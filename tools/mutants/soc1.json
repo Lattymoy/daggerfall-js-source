@@ -328,8 +328,8 @@
   {
     "name": "S37-picture-before-the-welcome",
     "file": "server/src/index.js",
-    "old": "        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });\n        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);",
-    "new": "        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });\n        if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch { /* the mutant's early hello */ } }\n        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);",
+    "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name }, who));",
+    "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name }, who));\n        if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); } }",
     "tests": [
       "test/soc1_hub.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "S38-version-not-bumped",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world84';",
-    "new": "export const RELAY_VERSION = 'world83';",
+    "old": "export const RELAY_VERSION = 'world89';",
+    "new": "export const RELAY_VERSION = 'world88';",
     "tests": [
       "test/soc1_hub.test.js",
       "test/relayversion.test.js"

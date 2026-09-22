@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:5952` read, on one physical line:
+`src/scenes/worldModes.js:5825` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3489` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3444` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -6635,6 +6635,19 @@ layer is not hidden on `gamePaused()` (only on `hudCovered`, the gate the
 old call took); not destroyed at pagehide (a bfcached page's rejoin would
 be nameless for life).
 
+**ACC1d-MARK (2026-09-22) added one thing to this point.** The name
+carries the relay's verdict now (`vouched`, straight off the peer's `v`),
+and a name the relay CHECKED wears a mark - one ASCII glyph, in both
+faces, drawn BESIDE the label and never inside it, because the label is
+centred on the skull and a prefixed glyph would walk it off the head. The
+mark keeps the name's own colour: SOC4's green says who somebody is to
+you, and this says whether the SERVICE ISSUED the name at all. The
+polarity is Mac's own correction - the first cut marked the unvouched and
+he asked "Why a question mark since even guests get a name?", which is
+the right question: the verdict divides a name the player TYPED from a
+name the service ISSUED, not a guest from an account. Full record in
+`06-Systems/Accounts-And-Cloud-Saves-Arc.md`.
+
 ## RESPAWN1 - A DUNGEON'S DEAD STOOD BACK UP, AND THE DOOR WAS WHY (2026-09-17)
 
 Mac, forwarding a patch he was sent: a dungeon's kills did not persist.
@@ -7030,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:712`, `src/net/online.js:1104`):**
+**Now (`src/net/wire.js:756`, `src/net/online.js:1203`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence

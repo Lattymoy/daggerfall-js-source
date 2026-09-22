@@ -16,6 +16,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rosterFor, ROSTER_MAX, SOCKETS_MAX, POSE_FAN_MAX, nearestFan, validPose } from '../src/net/wire.js';
 import { Room } from '../server/src/index.js';
+import { roomSigner } from './fakeRoom.mjs';   // ACC1g: one home for a room's key and its tokens
 import { readFileSync } from 'node:fs';
 
 /** The Durable Object's real batched-get limit. The runtime enforces it; `test/fakeRoom.mjs` does not, which is
@@ -44,7 +45,12 @@ function strictRoom(key) {
       async setAlarm() {}, async getAlarm() { return null; }, async deleteAlarm() {},
     },
   };
-  const room = new Room(state);
+  // ACC1g: this harness is slam5's own (it enforces the batched-get
+  // limit), so it takes the shared signer rather than a second copy of
+  // one - the room really verifies, on this test's own faked clock.
+  const env = {};
+  const room = new Room(state, env);
+  const { token } = roomSigner(env, () => Date.now());
   const connect = () => {
     const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null, bucket: null, drops: 0 },
       send(s) { this.sent.push(JSON.parse(s)); },
@@ -52,7 +58,7 @@ function strictRoom(key) {
       serializeAttachment(a) { this.att = JSON.parse(JSON.stringify(a)); }, deserializeAttachment() { return this.att; } };
     state.acceptWebSocket(ws); return ws;
   };
-  return { room, connect, get maxKeys() { return maxKeys; } };
+  return { room, connect, token, get maxKeys() { return maxKeys; } };
 }
 
 test('SLAM5: A FULL ROOM FILLS - two hundred players join a town and every one gets a welcome, against storage that enforces the batched-get limit the runtime enforces (mutant: the pre-SLAM5 get over every socket, which throws at the 130th and leaves them connected but invisible)', async () => {
@@ -65,7 +71,16 @@ test('SLAM5: A FULL ROOM FILLS - two hundred players join a town and every one g
     for (let i = 0; i < 200; i++) {
       const ws = r.connect();
       try {
-        await r.room.webSocketMessage(ws, JSON.stringify({ t: 'hello', id: `p${String(i).padStart(4, '0')}`, secret: `secret-of-${i}`, name: `n${i}`,
+        // ACC1g: a real signed token per hello - the relay refuses one it
+        // cannot verify, so a full room only fills if two hundred tokens verify.
+        await r.room.webSocketMessage(ws, JSON.stringify({ t: 'hello', id: `p${String(i).padStart(4, '0')}`, secret: `secret-of-${i}`, name: `p${String(i).padStart(4, '0')}`,
+          // ACC1g: THE NAME IS THE ID HERE, and the reason is the filter
+          // doing its job: `n16` folds to a slur under NAME-F1's leet
+          // normalisation, so `sanitizeName` answers Traveller and the
+          // token's own `nameIsIssuable` refuses to mint it. The old
+          // fixture never noticed because nothing checked the name it
+          // typed; a token has to be issuable to exist.
+          tok: await r.token(`p${String(i).padStart(4, '0')}`),
           look: { race: 'Nord', gender: 'male', faceIndex: 0, items: [] }, pose: at((i % 20) * 3, Math.floor(i / 20) * 3) }));
         if (!ws.closed && ws.sent.some((m) => m.t === 'welcome')) welcomed++;
       } catch (e) { threw ??= { at: i, msg: e.message }; }
@@ -89,7 +104,8 @@ test('SLAM5: the welcome\'s roster CARRIES each peer\'s look - reading nothing f
   try {
     for (let i = 0; i < 6; i++) {
       const ws = r.connect();
-      await r.room.webSocketMessage(ws, JSON.stringify({ t: 'hello', id: `p${String(i).padStart(4, '0')}`, secret: `secret-of-${i}`, name: `n${i}`,
+      await r.room.webSocketMessage(ws, JSON.stringify({ t: 'hello', id: `p${String(i).padStart(4, '0')}`, secret: `secret-of-${i}`, name: `p${String(i).padStart(4, '0')}`,
+        tok: await r.token(`p${String(i).padStart(4, '0')}`),   // ACC1g: the id IS the name - `n16` folds to a slur and cannot be minted
         look: { race: i % 2 ? 'Redguard' : 'Nord', gender: 'male', faceIndex: i, items: [] }, pose: at(i * 3, 0) }));
       welcome = ws.sent.find((m) => m.t === 'welcome') ?? welcome;
       t += 120;
@@ -145,7 +161,7 @@ test('SLAM5: a roster asked for with no pose to measure from still answers, boun
 test('PINS (AUDIT SLAM S7): the welcome\'s roster CARRIES EACH PEER\'S POSE - the joiner stands the room where it is, not at the origin (mutant: `{ id, name, look }` built from the ranked entry, which drops the pose and survived the whole suite)', async () => {
   const r = strictRoom('town:m9');
   const real = Date.now; let t = 1e12; Date.now = () => t;
-  const hello = async (id, pose) => { const ws = r.connect(); await r.room.webSocketMessage(ws, JSON.stringify({ t: 'hello', id, secret: `secret-of-${id}`, name: `n-${id}`, look: { race: 'Nord', gender: 'male', faceIndex: 0, items: [] }, pose })); t += 200; return ws; };
+  const hello = async (id, pose) => { const ws = r.connect(); await r.room.webSocketMessage(ws, JSON.stringify({ t: 'hello', id, secret: `secret-of-${id}`, name: `n-${id}`, tok: await r.token(id, { n: `n-${id}` }), look: { race: 'Nord', gender: 'male', faceIndex: 0, items: [] }, pose })); t += 200; return ws; };   // ACC1g: a real token, verified by the room
   try {
     await hello('aaaa-0001', at(3, 4)); await hello('bbbb-0002', at(5, 6));
     const c = await hello('cccc-0003', at(7, 8));

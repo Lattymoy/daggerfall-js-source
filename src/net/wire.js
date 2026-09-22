@@ -12,14 +12,17 @@
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
 //                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
+//                    {t:'say', text}                    RED1: THE SERVER SPEAKING - only from a socket whose
+//                                                       TOKEN carried the dev glyph; fanned as {t:'red', text, at}
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
 //                    {t:'act', data}                    a change to the room's doors, levers, movers and loot, from anyone in it (WORLD3/WORLD4)
 //                    {t:'social', k, acct?, peer?, party?}   a friend or party act, in the HUB alone (SOC1): SOCIAL_HZ_MAX a second
 //                    {t:'party', p}                     my party pose - where I stand and how I fare - to the hub (SOC1): PARTY_HZ_MAX a second
-//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world, now}   now: the relay's clock, ms (WORLD5)
-//                    {t:'join', id, name, look, pose}   {t:'leave', id}
+//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose,title?,glyphs?}], host, world, now}   now: the relay's clock, ms (WORLD5)
+//                    {t:'join', id, name, look, pose, title?, glyphs?}   {t:'leave', id}
+//                    ACC3: `title` and `glyphs` are read off the hello's VERIFIED token and are absent when there is no badge
 //                    {t:'pose', id, p}                  {t:'pong'}
 //                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
 //                    {t:'host', id}                     the room's host changed (WORLD1)
@@ -132,6 +135,7 @@
 // fast travel, no sentence, no ?tod, no ?timescale.
 
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
+import { TITLES, GLYPHS, GLYPHS_MAX } from './identityToken.js';   // ACC3: the badge vocabulary, closed - `badged` writes it and `readBadge` checks it back
 import { nameAllowed } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
 
 /** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
@@ -190,6 +194,37 @@ export const CLOSE_BUSY = 1013;       // the room is full or its hello gate is s
 export const CHAT_MAX = 240;
 /** The most chat lines a client may send a second; the bucket's burst is the same number. */
 export const CHAT_HZ_MAX = 2;
+
+/** ═══ RED1: THE SERVER'S OWN LINE ════════════════════════════════
+ *
+ * Mac (2026-09-22): "I want to set up a red text system (kind of like
+ * warframe) where I can message chat as the server."
+ *
+ * A LINE NOBODY IS SPEAKING. It carries no id and no name, because it
+ * is not a person - which is also what makes it unforgeable in the
+ * one way that matters: `net/chat.js`'s own note says a notice
+ * recognised by the string 'Server' would be one rename away from a
+ * player announcing a fake one, so this arrives as its OWN FRAME TYPE
+ * and the client marks it from the type rather than from any field.
+ *
+ * IT IS BOUNDED LIKE A CHAT LINE because it IS one - `sanitizeChat`
+ * runs on it at both ends. A broadcast is not a licence to put four
+ * kilobytes over everybody's screen.
+ *
+ * RED_HZ_MAX IS DELIBERATELY BELOW CHAT_HZ_MAX. A player's line
+ * reaches the room; this reaches EVERY PLAYER IN THE GAME, so the
+ * thing that would be merely annoying at chat's rate is the whole
+ * population's screen at this one.
+ *
+ * AND IT IS 1 RATHER THAN THE 0.5 THIS WAS FIRST WRITTEN AS, because
+ * `tokenGate` CANNOT EXPRESS A RATE BELOW ONE A SECOND: a fresh bucket
+ * starts with `rate` tokens and the gate needs a whole one, so at 0.5
+ * the very first frame is refused and every one after it - the feature
+ * would have been silently dead rather than slow. The pins caught it;
+ * the constraint is now written down at `tokenGate` itself so the next
+ * slice that wants "one every ten seconds" meets it before shipping.
+ */
+export const RED_HZ_MAX = 1;
 /** Over-rate chat lines dropped in a row before the socket is closed. */
 export const CHAT_STRIKES_MAX = 20;
 /** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
@@ -419,6 +454,17 @@ const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
 const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
 const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
+/** ACC1d: what an identity token LOOKS like - `v1.<base64url body>.<base64url sig>`,
+ *  which is `src/net/identityToken.js`'s own shape. Bounded because an
+ *  unbounded string reaches WebCrypto on the relay, and the verifier
+ *  refuses an oversized one anyway (TOKEN_MAX there); this is the
+ *  cheaper refusal, before a frame is even accepted.
+ *
+ *  THE VERSION PREFIX IS NOT SPELLED OUT HERE. identityToken.js is the
+ *  one home for which version exists and the verifier refuses anything
+ *  else before parsing a byte; a second copy of `v1` in this file would
+ *  be a second thing to forget on the day there is a v2. */
+const TOKEN_RE = /^[A-Za-z0-9]{1,8}\.[A-Za-z0-9_-]{1,512}\.[A-Za-z0-9_-]{1,128}$/;
 
 /** The name a refused one becomes. Not a mask (`C**` is a shape a
  *  player treats as a puzzle) and not an error the relay could not
@@ -733,7 +779,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world84';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite
+export const RELAY_VERSION = 'world89';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -973,6 +1019,30 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!look) return { error: 'bad look' };
     const pose = validPose(m.pose);
     const hello = { t: 'hello', id, secret, name: sanitizeName(m.name), look, pose };
+    // ═══ ACC1d: THE IDENTITY TOKEN, OPTIONAL, AND ITS SHAPE ONLY ══
+    //
+    // `parseClient` is SYNC AND PURE and has to stay that way - it is
+    // the law both ends run, and a verifier needs WebCrypto, a public
+    // key and an await. So this checks that `tok` could be a token and
+    // nothing more; server/src/index.js does the arithmetic, because
+    // only the relay holds the key.
+    //
+    // A HELLO WITHOUT ONE IS ADMITTED, exactly as SOC1's account pair
+    // is admitted when absent: it is a build from before this slice, or
+    // a client that could not reach the account service. ACC1d's record
+    // (bible ACC1d D1) says why the token is not required - a second
+    // Worker's outage must not take the game offline - and says the
+    // honest limit out loud: a token makes a name TRUSTWORTHY, it does
+    // not yet make one MANDATORY.
+    //
+    // A MALFORMED ONE IS AN ERROR, not a quiet drop. A client that
+    // meant to send a token and sent rubbish should hear so, the same
+    // way a malformed account pair is `bad account` rather than a
+    // silent downgrade to no account at all.
+    if (m.tok !== undefined) {
+      if (typeof m.tok !== 'string' || !TOKEN_RE.test(m.tok)) return { error: 'bad token' };
+      hello.tok = m.tok;
+    }
     // SOC1: the account, optional - and BOTH or neither. A hello that names an account without its secret, or a
     // malformed either, is not the port's client (accountId/accountSecret mint the shape the law admits), so it is an
     // error like a bad id, not a hello quietly admitted without an account. A hello naming none is a build before
@@ -995,6 +1065,16 @@ export function parseClient(text, { hasHello = false } = {}) {
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
     return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
   }
+  if (m.t === 'say') {
+    // RED1: THE SERVER'S LINE, ASKED FOR. This checks the SHAPE and
+    // nothing else - whether this socket may actually speak as the
+    // server is a question about a SIGNATURE, and only the relay holds
+    // the key. `parseClient` is sync and pure and stays that way, the
+    // same split the token itself lives under (ACC1d).
+    if (!hasHello) return { error: 'say before hello' };
+    const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
+    return text ? { t: 'say', text } : { error: 'bad say' };
+  }
   if (m.t === 'social') {   // SOC1: a friend or party act - a KIND from SOCIAL_ACTS naming what that kind must name, and nothing else
     if (!hasHello) return { error: 'social before hello' };
     const act = validSocialAct(m);
@@ -1015,6 +1095,13 @@ export function parseClient(text, { hasHello = false } = {}) {
 
 /** A token bucket of `rate` a second: the bucket after the frame and
  *  whether the frame passes. The pose gate and the hello gate ride it. */
+/** RED1 FOUND THE FLOOR, so it is stated here rather than rediscovered:
+ *  THIS GATE CANNOT EXPRESS A RATE BELOW ONE A SECOND. A fresh bucket
+ *  starts with `rate` tokens and a pass costs a whole one, so any rate
+ *  under 1 refuses the FIRST frame and every frame after it - a gate
+ *  that reads as "slow" and behaves as "off". A slower allowance needs
+ *  a different shape (a stamp of the last pass, not a bucket), and
+ *  whoever needs one should write that rather than pass a fraction. */
 export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX) {
   const b = bucket ?? { tokens: rate, at: nowMs };
   const refill = ((nowMs - b.at) / 1000) * rate;
@@ -1068,6 +1155,8 @@ export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
+/** RED1: the server line's own bucket, well under chat's - see RED_HZ_MAX. */
+export const redGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RED_HZ_MAX);
 /** SOC1: the social acts' gate - SOCIAL_HZ_MAX a second, at the hub and at home (an act the hub would refuse is never sent). */
 export const socialGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_HZ_MAX);
 /** SOC1: the party poses' gate - PARTY_HZ_MAX a second, at the hub and at home. */
@@ -1126,9 +1215,85 @@ export const relayVersionOf = (v) => (typeof v === 'string' && v.length > 0 && v
 /** What a joiner is told: everyone else in the room who has said hello
  *  - the nearest ROSTER_MAX to `near` when there is a pose to measure
  *  from (a world cell), the first ROSTER_MAX otherwise. */
+/** ═══ ACC3: THE BADGE ON A WIRE ROW, AND WHY IT IS OMITTED ════════
+ *
+ * Mac (2026-09-22): "Player titles appear above a player name ... name
+ * glyphs appear on the right side of the player name."
+ *
+ * Both ride BESIDE the name on every row that carries one - a welcome
+ * peer, a join, a channel roster - and the relay reads them off the
+ * VERIFIED token claims, never off anything a client said about itself
+ * (server/src/index.js `_named`). That is ACC1g's law applied to a
+ * stronger claim than a name: "Developer" over somebody's head reads
+ * as this project's own word about them.
+ *
+ * THE KEYS ARE ABSENT AND NOT NULL when there is no badge, which is
+ * the same discipline `look.class` keeps two hundred lines up and for
+ * the same two reasons. Most players wear nothing, so `"title":null`
+ * on every row of a 64-peer welcome is bytes paid for saying nothing;
+ * and a reader that has to tell "no title" from "the key is not in
+ * this build" has one answer instead of two.
+ *
+ * ONE HOME BOTH ENDS: the relay builds rows with it, and the client
+ * reads them, so neither can drift into carrying a field the other
+ * does not.
+ *
+ * @param {any} row  the row so far - returned, mutated, by design
+ * @param {any} from anything carrying `title` and `glyphs` (a token's
+ *                   claims as `_named` projects them, or an attachment)
+ */
+export function badged(row, from) {
+  const t = from?.title;
+  if (typeof t === 'string' && t) row.title = t;
+  const g = from?.glyphs;
+  if (Array.isArray(g) && g.length) row.glyphs = g;
+  return row;
+}
+
+/** ═══ AND THE INVERSE, because a reader is half of a field ════════
+ *
+ * `badged` is what the RELAY writes; this is what a client reads back,
+ * and the two live together so a badge cannot be written one way and
+ * understood another. The relay itself never calls it - it reads a
+ * badge out of a verified token, never off the wire - so this is the
+ * client's half of the pair, and it lives here because the alternative
+ * is a second spelling of one law in `net/online.js`.
+ *
+ * IT CHECKS THE VOCABULARY, and that is the point rather than a
+ * formality: this is a stranger's word about themselves. The relay
+ * only ever sends what a signature carried, so anything else is a
+ * relay that is older, newer, or not ours - and a name layer that
+ * trusts an unknown string is a name layer somebody paints text with.
+ * Duplicates go, and the list is cut at the vocabulary's own size.
+ *
+ * Answers `{ title, glyphs }` always: `null` and `[]` for no badge, so
+ * a caller never has to tell "absent" from "none".
+ */
+export function readBadge(row) {
+  const t = row?.title;
+  const title = typeof t === 'string' && TITLES.includes(t) ? t : null;
+  const glyphs = [];
+  if (Array.isArray(row?.glyphs)) {
+    for (const g of row.glyphs) {
+      if (typeof g !== 'string' || !GLYPHS.includes(g) || glyphs.includes(g)) continue;
+      if (glyphs.length >= GLYPHS_MAX) break;
+      glyphs.push(g);
+    }
+  }
+  return { title, glyphs };
+}
+
 export function rosterFor(peers, meId, near = null) {
   const out = [];
-  for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });
+  // ACC1g: AND `v` IS GONE FROM IT. ACC1d put the relay's verdict on
+  // every roster row and on the join beside it, for a good reason at
+  // the time - a roster that dropped it would have marked the people
+  // who arrive AFTER you and left everybody already standing there
+  // unmarked, a signal true half the time. The gate makes the whole
+  // field say one thing: every peer in this room was verified to get
+  // in, so a per-name verdict carries no information about any of them.
+  // ACC3: and the badge, off the attachment the token wrote - omitted, not nulled, when there is none (`badged`).
+  for (const p of peers) if (p && p.id && p.id !== meId) out.push(badged({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null }, p));
   // SLAM5 (2026-09-16, AUDIT SLAM): ONE METRIC. This ranked by `pixelDistance` - Chebyshev on MAP PIXELS, 32768 units
   // wide - while the pose fan ranks by squared Euclidean in the pose's own frame. Two different metrics over the same
   // set DO NOT NEST, so `POSE_FAN_MAX <= ROSTER_MAX` bought nothing: measured at an event standing, only 11 of the 32

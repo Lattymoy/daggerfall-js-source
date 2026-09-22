@@ -879,3 +879,15 @@ test('AUDIT NAME1 F9 / F10 / F11: a bubble with nothing to show is not shown - a
   l3.render({ points: [{ id: 'q', name: 'Q', x: 10, y: 20, scale: NaN }] });
   assert.equal(l3.tagFor('q').node.style.fontSize, `${NAME_BASE_PX.toFixed(1)}px`);
 });
+
+// ── ACC1d-MARK IS RETIRED (ACC1g) ────────────────────────────────────────────────────────────────
+//
+// The mark said a name had been CHECKED, which meant something only
+// while a name could also be one the player had typed. Mac shut that
+// door - "You shouldnt be able to just type a name and enter
+// anymore.... this is what the account system is for" - so every name
+// over every head is a checked one and the badge appeared on all of
+// them, which is the wallpaper he named when he took its first
+// polarity apart. The pin goes with it; what is left below is what the
+// name pass was before, and the fixture's peers carry no verdict
+// because the wire carries none.

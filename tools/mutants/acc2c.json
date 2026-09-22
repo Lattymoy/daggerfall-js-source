@@ -1,0 +1,82 @@
+[
+  {
+    "name": "ONLY-1-the-key-drops-the-character",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  return (cards ?? []).filter((c) => c?.characterId && c?.saveName && !here.has(slotKeyOf(c)));",
+    "new": "  return (cards ?? []).filter((c) => c?.characterId && c?.saveName && !here.has(c.saveName));",
+    "tests": ["test/cloudsaves.test.js"],
+    "note": "AUDIT-312 F3's own bug, one module over: the slot is (character, save name) and a key without the character half makes every character's QuickSave one slot - so one local QuickSave hides EVERY other character's cloud QuickSave, and those saves go on being invisible, which is the exact failure this slice exists to end."
+  },
+  {
+    "name": "ONLY-2-the-difference-inverted",
+    "file": "src/systems/cloudSaves.js",
+    "old": "&& !here.has(slotKeyOf(c)));",
+    "new": "&& here.has(slotKeyOf(c)));",
+    "tests": ["test/cloudsaves.test.js"],
+    "note": "The grid then lists exactly the saves that are already on this device, offering to download what the player is looking at - and still shows nothing of what is only in the cloud."
+  },
+  {
+    "name": "ONLY-3-a-card-with-no-slot-identity-drawn",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  return (cards ?? []).filter((c) => c?.characterId && c?.saveName && !here.has(slotKeyOf(c)));",
+    "new": "  return (cards ?? []).filter((c) => !here.has(slotKeyOf(c)));",
+    "tests": ["test/cloudsaves.test.js"],
+    "note": "A card without both halves cannot be downloaded (`pullSlot` answers `no-slot`) and cannot be deleted, so drawing one is a tile whose every button refuses - and `slotKeyOf(null)` is a real key ('|'), so a null in the listing becomes a tile."
+  },
+  {
+    "name": "ONLY-4-download-wired-to-push",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  runCloud(card, (io) => pullSlot(io, appStorage(), card));",
+    "new": "  runCloud(card, (io) => pushSlot(io, appStorage(), card.saveName));",
+    "tests": ["test/cloudsaves.test.js"],
+    "note": "The one seam this slice exists to close. `pullSlot` was written, pinned end to end against the real service, and had ZERO CALLERS - a Download button that pushes leaves it that way while looking finished."
+  },
+  {
+    "name": "ONLY-5-the-only-arm-folded-into-the-local-ladder",
+    "file": "src/ui/saveTile.js",
+    "old": "  if (local === false) {\n    if (busy) return { state: 'busy', when: null, error: null };\n    if (error) return { state: 'bad', when: null, error };\n    return { state: 'only', when: agoText(card?.updatedAt, nowS), error: null };\n  }",
+    "new": "",
+    "tests": ["test/savetile.test.js"],
+    "note": "Every rung of the local ladder is a question about a LOCAL slot. A cloud card has no `characterId` handed in, so without its own arm it falls to `wait` - 'Not backed up yet', printed under a tile whose only copy IS the backup."
+  },
+  {
+    "name": "ONLY-6-only-says-backed-up",
+    "file": "src/ui/saveTile.js",
+    "old": "      only: cloud.when ? `Only in your backup · ${cloud.when}` : 'Only in your backup',",
+    "new": "      only: cloud.when ? `Backed up · ${cloud.when}` : 'Backed up',",
+    "tests": ["test/savetile.test.js"],
+    "note": "'Backed up' under a tile whose only copy is the backup tells a player they have two of something they have one of - the opposite fact in the same sentence shape."
+  },
+  {
+    "name": "ONLY-7-no-saved-games-over-a-shelf-of-backups",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (!saves.length && !onlyCloud) body.append(empty('No saved games', 'Save a game and every slot of it appears here.'));",
+    "new": "  if (!saves.length) body.append(empty('No saved games', 'Save a game and every slot of it appears here.'));",
+    "tests": ["test/cloudsaves.test.js"],
+    "note": "The sentence ends 'Save a game and every slot of it appears here', which told a player with a shelf full of backups that they had none. It is the very sentence this slice exists to stop being shown, and it would sit directly above the tiles that disprove it."
+  },
+  {
+    "name": "ONLY-8-a-stat-invented-from-a-column",
+    "file": "src/ui/saveTile.js",
+    "old": "    name: card?.characterName || 'Unnamed',",
+    "new": "    name: card?.characterName || 'Unnamed',\n    level: card?.saveVersion ?? null,",
+    "tests": ["test/savetile.test.js"],
+    "note": "The service never held a level; `save_version` is the envelope's format number. Reading one column as another is how a tile prints 'level 1' about a character nobody sent - and the tile would draw it without complaint, because every field there is optional by design."
+  },
+  {
+    "name": "ONLY-9-the-initial-from-the-slot-name",
+    "file": "src/ui/saveTile.js",
+    "old": "    name: card?.characterName || 'Unnamed',",
+    "new": "    name: card?.saveName || 'Unnamed',",
+    "tests": ["test/savetile.test.js"],
+    "note": "There is no portrait in a card, so the well draws an INITIAL and the heading a name - and taking both from the slot name puts 'QuickSave' where the character goes, on the one surface whose whole job is telling a player which of their characters this is."
+  },
+  {
+    "name": "ONLY-10-gameTime-read-as-anything-but-classic-minutes",
+    "file": "src/ui/saveTile.js",
+    "old": "  const date = Number.isFinite(m) && dateFrom ? dateFrom(m) : null;",
+    "new": "  const date = Number.isFinite(m) && dateFrom ? dateFrom(Math.floor(m / 60)) : null;",
+    "tests": ["test/savetile.test.js"],
+    "note": "`gameTime` IS classic minutes - saveSlots.js's SaveInfo typedef says so of the very field pushSlot copies up. A second interpretation of the same number puts a cloud tile's date years away from the same save's date once it is downloaded."
+  }
+]

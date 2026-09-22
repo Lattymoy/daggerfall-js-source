@@ -329,3 +329,138 @@ test('ACC1a: PURE, and both ends can import it', async () => {
   const imports = [...text.matchAll(/from\s+'(\.[^']+)'/g)].map((m) => m[1]);
   assert.deepEqual(imports, ['./wire.js'], 'a new import here is a new file in the relay\'s bundle');
 });
+
+// ═══ ACC1d: THE TRIPWIRE FIRED, AND THIS IS WHAT REPLACED IT ═══════
+//
+// The gate this slice removed said, in its own failure message:
+//
+//   REPLACE THIS PIN with one that DRIVES it: present the same token
+//   twice and prove the second is refused.
+//
+// It fired the moment `server/src/index.js` imported this module, which
+// is the moment it was written for. What stands here now is the thing
+// it was demanding: the relay's own `_named`, driven with a REAL key
+// pair and a REAL token, twice.
+//
+// The room is not stood up - `_named` is a method on a big Durable
+// Object and node has no workerd. It is driven the way this suite
+// drives any pure-ish method: on a bare object carrying the two fields
+// it reads (`env`, `_spent`), with WebCrypto doing the arithmetic for
+// real. A stub signature would have proved something about the stub.
+import { readFileSync as _rf } from 'node:fs';
+
+/** `_named` lifted off the class, so node can call it without a
+ *  Durable Object. Read from the SOURCE rather than copied, so the day
+ *  the method changes this pin is driving the new one - a copy here
+ *  would be a second implementation agreeing with itself. */
+async function namedOf(room, m, now) {
+  const text = _rf(new URL('../server/src/index.js', import.meta.url), 'utf8');
+  const start = text.indexOf('  async _named(m, now) {');
+  assert.ok(start > 0, 'server/src/index.js no longer has a _named - this pin is driving nothing');
+  const end = text.indexOf('\n  }\n', start) + 4;
+  const body = text.slice(start + '  async _named(m, now) {'.length, end - 4);
+  // the two module-level names the method closes over
+  const fn = new Function('m', 'now', 'verifyToken', 'importPublicKeyB64', 'MAX_TTL_S', 'SPENT_MAX', 'crypto', 'console',
+    `return (async () => {${body}})()`);
+  return fn.call(room, m, now, verifyToken, importPublicKeyB64, MAX_TTL_S, 4096, globalThis.crypto, console);
+}
+
+const roomWith = (pub) => ({ env: { IDENTITY_PUBLIC_KEY: pub }, _spent: new Map(), _verifyKey: undefined });
+
+test('ACC1d/F8: A TOKEN IS SPENT ONCE - the same token presented twice is refused the second time', async () => {
+  const kp = await keys();
+  const pub = _b64url.encode(new Uint8Array(await subtle.exportKey("raw", kp.publicKey)));
+  const token = await mint(kp);
+  const room = roomWith(pub);
+  const now = NOW * 1000;
+
+  const first = await namedOf(room, { tok: token, name: 'anything' }, now);
+  assert.equal(first.error, undefined, `the first presentation was refused: ${first.error}`);
+  assert.equal(first.error, undefined, 'the relay refused a token it had just verified');   // ACC1g: an admitted hello IS a verified one, so there is no `verified` flag left to assert
+  // THE NAME COMES OUT OF THE TOKEN, and the frame's own is ignored -
+  // that is the whole point of the seam.
+  assert.equal(first.name, WHO.n);
+
+  const second = await namedOf(room, { tok: token, name: 'anything' }, now);
+  assert.equal(second.error, 'token spent', 'the same token was honoured twice');
+  assert.equal(second.name, undefined, 'a refusal hands back no name at all');
+});
+
+test('ACC1g: a hello with NO token is REFUSED - a name cannot be typed any more (mutants: the old admit-unvouched arm back; the refusal downgraded to a name off the frame)', async () => {
+  // Mac: "You shouldnt be able to just type a name and enter
+  // anymore.... this is what the account system is for."
+  //
+  // ACC1d admitted this hello and said out loud that it was the wall
+  // not yet standing. THE WHOLE ARC TURNS ON THIS LINE: while it
+  // admitted, the name on the frame was the client's own and the relay
+  // only sanitised it, so anybody could wear anybody's name.
+  const kp = await keys();
+  const pub = _b64url.encode(new Uint8Array(await subtle.exportKey("raw", kp.publicKey)));
+  const r = await namedOf(roomWith(pub), { name: 'Traveller' }, NOW * 1000);
+  assert.equal(r.error, 'sign in to play online', 'a hello with no token must be refused, not admitted unvouched');
+  assert.equal(r.name, undefined, 'and it must not hand back the typed name either');
+});
+
+test('ACC1g: a relay with NO USABLE KEY refuses everybody, and the protection against that is at the DEPLOY (mutants: the old admit-everybody arm back; a bad key throwing rather than refusing)', async () => {
+  // THIS ARM CHANGED DIRECTION. While a token was optional, refusing
+  // everybody over a mistyped config was the worse failure and the
+  // relay admitted them unnamed. With the wall at the door that reading
+  // IS the hole: a relay that cannot verify cannot tell an issued name
+  // from a typed one, so admitting everyone reopens exactly what the
+  // gate closes.
+  //
+  // What keeps a mistyped key from taking the game dark is not this
+  // line - it is both deploy workflows checking the relay's copy of the
+  // key against what the account service publishes, so a real
+  // disagreement stops the deploy before a player ever sees it. That
+  // pair is pinned in relaydeploy.test.js and accountdeploy.test.js.
+  for (const pub of [undefined, '', 'not-a-key']) {
+    const r = await namedOf(roomWith(pub), { tok: 'v1.aaa.bbb', name: 'Traveller' }, NOW * 1000);
+    assert.equal(r.error, 'sign-ins cannot be checked right now', `key ${JSON.stringify(pub)}`);
+    assert.equal(r.name, undefined, 'and no typed name comes back');
+  }
+});
+
+test('ACC1d: a token that does not verify REFUSES the hello - it is never a quiet downgrade', async () => {
+  const kp = await keys();
+  const stranger = await keys();
+  const pub = _b64url.encode(new Uint8Array(await subtle.exportKey("raw", kp.publicKey)));
+  const now = NOW * 1000;
+
+  // signed by somebody else's key
+  const forged = await mint(stranger);
+  const a = await namedOf(roomWith(pub), { tok: forged, name: 'Nystul' }, now);
+  assert.match(a.error ?? '', /^token /, 'a token signed by a stranger was admitted');
+
+  // expired: minted far enough back that `e` has passed
+  const old = await mint(kp, WHO, { nowS: NOW - 10_000 });
+  const b = await namedOf(roomWith(pub), { tok: old, name: 'Nystul' }, now);
+  assert.match(b.error ?? '', /^token /, 'an expired token was admitted');
+
+  // A DOWNGRADE WOULD BE THE BUG: admitting these as `verified: false`
+  // would let a replay quietly succeed at exactly the level the
+  // attacker wanted, and would drop an honest player to their typed
+  // name with nothing on screen saying why.
+  assert.equal(a.name, undefined);
+  assert.equal(b.name, undefined);
+});
+
+test('ACC1d: the TTL ceiling is config, and config may only TIGHTEN the module\'s own', async () => {
+  const kp = await keys();
+  const pub = _b64url.encode(new Uint8Array(await subtle.exportKey("raw", kp.publicKey)));
+  const now = NOW * 1000;
+  const token = await mint(kp);   // minted at the module's full MAX_TTL_S
+
+  // a relay that allows less than the token was minted for refuses it
+  const tight = { env: { IDENTITY_PUBLIC_KEY: pub, IDENTITY_MAX_TTL_S: '5' }, _spent: new Map(), _verifyKey: undefined };
+  const r = await namedOf(tight, { tok: token, name: 'x' }, now);
+  assert.match(r.error ?? '', /^token /, 'a relay configured to 5s honoured a 300s token');
+
+  // ...and one that asks for MORE than the module allows does not get it
+  const loose = { env: { IDENTITY_PUBLIC_KEY: pub, IDENTITY_MAX_TTL_S: String(MAX_TTL_S * 100) }, _spent: new Map(), _verifyKey: undefined };
+  const wide = await namedOf(loose, { tok: token, name: 'x' }, now);
+  assert.equal(wide.error, undefined, 'a sane token was refused under a generous config');
+  const src2 = _rf(new URL('../server/src/index.js', import.meta.url), 'utf8');
+  assert.match(src2, /Math\.min\(configured, MAX_TTL_S\)/,
+    'config can widen the ceiling past the module\'s own, which is the door F8 asked to be shut');
+});

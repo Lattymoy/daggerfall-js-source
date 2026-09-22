@@ -1,0 +1,98 @@
+[
+  {
+    "name": "ACC1e-1-a-double-press-opens-a-second-guest-row",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (self.busy) return false;          // ONE PRESS IS ONE ACCOUNT",
+    "new": "    if (false) return false;          // ONE PRESS IS ONE ACCOUNT",
+    "tests": ["test/accountflow.test.js"],
+    "note": "Registering is TWO calls. A press between them opens a second guest row with no handle, no password and nothing that will ever adopt it."
+  },
+  {
+    "name": "ACC1e-2-the-guest-row-is-stranded-when-the-upgrade-fails",
+    "file": "src/ui/accountFlow.js",
+    "old": "      keepSession(storage, made.data);",
+    "new": "      if (false) keepSession(storage, made.data);",
+    "tests": ["test/accountflow.test.js"],
+    "note": "The session is kept BEFORE the upgrade is attempted on purpose: a `handle-taken` refusal leaves a real row this device owns, and dropping the secret would strand it and make the next press open another."
+  },
+  {
+    "name": "ACC1e-3-a-dead-credential-is-kept",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (!r.ok && r.error === 'auth') { signedOut(accountRefusalText('auth')); return null; }",
+    "new": "    if (false) { signedOut(accountRefusalText('auth')); return null; }",
+    "tests": ["test/accountflow.test.js"],
+    "note": "A secret the service has stopped honouring is not a session; keeping it makes every later call fail the same way with nothing on screen saying why."
+  },
+  {
+    "name": "ACC1e-4-a-network-blip-signs-the-player-out",
+    "file": "src/ui/accountFlow.js",
+    "old": "      go('in', { error: accountRefusalText(r.error) });",
+    "new": "      signedOut(accountRefusalText(r.error));",
+    "tests": ["test/accountflow.test.js"],
+    "note": "`offline` and `server` say NOTHING about whether the credential is good. Throwing a working session away over a bad second is a player signed out by a blip."
+  },
+  {
+    "name": "ACC1e-5-two-different-passwords-are-accepted",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (fields.includes('confirm') && pw('password') !== pw('confirm')) return LOCAL_REFUSALS['confirm-mismatch'];",
+    "new": "    if (false) return LOCAL_REFUSALS['confirm-mismatch'];",
+    "tests": ["test/accountflow.test.js"],
+    "note": "The service never sees `confirm` - it takes one password and has no idea a second box existed. This check exists here or nowhere, and without it a typo sets a password the player does not know."
+  },
+  {
+    "name": "ACC1e-6-a-password-is-trimmed-behind-the-players-back",
+    "file": "src/ui/accountFlow.js",
+    "old": "  const pw = (k) => self.values[k] ?? '';",
+    "new": "  const pw = (k) => (self.values[k] ?? '').trim();",
+    "tests": ["test/accountflow.test.js"],
+    "note": "A leading or trailing space is a character a player may have chosen. Trimming it here while the service hashes what it was sent is a login that works today and fails from another client tomorrow."
+  },
+  {
+    "name": "ACC1e-7-a-password-outlives-the-stage-that-asked-for-it",
+    "file": "src/ui/accountFlow.js",
+    "old": "    self.values = {};\n    if (stage !== 'code') self.recoveryCode = null;",
+    "new": "    if (stage !== 'code') self.recoveryCode = null;",
+    "tests": ["test/accountflow.test.js"],
+    "note": "A password left in the flow is a password left in the DOM."
+  },
+  {
+    "name": "ACC1e-8-a-password-box-is-drawn-in-the-clear",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "    input.type = spec.secret ? 'password' : 'text';",
+    "new": "    input.type = 'text';",
+    "tests": ["test/enhancedaccount.test.js"],
+    "note": "Every password field, readable over a shoulder."
+  },
+  {
+    "name": "ACC1e-9-the-recovery-code-stage-gains-a-second-way-off",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "      acts.append(act('I have written it down', () => flow.acknowledgeCode(), { primary: true }));",
+    "new": "      acts.append(act('I have written it down', () => flow.acknowledgeCode(), { primary: true }));\n      acts.append(act('Later', () => flow.go('in')));",
+    "tests": ["test/enhancedaccount.test.js"],
+    "note": "The code is readable ONCE. A second way off that stage is a way to lose an account by taking it - and 'Later' is exactly the button somebody would add."
+  },
+  {
+    "name": "ACC1e-10-F1-the-ash-token-comes-back",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".card label.field .fieldlabel { font-size: 13px; color: var(--dim); letter-spacing: 0.02em; }",
+    "new": ".card label.field .fieldlabel { font-size: 13px; color: var(--ash); letter-spacing: 0.02em; }",
+    "tests": ["test/enhancedaccount.test.js"],
+    "note": "ACC1e F1 put back verbatim: nothing declares --ash, so the declaration is invalid and every field label in the skin inherits --bone. The node pin walks the tokens; tools/accountCardProbe.mjs measures the computed colour and gets BONE."
+  },
+  {
+    "name": "ACC1e-11-the-card-wears-a-class-the-skin-does-not-style",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "      const plaque = el('div', 'acctcode');",
+    "new": "      const plaque = el('div', 'acct-code-plaque');",
+    "tests": ["test/enhancedaccount.test.js"],
+    "note": "An unstyled class draws as bare text in the middle of the enhanced skin and reads as a broken page rather than a missing rule."
+  },
+  {
+    "name": "ACC1e-12-a-refusal-word-reaches-the-player-raw",
+    "file": "src/net/accountClient.js",
+    "old": "export const accountRefusalText = (error) => REFUSALS[error] ?? REFUSALS.server;",
+    "new": "export const accountRefusalText = (error) => REFUSALS[error] ?? error;",
+    "tests": ["test/accountflow.test.js"],
+    "note": "A player staring at `handle-frobnicated` has been told nothing."
+  }
+]

@@ -105,6 +105,41 @@ jobs:
           echo "::error::/health did not answer - not deploying blind on a push. Dispatch by hand once it is reachable."
           exit 1
 
+      # ═══ ACC1d D2: THE KEY THIS RELAY WOULD DEPLOY WITH ══════════
+      #
+      # The public half lives in `server/wrangler.toml` as a var - it can
+      # verify and cannot mint, so there is nothing to hide, and fetching
+      # it at runtime would put the account service in the relay's
+      # startup path, which is the coupling the two-Worker split exists
+      # to refuse. That copy can go stale, and a stale one fails in the
+      # worst possible way: every token is refused as a bad signature and
+      # no player is told why. The account service publishes the truth,
+      # so this asks it.
+      #
+      # A SERVICE THAT DOES NOT ANSWER IS NOT A MISMATCH. It is one
+      # Worker being slow, and refusing to deploy the relay over it would
+      # be the exact coupling D1 and D2 both refused. Only a key that
+      # answers AND disagrees stops the deploy.
+      - name: The relay's identity key matches what the account service publishes
+        run: |
+          set -euo pipefail
+          want=$(grep -oP '^IDENTITY_PUBLIC_KEY\s*=\s*"\K[^"]+' server/wrangler.toml || true)
+          if [ -z "$want" ]; then
+            echo "::error::server/wrangler.toml carries no IDENTITY_PUBLIC_KEY - this relay could vouch for nobody"
+            exit 1
+          fi
+          url='https://daggerfall-accounts.mackcothran.workers.dev/v1/pubkey'
+          got=$(curl -fsS --max-time 10 "$url" | sed -n 's/.*"key":"\([^"]*\)".*/\1/p' || true)
+          if [ -z "$got" ]; then
+            echo "::warning::/v1/pubkey did not answer - the relay's key could not be checked against it"
+            exit 0
+          fi
+          if [ "$want" != "$got" ]; then
+            echo "::error::the relay's IDENTITY_PUBLIC_KEY is not the one the account service publishes - every identity token would be refused"
+            exit 1
+          fi
+          echo "the relay's identity key matches the live account service"
+
       - name: Deploy
         if: steps.live.outputs.version != steps.ver.outputs.version
         working-directory: server

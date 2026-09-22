@@ -32,6 +32,7 @@
    this block into that page at build; the rest of the skin stays a
    string the game pays for only when a screen is mounted. */
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // FIX-D: Silkscreen's five ahead of Pixelify Sans
+import { badgeCss } from './playerBadge.js';   // ACC3c: one rule per title and per glyph, walked out of the vocabulary - the card writes a class and the skin carries the colour
 
 /**
  * QUICK-LOOT-STATS: THE PLAQUE'S LAYOUT NUMBERS LIVE WITH THE DRESS.
@@ -226,6 +227,117 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .stats { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; margin: 0 0 18px; }
 .stats dt { color: var(--dim); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 .stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* ── TILE1: THE SAVE TILE (ui/saveTile.js) ─────────────────────────
+   Mac: "a detailed tile based design for your saves... showing your
+   portrait and character information".
+
+   A GRID RATHER THAN A LIST. Three panes listed the same slots as full
+   width cards, so four saves filled a screen and a player scrolled to
+   find a character they would have recognised at a glance. The tiles
+   are as wide as they need to be and as many as fit.
+
+   THE TILE ITSELF IS A THREE PART GRID: the face down the left in its
+   own column, everything about the character beside it, and the
+   actions along the foot spanning both - so the buttons line up across
+   every tile in a row however tall the text above them runs.
+
+   It borrows the skin rather than bringing one: --iron for the rule,
+   --bone for the name, --dim for the quiet lines, --brass for the
+   primary. Nothing here is a new design language. */
+.svgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.svtile {
+  /* THREE ROWS: the character, a filler that eats the slack, and the
+     foot. Without the filler every tile's buttons sat wherever its own
+     text ended, and a row of equal-height tiles had its buttons at four
+     different heights - measured in tools/saveTileProbe.mjs, and it
+     reads as four misaligned cards rather than one row. */
+  display: grid; grid-template-columns: 96px 1fr; grid-template-rows: auto 1fr auto;
+  gap: 0 16px;
+  border: 1px solid var(--iron); background: #12161b; padding: 16px; position: relative;
+}
+/* The slot this pane is ABOUT - the most recent, or the one a save
+   would overwrite. One brass edge, no badge and no extra word. */
+.svtile.sv-current { border-color: var(--brass); }
+
+/* THE WELL. A fixed box so a tile is the same height whether its
+   portrait loaded or not - a grid that reflows when ten CIF reads land
+   is a list that jumps under a player's finger. */
+.svface {
+  grid-row: 1 / span 2; width: 96px; height: 116px;
+  border: 1px solid var(--iron); background: #0a0c11;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.svface canvas {
+  /* THE PIXELS, AS THEY ARE. A 2x nearest-neighbour head is the art
+     Daggerfall shipped; smoothing it is a portrait of a different
+     game. */
+  image-rendering: pixelated; max-width: 100%; max-height: 100%; display: block;
+}
+.svinitial { font-family: var(--display); font-size: 40px; color: var(--iron); }
+
+.svwho { grid-column: 2; grid-row: 1; min-width: 0; }
+.svwho h3 { font-family: var(--display); font-weight: 400; font-size: 21px; margin: 0 0 2px; overflow-wrap: anywhere; }
+.svsub { color: var(--bone); font-size: 13px; margin: 0 0 2px; }
+.svwhen { color: var(--dim); font-size: 12px; margin: 0 0 10px; }
+.svwho .stats { gap: 4px 14px; margin: 0; }
+
+/* THE NAME AND THE SLOT SHARE ONE ROW. Not the slot pinned to the
+   tile's corner: a slot name is the player's own words and can be a
+   sentence, and pinned it ran straight into a long character name
+   (measured at "Mithriil Stormaire" beside "a very long slot name
+   indeed"). Sharing a row makes the slot GIVE WAY, which is the right
+   precedence - the character is who a player is looking for. */
+.svtop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.svtop h3 { flex: 0 1 auto; min-width: 0; }
+.svslot {
+  flex: 0 1 auto; min-width: 0;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── THE CLOUD LINE (ACC2) ───────────────────────────────────────
+   ONE line and at most one button, and only when there is an account
+   to have a backup on. ACC0's wall is at cloud saves, and a player
+   without one is not nagged about it on every tile. */
+/* The foot: pinned to the bottom row, spanning both columns. */
+.svfoot { grid-column: 1 / -1; grid-row: 3; }
+.svcloud {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--iron);
+}
+.svsay { font-size: 12px; letter-spacing: 0.06em; color: var(--dim); flex: 1 1 auto; }
+.svcloud.is-saved .svsay { color: var(--verdigris); }
+.svcloud.is-bad .svsay { color: var(--ruby); }
+/* ACC2c: a save whose ONLY copy is the backup. Brass rather than the
+   verdigris a backed-up local save gets, because they are opposite
+   facts wearing the same sentence shape - one says "there are two of
+   these" and this one says "there is one, and it is not here". */
+.svcloud.is-only .svsay { color: var(--brass); }
+.svcloud .act { padding: 7px 12px; min-height: 32px; font-size: 12px; }
+
+/* ── ACC2c: THE CLOUD-ONLY GRID ──────────────────────────────────
+   Its own block under the pane's own tiles, with a rule above it, so
+   the eye reads two groups rather than one grid of tiles that answer
+   different buttons. No new colours and no new box: the heading is the
+   display face every heading here is in, and the tiles inside are the
+   same tiles. */
+.svcloudonly { margin-top: 6px; padding-top: 16px; border-top: 1px solid var(--iron); }
+.svcloudonly h4 {
+  font-family: var(--display); font-weight: 400; font-size: 17px;
+  margin: 0 0 2px; color: var(--bone);
+}
+.svcloudonly .meta { margin: 0 0 14px; }
+
+.svtile .acts { margin-top: 12px; }
+.svtile .acts .act { padding: 9px 16px; min-height: 38px; }
+
+/* A phone holds one tile across, and the face beside the text still
+   reads - so the columns stay and only the gaps tighten. */
+@media (max-width: 560px) {
+  .svgrid { grid-template-columns: 1fr; }
+  .svtile { padding: 14px; gap: 4px 12px; }
+}
 
 .acts { display: flex; gap: 8px; flex-wrap: wrap; }
 .act {
@@ -870,7 +982,16 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .goldfield input:focus-visible { outline: none; border-color: var(--brass); }
 /* ONLINE1: the Online card's two fields */
 .card label.field { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
-.card label.field .fieldlabel { font-size: 13px; color: var(--ash); letter-spacing: 0.02em; }
+/* ACC1e F1: THIS SAID var(--ash) AND NOTHING HAS EVER DEFINED --ash.
+   Not here, not in enhanced.html, not in the landing page's injected
+   block - the whole tree has one USE of it and no declaration, so the
+   property was invalid at computed-value time and every field label in
+   the enhanced skin inherited --bone instead. ONLINE1's two fields, the
+   save slot's name, and now this arc's: all of them have been drawing
+   their labels in the body colour since the day the rule was written.
+   --dim is what this wanted and what .card .meta one line up already
+   uses for exactly this job - a quiet label over a loud value. */
+.card label.field .fieldlabel { font-size: 13px; color: var(--dim); letter-spacing: 0.02em; }
 .card label.field input {
   min-height: 44px; padding: 0 12px;
   background: #0b0e12; border: 1px solid var(--iron); color: var(--bone);
@@ -883,6 +1004,128 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .card label.field.bad input { border-color: #b4553f; }
 .card p.meta.nameveto:empty { display: none; }
 .card p.meta.nameveto.bad { color: #e0906f; }
+
+/* ── ACC1e: THE ACCOUNT CARD ────────────────────────────────────────
+   Three shapes and no fourth. Everything else it wears - .card, .tag,
+   .acts, .act, label.field, .fieldlabel - already existed and is
+   already worn by the Online pane this card sits inside. A screen that
+   arrives with its own palette is the drift this file exists to stop. */
+
+/* A FIELD'S HINT. The rule under the box ("at least 8 characters"),
+   said BEFORE the press rather than as a refusal after it. Quieter
+   than the label above it, because it is help rather than a name. */
+.card label.field .fieldhint { font-size: 11.5px; color: var(--dim); opacity: 0.85; }
+/* ...AND THE GROUP NEEDS ROOM UNDER IT, which the probe measured
+   rather than anybody eyeballing: at the shared 10px field margin a
+   hint sat 6px under its own box and 10px above the NEXT field's
+   label. Nearer its own, but by four pixels - which is not a grouping
+   a reader can see, so the hint read as a caption for the box below
+   it. The gap inside a field stays 6px and the gap BETWEEN fields
+   goes to 20px, so proximity says what belongs together. */
+.card.acct label.field { margin: 0 0 20px; }
+
+/* THE REFUSAL, AND THE CONFIRMATION. NAME-F2's own reasoning: the red
+   lives on the border and on this line, never on the text the player
+   typed, because what they have to do next is EDIT that text. The good
+   line is verdigris rather than a green - brass turning is the skin's
+   own idea of a thing that has settled. */
+.card p.meta.acctwhy { margin: 10px 0 14px; font-size: 13px; }
+.card p.meta.acctwhy.bad { color: #e0906f; }
+.card p.meta.acctwhy.good { color: var(--verdigris); }
+.card p.meta.acctwhy:empty { display: none; }
+
+/* ACC3c - THE WARDROBE. Mac put the equip control on the account card
+   ("tap the account icon to equip 1 feature along with signing out"),
+   so it borrows .fieldlabel and .act's own vocabulary rather than
+   bringing a third one - the rule this whole card was written under.
+
+   A TITLE BUTTON CARRIES ITS COLOUR AND NOTHING ELSE UNTIL IT IS WORN.
+   Unworn it is an outline in the title's own gold or red; worn it
+   fills, which is the one state change a player has to be able to read
+   across the room. The colour is written by the card from
+   ui/playerBadge.js - the same table the name over a head reads - so
+   the swatch here and the label in the world cannot drift.
+
+   THE GLYPHS ARE NOT BUTTONS and must not look like them: no border,
+   no hover, no pointer. A glyph is true of an account rather than
+   chosen by one, and a control that cannot be operated is worse than
+   a fact that never offered. */
+.card .acctwear { margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
+.card .acctwear .fieldlabel { margin-top: 6px; }
+.card .acctwearrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.card button.acttitle {
+  font: inherit; font-size: 13px; letter-spacing: 0.04em;
+  padding: 6px 12px; border: 1px solid currentColor; border-radius: 2px;
+  background: transparent; cursor: pointer;
+}
+.card button.acttitle:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.card button.acttitle:disabled { opacity: 0.5; cursor: default; }
+/* WORN vs HELD, and the difference has to read WITHOUT the colour,
+   because the colour already says WHICH title and cannot also say
+   whether it is on. Unworn is dimmed to two thirds behind a hairline;
+   worn is full strength behind a doubled edge with a faint fill under
+   it. A filled swatch was tried and refused: filling with
+   currentColor leaves the label on its own colour, invisible. */
+.card button.acttitle { opacity: 0.62; }
+.card button.acttitle.worn {
+  opacity: 1; border-width: 2px; padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.card .acctglyph {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--dim);
+}
+.card .acctglyphart { width: 15px; height: 15px; display: block; }
+/* One rule per title and per glyph, WALKED out of the vocabulary in
+   ui/playerBadge.js - so the gold on this card and the gold over a
+   head are one fact, and a title added to the token gets a colour
+   here without anybody remembering to write one. */
+${badgeCss()}
+
+/* THE SIGNED-IN FACTS. A key and a value per row, the key quiet and
+   letter-spaced the way .qs-mark and the rarity headings are, so it
+   reads as a label rather than as half a sentence. */
+.card ul.acctfacts { list-style: none; margin: 0 0 16px; padding: 0; }
+.card ul.acctfacts li {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 7px 0; border-bottom: 1px solid var(--iron);
+}
+.card ul.acctfacts li:last-child { border-bottom: 0; }
+.card ul.acctfacts .acctkey {
+  flex: 0 0 96px; font-size: 10.5px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--dim);
+}
+.card ul.acctfacts .acctval { flex: 1 1 auto; min-width: 0; color: var(--bone); font-size: 15px; }
+
+/* ═══ THE RECOVERY CODE ═══════════════════════════════════════════
+   THE ONE MOMENT THIS STRING EXISTS. Email is completely optional
+   (Mac), so there is no address to send a reset to and this code IS
+   the reset - a player who does not write it down has a forgotten
+   password away from losing the account and the saves behind it.
+   So it is drawn as a PLAQUE rather than as a line of text: brass on
+   ink inside a brass frame, the loudest thing the skin can say
+   without a colour it does not own, and wide letter-spacing because
+   what happens next is a human transcribing it onto paper.
+   Selectable on purpose - user-select: all makes one click take the
+   whole code, since a half-copied recovery code is worse than none. */
+.card .acctcode {
+  margin: 4px 0 16px; padding: 16px 12px;
+  border: 1px solid var(--brass); background: #0b0e12;
+  text-align: center;
+}
+.card .acctcode code {
+  font-family: var(--data); font-size: clamp(17px, 4.6vw, 23px); font-weight: 600;
+  letter-spacing: 0.22em; color: var(--brass);
+  word-break: break-all; user-select: all; -webkit-user-select: all;
+}
+/* The phone: 0.22em of tracking on a 23-line is what pushes a 23
+   character code into a second line, and a code that wraps mid-group
+   is a code somebody mistypes. The clamp above shrinks it first; this
+   loosens the grip rather than letting it overflow the card. */
+@media (max-width: 420px) {
+  .card .acctcode { padding: 14px 8px; }
+  .card .acctcode code { letter-spacing: 0.12em; }
+}
 .goldfield .meta { flex: 1 0 100%; color: var(--dim); font-size: 11.5px; margin: 0; }
 
 /* THE LISTS STACK BELOW THE PACK'S OWN BREAKPOINT, not at it: two
@@ -1681,6 +1924,87 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .px-about:hover, .px-about:focus-visible { outline: none;
   color: rgb(243,239,44); border-color: var(--brass);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+/* ── ACC1f: THE PROFILE MARK AND THE ACCOUNT WINDOW ─────────────────
+   Mac: the online details live "as a popup on main menu startup and a
+   new profile icon". The mark takes the door's TOP-RIGHT corner - the
+   one the foot's About box does not use - and wears the About box's
+   own face rather than a new one, because two corner buttons that
+   look unrelated read as two different kinds of thing. */
+.px-profile {
+  position: absolute; top: 18px; right: 18px; z-index: 4;
+  display: flex; align-items: center; gap: 10px;
+  font: inherit; font-size: 15px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #d8cfae; cursor: pointer;
+  min-height: 44px; padding: 8px 16px;
+  background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+}
+.px-profile:hover, .px-profile:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The gem is FILLED when there is a session and HOLLOW when there is
+   not - the same two glyphs the rail uses for on and off, so "am I
+   signed in" is answerable at a glance without reading the word. */
+.px-profileicon { font-size: 12px; line-height: 1; }
+.px-profilename { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* THE WINDOW is the pause window's frame with the account card inside
+   it, so the door has ONE kind of modal rather than two. It is
+   shorter, because the card is a card and not a journal. */
+/* THE SCRIM. Without it the door's own menu reads straight through the
+   window - CONTINUE and NEW GAME sitting behind the sign-in copy - and
+   a modal you can read the page through is a modal nobody believes is
+   modal. The pause face uses rgba(10,12,17,0.55) over a LIVE frame;
+   this sits over the still door, so it can be heavier. */
+/* THE SCRIM SITS UNDER THE WORDMARK, not over it. The first cut
+   centred the window on the viewport, which put it across the logo -
+   the best thing on that screen, covered by a sign-in box - and used
+   an 0.82 scrim that flattened the whole door to mud. Lighter now, and
+   the window stands in the space the menu list occupies, which is what
+   it is standing in for. */
+.px-acctstage { position: absolute; inset: 0; z-index: 5;
+  display: grid; grid-template-rows: auto 1fr; justify-items: center;
+  padding: clamp(270px, 33vh, 400px) 16px 24px;
+  background: rgba(8,10,15,0.6); }
+.px-win.px-acctwin { height: auto; max-height: min(580px, 58dvh); width: min(500px, 92vw);
+  background: #0a0c11; align-self: start; }
+.px-win.px-acctwin .px-body { padding: 22px 26px 24px; }
+
+/* ═══ ONE AXIS ════════════════════════════════════════════════════
+   Mac: "Nothing is centered". It was true and it read as rushed - a
+   left-aligned tag over a left-aligned heading over left-aligned
+   buttons, with a Close centred underneath them. The window is
+   symmetrical about one line now, contents included. */
+.px-win.px-acctwin .card.acct { text-align: center; }
+.px-win.px-acctwin .card.acct .tag { display: inline-block; }
+.px-win.px-acctwin .card.acct .acts { justify-content: center; }
+.px-win.px-acctwin .card.acct label.field { align-items: center; }
+.px-win.px-acctwin .card.acct label.field input { text-align: center; width: 100%; }
+.px-win.px-acctwin .card.acct ul.acctfacts li { justify-content: center; }
+.px-win.px-acctwin .card.acct ul.acctfacts .acctkey,
+.px-win.px-acctwin .card.acct ul.acctfacts .acctval { flex: 0 0 auto; }
+/* The card inside brings its own frame, and a box inside a box reads
+   as a mistake - the window IS the frame here. */
+.px-win.px-acctwin .card.acct { border: 0; background: none; padding: 0; margin: 0; }
+.px-winfoot { display: flex; justify-content: center; padding: 6px 0 18px; }
+.px-winclose {
+  font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;
+  text-transform: uppercase; color: #d8cfae; cursor: pointer;
+  min-height: 44px; padding: 8px 22px;
+  background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+}
+.px-winclose:hover, .px-winclose:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+@media (max-width: 480px) {
+  /* On a phone the wordmark owns the top, so the mark loses its word
+     and keeps its gem - a 44px target either way. */
+  .px-profile { top: 10px; right: 10px; padding: 8px 12px; }
+  .px-profilename { display: none; }
+}
 @media (max-width: 480px) {
   .px-wordmark { font-size: 60px; }
   .px-menu button { font-size: 24px; letter-spacing: 0.12em; text-indent: 0.12em; }
@@ -1736,7 +2060,12 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .card, .shell .dcard { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
   background: rgba(0,0,0,0.35); }
-.shell .card h3, .shell .dcard h3, .shell .empty h3 { font-family: inherit; font-weight: 400;
+/* ACC1f: ...AND THE DOOR'S WINDOW, which is a third host for the same
+   markup. This rule was .shell only, so the account card's heading
+   came out in Cormorant inside a pixel-skinned window - the one thing
+   on the door not drawn in whole pixels. Found by screenshotting it. */
+.shell .card h3, .shell .dcard h3, .shell .empty h3,
+.px-win .card h3, .px-win .dcard h3, .px-win .empty h3 { font-family: inherit; font-weight: 400;
   letter-spacing: 0.12em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 /* CR1: the credited work's title wears the pixel face like every other
@@ -1746,14 +2075,18 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .tag { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
   letter-spacing: 0.24em; background: none; border: 0; }
-.shell .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
+/* ACC1f: the same widening as the heading above - these were .shell
+   only, so a card's buttons inside the door's window came out
+   lowercase and unspaced beside a CLOSE that was neither. */
+.shell .act, .px-win .card .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--bone);
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-.shell .act:hover, .shell .act:focus-visible { color: rgb(243,239,44); border-color: var(--brass);
+.shell .act:hover, .shell .act:focus-visible,
+.px-win .card .act:hover, .px-win .card .act:focus-visible { color: rgb(243,239,44); border-color: var(--brass);
   background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
-.shell .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
+.shell .act.primary, .px-win .card .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
-.shell .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
+.shell .act:disabled, .px-win .card .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
 /* ── the settings screen ── */
 .shell .subbtn { letter-spacing: 0.1em; text-transform: uppercase; border-radius: 0;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }

@@ -67,9 +67,19 @@ test('AUDIT WORLD34 A2: a map id with bit 31 set read NEGATIVE off the signed in
 test('AUDIT WORLD34 A1 executed: two real sessions through the real Room in Privateer\'s Hold\'s room - the host\'s foes fan to the joiner, the joiner\'s act fans to the host, the memory is stored and handed on; the same two in the slug room the old law left them in relay poses and nothing else', async () => {
   const run = async (key) => {
     const r = fakeRoom(key);
+    // ACC1g: the keypair made BEFORE the clock starts. A session's hello
+    // now awaits a mint, and generating an Ed25519 key the first time is
+    // slower than the few milliseconds this pin waits between steps -
+    // so the cost is paid here rather than inside the window the pin is
+    // measuring.
+    await r.signer();
     const link = (id) => {
       const { FakeWS, sockets } = fakeSocketClass();
-      const s = new OnlineSession({ url: 'wss://relay.test', name: id, id, secret: 'secret-of-' + id, WebSocketImpl: FakeWS, now: () => Date.now() });
+      // ACC1g: a REAL minter against the room's own key. The relay
+      // refuses a hello it cannot verify, so this end-to-end pin now
+      // runs through the door a player runs through - the session mints,
+      // the room verifies, and only then does anything cross.
+      const s = new OnlineSession({ url: 'wss://relay.test', name: id, id, secret: 'secret-of-' + id, WebSocketImpl: FakeWS, now: () => Date.now(), mintToken: () => r.token(id) });
       const seen = { foes: [], acts: [], worlds: [] };
       s.onFoes = (_, d) => seen.foes.push(d); s.onAct = (_, d) => seen.acts.push(d); s.onWorld = (w) => seen.worlds.push(w);
       quiet(() => s.join(key, at(1, 1)));
@@ -79,13 +89,13 @@ test('AUDIT WORLD34 A1 executed: two real sessions through the real Room in Priv
       ws.open();
       return { s, ws, server, seen };
     };
-    const a = link('aaaa-0001'); await new Promise((f) => setTimeout(f, 5));
-    const b = link('bbbb-0002'); await new Promise((f) => setTimeout(f, 5));
+    const a = link('aaaa-0001'); await new Promise((f) => setTimeout(f, 25));
+    const b = link('bbbb-0002'); await new Promise((f) => setTimeout(f, 25));
     assert.equal(a.s.host, 'aaaa-0001', 'a hosts'); assert.equal(b.s.host, 'aaaa-0001', 'b is told');
     assert.deepEqual([...b.s.peers.keys()], ['aaaa-0001'], 'presence: b sees a');
-    const foes = a.s.sendFoes({ n: 1, k: 'dungeon:1', f: [{ i: 0, h: 5 }] }); await new Promise((f) => setTimeout(f, 5));
-    const act = b.s.sendAct({ k: 'dungeon:1', a: [{ key: 'act:1:2', state: 'forward', t: 1 }] }); await new Promise((f) => setTimeout(f, 5));
-    const world = a.s.sendWorld({ locationKey: 'dungeon:1', stamp: 'a', world: { foes: [], actions: [] } }); await new Promise((f) => setTimeout(f, 5));
+    const foes = a.s.sendFoes({ n: 1, k: 'dungeon:1', f: [{ i: 0, h: 5 }] }); await new Promise((f) => setTimeout(f, 25));
+    const act = b.s.sendAct({ k: 'dungeon:1', a: [{ key: 'act:1:2', state: 'forward', t: 1 }] }); await new Promise((f) => setTimeout(f, 25));
+    const world = a.s.sendWorld({ locationKey: 'dungeon:1', stamp: 'a', world: { foes: [], actions: [] } }); await new Promise((f) => setTimeout(f, 25));
     return { foes, act, world, bFoes: b.seen.foes.length, aActs: a.seen.acts.length, stored: r.store.has('world:meta'), peers: b.s.peers.size };
   };
   const real = await run(`dungeon:m${PRIVATEERS_HOLD}`);

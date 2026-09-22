@@ -34,7 +34,7 @@ import { guestName, GUEST_BANKS, pick, isGuestShaped, isHandleShaped } from '../
 import banks from '../src/characters/nameGen.json' with { type: 'json' };
 import {
   hashPassword, verifyPassword, needsRehash, parseStored, passwordRefusal,
-  mintRecoveryCode, canonicalCode, PBKDF2_ITERS, CODE_ALPHABET,
+  mintRecoveryCode, canonicalCode, codeForHashing, timingSafeEqual, PBKDF2_ITERS, CODE_ALPHABET,
 } from '../server-account/src/password.js';
 import { verifyToken, importPublicKeyB64, ID_RE, nameIsIssuable, TOKEN_V } from '../src/net/identityToken.js';
 
@@ -86,12 +86,24 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   assert.match(src('server-account/migrations/0001_accounts.sql'), /THAT IS NOT TRUE OF EVERY MIGRATION/);
 
   const tables = db._raw.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all().map((r) => r.name);
-  assert.deepEqual(tables, ['players', 'rate_limits', 'sessions']);
-  // ACC1b IS IDENTITY ALONE. Saves and provider links arrive as their
-  // own migrations rather than as columns somebody added here.
+  // ACC2 added `saves` as ITS OWN TABLE and its own migration - which
+  // is exactly what 0001's header said would happen ("No saves, no
+  // provider links; those are ACC1c and ACC2, and each arrives as its
+  // own migration rather than as a column somebody added here later").
+  // A provider link is still not here.
+  assert.deepEqual(tables, ['players', 'rate_limits', 'saves', 'sessions']);
+  // ACC1b IS IDENTITY ALONE, and the PLAYERS row still is: the save
+  // arrived beside it, never inside it.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);
+  // ACC3 added exactly ONE - `title`, the title a player WEARS, which
+  // is the only part of a wardrobe that is a choice. Every GRANT is
+  // derived (server-account/src/titles.js): founder from a cutoff over
+  // `registered_at`, the sprout from `created_at`, developer from the
+  // service's own config. None of those is a column, and this row is
+  // the pin that says so.
   assert.deepEqual(cols.sort(), ['created_at', 'email', 'guest_name', 'handle', 'handle_lc', 'id',
-    'last_seen', 'muted_until', 'password', 'recovery_hash', 'registered_at']);
+    'last_seen', 'muted_until', 'password', 'recovery_hash', 'registered_at', 'title']);
+  assert.ok(!cols.some((c) => /founder|developer|sprout|glyph|grant/i.test(c)), `a grant became a column: ${cols}`);
   // SAVES AND PROVIDER LINKS ARE STILL NOT HERE. They arrive as their
   // own migrations rather than as columns somebody added to this one.
   assert.ok(!cols.some((c) => /save|slot|provider|blob|r2/i.test(c)), `ACC2's columns arrived early: ${cols}`);
@@ -974,5 +986,91 @@ test('ACC1c: no credential of any kind is stored in the clear, or shipped back',
   const view = JSON.stringify((await call('GET', '/v1/account', undefined, guest.secret)).body);
   for (const leak of ['a memorable phrase', reg.body.recoveryCode, row.password, row.recovery_hash]) {
     assert.ok(!view.includes(leak), `the account view ships ${leak.slice(0, 20)}`);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// AUDIT-PW (2026-09-22, Mac: "Can you read those") - THE ADVERSARIAL
+// READ server-account/src/password.js had never had. AUDIT-ACC named
+// it as unexamined twice and never came back to it.
+// ═══════════════════════════════════════════════════════════════════
+
+test('AUDIT-PW P1: nothing may hash an EMPTY credential, because the empty hash is a skeleton key', async () => {
+  // THE SHAPE. `codeForHashing` has TWO CONTRACTS - at the mint a null
+  // is impossible, at the check a null is the ordinary answer to a typo
+  // - and nothing enforced the first. `normalise` answers '' for a
+  // null, so a minted code that failed to canonicalise hashed the EMPTY
+  // STRING into `recovery_hash`; and `recover` compares `canon ?? ''`
+  // against that row, so ANY string that is not a code at all would
+  // then open the account.
+  //
+  // IT HAS HAPPENED ONCE. password.js's own note records the Q fold
+  // doing exactly this to `7GEPQ-47BS9-AYK70-QMWYW`, and the only thing
+  // that caught it was a test over minted codes - nothing in the code
+  // refused to store the result.
+  assert.equal(codeForHashing('NOT-A-VALID-CODE!!'), null, 'the check arm still answers null for a non-code');
+  await assert.rejects(() => hashPassword(codeForHashing('NOT-A-VALID-CODE!!'), { subtle, rand }),
+    /empty credential/, 'a null walked into the hasher');
+  for (const empty of [null, undefined, '', '\u0000'.slice(0, 0)]) {
+    await assert.rejects(() => hashPassword(empty, { subtle, rand }), /empty credential/, `${String(empty)} was hashed`);
+  }
+  // ...and nothing legitimate is refused: a password cannot reach the
+  // hasher empty (passwordRefusal's floor is 8 and it runs first at all
+  // three call sites) and a minted code is twenty characters.
+  const ok = await hashPassword('correct horse battery', { subtle, rand }, 10_000);
+  assert.equal(await verifyPassword('correct horse battery', ok, { subtle }), true);
+  assert.equal(await verifyPassword('', ok, { subtle }), false, 'an empty guess opened a real row');
+
+  // THE HOLE, DRIVEN END TO END against what the service would have
+  // stored: the empty hash plus the check arm's own `canon ?? ''`.
+  const skeleton = await hashPassword('placeholder', { subtle, rand }, 10_000);
+  assert.equal(await verifyPassword(codeForHashing('total garbage') ?? '', skeleton, { subtle }), false,
+    'a row hashed from a real credential is not opened by a non-code');
+});
+
+test('AUDIT-PW P2: the constant-time compare fails CLOSED', async () => {
+  // It coerced anything that was not a Uint8Array to an EMPTY one, so
+  // two lengths of 0 XOR'd to 0, the loop never ran, and the one
+  // primitive in this service whose whole job is to say NO said yes.
+  // Nothing reaches it that way today - verifyPassword is its only
+  // caller and always hands it two real derivations - which is exactly
+  // why it could sit there unnoticed.
+  for (const [a, b] of [[null, null], [undefined, undefined], [undefined, {}], [{}, {}],
+    [[1, 2, 3], [1, 2, 3]], ['ab', 'ab'], [new Uint8Array([1]), null], [null, new Uint8Array([1])]]) {
+    assert.equal(timingSafeEqual(a, b), false, `${JSON.stringify(a)} vs ${JSON.stringify(b)} compared EQUAL`);
+  }
+  // ...and it still does its actual job.
+  assert.equal(timingSafeEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 3])), true);
+  assert.equal(timingSafeEqual(new Uint8Array([1, 2, 3]), new Uint8Array([1, 2, 4])), false);
+  assert.equal(timingSafeEqual(new Uint8Array([1, 2]), new Uint8Array([1, 2, 3])), false, 'a prefix is not a match');
+  // ...AND THE ONE THE CAMPAIGN FOUND THIS PIN COULD NOT SEE. The loop
+  // reads `x[i % x.length]` so that a byte is read on every iteration
+  // whichever array is shorter - which means a short array that REPEATS
+  // into a longer one matches it byte for byte, and the length XOR that
+  // seeds `diff` is the only thing that says no. A prefix dies without
+  // it; a repeat does not.
+  assert.equal(timingSafeEqual(new Uint8Array([1, 2]), new Uint8Array([1, 2, 1, 2])), false,
+    'a repeating short array matched a longer one - the length is not in the compare');
+  assert.equal(timingSafeEqual(new Uint8Array([7]), new Uint8Array([7, 7, 7])), false);
+  assert.equal(timingSafeEqual(new Uint8Array(0), new Uint8Array(0)), true, 'two real empty arrays ARE equal');
+});
+
+test('AUDIT-PW P3: every code the minter can draw survives its own canonicalisation', async () => {
+  // THE PIN THAT WAS ALREADY THE ONLY GUARD on P1, kept and widened -
+  // P1 puts a refusal in the code, and this says the refusal can never
+  // legitimately fire. The Q fold is the recorded case: it made a
+  // MINTED code canonicalise to a different string than the one that
+  // was hashed.
+  for (let i = 0; i < 2000; i++) {
+    const code = mintRecoveryCode(rand);
+    const canon = canonicalCode(code);
+    assert.equal(canon, code.replace(/-/g, ''), `a minted code did not survive canonicalisation: ${code}`);
+    assert.equal(codeForHashing(code), canon);
+  }
+  // ...and the folding is Crockford's and ONLY Crockford's: a letter
+  // the alphabet CONTAINS must never be folded to something else.
+  for (const c of CODE_ALPHABET) {
+    const grid = `${c}${'0'.repeat(19)}`;
+    assert.equal(canonicalCode(grid), grid, `${c} is in the alphabet and the canonicaliser changed it`);
   }
 });

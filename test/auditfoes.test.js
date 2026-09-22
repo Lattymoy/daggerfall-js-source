@@ -128,9 +128,10 @@ const quiet = (fn) => { const i = console.info, w = console.warn; console.info =
 test('AUDIT FOES FOE10: a joiner\'s blow crosses the real relay to the host, and to the host alone', async () => {
   const key = 'dungeon:m187853213';   // Privateer's Hold, the id AUDIT WORLD34 A1 drives the same rig on
   const r = fakeRoom(key);
+  await r.signer();   // ACC1g: the keypair before the clock starts - a hello mints a real token now
   const link = (id) => {
     const { FakeWS, sockets } = fakeSocketClass();
-    const s = new OnlineSession({ url: 'wss://relay.test', name: id, id, secret: `secret-of-${id}`, WebSocketImpl: FakeWS, now: () => Date.now() });
+    const s = new OnlineSession({ url: 'wss://relay.test', name: id, id, secret: `secret-of-${id}`, WebSocketImpl: FakeWS, now: () => Date.now(), mintToken: () => r.token(id) });   // ACC1g: the relay refuses a hello it cannot verify, so this rig mints for real
     const hits = [];
     s.onHit = (from, data) => hits.push([from, data]);
     quiet(() => s.join(key, at(1, 1)));
@@ -139,15 +140,15 @@ test('AUDIT FOES FOE10: a joiner\'s blow crosses the real relay to the host, and
     ws.open();
     return { s, hits };
   };
-  const host = link('aaaa-0001'); await new Promise((f) => setTimeout(f, 5));
-  const joiner = link('bbbb-0002'); await new Promise((f) => setTimeout(f, 5));
-  const bystander = link('cccc-0003'); await new Promise((f) => setTimeout(f, 5));
+  const host = link('aaaa-0001'); await new Promise((f) => setTimeout(f, 25));
+  const joiner = link('bbbb-0002'); await new Promise((f) => setTimeout(f, 25));
+  const bystander = link('cccc-0003'); await new Promise((f) => setTimeout(f, 25));
   assert.equal(host.s.isHost(), true, 'the first socket holds the seat');
   assert.equal(joiner.s.host, 'aaaa-0001', 'and the joiner is told who to strike through');
 
   const blow = { i: 7, dmg: 12, kind: 'melee', p: [1, 2, 3], d: [0, 0, 1] };
   assert.equal(joiner.s.sendHit(blow), true, 'the blow leaves the joiner');
-  await new Promise((f) => setTimeout(f, 5));
+  await new Promise((f) => setTimeout(f, 25));
 
   assert.equal(host.hits.length, 1, 'THE WHOLE REPORT: the host hears the blow');
   assert.deepEqual(host.hits[0], ['bbbb-0002', blow], 'with the striker named and the payload whole');

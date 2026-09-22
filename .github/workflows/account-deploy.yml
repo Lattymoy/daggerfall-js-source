@@ -131,6 +131,56 @@ jobs:
           fi
           echo "the config in this runner now names the real database"
 
+      # ── 1b. THE BUCKET, IF IT IS NOT THERE ALREADY ────────────────
+      #
+      # ACC2. Same shape as the database above and for the same reason
+      # (Mac: "The token provided allows you to take this on yourself"),
+      # with one difference that makes it simpler: A BUCKET NAME IS NOT
+      # AN ID. Cloudflare mints no identifier to resolve, so the name in
+      # `wrangler.toml` IS the reference and there is no sentinel here.
+      #
+      # `r2 bucket create` on an existing name is an error rather than a
+      # no-op, exactly like `d1 create`, so the list is asked first - and
+      # the listing must SUCCEED and parse, never fall back to "empty".
+      # AUDIT-ACC F1 was that fallback: `|| echo '[]'` turned "I could
+      # not read this" into "there is none of it", and the destructive
+      # default it reached was re-minting the signing pair on every
+      # deploy. Here the same fallback would try to create a bucket that
+      # exists, which merely fails - but the lesson is the shape, not the
+      # blast radius.
+      #
+      # AND IT RUNS BEFORE THE DEPLOY, because a Worker whose toml binds
+      # a bucket that does not exist does not start.
+      - name: Create the save bucket if it does not exist
+        run: |
+          set -euo pipefail
+          # DERIVED, NEVER TYPED TWICE: the name comes out of the config
+          # this deploy actually ships, so a rename in one place cannot
+          # leave the other creating the wrong bucket.
+          want=$(grep -oP '^bucket_name\s*=\s*"\K[^"]+' server-account/wrangler.toml)
+          if [ -z "$want" ]; then
+            echo "::error::server-account/wrangler.toml declares no r2 bucket_name"
+            exit 1
+          fi
+          # NO `|| echo` FALLBACK. AUDIT-ACC F1: a listing that fails must
+          # fail the step, because "I could not read this" turning into
+          # "there is none of it" is how the deploy came to re-mint the
+          # signing pair on every run.
+          #
+          # `r2 bucket list` has no --json (checked against wrangler 4's
+          # own bundle, not assumed): it prints wrangler's labelled-value
+          # table, one `name:  <bucket>` line per bucket. awk splits on
+          # whitespace and compares the value EXACTLY, so no part of the
+          # name is read as a pattern and a bucket whose name merely
+          # contains ours is not mistaken for it.
+          list=$($WRANGLER r2 bucket list | sed 's/\x1b\[[0-9;]*m//g')
+          if printf '%s\n' "$list" | awk -v w="$want" '$1 == "name:" && $2 == w { found = 1 } END { exit !found }'; then
+            echo "$want already exists"
+          else
+            echo "creating $want"
+            $WRANGLER r2 bucket create "$want"
+          fi
+
       # ── 2. THE MIGRATIONS ─────────────────────────────────────────
       #
       # `migrations apply` keeps a `d1_migrations` table in the database
@@ -308,3 +358,34 @@ jobs:
             exit 1
           fi
           echo "the service publishes a ${#key}-character public key"
+
+          # ═══ ACC1d D2: THE TWO COPIES ARE CHECKED AGAINST EACH OTHER
+          #
+          # The relay carries the public half as a plain var, because a
+          # key that can verify and cannot mint has nothing to hide, and
+          # fetching it at runtime would put this service in the relay's
+          # startup path - the coupling the two-Worker split exists to
+          # refuse. The price of that copy is drift, and drift here has
+          # the worst failure mode there is: EVERY verify fails, every
+          # hello is refused as `token bad signature`, and nothing says
+          # why. So it is caught at deploy, where it is free.
+          want=$(grep -oP '^IDENTITY_PUBLIC_KEY\s*=\s*"\K[^"]+' server/wrangler.toml || true)
+          if [ -z "$want" ]; then
+            echo "::error::server/wrangler.toml carries no IDENTITY_PUBLIC_KEY - the relay cannot verify anything"
+            exit 1
+          fi
+          if [ "$want" != "$key" ]; then
+            echo "::error::the relay's configured public key does not match the one this service publishes - every token would be refused"
+            {
+              echo "### The relay's identity key is stale"
+              echo ""
+              echo "\`server/wrangler.toml\` says \`IDENTITY_PUBLIC_KEY = \"$want\"\`,"
+              echo "but this service publishes:"
+              echo ""
+              echo "    $key"
+              echo ""
+              echo "Update the relay's config to that value and let the relay deploy."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "and the relay's configured copy matches it"
