@@ -320,8 +320,21 @@ export function tierOf(key) {
 // casts no light at all. With Handheld Torches vendored and on, that
 // default makes the mod's whole subject invisible - you light a torch
 // and nothing happens. Ledger A row MODS-ON.
+//
+// SWING-DEFAULT1 (Mac, 2026-09-22, after a first-time player on Discord:
+// "my character isn't swinging? I'm holding down RMB and moving my
+// mouse and it's doing nothing" - The Frog: "Change your attack setting
+// to click or click and hold... It should be the default setting"):
+// WeaponSwingMode. DFU ships 0, the vanilla drag - the button held AND
+// the mouse dragged half a percent of the screen's longer side, which a
+// touchpad can barely do and a new player never guesses. 2 is CLICK OR
+// HOLD (WeaponManager.cs:316-350): a click swings, a held button keeps
+// swinging, and the drag mode is one row away in the controls screen
+// for whoever wants it. The stored file carries overrides alone, so a
+// player who never touched the row takes this default too.
 export const PORT_DEFAULTS = Object.freeze({
   Enhancements: Object.freeze({ PlayerTorchFromItems: 'True' }),
+  Controls: Object.freeze({ WeaponSwingMode: '2' }),
 });
 
 /** The default in effect: the port's, else the vendored ini's. Every

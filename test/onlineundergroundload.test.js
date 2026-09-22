@@ -65,7 +65,7 @@ test('ONLINE-UNDERGROUND-LOAD1 by source: the boot load\'s dungeon arm wakes an 
     'the same teleport core and the death respawn\'s own marker landing, still a LOAD to the seasons');
   assert.match(arm, /townTalk\.say\(undergroundWakeText\(wake\.kind\)\)/);
   assert.doesNotMatch(arm.slice(0, arm.indexOf('} else {')), /startInDungeon|restoreDungeonSave/, 'the online arm never re-enters the dungeon');
-  assert.match(arm, /\} else \{\s*\n\s*await _teleportToPixel\(pixel\.x, pixel\.y, null, \{ modEvent: 'load' \}\);[^\n]*\n\s*const entered = await \(modes\?\.startInDungeon\?\.\(\) \?\? false\);/,
-    'offline (and the Hold) re-enter the dungeon exactly as MAC6 #1 wrote it');
+  assert.match(arm, /\} else \{\s*\n\s*await _teleportToPixel\(pixel\.x, pixel\.y, null, \{ modEvent: 'load' \}\);[^\n]*\n\s*const entered = await \(modes\?\.startInDungeon\?\.\(\{ locationKey: extras\.locationKey \}\) \?\? false\);/,
+    'offline (and the Hold) re-enter the dungeon exactly as MAC6 #1 wrote it (CASTLE1: naming the saved dungeon)');
   assert.match(w, /import \{[^}]*undergroundWakeSpot, undergroundWakeText[^}]*\} from '\.\.\/systems\/deathRespawn\.js';/);
 });

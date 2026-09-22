@@ -74,6 +74,15 @@ export function worldAabb(positions, m) {
   return { min: [minX, minY, minZ], max: [maxX, maxY, maxZ] };
 }
 
+/** CASTLE1: is `p` inside `aabb`, grown by `skin` on every side. */
+export function boxContains(aabb, p, skin = 0) {
+  return p[0] >= aabb.min[0] - skin && p[0] <= aabb.max[0] + skin
+    && p[1] >= aabb.min[1] - skin && p[1] <= aabb.max[1] + skin
+    && p[2] >= aabb.min[2] - skin && p[2] <= aabb.max[2] + skin;
+}
+
+const boxVolume = (b) => (b.max[0] - b.min[0]) * (b.max[1] - b.min[1]) * (b.max[2] - b.min[2]);
+
 /** Slab ray-AABB; distance along unit dir or null. */
 export function rayAabb(origin, dir, aabb) {
   let tMin = 0;
@@ -328,7 +337,7 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:5006-5016) given a
+ * bulletin board's idiom (scenes/worldModes.js:5007-5017) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.
@@ -341,9 +350,50 @@ export function pickActivatableHit(eye, dir, targets, collider) {
   let bestAabb = null;
   let bestReach = DEFAULT_ACTIVATION_DISTANCE;
   let bestNoSurface = false;
+  let targetKeys = null;   // CASTLE1: the keys, minted only when a box holds the eye
   for (const target of targets) {
-    const d = rayAabb(eye, dir, target.aabb);
-    if (d === null || d >= bestDist) continue;
+    let d = rayAabb(eye, dir, target.aabb);
+    if (d === null) continue;
+    // CASTLE1 (DragynDance, 2026-09-22: "Entering castle daggerfall
+    // removes your ability to interact with anything, so you are unable
+    // to leave, talk to the guard, or open any doors"): THE EYE INSIDE
+    // A BOX. The slab test answers 0 for a box the ray starts in, and 0
+    // beats every real distance - so a large action model whose AABB
+    // takes in the start marker (Castle Daggerfall's foyer piece, six
+    // metres square) won every click from anywhere inside it: the exit
+    // door a pace away, the guard and every door lost to it, and a load
+    // put the player back on the same marker. DFU casts against MESH
+    // colliders (PlayerActivate.cs:314), so an object you stand inside
+    // is hit only where the ray meets its geometry, and the door
+    // surface in front of you is nearer. The port's word for "where the
+    // ray meets geometry" is the collider: a containing box's hit is
+    // the collider's surface hit, and only when that hit lies inside
+    // the box (a triangle's home is its own AABB); a ray that leaves
+    // the box before meeting anything never struck this object. A
+    // `noSurface` target (a flat) has no geometry to meet at all.
+    if (d === 0 && boxContains(target.aabb, eye)) {
+      if (target.noSurface === true) continue;
+      const reach = target.distance ?? DEFAULT_ACTIVATION_DISTANCE;
+      const hit = collider.raycastHit ? collider.raycastHit(eye, dir, reach) : { dist: collider.raycast(eye, dir, reach), key: null };
+      if (!Number.isFinite(hit.dist)) continue;
+      // An action door, a mover and a special door own their collider
+      // bucket under their own key (actionSystem.js addMesh(o.key)): a
+      // surface ANOTHER target owns is that target's, never this one's.
+      // The static bucket names nobody, so the box decides there.
+      if (hit.key != null && hit.key !== target.key) {
+        targetKeys ??= new Set(targets.map((t) => t.key));
+        if (targetKeys.has(hit.key)) continue;
+      }
+      if (!boxContains(target.aabb, [eye[0] + dir[0] * hit.dist, eye[1] + dir[1] * hit.dist, eye[2] + dir[2] * hit.dist], 0.15)) continue;
+      d = hit.dist;
+    }
+    if (d > bestDist) continue;
+    // Two boxes struck at the same distance - the foyer piece and the
+    // exit door standing in it, both holding the eye and both claiming
+    // the one surface the ray met: the TIGHTER box is the likelier
+    // owner of a surface both enclose. A strict later-loses tie keeps
+    // the pre-CASTLE1 order for everything else.
+    if (d === bestDist && (bestAabb === null || boxVolume(target.aabb) >= boxVolume(bestAabb))) continue;
     if (d > (target.distance ?? DEFAULT_ACTIVATION_DISTANCE)) continue;
     bestKey = target.key;
     bestDist = d;

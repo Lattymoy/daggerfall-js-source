@@ -7,6 +7,9 @@ import {
   INTERIM_WEAPON, playerMeleeCanHit, PlayerWeapon,
 } from '../src/combat/playerWeapon.js';
 import { HIT_FRAME_MELEE } from '../src/characters/weaponStates.js';
+// SWING-DEFAULT1 (2026-09-22): these pins are the DRAG's law (WeaponSwingMode 0); the port's default is 2 now (click or hold), so the drag is asked for here, once for the file.
+import { setValue as _swingSetValue } from '../src/systems/settings.js';
+_swingSetValue('Controls', 'WeaponSwingMode', '0');
 
 test('playerWeapon: verbatim reach + hit rule + swing table', () => {
   assert.equal(DEFAULT_WEAPON_REACH, 2.25);        // WeaponManager.cs:35

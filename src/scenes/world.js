@@ -3566,7 +3566,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2419 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5543
+  // that context through modes.dungeonCtx - so worldModes.js:5544
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5803,7 +5803,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           townTalk.say(undergroundWakeText(wake.kind));
         } else {
           await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
-          const entered = await (modes?.startInDungeon?.() ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it
+          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey }) ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
           if (entered) { playerSpawned = true; modes?.restoreDungeonSave?.(extras); }
           else townTalk.say('(the dungeon has no entrance here - character restored at its door)');
         }
@@ -7509,7 +7509,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8607-8671 -
+  // worldModes answers it in BOTH modes (worldModes.js:8639-8703 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9726,6 +9726,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Extracted here so all three hosts share the identical reset (forwarded the same way onEnemyBreak/
   // canceledByFollower already are), rather than three copies that can drift out of sync with each other again.
   const markPartyRestSpent = () => {
+    // REST-OFFLINE1 (Discord, 2026-09-22, a crash report: "TypeError: Cannot
+    // read properties of null (reading 'now') at markPartyRestSpent <-
+    // toggleRest <- travel"): OFFLINE THERE IS NO PARTY AND NO SOCIAL
+    // CLOCK. `social` is built by socialStart alone, which never runs
+    // without a connected online account, and partyRestGate answers null
+    // on `!social?.party` for the same reason - but this reset, called on
+    // every granted rest (the outdoor R, the interior and dungeon rests,
+    // the travel window's "rest until" arm), read `social.now()`
+    // unconditionally and threw the whole rest away with the frame. Every
+    // field it resets is party state; with no party there is nothing to
+    // spend.
+    if (!social) return;
     _partyRestReady = false;   // PARTY-REST2: spent the moment it is acted on - next nap asks again
     // PARTY-REST2f (2026-09-20, per-request: "it also seems it cant initiate a new rest it tell me vote is
     // still ongoing" - the bug this closed): a genuinely RESOLVED vote - this one, right now, succeeding -
@@ -10680,6 +10692,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // quickSaveNow can also update a character's AutoSave slot on the
     // way out, not only QuickSave - see its own header.
     quickSave: (saveName) => worldQuickSave(saveName),
+    loadSave: (key) => worldQuickLoad(key != null ? { key } : {}),   // CASTLE1: the dungeon's own load door hands a save from another place here (dungeonContext.js quickLoad)
     quickLoad: () => worldQuickLoad(),
     relock: () => requestLook(canvas),   // MAC1: the interior arm's pause door relocks through this host's canvas
     // ONLINE-LOAD1: the building host's own reflection of the same
@@ -10878,6 +10891,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WINDOW is the third-party UnityConsole prefab, not DFU source).
   installConsoleProbe();
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
+  if (shotMode) {   // CASTLE1 probe surface (tools/castleProbe.mjs)
+    window.__quickSave = (name) => modes.quickSaveNow(name);   // the standing host's OWN composer (the dungeon's underground)
+    window.__quickLoad = () => worldQuickLoad();
+    window.__loadSave = (key) => worldQuickLoad({ key });
+    window.__saveKeys = () => JSON.stringify(saveKeysOfCharacter(playerEntity.name).map((key) => ({ key, name: saveInfoOf(key)?.saveName ?? null })));
+    window.__hudLines = () => JSON.stringify(townTalk._debug().hud ?? null);
+  }
   if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
   if (shotMode) {
     // F-slice probe surface: the travel state + the nearest real
