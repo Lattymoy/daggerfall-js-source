@@ -251,7 +251,7 @@ export function buttonText(code, full = false) {
  *  (:521), which is where both arms of GetButtonText land. */
 function formatButtonText(text, full) {
   if (text.length <= MAX_BUTTON_TEXT || full) {
-    return text.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim().toUpperCase();
+    return text.replace(/([a-z])([A-Z])/g, '$1 $2').trim().toUpperCase();   // no lookbehind - see splitCamel below
   }
   return ELONGATED_TEXT;
 }
@@ -286,8 +286,17 @@ export function comboFromEvent(code, e) {
   return null;
 }
 
-/** The remove prompt's action face (:302): camel case split. */
-export const splitCamel = (s) => s.replace(/(?<=[a-z])([A-Z])/g, ' $1').trim();
+/** The remove prompt's action face (:302): camel case split.
+ *
+ *  NO LOOKBEHIND. This was DFU's own split, a lookbehind for a lower
+ *  letter before an upper - and a regex lookbehind is a PARSE error in Safari before 16.4
+ *  (macOS 12 and older, iOS 16.3 and older): not a wrong answer, a
+ *  module that will not load. This file sits in the chunk the menu and
+ *  the world both import, so those players got no game at all. The
+ *  captured pair says the same thing - a space between a lower and the
+ *  upper after it - and test/nolookbehind.test.js holds the whole tree
+ *  to it. */
+export const splitCamel = (s) => s.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
 
 /** PromptRemoveKeybindMessage's text (:298-302): the "removeKeybind"
  *  record formatted with the camel-split action name and the FULL

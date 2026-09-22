@@ -340,6 +340,7 @@ export function pickActivatableHit(eye, dir, targets, collider) {
   let bestDist = Infinity;
   let bestAabb = null;
   let bestReach = DEFAULT_ACTIVATION_DISTANCE;
+  let bestNoSurface = false;
   for (const target of targets) {
     const d = rayAabb(eye, dir, target.aabb);
     if (d === null || d >= bestDist) continue;
@@ -350,14 +351,23 @@ export function pickActivatableHit(eye, dir, targets, collider) {
     // MC-2: a family that was not widened has no `reach` of its own, and
     // its pick reach IS its handler's constant.
     bestReach = target.reach ?? target.distance ?? DEFAULT_ACTIVATION_DISTANCE;
+    bestNoSurface = target.noSurface === true;
   }
   if (bestKey === null) return null;
   // Occlusion: solid world strictly in front of the target blocks it -
   // UNLESS the blocking hit lies inside the target's own box (thin or
   // diagonal meshes sit well inside their AABB, so their own surface
   // legitimately lands nearer than the AABB entry).
+  //
+  // FIX-D: ...and only a target that HAS a surface in the collider gets
+  // that pardon. A `noSurface` target is a flat - no collider at all -
+  // so a hit inside its box is never its own face: it is the door or
+  // the wall its box stands against, and it blocks. Without this, a
+  // world fire whose box met a door through the wall was named and lit
+  // through it.
   const wall = collider.raycast(eye, dir, bestDist - 0.05);
   if (wall < bestDist - 0.05) {
+    if (bestNoSurface) return null;
     const hx = eye[0] + dir[0] * wall;
     const hy = eye[1] + dir[1] * wall;
     const hz = eye[2] + dir[2] * wall;

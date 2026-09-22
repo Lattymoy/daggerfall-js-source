@@ -100,11 +100,12 @@
  },
  {
   "name": "HEARTH1-the-hearths-box-does-not-reach-down-so-aiming-at-the-bowl-misses-the-fire",
-  "file": "src/scenes/camps.js",
-  "old": "        aabb: { min: [h.x - HEARTH_HALF, h.y - HEARTH_DROP, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },",
-  "new": "        aabb: { min: [h.x - HEARTH_HALF, h.y, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },",
+  "file": "src/systems/survival/hearth.js",
+  "old": "  return { min: [x - r, foot, z - r], max: [x + r, foot + h, z + r] };",
+  "new": "  return { min: [x - r, foot + h / 2, z - r], max: [x + r, foot + h, z + r] };",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/hearth1_worldfires.test.js",
+   "test/fixd_hearthbox.test.js"
   ]
  },
  {
@@ -155,7 +156,7 @@
  {
   "name": "HEARTH1-the-streaming-host-stops-collecting-so-no-town-brazier-is-a-fire",
   "file": "src/scenes/world.js",
-  "old": "          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push(lp);",
+  "old": "          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push([lp[0], lp[1], lp[2], locLocal[1] + light.foot, light.w, light.h]);",
   "new": "",
   "tests": [
    "test/hearth1_worldfires.test.js"
@@ -164,7 +165,7 @@
  {
   "name": "HEARTH1-the-fixed-city-stops-collecting",
   "file": "src/scenes/exterior.js",
-  "old": "      if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) cityHearths.push(l);",
+  "old": "      if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) cityHearths.push({ ...l, foot: light.foot, w: light.w, h: light.h });   // FIX-D: and its sprite, for the eye's box",
   "new": "",
   "tests": [
    "test/hearth1_worldfires.test.js"
@@ -173,7 +174,7 @@
  {
   "name": "HEARTH1-the-dungeon-stops-collecting-so-a-bowl-of-fire-underground-is-scenery-again",
   "file": "src/scenes/dungeonContext.js",
-  "old": "      if (isHearthFlat(f.archive, f.record)) dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ });",
+  "old": "        dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ, foot: size ? f.y - size.h / 2 : undefined, w: size?.w, h: size?.h });",
   "new": "",
   "tests": [
    "test/hearth1_worldfires.test.js"
@@ -263,28 +264,29 @@
  {
   "name": "AUDIT-HEARTH1-F2-the-streaming-walk-mints-a-list-a-frame-again",
   "file": "src/scenes/world.js",
-  "old": "        const e = _hearthStore[n] ?? (_hearthStore[n] = { x: 0, y: 0, z: 0 });\n        e.x = x; e.y = y; e.z = z;\n        _hearthOut[n] = e;",
-  "new": "        const e = { x, y, z };\n        _hearthOut[n] = e;",
+  "old": "        const e = _hearthStore[n] ?? (_hearthStore[n] = { x: 0, y: 0, z: 0, foot: 0, w: 0, h: 0 });\n        e.x = x; e.y = y; e.z = z;\n        e.foot = h[3] + t[1]; e.w = h[4]; e.h = h[5];   // FIX-D: the sprite, for the eye's box\n        _hearthOut[n] = e;",
+  "new": "        const e = { x, y, z, foot: h[3] + t[1], w: h[4], h: h[5] };\n        _hearthOut[n] = e;",
   "tests": [
    "test/hearth1_worldfires.test.js"
   ]
  },
  {
-  "name": "AUDIT-HEARTH1-F3-the-drop-is-a-half-so-the-bowl-under-a-town-braziers-flame-is-not-a-target",
-  "file": "src/scenes/camps.js",
-  "old": "export const HEARTH_DROP = 1.8;",
-  "new": "export const HEARTH_DROP = 0.5;",
+  "name": "FIX-D-the-exterior-foot-is-the-flame-so-the-box-floats-a-sprite-high",
+  "file": "src/world/cityLights.js",
+  "old": "      foot: -obj.yPos * GLOBAL_SCALE, w: size.w, h: size.h,\n",
+  "new": "      foot: -obj.yPos * GLOBAL_SCALE + size.h, w: size.w, h: size.h,\n",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/hearth1_worldfires.test.js",
+   "test/fixd_hearthbox.test.js"
   ]
  },
  {
-  "name": "AUDIT-HEARTH1-F3-the-box-reaches-as-far-up-as-down-and-starts-eating-clicks-behind-the-fire",
-  "file": "src/scenes/camps.js",
-  "old": "export const HEARTH_DROP = 1.8;",
-  "new": "export const HEARTH_DROP = 0.6;",
+  "name": "FIX-D-a-flat-gets-the-meshes-pardon-and-a-fire-behind-a-door-is-named-through-it",
+  "file": "src/player/activate.js",
+  "old": "    if (bestNoSurface) return null;\n",
+  "new": "\n",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/fixd_hearthbox.test.js"
   ]
  },
  {

@@ -117,13 +117,13 @@ export function interiorLightProperties(record) {
  * @param {Array<{archive:number,record:number,x:number,y:number,z:number}>} flats
  * @param {(record:number) => {w:number,h:number}} getScaledSize -
  *   scaledBillboardSize for archive 210 records (world units).
- * @returns {Array<{record:number,x:number,y:number,z:number,range:number,intensity:number,color:readonly number[]}>}
+ * @returns {Array<{record:number,x:number,y:number,z:number,foot:number,w:number,h:number,range:number,intensity:number,color:readonly number[]}>}
  */
 export function collectInteriorLights(flats, getScaledSize) {
   const lights = [];
   for (const f of flats) {
     if (f.archive !== LIGHTS_ARCHIVE) continue;
-    const h = getScaledSize(f.record).h;
+    const { w, h } = getScaledSize(f.record);
     let offset = RECORD_OFFSETS.get(f.record) ?? 0;
     if (f.record === 14 || f.record === 15) offset = h / 2;
     else if (f.record === 21) offset = h / 2.4;
@@ -133,6 +133,7 @@ export function collectInteriorLights(flats, getScaledSize) {
       x: f.x,
       y: f.y + h / 2 + offset,
       z: f.z,
+      foot: f.y, w, h,   // FIX-D: the sprite the light hangs on (an interior flat stands on its y), for a hearth's eye box
       range: light.range,
       intensity: light.intensity,
       color: light.color,

@@ -1477,7 +1477,9 @@ export async function bootWorld(canvas, renderer, params, status) {
           // it. Split off the SAME walk that builds the lanterns - the
           // record is the only thing that tells the two apart and this
           // is the one place that has it.
-          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push(lp);
+          // FIX-D: and the sprite under the flame - base y, width,
+          // height - pixel-local like the rest, for the eye's box.
+          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push([lp[0], lp[1], lp[2], locLocal[1] + light.foot, light.w, light.h]);
         }
       }
 
@@ -2835,8 +2837,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const h of p.hearths) {
         const x = h[0] + t[0], y = h[1] + t[1], z = h[2] + t[2];
         if (Math.abs(x - eye[0]) > HEARTH_NEAR || Math.abs(z - eye[2]) > HEARTH_NEAR) continue;
-        const e = _hearthStore[n] ?? (_hearthStore[n] = { x: 0, y: 0, z: 0 });
+        const e = _hearthStore[n] ?? (_hearthStore[n] = { x: 0, y: 0, z: 0, foot: 0, w: 0, h: 0 });
         e.x = x; e.y = y; e.z = z;
+        e.foot = h[3] + t[1]; e.w = h[4]; e.h = h[5];   // FIX-D: the sprite, for the eye's box
         _hearthOut[n] = e;
         n++;
       }
@@ -3543,7 +3546,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2381 mounts the same one, gated on
+  // and dungeonContext.js:2403 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5503
@@ -5430,7 +5433,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6119), so exterior mode and a
+    // composer, dungeonContext.js:6141), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
