@@ -344,6 +344,47 @@ jobs:
           echo "::error::the account service never reported $want - the deploy did not take"
           exit 1
 
+      # ═══ AND A REAL PASSWORD ROUTE ACTUALLY RUNS ══════════════════
+      #
+      # /v1/health proves the Worker is up and serving this version. It
+      # does NOT prove the service works, and the difference cost a live
+      # outage: Cloudflare Workers refuses PBKDF2 above 100,000
+      # iterations, this arc shipped 210,000, and register, login and
+      # recover ALL answered 500 from the day they deployed while every
+      # gate stayed green.
+      #
+      # NOTHING LOCAL COULD HAVE CAUGHT IT. The suite runs in node,
+      # which has no cap. tools/accountProbe.mjs stands the service in
+      # real workerd - the probe that exists because AUDIT-ACC F2 found
+      # a Worker that could not boot behind a green suite - and workerd
+      # has no cap either. It even measured the cost and passed.
+      #
+      # So the deploy makes the one request no local runtime can fake: a
+      # REGISTRATION, against the deployed Worker, on Cloudflare. A
+      # throwaway handle, a guest row that costs nothing, and a 500 here
+      # fails the deploy instead of a player.
+      - name: Verify a password route really runs on the platform
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          guest=$(curl -fsS --max-time 15 -X POST "$base/v1/auth/guest" \
+            -H 'content-type: application/json' -d '{"label":"deploy-smoke"}')
+          secret=$(echo "$guest" | sed -n 's/.*"secret":"\([^"]*\)".*/\1/p')
+          test -n "$secret" || { echo "::error::no guest session - /v1/auth/guest did not answer a secret"; echo "$guest"; exit 1; }
+
+          handle="smoke$(date +%s | tail -c 7)"
+          code=$(curl -sS --max-time 25 -o /tmp/reg.json -w '%{http_code}' -X POST "$base/v1/auth/register" \
+            -H 'content-type: application/json' \
+            -d "{\"secret\":\"$secret\",\"handle\":\"$handle\",\"password\":\"a-long-enough-password\"}")
+          echo "register -> $code"
+          cat /tmp/reg.json || true
+          echo
+          if [ "$code" != "200" ]; then
+            echo "::error::a REGISTRATION failed on the deployed Worker ($code). /v1/health is green and the service does not work - this is the PBKDF2-cap class: node and workerd have no iteration cap and Cloudflare does."
+            exit 1
+          fi
+          echo "VERIFIED: a password route runs on the real platform"
+
       # AND THE PUBLIC KEY IS REACHABLE, which is what makes the minting
       # step's "nobody ever sees it" safe. A pair minted into a Worker
       # that cannot hand back its own public half is a pair that would

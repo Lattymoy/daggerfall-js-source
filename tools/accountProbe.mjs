@@ -312,7 +312,14 @@ try {
   const view = (await get('/v1/account', { bearer: guest.secret })).body;
   ok('...the same player id, now linked', view?.account?.id === guest.id && view?.account?.kind === 'linked');
   // TWO derivations (password + recovery code) plus D1 round trips.
+  // WORKERD IS NOT CLOUDFLARE, and this line is where that was learned.
+  // It measured "PBKDF2 at 210,000 costs 36ms" and passed, against a
+  // runtime with no iteration cap, while the deployed Worker answered
+  // 500 to every password route. The timing is still worth having; the
+  // CEILING is the thing this probe cannot see, so it says so and the
+  // suite holds the number instead.
   ok(`PBKDF2 at ${PBKDF2_ITERS} fits a Worker's CPU budget`, regMs < 10_000, `register took ${regMs}ms`);
+  ok('...and is at or under the cap Cloudflare enforces in PRODUCTION ONLY (workerd does not)', PBKDF2_ITERS <= 100_000, `${PBKDF2_ITERS} would be NotSupportedError on the real platform`);
 
   const good = await post('/v1/auth/login', { handle: HANDLE.toLowerCase(), password: 'a good long one' });
   ok('a handle is case-insensitive on the way in', good.status === 200);

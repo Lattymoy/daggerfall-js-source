@@ -34,7 +34,7 @@ import { guestName, GUEST_BANKS, pick, isGuestShaped, isHandleShaped } from '../
 import banks from '../src/characters/nameGen.json' with { type: 'json' };
 import {
   hashPassword, verifyPassword, needsRehash, parseStored, passwordRefusal,
-  mintRecoveryCode, canonicalCode, codeForHashing, timingSafeEqual, PBKDF2_ITERS, CODE_ALPHABET,
+  mintRecoveryCode, canonicalCode, codeForHashing, timingSafeEqual, PBKDF2_ITERS, PBKDF2_CAP, CODE_ALPHABET,
 } from '../server-account/src/password.js';
 import { verifyToken, importPublicKeyB64, ID_RE, nameIsIssuable, TOKEN_V } from '../src/net/identityToken.js';
 
@@ -725,7 +725,23 @@ test('ACC1c: the stored password is self-describing, so its cost can be raised w
   assert.equal(parsed.alg, 'pbkdf2-sha256');
   assert.equal(parsed.iters, PBKDF2_ITERS);
   assert.equal(parsed.salt.length, 16, 'a per-account salt, not a pepper');
-  assert.ok(PBKDF2_ITERS >= 210_000, 'below OWASP\'s current figure for this pairing');
+  // ═══ THE PIN THAT ENFORCED THE OUTAGE ════════════════════════
+  //
+  // This read `>= 210_000` - OWASP's figure - and it was the thing
+  // HOLDING the value that made every password route on the live
+  // service answer 500. Cloudflare Workers refuses PBKDF2 above
+  // 100,000 ("iteration counts above 100000 are not supported"), and
+  // that cap is PRODUCTION-ONLY: node has none, and workerd - which
+  // tools/accountProbe.mjs uses precisely because importability is not
+  // deployability - has none either.
+  //
+  // So the pin now holds the PLATFORM's bound rather than a standards
+  // body's, because a number the runtime will not execute protects
+  // nobody. The comment on PBKDF2_ITERS carries what that costs and
+  // how to buy it back (chained derivations, upgraded by needsRehash).
+  assert.equal(PBKDF2_ITERS, PBKDF2_CAP, 'the iteration count must be the platform ceiling, not above it');
+  assert.ok(PBKDF2_ITERS <= 100_000, 'Cloudflare Workers refuses PBKDF2 above 100,000 - a higher count is a 500 on every password route, in production only');
+  assert.ok(PBKDF2_ITERS >= 100_000, 'and there is no reason to ask for less than the platform allows');
 
   assert.equal(await verifyPassword('correct horse battery', stored, { subtle }), true);
   assert.equal(await verifyPassword('correct horse batterz', stored, { subtle }), false);

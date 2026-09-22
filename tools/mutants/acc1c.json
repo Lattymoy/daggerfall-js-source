@@ -12,7 +12,7 @@
   {
     "name": "ACC1c-2-the-cost-is-a-token-gesture",
     "file": "server-account/src/password.js",
-    "old": "export const PBKDF2_ITERS = 210_000;",
+    "old": "export const PBKDF2_ITERS = PBKDF2_CAP;",
     "new": "export const PBKDF2_ITERS = 1_000;",
     "tests": [
       "test/accountworker.test.js"
