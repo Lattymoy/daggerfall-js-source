@@ -286,6 +286,7 @@ import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs a
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
+import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { createSocialPanel, TRY_AGAIN_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { pickPeerInFront, SOCIAL_REACH } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches
@@ -5094,10 +5095,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // same pixel arrival fast travel takes (_teleportToPixel re-inits
   // the streamer; _lastEncMinutes is the PreventEnemySpawns parity -
   // "intentionally not spawning enemies, for this time the PLAYER is
-  // the monster"). RECORDED DIVERGENCE: DFU's RespawnPlayer lands the
-  // player INSIDE the cemetery crypt (insideDungeon true); the port
-  // has no door-less dungeon entry yet, so the vampire wakes at the
-  // cemetery's exterior, its crypt door in front of them. Off the
+  // the monster"). DFU's RespawnPlayer lands the player INSIDE the
+  // cemetery crypt (insideDungeon true): CRUX1 gave the port the
+  // door-less dungeon start (StartDungeonInterior(location), through
+  // modes.startInDungeon's dungeonStartSite arm), so the vampire wakes
+  // in the crypt now, as recorded before as a divergence. Off the
   // tick's frame like the videos; interior/dungeon modes skip loudly
   // (DFU tears the interior down in RespawnPlayer - host work).
   function transferToCemeteryArm() {
@@ -5115,6 +5117,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     Promise.resolve().then(async () => {
       await _teleportToPixel(pos.x, pos.y);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);
+      const entered = await (modes?.startInDungeon?.() ?? false);   // CRUX1: insideDungeon true - the crypt, not its door
+      if (!entered) console.warn('[infection] the cemetery has no dungeon to wake in - the vampire wakes at its exterior');
     });
   }
 
@@ -7342,7 +7346,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8502-8566 -
+  // worldModes answers it in BOTH modes (worldModes.js:8517-8581 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8131,6 +8135,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (PlaySound.cs:112) - ONE source for every PlaySound action in every
   // running quest, which is what makes the busy-skip a shared gate
   // rather than a per-action one.
+  // CRUX1: the quest videos' one chain - see the playVideo hook below
+  const _questVideos = makeVideoQueue(async (name) => {
+    try {
+      const { playVideo } = await import('../ui/videoPlayer.js');
+      const { getBytes } = await import('./dataSource.js');
+      const played = await playVideo(renderer.canvas, renderer, await getBytes(name), { endOnAnyKey: false });
+      if (typeof window !== 'undefined') (window.__questVideos ??= []).push({ name, played });
+    } catch (e) {
+      console.warn(`[quest] ${name} unavailable - skipping the video:`, e?.message ?? e);
+    }
+  });
   const questAudioSource = new QuestAudioSource(audio);
   questBridge = createQuestBridge({
     data: questPack,
@@ -8306,18 +8321,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // F151: GetBackButtonDown is its own disjunct). NEVER TRAPS: a
     // missing or undecodable ANIM costs the video and the quest rolls
     // on - SetComplete already ran at the push, exactly as in C#.
-    playVideo: (name) => {
-      Promise.resolve().then(async () => {
-        try {
-          const { playVideo } = await import('../ui/videoPlayer.js');
-          const { getBytes } = await import('./dataSource.js');
-          const played = await playVideo(renderer.canvas, renderer, await getBytes(name), { endOnAnyKey: false });
-          if (typeof window !== 'undefined') (window.__questVideos ??= []).push({ name, played });
-        } catch (e) {
-          console.warn(`[quest] ${name} unavailable - skipping the video:`, e?.message ?? e);
-        }
-      });
-    },
+    // CRUX1: IN TURN. Two videos due on one tick (the ending's video
+    // 3 and the totem-holder's) used to start two players over one
+    // canvas; DFU pushes each onto the UI stack and the second shows
+    // when the first pops (systems/quest/videoQueue.js). Still off the
+    // tick's frame, still never trapping.
+    playVideo: (name) => { _questVideos(name); },
     // E6: THE BUSY SKIP, DFU's own. PlaySound.cs:110-116 is
     // `if (source != null && !source.IsPlaying()) { source.PlayOneShot(
     // ...); lastTimePlayed = gameSeconds; }` over the ONE
@@ -9591,6 +9600,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...e, door: shiftedDoor(e),
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,
     })),
+    // CRUX1: THE DOORLESS DUNGEON START - the player's own pixel's
+    // location, when it has a dungeon, in the shape a door hit has
+    // (what tryEnterDungeon reads: the location, the climate base, the
+    // season, the group the exit's candidates are filtered by) and no
+    // door. StartDungeonInterior(location)'s input, for the quest
+    // teleport into the Mantellan Crux, the cemetery transfer and a new
+    // game at a location whose exterior carries no entrance door.
+    dungeonStartSite: () => {
+      const p = playerTravelPixel();
+      const key = `${p.x},${p.y}`;
+      const dfLocation = locationIndex.get(key) ?? null;
+      if (!dfLocation?.hasDungeon) return null;
+      return { dfLocation, climateBase: getWorldClimateSettings(maps.getClimateIndex(p.x, p.y)).climateType, season: INTERIOR_SEASON, group: key, door: null, dfBlock: null, recordIndex: -1 };
+    },
     // WORLD-HOVER: the token that says whether the list above is still
     // the one it was. See `doorGeneration`'s own note for why this
     // host has one and the fixed city does not.

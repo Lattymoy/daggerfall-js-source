@@ -6169,7 +6169,22 @@ export function createWorldModes(host) {
    *  Privateer's Hold was a sealed box: the whole reason this exists. */
   async function startInDungeon() {
     const entries = doorTargets();
-    const hit = entries.find((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE);
+    // CRUX1 (2026-09-22, "the final dungeon mission is unbeatable"):
+    // AND WITHOUT A DOOR. DFU's StartDungeonInterior(location) builds
+    // the location's dungeon directly (PlayerEnterExit.cs:520-527 ->
+    // 968-997) and never looks for an entrance door; this port's arm
+    // took the first DUNGEON_ENTRANCE door in the loaded exterior and
+    // answered FALSE without one, which is what the quest teleport
+    // (`transfer pc inside`, S0000016 into the Mantellan Crux), the
+    // vampire's cemetery transfer and a new game at a doorless
+    // location all ride. A doorless site is entered off the host's own
+    // word for the player's pixel (world.js dungeonStartSite: the
+    // location, its climate, an interior season, no door), through the
+    // same tryEnterDungeon - the ENTER marker, facing north, the exit
+    // candidates whatever entrance doors the pixel does carry. The
+    // exterior fallback the respawn keeps is for a site with no
+    // dungeon at all, which is what it was always for.
+    const hit = entries.find((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) ?? host.dungeonStartSite?.() ?? null;
     if (!hit) return false;
     // DE1: this is StartDungeonInterior, not the door transition - the
     // player is placed inside without ever walking through, so the
@@ -6998,7 +7013,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:8166's own wave-46 note); the interior
+          // a blow (world.js:8181's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9403,7 +9418,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3169-3191), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5424). So an F9 pressed in a shop
+     *  unconditionally (world.js:5428). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9430,7 +9445,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5516)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5520)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9440,7 +9455,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5661`
+     *  HARD2c: this used to spell them out, and named `world.js:5665`
      *  and `dungeonContext.js:6148` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
