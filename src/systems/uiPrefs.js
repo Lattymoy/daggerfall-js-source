@@ -78,6 +78,8 @@ export const PREF_DEFAULTS = Object.freeze({
   // Defaults ON, unlike mwArms above: this needs no attached data and no build step, so there is nothing to opt
   // INTO the way Morrowind assets are - only a look a player might prefer to opt OUT of.
   peerClassSprites: true,
+  peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
+  peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
   // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is
   // declared on its Features row (systems/features.js), RF4's law - it
   // arrives through FEATURE_PREF_DEFAULTS below.

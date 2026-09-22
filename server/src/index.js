@@ -180,7 +180,7 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -259,6 +259,7 @@ export class Room {
     // AUDIT WORLD6b A1/A2: the hit funnel (AUDIT WORLD2 A6) is the DESTINATION socket's own bucket (`hbucket` on its attachment), not the room's
     this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
     this._roomHits = null;   // AUDIT WORLD6b-iii(c) C3: the room's hit BYTES budget (a grant is a frame's worth of items)
+    this._roomTrade = null;   // TRADE1: the room's trade BYTES budget (a commit is a pack's worth of items)
     this._roomWho = null;    // AUDIT WORLD6b-iii(e) B1: the room's ask budget (WHO_ROOM_HZ_MAX) - the one arm past the hello that reads storage
     this._looks = new Map(); // AUDIT WORLD6b-iii(e) B1: the looks said hello with, kept on the instance while it is awake - a repeat ask reads no storage; after a hibernation the storage's copy is read once and kept again
     this._roomActBytes = null;   // AUDIT WORLD3 A1: and its BYTE budget - the frame times its listeners, as the foes fan has
@@ -464,6 +465,26 @@ export class Room {
     const next = { ...a, pbucket: gate.bucket, pdrops };
     this._setAttach(ws, next);
     if (!gate.pass) { if (pdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many party poses'); return null; }
+    return next;
+  }
+  /** QUEST1: a quest share's own cooldown (questShareGate - a plain interval, not a token bucket; see its own note
+   *  in wire.js for why), the same strikes - a rare, deliberate act, so this drops far sooner in practice than the
+   *  poses ever would, and a flood off it is a bug or an abusive client either way. */
+  _meterQuest(ws, a, now) {
+    const gate = questShareGate(a.qgateAt, now);
+    const qdrops = gate.pass ? 0 : (a.qdrops ?? 0) + 1;
+    const next = { ...a, qgateAt: gate.at, qdrops };
+    this._setAttach(ws, next);
+    if (!gate.pass) { if (qdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many quest shares'); return null; }
+    return next;
+  }
+  /** TRADE1: the trade frames' own bucket (TRADE_HZ_MAX), the same strikes - an offer beside the poses, never starving them. */
+  _meterTrade(ws, a, now) {
+    const gate = tradeGate(a.tradeBucket, now);
+    const tdrops = gate.pass ? 0 : (a.tdrops ?? 0) + 1;
+    const next = { ...a, tradeBucket: gate.bucket, tdrops };
+    this._setAttach(ws, next);
+    if (!gate.pass) { if (tdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many trade frames'); return null; }
     return next;
   }
   /** WORLD3: the action frames' own bucket (ACT_HZ_MAX), the same strikes - a door beside the poses, never starving them. */
@@ -676,7 +697,20 @@ export class Room {
     // WORLD2: the foes frame is the other one, on the stream's own bucket. `doored` names the prefix the door metered
     // by, so an arm whose TYPE disagrees meters again (AUDIT WORLD2 A3: a duplicate-key frame spent the wrong bucket)
     let doored = null;
-    if (typeof message === 'string' && (message.length > MAX_FRAME_BYTES || message.startsWith(WORLD_PREFIX) || message.startsWith(FOES_PREFIX))) {
+    // QUEST1: the quest-share frame is the THIRD large one, entirely separate from the world-room fast path below -
+    // that path's own law is world-room-shaped throughout (host-only frames, a cell's stream ingress budget), and
+    // none of it applies to a hub-scoped, per-party frame. Checked and metered here, on its own, before falling
+    // through to the ordinary parse+dispatch below (which already answers `m.t === 'quest'`) - an `else if` against
+    // the world/foes branch, not a second `if`, so an oversized quest frame is never also treated as a giant world
+    // frame just because it is bigger than MAX_FRAME_BYTES.
+    if (typeof message === 'string' && message.startsWith(QUEST_PREFIX)) {
+      if (!a.acct) { this._refuse(ws, 'quest before hello'); return; }
+      if (!isSocialRoom(a.key)) { this._refuse(ws, 'frame too large'); return; }
+      if (message.length > QUEST_FRAME_MAX) { this._refuse(ws, 'frame too large'); return; }
+      a = this._meterQuest(ws, a, Date.now());
+      if (!a) return;
+      doored = 'quest';
+    } else if (typeof message === 'string' && (message.length > MAX_FRAME_BYTES || message.startsWith(WORLD_PREFIX) || message.startsWith(FOES_PREFIX))) {
       const foesLike = message.startsWith(FOES_PREFIX);
       if (!a.id) { this._refuse(ws, foesLike ? 'foes before hello' : 'world before hello'); return; }
       // A4: outside a world room no large frame has a home - refused, as the small cap always was, not sunk for free
@@ -914,6 +948,34 @@ export class Room {
       this._send(tws, out);
       return;
     }
+    if (m.t === 'trade') {
+      // TRADE1: ONE DIRECTED FRAME, THE `hit` FRAME'S OWN ROUTING - from a hello'd socket in a PLACE room (a channel or the
+      // hub is no place to stand and trade), on the trade bucket, to the socket `to` names in this room and to it alone,
+      // the sender's id stamped on it. The relay reads none of the items (wire.js validTradeData checked the SHAPE;
+      // the receiver projects every record through validLootItem before it reads a field). A peer that is gone is not
+      // junk - a leave races a frame - and the sender's own session times out on it.
+      const now = Date.now();
+      a = this._meterTrade(ws, a, now); if (!a) return;
+      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;
+      const to = m.data.to;
+      if (to === a.id) { this._junk(ws, a); return; }
+      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;
+      if (!target) return;
+      // the funnel onto the destination's ONE socket - every sender together (the hit arm's A6 law, its own bucket)
+      const [tws, tb] = target;
+      const funnel = tokenGate(tb.tinbucket ?? null, now, TRADE_ROOM_HZ_MAX);
+      this._setAttach(tws, { ...tb, tinbucket: funnel.bucket });
+      if (!funnel.pass) return;
+      const out = JSON.stringify({ t: 'trade', id: a.id, data: m.data });
+      // AUDIT DROPS B3: the byte budget is the SENDER's, not the room's - a room-wide bucket let two sockets at
+      // TRADE_HZ_MAX x TRADE_FRAME_MAX spend the whole room and drop an honest commit that had already cost its
+      // sender their goods (LOOT-DUP: sent means gone). Per sender, a flood only starves the flooder.
+      const bytes = byteGate(a.tbytes ?? null, now, out.length, TRADE_ROOM_BYTES_PER_S);
+      this._setAttach(ws, { ...a, tbytes: bytes.bucket });
+      if (!bytes.pass) return;
+      this._send(tws, out);
+      return;
+    }
     if (m.t === 'act') {
       // WORLD3: a door, a lever or a platform moved - from anyone hello'd in a world room, on the actions' own
       // bucket, to everyone hello'd but its author, under the room's own budget (over it dropped, nobody struck)
@@ -978,6 +1040,34 @@ export class Room {
       try { party = await this._livingParty(a.party, now); } catch (e) { console.warn('[hub] party pose failed', e?.message ?? e); return; }   // AUDIT SOC A2: contained
       if (!party || !party.members.includes(a.acct)) { this._markParty(a.acct, null); return; }   // the seat is gone: the attachment forgets it, or every pose would read storage for a party that is not there
       const out = JSON.stringify({ t: 'party', acct: a.acct, p: m.p });
+      for (const member of party.members) if (member !== a.acct) for (const other of this._socketsOf(member)) this._send(other, out);
+      return;
+    }
+    if (m.t === 'quest') {
+      // QUEST1: a quest shared with my party - its own bucket (metered like the poses), room-budgeted like a social
+      // act (an arbitrary-payload, one-off act, not a per-frame stream), fanned to my party's other members alone.
+      // The relay reads `m.quest.questName`/`displayName` only to keep them bounded (parseClient already did); the
+      // save-data envelope itself is opaque here exactly as 'world'/'foes'/'act' data is - validating a quest's own
+      // shape is the quest engine's job, not the relay's.
+      const now = Date.now();
+      // A3 (WORLD2's own rule, applied here): the pre-parse door may have
+      // already metered this frame under QUEST_HZ_MAX (a large one, above)
+      // - meter again only if it did not, so a big quest-share never spends
+      // two tokens for one message.
+      if (doored !== 'quest') { a = this._meterQuest(ws, a, now); if (!a) return; }
+      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }   // the hub alone, an account alone - the party arm's own law
+      // AUDIT DROPS C3: a share with nobody to reach (no party; another tab of mine speaks for the seat - AUDIT SOC
+      // B9) spends nothing of the room's budget
+      if (!a.party) return;
+      if (this._speaker(a.acct) !== ws) return;
+      const budget = tokenGate(this._roomQuest, now, QUEST_ROOM_HZ_MAX);
+      this._roomQuest = budget.bucket;
+      if (!budget.pass) { this._sayError(ws, 'busy'); return; }
+      let party = null;
+      try { party = await this._livingParty(a.party, now); } catch (e) { console.warn('[hub] quest share failed', e?.message ?? e); return; }
+      if (!party || !party.members.includes(a.acct)) { this._markParty(a.acct, null); return; }
+      const mine = await this._acct(a.acct);
+      const out = JSON.stringify({ t: 'quest', acct: a.acct, name: mine?.name ?? null, quest: m.quest });
       for (const member of party.members) if (member !== a.acct) for (const other of this._socketsOf(member)) this._send(other, out);
       return;
     }

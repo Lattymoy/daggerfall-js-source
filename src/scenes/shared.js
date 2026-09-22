@@ -2022,6 +2022,26 @@ export function createRestDeps(entity, opts = {}) {
   } = opts;
   let _kind = REST_KIND.Rough;   // the running rest's kind, read at the open
   let _roughHours = 0;           // rested hours paid at the rough rate - the stiff morning follows them
+  // PARTY-REST10 (2026-09-21, per-request: confirmed by testing - health frozen for 10 straight simulated
+  // hours under Rough, not merely "sometimes rounds down"): see systems/survival/rest.js's own `restHour` doc
+  // comment for the full explanation. This is the PERSISTENT carry `restHour` now accepts - one per running
+  // rest, reset the moment a NEW rest opens (a fresh sleep owes nothing to whatever the last one banked), so
+  // the fractional point Math.trunc would otherwise discard every single hour instead accumulates toward the
+  // next one.
+  let _roughCarry = { health: 0, fatigue: 0, magicka: 0 };
+  // PARTY-REST4b (2026-09-21, per-request: "only the leader heals up hp not the members" - the REAL bug behind
+  // PARTY-REST4's own fix, found on closer inspection): `setResting` below is ONE closure, made ONCE right here,
+  // reading only the `restKind` local this call's own destructure bound - never a property looked up off
+  // whatever object it happens to be attached to. `partyRestMirrorDeps` (world.js) was spreading a `restKind`
+  // KEY onto a COPY of this returned object, but the copy's `setResting` is the exact same function reference as
+  // the original's - it still closes over THIS scope's `restKind`, not the copy's key, so the override sat there
+  // inert and every mirrored follower kept silently reading the position-based check (bed/houseOwned/ship/byFire
+  // asked of their OWN feet) that PARTY-REST4 thought it had already replaced. Fixed with an actual mutable slot
+  // INSIDE this closure, flipped through the one door below (`overrideRestKind`) that a caller reaches off the
+  // SAME object `setResting` itself reads from - not a sibling copy of it. Cleared the moment resting turns off,
+  // so an override always belongs to exactly the one session it was set for and can never bleed into this same
+  // entity's next real rest.
+  let _restKindOverride = null;
   return {
     // PlayerEntity.IsResting / IsLoitering (:268, :284, :789, :285).
     // Every host owes these identically - they are entity flags, not
@@ -2032,11 +2052,20 @@ export function createRestDeps(entity, opts = {}) {
       entity.isResting = !!b;
       // SURV4: the kind is read at the OPEN (the fire may die under a long night - it was lit when you lay down);
       // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the encounter roll's `roughRest`
-      if (b) { _kind = survivalOn() ? restKind() : REST_KIND.Bed; _roughHours = 0; }
+      // PARTY-REST4b: `_restKindOverride`, when one is set, wins over the inherited `restKind()` position check -
+      // see the doc comment above `_restKindOverride`'s declaration for the closure bug this replaces.
+      if (b) {
+        _kind = survivalOn() ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;
+        _roughCarry = { health: 0, fatigue: 0, magicka: 0 };   // PARTY-REST10: a fresh sleep owes nothing to whatever the last one banked
+      }
       // SURV4: rough hours rested are a stiff morning (STIFF_HOURS of speed and agility) on the way out - an interrupted
       // night too, since the hours were slept - said once; the hours are spent
       if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
       entity.restKind = b ? _kind : null;
+      // PARTY-REST4b: an override is good for exactly one session - the moment THIS session's resting flag drops,
+      // forget it, so a later real rest (this same entity choosing to actually rest for themselves) never
+      // silently inherits a stale kind broadcast by whoever they last mirrored.
+      if (!b) { _restKindOverride = null; }
     },
     setLoitering: (b) => { entity.isLoitering = !!b; },
     // THE PASS-THROUGH IS LOAD BEARING, and it is here because a review
@@ -2053,6 +2082,14 @@ export function createRestDeps(entity, opts = {}) {
     // spread.
     restPlace: place ?? rest.restPlace ?? undefined,
     enemiesNearby: rest.enemiesNearby ?? (() => false),
+    // PARTY-REST4b: the actual override door - see `_restKindOverride`'s own doc comment above (by `setResting`).
+    // Pass a function to make the NEXT `setResting(true)` read it instead of the inherited `restKind()`; pass
+    // null/undefined to go back to inheriting it. Reaches the same closure `setResting` reads from because it is
+    // defined in the SAME call to this function, over the SAME `_restKindOverride` variable - unlike a
+    // spread-added key on a copy of the returned object, which `setResting` was never able to see. Placed here,
+    // AFTER `...rest`, alongside the other composed deps this function's own doc comment already promises always
+    // win over a same-named key: a host's opts has no business shadowing the one door that reaches this closure.
+    overrideRestKind: (fn) => { _restKindOverride = fn ?? null; },
     // ROAD-B B5: GameManager.GetPreventedRestMessage, polled by
     // TickRest every frame of a running rest. It is a GameManager
     // member, not a host one - the registry is one module singleton -
@@ -2061,7 +2098,11 @@ export function createRestDeps(entity, opts = {}) {
     preventedRestMessage: getPreventedRestMessage,
     onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp, lines: rest.endLines, box }),
     // SURV4: the hour by its kind - DFU's whole hour in a bed or by a fire, half of it rough (survival/rest.js restHour)
-    tickVitals: () => { if (_kind === REST_KIND.Rough) _roughHours++; return restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() })); },
+    tickVitals: () => {
+      if (_kind === REST_KIND.Rough) _roughHours++;
+      const healed = restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() }), _roughCarry);
+      return healed;
+    },
     fullyHealed: () => restFullyHealed(entity),
     sharedMinutes: () => (sharedClockOn() ? worldMinutes() : null),   // WORLD5: a rest online is paced by the world's clock, not by the window's timer
     creditSkillMinutes: (n) => { entity.restSimMinutes = (entity.restSimMinutes ?? 0) + n; },   // MAC-LVL1: the rest's simulated minutes, owed to the skill-check clock (raisePlayerSkills spends them)

@@ -87,12 +87,19 @@ export function injectSocialMenuStyle(doc = document) {
  *  friendship is. `relation` and `acct` are no longer read at all - callers still hand the WHOLE of `actionsFor`
  *  in (they should not have to strip it), and the extra keys are simply ignored, which is what an object argument
  *  is for. */
-export function socialMenuRows({ peerId, canFriend = false, canInvite = false, whyNotFriend = null, whyNotInvite = null } = {}) {
-  return [
+export function socialMenuRows({ peerId, canFriend = false, canInvite = false, whyNotFriend = null, whyNotInvite = null, canTrade, whyNotTrade = null, tradeLabel = null } = {}) {
+  const rows = [
     { key: 'friend', label: 'Add friend', enabled: !!canFriend, why: canFriend ? null : (whyNotFriend ?? null), act: { k: 'friend.request', peer: peerId } },
     { key: 'invite', label: 'Invite to party', enabled: !!canInvite, why: canInvite ? null : (whyNotInvite ?? null), act: { k: 'party.invite', peer: peerId } },
-    { key: 'cancel', label: 'Cancel', enabled: true, why: null, act: null },
   ];
+  // TRADE1: the third act. It is present ONLY when the host says whether a trade can be had (`canTrade` given): offline, on a
+  // page with no account, or on a skin that cannot draw the window, the host says nothing and the card is exactly the two
+  // acts and a way out it always was. The act is NOT a hub act (net/wire.js SOCIAL_ACTS) - a trade is between two players
+  // standing in one room, so the host routes `trade.request` to net/tradeSession.js, not to the hub link. When a peer has
+  // already asked, the same row reads 'Accept trade' (`tradeLabel`): there is no separate panel to stand under a window.
+  if (canTrade !== undefined) rows.push({ key: 'trade', label: tradeLabel || 'Trade', enabled: !!canTrade, why: canTrade ? null : (whyNotTrade ?? null), act: { k: 'trade.request', peer: peerId } });
+  rows.push({ key: 'cancel', label: 'Cancel', enabled: true, why: null, act: null });
+  return rows;
 }
 
 /**

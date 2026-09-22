@@ -147,7 +147,8 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILI
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // the scene-free open gate, one home   // ROAD-B B5: GetPreventedRestMessage
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
-import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
+import { preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
+import { createRestWindow } from '../ui/restDoor.js';   // the enhanced/native fork, same law as ui/tradeDoor.js
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
@@ -1454,6 +1455,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // one the pause tab takes - see questBridge.js.
     questLog: () => opts.questBridge.questLog(),
     notebook: () => opts.questBridge.notebook ?? null,
+    // QUEST1: the Share button, delegated through the SAME chain
+    // dungeonOnline/useMagicItem/survivalEnv already ride - the dungeon
+    // has no online layer of its own, only whatever the outer host
+    // (world.js, through worldModes.js's own delegation) answers. This
+    // is what makes the button work while actually standing in the
+    // dungeon, not only after walking back outside it.
+    partyMembers: () => opts.partyMembers?.() ?? [],
+    shareQuest: (uid, questName, displayName) => opts.shareQuest?.(uid, questName, displayName),
   } : {});
 
   /** AUDIT 39 (#38): the chronicle's ONE builder. The key doors mount
@@ -1642,7 +1651,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8392 / exterior.js:3449), set
+  // host's own townTalk sink (world.js:8550 / exterior.js:3450), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1987,6 +1996,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // tick, which the optional chain says.
     tickQuests: () => opts.questBridge?.machine?.tick?.(),
     enemiesNearby: () => areEnemiesNearby(foes, { resting: true }),
+    // PARTY-REST5: forwarded straight from THIS host's own opts.onEnemyBreak (world.js's own hook, relayed
+    // through worldModes.js exactly like opts.partyRestGate/opts.strangerRestGate already are) - see
+    // world.js's outdoorRestDeps for what it's for.
+    onEnemyBreak: () => opts.onEnemyBreak?.(),
+    // PARTY-REST19: forwarded straight from THIS host's own opts.canceledByFollower, relayed the same way
+    // opts.onEnemyBreak already is - see world.js's checkCanceledByFollower for what it's for.
+    canceledByFollower: () => opts.canceledByFollower?.() ?? false,
     endLines: (id) => rscLines(id),
     say: (msg) => hudText.add(msg),
     onLevelUp: _onLevelUp,
@@ -2166,7 +2182,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1160,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1163,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2676,7 +2692,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6847 against :6871).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6889 against :6913).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3240,8 +3256,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11768,
-              // exterior.js:4950 and worldModes.js:7047 already ran;
+              // playerArrowHitFoe is the one copy world.js:12775,
+              // exterior.js:4951 and worldModes.js:7089 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3492,9 +3508,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   /** WORLD2: the host's foes frame in, each record onto its puppet - the target pose for the eased step, the health
    *  (a drop is the hurt one-shot), death and un-death through the one kill door, the attack once per count (a joiner
-   *  latches the count it arrives with and replays nothing). A frame older than the last is stale. False while I am
-   *  the authority. */
+   *  latches the count it arrives with and replays nothing). A frame older than the last is stale. */
+  /** SEAT-HEAL (2026-09-22, a player's report: "I kill a rat, my party member comes in and still sees it alive, and hits
+   *  the air for me"). THE SEAT WAS A ONE-WAY LATCH. world.js hands a joiner the foes when the host's stream has been
+   *  silent FOES_STALE_MS (a backgrounded host tab stops the frame loop, so it streams nothing), and the heartbeat that
+   *  would hand them back (`_foesInAt`) is stamped only when a frame is APPLIED - while `applyFoesFrame` refuses every
+   *  frame for as long as this context is the authority. So one silence of six seconds left the joiner in a private
+   *  dungeon for good: the rat alive on its screen, its blows applied to its own copy and never sent to the host.
+   *  A frame that reaches here is the live seat-holder's word (online.js delivers a world room's foes frame only when
+   *  `m.id === host && m.id !== me`), so it is proof the seat is ALIVE: the authority yields and the frame lands as a
+   *  puppet's. Only for a NAMED sender and this dungeon's own key; and a frame that does not land (or throws) gives the
+   *  seat back, so a stream broken on this client still cannot pose as a heartbeat (AUDIT ONCRASH1 A4). */
   function applyFoes(data, from = null) {
+    if (!data || !Array.isArray(data.f)) return false;
+    if (!_authority) return applyFoesFrame(data, from);
+    if (typeof from !== 'string' || !from || (data.k != null && data.k !== _locationKey)) return false;
+    setAuthority(false);
+    let landed = false;
+    try { landed = applyFoesFrame(data, from); } finally { if (!landed) setAuthority(true); }
+    return landed;
+  }
+  function applyFoesFrame(data, from = null) {
     if (_authority || !data || !Array.isArray(data.f)) return false;
     // AUDIT WORLD2 A1/B2: a new host's counter starts over, and its attack counts are its own - every puppet
     // re-latches (no phantom strike, no frame judged stale by the old host's high-water mark)
@@ -4767,6 +4801,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         return raceWinner({
           ground: pickActivatableHit(eye, d, api.dungeonActivationTargets(), collider),
           foe: pickActivatableHit(eye, d, liveFoeTargets(foes, 'mobileFoe'), collider),
+          peer: opts.peerHoverPick?.() ?? null,   // PEER-PLAQUE1: another player underground, raced as the F key picks them - off the key's own ray (AUDIT DROPS E3)
         });
       },
       collider,
@@ -4780,7 +4815,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // beside `hideHudText`); this is the belt, and it is the CONTEXT's
       // own answer - a host with a window of its own over the dungeon
       // (townTalk's slot) hides it on its own branch.
-      cursorActive: dungeonPaused(),
+      cursorActive: dungeonPaused() || !!opts.pointerSurfaceUp?.(),   // AUDIT DROPS E1: and under the F-menu / chat / friends panel - the plaque painted over the menu
       contents: api.lootContents,
       name: api.hoverName,   // WORLD-HOVER: the mod's ladder, the port's own objects, then whatever the host stands
     });
@@ -5670,6 +5705,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the 15-song list.
     /** The host's cumulative clock, for the music context's gameDays. */
     get classicMinutes() { return classicMinutesRef.value; },
+    // PARTY-REST1: the dungeon twin of worldModes.js's own restState -
+    // see that getter's doc comment for the whole of why (world.js owns
+    // every party/online seam and cannot see into this closure's own
+    // window stack any other way). Null while not resting and null for
+    // a mirrored session, same law.
+    get restState() {
+      const w = activeOverlay;
+      // PARTY-REST6: see worldModes.js's own restState getter for the bug this `state === 'resting'` guard
+      // closes - `session` truthy alone does not mean the window is still actually ticking.
+      if (!w?.isRestWindow || w.isPartyRestMirror || !w.session || w.state !== 'resting') return null;
+      return { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours };
+    },
     /** AUDIT 21 (music lane, F3): IsPlayerInsideDungeonCastle, live off the
      *  block the player is standing in - the Castle playlist and
      *  doNotPlayInCastle both had it hardcoded false. */
@@ -6110,7 +6157,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
       }
-      activeOverlay = new RestWindow(_restDeps);
+      // STRANGER-REST1: shared with world.js's own outdoor toggleRest and worldModes.js's interior - see
+      // world.js's strangerRestGate doc comment (30m in a dungeon, its own radius). Checked FIRST, same order.
+      const strangerRefusal = opts.strangerRestGate?.();
+      if (strangerRefusal) { activeOverlay = new ActionTextBox([strangerRefusal]); return; }
+      // PARTY-REST2: shared with world.js's own outdoor toggleRest and worldModes.js's interior - see world.js's
+      // partyRestGate doc comment.
+      const partyRefusal = opts.partyRestGate?.();
+      if (partyRefusal) { activeOverlay = new ActionTextBox([partyRefusal]); return; }
+      // PARTY-REST28: shared with world.js's own outdoor toggleRest and worldModes.js's interior - see
+      // world.js's markPartyRestSpent doc comment for the bug this closes (a rest granted in a dungeon used
+      // to leave the granting player's own ready flag stuck true forever, since nothing here ever reset it).
+      opts.markPartyRestSpent?.();
+      activeOverlay = createRestWindow(_restDeps);
     },
     // P11: the current block's water surface (world y) - the swim
     // toggle rule reads it (PlayerEnterExit blockWaterLevel).
