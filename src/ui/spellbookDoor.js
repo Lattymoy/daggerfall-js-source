@@ -54,7 +54,7 @@ export function spellbookDoorReady() {
  */
 export function createSpellbookWindow(deps = {}) {
   if (!spellbookDoorReady()) return null;
-  const { entity, magic, castCost, rows, onClose } = deps;
+  const { entity, magic, castCost, rows, onClose, relock } = deps;
   const shared = {
     // The latch is the hosts' own: `??=` so a player who has never cast
     // gets an array rather than undefined, and the SAME array every
@@ -72,7 +72,7 @@ export function createSpellbookWindow(deps = {}) {
     // `document` for the reason charSheetDoor and pauseDoor give: node
     // drives these hosts headless and keeps the canvas window rather
     // than having a special case written for it.
-    return enhancedSpellbookOverlay(shared, onClose);
+    return enhancedSpellbookOverlay(shared, onClose, relock);
   }
   const win = new SpellbookWindow({ ...shared, onClose });
   return win;
@@ -84,12 +84,12 @@ export function createSpellbookWindow(deps = {}) {
  * mounted lazily so a host that builds the window and never shows it
  * costs nothing.
  */
-function enhancedSpellbookOverlay(shared, onClose) {
+function enhancedSpellbookOverlay(shared, onClose, relock) {
   let host = null;
   let view = null;
   let done = false;
   let unregister = () => {};   // PX28: Tab must be able to put this away
-  const close = () => {
+  const close = (relockLook = false) => {
     if (done) return;
     done = true;
     unregister();
@@ -97,20 +97,22 @@ function enhancedSpellbookOverlay(shared, onClose) {
     try { host?.remove(); } catch { /* ditto */ }
     host = null; view = null;
     onClose?.();
+    if (relockLook) relock?.();
   };
+  const closeToGame = () => close(true);
   const mount = () => {
     if (host || done) return;
     host = document.createElement('div');
     host.id = 'enhanced-spellbook';
     host.style.cssText = 'position:fixed;inset:0;z-index:11';
     document.body.append(host);
-  unregister = registerOverlay(close);
+  unregister = registerOverlay(closeToGame);
     // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js) - retried
     // once, then SPOKEN rather than closed in silence.
     mountEnhancedChunk({
       load: () => import('./enhancedSpellbook.js'),
-      mount: ({ mountEnhancedSpellbook }) => { view = mountEnhancedSpellbook(host, { ...shared, onExit: close }); },
-      alive: () => !done, host, onDismiss: close, label: 'spellbook',
+      mount: ({ mountEnhancedSpellbook }) => { view = mountEnhancedSpellbook(host, { ...shared, onExit: closeToGame }); },
+      alive: () => !done, host, onDismiss: closeToGame, label: 'spellbook',
     });
   };
   mount();
@@ -133,7 +135,7 @@ function enhancedSpellbookOverlay(shared, onClose) {
     // `close`, `dispose` and `destroy` are the hosts' three words for
     // the same act - townTalk's showOverlay frees the outgoing window
     // with `dispose?.()`, and without it the div outlives the object.
-    close,
+    close: closeToGame,
     dispose: close,
     destroy: close,
   };
