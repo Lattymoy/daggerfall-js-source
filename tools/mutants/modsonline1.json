@@ -1,0 +1,155 @@
+[
+  {
+    "name": "the-ground-is-freed-with-everything-else",
+    "file": "src/systems/onlineLane.js",
+    "old": "  'roads-hazelnut': Object.freeze({\n    Enabled: true,        // which network is painted, and so which beds are smoothed\n    SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away\n  }),",
+    "new": "",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "the-smoothing-goes-back-to-being-a-dial",
+    "file": "src/systems/onlineLane.js",
+    "old": "    SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away\n",
+    "new": "",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "the-water-is-forced-though-it-moves-no-height",
+    "file": "src/systems/onlineLane.js",
+    "old": "    SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away",
+    "new": "    SmoothRoads: true,\n    RiversAndStreams: false,",
+    "tests": [
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "the-key-check-goes-so-every-switch-of-a-ground-mod-is-forced",
+    "file": "src/systems/onlineLane.js",
+    "old": "  if (!room || !Object.hasOwn(room, key)) return undefined;",
+    "new": "  if (!room) return undefined;",
+    "tests": [
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "offline-starts-forcing-too",
+    "file": "src/systems/onlineLane.js",
+    "old": "  return isOnlinePage(search) ? room[key] : undefined;",
+    "new": "  return room[key];",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "the-forced-value-is-invented-rather-than-the-mods-own",
+    "file": "src/systems/onlineLane.js",
+    "old": "    Enabled: true,        // which network is painted, and so which beds are smoothed",
+    "new": "    Enabled: false,",
+    "tests": [
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "shield-widget-forced-again-though-the-block-is-the-defenders",
+    "file": "src/systems/onlineLane.js",
+    "old": "  'shield-widget',               // the block is the DEFENDER's - damageShieldPool runs where the blow lands\n",
+    "new": "",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "the-menu-lock-gives-the-lanes-reason-for-a-ground-switch",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    if (ground !== undefined) lockOnline(b, null, { note: vendor === 'roads-hazelnut' ? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE, value: ground });",
+    "new": "    if (ground !== undefined) lockOnline(b, null);",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "the-mods-pane-goes-back-to-the-lanes-note",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_MODS_NOTE));",
+    "new": "  if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_LOCK_NOTE));",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "the-smoother-stops-looking-at-the-road-bed",
+    "file": "src/world/roadPainter.js",
+    "old": "      if (tile !== 46 && tile !== 0xff) continue;",
+    "new": "      if (tile !== 0xff) continue;",
+    "tests": [
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "the-declared-key-check-goes-back-to-an-inherited-one",
+    "file": "src/systems/modSettings.js",
+    "old": "  (Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);",
+    "new": "  MOD_SETTINGS[vendor]?.keys?.[key];",
+    "tests": [
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "the-vendor-half-of-the-own-key-check-goes",
+    "file": "src/systems/modSettings.js",
+    "old": "  (Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);",
+    "new": "  (MOD_SETTINGS[vendor] && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);",
+    "tests": [
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "climates-and-calories-forced-online-again",
+    "file": "src/systems/features.js",
+    "old": "control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: 'player' }),",
+    "new": "control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: true }),",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "the-balance-three-are-freed-again",
+    "file": "src/systems/onlineLane.js",
+    "old": "  meanerMonsters: Object.freeze({ Enabled: true }),\n  pcaao: Object.freeze({ Enabled: true }),",
+    "new": "",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "the-loot-roll-is-freed-again",
+    "file": "src/systems/onlineLane.js",
+    "old": "  unleveledLoot: Object.freeze({ Enabled: true }),\n",
+    "new": "",
+    "tests": [
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "every-locked-row-wears-the-grounds-reason-again",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "vendor === 'roads-hazelnut' ? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE",
+    "new": "ONLINE_GROUND_NOTE",
+    "tests": [
+      "test/modsonline.test.js",
+      "test/onlinelane.test.js"
+    ]
+  }
+]

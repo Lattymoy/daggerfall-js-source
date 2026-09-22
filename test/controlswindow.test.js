@@ -12,12 +12,24 @@ import {
   INTERNAL_DUPE_COLOR, CROSS_DUPE_COLOR,
 } from '../src/systems/controlsConfig.js';
 import {
-  createBindings, resetDefaults, setBinding, getBinding, ACTIONS,
+  createBindings, resetDefaults, setBinding, getBinding, actionForCode, ACTIONS,
 } from '../src/systems/inputActions.js';
 import { KEY_GROUPS, KEY_BTN, TAB_RECTS, MLOOK_ALT_RECT, gridButtons } from '../src/ui/controlsWindow.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const freshStore = () => { const b = createBindings(); resetDefaults(b); return b; };
+
+// A code NO default holds, for the fixtures that need one. It was
+// written out as `KeyP` until QUICK-LOOT B4 gave P a default of its
+// own, at which point two tests about staging a FREE code quietly
+// became tests about a clash. Deriving it means a new default can
+// never change what a test is asking again.
+const freeCode = (store) => {
+  const letters = 'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`);
+  const free = letters.find((c) => !actionForCode(store, c));
+  assert.ok(free, 'every candidate letter is spoken for - this fixture needs a new one');
+  return free;
+};
 
 test('I4: the grid geometry is DFU\'s nine SetupKeybindButtons calls (:146-152)', () => {
   assert.deepEqual(KEY_GROUPS.map((g) => `${g.start}-${g.end}@${g.x},${g.y}`), [
@@ -57,10 +69,11 @@ test('I4: staging copies BOTH dicts and writes nothing live until applied', () =
   // a FREE code - KeyI belongs to Status, and applying a set where
   // two actions share a code is order-dependent by DFU's own design
   // (see the next test)
-  setUnsavedBinding(u, 'MoveForwards', 'KeyP');
+  const free = freeCode(store);
+  setUnsavedBinding(u, 'MoveForwards', free);
   assert.equal(getBinding(store, 'MoveForwards'), 'KeyW', 'the LIVE registry is untouched');
   applyUnsavedKeybinds(store, u);
-  assert.equal(getBinding(store, 'MoveForwards'), 'KeyP', 'the apply lands it');
+  assert.equal(getBinding(store, 'MoveForwards'), free, 'the apply lands it');
   assert.equal(checkDuplicates(createUnsavedKeybinds(store)).ok, true, 'and the result is clean');
   // an emptied PRIMARY slot is marked removed, so the autofill pass
   // cannot restore its default behind the player's back (:552-553)
@@ -148,9 +161,10 @@ test('I4: the apply CONTRACT - a clashing set is order-dependent, and the gate i
 
 test('I4: Default resets the live registry and re-stages from it', () => {
   const store = freshStore();
-  setBinding(store, 'KeyP', 'Rest');
+  const free = freeCode(store);
+  setBinding(store, free, 'Rest');
   const u = createUnsavedKeybinds(store);
-  assert.equal(currentDict(u).get('Rest'), 'KeyP');
+  assert.equal(currentDict(u).get('Rest'), free);
   resetUnsavedToDefaults(store, u);
   assert.equal(getBinding(store, 'Rest'), 'KeyR', 'the LIVE registry is back on defaults');
   assert.equal(currentDict(u).get('Rest'), 'KeyR', 'and the staged copy tracks it');

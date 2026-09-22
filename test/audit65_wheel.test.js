@@ -93,8 +93,8 @@ test('AUDIT 65 UI-5: the notch carries its own point, so the pack scrolls before
 
 test('AUDIT 65 UI-5: every host wheel seam hands the window the live point', () => {
   const POINT = /wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/;
-  // townTalk.js is the seam for BOTH outdoor hosts (world.js:6873 and
-  // exterior.js:2948 hand it the raw event).
+  // townTalk.js is the seam for BOTH outdoor hosts (world.js:6888 and
+  // exterior.js:2962 hand it the raw event).
   assert.match(read('src/scenes/townTalk.js'), POINT, 'townTalk.js');
   // worldModes.js: BOTH arms - the interior slot and the mounted
   // dungeon context's.
@@ -111,8 +111,28 @@ test('AUDIT 65 UI-5: every host wheel seam hands the window the live point', () 
   assert.match(read('src/scenes/interior.js'), POINT, 'interior.js');
   // world.js and exterior.js own no arithmetic of their own: the whole
   // point of naming them is that the event is what they pass on.
+  //
+  // QUICK-LOOT B4 put a third rung in that ladder (the plaque takes the
+  // wheel while it is listing something), so the two named rungs are no
+  // longer adjacent - and "adjacent" was never the law. The law is that
+  // EVERY rung is handed the event or its raw `deltaY`, and that the
+  // NOTCH is derived by whoever owns the meaning of a direction, which
+  // is why `quickLootWheel` takes `deltaY` exactly as `mwViewWheel`
+  // does. So the pin now reads the whole ladder and holds both halves:
+  // the order (an open window first, the camera last) and the shape of
+  // every argument in between.
+  const RUNG = String.raw`\w+(?:\.\w+|\?\.)*\((?:e|e\.deltaY)\)`;
+  const LADDER = new RegExp(String.raw`townTalk\.wheel\(e\)(?: \|\| ${RUNG})* \|\| modes\?\.wheel\?\.\(e\)(?: \|\| ${RUNG})*\)`);
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(read(h), /townTalk\.wheel\(e\) \|\| modes\?\.wheel\?\.\(e\)/, h);
+    const src = read(h);
+    assert.match(src, LADDER, h);
+    // ...and nothing in the listener may do the deriving itself: a
+    // `e.deltaY < 0 ? -1 : 1` written here would be one copy per host
+    // of one decision about which way the wheel goes.
+    const line = src.split('\n').find((l) => l.includes("addEventListener('wheel'"));
+    assert.ok(line, `${h} has no wheel listener`);
+    assert.equal(/Math\.sign|deltaY\s*[<>]|deltaY\s*[*/+-]/.test(line.split('//')[0]), false,
+      `${h} derives a notch in the host`);
   }
   // ...and no seam may go back to a bare notch.
   for (const h of ['src/scenes/townTalk.js', 'src/scenes/worldModes.js', 'src/scenes/dungeon.js',

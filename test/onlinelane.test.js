@@ -11,7 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { isOnlinePage, ONLINE_FORCED_PREFS, ONLINE_PLAYERS_OWN_PREFS, onlineForcedPref, onlineForcedModSetting, ONLINE_FORCED_MOD_KEY, ONLINE_PLAYERS_OWN_MODS } from '../src/systems/onlineLane.js';
+import { isOnlinePage, ONLINE_FORCED_PREFS, ONLINE_PLAYERS_OWN_PREFS, onlineForcedPref, onlineForcedModSetting, ONLINE_ROOM_MOD_KEYS, ONLINE_PLAYERS_OWN_MODS } from '../src/systems/onlineLane.js';
 import { uiSkin, isEnhanced } from '../src/systems/uiSkin.js';
 import { PREF_DEFAULTS, getPref, setPref, _resetForTests } from '../src/systems/uiPrefs.js';
 import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
@@ -54,25 +54,29 @@ test('OL1: every enhancement the port owns reads ON online whatever the shelf sa
   _resetForTests();
 });
 
-test('OL1: every vendored mod is enabled online whatever the store says, its other switches are the player\'s, and the store is not written', () => {
+test('MODS-ONLINE-2: a mod the player turned off is OFF online too - only the room\'s ground answers past the store, and the store is never written', () => {
+  // OL1 used to read "every vendored mod is enabled online whatever the
+  // store says". That half of the lane is gone (MODS-ONLINE-2, Mac:
+  // "Is it possible to allow all mods to be toggled on and off for
+  // online?"): the port's OWN switches are still the lane's, and a
+  // mod's are the player's - except the two Basic Roads switches the
+  // room's terrain heights depend on, which are the floor everyone
+  // stands on rather than a rule anyone applies.
   _resetModSettings();
   for (const vendor of Object.keys(MOD_SETTINGS)) setModSetting(vendor, 'Enabled', false);
   setModSetting('dynamic-skies', 'densitySetting', 3);
+  setModSetting('roads-hazelnut', 'SmoothRoads', false);
   onPage('?online=1', () => {
     for (const vendor of Object.keys(MOD_SETTINGS)) {
-      // AUDIT-WH R8: ...EXCEPT a mod that only draws a READOUT on your
-      // own screen. OL1's reasoning is about the WORLD - a mod that
-      // moves a light, stands an object, changes a roll or writes a
-      // save record is what the room has to agree on - and a crosshair
-      // label stands nothing, rolls nothing, writes nothing and is not
-      // on the wire. It is the same category as `chatHidden` and
-      // `peerClassSprites`, which this lane already leaves alone.
-      const own = ONLINE_PLAYERS_OWN_MODS.includes(vendor);
-      assert.equal(modSetting(vendor, 'Enabled'), !own, `${vendor} ${own ? 'is still the player\'s' : 'enabled'} online`);
+      const ground = Object.hasOwn(ONLINE_ROOM_MOD_KEYS[vendor] ?? {}, 'Enabled');
+      assert.equal(modSetting(vendor, 'Enabled'), ground, `${vendor} online is ${ground ? "the room's ground" : "the player's own off"}`);
     }
+    assert.equal(modSetting('roads-hazelnut', 'SmoothRoads'), true, 'the smoothing is the room\'s floor, not a dial - it was the hole');
+    assert.equal(modSetting('roads-hazelnut', 'RiversAndStreams'), false, 'and the water is paint, so it is still the player\'s');
     assert.equal(modSetting('dynamic-skies', 'densitySetting'), 3, 'a mod\'s own dial is the player\'s');
   });
   for (const vendor of Object.keys(MOD_SETTINGS)) assert.equal(modSetting(vendor, 'Enabled'), false, `${vendor}: offline again, the store as the player left it`);
+  assert.equal(modSetting('roads-hazelnut', 'SmoothRoads'), false, 'offline the smoothing is the player\'s again - the lane never wrote the store');
   _resetModSettings();
 });
 
@@ -84,19 +88,40 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
   for (const k of ONLINE_PLAYERS_OWN_PREFS) assert.ok(Object.hasOwn(PREF_DEFAULTS, k), `${k} is a uiPrefs key`);
   for (const k of booleans.filter((k) => /^enhanced/.test(k))) assert.equal(ONLINE_FORCED_PREFS[k], true, `${k} is an enhancement and the lane forces it`);
   assert.equal(ONLINE_FORCED_PREFS.skin, 'enhanced');
-  assert.equal(ONLINE_FORCED_MOD_KEY, 'Enabled');
-  for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) assert.ok(mod.keys.Enabled, `${vendor} has an Enabled key for the lane to force`);
-  // AUDIT-WH R8: and every EXEMPTION names a mod that exists, so the
-  // list cannot rot into a no-op the way a stale key would.
+  // MODS-ONLINE-2: the MOD half of this pin is now total and lives in
+  // test/modsonline.test.js (every vendor classified, every forced key
+  // a declared key at the mod's own default). What is kept here is the
+  // rot check the exemption list always owed: a name that no longer
+  // matches a vendored mod is a no-op nobody would notice.
   for (const vendor of ONLINE_PLAYERS_OWN_MODS) assert.ok(MOD_SETTINGS[vendor], `${vendor} is a vendored mod`);
+  for (const vendor of Object.keys(ONLINE_ROOM_MOD_KEYS)) assert.ok(MOD_SETTINGS[vendor], `${vendor} is a vendored mod`);
   assert.equal(onlineForcedModSetting('world-tooltips', 'Enabled', '?online=1'), undefined,
     'a purely local readout is not the room\'s business');
-  assert.equal(onlineForcedModSetting('dynamic-skies', 'Enabled', '?online=1'), true,
-    '...and a mod that changes the world still is');
+  // THE CONTRAST THIS LINE EXISTS TO DRAW has been re-aimed twice, and
+  // each time because the mod it named turned out not to be the room's
+  // after a reading. It named `dynamic-skies` (which only PAINTS a
+  // weather WORLD5 already shares), then `meanerMonsters` (whose stats
+  // are minted where a foe SPAWNS, so a peer steps a puppet under the
+  // owner's numbers). MODS-ONLINE-2 aims it at the one thing in the
+  // whole shelf that is not a rule anybody applies but the floor
+  // everybody stands on - and a floor cannot be two.
+  assert.equal(onlineForcedModSetting('roads-hazelnut', 'SmoothRoads', '?online=1'), true,
+    '...and the switch that moves the TERRAIN HEIGHTS is the room\'s');
+  assert.equal(onlineForcedModSetting('roads-hazelnut', 'RiversAndStreams', '?online=1'), undefined,
+    '...while the one beside it that only paints tiles is not');
   assert.equal(onlineForcedPref('enhancedAI', '?online=1'), true);
   assert.equal(onlineForcedPref('enhancedAI', ''), undefined);
   assert.equal(onlineForcedPref('grassDensity', '?online=1'), undefined);
-  assert.equal(onlineForcedModSetting('pcaao', 'Enabled', '?online=1'), true);
+  // MODS-ONLINE-4 (2026-09-22, Mac: "What about player balance?"):
+  // back to the room, and for a reason MODS-ONLINE-2 never asked about.
+  // Its reading was right - the striker rolls the damage and the host
+  // applies the number, so nothing desyncs - but OWNERSHIP IS NOT
+  // PRIVACY: a world room's layout foes are its HOST's (WORLD2), so
+  // the host's formulas are what the whole party fights.
+  assert.equal(onlineForcedModSetting('pcaao', 'Enabled', '?online=1'), true,
+    'the host\'s combat rules are the party\'s combat rules');
+  assert.equal(onlineForcedModSetting('shield-widget', 'Enabled', '?online=1'), undefined,
+    '...while a block, which only ever mitigates the DEFENDER\'s own blow, is still the player\'s');
   assert.equal(onlineForcedModSetting('dynamic-skies', 'densitySetting', '?online=1'), undefined);
 });
 
@@ -106,9 +131,9 @@ test('OL1 by source: the three read paths ask the one home first, the menu locks
   assert.match(rd('src/systems/modSettings.js'), /const forced = onlineForcedModSetting\(vendor, key\);[^\n]*\n\s*if \(forced !== undefined\) return forced;\s*const v = load\(\)\[vendor\]\?\.\[key\];/);
   const menu = rd('src/ui/enhancedMenu.js');
   assert.match(menu, /if \(onlineForcedPref\(key\) !== undefined\) lockOnline\(b, main\);/, 'a forced pref row is locked');
-  assert.match(menu, /if \(onlineForcedModSetting\(vendor, key\) !== undefined\) lockOnline\(b, null\);/, 'a mod\'s Enabled row is locked');
-  assert.match(menu, /function lockOnline\(b, main\) \{\s*b\.textContent = 'On \(online\)';\s*b\.disabled = true;/, 'the lock says so and answers nothing');
-  assert.match(menu, /if \(isOnlinePage\(\)\) body\.append\(el\('p', 'meta', ONLINE_LOCK_NOTE\)\);/, 'the Mods pane says it once at the top');
-  assert.match(menu, /Online is the enhanced lane, whole: every enhancement and every mod is on for everyone, and your own switches return when you play offline\./, 'the Online pane');
+  assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: vendor === 'roads-hazelnut' \? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE, value: ground \}\);/, 'a forced mod row is locked, with the reason it is actually locked FOR');
+  assert.match(menu, /function lockOnline\(b, main, \{ note = ONLINE_LOCK_NOTE, value = true \} = \{\}\) \{\s*b\.textContent = value \? 'On \(online\)' : 'Off \(online\)';/, 'the lock says so and answers nothing');
+  assert.match(menu, /if \(isOnlinePage\(\)\) body\.append\(el\('p', 'meta', ONLINE_MODS_NOTE\)\);/, 'the Mods pane says it once at the top');
+  assert.match(menu, /Online is the enhanced lane: every enhancement the port owns is on for everyone\./, 'the Online pane');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## OL1 \(2026-09-14\)/, 'the record');
 });

@@ -198,6 +198,7 @@ import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER H2: t
 import { composeActivationTargets, composeNamer } from '../systems/worldHover.js';
 import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, liveEntityName, lootPileName, actionName, actionDoorName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
+import { quickLootTake } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the take, through the window's own door
 import { isEnhanced } from '../systems/uiSkin.js';
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
@@ -1606,7 +1607,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8351 / exterior.js:3426), set
+  // host's own townTalk sink (world.js:8366 / exterior.js:3440), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2117,7 +2118,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1186,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1187,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2627,7 +2628,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1048 against :1078; worldModes.js:7425 against :7449).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1072 against :1102; worldModes.js:7435 against :7459).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3191,8 +3192,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11604,
-              // exterior.js:4908 and worldModes.js:7005 already ran;
+              // playerArrowHitFoe is the one copy world.js:11642,
+              // exterior.js:4936 and worldModes.js:7015 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6923,6 +6924,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // item moves, so a second reader opening the same pile a moment later reads the room's and not their own roll.
       // AUDIT WORLD4 C6: after the mount, never before it - openInventory REFUSES a transformed lycanthrope
       // (GetSuppressInventory), and a claim for a container nobody opened is not what the law says.
+      // QUICK-LOOT B4: the same door, one layer in. This host does not
+      // build a hooks object for the window - it hands `openInventory`
+      // the SOURCE ARRAY itself, and that array is what the window
+      // mutates - so the hooks shape is put around that same handle
+      // rather than a second one. Null opens the window as before, and
+      // the WORLD4 claim below is not made for a take that never opens
+      // anything (a claim for a container nobody opened is not what the
+      // law says, which is the same reasoning C6 gives just above).
+      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText)) return source.length;
       const _k = lootHolder(key) ? lootKeyOf(key) : null;
       activeOverlay = openInventory(source, onEmptied, { lootHooks, lootKey: _k });
       if (activeOverlay && _k) { _lootOpenKey = _k; publishLoot(_k, { claim: true }); }

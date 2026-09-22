@@ -413,6 +413,37 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedCombatVisuals', initial: true, online: true }),   // ECV1: on by default like the other enhanced visuals; the rules are untouched either way
   }),
+  // QUICK-LOOT B4 (2026-09-22, Mac: Arc B of the world-hover arcs, and
+  // "How does skyrim do it" when the shape was put to him). Vanilla
+  // Skyrim does not; what everyone means by it is the QuickLoot mod,
+  // and this is that adapted to the port: the plaque Arc A already
+  // draws under the crosshair grows a highlight the wheel moves, the
+  // activate key takes the highlighted row, and a key of its own takes
+  // the lot - without ever freeing the cursor or opening a window.
+  //
+  // It is NOT a port of anything. DFU has no quick loot and no mod in
+  // vendor/ carries one, so the row says so plainly: this is the
+  // port's own, and OFF is Daggerfall's loot exactly - the window the
+  // activate key has always opened, untouched.
+  //
+  // DFU's own precedent for taking with no window is real and narrow:
+  // a body holding nothing but arrows is taken whole (PlayerActivate
+  // .cs:948-952). This generalises that to any row the player has
+  // picked out, which is the departure and is recorded as one.
+  //
+  // It sits with LR1 in the `loot` group and AHEAD of it, because
+  // WIND3 pins its wisps row to the seat directly after LR1's - so
+  // the two loot rows stay together without moving a pinned one.
+  Object.freeze({
+    id: 'quick-loot',
+    group: 'loot',
+    title: 'Quick loot',
+    note: 'The wheel moves a highlight through the plaque\u2019s list, the activate key takes that row and one key takes '
+      + 'the lot \u2014 no cursor, no window, so looting never stops you aiming. Off is the inventory window as always.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'quickLoot', initial: true, online: 'player' }),   // the player's own: it stands nothing, rolls nothing and is not on the wire - the same category chatHidden is (OL1)
+  }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
   // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with
   // DFU's artifacts as the ceiling. Enhanced, and ON (LR5, 2026-09-15,
@@ -588,8 +619,16 @@ export const FEATURES = Object.freeze([
   // OpenMW mechanism, on the port's Morrowind third-person body. The
   // switch is the port's own pref (the mod ships no settings of its own);
   // RF4: declared here, once, the shelf's default and the online answer
-  // riding the row. Forced on online as the arms are (mwArms), so every
-  // body a peer sees wears its blade the same way.
+  // riding the row.
+  //
+  // MODS-ONLINE-3 (2026-09-22, Mac): THE PLAYER'S, like every other mod
+  // row. It was forced "so every body a peer sees wears its blade the
+  // same way" - which is a claim about how MY machine DRAWS someone
+  // else, not about anything the room agrees on. That is the same
+  // category as `peerClassSprites`, which this lane has always left
+  // alone for exactly this reason. A scabbard stands no object, rolls
+  // nothing, writes nothing and never reaches the wire; the pose's `wd`
+  // carries whether a peer's weapon is drawn either way.
   Object.freeze({
     id: 'mod-weapon-sheathing',
     group: 'combat',
@@ -598,7 +637,7 @@ export const FEATURES = Object.freeze([
       + 'Sheathing ships for it, with a quiver for a bow. Off, a lowered weapon vanishes as in vanilla Morrowind.',
     effect: 'Takes effect when the Morrowind body next builds; the Mods page\u2019s switch rebuilds it at once.',
     kinds: Object.freeze(['mod']),
-    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),
+    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),
   }),
   // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
   // Morrowind mod, and the only row whose effect line has to say NEXT
@@ -820,9 +859,28 @@ export const FEATURES = Object.freeze([
     title: 'Climates & Calories by Ralzar',   // AUDIT SURV E: the author's name, as every mod row carries it
     note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
       + 'campfire or a bed. Off is the classic game, with no needs at all.',
-    effect: 'Takes effect at once. Online the room decides.',
+    effect: 'Takes effect at once, online too.',
     kinds: Object.freeze(['mod', 'enhanced', 'classic']),   // AUDIT SURV E: a mod row, under the MOD AUTHORED filter
-    control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: true }),
+    // MODS-ONLINE-3 (2026-09-22, Mac): THIS IS A MOD ROW AND IT IS THE
+    // PLAYER'S. The lane forced it because the system is the PORT's code
+    // rather than a vendored mod - a distinction that exists nowhere a
+    // player can see it. It sits in the Mods pane under Ralzar's name,
+    // beside sixteen rows that are all the player's now, and it was the
+    // only one still locked.
+    //
+    // It passes the same reading they did. The system is resolved
+    // entirely on the machine that owns the actor: hunger, thirst,
+    // exposure and the temperature are computed fresh each tick from MY
+    // climate, MY clothes and MY race, onto MY entity; a camp is local
+    // (the braziers are scenery the terrain already carries either way);
+    // a shop's stock is its own. The one thing that leaves this machine
+    // is a corpse's food, minted by the KILLER in the enemy-death
+    // handler - and a corpse's pile is already the owner's word, granted
+    // to peers as it stands (WORLD6b-iii(c)). That is the same shape as
+    // Unleveled Loot, which is the player's: whoever swings rolls what
+    // falls. A room where one player's kills carry meat and another's do
+    // not is two players playing their own game, not two worlds.
+    control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: 'player' }),
   }),
 ]);
 

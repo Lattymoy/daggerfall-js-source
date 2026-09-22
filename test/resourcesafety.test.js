@@ -207,4 +207,27 @@ test('NT1 / AUDIT-WH R6: the world plaque has ONE owner per host, and every one 
     'the teardown frees the watchdog before anything else');
   assert.match(plaque, /export function hideWorldPlaque\(\) \{\n(?:\s*\/\/[^\n]*\n)*\s+_cancel\(_watchdog\);\n\s+_watchdog = null;/,
     'and so does the hide - the heartbeat stops with the thing it watches');
+  // QUICK-LOOT B3/B4: the highlight is ABOUT a key in the world this
+  // teardown is unmaking, so it dies with it - a selection carried
+  // across a mode change points the take at a pile that is gone, and a
+  // pending nudge spent in a dungeon would move the highlight in the
+  // street. The STATE is the feature's (systems/quickLoot.js, where the
+  // take can reach it without a systems module importing a draw); the
+  // teardown that frees it is still this module's, because this is the
+  // door the hosts call.
+  assert.match(plaque, /export function destroyWorldPlaque\(\)[\s\S]{0,1400}?\n\s+resetQuickLoot\(\);/,
+    'the teardown frees the feature\'s selection and pending nudge');
+  const ql = src('systems/quickLoot.js');
+  // ...and that is what freeing them means - EVERY slot the feature
+  // owns, held the same way the plaque's own destroy-slot list above
+  // holds its own: a name here per `let` there, and a new `let` with no
+  // line in the reset fails the second half.
+  const reset = ql.slice(ql.indexOf('export function resetQuickLoot() {'));
+  for (const slot of ['_sel = null;', '_nudge = 0;', '_pending = null;']) {
+    assert.ok(reset.slice(0, reset.indexOf('}')).includes(slot), `resetQuickLoot leaves ${slot.split(' ')[0]} behind`);
+  }
+  assert.doesNotMatch(ql, /^let (?!_sel|_nudge|_pending)/m,
+    'a new module-level slot needs an owner and a line in resetQuickLoot');
+  assert.doesNotMatch(ql, /from '\.\.\/ui\//,
+    'the feature owns its own state, so it never has to reach into a draw to read it');
 });

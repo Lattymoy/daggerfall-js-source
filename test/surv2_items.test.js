@@ -279,7 +279,13 @@ test('SURV2: by source - the pipeline stands a vendor archive in, the weight law
   assert.match(read('src/systems/equip.js'), /if \(survivalOn\(\)\) for \(const it of startingProvisions\(\)\) entity\.items\.push\(it\);/);
   assert.match(read('src/systems/worldTick.js'), /installSurvivalIcons\(\);[^\n]*\n\s*installSurvivalLoot\(\{ enabled: survivalOn \}\);/, 'the corpse\'s food is off with the one switch');
   assert.match(read('src/systems/survival/switch.js'), /export const survivalOn = \(\) => getPref\(SURVIVAL_PREF\) !== false;/);
-  assert.match(read('src/systems/features.js'), /key: 'survival', initial: true, online: true/, 'the row owns the key and the default: on');
+  // MODS-ONLINE-3 (2026-09-22, Mac): `online: true` became `'player'`.
+  // Climates & Calories is a MOD ROW under Ralzar's name and it was the
+  // last one still locked online, kept there only because the port
+  // wrote the system itself and so carries it on the prefs shelf - a
+  // distinction no player can see. What this pin owns is unchanged:
+  // the row declares the key and the default, once (RF4).
+  assert.match(read('src/systems/features.js'), /key: 'survival', initial: true, online: 'player'/, 'the row owns the key and the default: on, and the player owns the switch');
 });
 
 // ═══ AUDIT VC6 (2026-09-18): THE DROP ROLLS ON THE POOL'S OWN STREAM ══

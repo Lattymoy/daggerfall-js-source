@@ -57,7 +57,7 @@
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
 import { billboardSize } from '../world/rmbFlats.js';
-import { addItem, isGoldPieces, addGoldPieces } from '../systems/inventory.js';
+import { addItem, isGoldPieces, addGoldPieces, takeOneInto } from '../systems/inventory.js';   // QUICK-LOOT B2: the one-item door, which the bulk take below is now written over
 import { SOUND } from '../systems/soundClips.js';
 import { lootRarityOn, bestRarity, RARITIES } from '../systems/lootRarity.js';   // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
@@ -382,19 +382,21 @@ export function takeCorpseLoot(entry, playerEntity, say = () => {}) {
   }
   playerEntity.items = playerEntity.items || [];
   let n = 0;
-  for (const item of items) {
-    // DoTransferItem's FIRST statement (DaggerfallInventoryWindow.cs:1562-1571):
-    // a Currency.Gold_pieces pile bound for PlayerEntity.Items is spent into
-    // the counter (`playerEntity.GoldPieces += item.stackCount`) and never
-    // added to the list. DFU reaches that door because :957 opens the window;
-    // the port's bulk take is the recorded UI residue above, so the door has
-    // to be spelled here too - E4's invariant is that the player's collection
-    // never holds Currency, and gold that lands in it is unspendable.
-    if (isGoldPieces(item)) addGoldPieces(playerEntity, item.stackCount ?? 1);
-    else addItem(playerEntity.items, item);
-    n++;
-  }
-  items.length = 0;
+  // DoTransferItem's FIRST statement (DaggerfallInventoryWindow.cs:1562-1571):
+  // a Currency.Gold_pieces pile bound for PlayerEntity.Items is spent into
+  // the counter (`playerEntity.GoldPieces += item.stackCount`) and never
+  // added to the list. DFU reaches that door because :957 opens the window;
+  // the port's bulk take is the recorded UI residue above, so the door has
+  // to be spelled away from the window too - E4's invariant is that the
+  // player's collection never holds Currency, and gold that lands in it is
+  // unspendable.
+  //
+  // QUICK-LOOT B2: and it is spelled ONCE now, in `takeOneInto`, because
+  // quick loot's single-row take needs the same door and a third copy of
+  // a law is a third chance to omit it (HARD2). This loop is that door
+  // applied to every row; `[...items]` because the door splices the
+  // source, so iterating it live would skip every second entry.
+  for (const item of [...items]) { if (takeOneInto(playerEntity, items, item)) n++; }
   say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);
   return n;
 }

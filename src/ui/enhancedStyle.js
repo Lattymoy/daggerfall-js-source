@@ -3647,6 +3647,18 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .wplaque-row { display: flex; align-items: baseline; gap: 10px; font-size: 14px;
   line-height: 1.5; }
 .wplaque-count { margin-left: auto; color: var(--brass); font-size: 12px; }
+/* QUICK-LOOT B3: THE HIGHLIGHT. Negative margins with matching padding
+   so the band reaches the plaque's inner edges without the row's own
+   box moving - a highlight that reflowed the list would shift every
+   name under it each time the wheel turned, which is the one thing a
+   readout at the crosshair must not do. The rarity colours above are
+   on the row's first span and are untouched by this, so a highlighted
+   artifact still reads as an artifact. */
+.wplaque-row.sel { background: rgba(125,116,96,0.28); box-shadow: inset 2px 0 0 var(--brass);
+  margin: 0 -14px; padding: 0 14px 0 12px; }
+/* ...and the line that says what the keys do, under the list. */
+.wplaque-keys { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(125,116,96,0.35);
+  color: #7d7460; font-size: 11px; text-align: center; }
 .wplaque-empty, .wplaque-more { color: #7d7460; font-size: 12px; }
 /* AUDIT-WH R7: THE LIST HAS ITS OWN NODE AND HAD NO RULE. The draw
    emits a .wplaque-list wrapper round the rows and nothing styled it,

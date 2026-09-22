@@ -34,6 +34,7 @@ import {
   ACTIONS, DEFAULT_BINDINGS, DEFAULT_SECONDARY_BINDINGS, createBindings, resetDefaults, setBinding, clearBinding,
   getBinding, addRemovedSecondaryAction, serializeKeyBinds, loadKeyBinds,
 } from '../src/systems/inputActions.js';
+
 import { DEFAULT_JOYSTICK_UI, STANDARD_TO_UNITY_BUTTON, isAxisKeyName } from '../src/systems/gamepad.js';
 import { domCodeForKeyCode, keyCodeForDomCode, isBindableKeyCode } from '../src/systems/keyCodes.js';
 import { setBindings, held, QUICKSLOT_ACTIONS } from '../src/ui/input.js';
@@ -128,13 +129,23 @@ test('PAD1-C the store: a full reset and the load-time autofill both FILL the pa
   resetDefaults(s);
   for (const [code, action] of DEFAULT_SECONDARY_BINDINGS) assert.equal(s.secondary.get(code), action, `${code} -> ${action}`);
   assert.equal(getBinding(s, 'Jump'), 'Space', 'the keyboard primary stands beside it');
-  // the player's own secondary stands through a full reset and an autofill
-  setBinding(s, 'KeyJ', 'Jump', false);
+  // the player's own secondary stands through a full reset and an autofill.
+  //
+  // The code is DERIVED rather than written out: it was `KeyJ` until
+  // QUICK-LOOT B4 gave J a primary default, and a reset then took the
+  // secondary back to the pad button - so the test stopped asking what
+  // it says it asks. A code no default holds, in EITHER dict, is what
+  // this fixture has always meant.
+  const own = 'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`)
+    .find((c) => !DEFAULT_BINDINGS.some(([code]) => code === c)
+      && !DEFAULT_SECONDARY_BINDINGS.some(([code]) => code === c));
+  assert.ok(own, 'every candidate letter is spoken for - this fixture needs a new one');
+  setBinding(s, own, 'Jump', false);
   assert.equal(s.secondary.has('JoystickButton5'), false, 'a secondary bind steals the action\'s old secondary (DFU\'s single-bind law)');
   resetDefaults(s);
-  assert.equal(getBinding(s, 'Jump', false), 'KeyJ', 'a full reset leaves the player\'s secondary');
+  assert.equal(getBinding(s, 'Jump', false), own, 'a full reset leaves the player\'s secondary');
   resetDefaults(s, true);
-  assert.equal(getBinding(s, 'Jump', false), 'KeyJ', 'and so does the autofill');
+  assert.equal(getBinding(s, 'Jump', false), own, 'and so does the autofill');
   // a cleared pad row stays cleared
   clearBinding(s, 'Crouch', false); addRemovedSecondaryAction(s, 'Crouch');
   resetDefaults(s, true);
@@ -143,7 +154,7 @@ test('PAD1-C the store: a full reset and the load-time autofill both FILL the pa
   assert.deepEqual(data.removedSecondaryActions, ['Crouch']);
   const t = createBindings(); loadKeyBinds(t, data); resetDefaults(t, true);
   assert.equal(getBinding(t, 'Crouch', false), null, 'the mark loads and holds through the startup autofill');
-  assert.equal(getBinding(t, 'Jump', false), 'KeyJ');
+  assert.equal(getBinding(t, 'Jump', false), own);
   assert.equal(getBinding(t, 'QuickUse1', false), 'JoystickAxis7Button0');
   // a mark for an action that is BOUND somewhere is read as the binding (the same law as removedPrimary)
   const u = createBindings(); loadKeyBinds(u, { actionKeyBinds: {}, secondaryActionKeyBinds: { JoystickButton4: 'Crouch' }, removedSecondaryActions: ['Crouch', 'Nonsense'] });

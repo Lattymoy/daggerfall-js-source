@@ -30,6 +30,8 @@ import {
   showWorldPlaque, destroyWorldPlaque, hideWorldPlaque, plaqueAnchor, worldPlaqueOn, worldHoverFrame,
   worldHoverFaults, PLAQUE_GAP, PLAQUE_WATCHDOG_MS, _plaqueSignatureForTests, _setPlaqueClockForTests,
 } from '../src/ui/worldPlaque.js';
+import { foldQuickLoot, quickLootWheel, resetQuickLoot } from '../src/systems/quickLoot.js';   // QUICK-LOOT B3: the two draw pins at the foot of this file drive the highlight through its own module
+import { PREF_DEFAULTS, setPref } from '../src/systems/uiPrefs.js';
 import { CROSSHAIR_ARM, crosshairCentreY } from '../src/ui/hudCrosshair.js';
 import { hudScale } from '../src/ui/hud.js';
 
@@ -1261,7 +1263,10 @@ test('INTERIOR-BODIES: a body killed inside a building is stood, named, listed a
   // rather than teleporting into the pack. The pool keeps the
   // empty-body refusal, the arrows pickup and a puppet's ask over the
   // wire; this hands it the door and nothing else.
-  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*const pool = key\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards;\n\s*pool\?\.takeLoot\(key, \(l\) => say\(l\), \(loot\) => mountInterior\(interiorInventory\(\{ loot \}\)\)\);\n\s*return true;\n\s*\}/,
+  // QUICK-LOOT B4: the window callback gained a DECLINE in front of it -
+  // quick loot is handed the same `loot` hooks the window would get, and
+  // a null answer falls through to exactly the call that was here.
+  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*const pool = key\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards;\n(?:\s*\/\/[^\n]*\n)*\s*pool\?\.takeLoot\(key, \(l\) => say\(l\), \(loot\) => \{\n\s*if \(quickLootTake\(key, loot, playerEntity, \(l\) => say\(l\)\)\) return;\n\s*mountInterior\(interiorInventory\(\{ loot \}\)\);\n\s*\}\);\n\s*return true;\n\s*\}/,
     'the press arm the bodies never had');
 
   // ...and it sits INSIDE the reach refusal, like every other family in
@@ -2051,8 +2056,22 @@ test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s onlin
   // the wire - the same category as `chatHidden`, which the lane has
   // always left alone.
   const ol = read('src/systems/onlineLane.js');
-  assert.match(ol, /export const ONLINE_PLAYERS_OWN_MODS = \['world-tooltips'\];/);
-  assert.match(ol, /if \(ONLINE_PLAYERS_OWN_MODS\.includes\(vendor\)\) return undefined;/);
+  // MODS-ONLINE (2026-09-22) re-aimed this line. It matched the list
+  // LITERALLY - `= ['world-tooltips'];` - which froze it at one entry
+  // and so asserted "exactly one readout is the player's" when R8's
+  // law is "a readout is". Seven more mods answer R8's question the
+  // same way now (Mac: "Is it possible to allow all mods to be toggled
+  // on and off for online?"), and the whole classification is held by
+  // test/modsonline.test.js. What this pin owns is its OWN case: World
+  // Tooltips is on that list and the lane does not force it.
+  // MODS-ONLINE-2 (2026-09-22) re-aimed the third line. The lane no
+  // longer asks "is this vendor exempt?" - it asks whether the KEY is
+  // one the room's ground depends on, and nothing else is forced at
+  // all. R8's own case is unchanged and stronger: World Tooltips is on
+  // the player's list AND the lane forces none of its keys.
+  assert.match(ol, /export const ONLINE_PLAYERS_OWN_MODS = \[/);
+  assert.match(ol, /'world-tooltips',/);
+  assert.match(ol, /const room = ONLINE_ROOM_MOD_KEYS\[vendor\];\s*\n\s*if \(!room \|\| !Object\.hasOwn\(room, key\)\) return undefined;/);
 
   // P7: ONE BUILDER, THREE READERS, NO SHARED SLOT. `springTargets()`
   // used to refill a module-level array on its way to the targets and
@@ -2083,3 +2102,54 @@ test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s onlin
   assert.match(teleport.slice(0, 1200), /doorGeneration \+= 1;/,
     'a teleport re-anchors the origin, so the street\'s door rows are not the street\'s any more');
 });
+
+// ── QUICK-LOOT B3: THE DRAW SHOWS THE HIGHLIGHT ──────────────────
+//
+// The behaviour of the take lives in test/quickloot.test.js, which
+// drives the feature module. These two are about the PLAQUE, and they
+// need the fake document above: that a lit row is drawn lit, and that
+// moving the highlight actually repaints - which it does not for free,
+// because a frame whose rows and title are unchanged is the very case
+// the signature guard exists to skip.
+
+test('QUICK-LOOT B3: the lit row is drawn lit, and only one of them', () => withPlaque((root) => {
+  setPref('quickLoot', true);
+  resetQuickLoot();
+  try {
+    const items = [{ name: 'Ruby' }, { name: 'Longsword' }, { name: 'Shield' }];
+    const { shown, rest, empty } = hoverLines(items);
+    const f = { key: 'pile:1', kind: 'items', title: 'Loot Pile', subs: [], rows: shown, rest, empty };
+    foldQuickLoot(f);
+    quickLootWheel(120);
+    foldQuickLoot(f);
+    showWorldPlaque(f, { x: 100, top: 40 });
+    const rows = find(root(), 'wplaque-row');
+    assert.equal(rows.length, 3, 'every row is drawn');
+    assert.deepEqual(rows.map((r) => r.classList.contains('sel')), [false, true, false],
+      'the second row is lit, and it is the only one');
+  } finally { resetQuickLoot(); setPref('quickLoot', PREF_DEFAULTS.quickLoot); }
+}));
+
+test('QUICK-LOOT B3: a moved highlight REPAINTS, though the frame is identical', () => withPlaque((root) => {
+  setPref('quickLoot', true);
+  resetQuickLoot();
+  try {
+    const items = [{ name: 'Ruby' }, { name: 'Longsword' }];
+    const { shown, rest, empty } = hoverLines(items);
+    const f = () => ({ key: 'pile:1', kind: 'items', title: 'Loot Pile', subs: [], rows: shown, rest, empty });
+    foldQuickLoot(f());
+    showWorldPlaque(f(), { x: 100, top: 40 });
+    const first = _plaqueSignatureForTests();
+    assert.deepEqual(find(root(), 'wplaque-row').map((r) => r.classList.contains('sel')), [true, false]);
+    // the same frame again, with the wheel turned between them. Nothing
+    // the model says about this pile changed - only which row is lit -
+    // so a signature built from the frame ALONE would skip the repaint
+    // and leave the highlight painted on the row the player left.
+    quickLootWheel(120);
+    foldQuickLoot(f());
+    showWorldPlaque(f(), { x: 100, top: 40 });
+    assert.notEqual(_plaqueSignatureForTests(), first, 'the signature carries the lit row');
+    assert.deepEqual(find(root(), 'wplaque-row').map((r) => r.classList.contains('sel')), [false, true],
+      'and the paint followed the highlight');
+  } finally { resetQuickLoot(); setPref('quickLoot', PREF_DEFAULTS.quickLoot); }
+}));
