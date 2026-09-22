@@ -184,6 +184,54 @@ export function endLethalDrains(entity) {
   return cleared;
 }
 
+/**
+ * DEATHLOOP2 (2026-09-22, DragynDance on Discord: "my game keeps
+ * spamming a wailing sound at me", with "I almost died in privateers
+ * hold due to freezing to death" and "as soon as I stepped outside my
+ * health bar started draaaaining").
+ *
+ * THE WAILING IS THE DEATH SOUND, ONE PER LOOP. PlayerDeathSequence
+ * plays the character's own Pain3 in its CONSTRUCTOR, and every host
+ * builds a fresh DeathScreen each time death is raised (all four are
+ * guarded against STACKING one over another, so it is not that) - so a
+ * player who dies, revives and dies again hears the wail once per turn
+ * of the loop, with the survival notices behind it.
+ *
+ * AND DEATHLOOP1 ONLY CLOSED HALF OF IT. That fix ended the `poison`,
+ * `continuousDamage` and `transferHealth` entries still draining the
+ * bar - effects on the entity - and stopped there. The cold is not an
+ * effect: survival/needs.js computes the felt temperature fresh every
+ * tick from the climate, the month, the hour, the weather, what is
+ * worn, how WET it is, and the race (an Argonian carries RACE_TEMP
+ * -10, the coldest of the eight), and its harm is DELIBERATELY LETHAL
+ * - needs.js says so where the floor is withheld: "the bare-skin harms
+ * leave the last five points BECAUSE they are not meant to kill, and
+ * this one is."
+ *
+ * That lethality is the design and is left alone. What is not the
+ * design is the LOOP: a character revived at half health in the same
+ * weather, still soaked, with the exposure counter still full, takes
+ * the same killing tick again before they can walk anywhere. So the
+ * revival clears the two survival fields that CARRY the death across
+ * it - the accumulated `exposure` and the `wet` that is defeating the
+ * clothes - exactly as it clears a poison, and for the same reason.
+ * Neither is the weather: step back out into a mountain night in a
+ * loincloth and it will kill you again, which is the system working.
+ */
+export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0, wet: 0 });
+
+/** Clear the stored survival state that would re-kill on the next harm
+ *  tick. Answers the fields it actually reset. */
+export function endLethalExposure(entity) {
+  const s = entity?.survival;
+  if (!s || typeof s !== 'object') return [];
+  const cleared = [];
+  for (const [k, v] of Object.entries(REVIVED_SURVIVAL_RESET)) {
+    if ((s[k] ?? 0) !== v) { s[k] = v; cleared.push(k); }
+  }
+  return cleared;
+}
+
 /** THE ONE REVIVAL. Health back to the respawn fraction if they are at
  *  or below zero, and the fast drains ended - in that order, and
  *  together, because either alone is the bug: health with the poison
@@ -198,5 +246,8 @@ export function reviveForPlay(entity, { force = false } = {}) {
   if (!entity) return { revived: false, cleared: [] };
   const dead = !(entity.health > 0);
   if (dead || force) entity.health = respawnHealth(entity.maxHealth);
-  return { revived: dead || force, cleared: endLethalDrains(entity) };
+  // DEATHLOOP2: the effects AND the exposure. Either alone leaves a
+  // loop - the poison one for a poisoned character, the cold one for a
+  // freezing one, and the second is what a player actually reported.
+  return { revived: dead || force, cleared: endLethalDrains(entity), exposure: endLethalExposure(entity) };
 }
