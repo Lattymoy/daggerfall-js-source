@@ -144,7 +144,32 @@ export const ONLINE_FORCED_MOD_KEY = 'Enabled';
  * `HideDefaultInteractTooltip` was already the player's and this makes
  * the pair consistent.
  */
-export const ONLINE_PLAYERS_OWN_MODS = ['world-tooltips'];
+export const ONLINE_PLAYERS_OWN_MODS = [
+  // AUDIT-WH R8's own case, and the one that set the test.
+  'world-tooltips',
+  // MODS-ONLINE (2026-09-22, Mac: "Is it possible to allow all mods to
+  // be toggled on and off for online?"). Yes - for every mod that
+  // answers R8's question the same way World Tooltips does, and the
+  // answer is a READING of what each one touches rather than a guess
+  // at what it sounds like. Two of the candidates failed on that
+  // reading and stayed forced, which is the whole reason it is a
+  // reading: the Shield Widget sounds cosmetic and carries
+  // `hitShield(damage, item)` and a block coroutine - it is in the
+  // damage path, and two players disagreeing about whether a blow was
+  // blocked is the room disagreeing; Handheld Torches sounds like a
+  // light and is an EQUIPPED ITEM in the save with a light in the
+  // world.
+  //
+  // What is left is the set that draws on your own screen and nowhere
+  // else. None of them reaches the wire, a save record, or a roll:
+  'dynamic-skies',         // the sky dome over a weather the room already shares (WORLD5 rolls it; this only paints it)
+  'seasons-iliac-bay',     // which texture archives load for the season - a swap in front of the same terrain
+  'weapon-widget',         // the first-person weapon's own motion; no damage, no timing, no attack state
+  'eye-of-the-beholder',   // third person and your own billboard; peers are drawn by remotePlayers either way
+  'ambient-text',          // flavour lines on your own screen
+  'immersive-footsteps',   // your own footstep audio
+  'better-ambience',       // ambient audio and the dungeon's darkness, both drawn locally
+];
 
 /** The forced value of a mod's switch on an online page, else undefined. */
 export function onlineForcedModSetting(vendor, key, search) {
