@@ -228,6 +228,11 @@ export const logout = (io, all = false) => call(io, '/v1/auth/logout', { all });
  *  ACC1g shut one field over. `{ ok, titles, title, glyphs }`. */
 export const equipTitle = (io, title) => call(io, '/v1/account/title', { title: title ?? null });
 
+/** ACC4: ONE BEAT OF TIME PLAYED. It carries no number - the service
+ *  credits the gap by its own clock (net/playClock.js says why), and
+ *  answers the running total. `{ playedS }`. */
+export const beatPlay = (io) => call(io, '/v1/account/played', {});
+
 /** ACC1d: A SIGNED WORD THE RELAY CAN CHECK, for one connection.
  *  `{ token, name, kind, expiresAt }`. The service signs the name it
  *  holds - this side does not get to say what goes in it, which is the
@@ -370,6 +375,28 @@ export function accountTokenMinter({ fetch, storage, onIssued = null }) {
     // rate limit would make an outage permanent.
     if (answer.error === 'auth') forgetSession(storage);
     return null;
+  };
+}
+
+/**
+ * ACC4: THE BEAT, bound to this device's stored session. The world host
+ * hands this to `startPlayClock` (net/playClock.js), which calls it
+ * every PLAY_BEAT_S while the page is visible.
+ *
+ * A DEVICE WITH NO SESSION DOES NOT KNOCK, and the session is read at
+ * EACH beat rather than captured: a player who signs in mid-sitting
+ * starts counting at the next beat, and one who signs out stops.
+ *
+ * AN `auth` ANSWER IS LEFT ALONE HERE. Forgetting a dead session is the
+ * minter's and the card's job, each of which can say so to the player;
+ * a background counter signing somebody out with nothing on screen to
+ * explain it would be a sign-out out of nowhere.
+ */
+export function accountPlayBeat({ fetch, storage }) {
+  return async () => {
+    const session = storedSession(storage);
+    if (!session) return null;
+    return beatPlay({ fetch, base: serviceBase(storage), secret: session.secret });
   };
 }
 

@@ -101,8 +101,11 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // `registered_at`, the sprout from `created_at`, developer from the
   // service's own config. None of those is a column, and this row is
   // the pin that says so.
+  // ACC4 added TWO - `played_s` and `played_at`, the one fact about an
+  // account no other column could derive: how long it has been played,
+  // credited by the service's clock (src/net/playClock.js says why).
   assert.deepEqual(cols.sort(), ['created_at', 'email', 'guest_name', 'handle', 'handle_lc', 'id',
-    'last_seen', 'muted_until', 'password', 'recovery_hash', 'registered_at', 'title']);
+    'last_seen', 'muted_until', 'password', 'played_at', 'played_s', 'recovery_hash', 'registered_at', 'title']);
   assert.ok(!cols.some((c) => /founder|developer|sprout|glyph|grant/i.test(c)), `a grant became a column: ${cols}`);
   // SAVES AND PROVIDER LINKS ARE STILL NOT HERE. They arrive as their
   // own migrations rather than as columns somebody added to this one.

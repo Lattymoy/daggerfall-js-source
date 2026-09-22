@@ -18,7 +18,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { dirname, join, relative } from 'node:path';
+import { graph } from './importGraph.mjs';   // ACC4: the walk moved to a helper so the ACCOUNT Worker's deploy filter is held to its own graph by the same law
 import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 
 /** SLAM13 (AUDIT SLAM, final lens): THE LAW IS THE WHOLE BUNDLE, not two files. wrangler bundles every relative import
@@ -28,20 +28,6 @@ import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker e
  *  depth first, each file once, in the order the imports are written. A file joining the graph changes the hash too,
  *  which is the point - a new import is a new bundle. Rows before world73 were sha256(index.js + wire.js) and stay
  *  as recorded: they are facts about bytes already deployed, under the hash law of their day. */
-function graph(entry) {
-  const out = [];
-  const walk = (file) => {
-    if (out.includes(file)) return;
-    out.push(file);
-    const src = readFileSync(new URL('../' + file, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[ \t])\/\/[^\n]*/gm, '$1');
-    for (const m of src.matchAll(/\bfrom\s+'(\.[^']+)'|\bexport\s+\*\s+from\s+'(\.[^']+)'|\bimport\s+'(\.[^']+)'/g)) {
-      const spec = m[1] ?? m[2] ?? m[3];
-      walk(relative('.', join(dirname(file), spec)).split('\\').join('/'));
-    }
-  };
-  walk(entry);
-  return out;
-}
 export const RELAY_GRAPH = graph('server/src/index.js');
 
 /** A version bump is `sed world<N>/world<N+1>` over nine test files - RUN IT WITH THIS FILE EXCLUDED, or it

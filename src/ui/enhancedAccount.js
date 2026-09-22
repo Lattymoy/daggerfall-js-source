@@ -42,6 +42,27 @@ export const GLYPH_LABEL = Object.freeze({
   dev: 'Developer',
 });
 
+/** ACC4: THE TWO FACTS MAC ASKED FOR, as words. Pure, so node pins
+ *  them. The date is the player's LOCAL day - an account made late on
+ *  the 21st in California was made on the 21st to its player, whatever
+ *  UTC says - and the month is a word, because 09/10 is two different
+ *  days on two sides of an ocean. Null for no date: a guest has not
+ *  registered, and 0 would print 1970. */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export function registeredText(s) {
+  if (!Number.isSafeInteger(s) || s <= 0) return null;
+  const d = new Date(s * 1000);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+/** Hours and minutes, and never seconds: the service counts in beats
+ *  of five minutes (net/playClock.js), so a seconds figure would claim
+ *  a precision nothing measured. Under an hour reads in minutes alone. */
+export function playedText(s) {
+  const m = Math.floor((Number.isFinite(s) && s > 0 ? s : 0) / 60);
+  const h = Math.floor(m / 60);
+  return h ? `${h}h ${m % 60}m` : `${m}m`;
+}
+
 export const STAGE_COPY = Object.freeze({
   // THE BLURBS WERE CUT (Mac: "there's uneeded text explaining what an
   // account is"). A sign-in window is not a place to be taught what an
@@ -249,6 +270,13 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
       if (flow.account.handle) row('Username', flow.account.handle);
       else row('Name', `${flow.account.guestName ?? flow.account.name} (a guest)`);
       if (flow.account.kind) row('Kind', flow.account.kind === 'linked' ? 'Registered' : 'Guest');
+      // ACC4 (Mac: "registered date and time played"). A guest has no
+      // registered date and gets no row for it, rather than a dash - the
+      // Kind row above already says why. Time played is every account's,
+      // guest time included: registering upgrades the same row.
+      const joined = registeredText(flow.account.registeredAt);
+      if (joined) row('Registered', joined);
+      row('Time played', playedText(flow.account.playedS));
       root.append(rows);
       wardrobe();
       if (!flow.account.handle) {

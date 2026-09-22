@@ -272,7 +272,8 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { accountTokenMinter, storedSession } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds
+import { accountTokenMinter, storedSession, accountPlayBeat } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
@@ -8684,6 +8685,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);
   };
   const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued });
+  // ACC4 (Mac: "time played to the icon profile"): THE WORLD IS WHERE
+  // TIME IS PLAYED, so the clock starts here and not at the menu - once,
+  // because bootWorld runs once per page. Online or not: a signed-in
+  // player in a single-player world is still playing. A hidden page
+  // does not knock, so a tab left in the background is not time played.
+  startPlayClock({
+    beat: accountPlayBeat({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
+    visible: () => globalThis.document?.visibilityState !== 'hidden',
+  });
   const onlineStart = () => {
     online = new OnlineSession({
       url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
