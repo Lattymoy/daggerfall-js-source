@@ -265,6 +265,44 @@ export function keepSession(storage, { id, name, kind, sessionId, secret }) {
   } catch { return false; }
 }
 
+/**
+ * ═══ NAME-ADOPT: THE CLIENT LEARNS WHO IT IS FROM THE SERVICE ══════
+ *
+ * Mac (2026-09-22), the first hour the arc was live: "The top right
+ * corner button doesnt update with name" and "Ingame your name shows
+ * for other people but you still see your character name in the chat
+ * menu".
+ *
+ * ONE CAUSE, TWO SYMPTOMS. The service ISSUES a name - the handle, or
+ * the guest name - and the relay takes it out of the token for
+ * everybody ELSE. But this device never took it in for ITSELF: the
+ * stored session kept whatever name it was written with (a guest's,
+ * when a guest registers - `register` answers the handle and not a
+ * session), and the online session was built from the CHARACTER'S
+ * name. So everybody in the room read `Lattymoy` and the one person
+ * who did not was Lattymoy.
+ *
+ * THE LAW: the issued identity is the service's answer, and this
+ * device adopts it wherever the service states it - `/v1/account` and
+ * every `/v1/auth/token`. This is the one door that writes it back.
+ *
+ * IT NEVER CREATES A SESSION and never touches the secret or the id:
+ * it corrects the name and kind of a session that already exists, so
+ * an answer arriving after a sign-out cannot resurrect one.
+ *
+ * @param {any} storage
+ * @param {{ name?: string, kind?: string }} [who]
+ */
+export function adoptIdentity(storage, { name, kind } = {}) {
+  const was = storedSession(storage);
+  if (!was) return false;
+  const next = { ...was };
+  if (typeof name === 'string' && name) next.name = name;
+  if (kind === 'guest' || kind === 'linked') next.kind = kind;
+  if (next.name === was.name && next.kind === was.kind) return false;   // nothing to write, and a write is a storage event every open tab hears
+  return keepSession(storage, next);
+}
+
 /** Forget it. Called on a deliberate sign-out AND whenever the service
  *  answers `auth`, because a secret the far end has stopped honouring
  *  is not a session - keeping it would make every later call fail the
@@ -285,23 +323,46 @@ export function forgetSession(storage) {
  *
  * IT ANSWERS `null` FOR EVERY REASON A PLAYER MIGHT HAVE NO TOKEN - no
  * session on this device, a service that is down, a rate limit, a secret
- * the service has stopped honouring. Never a throw. ACC1d D1 admits an
- * unverified hello exactly as every build before this slice did, so the
- * cost of a bad minute at the account service is a name the relay will
- * not vouch for, never a connection the player cannot make. That is the
- * two-Worker split's whole claim (ACC0) and this is where it is paid.
+ * the service has stopped honouring. Never a throw.
+ *
+ * (This paragraph used to end "ACC1d D1 admits an unverified hello
+ * exactly as every build before this slice did", which ACC1g made false:
+ * the relay REFUSES a tokenless hello now. What a null costs today is
+ * the connection - the player is told to sign in - and that is the
+ * wall working, not the minter failing.)
+ *
+ * NAME-ADOPT: THE ANSWER CARRIES WHO THIS DEVICE IS, and it used to be
+ * thrown away - the token kept, and `name`, `kind`, `title` and
+ * `glyphs` dropped on the floor beside it. That is half of why a
+ * player saw their character's name while everybody else saw their
+ * handle. So every successful mint ADOPTS the issued identity into the
+ * stored session, and hands it to `onIssued` for the live sessions.
+ * The return stays the token alone: the session's contract with this
+ * function is a string, and a pin holds it.
  *
  * @param {object} io
  * @param {(url: string, init: object) => Promise<any>} io.fetch
  * @param {any} io.storage  appStorage() in the app, a Map in a test
+ * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[]}) => void)|null} [io.onIssued]
  * @returns {() => Promise<string|null>}
  */
-export function accountTokenMinter({ fetch, storage }) {
+export function accountTokenMinter({ fetch, storage, onIssued = null }) {
   return async () => {
     const session = storedSession(storage);
     if (!session) return null;
     const answer = await mintIdentity({ fetch, base: serviceBase(storage), secret: session.secret });
-    if (answer.ok) return typeof answer.data?.token === 'string' ? answer.data.token : null;
+    if (answer.ok) {
+      const token = typeof answer.data?.token === 'string' ? answer.data.token : null;
+      if (token) {
+        const who = { name: answer.data.name, kind: answer.data.kind, title: answer.data.title ?? null, glyphs: Array.isArray(answer.data.glyphs) ? answer.data.glyphs : [] };
+        adoptIdentity(storage, who);
+        // A THROW HERE IS THE HOST'S AND IS NOT THE PLAYER'S. The token
+        // is good and the connection is the thing that matters; a
+        // display seam that breaks must not cost the hello its word.
+        try { onIssued?.(who); } catch { /* the token still goes */ }
+      }
+      return token;
+    }
     // A SECRET THE SERVICE HAS STOPPED HONOURING IS NOT A SESSION, and
     // `forgetSession`'s own note says why keeping one is worse than
     // dropping it. ONLY `auth`: every other refusal is the service
