@@ -196,15 +196,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // The open map owns the keyboard, exactly as it does in the three
     // hosts that already carry it - including the toggle key, which the
     // window itself defers to its own close.
-    if (overlay) {
-      overlay.input(e.code, e);
-      drainOverlay();
-      // MENU-RELOCK: the close key is the browser gesture pointer-lock
-      // needs. Do not wait for the next animation frame to reclaim look.
-      if (!overlay && !gamePaused()) requestLook(canvas);
-      e.preventDefault();
-      return;
-    }
+    if (overlay) { overlay.input(e.code, e); drainOverlay(); if (!overlay && !gamePaused()) requestLook(canvas); e.preventDefault(); return; }
     // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER, the law all four
     // hosts now carry. InputManager.PollInput (:1795-1809) adds every
     // held key before GameManager.Update reads an Action, and this add
@@ -228,8 +220,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     keys.delete(e.code);
     if (!overlay) return;
     overlay.keyup?.(e.code, e);
-    drainOverlay();
-    if (!overlay && !gamePaused()) requestLook(canvas);
+    drainOverlay(); if (!overlay && !gamePaused()) requestLook(canvas);
   });
   canvas.addEventListener('pointerdown', (e) => {
     // An open window withholds the pointer lock (the dungeon.js law) -
