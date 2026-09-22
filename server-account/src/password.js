@@ -105,8 +105,21 @@ export function passwordRefusal(pw) {
  * better than `===` short-circuiting on the first byte.
  */
 export function timingSafeEqual(a, b) {
-  const x = a instanceof Uint8Array ? a : new Uint8Array(0);
-  const y = b instanceof Uint8Array ? b : new Uint8Array(0);
+  // ═══ AUDIT-PW P2: IT USED TO FAIL OPEN ═══════════════════════════
+  //
+  // Both arguments were COERCED to an empty array when they were not
+  // byte arrays - so `timingSafeEqual(null, null)` was TRUE, and so was
+  // `timingSafeEqual(undefined, {})`. Two lengths of 0 XOR to 0, the
+  // loop does not run, and a function whose whole job is to say NO
+  // says yes. Nothing reaches it that way today (verifyPassword is its
+  // only caller and always hands it two real derivations), which is
+  // exactly why it could sit there: a defensive coercion that defends
+  // in the wrong direction, on the one primitive in this service that
+  // must never guess.
+  //
+  // ANYTHING THAT IS NOT A PAIR OF BYTE ARRAYS IS NOT EQUAL.
+  if (!(a instanceof Uint8Array) || !(b instanceof Uint8Array)) return false;
+  const x = a; const y = b;
   let diff = x.length ^ y.length;
   const n = Math.max(x.length, y.length);
   for (let i = 0; i < n; i++) diff |= (x[i % (x.length || 1)] ?? 0) ^ (y[i % (y.length || 1)] ?? 0);
@@ -120,8 +133,30 @@ async function derive(pw, salt, iters, subtle) {
 }
 
 /** Hash a password (or a recovery code - it is the same kind of thing
- *  and gets the same treatment). */
+ *  and gets the same treatment).
+ *
+ *  ═══ AUDIT-PW P1: IT REFUSES TO HASH NOTHING ════════════════════
+ *
+ *  `normalise` answers '' for anything that is not a string, and this
+ *  is the one chokepoint every stored credential in this service goes
+ *  through - so it is where the refusal belongs.
+ *
+ *  THE HOLE IT CLOSES IS NOT HYPOTHETICAL; this file's own note below
+ *  records the day it was open. `codeForHashing` has TWO CONTRACTS: at
+ *  the mint (accounts.js register/recover) a null is impossible, and at
+ *  the check a null is the ordinary answer to a typo. Nothing enforced
+ *  the first. So a minted code that failed to canonicalise - which is
+ *  what the Q fold did to `7GEPQ-47BS9-AYK70-QMWYW` - hashed the EMPTY
+ *  STRING into `recovery_hash`, and the check arm then compares
+ *  `canon ?? ''` against it: EVERY account registered in that window is
+ *  opened by typing any string that is not a code at all.
+ *
+ *  A password cannot reach here empty (`passwordRefusal` runs first at
+ *  all three call sites and its floor is 8), so nothing legitimate is
+ *  refused and the throw is a programming error rather than a player's.
+ */
 export async function hashPassword(pw, { subtle, rand }, iters = PBKDF2_ITERS) {
+  if (!normalise(pw)) throw new Error('refusing to hash an empty credential - a caller handed this null or ""');
   const salt = new Uint8Array(SALT_BYTES);
   rand(salt);
   const out = await derive(pw, salt, iters, subtle);

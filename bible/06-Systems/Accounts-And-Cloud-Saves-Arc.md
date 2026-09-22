@@ -1794,3 +1794,107 @@ so the hole is safe and it is kept.
 
 Mutants: `tools/mutants/audit312.json`, 10, **9 dead and 1 recorded
 equivalent**.
+
+---
+
+## AUDIT-PW — 2026-09-22, Mac: "Can you read those"
+
+The two things AUDIT-ACC named as unexamined and never came back to:
+`server-account/src/password.js` had never had the adversarial read the
+token got, and `tools/accountProbe.mjs` had never been mutated. Both
+were named again at the end of AUDIT-312, which is the second time a
+record has said so — so they are done here rather than named a third
+time.
+
+### P1 — NOTHING MAY HASH AN EMPTY CREDENTIAL, and the hole was live
+
+`codeForHashing` has **two contracts**. At the mint (`register`,
+`recover`) a null is impossible; at the check a null is the ordinary
+answer to a typo. **Nothing enforced the first.**
+
+`normalise` answers `''` for anything that is not a string, so a minted
+code that failed to canonicalise hashed the **empty string** into
+`recovery_hash` — and `recover` compares `canon ?? ''` against that row.
+Every account registered in such a window is opened by typing any string
+that is not a code at all. Driven, before the fix:
+
+```
+codeForHashing('NOT-A-VALID-CODE!!')  -> null
+hashPassword(null)                    -> pbkdf2-sha256$...   (of '')
+verifyPassword(codeForHashing('total garbage') ?? '', that)  -> TRUE
+```
+
+**It has happened once.** password.js's own note records the Q fold
+doing exactly this to `7GEPQ-47BS9-AYK70-QMWYW` — and the only thing
+that caught it was a test over minted codes. Nothing in the code refused
+to store the result, so the same shape would come back with the next
+alphabet change.
+
+Paid at the chokepoint: `hashPassword` refuses an empty normalised
+input, because it is the one door every stored credential in this
+service goes through. It **throws** rather than returning a refusal — a
+caller that hands it nothing is a programming error, and the router
+turns it into a logged 500 that stores nothing, which is the right
+failure for this. Nothing legitimate is refused: `passwordRefusal`'s
+floor is 8 and it runs first at all three password sites, and a minted
+code is twenty characters.
+
+### P2 — the constant-time compare failed OPEN
+
+`timingSafeEqual` **coerced** anything that was not a `Uint8Array` to an
+empty one. Two lengths of 0 XOR to 0, the loop never runs, and the one
+primitive in this service whose whole job is to say NO said yes:
+
+```
+timingSafeEqual(null, null)      -> true
+timingSafeEqual(undefined, {})   -> true
+```
+
+Unreachable today — `verifyPassword` is its only caller and always hands
+it two real derivations — which is exactly why it could sit there. A
+defensive default that defends in the wrong direction is worse than no
+default, because it reads as care. Anything that is not a pair of byte
+arrays is unequal now.
+
+**And the campaign found this pin's own blind spot.** The loop reads
+`x[i % x.length]` so that a byte is read on every iteration whichever
+array is shorter — which means a short array that **repeats** into a
+longer one matches it byte for byte, and the length XOR seeding `diff`
+is the only thing that says no. A *prefix* dies without it; a *repeat*
+does not, and the pin only tested a prefix. `[1,2]` against `[1,2,1,2]`
+is held now.
+
+### P3 — the mint's own guarantee, widened
+
+What was P1's only guard is kept as a pin in its own right: 2,000 minted
+codes must survive their own canonicalisation, and every letter the
+alphabet **contains** must come back unchanged (the Q fold's shape,
+stated as a law rather than as one remembered case).
+
+### What held
+
+PBKDF2-SHA256 at 210,000 with a per-account salt and a self-describing
+stored form; NFKC before the KDF; the rehash-on-correct-login upgrade
+path; `verifyPassword` deriving before it checks whether the row parsed,
+so "no password" and "wrong password" cost the same; `parseStored`
+refusing rather than throwing; the code alphabet a power of two with the
+mask exact and a throw if it ever stops being one; and `needsRehash`
+consulted only after a verified login.
+
+Mutants: `tools/mutants/auditpw.json`, 6, **6 dead and 0 survived** (one
+survived the first run — the repeat case above).
+
+### And the probe has been mutated at last
+
+`tools/accountProbe.mjs` was named never-mutated beside password.js. The
+question a campaign asks of a PROBE is the inverse of the usual one:
+**break the service, and does the probe go red?**
+
+| mutant | the suite sees it |
+|---|---|
+| a named value export back on the entrypoint | **no** — workerd refuses to start over a constant while the suite stays green BECAUSE it imports those very names |
+| the R2 binding renamed in `wrangler.toml` | **no** — the suite hands the Worker its own env and never reads that file |
+| the hash cost raised out of a Worker's CPU budget | no — the suite gets slower and stays green |
+| a migration that stops applying through wrangler's ledger | yes, but not through the ledger the deploy runs |
+
+Mutants: `tools/mutants/acctprobe.json`, 4, **4 dead and 0 survived.**
