@@ -200,10 +200,13 @@ export const SPECIAL_DUNGEON_TEXT_ID = Object.freeze({
   Daggerfall: 475, Wayrest: 476, Sentinel: 477,
 });
 export function specialDungeonName(regionName, locationName, textLine = () => null) {
+  let name = locationName ?? '';
   if (regionName === locationName && SPECIAL_DUNGEON_TEXT_ID[regionName] != null) {
-    return textLine(SPECIAL_DUNGEON_TEXT_ID[regionName]) ?? locationName;
+    name = textLine(SPECIAL_DUNGEON_TEXT_ID[regionName]) ?? name;
   }
-  return locationName ?? '';
+  // MACRO-6: `dungeonName.TrimEnd('.')` (:267) - the records read
+  // "Castle Daggerfall." and the answer puts its own full stop after it.
+  return String(name).replace(/\.+$/, '');
 }
 
 export const TALK_STRINGS = Object.freeze({

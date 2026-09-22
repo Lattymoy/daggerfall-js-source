@@ -9,7 +9,7 @@
 // characters/playerEntity.js:5). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:158/:1233-1235 both import and run
+// 126/:1364-1366 and exterior.js:158/:1234-1236 both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -365,7 +365,7 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:2653, exterior.js:1289,
+  // through this function - world.js:2653, exterior.js:1290,
   // dungeonContext.js:2436 - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game
@@ -406,7 +406,7 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *
  * `isChoiceWindow` is a GETTER for the same reason: the wizard wants
  * raw key codes and the question wants the shared overlayAction names,
- * and the hosts read that flag at routing time (townTalk.js:423,
+ * and the hosts read that flag at routing time (townTalk.js:425,
  * worldModes.js's overlayIsNative), so one object can want both in
  * turn.
  *
@@ -517,9 +517,9 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1262-1273,
-    // the route itself :1271), dungeonContext.js through `overlayHover`
-    // (:6682), which dungeon.js:524 and worldModes.js:8693 both feed.
+    // exterior.js through `townTalk.hover` (townTalk.js:1278-1289,
+    // the route itself :1287), dungeonContext.js through `overlayHover`
+    // (:6682), which dungeon.js:524 and worldModes.js:8719 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

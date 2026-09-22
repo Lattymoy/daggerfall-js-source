@@ -142,7 +142,7 @@ per arc:
   factual error found in the whole bible: `:798-805` claims "only %G
   has a capitalized handler" in DFU / "%G2/%G3 uppercase DO NOT
   EXIST" - refuted by the doc's own Wave 25 (`:2908`) and
-  `questMacros.js:479-490` ("MacroHelper.cs:240-245 registers ALL SIX
+  `questMacros.js:519-530` ("MacroHelper.cs:240-245 registers ALL SIX
   capitalized forms"); the early section was never corrected.
 - *World-Arc / Player-Arc*: ~20 clauses closed by later slices still
   read "pends" - T3c's list (`:653`) has three clauses T3d/T3e/T3f
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:5157-5158` routes them). UI-Arc carries no records
+  (`worldModes.js:5184-5185` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and

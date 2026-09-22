@@ -1,0 +1,16 @@
+[
+ {"name": "GUILD-REP-the-page-draws-no-guilds", "file": "src/ui/enhancedMenu.js",
+  "old": "  statsGuilds(detail, playerEntity);\n}", "new": "}", "tests": ["test/guildrep.test.js"]},
+ {"name": "GUILD-REP-the-rep-drops-off-the-row", "file": "src/ui/enhancedMenu.js",
+  "old": "el('span', 'v px-rank', a.title), signedRep(a.rep));", "new": "el('span', 'v px-rank', a.title));", "tests": ["test/guildrep.test.js"]},
+ {"name": "GUILD-REP-the-rank-drops-off-the-row", "file": "src/ui/enhancedMenu.js",
+  "old": "el('span', 'v px-rank', a.title), signedRep(a.rep));", "new": "signedRep(a.rep));", "tests": ["test/guildrep.test.js"]},
+ {"name": "GUILD-REP-the-rep-loses-its-sign", "file": "src/ui/enhancedMenu.js",
+  "old": "v > 0 ? `+${v}` : String(v));", "new": "String(v));", "tests": ["test/guildrep.test.js"]},
+ {"name": "GUILD-REP-an-empty-book-draws-nothing", "file": "src/ui/enhancedMenu.js",
+  "old": "    detail.append(el('p', 'px-note', 'You have no affiliations.'));\n", "new": "", "tests": ["test/guildrep.test.js"]},
+ {"name": "GUILD-REP-the-faction-name-ignored", "file": "src/systems/affiliations.js",
+  "old": "affiliation: entity?.factionRep?.dict?.get?.(guild.factionId)?.name ?? guild.name,", "new": "affiliation: guild.name,", "tests": ["test/guildrep.test.js", "test/classiccharsheetmodal.test.js"]},
+ {"name": "GUILD-REP-an-unknown-guild-is-a-row", "file": "src/systems/affiliations.js",
+  "old": "    if (!guild) continue;\n", "new": "    if (!guild) { out.push({ affiliation: '', title: '', rep: 0, factionId: 0 }); continue; }\n", "tests": ["test/guildrep.test.js"]}
+]

@@ -61,6 +61,7 @@ import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';
 import { questTransferRefused, SMALL_CART_TEMPLATE, TABS, tabAccepts } from './nativeInventory.js';
 import { initialTradeTab, STEAL_SUCCESS_TEXT, STEAL_FAILURE_TEXT } from './nativeTrade.js';
 import { expandGuildMacros } from '../systems/guildServiceActions.js';
+import { firstName } from '../systems/talkSession.js';   // MACRO-4: %pct's shop arm
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -198,6 +199,7 @@ function rowsFor(id, amount = null) {
     text: expandGuildMacros(r.text, {
       amount, gold: deps.gold?.() ?? 0, shopName: deps.shopName ?? '',
       cityName: deps.cityName?.() ?? '', playerName: deps.entity?.name ?? '',
+      guildTitle: deps.guildTitle?.() ?? firstName(deps.entity?.name ?? ''),   // MACRO-4: %pct (TradeMacroDataSource.GuildTitle)
     }),
   }));
 }

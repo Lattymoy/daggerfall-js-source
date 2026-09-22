@@ -29,6 +29,7 @@ import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherMan
 import { seasonValue, SEASONS, dateFromClassicMinutes } from '../systems/gameDate.js';   // DS1: the winter arm of that scale
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+import { expandRowValues } from '../systems/quest/questMacros.js';   // MACRO-3: the mastery box's %pcn and %ski
 // LV2: the level-up notification's seams. The CLASSIC lane's line and
 // box are still this file's - the seam takes them and uses them - so
 // nothing about the old skin is decided in a UI module.
@@ -1275,7 +1276,7 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
       // enhanced skin read record 4020 off disk at every mastery and
       // dropped it, under a surface that promises to read no game
       // data to announce one.
-      announceMastery(id, { box, rows: () => plainLines(lines?.(MASTERY_TEXT_ID)) });
+      announceMastery(id, { box, rows: () => expandRowValues(plainLines(lines?.(MASTERY_TEXT_ID)), null) });   // MACRO-3: %pcn and %ski are MacroHelper globals - DFU's box expands them with no source (PlayerEntity.cs:1397-1401)
       audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
     },
     (id) => announceSkillRaise(id, skillValue(entity, id), { say })) ?? [];

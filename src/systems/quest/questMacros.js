@@ -163,19 +163,65 @@ export function getMacro(word) {
  * '%adj' whole, misses the map, and leaves it alone.
  */
 export function expandMacroValues(text, values = {}, questLike = null) {
+  // MACRO-ONE: the context is the caller's, or else THE WORLD'S. DFU's
+  // MacroHelper never needs one handed to it for its global rows - they
+  // read GameManager.Instance - and the port's table reads the same facts
+  // off a quest machine's hooks. Only the callers that remembered to pass
+  // `questBridge.machine.macroContext()` got them, so every walk that
+  // passed a bare value map printed %ra, %crn, %cn raw. The bridge
+  // registers the world once (setMacroWorld) and every walk falls to it.
+  const ctx = questLike ?? macroWorld();
+  const vals = values ?? {};
   return String(text ?? '').replace(/%\w+/g, (token) => {
     const sym = token.slice(1);
-    if (sym in values) {
-      const v = values[sym];
-      if (v == null) return token;
-      return String(typeof v === 'function' ? v() : v);
+    if (sym in vals) {
+      const v = typeof vals[sym] === 'function' ? vals[sym]() : vals[sym];
+      // MACRO-ONE: a NULL is "this caller does not know", not "print the
+      // token" - it falls through to the context, and only a miss there
+      // leaves the token verbatim. The old guard made every map that
+      // listed a symbol it could not fill (a guild map's %ra, %pct, %hnr)
+      // a wall in front of the world that could.
+      if (v != null) return String(v);
     }
-    if (questLike && HANDLERS[token]) {
-      return getContextValue(token, questLike, questLike.hooks);
+    const declared = sym in vals;   // the caller named it and could not fill it
+    if (ctx && HANDLERS[token]) {
+      // ...and a caller's own context keeps DFU's throws (a %god with no
+      // Divine throws in MacroHelper too), but THE WORLD'S may not: it now
+      // reaches every window, and a handler that needs a subject the world
+      // does not have must cost the token, never the box.
+      //
+      // THE WORLD HAS NO SUBJECT. It answers only the rows MacroHelper
+      // reads off singletons (the player, the region, the date): no quest
+      // source, no NPC, no guild - so a subject-bound %n or %fon misses
+      // and stays for the caller who knows the speaker, rather than the
+      // world inventing a random name for it.
+      let v;
+      if (questLike) v = getContextValue(token, ctx, ctx.hooks);
+      else { try { v = getMacroValue(token, null, ctx.hooks, null); } catch { return token; } }
+      // MACRO-ONE: the WORLD'S fallback never prints an error shape. A
+      // row the world cannot answer (a subject-bound %god, %fon, %n with
+      // no provider) stays the token - the audit's gate names it - rather
+      // than trading "%fon" for "%fon[nullMCP]". A caller that passed its
+      // own context keeps the ladder's shapes exactly as before.
+      if ((!questLike || declared) && isErrorShape(v, token)) return token;
+      return v;
     }
     return token;
   });
 }
+
+/** MACRO-ONE: THE ONE GAMEMANAGER. DFU resolves a global macro (the
+ *  player, the region, the date) off singletons, whoever is showing the
+ *  text; the port's equivalent is the live quest machine's macroContext().
+ *  createQuestBridge registers it here, once per host, so no window has
+ *  to remember to hand it over. A throwing or absent provider is no
+ *  context - a macro walk must never cost a frame. */
+let _macroWorld = null;
+export function setMacroWorld(fn) { _macroWorld = typeof fn === 'function' ? fn : null; }
+export function macroWorld() {
+  try { return _macroWorld?.() ?? null; } catch { return null; }
+}
+const isErrorShape = (v, token) => typeof v !== 'string' || v.startsWith(token + '[');
 
 /** MACROS1 (2026-09-20, kurkku on Discord: "%map" and "%pcn / %fon" printed raw): TEXT.RSC ROWS through the value
  *  expander. A record read through the host's `lines(id)` is `[{ text, center }]` (or bare strings), and the boxes
@@ -203,7 +249,7 @@ export function expandRowValues(rows, values = null, questLike = null) {
   // symbol it carries, exactly as `expandMacroValues` orders them.
   if (!Array.isArray(rows)) return rows;
   const hasValues = !!values && !!Object.keys(values).length;
-  if (!hasValues && !questLike) return rows;
+  if (!hasValues && !questLike && !macroWorld()) return rows;   // MACRO-ONE: the world's context is a source too
   const one = (t) => expandMacroValues(t ?? '', values ?? {}, questLike);
   return rows.map((row) => (typeof row === 'string' ? one(row)
     : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row));
@@ -1020,6 +1066,28 @@ export function getMacroValue(symbolStr, mcp, hooks, mcp2 = null) {
 export function getContextValue(symbolStr, quest, hooks) {
   const mcp = quest ? { quest, source: questMacroSource(quest) } : null;
   return getMacroValue(symbolStr, mcp, hooks, quest?.externalMCP ?? null);
+}
+
+/** MACRO-5: `SetTextTokens(tokens, mcp)` for a walk - the value map a
+ *  MacroDataSource answers, over the ONE table. DFU hands a box its
+ *  subject (an effect, an item) and MacroHelper asks that subject every
+ *  row; the port's walks take value maps, so this turns a source into
+ *  one: each row asks `source` through its own handler, lazily, and a
+ *  row the source cannot answer (NotImplemented, a null, a throw) is
+ *  null - "this caller does not know" - so the world still answers the
+ *  global rows, exactly as expandMacroValues orders them. The table
+ *  names the symbol once; nothing here repeats it. */
+export function sourceValues(source) {
+  const mcp = { source };
+  const out = {};
+  for (const token of Object.keys(HANDLERS)) {
+    out[token.slice(1)] = () => {
+      let v;
+      try { v = getMacroValue(token, mcp, null, null); } catch { return null; }
+      return isErrorShape(v, token) ? null : v;
+    };
+  }
+  return out;
 }
 
 // ---- ExpandQuestMessage (QuestMacroHelper.cs:91-160) ----

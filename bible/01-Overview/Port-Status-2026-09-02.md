@@ -310,7 +310,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **player** | Near-1:1 / one lethal seam | **Near-1:1** | `cancelMovement` is a real motor field set on the mode edges (`player/motor.js:367,:439,:447`). ROAD-A A6 took the -0.28 doorway head-dip, `PlayerMoveScanner`'s three probes, `controllerSwimHeight` 0.30 with Do(Un)Sinking, and `FreezeMotor` on teleports. |
 | **combat** | Math exact / wiring broken | **Verbatim** | Four hosts resolve a player arrow. ROAD-A A12 shipped the left-hand weapon (ToggleHand/SwitchHand/`usingRightHand`, the classic import's `usingLeftHandWeapon`, the mirrored draw). |
 | **characters-ai** | Verbatim | **Verbatim** | `stopDistance` picks `CLASSIC_MELEE_DISTANCE_VS_AI` per pass (`enemyMotor.js:1271`, `enemyAttack.js:177`). ROAD-A A5 took enemy levitation, invisibility/Shade as live sources, foe fall damage and the Seducer transform pair. |
-| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:5172` passes `voxelfolk`, `scenes/interiorContext.js:503` consumes it. |
+| **characters-voxel** | Departure (deliberate) | **Departure, still editor-only** | 86 designs across seven tables - 42 of the 43 monster mobiles, 19 class, 25 villager. The rig is 1,791 lines across 7 modules and is still gated: `worldModes.js:5199` passes `voxelfolk`, `scenes/interiorContext.js:503` consumes it. |
 | **sys-entity** | Law byte-exact / three dead seams | **Verbatim** | ROAD-A A11 took the "master of" box (TEXT.RSC 4020) with `ArenaFanfareLevelUp`, `skillsRecentlyRaised` and the sheet's own leveling arm. |
 | **sys-magic** | Near-complete | **Verbatim** | 91 keys, 0 inert; `minimumCastingCost` live; ROAD-D D9 took the held-bundle instant re-fire and the caster block's `BundleType == Spell` test on all three gates. |
 | **sys-quests** | Verbatim | **Verbatim** | 82/82 action templates, 265 quests. `playSound`'s busy-skip was the one recorded delta and the E-group closed it (`systems/audio.js`'s `QuestAudioSource`). |
@@ -322,7 +322,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 | **sys-save** | Broad / three features silently dropped | **Verbatim** | ROAD-A A4 took the envelope stragglers (resistances, `skillsRecentlyRaised`, `minMetalToHit`, `previousVampireClan`, `timeToBecomeVampireOrWerebeast`, `playerTeleportedIntoDungeon`); ROAD-C C1 built the multi-slot window over the store. |
 | **ui-core** | Verbatim | **Verbatim** | ROAD-A A7 built a real `VerticalScrollBar` with a draggable thumb, the item scroller's arrow states, the list picker's double-click law and the message box's scrolling variant with its image panel - and with it, paintings. |
 | **ui-hud** | Verbatim (classic) / Partial (enhanced default) | **Verbatim on both skins** | The skin fork moved BELOW the game-state seams: `ui/hud.js:499` runs `updateHudVitals` and `:554` `drawNearDeathFlicker`, both above the enhanced branch at `:606` and above the `!art` return, and the enhanced HUD takes the Detect markers at `:621`. `lastHealthLost()` is no longer pinned at 0, so `CameraRecoiler` lives in all three hosts. |
-| **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:1011` over the 7-wide rail). |
+| **ui-windows-a** | Rect parity excellent / two crash doors | **Verbatim** | ROAD-D D2 shipped both scroll thumbs (`chargenArt.js:777` over `RECTS.pickScroll`, `spellbookWindow.js:1015` over the 7-wide rail). |
 | **ui-windows-b** | Broadly ported | **Verbatim** | Both automaps are native windows. ROAD-D D6 built the ship purchase over the shared bank-market mount and gave `buildingIsUnlocked` the `ownsShip` key its last arm needed. |
 | **ui-enhanced** | Departure lane | **Departure lane, scoped** | `ui/worldPlaque.js:301` puts the skin gate above `ensure()`, so the unscoped `*`/`html`/`body`/`button`/`#app` rules never reach the classic page. 9 modules / 8,940 lines. |
 | **xcut-seams** | Clean, with one block | **Clean** | The quest machine's region-faction block was the wave. |
@@ -403,7 +403,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   "DR1: THE TWO WINDOW SEAMS, MOUNTED"), pinned by three DR1 cases in
   `test/x11b.test.js`. This was also Ledger row `:697`'s adjudication,
   and that row is struck with it.
-- **`src/ui/enhancedMenu.js:2969`** - the rest of the keyboard; the
+- **`src/ui/enhancedMenu.js:2992`** - the rest of the keyboard; the
   wizard walks to `done` with no pointer. *The enhanced menu is the
   enhanced skin, a Ledger A departure, so no C# line is owed. The flag
   names its own blocker: focus order across a rail, a settings list and
@@ -420,7 +420,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - host scope.**
 
-- **`src/scenes/exterior.js:2064`** - Recall pends here; the anchor
+- **`src/scenes/exterior.js:2065`** - Recall pends here; the anchor
   machinery lives in the streaming `?world` host. *(The triage measured
   this row at `:1033`; RE-RESOLVED onto the live refusal at ROAD-G G7,
   because this is the one row in the two lists that is still OPEN - a
@@ -437,7 +437,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   named exactly: a jump to an anchor on ANOTHER map pixel, which is
   `_teleportToPixel`'s - the streamer's - and there is no streamer here.
   Its refusal names the reason instead of eating the cast.*
-- ~~**`src/scenes/exterior.js:1754`** - PX3: this test host mounts no
+- ~~**`src/scenes/exterior.js:1755`** - PX3: this test host mounts no
   quest bridge, so the pause window's Quests tab says so.~~ **SHIPPED
   (QX1, 2026-09-03).** *The triage's premise - "this file has no bridge
   at all and constructs no quest machine" - was a missing construction,
@@ -456,7 +456,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   interior pause off the same one walk), and the pause window's
   Chronicle button. The EIGHTH - the exterior static-NPC pass - keeps
   C#'s empty-machine answer for the narrower reason written at its own
-  site. (The `src/scenes/worldModes.js:2227` row below is struck: ROAD-E
+  site. (The `src/scenes/worldModes.js:2235` row below is struck: ROAD-E
   E3 ran that pass above ground in the streaming host, and what the
   sentence names is this host's layout order alone.)*
 
@@ -668,9 +668,9 @@ could see the others' closures until the squash, which is how "leaving
   narrowed the header and **E3** built the console host they needed.
 
 Five of the sites that survived Wave E only MOVED, and `Home.md` was
-regenerated onto the new sites: ~~`exterior.js:1434` -> `:1205`~~
+regenerated onto the new sites: ~~`exterior.js:1435` -> `:1206`~~
 (**CLOSED at TP2**: the Recall interim narrowed to the one arm this host
-cannot take, `exterior.js:1776`), ~~`exterior.js:1826` -> `:1514`~~
+cannot take, `exterior.js:1777`), ~~`exterior.js:1827` -> `:1515`~~
 (**CLOSED at QX1**: this host took the quest bridge, so the pause window's
 Quests tab has a machine to read), ~~`world.js:3689` -> `:3682`~~
 (**CLOSED at the ship landing**), ~~`worldModes.js:1902` -> `:1781`~~
@@ -907,7 +907,7 @@ ships, which is the warning the section's own preamble opens with.
 9. **`:584` UseItem's unbuilt destinations.** Every arm the row names is
    built: `DrinkPotion` (`systems/useItem.js:197`, `:275-285`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
-   (`ui/nativeInventory.js:778-782`, `scenes/world.js:3949`), the
+   (`ui/nativeInventory.js:796-800`, `scenes/world.js:3949`), the
    quest-item click (`useItem.js:229`, `:242-243`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
@@ -932,7 +932,7 @@ ships, which is the warning the section's own preamble opens with.
 12. **`:683` the magic crafting windows.** The row's FLAGGED residue is
     three items and all three are answered: spell icons ship and are
     drawn (`ui/spellIcons.js`, imported at
-    `ui/spellbookWindow.js:136-138`, drawn at `:1011`), the icon picker
+    `ui/spellbookWindow.js:136-138`, drawn at `:1015`), the icon picker
     ships (`ui/spellIconPickerWindow.js`), and the
     inert-catalogue count is gated at 0. What survives is not residue
     ~~but a **departure with no Ledger row**: DFU's native INFO01I0 art
@@ -960,7 +960,7 @@ faithful to whatever reference it does have, and none of them is a gap.
 - **The voxel character engine** (Mac's system, Port-Doctrine). 86
   designs across seven tables - 42 of the 43 monster mobiles, 19 class,
   25 villager - and a 1,791-line rig across 7 modules. Still not shipped
-  by a game host: `worldModes.js:5172` passes `voxelfolk`,
+  by a game host: `worldModes.js:5199` passes `voxelfolk`,
   `scenes/interiorContext.js:503` gates on it, and no default route sets
   it. The departure is faithful and is not in the player's hands.
 - **The enhanced skin and visuals** - 9 `ui/enhanced*.js` modules, 8,940

@@ -343,7 +343,8 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
     say?.(QUICKSLOT_TEXT.swapGone(r.name)); return { kind: 'gone', name: r.name };
   }
   const refuse = (id, kind) => {
-    const text = rows ? (rows(id) ?? []).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : '';
+    // MACRO-3: the item is the record's macro source - "%it is broken."
+    const text = rows ? expandRowValues(rows(id) ?? [], { it: itemLongName(r.item) }).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : '';
     if (text) say?.(text);
     return { kind, name: r.name };
   };

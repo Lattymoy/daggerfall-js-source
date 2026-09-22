@@ -870,7 +870,7 @@ does the pack's USE arm.
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:1057, world.js:2124,
-                        exterior.js:2374. It is the only window TWO
+                        exterior.js:2375. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
@@ -6968,7 +6968,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:649, :657`), and both exterior hosts called it
+  overlay (`townTalk.js:651, :659`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -8605,7 +8605,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2965 as a second book built by hand 342 lines below the
+worldModes.js:2973 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -9315,7 +9315,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:6538` and `dungeonContext.js:1612` answer the same
+`worldModes.js:6564` and `dungeonContext.js:1612` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10604,7 +10604,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1123` and `ui/spellbookWindow.js:430` already
+- the arm `ui/chargen.js:1123` and `ui/spellbookWindow.js:431` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -10647,7 +10647,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1123`, `ui/spellbookWindow.js:430`
+section above called `ui/chargen.js:1123`, `ui/spellbookWindow.js:431`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
@@ -10978,7 +10978,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:621-647`), so in the art-less greeting chain a tone
+  (`townTalk.js:623-649`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -16684,7 +16684,7 @@ there; all-max gets the sentence that is true of it.
 
 **F3 - two of the eight descriptions named numbers that do nothing.**
 The window's own promise is that each attribute line is true of code
-that runs. Willpower cited `questMacros.js:595`, which only PRINTS
+that runs. Willpower cited `questMacros.js:635`, which only PRINTS
 MagicResist for the `%mr` macro - the consumer is `spellcast.js:158`'s
 saving throw. Agility cited `toHitModifier` (formulas.js:118), which is
 the CHARACTER SHEET's display modifier and is read by chargen's derived

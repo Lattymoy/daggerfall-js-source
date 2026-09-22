@@ -354,9 +354,9 @@ half the lanes' own mutation tallies could not see.
   permanent `entity.skills` array while the hand-to-hand damage row four
   lines below it (AUDIT 63 F34) already read live, so a lycanthrope read
   `Hand-to-Hand 30%` on one line and a damage range computed from 60 on
-  the next. `charsheet.js:820` and `enhancedCharSheet.js:152` read
+  the next. `charsheet.js:798` and `enhancedCharSheet.js:152` read
   `skillValue` now, which moves the enhanced skin's meter with its
-  number (`enhancedMenu.js:2437-2438`) - correctly, since the attribute
+  number (`enhancedMenu.js:2438-2439`) - correctly, since the attribute
   bars beside it were already live. The art-less `_drawFallback` pane
   still prints `''` for an absent skill (both refuters: decide the
   blank case first); DFU has no such pane.
