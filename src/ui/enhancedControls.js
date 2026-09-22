@@ -145,13 +145,23 @@ const QUICKSLOT_ROWS = Object.freeze([
 export const PORT_GROUP_TITLE = 'Online';
 /** QS2's own, the same way. */
 export const QUICKSLOT_GROUP_TITLE = 'Quickslots';
+/** QUICK-LOOT B4: ...and the plaque's two, under their own heading for
+ *  the same reason the two above have theirs - the CLASSIC windows
+ *  cannot draw a row DFU never had, so a clash against one of these is
+ *  a clash a classic player can neither see nor clear. */
+export const QUICKLOOT_GROUP_TITLE = 'Quick loot';
+const QUICKLOOT_ROWS = Object.freeze([
+  Object.freeze({ action: 'QuickLootAll', label: 'Take everything' }),
+  Object.freeze({ action: 'QuickLootOpen', label: 'Open the container' }),
+]);
 /** The port's own headings, in the order the pane draws them. */
 export const PORT_GROUPS = Object.freeze([
   Object.freeze({ title: PORT_GROUP_TITLE, rows: ONLINE_ROWS }),
   Object.freeze({ title: QUICKSLOT_GROUP_TITLE, rows: QUICKSLOT_ROWS }),
+  Object.freeze({ title: QUICKLOOT_GROUP_TITLE, rows: QUICKLOOT_ROWS }),
 ]);
 /** Every port row, flat: the coverage rule's half of the answer. */
-export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS]);
+export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS, ...QUICKLOOT_ROWS]);
 
 /** ShowMultipleAssignmentsMessage's line, the string the classic grid
  *  draws (ui/controlsWindow.js's `top === 'dupes'` row). The same

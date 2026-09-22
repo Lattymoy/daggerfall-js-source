@@ -49,6 +49,7 @@ import { pickFoe,   // TI1: the lock-on pick
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
 import { hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // AUDIT-WH H4: the plaque's hide door, for the overlay branch that returns above drawFoes
+import { quickLootWheel, quickLootArm } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the plaque owns the wheel while it lists, and the two keys arm what the next activate means
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
 import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode, routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game   // AUDIT 39r: the mouse half of the held set
@@ -128,7 +129,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:6104), so each
+      // context owns none of its own (dungeonContext.js:6106), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -318,6 +319,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // InputManager.cs:487-503 returns before currentActions is
     // populated), so the mode must NOT flip under an open overlay -
     // the very next line already has the predicate.
+    // QUICK-LOOT B4: the two keys, under this host's overlay gate and
+    // above the mode ladder, for the reason the three hosts above put
+    // them high: `quickLootArm` refuses unless something is
+    // HIGHLIGHTED, so with no list under the crosshair the ladder falls
+    // through. It arms a mode and fires the one-frame activate
+    // (`_tapArmed`) the touch tap already uses, because the key is
+    // known here and only the FRAME has the ray and the pools.
+    if (!ctx.uiOverlayActive && quickLootArm(actionOf(e, keys))) { _tapArmed = 2; e.preventDefault(); return; }
     const im = MODE_ACTIONS[actionOf(e, keys)];
     if (im) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
@@ -393,7 +402,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // pickers); passive:false so the page never scrolls under the game.
   canvas.addEventListener('wheel', (e) => {
     if (!ctx.uiOverlayActive) {
-      // MW-D25: with no window up the wheel is the Morrowind camera.
+      // QUICK-LOOT B4: ...but the plaque is asked first, and answers
+      // only while it is listing a pile or a body. MW-D25: with no
+      // window up and no list under the crosshair the wheel is the
+      // Morrowind camera, exactly as before.
+      if (quickLootWheel(e.deltaY)) { e.preventDefault(); return; }
       if (walkMode && mwViewWheel(e.deltaY)) e.preventDefault();
       return;
     }

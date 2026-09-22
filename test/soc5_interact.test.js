@@ -485,7 +485,8 @@ test('AUDIT SOC D3: the port own action YIELDS in the classic windows - a grid a
   // QS2: the three quickslot actions joined it, off the same face and for the
   // same reason - the classic grid is Actions[2..40) on fixed art and the
   // ADVANCED popup is DFU's six, so none of the four is drawable there.
-  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);   // QS6: the spell slot yields there too - the classic pane cannot draw it either
+  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell',
+    'QuickLootAll', 'QuickLootOpen']);   // QUICK-LOOT B4: the two loot keys yield on the same rule - neither the grid's art nor DFU's six can draw them; QS6: the spell slot yields there too
   const store = createBindings();
   resetDefaults(store);
   assert.equal(getBinding(store, 'SocialInteract'), 'KeyF');

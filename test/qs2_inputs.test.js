@@ -31,7 +31,7 @@ import {
   createBindings, resetDefaults, setBinding, getBinding, actionForCode, loadKeyBinds, serializeKeyBinds,
 } from '../src/systems/inputActions.js';
 import { routeAction, QUICKSLOT_ACTIONS, POLLED_ACTIONS } from '../src/ui/input.js';
-import { GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, QUICKSLOT_GROUP_TITLE } from '../src/ui/enhancedControls.js';
+import { GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, QUICKSLOT_GROUP_TITLE, QUICKLOOT_GROUP_TITLE } from '../src/ui/enhancedControls.js';
 import { createWeaponRig } from '../src/combat/weaponRig.js';
 import { equipItem, equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { assignQuickslot, clearQuickslots, swapQuickslot, quickslotOf } from '../src/systems/quickslots.js';
@@ -45,6 +45,10 @@ const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 // action is never removed from ACTIONS, and the swap is still rebindable. What
 // it lost is its DEFAULT key, which the off-hand cell that draws it now carries.
 const QS = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);
+/** QUICK-LOOT B4: the plaque's two, appended past the quickslots for
+ *  the same reason the quickslots were appended past SOC5's row - an
+ *  action is never inserted, because the classic grid draws by INDEX. */
+const QL = Object.freeze(['QuickLootAll', 'QuickLootOpen']);
 /** The three a HOLD belongs to: a tap performs the slot, a hold cycles it, and
  *  only the frame can tell those apart - so these are polled, not dispatched. */
 const HOLD = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSpell']);
@@ -52,14 +56,14 @@ const HOLD = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSpell']);
 // ── THE ACTIONS ──────────────────────────────────────────────────────
 
 test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5\'s row - parse, and never displace an index the classic grid draws by number (mutants: a name spliced mid-list; a name the parser answers Unknown for)', () => {
-  assert.deepEqual(ACTIONS.slice(-5), QS, 'the last five rows, in this order');
-  assert.equal(ACTIONS.length, 50, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1');
+  assert.deepEqual(ACTIONS.slice(-7), [...QS, ...QL], 'the last seven rows, in this order');
+  assert.equal(ACTIONS.length, 52, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
   assert.equal(ACTIONS[44], 'SocialInteract', 'and SOC5\'s keeps 44');
   assert.deepEqual([...GRID_ACTIONS], ACTIONS.slice(2, 40), 'so the classic grid\'s slice still means what it meant');
-  for (const a of QS) {
+  for (const a of [...QS, ...QL]) {
     assert.equal(ACTIONS.filter((x) => x === a).length, 1, `${a} once`);
     assert.equal(parseActionName(a), a);
   }
@@ -68,7 +72,7 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
 });
 
 test('QS2: the port\'s own actions YIELD in the classic windows - all four of them, because none of the four is on either classic face (mutant: the three left out of PORT_ACTIONS, so a classic player is told of a clash against a row they cannot see or clear)', () => {
-  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS]);
+  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS, ...QL]);
   // The claim PORT_ACTIONS makes is "not drawable by a classic window", and it
   // is derived here rather than asserted: the classic grid is ACTIONS[2..40)
   // and the ADVANCED popup is its six.
@@ -142,8 +146,20 @@ test('QS2: a bindings blob written BEFORE this slice gains the three on the next
 // ── THE PANE ─────────────────────────────────────────────────────────
 
 test('QS2: the enhanced pane draws the three under their OWN heading, and the coverage rule still holds over every group (mutants: the rows dropped so the keys are unrebindable; the rows hidden under SOC5\'s Online heading; a row twice)', () => {
-  assert.deepEqual(PORT_GROUPS.map((g) => g.title), ['Online', QUICKSLOT_GROUP_TITLE]);
+  // QUICK-LOOT B4: a THIRD group, for the reason the second exists - a
+  // row the classic windows cannot draw needs a heading of its own, or
+  // a clash against it is one a classic player can neither see nor
+  // clear. The coverage rule below is what actually holds it: every
+  // bindable action has exactly one row across every group.
+  assert.deepEqual(PORT_GROUPS.map((g) => g.title), ['Online', QUICKSLOT_GROUP_TITLE, QUICKLOOT_GROUP_TITLE]);
   assert.equal(QUICKSLOT_GROUP_TITLE, 'Quickslots');
+  assert.equal(QUICKLOOT_GROUP_TITLE, 'Quick loot');
+  assert.deepEqual(PORT_GROUPS[2].rows.map((r) => [r.action, r.label]), [
+    ['QuickLootAll', 'Take everything'],
+    ['QuickLootOpen', 'Open the container'],
+  ]);
+  assert.ok(!PORT_GROUPS[0].rows.concat(PORT_GROUPS[1].rows).some((r) => QL.includes(r.action)),
+    'not under Online and not under Quickslots - looting is neither');
   assert.deepEqual(PORT_GROUPS[1].rows.map((r) => [r.action, r.label]), [
     ['QuickUse1', 'Use quickslot 1'],
     ['QuickUse2', 'Use quickslot 2'],

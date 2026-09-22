@@ -74,6 +74,17 @@ export const ACTIONS = Object.freeze([
   // rebindable - it only gives up the DEFAULT key, which the cell it is drawn
   // in (the off hand's) already carries.
   'QuickSpell',
+  // QUICK-LOOT B4: the plaque's two keys. APPENDED, like every port
+  // action before them, because an action is never removed from this
+  // list and its position is what a saved binding file resolves by.
+  //
+  // The third key quick loot needs is not here on purpose:
+  // ActivateCenterObject already exists, is UNLOSEABLE, and is what
+  // takes the highlighted row. Minting a second "activate, but for
+  // loot" would be two bindings for one press and the first thing a
+  // player would rebind into a clash.
+  'QuickLootAll',
+  'QuickLootOpen',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -86,7 +97,7 @@ export const ACTIONS = Object.freeze([
  *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen']);   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -152,6 +163,29 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // there first). Rebindable like every other row - the enhanced controls
   // window's ONLINE group.
   ['KeyF', 'SocialInteract'],
+  // QUICK-LOOT B4: P takes the lot, J opens the container.
+  //
+  // Both were chosen by ELIMINATION, and it took two rounds. The first
+  // pass picked G and B off a sweep of what THIS table binds, and
+  // HT4's gate caught them - G is Handheld Torches' ManualDropInput
+  // and B is Eye Of The Beholder's Camera.SwitchShoulder, so either
+  // would have been one press doing two things. The second pass swept
+  // the vendored mods' DEFAULTS too and picked K, and the gate caught
+  // that as well: Travel Options offers K as one of the CHOICES on
+  // RoadsIntegration.FollowPathsKey, which a defaults-only sweep
+  // cannot see. J and P are what is left over once DFU's table, the
+  // port's own two (Tab, Escape), every mod's default and every mod's
+  // offered choice are all spent.
+  //
+  // Neither is near the movement hand, and that is the honest cost of
+  // a keymap this full rather than a preference: they are ACTIONS, so
+  // a player who wants them under WASD moves them there.
+  //
+  // Both are ACTIONS rather than a literal `e.code` test in a host,
+  // which is AUDIT 58's lesson: a key-literal table there made four
+  // rebindable rows inert in both directions.
+  ['KeyP', 'QuickLootAll'],
+  ['KeyJ', 'QuickLootOpen'],
   // QS2: THE NUMBER ROW, which is the one place a Souls player's hand already
   // goes. Digit1-Digit4 are unspent by SetupDefaults, unspent by the port
   // (PX15's Tab, HT4's G, SOC5's F, HT's O and X are the whole of the port's

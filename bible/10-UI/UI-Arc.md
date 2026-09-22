@@ -866,17 +866,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:2140 (the factory) and :1904 (a
+                        worldModes.js:2142 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1019, world.js:2109,
-                        exterior.js:2372. It is the only window TWO
+                        dungeonContext.js:1021, world.js:2111,
+                        exterior.js:2373. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6418, dungeonContext.js:6568. A seam
+    / NOTEBOOK          world.js:6419, dungeonContext.js:6569. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8605,7 +8605,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2959 as a second book built by hand 342 lines below the
+worldModes.js:2961 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8688,7 +8688,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2524 and
+questJournal.js from charSheetNav:53, world.js:2526 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9315,7 +9315,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:6463` and `dungeonContext.js:1566` answer the same
+`worldModes.js:6483` and `dungeonContext.js:1568` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10023,7 +10023,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:885`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:953`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6750`,
+the other half went stale unnoticed. (The rest cite named `world.js:6765`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6756` now.)
+deleted the second and the cite is `world.js:6771` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10735,7 +10735,7 @@ if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
 - and for a SECONDARY write the "other" dict IS the primary, so a
 secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
 the reverse order deletes Jump's secondary row by the same line. The
-port carries it at `inputActions.js:469-470`. Either order collapses the
+port carries it at `inputActions.js:537-538`. Either order collapses the
 pair.
 
 The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
@@ -10746,7 +10746,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:649-659`, whose own comment already said
+- ported at `inputActions.js:717-727`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the
@@ -15349,9 +15349,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4882` named a line that is 8950, `:803` one that is
+read: `world.js:4884` named a line that is 8950, `:805` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4618-4650` and `dungeonContext.js:1391` were
+that is 8907. `world.js:4620-4652` and `dungeonContext.js:1393` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -16893,7 +16893,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2353` became
+second pass moved them a second time - `dungeonContext.js:2355` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came
@@ -17575,3 +17575,92 @@ so a *new* offender fails the suite.
 3 pins, 8 mutants, 8 dead. The node pins are the weaker half and say so
 in their own header: the proof is the browser probe, and CI does not run
 it.
+
+## QUICK-LOOT - taking from the plaque, without a window (2026-09-22, Mac)
+
+Arc B of the world-hover arcs. Arc A put a plaque under the crosshair
+that names what you are looking at and lists what a pile or a body
+holds; this makes that list a way to TAKE. Mac asked "Arc B first",
+then "How does skyrim do it" before the shape was settled, then "go".
+
+**What it is a port of: nothing, and the row says so.** DFU has no
+quick loot and no mod under `vendor/` carries one. Vanilla Skyrim does
+not either - what everyone means by the name is the QuickLoot mod (LE's
+QuickLoot, then QuickLoot RE/EE on SE), whose shape is a list beside the
+crosshair on look, the wheel moving a highlight through it, the activate
+key taking the lit row, a key of its own taking the lot, and the cursor
+never freed. That is what this is, adapted to the plaque Arc A already
+draws, and it is a DEPARTURE recorded as one (Ledger A).
+
+DFU's own precedent for taking with no window is real and narrow: a
+body holding nothing but arrows is taken whole and no window opens
+(PlayerActivate.cs:948-952). This generalises that one case to any row
+the player has picked out, which is exactly the size of the departure.
+
+**Where the parts live.** The HIGHLIGHT's law is `systems/worldHover.js
+nextSelection` - pure, and clamped at both ends rather than wrapping,
+because a highlight off the end points the take at nothing and a wrap
+makes a flick of a trackpad unpredictable. The row -> item walk is the
+DRAW's own (`hoverItemAt` over `hoverItems`), so a hole in a pack is not
+a row and is not an item either, and the "and N more" tail names nothing
+and takes nothing. The MOVE is `systems/inventory.js takeOneInto`,
+which is DoTransferItem's first statement written ONCE: gold to the
+counter, never the item list. `corpseMarker.js`'s bulk take is that door
+applied to every row now rather than a second copy of the law.
+
+The STATE - the selection, the pending wheel nudge, the armed key - is
+`systems/quickLoot.js`'s. The first pass put it in `ui/worldPlaque.js`,
+on the argument that the plaque already owns the frame and the teardown,
+which is true and still the wrong home: the TAKE needs the selection
+too, and that left only a take living inside a draw or a systems module
+reaching into `ui/`. The draw is TOLD which row is lit.
+
+**The wheel.** A host asks `quickLootWheel(e.deltaY)` first in its wheel
+ladder, above the camera zoom - the ladder's own existing law, "an open
+window owns the wheel", applied to a live list under the crosshair. The
+NOTCH is derived in the feature, not at three host call sites: AUDIT 65
+UI-5 holds that the outdoor hosts own no wheel arithmetic, and the sign
+is the half that is easy to get wrong (down the page is DOWN the list,
+which is the other way round from the camera door below it). The nudge
+is flushed once a frame, `player/mwView.js`'s own idiom for the same
+problem, and spent whether or not it moved anything.
+
+**The take goes through the window's own door.** `hooks` is the
+container's loot hooks - the very object a host already hands the
+inventory window as its remote target, and whose `items()` that window
+mutates when the player drags something out. Quick loot takes from the
+same handle, so there is one mutable way into a container and not two;
+reaching for `hoverContents` instead would have spliced what the slice
+documents as a read-only accessor. It sits INSIDE the pool's
+`openWindow` callback, so the pool keeps everything that is the pool's -
+the empty-body refusal, the arrows-taken-whole case, a puppet's ask over
+the wire - and a null answer opens the window exactly as before.
+
+**The two keys** (`QuickLootAll` on P, `QuickLootOpen` on J, after two
+rounds of elimination against every mod's own bindings) cannot act where
+they are pressed: a keydown has the KEY, and only the frame has the ray,
+the pick and the pools. So the key ARMS a mode and the host fires its
+own one-frame activate - `_tapArmed`, the existing idiom for exactly
+this - and the take reads the mode when the press lands. The arming is
+refused unless something is lit, so neither key does anything while you
+are looking at a door.
+
+**The switch** (`quick-loot`, the player's own, on by default) is read
+by the take ITSELF and not merely by the fold, because a keydown lands
+between two frames: throwing the switch off and hitting activate must
+open the window rather than take a row from a player who just asked for
+it back.
+
+**A body emptied by quick loot is not disabled.** DFU disables a corpse
+on the activation that FINDS it empty (PlayerActivate.cs:942-947), which
+is what leaves the player "The body has no treasure." to hear.
+
+Off is Daggerfall's loot exactly: the activate key opens the window it
+has always opened, and the plaque stays the readout Arc A shipped.
+
+**What the first pass got wrong, recorded because it is the general
+lesson.** Arc B's hosts were pinned by SOURCE TEXT - the rung is on this
+line, in this order - and nothing was pinned about what the feature
+does. A 24-mutant campaign killed two of its own mutants and let
+twenty-two live. `test/quickloot.test.js` is the answer: 21 tests that
+drive the real module, and the campaign is 24 for 24.
