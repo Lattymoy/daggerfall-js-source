@@ -2469,3 +2469,79 @@ each would cost its own.
 **OWED, and it is the half a player can see: `ACC3b`.** The name layer
 does not draw either yet, and the account icon has no equip control on
 it. Nothing above reaches a screen until it does.
+
+### ACC3b — SHIPPED 2026-09-22: over a head, in both faces
+
+**`src/ui/playerBadge.js` is the one home, and it is deliberately NOT in
+`identityToken.js`.** That module owns what EXISTS and is in the relay
+bundle, where a word of presentation costs a `RELAY_VERSION` bump and
+drops every connected player — and the relay has no opinion about gold.
+So the vocabulary is imported from there and the appearance lives here,
+where it can be changed for nothing. A pin WALKS `TITLES` and `GLYPHS`
+and requires an entry for every member, so a third title added to the
+token cannot reach a screen as a blank.
+
+**A glyph has TWO spellings and it is written down.** The enhanced DOM
+layer can draw a sprouting plant; the classic bitmap pass draws through
+a Daggerfall font and puts *nothing* on screen for a glyph that font
+lacks — ACC1d-MARK learned that with a tick, one slice earlier. So each
+glyph carries an SVG `path` for the face that can, and a one-character
+`mark` inside FONT0003's own range for the face that cannot. The limit
+is stated rather than left to be found: **this container has no ARENA2,
+so the real font is not read by any pin — the range is.**
+
+A title has ONE spelling, because it is a word, and both faces draw a
+word. Only its colour is spelled twice (an RGBA array, `cssRgba` for the
+DOM), which is exactly how SOC4's party green already crosses that seam.
+
+**The title's colour is not `colorOf`'s.** SOC4 owns the NAME's green;
+gold IS the Founder title. Either painted over the other erases a
+distinction somebody asked for, so they are two labels with two owners
+and a mutant holds the line.
+
+**`readBadge` is the inverse of `badged`, and lives beside it** in
+`wire.js` — the client's half of one field, so a badge cannot be written
+one way and understood another. The relay never calls it (it reads a
+badge out of a verified token, never off the wire); it is there because
+the alternative is a second spelling of one law in `net/online.js`. It
+CHECKS the vocabulary, because what arrives is a stranger's word: the
+relay only sends what a signature carried, so anything else is a relay
+that is older, newer, or not ours.
+
+- `src/ui/playerBadge.js` — new. The words, the colours, the marks, the
+  paths; `titleBadge`, `glyphBadges`, `glyphMarks`.
+- `src/net/wire.js` — `readBadge`; `RELAY_VERSION` world87 → **world88**.
+- `src/net/online.js` — the peer carries the badge, wears the NEWEST
+  hello's including none, and the remembered introduction keeps it so a
+  socket blip does not strip every title in the room.
+- `src/net/remotePlayers.js` — the badge rides the POINT (a fact about
+  the peer, unlike `colorOf`); the classic pass draws the title on its
+  own line above and the glyphs inside the centred run.
+- `src/ui/nameLayer.js` — `.dfname-title` above the row, `.dfname-glyphs`
+  after the name, the run rebuilt only when the badge changes.
+- `test/acc3badge.test.js` — 8 pins. `tools/mutants/acc3b.json` — 12,
+  11 dead and 1 recorded equivalent.
+
+**THE CAMPAIGN CAUGHT THE PIN THAT WAS SUPPOSED TO HOLD THE DRIFT.** A
+badge beside a name widens the run the label is centred on, and a run
+measured without it walks every badged name half a badge off its own
+skull — NAME1's entire complaint, re-made sideways by the feature meant
+to decorate it. The first cut of that pin compared two centres with a
+four-pixel tolerance and the mutant walked straight through: a pin about
+drift that tolerated the drift. The left edge is DERIVED now, through
+the same `measureText` the draw uses and at the point's own perspective
+scale — half the WHOLE run left of the head, and demonstrably not half
+the name.
+
+**And the recorded equivalent is honest rather than convenient.** The
+client's glyph bound (`glyphs.length >= GLYPHS_MAX`) is unreachable by
+construction: the duplicate test over a closed vocabulary already
+implies it, and `GLYPHS_MAX` is that vocabulary's own length. It stays
+because it is the TOKEN's bound restated at the client's door, for the
+day somebody relaxes the duplicate test — AUDIT-PW P2 is the standing
+example of why keeping such a guard is right.
+
+**STILL OWED: `ACC3c`.** The chat roster shows a bare name, and the
+account icon has no equip control — Mac asked to *"tap the account icon
+to equip 1 feature along with signing out"*, and until that exists a
+player holds titles they cannot choose between.
