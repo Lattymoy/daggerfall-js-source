@@ -465,7 +465,7 @@ test('ACC2: with no bucket bound, a save route says so rather than pretending', 
 
 import {
   cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, localSlot,
-  slotPath as clientSlotPath, CLOUD_REFUSALS, cloudRefusalText,
+  slotPath as clientSlotPath, slotKeyOf, CLOUD_REFUSALS, cloudRefusalText,
 } from '../src/systems/cloudSaves.js';
 import { SESSION_KEY, REFUSALS } from '../src/net/accountClient.js';
 import { SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX } from '../src/systems/characterId.js';
@@ -635,7 +635,7 @@ test('ACC2b: the slot the SERVICE refuses, and the slot this side refuses, each 
   putLocal(storage, 1, { characterId: undefined });
   const legacy = await pushSlot(io, storage, 1);
   assert.deepEqual(legacy, { ok: false, error: 'no-character' });
-  assert.match(cloudRefusalText('no-character'), /Load it once/);
+  assert.match(cloudRefusalText('no-character'), /Load this save once/);
 
   // A LOCAL SLOT THAT IS NOT THERE.
   assert.deepEqual(await pushSlot(io, storage, 99), { ok: false, error: 'no-save' });
@@ -739,4 +739,27 @@ test('ACC2b: a real slot written by saveSlots.js pushes - the two ends agree abo
   const left = (await cloudList(io)).saves.map((c) => c.saveName).sort();
   assert.deepEqual(left, ['100%', 'a/b', 'danger#1', 'x?y'], 'one slot went, and only that one');
   assert.equal(slotsIn(storage).length, before, 'every save is still on this device');
+});
+
+test('AUDIT-312 F3: the slot key carries BOTH halves, and one module writes it', () => {
+  // `ui/enhancedMenu.js` held its own copy of this and the audit's
+  // mutation campaign dropped the character half out of it without a
+  // single pin firing. Two characters both called their save QuickSave
+  // - which is what two people do - and one backup's spinner, one
+  // backup's error and one Delete then landed on both.
+  assert.equal(slotKeyOf({ characterId: 'c1', saveName: 'QuickSave' }), 'c1|QuickSave');
+  assert.notEqual(
+    slotKeyOf({ characterId: 'c1', saveName: 'QuickSave' }),
+    slotKeyOf({ characterId: 'c2', saveName: 'QuickSave' }),
+    'two characters, one slot name, two keys',
+  );
+  assert.notEqual(
+    slotKeyOf({ characterId: 'c1', saveName: 'QuickSave' }),
+    slotKeyOf({ characterId: 'c1', saveName: 'AutoSave' }),
+  );
+  // A card the SERVICE hands back is keyed by the same function - the
+  // menu looks its own slots up in that listing, so a second way of
+  // writing the key is a lookup that never matches.
+  assert.equal(slotKeyOf({}), '|');
+  assert.equal(slotKeyOf(null), '|');
 });

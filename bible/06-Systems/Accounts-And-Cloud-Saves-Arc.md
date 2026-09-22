@@ -1571,7 +1571,8 @@ adds a file. And `accountworker.test.js`'s schema pin listed the tables;
 exactly what 0001's header promised would happen, so the list moved and
 the promise is quoted beside it.
 
-Mutants: `tools/mutants/acc2.json`, 14, **14 dead and 0 survived**.
+Mutants: `tools/mutants/acc2.json`, 14 at this slice, **14 dead and 0
+survived** — ACC2b took the same file to 22, which is what it holds now.
 
 **NOT DEPLOYED**, and when it is, it drops nobody: `RELAY_GRAPH` is
 untouched by every line of it.
@@ -1635,3 +1636,161 @@ device is `pullSlot`, it is pinned end to end against the real service,
 and what it needs is a surface: a tile for a cloud-only save, with
 **Download** where **Load** sits. That is the next slice, and it is
 small.
+
+(The DELETE was on that list too, silently — AUDIT-312 F1 found it and
+paid it. See below.)
+
+---
+
+## AUDIT-312 — 2026-09-22, Mac: "Let's audit this"
+
+The four slices on PR #312 that AUDIT-ACC had not seen, because they did
+not exist when it ran: **ACC1d**, **ACC2a**, **ACC2b** and **TILE1/TILE2**
+(the tile half is recorded in `bible/10-UI/UI-Arc.md`; the findings are
+numbered once, here).
+
+Five lenses, the arc's usual: does it RUN, is the service safe read
+adversarially, what did it break, do the pins derive, and does the record
+say true things. **Twelve adversarial mutants were written against laws
+these slices claim**, and four survived. Everything below was driven, not
+read.
+
+### What held
+
+- **The relay's token seam.** Four mutants at the sharp parts — a relay
+  that vouches for names it cannot verify, a config var that loosens the
+  module's hard TTL ceiling, a spend-set that sweeps itself empty before
+  it is asked, and a client that puts `tok: null` in the hello (which
+  `wire.js` refuses, so it would cost every signed-out player the room).
+  All four died.
+- **The save service's isolation.** A `DELETE` that reaches past its own
+  account, a slot bound never counted, a thumbnail bounded by the save's
+  4 MiB limit — all dead, and the announced-content-length check turned
+  out to be pinned too (it was written off as un-pinnable and is not).
+- **The recorded campaigns re-run honestly**: `acc1d.json` 22,
+  `acc2.json` 22, `tile.json` 11 — **54 dead, 1 recorded equivalent, 0
+  survived**, which is what the PR claims.
+- **The Worker still boots** in workerd with ACC2's new R2 binding, and
+  the migration ledger applies `0003_saves.sql` in order.
+
+### F1 — THE DELETE HAD NO DOOR, and the refusal table already named it
+
+`DELETE /v1/saves/{char}/{name}` existed. `removeCloudSlot` existed.
+**Nothing called either**, and nothing in the record said so — ACC2c's
+"what is still not done" listed the download and not this.
+
+It is not a missing nicety. `SAVES_MAX` is 60, at the bound a new slot is
+refused, and the sentence the player is handed is *"Your cloud backup is
+full. Delete a save there to make room."* — an instruction to do
+something **the game gave them no way to do**. An account that filled up
+could never back up again.
+
+Paid: the tile's cloud line carries **Delete backup** on a backed-up
+slot. It says *backup* because the tile already has a **Delete**, the
+pane's own, which removes the save from this device — two buttons reading
+`Delete` one row apart, one destroying the game and one destroying the
+copy, is the worst label this menu could carry. It **asks twice** (the
+armed slot is cleared by the press, by arming another tile, and by the
+next visit to the menu), and `removeCloudSlot` never touches the local
+store, because the cloud is the copy.
+
+### F2 — `no-character` was a sentence no surface could show
+
+A card written before CHARID1 has no character id. `cloudFor` returned
+`off` for it, which draws **no cloud line at all** — so a legacy save sat
+in the list with no backup button and no reason, beside tiles that had
+one, and the sentence ACC2b wrote for exactly this case could never
+appear.
+
+Paid: a sixth cloud state, `wait`, with the sentence and **no button** —
+the act it needs is loading the save, which is the tile's own Load. The
+table's sentence was **shortened** to suit the surface it now has
+("Load this save once, then it can be backed up."), because Mac's rule
+for a tile is facts and no prose.
+
+### F3 — the menu's cloud arithmetic was where no pin could reach it
+
+The decision about what a tile says — signed in, legacy, busy, refused,
+backed up — lived inside `ui/enhancedMenu.js`, which is DOM and a boot
+and which no node test in this tree can drive. Three mutants of it went
+through **the whole suite** untouched:
+
+| mutant | what a player would have seen |
+|---|---|
+| `card.bytes > 0` → `card` | an upload that died between the row and the blob reads as **Backed up** |
+| the listing patched, not re-asked | a backup that lands never changes the tile until the menu is closed and reopened |
+| the slot key drops the character | every character's QuickSave is one slot: one spinner, one error, one armed Delete on all of them |
+
+Paid at the root: the decision is `ui/saveTile.js`'s `cloudStateOf`
+(pure, beside the states it names, returning a refusal **word** and never
+a sentence), and the slot key is `systems/cloudSaves.js`'s `slotKeyOf`,
+which is the module that owns "a slot is (character, save name)". What
+is left in the menu is the handlers, which is all a menu should hold.
+
+### F4 — `tools/accountProbe.mjs` never saw ACC2
+
+The probe exists because **importability is not deployability** — it was
+written the day the Worker could not boot while the suite was green. ACC2
+added a whole new binding (`SAVES`) and seven routes, and the probe never
+touched them.
+
+The gap is worse than it looks: **a binding that is absent does not
+crash.** `env.SAVES` missing answers `no-storage`, which reaches a player
+as "Cloud saves are unavailable right now" — with a green suite and a
+green deploy behind it, for ever.
+
+Paid: the probe drives a whole save round trip in workerd against its own
+R2 — the guest wall, a blob refused without a card, the card, the bytes
+back **byte for byte** as an octet-stream, the shot bounded apart from
+the save, another account refused a read and a delete, and the player's
+own delete taking the object as well as the row.
+
+**And the probe was only ever correct once.** `wrangler --local` reuses
+its state under `server-account/.wrangler`, so the second run registered
+a username the first had taken and logged in with a password the first
+run's recovery check had changed — six failures that were about the last
+run rather than about the service, and a migration check that read "no
+migrations to apply" as "no migrations". It stands on a fresh
+`--persist-to` directory now, and two runs back to back are 36/36 twice.
+
+### F5 — the extraction changed the ten heads' contract
+
+TILE1 lifted the face drawing out of `systems/chargenSession.js` into
+`ui/facePortrait.js`, which is right. But the new one ends
+`.filter(Boolean)` and the old one did not.
+
+`faceIndex` is on the save envelope and it addresses a **record number**.
+`bitmapCanvas` returns null for a record with no data, so one bad record
+shifted every later face down by one — while `ui/chargenArt.js`'s
+`loadFaceSet`, the OTHER reader of the same ten records, pushes for every
+index and never compacts. Two homes for the ten heads that disagree about
+what index 5 means is precisely the drift the extraction says it exists
+to prevent. Both readers already draw something where a face is missing,
+so the hole is safe and it is kept.
+
+### F6 — smaller, and recorded rather than paid
+
+- **The cloud latch was per page load, not per visit.** ACC2c's record
+  says "asked ONCE per visit to the menu"; the latch was module state and
+  nothing cleared it, so a player who backed a save up on their phone and
+  reopened this menu saw whatever listing was last fetched. A fresh mount
+  clears it now (and the armed Delete with it — an armed destructive
+  button must not outlive the screen it was armed on).
+- **The spent-set's eviction comment claims more than it holds.** "past
+  it the OLDEST goes, so a flood cannot evict the token somebody is about
+  to present" — the set holds SPENT tokens, so what an eviction exposes
+  is a replay of an already-presented one. The real bound is the 300 s
+  TTL plus the mint rate (`ACCOUNT_MAX` 240/min per account), which makes
+  4096 live entries in one room inside one token's life a deliberate act
+  with several accounts, by somebody who already has the victim's token
+  off the wire. Left as it is; the sentence is the thing that was wrong.
+- **`encodeURIComponent` on the R2 key's player half is equivalent**, and
+  that was DRIVEN rather than assumed: `accounts.js` mints ids base64url,
+  so the call is a no-op over every id that can exist. Belt for the day
+  that alphabet changes, recorded as equivalent in
+  `tools/mutants/audit312.json`.
+- **`pullSlot` is still the one live dead seam**, as ACC2c says — the
+  cloud-only tile is the next slice.
+
+Mutants: `tools/mutants/audit312.json`, 10, **9 dead and 1 recorded
+equivalent**.

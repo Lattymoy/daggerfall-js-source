@@ -45,8 +45,53 @@
 
 /** The cloud states a tile can be in. `off` draws no cloud line at all
  *  - ACC0's wall is at cloud saves, and a player with no account is not
- *  nagged on every tile about a feature they have not asked for. */
-export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad']);
+ *  nagged on every tile about a feature they have not asked for.
+ *
+ *  `wait` is AUDIT-312 F2's: a card written before CHARID1 has no
+ *  character id, so it cannot be filed in the cloud YET - it is adopted
+ *  the first time its character loads. That is a sentence to read, not
+ *  a failure and not a button. */
+export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad', 'wait']);
+
+/**
+ * ═══ THE CLOUD LINE'S STATE, DECIDED WHERE NODE CAN REACH IT ═══════
+ *
+ * AUDIT-312 F3: this decision lived inside `ui/enhancedMenu.js`, which
+ * is DOM and a boot and which no node pin can drive - so three mutants
+ * that change what a player is told about their own backup all
+ * SURVIVED the whole suite (an unfinished upload reading as a finished
+ * one, a listing that is never re-asked after a push, and every
+ * character's QuickSave sharing one slot key). The menu keeps the
+ * effects; the decision is here, pure, beside the states it names.
+ *
+ * IT RETURNS A REFUSAL WORD AND NOT A SENTENCE. `accountClient.js` owns
+ * the sentences - one word, one sentence - and this file owns no words
+ * about the cloud at all.
+ *
+ * @param {object} [q]
+ * @param {boolean} [q.signedIn]     there is an account on this device
+ * @param {string|null} [q.characterId]  CHARID1's id, or null on a legacy card
+ * @param {{bytes?: number, updatedAt?: number}|null} [q.card]  the service's own row for this slot
+ * @param {boolean} [q.busy]         a push is in flight for THIS slot
+ * @param {string|null} [q.error]    the refusal the last push for THIS slot ended in
+ * @param {number} [q.nowS]          seconds, as the card's `updatedAt` is
+ * @returns {{state: string, when: string|null, error: string|null}}
+ */
+export function cloudStateOf({ signedIn = false, characterId = null, card = null, busy = false, error = null, nowS = 0 } = {}) {
+  if (!signedIn) return { state: 'off', when: null, error: null };
+  // A LEGACY CARD IS A WAIT, NOT A WALL, and the refusal table has
+  // always had the sentence for it - before this it had no surface that
+  // could ever show it, because the tile fell straight to `off`.
+  if (!characterId) return { state: 'wait', when: null, error: 'no-character' };
+  if (busy) return { state: 'busy', when: null, error: null };
+  if (error) return { state: 'bad', when: null, error };
+  // `bytes` STAYS 0 UNTIL THE DATA LANDS (server-account/src/saves.js).
+  // A card alone is an upload that died between the row and the blob,
+  // and the service keeps that visible on purpose - reading it as a
+  // backup is how a player trusts a restore that cannot happen.
+  if (card && (card.bytes ?? 0) > 0) return { state: 'saved', when: agoText(card.updatedAt, nowS), error: null };
+  return { state: 'none', when: null, error: null };
+}
 
 /** How long ago, in words a player reads at a glance. Seconds in,
  *  because that is what the service's card carries (`updatedAt`). */
@@ -167,6 +212,10 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
       // A REFUSAL IS THE SERVICE'S OWN SENTENCE, handed in - this file
       // owns no words about why a backup failed.
       bad: cloud.why || 'Could not back up',
+      // ...and the same for a WAIT. AUDIT-312 F2: the sentence for a
+      // pre-CHARID1 card has existed since ACC2b and had no surface
+      // that could show it, because the tile fell straight to `off`.
+      wait: cloud.why || 'Not backed up yet',
     }[state];
     bar.append(el('span', 'svsay', said));
     for (const a of cloud.actions ?? []) bar.append(actionButton(el, a));

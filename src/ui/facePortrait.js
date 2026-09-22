@@ -102,9 +102,27 @@ export async function loadFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
     const name = races.raceArt(raceKey, gender).heads;
     const cif = new CifRciFile();
     cif.load(await getBytes(name), name, palette.pal);
+    // ═══ POSITIONAL, AND THAT IS NOT A DETAIL (AUDIT-312 F5) ══════
+    //
+    // THE INDEX IS THE IDENTITY. `faceIndex` is written on the save
+    // envelope (S3c/U9) and it addresses a RECORD NUMBER in the CIF -
+    // so this array is addressed by it at both ends: the chargen
+    // wizard's grid walks 0..FACES_PER_RACE-1 and reads `canvases[i]`
+    // (ui/enhancedChargen.js, which already draws the number where a
+    // face is missing), and `loadFace` below reads `set[faceIndex]`.
+    //
+    // The first cut of this extraction ended `.filter(Boolean)`, which
+    // COMPACTS. `bitmapCanvas` returns null for a record with no data
+    // or a canvas with no 2d context, so one bad record shifted every
+    // later face down by one - and `ui/chargenArt.js`'s loadFaceSet,
+    // the OTHER reader of these ten records, pushes for every `i` and
+    // never compacts. Two homes for the ten heads that disagreed about
+    // what index 5 means is the exact drift this module was extracted
+    // to prevent, so the hole is KEPT and every reader already handles
+    // one.
     const set = [];
     for (let i = 0; i < races.FACES_PER_RACE; i++) set.push(bitmapCanvas(cif.getDFBitmap(i, 0), palette.rgb, { scale }));
-    return set.filter(Boolean);
+    return set;
   })().then((set) => {
     cache.set(key, { canvases: set });
     return set;

@@ -17266,9 +17266,49 @@ game must never fail, and a backup that happens invisibly is a backup
 whose failure is also invisible. The listing is asked ONCE per visit and
 latches, because a pane repaints on every press.
 
-**Pinned** in `test/savetile.test.js` (8) and measured in
-`tools/saveTileProbe.mjs` (18 checks, `npm run savetile`). Mutants:
-`tools/mutants/tile.json`, 11, **10 dead and 1 recorded equivalent**.
+**Pinned** in `test/savetile.test.js` (11) and measured in
+`tools/saveTileProbe.mjs` (21 checks, `npm run savetile`). Mutants:
+`tools/mutants/tile.json`, 11, **10 dead and 1 recorded equivalent**, and
+`tools/mutants/audit312.json`, 10, **9 dead and 1 recorded equivalent**.
+
+### AUDIT-312 (2026-09-22, Mac: "Let's audit this") — three of the five
+### findings were on this surface
+
+The numbering and the full account are in
+`bible/06-Systems/Accounts-And-Cloud-Saves-Arc.md`; what belongs here is
+what changed on the tile.
+
+**F3 — the cloud line's STATE now lives in `ui/saveTile.js`, not in the
+menu.** `cloudStateOf` is pure and beside the states it names, and it
+answers a refusal WORD rather than a sentence, because the sentences
+belong to `net/accountClient.js`'s one table. It moved because
+`ui/enhancedMenu.js` is DOM and a boot: three mutants of that arithmetic
+survived THE WHOLE SUITE, and each is a lie about a player's own backup —
+an unfinished upload reading as a finished one, a listing never re-asked
+after a push, and every character's QuickSave sharing one slot key.
+
+**F1 — a backed-up slot carries `Delete backup`.** The route and the
+client call existed and nothing called either, while the refusal at the
+bound already told a player to "delete a save there to make room". It
+says *backup* because the tile already has a **Delete**, the pane's own,
+which removes the save from this device — two buttons reading `Delete`
+one row apart, one destroying the game and one destroying the copy, is
+the worst label this menu could carry. It asks twice, and the sheet was
+re-measured with both cloud buttons on one line.
+
+**F2 — a sixth cloud state, `wait`.** A card written before CHARID1 fell
+to `off`, so it drew no cloud line at all: no button and no reason,
+beside tiles that had one. It carries the (now shorter) sentence and NO
+button, and it reads DIM rather than ruby, because a wait is not a
+failure.
+
+**F5 — the ten heads stay POSITIONAL.** `loadFaceCanvases` ended
+`.filter(Boolean)`, which compacts — and `faceIndex` addresses a RECORD
+NUMBER. One record that will not draw shifted every later face down by
+one, while `ui/chargenArt.js`'s `loadFaceSet`, reading the same ten
+records, never compacts. Two homes for the ten heads disagreeing about
+what index 5 means is the exact drift the extraction exists to prevent.
+Both readers already draw something where a face is missing.
 
 **STILL OPEN, and it is Mac's call:** the portraits could not be
 photographed here — a real head needs the player's own Daggerfall files

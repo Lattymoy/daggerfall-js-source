@@ -64,7 +64,11 @@ export const CLOUD_REFUSALS = Object.freeze({
   // CHARID1: a card written before characters had ids. It is adopted
   // the first time its character is loaded (`adoptLegacyCards`), so
   // this is a wait rather than a wall, and the sentence says so.
-  'no-character': 'This save was made before characters had ids. Load it once and it can be backed up.',
+  // SHORT ON PURPOSE (AUDIT-312 F2). It now has a surface - the tile's
+  // own cloud line - and Mac's rule for a tile is facts and no prose:
+  // "there's uneeded text explaining what an account is". What a player
+  // needs here is the ACT, not the history of CHARID1.
+  'no-character': 'Load this save once, then it can be backed up.',
   'no-save': 'That save is not on this device.',
   // NOT `no-account`, which the SERVICE already uses for "that account
   // no longer exists". One word, one sentence: a table here that
@@ -98,6 +102,16 @@ export function cloudIo({ fetch, storage }) {
  *  own words and may hold a space, a slash or a hash, and the service's
  *  own matcher decodes exactly this (server-account/src/service.js
  *  savePathOf). */
+/** THE SLOT'S IDENTITY AS ONE STRING, for a caller that has to hold
+ *  "which slot is this?" in a variable - the menu's busy latch and its
+ *  refusal latch both do. It is the SAME pair the path is built from
+ *  (ACC2 D2: a slot is (character, save name), never the local number),
+ *  and it lives here rather than in the menu because AUDIT-312 F3 found
+ *  the menu's own copy had dropped the character half - which makes
+ *  every character's QuickSave one slot, so one backup's spinner and
+ *  one backup's error land on all of them. */
+export const slotKeyOf = (slot) => `${slot?.characterId ?? ''}|${slot?.saveName ?? ''}`;
+
 export const slotPath = (characterId, saveName, part = null) =>
   `/v1/saves/${encodeURIComponent(characterId)}/${encodeURIComponent(saveName)}${part ? `/${part}` : ''}`;
 

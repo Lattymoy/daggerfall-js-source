@@ -1,0 +1,83 @@
+[
+  {
+    "name": "A312-1-an-unfinished-upload-reads-as-a-backup",
+    "file": "src/ui/saveTile.js",
+    "old": "  if (card && (card.bytes ?? 0) > 0) return { state: 'saved', when: agoText(card.updatedAt, nowS), error: null };",
+    "new": "  if (card) return { state: 'saved', when: agoText(card.updatedAt, nowS), error: null };",
+    "tests": ["test/savetile.test.js"],
+    "note": "`bytes` stays 0 until the data lands, on purpose - the service keeps a half-finished upload visible rather than letting it pass for a backup. This mutant SURVIVED the whole suite before the audit, because the decision lived in ui/enhancedMenu.js where no node pin could reach it."
+  },
+  {
+    "name": "A312-2-a-legacy-card-is-silently-off",
+    "file": "src/ui/saveTile.js",
+    "old": "  if (!characterId) return { state: 'wait', when: null, error: 'no-character' };",
+    "new": "  if (!characterId) return { state: 'off', when: null, error: null };",
+    "tests": ["test/savetile.test.js"],
+    "note": "AUDIT-312 F2, restored: the tile fell to `off` for a card written before CHARID1, so the sentence the refusal table has always had for it could never be shown - a tile with no cloud line and no reason, beside tiles that have one."
+  },
+  {
+    "name": "A312-3-a-stale-refusal-outlives-the-retry-it-caused",
+    "file": "src/ui/saveTile.js",
+    "old": "  if (busy) return { state: 'busy', when: null, error: null };\n  if (error) return { state: 'bad', when: null, error };",
+    "new": "  if (error) return { state: 'bad', when: null, error };\n  if (busy) return { state: 'busy', when: null, error: null };",
+    "tests": ["test/savetile.test.js"],
+    "note": "Press Try again and the tile still reads as failed while the retry is in flight - so the player presses it again, and again."
+  },
+  {
+    "name": "A312-4-two-characters-share-one-slot-key",
+    "file": "src/systems/cloudSaves.js",
+    "old": "export const slotKeyOf = (slot) => `${slot?.characterId ?? ''}|${slot?.saveName ?? ''}`;",
+    "new": "export const slotKeyOf = (slot) => `${slot?.saveName ?? ''}`;",
+    "tests": ["test/cloudsaves.test.js", "test/savetile.test.js"],
+    "note": "Every character's QuickSave becomes one slot: one spinner, one error and one armed Delete on all of them. SURVIVED the whole suite before the audit, in the menu's own copy of this line."
+  },
+  {
+    "name": "A312-5-the-listing-is-patched-rather-than-asked",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    if (r.ok) { cloudAsked = false; ensureCloud(); }",
+    "new": "    if (r.ok) { ensureCloud(); }",
+    "tests": ["test/savetile.test.js"],
+    "note": "The latch is still set, so a push that lands never changes what the tile says the cloud holds until the menu is closed and reopened."
+  },
+  {
+    "name": "A312-6-the-cloud-latch-outlives-the-visit",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "  cloudAsked = false;\n  cloudArm = null;\n  sections =",
+    "new": "  cloudArm = null;\n  sections =",
+    "tests": ["test/savetile.test.js"],
+    "note": "Module state, so `once per visit` was really once per page load: a player who backed a save up on another device and reopened this menu was shown the listing from whenever it was last asked."
+  },
+  {
+    "name": "A312-7-the-delete-does-not-ask-twice",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "      line.actions.push(cloudArm === slot\n        ? { label: 'Delete backup?', primary: true, onClick: () => removeBackup(save) }\n        : { label: 'Delete backup', onClick: () => { cloudArm = slot; render(); } });",
+    "new": "      line.actions.push({ label: 'Delete backup', onClick: () => removeBackup(save) });",
+    "tests": ["test/savetile.test.js"],
+    "note": "The one button in this menu that destroys something, one mis-press from a backup that is gone - beside `Back up again`, which is the button next to it."
+  },
+  {
+    "name": "A312-8-the-delete-takes-the-local-save-too",
+    "file": "src/systems/cloudSaves.js",
+    "old": "export const removeCloudSlot = (io, { characterId, saveName }) =>\n  ask(io, slotPath(characterId, saveName), { method: 'DELETE' });",
+    "new": "export const removeCloudSlot = (io, { characterId, saveName }) =>\n  ask(io, slotPath(characterId, saveName), { method: 'DELETE' }).then((r) => { io.storage?.removeItem?.(`x${characterId}`); return r; });",
+    "tests": ["test/savetile.test.js"],
+    "note": "The cloud is the COPY. Deleting a backup that also deleted the game is the single worst thing this arc could do, and the design record says so twice."
+  },
+  {
+    "name": "A312-9-the-ten-heads-are-compacted",
+    "file": "src/ui/facePortrait.js",
+    "old": "    for (let i = 0; i < races.FACES_PER_RACE; i++) set.push(bitmapCanvas(cif.getDFBitmap(i, 0), palette.rgb, { scale }));\n    return set;",
+    "new": "    for (let i = 0; i < races.FACES_PER_RACE; i++) set.push(bitmapCanvas(cif.getDFBitmap(i, 0), palette.rgb, { scale }));\n    return set.filter(Boolean);",
+    "tests": ["test/savetile.test.js"],
+    "note": "This is what the extraction shipped. `faceIndex` addresses a RECORD NUMBER, and `bitmapCanvas` returns null for a record it cannot draw - so one bad record shifts every later face down by one, while ui/chargenArt.js's loadFaceSet, reading the same ten records, never compacts."
+  },
+  {
+    "name": "A312-10-the-player-half-of-the-R2-key-is-pasted-unencoded",
+    "file": "server-account/src/service.js",
+    "old": "export const savePrefix = (playerId) => `saves/${encodeURIComponent(playerId)}/`;",
+    "new": "export const savePrefix = (playerId) => `saves/${playerId}/`;",
+    "tests": ["test/cloudsaves.test.js"],
+    "equivalent": true,
+    "why": "A player id is minted by the service itself - accounts.js mintId, base64url, so [A-Za-z0-9_-] and encodeURIComponent is a no-op over every id that can exist. It is belt for the day an id's alphabet changes, not a branch, and the audit DROVE that rather than assuming it."
+  }
+]

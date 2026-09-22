@@ -68,6 +68,11 @@ const SAVES = [
     when: '28th of Last Seed, 3E 405', hour: '03:02', saveName: 'AutoSave', face: true, cloud: 'busy' },
   { name: 'Mithriil Stormaire', race: 'High Elf', career: 'Spellsword', level: 3, health: 30, maxHealth: 44, gold: 9,
     when: '1st of Morning Star, 3E 405', hour: '12:00', saveName: 'a very long slot name indeed', face: false, cloud: 'bad' },
+  // AUDIT-312 F2: a card from before CHARID1. It cannot be filed in the
+  // cloud yet and it is not a failure, so it gets the sentence and no
+  // button - and it must still read as an ordinary tile.
+  { name: 'Old Gwylim', race: 'Wood Elf', career: 'Archer', level: 5, health: 52, maxHealth: 52, gold: 1204,
+    when: '9th of Sun\'s Dusk, 3E 405', hour: '18:30', saveName: 'QuickSave', face: false, cloud: 'wait' },
 ];
 
 const measured = await page.evaluate(async ({ saves }) => {
@@ -92,10 +97,15 @@ const measured = await page.evaluate(async ({ saves }) => {
   grid.className = 'svgrid';
   app.append(grid);
   const cloudOf = (s) => ({
-    saved: { state: 'saved', when: '2 hours ago', actions: [{ label: 'Back up again' }] },
+    // AUDIT-312 F1: a backed-up slot carries BOTH cloud buttons now -
+    // the delete had a route and a client call and no door at all, while
+    // the refusal table already told a player at the bound to delete
+    // one. Two buttons plus the line is what has to fit.
+    saved: { state: 'saved', when: '2 hours ago', actions: [{ label: 'Back up again' }, { label: 'Delete backup' }] },
     none: { state: 'none', actions: [{ label: 'Back up' }] },
     busy: { state: 'busy' },
     bad: { state: 'bad', why: 'Your cloud backup is full. Delete a save there to make room.', actions: [{ label: 'Try again' }] },
+    wait: { state: 'wait', why: 'Load this save once, then it can be backed up.' },
     off: { state: 'off' },
   })[s.cloud];
   const tiles = [];
@@ -140,6 +150,14 @@ const measured = await page.evaluate(async ({ saves }) => {
       rendering: t.querySelector('.svface canvas') ? cs(t.querySelector('.svface canvas')).imageRendering : null,
       cloudSay: t.querySelector('.svsay')?.textContent ?? null,
       cloudColor: cs(t.querySelector('.svsay'))?.color ?? null,
+      cloudButtons: [...t.querySelectorAll('.svcloud .act')].map((b) => b.textContent),
+      // Does the cloud line fit? Its own right edge against the last
+      // button's - a second button that wraps off the tile is the fault
+      // a source sweep cannot see.
+      cloudRight: t.querySelector('.svcloud')
+        ? Math.round(box(t.querySelector('.svcloud')).right) : 0,
+      cloudLastRight: t.querySelector('.svcloud .act:last-child')
+        ? Math.round(box(t.querySelector('.svcloud .act:last-child')).right) : 0,
       slot: t.querySelector('.svslot')?.textContent ?? null,
       // A LONG SLOT NAME SITS ON THE HEADING'S LINE, so it is bounded
       // and clipped rather than allowed to crowd the character's name.
@@ -210,6 +228,16 @@ check('a backup reads verdigris and a refusal reads ruby',
   measured.tiles[0].cloudColor === VERDIGRIS && measured.tiles[3].cloudColor === RUBY,
   `${measured.tiles[0].cloudColor} / ${measured.tiles[3].cloudColor}`);
 check('NO ACCOUNT, NO CLOUD LINE - a player who has not asked for one is not nagged', !measured.bare.cloud);
+// AUDIT-312 F1/F2: the delete's door, and the wait that had none.
+check('a backed-up slot offers BOTH cloud buttons, and both fit on the tile',
+  measured.tiles[0].cloudButtons.join('/') === 'Back up again/Delete backup'
+  && measured.tiles[0].cloudLastRight <= measured.tiles[0].cloudRight,
+  `${measured.tiles[0].cloudButtons.join('/')} | last ends ${measured.tiles[0].cloudLastRight} of ${measured.tiles[0].cloudRight}`);
+check('a card from before CHARID1 says so and offers NO button',
+  /Load this save once/.test(measured.tiles[4].cloudSay ?? '') && measured.tiles[4].cloudButtons.length === 0,
+  `${measured.tiles[4].cloudSay} | ${measured.tiles[4].cloudButtons.length} buttons`);
+check('...and it reads QUIET - a wait is not a failure', measured.tiles[4].cloudColor === DIM,
+  measured.tiles[4].cloudColor);
 
 await page.evaluate(() => { document.body.style.background = '#0e1013'; });
 await page.screenshot({ path: `${shots}/tile-desktop.png`, fullPage: true });

@@ -19,7 +19,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { saveTile, agoText, tileLine, tileWhen, initialOf, CLOUD_STATES } from '../src/ui/saveTile.js';
+import { saveTile, agoText, tileLine, tileWhen, initialOf, CLOUD_STATES, cloudStateOf } from '../src/ui/saveTile.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -117,7 +117,7 @@ test('TILE2/ACC2: the cloud line, and the state that draws NONE of it', () => {
   for (const cloud of [null, { state: 'off' }, {}]) {
     assert.equal(byClass(saveTile(fakeDoc(), SAVE, { cloud }), 'svcloud').length, 0, JSON.stringify(cloud));
   }
-  assert.deepEqual(CLOUD_STATES, ['off', 'none', 'saved', 'busy', 'bad']);
+  assert.deepEqual(CLOUD_STATES, ['off', 'none', 'saved', 'busy', 'bad', 'wait']);
 
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'none' } }), 'svsay'), 'Not backed up');
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'saved' } }), 'svsay'), 'Backed up');
@@ -129,8 +129,104 @@ test('TILE2/ACC2: the cloud line, and the state that draws NONE of it', () => {
   // sentence existing for a refusal accountClient.js already explains.
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'bad', why: 'Your cloud backup is full.' } }), 'svsay'), 'Your cloud backup is full.');
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'bad' } }), 'svsay'), 'Could not back up');
+  // ...AND THE SAME FOR A WAIT (AUDIT-312 F2), which is a sentence to
+  // read rather than a failure or a button.
+  assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'wait', why: 'Load this save once, then it can be backed up.' } }), 'svsay'),
+    'Load this save once, then it can be backed up.');
   // a state nobody knows is not a crash and is not "backed up"
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'frobnicated' } }), 'svsay'), 'Not backed up');
+});
+
+test('AUDIT-312 F3: the cloud line\'s STATE is decided where a pin can reach it', () => {
+  // WHY THIS PIN EXISTS. This arithmetic lived inside
+  // `ui/enhancedMenu.js` - DOM, a boot, and nothing node can drive - so
+  // the audit's mutation campaign put three mutants of it through the
+  // WHOLE SUITE and all three survived: an unfinished upload reading as
+  // a finished backup, a listing never re-asked after a push, and every
+  // character's QuickSave sharing one slot key. Each is a thing a
+  // player is told about their own saves.
+  const now = 1_758_400_000;
+  const card = { bytes: 4096, updatedAt: now - 7200 };
+
+  // NO ACCOUNT, NO LINE - before anything else is asked.
+  assert.deepEqual(cloudStateOf({ signedIn: false, characterId: 'c1', card, nowS: now }),
+    { state: 'off', when: null, error: null });
+  assert.equal(cloudStateOf({}).state, 'off');
+
+  // A LEGACY CARD IS A WAIT, and it carries the WORD - the sentence
+  // belongs to accountClient.js's one table.
+  assert.deepEqual(cloudStateOf({ signedIn: true, characterId: null, nowS: now }),
+    { state: 'wait', when: null, error: 'no-character' });
+
+  // `bytes` STAYS 0 UNTIL THE DATA LANDS. A card alone is an upload
+  // that died between the row and the blob, and reading it as a backup
+  // is how a player trusts a restore that cannot happen.
+  assert.equal(cloudStateOf({ signedIn: true, characterId: 'c1', card: { bytes: 0, updatedAt: now }, nowS: now }).state, 'none');
+  assert.equal(cloudStateOf({ signedIn: true, characterId: 'c1', card: {}, nowS: now }).state, 'none');
+  assert.equal(cloudStateOf({ signedIn: true, characterId: 'c1', card: null, nowS: now }).state, 'none');
+
+  const saved = cloudStateOf({ signedIn: true, characterId: 'c1', card, nowS: now });
+  assert.deepEqual(saved, { state: 'saved', when: '2 hours ago', error: null });
+
+  // BUSY WINS OVER A STALE REFUSAL: a retry in flight is not a failure,
+  // and the failure it is retrying is the one still in the latch.
+  assert.equal(cloudStateOf({ signedIn: true, characterId: 'c1', card, busy: true, error: 'too-large', nowS: now }).state, 'busy');
+  assert.deepEqual(cloudStateOf({ signedIn: true, characterId: 'c1', card, error: 'too-large', nowS: now }),
+    { state: 'bad', when: null, error: 'too-large' });
+
+  // ...AND THE TWO THINGS ONLY THE MENU CAN DO, held where they live.
+  const menu = rd('src/ui/enhancedMenu.js');
+  // THE SLOT KEY IS THE SERVICE'S, and it comes from the module that
+  // owns "a slot is (character, save name)". The menu's own copy had
+  // dropped the character half, which makes every character's QuickSave
+  // one slot - one spinner and one error on all of them.
+  assert.match(menu, /const cloudKeyOf = \(save\) => slotKeyOf\(save\);/);
+  assert.doesNotMatch(menu, /save\.saveName \?\? ''\}`;/, 'the menu writes no second slot key');
+  // THE LISTING IS ASKED AGAIN, NEVER PATCHED: one answer about what
+  // the cloud holds, and it comes from the cloud.
+  assert.match(menu, /if \(r\.ok\) \{ cloudAsked = false; ensureCloud\(\); \}/);
+  // ...and the latch is per VISIT, which means a fresh mount clears it.
+  assert.match(menu.slice(menu.indexOf('export function mountEnhancedMenu')), /^\s*cloudAsked = false;$/m);
+});
+
+test('AUDIT-312 F1: the cloud DELETE has a door, and it asks twice', () => {
+  // The route existed, `removeCloudSlot` existed, and nothing called
+  // either - while the refusal table already told a player at the bound
+  // to "delete a save there to make room". An account at SAVES_MAX
+  // could never back up again, and the only sentence it was given named
+  // an act the game did not offer.
+  const menu = rd('src/ui/enhancedMenu.js');
+  assert.match(menu, /removeCloudSlot/, 'the menu calls the delete');
+  // ...AND IT SAYS `backup`: the tile already has a Delete, the pane's
+  // own, which removes the save from this device. Two buttons reading
+  // `Delete` one row apart - one destroying the game, one destroying
+  // the copy - is the worst label this menu could carry.
+  assert.match(menu, /label: 'Delete backup'/);
+  assert.match(menu, /label: 'Delete backup\?'/, 'a destructive act asks twice');
+  // IT REMOVES THE COPY AND NEVER THE SAVE. The cloud is a backup, so
+  // deleting the backup is not deleting the game.
+  const cloud = rd('src/systems/cloudSaves.js');
+  const fn = cloud.slice(cloud.indexOf('export const removeCloudSlot'));
+  assert.doesNotMatch(fn, /removeItem|setItem/, 'it never touches this device\'s store');
+  // ...and the sentence that names it is reachable now.
+  assert.match(rd('src/net/accountClient.js'), /'too-many-saves': '[^']*[Dd]elete[^']*'/);
+});
+
+test('AUDIT-312 F5: the ten heads stay POSITIONAL - the index IS the identity', () => {
+  // `faceIndex` is on the save envelope and it addresses a RECORD
+  // NUMBER. The first cut of the extraction ended `.filter(Boolean)`,
+  // which COMPACTS - so one record that will not draw shifted every
+  // later face down by one, while ui/chargenArt.js's loadFaceSet (the
+  // other reader of the same ten records) pushes for every index and
+  // never compacts. Two homes that disagree about what index 5 means is
+  // the exact drift this module was extracted to prevent.
+  const face = rd('src/ui/facePortrait.js');
+  assert.match(face, /for \(let i = 0; i < races\.FACES_PER_RACE; i\+\+\) set\.push\(/);
+  assert.doesNotMatch(face, /^\s*return set\.filter/m, 'a compacted set is a different index');
+  // Both readers already draw something where a face is missing, which
+  // is what makes the hole safe to keep.
+  assert.match(rd('src/ui/enhancedChargen.js'), /const art = faces\?\.canvases\?\.\[i\];/);
+  assert.match(face, /const art = set\[i\] \?\? set\[0\] \?\? null;/);
 });
 
 test('TILE2: how long ago, in words a player reads at a glance', () => {
@@ -186,7 +282,11 @@ test('TILE2: ONE tile for THREE panes, and the classes it draws belong to nobody
   // The drift this retired: three hand-rolled copies of the same four
   // lines is how three panes come to disagree about what a save is.
   assert.doesNotMatch(menu, /function slotCard\(/, 'the old per-pane card is gone');
-  assert.match(menu, /import \{ saveTile, agoText \} from '\.\/saveTile\.js'/);
+  assert.match(menu, /import \{ saveTile, cloudStateOf \} from '\.\/saveTile\.js'/);
+  // AUDIT-312 F3: and the DECISION comes from there too, rather than
+  // being re-inlined into a module no pin can drive. The gate is that
+  // the menu asks; the arithmetic itself is pinned above.
+  assert.match(menu, /const state = cloudStateOf\(\{/);
   const pane = (from, to) => menu.slice(menu.indexOf(from), menu.indexOf(to));
   for (const [name, from, to] of [
     ['Online', 'function paneOnline(body)', 'function paneLoad(body)'],

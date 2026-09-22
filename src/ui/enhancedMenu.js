@@ -153,9 +153,9 @@ import '../world/outdoors.js';   // RF4: the outdoors lane too
 // thinks (ui/accountFlow.js, node-drivable), this draws it
 import { AccountFlow } from './accountFlow.js';
 import { accountCard } from './enhancedAccount.js';
-import { saveTile, agoText } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information")
+import { saveTile, cloudStateOf } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information")
 import { loadFace } from './facePortrait.js';   // TILE1: the character's face, the one home chargen also reads
-import { cloudIo, cloudList, pushSlot, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer
+import { cloudIo, cloudList, pushSlot, removeCloudSlot, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, and AUDIT-312 F1's delete
 import { serviceBase, storedSession } from '../net/accountClient.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -242,8 +242,9 @@ let accountOffered = false;
 // line at all, which is also what a player with no account sees.
 let cloudCards = null;
 let cloudAsked = false;
-let cloudBusy = null;    // the slot being pushed, as characterId|saveName
-let cloudWhy = null;     // { slot, text } - the last refusal, under the slot it was about
+let cloudBusy = null;    // the slot being pushed or removed, as slotKeyOf writes it
+let cloudWhy = null;     // { slot, error } - the last refusal WORD, under the slot it was about
+let cloudArm = null;     // the slot whose Delete is armed - a destructive act asks twice (AUDIT-312 F1)
 let lockHandler = null;
 let resizeHandler = null;   // PX1: the home ground's redraw-on-resize
 let groundTimer = null;     // PX1b: the home sky's 8fps clock - cleared by every rebuild and by unmount
@@ -322,8 +323,10 @@ function savedGames() {
 
 /** The slot's key on the SERVICE, which is (character, save name) and
  *  never the local number - the local integer is a fact about one
- *  store (bible ACC2 D2). */
-const cloudKeyOf = (save) => `${save.characterId ?? ''}|${save.saveName ?? ''}`;
+ *  store (bible ACC2 D2). `systems/cloudSaves.js` writes it, because
+ *  this file's own copy had dropped the character half (AUDIT-312 F3).
+ */
+const cloudKeyOf = (save) => slotKeyOf(save);
 
 /** Ask the service what it holds, ONCE per visit to this menu. Nothing
  *  waits on it: the tiles are drawn with no cloud line and gain one
@@ -336,20 +339,62 @@ function ensureCloud() {
   cloudList(io).then((r) => { if (r.ok) { cloudCards = r.saves; render(); } }).catch(() => {});
 }
 
-/** The cloud line for one slot, or the state that draws none. */
+/** The cloud line for one slot, or the state that draws none.
+ *
+ *  THE DECISION IS `ui/saveTile.js`'s `cloudStateOf` and not this
+ *  function's: AUDIT-312 F3 found three mutants of the arithmetic that
+ *  once lived here surviving the whole suite, because a module that is
+ *  DOM and a boot is a module no node pin can drive. What is left here
+ *  is what only a menu can do - the handlers. */
 function cloudFor(save) {
-  // NO ACCOUNT, NO LINE. ACC0's wall is at cloud saves, and a player
-  // who has not asked for one is not told about it on every tile.
-  if (!cloudIo({ fetch: () => {}, storage: appStorage() }) || !save.characterId) return { state: 'off' };
   const slot = cloudKeyOf(save);
-  if (cloudBusy === slot) return { state: 'busy' };
-  if (cloudWhy?.slot === slot) return { state: 'bad', why: cloudWhy.text, actions: [{ label: 'Try again', onClick: () => backUp(save) }] };
-  const card = (cloudCards ?? []).find((c) => `${c.characterId}|${c.saveName}` === slot);
-  return {
-    state: card && card.bytes > 0 ? 'saved' : 'none',
-    when: card ? agoText(card.updatedAt, Math.floor(Date.now() / 1000)) : null,
-    actions: [{ label: card ? 'Back up again' : 'Back up', onClick: () => backUp(save) }],
-  };
+  const state = cloudStateOf({
+    // NO ACCOUNT, NO LINE. ACC0's wall is at cloud saves, and a player
+    // who has not asked for one is not told about it on every tile.
+    signedIn: !!cloudIo({ fetch: () => {}, storage: appStorage() }),
+    characterId: save.characterId,
+    card: (cloudCards ?? []).find((c) => slotKeyOf(c) === slot) ?? null,
+    busy: cloudBusy === slot,
+    error: cloudWhy?.slot === slot ? cloudWhy.error : null,
+    nowS: Math.floor(Date.now() / 1000),
+  });
+  const why = state.error ? cloudRefusalText(state.error) : null;
+  const line = { state: state.state, when: state.when, why, actions: [] };
+  switch (state.state) {
+    // A WAIT HAS NO BUTTON. The act it needs is loading the save, which
+    // is the tile's own Load and is already there.
+    case 'off': case 'busy': case 'wait': break;
+    case 'bad':
+      line.actions.push({ label: 'Try again', onClick: () => backUp(save) });
+      break;
+    case 'saved':
+      line.actions.push({ label: 'Back up again', onClick: () => backUp(save) });
+      // ═══ AUDIT-312 F1: THE DELETE HAD NO DOOR ═══════════════════
+      //
+      // The route existed (DELETE /v1/saves/…), `removeCloudSlot`
+      // existed, and NOTHING CALLED EITHER - while the refusal table
+      // already told a player at the bound to "delete a save there to
+      // make room". An account at SAVES_MAX could never back up again
+      // and the only sentence it was given named an act the game did
+      // not offer.
+      //
+      // IT SAYS `backup`, because the tile ALREADY has a Delete - the
+      // pane's own, which removes the save from this device. Two
+      // buttons reading `Delete` one row apart, one destroying the game
+      // and one destroying the copy of it, is the worst label in this
+      // menu. Measured on the sheet rather than argued about.
+      //
+      // AND IT ASKS TWICE, because this is the one button here that
+      // destroys anything. The armed slot is cleared by the press, by
+      // arming a different tile, and by the next visit to the menu.
+      line.actions.push(cloudArm === slot
+        ? { label: 'Delete backup?', primary: true, onClick: () => removeBackup(save) }
+        : { label: 'Delete backup', onClick: () => { cloudArm = slot; render(); } });
+      break;
+    default:   // 'none'
+      line.actions.push({ label: 'Back up', onClick: () => backUp(save) });
+  }
+  return line;
 }
 
 /** THE PLAYER'S OWN ACT. Nothing uploads by itself (bible ACC2 D6): an
@@ -358,22 +403,39 @@ function cloudFor(save) {
  *  invisibly is a backup whose failure is also invisible. This is the
  *  surface that can show it failing. */
 function backUp(save) {
+  runCloud(save, (io) => pushSlot(io, appStorage(), save.key));
+}
+
+/** ...AND THE PLAYER'S OWN DELETE (AUDIT-312 F1). It removes the COPY
+ *  and never the save: `removeCloudSlot` does not touch this device's
+ *  store, because the cloud is a backup and deleting a backup is not
+ *  deleting a game. It is the one act here that destroys anything, so
+ *  `cloudFor` arms it on a first press and only the second one calls
+ *  this. */
+function removeBackup(save) {
+  cloudArm = null;
+  runCloud(save, (io) => removeCloudSlot(io, { characterId: save.characterId, saveName: save.saveName }));
+}
+
+/** ONE LADDER FOR BOTH ACTS, because a push and a delete differ only in
+ *  the call: busy under this slot, the service's own word under this
+ *  slot when it refuses, and THE LISTING ASKED AGAIN rather than
+ *  patched when it does not - one answer about what the cloud holds,
+ *  and it comes from the cloud. */
+function runCloud(save, call) {
   const io = cloudIo({ fetch: (...a) => globalThis.fetch(...a), storage: appStorage() });
   if (!io) return;
-  cloudBusy = cloudKeyOf(save);
+  const slot = cloudKeyOf(save);
+  cloudBusy = slot;
   cloudWhy = null;
   render();
-  pushSlot(io, appStorage(), save.key).then((r) => {
+  call(io).then((r) => {
     cloudBusy = null;
-    if (r.ok) {
-      // The listing is stale the moment a push lands, so it is asked
-      // again rather than patched here - one answer about what the
-      // service holds, and it comes from the service.
-      cloudAsked = false;
-      ensureCloud();
-    } else {
-      cloudWhy = { slot: cloudKeyOf(save), text: cloudRefusalText(r.error) };
-    }
+    // THE WORD, NOT THE SENTENCE. `cloudFor` asks accountClient.js for
+    // the sentence at paint time, so a refusal held over a repaint
+    // cannot drift out of step with the one table that owns it.
+    if (r.ok) { cloudAsked = false; ensureCloud(); }
+    else cloudWhy = { slot, error: r.error };
     render();
   }).catch(() => { cloudBusy = null; render(); });
 }
@@ -3233,6 +3295,15 @@ export function mountEnhancedMenu(host, {
   if (!morrowindDataCounted()) {
     countMorrowindArchives().then(() => { if (app === host && host.isConnected) render(); }).catch(() => {});
   }
+  // ACC2c: THE CLOUD LATCH IS PER VISIT, and AUDIT-312 F4 found it was
+  // per PAGE LOAD - the module state simply stayed true, so a player
+  // who backed a save up on their phone, came back to this tab and
+  // reopened the menu was shown the listing from the last time it was
+  // asked. The latch exists so a REPAINT does not re-ask; a fresh mount
+  // is a fresh visit. The armed Delete goes with it, because an armed
+  // destructive button must never outlive the screen it was armed on.
+  cloudAsked = false;
+  cloudArm = null;
   sections = mode === 'pause' ? SECTIONS_PAUSE : isEnhanced() ? SECTIONS_BOOT : SECTIONS_CLASSIC;   // FD1: one door, two rails
   // WHICH PANE OPENS. Both doors open on the PIXEL HOME (PX1/PX2) -
   // the face itself, every section one press away. Pause used to open
