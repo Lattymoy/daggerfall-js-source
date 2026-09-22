@@ -76,7 +76,7 @@ const SAVES = [
 ];
 
 const measured = await page.evaluate(async ({ saves }) => {
-  const { saveTile } = await import('/saveTile.js');
+  const { saveTile, saveFromCard } = await import('/saveTile.js');
   const app = document.getElementById('app');
   app.style.cssText = 'padding:28px;max-width:1040px;margin:0 auto;';
 
@@ -132,6 +132,38 @@ const measured = await page.evaluate(async ({ saves }) => {
   const bare = saveTile(document, saves[0], { face: standIn(), cloud: { state: 'off' }, actions: [{ label: 'Play online', primary: true }] });
   plain.append(bare);
 
+  // ── ACC2c: THE SAVES THAT ARE ONLY IN THE BACKUP ───────────────
+  // Stood up in a REAL browser because that is the only place three of
+  // its claims can be checked: that a heading in the display face
+  // actually gets one (ACC1f found `.shell .card h3` forcing the pixel
+  // face on a card that had never asked for it), that `is-only` is a
+  // DIFFERENT colour from the verdigris a backed-up local save wears,
+  // and that a tile with no face, no sub-line and no stats is still a
+  // tile rather than a collapsed strip.
+  const onlyBox = document.createElement('div');
+  onlyBox.className = 'svcloudonly';
+  const h4 = document.createElement('h4');
+  h4.textContent = '2 saves are only in your backup';
+  const meta = document.createElement('p');
+  meta.className = 'meta';
+  meta.textContent = 'Download one to bring it back to this device.';
+  const onlyGrid = document.createElement('div');
+  onlyGrid.className = 'svgrid';
+  onlyBox.append(h4, meta, onlyGrid);
+  app.append(onlyBox);
+  const CARDS = [
+    { characterId: 'c1', saveName: 'QuickSave', characterName: 'Nystul', gameTime: 523000, updatedAt: 0, bytes: 91233 },
+    { characterId: 'c2', saveName: 'a very long slot name indeed', characterName: 'Mithriil Stormaire', gameTime: 9000, updatedAt: 0, bytes: 44000 },
+  ];
+  const onlyTiles = CARDS.map((card) => {
+    const t = saveTile(document, saveFromCard(card, (m) => ({ hour: Math.floor(m / 60) % 24, minute: m % 60 }), () => '17th of Hearthfire, 3E 405'), {
+      cloud: { state: 'only', when: '3 days ago', actions: [{ label: 'Delete backup' }] },
+      actions: [{ label: 'Download', primary: true }],
+    });
+    onlyGrid.append(t);
+    return t;
+  });
+
   const cs = (el) => (el ? getComputedStyle(el) : null);
   const box = (el) => el.getBoundingClientRect();
   return {
@@ -181,6 +213,23 @@ const measured = await page.evaluate(async ({ saves }) => {
       actsTop: Math.round(box(t.querySelector('.acts')).top - box(t).top),
     })),
     bare: { cloud: !!bare.querySelector('.svcloud'), h: Math.round(box(bare).height) },
+    only: {
+      headFace: cs(h4).fontFamily,
+      headSize: cs(h4).fontSize,
+      say: onlyTiles[0].querySelector('.svsay')?.textContent ?? null,
+      sayColor: cs(onlyTiles[0].querySelector('.svsay'))?.color ?? null,
+      // WHAT A CARD DOES NOT CARRY MUST NOT BE DRAWN: no sub-line, no
+      // stats list, and the well on its initial.
+      sub: !!onlyTiles[0].querySelector('.svsub'),
+      stats: !!onlyTiles[0].querySelector('.stats'),
+      initial: !!onlyTiles[0].querySelector('.svinitial'),
+      wellW: Math.round(box(onlyTiles[0].querySelector('.svface')).width),
+      tiles: onlyTiles.map((t) => ({ w: Math.round(box(t).width), h: Math.round(box(t).height) })),
+      buttons: onlyTiles.map((t) => [...t.querySelectorAll('.act')].map((b) => b.textContent).join('/')),
+      overflow: onlyTiles.some((t) => [...t.querySelectorAll('*')].some((n) => box(n).right > box(t).right + 1 || box(n).bottom > box(t).bottom + 1)),
+      // The group's own rule above it, so the eye reads two groups.
+      ruled: cs(onlyBox).borderTopWidth,
+    },
     perRow: (() => {
       const tops = tiles.map((t) => Math.round(box(t).top));
       return tops.filter((v) => v === tops[0]).length;
@@ -238,6 +287,24 @@ check('a card from before CHARID1 says so and offers NO button',
   `${measured.tiles[4].cloudSay} | ${measured.tiles[4].cloudButtons.length} buttons`);
 check('...and it reads QUIET - a wait is not a failure', measured.tiles[4].cloudColor === DIM,
   measured.tiles[4].cloudColor);
+
+// ── ACC2c: THE CLOUD-ONLY GROUP ─────────────────────────────────────
+const only = measured.only;
+check('ACC2c: the group heading is in the DISPLAY face, not the pixel one',
+  /Cormorant/i.test(only.headFace), only.headFace);
+check('ACC2c: a cloud-only tile says WHERE the save is, not that it is safe',
+  only.say === 'Only in your backup · 3 days ago', String(only.say));
+check('ACC2c: ...and it is BRASS, a different colour from the verdigris a backed-up LOCAL save wears',
+  only.sayColor === BRASS && only.sayColor !== VERDIGRIS, `${only.sayColor} (brass ${BRASS}, verdigris ${VERDIGRIS})`);
+check('ACC2c: what the card does not carry is not drawn - no sub-line, no stats',
+  !only.sub && !only.stats, `sub:${only.sub} stats:${only.stats}`);
+check('ACC2c: the well falls back to the initial and keeps its size, so the tile is not a collapsed strip',
+  only.initial && only.wellW === 96 && only.tiles.every((t) => t.h > 140),
+  `initial:${only.initial} well:${only.wellW} ${only.tiles.map((t) => `${t.w}x${t.h}`).join(' ')}`);
+check('ACC2c: Download sits where Load sits, and Delete backup on the cloud line',
+  only.buttons.every((b) => b === 'Delete backup/Download'), only.buttons.join(' | '));
+check('ACC2c: nothing leaves a cloud-only tile, long slot name and all', !only.overflow);
+check('ACC2c: the group is ruled off from the pane\'s own tiles', only.ruled === '1px', only.ruled);
 
 await page.evaluate(() => { document.body.style.background = '#0e1013'; });
 await page.screenshot({ path: `${shots}/tile-desktop.png`, fullPage: true });

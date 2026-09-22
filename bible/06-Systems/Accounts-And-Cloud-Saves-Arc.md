@@ -2024,3 +2024,104 @@ this container has no ARENA2, so the real FONT0003 is not read here.**
   badged. MARK-7 is the one above. MARK-8 holds Mac's correction as a
   law rather than as a memory: the polarity flipped back is a dead
   mutant, not a preference somebody can quietly restore.
+
+---
+
+## ACC2c — the save that is only in the cloud (2026-09-22)
+
+Mac, asked whether to build it: *"And yes."*
+
+### ACC2 BUILT THE BACKUP AND NOTHING COULD READ ONE BACK
+
+`pullSlot` was written, pinned end to end against the real service in a
+real workerd, and had **zero callers.** Not a missing button — a missing
+*surface*: a cloud card only ever reached a player as the cloud LINE on
+a local tile, and a card with no local tile has no line to appear on.
+
+So the one case cloud saves exist for did not work. A player who cleared
+their browser, or sat down at a second machine, opened Load and saw
+**"No saved games. Save a game and every slot of it appears here"**,
+with their games three feet away in R2 and nothing on screen admitting
+they existed. That sentence was the symptom and it is now one of the
+things this slice deletes.
+
+### The difference is a set difference, and it lives in `systems/`
+
+`cloudOnly(cards, saves)` — the cards no local slot answers to, keyed by
+`slotKeyOf`, the same key the cloud line is asked with. So a card gets
+**a line on a tile or a tile of its own, never both and never neither**,
+and the pin asserts exactly that, card by card.
+
+It is not in the menu, and that is AUDIT-312 F3's finding taken
+seriously rather than repeated: `ui/enhancedMenu.js` is DOM and a boot,
+and the last copy of a slot key written there had **dropped the
+character half** — which makes every character's QuickSave one slot —
+and the mutant of it went through the whole suite untouched. Here, that
+same mutant dies: one local QuickSave would otherwise hide *every* other
+character's cloud QuickSave, and those saves would go on being invisible,
+which is the failure this slice exists to end.
+
+### The card is smaller than a save, so the tile says less
+
+`server-account/src/saves.js` keeps eleven columns and **none of them is
+a race, a class, a level, a health, a gold or a look.** None of it was
+ever uploaded. So `saveFromCard` hands back a shape with those fields
+**absent** — not zero, not a dash — and the tile degrades on its own:
+`tileLine` joins nothing and is never appended, the stats list stays
+empty and is never appended, and the well falls back to the character's
+initial. **Not one special case in the drawing, and not one invented
+fact.** Two mutants hold that line: a level read off `save_version`, and
+the initial taken from the slot name so a tile reads `QuickSave` where
+the character goes.
+
+`gameTime` **is** classic minutes — `saveSlots.js`'s own `SaveInfo`
+typedef says so of the very field `pushSlot` copies up — so the date and
+hour are derived by the same two calls a local tile's are, rather than
+by a second interpretation of one number.
+
+### `only` is a seventh state, and its own whole ladder
+
+Every rung of the local cloud ladder is a question about a *local* slot:
+whether it predates CHARID1, whether its upload finished, whether it has
+been backed up at all. **None is answerable about a save that is not
+here** — a card with no `characterId` is still a card, not a `wait` — so
+`local: false` is its own arm rather than a flag threaded through five
+branches. What *is* still true of it is kept: a download in flight is
+`busy`, and a refused one carries the service's own word.
+
+The sentence is **"Only in your backup"**, not "Backed up". Under a tile
+whose only copy *is* the backup, "Backed up" tells a player they have
+two of something they have one of. It wears `is-only`, and the probe
+reads it **brass** against the backed-up line's verdigris in a real
+Chromium.
+
+### One pane, and the delete that F1 half-finished
+
+**Load, and no other.** Online brings a character in to play *now* and
+cannot use a save that is not here, so offering it there is a two-step
+act at a one-step door; Save writes rather than reads, and a cloud-only
+slot in that grid would be an Overwrite target for a game this device
+does not have. Load's whole job is getting a game back.
+
+And the tile carries **Delete backup**, two presses, which is **the rest
+of AUDIT-312 F1**: that slice gave a player the way to act on *"delete a
+save there to make room"* and gave it to them on LOCAL tiles only — so a
+cloud-only slot went on holding its share of `SAVES_MAX` with no surface
+that could ever release it. Same word, same arm.
+
+### SHIPPED 2026-09-22
+
+- `src/systems/cloudSaves.js` — `cloudOnly`.
+- `src/ui/saveTile.js` — `saveFromCard`; `CLOUD_STATES` gains `only`
+  (appended, so nothing positional moves); `cloudStateOf` takes `local`,
+  defaulting **true** so every caller written before this slice reads
+  exactly what it read.
+- `src/ui/enhancedMenu.js` — `download` (the caller `pullSlot` never
+  had, through `runCloud`), `cloudForCard`, `cloudOnlyGrid`, and the
+  narrowed empty case.
+- `src/ui/enhancedStyle.js` — `.svcloudonly` and `.svcloud.is-only`.
+- Pins: `test/cloudsaves.test.js` 19 → **21**, `test/savetile.test.js`
+  11 → **13**. Probe: `npm run savetile` 18 → **29 checks**, which is
+  where the heading's face, the brass, and a tile that could have
+  collapsed to a strip were actually measured.
+- Mutants: `tools/mutants/acc2c.json`, 10, **10 dead and 0 survived.**

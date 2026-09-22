@@ -153,9 +153,9 @@ import '../world/outdoors.js';   // RF4: the outdoors lane too
 // thinks (ui/accountFlow.js, node-drivable), this draws it
 import { AccountFlow } from './accountFlow.js';
 import { accountCard } from './enhancedAccount.js';
-import { saveTile, cloudStateOf } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information")
+import { saveTile, cloudStateOf, saveFromCard } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
 import { loadFace } from './facePortrait.js';   // TILE1: the character's face, the one home chargen also reads
-import { cloudIo, cloudList, pushSlot, removeCloudSlot, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, and AUDIT-312 F1's delete
+import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
 import { serviceBase, storedSession } from '../net/accountClient.js';
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -417,6 +417,54 @@ function removeBackup(save) {
   runCloud(save, (io) => removeCloudSlot(io, { characterId: save.characterId, saveName: save.saveName }));
 }
 
+/** ═══ ACC2c — THE DOWNLOAD, AND THE ONLY DOOR BACK ═════════════════
+ *
+ *  ACC2 built the backup and nothing could read one back. `pullSlot`
+ *  was written and pinned end to end against the real service and had
+ *  ZERO CALLERS, because a cloud card only ever reached a player as the
+ *  cloud LINE on a local tile - and a card with no local tile has no
+ *  line to appear on. A cleared browser or a second device showed an
+ *  empty save list with the player's games three feet away in R2.
+ *
+ *  It goes through `runCloud` like the other two, so a download is busy
+ *  under its own slot and a refusal is the service's own word under it.
+ *  `pullSlot` answers `{ ok: true, skipped: true }` for a save the
+ *  store already holds, which is SP1's law and not a failure - the
+ *  listing is re-asked either way and the tile leaves this grid for the
+ *  one above it. */
+function download(card) {
+  runCloud(card, (io) => pullSlot(io, appStorage(), card));
+}
+
+/** The cloud line for a card with NO save under it. Its own function
+ *  rather than an argument to `cloudFor`, because every rung of that
+ *  ladder is a question about a local slot and none of them can be
+ *  asked here; the decision is still `cloudStateOf`'s, which takes
+ *  `local: false` and keeps the two acts a download can be in. */
+function cloudForCard(card) {
+  const slot = slotKeyOf(card);
+  const state = cloudStateOf({
+    signedIn: true,   // a card only reaches this surface through a listing, which needs a session
+    card,
+    local: false,
+    busy: cloudBusy === slot,
+    error: cloudWhy?.slot === slot ? cloudWhy.error : null,
+    nowS: Math.floor(Date.now() / 1000),
+  });
+  const line = { state: state.state, when: state.when, why: state.error ? cloudRefusalText(state.error) : null, actions: [] };
+  // THE DELETE BELONGS HERE TOO, and this is the rest of AUDIT-312 F1
+  // rather than a new idea: F1 gave a player the way to act on "delete
+  // a save there to make room" and gave it to them on LOCAL tiles only,
+  // so a cloud-only slot went on holding its share of SAVES_MAX with no
+  // surface that could ever free it. Same word, same two presses.
+  if (state.state === 'only') {
+    line.actions.push(cloudArm === slot
+      ? { label: 'Delete backup?', primary: true, onClick: () => removeBackup(card) }
+      : { label: 'Delete backup', onClick: () => { cloudArm = slot; render(); } });
+  }
+  return line;
+}
+
 /** ONE LADDER FOR BOTH ACTS, because a push and a delete differ only in
  *  the call: busy under this slot, the service's own word under this
  *  slot when it refuses, and THE LISTING ASKED AGAIN rather than
@@ -459,6 +507,50 @@ function tileGrid(saves, forSave) {
   const grid = el('div', 'svgrid');
   for (const save of saves) grid.append(tileOf(save, forSave(save)));
   return grid;
+}
+
+/** ACC2c — the saves that are ONLY in the cloud, as tiles of their own,
+ *  or null where there are none.
+ *
+ *  A SEPARATE GRID UNDER A HEADING, not mixed into the one above. These
+ *  are not slots on this device: nothing can load one, nothing can
+ *  overwrite one, and the Save pane's `current` edge means nothing
+ *  about one. Sorting them into the same grid would put four tiles in a
+ *  row of which two answer a different set of buttons, and a player
+ *  would learn the difference by pressing.
+ *
+ *  THE SET DIFFERENCE IS `cloudOnly`'s, in systems/cloudSaves.js, for
+ *  AUDIT-312 F3's reason: this file is DOM and a boot, and arithmetic
+ *  about what a player's own backup holds is arithmetic a pin must be
+ *  able to drive. */
+function cloudOnlyGrid(saves) {
+  const cards = cloudOnly(cloudCards, saves);
+  if (!cards.length) return null;
+  const box = el('div', 'svcloudonly');
+  box.append(el('h4', null, cards.length === 1 ? 'One save is only in your backup' : `${cards.length} saves are only in your backup`));
+  // THE ONE LINE OF PROSE THIS GRID GETS, because without it the
+  // heading is a statement and not an instruction: a player looking at
+  // a character they cannot press Load on needs to be told what the
+  // button does before they press it.
+  box.append(el('p', 'meta', 'Download one to bring it back to this device.'));
+  const grid = el('div', 'svgrid');
+  for (const card of cards) {
+    grid.append(saveTile(document, saveFromCard(card, dateFromClassicMinutes, dateString), {
+      cloud: cloudForCard(card),
+      // NO FACE, AND NOT A BUG. Nothing about a portrait was ever
+      // uploaded (server-account/src/saves.js keeps eleven columns and
+      // none of them is a look), so the well draws the character's
+      // initial - TILE1's own no-face arm, reached honestly.
+      actions: [{
+        label: 'Download',
+        primary: true,
+        disabled: cloudBusy === slotKeyOf(card),
+        onClick: () => download(card),
+      }],
+    }));
+  }
+  box.append(grid);
+  return box;
 }
 
 function savedGame() {
@@ -883,7 +975,20 @@ function paneLoad(body) {
       ) },
     ],
   })));
-  if (!saves.length) body.append(empty('No saved games', 'Save a game and every slot of it appears here.'));
+  // ACC2c: ...and under them, the saves that are only in the backup.
+  // THIS PANE AND NO OTHER. Online brings a character in to play NOW
+  // and a save that is not here cannot be brought in until it is
+  // downloaded, so offering it there is a two-step act at a one-step
+  // door; Save writes rather than reads, and a cloud-only slot in that
+  // grid would be an Overwrite target for a game this device does not
+  // have. Load's whole job is getting a game back, so it is the door.
+  const onlyCloud = cloudOnlyGrid(saves);
+  if (onlyCloud) body.append(onlyCloud);
+  // AND "NO SAVED GAMES" IS FALSE WHEN THE ACCOUNT HAS SOME. The old
+  // line ends "Save a game and every slot of it appears here", which
+  // told a player with a shelf full of backups that they had none -
+  // which is the very sentence this slice exists to stop being shown.
+  if (!saves.length && !onlyCloud) body.append(empty('No saved games', 'Save a game and every slot of it appears here.'));
   if (mode === 'pause' && typeof hooks.quickLoad !== 'function') {
     body.append(empty('Not from here',
       'This part of the game has no load door. Reach a saved game from the main menu instead.'));

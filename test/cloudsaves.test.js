@@ -464,7 +464,7 @@ test('ACC2: with no bucket bound, a save route says so rather than pretending', 
 // ════════════════════════════════════════════════════════════════════
 
 import {
-  cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, localSlot,
+  cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, localSlot, cloudOnly,
   slotPath as clientSlotPath, slotKeyOf, CLOUD_REFUSALS, cloudRefusalText,
 } from '../src/systems/cloudSaves.js';
 import { SESSION_KEY, REFUSALS } from '../src/net/accountClient.js';
@@ -762,4 +762,82 @@ test('AUDIT-312 F3: the slot key carries BOTH halves, and one module writes it',
   // writing the key is a lookup that never matches.
   assert.equal(slotKeyOf({}), '|');
   assert.equal(slotKeyOf(null), '|');
+});
+
+test('ACC2c: `cloudOnly` is the set difference that gives a save with no local slot a tile at all - asked with the SAME key the cloud line is asked with, so a card either gets a line on a tile or a tile of its own and never both or neither (mutants: the key dropping the character half; the difference inverted; a card with no slot identity let through)', () => {
+  // THE KEY IS `slotKeyOf`'s, and that is the whole point of asking it
+  // here rather than in the menu: AUDIT-312 F3 found the menu's own
+  // copy of this key had dropped the character half, which makes every
+  // character's QuickSave one slot - and the mutant survived the whole
+  // suite, because ui/enhancedMenu.js is DOM and a boot.
+  const here = [
+    { characterId: 'a', saveName: 'QuickSave' },
+    { characterId: 'a', saveName: 'Before the lich' },
+    { characterId: 'b', saveName: 'QuickSave' },
+  ];
+  const cards = [
+    { characterId: 'a', saveName: 'QuickSave' },          // here
+    { characterId: 'b', saveName: 'QuickSave' },          // here
+    { characterId: 'b', saveName: 'Before the lich' },    // NOT here - same slot name, different character
+    { characterId: 'c', saveName: 'QuickSave' },          // NOT here - a character this device has never seen
+  ];
+  assert.deepEqual(cloudOnly(cards, here).map(slotKeyOf), ['b|Before the lich', 'c|QuickSave']);
+
+  // EVERY CARD IS EXACTLY ONE OF THE TWO, which is the law that keeps a
+  // save from appearing twice or vanishing: a card is cloud-only iff no
+  // local slot answers to its key.
+  for (const c of cards) {
+    const onlyOne = cloudOnly([c], here).length;
+    const hasLine = here.some((h) => slotKeyOf(h) === slotKeyOf(c)) ? 1 : 0;
+    assert.equal(onlyOne + hasLine, 1, `${slotKeyOf(c)} is in neither group or in both`);
+  }
+
+  // A CARD WITH NO SLOT IDENTITY IS NOT A TILE. It cannot be downloaded
+  // (`pullSlot` answers `no-slot`) and it cannot be deleted, so drawing
+  // one would be a tile whose every button refuses.
+  assert.deepEqual(cloudOnly([{ saveName: 'QuickSave' }, { characterId: 'z' }, null], here), []);
+
+  // AN EMPTY DEVICE IS THE CASE THIS SLICE EXISTS FOR - a cleared
+  // browser, or a second machine - and a listing nobody has answered
+  // yet is not "everything is cloud-only".
+  assert.equal(cloudOnly(cards, []).length, 4);
+  assert.equal(cloudOnly(null, here).length, 0, 'no listing yet is no tiles, not four');
+  assert.equal(cloudOnly(cards, null).length, 4);
+});
+
+test('ACC2c: the DOWNLOAD reaches a player - the pane, the act and the one sentence, read off ui/enhancedMenu.js (mutants: the grid on a pane that cannot use it; Download wired to push; the listing patched rather than re-asked; "No saved games" printed over a shelf of backups)', () => {
+  const menu = src('src/ui/enhancedMenu.js');
+  // THE CALLER pullSlot NEVER HAD. This is the finding itself: the
+  // function was written, pinned end to end above, and reached by
+  // nothing.
+  assert.match(menu, /import \{[^}]*\bpullSlot\b[^}]*\} from '\.\.\/systems\/cloudSaves\.js'/);
+  assert.match(menu, /function download\(card\) \{\s*runCloud\(card, \(io\) => pullSlot\(io, appStorage\(\), card\)\);/,
+    'Download pulls - and through `runCloud`, so it is busy under its own slot and its refusal is the service\'s own word');
+  assert.match(menu, /label: 'Download',\s*primary: true,/);
+
+  // ONE PANE. Load's job is getting a game back; Online brings a
+  // character in to play NOW and cannot use a save that is not here,
+  // and Save writes rather than reads.
+  assert.equal((menu.match(/cloudOnlyGrid\(/g) ?? []).length, 2, 'declared once and called once');
+  const load = menu.slice(menu.indexOf('function paneLoad'), menu.indexOf('// SP1 (2026-09-21'));
+  assert.match(load, /const onlyCloud = cloudOnlyGrid\(saves\);/, 'and the pane that calls it is paneLoad');
+
+  // "NO SAVED GAMES" IS FALSE WHEN THE ACCOUNT HAS SOME, and that
+  // sentence is the one this slice exists to stop being shown.
+  assert.match(load, /if \(!saves\.length && !onlyCloud\) body\.append\(empty\('No saved games'/);
+
+  // THE SET DIFFERENCE IS NOT WRITTEN HERE (AUDIT-312 F3): the menu
+  // asks systems/cloudSaves.js, which a pin can drive.
+  assert.match(menu, /const cards = cloudOnly\(cloudCards, saves\);/);
+  assert.doesNotMatch(menu, /\.filter\(\(c\) => .*characterId.*saveName/, 'the difference is not hand-rolled back into the menu');
+
+  // AND THE DELETE IS HERE TOO - the rest of AUDIT-312 F1, which gave
+  // a player the way to free a full backup on LOCAL tiles only, so a
+  // cloud-only slot held its share of SAVES_MAX with no surface that
+  // could ever release it. Same word, same two presses.
+  const forCard = menu.slice(menu.indexOf('function cloudForCard'), menu.indexOf('/** ONE LADDER FOR BOTH ACTS'));
+  assert.match(forCard, /label: 'Delete backup\?', primary: true, onClick: \(\) => removeBackup\(card\)/);
+  assert.match(forCard, /cloudArm = slot; render\(\);/, 'and it arms first - one press cannot destroy anything');
+  assert.match(forCard, /local: false,/, 'the state is cloudStateOf\'s own, not a second ladder written here');
+  assert.doesNotMatch(forCard, /label: 'Back up/, 'nothing offers to push a slot this device does not have');
 });

@@ -274,6 +274,35 @@ export async function pullSlot(io, storage, cloudCard) {
   return { ok: false, error: 'no-room' };
 }
 
+/**
+ * ACC2c — THE CARDS THIS DEVICE HAS NO SAVE FOR.
+ *
+ * ACC2 built the backup and nothing could ever read one back: `pullSlot`
+ * was written, pinned end to end against the real service, and had ZERO
+ * CALLERS, because a cloud card only ever reached a player through the
+ * cloud LINE on a local tile - and a card with no local tile has no line
+ * to appear on. So a player who cleared their browser, or sat down at a
+ * second device, saw an empty save list with their games sitting in R2
+ * three feet away and nothing on screen admitting they existed.
+ *
+ * THE ANSWER IS A SET DIFFERENCE AND IT LIVES HERE, not in the menu:
+ * AUDIT-312 F3's finding was that `ui/enhancedMenu.js` is DOM and a
+ * boot, so arithmetic written there is arithmetic no pin can drive -
+ * three mutants of exactly that kind went through the whole suite
+ * untouched. The key is `slotKeyOf`'s, so this asks the question the
+ * same way the cloud LINE asks it and the two cannot drift: a card that
+ * matches a local slot gets a line on that slot's tile, and a card that
+ * matches none gets a tile of its own.
+ *
+ * @param {Array<any>|null|undefined} cards the service's listing
+ * @param {Array<any>|null|undefined} saves this device's slots, in the
+ *        shape the panes list them (`characterId` and `saveName`)
+ */
+export function cloudOnly(cards, saves) {
+  const here = new Set((saves ?? []).map((s) => slotKeyOf(s)));
+  return (cards ?? []).filter((c) => c?.characterId && c?.saveName && !here.has(slotKeyOf(c)));
+}
+
 /** THE PLAYER'S OWN DELETE, and the only thing on this side that
  *  removes a cloud slot. It never touches the local store: the cloud is
  *  the copy, so deleting the copy is not deleting the save. */

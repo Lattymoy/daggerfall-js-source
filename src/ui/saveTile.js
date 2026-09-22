@@ -51,7 +51,7 @@
  *  character id, so it cannot be filed in the cloud YET - it is adopted
  *  the first time its character loads. That is a sentence to read, not
  *  a failure and not a button. */
-export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad', 'wait']);
+export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad', 'wait', 'only']);
 
 /**
  * ═══ THE CLOUD LINE'S STATE, DECIDED WHERE NODE CAN REACH IT ═══════
@@ -75,10 +75,26 @@ export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad'
  * @param {boolean} [q.busy]         a push is in flight for THIS slot
  * @param {string|null} [q.error]    the refusal the last push for THIS slot ended in
  * @param {number} [q.nowS]          seconds, as the card's `updatedAt` is
+ * @param {boolean} [q.local]        ACC2c: is there a slot on THIS DEVICE under this card? Default true,
+ *        so every caller written before that slice reads exactly what it read.
  * @returns {{state: string, when: string|null, error: string|null}}
  */
-export function cloudStateOf({ signedIn = false, characterId = null, card = null, busy = false, error = null, nowS = 0 } = {}) {
+export function cloudStateOf({ signedIn = false, characterId = null, card = null, busy = false, error = null, nowS = 0, local = true } = {}) {
   if (!signedIn) return { state: 'off', when: null, error: null };
+  // ACC2c — A CARD WITH NO SAVE UNDER IT IS ITS OWN LADDER, kept whole
+  // rather than threaded through the one below, because every rung of
+  // that one is a question about a LOCAL slot: whether it predates
+  // CHARID1, whether its upload finished, whether it has been backed up
+  // at all. None of them is answerable about a save that is not here,
+  // and a `local` flag sprinkled through five branches is how a ladder
+  // stops being readable. What IS still true of it is the act in
+  // flight: a download shows busy and a refused one shows the service's
+  // own word, exactly as a push does.
+  if (local === false) {
+    if (busy) return { state: 'busy', when: null, error: null };
+    if (error) return { state: 'bad', when: null, error };
+    return { state: 'only', when: agoText(card?.updatedAt, nowS), error: null };
+  }
   // A LEGACY CARD IS A WAIT, NOT A WALL, and the refusal table has
   // always had the sentence for it - before this it had no surface that
   // could ever show it, because the tile fell straight to `off`.
@@ -122,6 +138,50 @@ export const tileLine = (save) => [
 
 /** ...and the line under THAT: when, in the world's own calendar. */
 export const tileWhen = (save) => [save?.when ?? null, save?.hour ?? null].filter(Boolean).join(' · ');
+
+/**
+ * ACC2c — A CLOUD CARD, IN THE SHAPE A TILE DRAWS.
+ *
+ * A save that exists ONLY in the cloud needs a tile, and the card the
+ * service holds is not the shape the panes hand this file. This is that
+ * conversion, and its whole discipline is that IT INVENTS NOTHING.
+ *
+ * THE CARD IS SMALLER THAN A SAVE AND THE TILE MUST SAY SO BY SAYING
+ * LESS. `server-account/src/saves.js` keeps character_id, save_name,
+ * character_name, game_time, real_time, dfu_version, save_version,
+ * bytes, shot_bytes and the two stamps - and that is all. There is no
+ * race, no class, no level, no health, no gold and NO PORTRAIT, because
+ * none of them was ever uploaded. So this hands back a shape with those
+ * fields ABSENT, and the tile degrades on its own: `tileLine` joins
+ * nothing and no line is appended, the stats list stays empty and is
+ * never appended, and the well falls back to the character's initial.
+ * Not one special case in the drawing, and not one invented fact.
+ *
+ * `gameTime` IS CLASSIC MINUTES - `saveSlots.js` says so of its own
+ * `SaveInfo` typedef and `pushSlot` copies that very field up - so the
+ * date and hour here are derived by the same two calls a local tile's
+ * are, rather than by a second interpretation of the same number.
+ *
+ * @param {any} card one row of the service's listing
+ * @param {(m: number) => any} dateFrom  systems/gameDate.js's
+ *        dateFromClassicMinutes, handed in so this file stays pure
+ * @param {(d: any) => string} dateText  ...and its dateString
+ */
+export function saveFromCard(card, dateFrom, dateText) {
+  const m = card?.gameTime;
+  const date = Number.isFinite(m) && dateFrom ? dateFrom(m) : null;
+  return {
+    // THE KEY IS THE SERVICE'S, because there is no local slot to
+    // number. A caller that reaches for `.key` on one of these has
+    // mistaken it for a save that is here, and undefined is the honest
+    // answer to that.
+    characterId: card?.characterId ?? null,
+    saveName: card?.saveName ?? '',
+    name: card?.characterName || 'Unnamed',
+    when: date && dateText ? dateText(date) : null,
+    hour: date ? `${String(date.hour).padStart(2, '0')}:${String(date.minute).padStart(2, '0')}` : null,
+  };
+}
 
 /** A character's initial, for the well when there is no portrait. Not
  *  a silhouette and not a question mark: a letter reads as "this is
@@ -216,6 +276,11 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
       // pre-CHARID1 card has existed since ACC2b and had no surface
       // that could show it, because the tile fell straight to `off`.
       wait: cloud.why || 'Not backed up yet',
+      // ACC2c: and the one line a cloud-only tile carries. It says
+      // WHERE the save is rather than that it is safe - "Backed up"
+      // under a tile whose only copy is the backup would be telling a
+      // player they have two of something they have one of.
+      only: cloud.when ? `Only in your backup · ${cloud.when}` : 'Only in your backup',
     }[state];
     bar.append(el('span', 'svsay', said));
     for (const a of cloud.actions ?? []) bar.append(actionButton(el, a));

@@ -19,7 +19,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { saveTile, agoText, tileLine, tileWhen, initialOf, CLOUD_STATES, cloudStateOf } from '../src/ui/saveTile.js';
+import { saveTile, agoText, tileLine, tileWhen, initialOf, CLOUD_STATES, cloudStateOf, saveFromCard } from '../src/ui/saveTile.js';
+import { dateFromClassicMinutes, dateString } from '../src/systems/gameDate.js';   // ACC2c: the two calls a LOCAL tile's date comes from, handed to the card's conversion so there is one reading of `gameTime`
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -117,7 +118,10 @@ test('TILE2/ACC2: the cloud line, and the state that draws NONE of it', () => {
   for (const cloud of [null, { state: 'off' }, {}]) {
     assert.equal(byClass(saveTile(fakeDoc(), SAVE, { cloud }), 'svcloud').length, 0, JSON.stringify(cloud));
   }
-  assert.deepEqual(CLOUD_STATES, ['off', 'none', 'saved', 'busy', 'bad', 'wait']);
+  // ACC2c appended `only` (a save whose ONLY copy is the backup), the same
+  // way AUDIT-312 F2 appended `wait`: at the END, so nothing that reads this
+  // list positionally moves, and named here so a seventh cannot arrive quietly.
+  assert.deepEqual(CLOUD_STATES, ['off', 'none', 'saved', 'busy', 'bad', 'wait', 'only']);
 
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'none' } }), 'svsay'), 'Not backed up');
   assert.equal(text(saveTile(fakeDoc(), SAVE, { cloud: { state: 'saved' } }), 'svsay'), 'Backed up');
@@ -282,7 +286,7 @@ test('TILE2: ONE tile for THREE panes, and the classes it draws belong to nobody
   // The drift this retired: three hand-rolled copies of the same four
   // lines is how three panes come to disagree about what a save is.
   assert.doesNotMatch(menu, /function slotCard\(/, 'the old per-pane card is gone');
-  assert.match(menu, /import \{ saveTile, cloudStateOf \} from '\.\/saveTile\.js'/);
+  assert.match(menu, /import \{ saveTile, cloudStateOf, saveFromCard \} from '\.\/saveTile\.js'/);
   // AUDIT-312 F3: and the DECISION comes from there too, rather than
   // being re-inlined into a module no pin can drive. The gate is that
   // the menu asks; the arithmetic itself is pinned above.
@@ -353,4 +357,103 @@ test('TILE1: the face has ONE home, and it is not the one chargenArt already own
   const menu = rd('src/ui/enhancedMenu.js');
   assert.match(menu, /race: typeof snap\.race === 'string' \? snap\.race : null,/);
   assert.match(menu, /faceIndex: Number\.isInteger\(snap\.faceIndex\) \? snap\.faceIndex : 0,/);
+});
+
+// ── ACC2c: THE SAVE THAT IS ONLY IN THE CLOUD ─────────────────────────────────────────────────────
+//
+// Mac, asked whether to build it: "And yes".
+//
+// ACC2 built the backup and nothing could read one back. `pullSlot` was
+// written, pinned end to end against the real service, and had ZERO
+// CALLERS - so a cleared browser or a second device showed an empty
+// save list with the player's games sitting in R2 and nothing on screen
+// admitting they existed.
+
+test('ACC2c: a cloud card becomes a tile that INVENTS NOTHING - the card is smaller than a save and the tile says less, with no race, class, level, health, gold or portrait, because none of them was ever uploaded (mutants: a stat invented from a field the card does not carry; the date read as anything but classic minutes; the initial taken from the slot name)', () => {
+  // THE CARD IS THE SERVICE'S OWN SHAPE. server-account/src/saves.js
+  // keeps eleven columns and this is all of them that describe a game.
+  const card = {
+    characterId: 'ch-7', saveName: 'Before the lich',
+    characterName: 'Nystul', gameTime: 523_000, realTime: 1_700_000_000_000,
+    dfuVersion: '0.15.4', saveVersion: 1, bytes: 91_233, shotBytes: 4_100,
+    createdAt: 1_700_000_000, updatedAt: 1_700_000_900,
+  };
+  const save = saveFromCard(card, dateFromClassicMinutes, dateString);
+
+  // WHAT IT CARRIES: the two names, and the moment - derived by the
+  // same two calls a local tile's date comes from, because `gameTime`
+  // IS classic minutes (systems/saveSlots.js's SaveInfo typedef says
+  // so of the field `pushSlot` copies up).
+  assert.equal(save.name, 'Nystul');
+  assert.equal(save.saveName, 'Before the lich');
+  assert.equal(save.characterId, 'ch-7');
+  const d = dateFromClassicMinutes(card.gameTime);
+  assert.equal(save.when, dateString(d));
+  assert.equal(save.hour, `${String(d.hour).padStart(2, '0')}:${String(d.minute).padStart(2, '0')}`);
+
+  // WHAT IT MUST NOT: every field the upload never carried is ABSENT,
+  // not zero and not a dash - a tile that prints `level 0` or
+  // `0 / 0` has told a player a fact about a character nobody sent.
+  for (const k of ['race', 'career', 'level', 'health', 'maxHealth', 'gold']) {
+    assert.equal(save[k], undefined, `${k} was invented - the service never held one`);
+  }
+  // ...and the TILE degrades on its own, with no special case in the
+  // drawing: no sub-line, no stats list, and the well's initial.
+  const t = saveTile(fakeDoc(), save, { actions: [{ label: 'Download', primary: true }] });
+  assert.equal(tileLine(save), '', 'the sub-line joins nothing');
+  assert.equal(byClass(t, 'svsub').length, 0, 'and is never appended');
+  assert.equal(walk(t).filter((n) => n.tagName === 'DL').length, 0, 'no stats list at all');
+  assert.equal(text(t, 'svinitial'), 'N', 'the well falls back to the CHARACTER\'s initial, not the slot\'s');
+  assert.equal(text(t, 'svwhen'), `${save.when} · ${save.hour}`);
+
+  // A CARD FROM AN OLDER BUILD, OR ONE THAT NEVER HAD A DATE, is a
+  // tile and not a crash - the same law `SaveInfo` states about its own
+  // every-field-optional shape.
+  const bare = saveFromCard({ characterId: 'c', saveName: 's' }, dateFromClassicMinutes, dateString);
+  assert.equal(bare.name, 'Unnamed');
+  assert.equal(bare.when, null);
+  assert.equal(bare.hour, null);
+  assert.equal(initialOf(bare), 'U');
+});
+
+test('ACC2c: `only` is its own cloud state and its own ladder - a card with no save under it cannot be asked the questions the local ladder asks, and the sentence says WHERE the save is rather than that it is safe (mutants: the only-arm folded into the local ladder; `only` saying "Backed up"; a busy or refused download swallowed by it)', () => {
+  assert.ok(CLOUD_STATES.includes('only'), 'the state exists');
+  const card = { characterId: 'c', saveName: 's', bytes: 900, updatedAt: 1000 };
+
+  // THE LADDER IS WHOLE AND SEPARATE. Every rung of the local one is a
+  // question about a local slot - whether it predates CHARID1, whether
+  // its upload finished, whether it has been backed up at all - and
+  // none is answerable here. So `local: false` answers `only` WITHOUT
+  // consulting characterId at all.
+  assert.deepEqual(
+    cloudStateOf({ signedIn: true, card, local: false, nowS: 1120 }),
+    { state: 'only', when: agoText(1000, 1120), error: null });
+  assert.equal(
+    cloudStateOf({ signedIn: true, card, local: false, characterId: null, nowS: 1120 }).state, 'only',
+    'a card with no characterId is still a card - `wait` is a question about a LOCAL slot');
+
+  // ...but the two things that are still true of it are kept: a
+  // download in flight, and a refused one carrying the service's own
+  // WORD rather than a sentence this file made up.
+  assert.equal(cloudStateOf({ signedIn: true, card, local: false, busy: true }).state, 'busy');
+  const bad = cloudStateOf({ signedIn: true, card, local: false, error: 'too-large' });
+  assert.deepEqual([bad.state, bad.error], ['bad', 'too-large']);
+
+  // NO ACCOUNT IS STILL NO LINE. `off` is the first rung for a reason -
+  // ACC0's wall - and `local` may not step in front of it.
+  assert.equal(cloudStateOf({ signedIn: false, card, local: false }).state, 'off');
+
+  // AND THE DEFAULT IS LOCAL, so every caller written before this slice
+  // reads exactly what it read.
+  assert.deepEqual(
+    cloudStateOf({ signedIn: true, characterId: 'c', card, nowS: 1120 }),
+    { state: 'saved', when: agoText(1000, 1120), error: null });
+
+  // THE SENTENCE. "Backed up" under a tile whose only copy IS the
+  // backup tells a player they have two of something they have one of.
+  const t = saveTile(fakeDoc(), { name: 'N' }, { cloud: { state: 'only', when: '2 minutes ago', actions: [] } });
+  assert.equal(text(t, 'svsay'), 'Only in your backup · 2 minutes ago');
+  assert.equal(byClass(t, 'svcloud')[0].className, 'svcloud is-only', 'and it wears its own class, so the skin can colour it apart from a backed-up local save');
+  const noWhen = saveTile(fakeDoc(), { name: 'N' }, { cloud: { state: 'only', when: null, actions: [] } });
+  assert.equal(text(noWhen, 'svsay'), 'Only in your backup');
 });

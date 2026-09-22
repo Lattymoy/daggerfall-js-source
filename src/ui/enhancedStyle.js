@@ -290,7 +290,25 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .svsay { font-size: 12px; letter-spacing: 0.06em; color: var(--dim); flex: 1 1 auto; }
 .svcloud.is-saved .svsay { color: var(--verdigris); }
 .svcloud.is-bad .svsay { color: var(--ruby); }
+/* ACC2c: a save whose ONLY copy is the backup. Brass rather than the
+   verdigris a backed-up local save gets, because they are opposite
+   facts wearing the same sentence shape - one says "there are two of
+   these" and this one says "there is one, and it is not here". */
+.svcloud.is-only .svsay { color: var(--brass); }
 .svcloud .act { padding: 7px 12px; min-height: 32px; font-size: 12px; }
+
+/* ── ACC2c: THE CLOUD-ONLY GRID ──────────────────────────────────
+   Its own block under the pane's own tiles, with a rule above it, so
+   the eye reads two groups rather than one grid of tiles that answer
+   different buttons. No new colours and no new box: the heading is the
+   display face every heading here is in, and the tiles inside are the
+   same tiles. */
+.svcloudonly { margin-top: 6px; padding-top: 16px; border-top: 1px solid var(--iron); }
+.svcloudonly h4 {
+  font-family: var(--display); font-weight: 400; font-size: 17px;
+  margin: 0 0 2px; color: var(--bone);
+}
+.svcloudonly .meta { margin: 0 0 14px; }
 
 .svtile .acts { margin-top: 12px; }
 .svtile .acts .act { padding: 9px 16px; min-height: 38px; }

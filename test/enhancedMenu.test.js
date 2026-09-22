@@ -362,7 +362,15 @@ test('Load and Continue are only drawn when there IS a save', () => {
   // Same law, and the pin follows the code rather than holding the old
   // shape in place.
   assert.match(load, /body\.append\(tileGrid\(saves,/, 'SLOTS1/TILE2: Load draws every restorable slot, a tile each');
-  assert.match(load, /if \(!saves\.length\) body\.append\(empty\(/, '...and says so when there are none');
+  // ACC2c NARROWED THE EMPTY CASE, and in the only direction it could
+  // be narrowed: "No saved games... save a game and every slot of it
+  // appears here" is FALSE of a device that has none locally and a
+  // shelf full of them in the cloud, and printing it directly above the
+  // tiles that disprove it is the sentence that slice exists to stop
+  // showing. The law is unchanged - Load still says so when there are
+  // none - and it now means none ANYWHERE this pane can reach.
+  assert.match(load, /if \(!saves\.length && !onlyCloud\) body\.append\(empty\(/, '...and says so when there are none');
+  assert.match(load, /const onlyCloud = cloudOnlyGrid\(saves\);/, 'and the saves only in the backup are drawn before it decides');
 });
 
 // ── AUDIT UI (2026-08-27): A THUMB IS NOT A SCREEN WIDTH ──────────
