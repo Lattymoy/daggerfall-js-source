@@ -547,7 +547,7 @@ function accountBody() {
     storage: appStorage(),
     onChange: () => card?.paint(),
   });
-  card = accountCard(document, flow);
+  card = accountCard(document, flow, { onClose: () => { accountOpen = false; render(); } });
   host.append(card.root);
   // Not awaited: the door must be on screen before the service is
   // asked anything, and `start` catches its own refusals. The guard is
@@ -582,13 +582,6 @@ function accountWindow() {
   const body = el('div', 'px-body');
   body.append(accountBody());
   win.append(body);
-  const foot = el('div', 'px-winfoot');
-  const close = el('button', 'px-winclose');
-  close.type = 'button';
-  close.append(el('span', 'px-c', '\u25c6'), document.createTextNode('Close'), el('span', 'px-c', '\u25c6'));
-  close.onclick = () => { accountOpen = false; render(); };
-  foot.append(close);
-  win.append(foot);
   return win;
 }
 

@@ -33,52 +33,37 @@ import { STAGES, FIELDS, FIELD_SPEC } from './accountFlow.js';
  *  pin asserts every stage has an entry - a stage added without one
  *  would draw a card with no words on it. */
 export const STAGE_COPY = Object.freeze({
-  loading: {
-    tag: 'Account',
-    title: 'Checking your account',
-    blurb: 'One moment.',
-  },
-  out: {
-    tag: 'Account',
-    title: 'Your account',
-    // ACC0's wall, said at the door, and said HONESTLY: the saves are
-    // ACC2 and the name is ACC1d, so neither is promised as working
-    // today. A door that oversells is a door that gets a bug report.
-    blurb: 'An account gives you a username nobody else can take, and a place to keep your saves. '
-      + 'You can play online without one - you will be given a name of the Bay, and it will be yours only while you are here.',
-  },
-  register: {
-    tag: 'Account',
-    title: 'Create an account',
-    blurb: 'Pick a username and a password. You will be given a recovery code afterwards - it is the only way back in if you forget the password, so have somewhere to write it down.',
-  },
-  login: {
-    tag: 'Account',
-    title: 'Sign in',
-    blurb: 'Sign in on this device. Your other devices stay signed in.',
-  },
+  // THE BLURBS WERE CUT (Mac: "there's uneeded text explaining what an
+  // account is"). A sign-in window is not a place to be taught what an
+  // account is - the two buttons say it. What survives is only what a
+  // player CANNOT guess and would be hurt by not knowing: that recovery
+  // signs every device out, and that the code is shown once.
+  loading: { tag: 'Account', title: 'One moment', blurb: '' },
+  out: { tag: 'Account', title: 'Your account', blurb: '' },
+  register: { tag: 'Account', title: 'Create an account', blurb: '' },
+  login: { tag: 'Account', title: 'Sign in', blurb: '' },
   recover: {
     tag: 'Account',
     title: 'Use your recovery code',
-    blurb: 'This sets a new password and signs every device out, including this one. You will be given a new recovery code.',
+    // KEPT: this signs every device out, including the one being used.
+    // A player who did not expect that has lost their other sessions.
+    blurb: 'This signs every device out, including this one.',
   },
   code: {
     tag: 'Write this down',
     title: 'Your recovery code',
-    // THE STRONGEST SENTENCE ON THE CARD, because this is the only
-    // moment it exists. Email is completely optional (Mac), so there is
-    // no address to send a reset to and this code IS the reset.
-    blurb: 'This is the only time this code will ever be shown. Without it, a forgotten password means a lost account - and the saves with it. Write it down somewhere that is not this computer.',
+    // KEPT, and it is the only long line left on the card. Email is
+    // optional, so this code IS the reset - a player who closes this
+    // without writing it down has a forgotten password away from
+    // losing the account.
+    blurb: 'This is the only time this code is shown. Without it, a forgotten password means a lost account.',
   },
-  in: {
-    tag: 'Account',
-    title: 'Signed in',
-    blurb: '',
-  },
+  in: { tag: 'Account', title: 'Signed in', blurb: '' },
   password: {
     tag: 'Account',
     title: 'Change your password',
-    blurb: 'Your current password is needed even here, so a borrowed device cannot lock you out. Every other device will be signed out.',
+    // KEPT: same reason as recovery - an unexpected sign-out elsewhere.
+    blurb: 'Every other device will be signed out.',
   },
 });
 
@@ -98,7 +83,7 @@ export const STAGE_ACTS = Object.freeze({
  * @param {Document} doc
  * @param {ReturnType<typeof import('./accountFlow.js').AccountFlow>} flow
  */
-export function accountCard(doc, flow) {
+export function accountCard(doc, flow, { onClose = null } = {}) {
   const el = (t, cls, txt) => {
     const n = doc.createElement(t);
     if (cls) n.className = cls;
@@ -151,7 +136,11 @@ export function accountCard(doc, flow) {
     const stage = STAGES.includes(flow.stage) ? flow.stage : 'out';
     const copy = STAGE_COPY[stage];
 
-    root.append(el('span', `tag${stage === 'code' ? '' : ' grey'}`, copy.tag));
+    // The tag earns its place only where it is NOT a restatement of the
+    // heading below it: "Write this down" over "Your recovery code" is
+    // a different sentence; "Account" over "Your account" is the same
+    // one twice.
+    if (copy.tag !== 'Account') root.append(el('span', 'tag', copy.tag));
     root.append(el('h3', null, stage === 'in' ? (flow.account?.name ?? copy.title) : copy.title));
     if (copy.blurb) root.append(el('p', 'meta', copy.blurb));
 
@@ -173,7 +162,7 @@ export function accountCard(doc, flow) {
       if (flow.account.kind) row('Kind', flow.account.kind === 'linked' ? 'Registered' : 'Guest');
       root.append(rows);
       if (!flow.account.handle) {
-        root.append(el('p', 'meta', 'This device has a guest account. Give it a username and a password and it keeps everything it already has - the same account, with a name on it.'));
+        root.append(el('p', 'meta', 'Adding a username keeps everything this account already has.'));
       }
     }
 
@@ -199,7 +188,7 @@ export function accountCard(doc, flow) {
     const acts = el('div', 'acts');
     const busy = flow.busy;
     if (stage === 'out') {
-      acts.append(act('Create an account', () => flow.go('register'), { primary: true, disabled: busy }));
+      acts.append(act('Create account', () => flow.go('register'), { primary: true, disabled: busy }));
       acts.append(act('Sign in', () => flow.go('login'), { disabled: busy }));
     } else if (stage === 'in') {
       if (flow.account?.handle) {
@@ -224,6 +213,12 @@ export function accountCard(doc, flow) {
         acts.append(act('Lost your password?', () => flow.go('recover'), { disabled: busy }));
       }
     }
+    // ACC1f: CLOSE IS AN ACT, NOT A THIRD ROW. The window used to own
+    // a foot of its own, which put Close on a row under the card's own
+    // buttons - two stacked rows where one would do, and on a form
+    // that already had a Back it was a second way to do the same
+    // thing. One row, centred, Close last.
+    if (onClose) acts.append(act('Close', onClose));
     if (acts.children.length) root.append(acts);
   }
 

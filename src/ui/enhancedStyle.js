@@ -1764,11 +1764,33 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    a modal you can read the page through is a modal nobody believes is
    modal. The pause face uses rgba(10,12,17,0.55) over a LIVE frame;
    this sits over the still door, so it can be heavier. */
-.px-acctstage { display: grid; place-items: center; position: absolute; inset: 0; z-index: 5;
-  background: rgba(6,8,12,0.82); }
-.px-win.px-acctwin { height: auto; max-height: min(760px, 86dvh); width: min(560px, 94vw);
-  background: #0a0c11; }
-.px-win.px-acctwin .px-body { padding: 26px 24px 8px; }
+/* THE SCRIM SITS UNDER THE WORDMARK, not over it. The first cut
+   centred the window on the viewport, which put it across the logo -
+   the best thing on that screen, covered by a sign-in box - and used
+   an 0.82 scrim that flattened the whole door to mud. Lighter now, and
+   the window stands in the space the menu list occupies, which is what
+   it is standing in for. */
+.px-acctstage { position: absolute; inset: 0; z-index: 5;
+  display: grid; grid-template-rows: auto 1fr; justify-items: center;
+  padding: clamp(270px, 33vh, 400px) 16px 24px;
+  background: rgba(8,10,15,0.6); }
+.px-win.px-acctwin { height: auto; max-height: min(580px, 58dvh); width: min(500px, 92vw);
+  background: #0a0c11; align-self: start; }
+.px-win.px-acctwin .px-body { padding: 22px 26px 24px; }
+
+/* ═══ ONE AXIS ════════════════════════════════════════════════════
+   Mac: "Nothing is centered". It was true and it read as rushed - a
+   left-aligned tag over a left-aligned heading over left-aligned
+   buttons, with a Close centred underneath them. The window is
+   symmetrical about one line now, contents included. */
+.px-win.px-acctwin .card.acct { text-align: center; }
+.px-win.px-acctwin .card.acct .tag { display: inline-block; }
+.px-win.px-acctwin .card.acct .acts { justify-content: center; }
+.px-win.px-acctwin .card.acct label.field { align-items: center; }
+.px-win.px-acctwin .card.acct label.field input { text-align: center; width: 100%; }
+.px-win.px-acctwin .card.acct ul.acctfacts li { justify-content: center; }
+.px-win.px-acctwin .card.acct ul.acctfacts .acctkey,
+.px-win.px-acctwin .card.acct ul.acctfacts .acctval { flex: 0 0 auto; }
 /* The card inside brings its own frame, and a box inside a box reads
    as a mistake - the window IS the frame here. */
 .px-win.px-acctwin .card.acct { border: 0; background: none; padding: 0; margin: 0; }
