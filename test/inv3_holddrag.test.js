@@ -33,7 +33,7 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { holdBroken, mountEnhancedInventory } from '../src/ui/enhancedInventory.js';
+import { holdBroken, MOUSE_HOLD_MS, mountEnhancedInventory } from '../src/ui/enhancedInventory.js';
 import { withDom } from './invdrag.mjs';
 import { ITEM_TEMPLATES, getTemplate } from '../src/characters/paperdoll.js';
 import { equipItem, isEquipped } from '../src/systems/equip.js';
@@ -272,24 +272,29 @@ test('INV3: and the browser taking the gesture ends it too', () => {
   });
 });
 
-test('INV3: the MOUSE is untouched - it still crosses at four pixels, with no hold', () => {
-  // A mouse has no scroll to steal, so INV1's threshold is INV1's. The
-  // per-axis slop must not have reached it: 3px is a tap, 5px is a drag,
-  // and neither waits on a timer.
+test('INV3: mouse drag is immediate on movement and deterministic on hold', () => {
+  // Keep the fast path: a normal desktop drag should still feel instant.
   withPack(({ dom, rows, ghost, at, press, move, up }) => {
     at(dom.body);
     press(rows()[0], 200, 300, 'mouse');
     move(202, 301);
     assert.equal(ghost(), null, 'three pixels of Manhattan is still a click');
     move(203, 302);
-    assert.ok(ghost(), 'five is a drag, on the instant - no hold, no timer');
+    assert.ok(ghost(), 'five pixels starts the drag immediately');
     up(203, 302);
   });
-  withPack(({ dom, rows, ghost, at, press, move, up }) => {
+
+  // And add the path the UI promises: click, hold, then drag. A precise
+  // mouse no longer depends on accidentally crossing the movement slop.
+  withPack(({ dom, rows, ghost, at, press, move, wait, up }) => {
     at(dom.body);
     press(rows()[0], 200, 300, 'mouse');
-    move(213, 300);   // past the touch law's x slop and nowhere near the touch law
-    assert.ok(ghost(), 'and the mouse never waits for a hold in either axis');
+    wait(MOUSE_HOLD_MS - 1);
+    assert.equal(ghost(), null, 'a normal click is still a click');
+    wait(1);
+    assert.ok(ghost(), 'the held mouse deterministically picks the item up');
+    move(213, 300);
+    assert.ok(ghost(), 'and it stays carried once movement begins');
     up(213, 300);
   });
 });
