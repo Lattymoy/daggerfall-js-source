@@ -157,7 +157,7 @@ import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-D
 import { nearestSafeLocation, respawnFlavorText, respawnHealth, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
 import { saveSlot, loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, requestScreenshot, capturePendingScreenshot } from '../systems/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
-import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
+import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { arrivalClampMinutes, playerTravelPosition } from '../systems/travel.js';   // F-slice; F114: the ship-aware travel origin
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion, directionHintString } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
@@ -2902,10 +2902,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     (key) => (typeof key === 'string' && key.startsWith('water:')
       ? waterSourceHoverName(!!springAt(key)?.dry) : null),
     (key) => wagonHoverName(key),
-    // WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-313). A live foe
-    // is named by the pool that stands it, and only when it is not
-    // hostile; a walking townsperson by `MobilePersonNPC.NameNPC`, off
-    // the same live pool and the same index the pick raced.
+  ];
+  /**
+   * WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-320), IN ITS OWN
+   * ARRAY. A live foe is named by the pool that stands it, and only
+   * when it is not hostile; a walking townsperson by
+   * `MobilePersonNPC.NameNPC`, off the same live pool and the same
+   * index the pick raced.
+   *
+   * AUDIT-WH2 L2-F3: it is separate from `_hoverNamers` above because
+   * the two arrays answer to different switches. Everything above is
+   * the PORT's own and predates the mod, so it speaks whether World
+   * Tooltips is on or off; this is the MOD's, so it must go silent
+   * when the mod does. It went in `_hoverNamers` and so it never did -
+   * see the note at the gate in worldModes' `exteriorHoverName`.
+   */
+  const _hoverModNamers = [
     (key) => exteriorFoes.liveHoverName?.(key) ?? null,
     (key) => cityGuards.liveHoverName?.(key) ?? null,
     (key) => {
@@ -2933,7 +2945,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // pack. Each pool answers for its own bodies, beside the producer
   // that stands them.
   const _hoverContents = composeContents([
-    (key) => (key.startsWith('droppedLoot:') ? (droppedLoot.contents?.(key) ?? null) : null),
+    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:') ? (droppedLoot.contents?.(key) ?? null) : null),   // AUDIT-WH2 L2-F5: C1's guard - the CONTENTS ladder is handed every key the namer is
     (key) => exteriorFoes.hoverContents?.(key) ?? null,
     (key) => cityGuards.hoverContents?.(key) ?? null,
   ]);
@@ -3528,7 +3540,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2353 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5380
+  // that context through modes.dungeonCtx - so worldModes.js:5491
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5403,7 +5415,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6070), so exterior mode and a
+    // composer, dungeonContext.js:6084), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7296,7 +7308,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8328-8391 -
+  // worldModes answers it in BOTH modes (worldModes.js:8436-8499 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9865,7 +9877,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // node and this return is above the frame's hover call, so a name
     // that was on screen when the video took the canvas stayed there,
     // floating over an infection dream.
-    if (frameHeld()) { hideWorldPlaque(); last = now; requestAnimationFrame(frame); return; }
+    if (frameHeld()) { frameAbort(); hideWorldPlaque(); last = now; requestAnimationFrame(frame); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the
@@ -10030,6 +10042,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // townTalk always draws.
       townTalk.frame(dt);
       capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot
+      frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
       return;
     }
@@ -11714,7 +11727,23 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           dir: _hd,
           collider,
           canvas,
-          cursorActive: gamePaused(),
+          // AUDIT-WH2 L3-F3: ...AND THE POINTER SURFACES, which
+          // `gamePaused` does not count. This host frees the mouse for
+          // three of its own surfaces (AUDIT SOC B6, the Set at the key
+          // ladder's head): the chat, the friends panel and the peer
+          // F-menu. None of them is an overlay in `gamePaused`'s sense,
+          // so the plaque went on naming a shopfront through them.
+          //
+          // It parts from the crosshair here, and only here, for a
+          // reason the crosshair does not have: the plaque is a DOM
+          // node at `z-index: 6` (enhancedStyle.js .wplaque) and
+          // `.dfpeer` is a DOM node at `z-index: 6` (socialMenu.js),
+          // both `position: fixed` within three percent of the same
+          // centre - so the plaque PAINTS OVER the menu the player just
+          // opened. The reticle is drawn into the canvas underneath and
+          // can never do that. `pointer-events: none` keeps the clicks
+          // working; it does not keep the panel readable.
+          cursorActive: gamePaused() || pointerSurfaces.size > 0,
           pick: () => modes.exteriorHoverPick(cam.pos, _hd, {
             corpse: pickActivatableHit(cam.pos, _hd, [...cityGuards.lootTargets(), ...exteriorFoes.lootTargets()], collider),
             pile: pickActivatableHit(cam.pos, _hd, droppedLoot.lootTargets(), collider),
@@ -11729,7 +11758,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             foe: pickActivatableHit(cam.pos, _hd, [...exteriorFoes.liveTargets(), ...cityGuards.liveTargets()], collider),
             person: _hoverPersonPick(cam.pos, _hd),
           }),
-          name: (key) => modes.exteriorHoverName(key, { eye: cam.pos, dir: _hd, names: _hoverNamers }),
+          name: (key) => modes.exteriorHoverName(key, { eye: cam.pos, dir: _hd, names: _hoverNamers, modNames: _hoverModNamers }),
           contents: _hoverContents,
         });
       }

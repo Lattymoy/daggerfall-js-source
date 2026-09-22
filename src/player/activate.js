@@ -203,7 +203,15 @@ export function pickFoeHit(eye, dir, foes, collider, distance = DEFAULT_ACTIVATI
 /** The volume `pickFoeAlong` strikes: the foe's controller, at its
  *  feet. ONE expression, because `liveFoeTargets` below hands the same
  *  box to `pickActivatableHit` and the two sweeps must agree on what
- *  the ray hit. */
+ *  the ray hit.
+ *
+ *  AUDIT-WH2 L2-F6: and the same goes for the SKIP above the box.
+ *  `liveFoeTargets`/`liveFoeFor` refused a foe with no `entity` and
+ *  `pickFoeAlong` never did, so a record in that state took the press
+ *  and was invisible to the plaque - one expression for the box and two
+ *  for the pool is the same drift one rung up. Unreachable today (both
+ *  pools attach `entity` before a record enters them) and pinned so it
+ *  stays that way. */
 export function foeAabb(f) {
   const feet = f?.ai?.feet;
   if (!feet) return null;
@@ -228,7 +236,7 @@ export function foeAabb(f) {
  *
  * The RAY's distance with the MOD's own 6.4 beside it: World Tooltips
  * names a live entity only inside MobileNPCActivationDistance
- * (.cs:297-313) while the press has no distance gate on the Info arm
+ * (.cs:297-320) while the press has no distance gate on the Info arm
  * at all, and AUDIT 65 MC-2's law is that a family reaches for the ray
  * and carries its handler's reach.
  *
@@ -241,7 +249,7 @@ export function liveFoeTargets(foes, keyPrefix, { idOf = null } = {}) {
   let i = -1;
   for (const f of foes ?? []) {
     i += 1;
-    if (!f || f.dead || !f.entity) continue;
+    if (!f || f.dead) continue;   // AUDIT-WH2 L2-F6: `!f.entity` came off - the PRESS's own sweep (pickFoeAlong, below) never had it, and the two sweeps must agree on what the ray hit
     const aabb = foeAabb(f);
     if (!aabb) continue;
     targets.push({
@@ -261,7 +269,7 @@ export function liveFoeFor(foes, key, keyPrefix, { idOf = null } = {}) {
   let i = -1;
   for (const f of foes ?? []) {
     i += 1;
-    if (!f || f.dead || !f.entity) continue;
+    if (!f || f.dead) continue;   // AUDIT-WH2 L2-F6: `!f.entity` came off - the PRESS's own sweep (pickFoeAlong, below) never had it, and the two sweeps must agree on what the ray hit
     if (`${keyPrefix}:${idOf ? idOf(f) : i}` === key) return f;
   }
   return null;
@@ -320,7 +328,7 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:4850-4860) given a
+ * bulletin board's idiom (scenes/worldModes.js:4962-4972) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.

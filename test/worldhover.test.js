@@ -28,7 +28,7 @@ import {
 } from '../src/systems/worldHover.js';
 import {
   showWorldPlaque, destroyWorldPlaque, hideWorldPlaque, plaqueAnchor, worldPlaqueOn, worldHoverFrame,
-  worldHoverFaults, PLAQUE_GAP, _plaqueSignatureForTests,
+  worldHoverFaults, PLAQUE_GAP, PLAQUE_WATCHDOG_MS, _plaqueSignatureForTests, _setPlaqueClockForTests,
 } from '../src/ui/worldPlaque.js';
 import { CROSSHAIR_ARM, crosshairCentreY } from '../src/ui/hudCrosshair.js';
 import { hudScale } from '../src/ui/hud.js';
@@ -64,16 +64,30 @@ function fakeEl(tag) {
     set textContent(v) { n.children.length = 0; if (v) n.children.push({ textContent: v, children: [] }); },
     append(...cs) { for (const c of cs) n.children.push(c); },
     setAttribute(k, v) { n.attrs[k] = v; },
-    remove() { n.removed = true; },
+    remove() { n.removed = true; const i = _body.indexOf(n); if (i >= 0) _body.splice(i, 1); },
   };
   return n;
 }
 
+// AUDIT-WH2 L5-F6/F11: THE FAKE BODY KEEPS ITS CHILDREN.
+//
+// It used to be `body: { append() {} }` - a no-op - and `root()` looked
+// in the `made` array rather than in the document, so every draw
+// assertion in this file passed against a DETACHED div. Two mutants
+// lived in that gap: deleting `document.body.append(node)` from
+// `ensure()` (the plaque draws nothing in a browser, suite stays green)
+// and deleting `node?.remove()` from `destroyWorldPlaque()` (every host
+// teardown orphans a body child). Both are now killed by
+// `bodyChildren()` below.
+let _body = [];
+const bodyChildren = () => _body;
+
 function withPlaque(fn, { skin = 'enhanced', touch = false } = {}) {
   const made = [];
+  _body = [];
   globalThis.document = {
     createElement: (t) => { const e = fakeEl(t); made.push(e); return e; },
-    body: { append() {} },
+    body: { append: (...cs) => { for (const c of cs) _body.push(c); } },
     head: { append() {}, appendChild() {}, querySelector: () => null },
     querySelector: () => null,
     getElementById: () => null,
@@ -195,6 +209,28 @@ test('WORLD-HOVER: the signature changes when the LIST does, under a constant ke
   const door = (subs) => frameSignature(resolveHover(hit('door:2'), { name: () => ({ title: 'Door', subs }) }));
   assert.notEqual(door([]), door(['Lock Level: 12']));
   assert.equal(frameSignature(null), null);
+  // AUDIT-WH2 L5-F5: ...AND THE TITLE, under a CONSTANT KEY.
+  //
+  // Nothing here ever changed a title without changing the key, so
+  // dropping `|${f.title}` from the signature survived. That is PX21c's
+  // own bug one field over: a `mobileFoe:0` that turns hostile, or a
+  // door whose building resolves on a later frame, keeps the old word on
+  // screen for as long as the player keeps looking at it.
+  const named = (t) => frameSignature(resolveHover(hit('door:2'), { name: () => ({ title: t }) }));
+  assert.notEqual(named('Door'), named('The Rusty Sword'), 'a changed WORD under one key repaints');
+  // AUDIT-WH2 L5-F4: ...AND THE TAIL. `rest` is not derivable from
+  // `rows` - the rows are capped at HOVER_MAX - so two frames with the
+  // same six visible rows and different "and N more" tails collided into
+  // one signature and the plaque kept the stale count.
+  const many = (n) => frameSignature(resolveHover(hit('loot:1'), {
+    contents: () => Array.from({ length: n }, (_, i) => (i < HOVER_MAX ? { name: `Item${i}` } : { name: `Spare${i}` })),
+    name: PILE,
+  }));
+  const six = resolveHover(hit('loot:1'), { contents: () => Array.from({ length: HOVER_MAX + 1 }, (_, i) => ({ name: `Item${i}` })), name: PILE });
+  const seven = resolveHover(hit('loot:1'), { contents: () => Array.from({ length: HOVER_MAX + 2 }, (_, i) => ({ name: `Item${i}` })), name: PILE });
+  assert.deepEqual(six.rows.map((r) => r.name), seven.rows.map((r) => r.name), 'the same six rows are visible');
+  assert.notEqual(six.rest, seven.rest, '...and the tails differ');
+  assert.notEqual(many(HOVER_MAX + 1), many(HOVER_MAX + 2), 'a changed TAIL under the same visible rows repaints');
 });
 
 // ── THE DRAW ─────────────────────────────────────────────────────
@@ -236,9 +272,14 @@ test('WORLD-HOVER: one node, rewritten only when what would be painted changes',
     const f = (items) => resolveHover(hit('loot:1'), { contents: () => items, name: PILE });
     showWorldPlaque(f([{ name: 'Ruby' }]));
     const n = root();
-    const before = n.children;
-    showWorldPlaque(f([{ name: 'Ruby' }]));
-    assert.equal(n.children, before, 'the same frame does not touch the tree');
+    // AUDIT-WH2 L5-F18: `assert.equal(n.children, before)` USED TO SIT
+    // HERE and it was a tautology - the fake element's `set textContent`
+    // does `n.children.length = 0`, so the array OBJECT survives a full
+    // clear-and-refill and the identity holds whether or not the guard
+    // ran. The previous audit noticed, added the `__mark` test below
+    // that really does catch a deleted guard, and then left this one in
+    // place still reading as evidence. Two pins, one law, one of them
+    // false: the false one goes.
     const sig = _plaqueSignatureForTests();
     showWorldPlaque(f([{ name: 'Helm' }]));
     assert.notEqual(_plaqueSignatureForTests(), sig, 'a changed list repaints');
@@ -284,9 +325,48 @@ test('WORLD-HOVER: the anchor is the reticle\'s own, a fixed gap BELOW the cross
   const centre = crosshairCentreY(canvas.height, 0);
   assert.equal(centre, 450);
   assert.equal(a.top, (centre + CROSSHAIR_ARM * s) / 2 + PLAQUE_GAP);
-  assert.ok(a.top > centre / 2 + CROSSHAIR_ARM * s / 2, 'strictly below the cross\'s lower tip');
+  // AUDIT-WH2 L5-F19: `a.top` IS `(centre + CROSSHAIR_ARM * s) / 2 +
+  // PLAQUE_GAP`, so the old assertion here read `X + PLAQUE_GAP > X` and
+  // could only fail if the gap went negative. The claim worth pinning is
+  // the one the sentence above makes - the plaque starts below the
+  // cross's LOWER TIP - so measure against the tip itself.
+  const lowerTip = (centre + CROSSHAIR_ARM * s) / 2;
+  assert.equal(a.top - lowerTip, PLAQUE_GAP, 'exactly the gap below the cross\'s lower tip');
+  assert.ok(a.top > lowerTip, 'strictly below the cross\'s lower tip');
   assert.equal(plaqueAnchor(null), null);
   assert.equal(plaqueAnchor({ width: 0, height: 0 }), null, 'an unsized canvas has no anchor');
+});
+
+test('AUDIT-WH2 L5-F1: the SEAM moves the plaque - a host hands it a canvas and the name follows the reticle', () => {
+  // A mutant proved this was unheld against the WHOLE 972-file suite:
+  // `showWorldPlaque(frame, plaqueAnchor(canvas))` -> `showWorldPlaque(frame)`
+  // survived it. Every anchor pin in this file calls `plaqueAnchor` and
+  // `showWorldPlaque` BY HAND; not one ever passed a `canvas` through
+  // `worldHoverFrame`, which is the only door four hosts use. In the
+  // shipping game the plaque would have sat wherever the first paint put
+  // it - through a resize, through a large HUD docking, forever.
+  withPlaque((root) => {
+    const collider = { raycast: () => Infinity };
+    const targets = () => [{ key: 'person:1', aabb: { min: [-1, -1, 1], max: [1, 1, 2] }, distance: 76.8, reach: 6.4 }];
+    const frame = (canvas) => worldHoverFrame({
+      eye: [0, 0, 0], dir: [0, 0, 1], collider, targets, canvas,
+      name: () => ({ title: 'Marcus Grey' }), contents: () => null,
+    });
+    frame({ width: 1600, height: 900, clientWidth: 800 });
+    const n = root();
+    assert.ok(n, 'the seam painted');
+    assert.equal(n.props['--wp-x'], '400.0px', 'the seam asked plaqueAnchor, not nothing');
+    const wide = n.props['--wp-top'];
+    // ...and it asks EVERY frame, so a resize moves the name with the
+    // reticle rather than stranding it at the old centre.
+    frame({ width: 800, height: 1200, clientWidth: 400 });
+    assert.equal(n.props['--wp-x'], '200.0px', 'a resized canvas moves the plaque');
+    assert.notEqual(n.props['--wp-top'], wide, '...in both axes');
+    // A host that hands NO canvas still draws - the anchor is optional,
+    // the name is not (the CSS defaults hold it at mid-screen).
+    frame(null);
+    assert.equal(n.classList.contains('on'), true, 'no canvas is not no plaque');
+  });
 });
 
 test('WORLD-HOVER: the anchor is written as custom properties, and only when it moves', () => {
@@ -306,6 +386,139 @@ test('WORLD-HOVER: the anchor is written as custom properties, and only when it 
 });
 
 // ── THE TWO GATES ────────────────────────────────────────────────
+
+test('AUDIT-WH2 L5-F6/F11: the plaque is ON THE PAGE while it lives, and OFF it when the host unwinds', () => {
+  // Two mutants, one gap. `ensure()` without `document.body.append(node)`
+  // and `destroyWorldPlaque()` without `node?.remove()` BOTH survived the
+  // suite, because nothing here had ever looked in the document - the
+  // harness's body was a no-op and `root()` searched the created-element
+  // list instead. A plaque that is never attached draws nothing in a
+  // browser; one that is never detached is orphaned on every mode change,
+  // which is the allocation-owner law this slice is pinned on hardest.
+  withPlaque((root) => {
+    assert.equal(bodyChildren().length, 0, 'nothing on the page before the first draw');
+    showWorldPlaque(resolveHover(hit('person:1'), { name: () => ({ title: 'Marcus Grey' }) }));
+    const n = root();
+    assert.ok(n, 'a node was built');
+    assert.ok(bodyChildren().includes(n), 'and it is ATTACHED - a detached plaque draws nothing in a browser');
+    // a hide leaves it attached: it is reused every frame and only the
+    // teardown owns its removal.
+    showWorldPlaque(null);
+    assert.ok(bodyChildren().includes(n), 'a hide blanks it, it does not orphan it');
+    destroyWorldPlaque();
+    assert.equal(n.removed, true, 'the teardown removed it');
+    assert.equal(bodyChildren().includes(n), false, '...and it is off the page, not merely unreferenced');
+  });
+});
+
+test('AUDIT-WH2 L5-F8: the TITLE is painted above the sub-lines and the rows', () => {
+  // `textsOf` collects by class, so document order was never asserted and
+  // moving `n.append(title)` below the subs loop survived. Every plaque
+  // in the game would read "Lock Level: 12 / To The Rusty Sword".
+  withPlaque((root) => {
+    showWorldPlaque(resolveHover(hit('door:2'), { name: () => ({ title: 'The Rusty Sword', subs: ['Lock Level: 12'] }) }));
+    const classes = root().children.map((c) => c.className ?? '');
+    assert.ok(classes.length >= 2, 'a title and a sub-line were painted');
+    assert.match(classes[0], /wplaque-title/, 'the title is FIRST in the tree, not merely present');
+    assert.ok(classes.findIndex((c) => /wplaque-sub/.test(c)) > 0, '...and the sub-lines come after it');
+  });
+});
+
+test('AUDIT-WH2 L5-F3: a bad namer is said ONCE, not once a frame', () => {
+  // ONCRASH1's idiom is "a latch, not a per-frame console", and the latch
+  // was held by prose plus the sight of `_faultSaid = false` in the
+  // teardown - never by behaviour. `if (!_faultSaid)` -> `if (true)`
+  // survived. A third-party namer that throws would put 60 lines a second
+  // into the console of a game that is otherwise running fine.
+  const warn = console.warn;
+  const said = [];
+  console.warn = (m) => said.push(m);
+  try {
+    withPlaque(() => {
+      const exploding = () => { throw new TypeError('boom'); };
+      for (let i = 0; i < 5; i++) {
+        worldHoverFrame({
+          eye: [0, 0, 0], dir: [0, 0, 1], collider: { raycast: () => Infinity },
+          targets: () => [{ key: 'loot:0', aabb: { min: [-1, -1, 1], max: [1, 1, 2] }, distance: 76.8, reach: 3.2 }],
+          name: exploding, contents: () => [],
+        });
+      }
+      assert.equal(worldHoverFaults(), 5, 'every frame is counted');
+      assert.equal(said.length, 1, '...and exactly one is SAID');
+      assert.match(said[0], /world-hover/);
+    });
+    // ...and the latch is re-armed by the teardown, so the next host says it once too.
+    said.length = 0;
+    withPlaque(() => {
+      worldHoverFrame({
+        eye: [0, 0, 0], dir: [0, 0, 1], collider: { raycast: () => Infinity },
+        targets: () => [{ key: 'loot:0', aabb: { min: [-1, -1, 1], max: [1, 1, 2] }, distance: 76.8, reach: 3.2 }],
+        name: () => { throw new TypeError('boom'); }, contents: () => [],
+      });
+      assert.equal(said.length, 1, 'a new host gets its own one line');
+    });
+  } finally { console.warn = warn; }
+});
+
+test('AUDIT-WH2 L3-F1: the GATE the hosts reach takes the plaque DOWN, it does not merely stop drawing', () => {
+  // L5 put the hide on `showWorldPlaque`. `grep -rn showWorldPlaque
+  // src/scenes/` returns NOTHING - every host calls `worldHoverFrame` and
+  // only `worldHoverFrame`, whose gate was a bare `return null` - so the
+  // fix was unreachable in production for its whole life. Both terms of
+  // the gate can flip under a painted plaque: the skin is a live setting
+  // and `isTouchDevice` reads a media query a tablet-mode flip changes.
+  withPlaque((root) => {
+    const seam = () => worldHoverFrame({
+      eye: [0, 0, 0], dir: [0, 0, 1], collider: { raycast: () => Infinity },
+      targets: () => [{ key: 'person:1', aabb: { min: [-1, -1, 1], max: [1, 1, 2] }, distance: 76.8, reach: 6.4 }],
+      name: () => ({ title: 'Wardrobe' }), contents: () => null,
+    });
+    seam();
+    const n = root();
+    assert.equal(n.classList.contains('on'), true, 'a name is on screen');
+    // the flip a tablet makes, under the painted plaque
+    globalThis.window.matchMedia = () => ({ matches: true });
+    globalThis.location.search = '?skin=enhanced&touch=on';
+    globalThis.window.location.search = '?skin=enhanced&touch=on';
+    assert.equal(worldPlaqueOn(), false, 'the gate is shut');
+    assert.equal(seam(), null, 'and the seam refuses');
+    assert.equal(n.classList.contains('on'), false, '...and the stranded name is GONE, not left painted');
+  });
+});
+
+test('AUDIT-WH2 L3-F2: the plaque has a heartbeat - frames that stop coming take it down', () => {
+  // The seam's try/catch contains a throw INSIDE the hover call. It
+  // cannot contain one BESIDE it: each host runs hundreds of lines
+  // between `worldHoverFrame(...)` and its bare
+  // `requestAnimationFrame(frame)`, which is not in a `finally`. A DOM
+  // overlay stays painted unless it is told otherwise (AUDIT 64 F37), so
+  // the last name floated over a game that had stopped. ENH-NOTICE1 met
+  // the same shape and answered it the same way.
+  let armed = null;
+  const fired = [];
+  _setPlaqueClockForTests((fn, ms) => { armed = { fn, ms }; return { id: fired.length }; }, (t) => { if (t) fired.push(t); });
+  try {
+    withPlaque((root) => {
+      showWorldPlaque(resolveHover(hit('person:1'), { name: () => ({ title: 'Marcus Grey' }) }));
+      const n = root();
+      assert.ok(armed, 'a draw arms the watchdog');
+      assert.equal(armed.ms, PLAQUE_WATCHDOG_MS);
+      assert.equal(n.classList.contains('on'), true);
+      // ...and it is re-armed by every draw, including the ones the
+      // signature short-circuits - a plaque standing still on one name is
+      // still a live frame.
+      armed = null;
+      showWorldPlaque(resolveHover(hit('person:1'), { name: () => ({ title: 'Marcus Grey' }) }));
+      assert.ok(armed, 'an unchanged frame re-arms it too');
+      // now the frames stop, and the timer is what is left
+      armed.fn();
+      assert.equal(n.classList.contains('on'), false, 'a plaque nobody is drawing comes down by itself');
+    });
+  } finally { _setPlaqueClockForTests(
+    (fn, ms) => (typeof setTimeout === 'function' ? setTimeout(fn, ms) : null),
+    (t) => { if (t != null && typeof clearTimeout === 'function') clearTimeout(t); },
+  ); }
+});
 
 test('WORLD-HOVER: the classic skin never builds a node, and never injects the sheet', () => {
   // AUDIT 39's finding, and it matters MORE now: four hosts calling one
@@ -522,7 +735,7 @@ test('WORLD TOOLTIPS: an action object is named by its model, and an unlisted Mu
 test('WORLD TOOLTIPS: a house container is named by its FULL model id, which `% 100` could not tell apart', async () => {
   const { houseContainerName, INTERACT_TEXT } = await import('../src/systems/worldTooltips.js');
   const { containerTextureRecord } = await import('../src/systems/containers.js');
-  // .cs:552-629. The reason WORLD-HOVER's groundwork slice made the
+  // .cs:552-633. The reason WORLD-HOVER's groundwork slice made the
   // container record carry its model id: the derived texture record is
   // LOSSY, and these two both read 3.
   assert.equal(containerTextureRecord(41003), containerTextureRecord(41803), 'the derivation cannot tell them apart');
@@ -647,8 +860,13 @@ test('AUDIT-WH H5: the location\'s name is read in the PORT\'s spelling, from ON
   // way. This is the same law HARD2 applied to the activation race.
   assert.match(wm, /const currentLocationName = \(\) => host\.currentLocation\?\.\(\)\?\.name \?\? '';/,
     'PlayerGPS.CurrentLocation.Name, once');
+  // AUDIT-WH2 L5: a COUNT is not a law - three calls anywhere in the file
+  // satisfied it and nothing said WHICH three arms. Name them.
   assert.equal((wm.match(/currentLocationName\(\)/g) ?? []).length, 3,
     'the three above-ground arms that take it - the building exit, the city wall and (AUDIT-WH M7) the dungeon entrance');
+  assert.match(wm, /staticDoorName\('buildingExit', \{ locationName: currentLocationName\(\) \}\)/, 'the building exit, from inside');
+  assert.match(wm, /staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\) \}\)/, 'the dungeon entrance, from outside');
+  assert.match(wm, /locationName: currentLocationName\(\),\n\s+buildingType: bd\.buildingType,/, 'and the shopfront the city wall arm reads');
   // ...and the DUNGEON exit names the dungeon it is in, not the
   // location under the player, so it reads its own record - in the
   // same spelling.
@@ -667,7 +885,7 @@ test('AUDIT-WH H5: the location\'s name is read in the PORT\'s spelling, from ON
 
 test('WORLD TOOLTIPS: a quest ITEM stand is named; the Totem is named by hand', async () => {
   const { questResourceName, TOTEM_TEXT } = await import('../src/systems/worldTooltips.js');
-  // .cs:493-505 - archive 211 record 54, before the resolver runs.
+  // .cs:491-505 - archive 211 record 54, before the resolver runs.
   assert.equal(questResourceName(null, { archive: 211, record: 54 }), TOTEM_TEXT);
   assert.equal(questResourceName({ name: 'Ruby', templateIndex: -1 }, { archive: 211, record: 54 }), TOTEM_TEXT,
     'the billboard wins over the item');
@@ -880,6 +1098,20 @@ test('AUDIT-WH L1: the seam CONTAINS its host closures - a bad namer costs a fra
     const exploding = () => { throw new TypeError('a third-party namer exploded'); };
     const targets = () => [{ key: 'loot:0', aabb: { min: [-1, -1, 1], max: [1, 1, 2] }, distance: 76.8, reach: 3.2 }];
     const collider = { raycast: () => Infinity };
+    // AUDIT-WH2 L5-F2: PAINT A NAME FIRST, then break the namer.
+    //
+    // Without this the assertion below was a TAUTOLOGY and a mutant
+    // proved it: the namer threw on the very first frame, so
+    // `showWorldPlaque` was never reached, `ensure()` never ran, `root()`
+    // answered null, and `null ?? false === false` passed whether or not
+    // the catch arm took the plaque down. Deleting
+    // `showWorldPlaque(null)` from the catch survived the WHOLE suite.
+    // The law is "it does not freeze on its last answer", so there has
+    // to BE a last answer.
+    assert.doesNotThrow(() => worldHoverFrame({
+      eye: [0, 0, 0], dir: [0, 0, 1], collider, targets, name: () => ({ title: 'Chest' }), contents: () => [],
+    }));
+    assert.equal(root()?.classList.contains('on'), true, 'a name is on screen before the namer breaks');
     for (let i = 0; i < 3; i++) {
       assert.doesNotThrow(() => worldHoverFrame({
         eye: [0, 0, 0], dir: [0, 0, 1], collider, targets, name: exploding, contents: () => [],
@@ -888,8 +1120,12 @@ test('AUDIT-WH L1: the seam CONTAINS its host closures - a bad namer costs a fra
     assert.equal(worldHoverFaults(), 3, 'and every contained frame is COUNTED');
     // a readout that cannot answer shows NOTHING - it does not freeze
     // on its last answer, which would be a plaque naming a thing it can
-    // no longer resolve.
-    assert.equal(root()?.classList.contains('on') ?? false, false);
+    // no longer resolve. The node EXISTS here (the frame above painted
+    // "Chest" into it), so this now reads the class rather than reading
+    // `null ?? false`.
+    assert.ok(root(), 'the node is still there - this is about what it SHOWS');
+    assert.equal(root().classList.contains('on'), false);
+    assert.equal(root().textContent, '', 'and it is blank, not holding the word it can no longer resolve');
     // an exploding PICK and an exploding TARGETS are the same class.
     for (const bad of [{ pick: exploding }, { targets: exploding }]) {
       assert.doesNotThrow(() => worldHoverFrame({
@@ -915,17 +1151,32 @@ test('AUDIT-WH H3: an above-ground body LISTS what it holds, from one ladder', a
   // Driven over the shape the pools mint: one lens, minting the key
   // and resolving it back, exactly as exteriorFoes and cityGuards use
   // it now.
+  // AUDIT-WH2 L5-F15: THE PRODUCER'S LENS, not a simplified copy of it.
+  //
+  // This used to be a three-key transcription that omitted the encounter
+  // pool's WORLD6b-iii(c) term, so dropping that term from the real lens
+  // survived - a PUPPET's body became a lootable target again even when
+  // its owner's word said it holds nothing. A pin that drives its own
+  // shorter version of the producer is testing the pin.
   const lens = {
-    isCorpse: (e) => !!e.corpse && !!e.entity,
+    isCorpse: (e) => !!e.corpse && !!e.entity && (!e.puppet || (e._pup?.o | 0) > 0),
     idOf: (e) => e.id,
     feetOf: (e) => e.feet,
   };
+  assert.match(read('src/scenes/exteriorFoes.js'),
+    /isCorpse: \(f\) => !!f\.corpse && !!f\.entity && \(!f\.puppet \|\| \(f\._pup\?\.o \| 0\) > 0\),/,
+    'the encounter pool\'s lens is the one driven above, character for character');
   const rat = { id: 7, corpse: true, feet: [0, 0, 2], entity: { items: [{ shortName: 'Long Bow', templateIndex: 130 }] } };
   const bare = { id: 9, corpse: true, feet: [0, 0, 3], entity: { items: [] } };
   const shut = { id: 11, corpse: true, corpseDisabled: true, feet: [0, 0, 4], entity: { items: [{ shortName: 'Gold', templateIndex: 530 }] } };
-  const pool = [rat, bare, shut];
+  // a PUPPET's body: its owner's word is what says whether it holds
+  // anything, and an owner who says "empty" takes it out of the ray.
+  const puppetFull = { id: 13, corpse: true, feet: [0, 0, 5], puppet: true, _pup: { o: 2 }, entity: { items: [] } };
+  const puppetSpent = { id: 15, corpse: true, feet: [0, 0, 6], puppet: true, _pup: { o: 0 }, entity: { items: [] } };
+  const pool = [rat, bare, shut, puppetFull, puppetSpent];
   const keys = corpseLootTargets(pool, 'foeCorpse', lens).map((t) => t.key);
-  assert.deepEqual(keys, ['foeCorpse:7', 'foeCorpse:9'], 'a disabled body is not a target at all');
+  assert.deepEqual(keys, ['foeCorpse:7', 'foeCorpse:9', 'foeCorpse:13'],
+    'a disabled body is not a target at all, and neither is a puppet its owner says is empty');
   assert.equal(corpseEntryFor(pool, 'foeCorpse:7', 'foeCorpse', lens), rat, 'the key the producer minted resolves back');
   assert.deepEqual(corpseContents(rat), rat.entity.items, 'and the body answers what it holds');
   // An EMPTY body answers `[]`, not null: "it holds nothing" is an
@@ -972,8 +1223,18 @@ test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladd
   for (const f of ['src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) {
     const src = read(f);
     assert.match(src, /const corpseLens = \{/, `${f}: one identity, not three`);
+    // AUDIT-WH2 L5: A COUNT IS NOT A LAW. This was `=== 4`, and four
+    // mentions of the word anywhere in the file satisfied that -
+    // `const hoverContents = () => null;` plus any fourth mention
+    // passed it. The law is WHICH THREE READERS take the lens, so name
+    // them: the targets, the namer's entry lookup, and the contents'.
+    // A reader that stops passing it now fails here.
     assert.equal((src.match(/corpseLens\b/g) ?? []).length, 4,
       `${f}: declared once, read by the targets, the namer and the contents`);
+    assert.match(src, /corpseLootTargets\((?:foes|guards), '(?:foe|guard)Corpse', corpseLens\)/,
+      `${f}: the TARGETS walk the pool under the lens`);
+    assert.equal((src.match(/corpseEntryFor\((?:foes|guards), key, '(?:foe|guard)Corpse', corpseLens\)/g) ?? []).length, 2,
+      `${f}: and so do the namer and the contents - the same walk, twice, under the same identity`);
     assert.match(src, /hoverContents\b/, `${f}: and the contents arm exists`);
     assert.match(src, /hoverName, hoverContents,/, `${f}: ...and is published beside the namer`);
   }
@@ -991,7 +1252,10 @@ test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladd
       `${f}: and the one-prefix ternary is gone`);
     // the same three pools, in the ACTIVATION ladder's order, as the
     // namers beside them.
-    assert.match(src, /\(key\) => \(key\.startsWith\('droppedLoot:'\) \? \(droppedLoot\.contents\?\.\(key\) \?\? null\) : null\),\s*\n\s*\(key\) => exteriorFoes\.hoverContents\?\.\(key\) \?\? null,\s*\n\s*\(key\) => cityGuards\.hoverContents\?\.\(key\) \?\? null,/,
+    // AUDIT-WH2 L2-F5: the pile rung carries C1's type guard now - a
+    // CONTENTS ladder is handed every key a namer is, the exterior door
+    // mints a bare number, and `key.startsWith` on one throws.
+    assert.match(src, /\(key\) => \(typeof key === 'string' && key\.startsWith\('droppedLoot:'\) \? \(droppedLoot\.contents\?\.\(key\) \?\? null\) : null\),[^\n]*\n\s*\(key\) => exteriorFoes\.hoverContents\?\.\(key\) \?\? null,\s*\n\s*\(key\) => cityGuards\.hoverContents\?\.\(key\) \?\? null,/,
       `${f}: the piles, the encounter pool, the watch`);
   }
 });
@@ -1175,6 +1439,70 @@ test('AUDIT-WH H4/L3/L5: the plaque comes DOWN when a branch returns above the f
   }, { skin: 'classic' });
 });
 
+test('AUDIT-WH2 L1-F1/F2: the door\'s word is dropped when the ray leaves it, and a miss never poisons the key', () => {
+  // The mod's WHOLE bound on a stale door tooltip is `prevHit`: `isSame`
+  // (.cs:266-275) short-circuits the entire body while you stare at one
+  // collider - so the mod IS stale while you stare, and the port carries
+  // that 1:1 - but `prevHit = null` on every other path (.cs:666, .cs:672,
+  // .cs:786) makes the next look a full recompute.
+  //
+  // The port's key was (door index, door generation) and a generation
+  // only moves when a pixel streams or the origin recentres. So: read a
+  // shop's door at 17:55, turn away, come back at 18:05, and the plaque
+  // still said OPEN while the press said "This store is closed" - for as
+  // long as the player stayed on that street. The VALUE reads the hour,
+  // the holidays, guild membership and the quest links; none of them is
+  // in the key.
+  const wm = read('src/scenes/worldModes.js');
+  // the drop lives in the PICK, because a look at NOTHING never reaches
+  // a namer at all and that is the commonest look-away there is.
+  assert.match(wm, /const winner = raceWinner\(\{ \.\.\.picks, ground \}\);[\s\S]{0,1600}?\n\s+if \(winner\?\.key !== _doorTextKey\) \{ _doorTextKey = null; _doorText = null; \}\n\s+return winner;/,
+    'the exterior pick drops the door text the moment the winner is a different key');
+  // ...and the arm stamps the key ONLY on success. It used to stamp on
+  // entry with `_doorText = null` beside it, so ONE frame in which the
+  // building did not resolve made that door nameless for the whole
+  // generation while the press opened it perfectly well. The mod returns
+  // `prevDoorText` there (.cs:761) - the same door's last good word.
+  assert.doesNotMatch(wm, /_doorTextKey = key; _doorTextGen = gen; _doorText = null;/,
+    'the key is never stamped before the value is known');
+  const arm = wm.slice(wm.indexOf('const gen = doorGeneration?.() ?? 0;'));
+  const head = arm.slice(0, arm.indexOf('_doorTextKey = key; _doorTextGen = gen;'));
+  // four: the cache HIT at the top, and the three misses below it -
+  // `!bd`, `!locId`, `!db` - each handing back the same door's last good
+  // word instead of writing a null under its key.
+  assert.equal((head.match(/return _doorText;/g) ?? []).length, 4,
+    'the cache hit and all three misses hand back the same door\'s last word rather than caching a null');
+  assert.doesNotMatch(head, /return null;/, 'and none of them caches the negative');
+  assert.match(arm, /_doorText = staticDoorName\('building', \{[\s\S]{0,400}?\}\);\n\s+_doorTextKey = key; _doorTextGen = gen;\n\s+return _doorText;/,
+    'the stamp is the LAST thing the success path does');
+});
+
+test('AUDIT-WH2 L2-F3: the mod\'s switch turns the mod\'s MOBILE BAND off, in all four hosts', () => {
+  // The band is .cs:297-320 - a live foe, a watchman, a walking
+  // townsperson - and both outer hosts had it in the UNGATED array, the
+  // one that holds the port's own objects. So a player who turned World
+  // Tooltips off still had names floating over every rat and passer-by in
+  // the street, while the same rat in a building or a dungeon went quiet.
+  // One array cannot carry two gating laws; two arrays can.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const src = read(f);
+    assert.match(src, /const _hoverModNamers = \[/, `${f}: the mod's band has its own array`);
+    assert.match(src, /names: _hoverNamers, modNames: _hoverModNamers \}\)/, `${f}: ...and both are handed over`);
+    // the three arms of the band are in the GATED array, not the other
+    const mod = src.slice(src.indexOf('const _hoverModNamers = ['));
+    const own = src.slice(src.indexOf('const _hoverNamers = ['), src.indexOf('const _hoverModNamers = ['));
+    for (const arm of ['liveHoverName', 'mobilePersonName']) {
+      assert.match(mod.slice(0, mod.indexOf('];')), new RegExp(arm), `${f}: ${arm} is the mod's`);
+      assert.doesNotMatch(own, new RegExp(arm), `${f}: ...and is NOT in the ungated array`);
+    }
+  }
+  // and the seam runs it BELOW the switch, at the top of the mod's own
+  // ladder - .cs:297-320 sits above the board, the person and the doors.
+  const wm = read('src/scenes/worldModes.js');
+  assert.match(wm, /const own = composeNamer\(names\)\(key\);\n\s+if \(own\) return own;\n\s+if \(!worldTooltipsOn\(\)\) return null;[\s\S]{0,1600}?\n\s+const band = composeNamer\(modNames\)\(key\);\n\s+if \(band\) return band;/,
+    'the port\'s own first and ungated, the mod\'s band next and gated');
+});
+
 test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover says the hide, and the plaque dies with the loop', () => {
   // THE FOUR HOSTS RULE, on the lifecycle rather than the wiring.
   const wm = read('src/scenes/worldModes.js');
@@ -1203,7 +1531,7 @@ test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover sa
   // L3: a full-screen video owns the canvas and this return is above
   // the hover - the plaque floated over infection dreams.
   for (const [f, src] of [['world.js', wo], ['exterior.js', ex], ['dungeon.js', dj]]) {
-    assert.match(src, /if \(frameHeld\(\)\) \{ hideWorldPlaque\(\);/, `${f}: the held frame takes it down`);
+    assert.match(src, /if \(frameHeld\(\)\) \{ frameAbort\(\); hideWorldPlaque\(\);/, `${f}: the held frame takes it down, and closes the frame token it opened`);
     // L4: ...and the host's ONE unwind point destroys it. `world.js`
     // imported the door and never called it; `exterior.js` had no
     // teardown at all.
@@ -1214,19 +1542,35 @@ test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover sa
   // L6: EVERY ALLOCATION HAS AN OWNER. The door cache holds the
   // outgoing city's rows, each off a live dfBlock, and it is
   // exterior-only by construction - so leaving the street frees it, at
-  // the one write of `mode` rather than at the four sites that write it.
+  // the one write of `mode` rather than at the sites that write it.
   // AUDIT-WH P1/P5 put the two per-frame ray-list memos in the same
   // dropper: a list built for the street is not the building's, and a
   // frame that crosses a threshold must not serve the outgoing one.
   assert.match(wm, /const dropDoorCache = \(\) => \{ _doorCache = null; _extList = null; _extMark = null; _intList = null; _intMark = null; _doorTextKey = null; _doorText = null; \};/);
-  assert.equal((wm.match(/dropDoorCache\(\);/g) ?? []).length, 4,
-    'both ways in and both ways out');
-  // Before the flip in both arms, because the statements after it are
-  // each pinned to sit next to their neighbour (the lock release, the
-  // context's goLive adoption) and a law wedged between two of those
-  // is a law somebody moves.
-  assert.match(wm, /dropDoorCache\(\);[^\n]*\n\s+mode = 'interior';/);
-  assert.match(wm, /dropDoorCache\(\);[^\n]*\n\s+ctx\.goLive\?\.\(\);[\s\S]{0,400}?\n\s+mode = 'dungeon';/);
+  // AUDIT-WH2 L1-F5: AND THIS IS THE PIN THAT REPLACED A COUNT.
+  //
+  // What stood here was `dropDoorCache(); === 4`, "both ways in and
+  // both ways out" - and the count was already wrong when it was
+  // written. There were FIVE writes of `mode`; the quest-teleport and
+  // save-load teardown was the fifth, it had no free beside it, and
+  // this pin actively defended the hole: adding the missing call
+  // turned the suite red. A count is not a law, it is a snapshot of
+  // how many times somebody remembered.
+  //
+  // The law is that `mode` has ONE writer. These two assertions say so
+  // in the only way a source pin can - the free is inside that writer,
+  // and no other line in the file assigns `mode` at all - so a sixth
+  // mode that spells its own flip fails here instead of leaking a
+  // street. A PIN MUST FAIL: delete the `dropDoorCache()` from setMode
+  // and the first dies; write `mode = 'whatever'` anywhere and the
+  // second does.
+  assert.match(wm, /const setMode = \(next\) => \{ dropDoorCache\(\); mode = next; \};/,
+    'the free rides the one write of mode');
+  const rawModeWrites = (wm.match(/^\s*mode = (?!next;)/gm) ?? []);
+  assert.equal(rawModeWrites.length, 0,
+    `every mode flip goes through setMode - found ${rawModeWrites.length} raw assignment(s) beside it`);
+  assert.equal((wm.match(/^\s*setMode\('(exterior|interior|dungeon)'\);$/gm) ?? []).length, 5,
+    'both ways in, both ways out, and the teardown that forgot');
 });
 
 test('AUDIT-WH M1: every family in the ray carries a reach, and the widest of them IS the mod\'s 6.4', async () => {
@@ -1331,7 +1675,51 @@ test('AUDIT-WH M6: the two families the press has always acted on, driven', asyn
   assert.deepEqual(waterSourceHoverName(true), { title: WATER_SOURCE_NAME, subs: [DRY_SOURCE_TEXT] });
 });
 
-test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the ladder order is the mod\'s', () => {
+test('AUDIT-WH2 L5-F10/F12: the row list survives a holed pack, and two rows never run together', () => {
+  // F12: `hoverLines` filters holes out because `entity.items` is a
+  // sparse-capable array and `itemNameParts` dereferences what it is
+  // handed - a hole would throw inside the seam, be contained, and blank
+  // the plaque over a body that plainly holds things. No fixture had ever
+  // contained one, so dropping `.filter(Boolean)` survived.
+  const holed = [{ name: 'Ruby' }, null, undefined, { name: 'Helm' }];
+  const { shown, rest, empty } = hoverLines(holed);
+  assert.deepEqual(shown.map((r) => r.name), ['Ruby', 'Helm'], 'the holes are gone, the items are not');
+  assert.equal(empty, false);
+  assert.equal(rest, 0);
+  // F10: the row separator is what makes the signature INJECTIVE across a
+  // ROW boundary, and the collision it prevents is a real one - it just
+  // needs the field that can be EMPTY to sit at the boundary. A row is
+  // `name \u0002 stack \u0002 rarity`, and `rarity` is null (so '') for a
+  // common item and a tier word otherwise (LR1's `rarityAttr`), so:
+  //
+  //   ['Iron' rarity '']      + ['magicHelm']   ->  ...\u0002 magicHelm...
+  //   ['Iron' rarity 'magic'] + ['Helm']        ->  ...\u0002magic Helm...
+  //
+  // are the same string once the rows run together, and a collided
+  // signature is a plaque that does not repaint. Driven against
+  // `frameSignature` itself with the rows built by hand, because that is
+  // the unit whose whole contract is "different frames, different
+  // strings" - going through `hoverLines` would only test which rarities
+  // the loot table happens to mint today.
+  const f = (rows) => frameSignature({ key: 'loot:1', kind: 'items', title: 'Loot Pile', subs: [], rows, rest: 0, empty: false });
+  const r = (name, rarity = null) => ({ name, stack: 0, rarity });
+  assert.notEqual(
+    f([r('Iron'), r('magicHelm')]),
+    f([r('Iron', 'magic'), r('Helm')]),
+    'two rows never run together - the tier of one row cannot be read as the name of the next',
+  );
+  // ...and the same one field over, INSIDE a row, where the stack count
+  // runs straight into the name: a stack of 12 Irons and a stack of 2
+  // "Iron1"s are one string without it.
+  assert.notEqual(
+    f([{ name: 'Iron', stack: 12, rarity: null }]),
+    f([{ name: 'Iron1', stack: 2, rarity: null }]),
+    'a row\'s own fields are separated too',
+  );
+});
+
+test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the ladder order is the mod\'s', async () => {
+  const { LOCATION_TYPES } = await import('../src/formats/mapsFile.js');   // AUDIT-WH2 L5-F13: the dungeon-exit predicate is DRIVEN over the real table
   // M5/M6. A family a host STANDS but cannot NAME is the composition
   // seam's own named failure, one step on: the press acts and the
   // plaque says nothing (or, before this, said an invented word).
@@ -1345,6 +1733,21 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
     assert.match(src, /\? waterSourceHoverName\(/, `${f}: a water source has a word`);
     assert.match(src, /\(key\) => wagonHoverName\(key\),/, `${f}: and so has the cart`);
   }
+  // AUDIT-WH2 L5-F16: ...AND THE INTERIOR ARM, which this loop never
+  // covered. M5's headline was that a pile OUTDOORS read the invented
+  // literal 'Loot' while the same pile INDOORS read the mod's word - and
+  // the pin that shipped with the fix held the two outdoor hosts only, so
+  // the indoor arm the bug was measured against could be reverted to
+  // `{ title: 'Loot' }` freely. All four hosts, one word.
+  assert.match(read('src/scenes/worldModes.js'),
+    /if \(key\.startsWith\('droppedLoot:'\)\) return \{ title: lootPileName\(interiorDropped\.contents\?\.\(key\) \?\? null\) \};/,
+    'the interior names a pile from its contents too');
+  assert.match(read('src/scenes/dungeonContext.js'), /return \{ title: lootPileName\(api\.lootContents\(key\)\) \};/,
+    'and the dungeon, which is where the word came from');
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
+    assert.doesNotMatch(read(f).replace(/^\s*(?:\/\/|\*).*$/gm, ''), /title: 'Loot'/,
+      `${f}: the invented word is nowhere in the tree`);
+  }
   // ...each beside the module that STANDS it, never written out at the host.
   assert.match(read('src/player/eotbWagon.js'), /export const wagonHoverName = /);
   assert.match(read('src/systems/survival/items.js'), /export const waterSourceHoverName = /);
@@ -1355,6 +1758,33 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
   // no caller in the tree: "To Privateer's Hold" never drew once.
   assert.match(read('src/scenes/worldModes.js'),
     /if \(entry\?\.door\?\.doorType === DOOR_TYPE\.DUNGEON_ENTRANCE\) \{\n\s+return staticDoorName\('dungeonEntrance', \{ locationName: currentLocationName\(\) \}\);/);
+
+  // AUDIT-WH2 L5-F13/F14: ...AND THE PREDICATE BEHIND `inTown`, which
+  // nothing drove. `staticDoorName('dungeonExit', ...)` is exercised with
+  // `inTown` SUPPLIED BY HAND, so the boolean the running game DERIVES -
+  // which location types count as a town - had no test and no mutant
+  // anywhere in the tree: narrowing it to TownCity alone, or hard-wiring
+  // it true, both survived. TEST THE SHAPE THE PRODUCER MINTS.
+  //
+  // .cs:777-779 - a dungeon exit names the TOWN for City, Hamlet and
+  // Village, and the REGION for everything else (a graveyard, a coven, a
+  // dungeon in open country).
+  {
+    const wm2 = read('src/scenes/worldModes.js');
+    const decl = /const DUNGEON_EXIT_TOWN_TYPES = \[LOCATION_TYPES\.TownCity, LOCATION_TYPES\.TownHamlet, LOCATION_TYPES\.TownVillage\];/;
+    assert.match(wm2, decl, 'the three town types, as the mod lists them');
+    assert.match(wm2, /inTown: DUNGEON_EXIT_TOWN_TYPES\.includes\(dungeonLoc\?\.mapTableData\?\.locationType \?\? -1\),/,
+      'and the call site DERIVES it rather than asserting it');
+    // drive the predicate itself over every location type the port knows
+    const TOWNS = ['TownCity', 'TownHamlet', 'TownVillage'];
+    const types = [LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage];
+    const inTown = (t) => types.includes(t ?? -1);
+    for (const k of Object.keys(LOCATION_TYPES)) {
+      assert.equal(inTown(LOCATION_TYPES[k]), TOWNS.includes(k), `${k} is ${TOWNS.includes(k) ? '' : 'not '}a town`);
+    }
+    assert.equal(inTown(undefined), false, 'and an unknown location is not a town - the region names it');
+    assert.equal(inTown(-1), false);
+  }
 
   // M10. `EnumerateCustomHoverText` is the FIRST statement of the
   // tooltip body (.cs:285) and every band below it is guarded on
@@ -1371,7 +1801,7 @@ test('AUDIT-WH M5/M6/M7/M10: every family the press acts on has a word, and the 
 });
 
 test('AUDIT-WH P1/P2/P5: one answer a frame, and the mod\'s own cache on the one arm that is not a lookup', async () => {
-  const { frameMark, frameBegin, frameEnd, _resetFrameClock } = await import('../src/systems/frameClock.js');
+  const { frameMark, frameBegin, frameEnd, frameAbort, frameCpu, _resetFrameClock } = await import('../src/systems/frameClock.js');
   // THE FRAME IN FLIGHT, as a token. It is the rAF stamp the host
   // already puts up (PERF1 pins that every host stamps it), it changes
   // exactly once a frame, and - the important half - it is NULL
@@ -1395,7 +1825,12 @@ test('AUDIT-WH P1/P2/P5: one answer a frame, and the mod\'s own cache on the one
   // re-walking the people and the boards.
   for (const [what, fn] of [['exterior', 'exteriorActivationTargets'], ['interior', 'interiorActivationTargets']]) {
     const body = wm.slice(wm.indexOf(`function ${fn}() {`), wm.indexOf(`function ${fn}() {`) + 900);
-    assert.match(body, /!== null && _(ext|int)Mark === _?mark && _(ext|int)List\) return _(ext|int)List;/, `${what}: one answer a frame`);
+    // AUDIT-WH2 L5: the three alternations used to be INDEPENDENT groups,
+    // so `_extMark === mark && _intList) return _extList;` matched. Pin the
+    // arm's own name in all three places instead.
+    const slot = fn.startsWith('exterior') ? 'ext' : 'int';
+    assert.match(body, new RegExp(String.raw`!== null && _${slot}Mark === _?mark && _${slot}List\) return _${slot}List;`),
+      `${what}: one answer a frame, and all three terms are THIS arm's`);
     assert.match(body, /_?mark = frameMark\(\);/, `${what}: keyed on the frame, not on a generation`);
   }
   // P2: the mod's `prevHit`/`prevText` (.cs:266-275) and its own
@@ -1408,6 +1843,75 @@ test('AUDIT-WH P1/P2/P5: one answer a frame, and the mod\'s own cache on the one
     'a moved origin or a streamed pixel misses the cache');
   // ...and every one of them dies with the mode.
   assert.match(wm, /_doorTextKey = null; _doorText = null; \};/);
+
+  // AUDIT-WH2 L1-F4: AND THE TOKEN IS CLOSED BY AN EARLY RETURN TOO.
+  //
+  // The paragraph at the top of this test is the promise `frameMark`'s
+  // docblock makes, and it was NOT TRUE when it was written. This
+  // module's own header says so ten lines above it: "an early return
+  // between them is a sample that is simply not taken". Every host has
+  // two such returns and neither said `frameEnd` - and one of them, the
+  // modal return, is taken on EVERY frame of every interior and dungeon
+  // visit under the streaming host. So for a whole indoor session `open`
+  // stayed stamped and `frameMark()` answered non-null in every gap.
+  //
+  // It was never a wrong answer INSIDE a frame (`frameBegin` takes the
+  // rAF timestamp, so two frames cannot share a mark). It broke the
+  // promise exactly where the promise was the point: `worldPlaqueOn()`'s
+  // gate memo answered ENHANCED on a classic page when reached from
+  // outside a frame - AUDIT 39's hazard shape - and this file's own
+  // `__exit` probe, which the tree documents as calling `tryExit`
+  // OUTSIDE the frame loop, was served the previous frame's target list.
+  _resetFrameClock();
+  frameBegin(2000);
+  assert.equal(frameMark(), 2000);
+  frameAbort();
+  assert.equal(frameMark(), null, 'an early return closes the token');
+  // ...and it takes NO sample, which is the whole reason it is not
+  // `frameEnd`: a frame that bailed at its second statement did almost no
+  // work, and folding it into the window's mean would make the
+  // script-time number say the main thread got cheaper every time a
+  // modal went up.
+  assert.equal(frameCpu(), null, 'and no sample is taken for a frame that never ran');
+  frameBegin(3000); frameEnd(3010);
+  assert.equal(frameCpu()?.frames, 1, 'a real frame still samples');
+  _resetFrameClock();
+
+  // every host says it at BOTH of its early returns, and nowhere else
+  // does a frame escape between the stamp and the close.
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
+    const src = read(f);
+    assert.match(src, /import \{ frameBegin, frameEnd, frameAbort \}/, `${f}: takes the door`);
+    assert.equal((src.match(/frameAbort\(\);/g) ?? []).length, 2,
+      `${f}: the held frame and the modal return, both`);
+    assert.match(src, /if \(frameHeld\(\)\) \{ frameAbort\(\);/, `${f}: the held frame closes it`);
+    assert.match(src, /frameAbort\(\);[^\n]*\n\s+requestAnimationFrame\(frame\);\n\s+return;/,
+      `${f}: and so does the modal return, before it re-arms`);
+  }
+});
+
+test('AUDIT-WH2 L5-F9: the gate memo is asked INSIDE a frame, which is the only place it memoises', async () => {
+  // AUDIT-WH P3's whole subject, and nothing drove it: no pin ever called
+  // `frameBegin()` before `worldPlaqueOn()`, so the memoised path was
+  // never taken in the suite at all and `const mark = frameMark();` ->
+  // `const mark = null;` survived. The INVALIDATION half was covered only
+  // because `frameMark()` is null out of frame - which is to say, by the
+  // memo never being used.
+  const { frameBegin, frameEnd, _resetFrameClock } = await import('../src/systems/frameClock.js');
+  _resetFrameClock();
+  try {
+    withPlaque(() => {
+      frameBegin(5000);
+      assert.equal(worldPlaqueOn(), true, 'enhanced, not touch');
+      // the skin flips UNDER the frame - the memo must not see it
+      globalThis.location.search = '?skin=classic&touch=off';
+      globalThis.window.location.search = '?skin=classic&touch=off';
+      assert.equal(worldPlaqueOn(), true, 'one answer a frame: the mid-frame flip is not seen');
+      frameEnd(5010);
+      frameBegin(5020);
+      assert.equal(worldPlaqueOn(), false, '...and the NEXT frame sees it');
+    });
+  } finally { _resetFrameClock(); }
 });
 
 test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s online, and the two caches say why they are valid', () => {
@@ -1464,5 +1968,11 @@ test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s onlin
   // because the destroy loop above happens to run first and each
   // removal bumps the counter. One bump here makes the law stated.
   const teleport = wo.slice(wo.indexOf('queue.push(...state.init(px, py));'));
-  assert.match(teleport.slice(0, 1200), /doorGeneration \+= 1;   \/\/ WORLD-HOVER: the origin was re-anchored/);
+  // AUDIT-WH2 L5: the regex used to carry the COMMENT - "// WORLD-HOVER:
+  // the origin was re-anchored" - so rewording the prose reddened the
+  // suite and the pin's discriminating power was partly English. The law
+  // is that the teleport bumps the generation; the sentence beside it is
+  // not the law.
+  assert.match(teleport.slice(0, 1200), /doorGeneration \+= 1;/,
+    'a teleport re-anchors the origin, so the street\'s door rows are not the street\'s any more');
 });

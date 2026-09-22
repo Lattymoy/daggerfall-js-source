@@ -363,7 +363,13 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   assert.match(dc, /camps: camps\.snapshot\(\),/); assert.match(dc, /if \(truncate\) camps\.restore\(w\.camps\);/);
   assert.match(dc, /camps, campBatches: \(\) => camps\.batches\(\), campLights: \(\) => camps\.lights\(\),/);
   assert.match(modes, /\.\.\.dungeonCtx\.campLights\(\), \.\.\.dungeonCtx\.torchLights\(\)\)/); assert.match(modes, /\.\.\.dungeonCtx\.campBatches\(\), \.\.\.dungeonCtx\.torchBatches\(\)/);
-  assert.match(dc, /if \(kind === 'camp'\) return camps\.activate\(key, mode\) \? 1 : 0;/);
+  // AUDIT-WH2 L2-F1: ...and `hearth:` beside it. HEARTH1 says all FOUR
+  // HOSTS stand a ray target on a world fire that opens the cooking
+  // list; the dungeon collected the fires, stood them and named them
+  // 'Fire' without ever growing the arm, so E on a brazier underground
+  // was eaten in silence while the same object worked outdoors and
+  // indoors. `camps.activate` already routed both keys.
+  assert.match(dc, /if \(kind === 'camp' \|\| kind === 'hearth'\) return camps\.activate\(key, mode\) \? 1 : 0;/);
   assert.match(dc, /targets\.push\(\.\.\.camps\.targets\(\)\);/);
   assert.match(dc, /camps\.destroyAll\(\);[^\n]*\n\s*droppedTorches\.destroyAll\(\);\s*\n\s*weaponRig\.dispose\?\.\(\);/, 'the teardown frees the fires');
   assert.match(modes, /key\.startsWith\('droppedTorch:'\) \|\| key\.startsWith\('camp:'\)/);

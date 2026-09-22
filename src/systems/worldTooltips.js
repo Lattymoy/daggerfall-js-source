@@ -185,7 +185,7 @@ export function actionName(triggerFlag, modelIdNum, { hideInteract = false } = {
   return hideInteract ? null : INTERACT_TEXT;
 }
 
-// ── HOUSE CONTAINERS, BY MODEL ID (.cs:552-629) ─────────────────
+// ── HOUSE CONTAINERS, BY MODEL ID (.cs:552-633) ─────────────────
 //
 // Keyed by the FULL model id, because `% 100` cannot tell 41003
 // (Wardrobe) from 41803 (Dresser) - which is why WORLD-HOVER's
@@ -299,7 +299,31 @@ export function mobileEntityName(entityName, { hostile = false } = {}) {
   return entityName || null;
 }
 
-// ── THE TOTEM (.cs:493-505) ─────────────────────────────────────
+/**
+ * ...AND `Entity.Name` IS THE CAREER'S WORD, NOT THE CORPSE'S.
+ *
+ * AUDIT-WH2 L4-F1. ONE DFU MEMBER ONE EXPORT, and the first pass read
+ * the wrong member at all four call sites. The mod's LIVE arm is
+ * `.cs:310` `((DaggerfallEntityBehaviour)comp).Entity.Name`, which is
+ * EnemyEntity.cs:314 `name = career.Name` - set after the if/else, so
+ * both a monster and a class enemy take their CAREER's name. The mod's
+ * CORPSE arm is a different member entirely: `.cs:526` `loot.entityName`,
+ * which GameObjectHelper.cs:701 fills from `GetLocalizedEnemyName(...)`.
+ * The port handed the corpse's member to the live arm, so a living city
+ * watchman was labelled from the enemy table instead of his career.
+ *
+ * RECORDED DEPARTURE. The port's enemy entity only carries a career
+ * name for CLASS enemies - `name: isClass ? career.name : undefined`
+ * (characters/enemyEntity.js) - because nothing else has ever needed a
+ * monster's career template. So a monster falls through to the enemy
+ * name, which is the same word for every monster in the game and the
+ * only word the port holds; a class enemy now takes the member the mod
+ * takes. The fallback is the port's limit, not a second reading of the
+ * mod.
+ */
+export const liveEntityName = (rec, enemyName = null) => rec?.entity?.name ?? enemyName ?? null;
+
+// ── THE TOTEM (.cs:491-505) ─────────────────────────────────────
 //
 // A quest ITEM resource is named by ResolveItemLongName, except the
 // one billboard the mod special-cases by hand.

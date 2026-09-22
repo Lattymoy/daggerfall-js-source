@@ -196,7 +196,7 @@ import { avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';   //
 import { activationTargets, liveFoeTargets, liveFoeFor, pickActivatableHit, RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER H2: the ONE precedence the press and the plaque share
 import { composeActivationTargets, composeNamer } from '../systems/worldHover.js';
-import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, lootPileName, actionName, actionDoorName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
+import { worldTooltipsOn, hideInteractTooltip, corpseName, mobileEntityName, liveEntityName, lootPileName, actionName, actionDoorName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder, arm by arm   // WORLD-HOVER: the composition law is pure, so it lives with the model and can be DRIVEN   // WORLD-HOVER: the ONE construction seam composes the action objects' targets here; AUDIT 65 MC-2: the ray's reach, and each family's own
 import { worldHoverFrame, destroyWorldPlaque } from '../ui/worldPlaque.js';   // PX21c, WORLD-HOVER: one seam, one plaque
 import { isEnhanced } from '../systems/uiSkin.js';
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
@@ -1606,7 +1606,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8332 / exterior.js:3409), set
+  // host's own townTalk sink (world.js:8344 / exterior.js:3421), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2627,7 +2627,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1019 against :1048; worldModes.js:6685 against :6709).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1026 against :1055; worldModes.js:6793 against :6817).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3191,8 +3191,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11553,
-              // exterior.js:4887 and worldModes.js:6837 already ran;
+              // playerArrowHitFoe is the one copy world.js:11566,
+              // exterior.js:4908 and worldModes.js:6945 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5526,6 +5526,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    * what stops an unported family labelling itself with its key string.
    */
   function _dungeonHoverName(key) {
+    // AUDIT-WH2 L2-F5: C1's guard. The exterior ladder got it when C1
+    // shipped and the other three did not; this one is reached through
+    // `addActivationNamer`, which the tree documents as the door a third
+    // party would use, so it must survive a key it did not mint.
+    if (typeof key !== 'string') return null;
     const modOn = worldTooltipsOn();
     const hide = hideInteractTooltip();
     // PX21c's loot rows come first and are NOT the mod's - they are
@@ -5548,7 +5553,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (key.startsWith('mobileFoe:')) {
       const f = liveFoeFor(foes, key, 'mobileFoe');
       if (!f) return null;
-      const t = mobileEntityName(enemyDisplayName(f.mobileType), { hostile: !!f.ai?.isHostile });
+      const t = mobileEntityName(liveEntityName(f, enemyDisplayName(f.mobileType)), { hostile: !!f.ai?.isHostile });
       return t ? { title: t } : null;
     }
     if (key.startsWith('door:') || key.startsWith('act:')) {
@@ -5569,11 +5574,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    * ladder last.
    *
    * That is the mod's documented order - `EnumerateCustomHoverText`
-   * is the FIRST statement of the tooltip body (.cs:285) and every
-   * band below it is guarded on `IsNullOrEmpty(ret)`, so a registered
-   * namer wins outright - and the port had it inverted: the dungeon's
+   * is the FIRST statement of the tooltip body (.cs:285) and the bands
+   * below it are guarded on `IsNullOrEmpty(ret)`, so a registered namer
+   * wins outright - and the port had it inverted: the dungeon's
    * own ladder ran ahead of the torches, the camps and whatever the
    * host stands.
+   *
+   * AUDIT-WH2 L4-F2: "every band" was too strong and is corrected
+   * above. The `DefaultActivationDistance` block at .cs:397 opens on
+   * the distance alone, with no `IsNullOrEmpty(ret)` beside it - it is
+   * the one band that would run under a filled `ret`, and its own arms
+   * then overwrite it. It does not change this ordering (the extension
+   * namers are still first and still win every band that IS guarded);
+   * it is simply not true of all of them, and systems/worldTooltips.js
+   * already states it correctly.
    *
    * It is INERT TODAY, because the key sets are disjoint - nothing a
    * torch or a camp answers is a key `_dungeonHoverName` knows. That
@@ -6854,7 +6868,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const [kind, iStr] = key.split(':');
       const i = Number(iStr);
       if (kind === 'droppedTorch') return droppedTorches.activate(key, mode) ? 1 : 0;   // HT1: PickUpLightSource
-      if (kind === 'camp') return camps.activate(key, mode) ? 1 : 0;   // SURV3: the fire's menu, or its name
+      // SURV3: the fire's menu, or its name. AUDIT-WH2 L2-F1: and a
+      // `hearth:` beside it - HEARTH1 says all FOUR HOSTS collect the
+      // world fires and stand a ray target that opens the cooking list,
+      // and the dungeon collected them (dungeonHearths, off the RDB
+      // flats), stood them (camps.targets()) and named them ('Fire')
+      // without ever growing the arm that answers. `camps.activate`
+      // already routes both keys; only this line was missing, so E on a
+      // brazier fell through to the ActionSystem, matched no object,
+      // and was CONSUMED - no cooking list, no Info line, and nothing
+      // behind it activated either. The same object opens the list
+      // outdoors and indoors.
+      if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode) ? 1 : 0;
       let source = null;
       let onEmptied = null;
       let lootHooks = null;   // G5: DaggerfallLoot's identity, per kind

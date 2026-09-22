@@ -191,8 +191,20 @@ test('NT1 / AUDIT-WH R6: the world plaque has ONE owner per host, and every one 
   assert.equal((src('scenes/worldModes.js').match(/destroyWorldPlaque\(\);/g) ?? []).length, 3,
     'every way out of a mode frees it');
   // The seam itself allocates nothing that outlives a frame: the only
-  // persistent handle is the node, and the only growing state is a
-  // fault COUNT.
-  assert.doesNotMatch(plaque, /^let (?!node|shownSig|lastX|lastTop|_faults|_faultSaid|_gateMark|_gateOn)/m,
+  // persistent handles are the node and the watchdog's timer, and the
+  // only growing state is a fault COUNT.
+  //
+  // AUDIT-WH2 L3-F2: `_watchdog` is the second handle this module owns -
+  // a pending setTimeout - and `_schedule`/`_cancel` are the two clocks
+  // a test swaps for it. All three are in the allowlist BECAUSE the
+  // destroy-slot list below names the one that is a live resource.
+  assert.doesNotMatch(plaque, /^let (?!node|shownSig|lastX|lastTop|_faults|_faultSaid|_gateMark|_gateOn|_watchdog|_schedule|_cancel)/m,
     'a new module-level slot needs an owner and a line in destroyWorldPlaque');
+  // ...and the timer is CANCELLED, not merely forgotten: a dropped
+  // handle keeps firing, and in a test run it holds the event loop
+  // open past the last assertion.
+  assert.match(plaque, /export function destroyWorldPlaque\(\) \{\n(?:\s*\/\/[^\n]*\n)*\s+_cancel\(_watchdog\);\n\s+_watchdog = null;/,
+    'the teardown frees the watchdog before anything else');
+  assert.match(plaque, /export function hideWorldPlaque\(\) \{\n(?:\s*\/\/[^\n]*\n)*\s+_cancel\(_watchdog\);\n\s+_watchdog = null;/,
+    'and so does the hide - the heartbeat stops with the thing it watches');
 });

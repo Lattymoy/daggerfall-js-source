@@ -30,8 +30,44 @@ export function frameBegin(now) { open = now; }
  * is NULL outside one - which is the important half, because a memo
  * keyed on it can never carry an answer from one frame into the next,
  * and a caller reached outside a frame (a test, a console) recomputes.
+ *
+ * AUDIT-WH2 L1-F4: AND THAT HALF WAS NOT TRUE WHEN IT WAS WRITTEN.
+ *
+ * P1 layered this token onto a clock whose own header, ten lines above,
+ * says the opposite in as many words: "an early return between them is
+ * a sample that is simply not taken". Every host has two such returns
+ * and neither said `frameEnd` - and one of them, the modal return, is
+ * taken on EVERY frame of every interior and dungeon visit under the
+ * streaming host. So for a whole indoor session `open` stayed stamped
+ * and this answered non-null in every gap between frames.
+ *
+ * It was not a wrong answer in a frame (`frameBegin` takes the rAF's
+ * timestamp, so two frames can never share a mark), but it broke this
+ * promise exactly where the promise was the point: `worldPlaqueOn()`'s
+ * gate memo answered ENHANCED on a classic page when reached from
+ * outside a frame, which is AUDIT 39's hazard shape; and worldModes'
+ * `__exit` probe, which the tree itself documents as calling `tryExit`
+ * OUTSIDE the frame loop, was served the previous frame's target list
+ * instead of recomputing - the "a test, a console" case, named in this
+ * very sentence and wrong.
+ *
+ * `frameAbort` below is the missing door. A skipped SAMPLE and a frame
+ * that never closed are two different things, and PERF1 only ever
+ * wanted the first.
  */
 export const frameMark = () => open;
+
+/**
+ * CLOSE THE FRAME WITHOUT SAMPLING IT - what a host says when it
+ * returns early.
+ *
+ * Deliberately not `frameEnd`: a frame that bailed at its second
+ * statement did almost no work, and folding it into the window's mean
+ * would make the script-time number say the main thread got cheaper
+ * every time a modal went up. PERF1's measurement is unchanged; only
+ * the token is cleared.
+ */
+export function frameAbort() { open = null; }
 
 /** The bottom of the same callback, before it re-arms. `now` defaults
  *  to performance.now() - the end is measured, not the rAF's stamp. */

@@ -122,8 +122,8 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
     "file": "src/ui/worldPlaque.js",
-    "old": "} = {}) {\n  if (!worldPlaqueOn()) return null;",
-    "new": "} = {}) {\n  if (false) return null;",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }",
+    "new": "  if (false) { hideWorldPlaque(); return null; }",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -522,8 +522,8 @@
   {
     "name": "WORLD-HOVER-a-body-is-stood-as-a-live-foe",
     "file": "src/player/activate.js",
-    "old": "    if (!f || f.dead || !f.entity) continue;\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
-    "new": "    if (!f || !f.entity) continue;\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
+    "old": "    if (!f || f.dead) continue;   // AUDIT-WH2 L2-F6: `!f.entity` came off - the PRESS's own sweep (pickFoeAlong, below) never had it, and the two sweeps must agree on what the ray hit\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
+    "new": "    if (!f) continue;\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -603,8 +603,8 @@
   {
     "name": "WORLD-HOVER-the-hide-keeps-the-signature",
     "file": "src/ui/worldPlaque.js",
-    "old": "export function hideWorldPlaque() {\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "export function hideWorldPlaque() {\n  if (!node) return;\n  blank(node);\n}",
+    "old": "  _cancel(_watchdog);\n  _watchdog = null;\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  _cancel(_watchdog);\n  _watchdog = null;\n  if (!node) return;\n  blank(node);\n}",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -612,8 +612,8 @@
   {
     "name": "WORLD-HOVER-the-hide-door-ensures-a-node",
     "file": "src/ui/worldPlaque.js",
-    "old": "export function hideWorldPlaque() {\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "export function hideWorldPlaque() {\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
+    "old": "  _cancel(_watchdog);\n  _watchdog = null;\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  _cancel(_watchdog);\n  _watchdog = null;\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -657,8 +657,8 @@
   {
     "name": "WORLD-HOVER-a-held-frame-keeps-the-plaque",
     "file": "src/scenes/world.js",
-    "old": "    if (frameHeld()) { hideWorldPlaque(); last = now;",
-    "new": "    if (frameHeld()) { last = now;",
+    "old": "    if (frameHeld()) { frameAbort(); hideWorldPlaque(); last = now;",
+    "new": "    if (frameHeld()) { frameAbort(); last = now;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -675,8 +675,8 @@
   {
     "name": "WORLD-HOVER-the-street-s-doors-outlive-the-street",
     "file": "src/scenes/worldModes.js",
-    "old": "      dropDoorCache();   // AUDIT-WH L6: the building takes the click, and the STREET's door rows are the street's\n      mode = 'interior';",
-    "new": "      mode = 'interior';",
+    "old": "  const setMode = (next) => { dropDoorCache(); mode = next; };",
+    "new": "  const setMode = (next) => { mode = next; };",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -819,8 +819,8 @@
   {
     "name": "WORLD-HOVER-the-door-text-is-resolved-every-frame-again",
     "file": "src/scenes/worldModes.js",
-    "old": "      const gen = doorGeneration?.() ?? 0;\n      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;\n      _doorTextKey = key; _doorTextGen = gen; _doorText = null;\n",
-    "new": "",
+    "old": "      const gen = doorGeneration?.() ?? 0;\n      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;\n",
+    "new": "      const gen = doorGeneration?.() ?? 0;\n",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -878,6 +878,232 @@
     "new": "  if (_gateMark !== null) return _gateOn;",
     "tests": [
       "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-seam-gate-stops-hiding",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }",
+    "new": "  if (!worldPlaqueOn()) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-seam-drops-the-anchor",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    showWorldPlaque(frame, plaqueAnchor(canvas));",
+    "new": "    showWorldPlaque(frame);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-contained-frame-freezes-on-its-last-answer",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    try { showWorldPlaque(null); } catch { /* the draw itself is gone; nothing left to hide */ }\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-no-watchdog",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  _cancel(_watchdog);\n  _watchdog = _schedule(() => { _watchdog = null; hideWorldPlaque(); }, PLAQUE_WATCHDOG_MS);\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-plaque-is-never-attached",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  document.body.append(node);\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-teardown-orphans-the-node",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  try { node?.remove(); } catch { /* already gone */ }\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-fault-is-said-every-frame",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    if (!_faultSaid) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-gate-memo-is-switched-off",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const mark = frameMark();",
+    "new": "  const mark = null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-signature-stops-seeing-the-title",
+    "file": "src/systems/worldHover.js",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-signature-stops-seeing-the-tail",
+    "file": "src/systems/worldHover.js",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.empty ? 'e' : ''}`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-two-rows-run-together",
+    "file": "src/systems/worldHover.js",
+    "old": "  const rows = f.rows.map((r) => `${r.name}\\u0002${r.stack}\\u0002${r.rarity ?? ''}`).join('\\u001f');",
+    "new": "  const rows = f.rows.map((r) => `${r.name}\\u0002${r.stack}\\u0002${r.rarity ?? ''}`).join('');",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-a-holed-pack-is-not-filtered",
+    "file": "src/systems/worldHover.js",
+    "old": "  const rows = (items ?? []).filter(Boolean).map((it) => ({",
+    "new": "  const rows = (items ?? []).map((it) => ({",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-door-text-survives-a-look-away",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (winner?.key !== _doorTextKey) { _doorTextKey = null; _doorText = null; }\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-a-missed-building-caches-the-negative",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!bd) return _doorText;",
+    "new": "      if (!bd) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-mode-flip-forgets-the-door-cache",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const setMode = (next) => { dropDoorCache(); mode = next; };",
+    "new": "  const setMode = (next) => { mode = next; };",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-dungeon-exit-town-types-are-narrowed",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const DUNGEON_EXIT_TOWN_TYPES = [LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage];",
+    "new": "  const DUNGEON_EXIT_TOWN_TYPES = [LOCATION_TYPES.TownCity];",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-every-dungeon-exit-claims-a-town",
+    "file": "src/scenes/worldModes.js",
+    "old": "        inTown: DUNGEON_EXIT_TOWN_TYPES.includes(dungeonLoc?.mapTableData?.locationType ?? -1),",
+    "new": "        inTown: true,",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-interior-pile-gets-the-invented-word-back",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (key.startsWith('droppedLoot:')) return { title: lootPileName(interiorDropped.contents?.(key) ?? null) };",
+    "new": "      if (key.startsWith('droppedLoot:')) return { title: 'Loot' };",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-puppets-pile-is-a-target-again",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    isCorpse: (f) => !!f.corpse && !!f.entity && (!f.puppet || (f._pup?.o | 0) > 0),",
+    "new": "    isCorpse: (f) => !!f.corpse && !!f.entity,",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-frameAbort-does-nothing",
+    "file": "src/systems/frameClock.js",
+    "old": "export function frameAbort() { open = null; }",
+    "new": "export function frameAbort() { }",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-modal-return-leaks-the-frame-token",
+    "file": "src/scenes/world.js",
+    "old": "      frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-mobile-band-goes-back-above-the-switch",
+    "file": "src/scenes/world.js",
+    "old": "names: _hoverNamers, modNames: _hoverModNamers }),",
+    "new": "names: [..._hoverNamers, ..._hoverModNamers] }),",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-title-is-painted-below-the-subs",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  n.append(title);\n  for (const s of f.subs) {\n    const sub = document.createElement('div');\n    sub.className = 'wplaque-sub';\n    sub.textContent = s;\n    n.append(sub);\n  }",
+    "new": "  for (const s of f.subs) {\n    const sub = document.createElement('div');\n    sub.className = 'wplaque-sub';\n    sub.textContent = s;\n    n.append(sub);\n  }\n  n.append(title);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-dungeon-brazier-eats-the-press-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode) ? 1 : 0;",
+    "new": "      if (kind === 'camp') return camps.activate(key, mode) ? 1 : 0;",
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-live-entity-takes-the-corpses-member",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const t = mobileEntityName(liveEntityName(f, enemyDisplayName(f.mobileType)), { hostile: !!f.ai?.isHostile });",
+    "new": "    const t = mobileEntityName(enemyDisplayName(f.mobileType), { hostile: !!f.ai?.isHostile });",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/citedrift.test.js"
     ]
   }
 ]

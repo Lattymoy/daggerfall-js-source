@@ -1152,8 +1152,15 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // BOTH doors gate, and each gates FIRST. worldHoverFrame is the one
   // four hosts call, and it must refuse before it pulls a target list
   // or casts a ray, not only before it paints.
-  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n  if \(!worldPlaqueOn\(\)\) return null;/,
-    'the seam asks the skin as its first act - before the ray, before the list');
+  // AUDIT-WH2 L3-F1: ...and it HIDES on the way out. This gate was a
+  // bare `return null` and showWorldPlaque's was the one that hid -
+  // and `grep -rn showWorldPlaque src/scenes/` is EMPTY, so the hide
+  // was unreachable in every host. A skin switch or a tablet-mode flip
+  // under a painted plaque stranded it. The `[\s\S]` window admits the
+  // comment that says so and nothing else: a statement between the
+  // brace and the gate would have to contain `{` or `;`.
+  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  if \(!worldPlaqueOn\(\)\) \{ hideWorldPlaque\(\); return null; \}/,
+    'the seam asks the skin as its first act - before the ray, before the list - and takes the plaque down when the answer is no');
   const show = hov.slice(hov.indexOf('export function showWorldPlaque'));
   assert.ok(show.indexOf('if (!worldPlaqueOn()) return;') < show.indexOf('const n = ensure();'),
     'the skin is asked BEFORE the node is built and the sheet injected');

@@ -53,12 +53,25 @@ import { resolveHover, frameSignature } from '../systems/worldHover.js';
  *  shape, small enough that the name is plainly about the reticle. */
 export const PLAQUE_GAP = 18;
 
+/** AUDIT-WH2 L3-F2: a plaque that has not been drawn for this long is
+ *  gone - take it down. ENH-NOTICE1's own constant and its own reason
+ *  (ui/enhancedNotice.js NOTICE_WATCHDOG_MS), at the same 400ms: long
+ *  enough that no honest frame rate trips it, short enough that a
+ *  stranded name is a blink and not a fixture. */
+export const PLAQUE_WATCHDOG_MS = 400;
+
 let node = null;
 let shownSig = null;
 let lastX = null;
 let lastTop = null;
 let _faults = 0;        // AUDIT-WH L1: contained frames, counted
 let _faultSaid = false; // ...and said once, not once a frame
+let _watchdog = null;   // AUDIT-WH2 L3-F2: the heartbeat's handle - owned here, freed at every door out
+let _schedule = (fn, ms) => (typeof setTimeout === 'function' ? setTimeout(fn, ms) : null);
+let _cancel = (t) => { if (t != null && typeof clearTimeout === 'function') clearTimeout(t); };
+/** Tests replace the two clocks so a stranded plaque can be observed at
+ *  once, exactly as `_setNoticeClockForTests` does for the notice. */
+export function _setPlaqueClockForTests(s, c) { _schedule = s ?? _schedule; _cancel = c ?? _cancel; }
 
 function ensure() {
   if (node || typeof document === 'undefined') return node;
@@ -216,6 +229,13 @@ function blank(n) {
  * that does not exist has nothing to hide.
  */
 export function hideWorldPlaque() {
+  // AUDIT-WH2 L3-F2: the heartbeat stops with the thing it watches, and
+  // it stops FIRST - a hide with a timer still pending would take the
+  // plaque down twice and, in a test, hold the event loop open past the
+  // run. The watchdog itself nulls the handle before it calls here, so
+  // this is a no-op on that path.
+  _cancel(_watchdog);
+  _watchdog = null;
   if (!node) return;
   shownSig = null;
   blank(node);
@@ -242,6 +262,20 @@ export function showWorldPlaque(frame, anchor = null) {
   if (!worldPlaqueOn()) { hideWorldPlaque(); return; }
   const n = ensure();
   if (!n) return;
+  // AUDIT-WH2 L3-F2: THE HEARTBEAT, re-armed by every draw - and armed
+  // ABOVE the signature short-circuit below, because a plaque standing
+  // still on one name returns there and that is still a live frame.
+  //
+  // The seam's try/catch contains a throw INSIDE the hover call. It
+  // cannot contain one BESIDE it: each host runs hundreds of lines
+  // between its `worldHoverFrame(...)` and its bare
+  // `requestAnimationFrame(frame)`, which is not in a `finally`, so any
+  // throw downstream of the plaque kills the loop with the last name
+  // still painted over a game that has stopped. A DOM overlay stays
+  // painted unless it is told otherwise (AUDIT 64 F37); nothing else in
+  // this module can tell it once the frames stop coming.
+  _cancel(_watchdog);
+  _watchdog = _schedule(() => { _watchdog = null; hideWorldPlaque(); }, PLAQUE_WATCHDOG_MS);
   if (anchor && (anchor.x !== lastX || anchor.top !== lastTop)) {
     lastX = anchor.x; lastTop = anchor.top;
     n.style.setProperty('--wp-x', `${anchor.x.toFixed(1)}px`);
@@ -293,7 +327,21 @@ export function worldHoverFrame({
   eye = null, dir = null, targets = null, collider = null, pick = null,
   cursorActive = false, canvas = null, name = null, contents = null,
 } = {}) {
-  if (!worldPlaqueOn()) return null;
+  // AUDIT-WH2 L3-F1: ...AND THE HIDE IS SPOKEN HERE, NOT ONLY IN
+  // showWorldPlaque. L5 put the gate's hide door on showWorldPlaque and
+  // it was unreachable: `grep -rn showWorldPlaque src/scenes/` returns
+  // NOTHING - every host calls this function and only this function, so
+  // a bare `return null` here was the only gate production ever ran. A
+  // skin switch or a tablet-mode flip under a painted plaque stranded
+  // it naming what the new input can no longer open, which is the exact
+  // defect L5 was written to close, closed on the wrong door.
+  //
+  // Both doors stay. This one is the one hosts reach; showWorldPlaque's
+  // is the one a test, a console or a future caller reaches, and neither
+  // can call `ensure()` (AUDIT 39: the gate is about DRAWING - a classic
+  // page must not reach injectEnhancedStyle(), and hiding an existing
+  // node injects nothing).
+  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }
   // `cursorActive` is the crosshair's OWN first statement (there is no
   // reticle while a window is up, hudCrosshair.js:114) and so it is the
   // plaque's. In the dungeon this was an accident of scheduling - the
@@ -336,6 +384,11 @@ export const worldHoverFaults = () => _faults;
 
 /** Tear down with the host that raised it. */
 export function destroyWorldPlaque() {
+  // AUDIT-WH2 L3-F2: EVERY ALLOCATION HAS AN OWNER, and a pending timer
+  // is one. Freed first: a watchdog that fired after the node was gone
+  // would be harmless but a watchdog left pending holds a test run open.
+  _cancel(_watchdog);
+  _watchdog = null;
   try { node?.remove(); } catch { /* already gone */ }
   node = null;
   shownSig = null;

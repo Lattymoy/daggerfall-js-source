@@ -129,7 +129,7 @@ import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER: the 
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, and the hide door for the branches that return above it
 import { staticDoorName, npcHoverName, questResourceName, worldTooltipsOn, hideInteractTooltip,
   houseContainerName, actionName, actionDoorName, lootPileName,
-  BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands   // WORLD-HOVER: the mod's ladder for the families THIS host stands
+  BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands   // WORLD-HOVER: the mod's ladder for the families THIS host stands
 import { LOCATION_TYPES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:777-782 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
 import { isShop, isRepairShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, createStockedDate, needsRestock } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock
 import { identifySpellPass, identifiedTallyText, NOT_ENOUGH_SPELL_POINTS_TEXT } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal
@@ -418,7 +418,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:3464 hands
+   * record these hosts mint spells it `name` (exterior.js:3476 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -1855,6 +1855,13 @@ export function createWorldModes(host) {
    */
   const interiorHoverName = composeNamer([
     (key) => {
+      // AUDIT-WH2 L2-F5: C1's guard, on this ladder too. The exterior
+      // lane got it and the other three did not, and a namer is handed
+      // EVERY key the ray can win - `composeNamer` and
+      // `addActivationNamer` are documented as the same door a third
+      // party would use, and the one key already in the tree that is
+      // not a string is the exterior door's bare number.
+      if (typeof key !== 'string') return null;
       if (key.startsWith('droppedLoot:')) return { title: lootPileName(interiorDropped.contents?.(key) ?? null) };   // .cs:534-548
       return null;
     },
@@ -1869,7 +1876,7 @@ export function createWorldModes(host) {
       if (key.startsWith('exit:')) {
         return staticDoorName('buildingExit', { locationName: currentLocationName() });
       }
-      // .cs:552-629 - by the container's FULL model id, which is why
+      // .cs:552-633 - by the container's FULL model id, which is why
       // the groundwork slice stopped storing only `modelIdNum % 100`.
       if (key.startsWith('container:')) {
         const c = interiorCtx.containers[Number(key.split(':')[1])];
@@ -1889,7 +1896,7 @@ export function createWorldModes(host) {
       if (key.startsWith('mobileFoe:')) {
         const f = liveFoeFor(interiorFoePool(), key, 'mobileFoe');
         if (!f) return null;
-        const t = mobileEntityName(enemyDisplayName(f.mobileType), { hostile: !!f.ai?.isHostile });
+        const t = mobileEntityName(liveEntityName(f, enemyDisplayName(f.mobileType)), { hostile: !!f.ai?.isHostile });
         return t ? { title: t } : null;
       }
       if (key.startsWith('door:') || key.startsWith('act:')) {
@@ -1913,7 +1920,7 @@ export function createWorldModes(host) {
         const t = npcHoverName(display, { archive: pn.archive ?? -1, record: pn.record ?? -1 });
         return t ? { title: t } : null;
       }
-      // .cs:481-512 - a quest ITEM stand only; a person or foe stand
+      // .cs:483-512 - a quest ITEM stand only; a person or foe stand
       // answers nothing, as the mod's `is Item` gate does.
       if (key.startsWith('questflat:')) {
         const st = questFlats[Number(key.split(':')[1])];
@@ -4483,10 +4490,32 @@ export function createWorldModes(host) {
    * reachable behind a mode that cannot read them. EVERY ALLOCATION
    * HAS AN OWNER, and the owner is the exterior mode itself.
    *
-   * Freed at the ONE write of `mode` rather than at the four sites
-   * that write it, so a fifth mode cannot forget.
+   * Freed at the ONE write of `mode` rather than at the sites that
+   * write it, so a new mode cannot forget.
    */
   const dropDoorCache = () => { _doorCache = null; _extList = null; _extMark = null; _intList = null; _intMark = null; _doorTextKey = null; _doorText = null; };
+  /**
+   * ...AND THIS IS THAT ONE WRITE.
+   *
+   * AUDIT-WH2 L1-F5. The sentence above was already written and it was
+   * already false: the free was hand-attached beside FOUR of the five
+   * `mode = ` assignments, and the fifth - the quest-teleport and
+   * save-load teardown - forgot it, exactly as the sentence said a
+   * fifth could not. That path tears down the interior context, the
+   * foes, the guards, the piles, the torches, the camps and the windows
+   * and calls `destroyWorldPlaque()`, so the author was thinking about
+   * this surface there; it still left `_doorCache` holding the outgoing
+   * city's door rows (each a record off a live `dfBlock`) and `_intList`
+   * holding the destroyed room's container and shelf boxes. EVERY
+   * ALLOCATION HAS AN OWNER, on the one path L6 missed.
+   *
+   * A comment cannot make a claim like that true; only a shape can. So
+   * `mode` is written HERE and nowhere else, the free rides the write,
+   * and a pin holds the file to a single raw assignment - the one on
+   * the next line - so the sixth mode turns the suite red rather than
+   * leaking a street.
+   */
+  const setMode = (next) => { dropDoorCache(); mode = next; };
   function exteriorDoorTargets() {
     const gen = doorGeneration?.();
     if (gen !== undefined && _doorCache && _doorCache.gen === gen) return _doorCache;
@@ -4623,7 +4652,33 @@ export function createWorldModes(host) {
     if (mode !== 'exterior') return null;
     const { targets } = exteriorActivationTargets();
     const ground = pickActivatableHit(eye, dir, targets, baseCollider());
-    return raceWinner({ ...picks, ground });
+    const winner = raceWinner({ ...picks, ground });
+    // AUDIT-WH2 L1-F1: AND THE DOOR'S WORD IS DROPPED THE MOMENT THE
+    // RAY LEAVES THAT DOOR - `prevHit = null`, which the mod says on
+    // every path that is not this same transform (.cs:666, .cs:672, .cs:786).
+    //
+    // This is the whole of the mod's bound on a stale door tooltip.
+    // `isSame` (.cs:266) short-circuits the entire body while you stare
+    // at one collider, so the mod IS stale for as long as you stare -
+    // the port inherits that and Mac's call was 1:1 - but the instant
+    // you look at anything else, or at nothing, `prevHit` is null and
+    // the next look is a full recompute.
+    //
+    // The port had no such instant. Its key was (door index, door
+    // generation), and a generation only moves when a pixel streams or
+    // the origin recentres - not when you look away, and not when the
+    // clock does. So: read a shop's door at 17:55, turn around, come
+    // back at 18:05, and the plaque still said OPEN while the press
+    // said "This store is closed", for as long as the player stayed on
+    // that street. The value reads the hour, the holidays, guild
+    // membership and the quest links; NONE of them is in the key, and
+    // only this line makes the key honest.
+    //
+    // It belongs here rather than in the namer because a look at
+    // NOTHING never reaches a namer at all, and that is the commonest
+    // look-away there is. This runs once a frame, in both hosts.
+    if (winner?.key !== _doorTextKey) { _doorTextKey = null; _doorText = null; }
+    return winner;
   }
 
   /**
@@ -4631,7 +4686,7 @@ export function createWorldModes(host) {
    * families this host stands, with the port's own objects answering
    * for themselves through the mod's extension API.
    */
-  function exteriorHoverName(key, { eye, dir, names = [] } = {}) {
+  function exteriorHoverName(key, { eye, dir, names = [], modNames = [] } = {}) {
     // THE HOST'S OWN NAMERS RUN FIRST, which is the mod's own law for
     // its extension API (vendor .cs:228-257, walked before the mod's
     // ladder). They are where the port's own world objects answer -
@@ -4642,6 +4697,28 @@ export function createWorldModes(host) {
     const own = composeNamer(names)(key);
     if (own) return own;
     if (!worldTooltipsOn()) return null;
+    // ...AND `modNames` IS THE MOD'S OWN, so it goes BELOW the switch.
+    //
+    // AUDIT-WH2 L2-F3. Both outer hosts had their mobile band - the
+    // live foe, the watchman, the walking townsperson, all of it
+    // .cs:297-320 and labelled as such in the host's own comment - in
+    // the `names` array above, which is the UNGATED one. So a player
+    // who turned World Tooltips off in the Mods pane still had names
+    // floating over every rat and passer-by in the street, while the
+    // same rat in a building or a dungeon went quiet: those two hosts
+    // gate the identical band correctly. Four hosts, two answers.
+    //
+    // The switch's own description sells the off state as "the plaque
+    // still lists what a chest or a body holds - that is the port's own
+    // and has no switch" and sells "a person" as an ON feature
+    // (systems/modSettings.js). The outdoor live band is neither, and
+    // one array could not tell the two laws apart. Two arrays can.
+    //
+    // It runs here, at the TOP of the mod's ladder, because that is
+    // where the mod runs it - .cs:297-320 sits above the board
+    // (:315-318), the person (:325-393) and the doors (:659).
+    const band = composeNamer(modNames)(key);
+    if (band) return band;
     const { npcs, entries } = exteriorActivationTargets();
     // THE DOOR KEY IS A BARE NUMBER - the index into `entries` - which
     // is why this tests the type rather than a prefix.
@@ -4677,20 +4754,54 @@ export function createWorldModes(host) {
       // "the same door, in the same world". A moved origin, a streamed
       // pixel or a different door all miss it.
       //
-      // The staleness this inherits is the mod's: a shop that opens
-      // while you stand looking at its door keeps the closed sentence
-      // until you look away, exactly as `prevDoorText` does. Mac's
-      // call was 1:1.
+      // The staleness this inherits is the mod's, and ONLY the mod's: a
+      // shop that opens while you stand looking at its door keeps the
+      // closed sentence until you look away, because `isSame`
+      // (.cs:266-275) short-circuits the whole tooltip body while the
+      // ray rests on one transform. Mac's call was 1:1.
+      //
+      // AUDIT-WH2 L1-F1: but "until you look away" is a CLAUSE, not a
+      // decoration, and this arm had no line that honoured it. The mod
+      // nulls `prevHit` on every path that is not the same transform;
+      // the port's key survived a look-away, a walk down the street and
+      // an hour of game time. The drop now lives in `exteriorHoverPick`
+      // above, which is the one place a look at NOTHING is observed.
+      //
+      // The mod's third term, `prevDistance` (.cs:274-278: same
+      // transform but further than `DoorActivationDistance` answers
+      // nothing), has no line here because it needs none - the model
+      // gates on `hit.distance <= hit.reach` before any namer is called
+      // (systems/worldHover.js), and a door's reach IS
+      // DOOR_ACTIVATION_DISTANCE. Same refusal, one rung higher.
       const gen = doorGeneration?.() ?? 0;
       if (_doorTextKey === key && _doorTextGen === gen) return _doorText;
-      _doorTextKey = key; _doorTextGen = gen; _doorText = null;
+      // AUDIT-WH2 L1-F2: THE KEY IS STAMPED ON SUCCESS, NOT ON ENTRY.
+      //
+      // It used to be stamped here, with `_doorText = null` beside it,
+      // and every one of the three misses below then left that NULL
+      // cached under the door's own key - so ONE frame in which the
+      // building did not resolve made that door nameless for the whole
+      // generation, while the press opened it perfectly well.
+      //
+      // The mod does the opposite, twice over. Its inner miss returns
+      // `prevDoorText` - ".cs:761: If we caught ourselves hitting the
+      // same door again directly without touching the building, just
+      // return the previous text which should be the door's" - and its
+      // outer miss nulls `prevHit` (.cs:786) so the NEXT frame is a
+      // full recompute. Caching the negative is the one thing it is
+      // careful not to do.
+      //
+      // So a miss returns `_doorText` and stamps nothing. With the
+      // look-away drop in `exteriorHoverPick`, `_doorText` here is this
+      // same door's last good word or it is null - it can never be a
+      // different door's.
       const bd = buildingUnderRay(eye, dir);
-      if (!bd) return null;
+      if (!bd) return _doorText;
       const locId = discoveryLocationId?.() ?? null;
-      if (!locId) return null;
+      if (!locId) return _doorText;
       discoverBuilding(locId, bd, null, questBuildingSource);   // .cs:719
       const db = getDiscoveredBuilding(locId, bd.buildingKey);
-      if (!db) return null;
+      if (!db) return _doorText;
       _doorText = staticDoorName('building', {
         displayName: db.displayName,
         locationName: currentLocationName(),
@@ -4698,6 +4809,7 @@ export function createWorldModes(host) {
         unlocked: resolveBuildingUnlocked(bd),
         quality: bd.quality ?? 0,
       });
+      _doorTextKey = key; _doorTextGen = gen;
       return _doorText;
     }
     if (typeof key !== 'string') return null;
@@ -5291,8 +5403,7 @@ export function createWorldModes(host) {
       // a click.
       const spot = restore?.pos ?? floored;
       player.spawn(spot[0], spot[1], spot[2]);
-      dropDoorCache();   // AUDIT-WH L6: the building takes the click, and the STREET's door rows are the street's
-      mode = 'interior';
+      setMode('interior');
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change (its pin wants this on the next line)
       mwViewTransition('Interior');   // AUDIT-EOTB2: AutoTogglePerspective.OnTransitionInterior, on the building's door (PlayerEnterExit.OnTransitionInterior)
       setWeaponPose(interiorWeapon.playerWeapon, host.weaponPose?.() ?? null);   // JAN1: the pose is the PLAYER's - the interior rig takes the pair the exterior rig held (DFU has one WeaponManager)
@@ -5619,9 +5730,8 @@ export function createWorldModes(host) {
     // controller's CENTRE; the feet go a body-half lower, never below
     // the terrain's floor (enterExit.repositionFeetY).
     player.spawn(landing[0], repositionFeetY(player.collider.heightAt(landing[0], landing[2]), landing[1]), landing[2]);
-    mode = 'exterior';
+    setMode('exterior');
     host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
-    dropDoorCache();   // AUDIT-WH P1/P5: the modal list dies with the mode, as the street's did when it took over
     destroyWorldPlaque();   // WORLD-HOVER: a DOM overlay stays painted unless it is told otherwise (AUDIT 64 F37) - and the exterior arm is not the plaque's host, so it has no frame in which to hide it
     host.applyWeaponPose?.(weaponPoseOf(interiorWeapon.playerWeapon));   // JAN1: and the exterior rig takes the pair back
     mwViewTransition('Exterior');   // AUDIT-EOTB2: AutoTogglePerspective.OnTransitionExterior, stepping back out of a building (PlayerEnterExit.OnTransitionExterior)
@@ -5777,7 +5887,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6090), so the OUTER host's one rides in.
+          // (dungeonContext.js:6104), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:657 -> the
@@ -5846,7 +5956,7 @@ export function createWorldModes(host) {
       // .cs:774-783 - a dungeon exit names the town it opens onto, or
       // the REGION when it opens onto open country. The mod asks
       // PlayerGPS for all three; this host is where they live.
-      ctx.addActivationNamer((key) => (key.startsWith('exit:') ? staticDoorName('dungeonExit', {
+      ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('exit:') ? staticDoorName('dungeonExit', {   // AUDIT-WH2 L2-F5: C1's guard - a namer is handed every key the ray can win
         locationName: dungeonLoc?.name ?? '',
         regionName: buildingDirectory?.()?.regionName ?? '',
         inTown: DUNGEON_EXIT_TOWN_TYPES.includes(dungeonLoc?.mapTableData?.locationType ?? -1),
@@ -5854,7 +5964,7 @@ export function createWorldModes(host) {
       // .cs:325-393 - the sixteen Daedra by their summoning billboard's
       // record, else the NPC's own display name.
       ctx.addActivationNamer((key) => {
-        if (!key.startsWith('person:')) return null;
+        if (typeof key !== 'string' || !key.startsWith('person:')) return null;   // AUDIT-WH2 L2-F5: C1's guard
         const pn = (ctx.npcTargets?.() ?? [])[Number(key.split(':')[1])];
         if (!pn) return null;
         // The DISPLAY NAME is resolved by the port's own StaticNPC
@@ -5867,11 +5977,11 @@ export function createWorldModes(host) {
         const t = npcHoverName(display, { archive: pn.archive ?? -1, record: pn.record ?? -1 });
         return t ? { title: t } : null;
       });
-      // .cs:481-512 - a quest ITEM stand is named by the long name, and
+      // .cs:483-512 - a quest ITEM stand is named by the long name, and
       // one billboard by hand. A quest PERSON or FOE stand answers
       // nothing, exactly as the mod's `is Item` gate does.
       ctx.addActivationNamer((key) => {
-        if (!key.startsWith('questflat:')) return null;
+        if (typeof key !== 'string' || !key.startsWith('questflat:')) return null;   // AUDIT-WH2 L2-F5: C1's guard
         const st = dungeonQuestFlats[Number(key.split(':')[1])];
         const res = st?.behaviour?.targetResource ?? null;
         if (!res || res.isPerson === true || res.isFoe === true) return null;
@@ -5932,9 +6042,8 @@ export function createWorldModes(host) {
         dungeonCtx = null;
         return false;
       }
-      dropDoorCache();   // AUDIT-WH L6: the dungeon takes the click, and the STREET's door rows are the street's
       ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1): ADOPTED - the context's stack is the live top window from the next statement on; before the flip and not after, so no statement ever runs with mode 'dungeon' and the door's presenter still dormant (worldModes' own quest door reaches the same stack and reads no `_live`)
-      mode = 'dungeon';
+      setMode('dungeon');
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
       mwViewTransition('Interior');   // EOTB-IL: OnTransitionInterior is registered on PlayerEnterExit.OnTransitionDungeonInterior too (Start, IL_06bf)
       setWeaponPose(dungeonCtx?.weaponRig?.()?.playerWeapon ?? null, host.weaponPose?.() ?? null);   // JAN1: the dungeon rig takes the pair the exterior rig held
@@ -6070,7 +6179,7 @@ export function createWorldModes(host) {
     if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
     // U26: droppedLoot: is the player's own pile - the same three-way
     // arm the standalone dungeon scene carries, kept in step here.
-    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:')) {
+    if (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:')) {   // AUDIT-WH2 L2-F1: hearth: - HEARTH1's fourth host, stood and named down here since it shipped and never answered
       dungeonCtx.takeLoot(key, getInteractionMode());   // SURV3: a camp's fire takes the mode too   // opens the inventory with the pile as the remote target; HT1: a dropped torch takes the mode
       return true;
     }
@@ -6138,9 +6247,8 @@ export function createWorldModes(host) {
     dungeonCtx.destroy();
     dungeonCtx = null;
     dungeonLoc = null;
-    mode = 'exterior';
+    setMode('exterior');
     host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
-    dropDoorCache();   // AUDIT-WH P1/P5: the modal list dies with the mode, as the street's did when it took over
     destroyWorldPlaque();   // WORLD-HOVER: a DOM overlay stays painted unless it is told otherwise (AUDIT 64 F37) - and the exterior arm is not the plaque's host, so it has no frame in which to hide it
     host.applyWeaponPose?.(pose);   // JAN1: the exterior rig takes the pair the dungeon rig held
     mwViewTransition('Exterior');   // EOTB-IL: OnTransitionExterior is registered on PlayerEnterExit.OnTransitionDungeonExterior too (Start, IL_06e1)
@@ -6275,7 +6383,7 @@ export function createWorldModes(host) {
     // the movers kept travelling - all of it under the open menu.
     // DFU UserInterfaceManager.AddWindow (:179-184) calls
     // PauseGame(true) for any PauseWhileOpen window (the default),
-    // which is what dungeon.js:298's `held` already implements.
+    // which is what dungeon.js:305's `held` already implements.
     // AUDIT 39 (#28): and the OUTER host's slot with them. AddWindow
     // pauses for the window, not for the slot it was pushed into -
     // and townTalk's slot really does hold one in these modes: this
@@ -6348,7 +6456,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:501 is this same gate
+    // the crouch edge still toggled. dungeon.js:508 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -6456,7 +6564,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:352 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:359 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -6632,7 +6740,7 @@ export function createWorldModes(host) {
 
     if (mode === 'dungeon') {
       if (pendingDungeonExit) { pendingDungeonExit = false; exitDungeonNow(); return true; }   // F-A5: outside any overlay dispatch
-      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:299's `if (!held)` - a paused game advances no movers
+      if (!overlayHeld) dungeonCtx.actions.update(dt);   // dungeon.js:306's `if (!held)` - a paused game advances no movers
       if (!overlayHeld) dungeonCtx.automapTick?.(dt, cam.pos, fwd);   // A1: the 5 Hz reveal probes ride the same gate
       dungeonCtx.flicker.tick(dt);
       // AUDIT 26 F183: castle blocks and the one special area take
@@ -6812,7 +6920,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:8120's own wave-46 note); the interior
+          // a blow (world.js:8132's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7056,7 +7164,7 @@ export function createWorldModes(host) {
         cursorActive: overlayHeld,
         canvas,
         name: interiorHoverName,
-        contents: (key) => (key.startsWith('droppedLoot:') ? (interiorDropped.contents?.(key) ?? null) : null),
+        contents: (key) => (typeof key === 'string' && key.startsWith('droppedLoot:') ? (interiorDropped.contents?.(key) ?? null) : null),   // AUDIT-WH2 L2-F5: C1's guard - a CONTENTS reader is handed every itemised key too
       });
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
@@ -7457,7 +7565,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:369-419 carries, so a probe could take the
+    // scenes/dungeon.js:376-426 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -7668,7 +7776,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3525`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3537`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8986,7 +9094,7 @@ export function createWorldModes(host) {
         dungeonCtx.destroy(); dungeonCtx = null; dungeonLoc = null;
       }
       player.collider = baseCollider();
-      mode = 'exterior';
+      setMode('exterior');
       host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
       destroyWorldPlaque();   // WORLD-HOVER: a DOM overlay stays painted unless it is told otherwise (AUDIT 64 F37) - and the exterior arm is not the plaque's host, so it has no frame in which to hide it
       if (pose) host.applyWeaponPose?.(pose);   // JAN1: the exterior rig takes the pair the live rig held
@@ -9173,9 +9281,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3115-3137), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3127-3149), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5434). So an F9 pressed in a shop
+     *  unconditionally (world.js:5446). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9202,7 +9310,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5526)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5538)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9212,8 +9320,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5640`
-     *  and `dungeonContext.js:6100` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5652`
+     *  and `dungeonContext.js:6114` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {
