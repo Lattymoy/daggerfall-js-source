@@ -91,7 +91,6 @@
 
 import { fpArm, hasDaggerfallArrows } from '../combat/fpArm.js';
 import { questRail, journalLines, questTitleOf } from './questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
-import { entryVerdict } from '../net/nameFilter.js';   // NAME-F2: the entry-side refusal; net/wire.js's sanitizeName is the half that holds   // AUDIT-CHATR F2/F3: ONE verdict, given the save it is about
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1: a tap on the scrim resumes
 import { TEST_PRESETS, TEST_RIDE, TEST_LOOT } from '../systems/testRoom.js';   // TR3: the one home the pane shows; TSR4: the ride; LR3: the loot ladder
 import { mwRaceId } from '../formats/mwNpc.js';
@@ -849,60 +848,59 @@ function paneOnline(body) {
     wrap.append(input);
     return wrap;
   };
-  // ═══ NAME-F2: THE NAME IS REFUSED HERE, WITH A REASON ══════════
+  // ═══ ACC1g: THE NAME IS THE ACCOUNT'S NOW, AND THERE IS NO FIELD
   //
-  // Mac, 2026-09-16: "a proper censoring system for players choosing
-  // their online name. Im seeing a lot of names like 'Cum'".
+  // Mac: "You shouldnt be able to just type a name and enter
+  // anymore.... this is what the account system is for."
   //
-  // This is the half a player SEES. The half that holds is
-  // `net/wire.js`'s `sanitizeName`, which the relay runs on every
-  // hello - a check that lived only here would be a check a devtools
-  // console removes. Both, or neither is worth writing.
+  // A text field reading "Name over your head" stood here and its
+  // contents went into the hello, where the relay only sanitised them -
+  // so a player could type anybody's name and walk in wearing it. That
+  // is the impersonation hole ACC1a opened this arc to close, and ACC1d
+  // said out loud that a token made a name trustworthy without making
+  // one mandatory. The relay refuses an unverified hello now, so the
+  // field is not merely unnecessary: it would be a box that promises a
+  // name the server will not give.
   //
-  // What is checked is the EFFECTIVE name, not the field: an empty
-  // field falls through to the chosen save's own character name
-  // (scenes/world.js's onlineStart ladder), so a character called Cum
-  // who never touches this field must be told here rather than
-  // discovering it as a silent rename in the world.
+  // WHAT STANDS IN ITS PLACE IS WHO YOU ARE, read from the session this
+  // device holds - a storage read and no network, the same one the
+  // door's profile mark makes, so opening this pane on a train still
+  // works.
   //
-  // AUDIT-CHATR F2/F3: and the ladder is walked by `entryVerdict`, once,
-  // with the save the verdict is ABOUT. Written out here it was written
-  // twice - `saves[0]` for the painted line, the pressed card's save for
-  // the press - so the two could disagree, and did: a refused second
-  // character got a dead button and a blank reason. `entryVerdict` also
-  // lets an EMPTY ladder through, because empty is Traveller and the
-  // line below this field says so.
-  const nameField = field('Name over your head', 'onlineName', saves[0]?.name ?? 'Your name', 24);
-  const nameWhy = el('p', 'meta nameveto');
-  const nameVerdict = (saveName) => entryVerdict(getPref('onlineName'), saveName);
-  // The DEFAULT subject is the most recent save - the one whose name is
-  // already this field's placeholder - so the standing line is about the
-  // character a reader is looking at. It can be a false RED (the field
-  // empty, the first save rude, the player about to press the third
-  // card's button), and that is the survivable direction: the press
-  // repaints about the save it refused, so the reason a player acts on
-  // is always the right one.
-  const paintName = (saveName = saves[0]?.name) => {
-    const v = nameVerdict(saveName);
-    nameWhy.textContent = v.ok ? '' : v.reason;
-    nameWhy.classList.toggle('bad', !v.ok);
-    nameField.classList.toggle('bad', !v.ok);
-  };
-  const nameInput = nameField.querySelector?.('input');
-  if (nameInput) {
-    const already = nameInput.oninput;
-    nameInput.oninput = (e) => { already?.(e); paintName(); };
+  // NAME-F2's ENTRY HALF MOVED WITH IT, and did not disappear: the
+  // filter that refused `Cum` at this field now refuses it at
+  // REGISTRATION, where a name is chosen once instead of per session -
+  // `server-account/src/accounts.js handleRefusal` ends in
+  // `nameIsIssuable`, which is `sanitizeName(h) === h`, which is the
+  // very function carrying `nameAllowed`. One filter, one home, asked
+  // earlier and asked once.
+  const who = storedSession(appStorage());
+  const idBox = el('div', 'field');
+  idBox.append(el('span', 'fieldlabel', 'Name over your head'));
+  if (who) {
+    // A GUEST IS SAID TO BE ONE, because "guest" here is not a lesser
+    // player - it is a name this device can lose. ACC1e's card is where
+    // that is fixed, and a player who never reads it should still know
+    // which of the two they are holding.
+    idBox.append(el('p', 'meta', who.kind === 'guest'
+      ? `${who.name} - a guest name, kept on this device. Add a password to keep it.`
+      : `${who.name} - your account.`));
+  } else {
+    idBox.append(el('p', 'meta bad', 'Online needs an account, so a name over a head is one nobody else can wear. A guest takes one press and no email.'));
   }
-  c.append(nameField);
-  // AUDIT-CHATR F6: this line used to promise "24 plain letters and
-  // digits; anything else is dropped". It is not what sanitizeName does
-  // and never was - it keeps every PRINTABLE ASCII character, so
-  // `Bob Smith` and `Bob!!!` survive whole and it is the accents and the
-  // emoji that go. A player reading the old line would have thought the
-  // space in their name was about to vanish.
-  c.append(el('p', 'meta', 'Up to 24 characters; anything outside plain ASCII is dropped, and an empty name shows as Traveller.'));
-  c.append(nameWhy);
-  paintName();
+  c.append(idBox);
+  if (!who) {
+    const go = el('button', 'act primary');
+    go.type = 'button';
+    go.textContent = 'Sign in or continue as guest';
+    // THE WINDOW LIVES AT THE DOOR (ACC1f), and this sends the player
+    // there rather than growing a second home for it here: that card
+    // was drawn in a pixel window over the px-home and the three faults
+    // the screenshot found were all rules that did not reach it. One
+    // window, one place, one set of rules that have been looked at.
+    go.onclick = () => { section = 'home'; accountOpen = true; render(); };
+    c.append(go);
+  }
   c.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
   // SLOTS1 (Mac: "the ability to choose which save to use in online"):
   // every restorable slot is a card, and the one pressed is the
@@ -917,14 +915,17 @@ function paneOnline(body) {
     actions: [{
       label: 'Play online',
       primary: true,
-      // NAME-F2: the refusal is a REFUSAL, not a warning beside a
-      // button that works anyway. A name the filter rejects does not
-      // join - the field is repainted so the reason is under the
-      // player's eye at the moment they pressed.
+      // ACC1g: SIGNED OUT IS A DEAD BUTTON WITH A REASON ABOVE IT, not
+      // a live one that fails at the relay. The relay owns the rule and
+      // refuses an unverified hello whatever this pane does - this is
+      // only the pane declining to send a player into a refusal it can
+      // already see, with the sentence and the way in one card up.
+      //
+      // NAME-F2's refusal was here and has moved to registration (see
+      // the card above): a name is chosen once, at the account, rather
+      // than re-judged on every press of this button.
+      disabled: !who,
       onClick: () => {
-        // ...about THIS save, and repainted about this save, so the
-        // reason under the field is the one that stopped the press.
-        if (!nameVerdict(save.name).ok) { paintName(save.name); nameInput?.focus?.(); return; }
         _pickedSaveKey = save.key;
         onAction('online');
       },

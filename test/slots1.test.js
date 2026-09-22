@@ -56,21 +56,25 @@ test('SLOTS1: the pick seams hand a key and a name over once (mutant: a pick tak
   // pressed one is still the character brought in.
   assert.match(online, /body\.append\(tileGrid\(saves,[\s\S]*?_pickedSaveKey = save\.key;\s*\n\s*onAction\('online'\);/,
     'a tile per slot, the pressed one is the character brought in');
-  // NAME-F2: ...and the name is checked BEFORE the pick is taken. The
-  // order is the point: `takePickedSaveKey` is a one-shot, so a pick
-  // stored and then refused would leave the key latched for the next
-  // Continue - the very mutant this test's title names.
+  // ACC1g MOVED THE GUARD OFF THIS BUTTON, and the reason is the whole
+  // slice: NAME-F2's check was about a name the player TYPED into this
+  // pane, and there is no such name any more. The account service
+  // refuses a rude handle at REGISTRATION (`handleRefusal` ends in
+  // `nameIsIssuable`, which is `sanitizeName(h) === h`, which carries
+  // `nameAllowed`), so a name is judged once when it is chosen rather
+  // than on every press of this button.
   //
-  // AUDIT-CHATR F2: found by the SUBJECT of the guard, not by the name
-  // of the function that answers it. The guard must be about THIS card's
-  // save - the pane once asked about `saves[0]` on one path and the
-  // pressed card on the other, and the two disagreed.
-  const guardAt = online.search(/if \(!\w+\(save\.name\)\.ok\)/);
+  // WHAT GUARDS THE BUTTON NOW IS THE SESSION, and it is a DEAD BUTTON
+  // rather than a live one that fails at the relay: the relay refuses
+  // an unverified hello whatever this pane does, and the pane declines
+  // to send a player into a refusal it can already see.
   const latch = online.indexOf('_pickedSaveKey = save.key;');
-  assert.ok(guardAt > 0 && guardAt < latch, 'the refusal returns before the key is latched');
-  const guard = guardAt;
-  assert.match(online.slice(guard, latch), /return; \}/, 'and it really RETURNS rather than falling through');
-  assert.doesNotMatch(online, /disabled: !save/, 'no single most-recent button any more');
+  assert.ok(latch > 0, 'the pick is still latched by the press');
+  assert.match(online, /disabled: !who,/, 'signed out is a dead Play online button');
+  assert.match(online, /const who = storedSession\(appStorage\(\)\);/,
+    'and `who` is the session on this device - a storage read, no network, so the pane opens on a train');
+  assert.doesNotMatch(online, /entryVerdict|onlineName/,
+    'the typed name and its entry-side filter are gone from this pane entirely');
   const load = menu.slice(menu.indexOf('function paneLoad(body)'), menu.indexOf('// ── SAVE GAME'));
   assert.match(load, /_pickedSaveKey = save\.key; onAction\('load'\);/);
   // TILE2: the delete moved onto the Load pane's own tile actions with

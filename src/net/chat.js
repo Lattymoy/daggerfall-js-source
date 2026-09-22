@@ -62,17 +62,16 @@ export class ChatLog {
    *  the string 'Server' would be one `/name Server` away from a player
    *  announcing a fake restart. A flag never travels on the wire - it is
    *  set here, by us, on a line nobody sent. */
-  push(tabId, { id = '', name = '', text = '', at = null, mine = false, system = false, v = false } = {}) {
+  push(tabId, { id = '', name = '', text = '', at = null, mine = false, system = false } = {}) {
     const tab = this.tab(tabId);
     if (!tab || typeof text !== 'string' || !text) return null;
     const now = this._now();
-    // ACC1d: `v` is the RELAY's verdict on the name beside the line - true
-    // only where a signed token said so. A system line is nobody's name,
-    // so it is never vouched for. The panel does not draw the mark yet
-    // (bible ACC1d D5); dropping it here would mean the day it does, the
-    // relay has to be redeployed to get it back, and a relay deploy
-    // drops every connected player.
-    const line = { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: !!system, v: !!v && !system };
+    // ACC1g: a line carried the relay's verdict on the name beside it
+    // (`v`) while a token was optional. The relay refuses a hello it
+    // cannot verify now, so every name that can appear on a line was
+    // verified to be in the room at all and the flag said the same
+    // thing about every one of them.
+    const line = { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: !!system };
     tab.messages.push(line);
     if (tab.messages.length > this._keep) tab.messages.splice(0, tab.messages.length - this._keep);
     if (!(this.open && tab.id === this.active)) tab.unread++;

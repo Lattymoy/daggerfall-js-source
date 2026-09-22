@@ -294,65 +294,59 @@ test('ACC1d: the host builds ONE minter and hands it to the presence session AND
   assert.doesNotMatch(rd('src/net/online.js'), /accountClient|fetch\(/, 'the session does not know the account service exists');
 });
 
-// ── 5. THE VERDICT, ALL THE WAY TO THE CLIENT ───────────────────────
+// ── 5. THE VERDICT IS GONE, AND ACC1g IS WHY ────────────────────────
 //
-// The relay decides `v` and puts it on the join, the roster and every
-// chat line. If any door between there and the client drops it, the
-// mark is true for some people and missing for others, which is worse
-// than no mark at all - and getting it back would cost another relay
-// deploy, which drops every connected player.
+// ACC1d carried `v` - the relay's verdict on a name - from the join,
+// the roster and every chat line all the way to the peer and the log,
+// and three pins held every door on that road open. It was worth
+// holding while a name could be VERIFIED or TYPED.
+//
+// Mac closed the typed one: "You shouldnt be able to just type a name
+// and enter anymore.... this is what the account system is for." The
+// relay refuses a hello it cannot verify, so every name in every room
+// is a verified name and `v` said the same thing about all of them -
+// a field carrying no information. It leaves on the same deploy the
+// gate costs, because a wire change costs a drop and this deploy is
+// already paying for one.
+//
+// SO THE PINS BELOW ARE THE INVERSE: nothing on the road may carry it,
+// and a relay that sends one anyway must not put it back on a peer.
 
-test('ACC1d: the WELCOME\'s roster carries the verdict too, not just the joins that come after you', () => {
-  const peers = [
-    { id: 'a-0001', name: 'Nystul', look: LOOK, pose: null, v: true },
-    { id: 'b-0002', name: 'Nystul', look: LOOK, pose: null },
-  ];
-  const out = rosterFor(peers, 'mac-0001');
-  assert.equal(out.length, 2);
-  assert.equal(out[0].v, true, 'the one the relay vouched for');
-  assert.equal(JSON.parse(JSON.stringify(out[1])).v, undefined, 'and an unverified peer costs no bytes on the wire');
-});
+test('ACC1g: no door between the relay and the client carries a verdict any more - not the roster, not the peer, not a chat line (mutants: `v` back on the roster row; a peer keeping one a stale relay sent; the log keeping one on a line)', () => {
+  // THE ROSTER. `rosterFor` is the relay's own function (one home, both
+  // ends), and a row is an id, a name, a look and a pose.
+  const out = rosterFor([{ id: 'a-0001', name: 'Nystul', look: LOOK, pose: null, v: true }], 'mac-0001');
+  assert.deepEqual(Object.keys(out[0]).sort(), ['id', 'look', 'name', 'pose'],
+    'the roster row grew a field back');
 
-test('ACC1d: a peer wears the relay\'s verdict, from the roster and from a join, and a fresh hello is a fresh verdict', () => {
+  // THE PEER. A relay still sending `v` - an older one, or a forgery -
+  // must not put it back on a peer, because a client that keeps a field
+  // the wire no longer defines is a client trusting a stranger's word
+  // about itself.
   const { FakeWS, sockets } = fakeSocketClass();
   const s = session({ WS: FakeWS });
   s.join('world:0,0');
   sockets[0].open();
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', host: 'mac-0001', peers: [
     { id: 'a-0001', name: 'Nystul', look: LOOK, pose: null, v: true },
-    { id: 'b-0002', name: 'Nystul', look: LOOK, pose: null },
   ] });
-  assert.equal(s.peers.get('a-0001').v, true);
-  assert.equal(s.peers.get('b-0002').v, false, 'a hard boolean - never a "maybe"');
-
+  assert.equal(s.peers.get('a-0001').v, undefined, 'a peer kept a verdict off the wire');
   sockets[0].receive({ t: 'join', id: 'c-0003', name: 'Julianos', look: LOOK, v: true });
-  assert.equal(s.peers.get('c-0003').v, true);
-  // A PEER THAT RE-HELLOS IS JUDGED AGAIN. Somebody who signed out and
-  // reconnected is not still vouched for, and a stale `true` is exactly
-  // the impersonation the mark exists to show.
-  sockets[0].receive({ t: 'join', id: 'c-0003', name: 'Julianos', look: LOOK });
-  assert.equal(s.peers.get('c-0003').v, false, 'the verdict is the LAST hello\'s, never the first');
-});
+  assert.equal(s.peers.get('c-0003').v, undefined);
 
-test('ACC1d: a chat line carries the verdict on the name beside it, and a system line is nobody\'s name', () => {
-  const { FakeWS, sockets } = fakeSocketClass();
-  const s = session({ WS: FakeWS, presence: false });
+  // THE CHAT LINE, and the LOG the panel draws from.
+  const { FakeWS: FW2, sockets: s2 } = fakeSocketClass();
+  const c = session({ WS: FW2, presence: false });
   const heard = [];
-  s.onChat = (line) => heard.push(line);
-  s.join('chan:world');
-  sockets[0].open();
-  sockets[0].receive({ t: 'welcome', id: 'mac-0001', host: 'mac-0001', peers: [] });
-  sockets[0].receive({ t: 'chat', id: 'a-0001', name: 'Nystul', text: 'hail', at: 1, v: true });
-  sockets[0].receive({ t: 'chat', id: 'b-0002', name: 'Nystul', text: 'hail', at: 1 });
-  assert.deepEqual(heard.map((l) => l.v), [true, false]);
-
-  // ...and the LOG keeps it, because the log is what the panel draws.
+  c.onChat = (line) => heard.push(line);
+  c.join('chan:world');
+  s2[0].open();
+  s2[0].receive({ t: 'welcome', id: 'mac-0001', host: 'mac-0001', peers: [] });
+  s2[0].receive({ t: 'chat', id: 'a-0001', name: 'Nystul', text: 'hail', at: 1, v: true });
+  assert.equal(heard[0].v, undefined, 'a chat line kept a verdict off the wire');
   const log = new ChatLog({ now: () => 1 });
   const tab = log.tabs[0].id;
-  assert.equal(log.push(tab, heard[0]).v, true);
-  assert.equal(log.push(tab, heard[1]).v, false);
-  assert.equal(log.push(tab, { text: 'the relay restarted', system: true, v: true }).v, false,
-    'a system line has no name to vouch for, whatever it was handed');
+  assert.equal(log.push(tab, { ...heard[0], v: true }).v, undefined, 'the log kept one it was handed');
 });
 
 // ── 6. THE NOTE AND THE CODE ────────────────────────────────────────

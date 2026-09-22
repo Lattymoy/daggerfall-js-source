@@ -1066,7 +1066,7 @@ export class OnlineSession {
       // because a chat log is where a name is read and an impersonation
       // is worth doing. A hard boolean for the same reason `_peer` keeps
       // one: never a "maybe".
-      this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), v: m.v === true, text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
+      this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
     } else if (m.t === 'social') {
       // AUDIT SOC B3: GATED COMING IN, as a chat line is (CHAT-G) - a note or an error becomes a chat line (net/chat.js
       // keeps CHAT_KEEP of them, so an ungated stream is a player's history deleted) and the rest a repaint; the
@@ -1099,17 +1099,15 @@ export class OnlineSession {
 
   _peer(p, now) {
     const pose = validPose(p.pose);
-    // ACC1d: `v` IS THE RELAY'S WORD AND NOTHING ELSE. It rides the
-    // welcome's roster and every join; it is kept as a hard boolean so
-    // a peer the relay did not vouch for can never read as "maybe".
-    // NOT DRAWN YET - bible ACC1d D5 says why, and says whose call the
-    // mark's design is.
-    return { id: p.id, name: sanitizeName(p.name), look: validLook(p.look), v: p.v === true, told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
+    // ACC1g: no `v` on a peer any more - the relay refuses a hello it
+    // cannot verify, so every peer in the room is one it verified and a
+    // per-peer verdict said the same thing about all of them.
+    return { id: p.id, name: sanitizeName(p.name), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
   _refresh(p, m, now) {
-    p.name = sanitizeName(m.name); p.look = validLook(m.look); p.v = m.v === true; p.told = true; p.recall = false;   // SLAM6: an introduction, so the asks stop (SLAM14: the recall's too)   // ACC1d: a fresh hello is a fresh verdict - a peer that signed out and re-hello'd is NOT still vouched for
+    p.name = sanitizeName(m.name); p.look = validLook(m.look); p.told = true; p.recall = false;   // SLAM6: an introduction, so the asks stop (SLAM14: the recall's too)
     this._remember(p.id, p);   // SLAM9: and it is kept, so a blip cannot un-introduce it
     const pose = validPose(m.pose);
     if (pose) this._arrive(p, pose, now); else p.seenAt = now;

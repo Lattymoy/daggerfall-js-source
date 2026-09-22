@@ -744,7 +744,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world85';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it
+export const RELAY_VERSION = 'world86';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1163,12 +1163,14 @@ export const relayVersionOf = (v) => (typeof v === 'string' && v.length > 0 && v
  *  from (a world cell), the first ROSTER_MAX otherwise. */
 export function rosterFor(peers, meId, near = null) {
   const out = [];
-  // ACC1d: `v` RIDES THE ROSTER TOO. The join frame carries it, and a
-  // roster that dropped it would mark the people who arrive AFTER you
-  // and leave everybody already standing there unmarked - a signal
-  // that is true half the time is worse than none. `undefined` is
-  // absent once stringified, so an unverified peer costs no bytes.
-  for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null, ...(p.v ? { v: true } : {}) });
+  // ACC1g: AND `v` IS GONE FROM IT. ACC1d put the relay's verdict on
+  // every roster row and on the join beside it, for a good reason at
+  // the time - a roster that dropped it would have marked the people
+  // who arrive AFTER you and left everybody already standing there
+  // unmarked, a signal true half the time. The gate makes the whole
+  // field say one thing: every peer in this room was verified to get
+  // in, so a per-name verdict carries no information about any of them.
+  for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });
   // SLAM5 (2026-09-16, AUDIT SLAM): ONE METRIC. This ranked by `pixelDistance` - Chebyshev on MAP PIXELS, 32768 units
   // wide - while the pose fan ranks by squared Euclidean in the pose's own frame. Two different metrics over the same
   // set DO NOT NEST, so `POSE_FAN_MAX <= ROSTER_MAX` bought nothing: measured at an event standing, only 11 of the 32

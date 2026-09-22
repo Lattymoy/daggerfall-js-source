@@ -309,12 +309,22 @@ test('NAME-F2: the filter is in the RELAY’s graph, and the entry pane is the o
   assert.equal((rd('src/net/nameFilter.js').match(/^import /gm) ?? []).length, 0,
     'nameFilter.js must import nothing, or the relay’s bundle grows a graph');
 
-  // and the entry side refuses rather than warning beside a button that
-  // works anyway
+  // ACC1g MOVED THE ENTRY HALF, and did not drop it. The filter that
+  // refused `Cum` at a text field in the Online pane now refuses it at
+  // REGISTRATION, where a name is chosen ONCE instead of re-judged on
+  // every press: `server-account/src/accounts.js handleRefusal` ends in
+  // `nameIsIssuable`, which is `sanitizeName(h) === h`, which is the
+  // very function carrying `nameAllowed`. One filter, one home, asked
+  // earlier and asked once - and the pane has no name to judge, because
+  // a player cannot type one any more.
+  const acct = rd('server-account/src/accounts.js');
+  assert.match(acct, /export function handleRefusal\(handle\) \{/);
+  assert.match(acct, /if \(!nameIsIssuable\(h\)\) return 'refused';/, 'NAME-F1/F2, at the one entry there is');
+  assert.match(rd('src/net/identityToken.js'), /&& sanitizeName\(name\) === name;/,
+    "and `nameIsIssuable` IS sanitizeName - so a handle goes through the relay's own filter");
   const menu = rd('src/ui/enhancedMenu.js');
-  assert.match(menu, /import \{ entryVerdict \} from '\.\.\/net\/nameFilter\.js';/);
-  assert.match(menu, /if \(!nameVerdict\(save\.name\)\.ok\) \{[^}]*return; \}/,
-    'Play online must REFUSE, not warn');
+  assert.doesNotMatch(menu, /entryVerdict|onlineName/,
+    'the typed name, its field and its entry-side verdict are gone from the menu entirely');
 
   // AUDIT-CHATR F2: ONE SUBJECT. The painted line and the pressed
   // button must ask about the SAME save, and the only way to be sure of
@@ -322,13 +332,16 @@ test('NAME-F2: the filter is in the RELAY’s graph, and the entry pane is the o
   // walked the ladder twice - `saves[0]` for the paint, the card's own
   // save for the press - so a refused second character got a dead
   // button and a blank reason.
+  // AUDIT-CHATR F2's finding was that the pane walked the ladder TWICE
+  // with two different subjects. ACC1g removed the ladder from this
+  // pane altogether, so the way that bug cannot come back is that there
+  // is nothing here to have a subject: the pane shows WHO YOU ARE and
+  // the button is dead without a session.
   const pane = menu.slice(menu.indexOf('function paneOnline('), menu.indexOf('function paneLoad('));
   const code = pane.replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');   // its own prose is not its wiring
-  assert.equal((code.match(/entryVerdict\(/g) ?? []).length, 1, 'the ladder is walked in ONE place');
-  assert.match(code, /const nameVerdict = \(saveName\) => entryVerdict\(getPref\('onlineName'\), saveName\);/);
-  assert.match(code, /paintName\(save\.name\)/, 'the refusal repaints about the save it refused');
-  assert.doesNotMatch(code, /saves\[0\]\?\.name \|\||\|\| saves\[0\]\?\.name/,
-    'saves[0] is a PLACEHOLDER here and never a verdict\u2019s subject');
+  assert.equal((code.match(/entryVerdict\(/g) ?? []).length, 0, 'the ladder is not walked here at all');
+  assert.match(code, /const who = storedSession\(appStorage\(\)\);/, 'what the pane reads is the SESSION');
+  assert.match(code, /disabled: !who,/, 'and signed out is a dead button, not a warning beside a live one');
 });
 
 test('AUDIT-CHATR F6: the Online pane\u2019s copy says what sanitizeName actually does', () => {
@@ -342,10 +355,16 @@ test('AUDIT-CHATR F6: the Online pane\u2019s copy says what sanitizeName actuall
   assert.equal(sanitizeName('x'.repeat(NAME_MAX + 9)).length, NAME_MAX, 'and the 24 is real');
 
   const menu = rd('src/ui/enhancedMenu.js');
-  const copy = menu.slice(menu.indexOf("c.append(el('p', 'meta', 'Up to "));
-  const line = copy.slice(0, copy.indexOf('\n'));
-  assert.match(line, /Up to 24 characters; anything outside plain ASCII is dropped, and an empty name shows as Traveller\./);
-  assert.doesNotMatch(line, /letters and digits/, 'the false promise is gone');
+  // ACC1g: THE LINE IS GONE WITH THE FIELD IT DESCRIBED. F6's law was
+  // that a promise to a player is a claim about the code; the strongest
+  // form of that law is that the pane makes no promise about a name the
+  // player cannot type. `sanitizeName` still holds the wire (the four
+  // assertions above), and the pane says who you ARE instead.
+  assert.doesNotMatch(menu, /Up to 24 characters/, 'the line describing the typed-name field outlived the field');
+  assert.doesNotMatch(menu, /letters and digits/, 'and the false promise it replaced is still gone');
+  const pane2 = menu.slice(menu.indexOf('function paneOnline('), menu.indexOf('function paneLoad('));
+  assert.match(pane2, /Online needs an account, so a name over a head is one nobody else can wear\./,
+    'what stands there now says why, and says the guest way in is one press');
 });
 
 test('AUDIT-CHATR F2/F3: one ladder, one subject - and an empty ladder is Traveller, not a refusal', () => {

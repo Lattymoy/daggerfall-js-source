@@ -105,13 +105,30 @@ test('WORLD1: the Room - the host is the hello\'d socket in the room longest, sa
   assert.deepEqual(welcomeOf(c).peers.map((p) => p.id).sort(), ['aaaa-0001', 'bbbb-0002'], 'and the roster still');
   // AUDIT WORLD D4: the joiner that LEADS (a stamp before everyone's - the same-millisecond tie the smaller id wins)
   // is said to the rest and not to itself, and its leave hands the seat back
-  { const tie = r.connect(); a.att.since += 10; b.att.since += 10; c.att.since += 10; r.wake();
-    await r.hello(tie, '0000-tie0', at(1, 1));
+  // ACC1g: the token is minted BEFORE the stamps are bumped. A hello
+  // mints one now, and minting is real Ed25519 - a few milliseconds
+  // between the bump and the hello, which is enough to undo a +10ms
+  // tie that this pin is entirely about.
+  const tieTok = await r.token('0000-tie0');
+  // ACC1g: AN EXACT TIE, not a ten-millisecond head start. The old
+  // fixture bumped the other three by +10ms and relied on this test
+  // reaching the hello inside that window; a hello mints a real
+  // Ed25519 token now, so it does not, and the pin was measuring the
+  // wall clock instead of the tie-break. The clock is FROZEN for this
+  // block and the three stamps are set to the same instant, which is
+  // exactly what the line above says the case is - "the
+  // same-millisecond tie the smaller id wins".
+  const realNow = Date.now; const froze = realNow();
+  try {
+    Date.now = () => froze;
+    const tie = r.connect(); a.att.since = froze; b.att.since = froze; c.att.since = froze; r.wake();
+    await r.hello(tie, '0000-tie0', at(1, 1), { tok: tieTok });
     assert.equal(welcomeOf(tie).host, '0000-tie0', 'the joiner leads');
     for (const ws of [a, b, c]) assert.deepEqual(ofType(ws, 'host').at(-1), { t: 'host', id: '0000-tie0' }, 'said to the rest');
     assert.equal(ofType(tie, 'host').length, 0, 'not to itself: its welcome said it');
     await r.drop(tie);
-    for (const ws of [a, b, c]) assert.deepEqual(ofType(ws, 'host').at(-1), { t: 'host', id: 'aaaa-0001' }, 'the seat handed back'); }
+    for (const ws of [a, b, c]) assert.deepEqual(ofType(ws, 'host').at(-1), { t: 'host', id: 'aaaa-0001' }, 'the seat handed back');
+  } finally { Date.now = realNow; }
   // the host leaves: the next-longest, said to everyone
   await r.drop(a);
   assert.deepEqual(ofType(b, 'host').at(-1), { t: 'host', id: 'bbbb-0002' }, 'b has been here longest now');

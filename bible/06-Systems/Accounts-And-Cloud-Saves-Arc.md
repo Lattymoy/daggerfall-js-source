@@ -2017,13 +2017,31 @@ this container has no ARENA2, so the real FONT0003 is not read here.**
   both cases, and a badged room is **2n draws and still nothing that
   scales with how long anybody's name is**, which is the whole of what
   PERF-ON was ever about.
-- Mutants: `tools/mutants/acc1dmark.json`, 8, **8 dead and 0 survived.**
+- Mutants: acc1dmark.json, 8, **8 dead and 0 survived** (the file is
+  gone with the slice - ACC1g retired it hours later, below).
   Two survived a first run. MARK-3: prefixing the badge INTO the name
-  leaves the *run count* unchanged, so the pin now reads the badged
-  peer's name draw as having the same glyph count as when nobody is
-  badged. MARK-7 is the one above. MARK-8 holds Mac's correction as a
-  law rather than as a memory: the polarity flipped back is a dead
-  mutant, not a preference somebody can quietly restore.
+  leaves the *run count* unchanged, so the pin read the badged peer's
+  name draw as having the same glyph count as when nobody is badged.
+  MARK-7 was the one above. MARK-8 held Mac's correction as a law
+  rather than as a memory.
+
+### AND THEN ACC1g RETIRED IT, hours later and for his own reason
+
+The badge meant something only while a name could be VERIFIED **or**
+TYPED. Mac closed the typed one the same night, so every name over
+every head is a checked one and the badge appeared on all of them -
+which is the wallpaper he named when he took the first polarity apart.
+It is gone, with `NAME_MARK`, `NAME_MARK_GAP_PX`, the point's `vouched`,
+the DOM layer's span, its pin and its campaign; `v` leaves the wire in
+the same deploy, because the badge was its only reader.
+
+**The mechanism is in the history and in this page, not in a dead
+branch:** a mark beside a label, measured off the name's own width so
+the label stays centred on the skull, drawn in both faces out of one
+point, in the name's own colour. If a later slice needs one - a
+moderator, a party leader, a mute - that is where to read how it was
+done, and how not to do it (MARK-3 and MARK-7 both survived their first
+run).
 
 ---
 
@@ -2125,3 +2143,138 @@ that could ever release it. Same word, same arm.
   where the heading's face, the brass, and a tile that could have
   collapsed to a strip were actually measured.
 - Mutants: `tools/mutants/acc2c.json`, 10, **10 dead and 0 survived.**
+
+---
+
+## ACC1g — the wall moves to the door (2026-09-22)
+
+> You shouldnt be able to just type a name and enter anymore.... this is
+> what the account system is for
+
+### THIS IS THE FLIP ACC1d NAMED AND DID NOT MAKE
+
+ACC1d's own record says it out loud: *"a token makes a name TRUSTWORTHY,
+it does not yet make one MANDATORY, and ACC0's wall is not fully
+standing until that flip, which is its own slice with its own deploy."*
+This is that slice.
+
+Until here the hello carried a `name` **the client wrote** and the relay
+only sanitised it. ACC1e put a text field in front of it — *"Name over
+your head"* — and a URL could set it too. So anybody could type
+anybody's name and walk in wearing it: the impersonation hole ACC1a
+opened this arc to close, still open at the end of six slices about
+closing it.
+
+**ACC0's wall moves.** That page said *THE WALL IS AT CLOUD SAVES AND
+NOWHERE ELSE*, and the argument was that a guest should be able to
+connect, be seen, walk and chat under a generated name. **That argument
+still holds and the wall still doesn't cost a guest anything** — a guest
+session mints a token like anybody else, so the price of getting in is
+one press of *Continue as guest* and no email. What changed is that
+there is no longer a way to be in the room **unnamed by the service**.
+Mac's own bargain from ACC0 — *the only people who can take a name are
+the people who can be banned* — is the whole of it, and this is the line
+where it becomes true.
+
+### The relay refuses, and both arms are refusals
+
+```
+no token       -> 'sign in to play online'
+no usable key  -> 'sign-ins cannot be checked right now'
+token, bad     -> refused, loudly (unchanged)
+token, good    -> the name out of the TOKEN (unchanged)
+```
+
+**The second arm changed direction.** While a token was optional, a
+relay that could not verify admitted everybody unnamed, on the reasoning
+that refusing the world over a mistyped config was the worse failure.
+With the wall at the door that reading *is* the hole: a relay that
+cannot verify cannot tell an issued name from a typed one. It fails
+closed, and what keeps that from being how the game goes dark is at the
+**deploy**, not here — both workflows check the relay's copy of the
+public key against what the account service publishes, and a real
+disagreement stops the deploy before a player sees it.
+
+### What the player sees
+
+The *"Name over your head"* field is **gone**, with the `onlineName`
+pref and the `?name=` URL override behind it. In its place the Online
+pane says who you are, read from the session on this device — a storage
+read and no network, the same one the door's profile mark makes. Signed
+out, it says why and offers the way in; **Play online** is a dead button
+rather than a live one that fails at the relay.
+
+**NAME-F2's entry half moved and did not disappear.** The filter that
+refused `Cum` at that field now refuses it at **registration**, where a
+name is chosen once instead of re-judged on every press:
+`handleRefusal` ends in `nameIsIssuable`, which is
+`sanitizeName(h) === h`, which is the very function carrying
+`nameAllowed`. One filter, one home, asked earlier and asked once.
+
+### `v` leaves the wire, and the mark with it
+
+Every admitted socket is verified now, so the per-name verdict on the
+join, the roster, the `who` answer and the chat line said the same thing
+about everybody — a field carrying no information. It goes in **this**
+deploy rather than a later one, because a wire change costs a drop and
+this deploy is already paying for one. ACC1d-MARK, its only reader, is
+retired above for the same reason: a badge on every head is no badge.
+
+### What the fixtures learned, which is a finding about the tests
+
+**Eighty-nine relay pins went red on the gate**, and that is the gate
+telling the truth about what every one of them had been assuming. The
+fix is not a back door in the room: `test/fakeRoom.mjs` mints a **real
+Ed25519 token** against a real key and the room really verifies it, so
+those pins now run through the door a player runs through rather than
+around it. Three things fell out of it:
+
+- **The token's name is the frame's**, because the relay takes the name
+  out of the token and ignores the frame's. A harness that signed one
+  name and typed another would be re-proving that the frame is ignored,
+  in every pin that ever names a peer.
+- **`n16` cannot be minted.** Two fixtures named their peers `n${i}` and
+  `N${i}`, and the sixteenth folds to a slur under NAME-F1's leet
+  normalisation — so `sanitizeName` answers `Traveller` and
+  `nameIsIssuable` refuses. The old fixtures never noticed because
+  nothing checked the name they typed. **A token has to be issuable to
+  exist**, which is the filter reaching one layer further than it used
+  to.
+- **The harness's own uniqueness bug, found by the room.** The room
+  spends a signature once and Ed25519 is deterministic, so two helloes
+  for one identity need different claims. Counting mints and subtracting
+  from the *current* clock cancels out the moment the clock moves: a
+  test ticking its fake clock past a second boundary minted `nowS - 1`
+  and then `(nowS + 1) - 2` — the same instant, the same bytes, refused
+  as a replay. Each identity's issued-at is kept as a **value** now and
+  only ever goes down.
+
+Two pins were also measuring the wall clock without knowing it. WORLD1's
+host tie-break gave the other three sockets a +10ms head start and
+relied on the test reaching the hello inside that window; it freezes the
+clock and sets three equal stamps now, which is what its own comment
+always said the case was — *"the same-millisecond tie the smaller id
+wins"*.
+
+### SHIPPED 2026-09-22
+
+- `server/src/index.js` — `_named` refuses both arms; the attachment,
+  the join, the roster, the `who` answer and the chat line drop `v`.
+- `src/net/wire.js` — `rosterFor` drops `v`; `RELAY_VERSION` world85 →
+  **world86**.
+- `src/net/online.js`, `src/net/chat.js` — no `v` on a peer or a line.
+- `src/net/remotePlayers.js`, `src/ui/nameLayer.js` — the mark retired.
+- `src/ui/enhancedMenu.js` — the name field replaced by who you are; the
+  button gated on a session. `src/scenes/world.js` — the two typed name
+  sources gone. `src/systems/uiPrefs.js` — `onlineName` gone.
+- `test/fakeRoom.mjs` — `roomSigner`, shared with slam5's own harness.
+- Pins: `test/identitytoken.test.js`'s two admit-arms rewritten as
+  refusals; `test/acc1dclient.test.js`'s three verdict pins replaced by
+  their inverse (no door may carry one, and a peer must not keep one a
+  stale relay sends); NAME-F2, AUDIT-CHATR F2/F6 and SLOTS1 re-aimed to
+  where the name is now judged.
+
+**NOT DEPLOYED, and the price is the arc's largest yet.** The relay
+deploy fires on merge to main: it drops every connected player, **and
+from that moment nobody can join without a session.** Every player
+online today is using a typed name.

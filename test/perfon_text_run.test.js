@@ -132,23 +132,18 @@ test('PERF-ON: the name pass no longer scales by the glyph - measured, per peer'
   // whole name of quads; now, one draw whatever the name's length.
   const proj = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -1, 0, 0, -1, 0]);
   const view = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -10, 1]);
-  // ACC1d-MARK: `v` is EXPLICIT, and both values are measured below. The
-  // relay's wire has no `v: false` - it sends `v: true` and OMITS the field
-  // otherwise (server/src/index.js `_named`), so a fixture that says nothing
-  // is asking for a mark, and a pin that says nothing is measuring a case it
-  // did not choose.
-  const peers = (n, v) => Array.from({ length: n }, (_, i) => ({
-    id: `p${i}`, name: `Wanderer${i}`, v,
+  const peers = (n) => Array.from({ length: n }, (_, i) => ({
+    id: `p${i}`, name: `Wanderer${i}`,
     shown: { x: 0, y: 0, z: 0, yaw: 0 }, look: { race: 1, gender: 0, face: 0, items: [] },
   }));
-  const run = (n, v = false) => {
+  const run = (n) => {
     const r = batched();
     r.createBillboardBatch = () => ({ origin: [0, 0, 0] });
     r.destroyBillboardBatch = () => {}; r.uploadTexture = () => {}; r.releaseTexture = () => {};
     const rp = new RemotePlayers({ renderer: r, deps: null, compose: async () => null });
     rp._dolls.set('*', { rec: 'd', w: 1, h: 2 });
     const g = rp._dolls.get.bind(rp._dolls); rp._dolls.get = () => g('*');
-    rp.sync(peers(n, v), (p) => [p.x, p.y, p.z]);
+    rp.sync(peers(n), (p) => [p.x, p.y, p.z]);
     r.runs.length = 0; r.quads.length = 0;
     const drawn = rp.drawNames(r, font, proj, view, 1280, 800, [0, 0, 0], 1, (p) => [p.x, p.y, p.z]);
     return { drawn, draws: r.runs.length, loose: r.quads.length - r.runs.reduce((s, x) => s + x.n, 0) };
@@ -157,18 +152,6 @@ test('PERF-ON: the name pass no longer scales by the glyph - measured, per peer'
     const m = run(n);
     assert.equal(m.drawn, n, `${n} peers, ${m.drawn} names drawn`);
     assert.equal(m.draws, n, `${n} peers must be ${n} draws - one a NAME, not one a glyph`);
-    assert.equal(m.loose, 0, 'a glyph escaped the run and is a draw of its own');
-  }
-  // ACC1d-MARK PAYS A CONSTANT, NOT A GLYPH. A name the relay CHECKED
-  // wears a badge, and the badge is its own draw - so a room where
-  // everybody signed in costs TWO draws a peer instead of one, and still
-  // nothing that scales with how long anybody's name is. That is the
-  // whole of PERF-ON's law: `Wanderer15` is ten glyphs and neither
-  // number moves with it.
-  for (const n of [1, 4, 16]) {
-    const m = run(n, true);
-    assert.equal(m.drawn, n, `${n} badged peers, ${m.drawn} names drawn`);
-    assert.equal(m.draws, 2 * n, `${n} vouched-for peers must be ${2 * n} draws - a NAME and a BADGE each, and neither a glyph`);
     assert.equal(m.loose, 0, 'a glyph escaped the run and is a draw of its own');
   }
 });

@@ -376,31 +376,48 @@ test('ACC1d/F8: A TOKEN IS SPENT ONCE - the same token presented twice is refuse
 
   const first = await namedOf(room, { tok: token, name: 'anything' }, now);
   assert.equal(first.error, undefined, `the first presentation was refused: ${first.error}`);
-  assert.equal(first.verified, true, 'the relay did not vouch for a token it just verified');
+  assert.equal(first.error, undefined, 'the relay refused a token it had just verified');   // ACC1g: an admitted hello IS a verified one, so there is no `verified` flag left to assert
   // THE NAME COMES OUT OF THE TOKEN, and the frame's own is ignored -
   // that is the whole point of the seam.
   assert.equal(first.name, WHO.n);
 
   const second = await namedOf(room, { tok: token, name: 'anything' }, now);
   assert.equal(second.error, 'token spent', 'the same token was honoured twice');
-  assert.equal(second.verified, undefined);
+  assert.equal(second.name, undefined, 'a refusal hands back no name at all');
 });
 
-test('ACC1d: a hello with NO token is admitted with its own name, unvouched', async () => {
+test('ACC1g: a hello with NO token is REFUSED - a name cannot be typed any more (mutants: the old admit-unvouched arm back; the refusal downgraded to a name off the frame)', async () => {
+  // Mac: "You shouldnt be able to just type a name and enter
+  // anymore.... this is what the account system is for."
+  //
+  // ACC1d admitted this hello and said out loud that it was the wall
+  // not yet standing. THE WHOLE ARC TURNS ON THIS LINE: while it
+  // admitted, the name on the frame was the client's own and the relay
+  // only sanitised it, so anybody could wear anybody's name.
   const kp = await keys();
   const pub = _b64url.encode(new Uint8Array(await subtle.exportKey("raw", kp.publicKey)));
   const r = await namedOf(roomWith(pub), { name: 'Traveller' }, NOW * 1000);
-  assert.deepEqual(r, { name: 'Traveller', verified: false },
-    'a build from before this slice must connect exactly as it always did');
+  assert.equal(r.error, 'sign in to play online', 'a hello with no token must be refused, not admitted unvouched');
+  assert.equal(r.name, undefined, 'and it must not hand back the typed name either');
 });
 
-test('ACC1d: a relay with NO key vouches for nobody and refuses nobody', async () => {
-  // The state a relay is in before its config carries a key, and the
-  // state a mistyped one leaves it in. It must not pretend it checked,
-  // and it must not take the room down.
+test('ACC1g: a relay with NO USABLE KEY refuses everybody, and the protection against that is at the DEPLOY (mutants: the old admit-everybody arm back; a bad key throwing rather than refusing)', async () => {
+  // THIS ARM CHANGED DIRECTION. While a token was optional, refusing
+  // everybody over a mistyped config was the worse failure and the
+  // relay admitted them unnamed. With the wall at the door that reading
+  // IS the hole: a relay that cannot verify cannot tell an issued name
+  // from a typed one, so admitting everyone reopens exactly what the
+  // gate closes.
+  //
+  // What keeps a mistyped key from taking the game dark is not this
+  // line - it is both deploy workflows checking the relay's copy of the
+  // key against what the account service publishes, so a real
+  // disagreement stops the deploy before a player ever sees it. That
+  // pair is pinned in relaydeploy.test.js and accountdeploy.test.js.
   for (const pub of [undefined, '', 'not-a-key']) {
     const r = await namedOf(roomWith(pub), { tok: 'v1.aaa.bbb', name: 'Traveller' }, NOW * 1000);
-    assert.deepEqual(r, { name: 'Traveller', verified: false }, `key ${JSON.stringify(pub)}`);
+    assert.equal(r.error, 'sign-ins cannot be checked right now', `key ${JSON.stringify(pub)}`);
+    assert.equal(r.name, undefined, 'and no typed name comes back');
   }
 });
 
@@ -442,7 +459,7 @@ test('ACC1d: the TTL ceiling is config, and config may only TIGHTEN the module\'
   // ...and one that asks for MORE than the module allows does not get it
   const loose = { env: { IDENTITY_PUBLIC_KEY: pub, IDENTITY_MAX_TTL_S: String(MAX_TTL_S * 100) }, _spent: new Map(), _verifyKey: undefined };
   const wide = await namedOf(loose, { tok: token, name: 'x' }, now);
-  assert.equal(wide.verified, true, 'a sane token was refused under a generous config');
+  assert.equal(wide.error, undefined, 'a sane token was refused under a generous config');
   const src2 = _rf(new URL('../server/src/index.js', import.meta.url), 'utf8');
   assert.match(src2, /Math\.min\(configured, MAX_TTL_S\)/,
     'config can widen the ceiling past the module\'s own, which is the door F8 asked to be shut');

@@ -8663,7 +8663,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   const onlineStart = () => {
     online = new OnlineSession({
       url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
-      name: params.get('name') || getPref('onlineName') || playerEntity.name || 'Traveller',
+      // ACC1g: THE RELAY TAKES THE NAME OUT OF THE TOKEN AND IGNORES
+      // THIS ONE. Two typed sources stood here - a `?name=` in the URL
+      // and the `onlineName` pref - and both were the impersonation
+      // hole: the relay only sanitised what arrived. They are gone, and
+      // what is left fills the frame's shape (wire.js still requires a
+      // name on a hello) and is carried no further. ACC1g-b takes the
+      // field off the wire, in this same deploy.
+      name: playerEntity.name || 'Traveller',
       look: composeLook(playerEntity),
       // ACC1d: the client's half of the token seam. The session calls
       // this on every socket open and puts the answer in the hello;

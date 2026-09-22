@@ -12,12 +12,12 @@
   {
     "name": "ACC1d-2-the-vouched-name-comes-off-the-FRAME",
     "file": "server/src/index.js",
-    "old": "    return { name: r.claims.n, verified: true, kind: r.claims.k, subject: r.claims.s };",
-    "new": "    return { name: m.name, verified: true, kind: r.claims.k, subject: r.claims.s };",
+    "old": "    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s };",
+    "new": "    return { name: m.name, kind: r.claims.k, subject: r.claims.s };",
     "tests": [
       "test/identitytoken.test.js"
     ],
-    "note": "The whole slice. A valid token beside any name the client fancies, marked verified - the relay vouching for a name nobody signed, which is worse than not vouching at all."
+    "note": "THE WHOLE SEAM. The name must come OUT of the token - a signed claim set beats a typed one, and after ACC1g there is no typed one at all. Read off the frame, the signature verifies and then names whoever the sender asked to be."
   },
   {
     "name": "ACC1d-3-a-failed-token-is-a-quiet-downgrade",
@@ -30,14 +30,14 @@
     "note": "A client that MEANT to send a token and sent a bad one must hear so. Admitting it unverified is how a forged token and an expired one become indistinguishable from a client that sent none."
   },
   {
-    "name": "ACC1d-4-a-keyless-relay-refuses-everybody",
+    "name": "ACC1g-4-a-keyless-relay-admits-everybody",
     "file": "server/src/index.js",
-    "old": "    if (!this._verifyKey) return { name: m.name, verified: false };",
-    "new": "    if (!this._verifyKey) return { error: 'no verifying key' };",
+    "old": "    if (!this._verifyKey) return { error: 'sign-ins cannot be checked right now' };",
+    "new": "    if (!this._verifyKey) return { name: m.name, kind: 'guest', subject: 'acct-unchecked' };",
     "tests": [
       "test/identitytoken.test.js"
     ],
-    "note": "bible ACC1d D1: a relay that cannot verify does not get to pretend it did, and does not get to shut the game either. A mistyped config would take every room down."
+    "note": "THIS ARM CHANGED DIRECTION WITH ACC1g. While a token was optional, admitting an unnamed hello over a mistyped key was the lesser failure; with the wall at the door it IS the hole - a relay that cannot verify cannot tell an issued name from a typed one, so admitting everybody reopens exactly what the gate closes. What keeps a bad key from taking the game dark is the DEPLOY checking it against what the account service publishes."
   },
   {
     "name": "ACC1d-5-config-may-LOOSEN-the-modules-ceiling",
@@ -168,55 +168,5 @@
       "test/accountdeploy.test.js"
     ],
     "note": "The deploy that can MINT a new pair is the one whose green run would leave the relay's configured copy wrong. Checking anywhere else is checking after the damage."
-  },
-  {
-    "name": "ACC1d-18-the-welcomes-roster-drops-the-verdict",
-    "file": "src/net/wire.js",
-    "old": "out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null, ...(p.v ? { v: true } : {}) });",
-    "new": "out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });",
-    "tests": [
-      "test/acc1dclient.test.js"
-    ],
-    "note": "The join carries it and the roster would not: everybody who arrives after you is marked and everybody already standing there is not. A signal that is true half the time is worse than none - and getting it back costs another relay deploy, which drops every connected player."
-  },
-  {
-    "name": "ACC1d-19-every-peer-reads-as-vouched-for",
-    "file": "src/net/online.js",
-    "old": "look: validLook(p.look), v: p.v === true, told: true",
-    "new": "look: validLook(p.look), v: true, told: true",
-    "tests": [
-      "test/acc1dclient.test.js"
-    ],
-    "note": "The relay's verdict replaced by a constant yes - the client vouching for names nobody signed, which is the exact failure the token was built to end."
-  },
-  {
-    "name": "ACC1d-20-a-stale-verdict-outlives-the-hello-that-earned-it",
-    "file": "src/net/online.js",
-    "old": "p.name = sanitizeName(m.name); p.look = validLook(m.look); p.v = m.v === true; p.told = true;",
-    "new": "p.name = sanitizeName(m.name); p.look = validLook(m.look); p.told = true;",
-    "tests": [
-      "test/acc1dclient.test.js"
-    ],
-    "note": "A peer that signed out and re-hello'd keeps the tick it earned last time. That is an impersonation the mark would actively help, rather than show."
-  },
-  {
-    "name": "ACC1d-21-the-chat-line-loses-the-verdict",
-    "file": "src/net/online.js",
-    "old": "this.onChat?.({ id: m.id, name: sanitizeName(m.name), v: m.v === true, text,",
-    "new": "this.onChat?.({ id: m.id, name: sanitizeName(m.name), text,",
-    "tests": [
-      "test/acc1dclient.test.js"
-    ],
-    "note": "A chat log is where a name is READ, so it is where impersonation is worth doing. The relay already says which names it vouches for; dropping it here throws that away on the client's side of a deploy nobody can repeat cheaply."
-  },
-  {
-    "name": "ACC1d-22-a-system-line-can-be-vouched-for",
-    "file": "src/net/chat.js",
-    "old": "mine: !!mine, system: !!system, v: !!v && !system };",
-    "new": "mine: !!mine, system: !!system, v: !!v };",
-    "tests": [
-      "test/acc1dclient.test.js"
-    ],
-    "note": "A system line has no name behind it, so a tick on one is a tick on nothing - and the lines the client itself writes are the easiest place for a forged one to hide."
   }
 ]

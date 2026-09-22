@@ -36,7 +36,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
-import { NAME_GAP_PX, NAME_MARK, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';   // the anchor's gap, the vouched-for mark (ACC1d-MARK: ONE glyph, both faces), and the size law's own two doors (AUDIT NAME1 F3)
+import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
@@ -137,17 +137,6 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    beside them in bone. One token, one fallback. */
 .dfname-tag { white-space: nowrap; line-height: 1; color: var(--bone, #e9e4d9);
   text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 3px #000; }
-/* ACC1d-MARK: the mark over a name the relay CHECKED. It sits OUTSIDE
-   the name rather than in it (the label stays centred on the head) and
-   it keeps the tag's own ink rather than the party's green, so SOC4's
-   colour is not argued with. It is not dimmed: a badge that says the
-   service issued this name is the one thing here worth seeing, and it
-   is rare enough not to shout. An empty mark takes no room: the :empty
-   rule drops the margin, so an unbadged label is exactly the label it
-   was before this existed. (NO BACKTICKS IN HERE - NAME_CSS is a
-   template literal and one would end it.) */
-.dfname-mark { margin-right: .3em; }
-.dfname-mark:empty { margin-right: 0; }
 /* The bubble wraps at a bounded WIDTH (15em of its own size, so it stays a bubble at every distance) and the text
    is cut at a bounded LENGTH before it ever gets here (bubbleText). */
 .dfname-bubble { position: relative; max-width: 15em; margin-bottom: .45em; padding: .3em .55em;
@@ -209,19 +198,12 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     bubble.className = 'dfname-bubble off';
     const tag = doc.createElement('div');
     tag.className = 'dfname-tag';
-    // ACC1d-MARK: the mark is its OWN element, so the name's text can be
-    // written without wiping it - `setText` on the tag would take the
-    // mark with it every frame, which is how a decoration becomes a
-    // flicker. It is EMPTY where the relay could not check the name, so
-    // an unbadged player's label is the element it always was.
-    const mark = doc.createElement('span');
-    mark.className = 'dfname-mark';
     const name = doc.createElement('span');
     name.className = 'dfname-who';
-    tag.append(mark, name);
+    tag.append(name);
     node.append(bubble, tag);
     root.append(node);
-    return { node, bubble, tag, mark, name };
+    return { node, bubble, tag, name };
   };
 
   /** A line over a peer's head. The newest REPLACES the one before it (delete then set, so the entry is also the
@@ -302,14 +284,6 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
         setStyle(tag.node, 'top', `${Math.round(p.y - NAME_GAP_PX)}px`);
         setStyle(tag.node, 'fontSize', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`);
         setText(tag.name, p.name ?? '');
-        // ACC1d-MARK: a name the relay CHECKED wears one, and THE
-        // COLOUR STAYS WHERE IT WAS - on the name itself. The mark
-        // keeps the sheet's own ink rather than the party's green,
-        // because they are different systems saying different things:
-        // SOC4's colour is WHO somebody is to you, and this is whether
-        // the service issued the name at all. A mark that turned green
-        // with the name would read as part of it.
-        setText(tag.mark, p.vouched === true ? NAME_MARK : '');
         setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');
         const b = bubbles.get(p.id);
         // AUDIT NAME1 F9: a bubble is SHOWN when it can be seen. A negative age - a clock stepped backwards, a

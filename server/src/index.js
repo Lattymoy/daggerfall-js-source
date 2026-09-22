@@ -521,32 +521,60 @@ export class Room {
   }
 
   /**
-   * ═══ ACC1d: THE NAME, VERIFIED ══════════════════════════════════
+   * ═══ ACC1d/ACC1g: THE NAME, VERIFIED - OR NO ROOM ═══════════════
    *
-   * Answers `{ name, verified }` for a hello, or `{ error }` to refuse
-   * it. Three arms and they are all refusals or plain facts, never a
-   * repair - identityToken.js's own law, on this side too.
+   * Answers `{ name, verified: true }` for a hello, or `{ error }` to
+   * refuse it. Every arm is a refusal or a plain fact, never a repair -
+   * identityToken.js's own law, on this side too.
    *
-   *   no token        -> the name off the frame, `verified: false`.
-   *                      A build from before this slice, or a client
-   *                      that could not reach the account service. The
-   *                      record (ACC1d D1) says why that is admitted
-   *                      and what it costs.
-   *   token, verified -> the name out of the TOKEN, `verified: true`.
-   *                      The frame's own `name` is ignored entirely; a
-   *                      signed claim set beats a typed one.
-   *   token, refused  -> the hello is REFUSED, loudly.
+   *   no token        -> REFUSED. ACC1g (Mac: "You shouldnt be able to
+   *                      just type a name and enter anymore"). ACC1d
+   *                      admitted this and said out loud that it was
+   *                      the wall not yet standing; this is it standing.
+   *   no usable key   -> REFUSED. A relay that cannot check cannot tell
+   *                      an issued name from a typed one.
+   *   token, verified -> the name out of the TOKEN. The frame's own
+   *                      `name` is ignored entirely; a signed claim set
+   *                      beats a typed one, and now there is no typed
+   *                      one to beat.
+   *   token, refused  -> REFUSED, loudly.
    *
-   * THE THIRD ARM IS A REFUSAL AND NOT A DOWNGRADE, which is a real
-   * choice. Admitting a failed token as "unverified" would mean an
-   * expired one silently drops a player to their typed name with
-   * nothing on screen saying why, and a REPLAYED one quietly succeeds
-   * at exactly the level the attacker wanted. A refusal is recoverable:
-   * the client mints a fresh token per connection, so a retry fixes an
-   * expiry, and a replay hears no.
+   * THE LAST ARM IS A REFUSAL AND NOT A DOWNGRADE, which was a real
+   * choice before the gate and is forced by it now. Admitting a failed
+   * token as "unverified" would mean an expired one silently drops a
+   * player to a typed name with nothing on screen saying why, and a
+   * REPLAYED one quietly succeeds at exactly the level the attacker
+   * wanted. A refusal is recoverable: the client mints a fresh token
+   * per connection, so a retry fixes an expiry, and a replay hears no.
+   *
+   * AND `verified` IS GONE WITH THE OPTIONAL TOKEN. Every socket that
+   * gets past this is verified, so a per-name `v` on the wire said the
+   * same thing about everybody - the definition of a field carrying no
+   * information. It leaves in this same deploy rather than a later one,
+   * because a wire change costs a drop and this deploy is already
+   * paying for one. ACC1d-MARK, whose only reader it was, is retired
+   * with it: a badge on every head is no badge.
    */
   async _named(m, now) {
-    if (!m.tok) return { name: m.name, verified: false };
+    // ═══ ACC1g — THE WALL IS AT THE DOOR NOW ═══════════════════════
+    //
+    // Mac: "You shouldnt be able to just type a name and enter
+    // anymore.... this is what the account system is for."
+    //
+    // This is the flip ACC1d named and did not make. Until here the
+    // hello carried a name THE CLIENT WROTE and the relay only
+    // sanitised it, and a token merely made a name TRUSTWORTHY rather
+    // than MANDATORY - so anyone could type anybody's name and walk in,
+    // which is the hole ACC1a opened this arc to close.
+    //
+    // NO TOKEN, NO ROOM. The name is now the account service's to issue
+    // and this room's to verify, and there is no other way to be named.
+    // A GUEST IS NOT SHUT OUT: a guest session mints a token like
+    // anybody else, so the cost to a new player is one press of
+    // Continue as guest, not an email - ACC0's bargain (the only people
+    // who can take a name are the people who can be banned) with the
+    // door finally standing where it was always drawn.
+    if (!m.tok) return { error: 'sign in to play online' };
 
     if (this._verifyKey === undefined) {
       const raw = this.env.IDENTITY_PUBLIC_KEY;
@@ -560,9 +588,17 @@ export class Room {
         catch (e) { console.warn('[room] IDENTITY_PUBLIC_KEY will not import', e?.message ?? e); }
       }
     }
-    // NO KEY, NO CLAIM. A relay that cannot verify does not get to
-    // pretend it did, and it does not get to refuse everybody either.
-    if (!this._verifyKey) return { name: m.name, verified: false };
+    // NO KEY, NO ROOM - AND THIS ARM CHANGED DIRECTION WITH ACC1g.
+    // While a token was optional, refusing everybody over a mistyped
+    // config was the worse failure and this line admitted them unnamed.
+    // With the wall at the door that reading is the hole itself: a
+    // relay that cannot verify cannot tell an issued name from a typed
+    // one, so admitting everyone reopens exactly what the gate closes.
+    // IT FAILS CLOSED, and the protection against that being how the
+    // game goes dark is at the DEPLOY rather than here: both workflows
+    // check this key against what the account service publishes, and a
+    // real disagreement stops the deploy before a player sees it.
+    if (!this._verifyKey) return { error: 'sign-ins cannot be checked right now' };
 
     const nowS = Math.floor(now / 1000);
     // THE CEILING IS CONFIG, BESIDE THE KEY (F8, and bible ACC1d D3).
@@ -591,7 +627,7 @@ export class Room {
     if (this._spent.size >= SPENT_MAX) this._spent.delete(this._spent.keys().next().value);
     this._spent.set(sig, r.claims.e);
 
-    return { name: r.claims.n, verified: true, kind: r.claims.k, subject: r.claims.s };
+    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s };
   }
 
   async _message(ws, message) {
@@ -660,7 +696,7 @@ export class Room {
       // refused token never reaches the roster at all.
       const who = await this._named(m, now);
       if (who.error) { this._refuse(ws, who.error); return; }
-      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, v: who.verified || undefined, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
+      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -671,9 +707,9 @@ export class Room {
         // panel read the player's own cell instead. The names are on the attachments already (no look, no storage
         // read - the hello path stays as cheap as AUDIT CHAT A1 priced it); socket order, cut at CHAT_ROSTER_MAX, with
         // `n` the true count. The join below is said here too, with the name and nothing else.
-        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name, ...(b.v ? { v: true } : {}) }));   // ACC1d: and the relay's verdict on each name, absent where it vouched for nobody
+        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => ({ id: b.id, name: b.name }));   // ACC1g: a name and nothing beside it - every name in this room was verified to get in, so a per-name verdict says the same thing about everybody
         if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION, now: Date.now() }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
-        const said = JSON.stringify({ t: 'join', id: m.id, name: who.name, v: who.verified || undefined });
+        const said = JSON.stringify({ t: 'join', id: m.id, name: who.name });
         for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);
         // SOC1: the account, in the hub - after the welcome and the join, so a client's session has reset on the
         // welcome before its picture lands; a hello naming none is a build before this slice, admitted as it was
@@ -715,7 +751,7 @@ export class Room {
       // SRV-N / SLAM13 (AUDIT SLAM A5): the relay's VERSION rides it (`v`, last), so a client can tell a restarted relay from the one it was talking to, and one built against another law can say so
       const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}}`;
       if (!this._send(ws, welcome)) return;
-      const join = JSON.stringify({ t: 'join', id: m.id, name: who.name, v: who.verified || undefined, look: m.look, pose: m.pose });
+      const join = JSON.stringify({ t: 'join', id: m.id, name: who.name, look: m.look, pose: m.pose });
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
       return;
     }
@@ -938,7 +974,7 @@ export class Room {
       // B2: the pose rides only WITHIN RANGE - the pose fan's own law (a stranger heard through that fan is in range by
       // construction; a room without the law, a dungeon's, says it); past the range the answer named a member's
       // position the fan had refused to say, a radar over the whole cell
-      this._send(ws, JSON.stringify({ t: 'join', id: b.id, name: b.name, v: b.v || undefined, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (b.pose ?? null) : null }));
+      this._send(ws, JSON.stringify({ t: 'join', id: b.id, name: b.name, look, pose: inRange(a.key ?? '', a.pose, b.pose) ? (b.pose ?? null) : null }));
       return;
     }
     if (m.t === 'pose' || m.t === 'ping') {
@@ -1013,7 +1049,7 @@ export class Room {
       const room = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);
       this._roomChat = room.bucket;
       if (!room.pass) return;
-      const out = JSON.stringify({ t: 'chat', id: a.id, name: a.name, v: a.v || undefined, text: m.text, at: now });
+      const out = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now });
       const chat = isChatRoom(a.key);
       for (const [other, b] of [...this._all()]) {
         if (!b.id) continue;
