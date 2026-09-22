@@ -282,6 +282,7 @@ test('ACC3c: the roster REPAINTS when a badge changes - it is keyed, and a stale
   // label read left to right, so one name does not sit two ways round
   // on one screen.
   const row = panel.slice(panel.indexOf('const badge = titleBadge(r);'), panel.indexOf("if (dup.has(r.name.toLowerCase()))"));
-  assert.ok(row.indexOf('dfchat-who-title') < row.indexOf('n.append(nameEl)'), 'the title is appended before the name');
-  assert.ok(row.indexOf('n.append(nameEl)') < row.indexOf('dfchat-who-glyph'), 'the glyphs after it');
+  // CHAT-FIT: the three sit in the row's one nowrap LINE (`line`), not on the row itself
+  assert.ok(row.indexOf('dfchat-who-title') < row.indexOf('line.append(nameEl)'), 'the title is appended before the name');
+  assert.ok(row.indexOf('line.append(nameEl)') < row.indexOf('dfchat-who-glyph'), 'the glyphs after it');
 });

@@ -89,7 +89,7 @@ test('ROSTER-G: world.js hands the panel the ACTIVE CHANNEL\'s link, with the pr
   const world = rd('src/scenes/world.js');
   assert.match(world, /roster: \(\) => chatLinks\?\.get\(chatLog\?\.active\) \?\? online \?\? null,/, 'the tab\'s own link first');
   const panel = rd('src/ui/chatPanel.js');
-  assert.match(panel, /if \(dup\.has\(r\.name\.toLowerCase\(\)\)\) n\.append\(el\('span', 'dfchat-who-tag', '#' \+ r\.tag\)\);/, 'the tag is conditional on a shared name');
+  assert.match(panel, /if \(dup\.has\(r\.name\.toLowerCase\(\)\)\) line\.append\(el\('span', 'dfchat-who-tag', '#' \+ r\.tag\)\);/, 'the tag is conditional on a shared name (CHAT-FIT: on the row\'s one line)');
   // the relay's side, by source: a channel's welcome is built from `others` by name, cut and counted
   const idx = rd('server/src/index.js');
   assert.match(idx, /const named = others\.slice\(0, CHAT_ROSTER_MAX\)\.map\(\(b\) => badged\(\{ id: b\.id, name: b\.name \}, b\)\);/, 'ACC1g took the per-name VERDICT off this row - every name in the room was verified to get in, so it said the same thing about everybody; ACC3 put a BADGE on it, which is the opposite kind of field: a title is held by a few and is read out of the signature');

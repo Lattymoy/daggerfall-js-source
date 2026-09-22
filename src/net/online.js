@@ -841,6 +841,21 @@ export class OnlineSession {
     return changed;
   }
 
+  /** CHAT-FIT (2026-09-22, Mac: "Glyphs should also show on chat names in the chat itself"): THE BADGE A NAME
+   *  WEARS, BY ID - mine (the service's word, adopted above), a peer's in the room, or a peer's this session was
+   *  introduced to and has since lost: the chat keeps two hundred lines and the room keeps people only while they
+   *  stand in it, so a line said ten minutes ago by someone who left is still signed. Null for a stranger - a line
+   *  whose author this session never met wears no badge rather than a guessed one. The chat panel asks through the
+   *  host (ui/chatPanel.js `badgeOf`), the way it asks the social picture for a name's colour.
+   *  @param {string|null|undefined} id
+   *  @returns {{ title: string|null, glyphs: string[] }|null} */
+  badgeOf(id) {
+    if (id == null) return null;
+    if (id === this.id) return { title: this.title ?? null, glyphs: Array.isArray(this.glyphs) ? this.glyphs : [] };
+    const p = this.peers.get(id) ?? this._known.get(id);
+    return p ? { title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [] } : null;
+  }
+
   /** RED1: THE SERVER'S OWN LINE OUT. Mac: "a red text system (kind of
    *  like warframe) where I can message chat as the server."
    *

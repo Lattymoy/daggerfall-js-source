@@ -8909,6 +8909,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // wears the friend colour, which is the list's own mark carried into the conversation
       nameColor: (id) => social?.cssColorOf(id) ?? null,   // SOC7 integration: the picture answers (net/social.js cssColorOf - party green, friend blue, a stranger none); the host names no colour, which SOC4's pin holds it to
       rowActions: (peerId) => socialRowActions(peerId),
+      badgeOf: (id) => (chatLinks?.get(chatLog?.active) ?? online)?.badgeOf?.(id) ?? null,   // CHAT-FIT: a chat line's author wears the badge the roster shows - the same session answers both, or the one name would say two things on one screen
     });
     socialStart();   // SOC2: the picture over the hub's link, once the panel it lands beside exists
   };

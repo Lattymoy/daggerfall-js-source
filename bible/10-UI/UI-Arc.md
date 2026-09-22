@@ -17955,3 +17955,71 @@ Both readers already draw something where a face is missing.
 photographed here — a real head needs the player's own Daggerfall files
 and this container has none — so the sheets he was sent use STAND-INS at
 a head record's real size. The layout is proved; the art on it is not.
+
+---
+
+## CHAT-FIT - the roster column is as tall as the conversation, a row is one line, and a chat line wears its author's badge (2026-09-22, Mac)
+
+Mac, with a phone screenshot of the box over the road:
+
+> Currently names sometimes take up 2 rows, the list isnt scrollable and
+> continues to grow, enlarging the chat. Glyphs should also show on
+> chat names in the chat itself
+
+### Two defects, one cause
+
+`.dfchat-cols` is a flex row with no height of its own: it is as tall as
+its tallest child. The conversation column has a fixed-height list, so
+it was never the tallest child once the room held more than a dozen
+people - the ROSTER was, and the box grew with it. A list that can
+always grow never overflows, so the `overflow-y: auto` CHAT-R2 put on it
+was true and never reached. That is why "isn't scrollable" and "keeps
+growing" arrived in one sentence: they are the same defect seen twice.
+
+The column's content is ABSOLUTE inside it now (`.dfchat-who-inner`,
+`inset: 0`), so the column contributes no height, takes the
+conversation's, and the list scrolls inside that. Measured in Chromium
+by `tools/chatFitProbe.mjs`: 299 px with three names and 299 px with
+twenty-four, the column 263 px beside a 263 px conversation, 437 px of
+list in 235 - on a desktop and on a phone in landscape.
+
+### A row is one line
+
+`.dfchat-who-row` carried `overflow-wrap: anywhere`, which is the rule
+for a chat LINE - a paragraph that must never overflow its column - and
+the wrong rule for a name beside a title: every long name folded under
+its own title, and ACC3c's title and sprout made more of them long. The
+row holds ONE nowrap flex line now (`.dfchat-who-line`: title, name,
+glyphs, tag), and the NAME is the part that gives - `min-width: 0`,
+`text-overflow: ellipsis`, the whole name in its `title` - because a
+title and a glyph are a few pixels and the name is what the row is
+for. The row itself stays a block so SOC3's action menu still opens
+UNDER the line. The column is 148 px where it was 132, which is the
+title's width back. Every row measures 16-17 px against a 16.2 px line;
+eight of twenty-four names are cut with an ellipsis rather than folded.
+
+### The line wears the badge
+
+ACC3c put the title before a name and the glyphs after it on the world
+label and on the roster row, and not on the chat line - so one name said
+two things on one screen. The line is laid from PARTS now (time, the
+badge's title, the name, the badge's glyphs, the tag, the text), and a
+BADGE PASS runs where the colour pass runs, on the colour pass's law:
+the host is asked once per author per pass (`badgeOf`, beside
+`nameColor`), and a line is re-laid only when its author's badge
+CHANGED - so a title equipped mid-conversation reaches the lines
+already said, and an unchanged answer touches no DOM at all (a pin
+counts the re-lays). The host answers off the ACTIVE CHANNEL's session,
+the one the roster reads, through `OnlineSession.badgeOf`: mine as the
+service issued it, a peer's in the room, or a peer's this session was
+introduced to and has since lost - the chat keeps two hundred lines and
+the room keeps people only while they stand in it. A stranger's line
+wears nothing rather than a guess. The SVG drawing is the roster's own,
+moved into one door (`glyphSvg`) the row and the line both use, and a
+document without an SVG namespace draws no glyph and does not throw.
+
+**Pinned** in `test/chatfit.test.js` (7), measured by
+`tools/chatFitProbe.mjs` (12 checks, two shots). Mutants
+`tools/mutants/chatfit.json`: 14, 14 dead. acc3wear's roster-order pin
+re-aimed at the row's line.
+
