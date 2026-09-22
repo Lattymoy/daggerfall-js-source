@@ -2894,7 +2894,7 @@ correct than the game it is a port of, which is the one thing this arc
 has never allowed. Expanding in place now. (The caller-side
 `if (quest)` went too - C# calls `ExpandQuestMessage` whether or not
 `GetQuest` found anything, and the null-parent bail is a forum-bug fix
-*inside* the helper, which `questMacros.js:545` already carries.)
+*inside* the helper, which `questMacros.js:550` already carries.)
 
 **Three nits with teeth.**
 

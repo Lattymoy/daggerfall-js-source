@@ -3535,7 +3535,7 @@ export function createWorldModes(host) {
     // the summoning flow's with its prince (see `say`). One walk per
     // box, and no pass ever hands a sentinel to another pass.
     const rawRows = (id) => townTalk?.lines?.(id) ?? [];
-    const rows = (id) => expandRowValues(rawRows(id), null, questBridge?.machine.macroContext() ?? null);
+    const rows = (id) => expandRowValues(rawRows(id), null, null);   // MACRO-ONE: the world's context (setMacroWorld) - the machine's own posed as a quest, and a %di or %qdt row would have thrown
     let win = null;
     win = new CovenWindow({
       rows,
@@ -3858,7 +3858,7 @@ export function createWorldModes(host) {
       // context. It wraps whichever `rows` the caller handed in - the
       // coven's or the guild's - rather than replacing it, so each
       // keeps whatever it already resolved.
-      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), questBridge?.machine.macroContext() ?? null);
+      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), null);   // MACRO-ONE: the world answers %dat and %pcn
       // ...and ONE read per box. Several of these records carry random
       // variants (BOX1's law: a textId box reads its record once), so a
       // `say(id).length ? say(id) : fallback` would roll the record

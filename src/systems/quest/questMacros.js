@@ -175,10 +175,15 @@ export function expandMacroValues(text, values = {}, questLike = null) {
   return String(text ?? '').replace(/%\w+/g, (token) => {
     const sym = token.slice(1);
     if (sym in vals) {
-      const v = vals[sym];
-      if (v == null) return token;
-      return String(typeof v === 'function' ? v() : v);
+      const v = typeof vals[sym] === 'function' ? vals[sym]() : vals[sym];
+      // MACRO-ONE: a NULL is "this caller does not know", not "print the
+      // token" - it falls through to the context, and only a miss there
+      // leaves the token verbatim. The old guard made every map that
+      // listed a symbol it could not fill (a guild map's %ra, %pct, %hnr)
+      // a wall in front of the world that could.
+      if (v != null) return String(v);
     }
+    const declared = sym in vals;   // the caller named it and could not fill it
     if (ctx && HANDLERS[token]) {
       // ...and a caller's own context keeps DFU's throws (a %god with no
       // Divine throws in MacroHelper too), but THE WORLD'S may not: it now
@@ -198,7 +203,7 @@ export function expandMacroValues(text, values = {}, questLike = null) {
       // no provider) stays the token - the audit's gate names it - rather
       // than trading "%fon" for "%fon[nullMCP]". A caller that passed its
       // own context keeps the ladder's shapes exactly as before.
-      if (!questLike && isErrorShape(v, token)) return token;
+      if ((!questLike || declared) && isErrorShape(v, token)) return token;
       return v;
     }
     return token;

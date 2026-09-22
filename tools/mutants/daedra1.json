@@ -29,7 +29,7 @@
  {
   "name": "DAEDRA1-the-coven-hands-its-records-over-raw-again",
   "file": "src/scenes/worldModes.js",
-  "old": "    const rows = (id) => expandRowValues(rawRows(id), null, questBridge?.machine.macroContext() ?? null);",
+  "old": "    const rows = (id) => expandRowValues(rawRows(id), null, null);",
   "new": "    const rows = (id) => rawRows(id);",
   "tests": [
    "test/daedrasummoning.test.js"
@@ -38,7 +38,7 @@
  {
   "name": "DAEDRA1-the-summoning-loses-its-prince",
   "file": "src/scenes/worldModes.js",
-  "old": "      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), questBridge?.machine.macroContext() ?? null);",
+  "old": "      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), null);",
   "new": "      const say = (id) => rows?.(id) ?? [];",
   "tests": [
    "test/daedrasummoning.test.js"

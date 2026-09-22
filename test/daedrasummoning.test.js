@@ -234,10 +234,12 @@ test('DAEDRA1: every box the coven and the summoning show goes THROUGH the walk'
   // the coven's own rows provider - its prompts and its quest offers
   // DAEDRA1b: off the RAW reader, and once - the composition pin below
   // owns the rest of this law
-  assert.match(modes, /const rows = \(id\) => expandRowValues\(rawRows\(id\), null, questBridge\?\.machine\.macroContext\(\) \?\? null\)/,
+  // MACRO-ONE: the context is the WORLD'S now (setMacroWorld), which a
+  // null hands over - the machine's own posed as a quest and could throw
+  assert.match(modes, /const rows = \(id\) => expandRowValues\(rawRows\(id\), null, null\);/,
     'the coven expands every record it shows');
   // the flow's own, with the prince riding it
-  assert.match(modes, /const say = \(id, d = daedra\) => expandRowValues\(rows\?\.\(id\) \?\? \[\], summonMacroValues\(d\), questBridge\?\.machine\.macroContext\(\) \?\? null\)/,
+  assert.match(modes, /const say = \(id, d = daedra\) => expandRowValues\(rows\?\.\(id\) \?\? \[\], summonMacroValues\(d\), null\);/,
     'and the summoning adds %dae to it');
   // ONE READ PER BOX: these records carry random variants, so a
   // `say(id).length ? say(id) : fallback` would roll twice
@@ -292,7 +294,7 @@ test('DAEDRA1b: the coven keeps a RAW reader, and hands THAT to the summoning fl
   const modes = code('scenes/worldModes.js');
   assert.match(modes, /const rawRows = \(id\) => townTalk\?\.lines\?\.\(id\) \?\? \[\];/,
     'the raw reader exists');
-  assert.match(modes, /const rows = \(id\) => expandRowValues\(rawRows\(id\), null, questBridge\?\.machine\.macroContext\(\) \?\? null\);/,
+  assert.match(modes, /const rows = \(id\) => expandRowValues\(rawRows\(id\), null, null\);/,
     "the window's own boxes expand once, off the raw reader");
   assert.match(modes, /openServiceFlow\('guildServiceDaedraSummoning', \{\s*guild: null, memberships: \[\], store, rows: rawRows,/,
     'and the flow is handed the RAW reader, not the expanded one - the whole of this fix');

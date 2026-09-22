@@ -83,9 +83,13 @@ export const oathTextId = (race) => OATH_BASE_TEXT_ID + (OATH_RACE_INDEX[race] ?
  *  MAP now, not a replaceAll chain. */
 export function expandMacros(text, { playerName = '', oath = '', cityName = '' } = {}) {
   return expandMacroValues(text, {
-    pcf: firstName(playerName), pcn: playerName, cn: cityName, oth: oath,
+    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,
   });
 }
+
+/** MACRO-ONE: an EMPTY name or city is an unknown one - null, so the
+ *  walk asks the world - never a blank printed into the sentence. */
+const known = (v) => (v == null || v === '' ? null : v);
 
 /** The Where-is ANSWER record's macro chain. TalkManager's
  *  ExpandRandomTextRecord (:3580-3587) runs the WHOLE MacroHelper over
@@ -103,7 +107,7 @@ export function expandAnswerRecord(raw, {
   honorific = honorificOf('male'), race = raceDisplayName('Breton'),
 } = {}) {
   return expandMacroValues(raw, {
-    pcf: firstName(playerName), pcn: playerName, cn: cityName, oth: oath,
+    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,
     hnt: hint, key, hnr: honorific, ra: race,
   });
 }

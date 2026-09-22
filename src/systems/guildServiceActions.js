@@ -50,8 +50,11 @@ export function expandGuildMacros(text, { amount = null, gold = null, god = null
   // null)` guards the old replaceAll chain carried - and the walk's
   // maximal-munch match retires the chain's latent %a-inside-%adj
   // corruption. The per-symbol sources below are unchanged.
+  // MACRO-ONE: an EMPTY name or city is an unknown one, not a blank to
+  // print - it goes to the walk as null, and the world answers it.
+  const known = (v) => (v == null || v === '' ? null : v);
   return expandMacroValues(text ?? '', {
-    pcf: firstName(playerName), pcn: playerName, cn: cityName, oth: '',
+    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: '',
     ra: race, hnr: honorific,
     a: amount == null ? null : String(amount),
     gii: gold == null ? null : String(gold),

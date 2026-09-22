@@ -66,3 +66,28 @@ test('MACRO-ONE: the bridge registers its machine as the world, in every host th
     assert.match(read(f), /playerRaceName: \(\) => \(playerEntity\.race \? raceDisplayName\(playerEntity\.race\) : null\)/, `${f} wires %ra`);
   }
 });
+
+test('MACRO-2: a NULL in a caller’s map is "I do not know" - the world answers it; an EMPTY name or city is unknown, not a blank', async () => {
+  const { expandGuildMacros } = await import('../src/systems/guildServiceActions.js');
+  const { expandMacros } = await import('../src/systems/talkSession.js');
+  setMacroWorld(world);
+  try {
+    // the guild map lists %ra, %pct, %hnr and fills none of them here
+    assert.equal(expandGuildMacros('A %ra, in %cn.', { playerName: 'Aldric Vane' }), 'A Dark Elf, in Gothway Garden.',
+      'the null %ra and the empty %cn both reach the world');
+    assert.equal(expandMacros('Greetings, %pcf of %cn.', {}), 'Greetings, Aldric of Gothway Garden.',
+      'no name and no city handed over: the world names both, never "Greetings,  of ."');
+    // a symbol the caller named and cannot fill, which the world cannot
+    // answer either, stays the token - never an error shape
+    assert.equal(expandGuildMacros('Praise %god.', {}), 'Praise %god.');
+  } finally { setMacroWorld(null); }
+  // no world at all: exactly the old verbatim behaviour
+  assert.equal(expandGuildMacros('A %ra.', {}), 'A %ra.');
+});
+
+test('MACRO-2: the coven and the summoning walk off the WORLD, not a quest-posed machine context that throws', () => {
+  const modes = read('src/scenes/worldModes.js');
+  assert.match(modes, /const rows = \(id\) => expandRowValues\(rawRows\(id\), null, null\);/);
+  assert.match(modes, /const say = \(id, d = daedra\) => expandRowValues\(rows\?\.\(id\) \?\? \[\], summonMacroValues\(d\), null\);/);
+  assert.doesNotMatch(modes, /expandRowValues\([^\n]*machine\.macroContext\(\)/, 'no row walk poses the machine as a quest');
+});
