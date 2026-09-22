@@ -2420,7 +2420,7 @@ beside them. Then the same shape turned up everywhere else:
 | `worldModes.js:7149-7207` | blood, torches, drops, foes, guards - **five separate uncut calls** |
 | `exterior.js:4967`, `world.js:11210` | the spell missiles |
 | `exterior.js:5029` | the fixed city's townspeople |
-| `interior.js:360`, `dungeon.js:1041` | the flats, the camps, the torches |
+| `interior.js:369`, `dungeon.js:1052` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
 them one at a time is how this bug got to be in eight places.** The test

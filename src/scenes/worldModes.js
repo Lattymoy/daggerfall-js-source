@@ -2756,7 +2756,7 @@ export function createWorldModes(host) {
     // does not write, so every shopkeeper, priest and guild clerk in
     // the game reached TalkManager as ''. The visible half is
     // TalkManager's greeting, which says the NPC's name once reaction
-    // is above zero and "stranger" below it (townTalk.js:539) - so
+    // is above zero and "stranger" below it (townTalk.js:546) - so
     // every static NPC stayed a stranger no matter how well liked -
     // and topicTree's same-building-static test (:558), which matches
     // a topic caption against this name and therefore never matched.
@@ -6526,7 +6526,7 @@ export function createWorldModes(host) {
     // jump while the player still falls), and it was standing in for
     // both: a fall opened under a menu completed under it and
     // applyFallLanding charged the damage, a swimmer kept sinking, and
-    // the crouch edge still toggled. dungeon.js:534 is this same gate
+    // the crouch edge still toggled. dungeon.js:545 is this same gate
     // ("no movers, no motor").
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -6634,7 +6634,7 @@ export function createWorldModes(host) {
       if (!overlayHeld) dungeonCtx.reportActivity?.({ running: player.isRunning && !player.standing, runningTally: player.isRunning && !player.riding, swimming: player.swimming, climbing: !!player.climb?.isClimbing, jumped: player.jumped, movingLessThanHalfSpeed: player.movingLessThanHalfSpeed, fell: player.landedFallDistance });   // P13 sneak state + P14 fall landing (AUDIT 26 F083: + the climbing arm)
       // PlayerMotor.StartRestGroundedCheck (:184-194) reads the LIVE
       // grounded state; dungeonContext's `_grounded` is host-fed and
-      // only dungeon.js:377 fed it, so in a world-hosted dungeon the
+      // only dungeon.js:384 fed it, so in a world-hosted dungeon the
       // rest gate read the initialiser `true` for the whole session
       // and R mid-fall opened the window DFU refuses (TEXT.RSC 355).
       if (!overlayHeld) dungeonCtx.reportMotor?.(player.grounded, player.velY, cam.yaw);
@@ -7646,7 +7646,7 @@ export function createWorldModes(host) {
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a
     // real dungeonContext but installed none of the hooks
-    // scenes/dungeon.js:394-452 carries, so a probe could take the
+    // scenes/dungeon.js:401-459 carries, so a probe could take the
     // classic start into Privateer's Hold and then see nothing inside
     // it - no foes, no vitals, no corpses. Same names and same shapes
     // as the standalone host's, so one probe reads either.
@@ -8390,13 +8390,23 @@ export function createWorldModes(host) {
     // actions: F5, F6, L, N and R all died the moment you stepped
     // through a shop door. This routes the same ui/input.js table the
     // dungeon arm has always used, over an interior ctx.
+    // MENU-RELOCK: read BEFORE the mode ladder, never between a mode's
+    // check and its dispatch. U43's law is that the interior arm routes
+    // the WHOLE table over its own ctx and nothing stands in between -
+    // test/qs7_one_dispatch.test.js and test/flagsweep.test.js hold that
+    // shape by source, and a `const` slipped under the `if` broke both.
+    // One read serves both arms: only one ctx is live per mode.
+    const hadOverlay = !!(mode === 'interior' ? interiorKeyCtx : dungeonCtx)?.uiOverlayActive;
+    const closedAWindow = (ctx) => hadOverlay && !ctx?.uiOverlayActive;   // MENU-RELOCK: this key dismissed the last window
     if (mode === 'interior') {
       if (routeKey(e, interiorKeyCtx, null, keys)) e.preventDefault();   // AUDIT 58 (f3/input): the held-keys Set, so routeKey's actionOf resolves COMBOS (InputManager.cs:1666-1712) - see the note at the world host's own actionOf call
+      if (closedAWindow(interiorKeyCtx)) host.relock?.();   // MENU-RELOCK: inside the closing key's own gesture
       return;
     }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
     if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch
+    if (closedAWindow(dungeonCtx)) host.relock?.();   // MENU-RELOCK: the same, on the dungeon arm
   });
 
   // U8c: pointer routing for interior native windows (the townTalk
@@ -8526,10 +8536,14 @@ export function createWorldModes(host) {
       interiorOverlay.keyup?.(e.code, e);
       if (interiorOverlay?.done) interiorOverlay = null;
       interiorWindows.reconcile(interiorOverlay);   // a release that closes the top window is PopWindow too
+      if (!interiorOverlay) host.relock?.();
       return true;
     }
     if (mode !== 'dungeon' || !dungeonCtx) return false;
-    return routeKeyUp(e, dungeonCtx);
+    const hadOverlay = !!dungeonCtx.uiOverlayActive;
+    const handled = routeKeyUp(e, dungeonCtx);
+    if (hadOverlay && !dungeonCtx.uiOverlayActive) host.relock?.();
+    return handled;
   }
 
   /** The wheel seam (U-scroll), the pointerdown shape: an open

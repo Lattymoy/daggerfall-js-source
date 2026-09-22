@@ -196,7 +196,15 @@ export async function bootInterior(canvas, renderer, params, status) {
     // The open map owns the keyboard, exactly as it does in the three
     // hosts that already carry it - including the toggle key, which the
     // window itself defers to its own close.
-    if (overlay) { overlay.input(e.code, e); drainOverlay(); e.preventDefault(); return; }
+    if (overlay) {
+      overlay.input(e.code, e);
+      drainOverlay();
+      // MENU-RELOCK: the close key is the browser gesture pointer-lock
+      // needs. Do not wait for the next animation frame to reclaim look.
+      if (!overlay && !gamePaused()) requestLook(canvas);
+      e.preventDefault();
+      return;
+    }
     // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER, the law all four
     // hosts now carry. InputManager.PollInput (:1795-1809) adds every
     // held key before GameManager.Update reads an Action, and this add
@@ -221,6 +229,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     if (!overlay) return;
     overlay.keyup?.(e.code, e);
     drainOverlay();
+    if (!overlay && !gamePaused()) requestLook(canvas);
   });
   canvas.addEventListener('pointerdown', (e) => {
     // An open window withholds the pointer lock (the dungeon.js law) -
@@ -368,7 +377,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:759 and worldModes.js:6202/:6230 gate the same
+    // driver. dungeon.js:770 and worldModes.js:6202/:6230 gate the same
     // way; this is that gate for this host.
     lookGate(!!overlay);   // AUDIT-AMAP H8
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
