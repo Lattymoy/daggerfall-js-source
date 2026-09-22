@@ -146,7 +146,8 @@ import { exhaustionOutcome, EXHAUSTED_IN_WATER, hasSpecialAbility, SPECIAL_ABILI
 import { restDecision, getPreventedRestMessage } from '../systems/restSession.js';   // the scene-free open gate, one home   // ROAD-B B5: GetPreventedRestMessage
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { intermittentEnemySpawn, setEnemyAlert, decayEnemyAlert, areEnemiesNearby } from '../systems/encounters.js';   // E-slice; S40: the resting test, one home
-import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
+import { preloadRestArt } from '../ui/restWindow.js';   // D3: REST00I0/01I0/02I0
+import { createRestWindow } from '../ui/restDoor.js';   // the enhanced/native fork, same law as ui/tradeDoor.js
 import { AmbientEffects, DUNGEON_AMBIENT_WAITS } from '../systems/ambientEffects.js';
 import { dice100, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, KB_UNIT } from '../combat/formulas.js';   // C15: + knockback
 import { assignEnemySpells, SPELL_CAST_SOUND } from '../systems/enemySpells.js';
@@ -1641,7 +1642,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8483 / exterior.js:3449), set
+  // host's own townTalk sink (world.js:8547 / exterior.js:3450), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1973,6 +1974,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // tick, which the optional chain says.
     tickQuests: () => opts.questBridge?.machine?.tick?.(),
     enemiesNearby: () => areEnemiesNearby(foes, { resting: true }),
+    // PARTY-REST5: forwarded straight from THIS host's own opts.onEnemyBreak (world.js's own hook, relayed
+    // through worldModes.js exactly like opts.partyRestGate/opts.strangerRestGate already are) - see
+    // world.js's outdoorRestDeps for what it's for.
+    onEnemyBreak: () => opts.onEnemyBreak?.(),
+    // PARTY-REST19: forwarded straight from THIS host's own opts.canceledByFollower, relayed the same way
+    // opts.onEnemyBreak already is - see world.js's checkCanceledByFollower for what it's for.
+    canceledByFollower: () => opts.canceledByFollower?.() ?? false,
     endLines: (id) => rscLines(id),
     say: (msg) => hudText.add(msg),
     onLevelUp: _onLevelUp,
@@ -2152,7 +2160,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1161,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1162,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2662,7 +2670,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6855 against :6879).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6880 against :6904).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3226,8 +3234,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:12184,
-              // exterior.js:4950 and worldModes.js:7055 already ran;
+              // playerArrowHitFoe is the one copy world.js:12764,
+              // exterior.js:4951 and worldModes.js:7080 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5675,6 +5683,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the 15-song list.
     /** The host's cumulative clock, for the music context's gameDays. */
     get classicMinutes() { return classicMinutesRef.value; },
+    // PARTY-REST1: the dungeon twin of worldModes.js's own restState -
+    // see that getter's doc comment for the whole of why (world.js owns
+    // every party/online seam and cannot see into this closure's own
+    // window stack any other way). Null while not resting and null for
+    // a mirrored session, same law.
+    get restState() {
+      const w = activeOverlay;
+      // PARTY-REST6: see worldModes.js's own restState getter for the bug this `state === 'resting'` guard
+      // closes - `session` truthy alone does not mean the window is still actually ticking.
+      if (!w?.isRestWindow || w.isPartyRestMirror || !w.session || w.state !== 'resting') return null;
+      return { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours };
+    },
     /** AUDIT 21 (music lane, F3): IsPlayerInsideDungeonCastle, live off the
      *  block the player is standing in - the Castle playlist and
      *  doNotPlayInCastle both had it hardcoded false. */
@@ -6115,10 +6135,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
       }
-      // PARTY-REST2 (AUDIT DROPS D1): the party's own gate, through the outer host's door - the twin of the building's
-      const partyRefusal = opts.partyRestGate?.() ?? null;
+      // STRANGER-REST1: shared with world.js's own outdoor toggleRest and worldModes.js's interior - see
+      // world.js's strangerRestGate doc comment (30m in a dungeon, its own radius). Checked FIRST, same order.
+      const strangerRefusal = opts.strangerRestGate?.();
+      if (strangerRefusal) { activeOverlay = new ActionTextBox([strangerRefusal]); return; }
+      // PARTY-REST2: shared with world.js's own outdoor toggleRest and worldModes.js's interior - see world.js's
+      // partyRestGate doc comment.
+      const partyRefusal = opts.partyRestGate?.();
       if (partyRefusal) { activeOverlay = new ActionTextBox([partyRefusal]); return; }
-      activeOverlay = new RestWindow(_restDeps);
+      // PARTY-REST28: shared with world.js's own outdoor toggleRest and worldModes.js's interior - see
+      // world.js's markPartyRestSpent doc comment for the bug this closes (a rest granted in a dungeon used
+      // to leave the granting player's own ready flag stuck true forever, since nothing here ever reset it).
+      opts.markPartyRestSpent?.();
+      activeOverlay = createRestWindow(_restDeps);
     },
     // P11: the current block's water surface (world y) - the swim
     // toggle rule reads it (PlayerEnterExit blockWaterLevel).
@@ -6419,12 +6448,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // painted. ROAD-tail: that is what the stack's own pause LATCH
     // answers, so the question is asked once, in `dungeonPaused`.
     get uiOverlayActive() { return dungeonPaused(); },
-    /** PARTY-REST1 (AUDIT DROPS D1): the dungeon's own live rest, RESTING, never a mirror - composePartyPose's shape (see worldModes' twin). */
-    get restState() {
-      const w = activeOverlay;
-      return w?.isRestWindow && !w.isPartyRestMirror && w.session && w.state === 'resting'
-        ? { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours } : null;
-    },
     /** STATUS-LIVE: ...AND THE OTHER HALF OF THAT QUESTION, which the
      *  two hosts that DRAW this context's slot need and could not ask.
      *  A window the game is NOT stopped for (the status readout,

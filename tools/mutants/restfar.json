@@ -1,6 +1,6 @@
 [
   {
-    "name": "PARTY-REST4-latch-dropped",
+    "name": "PARTY-REST-FAR1-latch-dropped",
     "file": "src/scenes/world.js",
     "old": "    if (_partyRestFarSaid) return;\n    _partyRestFarSaid = true;\n",
     "new": "    _partyRestFarSaid = true;\n",
@@ -9,43 +9,43 @@
     ]
   },
   {
-    "name": "PARTY-REST4-latch-never-re-armed",
+    "name": "PARTY-REST-FAR1-latch-never-re-armed",
     "file": "src/scenes/world.js",
-    "old": "    if (!leaderRest || near) { _partyRestFarSaid = false; return; }",
-    "new": "    if (!leaderRest || near) return;",
+    "old": "    if (!rest || near) { _partyRestFarSaid = false; return; }",
+    "new": "    if (!rest || near) return;",
     "tests": [
       "test/restfar.test.js"
     ]
   },
   {
-    "name": "PARTY-REST4-told-when-near",
+    "name": "PARTY-REST-FAR1-told-when-near",
     "file": "src/scenes/world.js",
-    "old": "    if (!leaderRest || near) { _partyRestFarSaid = false; return; }",
-    "new": "    if (!leaderRest || !near) { _partyRestFarSaid = false; return; }",
+    "old": "    if (!rest || near) { _partyRestFarSaid = false; return; }",
+    "new": "    if (!rest || !near) { _partyRestFarSaid = false; return; }",
     "tests": [
       "test/restfar.test.js"
     ]
   },
   {
-    "name": "PARTY-REST4-told-with-no-rest",
+    "name": "PARTY-REST-FAR1-told-with-no-rest",
     "file": "src/scenes/world.js",
-    "old": "    if (!leaderRest || near) { _partyRestFarSaid = false; return; }",
+    "old": "    if (!rest || near) { _partyRestFarSaid = false; return; }",
     "new": "    if (near) { _partyRestFarSaid = false; return; }",
     "tests": [
       "test/restfar.test.js"
     ]
   },
   {
-    "name": "PARTY-REST4-no-fallback-name",
+    "name": "PARTY-REST-FAR1-no-fallback-name",
     "file": "src/scenes/world.js",
-    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader', leaderRest.mode === 0), PARTY_REST_FAR_SECONDS);",
-    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name, leaderRest.mode === 0), PARTY_REST_FAR_SECONDS);",
+    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(row?.name || 'A party member', rest.mode === 0), PARTY_REST_FAR_SECONDS);",
+    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(row?.name, rest.mode === 0), PARTY_REST_FAR_SECONDS);",
     "tests": [
       "test/restfar.test.js"
     ]
   },
   {
-    "name": "PARTY-REST4-radius-restated",
+    "name": "PARTY-REST-FAR1-radius-restated",
     "file": "src/scenes/world.js",
     "old": "  const PARTY_REST_FAR_TEXT = (who, loitering = false) => `${who} is ${loitering ? 'loitering' : 'resting'} - come within ${PARTY_REST_RADIUS} m of them to ${loitering ? 'wait' : 'rest'} with the party.`;",
     "new": "  const PARTY_REST_FAR_TEXT = (who, loitering = false) => `${who} is ${loitering ? 'loitering' : 'resting'} - come within 15 m of them to ${loitering ? 'wait' : 'rest'} with the party.`;",
@@ -54,18 +54,18 @@
     ]
   },
   {
-    "name": "PARTY-REST4-notice-not-called",
+    "name": "PARTY-REST-FAR1-notice-not-called",
     "file": "src/scenes/world.js",
-    "old": "    if (!dead) partyRestFarNotice(leaderRest, near, leaderRow);   // PARTY-REST4: told once when the leader naps out of my reach - before the mirror below reads `near`; AUDIT DROPS D3: not while the HUD is down for a death\n",
+    "old": "    if (!dead) partyRestFarNotice(farRow?.p?.rest ?? null, !farRow, farRow);\n",
     "new": "",
     "tests": [
       "test/restfar.test.js"
     ]
   },
   {
-    "name": "PARTY-REST4-latch-kept-across-parties",
+    "name": "PARTY-REST-FAR1-latch-kept-across-parties",
     "file": "src/scenes/world.js",
-    "old": "      _partyRestFarSaid = false;   // PARTY-REST4: no leader to be far from\n",
+    "old": "      _partyRestFarSaid = false;   // PARTY-REST-FAR1: nobody to be far from\n",
     "new": "",
     "tests": [
       "test/restfar.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-DROPS-D3-loiter-said-as-a-rest",
     "file": "src/scenes/world.js",
-    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader', leaderRest.mode === 0), PARTY_REST_FAR_SECONDS);",
-    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader'), PARTY_REST_FAR_SECONDS);",
+    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(row?.name || 'A party member', rest.mode === 0), PARTY_REST_FAR_SECONDS);",
+    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(row?.name || 'A party member'), PARTY_REST_FAR_SECONDS);",
     "tests": [
       "test/restfar.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-DROPS-D3-the-default-blink",
     "file": "src/scenes/world.js",
-    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader', leaderRest.mode === 0), PARTY_REST_FAR_SECONDS);",
-    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader', leaderRest.mode === 0));",
+    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(row?.name || 'A party member', rest.mode === 0), PARTY_REST_FAR_SECONDS);",
+    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(row?.name || 'A party member', rest.mode === 0));",
     "tests": [
       "test/restfar.test.js"
     ]
@@ -92,26 +92,26 @@
   {
     "name": "AUDIT-DROPS-D3-told-while-dead",
     "file": "src/scenes/world.js",
-    "old": "    if (!dead) partyRestFarNotice(leaderRest, near, leaderRow);",
-    "new": "    partyRestFarNotice(leaderRest, near, leaderRow);",
+    "old": "    if (!dead) partyRestFarNotice(farRow?.p?.rest ?? null, !farRow, farRow);",
+    "new": "    partyRestFarNotice(farRow?.p?.rest ?? null, !farRow, farRow);",
     "tests": [
       "test/restfar.test.js"
     ]
   },
   {
-    "name": "AUDIT-DROPS-D3-offline-leader-rests",
+    "name": "AUDIT-DROPS-D3-offline-rester-rests",
     "file": "src/scenes/world.js",
-    "old": "    const leaderRest = leaderRow?.online === false ? null : (leaderRow?.p?.rest ?? null);",
-    "new": "    const leaderRest = leaderRow?.p?.rest ?? null;",
+    "old": "    const farRow = social.others().find((m) => m.p?.rest && m.online !== false && !nearAccount(m.acct, m.p)) ?? null;",
+    "new": "    const farRow = social.others().find((m) => m.p?.rest && !nearAccount(m.acct, m.p)) ?? null;",
     "tests": [
       "test/restfar.test.js"
     ]
   },
   {
-    "name": "AUDIT-DROPS-D2-mirror-reopens-every-frame",
+    "name": "PARTY-REST-FAR1-a-near-rester-counts-as-far",
     "file": "src/scenes/world.js",
-    "old": "    if (_partyRestMirrored) { _partyRestMirrored = false; if (leaderRest) _partyRestDeclined = true; }\n    if (!leaderRest || !near || _partyRestDeclined) return;",
-    "new": "    if (_partyRestMirrored) { _partyRestMirrored = false; }\n    if (!leaderRest || !near) return;",
+    "old": "    const farRow = social.others().find((m) => m.p?.rest && m.online !== false && !nearAccount(m.acct, m.p)) ?? null;",
+    "new": "    const farRow = social.others().find((m) => m.p?.rest && m.online !== false) ?? null;",
     "tests": [
       "test/restfar.test.js"
     ]

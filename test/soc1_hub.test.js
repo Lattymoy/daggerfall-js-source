@@ -59,7 +59,7 @@ test('SOC1 wire: the hub is the world channel, the bounds are what Mac asked for
   assert.ok(INVITE_TTL_MS >= 60_000 && INVITE_TTL_MS <= 10 * 60_000, 'an invite stands for minutes, not for ever');
   assert.ok(PARTY_OFFLINE_MS >= 60_000, 'a refresh keeps a seat');
   assert.ok(PARTY_SEND_MS * PARTY_HZ_MAX >= 1000, 'the client\'s floor never trips the relay\'s gate');
-  assert.equal(RELAY_VERSION, 'world92', 'AUDIT DROPS (the trade bytes per sender, the hub\'s quest cooldown, the quest budget\'s order - world92); QUEST1 + TRADE1 + PEER-FS1 (three drops, one deploy: the quest frame, the trade frame, the pose\'s fk - world91); SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair); AUDIT WATCH1 again (wire.js gained CELL_WATCH_PUPPETS_MAX); the main merge again (a comment line in wire.js moved - the bytes are the law)');
+  assert.equal(RELAY_VERSION, 'world93', 'PARTY-REST DROP (the pose\'s rest kind, the vote and cancel stamps, the 32-bit building key - world93); AUDIT DROPS (the trade bytes per sender, the hub\'s quest cooldown, the quest budget\'s order - world92); QUEST1 + TRADE1 + PEER-FS1 (three drops, one deploy: the quest frame, the trade frame, the pose\'s fk - world91); SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair); AUDIT WATCH1 again (wire.js gained CELL_WATCH_PUPPETS_MAX); the main merge again (a comment line in wire.js moved - the bytes are the law)');
   assert.deepEqual(Object.keys(SOCIAL_ACTS), ['friend.request', 'friend.accept', 'friend.decline', 'friend.cancel', 'friend.remove', 'party.invite', 'party.accept', 'party.decline', 'party.leave', 'party.kick']);
   assert.deepEqual(SOCIAL_KINDS, ['state', 'presence', 'party', 'invite', 'note', 'error']);
   assert.ok(NOTE_CODES.includes('party.joined') && NOTE_CODES.includes('friend.requested') && NOTE_CODES.includes('party.leader') && NOTE_CODES.includes('party.lapsed'));
@@ -105,7 +105,7 @@ test('SOC1 wire: a social act names exactly what its kind needs (mutants: a targ
 
 test('SOC1 wire: a party pose is projected by its own law - the map pixel clamped, the vitals bounded and rounded, the place a label, the portrait by the look\'s bounds; refused whole (mutants: a vital past FOE_HEALTH_MAX admitted; a fraction on a bar; the place unfiltered; a record half landed)', () => {
   const p = validPartyPose(P);
-  assert.deepEqual(p, { px: 100, py: 200, in: 0, loc: 'Daggerfall', h: 50, hm: 60, f: 1000, fm: 2000, m: 10, mm: 20, race: 'Nord', gender: 'male', face: 2, bk: null, rest: null, restPending: null, ready: false });
+  assert.deepEqual(p, { px: 100, py: 200, in: 0, loc: 'Daggerfall', h: 50, hm: 60, f: 1000, fm: 2000, m: 10, mm: 20, race: 'Nord', gender: 'male', face: 2, bk: null, rest: null, restEnemyAt: null, restPending: null, ready: false, voteAt: null, restCancelFor: null, restCancelAt: null, restStartedAt: null });
   assert.deepEqual(validPartyPose(p), p, 'idempotent');
   assert.deepEqual(validPartyPose({ ...P, px: 5000, py: -3 }), null, 'a negative pixel is no pixel');
   assert.equal(validPartyPose({ ...P, px: 5000.7 }).px, MAP_PIXELS_X - 1, 'clamped to the map');
@@ -141,7 +141,13 @@ test('PARTY-REST1 wire: `bk` only means anything indoors, and `rest` is refused 
   assert.equal(validPartyPose({ ...P, rest: undefined }).rest, null);
   assert.equal(validPartyPose({ ...P, rest: null }).rest, null);
   const rest = { mode: 1, hoursRemaining: 4, totalHours: 2 };
-  assert.deepEqual(validPartyPose({ ...P, rest }).rest, rest);
+  assert.deepEqual(validPartyPose({ ...P, rest }).rest, { ...rest, kind: null }, 'kind defaults to null, same law as ready/restPending - absent is its own ordinary value, never a refusal');
+  // PARTY-REST4 (2026-09-21, per-request: "15m away from the leader do not change the healrate party member
+  // MUST heal their health near the leader"): the leader's own live REST_KIND (systems/survival/rest.js),
+  // broadcast so a follower's mirror can inherit the SAME rest quality instead of guessing their own.
+  for (const kind of ['bed', 'camp', 'rough']) assert.equal(validPartyPose({ ...P, rest: { ...rest, kind } }).rest.kind, kind);
+  assert.equal(validPartyPose({ ...P, rest: { ...rest, kind: null } }).rest.kind, null, 'survival mode off, or simply not yet resolved - a valid, ordinary value, never a refusal');
+  assert.equal(validPartyPose({ ...P, rest: { ...rest, kind: 'bunk' } }), null, 'an unrecognised kind refuses the WHOLE pose, same law as a bad mode/hours');
   for (const mode of [0, 2]) assert.equal(validPartyPose({ ...P, rest: { ...rest, mode } }).rest.mode, mode);
   // refused WHOLE: one bad field inside `rest` refuses the POSE, not just
   // that field - a follower's mirror would otherwise have to guess the rest
@@ -615,5 +621,16 @@ test('SOC1 hub: the source - the account is handled after the channel\'s welcome
   assert.match(partyArm, /if \(!isSocialRoom\(a\.key\) \|\| !a\.acct\) \{ this\._junk\(ws, a\); return; \}/, 'a party pose outside the hub, or without an account, is junk');
   const w = rd('src/net/wire.js');
   assert.match(w, /export const SOCIAL_ROOM = CHAT_WORLD_ROOM;/);
-  assert.match(w, /export const RELAY_VERSION = 'world92';/, 'AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again, RELAY-H1 again, ACC1d again, the three drops again (world91), AUDIT DROPS again (world92)');
+  assert.match(w, /export const RELAY_VERSION = 'world93';/, 'AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again, RELAY-H1 again, ACC1d again, the three drops again (world91), AUDIT DROPS again (world92), the party-rest drop again (world93)');
 });
+
+test('PARTY-REST2e wire: `voteAt` is a plain, bounded timestamp or null - never negative, never a fraction, refusing nothing (it is not part of the refuse-whole `rest`/`restPending` objects, just its own field, same law as `ready`) (mutants: a negative or fractional value admitted; absent reading as 0 instead of null; the whole pose refused for a bad voteAt instead of the field alone landing as null)', () => {
+  assert.equal(validPartyPose({ ...P, voteAt: undefined }).voteAt, null);
+  assert.equal(validPartyPose({ ...P, voteAt: null }).voteAt, null);
+  assert.equal(validPartyPose({ ...P, voteAt: 1758000000000 }).voteAt, 1758000000000);
+  assert.equal(validPartyPose({ ...P, voteAt: 1758000000000.7 }).voteAt, 1758000000001, 'rounded, same law as the vitals');
+  assert.equal(validPartyPose({ ...P, voteAt: -5 }).voteAt, 0, 'clamped, not refused - the field alone lands as its own bound, unlike rest/restPending\'s refuse-whole');
+  assert.equal(validPartyPose({ ...P, voteAt: 'x' }).voteAt, null);
+  assert.equal(validPartyPose({ ...P, voteAt: NaN }).voteAt, null);
+});
+

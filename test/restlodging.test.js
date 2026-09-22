@@ -496,7 +496,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   }
   // ...and createRestDeps CALLS them rather than closing over a value.
   assert.match(src('src/scenes/shared.js'),
-    /tickVitals: \(\) => \{[^\n]*restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\)\); \},/);   // SURV4: the hour by its kind, restVitals still the one home
+    /tickVitals: \(\) => \{[\s\S]{0,900}?restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\), _roughCarry\);/);   // SURV4: the hour by its kind, restVitals still the one home; PARTY-REST10: with the rough carry
 
   // Each of the three must be at max INDEPENDENTLY: fill two and the
   // completion must still be false, or FullRest ends early.
@@ -530,7 +530,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
 test('S40 hosts: all four can now rest, and each supplies its own place', () => {
   // The interior host: the key arm, the place bag, and the deps.
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /mountInterior\(new RestWindow\(interiorRestDeps\)\);/);
+  assert.match(wm, /mountInterior\(createRestWindow\(interiorRestDeps\)\);/);   // RESTDOOR1: through the door
   // The bag is a LAW now, so this RUNS it. It used to be pinned by
   // regexes over its own source inside the host closure, and a review
   // round proved that hollow: flipping `insideBuilding` to false there
@@ -597,13 +597,15 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     // keys properly; this is the same claim where this pin makes it.)
     assert.equal((s.match(/(?<![\w.])toggleRest:/g) ?? []).length, 1,
       `${f}: hudCtx must declare toggleRest exactly once`);
-    // PARTY-REST1: world.js opens the SAME class a second time, over the follower's mirror deps - a mirror of
-    // the leader's nap, not a twin of toggleRest (it runs no gate, no CanRest, no Vagrancy charge of its own).
-    const mirrors = f === 'src/scenes/world.js' ? 1 : 0;
-    assert.equal((s.match(/new RestWindow\(/g) ?? []).length, 1 + mirrors,
-      `${f}: one rest window path, not a twin's second one`);
-    if (mirrors) assert.match(s, /const win = new RestWindow\(partyRestMirrorDeps\(\)\);[^\n]*\n\s*win\.isPartyRestMirror = true;/,
-      `${f}: the second is the party mirror, marked as one`);
+    // PARTY-REST1: world.js alone has a SECOND, deliberate `createRestWindow(` - the party-rest follower's own mirror
+    // (partyRestMirrorDeps, tagged isPartyRestMirror) - which is not the twin bug this pin was written against: that
+    // bug was a SHADOWED inline redeclaration of the same door, not a second door with its own deps and its own tag
+    // read by three other places (composePartyPose, both restState getters). RESTDOOR1: both call sites read
+    // `createRestWindow(` now - ui/restDoor.js is the ONE place either host constructs the window directly.
+    assert.equal((s.match(/createRestWindow\(/g) ?? []).length, f === 'src/scenes/world.js' ? 2 : 1,
+      `${f}: one rest window path (world.js: plus PARTY-REST1's own tagged mirror), not a twin's second one`);
+    assert.doesNotMatch(s, /new RestWindow\(/, `${f}: the classic construction is ui/restDoor.js's alone now`);
+    if (f === 'src/scenes/world.js') assert.match(s, /const win = createRestWindow\(partyRestMirrorDeps\([^\n]*\)\);[^\n]*\n\s*win\.isPartyRestMirror = true;/, `${f}: the second is the party mirror, marked as one`);
     // ...and it sits INSIDE the overlay/mode guard the ladder opens
     // with, not after it. Both indices are asserted FOUND first: the
     // first version compared them raw, so an arm hoisted ABOVE the
@@ -616,7 +618,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     const close = ladder.indexOf('\n    }');
     assert.ok(at > 0, `${f}: the Rest arm is not below the guard at all`);
     assert.ok(close > 0 && at < close, `${f}: the Rest arm escaped the guard`);
-    assert.match(s, /new RestWindow\(outdoorRestDeps\)/, f);
+    assert.match(s, /createRestWindow\(outdoorRestDeps\)/, f);
     assert.match(s, /setCrimeCommitted\(playerEntity, crime\)/, f);   // V4: through the one setter (SuppressCrime)
     assert.match(s, /if \(spawnGuards\) _crimeResponse\(\)/, f);
     assert.match(s, /inTownOutside: _isPlayerInTownStrict\(\)/, f);
@@ -703,7 +705,7 @@ test('S40 restDecision: it is SCENE-FREE - all four hosts run it before opening'
     const h = src(f);
     assert.match(h, /restDecision\(\{/, f);
     assert.match(h, /if \(d\.kind !== 'rest'\)/, f);
-    assert.ok(h.indexOf('restDecision({') < h.indexOf('new RestWindow('), `${f}: the gate must precede the window`);
+    assert.ok(h.indexOf('restDecision({') < h.indexOf('createRestWindow('), `${f}: the gate must precede the window`);
     // ...and each acts on the two arms that need acting on. V2b: the
     // blocked arm no longer returns SILENTLY - the racial override
     // speaks for itself (the unfed vampire's TEXT.RSC 36 box), so the

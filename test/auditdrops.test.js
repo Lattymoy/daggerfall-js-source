@@ -251,18 +251,30 @@ test('AUDIT DROPS C1/C2: the hub\'s and the receiver\'s cooldowns sit at HALF th
 
 // ── D. party rest in the modal hosts ────────────────────────────────
 
-test('AUDIT DROPS D1: the building and the dungeon expose `restState` (RESTING, never a mirror) and run the party gate before their rest window; world.js reads them, and the gate spends the /ready vote for all three', () => {
+test('AUDIT DROPS D1 (as the party-rest drop now keeps it): the building and the dungeon expose `restState` (RESTING, never a mirror, never the wake box) and run the stranger and party gates before their rest window; world.js reads them, broadcasts a rest only while RESTING, and its own toggle is guarded until the mode machine stands', () => {
   const m = rd('src/scenes/worldModes.js'), d = rd('src/scenes/dungeonContext.js'), w = rd('src/scenes/world.js');
-  const getter = /get restState\(\) \{\s*const w = (interiorOverlay|activeOverlay);\s*return w\?\.isRestWindow && !w\.isPartyRestMirror && w\.session && w\.state === 'resting'\s*\? \{ mode: w\.mode, hoursRemaining: w\.session\.hoursRemaining, totalHours: w\.session\.totalHours \} : null;\s*\},/;
+  const getter = /get restState\(\) \{[\s\S]{0,2200}?if \(!w\?\.isRestWindow \|\| w\.isPartyRestMirror \|\| !w\.session \|\| w\.state !== 'resting'\) return null;\s*return \{ mode: w\.mode, hoursRemaining: w\.session\.hoursRemaining, totalHours: w\.session\.totalHours \};/;
   assert.match(m, getter, 'the building\'s'); assert.match(d, getter, 'the dungeon\'s');
-  assert.match(m, /const partyRefusal = host\.partyRestGate\?\.\(\) \?\? null;\s*if \(partyRefusal\) \{ mountInterior\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*mountInterior\(new RestWindow\(interiorRestDeps\)\);/);
-  assert.match(d, /const partyRefusal = opts\.partyRestGate\?\.\(\) \?\? null;\s*if \(partyRefusal\) \{ activeOverlay = new ActionTextBox\(\[partyRefusal\]\); return; \}\s*activeOverlay = new RestWindow\(_restDeps\);/);
-  assert.match(m, /partyRestGate: \(\) => host\.partyRestGate\?\.\(\) \?\? null,/, 'handed down to the dungeon');
+  // The drop put the building's getter on interiorKeyCtx - the KEY table's ctx, which the factory never
+  // returns - so `modes?.restState` read undefined from a tavern: D1's hole, re-opened. ONE getter per host,
+  // ONE `restState` key at all, and the building's lies inside the factory's returned literal.
+  for (const [src, who] of [[m, 'the building'], [d, 'the dungeon']]) {
+    assert.equal(src.match(/get restState\(\)/g).length, 1, `${who}: one getter`);
+    assert.equal(src.match(/\brestState\s*:/g), null, `${who}: no plain key beside the getter (the later key of a literal wins)`);
+  }
+  assert.ok(m.indexOf('get restState()') > m.lastIndexOf('\n  return {'), 'the building\'s getter sits on the object world.js reads, not the key ctx');
+  assert.ok(m.indexOf('get restState()') > m.indexOf('get footstepKind()'), 'beside E2\'s footstepKind, on the same literal');
+  assert.ok(d.indexOf('get restState()') > d.indexOf('\n  const api = {') && d.indexOf('get restState()') < d.indexOf('get uiOverlayActive() { return dungeonPaused(); }'), 'the dungeon\'s on `api`');
+  assert.match(m, /const strangerRefusal = host\.strangerRestGate\?\.\(\);\s*if \(strangerRefusal\) \{ mountInterior\(new ActionTextBox\(\[strangerRefusal\]\)\); return; \}[\s\S]{0,600}?const partyRefusal = host\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ mountInterior\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}[\s\S]{0,600}?host\.markPartyRestSpent\?\.\(\);\s*mountInterior\(createRestWindow\(interiorRestDeps\)\);/, 'the building: strangers, the party, the spend, the window');
+  assert.match(d, /const strangerRefusal = opts\.strangerRestGate\?\.\(\);\s*if \(strangerRefusal\) \{ activeOverlay = new ActionTextBox\(\[strangerRefusal\]\); return; \}[\s\S]{0,600}?const partyRefusal = opts\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ activeOverlay = new ActionTextBox\(\[partyRefusal\]\); return; \}[\s\S]{0,600}?opts\.markPartyRestSpent\?\.\(\);\s*activeOverlay = createRestWindow\(_restDeps\);/, 'the dungeon: the same four, through the outer host\'s doors');
+  assert.match(m, /partyRestGate: \(\) => host\.partyRestGate\?\.\(\),/, 'handed down to the dungeon');
+  assert.match(m, /markPartyRestSpent: \(\) => host\.markPartyRestSpent\?\.\(\),/);
   assert.match(w, /const restWin = mode === 'interior' \? modes\?\.restState\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState/, 'world.js reads the two getters');
   assert.match(w, /townTalk\.overlay\.session && townTalk\.overlay\.state === 'resting'/, 'D2: outdoors too, RESTING - not the wake box');
-  assert.match(w, /const partyRestGate = \(\) => \{\s*const refusal = partyRestRefusal\(\);\s*if \(!refusal\) _partyRestReady = false;[^\n]*\n\s*return refusal;\s*\};/, 'the gate spends the vote');
+  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*_partyRestReady = false;/, 'PARTY-REST28: the one shared reset every host runs on a granted rest');
   assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;/, 'D5: no TDZ before the mode machine stands');
-  assert.equal((w.match(/(?<!let )_partyRestReady = false;/g) ?? []).length, 2, 'spent in the gate and when a mirror opens - nowhere else');
+  assert.match(w, /const strangerRefusal = modes \? strangerRestGate\(\) : null;/, 'D5: the stranger gate the same');
+  assert.match(w, /if \(modes\) markPartyRestSpent\(\);/, 'D5: and the spend');
 });
 
 // ── E. the plaque, the kind, the peer sounds ────────────────────────

@@ -834,7 +834,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world92';   // AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world93';   // PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1454,6 +1454,7 @@ const PARTY_REST_HOURS_MAX = 99;
 /** loiter=0, timed=1, full=2 - restWindow.js's own `this.mode` strings ('loiter'|'timed'|'full'), numbered small
  *  for the wire the way `in` already is. */
 const PARTY_REST_MODES = Object.freeze([0, 1, 2]);
+const PARTY_REST_KINDS = Object.freeze(['bed', 'camp', 'rough']);   // PARTY-REST4: systems/survival/rest.js's own REST_KIND values, unchanged - null (survival mode off, or not yet resolved) is valid too
 
 /** SOC1: A PARTY POSE the hub will keep and repeat, or null - where a member stands and how they fare, which is what
  *  the party HUD and the map draw of a member who may be a continent away: `px`,`py` the map pixel (in a dungeon or a
@@ -1486,14 +1487,32 @@ export function validPartyPose(p) {
   out.race = typeof p.race === 'string' && /^[A-Za-z]{1,16}$/.test(p.race) ? p.race : 'Breton';
   out.gender = p.gender === 'female' ? 'female' : 'male';
   out.face = uint(p.face, 9) ?? 0;
-  out.bk = out.in === 2 ? uint(p.bk, 0xffff) : null;
+  // PARTY-REST9 (2026-09-21, per-request: "youre not near the leader, you must gather your party i stand in
+  // the leader, tried beside him and it still comes up" - the bug this closes): 0xffff (65535) is far too small
+  // a cap for a real building key. `net/online.js`'s own `roomKeyFor` computes it as `buildingKey >>> 0` - a
+  // full unsigned 32-bit value - and an actual room key logged during this exact bug report
+  // (`interior:m206728581.131590`) already carries a building key of 131590, more than DOUBLE the old cap. Every
+  // such key got silently clamped down to 65535 on the way through this validator - not refused outright, which
+  // would at least have been visible, but SILENTLY CHANGED to a wrong-but-valid-looking number - so two players
+  // standing in the exact same building, with the exact same real (unclamped) key on each of their own local
+  // `myPartyLocation()`/`composePartyPose()` reads, disagreed the moment either read the OTHER's clamped
+  // broadcast value back off the wire: `samePlace`'s own `bk === bk` check (world.js) failed forever, for any
+  // building whose key exceeded 65535, no matter how close together the two of them actually stood. Widened to
+  // the full unsigned 32-bit range `roomKeyFor` itself already uses, so the wire can never disagree with the
+  // room key it already agreed to share.
+  out.bk = out.in === 2 ? uint(p.bk, 0xffffffff) : null;
   if (p.rest != null) {
     if (typeof p.rest !== 'object' || Array.isArray(p.rest)) return null;
     const mode = PARTY_REST_MODES.includes(p.rest.mode) ? p.rest.mode : null;
     const hoursRemaining = finite(p.rest.hoursRemaining) ? Math.min(PARTY_REST_HOURS_MAX, Math.max(0, Math.round(p.rest.hoursRemaining))) : null;
     const totalHours = finite(p.rest.totalHours) ? Math.min(PARTY_REST_HOURS_MAX, Math.max(0, Math.round(p.rest.totalHours))) : null;
     if (mode == null || hoursRemaining == null || totalHours == null) return null;
-    out.rest = { mode, hoursRemaining, totalHours };
+    // PARTY-REST4: the kind the leader is ACTUALLY resting as (bed/camp/rough, systems/survival/rest.js's own
+    // REST_KIND) - null is valid (survival mode off, or the field simply absent) and reads as "no kind to
+    // inherit", never as a refusal; an unrecognised string is the one thing that still refuses the whole pose,
+    // same law every other field in this object already keeps.
+    if (p.rest.kind != null && !PARTY_REST_KINDS.includes(p.rest.kind)) return null;
+    out.rest = { mode, hoursRemaining, totalHours, kind: p.rest.kind != null ? p.rest.kind : null };
   } else {
     out.rest = null;
   }
@@ -1513,6 +1532,39 @@ export function validPartyPose(p) {
     out.restPending = null;
   }
   out.ready = p.ready === true;
+  // PARTY-REST2e (2026-09-20, per-request: "it only counts down the countdown for the player who initiated it
+  // not for the whole group... every one in the group can start a vote and has its own timer" - the bug this
+  // closed): the relay's own clock (net/social.js's `now()`, already offset-corrected so every tab reads the
+  // SAME moment regardless of whose machine it is), the instant THIS tab's own gate last asked "is everyone
+  // ready" and got a no - null the rest of the time, including while merely out of range (a leader alone, or a
+  // follower far from the leader, never starts this clock at all - "the vote time also shouldn't start when out
+  // of range"). A follower's own gate reads every near member's `voteAt` alongside its own, so ONE cooldown -
+  // whoever's is most recent - covers the whole group standing there, not a separate one per person asking.
+  out.voteAt = finite(p.voteAt) ? Math.max(0, Math.round(p.voteAt)) : null;
+  // PARTY-REST5 (2026-09-21, per-request: "the ones who not initiate need to also stop resting when an enemy
+  // appears for the initiator"): a monotonic marker, stamped only on a REAL enemy break
+  // (systems/restSession.js's own two call sites) - NOT nested inside `rest` above, deliberately, because a
+  // real session moves to 'ended' the same tick the break is discovered, so `rest` may already read null again
+  // by the next pose a follower's mirror reads. Same law as `voteAt`: a follower only ever compares this
+  // against its own last-seen copy of the SAME sender's value (world.js's `partyRestFollowTick`), never against
+  // its own clock, so an unrecognised (non-finite) value reads as "nothing to compare yet" rather than refusing
+  // the whole pose.
+  out.restEnemyAt = finite(p.restEnemyAt) ? Math.max(0, Math.round(p.restEnemyAt)) : null;
+  // PARTY-REST19 (2026-09-22, per-request: "An non initiator MUST cancel the rest for all if he cancels the
+  // ongoing resting"): stamped by a follower's own Stop click, naming the ONE account they were mirroring -
+  // `restCancelFor` uses the same `idOf` normalizer acct/leader already do, `restCancelAt` the same
+  // finite-timestamp law restEnemyAt/voteAt already do. The real rester's own session compares `restCancelFor`
+  // against their OWN account id and `restCancelAt` against its own last-seen copy of it (world.js's
+  // `canceledByFollower`), never against a local clock - same law as restEnemyAt.
+  out.restCancelFor = idOf(p.restCancelFor);
+  out.restCancelAt = finite(p.restCancelAt) ? Math.max(0, Math.round(p.restCancelAt)) : null;
+  // PARTY-REST21 (2026-09-22, per-request: confirmed by direct testing - "1/2 pops up again in the chat"/
+  // "the non initiator presses r again when all ready he starts a new vote... just put a cooldown on being
+  // able to start a new rest"): the last time this account's own rest actually started, for real or via
+  // mirror - on social.now() like voteAt (compared as a DURATION against it elsewhere, so it has to be the
+  // shared relay clock, never a local one), unlike restEnemyAt/restCancelAt above (which are only ever
+  // compared against a previously-seen copy of themselves, never against a clock).
+  out.restStartedAt = finite(p.restStartedAt) ? Math.max(0, Math.round(p.restStartedAt)) : null;
   return out;
 }
 

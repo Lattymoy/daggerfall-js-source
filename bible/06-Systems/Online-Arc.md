@@ -4320,7 +4320,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1138`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1139`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:5964` read, on one physical line:
+`src/scenes/worldModes.js:5988` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4185`). With the property missing that call is a
+(`dungeonContext.js:4193`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3463` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3464` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7517,5 +7517,15 @@ Three opus lenses, one each over the merge and the wire, the additions and the h
 **The records (lens 3).** No re-aimed pin was weakened and every count and constant was true; the record named the wrong audit for the relay-deploy precedent (RELAY-H1's F1, not ONLINE-DUNGEON-FOES'), the Ledger said "a tenth-a-second cooldown" for one share per ten seconds, and 'in your party' lived in two files (one home now: `net/social.js WHY_IN_PARTY`). Re-aims the DROPS record left unsaid: `test/world2.test.js` moved its pin from `applyFoes` to `applyFoesFrame` (SEAT-HEAL's real change of law - the public door no longer refuses frames while it holds authority; seatheal pins the new behaviour); `watch1`, `econ1`, `auditworld2` (`'quest'` in the doc regex); mutants `slam15` Z6/Z7, `soc1` S38, `macfg` MAC-F. The drop laws no pin had held are held now (`test/auditdrops.test.js` F): the pose's `fk` clamp, the quest frame's own cap at the door, `relaySupportsTrade`, the real `tradePack` reserve/restore over a real entity, `tradeFrame` after `chatFrame` before the dead return. Left as found, on purpose: a modified client can offer gold or items it does not own (WORLD4's peer-loot trust - the receiver sees the offer before locking); peers' footsteps assume a grounded peer (the pose carries no swim/levitate bit); a shared TeleportPc lands the receiver at the sender's Place (party trust).
 
 **The relay:** `world92` - the trade bytes per sender, the hub's quest cooldown, the quest budget's order, the trade data cap. The merge deploys it (`relay-deploy.yml`).
+
+Not verified in a browser: no online session exists in this container.
+
+## PARTY-REST DROP (2026-09-22, Mac: "Add this to the batch") - the party-rest feature zip integrated over the audit, one getter per host, world93
+
+Eight files from Mac's tree (`net/wire.js`, `ui/enhancedRest.js`, `scenes/world.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/shared.js`, `systems/restSession.js`, `systems/survival/rest.js`), each a whole-file copy against an older main, three-way merged per file against the main commit that minimised its diff, conflicts resolved at block level. What arrived, by the drop's own law names: PARTY-REST1 (the leader's live rest/loiter session rides the party pose; a follower near enough mirrors it - `partyRestFollowTick` every frame beside `partyFrame`, the mirror rolling no encounter of its own), PARTY-REST1c (ANY near resting member is mirrored, not the leader alone), PARTY-REST2/2b/2f/28 (`/ready` is a local chat command stamping `voteAt`, the vote expires in `PARTY_READY_TIMEOUT_MS`, `partyRestGate` refuses a rest until the near members are ready, `markPartyRestSpent` is the one reset every host runs on a granted rest, a refused gate clears back to -Infinity so a new vote can start), PARTY-REST4/4b (`partyRestMirrorDeps(restKind, targetAcct)` heals the follower at the leader's rate through `outdoorRestDeps.overrideRestKind`), PARTY-REST5/19 (the leader's `restEnemyAt` breaks every mirror; a follower's cancel rides `restCancelFor/At`), PARTY-REST6 (`restState` answers only while `state === 'resting'` - the wake box is not a live rest), PARTY-REST8 (`nearAccount`'s interior arm keys on `bk`, now 32-bit, PARTY-REST9), PARTY-REST10 (`restHour(entity, kind, tick, carry)`), PARTY-REST12/20/21/23/25/26/17/16/2d/2e (the gate's refusals and their cooldowns: `PARTY_REST_VOTE_COOLDOWN_MS` 60 s, `PARTY_REST_START_COOLDOWN_MS` 10 s), ONLINE-REST1 (the gate is enhanced+online only), TAVERN-REST1/GUILD-REST1 (`modes.insidePartyRestExempt`), STRANGER-REST1 (`strangerRestGate`: no rest within 100 m of a stranger outdoors, 30 m in a dungeon), REST-VITALS1/RESTFIX1/RESTFIX3/PARTY-REST1d (the enhanced rest window: vitals shown while healing, no rebuild per tick, the illegal-rest warning, pointer lock released for every member). The wire grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`, `restCancelAt`, `restStartedAt`; `RELAY_VERSION` is world93 (the LAW row hashed after the wire change; `server/src/index.js` is untouched by this drop - the version moves because the pose's shape did).
+
+**What the zip did not carry, written here.** The drop's three hosts import `ui/restDoor.js`, which no zip shipped: written - `createRestWindow(deps, ignoreAllocatedBed)` opens `ui/enhancedRest.js` under the enhanced skin (`openEnhancedRest`, the fixed host at z-index 13, `registerOverlay` around its `dispose`) and `new RestWindow(deps, ignoreAllocatedBed)` under the classic one; it touches no DOM itself, so CRASH2's door contract reads the view, not the door. The drop's own restlodging pins expect `createRestWindow` in `scenes/exterior.js` (not in the zip): converted. The drop's partyrest1 pins name `.rest-shell` rules `enhancedStyle.js` never had: added (the centred 420 px dialog, the hours field, the vitals line, `font-family: inherit` on the field - FONT1's law).
+
+**Reconciled with AUDIT DROPS.** *D1 re-done, not doubled:* the drop wrote the building's `restState` getter onto `interiorKeyCtx` - the interior KEY table's own ctx, which the mode factory never returns - so `modes?.restState` read `undefined` from a tavern and broadcast `rest: null`: the very hole D1 had closed on the returned object. The merge left both, and in the dungeon two getters on one `api` literal (the later wins). One getter per host now, on the object world.js reads, in the drop's shape with its PARTY-REST6 words; pinned by count and by position (test/auditdrops.test.js D1), a shadowing plain key killed as a mutant. *D2's declined latch* is superseded by PARTY-REST19's own cancel fields and dropped. *D5* stands: the outdoor toggle runs `strangerRestGate` then `partyRestGate` then `markPartyRestSpent` only once `modes` exists. *PARTY-REST4 (mine, the far notice)* is renamed PARTY-REST-FAR1 so it no longer collides with the drop's PARTY-REST4 (the heal rate): it scans `social.others()` for ANY resting member I cannot mirror (PARTY-REST1c's law), falls back to 'A party member', and stays quiet while dead. `canRest` and `ILLEGAL_REST_WARNING` now have two window callers (restwhere's sweep admits the enhanced twin).
 
 Not verified in a browser: no online session exists in this container.

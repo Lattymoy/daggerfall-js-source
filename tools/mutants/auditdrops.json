@@ -239,7 +239,7 @@
   {
     "name": "AD-D1-building-rest-not-gated",
     "file": "src/scenes/worldModes.js",
-    "old": "      const partyRefusal = host.partyRestGate?.() ?? null;\n      if (partyRefusal) { mountInterior(new ActionTextBox([partyRefusal])); return; }\n",
+    "old": "      const partyRefusal = host.partyRestGate?.();\n      if (partyRefusal) { mountInterior(new ActionTextBox([partyRefusal])); return; }\n",
     "new": "",
     "tests": [
       "test/auditdrops.test.js"
@@ -248,7 +248,7 @@
   {
     "name": "AD-D1-dungeon-rest-not-gated",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      const partyRefusal = opts.partyRestGate?.() ?? null;\n      if (partyRefusal) { activeOverlay = new ActionTextBox([partyRefusal]); return; }\n",
+    "old": "      const partyRefusal = opts.partyRestGate?.();\n      if (partyRefusal) { activeOverlay = new ActionTextBox([partyRefusal]); return; }\n",
     "new": "",
     "tests": [
       "test/auditdrops.test.js"
@@ -257,28 +257,31 @@
   {
     "name": "AD-D1-building-restState-a-mirror-too",
     "file": "src/scenes/worldModes.js",
-    "old": "      const w = interiorOverlay;\n      return w?.isRestWindow && !w.isPartyRestMirror && w.session && w.state === 'resting'",
-    "new": "      const w = interiorOverlay;\n      return w?.isRestWindow && w.session && w.state === 'resting'",
+    "old": "      if (!w?.isRestWindow || w.isPartyRestMirror || !w.session || w.state !== 'resting') return null;\n      return { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours };\n    },\n    /** AUDIT 58 (f3/input)",
+    "new": "      if (!w?.isRestWindow || !w.session || w.state !== 'resting') return null;\n      return { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours };\n    },\n    /** AUDIT 58 (f3/input)",
     "tests": [
-      "test/auditdrops.test.js"
+      "test/auditdrops.test.js",
+      "test/partyrest1.test.js"
     ]
   },
   {
     "name": "AD-D1-dungeon-restState-the-wake-box-too",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      const w = activeOverlay;\n      return w?.isRestWindow && !w.isPartyRestMirror && w.session && w.state === 'resting'",
-    "new": "      const w = activeOverlay;\n      return w?.isRestWindow && !w.isPartyRestMirror && w.session",
+    "old": "      if (!w?.isRestWindow || w.isPartyRestMirror || !w.session || w.state !== 'resting') return null;\n      return { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours };\n    },\n    /** AUDIT 21 (music lane, F3)",
+    "new": "      if (!w?.isRestWindow || w.isPartyRestMirror || !w.session) return null;\n      return { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours };\n    },\n    /** AUDIT 21 (music lane, F3)",
     "tests": [
-      "test/auditdrops.test.js"
+      "test/auditdrops.test.js",
+      "test/partyrest1.test.js"
     ]
   },
   {
-    "name": "AD-D1-vote-not-spent-by-the-gate",
+    "name": "AD-D1-vote-not-spent-on-a-granted-rest",
     "file": "src/scenes/world.js",
-    "old": "    if (!refusal) _partyRestReady = false;",
+    "old": "    if (modes) markPartyRestSpent();",
     "new": "",
     "tests": [
-      "test/auditdrops.test.js"
+      "test/auditdrops.test.js",
+      "test/partyrest1.test.js"
     ]
   },
   {
@@ -411,5 +414,14 @@
     ],
     "equivalent": true,
     "why": "parseClient already refuses the frame at its door through frameCap (QUEST_PREFIX -> QUEST_FRAME_MAX) before this line runs; this second check is the belt for a frame whose `t` is quest but whose text does not start with the prefix, which the client never mints and which the general MAX_FRAME_BYTES cap bounds anyway."
+  },
+  {
+    "name": "AD-D1-building-restState-shadowed-on-the-host",
+    "file": "src/scenes/worldModes.js",
+    "old": "      return { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours };\n    },\n    /** AUDIT 58 (f3/input)",
+    "new": "      return { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours };\n    },\n    restState: undefined,\n    /** AUDIT 58 (f3/input)",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
   }
 ]
