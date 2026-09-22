@@ -100,6 +100,8 @@ import { makeFont, drawText } from './text.js';
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM5: TransferItem's split popup
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
+import { magicPowersLines } from '../systems/itemPowers.js';   // MACRO-3: %mpw
+import { itemIsIdentified } from '../systems/tradeModes.js';   // MACRO-3: MagicPowers' identified arm
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -152,6 +154,17 @@ export const INFO_LABEL = Object.freeze({ x: 2, scale: 0.43, extraLeading: 3, ma
 /** TEXT.RSC 1016 - the "Item powers" box DFU chains behind an
  *  enchanted item's info (:1614). */
 export const INFO_TEXT_POWERS = 1016;
+/** MACRO-3: record 1016's rows with %mpw's row spread into one row per
+ *  power; every other row goes through the walk as it stands. */
+export function powersRows(recordRows, powers) {
+  const out = [];
+  for (const r of recordRows ?? []) {
+    const row = typeof r === 'string' ? { text: r } : r;
+    if (!String(row?.text ?? '').includes('%mpw')) { out.push(...expandRowValues([row], null)); continue; }
+    for (const p of powers) out.push({ ...row, text: String(row.text).replace('%mpw', p) });
+  }
+  return out;
+}
 
 /** U47: UpdateItemInfoPanelGold (:2249-2258). The GOLD button's hover
  *  fills the panel with two GENERATED lines rather than a TEXT.RSC
@@ -574,8 +587,10 @@ export class NativeInventoryWindow {
     // prohibition chain, and with its own TEXT.RSC record.
     if (isBrokenItem(it)) {
       this.boxes = [{
-        rows: this.hooks.rows?.(ITEM_BROKEN_TEXT_ID)
-          ?? [{ text: 'This item is broken.', center: true }],
+        // MACRO-3: SetTextTokens(itemBrokenTextId, item) - the ITEM is the
+        // box's macro source, so "%it is broken." names it
+        rows: expandRowValues(this.hooks.rows?.(ITEM_BROKEN_TEXT_ID)
+          ?? [{ text: 'This item is broken.', center: true }], { it: this._longName(it) }),
       }];
       return true;
     }
@@ -641,7 +656,10 @@ export class NativeInventoryWindow {
       return;
     }
     this.boxes = [{ rows: infoRows }];
-    if (isEnchanted(it)) this.boxes.push({ rows: rows(INFO_TEXT_POWERS) ?? [] });
+    // MACRO-3: 1016 is "Item powers:" over %mpw, and %mpw is a LIST - one
+    // line per power (DaggerfallUnityItemMCP.MagicPowers), so the token's
+    // row becomes that many rows, each keeping the record row's alignment.
+    if (isEnchanted(it)) this.boxes.push({ rows: powersRows(rows(INFO_TEXT_POWERS) ?? [], magicPowersLines(it, { identified: itemIsIdentified(it), lines: rows })) });
     this.infoItem = it;
   }
 
@@ -739,7 +757,7 @@ export class NativeInventoryWindow {
    *  invented for the label). */
   _dropGold() {
     this.inputBox = new InputMessageBoxWindow({
-      lines: this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }],
+      lines: expandRowValues(this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }], null),   // MACRO-3: %gii, the world's
       value: '0',
       maxCharacters: 8,
       numeric: true,
