@@ -434,7 +434,12 @@ test('LR1: the skins - the native cell tints and the tooltip lists, the enhanced
   assert.equal(tip.split('\r')[0], itemLongName(r));
   assert.deepEqual(tip.split('\r').slice(1), LR.rarityLines(r), 'one row per line');
   assert.equal(scrollerToolTipText(sword()), itemLongName(sword()), 'Common: the long name alone');
-  assert.deepEqual(hoverLines([r]).shown[0], { name: itemLongName(r) === r.name ? r.name : resolveItemName(r), stack: 0, rarity: 'rare' });
+  // QUICK-LOOT-STATS: the row carries its source item too; this pin is
+  // about the TIER it wears, so it compares the drawn fields.
+  const rareRow = hoverLines([r]).shown[0];
+  assert.deepEqual({ name: rareRow.name, stack: rareRow.stack, rarity: rareRow.rarity },
+    { name: itemLongName(r) === r.name ? r.name : resolveItemName(r), stack: 0, rarity: 'rare' });
+  assert.equal(rareRow.item, r);
   const u = LR.applyRarity(sword(), 'rare', lcg(6));
   assert.equal(hoverLines([u]).shown[0].name, 'Longsword', 'unidentified on the plaque too');
   assert.equal(LR.rarityAttr(r), 'rare');

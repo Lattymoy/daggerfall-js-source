@@ -194,7 +194,7 @@
   {
     "name": "QUICK-LOOT-a-moved-highlight-does-not-repaint",
     "file": "src/ui/worldPlaque.js",
-    "old": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}`;",
+    "old": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}|${statsSide(lastX, globalThis.innerWidth ?? 0)}`;",
     "new": "  const sig = frameSignature(frame);",
     "tests": [
       "test/worldhover.test.js"

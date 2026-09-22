@@ -32,6 +32,24 @@
    this block into that page at build; the rest of the skin stays a
    string the game pays for only when a screen is mounted. */
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // FIX-D: Silkscreen's five ahead of Pixelify Sans
+
+/**
+ * QUICK-LOOT-STATS: THE PLAQUE'S LAYOUT NUMBERS LIVE WITH THE DRESS.
+ *
+ * `ui/worldPlaque.js statsSide` decides which side the stat panel
+ * stands on, and that decision is arithmetic over these widths - so
+ * they cannot be a literal in the sheet AND a literal in the module, or
+ * the day one is tuned the panel is laid out against the other and runs
+ * off the screen edge. They live here because the sheet is the thing
+ * that DRAWS them; the plaque imports the sheet already (for
+ * `injectEnhancedStyle`), so this adds no edge and the reverse - the
+ * sheet importing the plaque - would be a cycle.
+ */
+export const PLAQUE_MAX_W = 300;
+export const STATS_W = 190;
+export const STATS_GAP = 8;
+/** The clearance kept between the stat panel and the window's edge. */
+export const STATS_MARGIN = 12;
 export const ENHANCED_TOKENS = `:root {
   --ink: #0e1013;
   --slate: #171b21;
@@ -3344,7 +3362,7 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    it. The percentages are the fallback for a frame not yet drawn. */
 .wplaque { position: fixed; left: var(--wp-x, 50%); top: var(--wp-top, 55%);
   transform: translateX(-50%);
-  z-index: 6; display: none; min-width: 190px; max-width: 300px; padding: 10px 14px;
+  z-index: 6; display: none; min-width: 190px; max-width: ${PLAQUE_MAX_W}px; padding: 10px 14px;
   background: rgba(10,12,17,0.9); border: 2px solid #7d7460; pointer-events: none;
   font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; color: #d8cfae;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
@@ -3376,6 +3394,31 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .wplaque-keys { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(125,116,96,0.35);
   color: #7d7460; font-size: 11px; text-align: center; }
 .wplaque-empty, .wplaque-more { color: #7d7460; font-size: 12px; }
+/* QUICK-LOOT-STATS: the lit row's numbers, beside the list. Same box as
+   the plaque itself - a player should read them as one surface, not as
+   a tooltip about a tooltip. Absolutely positioned against the plaque's
+   own fixed box, so it rides the reticle's anchor with no second
+   variable to keep in step. The SIDE is decided in JS (worldPlaque.js
+   statsSide) because it depends on the window's width, which a media
+   query cannot compare against the reticle's x. */
+.wplaque-stats { position: absolute; top: 0; width: ${STATS_W}px; box-sizing: border-box;
+  padding: 8px 10px; background: rgba(10,12,17,0.9); border: 2px solid #7d7460;
+  text-align: left; }
+.wplaque-stats[data-side="right"] { left: calc(100% + ${STATS_GAP}px); }
+.wplaque-stats[data-side="left"] { right: calc(100% + ${STATS_GAP}px); }
+/* BELOW is the phone's answer, and it is not a fallback that looks
+   broken: full width under the list, in the plaque's own flow rather
+   than beside it. */
+.wplaque-stats[data-side="below"] { position: static; width: auto; margin-top: 8px;
+  border: 0; border-top: 1px solid rgba(125,116,96,0.35); padding: 6px 0 0; background: none; }
+.wplaque-statrow { display: flex; align-items: baseline; gap: 10px; font-size: 12px;
+  line-height: 1.5; color: #d8cfae; }
+.wplaque-statkey { color: #7d7460; }
+.wplaque-statval { margin-left: auto; }
+/* A sentence row (a raw meat's "cook it at a fire") has no key, so it
+   must not be pushed to the right edge by the auto margin the paired
+   rows use for their value. */
+.wplaque-statnote .wplaque-statval { margin-left: 0; color: #a49a80; }
 /* AUDIT-WH R7: THE LIST HAS ITS OWN NODE AND HAD NO RULE. The draw
    emits a .wplaque-list wrapper round the rows and nothing styled it,
    so the block existed only to be an unstyled div - and a plaque under

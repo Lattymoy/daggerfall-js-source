@@ -43,7 +43,7 @@
 // module reaching into `ui/` to read a highlight. Moving the state to
 // the feature closes both.
 import { getPref } from './uiPrefs.js';
-import { itemNameParts } from './itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear
+import { itemNameParts, itemStatRows } from './itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
 import { nextSelection, selectedRow, hoverItemAt } from './worldHover.js';   // the fold's LAW and the row -> item walk, both driven there
 import { takeOneInto } from './inventory.js';   // ...and the move, with the gold door in it
 
@@ -138,6 +138,38 @@ export const quickLootRow = (frame) => selectedRow(_sel, frame);
 
 /** The highlight itself, for a host that needs to know there IS one. */
 export const quickLootSelection = () => (_sel ? { ..._sel } : null);
+
+/**
+ * QUICK-LOOT-STATS (2026-09-22, a player to Mac: "i love the quick loot
+ * but can it show the stats of the items next to the quickloot window?
+ * So i dont have to pick up everything to check in my inventory if its
+ * worth keeping"): THE HIGHLIGHTED ROW'S OWN NUMBERS.
+ *
+ * THE WHOLE POINT OF THE ARC WAS TO DECIDE IN THE WORLD RATHER THAN
+ * THROUGH A DOOR, and without this the decision was only half moved:
+ * Arc A said what a pile HELD and Arc B let you take it, so "is this
+ * worth stopping for" could be answered but "is this better than what I
+ * am wearing" still cost a pickup, a menu and a drop. A player found
+ * the gap in a day.
+ *
+ * ONE ROW, NOT SIX. The panel describes the row the player has picked
+ * out, because that is the one they are deciding about - and because
+ * six stat blocks under a crosshair is a window, which is the thing
+ * this arc exists to avoid. It follows that there is nothing to draw
+ * unless quick loot is ON and something is lit, so the readout needs no
+ * switch of its own: it is the highlight's other half.
+ *
+ * The rows are `itemInfo.js itemStatRows` - the same producers the
+ * classic popup and the enhanced detail card read, so the crosshair
+ * cannot disagree with the pack about what a sword does.
+ *
+ * @returns {{label: string, text: string}[]} empty when nothing is lit
+ */
+export function quickLootStats(frame) {
+  const row = quickLootRow(frame);
+  if (row < 0) return [];
+  return itemStatRows(frame?.rows?.[row]?.item ?? null);
+}
 
 /** Freed with the host that raised it: a selection is ABOUT a key in a
  *  world a teardown is unmaking, and a nudge spent in a dungeon must
