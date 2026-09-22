@@ -19,6 +19,9 @@ import { equipSoundFor } from '../src/characters/weapons.js';
 import { midScreenText } from '../src/ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's surface
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+// SWING-DEFAULT1 (2026-09-22): the harness-artifact pin below reads the DRAG's direction (WeaponSwingMode 0); the port's default is 2 now (click or hold), so the drag is asked for here, once for the file.
+import { setValue as _swingSetValue } from '../src/systems/settings.js';
+_swingSetValue('Controls', 'WeaponSwingMode', '0');
 
 const stubAudio = () => {
   const a = { played: [], playOneShot(id) { a.played.push(id); } };
