@@ -11,7 +11,7 @@
  {
   "name": "GRASSPX-every-tip-is-the-highlight",
   "file": "src/render/grassPixelArt.js",
-  "old": "  if (isTip && height >= 20) return 4;",
+  "old": "  if (isTip && height >= highlightMin) return 4;",
   "new": "  if (isTip) return 4;",
   "tests": [
    "test/grasspx.test.js"
@@ -175,8 +175,8 @@
  {
   "name": "GRASSPX-the-renderer-compiles-the-labs-text-so-the-pixel-uniforms-do-not-exist",
   "file": "src/render/labGrass.js",
-  "old": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS } } = {}) {",
-  "new": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS } } = {}) {",
+  "old": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null } = {}) {",
+  "new": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS }, tuft = null } = {}) {",
   "tests": [
    "test/grasspx.test.js"
   ]
@@ -292,8 +292,8 @@
  {
   "name": "AUDIT-GRASSPX-the-highlight-is-one-texel",
   "file": "src/render/grassPixelArt.js",
-  "old": "export const isHighlightRow = (r, top, height) => height >= 20 && r >= top - 1;",
-  "new": "export const isHighlightRow = (r, top, height) => height >= 20 && r >= top;",
+  "old": "export const isHighlightRow = (r, top, height, highlightMin = PX_HIGHLIGHT_MIN) => height >= highlightMin && r >= top - 1;",
+  "new": "export const isHighlightRow = (r, top, height, highlightMin = PX_HIGHLIGHT_MIN) => height >= highlightMin && r >= top;",
   "tests": [
    "test/grasspx.test.js"
   ]

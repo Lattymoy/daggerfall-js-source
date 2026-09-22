@@ -188,6 +188,84 @@ do the pins derive, does the record say true things.
 - Campaign after the audit: 18 mutants, 18 killed, on a green file.
 
 
+## PEER-CADENCE - a peer's body is re-posed on a cadence the eye can see (2026-09-22)
+
+Mac, before the merge: "look for ways to improve online performance."
+PERF-ON2 had measured the online frame - the session, the names, the
+billboard draw - and found each cheap. It never measured the peer
+BODIES, and the bodies are the online frame's one real cost: a peer in
+a Morrowind body is a whole `createFpArm()` rig, and every frame
+`PeerBodies._place` stepped it through the pipeline this page is about -
+poseAssembly (every skinned vertex blended in JS), uploadThirdMesh (the
+whole packed mesh re-uploaded), stepRigEffects - and then `draw`
+rendered it into the sprite target. ~0.3 ms a body a frame at 3,000
+vertices (above), per body, up to BODIES_MAX of them.
+
+**Against what?** A peer's pose arrives at POSE_HZ, ten a second, and is
+eased between arrivals; the drawn body is a sprite quantised to
+MW_ARM_PIXEL blocks. Re-skinning that sixty times a second is
+oversampling: the skin cannot show more than the wire sends or the
+block resolves.
+
+**What changed.** The rig's `update(dt)` takes `{ pose, effectsDt }`.
+`pose: false` steps the CLOCKS and not the SKIN: the four-slot machine
+advances, the movement refresh reads the camera, the keys fire, and the
+third-person frame stops short of the skin, the upload and the particle
+step. Nothing else about the rig moved; a caller that never heard of
+the flag poses every frame as before, and the first-person arm never
+takes it (its held sheet reads the posed camera node every frame).
+`net/peerBodies.js` decides which frames, by distance - `POSE_CADENCE`
+`[[10, 1], [25, 2], [Infinity, 3]]`: every frame within 10 m, where a
+swing's arc is read; every second frame to 25 m; every third beyond,
+which at 60 fps is still twice the wire's rate and under the block. The
+first step of a standing body ALWAYS poses (the third-person mesh is
+minted by the first upload and `thirdActive` waits on it - a body that
+skipped its first frame would stand as the doll for a frame), bodies
+take a phase each so eight far bodies do not all skin on the same
+frame, and the skipped frames' dt is banked and handed to the particle
+step on the frame that poses, so a puff keeps wall time.
+
+**Measured** by `tools/peerBodiesProbe.mjs`: the real PeerBodies over
+the real rig on the arm fixtures (`test/fixtures/mw/bodyRig.mjs`, the
+same build fparm.test.js stands), a counting renderer, 600 frames of
+peers walking out from 4 m to 50 m with a pose every sixth frame, at
+1, 4 and 8 bodies. Poses+uploads a body a frame: 1.00 / 1.00 / 1.00
+before, 0.74 / 0.52 / 0.43 after. The fixture rig is four small
+pieces, so the probe's milliseconds understate a retail body by an
+order of magnitude and are not reported as a saving; the counts are
+exact and the skin is what PERF-RIG1 costed.
+
+**Pinned** in test/peercadence.test.js (7): the cadence's rows and its
+inclusive edges; PeerBodies stepping a stub rig every frame and posing
+near ones every frame and far ones one in three, evenly; the first step
+of a standing body posed whatever its phase; three bodies at one
+distance skinning on three different frames, and a body walking in
+tightening live; the bank equal to the dt since the last pose; and the
+REAL rig - a clocks-only step before any pose mints nothing and does
+not throw, six clocks-only steps upload nothing and count no posed
+frame while the body still stands and draws, and a pose after six
+skipped frames is bit-identical to a pose after six posing frames
+(the fixture idle animates, so the clocks provably advanced).
+tools/mutants/peercadence.json: 15 dead, 0 survived - the fifteenth
+(the clips advancing only on a posing frame) survived the first draft
+because the pin for it read the source, and died once the pin drove
+two rigs and compared their skins.
+
+**Still open.**
+- **The sprite render is still one a body a frame** (the probe's last
+  column, 1.00 throughout). `drawThird` renders each body into ONE
+  shared offscreen target and draws the quad from it, so a body's
+  picture cannot be kept across frames without a target of its own -
+  a per-body RT, invalidated on a pose or a camera move, is the next
+  slice, and it needs a GPU to measure.
+- **The foes' rigs pose every frame.** A Morrowind-bodied foe
+  (`scenes/dungeonContext.js`, `scenes/exteriorFoes.js`) goes through
+  the same `rig.update(dt)` and could take the same cadence by
+  distance; that is the offline frame's cost and was outside this
+  request.
+- GPU skinning (above) still removes the skin's cost outright rather
+  than dividing it.
+
 ## PERF-READ1 - the `hud` span was the vsync wait (2026-09-21)
 
 Mac pasted a `?perf=cpu` readout from the road: `cpu 17.15ms | hud 7.09 |

@@ -38,6 +38,7 @@ await page.goto('http://localhost:5298/play/');
 
 const out = await page.evaluate(async () => {
   const { LabGrassRenderer, createGrassField, LAB_GRASS, grassPerCell, GRASS_CELL, LAB_GRASS_VS, LAB_GRASS_FS } = await import('/src/render/labGrass.js');
+  const { PX_TUFT_W, PX_TUFT_H } = await import('/src/render/grassPixelArt.js');   // GRASS-PX4: the sheet's own size, not a number typed here
   const { perspective, lookAt } = await import('/src/world/mat4.js');
   const W = 640, H = 400;
   const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
@@ -128,8 +129,29 @@ const out = await page.evaluate(async () => {
   const storm = { ...light, dim: 0.46, sunScale: 0.3 };
   const stormSmooth = frame(200, 'smooth', { lit: storm }), stormPixel = frame(200, 'pixel', { lit: storm });
   const dithered = frame(60, 'pixel'), undithered = frame(300, 'pixel');
+  // GRASS-PX4 (Mac: "have grass have larger pixels"): the OLD 16x32
+  // sheet beside the shipped one, same field, same style, so the
+  // change is measured rather than described. A tuft's texel is the
+  // thing the eye reads as a pixel; the shipped sheet has a quarter as
+  // many per tuft, so the near band shows fewer colour edges per row.
+  const old = new LabGrassRenderer(gl, { tuft: { w: 16, h: 32 } });
+  const oldField = createGrassField(old, { keep, ground, perFrame: 1e9 });
+  oldField.update(eye[0], eye[2], keep, ground);
+  const edgesIn = (name) => {
+    // horizontal colour edges in the bottom quarter of the frame, per row
+    const px = new Uint8Array(W * H * 4);
+    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    let edges = 0;
+    for (let y = 0; y < H / 4; y++) for (let x = 1; x < W; x++) {
+      const i = (y * W + x) * 4, j = i - 4;
+      if (px[i] !== px[j] || px[i + 1] !== px[j + 1] || px[i + 2] !== px[j + 2]) edges++;
+    }
+    return { name, edges: edges / (H / 4), shot: canvas.toDataURL('image/png') };
+  };
+  const pixelOld = frame(200, 'pixel', { r: old }); const oldEdges = edgesIn('grasspx4-old-16x32');
+  frame(200, 'pixel'); const newEdges = edgesIn('grasspx4-new-8x16');
   const pxSheet = (() => {
-    const w = grass.pxVariants * 16, h = 32;
+    const w = grass.pxVariants * PX_TUFT_W, h = PX_TUFT_H;
     const fb = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, grass.pxSheet, 0);
     const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
@@ -138,10 +160,10 @@ const out = await page.evaluate(async () => {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.deleteFramebuffer(fb);
     let soft = 0, blade = 0;
     for (let i = 3; i < buf.length; i += 4) { if (buf[i] !== 0 && buf[i] !== 255) soft++; if (buf[i] === 255) blade++; }
-    return { ok, soft, blade, w, h };
+    return { ok, soft, blade, w, h, tuftW: PX_TUFT_W, tuftH: PX_TUFT_H, oldW: old.pxVariants * 16, oldH: 32 };
   })();
   return {
-    pixel, pixelShipped, pxSheet, labFrame, nightSmooth, nightPixel, stormSmooth, stormPixel, dithered, undithered,
+    pixel, pixelShipped, pxSheet, pixelOld, oldEdges, newEdges, labFrame, nightSmooth, nightPixel, stormSmooth, stormPixel, dithered, undithered,
     perCell: grassPerCell(), cell: GRASS_CELL, slots: field.slots, verts: grass.verts,
     labRange: LAB_GRASS.range, labHeight: LAB_GRASS.height, density: LAB_GRASS.density,
     liveCells: field.live.size, at200, at110, shipped, sweep, glError: gl.getError(),
@@ -173,6 +195,16 @@ check('the pixel frame submits under half the smooth frame\'s vertices - one qua
 check('and a different picture from the smooth one', out.pixel.sum !== out.at200.sum, `sum ${out.pixel.sum} vs ${out.at200.sum}`);
 check('the pixel field takes FEWER colours than the gradient field - the ramp and the four tones', out.pixel.tones < out.at200.tones * 0.5, `${out.pixel.tones} against ${out.at200.tones}`);
 check('the sheet reached the GPU with a hard alpha - no texel between 0 and 255', out.pxSheet.ok && out.pxSheet.soft === 0 && out.pxSheet.blade > 100, JSON.stringify(out.pxSheet));
+// GRASS-PX4: the tuft is half the texels each way, and the frame shows it
+check('the shipped tuft is 8x16 - half the old 16x32 each way, a quarter of the texels', out.pxSheet.tuftW * 2 === 16 && out.pxSheet.tuftH * 2 === 32, `${out.pxSheet.tuftW}x${out.pxSheet.tuftH}`);
+check('the near band has fewer colour edges per row on the shipped sheet than on the old one - the pixels ARE larger', out.newEdges.edges < out.oldEdges.edges * 0.8,
+  `${out.newEdges.edges.toFixed(1)} edges/row against ${out.oldEdges.edges.toFixed(1)} (old sheet ${out.pxSheet.oldW}x${out.pxSheet.oldH}); ${out.pixel.green} green px in ${out.pixel.tones} colours against the old sheet's ${out.pixelOld.green} in ${out.pixelOld.tones}`);
+{
+  const { mkdirSync, writeFileSync } = await import('node:fs');
+  mkdirSync('tools/shots', { recursive: true });
+  for (const s of [out.oldEdges, out.newEdges]) writeFileSync(`tools/shots/${s.name}.png`, Buffer.from(s.shot.split(',')[1], 'base64'));
+  console.log('  shots: tools/shots/grasspx4-old-16x32.png, tools/shots/grasspx4-new-8x16.png');
+}
 // GRASS AUDIT 1: THE EXECUTED PINS. Each of these is a picture read back,
 // not a line of source matched.
 const pc = (v) => `${(100 * v).toFixed(1)}%`;

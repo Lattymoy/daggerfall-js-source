@@ -3810,8 +3810,22 @@ export function createFpArm() {
 
     /** PER FRAME. Synchronous, no allocation after the first pack, no
      *  await and no dynamic import - a promise per frame in a rAF body
-     *  is a stutter you cannot profile out. */
-    update(dt) {
+     *  is a stutter you cannot profile out.
+     *
+     *  PEER-CADENCE (2026-09-22): `pose: false` steps the CLOCKS and
+     *  not the SKIN - the four-slot machine advances, the movement
+     *  refresh reads the camera, the keys fire - and the third-person
+     *  frame stops short of poseAssembly, the mesh upload and the
+     *  particle step, which are the frame's cost (PERF-RIG1: ~0.3 ms a
+     *  body at 3,000 vertices, per body). A body posed from a 10 Hz
+     *  wire and drawn as a 3-px sprite does not need its skin every
+     *  frame; net/peerBodies.js decides which frames, by distance. The
+     *  particle systems are stepped by `effectsDt` on the frame that
+     *  poses - the caller banks the skipped frames' dt and hands it
+     *  over, so a puff's clock keeps wall time. The first-person arm
+     *  never takes `pose: false` (the held sheet reads the posed
+     *  camera node every frame). */
+    update(dt, { pose = true, effectsDt = dt } = {}) {
       if (!built || !built.ok || !renderer) return;
       const cam = camera && camera();
       sneaking = !!(cam && cam.sneaking);
@@ -3889,15 +3903,22 @@ export function createFpArm() {
         const tBase = poseSource ? poseSource.trackMap : t.tracks;
         const tOverlay = torchState && torchSource && t.leftArm && t.leftArm.size;
         if (tOverlay) overlayClock = torchState.time;
-        poseAssembly(t.arm, {
-          tracks: tOverlay ? overlayFor(tBase, t.leftArm) : tBase,
-          sampleTrack: tOverlay ? overlaySample : sampleTrack,
-          time: poseTime(state),   // MS1: a backhand's window runs backwards
-          accumRoot: t.accumRoot,
-        });
-        uploadThirdMesh(t);
-        // MAC-Q: the body's particle systems, on the clock its parts ride
-        stepRigEffects(t.arm, { dt, clock: tOverlay ? overlayClock : poseTime(state), renderer, mesh: thirdMesh, textures: t.textures, hidden: effectHidden });
+        // PEER-CADENCE: a frame that does not pose keeps last frame's
+        // skin, upload and bounds; the clips above advanced all the
+        // same, so the next posing frame lands where the clock is.
+        if (pose) {
+          poseAssembly(t.arm, {
+            tracks: tOverlay ? overlayFor(tBase, t.leftArm) : tBase,
+            sampleTrack: tOverlay ? overlaySample : sampleTrack,
+            time: poseTime(state),   // MS1: a backhand's window runs backwards
+            accumRoot: t.accumRoot,
+          });
+          uploadThirdMesh(t);
+          // MAC-Q: the body's particle systems, on the clock its parts ride
+          stepRigEffects(t.arm, { dt: effectsDt, clock: tOverlay ? overlayClock : poseTime(state), renderer, mesh: thirdMesh, textures: t.textures, hidden: effectHidden });
+          frames++;   // the POSED frames - a skipped one is not a frame the skin saw
+        }
+        if (!thirdMesh) return;   // never posed yet: nothing to hide
         // Rule 57 hides on the SAME flags: sheathed vanilla shows no
         // weapon on the body, and the arrow follows the shoot keys.
         for (const r of thirdMesh.ranges) {
@@ -3906,7 +3927,6 @@ export function createFpArm() {
           else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51
           else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, weaponShown, { arrowShown, tag: r.piece?.tag });   // WS1: the holster while the hand is empty, the scabbard always, the quiver less the round on the string
         }
-        frames++;
         return;
       }
       // MW-D51: RULES 25+26 FOR ONE MASK - the "torch" state wins the

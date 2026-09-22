@@ -67,6 +67,19 @@ export const BODY_REBUILD_MS = 10000;
 export const PENDING_FRAMES = 60;
 /** The drawn yaw eases toward the pose's at this rate (a second) - a turn the rig can see every frame, not one that stops between poses. */
 export const YAW_EASE = 12;
+/** PEER-CADENCE (2026-09-22, Mac: "look for ways to improve online performance"): how many frames apart a body's
+ *  SKIN is re-posed, by its distance from the eye (scene units, metres) - `[within, every]`, the first row that
+ *  holds. The clips advance every frame regardless (the rig's `pose: false`); what waits is poseAssembly, the mesh
+ *  upload and the particle step, the whole of a body's CPU cost (PERF-RIG1: ~0.3 ms a body a frame at 3,000
+ *  vertices, and eight bodies at once). The pose comes off the wire at POSE_HZ (10 a second) and the body is drawn
+ *  as a MW_ARM_PIXEL sprite, so a skin every third frame (20 Hz at 60 fps) beyond 25 m is still twice the wire and
+ *  under the block; within 10 m every frame, where a swing's arc is read. */
+export const POSE_CADENCE = [[10, 1], [25, 2], [Infinity, 3]];
+/** Frames between poses for a body at squared distance d2 - the first POSE_CADENCE row within which it stands. */
+export function poseCadenceFor(d2) {
+  for (const [within, every] of POSE_CADENCE) if (d2 <= within * within) return every;
+  return POSE_CADENCE[POSE_CADENCE.length - 1][1];
+}
 
 /** The rig's build options from a peer's look - the same inputs
  *  weaponRig.armBuildOptsOf maps the player's entity onto. `hasAmmo`
@@ -132,6 +145,7 @@ export class PeerBodies {
     this._bodies = new Map();   // peer id -> { id, key, rig, state: 'building'|'ok', cam, feet, yaw, speed, goneAt, far, d2, swing, cast, pending, held }
     this._failed = new Map();   // lookKey -> { until, reason }
     this._queue = Promise.resolve();
+    this._phase = 0;   // PEER-CADENCE: each new body takes the next phase, so bodies on the same cadence pose on different frames
   }
 
   /** Is this body standing for its peer: built, in range, its peer present, the rig live? */
@@ -197,7 +211,8 @@ export class PeerBodies {
     for (const w of want) {
       if (this._bodies.size >= BODIES_MAX && !this._yield(w.d2)) break;
       const peer = w.peer;
-      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null, cast: null, pending: null, held: false, ammo: null, weapon: null };
+      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null, cast: null, pending: null, held: false, ammo: null, weapon: null,
+        posed: false, tick: 0, phase: this._phase++, bank: 0 };   // PEER-CADENCE
       this._bodies.set(peer.id, b);
       b.rig.attach(this.renderer, () => b.cam);
       this._place(b, peer, toScene, dt, near);
@@ -240,7 +255,16 @@ export class PeerBodies {
       // AUDIT MWBODY A1: a throw from one peer's rig is that peer's doll, never the frame's end
       try {
         this._arm(b, peer.shown);
-        b.rig.update(dt);
+        // PEER-CADENCE: the skin on its cadence, the clocks every frame. The FIRST step of a standing body always
+        // poses (the third-person mesh is minted by the first upload, and `thirdActive` waits on it - a body that
+        // skipped its first frame would stand as the doll for a frame); after that, one frame in `every`, the
+        // bodies staggered by phase so eight far bodies do not all skin on the same frame. The skipped frames' dt
+        // is banked for the particle step, which keeps wall time on the frame that poses.
+        b.bank += dt;
+        const pose = !b.posed || (b.tick + b.phase) % poseCadenceFor(b.d2) === 0;
+        b.tick++;
+        if (pose) { b.rig.update(dt, { pose: true, effectsDt: b.bank }); b.bank = 0; b.posed = true; }
+        else b.rig.update(dt, { pose: false });
       } catch (e) { this._fail(b, `update threw: ${e?.message ?? e}`); }
     } else if (b.swing != null) { b.swing = peer.shown.an | 0; b.cast = peer.shown.cn | 0; b.pending = null; }   // AUDIT WORLD C7: not arming (far, or frozen) - the counts follow, so a blow out of sight is not replayed on waking
   }
