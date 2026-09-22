@@ -18,7 +18,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { dirname, join, relative } from 'node:path';
+import { graph } from './importGraph.mjs';   // ACC4: the walk moved to a helper so the ACCOUNT Worker's deploy filter is held to its own graph by the same law
 import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker entry exports handlers alone
 
 /** SLAM13 (AUDIT SLAM, final lens): THE LAW IS THE WHOLE BUNDLE, not two files. wrangler bundles every relative import
@@ -28,20 +28,6 @@ import { RELAY_VERSION } from '../src/net/wire.js';   // LOCALDEV1: the worker e
  *  depth first, each file once, in the order the imports are written. A file joining the graph changes the hash too,
  *  which is the point - a new import is a new bundle. Rows before world73 were sha256(index.js + wire.js) and stay
  *  as recorded: they are facts about bytes already deployed, under the hash law of their day. */
-function graph(entry) {
-  const out = [];
-  const walk = (file) => {
-    if (out.includes(file)) return;
-    out.push(file);
-    const src = readFileSync(new URL('../' + file, import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[ \t])\/\/[^\n]*/gm, '$1');
-    for (const m of src.matchAll(/\bfrom\s+'(\.[^']+)'|\bexport\s+\*\s+from\s+'(\.[^']+)'|\bimport\s+'(\.[^']+)'/g)) {
-      const spec = m[1] ?? m[2] ?? m[3];
-      walk(relative('.', join(dirname(file), spec)).split('\\').join('/'));
-    }
-  };
-  walk(entry);
-  return out;
-}
 export const RELAY_GRAPH = graph('server/src/index.js');
 
 /** A version bump is `sed world<N>/world<N+1>` over nine test files - RUN IT WITH THIS FILE EXCLUDED, or it
@@ -70,6 +56,7 @@ const LAW = {
   world87: 'b35a4d0ec7579023e6ba83ea894ceeba3bd65c26f22ea9a568e9de94eb7b4150',   // ACC3: TITLES AND GLYPHS RIDE THE SIGNATURE (Mac: "Player titles appear above a player name... name glyphs... appear on the right side"). src/net/identityToken.js gains TITLES, GLYPHS and the `t`/`g` claims, validated against those two closed lists before a token verifies; server/src/index.js `_named` reads both OUT of the verified claims, and wire.js `badged` puts them on the welcome's roster rows, the join, the channel roster and the `who` answer - absent, never null, when there is no badge. A CLIENT NEVER ASSERTS EITHER, which is ACC1g's law applied to a stronger claim than a name: a title over somebody's head reads as this project's own word about them. The deployed relay is still world84, so world86 and world87 ride ONE drop between them.
   world88: 'b96b8ca4a994bf052081da4499f6b34d864bf8ceb03fd8c27aa981c03510747d',   // ACC3b: `readBadge`, the INVERSE of world87's `badged`, in wire.js beside it - the client's half of one field, so a badge cannot be written one way and understood another. It is the relay's bundle only because the pair lives together; the relay never calls it (it reads a badge out of a verified token, never off the wire). wire.js imports the vocabulary from identityToken.js, which was already in the graph, so the bundle gained bytes and no file.
   world89: 'c6bbe33551e8d6be470e63cb75cfa75dd9012ebe56dad189b7681f4a8d573067',   // RED1: THE SERVER SPEAKING (Mac: "a red text system (kind of like warframe) where I can message chat as the server before we merge"). A `say` frame in, a `red` frame out to every socket in the room, and THE AUTHORITY IS THE DEV GLYPH THE TOKEN ALREADY CARRIED - `a.glyphs` was written by `_named` off the verified claims and can be written by nothing else on that socket, so the right to speak as the server is the same fact as the mark beside the name, granted and revoked the same way, with no second password, no admin route and no second key to leak. Its own bucket at RED_HZ_MAX, deliberately well under chat's, because a player's line reaches a room and this reaches every player in the game. The line carries no id and no name, because nobody is speaking it - and it is its OWN frame type rather than a flag on a chat line, so the client marks it from the type, which no player can send.
+  world90: '7f109a2bc863ab36fe9517fad4c43300e4409839ad8036459024fd0db4e443aa',   // MOD1: THE MODERATOR'S MUTE (Mac: "a moderator glyph and moderator chat commands" - /mute, /unmute, the blue shield). identityToken.js gains the `mod` glyph, the `mu` claim (a mute rides the signature, so a reconnect cannot shed one) and a second token SHAPE - the mute ORDER, `{o:'mute', s, mu}`, which one key signs beside identities and which the claim shapes keep apart both ways. server/src/index.js keeps the verified account (`sub`) and the mute (`mu`) on the attachment, refuses a muted line and tells only its sender, and gains a `mute` arm that believes the ORDER'S SIGNATURE and never its carrier, the newest order per account winning (`_orders`) so a replay cannot undo an unmute and a token older than the order is held to it. wire.js carries `{t:'mute', order}` in, `{t:'muted', until}` out, `sub` on chat lines and a channel's roster and joins, MUTE_HZ_MAX. The key load moved into `_loadKey` so the hello and the order share one.
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));

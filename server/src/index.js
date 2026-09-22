@@ -171,14 +171,16 @@
 // ACC0 chose two Workers so that account work would NOT cost this; the
 // token seam is the one piece that has to be paid for, and it is paid
 // once here rather than a little at a time.
-import { verifyToken, importPublicKeyB64, MAX_TTL_S } from '../../src/net/identityToken.js';
+import { verifyToken, verifyOrder, importPublicKeyB64, MAX_TTL_S } from '../../src/net/identityToken.js';   // MOD1: and the mute order, checked with the same key
 /** ACC1d/F8: the most spent signatures one room remembers. Every entry
  *  expires within MAX_TTL_S and the hello gate bounds how fast they can
  *  arrive, so honest traffic never comes near this; it is here so a
  *  flood cannot grow the map without end. */
 const SPENT_MAX = 4096;
+/** MOD1: the most accounts whose latest mute order one room remembers. */
+const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -241,6 +243,15 @@ export class Room {
      *  provider links - the record says exactly what that does and does
      *  not close. */
     this._spent = new Map();
+    /** MOD1: THE NEWEST MUTE ORDER THIS ROOM HAS APPLIED, per account -
+     *  `{i, mu, sig}`. Two jobs: an order older than one already applied
+     *  is ignored (so a replayed mute cannot undo an unmute inside its
+     *  minute), and a hello whose token was minted BEFORE the newest
+     *  order here takes the order's word (so a token minted a moment
+     *  before the mute cannot carry its holder past it). Memory, bounded
+     *  by ORDERS_MAX, oldest out - the account row is the truth and
+     *  every later token carries it, so this only has to cover the gap. */
+    this._orders = new Map();
     this._idx = null;   // ws -> attachment, read once (A7); rebuilt when the socket set changes
     this._roomChat = null;   // AUDIT CHAT A2: the room's own chat budget - on the instance, since a sleeping room fans nothing
     this._roomFoes = null;   // AUDIT WORLD2 A5: the room's foes byte budget (the frame times its listeners)
@@ -576,18 +587,7 @@ export class Room {
     // door finally standing where it was always drawn.
     if (!m.tok) return { error: 'sign in to play online' };
 
-    if (this._verifyKey === undefined) {
-      const raw = this.env.IDENTITY_PUBLIC_KEY;
-      this._verifyKey = null;
-      if (typeof raw === 'string' && raw) {
-        // A BAD KEY IS NOT A CRASH. A mistyped config must not take the
-        // room down on its first hello; it leaves the relay unable to
-        // vouch for anybody, which the deploy's own check is there to
-        // catch before a player ever sees it.
-        try { this._verifyKey = await importPublicKeyB64(raw, { subtle: crypto.subtle }); }
-        catch (e) { console.warn('[room] IDENTITY_PUBLIC_KEY will not import', e?.message ?? e); }
-      }
-    }
+    await this._loadKey();
     // NO KEY, NO ROOM - AND THIS ARM CHANGED DIRECTION WITH ACC1g.
     // While a token was optional, refusing everybody over a mistyped
     // config was the worse failure and this line admitted them unnamed.
@@ -641,7 +641,30 @@ export class Room {
     // said ok, so what comes out here is one of a handful of known
     // strings or nothing. The room does not re-check and does not need
     // to: an unknown badge cannot have been signed for.
-    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g };
+    // MOD1: THE MUTE, off the same signature - and a mute ORDER this
+    // room applied after the token was minted wins over the token, so a
+    // token minted a moment before a mute cannot carry its holder past
+    // it (and one minted before an unmute cannot hold them in it).
+    const order = this._orders.get(r.claims.s);
+    const mu = order && order.i > r.claims.i ? order.mu : (r.claims.mu ?? 0);
+    return { name: r.claims.n, kind: r.claims.k, subject: r.claims.s, title: r.claims.t, glyphs: r.claims.g, mu };
+  }
+
+  /** The verifying key, imported once. Shared by the hello and by
+   *  MOD1's mute order, so there is one key and one way to load it. */
+  async _loadKey() {
+    if (this._verifyKey === undefined) {
+      const raw = this.env.IDENTITY_PUBLIC_KEY;
+      this._verifyKey = null;
+      if (typeof raw === 'string' && raw) {
+        // A BAD KEY IS NOT A CRASH. A mistyped config must not take the
+        // room down on its first hello; it leaves the relay unable to
+        // vouch for anybody, which the deploy's own check is there to
+        // catch before a player ever sees it.
+        try { this._verifyKey = await importPublicKeyB64(raw, { subtle: crypto.subtle }); }
+        catch (e) { console.warn('[room] IDENTITY_PUBLIC_KEY will not import', e?.message ?? e); }
+      }
+    }
   }
 
   async _message(ws, message) {
@@ -710,7 +733,7 @@ export class Room {
       // refused token never reaches the roster at all.
       const who = await this._named(m, now);
       if (who.error) { this._refuse(ws, who.error); return; }
-      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }
+      if (!this._setAttach(ws, { ...a, id: m.id, name: who.name, title: who.title, glyphs: who.glyphs, sub: who.subject, mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -721,9 +744,9 @@ export class Room {
         // panel read the player's own cell instead. The names are on the attachments already (no look, no storage
         // read - the hello path stays as cheap as AUDIT CHAT A1 priced it); socket order, cut at CHAT_ROSTER_MAX, with
         // `n` the true count. The join below is said here too, with the name and nothing else.
-        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => badged({ id: b.id, name: b.name }, b));   // ACC3: and whatever the token vouched for, beside it   // ACC1g: a name and nothing beside it - every name in this room was verified to get in, so a per-name verdict says the same thing about everybody
+        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => badged({ id: b.id, name: b.name, sub: b.sub }, b));   // MOD1: and the verified account - what /mute names   // ACC3: and whatever the token vouched for, beside it   // ACC1g: a name and nothing beside it - every name in this room was verified to get in, so a per-name verdict says the same thing about everybody
         if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: others.length + 1, v: RELAY_VERSION, now: Date.now() }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
-        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name }, who));
+        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject }, who));
         for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);
         // SOC1: the account, in the hub - after the welcome and the join, so a client's session has reset on the
         // welcome before its picture lands; a hello naming none is a build before this slice, admitted as it was
@@ -1064,11 +1087,16 @@ export class Room {
       const cdrops = gate.pass ? 0 : (a.cdrops ?? 0) + 1;
       this._setAttach(ws, { ...a, cbucket: gate.bucket, cdrops });
       if (!gate.pass) { if (cdrops > CHAT_STRIKES_MAX) this._refuse(ws, 'too many lines'); return; }   // over the rate: dropped, never queued
+      // MOD1: A MUTED PLAYER'S LINE GOES NOWHERE, and they are told why
+      // and until when - after the rate gate, so a muted player hammering
+      // the key is struck out exactly as anyone else would be, and a
+      // refusal is never a free way to make the room answer.
+      if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }
       // AUDIT CHAT A2: the room's own budget, over which a line is dropped and nobody is struck - the fan is everyone
       const room = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);
       this._roomChat = room.bucket;
       if (!room.pass) return;
-      const out = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now });
+      const out = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub });   // MOD1: the verified account beside the line
       const chat = isChatRoom(a.key);
       for (const [other, b] of [...this._all()]) {
         if (!b.id) continue;
@@ -1108,6 +1136,42 @@ export class Room {
       // can send.
       const said = JSON.stringify({ t: 'red', text: m.text, at: now });
       for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in this room, the sender included - that is the receipt
+    }
+    if (m.t === 'mute') {
+      // ═══ MOD1 — A MUTE ORDER, CARRIED IN ═══════════════════════════
+      //
+      // Mac: "moderator chat commands" - /mute and /unmute.
+      //
+      // THE CARRIER IS NOT ASKED WHO THEY ARE. The account service
+      // decided the moderator may do this and SIGNED the result; this
+      // room checks that signature with the key it already holds and
+      // nothing else. So the authority is exactly as strong as the
+      // name and the badge - one grant list in the service's config,
+      // one signature - and this arm adds no second way to be trusted.
+      const now = Date.now();
+      const gate = muteGate(a.mbucket, now);
+      this._setAttach(ws, { ...a, mbucket: gate.bucket });
+      if (!gate.pass) return;
+      await this._loadKey();
+      if (!this._verifyKey) return;
+      const r = await verifyOrder(m.order, this._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000) });
+      if (!r.ok) return;   // silently, as `say` refuses: a forger learns nothing from being ignored
+      const { s: sub, mu, i } = r.claims;
+      const sig = m.order.slice(m.order.lastIndexOf('.') + 1);
+      // THE NEWEST ORDER WINS, and the same one twice is one order. A
+      // replay of an old mute inside its minute cannot undo the unmute
+      // that followed it.
+      const held = this._orders.get(sub);
+      if (held && (i < held.i || held.sig === sig)) return;
+      this._orders.delete(sub);
+      if (this._orders.size >= ORDERS_MAX) this._orders.delete(this._orders.keys().next().value);
+      this._orders.set(sub, { i, mu, sig });
+      const told = JSON.stringify({ t: 'muted', until: mu });
+      for (const [other, b] of [...this._all()]) {
+        if (b.sub !== sub) continue;
+        this._setAttach(other, { ...b, mu });
+        this._send(other, told);   // the player hears it at once - muted until, or 0 for lifted
+      }
     }
   }
 

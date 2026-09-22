@@ -36,9 +36,21 @@ name: Deploy account service (drops nobody)
 on:
   push:
     branches: [main]
+    # EVERY FILE OUTSIDE server-account/ THAT THE WORKER BUNDLES is
+    # listed, and test/accountdeploy.test.js walks the Worker's import
+    # graph and holds this list to it. Only identityToken.js was listed
+    # until ACC4 - a change to the name filter or the handle shape was
+    # bundled into this Worker and did not deploy it.
     paths:
       - "server-account/**"
       - "src/net/identityToken.js"
+      - "src/net/handleShape.js"
+      - "src/net/nameFilter.js"
+      - "src/net/moderation.js"
+      - "src/net/playClock.js"
+      - "src/net/wire.js"
+      - "src/world/mat4.js"
+      - "src/characters/nameGen.json"
       - ".github/workflows/account-deploy.yml"
   workflow_dispatch:
 
@@ -371,6 +383,28 @@ jobs:
             -H 'content-type: application/json' -d '{"label":"deploy-smoke"}')
           secret=$(echo "$guest" | sed -n 's/.*"secret":"\([^"]*\)".*/\1/p')
           test -n "$secret" || { echo "::error::no guest session - /v1/auth/guest did not answer a secret"; echo "$guest"; exit 1; }
+
+          # ACC4: THE BEAT IS ONE UPDATE ... RETURNING with numbered
+          # parameters. node:sqlite runs both; this asks D1 itself.
+          code=$(curl -sS --max-time 15 -o /tmp/beat.json -w '%{http_code}' -X POST "$base/v1/account/played" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\"}")
+          echo "played -> $code"
+          cat /tmp/beat.json || true
+          echo
+          if [ "$code" != "200" ] || ! grep -q '"playedS":0' /tmp/beat.json; then
+            echo "::error::the time-played beat failed on the deployed Worker ($code) - a first beat must answer playedS 0"
+            exit 1
+          fi
+
+          # MOD1: THE MODERATION ROUTE IS LIVE AND SHUT. A guest is nobody's
+          # moderator, so it must be refused 403 - a 404 is a route that did
+          # not deploy, a 500 a migration that did not apply.
+          code=$(curl -sS --max-time 15 -o /tmp/mod.json -w '%{http_code}' -X POST "$base/v1/mod/mute" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"target\":\"p_nobody\",\"minutes\":1}")
+          echo "mod/mute as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"not-moderator"' /tmp/mod.json; then
+            echo "::error::/v1/mod/mute did not refuse a guest as not-moderator ($code)"; cat /tmp/mod.json || true; exit 1
+          fi
 
           handle="smoke$(date +%s | tail -c 7)"
           code=$(curl -sS --max-time 25 -o /tmp/reg.json -w '%{http_code}' -X POST "$base/v1/auth/register" \

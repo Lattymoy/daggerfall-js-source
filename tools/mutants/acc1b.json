@@ -134,8 +134,8 @@
   {
     "name": "ACC1b-14-the-token-carries-a-name-the-client-sent",
     "file": "server-account/src/index.js",
-    "old": "          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe },",
-    "new": "          { s: who.player.id, n: body.name ?? displayName(who.player), k: accountKind(who.player), ...wardrobe },",
+    "old": "          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu },",
+    "new": "          { s: who.player.id, n: body.name ?? displayName(who.player), k: accountKind(who.player), ...wardrobe, mu },",
     "tests": [
       "test/accountworker.test.js"
     ],

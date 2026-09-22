@@ -191,9 +191,10 @@ export const ACCOUNT_KINDS = Object.freeze(['guest', 'linked']);
 export const TITLES = Object.freeze(['founder', 'developer']);
 
 /** The glyphs that exist. A glyph is not worn, it is TRUE of a player -
- *  sprout is "this account is new", dev is "this is a developer" - so a
- *  token may carry several and a player chooses none of them. */
-export const GLYPHS = Object.freeze(['sprout', 'dev']);
+ *  sprout is "this account is new", dev is "this is a developer", mod is
+ *  "this is a moderator" (MOD1, Mac: "a moderator glyph") - so a token
+ *  may carry several and a player chooses none of them. */
+export const GLYPHS = Object.freeze(['sprout', 'dev', 'mod']);
 
 /** The bound on `g`, and it is the vocabulary's own size rather than a
  *  number somebody picked: a token carrying more glyph slots than there
@@ -238,12 +239,13 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[]}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
  *   t  the title WORN, absent for none (ACC3)
  *   g  the glyphs TRUE of this player, absent for none (ACC3)
+ *   mu muted until, epoch seconds, absent when not muted (MOD1)
  */
 
 /** The account id's own shape - the same one `net/social.js` already
@@ -271,6 +273,13 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
     if (!c.g.every((g) => GLYPHS.includes(g))) return false;
     if (new Set(c.g).size !== c.g.length) return false;   // a repeat is a longer claim set saying one thing
   }
+  // MOD1: THE MUTE RIDES THE SIGNATURE, like the name and the badge, so
+  // a player cannot talk their way out of one by reconnecting - every
+  // hello re-reads it off a claim the service signed. Absent when not
+  // muted; present, it must END AFTER the token was issued, because a
+  // mute that is already over is not a mute and the minter must not say
+  // one is.
+  if (c.mu !== undefined && (!Number.isSafeInteger(c.mu) || c.mu <= c.i)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i) return false;                 // a token that is born dead
   if (c.e - c.i > maxTtlS) return false;        // a minter that got greedy
@@ -281,7 +290,7 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, g?:string[]}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, g?:string[], mu?:number}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -294,10 +303,17 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   const claims = { s: who?.s, n: who?.n, k: who?.k, i: nowS, e: nowS + ttlS };
   if (who?.t !== undefined) claims.t = who.t;
   if (who?.g !== undefined && who.g.length) claims.g = who.g;
+  if (who?.mu !== undefined) claims.mu = who.mu;   // MOD1: only while muted - an unmuted player mints the bytes they always did
   // A BAD CLAIM SET IS REFUSED AT THE MINTER. The verifier would refuse
   // it too, but at the player's machine, where the only thing anyone
   // learns is that online is broken.
   if (!claimsValid(claims)) throw new TypeError('mintToken refused a claim set it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** Sign a claim set - the one place a signature is made, for an
+ *  identity and for an order alike. */
+async function sealClaims(claims, privateKey, subtle) {
   const body = b64urlFromBytes(enc.encode(JSON.stringify(claims)));
   const signed = enc.encode(`${TOKEN_V}.${body}`);
   const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, signed));
@@ -319,6 +335,17 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
  * @returns {Promise<{ok: true, claims: Claims} | {ok: false, why: string}>}
  */
 export async function verifyToken(token, publicKey, { subtle, nowS, maxTtlS = MAX_TTL_S, skewS = SKEW_S }) {
+  return openSealed(token, publicKey, { subtle, nowS, skewS, valid: (c) => claimsValid(c, { maxTtlS }) });
+}
+
+/** The verifier's whole ladder, shared by an identity and an order so
+ *  the two cannot come to check a signature differently. `valid` is
+ *  the only thing that differs, and it is what keeps one kind from
+ *  passing as the other.
+ *  @param {unknown} token @param {CryptoKey} publicKey
+ *  @param {{subtle: SubtleCrypto, nowS: number, skewS: number, valid: (c: any) => boolean}} env
+ *  @returns {Promise<{ok: true, claims: any} | {ok: false, why: string}>} */
+async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
   if (typeof token !== 'string' || token.length > 1024) return { ok: false, why: 'shape' };
   const parts = token.split('.');
   if (parts.length !== 3) return { ok: false, why: 'shape' };
@@ -346,12 +373,65 @@ export async function verifyToken(token, publicKey, { subtle, nowS, maxTtlS = MA
   // Signed, and still checked: a key of ours signing a claim set we
   // would not have minted means the minter has a bug, and a bug is not
   // an authorisation.
-  if (!claimsValid(claims, { maxTtlS })) return { ok: false, why: 'claims' };
+  if (!valid(claims)) return { ok: false, why: 'claims' };
 
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };
   if (claims.i > nowS + skewS) return { ok: false, why: 'future' };
   return { ok: true, claims };
+}
+
+/* ═══ MOD1: THE MUTE ORDER ══════════════════════════════════════════
+ *
+ * Mac: "moderator chat commands" - /mute and /unmute.
+ *
+ * A mute lands in two places. The ACCOUNT ROW is the truth (ACC0's own
+ * `muted_until`), and every identity token minted afterwards carries it
+ * as `mu`, so a reconnect cannot shed one. But a player already in a
+ * room holds a token minted before the mute, and the relay cannot read
+ * D1 - that is the seam's whole design. So the service also hands the
+ * moderator an ORDER: the service's signature over "account s is muted
+ * until mu", which any socket may carry to a room and the room checks
+ * with the key it already holds. The relay never trusts WHO delivers it
+ * (the moderator, today) - only who signed it.
+ *
+ * AN ORDER CAN NEVER PASS AS AN IDENTITY, NOR AN IDENTITY AS AN ORDER.
+ * An identity needs an issuable `n`; an order must carry no `n` and must
+ * carry `o`. One key signs both, so that split is the thing standing
+ * between "a moderator muted you" and "you are now called that".
+ */
+
+/** What an order may say. One word today; a closed list so a relay a
+ *  build behind refuses a kind it does not know rather than guessing. */
+export const ORDER_KINDS = Object.freeze(['mute']);
+/** An order lives a minute - long enough to be carried to every room
+ *  the moderator holds, short enough that a leaked one is stale before
+ *  anyone could use it for anything but what it already said. */
+export const ORDER_TTL_S = 60;
+
+/** `{o:'mute', s, mu, i, e}` - `mu` 0 is "unmuted". */
+export function orderValid(c) {
+  if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
+  if (!ORDER_KINDS.includes(c.o)) return false;
+  if (c.n !== undefined || c.k !== undefined) return false;   // an identity's fields: never on an order
+  if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
+  if (!Number.isSafeInteger(c.mu) || c.mu < 0) return false;
+  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
+  if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
+  return true;
+}
+
+/** MINT AN ORDER - the account service's half, as `mintToken` is. */
+export async function mintOrder({ s, mu }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'mute', s, mu, i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** VERIFY AN ORDER - the relay's half. Same ladder, same answers. */
+export async function verifyOrder(token, publicKey, { subtle, nowS, skewS = SKEW_S }) {
+  return openSealed(token, publicKey, { subtle, nowS, skewS, valid: orderValid });
 }
 
 /** Import a raw 32-byte Ed25519 public key - the shape a relay carries

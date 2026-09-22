@@ -27,6 +27,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { graph } from './importGraph.mjs';   // ACC4: the deploy filter is held to the Worker's real import graph
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -372,8 +373,18 @@ test('ACC1-CI: the deploy is verified BY CONTENT, and reads the host and version
   const paths = /paths:\s*\n((?:\s*-\s*"[^"]+"\n)+)/.exec(wf);
   assert.ok(paths, 'the trigger no longer has a path filter');
   assert.match(paths[1], /server-account\/\*\*/, 'a change to the service itself would not deploy it');
-  assert.match(paths[1], new RegExp('src/net/identityToken\\.js'.replace(/\//g, '\\/')),
-    'the token module is bundled into this Worker and a change to it would not deploy');
+  // ACC4: DERIVED FROM WHAT THE WORKER REALLY BUNDLES. This pin used to
+  // name identityToken.js alone, and the Worker also bundled the handle
+  // shape, the name filter, the wire, mat4 and the name tables - five
+  // files whose changes shipped nowhere. Walked from the entry now, so a
+  // file that joins the bundle without joining the filter reddens here.
+  const listed = [...paths[1].matchAll(/-\s*"([^"]+)"/g)].map((m) => m[1]);
+  const outside = graph('server-account/src/index.js').filter((f) => !f.startsWith('server-account/'));
+  assert.ok(outside.includes('src/net/identityToken.js') && outside.includes('src/net/playClock.js'),
+    `the walk no longer sees the files it must - it would pass over any filter: ${outside.join(', ')}`);
+  for (const f of outside) {
+    assert.ok(listed.includes(f), `${f} is bundled into the account Worker and a change to it would not deploy`);
+  }
 });
 
 test('ACC1-CI: nothing in the service still claims a person has to do this by hand', () => {

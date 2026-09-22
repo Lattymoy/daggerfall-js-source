@@ -272,7 +272,9 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { accountTokenMinter, storedSession } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds
+import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
+import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
@@ -8704,6 +8706,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);
   };
   const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued });
+  // ACC4 (Mac: "time played to the icon profile"): THE WORLD IS WHERE
+  // TIME IS PLAYED, so the clock starts here and not at the menu - once,
+  // because bootWorld runs once per page. Online or not: a signed-in
+  // player in a single-player world is still playing. A hidden page
+  // does not knock, so a tab left in the background is not time played.
+  startPlayClock({
+    beat: accountPlayBeat({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
+    visible: () => globalThis.document?.visibilityState !== 'hidden',
+  });
   const onlineStart = () => {
     online = new OnlineSession({
       url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
@@ -8830,6 +8841,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!online.url) return;   // AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either - not the public default by the back door
     chatLog = new ChatLog();
     chatLinks = new Map();
+    // MOD1: A MUTE IS SAID ONCE. An order reaches every room this client
+    // holds, so the same notice can arrive two or three times at once;
+    // `mutedNotices` passes the first and the next real event.
+    const mutedOnce = mutedNotices();
+    const onMuted = ({ until }) => {
+      if (!mutedOnce(until, Date.now())) return;
+      chatLog.push(chatLog.active, { text: mutedText(until, Math.floor(Date.now() / 1000)), system: true });
+    };
+    online.onMuted = onMuted;   // a place room's local chat is refused the same way
     for (const tab of chatLog.tabs) {
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
       link.onChat = (line) => chatLog.push(tab.id, line);
@@ -8839,6 +8859,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // own peek draws it over the world for a player who never opens
       // the panel: a broadcast nobody sees is not one.
       link.onRed = (line) => chatLog.push(tab.id, { text: line.text, at: line.at, red: true });
+      link.onMuted = onMuted;
       link.onRelay = onRelayVersion;
       link.join(tab.room);
       chatLinks.set(tab.id, link);
@@ -8891,6 +8912,28 @@ export async function bootWorld(canvas, renderer, params, status) {
         // who tries learns nothing from the silence.
         const red = /^\/red\s+([\s\S]+)$/i.exec(text.trim());
         if (red) return chatLinks.get(tabId)?.sendRed(red[1]) ?? false;
+        // MOD1 (Mac: "moderator chat commands"): /mute and /unmute. NOT
+        // GUARDED HERE either, for /red's reason: whether this player may
+        // is the account service's question, and its refusal comes back
+        // as a line. The name is found among EVERY room this client
+        // holds - the world channel names everyone online - and the
+        // signed order is carried back into each of them.
+        const mod = parseModCommand(text);
+        if (mod) {
+          const say = (line) => chatLog.push(tabId, { text: line, system: true });
+          if ('error' in mod) { say(mod.error); return true; }
+          const links = [...(chatLinks?.values?.() ?? []), online].filter(Boolean);
+          const peers = new Map();
+          for (const l of links) for (const [id, p] of l.peers ?? []) if (!peers.has(id) || (!peers.get(id).sub && p.sub)) peers.set(id, p);
+          const mute = (sub, minutes) => {
+            const session = storedSession(appStorage());
+            if (!session) return Promise.resolve({ ok: false, error: 'auth' });
+            return muteAccount({ fetch: (u, i) => globalThis.fetch(u, i), base: serviceBase(appStorage()), secret: session.secret }, sub, minutes);
+          };
+          runModCommand(mod, { session: { peers }, links, mute, refusal: accountRefusalText })
+            .then(say, () => say(accountRefusalText('server')));
+          return true;
+        }
         return chatLinks.get(tabId)?.sendChat(text) ?? false;   // false keeps the line in the field (B2)
       },
       // CHAT-R1 (Mac: "a sidepanel on the chat ui showing all currently

@@ -1,134 +1,134 @@
 [
- {
-  "name": "G1-channel-welcome-names-nobody",
-  "file": "server/src/index.js",
-  "old": "        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => badged({ id: b.id, name: b.name }, b));   // ACC3: and whatever the token vouched for, beside it",
-  "new": "        const named = [];",
-  "tests": [
-   "test/rosterg.test.js",
-   "test/chat1.test.js"
-  ]
- },
- {
-  "name": "G2-channel-join-not-said",
-  "file": "server/src/index.js",
-  "old": "        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);\n",
-  "new": "",
-  "tests": [
-   "test/rosterg.test.js",
-   "test/chat1.test.js"
-  ]
- },
- {
-  "name": "G3-channel-leave-skipped-again",
-  "file": "server/src/index.js",
-  "old": "    // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online\n",
-  "new": "    if (isChatRoom(a.key)) return;\n",
-  "tests": [
-   "test/rosterg.test.js",
-   "test/chat1.test.js"
-  ]
- },
- {
-  "name": "G4-channel-join-carries-the-look",
-  "file": "server/src/index.js",
-  "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name }, who));",
-  "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, look: m.look }, who));",
-  "tests": [
-   "test/rosterg.test.js",
-   "test/chat1.test.js"
-  ]
- },
- {
-  "name": "G5-cut-removed",
-  "file": "server/src/index.js",
-  "old": "others.slice(0, CHAT_ROSTER_MAX).map(",
-  "new": "others.map(",
-  "tests": [
-   "test/rosterg.test.js"
-  ]
- },
- {
-  "name": "G6-count-from-the-cut-list",
-  "file": "server/src/index.js",
-  "old": "n: others.length + 1, v: RELAY_VERSION",
-  "new": "n: named.length + 1, v: RELAY_VERSION",
-  "tests": [
-   "test/rosterg.test.js"
-  ]
- },
- {
-  "name": "G7-channel-says-host-on-leave",
-  "file": "server/src/index.js",
-  "old": "if (!isChatRoom(a.key) && this._leads(a, ws)) this._sayHost",
-  "new": "if (this._leads(a, ws)) this._sayHost",
-  "tests": [
-   "test/rosterg.test.js",
-   "test/chat1.test.js"
-  ]
- },
- {
-  "name": "G8-count-ignored",
-  "file": "src/net/roster.js",
-  "old": "  const total = Number.isFinite(n) && n > rows.length ? n : rows.length;",
-  "new": "  const total = rows.length;",
-  "tests": [
-   "test/rosterg.test.js"
-  ]
- },
- {
-  "name": "G9-count-over-the-rows",
-  "file": "src/net/roster.js",
-  "old": "  const total = Number.isFinite(n) && n > rows.length ? n : rows.length;",
-  "new": "  const total = Number.isFinite(n) ? n : rows.length;",
-  "tests": [
-   "test/rosterg.test.js"
-  ]
- },
- {
-  "name": "G10-count-never-read",
-  "file": "src/net/online.js",
-  "old": "      this.roomCount = Number.isFinite(m.n) && m.n > keep.size + 1 ? m.n : null;\n",
-  "new": "",
-  "tests": [
-   "test/rosterg.test.js"
-  ]
- },
- {
-  "name": "G11-tag-on-every-row",
-  "file": "src/ui/chatPanel.js",
-  "old": "      if (dup.has(r.name.toLowerCase())) line.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
-  "new": "      line.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
-  "tests": [
-   "test/rosterg.test.js",
-   "test/chatroster_namefilter.test.js"
-  ]
- },
- {
-  "name": "G12-count-kept-for-a-whole-list",
-  "file": "src/net/online.js",
-  "old": "this.roomCount = Number.isFinite(m.n) && m.n > keep.size + 1 ? m.n : null;",
-  "new": "this.roomCount = Number.isFinite(m.n) ? m.n : null;",
-  "tests": [
-   "test/rosterg.test.js"
-  ]
- },
- {
-  "name": "G13-count-not-moved-by-leave",
-  "file": "src/net/online.js",
-  "old": "if (this.roomCount != null && this._rooms.get(room)?.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); ",
-  "new": "",
-  "tests": [
-   "test/rosterg.test.js"
-  ]
- },
- {
-  "name": "G14-count-moved-by-a-repeat-join",
-  "file": "src/net/online.js",
-  "old": "if (this.roomCount != null && !this.peers.has(m.id)) this.roomCount++;",
-  "new": "if (this.roomCount != null) this.roomCount++;",
-  "tests": [
-   "test/rosterg.test.js"
-  ]
- }
+  {
+    "name": "G1-channel-welcome-names-nobody",
+    "file": "server/src/index.js",
+    "old": "        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => badged({ id: b.id, name: b.name, sub: b.sub }, b));",
+    "new": "        const named = [];",
+    "tests": [
+      "test/rosterg.test.js",
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "G2-channel-join-not-said",
+    "file": "server/src/index.js",
+    "old": "        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);\n",
+    "new": "",
+    "tests": [
+      "test/rosterg.test.js",
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "G3-channel-leave-skipped-again",
+    "file": "server/src/index.js",
+    "old": "    // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online\n",
+    "new": "    if (isChatRoom(a.key)) return;\n",
+    "tests": [
+      "test/rosterg.test.js",
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "G4-channel-join-carries-the-look",
+    "file": "server/src/index.js",
+    "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject }, who));",
+    "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject, look: m.look }, who));",
+    "tests": [
+      "test/rosterg.test.js",
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "G5-cut-removed",
+    "file": "server/src/index.js",
+    "old": "others.slice(0, CHAT_ROSTER_MAX).map(",
+    "new": "others.map(",
+    "tests": [
+      "test/rosterg.test.js"
+    ]
+  },
+  {
+    "name": "G6-count-from-the-cut-list",
+    "file": "server/src/index.js",
+    "old": "n: others.length + 1, v: RELAY_VERSION",
+    "new": "n: named.length + 1, v: RELAY_VERSION",
+    "tests": [
+      "test/rosterg.test.js"
+    ]
+  },
+  {
+    "name": "G7-channel-says-host-on-leave",
+    "file": "server/src/index.js",
+    "old": "if (!isChatRoom(a.key) && this._leads(a, ws)) this._sayHost",
+    "new": "if (this._leads(a, ws)) this._sayHost",
+    "tests": [
+      "test/rosterg.test.js",
+      "test/chat1.test.js"
+    ]
+  },
+  {
+    "name": "G8-count-ignored",
+    "file": "src/net/roster.js",
+    "old": "  const total = Number.isFinite(n) && n > rows.length ? n : rows.length;",
+    "new": "  const total = rows.length;",
+    "tests": [
+      "test/rosterg.test.js"
+    ]
+  },
+  {
+    "name": "G9-count-over-the-rows",
+    "file": "src/net/roster.js",
+    "old": "  const total = Number.isFinite(n) && n > rows.length ? n : rows.length;",
+    "new": "  const total = Number.isFinite(n) ? n : rows.length;",
+    "tests": [
+      "test/rosterg.test.js"
+    ]
+  },
+  {
+    "name": "G10-count-never-read",
+    "file": "src/net/online.js",
+    "old": "      this.roomCount = Number.isFinite(m.n) && m.n > keep.size + 1 ? m.n : null;\n",
+    "new": "",
+    "tests": [
+      "test/rosterg.test.js"
+    ]
+  },
+  {
+    "name": "G11-tag-on-every-row",
+    "file": "src/ui/chatPanel.js",
+    "old": "      if (dup.has(r.name.toLowerCase())) line.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
+    "new": "      line.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
+    "tests": [
+      "test/rosterg.test.js",
+      "test/chatroster_namefilter.test.js"
+    ]
+  },
+  {
+    "name": "G12-count-kept-for-a-whole-list",
+    "file": "src/net/online.js",
+    "old": "this.roomCount = Number.isFinite(m.n) && m.n > keep.size + 1 ? m.n : null;",
+    "new": "this.roomCount = Number.isFinite(m.n) ? m.n : null;",
+    "tests": [
+      "test/rosterg.test.js"
+    ]
+  },
+  {
+    "name": "G13-count-not-moved-by-leave",
+    "file": "src/net/online.js",
+    "old": "if (this.roomCount != null && this._rooms.get(room)?.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); ",
+    "new": "",
+    "tests": [
+      "test/rosterg.test.js"
+    ]
+  },
+  {
+    "name": "G14-count-moved-by-a-repeat-join",
+    "file": "src/net/online.js",
+    "old": "if (this.roomCount != null && !this.peers.has(m.id)) this.roomCount++;",
+    "new": "if (this.roomCount != null) this.roomCount++;",
+    "tests": [
+      "test/rosterg.test.js"
+    ]
+  }
 ]

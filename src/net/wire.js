@@ -14,6 +14,8 @@
 //                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
 //                    {t:'say', text}                    RED1: THE SERVER SPEAKING - only from a socket whose
 //                                                       TOKEN carried the dev glyph; fanned as {t:'red', text, at}
+//                    {t:'mute', order}                  MOD1: a mute ORDER the account service signed, carried by the moderator
+//                                                       who asked for it; the room checks the signature, not the carrier (MUTE_HZ_MAX)
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
@@ -24,7 +26,11 @@
 //                    {t:'join', id, name, look, pose, title?, glyphs?}   {t:'leave', id}
 //                    ACC3: `title` and `glyphs` are read off the hello's VERIFIED token and are absent when there is no badge
 //                    {t:'pose', id, p}                  {t:'pong'}
-//                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
+//                    {t:'chat', id, name, text, at, sub?}   to everyone who hears it, the sender included
+//                    MOD1: `sub` is the sender's VERIFIED account id (the token's `s`), on a chat line and on a channel's
+//                    roster rows and joins - what a moderator's /mute names, since a name is not unique and an id is.
+//                    NOT `acct`: that word is the social hub's own account (SOC1), a different id with a different law
+//                    {t:'muted', until}                 MOD1: to the muted player alone - `until` in epoch seconds, 0 when lifted
 //                    {t:'host', id}                     the room's host changed (WORLD1)
 //                    {t:'world', id, data}              the room's memory, to a socket whose welcome carried none (AUDIT WORLD34 C1)
 //                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)
@@ -225,6 +231,9 @@ export const CHAT_HZ_MAX = 2;
  * slice that wants "one every ten seconds" meets it before shipping.
  */
 export const RED_HZ_MAX = 1;
+/** MOD1: mute orders a socket may carry a second. One: an order is a
+ *  moderator's deliberate act, and tokenGate cannot go lower. */
+export const MUTE_HZ_MAX = 1;
 /** Over-rate chat lines dropped in a row before the socket is closed. */
 export const CHAT_STRIKES_MAX = 20;
 /** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
@@ -779,7 +788,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world89';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried
+export const RELAY_VERSION = 'world90';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1075,6 +1084,13 @@ export function parseClient(text, { hasHello = false } = {}) {
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
     return text ? { t: 'say', text } : { error: 'bad say' };
   }
+  if (m.t === 'mute') {
+    // MOD1: THE SHAPE ONLY, as `say` is. Whether the order is real is a
+    // question about a signature, and the relay alone holds the key.
+    if (!hasHello) return { error: 'mute before hello' };
+    return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1024
+      ? { t: 'mute', order: m.order } : { error: 'bad mute' };
+  }
   if (m.t === 'social') {   // SOC1: a friend or party act - a KIND from SOCIAL_ACTS naming what that kind must name, and nothing else
     if (!hasHello) return { error: 'social before hello' };
     const act = validSocialAct(m);
@@ -1157,6 +1173,8 @@ export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length 
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
 /** RED1: the server line's own bucket, well under chat's - see RED_HZ_MAX. */
 export const redGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RED_HZ_MAX);
+/** MOD1: the mute order's own bucket - see MUTE_HZ_MAX. */
+export const muteGate = (bucket, nowMs) => tokenGate(bucket, nowMs, MUTE_HZ_MAX);
 /** SOC1: the social acts' gate - SOCIAL_HZ_MAX a second, at the hub and at home (an act the hub would refuse is never sent). */
 export const socialGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_HZ_MAX);
 /** SOC1: the party poses' gate - PARTY_HZ_MAX a second, at the hub and at home. */
@@ -1305,6 +1323,13 @@ export function rosterFor(peers, meId, near = null) {
 
 /** SOC1: an id off the wire (ID_RE - a peer's, an account's and a party's are one shape), or null. */
 const idOf = (v) => (typeof v === 'string' && ID_RE.test(v) ? v : null);
+
+/** MOD1: the verified account id (`sub`) a row or a line carries, or
+ *  null - the wire's own id law, read the same way at both ends. */
+export const subOf = (m) => idOf(m?.sub);
+
+/** MOD1: a `muted` frame's `until`, or null for a frame that is not one. */
+export const mutedUntilOf = (m) => (Number.isSafeInteger(m?.until) && m.until >= 0 ? m.until : null);
 
 /** SOC1 / AUDIT SOC B11: ONE ACT, PROJECTED - `{k, acct?, peer?, party?}` with exactly what its kind needs (SOCIAL_ACTS:
  *  an account, a peer, either one of the two but never both, a party, nothing) and nothing else, or null. ONE HOME:

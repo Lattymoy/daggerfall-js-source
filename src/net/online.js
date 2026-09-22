@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -271,6 +271,7 @@ export class OnlineSession {
     this.presence = !!presence;   // false: a channel's session (CHAT1) - no pose out, a ping for a heartbeat
     this.onChat = null;           // (line) => void: a chat line in - {id, name, text, at, mine}
     this.onRed = null;            // RED1: (line) => void: the SERVER's own line - {text, at}, no id and no name, because nobody is speaking it
+    this.onMuted = null;          // MOD1: ({until}) => void - the relay says I am muted until then (epoch seconds), or 0: lifted
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
     this.onAct = null;            // WORLD3: (id, data) => void - a door, a lever or a platform moved by another in my room
@@ -309,6 +310,7 @@ export class OnlineSession {
     this.terminalAt = null;    // when it did (the session's clock): rejoin() waits on it
     this._cbucket = null;      // the client's own chat gate (AUDIT CHAT A8): the relay's law, run first
     this._rbucket = null;      // RED1: and the server line's own, well under it - the relay's law again, run first
+    this._mbucket = null;      // MOD1: and a mute order's, the same way
     // CHAT-G: the gate on lines COMING IN, one bucket per room because
     // that is the unit the relay spends by. Room -> bucket; a room let go
     // drops its bucket with the rest of what that room meant (_forgetRoom).
@@ -440,7 +442,7 @@ export class OnlineSession {
     // bodies stood, its foes trusted) and `recall`: `_askRound` walks it as it walks a stranger, the relay's join
     // answers with the look it holds now, and `_refresh` clears the flag. One ask per re-stood peer, at the who gate.
     const knew = told ? null : this._known.get(id);
-    const made = this._peer(knew ? { ...p, name: knew.name, title: knew.title, glyphs: knew.glyphs, look: knew.look } : p, now);
+    const made = this._peer(knew ? { ...p, name: knew.name, title: knew.title, glyphs: knew.glyphs, sub: knew.sub, look: knew.look } : p, now);
     made.told = told || !!knew;
     made.recall = !told && !!knew;
     if (told) this._remember(id, made);
@@ -456,7 +458,7 @@ export class OnlineSession {
    *  forgets by staleness, not by first sight. */
   _remember(id, p) {
     this._known.delete(id);
-    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, look: p.look });
+    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, sub: p.sub, look: p.look });   // MOD1: the account too, so a re-stood peer can still be named by /mute
     if (this._known.size > KNOWN_MAX) this._known.delete(this._known.keys().next().value);
   }
   _held(id) { for (const s of this._rooms.values()) if (s.has(id)) return true; return false; }
@@ -879,6 +881,18 @@ export class OnlineSession {
     return true;
   }
 
+  /** MOD1: carry a mute order the account service signed into this
+   *  room. The room checks the signature; this checks only that there is
+   *  one to carry, and the rate, as the relay will. False when nothing went. */
+  sendMuteOrder(order) {
+    if (typeof order !== 'string' || !order || order.length > 1024) return false;
+    const gate = muteGate(this._mbucket, this._now());
+    if (!gate.pass) return false;
+    if (!this._send({ t: 'mute', order })) return false;
+    this._mbucket = gate.bucket;
+    return true;
+  }
+
   /** SOC2: a social act out - to the hub, from a session that holds an account: `{k, acct?|peer?|party?}` as
    *  net/wire.js SOCIAL_ACTS has it, gated here as the hub gates it (SOCIAL_HZ_MAX - an act the hub would drop without
    *  a word is refused here with a false, and the panel keeps its button lit); false when nothing went. */
@@ -1133,7 +1147,7 @@ export class OnlineSession {
       // because a chat log is where a name is read and an impersonation
       // is worth doing. A hard boolean for the same reason `_peer` keeps
       // one: never a "maybe".
-      this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
+      this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id, sub: subOf(m) }));
     } else if (m.t === 'red') {
       // RED1: THE SERVER SPEAKING, and the client knows it by the FRAME
       // TYPE rather than by anything on the frame. net/chat.js's own
@@ -1152,6 +1166,16 @@ export class OnlineSession {
       this._inChat.set(room, g.bucket);
       if (!g.pass) { this.stats.chatsDropped++; return; }
       this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));
+    } else if (m.t === 'muted') {
+      // MOD1: THE RELAY SAYS I AM MUTED (or no longer). On the chat line's
+      // own inbound bucket, for CHAT-G's reason: it becomes a line in the
+      // log, and the relay is the player's own choice.
+      const until = mutedUntilOf(m);
+      if (until === null) return;
+      const g = chatInGate(this._inChat.get(room), now);
+      this._inChat.set(room, g.bucket);
+      if (!g.pass) { this.stats.chatsDropped++; return; }
+      this._deliver('chat', () => this.onMuted?.({ until }));
     } else if (m.t === 'social') {
       // AUDIT SOC B3: GATED COMING IN, as a chat line is (CHAT-G) - a note or an error becomes a chat line (net/chat.js
       // keeps CHAT_KEEP of them, so an ungated stream is a player's history deleted) and the rest a repaint; the
@@ -1193,7 +1217,7 @@ export class OnlineSession {
     // answers a title or null and a list or empty, so nothing below
     // ever has to tell "absent" from "none".
     const { title, glyphs } = readBadge(p);
-    return { id: p.id, name: sanitizeName(p.name), title, glyphs, look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
+    return { id: p.id, name: sanitizeName(p.name), title, glyphs, sub: subOf(p), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // MOD1: `sub` the relay-verified account, what /mute names
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
@@ -1204,6 +1228,7 @@ export class OnlineSession {
     // too, and a peer that kept the FIRST badge it was ever seen with
     // would be wearing a grant the relay has stopped vouching for.
     ({ title: p.title, glyphs: p.glyphs } = readBadge(m));
+    if (subOf(m)) p.sub = subOf(m);   // MOD1: a place room's hello names no account; a channel's does - keep the one we were told
     this._remember(p.id, p);   // SLAM9: and it is kept, so a blip cannot un-introduce it
     const pose = validPose(m.pose);
     if (pose) this._arrive(p, pose, now); else p.seenAt = now;

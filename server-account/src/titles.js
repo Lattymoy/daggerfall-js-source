@@ -65,7 +65,19 @@ export const SPROUT_S = 14 * 24 * 60 * 60;
  *  a live database at three in the morning. Case-folded on the way in,
  *  because `handle_lc` is what uniqueness is really on. */
 export function developerHandles(env) {
-  const raw = env?.DEVELOPER_HANDLES;
+  return handleList(env?.DEVELOPER_HANDLES);
+}
+
+/** MOD1: the moderators, the same way and for the same reason. Mac
+ *  names them; a deploy grants them; taking a handle off revokes the
+ *  glyph and the commands on that player's next token and next call. */
+export function moderatorHandles(env) {
+  return handleList(env?.MODERATOR_HANDLES);
+}
+
+/** One reading of a comma list of handles, so the two lists cannot
+ *  come to disagree about case or spaces. */
+function handleList(raw) {
   if (typeof raw !== 'string' || !raw) return new Set();
   return new Set(raw.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));
 }
@@ -76,6 +88,18 @@ export function developerHandles(env) {
 export const isDeveloper = (player, env) =>
   typeof player?.handle === 'string' && !!player.handle
   && developerHandles(env).has(player.handle.toLowerCase());
+
+/** MOD1: is this player a moderator? A guest cannot be, for the same
+ *  reason a guest cannot be a developer. */
+export const isModerator = (player, env) =>
+  typeof player?.handle === 'string' && !!player.handle
+  && moderatorHandles(env).has(player.handle.toLowerCase());
+
+/** MOD1: MAY THIS PLAYER MODERATE? A moderator may, and so may a
+ *  developer - the people who can already speak as the server are not
+ *  made to add themselves to a second list to mute somebody. The GLYPH
+ *  stays the moderator list's alone: the dev mark already says more. */
+export const canModerate = (player, env) => isModerator(player, env) || isDeveloper(player, env);
 
 /**
  * THE TITLES THIS PLAYER HOLDS, in the order they are offered.
@@ -100,6 +124,7 @@ export function glyphsOf(player, env, nowS) {
   const on = [];
   if (Number.isFinite(player?.created_at) && nowS - player.created_at < SPROUT_S) on.push('sprout');
   if (isDeveloper(player, env)) on.push('dev');
+  if (isModerator(player, env)) on.push('mod');   // MOD1: the blue shield
   return on;
 }
 

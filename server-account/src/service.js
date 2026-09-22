@@ -29,7 +29,7 @@
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct3';   // acct3: ACC3's titles and glyphs
+export const ACCOUNT_VERSION = 'acct5';   // acct3: ACC3's titles and glyphs; acct4: ACC4's time played; acct5: MOD1's moderation
 
 /** A body bigger than this is not a request this service has. Read
  *  BEFORE the JSON is parsed, so a megabyte of nothing costs nothing. */
@@ -120,6 +120,12 @@ export const ROUTES = new Set([
   // and nothing can equip a glyph, so this is the only thing about
   // either that a player chooses - and so the only route.
   '/v1/account/title',
+  // ACC4: the beat that counts time played. It writes, and it is the
+  // service's clock that decides how much - the body is never read.
+  '/v1/account/played',
+  // MOD1: the one moderation route. Behind a session like every other,
+  // and it refuses anybody the service's own lists do not name.
+  '/v1/mod/mute',
   // ACC2: the LISTING is a fixed path; every other save route carries
   // the slot in it and is matched by `savePathOf`.
   '/v1/saves',

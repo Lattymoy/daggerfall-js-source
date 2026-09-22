@@ -2898,3 +2898,163 @@ believe.
 
 **Client-only — no relay change, no account-service change.** It ships
 with the site build and drops nobody.
+
+## ACC4 — registered date and time played on the profile card (2026-09-22)
+
+> Lets add an account registered date and time played to the icon profile
+
+### The registered date was already a column
+
+`registered_at` has been stamped by `register` since 0002. `accountView`
+now carries it as `registeredAt`, **null for a guest** — there is no date
+to show, and a 0 would print as 1970. The card draws a `Registered` row
+only when there is a date; a guest's `Kind` row already says why not.
+
+### Time played is measured by the service's clock, never the client's
+
+The obvious build is a counter in the tab that posts *"I played 300
+seconds"*. That is a number the client **asserts**, and ACC1g and ACC3
+settled what this project does with a client's word about itself.
+
+So a tab in the world sends a **beat with no number in it** every
+`PLAY_BEAT_S` (five minutes) while the page is visible
+(`src/net/playClock.js`). The service credits the gap from the account's
+last beat **by its own clock**, capped at `PLAY_GRACE_S` (two beats,
+derived). A gap wider than that is a new sitting and credits nothing —
+the tab was closed, the machine slept, the page sat hidden.
+
+- **A forged beat cannot credit more than real time.** The route never
+  reads the body.
+- **Two tabs, or two devices, count the wall clock once.** Each beat
+  measures from whichever beat really landed last. That is why
+  `creditPlay` is **one `UPDATE … RETURNING`**, not read-then-write: two
+  beats in flight together would both read the same last beat and both
+  add it. The pin drives exactly that race.
+- **A late, out-of-order beat credits nothing** and does not drag the
+  clock back (`MAX`).
+- **The cost, said plainly:** the tail of each sitting — under one beat —
+  is not counted, and the first beat of a sitting opens it rather than
+  crediting. That is the honest price of never believing a client about
+  a duration.
+- **Guest time counts.** Registering upgrades the same row, so every
+  minute a guest played is kept.
+- **Every existing row starts at zero.** Nothing counted time before
+  0005, so there is no history to derive from, and a backfill would be a
+  guess written down as a fact.
+
+The world host starts the clock once per page (bootWorld runs once),
+online or not — a signed-in player in a single-player world is still
+playing. The session is read at each beat, so signing in mid-sitting
+counts from the next knock. An `auth` answer to a beat is **left alone**:
+forgetting a dead session is the minter's and the card's job, each of
+which can say so on screen.
+
+### And a hole found on the way
+
+`account-deploy.yml` fires on a path filter, and that filter named
+`src/net/identityToken.js` as the one file outside `server-account/` the
+Worker bundles. It bundles **six**: the handle shape, the name filter,
+the wire, mat4 and the name tables as well. A change to any of those five
+shipped nowhere. The filter now lists all of them plus `playClock.js`,
+and `test/accountdeploy.test.js` **walks the Worker's import graph** and
+holds the filter to it, instead of naming one file. The walk moved from
+`relayversion.test.js` into `test/importGraph.mjs` so both Workers are
+read by the same law; the relay's hash is unchanged.
+
+- `server-account/migrations/0005_played.sql` — `played_s`, `played_at`.
+- `server-account/src/accounts.js` — `creditPlay`; `accountView` gains
+  `registeredAt` and `playedS`.
+- `server-account/src/index.js`, `service.js` — `POST
+  /v1/account/played`; `ACCOUNT_VERSION` `acct4` (and wrangler.toml).
+- `src/net/playClock.js` — `PLAY_BEAT_S`, `PLAY_GRACE_S`,
+  `startPlayClock`.
+- `src/net/accountClient.js` — `beatPlay`, `accountPlayBeat`.
+- `src/scenes/world.js` — the clock starts, gated on visibility.
+- `src/ui/enhancedAccount.js` — `registeredText`, `playedText`, the two
+  rows. It still styles nothing.
+- `.github/workflows/account-deploy.yml` — the filter; the smoke step
+  now beats a throwaway guest on real D1 and requires `playedS: 0`,
+  because `RETURNING` and numbered parameters are exactly the class of
+  thing node runs and a platform might not.
+- `test/acc4played.test.js` — 13 pins. `tools/mutants/acc4.json` — 15,
+  all dead.
+
+**Account service + site only.** The relay's bundle is untouched, so the
+relay deploy is a no-op and **drops nobody**.
+
+## MOD1 — the moderator shield, /mute and /unmute (2026-09-22)
+
+> Next up I want a moderator glyph and moderator chat commands
+
+Asked which: **/mute and /unmute**, and the **blue shield**.
+
+### Who is a moderator
+
+`MODERATOR_HANDLES` in the service's config — the same law as
+`DEVELOPER_HANDLES`: a reviewed, deployed edit grants it, taking the
+handle off revokes it on the next token and the next call, and nothing is
+stored. **Asynian** is the first (Mac: "Username is Asynian"). A developer may moderate
+without being listed (`canModerate`), but the **shield** is the
+moderator list's alone — the dev mark already says more. A guest can be
+neither: the list names people, and a guest row is a device.
+
+### Where the authority lives — and where it does not
+
+A mute is an authority, and the build that passes a naive test is the one
+where a client says *"I am a moderator, mute Bob"* and something believes
+it. So:
+
+- **The service decides.** `POST /v1/mod/mute {target, minutes}` checks
+  the caller against the lists, **refuses a moderator or developer as a
+  target** (a mod-on-mod fight is Mac's to settle) and a self-mute, bounds
+  it at a week (`MUTE_MAX_MIN`, one home in `src/net/moderation.js`), and
+  writes `muted_until` — ACC0's own column — with **`muted_by`**
+  (migration 0006), so the power leaves a record.
+- **The row is the truth, and every later token carries it** as the `mu`
+  claim. A reconnect cannot shed a mute; every room reads it at the hello.
+- **Live rooms hear it through a signed ORDER.** The relay cannot read
+  D1, so the service also signs `{o:'mute', s, mu}` — a minute-long token
+  of a **different shape** from an identity. One key signs both, and the
+  shapes keep them apart: an identity needs an issuable `n`, an order must
+  carry none. The moderator's client carries the order into every room it
+  holds; **the relay checks the signature and never asks who carried it.**
+- **The newest order wins.** A replayed mute inside its minute cannot undo
+  the unmute that followed it, and a hello whose token predates the room's
+  newest order takes the order's word — so a token minted a moment before
+  the mute cannot carry its holder past it.
+
+A muted player's line goes nowhere — not even back to them — and they
+alone are told `{t:'muted', until}`. They still read chat.
+
+### A name is not an account
+
+Two guests can share a generated name. So chat lines and a channel's
+roster carry **`sub`**, the sender's verified account from their token
+(not `acct`: that word is the social hub's own id, a different law). The
+command resolves a typed name against the players the relay has named,
+and **two matches is a refusal, never a guess**. A name may have a space
+in it — every guest's does — so the minutes are the last word.
+
+### What it costs
+
+**A relay deploy — `world90` — which drops every connected player once.**
+The token module and the wire are in the relay's bundle. The account
+service deploys beside it and drops nobody.
+
+**Honestly bounded:** a player muted while standing in a place room the
+moderator is not in is muted there on their next connection to it (every
+room change is one), not instantly; the world channel — where everyone is
+— hears it at once.
+
+- `src/net/identityToken.js` — `mod` glyph, `mu` claim, `ORDER_KINDS`,
+  `mintOrder` / `verifyOrder` / `orderValid`, one shared verify ladder.
+- `server-account/` — `canModerate`, `isModerator`, `muteAccount`,
+  `/v1/mod/mute`, `acct5`, migration 0006, `MODERATOR_HANDLES`.
+- `server/src/index.js` — `sub` and `mu` on the attachment, the muted
+  refusal, the `mute` arm, `_orders`, `_loadKey`.
+- `src/net/wire.js` — the frames, `MUTE_HZ_MAX`, `subOf`,
+  `mutedUntilOf`. `src/net/online.js` — `sub` on peers and lines,
+  `onMuted`, `sendMuteOrder`.
+- `src/net/moderation.js` — the commands, the lookup, the words.
+- `src/ui/playerBadge.js`, `enhancedAccount.js` — the blue shield.
+- `test/mod1.test.js` — 15 pins. `tools/mutants/mod1.json` — 20, all dead.
