@@ -34,7 +34,7 @@ test('HARD2-S1: the two exterior hosts are NOT peers - world.js ships, exterior.
 test('HARD2-S2: the dungeon context disposes its OWN window stack, which is why the host\'s extra dispose is harmless', () => {
   // S2 candidate 3 was "worldModes.js disposes the dungeon overlay and
   // then destroy() disposes it again - HARD1's double free". It is not:
-  // dispose() is idempotent by A2, and dungeonContext.js:6939-6940 says
+  // dispose() is idempotent by A2, and dungeonContext.js:6998-6999 says
   // so at the site. That makes the outer call belt-and-braces rather
   // than a defect - but only while destroy() really does own the stack.
   const dc = read('src/scenes/dungeonContext.js');

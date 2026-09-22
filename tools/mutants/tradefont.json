@@ -1,0 +1,47 @@
+[
+  {
+    "name": "DROPS-FONT-trade-root-not-a-px-home",
+    "file": "src/ui/enhancedPlayerTrade.js",
+    "old": "    const shell = el('div', 'px-home px-over trade-shell ptrade-shell');",
+    "new": "    const shell = el('div', 'px-over trade-shell ptrade-shell');",
+    "tests": [
+      "test/tradefont.test.js"
+    ]
+  },
+  {
+    "name": "DROPS-FONT-gold-field-in-the-browser-face",
+    "file": "src/ui/enhancedPlayerTrade.js",
+    "old": "  border-radius: 3px; padding: 4px 6px; font: inherit; }",
+    "new": "  border-radius: 3px; padding: 4px 6px; }",
+    "tests": [
+      "test/tradefont.test.js"
+    ]
+  },
+  {
+    "name": "DROPS-FONT-trade-sheet-names-a-face",
+    "file": "src/ui/enhancedPlayerTrade.js",
+    "old": ".ptrade-shell .itemrow.staged { outline: 1px solid var(--brass, #c08a3e); }",
+    "new": ".ptrade-shell .itemrow.staged { outline: 1px solid var(--brass, #c08a3e); }\n.ptrade-shell { font-family: serif; }",
+    "tests": [
+      "test/tradefont.test.js"
+    ]
+  },
+  {
+    "name": "DROPS-FONT-share-button-in-the-browser-face",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  font: inherit; font-size: 14px; cursor: pointer; }\n.cr-shell .cr-rm:hover",
+    "new": "  font-size: 14px; cursor: pointer; }\n.cr-shell .cr-rm:hover",
+    "tests": [
+      "test/tradefont.test.js"
+    ]
+  },
+  {
+    "name": "DROPS-FONT-px-home-loses-the-stack",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  font-family: ${PIXEL_STACK}; color: #d8cfae;\n  -webkit-font-smoothing: none; }",
+    "new": "  color: #d8cfae;\n  -webkit-font-smoothing: none; }",
+    "tests": [
+      "test/tradefont.test.js"
+    ]
+  }
+]

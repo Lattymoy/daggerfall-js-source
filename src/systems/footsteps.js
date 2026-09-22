@@ -32,24 +32,39 @@ export const FOOTSTEP_VOLUME = 0.7;
  *  the base set by place, then exterior water, then exterior path,
  *  then the dungeon water arms. */
 export function pickFootstepSet(ctx = {}) {
-  let s1, s2;
-  if (!ctx.inside && !ctx.onStaticGeometry) {
-    if (ctx.winter && !isSnowFreeClimate(ctx.climateIndex ?? CLIMATES.Woodlands)) {
-      s1 = FOOTSTEP.Snow1; s2 = FOOTSTEP.Snow2;
-    } else {
-      s1 = FOOTSTEP.Outside1; s2 = FOOTSTEP.Outside2;
-    }
-  } else if (ctx.inBuilding) {
-    s1 = FOOTSTEP.Wood1; s2 = FOOTSTEP.Wood2;
-  } else {
-    s1 = FOOTSTEP.Stone1; s2 = FOOTSTEP.Stone2;
-  }
-  if (ctx.onExteriorWater) { s1 = FOOTSTEP.Submerged; s2 = FOOTSTEP.Submerged; }
-  if (ctx.onExteriorPath) { s1 = FOOTSTEP.Stone1; s2 = FOOTSTEP.Stone2; }
-  if (ctx.dungeonSwimming) { s1 = FOOTSTEP.Submerged; s2 = FOOTSTEP.Submerged; }
-  else if (ctx.dungeonShallow) { s1 = FOOTSTEP.Shallow; s2 = FOOTSTEP.Shallow; }
-  return [s1, s2];
+  const kind = pickFootstepKind(ctx);
+  return FOOTSTEP_CLIP_SETS[kind];
 }
+
+/** Same precedence as pickFootstepSet, but answers the KIND enum rather
+ *  than the clip pair - the network send (a peer's own client) only needs
+ *  to say WHICH surface it is standing on; the receiving client looks the
+ *  clip pair up locally (FOOTSTEP_CLIP_SETS below), so the wire carries one
+ *  small int instead of two archive-specific clip ids. */
+export const FOOTSTEP_KIND = Object.freeze({ Outside: 0, Snow: 1, Wood: 2, Stone: 3, Submerged: 4, Shallow: 5 });
+export function pickFootstepKind(ctx = {}) {
+  let kind;
+  if (!ctx.inside && !ctx.onStaticGeometry) {
+    kind = (ctx.winter && !isSnowFreeClimate(ctx.climateIndex ?? CLIMATES.Woodlands)) ? FOOTSTEP_KIND.Snow : FOOTSTEP_KIND.Outside;
+  } else if (ctx.inBuilding) kind = FOOTSTEP_KIND.Wood;
+  else kind = FOOTSTEP_KIND.Stone;
+  if (ctx.onExteriorWater) kind = FOOTSTEP_KIND.Submerged;
+  if (ctx.onExteriorPath) kind = FOOTSTEP_KIND.Stone;
+  if (ctx.dungeonSwimming) kind = FOOTSTEP_KIND.Submerged;
+  else if (ctx.dungeonShallow) kind = FOOTSTEP_KIND.Shallow;
+  return kind;
+}
+/** The clip-pair table `pickFootstepKind`'s answer indexes into - shared
+ *  by the local pickFootstepSet above and any receiver (net/remotePlayers.js)
+ *  that only has the kind, not the original ctx. */
+export const FOOTSTEP_CLIP_SETS = Object.freeze([
+  [FOOTSTEP.Outside1, FOOTSTEP.Outside2],
+  [FOOTSTEP.Snow1, FOOTSTEP.Snow2],
+  [FOOTSTEP.Wood1, FOOTSTEP.Wood2],
+  [FOOTSTEP.Stone1, FOOTSTEP.Stone2],
+  [FOOTSTEP.Submerged, FOOTSTEP.Submerged],
+  [FOOTSTEP.Shallow, FOOTSTEP.Shallow],
+]);
 
 /** The stride machine. update() per frame with the live position and
  *  motor state; returns a clip id to play or null. */

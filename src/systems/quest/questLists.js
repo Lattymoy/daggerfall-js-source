@@ -106,6 +106,25 @@ export class QuestListsManager {
     }
   }
 
+  /** OURS, not DFU's: quest-sharing's own lookup (systems/questShare.js).
+   *  GetQuest resolves a quest by PARSING it; this instead answers the
+   *  catalog ROW - guild group, required membership, the rank/reputation
+   *  floor, oneTime - without parsing anything, so a received share can
+   *  be checked against the receiver's OWN guild standing before a
+   *  single resource is built. A quest with no catalog row (the source
+   *  seam, or an InitAtGameStart entry) answers null: nothing here
+   *  gates it, the same as GetQuest's own first-checked seam. */
+  findQuestMeta(questName) {
+    for (const quest of this.init) if (quest.name === questName) return { scope: 'init', quest };
+    for (const [group, pool] of this.guilds) {
+      for (const quest of pool) if (quest.name === questName) return { scope: 'guild', group, quest };
+    }
+    for (const [group, pool] of this.social) {
+      for (const quest of pool) if (quest.name === questName) return { scope: 'social', group, quest };
+    }
+    return null;
+  }
+
   /** GetQuest (:279-321): the source seam first (C#'s
    *  QuestSourceFolder File.Exists), then init, guild and social
    *  lists by name. Answers null for an unknown quest. */
@@ -231,5 +250,24 @@ export class QuestListsManager {
     if (quest.oneTime && this.oneTimeQuestsAccepted != null) {
       this.oneTimeQuestsAccepted.push(quest.questName);
     }
+  }
+
+  /** OURS: questShare.js's own two calls, not DFU's. A shared quest is
+   *  "started" for the receiver too, so it must never re-offer either
+   *  - but noteQuestStarted only pushes when the array is already
+   *  lazily initialised (a pool built at least once this session), and
+   *  a share can land before the receiver has opened any guild
+   *  counter at all. markOneTimeAccepted inits it either way;
+   *  hasAcceptedOneTime is the matching read, for the "already
+   *  completed/tombstoned" gate - a repeatable (non-oneTime) quest
+   *  keeps no such record by design (DFU means it to be redoable), so
+   *  the gate only ever applies to a oneTime quest's catalog row. */
+  markOneTimeAccepted(questName) {
+    if (this.oneTimeQuestsAccepted == null) this.oneTimeQuestsAccepted = [];
+    if (!this.oneTimeQuestsAccepted.includes(questName)) this.oneTimeQuestsAccepted.push(questName);
+  }
+
+  hasAcceptedOneTime(questName) {
+    return !!this.oneTimeQuestsAccepted?.includes(questName);
   }
 }

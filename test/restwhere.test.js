@@ -342,8 +342,8 @@ test('rest: both above-ground hosts run the DISPATCH, and ONLY its enemies arm r
     assert.match(body, /d\.kind === 'blocked'\)\s*\{/, `${host} acts on a racial override's block`);
     assert.match(body, /rb\.textId/, `${host} speaks the override's own record`);
     // The window opens only past the gate, and only once.
-    assert.equal((body.match(/new RestWindow\(/g) ?? []).length, 1, `${host} opens ONE rest window`);
-    assert.ok(body.indexOf('restDecision(') < body.indexOf('new RestWindow('),
+    assert.equal((body.match(/createRestWindow\(/g) ?? []).length, 1, `${host} opens ONE rest window`);
+    assert.ok(body.indexOf('restDecision(') < body.indexOf('createRestWindow('),
       `${host}: the gate must precede the window`);
   }
 
@@ -357,10 +357,10 @@ test('rest: both above-ground hosts run the DISPATCH, and ONLY its enemies arm r
   // the Vagrancy charge live in exactly one place each, and it is
   // never a host.
   assert.deepEqual(modulesMatching(/(?<![\w.])canRest\(/),
-    ['systems/restSession.js', 'ui/restWindow.js'],
-    'CanRest is DECLARED in restSession and CALLED by the window - by no host');
+    ['systems/restSession.js', 'ui/enhancedRest.js', 'ui/restWindow.js'],
+    'CanRest is DECLARED in restSession and CALLED by the two windows (PARTY-REST DROP: the enhanced rest window is the classic one\'s twin over the same session) - by no host');
   assert.deepEqual(modulesMatching(/ILLEGAL_REST_WARNING/),
-    ['systems/restSession.js', 'ui/restWindow.js']);
+    ['systems/restSession.js', 'ui/enhancedRest.js', 'ui/restWindow.js']);
   assert.deepEqual(modulesMatching(/getBool\('GUI', 'IllegalRestWarning'\)/),
     ['systems/restSession.js'], 'the setting has one reader');
   // ...and the settings ledger names that reader. It named

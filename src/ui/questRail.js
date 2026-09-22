@@ -81,6 +81,12 @@ export function parseFinished(entry, index) {
 export function questRail(log) {
   const active = (log?.active ?? []).map((q, i) => ({
     key: `a:${q.id ?? i}`,
+    // QUEST1: the raw id, kept alongside `key` rather than folded only
+    // into that composite string - a consumer wanting to ACT on this
+    // quest (not just render/fold it) needs the id on its own, and
+    // `key`'s "a:" prefix makes it unusable as one without parsing the
+    // string back apart.
+    id: q.id ?? null,
     name: q.name || `Quest ${i + 1}`,
     questName: q.questName ?? '',
     main: isMainQuest(q.questName),
