@@ -337,7 +337,12 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
     assert.match(src, /openRest: \(\) => \{ townTalk\.closeOverlay\(\); toggleRest\(\); \}/, `${name}: the menu's picker leaves the slot before the rest window`);
     assert.match(src, /isWaterSourceFlat\(flat\.archive, flat\.record\) \|\| isDrySourceFlat\(flat\.archive, flat\.record\)/, `${name}: the fountains and wells off the block flats`);
     assert.match(src, /WATER_SOURCE_MODELS\.includes\(placed\.modelIdNum\)/, `${name}: the troughs off the models`);
-    assert.match(src, /if \(!survivalOn\(\)\) return \[\];|survivalOn\(\) \? springs\.map/, `${name}: no water arm with the mod off`);
+    // AUDIT-WH P7 split the streaming host's builder from its
+    // targets (one builder, three readers, no shared slot), so its
+    // empty answer is the empty LIST rather than an empty array
+    // literal. The law - nothing in the ray with the mod off - is
+    // the same one.
+    assert.match(src, /if \(!survivalOn\(\)\) return _springs;|survivalOn\(\) \? springs\.map/, `${name}: no water arm with the mod off`);
   }
   // world: the pixel sweep, the scene cache, the save envelope, the recenter, the cell's frames
   assert.doesNotMatch(world, /camps\.collectPixel\(key\)/, 'AUDIT SURV B: the streaming sweep spares a placed camp');
@@ -358,7 +363,13 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   assert.match(dc, /camps: camps\.snapshot\(\),/); assert.match(dc, /if \(truncate\) camps\.restore\(w\.camps\);/);
   assert.match(dc, /camps, campBatches: \(\) => camps\.batches\(\), campLights: \(\) => camps\.lights\(\),/);
   assert.match(modes, /\.\.\.dungeonCtx\.campLights\(\), \.\.\.dungeonCtx\.torchLights\(\)\)/); assert.match(modes, /\.\.\.dungeonCtx\.campBatches\(\), \.\.\.dungeonCtx\.torchBatches\(\)/);
-  assert.match(dc, /if \(kind === 'camp'\) return camps\.activate\(key, mode\) \? 1 : 0;/);
+  // AUDIT-WH2 L2-F1: ...and `hearth:` beside it. HEARTH1 says all FOUR
+  // HOSTS stand a ray target on a world fire that opens the cooking
+  // list; the dungeon collected the fires, stood them and named them
+  // 'Fire' without ever growing the arm, so E on a brazier underground
+  // was eaten in silence while the same object worked outdoors and
+  // indoors. `camps.activate` already routed both keys.
+  assert.match(dc, /if \(kind === 'camp' \|\| kind === 'hearth'\) return camps\.activate\(key, mode\) \? 1 : 0;/);
   assert.match(dc, /targets\.push\(\.\.\.camps\.targets\(\)\);/);
   assert.match(dc, /camps\.destroyAll\(\);[^\n]*\n\s*droppedTorches\.destroyAll\(\);\s*\n\s*weaponRig\.dispose\?\.\(\);/, 'the teardown frees the fires');
   assert.match(modes, /key\.startsWith\('droppedTorch:'\) \|\| key\.startsWith\('camp:'\)/);

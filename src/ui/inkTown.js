@@ -194,7 +194,7 @@ export function townBytes(gridW, gridH, blocks) {
     // EM-BUG3: the block's row in SHEET space. `(gridH-1-b.y)` is the
     // block flip and the source row `y` then goes in unreversed, which
     // together are `H-1-anchorRow` - the shipped window's own
-    // composition (exteriorAutomapWindow.js:299-300), derived above.
+    // composition (exteriorAutomapWindow.js:302-303), derived above.
     const by = (gh - 1 - (b.y ?? 0)) * BLOCK_PX;
     if (bx < 0 || by < 0 || bx + BLOCK_PX > w || by + BLOCK_PX > h) continue;   // a block off its own grid
     for (let y = 0; y < BLOCK_PX; y++) {

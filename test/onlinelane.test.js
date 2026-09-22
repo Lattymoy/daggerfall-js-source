@@ -11,7 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { isOnlinePage, ONLINE_FORCED_PREFS, ONLINE_PLAYERS_OWN_PREFS, onlineForcedPref, onlineForcedModSetting, ONLINE_FORCED_MOD_KEY } from '../src/systems/onlineLane.js';
+import { isOnlinePage, ONLINE_FORCED_PREFS, ONLINE_PLAYERS_OWN_PREFS, onlineForcedPref, onlineForcedModSetting, ONLINE_FORCED_MOD_KEY, ONLINE_PLAYERS_OWN_MODS } from '../src/systems/onlineLane.js';
 import { uiSkin, isEnhanced } from '../src/systems/uiSkin.js';
 import { PREF_DEFAULTS, getPref, setPref, _resetForTests } from '../src/systems/uiPrefs.js';
 import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
@@ -59,7 +59,17 @@ test('OL1: every vendored mod is enabled online whatever the store says, its oth
   for (const vendor of Object.keys(MOD_SETTINGS)) setModSetting(vendor, 'Enabled', false);
   setModSetting('dynamic-skies', 'densitySetting', 3);
   onPage('?online=1', () => {
-    for (const vendor of Object.keys(MOD_SETTINGS)) assert.equal(modSetting(vendor, 'Enabled'), true, `${vendor} enabled online`);
+    for (const vendor of Object.keys(MOD_SETTINGS)) {
+      // AUDIT-WH R8: ...EXCEPT a mod that only draws a READOUT on your
+      // own screen. OL1's reasoning is about the WORLD - a mod that
+      // moves a light, stands an object, changes a roll or writes a
+      // save record is what the room has to agree on - and a crosshair
+      // label stands nothing, rolls nothing, writes nothing and is not
+      // on the wire. It is the same category as `chatHidden` and
+      // `peerClassSprites`, which this lane already leaves alone.
+      const own = ONLINE_PLAYERS_OWN_MODS.includes(vendor);
+      assert.equal(modSetting(vendor, 'Enabled'), !own, `${vendor} ${own ? 'is still the player\'s' : 'enabled'} online`);
+    }
     assert.equal(modSetting('dynamic-skies', 'densitySetting'), 3, 'a mod\'s own dial is the player\'s');
   });
   for (const vendor of Object.keys(MOD_SETTINGS)) assert.equal(modSetting(vendor, 'Enabled'), false, `${vendor}: offline again, the store as the player left it`);
@@ -76,6 +86,13 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
   assert.equal(ONLINE_FORCED_PREFS.skin, 'enhanced');
   assert.equal(ONLINE_FORCED_MOD_KEY, 'Enabled');
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) assert.ok(mod.keys.Enabled, `${vendor} has an Enabled key for the lane to force`);
+  // AUDIT-WH R8: and every EXEMPTION names a mod that exists, so the
+  // list cannot rot into a no-op the way a stale key would.
+  for (const vendor of ONLINE_PLAYERS_OWN_MODS) assert.ok(MOD_SETTINGS[vendor], `${vendor} is a vendored mod`);
+  assert.equal(onlineForcedModSetting('world-tooltips', 'Enabled', '?online=1'), undefined,
+    'a purely local readout is not the room\'s business');
+  assert.equal(onlineForcedModSetting('dynamic-skies', 'Enabled', '?online=1'), true,
+    '...and a mod that changes the world still is');
   assert.equal(onlineForcedPref('enhancedAI', '?online=1'), true);
   assert.equal(onlineForcedPref('enhancedAI', ''), undefined);
   assert.equal(onlineForcedPref('grassDensity', '?online=1'), undefined);

@@ -707,8 +707,8 @@
   {
     "name": "AUDIT4-C1-adopted-after-the-flip",
     "file": "src/scenes/worldModes.js",
-    "old": "      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1): ADOPTED - the context's stack is the live top window from the next statement on; before the flip and not after, so no statement ever runs with mode 'dungeon' and the door's presenter still dormant (worldModes' own quest door reaches the same stack and reads no `_live`)\n      mode = 'dungeon';\n      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change\n",
-    "new": "      mode = 'dungeon';\n      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change\n      ctx.goLive?.();\n",
+    "old": "      ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1, re-audited C1): ADOPTED - the context's stack is the live top window from the next statement on; before the flip and not after, so no statement ever runs with mode 'dungeon' and the door's presenter still dormant (worldModes' own quest door reaches the same stack and reads no `_live`)\n      setMode('dungeon');\n      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change\n",
+    "new": "      setMode('dungeon');\n      host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change\n      ctx.goLive?.();\n",
     "tests": [
       "test/enhnotice3_hosts.test.js"
     ]

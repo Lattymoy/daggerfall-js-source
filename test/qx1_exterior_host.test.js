@@ -108,7 +108,7 @@ const QW_PARAMS = [
   'placeFoeEnv', 'placeFoeFreely', 'entityOccupancy', 'questFoeGender', 'ENEMY_BASICS',
   'fieldOfView', 'walkMode', 'player', 'cam', 'collider', 'exteriorFoes', 'exteriorFoePool',
   // ...and the G4 spell registry CastSpellDo reads through this host's
-  // own `getClassicSpellEffects` (world.js:7294's seam).
+  // own `getClassicSpellEffects` (world.js:7434's seam).
   'spellRecordOfIndex',
 ];
 
@@ -304,7 +304,7 @@ test('QX1 review: every faction read is the PERSISTENT store, and the Person cha
   // (4) ...and the family degrades to the charter's refusal when
   // FACTION.TXT has not loaded - never a throw on `store.dict`. The
   // People/Courts pair is left out of this arm deliberately: their
-  // expressions are world.js:7345/7347's verbatim, and talk.js's
+  // expressions are world.js:7485/7487's verbatim, and talk.js's
   // findFactions dereferences the dictionary it is handed, so the two
   // hosts share one shape there and neither invents a private guard.
   const cold = mountQuestWorld({ factionDict: null });
@@ -491,8 +491,8 @@ test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into TH
   // host owns its own cast engine, and worldModes takes THIS instance
   // for the interior mode, so while the mount passed neither key every
   // `cast X spell do` / `cast X effect do` on this route - and in every
-  // shop entered from it - was permanently deaf. world.js:3291-3292 and
-  // dungeonContext.js:2209-2210 wire the identical pair.
+  // shop entered from it - was permanently deaf. world.js:3457-3458 and
+  // dungeonContext.js:2154-2155 wire the identical pair.
   const doorSrc = slice('    onNewReadySpell: (sp) => questBridge',
     '    // ROAD-G G2 (a): THE THREE-ARM SHAPE');
   // ...and they are keys of the ENGINE MOUNT, not of some other bag:
@@ -527,7 +527,7 @@ test('ROAD-G G2 review: questWorld answers CastSpellDo\'s two classic-spell read
   // Without these the action self-completes at PARSE
   // (actions.js:2756/:2763 - no effects, so C#'s template completes and
   // the task can never fire), which would have left `cast X spell do`
-  // dead on this route even with the doors above wired. world.js:7294's
+  // dead on this route even with the doors above wired. world.js:7434's
   // pair, byte-folded on both sides exactly as MakeClassicKey folds.
   const { world } = mountQuestWorld();
   assert.deepEqual(world.getClassicSpellEffects(0x105), [{ type: 5, subType: 1 }],
@@ -568,7 +568,7 @@ test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, 
   assert.match(senses, /candidates: \(\) => exteriorFoePool\(\)\.filter\(\(f\) => !f\.dead\),/,
     'the senses walk the UNNARROWED street database, live records only');
 
-  // world.js:11051-11114's arrow shape: an enemy shaft hunts a WALKING
+  // world.js:11204-11267's arrow shape: an enemy shaft hunts a WALKING
   // player (the fly camera has no capsule), and both live pools are
   // impact candidates. `playerFeet: null` is every enemy arrow passing
   // through the player - the whole enemy arm the lane shipped.

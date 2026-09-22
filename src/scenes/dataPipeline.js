@@ -188,7 +188,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // collider, no doors of its own.
     if (modelIdNum === MACHINERY_MODEL_ID) {
       const gpu = await uploadPart(modelIdNum, MACHINERY);
-      cpuModels.set(modelIdNum, { positions: MACHINERY.positions, indices: MACHINERY.indices, subMeshes: MACHINERY.subMeshes, doors: [] });
+      cpuModels.set(modelIdNum, { modelIdNum, positions: MACHINERY.positions, indices: MACHINERY.indices, subMeshes: MACHINERY.subMeshes, doors: [] });
       return gpu;
     }
     const index = arch.getRecordIndex(modelIdNum);
@@ -201,7 +201,12 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const model = dfMeshToModel(dfMesh, getTextureSize);
     for (const sm of model.subMeshes) uploadRecord(sm.textureArchive, sm.textureRecord, { opaque: true });   // a mesh material: alphaIndex -1
     const gpu = renderer.createMesh(model);
-    cpuModels.set(modelIdNum, { positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors, normals: model.normals, uvs: model.uvs });   // PERF4: the static batch merges the whole vertex
+    // WORLD-HOVER: the record carries its OWN id. The map was keyed by it
+    // and the value did not know it, so anything handed a cpu record - the
+    // action system's five constructors among them - could not say WHICH
+    // model it held, and a namer had to be handed the id a second time from
+    // whichever caller happened to still have it. The model knows.
+    cpuModels.set(modelIdNum, { modelIdNum, positions: model.positions, indices: model.indices, subMeshes: model.subMeshes, doors: model.doors, normals: model.normals, uvs: model.uvs });   // PERF4: the static batch merges the whole vertex
     gpuMeshes.set(modelIdNum, gpu);
     return gpu;
   }

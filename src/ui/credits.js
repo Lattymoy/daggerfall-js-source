@@ -136,6 +136,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/49',
     }),
     Object.freeze({
+      title: 'World Tooltips',
+      version: '1.1',
+      author: 'jefetienne',
+      what: 'A name under the crosshair for whatever you are looking at (WORLD-HOVER): a person, a shop sign and the hours it keeps, a door and its lock level, the dungeon you would walk into, a lever, a wheel, a ladder, a bookshelf, a Daedra at a summoning, and what a chest or a body holds. The mod\u2019s naming ladder ported 1:1 from its own source, in its own order, extension API included - worn in the enhanced skin\u2019s own dress at the reticle, where the port\u2019s loot plaque already stood, rather than the mod\u2019s Daggerfall tooltip panel.',
+      terms: 'Carried under its MIT License - the permission the source grants (Copyright (c) 2009-2018 jefetienne), beside Daggerfall Workshop\u2019s own; see vendor/world-tooltips/README.md.',
+      contact: 'jefetienne, through the DFU forums (the manifest\u2019s ContactInfo)',
+      vendor: Object.freeze(['world-tooltips']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/158',
+    }),
+    Object.freeze({
       title: 'Windmills of Daggerfall',
       version: '2.0',
       author: 'Kamer',

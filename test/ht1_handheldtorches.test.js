@@ -881,7 +881,7 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.match(dc, /delete w\.droppedLoot;\s*delete w\.droppedTorches;/, 'the shared world carries nothing of the player\'s own');
   assert.match(dc, /waterLevel: \(\) => \(_fpFeet \? blockWaterLevelAt\(/, 'the dungeon\'s water plane for the douse');
   assert.match(dc, /droppedTorches\.destroyAll\(\);\s*weaponRig\.dispose\?\.\(\);/, 'AUDIT 66 F5/F8: the pool and the rig\'s component leave with the dungeon, beside the foes\' batches and the wall torches\' loops');
-  assert.match(dj, /\.\.\.ctx\.torchLights\(\)\)/); assert.match(dj, /\.\.\.ctx\.torchBatches\(\)\]/); assert.match(dj, /key\.startsWith\('droppedTorch:'\)\)\) \{/);
+  assert.match(dj, /\.\.\.ctx\.torchLights\(\)\)/); assert.match(dj, /\.\.\.ctx\.torchBatches\(\)\]/); assert.match(dj, /key\.startsWith\('droppedTorch:'\) \|\| key\.startsWith\('camp:'\) \|\| key\.startsWith\('hearth:'\)\)\) \{/);   // AUDIT-WH2 L2-F1/F2: the fires joined this ladder - ?dungeon stood and NAMED camp:/hearth: and answered neither
   assert.match(dj, /keyDown: \(code\) => keys\.has\(code\)/);
 });
 

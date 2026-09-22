@@ -48,7 +48,7 @@ export const buildingLockValue = (quality) => Math.trunc((quality ?? 0) / 2);
  *   isHouseOwned(buildingKey)     - DaggerfallBankManager.IsHouseOwned
  *                                   (H1 WIRED IT: banking.js:175 over
  *                                   playerEntity.houses, handed in at
- *                                   scenes/worldModes.js:3880, so
+ *                                   scenes/worldModes.js:4079, so
  *                                   :69 - PlayerActivate.cs:1261-1262,
  *                                   the ladder's first test - now has
  *                                   a real answer instead of false)
@@ -110,6 +110,29 @@ export function buildingIsUnlocked(building, {
   // DFU's `unlocked` starts false and no arm below Ship sets it
   if (type === BUILDING_TYPES.Ship && ownsShip) return true;
   return false;
+}
+
+/**
+ * THE BUILDING-CLOSED SENTENCE (PlayerActivate.cs:477-480), and its ONE
+ * home. DFU picks one of two localized rows - `guildClosed` for a
+ * GuildHall, `storeClosed` for everything else (Internal_Strings.csv:
+ * 36-37) - then substitutes %d1/%d2 with this type's open and close
+ * hours, ":00" suffixes and all.
+ *
+ * It lived as an inline template literal in the exterior activate arm
+ * until the world hover needed to SAY the same sentence without
+ * clicking. Two producers of one DFU member is the violation the bible
+ * names first, so the sentence moved here beside the hours it reads and
+ * both callers ask for it.
+ *
+ * `subject` overrides the Guild/Store word. Nothing in DFU passes it;
+ * World Tooltips does, substituting "Palace" for a palace it looks at
+ * (a departure of the mod's, recorded with the port of its ladder), and
+ * the override is how that arm stays a caller instead of a second copy.
+ */
+export function buildingClosedText(buildingType, { subject = null } = {}) {
+  const which = subject ?? (buildingType === BUILDING_TYPES.GuildHall ? 'Guild' : 'Store');
+  return `${which} is closed. Open from ${OPEN_HOURS[buildingType]}:00 to ${CLOSE_HOURS[buildingType]}:00.`;
 }
 
 /** The locked-door popup line - `lockedExteriorDoor`, which

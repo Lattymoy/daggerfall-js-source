@@ -509,7 +509,12 @@ test('AUDIT 62 F16/F28: EVERY mode change releases the lock (mutant: drop the un
   const wm = read('src/scenes/worldModes.js');
   const lines = wm.split('\n');
   const flips = [];
-  lines.forEach((l, i) => { if (/^\s*mode = '(exterior|interior|dungeon)';$/.test(l)) flips.push(i); });
+  // AUDIT-WH2 L1-F5: the flip is `setMode('x')` now, not a raw
+  // assignment - `mode` is written in exactly one place so the door
+  // cache's free cannot be forgotten by a sixth mode. The law this pin
+  // holds is unchanged: whatever spells the flip, the lock goes on the
+  // NEXT line.
+  lines.forEach((l, i) => { if (/^\s*setMode\('(exterior|interior|dungeon)'\);$/.test(l)) flips.push(i); });
   assert.ok(flips.length >= 5, `every mode assignment is a transition: found ${flips.length}`);
   for (const i of flips) {
     assert.match(lines[i + 1], /host\.unlockOn\?\.\(\);/,

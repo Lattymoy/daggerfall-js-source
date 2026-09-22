@@ -37,6 +37,20 @@ export function populateBookshelf(rolls = Math.random) {
   return books;
 }
 
+/**
+ * WHICH BUILDINGS MAKE A SHELF MODEL A BOOKSHELF
+ * (DaggerfallInterior.cs:808-814) - the same model a shop makes loot
+ * shelves of. An OWNED house's shelf never reaches either arm: HC1
+ * births it a container at build.
+ *
+ * Lifted out of `worldModes.openShelf` when the world hover needed to
+ * SAY which of the two a shelf is without opening it. Two producers of
+ * one DFU member is the violation the bible names first, so the
+ * predicate moved here beside the access rule it gates.
+ */
+export const isBookshelfBuilding = (buildingType) => buildingType === BUILDING_TYPES.Library
+  || buildingType === BUILDING_TYPES.GuildHall || buildingType === BUILDING_TYPES.Temple;
+
 /** ReadBook()'s gate (:68-80). `guild`/`membership` are the building
  *  faction's, resolved by the caller the way GetGuild(factionID)
  *  resolves DFU's - a null guild is a hall the dict cannot name, and

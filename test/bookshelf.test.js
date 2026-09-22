@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { BOOKSHELF_CAPACITY, populateBookshelf, bookshelfAccess, bookshelfTitles } from '../src/systems/bookshelf.js';
+import { BOOKSHELF_CAPACITY, populateBookshelf, bookshelfAccess, bookshelfTitles, isBookshelfBuilding } from '../src/systems/bookshelf.js';
 import { healthStatusRows, YOU_ARE_HEALTHY_ID, YOU_HAVE_BEEN_POISONED_ID } from '../src/systems/healthStatus.js';
 import { BOOK_ID_TITLES } from '../src/systems/booksData.js';
 import { bookTitle } from '../src/systems/books.js';
@@ -60,8 +60,22 @@ test('BS1: ReadBook\'s gate - only a GuildHall or Temple consults the guild, a L
 
 test('BS1: the interior shelf click routes - bookshelf in the three types, loot shelves in a shop', () => {
   const wm = code('scenes/worldModes.js');
-  assert.match(wm, /if \(b\.buildingType === BUILDING_TYPES\.Library \|\| b\.buildingType === BUILDING_TYPES\.GuildHall\n\s+\|\| b\.buildingType === BUILDING_TYPES\.Temple\) openBookshelf\(shelf, b\);/,
+  // WORLD-HOVER lifted the GATE to systems/bookshelf.js, because the
+  // world hover has to say which of the two a shelf is WITHOUT opening
+  // it - and two producers of one DFU member is the violation the
+  // bible names first. The click is a caller now; the gate is pinned
+  // where it lives.
+  assert.match(wm, /if \(isBookshelfBuilding\(b\.buildingType\)\) openBookshelf\(shelf, b\);/,
+    'the click ASKS for the answer rather than keeping a second copy of it');
+  assert.match(code('systems/bookshelf.js'),
+    /export const isBookshelfBuilding = \(buildingType\) => buildingType === BUILDING_TYPES\.Library\n\s+\|\| buildingType === BUILDING_TYPES\.GuildHall \|\| buildingType === BUILDING_TYPES\.Temple;/,
     'the DaggerfallInterior.cs:808-814 building-type gate');
+  assert.equal(isBookshelfBuilding(BUILDING_TYPES.Library), true);
+  assert.equal(isBookshelfBuilding(BUILDING_TYPES.GuildHall), true);
+  assert.equal(isBookshelfBuilding(BUILDING_TYPES.Temple), true);
+  for (const t of [BUILDING_TYPES.GeneralStore, BUILDING_TYPES.Tavern, BUILDING_TYPES.House1, BUILDING_TYPES.Palace]) {
+    assert.equal(isBookshelfBuilding(t), false, `building type ${t} makes loot shelves, not bookshelves`);
+  }
   assert.ok(!wm.includes('Library/Guild/Temple bookshelves + owned-house storage pend'),
     'the old flag sentence is gone (the house half is re-flagged in place)');
   // the pick opens the reader on the id, through the one book hook

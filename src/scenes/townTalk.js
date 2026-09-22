@@ -92,6 +92,33 @@ export const PERSON_HIT_HEIGHT = 1.8;
 
 /** Ray vs a vertical cylinder at feet (the person's controller):
  *  returns the along-ray distance or Infinity. */
+/**
+ * THE NEAREST TOWNSPERSON UNDER THE RAY - the press's own scan, lifted.
+ *
+ * AUDIT-WH H2. `tryActivate` below walked the street pool inline, and
+ * the world hover needed the same answer to race a townsperson against
+ * a shopfront (the mod's .cs:299-302 band). A second walk written at
+ * the plaque is the HARD2 failure in miniature: only a readout would
+ * read it, so nobody would notice it drifting from the one the button
+ * takes. One scan, two readers.
+ *
+ * The INDEX comes back with the entry because the plaque keys its
+ * frame by it - `mobileNpc:<i>` into the host's own live pool, the
+ * same shape worldModes' static `person:<i>` already uses.
+ *
+ * @returns {{entry: object, index: number, distance: number}|null}
+ */
+export function nearestPerson(camPos, fwd, persons) {
+  let best = null, bestI = -1, bestDist = Infinity;
+  let i = -1;
+  for (const p of persons ?? []) {
+    i += 1;
+    const d = rayPersonDistance(camPos, fwd, p.pos);
+    if (d < bestDist) { best = p; bestI = i; bestDist = d; }
+  }
+  return best ? { entry: best, index: bestI, distance: bestDist } : null;
+}
+
 export function rayPersonDistance(camPos, fwd, feet) {
   const cx = feet[0] - camPos[0], cz = feet[2] - camPos[2];
   // closest approach in XZ
@@ -626,11 +653,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  this arm consumes strictly below it alone - :412 is reached for the ONE ray's own hit (activate.js has the law). */
   function tryActivate(camPos, fwd, persons, nearerThan = Infinity) {
     if (overlay) return true;
-    let best = null, bestDist = Infinity;
-    for (const p of persons) {
-      const d = rayPersonDistance(camPos, fwd, p.pos);
-      if (d < bestDist) { best = p; bestDist = d; }
-    }
+    const near = nearestPerson(camPos, fwd, persons);
+    const best = near?.entry ?? null, bestDist = near?.distance ?? Infinity;
     // AUDIT 23 (ui-native-3) - PlayerActivate.cs:76/:771-798: the ray
     // itself reaches RayDistance (76.8); each MODE's distance gates
     // inside with the 'youAreTooFarAway' line (Info/Grab/Talk 6.4, Steal

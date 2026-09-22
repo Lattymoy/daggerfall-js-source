@@ -866,17 +866,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:1941 (the factory) and :1904 (a
+                        worldModes.js:2140 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1017, world.js:2058,
-                        exterior.js:2291. It is the only window TWO
+                        dungeonContext.js:1019, world.js:2109,
+                        exterior.js:2372. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6268, dungeonContext.js:6409. A seam
+    / NOTEBOOK          world.js:6412, dungeonContext.js:6568. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -6968,7 +6968,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:632, :613`), and both exterior hosts called it
+  overlay (`townTalk.js:632, :640`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -8605,7 +8605,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2760 as a second book built by hand 342 lines below the
+worldModes.js:2959 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8688,7 +8688,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2475 and
+questJournal.js from charSheetNav:53, world.js:2524 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9315,7 +9315,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:5774` and `dungeonContext.js:1563` answer the same
+`worldModes.js:6463` and `dungeonContext.js:1566` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6601`,
+the other half went stale unnoticed. (The rest cite named `world.js:6744`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6607` now.)
+deleted the second and the cite is `world.js:6750` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10978,7 +10978,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:577-603`), so in the art-less greeting chain a tone
+  (`townTalk.js:604-630`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -13697,7 +13697,7 @@ Pinned: `test/macfive.test.js` PL3 (two), `test/cursortoggle.test.js`,
 ## RF6 - THE ENHANCED SKIN READS THE ONE NAME RESOLVER (2026-09-14, Mac's refactor pass, the sixth)
 
 THE FAULT. The enhanced inventory's line (`src/ui/enhancedInventory.js`
-itemLine) and the loot plaque (`src/ui/lootHover.js` hoverLines) rebuilt
+itemLine) and the loot plaque (`src/systems/worldHover.js` hoverLines) rebuilt
 ResolveItemLongName's arms by hand - ResolveItemName for the name,
 materialName for the sub-line, gated on "Armor or Weapons, identified"
 - and lost four of DFU's arms on the way: an arrow, a helm or shield
@@ -15349,9 +15349,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4721` named a line that is 8950, `:798` one that is
+read: `world.js:4882` named a line that is 8950, `:803` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4456-4488` and `dungeonContext.js:1411` were
+that is 8907. `world.js:4618-4650` and `dungeonContext.js:1391` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -16684,7 +16684,7 @@ there; all-max gets the sentence that is true of it.
 
 **F3 - two of the eight descriptions named numbers that do nothing.**
 The window's own promise is that each attribute line is true of code
-that runs. Willpower cited `questMacros.js:575`, which only PRINTS
+that runs. Willpower cited `questMacros.js:595`, which only PRINTS
 MagicResist for the `%mr` macro - the consumer is `spellcast.js:158`'s
 saving throw. Agility cited `toHitModifier` (formulas.js:118), which is
 the CHARACTER SHEET's display modifier and is read by chargen's derived
@@ -16893,7 +16893,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2350` became
+second pass moved them a second time - `dungeonContext.js:2353` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came
@@ -17169,3 +17169,302 @@ not load (a trailing comment swallowed a one-line statement, twice),
 and read 14/14 both times; PERF-RIG1's F3 lesson again, caught by
 reading the pass count against the run.
 
+
+## WORLD-HOVER - a name under the crosshair for whatever you are looking at (2026-09-21, Mac)
+
+Mac handed over the shipped zip of **World Tooltips 1.1** (jefetienne,
+MIT, Nexus 158) with two conditions of his own:
+
+> "This is perfect and honestly it fits in with the next mod I want to
+> integerate 1:1. With soem caviats 1. We need to build our own
+> enhanced skin for the enhanced version 2. Currently we have a tooltip
+> for looting containers, so this will need to be compatible somehow."
+
+The second caveat is the interesting one. The port already had a plaque
+under the crosshair - PX21c's `ui/lootHover.js`, which names what is in
+a pile you are looking at - and the mod names everything EXCEPT what is
+in a pile. Two surfaces answering one ray would be the FONT1 two-faces
+bug in a new coat. So this is not the mod bolted on beside the plaque;
+it is one surface with one resolver, and the mod's ladder and the
+port's item rows are two STATES of it.
+
+### The law the whole slice exists to keep
+
+**The plaque and the button can never disagree.** PX21c said it first,
+for three loot keys, in its own header:
+
+> It follows what the crosshair already resolves - the same activation
+> pick the take uses - so it can never disagree with what pressing the
+> button would open.
+
+Everything below is that sentence extended to every key the activation
+ladder can hit, and the way it is kept is that there is exactly ONE
+race: `player/activationRace.js`, which the press already walks. **The
+race decides WHO WON; the model only decides what the winner is
+CALLED.** Nothing in this slice re-derives a distance, a reach or a
+precedence of its own.
+
+### The shape
+
+| | module | what it is |
+|---|---|---|
+| model | `systems/worldHover.js` | the reach gate, the itemising, the frame record, its rendered signature, the two composition laws. Pure: no document, no skin, no host |
+| words | `systems/worldTooltips.js` | World Tooltips' naming ladder, ported 1:1 and cited arm by arm |
+| draw | `ui/worldPlaque.js` | the node, the dress, the skin gate, the reticle anchor, and the ONE seam four hosts call |
+
+`ui/lootHover.js` was renamed to `ui/worldPlaque.js`: it was named after
+the one state it had. The rename is the repo's own idiom
+(`MakeHouseContainer` -> `isHouseContainerModel`, `overworldMap.js` ->
+`heldMap.js`) and every pin that held the old name moved with it rather
+than being deleted - including the `readdirSync('src/ui')` sweep in
+`rf6_itemnames`, which would have dropped the file SILENTLY.
+
+### Three things PX21c got away with by accident
+
+**1. The guard could not see the list.** `if (key === shownKey) return;`
+cannot see a pile whose contents changed under a constant key. That was
+safe only because taking required a window and the window unmounted the
+driver - an accident, not a law, and it goes the moment a quest machine,
+the room's own word (WORLD4) or the next arc's quick loot writes into a
+container being looked at. The guard compares the RENDERED SIGNATURE
+now (`frameSignature`): one node, rewritten only on change, which is
+PX21c's law intact and finally honest about its term.
+
+**2. The 10 Hz throttle bought nothing.** PX21c threw it in because "a
+raycast over every pile and corpse is not free". Measured rather than
+guessed, the pick is ~3 microseconds of a 16.7 ms frame. What the
+throttle cost was a plaque that lagged the crosshair by up to a tenth
+of a second, so sweeping past a rack of barrels named them out of step
+with the reticle and the name stuck after you looked away. It runs
+every frame.
+
+**3. It stood where the reticle was not.** The old rule was `bottom:
+16%`, with a comment saying it was "centred low so it never sits on the
+reticle" - avoiding the cross by standing far from it, because it had
+nowhere to read the cross's real place. `ui/hud.js` exports
+`hudReticle` now, the two terms its own crosshair draw uses, so there
+is ONE answer to "where is the reticle" and the plaque asks it. It
+hangs a fixed gap BELOW the cross and grows downward: covered in no
+state at any length, and a docked large HUD moves both (ROAD-E E5).
+That is also the mod's own anchor (vendor .cs:1097-1112).
+
+### And two gates it did not have
+
+`cursorActive` takes the plaque down BY LAW rather than by scheduling
+accident - the dungeon's driver only ran with no overlay up, and four
+hosts calling one seam have no such accident to rely on. And **the
+plaque is off entirely on a touch device**: there the activation ray is
+through the FINGER (`_tapPoint` -> `_tapDir` through `rayDirFromScreen`),
+not the crosshair, so a centre-anchored plaque would name what a tap
+would NOT open. That is the founding law broken on every frame, and a
+wrong answer delivered confidently is worse than no answer. The
+tap-anchored variant - resolve on the tap's own ray, anchor at the tap
+point, hold a couple of seconds - is a later slice's, not this one
+wearing a media query.
+
+### ONE CONSTRUCTION SEAM, per scene
+
+The dungeon's activation target list was built INLINE in two places
+against the same context - the modal host's arm and the standalone dev
+door's - and the hover would have been a third. AUDIT 17i's failure by
+name. It is `dungeonContext.dungeonActivationTargets()` now, composed
+through `worldHover.composeActivationTargets`, a pure law that can be
+DRIVEN rather than read. The interior's list had never been extracted
+at all (its exterior twin had) and is `interiorActivationTargets()`.
+
+**A host REGISTERS the families it stands, and registering rather than
+passing an options bag is the point.** A host that cannot ANSWER a
+family must not stand it: the standalone `?dungeon` door has no world
+to exit to and no `exit:` or `person:` arm in its ladder, so such a
+target would win the pick and eat the press in silence. That difference
+between the two dungeon hosts was real before this slice and entirely
+invisible - it WAS the difference between two hand-copied lists. It is
+three declared lines at one mount and none at the other now.
+
+The exterior hosts are the exception that proves it. They do not race
+one list: they run seven picks and settle them with `raceActivation`.
+So `raceWinner` was minted beside the race - the race's own winner, as
+a hit - and the seam takes a `pick` override. The tie order is not a
+guess: `raceActivation` answers `<= Math.min(...)`, so on an exact tie
+several flags are true and the HOST'S arm ladder decides which one
+takes the press. That ladder is the order `raceWinner` walks.
+
+### The naming ladder, and the one structural difference
+
+The mod asks "what component is on this transform" and walks reach
+BANDS in order. The port asks "what key won the pick", and the bands
+are enforced BEFORE the ladder is asked, per family, by the very pick
+the press uses. That is a stronger guarantee than the mod's own,
+because the mod's bands and PlayerActivate's handlers are two copies of
+one set of constants. Three consequences are written into the module's
+head rather than left to be rediscovered: the mod's 6.4 ray clamp is
+structurally already here (the port's widest reach IS 6.4); the mod's
+unguarded "Default" band, which can overwrite a Static NPC name at
+close range, is unreachable; and the `MeshFilter` name scraping has no
+counterpart because a model record carries its own id.
+
+What the ladder says, every arm driven by a pin:
+
+- **the sixteen Daedra by BILLBOARD RECORD**, which is deliberately a
+  SECOND table: `daedraSummoning.DAEDRA` is ordered by factionId and
+  its index 8 is load-bearing for the summoning itself. Two orderings
+  of one pantheon, each right for its own question, and a pin holds
+  them apart. The spellings differ too (the mod's "Vaermina",
+  Daggerfall's "Vaernima") and each stays faithful to its own source.
+- **action objects by model** - Wheel, Lever, The Mantella - and THE
+  MULTITRIGGER RULE: an unlisted, unnamed MultiTrigger is SILENCED
+  outright, because MultiTrigger is the flag on collision plates and
+  trap volumes and labelling them would draw a box round every pressure
+  pad in the dungeon.
+- **house containers by FULL model id.** 41003 (Wardrobe) and 41803
+  (Dresser) both read 3 under `% 100`, which is why the groundwork
+  slice made the container record store the model and derive the
+  texture record at its one reader.
+- a pile of exactly one named by that item with its stack count; a
+  corpse by who it was; a door by its lock level when locked; a static
+  door by where it goes, its lock, and the closed-shop sentence from
+  its one home.
+- `HideDefaultInteractTooltip` verbatim - the author's own knob, so the
+  main quest's puzzles are not given away by a label on the thing you
+  are meant to find for yourself.
+
+**The extension API came with it.** `worldHover.composeNamer` is the
+mod's `Map<reach, fn[]>` in the port's shape - insertion order, first
+answer with a title wins - minus the reach key, which the pick already
+decided. That is what lets the port's OWN world objects ride beside the
+mod's ladder instead of being wedged into it: the camps, the dropped
+torches and both corpse pools name themselves, from the module that
+STANDS the target, through the same door a third party would use.
+
+### What had to move to one home first
+
+Four members had two producers the moment a plaque wanted to SAY
+something the press had only ever done:
+
+- **the closed-shop sentence** -> `buildingLocks.buildingClosedText`
+  (it was a template literal inside the exterior activate arm; the host
+  no longer imports the hour tables at all, so it cannot rebuild it)
+- **a model's own id** -> the `cpuModels` record, so the five
+  ActionSystem constructors can say which model they hold
+- **a container's model** stored instead of its derived texture record
+- **`isBookshelfBuilding`** -> `systems/bookshelf.js`, because one
+  shelf model is a bookshelf in a Library, GuildHall or Temple and loot
+  shelves in a shop, and the plaque must say which without opening it
+
+And one import cycle, caught at boot by the suite:
+`corpseMarker -> worldTooltips -> buildingLocks -> worldTick ->
+unleveledLoot -> corpseMarker`, which read `_deathHandlers` before it
+existed. `corpseEntryFor` answers the ENTRY and the pools apply the
+word. A caller of a rule is not a copy of it; a cycle is a crash.
+
+### THE FOUR HOSTS RULE, named (AUDIT-WH R2)
+
+The record said "the ONE seam four hosts call" and then named two of
+them. A rule whose roster lives in a sentence is a rule nobody can
+check, so here is the roster, and what each host stands:
+
+| host | door | what it drives the plaque with |
+|---|---|---|
+| `scenes/world.js` | `?world`, the streaming exterior | the race's winner (`exteriorHoverPick`) over eight picks, a namer ladder of its own pools, the dropped piles' contents, and the teardown at its unwind |
+| `scenes/exterior.js` | `?exterior`, the fixed city | the same, character for character - its `_hoverNamers` and `_hoverContents` are `world.js`'s twins, and HARD2 is why that duplication is a list of closures rather than a copied law |
+| `scenes/worldModes.js` | the interior and world-hosted dungeon arms | `interiorActivationTargets` raced against the live foes, `interiorHoverName`, and `overlayHeld` as the plaque's `cursorActive` |
+| `scenes/dungeonContext.js` | both dungeon doors, from the one frame function they share | `dungeonActivationTargets` raced against the live foes, `hoverName` (the context's ladder plus whatever the host registers), `lootContents` |
+
+...plus `scenes/dungeon.js`, the standalone `?dungeon` dev door, which
+drives it through that shared context and adds the hide on its overlay
+branch and the teardown at its own unwind.
+
+**And `scenes/interior.js` is OUT, on purpose.** It is the `?interior`
+dev door and it stands no player, no HUD and no activation ray at all -
+there is nothing for a plaque to hang under and nothing for it to name.
+That is the FOURTH answer the Four Hosts Rule allows (wired, wired,
+wired, and FLAGGED as not applicable), and it is written down here
+because an unnamed absence and an oversight look identical.
+
+### Cost, measured rather than guessed
+
+Re-runnable: **`node tools/hoverCost.mjs`** prints the table below
+against synthetic scenes sized like real ones, with the machine's own
+scale factor so one run can be compared with another (AUDIT-WH R5 -
+the original numbers were measured, and then lived in a chat log,
+which is a guess with a decimal point on it).
+
+| | ms/frame |
+|---|---|
+| one collider ray | ~0.003 |
+| the pick, per target | ~0.00002 |
+| **assembling a streaming city's door list** | **~0.200, and ~4,500 allocations** |
+| ray + pick over a CACHED list | **~0.007** |
+| the interior list (worldAabb per container and shelf) | 0.018-0.117 |
+| the dungeon list (objectAabb per action object, 62-150 of them) | 0.068-0.582 |
+
+95-97% of a hover in this port is BUILDING the target list, not casting
+the ray - the PERF-TOWN1 shape exactly, in the host whose collector
+meetings that slice already had to go and fix. So the seam takes a
+THUNK, and `world.js` carries a `doorGeneration` bumped by FOUR
+discrete events (a pixel in, a pixel out, the floating origin
+recentring, and - AUDIT-WH P9 - the teleport's re-anchor, which moves
+the origin by up to 32,768 units and returns no offset, so the
+recentring bump cannot see it). The live families are NOT cached: the
+street's people and the boards move, and a stale person is a plaque
+naming someone who has walked away.
+
+**And the list itself is answered once a frame** (AUDIT-WH P1/P5). The
+exterior list was built up to four times in one frame on the streaming
+host - the enemy arm's rival distance, the press's pick, the plaque's
+pick and the plaque's namer - each copying the ~300-row door array and
+re-walking the people and the boards. It is memoised on `frameMark()`,
+the rAF stamp PERF1's clock already puts up: it changes exactly once a
+frame and is null BETWEEN frames, so the memo cannot carry an answer
+forward. The interior list is the same, and dies with its mode.
+
+**The six live picks, with a number** (AUDIT-WH P6). Each exterior
+frame runs seven picks - the bodies, the piles, the torches, the cart,
+the camps, the water and the door/person/board set - and the six live
+ones mint about **230 objects and ~14 KB a frame** (~14,000 objects
+and ~860 KB a second) between the target rows and their AABBs. That is
+PERF-TOWN1's own shape at about 1/19 the scale, and it is a large net
+win over the alternative (a second merged list would resolve ties
+differently from the press, which is the one thing this surface exists
+not to do) - but the record used to say only "they are cheap", and a
+cost with no number is the throttle's mistake wearing the other hat.
+
+**The door cache misses on a stream-in, by design** (AUDIT-WH P8). The
+generation bumps PER DOOR as a town pixel builds, inside a build that
+is already breathing, so the cache misses on every frame of that
+stream-in: **0.12-0.37 ms a frame, normalized** - exactly when the
+frame is most loaded. Steady state is ~100% hits (0 stale entries over
+4,000 driven frames). The alternative is a coarser generation that
+would serve a half-built city's doors, which is a plaque naming a door
+that is not there yet.
+
+**The one arm that is not a lookup carries the mod's own cache.** The
+building namer casts a collider ray and box-tests the location's
+buildings, and it ran every frame the crosshair rested on a shopfront.
+The mod does not: `prevHit`/`prevText` (.cs:266-275) short-circuit the
+whole tooltip body on an unchanged hit, and `prevDoorText` (.cs:762) is
+a second cache inside `GetStaticDoorText` itself. The port caches on
+the door's key and the host's door generation, and inherits the same
+staleness the mod has - a shop that opens while you stand looking at
+its door keeps the closed sentence until you look away.
+
+### The departures, and who chose them
+
+Ledger A carries the row. In short: the enhanced skin's plaque in place
+of the mod's own Daggerfall tooltip panel; the port's ITEM ROWS where
+the mod says "Loot Pile" (PX21c's departure carried forward, not
+dropped); the port's own world objects named through the mod's
+extension API rather than its ladder; and **looking at a building
+discovers it** - the mod's static-door namer calls `DiscoverBuilding`
+purely to read the name (.cs:719). That last one was put to Mac as a
+decision, because it is a save-state write arriving through a naming
+call and it fills your map as you walk. His answer was to keep it 1:1,
+so it is a recorded departure from DFU rather than from the mod.
+
+Two departures OF THE MOD'S OWN from PlayerActivate are carried as the
+mod's rather than folded into the port's pinned `activateBuilding`: its
+closed-message gate is `<= Palace` where DFU's is `< Temple`, so it
+tells you a temple is shut and DFU does not; and a palace substitutes
+its own word for "Store".
+
+The classic skin has none of it, byte for byte.

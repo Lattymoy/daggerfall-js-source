@@ -36,7 +36,7 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
   // matters: it asserted that every file reading `held(keys, ...)`
   // must itself write the mouse codes into that Set. `worldModes.js`
   // does not OWN a Set - it takes `keys` off the host bag
-  // (`exterior.js:3461`) - and the lender's own mousedown writes the
+  // (`exterior.js:3537`) - and the lender's own mousedown writes the
   // codes UNGATED on a listener that is never removed. The codes were
   // always there.
   //
@@ -802,8 +802,8 @@ test('AUDIT-MACL F5: the guard PREVENTS the menu and does not STOP the event', a
   // counting `enhancedBook.js`, which is mounted BY one of the thirteen
   // rather than being one of them. Counted here rather than remembered.
   const inGame = ['bookDoor', 'charSheetDoor', 'chronicleDoor', 'fpsCounter', 'gamepadInput',
-    'heldMap', 'hitNumbers', 'inventoryDoor', 'lootHover', 'pauseDoor',   // MAP1: heldMap.js in overworldMap.js's seat
-    'spellbookDoor', 'talkDoor', 'touch'].map((n) => `src/ui/${n}.js`);
+    'heldMap', 'hitNumbers', 'inventoryDoor', 'pauseDoor',   // MAP1: heldMap.js in overworldMap.js's seat   // WORLD-HOVER: lootHover.js is worldPlaque.js, at the end of the list
+    'spellbookDoor', 'talkDoor', 'touch', 'worldPlaque'].map((n) => `src/ui/${n}.js`);
   assert.equal(inGame.length, 13, 'the thirteen, named');
   for (const f of inGame) assert.ok(rd(f).length > 0, `${f} exists`);
   const selfShutting = inGame.filter((f) => /contextmenu/.test(rd(f)));

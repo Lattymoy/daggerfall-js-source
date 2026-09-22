@@ -1,0 +1,14 @@
+{
+    "ModTitle": "World Tooltips",
+    "ModVersion": "1.1",
+    "ModAuthor": "jefetienne",
+    "ContactInfo": "https://forums.dfworkshop.net/memberlist.php?mode=viewprofile&u=2186",
+    "DFUnity_Version": "0.13.4",
+    "ModDescription": "Displays info about NPCs, buildings, and items and other interactables.",
+    "GUID": "88e77a95-fca0-4c13-a3b9-55ddf40ee01e",
+    "Files": [
+        "Assets/Scripts/Game/UserInterface/Modded_HUDTooltipWindow.cs",
+        "Assets/Game/Mods/tooltip.dfmod.json",
+        "Assets/Scripts/Game/UserInterface/modsettings.json"
+    ]
+}
