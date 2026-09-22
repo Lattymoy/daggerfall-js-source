@@ -1,27 +1,27 @@
 [
   {
-    "name": "AIWATER-a-spawned-dungeon-still-builds-its-water-quads",
+    "name": "WATER-BACK-the-spawn-skip-returns-to-the-quad-build",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {",
-    "new": "    if (b.layout.waterLevel !== 10000) {",
+    "old": "    if (b.layout.waterLevel !== 10000) {",
+    "new": "    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {",
     "tests": [
       "test/aiwater.test.js"
     ]
   },
   {
-    "name": "AIWATER-a-spawned-dungeon-keeps-its-fog-and-swimming-state",
+    "name": "WATER-BACK-the-spawn-skip-returns-to-the-level-door",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (dfLocation?.spawned) return 10000;",
-    "new": "",
+    "old": "  function blockWaterLevelAt(x, z) {",
+    "new": "  function blockWaterLevelAt(x, z) {\n    if (dfLocation?.spawned) return 10000;   // water",
     "tests": [
       "test/aiwater.test.js"
     ]
   },
   {
-    "name": "AIWATER-a-REAL-dungeon-loses-its-water-too",
+    "name": "WATER-BACK-every-dry-block-floods",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {",
-    "new": "    if (false) {",
+    "old": "    if (b.layout.waterLevel !== 10000) {",
+    "new": "    if (true) {",
     "tests": [
       "test/aiwater.test.js"
     ]

@@ -866,17 +866,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:2366 (the factory) and :1904 (a
+                        worldModes.js:2141 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1021, world.js:2083,
+                        dungeonContext.js:1047, world.js:2116,
                         exterior.js:2373. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6409, dungeonContext.js:6608. A seam
+    / NOTEBOOK          world.js:6424, dungeonContext.js:6602. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -6968,7 +6968,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:639, :671`), and both exterior hosts called it
+  overlay (`townTalk.js:649, :657`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -8605,7 +8605,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:3185 as a second book built by hand 342 lines below the
+worldModes.js:2960 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8688,7 +8688,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2500 and
+questJournal.js from charSheetNav:53, world.js:2501 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9315,7 +9315,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:7045` and `dungeonContext.js:1570` answer the same
+`worldModes.js:6497` and `dungeonContext.js:1594` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9380,7 +9380,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:707` routed
+The port had the DOOR and not the room. `input.js:709` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:152`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6756`,
+the other half went stale unnoticed. (The rest cite named `world.js:6784`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6762` now.)
+deleted the second and the cite is `world.js:6790` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10978,7 +10978,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:611-637`), so in the art-less greeting chain a tone
+  (`townTalk.js:621-647`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -14622,7 +14622,7 @@ exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
 WINDOWS, which the first record did not name: under the enhanced skin the
 death screen (`ui/deathScreen.js:71-72`), the rest window's rows
 (`ui/restWindow.js:861`), the save window (`ui/saveWindow.js`, eight
-`shadowText` sites), the travel popup (`ui/travelPopUp.js:685`), the quest
+`shadowText` sites), the travel popup (`ui/travelPopUp.js:716`), the quest
 journal (`ui/questJournal.js:641-642`), every MessageBox row
 (`ui/messageBox.js:435, 434`) and every ActionTextBox (`ui/actionText.js:45,
 152`) still draw in the bitmap font - each a native window under THE
@@ -15349,9 +15349,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:4856` named a line that is 8950, `:808` one that is
+read: `world.js:4857` named a line that is 8950, `:809` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4591-4623` and `dungeonContext.js:1415` were
+that is 8907. `world.js:4625-4657` and `dungeonContext.js:1419` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -16738,7 +16738,7 @@ removed.
 **REFUTED, and written down because the next reader will wonder.**
 A window key (F5/F6/L) pressed during a level-up cannot stack a second
 one. The overlay carries `isChoiceWindow`, and both key seams - the
-dungeon/interior `routeKey` (ui/input.js:635-648) and townTalk's own
+dungeon/interior `routeKey` (ui/input.js:637-650) and townTalk's own
 (:371-381) - hand the raw code to the OVERLAY and return before any
 toggle arm can run. The same guard is why QuickLoad, which routeKey
 otherwise allows from under any overlay, cannot reach past this one
@@ -16893,7 +16893,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2357` became
+second pass moved them a second time - `dungeonContext.js:2381` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came
@@ -17664,6 +17664,153 @@ line, in this order - and nothing was pinned about what the feature
 does. A 24-mutant campaign killed two of its own mutants and let
 twenty-two live. `test/quickloot.test.js` is the answer: 21 tests that
 drive the real module, and the campaign is 24 for 24.
+
+## STATUS-LIVE + NOTICE-FIT - the readout does not stop the world, and the panel is as wide as what it says (2026-09-22, kurkku through Mac)
+
+Two sentences, one message:
+
+> minor thing: would be nice if the info panel that comes up when you
+> press i didn't pause the game, that way you could quickly check your
+> status while walking around
+
+> I think we also need the sizing of the boxes to properly adjust for
+> the text instead of always being wide
+
+They are two defects with one cause between them, and the cause is a
+move that was right. ENH-NOTICE1 took DFU's centre-of-screen parchment
+and made it, on the enhanced skin, a panel at the RIGHT EDGE of the
+screen. It carried across two properties of the parchment that do not
+belong to a panel at the edge: it stopped the world, and it was a fixed
+slab as wide as the longest thing it would ever have to say.
+
+### The pause was a leftover of the presentation
+
+DFU's Status action raises `DisplayStatusInfo`
+(DaggerfallUI.cs:1615-1628): a `DaggerfallMessageBox` carrying TEXT.RSC
+record 22, chained by `AddNextMessageBox` into
+`CreateHealthStatusBox`. A message box is a window; a window raises
+`PauseWhileOpen` (UserInterfaceWindow.cs:141); the game stops. All of
+that is RIGHT for DFU, and the reason it is right is the geometry: the
+parchment lands in the middle of the screen and there is nothing to see
+past it. None of that is true of a panel you can see the world behind.
+
+So the pause was never a law of the thing being SHOWN. It was a law of
+where the thing used to sit.
+
+A readout is the player's — AUDIT-WH R8, the law the hover plaque was
+built on. This one box therefore declares DFU's own field,
+`pauseWhileOpen: false`, which `ui/windowStack.js` has read off every
+window in every host's slot since ROAD-B; all four hosts' pause latches
+answer false for it without a single new gate being invented. The field
+is DFU's and its default is DFU's: every other message box in the port
+still stops the world.
+
+### Three things follow from not pausing, and each is a decision
+
+**No chain.** `AddNextMessageBox` advances on a DISMISSAL, and nothing
+routes a key to a box the game is not stopped for — so a chained page
+could never be reached. The record-22 status text, the health box and
+SURV5's survival advice are ONE page, blank-line separated. That is
+what "quickly check your status" wanted anyway.
+
+**No ClickAnywhereToClose.** A click while the world is running is a
+swing, so `click()` declines and the press falls through to the host.
+The panel's caption then has to say what actually closes it, naming the
+LIVE Status binding — the AUDIT ENH-NOTICE3 B2-B4 rule (a hint tells the
+truth) at the one box that could now contradict it.
+
+**It is a toggle, and it yields.** The Status key opens it and the
+Status key closes it; Escape closes it and does nothing else, because at
+a panel that key means "close this", not "and also open the pause menu".
+And any action that RAISES A WINDOW takes the slot the readout is
+standing in, so the readout leaves first. Without that last rule the
+dungeon's own free-slot guards would simply have refused the character
+sheet while a readout stood in the slot: a key that silently does
+nothing, which is the drawn-door-that-opens-nothing defect this port has
+paid for four times. The yield lives in ONE place,
+`ui/input.js`'s `routeAction`, because that is the single door every
+host's window keys and the large HUD's eleven panels come through; the
+two outdoor hosts run their own ladders and call it themselves.
+
+### The gates that asked the wrong question
+
+Four seams consumed every key, click, wheel notch and release on the
+SLOT'S TRUTHINESS rather than on the pause. That is indistinguishable
+while every occupant pauses, and it is the difference between a step
+taken and a step eaten the moment one does not. They ask
+`talkPaused()` / `interiorPaused()` now — which is the shape
+`dungeonContext.js`'s twin has carried since ROAD-tail, and the reason
+`interiorPaused` was written in the first place.
+
+Two more followed from the same reading. The dungeon frame's paused arm
+RETURNS above the draw, so a non-pausing occupant would never have been
+ticked or painted at all — in a dungeon the Status key would have done
+nothing, and on the enhanced skin its panel (which is raised BY the
+draw) would never have appeared. And the 60% modal dim belongs to a
+MODAL window: a corridor the player is walking down cannot be blacked
+out.
+
+### One composer, not four
+
+`world.js`, `exterior.js`, worldModes' interior arm and
+`dungeonContext.js` each wrote the same three-line chain out by hand.
+Four copies is four places to forget when the law moves, and the law
+moved today: `ui/statusBox.js`.
+
+Its live half — which box is up, the host's own door back out of its
+slot, and the yield — is `systems/statusReadout.js`, a LEAF. That
+placement is not tidiness: `ui/input.js` is already inside
+`ui/actionText.js`'s import ring (through `ui/inputMessageBox.js`), so
+reaching for the BOX from there closed a cycle and the class body met
+`ActionTextBox` in its temporal dead zone. A real crash on a real import
+order, found by running it.
+
+### NOTICE-FIT
+
+`.notice` carried `width: min(520px, 70vw)`, so "You are healthy." and a
+four-paragraph quest box were the same slab — and at the right edge,
+where the panel is read against the world behind it, the empty half is
+the thing the eye reads first. A flex item under `align-items: flex-end`
+with no width is already shrink-to-fit, so the cap alone is the whole
+law: it is a `max-width` now, the rows set the width, and wrapping
+starts only at the ceiling.
+
+`tools/noticeFitProbe.mjs` measures it in Chromium, through
+`drawEnhancedNotice` itself: 210 / 450 / 520 / 339 px at 1280 wide for a
+one-line notice, the status readout, a long quest box and a toast. Four
+widths where there used to be one.
+
+**The probe lied on its first run, and the picture is why it was
+caught.** It photographed panels 46px off the right edge with a live
+transform, and the measurement agreed with the picture only once the
+transform was read: `NOTICE_WATCHDOG_MS` had correctly swept a panel
+nobody was drawing, and what the shot showed was a slide-OUT halfway
+done. A harness that does not do what the host does measures its own
+artefact — it pumps the draw on rAF now, the way a host does.
+
+### What the mutants found
+
+Three of the first draft's twenty-nine survived, and all three were
+real. Two because the caption pin pushed the binding store down ITSELF
+instead of driving `ui/input.js`'s `bindings()` and `setBindings`, so it
+passed whether or not the live store ever reached the panel — a pin that
+supplies the thing it is checking for. The third because a
+`&& !_live.done` term in `statusReadoutUp` was DEAD: every door that
+raises `done` on this box forgets it in the same statement, so the state
+the term guards against cannot be reached. It was removed rather than
+left standing — a guard no mutation can kill is a guard no reader can
+trust.
+
+**And the suite's own sweep caught a line this arc wrote the wrong way
+round.** The dungeon frame's new draw first asked
+`dungeonCtx.overlayWindow()` - a PROBE SURFACE - and ROAD-tail's law is
+that a host asks the owning context for its pause and never reaches
+past it for the slot. `test/roadb_host_pause.test.js` reddened on it
+("a probe surface is not a pause gate"), which is the sweep doing
+exactly the job it was written for. The context publishes the answer as
+its own word now, `unpausedOverlay`, beside the `uiOverlayActive` it is
+the other half of.
+
 ---
 
 ## TILE1/TILE2 — THE SAVE TILE (2026-09-22)
@@ -17808,3 +17955,71 @@ Both readers already draw something where a face is missing.
 photographed here — a real head needs the player's own Daggerfall files
 and this container has none — so the sheets he was sent use STAND-INS at
 a head record's real size. The layout is proved; the art on it is not.
+
+---
+
+## CHAT-FIT - the roster column is as tall as the conversation, a row is one line, and a chat line wears its author's badge (2026-09-22, Mac)
+
+Mac, with a phone screenshot of the box over the road:
+
+> Currently names sometimes take up 2 rows, the list isnt scrollable and
+> continues to grow, enlarging the chat. Glyphs should also show on
+> chat names in the chat itself
+
+### Two defects, one cause
+
+`.dfchat-cols` is a flex row with no height of its own: it is as tall as
+its tallest child. The conversation column has a fixed-height list, so
+it was never the tallest child once the room held more than a dozen
+people - the ROSTER was, and the box grew with it. A list that can
+always grow never overflows, so the `overflow-y: auto` CHAT-R2 put on it
+was true and never reached. That is why "isn't scrollable" and "keeps
+growing" arrived in one sentence: they are the same defect seen twice.
+
+The column's content is ABSOLUTE inside it now (`.dfchat-who-inner`,
+`inset: 0`), so the column contributes no height, takes the
+conversation's, and the list scrolls inside that. Measured in Chromium
+by `tools/chatFitProbe.mjs`: 299 px with three names and 299 px with
+twenty-four, the column 263 px beside a 263 px conversation, 437 px of
+list in 235 - on a desktop and on a phone in landscape.
+
+### A row is one line
+
+`.dfchat-who-row` carried `overflow-wrap: anywhere`, which is the rule
+for a chat LINE - a paragraph that must never overflow its column - and
+the wrong rule for a name beside a title: every long name folded under
+its own title, and ACC3c's title and sprout made more of them long. The
+row holds ONE nowrap flex line now (`.dfchat-who-line`: title, name,
+glyphs, tag), and the NAME is the part that gives - `min-width: 0`,
+`text-overflow: ellipsis`, the whole name in its `title` - because a
+title and a glyph are a few pixels and the name is what the row is
+for. The row itself stays a block so SOC3's action menu still opens
+UNDER the line. The column is 148 px where it was 132, which is the
+title's width back. Every row measures 16-17 px against a 16.2 px line;
+eight of twenty-four names are cut with an ellipsis rather than folded.
+
+### The line wears the badge
+
+ACC3c put the title before a name and the glyphs after it on the world
+label and on the roster row, and not on the chat line - so one name said
+two things on one screen. The line is laid from PARTS now (time, the
+badge's title, the name, the badge's glyphs, the tag, the text), and a
+BADGE PASS runs where the colour pass runs, on the colour pass's law:
+the host is asked once per author per pass (`badgeOf`, beside
+`nameColor`), and a line is re-laid only when its author's badge
+CHANGED - so a title equipped mid-conversation reaches the lines
+already said, and an unchanged answer touches no DOM at all (a pin
+counts the re-lays). The host answers off the ACTIVE CHANNEL's session,
+the one the roster reads, through `OnlineSession.badgeOf`: mine as the
+service issued it, a peer's in the room, or a peer's this session was
+introduced to and has since lost - the chat keeps two hundred lines and
+the room keeps people only while they stand in it. A stranger's line
+wears nothing rather than a guess. The SVG drawing is the roster's own,
+moved into one door (`glyphSvg`) the row and the line both use, and a
+document without an SVG namespace draws no glyph and does not throw.
+
+**Pinned** in `test/chatfit.test.js` (7), measured by
+`tools/chatFitProbe.mjs` (12 checks, two shots). Mutants
+`tools/mutants/chatfit.json`: 14, 14 dead. acc3wear's roster-order pin
+re-aimed at the row's line.
+

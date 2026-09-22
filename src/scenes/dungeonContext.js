@@ -43,8 +43,8 @@ import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass 
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { registerPresenter, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: this context's window stack and its PopupText, offered to the one door every message goes through - and the door itself, for the seams that name a KIND
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
-import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
-import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5
+import { toggleStatusReadout } from '../ui/statusBox.js';   // STATUS-LIVE: the Status readout, one composer for all four hosts
+import { statusReadoutUp } from '../systems/statusReadout.js';   // STATUS-LIVE: ...and the live one, for this host's free-slot guard
 import { liveVampirism } from '../systems/racialLive.js';   // SURV5: the vampire's one status line
 import { survivalOn } from '../systems/survival/switch.js';
 import { survivalFeed, installSurvivalGate, uninstallSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the rest gate; AUDIT SURV B/C: and off the seam at the teardown
@@ -55,7 +55,8 @@ import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool
 import { addItem, spendAmmoFor, isEnchanted } from '../systems/inventory.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { worldAabb, objectAabb } from '../player/activate.js';   // AUDIT 63 F37/F38: objectAabb is the LIVE box a ray or a collision meets
-import { createWeaponRig, envAttack } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface
+import { createWeaponRig, envAttack, sheetHolderOf } from '../combat/weaponRig.js';   // C10: the shared FP-weapon surface; MW-MAP1: the held map's holder
+import { mwViewFirstPerson } from '../player/mwView.js';   // MW-MAP1: the automap is read in the head (MAP-POV's law), underground too
 import { weaponPoseOf, applyWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law (SerializablePlayer.cs:175-176 / :420-421)
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
@@ -705,18 +706,43 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (const l of collectDungeonLights(b.dfBlock)) {
       lights.push({ x: l.x + b.originX, y: l.y, z: l.z + b.originZ, range: l.range });
     }
-    // WATER OFF IN A SPAWNED DUNGEON (2026-09-20, Mac's patch). A
-    // spawn's water has been reported wrong every time - shown well
-    // below the floor, in patches, reading like a no-clip glitch - and
-    // rather than keep chasing the placement, a spawn simply gets no
-    // water quads. A REAL dungeon is untouched.
+    // WATER-BACK (2026-09-22, kurkku: "invisible water", with a picture
+    // of a dry dungeon): THE BAND-AID OUTLIVED ITS BUG BY ONE DAY.
     //
-    // `b.layout.waterLevel` itself is left alone, and that is the
-    // point: `dungeon.blocks` is the TEMPLATE'S own shared array (see
-    // world/spawnedDungeons.js's synthesizeDungeonLocation), so
-    // writing the sentinel into it here would corrupt the real dungeon
+    // AIWATER (2026-09-20) took the water out of every SPAWNED dungeon
+    // because "a spawn's water has been reported wrong every time -
+    // shown well below the floor, in patches, reading like a no-clip
+    // glitch", and said so honestly: "rather than keep chasing the
+    // placement". WATER-D1 (2026-09-21, the next morning) then chased
+    // it and CAUGHT it, and it was not the placement at all - both
+    // dungeon hosts called `renderer.drawWater` AFTER drawFoes
+    // returned, which is after the first screen quad, which is where
+    // the enhanced-lighting lane resolves its frame target; the quad
+    // landed on the default framebuffer whose depth buffer holds no
+    // world, so it passed the depth test everywhere. A plane through
+    // every wall and every floor, wherever you stood. WATER-D1's own
+    // words: "The level itself was never the defect: the quads sit
+    // exactly where DFU's AddWater puts its plane (R7)."
+    //
+    // A spawn was never special. It was just where people met the bug,
+    // because spawns are where people were. With the cause closed the
+    // exclusion only does what kurkku photographed: it makes a
+    // flooded dungeon dry, which is the ONE thing nobody asked for.
+    //
+    // LostMyLeg's caution on the report - "when water textures are
+    // activated again they clip through walls and players will see
+    // water all the time" - is a memory of the pre-WATER-D1 defect, and
+    // it is the right thing to be careful about: test/waterback.test.js
+    // holds the draw ORDER that makes it safe, so the day someone moves
+    // the call back after a screen quad, that reddens rather than
+    // shipping.
+    //
+    // `b.layout.waterLevel` is still left alone, and that reason stands
+    // whatever else changes: `dungeon.blocks` is the TEMPLATE'S own
+    // shared array (world/spawnedDungeons.js synthesizeDungeonLocation),
+    // so writing the sentinel into it would corrupt the real dungeon
     // this was cloned from and every other spawn sharing that template.
-    if (b.layout.waterLevel !== 10000 && !dfLocation?.spawned) {
+    if (b.layout.waterLevel !== 10000) {
       waterQuads.push({
         x: b.originX, z: b.originZ, size: RDB_SIDE,
         y: -b.layout.waterLevel * GLOBAL_SCALE,
@@ -1607,7 +1633,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8368 / exterior.js:3440), set
+  // host's own townTalk sink (world.js:8389 / exterior.js:3449), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2118,7 +2144,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1187,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1159,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2628,7 +2654,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1072 against :1102; worldModes.js:7435 against :7459).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6838 against :6862).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3192,8 +3218,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11722,
-              // exterior.js:4936 and worldModes.js:7015 already ran;
+              // playerArrowHitFoe is the one copy world.js:11757,
+              // exterior.js:4950 and worldModes.js:7038 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4496,11 +4522,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  Off every block DFU reports playerBlockIndex == -1 and simply
    *  does not call UpdateFog that frame (:349-352); null says so. */
   function blockWaterLevelAt(x, z) {
-    // ...and no water means none of what water implies: this feeds the
-    // underwater fog and the "am I swimming" check, so without it a
-    // spawn would keep the green murk and a half-submerged player with
-    // nothing on screen to explain either.
-    if (dfLocation?.spawned) return 10000;
+    // WATER-BACK: AIWATER's other half, and it never covered the whole
+    // question. Three doors answer "is there water here" - this one
+    // (the fog and the swim check), `waterSurfaceYAt` above (the swim
+    // TOGGLE and P12's drowning tick) and the draw's quads - and the
+    // spawn exclusion was written into two of the three. So a spawned
+    // dungeon had water that `waterSurfaceYAt` could still put a
+    // player INTO and drown them in, with no plane drawn and no fog to
+    // say why: invisible water in the literal sense, and the dangerous
+    // sense rather than the ugly one. Removing it is what puts the
+    // three back on one answer.
     for (const b of dungeon.blocks) {
       if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
         return b.layout.waterLevel;
@@ -5810,7 +5841,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // both of them hand it in: dungeon.js's opts bag and
         // worldModes' (the world-hosted crawl, which is where the
         // classic start into Privateer's Hold lives, and which is the
-        // pause door ui/input.js:738 reaches underground).
+        // pause door ui/input.js:740 reaches underground).
         relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
@@ -5846,7 +5877,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // slot stays empty, exactly as before; the enhanced arm reads no
       // ARENA2 raster at all, so it is always ready.
       if (!automapDoorReady()) return;
+      mwViewFirstPerson();   // MW-MAP1: into the head before the window's first tick asks the arm
       activeOverlay = createAutomapWindow({
+        holder: sheetHolderOf(() => weaponRig),   // MW-MAP1: the Morrowind hands lane on the dungeon's M
         record: () => automapRec,
         drawList, dynamicDraws, texRemap,
         player: () => ({ feet: lastPlayerFeet, eye: _automapEye, yaw: _motorYaw }),
@@ -6356,6 +6389,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // painted. ROAD-tail: that is what the stack's own pause LATCH
     // answers, so the question is asked once, in `dungeonPaused`.
     get uiOverlayActive() { return dungeonPaused(); },
+    /** STATUS-LIVE: ...AND THE OTHER HALF OF THAT QUESTION, which the
+     *  two hosts that DRAW this context's slot need and could not ask.
+     *  A window the game is NOT stopped for (the status readout,
+     *  ui/statusBox.js) still has to be ticked and painted, and both
+     *  hosts' overlay arm is `if (uiOverlayActive) { ...; return; }` -
+     *  so below that return there was no way to know a slot was
+     *  occupied at all. Published as its own word rather than left to
+     *  the hosts to derive from `overlayWindow()`, because ROAD-tail's
+     *  law is that a host asks the owning context for its pause and
+     *  never reaches past it for the slot - and a probe surface is not
+     *  a pause gate (test/roadb_host_pause.test.js sweeps for exactly
+     *  that, and caught this line written the wrong way round). */
+    get unpausedOverlay() { return !!activeOverlay && !dungeonPaused(); },
     /** AUDIT 64 F35 (review round): the HUD's own question, asked of
      *  the same stack - a window is up AND something on it cut the
      *  previousWindow chain (DaggerfallPopupWindow.cs:76-84). Published
@@ -6642,7 +6688,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the offset MUST reset even if an overlay draw throws.
       const s = hudScaleFor(canvas.width, canvas.height);
       const vw = 320 * s, vh = 200 * s;
-      renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.02, 0.02, 0.02, 0.6]);
+      // STATUS-LIVE: THE DIM BELONGS TO A MODAL WINDOW. This backdrop
+      // says "the game is stopped and this is the only thing that
+      // matters", which is true of every window that raises
+      // PauseWhileOpen and false of one that does not - a readout the
+      // player is WALKING under cannot black out the corridor they are
+      // walking down. Asked of the window, the way every other gate in
+      // this file asks `dungeonPaused`.
+      if (pauseWhileOpen(activeOverlay)) renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.02, 0.02, 0.02, 0.6]);
       renderer.setScreenOffset((canvas.width - vw) / 2, (canvas.height - vh) / 2);
       try {
         activeOverlay.draw(renderer, { width: vw, height: vh }, hudFont, s);
@@ -6652,12 +6705,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     // BS1/F198 + ST1: the Status action's chain (the four-hosts
     // seam) - the record-22 status text, then the health box.
+    // STATUS-LIVE: ui/statusBox.js has the law. The free-slot refusal
+    // stays and it stays SECOND: the toggle's own close has to run
+    // first, or the key that opened the readout could never shut it.
     showStatus() {
-      if (activeOverlay) return;
-      const _box = new ActionTextBox(statusInfoRows(rscLines, opts.questBridge?.machine?.macroContext?.() ?? null))
-        .addNext(healthStatusRows(playerEntity, rscLines));
-      if (survivalOn()) _box.addNext(survivalStatusRows(playerEntity, Math.floor(worldMinutes()), { vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') }));   // SURV5
-      activeOverlay = _box;
+      if (statusReadoutUp() || !activeOverlay) {
+        toggleStatusReadout({
+          mount: (box) => { activeOverlay = box; },
+          drop: (box) => { if (activeOverlay === box) { activeOverlay = null; dungeonWindows.reconcile(null); } },
+          lines: rscLines,
+          macroContext: opts.questBridge?.machine?.macroContext?.() ?? null,
+          entity: playerEntity,
+          survival: survivalOn() ? { minutes: Math.floor(worldMinutes()), vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') } : null,   // SURV5
+        });
+      }
     },
     // FIX-F: routeKey's RecastSpell / AbortSpell arms (EntityEffectManager.cs:257-270) - the dungeon's ctx
     recastSpell() { magic.recastSpell(); },

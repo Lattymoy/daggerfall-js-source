@@ -129,7 +129,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:6303), so each
+      // context owns none of its own (dungeonContext.js:6139), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -1091,6 +1091,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // WATER-D1: the water plane is drawn INSIDE drawFoes now, before the
     // weapon overlay - a draw here landed after the lane's resolve and
     // showed through every wall (dungeonContext.js's note at the draw).
+    // STATUS-LIVE: ...AND A NON-PAUSING OCCUPANT, LAST OF ALL. THE FOUR
+    // HOSTS RULE: this host mounts the SAME dungeonContext worldModes'
+    // dungeon arm does and routes the same key table at it, so a window
+    // the game is not stopped for - the status readout, ui/statusBox.js
+    // - has to be ticked and painted here too. The branch above is the
+    // PAUSED arm and it returns; without this line the Status key would
+    // open a readout on `?dungeon` that no frame ever draws.
+    if (ctx.unpausedOverlay) { ctx.tickOverlay(dt); ctx.drawOverlay(canvas); }
 
     frames++;
     if (shotMode) window.__frame = frames;

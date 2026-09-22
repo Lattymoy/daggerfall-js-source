@@ -1,0 +1,16 @@
+[
+ { "name": "MWMAP1-the-holder-snapshots-the-rig", "file": "src/combat/weaponRig.js",
+   "old": "export function sheetHolderOf(rig) {\n  return {", "new": "export function sheetHolderOf(rigFn) {\n  const first = rigFn(); const rig = () => first;\n  return {", "tests": ["test/mwmap1.test.js"] },
+ { "name": "MWMAP1-hold-answers-true-for-no-rig", "file": "src/combat/weaponRig.js",
+   "old": "    hold: (spec, opts) => !!rig()?.holdPaper?.(spec, opts),", "new": "    hold: (spec, opts) => { rig()?.holdPaper?.(spec, opts); return true; },", "tests": ["test/mwmap1.test.js"] },
+ { "name": "MWMAP1-the-town-door-drops-the-holder", "file": "src/ui/townMapDoor.js",
+   "old": "      holder: deps.holder ?? null,", "new": "      holder: null,", "tests": ["test/mwmap1.test.js"] },
+ { "name": "MWMAP1-the-automap-door-drops-the-holder", "file": "src/ui/automapDoor.js",
+   "old": "      holder: deps.holder ?? null,", "new": "      holder: null,", "tests": ["test/mwmap1.test.js"] },
+ { "name": "MWMAP1-the-dungeon-forgets-the-head", "file": "src/scenes/dungeonContext.js",
+   "old": "      mwViewFirstPerson();   // MW-MAP1: into the head before the window's first tick asks the arm\n", "new": "", "tests": ["test/mwmap1.test.js"] },
+ { "name": "MWMAP1-the-building-hands-the-outdoor-rig", "file": "src/scenes/worldModes.js",
+   "old": "        holder: sheetHolderOf(() => interiorWeapon),", "new": "        holder: sheetHolderOf(() => dungeonCtx?.weaponRig?.() ?? null),", "tests": ["test/mwmap1.test.js"] },
+ { "name": "MWMAP1-the-world-M-has-no-holder-again", "file": "src/scenes/world.js",
+   "old": "      holder: sheetHolderOf(() => weaponRig),   // MW-MAP1: the Morrowind hands lane on the M key, as on V\n", "new": "", "tests": ["test/mwmap1.test.js"] }
+]

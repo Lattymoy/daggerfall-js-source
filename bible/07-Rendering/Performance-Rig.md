@@ -188,6 +188,145 @@ do the pins derive, does the record say true things.
 - Campaign after the audit: 18 mutants, 18 killed, on a green file.
 
 
+## PEER-CADENCE - a peer's body is re-posed on a cadence the eye can see (2026-09-22)
+
+Mac, before the merge: "look for ways to improve online performance."
+PERF-ON2 had measured the online frame - the session, the names, the
+billboard draw - and found each cheap. It never measured the peer
+BODIES, and the bodies are the online frame's one real cost: a peer in
+a Morrowind body is a whole `createFpArm()` rig, and every frame
+`PeerBodies._place` stepped it through the pipeline this page is about -
+poseAssembly (every skinned vertex blended in JS), uploadThirdMesh (the
+whole packed mesh re-uploaded), stepRigEffects - and then `draw`
+rendered it into the sprite target. ~0.3 ms a body a frame at 3,000
+vertices (above), per body, up to BODIES_MAX of them.
+
+**Against what?** A peer's pose arrives at POSE_HZ, ten a second, and is
+eased between arrivals; the drawn body is a sprite quantised to
+MW_ARM_PIXEL blocks. Re-skinning that sixty times a second is
+oversampling: the skin cannot show more than the wire sends or the
+block resolves.
+
+**What changed.** The rig's `update(dt)` takes `{ pose, effectsDt }`.
+`pose: false` steps the CLOCKS and not the SKIN: the four-slot machine
+advances, the movement refresh reads the camera, the keys fire, and the
+third-person frame stops short of the skin, the upload and the particle
+step. Nothing else about the rig moved; a caller that never heard of
+the flag poses every frame as before, and the first-person arm never
+takes it (its held sheet reads the posed camera node every frame).
+`net/peerBodies.js` decides which frames, by distance - `POSE_CADENCE`
+`[[10, 1], [25, 2], [Infinity, 3]]`: every frame within 10 m, where a
+swing's arc is read; every second frame to 25 m; every third beyond,
+which at 60 fps is still twice the wire's rate and under the block. The
+first step of a standing body ALWAYS poses (the third-person mesh is
+minted by the first upload and `thirdActive` waits on it - a body that
+skipped its first frame would stand as the doll for a frame), bodies
+take a phase each so eight far bodies do not all skin on the same
+frame, and the skipped frames' dt is banked and handed to the particle
+step on the frame that poses, so a puff keeps wall time.
+
+**Measured** by `tools/peerBodiesProbe.mjs`: the real PeerBodies over
+the real rig on the arm fixtures (`test/fixtures/mw/bodyRig.mjs`, the
+same build fparm.test.js stands), a counting renderer, 600 frames of
+peers walking out from 4 m to 50 m with a pose every sixth frame, at
+1, 4 and 8 bodies. Poses+uploads a body a frame: 1.00 / 1.00 / 1.00
+before, 0.74 / 0.52 / 0.43 after. The fixture rig is four small
+pieces, so the probe's milliseconds understate a retail body by an
+order of magnitude and are not reported as a saving; the counts are
+exact and the skin is what PERF-RIG1 costed.
+
+**Pinned** in test/peercadence.test.js (7): the cadence's rows and its
+inclusive edges; PeerBodies stepping a stub rig every frame and posing
+near ones every frame and far ones one in three, evenly; the first step
+of a standing body posed whatever its phase; three bodies at one
+distance skinning on three different frames, and a body walking in
+tightening live; the bank equal to the dt since the last pose; and the
+REAL rig - a clocks-only step before any pose mints nothing and does
+not throw, six clocks-only steps upload nothing and count no posed
+frame while the body still stands and draws, and a pose after six
+skipped frames is bit-identical to a pose after six posing frames
+(the fixture idle animates, so the clocks provably advanced).
+tools/mutants/peercadence.json: 15 dead, 0 survived - the fifteenth
+(the clips advancing only on a posing frame) survived the first draft
+because the pin for it read the source, and died once the pin drove
+two rigs and compared their skins.
+
+**Still open.**
+- **The sprite render is still one a body a frame** (the probe's last
+  column, 1.00 throughout). `drawThird` renders each body into ONE
+  shared offscreen target and draws the quad from it, so a body's
+  picture cannot be kept across frames without a target of its own -
+  a per-body RT, invalidated on a pose or a camera move, is the next
+  slice, and it needs a GPU to measure.
+- **The foes' rigs pose every frame.** A Morrowind-bodied foe
+  (`scenes/dungeonContext.js`, `scenes/exteriorFoes.js`) goes through
+  the same `rig.update(dt)` and could take the same cadence by
+  distance; that is the offline frame's cost and was outside this
+  request.
+- GPU skinning (above) still removes the skin's cost outright rather
+  than dividing it.
+
+## AUDIT PEER-CADENCE (same day, Mac: "Audit before merging") - three lenses, four findings paid
+
+The rig side (fpArm.js), the peer side (peerBodies.js) and the probe,
+each read adversarially with scratch scripts against the real fixture
+rig. What the reading found, and what changed:
+
+**F1 - the stagger was an accident of the build queue, not a law.** The
+cadence counted on a PER-BODY tick that started on the frame the body
+stood, and bodies stand when their builds land - one at a time, seconds
+apart. The residue that decides a body's skinning frame was `(phase -
+standing frame) mod every`, which is arbitrary: eight bodies at 40 m
+whose builds landed one frame apart (or four, or 121) all skinned on
+the SAME frame - `0,8,0,0,8,0` per frame, the exact spike the phase was
+written to prevent - and the pin passed only because the fixture lands
+all three builds inside one settle. The cadence counts on the MODULE's
+frame now (`this._frame`, stepped once in `sync`), so the phase alone
+decides the residue whenever a body stood. Pinned: eight bodies
+introduced a frame apart, at most three skin on any frame; two bodies
+at 20 m landed on frames of different parity skin on different frames.
+
+**F2 - a body back from far, or from a linger, drew a skin seconds old.**
+The far and lingering frames neither step nor pose, and `posed` stayed
+true, so the first frame back took its cadence slot: `has()` true,
+drawn, on the limb pose and sheath stance from before the sleep. Both
+seams forget the skin now (`posed = false` in the sweep when a body
+starts to linger, and on any frame the body is not stepped), and the
+pin drives a body out past BODY_RANGE and back, and out of the drawable
+set and back, and holds the first step a pose - and the frame after a
+plain skip again, so the reset is one frame and not a latch.
+
+**F3 - a rebuild that let the mesh go left the body as the doll for a
+frame or two.** `setWeapon` (an archer's nock - `_arm` calls it on the
+first pose whose `am` bit is set, and on every toggle), `setTorch` and
+`build` all release the third mesh in an async tick between frames.
+Before the cadence the next update re-minted it before anyone looked;
+now a skipped frame returned above the upload, `thirdActive` was false,
+`_standing` false, and remotePlayers drew the paperdoll at doll height
+for a frame (`.B..BBBB` at 40 m, measured). The pose decision asks the
+rig whether it HAS a skin to keep (`thirdActive`), and a body without
+one poses whatever the cadence. The stub rig in the pins carries a
+`skinned` flag minted by a posing step and let go by a rebuild, so the
+seam is executed rather than described.
+
+**F4 (pins) - the middle band and the seams had no behavioural pin.** A
+mutant reading the cadence at TWICE the distance survived: the sync-level
+pins stood at 5 m and 40 m and nothing between. Through `sync` now: 9.9
+and 10 m every frame, 12 and 24 m one in two, 26 m one in three. Six
+mutants added for the four findings (the distance doubled, an even phase
+for every body, the module frame never counted, the far and the linger
+skin kept, a meshless body waiting for its slot) - all dead; the old
+per-body tick mutant retired with the tick.
+
+Notes, not paid: `dist2` ignores y (a peer 30 m straight up reads d2 0),
+pre-existing for BODY_RANGE and now also the dearest cadence; a piece's
+particle effect stays visible one or two frames after its piece hides
+(the `gpu.hidden` write is inside the particle step); the particle sim
+under a banked dt overshoots a particle's life by up to three frames
+instead of one. The probe's "before" was checked by driving a scratch
+copy of the module with `[[Infinity, 1]]`: 1.00 / 1.00 / 1.00, and HEAD
+0.74 / 0.52 / 0.43, as recorded.
+
 ## PERF-READ1 - the `hud` span was the vsync wait (2026-09-21)
 
 Mac pasted a `?perf=cpu` readout from the road: `cpu 17.15ms | hud 7.09 |

@@ -44,8 +44,9 @@
   {
     "name": "WATERD1-the-world-host-regrows-its-own-draw-after-drawFoes",
     "file": "src/scenes/worldModes.js",
-    "old": "      host.drawPeerNames?.({ proj, view, eye: mwv.eye });   // ONLINE1: the names, last of the 3D\n      return true;\n",
-    "new": "      if (dungeonCtx.waterQuads.length) renderer.drawWater(dungeonCtx.waterQuads, [1, 1, 1, 0.82], renderer.textures.get(`${dungeonReturn.waterArchive}_0`), 0);\n      host.drawPeerNames?.({ proj, view, eye: mwv.eye });   // ONLINE1: the names, last of the 3D\n      return true;\n",
+    "old": "      host.drawPeerNames?.({ proj, view, eye: mwv.eye });   // ONLINE1: the names, last of the 3D\n",
+    "new": "      if (dungeonCtx.waterQuads.length) renderer.drawWater(dungeonCtx.waterQuads, [1, 1, 1, 0.82], renderer.textures.get(`${dungeonReturn.waterArchive}_0`), 0);\n      host.drawPeerNames?.({ proj, view, eye: mwv.eye });   // ONLINE1: the names, last of the 3D\n",
+    "why": "Re-aimed BY CONTENT: STATUS-LIVE (2026-09-22) put the non-pausing overlay's tick-and-draw between this line and the `return true;` the anchor used to reach, and a positional anchor that stops applying is a law nobody checks. The mutant is unchanged - it regrows the host-side water draw this slice deleted.",
     "tests": ["test/waterd1.test.js"]
   },
   {

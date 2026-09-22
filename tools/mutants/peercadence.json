@@ -1,0 +1,183 @@
+[
+ {
+  "name": "PEERCADENCE-the-far-band-poses-every-frame",
+  "file": "src/net/peerBodies.js",
+  "old": "export const POSE_CADENCE = [[10, 1], [25, 2], [Infinity, 3]];",
+  "new": "export const POSE_CADENCE = [[10, 1], [25, 2], [Infinity, 1]];",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-band-edge-is-exclusive",
+  "file": "src/net/peerBodies.js",
+  "old": "  for (const [within, every] of POSE_CADENCE) if (d2 <= within * within) return every;",
+  "new": "  for (const [within, every] of POSE_CADENCE) if (d2 < within * within) return every;",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-first-step-of-a-standing-body-may-skip",
+  "file": "src/net/peerBodies.js",
+  "old": "        const pose = !b.posed || !(b.rig.thirdActive?.() ?? true) || (this._frame + b.phase) % poseCadenceFor(b.d2) === 0;",
+  "new": "        const pose = !(b.rig.thirdActive?.() ?? true) || (this._frame + b.phase) % poseCadenceFor(b.d2) === 0;",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-every-body-shares-one-phase",
+  "file": "src/net/peerBodies.js",
+  "old": "        posed: false, phase: this._phase++, bank: 0 };   // PEER-CADENCE",
+  "new": "        posed: false, phase: 0, bank: 0 };   // PEER-CADENCE",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-skipped-frame-does-not-step-the-clocks",
+  "file": "src/net/peerBodies.js",
+  "old": "        else b.rig.update(dt, { pose: false });",
+  "new": "        else { /* skipped */ }",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-bank-is-never-emptied",
+  "file": "src/net/peerBodies.js",
+  "old": "b.bank = 0; b.posed = true; }",
+  "new": "b.posed = true; }",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-bank-is-never-filled",
+  "file": "src/net/peerBodies.js",
+  "old": "        b.bank += dt;\n",
+  "new": "        b.bank = dt;\n",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-cadence-is-read-off-the-body-when-it-stood",
+  "file": "src/net/peerBodies.js",
+  "old": "(this._frame + b.phase) % poseCadenceFor(b.d2) === 0;",
+  "new": "(this._frame + b.phase) % poseCadenceFor(b.cadenceD2 ??= b.d2) === 0;",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-rig-poses-whatever-the-flag",
+  "file": "src/combat/fpArm.js",
+  "old": "        if (pose) {\n          poseAssembly(t.arm, {",
+  "new": "        if (true) {\n          poseAssembly(t.arm, {",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-frame-count-counts-skipped-frames",
+  "file": "src/combat/fpArm.js",
+  "old": "          frames++;   // the POSED frames - a skipped one is not a frame the skin saw\n        }\n        if (!thirdMesh) return;",
+  "new": "        }\n        frames++;\n        if (!thirdMesh) return;",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-particles-step-by-the-frame-not-the-bank",
+  "file": "src/combat/fpArm.js",
+  "old": "          stepRigEffects(t.arm, { dt: effectsDt, clock:",
+  "new": "          stepRigEffects(t.arm, { dt, clock:",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-hidden-loop-reads-a-mesh-never-minted",
+  "file": "src/combat/fpArm.js",
+  "old": "        if (!thirdMesh) return;   // never posed yet: nothing to hide\n",
+  "new": "",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-flag-defaults-to-skip",
+  "file": "src/combat/fpArm.js",
+  "old": "    update(dt, { pose = true, effectsDt = dt } = {}) {",
+  "new": "    update(dt, { pose = false, effectsDt = dt } = {}) {",
+  "tests": [
+   "test/peercadence.test.js",
+   "test/fparm.test.js"
+  ]
+ },
+ {
+  "name": "PEERCADENCE-the-clips-advance-only-on-a-posing-frame",
+  "file": "src/combat/fpArm.js",
+  "old": "      if (idleState) advanceClip(idleState, (idleSource || rig()).keys, dt, null);\n      refreshIdle();",
+  "new": "      if (idleState && pose) advanceClip(idleState, (idleSource || rig()).keys, dt, null);\n      refreshIdle();",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-the-cadence-reads-twice-the-distance",
+  "file": "src/net/peerBodies.js",
+  "old": "    b.d2 = near ? dist2(f, near) : 0;",
+  "new": "    b.d2 = near ? dist2(f, near) * 4 : 0;",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-every-body-takes-an-even-phase",
+  "file": "src/net/peerBodies.js",
+  "old": "        posed: false, phase: this._phase++, bank: 0 };",
+  "new": "        posed: false, phase: (this._phase += 2), bank: 0 };",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-the-module-never-counts-a-frame",
+  "file": "src/net/peerBodies.js",
+  "old": "    this._frame++;\n",
+  "new": "",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-a-far-body-keeps-its-stale-skin",
+  "file": "src/net/peerBodies.js",
+  "old": "      b.posed = false;   // AUDIT PEER-CADENCE F2: far",
+  "new": "      // AUDIT PEER-CADENCE F2: far",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-a-lingering-body-keeps-its-stale-skin",
+  "file": "src/net/peerBodies.js",
+  "old": "b.swing = null; b.pending = null; b.posed = false; }",
+  "new": "b.swing = null; b.pending = null; }",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PEERCADENCE-a-body-with-no-mesh-waits-for-its-slot",
+  "file": "src/net/peerBodies.js",
+  "old": "const pose = !b.posed || !(b.rig.thirdActive?.() ?? true) || (this._frame + b.phase)",
+  "new": "const pose = !b.posed || (this._frame + b.phase)",
+  "tests": [
+   "test/peercadence.test.js"
+  ]
+ }
+]

@@ -97,8 +97,8 @@
   {
     "name": "G11-tag-on-every-row",
     "file": "src/ui/chatPanel.js",
-    "old": "      if (dup.has(r.name.toLowerCase())) n.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
-    "new": "      n.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
+    "old": "      if (dup.has(r.name.toLowerCase())) line.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
+    "new": "      line.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
     "tests": [
       "test/rosterg.test.js",
       "test/chatroster_namefilter.test.js"

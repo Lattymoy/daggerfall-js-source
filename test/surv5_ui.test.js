@@ -171,8 +171,17 @@ test('SURV5: the tavern window - the survival menu in the one picker: a meal cha
 
 test('SURV5: by source - the four hosts chain the third box, the enhanced HUD carries the strip, the interior hands the tavern its climate and clock', () => {
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
-    assert.match(read(f), /if \(survivalOn\(\)\) _box\.addNext\(survivalStatusRows\(playerEntity, Math\.floor\(worldMinutes\(\)\), \{ vampire: !!liveVampirism\(playerEntity\), endurance: liveStat\(playerEntity, 'endurance'\) \}\)\);/, `${f}: the third box`);
+    // STATUS-LIVE (2026-09-22): the readout does not PAUSE, so there is
+    // nothing to route it a key and AddNextMessageBox cannot advance -
+    // the three pages are one page, composed once in ui/statusBox.js.
+    // What each host still owes is this arc's own half: the mod's
+    // switch, the world's minutes, the vampirism and the endurance,
+    // fed as SURV5's own bag or withheld as null when the mod is off.
+    assert.match(read(f), /survival: survivalOn\(\) \? \{ minutes: Math\.floor\(worldMinutes\(\)\), vampire: !!liveVampirism\(playerEntity\), endurance: liveStat\(playerEntity, 'endurance'\) \} : null,/, `${f}: the third box`);
   }
+  // ...and the ONE place it becomes rows, so the page cannot be dropped
+  // by a host that forgets it.
+  assert.match(read('src/ui/statusBox.js'), /if \(survival\) rows\.push\('', \.\.\.survivalStatusRows\(entity, survival\.minutes, survival\)\);/);
   const hud = read('src/ui/enhancedHud.js');
   assert.match(hud, /const needs = el\('div', 'hud-needs'\);/); assert.match(hud, /const chips = survivalOn\(\) \? survivalHudChips\(vitals, Math\.floor\(worldMinutes\(\)\), \{ vampire: !!liveVampirism\(vitals\), endurance: liveStat\(vitals, 'endurance'\) \}\) : \[\];/);
   assert.match(read('src/ui/enhancedStyle.js'), /\.hud-need\.danger \{/);

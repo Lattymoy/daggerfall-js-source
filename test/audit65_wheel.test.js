@@ -93,14 +93,19 @@ test('AUDIT 65 UI-5: the notch carries its own point, so the pack scrolls before
 
 test('AUDIT 65 UI-5: every host wheel seam hands the window the live point', () => {
   const POINT = /wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/;
-  // townTalk.js is the seam for BOTH outdoor hosts (world.js:6890 and
-  // exterior.js:2962 hand it the raw event).
+  // townTalk.js is the seam for BOTH outdoor hosts (world.js:6918 and
+  // exterior.js:2970 hand it the raw event).
   assert.match(read('src/scenes/townTalk.js'), POINT, 'townTalk.js');
   // worldModes.js: BOTH arms - the interior slot and the mounted
   // dungeon context's.
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /dungeonCtx\.overlayWheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/, 'worldModes dungeon arm');
-  assert.match(wm, /interiorOverlay\.wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/, 'worldModes interior arm');
+  // STATUS-LIVE (2026-09-22): the arm's GATE is `interiorPaused()` now
+  // rather than the slot's truthiness - a notch under a box the game is
+  // not stopped for belongs to whatever the world puts under it - so
+  // the slot read below it is optional-chained. The law this pin holds
+  // is unchanged: the live POINT rides the notch.
+  assert.match(wm, /interiorOverlay\?\.wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/, 'worldModes interior arm');
   // dungeonContext.js forwards it, defaulting to the hosts' own
   // pointer-leave sentinel for a caller that has no point.
   assert.match(read('src/scenes/dungeonContext.js'),

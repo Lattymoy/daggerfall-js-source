@@ -492,7 +492,21 @@ export class QuestMachine {
   scheduleQuestByName(questName, factionId = 0, opts = {}) {
     const lines = this.deps.getQuestSourceLines?.(questName);
     if (!lines) { console.warn(`[quest] no source for quest ${questName}`); return null; }
-    return this.scheduleQuest(lines, factionId, opts);
+    // CRUX1 (2026-09-22): UNDER ParseQuest's CATCH, as the lists arm is
+    // (parseQuestForLists above, AUDIT 24). This is the `start quest`
+    // action's door (StartQuest.cs:58-72 -> QuestMachine.StartQuest ->
+    // ParseQuest, whose try/catch at :670-687 answers null), and it had
+    // no catch: a child quest whose set-up throws - S0000016's fixed
+    // Place into the Mantellan Crux, whose marker enumeration has no
+    // second chance - threw out of the PARENT's update, and the Tick
+    // loop error-terminated the parent (S0000008, the Totem quest)
+    // for it. DFU logs the child's failure and the parent lives.
+    try {
+      return this.scheduleQuest(lines, factionId, opts);
+    } catch (ex) {
+      console.warn(`[quest] Parsing quest ${questName} FAILED!\r\n${ex?.message ?? ex}`);
+      return null;
+    }
   }
 
   /** ScheduleQuest(quest) - the parsed-quest arm (QuestMachine.cs's
@@ -1093,7 +1107,7 @@ export class QuestMachine {
    *  faction ("This effectively shuts down several named NPCs during
    *  main quest") - and TalkManager.cs does not contain the word
    *  Listener at all. The port already ships that reader, at
-   *  src/scenes/worldModes.js:2648. A pending marker over shipped work
+   *  src/scenes/worldModes.js:2647. A pending marker over shipped work
    *  is worse than no marker: it sends the next reader looking for
    *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {

@@ -44,6 +44,7 @@ import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { advanceWorldMinutes, MINUTES_PER_DAY, sharedClockOn } from '../systems/worldTick.js';   // AUDIT WORLD5 C9: a sentence online serves no days
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallCourtWindow_OnEndPrisonTime (EntityEffectBroker.cs:841-842)
 import { fillVitalSigns } from '../systems/statMods.js';
+import { registerPlayerDamageVeto } from '../characters/playerEntity.js';   // ARREST-SHIELD: the one damage door consults this flow while a trial is up online
 import { reviveForPlay } from '../systems/deathRespawn.js';   // DEATHLOOP1: nobody leaves a cell dead   // F038: the acquittal's refill; F98: every other non-execution exit's
 import { SEVERE_PUNISHMENT_BANISHED, SEVERE_PUNISHMENT_EXECUTED } from '../systems/encounters.js';   // F99: the court's own two bits
 import { PrisonScreenWindow, CourtScreenWindow } from '../ui/prisonScreen.js';   // the serving-time presentation (SwitchToPrisonScreen + UpdatePrisonScreen)   // ROAD-B B5: Setup's courtPanel, the backdrop the trial stands on
@@ -183,9 +184,34 @@ export function createArrestFlow({
    *  every guard swing that landed WHILE the box was up is simply
    *  never delivered, not queued for later. */
   let awaitingSurrenderAnswer = false;
+
+  /**
+   * ARREST-SHIELD (2026-09-22, Revverie: "when guards come to arrest
+   * you and you go to trial, you still can die ... idk if a guard
+   * continue to aggro me or if it was a bandit of sorts ... the game
+   * ... just froze and I had to kill it"): THE QUESTION, ONCE.
+   *
+   * The clause below was written for a GUARD and it was right about
+   * the situation and too narrow about the attacker. Online the court
+   * sequence cannot pause the world (WORLD5: the clock is the room's),
+   * so the boxes are read standing in the open street - and a town's
+   * foes hunt every player in the cell (WORLD6b-ii). A bandit's blow,
+   * a spell, a fall, drowning: none was a guard, so none was withheld,
+   * and a death inside the court sequence puts a death screen and a
+   * modal trial on one window. That is the freeze in the report.
+   *
+   * So the predicate is named and the ONE player damage door consults
+   * it (characters/playerEntity.js registerPlayerDamageVeto), which is
+   * the same shape as the shield pool that already sits there. A
+   * second copy of "am I in a trial" is a second chance to disagree
+   * with the first, so `onGuardHit` reads THIS and nothing of its own.
+   */
+  const inCourt = () => sharedClockOn() && (awaitingSurrenderAnswer || playerEntity.arrested);
+  registerPlayerDamageVeto(inCourt);
+
   function onGuardHit(dmg, applyDamage) {
     if (crimeId() === 0) return false;
-    if (sharedClockOn() && (awaitingSurrenderAnswer || playerEntity.arrested)) return true;
+    if (inCourt()) return true;
     if (!playerEntity.haveShownSurrenderDialogue) {
       playerEntity.haveShownSurrenderDialogue = true;
       lowerRepForCrime(playerEntity, region(), crimeId());
@@ -554,5 +580,9 @@ export function createArrestFlow({
     playerEntity.health = Math.max(1, playerEntity.health);   // the port's own floor, not DFU's
   }
 
-  return { onGuardHit, startCourtFlow };
+  /** ARREST-SHIELD: a host that tears this flow down takes its veto
+   *  with it - a stale closure over a dead entity must never shield a
+   *  live one. */
+  function dispose() { registerPlayerDamageVeto(null); }
+  return { onGuardHit, startCourtFlow, inCourt, dispose };
 }

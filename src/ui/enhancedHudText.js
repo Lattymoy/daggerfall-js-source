@@ -48,9 +48,9 @@
 // are still drawn on the canvas in the 1996 bitmap face under this
 // skin, and that is a slice of its own rather than an oversight:
 // ui/deathScreen.js:71-72, ui/restWindow.js:861, ui/saveWindow.js:628+
-// (shadowText, eight sites), ui/travelPopUp.js:685,
+// (shadowText, eight sites), ui/travelPopUp.js:716,
 // ui/questJournal.js:641-642, ui/messageBox.js:435/:438 and
-// ui/actionText.js:45/:152 (every ActionTextBox's parchment on the
+// ui/actionText.js:45/:137 (every ActionTextBox's parchment on the
 // classic skin). Each of those is a native window whose every drawn
 // element cites a DFU rect (THE NATIVE-WINDOW RULE), so the face
 // cannot change without the metrics changing with it.

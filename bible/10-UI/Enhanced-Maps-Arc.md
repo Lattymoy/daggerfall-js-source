@@ -595,3 +595,14 @@ are the ones that made two independent modules answer the same question.
 The sprite is Mac's, the maps are computed, the names are the game's
 own strings drawn in a face the port ships. No ARENA2 raster enters the
 repo through this arc either.
+
+---
+
+## MW-MAP1 (2026-09-22) - the M-key sheets take the Morrowind hands
+
+EM3 and EM4 opened this window from the M key on every host and handed
+it no `holder`, so the Morrowind hands lane (MAP3) stood only on the V
+key's travel map. The holder is combat/weaponRig.js's `sheetHolderOf`
+now and every door on every host with a rig passes it; the record is
+Held-Map-Arc.md's MW-MAP1 section.
+

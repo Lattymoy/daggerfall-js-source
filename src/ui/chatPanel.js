@@ -53,6 +53,28 @@
 // name carries a tag from the guarded id (A5); the dial counts as an
 // overlay (C1, in pixelDial.js) and an open overlay hides the panel.
 //
+// CHAT-FIT (2026-09-22, Mac: "names sometimes take up 2 rows, the
+// list isnt scrollable and continues to grow, enlarging the chat.
+// Glyphs should also show on chat names in the chat itself"): THREE
+// DEFECTS, and the first two have one cause. The roster column was a
+// flex child that CONTRIBUTED ITS HEIGHT: `.dfchat-cols` has no height
+// of its own, so a column of nineteen rows stretched the row, the box
+// grew with it, and a list that can always grow never scrolls - the
+// `overflow-y: auto` on it was true and never reached. The column's
+// content is absolute inside it now (`.dfchat-who-inner`), so the
+// column is exactly as tall as the conversation beside it and the
+// list scrolls inside that. A row is ONE LINE: the title, the name,
+// the glyphs and the tag stand in a nowrap flex line and the NAME is
+// the one that gives (ellipsis, the full name as its title), because
+// a title and a glyph are a few pixels and a name is what the row is
+// for - `overflow-wrap: anywhere` had every long name folding under
+// its own title. And a chat LINE wears the author's badge the way the
+// roster row does: the title before the name, the glyphs after it,
+// drawn by the one SVG door the roster already had, asked of the host
+// (`badgeOf`, net/online.js's answer for me, a peer, or a peer this
+// session once met) on the same pass that asks the name's colour, so a
+// title equipped mid-conversation reaches the lines already said.
+//
 // SOC3 (2026-09-16, Mac: "A social button next to the chat UI, that
 // when tapped opens the new friends list + party interface ... be able
 // to invite friends or other individuals to the new 4 person party
@@ -163,12 +185,28 @@ ${PIXELIFY_FIVE_FACE}
    radius however long either column gets. */
 .dfchat-cols { display: flex; min-height: 0; }
 .dfchat-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.dfchat-who { flex: none; width: 132px; border-left: 1px solid var(--iron, #2b323b); display: flex; flex-direction: column; min-height: 0; }
+/* CHAT-FIT: THE COLUMN DOES NOT SET THE BOX'S HEIGHT. .dfchat-cols is
+   as tall as its tallest child and had no height of its own, so the
+   roster - nineteen rows and growing - was the tallest child, the box
+   grew with it and overflow-y: auto on the list never had anything to
+   do. The column's content is ABSOLUTE inside it now: the column is
+   exactly as tall as the conversation beside it, whatever the room
+   holds, and the list scrolls inside that. */
+.dfchat-who { flex: none; width: 148px; border-left: 1px solid var(--iron, #2b323b); position: relative; min-height: 0; }
+.dfchat-who-inner { position: absolute; inset: 0; display: flex; flex-direction: column; min-height: 0; }
 .dfchat-whohead { flex: none; padding: 6px 8px 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim, #8b8578); }
 .dfchat-wholist { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 6px; display: flex; flex-direction: column; gap: 1px; }
-.dfchat-who-row { font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; color: var(--bone, #e9e4d9); }
+/* CHAT-FIT: A ROW IS ONE LINE. Title, name, glyphs and tag stand in a
+   nowrap flex line; the NAME is the part that gives (ellipsis, the full
+   name in its title), because a title and a glyph are a few pixels and
+   the name is what the row is for. overflow-wrap: anywhere had every
+   long name folding under its own title. The row itself stays a block,
+   so SOC3's action menu opens UNDER the line and not beside it. */
+.dfchat-who-row { font-size: 12px; line-height: 1.35; color: var(--bone, #e9e4d9); }
+.dfchat-who-line { display: flex; align-items: baseline; white-space: nowrap; min-width: 0; }
 .dfchat-who-row.me .dfchat-who-name { color: #dcc27c; }
-.dfchat-who-name { font-weight: 600; }
+.dfchat-who-name { font-weight: 600; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dfchat-who-title, .dfchat-who-glyph, .dfchat-who-tag { flex: none; }
 .dfchat-who-tag { color: var(--dim, #8b8578); font-size: 10px; margin-left: 4px; }
 /* ACC3c: the title BEFORE the name and the glyphs AFTER it, which is
    the world label read left to right. A roster column is narrow, so
@@ -178,6 +216,10 @@ ${PIXELIFY_FIVE_FACE}
   text-transform: uppercase; }
 .dfchat-who-glyph { width: 11px; height: 11px; display: inline-block; vertical-align: -1px;
   margin-left: 3px; }
+/* CHAT-FIT: the same badge on a chat LINE - the title before the name
+   at the tag's size, the glyphs after it at the roster's size. */
+.dfchat-line-title { font-size: 10px; letter-spacing: .05em; text-transform: uppercase; margin-right: 4px; }
+.dfchat-line-glyph { width: 11px; height: 11px; display: inline-block; vertical-align: -1px; margin-left: 3px; }
 .dfchat-who-more { font-size: 11px; color: var(--dim, #8b8578); padding-top: 4px; }
 /* the roster is the first thing to go when there is no width for it */
 @media (max-width: 560px) { .dfchat-who { display: none; } }
@@ -293,7 +335,7 @@ export function isOpenKey(e, { canOpen = () => true, overlay = overlayOpen, acti
  * key - and when it does handle one it calls stopImmediatePropagation,
  * so neither a sibling surface nor the host's pause door sees it.
  */
-export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), social = null, nameColor = null, rowActions = null } = {}) {
+export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), social = null, nameColor = null, rowActions = null, badgeOf = null } = {}) {
   injectChatStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const root = el('div', `dfchat${touch ? ' touch' : ''}`);
@@ -330,7 +372,9 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const whoHead = el('div', 'dfchat-whohead', rosterTitle(0));
   const whoList = el('div', 'dfchat-wholist');
   const whoMore = el('div', 'dfchat-who-more');
-  who.append(whoHead, whoList, whoMore);
+  const whoInner = el('div', 'dfchat-who-inner');   // CHAT-FIT: absolute inside the column, so the column takes the conversation's height and not the room's
+  whoInner.append(whoHead, whoList, whoMore);
+  who.append(whoInner);
   const tabButtons = new Map();
   for (const tab of log.tabs) {
     const b = el('button', 'dfchat-tab', tab.label);
@@ -383,9 +427,45 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
 
   /** A drawn line, and the span its AUTHOR's name is in - SOC3 colours that span from the host's `nameColor` without
    *  rebuilding the row, so a party formed while the chat is open turns the names green where they already stand. */
+  /** ACC3c / CHAT-FIT: ONE GLYPH AS AN SVG - the roster's drawing, shared with the chat line. Null where the
+   *  document has no SVG door: such a document draws NO glyph rather than throwing under somebody's name. */
+  const glyphSvg = (g, cls) => {
+    const svg = doc.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
+    if (!svg) return null;
+    svg.setAttribute('class', cls);
+    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.color = cssRgba(g.rgba) ?? '';
+    const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', g.path);
+    if (GLYPH_STROKE[g.key]) {
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', 'currentColor');
+      path.setAttribute('stroke-width', '1.8');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+    } else path.setAttribute('fill', 'currentColor');
+    svg.append(path);
+    return svg;
+  };
+  const titleSpan = (badge, cls) => { const t = el('span', cls, badge.text); t.style.color = cssRgba(badge.rgba) ?? ''; return t; };
+  /** CHAT-FIT: the badge nodes a chat line's author wears - the title BEFORE the name, the glyphs AFTER it, the
+   *  roster row's own order (ACC3c) - for a { title, glyphs } record, or none for null. */
+  const badgeNodes = (peer, prefix) => {
+    const badge = titleBadge(peer);
+    const before = badge ? [titleSpan(badge, `${prefix}-title`)] : [];
+    const after = [];
+    for (const g of glyphBadges(peer)) { const svg = glyphSvg(g, `${prefix}-glyph`); if (!svg) break; after.push(svg); }
+    return { before, after };
+  };
+  const badgeKeyOf = (b) => (b ? `${b.title ?? ''}|${(Array.isArray(b.glyphs) ? b.glyphs : []).join('+')}` : '');
+  /** CHAT-FIT: a line is laid from its PARTS - time, the badge's title, the name, the badge's glyphs, the tag, the
+   *  text - so the badge pass can re-lay one line when its author's badge changes, without rebuilding the list. */
+  const layLine = (r) => { r.node.replaceChildren(...[r.time, ...r.before, r.nameEl, ...r.after, r.tag, r.text].filter(Boolean)); };
   const lineNode = (line, withTime) => {
     const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}`);
-    if (withTime) n.append(el('span', 'dfchat-time', clockOf(line.at)));
+    const time = withTime ? el('span', 'dfchat-time', clockOf(line.at)) : null;
+    if (time) n.append(time);
     // SRV-N: a notice is NOT ATTRIBUTED. No name and no `#tag`, because
     // both are the marks of a person having spoken - a notice drawn with
     // them would read as a player called 'Server' with a tag of its own,
@@ -393,15 +473,17 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     // hash off an empty id, identical on every notice and therefore
     // exactly the thing a player could be fooled by. Its own colour
     // instead, which is a mark no player's line can wear.
-    if (line.system) n.append(el('span', 'dfchat-text', line.text));
-    else n.append(el('span', 'dfchat-name', line.name || '?'), el('span', 'dfchat-tag', `#${tagOf(line.id)}`), el('span', 'dfchat-text', line.text));
-    return n;
+    if (line.system) { const text = el('span', 'dfchat-text', line.text); n.append(text); return { node: n, time, nameEl: null, tag: null, text }; }
+    const nameEl = el('span', 'dfchat-name', line.name || '?'), tag = el('span', 'dfchat-tag', `#${tagOf(line.id)}`), text = el('span', 'dfchat-text', line.text);
+    n.append(nameEl, tag, text);
+    return { node: n, time, nameEl, tag, text };
   };
-  /** One drawn row of the two line lists: the node, and the record the colour pass walks. */
+  /** One drawn row of the two line lists: the node, its parts, and the record the colour and badge passes walk.
+   *  `badgeKey` starts null so the first pass lays the badge the author wears NOW (or none), and after that only a
+   *  change touches the line. */
   const lineRow = (line, withTime, extra) => {
-    const node = lineNode(line, withTime);
-    const nameEl = line.system ? null : node.children[withTime ? 1 : 0];
-    return { node, nameEl, id: line.id, css: null, ...extra };
+    const parts = lineNode(line, withTime);
+    return { ...parts, id: line.id, css: null, badgeKey: null, before: [], after: [], ...extra };
   };
 
   /**
@@ -421,11 +503,32 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
    * seats on every call.
    */
   const paintNames = () => {
-    if (!nameColor) return;
+    if (nameColor) {
+      const asked = new Map();
+      const of = (id) => { if (!asked.has(id)) asked.set(id, nameColor(id) || ''); return asked.get(id); };
+      const pass = (rows) => { for (const r of rows) { if (!r.nameEl) continue; const css = of(r.id); if (r.css === css) continue; r.css = css; r.nameEl.style.color = css; } };
+      pass(listNodes); pass(peekNodes); pass(whoNames);
+    }
+    paintBadges();
+  };
+  /** CHAT-FIT: THE BADGE PASS over the two line lists, on the colour pass's law - the host is asked once per author
+   *  per pass, and a line is re-laid only when its author's badge CHANGED (the first pass lays what the author wears
+   *  now, which for most lines is nothing and costs one replaceChildren). Without `badgeOf` no line wears one. */
+  const paintBadges = () => {
+    if (!badgeOf) return;
     const asked = new Map();
-    const of = (id) => { if (!asked.has(id)) asked.set(id, nameColor(id) || ''); return asked.get(id); };
-    const pass = (rows) => { for (const r of rows) { if (!r.nameEl) continue; const css = of(r.id); if (r.css === css) continue; r.css = css; r.nameEl.style.color = css; } };
-    pass(listNodes); pass(peekNodes); pass(whoNames);
+    const of = (id) => { if (!asked.has(id)) asked.set(id, badgeOf(id) ?? null); return asked.get(id); };
+    const pass = (rows) => {
+      for (const r of rows) {
+        if (!r.nameEl) continue;
+        const b = of(r.id), key = badgeKeyOf(b);
+        if (r.badgeKey === key) continue;
+        r.badgeKey = key;
+        ({ before: r.before, after: r.after } = badgeNodes(b ?? {}, 'dfchat-line'));
+        layLine(r);
+      }
+    };
+    pass(listNodes); pass(peekNodes);
   };
 
   /** SOC3: the badge on both Social buttons - what is waiting on the player (requests to me + live invites). */
@@ -527,38 +630,25 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       const acts = !!rowActions && !r.me && (rowActions(r.id) ?? []).length > 0;
       const n = el('div', 'dfchat-who-row' + (r.me ? ' me' : '') + (acts ? ' dfchat-act' : ''));   // MAC-J: prefixed, because a bare `act` IS the enhanced skin's button
       const nameEl = el('span', 'dfchat-who-name', r.name);
+      nameEl.title = r.name;   // CHAT-FIT: the row is one line and a long name is cut with an ellipsis; the whole of it is a hover away
       whoNames.push({ id: r.id, nameEl, css: null });
+      // CHAT-FIT: the row's ONE LINE - title, name, glyphs, tag in a nowrap flex line the name gives way in; the
+      // row itself stays a block so SOC3's menu opens under it.
+      const line = el('div', 'dfchat-who-line');
       // ACC3c: THE TITLE GOES BEFORE THE NAME and the glyphs after it,
       // which is the world label's own order read left to right - a
       // roster is a narrow column and cannot stack, so the one thing
       // that must not move is which side of the name each sits on.
       const badge = titleBadge(r);
-      if (badge) {
-        const t = el('span', 'dfchat-who-title', badge.text);
-        t.style.color = cssRgba(badge.rgba) ?? '';
-        n.append(t);
-      }
-      n.append(nameEl);
+      if (badge) line.append(titleSpan(badge, 'dfchat-who-title'));
+      line.append(nameEl);
       for (const g of glyphBadges(r)) {
-        const svg = doc.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
+        const svg = glyphSvg(g, 'dfchat-who-glyph');
         if (!svg) break;   // a document that cannot make one draws none, rather than throwing in a repaint
-        svg.setAttribute('class', 'dfchat-who-glyph');
-        svg.setAttribute('viewBox', '0 0 16 16');
-        svg.setAttribute('aria-hidden', 'true');
-        svg.style.color = cssRgba(g.rgba) ?? '';
-        const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', g.path);
-        if (GLYPH_STROKE[g.key]) {
-          path.setAttribute('fill', 'none');
-          path.setAttribute('stroke', 'currentColor');
-          path.setAttribute('stroke-width', '1.8');
-          path.setAttribute('stroke-linecap', 'round');
-          path.setAttribute('stroke-linejoin', 'round');
-        } else path.setAttribute('fill', 'currentColor');
-        svg.append(path);
-        n.append(svg);
+        line.append(svg);
       }
-      if (dup.has(r.name.toLowerCase())) n.append(el('span', 'dfchat-who-tag', '#' + r.tag));
+      if (dup.has(r.name.toLowerCase())) line.append(el('span', 'dfchat-who-tag', '#' + r.tag));
+      n.append(line);
       if (acts) {
         n.addEventListener('click', () => { menuFor = menuFor === r.id ? null : r.id; paintWho(); });
         if (menuFor === r.id) n.append(rowMenu(r.id));

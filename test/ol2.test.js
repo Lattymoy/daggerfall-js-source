@@ -54,7 +54,7 @@ test('OL2 (5): the clock line says the world\'s time of day (RESTX2: and that a 
   assert.match(src, /lines = this\.restingLines\(\);/, 'one body for the text page and the pin');
 });
 
-test('OL2 (6): online the trip\'s countdown is empty and it begins on the next tick, no inn night is paid, the days label says now and the line under the panel says why; a host that says nothing travels as DFU does', () => {
+test('OL2 (6) + TRAVEL-FARE: online the trip\'s countdown is empty and it begins on the next tick, the FARE is still billed, the days label says now and the line under the panel says why; a host that says nothing travels as DFU does', () => {
   const mk = (noWorldTime) => {
     const traveled = [];
     const w = new TravelPopUpWindow({ x: 10, y: 0 }, {
@@ -65,16 +65,32 @@ test('OL2 (6): online the trip\'s countdown is empty and it begins on the next t
   };
   const on = mk(() => true);
   assert.equal(on.w.sleepModeInn, true, 'Inns is still the default toggle');
-  assert.equal(on.w.trip.piecesCost, 0, 'no nights, no inn - not even DFU\'s "always at least one stay"');
-  assert.equal(on.w.trip.totalCost, 0, 'and no ocean on this path: nothing to pay');
+  // TRAVEL-FARE (2026-09-22, kurkku: "really long trips ... don't cost
+  // anything"): THE FARE IS BILLED ONLINE NOW, and this pin is the
+  // reversal's own record. OL2 read "no nights, so no inn", which was
+  // right about the nights and wrong about the UNIT - DFU bills the
+  // trip's HOURS, and the journey has a length online even though the
+  // clock will not advance over it. OL2's own ship clause always read
+  // it that way ("a crossing is a crossing"); both halves agree now.
+  // What made it a bug rather than a rule: with Travel Options'
+  // cautious travel off, a trip is an instant arrival, so online it
+  // cost no time AND no gold - free teleportation anywhere in the Bay
+  // from a mod toggle, while a ship still billed.
+  assert.ok(on.w.trip.piecesCost >= 5, 'the inn is billed online - DFU\'s "always at least one stay" included');
+  assert.equal(on.w.trip.totalCost, on.w.trip.piecesCost, 'no ocean on this path, so the fare is the inn alone');
   assert.ok(on.w.travelTimeTotalMins > 0, 'the trip\'s DFU minutes are still computed (the host reads them offline only)');
   assert.equal(on.w.countdownValueTravelTimeDays, 0, 'no days to count down');
   on.w.input('KeyB');
   on.w.tick(0.016);
   assert.equal(on.traveled.length, 1, 'the trip begins on the first tick');
-  assert.equal(on.traveled[0].computed.piecesCost, 0);
+  assert.ok(on.traveled[0].computed.piecesCost >= 5, 'and the trip that BEGINS carries the same fare the card quoted');
   const off = mk(null);
   assert.ok(off.w.trip.piecesCost >= 5 && off.w.countdownValueTravelTimeDays >= 1, 'offline: the inn night and the countdown, as DFU');
+  // TRAVEL-FARE: the SAME journey, so the same fare - what online
+  // still waives is the DAYS, and only the days.
+  assert.equal(on.w.trip.piecesCost, off.w.trip.piecesCost, 'billed at exactly the offline fare');
+  assert.equal(on.w.countdownValueTravelTimeDays, 0);
+  assert.ok(off.w.countdownValueTravelTimeDays >= 1, '...and that is the ONE thing that still differs');
   off.w.input('KeyB'); off.w.tick(0.016);
   assert.equal(off.traveled.length, 0, 'offline the trip waits for the counter');
   // the labels: 'now' where the days go, and the line under the panel
@@ -88,14 +104,21 @@ test('OL2 (6): online the trip\'s countdown is empty and it begins on the next t
   // FAST TRAVEL talking, and while Travel Options stood down on the shared
   // clock the teleport was the only online arrival there was, so it was true
   // of every trip. The journey runs online now (bible Travel-Options.md item
-  // 9), and over a walked one "you arrive now, and no inn is paid" is false -
+  // 9), and over a walked one "you arrive now" is false -
   // that branch carries the mod's own words and an hours:minutes estimate.
   // What OL2 (6) pins is unchanged: the line still says why, wherever the
   // trip really is DFU's.
   assert.match(src, /if \(this\.noWorldTime\(\) && !this\.walkedTrip\) shadowText\(renderer, font, ONLINE_TRAVEL_LINE, m, 0, POPUP_RECTS\.native\[1\] \+ POPUP_RECTS\.native\[3\] \+ 4, \{ align: 'center', w: NATIVE_W \}\);/);
-  assert.match(src, /sleepModeInn: this\.sleepModeInn && !this\.noWorldTime\(\),/);
+  // TRAVEL-FARE: the clause is GONE, and its absence is the law now -
+  // the toggle reaches the formula unconditioned, online or not.
+  assert.match(src, /sleepModeInn: this\.sleepModeInn,   \/\/ TRAVEL-FARE: billed online too/);
+  assert.doesNotMatch(src, /sleepModeInn: this\.sleepModeInn && !this\.noWorldTime\(\)/,
+    'OL2\'s inn clause is retired - the fare is the price of the journey, not rent on elapsed time');
   assert.match(src, /this\.countdownValueTravelTimeDays = this\.noWorldTime\(\) \? 0 : travelDays\(this\.travelTimeTotalMins\);/);
-  assert.equal(ONLINE_TRAVEL_LINE, 'Online: the world\'s clock does not wait. You arrive now, and no inn is paid.');
+  // TRAVEL-FARE: the line said "no inn is paid" and that is not true
+  // any more - a claim a player can read has to move with the law it
+  // describes, or the window is lying about the number beside it.
+  assert.equal(ONLINE_TRAVEL_LINE, 'Online: the world\'s clock does not wait. You arrive now - the journey is still paid for.');
   assert.deepEqual(LABEL_POS.time, [129, 117]);
   void painted; void font; void renderer;
   assert.match(rd('src/ui/travelMapWindow.js'), /noWorldTime: this\.deps\.noWorldTime,/, 'threaded through the map window');

@@ -239,7 +239,15 @@ export function noticeDraw(box, rows) {
   if (!isEnhanced()) return false;
   if (box.done) return true;
   box._noticeKey ??= noticeKey();
-  return drawEnhancedNotice({ rows }, undefined, box._noticeKey) != null;
+  // STATUS-LIVE: ...and the BOX'S OWN CAPTION, where it has one. The
+  // default is NOTICE_HINT because the default box IS
+  // ClickAnywhereToClose; a box that is not dismissed that way - the
+  // status readout, which the world runs under and which a click no
+  // longer closes - must say what actually closes it, or the panel
+  // promises a gesture it does not keep (AUDIT ENH-NOTICE3 B2-B4's
+  // finding, at the one box that can now contradict it). `undefined`
+  // is the default's own spelling, so every other box is untouched.
+  return drawEnhancedNotice({ rows, hint: box.noticeHint }, undefined, box._noticeKey) != null;
 }
 
 /** The box (or the window that owns one) is gone: its panel leaves.

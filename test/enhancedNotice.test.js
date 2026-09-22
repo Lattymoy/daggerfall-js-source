@@ -18,6 +18,7 @@ import {
   _setNoticeClockForTests, ENHANCED_NOTICE_ID, NOTICE_SLIDE_MS, NOTICE_WATCHDOG_MS, NOTICE_HINT,
 } from '../src/ui/enhancedNotice.js';
 import { ActionTextBox, ActionInputBox } from '../src/ui/actionText.js';
+import { StatusReadout } from '../src/ui/statusBox.js';   // STATUS-LIVE: the one box whose caption is not ClickAnywhereToClose
 import { ChoiceWindow } from '../src/ui/talkWindow.js';
 import { ENHANCED_CSS, ENHANCED_STYLE_ID } from '../src/ui/enhancedStyle.js';
 
@@ -559,6 +560,31 @@ test('ENH-NOTICE3 (AUDIT B2-B4): THE HINT TELLS THE TRUTH - the default is the b
     assert.equal(panelsOf(doc)[2].children.find((c) => c.className === 'notice-hint').textContent, 'Any key');
     drawEnhancedToasts({ rows: ['a'], ids: [1] }, doc, 'town1');
     assert.equal(panelsOf(doc).at(-1).children.find((c) => c.className === 'notice-hint'), undefined, 'a toast is never dismissed');
+  });
+});
+
+test('STATUS-LIVE: the BOX carries its own caption to the panel, and the status readout is the one that does', () => {
+  withSkin('enhanced', (doc) => {
+    fakeClock();
+    // the ordinary box is untouched: ClickAnywhereToClose, said the
+    // enhanced way, is still what a message box promises
+    const plain = new ActionTextBox(['A quest speaks.']);
+    plain.draw(recorder(), CANVAS, FONT, 2);
+    // ...and the readout, which a click does NOT close (the world is
+    // running under it), says what does. Driven through the real draw,
+    // because the hint reaching the PANEL is the thing that matters -
+    // a caption held on the box and never painted is a caption nobody
+    // can read.
+    const readout = new StatusReadout(['You are healthy.']);
+    readout.draw(recorder(), CANVAS, FONT, 2);
+    const hints = panelsOf(doc).map((p) => p.children.find((c) => c.className === 'notice-hint')?.textContent ?? null);
+    assert.deepEqual(hints, [NOTICE_HINT, readout.noticeHint],
+      'mutants: noticeDraw dropping the box\'s hint, so the readout promises a click it declines');
+    assert.match(readout.noticeHint, /ESC to close$/);
+    assert.notEqual(readout.noticeHint, NOTICE_HINT);
+    // and the rows really are the readout's, on the panel, not on a canvas
+    const rows = panelsOf(doc).at(-1).children.find((c) => c.className === 'notice-body').children.map((r) => r.textContent);
+    assert.deepEqual(rows, ['You are healthy.']);
   });
 });
 

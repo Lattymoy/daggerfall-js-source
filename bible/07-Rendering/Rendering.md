@@ -263,7 +263,7 @@ directory by `test/audit18_bible_docs.test.js`:
   - and changes what a blade LOOKS like, in five places, each a
   `mix(lab, pixel, uPixel)` or a branch on it so that at zero the
   arithmetic is the lab's to the last operation: the quad wears a
-  16x32 tuft from a sheet of eight (built at boot from a seed in
+  16x32 tuft (8x16 since GRASS-PX4, below) from a sheet of eight (built at boot from a seed in
   `render/grassPixelArt.js` - three to five one-texel stalks curving as
   height squared, the lab's own bend law; a two-texel base on half of
   them; a seed head on a tall one now and then; alpha 0 or 255 and never
@@ -350,6 +350,66 @@ directory by `test/audit18_bible_docs.test.js`:
   and their two constants are gone; the pixel style's edit list is four,
   and the pin holds the whole sway block of the compiled vertex stage
   byte-identical to the lab's. Nothing else about the tuft moved.
+  **GRASS-PX4 (2026-09-22, Mac: "have grass have larger pixels"): THE
+  TUFT IS 8x16.** A tuft's texel is the thing the eye reads as a pixel,
+  and the quad is sized off the blade's drawn height (GRASS AUDIT 1 F2:
+  width is half the height, per blade), so a texel's size on screen is
+  the height over sixteen now where it was the height over thirty-two -
+  every pixel twice as tall and twice as wide, a quarter as many a
+  tuft. The change is the sheet's size and nothing else: the shader is
+  byte-identical (the pin still holds the four-edit vertex stage and
+  the fragment stage's texel snap against the lab's text), the quad,
+  the placer, the mip chain and the tones are untouched. What HAD to
+  move was every law written as a texel count for a 16x32 tuft - a
+  two-texel margin, a blade at least eight tall, the highlight on a
+  blade of twenty or more, the lean up to six columns - and each is a
+  FRACTION of the tuft now (`PX_TUFT_MARGIN`, `PX_BLADE_MIN`,
+  `PX_HIGHLIGHT_MIN`, the lean scaled by w/16), so the 16x32 sheet
+  still builds through `buildTuftSheet({ w: 16, h: 32 })` and
+  `LabGrassRenderer`'s `tuft` option, and the pins hold the old size's
+  laws through that door beside the new one. The 8x16 sheet covers 32%
+  of its texels where the 16x32 covered 20% (a one-texel stalk is a
+  larger share of a smaller tuft); the coverage chain is seven levels
+  to 1x1. Measured on the probe's GL, same field, same style, the old
+  sheet beside the new: 66 colour edges a row in the near band against
+  100, 61,072 green pixels in 66 colours against 44,623 in 65 - the
+  field reads the same and its pixels are larger. Two probe checks and
+  two screenshots (tools/shots/grasspx4-old-16x32.png and -new-8x16);
+  the six size-bound pins rewritten to the fractions; 39 mutants, 39
+  dead (the renderer-constructor record re-aimed at the `tuft` door).
+  **AUDIT GRASS-PX4 (same day, Mac: "Audit before merging"): ONE LENS
+  OVER THE SHEET, SEVEN FINDINGS, FOUR PAID.** (F1) `paintTuft` carried a
+  SECOND copy of the highlight threshold's formula, and a sheet built
+  from a copy is pinned by neither: `h * 21 / 32` in that copy survived
+  every pin and took the highlight off three of the shipped tufts. The
+  three laws are ONE function each now (`tuftMarginFor`, `bladeMinFor`,
+  `highlightMinFor`), read by the constants and by layTuft/paintTuft
+  alike, and the shipped sheet's highlight count (39 texels) is pinned
+  beside the 19/20 and 9/10 edges through paintTuft. (F2) The "shortest
+  blade" clamp NEVER FIRED - the height law's own floor, floor(0.45 h),
+  is above it at both sizes, so `PX_BLADE_MIN` described a law the sheet
+  never exercised (and had since 16x32). The clamp is gone and the
+  constant is the law's floor (7 of 16, 14 of 32), with a pin that a
+  blade reaches it and none goes under, over 3000 seeds. (F3) "No tuft
+  on its edge column" was a property of the eight shipped seeds, not of
+  the code: the seed head is two texels wide to the tip's RIGHT, and a
+  headed tip one column short of the edge painted the edge column on
+  6% of tufts at 8x16 (3% at 16x32) - a reseed or a ninth variant would
+  have failed the pin. A headed blade's lean is clamped one column
+  further in, the way the tip already was; pinned over 3000 seeds at
+  both sizes, column 0 and column w-1 empty. (F4) `layTuft` recomputed
+  the margin instead of reading the constant - same fix as F1. The
+  16x32 door still reproduces the OLD sheet byte for byte (the lens
+  compared it against HEAD~1's module: 128x32 and every mip level, 0
+  bytes differ), because none of the shipped old seeds had a head at
+  the edge. Noted, not paid: the head, the base and the two-row
+  highlight are texel-sized and so relatively larger at 8x16 (a quarter
+  of the width where they were an eighth) - consistent with "a texel is
+  a pixel", but "the sheet's size and nothing else" overstated it; the
+  lean scale `(w / 16)` and `(h / 32)` are indistinguishable while a
+  tuft is 1:2. Eight mutants added (the three thresholds, the head at
+  the edge, the margin twice, the floor and the height law drifting
+  apart).
   **GRASS AUDIT 1 (2026-09-21, Mac: "do an audit on this"): THREE
   LENSES OVER THE PIXEL GRASS, TWENTY FINDINGS, ALL PAID.** The sheet
   and the fragment stage; the vertex stage, the draw path and the
@@ -429,7 +489,7 @@ directory by `test/audit18_bible_docs.test.js`:
   draws. Two of the three worst findings (the black ramp, the wall) were
   lines the pins held exactly, and the one bug the fixes introduced was
   invisible to every pin and loud on the first readback.**
-- `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 16x32 tufts built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
+- `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 8x16 tufts (GRASS-PX4; 16x32 until 2026-09-22, and the laws are written as fractions of the tuft so the old size still builds through `buildTuftSheet({ w, h })`) built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
 - `systems/wind.js` - **WIND1 (2026-09-02) THE WIND IS ITS OWN THING.**
   Mac: "wind should be something different from the weather. Imagine a
   time-lapse, seeing a storm rolling in as the wind kicks up, and the

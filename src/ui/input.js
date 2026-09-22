@@ -50,6 +50,7 @@ import {
 // AUDIT 64 F36/F37: DaggerfallHUD.Update's own shortcut arms. A leaf
 // on systems/ alone, so this module can take it without a cycle.
 import { hudShortcutKey } from './hudShortcuts.js';
+import { statusReadoutTakesAction, setStatusBindings } from '../systems/statusReadout.js';   // STATUS-LIVE: the readout yields to whatever wants the slot, and the panel names the live Status key. A LEAF - this module is in ui/actionText.js's own import ring (through ui/inputMessageBox.js), so reaching for the BOX from here put its class body in a temporal dead zone
 import { getInt, getFloat } from '../systems/settings.js';   // SWING-SAY: the swing mode and its threshold, for the boot readout
 
 // The registry singleton - built on first read, so the module can be
@@ -58,11 +59,12 @@ let _bindings = null;
 export function bindings() {
   if (_bindings) return _bindings;
   _bindings = loadOrCreateBindings();
+  setStatusBindings(_bindings);   // STATUS-LIVE: the readout's caption names the key that actually answers
   saySwingChain();   // SWING-SAY: once, at the moment the store is first real
   return _bindings;
 }
 /** Tests (and the I3 controls window) swap the live store. */
-export function setBindings(b) { _bindings = b; }
+export function setBindings(b) { _bindings = b; setStatusBindings(b); }   // STATUS-LIVE: a rebound Status key renames the readout's caption with it
 
 /**
  * SWING-SAY (2026-09-22, Mac: "its not working on the install but works
@@ -771,6 +773,17 @@ export function swallowBrowserKey(e) {
 }
 
 export function routeAction(action, ctx, setPlayerPos = null) {
+  // STATUS-LIVE: THE READOUT YIELDS, BEFORE ANY ARM BELOW RUNS. The
+  // status panel does not pause the game, so it is still standing in a
+  // host's overlay slot while the player presses the next key - and
+  // the arms below are exactly the keys that WANT that slot. Two of
+  // the four hosts would simply have refused (the dungeon's free-slot
+  // guards, the interior arm's push), which is a key that silently
+  // does nothing. Here, once, because this is the one door every
+  // host's window keys and the large HUD's eleven panels come through.
+  // Escape is SPENT by the close (the truthy answer): at a panel, that
+  // key means "close this", not "and also open the pause menu".
+  if (statusReadoutTakesAction(action)) return true;
   switch (action) {
     // Escape with no overlay up opens the pause options window
     // (GameManager's escape door; the window closes itself on the

@@ -72,9 +72,12 @@ test('QV1: the machine hands the name to the playVideo hook and the action compl
 test('QV1: the world door is the infection lane\'s player, DFU\'s flag, never-traps', () => {
   const world = readFileSync('src/scenes/world.js', 'utf8');
   assert.ok(!/video playback pends/.test(world), 'the pends warn is GONE - retiring a seam deletes the sentence');
-  const from = world.indexOf('playVideo: (name) => {');
-  assert.ok(from > 0, 'the door exists');
-  const body = world.slice(from, world.indexOf('\n    },', from));
+  // CRUX1: the door hands the name to the queue (systems/quest/videoQueue.js) and the PLAYER is the queue's one
+  // play function, declared beside the hooks - the same body, in turn
+  assert.match(world, /playVideo: \(name\) => \{ _questVideos\(name\); \},/, 'the door exists and is the queue\'s');
+  const from = world.indexOf('const _questVideos = makeVideoQueue(async (name) => {');
+  assert.ok(from > 0, 'the queue\'s play function exists');
+  const body = world.slice(from, world.indexOf('\n  });', from));
   assert.match(body, /import\('\.\.\/ui\/videoPlayer\.js'\)/, 'the one player, deferred off the tick frame');
   assert.match(body, /\{ endOnAnyKey: false \}/, 'PlayVideo.cs:78 - EndOnAnyKey = false, verbatim');
   assert.match(body, /catch \(e\)/, 'a missing ANIM costs the video, never the quest');

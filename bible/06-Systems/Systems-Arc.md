@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:980`, `world.js:1096`), fired
+`playerTicker.advance(60)` (`exterior.js:980`, `world.js:1097`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -3996,11 +3996,11 @@ with _lastEncMinutes stamped for the PreventEnemySpawns parity
 ("intentionally not spawning enemies, for this time the PLAYER is the
 monster"). worldModes' infection re-registration FORWARDS the outer
 host's arm rather than dropping it - the re-registration shadowing
-that V2c's death-presenter lesson predicted. RECORDED DIVERGENCE:
-DFU's RespawnPlayer lands the player INSIDE the crypt; the port has
-no door-less dungeon entry, so the vampire wakes at the cemetery's
-exterior with the crypt door in front of them, and interior/dungeon
-modes skip loudly where DFU tears the scene down.
+that V2c's death-presenter lesson predicted. DFU's RespawnPlayer
+lands the player INSIDE the crypt, and so does the port since CRUX1
+(2026-09-22, Quest-Arc.md) gave it the door-less dungeon start it had
+recorded as missing here; interior/dungeon modes still skip loudly
+where DFU tears the scene down.
 
 FLAGGED, each loudly: the transformed suppressions/claws/sounds/
 paperdoll+head art (host work), the artifact payloads.
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:2068` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:2069` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4912` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:4913` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which

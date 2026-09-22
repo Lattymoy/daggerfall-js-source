@@ -11,7 +11,7 @@
  {
   "name": "GRASSPX-every-tip-is-the-highlight",
   "file": "src/render/grassPixelArt.js",
-  "old": "  if (isTip && height >= 20) return 4;",
+  "old": "  if (isTip && height >= highlightMin) return 4;",
   "new": "  if (isTip) return 4;",
   "tests": [
    "test/grasspx.test.js"
@@ -175,8 +175,8 @@
  {
   "name": "GRASSPX-the-renderer-compiles-the-labs-text-so-the-pixel-uniforms-do-not-exist",
   "file": "src/render/labGrass.js",
-  "old": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS } } = {}) {",
-  "new": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS } } = {}) {",
+  "old": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null } = {}) {",
+  "new": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS }, tuft = null } = {}) {",
   "tests": [
    "test/grasspx.test.js"
   ]
@@ -292,8 +292,8 @@
  {
   "name": "AUDIT-GRASSPX-the-highlight-is-one-texel",
   "file": "src/render/grassPixelArt.js",
-  "old": "export const isHighlightRow = (r, top, height) => height >= 20 && r >= top - 1;",
-  "new": "export const isHighlightRow = (r, top, height) => height >= 20 && r >= top;",
+  "old": "export const isHighlightRow = (r, top, height, highlightMin = PX_HIGHLIGHT_MIN) => height >= highlightMin && r >= top - 1;",
+  "new": "export const isHighlightRow = (r, top, height, highlightMin = PX_HIGHLIGHT_MIN) => height >= highlightMin && r >= top;",
   "tests": [
    "test/grasspx.test.js"
   ]
@@ -348,6 +348,78 @@
   "file": "src/render/labGrass.js",
   "old": "  Object.freeze({\n    why: 'the pixel quad is not tapered",
   "new": "  Object.freeze({\n    why: 'GRASS-PX3 mutant: the clock stepped',\n    from: '  float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n    to: '  float gust = sin((floor(uTime * 8.0) / 8.0)*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n  }),\n  Object.freeze({\n    why: 'the pixel quad is not tapered",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-paintTuft-highlightMin-21-of-32",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const highlightMinFor = (h) => Math.round(h * 20 / 32);",
+  "new": "export const highlightMinFor = (h) => Math.round(h * 21 / 32);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-paintTuft-highlightMin-19-of-32",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const highlightMinFor = (h) => Math.round(h * 20 / 32);",
+  "new": "export const highlightMinFor = (h) => Math.round(h * 19 / 32);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-paintTuft-reads-its-own-threshold",
+  "file": "src/render/grassPixelArt.js",
+  "old": "  const highlightMin = highlightMinFor(h);",
+  "new": "  const highlightMin = Math.round(h * 21 / 32);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-the-seed-head-may-paint-the-edge-column",
+  "file": "src/render/grassPixelArt.js",
+  "old": "    if (head) lean = Math.min(w - 3 - x0, lean);\n",
+  "new": "",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-the-margin-is-two-sixteenths",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const tuftMarginFor = (w) => Math.max(1, Math.round(w * 3 / 16));",
+  "new": "export const tuftMarginFor = (w) => Math.max(1, Math.round(w * 2 / 16));",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-layTuft-margin-is-its-own",
+  "file": "src/render/grassPixelArt.js",
+  "old": "  const margin = tuftMarginFor(w);",
+  "new": "  const margin = Math.max(1, Math.round(w * 2 / 16));",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-the-blade-floor-is-not-the-height-laws",
+  "file": "src/render/grassPixelArt.js",
+  "old": "export const bladeMinFor = (h) => Math.floor(h * 0.45);",
+  "new": "export const bladeMinFor = (h) => Math.floor(h * 0.4);",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PX4-the-height-law-drifts-from-its-floor",
+  "file": "src/render/grassPixelArt.js",
+  "old": "    const height = Math.floor(h * (0.45 + rnd() * 0.55));",
+  "new": "    const height = Math.floor(h * (0.4 + rnd() * 0.6));",
   "tests": [
    "test/grasspx.test.js"
   ]

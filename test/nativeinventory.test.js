@@ -480,7 +480,12 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // survived restoring the defect.
   const tt = code('scenes/townTalk.js');
   const pd = tt.slice(tt.indexOf('function pointerdown(e) {'), tt.indexOf('function hover(e) {'));
-  assert.match(pd, /if \(!overlay\) return false;/, 'the guard is on the WINDOW');
+  // STATUS-LIVE (2026-09-22): the guard is still on the WINDOW - what
+  // it asks is the PAUSE. A box the game is not stopped for (the
+  // status readout, ui/statusBox.js) is standing in this slot while
+  // the player walks, and a press then belongs to the world.
+  assert.match(pd, /if \(!overlay \|\| !talkPaused\(\)\) return false;/, 'the guard is on the WINDOW');
+  assert.doesNotMatch(pd, /if \(!overlay\) return false;/, 'and not on the slot alone any more');
   assert.doesNotMatch(pd, /if \(!overlay\?\.click\)/, 'and not on its click method');
   assert.match(pd, /overlay\.click\?\.\(/, 'the call is what is optional');
   // AUDIT 18: F11 is QuickLoad AND the browser's fullscreen key. One
@@ -495,7 +500,7 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // destroyed the session (AUDIT 17e F41's own failure) and F11 went
   // fullscreen. A list a lane has to remember to extend is what let that
   // happen, so the pin now asks the tree which hosts register a keydown
-  // and holds every one of them to ui/input.js:646-647's "every host
+  // and holds every one of them to ui/input.js:648-649's "every host
   // that registers a keydown calls this FIRST".
   const SCENES = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'scenes');
   const hosts = readdirSync(SCENES).filter((f) => f.endsWith('.js')

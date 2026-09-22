@@ -716,7 +716,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:559). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:560). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -1453,7 +1453,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1181's
+and both hosts mint a fresh one at every click - worldModes.js:1182's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -2808,7 +2808,7 @@ banker and guild clerk in Daggerfall reached `TalkManager` with an
 empty name. Two things read it:
 
 - the greeting says the NPC's name once reaction is above zero, and
-  "stranger" below it (`townTalk.js:546`). Every static NPC in the
+  "stranger" below it (`townTalk.js:556`). Every static NPC in the
   game stayed a stranger no matter how well liked.
 - `topicTree`'s same-building-static test (`:558`) matches a topic
   caption against that name, so it never matched.
@@ -2902,7 +2902,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:559`. A pending marker over shipped
+already ships, at `worldModes.js:560`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -5467,7 +5467,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:2981-3072) — and
+spawns and the NPC-guard conversion with it (world.js:2982-3073) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5488,13 +5488,13 @@ instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
 ready-spell events (`hostMagic.js:76-77`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:799`/`:782`; C# subscribes them in the action's
+(`machine.js:813`/`:796`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:3287-3288`,
-`dungeonContext.js:2213-2214`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:3336-3337`,
+`dungeonContext.js:2182-2183`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:7329-7332`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:7357-7360`),
 absent which the action self-completes at *parse*
 (`actions.js:2756`/`:2763`) and the task can never arm at all.
 
@@ -6200,3 +6200,78 @@ is always on.
 swapped pair, a narrowed pattern, three forgotten restore fields, an
 unstamped log step, the disabled marker, two dropped host hooks, and an
 exemption gone stale.
+
+---
+
+## CRUX1 - THE ROAD INTO THE MANTELLAN CRUX, MADE OF DFU'S PARTS (2026-09-22, a player through Mac)
+
+> Got word the final dungeon mission is unbeatable
+
+No ARENA2 in this container, so the Crux itself could not be walked;
+what could be done was to read the whole road from Nulfaga's word to
+the Mantella's touch and find where the port's road differs from DFU's.
+Every action S0000016 and S0000008 use has a port implementation and the
+AUDIT QUESTS sweep was clean - but that sweep parses headless, with no
+world attached, so the Crux's fixed Place has never been RESOLVED in
+CI, and the road had three places where the port's law was not DFU's.
+
+**1. The teleport needed a door DFU never needs.** `transfer pc inside`
+is the one quest action that puts the player inside a dungeon from
+nowhere, and the Crux is the one dungeon nothing else reaches (region
+31 has no travel page - "entered through the main quest, not travelled
+to"). The port's respawn did `_teleportToPixel` and then
+`modes.startInDungeon()`, which took the FIRST `DUNGEON_ENTRANCE` door
+in the loaded exterior and answered false without one - and DFU's
+StartDungeonInterior(location) (PlayerEnterExit.cs:520-527 -> 968-997)
+builds the location's dungeon directly and never looks. A false there
+is the recorded "exterior fallback": TeleportPc still completes, the
+player surfaces at the map-corner sea pixel, and nothing retries - the
+Mantella is unreachable and global 36 (`FinishedMantellanCrux`, which
+only the Mantella's SetGlobalVar sets) is never set. The same gap was
+already written down twice, for the vampire's cemetery ("no door-less
+dungeon entry yet") and for a new game at a doorless location.
+`startInDungeon` falls back to the host's own word for the player's
+pixel now (`dungeonStartSite`: the location if it has a dungeon, its
+climate base, the interior season, the pixel as the exit's group, no
+door) through the same `tryEnterDungeon` - which was read to make sure
+it never touches `hit.door` - so the ENTER marker and north facing are
+as before and the exit's candidates are whatever entrance doors the
+pixel does carry. The vampire wakes in the crypt now, as DFU's does;
+the two records that said otherwise are closed.
+
+**2. A child that failed to set up killed its parent.** `start quest`
+goes through `scheduleQuestByName`, and that door had no catch where
+DFU's StartQuest -> ParseQuest does (QuestMachine.cs:670-687; the
+lists arm in the port has had the same catch since AUDIT 24). If
+S0000016's Place setup throws - "Could not find spawn marker in
+MantellanCrux" has no second chance - the throw came out of
+S0000008's update and the Tick loop error-terminated S0000008, the
+Totem quest, for it: click Nulfaga, nothing happens, the Totem quest
+gone from the journal. Under the catch now, logged in ParseQuest's
+words; the parent lives and its other children still start.
+
+**3. The ending's two videos played over each other.** On the tick the
+`_delay_` clock fires, the `_delay_` task (video 3, `say 1050`) and
+the totem-holder's ending task (video 14, or 6-10/15) start together.
+DFU pushes each DaggerfallVidPlayerWindow onto the UI stack and the
+second shows when the first pops; the port started a player per call.
+`systems/quest/videoQueue.js` is one promise chain: a play waits for
+the one before it, a failed play (the door never traps) releases the
+next.
+
+Not changed, and said plainly: whether the Crux's Mantella model
+carries its SetGlobalVar action with axis 36 in the reporter's data
+could not be checked here (SetGlobalVar shipped 2026-08-25; a save that
+touched the Mantella before that has nothing to re-arm); PlayerCrush is
+unported and rotating platforms are translation-only, and if a Crux
+puzzle needs either the player could still be stranded; leaving the
+Crux early is as unrecoverable as in DFU. If the report stands after
+this, the reporter's save (`machine.globalVars` for index 36, the
+console for `[quest] respawn:` or `Parsing quest S0000016 FAILED!`)
+says which of those it is.
+
+**Pinned** in `test/crux1.test.js` (3): a `start quest` whose child
+throws leaves the parent alive and its good child starting, logged in
+ParseQuest's words; the queue plays in turn and a failure releases the
+next; every seam by source. `tools/mutants/crux1.json`: 8, 8 dead.
+

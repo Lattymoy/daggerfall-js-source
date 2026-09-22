@@ -194,9 +194,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2825), townTalk.say
- *                     (exterior.js:1942, world.js:3346) and
- *                     worldModes' own interior sink (worldModes.js:415,
+ *                     (dungeonContext.js:2788), townTalk.say
+ *                     (exterior.js:1942, world.js:3398) and
+ *                     worldModes' own interior sink (worldModes.js:414,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -265,6 +265,31 @@ export function muzzleRay(drawn, fovRad, forward = MUZZLE_FORWARD) {
     right: (((px - r.x) / r.w) * 2 - 1) * tanX * forward,
     up: (1 - ((py - r.y) / r.h) * 2) * tanY * forward,   // screen y counts DOWN, camera up counts UP
     forward,
+  };
+}
+
+/** MW-MAP1 (2026-09-22, a player: "the morrowind map isnt showing"):
+ *  THE HELD MAP'S HOLDER, IN ONE PLACE. MAP3 gave the enhanced held map
+ *  a `holder` - the four doors it asks of the Morrowind arm (would it
+ *  draw, take the sheet, let it go, where are the sheet's corners) - and
+ *  wrote it inline in world.js's TRAVEL map builder. Then EM3/EM4 gave
+ *  the SAME window its M-key doors (the town plan, the dungeon and
+ *  building automaps) through ui/townMapDoor.js and ui/automapDoor.js,
+ *  and none of those doors passed a holder: every sheet opened with M
+ *  fell to the painted gauntlets, and a player with Morrowind arms saw
+ *  the Morrowind map only on V, outdoors. The holder is written once
+ *  here, off the rig that owns the arm, and every host that has a rig
+ *  hands it to every door it opens. `rig` is a FUNCTION so a host whose
+ *  rig can be swapped answers live, and a host with no rig at all (the
+ *  ?interior probe) passes nothing and keeps the sprite lane. */
+export function sheetHolderOf(rig) {
+  return {
+    available: () => !!rig()?.armsAvailable?.(),   // MAP-FIELD: WOULD it draw - the arm is sheathed until it takes the sheet
+    hold: (spec, opts) => !!rig()?.holdPaper?.(spec, opts),
+    release: () => { rig()?.releasePaper?.(); },
+    // AUDIT-MAP2: corners only from a frame the arm DREW - a paralysed,
+    // hidden or third-person arm answers none, and the window hides the ink
+    corners: () => { const r = rig(); return (r?.armsDrawn?.() ? r.paperCorners() : null) ?? null; },
   };
 }
 

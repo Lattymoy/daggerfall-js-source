@@ -555,7 +555,10 @@ test('MAP3 world.js: the holder rides the ONE dep bag, asked per open through th
   const src = rd('src/scenes/world.js');
   const at = src.indexOf('createTravelMapWindow({');
   const bag = src.slice(at, src.indexOf('...extra,', at));
-  assert.match(bag, /holder: \{\s*\n\s*available: \(\) => !!weaponRig\?\.armsAvailable\?\.\(\),[^\n]*\n\s*\s*hold: \(spec, opts\) => !!weaponRig\?\.holdPaper\?\.\(spec, opts\),\s*\n\s*release: \(\) => \{ weaponRig\?\.releasePaper\?\.\(\); \},[\s\S]*?corners: \(\) => \(weaponRig\?\.armsDrawn\?\.\(\) \? weaponRig\.paperCorners\(\) : null\) \?\? null,\s*\n\s*\},/, 'AUDIT-MAP2: corners only from a frame the arm drew');
+  // MW-MAP1: the holder is combat/weaponRig.js's sheetHolderOf, handed the rig as a FUNCTION (never a snapshot) -
+  // the same holder every M-key door on every host hands over now; its four doors are pinned in test/mwmap1.test.js
+  assert.match(bag, /holder: sheetHolderOf\(\(\) => weaponRig\),/, 'the one holder, off the live rig');
+  assert.doesNotMatch(bag, /available: \(\) =>/, 'no inline holder left in the travel builder');
   assert.match(src, /window\.__heldPose = \(spec\) => \(spec \? weaponRig\?\.setHeldPose\?\.\(spec\) : weaponRig\?\.heldPose\?\.\(\)\);/);
   const css = rd('src/ui/enhancedStyle.js');
   // MAP-FIELD2: the root is clear for BOTH lanes now (the sprite lane is

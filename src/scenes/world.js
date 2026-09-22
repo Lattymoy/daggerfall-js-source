@@ -80,8 +80,8 @@ import { bloodDecalDeps } from '../combat/bloodSwitch.js';
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: the ring, owned by this host and ended by its own name
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
-import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
-import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5: the status page's third box
+import { toggleStatusReadout } from '../ui/statusBox.js';   // STATUS-LIVE: the Status readout, one composer for all four hosts
+import { statusReadoutTakesAction } from '../systems/statusReadout.js';   // STATUS-LIVE: ...and the yield this host's own key ladder owes, which never reaches routeAction
 import { maxFatigue, FATIGUE_MULTIPLIER, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); AUDIT SOC B5: the party pose's fatigue in the digits a sheet shows
 // V5: resting above ground. RestWindow and RestSession have been
 // finished since U7; what was missing was a host outside the dungeon
@@ -259,7 +259,7 @@ import { floorLanding } from '../player/enterExit.js';   // FixStanding for the 
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above, SURV6) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
-import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
+import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
@@ -288,6 +288,7 @@ import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs a
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
+import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { createSocialPanel, TRY_AGAIN_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { pickPeerInFront, SOCIAL_REACH } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches
@@ -3542,10 +3543,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2389 mounts the same one, gated on
+  // and dungeonContext.js:2381 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:6102
+  // that context through modes.dungeonCtx - so worldModes.js:5503
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5096,10 +5097,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   // same pixel arrival fast travel takes (_teleportToPixel re-inits
   // the streamer; _lastEncMinutes is the PreventEnemySpawns parity -
   // "intentionally not spawning enemies, for this time the PLAYER is
-  // the monster"). RECORDED DIVERGENCE: DFU's RespawnPlayer lands the
-  // player INSIDE the cemetery crypt (insideDungeon true); the port
-  // has no door-less dungeon entry yet, so the vampire wakes at the
-  // cemetery's exterior, its crypt door in front of them. Off the
+  // the monster"). DFU's RespawnPlayer lands the player INSIDE the
+  // cemetery crypt (insideDungeon true): CRUX1 gave the port the
+  // door-less dungeon start (StartDungeonInterior(location), through
+  // modes.startInDungeon's dungeonStartSite arm), so the vampire wakes
+  // in the crypt now, as recorded before as a divergence. Off the
   // tick's frame like the videos; interior/dungeon modes skip loudly
   // (DFU tears the interior down in RespawnPlayer - host work).
   function transferToCemeteryArm() {
@@ -5117,6 +5119,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     Promise.resolve().then(async () => {
       await _teleportToPixel(pos.x, pos.y);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);
+      const entered = await (modes?.startInDungeon?.() ?? false);   // CRUX1: insideDungeon true - the crypt, not its door
+      if (!entered) console.warn('[infection] the cemetery has no dungeon to wake in - the vampire wakes at its exterior');
     });
   }
 
@@ -5426,7 +5430,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6283), so exterior mode and a
+    // composer, dungeonContext.js:6119), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6270,15 +6274,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // (combat/fpArm.js holdPaper) and lays its ink over the sheet's
       // projected corners; on the classic body the sprite lane stands.
       // Asked per open, never snapshot: the arm can be built, unloaded or
-      // hidden between two presses of the key.
-      holder: {
-        available: () => !!weaponRig?.armsAvailable?.(),   // MAP-FIELD: WOULD it draw - the arm is sheathed until it takes the sheet
-        hold: (spec, opts) => !!weaponRig?.holdPaper?.(spec, opts),
-        release: () => { weaponRig?.releasePaper?.(); },
-        // AUDIT-MAP2: corners only from a frame the arm DREW - a paralysed,
-        // hidden or third-person arm answers none, and the window hides the ink
-        corners: () => (weaponRig?.armsDrawn?.() ? weaponRig.paperCorners() : null) ?? null,
-      },
+      // hidden between two presses of the key. MW-MAP1: the holder is
+      // combat/weaponRig.js's, the one every door on every host hands
+      // over - it was written here alone, and the M-key sheets had none.
+      holder: sheetHolderOf(() => weaponRig),
       ...extra,
     });
   }
@@ -6358,7 +6357,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       isBuildingQuestResource: (mapID, key) => topicTree.isBuildingQuestResource(mapID, key),
     }, dfLoc.mapTableData?.mapId ?? 0);
     if (!townMapDoorReady()) return;   // EM4: the skin fork's gate
+    mwViewFirstPerson();   // MW-MAP1: MAP-POV's law for this sheet too - the town plan is read in the head, and the arm must be first-person before the window's first tick asks
     townTalk.showOverlay(createTownMapWindow({
+      holder: sheetHolderOf(() => weaponRig),   // MW-MAP1: the Morrowind hands lane on the M key, as on V
       locationName: dfLoc.name,
       locationId: locId,
       gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
@@ -6489,12 +6490,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // shipped statusInfoRows INTO that file and the macro producers
     // landed with IM1/MH1, so the flag it pointed at does not exist -
     // and it sat one line above the correction that says so.
+    // STATUS-LIVE (2026-09-22, kurkku): the chain, the pause and the
+    // four copies of this expression are all gone - ui/statusBox.js
+    // has the whole law and the reasoning. `mount` and `drop` are this
+    // host's own two doors into its one slot.
     showStatus: () => {
-      const rows = (id) => townTalk.lines(id);
-      const _box = new ActionTextBox(statusInfoRows(rows, questBridge?.machine?.macroContext?.() ?? null))
-        .addNext(healthStatusRows(playerEntity, rows));
-      if (survivalOn()) _box.addNext(survivalStatusRows(playerEntity, Math.floor(worldMinutes()), { vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') }));   // SURV5: the mod's advice box, third in the chain
-      townTalk.showOverlay(_box);
+      toggleStatusReadout({
+        mount: (box) => townTalk.showOverlay(box),
+        drop: (box) => townTalk.closeOverlay(box),   // identity-guarded: a slot that moved on is left alone
+        lines: (id) => townTalk.lines(id),
+        macroContext: questBridge?.machine?.macroContext?.() ?? null,
+        entity: playerEntity,
+        survival: survivalOn() ? { minutes: Math.floor(worldMinutes()), vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') } : null,   // SURV5: the mod's advice, the readout's third page
+      });
     },
     toggleLogbook: () => townTalk.showOverlay(makeJournalWindow('activeQuests')),
     toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('notebook')),
@@ -6514,14 +6522,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:706) and
+     *  on. Here routeAction's arm is optional (ui/input.js:708) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:567), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:569), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -6719,7 +6727,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     noteKeyDown(latch.edge, e.code, e.repeat);   // MWCROUCH: the press event, buffered for the frame that reads it
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:243-264), and no host passed one - so
+    // held-keys Set (ui/input.js:245-266), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -6729,6 +6737,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
     // "space is jump, LeftShift+Space opens inventory: ignore it").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
+    // STATUS-LIVE: THE READOUT YIELDS HERE TOO. This host runs its own
+    // key ladder rather than routeKey's, so its Escape arm (and its
+    // quickslot and window arms) never reach ui/input.js's routeAction
+    // - where the one copy of this law lives. Same call, same answer:
+    // an action that wants the slot closes the readout first, and
+    // Escape is SPENT by the close.
+    if (statusReadoutTakesAction(act)) { e.preventDefault(); return; }
     // AUDIT SOC B4/D1: F ON A BODY WORKS INSIDE TOO. The social door sat under the exterior gate below, and the
     // interior and dungeon modes' own contexts (scenes/worldModes.js interiorKeyCtx, dungeonCtx) carry no
     // `socialInteract`, so in a tavern or a dungeon - where two players meet as often as in a street - F did nothing
@@ -6880,7 +6895,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // gates the position now, not just the presence.
       // WEAPON-VIS2: this ladder never calls routeKey (the comment
       // above the Escape arm says so directly), so routeKey's own
-      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:669) never
+      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:671) never
       // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
       // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
       // routeAction from BOTH here AND the frame's own poll below
@@ -7333,7 +7348,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:9092-9155 -
+  // worldModes answers it in BOTH modes (worldModes.js:8517-8581 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8122,6 +8137,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (PlaySound.cs:112) - ONE source for every PlaySound action in every
   // running quest, which is what makes the busy-skip a shared gate
   // rather than a per-action one.
+  // CRUX1: the quest videos' one chain - see the playVideo hook below
+  const _questVideos = makeVideoQueue(async (name) => {
+    try {
+      const { playVideo } = await import('../ui/videoPlayer.js');
+      const { getBytes } = await import('./dataSource.js');
+      const played = await playVideo(renderer.canvas, renderer, await getBytes(name), { endOnAnyKey: false });
+      if (typeof window !== 'undefined') (window.__questVideos ??= []).push({ name, played });
+    } catch (e) {
+      console.warn(`[quest] ${name} unavailable - skipping the video:`, e?.message ?? e);
+    }
+  });
   const questAudioSource = new QuestAudioSource(audio);
   questBridge = createQuestBridge({
     data: questPack,
@@ -8297,18 +8323,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // F151: GetBackButtonDown is its own disjunct). NEVER TRAPS: a
     // missing or undecodable ANIM costs the video and the quest rolls
     // on - SetComplete already ran at the push, exactly as in C#.
-    playVideo: (name) => {
-      Promise.resolve().then(async () => {
-        try {
-          const { playVideo } = await import('../ui/videoPlayer.js');
-          const { getBytes } = await import('./dataSource.js');
-          const played = await playVideo(renderer.canvas, renderer, await getBytes(name), { endOnAnyKey: false });
-          if (typeof window !== 'undefined') (window.__questVideos ??= []).push({ name, played });
-        } catch (e) {
-          console.warn(`[quest] ${name} unavailable - skipping the video:`, e?.message ?? e);
-        }
-      });
-    },
+    // CRUX1: IN TURN. Two videos due on one tick (the ending's video
+    // 3 and the totem-holder's) used to start two players over one
+    // canvas; DFU pushes each onto the UI stack and the second shows
+    // when the first pops (systems/quest/videoQueue.js). Still off the
+    // tick's frame, still never trapping.
+    playVideo: (name) => { _questVideos(name); },
     // E6: THE BUSY SKIP, DFU's own. PlaySound.cs:110-116 is
     // `if (source != null && !source.IsPlaying()) { source.PlayOneShot(
     // ...); lastTimePlayed = gameSeconds; }` over the ONE
@@ -8938,6 +8958,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // wears the friend colour, which is the list's own mark carried into the conversation
       nameColor: (id) => social?.cssColorOf(id) ?? null,   // SOC7 integration: the picture answers (net/social.js cssColorOf - party green, friend blue, a stranger none); the host names no colour, which SOC4's pin holds it to
       rowActions: (peerId) => socialRowActions(peerId),
+      badgeOf: (id) => (chatLinks?.get(chatLog?.active) ?? online)?.badgeOf?.(id) ?? null,   // CHAT-FIT: a chat line's author wears the badge the roster shows - the same session answers both, or the one name would say two things on one screen
     });
     socialStart();   // SOC2: the picture over the hub's link, once the panel it lands beside exists
   };
@@ -9622,6 +9643,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       ...e, door: shiftedDoor(e),
       dfLocation: locationIndex.get(e.pixelKey), group: e.pixelKey,
     })),
+    // CRUX1: THE DOORLESS DUNGEON START - the player's own pixel's
+    // location, when it has a dungeon, in the shape a door hit has
+    // (what tryEnterDungeon reads: the location, the climate base, the
+    // season, the group the exit's candidates are filtered by) and no
+    // door. StartDungeonInterior(location)'s input, for the quest
+    // teleport into the Mantellan Crux, the cemetery transfer and a new
+    // game at a location whose exterior carries no entrance door.
+    dungeonStartSite: () => {
+      const p = playerTravelPixel();
+      const key = `${p.x},${p.y}`;
+      const dfLocation = locationIndex.get(key) ?? null;
+      if (!dfLocation?.hasDungeon) return null;
+      return { dfLocation, climateBase: getWorldClimateSettings(maps.getClimateIndex(p.x, p.y)).climateType, season: INTERIOR_SEASON, group: key, door: null, dfBlock: null, recordIndex: -1 };
+    },
     // WORLD-HOVER: the token that says whether the list above is still
     // the one it was. See `doorGeneration`'s own note for why this
     // host has one and the fixed city does not.
@@ -10168,7 +10203,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:639, :671). So every HUD line raised in a modal
+      // (townTalk.js:649, :657). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where

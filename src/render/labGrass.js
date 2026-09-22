@@ -27,7 +27,7 @@
 
 import { frustumPlanes, aabbOutside } from './frustum.js';   // PERF2: the field draws only the cells in view
 import { smoothstep } from '../systems/mathf.js';   // GRASS2: the host's blade budget is a bound on the shader's fade, so the two must be the SAME curve
-import { buildTuftMips, pixelGrass, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from './grassPixelArt.js';   // GRASS-PX: the tuft sheet and the pixel style's numbers
+import { buildTuftMips, buildTuftSheet, pixelGrass, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from './grassPixelArt.js';   // GRASS-PX: the tuft sheet and the pixel style's numbers
 
 /**
  * GRASS2: THE DEPARTURES FROM THE LAB, AS DATA.
@@ -338,7 +338,7 @@ export const GRASSPX_VS_EDITS = Object.freeze([
   // frame. The sway law is untouched above this list: uTime, the gust
   // wave, the lean, exactly as the lab has them.
   Object.freeze({
-    why: 'the pixel quad is not tapered - the sprite carries the shape - and it is HALF ITS DRAWN HEIGHT wide, so a 16x32 sprite is square texels on every blade, buried or not',
+    why: 'the pixel quad is not tapered - the sprite carries the shape - and it is HALF ITS DRAWN HEIGHT wide, so a 2:1 tuft (16x32 then, 8x16 since GRASS-PX4) is square texels on every blade, buried or not',
     from: '  p.xz += side * (aCorner.x-0.5) * aInst2.w * (1.0 - vT*0.75);',
     to: '  p.xz += side * (aCorner.x-0.5) * mix(aInst2.w * (1.0 - vT*0.75), h * 0.5, uPixel);   // GRASS-PX; GRASS AUDIT 1: the width is the height\'s, per blade',
   }),
@@ -1063,7 +1063,7 @@ export class LabGrassRenderer {
    *  field through the lab's own text and hold the smooth style
    *  byte-identical to it - the executed form of "with the switch at
    *  zero the arithmetic is the lab's". */
-  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS } } = {}) {
+  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null } = {}) {   // GRASS-PX4: `tuft` ({ w, h }) lays the sheet at another size - the probe photographs the old 16x32 beside the shipped 8x16 through it
     this.gl = gl;
     const compile = (type, src) => {
       const sh = gl.createShader(type);
@@ -1131,7 +1131,7 @@ export class LabGrassRenderer {
     // holding across it.
     this.pxSheet = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);
-    const mips = buildTuftMips();
+    const mips = buildTuftMips(tuft ? buildTuftSheet({ w: tuft.w, h: tuft.h }) : undefined);   // GRASS-PX4
     this.pxVariants = mips[0].variants;
     for (let i = 0; i < mips.length; i++) gl.texImage2D(gl.TEXTURE_2D, i, gl.RGBA, mips[i].width, mips[i].height, 0, gl.RGBA, gl.UNSIGNED_BYTE, mips[i].data);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);

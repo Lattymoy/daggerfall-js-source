@@ -64,6 +64,7 @@ export function createAutomapWindow(deps = {}) {
   if (isEnhanced() && typeof document !== 'undefined') {
     return new HeldMapWindow({
       where: deps.where ?? (() => ({ insideDungeon: !deps.insideBuilding, insideBuilding: !!deps.insideBuilding })),
+      holder: deps.holder ?? null,   // MW-MAP1: the Morrowind arm's hands lane, where the host has an arm (combat/weaponRig.js sheetHolderOf)
       automap: {
         record: deps.record,
         model: () => deps.model ?? null,

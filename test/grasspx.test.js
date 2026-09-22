@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildTuftSheet, buildTuftMips, downsampleCoverage, coverageOf, layTuft, paintTuft, toneAt, toneByte, isHighlightRow, mulberry32, pixelGrass,
-  PX_VARIANTS, PX_TUFT_W, PX_TUFT_H, PX_TONES, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from '../src/render/grassPixelArt.js';
+  PX_VARIANTS, PX_TUFT_W, PX_TUFT_H, PX_TONES, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT, PX_TUFT_MARGIN, PX_BLADE_MIN, PX_HIGHLIGHT_MIN, tuftMarginFor, bladeMinFor, highlightMinFor } from '../src/render/grassPixelArt.js';
 import { LAB_GRASS_HEAD, GAME_GRASS_FIELD, LAB_GRASS_VS, LAB_GRASS_FS, GAME_GRASS_VS, GAME_GRASS_FS, GRASSPX_VS_EDITS, GRASSPX_FS_EDITS, applyGrassEdits, LabGrassRenderer, GRASS_CELL } from '../src/render/labGrass.js';
 import { FEATURES, FEATURE_PREF_DEFAULTS } from '../src/systems/features.js';
 import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
@@ -19,7 +19,12 @@ const TONE_BYTES = [0, 64, 128, 192, 255];
 /** the shader's own decode of the tone byte */
 const decode = (r) => Math.floor((r / 255) * 4 + 0.5);
 
-test('GRASS-PX: the sheet is eight 16x32 tufts, hard-edged, four-toned, and the same on every build', () => {
+test('GRASS-PX / GRASS-PX4: the sheet is eight 8x16 tufts, hard-edged, four-toned, and the same on every build', () => {
+  // GRASS-PX4 (Mac: "have grass have larger pixels"): the tuft was 16x32
+  // and is 8x16 - the same quad, so a texel is twice the blade it was.
+  // The laws below are held as FRACTIONS of the tuft (the constants),
+  // not as the numbers they came to at one size.
+  assert.deepEqual([PX_TUFT_W, PX_TUFT_H, PX_TUFT_MARGIN, PX_BLADE_MIN, PX_HIGHLIGHT_MIN], [8, 16, 2, 7, 10], 'the shipped size and its fractions: 3/16 of the width, the height law\'s own floor (floor 0.45 h - AUDIT GRASS-PX4 F2), five eighths of the height');
   const a = buildTuftSheet(), b = buildTuftSheet();
   assert.equal(a.width, PX_VARIANTS * PX_TUFT_W); assert.equal(a.height, PX_TUFT_H); assert.equal(a.variants, 8);
   assert.deepEqual(a.data, b.data, 'a function of the seed and nothing else');
@@ -30,9 +35,12 @@ test('GRASS-PX: the sheet is eight 16x32 tufts, hard-edged, four-toned, and the 
     assert.ok(TONE_BYTES.includes(r), `the tone byte is one of five, never ${r}`);
     assert.equal(r === 0, al === 0, 'a texel is a blade exactly when it has a tone');
     if (al) { blade++; assert.equal(decode(r), TONE_BYTES.indexOf(r), 'the shader\'s decode reads the tone back'); }
-    if (al && r === 255) assert.ok(g >= 242, `the highlight is the top two texels of a tall blade, so its height is at least 19/20 (${g})`);
+    // the top two rows of a blade at least PX_HIGHLIGHT_MIN tall: f is at least (min-2)/(min-1) of the way up
+    const hlFloor = Math.round((PX_HIGHLIGHT_MIN - 2) / (PX_HIGHLIGHT_MIN - 1) * 255);
+    if (al && r === 255) assert.ok(g >= hlFloor, `the highlight is the top two texels of a tall blade, so its height is at least ${PX_HIGHLIGHT_MIN - 2}/${PX_HIGHLIGHT_MIN - 1} (${g} against ${hlFloor})`);
   }
-  assert.ok(blade > 400 && blade < a.data.length / 4 * 0.6, `a sheet that is mostly air, with ${blade} blade texels`);
+  const texels = a.data.length / 4;
+  assert.ok(blade > texels * 0.12 && blade < texels * 0.6, `a sheet that is mostly air, with ${blade} blade texels of ${texels}`);
   const at = (v, x, y) => a.data[((y * a.width) + v * PX_TUFT_W + x) * 4 + 3];
   const seen = new Set();
   for (let v = 0; v < a.variants; v++) {
@@ -49,8 +57,10 @@ test('GRASS-PX: the sheet is eight 16x32 tufts, hard-edged, four-toned, and the 
 
 test('GRASS-PX: the tone law and its byte', () => {
   assert.deepEqual([0, 0.34, 0.35, 0.74, 0.75, 1].map((f) => toneAt(f, false, 32)), [1, 1, 2, 2, 3, 3], 'root, mid, tip by thirds of the stalk');
-  assert.equal(toneAt(1, true, 20), 4, 'the tip of a blade tall enough to clear the sward is the highlight');
-  assert.equal(toneAt(1, true, 19), 3, '...and a short blade\'s tip is plain tip');
+  assert.equal(toneAt(1, true, PX_HIGHLIGHT_MIN), 4, 'the tip of a blade tall enough to clear the sward is the highlight');
+  assert.equal(toneAt(1, true, PX_HIGHLIGHT_MIN - 1), 3, '...and a short blade\'s tip is plain tip');
+  assert.equal(toneAt(1, true, 20, 20), 4, 'GRASS-PX4: the threshold is a parameter, so a tuft laid at another size keeps the law - 20 of 32 was the old sheet\'s');
+  assert.equal(toneAt(1, true, 19, 20), 3);
   assert.deepEqual([0, 1, 2, 3, 4].map(toneByte), TONE_BYTES);
   for (let t = 0; t <= 4; t++) assert.equal(decode(toneByte(t)), t, `tone ${t} round-trips through the shader's floor(R*4+0.5)`);
 });
@@ -60,8 +70,8 @@ test('GRASS-PX: a tuft\'s blades - three to five, never on the edge, the tip ins
     const blades = layTuft(mulberry32(seed));
     assert.ok(blades.length >= 3 && blades.length <= 5, `${blades.length} blades`);
     for (const bl of blades) {
-      assert.ok(bl.x0 >= 3 && bl.x0 <= PX_TUFT_W - 4, `root column ${bl.x0}`);
-      assert.ok(bl.height >= 8 && bl.height <= PX_TUFT_H, `height ${bl.height}`);
+      assert.ok(bl.x0 >= PX_TUFT_MARGIN && bl.x0 <= PX_TUFT_W - 1 - PX_TUFT_MARGIN, `root column ${bl.x0}`);
+      assert.ok(bl.height >= PX_BLADE_MIN && bl.height <= PX_TUFT_H, `height ${bl.height}`);
       const tip = bl.x0 + Math.round(bl.lean);
       assert.ok(tip >= 1 && tip <= PX_TUFT_W - 2, `the tip lands at column ${tip} of the tuft, inside it`);
       assert.ok(bl.ordinal >= 0 && bl.ordinal <= 1);
@@ -71,6 +81,17 @@ test('GRASS-PX: a tuft\'s blades - three to five, never on the edge, the tip ins
   // the seed is the sheet: two streams of the same seed lay the same tuft
   assert.deepEqual(layTuft(mulberry32(7)), layTuft(mulberry32(7)));
   assert.notDeepEqual(layTuft(mulberry32(7)), layTuft(mulberry32(8)));
+  // GRASS-PX4: the same laws at the OLD size - a tuft laid at 16x32 is
+  // the 16x32 tuft (margin 3, shortest blade 8, lean up to 6 texels), so
+  // the size is the only thing that changed
+  for (let seed = 1; seed <= 200; seed++) {
+    for (const bl of layTuft(mulberry32(seed), 16, 32)) {
+      assert.ok(bl.x0 >= 3 && bl.x0 <= 12, `16x32 root column ${bl.x0}`);
+      assert.ok(bl.height >= 8 && bl.height <= 32, `16x32 height ${bl.height}`);
+      assert.ok(Math.abs(bl.lean) <= 6.0001, `16x32 lean ${bl.lean}`);
+    }
+    for (const bl of layTuft(mulberry32(seed))) assert.ok(Math.abs(bl.lean) <= 3.0001, `8x16 lean ${bl.lean} - half the travel on half the width`);
+  }
 });
 
 test('GRASS-PX / GRASS AUDIT 1: the mip chain PRESERVES COVERAGE and carries the TIP - a far tuft is as dense as a near one, tip-toned, never nothing and never a wall', () => {
@@ -89,10 +110,10 @@ test('GRASS-PX / GRASS AUDIT 1: the mip chain PRESERVES COVERAGE and carries the
   assert.equal(coverageOf(down), 0.5, 'two of two blocks: round(0.25 * 2) = 1 kept, then the one-per-tuft floor... the tuft is 2 texels wide and already has one');
   const sheet = buildTuftSheet();
   const chain = buildTuftMips(sheet);
-  assert.equal(chain.length, 8, '128x32 halves to 1x1 in seven steps - a chain that stops short is an incomplete texture, which samples black');
-  assert.deepEqual(chain.map((l) => `${l.width}x${l.height}`), ['128x32', '64x16', '32x8', '16x4', '8x2', '4x1', '2x1', '1x1']);
+  assert.equal(chain.length, 7, '64x16 halves to 1x1 in six steps - a chain that stops short is an incomplete texture, which samples black');
+  assert.deepEqual(chain.map((l) => `${l.width}x${l.height}`), ['64x16', '32x8', '16x4', '8x2', '4x1', '2x1', '1x1']);
   const base = coverageOf(sheet);
-  assert.ok(base > 0.15 && base < 0.25, `the sheet is mostly air (${base})`);
+  assert.ok(base > 0.15 && base < 0.40, `the sheet is mostly air (${base}) - 8x16 tufts cover about a third, 16x32 about a fifth`);
   for (const [k, l] of chain.entries()) {
     for (let i = 3; i < l.data.length; i += 4) assert.ok(l.data[i] === 0 || l.data[i] === 255, 'hard alpha at every level');
     const frac = coverageOf(l);
@@ -104,10 +125,10 @@ test('GRASS-PX / GRASS AUDIT 1: the mip chain PRESERVES COVERAGE and carries the
     for (let i = 0; i < l.data.length; i += 4) if (l.data[i + 3]) { n++; if (Math.floor((l.data[i] / 255) * 4 + 0.5) === 1) root++; }
     if (k >= 3) assert.ok(root <= n * 0.2, `level ${k}: a far tuft is its tips, not its roots (${root} of ${n} root-toned) - the old chain was ALL root from level 5`);
   }
-  assert.equal(chain[7].data[3], 255, 'the last pixel is grass');
-  assert.ok(Math.floor((chain[7].data[0] / 255) * 4 + 0.5) >= 2, '...and not the ground\'s colour');
+  assert.equal(chain.at(-1).data[3], 255, 'the last pixel is grass');
+  assert.ok(Math.floor((chain.at(-1).data[0] / 255) * 4 + 0.5) >= 2, '...and not the ground\'s colour');
   // every tuft keeps at least a texel while it is a texel wide
-  for (const l of chain.slice(1, 5)) {
+  for (const l of chain.slice(1).filter((l) => l.width / sheet.variants >= 1)) {
     const perTuft = l.width / sheet.variants;
     for (let v = 0; v < sheet.variants; v++) {
       let any = 0;
@@ -118,19 +139,27 @@ test('GRASS-PX / GRASS AUDIT 1: the mip chain PRESERVES COVERAGE and carries the
 });
 
 test('GRASS AUDIT 1: the rim has somewhere to land - the highlight is the top two texels of a tall blade, and a seed head goes UNDER its stalk', () => {
-  assert.deepEqual([[31, 31, 32], [30, 31, 32], [29, 31, 32], [19, 19, 20], [18, 19, 20], [19, 19, 19]].map(([r, top, h]) => isHighlightRow(r, top, h)), [true, true, false, true, true, false]);
+  const H = PX_TUFT_H, M = PX_HIGHLIGHT_MIN;
+  assert.deepEqual([[H - 1, H - 1, H], [H - 2, H - 1, H], [H - 3, H - 1, H], [M - 1, M - 1, M], [M - 2, M - 1, M], [M - 1, M - 1, M - 1]].map(([r, top, h]) => isHighlightRow(r, top, h)), [true, true, false, true, true, false]);
+  assert.deepEqual([[31, 31, 32], [19, 19, 20], [19, 19, 19]].map(([r, top, h]) => isHighlightRow(r, top, h, 20)), [true, true, false], 'GRASS-PX4: the old sheet\'s 20-of-32 threshold, as a parameter');
   const sheet = buildTuftSheet();
   let hl = 0; for (let i = 0; i < sheet.data.length; i += 4) if (sheet.data[i] === 255) hl++;
-  assert.ok(hl >= 30, `a sheet with ${hl} highlight texels - the first sheet had twelve, and half of those under a seed head`);
+  assert.ok(hl >= 16, `a sheet with ${hl} highlight texels - the first sheet had twelve, and half of those under a seed head`);
   // a headed blade, painted alone: its tip texel is the highlight, not the head's mid tone
-  const w = PX_TUFT_W, h = PX_TUFT_H;
+  const w = PX_TUFT_W, h = PX_TUFT_H, x = w / 2;
   const out = new Uint8Array(w * h * 4);
-  paintTuft(out, w, 0, [{ x0: 8, height: 32, lean: 0, wide: false, head: true, ordinal: 0 }], w, h);
-  const at = (x, y) => out[(y * w + x) * 4];
-  assert.equal(at(8, 31), 255, 'the tip is the highlight'); assert.equal(at(8, 30), 255, '...and the texel under it');
-  assert.equal(at(9, 31), toneByte(2), 'the head\'s other column is the head\'s mid tone');
-  paintTuft(out.fill(0), w, 0, [{ x0: 8, height: 12, lean: 0, wide: false, head: false, ordinal: 0 }], w, h);
-  assert.equal(at(8, 11), toneByte(3), 'a short blade\'s tip is plain tip');
+  paintTuft(out, w, 0, [{ x0: x, height: h, lean: 0, wide: false, head: true, ordinal: 0 }], w, h);
+  const at = (xx, y) => out[(y * w + xx) * 4];
+  assert.equal(at(x, h - 1), 255, 'the tip is the highlight'); assert.equal(at(x, h - 2), 255, '...and the texel under it');
+  assert.equal(at(x + 1, h - 1), toneByte(2), 'the head\'s other column is the head\'s mid tone');
+  paintTuft(out.fill(0), w, 0, [{ x0: x, height: M - 4, lean: 0, wide: false, head: false, ordinal: 0 }], w, h);
+  assert.equal(at(x, M - 5), toneByte(3), 'a short blade\'s tip is plain tip');
+  // GRASS-PX4: painted at the OLD size the OLD threshold applies - a 12-of-32 blade is short there, and 12 of 16 is tall here
+  const o32 = new Uint8Array(16 * 32 * 4);
+  paintTuft(o32, 16, 0, [{ x0: 8, height: 12, lean: 0, wide: false, head: false, ordinal: 0 }], 16, 32);
+  assert.equal(o32[(11 * 16 + 8) * 4], toneByte(3), 'a 12-texel blade on a 32-texel sheet is plain tip');
+  paintTuft(out.fill(0), w, 0, [{ x0: x, height: 12, lean: 0, wide: false, head: false, ordinal: 0 }], w, h);
+  assert.equal(at(x, 11), 255, '...and a 12-texel blade on a 16-texel sheet carries the highlight');
 });
 
 test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits, each landing exactly once, and the lab\'s text is untouched', () => {
@@ -236,7 +265,11 @@ test('GRASS-PX: the renderer compiles the game\'s stages, uploads the sheet with
   assert.deepEqual(sources, [LAB_GRASS_HEAD + GAME_GRASS_FIELD + GAME_GRASS_VS, LAB_GRASS_HEAD + GAME_GRASS_FS], 'what is compiled is the game\'s text');
   let bound = null; const sheetUploads = [];
   for (const c of calls) { if (c[0] === 'bindTexture') bound = c[2]; else if (c[0] === 'texImage2D' && bound === r.pxSheet) sheetUploads.push(c); }
-  assert.deepEqual(sheetUploads.map((c) => [c[2], c[4], c[5]]), [[0, 128, 32], [1, 64, 16], [2, 32, 8], [3, 16, 4], [4, 8, 2], [5, 4, 1], [6, 2, 1], [7, 1, 1]], 'eight levels, by hand - generateMipmap would average the sprite away');
+  assert.deepEqual(sheetUploads.map((c) => [c[2], c[4], c[5]]), [[0, 64, 16], [1, 32, 8], [2, 16, 4], [3, 8, 2], [4, 4, 1], [5, 2, 1], [6, 1, 1]], 'seven levels, by hand - generateMipmap would average the sprite away');
+  // GRASS-PX4: the `tuft` option lays the sheet at another size, which is how the probe photographs the old 16x32 beside the shipped 8x16
+  { const { gl: g3, calls: c3 } = stubGl(); const r3 = new LabGrassRenderer(g3, { tuft: { w: 16, h: 32 } }); let b3 = null; const ups = [];
+    for (const c of c3) { if (c[0] === 'bindTexture') b3 = c[2]; else if (c[0] === 'texImage2D' && b3 === r3.pxSheet) ups.push([c[4], c[5]]); }
+    assert.deepEqual(ups[0], [128, 32], 'the old sheet, on request'); assert.equal(ups.length, 8); }
   assert.equal(r.pxVariants, PX_VARIANTS);
   const binds = calls.map((c, i) => [i, c]).filter(([, c]) => c[0] === 'bindTexture' && c[2] === r.pxSheet);
   assert.ok(binds.length >= 1);
@@ -345,4 +378,43 @@ test('GRASS-PX2: in the pixel style every cell draws the ONE-QUAD blade - the sp
   // the probe counts it on a real GL
   const probe = read('tools/grassFieldProbe.mjs');
   assert.ok(probe.includes('out.pixelShipped.drawn.verts < out.shipped.drawn.verts * 0.5'), 'the probe holds the pixel frame under half the smooth frame\u2019s vertices');
+});
+
+const HL_SHIPPED = 39;   // the shipped sheet's highlight texels (AUDIT GRASS-PX4 F1: a threshold that moves by one changes it)
+test('AUDIT GRASS-PX4 (2026-09-22, three lenses): the laws are ONE function each and the sheet is built from them; the edge columns are a LAW over any seed (the head clamped like the tip); the shortest blade is the height law\'s own floor; the highlight threshold holds at the 19/20 edge through the door and the 9/10 edge at the shipped size; the shipped sheet\'s highlight count is pinned', () => {
+  assert.equal(tuftMarginFor(16), 3); assert.equal(bladeMinFor(32), 14); assert.equal(highlightMinFor(32), 20, 'the 16x32 laws, off the same three functions');
+  assert.equal(tuftMarginFor(8), PX_TUFT_MARGIN); assert.equal(bladeMinFor(16), PX_BLADE_MIN); assert.equal(highlightMinFor(16), PX_HIGHLIGHT_MIN);
+  // F3: over 3000 seeds at both sizes - column 0 and column w-1 never painted, head or stalk or base; F2: no blade
+  // under bladeMinFor(h), and one AT it (the clamp the first cut carried never fired, so it was not a law)
+  for (const [w, h] of [[8, 16], [16, 32]]) {
+    let shortest = Infinity, headed = 0, edgeHeads = 0;
+    for (let seed = 1; seed <= 3000; seed++) {
+      const sheet = buildTuftSheet({ variants: 1, w, h, seed });
+      for (let y = 0; y < h; y++) {
+        assert.equal(sheet.data[(y * w) * 4 + 3], 0, `seed ${seed} ${w}x${h}: column 0 row ${y} is air`);
+        assert.equal(sheet.data[(y * w + w - 1) * 4 + 3], 0, `seed ${seed} ${w}x${h}: column ${w - 1} row ${y} is air`);
+      }
+      const rnd = mulberry32((seed ^ Math.imul(1, 0x85ebca6b)) >>> 0);
+      for (const bl of layTuft(rnd, w, h)) {
+        shortest = Math.min(shortest, bl.height);
+        assert.ok(bl.height >= bladeMinFor(h), `a blade of ${bl.height} under the floor ${bladeMinFor(h)}`);
+        if (bl.head) { headed++; if (bl.x0 + Math.round(bl.lean) + 1 >= w - 1) edgeHeads++; }
+      }
+    }
+    assert.equal(shortest, bladeMinFor(h), `${w}x${h}: the shortest blade laid IS the floor`);
+    assert.ok(headed > 100, 'seed heads were laid'); assert.equal(edgeHeads, 0, 'and none reaches the edge column');
+  }
+  // F1: the threshold through paintTuft, at the edges, both sizes
+  const hl = (w, h, height) => {
+    const out = new Uint8Array(w * h * 4);
+    paintTuft(out, w, 0, [{ x0: Math.floor(w / 2), height, lean: 0, wide: false, head: false, ordinal: 0 }], w, h);
+    let n = 0; for (let i = 0; i < out.length; i += 4) if (out[i + 3] && out[i] === 255) n++;
+    return n;
+  };
+  assert.equal(hl(16, 32, 19), 0, '19 of 32: no highlight'); assert.equal(hl(16, 32, 20), 2, '20 of 32: the top two texels');
+  assert.equal(hl(8, 16, 9), 0, '9 of 16: no highlight'); assert.equal(hl(8, 16, 10), 2, '10 of 16: the top two texels');
+  // and the shipped sheet's own count - a threshold that moves by one changes it
+  const shipped = buildTuftSheet();
+  let hlTexels = 0; for (let i = 0; i < shipped.data.length; i += 4) if (shipped.data[i + 3] && shipped.data[i] === 255) hlTexels++;
+  assert.equal(hlTexels, HL_SHIPPED, `the shipped sheet carries ${HL_SHIPPED} highlight texels`);
 });

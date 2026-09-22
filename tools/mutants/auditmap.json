@@ -200,10 +200,10 @@
     ]
   },
   {
-    "name": "online-bills-inns",
+    "name": "online-waives-the-fare",
     "file": "src/ui/heldMap.js",
-    "old": "      sleepModeInn: st.opts.sleepModeInn && !nwt, hasShip: st.hasShip, travelShip: st.opts.travelShip,",
-    "new": "      sleepModeInn: st.opts.sleepModeInn, hasShip: st.hasShip, travelShip: st.opts.travelShip,",
+    "old": "      sleepModeInn: st.opts.sleepModeInn, hasShip: st.hasShip, travelShip: st.opts.travelShip,",
+    "new": "      sleepModeInn: st.opts.sleepModeInn && !nwt, hasShip: st.hasShip, travelShip: st.opts.travelShip,",
     "tests": [
       "test/heldmap.test.js"
     ]

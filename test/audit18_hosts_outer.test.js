@@ -647,11 +647,19 @@ test('audit18 hosts: worldModes feeds the rest gate its live grounded state', ()
 
 test('audit18 hosts: an open interior window swallows the pointer even with no click handler', () => {
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /if \(mode !== 'interior' \|\| !interiorOverlay\) return false;/,
+  // STATUS-LIVE (2026-09-22): the guard is still on the WINDOW and not
+  // on its click method - that is the law here - but the question it
+  // asks is the PAUSE rather than the slot's truthiness. A window the
+  // game is STOPPED for owns the pointer; a readout the player is
+  // walking under does not, and a click there is a swing (the box
+  // itself declines `click()`, ui/statusBox.js).
+  assert.match(wm, /if \(mode !== 'interior' \|\| !interiorPaused\(\)\) return false;/,
     'a click-less overlay lets the pointerdown escape to requestLook');
+  assert.doesNotMatch(wm, /if \(mode !== 'interior' \|\| !interiorOverlay\) return false;/,
+    'and the slot-truthiness gate is retired, not shadowed by a second copy');
   // I4 widened the call with the right-button flag; the LAW this pin
   // holds is the OPTIONAL call (a click-less window still consumes).
-  assert.match(wm, /interiorOverlay\.click\?\.\(v\[0\], v\[1\]/);
+  assert.match(wm, /interiorOverlay\?\.click\?\.\(v\[0\], v\[1\]/);   // STATUS-LIVE: the gate above is the PAUSE, so the slot read is optional too
 });
 
 test('audit18 hosts: interior point lights carry their PER-LIGHT range in both hosts', () => {

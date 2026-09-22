@@ -77,12 +77,22 @@ test('TRAVEL-INN: online BOTH consequences collapse - the instant trip really do
   // WORLD5/OL2: no world time, so no nights, so no inn.
   assert.equal(inn.days, 0, 'the arrival is now');
   assert.equal(camp.days, 0, 'either way');
-  assert.equal(inn.cost, 0, 'and no night is paid');
-  assert.equal(camp.cost, 0, 'either way');
+  // TRAVEL-FARE (2026-09-22, kurkku: "really long trips ... don't cost
+  // anything when player-controlled cautious travel is disabled").
+  // THIS PIN MEASURED THE BUG AND CALLED IT THE LAW, which is the
+  // lesson worth keeping: it was written a day ago and it recorded
+  // 0 gold online as correct because OL2 said so. It was correct about
+  // the DAYS and wrong about the gold - DFU bills the trip's HOURS,
+  // and the journey has a length online even though the clock will not
+  // advance over it. A player found it in a day, exactly where this
+  // pin was looking.
+  assert.ok(inn.cost > 0, 'the inn IS billed online - the fare is the price of the journey');
+  assert.equal(camp.cost, 0, 'and camping out is still free, online as offline');
+  assert.ok(inn.cost > camp.cost, 'so the choice has a consequence again, which is the whole of the report');
 
   // The player is TOLD, which is the difference between this and a
   // silent no-op: the window carries the line in both skins.
-  assert.match(ONLINE_TRAVEL_LINE, /no inn is paid/);
+  assert.match(ONLINE_TRAVEL_LINE, /the journey is still paid for/);   // TRAVEL-FARE: the line moved with the law
 
   // ...and the toggle is not DEAD online - it still decides the one
   // thing that has a consequence when no time passes: whether the trip

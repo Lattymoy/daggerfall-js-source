@@ -66,13 +66,40 @@ export class ActionTextBox {
    *  DaggerfallAction's own ShowText box is the exception and passes
    *  `null` (Internal/DaggerfallAction.cs:536); it says so at its call
    *  site. */
-  constructor(lines, { highlightColor = undefined, previousWindow = true } = {}) {
+  /** STATUS-LIVE: UserInterfaceWindow.pauseWhileOpened (:141), which
+   *  ui/windowStack.js's `pauseWhileOpen` already reads off every
+   *  window in every host's slot. TRUE is the default because a
+   *  DaggerfallMessageBox is modal - the parchment covers the middle
+   *  of the screen and the game waits under it, and that is right for
+   *  the ~35 sites that raise one. FALSE is for a box that is a
+   *  READOUT and nothing else (ui/statusBox.js), where the enhanced
+   *  skin's panel stands at the EDGE and there is nothing to answer:
+   *  the field is declared rather than assumed so the hosts' gates ask
+   *  the window, as DFU's do, instead of asking whether the slot is
+   *  occupied.
+   *
+   *  `noticeHint` is the caption under the enhanced panel's rows -
+   *  undefined for NOTICE_HINT's "click or press a key", which is what
+   *  ClickAnywhereToClose means and so is the default. A box that
+   *  closes some other way says so. */
+  constructor(lines, { highlightColor = undefined, previousWindow = true, pauseWhileOpen = true, noticeHint = undefined } = {}) {
     this.lines = lines;
     this.highlightColor = highlightColor;
     this.done = false;
     this._next = [];
     this.previousWindow = previousWindow;
+    this.pauseWhileOpen = pauseWhileOpen;
+    this.noticeHint = noticeHint;
   }
+
+  /** The box was REPLACED rather than dismissed - a host's showOverlay
+   *  disposes the outgoing occupant (scenes/townTalk.js, worldModes'
+   *  interior arm, dungeonContext's drawOverlay). Without this the
+   *  panel left only when the watchdog noticed the draws had stopped,
+   *  so a box swapped for a window slid out NOTICE_WATCHDOG_MS late,
+   *  over the window that replaced it. Same release `input` runs, and
+   *  a no-op on the classic skin. */
+  dispose() { noticeRelease(this); }
 
   /** ST1: DaggerfallMessageBox.AddNextMessageBox - dismissing this
    *  box shows the next box's rows in its place, and only the LAST

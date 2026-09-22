@@ -1,26 +1,56 @@
 [
-  { "name": "camping-costs-the-same-time", "file": "src/systems/travel.js",
+  {
+    "name": "camping-costs-the-same-time",
+    "file": "src/systems/travel.js",
     "old": "  if (!sleepModeInn) thisMove = (300 * thisMove) >> 8;",
     "new": "",
-    "tests": ["test/travelinn.test.js"] },
-  { "name": "camping-becomes-the-faster-road", "file": "src/systems/travel.js",
+    "tests": [
+      "test/travelinn.test.js"
+    ]
+  },
+  {
+    "name": "camping-becomes-the-faster-road",
+    "file": "src/systems/travel.js",
     "old": "  if (!sleepModeInn) thisMove = (300 * thisMove) >> 8;",
     "new": "  if (sleepModeInn) thisMove = (300 * thisMove) >> 8;",
-    "tests": ["test/travelinn.test.js"] },
-  { "name": "the-popup-stops-passing-the-toggle-to-the-clock", "file": "src/ui/travelPopUp.js",
+    "tests": [
+      "test/travelinn.test.js"
+    ]
+  },
+  {
+    "name": "the-popup-stops-passing-the-toggle-to-the-clock",
+    "file": "src/ui/travelPopUp.js",
     "old": "      speedCautious: this.speedCautious,\n      sleepModeInn: this.sleepModeInn,\n      travelShip: this.travelShip,\n      hasHorse: this.hasHorse,",
     "new": "      speedCautious: this.speedCautious,\n      travelShip: this.travelShip,\n      hasHorse: this.hasHorse,",
-    "tests": ["test/travelinn.test.js"] },
-  { "name": "online-pays-the-inn-after-all", "file": "src/ui/travelPopUp.js",
-    "old": "sleepModeInn: this.sleepModeInn && !this.noWorldTime(),   // OL2",
-    "new": "sleepModeInn: this.sleepModeInn,   // OL2",
-    "tests": ["test/travelinn.test.js"] },
-  { "name": "the-walked-fork-stops-reading-the-toggle", "file": "src/ui/travelPopUp.js",
+    "tests": [
+      "test/travelinn.test.js"
+    ]
+  },
+  {
+    "name": "online-waives-the-inn-after-all",
+    "file": "src/ui/travelPopUp.js",
+    "old": "      sleepModeInn: this.sleepModeInn,   // TRAVEL-FARE: billed online too",
+    "new": "      sleepModeInn: this.sleepModeInn && !this.noWorldTime(),",
+    "tests": [
+      "test/travelinn.test.js"
+    ]
+  },
+  {
+    "name": "the-walked-fork-stops-reading-the-toggle",
+    "file": "src/ui/travelPopUp.js",
     "old": "  return (settings.cautiousTravel || !speedCautious) && (settings.stopAtInnsTravel || !sleepModeInn) && !travelShip;",
     "new": "  return (settings.cautiousTravel || !speedCautious) && !travelShip;",
-    "tests": ["test/travelinn.test.js"] },
-  { "name": "the-online-line-stops-mentioning-the-inn", "file": "src/ui/travelPopUp.js",
-    "old": "You arrive now, and no inn is paid.'",
-    "new": "You arrive now.'",
-    "tests": ["test/travelinn.test.js"] }
+    "tests": [
+      "test/travelinn.test.js"
+    ]
+  },
+  {
+    "name": "the-online-line-stops-mentioning-the-fare",
+    "file": "src/ui/travelPopUp.js",
+    "old": "You arrive now - the journey is still paid for.';",
+    "new": "You arrive now.';",
+    "tests": [
+      "test/travelinn.test.js"
+    ]
+  }
 ]

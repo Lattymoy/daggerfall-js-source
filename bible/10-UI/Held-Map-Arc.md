@@ -1122,3 +1122,47 @@ inverted; the wheel in place of the restore; the rig left behind the
 camera; the builder forgetting the move; a copy of the move at the door
 above the refusals.
 
+---
+
+## MW-MAP1 - the Morrowind hands on every sheet, not only the V key's (2026-09-22, a player through Mac)
+
+> Got word ... the morrowind map isnt showing
+
+There is no separate Morrowind map. "The Morrowind map" is this window's
+HANDS LANE (MAP3): when the Morrowind arm is the thing on screen, the
+sheet is handed to the rig and the ink is laid over the paper's projected
+corners; otherwise Mac's painted gauntlets stand. The lane opens on one
+thing - the `holder` the host hands the window, the arm's four doors -
+and MAP3 wrote that holder INLINE in world.js's TRAVEL map builder, the
+only door there was at the time. Then EM3 and EM4 gave the same window
+its M-key doors (the town plan through ui/townMapDoor.js, the dungeon
+and building automaps through ui/automapDoor.js), and none of those
+passed a holder. So a player with Morrowind arms saw the Morrowind hands
+on V outdoors and the painted gauntlets everywhere else - in a town, in
+a dungeon, in a building - which is most of the times a map is opened.
+MAP3's own record said it: "a host with no holder at all (every scene
+but the world) is the sprite lane", written before the other doors
+existed and never revisited when they were.
+
+**One holder, off the rig, on every door.** `sheetHolderOf(rig)` in
+combat/weaponRig.js is the holder - the four doors (would the arm draw,
+take the sheet, let it go, where are the corners), with AUDIT-MAP2's law
+kept (corners only from a frame the arm DREW) - handed the rig as a
+FUNCTION so a host whose rig can be swapped answers live and never a
+snapshot. The two doors pass `deps.holder` through to the window, and
+every host with a rig hands it to every door it opens: world.js's V and
+M, exterior.js's M, the dungeon's M off the dungeon rig, a building's M
+off the INTERIOR arm (worldModes' `interiorWeapon`). The one host with
+no rig - the `?interior` probe - hands none and keeps the sprite lane,
+honestly. And each of those doors goes INTO THE HEAD first
+(`mwViewFirstPerson`, MAP-POV's law: the map is read in the head, and
+the arm must be first-person before the window's first tick asks it),
+which MAP-POV had done for the V key alone.
+
+The fix is small because the pieces were all there; what was missing was
+one seam written once. test/mwmap1.test.js (3): the holder's four doors
+against a live, swapped, absent and doorless rig; the two doors carrying
+the holder into a real HeldMapWindow and null without one; every host by
+source. tools/mutants/mwmap1.json: 7, 7 dead; MAP3's two holder mutants
+re-aimed at the shared holder, still dead.
+
