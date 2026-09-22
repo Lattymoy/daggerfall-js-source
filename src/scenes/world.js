@@ -272,7 +272,7 @@ import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
 import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
-import { accountTokenMinter } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds
+import { accountTokenMinter, storedSession } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
 import { hasDaggerfallArrows } from '../combat/fpArm.js';   // MAC7 #2: the arrow bit on the wire - weaponRig's own read
@@ -8674,18 +8674,38 @@ export async function bootWorld(canvas, renderer, params, status) {
   // still a FRESH token per socket, which is what the relay's spend-once
   // rule (bible ACC1d D4) requires. Built once because reading the store
   // is the only work it does before a call.
-  const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
+  // NAME-ADOPT: every mint's answer says who this device IS, and every
+  // live session takes it in - the presence session AND each chat link,
+  // because the chat roster draws my own row from whichever link its
+  // tab holds. `chatLinks` is read at the moment of the answer, not
+  // captured here: the links are built after this and rebuilt on rejoin.
+  const adoptIssued = (who) => {
+    online?.adoptIdentity?.(who);
+    for (const link of chatLinks?.values?.() ?? []) link.adoptIdentity?.(who);
+  };
+  const identityMinter = accountTokenMinter({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage(), onIssued: adoptIssued });
   const onlineStart = () => {
     online = new OnlineSession({
       url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
       // ACC1g: THE RELAY TAKES THE NAME OUT OF THE TOKEN AND IGNORES
       // THIS ONE. Two typed sources stood here - a `?name=` in the URL
       // and the `onlineName` pref - and both were the impersonation
-      // hole: the relay only sanitised what arrived. They are gone, and
-      // what is left fills the frame's shape (wire.js still requires a
-      // name on a hello) and is carried no further. ACC1g-b takes the
-      // field off the wire, in this same deploy.
-      name: playerEntity.name || 'Traveller',
+      // hole: the relay only sanitised what arrived. They are gone.
+      //
+      // NAME-ADOPT CORRECTED WHAT THIS COMMENT SAID. It read "fills the
+      // frame's shape and is carried no further" - and it WAS carried
+      // further: into this session's own `name`, which the chat roster
+      // draws MY row from. So every other player saw the handle and the
+      // player saw their character (Mac: "you still see your character
+      // name in the chat menu"). The name here is now the one the account
+      // service ISSUED, as far as this device knows it, and every mint's
+      // answer corrects it (`adoptIssued` above). The character's name is
+      // only the last resort, for a build whose store holds no session -
+      // which the Online pane's own gate (ACC1h) does not let reach here.
+      // (It also said "ACC1g-b takes the field off the wire, in this same
+      // deploy". It did not: wire.js still requires a name on a hello and
+      // the relay still ignores it. Said here rather than left standing.)
+      name: storedSession(appStorage())?.name || playerEntity.name || 'Traveller',
       look: composeLook(playerEntity),
       // ACC1d: the client's half of the token seam. The session calls
       // this on every socket open and puts the answer in the hello;

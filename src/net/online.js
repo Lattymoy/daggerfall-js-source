@@ -253,6 +253,8 @@ export class OnlineSession {
     this._lastParty = null;       // SOC2: the last party pose that LEFT, and when - an unchanged one is not re-sent, and a socket that reopens re-sends the first (the hub's attachment is fresh)
     this._lastPartyAt = -Infinity;
     this.name = name;
+    this.title = null;         // NAME-ADOPT: my own badge, as the service issued it - never asserted by this side
+    this.glyphs = [];
     // ═══ ACC1d: THE IDENTITY TOKEN ═════════════════════════════════
     //
     // `mintToken` is an async () => string|null the HOST supplies - the
@@ -812,6 +814,31 @@ export class OnlineSession {
     this._cbucket = gate.bucket;   // the token is spent only on a line that left
     this.stats.chats++;
     return true;
+  }
+
+  /** NAME-ADOPT: WHO THIS SESSION IS, as the account service issued it.
+   *
+   *  The relay takes the name out of the token and shows it to everybody
+   *  else; this is the same answer, taken in for the player themselves.
+   *  Without it the session kept the name it was BUILT with - the
+   *  character's - and the chat roster, which draws my own row from this
+   *  session, showed a name nobody else in the room could see.
+   *
+   *  Through the wire's own laws, as a peer's name and badge are: this
+   *  is the service's word, and the service is trusted, but a name this
+   *  side would refuse to draw for a stranger should not be drawn for
+   *  me either. Answers whether anything changed.
+   *  @param {{ name?: string, title?: string|null, glyphs?: string[] }} [who] */
+  adoptIdentity({ name, title, glyphs } = {}) {
+    let changed = false;
+    if (typeof name === 'string' && name) {
+      const n = sanitizeName(name);
+      if (n !== this.name) { this.name = n; changed = true; }
+    }
+    const b = readBadge({ title, glyphs });
+    if (b.title !== (this.title ?? null)) { this.title = b.title; changed = true; }
+    if (b.glyphs.join('+') !== (this.glyphs ?? []).join('+')) { this.glyphs = b.glyphs; changed = true; }
+    return changed;
   }
 
   /** RED1: THE SERVER'S OWN LINE OUT. Mac: "a red text system (kind of

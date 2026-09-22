@@ -2825,3 +2825,76 @@ player.
 **THE DEPLOY THAT FIXES THIS DROPS NOBODY.** It is `server-account/`
 only — the two-Worker split earning its keep on the day after the one
 that dropped the whole room.
+
+---
+
+## NAME-ADOPT — the one person who could not see their own name (2026-09-22)
+
+> 1. The top right corner button doesnt update with name
+> 2. Ingame your name shows for other people but you still see your
+>    character name in the chat menu
+
+The first hour the arc was live, and the first account anybody made.
+
+### One cause, two symptoms — and a third nobody had reported
+
+The account service **issues** a name. The relay takes it out of the
+token and shows it to everybody **else**. And this device **never took it
+in for itself**:
+
+- **Bug 1.** `register` answers the handle and a recovery code — *not* a
+  session. So the session this device keeps was still written with the
+  **guest's** name, and the top-right button reads the stored session.
+- **Bug 2.** The online session was built from the **character's** name,
+  under a comment that said it *"is carried no further"*. It was carried
+  further: into the session's own `name`, which the chat roster draws
+  **my** row from.
+- **Bug 3, unreported.** The same thing on the badge. ACC3c built my own
+  roster row from the session, and nothing had ever put a title on the
+  session — so the first developer to equip one would have seen it on
+  every screen but their own.
+
+So everybody in the room read `Lattymoy`, and the one person who did not
+was Lattymoy.
+
+**And the answer was in hand the whole time.** `accountTokenMinter` kept
+`answer.data.token` and dropped `name`, `kind`, `title` and `glyphs`
+lying right beside it.
+
+### The law
+
+**The issued identity is the service's answer, and this device adopts it
+wherever the service states it** — `/v1/account` and every
+`/v1/auth/token`. One door writes it back (`adoptIdentity`), and the live
+sessions take it in the same breath.
+
+The door **never creates a session** — an answer landing after a sign-out
+must not resurrect one — never touches the secret or the id, and writes
+nothing when nothing changed, because a mint happens on every connect and
+a store write is an event every open tab hears.
+
+A host whose display seam throws **does not cost the hello its token**.
+Since ACC1g a tokenless hello is refused, so a bug in how a name is
+*drawn* would otherwise be a player who cannot *connect*.
+
+### And the comment that caused it
+
+It read *"fills the frame's shape and is carried no further. ACC1g-b
+takes the field off the wire, in this same deploy."* Both halves were
+false: the name went into the session, and ACC1g-b never happened —
+`wire.js` still requires a name on a hello and the relay still ignores
+it. Corrected where it stood rather than left for the next reader to
+believe.
+
+- `src/net/accountClient.js` — `adoptIdentity`; the minter adopts and
+  calls `onIssued`, still returning the token alone.
+- `src/ui/accountFlow.js` — `start()` adopts what `/v1/account` says.
+- `src/net/online.js` — `adoptIdentity` on the session, through
+  `sanitizeName` and `readBadge`.
+- `src/scenes/world.js` — the session starts from the stored issued
+  name; every mint corrects the presence session and every chat link.
+- `test/nameadopt.test.js` — 7 pins, **each bug reproduced before it is
+  shown fixed**. `tools/mutants/nameadopt.json` — 11, all dead.
+
+**Client-only — no relay change, no account-service change.** It ships
+with the site build and drops nobody.

@@ -282,8 +282,11 @@ test('ACC1d: the wire checks the token\'s SHAPE and nothing else - kept, absent,
 
 test('ACC1d: the host builds ONE minter and hands it to the presence session AND every channel link (mutant: a seam nothing calls)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /import \{ accountTokenMinter \} from '\.\.\/net\/accountClient\.js'/);
-  assert.match(w, /const identityMinter = accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\) \}\)/);
+  assert.match(w, /import \{ accountTokenMinter, storedSession \} from '\.\.\/net\/accountClient\.js'/);
+  // NAME-ADOPT: and every answer's identity flows back onto the live
+  // sessions - the half of this seam that was missing, which is why a
+  // player saw their character's name while everybody else saw the handle.
+  assert.match(w, /const identityMinter = accountTokenMinter\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\), onIssued: adoptIssued \}\)/);
   assert.match(w, /online = new OnlineSession\(\{[\s\S]*?mintToken: identityMinter,[\s\S]*?\}\);/, 'the presence session');
   assert.match(w, /link\.mintToken = identityMinter;/, 'and every channel link - the hub is where a name is READ');
   assert.equal((w.match(/accountTokenMinter\(/g) ?? []).length, 1, 'ONE minter: two would be two reads of the store per connect and no benefit');

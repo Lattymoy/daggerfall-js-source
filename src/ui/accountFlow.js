@@ -39,7 +39,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle,
+  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, adoptIdentity,
   storedSession, keepSession, forgetSession, accountRefusalText, handleShapeOk,
   PASSWORD_MIN_LEN,
 } from '../net/accountClient.js';
@@ -206,6 +206,13 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
       return;
     }
     self.account = r.data.account;
+    // NAME-ADOPT: AND THE STORED SESSION LEARNS IT. `register` answers
+    // the handle and a recovery code - not a session - so the session
+    // this device keeps was still written with the GUEST's name, and the
+    // top-right button reads the stored session. This is the next answer
+    // that states the name after a registration (acknowledging the code
+    // lands here), and it is the service's own word, so it is adopted.
+    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind });
     // ACC3c: THE WARDROBE IS ITS OWN FIELD, exactly as the service
     // answers it - what this account HOLDS, what it WEARS, and what is
     // true of it. Held beside `account` rather than folded into it,
