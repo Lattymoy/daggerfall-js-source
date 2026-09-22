@@ -12,6 +12,7 @@ import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
 import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
 import { layoutDungeon } from '../world/dungeonLayout.js';
+import { expandMacros } from '../systems/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
 import { enterDungeonAutomap, exitDungeonAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, automapDebugTeleportMode, registerAutomapConsoleCommands } from '../systems/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S1
@@ -469,7 +470,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const positionIndex = new Map();
   const torches = [];         // A2: { pos, handle } - looping Burning sources gated by range
   const ambientAnimals = [];  // A2: { pos, sound } - random-cadence barks (A4: consumed by the shared module)
-  const dungeonHearths = []; // HEARTH1: { x, y, z } - the braziers and fire bowls, for the survival law
+  const dungeonHearths = []; // HEARTH1: { x, y, z, foot, w, h } - the braziers and fire bowls, for the survival law (FIX-D: and their sprites, for the eye)
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   for (const [bi, b] of dungeon.blocks.entries()) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
@@ -693,7 +694,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // this from, because a dungeon's lights are RDB Light RESOURCES
       // (collectDungeonLights) with no texture record at all, and the
       // fires are flats.
-      if (isHearthFlat(f.archive, f.record)) dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ });
+      //
+      // FIX-D: and its SPRITE, for the eye's box - an RDB flat's stored
+      // y is its CENTRE (the batch below shifts down half a height to
+      // stand it), so the foot is half the flat's own height under it.
+      if (isHearthFlat(f.archive, f.record)) {
+        const t = await getTexture(f.archive);
+        const size = t && f.record < t.recordCount ? billboardSize(t, f.record) : null;
+        dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ, foot: size ? f.y - size.h / 2 : undefined, w: size?.w, h: size?.h });
+      }
     }
     for (const m of b.layout.markers) {
       // Acting markers join the runtime too (DFU AddActionFlatHelper
@@ -1642,7 +1651,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8547 / exterior.js:3450), set
+  // host's own townTalk sink (world.js:8550 / exterior.js:3450), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1714,9 +1723,22 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // boxes on the overlay seam (the world holds); DoorText rides the
   // HUD popup (AddHUDText 2.0s); the trespass check is
   // MakeEnemiesHostile over this dungeon's pool (below).
+  // MACRO1 (Discord, kurkku: "this prompt doesn't show the location
+  // name properly" - "Do you wish to access your wagon and stay in
+  // %cn?"): DFU's message boxes take their tokens through SetTextTokens,
+  // which runs MacroHelper over EVERY record - so a TEXT.RSC line never
+  // reaches the screen with a %code in it. This reader handed the raw
+  // record on. The GLOBAL symbols are expanded here, at the one reader
+  // every box in this host draws from: %cn is MacroHelper.CityName
+  // (MacroHelper.cs:566-573) - the current LOCATION, which in a dungeon
+  // is the dungeon's own location, falling back to the region - and
+  // %pcn/%pcf the player's name. A code with no producer here stays
+  // verbatim, exactly as the talk chain leaves one (talkSession.js).
   const rscLines = (id) => {
     const v = textRsc?.plainText(id);
-    return v?.length ? v[0].split('\n').filter((l) => l.length) : null;
+    if (!v?.length) return null;
+    const text = expandMacros(v[0], { playerName: playerEntity?.name ?? '', cityName: dfLocation?.name || dfLocation?.regionName || '' });
+    return text.split('\n').filter((l) => l.length);
   };
   actions.onShowText = (id) => {
     const lines = rscLines(id);
@@ -3234,7 +3256,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:12764,
+              // playerArrowHitFoe is the one copy world.js:12767,
               // exterior.js:4951 and worldModes.js:7080 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -5888,7 +5910,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // both of them hand it in: dungeon.js's opts bag and
         // worldModes' (the world-hosted crawl, which is where the
         // classic start into Privateer's Hold lives, and which is the
-        // pause door ui/input.js:740 reaches underground).
+        // pause door ui/input.js:744 reaches underground).
         relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it

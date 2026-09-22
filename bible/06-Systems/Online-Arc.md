@@ -4320,7 +4320,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1139`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1148`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4193`). With the property missing that call is a
+(`dungeonContext.js:4215`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3464` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3467` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7529,3 +7529,7 @@ Eight files from Mac's tree (`net/wire.js`, `ui/enhancedRest.js`, `scenes/world.
 **Reconciled with AUDIT DROPS.** *D1 re-done, not doubled:* the drop wrote the building's `restState` getter onto `interiorKeyCtx` - the interior KEY table's own ctx, which the mode factory never returns - so `modes?.restState` read `undefined` from a tavern and broadcast `rest: null`: the very hole D1 had closed on the returned object. The merge left both, and in the dungeon two getters on one `api` literal (the later wins). One getter per host now, on the object world.js reads, in the drop's shape with its PARTY-REST6 words; pinned by count and by position (test/auditdrops.test.js D1), a shadowing plain key killed as a mutant. *D2's declined latch* is superseded by PARTY-REST19's own cancel fields and dropped. *D5* stands: the outdoor toggle runs `strangerRestGate` then `partyRestGate` then `markPartyRestSpent` only once `modes` exists. *PARTY-REST4 (mine, the far notice)* is renamed PARTY-REST-FAR1 so it no longer collides with the drop's PARTY-REST4 (the heal rate): it scans `social.others()` for ANY resting member I cannot mirror (PARTY-REST1c's law), falls back to 'A party member', and stays quiet while dead. `canRest` and `ILLEGAL_REST_WARNING` now have two window callers (restwhere's sweep admits the enhanced twin).
 
 Not verified in a browser: no online session exists in this container.
+
+## MERGE - main onto this branch (2026-09-22), before the PR
+
+`origin/main` had moved two commits (FIX-A/B/D/E, SWING-LABEL) since the branch was cut: 70 files in conflict, 159 blocks, 157 of them citation drift on both sides (resolved to main's numbers, then `tools/citeMerge.mjs origin/main <branch head> --apply --struck` on the conflict-free tree BEFORE the merge commit, as Hardening.md asks - 395 cites moved), two real: Port-Status's departures tally (main's 168th departure kept over ours) and Testing.md's restwhere row (our note kept over main's). Section A of the Ledger holds both sides' rows (169) and Port-Status restates it; section 2's fourteen bare row identifiers and section C's bounds were re-resolved by anchor (main's Ledger row moved them one line); the one next-line continuation cite (chargenSession's `overlayHover`) re-aimed by hand. No relay LAW file changed on main, so world93 stands. Full suite green on the merged tree.

@@ -654,7 +654,10 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     billboardSize(t210, record)) : [])
     .map((l) => {
       const [x, y, z] = parentPt(l.x, l.y, l.z);
-      return { ...l, x, y, z };
+      // FIX-D: the sprite's base goes into the parent frame with it -
+      // a building turns about its vertical, so the foot is the same
+      // column's point, not a height to carry across untransformed.
+      return { ...l, x, y, z, foot: parentPt(l.x, l.foot, l.z)[1] };
     });
 
   // Markers (all types - ladders climb against these too) into the

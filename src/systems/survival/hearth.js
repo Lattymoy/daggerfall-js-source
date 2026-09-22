@@ -54,10 +54,21 @@
 // the LIGHT is, which is the flame - but it means the position this law
 // is handed sits anywhere from the middle of a flat to its top, never
 // at its foot. `BY_FIRE_REACH` is four metres and swallows the
-// difference whole; the ACTIVATION BOX does not, which is why the box
-// in scenes/camps.js reaches a sprite's height DOWNWARD from this point
-// and only a little up. A player aiming at the bowl is aiming at the
-// fire.
+// difference whole; the ACTIVATION BOX does not.
+//
+// FIX-D (2026-09-22, Discord: "Fire detected behind a door" - "the
+// torch beside the door, moreso than one behind the door itself"). The
+// first answer to that was a GUESSED box - 1.2 m square and 2.4 m tall
+// hung off the flame (HEARTH_HALF, HEARTH_DROP) - because the flame was
+// all a hearth carried. A town's brazier torch stands a pace from a
+// shop door, and the guess reached across the door's edge: the ray met
+// the box before the door and the plaque said "Fire" at a doorway.
+//
+// So a hearth now carries its SPRITE as well as its flame: `foot`, the
+// y the flat stands on, and `w` and `h`, its scaled size - each
+// collector already held both for the light it places, and says in its
+// own frame where the base is. The box is that sprite and nothing else
+// (`hearthAabb`), so the ray meets a fire exactly where a fire is drawn.
 
 /** The lights archive - the same one camp.js's FIRE_FLAT comes from. */
 export const HEARTH_ARCHIVE = 210;
@@ -95,8 +106,8 @@ export function isHearthFlat(archive, record) {
  * Entries without a `record` (a dungeon RDB Light resource, which has
  * no texture at all) are skipped rather than guessed at.
  *
- * @param {Array<{record?: number, archive?: number, x: number, y: number, z: number}>} flats
- * @returns {Array<{x: number, y: number, z: number}>}
+ * @param {Array<{record?: number, archive?: number, x: number, y: number, z: number, foot?: number, w?: number, h?: number}>} flats
+ * @returns {Array<{x: number, y: number, z: number, foot?: number, w?: number, h?: number}>}
  */
 export function collectHearths(flats) {
   const out = [];
@@ -108,9 +119,28 @@ export function collectHearths(flats) {
     // and never makes one.
     if (!f) continue;
     if (!isHearthFlat(f.archive ?? HEARTH_ARCHIVE, f.record)) continue;
-    out.push({ x: f.x, y: f.y, z: f.z });
+    out.push({ x: f.x, y: f.y, z: f.z, foot: f.foot, w: f.w, h: f.h });   // FIX-D: and the sprite, for the eye's box
   }
   return out;
+}
+
+/**
+ * FIX-D: the eye's box over one hearth - its SPRITE, standing on `foot`.
+ *
+ * A flat turns about its vertical axis to face the camera, so from any
+ * side it is `w` across: the box is `w` square and `h` tall. A hearth a
+ * collector could not size (no `foot`, `w` or `h`) has no box - it still
+ * warms, but the ray cannot be aimed at a picture nobody measured, and
+ * a guessed box is the bug this replaced.
+ *
+ * @param {{x: number, z: number, foot?: number, w?: number, h?: number}} hearth
+ * @returns {{min: number[], max: number[]} | null}
+ */
+export function hearthAabb(hearth) {
+  const { x, z, foot, w, h } = hearth ?? {};
+  if (![x, z, foot, w, h].every(Number.isFinite) || !(w > 0) || !(h > 0)) return null;
+  const r = w / 2;
+  return { min: [x - r, foot, z - r], max: [x + r, foot + h, z + r] };
 }
 
 /**

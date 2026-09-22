@@ -37,23 +37,12 @@ import {
   placeCampItem, packCamp, stokeFire, fireLit, campExpired, tentPos, nearestFire, campInfoText, campMenu,
   cookables, cookFood, hasSkillet, campWire, mergeOwnerCamps, BY_FIRE_REACH,
 } from '../systems/survival/camp.js';
-import { nearestHearth, hearthNear } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
+import { nearestHearth, hearthNear, hearthAabb } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
 
 /** The light hangs this far over the flame's base. */
 export const FIRE_LIGHT_UP = 0.6;
 /** The eye's box over a fire (a flame is about a metre tall) and a tent (its mesh's own bounds, or this). */
 export const FIRE_HALF = 0.5;
-/** HEARTH1: the eye's box over a world fire - a brazier's bowl is about this wide. */
-export const HEARTH_HALF = 0.6;
-/** HEARTH1 / AUDIT F3: how far the eye's box reaches BELOW a world fire.
- *  The position a host hands over is its LIGHT - the flame - and the
- *  three collectors put that anywhere from the middle of the flat to
- *  its top (survival/hearth.js says which is which), never at its foot.
- *  So the box reaches a sprite's height down to cover the bowl under
- *  the flame, and only HEARTH_HALF up, where there is nothing to aim
- *  at. It is deliberately not larger than that: a taller box would
- *  start eating clicks meant for whatever stands behind the fire. */
-export const HEARTH_DROP = 1.8;
 
 /**
  * deps = { renderer, getTexture, uploadRecordFrame, meshes ({ getGpuMesh, cpuModels } - the host's pipeline), entity (the player),
@@ -197,19 +186,19 @@ export function createCamps({
 
   /** The eye's targets: the fire's box and, for a tent, the mesh's bounds.
    *  HEARTH1: and a box on every world fire, so a brazier answers the
-   *  ray as a camp does - HEARTH_HALF either way, HEARTH_DROP below
-   *  (AUDIT F3: the position is the FLAME and the bowl is under it, by
-   *  a distance the three hosts each measure differently). */
+   *  ray as a camp does - the box its collector measured off the sprite
+   *  (FIX-D: the flame alone could only be guessed around, and the guess
+   *  reached across a door). */
   function targets() {
     const out = [];
     const wf = worldFires();
     if (wf) for (let i = 0; i < wf.length; i++) {
-      const h = wf[i];
-      out.push({
-        key: `hearth:${i}`,
-        aabb: { min: [h.x - HEARTH_HALF, h.y - HEARTH_DROP, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },
-        distance: RAY_DISTANCE, reach: CAMP_REACH,
-      });
+      // FIX-D: the SPRITE's own box (survival/hearth.js hearthAabb), not
+      // one guessed around the flame - and `noSurface`, because a flat
+      // has no collider, so every wall the ray meets in front of it is a
+      // wall and never the fire's own face (player/activate.js).
+      const aabb = hearthAabb(wf[i]);
+      if (aabb) out.push({ key: `hearth:${i}`, aabb, distance: RAY_DISTANCE, reach: CAMP_REACH, noSurface: true });
     }
     for (const c of camps) {
       const p = c.rec.pos;
