@@ -334,7 +334,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // DFU's `GetKeyUp` (the automap's two-phase toggle-close) or polls
   // `GetKey` (its twenty-two IsPressedWith camera arms) could not.
   // routeKey's mirror, on the same ctx.
-  addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(keyEdge, e.code); if (e.code === 'AltLeft') e.preventDefault(); routeKeyUp(e, ctx); });   // MWCROUCH: ...and the release, for SwitchHand's ActionComplete edge
+  addEventListener('keyup', (e) => {
+    keys.delete(e.code);
+    noteKeyUp(keyEdge, e.code);
+    if (e.code === 'AltLeft') e.preventDefault();
+    const hadOverlay = !!ctx.uiOverlayActive;
+    routeKeyUp(e, ctx);
+    if (hadOverlay && !ctx.uiOverlayActive) requestLook(canvas);
+  });   // MWCROUCH: ...and the release, for SwitchHand's ActionComplete edge
   // U14: an OPEN overlay owns the pointer - the click goes to the
   // window, not to the pointer lock. This host had no pointer path at
   // all, so chargen here was keyboard-only while the exterior hosts
@@ -448,7 +455,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // site not updated - it still passed the old `dir` thunk, which
     // landed in setPlayerPos, so a quickload here restored the
     // character and left them standing wherever they were.
+    const hadOverlay = !!ctx.uiOverlayActive;
     if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch (InputManager.cs:1666-1712)
+    // MENU-RELOCK: reclaim inside the same key gesture that removed the
+    // final window; the frame-late look gate is outside user activation.
+    if (hadOverlay && !ctx.uiOverlayActive) requestLook(canvas);
   });
   addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) { keys.delete(mc); noteKeyUp(keyEdge, mc); } if (isSwingButton(e.button)) ctx.playerAttackInput(0, 0, false); });
   const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; the right half is classified (TI1)
