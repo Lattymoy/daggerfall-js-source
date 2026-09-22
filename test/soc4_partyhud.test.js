@@ -329,7 +329,13 @@ const recorder = () => {
 };
 const PROJ = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -1, 0, 0, -1, 0]);
 const VIEW = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -10, 1]);
-const bodies = (ids) => ids.map((id) => ({ id, name: id.toUpperCase(), shown: { x: 0, y: 0, z: 0, yaw: 0 }, look: null }));
+// ACC1d-MARK: `v` is EXPLICIT. The relay's wire has no `v: false` - it sends
+// `v: true` and OMITS the field otherwise (server/src/index.js `_named`), so
+// ABSENT IS UNVOUCHED and a fixture that says nothing is asking for a mark.
+// These peers are vouched for because this pin is about the PARTY's colour,
+// not about the relay's verdict; the mark's own laws are pinned in
+// test/name1_bubbles.test.js, including that it never takes PARTY_GREEN.
+const bodies = (ids) => ids.map((id) => ({ id, name: id.toUpperCase(), v: true, shown: { x: 0, y: 0, z: 0, yaw: 0 }, look: null }));
 
 test('SOC4: the names over the bodies - drawNames takes the party colour as its LAST and OPTIONAL argument, so my party\'s tabs are drawn in PARTY_GREEN and everyone else in the white they always were; a caller that passes nothing draws every name white, byte for byte; and a name point carries the PEER id the question is asked of (mutants: the colour applied to everyone; the green leaked to a friend who is not in my party; the default path recoloured; the id dropped from the point)', () => {
   const rp = new RemotePlayers({ renderer: recorder(), deps: null, compose: async () => null });
@@ -363,10 +369,18 @@ test('SOC4: the names over the bodies - drawNames takes the party colour as its 
   // draws the names it always drew - holds exactly as written. The point grew `scale` and `depth` beside the id for
   // the same reason: both faces size a label from one number.
   assert.match(src, /drawNames\(renderer, font, proj, view, w, h, eye, scale = 1, toScene = \(p\) => \[p\.x, p\.y, p\.z\], rect = null, colorOf = null, blocked = null\) \{/, 'appended, so every existing call site keeps its meaning');
-  assert.match(src, /s, colorOf\?\.\(n\.id\) \?\? \[1, 1, 1, 1\]\);/, 'and the white is the fallback, not a branch that can be inverted');
+  // ACC1d-MARK MOVED THIS ONE, in the same one direction NAME1 and AUDIT NAME1 F3 moved the two below: the
+  // fallback was read off the draw call and is now read off the `tint` the draw takes, because the MARK beside
+  // the name takes the very same value. The law is unchanged and now covers two draws instead of one - white is
+  // still the fallback rather than a branch that can be inverted.
+  assert.match(src, /const tint = colorOf\?\.\(n\.id\) \?\? \[1, 1, 1, 1\];/, 'and the white is the fallback, not a branch that can be inverted');
+  assert.match(src, /drawText\(renderer, font, n\.name, Math\.round\(n\.x - tw \/ 2\), Math\.round\(top\), s, tint\);/, 'the name takes it');
+  assert.match(src, /drawText\(renderer, font, NAME_MARK,\n\s*Math\.round\([^\n]*\), Math\.round\(top\), s, tint\);/, 'and so does the mark - SOC4 owns that colour, and ACC1d-MARK does not get a second opinion on it');
   // AUDIT NAME1 F3 MOVED IT AGAIN, the same way: the point grew a `lens` beside the scale (the frame's own FOV
   // term) and the id is still the first thing on it.
-  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', x: s\.x, y: s\.y,\n\s*scale: nameScaleFor\(s\.depth\) \* lens, depth: s\.depth, lens \}\);/, 'the point carries the id');
+  // AND ACC1d-MARK MOVED IT AGAIN, the same way: the point grew `vouched` (the relay's verdict, off the peer's
+  // own `v`) and the id is still the first thing on it.
+  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', vouched: e\.peer\.v === true, x: s\.x, y: s\.y,\n\s*scale: nameScaleFor\(s\.depth\) \* lens, depth: s\.depth, lens \}\);/, 'the point carries the id');
 });
 
 // ── THE HOST ──────────────────────────────────────────────────────────────────────────────────────

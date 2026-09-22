@@ -92,6 +92,29 @@ export const NAME_RANGE = 60;
  *  clearance swing with depth - which is the thing that went wrong. Small, because the label hangs off the head and
  *  a large gap reads as a label floating over nobody. */
 export const NAME_GAP_PX = 5;
+/** ═══ ACC1d-MARK: THE MARK OVER A NAME THE RELAY CANNOT VOUCH FOR ══
+ *
+ *  Mac, asked where the verdict should be drawn: "Should be over the
+ *  head in online how it currently works." So it rides this pass, and
+ *  BOTH faces draw it - the DOM layer and the classic bitmap one - out
+ *  of the same point.
+ *
+ *  IT MARKS THE UNVOUCHED, NOT THE VOUCHED. ACC1d's whole claim is that
+ *  the relay says which names it VOUCHES FOR, and the useful signal is
+ *  the one that is missing: a mark on every verified name is a mark on
+ *  almost everybody once ACC1e's account exists, which is no signal at
+ *  all. NOTE WHAT UNVOUCHED IS NOT: it is not "a guest". A guest with a
+ *  session mints a token like anybody else and the relay vouches for
+ *  the name inside it. Unvouched means the relay COULD NOT CHECK -
+ *  there was no token on the hello, or its own key will not import, in
+ *  which case it vouches for nobody and says so over every head.
+ *
+ *  ONE ASCII GLYPH, because the classic face draws through a Daggerfall
+ *  font and can only put on screen what that font has. */
+export const NAME_MARK = '?';
+/** The clearance between the mark and the name it stands beside, in the
+ *  same screen pixels NAME_GAP_PX is in. */
+export const NAME_MARK_GAP_PX = 3;
 /** The depth, in scene units, at which a name is drawn at scale 1. A fixed world height projects to `f * H / depth`
  *  pixels, so `REF / depth` IS the perspective law - the label shrinks exactly as the body under it does. */
 export const NAME_SCALE_REF = 18;
@@ -733,7 +756,14 @@ export class RemotePlayers {
       // hysteresised (createSightCache) - a head point alone has no identity to remember an answer under. Purely
       // additive: a host that passes the raw `sightBlockedBy` closure ignores the second argument.
       if (blocked && blocked(head, e.peer.id)) continue;
-      out.push({ id: e.peer.id, name: e.peer.name ?? '', x: s.x, y: s.y,
+      // ACC1d-MARK: THE RELAY'S VERDICT RIDES THE POINT, because it is a
+      // fact about the PEER and not a decoration the host supplies -
+      // which is the difference between this and `colorOf`, where the
+      // party's colour is the social system's knowledge and has to be
+      // asked for by id. `v` is what the relay vouches for
+      // (server/src/index.js `_named`); it is spelled out here because
+      // a bare `v` beside `x` and `y` reads like a coordinate.
+      out.push({ id: e.peer.id, name: e.peer.name ?? '', vouched: e.peer.v === true, x: s.x, y: s.y,
         scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens });
     }
     return out;
@@ -783,7 +813,20 @@ export class RemotePlayers {
       // about the one number they exist to share. It is NOT multiplied by `n.scale`, because a clearance that
       // swings with depth is the world-space lift NAME1 took out.
       const top = n.y - NAME_GAP_PX * scale - font.fnt.fixedHeight * s;
-      drawText(renderer, font, n.name, Math.round(n.x - tw / 2), Math.round(top), s, colorOf?.(n.id) ?? [1, 1, 1, 1]);
+      const tint = colorOf?.(n.id) ?? [1, 1, 1, 1];
+      drawText(renderer, font, n.name, Math.round(n.x - tw / 2), Math.round(top), s, tint);
+      // ACC1d-MARK: BESIDE THE NAME, NEVER INSIDE IT. Prefixing the
+      // string would shift the label off the head it belongs to - the
+      // name is centred on the skull and stays there, and the mark
+      // hangs to its left in its own draw. It keeps the name's OWN
+      // colour (the party green SOC4 gives it, or the bone): a second
+      // owner of that colour is two systems arguing over one pixel,
+      // and this one is about the NAME, not about who they are.
+      if (n.vouched === false) {
+        const mw = measureText(font.fnt, NAME_MARK) * s;
+        drawText(renderer, font, NAME_MARK,
+          Math.round(n.x - tw / 2 - NAME_MARK_GAP_PX * scale - mw), Math.round(top), s, tint);
+      }
       drawn++;
     }
     return drawn;

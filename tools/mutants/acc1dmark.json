@@ -1,0 +1,73 @@
+[
+  {
+    "name": "MARK-1-the-verdict-never-reaches-the-point",
+    "file": "src/net/remotePlayers.js",
+    "old": "      out.push({ id: e.peer.id, name: e.peer.name ?? '', vouched: e.peer.v === true, x: s.x, y: s.y,",
+    "new": "      out.push({ id: e.peer.id, name: e.peer.name ?? '', vouched: true, x: s.x, y: s.y,",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ],
+    "note": "ACC1d carries the relay's verdict all the way to the client and this is the last inch of it. Hard-wired true, the mark can never appear and the whole seam is decoration."
+  },
+  {
+    "name": "MARK-2-everybody-wears-one",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (n.vouched === false) {",
+    "new": "      if (n.vouched !== null) {",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ],
+    "note": "A mark over every head is the same as a mark over none - it stops being a signal and becomes wallpaper."
+  },
+  {
+    "name": "MARK-3-the-mark-is-prefixed-INTO-the-name",
+    "file": "src/net/remotePlayers.js",
+    "old": "      const tint = colorOf?.(n.id) ?? [1, 1, 1, 1];\n      drawText(renderer, font, n.name, Math.round(n.x - tw / 2), Math.round(top), s, tint);",
+    "new": "      const tint = colorOf?.(n.id) ?? [1, 1, 1, 1];\n      drawText(renderer, font, (n.vouched === false ? NAME_MARK : '') + n.name, Math.round(n.x - tw / 2), Math.round(top), s, tint);",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ],
+    "note": "`tw` was measured off the NAME, so a prefixed glyph shifts the whole label off the head it belongs to - and only the marked peers' labels move, which reads as the name drifting."
+  },
+  {
+    "name": "MARK-4-the-DOM-mark-is-written-into-the-tag",
+    "file": "src/ui/nameLayer.js",
+    "old": "        setText(tag.mark, p.vouched === false ? NAME_MARK : '');",
+    "new": "        setText(tag.tag, p.vouched === false ? NAME_MARK : '');",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ],
+    "note": "Writing the mark onto the WRAPPER takes the name element with it - textContent on a parent replaces its children - so the label is the mark and nothing else."
+  },
+  {
+    "name": "MARK-5-the-mark-takes-the-partys-colour",
+    "file": "src/ui/nameLayer.js",
+    "old": "        setStyle(tag.name, 'color', cssRgba(colorOf?.(p.id)) ?? '');",
+    "new": "        setStyle(tag.tag, 'color', cssRgba(colorOf?.(p.id)) ?? '');",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ],
+    "note": "SOC4's green says who somebody is to you; the mark says whether the relay could check the name. One pixel, two systems, and the colour belongs to the first."
+  },
+  {
+    "name": "MARK-6-a-glyph-the-classic-font-cannot-draw",
+    "file": "src/net/remotePlayers.js",
+    "old": "export const NAME_MARK = '?';",
+    "new": "export const NAME_MARK = '\\u26a0';",
+    "tests": [
+      "test/name1_bubbles.test.js"
+    ],
+    "note": "The classic face draws through a Daggerfall bitmap font. A warning sign is the obvious mark and the font has no such record, so that face would draw nothing at all while the DOM face showed it - the two faces disagreeing about whether the player was told."
+  },
+  {
+    "name": "MARK-7-absent-read-as-vouched",
+    "file": "src/net/remotePlayers.js",
+    "old": "vouched: e.peer.v === true,",
+    "new": "vouched: e.peer.v !== false,",
+    "tests": [
+      "test/name1_bubbles.test.js",
+      "test/perfon_text_run.test.js"
+    ],
+    "note": "THE RELAY'S WIRE HAS NO `v: false`. server/src/index.js sends `v: who.verified || undefined` and OMITS the field otherwise, so ABSENT IS THE UNVOUCHED SIGNAL. Read as `!== false`, every unvouched name looks vouched for and the mark can never appear against a real relay - a seam that passes every fixture that bothers to say `v: false` and reports nothing at all in production."
+  }
+]
