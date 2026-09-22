@@ -133,6 +133,7 @@
 // fast travel, no sentence, no ?tod, no ?timescale.
 
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
+import { TITLES, GLYPHS, GLYPHS_MAX } from './identityToken.js';   // ACC3: the badge vocabulary, closed - `badged` writes it and `readBadge` checks it back
 import { nameAllowed } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
 
 /** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
@@ -745,7 +746,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world87';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client
+export const RELAY_VERSION = 'world88';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1195,6 +1196,39 @@ export function badged(row, from) {
   const g = from?.glyphs;
   if (Array.isArray(g) && g.length) row.glyphs = g;
   return row;
+}
+
+/** ═══ AND THE INVERSE, because a reader is half of a field ════════
+ *
+ * `badged` is what the RELAY writes; this is what a client reads back,
+ * and the two live together so a badge cannot be written one way and
+ * understood another. The relay itself never calls it - it reads a
+ * badge out of a verified token, never off the wire - so this is the
+ * client's half of the pair, and it lives here because the alternative
+ * is a second spelling of one law in `net/online.js`.
+ *
+ * IT CHECKS THE VOCABULARY, and that is the point rather than a
+ * formality: this is a stranger's word about themselves. The relay
+ * only ever sends what a signature carried, so anything else is a
+ * relay that is older, newer, or not ours - and a name layer that
+ * trusts an unknown string is a name layer somebody paints text with.
+ * Duplicates go, and the list is cut at the vocabulary's own size.
+ *
+ * Answers `{ title, glyphs }` always: `null` and `[]` for no badge, so
+ * a caller never has to tell "absent" from "none".
+ */
+export function readBadge(row) {
+  const t = row?.title;
+  const title = typeof t === 'string' && TITLES.includes(t) ? t : null;
+  const glyphs = [];
+  if (Array.isArray(row?.glyphs)) {
+    for (const g of row.glyphs) {
+      if (typeof g !== 'string' || !GLYPHS.includes(g) || glyphs.includes(g)) continue;
+      if (glyphs.length >= GLYPHS_MAX) break;
+      glyphs.push(g);
+    }
+  }
+  return { title, glyphs };
 }
 
 export function rosterFor(peers, meId, near = null) {

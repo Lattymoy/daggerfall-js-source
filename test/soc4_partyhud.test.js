@@ -366,7 +366,12 @@ test('SOC4: the names over the bodies - drawNames takes the party colour as its 
   assert.match(src, /s, colorOf\?\.\(n\.id\) \?\? \[1, 1, 1, 1\]\);/, 'and the white is the fallback, not a branch that can be inverted');
   // AUDIT NAME1 F3 MOVED IT AGAIN, the same way: the point grew a `lens` beside the scale (the frame's own FOV
   // term) and the id is still the first thing on it.
-  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', x: s\.x, y: s\.y,\n\s*scale: nameScaleFor\(s\.depth\) \* lens, depth: s\.depth, lens \}\);/, 'the point carries the id');
+  // ACC3 MOVED IT A THIRD TIME, the same way again: the point grew the
+  // peer's BADGE (a title and its glyphs) beside the lens, and the id
+  // is still the first thing on it. The badge is a fact about the PEER
+  // and rides the point; the colour is the social picture's knowledge
+  // and is asked for by id - which is the difference this pin is for.
+  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', x: s\.x, y: s\.y,\n\s*title: [^\n]*\n\s*scale: nameScaleFor\(s\.depth\) \* lens, depth: s\.depth, lens \}\);/, 'the point carries the id');
 });
 
 // ── THE HOST ──────────────────────────────────────────────────────────────────────────────────────

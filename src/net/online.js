@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -436,7 +436,7 @@ export class OnlineSession {
     // bodies stood, its foes trusted) and `recall`: `_askRound` walks it as it walks a stranger, the relay's join
     // answers with the look it holds now, and `_refresh` clears the flag. One ask per re-stood peer, at the who gate.
     const knew = told ? null : this._known.get(id);
-    const made = this._peer(knew ? { ...p, name: knew.name, look: knew.look } : p, now);
+    const made = this._peer(knew ? { ...p, name: knew.name, title: knew.title, glyphs: knew.glyphs, look: knew.look } : p, now);
     made.told = told || !!knew;
     made.recall = !told && !!knew;
     if (told) this._remember(id, made);
@@ -452,7 +452,7 @@ export class OnlineSession {
    *  forgets by staleness, not by first sight. */
   _remember(id, p) {
     this._known.delete(id);
-    this._known.set(id, { name: p.name, look: p.look });
+    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, look: p.look });
     if (this._known.size > KNOWN_MAX) this._known.delete(this._known.keys().next().value);
   }
   _held(id) { for (const s of this._rooms.values()) if (s.has(id)) return true; return false; }
@@ -1102,12 +1102,23 @@ export class OnlineSession {
     // ACC1g: no `v` on a peer any more - the relay refuses a hello it
     // cannot verify, so every peer in the room is one it verified and a
     // per-peer verdict said the same thing about all of them.
-    return { id: p.id, name: sanitizeName(p.name), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
+    // ACC3: and the badge, through the wire's own reader - `readBadge`
+    // is the inverse of the `badged` the relay wrote, so the vocabulary
+    // is checked in ONE place rather than spelled again here. It always
+    // answers a title or null and a list or empty, so nothing below
+    // ever has to tell "absent" from "none".
+    const { title, glyphs } = readBadge(p);
+    return { id: p.id, name: sanitizeName(p.name), title, glyphs, look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
   _refresh(p, m, now) {
     p.name = sanitizeName(m.name); p.look = validLook(m.look); p.told = true; p.recall = false;   // SLAM6: an introduction, so the asks stop (SLAM14: the recall's too)
+    // ACC3: THE NEWEST HELLO'S BADGE, whatever it is - including none.
+    // A player who takes a title off and reconnects must lose it here
+    // too, and a peer that kept the FIRST badge it was ever seen with
+    // would be wearing a grant the relay has stopped vouching for.
+    ({ title: p.title, glyphs: p.glyphs } = readBadge(m));
     this._remember(p.id, p);   // SLAM9: and it is kept, so a blip cannot un-introduce it
     const pose = validPose(m.pose);
     if (pose) this._arrive(p, pose, now); else p.seenAt = now;
