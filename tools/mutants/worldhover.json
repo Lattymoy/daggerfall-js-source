@@ -837,10 +837,12 @@
   {
     "name": "WORLD-HOVER-online-forces-the-readout-on",
     "file": "src/systems/onlineLane.js",
-    "old": "  // AUDIT-WH R8's own case, and the one that set the test.\n  'world-tooltips',\n",
+    "old": "  // AUDIT-WH R8: a readout is the player's - it stands nothing, rolls\n  // nothing, writes nothing and is not on the wire.\n  'world-tooltips',\n",
     "new": "",
     "tests": [
-      "test/onlinelane.test.js"
+      "test/onlinelane.test.js",
+      "test/worldhover.test.js",
+      "test/modsonline.test.js"
     ]
   },
   {

@@ -521,7 +521,7 @@ function paneOnline(body) {
   c.append(el('span', 'tag', 'Online'));
   c.append(el('h3', null, 'Bring your character into the shared world'));
   // AUDIT WORLD34 D5: the copy said the pre-WORLD1 truth ("Nothing else is shared yet") - what a player is promised here is the law
-  c.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane, whole: every enhancement and every mod is on for everyone, and your own switches return when you play offline.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
+  c.append(el('p', 'meta', 'Everyone brings their own save; you see each other everywhere and can talk. A dungeon is one shared world: its foes, doors, levers, platforms and every chest anyone has opened are the same for everyone in it, and it remembers. A building is a shared world too: its doors, and every shelf and cupboard anyone has opened, are the same for everyone in it, and it remembers. Towns and the open country share who is there and the creatures that find you: what one player meets, everyone nearby sees and fights - and its creatures can hurt you too. The clock and the sky are the world\'s and run on real time: a rest, a trip, a sentence or a lesson takes none of it, and the quest clocks stand still. Online is the enhanced lane: every enhancement the port owns is on for everyone. Your mods stay yours - turn any of them on or off online, except the two road switches, because the road beds are smoothed into the terrain and a room has to share one ground.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door
   const field = (label, key, placeholder, maxLength = 24) => {
     const wrap = el('label', 'field');
     wrap.append(el('span', 'fieldlabel', label));
@@ -1176,10 +1176,19 @@ function write(key, next) {
  *  answers nothing, so a player who presses it learns why rather than
  *  watching a press change nothing. */
 const ONLINE_LOCK_NOTE = 'On while online - the shared world is the enhanced lane, whole. Your own choice returns when you play offline.';
-function lockOnline(b, main) {
-  b.textContent = 'On (online)';
+/** MODS-ONLINE-2: a mod switch wears a lock for a DIFFERENT reason - not
+ *  the lane, the floor - and a lock that gives the wrong reason is a
+ *  refusal nobody can read. The two road switches say which. */
+/** MODS-ONLINE-2: the Mods pane's own line. The lane's note (above)
+ *  is about the PORT's switches and was wrong over the tiles the
+ *  moment a mod stopped being forced. */
+const ONLINE_MODS_NOTE = 'Your mods are yours online: turn any of them on or off. The two Basic Roads switches are the exception - road beds are smoothed into the terrain, so every player in a room has to stand on the same ground.';
+const ONLINE_GROUND_NOTE = 'Set while online - the road beds are smoothed into the terrain, so every player in a room has to stand on the same ground. Your own choice returns when you play offline.';
+function lockOnline(b, main, { note = ONLINE_LOCK_NOTE, value = true } = {}) {
+  b.textContent = value ? 'On (online)' : 'Off (online)';
+  b.classList.toggle('primary', !!value);
   b.disabled = true;
-  b.title = ONLINE_LOCK_NOTE;
+  b.title = note;
   b.setAttribute('aria-disabled', 'true');
   if (main) main.onclick = null;
 }
@@ -1715,7 +1724,7 @@ function packsCard() {
 // the 360-key scroll the tiles replace, and features.js MOD_CURATED
 // carries the reasoning and the door back for a key that earns one.
 function modsFooter(body) {
-  if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_LOCK_NOTE));   // OL1: said once, under the tiles
+  if (isOnlinePage()) body.append(el('p', 'meta', ONLINE_MODS_NOTE));   // MODS-ONLINE-2: said once, under the tiles - and it says what is actually true of the MODS pane
   body.append(morrowindCard());   // SO1: the assets card, off the Enhanced pane
   body.append(peerSpritesCard()); // 2026-09-17: other players' look, without a Morrowind body of their own
   body.append(packsCard());       // SO1/M-EXT: the packs' door, off the launcher
@@ -1806,7 +1815,8 @@ function modRow(vendor, key, def, { name = null, note = null, home = false } = {
     const b = el('button', 'act rowact', on ? 'On' : 'Off');
     if (on) b.classList.add('primary');
     b.onclick = () => { setModSetting(vendor, key, !modSetting(vendor, key)); render(); };
-    if (onlineForcedModSetting(vendor, key) !== undefined) lockOnline(b, null);   // OL1: every mod's Enabled, online
+    const ground = onlineForcedModSetting(vendor, key);   // MODS-ONLINE-2: the road switches the room's ground depends on; every other mod switch is free online
+    if (ground !== undefined) lockOnline(b, null, { note: ONLINE_GROUND_NOTE, value: ground });
     ctl.append(b);
   }
   row.append(ctl);
@@ -1885,7 +1895,7 @@ function tileStates(f) {
     }
     return null;
   }
-  // a vendored mod's Enabled - OL1 forces every mod on in a shared world
+  // a vendored mod's Enabled - the player's online too (MODS-ONLINE-2), but for the road switches the room's ground depends on
   const on = modSetting(c.vendor, c.key) === true || modSetting(c.vendor, c.key) === 'True';
   return { labels: ['Off', 'On'], at: on ? 1 : 0,
     locked: onlineForcedModSetting(c.vendor, c.key) !== undefined,

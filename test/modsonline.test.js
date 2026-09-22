@@ -1,110 +1,194 @@
-// MODS-ONLINE (2026-09-22, Mac: "Is it possible to allow all mods to be
-// toggled on and off for online?").
+// MODS-ONLINE-2 (2026-09-22, Mac: "Is it possible to allow all mods to
+// be toggled on and off for online?" and then, of the first answer,
+// "So all mods can now be toggled?").
 //
-// YES, FOR EVERY MOD THAT DRAWS ON YOUR OWN SCREEN AND NOWHERE ELSE -
-// and the list is a READING of what each one touches, not a guess at
-// what it sounds like.
+// NOW THEY CAN. MODS-ONLINE freed eight mods and left eight forced
+// because they sounded like world state; this pin holds the reading
+// that freed the other eight, and the one thing that stayed.
 //
-// OL1's law is that a room plays one game: what one player walks
-// through, another walks through. AUDIT-WH R8 drew the line inside it -
-// that reasoning is about the WORLD, and a mod that "moves a light,
-// stands an object, changes a roll or writes a save record" is what
-// the room has to agree on, while one that draws a readout is not.
-// Only `Enabled` was ever forced; a mod's other switches were always
-// the player's.
+// THE READING. A room desyncs when two machines apply different RULES
+// to one shared thing. The port does not work that way: everywhere a
+// mod could disagree, the answer is computed by the machine that OWNS
+// the actor and crosses the wire as a RESULT.
 //
-// TWO CANDIDATES FAILED THE READING AND STAYED FORCED, which is why it
-// has to be a reading:
-//   - the Shield Widget SOUNDS cosmetic and carries `hitShield(damage,
-//     item)` and a block coroutine. It is in the damage path, and two
-//     players disagreeing about whether a blow was blocked is the room
-//     disagreeing about the blow.
-//   - Handheld Torches SOUNDS like a light and is an EQUIPPED ITEM in
-//     the save, with a light standing in the world.
+//   - the striker rolls the damage and the host applies the number
+//     without recomputing (dungeonContext applyHit), so PCAAO's
+//     formulas were never shared to begin with;
+//   - a foe's stats are minted where it SPAWNS and a peer steps a
+//     puppet, so Meaner Monsters is already the owner's;
+//   - a corpse's pile is rolled and granted by the owner's word
+//     (WORLD6b-iii(c)), so Unleveled Loot is the owner's;
+//   - a blow is mitigated where it LANDS - damageShieldPool inside
+//     damageFoe for a foe, inside hurtPlayer for me - so the Shield
+//     Widget's block is always the defender's own;
+//   - Oblivion leveling is written into a character at creation,
+//     Handheld Torches is an item in my save with a light on my
+//     screen, Travel Options is my own journey.
 //
-// This pin makes the classification total: every vendored mod is on
-// one side or the other, with a reason, and a mod added tomorrow fails
-// until somebody decides which it is.
+// ONE THING IS NOT A RULE - IT IS THE FLOOR. Basic Roads rewrites
+// TERRAIN HEIGHTS (terrainGen calls smoothRoadHeights over the beds),
+// so `Enabled` (whose network is painted) and `SmoothRoads` (whether
+// the beds are smoothed at all) decide where the ground IS. Two
+// players who disagree stand on two floors along every road in the
+// Bay. `RiversAndStreams` does NOT: it paints tiles the smoother
+// never looks at, and the third test here MEASURES that rather than
+// asserting it.
+//
+// AND THE OLD LANE HAD THIS BACKWARDS. It forced `Enabled` and left
+// `SmoothRoads` - a DIAL - to the player, so the heights have been
+// diverging online since the lane was written, for anyone who turned
+// the smoothing off for the "minor extra performance" its own
+// description offers. The table is by KEY now, which is what makes
+// that fixable at all.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MOD_SETTINGS, modSetting } from '../src/systems/modSettings.js';
-import { ONLINE_PLAYERS_OWN_MODS, ONLINE_FORCED_MOD_KEY, onlineForcedModSetting } from '../src/systems/onlineLane.js';
+import { MOD_SETTINGS, modSetting, setModSetting, modSettingIfDeclared } from '../src/systems/modSettings.js';
+import { ONLINE_PLAYERS_OWN_MODS, ONLINE_ROOM_MOD_KEYS, onlineForcedModSetting } from '../src/systems/onlineLane.js';
+import { smoothRoadHeights, SMOOTHED_TILES, ROAD_TILES, RIVER_TILES, STREAM_TILES, TRACK_TILES } from '../src/world/roadPainter.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const rd = (f) => readFileSync(join(ROOT, f), 'utf8');
 
-/** The mods the room must agree on, each with what makes it the
- *  room's. A mod is here or in ONLINE_PLAYERS_OWN_MODS - never both,
- *  never neither. */
-const ROOM_MODS = Object.freeze({
-  'roads-hazelnut': 'roads are ground and the paths travel follows - one player on a road and one in a field is two worlds',
-  meanerMonsters: 'what a foe is: its stats and what spawns',
-  pcaao: 'the combat and armour formulas behind every blow that crosses the wire',
-  unleveledLoot: 'what is in a chest - a roll the room shares',
-  'oblivion-remaster-leveling': 'how a character advances, which is save state',
-  'travel-options': 'the journey itself, and where it puts you',
-  'handheld-torches': 'an equipped item in the save, and a light standing in the world',
-  'shield-widget': 'hitShield and the block coroutine - it is in the damage path',
-});
-
-test('MODS-ONLINE: every vendored mod is classified - the room\'s or the player\'s, never neither', () => {
+test('MODS-ONLINE-2: every vendored mod is classified, and the only keys the lane forces are a mod\'s own declared ones', () => {
   const all = Object.keys(MOD_SETTINGS).sort();
-  const classified = [...Object.keys(ROOM_MODS), ...ONLINE_PLAYERS_OWN_MODS].sort();
+  const classified = [...Object.keys(ONLINE_ROOM_MOD_KEYS), ...ONLINE_PLAYERS_OWN_MODS].sort();
 
-  const unclassified = all.filter((m) => !classified.includes(m));
-  assert.deepEqual(unclassified, [],
-    'a new mod must be decided: does the room have to agree on it, or is it a readout?');
+  assert.deepEqual(all.filter((m) => !classified.includes(m)), [],
+    'a new mod must be decided: does the room\'s GROUND depend on one of its switches, or is every switch the player\'s?');
+  assert.deepEqual(ONLINE_PLAYERS_OWN_MODS.filter((m) => m in ONLINE_ROOM_MOD_KEYS), [],
+    'a mod whose every switch is the player\'s cannot also own a forced key');
+  assert.deepEqual(classified.filter((m) => !all.includes(m)), [],
+    'a classification for a mod that does not exist is dead weight');
 
-  const both = ONLINE_PLAYERS_OWN_MODS.filter((m) => m in ROOM_MODS);
-  assert.deepEqual(both, [], 'a mod cannot be both');
-
-  const ghosts = classified.filter((m) => !all.includes(m));
-  assert.deepEqual(ghosts, [], 'a classification for a mod that does not exist is dead weight');
-});
-
-test('MODS-ONLINE: the player\'s mods are free online, the room\'s are forced', () => {
-  for (const vendor of ONLINE_PLAYERS_OWN_MODS) {
-    assert.equal(onlineForcedModSetting(vendor, ONLINE_FORCED_MOD_KEY, '?online=1'), undefined,
-      `${vendor} is the player's - online must not force it`);
-  }
-  for (const vendor of Object.keys(ROOM_MODS)) {
-    assert.equal(onlineForcedModSetting(vendor, ONLINE_FORCED_MOD_KEY, '?online=1'), true,
-      `${vendor} is the room's (${ROOM_MODS[vendor]})`);
-  }
-  // Offline nothing is forced, either way - the lane is the only thing
-  // that ever overrode the player.
-  for (const vendor of [...ONLINE_PLAYERS_OWN_MODS, ...Object.keys(ROOM_MODS)]) {
-    assert.equal(onlineForcedModSetting(vendor, ONLINE_FORCED_MOD_KEY, ''), undefined, `${vendor} offline is the player's`);
+  // A forced key must be a key the mod actually declares, forced to the
+  // value the mod itself ships - the room's floor is the mod's own
+  // floor, not a number invented here.
+  for (const [vendor, keys] of Object.entries(ONLINE_ROOM_MOD_KEYS)) {
+    for (const [key, value] of Object.entries(keys)) {
+      const def = MOD_SETTINGS[vendor]?.keys?.[key];
+      assert.ok(def, `${vendor}/${key} is a declared switch`);
+      assert.equal(value, def.default, `${vendor}/${key} is forced to the mod's own shipped default`);
+    }
   }
 });
 
-test('MODS-ONLINE: only Enabled was ever forced - a mod\'s own dials stay the player\'s on both sides', () => {
-  // The dials were never the lane's business, and freeing `Enabled` for
-  // some mods must not quietly change that for the rest.
-  assert.equal(ONLINE_FORCED_MOD_KEY, 'Enabled');
-  // The dial has to come from a mod the room OWNS. The first draft of
-  // this line took the first mod with a dial, which is now on the
-  // player's list - and a player's mod returns undefined at the top of
-  // onlineForcedModSetting before the key is ever looked at, so the
-  // assertion passed whatever the key check did. A pin whose subject
-  // short-circuits is not testing what it names.
-  const withDials = Object.entries(MOD_SETTINGS)
-    .find(([v, d]) => v in ROOM_MODS && Object.keys(d.keys).some((k) => k !== 'Enabled'));
-  assert.ok(withDials, 'some mod the ROOM owns has a dial besides Enabled');
-  const [vendor, def] = withDials;
-  const dial = Object.keys(def.keys).find((k) => k !== 'Enabled');
-  assert.equal(onlineForcedModSetting(vendor, dial, '?online=1'), undefined,
-    'a dial is nobody else\'s business, online or not - even on a mod the room owns');
+test('MODS-ONLINE-2: every mod switch is the player\'s online, except the two the room\'s ground depends on', () => {
+  for (const [vendor, def] of Object.entries(MOD_SETTINGS)) {
+    for (const key of Object.keys(def.keys)) {
+      const room = ONLINE_ROOM_MOD_KEYS[vendor] && Object.hasOwn(ONLINE_ROOM_MOD_KEYS[vendor], key);
+      assert.equal(onlineForcedModSetting(vendor, key, '?online=1'), room ? ONLINE_ROOM_MOD_KEYS[vendor][key] : undefined,
+        `${vendor}/${key} online is ${room ? 'the room\'s ground' : 'the player\'s'}`);
+      assert.equal(onlineForcedModSetting(vendor, key, ''), undefined,
+        `${vendor}/${key} offline is always the player's`);
+    }
+  }
+  // The whole shelf, counted, so a mod quietly re-forced shows up as a
+  // number rather than as a player's complaint.
+  const forced = Object.values(ONLINE_ROOM_MOD_KEYS).reduce((n, keys) => n + Object.keys(keys).length, 0);
+  assert.equal(forced, 2, 'the lane forces two mod switches in the whole shelf');
+  assert.deepEqual(Object.keys(ONLINE_ROOM_MOD_KEYS), ['roads-hazelnut'], 'and both are under one mod');
+  assert.equal(ONLINE_PLAYERS_OWN_MODS.length, Object.keys(MOD_SETTINGS).length - 1);
 });
 
-test('MODS-ONLINE: a mod the player owns reaches no wire, no save and no roll', () => {
-  // THE READING, held by execution rather than by the note above it. A
-  // module that would desync the room is one that puts something on
-  // the wire, writes a save record, or draws from a shared roll - so a
-  // player's mod whose own modules start doing any of that fails here
+test('MODS-ONLINE-2: a declared key is an OWN key - the lane and the store both refuse a name off Object.prototype', () => {
+  // The survivor of tools/mutants/modsonline1.json found this. Drop
+  // `Object.hasOwn` from onlineForcedModSetting and `room['toString']`
+  // is a FUNCTION - handed back as a forced setting value - so the
+  // guard is not decoration. Nothing in the port asks for these names
+  // today; a vendor or key that ever arrives from data would.
+  for (const name of ['toString', 'constructor', 'valueOf', 'hasOwnProperty', '__proto__']) {
+    assert.equal(onlineForcedModSetting('roads-hazelnut', name, '?online=1'), undefined,
+      `${name} is not a switch the room's ground depends on`);
+    assert.throws(() => modSetting('roads-hazelnut', name), /is not a declared switch/,
+      `${name} is not a declared switch`);
+    assert.throws(() => setModSetting('roads-hazelnut', name, true), /is not a declared switch/,
+      `${name} cannot be written either`);
+    assert.equal(modSettingIfDeclared('roads-hazelnut', name), undefined, `${name} reads as undeclared across mods`);
+    assert.throws(() => modSetting(name, 'Enabled'), /is not a declared switch/, `${name} is not a vendor either`);
+  }
+  // ...and the real switches still answer, so the guard did not close the door on them.
+  assert.equal(modSetting('roads-hazelnut', 'SmoothRoads'), true);
+  assert.equal(onlineForcedModSetting('roads-hazelnut', 'SmoothRoads', '?online=1'), true);
+});
+
+test('MODS-ONLINE-2 by execution: the smoothing MOVES the ground and rivers do not - which is why one is forced and the other is free', () => {
+  // The claim the whole classification rests on, measured on the real
+  // smoother rather than argued in a comment above it.
+  const hDim = 129, tDim = 128;
+  const flat = () => Float32Array.from({ length: hDim * hDim }, (_, i) => (i % 7) * 3);   // a ground with relief, so an average can move it
+  const map = (tile) => { const t = new Uint8Array(tDim * tDim); for (let y = 20; y < 100; y++) t[y * tDim + 64] = tile; return t; };
+
+  // A ROAD BED: the smoother finds it and the heights move.
+  const road = flat();
+  const roadTouched = smoothRoadHeights(road, map(ROAD_TILES[0][0]), hDim, null);
+  assert.ok(roadTouched > 0, 'a road bed is smoothed');
+  assert.notDeepEqual(Array.from(road), Array.from(flat()), 'SmoothRoads on and off are two different floors');
+
+  // RIVERS AND STREAMS: every tile either table can write, and the
+  // smoother touches none of them - so the dial is paint, not ground.
+  const waterTiles = [...new Set([...RIVER_TILES, ...STREAM_TILES].flatMap((r) => r ?? []))].filter((t) => t !== 0);
+  assert.ok(waterTiles.length >= 9, 'the water tables were read');
+  for (const tile of waterTiles) {
+    const s = flat();
+    assert.equal(smoothRoadHeights(s, map(tile), hDim, null), 0, `water tile ${tile} moves no height`);
+    assert.deepEqual(Array.from(s), Array.from(flat()), `water tile ${tile} leaves the floor alone`);
+  }
+  // And the reason: the smoother's own set names the road bed and
+  // nothing the water tables can write.
+  for (const tile of waterTiles) assert.ok(!SMOOTHED_TILES.has(tile), `${tile} is not a smoothed tile`);
+  const trackTiles = [...new Set(TRACK_TILES.flatMap((r) => r ?? []))];
+  assert.ok([...SMOOTHED_TILES].some((t) => ROAD_TILES.some((r) => r?.includes(t))),
+    'the smoothed set is the ROAD table\'s');
+  assert.ok(!trackTiles.some((t) => SMOOTHED_TILES.has(t)), 'and not a track\'s');
+});
+
+test('MODS-ONLINE-2 by source: the port resolves each freed mod where the actor lives, so nothing of it crosses as a rule', () => {
+  // THE READING, held where it lives. If any of these four doors ever
+  // starts trusting the RECEIVER's rules instead of the sender's
+  // number, the mod above it stops being safe to toggle and this fails
   // before a player finds it as two worlds.
+  const dc = rd('src/scenes/dungeonContext.js');
+  assert.match(dc, /const i = data\.i \| 0, dmg = Number\(data\.dmg\);/, 'PCAAO: the peer\'s damage NUMBER is what arrives');
+  assert.match(dc.replace(/\n\s*\/\/ /g, ' '), /The number is a peer's word and the host trusts it without recomputing/,
+    '...and the host does not re-roll it under its own formulas');
+  assert.match(dc, /const healthDamage = bypassShield \? damage : damageShieldPool\(foe\.entity, damage\);/, 'Shield Widget: a foe\'s block is the foe owner\'s');
+  const pe = rd('src/characters/playerEntity.js');
+  assert.match(pe, /export function hurtPlayer\(entity, dmg, \{ bypassShield = false \} = \{\}\) \{/, 'Shield Widget: and my block is mine');
+  assert.match(pe, /if \(!bypassShield\) \{/, '...mitigated here, where the blow lands');
+  assert.match(rd('src/characters/meanerMonsters.js'), /export const meanerMonstersEnabled = /, 'Meaner Monsters: read where an entity is MADE');
+  assert.match(rd('src/systems/oblivionLeveling.js'), /export const ORL_VENDOR = 'oblivion-remaster-leveling';/, 'Oblivion leveling: a character\'s own system');
+
+  // And the one that is not a rule: the lane forces it, the terrain
+  // reads it, and the smoother is the reason.
+  assert.match(rd('src/world/terrainGen.js'), /if \(roads\.smooth !== false\) smoothRoadHeights\(samples, tilemap, 129, hasLocation \? locationRect : null\);/,
+    'the smoothing is what SmoothRoads decides, and it writes the heights');
+  assert.match(rd('src/scenes/world.js'), /const roadSwitches = \{ smooth: modSetting\('roads-hazelnut', 'SmoothRoads'\), water: modSetting\('roads-hazelnut', 'RiversAndStreams'\) \};/,
+    'and the world reads it through modSetting, which is where the lane answers');
+});
+
+test('MODS-ONLINE-2: the lock, the pane and the door all say the same true thing', () => {
+  const menu = rd('src/ui/enhancedMenu.js');
+  // A lock that gives the wrong reason is as bad as no reason: the two
+  // road rows are not locked because "online is the enhanced lane".
+  assert.match(menu, /const ONLINE_GROUND_NOTE = '[^']*same ground[^']*';/, 'the ground lock has its own words');
+  assert.match(menu, /const ground = onlineForcedModSetting\(vendor, key\);/);
+  assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: ONLINE_GROUND_NOTE, value: ground \}\);/);
+  assert.match(menu, /if \(isOnlinePage\(\)\) body\.append\(el\('p', 'meta', ONLINE_MODS_NOTE\)\);/, 'the Mods pane says what is true of MODS');
+  // The Online pane's own sentence claimed every mod was on for
+  // everyone. A player reading that and then toggling one would be
+  // reading a lie the port no longer tells.
+  assert.ok(!/every enhancement and every mod is on for everyone/.test(menu), 'the old claim is gone');
+  assert.match(menu, /Your mods stay yours - turn any of them on or off online, except the two road switches/, 'the door says what is true');
+});
+
+test('MODS-ONLINE-2: a mod the player owns reaches no wire, no save and no roll', () => {
+  // Held by execution rather than by the note above it: a player's mod
+  // whose own modules start putting something on the wire, writing a
+  // save record or drawing from a shared roll fails here before a
+  // player finds it as two worlds.
   const OWN_MODULES = {
     'dynamic-skies': ['src/systems/dynamicSkies.js'],
     'seasons-iliac-bay': ['src/systems/seasonsIliacBay.js'],
@@ -113,16 +197,18 @@ test('MODS-ONLINE: a mod the player owns reaches no wire, no save and no roll', 
     'ambient-text': ['src/systems/ambientText.js'],
     'immersive-footsteps': ['src/systems/immersiveFootsteps.js'],
     'better-ambience': ['src/systems/betterAmbience.js'],
+    'shield-widget': ['src/combat/shieldWidget.js'],
+    'unleveledLoot': ['src/systems/unleveledLoot.js'],
+    'oblivion-remaster-leveling': ['src/systems/oblivionLeveling.js'],
+    'handheld-torches': ['src/systems/handheldTorches.js'],
   };
   const BANNED = /\bsendWorld\b|\bsendAct\b|from '\.\.\/net\/|getSaveData|restoreSaveData|snapshotPlayer/;
 
   for (const [vendor, files] of Object.entries(OWN_MODULES)) {
     assert.ok(ONLINE_PLAYERS_OWN_MODS.includes(vendor), `${vendor} is on the player's list`);
     for (const f of files) {
-      const src = readFileSync(join(ROOT, f), 'utf8')
-        .split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*')).join('\n');
-      assert.ok(!BANNED.test(src),
-        `${f} is a player's mod and must not reach the wire or the save`);
+      const src = rd(f).split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*')).join('\n');
+      assert.ok(!BANNED.test(src), `${f} is a player's mod and must not reach the wire or the save`);
     }
   }
 });
