@@ -1214,6 +1214,80 @@ test('AUDIT-WH H3: an above-ground body LISTS what it holds, from one ladder', a
   assert.equal(resolveHover({ key: 'foeCorpse:9', distance: 2, reach: 3.2 }, { name: () => ({ title: 'Rat (dead)' }), contents }).empty, true);
 });
 
+test('INTERIOR-BODIES: a body killed inside a building is stood, named, listed and OPENED - all four hosts now', () => {
+  // AUDIT-WH2 L2-F4, and the one finding of that audit that was a
+  // missing FAMILY rather than a hover bug. Indoors the game spawns real
+  // foes and a real watch; `mintCorpse` is unconditional and the pools
+  // ARE `createExteriorFoes`/`createCityGuards`, the same two that stand
+  // bodies in the street - the corpse billboard even DRAWS indoors,
+  // because `batches()` returns the live sprites and the corpse batches
+  // together. The interior's target list simply never asked for them.
+  //
+  // So the body was decorative: no plaque over it, no loot window, ever,
+  // while the other three hosts all open it. The press and the plaque
+  // AGREED, both silent, which is exactly why no gate could see it - a
+  // family a host does not stand looks identical to a family a host
+  // deliberately ignores.
+  const wm = read('src/scenes/worldModes.js');
+
+  // STOOD. The pools' own `lootTargets()`, not a second spelling of the
+  // box: CORPSE_ACTIVATION_DISTANCE (150 classic units, not 128 -
+  // ActivateLootContainer exempts a CorpseMarker and re-tests it at
+  // PlayerActivate.cs:938) rides in on them.
+  const list = wm.slice(wm.indexOf('function interiorActivationTargets() {'));
+  const body = list.slice(0, list.indexOf('return targets;'));
+  assert.match(body, /if \(interiorFoes\) targets\.push\(\.\.\.interiorFoes\.lootTargets\(\)\);/, 'the room\'s foes');
+  assert.match(body, /if \(interiorGuards\) targets\.push\(\.\.\.interiorGuards\.lootTargets\(\)\);/, 'and the watch called into it');
+
+  // NAMED, by the pool that stands it, above the mod's switch - a
+  // corpse's word is the port's own departure (PX21c) and predates the
+  // mod, the same reason the dropped pile beside it is ungated.
+  const namer = wm.slice(wm.indexOf('const interiorHoverName = composeNamer(['));
+  const rungs = namer.slice(0, namer.indexOf('if (!worldTooltipsOn()) return null;'));
+  assert.match(rungs, /\(key\) => interiorFoes\?\.hoverName\?\.\(key\) \?\? null,/, 'the foe pool answers for its own bodies');
+  assert.match(rungs, /\(key\) => interiorGuards\?\.hoverName\?\.\(key\) \?\? null,/, '...and the watch for its own');
+
+  // LISTED. A host's contents ladder covers exactly the itemised keys
+  // THAT host stands - it was one prefix while the interior stood no
+  // bodies, and a body reading "Empty" over a full pack is the defect
+  // AUDIT-WH H3 extracted this ladder for outdoors.
+  assert.match(wm, /contents: composeContents\(\[\n\s*\(key\) => \(typeof key === 'string' && key\.startsWith\('droppedLoot:'\)[^\n]*\n\s*\(key\) => interiorFoes\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\(key\) => interiorGuards\?\.hoverContents\?\.\(key\) \?\? null,\n\s*\]\),/,
+    'the interior reads contents as a LADDER, over every itemised key it stands');
+  assert.match(wm, /import \{ composeNamer, composeContents \} from '\.\.\/systems\/worldHover\.js';/);
+
+  // OPENED - the same door the street and the dungeon open: the pool's
+  // own takeLoot, handed the say and a window-opener, because the body
+  // becomes the inventory's REMOTE TARGET (PlayerActivate.cs:957)
+  // rather than teleporting into the pack. The pool keeps the
+  // empty-body refusal, the arrows pickup and a puppet's ask over the
+  // wire; this hands it the door and nothing else.
+  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*const pool = key\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards;\n\s*pool\?\.takeLoot\(key, \(l\) => say\(l\), \(loot\) => mountInterior\(interiorInventory\(\{ loot \}\)\)\);\n\s*return true;\n\s*\}/,
+    'the press arm the bodies never had');
+
+  // ...and it sits INSIDE the reach refusal, like every other family in
+  // this ladder: the pick reaches as far as the whole ray, so a body
+  // across the room still WINS, and the handler is where the refusal is
+  // spoken (AUDIT 65 MC-2).
+  const ladder = wm.slice(wm.indexOf("if (_pick.distance > _pick.reach) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }"));
+  assert.ok(ladder.indexOf("key.startsWith('foeCorpse:')") > 0,
+    'the corpse arm is below the too-far refusal, so an out-of-reach body says so rather than falling through');
+
+  // THE FOUR HOSTS RULE, closed: every host that stands a body also
+  // names it, lists it and opens it.
+  const HOSTS = [
+    ['src/scenes/world.js', 'exteriorFoes', 'cityGuards'],
+    ['src/scenes/exterior.js', 'exteriorFoes', 'cityGuards'],
+  ];
+  for (const [f, a, b] of HOSTS) {
+    const src = read(f);
+    for (const pool of [a, b]) {
+      assert.match(src, new RegExp(String.raw`${pool}\.lootTargets\(\)`), `${f}: ${pool} bodies are stood`);
+      assert.match(src, new RegExp(String.raw`${pool}\.hoverContents\?\.\(key\)`), `${f}: ...and listed`);
+    }
+  }
+  assert.match(read('src/scenes/dungeonContext.js'), /targets\.push\(\{ key: `corpse:\$\{i\}`/, 'the dungeon stands its own');
+});
+
 test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladder', () => {
   // A family's TARGETS, its WORD and its CONTENTS are one thing in
   // three parts, and all three walk the pool's list under the same

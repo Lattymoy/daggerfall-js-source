@@ -1105,5 +1105,50 @@
       "test/worldhover.test.js",
       "test/citedrift.test.js"
     ]
+  },
+  {
+    "name": "INTERIOR-BODIES-the-room-stands-no-bodies",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (interiorFoes) targets.push(...interiorFoes.lootTargets());\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-BODIES-the-watch-s-bodies-are-not-stood",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (interiorGuards) targets.push(...interiorGuards.lootTargets());\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-BODIES-a-body-indoors-has-no-word",
+    "file": "src/scenes/worldModes.js",
+    "old": "    (key) => interiorFoes?.hoverName?.(key) ?? null,\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-BODIES-a-body-indoors-reads-Empty",
+    "file": "src/scenes/worldModes.js",
+    "old": "          (key) => interiorFoes?.hoverContents?.(key) ?? null,\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-BODIES-the-press-arm-goes-back-to-silence",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (key.startsWith('foeCorpse:') || key.startsWith('guardCorpse:')) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
   }
 ]

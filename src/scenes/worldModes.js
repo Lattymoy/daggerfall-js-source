@@ -124,7 +124,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { containerTextureRecord } from '../systems/containers.js';
-import { composeNamer } from '../systems/worldHover.js';
+import { composeNamer, composeContents } from '../systems/worldHover.js';   // INTERIOR-BODIES: the interior stands itemised bodies now, so its contents reader is a LADDER like the other three hosts' rather than one prefix
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER: the race's WINNER, so the plaque names what the press would open
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, and the hide door for the branches that return above it
 import { staticDoorName, npcHoverName, questResourceName, worldTooltipsOn, hideInteractTooltip,
@@ -1818,6 +1818,25 @@ export function createWorldModes(host) {
     targets.push(...interiorDropped.lootTargets());   // ID1: the player's own piles, the dungeon's key vocabulary
     targets.push(...interiorTorches.targets());   // HT1: the dropped torches
     targets.push(...interiorCamps.targets());   // HEARTH1: the room's own fires - there is never a camp in this pool to add beside them
+    // INTERIOR-BODIES (AUDIT-WH2 L2-F4, Mac: "Do it"): ...AND THE BODIES.
+    //
+    // THE FOUR HOSTS RULE, on a family the interior was simply missing.
+    // A foe or a watchman killed inside a building leaves a corpse with
+    // a billboard and an inventory - `mintCorpse` is unconditional and
+    // the pools indoors ARE `createExteriorFoes`/`createCityGuards`, the
+    // same two that stand bodies in the street - and this list never
+    // asked for them. So the body was DECORATIVE: no plaque over it, no
+    // loot window, ever, while the other three hosts all open it. The
+    // press and the plaque agreed, which is why no gate could see it:
+    // both were silent.
+    //
+    // CORPSE_ACTIVATION_DISTANCE rides in on the pools' own targets
+    // (corpseMarker.js) - 150 classic units, not 128, because
+    // ActivateLootContainer exempts a CorpseMarker from the treasure
+    // gate and re-tests it at PlayerActivate.cs:938. Nothing is spelled
+    // twice here; these are the same `lootTargets()` the street calls.
+    if (interiorFoes) targets.push(...interiorFoes.lootTargets());
+    if (interiorGuards) targets.push(...interiorGuards.lootTargets());
     // U23: the StaticNPCs. Their reach is DFU's own 256 classic units
     // (PlayerActivate.cs:87), twice a door's, and a person with no
     // billboard size resolved is not a target at all.
@@ -1867,6 +1886,14 @@ export function createWorldModes(host) {
     },
     (key) => interiorTorches.hoverName?.(key) ?? null,   // HT1, through the mod's extension API
     (key) => interiorCamps.hoverName?.(key) ?? null,     // HEARTH1, likewise
+    // INTERIOR-BODIES: "<who> (dead)" for a body killed in this room -
+    // `.cs:526`, the mod's own word, answered by the pool that STANDS
+    // it exactly as both street hosts answer theirs. These sit with the
+    // port's own rows ABOVE the switch because a corpse's word is the
+    // port's departure (PX21c) and predates the mod, which is the same
+    // reason the dropped pile above them is ungated.
+    (key) => interiorFoes?.hoverName?.(key) ?? null,
+    (key) => interiorGuards?.hoverName?.(key) ?? null,
     (key) => {
       if (!worldTooltipsOn()) return null;
       const hide = hideInteractTooltip();
@@ -5570,6 +5597,28 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('droppedTorch:')) { interiorTorches.activate(key, getInteractionMode()); return true; }   // HT1: PickUpLightSource
+      // INTERIOR-BODIES: ...AND THE PRESS ARM THE BODIES NEVER HAD.
+      //
+      // The same door the street opens (world.js / exterior.js) and the
+      // dungeon opens: the pool's own `takeLoot`, handed the say and a
+      // window-opener, because the body becomes the inventory's REMOTE
+      // TARGET rather than teleporting into the pack (PlayerActivate.cs
+      // :957). The pool keeps what is the pool's - the empty-body
+      // refusal, the arrows pickup, a puppet's ask over the wire - and
+      // this hands it the door and nothing else.
+      //
+      // It is spelled as the `droppedLoot:` arm eight lines below is,
+      // through `mountInterior(interiorInventory(...))`, rather than
+      // importing the exterior's `inventoryDoorReady` fork: this host's
+      // inventory door is `host.makeInventory`, `interiorInventory`
+      // carries the room's own OnDrop and OnPop, and `mountInterior`
+      // already refuses a window that could not be built. One host, one
+      // way in.
+      if (key.startsWith('foeCorpse:') || key.startsWith('guardCorpse:')) {
+        const pool = key.startsWith('foeCorpse:') ? interiorFoes : interiorGuards;
+        pool?.takeLoot(key, (l) => say(l), (loot) => mountInterior(interiorInventory({ loot })));
+        return true;
+      }
       if (key.startsWith('hearth:')) { interiorCamps.activate(key, getInteractionMode()); return true; }   // HEARTH1: name it, or cook on it
       if (key.startsWith('droppedLoot:')) {
         // ID1: the pile the player dropped in this room. Activating a
@@ -7175,7 +7224,18 @@ export function createWorldModes(host) {
         cursorActive: overlayHeld,
         canvas,
         name: interiorHoverName,
-        contents: (key) => (typeof key === 'string' && key.startsWith('droppedLoot:') ? (interiorDropped.contents?.(key) ?? null) : null),   // AUDIT-WH2 L2-F5: C1's guard - a CONTENTS reader is handed every itemised key too
+        // AUDIT-WH2 L2-F5: C1's guard - a CONTENTS reader is handed
+        // every itemised key too. INTERIOR-BODIES: and the two corpse
+        // prefixes joined it, because a host's contents ladder must
+        // cover exactly the itemised keys THAT host stands - it covered
+        // the piles alone while the interior stood no bodies, and a
+        // body listed as "Empty" over a full pack is the defect this
+        // ladder was extracted for outdoors (AUDIT-WH H3).
+        contents: composeContents([
+          (key) => (typeof key === 'string' && key.startsWith('droppedLoot:') ? (interiorDropped.contents?.(key) ?? null) : null),
+          (key) => interiorFoes?.hoverContents?.(key) ?? null,
+          (key) => interiorGuards?.hoverContents?.(key) ?? null,
+        ]),
       });
       const _detected = detectFeed.tick(dt);
       drawHud(renderer, canvas, hudArt, playerEntity,
