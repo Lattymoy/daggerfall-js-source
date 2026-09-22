@@ -2314,7 +2314,9 @@ export function createWorldModes(host) {
     // nothing - `splice(indexOf(it), 1)` with -1 took the LAST item off the shelf and put the row's into the pack
     const at = shelf.items.indexOf(it);
     if (at < 0) return undefined;
-    if (goldAmount(playerEntity) < price) return null;
+    // DAEDRA2: the same pair as the summoning's - the gate must be
+    // GetGoldAmount because `deductGold` beneath it spends letters
+    if (totalGoldAmount(playerEntity) < price) return null;
     deductGold(playerEntity, price);
     shelf.items.splice(at, 1);
     playerEntity.items = playerEntity.items || [];
@@ -3856,7 +3858,15 @@ export function createWorldModes(host) {
             daedra,
             summonerRep: getReputation(store, summonerId),
             summonerGuildGroup: summoner?.ggroup ?? null,
-            gold: goldAmount(playerEntity),
+            // DAEDRA2 (2026-09-22): GetGoldAmount, which is coins PLUS
+            // letters of credit (PlayerEntity.cs:1313-1316) - because
+            // the PAYMENT four lines below is `deductGold`, which is
+            // DeductGoldAmount and DOES spend letters. Gating on coins
+            // alone turned a character with a 200,000-gold letter away
+            // as too poor from a bill the very next line could settle.
+            // AUDIT 26 F103-F105/F178 named this fault class and fixed
+            // it in banking; this is another of its seams.
+            gold: totalGoldAmount(playerEntity),
             daedraRep: (fid) => getReputation(store, fid),
             hasSummoned: (fid) => getFlag(store, fid, FACTION_FLAGS.Summoned),
             ...weather,
@@ -4303,7 +4313,8 @@ export function createWorldModes(host) {
       return;
     }
     const price = repairPrice(it, ctx.reducedRepairCost);
-    if (goldAmount(playerEntity) < price) {
+    // DAEDRA2: and again here - gate on what the payment can actually spend
+    if (totalGoldAmount(playerEntity) < price) {
       mountServiceWindow(new ChoiceWindow({ lines: ['You do not have enough gold.'], options: back }));
       return;
     }

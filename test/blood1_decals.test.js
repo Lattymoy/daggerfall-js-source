@@ -346,7 +346,7 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
 // ---- the mark, on the seam the splash already uses ------------------
 
 import { createHitEffects } from '../src/scenes/hitEffects.js';
-import { createBloodMarks, MARK_DROP, MAX_BODIES, MAX_DRIPS, CEILING_REACH, GIB_QUAD, GIB_FRAME } from '../src/combat/bloodMarks.js';
+import { createBloodMarks, MARK_DROP, MAX_BODIES, MAX_DRIPS, CEILING_REACH, GIB_QUAD, GIB_FRAME, WALL_RUN_LEAN } from '../src/combat/bloodMarks.js';
 import { markSize, marksBlood, MARK_SIZE_MIN, MARK_SIZE_MAX, BLOODLESS_INDEX } from '../src/combat/bloodDecals.js';
 
 /** A renderer stub that records what the mark asked of it. */
@@ -2463,11 +2463,138 @@ test('BLOOD2b: the atlas is the kinds in four variants, every cell bordered so a
   const r = mulberry32(1); assert.ok(r() !== r(), 'the generator moves');
   // the base is a red, deeper than the splash's own - and it is the
   // TINT'S now, not the texel's (BLOOD AUDIT 4)
-  assert.ok(BLOOD_BASE[0] > 0.5 && BLOOD_BASE[1] < 0.1 && BLOOD_BASE[2] < 0.1);
+  // BLOOD4: the base went DARKER (Mac: "a tad bit darker") and this pin
+  // used to hold a bare threshold (`> 0.5`) that the new colour trips
+  // while being exactly as red as before. The law is what it always
+  // meant: a real red, every channel inside the curve, red dominant by
+  // a wide margin - and the HUE, which is what a pure darkening must
+  // not move.
+  assert.ok(BLOOD_BASE.every((c) => c > 0 && c < 1), 'inside the curve, or the lane\'s decode stops being honest');
+  assert.ok(BLOOD_BASE[0] > 6 * Math.max(BLOOD_BASE[1], BLOOD_BASE[2]), 'red, and not by a little');
+  assert.ok(Math.abs(BLOOD_BASE[1] / BLOOD_BASE[0] - 0.085) < 0.006, 'the green/red that makes it BLOOD rather than paint');
+  assert.ok(Math.abs(BLOOD_BASE[2] / BLOOD_BASE[0] - 0.068) < 0.006, 'and the blue/red beside it');
+  // ...and it is DARKER than the colour BLOOD2b shipped, which is the
+  // whole of the ask - stated against the old number so the direction
+  // is pinned and not just the value.
+  assert.ok(BLOOD_BASE[0] < 0.58, 'darker than the red it replaced');
   // no picture is shipped: the atlas is made, not read
   const art = readFileSync(new URL('../src/combat/bloodArt.js', import.meta.url), 'utf8');
   assert.ok(!/BLOOD_BASE\[\d\] \* shade/.test(art), 'the atlas is not painted the base');
   assert.ok(!/\.png|fetch\(|import .*\.png/.test(art), 'nothing loaded');
+});
+
+test('BLOOD4: a wall of marks is not one picture stamped - sixteen faces a kind, and the mirror is free', async () => {
+  // Mac (2026-09-22), with a shot of a room: "youll notice in the screen
+  // shot the repetition of the wall splatter. I think we should
+  // introduce more variations."
+  //
+  // A wall mark is ALWAYS the drip kind and ALWAYS near-plumb - it has
+  // to be, a run runs downward - so it has none of the freedom the
+  // floor's marks take from the throw. Four cells was four pictures,
+  // upright, for ever. This pin holds the two things that fixed it and
+  // the one thing that must not have changed with them.
+  const { filmThickness } = await import('../src/combat/bloodArt.js');   // BLOOD4: the dome is a THICKNESS law, so it is read back through the film's own inverse
+  const a = buildBloodAtlas();
+  const drips = a.cells.filter((c) => c.kind === 'drip');
+  assert.equal(drips.length, ATLAS_CELLS);
+  assert.ok(ATLAS_CELLS >= 8, 'a kind carries at least eight cells');
+
+  // THE CELLS ARE DIFFERENT PICTURES, and this is measured rather than
+  // asserted by proxy. The first cut of this pin compared a coverage
+  // count and a rounded centroid, which two near-identical drips can
+  // still pass; overlap cannot be fooled that way.
+  //
+  // IT IS ALSO THE PIN THAT FOUND THE REAL BUG. Doubling ATLAS_CELLS
+  // alone left the eight drips at IoU 0.96 against each other - the
+  // same picture eight times - because the shape had two degrees of
+  // freedom and neither moved the bead, the column or the foot. Raising
+  // the count without this number would have shipped Mac his own
+  // complaint back.
+  const cellPx = ATLAS_SIZE / ATLAS_CELLS;
+  const row = ATLAS_KINDS.indexOf('drip');
+  const maskOf = (col) => {
+    const m = [];
+    for (let y = 0; y < cellPx; y++) {
+      for (let x = 0; x < cellPx; x++) m.push(a.colors[(((row * cellPx) + y) * ATLAS_SIZE + col * cellPx + x) * 4 + 3] > 128 ? 1 : 0);
+    }
+    return m;
+  };
+  const masks = [];
+  for (let col = 0; col < ATLAS_CELLS; col++) {
+    const m = maskOf(col);
+    assert.ok(m.some((v) => v), `drip cell ${col} drew something`);
+    masks.push(m);
+  }
+  let worst = 0;
+  for (let i = 0; i < masks.length; i++) {
+    for (let j = i + 1; j < masks.length; j++) {
+      let inter = 0, uni = 0;
+      for (let k = 0; k < masks[i].length; k++) { const A = masks[i][k], B = masks[j][k]; if (A && B) inter++; if (A || B) uni++; }
+      worst = Math.max(worst, uni ? inter / uni : 1);
+    }
+  }
+  assert.ok(worst < 0.85, `no two drips are the same picture - worst overlap ${worst.toFixed(3)}`);
+  // and they are not all the same SIZE either, which is the sameness a
+  // pure position jitter would have left behind
+  const areas = masks.map((m) => m.reduce((n, v) => n + v, 0));
+  assert.ok(Math.max(...areas) > Math.min(...areas) * 1.6, 'the runs differ in how much wall they cover');
+
+  // SOME OF THEM NEVER RAN. A bead that hit dry stone and stayed a bead
+  // is the single biggest break in the "every mark has a tail" sameness,
+  // so at least one cell must be plainly shorter than the longest.
+  const extents = [];
+  for (let col = 0; col < ATLAS_CELLS; col++) {
+    let top = Infinity, bot = -1;
+    for (let y = 0; y < cellPx; y++) {
+      for (let x = 0; x < cellPx; x++) {
+        if (a.colors[(((row * cellPx) + y) * ATLAS_SIZE + col * cellPx + x) * 4 + 3] > 128) { if (y < top) top = y; if (y > bot) bot = y; }
+      }
+    }
+    extents.push({ col, span: bot - top, top, bot });
+  }
+  const shortest = extents.reduce((m, e) => (e.span < m.span ? e : m));
+  const longest = extents.reduce((m, e) => (e.span > m.span ? e : m));
+  assert.ok(shortest.span < longest.span * 0.6,
+    `at least one drip never ran - shortest ${shortest.span} against ${longest.span}`);
+
+  // ...AND A DROP IS A DOME. That short one still has to carry the whole
+  // film: its alpha ends at a hard rim, but its THICKNESS feathers to
+  // nothing just inside it, or a mark that never ran would read as a
+  // flat sticker - which is the fault BLOOD3 exists to have fixed.
+  const thicks = [];
+  for (let y = 0; y < cellPx; y++) {
+    for (let x = 0; x < cellPx; x++) {
+      const o = (((row * cellPx) + y) * ATLAS_SIZE + shortest.col * cellPx + x) * 4;
+      const al = a.colors[o + 3] / 255;
+      if (al >= 0.5) thicks.push(filmThickness(al, a.colors[o] / 255));
+    }
+  }
+  assert.ok(Math.max(...thicks) > 0.9, 'the heart of a bead is a full-thickness film');
+  assert.ok(Math.min(...thicks) < 0.2, 'and it feathers away inside its own rim - a dome, not a disc');
+
+  // THE MIRROR doubles them, and it is a NEW object every time - the
+  // cells are shared by every mark on the wall, so a swap in place
+  // would reach back and flip blood that is already up.
+  const one = a.cells.find((c) => c.kind === 'drip');
+  // a two-roll stub: pickCell rolls the CELL first, then the mirror
+  const rolls = (...v) => { let i = 0; return () => v[Math.min(v.length - 1, i++)]; };
+  const upright = pickCell(a, 'drip', rolls(0, 0.9));
+  const mirrored = pickCell(a, 'drip', rolls(0, 0.1));
+  assert.equal(upright.u0 < upright.u1, true, 'the unmirrored pick reads left to right');
+  assert.equal(mirrored.u0 > mirrored.u1, true, 'the mirrored one reads right to left');
+  assert.equal(mirrored.u0, upright.u1, 'and it is the SAME cell, turned about');
+  assert.equal(mirrored.u1, upright.u0);
+  assert.equal(one.u0 < one.u1, true, 'the atlas\'s own cell was not touched');
+  assert.equal(a.cells.every((c) => c.u0 < c.u1), true, 'nor any other');
+  assert.equal(mirrored.kind, 'drip', 'a mirrored cell is still its kind');
+  assert.equal(mirrored.v0, upright.v0, 'and the mirror is HORIZONTAL - a drip that flipped vertically would run up the wall');
+  assert.equal(mirrored.v1, upright.v1);
+
+  // SIXTEEN FACES A KIND, counted the way a player meets them.
+  const faces = new Set();
+  const rng = mulberry32(99);
+  for (let i = 0; i < 4000; i++) { const c = pickCell(a, 'drip', rng); faces.add(`${c.u0},${c.u1}`); }
+  assert.equal(faces.size, ATLAS_CELLS * 2, 'every cell, both ways round');
 });
 
 test('BLOOD2b: a mark wears a cell of its KIND, is born a fresh red of its own, and DRIES in bounded steps', () => {
@@ -2546,7 +2673,34 @@ test('BLOOD2b: a mark wears a cell of its KIND, is born a fresh red of its own, 
   assert.ok(ds.some((d) => d.stretch > 1.5 && d.uv.kind === 'streak'), 'a drop that flew wears a streak');
   assert.ok(ds.filter((d) => d.normal[1] === 0).length > 0, 'some met the wall');
   assert.ok(ds.filter((d) => d.normal[1] === 0).every((d) => d.uv.kind === 'drip'), 'a wall’s mark wears a run');
-  assert.ok(ds.filter((d) => d.normal[1] === 0).every((d) => Math.abs(d.up[1] - 1) < 1e-9), 'and its run hangs DOWN the wall - the basis’ up is world up');
+  // BLOOD4: the run may LEAN off plumb by WALL_RUN_LEAN either way, so
+  // that a wall of marks reads as many runs and not one stamp - but it
+  // still has to plainly hang DOWN, which is the law this pin is for.
+  // Bounded by the constant rather than by a number typed here, and
+  // checked from BOTH sides: no mark leans further than allowed, and
+  // (the arm a mutant that drops the lean would survive) the marks do
+  // not all share one angle.
+  const walls = ds.filter((d) => d.normal[1] === 0);
+  assert.ok(walls.every((d) => d.up[1] >= Math.cos(WALL_RUN_LEAN) - 1e-9),
+    'and its run still hangs DOWN the wall, inside the lean');
+  assert.ok(walls.every((d) => Math.abs(d.up[1] - 1) <= 1 - Math.cos(WALL_RUN_LEAN) + 1e-9),
+    'never further off plumb than WALL_RUN_LEAN');
+  assert.ok(new Set(walls.map((d) => d.up[1].toFixed(6))).size > 1,
+    'and they do not all lean the SAME way - the repetition is the thing being fixed');
+  // BOTH WAYS off plumb, not just one - and that needs a SAMPLE. A
+  // lean that only ever went one way would still vary the angle and
+  // still read as a set of marks that all fell the same way, which is
+  // the sameness this slice is for; but three marks cannot tell the
+  // two apart, so the splash is driven until there are enough wall
+  // marks to be sure. The sign lives in the HORIZONTAL part of the
+  // basis' up, since up is world up turned about the wall's normal.
+  const leanSign = (d) => Math.sign(Math.round((d.up[0] + d.up[2]) * 1e6));
+  const seen = new Set();
+  for (let shot = 0; shot < 12 && seen.size < 2; shot++) {
+    fx.showBloodSplash(0, [0, 1, 0], null, { damage: 80, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] });
+    for (const d of marks._pool().decals()) if (d.normal[1] === 0 && d.uv.kind === 'drip') seen.add(leanSign(d));
+  }
+  assert.ok(seen.has(1) && seen.has(-1), `the runs lean BOTH ways off plumb - saw ${[...seen].join(',')}`);
   assert.ok(ds.some((d) => d.stretch <= 1.5 && d !== pool && d.normal[1] !== 0 && d.uv.kind === 'spatter'), 'the rest wear spatter');
   for (const d of ds) { assert.ok(d.tint[0] <= BLOOD_BASE[0] && d.tint[0] >= BLOOD_BASE[0] * (1 - FRESH_VARIANCE) - 1e-12, 'born fresh - the base by a shade'); assert.equal(d.stage, 0); assert.equal(d.born, 0); }
   assert.ok(new Set(ds.map((d) => d.tint[1].toFixed(4))).size > 1, 'each its own shade');

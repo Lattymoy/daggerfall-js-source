@@ -33,8 +33,24 @@
  *  collide with ARENA2 art. */
 export const BLOOD_ATLAS_ARCHIVE = 38001;
 export const BLOOD_ATLAS_RECORD = 'marks';
-export const ATLAS_SIZE = 256;
-export const ATLAS_CELLS = 4;
+// BLOOD4 (2026-09-22, Mac, with a shot of a room's wall: "youll notice
+// in the screen shot the repetition of the wall splatter. I think we
+// should introduce more variations").
+//
+// FOUR VARIANTS IS WHY. A wall mark is always the `drip` kind and
+// always `turn: 0` - it has to be, because a run has to run DOWNWARD
+// (bloodMarks' wall arm says so) - so a wall full of marks was drawing
+// four pictures, upright, over and over. The floor hides it because
+// spatter and streaks take their angle from the throw; a wall has no
+// such freedom, so the repetition lands there first and hardest.
+//
+// The cell stays 64 texels - the shapes are drawn at that size and
+// changing it would re-draw every one of them - so twice the variants
+// is twice the sheet: 512 wide, still five rows tall. `pickCell`
+// mirrors on top of this (see there), so a kind now shows 16 faces
+// where it showed 4.
+export const ATLAS_SIZE = 512;
+export const ATLAS_CELLS = 8;
 /** The kinds, one row each; the variants across the row. */
 export const ATLAS_KINDS = Object.freeze(['pool', 'spatter', 'streak', 'drip', 'print']);
 /** BLOOD2d: a boot's print - heel and sole, the toe toward +u, the way
@@ -55,7 +71,15 @@ export const ATLAS_KINDS = Object.freeze(['pool', 'spatter', 'streak', 'drip', '
  *  both real colours, both under one on every channel - which is also
  *  what keeps the lane's decode honest, since decode(ink) x decode(tint)
  *  is decode(ink x tint) only while both stay inside the curve. */
-export const BLOOD_BASE = Object.freeze([0.58, 0.05, 0.04]);
+/** BLOOD4 (2026-09-22, Mac from a lit interior: "blood could be a tad
+ *  bit darker"). The old colour was [0.58, 0.05, 0.04]; this is that
+ *  colour times 0.81 on ALL THREE CHANNELS, which is a pure darkening
+ *  and not a new red - G/R stays 0.085 where it was 0.086, so every
+ *  law downstream that reads the hue (freshShade's factor, the dried
+ *  stain's relationship to it) is untouched. A scale was the whole
+ *  ask: "a tad darker" is a luminance note, and re-mixing the channels
+ *  by eye would have answered a question nobody asked. */
+export const BLOOD_BASE = Object.freeze([0.47, 0.04, 0.032]);
 /** How much a fresh mark's tint wanders from the base - ALL THREE
  *  CHANNELS TOGETHER, so the variance is a shade of the same red and
  *  never a hue (BLOOD AUDIT 4: the red used to wander half as far as
@@ -162,16 +186,73 @@ function shapeAt(kind, rng, bits) {
       return { a: Math.max(heel, sole, waist), depth: 1 - smooth(heelX, toeX, x) };
     };
   }
-  // drip: a bead high in the cell and a run down to its foot
+  // drip: a bead high in the cell and a run down to its foot.
+  //
+  // BLOOD4 - AND IT HAS TO BE A DIFFERENT DRIP EACH TIME. The cell
+  // count went from four to eight for Mac's "repetition of the wall
+  // splatter", and measuring the result said the count was never the
+  // whole problem: the eight cells came out at IoU 0.96 against each
+  // other - the same picture eight times - because this shape had
+  // exactly TWO degrees of freedom, the run's length and its edge
+  // wobble. Bead, column and foot were fixed. Doubling a constant
+  // cannot vary a shape that does not vary.
+  //
+  // So the freedoms below are the ones a real run on a wall has, and
+  // each is a thing you can see:
+  //   WHERE THE BEAD STRUCK, off the cell's centre line and its own
+  //     size - a spurt does not land in the middle of its own mark;
+  //   WHETHER IT RAN AT ALL - a bead that hit dry stone and stayed a
+  //     bead is a third of them, and it is the single biggest break in
+  //     the "every mark has a tail" sameness;
+  //   HOW FAR, over a wider range than before;
+  //   THE DRIFT - a run wanders as it falls, it does not plumb-line;
+  //     the foot follows it, because that is where the blood ended up;
+  //   A SECOND RUN, thinner and shorter, where the bead split.
   const w = wobble(rng, 6, 0.25);
-  const runTo = -0.85 + rng() * 0.3;
+  const beadX = (rng() * 2 - 1) * 0.12;   // modest: the bead is the mark's deep end, and it stays near the cell's own centre line so the run has room to wander either way
+  const beadR = 0.22 + rng() * 0.14;
+  const ran = rng() > 0.32;                       // a third of them never ran
+  const runTo = ran ? -0.9 + rng() * 0.75 : 0.5;  // 0.5 == no run at all
+  const drift = (rng() * 2 - 1) * 0.22;           // where the run wanders to by its foot
+  const width = 0.06 + rng() * 0.06;
+  const forked = ran && rng() < 0.35;
+  const forkX = (rng() * 2 - 1) * 0.16;
+  const forkTo = runTo * (0.35 + rng() * 0.3);
+  const forkW = width * (0.4 + rng() * 0.25);
+  /** One run: its alpha at (x, y) and how far down it that point is. */
+  const trail = (x, y, fromX, toY, halfW, wob) => {
+    if (!(y < 0.5 && y > toY)) return { a: 0, along: -1 };
+    const along = (0.5 - y) / (0.5 - toY);
+    const cx = fromX + drift * along * along;     // squared: it wanders more as it slows
+    const half = halfW * (1 - 0.6 * along) * (1 + (wob ? w(along * Math.PI * 2) : 0)) + 0.015;
+    return { a: 1 - smooth(half - 0.03, half + 0.02, Math.abs(x - cx)), along };
+  };
+  const footX = beadX + drift;
   return (x, y) => {
-    const bead = 1 - smooth(0.24, 0.34, Math.hypot(x * 1.2, (y - 0.5) * 0.9));
-    const along = y < 0.5 && y > runTo ? (0.5 - y) / (0.5 - runTo) : -1;
-    const half = along < 0 ? 0 : 0.09 * (1 - 0.6 * along) * (1 + w(along * Math.PI * 2)) + 0.015;
-    const run = along < 0 ? 0 : 1 - smooth(half - 0.03, half + 0.02, Math.abs(x));
-    const foot = 1 - smooth(0.07, 0.12, Math.hypot(x, y - runTo));
-    return { a: Math.max(bead, run, foot), depth: 1 - Math.max(0, Math.min(1, along < 0 ? 1 : along)) };
+    const rBead = Math.hypot((x - beadX) * 1.2, (y - 0.5) * 0.9);
+    const rFoot = Math.hypot(x - footX, y - runTo);
+    const bead = 1 - smooth(beadR, beadR + 0.1, rBead);
+    const main = trail(x, y, beadX, runTo, width, true);
+    const fork = forked ? trail(x, y, beadX + forkX, forkTo, forkW, false) : { a: 0, along: -1 };
+    // the foot is the bead of blood that gathered at the end of the run
+    const foot = ran ? 1 - smooth(0.06, 0.11, rFoot) : 0;
+    const a = Math.max(bead, main.a, fork.a, foot);
+    // THE THICKNESS, which is NOT the alpha (AUDIT BLOOD3 F1's law: the
+    // sheet's ink is an invertible encoding of this, and BLOOD3's film
+    // reads it back). Deep at the bead, falling ALONG the run, and
+    // deep again at the foot where the blood gathered.
+    //
+    // A DROP IS A DOME, and that is what makes a bead-only cell legal:
+    // its alpha ends at a hard rim, but its THICKNESS feathers to
+    // nothing just inside that rim, so even a mark that never ran has
+    // the full range of film across it. The first cut of this took the
+    // depth from the run alone, which gave the bead, the foot and
+    // every pixel of a no-run cell a thickness of ZERO - the deep end
+    // inside out. The BLOOD3 depth pin caught it in one line.
+    const dBead = 1 - smooth(beadR * 0.2, beadR + 0.02, rBead);
+    const dFoot = ran ? (1 - smooth(0.02, 0.1, rFoot)) * 0.45 : 0;   // gathered, so thicker than the run above it - but never the bead's equal
+    const dRun = main.a > 0 ? 1 - main.along : (fork.a > 0 ? (1 - fork.along) * 0.85 : 0);
+    return { a, depth: Math.max(0, Math.min(1, Math.max(dBead, dFoot, dRun))) };
   };
 }
 
@@ -240,7 +321,21 @@ export function bloodAtlas() { return _atlas ??= buildBloodAtlas(); }
 export function pickCell(atlas, kind, rng = Math.random) {
   const of = atlas.cells.filter((c) => c.kind === kind);
   if (!of.length) return atlas.cells[0] ?? null;
-  return of[Math.min(of.length - 1, Math.floor(rng() * of.length))];
+  const c = of[Math.min(of.length - 1, Math.floor(rng() * of.length))];
+  // BLOOD4: AND HALF OF THEM FACE THE OTHER WAY. Swapping u0 and u1
+  // mirrors the cell left-for-right, which doubles every kind's faces
+  // for no sheet at all - and it is the one reflection that is free of
+  // consequences here:
+  //   a DRIP still runs downward (the mirror is horizontal, gravity is
+  //     vertical - this is exactly why the wall marks can take it);
+  //   a PRINT becomes the other foot, which is a gain;
+  //   a STREAK's head stays its head and only the side it flew to
+  //     changes, and the quad's own `right` already came off the
+  //     throw, so the two compose rather than fight.
+  // The atlas's own cell objects are NEVER mutated - a mirrored pick
+  // is a new object, because the cells are shared by every mark and a
+  // swap in place would flip marks already on the wall.
+  return rng() < 0.5 ? { ...c, u0: c.u1, u1: c.u0 } : c;
 }
 
 /** Which kind a mark is: the pool under the body, a streak that flew, a
