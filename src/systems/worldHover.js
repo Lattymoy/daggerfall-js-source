@@ -47,9 +47,32 @@ export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 
 /** Does this key open a list, or only a name? */
 export const keyItemises = (key) => typeof key === 'string' && ITEMISED_KEYS.some((p) => key.startsWith(p));
 
+/**
+ * THE ITEMS A PILE'S ROWS ARE, in the order the rows are drawn.
+ *
+ * QUICK-LOOT B1: extracted so the walk has ONE spelling. What the
+ * player sees is not the raw array - holes are filtered out and the
+ * tail past `HOVER_MAX` is a count, not a row - so a take that indexed
+ * `items[row]` would move the wrong thing the moment a pack had a hole
+ * or a seventh entry. The row the player SEES and the item the take
+ * MOVES are found by the same walk, which is the law `corpseLens`
+ * keeps for the bodies and `liveFoeTargets`/`liveFoeFor` for the live
+ * foes: two readers, one sweep.
+ */
+export const hoverItems = (items) => (items ?? []).filter(Boolean);
+
+/** WHICH item a visible row is, or null past the end. `row` is an
+ *  index into what is DRAWN, so it is bounded by `max` and not by the
+ *  pile's length - row 6 of a nine-item pile is the "and 3 more" tail,
+ *  which names nothing and takes nothing. */
+export function hoverItemAt(items, row, max = HOVER_MAX) {
+  if (!Number.isInteger(row) || row < 0 || row >= max) return null;
+  return hoverItems(items)[row] ?? null;
+}
+
 /** The lines a pile shows: name, and a count when a stack. Pure. */
 export function hoverLines(items, max = HOVER_MAX) {
-  const rows = (items ?? []).filter(Boolean).map((it) => ({
+  const rows = hoverItems(items).map((it) => ({
     name: itemNameParts(it).name || 'Something',   // RF6: the long name's name part - a potion its %po, a soul trap its soul; LR1: unidentified is the bare template (the resolver already answers a template-less item its own name)
     stack: (it.stackCount ?? 1) > 1 ? it.stackCount : 0,
     rarity: rarityAttr(it),   // LR1: null with the switch off or for Common
@@ -226,6 +249,49 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
  * So the guard compares what would be PAINTED. One node, rewritten only
  * on change, which is PX21c's law intact and now honest about its term.
  */
+/**
+ * ── THE HIGHLIGHT (QUICK-LOOT B1) ───────────────────────────────
+ *
+ * QuickLoot's selection, as a FOLD rather than a slot: given what was
+ * selected last frame, the frame that just resolved, and a nudge from
+ * the wheel, this answers what is selected now. The state lives with
+ * the host that owns the frame loop; the LAW lives here, where it can
+ * be driven without a document, a host or an input event.
+ *
+ * Four rules, and every one of them is a case a slot would get wrong:
+ *
+ *   - A frame with no rows selects NOTHING. A door, a person, an empty
+ *     body: there is no list, so there is no highlight, and the take
+ *     keys have nothing to act on.
+ *   - A NEW key selects the top row. Look away and back, look at the
+ *     next chest along: the highlight starts at the top, as the list
+ *     does. It does not remember where you were in a different pile.
+ *   - The same key keeps its row, moved by the nudge and CLAMPED. The
+ *     wheel does not wrap - QuickLoot's does not, and a wrapping
+ *     highlight under a crosshair is how you take the wrong thing.
+ *   - A list that SHRANK under the selection pulls it back to the last
+ *     row. This is the case the whole fold exists for: take the bottom
+ *     row of three and the list is two long while the selection still
+ *     says 2, so the next take would move nothing and the player would
+ *     press again harder.
+ */
+export function nextSelection(prev, frame, delta = 0) {
+  const rows = frame?.rows?.length ?? 0;
+  if (!frame || !rows) return null;
+  const d = Number.isFinite(delta) ? Math.trunc(delta) : 0;
+  const row = prev && prev.key === frame.key ? prev.row + d : 0;
+  return { key: frame.key, row: Math.max(0, Math.min(rows - 1, row)) };
+}
+
+/** The selected row, or -1 when this frame is not the selection's.
+ *  Read by the draw and by the take, so neither has to re-derive the
+ *  "is this still the same pile" test and get it subtly different. */
+export function selectedRow(sel, frame) {
+  if (!sel || !frame || sel.key !== frame.key) return -1;
+  const rows = frame.rows?.length ?? 0;
+  return sel.row >= 0 && sel.row < rows ? sel.row : -1;
+}
+
 export function frameSignature(f) {
   if (!f) return null;
   const rows = f.rows.map((r) => `${r.name}\u0002${r.stack}\u0002${r.rarity ?? ''}`).join('\u001f');

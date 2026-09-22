@@ -142,8 +142,8 @@
   {
     "name": "WORLD-HOVER-a-null-frame-is-merely-skipped",
     "file": "src/ui/worldPlaque.js",
-    "old": "    blank(n);\n    return;\n  }\n  paint(n, frame);",
-    "new": "    return;\n  }\n  paint(n, frame);",
+    "old": "    blank(n);\n    return;\n  }\n  paint(n, frame, quickLootRow(frame));",
+    "new": "    return;\n  }\n  paint(n, frame, quickLootRow(frame));",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "WORLD-HOVER-the-signature-guard-retires",
     "file": "src/ui/worldPlaque.js",
-    "old": "  const sig = frameSignature(frame);\n  if (sig === shownSig) return;",
-    "new": "  const sig = frameSignature(frame);\n  if (false) return;",
+    "old": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}`;\n  if (sig === shownSig) return;",
+    "new": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}`;\n  if (false) return;",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -865,8 +865,8 @@
   {
     "name": "WORLD-HOVER-the-gate-memo-outlives-the-host",
     "file": "src/ui/worldPlaque.js",
-    "old": "  _gateMark = null;\n  _gateOn = false;\n}",
-    "new": "}",
+    "old": "  _gateMark = null;\n  _gateOn = false;\n",
+    "new": "",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -982,7 +982,7 @@
   {
     "name": "AUDIT-WH2-a-holed-pack-is-not-filtered",
     "file": "src/systems/worldHover.js",
-    "old": "  const rows = (items ?? []).filter(Boolean).map((it) => ({",
+    "old": "  const rows = hoverItems(items).map((it) => ({",
     "new": "  const rows = (items ?? []).map((it) => ({",
     "tests": [
       "test/worldhover.test.js"

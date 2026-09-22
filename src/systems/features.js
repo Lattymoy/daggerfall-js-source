@@ -413,6 +413,37 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedCombatVisuals', initial: true, online: true }),   // ECV1: on by default like the other enhanced visuals; the rules are untouched either way
   }),
+  // QUICK-LOOT B4 (2026-09-22, Mac: Arc B of the world-hover arcs, and
+  // "How does skyrim do it" when the shape was put to him). Vanilla
+  // Skyrim does not; what everyone means by it is the QuickLoot mod,
+  // and this is that adapted to the port: the plaque Arc A already
+  // draws under the crosshair grows a highlight the wheel moves, the
+  // activate key takes the highlighted row, and a key of its own takes
+  // the lot - without ever freeing the cursor or opening a window.
+  //
+  // It is NOT a port of anything. DFU has no quick loot and no mod in
+  // vendor/ carries one, so the row says so plainly: this is the
+  // port's own, and OFF is Daggerfall's loot exactly - the window the
+  // activate key has always opened, untouched.
+  //
+  // DFU's own precedent for taking with no window is real and narrow:
+  // a body holding nothing but arrows is taken whole (PlayerActivate
+  // .cs:948-952). This generalises that to any row the player has
+  // picked out, which is the departure and is recorded as one.
+  //
+  // It sits with LR1 in the `loot` group and AHEAD of it, because
+  // WIND3 pins its wisps row to the seat directly after LR1's - so
+  // the two loot rows stay together without moving a pinned one.
+  Object.freeze({
+    id: 'quick-loot',
+    group: 'loot',
+    title: 'Quick loot',
+    note: 'The wheel moves a highlight through the plaque\u2019s list, the activate key takes that row and one key takes '
+      + 'the lot \u2014 no cursor, no window, so looting never stops you aiming. Off is the inventory window as always.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'quickLoot', initial: true, online: 'player' }),   // the player's own: it stands nothing, rolls nothing and is not on the wire - the same category chatHidden is (OL1)
+  }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
   // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with
   // DFU's artifacts as the ceiling. Enhanced, and ON (LR5, 2026-09-15,

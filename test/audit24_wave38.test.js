@@ -341,17 +341,30 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
   const took = [];
   const said = [];
   const opened = [];
+  // QUICK-LOOT B4: the arm gained two free names - the take and the
+  // player it moves items into - so the harness supplies them like every
+  // other one. `quickLootTake` is stubbed to DECLINE by default, which
+  // is what it really answers with the switch off or nothing
+  // highlighted, and the assertions below are therefore about exactly
+  // the behaviour they were always about.
+  const quick = [];
+  let quickTakes = false;
   const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
-    'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow', armSrc);
+    'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow',
+    'quickLootTake', 'playerEntity', armSrc);
   const run = (k, pick) => arm(k, pick,
     { takeLoot: (key, say2, open) => { took.push(['encounter', key]); if (open) open({ items: () => [] }); } },
     { takeLoot: (key, say2, open) => { took.push(['watch', key]); if (open) open({ items: () => [] }); } },
     { say: () => {}, showOverlay: (w) => opened.push(w) }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT,
-    () => true, (o) => o);
+    () => true, (o) => o,
+    (key, hooks) => { quick.push(key); return quickTakes ? {} : null; }, { items: [] });
   const near = { distance: 1, reach: CORPSE_ACTIVATION_DISTANCE };
   run('foeCorpse:3', near);
   run('guardCorpse:3', near);
   run(null, null);
+  // QUICK-LOOT B4: the take is OFFERED the body first, and declining it
+  // leaves every assertion below exactly as it was.
+  assert.deepEqual(quick, ['foeCorpse:3', 'guardCorpse:3'], 'both bodies are offered to quick loot');
   assert.deepEqual(took, [['encounter', 'foeCorpse:3'], ['watch', 'guardCorpse:3']],
     'the KEY picks the pool - an encounter corpse never reaches a live watchman');
   assert.deepEqual(said, [], 'a body in reach is opened, not refused');
