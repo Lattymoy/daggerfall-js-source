@@ -1,0 +1,86 @@
+[
+  {
+    "name": "BLOOD4-the-base-goes-back-to-its-old-brightness",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_BASE = Object.freeze([0.47, 0.04, 0.032]);",
+    "new": "export const BLOOD_BASE = Object.freeze([0.58, 0.05, 0.04]);",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-the-darkening-shifts-the-hue",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const BLOOD_BASE = Object.freeze([0.47, 0.04, 0.032]);",
+    "new": "export const BLOOD_BASE = Object.freeze([0.47, 0.09, 0.032]);",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-four-variants-again",
+    "file": "src/combat/bloodArt.js",
+    "old": "export const ATLAS_CELLS = 8;",
+    "new": "export const ATLAS_CELLS = 4;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-the-mirror-goes",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return rng() < 0.5 ? { ...c, u0: c.u1, u1: c.u0 } : c;",
+    "new": "  return c;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-the-mirror-flips-the-cell-in-place",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return rng() < 0.5 ? { ...c, u0: c.u1, u1: c.u0 } : c;",
+    "new": "  if (rng() < 0.5) { const t = c.u0; c.u0 = c.u1; c.u1 = t; } return c;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-the-mirror-is-vertical-so-runs-climb",
+    "file": "src/combat/bloodArt.js",
+    "old": "  return rng() < 0.5 ? { ...c, u0: c.u1, u1: c.u0 } : c;",
+    "new": "  return rng() < 0.5 ? { ...c, v0: c.v1, v1: c.v0 } : c;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-every-drip-runs-the-same-length",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const runTo = ran ? -0.9 + rng() * 0.75 : 0.5;  // 0.5 == no run at all",
+    "new": "  const runTo = ran ? -0.85 : 0.5;  // 0.5 == no run at all",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-the-run-never-wanders",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const drift = (rng() * 2 - 1) * 0.22;           // where the run wanders to by its foot",
+    "new": "  const drift = 0;           // where the run wanders to by its foot",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-every-bead-runs",
+    "file": "src/combat/bloodArt.js",
+    "old": "  const ran = rng() > 0.32;                       // a third of them never ran",
+    "new": "  const ran = true;                       // a third of them never ran",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-the-bead-is-flat-not-a-dome",
+    "file": "src/combat/bloodArt.js",
+    "old": "    const dBead = 1 - smooth(beadR * 0.2, beadR + 0.02, rBead);",
+    "new": "    const dBead = bead;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-a-wall-run-goes-back-to-plumb",
+    "file": "src/combat/bloodMarks.js",
+    "old": "export const WALL_RUN_LEAN = 0.12;",
+    "new": "export const WALL_RUN_LEAN = 0;",
+    "tests": ["test/blood1_decals.test.js"]
+  },
+  {
+    "name": "BLOOD4-the-lean-is-one-way-only",
+    "file": "src/combat/bloodMarks.js",
+    "old": "          const lean = (rng() * 2 - 1) * WALL_RUN_LEAN;",
+    "new": "          const lean = rng() * WALL_RUN_LEAN;",
+    "tests": ["test/blood1_decals.test.js"]
+  }
+]

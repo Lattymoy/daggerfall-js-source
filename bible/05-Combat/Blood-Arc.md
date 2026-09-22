@@ -1585,3 +1585,86 @@ Slices, each behind its own `features.js` row:
 
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.
+
+## BLOOD4 — the colour, and the sameness that had two causes
+
+Mac, from a lit interior (2026-09-22): *"So it looks reallt good, blood
+could be a tad bit darker."* And, with a shot of a room's wall: *"youll
+notice in the screen shot the repetition of the wall splatter. I think we
+should introduce more variations."*
+
+### The colour is a pure scale
+
+`BLOOD_BASE` is its old self times 0.81 on all three channels. G/R is
+0.085 where it was 0.086 — the hue does not move. "A tad darker" is a
+luminance note; re-mixing the channels by eye would have answered a
+question nobody asked, and every law downstream that reads the hue
+(`freshShade`'s factor, the dried stain's relationship to the fresh red)
+is untouched by a scale.
+
+The pin that guarded the colour was a bare `BLOOD_BASE[0] > 0.5`. That
+is a threshold, not a law, and the new red trips it while being exactly
+as red as before. It is re-aimed onto what it always meant: inside the
+curve, red by a wide margin, **the hue held**, and darker than the red
+it replaced.
+
+### Why a wall repeats where a floor does not
+
+A wall mark is always the `drip` kind and always near-plumb — it has to
+be, a run runs downward — so it has none of the freedom the floor's
+marks take from the throw. Spatter and streaks get their angle and their
+stretch from the swing; a wall gets nothing. Four cells were four
+pictures, upright, for ever.
+
+### The obvious half, and the half that mattered
+
+Doubling `ATLAS_CELLS` to 8 (the sheet 512 wide, the cell still 64) is
+the obvious half. **It would not have worked.** The pin written to
+*measure* the result found the eight drips at **IoU 0.96** against each
+other: `shapeAt`'s drip had exactly two degrees of freedom — the run's
+length and its edge wobble — and neither moved the bead, the column or
+the foot. Doubling a constant cannot vary a shape that does not vary.
+
+Raising the count alone would have shipped Mac his own complaint back,
+with a commit message claiming it was fixed.
+
+So the shape gained the freedoms a real run has, each one visible:
+
+| freedom | what you see |
+|---|---|
+| bead position and size | the spurt does not land in the middle of its own mark |
+| **whether it ran at all** | a third never do — the biggest break in "every mark has a tail" |
+| run length | over a wider range than before |
+| lateral drift | a run wanders as it falls; the foot follows it |
+| a fork | where the bead split |
+
+Worst overlap is **0.76** now, and the covered area spans 244–581 where
+it spanned 370–410. `pickCell` mirrors horizontally on top of that — 16
+faces a kind, for no sheet at all — and returns a **new object** every
+time, because the cells are shared by every mark already on the wall and
+a swap in place would flip blood that is already up. `WALL_RUN_LEAN`
+lets a run sit up to seven degrees off plumb, both ways.
+
+### The catch was the depth
+
+The first cut took the thickness from the run alone. That gave the bead,
+the foot, and *every pixel of a no-run cell* a thickness of zero — the
+deep end inside out — and BLOOD3's own depth pin caught it in one line,
+because that pin walks the real sheet instead of synthetic numbers.
+
+**A drop is a dome.** Its alpha ends at a hard rim; its thickness
+feathers to nothing just inside that rim. That is what makes a bead-only
+cell legal: even a mark that never ran carries the film's whole range,
+instead of reading as the flat sticker BLOOD3 exists to have fixed.
+
+### What the mutants bought
+
+Three of the twelve **survived** the first run — the no-run case, the
+dome, and the lean's direction. All three are pinned now because they
+survived; none of them would have been pinned otherwise. The lean's one
+needed a real sample: three wall marks cannot tell a two-way lean from a
+one-way one, so the pin drives the splash until it has enough.
+
+**The lesson:** the pin that measures is worth more than the change it
+measures. Doubling the cell count *looked* like the fix, and the number
+said it wasn't.

@@ -129,7 +129,10 @@ test('AUDIT WORLD6a by source: the settle asks the stack (A3), the keyed shop fa
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /if \(interiorWindows\.containsWindow\(s\.openWin\) && !s\.openWin\.done\) return;/, 'A3');
   assert.match(m, /if \(si >= 0\) interiorLootOpened\(`shelf:\$\{si\}`, interiorOverlay, \{ fresh \}\);/, 'A4: claimed');
-  assert.match(m, /const at = shelf\.items\.indexOf\(it\);\s*if \(at < 0\) return undefined;[\s\S]{0,200}?shelf\.items\.splice\(at, 1\);/, 'A4: a row the shelf no longer holds');
+  // DAEDRA2 widened the window from 200: the law is that the stale-row
+  // GUARD comes before the splice, and how many lines sit between them
+  // is incidental - a comment added at the gold gate closed it.
+  assert.match(m, /const at = shelf\.items\.indexOf\(it\);\s*if \(at < 0\) return undefined;[\s\S]{0,500}?shelf\.items\.splice\(at, 1\);/, 'A4: a row the shelf no longer holds');
   assert.equal((m.match(/interiorPublishLoot\(key\);   \/\/ WORLD6a: the new day's stock/g) ?? []).length, 0, 'A5: no restock is said at the roll');
   assert.match(m, /function interiorLootOpened\(key, win, \{ fresh = false \} = \{\}\) \{[\s\S]*?interiorPublishLoot\(canon, \{ claim: !fresh \}\);/, 'A5: said at the window, a fresh roll not a claim');
   assert.match(m, /const owned = b\?\.buildingType === BUILDING_TYPES\.Ship \|\| isHouseOwned\(/, 'B6: any ship');

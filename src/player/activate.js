@@ -259,7 +259,7 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:4252-4262) given a
+ * bulletin board's idiom (scenes/worldModes.js:4263-4273) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.

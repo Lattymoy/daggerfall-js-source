@@ -43,6 +43,11 @@ import { BLEED_RADIUS, BLEED_RATE, POOL_SIZE, POOL_SPREAD, POOL_STEPS, poolSizeA
  *  chest height (`bloodCentre` is five eighths up the capsule), so the
  *  floor is a body's height away and a little more on a step; past that
  *  the blood is over open air and leaves nothing. */
+/** BLOOD4: how far a wall's run may lean off plumb, in radians. Seven
+ *  degrees either way - enough that a wall of marks reads as many runs
+ *  rather than one stamp, small enough that every one of them still
+ *  plainly ran DOWN. */
+export const WALL_RUN_LEAN = 0.12;
 export const MARK_DROP = 3;
 /** BLOOD2c: a drip and a corpse's pool ray down from KNEE height, not
  *  chest - a foe on a stair stains the step it stands on. */
@@ -330,7 +335,17 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
           // wall and gravity's trail below it; `turn: 0` on a vertical
           // surface puts the basis' up at world up, which the cell's own
           // run is drawn against.
-          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: 0 }, bloodMarkKind({ wall: true }));
+          //
+          // BLOOD4: ...give or take WALL_RUN_LEAN. A run on a real wall
+          // is not a plumb line - it takes the stone's slope and the
+          // mortar's channel - and the lean is what stops a row of them
+          // reading as one stamp repeated. It is SMALL and it is
+          // bounded, because the whole reason this arm passes a turn at
+          // all is that gravity has to stay legible: past a few degrees
+          // the trail stops looking like it ran and starts looking like
+          // it was thrown.
+          const lean = (rng() * 2 - 1) * WALL_RUN_LEAN;
+          lay([wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng), turn: lean }, bloodMarkKind({ wall: true }));
           continue;
         }
       }
