@@ -46,7 +46,9 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MOD_SETTINGS, modSetting, setModSetting, modSettingIfDeclared } from '../src/systems/modSettings.js';
-import { ONLINE_PLAYERS_OWN_MODS, ONLINE_ROOM_MOD_KEYS, onlineForcedModSetting } from '../src/systems/onlineLane.js';
+import { ONLINE_PLAYERS_OWN_MODS, ONLINE_ROOM_MOD_KEYS, onlineForcedModSetting, onlineForcedPref, ONLINE_PLAYERS_OWN_PREFS } from '../src/systems/onlineLane.js';
+import { runSurvivalMinutes } from '../src/systems/survival/needs.js';   // MODS-ONLINE-3: the needs run, measured
+import { FEATURES } from '../src/systems/features.js';   // MODS-ONLINE-3: the rows a player sees as mods, whichever store carries them
 import { smoothRoadHeights, SMOOTHED_TILES, ROAD_TILES, RIVER_TILES, STREAM_TILES, TRACK_TILES } from '../src/world/roadPainter.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -211,4 +213,64 @@ test('MODS-ONLINE-2: a mod the player owns reaches no wire, no save and no roll'
       assert.ok(!BANNED.test(src), `${f} is a player's mod and must not reach the wire or the save`);
     }
   }
+});
+
+// ── MODS-ONLINE-3 (2026-09-22, Mac) ──────────────────────────────────
+// "What part of mod toggle for online do you not understand?"
+//
+// The right question. MODS-ONLINE-2 freed the sixteen VENDORED mods and
+// stopped there, because two more rows the player sees as mods are
+// carried on the PREFS shelf instead of the mod store - a distinction
+// that exists nowhere a player can see it. Both sat in the Mods pane,
+// under their authors' names, beside sixteen rows that were all free,
+// and both were still locked online:
+//
+//   - Climates & Calories (`survival`). The port's own code built from
+//     Ralzar's IL, which is why it was on the prefs shelf. Everything it
+//     computes is resolved on the machine that owns the actor: hunger,
+//     thirst, exposure and the felt temperature are minted fresh each
+//     tick from MY climate, MY clothes and MY race onto MY entity; a
+//     camp is local (the braziers are scenery the terrain carries
+//     either way); a shop's stock is its own. The one thing that leaves
+//     the machine is a corpse's food, minted by the KILLER - and a
+//     corpse's pile is ALREADY the owner's word, granted to peers as it
+//     stands (WORLD6b-iii(c)). That is Unleveled Loot's shape exactly,
+//     and Unleveled Loot is the player's.
+//   - Weapon Sheathing (`mwSheathing`). Forced "so every body a peer
+//     sees wears its blade the same way" - a claim about how MY machine
+//     DRAWS someone else, which is `peerClassSprites`'s category and has
+//     always been the player's.
+//
+// What is still forced is `enhancedEnvironments`, and deliberately: it
+// is the port's own enhanced outdoors (OL1's half of the lane, which
+// Mac has not revoked), and it carries the shared weather's evolution.
+// It wears a `mod` kind only because Dynamic Skies opens its knobs on
+// that tile - and Dynamic Skies itself is the player's.
+test('MODS-ONLINE-3: every row a player sees as a MOD is theirs online, whichever store carries it', () => {
+  const locked = FEATURES
+    .filter((r) => r.kinds?.includes('mod') && r.control)
+    .filter((r) => onlineForcedPref(r.control.key, '?online=1') !== undefined)
+    .map((r) => r.control.key);
+  // The one exception is named, so freeing it is a decision somebody
+  // makes rather than a list quietly growing back.
+  assert.deepEqual(locked, ['enhancedEnvironments'],
+    'a mod row the lane forces must be the port\'s own enhanced lane and nothing else');
+
+  for (const key of ['survival', 'mwSheathing']) {
+    assert.equal(onlineForcedPref(key, '?online=1'), undefined, `${key} is the player's online`);
+    assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes(key), `${key} is declared the player's BY NAME, not by omission`);
+  }
+});
+
+test('MODS-ONLINE-3 by execution: the survival system writes only its own entity, so two players may disagree about it', () => {
+  // The claim that freed it, measured. Needs are computed onto the
+  // entity handed in and nowhere else, so one player's switch cannot
+  // reach another player's character.
+  const body = () => ({ health: 50, maxHealth: 50, level: 1, stats: { endurance: 50, luck: 50, strength: 50 }, items: [] });
+  const mine = body(), theirs = body();
+  const before = JSON.stringify(theirs);
+  const env = { climate: 223, month: 11, hour: 3, weather: 'snow', outside: true };
+  runSurvivalMinutes(mine, 0, 600, env, { rolls: () => 0.5, autoDrink: false, autoEat: false });
+  assert.equal(JSON.stringify(theirs), before, 'my needs never touched the other player\'s entity');
+  assert.notEqual(JSON.stringify(mine), JSON.stringify(body()), 'and they really did land on mine');
 });

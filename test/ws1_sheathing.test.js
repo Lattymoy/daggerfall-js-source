@@ -380,7 +380,13 @@ test('WS1: the wiring, by source - the third-person build takes the addons and t
   assert.match(rig, /sheathing: getPref\('mwSheathing'\),/); assert.match(rig, /ammoCount: ammoCountOf\(entity\.items, worn\),/);
   const feat = rd('src/systems/features.js');
   assert.match(feat, /id: 'mod-weapon-sheathing',/);
-  assert.match(feat, /control: Object\.freeze\(\{ store: 'prefs', key: 'mwSheathing', initial: true, online: true \}\),/, 'RF4: the switch declared once, on its row, on by default and forced on online');
+  // MODS-ONLINE-3 (2026-09-22, Mac): the online answer is the PLAYER's
+  // now. It was forced "so every body a peer sees wears its blade the
+  // same way" - a claim about how MY machine DRAWS someone else, which
+  // is `peerClassSprites`'s category and has always been the player's.
+  // A scabbard stands no object, rolls nothing and never reaches the
+  // wire; the pose's `wd` carries a peer's drawn weapon either way.
+  assert.match(feat, /control: Object\.freeze\(\{ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' \}\),/, 'RF4: the switch declared once, on its row, on by default, and the player\'s online');
   assert.ok(!/mwSheathing: (true|false),/.test(rd('src/systems/uiPrefs.js')), 'and not on the shelf');
   assert.match(rd('src/ui/enhancedMenu.js'), /prefRow\('mwSheathing', 'Weapon sheathing',/);
   const ds = rd('src/scenes/dataSource.js');
