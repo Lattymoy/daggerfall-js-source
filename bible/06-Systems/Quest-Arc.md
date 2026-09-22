@@ -6070,3 +6070,133 @@ walk pin, `questbridge.test.js`'s fixture, whose clock_b now says 130
 in its field and 120 live). Campaign `tools/mutants/qtlive1.json`: 15
 mutants, 15 killed.
 
+
+## AUDIT QUESTS - THE LINKAGE, AND THE STANDING GUARD OVER IT (2026-09-22)
+
+Mac: *"I want you to do a deep conprehensive audit and ensure everything
+is linked up properly with quests and such."*
+
+**The sweep came back clean on every axis execution could reach, and
+that is the finding this section is mostly about.** An audit that finds
+nothing is worth nothing tomorrow: the same holes can open on the next
+commit and nobody would know until a player reports a quest that does
+not start. So the walk is written down here, and every link it walked
+by hand is now a law in `test/auditquests_linkage.test.js`, driven over
+the whole shipped corpus.
+
+### What the walk found
+
+- **The registry is whole.** 83 action classes, 82 registered,
+  `ActionTemplate` the base, no duplicate type name.
+- **The corpus parses.** All 265 shipped quests through the real
+  machine, no quest throwing, none parsing to null.
+- **The round trip holds.** Every quest save → restore → save,
+  byte-identical.
+- **The offer is intact.** All 188 offerable rows have files; the
+  `-` disabled marker is honoured by `Table`, so no dashed name
+  reaches the picker.
+- **The bridge and the journal chain are wired** — `activeLogMessages`
+  → `getLogMessages` → `questBridge.questLog` → `host.pauseQuestLog`.
+- **The world surface is answered.** 28 `hooks.world.X` read by the
+  engine; 21 provided by `world.js`'s `questWorld`; the 7 remaining all
+  accounted for — three `talk*` layered by `talkMacroHooks(ctx)` when a
+  pipeline exists, four `court*` superseded because `arrestFlow.js`
+  calls `expandMacroValues` with an explicit value map and **no**
+  questLike context, so the handler table is never consulted there.
+
+Minor, recorded rather than fixed: `getFieldIntValue` (`parseUtils.js`)
+is dead everywhere; `expandQuestString`, `resetUid` and
+`resetQuestTables` are test-only.
+
+### The one gap, named rather than asserted
+
+`scenes/exterior.js` builds its own `questWorld` that is **16 keys
+behind** `scenes/world.js`'s. It is the dev scene reached by
+`?region=&loc=` — its own header says so — and it has no save path at
+all, so the pin does not hold it to the shipped host's surface. It is
+written down here so that promoting that host cannot quietly inherit
+the gap. (This is AUDIT-QUEST F2's finding still standing, narrowed:
+that audit made the bridge REPORT its unwired seams, which is what
+keeps this honest at runtime.)
+
+### Then the mutants found what the audit had not
+
+Two of the five new pins were written wrong, and the mutants said so
+before the commit. Both are the same family of mistake and both are
+worth more than the clean result above.
+
+**Pin 2 asserted a structurally impossible failure.** It looked for a
+`null` in `task.actions` as the sign of a quest line no template
+claimed. Nothing ever puts one there: `Task._readTaskLines`
+(`task.js:192-201`) pushes only truthy actions and pends the raw text
+of anything else on `pendingActionLines`. The pin could not have failed
+under any mutation, and the mutant that narrowed `Say`'s pattern walked
+straight past it.
+
+Reading the real signal instead turned up **four lines in the 265-quest
+corpus that match no template**, which the hand sweep had missed
+entirely. Each was checked against `Interkarma/daggerfall-unity`
+@2343305d1 and pends THERE too, so none is a port gap:
+
+| quest | line | why it pends upstream |
+| --- | --- | --- |
+| `B0B71Y03.txt` | `_0x3c_ 19` | the source's own previous line reads `-- Discovered a new op-code:` |
+| `M0B11Y18.txt` | `pc at _L.00_ set _S.12_` | DFU's PcAt pattern reads the PLACE as `\w+` and only the TASK as `[a-zA-Z0-9_.]+` (PcAt.cs:42-45), so a dotted place symbol matches in neither engine |
+| `S0000007.txt` | `location _tavern_ 100 27000` | the source's own next line reads `--not known what this intends to do`; no DFU action carries a `location` pattern |
+| `__DEMO01.txt` | `juggle 5 apples every 2 seconds drop 40%` | `JuggleAction` is COMMENTED OUT of DFU's RegisterActionTemplates (QuestMachine.cs:342) |
+
+An unmatched line is a quest step that silently does nothing, and
+nothing anywhere logs it — so the four are now a named fixture, and a
+fifth fails the pin.
+
+**Pin 3's fixture was too clean to carry the fault.** It round-tripped
+FRESHLY PARSED quests, where a constructor default and a saved default
+are the same value. Delete `this.questTombstoneTime = data.questTombstoneTime`
+from `restoreSaveData` and the pristine corpus still agreed, because
+the constructor's 0 and the saved 0 are both 0. Every quest is DIRTIED
+first now — outcome, log steps, one-time messages, task trigger and
+dropped flags, then tombstoned — and the restoring machine's clock is
+deliberately DIFFERENT, so a field the restore forgets and re-derives
+from `now` reads back wrong instead of reading back identical.
+
+And a round trip has a second blind spot that dirtying does not cover:
+**a field the quest never WRITES into its envelope round-trips
+perfectly and still loses the data** — save omits it, restore has
+nothing to read, re-save omits it again, and all three agree. The
+mutant that dropped the `time` stamp from `addLogStep` proved it (the
+journal dates every entry by that stamp via `getCurrentLogMessageTime`,
+so losing it dates the whole log to quest start). So the pin now checks
+what the envelope CAPTURED as well as what it copied.
+
+### The registry law that was actually missing
+
+The first draft of pin 1 compared `actions.js` against itself — every
+class the file defines is registered — which is true by construction
+the moment somebody adds both lines together. The real law is DFU's:
+`defaultActionTemplates` is meant to be `RegisterActionTemplates`
+(QuestMachine.cs:339-428) **slot for slot and in order**, because
+`getActionTemplate` is a first-match scan (:751-763), so a slot that
+moves changes which template claims an ambiguous line.
+
+Compared against DFU @2343305d1, it is **82 for 82, positionally
+exact.** Eight rows carry a different name and every one is documented:
+seven renames where the port's own modules already own the word
+(`Season`/`Weather`/`Climate`/`Enemies`/`KillFoe`/`SetPlayerCrime`/
+`SpawnCityGuards`), and slot 69, where DFU's `WorldUpdate` routes into
+the mod-facing WorldDataVariants system the Port-Ledger holds at "Not
+planned" and the port stands a `PendingTrigger` carrying DFU's verbatim
+pattern.
+
+`test/auditquest_patterns.test.js` already compares all 82 patterns far
+more deeply — structure for structure, regenerated from the C#. But it
+opens a DFU checkout, so it calls `t.skip` whenever `DFU_PATH` is unset,
+which is CI's normal state: the registry's ORDER was unguarded exactly
+where guarding matters. Pin 1 carries DFU's order as a recorded fixture
+instead and runs on every machine with no checkout at all. The two are
+the same law at different depths, and the shallow one is the one that
+is always on.
+
+**5 pins, 13 mutants, 13 dead** — a dropped slot, a duplicate, a
+swapped pair, a narrowed pattern, three forgotten restore fields, an
+unstamped log step, the disabled marker, two dropped host hooks, and an
+exemption gone stale.
