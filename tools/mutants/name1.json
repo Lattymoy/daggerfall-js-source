@@ -218,7 +218,7 @@
   },
   {
     "name": "NAME1-party-colour-unclamped",
-    "file": "src/ui/nameLayer.js",
+    "file": "src/ui/playerBadge.js",
     "old": "  const hex = (v) => Math.max(0, Math.min(255, Math.round(Number(v) * 255))).toString(16).padStart(2, '0');",
     "new": "  const hex = (v) => Math.round(Number(v) * 255).toString(16).padStart(2, '0');",
     "tests": [

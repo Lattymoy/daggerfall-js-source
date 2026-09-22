@@ -32,6 +32,7 @@
    this block into that page at build; the rest of the skin stays a
    string the game pays for only when a screen is mounted. */
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // FIX-D: Silkscreen's five ahead of Pixelify Sans
+import { badgeCss } from './playerBadge.js';   // ACC3c: one rule per title and per glyph, walked out of the vocabulary - the card writes a class and the skin carries the colour
 export const ENHANCED_TOKENS = `:root {
   --ink: #0e1013;
   --slate: #171b21;
@@ -1014,6 +1015,54 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .card p.meta.acctwhy.bad { color: #e0906f; }
 .card p.meta.acctwhy.good { color: var(--verdigris); }
 .card p.meta.acctwhy:empty { display: none; }
+
+/* ACC3c - THE WARDROBE. Mac put the equip control on the account card
+   ("tap the account icon to equip 1 feature along with signing out"),
+   so it borrows .fieldlabel and .act's own vocabulary rather than
+   bringing a third one - the rule this whole card was written under.
+
+   A TITLE BUTTON CARRIES ITS COLOUR AND NOTHING ELSE UNTIL IT IS WORN.
+   Unworn it is an outline in the title's own gold or red; worn it
+   fills, which is the one state change a player has to be able to read
+   across the room. The colour is written by the card from
+   ui/playerBadge.js - the same table the name over a head reads - so
+   the swatch here and the label in the world cannot drift.
+
+   THE GLYPHS ARE NOT BUTTONS and must not look like them: no border,
+   no hover, no pointer. A glyph is true of an account rather than
+   chosen by one, and a control that cannot be operated is worse than
+   a fact that never offered. */
+.card .acctwear { margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
+.card .acctwear .fieldlabel { margin-top: 6px; }
+.card .acctwearrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.card button.acttitle {
+  font: inherit; font-size: 13px; letter-spacing: 0.04em;
+  padding: 6px 12px; border: 1px solid currentColor; border-radius: 2px;
+  background: transparent; cursor: pointer;
+}
+.card button.acttitle:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.card button.acttitle:disabled { opacity: 0.5; cursor: default; }
+/* WORN vs HELD, and the difference has to read WITHOUT the colour,
+   because the colour already says WHICH title and cannot also say
+   whether it is on. Unworn is dimmed to two thirds behind a hairline;
+   worn is full strength behind a doubled edge with a faint fill under
+   it. A filled swatch was tried and refused: filling with
+   currentColor leaves the label on its own colour, invisible. */
+.card button.acttitle { opacity: 0.62; }
+.card button.acttitle.worn {
+  opacity: 1; border-width: 2px; padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.card .acctglyph {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--dim);
+}
+.card .acctglyphart { width: 15px; height: 15px; display: block; }
+/* One rule per title and per glyph, WALKED out of the vocabulary in
+   ui/playerBadge.js - so the gold on this card and the gold over a
+   head are one fact, and a title added to the token gets a colour
+   here without anybody remembering to write one. */
+${badgeCss()}
 
 /* THE SIGNED-IN FACTS. A key and a value per row, the key quiet and
    letter-spaced the way .qs-mark and the rarity headings are, so it

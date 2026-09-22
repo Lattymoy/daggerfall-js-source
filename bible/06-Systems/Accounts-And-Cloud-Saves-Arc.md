@@ -2541,7 +2541,83 @@ because it is the TOKEN's bound restated at the client's door, for the
 day somebody relaxes the duplicate test — AUDIT-PW P2 is the standing
 example of why keeping such a guard is right.
 
-**STILL OWED: `ACC3c`.** The chat roster shows a bare name, and the
-account icon has no equip control — Mac asked to *"tap the account icon
-to equip 1 feature along with signing out"*, and until that exists a
-player holds titles they cannot choose between.
+### ACC3c — SHIPPED 2026-09-22: the control, and the roster
+
+> Players can tap the account icon to equip 1 feature along with
+> signing out.
+
+Where he put it. The signed-in card gains a **Title** row of the titles
+this account holds, and a **Glyphs** row beside it that is not pressable.
+
+**THE CLIENT DOES NOT DECIDE WHAT IS HELD.** The grant is derived at the
+service and can lapse *between the card being drawn and the button being
+pressed* — a handle taken off `DEVELOPER_HANDLES` is the real case — so
+the flow asks and takes the service's answer **whole**, including a
+`titles` list that shrank in the same breath as the write. A client that
+patched its own copy would go on offering a title nobody grants any more.
+
+**Pressing the one already worn takes it off**, because a picker whose
+only route to wearing nothing is a second button is a button that does
+nothing most of the time — and Mac asked for one control.
+
+**And the glyphs are not buttons.** A glyph is *true* of an account —
+the sprout is its age, the dev mark is a grant — so nothing equips one,
+and a control that cannot be operated is worse than a fact that never
+offered to be. A pin reads the source to hold that.
+
+### The card almost broke ACC1e's own rule, and the pin caught it
+
+`ui/enhancedAccount.js` **may not style itself** — enhancedStyle.js's
+header says why: *two copies of a design language is how the front door
+and the rooms behind it drift apart*. The first cut of this slice wrote
+`style.color` straight off the badge table, and ACC1e's pin went red.
+
+It was right, and the fix is better than what it refused: the card
+writes a **class**, and `enhancedStyle.js` emits one rule per title and
+per glyph from `badgeCss()`, **walked out of the vocabulary**. The gold
+on this card and the gold over a head are now one fact, and a third
+title gets a colour without anybody remembering to write one.
+
+`cssRgba` moved to `ui/playerBadge.js` with `ui/nameLayer.js`
+re-exporting it — three surfaces cross that seam now, and a stylesheet
+may not import a layer that drags the whole remote-player pass in behind
+it. SOC4's pin that the party green survives the trip is untouched,
+deliberately: moving that import would be a change to SOC4's seam for a
+reason that is not SOC4's.
+
+### The roster wears it too, and MY OWN ROW is the one that mattered
+
+A roster is a list of names, and a name wears a title everywhere else it
+is drawn — a bare one here is the same name saying two things on one
+screen. **The relay never sends me my own roster entry**, so my row is
+built from the session, and without the badge there the one name a
+player looks at most would be the only one in the list with no title on
+it. That is ACC1d-MARK's shape a third time: a signal true for everybody
+but you reads as a fault in your own account.
+
+It goes through `readBadge`, not a second spelling of the check. And it
+is **in the repaint key** — that list redraws only when the key moves
+(SOC3 put the open menu there for the same reason), so a title equipped,
+or a sprout aged past two weeks, would otherwise stay correct in the
+model and wrong on screen until somebody else joined the room.
+
+- `src/net/accountClient.js` — `equipTitle`; `not-held` and `no-title`
+  in the refusal table, two sentences because they are two situations.
+- `src/ui/accountFlow.js` — `wardrobe` beside `account`, and `equip`.
+- `src/ui/enhancedAccount.js` — the picker, `GLYPH_LABEL`.
+- `src/ui/enhancedStyle.js` — the wardrobe's rules, plus `badgeCss()`.
+- `src/ui/playerBadge.js` — `cssRgba`, `badgeClass`, `badgeCss`.
+- `src/net/roster.js`, `src/ui/chatPanel.js` — the badge on a row.
+- `test/acc3wear.test.js` — 10 pins. `tools/mutants/acc3c.json` — 12,
+  all dead.
+
+**THE CAMPAIGN CAUGHT A FIXTURE THAT PROVED NOTHING.** The pin for *"the
+flow takes the service's answer whole"* had the service answer exactly
+what a local patch would have produced, so the mutant that patches
+locally walked through it. The fixture now answers a wardrobe that
+**shrank** — the developer grant gone, the dev glyph with it — which is
+the real shape of the case and kills it.
+
+**STILL OWED: `DEVELOPER_HANDLES` ships empty.** Nobody holds the
+Developer title until a handle is written into it. Mac (2026-09-22):
+*"Ill have provide developer names once all our accounts are created."*

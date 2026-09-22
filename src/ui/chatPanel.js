@@ -88,6 +88,7 @@ import { overlayOpen } from './enhancedOverlays.js';
 import { isTouchDevice } from './touch.js';
 import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
+import { titleBadge, glyphBadges, GLYPH_STROKE, cssRgba } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { getPref, setPref } from '../systems/uiPrefs.js';   // CHAT-R2: the hidden state outlives the session
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
@@ -161,6 +162,14 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-who-row.me .dfchat-who-name { color: #dcc27c; }
 .dfchat-who-name { font-weight: 600; }
 .dfchat-who-tag { color: var(--dim, #8b8578); font-size: 10px; margin-left: 4px; }
+/* ACC3c: the title BEFORE the name and the glyphs AFTER it, which is
+   the world label read left to right. A roster column is narrow, so
+   the title is small and may not push the name off the row - it
+   shrinks first, and the name is what has to survive. */
+.dfchat-who-title { font-size: 10px; letter-spacing: .05em; margin-right: 4px;
+  text-transform: uppercase; }
+.dfchat-who-glyph { width: 11px; height: 11px; display: inline-block; vertical-align: -1px;
+  margin-left: 3px; }
 .dfchat-who-more { font-size: 11px; color: var(--dim, #8b8578); padding-top: 4px; }
 /* the roster is the first thing to go when there is no width for it */
 @media (max-width: 560px) { .dfchat-who { display: none; } }
@@ -489,7 +498,11 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     const { rows, total, shown } = rosterRows(roster());
     // SOC3: the open menu is part of what is DRAWN, so it joins the key - a roster that did not change still has to
     // repaint when a row is opened or closed, and nothing else about this law moved.
-    const key = total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0)).join(',');
+    // ACC3c: THE BADGE JOINS THE KEY. This list repaints only when the
+    // key moves, so a title equipped or a sprout that aged out would
+    // otherwise sit on screen, stale, until somebody else joined the
+    // room - the same reason SOC3 put the open menu in here.
+    const key = total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0) + ':' + (r.title ?? '') + ':' + (r.glyphs ?? []).join('+')).join(',');
     if (key === whoKey) return;
     whoKey = key;
     whoHead.textContent = rosterTitle(total);
@@ -507,7 +520,36 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       const n = el('div', 'dfchat-who-row' + (r.me ? ' me' : '') + (acts ? ' dfchat-act' : ''));   // MAC-J: prefixed, because a bare `act` IS the enhanced skin's button
       const nameEl = el('span', 'dfchat-who-name', r.name);
       whoNames.push({ id: r.id, nameEl, css: null });
+      // ACC3c: THE TITLE GOES BEFORE THE NAME and the glyphs after it,
+      // which is the world label's own order read left to right - a
+      // roster is a narrow column and cannot stack, so the one thing
+      // that must not move is which side of the name each sits on.
+      const badge = titleBadge(r);
+      if (badge) {
+        const t = el('span', 'dfchat-who-title', badge.text);
+        t.style.color = cssRgba(badge.rgba) ?? '';
+        n.append(t);
+      }
       n.append(nameEl);
+      for (const g of glyphBadges(r)) {
+        const svg = doc.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
+        if (!svg) break;   // a document that cannot make one draws none, rather than throwing in a repaint
+        svg.setAttribute('class', 'dfchat-who-glyph');
+        svg.setAttribute('viewBox', '0 0 16 16');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.style.color = cssRgba(g.rgba) ?? '';
+        const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', g.path);
+        if (GLYPH_STROKE[g.key]) {
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', 'currentColor');
+          path.setAttribute('stroke-width', '1.8');
+          path.setAttribute('stroke-linecap', 'round');
+          path.setAttribute('stroke-linejoin', 'round');
+        } else path.setAttribute('fill', 'currentColor');
+        svg.append(path);
+        n.append(svg);
+      }
       if (dup.has(r.name.toLowerCase())) n.append(el('span', 'dfchat-who-tag', '#' + r.tag));
       if (acts) {
         n.addEventListener('click', () => { menuFor = menuFor === r.id ? null : r.id; paintWho(); });

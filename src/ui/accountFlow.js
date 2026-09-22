@@ -39,7 +39,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  openGuest, register, login, recover, readAccount, changePassword, logout,
+  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle,
   storedSession, keepSession, forgetSession, accountRefusalText, handleShapeOk,
   PASSWORD_MIN_LEN,
 } from '../net/accountClient.js';
@@ -105,6 +105,12 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     stage: /** @type {string} */ ('loading'),
     /** the account view from /v1/account, when signed in */
     account: /** @type {any} */ (null),
+    /** ACC3c: `{ titles, title, glyphs }` from the same answer - what
+     *  this account HOLDS, WEARS and is TRUE of. Null when nobody is
+     *  signed in, and null from a service too old to answer one, which
+     *  the card reads as "draw no picker" rather than "draw an empty
+     *  one". */
+    wardrobe: /** @type {any} */ (null),
     /** a sentence for the player, never a machine word */
     error: '',
     /** a sentence that is NOT a failure - "your password was changed" */
@@ -153,6 +159,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
   function signedOut(message) {
     forgetSession(storage);
     self.account = null;
+    self.wardrobe = null;   // ACC3c: a wardrobe outliving its account is a title drawn for nobody
     self.busy = false;
     go('out', { error: message });
     return false;
@@ -199,7 +206,54 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
       return;
     }
     self.account = r.data.account;
+    // ACC3c: THE WARDROBE IS ITS OWN FIELD, exactly as the service
+    // answers it - what this account HOLDS, what it WEARS, and what is
+    // true of it. Held beside `account` rather than folded into it,
+    // because they are different kinds of fact: an account view is the
+    // row, a wardrobe is the row read against the service's config and
+    // clock. A service too old to answer one leaves it null, and the
+    // card then draws no picker at all rather than an empty one.
+    self.wardrobe = r.data.wardrobe ?? null;
     go('in');
+  };
+
+  /**
+   * ACC3c — WEAR ONE, OR NONE. Mac: "Players can tap the account icon
+   * to equip 1 feature along with signing out."
+   *
+   * IT ASKS; IT DOES NOT DECIDE. The grant is derived at the service
+   * (a founder cutoff, a config list) and can lapse between this card
+   * being drawn and this button being pressed - a developer taken off
+   * the list is the real case - so `not-held` is a sentence a player
+   * can meet and the answer REPLACES the wardrobe rather than patching
+   * it. A client that kept its own idea of what is held would be a
+   * client that can wear anything, which is the hole ACC1g shut one
+   * field over.
+   *
+   * PRESSING THE ONE ALREADY WORN IS TAKING IT OFF, because a picker
+   * where the only way to wear nothing is a separate button is a
+   * picker with a button that does nothing most of the time.
+   */
+  self.equip = async (title) => {
+    if (self.busy || self.stage !== 'in') return false;
+    const want = self.wardrobe?.title === title ? null : (title ?? null);
+    self.busy = true; self.error = ''; self.note = ''; changed();
+    try {
+      const r = await ask(() => equipTitle(door(), want));
+      if (!r) return false;                 // `auth` already landed on `out`
+      if (!r.ok) return refuse(accountRefusalText(r.error));
+      // THE SERVICE'S OWN ANSWER, whole: it describes the row AFTER
+      // the write, so nothing here has to guess what took and what did
+      // not - and a title that lapsed comes back missing from `titles`
+      // in the same breath as the refusal would have.
+      self.wardrobe = { titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs };
+      self.busy = false;
+      self.note = want ? `Wearing ${want}.` : 'Title removed.';
+      changed();
+      return true;
+    } catch {
+      return refuse(accountRefusalText('offline'));
+    }
   };
 
   /** THE ONE SUBMISSION DOOR. Dispatches on the stage, so a button
@@ -346,6 +400,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     } finally {
       forgetSession(storage);
       self.account = null;
+      self.wardrobe = null;
       self.busy = false;
       go('out', { note: all ? 'Signed out everywhere.' : 'Signed out.' });
     }

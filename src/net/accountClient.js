@@ -111,6 +111,14 @@ export const REFUSALS = Object.freeze({
   'no-slot': 'That save is not in your cloud backup.',
   'no-data': 'That backup is incomplete - it was interrupted. Back it up again.',
   'no-storage': 'Cloud saves are unavailable right now. Try again later.',
+  // ACC3, the titles. `not-held` is the one a player can actually
+  // meet - a title lapses (a developer taken off the list) between the
+  // card being drawn and the button being pressed - so it says what
+  // happened rather than blaming them. `no-title` is a build that has
+  // fallen behind the service's vocabulary, which is a different thing
+  // and gets a different sentence.
+  'not-held': 'That title is not yours to wear any more.',
+  'no-title': 'The account service does not know that title. The game may need updating.',
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });
@@ -209,6 +217,16 @@ export const setEmail = (io, email) => call(io, '/v1/account/email', { email: em
 
 /** THIS device by default. `all` is a separate, explicit act. */
 export const logout = (io, all = false) => call(io, '/v1/auth/logout', { all });
+
+/** ACC3c: WEAR ONE OF THE TITLES THIS ACCOUNT HOLDS, or none.
+ *  Mac: "tap the account icon to equip 1 feature along with signing
+ *  out." `null` takes it off and is always allowed.
+ *
+ *  THIS SIDE DOES NOT GET TO SAY WHAT IS HELD. It asks; the service
+ *  derives the grant and refuses `not-held`. A client that decided for
+ *  itself would be a client that can wear anything, which is the hole
+ *  ACC1g shut one field over. `{ ok, titles, title, glyphs }`. */
+export const equipTitle = (io, title) => call(io, '/v1/account/title', { title: title ?? null });
 
 /** ACC1d: A SIGNED WORD THE RELAY CAN CHECK, for one connection.
  *  `{ token, name, kind, expiresAt }`. The service signs the name it

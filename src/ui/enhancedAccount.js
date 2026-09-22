@@ -27,11 +27,21 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { STAGES, FIELDS, FIELD_SPEC } from './accountFlow.js';
+import { TITLE_TEXT, GLYPH_PATH, GLYPH_STROKE, glyphBadges, badgeClass } from './playerBadge.js';   // ACC3c: the SAME table the name over a head reads, so the picker shows what a player will actually wear - the COLOUR is the skin's (this card may not style itself, and a pin holds that)
 
 /** COPY LIVES IN ONE TABLE, so a stage cannot be drawn with a heading
  *  from one slice and a paragraph from another. Keyed by stage, and a
  *  pin asserts every stage has an entry - a stage added without one
  *  would draw a card with no words on it. */
+/** ACC3c: what a glyph is CALLED on the card. The name over a head is
+ *  a picture and needs no word; a wardrobe is a list of things a player
+ *  holds, and a coloured shape with nothing beside it is a list nobody
+ *  can read. A pin walks GLYPHS and requires an entry. */
+export const GLYPH_LABEL = Object.freeze({
+  sprout: 'New account',
+  dev: 'Developer',
+});
+
 export const STAGE_COPY = Object.freeze({
   // THE BLURBS WERE CUT (Mac: "there's uneeded text explaining what an
   // account is"). A sign-in window is not a place to be taught what an
@@ -131,6 +141,85 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
     return b;
   }
 
+  /**
+   * ACC3c — THE WARDROBE, and it is a PICKER rather than a list.
+   *
+   * Mac: "Players can tap the account icon to equip 1 feature along
+   * with signing out." So it sits on the signed-in card beside Sign
+   * out, which is where he put it.
+   *
+   * IT DRAWS NOTHING WHERE THERE IS NOTHING TO CHOOSE. A player who
+   * holds no title sees no picker - not an empty box with a heading
+   * over it - because ACC1e's own correction was Mac's ("there's
+   * uneeded text explaining what an account is") and a control with
+   * no options is exactly that. The glyphs are shown BESIDE it and
+   * are not pressable, because a glyph is TRUE of a player rather
+   * than chosen by one; a control that cannot be operated would say
+   * the opposite.
+   */
+  function wardrobe() {
+    const w = flow.wardrobe;
+    const held = Array.isArray(w?.titles) ? w.titles : [];
+    const glyphs = glyphBadges(w);
+    if (!held.length && !glyphs.length) return;
+
+    const box = el('div', 'acctwear');
+    if (held.length) {
+      box.append(el('span', 'fieldlabel', 'Title'));
+      const row = el('div', 'acctwearrow');
+      for (const key of held) {
+        // PRESSING THE ONE WORN TAKES IT OFF (the flow decides that,
+        // not this), so the button says which way it will go rather
+        // than leaving the player to guess from a highlight alone.
+        const worn = w.title === key;
+        // THE CLASS CARRIES THE COLOUR, not this file. enhancedStyle.js
+        // writes one rule per title out of ui/playerBadge.js's own
+        // table, so the gold here and the gold over a head are one
+        // fact - and this card goes on bringing no design language of
+        // its own, which is the rule ACC1e was built under.
+        const b = el('button', `acttitle ${badgeClass('tl', key)}${worn ? ' worn' : ''}`, TITLE_TEXT[key] ?? key);
+        b.type = 'button';
+        b.disabled = !!flow.busy;
+        b.setAttribute('aria-pressed', worn ? 'true' : 'false');
+        b.title = worn ? 'Wearing this - press to take it off' : `Wear ${TITLE_TEXT[key] ?? key}`;
+        b.onclick = () => flow.equip(key);
+        row.append(b);
+      }
+      box.append(row);
+    }
+    if (glyphs.length) {
+      box.append(el('span', 'fieldlabel', 'Glyphs'));
+      const row = el('div', 'acctwearrow');
+      for (const g of glyphs) {
+        // NOT A BUTTON. A glyph is a fact about the account - the
+        // sprout is its age, the dev mark is a grant - and nothing
+        // equips one, so nothing here can be pressed.
+        const chip = el('span', `acctglyph ${badgeClass('gl', g.key)}`);
+        const svg = doc.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
+        if (svg) {
+          svg.setAttribute('class', 'acctglyphart');
+          svg.setAttribute('viewBox', '0 0 16 16');
+          svg.setAttribute('aria-hidden', 'true');
+          const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', GLYPH_PATH[g.key] ?? '');
+          if (GLYPH_STROKE[g.key]) {
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', 'currentColor');
+            path.setAttribute('stroke-width', '1.6');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+          } else path.setAttribute('fill', 'currentColor');
+          svg.append(path);
+          chip.append(svg);
+        }
+        chip.append(el('span', null, GLYPH_LABEL[g.key] ?? g.key));
+        row.append(chip);
+      }
+      box.append(row);
+    }
+    root.append(box);
+  }
+
   function paint() {
     root.textContent = '';
     const stage = STAGES.includes(flow.stage) ? flow.stage : 'out';
@@ -161,6 +250,7 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
       else row('Name', `${flow.account.guestName ?? flow.account.name} (a guest)`);
       if (flow.account.kind) row('Kind', flow.account.kind === 'linked' ? 'Registered' : 'Guest');
       root.append(rows);
+      wardrobe();
       if (!flow.account.handle) {
         root.append(el('p', 'meta', 'Adding a username keeps everything this account already has.'));
       }

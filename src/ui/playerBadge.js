@@ -51,6 +51,18 @@
 
 import { TITLES, GLYPHS } from '../net/identityToken.js';
 
+/** An RGBA 0..1 array as CSS. ONE HOME, and it is here rather than in
+ *  ui/nameLayer.js (which re-exports it, so SOC4's pin that the party
+ *  green survives the trip is untouched) because THREE surfaces now
+ *  cross this seam: the name over a head, the chat roster and the
+ *  account card's own sheet - and the sheet may not import a layer
+ *  that pulls the whole remote-player pass in behind it. */
+export function cssRgba(rgba) {
+  if (!Array.isArray(rgba) || rgba.length < 3) return null;
+  const hex = (v) => Math.max(0, Math.min(255, Math.round(Number(v) * 255))).toString(16).padStart(2, '0');
+  return `#${hex(rgba[0])}${hex(rgba[1])}${hex(rgba[2])}`;
+}
+
 /** A title's word, as a player reads it. Capitalised because it is a
  *  title and not an identifier; the wire's own spelling is lower-case
  *  and is what everything else keys by. */
@@ -140,6 +152,24 @@ export function glyphBadges(peer) {
   }
   return out;
 }
+
+/** ═══ ACC3c: THE COLOURS AS A STYLESHEET ═════════════════════════
+ *
+ * `ui/enhancedAccount.js` may not style itself - a pin holds it, and
+ * enhancedStyle.js's own header says why: two copies of a design
+ * language is how the front door and the rooms behind it drift apart.
+ * So the card writes a CLASS and the skin carries the colour, and the
+ * skin gets the colour from HERE rather than from a hex somebody typed
+ * a second time.
+ *
+ * WALKED, not listed: a title added to the vocabulary gets a rule
+ * without anybody remembering to write one.
+ */
+export const badgeClass = (kind, key) => `${kind}-${key}`;
+export const badgeCss = () => [
+  ...TITLES.map((t) => `.card button.acttitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),
+  ...GLYPHS.map((g) => `.card .acctglyph.${badgeClass('gl', g)} .acctglyphart { color: ${cssRgba(GLYPH_RGBA[g])}; }`),
+].join('\n');
 
 /** The classic face's whole suffix: the marks, run together, or ''.
  *  One string, because that face draws a run and measures it. */

@@ -37,7 +37,7 @@
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
-import { titleBadge, glyphBadges, GLYPH_STROKE } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { titleBadge, glyphBadges, GLYPH_STROKE, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
@@ -61,12 +61,13 @@ export const BUBBLE_ELLIPSIS = '...';
 
 /** A peer's name colour for the DOM, from the picture's OWN answer (net/social.js colorOf -> PARTY_GREEN or null).
  *  The green has one home and this is not a second one: `cssRgba(PARTY_GREEN)` IS PARTY_GREEN_CSS, which a pin
- *  holds - so the party's green survives the move to the DOM without the colour being written down twice. */
-export function cssRgba(rgba) {
-  if (!Array.isArray(rgba) || rgba.length < 3) return null;
-  const hex = (v) => Math.max(0, Math.min(255, Math.round(Number(v) * 255))).toString(16).padStart(2, '0');
-  return `#${hex(rgba[0])}${hex(rgba[1])}${hex(rgba[2])}`;
-}
+ *  holds - so the party's green survives the move to the DOM without the colour being written down twice.
+ *
+ *  ACC3c MOVED THE FUNCTION AND KEPT THE DOOR. It lives in ui/playerBadge.js now, because the account card's own
+ *  SHEET needs it and a sheet may not import this layer - which would pull the whole remote-player pass in behind
+ *  it. Re-exported rather than relocated at every call site: this is where the party green has crossed into the DOM
+ *  since SOC4, and moving that import would be a change to SOC4's seam for a reason that is not SOC4's. */
+export { cssRgba };
 
 /** A line's own opacity at `age` ms: full through BUBBLE_HOLD of the window, then down to nothing at the end. */
 export function bubbleAlpha(age, life = BUBBLE_MS) {
