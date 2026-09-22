@@ -329,7 +329,7 @@ test('AUDIT SOC C20/C23: the picture names MY OWN tabs (`peers`) - a second tab 
 
 test('AUDIT SOC B5/B18/B10: the party pose says fatigue in the sheet\'s digits (/ FATIGUE_MULTIPLIER) and reads the entity, not a whole look, with the pixel read once; a page with no account says so once on the world tab and builds no social arm (mutants: the pool sent x64, so a member\'s card said 3200/6400; composeLook per pose, every item for three fields; the accountless page silent with a dead button)', () => {
   const w = rd('src/scenes/world.js');
-  const pose = w.slice(w.indexOf('const composePartyPose = () => {'), w.indexOf('const partyMarkers = '));
+  const pose = w.slice(w.indexOf('const composePartyPose = () => {'), w.indexOf('const partyRestModeFromCode = '));   // PARTY-REST1: the slice ends where the rest helpers begin - myPartyLocation reads the pixel for itself
   assert.match(pose, /f: Math\.trunc\(\(playerEntity\.fatigue \?\? 0\) \/ FATIGUE_MULTIPLIER\), fm: Math\.trunc\(maxFatigue\(playerEntity\) \/ FATIGUE_MULTIPLIER\)/, 'the digits ui/charsheet.js shows');
   // TO1 (2026-09-17): the host imports `liveStat` from the same module
   // now (Travel Options' avoid-encounter chance is a Luck reading), so

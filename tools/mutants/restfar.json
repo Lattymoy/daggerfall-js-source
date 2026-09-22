@@ -1,0 +1,74 @@
+[
+  {
+    "name": "PARTY-REST4-latch-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    if (_partyRestFarSaid) return;\n    _partyRestFarSaid = true;\n",
+    "new": "    _partyRestFarSaid = true;\n",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-REST4-latch-never-re-armed",
+    "file": "src/scenes/world.js",
+    "old": "    if (!leaderRest || near) { _partyRestFarSaid = false; return; }",
+    "new": "    if (!leaderRest || near) return;",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-REST4-told-when-near",
+    "file": "src/scenes/world.js",
+    "old": "    if (!leaderRest || near) { _partyRestFarSaid = false; return; }",
+    "new": "    if (!leaderRest || !near) { _partyRestFarSaid = false; return; }",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-REST4-told-with-no-rest",
+    "file": "src/scenes/world.js",
+    "old": "    if (!leaderRest || near) { _partyRestFarSaid = false; return; }",
+    "new": "    if (near) { _partyRestFarSaid = false; return; }",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-REST4-no-fallback-name",
+    "file": "src/scenes/world.js",
+    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader'));",
+    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name));",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-REST4-radius-restated",
+    "file": "src/scenes/world.js",
+    "old": "  const PARTY_REST_FAR_TEXT = (who) => `${who} is resting - come within ${PARTY_REST_RADIUS} m of them to rest with the party.`;",
+    "new": "  const PARTY_REST_FAR_TEXT = (who) => `${who} is resting - come within 15 m of them to rest with the party.`;",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-REST4-notice-not-called",
+    "file": "src/scenes/world.js",
+    "old": "    partyRestFarNotice(leaderRest, near, leaderRow);   // PARTY-REST4: told once when the leader naps out of my reach - before the mirror below reads `near`\n",
+    "new": "",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-REST4-latch-kept-across-parties",
+    "file": "src/scenes/world.js",
+    "old": "      _partyRestFarSaid = false;   // PARTY-REST4: no leader to be far from\n",
+    "new": "",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  }
+]

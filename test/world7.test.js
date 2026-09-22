@@ -79,7 +79,7 @@ test('WORLD7: the chain by source - the hosts hand the played step under the sha
     assert.match(s, /import \{ PLAYED_STEP_MAX_SECONDS \} from '\.\.\/systems\/quest\/clock\.js';/, `${p}: one home for the step`);
   }
   assert.match(rd('src/scenes/questBridge.js'), /questClockStepMax: \(\) => ctx\.questClockStepMax\?\.\(\) \?\? Infinity,/);
-  assert.equal((rd('src/systems/quest/machine.js').match(/questClockStepMax: \(\) => this\.deps\.questClockStepMax\?\.\(\) \?\? Infinity/g) ?? []).length, 3);
+  assert.equal((rd('src/systems/quest/machine.js').match(/questClockStepMax: \(\) => this\.deps\.questClockStepMax\?\.\(\) \?\? Infinity/g) ?? []).length, 4);   // QUEST1: receiveSharedQuest is the fourth door
   assert.match(rd('src/systems/quest/parser.js'), /const quest = new Quest\(\{ rolls, actionFactory, nowSeconds, hooks, questClockStepMax \}\);/);
   assert.match(rd('src/systems/quest/quest.js'), /this\.questClockStepMax = questClockStepMax;/);
   assert.match(rd('src/systems/quest/clock.js'), /const step = caller\.questClockStepMax\?\.\(\) \?\? Infinity;\s*\n\s*const raw = now - this\._lastWorldTimeSample;\s*\n\s*const difference = Number\.isFinite\(step\) \? Math\.min\(Math\.max\(raw, 0\), step\) : raw;/);

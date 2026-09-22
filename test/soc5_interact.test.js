@@ -374,7 +374,7 @@ test('SOC5: a name the room has not said yet still makes a sentence, and the car
 
 test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation site reads it, the reach law by the one pure helper, the menu built beside the picture and taken away by a window (mutants: a second cylinder written out in the host; the menu built without the picture so F acts on a page with no account; hudCtx.socialInteract missing so the route has no door)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /import \{ pickPeerInFront, SOCIAL_REACH \} from '\.\.\/player\/socialPick\.js';/);
+  assert.match(w, /import \{ pickPeerInFront, SOCIAL_REACH(?:, [^}]*)? \} from '\.\.\/player\/socialPick\.js';/);   // PEER-PLAQUE1: the plaque's half rides the same import
   assert.match(w, /import \{ createSocialMenu \} from '\.\.\/ui\/socialMenu\.js';/);
   assert.match(w, /hudCtx\.socialInteract = socialInteract;/, 'the door routeAction reaches');
   // the door sits AFTER peersNear, because peersNear is the list it measures

@@ -1,0 +1,220 @@
+[
+  {
+    "name": "PEER-PLAQUE1-peer-before-the-townsperson",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, peer, person, foe]) {",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-foe-before-the-peer",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, foe, peer]) {",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-peer-not-raced",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, foe]) {",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-pick-reach-unbounded",
+    "file": "src/player/socialPick.js",
+    "old": "  return { key: PEER_KEY_PREFIX + hit.peer.id, distance: hit.distance, reach };",
+    "new": "  return { key: PEER_KEY_PREFIX + hit.peer.id, distance: hit.distance, reach: Infinity };",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-pick-takes-an-infinite-distance",
+    "file": "src/player/socialPick.js",
+    "old": "  if (!hit?.peer?.id || !Number.isFinite(hit.distance)) return null;",
+    "new": "  if (!hit?.peer?.id) return null;",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-empty-id-is-a-peer",
+    "file": "src/player/socialPick.js",
+    "old": "export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length ? key.slice(PEER_KEY_PREFIX.length) : null);",
+    "new": "export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) ? key.slice(PEER_KEY_PREFIX.length) : null);",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-a-number-key-reaches-startsWith",
+    "file": "src/player/socialPick.js",
+    "old": "export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length ? key.slice(PEER_KEY_PREFIX.length) : null);",
+    "new": "export const peerIdOfKey = (key) => (String(key).startsWith(PEER_KEY_PREFIX) && String(key).length > PEER_KEY_PREFIX.length ? String(key).slice(PEER_KEY_PREFIX.length) : null);",
+    "tests": [
+      "test/peerplaque.test.js"
+    ],
+    "equivalent": true,
+    "why": "String(17) is '17' and String(null) is 'null' - neither starts with 'peer:', so the coerced form answers null for every non-string exactly as the typeof guard does; the guard is kept for AUDIT-WH2 L2-F5's stated law (no startsWith on a non-string), not for a behaviour a pin can see."
+  },
+  {
+    "name": "PEER-PLAQUE1-disabled-acts-listed",
+    "file": "src/player/socialPick.js",
+    "old": "  if (acts.canFriend) offers.push(PEER_ACT_LABELS.friend);",
+    "new": "  offers.push(PEER_ACT_LABELS.friend);",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-trade-label-ignored",
+    "file": "src/player/socialPick.js",
+    "old": "  if (acts.canTrade) offers.push(acts.tradeLabel || PEER_ACT_LABELS.trade);",
+    "new": "  if (acts.canTrade) offers.push(PEER_ACT_LABELS.trade);",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-empty-bracket-when-unbound",
+    "file": "src/player/socialPick.js",
+    "old": "  if (offers.length) return `${keyLabel ? `[${keyLabel}] ` : ''}${offers.join(' \\u00b7 ')}`;",
+    "new": "  if (offers.length) return `[${keyLabel}] ${offers.join(' \\u00b7 ')}`;",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-friendship-before-the-seat",
+    "file": "src/player/socialPick.js",
+    "old": "  if (acts.whyNotInvite === 'in your party') return 'In your party';\n  if (acts.relation === 'friend') return 'Friend';",
+    "new": "  if (acts.relation === 'friend') return 'Friend';\n  if (acts.whyNotInvite === 'in your party') return 'In your party';",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-stranger-gets-a-word",
+    "file": "src/player/socialPick.js",
+    "old": "  if (acts.relation === 'friend') return 'Friend';\n  return null;",
+    "new": "  if (acts.relation === 'friend') return 'Friend';\n  return 'Stranger';",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-street-pick-dropped",
+    "file": "src/scenes/world.js",
+    "old": "            peer: _hoverPeerPick(cam.pos, _hd),   // PEER-PLAQUE1: another player, raced as the F key picks them\n",
+    "new": "",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-street-namer-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    (key) => peerHoverName(key),\n  ];",
+    "new": "  ];",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-pick-with-a-reach-of-its-own",
+    "file": "src/scenes/world.js",
+    "old": "  const _hoverPeerPick = (eye, dir) => peerRayPick(pickPeerInFront(eye, dir, peersNear(), SOCIAL_REACH, rayPersonDistance), SOCIAL_REACH);",
+    "new": "  const _hoverPeerPick = (eye, dir) => peerRayPick(pickPeerInFront(eye, dir, peersNear(), 40, rayPersonDistance), 40);",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-key-assumed-F",
+    "file": "src/scenes/world.js",
+    "old": "  const interactKeyLabel = () => String(getBinding(bindings(), 'SocialInteract') ?? '').replace(/^Key/, '');",
+    "new": "  const interactKeyLabel = () => 'F';",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-title-without-the-marks",
+    "file": "src/scenes/world.js",
+    "old": "    return { title: marks ? `${name} ${marks}` : name, subs: prompt ? [prompt] : [] };",
+    "new": "    return { title: name, subs: prompt ? [prompt] : [] };",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-trade-half-of-the-bag-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    const prompt = social ? peerPromptText({ ...social.actionsFor(id), ...tradeActionsFor(id) }, interactKeyLabel()) : null;",
+    "new": "    const prompt = social ? peerPromptText(social.actionsFor(id), interactKeyLabel()) : null;",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-modal-doors-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    peerHoverPick: (eye, dir) => _hoverPeerPick(eye, dir),\n    peerHoverName: (key) => peerHoverName(key),\n",
+    "new": "",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-building-pick-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "            peer: host.peerHoverPick?.(mwv.eye, d) ?? null,   // PEER-PLAQUE1: another player in the room, raced as the F key picks them\n",
+    "new": "",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-building-namer-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "    (key) => host.peerHoverName?.(key) ?? null,   // PEER-PLAQUE1: another player, by the outer host's own word - the port's own family, ungated like the corpses above\n",
+    "new": "",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-dungeon-pick-not-delegated",
+    "file": "src/scenes/worldModes.js",
+    "old": "          peerHoverPick: (eye, dir) => host.peerHoverPick?.(eye, dir) ?? null,\n",
+    "new": "",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-dungeon-namer-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ctx.addActivationNamer((key) => host.peerHoverName?.(key) ?? null);\n",
+    "new": "",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "PEER-PLAQUE1-dungeon-pick-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          peer: opts.peerHoverPick?.(eye, d) ?? null,   // PEER-PLAQUE1: another player underground, raced as the F key picks them\n",
+    "new": "",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  }
+]

@@ -59,7 +59,7 @@ test('SOC1 wire: the hub is the world channel, the bounds are what Mac asked for
   assert.ok(INVITE_TTL_MS >= 60_000 && INVITE_TTL_MS <= 10 * 60_000, 'an invite stands for minutes, not for ever');
   assert.ok(PARTY_OFFLINE_MS >= 60_000, 'a refresh keeps a seat');
   assert.ok(PARTY_SEND_MS * PARTY_HZ_MAX >= 1000, 'the client\'s floor never trips the relay\'s gate');
-  assert.equal(RELAY_VERSION, 'world90', 'SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair); AUDIT WATCH1 again (wire.js gained CELL_WATCH_PUPPETS_MAX); the main merge again (a comment line in wire.js moved - the bytes are the law); RELAY-H1 again (the heartbeat and PING_MS); ACC1d again (the hello\'s `tok` and the roster\'s `v`)');
+  assert.equal(RELAY_VERSION, 'world91', 'QUEST1 + TRADE1 + PEER-FS1 (three drops, one deploy): the quest frame, the trade frame, the pose\'s fk; SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair); AUDIT WATCH1 again (wire.js gained CELL_WATCH_PUPPETS_MAX); the main merge again (a comment line in wire.js moved - the bytes are the law)');
   assert.deepEqual(Object.keys(SOCIAL_ACTS), ['friend.request', 'friend.accept', 'friend.decline', 'friend.cancel', 'friend.remove', 'party.invite', 'party.accept', 'party.decline', 'party.leave', 'party.kick']);
   assert.deepEqual(SOCIAL_KINDS, ['state', 'presence', 'party', 'invite', 'note', 'error']);
   assert.ok(NOTE_CODES.includes('party.joined') && NOTE_CODES.includes('friend.requested') && NOTE_CODES.includes('party.leader') && NOTE_CODES.includes('party.lapsed'));
@@ -105,7 +105,7 @@ test('SOC1 wire: a social act names exactly what its kind needs (mutants: a targ
 
 test('SOC1 wire: a party pose is projected by its own law - the map pixel clamped, the vitals bounded and rounded, the place a label, the portrait by the look\'s bounds; refused whole (mutants: a vital past FOE_HEALTH_MAX admitted; a fraction on a bar; the place unfiltered; a record half landed)', () => {
   const p = validPartyPose(P);
-  assert.deepEqual(p, { px: 100, py: 200, in: 0, loc: 'Daggerfall', h: 50, hm: 60, f: 1000, fm: 2000, m: 10, mm: 20, race: 'Nord', gender: 'male', face: 2 });
+  assert.deepEqual(p, { px: 100, py: 200, in: 0, loc: 'Daggerfall', h: 50, hm: 60, f: 1000, fm: 2000, m: 10, mm: 20, race: 'Nord', gender: 'male', face: 2, bk: null, rest: null, restPending: null, ready: false });
   assert.deepEqual(validPartyPose(p), p, 'idempotent');
   assert.deepEqual(validPartyPose({ ...P, px: 5000, py: -3 }), null, 'a negative pixel is no pixel');
   assert.equal(validPartyPose({ ...P, px: 5000.7 }).px, MAP_PIXELS_X - 1, 'clamped to the map');
@@ -124,6 +124,55 @@ test('SOC1 wire: a party pose is projected by its own law - the map pixel clampe
   for (const bad of [null, 7, 'x', [], { ...P, px: undefined }]) assert.equal(validPartyPose(bad), null);
   assert.equal(sanitizeLabel('the hub stumbled - try again', SOCIAL_ERROR_MAX, { filter: false }), 'the hub stumbled - try again');
   assert.equal(sanitizeLabel('x'.repeat(200), SOCIAL_ERROR_MAX, { filter: false }).length, SOCIAL_ERROR_MAX);
+});
+
+test('PARTY-REST1 wire: `bk` only means anything indoors, and `rest` is refused WHOLE on one bad number, never best-effort (mutants: bk kept outside or in a dungeon; a rest object with one bad field landing anyway; the mode enum accepting an out-of-range number; the hour clamps missing)', () => {
+  // bk: real outside a building, null everywhere else - including a real 0, the
+  // sentinel a mischievous client might send FOR "outside" to smuggle an
+  // in-bounds key past a check that used 0 as its own "absent" reading.
+  assert.equal(validPartyPose({ ...P, in: 2, bk: 5 }).bk, 5);
+  assert.equal(validPartyPose({ ...P, in: 2, bk: 0 }).bk, 0, 'a real building key of 0 is not the same thing as absent');
+  assert.equal(validPartyPose({ ...P, in: 2, bk: undefined }).bk, null);
+  assert.equal(validPartyPose({ ...P, in: 2, bk: -1 }).bk, null, 'not a real key (uint refuses negative, same as px/py)');
+  assert.equal(validPartyPose({ ...P, in: 0, bk: 5 }).bk, null, 'outside, a sent key is dropped, not trusted');
+  assert.equal(validPartyPose({ ...P, in: 1, bk: 5 }).bk, null, 'a dungeon has no building key either');
+  // rest: absent or null is a valid, ordinary pose (a stale client, or simply
+  // not resting) - never refused for lacking it.
+  assert.equal(validPartyPose({ ...P, rest: undefined }).rest, null);
+  assert.equal(validPartyPose({ ...P, rest: null }).rest, null);
+  const rest = { mode: 1, hoursRemaining: 4, totalHours: 2 };
+  assert.deepEqual(validPartyPose({ ...P, rest }).rest, rest);
+  for (const mode of [0, 2]) assert.equal(validPartyPose({ ...P, rest: { ...rest, mode } }).rest.mode, mode);
+  // refused WHOLE: one bad field inside `rest` refuses the POSE, not just
+  // that field - a follower's mirror would otherwise have to guess the rest
+  // of a half-landed session.
+  for (const bad of [{ ...rest, mode: 3 }, { ...rest, mode: 'x' }, { ...rest, mode: undefined },
+    { ...rest, hoursRemaining: 'x' }, { ...rest, hoursRemaining: NaN }, { ...rest, hoursRemaining: undefined },
+    { ...rest, totalHours: 'x' }, { ...rest, totalHours: undefined }, 7, 'x', []]) {
+    assert.equal(validPartyPose({ ...P, rest: bad }), null, `${JSON.stringify(bad)} refuses the whole pose`);
+  }
+  // clamped, not refused, same law as the vitals above.
+  assert.equal(validPartyPose({ ...P, rest: { ...rest, hoursRemaining: -3 } }).rest.hoursRemaining, 0);
+  assert.equal(validPartyPose({ ...P, rest: { ...rest, hoursRemaining: 500 } }).rest.hoursRemaining, 99, 'clamped to restSession.js\'s own MAX_REST_HOURS');
+  assert.equal(validPartyPose({ ...P, rest: { ...rest, hoursRemaining: 4.6 } }).rest.hoursRemaining, 5, 'rounded, same as the vitals');
+  assert.deepEqual(validPartyPose(validPartyPose({ ...P, rest })), validPartyPose({ ...P, rest }), 'idempotent with a rest object riding along');
+});
+
+test('PARTY-REST2 wire: `restPending` (the leader\'s proposal) is refused WHOLE on one bad field, same law as `rest`; `ready` is a plain, always-present boolean, never null (mutants: a half-landed proposal; ready defaulting to true; a stray truthy value passing as ready)', () => {
+  assert.equal(validPartyPose({ ...P, restPending: undefined }).restPending, null);
+  assert.equal(validPartyPose({ ...P, restPending: null }).restPending, null);
+  const pending = { mode: 1, hours: 6 };
+  assert.deepEqual(validPartyPose({ ...P, restPending: pending }).restPending, pending);
+  for (const mode of [0, 2]) assert.equal(validPartyPose({ ...P, restPending: { ...pending, mode } }).restPending.mode, mode);
+  for (const bad of [{ ...pending, mode: 3 }, { ...pending, mode: undefined }, { ...pending, hours: 'x' }, { ...pending, hours: NaN }, { ...pending, hours: undefined }, 7, 'x', []]) {
+    assert.equal(validPartyPose({ ...P, restPending: bad }), null, `${JSON.stringify(bad)} refuses the whole pose`);
+  }
+  assert.equal(validPartyPose({ ...P, restPending: { ...pending, hours: -3 } }).restPending.hours, 0);
+  assert.equal(validPartyPose({ ...P, restPending: { ...pending, hours: 500 } }).restPending.hours, 99);
+  assert.equal(validPartyPose({ ...P, ready: true }).ready, true);
+  assert.equal(validPartyPose({ ...P, ready: false }).ready, false);
+  assert.equal(validPartyPose({ ...P, ready: undefined }).ready, false, 'absent reads as not ready, never true');
+  for (const truthy of [1, 'yes', {}, []]) assert.equal(validPartyPose({ ...P, ready: truthy }).ready, false, `${JSON.stringify(truthy)} is not the literal true`);
 });
 
 test('SOC1 wire: the client\'s door on a hub frame - every kind projected, a bad row refuses the frame whole, a list is cut at its bound, a leader who is no member is no party, a note is a known code (mutants: a name unsanitized; a 1000-peer row; the party view admitted with a stranger for leader; the state applied half)', () => {
@@ -565,5 +614,5 @@ test('SOC1 hub: the source - the account is handled after the channel\'s welcome
   assert.match(s, /if \(!isSocialRoom\(a\.key\) \|\| !a\.acct\) \{ this\._junk\(ws, a\); return; \}/, 'a party pose outside the hub, or without an account, is junk');
   const w = rd('src/net/wire.js');
   assert.match(w, /export const SOCIAL_ROOM = CHAT_WORLD_ROOM;/);
-  assert.match(w, /export const RELAY_VERSION = 'world90';/, 'AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again, RELAY-H1 again, ACC1d again');
+  assert.match(w, /export const RELAY_VERSION = 'world91';/, 'AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again');
 });

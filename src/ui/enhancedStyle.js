@@ -2843,6 +2843,10 @@ ${badgeCss()}
 .cr-shell .cr-foldall { margin: 0 0 14px; max-width: 66ch; }
 .cr-shell .cr-entry.cr-shut { padding-bottom: 12px; }
 .cr-shell .cr-entry.cr-shut .cr-head { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+/* QUEST1: the Share button, inside the chosen quest's own opened frame -
+   a small action set off from the prose below it, not another line of
+   journal text. */
+.cr-shell .cr-share { min-width: 60px; }
 .cr-shell .sb-frame { margin: 0 0 16px; }
 .cr-shell .cr-compose { display: flex; gap: 10px; margin: 0 0 18px; max-width: 66ch; }
 .cr-shell .cr-compose input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;

@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:5951` read, on one physical line:
+`src/scenes/worldModes.js:5960` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4159`). With the property missing that call is a
+(`dungeonContext.js:4185`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3447` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3463` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:765`, `src/net/online.js:1270`):**
+**Now (`src/net/wire.js:808`, `src/net/online.js:1362`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7471,3 +7471,31 @@ Pins: `test/watch1.test.js` (6), `test/lockpicking.test.js` (9),
 `test/econ1_world_prices.test.js` (6); mutants: watch1 39 (38 dead, 1
 equivalent), ol4 12 (12 dead), econ1 27 (25 dead, 2 equivalent as
 recorded).
+
+## DROPS (2026-09-22, Mac: "Alright this is a big one. These changes are made specific for our codebase") - four drops integrated, three additions
+
+**What arrived.** Four zips of whole files against older mains: `quest-sharing-FINAL`, `Trading`, `peer-footsteps-v3`, `EnemyDesyncDungeonFix`. Each file was three-way merged (`git merge-file`) against the main commit its copy was cut from (the smallest diff over the last six hundred), one drop at a time, conflicts resolved at BLOCK level - never a whole file taken from one side (that silently dropped main's hunks once before). The base-finder's smallest diff is not always the true base: for `ui/enhancedMenu.js` it chose a main from before BR1 and the merge quietly reverted the brand mark; the file was reset to main and only the two `prefRow` lines re-added. Every deletion against main was audited by hand; the rest were legitimate.
+
+**QUEST1 - a quest shared with the party.** `systems/questShare.js` (the three receiver gates over the catalog's own membership/minReq/oneTime rows) and `systems/quest/machine.js` (`getShareableQuestData`, `receiveSharedQuest` - a real live Quest rebuilt through restoreSaveData's own loop from a wire envelope, `updateSharedQuest` for a later resync, `REPLAYABLE_ONE_TIME_ACTIONS` = TeleportPc/GivePc/TrainPc re-armed on the receiver; PayMoney and GiveItem deliberately not). The wire: `{t:'quest'}` under `QUEST_FRAME_MAX` (64 KiB, a quest's save-data is not a pose), `QUEST_HZ_MAX` a tenth a second, `questShareGate`/`questInGate` as plain cooldowns (a sub-1 rate never passes a token bucket - the drop's own BUG note), the hub fans it to the sender's party. The Share button sits in the chronicle's opened quest frame (`ui/enhancedChronicle.js`, `.cr-rm cr-share`), through `chronicleDoor.js` to world.js `shareQuestWithParty`; a received quest lands as a HUD line (`setMidScreenText`). `receiveSharedQuest` is the FOURTH door a live quest is born through, so `world5`/`world7`'s `questClockStepMax` count moved 3 -> 4.
+
+**TRADE1 - player-to-player trade.** `net/tradeSession.js` (the state machine: ask/yes/no, offer revisions, lock/confirm on both sides, commit only after MY goods left the socket - LOOT-DUP's law, `TRADE_RANGE_M` 5 metres between the two BODIES, never a pixel) and `systems/tradePack.js` (the real pack: reserve, release, apply). The wire: `{t:'trade', data}` projected by `validTradeData` per kind, `TRADE_FRAME_MAX` 12 KiB, routed by the relay to ONE peer inside one room (`server/src/index.js` `_meterTrade`), `sendTrade` down whichever open socket reports the peer (own cell or a halo - `_socketFor`), `TRADE_RELAY_MIN = 91` so a client never sends a frame an older relay would close the socket on (`relaySupportsTrade` off the welcome). The F-menu grew a third row (`ui/socialMenu.js` `canTrade`/`tradeLabel`: 'Accept trade' when the peer already asked), and the window is `ui/enhancedPlayerTrade.js` behind `ui/playerTradeDoor.js` - a DOM door in the enhanced skin alone, its overlay arms one per line so CRASH2's window gate reads it (the drop had them on one line and the gate reported the door unread). `tradeFrame()` ticks on the online frame after `chatFrame()`, before the dead return.
+
+**PARTY-REST1/2/3 - came in with the Trading drop's tree, kept whole.** `composePartyPose` carries `bk` (the building), `rest` (the leader's live session) and `ready` (this tab's `/ready` vote); a follower NEAR the leader (`nearAccount`: the same pixel/mode/building AND within `PARTY_REST_RADIUS` = 15 m by the bodies) mirrors the leader's nap through `partyRestFollowTick` - the SAME `RestWindow` class over `partyRestMirrorDeps()` (no encounter roll, no trespass charge of its own); the leader's `toggleRest` is gated by `partyRestGate` (everyone near must have typed `/ready`). The drop's world.js imported a `createRestWindow` from a `ui/restDoor.js` that is not in this tree - the app would not have loaded; restored to `new RestWindow(...)` in both places, and `restlodging`'s "one rest window path" pin now names the mirror as the one permitted second.
+
+**PEER-FS1/2 - peers heard.** The pose carries `fk` (the footstep-surface kind, `systems/footsteps.js FOOTSTEP_KIND` 0-5, cached on the exterior stride as `_lastFootstepKind` and composed into `arm`); `net/remotePlayers.js` runs a `FootstepMachine` per peer off their own pose and plays the clip pair (`FOOTSTEP_CLIP_SETS` - renamed from the drop's `FOOTSTEP_SETS`, which `immersiveFootsteps.js` already declares for its own set names) with a linear falloff 6 -> 30 m, and a swing sound on every `an` edge. Two switches, `peerFootsteps` and `peerAttackSounds`, on the peer-sprites card and in `ONLINE_PLAYERS_OWN_PREFS` (how OTHER players are heard on THIS machine, the same shape as `peerClassSprites`). `deps` may be null in a test, so the two sound doors read `this.deps?.audio`; `composeLook` keeps ONLINE-CLASS1's law (`class` OMITTED when the career has no name - a look is a cache key), which the drop had loosened to `class: null`.
+
+**SEAT-HEAL - the private dungeon.** A joiner whose host went quiet for `FOES_STALE_MS` took the foes for itself and never gave them back: `applyFoes` refused every frame while it was the authority, and the heartbeat that ends the authority is stamped only when a frame is APPLIED. `dungeonContext.js` `applyFoes` now wraps `applyFoesFrame`: an authority that receives a frame stands down and applies it, and takes the seat back only if the frame did not land. `test/seatheal.test.js` mounts the real statements (acorn-sliced) against a fake clock and session.
+
+**The relay.** `RELAY_VERSION` = `world91`, ONE bump for the three wire changes (the quest frame, the trade frame, the pose's `fk`); `test/relayversion.test.js` carries the row's sha. The relay must be DEPLOYED at world91 before a client offers Trade - until then `tradeOk` is false off the welcome and the row says 'relay not updated'. The Cloudflare token lives in the GitHub Actions secret and nowhere else (Mac's decision).
+
+**Three additions, per the same request.**
+
+*PEER-PLAQUE1 - "Using the world tooltip implementation for other players and interaction prompt."* Another player under the crosshair is one more racer in `raceWinner`'s one precedence (`peer`, between the townsperson and the foe - a body measured through the same cylinder, and the press has no arm for it: the F key is its own gesture). `player/socialPick.js` grew the pure half: `peerRayPick` dresses SOC5's own `pickPeerInFront` hit (SOCIAL_REACH, `rayPersonDistance`) as `{ key: 'peer:<id>', distance, reach }`, `peerIdOfKey`, and `peerPromptText` - the ENABLED acts alone, in the menu's own order and labels (`PEER_ACT_LABELS`, pinned equal to `socialMenuRows`), behind the LIVE interact binding (`getBinding(bindings(), 'SocialInteract')`, 'KeyF' -> 'F', no bracket when unbound - AUDIT SOC D10/C19), the trade row's own live label, and with nothing to offer the relation ('In your party' before 'Friend', else the name alone). world.js names it in the PORT's own `_hoverNamers` (ungated - DFU has no other players, so it sits with the cart and the camps above the mod's switch) as `<name> <glyph marks>` (`ui/playerBadge.js glyphMarks`, the classic face's plain-text glyphs); the building and the dungeon race and name it through two new host doors, `peerHoverPick(eye, dir)` and `peerHoverName(key)`, over the mode's own eye - `worldModes.js` interior pick/namer, `buildDungeonContext` opts, `ctx.addActivationNamer`, `dungeonContext.js` pick.
+
+*PARTY-REST4 - "Notification when youre not near the party leader for resting."* `partyRestFarNotice(leaderRest, near, leaderRow)` in world.js, called from `partyRestFollowTick` on the SAME `near` the mirror reads and before the mirror acts on it: the leader's pose carries a rest and I am not near enough - said ONCE on `setMidScreenText` ("<leader> is resting - come within 15 m of them to rest with the party.", the radius the one law's own number), the latch re-armed only when that rest has ended or I have come near (then the mirror opens instead), stood down with the party. A follower who walks out mid-nap is told the frame their mirror ends. Lifted out and driven in `test/restfar.test.js` (sixty far frames say it once).
+
+*DROPS-FONT - "Ensuring enhanced font gets integrated with the new ui changes."* Verified and pinned rather than changed: the trade window's root is a `.px-home` (the one rule that carries `PIXEL_STACK`, unsmoothed, ligatures off) and its own sheet names no face; the gold field and the chronicle's Share button (`.cr-rm`) say `font: inherit` (a form control falls to the browser's face unless told); the F-menu's Trade row rides the `.dfpeer` card that already wears `PIXEL_FONT_CSS`. `test/tradefont.test.js`.
+
+**Types.** `net/tradeSession.js` opted into `// @ts-check` (HARD3: a seam file) and the checker was run to zero over the tree - the drops' JSDoc named `say`/`near`/`onEnd` as zero-argument functions, `remotePlayers`' deps contract lacked `uploadRecordFrame`/`audio`, the two per-peer maps were born lazily (`??=`) instead of in the constructor, `online.shareQuest`'s destructured default had no shape.
+
+Not verified in a browser: no online session exists in this container. Pins: `test/trade_session.test.js` (25, the drop's), `test/seatheal.test.js` (3, the drop's), `test/peerplaque.test.js` (5), `test/restfar.test.js` (2), `test/tradefont.test.js` (2); mutants: peerplaque 24 (23 dead, 1 equivalent as recorded), restfar 8 (8 dead), tradefont 5 (5 dead), worldhover re-aimed for the new racer (127 dead).

@@ -51,8 +51,8 @@
   {
     "name": "Z6-unshown-peer-wanted",
     "file": "src/net/remotePlayers.js",
-    "old": "      if (!peer?.shown) continue;\n      // MWBODY1",
-    "new": "      if (!peer?.shown) { if (peer) this._wanted.add(lookKey(peer.look)); continue; }\n      // MWBODY1",
+    "old": "      if (!peer?.shown) continue;\n      this._syncFootsteps(peer, toScene, eye);",
+    "new": "      if (!peer?.shown) { if (peer) this._wanted.add(lookKey(peer.look)); continue; }\n      this._syncFootsteps(peer, toScene, eye);",
     "tests": [
       "test/slam15.test.js"
     ]
@@ -60,7 +60,7 @@
   {
     "name": "Z7-departed-batch-kept",
     "file": "src/net/remotePlayers.js",
-    "old": "    for (const [id, entry] of this._batches) {\n      if (live.has(id)) continue;\n      this.renderer.destroyBillboardBatch?.(entry.batch);\n      this._batches.delete(id);\n      this._mobiles.delete(id);   // 2026-09-17: a departed peer's mobile bundle (or its in-flight build) goes with its batch\n    }",
+    "old": "    for (const [id, entry] of this._batches) {\n      if (live.has(id)) continue;\n      this.renderer.destroyBillboardBatch?.(entry.batch);\n      this._batches.delete(id);\n      this._mobiles.delete(id);   // 2026-09-17: a departed peer's mobile bundle (or its in-flight build) goes with its batch\n      this._footsteps?.delete(id);   // PEER-FS1: a departed peer's stride machine goes with everything else\n      this._attackAn?.delete(id);   // PEER-FS2: and their swing-edge tracker\n    }\n",
     "new": "",
     "tests": [
       "test/slam15.test.js",

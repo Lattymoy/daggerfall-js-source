@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, TRADE_IN_HZ_MAX, relaySupportsTrade } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -191,6 +191,7 @@ export function lerpPose(from, to, t) {
     yaw: lerpAngle(from.yaw, to.yaw, k), pitch: from.pitch + (to.pitch - from.pitch) * k, mv: to.mv,
     wd: to.wd ?? 0, an: to.an ?? 0, as: to.as ?? 0,   // MAC7 #1: the arm's three ride the drawn pose whole - nothing to ease
     am: to.am ?? 0, sr: to.sr ?? 0, cn: to.cn ?? 0, cr: to.cr ?? 0,   // MAC7 #2: and the other four
+    fk: to.fk ?? 0,   // PEER-FS1: the footstep-sound kind - discrete, rides the drawn pose whole like the rest
   };
 }
 
@@ -248,10 +249,13 @@ export class OnlineSession {
     this.asecret = acct && asecret ? asecret : null;
     this.onSocial = null;         // SOC2: (frame) => void - a hub frame in, through the wire's door (validSocialFrame): state, presence, party, invite, note, error
     this.onParty = null;          // SOC2: (acct, p) => void - a party member's pose in (never my own account's back)
+    this.onQuestShared = null;    // QUEST1: (acct, name, quest) => void - a party member's shared quest in
     this._sbucket = null;         // SOC2: the social acts' own gate at home (SOCIAL_HZ_MAX - an act the hub would drop is never sent)
     this._pbucket = null;         // SOC2: the party poses' own gate at home (PARTY_HZ_MAX)
+    this._qgateAt = null;          // QUEST1: the quest-share act's own cooldown at home (questShareGate - a plain cooldown, not a bucket; see its own note in wire.js)
     this._lastParty = null;       // SOC2: the last party pose that LEFT, and when - an unchanged one is not re-sent, and a socket that reopens re-sends the first (the hub's attachment is fresh)
     this._lastPartyAt = -Infinity;
+    this._lastQuestShareAt = -Infinity;   // QUEST1: the client's own floor beside the hub's bucket (QUEST_SEND_MS)
     this.name = name;
     this.title = null;         // NAME-ADOPT: my own badge, as the service issued it - never asserted by this side
     this.glyphs = [];
@@ -273,6 +277,11 @@ export class OnlineSession {
     this.onRed = null;            // RED1: (line) => void: the SERVER's own line - {text, at}, no id and no name, because nobody is speaking it
     this.onMuted = null;          // MOD1: ({until}) => void - the relay says I am muted until then (epoch seconds), or 0: lifted
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
+    this.tradeOk = false;         // TRADE1: the relay that welcomed this socket routes trade frames (relaySupportsTrade) - an older one CLOSES the socket on the frame, so nothing is sent to it
+    this.onTrade = null;          // TRADE1: (id, data) => void - a trade frame from a peer, projected by the wire's validTradeData, addressed to ME
+    this._tbucket = null;         // TRADE1: the trade frames' own gate at home (TRADE_HZ_MAX)
+    this._inTradeBucket = null;   // TRADE1: and the gate on trade frames coming IN (a peer is chosen by the sender, so a flood is a peer's, never the relay's)
+    this._inTradeSaid = false;
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
     this.onAct = null;            // WORLD3: (id, data) => void - a door, a lever or a platform moved by another in my room
     this._abucket = null;         // WORLD3: the actions' own gate at home (ACT_HZ_MAX)
@@ -319,7 +328,7 @@ export class OnlineSession {
     // AUDIT SOC B3: the same law for the hub's frames - the picture's (state, presence, party, invite) on one bucket per
     // room, the LINES (a note, an error - each a chat line nobody sent) on a tighter one, the other members' poses on a
     // third; an honest hub at full tilt passes whole (net/wire.js SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, PARTY_IN_HZ_MAX)
-    this._inSocial = new Map(); this._inNote = new Map(); this._inParty = new Map();
+    this._inSocial = new Map(); this._inNote = new Map(); this._inParty = new Map(); this._inQuest = new Map();
     this._inSocialSaid = false;
     this.peers = new Map();    // id -> { id, name, look, pose, from, at, shown, seenAt } - MERGED over every room held (WORLD6b-iii(b))
     this._rooms = new Map();   // WORLD6b-iii(b): room -> Set<id> - which rooms report which peers; a peer stays in `peers` while any room holds it
@@ -525,6 +534,7 @@ export class OnlineSession {
     this._rooms.delete(room);
     this._inChat.delete(room);   // CHAT-G: a room let go takes its bucket with it, or a long session accumulates one per cell it ever walked through
     this._inSocial.delete(room); this._inNote.delete(room); this._inParty.delete(room);   // AUDIT SOC B3: and the hub's three
+    this._inQuest.delete(room);
     if (s) for (const id of s) if (!this._held(id)) this.peers.delete(id);
   }
   _openHalo(room, backoff = BACKOFF_MIN_MS) {
@@ -613,6 +623,43 @@ export class OnlineSession {
     if (s.length > MAX_FRAME_BYTES) return false;
     try { ws.send(s); } catch { return false; }
     this._hbucket = gate.bucket; this.stats.sent++; this.stats.hits++;
+    return true;
+  }
+
+  /** TRADE1: THE SOCKET A DIRECTED FRAME TO `id` GOES DOWN - my own cell's when it reports them, else a halo's that does; null
+   *  when no open socket I hold reports them. The relay routes `to` inside ONE room, so this is the only thing the relay's
+   *  geography decides - and it decides no RANGE: two players a few metres apart astride a cell edge are in each other's halo
+   *  (wire.cellHaloFor, `hit`'s own reasoning), so the frame simply goes down whichever socket reports the other. How near
+   *  is near enough to trade is a matter of metres (net/tradeSession.js TRADE_RANGE_M), judged by the host from the two bodies. */
+  _socketFor(id) {
+    if (!id) return null;
+    for (const r of [this.room, ...this._halo.keys()]) {
+      if (!this._rooms.get(r)?.has(id)) continue;
+      const ws = r === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(r)?.status === 'open' ? this._halo.get(r).ws : null);
+      if (ws) return ws;
+    }
+    return null;
+  }
+
+  /** TRADE1: can a frame reach `id` at all - some open socket of mine reports them (see _socketFor). Not a distance. */
+  reachesPeer(id) { return this._socketFor(id) !== null; }
+
+  /** TRADE1: one trade frame out - to a peer through the socket that reports them (`_socketFor`: my own cell or a halo), through
+   *  the wire's own projection first (what the relay's parser would refuse never leaves this machine), TRADE_HZ_MAX a second
+   *  at home. TRUE MEANS THE FRAME LEFT THE SOCKET and nothing else: net/tradeSession.js reserves goods against this
+   *  answer (the LOOT-DUP law, net/hitPend.js) - a false is refused to the caller, never queued here, so the session
+   *  owns its own retry and its own fate. */
+  sendTrade(data) {
+    const d = validTradeData(data);
+    if (!d || d.to === this.id || !this.tradeOk) return false;
+    const ws = this._socketFor(d.to);
+    if (!ws) return false;
+    const gate = tradeGate(this._tbucket, this._now());
+    if (!gate.pass) return false;
+    const s = JSON.stringify({ t: 'trade', data: d });
+    if (s.length > MAX_FRAME_BYTES) return false;
+    try { ws.send(s); } catch { return false; }
+    this._tbucket = gate.bucket; this.stats.sent++; this.stats.trades = (this.stats.trades ?? 0) + 1;
     return true;
   }
 
@@ -931,6 +978,26 @@ export class OnlineSession {
     return true;
   }
 
+  /** QUEST1: sharing an accepted quest with the party - systems/questShare.js's own envelope
+   *  ({questName, displayName, data}, prepareQuestShare's own shape), sent as-is; the hub resolves "my party" on its
+   *  own (the same roster the party pose view already reads), so nothing here names a target. A deliberate,
+   *  one-off click, never a stream - QUEST_SEND_MS is the client's own floor beside the hub's own QUEST_HZ_MAX
+   *  bucket, the same belt-and-suspenders relationship PARTY_SEND_MS/partyGate already keep. */
+  /** @param {{questName?: string, displayName?: string, data?: object}} [share] */
+  shareQuest(share = {}) {
+    const { questName, displayName, data } = share;
+    if (!this.acct) return false;
+    if (typeof questName !== 'string' || !questName || !data || typeof data !== 'object') return false;
+    const now = this._now();
+    if (now - this._lastQuestShareAt < QUEST_SEND_MS) return false;
+    const gate = questShareGate(this._qgateAt, now);
+    if (!gate.pass) return false;
+    const quest = { questName, displayName: typeof displayName === 'string' ? displayName : '', data };
+    if (!this._send({ t: 'quest', quest })) return false;
+    this._qgateAt = gate.at; this._lastQuestShareAt = now; this.stats.questShares = (this.stats.questShares ?? 0) + 1;
+    return true;
+  }
+
   /** The one door back for a session nothing else re-joins (AUDIT CHAT A6/B4/B6): a channel never changes
    *  rooms, so a page's goodbye (leave) or a terminal close would otherwise hold for the life of the page.
    *  Joins `room` at once after a leave, and once `afterMs` has passed since a terminal close; false when
@@ -1031,6 +1098,7 @@ export class OnlineSession {
       // the menu's Relay field), so its deploy name is not our word.
       const relayV = relayVersionOf(m.v);
       if (relayV) this._deliver('relay', () => this.onRelay?.(relayV));
+      if (primary) this.tradeOk = relaySupportsTrade(relayV);   // TRADE1
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {
@@ -1086,6 +1154,21 @@ export class OnlineSession {
       // WORLD2: a blow on my foe - mine to apply only while I host
       // WORLD6b: in a cell a blow is mine when it names me (the relay routed it, and the frame says so); in a world room while I host
       if ((isCellRoom(this.room) ? hitOwnerOf(m.data) === this.id : this.isHost()) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) { this._deliver('hit', () => this.onHit?.(m.id, m.data)); if (isCellRoom(this.room)) this._askWho(room, m.id, now); }   // WORLD6b-iii(e): a stranger's blow lands (the relay routed it to me) and the striker is asked for, so my foe finds its candidate
+    } else if (m.t === 'trade') {
+      // TRADE1: a trade frame the relay routed to me - on ANY socket I hold (my own cell's or a halo's: a peer across a cell
+      // edge reaches me down the socket that reports me, and a trade is decided by metres, not by which cell I stand in),
+      // never my own back, gated coming in (the sender chooses the peer, so an over-rate stream is dropped and said once),
+      // projected by the wire's own law, and addressed to ME. The session applies it; nothing is read from it here.
+      if (typeof m.id === 'string' && m.id !== this.id) {
+        const g = tradeInGate(this._inTradeBucket, now);
+        this._inTradeBucket = g.bucket;
+        if (!g.pass) {
+          if (!this._inTradeSaid) { this._inTradeSaid = true; console.warn(`[online] trade frames are arriving faster than ${TRADE_IN_HZ_MAX}/s - frames are being dropped.`); }
+        } else {
+          const d = validTradeData(m.data);
+          if (d && d.to === this.id) this._deliver('trade', () => this.onTrade?.(m.id, d));
+        }
+      }
     } else if (m.t === 'act') {
       // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one
       if (primary && isWorldRoom(this.room) && typeof m.id === 'string' && m.id !== this.id && m.data && typeof m.data === 'object' && !Array.isArray(m.data)) this._deliver('act', () => this.onAct?.(m.id, m.data));
@@ -1201,6 +1284,15 @@ export class OnlineSession {
       // hub fans to the other members' sockets, and this is the belt for a relay that does not)
       const f = validPartyFrame(m);
       if (f && f.acct !== this.acct) this._deliver('party', () => this.onParty?.(f.acct, f.p));
+    } else if (m.t === 'quest') {
+      // QUEST1: a party member's shared quest, at QUEST_IN_MIN_MS's own cooldown per room - an honest hub, at most
+      // PARTY_MAX-1 senders each throttled to QUEST_HZ_MAX, never trips it; a flood does.
+      const g = questInGate(this._inQuest.get(room), now);
+      this._inQuest.set(room, g.at);
+      if (!g.pass) { this.stats.questSharesDropped = (this.stats.questSharesDropped ?? 0) + 1; return; }
+      // never my own account's back, same reasoning as the party pose above
+      const f = validQuestFrame(m);
+      if (f && f.acct !== this.acct) this._deliver('quest', () => this.onQuestShared?.(f.acct, f.name, f.quest));
     } else if (m.t === 'error') {
       this.status = 'error'; this.error = String(m.m ?? 'relay error');
     }

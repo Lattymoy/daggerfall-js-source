@@ -1445,6 +1445,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // one the pause tab takes - see questBridge.js.
     questLog: () => opts.questBridge.questLog(),
     notebook: () => opts.questBridge.notebook ?? null,
+    // QUEST1: the Share button, delegated through the SAME chain
+    // dungeonOnline/useMagicItem/survivalEnv already ride - the dungeon
+    // has no online layer of its own, only whatever the outer host
+    // (world.js, through worldModes.js's own delegation) answers. This
+    // is what makes the button work while actually standing in the
+    // dungeon, not only after walking back outside it.
+    partyMembers: () => opts.partyMembers?.() ?? [],
+    shareQuest: (uid, questName, displayName) => opts.shareQuest?.(uid, questName, displayName),
   } : {});
 
   /** AUDIT 39 (#38): the chronicle's ONE builder. The key doors mount
@@ -1633,7 +1641,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8389 / exterior.js:3449), set
+  // host's own townTalk sink (world.js:8482 / exterior.js:3449), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2654,7 +2662,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6838 against :6862).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6850 against :6874).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3218,8 +3226,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11757,
-              // exterior.js:4950 and worldModes.js:7038 already ran;
+              // playerArrowHitFoe is the one copy world.js:12162,
+              // exterior.js:4950 and worldModes.js:7050 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3470,9 +3478,27 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   /** WORLD2: the host's foes frame in, each record onto its puppet - the target pose for the eased step, the health
    *  (a drop is the hurt one-shot), death and un-death through the one kill door, the attack once per count (a joiner
-   *  latches the count it arrives with and replays nothing). A frame older than the last is stale. False while I am
-   *  the authority. */
+   *  latches the count it arrives with and replays nothing). A frame older than the last is stale. */
+  /** SEAT-HEAL (2026-09-22, a player's report: "I kill a rat, my party member comes in and still sees it alive, and hits
+   *  the air for me"). THE SEAT WAS A ONE-WAY LATCH. world.js hands a joiner the foes when the host's stream has been
+   *  silent FOES_STALE_MS (a backgrounded host tab stops the frame loop, so it streams nothing), and the heartbeat that
+   *  would hand them back (`_foesInAt`) is stamped only when a frame is APPLIED - while `applyFoesFrame` refuses every
+   *  frame for as long as this context is the authority. So one silence of six seconds left the joiner in a private
+   *  dungeon for good: the rat alive on its screen, its blows applied to its own copy and never sent to the host.
+   *  A frame that reaches here is the live seat-holder's word (online.js delivers a world room's foes frame only when
+   *  `m.id === host && m.id !== me`), so it is proof the seat is ALIVE: the authority yields and the frame lands as a
+   *  puppet's. Only for a NAMED sender and this dungeon's own key; and a frame that does not land (or throws) gives the
+   *  seat back, so a stream broken on this client still cannot pose as a heartbeat (AUDIT ONCRASH1 A4). */
   function applyFoes(data, from = null) {
+    if (!data || !Array.isArray(data.f)) return false;
+    if (!_authority) return applyFoesFrame(data, from);
+    if (typeof from !== 'string' || !from || (data.k != null && data.k !== _locationKey)) return false;
+    setAuthority(false);
+    let landed = false;
+    try { landed = applyFoesFrame(data, from); } finally { if (!landed) setAuthority(true); }
+    return landed;
+  }
+  function applyFoesFrame(data, from = null) {
     if (_authority || !data || !Array.isArray(data.f)) return false;
     // AUDIT WORLD2 A1/B2: a new host's counter starts over, and its attack counts are its own - every puppet
     // re-latches (no phantom strike, no frame judged stale by the old host's high-water mark)
@@ -4745,6 +4771,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         return raceWinner({
           ground: pickActivatableHit(eye, d, api.dungeonActivationTargets(), collider),
           foe: pickActivatableHit(eye, d, liveFoeTargets(foes, 'mobileFoe'), collider),
+          peer: opts.peerHoverPick?.(eye, d) ?? null,   // PEER-PLAQUE1: another player underground, raced as the F key picks them
         });
       },
       collider,

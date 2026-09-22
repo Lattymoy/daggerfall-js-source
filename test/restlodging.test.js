@@ -597,8 +597,13 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     // keys properly; this is the same claim where this pin makes it.)
     assert.equal((s.match(/(?<![\w.])toggleRest:/g) ?? []).length, 1,
       `${f}: hudCtx must declare toggleRest exactly once`);
-    assert.equal((s.match(/new RestWindow\(/g) ?? []).length, 1,
+    // PARTY-REST1: world.js opens the SAME class a second time, over the follower's mirror deps - a mirror of
+    // the leader's nap, not a twin of toggleRest (it runs no gate, no CanRest, no Vagrancy charge of its own).
+    const mirrors = f === 'src/scenes/world.js' ? 1 : 0;
+    assert.equal((s.match(/new RestWindow\(/g) ?? []).length, 1 + mirrors,
       `${f}: one rest window path, not a twin's second one`);
+    if (mirrors) assert.match(s, /const win = new RestWindow\(partyRestMirrorDeps\(\)\);[^\n]*\n\s*win\.isPartyRestMirror = true;/,
+      `${f}: the second is the party mirror, marked as one`);
     // ...and it sits INSIDE the overlay/mode guard the ladder opens
     // with, not after it. Both indices are asserted FOUND first: the
     // first version compared them raw, so an arm hoisted ABOVE the

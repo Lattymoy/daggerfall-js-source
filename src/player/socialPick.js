@@ -69,3 +69,68 @@ export function pickPeerInFront(camPos, fwd, peers, reach, distanceOf) {
   if (!best || !(bestDist <= reach)) return null;
   return { peer: best, distance: bestDist };
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// PEER-PLAQUE1 (2026-09-22, Mac: "Using the world tooltip implementation for other players and interaction
+// prompt"): THE PLAQUE'S HALF OF THE SAME PICK. World Tooltips names what the crosshair rests on
+// (systems/worldHover.js, ui/worldPlaque.js) off the SAME ray race the press runs (player/activationRace.js
+// raceWinner), so another player under the crosshair is one more racer - `peerRayPick` dresses `pickPeerInFront`'s
+// answer in the race's own shape - and what the plaque says under their name is what the F-menu would offer at
+// this moment - `peerPromptText` reads the very `actionsFor`/`tradeActionsFor` bag ui/socialMenu.js draws its
+// rows from, so the prompt can never promise an act the menu would then refuse. Both are pure, so a test drives
+// them with plain numbers and plain words; scenes/world.js keeps the arm (the picks, the namer, the key's label).
+// ---------------------------------------------------------------------------------------------------------------
+
+/** The plaque key a player wears: `peer:<session id>` - a string like every other namer's, and one no other family
+ *  can mint (net/wire.js ID_RE has no colon). */
+export const PEER_KEY_PREFIX = 'peer:';
+
+/** The session id under a `peer:` key, or null for any other key (a namer is handed EVERY key the ray can win -
+ *  AUDIT-WH2 L2-F5's guard, so a non-string never reaches `startsWith`). */
+export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length ? key.slice(PEER_KEY_PREFIX.length) : null);
+
+/**
+ * `pickPeerInFront`'s answer as a RAY PICK the race reads - `{ key, distance, reach }`, `reach` the same SOCIAL_REACH
+ * the pick was already measured against (so `resolveHover`'s own `distance <= reach` gate agrees with the pick's,
+ * and a plaque never names a player the key would not reach). Null in, null out.
+ * @param {{ peer: { id: string }, distance: number }|null} hit
+ * @param {number} [reach]
+ * @returns {{ key: string, distance: number, reach: number }|null}
+ */
+export function peerRayPick(hit, reach = SOCIAL_REACH) {
+  if (!hit?.peer?.id || !Number.isFinite(hit.distance)) return null;
+  return { key: PEER_KEY_PREFIX + hit.peer.id, distance: hit.distance, reach };
+}
+
+/** The menu's own three labels, in the menu's own order (ui/socialMenu.js socialMenuRows) - one home. */
+export const PEER_ACT_LABELS = Object.freeze({ friend: 'Add friend', invite: 'Invite to party', trade: 'Trade' });
+
+/**
+ * WHAT THE PLAQUE SAYS UNDER A PLAYER'S NAME. `acts` is `{ ...social.actionsFor(id), ...tradeActionsFor(id) }` -
+ * exactly the bag the F-menu is opened with - and `keyLabel` the interact key as the host spells it ('' when the
+ * action is unbound: AUDIT SOC D10/C19, F is rebindable and a phone has no F, so the key is never assumed).
+ *
+ *   - The ENABLED acts, and only those, behind the key: `[F] Add friend · Invite to party · Trade`. A disabled
+ *     act is not listed with its reason - the plaque is a readout the eye takes in at a glance, and the menu is
+ *     one press away with every reason on its rows.
+ *   - The trade row's own live label when the peer already asked ('Accept trade' - `tradeLabel`).
+ *   - With nothing to offer, the RELATION instead and no key: 'In your party' beats 'Friend' (a party member is
+ *     usually a friend too, and the seat is the more useful word), else 'Friend', else null - the name alone.
+ *   - Unbound key: the acts alone, no bracket, so the line never reads `[] ...`.
+ *
+ * @param {{ canFriend?: boolean, canInvite?: boolean, canTrade?: boolean, tradeLabel?: string|null,
+ *           relation?: string|null, whyNotInvite?: string|null }|null} acts
+ * @param {string} [keyLabel]
+ * @returns {string|null}
+ */
+export function peerPromptText(acts, keyLabel = '') {
+  if (!acts) return null;
+  const offers = [];
+  if (acts.canFriend) offers.push(PEER_ACT_LABELS.friend);
+  if (acts.canInvite) offers.push(PEER_ACT_LABELS.invite);
+  if (acts.canTrade) offers.push(acts.tradeLabel || PEER_ACT_LABELS.trade);
+  if (offers.length) return `${keyLabel ? `[${keyLabel}] ` : ''}${offers.join(' \u00b7 ')}`;
+  if (acts.whyNotInvite === 'in your party') return 'In your party';
+  if (acts.relation === 'friend') return 'Friend';
+  return null;
+}
