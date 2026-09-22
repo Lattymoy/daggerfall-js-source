@@ -94,7 +94,7 @@ function enhancedInventoryOverlay(deps) {
   document.body.append(host);
   let unregister = () => {};   // PX28: Tab must be able to put the pack away
 
-  const close = () => {
+  const close = (relock = false) => {
     if (fired) return;
     unregister();
     // THE PILE IS READ BEFORE THE UNMOUNT, which clears the view's
@@ -115,8 +115,11 @@ function enhancedInventoryOverlay(deps) {
     // player in enhanced mode changed boots and walked five seconds in the old pair. (Not in closeSession itself:
     // systems/inventorySession.js is upstream of transport.js, which the component imports - a cycle.)
     immersiveFootsteps.onInventoryClose(deps.entity ?? null);
+    if (relock) deps.relock?.();
   };
-  unregister = registerOverlay(close);
+  const closeToGame = () => close(true);
+  const closeForHandoff = () => close(false);
+  unregister = registerOverlay(closeToGame);
 
   const overlay = {
     isChoiceWindow: true,
@@ -127,7 +130,7 @@ function enhancedInventoryOverlay(deps) {
     hover() { /* the view has its own :hover, and no canvas to hit-test */ },
     tick() { /* nothing on this screen moves on a clock */ },
     draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
+    dispose() { closeForHandoff(); },
   };
 
   // MW-D36: the pack takes the Morrowind arm module by dynamic import
@@ -140,9 +143,9 @@ function enhancedInventoryOverlay(deps) {
   mountEnhancedChunk({
     load: () => Promise.all([import('./enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)]),
     mount: ([{ mountEnhancedInventory }, armMod]) => {
-      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null });
+      view = mountEnhancedInventory(host, { ...deps, onExit: closeToGame, onHandoff: closeForHandoff, fpArm: armMod?.fpArm ?? null });
     },
-    alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'inventory',
+    alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; deps.relock?.(); }, label: 'inventory',
   });
 
   return overlay;
