@@ -259,7 +259,7 @@ import { floorLanding } from '../player/enterExit.js';   // FixStanding for the 
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above, SURV6) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';
 import { SOUND } from '../systems/soundClips.js';
-import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
+import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
@@ -3540,7 +3540,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2380 mounts the same one, gated on
+  // and dungeonContext.js:2381 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5503
@@ -5424,7 +5424,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6116), so exterior mode and a
+    // composer, dungeonContext.js:6119), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6268,15 +6268,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       // (combat/fpArm.js holdPaper) and lays its ink over the sheet's
       // projected corners; on the classic body the sprite lane stands.
       // Asked per open, never snapshot: the arm can be built, unloaded or
-      // hidden between two presses of the key.
-      holder: {
-        available: () => !!weaponRig?.armsAvailable?.(),   // MAP-FIELD: WOULD it draw - the arm is sheathed until it takes the sheet
-        hold: (spec, opts) => !!weaponRig?.holdPaper?.(spec, opts),
-        release: () => { weaponRig?.releasePaper?.(); },
-        // AUDIT-MAP2: corners only from a frame the arm DREW - a paralysed,
-        // hidden or third-person arm answers none, and the window hides the ink
-        corners: () => (weaponRig?.armsDrawn?.() ? weaponRig.paperCorners() : null) ?? null,
-      },
+      // hidden between two presses of the key. MW-MAP1: the holder is
+      // combat/weaponRig.js's, the one every door on every host hands
+      // over - it was written here alone, and the M-key sheets had none.
+      holder: sheetHolderOf(() => weaponRig),
       ...extra,
     });
   }
@@ -6356,7 +6351,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       isBuildingQuestResource: (mapID, key) => topicTree.isBuildingQuestResource(mapID, key),
     }, dfLoc.mapTableData?.mapId ?? 0);
     if (!townMapDoorReady()) return;   // EM4: the skin fork's gate
+    mwViewFirstPerson();   // MW-MAP1: MAP-POV's law for this sheet too - the town plan is read in the head, and the arm must be first-person before the window's first tick asks
     townTalk.showOverlay(createTownMapWindow({
+      holder: sheetHolderOf(() => weaponRig),   // MW-MAP1: the Morrowind hands lane on the M key, as on V
       locationName: dfLoc.name,
       locationId: locId,
       gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
@@ -7345,7 +7342,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8500-8564 -
+  // worldModes answers it in BOTH modes (worldModes.js:8502-8566 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

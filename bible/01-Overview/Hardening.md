@@ -171,7 +171,7 @@ left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
 `worldModes.js` that pointed between them cited `world.js:5661` and
-`dungeonContext.js:6145` - lines that had moved to `:4826` and `:6120`.
+`dungeonContext.js:6148` - lines that had moved to `:4827` and `:6123`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
 The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,
@@ -253,9 +253,9 @@ three collapsed on verification.**
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:9288` disposes the dungeon overlay that
+3. *"`worldModes.js:9290` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
-   known, already written down, at `dungeonContext.js:6914-6915`:
+   known, already written down, at `dungeonContext.js:6917-6918`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
    call harmless."* The tree had the answer before the audit asked.
 

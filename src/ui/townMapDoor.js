@@ -56,6 +56,7 @@ export function createTownMapWindow(deps = {}) {
       ...(deps.travel ?? {}),
       where: deps.where ?? (() => ({ inLocation: true })),
       openOnSheet: deps.openOnSheet ?? null,
+      holder: deps.holder ?? null,   // MW-MAP1: the Morrowind arm's hands lane, where the host has an arm (combat/weaponRig.js sheetHolderOf)
       town: {
         gridW: deps.gridW ?? 0,
         gridH: deps.gridH ?? 0,
