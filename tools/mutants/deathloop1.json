@@ -2,8 +2,8 @@
   {
     "name": "revival-forgets-the-drains",
     "file": "src/systems/deathRespawn.js",
-    "old": "  return { revived: dead || force, cleared: endLethalDrains(entity) };",
-    "new": "  return { revived: dead || force, cleared: [] };",
+    "old": "  return { revived: dead || force, cleared: endLethalDrains(entity), exposure: endLethalExposure(entity) };",
+    "new": "  return { revived: dead || force, cleared: [], exposure: endLethalExposure(entity) };",
     "tests": [
       "test/deathloop1.test.js"
     ]
@@ -144,6 +144,69 @@
     "tests": [
       "test/deathloop1.test.js",
       "test/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "revival-leaves-the-exposure",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  return { revived: dead || force, cleared: endLethalDrains(entity), exposure: endLethalExposure(entity) };",
+    "new": "  return { revived: dead || force, cleared: endLethalDrains(entity), exposure: [] };",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "revival-leaves-the-soaking",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0, wet: 0 });",
+    "new": "export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0 });",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "revival-wipes-the-needs-too",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0, wet: 0 });",
+    "new": "export const REVIVED_SURVIVAL_RESET = Object.freeze({ exposure: 0, wet: 0, thirst: 0, sleepDebt: 0 });",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "exposure-reset-reports-regardless",
+    "file": "src/systems/deathRespawn.js",
+    "old": "    if ((s[k] ?? 0) !== v) { s[k] = v; cleared.push(k); }",
+    "new": "    s[k] = v; cleared.push(k);",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "death-wail-leaves-the-constructor",
+    "file": "src/systems/playerDeath.js",
+    "old": "    playSound?.(this.deathSound);",
+    "new": "    this._pending = this.deathSound;",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "a-host-stacks-death-screens",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!(interiorOverlay instanceof DeathScreen)) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "the-cold-becomes-survivable",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (abs > NEED.DAMAGE_AT && !sleeping && harmTick) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));",
+    "new": "    if (abs > NEED.DAMAGE_AT && !sleeping && harmTick) hurtFloored(Math.max(1, Math.trunc((abs - 40) / 10)));",
+    "tests": [
+      "test/deathloop1.test.js"
     ]
   }
 ]

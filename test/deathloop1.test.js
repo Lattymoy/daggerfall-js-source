@@ -217,3 +217,89 @@ test('DEATH-BODY1: coming back to life lowers the death latch, wherever the life
     'one module-level body, which is why a latch on it outlives a death');
   assert.equal(typeof eotbBody.state, 'function');
 });
+
+// ── DEATHLOOP2: THE WAILING IS THE DEATH SOUND, ONE PER LOOP ─────
+//
+// DragynDance on Discord (2026-09-22): "do you know why my game keeps
+// spamming a wailing sound at me?", alongside "I almost died in
+// privateers hold due to freezing to death" and "as soon as I stepped
+// outside my health bar started draaaaining".
+//
+// PlayerDeathSequence plays the character's own Pain3 in its
+// CONSTRUCTOR, and every host builds a fresh DeathScreen each time
+// death is raised. All four hosts are already guarded against STACKING
+// one screen over another, so the repeat is not that - it is the loop
+// turning, once per wail, with the survival notices behind it.
+//
+// DEATHLOOP1 closed the effect half and stopped there. The cold is not
+// an effect: it is computed fresh each tick from climate, month, hour,
+// weather, clothing, WETNESS and race, and its harm is deliberately
+// lethal. That lethality stays. The loop does not.
+test('DEATHLOOP2: a revival clears the exposure that would re-kill on the next tick', async () => {
+  const { reviveForPlay, endLethalExposure, REVIVED_SURVIVAL_RESET } = await import('../src/systems/deathRespawn.js');
+
+  const frozen = { maxHealth: 40, health: 0, activeEffects: [{ kind: 'poison' }],
+    survival: { exposure: 600, wet: 300, thirst: 120, sleepDebt: 400, lastAte: -900 } };
+  const out = reviveForPlay(frozen, { force: true });
+
+  assert.deepEqual(out.cleared, ['poison'], 'the effect half still runs');
+  assert.deepEqual(out.exposure.sort(), ['exposure', 'wet'], 'and the exposure half is reported');
+  assert.equal(frozen.survival.exposure, 0, 'the accumulated cold is off the character');
+  assert.equal(frozen.survival.wet, 0, 'and so is the soaking that was defeating the clothes');
+
+  // THE NEEDS THEMSELVES SURVIVE. This is not a free meal, a free
+  // drink or a night's sleep - a revived character is still hungry,
+  // thirsty and tired, and has to deal with that. Only the two fields
+  // that carry the KILLING TICK across the revival are reset.
+  assert.equal(frozen.survival.thirst, 120, 'still thirsty');
+  assert.equal(frozen.survival.sleepDebt, 400, 'still short of sleep');
+  assert.equal(frozen.survival.lastAte, -900, 'still hungry');
+  assert.deepEqual(Object.keys(REVIVED_SURVIVAL_RESET).sort(), ['exposure', 'wet'],
+    'and the reset list is those two and nothing else');
+
+  // ...and it reports what it CHANGED, not what it looked at. A
+  // character who was dry and unexposed when something else killed
+  // them has no exposure to clear, and saying otherwise would put the
+  // cold in a report it had nothing to do with.
+  const dry = { maxHealth: 40, health: 0, activeEffects: [], survival: { exposure: 0, wet: 0, thirst: 10 } };
+  assert.deepEqual(endLethalExposure(dry), [], 'nothing to clear reports nothing');
+  const damp = { maxHealth: 40, health: 0, activeEffects: [], survival: { exposure: 0, wet: 120 } };
+  assert.deepEqual(endLethalExposure(damp), ['wet'], 'and only the field that moved');
+  assert.deepEqual(endLethalExposure({}), [], 'an entity with no record is not a throw');
+  assert.deepEqual(endLethalExposure(null), [], 'nor is no entity');
+});
+
+test('DEATHLOOP2: the wail is one per DeathScreen, and no host may stack a second over a live one', () => {
+  // The sound is played from the SEQUENCE'S CONSTRUCTOR, so the number
+  // of wails is exactly the number of screens built. That is why the
+  // guard below is the law and not a nicety.
+  const death = readFileSync(new URL('../src/systems/playerDeath.js', import.meta.url), 'utf8');
+  assert.match(death, /playSound\?\.\(this\.deathSound\);/, 'the clip rides construction');
+
+  const HOSTS = ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js', 'src/scenes/exterior.js'];
+  for (const file of HOSTS) {
+    const src = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+    const at = src.indexOf('new DeathScreen(');
+    assert.ok(at > 0, `${file} presents a death`);
+    // the guard sits within the arm just above the construction
+    const before = src.slice(Math.max(0, at - 1400), at);
+    assert.match(before, /instanceof DeathScreen/,
+      `${file}: a second screen over a live one is a second wail`);
+  }
+});
+
+test('DEATHLOOP2: survival exposure is left LETHAL - the design is not what was wrong', async () => {
+  // needs.js withholds the health floor from the temperature harm on
+  // purpose ("the bare-skin harms leave the last five points BECAUSE
+  // they are not meant to kill, and this one is"). A future reader
+  // fixing the deathloop by making the cold survivable would be
+  // undoing the system rather than the bug, so the intent is pinned
+  // where they will see it.
+  const needs = readFileSync(new URL('../src/systems/survival/needs.js', import.meta.url), 'utf8');
+  assert.match(needs, /if \(abs > NEED\.DAMAGE_AT && !sleeping && harmTick\) sinks\.hurt\?\.\(/,
+    'the temperature harm reaches sinks.hurt unfloored, as designed');
+  assert.match(needs, /they are not meant to kill, and this one is/,
+    'and the departure is stated where it is taken');
+  // the floored helper is still used by the harms that are NOT meant to kill
+  assert.match(needs, /hurtFloored\(1\)/, 'the bare-skin harms keep their floor');
+});

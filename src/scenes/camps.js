@@ -127,8 +127,18 @@ export function createCamps({
 
   /** THE PLACING: the pack's use of Camping Equipment or a Campfire Kit lands here (useItem's 'pitchCamp' / 'placeFire'). */
   function placeItem(item, list) {
+    // CAMP-SILENT (2026-09-22, DragynDance on Discord: "camp kits don't
+    // work for me"). USING AN ITEM ALWAYS SAYS SOMETHING. Every other
+    // arm below refuses with words - in town, indoors, foes near, no
+    // ground, worn out - and this one returned false with NO message at
+    // all, so a player whose host could not answer for the ground got
+    // an item that did nothing and no reason. That is the shape INFO1
+    // closed in the HUD a day earlier from the other end: a row with
+    // nothing in it. A refusal the player cannot see is a bug report
+    // nobody can act on, including us - "doesn't work" is all they can
+    // say, because it is all the game told them.
     const cam = camera?.();
-    if (!cam?.feet) return false;
+    if (!cam?.feet) { say(CAMP_TEXT.noSpot); return false; }
     const col = collider?.();
     const r = placeCampItem(item, list, {
       now: now(), owner: selfId?.() ?? null, feet: cam.feet, yaw: cam.yaw ?? 0,
