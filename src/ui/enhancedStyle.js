@@ -3414,11 +3414,18 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .wplaque-statrow { display: flex; align-items: baseline; gap: 10px; font-size: 12px;
   line-height: 1.5; color: #d8cfae; }
 .wplaque-statkey { color: #7d7460; }
-.wplaque-statval { margin-left: auto; }
+/* The value is RIGHT-ALIGNED, not merely pushed right. A condition
+   reads "Slightly Used (75%)" and the panel is deliberately narrow, so
+   that row wraps - and a wrapped value that is only pushed by an auto
+   margin sets its second line hard against the LABEL, which reads as a
+   different row. Aligning the text keeps both lines flush to the same
+   edge as every value above and below it. Seen, not guessed:
+   tools/quickLootStatsProbe.mjs photographs this row. */
+.wplaque-statval { margin-left: auto; text-align: right; }
 /* A sentence row (a raw meat's "cook it at a fire") has no key, so it
    must not be pushed to the right edge by the auto margin the paired
    rows use for their value. */
-.wplaque-statnote .wplaque-statval { margin-left: 0; color: #a49a80; }
+.wplaque-statnote .wplaque-statval { margin-left: 0; text-align: left; color: #a49a80; }
 /* AUDIT-WH R7: THE LIST HAS ITS OWN NODE AND HAD NO RULE. The draw
    emits a .wplaque-list wrapper round the rows and nothing styled it,
    so the block existed only to be an unstyled div - and a plaque under
