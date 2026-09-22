@@ -3549,7 +3549,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2403 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5503
+  // that context through modes.dungeonCtx - so worldModes.js:5504
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5672,7 +5672,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           townTalk.say(undergroundWakeText(wake.kind));
         } else {
           await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
-          const entered = await (modes?.startInDungeon?.() ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it
+          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey }) ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
           if (entered) { playerSpawned = true; modes?.restoreDungeonSave?.(extras); }
           else townTalk.say('(the dungeon has no entrance here - character restored at its door)');
         }
@@ -7351,7 +7351,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8517-8581 -
+  // worldModes answers it in BOTH modes (worldModes.js:8543-8607 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9873,6 +9873,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WINDOW is the third-party UnityConsole prefab, not DFU source).
   installConsoleProbe();
   if (shotMode) { modes.installShotProbes(); installTownProbes(); }
+  if (shotMode) { window.__quickSave = () => worldQuickSave(); window.__quickLoad = () => worldQuickLoad(); window.__hudLines = () => JSON.stringify(townTalk._debug().hud ?? null); }   // CASTLE1 probe surface (tools/castleProbe.mjs)
   if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
   if (shotMode) {
     // F-slice probe surface: the travel state + the nearest real

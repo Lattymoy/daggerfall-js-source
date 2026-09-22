@@ -1462,6 +1462,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // watched here is now a real TEXT.RSC box in this queue.
       overlayBox: (overlay?.boxes?.[0]?.rows ?? []).map((r) => r.text ?? r).join(' | ') || null,
       overlayRest: !!overlay?.isRestWindow,   // U48: the rest probe, in BOTH hosts that draw here
+      hud: hud.lines.map((l) => l.text),   // CASTLE1 probe surface
     }),
   };
 }

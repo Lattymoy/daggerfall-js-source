@@ -47,6 +47,8 @@ public/visual-changes/
 
 # V4's playthrough screenshots (tools/firstHourProbe.mjs default SHOTS dir).
 firsthour-shots/
+# CASTLE1: the castle probe's shots (tools/castleProbe.mjs default SHOTS dir).
+castle-shots/
 
 # THE ONE ALLOWED .BSA: the MW fixture archive is OURS - written by
 # test/fixtures/mw/generate.py from pyffi-authored meshes and a hand-
