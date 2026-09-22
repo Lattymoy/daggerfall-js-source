@@ -4,27 +4,35 @@
     "file": "src/ui/hudText.js",
     "old": "    if (String(text ?? '').trim() === '') return;",
     "new": "",
-    "tests": ["test/hudtext.test.js"]
+    "tests": [
+      "test/hudtext.test.js"
+    ]
   },
   {
     "name": "INFO1-whitespace-is-a-name",
     "file": "src/ui/hudText.js",
     "old": "    if (String(text ?? '').trim() === '') return;",
     "new": "    if (String(text ?? '') === '') return;",
-    "tests": ["test/hudtext.test.js"]
+    "tests": [
+      "test/hudtext.test.js"
+    ]
   },
   {
     "name": "INFO1-the-gate-trims-the-row-it-passes",
     "file": "src/ui/hudText.js",
     "old": "    this.lines.push({ id: ++this._nextId, text });",
     "new": "    this.lines.push({ id: ++this._nextId, text: String(text).trim() });",
-    "tests": ["test/hudtext.test.js"]
+    "tests": [
+      "test/hudtext.test.js"
+    ]
   },
   {
     "name": "INFO1-the-notebook-still-takes-the-empty-one",
     "file": "src/ui/hudText.js",
-    "old": "    if (String(text ?? '').trim() === '') return;\n    if (this.lines.length === 0) this.timer = delayInSeconds;",
-    "new": "    if (String(text ?? '').trim() === '') { this.onMessage?.(text); return; }\n    if (this.lines.length === 0) this.timer = delayInSeconds;",
-    "tests": ["test/hudtext.test.js"]
+    "old": "    if (String(text ?? '').trim() === '') return;",
+    "new": "    if (String(text ?? '').trim() === '') { this.onMessage?.(text); return; }",
+    "tests": [
+      "test/hudtext.test.js"
+    ]
   }
 ]

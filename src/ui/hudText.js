@@ -121,6 +121,32 @@ export class HudText {
    *  formatter. */
   add(text, delayInSeconds = HUD_TEXT_POP_DELAY) {
     if (String(text ?? '').trim() === '') return;
+    // NOTICE-SPAM (2026-09-22, Mac: "notification spam with the new
+    // enhanced integration"; DragynDance had a column of the same line
+    // over and over). A TOAST SYSTEM THAT STACKS ONE LINE TEN TIMES IS
+    // WRONG WHATEVER POSTED IT. The classic column scrolls, so a repeat
+    // there costs a row and passes; the enhanced skin draws a PLATE per
+    // row (ENH-NOTICE3), so ten copies of "You are freezing" are ten
+    // plates stacked up the screen and nothing else can be read.
+    //
+    // The producers are still the producers - every survival line is
+    // already gated to once per stage, and this does not excuse a
+    // caller that fires in a loop. What it does is stop the LAST row
+    // being said twice in a row: an identical line already at the back
+    // of the queue refreshes that row's dwell instead of adding a
+    // second one, which is what every toast system does and what the
+    // player means by "stop repeating yourself".
+    //
+    // Deliberately the BACK only, not a scan of the whole queue: "You
+    // are hit" twice with something else between them is two real
+    // events and both belong on screen. Only the immediate repeat is
+    // the spam.
+    const back = this.lines[this.lines.length - 1];
+    if (back && back.text === text) {
+      if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);
+      else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);
+      return;
+    }
     if (this.lines.length === 0) this.timer = delayInSeconds;
     else if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);
     else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);
