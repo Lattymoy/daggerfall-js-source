@@ -260,3 +260,64 @@ test('I1: actionForCode answers primary over secondary, then null', () => {
   assert.equal(actionForCode(t, 'KeyK'), 'Rest');
   assert.equal(actionForCode(t, 'KeyQ'), null);
 });
+
+// ── MAC-D1 (SquidKamer on the desktop app, 2026-09-21: "I cant seem to
+// swing the weapon in the installed version of the game. I have to
+// enable the attack click but I prefer the mouse swing") ─────────────
+test('MAC-D1: an action the game cannot be played without is never left addressing nothing, and a PAD row does not count as reachable', async () => {
+  const {
+    createBindings, resetDefaults, setBinding, repairUnloseableBindings,
+    codesForAction, actionIsReachable, isPadCode, UNLOSEABLE_ACTIONS,
+  } = await import('../src/systems/inputActions.js');
+
+  // MAC-SWING1 fixed the READ - a swing bound to a key answers now,
+  // whatever it is bound to. It did not fix the STATE: an action with
+  // no code at all. That is what stranded two reporters, and the
+  // desktop app's prefs file carries it across reinstalls.
+  assert.ok(UNLOSEABLE_ACTIONS.includes('SwingWeapon'), 'the verb this was reported about');
+  for (const a of ['MoveForwards', 'MoveBackwards', 'MoveLeft', 'MoveRight', 'ActivateCenterObject']) {
+    assert.ok(UNLOSEABLE_ACTIONS.includes(a), `${a}: there is no way to play without it and no way back except a binding`);
+  }
+
+  // A PAD ROW IS NOT A RESCUE. DEFAULT_SECONDARY_BINDINGS refills the
+  // pad codes on every load, so a stranded SwingWeapon still answers
+  // JoystickAxis10Button0 - and `swingButton` reads the MOUSE codes
+  // while the rig's latch reads the held set, neither of which can
+  // ever see a pad code on a machine with no pad.
+  assert.equal(isPadCode('JoystickAxis10Button0'), true);
+  assert.equal(isPadCode('Mouse1'), false); assert.equal(isPadCode('KeyH'), false);
+
+  const s = createBindings(); resetDefaults(s);
+  assert.ok(actionIsReachable(s, 'SwingWeapon'), 'a fresh store is sound');
+  assert.deepEqual(repairUnloseableBindings(s), [], 'and needs no repair - this only ever fires on a broken store');
+
+  // strand it exactly as the controls window can: the row cleared, and
+  // DFU's "keep it unbound" mark set
+  for (const [code, a] of [...s.primary]) if (a === 'SwingWeapon') s.primary.delete(code);
+  s.removedPrimary.add('SwingWeapon');
+  assert.equal(actionIsReachable(s, 'SwingWeapon'), false, 'stranded - nothing on the desk can swing');
+  assert.ok(codesForAction(s, 'SwingWeapon').every(isPadCode), '...though a pad row still answers, which is what hid it');
+
+  // the autofill pass CANNOT fix this, by design - it obeys the mark
+  resetDefaults(s, true);
+  assert.equal(actionIsReachable(s, 'SwingWeapon'), false, 'which is why the repair is its own pass and not a tweak to the autofill');
+
+  assert.deepEqual(repairUnloseableBindings(s), ['SwingWeapon'], 'repaired, and it says which');
+  assert.ok(actionIsReachable(s, 'SwingWeapon'));
+  assert.ok(codesForAction(s, 'SwingWeapon').includes('Mouse1'), 'back on its default');
+  assert.equal(s.removedPrimary.has('SwingWeapon'), false, 'and the mark is lifted, or the next load undoes the repair');
+
+  // A REBIND IS NOT A STRANDING. A player who moves the swing to a key
+  // keeps that key - the repair only ever fills an EMPTY action.
+  const s2 = createBindings(); resetDefaults(s2);
+  setBinding(s2, 'KeyH', 'SwingWeapon', true);
+  const before = codesForAction(s2, 'SwingWeapon');
+  assert.deepEqual(repairUnloseableBindings(s2), [], 'a swing on H is reachable, so nothing is touched');
+  assert.deepEqual(codesForAction(s2, 'SwingWeapon'), before, '...and the player keeps their key');
+  assert.ok(before.includes('KeyH'));
+
+  // the door every load comes through carries it
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/systems/inputActions.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(repairUnloseableBindings\(store\)\.length\) saveKeyBinds\(store\);/, 'run after the autofill pass, and written back');
+});

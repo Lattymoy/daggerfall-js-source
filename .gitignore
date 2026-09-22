@@ -65,3 +65,16 @@ server/.wrangler/
 
 # Probe output (tools/enhancedLightingProbe.mjs PNGs and the like) - never commit.
 scratch/
+
+# EM5: the enhanced map probe writes its shots here - pictures for a
+# person to look at, not source the repo carries.
+artifacts/
+
+# AUDIT-ACC F5: wrangler`s local state - the workerd build of the Worker
+# and the local D1 that `npm run account` and `wrangler dev` create.
+# Build artifacts and a throwaway database; neither belongs in the tree.
+.wrangler/
+# ...and the file wrangler reads local secrets from, which is exactly
+# the kind of file a signing key gets pasted into by accident.
+.dev.vars
+.dev.vars.*

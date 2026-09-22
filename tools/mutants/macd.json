@@ -1,0 +1,90 @@
+[
+  {
+    "name": "MACD1-a-stranded-swing-is-never-repaired",
+    "file": "src/systems/inputActions.js",
+    "old": "      if (repairUnloseableBindings(store).length) saveKeyBinds(store);\n",
+    "new": "",
+    "tests": [
+      "test/inputactions.test.js",
+      "test/audit63_items_loot.test.js",
+      "test/donline1_respawn.test.js"
+    ]
+  },
+  {
+    "name": "MACD1-a-pad-row-counts-as-reachable-so-the-stranding-stays-hidden",
+    "file": "src/systems/inputActions.js",
+    "old": "export const actionIsReachable = (store, action) => codesForAction(store, action).some((c) => !isPadCode(c));",
+    "new": "export const actionIsReachable = (store, action) => codesForAction(store, action).length > 0;",
+    "tests": [
+      "test/inputactions.test.js",
+      "test/audit63_items_loot.test.js",
+      "test/donline1_respawn.test.js"
+    ]
+  },
+  {
+    "name": "MACD1-the-swing-is-not-among-the-verbs-that-cannot-be-lost",
+    "file": "src/systems/inputActions.js",
+    "old": "export const UNLOSEABLE_ACTIONS = Object.freeze(['SwingWeapon',",
+    "new": "export const UNLOSEABLE_ACTIONS = Object.freeze([(",
+    "tests": [
+      "test/inputactions.test.js",
+      "test/audit63_items_loot.test.js",
+      "test/donline1_respawn.test.js"
+    ]
+  },
+  {
+    "name": "MACD2-transportation-draws-its-junk-icon-address-again",
+    "file": "src/systems/itemTemplates.js",
+    "old": "  if (TRANSPORTATION_INDICES.has(item.templateIndex)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/inputactions.test.js",
+      "test/audit63_items_loot.test.js",
+      "test/donline1_respawn.test.js"
+    ]
+  },
+  {
+    "name": "MACD3-a-corrupt-maxHealth-comes-back-as-NaN-neither-alive-nor-dead",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  const m = Number.isFinite(maxHealth) ? maxHealth : 0;\n  return Math.max(1, Math.floor(m * RESPAWN_HEALTH_FRACTION));",
+    "new": "  return Math.max(1, Math.floor((maxHealth ?? 0) * RESPAWN_HEALTH_FRACTION));",
+    "tests": [
+      "test/inputactions.test.js",
+      "test/audit63_items_loot.test.js",
+      "test/donline1_respawn.test.js"
+    ]
+  },
+  {
+    "name": "MACD3-the-heal-goes-back-to-the-end-after-the-teleport-the-death-loop",
+    "file": "src/scenes/world.js",
+    "old": "    playerEntity.health = respawnHealth(playerEntity.maxHealth);\n    surfacePlayer();\n    _deathWasOnline = null;",
+    "new": "    _deathWasOnline = null;",
+    "tests": [
+      "test/inputactions.test.js",
+      "test/audit63_items_loot.test.js",
+      "test/donline1_respawn.test.js"
+    ]
+  },
+  {
+    "name": "MACD3-a-second-death-mid-flight-starts-a-second-respawn",
+    "file": "src/scenes/world.js",
+    "old": "    if (_respawning) return;   // and a second death mid-flight cannot start a second respawn\n",
+    "new": "",
+    "tests": [
+      "test/inputactions.test.js",
+      "test/audit63_items_loot.test.js",
+      "test/donline1_respawn.test.js"
+    ]
+  },
+  {
+    "name": "MACD3-the-respawn-latch-is-never-released-so-one-death-ends-respawning-forever",
+    "file": "src/scenes/world.js",
+    "old": "    }).finally(() => { _respawning = false; });",
+    "new": "    });",
+    "tests": [
+      "test/inputactions.test.js",
+      "test/audit63_items_loot.test.js",
+      "test/donline1_respawn.test.js"
+    ]
+  }
+]

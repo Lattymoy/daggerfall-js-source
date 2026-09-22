@@ -1299,5 +1299,289 @@ Slices, each behind its own `features.js` row:
    recorded equivalent (`tools/mutants/blood1.json` is 307;
    `macbugw4.json`, `macbugw6.json` and `el4.json` re-aimed).
 
+13. **BLOOD3 - the film and the sheen.** SHIPPED (2026-09-21, Mac: *"I
+   think the blood is too shiny and flat"*). Two complaints, two
+   causes, and neither was the art.
+
+   FLAT. The decal's albedo was `ink * tint`, and the ink atlas is
+   WHITE - RGB is `shade * grain`, alpha is coverage. Multiply a white
+   grain by one tint and every texel of a pool comes out the same red:
+   a sticker, whatever the brush did. Blood is not a colour, it is a
+   FILM, and a film's colour is its depth: Beer-Lambert,
+   `tint * exp(ABSORB * (1 - thick))`, anchored so that FULL thickness
+   is exactly a no-op - which is the whole reason the AUDIT 4 parity
+   law ("a mark is lit as the wall it lies on") survives this slice
+   untouched. `BLOOD_ABSORB` is `[0.50, 0.95, 0.95]`: red passes, green
+   and blue are absorbed near twice as hard, so a thinning smear
+   brightens AND WARMS toward orange, which is what blood does and what
+   makes a flat shape read as depth. Deep `0.580 0.050 0.040` goes to
+   `0.956 0.129 0.103` at the rim.
+
+   AND THE THICKNESS IS NOT THE ALPHA. The first cut used `t.a` and
+   the law cancelled itself out - visible in the probe's picture, not
+   in any pin. Alpha is also what the mark is BLENDED by, so the thin
+   rim the film brightens is the rim that is fading out, and the solid
+   body has no variation left to read. The ink's grain is the density
+   the atlas already carries: `thick = t.a * t.r`, coverage times
+   density. Both decal shaders take it, off the one imported constant.
+
+   SHINY. `EL_WET_STRENGTH` was 0.9 - nine tenths of the lamp,
+   wherever the half-vector lined up, at ANY angle. That is the
+   reflectance of polished plastic, and it is why a wet mark read as a
+   white patch. A liquid film is SCHLICK: `F0 + (1-F0)*(1-n.v)^5` with
+   water's F0 = 0.02 (n = 1.33). Two per cent head-on - the case the
+   player sees most, a mark underfoot - and most of the light only at
+   a graze. What is left after Fresnel is `EL_WET_STRENGTH` 0.55, and
+   the sheen is gated by the mark's own DEPTH as well
+   (`smoothstep(0.15, 0.75, thick)`), so a dried rim does not shine
+   while its body is still wet. ONE number feeds both the lantern
+   glint and the sun's - one wetness, not two.
+
+   THE MENISCUS. (Read with slice 15: the NAME is right - this is the
+   curve a liquid stands in - but "a pool has a raised edge, so its rim
+   catches light" is not what the code computes, and a picture was
+   finally made of it there.) The thickness gradient is two extra atlas
+   taps (one texel along each axis) turned into a world-space slope
+   through the quad's OWN tangent frame, solved from `dFdx/dFdy` of
+   the world position against the same of the UV; the normal tilts
+   AWAY from the rise (`n - slope * 0.85`) - a bank of liquid, not a
+   dent. It is computed BEFORE `sunVis`, so the shadows and the sun
+   read the bumped normal and not the flat one, and it is guarded on a
+   non-degenerate frame and a non-flat patch, so a quad seen edge-on
+   divides by nothing.
+
+   The classic set takes the FILM only (it has no specular at all and
+   never had); the lane takes all three. `tools/bloodProbe.mjs` reads
+   the whole frame now and bands it by thickness: the lane's marks
+   come back deep `132,13,9` against thin `72,8,6` - warmth 0.083 to
+   0.101 - and the wet checks hold at `wet 137,25,23 vs dry 136,15,12`
+   with red keeping a 5.48x lead over the glint. 31 of 31 checks pass
+   on a real GPU.
+
+   Pins: three. Re-aimed: THREE, not the two this line said until the
+   audit counted them - the classic shader's film in W4, the lane's
+   albedo and lantern term in W6, and the strength, the sun glint and
+   the probe's strings in 2f. Mutants: 14, 14 dead.
+
+   **READ THIS SLICE WITH SLICE 14.** Three of the claims above are
+   wrong and were paid there: the film ran BACKWARDS (the sheet's ink is
+   a darkening, not a density, so this brightened what the art had
+   darkened); the meniscus differenced two different quantities and was
+   a fixed tilt rather than a rim; and a thinning film DESATURATES, it
+   does not "warm toward orange". The degenerate-frame guard this slice
+   claims covered the UV frame only, and the 31/31 it rests on included
+   a film check that was measuring alpha.
+
+14. **AUDIT BLOOD3 - three lenses, and the slice was wrong.** (2026-09-21,
+   Mac: *"audit this real quick. Make sure it's perfect"*.) It was not.
+   Three lenses went over the shaders and the GPU, the art laws and the
+   atlas, and the pins, mutants and records. Two of them found the same
+   headline defect independently, and a third confirmed it from the
+   records' side. Every finding below was verified against the source
+   before it was paid.
+
+   **F1 - THE FILM RAN BACKWARDS. The ink is not a density.**
+   `shapeAt`'s own docstring said what the sheet holds - *"shade a
+   darkening toward the heart of a pool"* - and every shape obeyed it:
+   pool `0.82 + 0.18 * smooth(0, edge, r)`, drip `0.85 + 0.15 * along`,
+   streak, print and spatter all put their MINIMUM ink at their
+   THICKEST point. That is the art hand-painting depth as a grey
+   darkener. BLOOD3 read high ink as thick, which is the same quantity
+   with the sign reversed, so the film brightened hardest exactly where
+   the art had darkened and erased most of the depth cue it was written
+   to add. The ink was also still an albedo factor, so the sheet's one
+   grey channel was being spent TWICE, in opposite directions.
+
+   The fix is at the source, and it is exact. `shapeAt` answers a
+   DEPTH now (1 at a heart, 0 at a rim). The painter writes
+   `ink = 1 - INK_DEPTH * (depth * grain)` - one shared ramp, because a
+   per-kind amplitude is not invertible - so the ink keeps the range
+   (0.82..1.0) and the sense it always had. That matters: the player's
+   own blood lens draws this same sheet through the plain 2D quad, which
+   has no film and no business acquiring one, and it is untouched to the
+   byte. Both decal shaders now recover the thickness with one line,
+   `(1.0 - t.r) / INK_DEPTH`, and neither multiplies by the ink any
+   more. The grey darkening WAS the film, done by hand in one channel;
+   the film does it now, per channel, properly.
+
+   **F2 - THE MENISCUS MEASURED A GRADIENT OF TWO DIFFERENT THINGS.**
+   The two taps read the neighbours' bare `.a` and subtracted the
+   centre's `t.a * t.r` - residue from the first cut, where `thick` was
+   alpha alone. That is not a difference: it leaves a constant pedestal
+   over a mark's whole body, where the true gradient is zero, which is a
+   fixed tilt along one atlas diagonal on every mark, several times the
+   rim signal it was meant to measure. It fed the diffuse, the shadow
+   lookup's normal offset, the moon, the trilight ambient and the
+   Fresnel. Both taps recover the same field the centre does now, and
+   the `dot(duv, duv) > 0.0` guard - which the pedestal had made
+   permanently true - does something again.
+   Also in that block: `dFdx`/`dFdy` sat INSIDE the branch, where GLSL
+   ES 3.0 leaves a derivative undefined, while line 642 had already
+   computed exactly those two values. One pair now, hoisted, which also
+   pays two redundant derivative ops. And the guard tests the WORLD
+   frame as well as the UV one - without it a quad whose world
+   derivatives are parallel hands `normalize()` a zero vector and throws
+   away the AUDIT 3 fallback as NaN.
+
+   **F3 - THE TWO LANES APPLIED THE FILM IN DIFFERENT COLOUR SPACES.**
+   The lane decodes to linear and encodes at the end; the classic set
+   has no decode and no encode and works in display space end to end. A
+   gain of G shows there as G and here as G^(1/2.2), so the same
+   constant made a mark's thin rim up to 1.7x brighter under the classic
+   set - MAC-BUG W6's fault with the sign reversed, on a line W6 had
+   left parity-correct. `BLOOD_ABSORB_ENCODED` is the exponent over
+   `DISPLAY_GAMMA`, and the pin drives both and asserts they show the
+   same gain on the screen.
+
+   **F4/F5 - "LESS SHINY" HAD BECOME "NOT WET".** Schlick for a
+   SPECULAR lobe is F(V.H), not F(N.V). BLOOD3 shipped the latter,
+   hoisted out in front of every light, where a `(N.H)^64` lobe peaks in
+   a different regime entirely - so the case the player sees most, a
+   mark underfoot with a torch at head height, went from 0.9 of the lamp
+   to 0.018. The angle now sits beside each light's own half-vector
+   (`wetFresnel`, one call, used by the lantern loop and the sun alike)
+   and `sheen` is the wetness gated on depth and nothing else.
+   And the cue that actually reads as wet from above is not a highlight
+   at all: a wet surface is DARKER and richer, because the light goes
+   into the film before it comes back. `WET_DARKEN` carries that. A
+   Fresnel specular without it is a highlight nobody standing up can
+   see, which is what BLOOD3 shipped.
+
+   **F6 - the depth gate did not bite.** Against the old ink the
+   `smoothstep(0.15, 0.75, thick)` sat above 0.93 over 93-97% of every
+   mark, so the "wet core, dry rim" was never delivered; nothing pinned
+   it, because the pins only related the two ends to each other. Against
+   a real depth the band is the full 0..1 and the gate does its job. The
+   pin now asserts where the band SITS, not just that it is ordered.
+
+   **F7 - the film desaturates; it does not "warm".** `BLOOD_ABSORB`
+   gives green and blue the same absorption, so a thinning mark holds
+   its hue and loses its depth of colour - toward pink, never toward
+   orange. BLOOD3's record and its pin both said "warms", and the pin's
+   own metric was a saturation measure. Said correctly now, and the
+   green:blue ratio is pinned invariant.
+
+   **F8 - a latent JS/GLSL desync that its own pin reproduced.** The
+   shader interpolated `${(1 - BLOOD_F0).toFixed(2)}` and the pin
+   asserted the same expression, so the two agreed by construction and
+   would have stayed green through any F0 that does not round to two
+   places. It interpolates the constant itself now.
+
+   **WHAT THE VERIFICATION WAS ACTUALLY DOING.** BLOOD3 reported 31/31
+   on a real GPU. The lenses took that apart, and they were right to:
+   - the probe's FILM check banded the frame BY RED, which sorts a
+     mark's alpha-faded rim into the "thin" bucket. It reported a 1.83
+     spread that the film cannot produce at all - its whole range on red
+     is `exp(0.5) = 1.65` - so it was measuring alpha, and would have
+     passed with the film deleted. It bands BY RADIUS now, two rings
+     both well inside the silhouette at full coverage, where only the
+     film can differ; and a third check bounds the gain, so
+     `BLOOD_ABSORB` has a picture constraining its size for the first
+     time.
+   - the parity fixtures had been moved from red 168 to 255 to make
+     five failing checks pass. 255 was ink at ZERO thickness - the
+     film's maximum gain - and the checks passed only because the law
+     was inverted too. They are shot at 209 now, which is
+     `255 * (1 - INK_DEPTH)`: the value the sheet itself holds at the
+     heart of every pool, where the film is anchored and is a no-op by
+     construction rather than by convenience.
+   - the sun's wet row had been relaxed from "+20 on all three" to
+     ">= on two", which a build with the sun glint DELETED satisfies
+     exactly. It has a margin again.
+   - three pins were re-aimed in the BLOOD3 commit, and the record
+     said two.
+
+   **AND THE PIN THAT WOULD HAVE CAUGHT F1.** Nothing in BLOOD3 ever fed
+   a real atlas texel to the new laws: three pins drove synthetic
+   numbers and the fourth read the shader's source. `BLOOD3 depth` walks
+   the sheet now - every kind, every texel - and asserts the sheet is
+   still white ink (so the lens cannot be broken silently), that the
+   recovered thickness spans the whole range at full coverage, and that
+   it FALLS away from each shape's own deep end. Pool -0.97, spatter
+   -0.77, drip -0.58 against their anchors; inverted, those are about
+   +0.9, which is what the shipped code was doing.
+
+   THE RUN, on chromium/SwiftShader: **33 of 33**. The film is in the
+   picture for the first time - classic heart `192,16,13` against its
+   shoulder `223,22,17` (red gain 1.164, saturation falling 0.076 ->
+   0.088), lane heart `136,14,10` against `152,23,18` (gain 1.118,
+   0.090 -> 0.133). The two lanes read different gains ON PURPOSE and
+   the row says so: the classic set shows it straight, the lane applies
+   it in linear and then tonemaps, which is F3 seen from the other
+   side. And the wet rows carry both halves - under a torch
+   `142,40,39` wet against `156,19,16` dry, the lamp's colour arriving
+   in green and blue while the red FALLS; at noon, head on, where
+   Schlick gives about two per cent, `119,12,9` against `134,13,9`: no
+   highlight at all, just the darkening. A build with BLOOD3's
+   any-angle glint fails that pair now.
+
+   The first run of this came back **18/33**, and every failure was the
+   probe rather than the code: the parity fixture carried its red in
+   the TEXTURE and tinted itself white, which no decal in the game
+   does - so once the ink stopped being an albedo factor it compared a
+   white mark against a red wall. The fixture takes its colour from the
+   tint now, as a mark does.
+
+   Still not covered by a picture: the meniscus. It is pinned by source
+   - the taps, the tangent-frame solve term for term, its placement
+   before the sun visibility, both guards - and killed by four mutants,
+   but no probe row draws it. Said here rather than implied away.
+
+   Pins: four (the film's law, its clamps, the two lanes' gain agreeing
+   on the screen, and the absolute size of the absorption; the sheet
+   walked per kind; the gate's band, Schlick's fifth power at V.H, and
+   the wet darkening; both shaders by source, the recovery, the
+   meniscus's frame, the one derivative pair, both guards). Re-aimed:
+   the W4 classic film, the W6 lane albedo, the lane's normal, the 2f
+   lantern and sun glints, and EL4's half-vector (the eye vector is
+   hoisted out of the light loop now - it was rebuilt up to 48 times a
+   fragment). Mutants: 28, 28 dead (`tools/mutants/blood3.json`); three
+   records re-aimed by content in `blood1.json` and `macbugw6.json`.
+
+15. **AUDIT BLOOD3, TWO LEFT OVER.** (2026-09-21, Mac: *"Whats the
+   meniscus"*, then *"Might aswell"* - make the picture.) Both came out
+   of trying to photograph the one part of the slice that had none.
+
+   **F9 - A DIAL AT A WHOLE NUMBER TOOK THE SHADER OUT.** To shoot the
+   meniscus against itself, `BLOOD_MENISCUS` was set to `0.0` - and the
+   Enhanced Lighting decal program stopped compiling:
+   `'*' : wrong operand types ... 'const int'`. JavaScript stringifies
+   `0.0` as `"0"`, which is an INTEGER literal in GLSL, and `vec3 * int`
+   has no overload. Every constant BLOOD3 and this audit interpolated
+   was bare - `BLOOD_MENISCUS`, `WET_DARKEN`, `INK_DEPTH`, `BLOOD_F0`,
+   `1 - BLOOD_F0`, `EL_WET_STRENGTH`, both absorption triplets - so any
+   of them set to a round number was a runtime landmine under exactly
+   the dials the record invites a reader to tune. The house already had
+   the answer: `glslFloat` (airPass.js:152), which the lantern loop has
+   used since EL5. Eleven interpolations routed through it, both lanes.
+   Pinned by driving the shader build at an integral value, which is the
+   only way to catch this - a text pin on the built string reads whatever
+   the current value happens to produce.
+
+   **F10 - IT IS A HEIGHT FIELD, NOT A RIM.** The picture (the same pool
+   under a grazing sun, `BLOOD_MENISCUS` on against off, differenced):
+   peak change 56 of 255 - so it is plainly doing something - but the
+   change is TWICE as strong in the body as in the rim band, mean 10.7
+   against 4.95. That is inherent to the shape. A pool's thickness is
+   `1 - smoothstep(0, edge, r)`, and a smoothstep's gradient peaks in
+   the MIDDLE of its ramp, not at its ends. So the term lights the mark
+   as a relief of its own thickness - which is correct, and is what
+   gives a pool volume - and a rim lip is one case of that rather than
+   the point of it. The grain rides inside the thickness now, so it
+   becomes fine surface texture too. Slice 13's "a pool has a raised
+   edge, so its rim catches light a flat quad never could" described an
+   effect the code does not have; one of the three lenses flagged the
+   wording and it was carried into the record anyway. Said correctly
+   here, in the shader, and in the index.
+
+   So the meniscus HAS a picture now, and it is a probe row: the mark's
+   lit result changes measurably when the term is switched off, and the
+   row says where that change lands. That was the one gap this arc went
+   to main with, and it is closed.
+
+   Pins: two (every interpolated dial through `glslFloat`, driven at an
+   integral value; the height-field wording by source). Mutants: 4, 4
+   dead. Probe: 35 checks, 35 pass.
+
 The numbers in THE FACTS are the target to feel like. The code that
 hits them is ours.

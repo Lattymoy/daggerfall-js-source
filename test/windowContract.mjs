@@ -93,7 +93,7 @@ export function enclosingScope(lines, i) {
 /** Is line `i` inside a `window.__…` debug probe rather than the
  *  play path? worldModes' inventory probes call `_remote`, `_pick`,
  *  `items`, `labels` and `enabled` straight off the slot, each behind
- *  a DUCK-TYPE test (`isInventory`, worldModes.js:7384) that this
+ *  a DUCK-TYPE test (`isInventory`, worldModes.js:7444) that this
  *  file's guard reader cannot see because the test names a parameter,
  *  not the slot. They are hooks the harness drives with a known window
  *  up, not arms the game calls on whatever is open, so they are not
@@ -156,6 +156,46 @@ export function hostArms() {
 /** The name of the thing a window-valued expression produces, or null.
  *  `new RestWindow(...)` -> RestWindow; `host.makeJournal?.('x')` ->
  *  makeJournal; `openInventory(a, b)` -> openInventory. */
+/**
+ * WHICH CLASSES A DOOR CAN HAND BACK, and where each one lives.
+ *
+ * EM3: a SKIN DOOR is the port's one idiom for "the classic skin gets
+ * DFU's window, the enhanced skin gets ours" (ui/travelMapDoor.js and
+ * six before it). When the dungeon automap grew one, interior.js's
+ * population stopped being a set of `new X(...)` literals and the
+ * closedness pin below went red - correctly, because it had lost sight
+ * of what can arrive.
+ *
+ * It is given its sight back rather than the pin relaxed. A door's arms
+ * are `new X(...)` in the door module itself, so the set is still
+ * EXACTLY knowable; and each class is resolved to the module that
+ * declares it, by looking, rather than by guessing a filename from the
+ * class name (`HeldMapWindow` lives in `heldMap.js`, and the guess
+ * `heldMapWindow.js` is the kind of silent miss this library exists to
+ * prevent). Any future door works with no edit here.
+ *
+ * @param {string} name a producer name, e.g. `createAutomapWindow`
+ * @returns {Array<{name: string, path: string}>|null} null when it is not a door's export
+ */
+export function doorProducts(name) {
+  for (const d of doors()) {
+    const src = read(d);
+    if (!new RegExp(`export\\s+function\\s+${name}\\b`).test(src)) continue;
+    const classes = [...new Set([...src.matchAll(/\bnew\s+([A-Z][\w$]*)\s*\(/g)].map((m) => m[1]))];
+    return classes.map((c) => ({ name: c, path: classModule(c) }));
+  }
+  return null;
+}
+
+/** The module under src/ui that DECLARES this class, or null. Looked
+ *  up rather than guessed - see doorProducts. */
+export function classModule(cls) {
+  for (const f of jsIn('src/ui')) {
+    if (new RegExp(`export\\s+class\\s+${cls}\\b`).test(read(f))) return f;
+  }
+  return null;
+}
+
 export function producerName(expr) {
   const t = String(expr).trim();
   const ctor = t.match(/^new\s+([A-Za-z_$][\w$]*)/);
@@ -190,7 +230,10 @@ export function hostPopulations() {
     const note = (expr, where) => {
       const name = producerName(expr);
       if (!name) return;
-      sites.push({ name, literal: /^new\s/.test(String(expr).trim()), where });
+      // EM3: a DOOR is as closed as a `new X(...)` - its arms are the
+      // `new` calls in the door module, and doorProducts reads them.
+      const viaDoor = doorProducts(name);
+      sites.push({ name, literal: /^new\s/.test(String(expr).trim()) || !!viaDoor, where, door: viaDoor });
     };
     // the host's own push wrapper(s): a function that reaches pushWindow
     const wrappers = [...src.matchAll(/(?:function\s+([A-Za-z_$][\w$]*)\s*\(|const\s+([A-Za-z_$][\w$]*)\s*=\s*\([^)]*\)\s*=>)[\s\S]{0,2000}?\.pushWindow\(/g)]
@@ -212,7 +255,9 @@ export function hostPopulations() {
     const named = sites.filter((s2) => !['w', 'win', 'window'].includes(s2.name));
     out.push({
       path, slots, wrappers, sites: named,
-      names: [...new Set(named.map((s2) => s2.name))].sort(),
+      // a door contributes the classes it can hand back, not itself
+      names: [...new Set(named.flatMap((s2) => (s2.door ? s2.door.map((c) => c.name) : [s2.name])))].sort(),
+      modules: new Map(named.flatMap((s2) => (s2.door ?? [])).map((c) => [c.name, c.path])),
       closed: named.length > 0 && named.every((s2) => s2.literal),
     });
   }

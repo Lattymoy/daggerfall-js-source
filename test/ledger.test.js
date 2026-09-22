@@ -341,7 +341,7 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
     'and world.js holds no road wire OUTSIDE that block - every one of them is in the ungated statement above');
 
   // AUDIT 58 R1 (a): the row's own line cite RESOLVES. It read
-  // `world.js:478-481` - four lines of the ROADS 3/24 comment block - from
+  // `world.js:483-486` - four lines of the ROADS 3/24 comment block - from
   // the day it was written, and the pin above re-derived the no-gate fact
   // without ever reading the number, so the one pointer a reader is sent to
   // could name anything. The cite is now sliced and checked.

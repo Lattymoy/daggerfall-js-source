@@ -100,9 +100,17 @@ function wobble(rng, n = 12, amount = 0.2) {
 }
 
 /**
- * One cell's mask and shade: answers `{ a, shade }` for a point in cell
- * space (x, y in -1..1, y up), a the coverage and shade a darkening
- * toward the heart of a pool.
+ * One cell's mask and DEPTH: answers `{ a, depth }` for a point in cell
+ * space (x, y in -1..1, y up) - `a` the coverage, `depth` how much
+ * blood stands there, 1 at the heart of a pool and 0 at its thinnest.
+ *
+ * AUDIT BLOOD3 F1: this used to answer a `shade`, a grey darkening
+ * toward the heart, and BLOOD3 then read that channel as a DENSITY -
+ * which is the same quantity with the sign reversed, so the film
+ * brightened exactly the texels the art had darkened and erased most
+ * of the depth cue it was written to add. The art owns which end of a
+ * shape is deep; it says so here, in the one unit a film can use, and
+ * the shading is the film's job now (see INK_DEPTH).
  */
 function shapeAt(kind, rng, bits) {
   if (kind === 'pool') {
@@ -110,7 +118,7 @@ function shapeAt(kind, rng, bits) {
     return (x, y) => {
       const r = Math.hypot(x, y), ang = Math.atan2(y, x);
       const edge = 0.78 * (1 + w(ang));
-      return { a: 1 - smooth(edge - 0.1, edge + 0.05, r), shade: 0.82 + 0.18 * smooth(0, edge, r) };
+      return { a: 1 - smooth(edge - 0.1, edge + 0.05, r), depth: 1 - smooth(0, edge, r) };
     };
   }
   if (kind === 'spatter') {
@@ -124,7 +132,7 @@ function shapeAt(kind, rng, bits) {
       const edge = 0.42 * (1 + w(ang));
       let a = 1 - smooth(edge - 0.08, edge + 0.04, r);
       for (const d of dots) a = Math.max(a, 1 - smooth(d.r - 0.03, d.r + 0.03, Math.hypot(x - d.x, y - d.y)));
-      return { a, shade: 0.9 + 0.1 * smooth(0, edge, r) };
+      return { a, depth: 1 - smooth(0, edge, r) };
     };
   }
   if (kind === 'streak') {
@@ -138,7 +146,7 @@ function shapeAt(kind, rng, bits) {
       const head = 1 - smooth(0.3, 0.42, Math.hypot(x + 0.55, y * 1.15));
       a = Math.max(a, head);
       for (const b of beads) a = Math.max(a, 1 - smooth(b.r - 0.02, b.r + 0.02, Math.hypot(x - b.x, y - b.y)));
-      return { a, shade: 0.88 + 0.12 * t };
+      return { a, depth: 1 - Math.max(0, Math.min(1, t)) };
     };
   }
   if (kind === 'print') {
@@ -151,7 +159,7 @@ function shapeAt(kind, rng, bits) {
       const heel = 1 - smooth(0.2, 0.28, Math.hypot((x - heelX) * 1.1, y * 1.35) * (1 + w(ang)));
       const sole = 1 - smooth(0.3, 0.38, Math.hypot((x - toeX) * 0.75, y * 1.15) * (1 + w(ang + 1)));
       const waist = x > heelX && x < toeX ? 1 - smooth(0.16, 0.22, Math.abs(y) * (1 + 0.6 * Math.abs((x - (heelX + toeX) / 2) / ((toeX - heelX) / 2)))) : 0;
-      return { a: Math.max(heel, sole, waist), shade: 0.9 + 0.1 * smooth(heelX, toeX, x) };
+      return { a: Math.max(heel, sole, waist), depth: 1 - smooth(heelX, toeX, x) };
     };
   }
   // drip: a bead high in the cell and a run down to its foot
@@ -163,7 +171,7 @@ function shapeAt(kind, rng, bits) {
     const half = along < 0 ? 0 : 0.09 * (1 - 0.6 * along) * (1 + w(along * Math.PI * 2)) + 0.015;
     const run = along < 0 ? 0 : 1 - smooth(half - 0.03, half + 0.02, Math.abs(x));
     const foot = 1 - smooth(0.07, 0.12, Math.hypot(x, y - runTo));
-    return { a: Math.max(bead, run, foot), shade: 0.85 + 0.15 * Math.max(0, along) };
+    return { a: Math.max(bead, run, foot), depth: 1 - Math.max(0, Math.min(1, along < 0 ? 1 : along)) };
   };
 }
 
@@ -195,12 +203,21 @@ export function buildBloodAtlas({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed =
         for (let px = 0; px < cell; px++) {
           const inBorder = px < BORDER || py < BORDER || px >= cell - BORDER || py >= cell - BORDER;
           const x = ((px + 0.5) / cell) * 2 - 1, y = ((py + 0.5) / cell) * 2 - 1;
-          const { a, shade } = inBorder ? { a: 0, shade: 1 } : at(x, y);
+          const { a, depth } = inBorder ? { a: 0, depth: 0 } : at(x, y);
           const g = 1 + grain(Math.atan2(y, x)) * 0.5 + grain(px * 0.37 + py * 0.11) * 0.5;
           const o = ((y0 + py) * size + (x0 + px)) * 4;
           // BLOOD AUDIT 4: white ink - the shape and its grain; the colour
-          // is the tint's (see BLOOD_BASE)
-          const ink = Math.round(255 * Math.max(0, Math.min(1, shade * g)));
+          // is the tint's (see BLOOD_BASE).
+          // AUDIT BLOOD3 F1: and the ink is now EXACTLY `1 - INK_DEPTH *
+          // thickness`, thickness being the shape's depth with the grain
+          // riding in it. It keeps the range and the sense it always had
+          // (0.82 at the heart, 1 at the thinnest), so the lens - which
+          // draws this sheet through the plain 2D quad and has no film -
+          // is unchanged to the byte. But it is now INVERTIBLE, so the
+          // decal shaders can recover the thickness the film needs from
+          // the one channel the sheet can spare.
+          const thick = Math.max(0, Math.min(1, depth * g));
+          const ink = Math.round(255 * (1 - INK_DEPTH * thick));
           colors[o] = ink; colors[o + 1] = ink; colors[o + 2] = ink;
           colors[o + 3] = Math.round(255 * Math.max(0, Math.min(1, a)));
         }
@@ -234,6 +251,148 @@ export function bloodMarkKind({ pool = false, wall = false, print = false, stret
   if (print) return 'print';
   return stretch > 1.5 ? 'streak' : 'spatter';
 }
+
+// ── BLOOD3: THE MARK IS A FILM, NOT A STICKER ────────────────────
+// (2026-09-21, Mac: "I think the blood is too shiny and flat.")
+//
+// BOTH faults were one line of the decal shader each.
+//
+// FLAT. The albedo was `ink * tint` - and the ink is WHITE, so every
+// texel of a pool came out the same red. A real mark is not a coloured
+// shape, it is a FILM of an absorbing liquid over a surface, and what
+// your eye reads as depth is that the thin part passes light and the
+// deep part does not. Blood absorbs green and blue far harder than
+// red, so a smear's thin edge is a bright scarlet and its body a deep
+// maroon going to black. The law is Beer-Lambert, anchored at the deep
+// end so a full-thickness mark does not move: `tint * exp(ABSORB * (1
+// - thick))`. At thick = 1 the factor is exactly 1.
+//
+// AND THE THICKNESS HAS TO BE A THICKNESS. BLOOD3 shipped reading it
+// off the atlas's ink, which was a grey SHADE - a darkening toward the
+// heart of a pool. That is the same quantity with the sign reversed:
+// the film then brightened hardest exactly where the art had darkened,
+// erasing three quarters of the pool's own depth cue and tipping its
+// heart toward pink. Three audit lenses found it independently; the
+// probe never saw it, because no test in the slice fed a real atlas
+// texel to the law. The fix is at the source: `shapeAt` answers a
+// DEPTH, the sheet stores `1 - INK_DEPTH * (depth * grain)`, and the
+// shader inverts that one line. The ink keeps the range and the sense
+// it always had, so the lens - which draws this sheet through the
+// plain 2D quad, with no film - is untouched; but the decal no longer
+// multiplies by the ink at all. The grey darkening WAS the film, done
+// by hand in one channel; the film does it now, per channel, properly.
+//
+// SHINY. The wet glint was EL_WET_STRENGTH (0.9) of the light's colour
+// wherever the half-vector lined up, at ANY angle and with no Fresnel -
+// the look of wet plastic sheeting, not of a liquid. A water film
+// reflects about 2% head-on and nearly all of it at a graze, so Schlick
+// belongs on it. But Schlick for a SPECULAR lobe is F(V.H), not
+// F(N.V): BLOOD3 shipped the latter, which peaks in a different regime
+// from the (N.H)^64 lobe it multiplies, and the two together took the
+// case the player sees most - a mark underfoot, torch at head height -
+// down by 82x. That is not "less shiny", it is "not wet". So: F(V.H),
+// per light, beside its own half-vector; and the cue that actually
+// reads as wet head-on is not a highlight at all but a DARKENING - a
+// wet surface is darker and richer than a dry one, because the light
+// goes into the film before it comes back. WET_DARKEN carries that,
+// and the sheen is left to do what a sheen does, at the graze.
+
+/** BLOOD3: the per-channel gain toward a THIN film - red passes, green
+ *  and blue are absorbed. At full thickness the gain is exactly 1, so
+ *  this only ever brightens a rim; it never darkens what was there. */
+export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);
+/** AUDIT BLOOD3 F3: the same film for the CLASSIC set, whose decal
+ *  shader has no decode and no encode - it works in display space from
+ *  end to end. A gain of G applied to an encoded value shows as G, not
+ *  as G^(1/2.2), so the same constant in both lanes made a mark's thin
+ *  rim up to 1.7x brighter under the classic set than under the lane.
+ *  The exponent divided by the display gamma is the same picture. */
+export const DISPLAY_GAMMA = 2.2;
+export const BLOOD_ABSORB_ENCODED = Object.freeze(BLOOD_ABSORB.map((a) => a / DISPLAY_GAMMA));
+/** AUDIT BLOOD3 F1: how deep the atlas's ink ramp runs. The sheet
+ *  stores `1 - INK_DEPTH * thickness`, so the ink sits in
+ *  [1 - INK_DEPTH, 1] - the range and the sense the hand-painted shade
+ *  always had, which is why the lens did not move - and a shader
+ *  recovers the thickness exactly: `(1 - ink) / INK_DEPTH`. One ramp
+ *  for every shape, because a per-kind amplitude is not invertible. */
+export const INK_DEPTH = 0.18;
+/** AUDIT BLOOD3 F5: how far a WET mark darkens. This, not the glint, is
+ *  what reads as wet when you are standing over it: light enters the
+ *  film and comes back attenuated, so a wet surface is darker and more
+ *  saturated than the same surface dry. A Fresnel specular without it
+ *  is a highlight nobody can see. */
+export const WET_DARKEN = 0.72;
+/** BLOOD3: a water film's reflectance head-on (Schlick's F0 for n =
+ *  1.33). The display curve lifts a small linear glint a long way, so
+ *  the difference between this and a glass-like 0.04 is the difference
+ *  between a sheen and a shine on the case the player sees most - a
+ *  mark on the floor, underfoot, viewed almost straight down. */
+export const BLOOD_F0 = 0.02;
+/** BLOOD3: where a mark's rim has dried and where it is still wet.
+ *  AUDIT BLOOD3 F6: these bite now. Against the old ink the gate sat
+ *  above 0.93 over 93-97% of every mark and the "wet core, dry rim"
+ *  was never delivered; against a real depth the band is the full
+ *  0..1, so a rim at 0.15 is dry and a heart at 0.75 is wet. */
+export const WET_THICK_LO = 0.15;
+export const WET_THICK_HI = 0.75;
+/** BLOOD3: how far the rim's shoulder tilts the surface normal - the
+ *  meniscus, off the thickness gradient, so a pool has a lit edge. */
+export const BLOOD_MENISCUS = 0.85;
+
+/** BLOOD3: the film's colour at a thickness - the shader's own law, in
+ *  JS, so a pin can drive it rather than read it. `thick` is coverage
+ *  times the ink's recovered depth (see `filmThickness`); `tint` the
+ *  mark's full-thickness colour, which is what it answers at 1. */
+export function filmColour(tint, thick) {
+  const d = 1 - Math.max(0, Math.min(1, thick));
+  return [0, 1, 2].map((i) => (tint?.[i] ?? 0) * Math.exp(BLOOD_ABSORB[i] * d));
+}
+
+/**
+ * BLOOD3 / AUDIT BLOOD3 F1: THE THICKNESS IS COVERAGE TIMES DEPTH,
+ * and the depth has to be READ OUT of the ink rather than taken for
+ * it. Alpha alone will not do: alpha is also what the mark is blended
+ * by, so exactly where the film says "thin, bright" the mark is fading
+ * out, and where the mark is solid the law has nothing left to say.
+ * The ink carries the other half - but it carries it as `1 - INK_DEPTH
+ * * thickness`, a darkening, which is the thickness INVERTED. BLOOD3
+ * read it as a density and so ran the film backwards over every shape
+ * in the sheet. Inverting it here is the whole fix, and it is exact:
+ * the sheet is written by `buildBloodAtlas` from this same constant.
+ *
+ * @param {number} alpha the atlas's coverage
+ * @param {number} ink the atlas's ink, 1 at the thinnest
+ */
+export const filmThickness = (alpha, ink) =>
+  Math.max(0, Math.min(1, alpha)) * Math.max(0, Math.min(1, (1 - Math.max(0, Math.min(1, ink))) / INK_DEPTH));
+
+/** BLOOD3: how much of a mark is WET at a fragment - its wetness,
+ *  gated on its own depth so a dried rim does not shine while the
+ *  heart still does. This is the whole of the angle-free half of the
+ *  sheen; the angle is `wetFresnel`, per light, below. */
+export function wetGate(wet, thick) {
+  if (!(wet > 0)) return 0;
+  const t = Math.max(0, Math.min(1, thick));
+  const x = Math.max(0, Math.min(1, (t - WET_THICK_LO) / Math.max(1e-6, WET_THICK_HI - WET_THICK_LO)));
+  return Math.max(0, Math.min(1, wet)) * (x * x * (3 - 2 * x));   // smoothstep, the shader's own
+}
+
+/** AUDIT BLOOD3 F5: Schlick for a SPECULAR lobe, which is F(V.H) and
+ *  not F(N.V). `vdoth` is the cosine between the eye and the light's
+ *  own half-vector - so the term belongs beside the lobe it scales,
+ *  once per light, and not hoisted out in front of all of them. */
+export function wetFresnel(vdoth) {
+  return BLOOD_F0 + (1 - BLOOD_F0) * Math.pow(1 - Math.max(0, Math.min(1, vdoth)), 5);
+}
+
+/** BLOOD3: the sheen at a fragment for one light - the gate times the
+ *  angle. Kept as one call so a pin can drive the product the shader
+ *  forms. */
+export const wetSheen = (wet, thick, vdoth) => wetGate(wet, thick) * wetFresnel(vdoth);
+
+/** AUDIT BLOOD3 F5: how much a wet mark DARKENS - the cue that reads as
+ *  wet head-on, where a Fresnel specular has nothing to give. */
+export const wetAlbedo = (wet) => 1 - (1 - WET_DARKEN) * Math.max(0, Math.min(1, wet));
 
 /** A fresh mark's tint: the blood's red, a shade darker by the roll -
  *  one factor on all three channels, so it is a shade and not a hue. */

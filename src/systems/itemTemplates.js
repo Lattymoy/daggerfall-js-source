@@ -120,6 +120,9 @@ export const itemValueOf = (item) => (Number.isFinite(item?.value) ? item.value 
 // PLAYER texture for most items; only these groups keep the world
 // sprite. Ingredients are the isIngredient flag, not a group.
 const WORLD_TEXTURE_GROUPS = new Set(['UselessItems1', 'ReligiousItems', 'MiscItems']);
+/** MAC-D2: the six ItemGroups.Transportation rows - a cart, a horse and
+ *  four boats. Read off the group table rather than spelled again. */
+const TRANSPORTATION_INDICES = new Set(GROUP_TEMPLATE_INDICES.Transportation ?? []);
 const ARROW_TEMPLATE = 131;
 const KATANA_TEMPLATE = 121;
 
@@ -182,6 +185,28 @@ export function mintCondition(item) {
 export function inventoryItemImage(item, identity = undefined) {
   const t = templateByIndex(item.templateIndex);
   if (!t) return null;
+  // MAC-D2 (Skibbster on Discord, 2026-09-21, with a screenshot of a
+  // TOMATO on the "Small Cart" card): TRANSPORTATION HAS NO INVENTORY
+  // ART, AND THE FIELDS THAT LOOK LIKE IT ARE ANOTHER ITEM'S.
+  //
+  // The template rows are DFU's verbatim and they are not wrong there:
+  // classic never draws a cart, a rowboat or a galley in a list, because
+  // transportation is a FLAG you buy and not a thing you carry, so those
+  // two columns are never read. The port keeps a cart as a real item -
+  // that is how the wagon knows it exists (systems/inventorySession.js's
+  // `hasCart`) - and so it reads columns nobody maintained.
+  //
+  // Where they point is the giveaway: Small Cart and all four boats name
+  // player texture 213 record 1, which is the WORLD sprite of template
+  // 91, the Wine Rack. That is the red blob in the screenshot. The Horse
+  // names 201/0. None of it is a vehicle.
+  //
+  // So: no address rather than a wrong one. Every caller already takes
+  // null - it is what an unknown template answers one line above - and
+  // the enhanced list falls through to its own tile. A cart drawn as
+  // nothing reads as "no picture for this"; a cart drawn as a tomato
+  // reads as a broken game, which is how it was reported.
+  if (TRANSPORTATION_INDICES.has(item.templateIndex)) return null;
   let archive, record;
   if (usesWorldTexture(item, t)) {
     // AUDIT 63 F20/F21: GetInventoryTextureArchive/Record's WORLD arms

@@ -692,7 +692,7 @@
   {
     "name": "MAP-WEAPON-the-host-raises-a-flag-instead-of-asking-the-slot",
     "file": "src/scenes/world.js",
-    "old": "    sheetWindowUp: () => townTalk.overlay?.isTravelMap === true,",
+    "old": "    sheetWindowUp: () => townTalk.overlay?.holdsScreen === true,",
     "new": "    sheetWindowUp: () => !!_travelMap,",
     "tests": [
       "test/map3_heldpose.test.js"

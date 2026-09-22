@@ -119,7 +119,12 @@ import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: th
 import { playerInSunlight, playerInHolyPlace, careerSunDamage } from '../systems/passiveSpecials.js';   // V2c: the enchant ctx's two E1 flags; AUDIT 64 F20/F21: Career.DamageFromSunlight, the travel door's own rung and the arrival clamp's second arm
 import { buildMapDict, locationSummaryAt as travelLocationSummaryAt } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict; TO1: the junction map's own reads
 import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 58 F4
-import { ExteriorAutomapWindow, stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // A2: the town map on M; D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
+import { stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
+// EM4: the skin fork. The classic skin keeps DFU's rotating town map
+// whole; the enhanced one gets the held sheet with the town's plan
+// traced onto it and its names in the Iliac Bay's own hand.
+import { createTownMapWindow, townMapDoorReady } from '../ui/townMapDoor.js';
+import { WORLD_PER_PX } from '../ui/inkTown.js';   // EM4: the town plan's own scale
 import { buildingSummaries } from '../world/buildingSummaries.js';   // ROAD-C c2/S10: the plate anchor's Position-bearing walk
 import { hasCustomLocationPosition } from '../world/locationLayout.js';   // ROAD-C c2/S10: the marker's custom-location offsets
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -3347,7 +3352,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // closed by Escape, by a travel, by a quest popup taking the slot
     // or by a teardown, and a flag would have to be lowered at all of
     // them. The tag is the window's own (`isTravelMap`).
-    sheetWindowUp: () => townTalk.overlay?.isTravelMap === true,
+    // EM-BUG1: `holdsScreen`, not `isTravelMap`. The travel tag was
+    // narrowed by EM4 to mean "the bay is reachable from here", which
+    // is false on a town sheet - so this gate stopped firing there and
+    // the weapon drew over the map.
+    sheetWindowUp: () => townTalk.overlay?.holdsScreen === true,
   });
   autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
   // WEAPON-VIS1: a live read of exactly what shown() gates on, always
@@ -3516,10 +3525,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2350 mounts the same one, gated on
+  // and dungeonContext.js:2353 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5320
+  // that context through modes.dungeonCtx - so worldModes.js:5380
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -5042,6 +5051,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the recorded wart. The shipped corpus never reaches it: every
   // `teleport pc to` targets a dungeon place and `transfer pc inside`
   // is S0000016's story dungeon alone.
+  // MAC-D3: ...and the online DEATH respawn shares this latch. One
+  // respawn is in flight at a time whichever door started it - a quest
+  // site respawn and a death respawn both teleport, and two teleports
+  // racing each other is how a player ends up somewhere neither meant.
   let _respawning = false;
   async function _respawnAtSite(loc) {
     modes?.forceExitToExterior();
@@ -5116,6 +5129,28 @@ export async function bootWorld(canvas, renderer, params, status) {
    * title menu, no save to load.
    */
   function respawnOnlinePlayer() {
+    // MAC-D3 (Seanobi on Discord, 2026-09-21: "stuck in an infinite
+    // deathloop. Instant death after respawning"): THE PLAYER IS
+    // BROUGHT BACK TO LIFE FIRST, AND EXACTLY ONCE.
+    //
+    // This used to heal on the LAST line, after `await
+    // _teleportToPixel` - so for the whole of that await the player
+    // stood at zero health with the death screen already torn down by
+    // forceExitToExterior below. The frame loop's death watcher only
+    // holds off while a DeathScreen is up (:2225), so the very next
+    // frame saw a dead player and no screen, raised death again, and
+    // that death's reset called back in here. A teleport loads a map
+    // pixel; under the lag spike Seanobi described the window is many
+    // frames wide, and the loop is unbreakable from inside the game
+    // because every pass tears the screen down again.
+    //
+    // The dungeon arm of the same law already had this right
+    // (worldModes.js's Privateer's Hold respawn: spawn, heal, THEN
+    // clear the overlay, all synchronous). This is that order.
+    if (_respawning) return;   // and a second death mid-flight cannot start a second respawn
+    _respawning = true;
+    playerEntity.health = respawnHealth(playerEntity.maxHealth);
+    surfacePlayer();
     _deathWasOnline = null;   // armed fresh for the NEXT death
     const mode = modes?.mode ?? 'exterior';
     const wasInDungeon = mode === 'dungeon';
@@ -5151,10 +5186,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // dungeon's door - not the terrain tile's dead centre.
       await _teleportToPixel(land.x, land.y, null, { reposition: REPOSITION.RandomStartMarker });
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // PreventEnemySpawns parity, the cemetery transfer's own line
-      playerEntity.health = respawnHealth(playerEntity.maxHealth);
-      surfacePlayer();
+      // MAC-D3: the heal is at the TOP now, before anything is torn
+      // down or awaited. Re-asserted here only because a teleport can
+      // cross a cell that re-reads vitals; it is the same value, so
+      // this is idempotent rather than a second mercy.
+      if (!(playerEntity.health > 0)) { playerEntity.health = respawnHealth(playerEntity.maxHealth); surfacePlayer(); }
       townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind)]));
-    });
+    }).finally(() => { _respawning = false; });
   }
 
   async function fastTravelTo(pick, opts, computed) {
@@ -5365,7 +5403,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6050), so exterior mode and a
+    // composer, dungeonContext.js:6070), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6296,7 +6334,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       getQuest: (questID) => questBridge?.machine.getQuest(questID) ?? null,
       isBuildingQuestResource: (mapID, key) => topicTree.isBuildingQuestResource(mapID, key),
     }, dfLoc.mapTableData?.mapId ?? 0);
-    townTalk.showOverlay(new ExteriorAutomapWindow({
+    if (!townMapDoorReady()) return;   // EM4: the skin fork's gate
+    townTalk.showOverlay(createTownMapWindow({
       locationName: dfLoc.name,
       locationId: locId,
       gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
@@ -6313,6 +6352,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       directory: () => townTalk.directory,
       discovered: () => discoveredBuildings(locId),
       rename: (buildingKey, name) => renameMapBuilding(locId, buildingKey, name),
+      // EM4: what the enhanced sheet needs beyond the classic bag. The
+      // context is DERIVED off the flags every host already keeps.
+      //
+      // THE BAY TAB IS NOT HANDED OVER FROM HERE, and that is a
+      // decision rather than an omission. `systems/mapTabs.js` says a
+      // town offers the streets AND the bay, and the slot's narrowing
+      // (ui/mapStrip.js) therefore leaves the world tab off this
+      // window's strip because this window holds no world sheet. The
+      // reason is DFU's travel guards: `toggleTravelMap` refuses to
+      // OPEN the bay with enemies nearby, with a merchant's offer
+      // pending, in sunlight for a sun-damaged career, or under a
+      // racial fast-travel block - four checks that happen at open
+      // time. Handing the bay over on the town key would walk straight
+      // past all four, and moving them to commit time is a behaviour
+      // change to a ported, audited system. Mac's call, recorded in
+      // 10-UI/Enhanced-Maps-Arc.md; until he takes it, the travel key
+      // is the way to the bay and it keeps its ladder.
+      where: () => ({ inLocation: true }),
+      townPlayer: () => ({ x: local[0] / WORLD_PER_PX, y: local[2] / WORLD_PER_PX, yaw: cam.yaw }),
     }));
   };
   /** SetCustomBuildingName (ExteriorAutomap.cs:867-899): the plate's
@@ -7238,7 +7296,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8263-8326 -
+  // worldModes answers it in BOTH modes (worldModes.js:8328-8391 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7655,7 +7713,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  :3552), so the in-place pass is right for both. Also: C# calls
    *  this whether or not GetQuest found anything - the null-parent arm
    *  is a DFU forum-bug fix INSIDE ExpandQuestMessage, not a caller
-   *  guard, and expandQuestMessage carries it (questMacros.js:490). */
+   *  guard, and expandQuestMessage carries it (questMacros.js:530). */
   const expandQuestTokens = (questID, tokens) => {
     expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
     return tokensToString(tokens);

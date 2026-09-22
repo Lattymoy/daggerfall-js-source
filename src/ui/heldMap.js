@@ -110,6 +110,15 @@ import {
   readPartyMarks, partyMarksKey, partyHoverText, partyLabelText,
   PARTY_MARK_CSS, PARTY_OFFLINE_CSS, PARTY_LEGEND_TEXT,
 } from './partyMapMarks.js';
+// EM1: the tab strip inked on the paper, the slot under it, and the
+// contract whatever is inked answers. `mapContextOf` turns the flags
+// the host already keeps into the place the tabs are gated by.
+import {
+  createSheetSlot, stripLayout, stripHit, paintStrip, stripFont,
+} from './mapStrip.js';
+import { mapContextOf } from '../systems/mapTabs.js';
+import { createAutomapSheet } from './automapSheet.js';
+import { createTownSheet } from './townSheet.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { quadPlacement } from './quadMap.js';   // MAP3: the sheet over the held paper's corners
 import { bindings } from './input.js';
@@ -394,10 +403,28 @@ export class HeldMapWindow {
     this.deps = deps;
     this.done = false;
     this.isChoiceWindow = true;
-    // MAP-WEAPON: the scene's tick tag, this file's own idiom
+    // MAP-WEAPON / EM-BUG1: the scene's tick tag, this file's own idiom
     // (`isRestWindow`, `isVirtueLevelUp`): the weapon rig asks whether
     // a map holds the screen and must not import a UI class to ask.
-    this.isTravelMap = true;
+    //
+    // THIS IS ITS OWN TAG NOW, AND THAT IS THE BUG EM4 LEFT. The rig's
+    // question was riding on `isTravelMap`, which EM4 correctly
+    // narrowed from a constant `true` to "the bay is reachable from
+    // here" - a crypt's plan is not a thing you can travel from. But
+    // one flag was answering two unrelated questions, and narrowing it
+    // for the travel one silently un-answered the other: a town or
+    // dungeon sheet stopped hiding the weapon, so the player stood
+    // holding a map AND a drawn sword (Mac: "your equipped weapon isnt
+    // stowed when the map is out").
+    //
+    // Hands holding a map are not also holding a sword, wherever the
+    // map came from. So this is constant, declared here, and true for
+    // every sheet this window can wear.
+    this.holdsScreen = true;
+    // EM4: DERIVED, not declared - and now answering ONLY the question
+    // it is named for. Set below, off the slot: true exactly where the
+    // bay is reachable.
+    this.isTravelMap = false;
     // MAP-FIELD2: the vitals and the status icons go while the sheet is
     // out - it is held in the player's own hands, and a bar drawn over
     // the knuckles is not a HUD under a window (windowStack.hidesHud).
@@ -410,6 +437,47 @@ export class HeldMapWindow {
     this._size = deps.mapSize ?? { width: MAP_WIDTH, height: MAP_HEIGHT };
     const p = deps.getPlayerPixel?.() ?? { x: this._size.width >> 1, y: this._size.height >> 1 };
     this._player = { x: p.x, y: p.y };
+
+    // ── EM1: ONE MAP, THREE SHEETS ──────────────────────────────
+    // The paper, the hands, the pan, the zoom and the held pose are
+    // the WINDOW; what is inked on the sheet is a TAB. `where` is the
+    // host's own flags (isPlayerInsideDungeon, isPlayerInside, whether
+    // the pixel carries a location) - DERIVED into a context by
+    // systems/mapTabs.js, never declared by a host.
+    //
+    // `has` is the sheets THIS window was built with, and the slot's
+    // offer is the place's offer narrowed by it. Until EM3 and EM4
+    // hand over the automap and town sheets that is the world alone,
+    // so nothing a player can reach changes: the strip reads "The Bay"
+    // and there is no second tab to press.
+    // THE WINDOW HOLDS A SHEET ONLY WHERE IT WAS GIVEN WHAT TO INK ON
+    // IT. The world sheet was unconditional, and EM5's browser probe
+    // caught what that meant the moment a second door opened one: the
+    // town key built a window with no bay data at all, the slot's
+    // narrowing saw a world sheet in hand and offered the tab, and
+    // pressing it would have shown a blank page - which is exactly the
+    // regression the narrowing exists to prevent, walked in through the
+    // back. `woods` is the one thing the bay's model cannot be built
+    // without (`_ensureWorldModel` returns null for want of it), so it
+    // is what the window asks.
+    this._sheets = new Map();
+    if (deps.woods) this._sheets.set('world', this._worldSheet());
+    // EM3: the dungeon and interior hosts hand `automap` - the reveal
+    // record, the reveal index, the player and the way in. A host that
+    // hands none (the world host's travel key) simply has no automap
+    // sheet, and the slot's narrowing keeps the tab off the paper.
+    if (deps.automap) this._sheets.set('automap', createAutomapSheet(deps.automap));
+    // EM4: the two exterior hosts hand `town` - the block grids, the
+    // building summaries and the discovery record.
+    if (deps.town) this._sheets.set('town', createTownSheet(deps.town));
+    this._slot = createSheetSlot({
+      context: mapContextOf(deps.where?.() ?? {}),
+      wanted: deps.openOnSheet ?? null,
+      has: [...this._sheets.keys()],
+    });
+    this._strip = null;   // the tabs' layout in paper px, minted on each paint
+    // the bay is reachable from here, so this window IS a travel map
+    this.isTravelMap = this._slot.ids.includes('world');
 
     this._phase = 'opening';
     this._t = 0;
@@ -474,6 +542,11 @@ export class HeldMapWindow {
     this._infoOwner = {};
 
     this._mountChrome();
+    // EM3: the sheet the window OPENS on claims its chrome as well - it
+    // never passes through _selectSheet, and a world map that opened
+    // without its search box was the first thing this caught.
+    this._showChrome(['search', 'ports', 'legend', 'card'], false);
+    this._sheet?.mount?.();
     this._tornDown = false;
     this._probeFn = () => JSON.stringify({
       phase: this._phase,
@@ -532,7 +605,19 @@ export class HeldMapWindow {
         return;
       }
     }
-    if (code === 'Escape' || actionForCode(bindings(), code) === 'TravelMap') {
+    // EM-BUG2: THE KEY THAT OPENS IT SHUTS IT, whichever key that was.
+    // This arm was written when the sheet was the WORLD map alone, so
+    // it took the TravelMap action and Escape. EM3 and EM4 gave the
+    // same window three more doors - a dungeon's plan, a town's, a
+    // building's - all of them behind the AutoMap key, and none of
+    // them could be closed by the key that opened them (Mac: "You
+    // cannot press the M key to stow the map"). The classic twin has
+    // always taken its own binding back (ui/automapWindow.js); so does
+    // this one now. Both actions, on every sheet, because the tabs mean
+    // one window can be entered by either key and the player should not
+    // have to remember which.
+    const _act = actionForCode(bindings(), code);
+    if (code === 'Escape' || _act === 'TravelMap' || _act === 'AutoMap') {
       e?.preventDefault?.();
       if (this._phase !== 'map') return;      // the sheet is moving: let it land
       // the diseased box steps back to the PANEL, not out of it - the
@@ -548,6 +633,14 @@ export class HeldMapWindow {
       return;
     }
     if (this._phase !== 'map') return;
+    // EM3: THE LIVE SHEET IS ASKED FIRST, once the window's own boxes
+    // have had their say - they hold the whole sheet, so a floor key
+    // under an open prompt would move a map the player cannot see.
+    if (!this._panel && !this._panelState?.confirm && this._sheet?.key?.(code, e)) {
+      e?.preventDefault?.();
+      this._dirty = true;
+      return;
+    }
     if (this._panelState?.confirm) {
       if (code === 'KeyY') { this._confirmDiseased(true); return; }
       if (code === 'KeyN') { this._confirmDiseased(false); return; }
@@ -610,10 +703,10 @@ export class HeldMapWindow {
         }
       }
     }
-    // SOC6: the party is POLLED, on this window's own cadence, from the
-    // first tick to the last - never snapshot at open.
-    this._partyPoll -= dt;
-    if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }
+    // EM1: the live sheet's own clock. For the world sheet that is
+    // SOC6's party poll, on this window's own cadence from the first
+    // tick to the last - never snapshot at open.
+    this._sheet?.tick?.(dt);
     this._layout();
     // MAP3: the hands lane follows the arm every frame; the sprite lane
     // keeps asking for a few ticks in case the rig had not posed yet
@@ -864,8 +957,141 @@ export class HeldMapWindow {
     this._dirty = true;
   }
 
+  // ── EM1: THE SHEET SLOT ─────────────────────────────────────────
+
+  /** The sheet that is inked right now. The window never asks WHICH -
+   *  it asks the sheet - so a second and a third sheet cost this class
+   *  nothing but their entries in `_sheets`. */
+  get _sheet() { return this._sheets.get(this._slot.live) ?? null; }
+
+  /**
+   * THE WORLD SHEET: the Iliac Bay, behind the contract
+   * (ui/mapStrip.js's SHEET_MEMBERS). Every member here delegates to
+   * the method that has always done the work, so this is a ROUTE and
+   * not a rewrite - the bay's ink, picks, labels and chrome are the
+   * same code they were, reached through the seam the automap and town
+   * sheets will be reached through.
+   *
+   * It is built here, closing over the window, because the world map's
+   * chrome (the search box, the ports button, the legend, the travel
+   * card) and its keys are tangled with the window's own phases and
+   * boxes. EM3 and EM4's sheets are standalone modules with no such
+   * back-reference; when the world map's travel half follows them out,
+   * this shrinks to nothing and the contract does not move.
+   */
+  _worldSheet() {
+    return {
+      id: 'world',
+      size: () => this._size,
+      ensure: () => this._ensureWorldModel(),
+      staticKey: () => [
+        this._marksVersion, this._portsShown() ? 1 : 0, this.markedMapId,
+        this.filters.roads ? 1 : 0, this.filters.tracks ? 1 : 0,
+      ].join('|'),
+      paintStatic: (ctx, env) => {
+        // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be
+        // taken off the map, since its too cluttered". The sheet inks
+        // the GLYPHS alone - a place is its mark, and its name is read
+        // off the label under the pointer and off the search, which is
+        // where a hand-drawn map puts it anyway. The PROVINCE names
+        // stay: far/mid only, a handful of words across the whole bay,
+        // and they are what makes the sheet readable zoomed out.
+        //
+        // `placeNames` itself is NOT deleted - it is inkMap's law and
+        // its own pin stands (test/heldmap.test.js): what went is this
+        // sheet's use of it, and the measure cache it needed.
+        paintInkStatic(ctx, env.model, env.view, {
+          paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, band: env.band,
+          filters: this.filters, names: null, regionNames: REGION_NAMES,
+          // MAP2: the harbours while the mod restricts ships to ports,
+          // and the mark in the mod's colour
+          ports: this._portsShown(),
+          markedMapId: this.markedMapId,
+          markColor: rgbaCss(this._to?.settings?.markLocationColor),
+        });
+      },
+      paintOverlay: (ctx, env) => {
+        paintInkOverlay(ctx, env.view, {
+          paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, clear: false,
+          player: this._player,
+          selected: this._selected ? { x: this._selected.x, y: this._selected.y, coords: !!this._selected.coords } : null,
+          party: this._party.map((m) => ({
+            x: m.x, y: m.y, name: partyLabelText(m), online: m.online, stack: m.stack,
+            // the colour is DATA, not a theme: online is the party
+            // green the rest of the slice draws a member's name in,
+            // offline is that green with the life out of it
+            color: m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS,
+          })),
+          pulse: env.pulse,
+        });
+      },
+      // the bay's keys stay with the WINDOW: I, H, P, the travel
+      // panel's S/T/N/B and the resume prompt's Y/N are about this
+      // window's phases and boxes rather than about the map, and moving
+      // them here would only move the tangle. Recorded in mapStrip's
+      // SHEET_MEMBERS note.
+      key: () => false,
+      pickAt: (px, py) => this._pickAt(px, py),
+      hoverLabel: (px, py) => this._hoverLabel(px, py),
+      mark: (px, py) => this._markLocationHandler(px, py),
+      // SOC6: the party is POLLED on this window's own cadence, from
+      // the first tick to the last - never snapshot at open.
+      tick: (dt) => {
+        this._partyPoll -= dt;
+        if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }
+      },
+      // THE TRAVEL CHROME IS THE WORLD SHEET'S. The search box, the
+      // ports button, the legend and the travel card exist to pick a
+      // destination on the bay; a dungeon plan has no destination, so
+      // they go with the tab rather than standing over it.
+      mount: () => {
+        this._showChrome(['search', 'card'], true);
+        this._renderPorts();
+        this._renderLegend();
+      },
+      unmount: () => {
+        this._showChrome(['search', 'ports', 'legend', 'card'], false);
+        this._closePanel?.();
+      },
+      // at rest the whole bay is on the sheet, centred
+      homeView: () => null,
+    };
+  }
+
+  /** Show or hide the shared chrome a sheet claims. ONE place, so a
+   *  sheet says what it needs and never touches this window's DOM. */
+  _showChrome(names, on) {
+    for (const n of names) {
+      const el2 = this._chrome?.[n];
+      if (el2) el2.style.display = on ? '' : 'none';
+    }
+  }
+
+  /** Put a sheet up, remembering where this one was looking. Refused by
+   *  the slot where the place does not offer it - Mac's sentence held
+   *  at ONE door - and silent when it is refused.
+   *
+   *  The outgoing sheet gives its chrome back BEFORE the incoming one
+   *  claims any: the other order lets a sheet that wants the search box
+   *  have it hidden a moment later by the sheet that just left. */
+  _selectSheet(id) {
+    const leaving = this._sheet;
+    if (!this._slot.select(id, this._view)) return false;
+    leaving?.unmount?.();
+    this._sheets.get(id)?.mount?.();
+    this._layoutKey = '';        // the new sheet's own coordinate space
+    this._staticKey = '';
+    this._layout();
+    const kept = this._slot.viewOf(id);
+    this._setView(kept ?? this._sheet?.homeView?.(this._limits()) ?? { ox: 0, oy: 0, scale: scaleMinOf(this._limits()) });
+    this._chrome.label.textContent = '';
+    this._dirty = true;
+    return true;
+  }
+
   _limits() {
-    return { mapW: this._size.width, mapH: this._size.height, paperW: this._paper.w, paperH: this._paper.h };
+    const size = this._sheet?.size?.() ?? this._size;
+    return { mapW: size.width, mapH: size.height, paperW: this._paper.w, paperH: this._paper.h };
   }
 
   // ── MAP3: THE HANDS LANE ───────────────────────────────────────
@@ -946,10 +1172,13 @@ export class HeldMapWindow {
     return p[0] >= -8 && p[1] >= -8 && p[0] <= this._paper.w + 8 && p[1] <= this._paper.h + 8;
   }
 
-  /** The ink model: chains once per data set (cached on the bytes and
-   *  the network reference), marks whenever a filter or the discovery
-   *  set moved. */
-  _ensureModel() {
+  /** THE WORLD SHEET's ink model: chains once per data set (cached on
+   *  the bytes and the network reference), marks whenever a filter or
+   *  the discovery set moved. Reached through the sheet contract's
+   *  `ensure` (EM1) rather than called by the window directly - the
+   *  world map's own picks and labels go on calling it, because they
+   *  ARE the world sheet. */
+  _ensureWorldModel() {
     const bytes = this.deps.woods?.heightMapBuffer;
     if (!bytes) return null;
     const net = this.deps.roads?.() ?? null;
@@ -992,26 +1221,61 @@ export class HeldMapWindow {
     return this._model;
   }
 
-  /** Paint the sheet. Guarded on a real 2D context: node drives this
-   *  window against a stub document whose canvas has none, and the
-   *  view, the marks and every law above are exercised without it. */
+  /** Paint the sheet: the live SHEET's ink, then the tab strip over it.
+   *  Guarded on a real 2D context - node drives this window against a
+   *  stub document whose canvas has none, and the view, the marks, the
+   *  strip's layout and every law above are exercised without it. */
   _paint() {
     this._dirty = false;
     const canvas = this._chrome?.ink;
     const ctx = canvas?.getContext?.('2d');
-    const model = this._ensureModel();
+    const sheet = this._sheet;
+    const { w: paperW, h: paperH, dpr } = this._paper;
+    // EM1: the strip is laid out whether or not there is a context to
+    // ink it with - the hit test is the POINTER's, not the painter's,
+    // and a window driven headless still has tabs a pin can press.
+    this._strip = stripLayout(this._slot, {
+      paperW,
+      // the real measure where there is a canvas, so a tab is as wide
+      // as the word the player sees; `stripFont` is the ONE home for
+      // the face and the size, shared with the painter below
+      measure: ctx?.measureText
+        ? (t) => { ctx.font = stripFont(paperW); return ctx.measureText(t).width; }
+        : null,
+    });
+    const model = sheet?.ensure?.() ?? null;
     if (!ctx || !model) return;
     const band = zoomBand(this._view.scale);
-    const { w: paperW, h: paperH, dpr } = this._paper;
-    // AUDIT-MAP (perf): THE STATIC INK IS KEPT. The coast, the carets, the
-    // borders, the roads, the marks and the names change only with the
-    // view, the band, the sheet, the marks or the mod's state; the rings
-    // that breathe are an overlay. So the static half is painted onto a
-    // kept layer when its key moves, and a pulse frame is one drawImage
-    // and a few arcs - not the whole bay's ink rasterised again.
+    // EM5: WHAT THE STRIP HAS TAKEN. The tabs are inked ON the paper,
+    // so the band they occupy is not the sheet's to letter names in -
+    // the probe's first town shot had "The Rusty Nail" written straight
+    // through "Town". The plan's own lines may run under a tab (a wall
+    // under a word is fine, and the halo carries the word); a NAME may
+    // not, and it is the sheet that knows which is which.
+    const env = {
+      model, view: this._view, paperW, paperH, dpr, band,
+      clock: this._clock, pulse: 0,
+      reserveTop: this._strip?.h ?? 0,
+      // ...AND WHERE THE HANDS ARE. THUMB_ZONES is measured on the
+      // SPRITE (MAP-FIELD4 keyed the gauntlets out of it pixel by
+      // pixel); PAPER is measured on the same sprite, so one division
+      // puts the thumbs into paper space. EM5's browser probe zoomed
+      // the town in and the one nameplate that survived landed under
+      // the left gauntlet - the paper's rectangle is not the part of it
+      // a player can SEE, which is the lesson MAP-FIELD3 learnt for the
+      // bay and the floor strip learnt again two shots earlier.
+      reserveHands: this._handRects(paperW, paperH),
+    };
+    // AUDIT-MAP (perf): THE STATIC INK IS KEPT. The coast, the carets,
+    // the borders, the roads, the marks and the names change only with
+    // the view, the band, the sheet, the marks or the mod's state; the
+    // rings that breathe are an overlay. So the static half is painted
+    // onto a kept layer when its key moves, and a pulse frame is one
+    // drawImage and a few arcs - not the whole bay's ink rasterised
+    // again. EM1: the window owns the LAYER (it is the paper's size and
+    // the paper is the window's); the SHEET owns what makes it stale.
     const key = [this._view.ox, this._view.oy, this._view.scale, band, paperW, paperH, dpr,
-      this._marksVersion, this._portsShown() ? 1 : 0, this.markedMapId,
-      this.filters.roads ? 1 : 0, this.filters.tracks ? 1 : 0].join('|');
+      this._slot.live, sheet.staticKey()].join('|');
     const layer = this._layer ?? (this._layer = document.createElement('canvas'));
     const lctx = layer.getContext?.('2d');
     if (key !== this._staticKey || !lctx) {
@@ -1021,47 +1285,46 @@ export class HeldMapWindow {
       // same value - the kept layer was being freed and re-zeroed on every
       // pan frame; paintInkStatic clears it itself
       if (lctx && (layer.width !== canvas.width || layer.height !== canvas.height)) { layer.width = canvas.width; layer.height = canvas.height; }
-      // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be
-      // taken off the map, since its too cluttered". The sheet inks the
-      // GLYPHS alone now - a place is its mark, and its name is read off
-      // the label under the pointer and off the search, which is where a
-      // hand-drawn map puts it anyway. The PROVINCE names stay: they are
-      // far/mid only, a handful of words across the whole bay, and they
-      // are what makes the sheet readable when it is zoomed out.
-      //
-      // `placeNames` itself is NOT deleted - it is inkMap's law and its
-      // own pin stands (test/heldmap.test.js): what went is this sheet's
-      // use of it, and the measure cache it needed. Nothing else on the
-      // sheet measures text, so the cache goes with it.
-      paintInkStatic(target, model, this._view, {
-        paperW, paperH, dpr, band,
-        filters: this.filters, names: null, regionNames: REGION_NAMES,
-        // MAP2: the harbours while the mod restricts ships to ports, and the mark in the mod's colour
-        ports: this._portsShown(),
-        markedMapId: this.markedMapId,
-        markColor: rgbaCss(this._to?.settings?.markLocationColor),
-      });
+      sheet.paintStatic(target, env);
+      // EM1: the tabs ride the KEPT layer, so they are re-lettered only
+      // when the sheet, the paper or the live tab moves - a breathing
+      // ring must not cost the strip a repaint.
+      this._paintStrip(target, dpr, paperW);
     }
     if (lctx) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(layer, 0, 0);
     }
-    const pulse = 0.5 + 0.5 * Math.sin(this._clock * 3);
-    paintInkOverlay(ctx, this._view, {
-      paperW, paperH, dpr, clear: false,
-      player: this._player,
-      selected: this._selected ? { x: this._selected.x, y: this._selected.y, coords: !!this._selected.coords } : null,
-      party: this._party.map((m) => ({
-        x: m.x, y: m.y, name: partyLabelText(m), online: m.online, stack: m.stack,
-        // the colour is DATA, not a theme: online is the party green the
-        // rest of the slice draws a member's name in, offline is that
-        // green with the life out of it
-        color: m.online ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS,
-      })),
-      pulse,
-    });
+    env.pulse = 0.5 + 0.5 * Math.sin(this._clock * 3);
+    sheet.paintOverlay(ctx, env);
     if (this._bandShown !== band) { this._bandShown = band; this._chrome.band.textContent = band; }
+  }
+
+  /** THE HANDS, in paper pixels: each THUMB_ZONE divided into PAPER's
+   *  own rectangle and clamped to it. A sheet keeps its WORDS out of
+   *  these; its lines may run under them, because a wall behind a
+   *  thumb is simply a wall the player pans to see. */
+  _handRects(paperW, paperH) {
+    const fx = (v) => (v - PAPER.x0) / (PAPER.x1 - PAPER.x0);
+    const fy = (v) => (v - PAPER.y0) / (PAPER.y1 - PAPER.y0);
+    const clamp01 = (v) => Math.min(1, Math.max(0, v));
+    return THUMB_ZONES.map((z) => ({
+      x0: clamp01(fx(z.x0)) * paperW,
+      x1: clamp01(fx(z.x1)) * paperW,
+      y0: clamp01(fy(z.y0)) * paperH,
+      y1: clamp01(fy(z.y1)) * paperH,
+    }));
+  }
+
+  /** The tabs, in PAPER pixels over whatever the sheet inked. The DPR
+   *  transform is set and put back, because everything else on this
+   *  canvas is painted in device pixels by its own painter. */
+  _paintStrip(ctx, dpr, paperW) {
+    if (!ctx?.setTransform) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    paintStrip(ctx, this._strip, { font: stripFont(paperW) });
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
   _setView(v) {
@@ -1167,7 +1430,7 @@ export class HeldMapWindow {
    *  not a thing the player pointed at. */
   _markerAt(sx, sy) {
     let best = null, bestD = 16 * 16;
-    const model = this._ensureModel();
+    const model = this._ensureWorldModel();
     if (!model) return null;
     const shown = BAND_MARKS[zoomBand(this._view.scale)] ?? BAND_MARKS.near;
     for (const m of model.marks) {
@@ -1834,7 +2097,7 @@ export class HeldMapWindow {
       if (this._phase !== 'map') return;
       if (this._top) return;   // the resume prompt holds the sheet
       // MAP2 (:532-550): the MIDDLE button marks the place under the cursor
-      if (e.button === 1) { e.preventDefault?.(); this._markLocationHandler(...this._paperPoint(e.clientX, e.clientY)); return; }
+      if (e.button === 1) { e.preventDefault?.(); this._sheet?.mark?.(...this._paperPoint(e.clientX, e.clientY)); return; }
       // AUDIT-MAP2: in the hands lane a press off the sheet is a press on
       // the world, not on the map - no pan, no pick, no pinch from it
       if (this._lane === 'hands' && this._paperPoint(e.clientX, e.clientY) === OFF_SHEET) return;
@@ -1879,7 +2142,20 @@ export class HeldMapWindow {
         if (A === OFF_SHEET || B === OFF_SHEET) return;   // dragged off the sheet: the pan waits where it was
         this._setView({ ox: downAt.ox - (B[0] - A[0]) / this._view.scale, oy: downAt.oy - (B[1] - A[1]) / this._view.scale, scale: this._view.scale });
       } else {
-        this._hoverLabel(...this._paperPoint(e.clientX, e.clientY));
+        const [hx, hy] = this._paperPoint(e.clientX, e.clientY);
+        // EM1: a tab under the pointer names itself and shows a hand -
+        // the sheet is never asked about a point that is on the strip
+        const tab = stripHit(this._strip, hx, hy);
+        // EM3: ONE writer for the label and the cursor, whichever sheet
+        // is up. A tab under the pointer names itself and shows a hand,
+        // and the sheet is never asked about a point that is on the
+        // strip; anywhere else the live sheet ANSWERS and the window
+        // writes, so no sheet has to reach into this window's chrome.
+        const hit = tab
+          ? { label: this._strip.tabs.find((t) => t.sheet === tab)?.title ?? '', cursor: 'pointer' }
+          : (this._sheet?.hoverLabel?.(hx, hy) ?? null);
+        this._chrome.label.textContent = hit?.label ?? '';
+        this._chrome.stage.style.cursor = hit?.cursor ?? '';
       }
     });
     const lift = (e) => {
@@ -1898,7 +2174,15 @@ export class HeldMapWindow {
     stage.addEventListener('pointerup', (e) => {
       if (this._phase !== 'map') { downAt = null; second = null; pinch = null; return; }
       if (lift(e)) return;
-      if (downAt && !panned) this._pickAt(...this._paperPoint(e.clientX, e.clientY));
+      if (downAt && !panned) {
+        const [px, py] = this._paperPoint(e.clientX, e.clientY);
+        // EM1: THE STRIP IS ASKED FIRST. A tab's word sits over the
+        // sheet's own ink, so a click that lands on one must never
+        // also pick the place under it.
+        const tab = stripHit(this._strip, px, py);
+        if (tab) this._selectSheet(tab);
+        else this._sheet?.pickAt?.(px, py);
+      }
       downAt = null;
     });
     stage.addEventListener('pointercancel', (e) => {
@@ -1980,39 +2264,44 @@ export class HeldMapWindow {
     }
   }
 
+  /**
+   * The WORLD sheet's label under the pointer. EM3: it ANSWERS rather
+   * than writes - `{label, cursor}` - because the sheet contract's
+   * `hoverLabel` is a sheet's, and a sheet that reaches into the
+   * window's chrome is a sheet that cannot be built outside this file.
+   * The window does the writing, in one place, for every sheet.
+   */
   _hoverLabel(sx, sy) {
-    if (!this._onSheet([sx, sy])) { this._chrome.label.textContent = ''; return; }   // AUDIT-MAP2: off the paper is off the map
+    if (!this._onSheet([sx, sy])) return null;   // AUDIT-MAP2: off the paper is off the map
     // SOC6: a party member wins the label over the place they are
     // standing in - the player pointed at the green ring, and "who"
     // is the answer they asked for.
     const pm = this._partyAt(sx, sy);
     if (pm) {
       // AUDIT SOC D2: every member ON THAT PIXEL, not the nearest of them.
-      this._chrome.label.textContent = this._party
-        .filter((m) => m.px === pm.px && m.py === pm.py)
-        .map(partyHoverText).join(' / ');
-      this._chrome.stage.style.cursor = 'pointer';
-      return;
+      return {
+        label: this._party.filter((m) => m.px === pm.px && m.py === pm.py).map(partyHoverText).join(' / '),
+        cursor: 'pointer',
+      };
     }
     const m = this._markerAt(sx, sy);
     if (m) {
       const name = m.name || this._summaryName(m.summary);
       const region = REGION_NAMES[m.summary.regionIndex] ?? '';
       // UpdateRegionLabel's own "Region : Location" reading
-      this._chrome.label.textContent = region && name ? `${region} : ${name}` : name;
-      this._chrome.stage.style.cursor = 'pointer';
-      return;
+      return { label: region && name ? `${region} : ${name}` : name, cursor: 'pointer' };
     }
-    this._chrome.stage.style.cursor = '';
     const [mx, my] = toMap(this._view, sx, sy);
     const px = Math.floor(mx), py = Math.floor(my);
-    if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) { this._chrome.label.textContent = ''; return; }
+    if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) return null;
     // the raw politic read, range-checked - the classic window's own
     // region-under-cursor law; the sea answers nothing
     const politic = this.deps.maps?.getPoliticIndex?.(px, py) ?? -1;
     const region = politic - 128;
-    this._chrome.label.textContent =
-      (region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '';
+    return {
+      label: (region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '',
+      cursor: '',
+    };
   }
 
   _pickAt(sx, sy) {
@@ -2028,7 +2317,7 @@ export class HeldMapWindow {
     if (this._coordsAllowedHere()) {
       const [mx, my] = toMap(this._view, sx, sy);
       const px = Math.floor(mx), py = Math.floor(my);
-      const marks = this._ensureModel()?.marks ?? [];
+      const marks = this._ensureWorldModel()?.marks ?? [];
       const placeHere = marks.some((k) => Math.floor(k.x) === px && Math.floor(k.y) === py);
       if (!placeHere && px >= 0 && py >= 0 && px < this._size.width && py < this._size.height) {
         this._select({ coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: toFormat(TO_TEXT.MsgTargetCoords, px, py), summary: null, mapId: null });

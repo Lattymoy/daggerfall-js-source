@@ -1,0 +1,92 @@
+# ACC1b (2026-09-21): THE ACCOUNT SERVICE. A second Cloudflare Worker
+# over D1, deliberately NOT a route on the relay.
+#
+# WHY TWO WORKERS: a relay deploy restarts every Durable Object and
+# drops every connected player. That is a fair price for changing the
+# relay's own law and an absurd one for fixing a sign-in button - and
+# SLAM8 hashes the RAW BYTES of everything the relay bundles, so the
+# price would be charged for a comment. `server/wrangler.toml` carries
+# the other half of this note.
+#
+# THE SEAM BETWEEN THEM IS A SIGNATURE. This service holds the private
+# key; the relay holds the public half and can verify but never mint.
+#
+# ─── THE DEPLOY IS AUTOMATIC, AND SO IS EVERYTHING BEFORE IT ───────
+# Mac (2026-09-21): "The token provided allows you to take this on
+# yourself. I am not needed at all."
+#
+# `.github/workflows/account-deploy.yml` does all four steps on every
+# push to main that touches this service, with the Cloudflare API token
+# read from `secrets.CLOUDFLARE_API_TOKEN`, where it already lives for
+# the relay. NOBODY TYPES A CREDENTIAL ANYWHERE. Every step is
+# idempotent, so the job is safe to re-run and a deploy that failed is
+# retried by the next push instead of silently staying stale:
+#
+#   1. Create the database if it is not there, then read its id back
+#      out of Cloudflare and write it into this file's copy IN THE
+#      RUNNER. The id below is a sentinel on purpose - see the binding.
+#   2. `wrangler d1 migrations apply`, which keeps its own
+#      `d1_migrations` table and so applies each file exactly once, in
+#      order. That is why it replaced a pair of `d1 execute --file`
+#      lines: 0002 is NOT idempotent (`ALTER TABLE ADD COLUMN` has no
+#      IF NOT EXISTS), and "remember to run each one once" is not a
+#      property, it is a hope. Now the tool remembers.
+#   3. Mint the signing pair, but ONLY IF THERE IS NOT ONE ALREADY -
+#      re-minting invalidates every token in flight. Both halves go in
+#      from a pipe; neither is echoed, written to a file, or put on a
+#      command line.
+#   4. Deploy, then verify /v1/health names this deploy - a wrangler
+#      exit code of 0 over an unchanged Worker is a green deploy that
+#      did not happen.
+#
+# A DEPLOY HERE DROPS NOBODY. That is the entire point of the split:
+# this Worker holds no sockets, so it can be fixed at any hour - which
+# is also why this one may fire on a path filter where the relay's
+# deploy may not.
+name = "daggerfall-accounts"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+account_id = "a27adccb38c8e8b82fa32e5736274a94"
+workers_dev = true
+
+# An uncaught error is logged, not lost - AUDIT ONLINE A17's law, on
+# this side too.
+[observability]
+enabled = true
+
+[vars]
+# Answered by /health so a deploy that did not happen cannot look like
+# one that did. Kept in step with ACCOUNT_VERSION in src/index.js.
+ACCOUNT_VERSION = "acct1"
+# The site that may call this. "*" while nothing is live; it is narrowed
+# to the real origin before a single account exists.
+ALLOWED_ORIGIN = "*"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "daggerfall-accounts"
+migrations_dir = "migrations"
+# THE ID IS NOT A SECRET, AND IT IS ALSO NOT WRITTEN HERE. Cloudflare
+# mints a D1 id when the database is created, so a repo that carries one
+# is a repo somebody has to hand-edit the first time this service is
+# stood up - and that hand edit was step 1 of a list nobody should have
+# to read.
+#
+# So the deploy RESOLVES it: create the database if it is missing, ask
+# Cloudflare for the id, rewrite this one line in the runner's own
+# checkout, then run wrangler. Nothing is committed back.
+#
+# The sentinel below is what the workflow substitutes, so the two are
+# one fact in two files - and test/accountdeploy.test.js reads both and
+# fails if they ever stop agreeing.
+database_id = "resolved-by-account-deploy-workflow"
+
+# IDENTITY_PRIVATE_KEY is NOT here and must never be. It is a secret
+# (`wrangler secret put`), and test/accountworker.test.js reads this
+# file to make sure nobody ever pastes one in.
+#
+# IDENTITY_PUBLIC_KEY is not here either, for the opposite reason: it is
+# not a secret at all. It is stored the same way only because it is
+# minted in the same breath as the private half by a job no person
+# watches - and the service hands it to anybody who asks, at /v1/pubkey,
+# rather than waiting to be copied into a file by hand.

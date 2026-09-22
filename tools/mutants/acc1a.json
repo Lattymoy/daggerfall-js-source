@@ -1,0 +1,150 @@
+[
+  {
+    "name": "ACC1a-1-the-version-is-not-checked",
+    "file": "src/net/identityToken.js",
+    "old": "  if (v !== TOKEN_V) return { ok: false, why: 'version' };",
+    "new": "  if (false) return { ok: false, why: 'version' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-2-the-signature-is-not-checked",
+    "file": "src/net/identityToken.js",
+    "old": "  if (!good) return { ok: false, why: 'signature' };",
+    "new": "  good = true;",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-3-the-claims-are-trusted-once-signed",
+    "file": "src/net/identityToken.js",
+    "old": "  if (!claimsValid(claims, { maxTtlS })) return { ok: false, why: 'claims' };",
+    "new": "  if (false) return { ok: false, why: 'claims' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-4-an-expired-token-still-opens-a-door",
+    "file": "src/net/identityToken.js",
+    "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };",
+    "new": "  if (nowS > claims.e + 86400) return { ok: false, why: 'expired' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-5-the-expiry-is-the-last-moment-it-lives",
+    "file": "src/net/identityToken.js",
+    "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };",
+    "new": "  if (nowS > claims.e) return { ok: false, why: 'expired' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-6-a-token-from-the-future-is-accepted",
+    "file": "src/net/identityToken.js",
+    "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
+    "new": "  if (false) return { ok: false, why: 'future' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-7-the-lifetime-is-the-minters-business-alone",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.e - c.i > maxTtlS) return false;        // a minter that got greedy",
+    "new": "  // the minter is trusted about how long its own token lives",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-8-the-name-is-repaired-instead-of-refused",
+    "file": "src/net/identityToken.js",
+    "old": "  if (!nameIsIssuable(c.n)) return false;",
+    "new": "  if (typeof c.n !== 'string') return false;",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-9-the-name-law-is-a-second-copy",
+    "file": "src/net/identityToken.js",
+    "old": "    && sanitizeName(name) === name;",
+    "new": "    && /^[ -~]+$/.test(name);",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-10-the-public-key-is-imported-extractable-and-signing",
+    "file": "src/net/identityToken.js",
+    "old": "    return await subtle.importKey('raw', bytes, { name: 'Ed25519' }, false, ['verify']);",
+    "new": "    return await subtle.importKey('raw', bytes, { name: 'Ed25519' }, true, ['verify']);",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "equivalent": true,
+    "why": "Extractable changes nothing an attacker can use: the key is PUBLIC, and its usages still exclude sign - which is the law the pin actually holds and which a mutation of `['verify']` would break. Recorded rather than dropped because the line reads like it matters and the next reader should know which half does."
+  },
+  {
+    "name": "ACC1a-11-an-oversized-token-reaches-webcrypto",
+    "file": "src/net/identityToken.js",
+    "old": "  if (typeof token !== 'string' || token.length > 1024) return { ok: false, why: 'shape' };",
+    "new": "  if (typeof token !== 'string') return { ok: false, why: 'shape' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-12-a-bad-token-throws-instead-of-refusing",
+    "file": "src/net/identityToken.js",
+    "old": "  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }",
+    "new": "  claims = JSON.parse(dec.decode(raw));",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-13-the-id-shape-drifts-from-SOC1",
+    "file": "src/net/identityToken.js",
+    "old": "export const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;",
+    "new": "export const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-14-the-minter-signs-what-it-cannot-verify",
+    "file": "src/net/identityToken.js",
+    "old": "  if (!claimsValid(claims)) throw new TypeError('mintToken refused a claim set it could not verify');",
+    "new": "  if (false) throw new TypeError('mintToken refused a claim set it could not verify');",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  },
+  {
+    "name": "ACC1a-15-a-signature-of-the-wrong-length-reaches-webcrypto",
+    "file": "src/net/identityToken.js",
+    "old": "  if (!sig || sig.length !== SIG_BYTES) return { ok: false, why: 'sig-shape' };",
+    "new": "  if (!sig) return { ok: false, why: 'sig-shape' };",
+    "tests": [
+      "test/identitytoken.test.js"
+    ],
+    "equivalent": true,
+    "why": "WebCrypto's own verify answers false for a 63-byte Ed25519 signature, so the refusal lands either way and no pin can tell the two apart from outside. The check is kept because it says NO before a crypto call rather than after one, which is the same reason the length bound above it exists."
+  },
+  {
+    "name": "ACC1a-16-the-token-is-signed-without-its-version",
+    "file": "src/net/identityToken.js",
+    "old": "  const signed = enc.encode(`${TOKEN_V}.${body}`);",
+    "new": "  const signed = enc.encode(body);",
+    "tests": [
+      "test/identitytoken.test.js"
+    ]
+  }
+]

@@ -5,7 +5,7 @@
 // third is ReceiveHouse, below (:105-151, H1) - and DR2 closed the
 // twentieth, so guildServiceFlow.js's SERVICE_DESTINATION now names a
 // window for every arm of DoGuildService's switch. This file's three
-// are routed at worldModes.js:3220 (Spymaster), :2897 (ReceiveArmor)
+// are routed at worldModes.js:3229 (Spymaster), :2906 (ReceiveArmor)
 // and :2732 (ReceiveHouse).
 //
 // THE ARMOUR IS ONCE PER RANK, and the bookkeeping is a BITFIELD on
