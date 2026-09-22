@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -268,6 +268,7 @@ export class OnlineSession {
     this.token = null;
     this.presence = !!presence;   // false: a channel's session (CHAT1) - no pose out, a ping for a heartbeat
     this.onChat = null;           // (line) => void: a chat line in - {id, name, text, at, mine}
+    this.onRed = null;            // RED1: (line) => void: the SERVER's own line - {text, at}, no id and no name, because nobody is speaking it
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
     this.onAct = null;            // WORLD3: (id, data) => void - a door, a lever or a platform moved by another in my room
@@ -305,6 +306,7 @@ export class OnlineSession {
     this.terminal = false;     // the relay closed with a reason a retry will not change (replaced, refused)
     this.terminalAt = null;    // when it did (the session's clock): rejoin() waits on it
     this._cbucket = null;      // the client's own chat gate (AUDIT CHAT A8): the relay's law, run first
+    this._rbucket = null;      // RED1: and the server line's own, well under it - the relay's law again, run first
     // CHAT-G: the gate on lines COMING IN, one bucket per room because
     // that is the unit the relay spends by. Room -> bucket; a room let go
     // drops its bucket with the rest of what that room meant (_forgetRoom).
@@ -812,6 +814,29 @@ export class OnlineSession {
     return true;
   }
 
+  /** RED1: THE SERVER'S OWN LINE OUT. Mac: "a red text system (kind of
+   *  like warframe) where I can message chat as the server."
+   *
+   *  THIS SIDE DOES NOT ASK WHETHER IT MAY. Whether this socket can
+   *  speak as the server is a question about the token's signature and
+   *  only the relay holds the key - so a client that checked its own
+   *  glyphs first would be a second copy of an authority it does not
+   *  hold, and a wrong one the moment a grant lapses. It sends; the
+   *  relay ignores it from anybody it did not sign for.
+   *
+   *  Gated here as the relay gates it, so a line the relay would drop
+   *  without a word is refused here with a false and the sender keeps
+   *  their text - `sendChat`'s own law, for the same reason. */
+  sendRed(text) {
+    const line = sanitizeChat(text);
+    if (!line) return false;
+    const gate = redGate(this._rbucket, this._now());
+    if (!gate.pass) return false;
+    if (!this._send({ t: 'say', text: line })) return false;
+    this._rbucket = gate.bucket;
+    return true;
+  }
+
   /** SOC2: a social act out - to the hub, from a session that holds an account: `{k, acct?|peer?|party?}` as
    *  net/wire.js SOCIAL_ACTS has it, gated here as the hub gates it (SOCIAL_HZ_MAX - an act the hub would drop without
    *  a word is refused here with a false, and the panel keeps its button lit); false when nothing went. */
@@ -1067,6 +1092,24 @@ export class OnlineSession {
       // is worth doing. A hard boolean for the same reason `_peer` keeps
       // one: never a "maybe".
       this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id }));
+    } else if (m.t === 'red') {
+      // RED1: THE SERVER SPEAKING, and the client knows it by the FRAME
+      // TYPE rather than by anything on the frame. net/chat.js's own
+      // note is the reason: a notice recognised by a name would be one
+      // rename away from a player faking one, so this line carries no
+      // id and no name at all and there is nothing on it to forge.
+      //
+      // GATED COMING IN like a chat line, on the SAME bucket, because
+      // the relay a client talks to is the player's own choice
+      // (`?server=`, the Relay field) - "the relay already gated it" is
+      // a sentence about an honest relay only, and this is the one line
+      // type a dishonest one would most want to flood.
+      const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
+      if (!text) return;
+      const g = chatInGate(this._inChat.get(room), now);
+      this._inChat.set(room, g.bucket);
+      if (!g.pass) { this.stats.chatsDropped++; return; }
+      this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));
     } else if (m.t === 'social') {
       // AUDIT SOC B3: GATED COMING IN, as a chat line is (CHAT-G) - a note or an error becomes a chat line (net/chat.js
       // keeps CHAT_KEEP of them, so an ungated stream is a player's history deleted) and the rest a repaint; the

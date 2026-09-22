@@ -8793,6 +8793,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const tab of chatLog.tabs) {
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
       link.onChat = (line) => chatLog.push(tab.id, line);
+      // RED1: the SERVER's own line, and it lands on the log with the
+      // flag set HERE - from the frame type the relay used, never from
+      // anything on the frame. It rides the ordinary log, so ChatLog's
+      // own peek draws it over the world for a player who never opens
+      // the panel: a broadcast nobody sees is not one.
+      link.onRed = (line) => chatLog.push(tab.id, { text: line.text, at: line.at, red: true });
       link.onRelay = onRelayVersion;
       link.join(tab.room);
       chatLinks.set(tab.id, link);
@@ -8834,6 +8840,17 @@ export async function bootWorld(canvas, renderer, params, status) {
           });
           return true;
         }
+        // RED1 (Mac: "a red text system (kind of like warframe) where I
+        // can message chat as the server"). THE COMMAND IS ALWAYS
+        // PARSED AND NEVER GUARDED HERE: whether this player may speak
+        // as the server is a question about their TOKEN's signature,
+        // and only the relay holds the key - a check here would be a
+        // second copy of an authority this side does not hold, wrong
+        // the moment a grant lapses. The relay ignores it from anybody
+        // it did not sign for, and nothing is echoed back, so a player
+        // who tries learns nothing from the silence.
+        const red = /^\/red\s+([\s\S]+)$/i.exec(text.trim());
+        if (red) return chatLinks.get(tabId)?.sendRed(red[1]) ?? false;
         return chatLinks.get(tabId)?.sendChat(text) ?? false;   // false keeps the line in the field (B2)
       },
       // CHAT-R1 (Mac: "a sidepanel on the chat ui showing all currently

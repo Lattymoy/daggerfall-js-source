@@ -2621,3 +2621,115 @@ the real shape of the case and kills it.
 **STILL OWED: `DEVELOPER_HANDLES` ships empty.** Nobody holds the
 Developer title until a handle is written into it. Mac (2026-09-22):
 *"Ill have provide developer names once all our accounts are created."*
+
+---
+
+## RED1 — the server speaking (2026-09-22)
+
+> Before we merge after everything, I want to set up a red text system
+> (kind of like warframe) where I can message chat as the server before
+> we merge.
+
+Warframe's red text: the developer says something to everybody at once,
+and everybody can tell it is not a player saying it.
+
+### D1 — A LINE THAT LOOKS OFFICIAL IS THE MOST VALUABLE FORGERY HERE
+
+*"The relay is restarting in 5 minutes."* *"There is a duplication bug,
+log out now."* *"The developers are giving away X — click this."* Every
+one of them costs a player something, and every one is free to whoever
+can make a line look like the server.
+
+So the authority is **a signature and nothing else**, and it is a
+signature this arc already mints: `a.glyphs` on the socket's attachment,
+written by `_named` out of the verified token claims and writable by
+nothing else on that socket.
+
+**The right to speak as the server is the same fact as the dev mark
+beside the name.** Granted by a handle in `DEVELOPER_HANDLES`, revoked
+by taking it off — within one token's life, with nothing to clear
+anywhere, because the grant was never stored.
+
+### D2 — NO SECOND CREDENTIAL, and that is the point
+
+An admin password, a `/v1/broadcast` route, a separate signing key —
+each was available and each is **another thing that can leak and another
+thing somebody has to remember to revoke**. The one already here is
+audited, already signed, and already expires.
+
+The client never asks whether it may. Whether a socket can do this is a
+question about a signature and only the relay holds the key, so a check
+in `scenes/world.js` would be a second copy of an authority this side
+does not hold — wrong the moment a grant lapses or arrives, and
+protecting nothing.
+
+### D3 — its own frame type, and no speaker
+
+```
+client -> relay:  {t:'say',  text}        shape checked by wire.js, nothing more
+relay  -> all:    {t:'red',  text, at}    no id, no name
+```
+
+`net/chat.js`'s note beside `system` says why a notice must not be
+recognised by a **name**: the relay lets a player call themselves
+anything the filter allows, so a notice known by the string *"Server"*
+would be one rename away from a player announcing a fake restart.
+
+This is one step stronger. A flag on a chat line would be a **field**,
+and a player can put a field on a frame. Its own frame type is something
+a player cannot send at all, so the client marks the line from the type
+and **there is nothing on it to forge**. It carries no id and no name
+because nobody is speaking it — and that makes it a system line by
+construction, which keeps every reader that already understands system
+lines correct without being told (`bubbleLineOk` would otherwise hang a
+chat bubble over the head of a peer whose id is the empty string).
+
+### D4 — rated, and refused in silence
+
+`RED_HZ_MAX` is its own bucket, under `CHAT_HZ_MAX`: a player's line
+reaches a room, this reaches **every player in the game**. The grant says
+who may speak and the bucket says how often; an authority with no rate is
+one careless account away from an outage.
+
+A player who sends `say` is **ignored, not refused**. A refusal would
+tell a stranger the frame exists and is worth attacking.
+
+### THE PINS CAUGHT A FEATURE THAT WOULD HAVE SHIPPED DEAD
+
+`RED_HZ_MAX` was first written as **0.5** — "one every two seconds",
+which reads perfectly well. `tokenGate` starts a fresh bucket with
+`rate` tokens and a pass costs a whole one, so **at any rate below 1 the
+first frame is refused and so is every frame after it.** Red text would
+have been silently non-functional, in a slice whose entire point is
+being able to say something when it matters.
+
+It is 1 now; a pin holds the floor with the reason on it; and the
+constraint is written at **`tokenGate`'s own door**, so the next slice
+that wants "one every ten seconds" meets it before shipping rather than
+after. That needs a different shape — a stamp of the last pass, not a
+bucket — and whoever needs one should write that rather than pass a
+fraction.
+
+### SHIPPED 2026-09-22
+
+- `src/net/wire.js` — `RED_HZ_MAX`, `redGate`, the `say` frame;
+  `RELAY_VERSION` world88 → **world89**.
+- `server/src/index.js` — the grant, the bucket, the fan.
+- `src/net/online.js` — `sendRed`, `onRed`, gated coming in (CHAT-G).
+- `src/net/chat.js` — `red` on a line, and every red line a system line.
+- `src/scenes/world.js` — `/red <text>`, parsed and never guarded.
+- `src/ui/chatPanel.js` — `.dfchat-line.red`, not an italic aside: the
+  system's notices are asides and this is an announcement.
+- `test/red1_server_say.test.js` — 9 pins. `tools/mutants/red1.json` —
+  12, all dead.
+
+**It rides the ordinary log**, so `ChatLog.peek` draws it over the world
+for a player who never opens the panel. A broadcast nobody sees is not
+one.
+
+**HOW MAC USES IT:** sign in on an account whose handle is in
+`DEVELOPER_HANDLES`, open chat, type `/red <the announcement>`. It
+reaches everyone in the world channel — which is the one room every
+player is in (ROSTER-G), so it reaches everybody, including players
+down a dungeon. Until a handle is written into that config **nobody can
+send one, including Mac**.

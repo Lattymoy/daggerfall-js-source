@@ -126,6 +126,14 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-tag { color: var(--dim, #8b8578); font-size: 10px; margin: 0 6px 0 2px; }
 .dfchat-line.mine .dfchat-name { color: #dcc27c; }
 .dfchat-line.system .dfchat-text { color: #8fb8d8; font-style: italic; }
+/* RED1 - THE SERVER SPEAKING. Every red line is a system line too
+   (nobody is speaking it), so this rule follows that one and wins on
+   specificity rather than fighting it. Not italic: the system's own
+   notices are asides and this is an announcement, which is the whole
+   difference Mac is asking for. The red is the skin's own alarm
+   colour, the one a refusal already wears. */
+.dfchat-line.red .dfchat-text { color: #e2453a; font-style: normal; font-weight: 600;
+  letter-spacing: .01em; }
 .dfchat-time { color: var(--dim, #8b8578); font-size: 10px; margin-right: 6px; }
 .dfchat-hint { margin-top: 4px; font-size: 11px; color: var(--dim, #8b8578); opacity: .75; text-shadow: ${PIXEL_TEXT_SHADOW}; }
 .dfchat-status { margin-top: 4px; font-size: 11px; color: #e0b070; text-shadow: ${PIXEL_TEXT_SHADOW}; }
@@ -376,7 +384,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   /** A drawn line, and the span its AUTHOR's name is in - SOC3 colours that span from the host's `nameColor` without
    *  rebuilding the row, so a party formed while the chat is open turns the names green where they already stand. */
   const lineNode = (line, withTime) => {
-    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}`);
+    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}`);
     if (withTime) n.append(el('span', 'dfchat-time', clockOf(line.at)));
     // SRV-N: a notice is NOT ATTRIBUTED. No name and no `#tag`, because
     // both are the marks of a person having spoken - a notice drawn with

@@ -1,0 +1,98 @@
+[
+  {
+    "name": "RED1-1-the-authority-dropped",
+    "file": "server/src/index.js",
+    "old": "      if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dev')) return;   // silently: a stranger probing this learns nothing from being ignored",
+    "new": "",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "THE WHOLE SLICE. Any player in the room can then speak as the server, and a line that looks official is the most valuable forgery in the game: \"the relay is restarting\", \"there is a duplication bug, log out now\", \"the developers are giving away X\" - each costs a player something and each is free to whoever can make a line look official."
+  },
+  {
+    "name": "RED1-2-the-authority-read-off-the-frame",
+    "file": "server/src/index.js",
+    "old": "      if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dev')) return;   // silently: a stranger probing this learns nothing from being ignored",
+    "new": "      if (!Array.isArray(m.glyphs) || !m.glyphs.includes('dev')) return;",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "The same hole wearing a check. `a.glyphs` was written by `_named` off the VERIFIED claims and can be written by nothing else on that socket; `m.glyphs` is whatever the sender typed. ACC1g shut exactly this on the name one arc ago, and a title was already the stronger claim - the server's own voice is stronger still."
+  },
+  {
+    "name": "RED1-3-the-title-mistaken-for-the-grant",
+    "file": "server/src/index.js",
+    "old": "      if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dev')) return;   // silently: a stranger probing this learns nothing from being ignored",
+    "new": "      if (a.title !== 'developer') return;",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "The WORN title is a choice - a developer who equips Founder instead would lose the ability to broadcast, and the grant would depend on a cosmetic preference. The dev GLYPH is the derived fact (server-account/src/titles.js: it rides the config list, not the column), which is why the authority hangs off it."
+  },
+  {
+    "name": "RED1-4-the-rate-gate-dropped",
+    "file": "server/src/index.js",
+    "old": "      const gate = redGate(a.rbucket, now);\n      this._setAttach(ws, { ...a, rbucket: gate.bucket });\n      if (!gate.pass) return;",
+    "new": "",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "A compromised or careless developer account can then paint every screen in the game as fast as a socket will carry frames. The grant says WHO may speak; the bucket says how often, and a broadcast needs both - an authority with no rate is a single account away from an outage."
+  },
+  {
+    "name": "RED1-5-the-red-bucket-is-the-chat-bucket",
+    "file": "server/src/index.js",
+    "old": "      const gate = redGate(a.rbucket, now);\n      this._setAttach(ws, { ...a, rbucket: gate.bucket });",
+    "new": "      const gate = redGate(a.cbucket, now);\n      this._setAttach(ws, { ...a, cbucket: gate.bucket });",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "Two different allowances sharing one bucket means each silently spends the other: a developer who has just talked cannot broadcast, and one who has just broadcast cannot talk. Separate spends, separate buckets - which is also why CHAT1 gave chat its own rather than borrowing the pose one."
+  },
+  {
+    "name": "RED1-6-a-rate-the-gate-cannot-express",
+    "file": "src/net/wire.js",
+    "old": "export const RED_HZ_MAX = 1;",
+    "new": "export const RED_HZ_MAX = 0.5;",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "THE FIRST CUT OF THIS SLICE, and the pins caught it. `tokenGate` starts a fresh bucket with `rate` tokens and a pass costs a whole one, so any rate below 1 refuses the FIRST frame and every frame after it - the feature reads as 'slow' in the source and is DEAD in the game. The constraint is now written at tokenGate's own door."
+  },
+  {
+    "name": "RED1-7-the-server-line-carries-a-name",
+    "file": "server/src/index.js",
+    "old": "      const said = JSON.stringify({ t: 'red', text: m.text, at: now });",
+    "new": "      const said = JSON.stringify({ t: 'red', id: a.id, name: a.name, text: m.text, at: now });",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "Nobody is speaking a server line, and giving it a speaker is how it stops being one: a reader now has an id to attribute it to, a name to colour, and a person to blame - and the announcement becomes a player's line drawn in red, which is the thing net/chat.js's `system` note warns about from the other direction."
+  },
+  {
+    "name": "RED1-8-the-broadcast-becomes-a-chat-frame",
+    "file": "server/src/index.js",
+    "old": "      const said = JSON.stringify({ t: 'red', text: m.text, at: now });",
+    "new": "      const said = JSON.stringify({ t: 'chat', text: m.text, red: true, at: now });",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "Then 'is this the server?' is a FIELD on a frame every player can send, and the client has to trust it. Its own frame type is the whole defence: a player cannot send `t:'red'` at all, so the client marks the line from the type and there is nothing on it to forge."
+  },
+  {
+    "name": "RED1-9-the-parser-lets-an-unbounded-line-through",
+    "file": "src/net/wire.js",
+    "old": "    const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';\n    return text ? { t: 'say', text } : { error: 'bad say' };",
+    "new": "    return typeof m.text === 'string' ? { t: 'say', text: m.text } : { error: 'bad say' };",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "A broadcast is not a licence to put four kilobytes of control characters over every screen in the game. It is a chat line and it is bounded like one, at both ends."
+  },
+  {
+    "name": "RED1-10-the-client-decides-who-may-broadcast",
+    "file": "src/scenes/world.js",
+    "old": "        if (red) return chatLinks.get(tabId)?.sendRed(red[1]) ?? false;",
+    "new": "        if (red) return online?.glyphs?.includes('dev') ? (chatLinks.get(tabId)?.sendRed(red[1]) ?? false) : false;",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "A second copy of an authority this side does not hold. It is wrong the moment a grant lapses or arrives, it invites the next reader to trust it, and it protects nothing - the relay is the only thing that can check a signature, and it already does."
+  },
+  {
+    "name": "RED1-11-the-red-line-is-not-a-system-line",
+    "file": "src/net/chat.js",
+    "old": "system: !!system || !!red, red: !!red };",
+    "new": "system: !!system, red: !!red };",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "Nobody is speaking a red line, so every reader that already knows what a system line is has to be told about this one separately - starting with ui/nameLayer.js's `bubbleLineOk`, which would hang a chat bubble over the head of a peer whose id is the empty string."
+  },
+  {
+    "name": "RED1-12-the-inbound-gate-dropped",
+    "file": "src/net/online.js",
+    "old": "      const g = chatInGate(this._inChat.get(room), now);\n      this._inChat.set(room, g.bucket);\n      if (!g.pass) { this.stats.chatsDropped++; return; }\n      this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));",
+    "new": "      this._deliver('chat', () => this.onRed?.({ text, at: Number.isFinite(m.at) ? m.at : now }));",
+    "tests": ["test/red1_server_say.test.js"],
+    "note": "CHAT-G's whole finding, on the one line type a dishonest relay would most want to flood. The relay a client talks to is the PLAYER'S OWN CHOICE (`?server=`, the Relay field), so 'the relay already gated this' is a sentence about an honest relay only - and net/chat.js keeps CHAT_KEEP lines, so an ungated stream is a player's history deleted."
+  }
+]

@@ -178,7 +178,7 @@ import { verifyToken, importPublicKeyB64, MAX_TTL_S } from '../../src/net/identi
  *  flood cannot grow the map without end. */
 const SPENT_MAX = 4096;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -1074,6 +1074,40 @@ export class Room {
         if (!b.id) continue;
         if (other === ws || chat || inRange(a.key ?? '', a.pose, b.pose)) this._send(other, out);   // the sender hears its own line back: that is the receipt
       }
+    }
+    if (m.t === 'say') {
+      // ═══ RED1 — THE SERVER SPEAKING ═══════════════════════════════
+      //
+      // Mac: "a red text system (kind of like warframe) where I can
+      // message chat as the server."
+      //
+      // THE AUTHORITY IS THE DEV GLYPH THE TOKEN ALREADY CARRIED, and
+      // nothing new was invented to hold it. `a.glyphs` was written by
+      // `_named` off the VERIFIED claims and can be written by nothing
+      // else on this socket - so the right to speak as the server is
+      // the same fact as the mark beside the name, granted the same
+      // way (a handle in the service's config) and revoked the same
+      // way. A handle taken off that list stops being able to do this
+      // within one token's life, with nothing here to clear.
+      //
+      // NO SEPARATE PASSWORD, NO ADMIN ROUTE, NO SECOND KEY. Each of
+      // those would be a second thing that can leak and a second thing
+      // to revoke; this one is already audited, already signed, and
+      // already expires.
+      if (!Array.isArray(a.glyphs) || !a.glyphs.includes('dev')) return;   // silently: a stranger probing this learns nothing from being ignored
+      const now = Date.now();
+      // ITS OWN BUCKET, well under chat's. A player's line reaches a
+      // room; this reaches every player in the game.
+      const gate = redGate(a.rbucket, now);
+      this._setAttach(ws, { ...a, rbucket: gate.bucket });
+      if (!gate.pass) return;
+      // A LINE NOBODY IS SPEAKING: no id, no name. Its own frame type
+      // rather than a flag on a chat line, because a flag on a chat
+      // frame is a field, and net/chat.js' own note says why that
+      // matters - the client marks this from the TYPE, which no player
+      // can send.
+      const said = JSON.stringify({ t: 'red', text: m.text, at: now });
+      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, said);   // everyone in this room, the sender included - that is the receipt
     }
   }
 

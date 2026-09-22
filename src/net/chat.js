@@ -62,7 +62,7 @@ export class ChatLog {
    *  the string 'Server' would be one `/name Server` away from a player
    *  announcing a fake restart. A flag never travels on the wire - it is
    *  set here, by us, on a line nobody sent. */
-  push(tabId, { id = '', name = '', text = '', at = null, mine = false, system = false } = {}) {
+  push(tabId, { id = '', name = '', text = '', at = null, mine = false, system = false, red = false } = {}) {
     const tab = this.tab(tabId);
     if (!tab || typeof text !== 'string' || !text) return null;
     const now = this._now();
@@ -71,7 +71,13 @@ export class ChatLog {
     // cannot verify now, so every name that can appear on a line was
     // verified to be in the room at all and the flag said the same
     // thing about every one of them.
-    const line = { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: !!system };
+    // RED1: `red` is the SERVER speaking, and it is the same kind of
+    // flag as `system` for the same reason - set HERE, by us, on a line
+    // nobody sent. What makes it safe is one step stronger: it is set
+    // from the relay's own FRAME TYPE (`t:'red'`), which a player
+    // cannot send at all, rather than from any field on a chat line.
+    // Every red line is a system line too: nobody is speaking it.
+    const line = { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: !!system || !!red, red: !!red };
     tab.messages.push(line);
     if (tab.messages.length > this._keep) tab.messages.splice(0, tab.messages.length - this._keep);
     if (!(this.open && tab.id === this.active)) tab.unread++;

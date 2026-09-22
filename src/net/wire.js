@@ -12,6 +12,8 @@
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
 //                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
+//                    {t:'say', text}                    RED1: THE SERVER SPEAKING - only from a socket whose
+//                                                       TOKEN carried the dev glyph; fanned as {t:'red', text, at}
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
@@ -192,6 +194,37 @@ export const CLOSE_BUSY = 1013;       // the room is full or its hello gate is s
 export const CHAT_MAX = 240;
 /** The most chat lines a client may send a second; the bucket's burst is the same number. */
 export const CHAT_HZ_MAX = 2;
+
+/** ═══ RED1: THE SERVER'S OWN LINE ════════════════════════════════
+ *
+ * Mac (2026-09-22): "I want to set up a red text system (kind of like
+ * warframe) where I can message chat as the server."
+ *
+ * A LINE NOBODY IS SPEAKING. It carries no id and no name, because it
+ * is not a person - which is also what makes it unforgeable in the
+ * one way that matters: `net/chat.js`'s own note says a notice
+ * recognised by the string 'Server' would be one rename away from a
+ * player announcing a fake one, so this arrives as its OWN FRAME TYPE
+ * and the client marks it from the type rather than from any field.
+ *
+ * IT IS BOUNDED LIKE A CHAT LINE because it IS one - `sanitizeChat`
+ * runs on it at both ends. A broadcast is not a licence to put four
+ * kilobytes over everybody's screen.
+ *
+ * RED_HZ_MAX IS DELIBERATELY BELOW CHAT_HZ_MAX. A player's line
+ * reaches the room; this reaches EVERY PLAYER IN THE GAME, so the
+ * thing that would be merely annoying at chat's rate is the whole
+ * population's screen at this one.
+ *
+ * AND IT IS 1 RATHER THAN THE 0.5 THIS WAS FIRST WRITTEN AS, because
+ * `tokenGate` CANNOT EXPRESS A RATE BELOW ONE A SECOND: a fresh bucket
+ * starts with `rate` tokens and the gate needs a whole one, so at 0.5
+ * the very first frame is refused and every one after it - the feature
+ * would have been silently dead rather than slow. The pins caught it;
+ * the constraint is now written down at `tokenGate` itself so the next
+ * slice that wants "one every ten seconds" meets it before shipping.
+ */
+export const RED_HZ_MAX = 1;
 /** Over-rate chat lines dropped in a row before the socket is closed. */
 export const CHAT_STRIKES_MAX = 20;
 /** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
@@ -746,7 +779,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world88';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client
+export const RELAY_VERSION = 'world89';   // RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1032,6 +1065,16 @@ export function parseClient(text, { hasHello = false } = {}) {
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
     return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
   }
+  if (m.t === 'say') {
+    // RED1: THE SERVER'S LINE, ASKED FOR. This checks the SHAPE and
+    // nothing else - whether this socket may actually speak as the
+    // server is a question about a SIGNATURE, and only the relay holds
+    // the key. `parseClient` is sync and pure and stays that way, the
+    // same split the token itself lives under (ACC1d).
+    if (!hasHello) return { error: 'say before hello' };
+    const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
+    return text ? { t: 'say', text } : { error: 'bad say' };
+  }
   if (m.t === 'social') {   // SOC1: a friend or party act - a KIND from SOCIAL_ACTS naming what that kind must name, and nothing else
     if (!hasHello) return { error: 'social before hello' };
     const act = validSocialAct(m);
@@ -1052,6 +1095,13 @@ export function parseClient(text, { hasHello = false } = {}) {
 
 /** A token bucket of `rate` a second: the bucket after the frame and
  *  whether the frame passes. The pose gate and the hello gate ride it. */
+/** RED1 FOUND THE FLOOR, so it is stated here rather than rediscovered:
+ *  THIS GATE CANNOT EXPRESS A RATE BELOW ONE A SECOND. A fresh bucket
+ *  starts with `rate` tokens and a pass costs a whole one, so any rate
+ *  under 1 refuses the FIRST frame and every frame after it - a gate
+ *  that reads as "slow" and behaves as "off". A slower allowance needs
+ *  a different shape (a stamp of the last pass, not a bucket), and
+ *  whoever needs one should write that rather than pass a fraction. */
 export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX) {
   const b = bucket ?? { tokens: rate, at: nowMs };
   const refill = ((nowMs - b.at) / 1000) * rate;
@@ -1105,6 +1155,8 @@ export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
+/** RED1: the server line's own bucket, well under chat's - see RED_HZ_MAX. */
+export const redGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RED_HZ_MAX);
 /** SOC1: the social acts' gate - SOCIAL_HZ_MAX a second, at the hub and at home (an act the hub would refuse is never sent). */
 export const socialGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_HZ_MAX);
 /** SOC1: the party poses' gate - PARTY_HZ_MAX a second, at the hub and at home. */
