@@ -547,6 +547,7 @@ let remote = null;
 let packOpen = true;
 let goldEntry = null;   // the drop-gold field's live text, or null
 let onExit = () => {};
+let onHandoff = () => {};
 let keyHandler = null;
 let lockHandler = null;
 // U54: how many times this screen has rebuilt itself. Every cold icon
@@ -1127,12 +1128,12 @@ function use(item, collection = deps.items?.() ?? []) {
     // HAND OVER, THEN CLOSE - the reader's failure callback reports on
     // this window while it is still the live overlay.
     open(act.item, () => { notice = fail; render(); });
-    onExit();
+    onHandoff();
     return;
   }
   if (act.kind === 'openSpellbook') {
     const open = deps.openSpellbook;
-    onExit();   // CLOSE, THEN HAND OVER - no callback, so free the slot
+    onHandoff();   // CLOSE, THEN HAND OVER - no callback, so free the slot
     open();
     return;
   }
@@ -2432,7 +2433,7 @@ function onKey(e) {
     // function`): THE HOOK IS READ BEFORE ANYTHING CLOSES - the file's own law at the close arm above - because
     // `onExit` unmounts, and the unmount clears `deps` to `{}` before this line ran on it.
     const openCharSheet = deps.openCharSheet;
-    onExit();                 // the pack's own close law runs FIRST...
+    onHandoff();              // the pack's own close law runs FIRST...
     openCharSheet();          // ...and this replaces the slot it just freed
     return;
   }
@@ -2473,6 +2474,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
     _unsubscribeFigure = d.fpArm.subscribe(() => { _figureCache = { key: null, img: null }; if (host) render(); });
   }
   onExit = d.onExit ?? (() => {});
+  onHandoff = d.onHandoff ?? onExit;
   tab = PAGE_IDS[0];
   picked = null;
   // PX20b: a LOOT target opens its own frame alone; every other way in
@@ -2557,6 +2559,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       host = null;
       deps = {};
       onExit = () => {};
+      onHandoff = () => {};
       picked = null;
       remote = null;
       _view = null;
