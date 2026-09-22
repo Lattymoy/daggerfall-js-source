@@ -1121,6 +1121,14 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .stagebody {
   flex: 1; min-height: 0; display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  /* CHARGEN-REFLEX: the row must be able to SHRINK. A grid's implicit
+     row is auto, which is max-content, so a stage taller than the
+     pane kept its full height while .stagebody itself shrank under
+     flex:1 + min-height:0 - and the difference spilled out of the
+     bottom as VISIBLE overflow, underneath the opaque .actionbar that
+     follows it. minmax(0, 1fr) is what lets the row give way so the
+     stage can scroll inside its own box instead. */
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--gap); background: var(--iron);
 }
 .stagebody.solo { grid-template-columns: 1fr; }
@@ -1137,7 +1145,14 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    Sex and the class METHOD are two choices each. Two choices get two
    large targets and an empty screen around them: a two-button question
    dressed as a form is a two-button question that reads as work. */
-.choose { display: grid; place-content: center; gap: 28px; padding: 40px 30px; height: 100%; }
+/* CHARGEN-REFLEX: "safe center" and a scroll, because plain "center"
+   is a trap. When the content is taller than the box, centred content
+   overflows BOTH ways and the half above the start edge can never be
+   scrolled to - "safe" falls back to "start" in exactly that case, and
+   overflow-y then makes the rest reachable. This stage is centred when
+   it fits and scrolls when it does not, which is what a question with
+   five tall answers needs on a short window. */
+.choose { display: grid; place-content: safe center; gap: 28px; padding: 40px 30px; height: 100%; overflow-y: auto; }
 .choose h2 {
   font-family: var(--display); font-weight: 300; font-size: 30px;
   margin: 0; text-align: center;
