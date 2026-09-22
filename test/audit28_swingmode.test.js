@@ -25,11 +25,12 @@ test('AUDIT 28 W11: the gate is the setting - 0.005 shipped, not the 0.05 field 
   assert.equal(ATTACK_THRESHOLD, 0.05, 'the field default stays what WeaponManager.cs:54 says');
   const pw = drawn();
   // 12px of 1200 = 0.01 > 0.005: fires under the setting; under the field default it would not.
-  assert.equal(pw.gesture(12, 0, true, 1 / 60, DIM), 'StrikeRight', 'DFU\'s shipped threshold');
+  // SWING-DEFAULT1: the port's default mode is 2 (click or hold) now; the threshold is the DRAG's law, so the drag is asked for
+  assert.equal(pw.gesture(12, 0, true, 1 / 60, DIM, { swingMode: 0 }), 'StrikeRight', 'DFU\'s shipped threshold');
   const strict = drawn();
-  assert.equal(strict.gesture(12, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD }), null, 'the field default alone would refuse it');
+  assert.equal(strict.gesture(12, 0, true, 1 / 60, DIM, { attackThreshold: ATTACK_THRESHOLD, swingMode: 0 }), null, 'the field default alone would refuse it');
   setValue('Controls', 'WeaponAttackThreshold', 0.5);
-  assert.equal(drawn().gesture(12, 0, true, 1 / 60, DIM), null, 'read live');
+  assert.equal(drawn().gesture(12, 0, true, 1 / 60, DIM, { swingMode: 0 }), null, 'read live');
   resetToDefaults();
 });
 
