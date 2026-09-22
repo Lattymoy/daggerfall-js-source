@@ -1006,7 +1006,7 @@ function dragFrom(row, item, source = 'local') {
     // armed after crossing a 4px movement threshold, so a precise or
     // slow press could feel like the drag simply failed. Movement still
     // starts a mouse drag instantly; holding is the deterministic backup.
-    drag.hold = setTimeout(dragArm, touch ? TOUCH_HOLD_MS : MOUSE_HOLD_MS);
+    if (touch) drag.hold = setTimeout(dragArm, TOUCH_HOLD_MS); else drag.hold = setTimeout(dragArm, MOUSE_HOLD_MS);
     // MAC-R4 (2026-09-17, Mac: "Hold to drag in the enhanced inventory
     // sometimes doesn't work properly"): A TOUCH POINTER CAPTURES THE ROW
     // IT LANDS ON, IMPLICITLY, and a captured row that a repaint detaches
