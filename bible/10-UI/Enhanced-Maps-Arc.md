@@ -136,6 +136,11 @@ console verbs and their pins. This arc is the ENHANCED skin's, behind
 the same skin door `ui/travelMapDoor.js` already forks on. A departure
 here is a departure from DFU only where the enhanced skin is worn.
 
+MAP-TOGGLE (2026-09-22, Mac: "Yes needs to be a toggle"): the door is
+the skin AND a Features switch now (`enhanced-map`, `ui/mapSkin.js`),
+so a player may keep the enhanced skin and take DFU's three windows
+back; see Held-Map-Arc.md MAP-TOGGLE.
+
 ## The window is the paper; the sheet is the ink
 
 The held window is 2,244 lines and every one of them was audited twice

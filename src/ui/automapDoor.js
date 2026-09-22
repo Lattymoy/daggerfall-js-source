@@ -29,7 +29,7 @@
 // "no map".
 // ═══════════════════════════════════════════════════════════════════
 
-import { isEnhanced } from '../systems/uiSkin.js';
+import { heldMapWorn } from './mapSkin.js';   // MAP-TOGGLE: the skin AND the player's switch
 import { AutomapWindow, preloadAutomapArt, automapArtLoaded } from './automapWindow.js';
 import { HeldMapWindow } from './heldMap.js';
 
@@ -41,7 +41,7 @@ export { preloadAutomapArt };
  *  keeps, and its one picture is the port's own sprite, fetched by the
  *  window itself. Same law as ui/travelMapDoor.js and ui/charSheetDoor.js. */
 export function automapDoorReady() {
-  return (isEnhanced() && typeof document !== 'undefined') || automapArtLoaded();
+  return heldMapWorn() || automapArtLoaded();
 }
 
 /**
@@ -61,7 +61,7 @@ export function createAutomapWindow(deps = {}) {
   // `document` for the reason every fork before this one gives: node
   // drives these hosts headless and keeps the canvas window rather than
   // getting a special case written for it.
-  if (isEnhanced() && typeof document !== 'undefined') {
+  if (heldMapWorn()) {
     return new HeldMapWindow({
       where: deps.where ?? (() => ({ insideDungeon: !deps.insideBuilding, insideBuilding: !!deps.insideBuilding })),
       holder: deps.holder ?? null,   // MW-MAP1: the Morrowind arm's hands lane, where the host has an arm (combat/weaponRig.js sheetHolderOf)

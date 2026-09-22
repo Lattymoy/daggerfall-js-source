@@ -1166,3 +1166,37 @@ the holder into a real HeldMapWindow and null without one; every host by
 source. tools/mutants/mwmap1.json: 7, 7 dead; MAP3's two holder mutants
 re-aimed at the shared holder, still dead.
 
+## MAP-TOGGLE + MAP-FIELD8 - the sheet is a switch, and the fourth painting (2026-09-22, Mac)
+
+Mac asked whether the enhanced map was a toggle; it was not - the three map doors (`ui/travelMapDoor.js`,
+`ui/automapDoor.js`, `ui/townMapDoor.js`) forked on `isEnhanced()` alone, so DFU's own maps came back only with
+the whole classic skin. "Yes needs to be a toggle. Along with this change, replace the current paperdoll
+integration with this replacement" - and a fourth painting.
+
+**MAP-TOGGLE.** One gate, `ui/mapSkin.js`: `enhancedMapOn()` is the Features row `enhanced-map` (Sight,
+enhanced-only, prefs `heldMap`, on by default - the sheet is what the enhanced skin has drawn since MAP1);
+`heldMapChosen()` is the skin AND the switch; `heldMapWorn()` is chosen AND a document to mount in. The three
+doors read the gate and ask no skin of their own: the travel door's readiness is `heldMapChosen() ||
+travelMapArtLoaded()` (the sheet reads no ARENA2 art, so it is ready wherever it is chosen), the automap's and
+the town map's `heldMapWorn() || <their art>`. Off under the enhanced skin is DFU's three windows exactly - the
+classic art is preloaded on every host whatever the skin (ROAD-C c2's shape), so the classic arm is ready the
+moment the switch flips. Read on every open, never cached. The classic skin never wears the sheet: the row's
+kinds say `enhanced`.
+
+**MAP-FIELD8.** The painting in the hands is the fourth (`public/art/held-map.png`, 1648x1086 - wider than the
+third's 1448, the same height; a real alpha channel, 58.7% clear). Every constant that is a measurement of the
+picture was re-measured by `tools/heldMapArtProbe.mjs` (20 checks, all passing): `SPRITE` 1648x1086; `PAPER`
+x 0.226-0.775, y 0.196-0.704 (the sheet measures x 364-1285, y 206-772, and the ink overhangs it by 0 px);
+`THUMB_ZONES` 0.19-0.30 and 0.70-0.81 across, 0.40-0.725 down (the thumbs rest a little higher and reach less far
+in than the third's); `SPRITE_ART_FOOT` 0.872 (the lowest opaque row is 946); `CUFF_BAND` 0.827, in the 24-row gap
+between the hand's silhouette (ends by 0.8158) and the cut cuffs (begin at 0.8379), eleven rows either side -
+the first draft put it at 0.867 off a cruder measurement and the probe refused it; `HAND_CHROMA` stays 75 (87.9%
+of the thumb under the line, 66 of 396,440 sheet pixels). The stage is the sprite's own aspect (3:2 now, not
+4:3); on a 16:9 screen the sheet still fits at `HELD_MAP_HEIGHT`, and on a narrower one the height gives way as
+before. The Morrowind hands lane (MAP3/MW-MAP1) is untouched: it is the arm's own lane, entered only when a
+holder says the arm is drawn.
+
+Pins: `test/maptoggle.test.js` (4, driven: the gate on/off/classic, the doors handing out the held sheet or the
+classic null against a live switch, the row, the fourth painting's numbers against the file's own header);
+`test/heldmap.test.js` U61 re-aimed to the gate. `tools/mutants/maptoggle.json`: 9 records, 9 dead. Not
+verified in a browser beyond the probe.
