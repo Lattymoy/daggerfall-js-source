@@ -151,7 +151,13 @@ export const MOD_CURATED = Object.freeze({
   // SW1: the three a player reaches for first - how big the shield sits,
   // where it sits, and what it does when the weapon comes out.
   'shield-widget': Object.freeze(['Shield.Scale', 'Shield.OffsetHorizontal', 'Shield.WhenAttacking']),
-  'handheld-torches': Object.freeze(['Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
+  // TORCH-BIND (2026-09-22, a player on Discord: "No option to rebind
+  // Handheld Torches actions"): the three TextKeys are the mod's own key
+  // store, read raw by the hosts, and the Mods pane that once captured
+  // them went with FT14 - this list was the only door left, and it did
+  // not name them. The relaxed switch rides along: 3ARMS ships it off.
+  'handheld-torches': Object.freeze(['Handling.ToggleLightInput', 'Handling.ManualDropInput', 'Throwing.ThrowTorchInput',
+    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
   pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
     'criticalStrikesIncreaseDamage', 'conditionBasedEffectiveness', 'softMaterialRequirements',
     'fixedStrengthDamageModifier']),
@@ -168,7 +174,7 @@ export const MOD_CURATED = Object.freeze({
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
-    'RoadsIntegration.FollowPathsKey',
+    'RoadsIntegration.FollowPathsKey', 'RoadsIntegration.FollowPathsCustomKeyBind',   // TORCH-BIND: the custom key travelOptions.js reads
   ]),
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
   // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this
@@ -176,7 +182,8 @@ export const MOD_CURATED = Object.freeze({
   // first: how far back the camera sits, which shoulder it sits over,
   // how fast it follows, and how big you are drawn. Everything else
   // stays in the mod's own pane.
-  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
+  // TORCH-BIND: the two keys eotbCamera.js reads ride the tile too - the same class as the torch keys.
+  'eye-of-the-beholder': Object.freeze(['Camera.SwitchShoulder', 'AutoTogglePerspective.ToggleInput', 'Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
     'Camera.Speed', 'Animation.BillboardScale']),
   // IF1: the clip quality and the two volumes are what a player reaches for.
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),

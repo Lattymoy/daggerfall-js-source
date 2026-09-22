@@ -453,10 +453,12 @@ test('WW1: Ambidexterity - the sprite in the hand you swing with (flipped for th
   const d3 = bench({ weapon: DAGGER, weaponType: T.Dagger, anims: DAGGER_ANIMS, over: { 'Swings.Windup': WINDUP.FirstFrame }, handedness: () => true });
   d3.frame(); machineAttack(d3.machine, 'StrikeDownLeft'); d3.frame(0.05);
   assert.equal(d3.widget.state, S.StrikeDownRight, 'flipped: the other way round');
-  // the two-handed mirrors: `GetItemHands() == 2` (LeftOnly) - a claymore answers Both, so the switch fires on nothing; kept as the mod has it
+  // the two-handed mirrors: `GetItemHands() == 2` is ItemHands.BOTH in DFU's enum (3ARMS: the port had read it as its own LeftOnly and the three switches fired on nothing)
   const c = bench({ weapon: { templateIndex: WEAPONS.Claymore, group: 'Weapons' }, over: { 'Miscellaneous.MirrorTwoHandedSwords': true } }); c.frame();
-  assert.equal(c.widget.flipHorizontal, false, 'IL 0x3528: the compare a two-hander never satisfies');
-  assert.match(rd('src/combat/weaponWidget.js'), /getItemHands\(w\.specificWeapon\) !== ITEM_HANDS\.LeftOnly/, 'the compare kept verbatim');
+  assert.equal(c.widget.flipHorizontal, true, 'IL 0x3528: a claymore answers Both, and the swords switch mirrors it (FPSWeaponClone.cs:2378)');
+  const c2 = bench({ weapon: { templateIndex: WEAPONS.Claymore, group: 'Weapons' }, over: { 'Miscellaneous.MirrorTwoHandedSwords': false } }); c2.frame();
+  assert.equal(c2.widget.flipHorizontal, false, 'the switch off: as the original');
+  assert.match(rd('src/combat/weaponWidget.js'), /getItemHands\(w\.specificWeapon\) !== ITEM_HANDS\.Both\) return false;/, 'the compare names Both');
 });
 
 test('WW1: Offset, Bob and Inertia - the channels the frame publishes: the sheathe slide off the screen (and the equip countdown\'s jump), the walking bob\'s rate and size, the look\'s lag with its sign by hand, the forward depth over the scale; DoubleScaleTextures\' half-size shift on the idle; the module switches each silence their channel', () => {

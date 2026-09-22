@@ -1798,6 +1798,11 @@ ${badgeCss()}
 .ctl-notice { margin: 10px 0 0; font-size: 13px; color: var(--dim); }
 .ctl-notice.bad { color: var(--blood); }
 .ctl-group h3 { margin-bottom: 2px; }
+/* TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" - they
+   had not found Continue, 53 rows above): the head card with Continue stays
+   in view while the list scrolls, and a second Continue closes the list. */
+.ctl-head { position: sticky; top: 0; z-index: 2; }
+.ctl-foot { display: flex; justify-content: flex-end; }
 .ctl-row:last-child { border-bottom: 0; }
 /* ...and the window's face, where the same markup is drawn in whole
    pixels (the .px-sys block above). */
@@ -2423,6 +2428,7 @@ ${badgeCss()}
 .hud-qspell { display: none; align-items: center; gap: 6px; padding: 3px 10px;
   max-width: 100%; background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.55); }
 .hud-qspell.on { display: flex; }
+.hud-qspell.empty { display: flex; opacity: 0.55; }   /* HOTSLOT: the empty socket, dim, wearing its key */
 .hud-qspell .hud-qstag { position: static; transform: none; background: none; border: 0;
   min-width: 0; height: auto; padding: 0; color: #7d7460; }
 .hud-qspname { font-size: 13px; color: #d8cfae; text-shadow: 2px 2px 0 rgba(10,12,17,0.9);

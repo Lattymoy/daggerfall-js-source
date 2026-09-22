@@ -565,7 +565,14 @@ export function consumableCandidates(entity, slot) {
 }
 
 /** The book, as the spell slot's candidate list. */
-export const spellCandidates = (entity) => bookOf(entity).filter(keyedSpell);
+export const spellCandidates = (entity) => {
+  // HOTSLOT: ONE entry per spell index. A bought stock spell, a classic
+  // import and the vampire/lycanthrope gifts each push a record without
+  // asking whether the book holds it, and findIndex on a doubled book
+  // always lands on the first copy - the cycle stuck on one spell.
+  const seen = new Set();
+  return bookOf(entity).filter((sp) => keyedSpell(sp) && !seen.has(sp.index) && (seen.add(sp.index), true));
+};
 
 /** The slots a hold can cycle - the two consumables and the spell. The
  *  off hand is not one: see the header. */

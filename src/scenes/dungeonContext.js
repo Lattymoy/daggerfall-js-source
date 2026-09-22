@@ -7070,11 +7070,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // build a hooks object for the window - it hands `openInventory`
       // the SOURCE ARRAY itself, and that array is what the window
       // mutates - so the hooks shape is put around that same handle
-      // rather than a second one. Null opens the window as before, and
-      // the WORLD4 claim below is not made for a take that never opens
-      // anything (a claim for a container nobody opened is not what the
-      // law says, which is the same reasoning C6 gives just above).
-      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText)) return source.length;
+      // rather than a second one. Null opens the window as before.
+      //
+      // LOOT-REGEN (2026-09-22, a player on Discord, online: "I get
+      // killed and go back into the dungeon, and all the guys I killed
+      // before have loot again"): B4 read the claim as a WINDOW's act
+      // and made none for a take that opened nothing - so a corpse
+      // emptied by the quick door never reached `_lootSeen`, the memory
+      // carried no `corpse:<i>` record for it, and on re-entry
+      // `patchFoe` stood the remembered death over the fresh build's
+      // OWN roll. A take is the room's word exactly as an open-and-close
+      // is: what is left is said and stamped the moment the take lands
+      // (WORLD4's close law, WORLD8's stamp - the open's claim and the
+      // close's word are one word here, since nothing stands open
+      // between them), and an emptied pile's flat is settled as the
+      // window's onEmptied would settle it. C6's order below stands:
+      // the window's claim follows its mount.
+      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText)) {
+        const _q = lootHolder(key) ? lootKeyOf(key) : null;
+        if (_q) publishLoot(_q);
+        if (!source.length) onEmptied?.();
+        return source.length;
+      }
       const _k = lootHolder(key) ? lootKeyOf(key) : null;
       activeOverlay = openInventory(source, onEmptied, { lootHooks, lootKey: _k });
       if (activeOverlay && _k) { _lootOpenKey = _k; publishLoot(_k, { claim: true }); }

@@ -214,8 +214,9 @@ test('HT7 (Mac: "Take care of both"): SHEATHED, a shield takes the hand TOO - th
   equipItem(b.entity, sword);
   equipItem(b.entity, bow);
   assert.equal(equipTableOf(b.entity)[EQUIP_SLOTS.LeftHand] ?? null, null, 'the bow took the RIGHT slot and evicted the sword');
-  assert.equal(b.entity.lightSource, bt, 'the left hand is free, so the torch stays lit');
-  assert.equal(b.h.hasFreeHand, true);
+  // 3ARMS (2026-09-22): a bow answers Both, and the IL's `== 2` IS Both - the mod takes the off hand for a bow relaxed or strict (HandheldTorches.cs:1325-1332), and HT7 takes it sheathed or drawn. So the torch STOWS here, remembered; what this pin holds is the boundary below - the hand comes back the moment the bow is bumped out.
+  assert.equal(b.entity.lightSource, null, 'a bow in the right is a two-hander: the left is taken too, and the torch stows');
+  assert.equal(b.h.hasFreeHand, false);
   // ...and put something in that hand and it goes, which is HT7.
   const bsh = shield();
   b.entity.items.push(bsh);
