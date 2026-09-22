@@ -47,6 +47,7 @@ import { hudReticle } from './hud.js';   // the reticle's own two terms, from th
 import { pickActivatableHit } from '../player/activate.js';
 import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P3: the frame in flight, so the gate's two terms are computed once in it
 import { resolveHover, frameSignature } from '../systems/worldHover.js';
+import { foldQuickLoot, quickLootRow, resetQuickLoot } from '../systems/quickLoot.js';   // QUICK-LOOT B3: the highlight is the FEATURE's - this draws it and frees it, it does not own it
 
 /** The gap in CSS pixels between the cross's lower arm tip and the
  *  plaque's top edge. Large enough that the two never read as one
@@ -141,7 +142,7 @@ export function plaqueAnchor(canvas) {
   };
 }
 
-function paint(n, f) {
+function paint(n, f, sel = -1) {
   n.textContent = '';
   n.classList.toggle('has-list', f.kind === 'items');
   const title = document.createElement('div');
@@ -173,9 +174,18 @@ function paint(n, f) {
     p.textContent = 'Empty';
     list.append(p);
   }
-  for (const r of f.rows) {
+  for (let i = 0; i < f.rows.length; i++) {
+    const r = f.rows[i];
     const row = document.createElement('div');
     row.className = 'wplaque-row';
+    // QUICK-LOOT B3: the highlight. A CLASS rather than an inline
+    // style, because the dress is the sheet's (enhancedStyle.js) like
+    // every other state this node wears, and because `.on`/`.has-list`
+    // already established that idiom here. Indexed rather than
+    // `rows.indexOf(r)`: that is quadratic on a list drawn every time
+    // it changes, and it would answer the wrong row the day two rows
+    // are the same object.
+    if (i === sel) row.classList.add('sel');
     if (r.rarity) row.dataset.rarity = r.rarity;   // LR1
     const nm = document.createElement('span');
     nm.textContent = r.name;
@@ -281,7 +291,13 @@ export function showWorldPlaque(frame, anchor = null) {
     n.style.setProperty('--wp-x', `${anchor.x.toFixed(1)}px`);
     n.style.setProperty('--wp-top', `${anchor.top.toFixed(1)}px`);
   }
-  const sig = frameSignature(frame);
+  // QUICK-LOOT B3: ...AND THE HIGHLIGHT IS PART OF WHAT IS PAINTED.
+  // `frameSignature` answers what the FRAME would draw, and the
+  // selection is not the frame's - it is this module's fold over it -
+  // so a wheel click that moves the highlight down one row leaves the
+  // frame identical and would not have repainted. Same defect PX21c had
+  // with the key, one field further out.
+  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}`;
   if (sig === shownSig) return;
   shownSig = sig;
   if (!frame) {
@@ -292,7 +308,7 @@ export function showWorldPlaque(frame, anchor = null) {
     blank(n);
     return;
   }
-  paint(n, frame);
+  paint(n, frame, quickLootRow(frame));
   n.classList.add('on');
 }
 
@@ -366,6 +382,13 @@ export function worldHoverFrame({
   try {
     const hit = pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider);
     const frame = resolveHover(hit, { name, contents });
+    // QUICK-LOOT B3: the highlight is folded HERE, inside the
+    // containment, because `nextSelection` reads the frame a host
+    // closure just produced - and the whole reason this try/catch
+    // exists is that a host closure can throw. The nudge is flushed
+    // whether or not it moved anything, so a wheel click spent while
+    // looking at a door does not arrive later at a chest.
+    foldQuickLoot(frame);
     showWorldPlaque(frame, plaqueAnchor(canvas));
     return frame;
   } catch (e) {
@@ -381,6 +404,7 @@ export function worldHoverFrame({
 
 /** For tests and the console: how many frames the seam has contained. */
 export const worldHoverFaults = () => _faults;
+
 
 /** Tear down with the host that raised it. */
 export function destroyWorldPlaque() {
@@ -398,6 +422,15 @@ export function destroyWorldPlaque() {
   _faultSaid = false;
   _gateMark = null;
   _gateOn = false;
+  // QUICK-LOOT B3: the highlight dies with the host that raised it. A
+  // selection is ABOUT a key in a world this teardown is unmaking, so
+  // carrying one across a mode change would point the take at a pile
+  // that no longer exists - and the pending wheel nudge with it, or a
+  // click spent in a dungeon would move the highlight in the street.
+  // The state is the feature's (systems/quickLoot.js); the teardown
+  // that frees it is still this module's, because this is what the
+  // hosts call.
+  resetQuickLoot();
 }
 
 /** For tests. */

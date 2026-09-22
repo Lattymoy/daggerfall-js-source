@@ -632,21 +632,34 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
     // walk closed on the first one it met.
     const openAt = lines.findIndex((l, i) => i > at && l.includes('else if (lootKey)'));
     assert.ok(openAt > at, `${file}: the corpse opener under its refusal`);
+    // ...and the walk ENDS WHERE THE BRACES DO. It used to stop at
+    // `openAt + 12` as well, which was a guess about how long the arm
+    // would stay - and QUICK-LOOT B4 made it wrong by giving the
+    // opener a take and a note. A cap that can silently cut a
+    // statement in half hands `new Function` a fragment and fails as a
+    // SyntaxError rather than as the thing this pin is about, so the
+    // walk now runs to the closing brace and SAYS SO if it never comes.
     let end = openAt;
     let depth = 0;
     do {
       for (const ch of lines[end]) { if (ch === '{') depth++; else if (ch === '}') depth--; }
       end++;
-    } while (depth > 0 && end < openAt + 12);
+    } while (depth > 0 && end < lines.length);
+    assert.equal(depth, 0, `${file}: the corpse opener never closes`);
     const took = [];
     said.length = 0;
+    // QUICK-LOOT B4: the arm names the take and the entity it moves
+    // into. It answers null here - the switch is what the pin below
+    // drives, and this one is about the REFUSAL - so the fall-through
+    // to the window is what gets witnessed.
     const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
       'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow',
+      'quickLootTake', 'playerEntity',
       [lines[at], ...lines.slice(openAt, end)].join('\n'));
     const run = (pick) => arm('foeCorpse:1', pick,
       { takeLoot: (k) => took.push(k) }, { takeLoot: (k) => took.push(k) },
       { say: () => {}, showOverlay: () => {} }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT,
-      () => true, (o) => o);
+      () => true, (o) => o, () => null, {});
     run({ distance: 8, reach: CORPSE_ACTIVATION_DISTANCE });
     assert.deepEqual(said, [TOO_FAR_AWAY_TEXT], `${file}: a body past 3.75 is refused`);
     assert.deepEqual(took, [], `${file}: ...and not opened`);

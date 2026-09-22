@@ -211,18 +211,29 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // empty itself into the pack instead of opening at all - so the
     // slices below are found by what each one carries rather than by
     // being the first `showOverlay(makeInventoryWindow({` in the file.
-    const pileAt = src.indexOf('loot: droppedLootHooks(pile)');
+    // QUICK-LOOT B4: the hooks are HOISTED now - `const _hooks =
+    // droppedLootHooks(pile)` above the arm - because quick loot is
+    // handed the very same object the window would get, and minting it
+    // twice would be two identities for one pile. The law is unchanged
+    // and is asserted on the hoist instead of on the property.
+    const pileAt = src.indexOf('const _hooks = droppedLootHooks(pile);');
     assert.ok(pileAt > 0, `${f}: the pile arm no longer names its own identity`);
-    const pile = src.slice(src.lastIndexOf('townTalk.showOverlay(makeInventoryWindow({', pileAt), pileAt + 400);
+    const pile = src.slice(pileAt, pileAt + 1100);   // QUICK-LOOT B4: past the decline and its reasoning, to the property itself
     // G5: DaggerfallLoot's identity travels with the pile through the
     // ONE shared shape, so a fifth call site cannot ship a partial one.
-    assert.match(pile, /loot: droppedLootHooks\(pile\)/);
+    assert.match(pile, /loot: _hooks,/);
+    assert.match(pile, /quickLootTake\(dropKey, _hooks, playerEntity,/,
+      `${f}: ...and quick loot takes through that SAME identity, never a second one`);
     assert.match(pile, /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/);
     // ...and the BODY's identity travels the same way, built by the
     // pool rather than the host (scenes/corpseMarker.js's
     // corpseLootHooks): the host hands over a door, the pool decides
     // what goes through it.
-    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\) : null\)/,
+    // QUICK-LOOT B4: ...with the decline in front of it. The body's
+    // identity still comes from the POOL (corpseLootHooks) and still
+    // reaches the same builder behind the same art gate; quick loot is
+    // handed that very object and answers null when it is not wanted.
+    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\)\)\) return;\n\s*townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\);\n\s*\} : null\)/,
       `${f}: the corpse must reach the same builder, behind the same art gate`);
   }
   // the dungeon host has one too, and it is the door's
