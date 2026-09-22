@@ -25,6 +25,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { routeMouseDrag } from '../src/scenes/shared.js';
+// SWING-DEFAULT1 (2026-09-22): these pins are the DRAG's law (WeaponSwingMode 0); the port's default is 2 now (click or hold), so the drag is asked for here, once for the file.
+import { setValue as _swingSetValue } from '../src/systems/settings.js';
+_swingSetValue('Controls', 'WeaponSwingMode', '0');
 
 const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const RMB = 2, LMB = 1, BOTH = 3;
