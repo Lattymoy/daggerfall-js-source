@@ -25,9 +25,15 @@
 //
 // A GUEST GETS A TOKEN, exactly as a linked account does, and may
 // connect, be seen, walk and chat. What a guest does not get is CLOUD
-// SAVES - and that wall lives where the saves are (ACC2), not here.
-// This service's job is to say who somebody is, not to decide what they
-// may do.
+// SAVES - and ACC2 put that wall on the save routes below, which IS
+// where the saves are: this service's job everywhere else is to say who
+// somebody is, not to decide what they may do.
+//
+// THE REASON IS SHARPER THAN "the table says so": a guest account is
+// one storage clear away from gone, which ACC0 records as the residue
+// of the wall. A backup filed under a credential a player can lose by
+// clearing their browser is a backup that cannot be restored, and that
+// is the one promise a backup may not break.
 //
 //   GET  /v1/health                       -> { ok, v }
 //   GET  /v1/pubkey                       -> { alg, key }   (not a secret)
@@ -36,6 +42,15 @@
 //   POST /v1/auth/session { secret, label? } -> { secret, sessionId }   (a second device)
 //   GET  /v1/account      Authorization: Bearer <secret> -> { account, devices[] }
 //   POST /v1/auth/logout  { secret, all? }-> { revoked, scope }
+//
+// ACC2, and every one of them needs a REGISTERED account (the wall):
+//   GET    /v1/saves                                   -> { saves[] }
+//   PUT    /v1/saves/{charId}/{name}       <card JSON>  -> { ok, created }
+//   PUT    /v1/saves/{charId}/{name}/data  <raw blob>   -> { ok, bytes }
+//   PUT    /v1/saves/{charId}/{name}/shot  <raw blob>   -> { ok, bytes }
+//   GET    /v1/saves/{charId}/{name}/data              -> the blob
+//   GET    /v1/saves/{charId}/{name}/shot              -> the blob
+//   DELETE /v1/saves/{charId}/{name}                   -> { ok }
 //
 // Bindings (wrangler.toml): env.DB (D1), env.ALLOWED_ORIGIN,
 // env.ACCOUNT_VERSION, and the signing pair, which the deploy mints
@@ -70,7 +85,8 @@ import {
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
 import { mintToken, MAX_TTL_S, TOKEN_V } from '../../src/net/identityToken.js';
-import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES } from './service.js';
+import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, savePathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES } from './service.js';
+import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey } from './signing.js';
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
@@ -118,7 +134,7 @@ export default {
         status: 204,
         headers: {
           'access-control-allow-origin': origin,
-          'access-control-allow-methods': 'GET, POST, OPTIONS',
+          'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'access-control-allow-headers': 'content-type, authorization',
           'access-control-max-age': '86400',
         },
@@ -151,7 +167,11 @@ export default {
     // a lie that costs an afternoon the first time somebody typos a
     // route. The paths this service serves are in this file and in the
     // repo; they are not the secret.
-    if (!ROUTES.has(path)) return no('not-found', 404, origin);
+    // ACC2: a save route carries the slot IN the path, so it is matched
+    // rather than looked up - and it is asked here, beside the Set, so
+    // there is still exactly one place that decides a path is a 404.
+    const slot = savePathOf(path);
+    if (!ROUTES.has(path) && !slot) return no('not-found', 404, origin);
 
     const db = env.DB;
     if (!db) return no('no-database', 503, origin);
@@ -282,6 +302,86 @@ export default {
           ? await closeAllSessions(ctx, who.player.id)
           : await closeSession(ctx, who.session.id);
         return json({ ...r, scope: body.all === true ? 'all' : 'this' }, 200, origin);
+      }
+
+      // ═══ ACC2: THE SAVES ═══════════════════════════════════════
+      //
+      // THE WALL, and the only place in this service that asks what an
+      // account may DO rather than who it is. A guest is refused every
+      // save route, read and write alike: an account that can be lost
+      // by clearing a browser cannot hold a backup, because a backup
+      // that cannot be restored is worse than none.
+      //
+      // ITS OWN WORD, not `not-registered`. That one already means "this
+      // account has no password yet" at the sign-in routes, and the
+      // refusal table maps one word to one sentence - so reusing it
+      // would tell a player at the backup button to sign in again,
+      // which is not what they need to do. 403 rather than 401 because
+      // the credential is GOOD; there is nothing to sign in again with.
+      if (path === '/v1/saves' || slot) {
+        if (accountKind(who.player) !== 'linked') return no('saves-need-account', 403, origin);
+        const me = who.player.id;
+
+        if (path === '/v1/saves') {
+          if (request.method !== 'GET') return no('method', 405, origin);
+          return json({ saves: await listSaves(ctx, me) }, 200, origin);
+        }
+
+        const bucket = env.SAVES;
+        const sctx = { ...ctx, bucket };
+
+        if (!slot.part) {
+          if (request.method === 'PUT') {
+            // THE CARD, and it is what CREATES a slot - the blobs below
+            // refuse to land without one (saves.js says why: it is
+            // SAV4's "a slot is only real WITH its SaveInfo", and it is
+            // also the only thing bounding R2).
+            const card = saveCardOf(await readBody(request));
+            if (!card) return no('body', 400, origin);
+            const r = await putCard(sctx, me, { ...slot, card });
+            return r.error ? no(r.error, r.error === 'too-many-saves' ? 409 : 400, origin) : json(r, 200, origin);
+          }
+          if (request.method === 'DELETE') {
+            const r = await deleteSave(sctx, me, slot);
+            return r.error ? no(r.error, 404, origin) : json(r, 200, origin);
+          }
+          return no('method', 405, origin);
+        }
+
+        if (request.method === 'PUT') {
+          // A RAW BODY, AGAINST ITS OWN BOUND. `readBody` caps at
+          // MAX_BODY_BYTES (4 KiB), which is right for every JSON route
+          // this service has and would refuse every real save - so the
+          // blob routes never touch it and carry the bound that fits
+          // them instead. The length is checked BEFORE the body is
+          // read, so a caller announcing a gigabyte costs nothing.
+          const max = slot.part === 'shot' ? SHOT_MAX_BYTES : SAVE_MAX_BYTES;
+          const len = Number(request.headers.get('content-length') ?? '0');
+          if (Number.isFinite(len) && len > max) return no('too-large', 413, origin);
+          const body = await request.arrayBuffer();
+          if (body.byteLength > max) return no('too-large', 413, origin);
+          if (!body.byteLength) return no('body', 400, origin);
+          const r = await putBlob(sctx, me, slot, slot.part, body, body.byteLength);
+          return r.error ? no(r.error, r.error === 'no-slot' ? 404 : 503, origin) : json(r, 200, origin);
+        }
+
+        if (request.method === 'GET') {
+          const r = await getBlob(sctx, me, slot, slot.part);
+          if (r.error) return no(r.error, r.error === 'no-storage' ? 503 : 404, origin);
+          // THE BLOB ITSELF, not a JSON wrapper around a base64 copy of
+          // it: a save is hundreds of kilobytes and base64 is a third
+          // more of them, paid twice (once on the wire, once in the
+          // string the client would have to hold whole).
+          return new Response(r.object.body, {
+            status: 200,
+            headers: {
+              'content-type': 'application/octet-stream',
+              'access-control-allow-origin': origin,
+              'cache-control': 'no-store',
+            },
+          });
+        }
+        return no('method', 405, origin);
       }
 
       // a path this service serves, reached with a method it does not

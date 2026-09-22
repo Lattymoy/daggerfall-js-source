@@ -86,9 +86,14 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   assert.match(src('server-account/migrations/0001_accounts.sql'), /THAT IS NOT TRUE OF EVERY MIGRATION/);
 
   const tables = db._raw.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all().map((r) => r.name);
-  assert.deepEqual(tables, ['players', 'rate_limits', 'sessions']);
-  // ACC1b IS IDENTITY ALONE. Saves and provider links arrive as their
-  // own migrations rather than as columns somebody added here.
+  // ACC2 added `saves` as ITS OWN TABLE and its own migration - which
+  // is exactly what 0001's header said would happen ("No saves, no
+  // provider links; those are ACC1c and ACC2, and each arrives as its
+  // own migration rather than as a column somebody added here later").
+  // A provider link is still not here.
+  assert.deepEqual(tables, ['players', 'rate_limits', 'saves', 'sessions']);
+  // ACC1b IS IDENTITY ALONE, and the PLAYERS row still is: the save
+  // arrived beside it, never inside it.
   const cols = db._raw.prepare('PRAGMA table_info(players)').all().map((c) => c.name);
   assert.deepEqual(cols.sort(), ['created_at', 'email', 'guest_name', 'handle', 'handle_lc', 'id',
     'last_seen', 'muted_until', 'password', 'recovery_hash', 'registered_at']);

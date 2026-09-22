@@ -15,7 +15,7 @@
 // shapes are asserted against the service's own source too.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 import { AccountFlow, STAGES, FIELDS, FIELD_SPEC, LOCAL_REFUSALS } from '../src/ui/accountFlow.js';
 import {
@@ -103,8 +103,15 @@ test('ACC1e: every refusal word the SERVICE can emit has a sentence here - walke
   // The service's refusals are `{ error: 'word' }` / `return { error:
   // 'word' }`. Walked so a word added there without a sentence here
   // reddens, rather than reaching a player as `handle-frobnicated`.
-  const text = ['server-account/src/accounts.js', 'server-account/src/index.js', 'server-account/src/password.js']
-    .map((p) => src(p)).join('\n');
+  // WALKED, NOT LISTED, and the population is the DIRECTORY. ACC2 added
+  // `server-account/src/saves.js` with five refusals of its own, and
+  // this pin had them all missing except the one index.js spells - a
+  // three-file list is an enumeration, and an enumeration disagrees with
+  // the tree the day somebody adds a file.
+  const files = readdirSync(new URL('../server-account/src', import.meta.url))
+    .filter((f) => f.endsWith('.js')).sort();
+  assert.ok(files.length >= 4, `the walk found only ${files.length} service files - it has stopped seeing its subject`);
+  const text = files.map((f) => src(`server-account/src/${f}`)).join('\n');
   const words = new Set();
   for (const m of text.matchAll(/error:\s*'([a-z-]+)'/g)) words.add(m[1]);
   for (const m of text.matchAll(/no\('([a-z-]+)'/g)) words.add(m[1]);

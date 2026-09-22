@@ -1403,3 +1403,175 @@ is why the pins walk both doors.
 
 **NOT DEPLOYED.** The relay deploy fires on merge to main and drops
 every connected player when it does.
+
+---
+
+## ACC2 — the design, before the code (2026-09-22)
+
+Mac: *"Go in order. Take your time."* ACC1d is done; this is step 4 of
+*THE ORDER TO BUILD IT* — **the card and the blob, backup only**.
+
+The page above already decided the shape (*THE SAVES: R2 for the blob,
+D1 for the card*) and the limit (*THE CLOUD IS A BACKUP AND A TRANSFER.
+THE LOCAL SAVE STAYS AUTHORITATIVE*). What follows is what that shape
+runs into once it meets `systems/saveSlots.js` as it actually exists,
+and the decisions nobody had made yet.
+
+### D1 — cloud saves are for LINKED accounts, and a guest is refused
+
+ACC0's table says it and nothing has enforced it, because until now
+there was nothing to enforce it on. The service checks it, not the
+client, and the reason is sharper than "the table says so":
+
+**A guest account is one storage clear away from gone.** That is stated
+plainly in ACC0 as the residue of the wall. A backup filed under a
+credential the player can lose by clearing their browser is a backup
+that cannot be restored — which is the one promise a backup may not
+break. Offering it would be worse than refusing it.
+
+It is also, as ACC0 argued, the second reason to link, and the one a
+player actually wants: a name, and their saves on the next device.
+
+The refusal word is `not-registered`, which `accountClient.js` already
+translates ("This account has no password yet.").
+
+### D2 — a cloud slot is keyed by (character, SAVE NAME), never by the local index
+
+This is the decision the existing code forces, and it would have been
+easy to get wrong.
+
+`systems/saveSlots.js` keys a slot in storage by an INTEGER — SAV4's
+`CreateNewSavePath`, *"a new pair takes the FIRST FREE integer key"*.
+That integer is a fact about ONE store. Two devices that saved in a
+different order hold the same character's "QuickSave" under different
+numbers, and a cloud keyed by the number would file them as two saves
+and then overwrite the wrong one.
+
+The slot's IDENTITY is already written down and is not the integer:
+SAV4 takes it from DFU's `FindSaveFolderByNames` and CHARID1 corrected
+its first half — **a save is (characterId, saveName)**. So that is the
+key here too:
+
+    PRIMARY KEY (player_id, character_id, save_name)
+
+and the R2 objects hang off the same triple. The local integer never
+leaves the device that minted it, which is exactly what CHARID1 shipped
+for.
+
+### D3 — R2 keys are player-first, so a deleted account is one sweep
+
+    saves/{playerId}/{characterId}/{saveName}/data
+    saves/{playerId}/{characterId}/{saveName}/shot
+
+Player first is not cosmetic: R2 lists by prefix, so "delete everything
+this account holds" is a prefix walk rather than a join against D1. A
+save name is a player-typed string, so it is encoded into the key
+rather than pasted into it, and the service bounds its length.
+
+### D4 — the bounds, and the one that would have been missed
+
+`MAX_BODY_BYTES` in `service.js` is **4 KiB**, and `readBody` enforces
+it before parsing. Every route this service has today is a small JSON
+body, so that bound is right for all of them and WRONG for a save,
+which is hundreds of kilobytes. A save route that went through
+`readBody` would refuse every real save; one that quietly bypassed the
+cap would have no cap at all. So the blob routes read a RAW body with
+their own, named bound:
+
+| | |
+|---|---|
+| `SAVE_MAX_BYTES` | 4 MiB — a Daggerfall envelope is a few hundred KB; this is headroom for a long game and a hard stop for anything else |
+| `SHOT_MAX_BYTES` | 256 KiB — a 320x200 JPEG is ~20 KB |
+| `SAVES_MAX` | 60 slots per account |
+| `SAVE_NAME_MAX` | 64 characters |
+
+An account at `SAVES_MAX` is refused with `too-many-saves` rather than
+having its oldest slot silently taken: this is a BACKUP, and a backup
+that deletes things to make room is not one.
+
+### D5 — a download does not get a new merge rule; it reuses SP1's
+
+The obvious thing to write is a sync: compare timestamps, take the
+newer. That is the design ACC0 refused — *"a design where the cloud is
+the truth is one where a sync bug is catastrophic"* — and it would also
+be a SECOND answer to a question this repo has already answered.
+
+`systems/saveTransfer.js` (SP1) defines what happens when a slot
+arrives from elsewhere, and it was written because a player thought
+they had lost their saves:
+
+> a slot never overwrites another: it takes its own number when that
+> number is free, the first free one when it is not, and a slot the
+> store already holds (same character, same slot name, same game
+> minute) is skipped rather than doubled.
+
+A cloud download is a slot arriving from elsewhere. It goes through
+that law, unchanged. **The cloud is a third destination for a carrier
+that already works** — the page said so before any of this was built,
+and the carrier is where the merge rule stays.
+
+### D6 — NOT automatic, and this is a narrowing of ACC0's step 4 with a reason
+
+Step 4 says *"Upload on save"*. This slice does not do that, and the
+departure is recorded rather than quietly taken:
+
+- An upload inside the save path puts a NETWORK CALL in the one
+  operation this game must never fail. `systems/save.js` handles
+  `QuotaExceededError` by name today; it has no arm for "the account
+  service was slow" and should not grow one.
+- A backup that happens invisibly is a backup whose failure is also
+  invisible. The whole point of ACC0's limit is that a failure here is
+  *"a message rather than a lost game"* — and a message needs somewhere
+  to appear.
+
+So ACC2 builds the transport and the explicit push and pull. **The
+trigger rides with the tile picker**, which is the next thing Mac asked
+for and is the surface where a player can see a save go up and see it
+fail. That keeps ACC0's promise rather than dropping it.
+
+### D7 — the bucket is created by the deploy, like the database was
+
+ACC1-CI's whole argument (Mac: *"The token provided allows you to take
+this on yourself. I am not needed at all"*) applies unchanged: the same
+API token that creates a D1 database creates an R2 bucket. So
+`account-deploy.yml` creates it if absent, idempotently, before the
+deploy — and the binding is in `wrangler.toml` where the D1 binding
+already is. Nobody opens a dashboard.
+
+### What this costs
+
+**Nothing in the relay bundle, so NOBODY IS DROPPED.** `RELAY_GRAPH` is
+unchanged by every line of ACC2 — which is the two-Worker split earning
+its keep for the second time this week, and is why this slice can land
+the day after one that dropped the whole room.
+
+### ACC2a — SHIPPED 2026-09-22: the service half
+
+- `server-account/migrations/0003_saves.sql` — the card, keyed
+  `(player_id, character_id, save_name)`, with `bytes`/`shot_bytes`
+  saying what R2 actually holds.
+- `server-account/src/saves.js` — list, put the card, put a blob, get a
+  blob, delete. Every statement binds the player the caller proved.
+- `server-account/src/service.js` — `savePathOf`, `saveKey`,
+  `savePrefix`, and the four bounds. `ACCOUNT_VERSION` acct1 → **acct2**.
+- `server-account/src/index.js` — the seven routes and the wall.
+- `server-account/wrangler.toml` — the `SAVES` R2 binding.
+- `.github/workflows/account-deploy.yml` — creates the bucket if absent,
+  before the deploy.
+- `src/net/accountClient.js` — a sentence for each of the six new
+  refusal words.
+
+**Two pins fired on their own subject the moment this landed, and both
+were right to.** `accountflow.test.js`'s refusal walk read three named
+files and so missed every word `saves.js` returns — it walks the
+service's whole `src/` directory now, because a three-file list is an
+enumeration and an enumeration disagrees with the tree the day somebody
+adds a file. And `accountworker.test.js`'s schema pin listed the tables;
+`saves` arriving as its OWN table rather than as columns on `players` is
+exactly what 0001's header promised would happen, so the list moved and
+the promise is quoted beside it.
+
+Mutants: `tools/mutants/acc2.json`, 14, **14 dead and 0 survived**.
+
+**NOT DEPLOYED**, and when it is, it drops nobody: `RELAY_GRAPH` is
+untouched by every line of it.

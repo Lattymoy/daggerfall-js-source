@@ -102,6 +102,15 @@ export const REFUSALS = Object.freeze({
   // deserves a sentence as much as one who mistyped a password.
   'not-found': 'The account service does not know that request. The game may need updating.',
   'no-database': 'The account service is starting up. Try again in a moment.',
+  // ACC2, the cloud saves. Every one of these is a sentence a player
+  // can act on, which is the whole rule of this table - "too-large" is
+  // not a thing to read and "that save is too big to back up" is.
+  'saves-need-account': 'Cloud saves need a username and a password. Give this account one and your saves can follow you.',
+  'too-many-saves': 'Your cloud backup is full. Delete a save there to make room.',
+  'too-large': 'That save is too big to back up.',
+  'no-slot': 'That save is not in your cloud backup.',
+  'no-data': 'That backup is incomplete - it was interrupted. Back it up again.',
+  'no-storage': 'Cloud saves are unavailable right now. Try again later.',
   server: 'The account service had a problem. Try again.',
   offline: 'Could not reach the account service. Check your connection.',
 });

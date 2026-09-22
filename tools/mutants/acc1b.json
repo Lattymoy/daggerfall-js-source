@@ -114,7 +114,7 @@
   {
     "name": "ACC1b-12-an-unknown-path-answers-401",
     "file": "server-account/src/index.js",
-    "old": "    if (!ROUTES.has(path)) return no('not-found', 404, origin);",
+    "old": "    if (!ROUTES.has(path) && !slot) return no('not-found', 404, origin);",
     "new": "    if (false) return no('not-found', 404, origin);",
     "tests": [
       "test/accountworker.test.js"

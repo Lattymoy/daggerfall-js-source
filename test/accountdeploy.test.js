@@ -438,3 +438,38 @@ test('ACC1d D2: the service\'s deploy checks the RELAY\'s copy of the public key
   const key = /^IDENTITY_PUBLIC_KEY\s*=\s*"([^"]+)"/m.exec(rd('server/wrangler.toml'))?.[1] ?? '';
   assert.doesNotMatch(wf, new RegExp(key.slice(0, 20)), 'no literal copy in the workflow');
 });
+
+test('ACC2: the deploy creates the SAVE BUCKET the same way it creates the database, and reads its name from the config it ships', () => {
+  const wf = rd(WF);
+  const toml = rd(TOML);
+  // THE BINDING IS IN THE CONFIG, and it is the config the deploy
+  // ships: a Worker whose toml binds a bucket that does not exist does
+  // not start, which is why the create runs BEFORE the deploy.
+  assert.match(toml, /^\[\[r2_buckets\]\]$/m, 'the save bucket is bound');
+  const bucket = /^bucket_name\s*=\s*"([^"]+)"/m.exec(toml)?.[1];
+  const binding = /^binding\s*=\s*"(SAVES)"/m.exec(toml)?.[1];
+  assert.ok(bucket, 'and it has a name');
+  assert.equal(binding, 'SAVES', 'under the name server-account/src/index.js reads (env.SAVES)');
+  assert.match(rd('server-account/src/index.js'), /env\.SAVES/, 'which the Worker really reads');
+
+  const step = /- name: Create the save bucket[\s\S]*?(?=\n      # |\n      - name: )/.exec(wf)?.[0] ?? '';
+  assert.ok(step, 'the create step is there');
+  // DERIVED, NOT TYPED TWICE - the same law the database's id follows.
+  assert.match(step, /grep -oP '\^bucket_name[^']*' server-account\/wrangler\.toml/, 'the name comes out of the config');
+  assert.doesNotMatch(step, new RegExp(`["']${bucket}["']`), 'and is never a literal in the workflow');
+  // AUDIT-ACC F1 AGAIN: no `|| echo` fallback on the listing. "I could
+  // not read this" must never become "there is none of it".
+  assert.match(step, /\$WRANGLER r2 bucket list/, 'the list is asked before the create');
+  assert.doesNotMatch(step, /r2 bucket list[^\n]*\|\|/, 'a listing that fails must fail the step');
+  assert.match(step, /r2 bucket create/, 'and the create is only reached when it is missing');
+  // ...and it runs BEFORE the deploy, for the reason above.
+  assert.ok(wf.indexOf('- name: Create the save bucket') < wf.indexOf('- name: Deploy'), 'the bucket exists before the Worker that binds it');
+
+  // THE MIGRATION IS NOT NAMED HERE EITHER. ACC1-CI's law: a workflow
+  // that lists migration files applies a new one only when somebody
+  // remembers. 0003 is applied by the ledger like every other.
+  const migrations = readdirSync(new URL('../server-account/migrations', import.meta.url)).filter((f) => f.endsWith('.sql'));
+  assert.ok(migrations.includes('0003_saves.sql'), 'ACC2 brought a migration');
+  const live = wf.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n');
+  for (const m of migrations) assert.ok(!live.includes(m), `the workflow names ${m}`);
+});
