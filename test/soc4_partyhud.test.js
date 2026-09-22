@@ -331,11 +331,11 @@ const PROJ = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -1, 0, 0, -1, 0]
 const VIEW = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -10, 1]);
 // ACC1d-MARK: `v` is EXPLICIT. The relay's wire has no `v: false` - it sends
 // `v: true` and OMITS the field otherwise (server/src/index.js `_named`), so
-// ABSENT IS UNVOUCHED and a fixture that says nothing is asking for a mark.
-// These peers are vouched for because this pin is about the PARTY's colour,
-// not about the relay's verdict; the mark's own laws are pinned in
+// ABSENT IS UNVOUCHED, and a name the relay could not check wears no badge.
+// These peers say so out loud because this pin is about the PARTY's colour
+// and wants the plain label under it; the mark's own laws are pinned in
 // test/name1_bubbles.test.js, including that it never takes PARTY_GREEN.
-const bodies = (ids) => ids.map((id) => ({ id, name: id.toUpperCase(), v: true, shown: { x: 0, y: 0, z: 0, yaw: 0 }, look: null }));
+const bodies = (ids) => ids.map((id) => ({ id, name: id.toUpperCase(), v: false, shown: { x: 0, y: 0, z: 0, yaw: 0 }, look: null }));
 
 test('SOC4: the names over the bodies - drawNames takes the party colour as its LAST and OPTIONAL argument, so my party\'s tabs are drawn in PARTY_GREEN and everyone else in the white they always were; a caller that passes nothing draws every name white, byte for byte; and a name point carries the PEER id the question is asked of (mutants: the colour applied to everyone; the green leaked to a friend who is not in my party; the default path recoloured; the id dropped from the point)', () => {
   const rp = new RemotePlayers({ renderer: recorder(), deps: null, compose: async () => null });

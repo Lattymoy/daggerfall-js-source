@@ -6551,12 +6551,16 @@ be nameless for life).
 
 **ACC1d-MARK (2026-09-22) added one thing to this point.** The name
 carries the relay's verdict now (`vouched`, straight off the peer's `v`),
-and a name the relay COULD NOT CHECK wears a mark - one ASCII glyph, in
-both faces, drawn BESIDE the label and never inside it, because the label
-is centred on the skull and a prefixed glyph would walk it off the head.
-The mark keeps the name's own colour: SOC4's green says who somebody is
-to you, and this says whether the relay could check the name at all.
-Full record in `06-Systems/Accounts-And-Cloud-Saves-Arc.md`.
+and a name the relay CHECKED wears a mark - one ASCII glyph, in both
+faces, drawn BESIDE the label and never inside it, because the label is
+centred on the skull and a prefixed glyph would walk it off the head. The
+mark keeps the name's own colour: SOC4's green says who somebody is to
+you, and this says whether the SERVICE ISSUED the name at all. The
+polarity is Mac's own correction - the first cut marked the unvouched and
+he asked "Why a question mark since even guests get a name?", which is
+the right question: the verdict divides a name the player TYPED from a
+name the service ISSUED, not a guest from an account. Full record in
+`06-Systems/Accounts-And-Cloud-Saves-Arc.md`.
 
 ## RESPAWN1 - A DUNGEON'S DEAD STOOD BACK UP, AND THE DOOR WAS WHY (2026-09-17)
 

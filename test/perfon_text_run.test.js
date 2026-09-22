@@ -141,7 +141,7 @@ test('PERF-ON: the name pass no longer scales by the glyph - measured, per peer'
     id: `p${i}`, name: `Wanderer${i}`, v,
     shown: { x: 0, y: 0, z: 0, yaw: 0 }, look: { race: 1, gender: 0, face: 0, items: [] },
   }));
-  const run = (n, v = true) => {
+  const run = (n, v = false) => {
     const r = batched();
     r.createBillboardBatch = () => ({ origin: [0, 0, 0] });
     r.destroyBillboardBatch = () => {}; r.uploadTexture = () => {}; r.releaseTexture = () => {};
@@ -159,15 +159,16 @@ test('PERF-ON: the name pass no longer scales by the glyph - measured, per peer'
     assert.equal(m.draws, n, `${n} peers must be ${n} draws - one a NAME, not one a glyph`);
     assert.equal(m.loose, 0, 'a glyph escaped the run and is a draw of its own');
   }
-  // ACC1d-MARK PAYS A CONSTANT, NOT A GLYPH. A name the relay cannot vouch
-  // for wears a mark, and the mark is its own draw - so an unvouched room
-  // costs TWO draws a peer instead of one, and still nothing that scales
-  // with how long anybody's name is. That is the whole of PERF-ON's law:
-  // `Wanderer15` is ten glyphs and neither number moves with it.
+  // ACC1d-MARK PAYS A CONSTANT, NOT A GLYPH. A name the relay CHECKED
+  // wears a badge, and the badge is its own draw - so a room where
+  // everybody signed in costs TWO draws a peer instead of one, and still
+  // nothing that scales with how long anybody's name is. That is the
+  // whole of PERF-ON's law: `Wanderer15` is ten glyphs and neither
+  // number moves with it.
   for (const n of [1, 4, 16]) {
-    const m = run(n, false);
-    assert.equal(m.drawn, n, `${n} marked peers, ${m.drawn} names drawn`);
-    assert.equal(m.draws, 2 * n, `${n} unvouched peers must be ${2 * n} draws - a NAME and a MARK each, and neither a glyph`);
+    const m = run(n, true);
+    assert.equal(m.drawn, n, `${n} badged peers, ${m.drawn} names drawn`);
+    assert.equal(m.draws, 2 * n, `${n} vouched-for peers must be ${2 * n} draws - a NAME and a BADGE each, and neither a glyph`);
     assert.equal(m.loose, 0, 'a glyph escaped the run and is a draw of its own');
   }
 });

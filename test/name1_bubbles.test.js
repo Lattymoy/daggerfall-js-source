@@ -32,6 +32,7 @@ import { SocialState, PARTY_GREEN, PARTY_GREEN_CSS } from '../src/net/social.js'
 import { PIXEL_STACK } from '../src/ui/pixelifyFive.js';
 import { projectToScreen } from '../src/player/tapRay.js';
 import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
+import { hasGlyph, FNT_SPACE_CODE } from '../src/ui/text.js';   // ACC1d-MARK: the font's own glyph range, so the badge is checked against the face that draws it
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -81,12 +82,13 @@ const W = 1600, H = 900;
 const stand = (rows) => {
   const rp = new RemotePlayers({ renderer: recorder(), deps: null, compose: async () => null });
   const heights = new Map(rows.map((r) => [r.id, r.height ?? PEER_HEIGHT]));
-  // ACC1d-MARK: `v` is EXPLICIT in the fixture. These pins are about the
-  // name pass - the anchor, the size, the sight test, the two faces -
-  // and a peer the relay vouches for is the ordinary case they are
-  // written about. A row that wants the mark asks for it (`v: false`);
-  // the mark's own pin is the one that does.
-  rp.sync(rows.map((r) => ({ id: r.id, name: r.name ?? r.id.toUpperCase(), v: r.v !== false, shown: { x: r.at[0], y: r.at[1], z: r.at[2], yaw: 0 }, look: null })),
+  // ACC1d-MARK: `v` is EXPLICIT in the fixture, and the default is NOT
+  // VOUCHED - the plain label, which is what every one of these pins is
+  // written about (the anchor, the size, the sight test, the two faces)
+  // and what an ordinary peer is today, since the account window is an
+  // offer rather than a gate. A row that wants the badge asks for it
+  // (`v: true`); the mark's own pin is the one that does.
+  rp.sync(rows.map((r) => ({ id: r.id, name: r.name ?? r.id.toUpperCase(), v: r.v === true, shown: { x: r.at[0], y: r.at[1], z: r.at[2], yaw: 0 }, look: null })),
     (p) => [p.x, p.y, p.z], { bodyHeight: (id) => heights.get(id) ?? 0 });
   return rp;
 };
@@ -890,8 +892,18 @@ test('AUDIT NAME1 F9 / F10 / F11: a bubble with nothing to show is not shown - a
 //
 // Mac, asked where the verdict ACC1d carries should be drawn: "Should be
 // over the head in online how it currently works."
+//
+// AND THEN, ON THE POLARITY: "Why a question mark since even guests get
+// a name?" He is right, and the question takes the first cut apart. The
+// verdict does not divide GUEST from ACCOUNT - a guest with a session is
+// vouched for like anybody else. It divides a name the player TYPED
+// (`onlineName`, "Name over your head", which the relay only sanitises)
+// from a name the service ISSUED and signed. So the mark goes on the
+// name that was CHECKED: it can only ever appear where the service
+// issued the name, so it never becomes wallpaper, and a relay whose key
+// will not import badges NOBODY rather than accusing EVERYBODY.
 
-test('ACC1d-MARK: a name the relay cannot vouch for wears a mark over the head, in BOTH faces, and a vouched-for name is the label it always was (mutants: the verdict dropped from the point; the mark drawn for everybody; the mark drawn for nobody; the mark prefixed INTO the name so the label leaves the head)', () => {
+test('ACC1d-MARK: a name the relay CHECKED wears a mark over the head, in BOTH faces, and a name it could not check is the label it always was (mutants: the verdict dropped from the point; the mark drawn for everybody; the mark drawn for nobody; the mark prefixed INTO the name so the label leaves the head; the polarity flipped back onto the unvouched)', () => {
   const rp = stand([{ id: 'ok', at: [0, 0, -10], v: true }, { id: 'no', at: [3, 0, -10], v: false }]);
 
   // THE POINT CARRIES IT, because it is a fact about the peer rather
@@ -906,12 +918,12 @@ test('ACC1d-MARK: a name the relay cannot vouch for wears a mark over the head, 
   const withMark = recorder();
   rp.drawNamePoints(withMark, FONT, pts, 1);
   assert.equal(withMark.runs.length, 3, 'two names and ONE mark');
-  const allOk = recorder();
-  rp.drawNamePoints(allOk, FONT, pts.map((n) => ({ ...n, vouched: true })), 1);
-  assert.equal(allOk.runs.length, 2, 'vouched for, and the label is the two draws it always was');
   const allBad = recorder();
   rp.drawNamePoints(allBad, FONT, pts.map((n) => ({ ...n, vouched: false })), 1);
-  assert.equal(allBad.runs.length, 4, 'and a relay that can vouch for nobody says so over every head');
+  assert.equal(allBad.runs.length, 2, 'a name the relay could not check is the label it always was - no badge, and nothing accusing it either');
+  const allOk = recorder();
+  rp.drawNamePoints(allOk, FONT, pts.map((n) => ({ ...n, vouched: true })), 1);
+  assert.equal(allOk.runs.length, 4, 'and a room where everybody signed in is a room of badges');
 
   // THE NAME ITSELF IS NOT TOUCHED, and this is the assertion that
   // says so rather than the one that looks like it does. Prefixing the
@@ -921,25 +933,25 @@ test('ACC1d-MARK: a name the relay cannot vouch for wears a mark over the head, 
   // put an extra GLYPH in the name's own draw while `tw` is still
   // measured off the name alone, so the label slides off the head it
   // belongs to, and only for the peers that are marked.
-  // Runs are [ok-name, no-name, no-mark]: the marked peer's NAME is the
-  // same draw it is when nobody is marked.
-  assert.equal(withMark.runs[1].quads.length, allOk.runs[1].quads.length,
+  // Runs are [ok-name, ok-mark, no-name]: the badged peer's NAME is the
+  // same draw it is when nobody is badged.
+  assert.equal(withMark.runs[0].quads.length, allBad.runs[0].quads.length,
     'the mark was written INTO the name - its glyphs are in the name\'s own draw');
-  assert.equal(withMark.runs[2].quads.length, 1, 'and the mark is its own single-glyph draw');
+  assert.equal(withMark.runs[1].quads.length, 1, 'and the mark is its own single-glyph draw');
   assert.deepEqual(pts.map((n) => n.name), ['OK', 'NO']);
 
   // ── THE DOM FACE: its own element, empty where the relay vouches, so
   // an ordinary label is the element it was before this existed.
   const layer = createNameLayer({ doc: fakeDocument(), now: () => 1000 });
   layer.render({ points: pts });
-  assert.equal(layer.tagFor('no').mark.textContent, NAME_MARK);
-  assert.equal(layer.tagFor('ok').mark.textContent, '', 'a vouched-for name carries no mark at all');
+  assert.equal(layer.tagFor('ok').mark.textContent, NAME_MARK);
+  assert.equal(layer.tagFor('no').mark.textContent, '', 'a name the relay could not check carries no mark at all');
   // ...and the mark does NOT take the party's colour: SOC4's green says
   // who somebody is to you, and this says whether the relay could check
   // the name. Two systems, and only one of them owns that pixel.
   layer.render({ points: pts, colorOf: () => PARTY_GREEN });
-  assert.equal(layer.tagFor('no').name.style.color, PARTY_GREEN_CSS, 'the NAME takes the green');
-  assert.equal(layer.tagFor('no').mark.style.color ?? '', '', 'and the mark does not');
+  assert.equal(layer.tagFor('ok').name.style.color, PARTY_GREEN_CSS, 'the NAME takes the green');
+  assert.equal(layer.tagFor('ok').mark.style.color ?? '', '', 'and the mark does not');
 
   // ── ABSENT IS UNVOUCHED, and this is the arm the campaign asked for.
   // THE RELAY'S WIRE HAS NO `v: false`: server/src/index.js sends
@@ -958,11 +970,19 @@ test('ACC1d-MARK: a name the relay cannot vouch for wears a mark over the head, 
   assert.deepEqual(barePts.map((n) => n.vouched), [false], 'a peer the relay said nothing about is a peer it did not vouch for');
   const bareDraw = recorder();
   bare.drawNamePoints(bareDraw, FONT, barePts, 1);
-  assert.equal(bareDraw.runs.length, 2, 'and it wears the mark - a name and a mark');
+  assert.equal(bareDraw.runs.length, 1, 'and it gets NO badge - the name alone, exactly as every build before this slice drew it');
 
   // the gap is a screen-pixel clearance like NAME_GAP_PX, named once
   assert.ok(Number.isFinite(NAME_MARK_GAP_PX) && NAME_MARK_GAP_PX > 0);
   // ONE GLYPH, and it has to be one the classic font can draw
   assert.equal(NAME_MARK.length, 1);
   assert.ok(/^[\x20-\x7e]$/.test(NAME_MARK), 'the classic face draws through a Daggerfall font - ASCII or it draws nothing');
+  // ...and ASCII is necessary, not sufficient: `drawText` draws nothing
+  // at all for a glyph of zero width, so a badge the font has no record
+  // for is one the classic skin silently never shows. The font's own
+  // range is read here; the real FONT0003 is read where ARENA2 exists
+  // (test/audit18_ui_chargen.test.js's door), and this states the limit
+  // rather than leaving it to be discovered.
+  assert.ok(hasGlyph(NAME_MARK.charCodeAt(0)) && NAME_MARK.charCodeAt(0) !== FNT_SPACE_CODE,
+    'the mark must be inside the font\'s glyph range and not the space');
 });

@@ -1913,24 +1913,57 @@ is a UI slice."* This is that slice, and it is a **client build** —
 which is the whole reason D5 carried `v` to the peer rather than
 stopping it at the relay. No `RELAY_VERSION` bump, nobody dropped.
 
-### The mark is on the UNVOUCHED
+### THE POLARITY IS MAC'S, AND THE FIRST CUT HAD IT BACKWARDS
 
-The relay says which names it **vouches for**. The signal worth drawing
-is therefore the one that is *missing*: a badge on every verified name
-is a badge on almost everybody the day ACC1e's accounts are common, and
-a mark that almost everybody wears is wallpaper.
+The first cut put a `?` on the names the relay could **not** vouch for,
+reasoning that the useful signal is the missing one. Mac asked the
+question that takes that apart:
 
-**Note what unvouched is not: it is not "a guest".** A guest with a
-session mints a token like anybody else and the relay vouches for the
-name inside it — ACC0's wall is at cloud saves, not at the door. An
-unvouched name is one the relay **could not check**: there was no token
-on the hello, or its own public key will not import, in which case it
-vouches for nobody and the mark stands over every head at once. So does
-a relay OLDER than world85, which knows nothing of `v` and says so about
-everybody. Both are worth stating rather than discovering: this mark's
-failure mode is *loud*, and it is loud in the direction that is true —
-if the client cannot be told a name was checked, it does not claim it
-was.
+> Why a question mark since even guests get a name?
+
+He is right, and the answer is that **the verdict does not divide guest
+from account.** A guest with a session mints a token like anybody else
+and the relay vouches for the name inside it. What it actually divides
+is **a name the player TYPED from a name the service ISSUED**:
+
+- **No session.** The hello carries whatever stands in `onlineName` —
+  the *"Name over your head"* field in `ui/enhancedMenu.js` — and the
+  relay only sanitises it for length and for the word filter. It can be
+  anybody's, which is the impersonation hole ACC1a opened this arc to
+  close.
+- **A session, guest or linked alike.** The account service signs a
+  token and the relay takes the name **out of it**.
+
+So the badge goes on the name that was **checked**. Three reasons, and
+the third is the one that settles it:
+
+1. It can only ever appear where the service issued the name, so it
+   **never becomes wallpaper** — which the `?` would be today, with the
+   account window an offer rather than a gate.
+2. It is the shape every reader already knows: a mark you look *for*,
+   not an accusation you have to learn to ignore.
+3. **It fails safe.** A relay whose public key will not import vouches
+   for nobody — so it badges nobody, where the old polarity would have
+   accused every head in the room at once.
+
+### Beside the name, never inside it
+
+The name is centred on the skull. Prefixing a glyph into the string
+moves the label off the head it belongs to — and only for the badged
+peers, so it reads as *those* names drifting. So the badge is its own
+draw in the classic face (`NAME_MARK_GAP_PX` to the left of the label's
+left edge, measured off the name's own width) and its own `<span>` in
+the DOM face, which also means `setText` on the name cannot wipe it
+every frame.
+
+### And the colour stays where it was
+
+SOC4's party green says **who somebody is to you**. The badge says
+**whether the service issued the name**. Two systems, one pixel, and the
+colour belongs to the first — so the badge keeps the sheet's own ink and
+the tint stays on the name element. Moving the colour up to the wrapper
+to cover both is what the first cut did, and it broke two NAME1 pins,
+which were right.
 
 ### ABSENT IS UNVOUCHED, and it is the relay's encoding that says so
 
@@ -1945,72 +1978,49 @@ peer since ACC1d, so the point sees one or the other and never the gap.
 
 **The campaign found this one, not the reading.** MARK-7 flips the read
 to `!== false`, and it *survived* the first run: every pin said `v:
-false` out loud, which is a frame the relay never sends — so the mutant
-passed the suite and would have shown the mark to nobody in production.
-The pin holds the relay's own line now, and a peer with the field
-missing entirely.
+false` out loud, which is a frame the relay never sends. Under this
+polarity it is the worse bug of the two, because the badge is the thing
+a player is asked to *trust* — so a mutant that badges the unchecked is
+a lie rather than a missing warning. The pin holds the relay's own line
+now, and a peer with the field missing entirely.
 
-**The honest limit, carried forward from ACC1d:** today the account
-window is an offer and not a gate, so most players have no token and
-most heads will wear the mark. That is the state of the system being
-reported accurately, not a bug in the drawing — and it is **one
-predicate** (`n.vouched === false`) in each face if Mac wants the
-polarity the other way round. The call is his.
-
-### Beside the name, never inside it
-
-The name is centred on the skull. Prefixing a glyph into the string
-moves the label off the head it belongs to — and only for the marked
-peers, so it reads as *those* names drifting. So the mark is its own
-draw in the classic face (`NAME_MARK_GAP_PX` to the left of the label's
-left edge, measured off the name's own width) and its own `<span>` in
-the DOM face, which also means `setText` on the name cannot wipe it
-every frame.
-
-### And the colour stays where it was
-
-SOC4's party green says **who somebody is to you**. The mark says
-**whether the relay could check the name**. Two systems, one pixel, and
-the colour belongs to the first — so the mark keeps the sheet's own ink
-(dimmed in the DOM face) and the tint stays on the name element. Moving
-the colour up to the wrapper to cover both is what the first cut did,
-and it broke two NAME1 pins, which were right.
-
-### ONE ASCII GLYPH
+### ONE ASCII GLYPH, and ASCII is necessary rather than sufficient
 
 The classic face draws through a Daggerfall bitmap font and can only put
-on screen what that font has a record for. A warning triangle is the
-obvious mark and would have drawn **nothing at all** in that face while
-the DOM face showed it — the two faces disagreeing about whether the
-player was ever told. `NAME_MARK` is `?`, and the mutant that swaps it
-for `⚠` is dead.
+on screen what that font has a record for — `drawText` draws **nothing
+at all** for a glyph of zero width, so a badge the font lacks is one the
+classic skin silently never shows while the DOM face shows it. A tick is
+the obvious badge and is not in that font; `NAME_MARK` is `*`, the pin
+holds it inside the font's own glyph range, and the mutant that swaps it
+for `\u2713` is dead. **The limit, stated rather than left to be found:
+this container has no ARENA2, so the real FONT0003 is not read here.**
 
 ### SHIPPED 2026-09-22
 
 - `src/net/remotePlayers.js` — `NAME_MARK`, `NAME_MARK_GAP_PX`;
   `namePoints` carries `vouched` on the point (a fact about the PEER,
   unlike `colorOf`, which is the social system's knowledge asked for by
-  id); `drawNamePoints` draws the mark beside the label.
+  id); `drawNamePoints` draws the badge beside the label.
 - `src/ui/nameLayer.js` — the tag is a wrapper over a `.dfname-mark`
-  span and a `.dfname-who` span; an empty mark takes no room
-  (`:empty` drops its margin), so an ordinary label is exactly the
+  span and a `.dfname-who` span; an empty badge takes no room
+  (`:empty` drops its margin), so an unbadged label is exactly the
   element it was before this existed.
-- Pins: `test/name1_bubbles.test.js` 20 → **21**. The fixture now sets
-  `v` EXPLICITLY, because two existing NAME1 pins had been counting
-  draws under peers that carried no verdict at all — the fixture was
-  fixed rather than the new behaviour weakened.
+- Pins: `test/name1_bubbles.test.js` 20 → **21**. The fixture sets `v`
+  EXPLICITLY and its default is **not vouched** — the plain label, which
+  is what those pins are about and what an ordinary peer is today.
 - Two neighbouring pins were re-aimed rather than worked around, and
   both got stronger for it. `test/soc4_partyhud.test.js` read the white
   fallback off the draw call; it reads it off the `tint` both draws take,
-  so SOC4's law now covers the mark as well as the name — *SOC4 owns
+  so SOC4's law now covers the badge as well as the name — *SOC4 owns
   that colour and ACC1d-MARK does not get a second opinion on it.*
   `test/perfon_text_run.test.js` measured one draw per peer; it measures
-  both cases, and the marked room is **2n draws and still nothing that
+  both cases, and a badged room is **2n draws and still nothing that
   scales with how long anybody's name is**, which is the whole of what
   PERF-ON was ever about.
-- Mutants: `tools/mutants/acc1dmark.json`, 7, **7 dead and 0 survived.**
-  Two survived a first run. MARK-3: prefixing the mark INTO the name
-  leaves the *run count* unchanged, so the pin now reads the marked
+- Mutants: `tools/mutants/acc1dmark.json`, 8, **8 dead and 0 survived.**
+  Two survived a first run. MARK-3: prefixing the badge INTO the name
+  leaves the *run count* unchanged, so the pin now reads the badged
   peer's name draw as having the same glyph count as when nobody is
-  marked. MARK-7 is the one above — the reading that agreed with every
-  fixture and with no relay.
+  badged. MARK-7 is the one above. MARK-8 holds Mac's correction as a
+  law rather than as a memory: the polarity flipped back is a dead
+  mutant, not a preference somebody can quietly restore.

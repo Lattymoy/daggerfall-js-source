@@ -92,26 +92,42 @@ export const NAME_RANGE = 60;
  *  clearance swing with depth - which is the thing that went wrong. Small, because the label hangs off the head and
  *  a large gap reads as a label floating over nobody. */
 export const NAME_GAP_PX = 5;
-/** ═══ ACC1d-MARK: THE MARK OVER A NAME THE RELAY CANNOT VOUCH FOR ══
+/** ═══ ACC1d-MARK: THE MARK OVER A NAME THE RELAY CHECKED ═══════════
  *
  *  Mac, asked where the verdict should be drawn: "Should be over the
  *  head in online how it currently works." So it rides this pass, and
  *  BOTH faces draw it - the DOM layer and the classic bitmap one - out
  *  of the same point.
  *
- *  IT MARKS THE UNVOUCHED, NOT THE VOUCHED. ACC1d's whole claim is that
- *  the relay says which names it VOUCHES FOR, and the useful signal is
- *  the one that is missing: a mark on every verified name is a mark on
- *  almost everybody once ACC1e's account exists, which is no signal at
- *  all. NOTE WHAT UNVOUCHED IS NOT: it is not "a guest". A guest with a
- *  session mints a token like anybody else and the relay vouches for
- *  the name inside it. Unvouched means the relay COULD NOT CHECK -
- *  there was no token on the hello, or its own key will not import, in
- *  which case it vouches for nobody and says so over every head.
+ *  IT MARKS THE VOUCHED-FOR, AND THAT IS MAC'S OWN CORRECTION. The
+ *  first cut marked the UNVOUCHED, reasoning that the useful signal is
+ *  the missing one; he asked the question that took it apart - "Why a
+ *  question mark since even guests get a name?" - and he is right.
+ *
+ *  WHAT THE VERDICT ACTUALLY DIVIDES IS NOT GUEST FROM ACCOUNT. It is
+ *  a name the player TYPED from a name the service ISSUED. Without a
+ *  session the hello carries whatever stands in `onlineName`
+ *  (ui/enhancedMenu.js, "Name over your head"), which the relay only
+ *  sanitises - so it can be anybody's. With a session, guest or
+ *  linked alike, the account service signs a token and the relay takes
+ *  the name OUT of it. A guest is vouched for; a stranger who never
+ *  opened the account window is not.
+ *
+ *  AND THAT IS WHY THE POLARITY MATTERS. A warning on the unvouched is
+ *  a warning on nearly every head while the account window is an offer
+ *  rather than a gate, which is wallpaper. A mark on the vouched-for
+ *  can only ever appear on a name the service issued, so it never
+ *  becomes noise - and it FAILS SAFE: a relay whose key will not
+ *  import vouches for nobody and therefore badges nobody, where the
+ *  old polarity would have accused everybody at once.
  *
  *  ONE ASCII GLYPH, because the classic face draws through a Daggerfall
- *  font and can only put on screen what that font has. */
-export const NAME_MARK = '?';
+ *  font and can only put on screen what that font has a record for -
+ *  `drawText` silently draws nothing for a glyph of zero width, so a
+ *  mark the font lacks is a badge the classic skin never shows. The
+ *  real font is read where ARENA2 exists (test/audit18_ui_chargen.js's
+ *  own door) and the pin says so. */
+export const NAME_MARK = '*';
 /** The clearance between the mark and the name it stands beside, in the
  *  same screen pixels NAME_GAP_PX is in. */
 export const NAME_MARK_GAP_PX = 3;
@@ -822,7 +838,7 @@ export class RemotePlayers {
       // colour (the party green SOC4 gives it, or the bone): a second
       // owner of that colour is two systems arguing over one pixel,
       // and this one is about the NAME, not about who they are.
-      if (n.vouched === false) {
+      if (n.vouched === true) {
         const mw = measureText(font.fnt, NAME_MARK) * s;
         drawText(renderer, font, NAME_MARK,
           Math.round(n.x - tw / 2 - NAME_MARK_GAP_PX * scale - mw), Math.round(top), s, tint);
