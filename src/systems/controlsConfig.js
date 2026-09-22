@@ -217,6 +217,50 @@ const CLASSIC_NAMES = Object.freeze({
   Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\',
 });
 
+/** SWING-LABEL (2026-09-22, Mac: "why some players arent able to
+ *  attack and ensure this isnt an issue with keybindings"): THE THREE
+ *  MOUSE BUTTONS BY WHAT THEY ARE, NOT BY UNITY'S NUMBER.
+ *
+ *  DFU names a button by its KeyCode - Mouse0, Mouse1, Mouse2 - and
+ *  Unity counts left, RIGHT, middle. So both controls windows told
+ *  every player that Swing Weapon is "MOUSE1" and Auto Run is
+ *  "MOUSE2". Everywhere else a player has met those words - nearly
+ *  every PC game's keybind screen - MOUSE1 is the LEFT button and
+ *  MOUSE2 the right. The screen was accurate in Unity's terms and
+ *  read backwards in everyone else's: it said "attack is left click",
+ *  players left-clicked, and the left button is Activate, which does
+ *  nothing with nothing in front of it. That is the "can't attack"
+ *  report, and it is the screen Mac read too.
+ *
+ *  The CODES do not move - the store, the saved files, the swing's
+ *  own routing (ui/input.js MOUSE_CODES) and every pin read 'Mouse1'
+ *  exactly as before. Only the words a player reads change. The short
+ *  form fits DFU's ten-character cap (MAX_BUTTON_TEXT); the full form
+ *  is what the enhanced pane and the tooltips show. */
+const MOUSE_NAMES = Object.freeze({
+  Mouse0: ['L CLICK', 'LEFT CLICK'],
+  Mouse1: ['R CLICK', 'RIGHT CLICK'],
+  Mouse2: ['M CLICK', 'MIDDLE CLICK'],
+});
+
+/** SWING-LABEL: ...and the one row where the button alone is not the
+ *  whole answer. In the default swing style (Gesture, 0) a CLICK does
+ *  nothing - WeaponManager tracks the drag, and a press with no travel
+ *  is no swing - and a sheathed weapon swings at nothing either. The
+ *  enhanced pane puts this line under Swing Weapon, in the player's
+ *  own live bindings, so the screen that says which button also says
+ *  how. `mode` is Controls/WeaponSwingMode; `readyCode` is the live
+ *  ReadyWeapon code (null when unbound). */
+export function swingHint(code, mode, readyCode) {
+  if (code == null) return 'Unbound - nothing can swing your weapon.';
+  const side = { Mouse0: 'left', Mouse1: 'right', Mouse2: 'middle' }[code];
+  const btn = side ? `the ${side} mouse button` : buttonText(code, true);
+  const how = mode === 1 ? `Press ${btn} to swing.`
+    : mode === 2 ? `Press or hold ${btn} to swing.`
+      : `Hold ${btn} and move the mouse to swing - the way you move picks the blow. A press without moving does nothing.`;
+  return readyCode == null ? how : `${how} Draw your weapon first with ${buttonText(readyCode, true)} (Ready Weapon).`;
+}
+
 /** GetButtonText + FormatButtonText. `full` skips the length cap
  *  (the tooltip/full-string arm). */
 export function buttonText(code, full = false) {
@@ -231,6 +275,7 @@ export function buttonText(code, full = false) {
     return formatButtonText(`${buttonText(mod)} + ${buttonText(key)}`, full);
   }
   if (CLASSIC_NAMES[code]) return CLASSIC_NAMES[code];
+  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0];   // SWING-LABEL: never "MOUSE1"
   let t = code;
   const digit = /^Digit(\d)$/.exec(code);
   if (digit) t = `A${digit[1]}`;                   // Alpha0..Alpha9 -> A0..A9

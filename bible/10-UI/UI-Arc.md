@@ -9380,7 +9380,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:709` routed
+The port had the DOOR and not the room. `input.js:713` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:152`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -16738,7 +16738,7 @@ removed.
 **REFUTED, and written down because the next reader will wonder.**
 A window key (F5/F6/L) pressed during a level-up cannot stack a second
 one. The overlay carries `isChoiceWindow`, and both key seams - the
-dungeon/interior `routeKey` (ui/input.js:637-650) and townTalk's own
+dungeon/interior `routeKey` (ui/input.js:641-654) and townTalk's own
 (:371-381) - hand the raw code to the OVERLAY and return before any
 toggle arm can run. The same guard is why QuickLoad, which routeKey
 otherwise allows from under any overlay, cannot reach past this one
@@ -16998,7 +16998,7 @@ UNDER the strip rather than at a box that now contains it. All four new
 checks fail against the shipped code.
 
 **F5 - THE ROW NAMED A KEY CALLED NONE.** `buttonText(null)` is
-KeyCode.None's own string (`systems/controlsConfig.js:223`), so a
+KeyCode.None's own string (`systems/controlsConfig.js:267`), so a
 player who CLEARED the character-sheet binding was handed a plate
 reading A LEVEL AWAITS / NONE - an instruction to press a key that does
 not exist, which is the bug the registry lookup was there to prevent
