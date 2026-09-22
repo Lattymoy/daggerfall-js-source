@@ -54,16 +54,41 @@ await page.route('**/*', async (route) => {
   const path = new URL(route.request().url()).pathname;
   if (MODULES[path]) return route.fulfill({ status: 200, contentType: 'text/javascript', body: MODULES[path] });
   if (path === '/') return route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><html><body><div id="app"></div></body></html>' });
-  // NOTHING ELSE IS SERVED, deliberately: a probe that quietly reaches
-  // the real account service would be a probe that makes rows in D1.
+  // NOTHING IS SERVED FROM THE NETWORK, deliberately - a probe that
+  // quietly reached the real account service would be a probe that
+  // makes rows in D1. The FACES are fetched in node and inlined below,
+  // so the page needs no network for them either.
   return route.abort();
 });
 
 await page.goto('http://probe.invalid/', { waitUntil: 'domcontentloaded' });
 
-// The skin, injected exactly as the game injects it.
-const { ENHANCED_CSS } = await import('../src/ui/enhancedStyle.js');
+// The skin, injected exactly as the game injects it - INCLUDING the
+// one Google Fonts request it makes.
+//
+// THE FIRST CUT OF THIS FILE NEVER LOADED A FACE. It injected
+// ENHANCED_CSS and nothing else, so every sheet it produced was
+// Georgia and system-ui standing in for Cormorant and Barlow Semi
+// Condensed - the fallbacks, photographed and called the design. The
+// card DECLARED the right families the whole time, which is exactly
+// why a source sweep could not have caught it: declaring a family and
+// rendering in it are different claims.
+//
+// The faces are fetched HERE, in node, and inlined as data URIs, so
+// the page needs no network and the probe stays hermetic. A modern
+// User-Agent is sent because Google serves ttf to anything it does not
+// recognise and woff2 to a browser.
+const { ENHANCED_CSS, ENHANCED_FONTS_URL } = await import('../src/ui/enhancedStyle.js');
+const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
+let fontCss = await (await fetch(ENHANCED_FONTS_URL, { headers: { 'user-agent': UA } })).text();
+const urls = [...new Set([...fontCss.matchAll(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g)].map((m) => m[1]))];
+for (const u of urls) {
+  const buf = Buffer.from(await (await fetch(u)).arrayBuffer());
+  fontCss = fontCss.split(u).join(`data:font/woff2;base64,${buf.toString('base64')}`);
+}
+await page.addStyleTag({ content: fontCss });
 await page.addStyleTag({ content: ENHANCED_CSS });
+await page.evaluate(() => document.fonts.ready);
 
 const STAGES = [
   { stage: 'out', label: 'signed out' },
@@ -109,6 +134,12 @@ const measured = await page.evaluate(async (stages) => {
       codeColor: code ? cs(code).color : null,
       codeSize: code ? cs(code).fontSize : null,
       primaryColor: primary ? cs(primary).borderTopColor : null,
+      // WHICH FACE ACTUALLY DREW. The declared family is what a source
+      // sweep can already read; `document.fonts.check` answers whether
+      // the file is really there, which is the only way to tell the
+      // enhanced face from the fallback standing in for it.
+      headFamily: cs(card.root.querySelector('h3')).fontFamily,
+      bodyFamily: cs(card.root.querySelector('p.meta') ?? card.root).fontFamily,
       // GROUPING: a hint must sit nearer the box it describes than the
       // NEXT field's label, or it reads as a caption for the wrong one.
       grouping: [...card.root.querySelectorAll('.fieldhint')].map((h) => {
@@ -156,6 +187,23 @@ const codeRow = measured.find((m) => m.codeColor);
 check('the recovery code is brass and large', codeRow?.codeColor === BRASS && parseFloat(codeRow.codeSize) >= 16,
   `${codeRow?.codeColor} at ${codeRow?.codeSize}`);
 check('the leading button wears brass', measured.filter((m) => m.primaryColor).every((m) => m.primaryColor === BRASS));
+
+// ═══ THE FACES ════════════════════════════════════════════════════
+// Mac asked whether the card uses the enhanced font. It declares the
+// skin's own tokens - --display for a heading, --data for body - but
+// DECLARING a family and RENDERING in it are different claims, and the
+// first version of this probe could not tell them apart.
+const faces = await page.evaluate(() => ({
+  display: document.fonts.check('400 22px Cormorant'),
+  data: document.fonts.check('400 15px "Barlow Semi Condensed"'),
+  loaded: [...document.fonts].map((f) => f.family).filter((v, i, a) => a.indexOf(v) === i),
+}));
+check('the enhanced faces actually LOADED, not just declared', faces.display && faces.data,
+  `Cormorant ${faces.display}, Barlow Semi Condensed ${faces.data} (loaded: ${faces.loaded.join(', ') || 'none'})`);
+check('a heading is set in the skin\'s DISPLAY face', measured.every((m) => /Cormorant/.test(m.headFamily)),
+  measured[0]?.headFamily);
+check('body copy is set in the skin\'s DATA face', measured.every((m) => /Barlow/.test(m.bodyFamily)),
+  measured[0]?.bodyFamily);
 
 // ═══ PROXIMITY SAYS WHAT BELONGS TOGETHER ═════════════════════════
 // The first sheet showed every hint sitting as close to the NEXT

@@ -1105,6 +1105,29 @@ reads the **computed** colour, which comes back as `--bone` exactly. Put
 the bug back and the probe fails naming the colour. `--dim` is what it
 wanted and what `.card .meta` one line up already uses.
 
+### The probe was photographing the fallbacks
+
+Mac, seeing the first sheet: *"Does this use the enhanced font"*.
+
+It does — a heading takes `var(--display)` and everything else
+`var(--data)`, inherited from the skin rather than declared locally, and
+that was true from the first commit. **But the sheet was not showing
+them.** The probe injected `ENHANCED_CSS` and never loaded a single font
+file, so Georgia stood in for Cormorant and system-ui for Barlow Semi
+Condensed, and the result was photographed and offered as the design.
+
+Declaring a family and rendering in it are different claims, and no
+source sweep can tell them apart — the CSS is correct either way. The
+probe now fetches the faces in node from the skin's own
+`ENHANCED_FONTS_URL` and inlines them as data URIs, so the page still
+makes no network call, and three checks ask the question directly:
+`document.fonts.check` for whether the file actually arrived, and the
+computed family on a heading and on body copy.
+
+The same class of error as ACC1e F1, one level up: F1 was a rule that
+looked right and never applied, this was a *measurement* that looked
+right and measured the wrong thing.
+
 ### And the shapes moved, because the direction of every import matters
 
 `GUEST_NAME_RE` and `HANDLE_RE` were born in
