@@ -43,8 +43,8 @@ import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass 
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { registerPresenter, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: this context's window stack and its PopupText, offered to the one door every message goes through - and the door itself, for the seams that name a KIND
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
-import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
-import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5
+import { toggleStatusReadout } from '../ui/statusBox.js';   // STATUS-LIVE: the Status readout, one composer for all four hosts
+import { statusReadoutUp } from '../systems/statusReadout.js';   // STATUS-LIVE: ...and the live one, for this host's free-slot guard
 import { liveVampirism } from '../systems/racialLive.js';   // SURV5: the vampire's one status line
 import { survivalOn } from '../systems/survival/switch.js';
 import { survivalFeed, installSurvivalGate, uninstallSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the rest gate; AUDIT SURV B/C: and off the seam at the teardown
@@ -1632,7 +1632,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8365 / exterior.js:3435), set
+  // host's own townTalk sink (world.js:8379 / exterior.js:3447), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2143,7 +2143,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1160,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1159,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2653,7 +2653,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6824 against :6848).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6823 against :6847).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3217,8 +3217,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:11610,
-              // exterior.js:4936 and worldModes.js:7015 already ran;
+              // playerArrowHitFoe is the one copy world.js:11624,
+              // exterior.js:4948 and worldModes.js:7023 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5840,7 +5840,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // both of them hand it in: dungeon.js's opts bag and
         // worldModes' (the world-hosted crawl, which is where the
         // classic start into Privateer's Hold lives, and which is the
-        // pause door ui/input.js:738 reaches underground).
+        // pause door ui/input.js:740 reaches underground).
         relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
@@ -6386,6 +6386,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // painted. ROAD-tail: that is what the stack's own pause LATCH
     // answers, so the question is asked once, in `dungeonPaused`.
     get uiOverlayActive() { return dungeonPaused(); },
+    /** STATUS-LIVE: ...AND THE OTHER HALF OF THAT QUESTION, which the
+     *  two hosts that DRAW this context's slot need and could not ask.
+     *  A window the game is NOT stopped for (the status readout,
+     *  ui/statusBox.js) still has to be ticked and painted, and both
+     *  hosts' overlay arm is `if (uiOverlayActive) { ...; return; }` -
+     *  so below that return there was no way to know a slot was
+     *  occupied at all. Published as its own word rather than left to
+     *  the hosts to derive from `overlayWindow()`, because ROAD-tail's
+     *  law is that a host asks the owning context for its pause and
+     *  never reaches past it for the slot - and a probe surface is not
+     *  a pause gate (test/roadb_host_pause.test.js sweeps for exactly
+     *  that, and caught this line written the wrong way round). */
+    get unpausedOverlay() { return !!activeOverlay && !dungeonPaused(); },
     /** AUDIT 64 F35 (review round): the HUD's own question, asked of
      *  the same stack - a window is up AND something on it cut the
      *  previousWindow chain (DaggerfallPopupWindow.cs:76-84). Published
@@ -6672,7 +6685,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // the offset MUST reset even if an overlay draw throws.
       const s = hudScaleFor(canvas.width, canvas.height);
       const vw = 320 * s, vh = 200 * s;
-      renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.02, 0.02, 0.02, 0.6]);
+      // STATUS-LIVE: THE DIM BELONGS TO A MODAL WINDOW. This backdrop
+      // says "the game is stopped and this is the only thing that
+      // matters", which is true of every window that raises
+      // PauseWhileOpen and false of one that does not - a readout the
+      // player is WALKING under cannot black out the corridor they are
+      // walking down. Asked of the window, the way every other gate in
+      // this file asks `dungeonPaused`.
+      if (pauseWhileOpen(activeOverlay)) renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.02, 0.02, 0.02, 0.6]);
       renderer.setScreenOffset((canvas.width - vw) / 2, (canvas.height - vh) / 2);
       try {
         activeOverlay.draw(renderer, { width: vw, height: vh }, hudFont, s);
@@ -6682,12 +6702,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     // BS1/F198 + ST1: the Status action's chain (the four-hosts
     // seam) - the record-22 status text, then the health box.
+    // STATUS-LIVE: ui/statusBox.js has the law. The free-slot refusal
+    // stays and it stays SECOND: the toggle's own close has to run
+    // first, or the key that opened the readout could never shut it.
     showStatus() {
-      if (activeOverlay) return;
-      const _box = new ActionTextBox(statusInfoRows(rscLines, opts.questBridge?.machine?.macroContext?.() ?? null))
-        .addNext(healthStatusRows(playerEntity, rscLines));
-      if (survivalOn()) _box.addNext(survivalStatusRows(playerEntity, Math.floor(worldMinutes()), { vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') }));   // SURV5
-      activeOverlay = _box;
+      if (statusReadoutUp() || !activeOverlay) {
+        toggleStatusReadout({
+          mount: (box) => { activeOverlay = box; },
+          drop: (box) => { if (activeOverlay === box) { activeOverlay = null; dungeonWindows.reconcile(null); } },
+          lines: rscLines,
+          macroContext: opts.questBridge?.machine?.macroContext?.() ?? null,
+          entity: playerEntity,
+          survival: survivalOn() ? { minutes: Math.floor(worldMinutes()), vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') } : null,   // SURV5
+        });
+      }
     },
     // FIX-F: routeKey's RecastSpell / AbortSpell arms (EntityEffectManager.cs:257-270) - the dungeon's ctx
     recastSpell() { magic.recastSpell(); },

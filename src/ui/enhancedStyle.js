@@ -3847,8 +3847,20 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
    (NOTICE_SLIDE_MS - keep the two in step, and keep the out-curve
    plain: a back-loaded bezier left the panel half-way out when the
    node was taken, measured in the headless browser). */
+/* NOTICE-FIT (2026-09-22, kurkku: "I think we also need the sizing of
+   the boxes to properly adjust for the text instead of always being
+   wide"): THE PANEL IS AS WIDE AS WHAT IT SAYS. This carried a FIXED
+   \`width\`, so "You are healthy." and a four-paragraph quest box were
+   the same slab - and at the right edge, where the panel is read
+   against the world behind it, the empty half is the thing the eye
+   reads first. A flex item under \`align-items: flex-end\` with no width
+   is already shrink-to-fit, so the cap alone is the whole law: the
+   rows set the width, wrapping only once they reach it. The HINT sets
+   a floor of its own (one short uppercase line) and a box never
+   narrows past it, which is what keeps a one-word box from becoming a
+   sliver; a toast wears no hint and hugs its line. */
 .notice {
-  box-sizing: border-box; width: min(520px, 70vw);
+  box-sizing: border-box; max-width: min(520px, 70vw);
   padding: 14px 20px 10px 18px;
   background: rgba(10,12,17,0.9); border: 2px solid rgba(125,116,96,0.6); border-right: 0;
   border-left: 4px solid var(--brass);
@@ -3888,7 +3900,7 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
 .notice.notice-toast .notice-row { font-size: 14px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); text-align: center; }
 @media (max-width: 720px) {
   .notice-stack { max-width: 88vw; gap: 6px; }
-  .notice { width: 88vw; padding: 10px 14px 8px 12px; }
+  .notice { max-width: 88vw; padding: 10px 14px 8px 12px; }   /* NOTICE-FIT: the phone's cap, still a cap */
   .notice.notice-toast { padding: 6px 12px 6px 10px; }
   /* AUDIT ENH-NOTICE3 A6: the toast rule (0-2-1) outranked these
      blocks' bare .notice-row (0-1-0), so a toast stayed 14px on a

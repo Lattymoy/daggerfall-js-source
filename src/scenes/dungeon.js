@@ -1091,6 +1091,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // WATER-D1: the water plane is drawn INSIDE drawFoes now, before the
     // weapon overlay - a draw here landed after the lane's resolve and
     // showed through every wall (dungeonContext.js's note at the draw).
+    // STATUS-LIVE: ...AND A NON-PAUSING OCCUPANT, LAST OF ALL. THE FOUR
+    // HOSTS RULE: this host mounts the SAME dungeonContext worldModes'
+    // dungeon arm does and routes the same key table at it, so a window
+    // the game is not stopped for - the status readout, ui/statusBox.js
+    // - has to be ticked and painted here too. The branch above is the
+    // PAUSED arm and it returns; without this line the Status key would
+    // open a readout on `?dungeon` that no frame ever draws.
+    if (ctx.unpausedOverlay) { ctx.tickOverlay(dt); ctx.drawOverlay(canvas); }
 
     frames++;
     if (shotMode) window.__frame = frames;

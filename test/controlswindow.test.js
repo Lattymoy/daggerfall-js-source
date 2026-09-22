@@ -229,11 +229,15 @@ test('I4: the window wiring - one flow factory, the right-click seam, both panel
   // drop-icon panel (RemoteTargetIconPanel_OnMiddleMouseClick,
   // DaggerfallInventoryWindow.cs:2104-2113) - so both flags are pinned.
   assert.match(code('scenes/townTalk.js'), /overlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/);
-  assert.match(code('scenes/worldModes.js'), /interiorOverlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/);
+  assert.match(code('scenes/worldModes.js'), /interiorOverlay\?\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/);   // STATUS-LIVE: the arm's gate is interiorPaused() now, so the slot read inside it is optional-chained
   // ...and the guard is on the window in BOTH, which is the defect
   // routed 62 named: a window with no click handler must still eat
   // the pointer, or the host grabs pointer lock behind the menu.
-  assert.match(code('scenes/townTalk.js'), /if \(!overlay\) return false;/);
+  // STATUS-LIVE (2026-09-22): the guard is still on the WINDOW - what it
+  // asks is the PAUSE. A press under a box the game is not stopped for
+  // (the status readout, ui/statusBox.js) belongs to the world, and the
+  // box declines `click()` itself.
+  assert.match(code('scenes/townTalk.js'), /if \(!overlay \|\| !talkPaused\(\)\) return false;/);
   assert.match(code('scenes/dungeonContext.js'), /overlayClick\(vx, vy, right = false, middle = false\)/);
   // and a right-click on an OPEN window is never also a swing
   assert.match(code('scenes/dungeon.js'), /isSwingButton\(e\.button\) && !ctx\.uiOverlayActive/);   // FIX-F: the swing's button is the registry's

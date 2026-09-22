@@ -144,11 +144,17 @@ test('F198: the health box decision, arm by arm - over the entries the PRODUCER 
   assert.deepEqual(healthStatusRows({ activeEffects: [plague] }, (id) => (id === 18 ? rows(18) : [])), rows(18), 'mutants: an empty append making `tokens` non-null');
 });
 
-test('F198: all four hosts hand the Status action a showStatus - the seam input.js:704 requires', () => {
+test('F198: all four hosts hand the Status action a showStatus - the seam input.js:706 requires', () => {
   for (const h of ['scenes/world.js', 'scenes/exterior.js', 'scenes/dungeonContext.js', 'scenes/worldModes.js']) {
     const src = code(h);
     assert.match(src, /showStatus/, `${h} provides showStatus`);
-    assert.match(src, /healthStatusRows\(playerEntity, /, `${h} builds the box from the live entity`);
+    // STATUS-LIVE (2026-09-22): the ROWS are built by the one composer
+    // now (ui/statusBox.js's statusReadoutRows, which calls
+    // healthStatusRows itself); what the host still owes is the LIVE
+    // ENTITY, which is what this line has always been about - four
+    // copies of the chain was the thing that went.
+    assert.match(src, /entity: playerEntity,/, `${h} builds the box from the live entity`);
+    assert.match(src, /toggleStatusReadout\(\{/, `${h} reaches the one composer`);
   }
   // the action route itself still requires the seam
   assert.match(code('ui/input.js'), /case 'Status': return ctx\.showStatus \? \(ctx\.showStatus\(\), true\) : false;/);

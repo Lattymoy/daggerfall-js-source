@@ -701,8 +701,8 @@ test('ROAD-E2: the reset is what lets an unbalanced builder out of the exit gate
 test('ROAD-E2: the wizard window hands the KeyboardEvent to the flow', () => {
   // The action string alone cannot carry a modifier - Ctrl-U and a
   // bare u are both 'char:u' through the shared overlay table
-  // (ui/input.js:323-339). Both hosts' key seams already pass the
-  // event (townTalk.js:407 `overlay.input(e.code, e)`,
+  // (ui/input.js:325-341). Both hosts' key seams already pass the
+  // event (townTalk.js:417 `overlay.input(e.code, e)`,
   // dungeonContext.js `overlayInput(action, e)`), so the window must
   // pass it on.
   const f = readyBuilder();

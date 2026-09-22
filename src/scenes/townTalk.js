@@ -380,7 +380,17 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   function keydown(e) {
-    if (overlay) {
+    // STATUS-LIVE: THE GATE IS THE PAUSE, NOT THE SLOT. This rung
+    // consumes every key under an occupant, which is right for a
+    // window the game is stopped for and wrong for one it is not: the
+    // status readout (ui/statusBox.js) declares `pauseWhileOpen:
+    // false` and stands in this slot while the player walks, so a W
+    // eaten here would be a step not taken. `talkPaused` is the same
+    // latch `overlayActive` already publishes - the STACK's, so a
+    // non-pausing box laid over a pausing window still consumes - and
+    // the readout's own two keys reach it through routeAction's yield
+    // and its own toggle, not through here.
+    if (overlay && talkPaused()) {
       // CG2 (Mac: "unable to type in your name"): a key typed into a DOM
       // text field - the enhanced wizard's name boxes stand over the
       // canvas as real <input>s - is the FIELD's. This rung used to
@@ -475,7 +485,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  the overlay consumed it, the way `keydown` does; a host that
    *  drains its own key Set on the same event does that first. */
   function keyup(e) {
-    if (!overlay) return false;
+    if (!overlay || !talkPaused()) return false;   // STATUS-LIVE: the pause, not the slot - the release half of the keydown rung above
     if (typeof overlay.keyup !== 'function') return true;
     overlay.keyup(e.code, e);
     if (overlay?.done) dropOverlay();
@@ -1184,7 +1194,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // does with it. worldModes.js carries the corrected shape with
     // this reasoning spelled out beside it; this host was the copy
     // that never got it.
-    if (!overlay) return false;
+    // STATUS-LIVE: ...and the same gate on the POINTER. A click under a
+    // non-pausing readout is the WORLD's - a swing, an activation -
+    // which is why the box itself declines `click()` (ui/statusBox.js).
+    // Consuming it here would swallow the press before the box could
+    // decline anything.
+    if (!overlay || !talkPaused()) return false;
     const r = canvas.getBoundingClientRect();
     const px = (e.clientX - r.left) * (canvas.width / r.width);
     const py = (e.clientY - r.top) * (canvas.height / r.height);
@@ -1230,7 +1245,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // dictionary, polled by VerticalScrollBar.Update :101-130), so a
     // window that latches on the press - the list picker's thumb drag -
     // needs the edge that ends it. `release()` is that edge.
-    if (!overlay) return false;
+    if (!overlay || !talkPaused()) return false;   // STATUS-LIVE: the pause, not the slot - see pointerdown
     if (!overlay.pointer && !(phase === 'up' && overlay.release)) return false;
     const r = canvas.getBoundingClientRect();
     const px = (e.clientX - r.left) * (canvas.width / r.width);
@@ -1267,7 +1282,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  the last point hover() happened to hand it - a pack opened with
    *  the Inventory key has had no mousemove at all. */
   function wheel(e) {
-    if (!overlay) return false;
+    if (!overlay || !talkPaused()) return false;   // STATUS-LIVE: the pause, not the slot - a notch under a readout scrolls whatever the world puts under it
     const r = canvas.getBoundingClientRect();
     const px = (e.clientX - r.left) * (canvas.width / r.width);
     const py = (e.clientY - r.top) * (canvas.height / r.height);

@@ -96,8 +96,8 @@ import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest
 import { setEnemyAlert, areEnemiesNearby, intermittentEnemySpawn, passiveGuardSpawns } from '../systems/encounters.js';
 import { rollCampEncounter } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs, riding the same tick   // ROAD-G TAIL: the catch-up loop's two rolls   // the enemy arm RAISES the alert before refusing; the RESTING variant asks the pool, the STRICT one gates the townsfolk idle
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5): the collapse box
-import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
-import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5
+import { toggleStatusReadout } from '../ui/statusBox.js';   // STATUS-LIVE: the Status readout, one composer for all four hosts
+import { statusReadoutTakesAction } from '../systems/statusReadout.js';   // STATUS-LIVE: ...and the yield this host's own key ladder owes, which never reaches routeAction
 import { liveStat } from '../systems/statMods.js';
 import { maxFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5)
 import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
@@ -2546,12 +2546,17 @@ export async function bootExterior(canvas, renderer, params, status) {
     // no quest machine", which left every macro as its bracketed
     // placeholder - the null-MCP posture, correct then and a lie now.
     // Same expression the world and dungeon hosts pass.
+    // STATUS-LIVE: ui/statusBox.js has the law; this host supplies its
+    // own slot's two doors and the rows' four sources.
     showStatus: () => {
-      const rows = (id) => townTalk.lines(id);
-      const _box = new ActionTextBox(statusInfoRows(rows, questBridge?.machine?.macroContext?.() ?? null))
-        .addNext(healthStatusRows(playerEntity, rows));
-      if (survivalOn()) _box.addNext(survivalStatusRows(playerEntity, Math.floor(worldMinutes()), { vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') }));   // SURV5
-      townTalk.showOverlay(_box);
+      toggleStatusReadout({
+        mount: (box) => townTalk.showOverlay(box),
+        drop: (box) => townTalk.closeOverlay(box),
+        lines: (id) => townTalk.lines(id),
+        macroContext: questBridge?.machine?.macroContext?.() ?? null,
+        entity: playerEntity,
+        survival: survivalOn() ? { minutes: Math.floor(worldMinutes()), vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') } : null,   // SURV5
+      });
     },
     toggleInventory: () => {
       // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421)
@@ -2564,7 +2569,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // is a WeaponManager singleton call with no scene gate, so the
     // eleventh panel answers here too. The law is at world.js's twin
     // (THE FOUR HOSTS RULE); routeKey still declines the key
-    // (ui/input.js:567), so the frame poll stays its only keyboard door.
+    // (ui/input.js:569), so the frame poll stays its only keyboard door.
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, on the ctx beside the sheath panel's
     // door - one object is this host's whole routeAction contract.
@@ -2763,7 +2768,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     noteKeyDown(latch.edge, e.code, e.repeat);   // MWCROUCH: the press event, buffered for the frame that reads it
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:243-264), and no host passed one - so
+    // held-keys Set (ui/input.js:245-266), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -2773,6 +2778,13 @@ export async function bootExterior(canvas, renderer, params, status) {
     // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
     // "space is jump, LeftShift+Space opens inventory: ignore it").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
+    // STATUS-LIVE: THE READOUT YIELDS HERE TOO. This host runs its own
+    // key ladder rather than routeKey's, so its Escape arm (and its
+    // quickslot and window arms) never reach ui/input.js's routeAction
+    // - where the one copy of this law lives. Same call, same answer:
+    // an action that wants the slot closes the readout first, and
+    // Escape is SPENT by the close.
+    if (statusReadoutTakesAction(act)) { e.preventDefault(); return; }
     // QUICK-LOOT B4: THE TWO KEYS, above the mode gate for QS2's own
     // reason - this host mounts the interior mode over itself, and a
     // loot key that died the moment the player walked into a shop is
@@ -2898,7 +2910,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       //
       // WEAPON-VIS2: except POLLED_ACTIONS - this ladder never calls
       // routeKey (the comment above says so directly), so routeKey's
-      // own `POLLED_ACTIONS.has(act)` decline (ui/input.js:669) never
+      // own `POLLED_ACTIONS.has(act)` decline (ui/input.js:671) never
       // touched this door either. hudCtx carries toggleSheath (AUDIT
       // 58, for the large HUD's sheath panel), so 'ReadyWeapon' - Z -
       // reached routeAction from BOTH here AND the frame's own poll
@@ -3203,14 +3215,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // below) has always been the clone, so a read off the file was a
     // read of a different Map: `change repute with _npc_ by 30` landed
     // on one and `when repute with _npc_ is at least N` asked the
-    // other. world.js:7532 is the same line.
+    // other. world.js:7546 is the same line.
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     /** PersistentFactionData.FindFactions by type - Person.cs's
      *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:7431-7444. */
+     *  %rn/%rt's producer - world.js:7445-7458. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -3249,7 +3261,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     currentWeatherKey: () => currentWeather() ?? null,   // Q5: the Weather trigger's read
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => _locPixel,   // F114: the quest clock's travel arm
-    // QG1: CastSpellDo's two world reads, world.js:7347-7350's pair.
+    // QG1: CastSpellDo's two world reads, world.js:7361-7364's pair.
     // Without them the action self-completes at parse (actions.js:2756/:2763)
     // and a `cast X spell do` on this route could never be armed, whatever
     // the ready-spell doors above raise.
@@ -3280,7 +3292,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     /** Place.AssignQuestResource's hot-place tail (Place.cs:508-527) -
      *  AddQuestResourceObjects over whatever site the player already
      *  stands in. The mode machine owns the mount and is already
-     *  mode-aware (worldModes:1258), so this is world.js:7320's line
+     *  mode-aware (worldModes:1258), so this is world.js:7334's line
      *  over this host's own modes bag. */
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
     /** AUDIT 63 F1: the same static-NPC behaviour cache
@@ -3293,7 +3305,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // meets a Foe could complete on this route.
     /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
      *  `count` inactive handles, activation deferred to placement.
-     *  Bridge-only, no host state - world.js:7328's call verbatim. */
+     *  Bridge-only, no host state - world.js:7342's call verbatim. */
     createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
     /** CreateFoe.TryPlacement (:183-211), ALL THREE ARMS. The INSIDE
      *  two are the mode machine's - worldModes.tryPlaceQuestFoe places
@@ -3308,7 +3320,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  city's rect for its whole life (`_musicInLocationRect` is
      *  `() => true`), so the wilderness arm (:252-257) has no reachable
      *  branch here at all and the ring is the default one, unqualified.
-     *  Everything else is world.js:7432's arm term for term: the cast
+     *  Everything else is world.js:7446's arm term for term: the cast
      *  origin is the controller CENTRE (DFU rays from
      *  PlayerObject.transform.position, not the feet), the FOV is
      *  handed over in DEGREES (`fieldOfView()` answers radians), the
@@ -3410,7 +3422,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to the pending pile rather than straight into the pack. The
     // flagless form is a different question and has its own caller
     // below (`inTownLocation`, CanRest's second arm). This is the
-    // closure S40 gave this host, and world.js:8086's line.
+    // closure S40 gave this host, and world.js:8100's line.
     isPlayerInTown: () => _isPlayerInTownStrict(),
     // Q5: the un-pended quest actions' doors, all of them this host's
     // own arms - the crime setter (V4's SuppressCrime gate), the gold
@@ -3436,7 +3448,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // which is the one seam that really does ask the narrower question.
     makeEnemiesHostile: _makeEnemiesHostile,
     // GameManager.ClearEnemies destroys every active enemy object; the
-    // encounter half is world.js:8166's line and the watch half is this
+    // encounter half is world.js:8180's line and the watch half is this
     // host's own (cityGuards owns its live list).
     clearEnemies: () => { cityGuards.clearLive?.(); for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } lockOn.unlock(); },   // AUDIT 62 F16: a removed foe is never flagged dead, so the lock must be let go here
     // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
@@ -3461,13 +3473,13 @@ export async function bootExterior(canvas, renderer, params, status) {
   // (:6459) alone, so on ?exterior every HUD line this host and its
   // interior arm spoke was dropped from the journal's Messages page -
   // a page exterior.js:1102 wires up and can reach. Same moment and
-  // same order as world.js:8387/:8392, for the same reason: the
+  // same order as world.js:8401/:8406, for the same reason: the
   // notebook only exists once the bridge above is built.
   townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
   // AUDIT 63 F5: DaggerfallTalkWindow.OnPop's notebook filing
   // (DaggerfallTalkWindow.cs:319). townTalk holds the one talk-window
   // door and no notebook; the bridge holds the notebook and is built
-  // here, so the sink is handed down at this moment - world.js:8371's
+  // here, so the sink is handed down at this moment - world.js:8385's
   // line for this host.
   townTalk.notebookSink = (tokens) => questBridge?.notebook?.addNoteTokens(tokens);
   questBridge.onInitWorld();   // QuestMachine's OnInitWorld - this route's ONE city is its world
@@ -3684,7 +3696,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // search; an empty list means an owned house never resolves even
       // in its OWN town, so this host sold every deed for nothing
       // before F26's guard and would refuse every sale after it. Same
-      // two inputs the world host uses (world.js:9293).
+      // two inputs the world host uses (world.js:9307).
       buildings: locationBuildings(dfLocation.exterior?.buildings ?? [], loc.blocks),
       mapId: dfLocation?.mapTableData?.mapId ?? 0,
       regionIndex: dfLocation.regionIndex ?? 0,
@@ -4237,7 +4249,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:639, :647). So every HUD line raised in a modal
+      // (townTalk.js:649, :657). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -4901,7 +4913,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:10935-11135 is the shape.
+    // through the player for ever. world.js:10949-11149 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -5149,7 +5161,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:11242's order, and the order
+          // BEFORE civilians - world.js:11256's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

@@ -80,8 +80,8 @@ import { bloodDecalDeps } from '../combat/bloodSwitch.js';
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a: the ring, owned by this host and ended by its own name
 import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest above ground   // D3: REST00I0/01I0/02I0
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
-import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
-import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5: the status page's third box
+import { toggleStatusReadout } from '../ui/statusBox.js';   // STATUS-LIVE: the Status readout, one composer for all four hosts
+import { statusReadoutTakesAction } from '../systems/statusReadout.js';   // STATUS-LIVE: ...and the yield this host's own key ladder owes, which never reaches routeAction
 import { maxFatigue, FATIGUE_MULTIPLIER, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); AUDIT SOC B5: the party pose's fatigue in the digits a sheet shows
 // V5: resting above ground. RestWindow and RestSession have been
 // finished since U7; what was missing was a host outside the dungeon
@@ -3541,7 +3541,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2380 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5504
+  // that context through modes.dungeonCtx - so worldModes.js:5503
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -6485,12 +6485,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // shipped statusInfoRows INTO that file and the macro producers
     // landed with IM1/MH1, so the flag it pointed at does not exist -
     // and it sat one line above the correction that says so.
+    // STATUS-LIVE (2026-09-22, kurkku): the chain, the pause and the
+    // four copies of this expression are all gone - ui/statusBox.js
+    // has the whole law and the reasoning. `mount` and `drop` are this
+    // host's own two doors into its one slot.
     showStatus: () => {
-      const rows = (id) => townTalk.lines(id);
-      const _box = new ActionTextBox(statusInfoRows(rows, questBridge?.machine?.macroContext?.() ?? null))
-        .addNext(healthStatusRows(playerEntity, rows));
-      if (survivalOn()) _box.addNext(survivalStatusRows(playerEntity, Math.floor(worldMinutes()), { vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') }));   // SURV5: the mod's advice box, third in the chain
-      townTalk.showOverlay(_box);
+      toggleStatusReadout({
+        mount: (box) => townTalk.showOverlay(box),
+        drop: (box) => townTalk.closeOverlay(box),   // identity-guarded: a slot that moved on is left alone
+        lines: (id) => townTalk.lines(id),
+        macroContext: questBridge?.machine?.macroContext?.() ?? null,
+        entity: playerEntity,
+        survival: survivalOn() ? { minutes: Math.floor(worldMinutes()), vampire: !!liveVampirism(playerEntity), endurance: liveStat(playerEntity, 'endurance') } : null,   // SURV5: the mod's advice, the readout's third page
+      });
     },
     toggleLogbook: () => townTalk.showOverlay(makeJournalWindow('activeQuests')),
     toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('notebook')),
@@ -6510,14 +6517,14 @@ export async function bootWorld(canvas, renderer, params, status) {
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:706) and
+     *  on. Here routeAction's arm is optional (ui/input.js:708) and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:567), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:569), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -6715,7 +6722,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     noteKeyDown(latch.edge, e.code, e.repeat);   // MWCROUCH: the press event, buffered for the frame that reads it
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:243-264), and no host passed one - so
+    // held-keys Set (ui/input.js:245-266), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -6725,6 +6732,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // LATCH (G3/GR); it carries the suppression half too (:1681-1685,
     // "space is jump, LeftShift+Space opens inventory: ignore it").
     const act = actionOf(e, keys);   // I2: the registry owns the code -> action read
+    // STATUS-LIVE: THE READOUT YIELDS HERE TOO. This host runs its own
+    // key ladder rather than routeKey's, so its Escape arm (and its
+    // quickslot and window arms) never reach ui/input.js's routeAction
+    // - where the one copy of this law lives. Same call, same answer:
+    // an action that wants the slot closes the readout first, and
+    // Escape is SPENT by the close.
+    if (statusReadoutTakesAction(act)) { e.preventDefault(); return; }
     // AUDIT SOC B4/D1: F ON A BODY WORKS INSIDE TOO. The social door sat under the exterior gate below, and the
     // interior and dungeon modes' own contexts (scenes/worldModes.js interiorKeyCtx, dungeonCtx) carry no
     // `socialInteract`, so in a tavern or a dungeon - where two players meet as often as in a street - F did nothing
@@ -6876,7 +6890,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // gates the position now, not just the presence.
       // WEAPON-VIS2: this ladder never calls routeKey (the comment
       // above the Escape arm says so directly), so routeKey's own
-      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:669) never
+      // `POLLED_ACTIONS.has(act)` decline (ui/input.js:671) never
       // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
       // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
       // routeAction from BOTH here AND the frame's own poll below
@@ -7329,7 +7343,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8477-8541 -
+  // worldModes answers it in BOTH modes (worldModes.js:8500-8564 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10056,7 +10070,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:639, :647). So every HUD line raised in a modal
+      // (townTalk.js:649, :657). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where

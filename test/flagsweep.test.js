@@ -106,7 +106,13 @@ test('FS1: the record-22 delegation is retired, and ST1 really did ship it', () 
   // does not: statusInfoRows lives in that file and world.js calls it
   // with the macro context the bridge hands down.
   assert.match(read('src/systems/healthStatus.js'), /export function statusInfoRows\(/);
-  assert.match(read('src/scenes/world.js'), /new ActionTextBox\(statusInfoRows\(rows, questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null\)\)/);
+  // STATUS-LIVE (2026-09-22): world.js no longer builds the box - it
+  // hands the ONE composer its rows source and the same macro context,
+  // and ui/statusBox.js calls statusInfoRows. The delegation this pin
+  // guards against is a FLAG pointing at a file that does no work; the
+  // work is still done, one layer along.
+  assert.match(read('src/scenes/world.js'), /macroContext: questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null,/);
+  assert.match(read('src/ui/statusBox.js'), /\.\.\.statusInfoRows\(lines, macroContext\),/);
 });
 
 // ROAD-F GS2: THE THIRD KIND OF STALENESS - a retirement RECORD that
@@ -156,7 +162,7 @@ test('FS1: the melee/arrow clauses are retired, and the tree contradicts them', 
   // alone, and the fixed-city host took the same three-pool swing
   // verbatim; replacing its encounter arm with four comment lines (so
   // no cite could move) left the swing as watch -> civilians with the
-  // shipped comment still claiming world.js:11458's order, green.
+  // shipped comment still claiming world.js:11472's order, green.
   for (const [file, foeTargets] of [
     ['src/scenes/world.js', /foeTargets: \[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\]/],
     ['src/scenes/exterior.js', /foeTargets: exteriorFoePool\(\)\.filter\(\(t\) => !t\.dead && t\.ai\)/],

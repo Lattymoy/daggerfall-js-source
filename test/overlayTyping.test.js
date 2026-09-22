@@ -48,7 +48,11 @@ test('CG2: a DOM text field owns its key - the dungeon route neither routes nor 
   assert.equal(calls.length, 1);
   // the exterior hosts' rung: townTalk.keydown returns true (consumed for the ladder) BEFORE its preventDefault
   const tt = read('src/scenes/townTalk.js');
-  assert.match(tt, /function keydown\(e\) \{\s*\n\s*if \(overlay\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\.target\)\) return true;\s*\n\s*e\.preventDefault\(\);/, 'the field\'s key steps out before the preventDefault, consumed for the host');
+  // STATUS-LIVE (2026-09-22): the rung's own gate is `overlay &&
+  // talkPaused()` now - a box the game is not stopped for lets the key
+  // through to the world - and the field's step-aside is still the
+  // FIRST statement inside it, which is what this pin is about.
+  assert.match(tt, /function keydown\(e\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(overlay && talkPaused\(\)\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\.target\)\) return true;\s*\n\s*e\.preventDefault\(\);/, 'the field\'s key steps out before the preventDefault, consumed for the host');
   assert.match(tt, /import \{ overlayAction, actionOf, isTextEntryTarget \} from '\.\.\/ui\/input\.js';/);
   // the dungeon host preventDefaults on true, which is why routeKey answers false for a field
   assert.match(read('src/scenes/dungeon.js'), /if \(routeKey\(e, ctx, \(p\) => player\.spawn\(p\[0\], p\[1\], p\[2\]\), keys\)\) e\.preventDefault\(\);/);

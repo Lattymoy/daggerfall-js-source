@@ -866,7 +866,7 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:2142 (the factory) and :1904 (a
+                        worldModes.js:2141 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:1046, world.js:2111,
@@ -6968,7 +6968,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:639, :647`), and both exterior hosts called it
+  overlay (`townTalk.js:649, :657`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -8605,7 +8605,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2961 as a second book built by hand 342 lines below the
+worldModes.js:2960 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -9315,7 +9315,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:6483` and `dungeonContext.js:1593` answer the same
+`worldModes.js:6482` and `dungeonContext.js:1593` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -9380,7 +9380,7 @@ cited and ported somewhere in `src/`. FOUR were not:
 
 ### UI1 CLOSED: the use-magic-item window
 
-The port had the DOOR and not the room. `input.js:707` routed
+The port had the DOOR and not the room. `input.js:709` routed
 `Actions.UseMagicItem` to `ctx.openUseMagicItem`, `hudLarge.js:152`
 gave the large HUD's button its rect, `inputActions.js` bound KeyU -
 and no host implemented the method, so a live binding silently did
@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6765`,
+the other half went stale unnoticed. (The rest cite named `world.js:6779`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6771` now.)
+deleted the second and the cite is `world.js:6785` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -10978,7 +10978,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:611-637`), so in the art-less greeting chain a tone
+  (`townTalk.js:621-647`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -16738,7 +16738,7 @@ removed.
 **REFUTED, and written down because the next reader will wonder.**
 A window key (F5/F6/L) pressed during a level-up cannot stack a second
 one. The overlay carries `isChoiceWindow`, and both key seams - the
-dungeon/interior `routeKey` (ui/input.js:635-648) and townTalk's own
+dungeon/interior `routeKey` (ui/input.js:637-650) and townTalk's own
 (:371-381) - hand the raw code to the OVERLAY and return before any
 toggle arm can run. The same guard is why QuickLoad, which routeKey
 otherwise allows from under any overlay, cannot reach past this one
@@ -17664,3 +17664,149 @@ line, in this order - and nothing was pinned about what the feature
 does. A 24-mutant campaign killed two of its own mutants and let
 twenty-two live. `test/quickloot.test.js` is the answer: 21 tests that
 drive the real module, and the campaign is 24 for 24.
+
+## STATUS-LIVE + NOTICE-FIT - the readout does not stop the world, and the panel is as wide as what it says (2026-09-22, kurkku through Mac)
+
+Two sentences, one message:
+
+> minor thing: would be nice if the info panel that comes up when you
+> press i didn't pause the game, that way you could quickly check your
+> status while walking around
+
+> I think we also need the sizing of the boxes to properly adjust for
+> the text instead of always being wide
+
+They are two defects with one cause between them, and the cause is a
+move that was right. ENH-NOTICE1 took DFU's centre-of-screen parchment
+and made it, on the enhanced skin, a panel at the RIGHT EDGE of the
+screen. It carried across two properties of the parchment that do not
+belong to a panel at the edge: it stopped the world, and it was a fixed
+slab as wide as the longest thing it would ever have to say.
+
+### The pause was a leftover of the presentation
+
+DFU's Status action raises `DisplayStatusInfo`
+(DaggerfallUI.cs:1615-1628): a `DaggerfallMessageBox` carrying TEXT.RSC
+record 22, chained by `AddNextMessageBox` into
+`CreateHealthStatusBox`. A message box is a window; a window raises
+`PauseWhileOpen` (UserInterfaceWindow.cs:141); the game stops. All of
+that is RIGHT for DFU, and the reason it is right is the geometry: the
+parchment lands in the middle of the screen and there is nothing to see
+past it. None of that is true of a panel you can see the world behind.
+
+So the pause was never a law of the thing being SHOWN. It was a law of
+where the thing used to sit.
+
+A readout is the player's — AUDIT-WH R8, the law the hover plaque was
+built on. This one box therefore declares DFU's own field,
+`pauseWhileOpen: false`, which `ui/windowStack.js` has read off every
+window in every host's slot since ROAD-B; all four hosts' pause latches
+answer false for it without a single new gate being invented. The field
+is DFU's and its default is DFU's: every other message box in the port
+still stops the world.
+
+### Three things follow from not pausing, and each is a decision
+
+**No chain.** `AddNextMessageBox` advances on a DISMISSAL, and nothing
+routes a key to a box the game is not stopped for — so a chained page
+could never be reached. The record-22 status text, the health box and
+SURV5's survival advice are ONE page, blank-line separated. That is
+what "quickly check your status" wanted anyway.
+
+**No ClickAnywhereToClose.** A click while the world is running is a
+swing, so `click()` declines and the press falls through to the host.
+The panel's caption then has to say what actually closes it, naming the
+LIVE Status binding — the AUDIT ENH-NOTICE3 B2-B4 rule (a hint tells the
+truth) at the one box that could now contradict it.
+
+**It is a toggle, and it yields.** The Status key opens it and the
+Status key closes it; Escape closes it and does nothing else, because at
+a panel that key means "close this", not "and also open the pause menu".
+And any action that RAISES A WINDOW takes the slot the readout is
+standing in, so the readout leaves first. Without that last rule the
+dungeon's own free-slot guards would simply have refused the character
+sheet while a readout stood in the slot: a key that silently does
+nothing, which is the drawn-door-that-opens-nothing defect this port has
+paid for four times. The yield lives in ONE place,
+`ui/input.js`'s `routeAction`, because that is the single door every
+host's window keys and the large HUD's eleven panels come through; the
+two outdoor hosts run their own ladders and call it themselves.
+
+### The gates that asked the wrong question
+
+Four seams consumed every key, click, wheel notch and release on the
+SLOT'S TRUTHINESS rather than on the pause. That is indistinguishable
+while every occupant pauses, and it is the difference between a step
+taken and a step eaten the moment one does not. They ask
+`talkPaused()` / `interiorPaused()` now — which is the shape
+`dungeonContext.js`'s twin has carried since ROAD-tail, and the reason
+`interiorPaused` was written in the first place.
+
+Two more followed from the same reading. The dungeon frame's paused arm
+RETURNS above the draw, so a non-pausing occupant would never have been
+ticked or painted at all — in a dungeon the Status key would have done
+nothing, and on the enhanced skin its panel (which is raised BY the
+draw) would never have appeared. And the 60% modal dim belongs to a
+MODAL window: a corridor the player is walking down cannot be blacked
+out.
+
+### One composer, not four
+
+`world.js`, `exterior.js`, worldModes' interior arm and
+`dungeonContext.js` each wrote the same three-line chain out by hand.
+Four copies is four places to forget when the law moves, and the law
+moved today: `ui/statusBox.js`.
+
+Its live half — which box is up, the host's own door back out of its
+slot, and the yield — is `systems/statusReadout.js`, a LEAF. That
+placement is not tidiness: `ui/input.js` is already inside
+`ui/actionText.js`'s import ring (through `ui/inputMessageBox.js`), so
+reaching for the BOX from there closed a cycle and the class body met
+`ActionTextBox` in its temporal dead zone. A real crash on a real import
+order, found by running it.
+
+### NOTICE-FIT
+
+`.notice` carried `width: min(520px, 70vw)`, so "You are healthy." and a
+four-paragraph quest box were the same slab — and at the right edge,
+where the panel is read against the world behind it, the empty half is
+the thing the eye reads first. A flex item under `align-items: flex-end`
+with no width is already shrink-to-fit, so the cap alone is the whole
+law: it is a `max-width` now, the rows set the width, and wrapping
+starts only at the ceiling.
+
+`tools/noticeFitProbe.mjs` measures it in Chromium, through
+`drawEnhancedNotice` itself: 210 / 450 / 520 / 339 px at 1280 wide for a
+one-line notice, the status readout, a long quest box and a toast. Four
+widths where there used to be one.
+
+**The probe lied on its first run, and the picture is why it was
+caught.** It photographed panels 46px off the right edge with a live
+transform, and the measurement agreed with the picture only once the
+transform was read: `NOTICE_WATCHDOG_MS` had correctly swept a panel
+nobody was drawing, and what the shot showed was a slide-OUT halfway
+done. A harness that does not do what the host does measures its own
+artefact — it pumps the draw on rAF now, the way a host does.
+
+### What the mutants found
+
+Three of the first draft's twenty-nine survived, and all three were
+real. Two because the caption pin pushed the binding store down ITSELF
+instead of driving `ui/input.js`'s `bindings()` and `setBindings`, so it
+passed whether or not the live store ever reached the panel — a pin that
+supplies the thing it is checking for. The third because a
+`&& !_live.done` term in `statusReadoutUp` was DEAD: every door that
+raises `done` on this box forgets it in the same statement, so the state
+the term guards against cannot be reached. It was removed rather than
+left standing — a guard no mutation can kill is a guard no reader can
+trust.
+
+**And the suite's own sweep caught a line this arc wrote the wrong way
+round.** The dungeon frame's new draw first asked
+`dungeonCtx.overlayWindow()` - a PROBE SURFACE - and ROAD-tail's law is
+that a host asks the owning context for its pause and never reaches
+past it for the slot. `test/roadb_host_pause.test.js` reddened on it
+("a probe surface is not a pause gate"), which is the sweep doing
+exactly the job it was written for. The context publishes the answer as
+its own word now, `unpausedOverlay`, beside the `uiOverlayActive` it is
+the other half of.

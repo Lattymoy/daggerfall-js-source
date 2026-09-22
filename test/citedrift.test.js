@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:789)". Section A carried no widget row at all -
+//     (Port-Ledger.md:790)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -602,7 +602,7 @@ const SOURCE_CITES = [
   ['src/ui/listPicker.js', /\(townTalk\.js:(\d+), worldModes\.js:\d+, dungeonContext\.js:\d+ /,
     'src/scenes/townTalk.js', /overlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/],
   ['src/ui/listPicker.js', /\(townTalk\.js:\d+, worldModes\.js:(\d+), dungeonContext\.js:\d+ /,
-    WM, /interiorOverlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/],
+    WM, /interiorOverlay\?\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/],   // STATUS-LIVE: the arm's gate is interiorPaused() now, so the slot read is optional-chained
   ['src/ui/listPicker.js', /\(townTalk\.js:\d+, worldModes\.js:\d+, dungeonContext\.js:(\d+) /,
     DC, /else activeOverlay\.click\(vx, vy, right, middle\);/],
   // ...and the wizard's hover route, whose dungeon and worldModes
@@ -663,8 +663,8 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:6611` for a line
-  // that is 5921, `world.js:9795` for 8836, `interior.js:315` for 329,
+  // four of the five had been stale for waves (`worldModes.js:6610` for a line
+  // that is 5921, `world.js:9809` for 8836, `interior.js:315` for 329,
   // `dungeon.js:935` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],
@@ -938,8 +938,8 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:811-721`, `world.js:7366-7340`,
-// `worldModes.js:1269 against :1066`. Forty of them came out as ranges
+// multi-number citation: `cityGuards.js:811-721`, `world.js:7380-7354`,
+// `worldModes.js:1268 against :1065`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //
