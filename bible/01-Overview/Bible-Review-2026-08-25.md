@@ -142,7 +142,7 @@ per arc:
   factual error found in the whole bible: `:798-805` claims "only %G
   has a capitalized handler" in DFU / "%G2/%G3 uppercase DO NOT
   EXIST" - refuted by the doc's own Wave 25 (`:2908`) and
-  `questMacros.js:479-490` ("MacroHelper.cs:240-245 registers ALL SIX
+  `questMacros.js:519-530` ("MacroHelper.cs:240-245 registers ALL SIX
   capitalized forms"); the early section was never corrected.
 - *World-Arc / Player-Arc*: ~20 clauses closed by later slices still
   read "pends" - T3c's list (`:653`) has three clauses T3d/T3e/T3f
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:5158-5159` routes them). UI-Arc carries no records
+  (`worldModes.js:5185-5186` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -216,7 +216,7 @@ own AUDIT-18 correction.
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
 - `src/ui/deathScreen.js:42-43` claims "`drop` is read by each host's
-  frame" - no host reads it (the Ledger row `:445` is right, the
+  frame" - no host reads it (the Ledger row `:447` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -
   they are (X1, `actionSystem.js:930-931`).
@@ -233,7 +233,7 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:541` (save.js:29/:528/:537 → :28/:574/:604), `:561`
+`Port-Ledger.md:543` (save.js:29/:528/:537 → :28/:574/:604), `:561`
 (world.js:2485 → :2412); `Quest-Arc.md:719`/`:2906`
 (worldModes.js:556 → :903); `Player-Arc.md:955` (worldModes.js:784 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`

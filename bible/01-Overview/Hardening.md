@@ -253,7 +253,7 @@ three collapsed on verification.**
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:9401` disposes the dungeon overlay that
+3. *"`worldModes.js:9428` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
    known, already written down, at `dungeonContext.js:7023-7024`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
@@ -548,7 +548,7 @@ frame**.
 
 **F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve
 window classes are constructed straight into a host slot, and
-`townTalk.js:1179` paints every *covered* window as well
+`townTalk.js:1195` paints every *covered* window as well
 (`eachCoveredWindow((w) => w.draw(...))`), so depth is in the contract
 too, not just the top of the stack.
 
@@ -556,7 +556,7 @@ too, not just the top of the stack.
 
 Read off the four hosts that own a window stack, scoped to the enclosing
 function rather than a fixed lookback (the first pass used four lines and
-mis-read `townTalk.js:1271` as unguarded; its guard sits eight lines up -
+mis-read `townTalk.js:1287` as unguarded; its guard sits eight lines up -
 HARD2's D10 pin was re-aimed for the same reason):
 
 | arm | required by | note |

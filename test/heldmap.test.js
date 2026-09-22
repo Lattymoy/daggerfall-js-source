@@ -333,10 +333,19 @@ test('U61: the classic skin still gets the canvas map - or its honest null witho
   });
 });
 
-test('U61: the fork asks the SKIN, not only the document', () => {
-  assert.match(read('src/ui/travelMapDoor.js'),
-    /if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{/,
-    'both clauses, in that order');
+test('U61 + MAP-TOGGLE: the fork asks the SKIN and the player\'s SWITCH, not only the document - one gate, ui/mapSkin.js, for all three doors', () => {
+  const gate = read('src/ui/mapSkin.js');
+  assert.match(gate, /export const enhancedMapOn = \(\) => !!getPref\('heldMap'\);/);
+  assert.match(gate, /export const heldMapChosen = \(\) => isEnhanced\(\) && enhancedMapOn\(\);/);
+  assert.match(gate, /export const heldMapWorn = \(\) => heldMapChosen\(\) && typeof document !== 'undefined';/, 'the skin, the switch, the document - in that order');
+  for (const door of ['src/ui/travelMapDoor.js', 'src/ui/automapDoor.js', 'src/ui/townMapDoor.js']) {
+    const d = read(door);
+    assert.match(d, /if \(heldMapWorn\(\)\) \{/, `${door} opens the held sheet through the gate`);
+    assert.doesNotMatch(d, /isEnhanced\(\)/, `${door} asks no skin of its own`);
+  }
+  assert.match(read('src/ui/travelMapDoor.js'), /return heldMapChosen\(\) \|\| travelMapArtLoaded\(\);/);
+  assert.match(read('src/ui/automapDoor.js'), /return heldMapWorn\(\) \|\| automapArtLoaded\(\);/);
+  assert.match(read('src/ui/townMapDoor.js'), /return heldMapWorn\(\) \|\| exteriorAutomapArtLoaded\(\);/);
 });
 
 test('U61: a host with no document keeps the classic arm, on either skin', () => {
@@ -1387,7 +1396,7 @@ test('MAP1: the sprite is the port\'s own under the doctrine row, the paper and 
     'https://daggerfalljs.dev/art/held-map.png', 'and the sprite lands at the site root, whatever page asked');
   assert.ok(existsSync(new URL('../public/art/held-map.png', import.meta.url)), 'the file ships');
   assert.match(read('test/doctrine.test.js'), /\['public\/art\/held-map\.png', "OURS - Mac's own painting/, 'under the OURS row');
-  assert.deepEqual(SPRITE, { w: 1448, h: 1086 });
+  assert.deepEqual(SPRITE, { w: 1648, h: 1086 }, 'MAP-FIELD8: the fourth painting');
   assert.ok(PAPER.x0 < THUMB_ZONES[0].x1 && THUMB_ZONES[1].x0 < PAPER.x1, 'the thumb zones reach INTO the paper - that is why they exist');
   assert.ok(THUMB_ZONES[0].y0 > PAPER.y0 && THUMB_ZONES[0].y1 >= PAPER.y1, 'and only its lower half, where the thumbs rest');
   // ...and each STARTS on its own hand, outside the sheet, because that

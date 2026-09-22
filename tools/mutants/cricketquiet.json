@@ -1,0 +1,16 @@
+[
+ {"name": "CRICKET-QUIET-the-all-night-loop-back", "file": "src/systems/ambientEffects.js",
+  "old": "    if (this._cricketT >= this._cricketLen) {\n      if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; }\n      this._cricketPhaseTo('quiet');\n      return;\n    }\n", "new": "", "tests": ["test/cricketquiet.test.js"]},
+ {"name": "CRICKET-QUIET-full-volume", "file": "src/systems/ambientEffects.js",
+  "old": "  volume: 0.55,", "new": "  volume: 1,", "tests": ["test/cricketquiet.test.js"]},
+ {"name": "CRICKET-QUIET-no-swell", "file": "src/systems/ambientEffects.js",
+  "old": "this._cricketsLoop?.setVolume?.(volume * Math.max(0, swell));", "new": "this._cricketsLoop?.setVolume?.(volume);", "tests": ["test/cricketquiet.test.js"]},
+ {"name": "CRICKET-QUIET-opens-loud", "file": "src/systems/ambientEffects.js",
+  "old": "this.engine.loop(AMBIENT_CRICKETS_LOOP, 0);", "new": "this.engine.loop(AMBIENT_CRICKETS_LOOP, 1);", "tests": ["test/cricketquiet.test.js"]},
+ {"name": "CRICKET-QUIET-quiet-never-ends", "file": "src/systems/ambientEffects.js",
+  "old": "      if (this._cricketT >= this._cricketLen) this._cricketPhaseTo('bout');\n", "new": "", "tests": ["test/cricketquiet.test.js"]},
+ {"name": "CRICKET-QUIET-the-night-opens-silent", "file": "src/systems/ambientEffects.js",
+  "old": "    if (preset === 'clearNight') this._cricketPhaseTo('bout');", "new": "    if (preset === 'clearNight') this._cricketPhaseTo('quiet');", "tests": ["test/cricketquiet.test.js", "test/ambient.test.js"]},
+ {"name": "CRICKET-QUIET-left-running-in-the-quiet", "file": "src/systems/ambientEffects.js",
+  "old": "      if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; }\n      this._cricketPhaseTo('quiet');", "new": "      this._cricketsLoop?.setVolume?.(0);\n      this._cricketPhaseTo('quiet');", "tests": ["test/cricketquiet.test.js"]}
+]

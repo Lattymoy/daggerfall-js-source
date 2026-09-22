@@ -1651,7 +1651,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8550 / exterior.js:3450), set
+  // host's own townTalk sink (world.js:8555 / exterior.js:3452), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2193,7 +2193,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  makes its dungeon arm a deliberate no-op (:857): both windows
    *  raise `done` from inside their own pick/cancel/close
    *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:203/:212;
-   *  NativeTradeWindow's close, ui/nativeTrade.js:610), and
+   *  NativeTradeWindow's close, ui/nativeTrade.js:613), and
    *  tickOverlay drains the slot and reconciles the stack. A second
    *  clear here would only race that drain. */
   const mountSpellWindow = (win) => pushDungeonWindow(win);
@@ -2692,7 +2692,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6888 against :6912).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6915 against :6939).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3256,8 +3256,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:12787,
-              // exterior.js:4951 and worldModes.js:7088 already ran;
+              // playerArrowHitFoe is the one copy world.js:12792,
+              // exterior.js:4953 and worldModes.js:7115 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -7095,11 +7095,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // build a hooks object for the window - it hands `openInventory`
       // the SOURCE ARRAY itself, and that array is what the window
       // mutates - so the hooks shape is put around that same handle
-      // rather than a second one. Null opens the window as before, and
-      // the WORLD4 claim below is not made for a take that never opens
-      // anything (a claim for a container nobody opened is not what the
-      // law says, which is the same reasoning C6 gives just above).
-      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText)) return source.length;
+      // rather than a second one. Null opens the window as before.
+      //
+      // LOOT-REGEN (2026-09-22, a player on Discord, online: "I get
+      // killed and go back into the dungeon, and all the guys I killed
+      // before have loot again"): B4 read the claim as a WINDOW's act
+      // and made none for a take that opened nothing - so a corpse
+      // emptied by the quick door never reached `_lootSeen`, the memory
+      // carried no `corpse:<i>` record for it, and on re-entry
+      // `patchFoe` stood the remembered death over the fresh build's
+      // OWN roll. A take is the room's word exactly as an open-and-close
+      // is: what is left is said and stamped the moment the take lands
+      // (WORLD4's close law, WORLD8's stamp - the open's claim and the
+      // close's word are one word here, since nothing stands open
+      // between them), and an emptied pile's flat is settled as the
+      // window's onEmptied would settle it. C6's order below stands:
+      // the window's claim follows its mount.
+      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText)) {
+        const _q = lootHolder(key) ? lootKeyOf(key) : null;
+        if (_q) publishLoot(_q);
+        if (!source.length) onEmptied?.();
+        return source.length;
+      }
       const _k = lootHolder(key) ? lootKeyOf(key) : null;
       activeOverlay = openInventory(source, onEmptied, { lootHooks, lootKey: _k });
       if (activeOverlay && _k) { _lootOpenKey = _k; publishLoot(_k, { claim: true }); }

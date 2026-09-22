@@ -870,7 +870,7 @@ does the pack's USE arm.
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
                         dungeonContext.js:1057, world.js:2124,
-                        exterior.js:2374. It is the only window TWO
+                        exterior.js:2375. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
@@ -6968,7 +6968,7 @@ still speaking to devtools, both of them one line of plumbing rather
 than an arc:
 
 - `townTalk.frame` ticks and draws the HUD TEXT LAYER as well as the
-  overlay (`townTalk.js:649, :657`), and both exterior hosts called it
+  overlay (`townTalk.js:651, :659`), and both exterior hosts called it
   in their modal branch only WHEN A WINDOW WAS UP. AUDIT F2-I1 added
   that line to tick a window and gated it on the window existing. So
   inside a building a broken weapon, a fatigue warning and a level-up
@@ -8605,7 +8605,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:2966 as a second book built by hand 342 lines below the
+worldModes.js:2974 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -9315,7 +9315,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:6546` and `dungeonContext.js:1612` answer the same
+`worldModes.js:6573` and `dungeonContext.js:1612` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10604,7 +10604,7 @@ c2 flight 2 caught the same pair driving the town map's chrome.
   row 0.
 
 **THE FIX.** `vy >= 0 &&` in front of the `update` call in both hovers
-- the arm `ui/chargen.js:1123` and `ui/spellbookWindow.js:430` already
+- the arm `ui/chargen.js:1123` and `ui/spellbookWindow.js:431` already
 carry. (The third guarded sibling is not the same arm:
 `ui/spellIconPickerWindow.js:227` tests `vx >= 0 && vy >= 0`, and
 `test/citedrift.test.js`'s CD8c pins that two-part shape by name.)
@@ -10647,7 +10647,7 @@ mutants - the guard deleted from either new window, "ALL THREE" restored
 to the Ledger, "both" restored to Testing.md - all go red.
 
 **AND THE THREE SIBLINGS ARE NOT ONE ARM.** The first draft of the
-section above called `ui/chargen.js:1123`, `ui/spellbookWindow.js:430`
+section above called `ui/chargen.js:1123`, `ui/spellbookWindow.js:431`
 and `ui/spellIconPickerWindow.js:227` "the same arm". They are not:
 the icon picker tests `vx >= 0 && vy >= 0`, the two-part shape CD8c
 pins by regex, while the other two test `vy` alone. The two new guards
@@ -10978,7 +10978,7 @@ the interior half:
 
 - The callback was handed to `openTalkWindow`'s FIRST mount and lost by
   every later one. `showOverlay` writes `_onOverlayClosed` on each call
-  (`townTalk.js:621-647`), so in the art-less greeting chain a tone
+  (`townTalk.js:623-649`), so in the art-less greeting chain a tone
   press (`toneOption`'s reshow) or a Where-is page (`openCategories` ->
   `pagedList`) re-mounted with `onClosed` null and threw the restore
   away - the player escaped the conversation and the popup DFU keeps
@@ -16684,7 +16684,7 @@ there; all-max gets the sentence that is true of it.
 
 **F3 - two of the eight descriptions named numbers that do nothing.**
 The window's own promise is that each attribute line is true of code
-that runs. Willpower cited `questMacros.js:595`, which only PRINTS
+that runs. Willpower cited `questMacros.js:635`, which only PRINTS
 MagicResist for the `%mr` macro - the consumer is `spellcast.js:158`'s
 saving throw. Agility cited `toHitModifier` (formulas.js:118), which is
 the CHARACTER SHEET's display modifier and is read by chargen's derived
@@ -18023,3 +18023,14 @@ document without an SVG namespace draws no glyph and does not throw.
 `tools/mutants/chatfit.json`: 14, 14 dead. acc3wear's roster-order pin
 re-aimed at the row's line.
 
+## DISCORD5 - five reports off the bug-reports channel: black arms, three arms, the torch keys, the hotslot, the loot that came back (2026-09-22, through Mac)
+
+Five players, five root causes, one commit. The torch's two are recorded in `06-Systems/Handheld-Torches.md` (3ARMS + TORCH-BIND) and the corpse loot in `06-Systems/Online-Arc.md` (LOOT-REGEN); the three that are this arc's are below.
+
+**BLACK-ARMS (Revverie: "Weapon and torch are blacked out").** The classic weapon and the torch hand were solid black silhouettes in a lit dungeon, the Morrowind arms fine, every lighting toggle useless. MAC-I's first-person tint is `flatLightAt`, an RGB TRIPLE, and the rig hands it as it is to `drawScreenQuad`'s `color`, the shader's vec4: `color[3]` was `undefined`, `uniform4f` takes an unrestricted float and uploaded NaN, and the fragment's alpha came out NaN - which ANGLE/D3D and most drivers store as 0 on the premultiplied canvas, so the page's `#000` showed through every opaque texel: a silhouette with a perfect cutout, on Revverie's machine and not on ours (a driver that clamps NaN to 1 draws it right). The Morrowind lane never met it: `renderCharacterSprite` reads the triple's three and the RT is blitted with no colour at all. No toggle could touch it because the tint rides `firstPersonLighting` (Sight), not `enhancedLighting`. Fixed at the one seam every classic sprite ends in: `drawScreenQuad` defaults an absent alpha to 1 (the upload and its shadow, and `screenQuadBlends` the same). `tools/macfpLightProbe.mjs` now draws the TRIPLE and reads the alpha back - it had appended a 1 the runtime never passed, which is why "a quarter tint really is a quarter on screen" pinned the RGB and not the shape. Pin: `test/discord5.test.js` drives `Renderer.prototype.drawScreenQuad` over a recording stub - a triple uploads `[r, g, b, 1]`, finite, shadowed on the defaulted alpha.
+
+**TORCH-BIND, the Continue half (teuton: "Keybind changes do not stick?"; The Frog: "if you scroll up after rebinding, there should be a Continue or Confirm button ... it needs some streamlining").** Rebinds are staged and applied only on Continue, in the head card, 53 rows above the Quickslot and Mouse rows a player binds last, and every walk-away discards - so a player who bound a key at the foot and pressed Escape lost it and read "does not stick". The staging law stands (DFU's OnPop applies on leave; the enhanced pane says what it does in its own copy): the head card is `position: sticky` now, so Continue is in view while the list scrolls, and a second Continue closes the list in a foot card, the same `applyAndSave`. Pin: `test/discord5.test.js` mounts the pane - two Continues, the foot one saves.
+
+**HOTSLOT (!Simple: "Cant change Hotslot spell").** The spell slot had ONE writer a player could reach: a 350 ms HOLD of the quick-spell key, said nowhere - the pane row read "Ready quickslot spell", the chip wore the bare key. A press readies the book's first spell and a second press unreadies it, so from the chair the key was a toggle stuck on spell one. On a phone it was a dead end: the chip that takes the hold was `display: none` until the slot was filled, and only the hold fills it. Four changes: the enhanced spellbook slots a spell - a Quickslot / Unslot button beside Ready, the pair the pack gives a consumable (`quickslotActs`); the empty chip is a SOCKET (drawn dim as "No spell", wearing its key, so the key is seen and a finger has a chip to fill - departure 4's law for the diamond's cells); the pane row says "(hold to cycle the book)"; and `spellCandidates` answers one entry per index - a bought stock spell, a classic import and the vampire/lycanthrope gifts each push a record without asking, and `findIndex` on a doubled book always landed on the first copy, the cycle stuck on one spell. The classic skin keeps the hold. Pins: `test/discord5.test.js` mounts the enhanced book over a DOM fake and slots, re-slots and unslots; the doubled book walks every spell; the socket and the label by source. `test/qs2_inputs.test.js` re-aimed to the label.
+
+Not verified in a browser: none of the five is reproducible headless. `tools/mutants/discord5.json`: 20 records, 20 dead.

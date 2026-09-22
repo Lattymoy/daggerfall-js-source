@@ -110,7 +110,9 @@ test('T4: the townTalk seam is wired - the lazy %hnt gate, the mark, the entity 
   // The hosts have no execution coverage (AUDIT 18's standing gap), so
   // the wiring is pinned at the source, the audit18 idiom.
   const src = readFileSync(new URL('../src/scenes/townTalk.js', import.meta.url), 'utf8');
-  assert.match(src, /raw\.includes\('%hnt'\)/, 'the fork must be LAZY - a refusal record never rolls or marks');
+  // MACRO-6: the laziness is the walk's own - the hint is a FUNCTION the walk calls per %hnt/%hnt2 occurrence
+  assert.match(src, /const hint = \(\) => \{\n\s+const h = buildingHint\(rolls, false\);/, 'the fork must be LAZY - a refusal record never rolls or marks');
+  assert.doesNotMatch(src, /hint = randomVariant\(/, 'no eager roll left beside it');
   assert.match(src, /buildingHint\(rolls/, 'the reveal roll rides the seam-injectable rolls');
   assert.match(src, /if \(h\.reveal\) discoverBuilding\(/, 'the %loc mark side effect fires only on the reveal arm');
   assert.match(src, /honorific: honorificOf\(playerEntity\.gender\)/, '%hnr reads the entity');

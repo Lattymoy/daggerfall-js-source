@@ -343,7 +343,8 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
     say?.(QUICKSLOT_TEXT.swapGone(r.name)); return { kind: 'gone', name: r.name };
   }
   const refuse = (id, kind) => {
-    const text = rows ? (rows(id) ?? []).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : '';
+    // MACRO-3: the item is the record's macro source - "%it is broken."
+    const text = rows ? expandRowValues(rows(id) ?? [], { it: itemLongName(r.item) }).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : '';
     if (text) say?.(text);
     return { kind, name: r.name };
   };
@@ -565,7 +566,14 @@ export function consumableCandidates(entity, slot) {
 }
 
 /** The book, as the spell slot's candidate list. */
-export const spellCandidates = (entity) => bookOf(entity).filter(keyedSpell);
+export const spellCandidates = (entity) => {
+  // HOTSLOT: ONE entry per spell index. A bought stock spell, a classic
+  // import and the vampire/lycanthrope gifts each push a record without
+  // asking whether the book holds it, and findIndex on a doubled book
+  // always lands on the first copy - the cycle stuck on one spell.
+  const seen = new Set();
+  return bookOf(entity).filter((sp) => keyedSpell(sp) && !seen.has(sp.index) && (seen.add(sp.index), true));
+};
 
 /** The slots a hold can cycle - the two consumables and the spell. The
  *  off hand is not one: see the header. */

@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:792)". Section A carried no widget row at all -
+//     (Port-Ledger.md:794)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -663,8 +663,8 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:6675` for a line
-  // that is 5921, `world.js:10965` for 8836, `interior.js:315` for 329,
+  // four of the five had been stale for waves (`worldModes.js:6702` for a line
+  // that is 5921, `world.js:10970` for 8836, `interior.js:315` for 329,
   // `dungeon.js:935` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],
@@ -724,7 +724,7 @@ const SOURCE_CITES = [
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
   // exactly the defect this file exists to catch - the leading number
   // was re-resolved and the trailing one left where it was, leaving a
-  // range that cannot exist (`exterior.js:1559-1304`).
+  // range that cannot exist (`exterior.js:1560-1305`).
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-\d+` build `createDetectFeed`/,
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` build `createDetectFeed`/,
@@ -743,7 +743,7 @@ const SOURCE_CITES = [
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:118-145`/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:140-167`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
   // AUDIT ENH-NOTICE3 (second pass, B18): six cites the shifter carried
   // along already WRONG - stale before the slice, moved by the right

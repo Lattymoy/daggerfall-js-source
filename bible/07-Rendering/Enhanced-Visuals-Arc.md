@@ -36,7 +36,7 @@ footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:166), and `_playerStill` reads one moving
 frame per crossing (world.js:7596-7598).
 
-frame per crossing (world.js:12112-12122).
+frame per crossing (world.js:12117-12127).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:50-57, DFU's own number) while the default 7x7
@@ -52,7 +52,7 @@ rows, terrainSurface.js:147-150): a permanent lighting lattice at every
 THERE IS NO CULLING AND NO MEASUREMENT. Zero frustum tests anywhere;
 ~1045 drawMesh calls in a city with per-call useProgram + per-submesh
 double texture binds and a template-string key allocated per submesh
-per frame (renderer.js:3043 - thousands of strings/frame, the single
+per frame (renderer.js:3054 - thousands of strings/frame, the single
 largest GC source). No FPS counter, no draw counter; the proven
 measurement pattern is window.__renderer + probe monkeypatching
 (hudCrosshairProbe), exposed today by the dungeon host alone.

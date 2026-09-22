@@ -2808,7 +2808,7 @@ banker and guild clerk in Daggerfall reached `TalkManager` with an
 empty name. Two things read it:
 
 - the greeting says the NPC's name once reaction is above zero, and
-  "stranger" below it (`townTalk.js:556`). Every static NPC in the
+  "stranger" below it (`townTalk.js:558`). Every static NPC in the
   game stayed a stranger no matter how well liked.
 - `topicTree`'s same-building-static test (`:558`) matches a topic
   caption against that name, so it never matched.
@@ -2894,7 +2894,7 @@ correct than the game it is a port of, which is the one thing this arc
 has never allowed. Expanding in place now. (The caller-side
 `if (quest)` went too - C# calls `ExpandQuestMessage` whether or not
 `GetQuest` found anything, and the null-parent bail is a forum-bug fix
-*inside* the helper, which `questMacros.js:510` already carries.)
+*inside* the helper, which `questMacros.js:550` already carries.)
 
 **Three nits with teeth.**
 

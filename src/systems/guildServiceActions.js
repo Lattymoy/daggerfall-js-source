@@ -44,19 +44,31 @@ import { expandMacroValues } from './quest/questMacros.js';   // MH1: the ONE ma
  *
  *  The shared %pcn/%pcf/%cn/%oth ride the same value map, so a guild
  *  record with a player name in it reads correctly too. */
-export function expandGuildMacros(text, { amount = null, gold = null, god = null, guildTitle = null, roomHours = null, race = null, honorific = null, shopName = null, factionName = null, playerName = '', cityName = '' } = {}) {
+export function expandGuildMacros(text, { amount = null, gold = null, god = null, godDesc = null, guildTitle = null, dungeon = null, roomHours = null, race = null, honorific = null, shopName = null, factionName = null, playerName = '', cityName = '' } = {}) {
   // MH1: ONE walk (questMacros.expandMacroValues) over ONE value map.
   // A null value leaves its token VERBATIM - exactly the `if (x !=
   // null)` guards the old replaceAll chain carried - and the walk's
   // maximal-munch match retires the chain's latent %a-inside-%adj
   // corruption. The per-symbol sources below are unchanged.
+  // MACRO-ONE: an EMPTY name or city is an unknown one, not a blank to
+  // print - it goes to the walk as null, and the world answers it.
+  const known = (v) => (v == null || v === '' ? null : v);
   return expandMacroValues(text ?? '', {
-    pcf: firstName(playerName), pcn: playerName, cn: cityName, oth: '',
+    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: '',
     ra: race, hnr: honorific,
     a: amount == null ? null : String(amount),
     gii: gold == null ? null : String(gold),
     god,
-    pct: guildTitle,
+    // MACRO-4: Temple.TempleMacroDataSource.GodDesc (Temple.cs:567-570) -
+    // "God of Logic" and the rest, the deity's own line.
+    gdd: godDesc,
+    // MACRO-4: %lev and %pct are ONE MacroHelper row, GuildTitle (:128) -
+    // the rank the promotion box names. The map carried only %pct, so
+    // every rank change in every guild printed "the rank of %lev".
+    pct: guildTitle, lev: guildTitle,
+    // MACRO-4: ThievesGuild/DarkBrotherhood's Dungeon() - the place the
+    // promotion just revealed (ThievesGuild.cs:279-282).
+    dng: dungeon,
     // U39: MacroHelper.cs:80 `{ "%dwr", RoomHoursLeft }` - the hours a
     // rented room still has to run, which the tavern's "how many
     // ADDITIONAL days" prompt quotes back at the player.

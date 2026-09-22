@@ -1,0 +1,83 @@
+[
+ {
+  "name": "MACRO-3-the-broken-box-forgets-its-item",
+  "file": "src/ui/nativeInventory.js",
+  "old": "?? [{ text: 'This item is broken.', center: true }], { it: this._longName(it) }),",
+  "new": "?? [{ text: 'This item is broken.', center: true }], null),",
+  "tests": [
+   "test/macro3_nowalk.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-3-the-drop-gold-prompt-walks-nothing",
+  "file": "src/ui/nativeInventory.js",
+  "old": "      lines: expandRowValues(this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }], null),",
+  "new": "      lines: this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }],",
+  "tests": [
+   "test/macro3_nowalk.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-3-the-powers-row-is-not-spread",
+  "file": "src/ui/nativeInventory.js",
+  "old": "    for (const p of powers) out.push({ ...row, text: String(row.text).replace('%mpw', p) });",
+  "new": "    out.push({ ...row, text: String(row.text).replace('%mpw', powers.join(' ')) });",
+  "tests": [
+   "test/macro3_nowalk.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-3-the-powers-list-skips-past-None",
+  "file": "src/systems/itemPowers.js",
+  "old": "if (!e || e.type === T.None || e.type === 65535 || e.type == null) break;",
+  "new": "if (!e || e.type === T.None || e.type === 65535 || e.type == null) continue;",
+  "tests": [
+   "test/macro3_nowalk.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-3-unidentified-lists-its-powers-anyway",
+  "file": "src/systems/itemPowers.js",
+  "old": "  if (!identified) return [POWERS_UNKNOWN_TEXT];\n",
+  "new": "",
+  "tests": [
+   "test/macro3_nowalk.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-3-the-box-reads-the-pickers-words",
+  "file": "src/systems/itemPowers.js",
+  "old": "    else if (list) out.push(first + (list[e.param] ?? ''));",
+  "new": "    else if (list) out.push(first + enchantmentParamName(typeName(e.type), e.param));",
+  "tests": [
+   "test/macro3_nowalk.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-3-an-artifact-reads-the-wrong-record",
+  "file": "src/systems/itemPowers.js",
+  "old": "lines?.(ARTIFACT_POWERS_TEXT_BASE + (item.artifactIndexBitfield >> 1))",
+  "new": "lines?.(ARTIFACT_POWERS_TEXT_BASE + item.artifactIndexBitfield)",
+  "tests": [
+   "test/macro3_nowalk.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-3-the-quickslot-refusal-forgets-its-item",
+  "file": "src/systems/quickslots.js",
+  "old": "expandRowValues(rows(id) ?? [], { it: itemLongName(r.item) })",
+  "new": "expandRowValues(rows(id) ?? [], null)",
+  "tests": [
+   "test/macro3_nowalk.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-3-the-mastery-box-walks-nothing",
+  "file": "src/scenes/shared.js",
+  "old": "rows: () => expandRowValues(plainLines(lines?.(MASTERY_TEXT_ID)), null) });",
+  "new": "rows: () => plainLines(lines?.(MASTERY_TEXT_ID)) });",
+  "tests": [
+   "test/macro3_nowalk.test.js"
+  ]
+ }
+]
