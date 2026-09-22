@@ -51,9 +51,7 @@ import { REGION_NAMES } from '../formats/mapsFile.js';       // GetLocalizedRegi
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM4: the Name button's DaggerfallInputMessageBox
 import { ENTER_NEW_NAME } from './itemMakerWindow.js';          // CM4: Internal_Strings.enterNewName, homed with its first reader
 import { healthStatusRows } from '../systems/healthStatus.js';   // CM4: CreateHealthStatusBox's rows
-import { activeMemberships, GUILDS, getTitle } from '../systems/guilds.js';   // CM4: ShowAffiliationsDialog's book
-import { templeOf, orderOf } from '../systems/guildVariants.js';
-import { getReputation } from '../systems/factionRep.js';
+import { affiliations } from '../systems/affiliations.js';   // CM4: ShowAffiliationsDialog's book - GUILD-REP: one model, both skins
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // CM4: the four buttons' DaggerfallShortcut bindings
 
 // U8a: the module-level art cache - hosts preload once at boot; a
@@ -288,41 +286,21 @@ export function levelProgressPercent(entity) {
   return Math.trunc((current % 1) * 100);
 }
 
-/** The membership book stores the port's canonical guild-record name;
- *  a temple's or an order's is its variant's (guildVariants.js). */
-export function guildForMembership(membership) {
-  const name = membership?.guild;
-  if (!name) return null;
-  for (const guild of Object.values(GUILDS)) if (guild.name === name) return guild;
-  if (name.startsWith('Temple:')) return templeOf(name.slice('Temple:'.length));
-  if (name.startsWith('Order:')) return orderOf(name.slice('Order:'.length));
-  return null;
-}
-
 /** ShowAffiliationsDialog (:327-364): the tab-stopped table - a
  *  highlighted "Affiliation / Rank" header, then one row a membership
  *  with the faction's display name, the rank TITLE and the live
- *  reputation - or record 19 when the book is empty. The faction name
- *  is the same cloned FACTION.TXT row guild reputation reads, so no
- *  host hook is needed. `rows` is the TEXT.RSC door the sheet's other
- *  boxes share. */
+ *  reputation - or record 19 when the book is empty. The rows are
+ *  systems/affiliations.js's, the one model the enhanced pause menu's
+ *  Standing page draws too (GUILD-REP). `rows` is the TEXT.RSC door the
+ *  sheet's other boxes share. */
 export function affiliationRows(entity, rows = null) {
   const noAffiliations = () => rows?.(NO_AFFILIATIONS_TEXT_ID) ?? [{ text: 'You have no affiliations.', center: true }];
-  const memberships = Object.values(activeMemberships(entity) ?? {}).filter(Boolean);
-  if (!memberships.length) return noAffiliations();
-  const out = [{
-    cells: [{ text: 'Affiliation', x: 0 }, { text: 'Rank', x: 125 }],
-    highlight: true,
-  }];
-  for (const membership of memberships) {
-    const guild = guildForMembership(membership);
-    if (!guild) continue;   // a hand-built or legacy membership names no guild: not a row, not a blank parchment
-    const affiliation = entity?.factionRep?.dict?.get?.(guild.factionId)?.name ?? guild.name;
-    const title = getTitle(membership, entity, guild);
-    const rep = entity?.factionRep ? getReputation(entity.factionRep, guild.factionId) : 0;
-    out.push({ cells: [{ text: affiliation, x: 0 }, { text: `${title} (rep:${rep})`, x: 125 }] });
-  }
-  return out.length > 1 ? out : noAffiliations();
+  const book = affiliations(entity);
+  if (!book.length) return noAffiliations();
+  return [
+    { cells: [{ text: 'Affiliation', x: 0 }, { text: 'Rank', x: 125 }], highlight: true },
+    ...book.map((a) => ({ cells: [{ text: a.affiliation, x: 0 }, { text: `${a.title} (rep:${a.rep})`, x: 125 }] })),
+  ];
 }
 
 /** The four buttons' DaggerfallShortcut names, in the sheet's setup order. */

@@ -1,0 +1,79 @@
+[
+ {
+  "name": "MACRO-4-lev-has-no-row-again",
+  "file": "src/systems/guildServiceActions.js",
+  "old": "    pct: guildTitle, lev: guildTitle,",
+  "new": "    pct: guildTitle,",
+  "tests": ["test/macro4_guild.test.js"]
+ },
+ {
+  "name": "MACRO-4-gdd-has-no-row",
+  "file": "src/systems/guildServiceActions.js",
+  "old": "    gdd: godDesc,",
+  "new": "",
+  "tests": ["test/macro4_guild.test.js"]
+ },
+ {
+  "name": "MACRO-4-dng-has-no-row",
+  "file": "src/systems/guildServiceActions.js",
+  "old": "    dng: dungeon,",
+  "new": "",
+  "tests": ["test/macro4_guild.test.js"]
+ },
+ {
+  "name": "MACRO-4-a-deity-line-misspelled",
+  "file": "src/systems/guildServices.js",
+  "old": "Stendarr: 'God of Mercy'",
+  "new": "Stendarr: 'God of Justice'",
+  "tests": ["test/macro4_guild.test.js"]
+ },
+ {
+  "name": "MACRO-4-the-popup-title-read-once-not-at-show",
+  "file": "src/scenes/worldModes.js",
+  "old": "      guildTitle: () => getTitle(membershipOf(activeMemberships(playerEntity), guild), playerEntity, guild),",
+  "new": "      guildTitle: getTitle(membershipOf(activeMemberships(playerEntity), guild), playerEntity, guild),",
+  "tests": ["test/macro4_guild.test.js"]
+ },
+ {
+  "name": "MACRO-4-the-popup-forgets-the-revealed-dungeon",
+  "file": "src/scenes/worldModes.js",
+  "old": "const name = host.revealLocation(noteKey); if (name) revealedDungeon = name; return name;",
+  "new": "return host.revealLocation(noteKey);",
+  "tests": ["test/guildreveal.test.js"]
+ },
+ {
+  "name": "MACRO-4-the-push-effects-bypass-the-wrapper",
+  "file": "src/scenes/worldModes.js",
+  "old": "        revealLocation,   // G8: the TG/DB map reveals",
+  "new": "        revealLocation: host.revealLocation ?? null,   // G8: the TG/DB map reveals",
+  "tests": ["test/guildreveal.test.js"]
+ },
+ {
+  "name": "MACRO-4-native-trade-has-no-shop-arm",
+  "file": "src/ui/nativeTrade.js",
+  "old": "        guildTitle: this.hooks.guildTitle?.() ?? firstName(this.hooks.entity?.name ?? ''),",
+  "new": "        guildTitle: this.hooks.guildTitle?.() ?? null,",
+  "tests": ["test/macro4_guild.test.js"]
+ },
+ {
+  "name": "MACRO-4-native-trade-ignores-the-guild",
+  "file": "src/ui/nativeTrade.js",
+  "old": "        guildTitle: this.hooks.guildTitle?.() ?? firstName(this.hooks.entity?.name ?? ''),",
+  "new": "        guildTitle: firstName(this.hooks.entity?.name ?? ''),",
+  "tests": ["test/macro4_guild.test.js"]
+ },
+ {
+  "name": "MACRO-4-enhanced-trade-has-no-pct",
+  "file": "src/ui/enhancedTrade.js",
+  "old": "      guildTitle: deps.guildTitle?.() ?? firstName(deps.entity?.name ?? ''),",
+  "new": "",
+  "tests": ["test/macro4_guild.test.js"]
+ },
+ {
+  "name": "MACRO-4-the-counter-names-no-guild",
+  "file": "src/scenes/worldModes.js",
+  "old": "        return g ? getTitle(membershipOf(activeMemberships(playerEntity), g), playerEntity, g) : null;",
+  "new": "        return null;",
+  "tests": ["test/macro4_guild.test.js"]
+ }
+]

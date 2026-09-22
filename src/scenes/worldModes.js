@@ -155,7 +155,7 @@ import {
   receiveHouseDecision, claimHouse, ALREADY_GIVEN_HOUSE,   // H1
 } from '../systems/knightlyGifts.js';   // G6
 import { mintCondition, setItemFields, itemValueOf } from '../systems/itemTemplates.js';   // G6: the gift's pieces mint like any other item; MAC-N1: with SetItem's name and value
-import { npcServiceKind, freeHealing, freeMagickaRecharge, avoidDeath, AVOID_DEATH_TEXT } from '../systems/guildServices.js';
+import { npcServiceKind, freeHealing, freeMagickaRecharge, avoidDeath, AVOID_DEATH_TEXT, DEITY_DESCRIPTIONS } from '../systems/guildServices.js';   // MACRO-4: %gdd
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision, activeMemberships } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick
 import { ensureFactionRep } from '../systems/factionRep.js';
@@ -421,7 +421,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:3519 hands
+   * record these hosts mint spells it `name` (exterior.js:3521 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -2221,6 +2221,14 @@ export function createWorldModes(host) {
       icons: { getTexture, uploadRecord, textures: renderer.textures },
       entity: playerEntity,   // AUDIT 17f: icons address for the wearer's morphology
       shopName: b.name ?? '',
+      // MACRO-4: TradeMacroDataSource.GuildTitle (DaggerfallTradeWindow.cs
+      // :1181-1187) - a guild's own title at a guild's counter, the
+      // player's first name at a shop's. %pct in record 260.
+      guildTitle: () => {
+        const dict = townTalk?.factionDict ?? null;
+        const g = guildFactionId != null ? guildOfFaction(guildFactionId, resolveVariantGuild(dict), dict) : null;
+        return g ? getTitle(membershipOf(activeMemberships(playerEntity), g), playerEntity, g) : null;
+      },
     });
   }
 
@@ -2760,7 +2768,7 @@ export function createWorldModes(host) {
     // does not write, so every shopkeeper, priest and guild clerk in
     // the game reached TalkManager as ''. The visible half is
     // TalkManager's greeting, which says the NPC's name once reaction
-    // is above zero and "stranger" below it (townTalk.js:556) - so
+    // is above zero and "stranger" below it (townTalk.js:558) - so
     // every static NPC stayed a stranger no matter how well liked -
     // and topicTree's same-building-static test (:558), which matches
     // a topic caption against this name and therefore never matched.
@@ -3540,7 +3548,7 @@ export function createWorldModes(host) {
     // the summoning flow's with its prince (see `say`). One walk per
     // box, and no pass ever hands a sentinel to another pass.
     const rawRows = (id) => townTalk?.lines?.(id) ?? [];
-    const rows = (id) => expandRowValues(rawRows(id), null, questBridge?.machine.macroContext() ?? null);
+    const rows = (id) => expandRowValues(rawRows(id), null, null);   // MACRO-ONE: the world's context (setMacroWorld) - the machine's own posed as a quest, and a %di or %qdt row would have thrown
     let win = null;
     win = new CovenWindow({
       rows,
@@ -3594,7 +3602,26 @@ export function createWorldModes(host) {
     // GuildServicePopupWindow hands ITSELF to MacroHelper for every box - %pcn/%pcf are the player, %fon (and %kno,
     // the same source) is the guild's faction name off FACTION.TXT. MH1's one walk (expandGuildMacros), not a second.
     const orderName = dict?.get?.(guild.factionId)?.name ?? null;
-    const rows = (id) => expandGuildRows(townTalk?.lines?.(id) ?? [], { playerName: playerEntity.name, factionName: orderName });
+    // MACRO-4: THE GUILD IS THE SOURCE, as DFU's Guild.GuildMacroDataSource
+    // is - %lev/%pct its title (read when the box is SHOWN, so a promotion
+    // names the new rank), a temple's deity for %god and %fon and its line
+    // for %gdd (TempleMacroDataSource), and the dungeon a Thieves Guild or
+    // Dark Brotherhood promotion just revealed for %dng. The map carried
+    // only the player and the faction name, so every rank change printed
+    // "the rank of %lev".
+    let revealedDungeon = null;
+    const revealLocation = host.revealLocation
+      ? (noteKey) => { const name = host.revealLocation(noteKey); if (name) revealedDungeon = name; return name; }
+      : null;
+    const guildMacros = {
+      playerName: playerEntity.name,
+      factionName: guild?.divine ?? orderName,
+      guildTitle: () => getTitle(membershipOf(activeMemberships(playerEntity), guild), playerEntity, guild),
+      god: guild?.divine ?? null,
+      godDesc: guild?.divine ? (DEITY_DESCRIPTIONS[guild.divine] ?? null) : null,
+      dungeon: () => revealedDungeon,
+    };
+    const rows = (id) => expandGuildRows(townTalk?.lines?.(id) ?? [], guildMacros);
     // U24: a window that dispatches to another window must not be
     // nulled by its OWN onClose - DFU closes the popup and pushes the
     // next one, and the port's overlay slot is single. The identity
@@ -3609,7 +3636,7 @@ export function createWorldModes(host) {
       steps: () => onPushEffects(playerEntity, guild, memberships, store, gameDate(), {
         freeHealing: freeHealing(guild, membershipOf(memberships, guild)),
         freeMagickaRecharge: freeMagickaRecharge(guild, membershipOf(memberships, guild), playerEntity),
-        revealLocation: host.revealLocation ?? null,   // G8: the TG/DB map reveals
+        revealLocation,   // G8: the TG/DB map reveals - MACRO-4: through the popup's own wrapper, which keeps the name for %dng
         // F114: OwnsHouse per CURRENT region (DaggerfallBankManager.cs:136).
         ownsHouse: () => ownsHouse(playerEntity.houses ?? [], interiorBuilding?.regionIndex ?? 0),
       }),
@@ -3863,7 +3890,7 @@ export function createWorldModes(host) {
       // context. It wraps whichever `rows` the caller handed in - the
       // coven's or the guild's - rather than replacing it, so each
       // keeps whatever it already resolved.
-      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), questBridge?.machine.macroContext() ?? null);
+      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), null);   // MACRO-ONE: the world answers %dat and %pcn
       // ...and ONE read per box. Several of these records carry random
       // variants (BOX1's law: a textId box reads its record once), so a
       // `say(id).length ? say(id) : fallback` would roll the record
@@ -5873,7 +5900,6 @@ export function createWorldModes(host) {
           shareQuest: (uid, questName, displayName) => host.shareQuest?.(uid, questName, displayName),
           // PEER-PLAQUE1: the plaque's peer pick, delegated the same way - the dungeon's own eye, the outer host's peers
           peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye
-          partyRestGate: () => host.partyRestGate?.() ?? null,   // PARTY-REST2 (AUDIT DROPS D1): the dungeon's rest asks the party too
           pointerSurfaceUp: () => !!host.pointerSurfaceUp?.(),   // AUDIT DROPS E1: the plaque comes down under a pointer surface
           // D-ONLINE1: the dungeon death screen's own door - see
           // dungeonContext.js's DeathScreen construction. Delegates to
@@ -7055,7 +7081,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:8344's own wave-46 note); the interior
+          // a blow (world.js:8349's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7923,7 +7949,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3580`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3582`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -9515,7 +9541,7 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3170-3192), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3171-3193), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
      *  unconditionally (world.js:5564). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them

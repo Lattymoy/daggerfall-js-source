@@ -3566,7 +3566,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2419 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5516
+  // that context through modes.dungeonCtx - so worldModes.js:5543
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -7509,7 +7509,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8581-8645 -
+  // worldModes answers it in BOTH modes (worldModes.js:8607-8671 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -7922,11 +7922,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  all fixed forever. The port cloned first and re-expanded from
    *  source every time, which is the port being more correct than
    *  the game it is a port of. The answer pipeline's caller clones
-   *  BEFORE calling (answerPipeline.js:656, C#'s own `.Clone()` at
+   *  BEFORE calling (answerPipeline.js:659, C#'s own `.Clone()` at
    *  :3552), so the in-place pass is right for both. Also: C# calls
    *  this whether or not GetQuest found anything - the null-parent arm
    *  is a DFU forum-bug fix INSIDE ExpandQuestMessage, not a caller
-   *  guard, and expandQuestMessage carries it (questMacros.js:530). */
+   *  guard, and expandQuestMessage carries it (questMacros.js:570). */
   const expandQuestTokens = (questID, tokens) => {
     expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
     return tokensToString(tokens);
@@ -8225,7 +8225,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // with two empty strings. Both are the CURRENT location's, which
     // is what Dungeon.Summary carries.
     specialDungeonName: () => specialDungeonName(
-      questWorld.currentRegionName(), _questLoc()?.name ?? '', (id) => townTalk.lines(id)?.[0] ?? null),
+      // MACRO-6: TextProvider.GetText is `tokens[0].text` (TextProvider.cs:241-248) - the ROW'S TEXT; the row object
+      // itself answered "You are in [object Object] in Daggerfall."
+      questWorld.currentRegionName(), _questLoc()?.name ?? '', (id) => {
+        const r = townTalk.lines(id)?.[0];
+        return r == null ? null : (typeof r === 'string' ? r : r.text ?? null);
+      }),
     dungeonRegionName: () => questWorld.currentRegionName(),
     // AUDIT 39 (#111): the REGION WALK, mounted. GetLocationWith-
     // RegionalBuilding (TalkManager.cs:1891-1918) counts the region's
@@ -11206,7 +11211,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:649, :657). So every HUD line raised in a modal
+      // (townTalk.js:651, :659). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where

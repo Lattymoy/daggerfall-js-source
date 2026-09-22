@@ -128,6 +128,7 @@ import { drawPixelGround } from './pixelGround.js';
 // Both are plain modules with no game data; the boot door never
 // renders the tab, so the front door still reads no game state.
 import { sheetModel } from './enhancedCharSheet.js';
+import { affiliations } from '../systems/affiliations.js';   // GUILD-REP: the sheet's Affiliations box, on the Standing page
 import { enhancedHudScale as hudScaleNow, HUD_SCALE_MIN, HUD_SCALE_MAX } from './enhancedHud.js';   // PX30c
 import { playerEntity } from '../characters/playerEntity.js';
 // PX6: the Stats page's skill labels - the one home (systems/skills.js).
@@ -2956,14 +2957,36 @@ function statsSpecials(detail, m) {
  *  Legal standing is PER REGION and the window does not know where
  *  you stand, so it stays with the court until a host hands a region
  *  seam - drawing a number without its region would be a lying row. */
+const signedRep = (v) => el('span', `v${v > 0 ? ' won' : v < 0 ? ' bad' : ''}`, v > 0 ? `+${v}` : String(v));
+
 function statsStanding(detail) {
   detail.append(pxDivider('Reputation'));
   const reps = playerEntity.sGroupReputations ?? [];
   for (let i = 0; i < SOCIAL_GROUP_NAMES.length; i++) {
-    const v = reps[i] ?? 0;
     const r = el('div', 'px-stat');
-    r.append(el('span', 'k', SOCIAL_GROUP_NAMES[i]),
-      el('span', `v${v > 0 ? ' won' : v < 0 ? ' bad' : ''}`, v > 0 ? `+${v}` : String(v)));
+    r.append(el('span', 'k', SOCIAL_GROUP_NAMES[i]), signedRep(reps[i] ?? 0));
+    detail.append(r);
+  }
+  statsGuilds(detail, playerEntity);
+}
+
+/** GUILD-REP (Mac: "we need to add guild reputation to our enhanced
+ *  pause menu, its missing"): the sheet's AFFILIATIONS box, on the
+ *  page. ShowAffiliationsDialog's own three facts per membership - the
+ *  affiliation, the rank title and the live reputation - off the one
+ *  model the classic box draws (systems/affiliations.js), so the two
+ *  skins cannot disagree about a guild. An empty book says what record
+ *  19 says rather than drawing an empty section. */
+export function statsGuilds(detail, entity) {
+  detail.append(pxDivider('Guilds'));
+  const book = affiliations(entity);
+  if (!book.length) {
+    detail.append(el('p', 'px-note', 'You have no affiliations.'));
+    return;
+  }
+  for (const a of book) {
+    const r = el('div', 'px-stat px-guild');
+    r.append(el('span', 'k', a.affiliation), el('span', 'v px-rank', a.title), signedRep(a.rep));
     detail.append(r);
   }
 }

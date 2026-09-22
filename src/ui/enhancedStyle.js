@@ -1736,6 +1736,10 @@ ${badgeCss()}
   text-transform: uppercase; align-self: center; }
 .px-stat .v.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-stat .v.bad { color: var(--blood); }
+/* GUILD-REP: a guild row carries three facts - the affiliation, the
+   rank title and the reputation - so the title takes the slack and
+   the number keeps the social rows' right edge. */
+.px-guild .v.px-rank { margin-left: auto; font-size: 16px; align-self: center; }
 /* ── PX7: THE SYSTEM PAGE ── the shell's own panes repainted in whole
    pixels. The LAWS stay in the pane functions; every rule here is
    paint over the same markup (.card/.act/.empty/.stats/.tag/.row). */

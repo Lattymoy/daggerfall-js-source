@@ -83,9 +83,13 @@ export const oathTextId = (race) => OATH_BASE_TEXT_ID + (OATH_RACE_INDEX[race] ?
  *  MAP now, not a replaceAll chain. */
 export function expandMacros(text, { playerName = '', oath = '', cityName = '' } = {}) {
   return expandMacroValues(text, {
-    pcf: firstName(playerName), pcn: playerName, cn: cityName, oth: oath,
+    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,
   });
 }
+
+/** MACRO-ONE: an EMPTY name or city is an unknown one - null, so the
+ *  walk asks the world - never a blank printed into the sentence. */
+const known = (v) => (v == null || v === '' ? null : v);
 
 /** The Where-is ANSWER record's macro chain. TalkManager's
  *  ExpandRandomTextRecord (:3580-3587) runs the WHOLE MacroHelper over
@@ -101,10 +105,18 @@ export function expandAnswerRecord(raw, {
   // off the entity; these are the pre-chargen entity's values, for
   // callers with no identity in hand.
   honorific = honorificOf('male'), race = raceDisplayName('Breton'),
+  // MACRO-6: TalkManagerMCP's other answers a Where-is record carries.
+  // %hnt2 is DialogHint2, whose LocalBuilding arm is the SAME
+  // GetKeySubjectBuildingHint as %hnt (TalkManagerMCP.cs:103-122), and
+  // %fn/%mn are FemaleName/MaleName (:58-71) - 7269 and 7275-7294 carry
+  // them, and the host with no talk engine printed them raw. A function
+  // is called per occurrence, as C# calls the handler per macro.
+  femaleName = null, maleName = null,
 } = {}) {
   return expandMacroValues(raw, {
-    pcf: firstName(playerName), pcn: playerName, cn: cityName, oth: oath,
-    hnt: hint, key, hnr: honorific, ra: race,
+    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,
+    hnt: hint, hnt2: hint, key, hnr: honorific, ra: race,
+    fn: femaleName, fn2: femaleName, mn: maleName, mn2: maleName,
   });
 }
 

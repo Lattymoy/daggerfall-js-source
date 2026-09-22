@@ -72,6 +72,8 @@ test('X3 MACROS1: the guild window\'s every record goes through the guild\'s con
   assert.equal(expandGuildMacros('%fon', {}), '%fon', 'no faction: the token stands, as every unknown value does in this walk');
   const wm = rd('src/scenes/worldModes.js');
   const flow = wm.slice(wm.indexOf('const service = npcServiceKind(pn.factionID);'), wm.indexOf('let win = null;', wm.indexOf('const service = npcServiceKind(pn.factionID);')));
-  assert.match(flow, /const orderName = dict\?\.get\?\.\(guild\.factionId\)\?\.name \?\? null;\s*const rows = \(id\) => expandGuildRows\(townTalk\?\.lines\?\.\(id\) \?\? \[\], \{ playerName: playerEntity\.name, factionName: orderName \}\);/, 'the join flow\'s rows, through the guild\'s context');
+  // MACRO-4: the map grew into `guildMacros` (the rank, the deity, the revealed dungeon); the faction name is still %fon's
+  assert.match(flow, /const orderName = dict\?\.get\?\.\(guild\.factionId\)\?\.name \?\? null;[\s\S]{0,1200}?const guildMacros = \{\s*playerName: playerEntity\.name,\s*factionName: guild\?\.divine \?\? orderName,/, 'the guild\'s context names the player and the faction');
+  assert.match(flow, /const rows = \(id\) => expandGuildRows\(townTalk\?\.lines\?\.\(id\) \?\? \[\], guildMacros\);/, 'the join flow\'s rows, through the guild\'s context');
   assert.doesNotMatch(flow, /const rows = \(id\) => townTalk\?\.lines\?\.\(id\) \?\? \[\];/, 'and its verbatim wiring is gone');
 });
