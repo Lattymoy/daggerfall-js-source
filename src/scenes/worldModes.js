@@ -78,7 +78,7 @@ import { pressed, released, pressedCode, routeKey, routeKeyUp, actionOf, held, m
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { createActivateGate, activateFrame } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
-import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
+import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/footsteps.js';   // FS-slice; AUDIT DROPS E2: the kind the pose carries
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog + WeatherManager.DungeonFogSettings
@@ -300,6 +300,8 @@ const NO_INDIRECT_COLOR = new Float32Array(3);
 
 export function createWorldModes(host) {
   const _footsteps = new FootstepMachine();   // FS-slice: the modal stride (interior wood / dungeon stone + water)
+  let _fsCtx = null;              // AUDIT DROPS E2: the stride's last ctx (built inline at the pickFootstepSet call)
+  let _modeFootstepKind = 0;      // AUDIT DROPS E2: ...and its kind, for the pose (`footstepKind` below)
   // AUDIT 18: the interior host's share of the player world clock.
   //
   // AUDIT 21 (hosts lane, F3): onLevelUp, through this host's own overlay
@@ -5846,7 +5848,9 @@ export function createWorldModes(host) {
           partyMembers: () => host.partyMembers?.() ?? [],
           shareQuest: (uid, questName, displayName) => host.shareQuest?.(uid, questName, displayName),
           // PEER-PLAQUE1: the plaque's peer pick, delegated the same way - the dungeon's own eye, the outer host's peers
-          peerHoverPick: (eye, dir) => host.peerHoverPick?.(eye, dir) ?? null,
+          peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye
+          partyRestGate: () => host.partyRestGate?.() ?? null,   // PARTY-REST2 (AUDIT DROPS D1): the dungeon's rest asks the party too
+          pointerSurfaceUp: () => !!host.pointerSurfaceUp?.(),   // AUDIT DROPS E1: the plaque comes down under a pointer surface
           // D-ONLINE1: the dungeon death screen's own door - see
           // dungeonContext.js's DeathScreen construction. Delegates to
           // the outer host exactly as dungeonOnline/useMagicItem do;
@@ -5965,7 +5969,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6166), so the OUTER host's one rides in.
+          // (dungeonContext.js:6169), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:740 -> the
@@ -6599,7 +6603,7 @@ export function createWorldModes(host) {
           // keeps the paralysed player silent - the hosts zero both axes.
           standingStill: player.standing,
           halfSpeed: player.movingLessThanHalfSpeed,
-        }, pickFootstepSet(mode === 'interior'
+        }, pickFootstepSet(_fsCtx = mode === 'interior'
           ? { inside: true, inBuilding: true }
           : { inside: true, inBuilding: false,
               dungeonSwimming: player.swimming,
@@ -6616,6 +6620,7 @@ export function createWorldModes(host) {
               // :127/:147-158, and that is None indoors -
               // PlayerMotor.cs:582-587 over :505-514.)
               dungeonShallow: _footsteps.waterStep(player.pos[1] + player.height / 2, _surf, player.swimming) }));
+        _modeFootstepKind = pickFootstepKind(_fsCtx);   // AUDIT DROPS E2: the SAME ctx the clip pair was picked from, as the kind the pose sends (world.js `arm`)
         if (_step) (mode === 'dungeon' ? dungeonCtx?.hitEffects : interiorHitEffects)?.footfall?.(player.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // BLOOD2d: a foot came down - treading in blood tracks it, on whichever pool this mode's marks are
         if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
         // IF1: ImmersiveFootstepsObject.FixedUpdate - inside: a building keeps the set the transition chose, a
@@ -7025,7 +7030,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:8276's own wave-46 note); the interior
+          // a blow (world.js:8277's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7257,7 +7262,7 @@ export function createWorldModes(host) {
           return raceWinner({
             ground: pickActivatableHit(mwv.eye, d, interiorActivationTargets(), interiorCtx.collider),
             foe: pickActivatableHit(mwv.eye, d, liveFoeTargets(interiorFoePool(), 'mobileFoe'), interiorCtx.collider),
-            peer: host.peerHoverPick?.(mwv.eye, d) ?? null,   // PEER-PLAQUE1: another player in the room, raced as the F key picks them
+            peer: host.peerHoverPick?.() ?? null,   // PEER-PLAQUE1: another player in the room, raced as the F key picks them - off the key's own ray (AUDIT DROPS E3)
           });
         },
         collider: interiorCtx.collider,
@@ -7267,7 +7272,7 @@ export function createWorldModes(host) {
         // the depth under the top (ROAD-B B1's `interiorWindows`). The
         // crosshair's own answer is `overlayHeld` - one union over the
         // stacks that can be live in this mode - so it is the plaque's.
-        cursorActive: overlayHeld,
+        cursorActive: overlayHeld || !!host.pointerSurfaceUp?.(),   // AUDIT DROPS E1: and under the F-menu / chat / friends panel, the street's own term - the plaque painted over the menu the player had just opened on the peer under the crosshair
         canvas,
         name: interiorHoverName,
         // AUDIT-WH2 L2-F5: C1's guard - a CONTENTS reader is handed
@@ -8401,6 +8406,10 @@ export function createWorldModes(host) {
         if (lines) mountInterior(new ActionTextBox(lines));
         return;
       }
+      // PARTY-REST2 (AUDIT DROPS D1): the party's own gate - everyone standing here must have typed /ready - which
+      // world.js hands in and the outdoor toggleRest already runs; the vote is spent by the gate itself
+      const partyRefusal = host.partyRestGate?.() ?? null;
+      if (partyRefusal) { mountInterior(new ActionTextBox([partyRefusal])); return; }
       mountInterior(new RestWindow(interiorRestDeps));
     },
   };
@@ -9325,6 +9334,16 @@ export function createWorldModes(host) {
      *  previousWindow chain instead of the pause latch - see
      *  `modeHudCovered`. The outer hosts OR this with townTalk's. */
     get hudCovered() { return modeHudCovered(); },
+    /** AUDIT DROPS E2: the surface underfoot in this mode, as PEER-FS1's kind - what the pose says peers hear. */
+    get footstepKind() { return _modeFootstepKind; },
+    /** PARTY-REST1 (AUDIT DROPS D1: the Trading drop shipped only world.js, which read this getter of a building
+     *  host that never had it - a leader resting in a tavern broadcast `rest: null` and nobody mirrored): the
+     *  building's own live rest, RESTING (not the wake box), never a mirror - composePartyPose's shape. */
+    get restState() {
+      const w = interiorOverlay;
+      return w?.isRestWindow && !w.isPartyRestMirror && w.session && w.state === 'resting'
+        ? { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours } : null;
+    },
     /** AUDIT 58 (f3/input): the mode machine's own "a window I draw is
      *  up" read, published so the HOST's single bindCursorToggle can OR
      *  it into its guard. One reader of Actions.ActivateCursor per host
@@ -9431,7 +9450,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3169-3191), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5523). So an F9 pressed in a shop
+     *  unconditionally (world.js:5524). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9458,7 +9477,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5615)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5616)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9468,8 +9487,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5760`
-     *  and `dungeonContext.js:6175` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5761`
+     *  and `dungeonContext.js:6178` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

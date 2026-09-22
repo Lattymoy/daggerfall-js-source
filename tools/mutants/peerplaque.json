@@ -94,8 +94,8 @@
   {
     "name": "PEER-PLAQUE1-friendship-before-the-seat",
     "file": "src/player/socialPick.js",
-    "old": "  if (acts.whyNotInvite === 'in your party') return 'In your party';\n  if (acts.relation === 'friend') return 'Friend';",
-    "new": "  if (acts.relation === 'friend') return 'Friend';\n  if (acts.whyNotInvite === 'in your party') return 'In your party';",
+    "old": "  if (acts.whyNotInvite === WHY_IN_PARTY) return 'In your party';\n  if (acts.relation === 'friend') return 'Friend';",
+    "new": "  if (acts.relation === 'friend') return 'Friend';\n  if (acts.whyNotInvite === WHY_IN_PARTY) return 'In your party';",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -166,7 +166,7 @@
   {
     "name": "PEER-PLAQUE1-modal-doors-dropped",
     "file": "src/scenes/world.js",
-    "old": "    peerHoverPick: (eye, dir) => _hoverPeerPick(eye, dir),\n    peerHoverName: (key) => peerHoverName(key),\n",
+    "old": "    peerHoverPick: () => _hoverPeerPick(cam.pos, socialFwd()),\n    peerHoverName: (key) => peerHoverName(key),\n",
     "new": "",
     "tests": [
       "test/peerplaque.test.js"
@@ -175,7 +175,7 @@
   {
     "name": "PEER-PLAQUE1-building-pick-dropped",
     "file": "src/scenes/worldModes.js",
-    "old": "            peer: host.peerHoverPick?.(mwv.eye, d) ?? null,   // PEER-PLAQUE1: another player in the room, raced as the F key picks them\n",
+    "old": "            peer: host.peerHoverPick?.() ?? null,   // PEER-PLAQUE1: another player in the room, raced as the F key picks them - off the key's own ray (AUDIT DROPS E3)\n",
     "new": "",
     "tests": [
       "test/peerplaque.test.js"
@@ -193,7 +193,7 @@
   {
     "name": "PEER-PLAQUE1-dungeon-pick-not-delegated",
     "file": "src/scenes/worldModes.js",
-    "old": "          peerHoverPick: (eye, dir) => host.peerHoverPick?.(eye, dir) ?? null,\n",
+    "old": "          peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye\n",
     "new": "",
     "tests": [
       "test/peerplaque.test.js"
@@ -211,10 +211,48 @@
   {
     "name": "PEER-PLAQUE1-dungeon-pick-dropped",
     "file": "src/scenes/dungeonContext.js",
-    "old": "          peer: opts.peerHoverPick?.(eye, d) ?? null,   // PEER-PLAQUE1: another player underground, raced as the F key picks them\n",
+    "old": "          peer: opts.peerHoverPick?.() ?? null,   // PEER-PLAQUE1: another player underground, raced as the F key picks them - off the key's own ray (AUDIT DROPS E3)\n",
     "new": "",
     "tests": [
       "test/peerplaque.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-DROPS-E3-modal-pick-off-the-modes-eye",
+    "file": "src/scenes/world.js",
+    "old": "    peerHoverPick: () => _hoverPeerPick(cam.pos, socialFwd()),",
+    "new": "    peerHoverPick: (eye, dir) => _hoverPeerPick(eye ?? cam.pos, dir ?? socialFwd()),",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DROPS-E1-plaque-over-the-menu-indoors",
+    "file": "src/scenes/worldModes.js",
+    "old": "        cursorActive: overlayHeld || !!host.pointerSurfaceUp?.(),",
+    "new": "        cursorActive: overlayHeld,",
+    "tests": [
+      "test/peerplaque.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DROPS-E1-plaque-over-the-menu-underground",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      cursorActive: dungeonPaused() || !!opts.pointerSurfaceUp?.(),",
+    "new": "      cursorActive: dungeonPaused(),",
+    "tests": [
+      "test/peerplaque.test.js",
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DROPS-lens3-the-press-races-the-peer",
+    "file": "src/player/activationRace.js",
+    "old": "export function raceWinner({",
+    "new": "export function raceWinner({ peer: _peerUnused, ...rest } = {}) { return raceWinnerInner(rest); }\nfunction raceWinnerInner({",
+    "tests": [
+      "test/peerplaque.test.js"
+    ],
+    "equivalent": false
   }
 ]

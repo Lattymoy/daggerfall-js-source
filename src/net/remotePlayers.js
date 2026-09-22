@@ -37,6 +37,7 @@ import { ENEMY_BASICS, ENEMY_NAMES } from '../characters/enemyBasics.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { getPref } from '../systems/uiPrefs.js';   // 2026-09-17: the 'peerClassSprites' on/off, read once a sync (Other players, enhancedMenu.js peerSpritesCard)
 import { CLASS_CAREERS } from '../systems/chargen.js';   // 2026-09-17 (bugfix): a stock class's CFG-loaded career carries no `.name` of its own - chargenSession.js's own class list already falls back to this array by careerIndex (`cf.career.name || CLASS_CAREERS[i]`), and composeLook needs the same fallback or every stock-class peer sends class:null
+import { EQUIP_SLOTS } from '../characters/paperdoll.js';   // AUDIT DROPS E6: the hand a swing sound is read off
 import { FootstepMachine, FOOTSTEP_CLIP_SETS } from '../systems/footsteps.js';   // PEER-FS1: peer footsteps off the pose's own `fk`
 import { swingSoundFor } from '../systems/soundClips.js';   // PEER-FS2: a peer's own swing sound, off the pose's `an` edge and their equipped weapon
 
@@ -605,8 +606,10 @@ export class RemotePlayers {
     // 2026-09-17: read once a sync, not once a peer - the pref does not change mid-frame, and a card's toggle takes
     // effect on the very next sync either way (this loop runs every frame; there is nothing to miss by not reading it fresher).
     const spritesOn = getPref('peerClassSprites');
+    const seen = new Set();   // AUDIT DROPS E4: EVERY peer this sync met, body peers included - the two sound maps are swept against it, not against `live` (which a body peer never joins)
     for (const peer of peers) {
       if (!peer?.shown) continue;
+      seen.add(peer.id);
       this._syncFootsteps(peer, toScene, eye);
       this._syncAttackSound(peer, toScene, eye);
       // MWBODY1: a peer standing in a Morrowind body (net/peerBodies.js) draws no doll/mobile; its name still rides this pass, at the body's own head
@@ -642,6 +645,11 @@ export class RemotePlayers {
       this._footsteps?.delete(id);   // PEER-FS1: a departed peer's stride machine goes with everything else
       this._attackAn?.delete(id);   // PEER-FS2: and their swing-edge tracker
     }
+    // AUDIT DROPS E4: a peer drawn as a Morrowind BODY holds no batch, so the sweep above never reached their
+    // stride machine or their swing edge - the entries stayed for the life of the session (SLAM4's class), and a
+    // stale `an` played a phantom swing when that peer came back
+    for (const id of this._footsteps.keys()) if (!seen.has(id)) this._footsteps.delete(id);
+    for (const id of this._attackAn.keys()) if (!seen.has(id)) this._attackAn.delete(id);
   }
 
   /** PEER-FS1 (Mac, 2026-09-18: "footstep sounds depending where they walk
@@ -662,7 +670,9 @@ export class RemotePlayers {
     const shown = peer.shown;
     const f = toScene(shown);
     const set = FOOTSTEP_CLIP_SETS[shown.fk ?? 0] ?? FOOTSTEP_CLIP_SETS[0];
-    const step = fm.update(f, { grounded: true, swimming: false, levitating: false, onFoot: true, standingStill: !shown.mv, halfSpeed: false }, set);
+    // AUDIT DROPS E5: the stride is measured in the WIRE's frame (the pose's own x/z), which never recentres - fed
+    // the scene point, a floating-origin shift (819.2 units) counted as a stride and fired one step at full volume
+    const step = fm.update([shown.x, shown.y, shown.z], { grounded: true, swimming: false, levitating: false, onFoot: true, standingStill: !shown.mv, halfSpeed: false }, set);
     if (!step) return;
     const hasEye = eye && eye.length === 3;
     const dist = hasEye ? Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]) : 0;
@@ -693,7 +703,9 @@ export class RemotePlayers {
     const FALLOFF_START = 6, FALLOFF_END = 30;
     const falloff = dist <= FALLOFF_START ? 1 : dist >= FALLOFF_END ? 0 : 1 - (dist - FALLOFF_START) / (FALLOFF_END - FALLOFF_START);
     if (falloff <= 0) return;
-    const weapon = (peer.look?.items ?? []).find((it) => it?.group === 'Weapons') ?? null;
+    // AUDIT DROPS E6: the weapon IN HAND (the look's right-hand slot), and none at all while the pose says sheathed
+    // (`wd` 0 - a fist swings as a fist), not the first weapon anywhere in the look
+    const weapon = peer.shown.wd ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === EQUIP_SLOTS.RightHand) ?? null) : null;
     this.deps.audio.playOneShot(swingSoundFor(weapon), 1.1 * falloff);
   }
 

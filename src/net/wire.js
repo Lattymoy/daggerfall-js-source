@@ -494,7 +494,10 @@ export const partyInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_IN_
  *  their own throttled rate); QUEST_IN_MIN_MS is the matching per-frame spacing. */
 export const QUEST_IN_HZ_MAX = QUEST_HZ_MAX * (PARTY_MAX - 1);
 export const QUEST_IN_MIN_MS = QUEST_SEND_MS / (PARTY_MAX - 1);
-export const questInGate = (at, nowMs) => (at != null && nowMs - at < QUEST_IN_MIN_MS ? { at, pass: false } : { at: nowMs, pass: true });
+/** AUDIT DROPS C2: keyed PER SENDER (account) at home, not per room - two members sharing within QUEST_IN_MIN_MS
+ *  of each other lost the second share to a per-room cooldown the honest hub was said never to trip. Each sender
+ *  is held to half their own floor (QUEST_HUB_MIN_MS), the same rule the hub applies. */
+export const questInGate = (at, nowMs) => (at != null && nowMs - at < QUEST_HUB_MIN_MS ? { at, pass: false } : { at: nowMs, pass: true });
 
 /** AUDIT SOC B20: the widest frame an honest relay sends a client - a welcome carrying a room's memory (WORLD_FRAME_MAX)
  *  and a full roster of hellos (ROSTER_MAX looks, each under the hello's own MAX_FRAME_BYTES). Past it a frame is
@@ -831,7 +834,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world91';   // QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world92';   // AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1247,7 +1250,11 @@ export const partyGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_HZ_MA
  *  refused EVERY quest share, forever, no matter how long the wait. Fixed with a plain cooldown instead of a token
  *  bucket - `at` is the timestamp of the last PASS, not a token count: pass once, then refuse until QUEST_SEND_MS
  *  has actually elapsed since. */
-export const questShareGate = (at, nowMs) => (at != null && nowMs - at < QUEST_SEND_MS ? { at, pass: false } : { at: nowMs, pass: true });
+/** AUDIT DROPS C1: the hub's own cooldown on one socket's shares - HALF the client's floor (the PARTY_SEND_MS /
+ *  partyGate rule: a gate at exactly the client's rate drops the honest client's frame on clock skew - a share at
+ *  +9990 ms by the relay's clock was dropped while the client said "Shared"). */
+export const QUEST_HUB_MIN_MS = QUEST_SEND_MS / 2;
+export const questShareGate = (at, nowMs) => (at != null && nowMs - at < QUEST_HUB_MIN_MS ? { at, pass: false } : { at: nowMs, pass: true });
 
 /** CHAT-G (2026-09-17): THE THIRD SIDE, which nothing counted.
  *
@@ -1631,6 +1638,11 @@ export const TRADE_ITEMS_MAX = 16;
 export const TRADE_GOLD_MAX = 1_000_000_000;
 /** The widest trade frame - the grant's own bound (scenes/exteriorFoes.js GRANT_FRAME_MAX), under MAX_FRAME_BYTES. */
 export const TRADE_FRAME_MAX = 12 * 1024;
+/** AUDIT DROPS B4: the widest trade DATA - the frame's cap less the wrapper the frame and the relay's fan-out put
+ *  around it (`{"t":"trade","id":"<16>","data":` and `}`, under 64 bytes). validTradeData bounded the DATA at the
+ *  FRAME's cap, so an honest offer of sixteen heavy items could pass at home and be refused at the relay's door as
+ *  'frame too large' - which CLOSES the socket. What passes here now fits parseClient at the relay by construction. */
+export const TRADE_DATA_MAX = TRADE_FRAME_MAX - 64;
 /** The most trade frames a socket may send a second, and the most one socket is sent (the destination's funnel). */
 export const TRADE_HZ_MAX = 8;
 export const TRADE_ROOM_HZ_MAX = 32;
@@ -1692,7 +1704,7 @@ export function validTradeData(d) {
     }
     default: return null;
   }
-  if (JSON.stringify(out).length > TRADE_FRAME_MAX) return null;
+  if (JSON.stringify(out).length > TRADE_DATA_MAX) return null;   // AUDIT DROPS B4: the data's own cap, so the whole frame fits the relay's
   return out;
 }
 

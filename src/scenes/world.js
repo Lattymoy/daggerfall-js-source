@@ -3562,7 +3562,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2389 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5504
+  // that context through modes.dungeonCtx - so worldModes.js:5506
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4166,10 +4166,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!quest) { _questSyncSeen.delete(questName); continue; }
       const count = quest.getLogMessages()?.length ?? 0;
       const seen = _questSyncSeen.get(questName);
-      _questSyncSeen.set(questName, count);
-      if (seen === undefined || count === seen) continue;   // first sight: baseline only; unchanged: nothing to resync
+      if (seen === undefined) { _questSyncSeen.set(questName, count); continue; }   // first sight: baseline only
+      if (count === seen) continue;   // unchanged: nothing to resync
       const prepared = prepareQuestShare(machine, quest.uid);
-      if (prepared.ok) socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: prepared.data });
+      // AUDIT DROPS C1: `seen` moves only when the share LEFT - one refused by the client's own floor (QUEST_SEND_MS)
+      // is tried again next tick instead of being forgotten
+      if (prepared.ok && socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: prepared.data })) _questSyncSeen.set(questName, count);
     }
   };
   const shareQuestWithParty = (uid, questName, displayName) => {
@@ -4374,9 +4376,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // party members are ready the leader can't rest"): shared with
     // worldModes.js's interior and dungeonContext.js's dungeon - see
     // partyRestGate's own doc comment.
-    const partyRefusal = partyRestGate();
+    const partyRefusal = modes ? partyRestGate() : null;   // AUDIT DROPS D5: `modes` is a var assigned after this handler is live - before it, no party can exist (audit24 wave37's law)
     if (partyRefusal) { townTalk.showOverlay(new ActionTextBox([partyRefusal])); return; }
-    _partyRestReady = false;   // PARTY-REST2: spent the moment it is acted on - next nap asks again
     townTalk.showOverlay(new RestWindow(outdoorRestDeps));
   };
   const arrows = new ArrowFlight({ getGpuMesh, collider: () => collider, effects: hitEffects });   // C13   // FIELD-GUN14: the orb's flat rides the host's own one-shot pool, which this frame already draws
@@ -5523,7 +5524,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6146), so exterior mode and a
+    // composer, dungeonContext.js:6149), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7441,7 +7442,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8530-8594 -
+  // worldModes answers it in BOTH modes (worldModes.js:8539-8603 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8989,7 +8990,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // temples, windmills and the like, same as any building door).
       onSend: (tabId, text) => {
         if (/^\/unstuck$/i.test(text.trim())) {
-          const moved = modes?.unstuck?.();
+          const moved = modes?.unstuck?.();   // AUDIT 24 wave37: guarded on the OBJECT - `modes` is a `var` assigned further down, so a line typed before the mode machine exists reads `undefined`, never throws
           chatLog.push(tabId, {
             text: moved ? 'You find your way back outside.' : 'There is nowhere to send you from out here.',
             system: true,
@@ -9253,7 +9254,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // reads back as somebody else's leader).
     const restWin = mode === 'interior' ? modes?.restState
       : mode === 'dungeon' ? modes?.dungeonCtx?.restState
-        : (townTalk.overlay?.isRestWindow && !townTalk.overlay.isPartyRestMirror && townTalk.overlay.session
+        : (townTalk.overlay?.isRestWindow && !townTalk.overlay.isPartyRestMirror && townTalk.overlay.session && townTalk.overlay.state === 'resting'   // AUDIT DROPS D2: not while the wake box is up - a follower whose mirror had ended reopened it every frame with 0 h left
           ? { mode: townTalk.overlay.mode, hoursRemaining: townTalk.overlay.session.hoursRemaining, totalHours: townTalk.overlay.session.totalHours }
           : null);
     return {
@@ -9359,13 +9360,16 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the latch re-arms only when that rest has ENDED or I have come near (then the mirror opens instead) - so a
    *  follower across town is told once per nap, never sixty times a second, and a follower who walks out of the
    *  circle mid-nap is told the moment their mirror ends. The leader's name is the pose row's own (SocialRow.name). */
-  const PARTY_REST_FAR_TEXT = (who) => `${who} is resting - come within ${PARTY_REST_RADIUS} m of them to rest with the party.`;
+  const PARTY_REST_FAR_TEXT = (who, loitering = false) => `${who} is ${loitering ? 'loitering' : 'resting'} - come within ${PARTY_REST_RADIUS} m of them to ${loitering ? 'wait' : 'rest'} with the party.`;   // AUDIT DROPS D3: a loiter (mode 0) is not a rest
+  const PARTY_REST_FAR_SECONDS = 4;   // AUDIT DROPS D3: the label's default 1.5 s is a refusal's; a notice about somebody else stays long enough to be read
   let _partyRestFarSaid = false;
+  let _partyRestMirrored = false;   // AUDIT DROPS D2: a mirror stood on the last frame
+  let _partyRestDeclined = false;   // AUDIT DROPS D2: ...and was closed while the leader still rested - no reopen this nap
   const partyRestFarNotice = (leaderRest, near, leaderRow) => {
     if (!leaderRest || near) { _partyRestFarSaid = false; return; }
     if (_partyRestFarSaid) return;
     _partyRestFarSaid = true;
-    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader'));
+    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader', leaderRest.mode === 0), PARTY_REST_FAR_SECONDS);
   };
   /** PARTY-REST2 (2026-09-20, per-request, then extended: "when a member wants to rest can this also initiate a
    *  rest vote... but only when the member is near the leader"): null when I may proceed straight to the real
@@ -9378,6 +9382,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  while the leader naps in a tavern - is never touched by this at all: their own Rest key still opens their
    *  own real rest exactly as it always could. */
   const partyRestGate = () => {
+    const refusal = partyRestRefusal();
+    if (!refusal) _partyRestReady = false;   // PARTY-REST2: spent the moment a rest is allowed to begin - next nap asks again (AUDIT DROPS D1: here, so the building's and the dungeon's rest spend it too)
+    return refusal;
+  };
+  const partyRestRefusal = () => {
     if (!social?.party) return null;
     const nearHere = nearPartyMembers();
     const leaderIsHere = social.leads() || nearHere.some((m) => m.acct === social.party.leader);
@@ -9404,14 +9413,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       return;
     }
     const leaderRow = social.party.members.find((m) => m.acct === social.party.leader);
-    const leaderRest = leaderRow?.p?.rest ?? null;
+    // AUDIT DROPS D3: a leader who went OFFLINE mid-nap leaves `rest` on their seat row until they pose again - an
+    // offline leader rests nobody
+    const leaderRest = leaderRow?.online === false ? null : (leaderRow?.p?.rest ?? null);
     const near = nearAccount(social.party.leader, leaderRow?.p);
-    partyRestFarNotice(leaderRest, near, leaderRow);   // PARTY-REST4: told once when the leader naps out of my reach - before the mirror below reads `near`
+    if (!leaderRest) _partyRestDeclined = false;   // the nap is over: the next one may be mirrored again
+    const dead = playerEntity.health <= 0 || !!modes?.deathUp?.();
+    if (!dead) partyRestFarNotice(leaderRest, near, leaderRow);   // PARTY-REST4: told once when the leader naps out of my reach - before the mirror below reads `near`; AUDIT DROPS D3: not while the HUD is down for a death
     if (mirroring) {
+      _partyRestMirrored = true;
       if (!leaderRest || !near) ov._end(ov.session.endEarly());   // endEarly still banks whatever hours already passed - the same door Escape uses
       return;
     }
-    if (!leaderRest || !near) return;
+    // AUDIT DROPS D2: a mirror that CLOSED while the leader still rests (Escape, Stop, the wake box) is declined for
+    // the rest of that nap - it used to reopen the next frame, again and again, until the leader's own box closed
+    if (_partyRestMirrored) { _partyRestMirrored = false; if (leaderRest) _partyRestDeclined = true; }
+    if (!leaderRest || !near || _partyRestDeclined) return;
     // Never steal a screen that is doing something else, and never double up on a rest that is already real.
     if (townTalk.overlayActive || playerEntity.isResting || playerEntity.isLoitering || playerEntity.health <= 0) return;
     const win = new RestWindow(partyRestMirrorDeps());   // PARTY-REST1: the SAME window class toggleRest opens, over the mirror's deps - not a twin, the one window under a follower's deps
@@ -9586,13 +9603,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     const prompt = social ? peerPromptText({ ...social.actionsFor(id), ...tradeActionsFor(id) }, interactKeyLabel()) : null;
     return { title: marks ? `${name} ${marks}` : name, subs: prompt ? [prompt] : [] };
   };
+  /** SOC5's own forward - the camera's yaw and pitch, the ray the F key casts; PEER-PLAQUE1's modal pick casts the same one (AUDIT DROPS E3). */
+  const socialFwd = () => [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
   const socialInteract = () => {
     if (!social) return false;
     if (socialMenu?.isOpen()) { socialMenu.hide(); return true; }
     const near = peersNear();
     // TI1's reading, minus the tap: the F-menu is a keyboard gesture and has no touch ray of its own.
-    const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-    const hit = pickPeerInFront(cam.pos, fwd, near, SOCIAL_REACH, rayPersonDistance);
+    const hit = pickPeerInFront(cam.pos, socialFwd(), near, SOCIAL_REACH, rayPersonDistance);
     if (!hit) { socialPanel?.toggle?.(); return true; }   // SOC3 owns `socialPanel`; until it lands this is a no-op that still consumes the key
     return socialMenu?.show({ name: peerName(hit.peer.id) ?? 'Someone', peerId: hit.peer.id, actions: { ...social.actionsFor(hit.peer.id), ...tradeActionsFor(hit.peer.id) } }) === true;
   };
@@ -9669,7 +9687,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const wm = rig.playerWeapon.machine;
     const arm = {
       mv,
-      fk: _lastFootstepKind,   // PEER-FS1: what peers should hear underfoot - see the cache's own header
+      fk: (modes?.mode ?? 'exterior') === 'exterior' ? _lastFootstepKind : (modes?.footstepKind ?? 0),   // PEER-FS1: what peers should hear underfoot - see the cache's own header; AUDIT DROPS E2: indoors and underground the MODE's stride answers (wood, stone, the water arms), not the last outdoor surface
       wd: rig.playerWeapon.sheathed ? 0 : (wm?.isBow && wm.state === 'StrikeUp' ? 2 : 1),
       an: rig.swing.n, as: Math.max(0, POSE_STRIKES.indexOf(rig.swing.strike)),
       am: hasDaggerfallArrows(playerEntity.items) ? 1 : 0, sr: (live ? live.armed : magic.spellArmed()) ? 1 : 0,
@@ -9777,8 +9795,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawPeerBodies: ({ proj, view, eye }) => drawPeerBodies(proj, view, eye),   // MWBODY1: the others' bodies, after the player's own
     // PEER-PLAQUE1: the plaque names another player in a building and underground too - the SAME pick and the SAME
     // words the street uses, over the mode's own eye (peersNear's feet are in whichever scene stands, onlineToScene)
-    peerHoverPick: (eye, dir) => _hoverPeerPick(eye, dir),
+    // AUDIT DROPS E3: the plaque's peer pick is the F KEY's OWN RAY in every mode (`cam.pos` and the same forward
+    // socialInteract casts), not the mode's eye - in third person the two differ, and the law is "never name a
+    // player the key would not reach"
+    peerHoverPick: () => _hoverPeerPick(cam.pos, socialFwd()),
     peerHoverName: (key) => peerHoverName(key),
+    pointerSurfaceUp: () => pointerSurfaces.size > 0,   // AUDIT DROPS E1: the plaque comes down under the F-menu, the chat and the friends panel indoors and underground too (AUDIT-WH2 L3-F3's law, the street's own term)
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
     onInteriorLeave: () => worldPublish(performance.now(), true),   // WORLD6a: and a building's while the building still stands
     onFoeHit: (hit, fate) => hitSend(hit, fate),   // WORLD2: a blow on a puppet goes to the host; AUDIT FOES FOE2: through the pending set, so a refused blow heals; LOOT-DUP: with the frame's own fate

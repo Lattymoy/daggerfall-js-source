@@ -128,6 +128,13 @@ export function prepareQuestShare(machine, uid) {
  *  has joined the right guild always passes; a receiver who has not
  *  always fails - the one direction that must never be wrong. */
 export function canReceiveSharedQuest(machine, questLists, questName, { memberships = {} } = {}) {
+  // AUDIT DROPS A2: a quest this player already FINISHED under a share is never received again this session -
+  // a fresh receipt rebuilds it from the sender's envelope and "counts as advance" would pay every completed
+  // GivePc/TrainPc a second time. (The tombstone only lives a week; the memory of having been paid outlives it.)
+  if (machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };
+  // AUDIT DROPS A1: the main quest is refused on RECEIPT as well as on send - the sender's own gate is the sender's
+  // client, and a hand-built envelope is not bound by it.
+  if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };
   if (machine.hasActiveQuestNamed(questName)) {
     // QUEST1 LIVE SYNC: a resync of a quest ALREADY kept in sync with the
     // party (shared out earlier, or received before) updates the existing
@@ -163,13 +170,66 @@ export function canReceiveSharedQuest(machine, questLists, questName, { membersh
 export function receiveSharedQuest(machine, questLists, questName, data, ctx = {}) {
   const check = canReceiveSharedQuest(machine, questLists, questName, ctx);
   if (!check.ok) return check;
+  // AUDIT DROPS A1: THE ENVELOPE IS NOT TRUSTED. The wire's `questName` gated the receipt above, but the quest is
+  // BUILT from `data` - so the two must agree, and the envelope's SHAPE (every task symbol and every action TYPE in
+  // order, every resource symbol and type) must be the receiver's OWN parse of that quest by name. Without this a
+  // party member's hand-built envelope could put any GivePc, TeleportPc or global-var link on the receiver's
+  // machine. The receiver's parse also supplies the ITEM resources' items (`takeLocalItems`): a reward is the
+  // receiver's own roll, never a `daggerfallUnityItem` somebody typed.
+  if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };
+  const local = machine.parseQuestShape?.(questName, data.factionId) ?? null;
+  if (!local) return { ok: false, reason: 'unknown' };
+  const why = shapeMismatch(local, data);
+  if (why) return { ok: false, reason: 'mismatch' };
+  const safe = takeLocalItems(local, data);
   if (check.resync) {
-    const quest = machine.updateSharedQuest(questName, data);
+    const quest = machine.updateSharedQuest(questName, safe);
     return quest ? { ok: true, quest, resync: true } : { ok: false, reason: 'gone' };
   }
-  const quest = machine.receiveSharedQuest(data);
+  const quest = machine.receiveSharedQuest(safe);
+  if (!quest) return { ok: false, reason: 'mismatch' };
   if (check.meta?.quest?.oneTime) questLists.markOneTimeAccepted(questName);
   return { ok: true, quest };
+}
+
+/** AUDIT DROPS A1: does the envelope's SHAPE match `local` (a Quest the receiver parsed from its own source by
+ *  the same name)? Every task's symbol and its actions' types in order, and every resource's symbol and type -
+ *  answers a word for the first thing that differs, or null when they agree. Pure, so a test hands in both. */
+export function shapeMismatch(local, data) {
+  const ref = local.getSaveData();
+  const tasks = Array.isArray(data.tasks) ? data.tasks : null;
+  if (!tasks || tasks.length !== ref.tasks.length) return 'tasks';
+  for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i], r = ref.tasks[i];
+    if (!t || typeof t !== 'object' || t.symbol?.original !== r.symbol?.original) return 'task';
+    const acts = Array.isArray(t.actions) ? t.actions : null;
+    if (!acts || acts.length !== r.actions.length) return 'actions';
+    for (let j = 0; j < acts.length; j++) if (!acts[j] || acts[j].type !== r.actions[j].type) return 'action';
+  }
+  const res = Array.isArray(data.resources) ? data.resources : null;
+  if (!res || res.length !== ref.resources.length) return 'resources';
+  const want = new Map(ref.resources.map((r) => [r.symbol?.original, r.type]));
+  for (const r of res) {
+    if (!r || typeof r !== 'object' || !want.has(r.symbol?.original) || want.get(r.symbol?.original) !== r.type) return 'resource';
+  }
+  return null;
+}
+
+/** AUDIT DROPS A1: the envelope with every Item resource's ITEM replaced by the receiver's own parse's roll for
+ *  that symbol - the sender's flags (useClicked, actionWatching, playerDropped, madePermanent) stay, the object a
+ *  player would end up holding is never the sender's bytes. A copy; the envelope handed in is not touched. */
+export function takeLocalItems(local, data) {
+  const mine = new Map();
+  for (const r of local.resources.values()) if (r.resourceTypeName === 'Item') mine.set(r.symbol?.original, r);
+  return {
+    ...data,
+    resources: data.resources.map((r) => {
+      const own = r?.type === 'Item' ? mine.get(r.symbol?.original) : null;
+      if (!own) return r;
+      const item = own.daggerfallUnityItem ? structuredClone(own.daggerfallUnityItem) : null;
+      return { ...r, resourceSpecific: { ...(r.resourceSpecific ?? {}), artifact: !!own.artifact, item } };
+    }),
+  };
 }
 
 /** A short, player-facing word for a refusal's `reason` - the UI's
@@ -181,5 +241,7 @@ export const SHARE_REFUSAL_TEXT = Object.freeze({
   mainQuest: 'The main quest cannot be shared.',
   active: 'already has this quest.',
   done: 'has already done this quest.',
+  mismatch: 'received a quest that did not match its own copy.',   // AUDIT DROPS A1: the envelope is not the quest it names
+  unknown: 'does not know this quest.',   // AUDIT DROPS A1: no local source to check the envelope against
   guild: 'is not a member of the guild this quest requires.',
 });

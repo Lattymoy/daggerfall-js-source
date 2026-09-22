@@ -51,8 +51,8 @@
   {
     "name": "Z6-unshown-peer-wanted",
     "file": "src/net/remotePlayers.js",
-    "old": "      if (!peer?.shown) continue;\n      this._syncFootsteps(peer, toScene, eye);",
-    "new": "      if (!peer?.shown) { if (peer) this._wanted.add(lookKey(peer.look)); continue; }\n      this._syncFootsteps(peer, toScene, eye);",
+    "old": "      if (!peer?.shown) continue;\n      seen.add(peer.id);",
+    "new": "      if (!peer?.shown) { if (peer) this._wanted.add(lookKey(peer.look)); continue; }\n      seen.add(peer.id);",
     "tests": [
       "test/slam15.test.js"
     ]

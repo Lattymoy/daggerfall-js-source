@@ -85,16 +85,25 @@ test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and n
   assert.match(namer, /const marks = badge \? glyphMarks\(badge\) : '';/);
   assert.match(namer, /peerPromptText\(\{ \.\.\.social\.actionsFor\(id\), \.\.\.tradeActionsFor\(id\) \}, interactKeyLabel\(\)\)/, 'the F-menu\'s own bag, both halves');
   assert.match(namer, /return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, subs: prompt \? \[prompt\] : \[\] \};/);
-  assert.match(w, /peerHoverPick: \(eye, dir\) => _hoverPeerPick\(eye, dir\),\s*\n\s*peerHoverName: \(key\) => peerHoverName\(key\),/, 'the two doors the modal hosts reach');
+  assert.match(w, /peerHoverPick: \(\) => _hoverPeerPick\(cam\.pos, socialFwd\(\)\),\s*\n\s*peerHoverName: \(key\) => peerHoverName\(key\),/, 'the two doors the modal hosts reach - the pick off the F key\'s OWN ray (AUDIT DROPS E3), never the mode\'s eye');
+  assert.match(w, /const hit = pickPeerInFront\(cam\.pos, socialFwd\(\), near, SOCIAL_REACH, rayPersonDistance\);/, 'the same ray the key casts');
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /foe: pickActivatableHit\(mwv\.eye, d, liveFoeTargets\(interiorFoePool\(\), 'mobileFoe'\), interiorCtx\.collider\),\s*\n\s*peer: host\.peerHoverPick\?\.\(mwv\.eye, d\) \?\? null,/, 'the building races it over the mode\'s own eye');
+  assert.match(m, /foe: pickActivatableHit\(mwv\.eye, d, liveFoeTargets\(interiorFoePool\(\), 'mobileFoe'\), interiorCtx\.collider\),\s*\n\s*peer: host\.peerHoverPick\?\.\(\) \?\? null,/, 'the building races it off the key\'s own ray');
   const interiorNamer = m.slice(m.indexOf('const interiorHoverName = composeNamer(['), m.indexOf('if (!worldTooltipsOn()) return null;', m.indexOf('const interiorHoverName = composeNamer([')));
   assert.match(interiorNamer, /\(key\) => host\.peerHoverName\?\.\(key\) \?\? null,/, 'the building names it above the mod\'s switch');
-  assert.match(m, /shareQuest: \(uid, questName, displayName\) => host\.shareQuest\?\.\(uid, questName, displayName\),\s*\n(?:\s*\/\/[^\n]*\n)*\s*peerHoverPick: \(eye, dir\) => host\.peerHoverPick\?\.\(eye, dir\) \?\? null,/, 'the dungeon is handed the pick with the quest doors');
+  assert.match(m, /shareQuest: \(uid, questName, displayName\) => host\.shareQuest\?\.\(uid, questName, displayName\),\s*\n(?:\s*\/\/[^\n]*\n)*\s*peerHoverPick: \(\) => host\.peerHoverPick\?\.\(\) \?\? null,/, 'the dungeon is handed the pick with the quest doors');
   assert.match(m, /ctx\.addActivationNamer\(\(key\) => host\.peerHoverName\?\.\(key\) \?\? null\);/, 'the dungeon names it through the extension door the exit uses');
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /foe: pickActivatableHit\(eye, d, liveFoeTargets\(foes, 'mobileFoe'\), collider\),\s*\n\s*peer: opts\.peerHoverPick\?\.\(eye, d\) \?\? null,/, 'the dungeon races it over its own eye');
+  assert.match(d, /foe: pickActivatableHit\(eye, d, liveFoeTargets\(foes, 'mobileFoe'\), collider\),\s*\n\s*peer: opts\.peerHoverPick\?\.\(\) \?\? null,/, 'the dungeon races it off the key\'s own ray');
   const race = rd('src/player/activationRace.js');
   assert.match(race, /person = null, peer = null, foe = null,/);
+  // AUDIT DROPS (lens 3): "the press has no arm for it" - raceActivation, the PRESS's own race, passes no peer
+  const press = race.slice(race.indexOf('export function raceActivation('), race.indexOf('export function raceWinner('));
+  assert.ok(press.length > 0 && !/\bpeer\b/.test(press), 'the press races no peer: the F key is its own gesture');
+  // AUDIT DROPS E1: indoors and underground the plaque comes down under a pointer surface (the F-menu over the very peer it names)
+  assert.match(w, /pointerSurfaceUp: \(\) => pointerSurfaces\.size > 0,/);
+  assert.match(m, /cursorActive: overlayHeld \|\| !!host\.pointerSurfaceUp\?\.\(\),/);
+  assert.match(m, /pointerSurfaceUp: \(\) => !!host\.pointerSurfaceUp\?\.\(\),/);
+  assert.match(d, /cursorActive: dungeonPaused\(\) \|\| !!opts\.pointerSurfaceUp\?\.\(\),/);
   assert.match(race, /for \(const p of \[camp, water, wagon, torch, corpse, pile, ground, person, peer, foe\]\) \{/, 'between the townsperson and the foe');
 });

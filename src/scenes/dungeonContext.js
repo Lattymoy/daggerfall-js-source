@@ -1641,7 +1641,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8482 / exterior.js:3449), set
+  // host's own townTalk sink (world.js:8483 / exterior.js:3449), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2152,7 +2152,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1159,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1161,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2662,7 +2662,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6850 against :6874).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6855 against :6879).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3226,8 +3226,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:12162,
-              // exterior.js:4950 and worldModes.js:7050 already ran;
+              // playerArrowHitFoe is the one copy world.js:12184,
+              // exterior.js:4950 and worldModes.js:7055 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4771,7 +4771,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         return raceWinner({
           ground: pickActivatableHit(eye, d, api.dungeonActivationTargets(), collider),
           foe: pickActivatableHit(eye, d, liveFoeTargets(foes, 'mobileFoe'), collider),
-          peer: opts.peerHoverPick?.(eye, d) ?? null,   // PEER-PLAQUE1: another player underground, raced as the F key picks them
+          peer: opts.peerHoverPick?.() ?? null,   // PEER-PLAQUE1: another player underground, raced as the F key picks them - off the key's own ray (AUDIT DROPS E3)
         });
       },
       collider,
@@ -4785,7 +4785,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // beside `hideHudText`); this is the belt, and it is the CONTEXT's
       // own answer - a host with a window of its own over the dungeon
       // (townTalk's slot) hides it on its own branch.
-      cursorActive: dungeonPaused(),
+      cursorActive: dungeonPaused() || !!opts.pointerSurfaceUp?.(),   // AUDIT DROPS E1: and under the F-menu / chat / friends panel - the plaque painted over the menu
       contents: api.lootContents,
       name: api.hoverName,   // WORLD-HOVER: the mod's ladder, the port's own objects, then whatever the host stands
     });
@@ -6115,6 +6115,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (lines) activeOverlay = new ActionTextBox(lines);
         return;
       }
+      // PARTY-REST2 (AUDIT DROPS D1): the party's own gate, through the outer host's door - the twin of the building's
+      const partyRefusal = opts.partyRestGate?.() ?? null;
+      if (partyRefusal) { activeOverlay = new ActionTextBox([partyRefusal]); return; }
       activeOverlay = new RestWindow(_restDeps);
     },
     // P11: the current block's water surface (world y) - the swim
@@ -6416,6 +6419,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // painted. ROAD-tail: that is what the stack's own pause LATCH
     // answers, so the question is asked once, in `dungeonPaused`.
     get uiOverlayActive() { return dungeonPaused(); },
+    /** PARTY-REST1 (AUDIT DROPS D1): the dungeon's own live rest, RESTING, never a mirror - composePartyPose's shape (see worldModes' twin). */
+    get restState() {
+      const w = activeOverlay;
+      return w?.isRestWindow && !w.isPartyRestMirror && w.session && w.state === 'resting'
+        ? { mode: w.mode, hoursRemaining: w.session.hoursRemaining, totalHours: w.session.totalHours } : null;
+    },
     /** STATUS-LIVE: ...AND THE OTHER HALF OF THAT QUESTION, which the
      *  two hosts that DRAW this context's slot need and could not ask.
      *  A window the game is NOT stopped for (the status readout,

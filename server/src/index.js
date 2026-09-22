@@ -967,8 +967,11 @@ export class Room {
       this._setAttach(tws, { ...tb, tinbucket: funnel.bucket });
       if (!funnel.pass) return;
       const out = JSON.stringify({ t: 'trade', id: a.id, data: m.data });
-      const bytes = byteGate(this._roomTrade, now, out.length, TRADE_ROOM_BYTES_PER_S);
-      this._roomTrade = bytes.bucket;
+      // AUDIT DROPS B3: the byte budget is the SENDER's, not the room's - a room-wide bucket let two sockets at
+      // TRADE_HZ_MAX x TRADE_FRAME_MAX spend the whole room and drop an honest commit that had already cost its
+      // sender their goods (LOOT-DUP: sent means gone). Per sender, a flood only starves the flooder.
+      const bytes = byteGate(a.tbytes ?? null, now, out.length, TRADE_ROOM_BYTES_PER_S);
+      this._setAttach(ws, { ...a, tbytes: bytes.bucket });
       if (!bytes.pass) return;
       this._send(tws, out);
       return;
@@ -1052,12 +1055,14 @@ export class Room {
       // - meter again only if it did not, so a big quest-share never spends
       // two tokens for one message.
       if (doored !== 'quest') { a = this._meterQuest(ws, a, now); if (!a) return; }
-      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }
+      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }   // the hub alone, an account alone - the party arm's own law
+      // AUDIT DROPS C3: a share with nobody to reach (no party; another tab of mine speaks for the seat - AUDIT SOC
+      // B9) spends nothing of the room's budget
+      if (!a.party) return;
+      if (this._speaker(a.acct) !== ws) return;
       const budget = tokenGate(this._roomQuest, now, QUEST_ROOM_HZ_MAX);
       this._roomQuest = budget.bucket;
       if (!budget.pass) { this._sayError(ws, 'busy'); return; }
-      if (!a.party) return;
-      if (this._speaker(a.acct) !== ws) return;   // AUDIT SOC B9: another tab of mine speaks for the seat - kept, fanned to nobody
       let party = null;
       try { party = await this._livingParty(a.party, now); } catch (e) { console.warn('[hub] quest share failed', e?.message ?? e); return; }
       if (!party || !party.members.includes(a.acct)) { this._markParty(a.acct, null); return; }

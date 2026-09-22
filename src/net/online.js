@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, TRADE_IN_HZ_MAX, relaySupportsTrade } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -112,6 +112,8 @@ export { HEARTBEAT_MS, PING_MS };
  *  left, so a blip in either stands its peers as themselves. Past it the stalest is forgotten. */
 export const KNOWN_MAX = SOCKETS_MAX * 2;
 /** The relay this port hosts (server/wrangler.toml). */
+/** AUDIT DROPS B3: the most senders the inbound trade gate keeps a bucket for before it forgets them all - a room holds SOCKETS_MAX at most, so an honest map never reaches it. */
+const TRADE_IN_SENDERS_MAX = 64;
 export const DEFAULT_SERVER = 'wss://daggerfall-online.mackcothran.workers.dev';
 /** A peer silent this long is HIDDEN (out of range, or its socket is
  *  gone and the leave is on its way); only the room's leave removes it. */
@@ -280,7 +282,7 @@ export class OnlineSession {
     this.tradeOk = false;         // TRADE1: the relay that welcomed this socket routes trade frames (relaySupportsTrade) - an older one CLOSES the socket on the frame, so nothing is sent to it
     this.onTrade = null;          // TRADE1: (id, data) => void - a trade frame from a peer, projected by the wire's validTradeData, addressed to ME
     this._tbucket = null;         // TRADE1: the trade frames' own gate at home (TRADE_HZ_MAX)
-    this._inTradeBucket = null;   // TRADE1: and the gate on trade frames coming IN (a peer is chosen by the sender, so a flood is a peer's, never the relay's)
+    this._inTradeBuckets = new Map();   // TRADE1: and the gate on trade frames coming IN, per sender (AUDIT DROPS B3) - a peer is chosen by the sender, so a flood is a peer's, never the relay's
     this._inTradeSaid = false;
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
     this.onAct = null;            // WORLD3: (id, data) => void - a door, a lever or a platform moved by another in my room
@@ -534,7 +536,7 @@ export class OnlineSession {
     this._rooms.delete(room);
     this._inChat.delete(room);   // CHAT-G: a room let go takes its bucket with it, or a long session accumulates one per cell it ever walked through
     this._inSocial.delete(room); this._inNote.delete(room); this._inParty.delete(room);   // AUDIT SOC B3: and the hub's three
-    this._inQuest.delete(room);
+    for (const k of [...this._inQuest.keys()]) if (k.startsWith(`${room}|`)) this._inQuest.delete(k);   // AUDIT DROPS C2: keyed room|acct
     if (s) for (const id of s) if (!this._held(id)) this.peers.delete(id);
   }
   _openHalo(room, backoff = BACKOFF_MIN_MS) {
@@ -657,7 +659,7 @@ export class OnlineSession {
     const gate = tradeGate(this._tbucket, this._now());
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'trade', data: d });
-    if (s.length > MAX_FRAME_BYTES) return false;
+    if (s.length > TRADE_FRAME_MAX) return false;   // AUDIT DROPS B4: the relay's own door on a trade frame, not the general cap - over it the relay closes the socket
     try { ws.send(s); } catch { return false; }
     this._tbucket = gate.bucket; this.stats.sent++; this.stats.trades = (this.stats.trades ?? 0) + 1;
     return true;
@@ -1160,8 +1162,11 @@ export class OnlineSession {
       // never my own back, gated coming in (the sender chooses the peer, so an over-rate stream is dropped and said once),
       // projected by the wire's own law, and addressed to ME. The session applies it; nothing is read from it here.
       if (typeof m.id === 'string' && m.id !== this.id) {
-        const g = tradeInGate(this._inTradeBucket, now);
-        this._inTradeBucket = g.bucket;
+        // AUDIT DROPS B3: the inbound gate is PER SENDER - one bucket for every sender together let two flooders
+        // crowd out my partner's commit, whose goods were already gone (LOOT-DUP: sent means gone)
+        if (this._inTradeBuckets.size > TRADE_IN_SENDERS_MAX) this._inTradeBuckets.clear();
+        const g = tradeInGate(this._inTradeBuckets.get(m.id) ?? null, now);
+        this._inTradeBuckets.set(m.id, g.bucket);
         if (!g.pass) {
           if (!this._inTradeSaid) { this._inTradeSaid = true; console.warn(`[online] trade frames are arriving faster than ${TRADE_IN_HZ_MAX}/s - frames are being dropped.`); }
         } else {
@@ -1287,12 +1292,15 @@ export class OnlineSession {
     } else if (m.t === 'quest') {
       // QUEST1: a party member's shared quest, at QUEST_IN_MIN_MS's own cooldown per room - an honest hub, at most
       // PARTY_MAX-1 senders each throttled to QUEST_HZ_MAX, never trips it; a flood does.
-      const g = questInGate(this._inQuest.get(room), now);
-      this._inQuest.set(room, g.at);
-      if (!g.pass) { this.stats.questSharesDropped = (this.stats.questSharesDropped ?? 0) + 1; return; }
       // never my own account's back, same reasoning as the party pose above
       const f = validQuestFrame(m);
-      if (f && f.acct !== this.acct) this._deliver('quest', () => this.onQuestShared?.(f.acct, f.name, f.quest));
+      if (!f || f.acct === this.acct) return;
+      // AUDIT DROPS C2: the cooldown is the SENDER's (their account), so one member's share never costs another's
+      const qk = `${room}|${f.acct}`;
+      const g = questInGate(this._inQuest.get(qk), now);
+      this._inQuest.set(qk, g.at);
+      if (!g.pass) { this.stats.questSharesDropped = (this.stats.questSharesDropped ?? 0) + 1; return; }
+      this._deliver('quest', () => this.onQuestShared?.(f.acct, f.name, f.quest));
     } else if (m.t === 'error') {
       this.status = 'error'; this.error = String(m.m ?? 'relay error');
     }

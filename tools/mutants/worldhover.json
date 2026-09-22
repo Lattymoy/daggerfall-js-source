@@ -639,7 +639,7 @@
   {
     "name": "WORLD-HOVER-the-dungeon-states-no-cursorActive",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      cursorActive: dungeonPaused(),\n",
+    "old": "      cursorActive: dungeonPaused() || !!opts.pointerSurfaceUp?.(),",
     "new": "",
     "tests": [
       "test/worldhover.test.js"

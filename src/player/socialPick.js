@@ -28,6 +28,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players to stand in front of. Ledger A row (ONLINE).
 import { MOBILE_NPC_ACTIVATION_DISTANCE } from './activate.js';
+import { WHY_IN_PARTY } from '../net/social.js';   // AUDIT DROPS: the seat's reason, one home
 
 /** HOW NEAR "on their body" IS. PlayerActivate.cs:88 MobileNpcActivationDistance (256 * GlobalScale = 6.4) - the
  *  game's OWN reach for a person, the one scenes/townTalk.js refuses a conversation past ('You are too far away...').
@@ -130,7 +131,7 @@ export function peerPromptText(acts, keyLabel = '') {
   if (acts.canInvite) offers.push(PEER_ACT_LABELS.invite);
   if (acts.canTrade) offers.push(acts.tradeLabel || PEER_ACT_LABELS.trade);
   if (offers.length) return `${keyLabel ? `[${keyLabel}] ` : ''}${offers.join(' \u00b7 ')}`;
-  if (acts.whyNotInvite === 'in your party') return 'In your party';
+  if (acts.whyNotInvite === WHY_IN_PARTY) return 'In your party';
   if (acts.relation === 'friend') return 'Friend';
   return null;
 }

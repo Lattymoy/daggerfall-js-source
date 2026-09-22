@@ -387,7 +387,8 @@ test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation
   assert.match(w, /SOC3/, 'and SOC3 is named where its slot is used');
   // the ray is the ACTIVATION ray's own reading, and the cylinder is the port's one test
   assert.match(w, /const fwd = \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\), Math\.sin\(cam\.pitch\), Math\.cos\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)\];/, 'the same forward the activation site composes');
-  assert.match(w, /pickPeerInFront\(cam\.pos, fwd, near, SOCIAL_REACH, rayPersonDistance\)/, 'one law, one cylinder, the host\'s own camera');
+  assert.match(w, /pickPeerInFront\(cam\.pos, socialFwd\(\), near, SOCIAL_REACH, rayPersonDistance\)/, 'one law, one cylinder, the host\'s own camera');   // AUDIT DROPS E3: the forward is a named function now, shared with the plaque's modal pick
+  assert.match(w, /const socialFwd = \(\) => \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\), Math\.sin\(cam\.pitch\), Math\.cos\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)\];/, 'the ray read as the activation site reads it');
   assert.equal((w.match(/rayPersonDistance\(/g) ?? []).length, 1, 'the host still calls the cylinder in exactly one place - the other site hands it to raceActivation as a list');
   // the menu is built beside the picture, over the LIVE link, and its acts write a line
   assert.match(w, /socialMenu = createSocialMenu\(\{/);

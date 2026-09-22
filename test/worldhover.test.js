@@ -1639,7 +1639,7 @@ test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover sa
   assert.match(dj, /ctx\.hideHudText\?\.\(\); hideWorldPlaque\(\);/,
     'and so does the standalone ?dungeon door');
   // ...and the dungeon's own call finally carries a cursorActive.
-  assert.match(read('src/scenes/dungeonContext.js'), /cursorActive: dungeonPaused\(\),/,
+  assert.match(read('src/scenes/dungeonContext.js'), /cursorActive: dungeonPaused\(\) \|\| !!opts\.pointerSurfaceUp\?\.\(\),/,   // AUDIT DROPS E1: and the pointer surfaces
     'the belt: the context states it too, rather than relying on when it is called');
 
   // L2: the interior's is the CROSSHAIR's answer, not the top of one

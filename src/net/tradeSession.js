@@ -144,6 +144,10 @@ export class TradeSession {
    *  `{ ok, why }` - a refusal leaves the offer exactly as it was. */
   setOffer(entries, gold = 0) {
     if (this.phase !== 'open') return { ok: false, why: 'The trade is over.' };
+    // AUDIT DROPS B1: my Confirm FREEZES my offer. A change after it unlocked both sides at home but the peer, who
+    // may already have confirmed against the old revision and committed, then had their goods refused as "not
+    // valid" on my side while theirs were already gone - the one loss LOOT-DUP's law exists to forbid.
+    if (this.myConfirm) return { ok: false, why: 'You have confirmed - cancel the trade to change your offer.' };
     const list = Array.isArray(entries) ? entries : [];
     const g = Math.floor(Number(gold));
     if (!Number.isFinite(g) || g < 0) return { ok: false, why: 'That is not an amount of gold.' };
@@ -348,6 +352,10 @@ export class TradeSession {
   _finish(phase, text, { silent = false } = {}) {
     if (this.isOver) return;
     this.phase = phase;
+    // AUDIT DROPS B2: goods RESERVED but whose commit never left the socket come back whichever way the session
+    // ends - a forged commit arriving while mine was still queued used to filter my commit out of the outbox
+    // below without firing its `dropped` fate, and the reservation was neither sent nor restored.
+    if (this._handle && !this._sentCommit) { this.pack.restore(this._handle); this._handle = null; }
     this._outbox = this._outbox.filter((f) => f.data.k === 'cancel');
     if (text && !silent) this._say(text); else if (text) this.lastMessage = text;
     if (text) this.lastMessage = text;

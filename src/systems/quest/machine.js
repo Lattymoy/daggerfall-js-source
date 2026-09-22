@@ -314,6 +314,13 @@ export class QuestMachine {
     // updateSharedQuest's own gate so a resync can never overwrite a
     // quest the player got independently and never shared at all.
     this.sharedQuestNames = new Set();
+    // AUDIT DROPS A2: the shared quests this player FINISHED (tombstoned while in sharedQuestNames) - a later
+    // resync or a fresh receipt of the same name is refused, so a partner who is behind can neither drag a
+    // finished quest back into play nor pay its rewards a second time.
+    this.finishedSharedQuestNames = new Set();
+    // AUDIT DROPS A2: uid -> the `task:action` keys already re-armed once - a reward fires at most once per
+    // action for the life of the quest, whatever order the resyncs arrive in.
+    this._rearmed = new Map();
     this.actionTemplates = [];
     this.globalVars = new Map();      // link id -> bool
     this.siteLinks = [];              // QuestMachine.cs siteLinks - the world<->marker bridge (Q3-i)
@@ -1024,7 +1031,9 @@ export class QuestMachine {
         const key = `${t}:${a}`;
         const was = before ? (before.get(key) ?? false) : false;
         if (!was && action.isComplete && REPLAYABLE_ONE_TIME_ACTIONS.has(action.typeName)) {
-          action.isComplete = false;
+          let done = this._rearmed.get(quest.uid);
+          if (!done) { done = new Set(); this._rearmed.set(quest.uid, done); }
+          if (!done.has(key)) { done.add(key); action.isComplete = false; }   // AUDIT DROPS A2: once per action, ever
         }
         a++;
       }
@@ -1052,10 +1061,10 @@ export class QuestMachine {
    *  this quest has its final local UID, reaches the exact link a
    *  fresh accept would have made. */
   receiveSharedQuest(questData) {
-    const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
-    const quest = new Quest({ nowSeconds, actionFactory: this._actionFactory, hooks: this._buildHooks(), questClockStepMax: () => this.deps.questClockStepMax?.() ?? Infinity });
+    const quest = this._newQuest();
     const uid = nextUid();
-    quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());
+    // AUDIT DROPS A3: an envelope the restore chokes on is REFUSED (null), never half a quest on the live table
+    try { quest.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest refused: ${e?.message ?? e}`); return null; }
     this.quests.set(quest.uid, quest);
     for (const resource of quest.resources.values()) {
       if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
@@ -1101,15 +1110,48 @@ export class QuestMachine {
   updateSharedQuest(questName, questData) {
     const quest = [...this.quests.values()].find((q) => q.questName === questName);
     if (!quest) return null;
-    const before = this._snapshotActionCompletion(quest);
+    // AUDIT DROPS A2: a quest this player has FINISHED is never dragged back into play by a partner who is behind
+    if (quest.questComplete || quest.questTombstoned) return null;
+    // AUDIT DROPS A3: DRY RUN first - restoreSaveData clears as it goes, so an envelope it chokes on halfway
+    // (`{tasks: 7}`) left the LIVE quest with no resources and no tasks. A scratch Quest takes the fall instead.
+    const scratch = this._newQuest();
     const uid = quest.uid;
+    try { scratch.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest resync refused: ${e?.message ?? e}`); return null; }
+    const before = this._snapshotActionCompletion(quest);
     quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());
+    // AUDIT DROPS A2: completion is MONOTONIC - an action this player already saw complete never reads false
+    // again off a partner's older copy (it would run a second time, reward and all, when its task next ticked)
+    let t = 0;
+    for (const task of quest.tasks.values()) {
+      let a = 0;
+      for (const action of task.actions) { if (before.get(`${t}:${a}`) === true && !action.isComplete) action.isComplete = true; a++; }
+      t++;
+    }
     for (const resource of quest.resources.values()) {
       if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
     }
     this._rearmNewlyCompletedEffects(quest, before);
     return quest;
   }
+
+  /** QUEST1: a Quest with THIS machine's registry, clock, hooks and played step - the one door a shared quest is born
+   *  through (receiveSharedQuest) and the scratch a resync is dry-run on (updateSharedQuest, AUDIT DROPS A3). */
+  _newQuest() {
+    const nowSeconds = () => this.deps.nowSeconds?.() ?? 0;
+    return new Quest({ nowSeconds, actionFactory: this._actionFactory, hooks: this._buildHooks(), questClockStepMax: () => this.deps.questClockStepMax?.() ?? Infinity });
+  }
+
+  /** AUDIT DROPS A1: the receiver's OWN parse of a quest by name - the reference an incoming envelope's shape is
+   *  held against (systems/questShare.js shapeMismatch) and the source of its Item resources' items. Not
+   *  scheduled, not started; null when this machine has no source for the name or the parse fails. */
+  parseQuestShape(questName, factionId = 0) {
+    const lines = this.deps.getQuestSourceLines?.(questName);
+    if (!lines) return null;
+    return this.parseQuestForLists(lines, Number(factionId) || 0);
+  }
+
+  /** AUDIT DROPS A2: was a quest by this name finished (tombstoned) while kept in sync with the party? */
+  hasFinishedSharedQuestNamed(questName) { return this.finishedSharedQuestNames.has(questName); }
 
   /** The reflection stand-in: the resource registry and the ACTION
    *  registry keyed by each template's explicit typeName (built
@@ -1179,6 +1221,9 @@ export class QuestMachine {
   /** Dispose resources then task actions (Quest.cs Dispose order,
    *  AUDIT quest-P5), mark tombstoned (site-link scrub rides Q3). */
   tombstoneQuest(quest) {
+    // AUDIT DROPS A2: a finished shared quest leaves the live-sync set and is remembered as finished - see the
+    // constructor's own note on the two sets
+    if (this.sharedQuestNames.has(quest.questName)) { this.sharedQuestNames.delete(quest.questName); this.finishedSharedQuestNames.add(quest.questName); this._rearmed.delete(quest.uid); }
     for (const resource of quest.resources.values()) resource.dispose();
     for (const task of quest.tasks.values()) task.disposeActions();
     // RemoveAllQuestSiteLinks (QuestMachine.cs:1042-1048): a
@@ -1281,7 +1326,7 @@ export class QuestMachine {
    *  faction ("This effectively shuts down several named NPCs during
    *  main quest") - and TalkManager.cs does not contain the word
    *  Listener at all. The port already ships that reader, at
-   *  src/scenes/worldModes.js:2648. A pending marker over shipped work
+   *  src/scenes/worldModes.js:2650. A pending marker over shipped work
    *  is worse than no marker: it sends the next reader looking for
    *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {

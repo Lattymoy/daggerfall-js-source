@@ -1,0 +1,415 @@
+[
+  {
+    "name": "AD-A1-wire-name-not-checked",
+    "file": "src/systems/questShare.js",
+    "old": "  if (!data || typeof data !== 'object' || data.questName !== questName) return { ok: false, reason: 'mismatch' };",
+    "new": "  if (!data || typeof data !== 'object') return { ok: false, reason: 'mismatch' };",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A1-shape-not-checked",
+    "file": "src/systems/questShare.js",
+    "old": "  const why = shapeMismatch(local, data);\n  if (why) return { ok: false, reason: 'mismatch' };",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A1-no-local-source-accepted",
+    "file": "src/systems/questShare.js",
+    "old": "  if (!local) return { ok: false, reason: 'unknown' };",
+    "new": "  if (!local) return check.resync ? { ok: true, quest: machine.updateSharedQuest(questName, data), resync: true } : { ok: true, quest: machine.receiveSharedQuest(data) };",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A1-action-types-not-compared",
+    "file": "src/systems/questShare.js",
+    "old": "    for (let j = 0; j < acts.length; j++) if (!acts[j] || acts[j].type !== r.actions[j].type) return 'action';",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A1-task-count-not-compared",
+    "file": "src/systems/questShare.js",
+    "old": "  if (!tasks || tasks.length !== ref.tasks.length) return 'tasks';",
+    "new": "  if (!tasks) return 'tasks';",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A1-resource-set-not-compared",
+    "file": "src/systems/questShare.js",
+    "old": "    if (!r || typeof r !== 'object' || !want.has(r.symbol?.original) || want.get(r.symbol?.original) !== r.type) return 'resource';",
+    "new": "    if (!r || typeof r !== 'object') return 'resource';",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A1-senders-item-lands",
+    "file": "src/systems/questShare.js",
+    "old": "      return { ...r, resourceSpecific: { ...(r.resourceSpecific ?? {}), artifact: !!own.artifact, item } };",
+    "new": "      return r;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A1-main-quest-received",
+    "file": "src/systems/questShare.js",
+    "old": "  if (isMainQuestName(questName)) return { ok: false, reason: 'mainQuest' };\n  if (machine.hasActiveQuestNamed(questName)) {",
+    "new": "  if (machine.hasActiveQuestNamed(questName)) {",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A2-finished-received-again",
+    "file": "src/systems/questShare.js",
+    "old": "  if (machine.hasFinishedSharedQuestNamed?.(questName)) return { ok: false, reason: 'done' };",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A2-complete-quest-resynced",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (quest.questComplete || quest.questTombstoned) return null;",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A2-completion-not-monotonic",
+    "file": "src/systems/quest/machine.js",
+    "old": "      for (const action of task.actions) { if (before.get(`${t}:${a}`) === true && !action.isComplete) action.isComplete = true; a++; }",
+    "new": "      for (const action of task.actions) { a++; }",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A2-rearmed-every-resync",
+    "file": "src/systems/quest/machine.js",
+    "old": "          if (!done.has(key)) { done.add(key); action.isComplete = false; }",
+    "new": "          done.add(key); action.isComplete = false;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A2-tombstone-keeps-the-name-in-sync",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (this.sharedQuestNames.has(quest.questName)) { this.sharedQuestNames.delete(quest.questName); this.finishedSharedQuestNames.add(quest.questName); this._rearmed.delete(quest.uid); }",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A3-no-dry-run",
+    "file": "src/systems/quest/machine.js",
+    "old": "    try { scratch.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest resync refused: ${e?.message ?? e}`); return null; }",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-A3-fresh-receipt-throws-through",
+    "file": "src/systems/quest/machine.js",
+    "old": "    try { quest.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest refused: ${e?.message ?? e}`); return null; }",
+    "new": "    try { quest.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest refused: ${e?.message ?? e}`); }",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-B1-offer-editable-after-confirm",
+    "file": "src/net/tradeSession.js",
+    "old": "    if (this.myConfirm) return { ok: false, why: 'You have confirmed - cancel the trade to change your offer.' };",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-B2-reservation-stranded",
+    "file": "src/net/tradeSession.js",
+    "old": "    if (this._handle && !this._sentCommit) { this.pack.restore(this._handle); this._handle = null; }",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-B2-sent-goods-restored-too",
+    "file": "src/net/tradeSession.js",
+    "old": "    if (this._handle && !this._sentCommit) { this.pack.restore(this._handle); this._handle = null; }",
+    "new": "    if (this._handle) { this.pack.restore(this._handle); this._handle = null; }",
+    "tests": [
+      "test/trade_session.test.js",
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-B3-room-wide-trade-bytes",
+    "file": "server/src/index.js",
+    "old": "      const bytes = byteGate(a.tbytes ?? null, now, out.length, TRADE_ROOM_BYTES_PER_S);\n      this._setAttach(ws, { ...a, tbytes: bytes.bucket });",
+    "new": "      const bytes = byteGate(this._roomTrade, now, out.length, TRADE_ROOM_BYTES_PER_S);\n      this._roomTrade = bytes.bucket;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-B3-inbound-trade-gate-shared",
+    "file": "src/net/online.js",
+    "old": "        const g = tradeInGate(this._inTradeBuckets.get(m.id) ?? null, now);\n        this._inTradeBuckets.set(m.id, g.bucket);",
+    "new": "        const g = tradeInGate(this._inTradeBuckets.get('*') ?? null, now);\n        this._inTradeBuckets.set('*', g.bucket);",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-B4-data-bounded-at-the-frame-cap",
+    "file": "src/net/wire.js",
+    "old": "  if (JSON.stringify(out).length > TRADE_DATA_MAX) return null;",
+    "new": "  if (JSON.stringify(out).length > TRADE_FRAME_MAX) return null;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-B4-client-frame-under-the-general-cap",
+    "file": "src/net/online.js",
+    "old": "    if (s.length > TRADE_FRAME_MAX) return false;",
+    "new": "    if (s.length > MAX_FRAME_BYTES) return false;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ],
+    "equivalent": true,
+    "why": "validTradeData now bounds the data at TRADE_DATA_MAX, so a frame sendTrade serialises is under TRADE_FRAME_MAX by construction and neither cap ever trips here; the line is the belt to that brace (the relay's own door), kept so a later loosening of the data cap fails at home rather than closing the socket."
+  },
+  {
+    "name": "AD-C1-hub-cooldown-at-the-clients-floor",
+    "file": "src/net/wire.js",
+    "old": "export const QUEST_HUB_MIN_MS = QUEST_SEND_MS / 2;",
+    "new": "export const QUEST_HUB_MIN_MS = QUEST_SEND_MS;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-C2-inbound-quest-gate-per-room",
+    "file": "src/net/online.js",
+    "old": "      const qk = `${room}|${f.acct}`;",
+    "new": "      const qk = `${room}|*`;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-C1-seen-moves-on-a-refused-share",
+    "file": "src/scenes/world.js",
+    "old": "      if (prepared.ok && socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: prepared.data })) _questSyncSeen.set(questName, count);",
+    "new": "      _questSyncSeen.set(questName, count);\n      if (prepared.ok) socialLink()?.shareQuest({ questName: prepared.questName, displayName: prepared.displayName, data: prepared.data });",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-C3-budget-spent-with-no-party",
+    "file": "server/src/index.js",
+    "old": "      if (!a.party) return;\n      if (this._speaker(a.acct) !== ws) return;\n      const budget = tokenGate(this._roomQuest, now, QUEST_ROOM_HZ_MAX);\n      this._roomQuest = budget.bucket;\n      if (!budget.pass) { this._sayError(ws, 'busy'); return; }",
+    "new": "      const budget = tokenGate(this._roomQuest, now, QUEST_ROOM_HZ_MAX);\n      this._roomQuest = budget.bucket;\n      if (!budget.pass) { this._sayError(ws, 'busy'); return; }\n      if (!a.party) return;\n      if (this._speaker(a.acct) !== ws) return;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-D1-building-rest-not-gated",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const partyRefusal = host.partyRestGate?.() ?? null;\n      if (partyRefusal) { mountInterior(new ActionTextBox([partyRefusal])); return; }\n",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-D1-dungeon-rest-not-gated",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const partyRefusal = opts.partyRestGate?.() ?? null;\n      if (partyRefusal) { activeOverlay = new ActionTextBox([partyRefusal]); return; }\n",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-D1-building-restState-a-mirror-too",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const w = interiorOverlay;\n      return w?.isRestWindow && !w.isPartyRestMirror && w.session && w.state === 'resting'",
+    "new": "      const w = interiorOverlay;\n      return w?.isRestWindow && w.session && w.state === 'resting'",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-D1-dungeon-restState-the-wake-box-too",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const w = activeOverlay;\n      return w?.isRestWindow && !w.isPartyRestMirror && w.session && w.state === 'resting'",
+    "new": "      const w = activeOverlay;\n      return w?.isRestWindow && !w.isPartyRestMirror && w.session",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-D1-vote-not-spent-by-the-gate",
+    "file": "src/scenes/world.js",
+    "old": "    if (!refusal) _partyRestReady = false;",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-D2-outdoor-rest-broadcast-under-the-wake-box",
+    "file": "src/scenes/world.js",
+    "old": "townTalk.overlay.session && townTalk.overlay.state === 'resting'",
+    "new": "townTalk.overlay.session",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-D5-toggleRest-before-the-mode-machine",
+    "file": "src/scenes/world.js",
+    "old": "    const partyRefusal = modes ? partyRestGate() : null;",
+    "new": "    const partyRefusal = partyRestGate();",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-E2-kind-not-cached-by-the-mode",
+    "file": "src/scenes/worldModes.js",
+    "old": "        _modeFootstepKind = pickFootstepKind(_fsCtx);",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-E2-pose-carries-the-street-kind-indoors",
+    "file": "src/scenes/world.js",
+    "old": "      fk: (modes?.mode ?? 'exterior') === 'exterior' ? _lastFootstepKind : (modes?.footstepKind ?? 0),",
+    "new": "      fk: _lastFootstepKind,",
+    "tests": [
+      "test/auditdrops.test.js",
+      "test/mac7.test.js"
+    ]
+  },
+  {
+    "name": "AD-E4-body-peers-leak",
+    "file": "src/net/remotePlayers.js",
+    "old": "    for (const id of this._footsteps.keys()) if (!seen.has(id)) this._footsteps.delete(id);\n    for (const id of this._attackAn.keys()) if (!seen.has(id)) this._attackAn.delete(id);",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-E5-stride-in-the-scene-frame",
+    "file": "src/net/remotePlayers.js",
+    "old": "    const step = fm.update([shown.x, shown.y, shown.z],",
+    "new": "    const step = fm.update(f,",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-E6-first-weapon-in-the-look",
+    "file": "src/net/remotePlayers.js",
+    "old": "    const weapon = peer.shown.wd ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === EQUIP_SLOTS.RightHand) ?? null) : null;",
+    "new": "    const weapon = (peer.look?.items ?? []).find((it) => it?.group === 'Weapons') ?? null;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-E6-sheathed-swings-the-weapon",
+    "file": "src/net/remotePlayers.js",
+    "old": "    const weapon = peer.shown.wd ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === EQUIP_SLOTS.RightHand) ?? null) : null;",
+    "new": "    const weapon = (peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === EQUIP_SLOTS.RightHand) ?? null;",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-F-fk-unclamped",
+    "file": "src/net/wire.js",
+    "old": "    fk: uint(fk, 5) ?? 0,",
+    "new": "    fk: uint(fk, 255) ?? 0,",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-F-quest-frame-cap-loosened-at-the-door",
+    "file": "src/net/wire.js",
+    "old": "export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX : text.startsWith(QUEST_PREFIX) ? QUEST_FRAME_MAX : MAX_FRAME_BYTES; }",
+    "new": "export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX : text.startsWith(QUEST_PREFIX) ? QUEST_FRAME_MAX * 4 : MAX_FRAME_BYTES; }",
+    "tests": [
+      "test/auditdrops.test.js"
+    ],
+    "equivalent": true,
+    "why": "the belt to the brace above it: the explicit `m.t === 'quest' && text.length > QUEST_FRAME_MAX` check after the parse refuses the same frame, so loosening the door alone changes no answer; each of the two checks is recorded equivalent on its own and the pair is the law (test/auditdrops.test.js F holds the frame at QUEST_FRAME_MAX + 1 refused)."
+  },
+  {
+    "name": "AD-F-any-relay-supports-trade",
+    "file": "src/net/wire.js",
+    "old": "export const relaySupportsTrade = (v) => { const m = /^world(\\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= TRADE_RELAY_MIN; };",
+    "new": "export const relaySupportsTrade = (v) => typeof v === 'string';",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-F-seat-reason-two-homes",
+    "file": "src/net/social.js",
+    "old": "      if (seated) whyNotInvite = WHY_IN_PARTY;",
+    "new": "      if (seated) whyNotInvite = 'seated with you';",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-F-gold-not-restored",
+    "file": "src/systems/tradePack.js",
+    "old": "      if (handle.gold) addGoldPieces(entity, handle.gold);",
+    "new": "",
+    "tests": [
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "AD-F-quest-frame-second-check-loosened",
+    "file": "src/net/wire.js",
+    "old": "  if (m.t === 'quest' && text.length > QUEST_FRAME_MAX) return { error: 'frame too large' };",
+    "new": "  if (m.t === 'quest' && text.length > QUEST_FRAME_MAX * 4) return { error: 'frame too large' };",
+    "tests": [
+      "test/auditdrops.test.js"
+    ],
+    "equivalent": true,
+    "why": "parseClient already refuses the frame at its door through frameCap (QUEST_PREFIX -> QUEST_FRAME_MAX) before this line runs; this second check is the belt for a frame whose `t` is quest but whose text does not start with the prefix, which the client never mints and which the general MAX_FRAME_BYTES cap bounds anyway."
+  }
+]

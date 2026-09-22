@@ -25,6 +25,7 @@ const STYLE_ID = 'dagger-ptrade-style';
 const PTRADE_CSS = `
 @media (min-width: 1101px) { .ptrade-shell .packlists { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .ptrade-shell .goldbox { display: flex; align-items: center; gap: 8px; padding: 8px 4px; }
+.ptrade-shell input { font: inherit; }   /* AUDIT DROPS F1: every form control, the stack-quantity field included - a control falls to the browser's face unless told */
 .ptrade-shell .goldbox input { width: 110px; background: #0e1013; color: var(--bone, #e9e4d9); border: 1px solid var(--iron, #2b323b);
   border-radius: 3px; padding: 4px 6px; font: inherit; }
 .ptrade-shell .lockmark { font-size: 12px; padding: 2px 8px; border-radius: 3px; background: var(--iron, #2b323b); color: var(--dim, #8b8578); }
@@ -73,12 +74,12 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     render();
   };
   const stage = (item, count = null) => {
-    if (session.phase !== 'open') return;
+    if (session.phase !== 'open' || session.myConfirm) return;   // AUDIT DROPS B1: confirmed = frozen
     if (entries().length >= TRADE_ITEMS_MAX) { say(`At most ${TRADE_ITEMS_MAX} items in one trade.`); render(); return; }
     const n = count ?? Math.max(1, item.stackCount ?? 1);
     applyOffer([...entries(), { item, count: n }]);
   };
-  const unstage = (item) => { if (session.phase === 'open') applyOffer(entries().filter((e) => e.item !== item)); };
+  const unstage = (item) => { if (session.phase === 'open' && !session.myConfirm) applyOffer(entries().filter((e) => e.item !== item)); };   // AUDIT DROPS B1
 
   const itemTile = (line) => {
     const src = line.image ? requestIcon(line.image.archive, line.image.record, { scale: 2, onReady: () => alive && render() }) : null;
@@ -142,7 +143,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     col.append(list);
     const gold = el('div', 'goldbox');
     const input = el('input'); input.type = 'number'; input.min = '0'; input.max = String(deps.gold()); input.value = String(session.mine.gold);
-    input.disabled = session.phase !== 'open';
+    input.disabled = session.phase !== 'open' || session.myConfirm;   // AUDIT DROPS B1: confirmed = frozen
     const commit = () => { input.blur(); const v = Math.max(0, Math.floor(Number(input.value) || 0)); if (v !== session.mine.gold) applyOffer(entries(), v); };
     input.onchange = commit;
     input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } };
@@ -179,11 +180,11 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
     bar.append(info);
     const stack = Math.max(1, selected.item.stackCount ?? 1);
-    if (selected.side === 'pack' && session.phase === 'open') {
+    if (selected.side === 'pack' && session.phase === 'open' && !session.myConfirm) {
       let qty = null;
       if (stack > 1) { qty = el('input'); qty.type = 'number'; qty.min = '1'; qty.max = String(stack); qty.value = String(stack); qty.style.width = '64px'; bar.append(qty); }
       const b = el('button', 'act primary', 'Offer'); b.onclick = () => { const it = selected.item; selected = null; stage(it, qty ? Math.min(stack, Math.max(1, Math.floor(Number(qty.value) || 1))) : null); }; bar.append(b);
-    } else if (selected.side === 'offer' && session.phase === 'open') {
+    } else if (selected.side === 'offer' && session.phase === 'open' && !session.myConfirm) {
       const b = el('button', 'act', 'Remove'); b.onclick = () => { const it = selected.item; selected = null; unstage(it); }; bar.append(b);
     }
     const c = el('button', 'act', 'Close'); c.onclick = () => { selected = null; render(); }; bar.append(c);

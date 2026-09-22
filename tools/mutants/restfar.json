@@ -38,8 +38,8 @@
   {
     "name": "PARTY-REST4-no-fallback-name",
     "file": "src/scenes/world.js",
-    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader'));",
-    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name));",
+    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader', leaderRest.mode === 0), PARTY_REST_FAR_SECONDS);",
+    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name, leaderRest.mode === 0), PARTY_REST_FAR_SECONDS);",
     "tests": [
       "test/restfar.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PARTY-REST4-radius-restated",
     "file": "src/scenes/world.js",
-    "old": "  const PARTY_REST_FAR_TEXT = (who) => `${who} is resting - come within ${PARTY_REST_RADIUS} m of them to rest with the party.`;",
-    "new": "  const PARTY_REST_FAR_TEXT = (who) => `${who} is resting - come within 15 m of them to rest with the party.`;",
+    "old": "  const PARTY_REST_FAR_TEXT = (who, loitering = false) => `${who} is ${loitering ? 'loitering' : 'resting'} - come within ${PARTY_REST_RADIUS} m of them to ${loitering ? 'wait' : 'rest'} with the party.`;",
+    "new": "  const PARTY_REST_FAR_TEXT = (who, loitering = false) => `${who} is ${loitering ? 'loitering' : 'resting'} - come within 15 m of them to ${loitering ? 'wait' : 'rest'} with the party.`;",
     "tests": [
       "test/restfar.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "PARTY-REST4-notice-not-called",
     "file": "src/scenes/world.js",
-    "old": "    partyRestFarNotice(leaderRest, near, leaderRow);   // PARTY-REST4: told once when the leader naps out of my reach - before the mirror below reads `near`\n",
+    "old": "    if (!dead) partyRestFarNotice(leaderRest, near, leaderRow);   // PARTY-REST4: told once when the leader naps out of my reach - before the mirror below reads `near`; AUDIT DROPS D3: not while the HUD is down for a death\n",
     "new": "",
     "tests": [
       "test/restfar.test.js"
@@ -67,6 +67,51 @@
     "file": "src/scenes/world.js",
     "old": "      _partyRestFarSaid = false;   // PARTY-REST4: no leader to be far from\n",
     "new": "",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DROPS-D3-loiter-said-as-a-rest",
+    "file": "src/scenes/world.js",
+    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader', leaderRest.mode === 0), PARTY_REST_FAR_SECONDS);",
+    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader'), PARTY_REST_FAR_SECONDS);",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DROPS-D3-the-default-blink",
+    "file": "src/scenes/world.js",
+    "old": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader', leaderRest.mode === 0), PARTY_REST_FAR_SECONDS);",
+    "new": "    setMidScreenText(PARTY_REST_FAR_TEXT(leaderRow?.name || 'Your party leader', leaderRest.mode === 0));",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DROPS-D3-told-while-dead",
+    "file": "src/scenes/world.js",
+    "old": "    if (!dead) partyRestFarNotice(leaderRest, near, leaderRow);",
+    "new": "    partyRestFarNotice(leaderRest, near, leaderRow);",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DROPS-D3-offline-leader-rests",
+    "file": "src/scenes/world.js",
+    "old": "    const leaderRest = leaderRow?.online === false ? null : (leaderRow?.p?.rest ?? null);",
+    "new": "    const leaderRest = leaderRow?.p?.rest ?? null;",
+    "tests": [
+      "test/restfar.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DROPS-D2-mirror-reopens-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "    if (_partyRestMirrored) { _partyRestMirrored = false; if (leaderRest) _partyRestDeclined = true; }\n    if (!leaderRest || !near || _partyRestDeclined) return;",
+    "new": "    if (_partyRestMirrored) { _partyRestMirrored = false; }\n    if (!leaderRest || !near) return;",
     "tests": [
       "test/restfar.test.js"
     ]
