@@ -1,0 +1,74 @@
+[
+ {
+  "name": "MACRO-ONE-the-walk-forgets-the-world",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "  const ctx = questLike ?? macroWorld();",
+  "new": "  const ctx = questLike;",
+  "tests": [
+   "test/macroone.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-ONE-the-row-walk-forgets-the-world",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "  if (!hasValues && !questLike && !macroWorld()) return rows;",
+  "new": "  if (!hasValues && !questLike) return rows;",
+  "tests": [
+   "test/macroone.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-ONE-the-fallback-prints-error-shapes",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "      if (!questLike && isErrorShape(v, token)) return token;\n",
+  "new": "",
+  "tests": [
+   "test/macroone.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-ONE-a-throwing-handler-takes-the-box-down",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "      else { try { v = getMacroValue(token, null, ctx.hooks, null); } catch { return token; } }",
+  "new": "      else v = getMacroValue(token, null, ctx.hooks, null);",
+  "tests": [
+   "test/macroone.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-ONE-a-throwing-provider-crashes-the-walk",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "  try { return _macroWorld?.() ?? null; } catch { return null; }",
+  "new": "  return _macroWorld?.() ?? null;",
+  "tests": [
+   "test/macroone.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-ONE-the-bridge-never-registers",
+  "file": "src/scenes/questBridge.js",
+  "old": "  setMacroWorld(() => machine.macroContext());\n",
+  "new": "",
+  "tests": [
+   "test/macroone.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-ONE-exterior-forgets-ra",
+  "file": "src/scenes/exterior.js",
+  "old": "    playerRaceName: () => (playerEntity.race ? raceDisplayName(playerEntity.race) : null),   // MACRO-ONE",
+  "new": "    playerRaceNameX: () => (playerEntity.race ? raceDisplayName(playerEntity.race) : null),   // MACRO-ONE",
+  "tests": [
+   "test/macroone.test.js"
+  ]
+ },
+ {
+  "name": "MACRO-ONE-the-world-plays-a-quest-and-invents-a-speaker",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "      else { try { v = getMacroValue(token, null, ctx.hooks, null); } catch { return token; } }",
+  "new": "      else { try { v = getContextValue(token, ctx, ctx.hooks); } catch { return token; } }",
+  "tests": [
+   "test/macroone.test.js"
+  ]
+ }
+]

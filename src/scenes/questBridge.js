@@ -58,7 +58,7 @@ import { PlayerNotebook } from '../systems/notebook.js';
 import { GENDERS } from '../characters/nameHelper.js';
 import { ZERO_NPC_DATA, NPC_CONTEXT, raceFromFaction } from '../characters/staticNpc.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
-import { expandMacroValues } from '../systems/quest/questMacros.js';   // GQL1: the wait box's %pcf
+import { expandMacroValues, setMacroWorld } from '../systems/quest/questMacros.js';   // GQL1: the wait box's %pcf
 import { firstName } from '../systems/talkSession.js';
 import { getBool } from '../systems/settings.js';
 import { noteOfferPending } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI's GivePc.OnOfferPending subscription
@@ -312,6 +312,10 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // HUD escort faces' quest-end sweep rides the world ctx
     onQuestEnded: (q) => ctx.onQuestEnded?.(q),
   });
+  // MACRO-ONE: this machine's hooks are the page's GameManager for every
+  // macro walk that is not handed a context of its own (questMacros.js
+  // setMacroWorld) - one registration, every window, every host.
+  setMacroWorld(() => machine.macroContext());
 
   questLists = new QuestListsManager({
     readListTable: (name) => ctx.data.readListTable(name),

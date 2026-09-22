@@ -163,19 +163,60 @@ export function getMacro(word) {
  * '%adj' whole, misses the map, and leaves it alone.
  */
 export function expandMacroValues(text, values = {}, questLike = null) {
+  // MACRO-ONE: the context is the caller's, or else THE WORLD'S. DFU's
+  // MacroHelper never needs one handed to it for its global rows - they
+  // read GameManager.Instance - and the port's table reads the same facts
+  // off a quest machine's hooks. Only the callers that remembered to pass
+  // `questBridge.machine.macroContext()` got them, so every walk that
+  // passed a bare value map printed %ra, %crn, %cn raw. The bridge
+  // registers the world once (setMacroWorld) and every walk falls to it.
+  const ctx = questLike ?? macroWorld();
+  const vals = values ?? {};
   return String(text ?? '').replace(/%\w+/g, (token) => {
     const sym = token.slice(1);
-    if (sym in values) {
-      const v = values[sym];
+    if (sym in vals) {
+      const v = vals[sym];
       if (v == null) return token;
       return String(typeof v === 'function' ? v() : v);
     }
-    if (questLike && HANDLERS[token]) {
-      return getContextValue(token, questLike, questLike.hooks);
+    if (ctx && HANDLERS[token]) {
+      // ...and a caller's own context keeps DFU's throws (a %god with no
+      // Divine throws in MacroHelper too), but THE WORLD'S may not: it now
+      // reaches every window, and a handler that needs a subject the world
+      // does not have must cost the token, never the box.
+      //
+      // THE WORLD HAS NO SUBJECT. It answers only the rows MacroHelper
+      // reads off singletons (the player, the region, the date): no quest
+      // source, no NPC, no guild - so a subject-bound %n or %fon misses
+      // and stays for the caller who knows the speaker, rather than the
+      // world inventing a random name for it.
+      let v;
+      if (questLike) v = getContextValue(token, ctx, ctx.hooks);
+      else { try { v = getMacroValue(token, null, ctx.hooks, null); } catch { return token; } }
+      // MACRO-ONE: the WORLD'S fallback never prints an error shape. A
+      // row the world cannot answer (a subject-bound %god, %fon, %n with
+      // no provider) stays the token - the audit's gate names it - rather
+      // than trading "%fon" for "%fon[nullMCP]". A caller that passed its
+      // own context keeps the ladder's shapes exactly as before.
+      if (!questLike && isErrorShape(v, token)) return token;
+      return v;
     }
     return token;
   });
 }
+
+/** MACRO-ONE: THE ONE GAMEMANAGER. DFU resolves a global macro (the
+ *  player, the region, the date) off singletons, whoever is showing the
+ *  text; the port's equivalent is the live quest machine's macroContext().
+ *  createQuestBridge registers it here, once per host, so no window has
+ *  to remember to hand it over. A throwing or absent provider is no
+ *  context - a macro walk must never cost a frame. */
+let _macroWorld = null;
+export function setMacroWorld(fn) { _macroWorld = typeof fn === 'function' ? fn : null; }
+export function macroWorld() {
+  try { return _macroWorld?.() ?? null; } catch { return null; }
+}
+const isErrorShape = (v, token) => typeof v !== 'string' || v.startsWith(token + '[');
 
 /** MACROS1 (2026-09-20, kurkku on Discord: "%map" and "%pcn / %fon" printed raw): TEXT.RSC ROWS through the value
  *  expander. A record read through the host's `lines(id)` is `[{ text, center }]` (or bare strings), and the boxes
@@ -203,7 +244,7 @@ export function expandRowValues(rows, values = null, questLike = null) {
   // symbol it carries, exactly as `expandMacroValues` orders them.
   if (!Array.isArray(rows)) return rows;
   const hasValues = !!values && !!Object.keys(values).length;
-  if (!hasValues && !questLike) return rows;
+  if (!hasValues && !questLike && !macroWorld()) return rows;   // MACRO-ONE: the world's context is a source too
   const one = (t) => expandMacroValues(t ?? '', values ?? {}, questLike);
   return rows.map((row) => (typeof row === 'string' ? one(row)
     : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row));

@@ -230,6 +230,7 @@ import { QuestAudioSource } from '../systems/audio.js';   // QX1/E6: PlaySound's
 import { WORLD_CONTEXT, makeAnchor, teleportPlan, ANCHOR_MUST_BE_SET } from '../systems/teleportAnchor.js';   // TP2/A10: the Recall anchor's law - shape, IsSameInterior, the plan, and the 4001 record id
 import { locationWorldRect } from '../world/streamingWorld.js';   // TP2: the native frame this host's origin stands at
 import { GLOBAL_SCALE } from '../world/meshReader.js';   // TP2: scene units <-> native world units
+import { raceDisplayName } from '../systems/talkSession.js';   // MACRO-ONE: %ra's display name, as world.js reads it
 
 export async function bootExterior(canvas, renderer, params, status) {
   const regionName = params.get('region') || 'Daggerfall';
@@ -3376,6 +3377,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     data: questPack,
     world: questWorld,
     playerEntity,
+    playerRaceName: () => (playerEntity.race ? raceDisplayName(playerEntity.race) : null),   // MACRO-ONE: %ra (MacroHelper.cs:942-945) - world.js wired it and this host never did, so every %ra here printed raw
     // AUDIT 63 F0: Quest.cs:649-656's tombstone sweep. This host mounts
     // no talk half (no topic tree, no rumour mill - see the note at the
     // nameplate stamp), so TalkManager.cs:2958's sibling caller is
