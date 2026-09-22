@@ -233,7 +233,7 @@ opposite of their own code and deserve a slice's attention:
 
 ## Line-citation drift (low, batched)
 
-`Port-Ledger.md:536` (save.js:29/:528/:537 → :28/:570/:600), `:557`
+`Port-Ledger.md:536` (save.js:29/:528/:537 → :28/:574/:604), `:561`
 (world.js:2422 → :2412); `Quest-Arc.md:719`/`:2906`
 (worldModes.js:530 → :903); `Player-Arc.md:955` (worldModes.js:758 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`

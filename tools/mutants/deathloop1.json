@@ -1,0 +1,119 @@
+[
+  {
+    "name": "revival-forgets-the-drains",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  return { revived: dead || force, cleared: endLethalDrains(entity) };",
+    "new": "  return { revived: dead || force, cleared: [] };",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "poison-not-a-drain",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth']);",
+    "new": "export const LETHAL_DRAINS = Object.freeze(['continuousDamage', 'transferHealth']);",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "continuous-damage-not-a-drain",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth']);",
+    "new": "export const LETHAL_DRAINS = Object.freeze(['poison', 'transferHealth']);",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "disease-cured-by-dying",
+    "file": "src/systems/deathRespawn.js",
+    "old": "export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth']);",
+    "new": "export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth', 'disease']);",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "floor-heals-the-living-too",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  if (dead || force) entity.health = respawnHealth(entity.maxHealth);",
+    "new": "  entity.health = respawnHealth(entity.maxHealth);",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "floor-leaves-the-dead-dead",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  const dead = !(entity.health > 0);",
+    "new": "  const dead = false;",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "prison-release-online-does-nothing",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "          if (!sharedClockOn()) fillVitalSigns(playerEntity);\n          else reviveForPlay(playerEntity);",
+    "new": "          if (!sharedClockOn()) fillVitalSigns(playerEntity);",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "prison-release-becomes-a-free-heal",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "          if (!sharedClockOn()) fillVitalSigns(playerEntity);\n          else reviveForPlay(playerEntity);",
+    "new": "          fillVitalSigns(playerEntity);",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "online-respawn-back-to-a-bare-heal",
+    "file": "src/scenes/world.js",
+    "old": "    reviveForPlay(playerEntity, { force: true });\n    surfacePlayer();",
+    "new": "    playerEntity.health = respawnHealth(playerEntity.maxHealth);\n    surfacePlayer();",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "dead-save-loads-with-its-poison",
+    "file": "src/systems/save.js",
+    "old": "  if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);",
+    "new": "  if (isOnlinePage() && !((entity.health ?? 0) > 0)) entity.health = respawnHealth(entity.maxHealth);",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "clear-reports-every-kind-regardless",
+    "file": "src/systems/deathRespawn.js",
+    "old": "  const cleared = LETHAL_DRAINS.filter((k) => had.has(k));",
+    "new": "  const cleared = [...LETHAL_DRAINS];",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "fullscreen-role-back-to-bare",
+    "file": "app/main.cjs",
+    "old": "        process.platform === 'darwin'\n          ? { role: 'togglefullscreen' }\n          : { role: 'togglefullscreen', accelerator: 'Alt+Enter' },",
+    "new": "        { role: 'togglefullscreen' },",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  },
+  {
+    "name": "fullscreen-accelerator-back-on-f11",
+    "file": "app/main.cjs",
+    "old": "          : { role: 'togglefullscreen', accelerator: 'Alt+Enter' },",
+    "new": "          : { role: 'togglefullscreen', accelerator: 'F11' },",
+    "tests": [
+      "test/deathloop1.test.js"
+    ]
+  }
+]

@@ -90,11 +90,14 @@ test('D-ONLINE1 by source: the world host snapshots "was this death online" at t
   // and no screen: death, reset, respawn, death. A lag spike widens
   // the window until it cannot be escaped. The pin agreed with the
   // wiring, so it went green over the loop.
-  const healAt = fn.indexOf('playerEntity.health = respawnHealth(playerEntity.maxHealth);');
-  assert.ok(healAt > 0, 'half health, off the one fraction');
+  // DEATHLOOP1 re-aim: still the one fraction, now reached through the
+  // one revival - `reviveForPlay` ends the drains at the same time,
+  // which is the half MAC-D3's ordering fix did not cover.
+  const healAt = fn.indexOf('reviveForPlay(playerEntity, { force: true });');
+  assert.ok(healAt > 0, 'half health, off the one fraction, through the one revival');
   assert.ok(healAt < fn.indexOf('modes?.forceExitToExterior()'), 'MAC-D3: healed BEFORE the death screen is torn down (the CALL, not this file\u2019s prose about it)');
   assert.ok(healAt < fn.indexOf('await _teleportToPixel'), 'MAC-D3: ...and before anything is awaited - a dead player must not survive a single frame of the flight');
-  assert.match(fn, /playerEntity\.health = respawnHealth\(playerEntity\.maxHealth\);\s*\n\s*surfacePlayer\(\);/, 'surfaced with it');
+  assert.match(fn, /reviveForPlay\(playerEntity, \{ force: true \}\);\s*\n\s*surfacePlayer\(\);/, 'surfaced with it');
   assert.match(fn, /townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\)\]\)\);/, 'and the line stands where the death screen did');
   // ...and one respawn at a time, or a death raised mid-flight starts
   // another teleport racing the first
@@ -138,8 +141,13 @@ test('MAC-D3: a respawn answers a LIVING number for any maxHealth, and the loop 
   // reads the order backwards. Comment lines come out first.
   const code = w.slice(ri, w.indexOf('\n  }\n', ri))
     .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
-  const heal = code.indexOf('playerEntity.health = respawnHealth(playerEntity.maxHealth);');
-  assert.ok(heal > 0, 'the heal is there');
+  // DEATHLOOP1 re-aim: the revival is `reviveForPlay` now, because a
+  // heal alone was only half of it - the drains that emptied the bar
+  // had to end with it. The ORDER this pin exists for is untouched and
+  // is what is still read: alive before anything is torn down or
+  // awaited.
+  const heal = code.indexOf('reviveForPlay(playerEntity, { force: true });');
+  assert.ok(heal > 0, 'the revival is there');
   assert.ok(heal < code.indexOf('modes?.forceExitToExterior()'), 'alive before the death screen goes');
   assert.ok(heal < code.indexOf('await '), 'alive before ANYTHING is awaited');
   assert.ok(heal < code.indexOf('Promise.resolve()'), '...and synchronously, in the same turn the reset ran');
@@ -153,7 +161,7 @@ test('MAC-D3: a respawn answers a LIVING number for any maxHealth, and the loop 
   const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
   const spawnAt = wm.indexOf('player.spawn(spawn[0], spawn[1], spawn[2]);');
   assert.ok(spawnAt > 0);
-  const healAt = wm.indexOf('playerEntity.health = respawnHealth(playerEntity.maxHealth);', spawnAt);
+  const healAt = wm.indexOf('reviveForPlay(playerEntity, { force: true });', spawnAt);
   const clearAt = wm.indexOf('ctx.clearDeathOverlay?.();', spawnAt);
   assert.ok(healAt > spawnAt && healAt < clearAt, 'worldModes: spawn, heal, THEN clear the overlay - all in one turn');
 });

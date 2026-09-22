@@ -430,7 +430,34 @@ function buildMenu() {
         { role: 'quit' },
       ],
     },
-    { label: 'View', submenu: [{ role: 'reload' }, { role: 'togglefullscreen' }, { role: 'toggleDevTools' }] },
+    // DEATHLOOP1 sibling, F11 (Janome, 2026-09-22: "in the exe version,
+    // F11 is the hotkey for full screen. this is an issue, because F11
+    // is also the quickload hotkey, so instead of making the game full
+    // screen it just loaded my save").
+    //
+    // F9 QuickSave and F11 QuickLoad are DFU's own SetupDefaults
+    // (systems/inputActions.js), so the GAME's binding is the correct
+    // one and the shell is what has to give way. Electron's
+    // `togglefullscreen` role carries F11 on Windows and Linux by
+    // default, which puts a menu accelerator on a key the game already
+    // spends - the page happens to win, so the menu item silently does
+    // nothing and the player gets a quickload they did not ask for.
+    //
+    // The accelerator moves to Alt+Enter, the other long-standing
+    // fullscreen convention on Windows and one no DFU binding uses.
+    // macOS keeps the role's own Ctrl+Cmd+F, which collides with
+    // nothing. Naming it here also makes it DISCOVERABLE, which was
+    // the other half of the report: the menu row now prints the key.
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        process.platform === 'darwin'
+          ? { role: 'togglefullscreen' }
+          : { role: 'togglefullscreen', accelerator: 'Alt+Enter' },
+        { role: 'toggleDevTools' },
+      ],
+    },
   ];
   if (process.platform === 'darwin') template.unshift({ role: 'appMenu' });
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));

@@ -22,6 +22,7 @@
 // just a different, distance-based pick of where to land, and three
 // kinds to choose among instead of one.
 import { LOCATION_TYPES, DUNGEON_TYPES, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { cureAllOfKind } from './effects.js';   // DEATHLOOP1
 
 const SAFE_KINDS = Object.freeze([
   { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },
@@ -134,3 +135,68 @@ const WAKE_FLAVOR = Object.freeze({
 
 /** The one line said when an online load wakes a character above ground; an unknown kind reads as the city's. */
 export const undergroundWakeText = (kind) => WAKE_FLAVOR[kind] ?? WAKE_FLAVOR.city;
+
+
+// ── DEATHLOOP1: A REVIVAL HAS TO END WHAT KILLED THEM ────────────
+//
+// SquidKamer on Discord (2026-09-22): "Respawn after poison and likely
+// disease and other things can cause a deathloop. Probably should do
+// something about that. Its basically permanent death for your
+// character." He is right, and MAC-D3 did not cover it: that fix put
+// the heal FIRST so no frame could see a dead player with no death
+// screen, which closed the window between reviving and landing. This
+// is the other half - the health comes back and THE CAUSE DOES NOT
+// GO AWAY. A poisoned character wakes at half health, the poison ticks
+// them straight back to zero, and the respawn runs again, for ever.
+//
+// So: every path that puts a living player back into the world ends
+// the drains that are still running. It is not a general cure, and the
+// line is drawn on RATE, because that is what decides whether a
+// revival is real:
+//
+//   CLEARED - poison, continuous damage, and health transfer. These
+//   tick on the combat round, so they empty a half-full health bar in
+//   seconds. Leaving them running makes the revival a lie: the player
+//   never gets far enough to do anything about them.
+//
+//   KEPT - diseases, infections included. A disease's HEA column falls
+//   ONCE PER CLASSIC DAY (systems/diseases.js - `data.HEA && sinks.hurt`),
+//   so half of max health is days of walking, which is enough to reach
+//   the temple that cures it. And they must be kept for a second
+//   reason that is not about rate at all: vampirism and lycanthropy
+//   are carried as `kind: 'disease'` entries (systems/infection.js),
+//   so a blanket cure here would let a player shake off an infection
+//   by dying on purpose - the cheapest cure in the game, at a
+//   graveyard, for free. Paralysis is kept for the same rate reason:
+//   it does not drain anything, and it wears off.
+//
+// A revival that lands somewhere safe is the whole promise of the
+// online death. This is what makes the promise true.
+export const LETHAL_DRAINS = Object.freeze(['poison', 'continuousDamage', 'transferHealth']);
+
+/** End the drains that would empty the bar again before the player can
+ *  act. Answers the kinds it actually removed, so a caller can say so
+ *  and a pin can read it. */
+export function endLethalDrains(entity) {
+  const had = new Set((entity?.activeEffects ?? []).map((a) => a?.kind));
+  const cleared = LETHAL_DRAINS.filter((k) => had.has(k));
+  for (const kind of cleared) cureAllOfKind(entity, kind);
+  return cleared;
+}
+
+/** THE ONE REVIVAL. Health back to the respawn fraction if they are at
+ *  or below zero, and the fast drains ended - in that order, and
+ *  together, because either alone is the bug: health with the poison
+ *  still on is SquidKamer's loop, and a cure with no health is a
+ *  corpse that cannot be hurt any further.
+ *
+ *  `force` re-asserts the health even on a living entity (the respawn
+ *  path pays the death's cost up front); without it an already-living
+ *  player keeps the health they have, which is what a prison release
+ *  wants - it is not a free heal, it is a floor under zero. */
+export function reviveForPlay(entity, { force = false } = {}) {
+  if (!entity) return { revived: false, cleared: [] };
+  const dead = !(entity.health > 0);
+  if (dead || force) entity.health = respawnHealth(entity.maxHealth);
+  return { revived: dead || force, cleared: endLethalDrains(entity) };
+}
