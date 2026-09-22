@@ -2733,3 +2733,95 @@ reaches everyone in the world channel — which is the one room every
 player is in (ROSTER-G), so it reaches everybody, including players
 down a dungeon. Until a handle is written into that config **nobody can
 send one, including Mac**.
+
+---
+
+## ACC-CAP — the outage the arc shipped, and why nothing caught it (2026-09-22)
+
+> The account service had a problem. Try again.
+
+Mac, minutes after the merge went live, trying to create the account he
+needed in order to send red text. **Every password route on the deployed
+service was answering 500** — register, login and recover — and had been
+since the moment they first deployed.
+
+### The cause
+
+**Cloudflare Workers refuses PBKDF2 above 100,000 iterations.**
+
+```
+NotSupportedError: Pbkdf2 failed: iteration counts above 100000
+are not supported
+```
+
+It is a DoS guard on their side. ACC1c chose **210,000** — OWASP's figure
+for PBKDF2-SHA256 — so every call to `hashPassword` and `verifyPassword`
+threw, the router's catch turned it into a logged 500, and the client
+showed its `server` sentence.
+
+Guest sign-in was fine throughout, which is the shape that gave it away:
+guests are hashed with **SHA-256** and never touch PBKDF2.
+
+### Why every gate was green — and this is the finding
+
+| | sees the cap? |
+|---|---|
+| `test/accountworker.test.js` (node) | no — node has no cap |
+| `tools/accountProbe.mjs` (**real workerd**) | **no — workerd has no cap either** |
+| `/v1/health` after deploy | no — it hashes nothing |
+| a human registering | **yes, immediately** |
+
+The cap is **production-only**. `wrangler dev`, Miniflare and node all
+run higher counts happily.
+
+**AUDIT-ACC F2 built that probe on the lesson that IMPORTABILITY IS NOT
+DEPLOYABILITY** — the suite was green over a Worker that could not boot,
+because the tests imported the very names workerd rejected. The probe
+answered that by standing the service up in a real workerd.
+
+**This is the same lesson one rung further out: LOCAL WORKERD IS NOT
+CLOUDFLARE.** A probe in workerd proves the code runs. It does not prove
+the platform will *allow* it. And the probe did not merely miss this — it
+**measured it and passed**, printing *"PBKDF2 at 210,000 costs 36ms
+there"* against a runtime that was never going to enforce the limit.
+
+**A pin was actively holding the broken value.** `accountworker.test.js`
+asserted `PBKDF2_ITERS >= 210_000`, *"below OWASP's current figure for
+this pairing"*. It now holds the **platform's** bound instead, because a
+number the runtime will not execute protects nobody.
+
+### What it costs, said plainly
+
+100,000 is below OWASP's recommendation (600,000 for PBKDF2-SHA256) and
+below the 210,000 this arc chose. It is the most Cloudflare will run, so
+the honest options were this or a different KDF, and a different KDF is
+not a thing to design during an outage.
+
+**It is not stuck here.** The stored form is self-describing
+(`pbkdf2-sha256$<iters>$<salt>$<derived>`) and `needsRehash` upgrades a
+row on its owner's next correct login — ACC1c built for exactly this. The
+work factor can be bought back later by **chaining two capped
+derivations**, with nobody logged out. And there was nothing to migrate:
+**register had never once succeeded**, so no row was ever written at the
+old cost.
+
+### The gate that would have caught it, now standing
+
+`account-deploy.yml` verified `/v1/health`, which proves the Worker is up
+and serving this version and **nothing about whether it works**. It now
+makes the one request no local runtime can fake: **a real registration
+against the deployed Worker on Cloudflare** — a throwaway handle and a
+guest row that costs nothing. A 500 there fails the deploy instead of a
+player.
+
+- `server-account/src/password.js` — `PBKDF2_CAP`, and `PBKDF2_ITERS`
+  set to it, with the whole story at the constant.
+- `test/accountworker.test.js` — the pin re-aimed at the platform bound.
+- `tools/accountProbe.mjs` — asserts the cap as well as the cost, and
+  says out loud that it cannot see the ceiling.
+- `.github/workflows/account-deploy.yml` — the registration smoke test.
+- `tools/mutants/acc1c.json`, `acctprobe.json` — both anchors re-aimed.
+
+**THE DEPLOY THAT FIXES THIS DROPS NOBODY.** It is `server-account/`
+only — the two-Worker split earning its keep on the day after the one
+that dropped the whole room.

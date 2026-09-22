@@ -18,10 +18,10 @@
   {
     "name": "PROBE-3-the-hash-cost-leaves-a-Workers-CPU-budget",
     "file": "server-account/src/password.js",
-    "old": "export const PBKDF2_ITERS = 210_000;",
+    "old": "export const PBKDF2_ITERS = PBKDF2_CAP;",
     "new": "export const PBKDF2_ITERS = 21_000_000;",
     "tests": ["tools/accountProbe.mjs"],
-    "note": "The suite gets SLOWER and stays green; only a real workerd says whether a registration still fits the budget. The probe measures it rather than assuming it, which is the second thing it claims to prove."
+    "note": "The suite gets SLOWER and stays green; only a real workerd says whether a registration still fits the budget. The probe measures it rather than assuming it, which is the second thing it claims to prove. AND THE PBKDF2 CAP TAUGHT THE LIMIT OF THAT CLAIM: workerd measures the COST and cannot see the CEILING - Cloudflare refuses anything above 100,000 and neither node nor workerd does, so this mutant is caught for being SLOW while the real 210,000 was caught by nobody until a player tried to register. The probe now asserts the cap as well as the cost, and the deploy makes a real registration against the deployed Worker."
   },
   {
     "name": "PROBE-4-a-migration-stops-applying",

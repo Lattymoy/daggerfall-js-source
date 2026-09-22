@@ -51,9 +51,53 @@
 
 /* global atob, btoa */
 
-/** OWASP's current figure for PBKDF2-SHA256. Raise it, and old rows
- *  keep working - that is what the stored form is for. */
-export const PBKDF2_ITERS = 210_000;
+/** ═══ THE CLOUDFLARE CEILING, AND HOW IT GOT PAST EVERYTHING ══════
+ *
+ * CLOUDFLARE WORKERS REFUSES PBKDF2 ABOVE 100,000 ITERATIONS:
+ *
+ *   NotSupportedError: Pbkdf2 failed: iteration counts above 100000
+ *   are not supported
+ *
+ * It is a DoS guard on their side and it is production-only. This was
+ * 210,000 - OWASP's figure for this pairing - and every password route
+ * on the live service answered 500: register, login, and recover, from
+ * the day they deployed. Nobody had ever successfully registered. Mac
+ * found it by trying, minutes after the arc went live.
+ *
+ * ═══ WHY NO GATE CAUGHT IT, WHICH IS THE REAL FINDING ═════════════
+ *
+ * `test/accountworker.test.js` drives the whole thing in node, and
+ * node has no such cap. `tools/accountProbe.mjs` exists precisely
+ * because IMPORTABILITY IS NOT DEPLOYABILITY (AUDIT-ACC F2 stood the
+ * Worker up in a real workerd after the suite was green over a Worker
+ * that could not boot) - and it stands the service in workerd, which
+ * ALSO has no such cap. It even MEASURED this: "PBKDF2 at 210,000
+ * costs 36ms there", green, against a runtime that was never going to
+ * enforce the limit.
+ *
+ * So the lesson is one rung further out than F2's: LOCAL WORKERD IS
+ * NOT CLOUDFLARE. A probe in workerd proves the code runs; it does not
+ * prove the platform will allow it. The only thing that could have
+ * caught this is a request to the DEPLOYED Worker, which is now what
+ * `.github/workflows/account-deploy.yml` makes after every deploy.
+ *
+ * ═══ WHAT THIS COSTS, SAID PLAINLY ════════════════════════════════
+ *
+ * 100,000 is BELOW OWASP's recommendation for PBKDF2-SHA256 (600,000),
+ * and below the 210,000 this arc chose. It is the most the platform
+ * will run, so the honest options are this or a different KDF, and a
+ * different KDF is not a thing to design during an outage.
+ *
+ * IT IS NOT STUCK HERE. The stored form is self-describing
+ * (`pbkdf2-sha256$<iters>$<salt>$<derived>`) and `needsRehash` upgrades
+ * a row on its owner's next correct login, so the work factor can be
+ * raised later - by chaining two capped derivations, say - without
+ * logging anybody out. And right now there is nothing to migrate:
+ * register has never once succeeded, so no row was ever written at the
+ * old cost.
+ */
+export const PBKDF2_CAP = 100_000;
+export const PBKDF2_ITERS = PBKDF2_CAP;
 export const SALT_BYTES = 16;
 export const DERIVED_BITS = 256;
 export const ALG = 'pbkdf2-sha256';
