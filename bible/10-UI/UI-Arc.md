@@ -10023,7 +10023,7 @@ than because the screen agrees with a narrower port.
 stays unbuilt - an owner call, unchanged: the port has no gamepad layer
 at all, the serialized joystick blocks are simply absent from
 `KeyBindData_v1`, and the flag that says so is
-`src/systems/inputActions.js:953`. The JOYSTICK tab still answers with
+`src/systems/inputActions.js:992`. The JOYSTICK tab still answers with
 its note, and Ledger `:593`'s live clause now names that window alone.
 `weaponSensitivitySlider` is commented out in DFU itself (:42, :355) -
 nine controls are built, the tenth is a stub - and
@@ -10735,7 +10735,7 @@ if (alt.ContainsKey(code)) alt.Remove(code);        // InputManager.cs:729-734
 - and for a SECONDARY write the "other" dict IS the primary, so a
 secondary Jump written onto `ShiftLeft` deletes Run's primary row, and
 the reverse order deletes Jump's secondary row by the same line. The
-port carries it at `inputActions.js:537-538`. Either order collapses the
+port carries it at `inputActions.js:576-577`. Either order collapses the
 pair.
 
 The route that DOES produce it is the LOAD path. `LoadActionKeybinds`
@@ -10746,7 +10746,7 @@ if (!dict.ContainsKey(key) && actionVal != Actions.Unknown)
     dict.Add(key, actionVal);                       // InputManager.cs:1950-1969
 ```
 
-- ported at `inputActions.js:717-727`, whose own comment already said
+- ported at `inputActions.js:756-766`, whose own comment already said
 "Raw map-set, NOT setBinding". So a hand-edited `KeyBindings.txt` that
 puts Jump on the run key as a SECONDARY, with the primary `Space` spent
 on something else, loads exactly as written; and it SURVIVES the

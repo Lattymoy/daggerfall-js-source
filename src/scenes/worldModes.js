@@ -7809,7 +7809,7 @@ export function createWorldModes(host) {
    *      ... cursorActive = !cursorActive;
    *  This mode machine used to register a SECOND bindCursorToggle of
    *  its own, and `bindCursorToggle` installs a fresh window listener
-   *  per call over a MODULE-global flag (player/pointerLock.js:57-135).
+   *  per call over a MODULE-global flag (player/pointerLock.js:57-151).
    *  ?world and ?exterior build this machine unconditionally, so one
    *  Enter ran both handlers and flipped the flag TWICE - net zero -
    *  and `cursorActive()` could never rise in the two shipping outdoor

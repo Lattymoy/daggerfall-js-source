@@ -500,7 +500,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `%`), `talkMacros.js` carries none - it is the MCP: TalkManagerMCP's
   thirteen overrides over the one GameManager the host hands in - and
   all four sentinels are reachable and pinned.*
-- ~~**`src/systems/inputActions.js:837`** - STILL FLAGGED, NARROWED (GP1,
+- ~~**`src/systems/inputActions.js:876`** - STILL FLAGGED, NARROWED (GP1,
   2026-09-11)~~ **RETIRED (GP3, 2026-09-11): the pad plays, its window is built, its cursor works a window - the note stands where the flag stood.** ~~axes and joystick. *The port has no gamepad input
   layer, so `AxisActions` and `JoystickUIActions` have no source to
   bind and `loadKeyBinds` deliberately ignores those blocks in a
