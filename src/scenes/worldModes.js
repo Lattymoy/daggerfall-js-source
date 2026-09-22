@@ -8381,12 +8381,18 @@ export function createWorldModes(host) {
     // through a shop door. This routes the same ui/input.js table the
     // dungeon arm has always used, over an interior ctx.
     if (mode === 'interior') {
-      if (routeKey(e, interiorKeyCtx, null, keys)) e.preventDefault();   // AUDIT 58 (f3/input): the held-keys Set, so routeKey's actionOf resolves COMBOS (InputManager.cs:1666-1712) - see the note at the world host's own actionOf call
+      if (routeKey(e, interiorKeyCtx, null, keys)) {
+        e.preventDefault();   // AUDIT 58 (f3/input): the held-keys Set, so routeKey's actionOf resolves COMBOS (InputManager.cs:1666-1712) - see the note at the world host's own actionOf call
+        host.relockAfterUiInput?.();
+      }
       return;
     }
     // The input map (ui/input.js) owns all bindings.
     if (mode !== 'dungeon' || !dungeonCtx) return;
-    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch
+    if (routeKey(e, dungeonCtx, (p) => player.spawn(p[0], p[1], p[2]), keys)) {
+      e.preventDefault();   // P14 (AUDIT 23): a load clears motion state, same applier as dungeon.js   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch
+      host.relockAfterUiInput?.();
+    }
   });
 
   // U8c: pointer routing for interior native windows (the townTalk
