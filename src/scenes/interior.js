@@ -135,7 +135,10 @@ export async function bootInterior(canvas, renderer, params, status) {
    *  does not. */
   const windows = makeWindowStack({ onTop: (w) => { overlay = w; } });
   const gamePaused = () => windows.paused() || pauseWhileOpen(overlay);
-  const lookGate = makeLookGate(canvas);   // AUDIT-AMAP H8: a window up frees the cursor, or the map cannot be dragged
+  const lookGate = makeLookGate(canvas);
+  const relockAfterUiInput = () => {
+    if (!gamePaused() && document.pointerLockElement !== canvas) requestLook(canvas);
+  };   // AUDIT-AMAP H8: a window up frees the cursor, or the map cannot be dragged
   let mapFont = null;
   makeFontFor().catch((e) => console.warn('[automap] FONT0003 unavailable:', e?.message ?? e));
   async function makeFontFor() {
@@ -196,7 +199,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // The open map owns the keyboard, exactly as it does in the three
     // hosts that already carry it - including the toggle key, which the
     // window itself defers to its own close.
-    if (overlay) { overlay.input(e.code, e); drainOverlay(); e.preventDefault(); return; }
+    if (overlay) { overlay.input(e.code, e); drainOverlay(); relockAfterUiInput(); e.preventDefault(); return; }
     // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER, the law all four
     // hosts now carry. InputManager.PollInput (:1795-1809) adds every
     // held key before GameManager.Update reads an Action, and this add
@@ -221,6 +224,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     if (!overlay) return;
     overlay.keyup?.(e.code, e);
     drainOverlay();
+    relockAfterUiInput();
   });
   canvas.addEventListener('pointerdown', (e) => {
     // An open window withholds the pointer lock (the dungeon.js law) -
@@ -229,6 +233,7 @@ export async function bootInterior(canvas, renderer, params, status) {
       const v = nativeAt(e);
       if (v) overlay.pointer?.('down', v[0], v[1], e.button, { ctrl: !!e.ctrlKey, shift: !!e.shiftKey });
       drainOverlay();
+      relockAfterUiInput();
       return;
     }
     requestLook(canvas);
@@ -259,6 +264,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     overlay.pointer?.('up', v ? v[0] : -1, v ? v[1] : -1, e.button);
     overlay.release?.();   // ROAD-E E1: the latch-dropping edge, for a window with no pointer seam (the list picker's thumb)
     drainOverlay();
+    relockAfterUiInput();
   });
   // AUDIT 65 UI-5: the point rides the notch here too (the four-hosts
   // rule, one seam over from F48's miss above) - BaseScreenComponent
