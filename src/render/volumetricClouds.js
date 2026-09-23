@@ -56,7 +56,7 @@
 
 import { createRenderTarget, withTarget, frameTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
-import { WEATHER_EASE_MINUTES, WEATHER_SKY, sunSkyDirection } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
+import { WEATHER_EASE_MINUTES, WEATHER_SKY, WIND_SECONDS_PER_MINUTE, sunSkyDirection, paletteAt } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
 
 /** VC7e: a JS number as a GLSL float literal (airPass.js glslFloat's law: `${1}` is an int to the compiler). */
 const glslF = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
@@ -207,6 +207,55 @@ export const CURTAIN_FALL = Object.freeze({ rain: Object.freeze([1, 0]), thunder
  *  column's profile can move within a stride - the smallest margin that measured the same picture as no stride at
  *  all (the arc's table: 0.01 left 95 pixels off, this 85, which is the dither's own jitter at a cloud's edge). */
 export const SKIP_ROOM = 0.02;
+/** VC7d (2026-09-23, Mac: "improve the volumetric cloud system to be more immersive" - the high cirrus, the last of
+ *  the four chosen): THE ICE LAYER. A thin shell of ice cloud at CIRRUS_ALT_M, far above the slab, read ONCE per ray
+ *  where the ray meets it over a round earth (so it runs out to its own horizon, 339 km off, instead of to infinity).
+ *  Its streaks lie along the upper wind - at these latitudes the westerly jet, whatever the surface wind is doing, so
+ *  they ride east on the game's clock at CIRRUS_JET_M_PER_MINUTE (five times a fair day's surface drift, the ratio
+ *  of a jet to the wind under it) and every player sees one sky. The tiles are CIRRUS_ALONG shape tiles down the jet
+ *  and CIRRUS_ACROSS across it (the streaks), and the fibres CIRRUS_FIBRE_ALONG/ACROSS detail tiles - each dividing
+ *  the field's period, so neither a recenter nor the jet's own wrap moves a streak. Its peak optical depth is
+ *  CIRRUS_TAU (real cirrus runs 0.03 to 3; a veil you can see the blue through), fading into the horizon's haze over
+ *  CIRRUS_FADE_M. */
+export const CIRRUS_ALT_M = 9000;
+export const CIRRUS_TAU = 0.6;
+export const CIRRUS_ALONG = 16;
+export const CIRRUS_ACROSS = 1;
+export const CIRRUS_FIBRE_ALONG = 48;
+export const CIRRUS_FIBRE_ACROSS = 1;
+export const CIRRUS_FIBRE = 0.35;
+/** VC7d: where the high air holds ice at all - a round, slow field CIRRUS_PATCH shape tiles across (the field's own
+ *  period), so a fair sky has streaks in places and clear blue in others, not a sheet; and how far across the jet
+ *  a medium field (CIRRUS_BEND shape tiles) bends the streaks, so they curve like mare's tails. The first cut was a
+ *  sheet of parallel stripes from horizon to horizon, its fibres aliasing to a dotted grain. */
+export const CIRRUS_PATCH = 16;
+/** VC7d: THE WISPS - where the smooth fbm of the stretched volume stands above a threshold the cover lowers, a soft
+ *  elongated wisp; the rest of the patch is blue. CIRRUS_WISP_TOP is the threshold with no cover, CIRRUS_WISP_COVER
+ *  how far a full cover lowers it, CIRRUS_WISP_SOFT the width of a wisp's edge. (Two cuts drew the sky as a sheet:
+ *  the Perlin-Worley cut by the cover crazed by its cell borders into dark contour lines, and the fbm's ridge, which
+ *  drew EVERY contour - marbling, not cirrus.) */
+export const CIRRUS_WISP_TOP = 0.66;
+export const CIRRUS_WISP_COVER = 0.24;
+export const CIRRUS_WISP_SOFT = 0.18;
+export const CIRRUS_BEND = 16;
+export const CIRRUS_BEND_M = 2500;
+/** VC7d: a jet runs about five times the surface wind under it; the fair day's surface drift is the clouds' own
+ *  integral (WIND2: the row's wind, on game minutes, in world metres), so the jet is five of those. */
+export const CIRRUS_JET_RATIO = 5;
+export const CIRRUS_JET_M_PER_MINUTE = CIRRUS_JET_RATIO * Math.hypot(...WEATHER_SKY.sunny.wind) * WIND_SECONDS_PER_MINUTE * WORLD_PER_DRIFT;
+export const CIRRUS_FADE_M = 120000;
+/** VC7d: ice crystals scatter hard forward - the sun's side of a cirrus veil is its brightest - but a crystal cloud
+ *  scatters white light many times over, so from ANY side it is brighter than the clear sky behind it. The first cut
+ *  lit it by the forward lobe alone and away from the sun it came out darker than the blue: dark contour lines round
+ *  every streak. CIRRUS_FWD of the sun's share follows the lobe, the rest is isotropic; CIRRUS_AMB of the lit cloud
+ *  colour is the sky's light on it. */
+export const CIRRUS_G = 0.7;
+export const CIRRUS_SUN = 0.8;
+export const CIRRUS_FWD = 0.6;
+export const CIRRUS_AMB = 0.45;
+/** VC7d: how much of the sky carries cirrus under each word (eased with the weather). A fair sky shows it most - an
+ *  overcast lid or a storm keeps theirs, but their own cloud hides it, which the march does by itself. */
+export const CIRRUS_COVER = Object.freeze({ sunny: 0.45, cloudy: 0.5, overcast: 0.5, fog: 0.3, rain: 0.5, snow: 0.45, thunder: 0.6, sandstorm: 0.15 });
 /** VC7e: how full a column is on the average (the shape noise past its coverage cut) - columnAbove's estimate. */
 export const COLUMN_FILL = 0.5;
 /** The shadow map's square, in metres: SIXTEEN pixels a side, the
@@ -331,6 +380,7 @@ export function cloudClocks(minutes, driftWorld) {
   return {
     evolve: [wrap(minutes * EVOLVE_M_PER_MINUTE, SHAPE_METRES), wrap(minutes * DETAIL_EVOLVE_M_PER_MINUTE, DETAIL_METRES), wrap(minutes * COVER_EVOLVE_PER_MINUTE, 1)],
     coverDrift: [wrapField(driftWorld[0] * COVER_DRIFT_SHARE), wrapField(driftWorld[1] * COVER_DRIFT_SHARE)],
+    cirrus: wrapField(minutes * CIRRUS_JET_M_PER_MINUTE),   // VC7d: the jet's offset east, wrapped to the field's period - every tile the ice reads divides it
   };
 }
 
@@ -494,6 +544,18 @@ export function cloudLight(state, profile = null) {
   const moon = m ? [m.color[0] * 0.12 * m.vis, m.color[1] * 0.12 * m.vis, m.color[2] * 0.14 * m.vis] : [0, 0, 0];
   if (w > 0) return { dir: state.sunDir, color: [state.sun[0] * w + moon[0] * (1 - w), state.sun[1] * w + moon[1] * (1 - w), state.sun[2] * w + moon[2] * (1 - w)], day: w };
   return { dir: m ? m.dir : [0, 1, 0], color: moon, day: 0 };
+}
+
+/** VC7d: the light on the ice layer - cloudLight at CIRRUS_ALT_M (it sees three degrees past the ground's horizon),
+ *  and the sun in the colour the palette gives it at the elevation the ICE sees it at: the player's elevation plus
+ *  that dip. So when the sun has set for the player and gone to ember for the deck, the cirrus is still gold - the
+ *  last colour in a sunset sky - and it goes out three degrees after the ground. Pure. */
+export function cirrusLight(state) {
+  const L = cloudLight(state, { base: CIRRUS_ALT_M, top: CIRRUS_ALT_M });
+  if (L.day <= 0) return L;
+  const elev = (state.elevDeg ?? Math.asin(Math.max(-1, Math.min(1, state.sunDir[1]))) * 180 / Math.PI) + horizonDip(CIRRUS_ALT_M) * 180 / Math.PI;
+  const sun = paletteAt(elev).sun, w = L.day;
+  return { dir: L.dir, color: [0, 1, 2].map((i) => sun[i] * w + (L.color[i] - state.sun[i] * w)), day: w };
 }
 
 /** VC6b: HOW MUCH OF THE LOW-SUN LOOK THIS FRAME TAKES, 0..1 - the one
@@ -746,6 +808,9 @@ uniform float uDusk;      // VC6b: how much of the low-sun look this frame takes
 uniform int uSteps;
 uniform int uLightSteps;
 uniform vec4 uCellF[8];   // VC7c: the fall under each cell - its amount (0 none), its kind (0 rain, 1 snow)
+uniform vec4 uCirrus;     // VC7d: the ice layer's cover (0 none), peak optical depth, the jet's offset east (metres)
+uniform vec3 uCirrusLight;   // VC7d: the light on it (cirrusLight) - the sun at the ice's own elevation, else the moon
+uniform vec3 uCirrusDir;     // ...and where that light comes from
 out vec4 outColor;
 const float PI = 3.14159265;
 ${CLOUD_FIELD_GLSL}
@@ -841,6 +906,37 @@ vec3 lightOctaves(float tau) {
   float multi = 0.0, a = ${glslF(MS_A)}, b = ${glslF(MS_B)};
   for (int o = 1; o < ${MS_OCTAVES}; o++) { multi += a * exp(-b * tau); a *= ${glslF(MS_A)}; b *= ${glslF(MS_B)}; }
   return vec3(single, multi, 0.0);
+}
+// VC7d: THE ICE LAYER - where the ray meets the shell CIRRUS_ALT_M up over a round earth (the stable root: no
+// cancellation at the zenith, finite at the horizon), read once from the shape volume stretched down the westerly jet
+// and its fibres from the detail volume, lit by the ice's own sun in hard forward scatter, fading into the horizon's
+// haze. Returns its premultiplied colour and transmittance; the slab stands in front of it.
+vec4 cirrus(vec3 cam, vec3 dir) {
+  if (uCirrus.x <= 0.0 || dir.y <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
+  const float R = ${glslF(EARTH_RADIUS_M)}, H = ${glslF(CIRRUS_ALT_M)};
+  float t = (2.0 * R * H + H * H) / (R * dir.y + sqrt(R * R * dir.y * dir.y + 2.0 * R * H + H * H));
+  vec2 q = cam.xz + dir.xz * t + uShift;
+  q.x -= uCirrus.z;   // the jet carries it east
+  float mip = clamp(log2(t / 15000.0), 0.0, 4.0);
+  // where the high air holds ice at all: the cover sets how much of this slow round field is in
+  float patchField = textureLod(uShape, vec3(q.x, 0.61 * SHAPE_M, q.y) / (SHAPE_M * ${glslF(CIRRUS_PATCH)}), 0.0).g;
+  float patchIn = smoothstep(1.0 - uCirrus.x - 0.12, 1.0 - uCirrus.x + 0.12, patchField);
+  if (patchIn <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
+  // the wisps, bent gently across the jet by the slow field (mare's tails)
+  float bend = (textureLod(uShape, vec3(q.x, 0.47 * SHAPE_M, q.y) / (SHAPE_M * ${glslF(CIRRUS_BEND)}), 0.0).b - 0.5) * ${glslF(CIRRUS_BEND_M)};
+  vec4 sk = textureLod(uShape, vec3(q.x / (SHAPE_M * ${glslF(CIRRUS_ALONG)}), 0.83 + uEvolve.x / SHAPE_M * 0.5, (q.y + bend) / (SHAPE_M * ${glslF(CIRRUS_ACROSS)})), mip + 1.0);   // a mip soft: the volume's texels, stretched this far, jag a wisp's edge
+  float wispAt = ${glslF(CIRRUS_WISP_TOP)} - ${glslF(CIRRUS_WISP_COVER)} * uCirrus.x;
+  float streak = smoothstep(wispAt, wispAt + ${glslF(CIRRUS_WISP_SOFT)}, sk.g * 0.6 + sk.b * 0.4);
+  if (streak <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
+  // the striations down each wisp: smooth fbm of the detail volume, long down the jet, a mip softer than the map
+  float fib = textureLod(uDetail, vec3(q.x / (DETAIL_M * ${glslF(CIRRUS_FIBRE_ALONG)}), 0.29, (q.y + bend) / (DETAIL_M * ${glslF(CIRRUS_FIBRE_ACROSS)})), mip + 1.0).g;
+  float d = patchIn * streak * mix(1.0, fib, ${glslF(CIRRUS_FIBRE)});
+  float a = 1.0 - exp(-uCirrus.y * d);
+  a *= exp(-t / ${glslF(CIRRUS_FADE_M)});   // gone into the horizon's haze
+  if (a <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
+  float phase = min(hg(dot(dir, uCirrusDir), ${glslF(CIRRUS_G)}) * 4.0 * PI, 4.0);
+  vec3 c = uCirrusLight * ${glslF(CIRRUS_SUN)} * mix(1.0, phase, ${glslF(CIRRUS_FWD)}) + uCloudLit * ${glslF(CIRRUS_AMB)};
+  return vec4(c * a, 1.0 - a);
 }
 void main() {
   vec2 uv = gl_FragCoord.xy / uMapSize;
@@ -944,6 +1040,9 @@ void main() {
   // aerial perspective: a far bank takes the horizon's colour
   float fade = 1.0 - exp(-t0 / 14000.0);
   col = mix(col, uHorizonColor * (1.0 - T), fade);
+  vec4 ice = cirrus(cam, dir);   // VC7d: far above the slab - behind it along the ray
+  col += T * ice.rgb;
+  T *= ice.a;
   outColor = underCurtains(col, T, cam, dir);   // VC7c: the curtains hang BELOW the slab, so they stand in front of it along the ray
 }`;
 
@@ -1056,7 +1155,7 @@ function link(gl, vs, fs) {
 
 /** The field's uniforms, shared by both marches. */
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
-export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
+export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF', 'uCirrus', 'uCirrusLight', 'uCirrusDir'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos'];   // WEATHER3d: the distant strike
 
@@ -1138,6 +1237,9 @@ export class VolumetricClouds {
     const target = VC_PROFILE[weather] ?? VC_PROFILE.sunny;
     this.profile = easeProfile(this.profile, target, easeDt);
     this.weather = weather;
+    // VC7d: the ice layer's cover eases with the weather, on the profile's own span
+    const iceWant = CIRRUS_COVER[weather] ?? CIRRUS_COVER.sunny;
+    this.cirrusCover = this.cirrusCover == null ? iceWant : this.cirrusCover + (iceWant - this.cirrusCover) * (1 - Math.exp(-Math.max(0, easeDt) / WEATHER_EASE_MINUTES));
     this.drift = [wrapField(drift[0] * WORLD_PER_DRIFT), wrapField(drift[1] * WORLD_PER_DRIFT)];   // CLK1: wrapped to the field's period
     this.clocks = cloudClocks(state.minutes ?? 0, [drift[0] * WORLD_PER_DRIFT, drift[1] * WORLD_PER_DRIFT]);   // VC7a: the boil and the cover's own wind
     this.flash = flash;
@@ -1183,7 +1285,7 @@ export class VolumetricClouds {
    *  so the next setState takes the new weather whole, as the row does,
    *  and both maps are marched whole again - the old sky is not eased
    *  into the new one. */
-  jump() { this.profile = null; this.stripe = 0; this.shadowFull = true; }
+  jump() { this.profile = null; this.cirrusCover = null; this.stripe = 0; this.shadowFull = true; }
 
   /** WEATHER3d: a distant storm's strike this frame - `{ x, z, r,
    *  strength }` in the host's world metres, or null. Its cloud is lit
@@ -1248,7 +1350,10 @@ export class VolumetricClouds {
       gl.uniform3fv(u.uSkyTint, s.zenith);   // VC6b: the sky that lights the side the sun does not
       gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b: the SUN's own angle and weight - zero at night, so the whole slice is off
       gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);
-      if (this._packed?.count > 0) gl.uniform4fv(u.uCellF, this._packed.f);   // VC7c: the curtains' falls, packed with the cells this frame
+      if (this._packed?.count > 0) gl.uniform4fv(u.uCellF, this._packed.f);
+      const ice = cirrusLight(s);   // VC7d
+      gl.uniform4f(u.uCirrus, this.cirrusCover ?? 0, CIRRUS_TAU, this.clocks?.cirrus ?? 0, 0);
+      gl.uniform3fv(u.uCirrusLight, ice.color); gl.uniform3fv(u.uCirrusDir, ice.dir);   // VC7c: the curtains' falls, packed with the cells this frame
       withTarget(gl, this.map, viewport, () => {
         gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));
         gl.drawArrays(gl.TRIANGLES, 0, 3);

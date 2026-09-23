@@ -446,3 +446,50 @@ The picture is the no-stride sky's, and the fair sky keeps VC6d's saving.
 - Fair and cloudy skies carry it; an overcast lid or a storm hides it
   behind their own cloud.
 
+**VC7d shipped (2026-09-23; Mac: "Let's do the not done yet before we
+merge").** Pinned by `test/vc7d_cirrus.test.js` (5 tests;
+`tools/mutants/vc7d.json` 34/34 dead).
+- **The shell.** One sample per sky-map texel, where the ray meets a sphere
+  CIRRUS_ALT_M (9 km) up. It uses the stable root (no cancellation at the
+  zenith), so the layer runs out to its own horizon 339 km off, where a
+  flat earth ran to infinity, and fades into the haze over 120 km. It sits
+  behind the slab along the ray, so a deck or a storm hides it by itself.
+- **The jet, not the wind.** The first design laid the streaks along the
+  surface wind. Its turning would have swung the whole field about the
+  world's origin: a kilometre of slide for every half-degree. The streaks
+  lie along the westerly jet instead, which is what upper air at these
+  latitudes does whatever the surface wind is up to. They ride east on
+  the game's clock at five times a fair day's surface drift (71 m a game
+  minute, derived), so every player sees one ice sky. Every tile the ice
+  reads divides the field's period (the floating origin's wrap, and now
+  the jet's), so neither moves a streak.
+- **Wisps, measured by eye four times.**
+  - As parallel stripes of Perlin-Worley cut by the cover it was a sheet
+    from horizon to horizon, its fibres aliasing to a dotted grain.
+  - With patches and a bend it became marbling: dark contour lines round
+    every streak. There were two causes. The cell borders of the
+    Perlin-Worley are thin low valleys, and stretched 8:1 they read as
+    cracks. And the veil, lit by the forward lobe alone, came out darker
+    than the blue away from the sun.
+  - As the fbm's ridge it drew every contour, so it was still marbling.
+  - What shipped: a slow round patch field (the field's period) decides
+    where the high air holds ice, and the cover sets how much. Inside a
+    patch, wisps stand where the smooth fbm of the stretched volume (16:1,
+    a mip soft) is in its upper tail. A gentle bend (2.5 km over ~49 km)
+    curves them like mare's tails, and faint striations run down each
+    one.
+  - The light: a share of the sun follows the ice's hard forward lobe
+    (g 0.7), the rest is isotropic, and the lit cloud colour is the sky's
+    light on it. So from any side it is brighter than the blue behind it,
+    which is pinned per channel.
+- **The ice's own sun.** `cirrusLight` is cloudLight at 9 km, which sees
+  3.04 degrees past the ground's horizon. It takes the palette's sun at
+  the elevation the ICE sees it: the player's elevation plus that dip. At
+  a sun 1.5 degrees down, the deck is out (dark mauve cumulus) and the
+  streaks are still gold against the blue: the last colour in the sky,
+  lit about 12 game minutes after the deck goes out.
+- **In the lab.** At noon, sparse long white streaks curve east-west with
+  blue between them. At dusk they are gold over a mauve deck. Under a
+  cloudy deck they show only where it is thin, and at night there is
+  nothing but stars.
+

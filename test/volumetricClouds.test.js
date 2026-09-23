@@ -137,7 +137,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(shared, /if \(clouds && dynamicSky\) dynamicSky\.cloudsExternal = true;/, 'and the mod\'s own sheets (DS2)');
   assert.match(shared, /weatherJump\(\) \{[\s\S]{0,300}?clouds\?\.jump\(\);/, 'a jump drops the profile with the row');
   const vc = read('src/render/volumetricClouds.js');
-  assert.match(vc, /jump\(\) \{ this\.profile = null; this\.stripe = 0; this\.shadowFull = true; \}/);
+  assert.match(vc, /jump\(\) \{ this\.profile = null; this\.cirrusCover = null; this\.stripe = 0; this\.shadowFull = true; \}/);
   // VC4 review: the floating origin - the field is sampled at the ABSOLUTE position
   // WIND4: ...and the drift is SUBTRACTED from it. The recenter is a
   // position (added, so q is absolute); the drift is how far the AIR
