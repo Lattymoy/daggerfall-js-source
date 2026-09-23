@@ -51,7 +51,9 @@ function joiner() {
     ${fnSrc(D, 'applyFoes')}
     return { setAuthority, applyFoes, isAuthority: () => _authority };
   `;
-  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ foes, validFoeRecord, retypeFoe: (...a) => hooks.retype(...a), console }));
+  // CORPSE-FOOD (2026-09-23): the stream's first word of a death rolls this joiner's copy of the body its food - stood
+  // down here, where the seat is the subject (survtiers3.test.js mounts that arm)
+  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ foes, validFoeRecord, retypeFoe: (...a) => hooks.retype(...a), console, addCorpseFood: () => 0, liveStat: () => 50, playerEntity: null }));
 
   const applyDungeonFoesLine = mustMatch(M, /applyDungeonFoes\(id, data[^)]*\) \{[^\n]*\},/, 'worldModes.applyDungeonFoes');
   const setDungeonAuthorityLine = mustMatch(M, /setDungeonAuthority\(on\) \{[^\n]*\},/, 'worldModes.setDungeonAuthority');

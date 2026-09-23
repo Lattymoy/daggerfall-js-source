@@ -310,12 +310,12 @@ export function rebuildEquipState(entity) {
  *  like any other item. Idempotent per entity.
  *
  *  SUPERSEDED, not pending. S3d shipped the real roll -
- *  systems/startingGear.js:70 assignStartingGear (ItemHelper's
+ *  systems/startingGear.js:74 assignStartingGear (ItemHelper's
  *  AssignStartingGear), run on both creation paths at
- *  chargenSession.js:141 (?class= headless) and :221 (the wizard) -
+ *  chargenSession.js:141 (?class= headless) and :233 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:3022, exterior.js:1267):
+ *  residue at the two host calls (world.js:3052, exterior.js:1267):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */
@@ -328,7 +328,7 @@ export function seedStartingEquipment(entity) {
   // SURV2: a new character sets out with provisions - two sacks of
   // rations, a full waterskin, worn camping gear and a fire kit with
   // two lights left (survival/items.js startingProvisions; the mod's
-  // own OnStartGame kit, plus the port's fire).
+  // own OnStartGame kit, plus the port's fire). Casual and Hard alone, by decision (Mac, 2026-09-23: "No, not off.. theres no reason to have it in off" - SURV-KIT, withdrawn).
   if (survivalOn()) for (const it of startingProvisions()) entity.items.push(it);
 }
 

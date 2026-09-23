@@ -23,7 +23,7 @@ its held-key set - that AUDIT 39r had fixed `world.js`, `exterior.js`
 and `dungeon.js` and left `worldModes.js` starved, so every mouse-bound
 action was dead indoors. **AUDIT-MACK F2 found that false.**
 `worldModes.js` does not OWN a held-key Set: it takes `keys` off the
-host bag (`exterior.js:3761` and world.js's twin), and the lender's own
+host bag (`exterior.js:3762` and world.js's twin), and the lender's own
 mousedown writes `keys.add(mouseCode(e.button))` **before any mode
 gate**, on a listener that is never removed. The codes were always
 there. AUDIT 39r was complete; MAC-K1 read its wording as a gap and

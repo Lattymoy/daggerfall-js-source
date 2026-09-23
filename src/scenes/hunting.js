@@ -17,7 +17,7 @@
 //   spawnBeast({ mobileType, count }) - the host's placement door
 //   inflictPoison / inflictDisease - the formulas (the law is pure)
 //   tally(skillId) - the host's tallySkill
-import { survivalOn } from '../systems/survival/switch.js';
+import { survivalOn, survivalRules } from '../systems/survival/switch.js';
 import { survivalOf } from '../systems/survival/needs.js';
 import {
   huntRoll, huntOutcome, applyHuntOutcome, huntPrompt, HUNT_BUSY, HUNT_MINUTES, huntRealSeconds,
@@ -56,7 +56,8 @@ export function createHunting({
       onSearched: () => {
         const now = env?.() ?? e;
         const minute = Math.floor(now.minute ?? 0);
-        outcome = huntOutcome(ev, { hasBow: !!now.hasBow, skills: now.skills ?? {}, luck: now.luck ?? 50, rolls });
+        // SURV-TIERS: the hunter's tier - a Casual search takes each harm's safe twin (survival/hunting.js HUNT_SAFE_TWIN)
+        outcome = huntOutcome(ev, { hasBow: !!now.hasBow, skills: now.skills ?? {}, luck: now.luck ?? 50, rolls, rules: survivalRules() ?? undefined });
         const rows = applyHuntOutcome(entity, entity.items ?? (entity.items = []), outcome, {
           now: minute, currentDay: Math.trunc(minute / 1440), rolls, inflictPoison, inflictDisease,
         });

@@ -1,0 +1,615 @@
+[
+  {
+    "name": "SURVTIERS3-mine-is-the-records-word-again",
+    "file": "src/scenes/camps.js",
+    "old": "  const mine = (c) => c.owner == null;",
+    "new": "  const mine = (c) => c.rec.owner == null || c.rec.owner === (selfId?.() ?? null);",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-rooms-memory-stands-my-own-camp-twice",
+    "file": "src/scenes/camps.js",
+    "old": "    const theirs = Array.isArray(records) ? records.filter((r) => !ownIds.has(r?.i)) : records;",
+    "new": "    const theirs = records;",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-load-keeps-the-pitch-after-the-save",
+    "file": "src/scenes/camps.js",
+    "old": "    for (let i = camps.length - 1; i >= 0; i--) if (mine(camps[i])) drop(camps[i]);",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-load-drops-a-peers-camps-too",
+    "file": "src/scenes/camps.js",
+    "old": "if (mine(camps[i])) drop(camps[i]);",
+    "new": "drop(camps[i]);",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-world-load-merges-again",
+    "file": "src/scenes/world.js",
+    "old": "        camps.dropOwn();   // AUDIT SURV-TIERS (the third pass): the save says which camps are mine - the pitch after it is undone, not kept beside the gear it gave back\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-dungeon-load-merges-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (truncate) { camps.dropOwn(); camps.restore(w.camps); }",
+    "new": "if (truncate) { camps.restore(w.camps); }",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-teleport-carries-the-camps-again",
+    "file": "src/scenes/world.js",
+    "old": "    camps.restore(campsHeld, campFromNatives);   // AUDIT SURV-TIERS (the third pass): the camps, in the new frame\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-every-camp-light-takes-a-slot",
+    "file": "src/scenes/camps.js",
+    "old": "    return near.slice(0, CAMP_LIGHTS_MAX).map(",
+    "new": "    return lit.map(",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-far-fire-lights-the-ground",
+    "file": "src/scenes/camps.js",
+    "old": ".filter(([, d]) => d <= CAMP_LIGHT_REACH)",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-id-counter-starts-at-nought",
+    "file": "src/scenes/camps.js",
+    "old": "      if (n) _nextId = Math.max(_nextId, Number(n[1]));",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-rest-here-from-seven-metres",
+    "file": "src/scenes/camps.js",
+    "old": "      if (!feet || !within(c.rec.pos, feet, BY_FIRE_REACH)) { say(CAMP_TEXT.restCloser); return; }",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-cold-tent-rests-cold",
+    "file": "src/scenes/camps.js",
+    "old": "      if (mine(c) && c.rec.kind === CAMP_KIND.Tent && !fireLit(c.rec, now())) { stokeFire(c.rec, now()); remount(c); say(CAMP_TEXT.stoked); onChanged?.(); }",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-nothing-tends-a-sleepers-fire",
+    "file": "src/scenes/camps.js",
+    "old": "    tendWhileResting(t);\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-off-tends-the-fire",
+    "file": "src/scenes/camps.js",
+    "old": "    if (!survivalOn() || !entity?.isResting",
+    "new": "    if (!entity?.isResting",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-kit-fire-is-tended",
+    "file": "src/scenes/camps.js",
+    "old": "c.rec.kind !== CAMP_KIND.Tent || ",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-worlds-fire-is-no-rests-place",
+    "file": "src/scenes/camps.js",
+    "old": "    || hearthNear(hearths ? hearths() : null, pos, BY_FIRE_REACH);",
+    "new": "    || false;",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-off-hides-the-worlds-fire-from-the-place",
+    "file": "src/scenes/camps.js",
+    "old": "    || hearthNear(hearths ? hearths() : null, pos, BY_FIRE_REACH);",
+    "new": "    || hearthNear(worldFires(), pos, BY_FIRE_REACH);",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-every-stage-change-speaks",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (Math.sign(now) !== Math.sign(before) || Math.abs(now) > Math.abs(before)) say?.(text);",
+    "new": "  say?.(text);",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-jump-says-every-line-every-time",
+    "file": "src/systems/survival/needs.js",
+    "old": "say: (t) => { if (!heard.includes(t)) heard.push(t); }",
+    "new": "say: (t) => { heard.push(t); }",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-jump-says-the-stages-it-passed",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (replay) return;\n  const was = s.notes[family];",
+    "new": "  const was = s.notes[family];",
+    "tests": [
+      "test/survtiers3.test.js",
+      "test/surv1_model.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-fire-warms-nobody-on-the-strip",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (warmedByFire) s.warmed = true; else if (s.warmed) delete s.warmed;",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-short-off-keeps-the-drink",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (s.drunk > 0) s.drunk = Math.max(0, s.drunk - (Math.floor(to / 10) - Math.floor(from / 10)));",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js",
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-short-off-keeps-the-soaking",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (s.wet > 0) s.wet = Math.max(0, s.wet - span);",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js",
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-fall-of-the-ceiling-settles-the-loan",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (repays && s.borrowed && !((entity.fatigue ?? 0) <= (s.loanPool ?? -Infinity))) settleLoan(",
+    "new": "  if (repays && s.borrowed) settleLoan(",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-fed-refund-settles-nothing",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (s.borrowed) s.loanPool = (entity.fatigue ?? 0) - refunded;",
+    "new": "  if (s.borrowed) s.loanPool = (entity.fatigue ?? 0);",
+    "tests": [
+      "test/survtiers3.test.js",
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-cut-rounds-up",
+    "file": "src/systems/survival/needs.js",
+    "old": "b[k] = Math.floor((b[k] * room) / total);",
+    "new": "b[k] = Math.ceil((b[k] * room) / total);",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-vampire-starves-in-hard",
+    "file": "src/systems/survival/needs.js",
+    "old": "    const starve = vampire ? 0 : starvingDays(hungerMinutes(s, now));",
+    "new": "    const starve = starvingDays(hungerMinutes(s, now));",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-minute-law-forgets-the-vampire",
+    "file": "src/systems/survival/needs.js",
+    "old": "{ endurance: liveStat(entity, 'endurance'), rules, vampire }",
+    "new": "{ endurance: liveStat(entity, 'endurance'), rules }",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-long-off-leaves-a-nought",
+    "file": "src/systems/survival/needs.js",
+    "old": "{ alignSurvival(entity, Math.floor(to), null); delete s.offFor; }",
+    "new": "{ alignSurvival(entity, Math.floor(to), null); s.offFor = 0; }",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-correction-moves-nothing",
+    "file": "src/systems/survival/needs.js",
+    "old": "  for (const k of ['lastAte', 'awakeSince', 'lastMinute', 'stiffUntil']) if (Number.isFinite(s[k]) && s[k] !== 0) s[k] += delta;",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-hard-charges-a-sleeper-by-the-fire",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (!resting || !env.byFire) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-warmed-cold-stays-red",
+    "file": "src/systems/survival/status.js",
+    "old": "    if (warmedBy(s, word) && out.at(-1)?.key === 'temp') out.at(-1).level = 'warn';",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-page-says-deadly-cold-by-the-fire",
+    "file": "src/systems/survival/status.js",
+    "old": "lines.push(warmedBy(s, word) ? STATUS_TEXT.warmedByFire : STATUS_TEXT.temp(word));",
+    "new": "lines.push(STATUS_TEXT.temp(word));",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-no-warm-chip",
+    "file": "src/systems/survival/status.js",
+    "old": "warm: ['Warm', 'warn'], ",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-vampire-thirsts-on-the-strip",
+    "file": "src/systems/survival/status.js",
+    "old": "  if (!vampire) push('thirst', ",
+    "new": "  push('thirst', ",
+    "tests": [
+      "test/survtiers3.test.js",
+      "test/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-rations-refuse-the-first-peckish-minutes",
+    "file": "src/systems/survival/food.js",
+    "old": "name: 'Rations', satiety: 240,",
+    "new": "name: 'Rations', satiety: 250,",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-meal-in-the-future",
+    "file": "src/systems/survival/food.js",
+    "old": "  const newLastAte = Math.min(now, base + satiety);",
+    "new": "  const newLastAte = base + satiety;",
+    "tests": [
+      "test/survtiers3.test.js"
+    ],
+    "equivalent": true,
+    "why": "no food's worth passes FULL_AHEAD_MINUTES since the rations came down to 240, so base + satiety never passes now; the clamp keeps the law from ever writing a future marker should a food's worth grow past it (the rations at 250 did, and a load read the marker as a fresh start)"
+  },
+  {
+    "name": "SURVTIERS3-the-stream-again",
+    "file": "src/systems/survival/items.js",
+    "old": "Find a fountain, a well or a trough.",
+    "new": "Find a fountain, a well or a stream.",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-two-spellings",
+    "file": "src/systems/survival/items.js",
+    "old": "  drankLow: 'Your waterskin is nearly empty.',",
+    "new": "  drankLow: 'Your water skin is nearly empty.',",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-rough-night-is-silent",
+    "file": "src/scenes/shared.js",
+    "old": "else if (!b && _roughHours > 0 && _rules && sleepStage(entity.survival?.sleepDebt ?? 0) !== 'rested') { say(REST_TEXT_SURVIVAL.sleptPoorly); _roughHours = 0; }",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-rested-rough-night-complains",
+    "file": "src/scenes/shared.js",
+    "old": " && sleepStage(entity.survival?.sleepDebt ?? 0) !== 'rested'",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-blackout-has-no-morning",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  return { minutes: wake - now, text: TAVERN_MENU_TEXT.woke };",
+    "new": "  return { minutes: wake - now };",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-classic-window-drops-the-waking",
+    "file": "src/ui/tavernWindow.js",
+    "old": "        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }];",
+    "new": "        return [{ rows: line(r.text) }];",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-an-off-absence-counts",
+    "file": "src/systems/save.js",
+    "old": "    if (!survivalOn() && at > saved) pauseSurvival(entity, saved, at);\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js",
+      "test/surv7_feed.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-hard-sets-out-with-nothing",
+    "file": "src/systems/startingGear.js",
+    "old": "import { survivalOn } from './survival/switch.js';",
+    "new": "import { survivalTier } from './survival/switch.js'; const survivalOn = () => survivalTier() === 'casual';",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-hard-falls-back-to-nothing",
+    "file": "src/systems/equip.js",
+    "old": "import { survivalOn } from './survival/switch.js';",
+    "new": "import { survivalTier } from './survival/switch.js'; const survivalOn = () => survivalTier() === 'casual';",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-clock-correction-skips-the-needs",
+    "file": "src/scenes/world.js",
+    "old": " if (Number.isFinite(before)) shiftSurvival(playerEntity, Math.floor(worldMinutes()) - Math.floor(before));",
+    "new": "",
+    "tests": [
+      "test/auditsurv.test.js",
+      "test/world5.test.js",
+      "test/auditworld5.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-kit-cite-startingGear-rots",
+    "file": "src/systems/equip.js",
+    "old": "systems/startingGear.js:74 assignStartingGear",
+    "new": "systems/startingGear.js:70 assignStartingGear",
+    "tests": [
+      "test/citedrift.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-kit-cite-headless-chargen-rots",
+    "file": "src/systems/equip.js",
+    "old": "chargenSession.js:141 (?class= headless)",
+    "new": "chargenSession.js:139 (?class= headless)",
+    "tests": [
+      "test/citedrift.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-kit-cite-wizard-rots",
+    "file": "src/systems/equip.js",
+    "old": "(?class= headless) and :233 (the wizard)",
+    "new": "(?class= headless) and :221 (the wizard)",
+    "tests": [
+      "test/citedrift.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
+    "file": "src/systems/equip.js",
+    "old": "(world.js:3052, exterior.js:1267)",
+    "new": "(world.js:2460, exterior.js:1267)",
+    "tests": [
+      "test/citedrift.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-gear-cite-equip-seed-rots",
+    "file": "src/systems/startingGear.js",
+    "old": "// (equip.js:322), which survives",
+    "new": "// (equip.js:307), which survives",
+    "tests": [
+      "test/citedrift.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
+    "file": "src/systems/startingGear.js",
+    "old": "world.js:3052 and exterior.js:1267 seed it",
+    "new": "world.js:2460 and exterior.js:1267 seed it",
+    "tests": [
+      "test/citedrift.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-exterior-cite-equip-guard-rots",
+    "file": "src/scenes/exterior.js",
+    "old": "early-returns (equip.js:323).",
+    "new": "early-returns (equip.js:306).",
+    "tests": [
+      "test/citedrift.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-rest-window-cite-input-rots",
+    "file": "src/ui/restWindow.js",
+    "old": "exterior.js:3052, ui/input.js:813)",
+    "new": "exterior.js:3052, ui/input.js:525)",
+    "tests": [
+      "test/citedrift.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-the-mirror-overrides-tickVitals",
+    "file": "src/scenes/world.js",
+    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
+    "new": "    enemiesNearby: () => false,\n    tickVitals: () => {},\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
+    "tests": [
+      "test/partyrest1.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-drenched-is-amber",
+    "file": "src/systems/survival/status.js",
+    "old": "drenched: ['Drenched', 'danger']",
+    "new": "drenched: ['Drenched', 'warn']",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-a-flavour-line-repeats-every-minute",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (once) { if (n[key] === 'on') return; n[key] = 'on'; say?.(text); return; }",
+    "new": "  if (once) { say?.(text); return; }",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-online-is-the-tier's",
+    "file": "src/systems/survival/switch.js",
+    "old": "export const corpseFoodOn = (search) => survivalOn() || isOnlinePage(search);",
+    "new": "export const corpseFoodOn = (search) => survivalOn();",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-the-boot-installs-the-tier",
+    "file": "src/systems/worldTick.js",
+    "old": "installSurvivalLoot({ enabled: corpseFoodOn });",
+    "new": "installSurvivalLoot({ enabled: survivalOn });",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-the-door-ignores-the-switch",
+    "file": "src/systems/survival/loot.js",
+    "old": "  if (!_enabled() || !entity || !Array.isArray(entity.items)) return 0;",
+    "new": "  if (!entity || !Array.isArray(entity.items)) return 0;",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-the-switch-is-never-installed",
+    "file": "src/systems/survival/loot.js",
+    "old": "  _enabled = enabled;\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-the-death-rolls-none",
+    "file": "src/systems/survival/loot.js",
+    "old": "(entity, opts = {}) => { addCorpseFood(entity, opts); }",
+    "new": "(entity, opts = {}) => {}",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-a-joiner's-stream-rolls-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (r.d === 1 && !f.dead) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-an-arrival's-body-rolls-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (wire && sf.dead && !f.dead && sf.items == null) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-an-arrival-rolls-over-the-room's-list",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (wire && sf.dead && !f.dead && sf.items == null) addCorpseFood(",
+    "new": "    if (wire && sf.dead && !f.dead) addCorpseFood(",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-a-joiner-rolls-every-frame",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (r.d === 1 && !f.dead) addCorpseFood(",
+    "new": "    if (r.d === 1) addCorpseFood(",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  }
+]

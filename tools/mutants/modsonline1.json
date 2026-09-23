@@ -116,8 +116,8 @@
   {
     "name": "climates-and-calories-forced-online-again",
     "file": "src/systems/features.js",
-    "old": "control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: 'player' }),",
-    "new": "control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: true }),",
+    "old": "store: 'prefs', key: 'survival', initial: 'casual', online: 'player',",
+    "new": "store: 'prefs', key: 'survival', initial: 'casual', online: true,",
     "tests": [
       "test/modsonline.test.js",
       "test/surv2_items.test.js"
