@@ -15,7 +15,7 @@
 // NullReferenceException and runs the next frame; this host's frame
 // loop dies on it - the red crash box. Three pins, by execution, over
 // the mod driven on a table (to1_travelOptions.test.js's own rig
-// shape, with the host's onClose wired as world.js:6759 wires it).
+// shape, with the host's onClose wired as world.js:6773 wires it).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -40,7 +40,7 @@ function rig() {
   const state = { pos: { x: o.x + 16384, z: o.z + 16384 }, pixel: { x: 500, y: 250 }, yaw: 0, tileRect: null, location: null };
   const said = [], scales = [];
   let to = null;
-  // world.js:6759 - CAMP / close is InterruptTravel; the port's panel is
+  // world.js:6773 - CAMP / close is InterruptTravel; the port's panel is
   // what the C#'s pushed window is, and its OnClose is the mod's own.
   const ui = new TravelControlUI({ defaultStartingAccel: 10, accelerationLimit: 60, onClose: () => to?.interruptTravel() });
   const settings = readTravelOptionsSettings((vendor, key) => (vendor === 'roads-hazelnut' ? key === 'Enabled' : modSetting(vendor, key)));
@@ -68,7 +68,7 @@ function rig() {
     locationWorldRect: (s) => { const q = mapPixelWorldOrigin(s.pixel.x, s.pixel.y); return rectOf(q.x + 16000, q.z + 16000, 768, 768); },
     // the terrain's answer: the town's pixel carries it once `tileRect`
     // is set; every other pixel is unbuilt or empty - null, which is
-    // world.js:6838's own answer for both.
+    // world.js:6852's own answer for both.
     locationTileRect: (p) => (p.x === 500 && p.y === 250 ? state.tileRect : null),
   });
   return { to, ui, net, at, state, said, scales, o };
@@ -79,7 +79,7 @@ function rig() {
  *  corner), which is the branch that reads `locationRect.zMax`. */
 function standInTheRing(r) {
   r.state.tileRect = TOWN;
-  r.to.onMapPixelChanged({ x: 500, y: 250 });   // world.js:3224 - the rects for the pixel the player stands in
+  r.to.onMapPixelChanged({ x: 500, y: 250 });   // world.js:3228 - the rects for the pixel the player stands in
   const t = locationRectsOf(r.o.x, r.o.z, TOWN.tileRect, false, false);
   r.state.pos = { x: (t.locationRect.xMin + t.locationRect.xMax) / 2, z: (t.locationRect.zMax + t.locationBorderRect.zMax) / 2 };
   r.state.yaw = 90;

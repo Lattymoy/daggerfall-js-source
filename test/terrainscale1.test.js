@@ -108,6 +108,11 @@ test('TERRAIN-SCALE1: the host stands every saved exterior height again as it la
   assert.match(WORLD, /const was = scaleOf\(arrived\.terrainScale\);/, '...and read');
   assert.match(WORLD, /terrainScale: STREAMING_TERRAIN_SCALE,   \/\/ TERRAIN-SCALE1: the ground that height stands on/, 'the anchor is stamped...');
   assert.match(WORLD, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/, '...and stood again at the recall');
+  // audit: the ship's remembered deck - stamped at boarding, stood again after the teleport built its pixel (the
+  // teleport stands a deck verbatim, never grounded)
+  assert.match(WORLD, /position: \{ mapPixel: here, pos: \[\.\.\.player\.pos\], yaw: cam\.yaw, terrainScale: STREAMING_TERRAIN_SCALE \},/);
+  const ship = WORLD.slice(WORLD.indexOf('    await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition });'));
+  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE\) \{\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\)\) \+ c;\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
 });
 
 /** The quickload's own re-stand helpers, sliced from world.js and run over a stub frame and ground. */
@@ -250,4 +255,8 @@ test('BUILD-FAIL1: a build that throws frees what it made - the GPU surfaces and
     assert.ok(WORLD.includes(line), line);
   }
   assert.match(WORLD, /flying = buildPixelNow\(px, py\)\n      \.catch\(\(e\) => \{ releaseFailedBuild\(key\); throw e; \}\)/);
+  // audit: one that threw AFTER publishing is torn down by the pump that releases its key, and a pixel torn down
+  // while its NPCs' art loads takes no batch made after
+  assert.match(WORLD, /console\.error\(`pixel \$\{next\.px\},\$\{next\.py\} failed:`, e\);\n(?:\s*\/\/[^\n]*\n)*      destroyPixel\(next\.px, next\.py, \{ collectLoose: false \}\);/);
+  assert.match(WORLD, /const t = await getTexture\(archive\);\n      if \(built\.get\(`\$\{entry\.px\},\$\{entry\.py\}`\) !== entry\) return;/);
 });

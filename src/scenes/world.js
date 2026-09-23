@@ -1165,9 +1165,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     const cx = arriving ? o[0] : feet[0], cy = arriving ? o[1] : feet[1] + (standing ? player.height / 2 : 0), cz = arriving ? o[2] : feet[2];
     for (const p of built.values()) {
       if (p.privateersHold && !p.privateersHold.state.rolled) standHold(p);   // WOD4: DungeonExterior.Update finds the block; PrivateersHold.Start runs
+      // WOD6 (audit): a pixel belongs to the arrival until its first frame - the frame its promotion's markers meet
+      // Start. A marker made on it later (a rebuild on a late region's list) is a later promotion's, and measures from
+      // the player; left in the set, it met Start from an origin the player had long left and sprang at their feet.
+      const init = _wodArrival.keys.delete(`${p.px},${p.py}`);
       if (!p.wodSpawners) continue;
       const t = state.pixelTranslation(p.px, p.py, _wodT);
-      const init = _wodArrival.keys.has(`${p.px},${p.py}`);
       for (const w of p.wodSpawners) {
         if (w.restand) { w.restand = false; standWodAction(p, w, w.flat); }   // WOD5: the captive stands again on the rebuilt pixel
         if (!w.spawner.active) continue;
@@ -2285,6 +2288,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const [k, centers] of npcGroups) {
       const [archive, record] = k.split('_').map(Number);
       const t = await getTexture(archive);
+      if (built.get(`${entry.px},${entry.py}`) !== entry) return;   // AUDIT (49faf853) B2: torn down during the await - a batch made now would be nobody's
       if (!t || record >= t.recordCount) continue;
       uploadRecord(archive, record);
       const size = billboardSize(t, record);
@@ -5521,7 +5525,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const t = shipTransition(playerEntity, {
       boardShipPosition: playerEntity.boardShipPosition ?? null,
       mapPixel: here,
-      position: { mapPixel: here, pos: [...player.pos], yaw: cam.yaw },
+      position: { mapPixel: here, pos: [...player.pos], yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE },   // TERRAIN-SCALE1 (audit): the ground `pos` stood on
     });
     if (!t) return;
     // TR-AUDIT F-F1: READ the reposition rather than infer it from
@@ -5572,6 +5576,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the floating origin happened to be.
     cacheExteriorScene(here);
     await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition });
+    // TERRAIN-SCALE1 (audit): a deck remembered by a save from before the stamp stood on the prefab's 1.5 - the
+    // teleport stood the player on it verbatim (not grounded); stood again now, over the pixel just built
+    if (localPos && scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE) {
+      const c = state.compensation[1];
+      const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale)) + c;
+      if (walkMode) player.spawn(localPos[0], y, localPos[2]);
+      cam.pos = [localPos[0], y + (walkMode ? 0 : 40), localPos[2]];
+    }
     restoreExteriorScene(t.go);
     if (t.restore) cam.yaw = t.restore.yaw;
     playerEntity.boardShipPosition = t.boardShipPosition;
@@ -6450,6 +6462,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           // (D-ONLINE2's reading, off the configured start cell): a character saved in the Hold reloads into it.
           const wake = undergroundWakeSpot(maps.getRegion(maps.getRegionIndexAt(pixel.x, pixel.y))?.mapTable ?? [], pixel);
           await _teleportToPixel(wake.mapPixel.x, wake.mapPixel.y, null, { modEvent: 'load', reposition: REPOSITION.RandomStartMarker });
+          // WOD6 (audit): a load all the same - SaveLoadManager.OnLoad, last, at the landed player
+          { const s = walkMode && playerSpawned; const f = s ? player.pos : cam.pos; wodOnLoad([f[0], f[1] + (s ? player.height / 2 : 0), f[2]]); }
           townTalk.say(undergroundWakeText(wake.kind));
         } else {
           await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
@@ -7275,6 +7289,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!state.loaded.has(`${next.px},${next.py}`)) destroyPixel(next.px, next.py);
     } catch (e) {
       console.error(`pixel ${next.px},${next.py} failed:`, e);
+      // AUDIT (49faf853) B1: a build that threw AFTER it published left its entry in `built` while the key left
+      // `state.loaded` - and the unload walks `loaded` alone, so it stood drawn and solid until the next teleport.
+      // One that threw before is BUILD-FAIL1's (destroyPixel finds nothing). Nor is it the arrival's any more.
+      destroyPixel(next.px, next.py, { collectLoose: false });
+      _wodArrival.keys.delete(`${next.px},${next.py}`);
       state.release(next.px, next.py);
     }
     building = false;

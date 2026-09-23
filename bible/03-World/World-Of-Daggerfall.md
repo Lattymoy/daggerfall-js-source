@@ -516,6 +516,29 @@ and every one dies.
 - **WOD6: the arrival runs in DFU's order** (WOD3, above), where the
   AUDIT BRANCH had held every Start until the player stood.
 
+Mac then asked for one more audit of that commit alone. Three read-only
+lenses (the old-save heights, the retry and the arrival, the scale's
+long tail and BUILD-FAIL1) found five things, each verified and fixed:
+- the ship's remembered deck carried a raw height with no stamp, and the
+  teleport stands a deck verbatim - it is stamped now, and a legacy one
+  is stood again once the pixel is built;
+- a pixel stayed the arrival's for as long as it stayed in range, so a
+  marker a late region's rebuild made met Start from the old origin and
+  could spring at the player's feet - a pixel is the arrival's until its
+  first frame now;
+- the online underground wake is a load and raised no OnLoad;
+- a build that threw AFTER publishing stood drawn and solid until the
+  next teleport (the pump released its key, the unload walks keys) - the
+  pump tears it down;
+- a pixel torn down while its NPCs' art loaded took a batch nobody
+  freed.
+The lenses found the rest correct: no height derived from 1.5 is left,
+DFU reads `defaultTerrainScale` nowhere else, the relay keeps no world
+height but a parked team's, and every save height is converted once or
+rightly left alone. Left open: a load that puts the player INSIDE a
+dungeon raises no OnLoad over the exterior; what DFU's markers measure
+from when the player later leaves is not settled here.
+
 ## THE FOUR HOSTS
 
 - `scenes/world.js` - WIRED. It is the one host that streams terrain.

@@ -546,6 +546,24 @@ test('WOD6: a marker standing unstarted when the load lands hears OnLoad as its 
   assert.deepEqual([c.wodSpawners[0].spawner.started, c.wodSpawners[0].spawner.active], [true, false], 'Start from the origin, then OnLoad at the loaded player');
 });
 
+test('WOD6 (audit): a pixel is the arrival\'s until its first frame - a marker made on it by a later rebuild meets Start from the player, not from an origin the player has left', () => {
+  const h = host();
+  h.arrival([{ px: 100, py: 100 }]);
+  h.publish(100, 100, [[700, 50, 700]]);
+  h.arriving(true);
+  h.tick();   // the promotion's Start, from the origin
+  h.arriving(false);
+  h.destroyPixel(100, 100, { collectLoose: false });   // a late region's rebuild: a new site, new markers
+  const q = h.publish(100, 100, [[640, 50, 660]]);   // ~920 from the corner; a new centre, so no carried marker
+  h.player.pos = worldAt(h, 100, 100, [640, 49.1, 650]);   // beside the new camp
+  const orig = Math.random; Math.random = () => 0.1;
+  try { h.tick(); } finally { Math.random = orig; }
+  assert.deepEqual([q.wodSpawners[0].spawner.started, q.wodSpawners[0].spawner.active], [true, false], 'Start from the player, within 300: stood down, never sprung at their feet');
+  assert.equal(h.droppedLoot.piles?.length ?? 0, 0);
+  assert.match(WORLD, /destroyPixel\(next\.px, next\.py, \{ collectLoose: false \}\);\n      _wodArrival\.keys\.delete\(`\$\{next\.px\},\$\{next\.py\}`\);\n      state\.release\(next\.px, next\.py\);/, 'a build that failed is torn down with its key, and is no longer the arrival\'s');
+  assert.match(WORLD, /reposition: REPOSITION\.RandomStartMarker \}\);\n[^\n]*\n          \{ const s = walkMode && playerSpawned; const f = s \? player\.pos : cam\.pos; wodOnLoad\(/, 'the online underground wake is a load: OnLoad last');
+});
+
 test('WOD6: the pixels a late region names are built again on the list in its order - those standing now, nearest first; one still building once it stands; the player\'s own under the season hold', () => {
   const i = WORLD.indexOf('  const _wodLate = new Set();');
   const j = WORLD.indexOf('  // LocationLoader.cs:146-151', i);

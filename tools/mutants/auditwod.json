@@ -326,7 +326,7 @@
   {
     "name": "WOD6-no-first-grid",
     "file": "src/scenes/world.js",
-    "old": "      const init = _wodArrival.keys.has(`${p.px},${p.py}`);",
+    "old": "      const init = _wodArrival.keys.delete(`${p.px},${p.py}`);",
     "new": "      const init = true;",
     "tests": [
       "test/audit_wod_branch.test.js"
@@ -418,6 +418,33 @@
     "file": "src/scenes/world.js",
     "old": "    const arriving = _seasonStraightening || _loading || _recalling;",
     "new": "    const arriving = false;",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD6-arrival-never-expires",
+    "file": "src/scenes/world.js",
+    "old": "      const init = _wodArrival.keys.delete(`${p.px},${p.py}`);",
+    "new": "      const init = _wodArrival.keys.has(`${p.px},${p.py}`);",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD6-failed-build-stays-arrival",
+    "file": "src/scenes/world.js",
+    "old": "      _wodArrival.keys.delete(`${next.px},${next.py}`);\n      state.release(next.px, next.py);",
+    "new": "      state.release(next.px, next.py);",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD6-underground-wake-no-onload",
+    "file": "src/scenes/world.js",
+    "old": "          { const s = walkMode && playerSpawned; const f = s ? player.pos : cam.pos; wodOnLoad([f[0], f[1] + (s ? player.height / 2 : 0), f[2]]); }\n          townTalk.say(undergroundWakeText(wake.kind));",
+    "new": "          townTalk.say(undergroundWakeText(wake.kind));",
     "tests": [
       "test/audit_wod_branch.test.js"
     ]

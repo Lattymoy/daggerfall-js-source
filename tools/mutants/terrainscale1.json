@@ -520,5 +520,41 @@
     "tests": [
       "test/terrainscale1.test.js"
     ]
+  },
+  {
+    "name": "TS1-ship-unstamped",
+    "file": "src/scenes/world.js",
+    "old": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE },",
+    "new": "yaw: cam.yaw },",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-ship-deck-raw",
+    "file": "src/scenes/world.js",
+    "old": "      if (walkMode) player.spawn(localPos[0], y, localPos[2]);",
+    "new": "      if (walkMode) player.spawn(localPos[0], localPos[1], localPos[2]);",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-published-throw-orphaned",
+    "file": "src/scenes/world.js",
+    "old": "      destroyPixel(next.px, next.py, { collectLoose: false });\n      _wodArrival",
+    "new": "      _wodArrival",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-npc-batch-on-dead-entry",
+    "file": "src/scenes/world.js",
+    "old": "      if (built.get(`${entry.px},${entry.py}`) !== entry) return;",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
   }
 ]
