@@ -499,6 +499,21 @@ float pointShadowAt(int k, vec3 wp, vec3 n) {
        + texture(uPointShadow, vec4(uv + vec2(0.0, t), layer, ref)) + texture(uPointShadow, vec4(uv - vec2(0.0, t), layer, ref));
   return lit / 5.0;
 }
+// VOL1: caster k's shadow at a point IN THE AIR - one tap, no normal (a march has no surface to bias against, and
+// the blur after it smooths what the kernel would); the face and its uv exactly as pointShadowAt finds them
+float pointShadowOne(int k, vec3 wp) {
+  vec4 P = uPointShadowParams[k];
+  float far = P.w;
+  if (far <= 0.0) return 1.0;
+  vec3 d = wp - P.xyz;
+  vec3 a = abs(d);
+  int face; float m;
+  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }
+  else if (a.y >= a.z) { face = d.y > 0.0 ? 2 : 3; m = a.y; }
+  else { face = d.z > 0.0 ? 4 : 5; m = a.z; }
+  vec2 uv = vec2(dot(FACE_X[face], d), dot(FACE_Y[face], d)) / max(m, 1e-4) * 0.5 + 0.5;
+  return texture(uPointShadow, vec4(uv, float(k * 6 + face), cubeDepthOfM(m - ${SHADOW_POINT_BIAS}, far)));
+}
 // EL5: light i's shadow - its caster's, if it has one this frame (EL8: by the table, one lookup)
 float shadowOfLight(int i, vec3 wp, vec3 n) {
   int k = uCasterOf[i];

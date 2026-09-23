@@ -108,5 +108,5 @@ test('EL6: on the fake GL - nothing measured at prepare, the frame\'s depth is a
   assert.equal(ap.measured, false, 'AUDIT-EL F10 holds at the resolve');
   assert.equal(ap.stats.glares, 1, 'one lantern glared at that resolve');
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
-  assert.deepEqual(ap.stats, { emitDraws: 0, glares: 0, shafts: false }, 'prepare resets the counts - a probe reading them mid-frame reads this frame\'s');
+  assert.deepEqual(ap.stats, { emitDraws: 0, glares: 0, shafts: false, vol: false }, 'prepare resets the counts - a probe reading them mid-frame reads this frame\'s (VOL1: the glow\'s too)');
 });

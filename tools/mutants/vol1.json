@@ -1,0 +1,129 @@
+[
+  {
+    "name": "vol-shadow-tap-dropped",
+    "file": "src/render/airPass.js",
+    "old": "      sum += pointShadowOne(k, uCamPos + dir * t) / (h2 + ds * ds);",
+    "new": "      sum += 1.0 / (h2 + ds * ds);",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-closed-form-for-all",
+    "file": "src/render/airPass.js",
+    "old": "    if (k < 0) { acc += elScatter(rel, range, dir, dist) * uPointColors[i]; continue; }",
+    "new": "    { acc += elScatter(rel, range, dir, dist) * uPointColors[i]; continue; }",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-unblurred",
+    "file": "src/render/airPass.js",
+    "old": "    quad(P.volBlur, T.volB);\n    depthOn(P.volBlur);   // the depth on unit 0; the glow on unit 1\n    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.vol.tex); gl.uniform1i(P.volBlur.uSrc, 1);\n    gl.activeTexture(gl.TEXTURE0);\n    gl.uniform2f(P.volBlur.uTexel, 1 / T.vol.w, 1 / T.vol.h);\n    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);\n",
+    "new": "    quad(P.gauss, T.volB);\n    gl.bindTexture(gl.TEXTURE_2D, T.vol.tex); gl.uniform1i(P.gauss.uSrc, 0);\n    gl.uniform2f(P.gauss.uDir, 0, 0);\n    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);\n",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-resolve-not-adding",
+    "file": "src/render/airPass.js",
+    "old": "    c += airDecode(texture(uVol, wuv).rgb);   // VOL1: what elFinish added per fragment, once per pixel and shadowed\n",
+    "new": "",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-door-ignored",
+    "file": "src/render/airPass.js",
+    "old": "    const on = !!P.vol && this.volOn && n > 0 && f.scatter > 0 && !!sp;",
+    "new": "    const on = !!P.vol && n > 0 && f.scatter > 0 && !!sp;",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-lane-glow-left-on",
+    "file": "src/render/renderer.js",
+    "old": "    gl.uniform1f(scLoc, this._airGlows() ? 0 : this._scatterGain());",
+    "new": "    gl.uniform1f(scLoc, this._scatterGain());",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-gain-dropped-from-prepare",
+    "file": "src/render/renderer.js",
+    "old": "        scatter: this._scatterGain(), exposure: this._exposure,   // VOL1: the glow's gain (the fog's) and the scene's exposure, for the march\n",
+    "new": "        exposure: this._exposure,\n",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-air-tap-with-a-kernel",
+    "file": "src/render/shadowPass.js",
+    "old": "  return texture(uPointShadow, vec4(uv, float(k * 6 + face), cubeDepthOfM(m - ${SHADOW_POINT_BIAS}, far)));\n}",
+    "new": "  return pointShadowAt(k, wp, vec3(0.0));\n}",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "bounce-door-ignored",
+    "file": "src/render/renderer.js",
+    "old": "    if (bLoc != null) gl.uniform1f(bLoc, this._bounceWanted === false ? 0 : (lane.bounce ?? 0));   // BOUNCE1",
+    "new": "    if (bLoc != null) gl.uniform1f(bLoc, lane.bounce ?? 0);",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-blur-depth-blind",
+    "file": "src/render/airPass.js",
+    "old": "      float w = abs(viewDist(depthAt(uv)) - here) <= here * ${AIR_VOL_BLUR_SHARE} ? 1.0 : 0.0;",
+    "new": "      float w = 1.0;",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "bounce-read-at-the-surface",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    float bsh = k >= 0 ? pointShadowOne(k, wp + n * ${glslFloat(EL_BOUNCE_REACH)}) : 1.0;",
+    "new": "    float bsh = k >= 0 ? pointShadowOne(k, wp) : 1.0;",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "bounce-unshadowed",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    acc += uELBounce * bsh * attOpen * (0.5 - 0.5 * n.y) * uPointColors[i];",
+    "new": "    acc += uELBounce * attOpen * (0.5 - 0.5 * n.y) * uPointColors[i];",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "bounce-weight-dropped",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    acc += uELBounce * bsh * attOpen * (0.5 - 0.5 * n.y) * uPointColors[i];",
+    "new": "    acc += uELBounce * bsh * attOpen * uPointColors[i];",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "bounce-flat-unshadowed",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    acc += sh * (1.0 + uELBounce * 0.5) * attOpen * uPointColors[i];",
+    "new": "    acc += (sh + uELBounce * 0.5) * attOpen * uPointColors[i];",
+    "tests": [
+      "test/vol1_glow.test.js",
+      "test/el5_field.test.js"
+    ]
+  }
+]

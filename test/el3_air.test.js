@@ -184,7 +184,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   r.setAir(true);
   const ap = r.air;
   assert.ok(ap instanceof AirPass);
-  assert.equal(count(calls, 'compileShader') - beforeAir, 22, 'eleven programs: ao, box, gauss, shaft, two emitters, the glare; EL4: the luminance, the adaptation, the bright pass, the resolve');
+  assert.equal(count(calls, 'compileShader') - beforeAir, 26, 'thirteen programs: ao, box, gauss, shaft, two emitters, the glare; EL4: the luminance, the adaptation, the bright pass, the resolve; VOL1: the glow and its tile blur');
   r.setAir(false); assert.equal(r.air, null);
   r.setAir(true); assert.equal(r.air, ap, 'kept');
   r.setLightingLane(null); assert.equal(r.air, null, 'no lane, no air');
@@ -228,7 +228,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   const vpCalls = calls.filter((c) => c[0] === 'viewport');
   assert.ok(vpCalls.some((c) => c[1] === 0 && c[3] === 160 && c[4] === 100), 'the AO at half');
   assert.ok(vpCalls.some((c) => c[3] === 80 && c[4] === 50), 'the bloom at a quarter');
-  assert.ok(calls.some((c) => c[0] === 'clearColor' && c[1] === 0 && c[2] === 0), 'the bloom target cleared black...');
+  assert.equal(calls.filter((c) => c[0] === 'clearColor' && c[1] === 0 && c[2] === 0 && c[3] === 0).length, 2, 'the bloom target cleared black, and the glow\'s image (no lantern here; VOL1) its own - the sun is up, so the shafts draw instead of clearing...');
   assert.ok(near(calls.filter((c) => c[0] === 'clearColor').at(-1)[1], 0.53, 1e-3), '...and the frame\'s clear colour restored');
   const depthBinds = calls.filter((c) => c[0] === 'bindTexture' && c[2] === ap.frame.depth).length;
   assert.ok(depthBinds >= 5, `the frame's depth bound for the AO, the emitters, the glare and the shaft (${depthBinds})`);

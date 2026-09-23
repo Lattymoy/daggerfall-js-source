@@ -3597,7 +3597,7 @@ test('BLOOD2f: the lane glints a wet mark - the lamp and the sun seen in it at t
   // glint-shadowed too), the pow skipped where the mark is dry
   const loop = F_DECAL_FS.slice(F_DECAL_FS.indexOf('vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {'), F_DECAL_FS.indexOf('\n}', F_DECAL_FS.indexOf('vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {')));
   assert.ok(loop.length > 0, 'the lantern loop takes the wetness and answers the glint beside the diffuse');
-  assert.match(loop, /float att = sh \* elAttenuation\(d, uPointLights\[i\]\.w\);\s*\n\s*acc \+= att \* \(max\(dot\(n, Ln\), 0\.0\) \+ spec\) \* uPointColors\[i\];/, 'the diffuse as it was');
+  assert.match(loop, /float attOpen = elAttenuation\(d, uPointLights\[i\]\.w\);\s*\n\s*float att = sh \* attOpen;\s*\n\s*acc \+= att \* \(max\(dot\(n, Ln\), 0\.0\) \+ spec\) \* uPointColors\[i\];/, 'the diffuse as it was (BOUNCE1: the open attenuation named beside it, for the bounce)');
   assert.match(loop, new RegExp(`if \\(wet > 0\\.0\\) \\{\\s*\\n\\s*float g = pow\\(max\\(dot\\(n, H\\), 0\\.0\\), ${EL_WET_GLOSS}\\.0\\);\\s*\\n\\s*if \\(g > 0\\.0\\) glint \\+= att \\* g \\* wetFresnel\\(dot\\(V, H\\)\\) \\* uPointColors\\[i\\];`), 'the glint on the SAME att - the same shadow, the same falloff - at the wet gloss, ITS colour, no pow when dry, and (AUDIT BLOOD3 F5) Schlick at ITS OWN half-vector');
   assert.match(loop, new RegExp(`glint \\*= ${EL_WET_STRENGTH} \\* wet;`), 'scaled by the wetness');
   assert.match(F_DECAL_FS, /vec3 elPointLit\(vec3 wp, vec3 n\) \{ vec3 g; return elPointLitWet\(wp, n, 0\.0, g\); \}/, 'the mesh’s call is the dry case of the one loop');

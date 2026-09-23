@@ -1218,3 +1218,69 @@ still the frame it drops, a post never); both hosts' gates by source.
 Campaign: `tools/mutants/shadowreach.json`, 11 mutants, 11 dead.
 `tools/shadowCacheProbe.mjs` and `tools/enhancedLightingProbe.mjs` still
 green on SwiftShader.
+
+## VOL1 / BOUNCE1 - THE LANTERNS' GLOW THROUGH THEIR SHADOWS, AND THEIR BOUNCE (2026-09-23, Mac: "Continue" - the second arc's last step)
+
+**The glow, marched.** EL1's glow (`elInScatter`) was one closed-form
+integral per lantern per FRAGMENT, in every world shader, walked over
+every light of the frame (LC1 left that loop unclustered) - and it knew
+nothing of what stood between a lantern and the air: a lamp behind a
+pillar glowed through it, a lantern in the next room lit this room's
+air. The glow is the air pass's now (`volFs`, airPass.js), at the
+bloom's size: per pixel, the view ray is cast through `posAt`'s own
+terms into the world, and each lantern's overlap with it is walked in
+`AIR_VOL_STEPS` (8) steps jittered by EL6's ordered pattern, each step's
+share of the same integrand the closed form integrates (1 / (h^2 +
+s^2), `elScatter`'s) let through by the lantern's own cube map - one
+tap, `pointShadowOne` in the shadow block, no normal (the air has no
+surface to bias against); a lantern with no map (the hand's light, one
+past the eight) keeps the closed form. The sum is tonemapped as
+`elFinish` tonemaps the glow it adds - the lane's curve, the exposure
+and the eye - blurred once over the jitter's tile BY DEPTH (a plain
+blur put the bright air past a near wall's edge onto the wall that
+hides the lantern; the lighting probe read that wall a third brighter),
+and added to the display-linear frame at the resolve. The lane's own
+glow is 0 on a world frame the air pass glows for and stands where the
+pass draws nothing - a panel, a sprite pass, a bake, `?volumetrics=off`
+- the gate the contact block and the grid already take. The air pass
+is a leaf still: the lane hands it its curve and its integral
+(`EL_TONEMAP_GLSL`, `EL_SCATTER_GLSL` - one law, now shared and not
+copied) and the renderer the shadow block. Fewer pixels walk the lights
+(a sixteenth), and a wall throws its shadow into the air.
+
+**The bounce.** A lantern's light lands mostly on the floor and the
+walls about it and comes back diffusely, so nothing near a lamp is
+pitch black on the side that faces away and a ceiling over a lamp is
+warm. `EL_BOUNCE` (0.18) of the light's attenuated colour, weighted by
+how much a surface faces the lit ground (0.5 - 0.5 n.y: a ceiling
+most, a wall half, a floor least - it faces the ceiling, which is lit
+least), through the lantern's shadow read a REACH off the surface
+(`EL_BOUNCE_REACH` 1.5 along the normal, one tap of the cube map).
+The first cut read no shadow at all, and a lantern in the next room
+bounced light onto this room's wall - the lighting probe caught the
+wall between the eye and lantern A a third brighter; shadowed at the
+surface the bounce could fill no shadow, which is what it is for. A
+reach off, a wall between rooms is still in the lantern's shadow
+(dark), a pillar's back a reach behind a thin pillar is not (filled),
+a ceiling a reach under itself over a lamp is lit (warm). A flat,
+standing upright, takes a wall's half through its base's own shadow
+(one value for the whole sprite, as its direct light). A lantern with
+no map bounces unshadowed, as its direct light is. `?bounce=off` for
+the eye.
+
+Pinned: `test/vol1_glow.test.js` - the march by source (the leaf, the
+three blocks handed in, the ray, the early-out, the closed form for a
+lantern with no map, the integrand and the jitter, the tonemap, the
+depth-aware tile blur, the resolve's add, the renderer's gate and the
+gain in `prepare`); on the fake GL (the shader built with the three
+blocks in its source, marched and blurred on a world frame with a
+lantern in a fogged air, the lane's own glow 0 there and a panel
+gated, the door shut clearing the image and handing the glow back);
+the bounce (the loop lines, the flat's half, the upload on the lane
+and 0 behind the door, the classic set silent). Campaign:
+`tools/mutants/vol1.json`, 14 mutants, 14 dead. `tools/volumetricProbe.mjs`
+(new) on SwiftShader: a crate between the eye and a lantern - the
+crate's front, its air in the crate's own shadow, reads a sixth darker
+through the march than under the closed form, and the floor whose air
+is lit reads the same either way within a third of a percent (the march
+sums the closed form's own integrand).
