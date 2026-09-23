@@ -19,6 +19,7 @@
 // drops it (uiPrefs.js loadPrefs), so the bar and the laws never disagree.
 import { getPref } from '../uiPrefs.js';
 import { SURVIVAL_OFF, tierOfStored, rulesForTier } from './difficulty.js';
+import { isOnlinePage } from '../onlineLane.js';   // CORPSE-FOOD: a leaf too - it imports nothing
 
 export const SURVIVAL_PREF = 'survival';
 /** 'off', 'casual' or 'hard'. */
@@ -26,3 +27,12 @@ export const survivalTier = () => tierOfStored(getPref(SURVIVAL_PREF));
 export const survivalOn = () => survivalTier() !== SURVIVAL_OFF;
 /** The live tier's rules (difficulty.js SURVIVAL_RULES), or null when the arc is off. */
 export const survivalRules = () => rulesForTier(survivalTier());
+/**
+ * CORPSE-FOOD (2026-09-23, Mac: "It needs to be accessible with people with it on"). ONLINE, A BODY'S FOOD IS THE
+ * ROOM'S. A corpse is minted by whoever raises the death - the foe's owner in a cell, the host in a dungeon - and
+ * looted by whoever opens it first (WORLD4, WORLD6b-iii(c)), so a kill raised on an Off machine, or a body a joiner
+ * opened first, left a Casual or Hard party no meat and no rations. So online the food is minted whatever this
+ * player's tier; an Off player sees it on a body, as they see a peer's campfire (SURV-OFFSIGHT), and uses what they
+ * like. Offline it is the tier's, as ever.
+ */
+export const corpseFoodOn = (search) => survivalOn() || isOnlinePage(search);

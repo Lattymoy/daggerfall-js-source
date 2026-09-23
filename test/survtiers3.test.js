@@ -433,3 +433,73 @@ test('the third pass: the WORLD\'s fires answer the rest\'s place in every tier 
   runSurvivalMinutes(e, 0, 480, { ...BLIZZARD, resting: true, sleeping: 'camp', byFire: true }, minuteDeps(e, log, HARD));
   assert.deepEqual([log.filter((l) => l[0] === 'fatigue').length, log.filter((l) => l[0] === 'hurt').length], [0, 0], 'eight hours asleep by a fire in a blizzard: no band, no wound');
 });
+
+// ── CORPSE-FOOD: THE THIRD PASS'S OPEN ITEM, ANSWERED ─────────────────
+
+test('CORPSE-FOOD (Mac: "It needs to be accessible with people with it on"): online a body\'s food is the room\'s - minted whatever the tier of the machine that raises the death, and rolled by a joiner\'s own copy of a dungeon body; offline it is the tier\'s', async () => {
+  const { corpseFoodOn } = await import('../src/systems/survival/switch.js');
+  const { installSurvivalLoot, uninstallSurvivalLoot, addCorpseFood } = await import('../src/systems/survival/loot.js');
+  const { raiseEnemyDeath } = await import('../src/scenes/corpseMarker.js');
+  const { MOBILE_TYPES } = await import('../src/characters/mobileTypes.js');
+  // the switch: the tier offline, every tier online
+  for (const [tier, offline] of [[SURVIVAL_OFF, false], ['casual', true], ['hard', true]]) {
+    _resetForTests(); setPref(SURVIVAL_PREF, SURVIVAL_STORED[tier]);
+    assert.deepEqual([corpseFoodOn(''), corpseFoodOn('?online')], [offline, true], `${tier}: offline ${offline}, online always`);
+  }
+  // a kill raised on an Off machine online - a cell foe's owner, a dungeon's host - carries the food for the party
+  const bear = () => ({ mobileType: MOBILE_TYPES.GrizzlyBear, basics: { affinity: 'Animal' }, items: [] });
+  let online = true;
+  uninstallSurvivalLoot();
+  installSurvivalLoot({ enabled: () => corpseFoodOn(online ? '?online' : '') });
+  try {
+    _resetForTests(); setPref(SURVIVAL_PREF, SURVIVAL_STORED[SURVIVAL_OFF]);
+    const b = bear(); raiseEnemyDeath(b, { rolls: () => 0.99, luck: 50 });
+    assert.ok(b.items.length > 0 && b.items.every((i) => i.templateIndex === TEMPLATE.RawMeat), 'an Off host\'s bear carries meat');
+    online = false;
+    const c = bear(); raiseEnemyDeath(c, { rolls: () => 0.99, luck: 50 });
+    assert.deepEqual(c.items, [], 'offline, Off mints none');
+    assert.equal(addCorpseFood(bear(), { rolls: () => 0.99 }), 0, '...through either door');
+    // a joiner's copy: the door the dungeon's stream and arrival call rolls into the copy's own list
+    online = true;
+    const d = bear();
+    assert.equal(addCorpseFood(d, { rolls: () => 0.99, luck: 50 }), d.items.length);
+    assert.ok(d.items.length > 0, 'the joiner\'s copy carries its own roll');
+  } finally {
+    uninstallSurvivalLoot();
+    installSurvivalLoot({ enabled: corpseFoodOn });   // as the boot left it (worldTick.js)
+  }
+  // ...and the dungeon calls it on the stream's first death and on an arrival's body that came without the room's list
+  const dc = read('src/scenes/dungeonContext.js');
+  assert.match(dc, /if \(r\.d === 1 && !f\.dead\) addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\);\n\s*if \(r\.d === 1\) \{ if \(!f\.dead\)/, 'the stream\'s death: the joiner\'s copy rolls its own');
+  assert.match(dc, /if \(wire && sf\.dead && !f\.dead && sf\.items == null\) addCorpseFood\(f\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\);/, 'an arrival\'s body without the room\'s list: its own roll, food and all');
+});
+
+test('CORPSE-FOOD, mounted: the dungeon\'s own `applyFoeRecord` rolls a joiner\'s copy of the body its food on the stream\'s first word of the death - once, and never for a foe the word keeps alive', async () => {
+  const acorn = await import('acorn');
+  const { validFoeRecord } = await import('../src/net/wire.js');
+  const { addCorpseFood } = await import('../src/systems/survival/loot.js');
+  const { MOBILE_TYPES } = await import('../src/characters/mobileTypes.js');
+  const D = read('src/scenes/dungeonContext.js');
+  const ast = acorn.parse(D, { ecmaVersion: 'latest', sourceType: 'module' });
+  let fn = null;
+  (function walk(n) {
+    if (!n || typeof n.type !== 'string' || fn) return;
+    if (n.type === 'FunctionDeclaration' && n.id?.name === 'applyFoeRecord') { fn = D.slice(n.start, n.end); return; }
+    for (const k of Object.keys(n)) { const v = n[k]; if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v.type === 'string') walk(v); }
+  })(ast);
+  assert.ok(fn, 'dungeonContext.js has applyFoeRecord');
+  const state = { validFoeRecord, addCorpseFood, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console };
+  const scope = new Proxy(state, { has: (t, k) => k !== '__s', get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : globalThis[k])) });
+  const { applyFoeRecord } = new Function('__s', `with (__s) { const setFoeDead = (f, d) => { f.dead = !!d; }; ${fn} return { applyFoeRecord }; }`)(scope);
+  const bear = { mobileType: MOBILE_TYPES.GrizzlyBear, dead: false, entity: { mobileType: MOBILE_TYPES.GrizzlyBear, basics: { affinity: 'Animal' }, health: 5, items: [] }, ai: { feet: [0, 0, 0], yaw: 0, moving: false, isHostile: true } };
+  state.foes.push(bear);
+  const word = (dead) => ({ i: 0, t: 0, f: [1, 0, 1], y: 0, h: dead ? 0 : 5, d: dead ? 1 : 0, a: 0, m: 0, g: '', c: 0, s: 0 });
+  _resetForTests();   // Casual: the switch says roll
+  applyFoeRecord(bear, word(false));
+  assert.deepEqual([bear.dead, bear.entity.items.length], [false, 0], 'alive: nothing rolled');
+  applyFoeRecord(bear, word(true));
+  const n = bear.entity.items.length;
+  assert.ok(bear.dead && n >= 3 && bear.entity.items.every((i) => i.templateIndex === TEMPLATE.RawMeat), `the host's word of the death: the joiner's copy carries its own meat (${n})`);
+  applyFoeRecord(bear, word(true));
+  assert.equal(bear.entity.items.length, n, 'the stream says it again every frame; the body is rolled once');
+});

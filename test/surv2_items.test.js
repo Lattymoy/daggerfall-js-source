@@ -277,7 +277,9 @@ test('SURV2: by source - the pipeline stands a vendor archive in, the weight law
   assert.match(read('src/systems/useItem.js'), /if \(isSurvivalItem\(item\)\) out = useSurvivalItem\(item, collection, \{ entity, now: nowMinute, rolls, currentDay: Math\.trunc\(nowMinute \/ 1440\), inflict: inflictDisease, rules: survivalRules\(\) \?\? SURVIVAL_RULES\.casual \}\);\s*\n[\s\S]*?else if \(isBook\(item\)\)/);   // SURV-TIERS: the live tier decides the meal's sickness (AUDIT SURV-TIERS: Off eats as Casual - never sickened)
   assert.match(read('src/systems/shopStock.js'), /if \(survivalOn\(\)\) for \(const it of provisionsStock\(quality, rolls\)\) items\.push\(it\);/);
   assert.match(read('src/systems/equip.js'), /if \(survivalOn\(\)\) for \(const it of startingProvisions\(\)\) entity\.items\.push\(it\);/);
-  assert.match(read('src/systems/worldTick.js'), /installSurvivalIcons\(\);[^\n]*\n\s*installSurvivalLoot\(\{ enabled: survivalOn \}\);/, 'the corpse\'s food is off with the one switch');
+  // CORPSE-FOOD (2026-09-23, Mac: "It needs to be accessible with people with it on"): offline the one switch; online
+  // the body's food is the room's (survival/switch.js corpseFoodOn - survtiers3 drives it)
+  assert.match(read('src/systems/worldTick.js'), /installSurvivalIcons\(\);[^\n]*\n\s*installSurvivalLoot\(\{ enabled: corpseFoodOn \}\);/, 'the corpse\'s food is off with the one switch - offline');
   // SURV-TIERS: the one switch reads a TIER now - on is anything but Off, and a value that is no tier reads as the default
   assert.match(read('src/systems/survival/switch.js'), /export const survivalTier = \(\) => tierOfStored\(getPref\(SURVIVAL_PREF\)\);\nexport const survivalOn = \(\) => survivalTier\(\) !== SURVIVAL_OFF;/);
   // MODS-ONLINE-3 (2026-09-22, Mac): `online: true` became `'player'`.

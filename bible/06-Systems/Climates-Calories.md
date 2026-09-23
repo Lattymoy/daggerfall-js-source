@@ -1056,11 +1056,11 @@ Every tier, Off included, is the player's online (`online: 'player'`,
 unchanged) - Mac's "still let it be able to be turned off for online".
 MODS-ONLINE-3's reading holds tier by tier: a tier decides only what THIS
 player's body pays; the counters and the camps are the world's in every
-tier. A corpse's food is not quite (AUDIT SURV-TIERS, the third pass,
-correcting this line): it is minted by whoever raises the death - the
-foe's owner in a cell, the host in a dungeon - at THAT player's tier, so an
-Off host's dungeon carries no meat for a Casual party (MODS-ONLINE-4's
-leak, older than the tiers; open for Mac, below) - an Off player's camps stand
+tier - and so, since CORPSE-FOOD (at the end of this page), is a corpse's
+food: the third pass found it minted at the tier of whoever raises the
+death (the foe's owner in a cell, the host in a dungeon), so an Off host's
+dungeon carried no meat for a Casual party; online it is minted whatever
+the tier now, and a joiner's own copy of a body rolls its own - an Off player's camps stand
 for everyone else, and an Off host relays its peers' camps; an Off
 player sees them and uses none (SURV-OFFSIGHT). A party rest's
 mirror (PARTY-REST4b) takes the leader's PLACE - every tier broadcasts it -
@@ -1426,7 +1426,9 @@ said was not there. No number of Hard's own charges moved.
    corpse first replaces the host's list for the room (MODS-ONLINE-4's
    accepted leak, older than the tiers; the Online section above said "the
    killer's word" and is corrected). Recommend: online, mint whatever the
-   tier, and let each client roll its own copy (WORLD4's rule).
+   tier, and let each client roll its own copy (WORLD4's rule). *Answered
+   the same day* - Mac: "It needs to be accessible with people with it on"
+   (CORPSE-FOOD, below).
 
 **The pins.** `test/survtiers3.test.js`, 19 tests, one per finding or
 group; older pins moved where a law did - survtiers (the composed ticker's
@@ -1471,3 +1473,52 @@ the two edited tests judge (52) was run again: all dead.
 so the online findings (#35's tabs, #37's peers, #50, #51) are driven
 through the real pool, `restorePlayer` and `StreamingWorldState`, not a
 live room.
+
+## CORPSE-FOOD - ONLINE, A BODY'S FOOD IS THE ROOM'S (2026-09-23)
+
+> Mac, on the third pass's open item: *"Wait, youre right. It needs to be
+> accessible with people with it on"*.
+
+A corpse's food is minted by whoever raises the death and looted by
+whoever opens the body first: in a cell the foe's owner raises it and
+grants the pile (WORLD6b-iii(c)); in a dungeon the host raises it, and the
+first reader's list becomes the room's (WORLD4), each client holding its
+own copy of every container. So the food followed two machines' tiers,
+neither of them necessarily the eater's: an Off host's dungeon carried no
+meat and no rations for a Casual party, an Off owner's cell foes none for
+anyone, and a joiner who opened a body before the host handed the room a
+list with no food in it at all - a joiner's copy of a body never rolled
+any, since the death is raised where it happens.
+
+- **Online the food is minted whatever the tier** (`survival/switch.js`
+  `corpseFoodOn`, which the death handler reads: the tier offline, true on
+  an online page). The TIER stays the player's (MODS-ONLINE-4: nobody is
+  made to freeze); the food is the room's, as the ground and the camps
+  are. An Off player sees it on a body, as they see a peer's campfire, and
+  may take it; nothing in Off asks them to eat.
+- **A joiner's copy rolls its own** (`survival/loot.js` `addCorpseFood`,
+  the handler's own door): on the stream's first word that the host's foe
+  died, and on a dead body the room's memory hands an arrival without its
+  list (the memory writes none since AUDIT WORLD4 D4). A save off disk
+  carries its own list, and a list the room sends is the room's.
+  Whoever opens first, the room's list has food in it.
+
+**The pins.** `test/survtiers3.test.js` 19 -> 21: the switch at every tier
+offline and online; a bear killed on an Off machine online carries meat,
+offline none, through either door; and the stream's arm MOUNTED - the
+dungeon's own `applyFoeRecord`, sliced out of the source as SEAT-HEAL
+mounts it: the host's word of the death rolls the joiner's copy its meat,
+once however often the word repeats, and nothing while the word keeps the
+foe alive. The arrival's arm is pinned by source (`patchFoe` needs half a
+dungeon). surv2's install pin reads the new switch, and SEAT-HEAL's own
+harness stands the roll down. **Mutants:** `tools/mutants/survtiers3.json`
+58 -> 67 - the switch back to the tier, the boot installing the tier, the
+door ignoring the switch, the switch never installed, the death rolling
+none, each joiner arm gone, a roll every frame, the arrival rolling over
+the room's list - all dead; `surv2`'s VC6 luck record re-aimed at the
+door.
+
+**Not driven in the container:** no second player and no relay, so an Off
+host's dungeon has not been looted by a Casual joiner in a live room; the
+handler is driven through `raiseEnemyDeath` and the door, the stream's arm
+mounted, and the arrival's by source.

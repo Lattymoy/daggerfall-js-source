@@ -224,7 +224,7 @@ export function onlineForcedPref(key, search) {
  * easier, and the last two of those mostly harder.
  *
  * So: what the lane forces is the floor the room stands on, and the
- * three switches that spend a stranger's evening.
+ * three switches that spend a stranger's evening. (CORPSE-FOOD, 2026-09-23: the food itself is the room's - minted online whatever the tier, survival/switch.js corpseFoodOn - and the tier stays the player's.)
  */
 export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   'roads-hazelnut': Object.freeze({

@@ -530,5 +530,86 @@
     "tests": [
       "test/survtiers3.test.js"
     ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-online-is-the-tier's",
+    "file": "src/systems/survival/switch.js",
+    "old": "export const corpseFoodOn = (search) => survivalOn() || isOnlinePage(search);",
+    "new": "export const corpseFoodOn = (search) => survivalOn();",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-the-boot-installs-the-tier",
+    "file": "src/systems/worldTick.js",
+    "old": "installSurvivalLoot({ enabled: corpseFoodOn });",
+    "new": "installSurvivalLoot({ enabled: survivalOn });",
+    "tests": [
+      "test/surv2_items.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-the-door-ignores-the-switch",
+    "file": "src/systems/survival/loot.js",
+    "old": "  if (!_enabled() || !entity || !Array.isArray(entity.items)) return 0;",
+    "new": "  if (!entity || !Array.isArray(entity.items)) return 0;",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-the-switch-is-never-installed",
+    "file": "src/systems/survival/loot.js",
+    "old": "  _enabled = enabled;\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-the-death-rolls-none",
+    "file": "src/systems/survival/loot.js",
+    "old": "(entity, opts = {}) => { addCorpseFood(entity, opts); }",
+    "new": "(entity, opts = {}) => {}",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-a-joiner's-stream-rolls-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (r.d === 1 && !f.dead) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-an-arrival's-body-rolls-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (wire && sf.dead && !f.dead && sf.items == null) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });\n",
+    "new": "",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-an-arrival-rolls-over-the-room's-list",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (wire && sf.dead && !f.dead && sf.items == null) addCorpseFood(",
+    "new": "    if (wire && sf.dead && !f.dead) addCorpseFood(",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS3-corpse-food-a-joiner-rolls-every-frame",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (r.d === 1 && !f.dead) addCorpseFood(",
+    "new": "    if (r.d === 1) addCorpseFood(",
+    "tests": [
+      "test/survtiers3.test.js"
+    ]
   }
 ]

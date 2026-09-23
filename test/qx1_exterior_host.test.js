@@ -492,7 +492,7 @@ test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into TH
   // for the interior mode, so while the mount passed neither key every
   // `cast X spell do` / `cast X effect do` on this route - and in every
   // shop entered from it - was permanently deaf. world.js:3616-3617 and
-  // dungeonContext.js:2222-2223 wire the identical pair.
+  // dungeonContext.js:2223-2224 wire the identical pair.
   const doorSrc = slice('    onNewReadySpell: (sp) => questBridge',
     '    // ROAD-G G2 (a): THE THREE-ARM SHAPE');
   // ...and they are keys of the ENGINE MOUNT, not of some other bag:

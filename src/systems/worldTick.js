@@ -51,7 +51,7 @@ installMeanerMonsters();   // MM1: before the overhaul, as DFU Awakes the depend
 installPcaao();
 installUnleveledLoot();   // UL1: after everything it would override (its manifest orders it after Roleplay Realism)
 installSurvivalIcons();   // SURV2: the mod's spoiled-food and waterskin icons ride the texture pipeline as the port's own art
-installSurvivalLoot({ enabled: survivalOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch
+installSurvivalLoot({ enabled: corpseFoodOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch - offline (CORPSE-FOOD: online the body's food is the room's)
 // AUDIT-THUNDERLOCK F1: the port's own weapon was DEAD. Its module
 // registers everything it is at import - the two custom templates, the
 // pellet as ammunition, the unique find, its legendary - and NOTHING
@@ -69,7 +69,7 @@ import { runSurvivalMinutes, clearSurvivalMods, pauseSurvival } from './survival
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
 import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
-import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
+import { survivalOn, corpseFoodOn } from './survival/switch.js';   // SURV2: the one switch; CORPSE-FOOD: and the body's food, the room's online
 /** :462 - `% 10080`, seven days of game minutes. */
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
 /** :469 - `% 54720`, thirty-eight days. */

@@ -146,8 +146,8 @@
   {
     "name": "AUDITVC6-the-handler-ignores-the-luck-it-is-handed",
     "file": "src/systems/survival/loot.js",
-    "old": "    const luck = opts.luck ?? 50;   // AUDIT VC6: the raiser's own player, or the floor",
-    "new": "    const luck = 50;   // AUDIT VC6: the raiser's own player, or the floor",
+    "old": "  const luck = opts.luck ?? 50;   // AUDIT VC6: the raiser's own player, or the floor",
+    "new": "  const luck = 50;   // AUDIT VC6: the raiser's own player, or the floor",
     "tests": [
       "test/surv2_items.test.js"
     ]

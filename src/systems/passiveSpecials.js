@@ -7,7 +7,7 @@
 // nothing, and the enchantment conditions' inSunlight/inHolyPlace ctx
 // arms, which had stood open since E1 and are answered here: the two
 // readers below are wired into the enchant ctx at world.js:3373-3374
-// off the host seam that worldModes.js:1059 and dungeonContext.js:2551
+// off the host seam that worldModes.js:1059 and dungeonContext.js:2552
 // register (bible/01-Overview/Port-Ledger.md:687 strikes the pair
 // through as closed, V2c 2026-08-27).
 //
