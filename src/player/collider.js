@@ -427,7 +427,7 @@ export class Collider {
    * their own buckets, keyed by the action object, which is what the
    * returned `key` is for.
    */
-  capsuleCast(p1, p2, radius, dir, maxDist, axisSamples = 3) {
+  capsuleCast(p1, p2, radius, dir, maxDist, axisSamples = 3, filter = null) {
     const ax = p2[0] - p1[0], ay = p2[1] - p1[1], az = p2[2] - p1[2];
     // A perpendicular basis for the cross-section. `dir` is normalized
     // by the caller; cross with world up unless dir IS world up.
@@ -467,7 +467,7 @@ export class Collider {
         [(-ux + vx) * h, (-uy + vy) * h, (-uz + vz) * h],
         [(-ux - vx) * h, (-uy - vy) * h, (-uz - vz) * h],
       ]) {
-        const h = this.raycastHit([bx + ox, by + oy, bz + oz], dir, reach);
+        const h = this.raycastHit([bx + ox, by + oy, bz + oz], dir, reach, filter);   // HCC: the same bucket filter the rays take (a horse stepping past its own parked wagon)
         if (h.dist < best) { best = h.dist; bestKey = h.key; }
       }
     }
@@ -486,8 +486,8 @@ export class Collider {
    * `key` is the bucket that produced the hit, which is what the
    * scanner's static-geometry and action lookups ask of it.
    */
-  sphereCast(origin, radius, dir, maxDist) {
-    return this.capsuleCast(origin, origin, radius, dir, maxDist, 1);
+  sphereCast(origin, radius, dir, maxDist, filter = null) {
+    return this.capsuleCast(origin, origin, radius, dir, maxDist, 1, filter);
   }
 
   _resolveSphere(center, radius, out, standCeil = Infinity, oneWayFloor = false, midBody = false) {

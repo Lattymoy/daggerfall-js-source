@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6022` read, on one physical line:
+`src/scenes/worldModes.js:6037` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4219`). With the property missing that call is a
+(`dungeonContext.js:4231`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,9 +4831,9 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3748` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3860` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
-  provenance argument `applySpellToFoe` hands them (`hostMagic.js:193`)
+  provenance argument `applySpellToFoe` hands them (`hostMagic.js:227`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
   Threading it touches four hosts.
 - **A building interior streams no foes at all.** `makeInteriorFoes`
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:815`, `src/net/online.js:1406`):**
+**Now (`src/net/wire.js:820`, `src/net/online.js:1457`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7813,3 +7813,190 @@ was zero; a gift beside my own Fortify; the mate's recast merging with the mate'
 seam by source. `tools/mutants/allycast.json`: 37, 37 dead. RELAY_VERSION world97 with its law row; the relay
 deploys itself on the merge to main. Not verified in a browser: no online session exists in this container.
 
+## FRIENDLY-SPELLS (2026-09-23, Mac: "These files here need to be integrated, with a cavet. We also made changes to cricket sounds and the new player-to-player spellcasting. I don't want to override our previous changes") - two drops onto ALLY-CAST, world98
+
+Two archives from Mac's tree (`friendly-spells-patch_6`, `friendly-spells-and-Nightsound-toggle`), both whole-file
+copies cut from the PR #331 merge. Main had moved on since: ALLY-CAST and AUDIT ALLY-CAST (the `cast` frame, a
+party-only receiver, the gift landing as a self-cast), CRICKET-DUNGEON (the chorus stopped underground), and AUDIT
+PARTY8 / AUDIT PARTY-REST (`systems/partyRestLaw.js`, `voteStands`, the shared-clock `readyAt`). The caveat was
+not to override those. So nothing was copied over a file main had changed: each of the 29 files with real edits
+was a three-way merge against that base, and every doc file the drop carried differed from main only by its own
+citation shifts, so main's text stands and `tools/citeShift.mjs` re-maps it.
+
+**AID1 IS NOT A SECOND SYSTEM - ITS BEHAVIOUR RIDES ALLY-CAST'S DOOR.** The drop built its own friendly-spell path
+- an `aid` frame, a relay arm, a receiver in world.js, `online.onAid` - beside the one main had just shipped and
+audited. Two player-to-player spell systems would be two laws for one act: the `aid` receiver took gifts from
+anyone in the room, where AUDIT ALLY-CAST limits them to the party and to the beneficial subset; and the drop's
+relay minimum (world95) named a version main had already spent on AUDIT PARTY8. What the drop ADDED is kept, as
+new arms of the one engine: a beneficial TOUCH meets a party mate's body (`hostMagic.js pickTouch` over
+`allyMarksFor`), a beneficial MISSILE that strikes a mate is given to them and spent, and a beneficial BLAST -
+around me, or where a missile bursts - reaches every mate inside `EXPLOSION_RADIUS`. Every gift leaves through
+`giveToAlly`, which is ALLY-CAST's `castAtAlly(id, allyCastFrame(...))`, so the receiver, its party gate and its
+beneficial filter are the audited ones. A free ready (a trap's payload, AUDIT ALLY-CAST A7) and a hostile spell
+give nothing. The marks come from `world.js allyMarksNear`: party members a socket of mine reaches, and only while
+the relay routes the `cast` frame. No `aid` frame, relay arm or receiver exists anywhere in the tree.
+
+**THE SENDER'S METER, SIZED FOR A BLAST.** ALLY-CAST sized the sender's cast bucket when one cast was one frame:
+CAST_HZ_MAX (4) deep, 4 a second. A beneficial blast is one cast and one frame for each mate inside it, so the
+rerouted blast gave a full party's blast to four mates and silently nothing to the other three - the link's own
+gate refused the rest and the caster read no line for them. `wire.js castGate` is now CAST_BURST_MAX (PARTY_MAX - 1,
+seven) deep, still refilled at CAST_HZ_MAX a second; `tokenGate` took a depth argument that defaults to the rate,
+so every other gate keeps its shape. The destination's per-sender funnel on the relay is untouched - a blast sends
+each mate one frame. The client and the relay read the one gate, so they agree on it, and the change rides world98.
+
+**SPELLFX1/2 - A PEER'S CAST AND SHAFT, SEEN AND HEARD.** The pose carries the cast's element (`ce`, the classic
+five) and the arrows loosed (`ar`). `world.js peerCastVisuals` reads them off the drawable list before the bodies
+sync: a new cast count draws the peer's missile in the live mode's engine (`spellVisual`, the dungeon's own when
+underground), a new arrow count a shaft. A drawn missile or shaft stops on a body - mine, a foe's, another
+player's - flashes and applies NOTHING: the caster's own world decided what it hit, and a beneficial one of theirs
+reached its target through the cast frame. SPELLFX2: the cast sound is the element's, played at the peer
+(`audio.play3dId`). The pose change moves the relay's import graph, so `RELAY_VERSION` is world98 with its row in
+`test/relayversion.test.js`; the merge to main deploys it.
+
+**SNDREP1 - A SOUND PACK, AND TWO SWITCHES.** `systems/soundReplacer.js`: DFU's loose `StreamingAssets/Sound/<name>.wav`
+for the crickets and the distant howl, attached by the player like a music pack and never bundled (the mod the
+drop was written for forbids re-uploading its files). The engine's buffer key was renamed `soundBufferKey`, since
+`musicReplacement.js` already exports a `replacementKey` (the audit24 one-symbol-one-home ratchet). Two prefs,
+`nightCrickets` and `distantHowl`, silence each clip at the audio door; they are the player's own online
+(`ONLINE_PLAYERS_OWN_PREFS`, an ear and nothing the room agrees on). **Beside CRICKET-DUNGEON:** the door refuses
+a NEW loop for a silenced clip, but a chorus already sounding holds its own source and sang on for the rest of its
+bout - up to 45 seconds after "Off: silent". The crickets arm in `ambientEffects.js` now stops the loop for the
+switch exactly as CRICKET-DUNGEON stops it underground, one condition with two reasons, and the chorus clock holds
+for both. CRICKET-DUNGEON's own behaviour is unchanged, and its mutants are re-aimed to the shared line.
+
+**THE REST.** HEAL1: a Healer starts knowing Balyna's Healing Touch - the Balm's own effects at ByTouch, index
+-1000 - which ALLY-CAST gives to a mate. The test room's sorceress gets a Fireball and a Healing Bolt (-1001,
+-1002) to throw at a friend. REST-MANA1: online, a no-regen career's rested hour pays magicka; offline it is
+Daggerfall's. STRANGER-REST2: the outdoor stranger-rest radius is 50 m, not 100. QS8 (the drop called it QS7, a
+name taken since 2026-09-17): readying from the book puts the spell on the spell slot, and the free lycanthropy
+ready does not.
+
+**PARTY-REST29/30/31, ON THE AUDIT'S LAW.** The drop fixed the rest vote with its own state
+(`_partyRestReadySocialAt`, `_partyRestStaleReady`, `partyMemberReady`, `partyRestLastStartedAt`) written against
+the tree before AUDIT PARTY-REST. The fixes are ported onto the law instead. PARTY-REST29: `partyRestLaw.js
+cooldownStamp` - a start stamp its own member's newer vote supersedes cools nothing down, and the leader's own
+stamp is waived when their rest window closed unrested (`restDoor.js` reports that close once, through
+`onClosedUnrested`); `voteStands` still reads every grant, so the round is spent. PARTY-REST30: the gate asks the
+cooldown BEFORE marking me ready, so a refused start leaves no vote on the wire. PARTY-REST31: a member's vote
+dies with the leader's round and with the leader's grant, and a vote canceled by walking away takes the leader's
+own ready with it.
+
+`test/friendlyspells.test.js` (15 tests) pins it by execution and by source; `tools/mutants/friendlyspells.json`:
+22, 22 dead. Re-aimed where the merged code moved them: the ALLY-CAST touch gate, CRICKET-DUNGEON's two mutants,
+the relay version mutant, the player-capsule census (AUDIT 62 F21, AUDIT 65 CV-2: three drawn arms added, each at
+the player's own radius), the pose's field list, and ALLY-CAST's three meter pins (a whole blast deep). Not verified in a browser with two players: no online
+session exists in this container.
+
+## HCC-ONLINE (2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also enhance its online integration functionality") - a peer's horse and wagon stand in the cell
+
+Horse Cart and Cargo (`06-Systems/Horse-Cart-And-Cargo.md`) is single-player: its parked wagon, waiting horse,
+following horse and trailing team are objects in one Unity scene. Online they stand in a shared cell, so the port
+carries them to everyone near, under the camps' law (SURV3) and no new one:
+
+- **The record** (`systems/horseCartWire.js`): what the pool SHOWS, not the save - the wagon's kind (trailing /
+  parked / following), base, rotation as Unity spells it, cargo tier and wheel angle; the horse's base, horizontal
+  forward, walk frame and walking; the horse's name. Positions in the wire frame (natives, the compensation-free
+  height), rounded to the centimetre. It rides as `hv` on the cell's foes frame beside `c`: on every full frame
+  (`null` when none stand), and between them whenever the word moved - the foe pool's `foesFrame(full, force)`
+  sends a frame with no foe in it for the rider, so a walking horse is heard every FOES_MS and not every two
+  seconds.
+- **The door** (`validHccRecord`): shape, POSE_BOUND / POSE_Y_BOUND, a quaternion within 0.5..2 renormalised, a
+  known kind and a known tier, a frame the walk set has, walking a bit, the name at the mod's 31. A junk word drops
+  the owner's whole team; a frame without the field leaves the last word standing.
+- **The owner law** (`horseCartPool applyOwner / sweepOwners / clearPeers`): an owner's word replaces that owner's
+  alone and never mine; an owner gone from the room or quiet past FOES_STALE_MS is swept beside their puppets and
+  camps; a room change and a leave clear every peer's team.
+- **The landing**: a peer's team is drawn with the same five pieces, cargo and horse billboard as mine, EASED
+  between words (12 per second; a step past 20 m - a summon, a pixel crossing, a fast travel - snaps), the horse's
+  orientation the reader's own camera's. Their wagon and horse are targets under the one ray so the plaque names
+  whose they are ("<Name> (<Peer>'s horse)", "<Peer>'s wagon"); the press says so and opens nothing.
+- **Nothing of the storage rides**: a player's items are their own client's (the port's law since the first
+  inventory), and a peer's wagon is a thing to see and walk around.
+- **No relay change**: the relay reads nothing inside a foes frame (AUDIT WORLD2), so `hv` needs no version and no
+  law row; the pose already carries the transport mode a peer rides.
+
+Pinned: `test/hcc_pool.test.js` (the record, the door, the ease, the owner law by execution), `test/hcc_hosts.test.js`
+(the stream, the setOnHcc landing, the sweep, the clears, the relay untouched). Not verified in a browser: no
+online session exists in this container.
+
+### AUDIT HCC-ONLINE (2026-09-23, Mac: "Let's do an audit on this, ensure online is handled properly")
+
+One lens over the lane above, read whole; nine findings paid, one recorded (the full list with the other two lenses
+is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.js`, mutants in
+`tools/mutants/hcc.json`).
+
+- **The word lives in the wire frame (O1, O2).** A peer's team was converted to scene coordinates once, when it
+  landed, and `offsetAll` shifted only what was SHOWN - so my next recentre put their wagon, horse, plaque and box
+  819 m away until their next word (up to a full frame's 2 s for a parked team), and a fast travel's teardown
+  (`clearLive`, which re-anchors the origin with no offset to ride) kept them at old-frame points. The pool keeps
+  the validated record and the host's `campToScene`, and converts every frame (horseCartWire's own header law:
+  "a reader converts at landing and every frame after"); the foe pool's `destroy` takes the teams as
+  `clearPuppets` does.
+- **The parked wagon is a box (O3).** A peer's Deployed wagon stands `hccWagon:<owner>` in my collider, re-stood
+  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it takes the ray's
+  surface pardon.
+- **The door cleans the name (O4).** `n` rides `sanitizeLabel` at the mod's 31 on both ends - printable ASCII and
+  the name filter, the door a player's name and a party's place already go through.
+- **A standing horse is silent (O5).** The walk frame rode `h`, so the idle flicker (frames 5/6 at 2 fps) changed
+  the word twice a second for as long as a horse stood, forcing a foes frame to everyone in range. `h` carries
+  the walking bit (six words, not seven); the reader strides its own HorseWalkAnimationState over the pace it
+  shows. The change key is taken through `campToWire`, so my own recentre is not a word.
+- **Reach, switch, art (O6-O9).** A press on a peer's team past the mod's 3.2 is DFU's "too far"; my switch turned
+  off is a word at once; a viewer with the mod off lands nothing and loads nothing; a horse whose art is not up is
+  not named or pressed.
+- **O10, built as HCC-PARK below.** A team stood for the others only while its owner was in the cell room to say
+  it, so a parked wagon vanished when its owner went indoors, travelled or logged off.
+
+## HCC-PARK + HCC-TIP + RIDE (2026-09-23, Mac: "I think we should build that. And if not already, ensure this is compatible with our tooltip implementation and ensure it shows owned if another players. Also need to ensure over people see others riding on horses") - world98
+
+The full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-TIP and RIDE. Pins in
+`test/hcc_park.test.js` (11), mutants in `tools/mutants/hccpark.json` (22, every one dead).
+
+- **A cell keeps a parked team (HCC-PARK).** A new client frame, `{t:'park', data}`, says MY parked wagon or
+  waiting horse: its anchor in wire units and, while it is shown, the record the foes frame's `hv` already carries.
+  The cell room stores `park:<owner>` only when the anchor lies in that room's own cell (`cellRoomOfWire`), fans it
+  as `{t:'park'}` and hands a joiner the whole list after the welcome as `{t:'parks'}` with each owner's verified
+  name. It is bounded by `PARK_HZ_MAX` a socket, `PARK_CELL_MAX` a cell (stalest out) and `PARK_TTL_MS` (72 hours
+  since the owner last said it). An owner registry (one durable object per owner, `parkRegistryRoom`) drops the
+  old cell's record when the team moves or is taken up, over internal paths the public worker never forwards; the
+  cell also drops its own superseded record, so a dev worker with no registry binding keeps no ghost.
+- **The client's two words.** `hccParkTick` sends the word off the SAVE record when it changes (at most once a
+  second), again on a room change and once the cell's socket opens; `sendPark` routes it to the primary socket or
+  the halo holding that cell, else the anchor alone through the room I am in. The pool keeps the live word and the
+  kept one apart, draws the live one first per part, and the sweep takes only the live one; a kept team stays while
+  I hold its cell's socket.
+- **The owned line (HCC-TIP).** A peer's horse or wagon hovers as the mod's own word for it with "Owned by <name>"
+  under it, the owner's session name or the relay's stamp when they are away.
+- **The mount on the pose (RIDE).** `rd` (1 horse, 2 cart) and `rv` (the rider's Eye Of The Beholder mounted
+  sprite set) ride the pose, omitted on foot; a mount change is a pose change. `net/peerRiders.js` draws a riding
+  peer with EOTB's mounted sprites, before the Morrowind bodies and the dolls, which stand nothing for a rider.
+- **The deploy.** RELAY_VERSION world99 with its law row (world98 was FRIENDLY-SPELLS', merged first). An older
+  relay closes the socket on an unknown frame, so the client sends `park` only to world99 or later (`relaySupportsPark`, set on the primary welcome). The relay
+  deploys itself on the merge to main, which drops every connected player once. Not verified in a browser: no
+  online session exists in this container.
+
+### AUDIT BRANCH - the parked team's owner, the reader, the rider (2026-09-23, Mac: "Let's do an audit on everything before we merge. This needs to be perfect")
+
+The full list is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT BRANCH. Main had shipped FRIENDLY-SPELLS as world98 first,
+so the branch merged main and moved its relay law to world99; the client's park door opens at world99.
+
+- **The owner is the account and the character, never the peer id (D1, D2).** A record keyed by the id a client
+  chooses could be dropped or overwritten by anyone who said that id, and a new tab left the old record standing
+  beside the new one. The relay keys a record by `parkKeyOf(sub, c)`: the subject the identity token verified and the
+  character id the frame names (`systems/characterId.js`). The others are told only that opaque key. An account is
+  never handed or fanned its own records, so its client draws its own team off its save alone.
+- **Bounded per account, ordered, announced (D3-D5).** `PARK_ACCOUNT_MAX` records of one account a cell; the registry
+  stores when the owner spoke and ignores an older word, and a cell drops a record only if it is no newer than the
+  drop; an expired record is said gone; the same word again refreshes its time and is fanned to nobody; the horse's
+  facing is a unit vector at the door.
+- **The reader keeps each cell's word apart (C2-C4).** Kept words are stored per room and owner key, so one cell's
+  "gone" never removes another's fresh record; every cell welcome carries the list, an empty one included; the park
+  word is said again after any welcome, so a word lost with a dying socket is repeated. A kept part stands down only
+  where its owner's live word shows that same part.
+- **The rider (RIDE).** Drawn off the smoothed pose, with the gallop bit the rider's own sprite shows, only once its
+  sprite is up (failed art retried), with no human footsteps, the name at the sprite's top, gone over the death
+  screen, and its casts from the saddle's eye height.
+
+Pins: `test/hcc_park.test.js` (13); mutants `tools/mutants/hccpark.json` (35, all dead). RELAY_VERSION world99 with
+its law row (never deployed, so its row was still this branch's to write). The relay deploys itself on the merge to
+main and drops every connected player once. Not verified in a browser: no online session exists in this container.

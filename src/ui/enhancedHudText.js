@@ -84,6 +84,42 @@ export function setEnhancedMidTextScale(scale, doc = (typeof document === 'undef
   hudScaleVar = String(scale);
   if (!doc) return;
   doc.getElementById?.(ENHANCED_MID_TEXT_ID)?.style?.setProperty('--hud-scale', hudScaleVar);
+  for (const h of labelHosts.values()) h.node.style.setProperty('--hud-scale', hudScaleVar);   // AUDIT HCC U6: the mods' HUD labels scale with it
+}
+
+// ── A MOD'S OWN HUD LABEL (AUDIT HCC U6) ────────────────────────────
+//
+// DaggerfallUI.AddTextLabel on the HUD's NativePanel - a mod's line at a native position of its own (Horse Cart and
+// Cargo's horse name at y=112). The enhanced face is the mid-screen label's (`.hudmid`: the skin's face, the HUD's
+// scale, the classic line's own top edge); one node per label id, so two mods' labels never share a line.
+/** @type {Map<string, { node: any, last: Record<string, any> }>} */
+const labelHosts = new Map();
+/** `frame` = { text, visible, top } as drawEnhancedMidText's. Returns the node (null off a document or when nothing
+ *  was ever shown). */
+export function drawEnhancedHudLabel(id, frame, doc = (typeof document === 'undefined' ? null : document)) {
+  if (!doc) return null;
+  const text = frame?.visible === false ? '' : String(frame?.text ?? '');
+  let h = labelHosts.get(id);
+  if (!h && !text) return null;
+  if (!h) {
+    injectEnhancedStyle(doc);
+    injectEnhancedFonts(doc);
+    const node = doc.createElement('div');
+    node.id = id;
+    node.className = 'hudmid';
+    node.setAttribute('aria-hidden', 'true');
+    applyScale(node);
+    doc.body.append(node);
+    h = { node, last: {} };
+    labelHosts.set(id, h);
+  }
+  const { node, last } = h;
+  if (last.text !== text) { last.text = text; node.textContent = text; }
+  const top = Number.isFinite(frame?.top) ? `${frame.top.toFixed(1)}px` : null;
+  if (top !== null && last.top !== top) { last.top = top; node.style.setProperty('--hudmid-top', top); }
+  const shown = text !== '';
+  if (last.on !== shown) { last.on = shown; node.style.display = shown ? '' : 'none'; }
+  return node;
 }
 
 // ── THE MID-SCREEN LABEL ────────────────────────────────────────────
@@ -211,6 +247,8 @@ export function destroyEnhancedHudText() {
   try { midHost?.remove(); } catch { /* already gone */ }
   try { statusHost?.remove(); } catch { /* already gone */ }
   midHost = null; statusHost = null;
+  for (const h of labelHosts.values()) { try { h.node.remove(); } catch { /* already gone */ } }
+  labelHosts.clear();
   hudScaleVar = null;
   for (const k of Object.keys(lastMid)) delete lastMid[k];
   for (const k of Object.keys(lastStatus)) delete lastStatus[k];

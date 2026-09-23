@@ -150,7 +150,7 @@ import {
   exteriorRotate, exteriorRotateAroundPlayerPos, exteriorDragPan, getLocationBorderPos,
 } from './automapCamera.js';
 import { rasterizeTopDown, rasterizeDisc } from './meshStamp.js';
-import { drawCompassStrip } from './hud.js';   // ONE HOME for the strip (hud.js:415-416)
+import { drawCompassStrip } from './hud.js';   // ONE HOME for the strip (hud.js:416-417)
 import { drawToolTipBox } from './toolTip.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { registerCommand } from '../systems/consoleCommands.js';   // E3: the console command database

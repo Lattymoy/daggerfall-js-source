@@ -15,6 +15,7 @@ import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
 import { getFloat } from './settings.js';   // SETT: SoundVolume
 import { REVERB_PRESET, reverbImpulse } from './reverbPresets.js';   // BA1: AudioReverbZone's presets and the impulse built from them
 import { setEquipSoundSink } from './equip.js';   // ES2: the equip moment's one audio door
+import { SOUND_REPLACEMENTS, soundBufferKey, fetchReplacement, soundSilenced, soundReplacementGen } from './soundReplacer.js';   // SNDREP1: a player's loose WAVs over classic clips, and the two night-sound switches
 
 /** The ArrayBuffer decodeAudioData is allowed to detach: THE VIEW'S OWN
  *  RANGE, not the whole backing store.
@@ -206,7 +207,34 @@ export class AudioEngine {
     this.ctx = new AC();
   }
 
+  /** SNDREP1: the decoded replacement from the player's attached sound pack for a classic index, or null - the
+   *  first ask starts its load (once per attach), so until it has decoded the classic record answers, and with no
+   *  pack (or a file that will not decode) the classic clip stays. */
+  _replacement(index) {
+    const name = SOUND_REPLACEMENTS[index];
+    if (!name) return null;
+    const gen = soundReplacementGen();
+    const key = `${soundBufferKey(name)}#${gen}`;   // a re-attached pack is a new key, so the new file is read
+    const b = this.buffers.get(key);
+    if (b) return b;
+    this._repLoads ??= new Set();
+    if (!this._repLoads.has(key)) {
+      this._repLoads.add(key);
+      fetchReplacement(name).then((bytes) => (bytes ? this.registerSound(key, bytes) : false)).catch(() => false);
+    }
+    return null;
+  }
+
+  /** SNDREP1: start every replacement's load now, so the first night's crickets are already the new ones. */
+  preloadReplacements() {
+    for (const i of Object.keys(SOUND_REPLACEMENTS)) this._replacement(Number(i));
+  }
+
   _buffer(index) {
+    if (typeof index === 'number') {
+      if (soundSilenced(index)) return null;   // SNDREP1: the player switched this sound off - it plays as a missing clip does: not at all
+      const r = this._replacement?.(index); if (r) return r;   // a loose WAV from the attached pack wins once decoded
+    }
     let b = this.buffers.get(index);
     if (b !== undefined) return b;
     // MW-D40: a REGISTERED buffer (a mod's own WAV, decoded through

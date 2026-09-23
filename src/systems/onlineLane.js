@@ -120,6 +120,7 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'peerClassSprites', // 2026-09-17: how OTHER players are drawn on THIS machine (animated class sprite vs paperdoll) -
                        // purely a local rendering choice, same shape as chatHidden above; it changes nothing the room agrees on
   'peerAttackSounds', 'peerFootsteps',   // PEER-FS1: and how OTHER players are HEARD on this machine - the same local-only shape
+  'nightCrickets', 'distantHowl',        // SNDREP1: whether THIS player hears the night's crickets and the far howl - an ear, nothing the room agrees on
   'heldMap',          // MAP-TOGGLE: whether THIS player's maps are the held sheet or DFU's windows - a look, nothing the room agrees on
   'proceduralSky',    // EE1's legacy key, read only by the migration
 ];   // (RF4: grown by declareOnlinePrefs with the registry's 'player' answers - the dials)
@@ -277,6 +278,7 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'handheld-torches',            // an item in my save with a light on my screen
   'oblivion-remaster-leveling',  // written into a character at creation and kept by that character
   'travel-options',              // my own journey; OL2 already spends no world time online
+  'horse-cart-and-cargo',   // HCC: whose horse and wagon stand where is the player's own; the others only SEE them (the online half rides the pose and the cell's frame, never a switch of the room's ground)
 ];
 
 /** The forced value of a mod's switch on an online page, else undefined -

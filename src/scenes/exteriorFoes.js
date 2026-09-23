@@ -167,6 +167,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   let _nextSeq = 1, _nextUid = 1;
   let _net = null;              // { room, onPeerHit, toWire, toScene, now, staleMs }
   let _onCamps = null;          // SURV3: (from, records, nowMs) - a peer's camps off their foes frame, once the frame has passed the room test
+  let _onHcc = null;            // HCC-ONLINE: (from, record | null, nowMs) - a peer's horse and wagon off the same frame (systems/horseCartWire.js)
+  let _onHccClear = null;       // HCC-ONLINE: called wherever clearPuppets runs - the peers' teams go with the puppets
   let _foesSeq = 0;             // my frames out, numbered
   // AUDIT WORLD6b B4/C3: an OWNER's record - the last frame number applied (a stale frame is not the world), when it
   // arrived (an owner whose stream has died is swept after staleMs), and the build generation (a build the clear or
@@ -1372,6 +1374,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     corpseBatches.length = 0;
     foes.length = 0;
     _owners.clear(); _pupPending.clear(); _pupIndex.clear();   // AUDIT WORLD6b C10: the teardown ends the owners' records too
+    _onHccClear?.();   // AUDIT HCC O2: and the peers' teams with them - a fast travel's clearLive re-anchors the origin with no offset to ride
   }
 
   /** AUDIT 17e F23: the floating-origin recenter shifts everything. */
@@ -1545,13 +1548,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   const watchOf = (i) => watchList().find((g) => g.seq === i) ?? null;
   /** SURV3: the host's door for a peer's camps (scenes/camps.js applyOwner) - beside the net, not in its bag. */
   function setOnCamps(fn) { _onCamps = typeof fn === 'function' ? fn : null; }
+  function setOnHcc(fn, onClear = null) { _onHcc = typeof fn === 'function' ? fn : null; _onHccClear = typeof onClear === 'function' ? onClear : null; }   // HCC-ONLINE
   const _now = () => (_net?.now ? _net.now() : Date.now());
   /** My foes out, and my watch behind them (WATCH1) - every one of MINE whose streamed state changed since its last
    *  frame (every one when full, so a dropped frame heals and a foe I culled is missed from the roll and so removed
    *  at the peers). A quest's foe is the quest owner's alone (Multiplayer.md's first lock) and never rides. The record is WORLD2's: i my number for
    *  it, t the species, x the gender bit, f the feet in the world frame, y the yaw, h the health, d dead, a the attack
    *  count with the ranged bit low, m moving. */
-  function foesFrame(full = false) {
+  function foesFrame(full = false, force = false) {
     if (!_net?.toWire) return null;
     const out = [];
     // WATCH1: the watch rides behind the foes, in the same record shape - `t` 146 (Knight_CityWatch, whose row every
@@ -1575,7 +1579,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       f._sentKey = key;
       out.push(r); src.set(r, f);
     }
-    if (!out.length && !full) return null;
+    if (!out.length && !full && !force) return null;   // HCC-ONLINE: `force` - a rider (the owner's moving horse) asks for a frame with no foe in it
     // AUDIT WORLD6b-iii(c) C5: CELL_FRAME_RECORDS_MAX is a law the SENDER obeys (the relay junks a longer frame whole, and
     // struck out the socket in the end) - the live foes ride first, then the newest bodies; the oldest bodies leave the
     // roll and the readers' full-frame sweep takes them down
@@ -1647,6 +1651,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         .finally(() => _pupPending.delete(key));
     }
     if (data.full === 1) for (const f of [..._pupIndex.values()]) if (f.puppet === from && !seen.has(f.seq)) removePuppet(f);
+    if (data.hv !== undefined) _onHcc?.(from, data.hv, _now());   // HCC-ONLINE: the owner's horse and wagon (null: none stand) - a frame without the field leaves the last word standing; past the same room test the camps pass
     if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now());   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them
     return true;
   }
@@ -1883,6 +1888,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     for (const f of [..._pupIndex.values()]) removePuppet(f);
     _owners.clear();
     _pupPending.clear();
+    _onHccClear?.();   // HCC-ONLINE: the peers' teams go with their puppets (a room change, a leave)
   }
 
   return { foes, spawnFoe, damageFoe, handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, snapshotWorld, restoreWorld, destroy,
@@ -1898,5 +1904,5 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     collectPixel, arrowHitFoe, removeFoe: questPoolOps.removeFoe,
     // WORLD6b: the cell's stream - the net installed, my foes out, a peer's in, a peer's blow in, the puppets pruned
     setNet, foesFrame, applyFoes, applyHit, pruneOwners, clearPuppets,
-    setOnCamps };   // SURV3
+    setOnCamps, setOnHcc };   // SURV3; HCC-ONLINE
 }
