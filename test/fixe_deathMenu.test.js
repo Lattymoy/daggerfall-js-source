@@ -137,5 +137,5 @@ test('FIX-E: the interior slot releases what it overwrites, and the fixed city o
   assert.match(read('src/scenes/world.js'), /new DeathScreen\(\{ eyeHeight: player\.eye\[1\] - player\.pos\[1\], capsuleHeight: player\.height, onReset: \(\) => \(_deathWasOnline \? respawnOnlinePlayer\(\) : endRunToTitleMenu\(renderer\)\) \}\)/, 'the world keeps the full hint - its F11 is real now (D-ONLINE1: and its reset respawns when the death was online)');
   const ds = read('src/ui/deathScreen.js');
   assert.match(ds, /hint = 'ENTER end   F11 load'/, 'the default hint is the full one');
-  assert.match(ds, /drawText\(renderer, font, this\.hint,/, 'and the screen draws the hint it was given');
+  assert.match(ds, /const hint = this\.online \? `RISING IN \$\{this\.respawnIn\}   ENTER now` : this\.hint;[^\n]*\n\s*drawText\(renderer, font, hint,/, 'and the screen draws the hint it was given (AUDIT CONTRIB A5: online, the hold\'s count in its place)');
 });

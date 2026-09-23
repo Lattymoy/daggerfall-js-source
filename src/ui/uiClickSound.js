@@ -25,10 +25,14 @@ export const CLICKABLE = [
   '.hb-slot:not(.hb-empty)',
 ].join(', ');
 
-/** A sound chosen this close before the click (a pointerdown or a
- *  pointerup handler that already acted - the hotbar, the pack's drag)
- *  counts as the click's own. */
-const LEAD_MS = 150;
+/** AUDIT CONTRIB U2: the click's own window opens at its GESTURE's
+ *  pointerdown - a pointerdown or pointerup handler that already acted (the
+ *  hotbar's press, the pack's drag) sounded for this click however long the
+ *  finger was held. It was a fixed 150 ms before the click, so a touch held
+ *  past it on a hotbar slot sounded twice. A keyboard's click (detail 0) has
+ *  no gesture and opens its window at itself; a pointerdown older than this
+ *  is another gesture's. */
+const GESTURE_MS = 10_000;
 
 const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -38,11 +42,14 @@ export function installUiClickSound(doc = globalThis.document) {
   const win = doc?.defaultView;
   if (installed || !win) return;
   installed = true;
+  let pressAt = -Infinity;
+  win.addEventListener('pointerdown', () => { pressAt = nowMs(); }, true);   // capture: before any handler of the press sounds
   win.addEventListener('click', (e) => {
     if (!isEnhanced()) return;
     const t = e.target?.closest?.(CLICKABLE);
     if (!t || t.disabled || t.getAttribute('aria-disabled') === 'true') return;
-    const at = nowMs() - LEAD_MS;
+    const now = nowMs();
+    const at = e.detail > 0 && now - pressAt < GESTURE_MS ? pressAt : now;
     // After every handler of THIS click has run - and a handler that
     // stops propagation cannot stop this, which is why it is scheduled
     // from the capture phase rather than heard at the bubble.

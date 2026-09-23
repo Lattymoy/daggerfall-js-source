@@ -484,20 +484,21 @@ export class RemotePlayers {
     this._queue = Promise.resolve();
     this._mobiles = new Map();   // 2026-09-17: peer id -> a ready MobileUnit bundle | Promise building | { failedUntil } - see _mobileFor
     this._corpses = [];          // PCORPSE1: { pose, room, until, batch | null, building } - the fallen, in wire space
+    this._told = new Map();      // AUDIT CONTRIB A3: acct -> { at, until, cried } - a party member's death their party pose tells of
     this._lastEye = null;        // PCORPSE1: the listener, for the cry's falloff between syncs
     this._lastToScene = null;
   }
 
   /** PCORPSE1: a peer fell. `pose` is its last pose (wire space), `room` the room it was heard in. The body is drawn
    *  from the next sync on; the cry plays now, at the distance the last sync placed the listener. */
-  addCorpse(peer, pose, room = null) {
+  addCorpse(peer, pose, room = null, { until = null, quiet = false } = {}) {
     if (!pose) return;
     const ct = corpseTextureFor(peer?.look);
-    const c = { id: peer?.id ?? null, acct: peer?.acct ?? null, pose: { x: pose.x, y: pose.y, z: pose.z }, room, until: this._now() + CORPSE_MS, ct, batch: null, building: false };
+    const c = { id: peer?.id ?? null, acct: peer?.acct ?? null, pose: { x: pose.x, y: pose.y, z: pose.z }, room, until: until ?? this._now() + CORPSE_MS, ct, batch: null, building: false };
     this._corpses.push(c);
     while (this._corpses.length > CORPSES_MAX) this._dropCorpse(this._corpses.shift());
     const audio = this.deps?.audio;
-    if (audio?.playOneShot) {
+    if (audio?.playOneShot && !quiet) {
       let falloff = 1;
       const eye = this._lastEye;
       if (eye && this._lastToScene) {
@@ -524,6 +525,26 @@ export class RemotePlayers {
   hasCorpseOf(acct, id = null) { return this._corpses.some((c) => !c.dead && ((acct && c.acct === acct) || (id && c.id === id))); }
   /** PCORPSE3: the body of a member who got up (a respawn, a rise) - gone. */
   dropCorpseOf(acct) { for (const c of [...this._corpses]) if (acct && c.acct === acct) this._dropCorpse(c); }
+
+  /** PCORPSE3, AUDIT CONTRIB A3: A PARTY MEMBER'S BODY THEIR PARTY POSE TELLS OF (`dd` {k, x, y, z, at}). The host
+   *  kept one memo per death and wrote it BEFORE asking whether the body's room was this scene's - so a body in a
+   *  dungeon I walked into after the death never stood, and one a building's walls took from the scene (keepCorpses)
+   *  never came back. The minute runs from the first word of THIS death (`at`) on this clock; the body stands
+   *  whenever `here` (the scene is the one it lies in) and none lies already, for what is left of its minute, and it
+   *  cries only the once. */
+  partyBody(acct, id, look, dd, here) {
+    if (!acct || !dd) return;
+    let e = this._told.get(acct);
+    if (!e || e.at !== dd.at) this._told.set(acct, e = { at: dd.at, until: this._now() + CORPSE_MS, cried: false });
+    if (this.hasCorpseOf(acct, id)) { e.cried = true; return; }   // the death pose brought it (and its cry)
+    if (!here || this._now() >= e.until) return;
+    this.addCorpse({ id, acct, look }, dd, dd.k, { until: e.until, quiet: e.cried });
+    e.cried = true;
+  }
+  /** PCORPSE3: a member no longer fallen (a rise, a respawn) - the body goes with the word of it. */
+  partyRose(acct) { this._told.delete(acct); this.dropCorpseOf(acct); }
+  /** PCORPSE3: a member gone from the party - nothing more is told of them; a body lying stays its minute. */
+  partyForget(acct) { this._told.delete(acct); }
 
   _dropCorpse(c) {
     if (!c) return;
@@ -768,7 +789,11 @@ export class RemotePlayers {
       // (LycanthropyTypes 1 werewolf, 2 wereboar); the sprite is the enemy's own (MobileTypes 9 / 14), puppeted off the
       // pose like any class sprite - whatever the 'Other players' card says, since a person drawn there is a lie.
       const beast = peer.shown.wb | 0;
-      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn ? classMobileType(peer.look?.class) : null;
+      // AUDIT CONTRIB S1: a peer with NO LOOK yet (heard by pose before its introduction - first contact, a SLAM recall)
+      // keeps the doll path until the look lands: classMobileType's Thief is for a look with no class or one this build
+      // does not know, and handing it to a look that has not arrived drew a Thief, then nothing while the real class
+      // built, then the real sprite
+      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn && peer.look ? classMobileType(peer.look.class) : null;
       const bundle = mobileType != null && ENEMY_BASICS[mobileType] ? this._mobileFor(peer.id, mobileType, peer.look?.gender === 'female' ? 'female' : 'male') : null;
       if (bundle && typeof bundle.then !== 'function') { this._syncMobilePeer(peer, bundle, toScene, dt, eye); continue; }
       this._syncDollPeer(peer, toScene);
@@ -1166,5 +1191,6 @@ export class RemotePlayers {
     for (const key of [...this._dolls.keys()]) this._release(key);
     this._mobiles.clear();   // 2026-09-17: no GPU resource of its own to release (the shared archive texture cache outlives any one peer), just the map
     for (const c of [...this._corpses]) this._dropCorpse(c);   // PCORPSE1: the host is gone, and its bodies with it
+    this._told.clear();
   }
 }

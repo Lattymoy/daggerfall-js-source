@@ -198,7 +198,7 @@ test('HCC hosts: worldModes fires the mod\'s transition handlers - pre before th
 
 test('HCC-ONLINE hosts: the foe pool carries the `hv` field past its room test and can be asked for a frame with no foe in it', () => {
   const f = rd('src/scenes/exteriorFoes.js');
-  assert.match(f, /function foesFrame\(full = false, force = false\)/);
+  assert.match(f, /function foesFrame\(full = false, force = false(?:, heirOf = null)?\)/);   // AUDIT CONTRIB P1: the handover's heirs ride the same builder
   assert.match(f, /if \(!out\.length && !full && !force\) return null;/);
   assert.match(f, /if \(data\.hv !== undefined\) _onHcc\?\.\(from, data\.hv, _now\(\)\);/);
   assert.match(f, /if \(data\.hv !== undefined\) _onHcc[^\n]*\n\s+if \(Array\.isArray\(data\.c\)\) _onCamps/, 'past the room test the camps pass, beside them');

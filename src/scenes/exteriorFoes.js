@@ -1582,7 +1582,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  reader stands it under WOD_CAMP_PUPPETS_MAX and spends its own copy of the marker). The record is WORLD2's: i my number for
    *  it, t the species, x the gender bit, f the feet in the world frame, y the yaw, h the health, d dead, a the attack
    *  count with the ranged bit low, m moving. */
-  function foesFrame(full = false, force = false) {
+  function foesFrame(full = false, force = false, heirOf = null) {
     if (!_net?.toWire) return null;
     const out = [];
     // WATCH1: the watch rides behind the foes, in the same record shape - `t` 146 (Knight_CityWatch, whose row every
@@ -1601,6 +1601,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // AUDIT WORLD6b-ii B2/B3: the attacker's terms - its level and its right-hand weapon - so a puppet's blow is this foe's
       const wpn = f.entity.weapon, wd = wpn && Number.isInteger(wpn.templateIndex) ? [wpn.templateIndex, wpn.material | 0] : null;
       const r = { i: f.seq, t: f.mobileType, x: f.gender === 'female' ? 1 : 0, f: [q2(w[0]), q2(w[1]), q2(w[2])], y: q3(f.ai.yaw), ...(Number.isFinite(f.entity.health) ? { h: Math.max(0, Math.min(FOE_HEALTH_MAX, f.entity.health)) } : {}), d: f.dead ? 1 : 0, a: f._atkA | 0, b: f._atkB ?? '', m: f.ai.moving ? 1 : 0, g, l: f.entity.level | 0, w: wd, c: f._castN | 0, s: f._castIdx | 0, u: f._castU ?? '', o: onWatch ? 0 : (f.corpse ? Math.min(255, f.entity?.items?.length | 0) : 0) };   // AUDIT WATCH1 A3: a watch body advertises NO pile - its take arm is its owner's own door (cityGuards.takeLoot), which the wire does not reach, so a peer offered the body clicked it for ever and heard nothing; WORLD6b-iii: the cast count and its spell; AUDIT WORLD6b-iii(a) A3: b/u whom the last blow/cast was at; WORLD6b-iii(c): o the body's pile
+      if (heirOf && !onWatch && !f.dead) { const h = heirOf(f) ?? null; f._heir = h; if (h) r.e = h; }   // AUDIT CONTRIB P1: the handover frame's heir (handOverFrame)
       const key = `${r.f[0]},${r.f[1]},${r.f[2]},${r.y},${r.h},${r.d},${r.a},${r.b},${r.m},${r.g},${r.l},${wd ? wd.join('/') : '-'},${r.c},${r.s},${r.u},${r.o}`;
       if (!full && f._sentKey === key) continue;
       f._sentKey = key;
@@ -1621,7 +1622,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       dead.sort((a, b) => (diedAt.get(b.i) ?? 0) - (diedAt.get(a.i) ?? 0));
       const before = out.slice();
       out.length = 0; out.push(...live, ...dead.slice(0, Math.max(0, CELL_FRAME_RECORDS_MAX - live.length)));
-      for (const r of before) if (!out.includes(r)) { const f = src.get(r); if (f) f._sentKey = null; }   // AUDIT WATCH1 B6: a record the trim dropped is UNSENT - its key was latched above, and it rode nothing until the next full frame
+      for (const r of before) if (!out.includes(r)) { const f = src.get(r); if (f) { f._sentKey = null; f._heir = null; } }   // AUDIT CONTRIB P1: and a record the trim dropped was handed to nobody   // AUDIT WATCH1 B6: a record the trim dropped is UNSENT - its key was latched above, and it rode nothing until the next full frame
     }
     // WOD7: the camp tags for the records in THIS frame (a reader stands a record's puppet under the camp allowance
     // and spends its own marker), and on a full frame every marker I have sprung - my host's list and my live camp
@@ -1657,7 +1658,6 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  cell, is not the world. */
   function applyFoes(from, data) {
     if (!_net?.toScene || typeof from !== 'string' || !from || !data || !Array.isArray(data.f)) return false;
-    if (_fallen.has(from) && _now() - _fallen.get(from).at < FALLEN_MS) return false;   // PDEATH-FOES2: a dead owner's late frame stands nothing again
     if (data.k != null && _net.room && data.k !== _net.room() && !_net.inRoom?.(data.k)) return false;   // WORLD6b-iii(b): the owner's OWN cell, which I hold (my cell, or a halo's across the seam) - another is not the world
     const o = ownerOf(from);
     if (Number.isFinite(data.n)) { if (data.n <= o.n) return false; o.n = data.n; }
@@ -1666,6 +1666,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const seen = new Set();
     const tags = validSiteTags(data.st);   // WOD7: which of these records stood for a World of Daggerfall marker
     const stood = new Set(), refused = new Set();   // AUDIT WOD7: a site whose every record the allowance refused is not spent here
+    let adopted = 0;   // AUDIT CONTRIB P1: the foes this frame hands to me
     for (const raw of data.f) {
       const r = validFoeRecord(raw);
       if (!r) continue;
@@ -1676,7 +1677,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (site && (f || _pupPending.has(key))) stood.add(site);   // AUDIT WOD7: standing or building here
       if (f) {
         if ((r.t !== undefined && r.t !== f.mobileType) || (r.d === 0 && f.dead) || (r.l !== undefined && f.mobileType >= 128 && r.l !== (f.builtLevel | 0))) removePuppet(f);   // AUDIT WORLD6b-ii B2: a CLASS foe's level is its owner's word (its skills and health are built from it) - a monster's is its species' (makeEnemyEntity), whatever the record says; AUDIT FOES FOE8: against the level it was BUILT at, which a City Watch's constructor re-rolls
-        else { applyPuppetRecord(f, r); continue; }
+        else { applyPuppetRecord(f, r); if (heirIsMe(r)) adopted += adopt(from, f); continue; }
       }
       if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t, _site: _pupPending.get(key)._site }); continue; }   // AUDIT ALL A1: a pending build's SPECIES is fixed at the build - a later word without `t` (or with another) neither moves it out of its class's count (an unbounded stand: a peer re-worded a pending watch as no species and stood ten more) nor lands a record of the wrong species on the build
       if (r.d === 1 || r.t === undefined || !ENEMY_BASICS[r.t] || !r.f) continue;
@@ -1692,12 +1693,15 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           if (!nf) return;
           const owner = _owners.get(from);
           if (!owner || owner.gen !== gen) { removePuppet(nf); return; }   // B6: a build the clear or the prune overtook is a ghost - it ends on arrival
-          applyPuppetRecord(nf, _pupPending.get(key) ?? r);
+          const rec = _pupPending.get(key) ?? r;
+          applyPuppetRecord(nf, rec);
+          if (heirIsMe(rec) && adopt(from, nf)) console.info('[foes] took over 1 foe from a fallen player');   // AUDIT CONTRIB P1: a handed foe I had not stood yet
         })
         .catch(() => {})
         .finally(() => _pupPending.delete(key));
     }
     if (data.full === 1) for (const f of [..._pupIndex.values()]) if (f.puppet === from && !seen.has(f.seq)) removePuppet(f);
+    if (adopted) console.info(`[foes] took over ${adopted} foe(s) from a fallen player`);   // PDEATH-FOES2: said, so a failed handover can be told apart
     // WOD7: the markers this owner sprang - the full frame's list with its ages, and the tags of what stands here (an
     // age not yet heard). AUDIT WOD7: a site whose every record the camp allowance refused is NOT spent here - its
     // marker stays mine to spring, rather than a camp I can neither see nor fight
@@ -1948,45 +1952,45 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** The owners gone from the cell (the session's peer map no longer holds them) or gone quiet (no frame in staleMs,
    *  AUDIT WORLD6b C3) - their puppets swept and their records ended, so a returning owner numbers from one again (B4). */
   function pruneOwners(alive, now = _now()) {
-    for (const [id, e] of [..._fallen]) if (now - e.at > FALLEN_MS) _fallen.delete(id);
     for (const [from, o] of [..._owners]) {
       if (alive.has(from) && !(_net?.staleMs > 0 && now - o.at > _net.staleMs)) continue;
-      const fell = _fallen.get(from);   // PDEATH-FOES2: a fallen owner's foes are adopted, not dropped, at its leave too
-      if (fell) { const n = adoptFrom(from, fell.mine); if (n) console.info(`[foes] took over ${n} foe(s) from a fallen player at their leave`); }
       for (const f of [..._pupIndex.values()]) if (f.puppet === from) removePuppet(f);
       _owners.delete(from);
     }
   }
   /** PDEATH-FOES (Discord, 2026-09-23: "enemies a player generated by resting etc should not disappear when the player
    *  is killed"): THE FALLEN OWNER'S FOES ARE ADOPTED. A cell has no seat - each player streams the foes it owns - so a
-   *  dead owner's leave took every one of its foes off everyone's screen. Now, on its death pose, each survivor takes
-   *  over the live foes it stands nearest (`mine(f)`): the puppet becomes one of this client's own, numbered in its own
-   *  stream, its AI picking up from where it stands. Its body and its health are the owner's last word. */
-  // PDEATH-FOES2 ("they still disappear for other players"): the fallen owners, remembered for FALLEN_MS with the
-  // survivor's test - so the adoption runs again when the owner's LEAVE is processed (whatever order the death pose
-  // and the leave arrived in), and a late foes frame from a dead owner cannot stand its foes a second time.
-  const FALLEN_MS = 10_000;
-  const _fallen = new Map();   // owner id -> { mine, at }
-  function adoptFrom(from, mine) {
-    _fallen.set(from, { mine, at: _now() });
-    let n = 0;
-    for (const f of [..._pupIndex.values()]) {
-      if (f.puppet !== from || f.dead || f._gone) continue;
-      let ok = false;
-      try { ok = !!mine(f); } catch { ok = false; }
-      if (!ok) continue;
-      if (_pupIndex.get(pupKey(from, f.seq)) === f) _pupIndex.delete(pupKey(from, f.seq));
-      f.puppet = null; f._pupMine = false; f.seq = _nextSeq++;
-      n++;
-    }
-    return n;
+   *  dead owner's leave took every one of its foes off everyone's screen.
+   *
+   *  AUDIT CONTRIB P1: THE DYING OWNER NAMES THE HEIRS. The drop had every survivor decide for itself, on its death
+   *  pose, which foes it stood nearest - each against ITS OWN view of the others (their eased, lagging poses), so two
+   *  survivors closing on one foe both took it (two owners streaming it: two copies at every reader, two AIs, two
+   *  healths) and two backing off both left it (gone). The one client that sees every foe's true place is the owner's,
+   *  so the owner decides: its last frame (`handOverFrame`) carries each live foe's heir (`e`, the survivor nearest it
+   *  in the owner's own view; never a watchman - the city watch hunts its own criminal and goes with him - and never a
+   *  foe that never rides), and the survivor it names adopts it on that frame's arrival (applyFoes). No death pose, no
+   *  socket order: the frame IS the handover. The owner then lets go of exactly what it handed (`dropOwnLive`), and
+   *  keeps the rest - a Resurrect in place finds them still there. */
+  function handOverFrame(heirOf) {
+    for (const f of foes) f._heir = null;
+    return foesFrame(true, true, heirOf);
   }
-  /** PDEATH-FOES: the dying owner's side - its live foes are the survivors' now, so they leave this client's pool
-   *  (a rise in place would otherwise stand them twice). Answers how many went. */
+  const heirIsMe = (r) => typeof r.e === 'string' && r.e !== '' && r.e === _net?.selfId?.();
+  /** A puppet of `from` made one of this client's own - numbered in my stream, its AI picking up where it stands.
+   *  Its body and its health are the owner's last word. Answers 1 when it was taken, else 0. */
+  function adopt(from, f) {
+    if (!f || f.puppet !== from || f.dead || f._gone) return 0;
+    if (_pupIndex.get(pupKey(from, f.seq)) === f) _pupIndex.delete(pupKey(from, f.seq));
+    f.puppet = null; f._pupMine = false; f._pup = null; f.seq = _nextSeq++;   // the owner's streamed state goes with the owner
+    return 1;
+  }
+  /** PDEATH-FOES: the dying owner's side - the foes its handover frame named an heir for leave this client's pool (a
+   *  rise in place would otherwise stand them twice); the rest stay mine. Answers how many went. */
   function dropOwnLive() {
     let n = 0;
     for (const f of [...foes]) {
-      if (f.puppet || f.dead || f.questBehaviour) continue;
+      const heir = f._heir; f._heir = null;
+      if (!heir || f.puppet || f.dead) continue;
       releaseFoeBatch(f);
       f._gone = true; f.dead = true;
       const i = foes.indexOf(f); if (i >= 0) foes.splice(i, 1);
@@ -2014,7 +2018,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     clearLive: destroy,
     collectPixel, arrowHitFoe, removeFoe: questPoolOps.removeFoe,
     // WORLD6b: the cell's stream - the net installed, my foes out, a peer's in, a peer's blow in, the puppets pruned
-    setNet, foesFrame, applyFoes, applyHit, pruneOwners, clearPuppets, adoptFrom, dropOwnLive,
+    setNet, foesFrame, applyFoes, applyHit, pruneOwners, clearPuppets, handOverFrame, dropOwnLive,
     setOnSites, removeSiteFoes,   // WOD7
     setOnCamps, setOnHcc };   // SURV3; HCC-ONLINE
 }

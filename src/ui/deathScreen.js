@@ -31,8 +31,8 @@ import { PlayerDeathSequence, DEATH_TIME_BEFORE_RESET } from '../systems/playerD
 import { playerEntity } from '../characters/playerEntity.js';   // D1: the death clip's race/gender
 import { audio } from '../systems/audio.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // DEATH2: the enhanced skin paints its own
-import { drawEnhancedDeath } from './enhancedDeath.js';
-import { EYE_HEIGHT } from '../player/motor.js';
+import { drawEnhancedDeath, removeEnhancedDeath } from './enhancedDeath.js';
+import { EYE_HEIGHT } from '../player/motor.js';   // DEATH3: the standing eye the fall starts from
 import { isOnlinePage } from '../systems/onlineLane.js';   // DEATH4: the online screen counts down, the offline one waits
 
 /** DEATH4 (Discord, 2026-09-23: "don't let it fade away automatically in
@@ -44,7 +44,7 @@ import { isOnlinePage } from '../systems/onlineLane.js';   // DEATH4: the online
 // DEATH6 (Discord, 2026-09-23: "a 60 second cooldown or skip it with Enter - the same time it takes till his
 // corpse disappears"): the wait is the body's own life on the others' screens (net/remotePlayers.js CORPSE_MS), so a
 // player who waits it out rises as their body fades, and Enter still rises at once.
-export const ONLINE_RESPAWN_SECONDS = 60;   // DEATH3: the standing eye the fall starts from
+export const ONLINE_RESPAWN_SECONDS = 60;
 
 const DIM = [0.5, 0.5, 0.45, 1];
 
@@ -128,7 +128,10 @@ export class DeathScreen {
     cam.pitch = from + (FALL_LOOK_UP - from) * look;
   }
   tick(dt) {
-    if (!this.fall) { this.sequence.tick(dt); return; }   // classic: DFU's three seconds, untouched
+    // classic OFFLINE: DFU's three seconds, untouched. AUDIT CONTRIB A5: online the hold is the screen's on EITHER skin -
+    // the classic's three seconds respawned the player and cleared the body their party could raise (RESURRECT1,
+    // PCORPSE3) before anyone could reach it; the wait is the body's minute whatever the skin draws.
+    if (!this.fall && !this.online) { this.sequence.tick(dt); return; }
     // DEATH4: the sequence runs its fall, fade and sound as ever but is
     // HELD a hair short of its own reset - the reset is this screen's to
     // call: the online countdown, or the player's Enter (input below).
@@ -138,10 +141,13 @@ export class DeathScreen {
     this.sequence.tick(Math.max(0, Math.min(Number(dt) || 0, room)));
   }
   /** RESURRECT1: the view handed back without a reset - a resurrection closes the screen in place. */
-  restoreView() { if (this._view) { this._view.cam.pitch = this._view.pitch; this._view = null; } }
+  restoreView() {
+    if (this._view) { this._view.cam.pitch = this._view.pitch; this._view = null; }
+    removeEnhancedDeath();   // AUDIT CONTRIB A4: the veil goes with the screen, not STALE_MS after it - the risen see at once
+  }
   /** DEATH4: whole seconds left before an online respawn, or null offline. */
   get respawnIn() {
-    if (!this.fall || !this.online) return null;
+    if (!this.online) return null;
     return Math.max(0, Math.ceil(ONLINE_RESPAWN_SECONDS - this.clock));
   }
   input(action) {
@@ -160,6 +166,7 @@ export class DeathScreen {
     if (isEnhanced() && typeof document !== 'undefined') { drawEnhancedDeath(this, fade); return; }
     const t = 'YOU HAVE DIED';
     drawText(renderer, font, t, (canvas.width - measureText(font.fnt, t) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
-    drawText(renderer, font, this.hint, (canvas.width - measureText(font.fnt, this.hint) * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
+    const hint = this.online ? `RISING IN ${this.respawnIn}   ENTER now` : this.hint;   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"
+    drawText(renderer, font, hint, (canvas.width - measureText(font.fnt, hint) * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
   }
 }

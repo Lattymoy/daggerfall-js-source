@@ -567,8 +567,11 @@ export function createPlayerMagic({
     // between the ready and the click; DFU fires and clamps instead.
     const cost = readiedFree ? 0 : readiedCost;   // S10: the per-effect skill-scaled cost; free readies spend nothing
     // RESURRECT1: nothing is spent on a Resurrect with no fallen party member under the crosshair
-    if (hasResurrect(sp) && !readiedFree && !fallenInReach(eye, dir)) { say(RESURRECT_TEXT.noBody); return false; }
-    if (sp.rangeType === 1) {
+    const raising = hasResurrect(sp) && !readiedFree;
+    if (raising && !fallenInReach(eye, dir)) { say(RESURRECT_TEXT.noBody); return false; }
+    // AUDIT CONTRIB A1: a Resurrect's touch IS the body - the gate above found one in reach, and the probe below sees
+    // only foes and standing mates, so a Resurrect at a body with no foe beside it was eaten silently here
+    if (sp.rangeType === 1 && !raising) {
       // ByTouch: CastReadySpell aborts BEFORE spending when no target
       // sits in touch range (verbatim - the S9 'spends on a whiff'
       // rule was wrong and died at its audit).

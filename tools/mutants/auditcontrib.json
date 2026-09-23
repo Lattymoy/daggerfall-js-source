@@ -1,0 +1,119 @@
+[
+  {
+    "name": "A1-the-touch-probe-eats-the-resurrect",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (sp.rangeType === 1 && !raising) {",
+    "new": "    if (sp.rangeType === 1) {",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A2-every-socket-copy-is-a-death",
+    "file": "src/net/online.js",
+    "old": "        if (!this._fallen.has(m.id)) {",
+    "new": "        if (true) {",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A2-a-rise-never-clears-the-death",
+    "file": "src/net/online.js",
+    "old": "      if (!pose.dd) this._fallen.delete(m.id);\n",
+    "new": "",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A3-a-body-the-walls-took-never-returns",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (!here || this._now() >= e.until) return;",
+    "new": "    if (!here || this._now() >= e.until || e.cried) return;",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A3-a-restood-body-cries-again",
+    "file": "src/net/remotePlayers.js",
+    "old": "{ until: e.until, quiet: e.cried });",
+    "new": "{ until: e.until, quiet: false });",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A3-no-minute-on-a-restood-body",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (!here || this._now() >= e.until) return;",
+    "new": "    if (!here) return;",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A5-the-classic-online-screen-ends-in-three-seconds",
+    "file": "src/ui/deathScreen.js",
+    "old": "    if (!this.fall && !this.online) { this.sequence.tick(dt); return; }",
+    "new": "    if (!this.fall) { this.sequence.tick(dt); return; }",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "A4-the-rise-keeps-the-sky",
+    "file": "src/ui/deathScreen.js",
+    "old": "    if (this._view) { this._view.cam.pitch = this._view.pitch; this._view = null; }\n    removeEnhancedDeath();",
+    "new": "    removeEnhancedDeath();",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "P1-every-survivor-adopts",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "  const heirIsMe = (r) => typeof r.e === 'string' && r.e !== '' && r.e === _net?.selfId?.();",
+    "new": "  const heirIsMe = (r) => typeof r.e === 'string' && r.e !== '';",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "P1-the-heir-never-rides",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": " const h = heirOf(f) ?? null; f._heir = h; if (h) r.e = h; }",
+    "new": " const h = heirOf(f) ?? null; f._heir = h; }",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "P1-the-wire-drops-the-heir",
+    "file": "src/net/wire.js",
+    "old": "return null; out.e = r.e; }",
+    "new": "return null; }",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "P3-the-owner-drops-what-nobody-took",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!heir || f.puppet || f.dead) continue;",
+    "new": "      if (f.puppet || f.dead) continue;",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "U1-every-one-shot-stamps-the-click",
+    "file": "src/systems/audio.js",
+    "old": "    if (globalThis.event && typeof globalThis.event.type === 'string') this.lastOneShotAt",
+    "new": "    this.lastOneShotAt",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  }
+]

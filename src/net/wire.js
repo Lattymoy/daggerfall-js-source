@@ -691,6 +691,8 @@ export function validFoeRecord(r) {
   // WORLD6b-iii(c): `o` how many items the corpse's pile holds (0 a live foe, an emptied body) - a peer's body is a loot
   // target while it says more than none; the pile itself travels in the owner's GRANT (a hit frame), never here
   if (r.o !== undefined) { if (!Number.isInteger(r.o) || r.o < 0 || r.o > 255) return null; out.o = r.o; }
+  // AUDIT CONTRIB P1: `e` the HEIR - on a dying owner's last frame, the survivor that owner names to take this foe over
+  if (r.e !== undefined) { if (typeof r.e !== 'string' || !ID_RE.test(r.e)) return null; out.e = r.e; }
   if (r.w !== undefined) {
     if (r.w === null) out.w = null;
     else if (Array.isArray(r.w) && r.w.length === 2 && Number.isInteger(r.w[0]) && r.w[0] >= 0 && r.w[0] <= 1023 && Number.isInteger(r.w[1]) && r.w[1] >= 0 && r.w[1] <= 255) out.w = [r.w[0], r.w[1]];

@@ -7686,7 +7686,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // D-ONLINE1 (Mac, 2026-09-17: "you should just respawn in this case"): F11 on the death screen used to
       // always quickload - the player back at their last save, mobs included. Online, respawn IS the answer to
       // "get me back in", so it takes over from quickload here exactly as Enter and the timer already do.
-      if (townTalk.overlay instanceof DeathScreen && _deathWasOnline) respawnOnlinePlayer();
+      if (townTalk.overlay instanceof DeathScreen && _deathWasOnline) townTalk.overlay.input('confirm');   // AUDIT CONTRIB A4: through the sequence's own reset, as Enter - the view handed back and the fall stopped, not a respawn under a screen still tilting at the sky
       else hudCtx.quickLoad();
       return;
     }
@@ -9547,10 +9547,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // friends list and the party HUD), the names over the world (green for my party), the F-menu on a body and the map;
   // an act goes out through `socialLink()` (sendSocial). `partyFrame` sends my own party pose once a second while I
   // sit in a party. Nothing here draws: the seams are the state and the link.
-  let social = null, _partyComposedAt = -Infinity, _partyPose = null;
-  let _rezOut = null, _rezSeen = null;
+  let social = null, _partyComposedAt = -Infinity, _partyPose = null;   // PARTY8-B: the last pose composed, for the party HUD's own "where am I"
+  let _rezOut = null, _rezSeen = null;   // RESURRECT1: my call to a fallen member; and, while I lie dead, what my party's poses said at my death
   let _deadMark = null;   // PCORPSE3: where my body lies while I am dead (my party pose says so)
-  const _partyBodies = new Map();   // PCORPSE3: account -> the `at` of the party-told body I stood   // RESURRECT1: my call to a fallen member; and, while I lie dead, what my party's poses said at my death   // PARTY8-B: the last pose composed, for the party HUD's own "where am I"
+  const _partyBodies = new Set();   // PCORPSE3: the accounts whose party pose tells of a body (AUDIT CONTRIB A3: remotePlayers.partyBody keeps each death's minute)
   let _partyRestReady = false;   // PARTY-REST2: this tab's own /ready vote, broadcast in composePartyPose's own `ready` field
   let _partyRestReadyAt = 0;   // PARTY-REST2b: when it was set - on the shared clock (social.now()), broadcast as `readyAt` (AUDIT PARTY-REST)
   let _partyRestMirrored = null;   // AUDIT PARTY-REST: the mirrorKey of the nap I last mirrored - one mirror per nap, however it ended
@@ -9836,13 +9836,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };
     online.onPeerDeath = (peer, pose, room) => {
       remotePlayers?.addCorpse({ ...peer, acct: social?.accountOfPeer?.(peer.id) ?? null }, pose, room);   // PCORPSE3: the account, so the party-told copy never doubles it
-      // PDEATH-FOES: the fallen player's live foes, each to the survivor it stands nearest - me for the ones I am
-      if ((modes?.mode ?? 'exterior') === 'exterior' && isCellRoom(room)) {
-        const others = (peersNear() ?? []).filter((q) => q.id !== peer.id);
-        const d = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
-        const n = exteriorFoes.adoptFrom?.(peer.id, (f) => { const at = f.ai?.feet; if (!at) return false; const mine = d(at, player.pos); return others.every((q) => d(at, q.feet) >= mine); }) ?? 0;
-        console.info(`[foes] took over ${n} foe(s) from a fallen player`);   // PDEATH-FOES2: said, so a failed handover can be told apart
-      }
+      // PDEATH-FOES: the fallen player's foes come to me on its own handover frame (exteriorFoes.applyFoes, AUDIT CONTRIB P1)
     };   // PCORPSE1: another player fell - their class's body for a minute, and their cry   // TRADE1: a peer's trade frame, already projected and addressed to me (net/online.js)
     // ALLY-CAST: a party mate's spell at ME. THE RECEIVER DECIDES: a cast from anyone outside my party is dropped
     // unread (the sender chose the peer; a party is invite-only), so is one at a dead player, and of what arrived only
@@ -11325,17 +11319,30 @@ export async function bootWorld(canvas, renderer, params, status) {
         // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
         _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;
         _partyComposedAt = -Infinity;
+        // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now - each to the one nearest it, as I see it (the
+        // only true view of where my foes stand), named on my last frame BEFORE the death pose; what nobody took stays mine
+        const near = isCellRoom(online.room) && (modes?.mode ?? 'exterior') === 'exterior' ? (peersNear() ?? []) : [];
+        if (near.length) {
+          const heirOf = (f) => { const at = f.ai?.feet; if (!at) return null; let id = null, best = Infinity; for (const q of near) { const d = Math.hypot(at[0] - q.feet[0], at[2] - q.feet[2]); if (d < best) { best = d; id = q.id; } } return id; };
+          const frame = exteriorFoes.handOverFrame(heirOf);
+          const n = frame && online.sendFoes(frame) ? exteriorFoes.dropOwnLive() : 0;
+          console.info(`[foes] handed ${n} foe(s) to the survivors`);
+        }
         online.sendDeath?.();
-        // PDEATH-FOES: my foes are the survivors' now
-        if (isCellRoom(online.room) && (online.peers?.size || peersNear()?.length)) { const n = exteriorFoes.dropOwnLive?.() ?? 0; console.info(`[foes] handed ${n} foe(s) to the survivors`); }
       }
       if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }
-      // RESURRECT1: a party member's call, new since I fell - I rise where I lie
-      if (!_rezSeen) _rezSeen = rezSnapshot(social?.others() ?? []);
-      const rez = social?.acct ? rezFor(social.others(), social.acct, _rezSeen) : null;
-      if (rez) { resurrectInPlace(rez); return; }
+      // RESURRECT1: a party member's call, new since I fell - I rise where I lie. AUDIT CONTRIB A6: only while DEAD -
+      // an outdoor respawn's teleport keeps this screen up for its whole await with the player already healed, and a
+      // snapshot taken then outlived the respawn: the next death read an old call (cast at the old body, still on the
+      // caster's pose) as new, and rose the instant it fell
+      if (!_respawning) {
+        if (!_rezSeen) _rezSeen = rezSnapshot(social?.others() ?? []);
+        const rez = social?.acct ? rezFor(social.others(), social.acct, _rezSeen) : null;
+        if (rez) { resurrectInPlace(rez); return; }
+      }
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); return;   // AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
+    _rezSeen = null;   // AUDIT CONTRIB A6: alive - the next death takes its own snapshot of what the party's poses say
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
     const overworld = mode === 'exterior';
     const wc = state.worldCoords(player.pos);
@@ -11478,15 +11485,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       const others = social.others();
       for (const m of others) {
         const dd = m.p?.dd;
-        if (!dd) { if (_partyBodies.has(m.acct)) { _partyBodies.delete(m.acct); remotePlayers.dropCorpseOf(m.acct); } continue; }
-        if (_partyBodies.get(m.acct) === dd.at) continue;
-        _partyBodies.set(m.acct, dd.at);
-        if (!(dd.k === online.room || (isCellRoom(dd.k) && isCellRoom(online.room)))) continue;
+        if (!dd) { if (_partyBodies.delete(m.acct)) remotePlayers.partyRose(m.acct); continue; }
+        _partyBodies.add(m.acct);
         const id = m.peers?.[0] ?? null;
-        if (remotePlayers.hasCorpseOf(m.acct, id)) continue;
-        remotePlayers.addCorpse({ id, acct: m.acct, look: (id && (online.peers.get(id)?.look ?? online._known?.get?.(id)?.look)) ?? null }, dd, dd.k);
+        const here = dd.k === online.room || (isCellRoom(dd.k) && isCellRoom(online.room));
+        remotePlayers.partyBody(m.acct, id, (id && (online.peers.get(id)?.look ?? online._known?.get?.(id)?.look)) ?? null, dd, here);
       }
-      for (const acct of [..._partyBodies.keys()]) if (!others.some((m) => m.acct === acct)) _partyBodies.delete(acct);
+      for (const acct of [..._partyBodies]) if (!others.some((m) => m.acct === acct)) { _partyBodies.delete(acct); remotePlayers.partyForget(acct); }
     }
     if (online.room) remotePlayers.keepCorpses((r) => r === online.room || ((isWorldRoom(r) || isCellRoom(r)) && (isWorldRoom(online.room) || isCellRoom(online.room))));   // PCORPSE2: never judged while between rooms (a cell crossing's gap) - no room is not another space
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id), dt, eye: player.pos, poseAgeMs: (p) => online.poseAgeMs(p) });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)

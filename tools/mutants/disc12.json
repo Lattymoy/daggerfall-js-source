@@ -56,8 +56,8 @@
   {
     "name": "DISC12-beast-drawn-as-person",
     "file": "src/net/remotePlayers.js",
-    "old": "      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn ? classMobileType(peer.look?.class) : null;",
-    "new": "      const mobileType = spritesOn ? classMobileType(peer.look?.class) : null;",
+    "old": "      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn && peer.look ? classMobileType(peer.look.class) : null;",
+    "new": "      const mobileType = spritesOn && peer.look ? classMobileType(peer.look.class) : null;",
     "tests": [
       "test/disc12.test.js"
     ]
