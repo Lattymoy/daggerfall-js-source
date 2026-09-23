@@ -1223,18 +1223,28 @@ chosen against what the old defaults drew. The idle audit that was
 running when the screenshot came was stopped, so no claim is made here
 about any screen shape or either hand.
 
-## DISC14-C: the Morrowind model's jitter, and B's own share of it
+## DISC14-C: the Morrowind model's jitter
 
-**Cause, measured.** B made DoubleScaleTextures a default. Weapon
-Widget's bob has a second shape for a doubled idle (bobStep's `xMin` and
-`yMax` at 0): centred on the rest, so it swings above it as well as
-below. The port gave that shape to every idle once the module was on.
-But only a `w_` texture drawn into the doubled box sits half its size in,
-low enough to swing above its rest; DW-CLIP had already made the
-half-size shift ride that doubling. Everything else rests on
-`transformRect`'s floor, which pinned the upper half of every sway:
+**Cause, measured.** Walking at 1920x1080 and 60 Hz, over 120 settled
+frames of the arms' composite (`armsTransform`). The worst jerk is the
+largest second difference of the rect's y, in pixels.
 
-| What was drawn | Frames pinned at the top, of 120 | Worst jerk |
+- **Main as shipped.** Diverse Weapons' preset was on by default
+  (DW-CLIP), and it turns Step and DoubleScaleTextures on. The arms were
+  pinned at the top on 25 frames, with a worst jerk of 16.9. Most of that
+  is Step's snap on each footfall: with Step off it is 1 frame and 1.47.
+  B turned the preset off, and Step with it.
+- **B's defaults.** B kept DoubleScaleTextures on, as Mac's values have
+  it. Weapon Widget's bob has a second shape for a doubled idle
+  (bobStep's `xMin` and `yMax` at 0): centred on the rest, so it swings
+  above it as well as below. The port gave that shape to every idle once
+  the module was on. But only a `w_` texture drawn into the doubled box
+  sits half its size in, low enough to swing above its rest; DW-CLIP had
+  already made the half-size shift ride that doubling. Everything else
+  rests on `transformRect`'s floor, which pinned the upper half of every
+  sway:
+
+| What was drawn, under B's defaults | Frames pinned at the top, of 120 | Worst jerk |
 |---|---|---|
 | The Morrowind arms' composite (`armsTransform`) | 53 | 3.37 (0.73 with the module off) |
 | A classic sprite, or a plain hit through the fall-through | 63 | 1.26 (0.22 with the module off) |
@@ -1247,9 +1257,15 @@ motion.
 helper (`doubledIdleNow`) shared with the half-size shift. The Morrowind
 arms keep their own bob integrator on the plain shape, always, plus the
 same inertia the sprite takes. With the fix, all three cases above pin
-on one frame (the bob's own peak), and the arm moves exactly as it did
-before B. ARROW2's sliver went with it. DW-CLIP's two mutant records
-named the old gate and are re-aimed by content at the shared helper.
+on one frame (the bob's own peak). Under the shipped defaults the arm
+now moves as it does with the module off: 1 frame, 0.73. ARROW2's sliver
+went with it. DW-CLIP's two mutant records named the old gate and are
+re-aimed by content at the shared helper.
+
+**Turning the preset back on** brings its Step back: 5 frames and a
+worst jerk of 33.75, the same as main with DoubleScaleTextures off. That
+is Weapon Widget's own Step reaching the arms, and part of the open
+question below.
 
 **What Weapon Widget does to the Morrowind model at all** (checked in
 `weaponRig.js`). Only `armsTransform` reaches it: Bob, Inertia and Step

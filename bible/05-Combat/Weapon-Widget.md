@@ -86,9 +86,11 @@ mirror and clip laws are untouched.
 
 **DISC14-C (2026-09-23): the arms keep the plain bob.** The bob's doubled
 -idle shape (centred on the rest) is for a doubled `w_` sprite texture.
-On the arms' full-screen composite it swung above the rest, and the
-floor pinned it there for half of every stride: Mac's "jitter on the
-Morrowind model". The arms have their own bob integrator on the plain
+On the arms' full-screen composite it swung above the rest, and under
+DISC14-B's defaults the floor pinned it there for half of every stride.
+Main's shipped defaults jerked the arms mostly through the preset's Step,
+which B turned off (Field-Bugs DISC14-C has the numbers). The arms have
+their own bob integrator on the plain
 shape (`armsPosition`), with the same inertia the sprite takes. The
 sprite takes the doubled shape only over a doubled `w_` hit, the rule
 DW-CLIP gave the half-size shift.
