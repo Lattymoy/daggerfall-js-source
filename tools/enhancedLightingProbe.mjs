@@ -155,7 +155,10 @@ const result = await page.evaluate(async ({ W, H }) => {
     if (r.air) r.air._now = () => 1000;   // the eye's clock frozen: no adaptation between frames or scenes, so a with/without comparison is the scene's alone
     const on = !!lane;
     let L = lights(withA);
-    if (carried) L = new Float32Array([...L, eye[0], eye[1] - 0.2, eye[2] - 0.6, 8]);   // EL7: `carried` adds the torch in the hand - a light in open air, half a unit ahead of the eye
+    if (carried) {   // EL7: `carried` adds the torch in the hand - a light in open air, half a unit ahead of the eye; MAC-T1/LIGHT-NEAR1: flagged BY NAME (the hosts' withPlayerLights mask), no longer by its distance
+      L = new Float32Array([...L, eye[0], eye[1] - 0.2, eye[2] - 0.6, 8]);
+      const mask = new Uint8Array(L.length >> 2); mask[mask.length - 1] = 1; L.carried = mask;
+    }
     if (contact !== null) {   // EL8: six dim lanterns beside the eye take the caster slots, so A and B are contact-shadowed, not mapped (BUGS-5 F3: two units out - a light within 1.5 of the eye is the hand's and never casts)
       const dummies = []; for (let k = 0; k < 6; k++) dummies.push(eye[0] + 2 * Math.cos(k), eye[1] - 0.5, eye[2] + 2 * Math.sin(k), 0.3);
       L = new Float32Array([...dummies, ...L]);
@@ -181,7 +184,7 @@ const result = await page.evaluate(async ({ W, H }) => {
     let bloom = null;
     for (let f = 0; f < 4; f++) {   // frame 1 records; frame 2 replays and draws the maps; a few more settle the eye
       r.beginFrame(proj, view, lightDir, WORLD_FRAME);
-      const shadowStats = r.shadows ? { ...r.shadows.stats, kind: r.shadows.kind, casters: r.shadows.casters, index: r.shadows.shadowIndex ? [...r.shadows.shadowIndex] : null } : null;   // the maps are drawn at beginFrame
+      const shadowStats = r.shadows ? { ...r.shadows.stats, culledTotal: (st?.shadows?.culledTotal ?? 0) + r.shadows.stats.culled, kind: r.shadows.kind, casters: r.shadows.casters, index: r.shadows.shadowIndex ? [...r.shadows.shadowIndex] : null } : null;   // SC1: the culls summed over the frames - a cached slot replays nothing   // the maps are drawn at beginFrame
       r.drawMesh(sky ? open : panelB ? meshPanel : mesh, I, null);
       r.drawBillboards([flat, ...(withEmitter ? [emitterInFront ? emitterFront : emitter] : []), ...(withFlameB ? [flameB] : [])], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0]));
       r.resolveFrame();   // EL6: the air's images are drawn here, off the frame's depth
@@ -278,7 +281,7 @@ console.log(`lantern B behind a panel: the bloom source sums ${panel}`);
 if (!(panel === 0)) failures.push(`lantern B glared through the panel in front of it (${panel})`);   // BUGS-5 F4: the glare's presence test must see the panel's depth, not the flame's
 const carriedIndex = result.frames['dungeon-lane-carried'].stats.shadows?.index || [];
 console.log(`the torch in the hand: caster slots ${JSON.stringify(carriedIndex)} (the hand's light is light 2)`);
-if (carriedIndex.includes(2)) failures.push(`the torch in the hand took a caster slot (${JSON.stringify(carriedIndex)})`);   // BUGS-5 F3: a light within 1.5 of the eye never casts
+if (carriedIndex.includes(2)) failures.push(`the torch in the hand took a caster slot (${JSON.stringify(carriedIndex)})`);   // MAC-T1: the light in the hand, by its flag, never casts (LIGHT-NEAR1: the 1.5 camera-distance proxy is gone)
 if (result.frames['dungeon-lane'].stats.air.emitDraws < 1) failures.push('the emitter was never replayed into the bloom source');
 const wallLane = regionMean(lane, result.wallRect), wallNoA = regionMean(noA, result.wallRect);
 const shadowLane = regionMean(lane, result.shadowRect), openLane = regionMean(lane, result.openRect);
@@ -292,7 +295,7 @@ if (bleed > 0.005) failures.push(`lantern A bleeds through the wall (mean |diff|
 if (!(shadowLane - shadowNoA < 0.01)) failures.push(`the wall casts no shadow from lantern A (A adds ${(shadowLane - shadowNoA).toFixed(4)} behind it)`);
 if (!(openLane - openNoA > 0.02)) failures.push(`lantern A does not light the open floor beside the wall (adds ${(openLane - openNoA).toFixed(4)})`);
 const sh = result.frames['dungeon-lane'].stats.shadows;
-if (!sh || sh.culled === 0) failures.push('the replays culled nothing - the record spheres are not wired');
+if (!sh || sh.culledTotal === 0) failures.push('the replays culled nothing - the record spheres are not wired');   // SC1: over the frames - the last frame of a still room replays nothing at all
 if (!sh || sh.casters < 2) failures.push(`two lanterns in range, ${sh?.casters} caster(s)`);
 if (pageErrors.length) failures.push(...pageErrors.map((e) => 'pageerror: ' + e));
 await browser.close(); await server.close();
