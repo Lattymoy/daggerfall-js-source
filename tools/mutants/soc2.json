@@ -128,7 +128,7 @@
   {
     "name": "C15-pose-lost-under-a-view",
     "file": "src/net/social.js",
-    "old": "for (const m of f.party.members) { const was = this.party.members.find((x) => x.acct === m.acct); if (was?.p && !m.p) m.p = was.p; }",
+    "old": "for (const m of f.party.members) { const was = this.party.members.find((x) => x.acct === m.acct); if (was?.p && !m.p && m.online !== false) m.p = was.p; }",
     "new": "",
     "tests": [
       "test/soc2_session.test.js"

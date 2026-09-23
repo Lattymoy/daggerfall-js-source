@@ -851,7 +851,7 @@ export class RemotePlayers {
   /**
    * SOC4 (2026-09-16, Mac: "Upon joining a party, the players name who are in a party together should turn green"):
    * `colorOf` is an APPENDED optional parameter (it was the last one until NAME1 appended `blocked` behind it - the
-   * rule is the same, nothing ahead of it moved), because a name's colour is not this module's business to know. A peer is a tab in a room; whether that tab belongs to somebody in my four-seat party is the social
+   * rule is the same, nothing ahead of it moved), because a name's colour is not this module's business to know. A peer is a tab in a room; whether that tab belongs to somebody in my party (PARTY_MAX seats) is the social
    * picture's question (net/social.js colorOf -> PARTY_GREEN or null), and the host asks it. Nothing is passed on
    * the probe hosts and on every caller written before the party existed, so the default path stays exactly what it
    * was: white, byte for byte (test/online.test.js pins it).

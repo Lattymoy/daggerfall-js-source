@@ -13,7 +13,10 @@
 // draws whatever it reports.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { RestSession, MAX_REST_HOURS, PROMPT_INITIAL, canRest, illegalRestWarning, ILLEGAL_REST_WARNING, REST_TEXT } from '../systems/restSession.js';
+import { RestSession, MAX_REST_HOURS, PROMPT_INITIAL, canRest, illegalRestWarning, ILLEGAL_REST_WARNING, REST_TEXT, loiterLimitHours, cannotLoiterLines, CANNOT_REST_MORE_THAN_99_HOURS_ID } from '../systems/restSession.js';
+import { normalizeCode } from '../systems/dialogShortcuts.js';   // AUDIT PARTY-REST: the Rest key, read as restWindow.js reads it
+import { getBinding } from '../systems/inputActions.js';
+import { bindings } from './input.js';   // B5: the live InputManager registry, as restWindow.js reads it
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -50,7 +53,7 @@ const MODE_LABEL = { loiter: 'Loitering', timed: 'Resting', full: 'Resting Until
  * a PARTY-REST1 follower's mirror deps) - unchanged, the same object
  * ui/restWindow.js's RestWindow takes.
  */
-export function mountEnhancedRest(hostEl, deps) {
+export function mountEnhancedRest(hostEl, deps, ignoreAllocatedBed = false) {
   injectEnhancedStyle();
   injectEnhancedFonts();
 
@@ -67,6 +70,7 @@ export function mountEnhancedRest(hostEl, deps) {
     _refusalLines: null,   // RESTFIX3: canRest's own refusal text, shown once and then the window closes
     _hoursValue: PROMPT_INITIAL,
     _endLines: null,
+    _hoursLines: null,   // AUDIT PARTY-REST: the hours prompt's refusal (loiter over the limit, rest over 99), classic's hoursRefused page
     _pendingEnemySpawn: false,   // same latch RestWindow carries - a foe spawned before a mode is even picked must not be lost
   };
   // restWindow.js's own doc comment on this exact call, verbatim law: "The flag is raised on OPEN, not on the
@@ -95,16 +99,35 @@ export function mountEnhancedRest(hostEl, deps) {
   // PARTY-REST1: the follower mirror's own entry point (world.js calls this exactly where it used to call the
   // classic window's own _start) - kept as the SAME name so neither caller has to know which skin it got.
   overlay._start = (mode, hours) => startFixed(mode, hours);
+  // AUDIT PARTY-REST (2026-09-23): THREE INTERIOR HOOKS THE CLASSIC WINDOW CALLS AND THIS ONE NEVER DID - the deps
+  // are the same bag in every host (worldModes.js supplies all three), so on the enhanced skin a rented room's
+  // sleeper rested standing where they stood (moveToBed), an expired room was announced and never removed
+  // (onRentExpired), and shopkeepers hidden before the nap stayed hidden until the player left and came back
+  // (updateNpcPresence). Each is called where restWindow.js calls it: MoveToBed after a timed or full start,
+  // RemoveExpiredRentedRooms as the first arm of EndRest, the presence re-roll on close.
+  const moveToBed = () => { if (overlay._allocatedBed != null && !ignoreAllocatedBed) deps.moveToBed?.(overlay._allocatedBed); };
   overlay._end = (result) => {
+    if (result.rentExpired) deps.onRentExpired?.();
     overlay._endLines = result.text ? [result.text] : (deps.endLines?.(result.textId) ?? ['You wake up.']);
     if (result.died || !overlay._endLines?.length) { close(); deps.onRestFinished?.(); return; }
     overlay.state = 'ended';
     render();
   };
 
+  // AUDIT PARTY-REST (2026-09-23): classic's TimedRestPrompt_OnGotUserInput, arm for arm (restWindow.js) - this
+  // skin clamped every mode to 99 and floored at 1, so a 99-hour LOITER in a town street went through where classic
+  // refuses anything over loiterLimitHours() (3-12), a rest over 99 was silently cut to 99 where classic shows
+  // TEXT.RSC 26, and an empty field started an hour's rest where classic returns to the selection page. The refusal
+  // is a page of its own whose OK goes back to selection, as classic's does: a retry is a fresh While/Loiter press.
+  const refuseHours = (lines) => { overlay._hoursLines = lines?.length ? lines : ['You cannot rest that long.']; overlay.state = 'hoursRefused'; overlay._hoursValue = PROMPT_INITIAL; render(); };
   const startTimed = (mode) => {
-    const hours = Math.min(MAX_REST_HOURS, Math.max(1, parseInt(overlay._hoursValue, 10) || 1));
-    startFixed(mode, hours);
+    const raw = String(overlay._hoursValue ?? '').trim();
+    const hours = raw === '' ? NaN : Number(raw);
+    if (!Number.isFinite(hours) || hours < 0) { overlay.state = 'selection'; overlay._hoursValue = PROMPT_INITIAL; render(); return; }
+    if (mode === 'loiter' && hours > loiterLimitHours()) { refuseHours(cannotLoiterLines()); return; }
+    if (mode === 'timed' && hours > MAX_REST_HOURS) { refuseHours(deps.endLines?.(CANNOT_REST_MORE_THAN_99_HOURS_ID) ?? null); return; }
+    startFixed(mode, Math.floor(hours));
+    if (mode === 'timed') moveToBed();
   };
 
   /** RESTFIX3 (2026-09-21, per-request: "normaly when you start resting it asks you if you really want to rest
@@ -142,7 +165,7 @@ export function mountEnhancedRest(hostEl, deps) {
     }
     if (!canRestNow(alreadyWarned)) return;
     if (which === 'while') { overlay.state = 'hours'; overlay.mode = 'timed'; overlay._hoursValue = PROMPT_INITIAL; render(); }
-    else startFixed('full', 0);
+    else { startFixed('full', 0); moveToBed(); }
   }
 
   function selectionCard() {
@@ -177,6 +200,17 @@ export function mountEnhancedRest(hostEl, deps) {
     const acts = el('div', 'acts');
     const ok = el('button', 'act', 'OK');
     ok.onclick = () => close();
+    acts.append(ok);
+    c.append(acts);
+    return c;
+  }
+
+  function hoursRefusedCard() {
+    const c = el('div', 'card');
+    for (const line of overlay._hoursLines ?? []) c.append(el('p', null, line));
+    const acts = el('div', 'acts');
+    const ok = el('button', 'act', 'OK');
+    ok.onclick = () => { overlay._hoursLines = null; overlay.state = 'selection'; render(); };
     acts.append(ok);
     c.append(acts);
     return c;
@@ -222,7 +256,7 @@ export function mountEnhancedRest(hostEl, deps) {
     const c = el('div', 'card');
     c.append(el('h2', null, MODE_LABEL[overlay.mode] ?? 'Resting'));
     const meter = el('div', 'meter');
-    const k = el('div', 'meter-k'); k.append(el('span', null, overlay.mode === 'loiter' ? 'Time passed' : 'Hours remaining'));
+    const k = el('div', 'meter-k'); k.append(el('span', null, overlay.mode === 'timed' ? 'Hours remaining' : 'Time passed'));   // AUDIT PARTY-REST: a rest until healed has no countdown - classic shows the hours passed
     const v = el('span', 'meter-v');
     k.append(v);
     meter.append(k);
@@ -250,7 +284,7 @@ export function mountEnhancedRest(hostEl, deps) {
     // ended screen, only by an ACTUAL Stop click - so a host can tell the two apart and (only for a mirror)
     // ask the real rester to stop too, this time for real. Fired BEFORE `_end`, so the request is in flight
     // the same frame Stop is pressed, not delayed behind this window's own teardown.
-    stop.onclick = () => { deps.onManualStop?.(); if (overlay.session) overlay._end(overlay.session.endEarly()); };
+    stop.onclick = () => stopOrClose();
     acts.append(stop);
     _restingRefs = { hourLabel: v, fill, vitalsLine };
     updateRestingDisplay();
@@ -267,9 +301,11 @@ export function mountEnhancedRest(hostEl, deps) {
     const s = overlay.session;
     const total = Math.max(1, (s?.totalHours ?? 0) + (s?.hoursRemaining ?? 0));
     const done = overlay.mode === 'loiter' ? (s?.totalHours ?? 0) : total - (s?.hoursRemaining ?? 0);
-    _restingRefs.hourLabel.textContent = overlay.mode === 'loiter' ? `${s?.totalHours ?? 0}h` : `${s?.hoursRemaining ?? 0}h`;
-    _restingRefs.fill.style.width = `${Math.max(0, Math.min(100, (done / total) * 100))}%`;
     const vit = deps.vitals?.();
+    _restingRefs.hourLabel.textContent = overlay.mode === 'timed' ? `${s?.hoursRemaining ?? 0}h` : `${s?.totalHours ?? 0}h`;
+    // AUDIT PARTY-REST: until-healed's meter is the health itself (the session never counts its hours down)
+    const frac = overlay.mode === 'full' ? ((vit?.maxHealth ?? 0) > 0 ? (vit.health ?? 0) / vit.maxHealth : 0) : done / total;
+    _restingRefs.fill.style.width = `${Math.max(0, Math.min(100, frac * 100))}%`;
     _restingRefs.vitalsLine.textContent = vit ? `Health ${vit.health}/${vit.maxHealth}  Fatigue ${vit.fatigue}  Magicka ${vit.magicka}` : '';
   }
 
@@ -283,7 +319,7 @@ export function mountEnhancedRest(hostEl, deps) {
     // this is the OTHER of the two places classic calls onRestFinished, and the one this skin was missing -
     // dismissing "You wake up"/"You are healed" without it silently dropped every skill-use raise a session of
     // successful sleep earned.
-    ok.onclick = () => { close(); deps.onRestFinished?.(); };
+    ok.onclick = () => stopOrClose();
     acts.append(ok);
     c.append(acts);
     return c;
@@ -301,6 +337,7 @@ export function mountEnhancedRest(hostEl, deps) {
         : overlay.state === 'hours' ? hoursCard()
           : overlay.state === 'confirm' ? confirmCard()
             : overlay.state === 'refused' ? refusedCard()
+              : overlay.state === 'hoursRefused' ? hoursRefusedCard()
               : overlay.state === 'resting' ? restingCard()
                 : endedCard(),
     );
@@ -324,6 +361,7 @@ export function mountEnhancedRest(hostEl, deps) {
     if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
     host?.remove();
     host = null;
+    deps.updateNpcPresence?.();   // AUDIT PARTY-REST: restWindow.js's _close re-rolls who is standing in the room after the nap
     deps.onClose?.();
     // ENHANCED-REST-DISPOSE1 (2026-09-22, per-request: "the resting window was fully classic ui even in
     // enhanced and online mode. Now that we use Enhanced ui for th resting screen maybe this couldve broke
@@ -350,7 +388,27 @@ export function mountEnhancedRest(hostEl, deps) {
   // Merged onto the SAME object the callers above already read `.session`/`.mode`/`.state`/`._start`/`._end` off
   // of, so a caller holding `townTalk.overlay` (world.js's PARTY-REST1/2, worldModes.js's/dungeonContext.js's own
   // restState getters) never has to know or care which skin built the window it is looking at.
-  overlay.input = () => { /* the DOM's own keydown/click own the keyboard and pointer - see onKey/button.onclick above */ };
+  // AUDIT PARTY-REST (2026-09-23): THE KEYS. `overlay.input` was a no-op, so Escape and the Rest key did nothing over
+  // this window where classic's keyup arms (restWindow.js) stop a running rest, close the selection page and
+  // dismiss the ended one; and the PX28 stack's Tab close went to `dispose` -> close(), which ended a running rest
+  // with no wake box, no skill raise (onRestFinished) and, for a mirror, no cancel request (onManualStop) - so the
+  // follower was pulled straight back into the nap on the next frame. ONE body for the Stop button, the OK
+  // button, the two keys and the stack's close arm: mid-rest it is Stop, ended it is OK, a page is closed. The
+  // press that opened this window never reaches it (the window did not exist yet), so the press is enough.
+  const stopOrClose = () => {
+    if (overlay.state === 'resting') { deps.onManualStop?.(); if (overlay.session) overlay._end(overlay.session.endEarly()); return true; }
+    if (overlay.state === 'ended') { close(); deps.onRestFinished?.(); return true; }
+    if (overlay.state === 'confirm') return false;   // the box's own Yes/No answer it
+    close();
+    return true;
+  };
+  overlay.stopOrClose = stopOrClose;
+  const restKey = () => { try { return getBinding(bindings(), 'Rest') ?? null; } catch { return null; } };
+  overlay.input = (action, e = null) => {
+    if (action === 'back') { stopOrClose(); return; }
+    const key = restKey();
+    if (key && normalizeCode(action, e) === key) stopOrClose();
+  };
   overlay.click = () => { /* fixed div, pointers never reach the canvas */ };
   overlay.wheel = () => {};
   overlay.hover = () => {};
@@ -372,10 +430,10 @@ export function mountEnhancedRest(hostEl, deps) {
  *  that calls this on the enhanced skin; the window object it returns carries every generic arm a host's frame
  *  drives (done, input, click, wheel, hover, tick, draw, dispose - assigned above, and pinned by
  *  test/partyrest1.test.js), so a host reads it exactly as it reads ui/restWindow.js's RestWindow. */
-export function openEnhancedRest(deps) {
+export function openEnhancedRest(deps, ignoreAllocatedBed = false) {
   const host = document.createElement('div');
   host.id = 'enhanced-rest';
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
-  return mountEnhancedRest(host, deps);
+  return mountEnhancedRest(host, deps, ignoreAllocatedBed);
 }

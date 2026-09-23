@@ -1,0 +1,163 @@
+[
+  {
+    "name": "AP-stamp-unbounded",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "  return Number.isFinite(v) && v <= now + slack ? v : 0;",
+    "new": "  return Number.isFinite(v) ? v : 0;",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-ghost-present",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "  return !!m && !!m.p && m.online !== false;",
+    "new": "  return !!m && !!m.p;",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-vote-never-spent",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "  return at > (Number.isFinite(lastStartedAt) ? lastStartedAt : 0);",
+    "new": "  return true;",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-cancel-high-water",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "    if (at === null || at === (seen.get(m.acct) ?? null)) continue;",
+    "new": "    if (at === null || at <= (seen.get(m.acct) ?? 0)) continue;",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-offline-pose-kept",
+    "file": "src/net/social.js",
+    "old": "if (was?.p && !m.p && m.online !== false) m.p = was.p; }",
+    "new": "if (was?.p && !m.p) m.p = was.p; }",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-pose-bumps-version",
+    "file": "src/net/social.js",
+    "old": "    if (first) this._changed('pose');\n    else { this.poseVersion++; this.onChange?.('pose'); }",
+    "new": "    this._changed('pose');",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-bed-unmoved",
+    "file": "src/ui/enhancedRest.js",
+    "old": "  const moveToBed = () => { if (overlay._allocatedBed != null && !ignoreAllocatedBed) deps.moveToBed?.(overlay._allocatedBed); };",
+    "new": "  const moveToBed = () => {};",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-bed-zero-skipped",
+    "file": "src/ui/enhancedRest.js",
+    "old": "if (overlay._allocatedBed != null && !ignoreAllocatedBed)",
+    "new": "if (overlay._allocatedBed && !ignoreAllocatedBed)",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-loiter-uncapped",
+    "file": "src/ui/enhancedRest.js",
+    "old": "    if (mode === 'loiter' && hours > loiterLimitHours()) { refuseHours(cannotLoiterLines()); return; }\n",
+    "new": "",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-rent-expiry-unremoved",
+    "file": "src/ui/enhancedRest.js",
+    "old": "    if (result.rentExpired) deps.onRentExpired?.();\n",
+    "new": "",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-back-ignored",
+    "file": "src/ui/enhancedRest.js",
+    "old": "    if (action === 'back') { stopOrClose(); return; }",
+    "new": "    if (action === 'back') { return; }",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-stack-close-disposes",
+    "file": "src/ui/enhancedRest.js",
+    "old": "    if (overlay.state === 'resting') { deps.onManualStop?.(); if (overlay.session) overlay._end(overlay.session.endEarly()); return true; }",
+    "new": "    if (overlay.state === 'resting') { close(); return true; }",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-stranger-takes-a-mate",
+    "file": "src/net/peerBodies.js",
+    "old": "      if (b.pri && !pri) continue;   // AUDIT PARTY8: a stranger never takes a party mate's slot",
+    "new": "      // (a stranger may take a party mate's slot)",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-mates-not-first",
+    "file": "src/net/peerBodies.js",
+    "old": "    want.sort((a, b) => (a.pri === b.pri ? a.d2 - b.d2 : a.pri ? -1 : 1));",
+    "new": "    want.sort((a, b) => a.d2 - b.d2);",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-lapse-burst",
+    "file": "server/src/index.js",
+    "old": "party = await this._partyOut(id, party, now, 'party.lapsed', rec?.name ?? null, { leaderNote: false }); }",
+    "new": "party = await this._partyOut(id, party, now, 'party.lapsed', rec?.name ?? null); }",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-lead-to-an-away-seat",
+    "file": "server/src/index.js",
+    "old": "const leader = party.leader === acct ? (members.find((id) => this._socketsOf(id).length) ?? members[0]) : party.leader;",
+    "new": "const leader = party.leader === acct ? members[0] : party.leader;",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-quest-fan-unbudgeted",
+    "file": "server/src/index.js",
+    "old": "      const bytes = byteGate(this._roomQuestBytes, now, out.length * targets.length, QUEST_ROOM_BYTES_PER_S, true);",
+    "new": "      const bytes = { pass: true, bucket: this._roomQuestBytes };",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-hud-place-by-words",
+    "file": "src/ui/partyPanel.js",
+    "old": "export const withMe = (p, here) => !!p && !!here\n  && p.px === here.px && p.py === here.py && (p.in ?? 0) === (here.in ?? 0)\n  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));",
+    "new": "export const withMe = (p, here) => !!p && !!here && placeText(p) === placeText(here);",
+    "tests": ["test/party8b.test.js"]
+  },
+  {
+    "name": "AP-hud-ignores-pose-version",
+    "file": "src/ui/partyPanel.js",
+    "old": "      if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) { paintLive(); return; }",
+    "new": "      if (social.version === painted) { paintLive(); return; }",
+    "tests": ["test/party8b.test.js", "test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-flare-on-percent",
+    "file": "src/ui/partyPanel.js",
+    "old": "    if (h != null && card.hpH != null && h < card.hpH && m.online) {",
+    "new": "    if (pct != null && card.hpPct != null && pct < card.hpPct && m.online) {",
+    "tests": ["test/party8b.test.js"]
+  },
+  {
+    "name": "AP-mirror-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "    if (key && key === _partyRestMirrored) return;",
+    "new": "    if (false) return;",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-quest-echo",
+    "file": "src/scenes/world.js",
+    "old": "        if (q) _questSyncSeen.set(quest.questName, q.getLogMessages()?.length ?? 0);\n",
+    "new": "",
+    "tests": ["test/auditparty8.test.js"]
+  },
+  {
+    "name": "AP-panel-rebuilds-on-pose",
+    "file": "src/ui/socialPanel.js",
+    "old": "        if (n.subNode) liveSubs.push({ el: n.subNode, of: () => partyPoseText(m.p) });\n",
+    "new": "",
+    "tests": ["test/auditparty8.test.js"]
+  }
+]

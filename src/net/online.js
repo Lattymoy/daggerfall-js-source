@@ -1281,7 +1281,7 @@ export class OnlineSession {
       const f = validSocialFrame(m);
       if (f) this._deliver('social', () => this.onSocial?.(f));
     } else if (m.t === 'party') {
-      // AUDIT SOC B3: the other members' poses, at PARTY_IN_HZ_MAX (three members at PARTY_HZ_MAX each) - per room
+      // AUDIT SOC B3: the other members' poses, at PARTY_IN_HZ_MAX (PARTY_MAX - 1 members at PARTY_HZ_MAX each) - per room
       const g = partyInGate(this._inParty.get(room), now);
       this._inParty.set(room, g.bucket);
       if (!g.pass) { this.stats.partiesDropped++; return; }
@@ -1290,8 +1290,8 @@ export class OnlineSession {
       const f = validPartyFrame(m);
       if (f && f.acct !== this.acct) this._deliver('party', () => this.onParty?.(f.acct, f.p));
     } else if (m.t === 'quest') {
-      // QUEST1: a party member's shared quest, at QUEST_IN_MIN_MS's own cooldown per room - an honest hub, at most
-      // PARTY_MAX-1 senders each throttled to QUEST_HZ_MAX, never trips it; a flood does.
+      // QUEST1: a party member's shared quest, under questInGate's cooldown per SENDER (AUDIT DROPS C2; QUEST_HUB_MIN_MS,
+      // the hub's own) - an honest hub, at most PARTY_MAX-1 senders each throttled to QUEST_HZ_MAX, never trips it; a flood does.
       // never my own account's back, same reasoning as the party pose above
       const f = validQuestFrame(m);
       if (!f || f.acct === this.acct) return;

@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3467` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3468` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:811`, `src/net/online.js:1370`):**
+**Now (`src/net/wire.js:815`, `src/net/online.js:1370`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7559,3 +7559,108 @@ back is the buzz), and `test/peerstride.test.js` drives the real seam at the rea
 seconds in the overworld makes a walker's six steps, not two hundred and forty; a standing peer none; a recentre
 rebased none, and the same jump unrebased one - the negative control that shows the rebase is what matters.
 `tools/mutants/peerstride.json`: 3, 3 dead. Not verified in a browser; the recording is the measurement.
+
+## AUDIT PARTY8 (2026-09-23, Mac: "audit the 8 party integration we just pushed") - six lenses over the eight seats, the HUD and the party rest under them, world95
+
+PARTY8 (PR #330, main `07efc0999`) doubled the party to eight seats and redrew the HUD twice; it landed with no
+record here (the Ledger's SOC row said "four-seat", `Social-Party-Arc.md` said `PARTY_MAX 4`) and beneath it the
+PARTY-REST DROP, whose pins the third lens ran fourteen mutants through with thirteen surviving. Six lenses (three
+over PARTY8: the bound and the hub, the HUD, every mechanic at eight; three over the party rest: the session and
+gate, the four hosts, the wire/UI/relay/records), every finding traced to a line and run where it could be run.
+The offline crash the first lens found first (`markPartyRestSpent` reading `social.now()` with no social clock -
+every offline Rest press a red box) had already reached main as REST-OFFLINE1 from a Discord crash report while
+the lens was running; the rest is paid here.
+
+**The party rest (four real bugs, five risks).**
+- *A mirror opened again every frame.* Nothing remembered which nap a follower had already mirrored, so a mirror
+  that ended before the rester's - the follower already healed under "Rest Until Healed", a quest's prevent-rest
+  line, a Stop the rester had not honoured yet - reopened on the next frame and after every OK until the rester
+  woke. `mirrorKey` (the rester and their `restStartedAt`) is remembered; one mirror per nap. And a mirror opens
+  only where the follower could rest themselves: the rest gate's own `restDecision` (the host's foe scan through
+  a new `restEnemiesNearby` on the interior and dungeon APIs, swimming, the ground, a prevent-rest message, the
+  vampire block) and the interior window stack (`modes.overlayHeld`, which townTalk's own flag never covered).
+- *A follower's Stop was ignored, or replayed.* `restCancelAt` was each follower's own `performance.now()`
+  compared against ONE high-water mark for every sender: a Stop from a tab younger than the last canceller's did
+  nothing (and that follower was pulled straight back in), and a reload of the rester's tab replayed an old
+  request on the next rest's first tick. `systems/partyRestLaw.js`: the marker is compared per sender against a
+  snapshot taken as my rest begins (`snapshotCancels` in `markPartyRestSpent`, `cancelRequestFor` each tick), a
+  mirror is nobody's target (`canceledByFollower: () => false` in its deps), and a follower's request is dropped
+  when their next mirror starts.
+- *A disconnected seat blocked the party for five minutes.* The hub keeps a dropped member's seat with `online:
+  false` and no pose, and `net/social.js` carried the LAST pose over a view that has none; the gate counted that
+  ghost among the online ("gather the party", unsatisfiable until the seat lapsed), and indoors, where nearness is
+  the building key alone, its stale `rest` was mirrored after every OK. The picture keeps a carried pose only for
+  a seat the hub says is online, and every reader - the gate's count, `nearPartyMembers`, the mirror's search and
+  its continue check - asks `memberPresent`.
+- *A vote outlived the rest it approved.* `ready` was a bare boolean whose sixty-second expiry ran only on the
+  voter's own frame, so a voter whose window was open when the rest started (no mirror spent the vote) or whose
+  tab sat in the background approved the leader's NEXT rest with it. The pose carries `readyAt` on the shared
+  clock (world95); a reader (`voteStands`) counts a vote younger than the timeout and cast after the last rest
+  that started here. `/ready` keeps the Rest key's law too: a member answers the leader's round and never opens
+  one.
+- The risks paid: a wire stamp from the future (`voteAt: 1e300`, run against the real gate: "Resting vote
+  ongoing" for ever) is no stamp (`stampOf`, `latestStamp` at the four reduce sites); a classic-skin rest is
+  nobody's to mirror and stamps no `restStartedAt` (ONLINE-REST1, both ends); a follower's "gather the party" is
+  measured around the LEADER (`nearPartyMembers(feetOfPartyAccount(leader))`), not the follower - eight within
+  fifteen metres of the leader can stand twenty-eight apart; PARTY-REST16's vote origin follows the floating
+  origin (a recentre read as an 819-unit walk and cancelled the vote); the mirror's deps say where the follower
+  stands (`inside` by mode, RapidHealing's rate); the cancel scan tests the name before the nearness.
+- *The enhanced rest window against the classic one, arm by arm.* Three interior hooks the classic window calls
+  and this one never did (`moveToBed` after a timed or full start, `onRentExpired` as the end's first arm,
+  `updateNpcPresence` on close - a rented room's sleeper rested standing, an expired room was announced and never
+  removed, hidden shopkeepers stayed hidden); `ignoreAllocatedBed` reaches it through the door; the hours prompt
+  keeps classic's arms (an empty field back to selection, a loiter over `loiterLimitHours()` and a rest over 99
+  refused on their own page, a zero a zero-hour rest - this skin clamped 1..99 and started); Escape and the Rest
+  key do what classic's keyup arms do (Stop mid-rest, OK on the ended page, close a page), and the PX28 stack's
+  Tab close goes through the same one body - it disposed the window, ending a rest with no wake box, no raise,
+  and no cancel request, so a follower was pulled straight back in; a rest until healed shows the hours passed
+  and a meter that is the health; the four choices stand as a column.
+
+**PARTY8 (two real bugs, six risks).**
+- *The HUD's "with me" compared words, not places.* `withMe` matched placeText's strings, so two wilderness
+  pixels 800 apart, two shops of one town and two nameless dungeons all read as "with me" and drew no place
+  line - a healer three regions away looked beside me. It compares coordinates now (the pixel, the kind, the
+  building key - samePlace's own rule) against the pose the host last composed; `hereKeyOf` is the one string
+  the live pass compares.
+- *The open social panel rebuilt every button under the pointer.* A member's pose raised the picture's
+  `version`, a repaint replaces the body, and a click that straddled a companion's pose (up to seven a second at
+  eight seats - lens C watched seven Kick buttons replaced under one pose) landed on a node that was gone. A pose
+  that replaces one moves `poseVersion` alone; the panel writes the row's line in place on its live pass, and the
+  party HUD watches the pose version.
+- *The hub's lapse burst overran the client's note gate.* Seven founding seats lapsing at once (a late joiner
+  idle, sending no pose to prompt an earlier sweep) said `party.lapsed` and `party.leader` alternately - fourteen
+  notes against NOTE_IN_HZ_MAX ten, and the one dropped was "You lead the party now". The lapses each say their
+  note; the lead is said once, for whoever holds it at the end. And the lead passes to the longest-standing seat
+  that is ONLINE - handed to an away seat, nobody could kick for five minutes.
+- The risks paid: the quest fan pays in bytes (`QUEST_ROOM_BYTES_PER_S`, a 64 KiB share to seven members' eight
+  tabs is 3.5 MiB for one press and the rate gate alone let eight through); a receiver no longer echoes a resync
+  back to the party (`_questSyncSeen` learns what it received - one log line was eight hub acts and fifty-six
+  deliveries); a party mate takes a body before a stranger (`peerBodies.sync`'s `priority`: a mate seated first,
+  may take a stranger's slot outright, never loses hers to one); the flare comes off on `animationend` (a class
+  left on the fill replayed it whenever a window closed or a seat joined) and is keyed on the health, not its
+  percent; a seat with no pose shows its dashes, dimmed; the portrait plate is content-box (the sheet's
+  border-box squashed a 31-wide head); a phone held sideways caps the stack above the touch buttons.
+- Not paid, said plainly: a world93 client in a party of five drops its whole social picture silently (the hello
+  carries no client version and SKEW1 removed the client's own check) - the web build updates itself and the
+  relay is live at world95, so this is the desktop shells' release-day window and a version gate is its own
+  slice; the hub cannot vouch that `restCancelFor` came from a member that was mirroring the target (a party is
+  invite-only); a pose's staleness is invisible on the HUD (an honest client sends only on change, so a stamp
+  would mark the still as stale); the notice stack and the junction map overlap the party rows (older than
+  PARTY8); the bar hues are literals where the sheet has tokens.
+
+**Pins and mutants.** `test/auditparty8.test.js` (18) drives the law on a table (`stampOf`/`latestStamp`,
+`memberPresent`, `voteStands`, the cancel markers, `mirrorKey`), the wire's `readyAt` and the byte budget's
+arithmetic, the picture (the offline seat's pose dropped, a pose a quiet change), the enhanced rest window under
+a fake document (the bed through canRest's guild arm - bed ZERO, which classic's truthiness skips - the expired
+room, the presence re-roll, the hours prompt's four arms, Escape and the stack, the until-healed meter), the body
+allocator (a mate seated first, a stranger never takes hers, a mate takes a stranger's), and the hub over the
+fake room (seven lapses say the lead once, the lead to an online seat, the ninth seat refused at the ACCEPT
+path); the world.js seams by source at the foot. `test/party8b.test.js` re-aimed to coordinates and extended
+(the flare on a max that rose, on a one-point hit); nineteen pins in `partyrest1`/`auditdrops`/`restfar`/
+`restlodging`/`mwbody1` re-aimed to the fixed text; `partyrest1`'s dead slice (`(restKind) =>`, lens 3) stands
+as it was pinned by its own signature test. `tools/mutants/auditparty8.json`: 23, 23 dead. Five older records
+re-aimed. RELAY_VERSION world95 (the wire's `readyAt`, the hub's quest bytes, the lapse and lead changes) - the
+relay deploys itself on the merge to main. Not verified in a browser: no online session exists in this
+container; lens B measured the flare, the landscape overflow and the squashed plate in Chromium on the HEAD
+before the fixes.
+

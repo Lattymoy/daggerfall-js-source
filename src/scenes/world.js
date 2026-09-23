@@ -288,7 +288,8 @@ import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow th
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
-import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
+import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';
+import { PARTY_READY_TIMEOUT_MS, memberPresent, latestStamp, voteStands, snapshotCancels, cancelRequestFor, mirrorKey } from '../systems/partyRestLaw.js';   // AUDIT PARTY-REST: the pure half of the party-rest mechanic, pinned by execution   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
@@ -4253,7 +4254,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       mustBeInLocationRect: true, mustBeOutside: true,
       inLocationRect: true, inside: (modes?.mode ?? 'exterior') !== 'exterior',
     });
-  let _outdoorLastCanceledAtSeen = 0;   // PARTY-REST19: the highest restCancelAt (naming me) I've already reacted to - see checkCanceledByFollower's own doc comment
+  let _cancelSeen = new Map();   // AUDIT PARTY-REST: each sender's restCancelAt as it stood when MY rest began (snapshotCancels), advanced as requests are honoured
   // PARTY-REST19 (2026-09-22, per-request: "An non initiator MUST cancel the rest for all if he cancels the
   // ongoing resting"): shared by all three hosts (this one directly, worldModes.js/dungeonContext.js via the
   // same host.X forwarding pattern already used for onEnemyBreak/partyRestGate) rather than each keeping its
@@ -4264,12 +4265,16 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reacted to (tracked here, not against a session-start baseline, so a stale request from a LONG-past
   // mirror can never re-fire, but a genuinely new one - even from the same follower mirroring me again later
   // - always can). Ends this real session the same way pressing Stop myself would.
+  // AUDIT PARTY-REST (2026-09-23): the marker is its SENDER'S OWN CLOCK (performance.now(), page-relative), so it
+  // is compared with that sender's own earlier value alone - never against another follower's, never against
+  // mine. The one high-water mark this used to keep across every sender ignored a Stop from a tab younger than
+  // the last canceller's, and a reload of my own tab (the mark back at zero) let a follower's old request end
+  // my next rest on its first tick. The baseline is the snapshot markPartyRestSpent takes as my rest begins.
   const checkCanceledByFollower = () => {
-    const acct = accountId();
-    const hit = nearPartyMembers().find((m) => m.p.restCancelFor === acct && (m.p.restCancelAt ?? 0) > _outdoorLastCanceledAtSeen);
-    if (!hit) return false;
-    _outdoorLastCanceledAtSeen = hit.p.restCancelAt;
-    return true;
+    const me = accountId();
+    // AUDIT PARTY8: the name test first - this runs every tick of a rest, and the nearness scan walks every peer in the room per member
+    const asking = social ? social.others().filter((m) => m.p?.restCancelFor === me && memberPresent(m) && nearAccount(m.acct, m.p)) : [];
+    return !!cancelRequestFor(asking, me, _cancelSeen);
   };
   const outdoorRestDeps = createRestDeps(playerEntity, {
     // ROAD-B B5: `uiManager.TopWindow` for TickRest's two top-window
@@ -4351,7 +4356,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     // CalculateHealthRecoveryRate's flags, live: outdoors, and day by
     // the clock - which is the ONE place RapidHealing InLight differs.
-    day: () => !isNight(minuteNow()), inside: () => false,
+    day: () => !isNight(minuteNow()),
+    // AUDIT PARTY-REST: where the sleeper stands, not where this bag was built - a follower's mirror inherits this
+    // bag in a dungeon or a building too (partyRestMirrorDeps), and RapidHealing's InLight/InDarkness rate reads it.
+    inside: () => (modes?.mode ?? 'exterior') !== 'exterior',
     restKind: () => (camps.byFire(walkMode && playerSpawned ? player.pos : cam.pos) ? 'camp' : 'rough'),   // SURV4: a lit fire near is the sleep; the window alone is rough
   });
   const toggleRest = () => {
@@ -5564,7 +5572,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6200), so exterior mode and a
+    // composer, dungeonContext.js:6201), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8711,7 +8719,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // sit in a party. Nothing here draws: the seams are the state and the link.
   let social = null, _partyComposedAt = -Infinity, _partyPose = null;   // PARTY8-B: the last pose composed, for the party HUD's own "where am I"
   let _partyRestReady = false;   // PARTY-REST2: this tab's own /ready vote, broadcast in composePartyPose's own `ready` field
-  let _partyRestReadyAt = 0;   // PARTY-REST2b: when it was set - see PARTY_READY_TIMEOUT_MS below
+  let _partyRestReadyAt = 0;   // PARTY-REST2b: when it was set - on the shared clock (social.now()), broadcast as `readyAt` (AUDIT PARTY-REST)
+  let _partyRestMirrored = null;   // AUDIT PARTY-REST: the mirrorKey of the nap I last mirrored - one mirror per nap, however it ended
   let _partyRestGateRefusedAt = -Infinity;   // PARTY-REST2d/e: when partyRestGate last genuinely refused (social.now(), the relay's clock - comparable across every tab) - see PARTY_REST_VOTE_COOLDOWN_MS below
   let _partyRestVoteOrigin = null;   // PARTY-REST16: my own position (player.feetAt()) at the moment the CURRENT vote round's cooldown was set - see partyRestGate's own doc comment where it's stamped
   let _partyRestJustStartedAt = -Infinity;   // PARTY-REST21: the last time MY OWN rest actually started (for real or via mirror) - see toggleRest's own doc comment for what this closes
@@ -9129,8 +9138,13 @@ export async function bootWorld(canvas, renderer, params, status) {
         // frame in partyRestFollowTick, which already runs unconditionally),
         // so the next rest always needs its own fresh round of /ready.
         if (/^\/ready$/i.test(text.trim())) {
+          // AUDIT PARTY-REST (2026-09-23): the chat's vote keeps the Rest key's own law (PARTY-REST26) - a member
+          // answers the leader's round and never opens one - and is stamped on the SHARED clock: `readyAt` rides
+          // the pose (world95) so every reader judges the vote's freshness alike. Un-readying is always allowed.
+          if (!social?.party) { chatLog.push(tabId, { text: 'You are not in a party.', system: true }); return true; }
+          if (!_partyRestReady && !social.leads() && !partyRoundActive()) { chatLog.push(tabId, { text: 'Only the leader can start a resting vote.', system: true }); return true; }
           _partyRestReady = !_partyRestReady;
-          _partyRestReadyAt = performance.now();
+          _partyRestReadyAt = social.now();
           chatLog.push(tabId, { text: _partyRestReady ? 'You are ready to rest.' : 'You are no longer marked ready.', system: true });
           return true;
         }
@@ -9197,6 +9211,12 @@ export async function bootWorld(canvas, renderer, params, status) {
         // background sync is not a deliberate share. Only the FIRST,
         // fresh receipt gets the on-screen note.
         if (!result.resync) setMidScreenText(`${who} shared a quest: "${label}".`);
+        // AUDIT PARTY8 (2026-09-23): THE ECHO. A resync restores the sender's log, which changes MY log's length, and
+        // questSyncTick read that as my own progress and shared the quest straight back - every receiver, once,
+        // on its next tick: one log line became eight hub acts and fifty-six deliveries at eight seats, and the
+        // room's whole quest burst (QUEST_ROOM_HZ_MAX) for one party. What I just received is what I have seen.
+        const q = [...(questBridge?.machine?.quests?.values() ?? [])].find((x) => x.questName === quest.questName);
+        if (q) _questSyncSeen.set(quest.questName, q.getLogMessages()?.length ?? 0);
         return;
       }
       const why = SHARE_REFUSAL_TEXT[result.reason];
@@ -9350,7 +9370,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // already excludes those; this host's own outdoor overlay excludes
     // itself the same way, one line down, so a follower here never
     // reads back as somebody else's leader).
-    const restWin = mode === 'interior' ? modes?.restState
+    const restWin = !isEnhanced() ? null   // AUDIT PARTY-REST: ONLINE-REST1 - a classic-skin rest is nobody's to mirror
+      : mode === 'interior' ? modes?.restState
       : mode === 'dungeon' ? modes?.dungeonCtx?.restState
         // PARTY-REST6: `state === 'resting'`, the same guard added to worldModes.js's/dungeonContext.js's own
         // restState getters - session truthy alone does not mean this window is still actually ticking; it
@@ -9396,6 +9417,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // off each near member's last pose. `restPending` (net/wire.js validPartyPose) stays unsent: nothing here
       // proposes a session over the wire for anyone else to answer, so it lands as the validator's own default null.
       ready: _partyRestReady,
+      readyAt: _partyRestReady && Number.isFinite(_partyRestReadyAt) && _partyRestReadyAt > 0 ? _partyRestReadyAt : null,   // AUDIT PARTY-REST: when the vote was cast, on the shared clock - a reader counts it only while fresh (partyRestLaw voteStands)
       // PARTY-REST2e: this tab's own vote-cooldown clock - null while no genuine "not ready" refusal has ever
       // fired (or it has fully expired - see partyRestGate itself for where this is set) - never the current
       // moment; broadcasting "now" every pose would make every tab look like an ongoing vote forever.
@@ -9436,6 +9458,25 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  mirroring is actually getting, since that is what mirroring a rest is supposed to mean. Falls back to the
    *  inherited position-based check only if the broadcast carried no kind at all (an older peer, or survival mode
    *  off) - never silently to Rough specifically. */
+  /** AUDIT PARTY-REST: the rest gate's own questions, asked of the FOLLOWER before a mirror opens - the outdoor
+   *  toggleRest's restDecision inputs, with the foe scan taken from whichever host I stand in (the hosts answer
+   *  `restEnemiesNearby`), plus the interior/dungeon window stack (`modes.overlayHeld`, which townTalk's own
+   *  `overlayActive` does not cover). A pending give-offer is not spent by a mirror. */
+  const mirrorRestRefused = () => {
+    if (modes?.overlayHeld) return true;
+    const mode = modes?.mode ?? 'exterior';
+    const enemies = mode === 'interior' ? !!modes?.restEnemiesNearby?.()
+      : mode === 'dungeon' ? !!modes?.dungeonCtx?.restEnemiesNearby?.()
+        : !!outdoorRestDeps.enemiesNearby();
+    const d = restDecision({
+      enemiesNearby: enemies,
+      swimming: !!player.isPlayerSwimming,
+      grounded: startRestGroundedCheck(!!player.grounded, player.pos, collider),
+      preventedMessage: getPreventedRestMessage,
+      racialOverrideBlocks: !!racialRestBlock(playerEntity, Math.floor(worldMinutes())),
+    });
+    return d.kind !== 'rest';
+  };
   const partyRestMirrorDeps = (restKind, targetAcct) => {
     // PARTY-REST4b (2026-09-21, per-request: "only the leader heals up hp not the members" - a genuine closure
     // bug found on re-inspection of PARTY-REST4): the `restKind` KEY this function used to spread onto its
@@ -9457,6 +9498,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     enemiesNearby: () => false,
     advanceMinutes: (n) => { playerTicker.advance(n); },   // local effects/quest catch-up only - no runEncounterTick
     commitCrime: () => {},   // a follower did not choose to trespass here themselves - the leader's own session already answers for the room
+    canceledByFollower: () => false,   // AUDIT PARTY-REST: a mirror is nobody's target - only the real rester's session answers a follower's Stop
     // PARTY-REST19 (2026-09-22, per-request: "An non initiator MUST cancel the rest for all if he cancels the
     // ongoing resting" - the bug this closes): fired ONLY by enhancedRest.js's own Stop button (a NEW,
     // dedicated hook, never by a natural completion or an enemy break), so an ACTUAL, deliberate cancel here
@@ -9499,11 +9541,17 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  not even a rendered, visible body right now (out of stream range, or simply never loaded in) answers
    *  Infinity, same as one with no live position at all - too far, not an error. */
   const PARTY_REST_RADIUS = 15;
-  const distanceToPartyAccount = (acct) => {
+  /** The feet of a party member's body as this client draws it, or null when no body of theirs is tracked here. */
+  const feetOfPartyAccount = (acct) => {
     const row = social?.party?.members.find((m) => m.acct === acct);
     const peer = row ? peersNear()?.find((p) => row.peers.includes(p.id)) : null;
-    if (!peer?.feet) return Infinity;
-    const mine = player.feetAt();
+    return peer?.feet ? [peer.feet[0], peer.feet[1], peer.feet[2]] : null;
+  };
+  const distanceToPartyAccount = (acct, from = player.feetAt()) => {
+    const peerFeet = feetOfPartyAccount(acct);
+    if (!peerFeet) return Infinity;
+    const peer = { feet: peerFeet };
+    const mine = from;
     const dx = peer.feet[0] - mine[0], dy = peer.feet[1] - mine[1], dz = peer.feet[2] - mine[2];
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
   };
@@ -9525,19 +9573,19 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  cell], always" in range) as a small, walled, single-building instance. Skipping the extra real-distance
    *  requirement indoors brings this check in line with both of those existing laws instead of quietly
    *  depending on indoor peer-tracking being as reliable as outdoor peer-tracking, which it need not be. */
-  const nearAccount = (acct, pose) => {
+  const nearAccount = (acct, pose, from = player.feetAt()) => {
     if (!pose || !samePlace(myPartyLocation(), { px: pose.px, py: pose.py, in: pose.in, bk: pose.bk })) return false;
     if ((modes?.mode ?? 'exterior') === 'interior') return true;   // walls already do this job - see the doc comment above
-    return distanceToPartyAccount(acct) <= PARTY_REST_RADIUS;
+    return distanceToPartyAccount(acct, from) <= PARTY_REST_RADIUS;
   };
   /** PARTY-REST2/3: the OTHER seated members standing in this SAME place right now (samePlace, the wire's own
    *  coarse px/py/in/bk) AND within PARTY_REST_RADIUS meters of me for real (distanceToPartyAccount) - the
    *  leader's gate reads this to ask "has everyone actually HERE said /ready", and it is nobody's job but the
    *  leader's: a follower far across the map, or simply not yet posed since taking the seat, does not hold up a
    *  rest happening HERE - and now, neither does one merely sharing the same square kilometre of wilderness. */
-  const nearPartyMembers = () => {
+  const nearPartyMembers = (from = player.feetAt()) => {
     if (!social?.party) return [];
-    return social.others().filter((m) => nearAccount(m.acct, m.p));
+    return social.others().filter((m) => memberPresent(m) && nearAccount(m.acct, m.p, from));   // AUDIT PARTY-REST: a seat the hub marked offline is nobody here
   };
   /** PARTY-REST2 (2026-09-20, per-request, then extended: "when a member wants to rest can this also initiate a
    *  rest vote... but only when the member is near the leader"; then, per-request: "when the leader or the party
@@ -9563,6 +9611,14 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  own separate timer. And the clock only ever starts on the THIRD line above - the leader-alone and
    *  follower-far-from-leader refusals never touch `_partyRestGateRefusedAt` at all, so simply being out of
    *  range is never mistaken for "a vote is in progress" by anyone, including me a minute later. */
+  /** AUDIT PARTY-REST: whether a vote round is open among the members standing here - the most recent of my own
+   *  refusal and every near member's broadcast `voteAt`, each read against the shared clock (a stamp from beyond
+   *  its slack is no stamp - one client saying 1e300 held the whole party at "Resting vote ongoing." for ever),
+   *  within the round's cooldown. The gate, the chat's /ready and the tally all ask this one question. */
+  const partyRoundActive = (nearHere = nearPartyMembers()) => {
+    const now = social.now();
+    return now - latestStamp(nearHere, 'voteAt', _partyRestGateRefusedAt, now) < PARTY_REST_VOTE_COOLDOWN_MS;
+  };
   const partyRestGate = () => {
     if (!social?.party) return null;
     // ONLINE-REST1 (2026-09-21, per-request: "what we are working with here is online mode only. the
@@ -9615,12 +9671,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     // offline member can never, ever be "near", so counting the WHOLE roster made this permanently
     // impossible to satisfy the moment one stale entry existed. `m.p` existing at all is the same "are they
     // actually here right now" distinction `nearAccount` itself already relies on, one call up.
-    const onlineOtherCount = social.others().filter((m) => m.p).length;
+    const onlineOtherCount = social.others().filter(memberPresent).length;   // AUDIT PARTY-REST: the hub's `online: false` outranks a pose it carried over
     if (iAmLeader) {
       if (nearHere.length < onlineOtherCount) return 'You must gather the party before you can rest.';   // never touches the cooldown clock at all
     } else if (!nearHere.some((m) => m.acct === social.party.leader)) {
       return 'You are not near the leader.';   // never touches the cooldown clock at all
-    } else if (nearHere.length < onlineOtherCount) {
+    } else if (nearPartyMembers(feetOfPartyAccount(social.party.leader) ?? player.feetAt()).length < onlineOtherCount) {
+      // AUDIT PARTY8 (2026-09-23): a follower asks "is everyone gathered" AROUND THE LEADER, not around themselves.
+      // Measured from the follower's own feet, eight people within 15 m of the leader can stand 28 m apart, so a
+      // member on the edge of a gathered party was told to gather it - and each client's tally counted a
+      // different group. One reference point, the leader's, is what the leader's own arm above already measures.
       return 'You must gather the party before you can rest.';   // never touches the cooldown clock at all
     }
     // PARTY-REST26 (2026-09-22, per-request: confirmed by direct testing, repeated several times for emphasis
@@ -9635,7 +9695,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // broadcast `voteAt`, so every machine agrees on whether a round is active). The leader's own press is
     // never blocked here (`!iAmLeader` is false for them), round active or not - it either continues an
     // existing one or IS the one that starts it.
-    const roundActive = social.now() - nearHere.reduce((latest, m) => Math.max(latest, m.p.voteAt ?? 0), _partyRestGateRefusedAt) < PARTY_REST_VOTE_COOLDOWN_MS;
+    const roundActive = partyRoundActive(nearHere);
     if (!iAmLeader && !roundActive) return 'Only the leader can start a resting vote.';
     // PARTY-REST12 (2026-09-22, per-request: "the R button is the rest button and when the party stands near
     // each other it should be mentioned how many players are ready to rest when pressed R and you should get
@@ -9657,7 +9717,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (never once typing /ready) would flicker ready -> not-ready one frame later, forever - visible as the
     // tally dropping back down in chat and the vote never able to complete.
     _partyRestReady = true;
-    _partyRestReadyAt = performance.now();
+    _partyRestReadyAt = social.now();   // AUDIT PARTY-REST: the shared clock - `readyAt` on the wire
     // PARTY-REST21 (2026-09-22, per-request: confirmed by direct testing - "the non initiator presses r
     // again when all ready he starts a new vote... just put a cooldown on being able to start a new rest" -
     // the bug this closes): a SEPARATE cooldown from the vote-in-progress one further down - this one is
@@ -9666,9 +9726,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // "read the most recent of everyone's own copy" law voteAt/groupVoteAt already use), so it fires
     // regardless of whose rest actually just happened - never touches _partyRestGateRefusedAt/voteAt at all,
     // so it can never itself be mistaken for "a vote is in progress" by the check further down.
-    const lastStartedAt = nearHere.reduce((latest, m) => Math.max(latest, m.p.restStartedAt ?? 0), _partyRestJustStartedAt);
+    const lastStartedAt = latestStamp(nearHere, 'restStartedAt', _partyRestJustStartedAt, social.now());
     if (social.now() - lastStartedAt < PARTY_REST_START_COOLDOWN_MS) return 'A rest just happened. Wait a moment before starting another.';
-    const notReady = nearHere.filter((m) => !m.p.ready);
+    const notReady = nearHere.filter((m) => !voteStands(m.p, social.now(), lastStartedAt));   // AUDIT PARTY-REST: a vote counts while it is fresh and cast after the last rest here
     // PARTY-REST11/12: the tally as the WHOLE gathered group would read it - `nearHere` is everyone ELSE
     // standing here (social.others(), filtered), so I am added back in on both sides: to the total, and to
     // the ready count too, now that pressing Rest (above) always marks me ready by the time either is read.
@@ -9692,8 +9752,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this returns) that still had "Waiting on ${names}" baked in from before that instruction existed - the
     // one spot I missed. Generic now, matching everywhere else this rule already applies.
     const line = `You are ready to rest. (${readyCount}/${totalCount} ready). Everyone can /ready or press Rest.`;
-    const groupVoteAt = nearHere.reduce((latest, m) => Math.max(latest, m.p.voteAt ?? 0), _partyRestGateRefusedAt);
-    if (social.now() - groupVoteAt < PARTY_REST_VOTE_COOLDOWN_MS) return 'Resting vote ongoing.';
+    if (partyRoundActive(nearHere)) return 'Resting vote ongoing.';
     _partyRestGateRefusedAt = social.now();
     // PARTY-REST16 (2026-09-22, per-request: "when the players move more then 15m away where the vote
     // started it should cancel the rest vote"): stamped only on a FRESH vote round (this line, not a retry
@@ -9728,6 +9787,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // Extracted here so all three hosts share the identical reset (forwarded the same way onEnemyBreak/
   // canceledByFollower already are), rather than three copies that can drift out of sync with each other again.
   const markPartyRestSpent = () => {
+    // AUDIT PARTY-REST: ONLINE-REST1's own exclusion, here too - a classic-skin rest never ran the gate, and its
+    // `restStartedAt` held every enhanced party mate at "A rest just happened" for each R it pressed.
+    if (!isEnhanced()) return;
     // REST-OFFLINE1 (Discord, 2026-09-22, a crash report: "TypeError: Cannot
     // read properties of null (reading 'now') at markPartyRestSpent <-
     // toggleRest <- travel"): OFFLINE THERE IS NO PARTY AND NO SOCIAL
@@ -9762,6 +9824,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // finishing), and the chat tracker (`_partyRestVoteTrackTick`) skips announcing anything at all while it
     // is recent, rather than mistaking my own momentary "not ready" for a fresh partial vote.
     _partyRestJustStartedAt = social.now();
+    _cancelSeen = snapshotCancels(social.others());   // AUDIT PARTY-REST: a request already in flight is not aimed at this rest
   };
   const PARTY_REST_VOTE_COOLDOWN_MS = 60_000;   // PARTY-REST2d: "put a cooldown of 1 minute on it"
   // PARTY-REST21 (2026-09-22, per-request: "just put a coooooldown on being able to start a new rest"):
@@ -9771,7 +9834,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   // go quiet for the brief moment between the vote succeeding and a mode actually being chosen). Short enough
   // not to feel restrictive for a genuinely new, later rest; long enough to comfortably outlast that gap.
   const PARTY_REST_START_COOLDOWN_MS = 10_000;
-  const PARTY_READY_TIMEOUT_MS = 60_000;   // PARTY-REST2b, per-request (2026-09-22, "make this 60 seconds"): long enough to coordinate a vote, short enough that a stale yes from an old rest cycle can never silently pre-approve a new one
   /** STRANGER-REST1 (2026-09-20, per-request: "other players that are not in a party together can rest near each
    *  other that should have a 100 meter block range means players not in a party together cant rest near each
    *  other in a 100m radius"; then, per-request: "stranger resting near each other should still work in taverns
@@ -9884,9 +9946,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // a real, if brief, gap where they look "not ready" to this exact computation, even though the rest they
     // asked for is already under way. Same cooldown and same "read the most recent of everyone's own copy"
     // reduce as partyRestGate's own check, so the two can never disagree about whether a rest just started.
-    const lastStartedAt = nearHere.reduce((latest, m) => Math.max(latest, m.p.restStartedAt ?? 0), _partyRestJustStartedAt);
+    const lastStartedAt = latestStamp(nearHere, 'restStartedAt', _partyRestJustStartedAt, social.now());
     if (social.now() - lastStartedAt < PARTY_REST_START_COOLDOWN_MS) { _partyRestVoteLastReady = null; return; }
-    const notReady = nearHere.filter((m) => !m.p.ready);
+    const notReady = nearHere.filter((m) => !voteStands(m.p, social.now(), lastStartedAt));   // AUDIT PARTY-REST: a vote counts while it is fresh and cast after the last rest here
     const totalCount = nearHere.length + 1;
     const readyCount = (nearHere.length - notReady.length) + (_partyRestReady ? 1 : 0);
     if (readyCount === 0) { _partyRestVoteLastReady = null; return; }   // no vote in progress - the next 1/X is a fresh start, not a "change"
@@ -9935,7 +9997,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // closes. Placed here, unconditionally, because this function already runs every frame regardless of party
     // state - a vote must expire even for a tab that has since left the party, or the flag would still be sitting
     // there, stale, the moment they rejoin one.
-    if (_partyRestReady && performance.now() - _partyRestReadyAt > PARTY_READY_TIMEOUT_MS) _partyRestReady = false;
+    if (_partyRestReady && (!social || social.now() - _partyRestReadyAt > PARTY_READY_TIMEOUT_MS)) _partyRestReady = false;   // AUDIT PARTY-REST: the same clock the readers use
     // PARTY-REST13 (2026-09-22, per-request: "so it also shows 1/4 then 2/4 then 3/4 and then 4/4 Ready
     // yes?" - the gap this closes): `partyRestGate` itself only ever announces on a fresh PRESS, and only
     // once per 60-second cooldown - so once the first press started that cooldown, everyone else quietly
@@ -9986,7 +10048,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         ov._end(ov.session.endEarly());
         return;
       }
-      if (!nearAccount(ov._mirrorAcct, mirrorRow?.p)) {
+      if (!memberPresent(mirrorRow) || !nearAccount(ov._mirrorAcct, mirrorRow?.p)) {   // AUDIT PARTY-REST: a seat gone offline ends its mirror
         ov._end(ov.session.endEarly());
       }
       return;
@@ -10009,14 +10071,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       return;
     }
     // PARTY-REST1c: ANY near member actually resting for real right now, not just the leader.
-    const others = social.others();
-    const restingRow = others.find((m) => m.p?.rest && nearAccount(m.acct, m.p));
+    const restingRow = nearPartyMembers().find((m) => m.p.rest);
     if (!restingRow) return;
+    // AUDIT PARTY-REST (2026-09-23): ONE MIRROR PER NAP. Nothing here remembered which rest it had already
+    // mirrored, so a mirror that ended before the rester's - the follower already at full health under "Rest
+    // Until Healed" (its first tick says "You are healed"), a quest's prevent-rest message, a Stop the rester had
+    // not honoured yet - was opened again on the next frame, and again after every OK, until the rester woke.
+    const key = mirrorKey(restingRow);
+    if (key && key === _partyRestMirrored) return;
+    // ...AND ONLY WHERE I COULD REST MYSELF. The mirror ran none of the rest gate's own questions: a follower
+    // swimming, levitating, fighting their own foe, an unfed vampire, or with a shop window open in the building
+    // (`modes.overlayHeld` - townTalk's stack is not the interior's) was pulled into the nap regardless.
+    if (mirrorRestRefused()) return;
+    _partyRestMirrored = key;
     const win = createRestWindow(partyRestMirrorDeps(restingRow.p.rest.kind, restingRow.acct));
     win.isPartyRestMirror = true;
     win._mirrorAcct = restingRow.acct;
     // PARTY-REST5: the baseline `restEnemyAt` reads against from here on - see the doc comment where it's read.
     win._mirrorEnemyAtStart = restingRow.p.restEnemyAt ?? null;
+    playerEntity._restCancelRequestFor = null; playerEntity._restCancelRequestAt = null;   // AUDIT PARTY-REST: a request aimed at the LAST rester does not ride into this nap
     townTalk.showOverlay(win);
     win._start(partyRestModeFromCode(restingRow.p.rest.mode), restingRow.p.rest.hoursRemaining);
     _partyRestReady = false;   // PARTY-REST2: spent the moment it is acted on - next nap asks again
@@ -10325,7 +10398,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) camps.sweepOwners(ids, now, FOES_STALE_MS); }   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     const drawable = online.drawable();
-    peerBodies.sync(drawable, onlineToScene, dt, player.pos);   // the nearest first, the far ones asleep
+    peerBodies.sync(drawable, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id), dt, eye: player.pos });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
   };
   const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); };
@@ -11905,6 +11978,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       footsteps.rebase();
       betterAmbience.rebase();   // BA1: the same anchor, the mod's own machine
       remotePlayers?.rebaseFootsteps?.();   // PEER-BUZZ: and every peer's - their strides are measured in scene units now, so they recentre with the rest
+      if (_partyRestVoteOrigin) { _partyRestVoteOrigin[0] += r.offset[0]; _partyRestVoteOrigin[1] += r.offset[1]; _partyRestVoteOrigin[2] += r.offset[2]; }   // AUDIT PARTY-REST: PARTY-REST16's origin is a scene point too - unshifted, a crossing read as a 819-unit walk and cancelled the vote
       mwViewRebase(r.offset);   // EOTB-IL: FloatingOrigin.OnPositionUpdate - the sprite camera's smoothing follows the origin
       if (_lastPlayerPos) { _lastPlayerPos[0] += r.offset[0]; _lastPlayerPos[1] += r.offset[1]; _lastPlayerPos[2] += r.offset[2]; }
       // ONLINE1 (AUDIT ONLINE D5): the others' billboards were placed before this step from the old origin - they follow it, or every peer jumps a tile for one frame at each crossing
