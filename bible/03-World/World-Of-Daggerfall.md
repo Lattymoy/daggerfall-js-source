@@ -549,6 +549,43 @@ port holds the ticks from the moment such an arrival begins
 (`_wodInside`), and the first frame inside ends the arrival; one that
 lands outside after all drops the hold.
 
+## WOD7: THE CAMPS, SHARED ONLINE (2026-09-23)
+
+Mac: "and all the enemies are synced online?" - they were not: every
+client of a room stood the same sites (the list is the room's), but each
+ran its own markers, so a camp sprang once per player and each fought a
+private copy (the AUDIT BRANCH's M1 had kept those foes home because
+they spent a peer's puppet slots). Now THE FIRST PLAYER TO SPRING A
+MARKER OWNS WHAT IT MADE (`world/wodShared.js`):
+- **A marker's site** is the key every client shares without a word:
+  the map pixel and the marker's objectID (unique inside its layout, one
+  layout to a pixel), or `hold` for Privateer's Hold's camp.
+- **The owner** tags each camp foe with its site (`spawnFoe`'s `site`);
+  a foe with a site rides the cell stream as any encounter foe does and
+  hunts the peers (a siteless placed foe still never rides - the fixed
+  city host's Hold). The frame carries the tags (`st`, record number to
+  site) and, on a full frame, every marker the owner sprang (`sp`: its
+  live camps and the treasure it took); a new spring asks for a full
+  frame at once.
+- **A reader** stands the camp's puppets under `WOD_CAMP_PUPPETS_MAX`
+  (16), apart from the encounter allowance - the slots M1 found spent -
+  and spends its own copy of every marker named: it never runs, stands
+  nothing and drops no pile. A captive's flat is each player's own.
+- **A race** - two players springing one marker inside
+  `WOD_CLAIM_WINDOW_MS` (5 s) - goes to the smaller player id; the other
+  takes its camp down. Past the window both stand: nobody's fight is
+  taken from under them.
+- **No wire or relay change.** The tags ride the foes frame beside
+  SURV3's camps and are checked at the reader; the relay counts a
+  frame's records and reads nothing else, so RELAY_VERSION stays.
+
+Limits, stated: the treasure pile stays its springer's (the others'
+markers are spent, so nobody else gets a copy); a camp's foes leave with
+their owner, as an encounter's do; the relay remembers no sprung marker,
+so a player who arrives after the owner has left the cell can spring it
+again. Pinned in `test/wod7_sharedcamps.test.js` and the audit's rig
+(`test/audit_wod_branch.test.js`); mutants `tools/mutants/wod7.json`.
+
 ## THE FOUR HOSTS
 
 - `scenes/world.js` - WIRED. It is the one host that streams terrain.

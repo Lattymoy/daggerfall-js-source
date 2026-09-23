@@ -21,6 +21,7 @@ import { StreamingWorldState, TerrainSlots, MAX_TERRAIN_ARRAY } from '../src/wor
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { createDroppedLoot } from '../src/scenes/droppedLoot.js';
 import { WodSpawner, WOD_LOOT_LOCATION_INDEX, WOD_LOOT_ALIGN } from '../src/world/wodSpawner.js';
+import { wodSiteId, yieldsTo } from '../src/world/wodShared.js';
 import { WOD_SPAWN_TYPE } from '../src/world/wodLocationObjects.js';
 import { alignBillboardToGround } from '../src/world/groundAlign.js';
 import { CELL_PUPPETS_MAX } from '../src/net/wire.js';
@@ -360,7 +361,7 @@ function sliceWorld() {
   return { wodCode, dpCode: WORLD.slice(dpStart, dpEnd), pubA: pubA[0], pubB: pubB[0] };
 }
 const SLICE = sliceWorld();
-function host() {
+function host({ online = null, removeSiteFoes = () => {} } = {}) {
   let release = null; let cold = false;
   const tex = { recordCount: 47, getFrameCount: () => 1, getSize: () => ({ width: 32, height: 32 }), getScale: () => ({ width: 0, height: 0 }) };
   const getTexture = (a) => (cold && a === 216 ? new Promise((r) => { release = () => r(tex); }) : Promise.resolve(tex));
@@ -373,19 +374,19 @@ function host() {
   const env = {
     wod: {}, walkMode: true, playerSpawned: true, player, cam: { pos: [0, 0, 0] }, built, state, TerrainSlots,
     collider: { surfaceHit: () => ({ dist: 1 }), removeBucket: () => {} },
-    exteriorFoes: { spawnFoe: async () => null, removeFoe: () => {}, collectPixel: () => {} },
+    exteriorFoes: { spawnFoe: async () => null, removeFoe: () => {}, collectPixel: () => {}, removeSiteFoes },
     alignBillboardToGround, WOD_LOOT_ALIGN, WOD_LOOT_LOCATION_INDEX, DUNGEON_LOOT_KEYS: ['A', 'B', 'C', 'N'],
     generateLootItems: () => [{ name: 'Gold' }], playerEntity: { level: 1, gender: 'male' }, addPileLootExtras: () => {}, rollLootRarity: () => {},
     pileSource: () => 0, dungeonRarityTier: () => 0, liveStat: () => 50, getTexture, billboardSize: () => ({ w: 0.8, h: 0.6 }), droppedLoot,
     uploadRecord: () => {}, centredBase: (c) => c, renderer, flatBatchAabb: () => [0, 0, 0, 0, 0, 0], armFlatAnim: () => {}, uploadRecordFrame: () => {},
-    _seasonStraightening: false, _loading: false, _recalling: false, rollHoldFoes: () => [],
+    _seasonStraightening: false, _loading: false, _recalling: false, rollHoldFoes: () => [], online, wodSiteId, yieldsTo, performance: { now: () => 0 },
     buildingDoors: [], doorGeneration: 0, droppedTorches: { collectPixel: () => {} }, cityGuards: { collectPixel: () => {} },
   };
   const names = Object.keys(env);
   const body = `${SLICE.wodCode}\n${SLICE.dpCode}\n
     function publish(px, py, centres, { wodSite = null } = {}) {
       const key = px + ',' + py;
-      const wodSpawners = centres.map((centre) => ({ spawner: new __WodSpawner({ spawnType: __LOOT }), centre, flat: null, restand: false }));
+      const wodSpawners = centres.map((centre, i) => ({ spawner: new __WodSpawner({ spawnType: __LOOT }), centre, flat: null, restand: false, oid: i + 1 }));
       const privateersHold = null;
 ${SLICE.pubA}
       built.set(key, { px, py, batches: [], _box: [0, 0, 0, 0, 0, 0], wodSpawners, privateersHold, wodSite, wodLife });
@@ -404,7 +405,8 @@ ${SLICE.pubB}
     }
     wodSlots.step(100, 100, state.terrainDistance, StreamingWorldState.onMap);   // the scene's start, as the host steps it
     return { tick: tickWodSpawners, destroyPixel, publish, sweep, cross, carryOf: (k) => wodCarry.get(k), arriving: (v) => { _seasonStraightening = v; }, siteWas: _wodSiteWas,
-      arrival: (list) => { _wodArrival = wodArrivalOf(list); }, onLoad: (c) => wodOnLoad(c), inside: (v) => { _wodInside = v; } };`;
+      arrival: (list) => { _wodArrival = wodArrivalOf(list); }, onLoad: (c) => wodOnLoad(c), inside: (v) => { _wodInside = v; },
+      sprung: _wodSprung, peerSprung: _wodPeerSprung, peerSites: wodPeerSites, sprungChanged: () => _wodSprungChanged };`;
   const api = new Function(...names, '__WodSpawner', '__LOOT', 'StreamingWorldState', body)(...names.map((k) => env[k]), WodSpawner, WOD_SPAWN_TYPE.Loot, StreamingWorldState);
   return { ...api, built, droppedLoot, state, player, cold: (v) => { cold = v; }, release: () => release?.() };
 }
@@ -585,6 +587,19 @@ test('WOD6 (dungeon loads): an arrival that lands INSIDE runs no marker - DFU\'s
   assert.match(WORLD, /_wodInside = true;[^\n]*\n          await _teleportToPixel\(pixel\.x, pixel\.y, null, \{ modEvent: 'load' \}\);/, 'a load inside a dungeon');
   assert.match(WORLD, /_wodInside = true;[^\n]*\n      await _teleportToPixel\(pos\.x, pos\.y\);/, 'the vampire\'s crypt');
   assert.equal((WORLD.match(/_wodInside = false;/g) ?? []).length, 6, 'the declaration, the frame inside, and each of the four arrivals that lands outside after all');
+});
+
+test('WOD7: a marker a peer sprang never springs here - its camp is theirs, and everyone\'s; one I spring is mine, online', () => {
+  const h = host({ online: { id: 'mmmm-0002' } });
+  const p = h.publish(100, 100, [[400, 50, 400], [420, 50, 400]]);   // two treasure markers, oids 1 and 2
+  h.peerSprung.add('100,100:1');
+  h.player.pos = worldAt(h, 100, 100, [410, 49.1, 800]);   // far: Start leaves both live
+  const orig = Math.random; Math.random = () => 0.1;
+  try { h.tick(); h.player.pos = worldAt(h, 100, 100, [410, 49.1, 390]); h.tick(); } finally { Math.random = orig; }   // then within 100 of both
+  assert.equal(p.wodSpawners[0].spawner.active, false, 'the peer\'s marker is spent');
+  assert.equal(p.wodSpawners[0].spawner.started, false, 'and never ran: no Start, no spring, no pile of mine');
+  assert.deepEqual([...h.sprung.keys()], ['100,100:2'], 'the other I sprang - mine now, on my next full frame');
+  assert.ok(h.sprungChanged());
 });
 
 test('WOD6: the pixels a late region names are built again on the list in its order - those standing now, nearest first; one still building once it stands; the player\'s own under the season hold', () => {

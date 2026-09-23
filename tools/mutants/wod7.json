@@ -1,0 +1,223 @@
+[
+  {
+    "name": "WOD7-larger-id-wins",
+    "file": "src/world/wodShared.js",
+    "old": "theirs < mine;",
+    "new": "theirs > mine;",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-no-claim-window",
+    "file": "src/world/wodShared.js",
+    "old": "return now - sprungAt <= WOD_CLAIM_WINDOW_MS && theirs < mine;",
+    "new": "return theirs < mine;",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-self-yields",
+    "file": "src/world/wodShared.js",
+    "old": "mine === theirs) return false;",
+    "new": "false) return false;",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ],
+    "equivalent": true,
+    "why": "belt: with mine === theirs, theirs < mine is already false, so the guard only states the case"
+  },
+  {
+    "name": "WOD7-sites-unbounded",
+    "file": "src/world/wodShared.js",
+    "old": "    if (out.length >= WOD_SITES_MAX) break;\n    if (typeof s",
+    "new": "    if (typeof s",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-sites-duplicated",
+    "file": "src/world/wodShared.js",
+    "old": " && !out.includes(s)) out.push(s);",
+    "new": ") out.push(s);",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-tags-unchecked",
+    "file": "src/world/wodShared.js",
+    "old": "if (Number.isInteger(i) && i >= 0 && typeof s === 'string' && WOD_SITE_RE.test(s)) out.set(i, s);",
+    "new": "out.set(i, s);",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-camp-stays-home",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (f.puppet || f.isQuestFoe || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
+    "new": "if (f.puppet || f.isQuestFoe || f.placed || (f.dead && !f.corpse)) continue;",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-camp-hunts-no-peer",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(f.placed && !f.site ? [] : peerCandidates())",
+    "new": "...(f.placed ? [] : peerCandidates())",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-no-tags",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(st.length ? { st } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-no-sprung-list",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(sp.length ? { sp } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-sprung-list-without-host",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(_sprungOf?.() ?? []), ",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-camp-under-encounter-cap",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (site ? livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX : r.t",
+    "new": "if (r.t",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-puppet-forgets-site",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "level: r.l ?? null, site })",
+    "new": "level: r.l ?? null })",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-host-not-told",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (sprung.size) _onSites?.(from, [...sprung]);",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-remove-other-sites",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (f.site === site && !f.puppet) questPoolOps.removeFoe(f);",
+    "new": "if (f.site && !f.puppet) questPoolOps.removeFoe(f);",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-peer-marker-springs",
+    "file": "src/scenes/world.js",
+    "old": "        if (_wodPeerSprung.has(wodSiteOf(p, w))) { w.spawner.active = false; continue; }   // WOD7: a peer sprang it - its camp is everyone's\n",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js",
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-spring-unrecorded",
+    "file": "src/scenes/world.js",
+    "old": " if (act.kind === 'foe' || act.kind === 'loot') wodSprang(wodSiteOf(p, w)); }",
+    "new": " }",
+    "tests": [
+      "test/wod7_sharedcamps.test.js",
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-offline-records",
+    "file": "src/scenes/world.js",
+    "old": "    if (!online) return;\n    _wodSprung.set(site, performance.now());",
+    "new": "    _wodSprung.set(site, performance.now());",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-no-full-frame",
+    "file": "src/scenes/world.js",
+    "old": "    _wodSprungChanged = true;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/wod7_sharedcamps.test.js",
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-race-keeps-both",
+    "file": "src/scenes/world.js",
+    "old": "        _wodSprung.delete(s);\n        exteriorFoes.removeSiteFoes(s);\n",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-race-always-yields",
+    "file": "src/scenes/world.js",
+    "old": "        if (!yieldsTo(online?.id ?? '', from, mine, performance.now())) continue;",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-hold-rolls-twice",
+    "file": "src/scenes/world.js",
+    "old": "        if (_wodPeerSprung.has(hs)) p.privateersHold.state.rolled = true;   // WOD7: a peer's roll stands here\n        else { standHold(p, hs); wodSprang(hs); }",
+    "new": "        standHold(p, hs); wodSprang(hs);",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-save-drops-site",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        site: f.site ?? null,   // WOD7: and a shared camp's foe keeps riding for its site\n",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-load-drops-site",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (typeof sf.site === 'string') f.site = sf.site;   // WOD7: a shared camp's foe keeps riding for its site\n",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  }
+]

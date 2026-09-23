@@ -119,8 +119,8 @@
   {
     "name": "the-camp-foes-join-the-cap",
     "file": "src/scenes/world.js",
-    "old": "gender: r.gender, placed: true, groundAlign: { hitDist: null } })\n          .then((f) => {",
-    "new": "gender: r.gender, placed: false, groundAlign: { hitDist: null } })\n          .then((f) => {",
+    "old": "gender: r.gender, placed: true, groundAlign: { hitDist: null }, site })\n          .then((f) => {",
+    "new": "gender: r.gender, placed: false, groundAlign: { hitDist: null }, site })\n          .then((f) => {",
     "tests": [
       "test/wod4_privateershold.test.js"
     ]
