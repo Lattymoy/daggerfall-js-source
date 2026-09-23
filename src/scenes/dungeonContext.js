@@ -2330,6 +2330,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // AUDIT ALLY-CAST A3: the party mate under the crosshair and the door the cast leaves through - the OUTER host's
     // (world.js through worldModes' opts, the peerHoverPick's own road); the standalone ?dungeon probe passes none
     allyTarget: (eye, dir, reach) => opts.allyTarget?.(eye, dir, reach) ?? null,
+    fallenTarget: (eye, dir, reach) => opts.fallenTarget?.(eye, dir, reach) ?? null,   // RESURRECT1
+    raiseFallen: (f) => !!opts.raiseFallen?.(f),
     castAtAlly: (id, frame) => !!opts.castAtAlly?.(id, frame),
     // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of
@@ -2703,7 +2705,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6935 against :6959).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1071 against :1100; worldModes.js:6959 against :6983).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3272,8 +3274,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:13235,
-              // exterior.js:5058 and worldModes.js:7135 already ran;
+              // playerArrowHitFoe is the one copy world.js:13275,
+              // exterior.js:5066 and worldModes.js:7159 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6542,6 +6544,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // DC1: PlayerDeath.Update's camera sink, read by the scene host's
     // one per-frame eye write; zero whenever no death runs.
     get deathDrop() { return activeOverlay instanceof DeathScreen ? activeOverlay.drop : 0; },
+    deathTilt(cam) { if (activeOverlay instanceof DeathScreen) activeOverlay.tiltView(cam); },   // DEATH3: the enhanced fall's pitch
     deathUp: () => activeOverlay instanceof DeathScreen,   // AUDIT WORLD B6: the death screen stands in THIS slot underground - world.js's own gate never saw it
     overlayWindow: () => activeOverlay,   // U26 probe surface
     /** U43-ii: the way IN to that slot. The context has held an

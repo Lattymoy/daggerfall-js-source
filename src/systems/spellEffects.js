@@ -102,6 +102,7 @@ const ROWS = [
   // cost row agrees (spellcost.js, `'29,255': row(SKILLS.Illusion, {})`),
   // as does the identically shaped Teleport row below.
   [29, 255, 'Morph Self', '', [], false],
+  [45, 255, 'Resurrect', '', []],   // RESURRECT1: the port's own (no classic key uses 45) - a fallen party member rises where they fell (systems/resurrect.js)
   [30, 255, 'Water Breathing', '', [D]],
   [31, 255, 'Water Walking', '', [D]],
   [33, 0, 'Pacify', 'Animal', [C]],
@@ -156,6 +157,7 @@ export const PORTED_KEYS = new Set([
   '27,255',                                                         // Jumping (X1)
   '28,255',                                                         // Climbing (X1)
   '29,255',                                                         // Morph Self (V2a - the arm calls the racial override)
+  '45,255',                                                         // Resurrect (RESURRECT1 - the arm is the cast engine's, at a fallen party member's body)
   '30,255',                                                         // Water Breathing
   '31,255',                                                         // Water Walking
   '6,0', '6,1', '6,2',                                              // Dispel {Magic,Undead,Daedra} (X9 the sweeps, X10 the bundle picker)

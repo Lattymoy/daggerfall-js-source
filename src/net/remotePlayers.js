@@ -39,7 +39,40 @@ import { getPref } from '../systems/uiPrefs.js';   // 2026-09-17: the 'peerClass
 import { CLASS_CAREERS } from '../systems/chargen.js';   // 2026-09-17 (bugfix): a stock class's CFG-loaded career carries no `.name` of its own - chargenSession.js's own class list already falls back to this array by careerIndex (`cf.career.name || CLASS_CAREERS[i]`), and composeLook needs the same fallback or every stock-class peer sends class:null
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';   // AUDIT DROPS E6: the hand a swing sound is read off
 import { FootstepMachine, FOOTSTEP_CLIP_SETS } from '../systems/footsteps.js';   // PEER-FS1: peer footsteps off the pose's own `fk`
-import { swingSoundFor } from '../systems/soundClips.js';   // PEER-FS2: a peer's own swing sound, off the pose's `an` edge and their equipped weapon
+import { swingSoundFor } from '../systems/soundClips.js';
+import { billboardSize } from '../world/rmbFlats.js';   // PCORPSE1: a corpse stands as the dungeon's own corpses stand
+import { raceGenderPain3Sound, CLASSIC_PLAYER_DEATH_SOUND } from '../systems/playerDeath.js';   // PCORPSE1: the fallen player's own cry
+import { RACES } from '../systems/races.js';
+
+// ── PCORPSE1: THE FALLEN ──────────────────────────────────────────
+//
+// Discord, 2026-09-23: "add dead corpses to players that died against mobs, based on the class they play - right
+// now they just disappear. The corpse should stay for 1 minute and disappear, and give it the player's death sound
+// depending on whether it's a woman or a man."
+//
+// THE BODY IS THE CLASS'S OWN CORPSE: `corpseTexture` off the same EnemyBasics row the peer's class sprite is drawn
+// from (classMobileType), which is exactly the body a killed class enemy of that class leaves in a dungeon
+// (dungeonContext spawnCorpse). DFU's data gives every human class ONE body (TEXTURE.380 record 1), so a Mage and a
+// Knight fall the same - which is Daggerfall's own answer, read from its table rather than restated here. A peer
+// with no class to go on falls to the Thief row, the class sprite's own default.
+//
+// THE CRY IS THE PLAYER'S OWN death voice: GetRaceGenderPain3Sound (PlayerDeath.cs:179-201), the race's clip for the
+// peer's gender - the woman's cry for a woman, the man's for a man - at the footsteps' distance falloff.
+
+/** How long a fallen player's body lies, in ms. */
+export const CORPSE_MS = 60_000;
+/** Bodies kept at once - a massacre is bounded like every other peer cache. */
+export const CORPSES_MAX = 32;
+/** The corpse row for a look: the class's own, else the Thief's (the class sprite's default). */
+export function corpseTextureFor(look) {
+  const t = classMobileType(look?.class) ?? THIEF_MOBILE_TYPE;
+  return ENEMY_BASICS[t]?.corpseTexture ?? ENEMY_BASICS[THIEF_MOBILE_TYPE]?.corpseTexture ?? null;
+}
+/** The fallen player's death cry: their race's Pain3 for their gender, the classic clip for a race outside the eight. */
+export function peerDeathSound(look) {
+  const clip = raceGenderPain3Sound(RACES[look?.race] ?? RACES.Breton, look?.gender === 'female' ? 'female' : 'male');
+  return clip >= 0 ? clip : CLASSIC_PLAYER_DEATH_SOUND;
+}   // PEER-FS2: a peer's own swing sound, off the pose's `an` edge and their equipped weapon
 
 /** entity.career?.name for a CUSTOM class; CLASS_CAREERS[entity.careerIndex] for a STOCK one, whose loaded career
  *  object does not carry its own name (see the import comment above) - null if neither resolves, same as before
@@ -421,6 +454,79 @@ export class RemotePlayers {
     this._wanted = new Set();    // SLAM7: the look keys the last sync ASKED FOR - composed or composing, drawn or not
     this._queue = Promise.resolve();
     this._mobiles = new Map();   // 2026-09-17: peer id -> a ready MobileUnit bundle | Promise building | { failedUntil } - see _mobileFor
+    this._corpses = [];          // PCORPSE1: { pose, room, until, batch | null, building } - the fallen, in wire space
+    this._lastEye = null;        // PCORPSE1: the listener, for the cry's falloff between syncs
+    this._lastToScene = null;
+  }
+
+  /** PCORPSE1: a peer fell. `pose` is its last pose (wire space), `room` the room it was heard in. The body is drawn
+   *  from the next sync on; the cry plays now, at the distance the last sync placed the listener. */
+  addCorpse(peer, pose, room = null) {
+    if (!pose) return;
+    const ct = corpseTextureFor(peer?.look);
+    const c = { id: peer?.id ?? null, acct: peer?.acct ?? null, pose: { x: pose.x, y: pose.y, z: pose.z }, room, until: this._now() + CORPSE_MS, ct, batch: null, building: false };
+    this._corpses.push(c);
+    while (this._corpses.length > CORPSES_MAX) this._dropCorpse(this._corpses.shift());
+    const audio = this.deps?.audio;
+    if (audio?.playOneShot) {
+      let falloff = 1;
+      const eye = this._lastEye;
+      if (eye && this._lastToScene) {
+        const f = this._lastToScene(c.pose);
+        const d = Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]);
+        falloff = d <= 8 ? 1 : d >= 45 ? 0 : 1 - (d - 8) / 37;
+      }
+      if (falloff > 0) audio.playOneShot(peerDeathSound(peer?.look), falloff);
+    }
+  }
+
+  /** PCORPSE1: bodies whose room the player has left for another kind of space are not this scene's to draw - a
+   *  dungeon's local coordinates mean nothing outdoors. `keep(room)` answers whether a corpse heard there still
+   *  belongs to the scene now. */
+  keepCorpses(keep) {
+    for (const c of [...this._corpses]) if (!keep(c.room)) this._dropCorpse(c);
+  }
+
+  /** RESURRECT1: the bodies lying in this scene, as the party pick reads a person ({id, acct, feet, height}). */
+  corpseMarks(toScene = (p) => [p.x, p.y, p.z]) {
+    return this._corpses.filter((c) => !c.dead && (c.id || c.acct)).map((c) => ({ id: c.id, acct: c.acct, feet: toScene(c.pose), height: 0.9 }));
+  }
+  /** PCORPSE3: is a body already lying for this account (or peer)? */
+  hasCorpseOf(acct, id = null) { return this._corpses.some((c) => !c.dead && ((acct && c.acct === acct) || (id && c.id === id))); }
+  /** PCORPSE3: the body of a member who got up (a respawn, a rise) - gone. */
+  dropCorpseOf(acct) { for (const c of [...this._corpses]) if (acct && c.acct === acct) this._dropCorpse(c); }
+
+  _dropCorpse(c) {
+    if (!c) return;
+    const i = this._corpses.indexOf(c);
+    if (i >= 0) this._corpses.splice(i, 1);
+    c.dead = true;
+    if (c.batch) this.renderer.destroyBillboardBatch?.(c.batch);
+    c.batch = null;
+  }
+
+  _syncCorpses(toScene) {
+    const now = this._now();
+    for (const c of [...this._corpses]) {
+      if (now >= c.until) { this._dropCorpse(c); continue; }
+      if (!c.batch) {
+        if (c.building || !c.ct || !this.deps?.getTexture || !this.deps?.uploadRecordFrame) continue;
+        c.building = true;
+        Promise.resolve(this.deps.getTexture(c.ct.archive)).then((tex) => {
+          c.building = false;
+          if (c.dead || !tex || c.ct.record >= (tex.recordCount ?? Infinity)) return;
+          try {
+            this.deps.uploadRecordFrame(c.ct.archive, c.ct.record, 0);
+            const batch = this.renderer.createBillboardBatch(c.ct.archive, `${c.ct.record}#0`, billboardSize(tex, c.ct.record), [[0, 0, 0]]);
+            batch.origin = [0, 0, 0];
+            c.batch = batch;
+          } catch { c.ct = null; }   // a body that cannot be drawn is not retried every frame; the cry already played
+        }, () => { c.building = false; });
+        continue;
+      }
+      const f = toScene(c.pose);
+      c.batch.origin[0] = f[0]; c.batch.origin[1] = f[1]; c.batch.origin[2] = f[2];
+    }
   }
 
   /** The doll for a look: composed once per look, serialized; a failure waits DOLL_RETRY_MS before another try. */
@@ -601,6 +707,10 @@ export class RemotePlayers {
    */
   sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0, dt = 0, eye = null } = {}) {
     const live = new Set();
+    // PCORPSE1: the fallen lie on whatever the living do - placed, aged out, drawn
+    if (eye && eye.length === 3) this._lastEye = [eye[0], eye[1], eye[2]];
+    this._lastToScene = toScene;
+    this._syncCorpses(toScene);
     this._shown = [];   // every drawable peer, doll, mobile or body, for the name pass
     this._wanted = new Set();   // SLAM7: rebuilt every frame - a look nobody is standing in any more stops being needed at once
     // 2026-09-17: read once a sync, not once a peer - the pref does not change mid-frame, and a card's toggle takes
@@ -648,6 +758,18 @@ export class RemotePlayers {
     // AUDIT DROPS E4: a peer drawn as a Morrowind BODY holds no batch, so the sweep above never reached their
     // stride machine or their swing edge - the entries stayed for the life of the session (SLAM4's class), and a
     // stale `an` played a phantom swing when that peer came back
+    // RESURRECT1: a fallen player standing again where they fell (a resurrection) takes their body with them
+    if (this._corpses.length) {
+      const up = new Map();
+      for (const peer of peers) if (peer?.shown && peer.id) up.set(peer.id, peer.shown);
+      for (const c of [...this._corpses]) {
+        const s = up.get(c.id);
+        if (!s) continue;
+        if (this._now() - (c.until - CORPSE_MS) < 2000) continue;   // PCORPSE2: a body's first two seconds - the fallen figure's last frames are not a rise
+        const a = toScene(s), b = toScene(c.pose);
+        if (Math.hypot(a[0] - b[0], a[2] - b[2]) < 2.5) this._dropCorpse(c);
+      }
+    }
     for (const id of this._footsteps.keys()) if (!seen.has(id)) this._footsteps.delete(id);
     for (const id of this._attackAn.keys()) if (!seen.has(id)) this._attackAn.delete(id);
   }
@@ -795,6 +917,7 @@ export class RemotePlayers {
   batches() {
     const out = [];
     for (const e of this._batches.values()) out.push(e.batch);
+    for (const c of this._corpses) if (c.batch) out.push(c.batch);   // PCORPSE1: and the fallen
     return out;
   }
 
@@ -964,5 +1087,6 @@ export class RemotePlayers {
     this._wanted.clear();   // SLAM7: nothing is needed by a host that is gone
     for (const key of [...this._dolls.keys()]) this._release(key);
     this._mobiles.clear();   // 2026-09-17: no GPU resource of its own to release (the shared archive texture cache outlives any one peer), just the map
+    for (const c of [...this._corpses]) this._dropCorpse(c);   // PCORPSE1: the host is gone, and its bodies with it
   }
 }

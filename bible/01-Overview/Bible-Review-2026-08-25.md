@@ -215,7 +215,7 @@ own AUDIT-18 correction.
 
 Doc review only, nothing fixed - but four code comments assert the
 opposite of their own code and deserve a slice's attention:
-- `src/ui/deathScreen.js:42-43` claims "`drop` is read by each host's
+- `src/ui/deathScreen.js:84-85` claims "`drop` is read by each host's
   frame" - no host reads it (the Ledger row `:448` is right, the
   comment is wrong).
 - `src/systems/mysticism.js:53` header "OPEN AND LOCK ARE NOT WIRED" -

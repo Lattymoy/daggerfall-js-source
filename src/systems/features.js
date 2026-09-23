@@ -786,6 +786,23 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' }),
   }),
+  // HB1 (2026-09-23, Discord: "an enhanced hotbar alongside keeping the
+  // current quickbar ... togglable so ppl can choose the lightweight
+  // quickbar or hotbar - both at the same time are too much clutter"):
+  // WHICH bar the enhanced HUD wears. ONE OR THE OTHER, never both: the
+  // hotbar hides the diamond and takes keys 1-9 and 0 while it is up.
+  // Enhanced skin only, online included - it is the player's own view.
+  Object.freeze({
+    id: 'quickbar-style',
+    group: 'sight',
+    title: 'Quickbar or hotbar',
+    note: 'Quickbar is the bottom-left diamond. Hotbar is ten slots over the vitals on keys 1-9 and 0, filled by dragging '
+      + 'weapons, potions, torches and spells onto it from the pack and the spellbook.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'quickbarStyle', initial: 'quickbar', online: 'player',
+      tiers: Object.freeze([['quickbar', 'Quickbar'], ['hotbar', 'Hotbar']]) }),
+  }),
   // CAMP1 (2026-09-17, Mac: camps and roaming packs in the wilderness):
   // an original addition, not a DFU classic feature - the classic game
   // spawns wandering monsters one at a time. This is a second roll

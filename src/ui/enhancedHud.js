@@ -89,6 +89,7 @@ import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
 // styles show a corner word - imported rather than restated.
 import { crosshairEnabled, interactionIconStyle, iconReplacesCrosshair, modeIconEnabled, MODE_LABEL } from './hudCrosshair.js';
 import { getInteractionMode } from '../player/interactionMode.js';
+import { mountHotbarDock, drawEnhancedHotbar, detachHotbarDock, hotbarMode } from './enhancedHotbar.js';   // HB1: the hotbar, the diamond's alternative (one or the other)
 import { setEnhancedMidTextScale } from './enhancedHudText.js';   // AUDIT FONT F2: the mid-screen label is a layer beside this one, not inside it (the popup column it once scaled too is a toast in the notice stack since ENH-NOTICE3)
 
 /**
@@ -316,6 +317,12 @@ function build(doc) {
 
   // BOTTOM: the three vitals, then the effects beneath them.
   const bottom = el('div', 'hud-bottom');
+  // HB1: THE HOTBAR'S PLACE - the top of the bottom column, over the
+  // vitals, so it rides the HUD's scale and rises with the vitals when
+  // the effects row grows under them. `display: contents` (the hotbar's
+  // sheet), so an empty dock costs the column no gap.
+  const hotDock = el('div', 'hud-hotdock');
+  bottom.append(hotDock);
   // PX30b: THE BREATH BAR, above the vitals. DFU draws it only while
   // you are holding breath (HUDBreathBar: Amount 0 draws nothing) and
   // turns it RED below (endurance >> 3) + 4 - the classic's own two
@@ -525,7 +532,7 @@ function build(doc) {
   doc.body.append(root);
   return { root, compass, marks, detectMarks: [], foe, foeName, foeFill, foeBladeFull, magicka, health, fatigue, effects, needs,
     breath, breathFill, readied, reticle, cross, centreWord, cornerWord,
-    quick, quickCells: cells, quickTags: tags,
+    quick, quickCells: cells, quickTags: tags, hotDock,
     spellChip: { chip: spellChip, tag: spellTag, img: spellGlyph, text: spellText, name: spellName } };
 }
 
@@ -591,8 +598,11 @@ const initialsOf = (name) => String(name ?? '').split(/\s+/).filter(Boolean)
 export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   const { hidden = false } = opts;
   if (typeof document === 'undefined') return;
-  if (!host) { parts = build(document); host = parts.root; }
+  if (!host) { parts = build(document); host = parts.root; mountHotbarDock(parts.hotDock); }
   tickFoeTarget(dt);
+  // HB1: the hotbar hears every frame, hidden or not - a hidden HUD is
+  // exactly when it may still be up under the pack as a drop target.
+  drawEnhancedHotbar(vitals, opts);
   if (hidden) {
     if (last.hidden !== true) { last.hidden = true; host.style.display = 'none'; }
     return;
@@ -812,11 +822,19 @@ function drawQuickslots(vitals, opts) {
     last.qoff = off;
     parts.quick.classList.toggle('nodiamond', off);
   }
+  // HB1: ONE BAR OR THE OTHER. The hotbar up puts the diamond and its
+  // spell chip away (the caption keeps the mode word and the readied
+  // spell); the keys the diamond answered are the hotbar's while it is.
+  const hb = hotbarMode();
+  if (last.qhotbar !== hb) {
+    last.qhotbar = hb;
+    parts.quick.classList.toggle('hotbarmode', hb);
+  }
   // QS6: THE SPELL CHIP, above the `off` return - it is the caption's,
   // and the caption is what the switch keeps. Its own guard, because a
   // spell name changing is not a reason to rewrite twenty cells.
   drawSpellChip(view, tags.spell);
-  if (off) return;
+  if (off || hb) return;   // HB1: the diamond is put away - nothing of it to paint
   const pct = (c) => (Number.isFinite(c) ? String(Math.round(c)) : '');
   const m = view.main, o = view.off;
   const sig = [
@@ -975,6 +993,7 @@ function quickTag(part, slot, t) {
 /** A host tearing down. */
 export function destroyEnhancedHud() {
   for (const h of holds) h.off();   // AUDIT QS6 F3: a finger mid-cycle does not outlive the HUD
+  detachHotbarDock();   // HB1: the bar's contents are the model's; its place went with the HUD
   holds.length = 0;
   try { host?.remove(); } catch { /* already gone */ }
   host = null; parts = null;

@@ -1001,6 +1001,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const _eye = player.eyeAt();   // EV1: a camera path, so the interpolated eye
       cam.pos = [_eye[0], _eye[1] - ctx.deathDrop, _eye[2]];
     }
+    if (walkMode && (ctx.deathDrop ?? 0) > 0) ctx.deathTilt?.(cam);   // DEATH3: the enhanced fall looks up, off the same gate
 
     // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
     // than covering it (ViewportChanger.cs:56-62), and Unity derives a

@@ -21,6 +21,8 @@
 //      stay valid for the exit landing math.
 //   baseCollider() - the collider to restore on exit.
 
+import { resurrectionSpell } from '../systems/resurrect.js';   // RESURRECT1
+import { isOnlinePage } from '../systems/onlineLane.js';   // RESURRECT1: the shelf's online arm
 import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
@@ -4157,7 +4159,7 @@ export function createWorldModes(host) {
         spells: () => (playerEntity.spells ??= []),
         entity: playerEntity,
         castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-        offered: () => [...sbi.values()],
+        offered: () => [...sbi.values(), ...(isOnlinePage() ? [resurrectionSpell()] : [])],   // RESURRECT1: online, the ready-made Resurrection is on the shelf
         buildingQuality: () => b?.quality ?? 0,
         shopName: () => b?.name ?? '',
         skills: () => ({
@@ -5914,7 +5916,9 @@ export function createWorldModes(host) {
           shareQuest: (uid, questName, displayName) => host.shareQuest?.(uid, questName, displayName),
           // PEER-PLAQUE1: the plaque's peer pick, delegated the same way - the dungeon's own eye, the outer host's peers
           peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye
-          allyTarget: (eye, dir, reach) => host.allyTarget?.(eye, dir, reach) ?? null,   // AUDIT ALLY-CAST A3: the dungeon's own cast engine asks the outer host's pick
+          allyTarget: (eye, dir, reach) => host.allyTarget?.(eye, dir, reach) ?? null,
+          fallenTarget: (eye, dir, reach) => host.fallenTarget?.(eye, dir, reach) ?? null,   // RESURRECT1
+          raiseFallen: (f) => !!host.raiseFallen?.(f),   // AUDIT ALLY-CAST A3: the dungeon's own cast engine asks the outer host's pick
           castAtAlly: (id, frame) => !!host.castAtAlly?.(id, frame),
           partyRestGate: () => host.partyRestGate?.(),   // PARTY-REST2 (AUDIT DROPS D1): the dungeon's rest asks the party too - ONE copy (main carried two; eslint no-dupe-keys)
           pointerSurfaceUp: () => !!host.pointerSurfaceUp?.(),   // AUDIT DROPS E1: the plaque comes down under a pointer surface
@@ -6819,6 +6823,9 @@ export function createWorldModes(host) {
     // slot and the one write below never saw it.
     if (interiorOverlay instanceof DeathScreen) cam.pos[1] -= interiorOverlay.drop;
     if (mode === 'dungeon') cam.pos[1] -= dungeonCtx?.deathDrop ?? 0;
+    // DEATH3: and the enhanced fall's pitch, from whichever slot holds the death
+    if (interiorOverlay instanceof DeathScreen) interiorOverlay.tiltView(cam);
+    if (mode === 'dungeon') dungeonCtx?.deathTilt?.(cam);
     // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
     // DFU's ActivateCenterObject: the readied spell fires on its
     // PRESS (EntityEffectManager.cs:250) and the world activation
@@ -9631,6 +9638,11 @@ export function createWorldModes(host) {
     /** AUDIT WORLD B6: is the death screen up in the mode's own slot - the dungeon context's (it borrows the
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
+    /** RESURRECT1: the mode's death screen closed IN PLACE - the fallen player rises where they fell, no exit. */
+    clearDeath() {
+      if (mode === 'dungeon') { dungeonCtx?.clearDeathOverlay?.(); return; }
+      if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
+    },
     /** The restore half - and NOT gated on the mode, deliberately.
      *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5796)
      *  and only re-enters the building at :4217, so the mode at apply

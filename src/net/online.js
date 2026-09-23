@@ -905,6 +905,19 @@ export class OnlineSession {
     return true;
   }
 
+  /** PCORPSE1: THE LAST POSE. A dying player's body where it fell, flagged `dd`, sent ONCE through every open socket
+   *  (the cell's and the halo's - whoever could see me hears it) right before the dead branch leaves the room. Past
+   *  the pose rate on purpose: it is the one pose that must not wait for the next tick, because there is none. */
+  sendDeath() {
+    const last = this._pose ?? this._lastSent;
+    if (!this.presence || !last) return false;
+    const s = JSON.stringify({ t: 'pose', p: { ...last, mv: 0, dd: 1 } });
+    let went = false;
+    if (this._ws && this.status === 'open') { try { this._ws.send(s); this.stats.sent++; went = true; } catch { /* the close will say */ } }
+    for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { try { h.ws.send(s); this.stats.sent++; went = true; } catch { /* the close will say */ } }
+    return went;
+  }
+
   /** A chat line out (CHAT1): sanitized here as the relay sanitizes it, and gated here as the relay gates it
    *  (AUDIT CHAT A8: the relay drops an over-rate line without a word, so the client refuses it first and the
    *  caller keeps the text); false when nothing went - nothing to say, over the rate, or no open socket. */
@@ -1283,6 +1296,19 @@ export class OnlineSession {
       // stranger. Every room a peer speaks in holds it now, and `leave` is per room, as WORLD6b-iii(b) meant.
       this._roomSet(room).add(m.id);
       const p = this.peers.get(m.id);
+      // PCORPSE1: a peer's LAST pose - it fell here. Handed to the host with the peer's look (the corpse's class and the
+      // cry's race and gender); its leave follows on the same socket and takes the living figure away as ever.
+      if (pose.dd) {
+        this._deliver('peerDeath', () => this.onPeerDeath?.({ id: m.id, look: p?.look ?? null, name: p?.name ?? null }, pose, room));
+        // PCORPSE2 ("sometimes the dead body isn't appearing"): THE FALLEN LEAVE THE LIST NOW, not when their socket's
+        // close is finally fanned as a `leave` - that can be a second or more behind, and for all of it the peer
+        // stood drawn on its own body, which the rise rule (remotePlayers: a player standing where their body lies
+        // was raised) read as a resurrection and took the body away. A later pose - a real rise - stands them again,
+        // dressed from memory (SLAM9's `_known`).
+        for (const set of this._rooms.values()) set.delete(m.id);
+        this.peers.delete(m.id);
+        return;
+      }
       if (p) {
         // SLAM14 (AUDIT SLAM FINAL B1): `heardIn` FOLLOWS THE POSES. It was stamped once, on the pose that stood the
         // stranger, so a peer first heard through my own cell and since heard only through a halo - it walked over
