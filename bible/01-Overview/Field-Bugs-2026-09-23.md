@@ -598,3 +598,77 @@ sim's word by design.
 Pinned by execution in `test/disc8.test.js` (DISC9, with the real front,
 the real sim and the mod as shipped); mutants in `tools/mutants/disc8.json`
 (4 more).
+
+
+---
+
+# DISC10 - three reports before the survival-tiers branch merged
+
+Mac, with three Discord screenshots: *"Before we push this can you fix
+these"*.
+
+1. kurkku: *"two wagons appear whenever you hitch it up, visual only"* /
+   *"also the Wagon tooltip can appear when it's trailing behind you and
+   you're looking forward. it'll flash quickly as the wagon goes in and out
+   of range"*
+2. Starempire42: *"Npcs marking things on the map doesn't seem to be
+   working. Npc was supposed to mark it on the map. It is not on the map
+   when I look."*
+3. Triage: *"im stuck in a tree?"*
+
+Each was investigated to its cause in node, against the real modules,
+before it was touched. The pins are `test/disc10.test.js`; the mutants are
+`tools/mutants/disc10.json`. All die.
+
+## DISC10-A: two carts for one Cart transport
+
+**Cause.** Not a stale or parked copy of the wagon, and not my own team
+echoed back online (both were ruled out by probes and by the relay's own
+exclusions). Two vendored mods each stand a cart for the Cart transport:
+Eye Of The Beholder's ShowCart (model 41239, `player/eotbWagon.js`, through
+the view seam) and Horse Cart and Cargo's trailing wagon (41214). Both ship
+on, EOTB's lane is open for every rider without the Morrowind body, and
+neither mod's code knows the other - DFU with both installed would stand
+both too. The second wagon in the reporter's first screenshot is EOTB's;
+the one ahead of the horse in the second is EOTB's after a turn (it only
+moves once it is 2.5 m from the rider). The plaque's "Wagon" was EOTB's
+too: HCC's trailing wagon takes no activation at all, and EOTB's box was
+an axis-aligned box drawn around the cart's rotated bounds, re-drawn every
+frame as it turned and swayed - at a diagonal it bulged forward past the
+rider, and a forward look over empty road entered it, flickering through
+every turn (10-14 times a quarter turn in the probe).
+
+**Fix.** While HCC's trailing wagon is on, EOTB's cart gives way
+(`mwView.js` `setEotbCartYields`, registered by both hosts beside the
+runtime it reads); with HCC off, or its wagon hidden, EOTB's cart stands
+as its IL says. EOTB's activation target is the cart's OWN turned box -
+`activate.js` `rayObb`, the slab test in the box's rigid frame - and it
+takes no surface inside it (`noSurface`: the cart has no collider, so a
+box that holds the eye names nothing by the ground or a wall). Ledger A
+carries it as ONE CART FOR THE CART TRANSPORT.
+
+## DISC10-B: "I'll mark it on your map", and the map did not
+
+**Cause.** The port marks the building and the building lands in the
+discovery store; the town map then hides it on purpose. The screenshot's
+wrapped line is "The Woodfield Residence", and the town map names a
+discovered RESIDENCE only by a quest Place carrying the NPC's
+marked-on-map stamp, or by the quest name it learned at discovery
+(ExteriorAutomap.cs:677, :693-707; PlayerGPS.cs:927, :945-959). Asked where
+a PERSON is, MarkKeySubjectLocationOnMap stamps the Person's own resource
+(TalkManager.cs:1283-1296), which the map never reads - so the house stayed
+unnamed whenever the Place was still dialog-hidden, or the house had been
+discovered as a plain residence before the quest named it (World Tooltips
+discovers a door the player looks at, which makes the second case common
+here). DFU has the same gap.
+
+**Fix.** A Person's map answer marks the person's assigned Place with
+them (`answerPipeline.js` `markKeySubjectLocationOnMap`). Everything else
+- the knowledge roll, the 7332/7333 draw, the compass stamp - is DFU's.
+Ledger A carries it as A PERSON'S "I'LL MARK IT ON YOUR MAP" MARKS THEIR
+HOUSE.
+
+**Not driven in a browser:** no game data here, so the two carts were
+driven with a stand-in box for model 41239, and the map through the
+real chain with the vendored text records.
+
