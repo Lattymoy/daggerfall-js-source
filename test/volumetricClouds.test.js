@@ -123,7 +123,7 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
   assert.match(src, /gl\.blendFuncSeparate\(gl\.ONE, gl\.SRC_ALPHA, gl\.ZERO, gl\.ONE\);   \/\/ sky \* T \+ cloud/, 'the colour blends sky * T + cloud; the buffer\'s alpha is left alone (ONE, SRC_ALPHA on alpha too would leave it 2T)');
   // VC4d: the flash lights the WHOLE sky on the composite, never one stripe of the map
   assert.doesNotMatch(MARCH_FS, /uFlash/, 'the march (a stripe a frame) carries no flash');
-  assert.match(COMPOSITE_FS, /outColor = vec4\(c\.rgb \* \(1\.0 \+ uFlash \* 2\.0\), c\.a\);/, 'the composite lights every texel for the frame');
+  assert.match(COMPOSITE_FS, /outColor = vec4\(c\.rgb \* \(1\.0 \+ uFlash \* 2\.0 \+ bolt \* 3\.0\), c\.a\);/, 'the composite lights every texel for the frame (WEATHER3d: and a distant strike its own cloud beside it)');
   assert.match(src, /gl\.uniform1f\(u\.uFlash, this\.flash\);/);
   assert.match(src, /createRenderTarget\(gl, this\.q\.width, this\.q\.height, \{ filter: 'LINEAR', wrapS: 'REPEAT', wrapT: 'CLAMP_TO_EDGE' \}\)/, 'the azimuth wraps, the elevation clamps');
   assert.match(src, /gl\.viewport\(0, y0, q\.width, Math\.min\(rows, q\.height - y0\)\);/, 'a stripe per frame');

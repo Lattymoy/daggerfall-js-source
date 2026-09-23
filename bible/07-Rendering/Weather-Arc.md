@@ -537,3 +537,34 @@ row now names it.
 Measured: the whole sample - the word, the sky's cells and the wind -
 costs about 0.02 ms a frame. Off the lane, nothing changes: WEATHER2b's
 cells are cut in their own order on the worn word's row, as before.
+
+### Slice D shipped - storms at a distance (2026-09-22)
+
+`systems/distantStorms.js` holds the law, pinned by
+`test/weather3d_distantstorms.test.js` (`tools/mutants/weather3d.json`
+15/15 dead).
+
+- **The strikes** are the storm's and the minute's. Each game minute
+  draws a Poisson count at STRIKES_PER_MINUTE (0.15, about twice a real
+  minute at the default TimeScale) times the storm's envelope, seeded
+  by its lattice id. Every client under the shared clock sees the same
+  strikes, and frame-by-frame is the same as all at once. The first
+  build struck at 0.8 a game minute, and an afternoon of swamp storms
+  strobed; measured and brought down.
+- **The light**: the march writes one stripe a frame, so a per-cloud
+  flash cannot ride it, which is why the overhead strobe is already
+  whole-sky at the composite. A distant strike is a bolt in the
+  composite instead (`boltOf`): the direction to the thunderhead's
+  middle (BOLT_HEIGHT), a cone as wide as its cloud, on the cloud's own
+  radiance only, so clear sky that way stays dark. It falls away over
+  BOLT_SECONDS.
+- **The thunder** (`thunderOf`) comes its distance over 343 m/s late,
+  half a minute for a storm 10 km off. Its volume falls with distance
+  (and with the storm's strength): a crack inside 4 km, the roll beyond,
+  nothing past 25 km. It is played THUNDER_SOURCE_M out toward the
+  storm, so it comes from its side.
+- **Whose storm**: under a thunderstorm's heart, DFU's LightningPlayer
+  and the ambience own the lightning and thunder, as before. Only the
+  others strike here. A jump (a load, a landing) plays no backlog and
+  forgets the thunder still on its way. Enhanced only, never under a
+  `?weather` pin, and nothing off the map's lane.

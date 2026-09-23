@@ -257,6 +257,20 @@ export function pickCells(cells, cap) {
     .sort((a, b) => (b.rank ?? 0) - (a.rank ?? 0) || b.r - a.r);
 }
 
+/** WEATHER3d: the height a distant strike's light is aimed at - a
+ *  thunderhead's middle (VC_PROFILE.thunder's slab, 500 m to 4200 m). */
+export const BOLT_HEIGHT = (VC_PROFILE.thunder.base + VC_PROFILE.thunder.top) / 2;
+/** WEATHER3d: a strike at (x, z), its cloud `r` across, seen from the
+ *  camera at `cam` ([x, z]): the unit direction to the cloud's middle and
+ *  the cosine of the cone the cloud fills (a little wider, for the glow
+ *  about it). Pure. */
+export function boltOf({ x, z, r, strength }, cam) {
+  const dx = x - cam[0], dz = z - cam[1];
+  const flat = Math.max(1, Math.hypot(dx, dz)), len = Math.hypot(flat, BOLT_HEIGHT);
+  const half = Math.min(Math.PI / 3, Math.atan2(r * 1.3, len));
+  return { dir: [dx / len, BOLT_HEIGHT / len, dz / len], cos: Math.cos(half), strength: Math.max(0, Math.min(1, strength)) };
+}
+
 /** The test door: `thunder`, `thunder,6000`, `thunder,6000,3000` - a
  *  cell of that weather `ahead` metres east (+x) of `pos`, radius `r`.
  *  Null for no door or an unknown weather. Pure. */
@@ -652,6 +666,8 @@ uniform float uPitch;
 uniform float uTanHalfFov;
 uniform float uAspect;
 uniform float uFlash;     // lightning: the WHOLE sky lit for the frame (the march writes one stripe a frame; the flash cannot ride it)
+uniform vec4 uBolt;       // WEATHER3d: a DISTANT storm's strike - xyz the direction to its cloud, w its light
+uniform float uBoltCos;   // ...and the cosine of the cone its cloud fills from here
 out vec4 outColor;
 const float PI = 3.14159265;
 void main() {
@@ -677,7 +693,10 @@ void main() {
   float az = atan(dir.x, dir.z);
   vec2 uv = vec2(az / (2.0 * PI), max(el, 0.0) / (0.5 * PI));   // DSH1: the bottom row over the skirt
   vec4 c = texture(uMap, uv);
-  outColor = vec4(c.rgb * (1.0 + uFlash * 2.0), c.a);
+  // WEATHER3d: the distant strike lights its own cloud and nothing else - the cone its disc fills from here, soft at
+  // the rim - on the cloud's own radiance (c.rgb carries its opacity), so clear sky in that direction stays dark
+  float bolt = uBolt.w * smoothstep(uBoltCos, mix(uBoltCos, 1.0, 0.6), dot(dir, uBolt.xyz));
+  outColor = vec4(c.rgb * (1.0 + uFlash * 2.0 + bolt * 3.0), c.a);
 }`;
 
 /** The lab's shadow-map viewer: the square as a picture. */
@@ -707,7 +726,7 @@ function link(gl, vs, fs) {
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uDrift', 'uShift', 'uCamXZ'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps'];   // VC6b: uSkyTint, uDusk
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
-export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash'];
+export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos'];   // WEATHER3d: the distant strike
 
 export class VolumetricClouds {
   /** `quality` a QUALITY key; `viewport` the caller's rect to restore
@@ -747,6 +766,7 @@ export class VolumetricClouds {
     this.shift = [0, 0];      // the floating origin's recenters, accumulated (metres)
     this.cam = [0, 0];        // the camera's world XZ
     this.flash = 0;
+    this.bolt = null;   // WEATHER3d: a distant strike's light, or none
     this.cells = [];          // WEATHER2c: this frame's cells, in the host's world metres, capped at the tier's count
     this.testCellSpec = null; // WEATHER2c: `?cloudcell=` as handed by the controller; resolved against the first camera position seen
     this.testCell = null;
@@ -829,6 +849,12 @@ export class VolumetricClouds {
    *  and both maps are marched whole again - the old sky is not eased
    *  into the new one. */
   jump() { this.profile = null; this.stripe = 0; this.shadowFull = true; }
+
+  /** WEATHER3d: a distant storm's strike this frame - `{ x, z, r,
+   *  strength }` in the host's world metres, or null. Its cloud is lit
+   *  in the direction of its middle (boltOf); the storm overhead is the
+   *  whole-sky `flash`, as before. */
+  setBolt(b) { this.bolt = b ? boltOf(b, this.cam) : null; }
 
   /** VC4: what the ground samples - the map and its square, for the
    *  deck the controller hands the renderer. */
@@ -928,6 +954,8 @@ export class VolumetricClouds {
     gl.uniform1f(u.uYaw, yaw); gl.uniform1f(u.uPitch, pitch);
     gl.uniform1f(u.uTanHalfFov, Math.tan(fovY / 2)); gl.uniform1f(u.uAspect, aspect);
     gl.uniform1f(u.uFlash, this.flash);
+    const b = this.bolt;   // WEATHER3d
+    gl.uniform4f(u.uBolt, b ? b.dir[0] : 0, b ? b.dir[1] : 1, b ? b.dir[2] : 0, b ? b.strength : 0); gl.uniform1f(u.uBoltCos, b ? b.cos : 1);
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);

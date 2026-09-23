@@ -150,7 +150,7 @@ half the lanes' own mutation tallies could not see.
   player's slot from a stale array - the restored sky was gone by hour
   five. `WeatherManager.cs:538-542`'s else arm is not "at boot", it is
   "in case of loaded savegame", every time. One line at
-  `weatherSim.js:472`; no envelope change. The CLK4 pin stayed green
+  `weatherSim.js:475`; no envelope change. The CLK4 pin stayed green
   under this bug for a whole audit because it opens with
   `resetWeatherSim()` - a restore pin that starts from a fresh module
   tests the boot load only, and the boot load was never the broken

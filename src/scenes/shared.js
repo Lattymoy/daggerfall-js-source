@@ -443,6 +443,9 @@ export function createSkyController(gl, params) {
       return 1 - 0.7 * Math.pow(weatherRowNow?.cover ?? 0, 1.6);
     },
     offsetOrigin(offset) { clouds?.offsetOrigin(offset); },
+    /** WEATHER3d: a distant storm's strike lights its own cloud - `{ x, z, r, strength }` in the host's world metres,
+     *  or null. The clouds' own; a no-op with them off. */
+    distantBolt(b) { clouds?.setBolt(b); },
     weatherJump() {
       weatherRowNow = null;
       windModel.jump();

@@ -206,6 +206,9 @@ let _mapFresh = true;       // no sample since the boot or a load: the next chan
 let _mapNear = [], _mapNearAt = null, _mapNearMinute = null, _mapNearLookup = null;
 let _mapIntensity = 0;
 let _mapApproach = 0;
+/** WEATHER3d: the map's systems near the player this minute (field metres, standing where they are), [] off the
+ *  map's lane - the distant storms' strikes are read off them. */
+export const currentMapSystems = () => (weatherMapOn() ? _mapNear : []);
 /** WEATHER3c: the wind of the storms drawing near (wind.js VIOLENCE's scale), 0 off the map's lane. */
 export const currentWindApproach = () => (weatherMapOn() ? _mapApproach : 0);
 /** WEATHER3c: the sky the clouds' cells stand on - clear air on the map's lane (the player's own system is a cell
