@@ -447,7 +447,13 @@ test('CHAT-CHAN host: the commands are tested in their order - the host\'s own f
   const w = rd('src/scenes/world.js');
   const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w)[1];
   const at = (s) => { const i = onSend.indexOf(s); assert.ok(i >= 0, `onSend has ${s}`); return i; };
-  assert.ok(at('/^\\/unstuck$/i') < at('const red = ') && at('const red = ') < at('parseModCommand(text)') && at('parseModCommand(text)') < at("/^\\/ready$/i") && at("/^\\/ready$/i") < at('parseChatLine(expandShortcodes(text))'), 'the host\'s own commands by their own tests, then the parser (EMOTE1: over the shortcodes\' emoji)');
+  // the parser is asked ONCE, after every command of the host's own. EMOTE1 re-aimed this pin to the parser over the
+  // shortcodes and it let a SECOND call live before the commands - which reads /unstuck, /red, /mute and /ready as the
+  // host's and would have refused every one; so the pin names the parser's FIRST call, and says it is the only one
+  const parser = onSend.indexOf('parseChatLine(');
+  assert.equal(parser, at('parseChatLine(expandShortcodes(text))'), 'the parser\'s first call is its one call, over the shortcodes\' emoji (EMOTE1)');
+  assert.equal(onSend.split('parseChatLine(').length - 1, 1, 'and it is asked once');
+  assert.ok(at('/^\\/unstuck$/i') < at('const red = ') && at('const red = ') < at('parseModCommand(text)') && at('parseModCommand(text)') < at("/^\\/ready$/i") && at("/^\\/ready$/i") < parser, 'the host\'s own commands by their own tests, then the parser');
   assert.match(onSend, /if \(cmd\.kind === 'help'\) \{ for \(const line of HELP_LINES\) note\(line\); return 'read'; \}/);
   for (const k of ['unknown', 'empty', 'host']) assert.match(onSend, new RegExp(`if \\(cmd\\.kind === '${k}'\\) \\{ note\\([^)]*\\)\\); return false; \\}`), `${k}: refused in words, the line kept to be mended`);
   assert.match(onSend, /if \(cmd\.kind === 'channel'\) return chatSend\(cmd\.tab, cmd\.wrap === 'ooc' \? oocText\(cmd\.text\) : cmd\.text, tabId\);/);

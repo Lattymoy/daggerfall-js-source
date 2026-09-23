@@ -173,6 +173,8 @@ the channel's members (Online, or the region's name), the party's seats online, 
   is 20), while any passing line wiped the casts' strikes. Each is its own now (`_castBucket`, `castDrops`).
 - The first cut of the relay's party arm struck a junk line off the attachment READ BEFORE the chat gate wrote it,
   refunding the line's token; the strike is written off the attachment as it stands. The test pins the exact bucket.
+  (AUDIT ATTACH has since moved every meter off the attachment: the strike and the bucket are two meters of one
+  record, so the class cannot recur.)
 - RED1-12 (the server line's inbound gate removed) SURVIVED on the commit before this one: its pin matched `chatInGate`
   over a slice that also held the next arm. The gate is driven now (`test/red1_server_say.test.js`: a flood in one instant reaches the log at the room's rate).
 
@@ -186,18 +188,21 @@ in a box under 400px (a CONTAINER query, because CHAT-SIZE lets the box be that 
 drop the capitals' spacing and the Social count becomes a dot as well (its own label still says it, AUDIT SOC C21); and
 only on a phone under about 380px wide does the strip scroll sideways - a swipe, never a squeeze.
 
-**Pins.** `test/chatchan.test.js` (16), over the real Room, the wire, a session on a fake socket, the log, the panel on
-a fake document, and the host by source. `tools/mutants/chatchan.json`: 56, 56 dead. `tools/chatChanProbe.mjs` reads the
-real panel in Chromium - the bar on both skins at 440, 352 and a 320px phone's 292, bare and with three tabs unread (no
-tab squeezed below its own name, judged off the text's own box; every dot whole inside its button), the hovers, the
-placeholders, the aside's face, the peek's marks, `/help` keeping the chat open - 59 checks (60 since DICE1 added a
-roll's look, 75 since EMOTE1's form row, picker and emoji). Re-aimed, each to the same claim on the new shape: CHAT1's
-tabs, whitelist, line shape, link loop, rejoin, send and strip pins; the roster pins (ACC3c's key, CHAT-R1's rows,
-ROSTER-G's and CHAT-FIT's wiring - one session still answers the badge and the row); SOC3's tab count; SRV-N's and
-RED1's host pins; BUBBLE1's law (every tab, and the aside refused). The mutant records the move touched were re-aimed by
-content (`chatfit`, `name1`, `red1`, `soc1`); `name1.json`'s BUBBLE1-any-tab-speaks is retired with the law it held,
-which `chatchan.json`'s CC-aside-bubbles replaces. The relay is world99 (a new LAW row); the arc's later slices ride the
-same deploy and restate that row until the merge.
+**Pins.** `test/chatchan.test.js` (16), over the real Room, the wire, a session on a fake socket, the log, the panel
+on a fake document, and the host by source. `tools/mutants/chatchan.json`: 56, 56 dead - CC-parser-before-unstuck
+lived from EMOTE1 on: EMOTE1 re-aimed the command-order pin to the parser over the shortcodes, and a second parser
+call put BEFORE the host's commands (which reads `/unstuck`, `/red`, `/mute` and `/ready` as the host's and would
+refuse every one) passed it; AUDIT ATTACH's rerun of the list found it, and the pin names the parser's first and only
+call now. `tools/chatChanProbe.mjs` reads the real panel in Chromium - the bar on both skins at 440, 352 and a 320px
+phone's 292, bare and with three tabs unread (no tab squeezed below its own name, judged off the text's own box; every
+dot whole inside its button), the hovers, the placeholders, the aside's face, the peek's marks, `/help` keeping the
+chat open - 59 checks (60 since DICE1 added a roll's look, 75 since EMOTE1's form row, picker and emoji). Re-aimed,
+each to the same claim on the new shape: CHAT1's tabs, whitelist, line shape, link loop, rejoin, send and strip pins;
+the roster pins (ACC3c's key, CHAT-R1's rows, ROSTER-G's and CHAT-FIT's wiring - one session still answers the badge
+and the row); SOC3's tab count; SRV-N's and RED1's host pins; BUBBLE1's law (every tab, and the aside refused). The
+mutant records the move touched were re-aimed by content (`chatfit`, `name1`, `red1`, `soc1`); `name1.json`'s
+BUBBLE1-any-tab-speaks is retired with the law it held, which `chatchan.json`'s CC-aside-bubbles replaces. The relay
+is world99 (a new LAW row); the arc's later slices ride the same deploy and restate that row until the merge.
 
 ## DICE1 - the relay rolls
 
