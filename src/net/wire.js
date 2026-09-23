@@ -971,12 +971,12 @@ export const POSE_RIDE = Object.freeze({ Foot: 0, Horse: 1, Cart: 2 });
 export const POSE_RIDE_SPRITES = 5;
 // DISC7 (2026-09-23, Mac: "fix the known gaps"): `hs` - the rider is moving at LESS THAN HALF SPEED
 // (PlayerMotor.IsMovingLessThanHalfSpeed, the motor's own flag), the one fact TransportManager swaps the clop on
-// (HorseClop below it, HorseClop2 above, the volume halved - :234-270). A receiver cannot derive it: the eased pose's
+// (HorseClop below it, HorseClop2 above, the volume halved - :255-269). A receiver cannot derive it: the eased pose's
 // speed is in the room's units and catches up at up to twice the real one, and the rider's SPD stat is not on the wire.
 // Mounted and moving only, and OMITTED when 0, so a gallop's pose and every pose on foot keep the bytes they had.
 const rideOf = (rd, rv, hs) => {
   const r = uint(rd, POSE_RIDE.Cart) ?? 0;
-  return r ? { rd: r, rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(hs ? { hs: 1 } : {}) } : {};
+  return r ? { rd: r, rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(uint(hs, 1) ? { hs: 1 } : {}) } : {};   // AUDIT DISC7 B8: uint's law, as rd and rv
 };
 
 /** One equipped item as the look carries it - the six fields, clamped - or null. */

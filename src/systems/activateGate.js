@@ -86,7 +86,7 @@ const nowSeconds = () =>
  *  the one action, plus PlayerActivate's castPending (:71) and its
  *  clickDelay/clickDelayStartTime pair (:1050-1054). */
 export function createActivateGate() {
-  return { down: false, castPending: false, clickDelay: 0, clickDelayStart: 0 };
+  return { down: false, castPending: false, clickDelay: 0, clickDelayStart: 0, pressCast: false };
 }
 
 /** PlayerActivate.SetClickDelay (:1050-1054), Mathf.Clamp01 included.
@@ -108,8 +108,12 @@ export function setClickDelay(gate, delay = 0.3, now = nowSeconds()) {
  * `hudBlocked` is LargeHUD.ActiveMouseOverLargeHUD (cursor freed AND
  * over the bar); `paused` is InputManager.IsPaused - any open window.
  *
- * Returns { cast, activate }: whether this frame casts the readied
- * spell, and whether it runs the activation ray.
+ * Returns { cast, activate, pressCast }: whether this frame casts the
+ * readied spell, whether it runs the activation ray, and - AUDIT DISC7 A1 -
+ * whether the press this release ends was a CAST. DFU lets a readied TOUCH
+ * spell's release run the activation too (:250-258) and the ladder keeps
+ * that; the port's own arms that are not DFU's (the plaque's verbs on a
+ * player - a touch heal on a party mate) must not also fire on it.
  */
 export function activateFrame(gate, {
   down = false, hasReadySpell = false, touchSpell = false,
@@ -140,6 +144,7 @@ export function activateFrame(gate, {
   // arms above it (:236-248) fire without a button at all and are the
   // effect system's own business, not this gate's.
   const cast = started && hasReadySpell;
+  if (started) gate.pressCast = cast;
 
   // Fact 4. PlayerActivate.cs:230-236, in its own position: ABOVE the
   // spell block, so castPending is neither set nor consumed here.
@@ -154,5 +159,5 @@ export function activateFrame(gate, {
     gate.castPending = false;
     return { cast, activate: false };
   }
-  return { cast, activate: complete };
+  return { cast, activate: complete, pressCast: complete && !!gate.pressCast };
 }

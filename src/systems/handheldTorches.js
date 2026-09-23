@@ -207,10 +207,14 @@ export function createHandheldTorches({
   // DISC7: THE LOOP ANSWERS THE TORCH, NOT THE RIG'S CLOCK. The update below still starts it (a lit torch in the rig
   // that ticks), but a light that goes out - doused, stowed, dropped or burnt out from inside an open window, where the
   // host holds this rig's frame - stops it on the change itself (systems/lightSource.js), not on the next tick.
-  const offLight = addLightSourceListener((entity, now) => {
+  // AUDIT DISC7 C1: subscribed by the UPDATE, as HT6's hand law is re-armed there - the mod's switch off disposes the
+  // component (weaponRig: "the switch off is a teardown") and the switch back on runs the same component again, so a
+  // subscription made once at birth was gone for the rest of the page after one toggle.
+  const onLight = (entity, now) => {
     if (!w.loop || !ctx?.entity || entity !== ctx.entity || (now && isTorch(now))) return;
     w.loop.stop?.(); w.loop = null;
-  });
+  };
+  let offLight = null;
 
   const light = () => ctx?.entity?.lightSource ?? null;
   const items = () => ctx?.entity?.items ?? [];
@@ -559,6 +563,7 @@ export function createHandheldTorches({
    */
   function update(dt, c) {
     ctx = c;
+    offLight ??= addLightSourceListener(onLight);   // AUDIT DISC7 C1: (re)armed with the frame
     _liveHandLaw = applyHandLaw;   // HT6: this host has the player, so this component answers the equip change
     w.s = settings();
     w.time += dt;
@@ -758,7 +763,7 @@ export function createHandheldTorches({
    *  frame starts the loop again on its next update if the torch still burns. Only the sound: the torch is the
    *  entity's, not the rig's. */
   function silence() { w.loop?.stop?.(); w.loop = null; }
-  function dispose() { offLight(); w.loop?.stop?.(); w.loop = null; if (lightOffsetSet) { setPlayerTorchOffsetOverride(null); lightOffsetSet = null; } if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change
+  function dispose() { offLight?.(); offLight = null; w.loop?.stop?.(); w.loop = null; if (lightOffsetSet) { setPlayerTorchOffsetOverride(null); lightOffsetSet = null; } if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change
 
   return {
     update, lateUpdate, draw, dispose, silence, receivePickedUp,

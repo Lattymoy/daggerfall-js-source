@@ -129,6 +129,8 @@ let _nudge = 0;
 /** ACT-MENU: the lit frame's verb ids when it is an 'actions' frame (a player, my horse or wagon), else null - the
  *  highlight is the same fold, and this says which kind of list it is lighting and what each row does. */
 let _actionIds = null;
+/** AUDIT DISC7: the key the last fold listed verbs for - `plaqueLightFirst` lights row 0 of it (F on an unlit player). */
+let _lastKey = null;
 /** 'all' | 'open' | null - what the NEXT activate means, armed by the
  *  two keys below and spent by the take. */
 let _pending = null;
@@ -161,6 +163,8 @@ export function quickLootWheel(deltaY) {
   // ACT-MENU: a list of verbs is not quick loot's - it owns the wheel whatever the loot switch says (the switch is
   // about TAKING from the plaque; the verbs have no other door where the plaque stands)
   if (!_sel || !clicks || !(_actionIds || quickLootOn())) return false;
+  // AUDIT DISC7 A7: a single verb already lit is no choice - the wheel stays the camera's
+  if (_actionIds && _actionIds.length <= 1 && _sel.row >= 0) return false;
   _nudge += clicks;
   return true;
 }
@@ -172,6 +176,7 @@ export function foldQuickLoot(frame) {
   const verbs = frame?.kind === 'actions';
   _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;
   _actionIds = verbs && _sel ? frame.rows.map((r) => r.id) : null;
+  _lastKey = _sel ? frame.key : null;
   _nudge = 0;
   return _sel;
 }
@@ -183,9 +188,17 @@ export function plaqueActionFor(key) {
   return _actionIds[_sel.row] ?? null;
 }
 
+/** AUDIT DISC7 A2: F on a player whose list is unlit lights its first row - the keyboard's way onto the list, as the
+ *  wheel's first notch is. True when it lit something. */
+export function plaqueLightFirst(key) {
+  if (!_actionIds || !_sel || key == null || _lastKey !== key || _sel.key !== key || _sel.row >= 0 || !_actionIds.length) return false;
+  _sel = { key, row: 0, id: _actionIds[0] };
+  return true;
+}
+
 /** ACT-MENU: the lit verb and whose it is, for a host whose press has no pick of its own (a player: the plaque's
  *  race is the only one that names them). */
-export const plaqueActionSelection = () => (_actionIds && _sel ? { key: _sel.key, id: _actionIds[_sel.row] ?? null } : null);
+export const plaqueActionSelection = () => (_actionIds && _sel ? { key: _sel.key, id: _sel.row >= 0 ? (_actionIds[_sel.row] ?? null) : null } : null);
 
 /** WHICH row is lit in this frame, or -1. The draw asks; so does the
  *  repaint guard, because a moved highlight leaves the frame identical
@@ -230,7 +243,7 @@ export function quickLootStats(frame) {
 /** Freed with the host that raised it: a selection is ABOUT a key in a
  *  world a teardown is unmaking, and a nudge spent in a dungeon must
  *  not move the highlight in the street. */
-export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; _actionIds = null; }
+export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; _actionIds = null; _lastKey = null; }
 
 /**
  * ── THE TAKE, AND THE DOOR IT GOES THROUGH ──────────────────────

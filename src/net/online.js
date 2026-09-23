@@ -1494,6 +1494,9 @@ export class OnlineSession {
   }
 
   /** The peers to draw, as an array. */
+  /** AUDIT DISC7 B3: how long ago this peer's newest pose arrived (the session's own clock), 0 before any. */
+  poseAgeMs(p) { return p?.at != null ? this._now() - p.at : 0; }
+
   drawable() {
     const now = this._now();
     const out = [];

@@ -95,7 +95,7 @@ export function presetForExterior(weather, night) {
  *  subscribed per instance at AmbientEffectsPlayer.cs:92-93. The port
  *  has no static events, and the video player can reach none of the
  *  three hosts that own an instance privately (dungeonContext.js:4619,
- *  exterior.js:4107, world.js:11356), so the registry IS that event:
+ *  exterior.js:4107, world.js:11384), so the registry IS that event:
  *  every instance joins on construction and leaves on dispose(). A
  *  mute wired into one host only would leave the rain audible over a
  *  video raised from another. */
@@ -117,13 +117,15 @@ export function unmuteAmbientForVideo() {
 
 /** DISC6 (Discord, 2026-09-23: "the rain sound in Taverns is louder than outside"; Mac: "ensure cricket noises can be
  *  heard in interiors"): THE STREET'S AMBIENCE, INDOORS. The host used to FREEZE it at the door (the modal frame
- *  returned before the street's tick), so the loops held their last street gain, their clocks stopped, and a night or a
- *  shower that began while you were inside never reached you; and Better Ambience's muffled indoor rain (its
+ *  returned before the street's tick), so the loops held their last street gain, their clocks stopped, and a night
+ *  that fell while you were inside never reached you (the weather word stays the street's last indoors - the front
+ *  does not tick there, as DFU's WeatherManager does not); and Better Ambience's muffled indoor rain (its
  *  InteriorAmbientSoundSource) played ON TOP of the street's full-volume loop - two copies of one rain, louder
  *  than the street. The ambience ticks indoors now, and inside a BUILDING its loops are the street heard through
  *  walls: the rain at INDOOR_RAIN_GAIN - or not at all while Better Ambience's indoor source is the rain you hear -
- *  and the night's crickets at INDOOR_CRICKETS_GAIN. Underground the rain stays DFU's (the verbatim quirk below) and
- *  the crickets stop (CRICKET-DUNGEON). The one-shots (birds, thunder, the cemetery) stay outdoor things. A recorded
+ *  and the night's crickets at INDOOR_CRICKETS_GAIN - of the street's own gain, so a building is never louder than the
+ *  street (AUDIT DISC7 B1). Underground the rain loop carries on at the street's gain (the verbatim quirk below) and
+ *  the crickets stop (CRICKET-DUNGEON, the port's own departure). The one-shots (birds, thunder, the cemetery) stay outdoor things. A recorded
  *  departure from the quirk, for buildings (Port-Ledger A). */
 export const INDOOR_RAIN_GAIN = 0.35;
 export const INDOOR_CRICKETS_GAIN = 0.35;
@@ -242,7 +244,7 @@ export class AmbientEffects {
    *  DISC6 (2026-09-23): in a BUILDING the port now departs on purpose -
    *  the loops are the street heard through the walls (INDOOR_RAIN_GAIN,
    *  INDOOR_CRICKETS_GAIN, the header above `update`), Port-Ledger A.
-   *  Underground this quirk stands as written. */
+   *  Underground the carried loop stands as written (the hour's preset aside, and CRICKET-DUNGEON's stop). */
   setPreset(preset) {
     if (preset === this.preset) return;
     this.preset = preset;

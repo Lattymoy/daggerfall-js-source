@@ -3748,6 +3748,8 @@ ${badgeCss()}
    artifact still reads as an artifact. */
 .wplaque-row.sel { background: rgba(125,116,96,0.28); box-shadow: inset 2px 0 0 var(--brass);
   margin: 0 -14px; padding: 0 14px 0 12px; }
+/* AUDIT DISC7 A4: a refused verb (the F-card's disabled row): its reason in its name, italic in the card's own lighter bone (SOC C12's 4.9:1), never dimmed by opacity */
+.wplaque-row.off { font-style: italic; color: #c8c2b4; }
 /* ...and the line that says what the keys do, under the list. */
 .wplaque-keys { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(125,116,96,0.35);
   color: #7d7460; font-size: 11px; text-align: center; }

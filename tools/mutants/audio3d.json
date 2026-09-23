@@ -47,8 +47,8 @@
   {
     "name": "RIDE-SOUND-setLoop3d-no-swap",
     "file": "src/systems/audio.js",
-    "old": "if (ch) { ch.want = clip; ch.setVolume(volume);",
-    "new": "if (ch) { ch.setVolume(volume);",
+    "old": "if (ch) { ch.want = clip; ch.rearm?.(); ch.setVolume(volume);",
+    "new": "if (ch) { ch.rearm?.(); ch.setVolume(volume);",
     "tests": [
       "test/audio3d.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RIDE-SOUND-standing-never-stops",
     "file": "src/net/remotePlayers.js",
-    "old": "standingStill: !peer.shown.mv",
-    "new": "standingStill: false",
+    "old": "    const moving = !!peer.shown.mv && !stale;",
+    "new": "    const moving = true;",
     "tests": [
       "test/audio3d.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RIDE-SOUND-pref-ignored",
     "file": "src/net/remotePlayers.js",
-    "old": " || getPref('peerFootsteps') === false) { this._stopRidingSound(peer.id); return; }",
-    "new": ") { this._stopRidingSound(peer.id); return; }",
+    "old": "    if (!audio?.setLoop3d || !rd || getPref('peerFootsteps') === false) {",
+    "new": "    if (!audio?.setLoop3d || !rd) {",
     "tests": [
       "test/audio3d.test.js"
     ]

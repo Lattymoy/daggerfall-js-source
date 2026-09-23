@@ -1,4 +1,4 @@
-# FIELD BUGS 2026-09-23 — DISC6, six from Discord and one of Mac's
+# FIELD BUGS 2026-09-23 — DISC6, five from Discord, the known limit and one of Mac's
 
 Mac, with the Discord screenshots: *"Can we tackle the known limit along
 with the following bug reports. Additionally ensure cricket noises can be
@@ -53,22 +53,26 @@ and no log step. The scratch harness showed it: live killCount 0, orphan
 
 **Cause.**
 - The hosts' modal branch returned before the street's ambience tick. The
-  loops held their last street gain and their clocks stopped. A shower or
-  a night that began while you were inside never reached you.
+  loops held their last street gain and their clocks stopped. A night that
+  fell while you were inside never reached you.
 - Better Ambience's muffled indoor rain (its InteriorAmbientSoundSource)
   played on top of the street's full-volume loop. The two copies of one
   rain made it louder than the street.
 
 **Fix.**
 - Both hosts tick `ambience.update` in the modal frame, with `{inside,
-  underground, indoorRainSource}`. The weather word and the hour go with
-  it.
+  underground, indoorRainSource}`. The hour goes with it (the night's
+  preset). The weather word and the rain's gain stay the street's last:
+  the weather front does not tick indoors, as DFU's WeatherManager does
+  not (corrected by AUDIT DISC7 B1, below).
 - Inside a BUILDING, the street's loops are heard through the walls:
-  - The rain plays at `INDOOR_RAIN_GAIN` (0.35), or at 0 while Better
-    Ambience's indoor rain (`indoorRainPlaying()`) is the rain you hear.
+  - The rain plays at `INDOOR_RAIN_GAIN` (0.35) of the street's own
+    gain, or at 0 while Better Ambience's indoor rain
+    (`indoorRainPlaying()`) is the rain you hear.
   - The night's cricket chorus plays at `INDOOR_CRICKETS_GAIN` (0.35).
   - The one-shots (birds, thunder, the cemetery) stay outdoor things.
-- Underground, the rain stays DFU's verbatim loop, and the crickets stop.
+- Underground, the rain loop carries on at the street's gain (DFU's
+  verbatim carry-over), and the crickets stop.
   CRICKET-DUNGEON's stop now actually runs; before this it sat behind the
   modal return.
 
@@ -170,8 +174,10 @@ not reproduced for peers.
 Mac: *"1. fix the known gaps 2. for player interaction and horse
 interaction, instead of using a keybind toggle, let's reuse the loot
 scroll menu to select options"*. Pins: `test/disc7.test.js` (11). Mutants:
-`tools/mutants/disc7.json` (38, all dead), plus fourteen older records
-re-aimed by content and two retired with the prompt they covered.
+`tools/mutants/disc7.json` (38, all dead), plus eighteen older records
+re-aimed by content (quickloot 6, worldhover 5, peerplaque 4, el8 2,
+soc1 1) and two retired with the prompt they covered. DISC6 re-aimed
+four of its own (worldhover 2, cricketdungeon 1, cricketquiet 1).
 
 ## ACT-MENU: the verbs, on the loot plaque
 
@@ -188,6 +194,8 @@ touch).**
   It is the same frame (`kind: 'actions'`), the same fold, the same wheel
   and the same highlight (`systems/quickLoot.js`).
 - The activate key presses the lit row. On a player, F does too.
+- (Revised by AUDIT DISC7 A2/A4, below: a player's list starts unlit, and
+  every act the card offers is listed, a refused one with its reason.)
 - A player's rows are the F-menu's enabled acts, in its order and words
   (`peerActionRows`). They press through the card's own door (`peerAct`),
   re-read at the press. The relation ("In your party", "Friend") stands
@@ -244,3 +252,159 @@ through the rect the depth was written under now (`holdPrevRect`,
 `prevDepthUV`), as every other screen pass maps through its rect.
 
 Not verified in a browser or online.
+
+---
+
+# AUDIT DISC7 - four lenses before the merge
+
+Mac: *"Do an audit before we merge"*. Four read-only lenses went over
+everything on the branch since main (DISC6 + DISC7):
+- A: the verbs on the plaque
+- B: audio, the riders and the wire
+- C: the torch, the lights and the quest
+- D: the evidence, the records and the hygiene
+
+Every verified finding is paid below. The pins are `test/auditdisc7.test.js`
+(10, by execution) and additions to `test/disc6.test.js`,
+`test/disc7.test.js` and `test/peerplaque.test.js`. The mutants are
+`tools/mutants/auditdisc7.json` (35), and the older records were re-aimed
+by content. Nine older source pins followed the new shapes without
+changing their law: the two exit ladders' anchors (`tryExit(`,
+`tryExitDungeon(` - they now take the press's `pressCast`) in AUDIT 28
+W2c, AUDIT 65 HP-2/3, DQ1, JAN1, QG1 and TS1; SC1's cadence (now
+`nearestRank`); AUDIT-EL F18's bail (now clears `prevValid`); MWBODY1's
+sync call (now hands `poseAgeMs`). The 3D handedness claim was proven with the real renderer
+matrices and the WebAudio azimuth law at every yaw and pitch, and it
+holds.
+
+## The verbs on the plaque (A)
+
+- **A1, major.** A touch spell's release still runs the activation (DFU's
+  own exception), and the plaque's player arm fired on it: every touch
+  heal on a party mate also sent the lit act. The activate gate now says
+  when a release ended a press that cast (`pressCast`), and the player arm
+  never fires on one.
+- **A2, major.** The list started lit at row 0, so a plain click on
+  another player sent a friend request or a trade, and a player in a
+  doorway took every click meant for the door. A player's list starts
+  UNLIT now, and a click passes to the ladder until the wheel or F lights
+  a row. F on an unlit list lights its first row. My horse's and wagon's
+  lists still open lit on Ride, the mod's default.
+- **A3.** The lit row kept its index when the list changed under it, so a
+  second click pressed the verb that slid into the slot. The highlight
+  follows its verb by id.
+- **A4.** The card's refusal reasons were unreachable on the desktop, and
+  a refused press was silent. The plaque lists every act the card offers.
+  A refused one is shown in italics with its reason ("Add friend (request
+  sent)"), and pressing it says the reason on the chat tab.
+  `ui/socialMenu.js socialPlaqueRows` / `plaqueRowFor` build both
+  surfaces off the card's own rows.
+- **A6.** The player pick had no wall test: a player behind a wall was
+  named, lit and pressed. `peerInSight` runs the live mode's collider
+  along the ray.
+- **A7.** A single lit verb no longer eats the wheel, which goes back to
+  the camera.
+- **A8.** Every door that takes the plaque down now folds the highlight
+  away: the hide, the contained fault and the skin gate.
+- **A9.** The press re-picks the player on its own ray. A verb lit on the
+  last frame is for the player under the crosshair now.
+- **A10.** A parked wagon over a team left hitched reads "Drive the
+  wagon", as the horse's row does for the same hitch.
+- **A11.** Indoors and underground, the player arm moved inside
+  `tryExit` / `tryExitDungeon`, after QG1's non-consuming quest click and
+  the tap's lock, as the street orders them.
+- **Recorded, not changed: A5.** Indoors in third person, the plaque's
+  race measures the ground from the camera and the press from the eye
+  (the loot plaque shares this; it predates DISC7). With A2 and A9 a
+  player act needs a lit row and a fresh pick on the press's own ray, so
+  it cannot take a click it was not aimed at.
+
+## Audio, the riders and the wire (B)
+
+- **B1, major.** DISC6's modal branch forced the rain's gain to 1 and the
+  word to the raw weather. Under the enhanced front the street's gain can
+  be 0.15, so a tavern at 0.35 was louder than the street, which is the
+  Discord report again. A dungeon was up to 6.7 times louder. The word
+  and the gain now stay the street's last, and only the hour is re-read.
+  A building is at most the street, and underground equals it.
+- **B2.** `hs` was sent as 1 during the move hold after every stop
+  (standing reads "slow"). It is latched off frames that moved.
+- **B3.** A rider whose poses stopped (a background tab, a crash) clopped
+  in place until the peer timed out. A pose older than
+  `PEER_RIDE_STALE_MS` stands the horse.
+- **B4.** The riding loop and the neigh are made only within earshot.
+  A rider first seen already mounted (a room join, a cell crossing) keeps
+  the ordinary neigh cadence instead of UpdateMode's mount neigh.
+- **B6.** The riders' loops move with the floating origin in the frame it
+  moves (`rebaseSounds`), with no one-frame dropout per crossing.
+- **B7.** A named loop whose clip could not play (switched off, not
+  loaded) is re-armed by its owner's next set. A clip that cannot play
+  builds no panner.
+- **B8.** The wire takes `hs` by `uint` (as `rd` and `rv`), and the
+  sender omits it rather than sending 0.
+- **Recorded, not changed: B5.** HRTF costs more per source than equal
+  power. Torches are culled to 5 m and peers to 30 m, but windmill hums
+  and dropped torches are not distance-culled. No overload was found.
+  The one mitigation on offer (warming the HRTF database) rests on an
+  unverified browser claim, so it is not shipped.
+
+## The torch, the lights and the quest (C)
+
+- **C1, major.** Turning Handheld Torches off disposes its component,
+  and turning it on runs the same component again. The light listener
+  was made once at birth, so after one toggle the DISC7 fix was gone for
+  the page. The component now subscribes on its update, as HT6 re-arms
+  its hand law.
+- **C2.** A shared-quest resync rebuilt the resources under standing
+  quest people, items and foes. Their behaviours kept the old symbol
+  object, so the next Place mount's `isAlreadyInjected` stood them again.
+  The machine now keeps weak references to its behaviours, and the resync
+  relinks every one on its quest at once, symbol included. Save/load is
+  untouched (the mount's documented DFU quirk).
+- **C3.** The resync's shorter queues under a behaviour's cursors
+  re-added a foe's whole item queue and re-cast spells. This world's
+  longer queue is kept.
+- **C6.** With the keep margin, the every-frame shadow redraw could go to
+  a held caster that was farther away. It goes to the two truly nearest
+  (`nearestRank`).
+- **C7.** A frame that bailed on a zero viewport left the next frame
+  pairing two-frame-old matrices with last frame's depth. The bail now
+  clears the previous frame.
+- **Recorded, not changed.**
+  - C4: kills split across two worlds are not summed (max, not sum).
+    That only matters if a Foe's spawns are shared, and they are
+    per-world.
+  - C5: the per-frame nearest-N light cut (48 enhanced, 16 classic) is
+    pre-existing and stable on ties. It is not the shop flashing.
+
+## Evidence, records and hygiene (D)
+
+- **D2.** The claim "a shower that begins while you are inside reaches
+  you" was false. It is corrected in the code comments, the ambience
+  header, this page and Port-Ledger A.
+- **D3.** The press's re-read is a pure function now (`plaqueRowFor`),
+  run by the tests and covered by mutants.
+- **D4, D5, D13.** The re-aim counts, the Port-Status ordinals and the
+  counts in titles are corrected.
+- **D6.** Stale docs describing the prompt and the card are updated: the
+  socialPick header, world.js's SOC5 block, Social-Party-Arc,
+  Online-Arc, the PEER-PLAQUE1 Testing row and test title.
+- **D7.** The resync ORed back `restrained`, which the quest's own
+  actions set and clear. A partner's clear could be undone. Only this
+  world's events are kept now: an injury, and a pending kill (no save
+  state carries it).
+- **D8, D9, D11, D12, D15.**
+  - D8: the peer file's comments are back on their imports and class.
+  - D9: a malformed Settings-Screen-Spec cite is fixed.
+  - D11: the tests dispose their torch components.
+  - D12: the TransportManager cite is :255-269.
+  - D15: the HCC activators name their parameter `mode` throughout.
+- **D10.** el8's prepare-prev-is-current record is left as re-aimed: it
+  still kills by the view-projection law.
+- **D14.** horseCartLaw's claim is scoped: the horse's rows are the mod's
+  decision, and the wagon's two rows are its two modes.
+
+RELAY_VERSION stays world100. Its law row was re-hashed, because world100
+has never been deployed and `hs`'s door changed under it. Not verified in
+a browser or online.
+

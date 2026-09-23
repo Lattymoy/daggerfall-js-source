@@ -117,10 +117,12 @@ test('DISC6 ambience: the night\'s crickets are heard in a building - the chorus
   assert.ok(played.length > 0, 'and in the street, as ever');
 });
 
-test('DISC6 ambience by source: both hosts tick the street\'s ambience in the modal frame - the word, the hour, inside, underground, Better Ambience\'s indoor rain', () => {
+test('DISC6 ambience by source: both hosts tick the street\'s ambience in the modal frame - the hour, inside, underground, Better Ambience\'s indoor rain; AUDIT DISC7 B1: the word and the rain\'s gain stay the street\'s last (mutant: the gain forced to 1 indoors)', () => {
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = rd(f);
-    assert.match(s, /windAudio\.stop\(\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*ambientWord = weather;\n\s*ambience\.setPreset\(presetForExterior\(ambientWord, isNight\(minuteNow\(\)\)\)\);\n\s*ambience\.rainGain = 1;\n\s*ambience\.update\(dt, \{ inside: true, underground: modes\.mode === 'dungeon', indoorRainSource: betterAmbience\.indoorRainPlaying\(\) \}\);/, f);
+    assert.match(s, /windAudio\.stop\(\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*ambience\.setPreset\(presetForExterior\(ambientWord, isNight\(minuteNow\(\)\)\)\);\n\s*ambience\.update\(dt, \{ inside: true, underground: modes\.mode === 'dungeon', indoorRainSource: betterAmbience\.indoorRainPlaying\(\) \}\);/, f);
+    const modal = s.slice(s.indexOf('windAudio.stop();'), s.indexOf("indoorRainSource: betterAmbience.indoorRainPlaying() });"));
+    assert.doesNotMatch(modal, /ambience\.rainGain = |ambientWord = /, `${f}: the street's word and gain are not replaced indoors`);
   }
 });
 
@@ -154,6 +156,7 @@ test('DISC6 torch: two rigs, one lit torch (the street\'s and the building\'s) -
   building.silence();
   street.update(0.016, ctx);
   assert.equal(burning(), 1, 'the rig that retakes the frame sounds again - its silenced handle was let go');
+  street.dispose(); building.dispose();   // AUDIT DISC7 D11: nothing left listening on the light-source door
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(f), /if \(_mode\(\) !== _torchesMode\) \{ droppedTorches\.destroyAll\(\); weaponRig\.silenceTorch\(\);/, f);
   assert.match(rd('src/scenes/worldModes.js'), /const setMode = \(next\) => \{ dropDoorCache\(\); if \(next !== mode\) interiorWeapon\.silenceTorch\(\);/);
 });

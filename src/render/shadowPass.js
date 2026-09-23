@@ -398,6 +398,17 @@ function heldAt(held, heldN, lights, i) {
   for (let k = 0; k < heldN; k++) if (held[k * 4] === lights[i * 4] && held[k * 4 + 1] === lights[i * 4 + 1] && held[k * 4 + 2] === lights[i * 4 + 2]) return true;
   return false;
 }
+/** AUDIT DISC7 C6: where the caster at `rank` stands among the frame's casters by TRUE distance to the eye. The pick's
+ *  order carries DISC6's keep margin (a held caster is measured at CASTER_KEEP_RATIO), which decides who HOLDS a map;
+ *  which two maps are redrawn every frame is about who is nearest, and a held caster a little farther must not take
+ *  that redraw from a nearer one. Ties go to the earlier rank. At most SHADOW_POINT_CASTERS squared compares. */
+export function nearestRank(casters, lights, eye, rank) {
+  const d2 = (i) => { const dx = lights[i * 4] - eye[0], dy = lights[i * 4 + 1] - eye[1], dz = lights[i * 4 + 2] - eye[2]; return dx * dx + dy * dy + dz * dz; };
+  const mine = d2(casters[rank]);
+  let n = 0;
+  for (let r = 0; r < casters.length; r++) if (r !== rank) { const d = d2(casters[r]); if (d < mine || (d === mine && r < rank)) n++; }
+  return n;
+}
 /** DISC6: remember this frame's casters for the next pick - their positions into `held`, the count returned. */
 export function holdCasters(held, lights, casters) {
   for (let r = 0; r < casters.length; r++) { const i = casters[r]; held[r * 4] = lights[i * 4]; held[r * 4 + 1] = lights[i * 4 + 1]; held[r * 4 + 2] = lights[i * 4 + 2]; }
@@ -969,7 +980,7 @@ export class ShadowPass {
       // EL8: the slot's layers are drawn again when its light changed (position or range), every frame for the nearest lights, every third otherwise
       const o = k * 4;
       const changed = !(sl[o] === pos[0] && sl[o + 1] === pos[1] && sl[o + 2] === pos[2] && sl[o + 3] === far);
-      const due = rank < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;   // SC1: by the light's RANK - the nearest two, whatever slot they hold
+      const due = nearestRank(casters, L, f.eye, rank) < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;   // SC1: by the light's RANK - the nearest two, whatever slot they hold; AUDIT DISC7 C6: its TRUE rank, not the keep margin's
       if (!this.cacheOn) {
         // the old path whole: every caster in range, static or not, into the live layers at the cadence
         if (changed || due) {

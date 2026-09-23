@@ -236,7 +236,7 @@
   {
     "name": "cadence-casters-every-frame",
     "file": "src/render/shadowPass.js",
-    "old": "      const due = rank < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;   // SC1: by the light's RANK - the nearest two, whatever slot they hold",
+    "old": "      const due = nearestRank(casters, L, f.eye, rank) < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;",
     "new": "      const due = true;",
     "tests": [
       "test/el8_contact.test.js"

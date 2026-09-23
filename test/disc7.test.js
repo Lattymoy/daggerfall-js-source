@@ -4,7 +4,7 @@
 //   - ACT-MENU: the World Tooltips plaque lists VERBS as it lists a pile's items - a player's (add friend, invite,
 //     trade) and my horse's and wagon's (ride, follow / wait, name, hitch, open) - the wheel lights one and the
 //     activate key presses it (systems/worldHover.js 'actions', systems/quickLoot.js, horseCartLaw.js hccActionRows,
-//     player/socialPick.js peerActionRows, the hosts' presses).
+//     ui/socialMenu.js socialPlaqueRows, the hosts' presses).
 //   - The peers' clop: the pose carries the rider's half-speed flag (`hs`, world100) and the riding loop swaps on it.
 //   - The torch loop follows the light in hand (systems/lightSource.js), not the rig's clock under an open window.
 //   - The contact shadow samples the previous frame's depth through its world rect (render/airPass.js holdPrevRect).
@@ -19,8 +19,8 @@ import { worldHoverFrame } from '../src/ui/worldPlaque.js';
 import { getPref, setPref } from '../src/systems/uiPrefs.js';
 import { hccActionRows, HCC_ACTION_TEXT, ACTIVATE_MODE, WAGON_MODE, HORSE_MODE, TRANSPORT, HCC_TEXT } from '../src/systems/horseCartLaw.js';
 import { makeWorld } from './hccWorld.mjs';
-import { peerActionRows, peerActOf, peerRelationText, PEER_ACT_KINDS } from '../src/player/socialPick.js';
-import { socialMenuRows } from '../src/ui/socialMenu.js';
+import { peerRelationText } from '../src/player/socialPick.js';
+import { socialMenuRows, socialPlaqueRows, plaqueRowFor } from '../src/ui/socialMenu.js';
 import { WHY_IN_PARTY } from '../src/net/social.js';
 import { setLightSource, addLightSourceListener, lightSourceListenerCount } from '../src/systems/lightSource.js';
 import { createHandheldTorches, readTorchSettings, HANDHELD_TORCHES_VENDOR, CLIPS } from '../src/systems/handheldTorches.js';
@@ -84,35 +84,44 @@ test('ACT-MENU: the wheel lights a verb whatever the loot switch says, the press
 test('ACT-MENU: the plaque draws the verbs as the loot list\'s rows, the lit one marked; the hosts press them - the horse and wagon with the lit mode, a player through the F-menu\'s own door, F where the plaque stands', () => {
   const plaque = rd('src/ui/worldPlaque.js');
   assert.match(plaque, /if \(f\.kind === 'actions'\) \{[\s\S]*?row\.className = 'wplaque-row wplaque-act';\s*\n\s*if \(i === sel\) row\.classList\.add\('sel'\);/);
-  assert.match(plaque, /if \(!worldPlaqueOn\(\)\) \{ foldQuickLoot\(null\); hideWorldPlaque\(\); return null; \}/);
+  assert.match(plaque, /export function hideWorldPlaque\(\) \{[\s\S]{0,700}?_watchdog = null;\n\s*foldQuickLoot\(null\);/, 'AUDIT DISC7 A8: every hide folds nothing - the skin gate, the hosts\' branches');
+  assert.match(plaque, /foldQuickLoot\(null\);   \/\/ AUDIT DISC7 A8: a contained fault lights nothing[^\n]*\n\s*try \{ showWorldPlaque\(null\); \}/, 'and the contained fault');
   assert.match(plaque, /if \(cursorActive \|\| !eye \|\| !dir \|\| !collider\) \{ foldQuickLoot\(null\); showWorldPlaque\(null\); return null; \}/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(rd(host), /hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(TOO_FAR_AWAY_TEXT\), plaqueActionFor\(_hccPick\.key\)\);/, host);
   }
   const w = rd('src/scenes/world.js');
-  assert.match(w, /else if \(_tapLockOnly\) \{[^\n]*\}\s*\n\s*else if \(plaquePeerAct\(\)\) \{/, 'the street: a player the plaque lit takes the press ahead of the ladder');
-  assert.match(rd('src/scenes/worldModes.js'), /if \(\(_act\.activate \|\| useEdge\) && !overlayHeld && !host\.plaquePeerAct\?\.\(\)\) \(mode === 'dungeon' \? tryExitDungeon : tryExit\)\(\);/, 'the building and the dungeon');
-  assert.match(w, /plaquePeerAct: \(\) => plaquePeerAct\(\),/);
-  assert.match(w, /if \(worldPlaqueOn\(\)\) \{ if \(plaquePeerAct\(\)\) return true; \}/, 'F presses the lit verb where the plaque stands');
-  assert.match(w, /if \(worldPlaqueOn\(\)\) return true;   \/\/ ACT-MENU/, 'and opens no card over the world there');
-  assert.match(w, /const act = peerActionRows\(acts\)\.some\(\(r\) => r\.id === sel\.id\) \? peerActOf\(sel\.id, id\) : null;\s*\n\s*if \(act\) peerAct\?\.\(act\);/, 'the verb re-read from the bag at the press');
+  assert.match(w, /else if \(_tapLockOnly\) \{[^\n]*\}\s*\n\s*else if \(!_act\.pressCast && plaquePeerAct\(cam\.pos, useFwd\)\) \{/, 'the street: a player the plaque lit takes the press ahead of the ladder, on the press\'s ray, never on a cast');
+  const m = rd('src/scenes/worldModes.js');
+  assert.match(m, /\(mode === 'dungeon' \? tryExitDungeon : tryExit\)\(\{ pressCast: _act\.pressCast \}\);/, 'the building and the dungeon hear whether the press cast');
+  assert.equal((m.match(/if \(!pressCast && host\.plaquePeerAct\?\.\(eye, dir\)\) return true;/g) ?? []).length, 2, 'both ladders, after QG1 and the lock (AUDIT DISC7 A11)');
+  for (const fn of ['function tryExit(', 'function tryExitDungeon(']) {
+    const body = m.slice(m.indexOf(fn), m.indexOf(fn) + 6000);
+    assert.ok(body.indexOf('qf.questBehaviour.doClick()') < body.indexOf('host.plaquePeerAct?.(eye, dir)'), `${fn}: QG1's non-consuming click first`);
+  }
+  assert.match(w, /plaquePeerAct: \(eye, dir\) => plaquePeerAct\(eye \?\? cam\.pos, dir \?\? socialFwd\(\)\),/);
+  assert.match(w, /if \(peerInSight\(eye, dir\)\?\.peer\?\.id !== id\) return false;/, 'A9: re-picked on the press\'s own ray');
+  assert.match(w, /const row = plaqueRowFor\(sel\.id, id, \{ \.\.\.social\.actionsFor\(id\), \.\.\.tradeActionsFor\(id\) \}\);\s*\n\s*if \(!row\) return false;\s*\n\s*if \(row\.act\) peerAct\?\.\(row\.act\);\s*\n\s*else peerNote\?\.\(row\.refusal\);/, 'A4: re-read at the press, a refusal said');
   assert.match(w, /onAct: \(act\) => peerAct\(act\),/, 'the card and the plaque leave by one door');
-  assert.match(w, /subs: \[cast, peerRelationText\(acts\)\]\.filter\(Boolean\), actions: peerActionRows\(acts\) \}/);
+  assert.match(w, /if \(worldPlaqueOn\(\)\) \{\s*\n\s*if \(plaquePeerAct\(\)\) return true;/, 'F presses the lit verb where the plaque stands');
+  assert.match(w, /if \(lit && lit\.id == null && peerIdOfKey\(lit\.key\) && plaqueLightFirst\(lit\.key\)\) return true;/, 'F lights the first row of an unlit list');
+  assert.match(w, /const wall = col\?\.raycast \? col\.raycast\(eye, dir, hit\.distance\) : Infinity;\s*\n\s*return wall < hit\.distance - 0\.05 \? null : hit;/, 'A6: a wall in front of the player blocks the pick');
+  assert.match(w, /subs: \[cast, peerRelationText\(acts\)\]\.filter\(Boolean\), actions: acts \? socialPlaqueRows\(id, acts\) : \[\], actionsUnlit: true \}/);
 });
 
-test('ACT-MENU: a player\'s verbs are the F-menu\'s enabled acts, in its order and words, each pressing the act the card\'s row would; the relation stands under the name (mutants: a refused act listed; the seat after the friendship)', () => {
+test('ACT-MENU: a player\'s rows are the F-card\'s own - every act it offers, a refused one with its reason; the press re-reads the row: an offered act sends the card\'s act, a refused one says why, a gone one nothing (mutants: the refusal sent; the press not re-read)', () => {
   const all = { canFriend: true, canInvite: true, canTrade: true, tradeLabel: null };
-  assert.deepEqual(peerActionRows(all), [{ id: 'friend', label: 'Add friend' }, { id: 'invite', label: 'Invite to party' }, { id: 'trade', label: 'Trade' }]);
-  assert.deepEqual(peerActionRows({ ...all, canFriend: false }).map((r) => r.id), ['invite', 'trade'], 'a refused act is no row');
-  assert.equal(peerActionRows({ canTrade: true, tradeLabel: 'Accept trade' })[0].label, 'Accept trade');
-  assert.deepEqual(peerActionRows(null), []);
+  assert.deepEqual(socialPlaqueRows('p1', all), [{ id: 'friend', label: 'Add friend' }, { id: 'invite', label: 'Invite to party' }, { id: 'trade', label: 'Trade' }]);
+  assert.deepEqual(socialPlaqueRows('p1', { ...all, canInvite: false, whyNotInvite: 'the party is full' })[1], { id: 'invite', label: 'Invite to party', disabled: true, why: 'the party is full' });
+  assert.deepEqual(socialPlaqueRows(null, all), []); assert.deepEqual(socialPlaqueRows('p1', null), []);
   const card = socialMenuRows({ peerId: 'p1', ...all }).filter((r) => r.act);
-  for (const r of card) assert.deepEqual(peerActOf(r.key, 'p1'), r.act, `${r.key}: the plaque's press is the card's act`);
+  for (const r of card) assert.deepEqual(plaqueRowFor(r.key, 'p1', all), { act: r.act, refusal: null }, `${r.key}: the plaque's press is the card's act`);
+  assert.deepEqual(plaqueRowFor('friend', 'p1', { ...all, canFriend: false, whyNotFriend: 'request sent' }), { act: null, refusal: 'Add friend: request sent.' }, 'a refused row says why, sends nothing');
+  assert.equal(plaqueRowFor('trade', 'p1', { canFriend: true }), null, 'a row the card no longer has');
+  assert.equal(plaqueRowFor('cancel', 'p1', all), null, 'Cancel is no act');
   assert.deepEqual(peerRelationText({ whyNotInvite: WHY_IN_PARTY, relation: 'friend' }), 'In your party');
   assert.equal(peerRelationText({ relation: 'friend' }), 'Friend');
   assert.equal(peerRelationText({ relation: 'none' }), null);
-  assert.equal(peerActOf('cancel', 'p1'), null); assert.equal(peerActOf('friend', ''), null);
-  assert.deepEqual(Object.keys(PEER_ACT_KINDS), ['friend', 'invite', 'trade']);
 });
 
 test('ACT-MENU: my horse\'s and wagon\'s verbs are the mod\'s decision - the ride or the drive, the command the horse can take now (follow / wait, with or without the wagon), the name; the wagon\'s hitch or drive and its pack (mutants: a command the horse cannot take listed; the drive called a ride)', () => {
@@ -162,7 +171,7 @@ test('ACT-MENU by source: the pool hands the runtime\'s rows to the plaque with 
   assert.match(pool, /if \(key === KEY_HORSE\) return runtime\.handleStationaryHorseActivation\(distance, mode\);/);
   const rt = rd('src/systems/horseCart.js');
   assert.equal((rt.match(/if \(\(mode \?\? deps\.activateMode\(\)\) === ACTIVATE_MODE\.Steal\)/g) ?? []).length, 2, 'both wagons');
-  assert.match(rt, /const mode = modeOverride \?\? deps\.activateMode\(\);/);
+  assert.match(rt, /const activate = mode \?\? deps\.activateMode\(\);/);
 });
 
 // ═══ the peers' clop ════════════════════════════════════════════════════
@@ -175,7 +184,9 @@ test('DISC7 wire: the rider\'s half-speed bit rides the pose mounted and moving 
   assert.equal(lerpPose(validPose(base), validPose({ ...base, hs: 1 }), 0.5).hs, 1);
   assert.equal('hs' in lerpPose(validPose(base), validPose(base), 0.5), false);
   assert.equal(RELAY_VERSION, 'world100');
-  assert.match(rd('src/scenes/world.js'), /hs: riding && moved && player\.movingLessThanHalfSpeed \? 1 : 0,/);
+  assert.match(rd('src/scenes/world.js'), /hs: riding && moved && _hsLatch \? 1 : undefined,/);
+  assert.match(rd('src/scenes/world.js'), /if \(movedThisFrame\) \{ _onlineMovingUntil = now \+ ONLINE_MOVE_HOLD_MS; _hsLatch = !!player\.movingLessThanHalfSpeed; \}/, 'AUDIT DISC7 B2: latched off a frame that moved');
+  assert.equal('hs' in validPose({ ...base, hs: '0' }), false, 'AUDIT DISC7 B8: uint\'s law - a string zero is no bit'); assert.equal(validPose({ ...base, hs: 7 }).hs, 1);
 });
 
 test('DISC7 riding sound: a peer riding below half speed swaps to the slow clop at half the volume, and back to the fast one on the edge - the rider\'s own TransportManager law (mutant: the bit ignored)', () => {
@@ -216,7 +227,7 @@ test('DISC7 torch: the light in hand has one door and it says when it changes - 
   const before = lightSourceListenerCount();
   const ht = createHandheldTorches({ settings: () => readTorchSettings(() => defaults), audio, say() {}, rolls: () => 0.5,
     torches: () => ({ spawnLightSource() {}, spawnLightSourceProjectile() {}, setOnPickedUp() {} }), handedness: () => false, loadSprite: async () => null });
-  assert.equal(lightSourceListenerCount(), before + 1);
+  assert.equal(lightSourceListenerCount(), before, 'AUDIT DISC7 C1: subscribed by the update, not at birth');
   const ctx = { renderer: null, canvas: { width: 640, height: 400 }, entity, machine: { state: 'Idle' }, sheathed: false, usingRightHand: true,
     castPlaying: false, spellArmed: false, thirdPerson: false, climbing: false, swimming: false, transformedLycanthrope: false,
     motion: { grounded: true, standing: true, speedRatio: 1, baseSpeed: 1, localVel: [0, 0, 0] }, look: [0, 0], swingHeld: false, cursorActive: false,
@@ -226,6 +237,7 @@ test('DISC7 torch: the light in hand has one door and it says when it changes - 
   entity.items = [torch];
   setLightSource(entity, torch);
   ht.update(0.016, ctx);
+  assert.equal(lightSourceListenerCount(), before + 1);
   const burning = () => loops.filter((l) => !l.stopped && l.clip === CLIPS.burning).length;
   assert.equal(burning(), 1, 'lit: the loop');
   useItem(torch, entity.items, { entity });   // the inventory's Use: douse - and the rig does NOT tick (the window holds its frame)

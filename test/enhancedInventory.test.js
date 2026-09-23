@@ -1167,7 +1167,7 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // under a painted plaque stranded it. The `[\s\S]` window admits the
   // comment that says so and nothing else: a statement between the
   // brace and the gate would have to contain `{` or `;`.
-  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  if \(!worldPlaqueOn\(\)\) \{ foldQuickLoot\(null\); hideWorldPlaque\(\); return null; \}/,
+  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  if \(!worldPlaqueOn\(\)\) \{ hideWorldPlaque\(\); return null; \}/,
     'the seam asks the skin as its first act - before the ray, before the list - and takes the plaque down when the answer is no');
   const show = hov.slice(hov.indexOf('export function showWorldPlaque'));
   assert.ok(show.indexOf('if (!worldPlaqueOn()) return;') < show.indexOf('const n = ensure();'),

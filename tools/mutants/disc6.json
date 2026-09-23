@@ -2,8 +2,8 @@
   {
     "name": "DISC6-quest-target-never-relinked",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    if (this.targetQuest != null && (this.machine",
-    "new": "    if (false && this.targetQuest != null && (this.machine",
+    "old": "  relinkToLiveQuest() {\n",
+    "new": "  relinkToLiveQuest() {\n    return false;\n",
     "tests": [
       "test/disc6.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DISC6-quest-relink-on-quest-only",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": " || this.targetQuest.getResource(this.targetSymbol) !== this.targetResource)) {",
-    "new": ")) {",
+    "old": "    if (this.machine.getQuest(this.questUID) === this.targetQuest && this.targetQuest.getResource(this.targetSymbol) === this.targetResource) return false;",
+    "new": "    if (this.machine.getQuest(this.questUID) === this.targetQuest) return false;",
     "tests": [
       "test/disc6.test.js"
     ]

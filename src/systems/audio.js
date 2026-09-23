@@ -401,6 +401,7 @@ export class AudioEngine {
       // assigning `.clip` mid-clop takes effect when the CURRENT one
       // ends. Restarting on the swap chops the hoofbeat in half.
       ch.want = clip;
+      ch.rearm?.();   // AUDIT DISC7 B7
       ch.setVolume(volume);
       ch.setPitch(pitch);
       return ch;
@@ -438,6 +439,9 @@ export class AudioEngine {
       src.start();
       ch.playing = src;
     };
+    // AUDIT DISC7 B7: a channel whose swapped-to clip could not play (switched off, not loaded) stood dead - `arm` left
+    // `playing` null and nothing called it again. The owner's next set re-arms it (setLoop / setLoop3d).
+    ch.rearm = () => { if (!ch.stopped && !ch.playing) arm(); };
     arm();
     if (!ch.playing) { gain.disconnect(); return null; }
     return ch;
@@ -552,8 +556,9 @@ export class AudioEngine {
       if (ch) { ch.stop(); this._loops3d.delete(name); }
       return null;
     }
-    if (ch) { ch.want = clip; ch.setVolume(volume); ch.setPitch(pitch); ch.move(pos); return ch; }
+    if (ch) { ch.want = clip; ch.rearm?.(); ch.setVolume(volume); ch.setPitch(pitch); ch.move(pos); return ch; }   // AUDIT DISC7 B7: a dead channel comes back with its clip
     if (!this._ready()) return null;
+    if (!this._buffer(clip)) return null;   // AUDIT DISC7 B7: a clip that cannot play builds no panner (it was a panner and a gain a frame, thrown away)
     const pan = this._panner(pos, { refDistance, maxDistance, distanceModel });
     pan.connect(this._out());
     const made = this._makeRetriggerLoop(clip, volume, pitch, pan);
@@ -564,6 +569,9 @@ export class AudioEngine {
     this._loops3d.set(name, made);
     return made;
   }
+
+  /** AUDIT DISC7 B6: move a named positional loop, if one stands (the floating origin's recentre). */
+  moveLoop3d(name, pos) { this._loops3d?.get(name)?.move?.(pos); }
 }
 
 export const audio = new AudioEngine();

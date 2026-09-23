@@ -314,9 +314,10 @@ export function resolveHorseActivation(wagonMode, horseMode, ownsCart, talkMode)
  * from DFU's interaction mode (Steal opens the wagon, Info names the horse, Talk commands it, anything else rides) -
  * four keys the player had to set BEFORE the click. On the World Tooltips plaque the verbs are rows instead, the wheel
  * lights one and the activate key presses it: each row carries the MODE the mod reads, so the press runs the mod's
- * own handler in that mode and every refusal, reach test and line stays the mod's. The labels come from the same
- * decision the press makes (ResolveHorseActivation), so a row never names a verb its click would not do; a command
- * the horse cannot take here (ResolveHorseActivation's None) is not listed.
+ * own handler in that mode and every refusal, reach test and line stays the mod's. The horse's labels come from the
+ * same decision the press makes (ResolveHorseActivation), so its rows name what its click does; a command the horse
+ * cannot take here (ResolveHorseActivation's None) is not listed. The wagon's two rows are its two modes whatever the
+ * state - the hitch's own refusals (no horse to pull, ride it over first) are said by the handler at the press.
  *
  * `target` is 'horse', 'deployedWagon' or 'followingWagon'.
  * @param {string} target
@@ -324,7 +325,9 @@ export function resolveHorseActivation(wagonMode, horseMode, ownsCart, talkMode)
  * @returns {{id: string, label: string}[]}
  */
 export function hccActionRows(target, { wagonMode, horseMode, ownsCart } = {}) {
-  if (target === 'deployedWagon') return [{ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.hitch }, { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];
+  // AUDIT DISC7 A10: a team left standing hitched ("Wait here" on a following team) is driven off, not hitched up -
+  // the same hitchDeployedWagon the horse's own row calls "Drive the wagon"
+  if (target === 'deployedWagon') return [{ id: ACTIVATE_MODE.Grab, label: horseMode === HORSE_MODE.HitchedToWagon ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.hitch }, { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];
   if (target === 'followingWagon') return [{ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.drive }, { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];
   if (target !== 'horse') return [];
   const rows = [];

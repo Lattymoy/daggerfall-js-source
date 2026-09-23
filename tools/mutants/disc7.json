@@ -2,8 +2,8 @@
   {
     "name": "ACT-MENU-verbs-drawn-as-a-name",
     "file": "src/systems/worldHover.js",
-    "old": "  if (acts.length) return frame(key, 'actions',",
-    "new": "  if (false) return frame(key, 'actions',",
+    "old": "  if (acts.length) {\n    const f = frame(key, 'actions'",
+    "new": "  if (false) {\n    const f = frame(key, 'actions'",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ACT-MENU-hidden-plaque-keeps-the-highlight",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { foldQuickLoot(null); hideWorldPlaque(); return null; }",
-    "new": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }",
+    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n",
+    "new": "",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ACT-MENU-wagon-pack-not-listed",
     "file": "src/systems/horseCartLaw.js",
-    "old": "  if (target === 'deployedWagon') return [{ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.hitch }, { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];",
-    "new": "  if (target === 'deployedWagon') return [{ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.hitch }];",
+    "old": ", { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];\n  if (target === 'followingWagon')",
+    "new": "];\n  if (target === 'followingWagon')",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ACT-MENU-horse-verb-ignored",
     "file": "src/systems/horseCart.js",
-    "old": "    const mode = modeOverride ?? deps.activateMode();",
-    "new": "    const mode = deps.activateMode();",
+    "old": "    const activate = mode ?? deps.activateMode();",
+    "new": "    const activate = deps.activateMode();",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -135,19 +135,19 @@
     ]
   },
   {
-    "name": "ACT-MENU-refused-invite-listed",
-    "file": "src/player/socialPick.js",
-    "old": "  if (acts.canInvite) rows.push({ id: 'invite', label: PEER_ACT_LABELS.invite });",
-    "new": "  rows.push({ id: 'invite', label: PEER_ACT_LABELS.invite });",
+    "name": "ACT-MENU-refused-verb-listed-as-offered",
+    "file": "src/ui/socialMenu.js",
+    "old": "    .map((r) => (r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null }));",
+    "new": "    .map((r) => ({ id: r.key, label: r.label }));",
     "tests": [
       "test/disc7.test.js"
     ]
   },
   {
-    "name": "ACT-MENU-invite-presses-a-friend-request",
-    "file": "src/player/socialPick.js",
-    "old": "export const PEER_ACT_KINDS = Object.freeze({ friend: 'friend.request', invite: 'party.invite', trade: 'trade.request' });",
-    "new": "export const PEER_ACT_KINDS = Object.freeze({ friend: 'friend.request', invite: 'friend.request', trade: 'trade.request' });",
+    "name": "ACT-MENU-refused-verb-sent",
+    "file": "src/ui/socialMenu.js",
+    "old": "  return r.enabled ? { act: r.act, refusal: null } : { act: null, refusal:",
+    "new": "  return true ? { act: r.act, refusal: null } : { act: null, refusal:",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ACT-MENU-street-press-skips-the-player",
     "file": "src/scenes/world.js",
-    "old": "          else if (plaquePeerAct()) { /* ACT-MENU: a player the plaque named nearest, and the verb it lit */ }\n",
-    "new": "",
+    "old": "          else if (!_act.pressCast && plaquePeerAct(cam.pos, useFwd)) {",
+    "new": "          else if (false) {",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "ACT-MENU-F-opens-the-card-over-the-plaque",
     "file": "src/scenes/world.js",
-    "old": "    if (worldPlaqueOn()) { if (plaquePeerAct()) return true; }\n",
+    "old": "      if (plaquePeerAct()) return true;\n",
     "new": "",
     "tests": [
       "test/disc7.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "ACT-MENU-modal-press-skips-the-player",
     "file": "src/scenes/worldModes.js",
-    "old": "&& !overlayHeld && !host.plaquePeerAct?.()) (mode",
-    "new": "&& !overlayHeld) (mode",
+    "old": "(A1: a touch heal on a party mate is the heal alone). The host re-picks them on this ray (A9) and walls block it.\n    if (!pressCast && host.plaquePeerAct?.(eye, dir)) return true;",
+    "new": "(A1: a touch heal on a party mate is the heal alone). The host re-picks them on this ray (A9) and walls block it.\n    ;",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -191,7 +191,7 @@
   {
     "name": "DISC7-hs-dropped-at-the-door",
     "file": "src/net/wire.js",
-    "old": "rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(hs ? { hs: 1 } : {}) } : {};",
+    "old": "rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(uint(hs, 1) ? { hs: 1 } : {}) } : {};",
     "new": "rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0 } : {};",
     "tests": [
       "test/disc7.test.js"
@@ -200,8 +200,8 @@
   {
     "name": "DISC7-hs-written-at-zero",
     "file": "src/net/wire.js",
-    "old": "...(hs ? { hs: 1 } : {}) } : {};",
-    "new": "hs: hs ? 1 : 0 } : {};",
+    "old": "...(uint(hs, 1) ? { hs: 1 } : {}) } : {};",
+    "new": "hs: uint(hs, 1) ? 1 : 0 } : {};",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "DISC7-peer-clop-ignores-the-bit",
     "file": "src/net/remotePlayers.js",
-    "old": "movingLessThanHalfSpeed: !peer.shown.mv || !!peer.shown.hs });",
-    "new": "movingLessThanHalfSpeed: !peer.shown.mv });",
+    "old": "movingLessThanHalfSpeed: !moving || !!peer.shown.hs });",
+    "new": "movingLessThanHalfSpeed: !moving });",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "DISC7-sender-never-slow",
     "file": "src/scenes/world.js",
-    "old": "      hs: riding && moved && player.movingLessThanHalfSpeed ? 1 : 0,",
-    "new": "      hs: 0,",
+    "old": "      hs: riding && moved && _hsLatch ? 1 : undefined,",
+    "new": "      hs: undefined,",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "DISC7-torch-listener-never-stops",
     "file": "src/systems/handheldTorches.js",
-    "old": "    w.loop.stop?.(); w.loop = null;\n  });",
-    "new": "  });",
+    "old": "    w.loop.stop?.(); w.loop = null;\n  };\n  let offLight = null;",
+    "new": "  };\n  let offLight = null;",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DISC7-torch-listener-leaks",
     "file": "src/systems/handheldTorches.js",
-    "old": "  function dispose() { offLight(); w.loop",
-    "new": "  function dispose() { w.loop",
+    "old": "  function dispose() { offLight?.(); offLight = null; w.loop",
+    "new": "  function dispose() { offLight = null; w.loop",
     "tests": [
       "test/disc7.test.js"
     ]
@@ -337,6 +337,15 @@
     "file": "src/ui/worldPlaque.js",
     "old": "      row.className = 'wplaque-row wplaque-act';\n      if (i === sel) row.classList.add('sel');",
     "new": "      row.className = 'wplaque-row wplaque-act';",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-dungeon-press-skips-the-player",
+    "file": "src/scenes/worldModes.js",
+    "old": "    // ACT-MENU (AUDIT DISC7 A11): the player the plaque lit - tryExit's arm, in the same place\n    if (!pressCast && host.plaquePeerAct?.(eye, dir)) return true;",
+    "new": "    // ACT-MENU (AUDIT DISC7 A11): the player the plaque lit - tryExit's arm, in the same place\n    ;",
     "tests": [
       "test/disc7.test.js"
     ]

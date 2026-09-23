@@ -48,6 +48,7 @@ export class QuestResourceBehaviour {
   constructor(machine, host = null) {
     this.machine = machine;
     this.host = host;
+    machine?._registerBehaviour?.(this);   // AUDIT DISC7 C2: the resync finds every behaviour standing on its quest
     // the serialized six (QuestResourceSaveData_v1)
     this.questUID = 0;
     this.targetSymbol = null;
@@ -86,6 +87,30 @@ export class QuestResourceBehaviour {
     }
   }
 
+  /**
+   * DISC6: let go of a target the quest no longer holds and resolve it again - the live quest's resource, and
+   * (AUDIT DISC7 C2) the SYMBOL it carries: sceneMount's isAlreadyInjected matches a standing behaviour to its resource
+   * by the symbol object, and a stale one read "not mounted" and stood the quest's person, item or foe a second time
+   * on the next Place mount. Run by update() and by the resync itself (machine.updateSharedQuest), which reaches the
+   * behaviours no frame updates. A behaviour whose target is live is untouched - the save-load quirk the mount's
+   * header records is not this path. Answers whether it relinked.
+   */
+  relinkToLiveQuest() {
+    if (this.targetQuest == null) {
+      // never cached (no update has run yet): nothing to let go - only the symbol, which the mount guard reads
+      const r = this.machine.getQuest(this.questUID)?.getResource?.(this.targetSymbol);
+      if (!r?.symbol || r.symbol === this.targetSymbol) return false;
+      this.targetSymbol = r.symbol;
+      return true;
+    }
+    if (this.machine.getQuest(this.questUID) === this.targetQuest && this.targetQuest.getResource(this.targetSymbol) === this.targetResource) return false;
+    this.targetQuest = null; this.targetResource = null;
+    this.cacheTarget();
+    if (this.targetResource?.symbol) this.targetSymbol = this.targetResource.symbol;
+    if (this.targetResource && !this.targetResource.questResourceBehaviour) this.targetResource.questResourceBehaviour = this;
+    return true;
+  }
+
   /** Start (:124-130). */
   start() { return this.cacheTarget(); }
 
@@ -98,10 +123,7 @@ export class QuestResourceBehaviour {
     // REBUILDS the live quest's resources. Every foe already standing went on counting its death into the orphaned
     // Foe while the `killed N _x_` trigger read the new one, so the last kill never fired its task - no popup, no
     // log. A target the quest no longer holds is let go and resolved again, the enemy re-read with it.
-    if (this.targetQuest != null && (this.machine.getQuest(this.questUID) !== this.targetQuest || this.targetQuest.getResource(this.targetSymbol) !== this.targetResource)) {
-      this.targetQuest = null; this.targetResource = null;
-      this.cacheTarget();
-    }
+    this.relinkToLiveQuest();
     // Ensure target resource has this behaviour assigned - coupling
     // is otherwise lost when reloading a game
     if (this.targetResource != null) {

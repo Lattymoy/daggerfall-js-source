@@ -5467,7 +5467,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:3112-3203) — and
+spawns and the NPC-guard conversion with it (world.js:3122-3213) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5488,13 +5488,13 @@ instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
 ready-spell events (`hostMagic.js:77-78`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:844`/`:827`; C# subscribes them in the action's
+(`machine.js:847`/`:830`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:3466-3467`,
+other two engine-owning hosts wire (`world.js:3476-3477`,
 `dungeonContext.js:2222-2223`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:7663-7666`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:7673-7676`),
 absent which the action self-completes at *parse*
 (`actions.js:2756`/`:2763`) and the task can never arm at all.
 
@@ -6281,5 +6281,5 @@ A party's shared-quest resync (`machine.updateSharedQuest` -> `restoreSaveData`)
 under the foes already standing, and each foe's `QuestResourceBehaviour` kept the Foe it cached on its first frame -
 every death went to the orphan, the `killed N` trigger read the new one, and the last kill fired nothing. The
 behaviour now lets go of a target the quest no longer holds (by UID and by symbol) and resolves it again, and the
-resync keeps this world's Foe counters (the larger kill count, the flags ORed). Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in
+resync keeps this world's Foe counters (the larger kill count; the injury and a pending kill this world's own events set - AUDIT DISC7 D7 dropped the restraint, which is the quest's word on both sides; C2 relinks every standing behaviour at the resync, symbol included, and C3 keeps this world's longer spell and item queues). Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in
 `test/disc6.test.js`; `tools/mutants/disc6.json`.

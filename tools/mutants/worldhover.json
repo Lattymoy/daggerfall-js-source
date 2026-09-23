@@ -122,8 +122,8 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { foldQuickLoot(null); hideWorldPlaque(); return null; }",
-    "new": "  if (false) { foldQuickLoot(null); hideWorldPlaque(); return null; }",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (false) { hideWorldPlaque(); return null; }   // (the hide",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -603,8 +603,8 @@
   {
     "name": "WORLD-HOVER-the-hide-keeps-the-signature",
     "file": "src/ui/worldPlaque.js",
-    "old": "  _cancel(_watchdog);\n  _watchdog = null;\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "  _cancel(_watchdog);\n  _watchdog = null;\n  if (!node) return;\n  blank(node);\n}",
+    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  blank(node);\n}",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -612,8 +612,8 @@
   {
     "name": "WORLD-HOVER-the-hide-door-ensures-a-node",
     "file": "src/ui/worldPlaque.js",
-    "old": "  _cancel(_watchdog);\n  _watchdog = null;\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "  _cancel(_watchdog);\n  _watchdog = null;\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
+    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -885,8 +885,8 @@
   {
     "name": "AUDIT-WH2-the-seam-gate-stops-hiding",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { foldQuickLoot(null); hideWorldPlaque(); return null; }",
-    "new": "  if (!worldPlaqueOn()) { foldQuickLoot(null); return null; }",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (!worldPlaqueOn()) { return null; }   // (the hide",
     "tests": [
       "test/worldhover.test.js"
     ]

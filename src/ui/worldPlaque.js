@@ -206,6 +206,7 @@ function paint(n, f, sel = -1, stats = []) {
       const row = document.createElement('div');
       row.className = 'wplaque-row wplaque-act';
       if (i === sel) row.classList.add('sel');
+      if (f.rows[i].disabled) row.classList.add('off');   // AUDIT DISC7 A4: a refused verb, its reason in its name
       row.textContent = f.rows[i].name;
       list.append(row);
     }
@@ -323,6 +324,7 @@ export function hideWorldPlaque() {
   // this is a no-op on that path.
   _cancel(_watchdog);
   _watchdog = null;
+  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it
   if (!node) return;
   shownSig = null;
   blank(node);
@@ -443,7 +445,7 @@ export function worldHoverFrame({
   // node injects nothing).
   // ACT-MENU: a plaque that stands down folds NOTHING - the highlight goes with it, so a verb lit before a window
   // opened (or the skin changed) cannot be pressed later by a click that never saw it
-  if (!worldPlaqueOn()) { foldQuickLoot(null); hideWorldPlaque(); return null; }
+  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide folds the highlight away too: AUDIT DISC7 A8)
   // `cursorActive` is the crosshair's OWN first statement (there is no
   // reticle while a window is up, hudCrosshair.js:114) and so it is the
   // plaque's. In the dungeon this was an accident of scheduling - the
@@ -483,6 +485,7 @@ export function worldHoverFrame({
       _faultSaid = true;
       console.warn(`[world-hover] the plaque could not resolve and is standing down for this frame: ${e?.message ?? e}`);
     }
+    foldQuickLoot(null);   // AUDIT DISC7 A8: a contained fault lights nothing - a click must not press the last good frame's verb
     try { showWorldPlaque(null); } catch { /* the draw itself is gone; nothing left to hide */ }
     return null;
   }

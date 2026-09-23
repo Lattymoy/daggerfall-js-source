@@ -76,10 +76,11 @@ export function pickPeerInFront(camPos, fwd, peers, reach, distanceOf) {
 // prompt"): THE PLAQUE'S HALF OF THE SAME PICK. World Tooltips names what the crosshair rests on
 // (systems/worldHover.js, ui/worldPlaque.js) off the SAME ray race the press runs (player/activationRace.js
 // raceWinner), so another player under the crosshair is one more racer - `peerRayPick` dresses `pickPeerInFront`'s
-// answer in the race's own shape - and what the plaque says under their name is what the F-menu would offer at
-// this moment - `peerPromptText` reads the very `actionsFor`/`tradeActionsFor` bag ui/socialMenu.js draws its
-// rows from, so the prompt can never promise an act the menu would then refuse. Both are pure, so a test drives
-// them with plain numbers and plain words; scenes/world.js keeps the arm (the picks, the namer, the key's label).
+// answer in the race's own shape - and what the plaque lists under their name is what the F-menu would offer at
+// this moment: ACT-MENU (DISC7) lists the card's own rows (ui/socialMenu.js socialPlaqueRows, off the very
+// `actionsFor`/`tradeActionsFor` bag) for the wheel to light and the activate key to press, with the relation
+// (`peerRelationText`) under the name. Pure, so a test drives it with plain numbers and plain words; scenes/world.js
+// keeps the arm (the picks, the namer, the press).
 // ---------------------------------------------------------------------------------------------------------------
 
 /** The plaque key a player wears: `peer:<session id>` - a string like every other namer's, and one no other family
@@ -102,38 +103,6 @@ export function peerRayPick(hit, reach = SOCIAL_REACH) {
   if (!hit?.peer?.id || !Number.isFinite(hit.distance)) return null;
   return { key: PEER_KEY_PREFIX + hit.peer.id, distance: hit.distance, reach };
 }
-
-/** The menu's own three labels, in the menu's own order (ui/socialMenu.js socialMenuRows) - one home. */
-export const PEER_ACT_LABELS = Object.freeze({ friend: 'Add friend', invite: 'Invite to party', trade: 'Trade' });
-
-/** ACT-MENU: what each row does - the F-menu's own act kinds (ui/socialMenu.js socialMenuRows), one home for the plaque. */
-export const PEER_ACT_KINDS = Object.freeze({ friend: 'friend.request', invite: 'party.invite', trade: 'trade.request' });
-
-/**
- * ACT-MENU (2026-09-23, Mac: "for player interaction and horse interaction, instead of using a keybind toggle, let's
- * reuse the loot scroll menu to select options"): WHAT THE PLAQUE LISTS UNDER A PLAYER'S NAME. `acts` is
- * `{ ...social.actionsFor(id), ...tradeActionsFor(id) }` - exactly the bag the F-menu is opened with. PEER-PLAQUE1
- * read it into a one-line prompt behind the F key, and F opened a card to choose from; the choice is the plaque's
- * own rows now, lit by the wheel as a pile's items are and pressed by the activate key (or F).
- *
- *   - The ENABLED acts, and only those, in the menu's order: a refused act is a row the press could not honour.
- *   - The trade row's own live label when the peer already asked ('Accept trade' - `tradeLabel`).
- *
- * @param {{ canFriend?: boolean, canInvite?: boolean, canTrade?: boolean, tradeLabel?: string|null }|null} acts
- * @returns {{ id: 'friend'|'invite'|'trade', label: string }[]}
- */
-export function peerActionRows(acts) {
-  if (!acts) return [];
-  /** @type {{ id: 'friend'|'invite'|'trade', label: string }[]} */
-  const rows = [];
-  if (acts.canFriend) rows.push({ id: 'friend', label: PEER_ACT_LABELS.friend });
-  if (acts.canInvite) rows.push({ id: 'invite', label: PEER_ACT_LABELS.invite });
-  if (acts.canTrade) rows.push({ id: 'trade', label: acts.tradeLabel || PEER_ACT_LABELS.trade });
-  return rows;
-}
-
-/** ACT-MENU: the act a row presses, in the F-menu's own shape (`{ k, peer }`), or null for an id that is no act. */
-export const peerActOf = (id, peerId) => (PEER_ACT_KINDS[id] && peerId ? { k: PEER_ACT_KINDS[id], peer: peerId } : null);
 
 /**
  * THE RELATION, under the name: 'In your party' beats 'Friend' (a party member is usually a friend too, and the seat

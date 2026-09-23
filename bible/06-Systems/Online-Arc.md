@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6037` read, on one physical line:
+`src/scenes/worldModes.js:6041` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3581` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3591` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:227`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7490,7 +7490,7 @@ recorded).
 
 **Three additions, per the same request.**
 
-*PEER-PLAQUE1 - "Using the world tooltip implementation for other players and interaction prompt."* Another player under the crosshair is one more racer in `raceWinner`'s one precedence (`peer`, between the townsperson and the foe - a body measured through the same cylinder, and the press has no arm for it: the F key is its own gesture). `player/socialPick.js` grew the pure half: `peerRayPick` dresses SOC5's own `pickPeerInFront` hit (SOCIAL_REACH, `rayPersonDistance`) as `{ key: 'peer:<id>', distance, reach }`, `peerIdOfKey`, and `peerPromptText` - the ENABLED acts alone, in the menu's own order and labels (`PEER_ACT_LABELS`, pinned equal to `socialMenuRows`), behind the LIVE interact binding (`getBinding(bindings(), 'SocialInteract')`, 'KeyF' -> 'F', no bracket when unbound - AUDIT SOC D10/C19), the trade row's own live label, and with nothing to offer the relation ('In your party' before 'Friend', else the name alone). world.js names it in the PORT's own `_hoverNamers` (ungated - DFU has no other players, so it sits with the cart and the camps above the mod's switch) as `<name> <glyph marks>` (`ui/playerBadge.js glyphMarks`, the classic face's plain-text glyphs); the building and the dungeon race and name it through two new host doors, `peerHoverPick(eye, dir)` and `peerHoverName(key)`, over the mode's own eye - `worldModes.js` interior pick/namer, `buildDungeonContext` opts, `ctx.addActivationNamer`, `dungeonContext.js` pick.
+*PEER-PLAQUE1 - "Using the world tooltip implementation for other players and interaction prompt."* (The prompt line behind the interact key is gone since DISC7 ACT-MENU: the card's acts are the plaque's rows - see DISC7 and AUDIT DISC7 below.) Another player under the crosshair is one more racer in `raceWinner`'s one precedence (`peer`, between the townsperson and the foe - a body measured through the same cylinder, and the press has no arm for it: the F key is its own gesture). `player/socialPick.js` grew the pure half: `peerRayPick` dresses SOC5's own `pickPeerInFront` hit (SOCIAL_REACH, `rayPersonDistance`) as `{ key: 'peer:<id>', distance, reach }`, `peerIdOfKey`, and `peerPromptText` - the ENABLED acts alone, in the menu's own order and labels (`PEER_ACT_LABELS`, pinned equal to `socialMenuRows`), behind the LIVE interact binding (`getBinding(bindings(), 'SocialInteract')`, 'KeyF' -> 'F', no bracket when unbound - AUDIT SOC D10/C19), the trade row's own live label, and with nothing to offer the relation ('In your party' before 'Friend', else the name alone). world.js names it in the PORT's own `_hoverNamers` (ungated - DFU has no other players, so it sits with the cart and the camps above the mod's switch) as `<name> <glyph marks>` (`ui/playerBadge.js glyphMarks`, the classic face's plain-text glyphs); the building and the dungeon race and name it through two new host doors, `peerHoverPick(eye, dir)` and `peerHoverName(key)`, over the mode's own eye - `worldModes.js` interior pick/namer, `buildDungeonContext` opts, `ctx.addActivationNamer`, `dungeonContext.js` pick.
 
 *PARTY-REST4 - "Notification when youre not near the party leader for resting."* `partyRestFarNotice(leaderRest, near, leaderRow)` in world.js, called from `partyRestFollowTick` on the SAME `near` the mirror reads and before the mirror acts on it: the leader's pose carries a rest and I am not near enough - said ONCE on `setMidScreenText` ("<leader> is resting - come within 15 m of them to rest with the party.", the radius the one law's own number), the latch re-armed only when that rest has ended or I have come near (then the mirror opens instead), stood down with the party. A follower who walks out mid-nap is told the frame their mirror ends. Lifted out and driven in `test/restfar.test.js` (sixty far frames say it once).
 
@@ -8022,6 +8022,6 @@ world100) and the clop swaps on it. Not verified in a browser.
 
 A player under the crosshair lists the F-menu's enabled acts as the World Tooltips plaque's rows - the loot list's own
 wheel and highlight - and the activate key (or F) presses the lit one through the card's own door, re-read at the press.
-The card stays where the plaque cannot (touch). The pose carries `hs`, the rider's half-speed flag, mounted and moving
+The card stays where the plaque cannot (touch, the classic skin). AUDIT DISC7: a player's list starts unlit (a plain click sends nothing; the wheel or F lights a row), every act the card offers is listed with a refused one's reason, the press re-picks the player on its own ray with walls blocking and never fires on a touch cast; the riders' loop stands on a stale pose, is made within earshot only and moves with the floating origin, and `hs` is latched off a moving frame - `01-Overview/Field-Bugs-2026-09-23.md` (AUDIT DISC7). The pose carries `hs`, the rider's half-speed flag, mounted and moving
 only and omitted at 0; the receiving riding loop swaps the clop on it. RELAY_VERSION world100 with its law row. Record:
 `01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/disc7.test.js`.

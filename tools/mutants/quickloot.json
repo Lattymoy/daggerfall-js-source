@@ -2,8 +2,8 @@
   {
     "name": "QUICK-LOOT-the-fold-does-not-clamp-to-the-last-row",
     "file": "src/systems/worldHover.js",
-    "old": "  return { key: frame.key, row: Math.max(0, Math.min(rows - 1, row)) };",
-    "new": "  return { key: frame.key, row };",
+    "old": "    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
+    "new": "    row = Math.max(floor, (at >= 0 ? at : prev.row) + d);",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QUICK-LOOT-the-fold-wraps-instead-of-stopping",
     "file": "src/systems/worldHover.js",
-    "old": "  return { key: frame.key, row: Math.max(0, Math.min(rows - 1, row)) };",
-    "new": "  return { key: frame.key, row: ((row % rows) + rows) % rows };",
+    "old": "    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
+    "new": "    row = ((((at >= 0 ? at : prev.row) + d) % rows) + rows) % rows;",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "QUICK-LOOT-a-new-container-inherits-the-old-row",
     "file": "src/systems/worldHover.js",
-    "old": "  const row = prev && prev.key === frame.key ? prev.row + d : 0;",
-    "new": "  const row = prev ? prev.row + d : 0;",
+    "old": "  if (prev && prev.key === frame.key) {\n    const at = prev.id",
+    "new": "  if (prev) {\n    const at = prev.id",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "QUICK-LOOT-the-nudge-is-never-spent",
     "file": "src/systems/quickLoot.js",
-    "old": "  _actionIds = verbs && _sel ? frame.rows.map((r) => r.id) : null;\n  _nudge = 0;",
-    "new": "  _actionIds = verbs && _sel ? frame.rows.map((r) => r.id) : null;",
+    "old": "  _lastKey = _sel ? frame.key : null;\n  _nudge = 0;",
+    "new": "  _lastKey = _sel ? frame.key : null;",
     "tests": [
       "test/quickloot.test.js"
     ]

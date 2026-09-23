@@ -65,19 +65,19 @@
     "why": "String(17) is '17' and String(null) is 'null' - neither starts with 'peer:', so the coerced form answers null for every non-string exactly as the typeof guard does; the guard is kept for AUDIT-WH2 L2-F5's stated law (no startsWith on a non-string), not for a behaviour a pin can see."
   },
   {
-    "name": "PEER-PLAQUE1-disabled-acts-listed",
-    "file": "src/player/socialPick.js",
-    "old": "  if (acts.canFriend) rows.push({ id: 'friend', label: PEER_ACT_LABELS.friend });",
-    "new": "  rows.push({ id: 'friend', label: PEER_ACT_LABELS.friend });",
+    "name": "PEER-PLAQUE1-refused-acts-dropped",
+    "file": "src/ui/socialMenu.js",
+    "old": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act)\n",
+    "new": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act && r.enabled)\n",
     "tests": [
       "test/peerplaque.test.js"
     ]
   },
   {
     "name": "PEER-PLAQUE1-trade-label-ignored",
-    "file": "src/player/socialPick.js",
-    "old": "  if (acts.canTrade) rows.push({ id: 'trade', label: acts.tradeLabel || PEER_ACT_LABELS.trade });",
-    "new": "  if (acts.canTrade) rows.push({ id: 'trade', label: PEER_ACT_LABELS.trade });",
+    "file": "src/ui/socialMenu.js",
+    "old": "label: tradeLabel || 'Trade'",
+    "new": "label: 'Trade'",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "PEER-PLAQUE1-pick-with-a-reach-of-its-own",
     "file": "src/scenes/world.js",
-    "old": "  const _hoverPeerPick = (eye, dir) => peerRayPick(pickPeerInFront(eye, dir, peersNear(), SOCIAL_REACH, rayPersonDistance), SOCIAL_REACH);",
-    "new": "  const _hoverPeerPick = (eye, dir) => peerRayPick(pickPeerInFront(eye, dir, peersNear(), 40, rayPersonDistance), 40);",
+    "old": "    const hit = pickPeerInFront(eye, dir, peersNear(), SOCIAL_REACH, rayPersonDistance);\n    if (!hit) return null;",
+    "new": "    const hit = pickPeerInFront(eye, dir, peersNear(), 40, rayPersonDistance);\n    if (!hit) return null;",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "PEER-PLAQUE1-title-without-the-marks",
     "file": "src/scenes/world.js",
-    "old": "    return { title: marks ? `${name} ${marks}` : name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: peerActionRows(acts) };",
-    "new": "    return { title: name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: peerActionRows(acts) };",
+    "old": "    return { title: marks ? `${name} ${marks}` : name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
+    "new": "    return { title: name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
     "tests": [
       "test/peerplaque.test.js"
     ]

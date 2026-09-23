@@ -1145,7 +1145,7 @@ export class AirPass {
    */
   prepare(f) {
     const [, , w, h] = f.viewport;
-    if (!(w > 0 && h > 0)) { this.f = null; return; }   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)
+    if (!(w > 0 && h > 0)) { this.f = null; this.prevValid = false; return; }   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0); AUDIT DISC7 C7: and the next frame has no previous one - its held matrices and rect would be two frames old against last frame's depth
     this.resize(w, h);
     // EL8: the frame just resolved becomes the previous - its view-projection and terms, for the contact march
     if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; holdPrevRect(this.prevRect, this.rect, this.canvas); }

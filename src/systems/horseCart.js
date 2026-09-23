@@ -922,15 +922,15 @@ export function createHorseCartRuntime(deps) {
     hitchDeployedWagon();
     return true;
   }
-  function handleStationaryHorseActivation(distance, modeOverride = null) {
+  function handleStationaryHorseActivation(distance, mode = null) {
     if (!physicalPersistenceEnabled) return false;
     if (!ready() || !stationaryHorseVisual) return false;
     if (distance > ACTIVATION_REACH) { tooFar(); return true; }
     if (!tm().hasHorse()) { say(HCC_TEXT.noLongerOwnHorse); return true; }
     if (pee().isPlayerInside()) return true;
-    const mode = modeOverride ?? deps.activateMode();
-    if (isHorseNamingMode(mode)) { openHorseNamePrompt(); return true; }
-    const decision = resolveHorseActivation(wagonState.Mode, wagonState.HorseMode, tm().hasCart(), isHorseCommandMode(mode));
+    const activate = mode ?? deps.activateMode();
+    if (isHorseNamingMode(activate)) { openHorseNamePrompt(); return true; }
+    const decision = resolveHorseActivation(wagonState.Mode, wagonState.HorseMode, tm().hasCart(), isHorseCommandMode(activate));
     switch (decision) {
       case HORSE_ACTIVATION.Follow: startFollowingHorse(); return true;
       case HORSE_ACTIVATION.Wait: stopFollowingHorse(); return true;
