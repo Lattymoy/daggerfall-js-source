@@ -34,7 +34,7 @@
   { "name": "RR2-17-a-trampled-guard-bleeds", "file": "src/systems/rrRealism.js",
     "old": "    ? { chargeGuard: true, spawnGuards: false, blood: false, clip: null, crime: 'Assault', remove: true }", "new": "    ? { chargeGuard: true, spawnGuards: false, blood: true, clip: null, crime: 'Assault', remove: true }", "tests": ["test/rr2_realism.test.js"] },
   { "name": "RR2-18-the-variable-price-rounds", "file": "src/systems/rrRealism.js",
-    "old": "  return baseCost - Math.trunc(baseCost * skillOfMax / 2);", "new": "  return baseCost - Math.round(baseCost * skillOfMax / 2);", "tests": ["test/rr2_realism.test.js"] },
+    "old": "  return baseCost - Math.trunc(Math.fround(baseCost * skillOfMax / 2));", "new": "  return baseCost - Math.round(Math.fround(baseCost * skillOfMax / 2));", "tests": ["test/rr2_realism.test.js"] },
   { "name": "RR2-19-the-week-is-offered-at-46", "file": "src/systems/rrRealism.js",
     "old": "export const rrIntensiveOffered = (intensive, skillValue, trainingMax) => !!intensive && skillValue < trainingMax - 4;", "new": "export const rrIntensiveOffered = (intensive, skillValue, trainingMax) => !!intensive && skillValue <= trainingMax - 4;", "tests": ["test/rr2_realism.test.js"] },
   { "name": "RR2-20-the-intensive-cost-forgets-the-level", "file": "src/systems/rrRealism.js",

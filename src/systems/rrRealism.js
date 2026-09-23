@@ -158,11 +158,12 @@ export function rrShipAvailable({ onShip = false, locationLoaded = false, portTo
  *  goes NEGATIVE under 100 fatigue and DecreaseFatigue then adds; the
  *  C#'s own arithmetic). Answers null under the threshold. */
 export function rrEncumbranceEffect({ carriedWeight = 0, maxEncumbrance = 1, liveSpeed = 50, permanentSpeed = 50, currentFatigue = 0 } = {}) {
-  const encPc = Math.min(maxEncumbrance > 0 ? carriedWeight / maxEncumbrance : 0, 1.2);
-  const encOver = Math.max(encPc - 0.75, 0) * ENC_EFFECT_SCALE_FACTOR;
+  // AUDIT-RR F7: the C# is float arithmetic (:590-595) - fround at every step, or a band edge lands one off
+  const encPc = Math.fround(Math.min(maxEncumbrance > 0 ? Math.fround(carriedWeight / maxEncumbrance) : 0, 1.2));
+  const encOver = Math.fround(Math.fround(Math.max(Math.fround(encPc - 0.75), 0)) * ENC_EFFECT_SCALE_FACTOR);
   if (!(encOver > 0)) return null;
-  const speedEffect = Math.min(liveSpeed - 2, Math.trunc(permanentSpeed * encOver));
-  const fatigueEffect = Math.min(currentFatigue - 100, Math.trunc(encOver * 100));
+  const speedEffect = Math.min(liveSpeed - 2, Math.trunc(Math.fround(permanentSpeed * encOver)));
+  const fatigueEffect = Math.min(currentFatigue - 100, Math.trunc(Math.fround(encOver * 100)));
   return { encPc, encOver, speedEffect, fatigueEffect };
 }
 
@@ -249,7 +250,7 @@ export function applyEnemyAppearance(basics) {
   let n = 0;
   for (const [id, row] of Object.entries(RR_ENEMY_APPEARANCE)) {
     const target = basics?.[id];
-    if (!target || Object.isFrozen(target)) continue;
+    if (!target || Object.isFrozen(target)) { if (target) console.warn(`[rr] enemyAppearance: ENEMY_BASICS row ${id} is frozen - the mod's appearance cannot be written`); continue; }   // AUDIT-RR F10
     const saved = {};
     for (const k of Object.keys(row)) saved[k] = Object.hasOwn(target, k) ? target[k] : undefined;
     _appearanceOriginals.set(id, saved);
@@ -334,23 +335,23 @@ export const bedSleepingOn = () => rrModule('bedSleeping');
 
 // ---- EnhancedRiding.cs -------------------------------------------------
 export const RR_RIDING = Object.freeze({
-  lookPitchRatio: 2.6,      // LookPitchRatio (:22)
-  extX: 0.06, extW: 0.78,   // the neck band's texcoords (:23-24)
-  samples: 16,              // the terrain angle ring (:26)
-  pitchMaxOffset: 18,       // `PitchMaxLimit = terrainAngle + 18` (:288)
-  chargeKnockback: 100,     // `KnockbackSpeed = 100` (:200)
-  chargeFatigueMultiplier: 15,   // `DecreaseFatigue(DefaultFatigueLoss * 15)` (:204)
+  lookPitchRatio: 2.6,      // LookPitchRatio (:17)
+  extX: 0.06, extW: 0.78,   // the neck band's texcoords (:18-19)
+  samples: 16,              // the terrain angle ring (:22)
+  pitchMaxOffset: 18,       // `PitchMaxLimit = terrainAngle + 18` (:251)
+  chargeKnockback: 100,     // `KnockbackSpeed = 100` (:199)
+  chargeFatigueMultiplier: 15,   // `DecreaseFatigue(DefaultFatigueLoss * 15)` (:205)
 });
 export const rrRidingOn = () => rrEnabled() && rrSetting('EnhancedRiding.enhancedRiding') === true;
 export const rrRidingSetting = (key) => rrSetting(`EnhancedRiding.${key}`);
-/** CanRunUnlessRidingCart (:95-99): `!((mode == Cart || inTownNoGallop) &&
+/** CanRunUnlessRidingCart (:57-61): `!((mode == Cart || inTownNoGallop) &&
  *  IsRiding)` - no galloping with the cart, nor in a town unless
  *  GallopingInTowns. `riding` is PlayerMotor.IsRiding. */
 export function rrCanRunRiding({ mode = 'Foot', riding = false, inTown = false, gallopingInTowns = false } = {}) {
   const inTownNoGallop = inTown && !gallopingInTowns;
   return !((mode === 'Cart' || inTownNoGallop) && riding);
 }
-/** Update's RealisticMovement arm (:128-136): InputManager's axis limits
+/** Update's RealisticMovement arm (:105-131): InputManager's axis limits
  *  while riding - backwards 0.5 (a cart 0.2), sideways 0.4 (a cart 0.1);
  *  off the mount, all three back to 1. */
 export function rrRidingInputLimits({ riding = false, mode = 'Foot' } = {}) {
@@ -358,10 +359,10 @@ export function rrRidingInputLimits({ riding = false, mode = 'Foot' } = {}) {
   const cart = mode === 'Cart';
   return { negVertical: cart ? 0.2 : 0.5, negHorizontal: cart ? 0.1 : 0.4, posHorizontal: cart ? 0.1 : 0.4 };
 }
-/** Update's terrain sample (:139-146): the ground under the player against
+/** Update's terrain sample (:108-118): the ground under the player against
  *  the ground one unit ahead, `Atan2(heightDiff, 1) * 100`. */
 export const rrTerrainAngle = (hereY, aheadY) => Math.atan2(hereY - aheadY, 1) * 100;
-/** OnGUI's average (:281-287): the ring's sum over `samples + softenFollow`
+/** OnGUI's average (:241-249): the ring's sum over `samples + softenFollow`
  *  when TerrainFollowing, else 0. */
 export function rrTerrainFollow(samples, softenFollow = 0, following = true) {
   if (!following || !samples?.length) return 0;
@@ -369,18 +370,21 @@ export function rrTerrainFollow(samples, softenFollow = 0, following = true) {
   for (const a of samples) sum += a;
   return sum / (samples.length + softenFollow);
 }
-/** `yAdj = (Pitch - terrainAngle - 10) * LookPitchRatio` (:289) - the
+/** `yAdj = (Pitch - terrainAngle - 10) * LookPitchRatio` (:252) - the
  *  mount's sprite rises and falls with the look; `pitchDegrees` is
  *  PlayerMouseLook.Pitch (up negative in DFU's convention). */
 export const rrRidingYAdj = (pitchDegrees, terrainAngle) => (pitchDegrees - terrainAngle - 10) * RR_RIDING.lookPitchRatio;
-/** OnGUI's neck band (:303-320): when the sprite's bottom lifts off the
+/** OnGUI's neck band (:266-278): when the sprite's bottom lifts off the
  *  screen bottom, the gap is filled with a strip of the riding texture
  *  itself (no neck CFA imported here: TryImportCifRci answers nothing
  *  for the port) - `yAdjNeck = yAdj / 100` of the texture from 0.2 down,
  *  `extX .. extX + extW` across, `width - 14` wide. */
 export function rrRidingNeckBand(yAdj) {
   const yAdjNeck = yAdj / 100;
-  return { u0: RR_RIDING.extX, u1: RR_RIDING.extX + RR_RIDING.extW, v0: 0.2 - yAdjNeck, v1: 0.2, widthTrim: 14 };
+  // AUDIT-RR F14: `Rect(extX, 0.2 - yAdjNeck, extW, yAdjNeck)` is in Unity texcoords, v = 0 at the BOTTOM row (DFBitmap
+  // .GetColor32 flips rows on upload) - the band is the bottom fifth of the sprite, the neck and chest. The port's
+  // screen quad samples v = 0 at the TOP row, so the same rows are 0.8 .. 0.8 + yAdjNeck here.
+  return { u0: RR_RIDING.extX, u1: RR_RIDING.extX + RR_RIDING.extW, v0: 0.8, v1: 0.8 + yAdjNeck, widthTrim: 14 };
 }
 /** HandleCharge's blow (:206-210): CalculateHandToHandMin/MaxDamage over
  *  the live skill, `Range(min, max + 1)`, plus Agility / 10 and
@@ -412,8 +416,8 @@ export const rrRefinedTrainingOn = () => rrEnabled() && rrSetting('RefinedTraini
  *  max` under variableTrainingPrice - a raw skill trains for half. */
 export function rrTrainingCost(baseCost, skillValue, trainingMax, variable = true) {
   if (!variable || !(trainingMax > 0)) return baseCost;
-  const skillOfMax = 1 - skillValue / trainingMax;
-  return baseCost - Math.trunc(baseCost * skillOfMax / 2);
+  const skillOfMax = Math.fround(1 - Math.fround(skillValue / trainingMax));   // AUDIT-RR F26: float32, as the C#'s `(float)skillValue / trainingMax`
+  return baseCost - Math.trunc(Math.fround(baseCost * skillOfMax / 2));
 }
 /** `intensiveCost = (trainingCost + (Level * 8) + 72) * 5` (:71). */
 export const rrIntensiveCost = (trainingCost, level) => (trainingCost + level * 8 + 72) * 5;

@@ -34,7 +34,7 @@ import { TRANSPORT_MODES, isRiding, hasHorse, hasCart } from '../systems/transpo
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';
 import { TransportWindow, transportArtLoaded } from '../ui/transportWindow.js';
 import { ownsShip } from '../systems/banking.js';
-import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
+import { horseOffsetHeight, dockedLargeHudHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse; AUDIT-RR F25: EnhancedRiding's own arm asks LargeHUDDocked (EnhancedRiding.cs:256-257)
 import { mwViewHides } from './mwView.js';   // AUDIT-EOTB2: the sprite body on screen hides the FPV horse (Eye Of The Beholder's ToggleBillboard)
 import { SOUND } from '../systems/soundClips.js';
 import { isShipAvailable } from '../systems/ship.js';   // RR1: TransportManager.ShipAvailiable, the delegate
@@ -84,19 +84,23 @@ export function createMountRig({
     const pitchDeg = -((lookPitch?.() ?? 0) * 180) / Math.PI;
     const yAdj = rrRidingYAdj(pitchDeg, _terrainAngle);
     const scaleY = c.height / NATIVE_SCREEN_HEIGHT;
-    rect.y = c.height - ((art.height + yAdj) * scaleY) - horseOffsetHeight();
-    return { yAdj, scaleY, c };
+    // AUDIT-RR F25: `LargeHUD && LargeHUDDocked` (EnhancedRiding.cs:256-257), not TransportManager's OffsetHorse arm - the
+    // component draws the mount itself and asks its own question; ridingRect above took the classic arm's offset, so
+    // it is taken back out here and the docked height put in
+    const offset = dockedLargeHudHeight();
+    rect.y = c.height - ((art.height + yAdj) * scaleY) - offset;
+    return { yAdj, scaleY, c, offset };
   }
   /** OnGUI's neck band (:303-320): when the lifted sprite leaves a gap
    *  under it, a strip of the same riding texture fills it (no neck CFA
    *  here - see rrRealism), `width - 14` wide, from 0.2 of the texture
    *  down by `yAdj / 100`. */
-  function drawNeckBand({ yAdj, scaleY, c }, rect, art, r) {
+  function drawNeckBand({ yAdj, scaleY, c, offset }, rect, art, r) {
     const drawBottom = rect.y + rect.h - scaleY;
     if (drawBottom >= c.height) return;
     const band = rrRidingNeckBand(yAdj);
     const scaleX = rect.w / art.width;
-    renderer.drawScreenQuad(art.frames[r.frame], { x: rect.x, y: drawBottom, w: (art.width - band.widthTrim) * scaleX, h: c.height - drawBottom + scaleY - horseOffsetHeight() }, { u0: band.u0, v0: band.v0, u1: band.u1, v1: band.v1 });
+    renderer.drawScreenQuad(art.frames[r.frame], { x: rect.x, y: drawBottom, w: (art.width - band.widthTrim) * scaleX, h: c.height - drawBottom + scaleY - offset }, { u0: band.u0, v0: band.v0, u1: band.u1, v1: band.v1 });
   }
   setPitchFloorProvider(() => (enhancedRiding?.() && isRiding(player.transportMode) ? _terrainAngle + RR_RIDING.pitchMaxOffset : null));
   let art = null;                          // TR2: the four CFA frames of the mount under you

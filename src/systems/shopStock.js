@@ -40,7 +40,8 @@
 import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // F209: StockHouseContainer's one classic-stream draw
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields, templateByIndex } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { customItemsForGroup } from './rriItems.js';   // AUDIT-RR F3: GetCustomItemsForGroup - the shelf's second loop (DaggerfallLoot.cs:255-287)
 import { createRandomBook } from './books.js';   // B1; A2: CreateRandomBook whole, priced off the book FILE
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
@@ -338,6 +339,24 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
         if (torchesFromItems && group === 'UselessItems2' && templateIndex === OIL_TEMPLATE)
           it.stackCount = 5 + Math.floor(rolls() * 16);   // UnityEngine.Random.Range(5, 20 + 1) - 5..20 inclusive
         add(it);
+      }
+    }
+    // AUDIT-RR F3: DaggerfallLoot.cs:255-287 - the CUSTOM items registered for the group, the same rarity gate
+    // and stock chance, a weapon at RandomMaterial, an armor at RandomArmorMaterial (ApplyArmorSettings is the
+    // class's own variant setter, which the mint runs). `chanceMod == 0 && Transportation -> 20` is the C#'s
+    // own arm for a custom transport item (none registered here; kept for the law's sake).
+    {
+      const customs = customItemsForGroup(group);
+      let customChanceMod = chanceMod;
+      if (customChanceMod === 0 && group === 'Transportation') customChanceMod = 20;
+      for (const templateIndex of customs) {
+        const t = templateByIndex(templateIndex);
+        if (!t || t.rarity > quality) continue;
+        const stockChance = Math.trunc(customChanceMod * 5 * (21 - t.rarity) / 100);
+        if (!dice100(stockChance, rolls())) continue;
+        if (group === 'Weapons') add({ group, templateIndex, material: randomMaterial(level, rolls), flags: 0 });
+        else if (group === 'Armor') add({ group, templateIndex, material: randomArmorMaterial(level, rolls) });
+        else add({ group, templateIndex });
       }
     }
   }

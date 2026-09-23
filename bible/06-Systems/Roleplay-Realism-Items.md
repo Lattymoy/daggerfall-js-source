@@ -233,10 +233,56 @@ The suites that pin DFU's own numbers for the repair price and the
 Sell arm (`repairservice`, `trademodes`) import `modsOff` first; the
 mod's numbers are pinned in `rri2_realism`.
 
+## AUDIT-RR (2026-09-23) - the Items findings
+
+Mac: *"Lets do one more audit."* The audit's frame is on the Roleplay &
+Realism page (four reviewers, the C# beside the port); the findings on
+RRI1 (a4a97604) and RRI2 (d47917cf) are paid here, numbered as the code
+comments carry them (`AUDIT-RR Fn`).
+
+- **F3 - shops never stocked a custom item.** `DaggerfallLoot
+  .StockShopShelf` has a SECOND loop (:255-287) over
+  `GetCustomItemsForGroup`, the same rarity gate and stock chance, a
+  weapon at `RandomMaterial`, an armor at `RandomArmorMaterial`; the
+  port's shelf ran the classic loop alone, so a hauberk or an archer's
+  axe never stood on a shelf. The loop stands after the classic one
+  (`chanceMod == 0 && Transportation -> 20` kept for the law's sake).
+- **F5 - a fur piece weighed as leather.** `ApplyArmorMaterial` runs
+  BEFORE the class's `SetVariant` (ItemBuilder.cs:466-485) and
+  `weightInKg` is an INSTANCE field the fold writes; the port derived
+  weight at read from the template, so the fur variant's baseWeight -2
+  (jerkin) never landed. Every light piece writes `weightInKg`;
+  `unitWeightInKg` answers a stored one; `setItemFields` values the
+  item before the fold.
+- **F6 - random armor was nameless.** The class ctor names the item
+  from its template before `SetVariant` prefixes it (ItemJerkin.cs
+  :29-46); `createRandomArmor` minted a bare record. It mints through
+  `setItemFields`, which runs the fold.
+- **F7 - the forbidden-armor test read the raw material.**
+  `DaggerfallInventoryWindow` reads `item.NativeMaterialValue >> 8`
+  (:1352), the class's VIRTUAL (ItemHauberk.cs:31-34: the chain
+  family); the port read `item.material`, so a leather-drawn mail
+  hauberk was forbidden to a class barred from leather.
+  `rriNativeMaterialValue`.
+- **F8 - the brigandine equipped as plate.** `GetEquipSound` is the
+  class's virtual (ItemJerkin.cs:82-85: EquipLeather whatever the
+  material); `rriEquipSound` answers the clip's NAME (the law stays a
+  leaf) and the equip arm consults it first.
+- **F9 - a mod spell was lost on reload.** The save wrote the spell's
+  index into SPELLS.STD; RRI's nine are past it. A `custom` or `rri`
+  spell is serialised whole.
+- **F10 - ConvertOrcish skipped the loot.** `Items.SearchItems(Weapons)`
+  + `(Armor)` (:691-692): the loot table's rolls are in Items already;
+  the port converted the equip table alone.
+
+Suite `test/auditrr.test.js` (the Items test executes the class
+virtuals, the group registry under each switch and the stored weight;
+the shelf's second loop and the mints are pinned by source).
+
 ## Record
 
 `vendor/roleplay-realism-items/`. Suites `test/rri1_items.test.js` (9),
-`test/rri2_realism.test.js` (11). Campaigns `tools/mutants/rri1.json`
+`test/rri2_realism.test.js` (11), `test/auditrr.test.js` (15, shared with the RR page). Campaigns `tools/mutants/rri1.json`
 (11), `tools/mutants/rri2.json` (18). The shipped set:
 `public/art/roleplay-realism-items/` (280 PNGs), `src/systems/rriIndex.js`
 (generated), `tools/rriExtract.mjs`.

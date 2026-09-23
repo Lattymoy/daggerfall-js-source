@@ -212,19 +212,22 @@ test('RR1 encumbranceEffects: past 75% of MaxEncumbrance the excess x2 takes spe
   reset();
   assert.equal(rrEncumbranceEffect({ carriedWeight: 50, maxEncumbrance: 100 }), null, 'half full: nothing');
   let e = rrEncumbranceEffect({ carriedWeight: 90, maxEncumbrance: 100, liveSpeed: 60, permanentSpeed: 60, currentFatigue: 5000 });
-  assert.equal(e.encOver, (0.9 - 0.75) * 2);
-  assert.equal(e.speedEffect, Math.trunc(60 * 0.3), '18');
-  assert.equal(e.fatigueEffect, Math.trunc(0.3 * 100), '30 raw units');
+  assert.equal(e.encOver, Math.fround(Math.fround(Math.fround(0.9) - 0.75) * 2), 'float32, as the C# (AUDIT-RR F7)');
+  // AUDIT-RR F7: in float32 encOver is 0.29999995, so (int)(60 * encOver) is 17 and (int)(encOver * 100) is 29 - DFU's
+  // own numbers at this band edge; double gave 18 and 30
+  assert.equal(e.speedEffect, 17, '(int)(PermanentSpeed * encOver) in float32');
+  assert.equal(e.fatigueEffect, 29, '(int)(encOver * 100) in float32, raw units');
   e = rrEncumbranceEffect({ carriedWeight: 200, maxEncumbrance: 100, liveSpeed: 10, permanentSpeed: 60, currentFatigue: 50 });
-  assert.equal(e.encPc, 1.2, 'capped at 120%');
+  assert.equal(e.encPc, Math.fround(1.2), 'capped at 120% - the float32 1.2f (AUDIT-RR F7)');
   assert.equal(e.speedEffect, 8, 'Min(LiveSpeed - 2, ...): the live speed never goes under 2');
   assert.equal(e.fatigueEffect, -50, 'Min(CurrentFatigue - 100, 90): negative under 100 - the C#\'s own arithmetic');
   // the seam: a laden player through the fold and a round
-  const player = { stats: { strength: 40, speed: 60 }, activeEffects: [], items: Array.from({ length: 7 }, () => mint({ group: 'Weapons', templateIndex: WEAPONS.Claymore, material: 0 })), health: 20, fatigue: 5000 };
+  // AUDIT-RR F5: the effect is the PLAYER's (the C# reads GameManager.Instance.PlayerEntity) - a foe carrying loot is never slowed
+  const player = { isPlayer: true, stats: { strength: 40, speed: 60 }, activeEffects: [], items: Array.from({ length: 7 }, () => mint({ group: 'Weapons', templateIndex: WEAPONS.Claymore, material: 0 })), health: 20, fatigue: 5000 };
   assert.equal(maxEncumbrance(40), 60);
   const w = carriedWeight(player);
   assert.ok(w > 45 && w <= 60, `seven iron claymores: ${w} kg, past three quarters of 60`);
-  const over = (Math.min(w / 60, 1.2) - 0.75) * 2;
+  const over = Math.fround(Math.fround(Math.fround(Math.min(Math.fround(w / 60), 1.2)) - 0.75) * 2);   // float32, as the C# (AUDIT-RR F7)
   computeEntityMods(player);
   assert.equal(player._mods.stats.speed, -Math.trunc(60 * over), 'the fold: the speed penalty');
   assert.equal(liveStat(player, 'speed'), 60 + player._mods.stats.speed);
@@ -234,6 +237,9 @@ test('RR1 encumbranceEffects: past 75% of MaxEncumbrance the excess x2 takes spe
   player.isResting = true;
   computeEntityMods(player);
   assert.equal(player._mods.stats.speed ?? 0, 0, 'resting: no effect (IsResting guard)');
+  const foe = { ...player, isPlayer: false, isResting: false, _mods: undefined };
+  computeEntityMods(foe);
+  assert.equal(foe._mods.stats.speed ?? 0, 0, 'a foe with the same load: nothing (AUDIT-RR F5)');
   player.isResting = false;
   on('encumbranceEffects', false);
   computeEntityMods(player);
@@ -342,7 +348,7 @@ test('RR1 bedSleeping and the wiring: the three bed models, listed by the interi
   assert.match(rd('src/scenes/interiorContext.js'), /\} else if \(isBedModel\(p\.modelIdNum\)\) \{\n      beds\.push\(\{ cpu, matrix \}\);/);
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /if \(bedSleepingOn\(\)\) interiorCtx\.beds\?\.forEach\(\(bd, i\) => \{/, 'a bed is a target only while the module is on');
-  assert.match(wm, /if \(key\.startsWith\('bed:'\)\) \{\n        interiorKeyCtx\.toggleRest\(\);/, 'BedActivation is the rest gate');
+  assert.match(wm, /if \(key\.startsWith\('bed:'\)\) \{\n        interiorKeyCtx\.toggleRest\(\{ ignoreAllocatedBed: true \}\);/, 'BedActivation is the rest gate, and `new DaggerfallRestWindow(uiManager, true)` (:524) - AUDIT-RR F6');
   assert.match(wm, /joinGuild\(memberships, guild, gameDate\(\), store\);/);
   assert.match(wm, /const doused = rrDouseOnDungeonExit\(playerEntity, \{ isDay: isDayFromMinutes\(Math\.floor\(worldMinutes\(\)\)\) \}\);\n      if \(doused\) townTalk\?\.showOverlay\?\.\(new ActionTextBox\(\[expandItemMacro\(USE_TEXT\.lightDouse, doused\)\]\)\);/, 'the douse on the dungeon exit with the light\'s own box');
   assert.match(wm, /setRrHostSeams\(\{ spawnFoe: \(mobileType, opts\) => standInteriorLooseFoe\(mobileType, opts\) \}\);/);

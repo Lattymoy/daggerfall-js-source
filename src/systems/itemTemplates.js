@@ -131,7 +131,9 @@ export function setItemFields(item) {
   return {
     ...named,
     ...(variant ? { ...variant, rriVariant: true } : {}),
-    value: itemValueOf({ ...named, ...(variant ?? {}) }),
+    // AUDIT-RR F5: ApplyArmorMaterial runs BEFORE the class's SetVariant (ItemBuilder.cs:466-485), so a fur piece's
+    // value is the CHAIN stage's (x2) - the fold to Leather comes after and value is a stored field; priced on `named`
+    value: itemValueOf(named),
   };
 }
 /** JAN1 (2026-09-18, Janome: "when I try to sell certain items I get COST:NaN ... he offers me 0"): THE ONE VALUE

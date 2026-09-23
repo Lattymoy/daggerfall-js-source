@@ -58,15 +58,15 @@
   {
     "name": "RR1-9-the-encumbrance-forgets-the-120-cap",
     "file": "src/systems/rrRealism.js",
-    "old": "  const encPc = Math.min(maxEncumbrance > 0 ? carriedWeight / maxEncumbrance : 0, 1.2);",
-    "new": "  const encPc = maxEncumbrance > 0 ? carriedWeight / maxEncumbrance : 0;",
+    "old": "  const encPc = Math.fround(Math.min(maxEncumbrance > 0 ? Math.fround(carriedWeight / maxEncumbrance) : 0, 1.2));",
+    "new": "  const encPc = Math.fround(maxEncumbrance > 0 ? Math.fround(carriedWeight / maxEncumbrance) : 0);",
     "tests": ["test/rr1_realism.test.js"]
   },
   {
     "name": "RR1-10-the-speed-penalty-can-take-the-live-speed-under-2",
     "file": "src/systems/rrRealism.js",
-    "old": "  const speedEffect = Math.min(liveSpeed - 2, Math.trunc(permanentSpeed * encOver));",
-    "new": "  const speedEffect = Math.trunc(permanentSpeed * encOver);",
+    "old": "  const speedEffect = Math.min(liveSpeed - 2, Math.trunc(Math.fround(permanentSpeed * encOver)));",
+    "new": "  const speedEffect = Math.trunc(Math.fround(permanentSpeed * encOver));",
     "tests": ["test/rr1_realism.test.js"]
   },
   {
@@ -130,8 +130,8 @@
   {
     "name": "RR1-19-the-resting-guard-is-lost",
     "file": "src/systems/rrInstall.js",
-    "old": "  if (!rrModule('encumbranceEffects') || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0)) return null;",
-    "new": "  if (!rrModule('encumbranceEffects') || !entity?.stats || !((entity.health ?? 0) > 0)) return null;",
+    "old": "  if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0)) return null;",
+    "new": "  if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || !((entity.health ?? 0) > 0)) return null;",
     "tests": ["test/rr1_realism.test.js"]
   }
 ]

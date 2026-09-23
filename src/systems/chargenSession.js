@@ -9,7 +9,7 @@
 // characters/playerEntity.js:5). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:153/:1225-1227 both import and run
+// 126/:1364-1366 and exterior.js:159/:1232-1234 both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -35,6 +35,7 @@ import { customSpellSetIndex } from './customClass.js';   // U20a
 import { SOCIAL_GROUP_COUNT, FactionFile } from '../formats/factionFile.js';   // U20a + S25
 import { attachFactionRep } from './factionRep.js';   // S25
 import { createRegionConditions } from './regionConditions.js';
+import { clearWorldDataVariants } from './worldDataVariants.js';   // AUDIT-RR F39: PlayerEntity.Reset (:818) clears the world variants at every new game
 import { bootstrapRegionPower } from './regionPower.js';   // AUDIT 26 F107   // PlayerEntity.InitializeRegionData (:2189-2218), at every new game
 // ORL1: the leveling choice - its screen, and the two names the
 // answer is spelled with.
@@ -128,7 +129,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:265) early-returns for a
+  // updateEquippedArmorValues (equip.js:266) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -148,6 +149,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // StartGameBehaviour.cs:433 InitializeRegionData - the same store the
   // wizard's path mints, on the second construction copy above.
   playerEntity.regionConditions = createRegionConditions();
+  clearWorldDataVariants();   // AUDIT-RR F39: PlayerEntity.Reset (:818) - a new game starts with no variant set
   // AUDIT 26 F107: InitializeRegionData's own tail (:2211-2217).
   bootstrapRegionPower(playerEntity.factionRep, { regionConditions: playerEntity.regionConditions });
   // ORL1: THE SKIP IS NOT A CHOICE, so it takes the port's own law.
@@ -194,7 +196,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:265) early-returns for a
+  // updateEquippedArmorValues (equip.js:266) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -239,6 +241,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // recorded a blank store. Nothing in the mint reads the character,
   // so it sits with the rest of what creation hands out.
   playerEntity.regionConditions = createRegionConditions();
+  clearWorldDataVariants();   // AUDIT-RR F39: PlayerEntity.Reset (:818) - a new game starts with no variant set
   bootstrapRegionPower(playerEntity.factionRep, { regionConditions: playerEntity.regionConditions });   // AUDIT 26 F107: InitializeRegionData's tail (:2211-2217)
   return playerEntity;
 }
@@ -365,7 +368,7 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:2573, exterior.js:1285,
+  // through this function - world.js:2576, exterior.js:1292,
   // dungeonContext.js:2328 - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game

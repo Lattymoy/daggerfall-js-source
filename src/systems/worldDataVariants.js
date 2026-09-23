@@ -93,6 +93,7 @@ export function getLocationVariant(locationKey) {
 }
 /** GetBlockVariant(blockName) (:190-206): the last location's, else any's. */
 export function getBlockVariantHere(blockName) {
+  if (lastLocationKey < 0) return NO_VARIANT;   // AUDIT-RR F35: `if (lastLocationKey >= 0)` (:192) - a negative key asks nothing, not even AnyLocationKey
   return blockVariants.get(blockKey(lastLocationKey, blockName)) ?? blockVariants.get(blockKey(ANY_LOCATION_KEY, blockName)) ?? NO_VARIANT;
 }
 /** GetBuildingVariant(ref key, blockName) (:213-236): only asked for a key

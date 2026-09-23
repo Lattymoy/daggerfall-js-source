@@ -303,7 +303,7 @@ export function addItem(list, item, position = 'back') {
  * are called by name rather than respelled.
  *
  * ROAD-Ar R5 - THE REMAINDER, RESTATED. A2 recorded two surviving
- * inline re-spellings of this member (equip.js:245 and
+ * inline re-spellings of this member (equip.js:246 and
  * potionMakerWindow.js:167, both on paths where nothing stackable is
  * equippable) and missed a THIRD, which was the one on the main path:
  * itemTransfer._applyTransfer's partial arm, reached by every
@@ -483,6 +483,9 @@ export function weightForMaterial(weightKg, weaponMaterial) {
  *  zero it, that flag gates only encumbrance. */
 export function unitWeightInKg(item) {
   const t = templateByIndex(item.templateIndex);   // SURV2: custom rows too
+  // AUDIT-RR F5: DFU's weightInKg is an INSTANCE field (GetWeight reads it, DaggerfallUnityItem.cs); an item that carries
+  // one - a fur piece after its class's fold, a Feather Weight enchantment's 0.25 - answers it, the derivation is for the rest
+  if (Number.isFinite(item.weightInKg)) return item.weightInKg + (Number.isFinite(item.water) && item.water > 0 ? item.water : 0);
   let base = t ? t.baseWeight : 0;
   if (Number.isFinite(item.water) && item.water > 0) base += item.water;   // SURV2: a waterskin weighs its water
   if (item.group === 'Weapons' && item.name !== 'Arrow' && item.material != null) {

@@ -530,7 +530,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
 test('S40 hosts: all four can now rest, and each supplies its own place', () => {
   // The interior host: the key arm, the place bag, and the deps.
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /mountInterior\(new RestWindow\(interiorRestDeps\)\);/);
+  assert.match(wm, /mountInterior\(new RestWindow\(interiorRestDeps, ignoreAllocatedBed\)\);/);   // AUDIT-RR F6: BedActivation's `true` rides through
   // The bag is a LAW now, so this RUNS it. It used to be pinned by
   // regexes over its own source inside the host closure, and a review
   // round proved that hollow: flipping `insideBuilding` to false there

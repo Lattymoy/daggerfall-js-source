@@ -171,7 +171,7 @@ export class BlocksFile {
   /** Load a block into memory and decompose it for use. */
   loadBlock(block) {
     if (block < 0 || block >= this.count) return false;
-    if (this._blocks[block] !== null) return true;
+    if (this._blocks[block] !== null && this._blocks[block].bytes !== null) return true;   // AUDIT-RR F38: a replacement stored in the slot (GetBlock) has no MemoryFile - LoadBlock reads the record again (BlocksFile.cs:303)
 
     if (this.autoDiscard && this._lastBlock !== -1) this.discardBlock(this._lastBlock);
 

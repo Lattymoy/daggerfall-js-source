@@ -30,7 +30,7 @@ import {
 import { SKILL_NAMES, permanentSkillValue } from '../systems/skills.js';
 import { trainingMax } from '../systems/guildServices.js';   // RR2: the cap the refined price scales against
 import { rrTrainingCost, rrIntensiveCost, rrIntensiveOffered, RR_WEEK_BUTTON, RR_INTENSIVE_DAYS, RR_INTENSIVE_SKILL_POINTS, RR_TRAINING_LINES } from '../systems/rrRealism.js';   // RR2: GuildServiceTrainingRR's laws
-import { goldAmount } from '../systems/court.js';
+import { goldAmount, totalGoldAmount } from '../systems/court.js';   // AUDIT-RR F24: GetGoldAmount (PlayerEntity.cs:1313-1316) counts letters of credit
 import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 
 /** DaggerfallInputMessageBox's own field width for the donation box
@@ -311,7 +311,7 @@ export function buildRefinedTrainingFlow(entity, guild, membership, deps) {
       const skillName = SKILL_NAMES[skill] ?? String(skill);
       const ctx = { ...baseCtx, amount: trainingCost };
       const pay = (cost, train) => {
-        if (goldAmount(entity) < cost) return [{ rows: macroRows(rows, NOT_ENOUGH_GOLD_ID, ctx) }];
+        if (totalGoldAmount(entity) < cost) return [{ rows: macroRows(rows, NOT_ENOUGH_GOLD_ID, ctx) }];   // `playerEntity.GetGoldAmount() < cost` (:142, :155)
         return train();
       };
       const trainOnce = (cost) => {
@@ -325,7 +325,8 @@ export function buildRefinedTrainingFlow(entity, guild, membership, deps) {
         const result = trainSkill(entity, skill, now(), rolls);
         applyTraining?.(result, intensiveCost);
         const L = RR_TRAINING_LINES;
-        return [{ rows: [{ text: L.trainingSkillIntense1, center: true }, { text: L.trainingSkillIntense2.replace('{0}', skillName), center: true }, { text: L.trainingSkillIntense3, center: true }] }];
+        // AUDIT-RR F23: TrainSkill pushes DFU's own MessageBox(TrainSkillId) (DaggerfallGuildServiceTraining.cs:119-128) and the intense box is pushed OVER it (:174-191) - the player reads the mod's three lines, then the record
+        return [{ rows: [{ text: L.trainingSkillIntense1, center: true }, { text: L.trainingSkillIntense2.replace('{0}', skillName), center: true }, { text: L.trainingSkillIntense3, center: true }] }, { rows: macroRows(rows, result.textId, ctx) }];
       };
       if (rrIntensiveOffered(intensive, skillValue, max)) {
         const L = RR_TRAINING_LINES;

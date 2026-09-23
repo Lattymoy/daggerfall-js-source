@@ -287,5 +287,13 @@ export function convertOrcish(entity, eq, rolls = Math.random) {
     a.material = ARMOR_MATERIALS.Orcish;
     if (a.item) { a.item.material = ARMOR_MATERIALS.Orcish; delete a.item.maxCondition; mintCondition(a.item); a.item.value = itemBaseValue(a.item); }
   }
+  // AUDIT-RR F10: `Items.SearchItems(Weapons)` + `(Armor)` (:691-692) - the loot table's rolls are in Items already
+  // (GenerateItems runs before SetEnemyEquipment, EnemyEntity.cs:330-347), so they convert too
+  for (const it of entity.items ?? []) {
+    if (it.group !== 'Weapons' && it.group !== 'Armor') continue;
+    if (!orcish(it.material ?? 0)) continue;
+    it.material = it.group === 'Weapons' ? WEAPON_MATERIALS.Orcish : ARMOR_MATERIALS.Orcish;
+    delete it.maxCondition; mintCondition(it); it.value = itemBaseValue(it);
+  }
   return eq;
 }

@@ -173,7 +173,7 @@ test('RRI1 the CurrentVariant setter, once at the mint: a plate material is Brig
   try {
     fresh();
     assert.deepEqual(rriVariantFields({ templateIndex: 520, name: 'Jerkin', material: M.Chain, weightInKg: 8 }), { name: 'Fur Jerkin', material: M.Leather, message: 1, weightInKg: 6 });
-    assert.deepEqual(rriVariantFields({ templateIndex: 523, name: 'Boots', material: M.Chain }), { name: 'Fur Boots', material: M.Leather, message: 1 }, 'the other light pieces keep their weight');
+    assert.deepEqual(rriVariantFields({ templateIndex: 523, name: 'Boots', material: M.Chain }), { name: 'Fur Boots', material: M.Leather, message: 1, weightInKg: 1.4 }, 'the other light pieces keep the CHAIN stage\'s weight - the template\'s, stored (AUDIT-RR F5)');
     assert.deepEqual(rriVariantFields({ templateIndex: 520, name: 'Jerkin', material: M.Iron }), { name: 'Brigandine Jerkin' });
     assert.deepEqual(rriVariantFields({ templateIndex: 520, name: 'Jerkin', material: M.Leather }), {}, 'leather is leather');
     assert.deepEqual(rriVariantFields({ templateIndex: 515, name: 'Hauberk', material: M.Daedric }), { name: 'Mail Hauberk' });
@@ -297,7 +297,8 @@ test('RRI1 the random makers: CreateRandomWeapon rolls over 19 + the registered 
     assert.equal(createRandomWeapon(1, at(18, 21)).templateIndex, 131, 'slot 18: arrows, as before');
     const hauberk = createRandomArmor(1, at(11, 23));
     assert.equal(hauberk.templateIndex, 515, 'slot 11 of 23: the Hauberk');
-    if (hauberk.material >= M.Iron) assert.equal(hauberk.name, 'Mail Hauberk'); else assert.equal(hauberk.name, undefined);
+    if (hauberk.material >= M.Iron) assert.equal(hauberk.name, 'Mail Hauberk'); else assert.equal(hauberk.name, 'Hauberk');   // AUDIT-RR F6: the ctor's template name, then the class's prefix
+    assert.ok(Number.isFinite(hauberk.value), 'priced at the mint, at the rolled material');
     assert.equal(createRandomArmor(1, at(22, 23)).templateIndex, 526);
     assert.equal(createRandomArmor(1, at(10, 23)).templateIndex, 112, 'slot 10: the tower shield, as before');
     setModSetting(RRI_VENDOR, 'Enabled', false);

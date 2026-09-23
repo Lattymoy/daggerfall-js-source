@@ -3880,8 +3880,8 @@ export function createWorldModes(host) {
         variablePrice: rrSetting('RefinedTraining.variableTrainingPrice') === true, intensive: rrSetting('RefinedTraining.intensiveTraining') === true,
         // TrainSkillIntense (GuildServiceTrainingRR.cs:130-134): four days off the clock and four permanent points, before the fifth session
         applyIntensive: (skill, days, points) => {
-          if (playerEntity.skills && typeof playerEntity.skills === 'object') playerEntity.skills[skill] = permanentSkillValue(playerEntity, skill) + points;   // SetPermanentSkillValue
-          interiorTicker.advance(days * MINUTES_PER_DAY);
+          interiorTicker.advance(days * MINUTES_PER_DAY);   // RaiseTime(SecondsPerDay * 4) first (:171) - AUDIT-RR F30: the C#'s order
+          if (playerEntity.skills && typeof playerEntity.skills === 'object') playerEntity.skills[skill] = permanentSkillValue(playerEntity, skill) + points;   // SetPermanentSkillValue (:172)
         },
         guildTitle: getTitle(membership, playerEntity, guild),
         shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,   // MAC-BUG2: NOT_ENOUGH_GOLD_ID is a TRADE record too
@@ -4736,7 +4736,7 @@ export function createWorldModes(host) {
           variantPerson: (pn) => rrVariantPerson(pn, {
             buildingType: interiorBuilding?.buildingType ?? -1, quality: interiorBuilding?.quality ?? 0,
             nameSeed: staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 }).nameSeed,
-            worldClimate: hit.dfLocation?.climate?.climateType ?? null,
+            worldClimate: hit.dfLocation?.climate?.worldClimate ?? null,   // AUDIT-RR F13: `climate` IS the settings object; its worldClimate (223-232) is what GetWorldClimateSettings takes - climateType (0-3) fell to the Breton arm everywhere
           }),
           // ROAD-C c2/S9: SetupBeacons(door)'s building arm - the
           // entrance beacon stands at the door walked through
@@ -5035,7 +5035,7 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('bed:')) {
-        interiorKeyCtx.toggleRest();   // RR1: BedActivation (RoleplayRealism.cs:464-506) IS DaggerfallUI's rest gate, then the window
+        interiorKeyCtx.toggleRest({ ignoreAllocatedBed: true });   // RR1: BedActivation (RoleplayRealism.cs:464-506) IS DaggerfallUI's rest gate, then the window; AUDIT-RR F6: `new DaggerfallRestWindow(uiManager, true)` (:524) - you rest in the bed you clicked, not the room's allocated one
         return true;
       }
       if (key.startsWith('person:')) {
@@ -6330,7 +6330,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7913's own wave-46 note); the interior
+          // a blow (world.js:7885's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7147,7 +7147,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3442`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3469`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -7595,7 +7595,7 @@ export function createWorldModes(host) {
     // LOITER free of the camping refusal and the Vagrancy charge -
     // LoiterButton never calls it (:693-706). Gating at open would
     // have made loitering in a city a crime.
-    toggleRest() {
+    toggleRest({ ignoreAllocatedBed = false } = {}) {   // AUDIT-RR F6: the bed's own click hands DFU's second constructor argument through
       if (interiorOverlay) return;
       const rb = racialRestBlock(playerEntity, Math.floor(interiorTicker.classicMinutes));   // V2b
       const d = restDecision({
@@ -7636,7 +7636,7 @@ export function createWorldModes(host) {
         if (lines) mountInterior(new ActionTextBox(lines));
         return;
       }
-      mountInterior(new RestWindow(interiorRestDeps));
+      mountInterior(new RestWindow(interiorRestDeps, ignoreAllocatedBed));
     },
   };
 
@@ -8613,9 +8613,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3032-3054), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3059-3081), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5258). So an F9 pressed in a shop
+     *  unconditionally (world.js:5230). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8642,7 +8642,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5350)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5322)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8652,7 +8652,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5463`
+     *  HARD2c: this used to spell them out, and named `world.js:5435`
      *  and `dungeonContext.js:5805` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

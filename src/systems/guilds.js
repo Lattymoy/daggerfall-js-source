@@ -609,12 +609,12 @@ export const isJoinableByApplication = (guild) => !INVITATION_ONLY.includes(guil
  *  rather than a chain, and the join is AddMembership -> Guild.Join()
  *  (:122-126, :309-313), which is joinGuild - rank 0 and today's date,
  *  not a rank the quest awarded. */
-export function guildInitiationQuestEnded(memberships, questName, questSuccess, now) {
+export function guildInitiationQuestEnded(memberships, questName, questSuccess, now, store = null) {
   if (!questSuccess) return [];
   const joined = [];
   for (const guild of [GUILDS.ThievesGuild, GUILDS.DarkBrotherhood]) {
     if (questName !== guild.initiationQuest) continue;
-    joinGuild(memberships, guild, now);
+    joinGuild(memberships, guild, now, store);   // AUDIT-RR F2: AddMembership runs the class's Join() (GuildManager.cs:122-126) - the underworld floor (ThievesGuildRR.cs:91-99) needs the store this path never handed
     joined.push(guild);
   }
   return joined;

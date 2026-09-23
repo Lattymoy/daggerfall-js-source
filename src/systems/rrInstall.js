@@ -6,7 +6,7 @@
 // port writes at install (the Features row says "when the game next
 // loads"). The laws themselves are systems/rrRealism.js; this module is
 // the one that imports the seams they hang on.
-import { registerFormulaOverride, formulaOverride } from '../combat/formulas.js';
+import { registerFormulaOverride, formulaOverride, maxEncumbrance } from '../combat/formulas.js';
 import { registerClimbingChanceOverride } from '../player/climbing.js';
 import { currentWeaponPose } from '../combat/playerWeapon.js';
 import { WEAPON_TYPES } from '../combat/fpsWeapon.js';
@@ -18,10 +18,9 @@ import { registerEntityFold } from './entityMods.js';
 import { overridePotionRecipes } from './potions.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
 import { setUnderworldRule, setGuildExpelledHook, setGuildSkillsOverride } from './guilds.js';
-import { setTrainingSkillsOverride } from './guildServices.js';
+import { setTrainingSkillsOverride, registerMerchantService } from './guildServices.js';
 import { carriedWeight } from './inventory.js';
-import { maxEncumbrance } from '../combat/formulas.js';
-import { liveStat } from './statMods.js';
+import { liveStat, maxFatigue } from './statMods.js';
 import { equipTableOf, EQUIP_SLOTS, lowerCondition } from './equip.js';
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
 import { rriAnimTimeOverride } from './rriKits.js';
@@ -32,7 +31,6 @@ import { installRoleplayRealismArt } from './rrVariants.js';
 import { registerQuestList } from './quest/questLists.js';
 import { addIntoQuestTables } from './quest/tables.js';
 import { registerCustomFaction } from '../formats/factionFile.js';
-import { registerMerchantService } from './guildServices.js';
 import { RR_QUEST_LIST, RR_CUSTOM_FACTIONS, RR_PLACES_TABLE, RR_FACTIONS_TABLE, RR_FACTION_IDS, RR_TEXT, rrCustomArmorService } from './rrQuestLine.js';
 import {
   rrEnabled, rrModule, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage, rrClimbingChance, rrMeleeWeaponAnimTime,
@@ -46,6 +44,10 @@ import {
  *  RR2's riding reads (PlayerGPS.IsPlayerInTown, TransportManager's mode,
  *  PlayerMotor.IsRiding). Set by the world hosts at mount. */
 const _host = { spawnFoe: null, inTown: null, transportMode: null, riding: null };
+/** AUDIT-RR F4: FoeSpawner.cs never gives up (:53-80, one try per frame); the port's
+ *  placer is a loop, so the squad's budget is a long one - 600 tries, ten seconds
+ *  of DFU's frames. */
+export const RR_SQUAD_PLACE_ATTEMPTS = 600;
 export function setRrHostSeams(seams = {}) { Object.assign(_host, seams); }
 export const rrHostSeams = () => _host;
 
@@ -74,7 +76,7 @@ export function installRoleplayRealism() {
     if (!e) return;
     // DecreaseFatigue(fatigueEffect, false): raw units, no multiplier; SetFatigue clamps
     if (sinks?.drainFatigue && e.fatigueEffect > 0) sinks.drainFatigue(e.fatigueEffect);
-    else entity.fatigue = Math.max(0, (entity.fatigue ?? 0) - e.fatigueEffect);
+    else entity.fatigue = Math.min(maxFatigue(entity), Math.max(0, (entity.fatigue ?? 0) - e.fatigueEffect));   // AUDIT-RR F8: SetFatigue's two clamps (DaggerfallEntity.cs:350-360)
   });
   registerEntityFold('roleplay-realism-encumbrance', (entity) => {
     const e = encumbranceOf(entity);
@@ -90,7 +92,11 @@ export function installRoleplayRealism() {
     const rule = rrUnderworldRule(guild?.name);
     if (!rule?.squad || !_host.spawnFoe) return;
     for (const wave of rule.squad(entity?.level ?? 1)) {
-      for (let i = 0; i < wave.count; i++) _host.spawnFoe(wave.mobileType, { minDistance: wave.minDistance, maxDistance: wave.maxDistance });
+      // AUDIT-RR F4: CreateFoeSpawner(false, type, n, min, max) - no line-of-sight check, the mod's own
+      // distances, and FoeSpawner retries every frame until every foe stands (FoeSpawner.cs:53-80); the
+      // port's placer takes an attempt budget, so the squad is given a long one rather than the 12 a
+      // conjured foe gets
+      for (let i = 0; i < wave.count; i++) _host.spawnFoe(wave.mobileType, { minDistance: wave.minDistance, maxDistance: wave.maxDistance, lineOfSightCheck: false, attempts: RR_SQUAD_PLACE_ATTEMPTS });
     }
   });
   setGuildSkillsOverride((guildName) => rrFightersGuildSkills(guildName));
@@ -125,7 +131,9 @@ export function installRoleplayRealism() {
   // enemyAppearance (:186-189): EnemyBasics written at Awake - here at install, while the switch is on
   if (rrModule('enemyAppearance')) applyEnemyAppearance(ENEMY_BASICS);
 
-  // purificationPotion (:190-193): the effect template re-registered with its recipes
+  // purificationPotion (:190-193): the effect template re-registered with its recipes. AUDIT-RR F9: read ONCE, here -
+  // which is the C#'s cadence for every switch (InitMod reads them into statics; a pane change waits for the next load),
+  // so this arm and enemyAppearance are the two that keep DFU's own timing while the rest read live
   overridePotionRecipes(rrModule('purificationPotion') ? RR_POTION_RECIPES : []);
 
   // classicStrengthDamageBonus (:202-205): DamageModifier
@@ -170,7 +178,7 @@ export function installRoleplayRealism() {
  *  PermanentSpeed, CurrentFatigue - under the guards the port can answer
  *  (not resting, alive; a paused game or a fade runs no round here). */
 function encumbranceOf(entity) {
-  if (!rrModule('encumbranceEffects') || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0)) return null;
+  if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0)) return null;   // AUDIT-RR F5: the C# reads GameManager.Instance.PlayerEntity alone (:582) - a foe's loot is not its burden
   return rrEncumbranceEffect({
     carriedWeight: carriedWeight(entity),
     maxEncumbrance: maxEncumbrance(liveStat(entity, 'strength')),

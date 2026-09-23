@@ -183,7 +183,11 @@ function lightVariant(item, { jerkin = false } = {}) {
     name = RRI_TEXT.fur + name;
     out.material = ARMOR_MATERIAL.Leather;
     out.message = 1;
-    if (jerkin) out.weightInKg = (item.weightInKg ?? 8) - 2;
+    // AUDIT-RR F5: weightInKg is a stored field ApplyArmorMaterial left at the template's for Chain (ItemBuilder.cs:495-497:
+    // only Leather halves it) and the fold does not touch; the jerkin alone takes 2 kg off (ItemJerkin.cs:43). Written
+    // here so the port's derived read (which would halve a Leather piece) answers the stored number instead.
+    const stored = Number.isFinite(item.weightInKg) ? item.weightInKg : (RRI_TEMPLATES.find((t) => t.index === item.templateIndex)?.baseWeight ?? 0);   // the mod's own row - no reach into the registry this module feeds
+    out.weightInKg = jerkin ? stored - 2 : stored;
   }
   if (name !== (item.name ?? '')) out.name = name;
   return out;
@@ -261,6 +265,19 @@ export function customItemClass(templateIndex) {
   if (!cls) return null;
   if (!rriModule(cls.group === 'Weapons' ? 'newWeapons' : 'newArmor')) return null;   // rriModule reads Enabled too
   return cls;
+}
+
+/** AUDIT-RR F7: the class's NativeMaterialValue virtual (ItemHauberk.cs:31-34, ItemJerkin.cs:65-68) - what
+ *  DaggerfallInventoryWindow's forbidden-armor test reads (:1352); a classic item answers its own material. */
+export function rriNativeMaterialValue(item) {
+  const cls = item ? customItemClass(item.templateIndex) : null;
+  return cls?.nativeMaterialValue ? cls.nativeMaterialValue(item) : (item?.material ?? 0);
+}
+/** AUDIT-RR F8: the class's GetEquipSound virtual (ItemJerkin.cs:82-85 - EquipLeather whatever the material),
+ *  by the clip's NAME (this law is a leaf; the equip system owns the clip table); null for a classic item. */
+export function rriEquipSound(item) {
+  const cls = item ? customItemClass(item.templateIndex) : null;
+  return cls?.equipSound ?? null;
 }
 
 /** ItemHelper.GetCustomItemsForGroup: the registered custom template

@@ -145,7 +145,7 @@ test('RR2 the decision per person: the two switches, the face override for the b
   assert.match(rd('src/scenes/dataPipeline.js'), /flatFaceOverride\(archive, record\) \?\? flats\?\.faceIndex\(archive, record\) \?\? -1/, 'the face lookup reads the override first');
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /variantPerson: \(pn\) => rrVariantPerson\(pn, \{\s*buildingType: interiorBuilding\?\.buildingType \?\? -1, quality: interiorBuilding\?\.quality \?\? 0,/);
-  assert.match(wm, /worldClimate: hit\.dfLocation\?\.climate\?\.climateType \?\? null,/);
+  assert.match(wm, /worldClimate: hit\.dfLocation\?\.climate\?\.worldClimate \?\? null,/, 'AUDIT-RR F13: the WORLD climate (223-232), not the base type');
   reset();
 });
 
@@ -195,8 +195,8 @@ test('RR2 riding laws: CanRun, the axis limits, the terrain angle and its averag
   assert.ok(Math.abs(rrRidingYAdj(30, 5) - 39) < 1e-9);
   // the band (:303-320)
   const band = rrRidingNeckBand(50);
-  assert.ok(Math.abs(band.u1 - 0.84) < 1e-12 && band.u0 === 0.06 && band.v1 === 0.2 && band.widthTrim === 14);
-  assert.ok(Math.abs(band.v0 - (0.2 - 0.5)) < 1e-12);
+  assert.ok(Math.abs(band.u1 - 0.84) < 1e-12 && band.u0 === 0.06 && band.widthTrim === 14);
+  assert.ok(Math.abs(band.v0 - 0.8) < 1e-12 && Math.abs(band.v1 - (0.8 + 0.5)) < 1e-12, 'AUDIT-RR F14: the bottom fifth of the sprite - Unity\'s v = 0 is the bottom row, the port\'s the top');
   // HandleCharge's blow (:206-210): Range(min, max + 1) + Agility / 10 + Willpower / 10
   assert.equal(rrChargeDamage({ minBase: 3, maxBase: 7, agility: 55, willpower: 68, roll: 0 }), 3 + 5 + 6);
   assert.equal(rrChargeDamage({ minBase: 3, maxBase: 7, agility: 55, willpower: 68, roll: 0.999 }), 7 + 5 + 6, 'the max is reachable');
@@ -271,8 +271,8 @@ test('RR2 riding seams: CanRun through the host reads, the axes clamped, the loo
   assert.equal(last[0].uv, null);
   assert.ok(last[1], 'and the band under it');
   assert.ok(Math.abs(last[1].rect.w - (100 - 14) * (last[0].rect.w / 100)) < 1e-9, 'width - 14');
-  assert.ok(last[1].uv.u0 === 0.06 && Math.abs(last[1].uv.u1 - 0.84) < 1e-12 && last[1].uv.v1 === 0.2);
-  assert.ok(Math.abs(last[1].uv.v0 - (0.2 - yAdj / 100)) < 1e-9);
+  assert.ok(last[1].uv.u0 === 0.06 && Math.abs(last[1].uv.u1 - 0.84) < 1e-12 && last[1].uv.v0 === 0.8);
+  assert.ok(Math.abs(last[1].uv.v1 - (0.8 + yAdj / 100)) < 1e-9, 'AUDIT-RR F14');
   assert.ok(Math.abs(pitchFloor() - Math.min(((angle + 18) * Math.PI) / 180, PITCH_FLOOR)) < 1e-9, 'the rig set the floor at terrainAngle + 18');
   enhanced = null;
   assert.equal(pitchFloor(), PITCH_FLOOR, 'off: DFU\'s floor');
@@ -284,19 +284,26 @@ test('RR2 riding seams: CanRun through the host reads, the axes clamped, the loo
 test('RR2 the trample and the charge on the hosts: the contacts each frame, the walker retired, the watchman minted where they stood, the installs', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(rrRidingOn\(\) && player\.riding && player\.isRunning\) rrRidingContacts\(\);/, 'TrampleCivilians && IsRiding && IsRunning, after the rig\'s frame');
-  assert.match(w, /if \(rrRidingSetting\('TrampleCivilians'\) === true\) \{/);
-  assert.match(w, /const out = rrTrampleOutcome\(\{ isGuard: !!person\.guard, female: person\.gender === GENDERS\.Female \}\);/);
-  assert.match(w, /hitEffects\.showBloodSplash\(0, \[feet\[0\] \+ fwd\[0\] \* 2, feet\[1\] \+ 1, feet\[2\] \+ fwd\[2\] \* 2\], fwd, LETHAL_HIT\)/, 'ShowBloodSplash(0, BloodPos())');
-  assert.match(w, /audio\.playOneShot\(SOUND\[out\.clip\], _travelSoundsOff \? 0 : 1\)/, 'RidingVolumeScale');
-  assert.match(w, /if \(out\.spawnGuards\) _spawnGuards\(true\);/, 'SpawnCityGuards(true)');
-  assert.match(w, /cityGuards\.spawnCityGuard\(\[\.\.\.seat\.pos\], person\.facingYaw \?\? cam\.yaw, \[\.\.\.feet\]\)\.then\(\(g\) => \{ if \(g\) rrChargeFoe\(g, fwd\); \}\)/, 'SpawnCityGuard + HandleCharge');
-  assert.match(w, /setCrimeCommitted\(playerEntity, CRIMES\[out\.crime\]\);/);
-  assert.match(w, /p\.population\?\.retire\(person\)/, 'Motor.gameObject.SetActive(false)');
-  assert.match(w, /f\._rrCharged = true;/, 'PickpocketByPlayerAttempted, the latch');
-  assert.match(w, /f\.ai\.knockbackSpeed = RR_RIDING\.chargeKnockback; f\.ai\.knockbackDir = \[\.\.\.direction\];/);
-  assert.match(w, /playerEntity\.fatigue = Math\.max\(0, \(playerEntity\.fatigue \?\? 0\) - FATIGUE_LOSS\.Default \* RR_RIDING\.chargeFatigueMultiplier\);/);
-  assert.match(w, /rrChargeDamage\(\{ minBase: handToHandMinDamage\(h2h\), maxBase: handToHandMaxDamage\(h2h\), agility: liveStat\(playerEntity, 'agility'\), willpower: liveStat\(playerEntity, 'willpower'\), roll: Math\.random\(\) \}\)/);
-  assert.match(w, /setRrHostSeams\(\{ inTown: \(\) => _isPlayerInTownStrict\(\), transportMode: \(\) => player\.transportMode, riding: \(\) => player\.riding \}\);/);
+  // AUDIT-RR F15: the contacts live in systems/rrRidingHost.js now and BOTH outdoor hosts stand one on their own reads
+  const rh = rd('src/systems/rrRidingHost.js');
+  assert.match(rh, /f\._rrCharged = true;/, 'PickpocketByPlayerAttempted, the latch');
+  assert.match(rh, /f\.ai\.knockbackSpeed = RR_RIDING\.chargeKnockback; f\.ai\.knockbackDir = \[\.\.\.direction\];/);
+  assert.match(rh, /playerEntity\.fatigue = Math\.max\(0, \(playerEntity\.fatigue \?\? 0\) - FATIGUE_LOSS\.Default \* RR_RIDING\.chargeFatigueMultiplier\);/);
+  assert.match(rh, /rrChargeDamage\(\{ minBase: handToHandMinDamage\(h2h\), maxBase: handToHandMaxDamage\(h2h\), agility: liveStat\(playerEntity, 'agility'\), willpower: liveStat\(playerEntity, 'willpower'\), roll: rolls\(\) \}\)/);
+  assert.match(rh, /if \(isGuardRecord\(f\)\) hurtGuard\(f, damage, at\);\s*else damageFoe\(f, damage, at\);/, 'AUDIT-RR F17: DamageHealthFromSource - no knock direction handed to the weapon path');
+  assert.match(rh, /const out = rrTrampleOutcome\(\{ isGuard: !!person\.guard, female: person\.gender === GENDERS\.Female \}\);/);
+  assert.match(rh, /if \(out\.clip\) playClip\(SOUND\[out\.clip\], ridingVolumeScale\(\)\);/, 'AUDIT-RR F16: RidingVolumeScale');
+  assert.match(rh, /spawnCityGuard\(\[\.\.\.seat\.pos\], person\.facingYaw \?\? yaw\(\), \[\.\.\.at\]\)\)\.then\(\(g\) => \{ if \(g\) chargeFoe\(g, fwd\); \}\)/, 'SpawnCityGuard + HandleCharge');
+  assert.match(rh, /if \(out\.remove\) \{ person\.trampled = true; retire\(person\); \}/);
+  for (const h of ['world', 'exterior']) {
+    const s = rd(`src/scenes/${h}.js`);
+    assert.match(s, /const rrRiding = createRrRidingContacts\(\{/, `${h}: stands the contacts`);
+    assert.match(s, /damageFoe: \(f, damage, feet\) => exteriorFoes\.damageFoe\(f, damage, feet, null, \{ kind: 'melee' \}\),/, `${h}: no knock direction`);
+    assert.match(s, /voice: \(f\) => enemyHeavyPainVoice\(f\),/, `${h}: AUDIT-RR F18 - the heavy pain cry`);
+    assert.match(s, /setRrHostSeams\(\{ inTown: \(\) => _isPlayerInTownStrict\(\), transportMode: \(\) => player\.transportMode, riding: \(\) => player\.riding \}\);/, `${h}: the seams`);
+  }
+  assert.match(rd('src/scenes/exterior.js'), /if \(rrRidingOn\(\) && player\.riding && player\.isRunning\) rrRiding\.contacts\(\);/, 'the fixed-city host runs them too (AUDIT-RR F15)');
+  assert.match(w, /ridingVolumeScale: \(\) => \(_travelSoundsOff \? 0 : RIDING_VOLUME_SCALE\),/);
   for (const h of ['world', 'exterior']) {
     const s = rd(`src/scenes/${h}.js`);
     assert.match(s, /lookPitch: \(\) => cam\.pitch, lookYaw: \(\) => cam\.yaw, groundHeightAt: \(x, z\) => (heightAt|collider\.heightAt)\(x, z\),/, `${h}: the rig's reads`);
@@ -414,7 +421,7 @@ test('RR2 refined training wiring: the window swapped under the switch, the host
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /const refined = rrRefinedTrainingOn\(\);\s*flow = \(refined \? buildRefinedTrainingFlow : buildTrainingFlow\)\(playerEntity, guild, membership, \{/, 'RegisterCustomUIWindow(GuildServiceTraining, GuildServiceTrainingRR)');
   assert.match(wm, /variablePrice: rrSetting\('RefinedTraining\.variableTrainingPrice'\) === true, intensive: rrSetting\('RefinedTraining\.intensiveTraining'\) === true,/);
-  assert.match(wm, /applyIntensive: \(skill, days, points\) => \{\s*if \(playerEntity\.skills && typeof playerEntity\.skills === 'object'\) playerEntity\.skills\[skill\] = permanentSkillValue\(playerEntity, skill\) \+ points;[^\n]*\n\s*interiorTicker\.advance\(days \* MINUTES_PER_DAY\);/);
+  assert.match(wm, /applyIntensive: \(skill, days, points\) => \{\s*interiorTicker\.advance\(days \* MINUTES_PER_DAY\);[^\n]*\n\s*if \(playerEntity\.skills && typeof playerEntity\.skills === 'object'\) playerEntity\.skills\[skill\] = permanentSkillValue\(playerEntity, skill\) \+ points;/, 'AUDIT-RR F30: RaiseTime first, then the +4 (:171-172)');
   const mb = rd('src/ui/messageBox.js');
   assert.match(mb, /const custom = _buttonArt\.get\(record\);\s*if \(custom && \(custom\.isOn\?\.\(\) \?\? true\)\) \{/, 'a registered record past the classic 20');
   assert.match(mb, /_art\.buttons\.set\(record, _art\.renderer\.uploadTexture\('img', `buttons:\$\{record\}`, \{ width: img\.width, height: img\.height, colors \}\)\);/);

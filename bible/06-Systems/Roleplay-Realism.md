@@ -325,11 +325,165 @@ the ordinary location index, and the three `worldupdate building` lines
 put Dharjen's rebuilt shop in Pjiga, Penmore or Paponirea - which is
 what the discovery on the location rect (RR3a) then names.
 
+## AUDIT-RR (2026-09-23) - the audit of RRI1, RRI2, RR1, RR2, RR3a and RR3b
+
+Mac: *"Lets do one more audit."* Four reviewers over the six slices, each
+with the author's C# open beside the port (RoleplayRealism.cs,
+EnhancedRiding.cs, GuildServiceTrainingRR.cs, ThievesGuildRR.cs,
+RoleplayRealismItemsMod.cs and the fourteen item classes, plus the DFU
+files they hook: FormulaHelper, GuildManager, GameObjectHelper,
+DaggerfallLoot, ItemBuilder, WorldDataReplacement, WorldDataVariants,
+PlayerGPS, PlayerEntity), then every finding re-read against the source
+before it was paid. Checked and standing: the eighteen switches and
+their defaults, the archery and bandage arithmetic, the loan and ship
+laws, the enemy appearance table, the sprite-variant ladders, the pitch
+floor and axis limits, the training price and the intensive day count,
+the quest tables and their macros, the fort's proximity, the world-data
+JSON readers (regenerated against the C# with `DFU_PATH`). Thirty-nine
+findings were raised across the six slices; those paid on this page's
+slices (RR1-RR3b) are below, numbered as the code comments carry them
+(`AUDIT-RR Fn`); the Items page carries its own.
+
+**RR1 (d02eb562):**
+
+- **F1 - the anim-time override was inert on the swing that lands.**
+  `FormulaHelper.GetMeleeWeaponAnimTime` takes `(player, weaponType,
+  weaponHands)` and RR's weaponSpeed arm (and RRI's weaponBalance arm)
+  read the held weapon through them; the port's `machineStep` asked the
+  override with the live speed alone, so both arms fell to the classic
+  clock on the live rig and only the widget clone timed the mod's way.
+  `machineStep(m, dt, liveSpeed, animCtx)` hands the rig's `{ entity,
+  weaponType, usingRightHand }` through; `weaponRig` sets the thunk.
+- **F2 - the underworld join floor missed the quest-end path.**
+  `GuildManager.AddMembership` runs the class's `Join()` (:122-126), and
+  ThievesGuildRR's Join floors the reputation at 2 (:91-99), but
+  `guildInitiationQuestEnded` called `joinGuild` without the store. It
+  takes one; world.js hands the quest store.
+- **F4 - the death squad placed like a conjured foe.** The mod's
+  `CreateFoeSpawner(false, type, n, min, max)` places with NO line-of-
+  sight check, its own distances (1..8, 1..5) and FoeSpawner retries
+  every frame until every foe stands (FoeSpawner.cs:53-80); the port's
+  `standLooseFoe` used 4..20, a line-of-sight check and 12 attempts,
+  so a squad in a corridor was half a squad. `standLooseFoe` takes
+  `{ minDistance, maxDistance, lineOfSightCheck, attempts }`; the squad
+  gets 600 attempts (`RR_SQUAD_PLACE_ATTEMPTS`).
+- **F5 - encumbrance effects ran on every entity.** The C# reads
+  `GameManager.Instance.PlayerEntity` alone (:582); the port's magic-round
+  hook took the entity it was handed, so a laden foe was slowed and
+  drained. Gated on `entity.isPlayer`.
+- **F7 - float32.** `EncumbranceEffects_OnNewMagicRound` is float
+  arithmetic (:590-595); double arithmetic put 38/50 one band edge off
+  (speed 1, fatigue 2 where the C# takes 0 and 1). `Math.fround` at
+  every step; pinned on both sides of the edge.
+- **F8 - SetFatigue's upper clamp.** The fallback arm clamped at 0 only;
+  a negative fatigue effect (under 100 fatigue, the C#'s own arithmetic)
+  added past MaxFatigue. Clamped both ways (DaggerfallEntity.cs:350-360).
+- **F6 - the bed rested in the room's allocated bed.** BedActivation
+  opens `new DaggerfallRestWindow(uiManager, true)` (:524) -
+  `ignoreAllocatedBed` - so you rest in the bed you clicked; the port
+  opened the ordinary window. `toggleRest({ ignoreAllocatedBed })`.
+- **F10 - a frozen ENEMY_BASICS row was skipped in silence.** The
+  enemyAppearance writer now says which row it could not write.
+- **F9 (named)** - the purification potion's switch is read at install,
+  a departure from the port's live reads, recorded at the site.
+  Duplicate imports in rrInstall.js merged.
+
+**RR2 (06bdf5d6):**
+
+- **F13 - the sprite-variant race was Breton everywhere.** The port
+  handed `climate` (the settings object) where the C# takes
+  `climate.WorldClimate` (223-232) into `GetWorldClimateSettings`; the
+  climate type 0-3 matched nothing and fell to the Breton arm. Fixed at
+  the one site.
+- **F14 - the neck band drew the wrong rows.** `Rect(extX, 0.2 -
+  yAdjNeck, extW, yAdjNeck)` is in Unity texcoords (v = 0 the bottom
+  row); the port's screen quad samples v = 0 at the top, so the band
+  drew the top of the sprite. `rrRidingNeckBand` answers 0.8 .. 0.8 +
+  yAdjNeck (the bottom fifth: the neck and chest), the width trim 14.
+- **F25 - the docked large HUD.** EnhancedRiding's own arm asks
+  `LargeHUDDocked` (:256-257) and lifts the mount by the HUD's height;
+  the port lifted by the classic arm's horse offset. `liftForLook` asks
+  `dockedLargeHudHeight()` and the band draw takes the same offset.
+- **F15 - the trample's blood was a scratch.** `DamageHealthFromSource`'s
+  civilian dies in one contact; both hosts hand `LETHAL_HIT` to the
+  splash.
+- **F16 - the trample's cry played at 0.6 x 0.6.** `RidingVolumeScale x
+  SoundVolume` (:151): the master bus carries SoundVolume already, so
+  the clip plays at `ridingVolumeScale()` alone (0 on a journey).
+- **F17 - the charge ran through the weapon path's knockback.** The
+  component writes its own `KnockbackSpeed = 100` (:199-200) and
+  `DamageHealthFromSource` (:212) is the blow alone; the port handed a
+  knock direction down the weapon path, which overwrote the component's.
+  `chargeFoe` hands no direction; the standalone exterior host, which
+  had no riding component at all, stands one (`rrRidingHost.js`, the
+  contacts shared by both hosts).
+- **F18 - the charge voice was the 40% gated pain voice.**
+  `PlayCombatVoice(gender, false, true)` (:195) is called directly - no
+  CombatVoices gate, no dice, monsters too. `enemyHeavyPainVoice`.
+- **F23 - the intensive result dropped DFU's own box.** `TrainSkill`
+  pushes `MessageBox(TrainSkillId)` (DaggerfallGuildServiceTraining.cs
+  :119-128) and the intense box is pushed OVER it (:174-191): the player
+  reads the mod's three lines, then the record. Two boxes.
+- **F24 - the gold gate ignored letters of credit.** `GetGoldAmount`
+  (PlayerEntity.cs:1313-1316) counts them; `totalGoldAmount`.
+- **F26 - float32 again.** `(float)skillValue / trainingMax`: 3 gold
+  at 20/60 is 3, not 2.
+- **F30 - the order.** `RaiseTime(SecondsPerDay * 4)` (:171) then
+  `SetPermanentSkillValue` (:172); the port wrote the skill first. The
+  ticker advances, then the +4.
+- Cite drift in EnhancedRiding's references corrected (:57-61,
+  :105-131, :241-249, :252, :266-278).
+
+**RR3a (1ff1c28f) and RR3b (c7caa8e6):**
+
+- **F32 - the last location key was stale at layout.** DFU sets
+  WorldDataVariants' last key when the DFLocation is read, right before
+  RMBLayout (MapsFile.cs:999); the port's boot index read every location
+  and left the key on the LAST, so the shop variant the quest set was
+  asked against the wrong location. `setLastLocationKeyTo` before
+  `layoutLocation`, in both hosts.
+- **F33 - the locationnew resolver was never wired.** RR3a's
+  `setNewLocationIndexResolver` seam stood empty; `SetNewLocationVariant`
+  asks `GetNewDFLocationIndex` (WorldDataVariants.cs:101).
+  `installWorldDataReplacement` wires it.
+- **F34 - place.js merged without the location index.** The quest
+  place's building merge seeded no `locationIndex`, so a replacement
+  building's key resolved against location 0. Passes the location's.
+- **F35 - a negative key asked AnyLocationKey.** `if (lastLocationKey >=
+  0)` (:192): a negative key asks nothing. Guarded.
+- **F36 - a phantom discovery record.** `DiscoverBuilding` returns when
+  `GetBaseBuildingDiscoveryData` fails (PlayerGPS.cs:932-933); the port
+  discovered the armorer with no directory record. Only with one.
+- **F37 - a duplicate location remapped the vanilla one.**
+  `Dictionary.Add` (:521-522) throws on a mapId or name a vanilla
+  location already has; the port's silent remap was its own invention.
+  Throws.
+- **F38 - a stored replacement block was never read.** `LoadBlock`
+  answers true for a slot the replacement filled (no MemoryFile), so
+  the record was never decoded (BlocksFile.cs:303). Re-reads when the
+  slot's bytes are null.
+- **F39 - a new game kept the variants.** `PlayerEntity.Reset` (:818)
+  clears them; both new-game paths do.
+
+**Named, not changed:** the shipLocation departure at d02eb562 (fixed
+by RR2); RRI-present-but-disabled semantics (a class registered under a
+switch that is off answers null, as an unregistered class does); the
+standalone dungeon host has no HUD say; beds only in buildings; the C#
+gender-carry quirk in the sprite variants (the port normalises it); the
+contact geometry (a trigger sphere against the port's 0.9 reach); the
+PitchMaxLimit snap and the 75-degree floor; the walker at 1 FPS against
+the mod's 5; a negative nameSeed; two deliberate C# slip fixes in RR3a;
+the title reload after a world-data install.
+
+Suite `test/auditrr.test.js` (15). The float32 edges, the neck band,
+the riding contacts, the negative key, the class virtuals and the
+override context are pinned by execution; the hosts' wiring by source.
+
 ## Record
 
 `vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (11),
 `test/rr2_realism.test.js` (12), `test/rr3_questline.test.js` (11),
-`test/rr3b_worlddata.test.js` (9). Campaigns `tools/mutants/rr1.json`
+`test/rr3b_worlddata.test.js` (9), `test/auditrr.test.js` (15). Campaigns `tools/mutants/rr1.json`
 (19: 18 dead, 1 equivalent), `tools/mutants/rr2.json` (28 dead),
 `tools/mutants/rr3.json` (33: 31 dead, 2 equivalent),
 `tools/mutants/rr3b.json` (24 dead).

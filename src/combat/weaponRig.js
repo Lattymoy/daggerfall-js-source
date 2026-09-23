@@ -195,7 +195,7 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2716), townTalk.say
- *                     (exterior.js:1851, world.js:3260) and
+ *                     (exterior.js:1878, world.js:3232) and
  *                     worldModes' own interior sink (worldModes.js:400,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
@@ -243,6 +243,7 @@ export function muzzleRay(drawn, fovRad, forward = MUZZLE_FORWARD) {
 
 export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
+  playerWeapon.animCtx = () => ({ entity, weaponType: weaponTypeForItem(playerWeapon.weapon), usingRightHand: playerWeapon.usingRightHand });   // AUDIT-RR F1: GetMeleeWeaponAnimTime(player, weaponType, weaponHands) - the swing clock's own ask, so RR's weaponSpeed and RRI's weaponBalance time the blow that lands, not only the widget's clone
   setWeaponPoseProbe(() => ({ ...weaponPoseOf(playerWeapon), weaponType: weaponTypeForItem(playerWeapon.weapon) }));   // RR1: WeaponManager.Sheathed (the pair through its one law, HARD2c) + ScreenWeapon.WeaponType
   // WW1: WEAPON WIDGET. One clone per rig, as DFU has one FPSWeaponClone
   // beside its one FPSWeapon; it reads the machine every frame and draws

@@ -18,13 +18,13 @@
 // (setMagicItemTemplates), and EVERY host that can generate loot now
 // loads it: scenes/shared.js:115-118 (loadMagicRegistries) feeds the
 // module table this file reads, called from dungeonContext.js:1101,
-// world.js:2408 and exterior.js:1199 - interiors run inside those hosts
+// world.js:2411 and exterior.js:1206 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
 // that is DFU's own answer rather than a stand-in: shared.js:122
 // records it, the category simply stays empty.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
-import { customItemsForGroup, rriVariantFields } from './rriItems.js';   // RRI1: CreateRandomWeapon/Armor roll over the classic slots PLUS the registered custom items (ItemBuilder.cs:382-390, :451-459)
+import { customItemsForGroup } from './rriItems.js';   // RRI1: CreateRandomWeapon/Armor roll over the classic slots PLUS the registered custom items (ItemBuilder.cs:382-390, :451-459)
 import { ARROW_TEMPLATE } from './inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
@@ -128,9 +128,9 @@ export function createRandomArmor(playerLevel, rolls = Math.random) {
   const customs = customItemsForGroup('Armor');   // RRI1: the registered custom armor rides the same roll
   const i = Math.floor(rolls() * (ARMOR_PIECES.length + customs.length));
   const piece = i < ARMOR_PIECES.length ? ARMOR_PIECES[i] : customs[i - ARMOR_PIECES.length];
-  const item = { group: 'Armor', templateIndex: piece, material: randomArmorMaterial(playerLevel, rolls) };
-  const variant = rriVariantFields(item);   // ApplyArmorSettings -> SetVariant: the class's own writes, once
-  return variant ? { ...item, ...variant, rriVariant: true } : item;
+  // AUDIT-RR F6: the class ctor names the item from its template BEFORE SetVariant prefixes it (ItemJerkin.cs:29-46), and
+  // ApplyArmorMaterial prices it before the fold - both are SetItem's own order, so the mint goes through it
+  return setItemFields({ group: 'Armor', templateIndex: piece, material: randomArmorMaterial(playerLevel, rolls) });
 }
 
 const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];

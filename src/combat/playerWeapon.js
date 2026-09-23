@@ -266,6 +266,7 @@ export class PlayerWeapon {
     this.currentRightHandWeapon = null;
     this.currentLeftHandWeapon = null;
     this.sheathed = true;   // classic starts sheathed; Z readies (WeaponManager.Sheathed)
+    this.animCtx = null;   // AUDIT-RR F1: the rig's thunk answering { entity, weaponType, usingRightHand } - what GetMeleeWeaponAnimTime's C# signature carries (player, weaponType, weaponHands)
     // DFU's Gesture: the timestamped trail, its vector sum and its
     // TRAVEL length (WeaponManager.cs:93-155).
     this._gpoints = [];
@@ -332,7 +333,7 @@ export class PlayerWeapon {
    * `sum over both hands of (EquipDelayTimes[GroupIndex] - 500)`,
    * divided by 1.7, onto the hand now in use.
    *
-   * PORT NOTE (the CH3 collapse, equip.js:66): DFU keeps a countdown
+   * PORT NOTE (the CH3 collapse, equip.js:67): DFU keeps a countdown
    * PER HAND and this bill lands on the used one; the port sums both
    * into entity.equipCountdown, so the bill lands on the one clock.
    * Same delay, same block on the swing - only the per-hand split is
@@ -526,7 +527,7 @@ export class PlayerWeapon {
     this.machine.tick = thunderlock ? GUN_TICK_SECONDS : null;
     this.machine.cooldown = thunderlock ? GUN_COOLDOWN_SECONDS : null;
     this.machine.hitFrame = thunderlock ? GUN_FEEL.hitFrame : null;
-    return machineStep(this.machine, dt, this.liveSpeed);
+    return machineStep(this.machine, dt, this.liveSpeed, this.animCtx?.() ?? null);
   }
 
   /** The FP viewmodel pose this frame: the fpMelee1H base with the

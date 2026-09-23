@@ -73,7 +73,7 @@ import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon, enemyAttackVoice } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon, enemyHeavyPainVoice } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
@@ -83,7 +83,7 @@ import { RestWindow, preloadRestArt } from '../ui/restWindow.js';   // S40: rest
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { healthStatusRows, statusInfoRows } from '../systems/healthStatus.js';   // BS1/F198: the Status health box
 import { survivalStatusRows } from '../systems/survival/status.js';   // SURV5: the status page's third box
-import { maxFatigue, FATIGUE_MULTIPLIER, FATIGUE_LOSS, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); AUDIT SOC B5: the party pose's fatigue in the digits a sheet shows
+import { maxFatigue, FATIGUE_MULTIPLIER, liveStat } from '../systems/statMods.js';   // AUDIT 23 (C5); AUDIT SOC B5: the party pose's fatigue in the digits a sheet shows
 // V5: resting above ground. RestWindow and RestSession have been
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
@@ -252,7 +252,7 @@ import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady }
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, spendAmmoFor, carriedWeight } from '../systems/inventory.js';   // E4: PlayerEntity.CarriedWeight carries the gold counter's own term
-import { calculateAttackDamage, handToHandMinDamage, handToHandMaxDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts; RR2: the charge's span
+import { calculateAttackDamage } from '../combat/formulas.js';   // X2-slice: enemy-arrow impacts
 import { inflictPoison } from '../systems/poisons.js';   // X2-slice: poisoned enemy arrows
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { getStaticDoors } from '../world/staticDoors.js';
@@ -350,8 +350,10 @@ import { createActivateGate, activateFrame, setClickDelay } from '../systems/act
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
 import { drawEnhancedStatusLine } from '../ui/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
-import { rrRidingOn, rrRidingSetting, rrTrampleOutcome, rrChargeDamage, RR_RIDING } from '../systems/rrRealism.js';   // RR2: EnhancedRiding's laws
-import { LETHAL_HIT } from '../combat/bloodDecals.js';   // RR2: the trample's splash hands its blow over - a civilian, from the player, gone in one contact
+import { rrRidingOn, rrRidingSetting } from '../systems/rrRealism.js';   // RR2: EnhancedRiding's switches
+import { createRrRidingContacts } from '../systems/rrRidingHost.js';   // RR2 / AUDIT-RR F15: the trample and the charge, one home for both outdoor hosts
+import { LETHAL_HIT } from '../combat/bloodDecals.js';   // the trample's splash hands its blow over - a civilian, from the player, gone in one contact
+import { RIDING_VOLUME_SCALE } from '../systems/riding.js';   // AUDIT-RR F16: the trample clip at RidingVolumeScale
 import { setRrHostSeams, rrEnabled } from '../systems/rrInstall.js';   // RR2: what the riding component reads off the scene
 import { rrFortProximityLines, rrMasterArmorerDiscovery } from '../systems/rrQuestLine.js';   // RR3: the two PlayerGPS subscribers
 import { getBuildingVariant, setLastLocationKeyTo } from '../systems/worldDataVariants.js';   // RR3: the shop variant the quest set
@@ -1224,6 +1226,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AUDIT 39 (#18): the skin reaches the layout, because the mill's
       // subrecord widens the block's building count and must not exist
       // on the classic one.
+      setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);   // AUDIT-RR F32: WorldDataVariants' last key is THIS location's before its blocks are read - DFU reads the DFLocation right before RMBLayout (MapsFile.cs:999 sets it); the boot index here read every location and left the key on the last
       const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() });   // WM3: the pack's own switch
       locBlocks = loc.blocks;
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
@@ -3163,56 +3166,25 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  written) said the arm was unreachable because "this host's pool
    *  is the exterior street"; the pool it needed is worldModes' own,
    *  and this is the routing. */
-  /** RR2: EnhancedRiding's two contacts (EnhancedRiding.cs:157-215), against
-   *  the street's people and the exterior foes within the mount's reach
-   *  (Unity's trigger against the player controller: a person cylinder
-   *  of 0.45 beside the rider's 0.45 - 0.9 units, foes at the capsule's
-   *  touch). TrampleCivilians: a civilian bleeds, cries the Breton pain
-   *  clip of their gender, the watch is called and the crime is Assault;
-   *  a guard is charged instead (a fresh watchman stands where they were,
-   *  charged too); the person leaves the street. HandleCharge: the foe is
-   *  knocked back at 100, the rider spends 15 x DefaultFatigueLoss, and the
-   *  blow is hand-to-hand's span plus Agility / 10 and Willpower / 10 -
-   *  once per foe (PickpocketByPlayerAttempted is the C#'s latch). */
-  function rrRidingContacts() {
-    const feet = player.pos;
-    if (!feet) return;
-    const reach = 0.9;
-    const fwd = [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
-    if (rrRidingSetting('TrampleCivilians') === true) {
-      for (const seat of _livePersons) {
-        const person = seat.person;
-        if (!person || person.trampled || !seat.pos) continue;
-        const dx = seat.pos[0] - feet[0], dz = seat.pos[2] - feet[2];
-        if (dx * dx + dz * dz > reach * reach) continue;
-        const out = rrTrampleOutcome({ isGuard: !!person.guard, female: person.gender === GENDERS.Female });
-        if (out.blood) hitEffects.showBloodSplash(0, [feet[0] + fwd[0] * 2, feet[1] + 1, feet[2] + fwd[2] * 2], fwd, LETHAL_HIT);   // blood.ShowBloodSplash(0, BloodPos()) (:149) - BloodPos is 2 ahead of the rider, 1 up; the C# hands no blow, and a civilian is gone in one contact, so the civilian's own rung
-        if (out.clip) audio.playOneShot(SOUND[out.clip], _travelSoundsOff ? 0 : 1);   // RidingVolumeScale x SoundVolume (:151) - the master bus carries SoundVolume
-        if (out.spawnGuards) _spawnGuards(true);
-        if (out.chargeGuard) cityGuards.spawnCityGuard([...seat.pos], person.facingYaw ?? cam.yaw, [...feet]).then((g) => { if (g) rrChargeFoe(g, fwd); }).catch((e) => console.error('[guards]', e));   // SpawnCityGuard(npc.position, npc.forward) + HandleCharge (:155-157)
-        setCrimeCommitted(playerEntity, CRIMES[out.crime]);
-        if (out.remove) { person.trampled = true; for (const p of built.values()) if (p.population?.retire(person)) break; }   // Motor.gameObject.SetActive(false) (:161)
-      }
-    }
-    for (const f of [...exteriorFoes.foes, ...cityGuards.guards]) {
-      if (f.dead || f.puppet || f._rrCharged || !f.ai?.feet) continue;
-      const dx = f.ai.feet[0] - feet[0], dz = f.ai.feet[2] - feet[2];
-      if (dx * dx + dz * dz > reach * reach) continue;
-      rrChargeFoe(f, fwd);
-    }
-  }
-  function rrChargeFoe(f, direction) {
-    if (!f || f._rrCharged) return;
-    f._rrCharged = true;   // hitEnemyEntity.PickpocketByPlayerAttempted = true (:203)
-    const v = enemyAttackVoice(f);   // enemySounds.PlayCombatVoice(gender, false, true) (:196)
-    if (v && v.clip >= 0) audio.playOneShot(v.clip, 1);
-    if (f.ai) { f.ai.knockbackSpeed = RR_RIDING.chargeKnockback; f.ai.knockbackDir = [...direction]; }
-    playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - FATIGUE_LOSS.Default * RR_RIDING.chargeFatigueMultiplier);
-    const h2h = skillValue(playerEntity, SKILLS.HandToHand);
-    const damage = rrChargeDamage({ minBase: handToHandMinDamage(h2h), maxBase: handToHandMaxDamage(h2h), agility: liveStat(playerEntity, 'agility'), willpower: liveStat(playerEntity, 'willpower'), roll: Math.random() });
-    if (f._encounter === undefined && cityGuards.guards.includes(f)) cityGuards.hurtGuard?.(f, damage, player.pos, direction);
-    else exteriorFoes.damageFoe(f, damage, player.pos, direction, { kind: 'melee' });
-  }
+  /** RR2: EnhancedRiding's two contacts (EnhancedRiding.cs:135-215) - the trample and the charge -
+   *  through their one home (systems/rrRidingHost.js, AUDIT-RR F15), on this host's own reads. */
+  const rrRiding = createRrRidingContacts({
+    playerEntity,
+    feet: () => player.pos, yaw: () => cam.yaw,
+    livePersons: () => _livePersons, foes: () => exteriorFoes.foes, guards: () => cityGuards.guards,
+    isGuardRecord: (f) => f._encounter === undefined && cityGuards.guards.includes(f),
+    splashBlood: (pos, fwd) => hitEffects.showBloodSplash(0, pos, fwd, LETHAL_HIT),
+    playClip: (clip, volume) => audio.playOneShot(clip, volume),
+    ridingVolumeScale: () => (_travelSoundsOff ? 0 : RIDING_VOLUME_SCALE),   // TransportManager.RidingVolumeScale - 0 for the journey (AUDIT-TO1 J1)
+    spawnGuards: () => _spawnGuards(true),
+    spawnCityGuard: (pos, yaw, feet) => cityGuards.spawnCityGuard(pos, yaw, feet),
+    setCrime: (crime) => setCrimeCommitted(playerEntity, crime),
+    retire: (person) => { for (const p of built.values()) if (p.population?.retire(person)) break; },
+    hurtGuard: (f, damage, feet) => cityGuards.hurtGuard?.(f, damage, feet, null),
+    damageFoe: (f, damage, feet) => exteriorFoes.damageFoe(f, damage, feet, null, { kind: 'melee' }),
+    voice: (f) => enemyHeavyPainVoice(f),
+  });
+  function rrRidingContacts() { rrRiding.contacts(); }
   function _spawnGuards(immediate) {
     if (modes?.spawnCityGuardsInside?.(immediate)) return;
     const feet = walkMode && playerSpawned ? player.pos : cam.pos;
@@ -7909,7 +7881,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AddMembership pushes no welcome window the way the walk-in join
       // does.
       const initiated = guildInitiationQuestEnded(activeMemberships(playerEntity), q?.questName ?? '',
-        !!q?.questSuccess, dateFromClassicMinutes(playerTicker.classicMinutes));
+        !!q?.questSuccess, dateFromClassicMinutes(playerTicker.classicMinutes), _questStore());   // AUDIT-RR F2: the store, so Join()'s rep floor (RR1) runs on the initiation path too
       // AUDIT 63 F9: both guilds override Join() to reveal their hall
       // on the town map at once (ThievesGuild.cs:168-173,
       // DarkBrotherhood.cs:177-182) - the join is one of DFU's three
@@ -10892,7 +10864,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // RR3: RoleplayRealism.PlayerGPS_OnEnterLocationRect (:259-267) - the master armorer's shop discovered under its own name
         if (rrEnabled()) {
           const arm = rrMasterArmorerDiscovery(_musicLoc, getBuildingVariant);
-          if (arm) discoverBuilding(`${_musicLoc.regionIndex}:${_musicLoc.name}`, (topicTree.listBuildings ?? []).find((b) => b.buildingKey === arm.buildingKey) ?? { buildingKey: arm.buildingKey }, arm.name);
+          const armRec = arm ? (topicTree.listBuildings ?? []).find((b) => b.buildingKey === arm.buildingKey) : null;
+          if (arm && armRec) discoverBuilding(`${_musicLoc.regionIndex}:${_musicLoc.name}`, armRec, arm.name);   // AUDIT-RR F36: DiscoverBuilding returns when GetBaseBuildingDiscoveryData fails (PlayerGPS.cs:932-933) - no phantom record
         }
         // AUDIT 64 F10: the THIRD law on this edge - PlayerEnterExit
         // .PlayerGPS_OnEnterLocationRect primes the holiday text

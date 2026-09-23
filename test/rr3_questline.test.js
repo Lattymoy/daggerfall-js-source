@@ -277,7 +277,7 @@ test('RR3 the fort\'s tracks and the armorer\'s discovery: nine pixels, the comp
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(rrEnabled\(\)\) \{ const _px = playerTravelPixel\(\); for \(const line of rrFortProximityLines\(_px\.x, _px\.y\)\) townTalk\.say\(line, 5\); \}/, 'OnMapPixelChanged: AddHUDText(text, 5)');
   assert.match(w, /if \(dfLocation\) setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);/);
-  assert.match(w, /const arm = rrMasterArmorerDiscovery\(_musicLoc, getBuildingVariant\);\s*if \(arm\) discoverBuilding\(`\$\{_musicLoc\.regionIndex\}:\$\{_musicLoc\.name\}`, [^\n]*arm\.buildingKey[^\n]*, arm\.name\);/, 'OnEnterLocationRect: DiscoverBuilding(key, name)');
+  assert.match(w, /const arm = rrMasterArmorerDiscovery\(_musicLoc, getBuildingVariant\);\s*const armRec = arm \? \(topicTree\.listBuildings \?\? \[\]\)\.find\(\(b\) => b\.buildingKey === arm\.buildingKey\) : null;\s*if \(arm && armRec\) discoverBuilding\(`\$\{_musicLoc\.regionIndex\}:\$\{_musicLoc\.name\}`, armRec, arm\.name\);/, 'OnEnterLocationRect: DiscoverBuilding(key, name) - and nothing without the directory\'s record (AUDIT-RR F36, PlayerGPS.cs:932-933)');
 });
 
 // ---- CustomArmorService (:414-484) ------------------------------------------------

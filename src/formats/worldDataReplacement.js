@@ -24,7 +24,7 @@
 // Northrock Fort (a new location in the Wrothgarian Mountains), its
 // RRFORT01.RMB, and the armorer's shop as the quest rebuilds it.
 import { getBool } from '../systems/settings.js';
-import { NO_VARIANT, makeLocationKey, getLocationVariant, getBlockVariantHere, getBuildingVariantHere } from '../systems/worldDataVariants.js';
+import { NO_VARIANT, makeLocationKey, getLocationVariant, getBlockVariantHere, getBuildingVariantHere, setNewLocationIndexResolver } from '../systems/worldDataVariants.js';
 import { LOCATION_TYPES, DUNGEON_TYPES, getWorldClimateSettings, REGION_NAMES } from './mapsFile.js';
 import { BLOCK_TYPES } from './blocksFile.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
@@ -72,6 +72,7 @@ let _blocksFile = null;           // ContentReader.BlockFileReader (AssignBlockI
 export function bindWorldDataBlocks(blocksFile) { _blocksFile = blocksFile ?? null; }
 /** Once: the readers' door. Tests reset with `_resetWorldDataReplacement`. */
 export function installWorldDataReplacement() {
+  setNewLocationIndexResolver(getNewDFLocationIndex);   // AUDIT-RR F33: SetNewLocationVariant -> GetNewDFLocationIndex (WorldDataVariants.cs:101) - RR3a's seam, wired
   setWorldDataDoor({ getDFRegionAdditionalLocationData, getDFLocationReplacementData, getDFBlockReplacementData, getBuildingReplacementData, getNewDFBlockName, getNewDFBlockIndex, applyBuildingReplacementAutoMapData });
 }
 export function _resetWorldDataReplacement({ assets = true } = {}) {
@@ -143,6 +144,10 @@ function addLocationToRegion(regionIndex, dfRegion, dfLocation) {
   dfLocation.locationIndex = locationIndex;
   dfLocation.exterior.recordElement.header.unknown2 = locationIndex >>> 0;
   dfRegion.mapTable.push(dfLocation.mapTableData);
+  // AUDIT-RR F37: `Dictionary.Add` (:521-522) THROWS on a mapId or name a vanilla location already has - the region
+  // load fails loudly in DFU, and a silent remap of the vanilla entry would be the port's own invention
+  if (dfRegion.mapIdLookup.has(dfLocation.mapTableData.mapId)) throw new Error(`[worlddata] region ${regionIndex}: mapId ${dfLocation.mapTableData.mapId} is already a location's (${dfLocation.name})`);
+  if (dfRegion.mapNameLookup.has(dfLocation.name)) throw new Error(`[worlddata] region ${regionIndex}: a location named ${JSON.stringify(dfLocation.name)} already stands`);
   dfRegion.mapIdLookup.set(dfLocation.mapTableData.mapId, locationIndex);
   dfRegion.mapNameLookup.set(dfLocation.name, locationIndex);
   locations.set(String(makeLocationKey(regionIndex, locationIndex)), dfLocation);

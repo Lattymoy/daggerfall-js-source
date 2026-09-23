@@ -145,7 +145,7 @@ export function machineCancelBowDraw(m, liveSpeed = 50) {
   return false;
 }
 
-export function machineStep(m, dt, liveSpeed) {
+export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1: the rig's { entity, weaponType, usingRightHand } for a registered GetMeleeWeaponAnimTime override
   m.now += dt;
   const events = [];
   if (m.state === 'Idle') return events;
@@ -168,7 +168,7 @@ export function machineStep(m, dt, liveSpeed) {
   // A gun's mechanism does not care how agile you are. Drawing a
   // bowstring does, and swinging a blade does, so both classic
   // formulas stay exactly where they were for everything else.
-  const tick = m.tick ?? (m.isBow ? CLASSIC_UPDATE_INTERVAL : getMeleeWeaponAnimTime(liveSpeed));
+  const tick = m.tick ?? (m.isBow ? CLASSIC_UPDATE_INTERVAL : getMeleeWeaponAnimTime(liveSpeed, animCtx));   // AUDIT-RR F1: FPSWeapon's own animTickTime asks FormulaHelper's override (FormulaHelper.cs:830-838); without the ctx the two mods' arms were inert on the swing that lands
   m.acc += dt;
   while (m.acc >= tick) {
     m.acc -= tick;

@@ -184,7 +184,7 @@ test('V5: every host that can hold a player now has a rest arm', () => {
   // the window's `restPlace` dep - CanRest runs on the WHILE and
   // HEALED buttons (:641-690), not at open, which is what keeps LOITER
   // free of the camping refusal and the Vagrancy charge.
-  assert.match(code('scenes/worldModes.js'), /toggleRest\(\) \{\n\s+if \(interiorOverlay\) return;/,
+  assert.match(code('scenes/worldModes.js'), /toggleRest\(\{ ignoreAllocatedBed = false \} = \{\}\) \{[^\n]*\n\s+if \(interiorOverlay\) return;/,   // AUDIT-RR F6: the bed's click hands DaggerfallRestWindow's second argument through
     'the interior arm, on the ctx U43 routes keys through');
   assert.match(code('scenes/world.js'), /toggleRest: \(\) => toggleRest\(\),/,
     'the exterior arm, on hudCtx');
