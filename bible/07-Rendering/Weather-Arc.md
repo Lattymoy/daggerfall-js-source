@@ -461,3 +461,43 @@ rows land within ±1.7 points at 6,000 samples a row. The gate holds six
 rows to 2.6 points each and to a 0.8 mean. A player's query costs about
 0.1 ms, and every system within 40 km of the player (the sky's reach)
 about 0.3 ms.
+
+### Slice B shipped - the sim seam (2026-09-22)
+
+The map is the sky on its lane: `weatherSim.js` WEATHER3b, pinned by
+`test/weather3b_simseam.test.js` (`tools/mutants/weather3b.json` 16/16
+dead), and approved by THE WORLD WEATHER MAP row in Ledger A.
+
+- **The lane** is the field's own (the enhanced skin, Enhanced
+  Environments, the weather-events row, forced on online). `?wxmap=off`
+  hands it back to WEATHER2b's field. `sampleWeatherField` routes to
+  the map there, so neither host's exterior frame changed.
+- **The word** is `wornAmong` over the systems within the sky's reach.
+  They are found once per game minute, or whenever the player has moved
+  250 m, and resolved every frame. It goes through the same `_set`, so
+  WEATHER2a's ground law holds and the raw word is kept for the wind.
+- **Crossing or jump is the sim's call, not the host's.** A change is a
+  crossing only when it follows the last sample within
+  STALE_DRAIN_MINUTES and MAP_JUMP_M (2 km). A rest, a load, a sentence,
+  an online join or a teleport is a jump even when a host calls its
+  frame live. Travel and respawn (same climate base included, where DFU
+  rolls nothing) sample the destination as one jump, and never pass
+  through the zone's word.
+- **The day roll stands down.** It still rolls (the classic lane and
+  the save read the array), but the drain applies nothing and CLK2's
+  evolution rests.
+- **Indoors**, the indoor frame (`worldModes.js`, before Better
+  Ambience's rain source reads the word) re-reads the map at the door
+  the player went in by. Each change is a jump, so the sky outside is
+  simply there on the way out.
+- **The front's peak is the place's.** `currentWeatherIntensity()`
+  (the system's envelope, falling from its heart out) is placed in the
+  mode's range every frame, so walking in from a storm's edge thickens
+  the drizzle into the downpour. Lanes with no map keep WX2's seeded
+  episode.
+- **The clouds** still get the precipitating systems' cores in
+  WEATHER2b's cell shape. Slice C gives the sky the whole structure.
+
+The day-roll machine's own pins (W1, S41, CLK2/CLK4, WORLD5 C4/C5,
+SAV3, WEATHER2a/b/d, AUDIT 57 F3) were written for the one lane that
+existed. Each now declares the non-map lane it tests, beside its reset.

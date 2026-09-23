@@ -187,7 +187,7 @@ import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js'; 
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
-import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJumpStamp, sampleWeatherField, weatherCrossingStamp, currentFieldCells } from '../systems/weatherSim.js';   // W1: the live weather state; WEATHER2b: the field
+import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJumpStamp, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity } from '../systems/weatherSim.js';   // W1: the live weather state; WEATHER2b: the field; WEATHER3b: the map's intensity
 import { fieldOfPixelLocal, pixelLocalOfField } from '../systems/weatherField.js';   // WEATHER2b: this host's pixel-local frame to the field's metres, and back
 import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells
 import { SEASON } from '../world/climateSwaps.js';
@@ -4718,7 +4718,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const crossing = weatherCrossingStamp() !== seenCrossing;
     seenCrossing = weatherCrossingStamp();
     if (crossing && !jump) sky.weatherArrive();
-    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000, jump });
+    const fx = weatherFront.tick({ dt, weather, arrival: enhancedFront ? sky.frontArrival() : 1, nowMinutes: playerTicker.classicMinutes, tsec: now / 1000, jump, peak: weatherOverride ? null : currentWeatherIntensity() });   // WEATHER3b: the map's intensity at the player is the peak
     if (fx.changed) wxFrom = wxNow;
     wxNow = enhancedFront ? blendTerms(wxFrom, weatherTerms(), fx.t) : weatherTerms();
     const wd = windDrive(sky, now / 1000, dt);   // WIND3: the frame's wind in every consumer's units, read once

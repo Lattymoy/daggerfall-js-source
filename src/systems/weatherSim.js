@@ -44,7 +44,8 @@ import { seededRng } from './wind.js';   // CLK2: the evolution's own generator 
 import { isEnhanced } from './uiSkin.js';   // CLK2: the evolution is the enhanced lane's
 import { getPref } from './uiPrefs.js';
 import { groundIsSnowy, climateSeasonFromMinutes } from '../world/climateSwaps.js';   // WEATHER2a: the terrain's own snow law
-import { fieldAt } from './weatherField.js';   // WEATHER2b: the day's words as places
+import { fieldAt, FIELD_RANGE_M, CELL_WORDS } from './weatherField.js';   // WEATHER2b: the day's words as places
+import { systemsNear, wornAmong } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land
 
 export { WEATHER_TYPES };
 
@@ -150,6 +151,7 @@ export const currentFieldCell = () => _fieldInside;
  */
 export function sampleWeatherField(nowMinutes, climateIndex, at, climateAt, how = 'live') {
   if (!weatherFieldOn() || !at || !climateAt) return false;
+  if (weatherMapOn()) return sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how);   // WEATHER3b: the map supersedes the field on its own lane
   if (!_climateWeathersValid && !_climateWeathersRolled) return false;   // no words yet: the drain rolls them first
   const f = fieldAt({ day: Math.floor(nowMinutes / 1440), minuteOfDay: nowMinutes % 1440, at, climateAt, wordOfClimate: (c) => WEATHER_TYPES[weatherForClimate(c)] });
   _fieldCells = f.cells; _fieldInside = f.inside;
@@ -157,6 +159,89 @@ export function sampleWeatherField(nowMinutes, climateIndex, at, climateAt, how 
   if (changed && how === 'live') _crossings++;
   else if (changed && how === 'jump') _jumps++;
   return changed;
+}
+
+// ---- WEATHER3b (2026-09-22): THE WORLD WEATHER MAP IS THE SKY -----------
+// Mac: "imagine a map, one location its sunny, one is cloudy, one has a
+// rainstorm, etc." systems/weatherMap.js is the law (systems born on the
+// land, drifting, growing, dying; the weather a pure function of place
+// and minute); this is its seam into the sim. On its lane - the field's
+// own (the enhanced skin, Enhanced Environments, the weather-events row,
+// forced on online) unless `?wxmap=off` hands the lane back to WEATHER2b's
+// field - the player's word is the map at the player:
+//   - every exterior frame, through the same `_set` (the ground law, the
+//     raw word kept for the wind's violence);
+//   - every arrival (a travel landing, a respawn, a teleport) as a JUMP;
+//   - INDOORS, at the door the player went in by (`sampleWeatherIndoors`),
+//     so the rain heard through the walls starts and stops with the sky
+//     outside - each change a jump, since no one inside saw it come.
+// A change is a CROSSING - the storm's edge walked into, or drifting over
+// - only on a live frame that follows the last sample closely in time and
+// place; across a clock jump (a rest, a load, a sentence, an online join)
+// or a teleport's distance it is a jump, whatever the host called it, so
+// no host has to know which of its paths moved the clock. The day roll
+// still rolls (the classic lane and the save read the array), but the
+// drain and CLK2's evolution stand down here: the zones' words reach no
+// one. Online needs nothing: every client reads the same map at the
+// shared clock's minute.
+let _mapOverride = null;   // tests: true/false; null reads the lane
+let _mapUrlDoor = null;    // ?wxmap=off, read once (lazily)
+export function setWeatherMapLaw(on) { _mapOverride = on == null ? null : !!on; }
+export function weatherMapOn() {
+  if (_mapOverride !== null) return _mapOverride;
+  _mapUrlDoor ??= new URLSearchParams(globalThis.location?.search ?? '').get('wxmap') !== 'off';
+  return _mapUrlDoor && weatherFieldOn();
+}
+/** A sample further than this from the last (field metres) is an arrival, not a walk. */
+export const MAP_JUMP_M = 2000;
+/** The systems are found once per game minute and whenever the player has
+ *  moved this far since; within it the found set still holds every system
+ *  over the player (they are gathered this much wider than the sky's reach). */
+const MAP_REFIND_M = 250;
+let _mapAt = null, _mapClimate = null, _mapClimateAt = null;   // the last sample's place: the door, once the player is inside
+let _mapSampledAt = null;   // its minute
+let _mapFresh = true;       // no sample since the boot or a load: the next change is a jump
+let _mapNear = [], _mapNearAt = null, _mapNearMinute = null, _mapNearLookup = null;
+let _mapIntensity = 0;
+/** WEATHER3b: the intensity of the worn word at the player, 0..1 (the
+ *  system's envelope, falling from its centre out) - the WX2 front's peak
+ *  on the map's lane; null off it (the front rolls its own). */
+export const currentWeatherIntensity = () => (weatherMapOn() ? _mapIntensity : null);
+function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
+  const minute = Math.floor(nowMinutes);
+  if (minute !== _mapNearMinute || climateAt !== _mapNearLookup || !_mapNearAt || Math.hypot(at[0] - _mapNearAt[0], at[1] - _mapNearAt[1]) > MAP_REFIND_M) {
+    _mapNear = systemsNear(at[0], at[1], minute, climateAt, FIELD_RANGE_M + MAP_REFIND_M);
+    _mapNearAt = [at[0], at[1]]; _mapNearMinute = minute; _mapNearLookup = climateAt;
+  }
+  const worn = wornAmong(_mapNear, at[0], at[1]);
+  _mapIntensity = worn.intensity;
+  // the clouds (WEATHER2c) draw the precipitating systems' cores as WEATHER2b drew its cells, until the sky reads the map whole (slice C)
+  _fieldCells = [];
+  _fieldInside = null;
+  for (const sys of _mapNear) {
+    if (!CELL_WORDS[sys.type]) continue;
+    const d = Math.hypot(sys.x - at[0], sys.z - at[1]), r = sys.bands[0][0];
+    if (d - r > FIELD_RANGE_M) continue;
+    const cell = { x: sys.x, z: sys.z, r, word: sys.type, d };
+    _fieldCells.push(cell);
+    if (d < r && (!_fieldInside || d < _fieldInside.d)) _fieldInside = cell;
+  }
+  _fieldCells.sort((a, b) => a.d - b.d);
+  const away = _mapSampledAt === null || _mapFresh || minute < _mapSampledAt || minute - _mapSampledAt > STALE_DRAIN_MINUTES
+    || !_mapAt || Math.hypot(at[0] - _mapAt[0], at[1] - _mapAt[1]) > MAP_JUMP_M;
+  _mapAt = [at[0], at[1]]; _mapClimate = climateIndex; _mapClimateAt = climateAt; _mapSampledAt = minute; _mapFresh = false;
+  const changed = _set(WEATHER_ENUM[worn.word], climateIndex, nowMinutes);
+  if (changed && (how === 'jump' || away)) _jumps++;
+  else if (changed) _crossings++;
+  return changed;
+}
+/** WEATHER3b: the indoor tick's sample - the map at the door the player
+ *  went in by, so the weather outside goes on while they are inside. A
+ *  change is a jump: no one inside saw it come. Nothing off the lane, or
+ *  before the first outdoor sample. */
+export function sampleWeatherIndoors(nowMinutes) {
+  if (!weatherMapOn() || !_mapAt || !_mapClimateAt) return false;
+  return sampleWeatherMap(nowMinutes, _mapClimate, _mapAt, _mapClimateAt, 'jump');
 }
 
 // ---- WEATHER2a (2026-09-14): NO RAIN OVER SNOW -----------------------
@@ -253,6 +338,7 @@ export function weatherForClimate(climateIndex) {
  *  seams lane), cited by name because a line number rots. Answers
  *  true when the weather changed. */
 export function applyClimateWeather(climateIndex, nowMinutes = null, at = null, climateAt = null) {
+  if (at && climateAt && nowMinutes != null && weatherMapOn()) return sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, 'jump');   // WEATHER3b: the map at the destination - the zones' words reach no one on its lane
   let changed = applyFromArray(climateIndex, nowMinutes);   // WEATHER2a: the arrival's minute, for the ground the sky lands over
   if (changed) _jumps++;   // WX2a: a world re-init is the PLAYER arriving, not the weather
   if (at && climateAt && sampleWeatherField(nowMinutes, climateIndex, at, climateAt, changed ? 'drain' : 'jump')) changed = true;   // WEATHER2b: the field at the destination, one jump
@@ -323,6 +409,7 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
   }
   if (!_updateFromClimateArray) return false;
   _updateFromClimateArray = false;
+  if (weatherMapOn()) return false;   // WEATHER3b: the day still rolls (the classic lane and the save read it), but on the map's lane nothing applies it
   const changed = applyFromArray(climateIndex, nowMinutes);
   // WX2a: a LIVE drain - the day turned while the player stood under the
   // sky - is a front. A STALE one - the roll happened while they were
@@ -343,6 +430,7 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
  *  Answers true when the weather changed. */
 export function weatherRespawn(nowMinutes, climateIndex, rolls = Math.random, at = null, climateAt = null) {
   const base = getWorldClimateSettings(climateIndex).climateType;
+  if (at && climateAt && weatherMapOn()) { _lastClimateBase = base; return sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, 'jump'); }   // WEATHER3b: every respawn lands under the map's sky there, whatever the climate it left
   if (base === _lastClimateBase) return false;
   _lastClimateBase = base;
   // WEATHER2b: under the field the destination's sky is the FIELD's word there - DFU's fresh roll for the
@@ -371,6 +459,7 @@ export function restoreWeather(weather) {
   _climateWeathersRolled = true;
   _updateFromClimateArray = false;
   _jumps++;   // WX2a: a load lands the player under the saved sky, whole
+  _mapFresh = true;   // WEATHER3b: and the map's first word after it is a jump too
   _evolveHour = null;   // CLK2: the evolution re-anchors on the loaded clock, rolling nothing
   _climateWeathersValid = false;   // CLK2 (AUDIT 65 SL-1): a loaded save's array is not THIS session's - an in-session load leaves the outgoing session's roll standing, and the evolution stays dormant until the next day roll re-rolls it
 }
@@ -433,6 +522,7 @@ export function weatherEvolutionOn() {
  */
 export function evolveClimateWeathers(nowMinutes) {
   const hour = Math.floor(nowMinutes / 60);
+  if (weatherMapOn()) { _evolveHour = hour; return false; }   // WEATHER3b: the map is the lane's weather; the zones' words reach no one
   // CLK2 review: VALID, not merely rolled - a loaded save stamps the
   // array rolled without rolling it (all Sunny), and an evolution off
   // that would hand the drain a slot the save never had; the loaded sky
@@ -471,6 +561,8 @@ export function resetWeatherSim() {
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
   _jumps = 0;
   _crossings = 0; _fieldCells = []; _fieldInside = null; _fieldOverride = null; _fieldUrlDoor = null;   // WEATHER2b
+  _mapOverride = null; _mapUrlDoor = null; _mapAt = null; _mapClimate = null; _mapClimateAt = null; _mapSampledAt = null; _mapFresh = true;   // WEATHER3b
+  _mapNear = []; _mapNearAt = null; _mapNearMinute = null; _mapNearLookup = null; _mapIntensity = 0;
   _rolledAtMinutes = null;
   _zoneChangedAtMinutes = new Array(6).fill(null);
   _climateWeathersValid = false;

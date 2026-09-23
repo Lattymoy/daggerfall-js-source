@@ -24,7 +24,7 @@ import { readFileSync } from 'node:fs';
 import { relayVersionAtLeast } from './relayVersion.mjs';
 import { CLASSIC_GAME_START_TIME, MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 import { worldMinutes, setWorldMinutes, setSharedClock, alignEntityClocks, resetMagicRoundMarker, tickPlayerMinutes, claimMagicRounds } from '../src/systems/worldTick.js';
-import { setSharedWeather, resetWeatherSim, rollClimateWeathersForDay, weatherForClimate, ZONE_CLIMATES, tickWeather, currentWeatherEnum, weatherJumpStamp, evolveClimateWeathers, setWeatherEvolution, WEATHER_ENUM } from '../src/systems/weatherSim.js';
+import { setSharedWeather, resetWeatherSim, rollClimateWeathersForDay, weatherForClimate, ZONE_CLIMATES, tickWeather, currentWeatherEnum, weatherJumpStamp, evolveClimateWeathers, setWeatherEvolution, WEATHER_ENUM, setWeatherMapLaw } from '../src/systems/weatherSim.js';
 import { RestSession, MINUTES_PER_TICK, REST_WAIT_PER_HOUR, LOITER_WAIT_PER_HOUR } from '../src/systems/restSession.js';
 import { exhaustionOutcome } from '../src/systems/rest.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
@@ -145,14 +145,14 @@ test('AUDIT WORLD5 C3: the alignment is a SHIFT of every marker the save carries
 });
 
 test('AUDIT WORLD5 C4: a LOAD under the shared clock is an arrival through save.js\'s one door - the restored markers shifted to the world\'s time and the day\'s sky rolled from the shared day, over the clock and the sky the save carried', () => {
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   const saved = CLASSIC_GAME_START_TIME + 2 * MINUTES_PER_DAY;
   // a date whose shared roll is not sunny for the desert, so the drain is visible
   let now = CLASSIC_GAME_START_TIME + 40 * MINUTES_PER_DAY + 720;
   try {
     setSharedClock(() => now); setSharedWeather(true);
     for (let i = 0; i < 60; i++) { rollClimateWeathersForDay(now); if (weatherForClimate(ZONE_CLIMATES[0]) !== WEATHER_ENUM.sunny) break; now += MINUTES_PER_DAY; }
-    resetWeatherSim(); setSharedWeather(true);
+    resetWeatherSim(); setWeatherMapLaw(false); setSharedWeather(true);
     const live = { items: [], stats: {}, skills: 30, activeEffects: [], lastSkillCheckTime: saved - 100, rentedRooms: [{ expiryMinutes: saved + 600 }] };
     const snap = JSON.parse(JSON.stringify(snapshotPlayer(live, { classicMinutes: saved })));
     snap.weather = 'snow';
@@ -166,41 +166,41 @@ test('AUDIT WORLD5 C4: a LOAD under the shared clock is an arrival through save.
     assert.equal(tickWeather(now, ZONE_CLIMATES[0]), true, 'and that frame applies the shared day\'s roll over it');
     assert.equal(currentWeatherEnum(), weatherForClimate(ZONE_CLIMATES[0]));
     assert.notEqual(currentWeatherEnum(), WEATHER_ENUM.snow);
-  } finally { offline(); resetWeatherSim(); }
+  } finally { offline(); resetWeatherSim(); setWeatherMapLaw(false); }
   assert.match(rd('src/systems/save.js'), /resetMagicRoundMarker\(Math\.floor\(snap\.classicMinutes \?\? 0\)\);\s*(?:\/\/[^\n]*\n\s*)*if \(sharedClockOn\(\)\) \{ alignEntityClocks\(entity, worldMinutes\(\)\); rollClimateWeathersForDay\(worldMinutes\(\)\); \}/, 'the one door every host loads through');
 });
 
 test('AUDIT WORLD5 C5: the shared roll is THE DAY\'S - stamped at the day\'s first minute, so a joiner\'s drain at noon is a jump and a midnight roll\'s is a front; and the evolution replays from the day\'s first hour, so a client that joined at noon carries the sky the one that stood under it since midnight does', () => {
   const dayStart = CLASSIC_GAME_START_TIME - (CLASSIC_GAME_START_TIME % MINUTES_PER_DAY) + 20 * MINUTES_PER_DAY;
   // the stamp: noon is a jump, midnight a front
-  resetWeatherSim(); setSharedWeather(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSharedWeather(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   let now = dayStart + 720;
   for (let i = 0; i < 60 && weatherForClimate(ZONE_CLIMATES[1]) === WEATHER_ENUM.sunny; i++) { now += MINUTES_PER_DAY; rollClimateWeathersForDay(now); }
   const before = weatherJumpStamp();
   assert.equal(tickWeather(now, ZONE_CLIMATES[1]), true);
   assert.equal(weatherJumpStamp(), before + 1, 'a noon roll drained at noon: the sky changed hours ago, the player arrived under it');
-  resetWeatherSim(); setSharedWeather(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSharedWeather(true);
   rollClimateWeathersForDay(now - 720 + 5);
   const b2 = weatherJumpStamp();
   tickWeather(now - 720 + 5, ZONE_CLIMATES[1]);
   assert.equal(weatherJumpStamp(), b2, 'the same day rolled five minutes past midnight and drained then: a front');
   // the replay: one client from midnight hour by hour, another joining at 15:00 - one sky
   const arr = () => ZONE_CLIMATES.map((c) => weatherForClimate(c));
-  resetWeatherSim(); setSharedWeather(true); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSharedWeather(true); setWeatherEvolution(true);
   rollClimateWeathersForDay(dayStart);
   for (let h = 0; h <= 15; h++) evolveClimateWeathers(dayStart + h * 60 + 7);
   const sinceMidnight = arr();
-  resetWeatherSim(); setSharedWeather(true); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSharedWeather(true); setWeatherEvolution(true);
   rollClimateWeathersForDay(dayStart + 15 * 60 + 7);
   evolveClimateWeathers(dayStart + 15 * 60 + 7);
   assert.deepEqual(arr(), sinceMidnight, 'the joiner replayed every hour of the day');
   // offline the stamp is the roll's own minute and the evolution re-anchors without rolling, as CLK2 left it
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);
   rollClimateWeathersForDay(dayStart + 15 * 60, () => 0.5);
   const off = arr();
   evolveClimateWeathers(dayStart + 15 * 60);
   assert.deepEqual(arr(), off, 'offline: no replay');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
   assert.match(rd('src/systems/weatherSim.js'), /_rolledAtMinutes = stampRoll\(nowMinutes\);/g);
   assert.equal((rd('src/systems/weatherSim.js').match(/_rolledAtMinutes = stampRoll\(nowMinutes\);/g) ?? []).length, 2, 'the day roll and the boot\'s lazy roll');
 });

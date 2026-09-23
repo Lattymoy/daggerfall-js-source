@@ -501,22 +501,32 @@ export function bandAt(s, d) {
 }
 
 /**
- * THE WEATHER AT A PLACE AND A MINUTE. Answers { word, intensity,
- * system }: the highest-priority word any system paints over the point
- * ('sunny' - clear air - where none does), the strongest intensity that
- * word has there (0 in clear air), and the system that paints it.
- * `ground(word, x, z, minutes)` (optional) is the ground law a word goes
- * through before priority (WEATHER2a: rain over snow ground is snow).
+ * THE WORN WORD AMONG SYSTEMS already found (each standing where it is
+ * this minute): the highest-priority word any of them paints over (x, z)
+ * - 'sunny', clear air, where none does - with the strongest intensity
+ * that word has there (0 in clear air) and the system that paints it.
+ * `ground(word, x, z)` (optional) is the ground law a word goes through
+ * before priority (WEATHER2a: rain over snow ground is snow). One
+ * resolution for every reader: `weatherAt` below, and the sim's sample,
+ * which finds its systems once a minute and resolves every frame.
  */
-export function weatherAt(x, z, minutes, climateAt, { ground = null } = {}) {
+export function wornAmong(systems, x, z, ground = null) {
   let best = null;
-  for (const s of systemsNear(x, z, minutes, climateAt, 0)) {
-    const band = bandAt(s, s.d);
+  for (const s of systems) {
+    const band = bandAt(s, Math.hypot(s.x - x, s.z - z));
     if (!band) continue;
-    const word = ground ? ground(band.word, x, z, minutes) : band.word;
+    const word = ground ? ground(band.word, x, z) : band.word;
     if (!best || RANK[word] < RANK[best.word] || (word === best.word && band.intensity > best.intensity)) best = { word, intensity: band.intensity, system: s };
   }
   return best ?? { word: 'sunny', intensity: 0, system: null };
+}
+
+/**
+ * THE WEATHER AT A PLACE AND A MINUTE: `wornAmong` over every system
+ * standing there. `ground(word, x, z, minutes)` as above.
+ */
+export function weatherAt(x, z, minutes, climateAt, { ground = null } = {}) {
+  return wornAmong(systemsNear(x, z, minutes, climateAt, 0), x, z, ground && ((w, gx, gz) => ground(w, gx, gz, minutes)));
 }
 
 /**

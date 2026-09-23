@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   resetWeatherSim, setSnowGroundLaw, snowGroundLawOn, overGround, tickWeather, weatherRespawn, applyClimateWeather,
-  setClimateWeathers, setWeather, restoreWeather, currentWeather, currentWeatherRaw, currentWeatherEnum, WEATHER_ENUM,
+  setClimateWeathers, setWeather, restoreWeather, currentWeather, currentWeatherRaw, currentWeatherEnum, WEATHER_ENUM, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
 import { groundIsSnowy, getTerrainGroundArchive, SEASON } from '../src/world/climateSwaps.js';
 import { CLIMATES, CLIMATE_BASE_TYPES, getWorldClimateSettings } from '../src/formats/mapsFile.js';
@@ -59,35 +59,35 @@ test('WEATHER2a overGround: rain and thunder over snowy ground are snow; a deser
 
 test('WEATHER2a the three writers go through the ground: the day\'s drain, the respawn roll and the travel arrival wear snow over a winter field and keep the table\'s word beside it; the classic lane wears the rain', () => {
   // the drain (tickWeather's boot roll + apply)
-  resetWeatherSim(); setSnowGroundLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   assert.equal(tickWeather(WINTER, CLIMATES.Woodlands, RAIN_ROLL), true);
   assert.equal(currentWeather(), 'snow'); assert.equal(currentWeatherRaw(), 'rain');
-  resetWeatherSim(); setSnowGroundLaw(false);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(false);
   assert.equal(tickWeather(WINTER, CLIMATES.Woodlands, RAIN_ROLL), true);
   assert.equal(currentWeather(), 'rain', 'DFU\'s own: rain over the snow'); assert.equal(currentWeatherRaw(), 'rain');
   // the same roll in summer, on the enhanced lane: rain
-  resetWeatherSim(); setSnowGroundLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(true);
   assert.equal(tickWeather(SUMMER, CLIMATES.Woodlands, () => 0.90), true);   // Summer row 60/20/5/0/10: 90 lands on rain
   assert.equal(currentWeather(), 'rain');
   // the respawn roll: a jungle storm in winter is a blizzard - snow worn, thunder kept
-  resetWeatherSim(); setSnowGroundLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(true);
   assert.equal(weatherRespawn(WINTER, CLIMATES.Rainforest, THUNDER_ROLL), true);
   assert.equal(currentWeather(), 'snow'); assert.equal(currentWeatherRaw(), 'thunder');
   // ...and a desert respawn's rain stays rain (the desert never wears snow)
-  resetWeatherSim(); setSnowGroundLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(true);
   assert.equal(weatherRespawn(WINTER, CLIMATES.Desert, () => 0.96), true);   // desert Winter 75/15/0/3/5: 96 lands on rain
   assert.equal(currentWeather(), 'rain');
   // the travel arrival: the array's slot, over the destination's ground at the arrival's minute
-  resetWeatherSim(); setSnowGroundLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(true);
   setClimateWeathers(SEASONS.Winter, RAIN_ROLL);
   assert.equal(applyClimateWeather(CLIMATES.Woodlands, WINTER), true);
   assert.equal(currentWeather(), 'snow'); assert.equal(currentWeatherRaw(), 'rain');
-  resetWeatherSim(); setSnowGroundLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(true);
   setClimateWeathers(SEASONS.Winter, RAIN_ROLL);
   assert.equal(applyClimateWeather(CLIMATES.Woodlands), true, 'no minute (an old caller): the word is taken as rolled');
   assert.equal(currentWeather(), 'rain');
   // a change of the raw word under one worn word is not a change: rain then thunder, both snow
-  resetWeatherSim(); setSnowGroundLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(true);
   assert.equal(weatherRespawn(WINTER, CLIMATES.Rainforest, RAIN_ROLL), true);
   assert.equal(currentWeather(), 'snow'); assert.equal(currentWeatherRaw(), 'rain');
   setClimateWeathers(SEASONS.Winter, THUNDER_ROLL);
@@ -96,7 +96,7 @@ test('WEATHER2a the three writers go through the ground: the day\'s drain, the r
   // a word taken whole (a pin, a restore) is its own violence
   setWeather('rain'); assert.equal(currentWeather(), 'rain'); assert.equal(currentWeatherRaw(), 'rain');
   restoreWeather('thunder'); assert.equal(currentWeatherEnum(), WEATHER_ENUM.thunder); assert.equal(currentWeatherRaw(), 'thunder');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
   assert.equal(currentWeatherRaw(), 'sunny', 'reset');
 });
 

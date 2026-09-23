@@ -223,7 +223,7 @@ import { getReputation, getFlag, setFlag, FACTION_FLAGS } from '../systems/facti
 // cost, Sheogorath's hijack and the roll.
 import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES, summonMacroValues } from '../systems/daedraSummoning.js';   // IF: the punishment table; DAEDRA1: %dae's one source
 import { expandRowValues } from '../systems/quest/questMacros.js';   // DAEDRA1: MH1's one walk, with the shared context riding it
-import { currentWeather } from '../systems/weatherSim.js';   // AUDIT AT F3: the WORD; its flags come from weather.js's one derivation
+import { currentWeather, sampleWeatherIndoors } from '../systems/weatherSim.js';   // AUDIT AT F3: the WORD; its flags come from weather.js's one derivation; WEATHER3b: the map read at the door while inside
 import { weatherFlags } from '../world/weather.js';   // AUDIT AT F3: WeatherManager's four public flags, derived once from SetWeather's switch
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { hasCart } from '../systems/inventorySession.js';   // AUDIT 28 W2c: the exit-door wagon prompt's cart test
@@ -6683,6 +6683,9 @@ export function createWorldModes(host) {
           inside: true, inDungeon: mode === 'dungeon',
           centreY: player.pos[1] + player.height / 2, waterSurfaceY: mode === 'dungeon' ? (_surf ?? null) : null,
         });
+        // WEATHER3b: the weather outside goes on while the player is inside - the world weather map read at the door
+        // they came in by, before the rain source below reads the word
+        sampleWeatherIndoors(Math.floor(interiorTicker.classicMinutes));
         // BA1: BetterFootstepsComponentPlayer.Update, CameraShaker.Update, ReverbMod.Update and the rain source's Update, one call.
         betterAmbience.frame(dt, {
           entity: playerEntity, inside: true, inBuilding: mode === 'interior', inDungeon: mode === 'dungeon',

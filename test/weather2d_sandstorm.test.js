@@ -15,7 +15,7 @@ import { LAB_DIM } from '../src/render/labGrass.js';
 import { PRECIP_PEAK, precipKind, soundWeather, createWeatherFront } from '../src/systems/weatherFront.js';
 import { CELL_WORDS, SAND_FROM, sandCountry, cellSeats, cellCandidate, fieldAt, baseWordOf } from '../src/systems/weatherField.js';
 import {
-  resetWeatherSim, setWeatherFieldLaw, setSnowGroundLaw, sampleWeatherField, importClimateWeathers, currentWeather, currentWeatherRaw, WEATHER_ENUM, overGround,
+  resetWeatherSim, setWeatherFieldLaw, setSnowGroundLaw, sampleWeatherField, importClimateWeathers, currentWeather, currentWeatherRaw, WEATHER_ENUM, overGround, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
 import { WindWispsRenderer, wispCount, SAND_LOOK, WISP_LOOK, WISP_MAX, WISP_FLOOR, WISP_FS, WISP_VS } from '../src/render/windWisps.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
@@ -119,7 +119,7 @@ test('WEATHER2d the field: a sandstorm seats on the desert tables\' land under a
   const woods = fieldAt({ day: 21, minuteOfDay: 0, at: inside, climateAt: WOODS, wordOfClimate: () => 'cloudy' });
   assert.deepEqual(woods.cells, []); assert.equal(woods.word, 'cloudy');
   // through the sim: the array's desert slot cloudy, the field's word at the place, the ground law untouched (never rain nor thunder)
-  resetWeatherSim(); setWeatherFieldLaw(true); setSnowGroundLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherFieldLaw(true); setSnowGroundLaw(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   importClimateWeathers(Uint8Array.of(E.cloudy, E.sunny, E.sunny, E.sunny, E.sunny, E.sunny));
   const now = 21 * 1440;
   assert.equal(sampleWeatherField(now, CLIMATES.Desert, inside, DESERT, 'jump'), true);
@@ -127,7 +127,7 @@ test('WEATHER2d the field: a sandstorm seats on the desert tables\' land under a
   assert.equal(overGround(E.sandstorm, CLIMATES.Woodlands, 0), E.sandstorm, 'a sandstorm over a winter woodland (it never is) would still be sand, not snow');
   assert.equal(sampleWeatherField(now, CLIMATES.Desert, clear, DESERT, 'live'), true);
   assert.equal(currentWeather(), 'cloudy');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
 });
 
 test('WEATHER2d the sand: the wisps\' program in the sand\'s look - tan, dense, short, a lower box, no floor - the front\'s intensity its strength; the look is a uniform set, the wisps\' own unchanged', () => {

@@ -15,7 +15,7 @@ import {
 } from '../src/systems/weatherField.js';
 import {
   resetWeatherSim, setWeatherFieldLaw, weatherFieldOn, sampleWeatherField, weatherCrossingStamp, weatherJumpStamp, currentFieldCells, currentFieldCell,
-  importClimateWeathers, tickWeather, applyClimateWeather, weatherRespawn, currentWeather, setSnowGroundLaw, WEATHER_ENUM,
+  importClimateWeathers, tickWeather, applyClimateWeather, weatherRespawn, currentWeather, setSnowGroundLaw, WEATHER_ENUM, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
 import { createWindModel, frontFactor, FRONT_LEAD_MIN, CROSS_LEAD_MIN } from '../src/systems/wind.js';
 import { CLIMATES, MAX_MAP_PIXEL_Y } from '../src/formats/mapsFile.js';
@@ -119,7 +119,7 @@ test('WEATHER2b fieldAt: inside a cell the cell\'s word, in the clear the zone\'
 });
 
 test('WEATHER2b the sim: nothing off the lane; on it the player\'s word is the field\'s, a live change is a crossing, a drain\'s is not, an arrival\'s is a jump; the respawn and the travel arrival sample the destination; the cells are kept for the clouds', () => {
-  resetWeatherSim(); setSnowGroundLaw(false);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   importClimateWeathers(DAY);
   const now = SUMMER + 12 * 1440;   // a summer day (no ground law in play either way - the seam is off above)
   const day = Math.floor(now / 1440);
@@ -153,9 +153,9 @@ test('WEATHER2b the sim: nothing off the lane; on it the player\'s word is the f
   assert.equal(currentWeather(), 'overcast'); assert.equal(weatherJumpStamp(), j2 + 1);
   assert.equal(weatherRespawn(now, CLIMATES.Woodlands, () => { throw new Error('rolled'); }, p.clear, WOODS), false, 'the same base: no change');
   // no words yet: nothing sampled
-  resetWeatherSim(); setWeatherFieldLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherFieldLaw(true);
   assert.equal(sampleWeatherField(now, CLIMATES.Woodlands, p.inside, WOODS, 'live'), false, 'the drain rolls the words first');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
   assert.equal(weatherCrossingStamp(), 0); assert.deepEqual(currentFieldCells(), []);
 });
 

@@ -14,7 +14,7 @@
  {"name": "WEATHER3a-lowest-word-wins", "file": "src/systems/weatherMap.js",
   "old": "RANK[word] < RANK[best.word]", "new": "RANK[word] > RANK[best.word]", "tests": ["test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3a-ground-after-priority", "file": "src/systems/weatherMap.js",
-  "old": "    const word = ground ? ground(band.word, x, z, minutes) : band.word;", "new": "    const word = band.word;", "tests": ["test/weather3a_weathermap.test.js"]},
+  "old": "    const word = ground ? ground(band.word, x, z) : band.word;", "new": "    const word = band.word;", "tests": ["test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3a-wind-path-backwards", "file": "src/systems/weatherMap.js",
   "old": "    dz += (share * (Math.cos(a0) - Math.cos(a1))) / turn;", "new": "    dz += (share * (Math.cos(a1) - Math.cos(a0))) / turn;", "tests": ["test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3a-off-map-asks-the-map", "file": "src/systems/weatherMap.js",

@@ -14,7 +14,7 @@ import { createWindModel, FRONT_LEAD_MIN, FRONT_HOLD_MIN, FRONT_TAIL_MIN } from 
 import { FOG_SETTINGS } from '../src/world/weather.js';
 import {
   resetWeatherSim, setWeather, currentWeather, restoreWeather, applyClimateWeather, weatherRespawn, tickWeather,
-  rollClimateWeathersForDay, rollWeather, weatherJumpStamp, STALE_DRAIN_MINUTES, WEATHER_TYPES,
+  rollClimateWeathersForDay, rollWeather, weatherJumpStamp, STALE_DRAIN_MINUTES, WEATHER_TYPES, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { seasonValue, dateFromClassicMinutes } from '../src/systems/gameDate.js';
@@ -250,7 +250,7 @@ test('WX2 the hosts: both read the front under the enhanced sky only, and the cl
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
     assert.match(h, /const enhancedFront = !!sky\?\.cloudShadow && params\.get\('front'\) !== 'off';/, `${host}: the front rides the enhanced sky, and ?front=off is its kill switch`);
-    assert.match(h, /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump \}\)/, `${host}: the arrival is the wind's under the enhanced sky and 1 under the classic, and the jump rides along`);
+    assert.match(h, /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump, peak: weatherOverride \? null : currentWeatherIntensity\(\) \}\)/, `${host}: the arrival is the wind's under the enhanced sky and 1 under the classic, and the jump rides along (WEATHER3b: and the map's intensity as the peak, none under a ?weather pin)`);
     assert.match(h, /if \(fx\.changed\) wxFrom = wxNow;\s*\n\s*wxNow = enhancedFront \? blendTerms\(wxFrom, weatherTerms\(\), fx\.t\) : weatherTerms\(\);/, `${host}: the terms cross from what was ON SCREEN, and classic takes the row whole`);
     assert.match(h, /ambientWord = enhancedFront \? soundWeather\(fx, weather\) : weather;[^\n]*\n\s*ambience\.setPreset\(presetForExterior\(ambientWord, isNight\(minute\)\)\);\s*\n\s*ambience\.rainGain = enhancedFront \? fx\.intensity : 1;/, `${host}: the ear follows the front, the gain too, classic verbatim (AUDIT 61: the word is named once, for the mod's lightning listener too)`);
     assert.match(h, /const precipShown = enhancedFront \? fx\.shown : precipMode;\s*\n\s*if \(precipShown === 'sand'\) \{[\s\S]{0,600}?\} else if \(precipShown && precip\) \{/, `${host}: what falls is what the front shows`);
@@ -271,7 +271,7 @@ test('WX2 the hosts: both read the front under the enhanced sky only, and the cl
 // ═══ WX2a - AUDIT 57: the front audited ═══════════════════════════════
 
 test('AUDIT 57 F3 (sim): a change the player was not present for stamps a JUMP - a load, a travel landing, a respawn roll, a stale drain - and a live day roll does not', () => {
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   try {
     const ci = CLIMATES.Woodlands;
     const NOW = 20 * 1440 + 600;
@@ -315,9 +315,9 @@ test('AUDIT 57 F3 (sim): a change the player was not present for stamps a JUMP -
     restoreWeather('rain');
     assert.equal(currentWeather(), 'rain');
     assert.equal(stamp(), b3 + 1, 'a restore is a jump');
-    resetWeatherSim();
+    resetWeatherSim(); setWeatherMapLaw(false);
     assert.equal(stamp(), 0, 'the test seam clears it');
-  } finally { resetWeatherSim(); }
+  } finally { resetWeatherSim(); setWeatherMapLaw(false); }
 });
 
 test('AUDIT 57 F3 (wind + controller): a jumped change builds no front and drops one that is up; ?wseed reaches the wind', () => {

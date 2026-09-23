@@ -190,7 +190,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // (ui/input.js:652-653) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:8325 sits
+    // returns before its own preventDefault - worldModes.js:8328 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three

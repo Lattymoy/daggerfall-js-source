@@ -24,7 +24,7 @@ import {
 } from '../src/systems/banking.js';
 import { MERCHANTS_FACTION_ID } from '../src/systems/guilds.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
-import { currentWeather, resetWeatherSim, tickWeather, setWeather } from '../src/systems/weatherSim.js';
+import { currentWeather, resetWeatherSim, tickWeather, setWeather, setWeatherMapLaw } from '../src/systems/weatherSim.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { createSceneCache, addPermanentScene, containsPermanentScene, interiorSceneName } from '../src/systems/sceneCache.js';
 import { REPUTATION_LOSS_PER_CRIME, CRIMES, legalRepOf, NORMALIZE_INTERVAL_MINUTES } from '../src/systems/court.js';
@@ -306,7 +306,7 @@ test('S41 loans: a region with no loan is never touched, and no accounts at all 
 // ── SetClimateWeathers (PlayerEntity.cs:447-448) ────────────────────
 
 test('S41 weather: the day change rolls the zones and raises the pending-apply flag; the frame drains it', () => {
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   try {
     setWeather('rain');
     // Drain the boot roll first so the pin is about the DAY block.
@@ -318,7 +318,7 @@ test('S41 weather: the day change rolls the zones and raises the pending-apply f
     assert.equal(currentWeather(), 'rain', 'the day block rolls but never applies');
     assert.equal(tickWeather(100 + MINUTES_PER_DAY, CLIMATES.Woodlands, () => 0.99), true);
     assert.equal(currentWeather(), 'sunny', 'the frame applied the DAY roll (low dice -> Woodlands winter sunny)');
-  } finally { resetWeatherSim(); }
+  } finally { resetWeatherSim(); setWeatherMapLaw(false); }
 });
 
 // ── THE WIRING: every host drives this, because the tick does ───────
