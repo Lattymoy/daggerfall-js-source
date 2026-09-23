@@ -21,7 +21,7 @@ import {
   CAST_DEST_SENDERS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, POSE_HZ_MAX, WHO_HZ_MAX, TRADE_HZ_MAX, CAST_BURST_MAX,
   ACT_HZ_MAX, FOES_HZ_MAX, CHAT_HZ_MAX, ROLL_HZ_MAX, QUEST_HUB_MIN_MS, questShareGate, poseGate, whoGate, socialGate,
   partyGate, tradeGate, castGate, actGate, foesGate, chatGate, rollGate, redGate, muteGate, tokenGate, byteGate,
-  HIT_ROOM_HZ_MAX, TRADE_ROOM_HZ_MAX, CAST_HZ_MAX, TRADE_ROOM_BYTES_PER_S,
+  HIT_ROOM_HZ_MAX, TRADE_ROOM_HZ_MAX, CAST_HZ_MAX, TRADE_ROOM_BYTES_PER_S, cardGate, CARD_HZ_MAX,
 } from '../src/net/wire.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { withClock, WIDE_POSE, HEAL_SPELL, PLACE_ATTACH_FIELDS, PLACE_METER_FIELDS, widestPlace } from './placeWidest.mjs';
@@ -53,6 +53,7 @@ const ARMS = [
   { arm: 'social', frame: () => ({ t: 'social', k: 'party.leave' }), passes: 0, key: 'junk', max: DROP_STRIKES_MAX, why: 'too many frames' },   // junk outside the hub: every one it takes is struck, and junk is never forgiven
   { arm: 'chat', frame: () => ({ t: 'chat', text: 'hello' }), passes: CHAT_HZ_MAX, key: 'cdrops', max: CHAT_STRIKES_MAX, why: 'too many lines' },
   { arm: 'roll', frame: () => ({ t: 'roll', n: 1, m: 20, k: 0 }), passes: ROLL_HZ_MAX, key: 'rollDrops', max: CHAT_STRIKES_MAX, why: 'too many rolls' },
+  { arm: 'card', frame: (o) => ({ t: 'card', data: { to: o, ask: true } }), passes: CARD_HZ_MAX, key: 'cardDrops', max: DROP_STRIKES_MAX, why: 'too many card frames' },   // INSPECT1
 ];
 
 test('AUDIT ATTACH A2: a meter no longer rides a write the runtime can refuse - with EVERY attachment write after the hello refused, each arm\'s flood still passes its bucket and no more, and is struck out on exactly the frame past its strikes, with its own words (mutants: the meters kept nowhere, so every gate passes; the strikes never forgiven; a strike bound off by one)', () => withClock(async (tick) => {
@@ -101,7 +102,7 @@ test('AUDIT ATTACH: a wake forgets the meters and nothing else - the host is sti
   assert.equal(j.sent.filter((m) => m.t === 'act').length, 1, 'the woken room works: its meters are made again as they are spent');
   assert.equal(h.att.finalUsed, true, 'the host\'s farewell is still spent');
   // the quiet: every bucket a wake forgets is whole again two seconds after it was emptied
-  for (const [name, gate, cap] of [['pose', poseGate, POSE_HZ_MAX], ['who', whoGate, WHO_HZ_MAX], ['social', socialGate, 2], ['party', partyGate, 2], ['trade', tradeGate, TRADE_HZ_MAX], ['cast', castGate, CAST_BURST_MAX], ['act', actGate, ACT_HZ_MAX], ['foes', foesGate, FOES_HZ_MAX], ['chat', chatGate, CHAT_HZ_MAX], ['roll', rollGate, ROLL_HZ_MAX], ['red', redGate, 1], ['mute', muteGate, 1], ['hit funnel', (b, t) => tokenGate(b, t, HIT_ROOM_HZ_MAX), HIT_ROOM_HZ_MAX], ['trade funnel', (b, t) => tokenGate(b, t, TRADE_ROOM_HZ_MAX), TRADE_ROOM_HZ_MAX], ['cast funnel', (b, t) => tokenGate(b, t, CAST_HZ_MAX), CAST_HZ_MAX]]) {
+  for (const [name, gate, cap] of [['pose', poseGate, POSE_HZ_MAX], ['who', whoGate, WHO_HZ_MAX], ['social', socialGate, 2], ['party', partyGate, 2], ['trade', tradeGate, TRADE_HZ_MAX], ['cast', castGate, CAST_BURST_MAX], ['act', actGate, ACT_HZ_MAX], ['foes', foesGate, FOES_HZ_MAX], ['chat', chatGate, CHAT_HZ_MAX], ['roll', rollGate, ROLL_HZ_MAX], ['red', redGate, 1], ['mute', muteGate, 1], ['card', cardGate, CARD_HZ_MAX], ['hit funnel', (b, t) => tokenGate(b, t, HIT_ROOM_HZ_MAX), HIT_ROOM_HZ_MAX], ['trade funnel', (b, t) => tokenGate(b, t, TRADE_ROOM_HZ_MAX), TRADE_ROOM_HZ_MAX], ['cast funnel', (b, t) => tokenGate(b, t, CAST_HZ_MAX), CAST_HZ_MAX]]) {
     let b = null;
     for (let k = 0; k < cap; k++) b = gate(b, 0).bucket;
     assert.equal(gate(b, 0).pass, false, `${name}: emptied`);

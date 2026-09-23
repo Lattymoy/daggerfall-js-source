@@ -95,7 +95,16 @@ test('AUDIT WORLD2 A: the relay - the budgets are one home and the byte gate spe
   // the header says the truth (A8)
   const room = rd('server/src/index.js');
   assert.match(room, /WORLD2 \(2026-09-12\): THE LIVE FOES\./, 'the head has a WORLD2 paragraph'); assert.match(room, /metered on the pose bucket, or the\n\/\/ stream's own for a foes frame \(A1/, 'and the A1 sentence names both buckets');
-  assert.match(rd('src/net/wire.js'), /\{t:'hello'\|'pose'\|'ping'\|'chat'\|'roll'\|'world'\|'foes'\|'hit'\|'act'\|'who'\|'quest', \.\.\.\}/, 'parseClient\'s doc names the two frames (and WORLD3\'s third, WORLD6b-iii(e)\'s ask, QUEST1\'s, and DICE1\'s roll beside the chat line)');
+  // INSPECT1: the line had fallen SEVEN arms behind the parser (say, mute, social, party, trade, cast and INSPECT1's
+  // card were parsed and not named) - a list restated by hand in a pin is a list that drifts with nobody noticing. So it
+  // is DERIVED: every frame parseClient has an arm for, the doc names, and it names nothing else.
+  const wsrc = rd('src/net/wire.js');
+  const doc = /One client frame, parsed and checked: \{t:((?:'[a-z]+'\|?)+), \.\.\.\}/.exec(wsrc);
+  assert.ok(doc, 'parseClient\'s doc line names its frames');
+  const from = wsrc.indexOf('export function parseClient(');
+  const arms = [...new Set([...wsrc.slice(from, wsrc.indexOf('\n}\n', from)).matchAll(/m\.t === '([a-z]+)'/g)].map((m) => m[1]))].sort();
+  assert.ok(arms.length >= 18 && arms.includes('hit') && arms.includes('card'), 'the arms were read off the parser');
+  assert.deepEqual([...doc[1].matchAll(/'([a-z]+)'/g)].map((m) => m[1]).sort(), arms, 'parseClient\'s doc names every frame it parses (WORLD2\'s two, WORLD3\'s third, WORLD6b-iii(e)\'s ask, QUEST1\'s, DICE1\'s roll beside the chat line, INSPECT1\'s card...), and no other');
 });
 
 test('AUDIT WORLD2: the session - a dead socket and a leave clear the seat through the one door, so the world host hears the seat go (A2/C2); the hits\' own gate at home refuses an over-rate blow to its caller (A6); my own id as the host is not the world in (D11); FOES_STALE_MS is three full frames', () => {

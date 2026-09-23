@@ -171,5 +171,9 @@ test('CHAT-FIT: by source - the host hands the panel a `badgeOf` read off the AC
   const p = rd('src/ui/chatPanel.js');
   assert.match(p, /const paintNames = \(\) => \{\s*if \(nameColor\) \{[\s\S]*?\}\s*paintBadges\(\);\s*\};/);
   assert.match(p, /if \(r\.badgeKey === key\) continue;/, 'a line is re-laid only on a change');
-  assert.equal((p.match(/doc\.createElementNS\?\.\('http:\/\/www\.w3\.org\/2000\/svg', 'svg'\)/g) ?? []).length, 1, 'ONE svg door, shared by the roster row and the chat line');
+  // INSPECT1: the door moved to ui/playerBadge.js glyphSvgNode - the one drawing the name over a head and the profile card
+  // share too - so the panel keeps NO svg door of its own, and its one glyph builder goes through that one
+  assert.equal((p.match(/createElementNS/g) ?? []).length, 0, 'no svg door of the panel\'s own');
+  assert.match(p, /const glyphSvg = \(g, cls\) => glyphSvgNode\(doc, g, cls\);/, 'ONE glyph builder, shared by the roster row and the chat line, through the one drawing');
+  assert.equal((rd('src/ui/playerBadge.js').match(/doc\?\.createElementNS\?\.\('http:\/\/www\.w3\.org\/2000\/svg', 'svg'\)/g) ?? []).length, 1, '...which has ONE svg door');
 });

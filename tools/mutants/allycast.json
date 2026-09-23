@@ -209,8 +209,8 @@
   {
     "name": "AAC-relay-one-funnel",
     "file": "server/src/index.js",
-    "old": "      let slot = cin.find((c) => c.id === a.id) ?? null;",
-    "new": "      let slot = cin[0] ?? null;",
+    "old": "    let slot = slots.find((c) => c.id === senderId) ?? null;",
+    "new": "    let slot = slots[0] ?? null;",
     "tests": [
       "test/allycast.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "AAC-relay-slots-unbounded",
     "file": "server/src/index.js",
-    "old": "        if (cin.length >= CAST_DEST_SENDERS_MAX) { cin.sort((x, y) => (x.b?.at ?? 0) - (y.b?.at ?? 0)); cin.shift(); }",
+    "old": "      if (slots.length >= CAST_DEST_SENDERS_MAX) { slots.sort((x, y) => (x.b?.at ?? 0) - (y.b?.at ?? 0)); slots.shift(); }",
     "new": "",
     "tests": [
       "test/allycast.test.js"

@@ -305,6 +305,8 @@ import { createTradeManager, TRADE_RANGE_M, inTradeRange } from '../net/tradeSes
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createSocialMenu } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
+import { createProfileWindow, profileView } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
 import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
 import { morrowindDataCount, morrowindDataGeneration } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
@@ -8778,6 +8780,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // no-peer arm reaches it through optional calls - F with nobody in front of you
   // opens the list, which is the same gesture one step out.
   let socialMenu = null;
+  let profileWin = null;   // INSPECT1: the profile over a player the F key found - made beside the F-menu it opens from
+  let _profileAsk = null;   // INSPECT1: { peerId, at, sent } - the card asked for and not yet answered; the frame retries the send and times the wait
+  const cardAnswers = createCardAnswerGate();   // INSPECT1: one asker answered once in a while, whoever asks
   let _worldPublishedAt = -Infinity;   // WORLD1: when this host last published the room's memory (the frame clock)
   // WORLD1 (Mac: "The world is the server ... True persistence"): the room's memory out - this player's, when the
   // relay says they are the room's host and a dungeon stands: every WORLD_PUBLISH_MS, and at once on the way out
@@ -9009,6 +9014,23 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (healed > 0) townTalk.say(`You are healed ${healed} points.`);
       surfacePlayer();
     };
+    // INSPECT1: A CARD FRAME AT ME. An ASK is answered with my card - what my own sheet shows and what I wear now
+    // (net/profileCard.js composeCard) - once in a while per asker (the answer gate), whoever asks: the relay routed it
+    // from someone in my room, and nothing on the card is more than the room could see of me standing there, bar my
+    // sheet's numbers. An ANSWER is drawn only on the profile that asked for it: an answer from anyone else, or one that
+    // lands after the player closed the card or moved on to another's, draws nothing.
+    online.onCard = (id, d) => {
+      if (d?.ask) {
+        if (!cardAnswers.pass(id, performance.now())) return;
+        const card = composeCard(playerEntity);
+        if (card) online.sendCard({ to: id, card });
+        return;
+      }
+      if (!d?.card || _profileAsk?.peerId !== id) return;
+      _profileAsk = null;
+      const p = online.peers.get(id) ?? null;
+      profileWin?.update(id, profileView({ name: peerName(id), peer: p, look: p?.look ?? null, card: d.card, state: 'answered' }));
+    };
     online.onAct = (id, data) => { modes?.applyPlaceActions?.(id, data); };   // WORLD3: another's door, lever or platform; WORLD6a: in a building too
     // WORLD5: this save's time markers are set to the WORLD's time - a save a month behind catches up no loans and no
     // diseases on its first frame, one a year ahead reads no negative day - and the day's weather is rolled from the
@@ -9238,7 +9260,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       },   // no chat under a window: the window's keys are the window's
       onOpen: () => surfaceOpen('chat'),   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open (AUDIT SOC B6: by the first surface up - the friends panel and the F-menu are surfaces too)   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
       onClose: () => surfaceClose('chat'),   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js) - by the last surface down
-      above: () => !!(socialPanel?.isOpen?.() || socialMenu?.isOpen?.()),   // AUDIT SOC C2/C14: ONE ESCAPE, ONE SURFACE - the chat yields the key while the friends panel or the F-menu stands over it (each of the three closes on its own Escape and stops it; the topmost answers)
+      above: () => !!(socialPanel?.isOpen?.() || socialMenu?.isOpen?.() || profileWin?.isOpen?.()),   // INSPECT1: and the profile. AUDIT SOC C2/C14: ONE ESCAPE, ONE SURFACE - the chat yields the key while the friends panel or the F-menu stands over it (each of the three closes on its own Escape and stops it; the topmost answers)
       // SOC3: the three social seams of the chat, all read LAZILY - `social` and `socialPanel` are made by
       // socialStart below, which runs after this call (the panel has to exist before the picture lands beside it),
       // so every one of these is a closure that asks at the moment of the click or the frame, never a value.
@@ -9307,7 +9329,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),
       onOpen: () => surfaceOpen('social'),   // AUDIT SOC B6: counted with the chat's and the F-menu's - the first up frees the mouse, the last down takes it back
       onClose: () => surfaceClose('social'),
-      above: () => !!socialMenu?.isOpen?.(),   // AUDIT SOC C2/C14: the F-menu stands over the panel - its Escape is the menu's
+      above: () => !!(socialMenu?.isOpen?.() || profileWin?.isOpen?.()),   // AUDIT SOC C2/C14: the F-menu stands over the panel - its Escape is the menu's; INSPECT1: and the profile opened from it
     });
     // AUDIT SOC B14/D11: `hudCtx.openSocial` stood here as a second door to the panel; nothing dispatched through it
     // (SOC5's key reaches the panel through socialInteract's nobody-in-front arm), and a door nothing opens is a
@@ -9329,6 +9351,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       onOpen: () => surfaceOpen('menu'),   // AUDIT CHAT C2's law: the card is a pointer surface - the mouse is freed inside the gesture that opened it (AUDIT SOC B6: counted with the chat's and the panel's)
       onClose: () => surfaceClose('menu'),   // and taken back inside the one that closed (MAC1's rule, ui/pauseDoor.js) - by the last surface down
       onAct: (act) => {
+        if (act.k === 'profile.inspect') { inspectPeer(act.peer); return; }   // INSPECT1: not a hub act - a look at someone standing here, and a card asked of them
         if (act.k === 'trade.request') {   // TRADE1: not a hub act - two players in one room, so the host routes it to the trade manager (or, if they had asked first, accepts)
           const r = tradeMgr.request(act.peer);
           if (!r.ok) tradeSay(r.why === 'try again' ? TRY_AGAIN_TEXT : `You cannot trade with them: ${r.why}.`);
@@ -9343,6 +9366,16 @@ export async function bootWorld(canvas, renderer, params, status) {
         const went = hub?.sendSocial(act) === true;
         chatLog.push(tab.id, { text: went ? socialActText(act.k, who) : (hub?.status === 'open' ? TRY_AGAIN_TEXT : NOT_CONNECTED_TEXT), system: true });
       },
+    });
+    // INSPECT1 (kurkku: "a profile page that you can bring up when you're near them"; Mac: "a new enhanced UI element for
+    // the player inspect interaction"): the profile, made beside the F-menu it opens from and under its gate - the same
+    // kind of pointer surface. Nothing stands over it: F with the profile up closes it (socialInteract), as a second F
+    // closes the F-menu, so the two are never up at once.
+    profileWin = createProfileWindow({
+      doc: document, win: globalThis,
+      canOpen: socialMenuCanOpen,
+      onOpen: () => surfaceOpen('profile'),
+      onClose: () => { surfaceClose('profile'); _profileAsk = null; },   // a card closed is a card no longer waited on
     });
   };
   let _noAccountSaid = false;   // AUDIT SOC B10: the no-account line goes on the tab once
@@ -10390,6 +10423,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // SOC3: and the friends + party panel repaints on the same frame, under the same covering rule as the chat -
     // its body only when the picture moved, its countdowns and its invite toast every time (ui/socialPanel.js).
     socialPanel?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });
+    profileWin?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });   // INSPECT1: the F-menu's own covering word
     socialMenu?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });   // SOC5: a window over the HUD takes the F-menu with it, the same word the chat's own `covered` carries - a card left over a window would take the clicks the window is owed
     // SOC4: and the party HUD is drawn from the same frame, under the SAME `covered` word the chat panel takes - a
     // window over the HUD covers both. The panel itself costs one version compare on a frame where nothing moved.
@@ -10493,19 +10527,44 @@ export async function bootWorld(canvas, renderer, params, status) {
   const castAtAllyDoor = (id, frame) => !!online?.sendCast?.(frame);
   /** SOC5's own forward - the camera's yaw and pitch, the ray the F key casts; PEER-PLAQUE1's modal pick casts the same one (AUDIT DROPS E3). */
   const socialFwd = () => [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+  /** INSPECT1: THE PROFILE OF THE PLAYER THE F KEY FOUND. It stands at once from what the room already knows - their
+   *  name, the badge the relay read off their token, the look they last said hello in - and asks them for their card
+   *  (their sheet, and what they wear now), which lands a frame later through `online.onCard`. With a relay that
+   *  cannot carry a card it says so and stays as it stood; one that can carries the ask, retried each frame until it
+   *  leaves (profileFrame), and a card that does not come in CARD_WAIT_MS is said not to have come. */
+  const inspectPeer = (peerId) => {
+    const p = online?.peers.get(peerId) ?? null;
+    if (!p || !profileWin) return false;
+    const can = !!online?.cardOk;
+    _profileAsk = can ? { peerId, at: performance.now(), sent: false } : null;
+    if (_profileAsk) _profileAsk.sent = online.sendCard({ to: peerId, ask: true }) === true;
+    return profileWin.show(peerId, profileView({ name: peerName(peerId), peer: p, look: p.look ?? null, state: can ? 'asking' : 'unsupported' }));
+  };
+  /** INSPECT1: the profile's frame - an ask the gate held back goes when it can, and a wait that ran out is said. */
+  const profileFrame = () => {
+    if (!_profileAsk) return;
+    if (!_profileAsk.sent) _profileAsk.sent = online?.sendCard({ to: _profileAsk.peerId, ask: true }) === true;
+    if (performance.now() - _profileAsk.at < CARD_WAIT_MS) return;
+    const id = _profileAsk.peerId;
+    _profileAsk = null;
+    const p = online?.peers.get(id) ?? null;
+    profileWin?.update(id, profileView({ name: peerName(id), peer: p, look: p?.look ?? null, state: 'silent' }));
+  };
   const socialInteract = () => {
     if (!social) return false;
+    if (profileWin?.isOpen()) { profileWin.hide(); return true; }   // INSPECT1: F again closes the profile, as it closes the F-menu
     if (socialMenu?.isOpen()) { socialMenu.hide(); return true; }
     const near = peersNear();
     // TI1's reading, minus the tap: the F-menu is a keyboard gesture and has no touch ray of its own.
     const hit = pickPeerInFront(cam.pos, socialFwd(), near, SOCIAL_REACH, rayPersonDistance);
     if (!hit) { socialPanel?.toggle?.(); return true; }   // SOC3 owns `socialPanel`; until it lands this is a no-op that still consumes the key
-    return socialMenu?.show({ name: peerName(hit.peer.id) ?? 'Someone', peerId: hit.peer.id, actions: { ...social.actionsFor(hit.peer.id), ...tradeActionsFor(hit.peer.id) } }) === true;
+    return socialMenu?.show({ name: peerName(hit.peer.id) ?? 'Someone', peerId: hit.peer.id, actions: { ...social.actionsFor(hit.peer.id), ...tradeActionsFor(hit.peer.id), canInspect: true } }) === true;   // INSPECT1: a player standing in front of you can always be looked at
   };
   hudCtx.socialInteract = socialInteract;   // SOC5: the door ui/input.js routeAction's 'SocialInteract' arm reaches - assigned here because the function is defined beside the peers it reads, and hudCtx is built with the windows
   const onlineFrame = (now, dt) => {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     tradeFrame();   // TRADE1: retries, timeouts, a peer gone or out of reach - before the dead return, as the chat's is
+    profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room

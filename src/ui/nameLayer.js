@@ -45,7 +45,7 @@
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
-import { titleBadge, glyphBadges, GLYPH_STROKE, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
@@ -270,23 +270,8 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     tag.worn = key;
     tag.glyphs.textContent = '';
     for (const g of badges) {
-      const svg = doc.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
+      const svg = glyphSvgNode(doc, g, 'dfname-glyph', 1.6);   // INSPECT1: the one drawing (ui/playerBadge.js), at this face's stroke
       if (!svg) return;   // a document that cannot make one draws none, rather than throwing under a name
-      svg.setAttribute('class', 'dfname-glyph');
-      svg.setAttribute('viewBox', '0 0 16 16');
-      svg.setAttribute('aria-hidden', 'true');
-      if (g.rgba) svg.style.color = cssRgba(g.rgba) ?? '';
-      const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', g.path);
-      // `currentColor` on both, so the colour above is the one decision.
-      if (GLYPH_STROKE[g.key]) {
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', 'currentColor');
-        path.setAttribute('stroke-width', '1.6');
-        path.setAttribute('stroke-linecap', 'round');
-        path.setAttribute('stroke-linejoin', 'round');
-      } else path.setAttribute('fill', 'currentColor');
-      svg.append(path);
       tag.glyphs.append(svg);
     }
   };

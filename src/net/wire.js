@@ -890,7 +890,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world99';   // AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world99';   // INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1097,8 +1097,9 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'world'|'foes'|'hit'|'act'|'who'|'quest', ...}
- *  or {error} - the caller closes on an error. */
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'mute'|'world'|'foes'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card', ...}
+ *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
+ *  (test/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again). */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
   // WORLD1/WORLD2: the frames past MAX_FRAME_BYTES are the world frame and the foes frame, told by their prefix
@@ -1134,6 +1135,12 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (text.length > CAST_FRAME_MAX) return { error: 'frame too large' };
     const data = validCastData(m.data);
     return data ? { t: 'cast', data } : { error: 'bad cast' };
+  }
+  if (m.t === 'card') {   // INSPECT1: a player's card, asked for or answered - one directed frame, projected by validCardData; the relay reads none of it
+    if (!hasHello) return { error: 'card before hello' };
+    if (text.length > CARD_FRAME_MAX) return { error: 'frame too large' };
+    const data = validCardData(m.data);
+    return data ? { t: 'card', data } : { error: 'bad card' };
   }
   if (m.t === 'ping') return { t: 'ping' };
   if (m.t === 'hello') {
@@ -1895,6 +1902,67 @@ export function validCastData(d) {
   }
   const name = typeof sp.name === 'string' ? sanitizeLabel(sp.name).slice(0, CAST_NAME_MAX) : '';
   return { to, level, spell: { name, element, rangeType, icon, effects } };
+}
+
+// INSPECT1 (2026-09-23, the community arc - kurkku: "a profile page that you can bring up when you're near them"; Mac:
+// "a new enhanced UI element for the player inspect interaction. Showing their glyph, name, title, stats and worn
+// gear"): A PLAYER'S CARD, ASKED FOR AND ANSWERED, as ONE DIRECTED FRAME with the cast frame's own routing -
+// `{t:'card', data:{to, ask: true}}` asks the player `to` names for their card and `{t:'card', data:{to, card}}` is
+// the answer, each from a hello'd socket in a place room to the socket `to` names, the sender's id stamped on it by
+// the relay. The relay reads the SHAPE alone (validCardData). The card is the ANSWERING player's own word - their
+// sheet's level, attributes and vitals, and the look they wear NOW (a look rides the hello alone, so the room's copy
+// can be a room behind) - and the asker draws it as theirs. The glyphs, the title and the name are NOT on the card:
+// they are the relay's word, read off the signed identity token (badged), so no card can claim a title.
+export const CARD_FRAME_MAX = 4 * 1024;
+/** A socket's asks and answers together, a second - the cast frame's rate: a card is asked by a hand on a menu. On the
+ *  way in, a card rides the cast arm's own funnel onto its destination - per sender (AUDIT ALLY-CAST B2), so strangers
+ *  asking over and over cannot starve a friend's ask - and ONE bucket for one sender whatever the directed frame: what a
+ *  destination is made to take from one sender, a spell or a card to answer, is bounded once. */
+export const CARD_HZ_MAX = 4;
+export const CARD_IN_HZ_MAX = CARD_HZ_MAX * 2;
+/** The card's ceilings - what a bound refuses is a number no sheet draws. An attribute is the sheet's LIVE value, which
+ *  the port clamps at systems/statMods.js MAX_STAT_VALUE whatever effect is on it (a pin holds the two equal - this
+ *  file is the relay's and imports no game module). The port caps no level and no vital's maximum (both climb with the
+ *  level), so theirs are sanity bounds. */
+export const CARD_LEVEL_MAX = 999;
+export const CARD_STAT_MAX = 100;
+export const CARD_VITAL_MAX = 99999;
+/** The eight attributes in the sheet's own order (systems/chargen.js STAT_KEYS_ORDER - a pin holds the two equal), and
+ *  the three vitals' maxima: health, fatigue (the sheet's /64 display figure), magicka. */
+export const CARD_ATTRS = 8;
+export const CARD_VITALS = 3;
+/** The relay that first routes a card - an older one answers the frame with 'unknown message' and CLOSES the socket,
+ *  so no card is asked of it (the profile draws what the room already knows). The same deploy as the channels. */
+export const CARD_RELAY_MIN = 99;
+export const relaySupportsCard = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CARD_RELAY_MIN; };
+export const cardGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CARD_HZ_MAX);
+export const cardInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CARD_IN_HZ_MAX);
+/** A card, projected: `{ level, attrs[8], vitals[3], look }` or null - every number an integer inside its bound, the
+ *  look through validLook (the paperdoll's recipe, the room's own law). A card short of anything is no card: half a
+ *  sheet drawn as a whole one would be a lie about a player. */
+export function validCard(c) {
+  if (!c || typeof c !== 'object' || Array.isArray(c)) return null;
+  const n = (v, max) => (Number.isInteger(v) && v >= 0 && v <= max ? v : null);
+  const level = Number.isInteger(c.level) && c.level >= 1 && c.level <= CARD_LEVEL_MAX ? c.level : null;
+  if (level === null) return null;
+  if (!Array.isArray(c.attrs) || c.attrs.length !== CARD_ATTRS) return null;
+  const attrs = c.attrs.map((v) => n(v, CARD_STAT_MAX));
+  if (attrs.includes(null)) return null;
+  if (!Array.isArray(c.vitals) || c.vitals.length !== CARD_VITALS) return null;
+  const vitals = c.vitals.map((v) => n(v, CARD_VITAL_MAX));
+  if (vitals.includes(null)) return null;
+  if (!c.look || typeof c.look !== 'object' || Array.isArray(c.look)) return null;
+  return { level, attrs, vitals, look: validLook(c.look) };
+}
+/** A card frame's data, projected: `{ to, ask: true }` or `{ to, card }` - exactly one of the two - or null. */
+export function validCardData(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  const to = typeof d.to === 'string' && ID_RE.test(d.to) ? d.to : null;
+  if (!to) return null;
+  if (d.ask === true && d.card === undefined) return { to, ask: true };
+  if (d.ask !== undefined || d.card === undefined) return null;
+  const card = validCard(d.card);
+  return card ? { to, card } : null;
 }
 
 /** One trade frame's data, PROJECTED: `{to, k, s, ...exactly what its kind carries}` or null. Items are checked for

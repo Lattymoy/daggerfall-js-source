@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -294,6 +294,11 @@ export class OnlineSession {
     this._tbucket = null;         // TRADE1: the trade frames' own gate at home (TRADE_HZ_MAX)
     this._inCastBuckets = new Map();   // ALLY-CAST: the gate on cast frames coming in, per sender - the trade gate's shape
     this._castBucket = null;   // ALLY-CAST: my own casts out, castGate's law. CHAT-CHAN: its OWN field - this was `_cbucket`, the chat gate's own
+    this.cardOk = false;          // INSPECT1: the relay that welcomed this socket routes card frames (relaySupportsCard) - an older one CLOSES the socket on one, so no card is asked of it
+    this.onCard = null;           // INSPECT1: (id, data) => void - a card frame at ME (an ask for my card, or the answer to mine), projected by the wire's validCardData
+    this._cardBucket = null;      // INSPECT1: my own card frames out, asks and answers together - cardGate's law
+    this._inCardBuckets = new Map();   // INSPECT1: the gate on card frames coming in, per sender - the cast gate's shape
+    this._inCardSaid = false;
     // name (below), so once Local chat went down this session a heal cast at a mate spent a chat line and a chat line a cast
     this._inTradeBuckets = new Map();   // TRADE1: and the gate on trade frames coming IN, per sender (AUDIT DROPS B3) - a peer is chosen by the sender, so a flood is a peer's, never the relay's
     this._inTradeSaid = false;
@@ -693,6 +698,24 @@ export class OnlineSession {
     if (s.length > CAST_FRAME_MAX) return false;
     try { ws.send(s); } catch { return false; }
     this._castBucket = gate.bucket; this.stats.sent++; this.stats.casts = (this.stats.casts ?? 0) + 1;
+    return true;
+  }
+
+  /** INSPECT1: one card frame out - an ask for a peer's card, or my card to one who asked - to the peer through the
+   *  socket that reports them (`_socketFor`: my own cell or a halo), through the wire's own projection first, CARD_HZ_MAX
+   *  a second, never at a relay that would close the socket for it. False when it cannot go: the asker's profile then
+   *  draws what the room already knows. */
+  sendCard(data) {
+    const d = validCardData(data);
+    if (!d || d.to === this.id || !this.cardOk) return false;
+    const ws = this._socketFor(d.to);
+    if (!ws) return false;
+    const gate = cardGate(this._cardBucket, this._now());
+    if (!gate.pass) return false;
+    const s = JSON.stringify({ t: 'card', data: d });
+    if (s.length > CARD_FRAME_MAX) return false;   // the relay's own door on a card frame - over it the relay closes the socket
+    try { ws.send(s); } catch { return false; }
+    this._cardBucket = gate.bucket; this.stats.sent++; this.stats.cards = (this.stats.cards ?? 0) + 1;
     return true;
   }
 
@@ -1175,6 +1198,7 @@ export class OnlineSession {
       if (primary) this.chanOk = relaySupportsChannels(relayV);   // CHAT-CHAN
       if (primary) this.rollOk = relaySupportsRoll(relayV);   // DICE1
       if (primary) this.emoteOk = relaySupportsEmote(relayV);   // EMOTE1
+      if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {
@@ -1260,6 +1284,20 @@ export class OnlineSession {
         } else {
           const d = validCastData(m.data);
           if (d && d.to === this.id) this._deliver('cast', () => this.onCast?.(m.id, d));
+        }
+      }
+    } else if (m.t === 'card') {
+      // INSPECT1: a card frame the relay routed to me - an ask for my card or the answer to mine - on any socket I hold,
+      // never my own back, gated coming in per sender (the cast arm's law), projected by the wire, addressed to ME
+      if (typeof m.id === 'string' && m.id !== this.id) {
+        if (this._inCardBuckets.size > TRADE_IN_SENDERS_MAX) this._inCardBuckets.clear();
+        const g = cardInGate(this._inCardBuckets.get(m.id) ?? null, now);
+        this._inCardBuckets.set(m.id, g.bucket);
+        if (!g.pass) {
+          if (!this._inCardSaid) { this._inCardSaid = true; console.warn(`[online] card frames are arriving faster than ${CARD_IN_HZ_MAX}/s - frames are being dropped.`); }
+        } else {
+          const d = validCardData(m.data);
+          if (d && d.to === this.id) this._deliver('card', () => this.onCard?.(m.id, d));
         }
       }
     } else if (m.t === 'act') {

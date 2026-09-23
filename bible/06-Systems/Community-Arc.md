@@ -371,3 +371,92 @@ list or ray cast with no turn armed and a turned classic frame returning before 
 39's `ensure()`; the one pick a named closure asked twice), and their mutant records (`freemouse1`, `qs2`,
 `worldhover`). Port-Status's section A tally is 173 rows with the pile's the 170th, and section 2's `:NNN` row
 identifiers were re-resolved past it.
+
+## INSPECT1 - the profile of a player standing in front of you
+
+kurkku on Discord, 2026-09-23: "a profile page that you can bring up when you're near them"; Mac: "For the profile
+suggestion. I think we develop a new enhanced UI element for the player inspect interaction. Showing their glyph,
+name, title, stats and worn gear".
+
+**Where it opens.** From the F-menu (SOC5), which already stands over the player the F key's ray finds - so "near
+them" is the menu's own reach, and the gesture is the one a player already uses to friend or invite someone. Its
+first row is Inspect now (`ui/socialMenu.js`, offered by the host for every body the key finds); on touch the HUD's
+☺ button is the same door. The profile (`ui/profileWindow.js`) is a pointer surface of its own, like the menu it
+opens from: F again closes it, as it closes the menu; Escape closes it unless a surface stands over it (the chat and
+the friends panel yield theirs to it); a window over the HUD, or a pause, takes it away.
+
+**What it shows, and whose word each part is.**
+- The TITLE above the name and the GLYPHS after it, in the name layer's order - the relay's word, off the signed
+  identity token (`net/wire.js badged`), drawn through the one badge law. Never the card's: a card that carried them
+  could claim a title nobody granted. Each glyph is drawn by the one SVG helper every DOM face shares now
+  (`ui/playerBadge.js glyphSvgNode` - the chat panel and the name layer each had a copy).
+- The NAME the room knows them by.
+- Their level, race and class, the eight attributes and the three vitals' maxima - THEIR word, the card their own
+  game hands over when asked (`net/profileCard.js composeCard`): what their own character sheet shows, read by the
+  producers that sheet reads (the level, `liveStat` over STAT_KEYS_ORDER, fatigue at the sheet's /64 figure).
+- What they WEAR, slot by slot - head to foot, then the hands, then the trinkets - named as the pack names an item
+  (`itemLongName`). Off the card's look when it came, because a look rides the hello alone: a player who changed
+  their armour in this room still wears the old one in the room's copy. Until the card comes, off the room's.
+
+**The card on the wire.** One directed frame, `card`, with the cast frame's routing (`net/wire.js validCardData`):
+`{to, ask: true}` asks and `{to, card}` answers, from a hello'd socket in a place room (a channel or the hub is
+nowhere to stand beside someone) to the socket `to` names, the sender's id stamped by the relay. The card is whole or
+nothing - the level (1 to 999), eight attributes each 0 to 100 (the sheet's live clamp, MAX_STAT_VALUE; a pin holds
+the wire's bound to it, since the relay imports no game module), three vitals, the look through the room's own law.
+The relay reads none of it. It meters asks and answers together on the card's own bucket (CARD_HZ_MAX, the cast's
+strikes), and funnels them onto the destination through the cast arm's per-sender funnel (AUDIT ALLY-CAST B2): one
+sender reaches one destination at CAST_HZ_MAX a second, whatever the directed frame. A client asks only a relay that
+routes the frame (world99, CARD_RELAY_MIN - an older relay closes the socket for a frame it does not know); with an
+older one the profile opens from the room's half and says the server cannot carry a card yet.
+
+**The answering law.** An ask is answered with my card through a gate (`createCardAnswerGate`): one asker once in
+CARD_ANSWER_MS however often they ask, CARD_ANSWER_ASKERS_MAX askers remembered with the stalest forgotten first - a
+stranger asking over and over makes my game send once in a while, not once a frame. The link gates both ways
+(CARD_HZ_MAX out, CARD_IN_HZ_MAX in, per sender) and delivers only a stamped frame addressed to me.
+
+**The wait.** The profile stands at once from the room's half - the name, the badge, the gear in the room's look -
+with "Asking Bran for their card...". An ask the link's gate held back goes on a later frame, and a card that does not
+come in CARD_WAIT_MS is said not to have come: "Bran did not answer - this is what they wear." An answer is drawn only
+on the profile that asked for it: one landing after the player closed it, or moved on to another's, draws nothing.
+
+**Recorded, not built.** There is no privacy switch: anyone standing beside me can ask, and my game answers with
+what my sheet shows. The numbers are the answering player's own word - a modified client can claim any sheet the
+wire's bounds admit - and the profile draws them as theirs, beside the badge that is the relay's. An item is named by
+its template and material, as the look carries it (an artifact's own name is not on the look).
+
+**What the probe found in the card.** `tools/profileProbe.mjs` stands the widest card a player can be shown - a name at
+NAME_MAX of the face's widest letter, the longest title, every glyph, the widest numbers the wire admits, and for every
+slot the longest name the pack gives an item that EQUIPS there (DFU's own GetEquipSlot places it) - over the enhanced
+sheet that online always wears and bare, at a desktop's width, a narrow window's and a phone's. Its first runs found
+three faults, each fixed where it lived: on a phone the widest name broke INSIDE itself, one letter orphaned on a second
+line (the narrow card now takes the name a size down, and a break inside it is the last resort); the card's max height
+bounded its CONTENT box, so its padding and border stood past it and a tall card kept a 1px gutter where its sides keep
+14 (`box-sizing: border-box` - the enhanced sheet's global rule had hidden it, and the card no longer leans on it); and
+over the enhanced sheet the Close stood its word at the button's left edge, the sheet's global `button { text-align:
+left }` reaching it (the button sets its own now). The probe's numbers had passed the second and the third; its
+photographs had not.
+
+**One glyph drawing.** The glyph's SVG was drawn twice before this slice - once by the chat panel, once by the name layer
+- and a third copy was about to join them. `ui/playerBadge.js glyphSvgNode` is the one drawing now, each face saying only
+how thick its stroke is.
+
+**Found by its measurement.** Before the card's meter joined the relay, its test measured the attachment the meter would
+ride - the widest a place socket can carry - and found it already past the runtime's 2 KiB, with a refused write
+freezing a meter open. That was paid first, at the root, as AUDIT ATTACH (`06-Systems/Online-Arc.md`): every meter is
+the Room instance's now, and the card's meter was measured with every other arm's there (`test/placeWidest.mjs`).
+
+**Pins.** `test/inspect1.test.js` (10): the wire (an ask or an answer, never both; the card whole or nothing at every
+bound, the attribute ceiling held to the sheet's live clamp; the widest card inside its frame; world99 the first relay
+that routes it); the relay over the real Room (to the one socket named, stamped; a channel or the hub nowhere; a frame
+at myself junk, a peer gone nothing; the cast arm's funnel shared - a card waits on the casts its sender spent,
+another sender's slot its own - and the sender's own meter holding it to CARD_HZ_MAX a second across every destination
+and striking a flood out on exactly the frame past its strikes); the link (only to a relay that routes it, through the
+wire's projection, to a peer some socket reports; in only a stamped frame addressed to me, per sender); the card by
+the sheet's own producers (live attributes under a disease and past the clamp, fatigue at /64, the look worn now); the
+answering law; the view (the relay's badge never the card's, the card's look over the room's, head to foot); the
+window over a fake document; the F-menu's row and the one glyph drawing; the host by source.
+`tools/mutants/inspect1.json`: 48, 47 dead and 1 recorded equivalent (the link's refusal to send at my own id: no
+socket of mine ever reports me, so `_socketFor` refuses it first). `tools/profileProbe.mjs` in Chromium: 127 checks,
+12 photographs. Re-aimed: the chat panel's and the name layer's glyph pins (CHAT-FIT's), AUDIT WORLD2's parseClient
+doc pin (DERIVED from the parser's arms now - it had fallen seven frames behind), ALLY-CAST's funnel pins and records,
+and AUDIT ATTACH's measurement, which the card's arm joins. The relay is world99's (restated).

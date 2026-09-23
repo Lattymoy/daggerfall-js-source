@@ -180,7 +180,7 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -493,6 +493,25 @@ export class Room {
    *  a pass on either reset the other's strikes, and twenty dropped casts followed by one over-rate line closed the
    *  socket as 'too many lines'. */
   _meterCast(ws, a, now) { return this._spend(ws, now, castGate, 'castBucket', 'castDrops', 'too many cast frames') ? a : null; }
+  /** INSPECT1: the card frames' own bucket (CARD_HZ_MAX: asks and answers together), the same strikes as a cast's. */
+  _meterCard(ws, a, now) { return this._spend(ws, now, cardGate, 'cardBucket', 'cardDrops', 'too many card frames') ? a : null; }
+  /** AUDIT ALLY-CAST B2 + INSPECT1: THE FUNNEL ONTO ONE DESTINATION, PER SENDER - a bounded list of sender buckets among
+   *  the destination's meters (`cin`), the stalest sender's slot evicted for a newcomer. One bucket for every sender
+   *  together let five strangers at their own rate starve a mate's heals, and this relay cannot tell a mate from a
+   *  stranger - so each sender waits only on its own spamming. The cast arm's and the card arm's, ONE for both: what a
+   *  destination is made to take from one sender - a spell to apply, a card to answer - is bounded once, whatever the
+   *  directed frame. Answers whether this sender's frame passes. */
+  _senderFunnel(tws, senderId, now) {
+    const slots = this._meterOf(tws).cin ??= [];
+    let slot = slots.find((c) => c.id === senderId) ?? null;
+    if (!slot) {
+      if (slots.length >= CAST_DEST_SENDERS_MAX) { slots.sort((x, y) => (x.b?.at ?? 0) - (y.b?.at ?? 0)); slots.shift(); }
+      slot = { id: senderId, b: null }; slots.push(slot);
+    }
+    const funnel = tokenGate(slot.b, now, CAST_HZ_MAX);
+    slot.b = funnel.bucket;
+    return funnel.pass;
+  }
   /** WORLD3: the action frames' own bucket (ACT_HZ_MAX), the same strikes - a door beside the poses, never starving them. */
   _meterActs(ws, a, now) { return this._spend(ws, now, actGate, 'abucket', 'adrops', 'too many acts') ? a : null; }
   /** WORLD2: the foes stream's own bucket (FOES_HZ_MAX), the same strikes - a stream beside the poses, never starving them. */
@@ -1020,16 +1039,28 @@ export class Room {
       // AUDIT ALLY-CAST B2: the funnel onto the destination is PER SENDER (wire.js CAST_DEST_SENDERS_MAX) - one bucket
       // for everyone let five strangers starve a mate's heals, and this relay cannot tell a mate from a stranger.
       // The stalest sender's slot goes to a newcomer, so a mate always finds a fresh bucket unless they spam it.
-      const cin = this._meterOf(tws).cin ??= [];
-      let slot = cin.find((c) => c.id === a.id) ?? null;
-      if (!slot) {
-        if (cin.length >= CAST_DEST_SENDERS_MAX) { cin.sort((x, y) => (x.b?.at ?? 0) - (y.b?.at ?? 0)); cin.shift(); }
-        slot = { id: a.id, b: null }; cin.push(slot);
-      }
-      const funnel = tokenGate(slot.b, now, CAST_HZ_MAX);
-      slot.b = funnel.bucket;
-      if (!funnel.pass) return;
+      if (!this._senderFunnel(tws, a.id, now)) return;
       this._send(tws, JSON.stringify({ t: 'cast', id: a.id, data: m.data }));
+      return;
+    }
+    if (m.t === 'card') {
+      // INSPECT1: ONE DIRECTED FRAME, the cast arm's own routing - an ask for a player's card or its answer, from a
+      // hello'd socket in a PLACE room (a channel or the hub is nowhere to stand beside someone) on the card bucket,
+      // to the socket `to` names in this room and to it alone, the sender's id stamped on it. The relay reads none of
+      // the card (wire.js validCardData checked the shape and bounds); the asker draws it as the answerer's own word.
+      // A frame at my own id is junk; a peer that is gone is not (a leave races a frame, and the asker times out).
+      const now = Date.now();
+      a = this._meterCard(ws, a, now); if (!a) return;
+      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;
+      const to = m.data.to;
+      if (to === a.id) { this._junk(ws); return; }
+      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;
+      if (!target) return;
+      const [tws] = target;
+      // THE CAST ARM'S FUNNEL, SHARED - not a second one: one sender, one destination, one bucket, whatever the directed
+      // frame (_senderFunnel says why)
+      if (!this._senderFunnel(tws, a.id, now)) return;
+      this._send(tws, JSON.stringify({ t: 'card', id: a.id, data: m.data }));
       return;
     }
     if (m.t === 'act') {
