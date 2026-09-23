@@ -507,10 +507,10 @@ test('MAP3 fpArm hides the hand-carried pieces while the sheet is up - the sourc
   assert.match(src, /else if \(r\.slot === 'torch'\) r\.hidden = !torchVisible\(\);/, 'MW-D51\'s line, untouched');
   assert.match(src, /else if \(r\.slot === 'paper'\) r\.hidden = !held;/);
   assert.match(src, /if \(held && \(r\.slot === 'weapon' \|\| r\.slot === 'arrow' \|\| r\.slot === 'torch'\)\) r\.hidden = true;/);
-  assert.match(src, /const projScreen = pad > 0 \? perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\) : proj;\s*\n\s*lastFrame = \{ model: NIF_TO_PASS, view, proj: projScreen, rect: screenTransform \? screenTransform\(\{ x: 0, y: 0, w: W, h: H \}\) : \{ x: 0, y: 0, w: W, h: H \} \};\s*\n\s*drewLast = true;/, 'the corners go through the SCREEN\'s symmetric frame (MAC-R1 pads the drawn one above it) and the WW1 channel rect the composite goes through, and the frame is marked composed');
+  assert.match(src, /lastFrame = \{ model: NIF_TO_PASS, view, proj, rect: win \? win\.dst : \{ x: 0, y: 0, w: W, h: H \} \};\s*\n\s*drewLast = true;/, 'the corners go through the frame\'s own lens into the rect the composite lays it on (DISC13-C: the frame window\'s)');
   assert.match(src, /draw\(canvas\) \{\s*\n\s*drewLast = false;/, 'AUDIT-MAP2: reset before every early return');
   assert.match(src, /const far = built\.reach \* 4;/, 'rule 54\'s law stands - the far plane is the reach times four; the sheet grows the REACH, not the line');
-  assert.match(src, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\)/, 'the screen\'s symmetric frame (MAC-R1 pads the drawn one above it)');
+  assert.match(src, /perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\)/, 'the screen\'s symmetric frame (the lens a rect at rest gives, DISC13-C)');
   assert.match(src, /const hm = heldTracksFor\(fTracks, fSampler\);\s*\n\s*fTracks = hm\.tracks; fSampler = hm\.sampler;/, 'the held tracks wrap whatever the torch overlay left - the two idioms stack');
   assert.match(src, /held = null; heldMemo = null; lastFrame = null;/, 'unload');
 });

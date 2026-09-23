@@ -5019,7 +5019,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const lit = withPlayerLights(holdSel ? holdSel.data : lightsOn
       ? nearestLights(cityLights, eye, renderer.maxPointLights, lightAnimator.ranges)   // EL1: the installed set's cap
       : new Float32Array(0),
-    magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11: the candle burns by day too - the effect has no time gate; T1: so does the torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash
+    magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11: the candle burns by day too - the effect has no time gate; T1: so does the torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
     // WOD4: what withPlayerLights prepended wears the shared colour, the selection its own (world.js's _wodSetLights)
     renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32,
       holdSel ? wodLightColors(lit.length / 4, lit.length / 4 - holdSel.data.length / 4, holdSel.colors, CITY_LIGHT_COLOR_F32) : null);
@@ -5352,7 +5352,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       if ((modes?.mode ?? 'exterior') === 'exterior') {
         const _mfwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
         magic.firePending([...cam.pos], _mfwd);
-        magic.update(dt, player.pos, _mfwd, player.height);   // X11: the candle hangs off the look direction
+        magic.update(dt, player.pos, _mfwd, player.height, player.feetAt());   // X11: the candle hangs off the look direction; DISC13-A off the render feet
         { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }   // LM1: the beast's own noise while transformed (real time)
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig

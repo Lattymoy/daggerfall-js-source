@@ -55,7 +55,7 @@ import { setPitchFloorProvider } from './lookFilter.js';   // RR2: PitchMaxLimit
 export function createMountRig({
   renderer, canvas, fetchBytes, palette, audio,
   player, playerEntity, showOverlay, onShip = null, paused = () => false,
-  shipLocation = null,   // RR1: () => ({ loaded, portTown, onShip }) - what TransportManager.ShipAvailiable's replacement reads (RoleplayRealism.cs:610-631); null when the host cannot say
+  shipLocation = null,   // RR1: () => ({ locationLoaded, portTown, onShip }) - what TransportManager.ShipAvailiable's replacement reads (RoleplayRealism.cs:610-631); null when the host cannot say
   // RR2 (EnhancedRiding.cs): the host's reads the component makes - the
   // look's pitch (radians, up-positive) and yaw, the ground's height at a
   // world x/z, and whether the module is on with its two settings

@@ -155,7 +155,9 @@ export const MOD_CURATED = Object.freeze({
   'diverse-weapons': Object.freeze(['WeaponWidgetPreset']),
   // RRI1: the three a player reaches for first - the new items, and what loot is.
   'roleplay-realism-items': Object.freeze(['newWeapons', 'newArmor', 'lootRebalance']),
-  'roleplay-realism': Object.freeze(['advancedArchery', 'climbingRestriction', 'underworldExpulsion']),
+  // DISC13-D (Sir McMobdon, of the ship: "Nether has options for the boat"): shipPorts was on no tile, and Travel
+  // Options' OnlyFromPorts rules the travel map's sea passage, never boarding your own ship.
+  'roleplay-realism': Object.freeze(['advancedArchery', 'climbingRestriction', 'underworldExpulsion', 'shipPorts']),
   // TORCH-BIND (2026-09-22, a player on Discord: "No option to rebind
   // Handheld Torches actions"): the three TextKeys are the mod's own key
   // store, read raw by the hosts, and the Mods pane that once captured

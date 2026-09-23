@@ -298,7 +298,7 @@ reference surface absent · **Departure** = deliberate, ledgered.
 |---|---|---|---|
 | **formats-core** | Verbatim | **Verbatim** | 46/50 API classes cited, `API/Save` 14/14. The malformed-CIF runaway parse was in the AUDIT-44 wave. Residue: `DFValidator`, `PowerOfTwo`. |
 | **formats-game** | Verbatim readers / broken consumer | **Verbatim** | The `ItemRecord` conversions were in the wave; ROAD-A A4 took the classic-import stragglers (building-level MAPSAVE, the native bank record, `LegacyArtifactIndexBitfieldCheck`). ~~Ledger row `:694`'s one residue is the phone path - no zip arm in the saves picker, a desktop-first charter call.~~ **CLOSED (OT1, 2026-09-10): the saves picker took the ARENA2 door's zip arm, and the row is struck whole.** |
-| **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1784` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
+| **formats-mw** | Departure lane, faithful within it | **Departure lane, now consumed** | `clipSweepTimes` has a production caller: `combat/fpArm.js:1818` runs the whole-clip reach sweep the superseded page said had never run in the game. 17 modules / 8,842 lines. |
 | **world-terrain** | Near-1:1 | **Near-1:1** | ROAD-A A1 moved the texture season onto `DaggerfallDateTime.SeasonValue` - climate swaps, the winter sunlight term and sky selection - and demoted `?season` to a debug override. The lightning flash stays a recorded enhanced-lane departure. |
 | **world-layout** | Near-1:1 | **Near-1:1** | `rmbLayout`'s shared-block mutation is gated: `attachWindmillRecord` runs only when `enhanced` is true, is idempotent by a `subs.findIndex(r => r?.windmill)` guard, and the header names `subRecords.length` as the count three subsystems bind on (`world/rmbLayout.js:139-150` the gated call, `:179` the guard). |
 | **scenes-world** | Law 1:1 / seams broken | **Near-1:1** | `currentWeatherKey` reads a live getter (`world.js:7445`). Region identity, the quest region/vampire faction seams and `CleanupUntrackedObjects` were the wave; `world.js:4614` carries the sweep and `hostMagic.js:711` its missile half. |
@@ -905,10 +905,10 @@ ships, which is the warning the section's own preamble opens with.
 *Stale - the row is a claim the tree has outrun:*
 
 9. **`:593` UseItem's unbuilt destinations.** Every arm the row names is
-   built: `DrinkPotion` (`systems/useItem.js:200`, `:291-301`),
+   built: `DrinkPotion` (`systems/useItem.js:205`, `:296-306`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
    (`ui/nativeInventory.js:809-813`, `scenes/world.js:4668`), the
-   quest-item click (`useItem.js:247`, `:255-256`) and
+   quest-item click (`useItem.js:252`, `:260-261`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
    is now `LayoutBookLabels` in each label's own face.

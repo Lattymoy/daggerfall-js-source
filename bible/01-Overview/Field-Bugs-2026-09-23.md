@@ -679,3 +679,143 @@ then *"Lets just merge what we have"*. The investigation was stopped
 before it reached a reproduction, so no cause is claimed here. If it
 comes back, the save and where it happened are what to ask for.
 
+
+---
+
+# DISC13 - four reports after the survival-tiers merge
+
+Mac, with four Discord screenshots: *"Got some bugs for you"*.
+
+1. icebreyker, "Lights/shadows are bugged": *"The shadows seem to flicker
+   when i move"* (a dungeon corridor, a torch in hand).
+2. icebreyker, "Cant heal with bandages": the pack's card for ten
+   bandages showed DROP and nothing else.
+3. Ilvi: *"When I'm walking with torch it looks torn down. Half of it just
+   dissapeared."*
+4. Sir McMobdon, "cant access my boat": they turned Travel Options' ship
+   option off (*"It's off / Still dont work"*), and then *"Nether has
+   options for the boat"*.
+
+Each was traced to its cause in node, against the real modules, before it
+was touched. The pins are `test/disc13.test.js`, and every one but A's
+first fails on the code before the fix. The mutants are
+`tools/mutants/disc13.json` (22). The run by the rule took 209 records:
+this list, every record whose tests this change edited, and every record
+within six lines of a changed line. One survived: MAC-R1's re-aimed
+"a window with no transform", which no pin read. It is pinned now, and
+all of them die.
+
+## DISC13-A: the light in the hand slid against the view
+
+**Cause.** This is not the shadow maps. The light in the hand casts
+none by design (`casterOf = -2`, shadowPass.js), so in a torch-lit
+dungeon the "shadows" are the torch's own falloff, and that is what
+pulsed.
+
+The motor steps at a fixed 60 Hz, and the camera draws from its
+interpolated eye (`motor.js` `eyeAt`, EV1). Every host built the
+lights in the hand off the raw stepped feet (`player.pos`):
+
+- the torch (`playerTorchLight`), in all six light arrays across the
+  four hosts;
+- the Thunderlock's flash (`thunderlockMuzzleLight`), in the same
+  arrays;
+- the Light spell's candle (`magic.update`'s feet).
+
+On a screen faster than 60 Hz, or a 60 Hz frame that jitters, the light
+slid back and forth against the view on every frame while walking.
+Standing still, it did not. Measured with the real motor and the real
+torch law, the lit wall beside the torch changed frame to frame by:
+
+- 9% at 120 Hz, alternating every frame;
+- 8.5% on average at 144 Hz;
+- up to 18.6% at 60 Hz with a millisecond of jitter.
+
+The cube-shadow selection was checked walking, running and bobbing, and
+is stable: DISC6's hold works. A build from before DISC6 would add that
+tie-swap flicker on top.
+
+**Fix.** The hand lights are built off the render feet (`motor.js`
+`feetAt`), the positional half of the camera's own eye, at all six
+sites. The candle takes the render feet as a fifth argument to
+`magic.update`, and the dungeon context carries them through
+`drawFoes`. The feet passed for gameplay are unchanged: missiles, blasts
+and collision still meet the simulated capsule. `feetAt` carries no head
+bob, as DFU's PlayerTorch is a child of the player and not of the
+camera.
+
+## DISC13-B: a bandage with no Use
+
+**Cause.** The heal works. Roleplay & Realism: Items registers UseBandage
+for the template (ItemHelper.RegisterItemUseHandler,
+`rriInstall.js`), and `useItem` asks that handler ahead of its ladder
+(DaggerfallInventoryWindow.cs:1703-1709). But the pack's card draws Use
+only where `usableItem` says the ladder has an arm (Mac, 2026-09-18:
+"hide Use for non-usables"), and that predicate was never told about
+registered handlers. So the card offered Drop alone. The classic
+window's Use mode still healed.
+
+**Fix.** `usableItem` asks the registered handler first. A handler that
+answers only under a switch says so with `usable`: the bandage's is RRI's
+`bandaging`, so with bandaging off the card offers no Use, and the
+ladder, which has no arm for a bandage, would have said nothing. The heal
+is silent, as the mod's is (it only logs).
+
+## DISC13-C: the torch cut in half at the screen's edge
+
+**Cause.** This is the Morrowind arm's lane. The classic Handheld
+Torches sprite is always drawn whole, and its resting place is the mod's
+own.
+
+The arm was rendered into a frame exactly the screen's size, and that
+picture was pasted into the rect the Weapon Widget's bob, inertia and
+step had moved. The bob always pushes right, so the frame's left edge
+came into the screen on every stride and the torch in the left hand
+ended in a straight vertical cut there. At 1920 wide that was up to
+77 px walking and 126 running. With Diverse Weapons' preset (on by
+default since DW-CLIP) the inertia opens either side: 170 px on the
+right when backing up, and 152 when strafing. MAC-R1 had padded the top
+of the frame for a raised blade. The sides never were.
+
+**Fix.** The pass renders the pixels of the lens's own grid that the
+moved rect shows on the screen (`fpArm.js` `fpFrameWindow`), and lays
+them where the rect puts them. No frame edge is ever inside the screen,
+the arm still slides at the widget's sub-pixel pace, and the frame is at
+most a column and a row bigger than before. The top pad is retired with
+it.
+
+Two other fixes were built and checked, and both closed the gap:
+
+- A side pad would have cost the arm a third of its resolution on a
+  2560 screen.
+- Moving the lens would have re-rasterised the arm, which draws at a
+  third of the screen's resolution, so the bob would step it three
+  pixels at a time.
+
+Morrowind-Rules, DISC13-C, carries the law.
+
+**Guess, not verified:** that Ilvi plays with Morrowind assets. Their
+question in the same thread, about changing the models to Morrowind
+ones, suggests so. The fixtures here have no torch bone and there is no
+retail data.
+
+## DISC13-D: the ship stayed dark in port
+
+**Cause.** Two things. First, Roleplay & Realism's shipPorts replaces
+TransportManager.ShipAvailiable (RoleplayRealism.cs:610-631): on the
+ship, yes; in a loaded location, a port town and an owned ship; anywhere
+else, no. The world host answered `{ loaded, portTown, onShip }` and the
+delegate reads `locationLoaded`. So every port read as the wilderness,
+and the Ship row was dark unless you were already aboard. This dates
+from RR2 (06bdf5d6). Second, the switch a player would reach for was on
+no tile. Roleplay & Realism's tile carried three dials, and shipPorts
+was not one of them. Travel Options' OnlyFromPorts, the one they turned
+off, rules the travel map's sea passage and never boarding your own
+ship.
+
+**Fix.** The world host answers `locationLoaded` (`world.js`
+`shipLocation`). The standalone exterior host passes no shipLocation and
+never did, so it answers HasShip as before. shipPorts is the fourth dial
+on Roleplay & Realism's tile (`features.js` MOD_CURATED). Online it
+stays the player's own: the room's RR keys (`onlineLane.js`) do not
+include it, and `test/modsonline.test.js` pins that.
