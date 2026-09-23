@@ -728,3 +728,52 @@ same sides. Nothing was changed there.
 Pinned by execution in `test/disc11.test.js` (gain times level, with the
 mod's recording louder than the street's, at 0.15, 0.5 and 1; the dungeon's
 exit; the jump). Mutants: `tools/mutants/disc11.json` (5).
+
+---
+
+# DISC12 - the gaps DISC10 left open, closed
+
+Mac: *"THose open tasks? I need you stop stop being lazy and tackle it,
+including the god damn double arrows"*.
+
+## A peer's weapon hand, online
+
+The look carries both hands' weapons; every receiver read the RIGHT hand
+(`peerBodies.peerBuildOpts`, `remotePlayers._syncAttackSound`), so a player
+fighting left-handed was drawn and heard with the right hand's weapon, or a
+fist. The pose carries the hand in use now (`lh`, the LEFT hand, omitted on
+the right), sent off the live rig; the Morrowind body's weapon follows it
+through setWeapon when the arm is quiet (`peerWeaponOf`), and the swing's
+sound reads the same hand.
+
+## A peer in beast form, online
+
+Nothing on the wire said a player was transformed, so the others saw the
+person. The pose carries the form (`wb`, 1 werewolf 2 wereboar - the
+curse's own infectionType - omitted in human form); a peer in beast form
+stands as the enemy's own sprite (MobileTypes 9 / 14), puppeted off the
+pose like a class sprite whatever the class-sprite card says, and takes no
+Morrowind body. The relay moves to **world101** (validPose, poseChanged:
+each edge goes out at once; lerpPose carries both). The merge deploys it and
+drops connected players once.
+
+## The pack's figure, the hand in use
+
+The enhanced pack handed the Morrowind figure the right hand's weapon
+while it was open. Each host hands the pack the live rig's hand
+(`usingRightHand`, the pose's own read indoors and underground).
+
+## U with nothing usable
+
+DFU says "You have no usable magic item" (DaggerfallUI.cs:584-585,
+Internal_Strings.csv:959); the port opened nothing and said nothing. All
+three hosts say it now.
+
+Pinned by execution in `test/disc12.test.js` (the wire's laws, the eased
+pose, the body following the hand, the beast drawn as the beast, the pack's
+figure, the HUD line). Mutants: `tools/mutants/disc12.json` (9).
+
+The version's own mutant run turned up one survivor on HEAD, soc1 S23 (the
+lead handed to the newest seat when nobody is online): no pin held the
+all-away arm. `test/auditparty8.test.js` now holds it (every remaining seat
+away - the longest-standing leads), and S23 names that suite.

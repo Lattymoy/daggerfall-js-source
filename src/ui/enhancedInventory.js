@@ -605,7 +605,9 @@ const refresh = () => {
     // Same read, same door, same key-compare fast path.
     try {
       const slots = equipTableOf(deps.entity);
-      arm.setWeapon?.(slots?.[EQUIP_SLOTS.RightHand] ?? null,
+      // DISC12: the hand in USE (WeaponManager.ApplyWeapon :741-755) - the right hand's weapon over a left-handed
+      // fighter was the figure holding what the screen does not
+      arm.setWeapon?.(slots?.[deps.usingRightHand?.() === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null,
         { hasAmmo: hasDaggerfallArrows(deps.entity.items) });
     } catch { /* see above */ }
   }
