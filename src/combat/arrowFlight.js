@@ -169,6 +169,14 @@ export class ArrowFlight {
       // AUDIT 39 (#64): the arm is the SHOOTER's, not a flag on one
       // side of it - an enemy shaft runs BowDamage's non-player arm,
       // a player shaft runs WeaponManager.WeaponDamage.
+      // SPELLFX1: ANOTHER PLAYER'S SHAFT, DRAWN (meta.visual) - neither arm: it stops on my capsule or a foe's and
+      // applies nothing, since the player who loosed it has already dealt whatever it did
+      if (m.visual) {
+        if ((playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS))
+          || (foeTargets ?? []).some((t) => t?.feet && !t.ref?.dead && missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height))) m.dead = true;
+        else if (c && m.pos[1] <= c.heightAt(m.pos[0], m.pos[2])) m.dead = true;
+        continue;
+      }
       const foeImpact = m.enemy ? onFoeHit : (m.fromPlayer ? onPlayerArrowHitFoe : null);
       if (foeImpact && foeTargets) {
         for (const t of foeTargets) {
@@ -226,7 +234,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2810), so the copy that survived
+ * now calls it (dungeonContext.js:2816), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into

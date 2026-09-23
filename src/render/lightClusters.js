@@ -55,6 +55,9 @@ export const CLUSTER_GRID_W = CLUSTER_X * CLUSTER_Y;
 export const CLUSTER_GRID_H = CLUSTER_Z;
 /** The two texture units the world shaders read the grid and the list on - below the air's (11, 12), the shadow
  *  maps' (13, 14) and the cloud shadow's (15), above the material units. */
+// AUDIT LC1: units 9 and 10 are the grid's and the list's ALONE - both are bound as TEXTURE_2D, and a 2D array
+// (the shadow maps, the terrain's tiles) bound to the same unit under a sampler2DArray would make the two samplers
+// of one unit an INVALID_OPERATION at draw; every other unit the lane uses is below these
 export const CLUSTER_GRID_UNIT = 9;
 export const CLUSTER_LIST_UNIT = 10;
 
@@ -89,17 +92,33 @@ export function createClusterSpace() {
     lights: 0,       // lights that touched the grid at all
     rows: 0,         // list rows to upload
     built: false,    // the last build's answer
-    _box: new Int16Array(6 * 64),   // per light: x0 x1 y0 y1 z0 z1 (up to 64 lights; the lane's cap is 48)
+    _tiles: new Int16Array(4),   // AUDIT LC1: a slice's tile range, scratch
+    _box: new Int16Array(7 * 64),   // per light: x0 x1 y0 y1 z0 z1 nearFull (up to 64 lights; the lane's cap is 48)
   };
 }
 
-/** A view-space sphere's cells: writes [x0, x1, y0, y1, z0, z1] into `box` at `at`, answers false when the
- *  sphere is behind the near plane or off-screen. `proj` is the frame's projection (any: the hosts' are
- *  x-mirrored perspectives - the corners are put through the matrix itself, not through a fov). */
+/** A view-space sphere's cells: writes [x0, x1, y0, y1, z0, z1, nearFull] into `box` at `at`, answers false when
+ *  the sphere is wholly behind the eye or off-screen. `proj` is the frame's projection (any: the hosts' are
+ *  x-mirrored perspectives - the corners are put through the matrix itself, not through a fov).
+ *
+ *  AUDIT LC1: THE NEAR BAND. The hosts' projections have near planes of 0.05 and 0.2 - closer than CLUSTER_NEAR
+ *  (0.25), where the depth slices begin - so a fragment can be drawn at a depth the hull was never computed for:
+ *  its tile is read at its own depth while the box's corners were clamped to 0.25, where the same extent projects
+ *  narrower, and the hull can fall a tile short (a lamp whose reach passes a hand's width from the view axis, a
+ *  door a foot from the eye). A sphere that reaches inside the band (depth - r < CLUSTER_NEAR) is therefore
+ *  written to EVERY tile of slice 0 (`nearFull`) - the slice every fragment nearer than 0.25 lands in - and the
+ *  hull serves the slices beyond; a sphere that lies wholly inside the band is slice 0, every tile. Nothing that
+ *  lights goes dark. */
 export function cellsOfSphere(vx, vy, vz, r, proj, box, at) {
   const depth = -vz;
   const dFar = depth + r;
-  if (dFar < CLUSTER_NEAR) return false;
+  if (dFar <= 0) return false;   // wholly behind the eye
+  const nearFull = depth - r < CLUSTER_NEAR;
+  box[at + 6] = nearFull ? 1 : 0;
+  if (dFar < CLUSTER_NEAR) {   // wholly inside the near band: slice 0, every tile, and no hull to compute
+    box[at] = 0; box[at + 1] = CLUSTER_X - 1; box[at + 2] = 0; box[at + 3] = CLUSTER_Y - 1; box[at + 4] = 0; box[at + 5] = 0;
+    return true;
+  }
   const dNear = Math.max(depth - r, CLUSTER_NEAR);
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (let c = 0; c < 8; c++) {
@@ -107,18 +126,30 @@ export function cellsOfSphere(vx, vy, vz, r, proj, box, at) {
     const y = c & 2 ? vy + r : vy - r;
     const z = c & 4 ? -dFar : -dNear;
     const cw = proj[3] * x + proj[7] * y + proj[11] * z + proj[15];
-    if (!(cw > 1e-6)) return false;   // a corner at or behind the eye's plane (w <= 0) is never divided through: the sphere is refused whole, and the loop walks every light
+    if (!(cw > 1e-6)) return false;   // a corner at or behind the eye's plane (w <= 0) is never divided through: this light is left out of the grid (unreachable for a perspective after the near clamp)
     const nx = (proj[0] * x + proj[4] * y + proj[8] * z + proj[12]) / cw;
     const ny = (proj[1] * x + proj[5] * y + proj[9] * z + proj[13]) / cw;
     if (nx < minX) minX = nx; if (nx > maxX) maxX = nx;
     if (ny < minY) minY = ny; if (ny > maxY) maxY = ny;
   }
-  if (minX > 1 || maxX < -1 || minY > 1 || maxY < -1) return false;
+  if (minX > 1 || maxX < -1 || minY > 1 || maxY < -1) {
+    if (!nearFull) return false;
+    // off-screen beyond the band, but reaching into it: slice 0 alone, every tile
+    box[at] = 0; box[at + 1] = CLUSTER_X - 1; box[at + 2] = 0; box[at + 3] = CLUSTER_Y - 1; box[at + 4] = 0; box[at + 5] = 0;
+    return true;
+  }
   const tile = (n, cells) => { const t = Math.floor((n + 1) * 0.5 * cells); return t < 0 ? 0 : t >= cells ? cells - 1 : t; };
   box[at] = tile(minX, CLUSTER_X); box[at + 1] = tile(maxX, CLUSTER_X);
   box[at + 2] = tile(minY, CLUSTER_Y); box[at + 3] = tile(maxY, CLUSTER_Y);
   box[at + 4] = sliceOf(dNear); box[at + 5] = sliceOf(dFar);
   return true;
+}
+/** AUDIT LC1: the tile range of a light's box in slice `cz` - every tile in slice 0 for a light that reaches the
+ *  near band, the hull otherwise. */
+function tilesIn(box, at, cz, out) {
+  if (cz === 0 && box[at + 6]) { out[0] = 0; out[1] = CLUSTER_X - 1; out[2] = 0; out[3] = CLUSTER_Y - 1; }
+  else { out[0] = box[at]; out[1] = box[at + 1]; out[2] = box[at + 2]; out[3] = box[at + 3]; }
+  return out;
 }
 
 /**
@@ -131,11 +162,12 @@ export function buildLightClusters(lights, count, view, proj, space) {
   const counts = space.counts, grid = space.grid, list = space.list, box = space._box;
   counts.fill(0);
   space.total = 0; space.lights = 0; space.rows = 0; space.built = false;
-  const n = Math.min(count, box.length / 6, 255);   // a list entry is one byte
+  const n = Math.min(count, box.length / 7, 255);   // a list entry is one byte
+  const t4 = space._tiles;
   let total = 0, touched = 0;
   for (let i = 0; i < n; i++) {
     const r = lights[i * 4 + 3];
-    const at = i * 6;
+    const at = i * 7;
     box[at] = -1;
     if (!(r > 0)) continue;
     const x = lights[i * 4], y = lights[i * 4 + 1], z = lights[i * 4 + 2];
@@ -144,11 +176,14 @@ export function buildLightClusters(lights, count, view, proj, space) {
     const vz = view[2] * x + view[6] * y + view[10] * z + view[14];
     if (!cellsOfSphere(vx, vy, vz, r, proj, box, at)) { box[at] = -1; continue; }
     touched++;
-    const x0 = box[at], x1 = box[at + 1], y0 = box[at + 2], y1 = box[at + 3], z0 = box[at + 4], z1 = box[at + 5];
-    total += (x1 - x0 + 1) * (y1 - y0 + 1) * (z1 - z0 + 1);
-    for (let cz = z0; cz <= z1; cz++) for (let cy = y0; cy <= y1; cy++) {
-      const row = cy * CLUSTER_X + cz * CLUSTER_X * CLUSTER_Y;
-      for (let cx = x0; cx <= x1; cx++) counts[row + cx]++;
+    const z0 = box[at + 4], z1 = box[at + 5];
+    for (let cz = z0; cz <= z1; cz++) {
+      const [x0, x1, y0, y1] = tilesIn(box, at, cz, t4);
+      total += (x1 - x0 + 1) * (y1 - y0 + 1);
+      for (let cy = y0; cy <= y1; cy++) {
+        const row = cy * CLUSTER_X + cz * CLUSTER_X * CLUSTER_Y;
+        for (let cx = x0; cx <= x1; cx++) counts[row + cx]++;
+      }
     }
   }
   space.lights = touched;
@@ -162,14 +197,17 @@ export function buildLightClusters(lights, count, view, proj, space) {
     counts[c] = 0;
   }
   for (let i = 0; i < n; i++) {
-    const at = i * 6;
+    const at = i * 7;
     if (box[at] < 0) continue;
-    const x0 = box[at], x1 = box[at + 1], y0 = box[at + 2], y1 = box[at + 3], z0 = box[at + 4], z1 = box[at + 5];
-    for (let cz = z0; cz <= z1; cz++) for (let cy = y0; cy <= y1; cy++) {
-      const row = cy * CLUSTER_X + cz * CLUSTER_X * CLUSTER_Y;
-      for (let cx = x0; cx <= x1; cx++) {
-        const c = row + cx;
-        list[grid[c * 2] + counts[c]++] = i;
+    const z0 = box[at + 4], z1 = box[at + 5];
+    for (let cz = z0; cz <= z1; cz++) {
+      const [x0, x1, y0, y1] = tilesIn(box, at, cz, t4);
+      for (let cy = y0; cy <= y1; cy++) {
+        const row = cy * CLUSTER_X + cz * CLUSTER_X * CLUSTER_Y;
+        for (let cx = x0; cx <= x1; cx++) {
+          const c = row + cx;
+          list[grid[c * 2] + counts[c]++] = i;
+        }
       }
     }
   }

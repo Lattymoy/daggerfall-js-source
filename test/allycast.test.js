@@ -20,7 +20,7 @@ import { SOCIAL_REACH } from '../src/player/socialPick.js';
 import { PERSON_RADIUS } from '../src/systems/allyCast.js';
 import { TOUCH_RANGE, TOUCH_SPHERE_CAST_RADIUS } from '../src/systems/spellcast.js';
 import {
-  validCastData, parseClient, CAST_FRAME_MAX, CAST_LEVEL_MAX, CAST_SETTING_MAX, CAST_ICON_MAX, CAST_HZ_MAX, CAST_IN_HZ_MAX, CAST_DEST_SENDERS_MAX, RELAY_VERSION, castGate, castInGate,
+  validCastData, parseClient, CAST_FRAME_MAX, CAST_LEVEL_MAX, CAST_SETTING_MAX, CAST_ICON_MAX, CAST_HZ_MAX, CAST_BURST_MAX, CAST_IN_HZ_MAX, CAST_DEST_SENDERS_MAX, RELAY_VERSION, castGate, castInGate,
   relaySupportsCast, PARTY_MAX,
 } from '../src/net/wire.js';
 import { fakeRoom } from './fakeRoom.mjs';
@@ -94,7 +94,7 @@ const GOOD = { to: 'peer-0002', level: 5, spell: { name: 'Heal', element: 4, ran
 const GOOD_OUT = { ...GOOD, spell: { ...GOOD.spell, icon: 0 } };
 
 test('ALLY-CAST wire (world97): validCastData projects a bounded spell record and refuses the whole frame otherwise; parseClient carries the `cast` frame after a hello and inside the cap', () => {
-  assert.ok(/^world(9[7-9]|\d{3,})$/.test(RELAY_VERSION), 'world97 carried this law; HCC-PARK moved the version on (world98) without touching the cast frame');
+  assert.equal(RELAY_VERSION, 'world99');   // SPELLFX1's pose fields moved it once more (world98), HCC-PARK + RIDE again (world99); the cast frame is world97's
   const d = validCastData(GOOD);
   assert.deepEqual(d, GOOD_OUT, 'a whole frame, every component an integer in bounds, the icon defaulted');
   assert.equal(validCastData({ ...GOOD, to: 'x' }), null, 'an id is an id');
@@ -124,8 +124,11 @@ test('ALLY-CAST wire (world97): validCastData projects a bounded spell record an
   assert.deepEqual(parseClient(JSON.stringify({ t: 'cast', data: { ...GOOD, spell: { ...GOOD.spell, name: 'x'.repeat(CAST_FRAME_MAX) } } }), { hasHello: true }), { error: 'frame too large' });
   // the gates: a sender's own casts and the frames coming in, both token buckets under their rates
   let g = { pass: true, bucket: null };
-  for (let i = 0; i < CAST_HZ_MAX; i++) { g = castGate(g.bucket, 1000); assert.equal(g.pass, true); }
-  assert.equal(castGate(g.bucket, 1000).pass, false, 'the fifth cast in the same second waits');
+  // FRIENDLY-SPELLS: the sender's bucket is a whole blast deep (one frame per party mate it reaches), refilled at CAST_HZ_MAX
+  assert.equal(CAST_BURST_MAX, PARTY_MAX - 1, 'one blast reaches every mate of a full party');
+  for (let i = 0; i < CAST_BURST_MAX; i++) { g = castGate(g.bucket, 1000); assert.equal(g.pass, true); }
+  assert.equal(castGate(g.bucket, 1000).pass, false, 'the frame past a whole blast in the same instant waits');
+  assert.equal(castGate(g.bucket, 1000 + 1000 / CAST_HZ_MAX).pass, true, '...and the refill is CAST_HZ_MAX a second');
   assert.equal(castInGate(null, 1000).pass, true);
   assert.ok(CAST_IN_HZ_MAX >= CAST_HZ_MAX * 2, 'the frames coming in admit a few casters at once');
   assert.ok(CAST_DEST_SENDERS_MAX >= PARTY_MAX - 1, 'AUDIT ALLY-CAST B2: every party mate keeps a funnel of their own onto me');
@@ -152,9 +155,10 @@ test('ALLY-CAST relay: the cast arm routes a frame to the one socket `to` names,
   await r.raw(a, JSON.stringify({ t: 'cast', data: { ...GOOD, to: 'peer-9999' } }));
   assert.equal(sentTo(b).length, 1, 'a peer that is gone: nothing sent, nothing struck');
   assert.equal(a.att.junk, junkBefore + 1);
-  // the sender's own meter: CAST_HZ_MAX in a second, the rest dropped on the sender's strikes
-  for (let i = 0; i < CAST_HZ_MAX + 2; i++) await r.raw(c, JSON.stringify({ t: 'cast', data: GOOD }));
-  assert.equal(sentTo(b).filter((m) => m.id === 'peer-0003').length, CAST_HZ_MAX, 'c\'s own meter');
+  // the sender's own meter: a whole blast (CAST_BURST_MAX) at once, the rest dropped on the sender's strikes - and b
+  // still takes only CAST_HZ_MAX of them, its per-sender funnel
+  for (let i = 0; i < CAST_BURST_MAX + 2; i++) await r.raw(c, JSON.stringify({ t: 'cast', data: GOOD }));
+  assert.equal(sentTo(b).filter((m) => m.id === 'peer-0003').length, CAST_HZ_MAX, 'c\'s frames onto b, through b\'s funnel');
   assert.ok((c.att.cdrops ?? 0) >= 2, '...its drops on c, never on b');
   // outside a place room the arm is closed
   const hub = fakeRoom('chat:world');
@@ -204,7 +208,7 @@ function linkRig(relayV = RELAY_VERSION) {
 }
 const MINE = { to: 'aaaa-0001', level: 5, spell: { name: 'Heal', element: 4, rangeType: 1, effects: [HEAL] } };
 
-test('AUDIT ALLY-CAST B1 link: a relay before world97 gets no cast frame at all (it would close the socket on one); a world97 welcome opens the door, and the door refuses a frame at myself, at a peer no socket reports, and past CAST_HZ_MAX', () => {
+test('AUDIT ALLY-CAST B1 link: a relay before world97 gets no cast frame at all (it would close the socket on one); a world97 welcome opens the door, and the door refuses a frame at myself, at a peer no socket reports, and past a whole blast (CAST_BURST_MAX)', () => {
   const old = linkRig('world96');
   assert.equal(old.s.castOk, false, 'the welcome said world96');
   assert.equal(old.s.sendCast(GOOD), false, 'refused at home');
@@ -217,9 +221,9 @@ test('AUDIT ALLY-CAST B1 link: a relay before world97 gets no cast frame at all 
   assert.equal(s.sendCast({ ...GOOD, to: 'aaaa-0001' }), false, 'never at myself');
   assert.equal(s.sendCast({ ...GOOD, to: 'peer-0009' }), false, 'nobody reports peer-0009');
   assert.equal(s.sendCast({ ...GOOD, spell: { ...GOOD.spell, rangeType: 0 } }), false, 'a self-cast never leaves');
-  for (let i = 1; i < CAST_HZ_MAX; i++) assert.equal(s.sendCast(GOOD), true);
-  assert.equal(s.sendCast(GOOD), false, 'the gate: CAST_HZ_MAX in a second');
-  assert.equal(s.stats.casts, CAST_HZ_MAX);
+  for (let i = 1; i < CAST_BURST_MAX; i++) assert.equal(s.sendCast(GOOD), true);
+  assert.equal(s.sendCast(GOOD), false, 'the gate: a whole blast at once (FRIENDLY-SPELLS), no more');
+  assert.equal(s.stats.casts, CAST_BURST_MAX);
 });
 
 test('AUDIT ALLY-CAST B5 link: a cast frame in is delivered when it is a peer\'s, projected and addressed to ME - my own id back, one at someone else and one that fails the wire land nothing; CAST_IN_HZ_MAX a second per sender', () => {
@@ -440,7 +444,7 @@ test('ALLY-CAST by source: world.js picks the party mate with the F key\'s own r
   assert.match(o, /const d = validCastData\(m\.data\);\s*\n\s*if \(d && d\.to === this\.id\) this\._deliver\('cast', \(\) => this\.onCast\?\.\(m\.id, d\)\);/, '...and delivers only what is addressed to me');
   const h = rd('src/scenes/hostMagic.js');
   assert.match(h, /const ally = !readiedFree && allyReach !== null && allyCastable\(sp\) \? allyInReach\(eye, dir, allyReach\) : null;\s*\n\s*if \(ally && castAtAlly\?\.\(ally\.id, allyCastFrame\(sp, playerEntity\.level, ally\.id\)\)\) \{/, 'the release frame asks before the four range arms, never for a free ready');
-  assert.match(h, /if \(!pickTouch\(eye, dir\) && !\(!readiedFree && allyCastable\(sp\) && allyInReach\(eye, dir, ALLY_TOUCH_REACH\)\)\) return false;/, 'the touch gate');
+  assert.match(h, /if \(!pickTouch\(eye, dir, sp\) && !\(!readiedFree && allyCastable\(sp\) && allyInReach\(eye, dir, ALLY_TOUCH_REACH\)\)\) return false;/, 'the touch gate');
   assert.match(h, /if \(!free && allyCastable\(sp\) && allyInReach\(lastAim\?\.eye \?\? null, lastAim\?\.dir \?\? null, ALLY_TOUCH_REACH\)\) \{ say\(PRESS_BUTTON_TO_FIRE_SPELL\); return; \}\s*\n\s*castInput\(null, null\); return;/, 'A1: the CasterOnly ready arms when a mate is in reach');
   assert.match(h, /function allyInReach\(eye, dir, reach\) \{\s*\n\s*if \(!eye \|\| !dir \|\| !allyTarget\) return null;\s*\n\s*let ally = null;\s*\n\s*try \{ ally = allyTarget\(eye, dir, reach\) \?\? null; \} catch \{ return null; \}\s*\n\s*if \(!ally\) return null;\s*\n\s*const d = ally\.distance;\s*\n\s*if \(Number\.isFinite\(d\) && d > 0\) \{\s*\n\s*const l = Math\.hypot\(dir\[0\], dir\[1\], dir\[2\]\) \|\| 1;\s*\n\s*const hit = collider\.raycast\(eye, \[dir\[0\] \/ l, dir\[1\] \/ l, dir\[2\] \/ l\], d\);\s*\n\s*if \(Number\.isFinite\(hit\) && hit < d - 1e-3\) return null;/, 'A2/A6: the line of sight and the guard');
   const relay = rd('server/src/index.js');

@@ -137,8 +137,11 @@ test('audit26 F033: both missile hosts flash, gated on element None and ByTouch,
       `${f} gates on element None and ByTouch`);
     // three impacts: the wall and the two body hits
     // three CALLS - the lookbehind drops the helper's own declaration
-    assert.equal((s.match(/(?<!function )showImpactFlash\(m, /g) ?? []).length, 3,
-      `${f} flashes at all three impacts`);
+    // AID1: the shared engine has a FOURTH - a friendly missile of mine meeting another player's body;
+    // SPELLFX1: and a FIFTH - a peer's drawn missile meeting a body
+    const impacts = f === 'src/scenes/hostMagic.js' ? 5 : 3;
+    assert.equal((s.match(/(?<!function )showImpactFlash\(m, /g) ?? []).length, impacts,
+      `${f} flashes at all ${impacts} impacts`);
     // the wall flash is OUTSIDE the AoE branch - DFU flashes on any
     // wall hit, so hoisting `impact` out of it is the point.
     // `impact` is computed OUTSIDE the AoE branch and the flash reads

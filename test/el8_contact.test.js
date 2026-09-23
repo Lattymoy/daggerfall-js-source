@@ -158,8 +158,11 @@ test('EL8: the cadence - the far cascade every other frame, the near casters eve
   frame(lights());   // frame 2: the first replay - the mesh's first sight is static, so every slot draws its cache once
   assert.equal(sp.stats.staticFaces, 6 * 6, 'SC1: six caches drawn on the first replay - one per lantern (HQ1: two of the eight slots stand empty)');
   const runs = [];
-  for (let f = 0; f < 6; f++) { calls.length = 0; frame(lights()); runs.push({ cascades: sp.stats.cascadesDrawn, faces: sp.stats.dynFaces, frameNo: sp.frameNo }); }
-  assert.ok(runs.every((x) => sp.stats.staticFaces === 0 || true), 'the caches stand');
+  for (let f = 0; f < 6; f++) { calls.length = 0; frame(lights()); runs.push({ cascades: sp.stats.cascadesDrawn, faces: sp.stats.dynFaces, statics: sp.stats.staticFaces, frameNo: sp.frameNo }); }
+  // AUDIT SC1: the first of these is the walker's first step - it leaves every slot's static set, so the six caches are
+  // drawn once more without it; after that they stand (the first cut's assert here was `|| true`)
+  assert.equal(runs[0].statics, 6 * 6, 'the walker leaves the six caches on its first step');
+  assert.ok(runs.slice(1).every((x) => x.statics === 0), 'the caches stand');
   assert.deepEqual(runs.map((x) => x.cascades), runs.map((x) => (x.frameNo % SHADOW_FAR_CASCADE_EVERY === 0 ? 3 : 2)), 'the far cascade every other frame (all three were drawn on the first replay, the frame before these)');
   assert.ok(runs.some((x) => x.cascades === 2) && runs.some((x) => x.cascades === 3));
   assert.ok(runs.every((x) => x.faces >= 2 * 6), 'the two nearest casters every frame');

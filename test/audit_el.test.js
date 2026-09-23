@@ -205,6 +205,7 @@ test('AUDIT-EL F13 (EL6): the emission replay faces each flat as its record was 
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
   rights = calls.filter((c) => c[0] === 'uniform3fv' && c[1] === 'uRight').map((c) => [...c[2]].map((v) => +v.toFixed(3)));
   assert.ok(rights.length > 0 && rights.every((v) => !(v[0] === 0.6 && v[2] === 0.8)), 'the sun map drew it facing the sun');
+  assert.ok(r.shadows.stats.sunDraws > 0, 'AUDIT LIGHTING: and DREW it - a flame is only its own lantern\'s non-occluder (EL6), the sun\'s caster still (the basis upload alone was the old evidence, and it rides the record whether or not the flat is drawn)');
   assert.match(read('src/render/airPass.js'), /gl\.uniform3fv\(P\.emitBb\.uRight, r\.right\); gl\.uniform3fv\(P\.emitBb\.uUp, r\.up\);/);
   assert.ok(!/sp\.replay\(/.test(read('src/render/airPass.js')), 'EL6: no depth replay - the frame\'s own depth');
 });

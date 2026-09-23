@@ -193,6 +193,8 @@ export function lerpPose(from, to, t) {
     yaw: lerpAngle(from.yaw, to.yaw, k), pitch: from.pitch + (to.pitch - from.pitch) * k, mv: to.mv,
     wd: to.wd ?? 0, an: to.an ?? 0, as: to.as ?? 0,   // MAC7 #1: the arm's three ride the drawn pose whole - nothing to ease
     am: to.am ?? 0, sr: to.sr ?? 0, cn: to.cn ?? 0, cr: to.cr ?? 0,   // MAC7 #2: and the other four
+    ce: to.ce ?? 4,   // SPELLFX1: the cast's element, whole
+    ar: to.ar ?? 0,   // SPELLFX1: and the arrows loosed
     fk: to.fk ?? 0,   // PEER-FS1: the footstep-sound kind - discrete, rides the drawn pose whole like the rest
     ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0 } : {}),   // RIDE: the mount, discrete, omitted on foot as the wire omits it
   };
@@ -294,6 +296,7 @@ export class OnlineSession {
     this._cbucket = null;   // ALLY-CAST: my own casts out, CAST_HZ_MAX a second
     this._inTradeBuckets = new Map();   // TRADE1: and the gate on trade frames coming IN, per sender (AUDIT DROPS B3) - a peer is chosen by the sender, so a flood is a peer's, never the relay's
     this._inTradeSaid = false;
+    this._inAidSaid = false;
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
     this.onAct = null;            // WORLD3: (id, data) => void - a door, a lever or a platform moved by another in my room
     this._abucket = null;         // WORLD3: the actions' own gate at home (ACT_HZ_MAX)

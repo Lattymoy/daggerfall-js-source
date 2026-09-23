@@ -170,7 +170,7 @@ following horse and trailing team stand in a shared cell, so:
   client's; a peer's wagon is a thing to see and walk around.
 - **The live word needs no relay change.** The relay reads nothing inside
   a foes frame, so `hv` needs no version.
-- **The kept word does (HCC-PARK, world98).** A PARKED team outlives its
+- **The kept word does (HCC-PARK, world99).** A PARKED team outlives its
   owner's presence: the cell room keeps it. See the section below.
 
 ## AUDIT HCC (2026-09-23)
@@ -295,7 +295,7 @@ horses."
   cell: it stays while I hold that cell's socket, mine or a halo's, and
   the next welcome brings it back.
 - Compatibility. An older relay closes the socket on an unknown frame, so
-  the client sends `park` only to world98 or later (`relaySupportsPark`).
+  the client sends `park` only to world99 or later (`relaySupportsPark`).
   The deploy drops every connected player once.
 
 **HCC-TIP - the owned line.** The HCC-ONLINE bullet above describes it.

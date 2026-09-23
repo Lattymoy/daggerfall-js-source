@@ -233,7 +233,7 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // identity still comes from the POOL (corpseLootHooks) and still
     // reaches the same builder behind the same art gate; quick loot is
     // handed that very object and answers null when it is not wanted.
-    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\)\)\) return;\n\s*townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\);\n\s*\} : null\)/,
+    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\);\n\s*\} : null\)/,
       `${f}: the corpse must reach the same builder, behind the same art gate`);
   }
   // the dungeon host has one too, and it is the door's

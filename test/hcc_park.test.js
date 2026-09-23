@@ -41,8 +41,8 @@ test('HCC-PARK wire: the anchor names the cell (MapsFile\'s pixel, then the cell
   assert.deepEqual(parseClient(JSON.stringify({ t: 'park', data: null }), { hasHello: true }), { t: 'park', data: null });
   assert.equal(parseClient(JSON.stringify({ t: 'park', data: null })).error, 'park before hello');
   assert.equal(parseClient(JSON.stringify({ t: 'park', data: { a: 'x' } }), { hasHello: true }).error, 'bad park');
-  assert.equal(relaySupportsPark('world97'), false, 'an older relay closes the socket on the frame - never sent to it');
-  assert.equal(relaySupportsPark('world98'), true);
+  assert.equal(relaySupportsPark('world98'), false, 'an older relay closes the socket on the frame - never sent to it (world98 is SPELLFX1\'s, which has no park arm)');
+  assert.equal(relaySupportsPark('world99'), true);
 });
 
 test('RIDE wire: the pose carries the mount (1 the horse, 2 the cart) and the sprite set, OMITTED on foot so a pose on foot is the bytes it always was; a mount is a change; the drawn pose keeps it', () => {

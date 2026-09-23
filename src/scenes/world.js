@@ -262,7 +262,7 @@ import { createWeatherFront, blendTerms, soundWeather } from '../systems/weather
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, createDetectFeed, foeNearbyRecord, lootNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { dispelNearby } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed)
-import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT } from '../player/motor.js';
+import { PlayerMotor, startRestGroundedCheck, motionBagOf, MAX_FRAME_DT, CAPSULE_HEIGHT } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
 import { travelDriveForward, travelLookaheadFor } from '../systems/travelAutopilot.js';   // TO-FIELD / AUDIT-FIELD F8: the journey's ground gate, pure so the pins can drive it   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
@@ -299,7 +299,7 @@ import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs a
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';
 import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in
-import { PARTY_READY_TIMEOUT_MS, memberPresent, latestStamp, voteStands, snapshotCancels, cancelRequestFor, mirrorKey } from '../systems/partyRestLaw.js';   // AUDIT PARTY-REST: the pure half of the party-rest mechanic, pinned by execution   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
+import { PARTY_READY_TIMEOUT_MS, memberPresent, latestStamp, voteStands, snapshotCancels, cancelRequestFor, mirrorKey, cooldownStamp, stampOf } from '../systems/partyRestLaw.js';   // AUDIT PARTY-REST: the pure half of the party-rest mechanic, pinned by execution   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
@@ -3547,8 +3547,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     restoreFatigue: (n) => { if (n > 0) { playerEntity.fatigue = Math.min(maxFatigue(playerEntity), (playerEntity.fatigue ?? 0) + n); surfacePlayer(); } },
     say: (l) => townTalk.say(l),
   };
+  const _castSeen = new Map();   // SPELLFX1: peer id -> { cn, frame } - the last cast count seen and the frame it was seen on
+  let _castFrame = 0;
   const magic = createPlayerMagic({
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
+    allyMarks: () => allyMarksNear(),   // AID1 onto ALLY-CAST: the party mates' bodies, for a beneficial touch, missile or blast (declared beside allyTargetPick, below)
+    peerBodies: () => peersNear(),   // SPELLFX1: every player's body, where a peer's drawn missile stops (declared below this engine's build)
     collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },
     playerEntity,
     playerSinks: playerSpellSinks,
@@ -3667,7 +3671,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2424 mounts the same one, gated on
+  // and dungeonContext.js:2430 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5551
@@ -4381,6 +4385,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     return !!cancelRequestFor(asking, me, _cancelSeen);
   };
   const outdoorRestDeps = createRestDeps(playerEntity, {
+    onClosedUnrested: () => cancelPartyRestStart(),   // PARTY-REST29: the window closed with no rest chosen - the leader may vote again at once (restDoor.js)
     // ROAD-B B5: `uiManager.TopWindow` for TickRest's two top-window
     // tests (:364, :399). B1 made this host's slot the MIRROR OF THE
     // TOP of its window stack, so the slot IS the answer - and the
@@ -5686,7 +5691,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6207), so exterior mode and a
+    // composer, dungeonContext.js:6221), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7637,7 +7642,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8657-8721 -
+  // worldModes answers it in BOTH modes (worldModes.js:8660-8724 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8844,6 +8849,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _partyRestMirrored = null;   // AUDIT PARTY-REST: the mirrorKey of the nap I last mirrored - one mirror per nap, however it ended
   let _partyRestGateRefusedAt = -Infinity;   // PARTY-REST2d/e: when partyRestGate last genuinely refused (social.now(), the relay's clock - comparable across every tab) - see PARTY_REST_VOTE_COOLDOWN_MS below
   let _partyRestVoteOrigin = null;   // PARTY-REST16: my own position (player.feetAt()) at the moment the CURRENT vote round's cooldown was set - see partyRestGate's own doc comment where it's stamped
+  let _partyRestReadyRound = null;   // PARTY-REST31: the leader's voteAt my (member's) ready was cast into - when that round ends, so does my vote
+  let _partyRestStartWaived = false;   // PARTY-REST29: my own start stamp no longer blocks a new vote (my rest window closed with no rest) - it is still BROADCAST, so the members see the round was spent
   let _partyRestJustStartedAt = -Infinity;   // PARTY-REST21: the last time MY OWN rest actually started (for real or via mirror) - see toggleRest's own doc comment for what this closes
   // SOC4 (Mac: "Theyre character portrait + health/stamins/magicia stats displayed on a new party UI element"): the
   // party HUD, made in socialStart beside `social` and driven from chatFrame. Null until there is a hub link to be
@@ -9884,8 +9891,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // regardless of how recently Rest had actually been pressed. A player relying purely on pressing Rest
     // (never once typing /ready) would flicker ready -> not-ready one frame later, forever - visible as the
     // tally dropping back down in chat and the vote never able to complete.
-    _partyRestReady = true;
-    _partyRestReadyAt = social.now();   // AUDIT PARTY-REST: the shared clock - `readyAt` on the wire
     // PARTY-REST21 (2026-09-22, per-request: confirmed by direct testing - "the non initiator presses r
     // again when all ready he starts a new vote... just put a cooldown on being able to start a new rest" -
     // the bug this closes): a SEPARATE cooldown from the vote-in-progress one further down - this one is
@@ -9895,7 +9900,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // regardless of whose rest actually just happened - never touches _partyRestGateRefusedAt/voteAt at all,
     // so it can never itself be mistaken for "a vote is in progress" by the check further down.
     const lastStartedAt = latestStamp(nearHere, 'restStartedAt', _partyRestJustStartedAt, social.now());
-    if (social.now() - lastStartedAt < PARTY_REST_START_COOLDOWN_MS) return 'A rest just happened. Wait a moment before starting another.';
+    // PARTY-REST30 (2026-09-23, per-request: "when you start resting again shortly after a short rest it says a rest
+    // already happened but shows 1/2 for all"): THE COOLDOWN IS ASKED BEFORE THE PRESS MARKS ME READY - a press this
+    // refuses leaves no vote behind, or my `ready` went out on the next pose and every mate's tally read 1/2 for a
+    // round nobody started. PARTY-REST29: the cooldown reads cooldownStamp - an unrested grant cools nothing down.
+    if (social.now() - cooldownStamp(nearHere, _partyRestStartWaived ? -Infinity : _partyRestJustStartedAt, social.now()) < PARTY_REST_START_COOLDOWN_MS) return 'A rest just happened. Wait a moment before starting another.';
+    _partyRestReady = true;
+    _partyRestReadyAt = social.now();   // AUDIT PARTY-REST: the shared clock - `readyAt` on the wire
     const notReady = nearHere.filter((m) => !voteStands(m.p, social.now(), lastStartedAt));   // AUDIT PARTY-REST: a vote counts while it is fresh and cast after the last rest here
     // PARTY-REST11/12: the tally as the WHOLE gathered group would read it - `nearHere` is everyone ELSE
     // standing here (social.others(), filtered), so I am added back in on both sides: to the total, and to
@@ -9992,8 +10003,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     // finishing), and the chat tracker (`_partyRestVoteTrackTick`) skips announcing anything at all while it
     // is recent, rather than mistaking my own momentary "not ready" for a fresh partial vote.
     _partyRestJustStartedAt = social.now();
+    _partyRestStartWaived = false;   // PARTY-REST29: a fresh grant cools down again
     _cancelSeen = snapshotCancels(social.others());   // AUDIT PARTY-REST: a request already in flight is not aimed at this rest
   };
+  /** PARTY-REST29: the rest window closed with no rest chosen - the vote that opened it granted nothing that
+   *  needs cooling down from, so my just-started stamp (PARTY-REST21) no longer holds the START COOLDOWN
+   *  (cooldownStamp) and I can open a new vote at once. The stamp stays broadcast, and stays the line every vote is
+   *  judged against (voteStands): the round it spent is spent, so the new one is voted afresh. */
+  const cancelPartyRestStart = () => { if (!social) return; _partyRestStartWaived = true; };
   const PARTY_REST_VOTE_COOLDOWN_MS = 60_000;   // PARTY-REST2d: "put a cooldown of 1 minute on it"
   // PARTY-REST21 (2026-09-22, per-request: "just put a coooooldown on being able to start a new rest"):
   // separate from the vote-in-progress cooldown above (which is about waiting out THIS round) - this one is
@@ -10017,11 +10034,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  THE RADIUS IS PER-SUBMODE, not one number everywhere: indoors (a tavern room, a shop, a guild hall) the
    *  check does not run at all - walls already separate one room's strangers from another's, and a packed tavern
    *  with travelers renting rooms down the hall is the ordinary case, not something to block. A dungeon's own
-   *  corridors are far tighter than the open road, so its radius is a third of the outdoors one. Read fresh off
+   *  corridors are far tighter than the open road, so its radius is smaller than the outdoors one. Read fresh off
    *  `modes?.mode` each call, exactly like myPartyLocation's own submode read just above - never cached, since a
    *  door crossed mid-session changes which radius (or none) applies without this function's own state to carry
    *  the stale answer forward. */
-  const STRANGER_REST_BLOCK_RADIUS = 100;
+  const STRANGER_REST_BLOCK_RADIUS = 50;   // STRANGER-REST2 (2026-09-23, per-request: "set the stranger rest near each other range limitation from 100m to 50m") - outdoors; the dungeon's 30 below and the unchecked interiors are unchanged
   const STRANGER_REST_BLOCK_RADIUS_DUNGEON = 30;
   const strangerRestGate = () => {
     const mode = modes?.mode ?? 'exterior';
@@ -10103,6 +10120,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         _partyRestGateRefusedAt = -Infinity;
         _partyRestVoteOrigin = null;
         _partyRestVoteLastReady = null;
+        // PARTY-REST31 (2026-09-23, per-request: "when the leader starts a rest moves away cancels it but goes near his
+        // members again it says 1/2 waiting for party"): a canceled vote takes MY vote with it - the flag used to stay
+        // up for its full PARTY_READY_TIMEOUT_MS, so walking back counted it again as a round nobody had started.
+        _partyRestReady = false;
         chatNotice('Rest vote canceled - moved too far from where it started.');
       }
     }
@@ -10115,7 +10136,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // asked for is already under way. Same cooldown and same "read the most recent of everyone's own copy"
     // reduce as partyRestGate's own check, so the two can never disagree about whether a rest just started.
     const lastStartedAt = latestStamp(nearHere, 'restStartedAt', _partyRestJustStartedAt, social.now());
-    if (social.now() - lastStartedAt < PARTY_REST_START_COOLDOWN_MS) { _partyRestVoteLastReady = null; return; }
+    if (social.now() - cooldownStamp(nearHere, _partyRestStartWaived ? -Infinity : _partyRestJustStartedAt, social.now()) < PARTY_REST_START_COOLDOWN_MS) { _partyRestVoteLastReady = null; return; }   // PARTY-REST29: the gate's own cooldown
     const notReady = nearHere.filter((m) => !voteStands(m.p, social.now(), lastStartedAt));   // AUDIT PARTY-REST: a vote counts while it is fresh and cast after the last rest here
     const totalCount = nearHere.length + 1;
     const readyCount = (nearHere.length - notReady.length) + (_partyRestReady ? 1 : 0);
@@ -10138,7 +10159,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     if (readyCount !== _partyRestVoteLastReady) {
       _partyRestVoteLastReady = readyCount;
-      chatNotice(`${readyCount}/${totalCount} ready to rest. Press R to vote!`);
+      // PARTY-REST30 (2026-09-23, per-request: "it should also tell the members that the leader starts a rest press R
+      // to be ready or something like that not just 1/2 press r to ready"): the line says what is happening to ME -
+      // a member not yet ready is asked by the leader, a member already ready and the leader just see the count.
+      // No names (PARTY-REST17's rule for the chat): "the leader" is always enough.
+      const iLead = social.leads();
+      if (!iLead && !_partyRestReady) chatNotice(`The leader wants to rest - press R to be ready! (${readyCount}/${totalCount} ready)`);
+      else chatNotice(`${readyCount}/${totalCount} ready to rest.${iLead ? ' Waiting for the party.' : ''}`);
     }
   };
   /** PARTY-REST-FAR1 (2026-09-22, Mac: "Notification when youre not near the party leader for resting"; carried
@@ -10166,6 +10193,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     // state - a vote must expire even for a tab that has since left the party, or the flag would still be sitting
     // there, stale, the moment they rejoin one.
     if (_partyRestReady && (!social || social.now() - _partyRestReadyAt > PARTY_READY_TIMEOUT_MS)) _partyRestReady = false;   // AUDIT PARTY-REST: the same clock the readers use
+    // PARTY-REST29/31 (2026-09-23, the drop's per-requests: "it doesnt start a new vote now i always get the resting
+    // window", "when a member leaves the 15m radius and goes in again after a canceled rest it also show 1/2"): a
+    // MEMBER's vote belongs to the leader's round. The readers already refuse a vote cast before the leader's grant
+    // (voteStands) - this clears it on MY side too, so my own tally agrees; and when the round the vote joined ENDS
+    // (the leader walked out of it: voteAt back to null) or is REPLACED by a newer one, the vote goes with it. A vote
+    // cast with no round open (a typed /ready) joins the next round the leader opens, as it always did.
+    if (_partyRestReady && social?.party && !social.leads?.()) {
+      const lead = social.others().find((m) => m.acct === social.party.leader);
+      const now = social.now();
+      if (lead && stampOf(lead.p?.restStartedAt, now) > _partyRestReadyAt) _partyRestReady = false;
+      const round = lead ? (stampOf(lead.p?.voteAt, now) || null) : null;
+      if (_partyRestReady && lead) {
+        if (_partyRestReadyRound === null) _partyRestReadyRound = round;
+        else if (round !== _partyRestReadyRound) { _partyRestReady = false; _partyRestReadyRound = null; }
+      }
+    }
+    if (!_partyRestReady) _partyRestReadyRound = null;
     // PARTY-REST13 (2026-09-22, per-request: "so it also shows 1/4 then 2/4 then 3/4 and then 4/4 Ready
     // yes?" - the gap this closes): `partyRestGate` itself only ever announces on a fresh PRESS, and only
     // once per 60-second cooldown - so once the first press started that cooldown, everyone else quietly
@@ -10263,6 +10307,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _partyRestReady = false;   // PARTY-REST2: spent the moment it is acted on - next nap asks again
     _partyRestGateRefusedAt = -Infinity;   // PARTY-REST2f: this round is resolved too, from this follower's own side
     _partyRestJustStartedAt = social.now();   // PARTY-REST21: see toggleRest's own doc comment for what this closes
+    _partyRestStartWaived = false;   // PARTY-REST29: a real (mirrored) rest cools down again
   };
   /** SOC6 (Mac: "Party members should be able to be seen on the world map, regardless of their location"): THE
    *  OTHER HALF OF THE POSE - what composePartyPose sends out, coming back in as something a map can draw. The
@@ -10459,6 +10504,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!hit || !social.isPartyPeer(hit.peer.id) || !online.reachesPeer?.(hit.peer.id)) return null;
     return { id: hit.peer.id, name: peerName(hit.peer.id) ?? 'a party member', distance: hit.distance };
   };
+  /** AID1 onto ALLY-CAST: THE PARTY MATES' BODIES, for the cast engine's touch, missile and blast - the peers standing in
+   *  this scene that the crosshair pick would accept (a party mate some socket of mine reaches), with their names. Null
+   *  offline or on a relay that cannot carry the cast frame, so nothing is aimed at a door that is shut. */
+  const allyMarksNear = () => {
+    if (!social?.party || !online?.castOk) return null;
+    const near = peersNear();
+    if (!near) return null;
+    return near.filter((p) => social.isPartyPeer(p.id) && online.reachesPeer?.(p.id)).map((p) => ({ ...p, name: peerName(p.id) ?? 'a party member' }));
+  };
   /** ...and the door the cast leaves through: the link's own directed frame (net/online.js sendCast), which answers
    *  whether it went - a refusal (the gate, the socket gone, a relay too old to route it) lets the release fall
    *  through to the ordinary arm. */
@@ -10551,7 +10605,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       wd: rig.playerWeapon.sheathed ? 0 : (wm?.isBow && wm.state === 'StrikeUp' ? 2 : 1),
       an: rig.swing.n, as: Math.max(0, POSE_STRIKES.indexOf(rig.swing.strike)),
       am: hasDaggerfallArrows(playerEntity.items) ? 1 : 0, sr: (live ? live.armed : magic.spellArmed()) ? 1 : 0,
-      cn: rig.cast.n, cr: rig.cast.rangeType | 0,
+      cn: rig.cast.n, cr: rig.cast.rangeType | 0, ce: rig.cast.element ?? 4,   // SPELLFX1: and its element, so the peers draw the right missile
+      ar: rig.shot?.n ?? 0,   // SPELLFX1: and the arrows loosed, so the peers draw the shafts
       // RIDE: the mount - the horse or the cart, outdoors (a door dismounts), and which of Eye Of The Beholder's five
       // mounted sprite sets this player chose, so the others draw the rider they drew themselves
       rd: (modes?.mode ?? 'exterior') !== 'exterior' ? 0 : player.transportMode === TRANSPORT_MODES.Horse ? 1 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 0,
@@ -10600,6 +10655,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) hcc.sweepOwners(ids, now, FOES_STALE_MS); }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     hcc.pruneKept(isCellRoom(online.room) ? [online.room, ...online.haloRooms()] : []);   // HCC-PARK: a kept team is its CELL's - it stands while I hold that cell's socket (mine or a halo's), and its welcome brings it back
     const drawable = online.drawable();
+    peerCastVisuals(drawable);   // SPELLFX1: a peer's new cast, drawn once
     // RIDE (2026-09-23, Mac: "ensure over people see others riding on horses"): a peer in the saddle is drawn as the
     // rider FIRST, so the body and the doll below stand nothing for them and their name rides over the rider
     peerRiders.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt });
@@ -10607,6 +10663,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerBodies.sync(afoot, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id), dt, eye: player.pos });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
   };
+  /** SPELLFX1 (the Unity co-op's RpcPlayPlayerSpellCastVisual): EVERY PEER'S CAST, DRAWN. The pose already carries the
+   *  cast count, its range and now its element; a count that moves on a peer I could see last frame is one cast, and
+   *  it goes to the live mode's engine as a visual - a missile from the peer's eye along their aim, or a flash for a
+   *  touch, self or area cast. A peer I could not see (new, far, back from a gap) is re-read silently, so a cast out
+   *  of sight is not replayed on arrival. It lands nothing: a blow travels by the hit frame and a gift by ALLY-CAST's cast frame. */
+  function peerCastVisuals(list) {
+    _castFrame++;
+    const dc = modes?.mode === 'dungeon' ? modes?.dungeonCtx : null;
+    const fx = dc?.spellVisual ?? magic.spellVisual;
+    for (const p of list) {
+      const s = p?.shown;
+      if (!s) continue;
+      const cn = s.cn | 0, ar = s.ar | 0, was = _castSeen.get(p.id);
+      _castSeen.set(p.id, { cn, ar, frame: _castFrame });
+      if (!was || was.frame !== _castFrame - 1 || (was.cn === cn && was.ar === ar)) continue;
+      const feet = onlineToScene(s), h = peerBodies?.heightOf(p.id) || CAPSULE_HEIGHT;
+      const eye = [feet[0], feet[1] + h - 0.2, feet[2]];
+      const dir = [Math.sin(s.yaw) * Math.cos(s.pitch), Math.sin(s.pitch), Math.cos(s.yaw) * Math.cos(s.pitch)];   // socialFwd's own formula - the pose's yaw/pitch ARE the sender's cam
+      if (was.cn !== cn) {
+        try { fx({ from: eye, dir, element: s.ce ?? 4, rangeType: s.cr | 0, casterId: p.id }); } catch (err) { console.warn(`[online] a peer's cast visual threw: ${err?.message ?? err}`); }
+      }
+      // SPELLFX1: and their ARROW - a shaft from their eye along their aim, in the live mode's own arrow pool
+      if (was.ar !== ar) {
+        const from = [eye[0] + dir[0] * 0.6, eye[1] + dir[1] * 0.6, eye[2] + dir[2] * 0.6];   // clear of their own body
+        try { if (!modes?.visualArrow?.(from, dir)) arrows.fire(from, dir, { visual: true }); } catch (err) { console.warn(`[online] a peer's arrow visual threw: ${err?.message ?? err}`); }
+      }
+    }
+    if (_castSeen.size > (online?.peers.size ?? 0) + 16) for (const [id, v] of _castSeen) if (v.frame !== _castFrame) _castSeen.delete(id);
+  }
   const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); };
   /** FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE SOCKET'S OWN
    *  WORD, IN THE SKIN'S FACE. The online lane is the enhanced lane whole (systems/onlineLane.js), so this line -
@@ -10663,6 +10748,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // PARTY-REST28: shared with this host's own outdoor toggleRest and dungeonContext.js's, forwarded the same
     // way partyRestGate itself already is - see markPartyRestSpent's own doc comment for the bug this closes.
     markPartyRestSpent: () => markPartyRestSpent(),
+    cancelPartyRestStart: () => cancelPartyRestStart(),   // PARTY-REST29: a rest window closed unrested, indoors or underground
     // STRANGER-REST1: shared with this host's own outdoor toggleRest and dungeonContext.js's - see strangerRestGate's doc comment.
     strangerRestGate: () => strangerRestGate(),
     // PARTY-REST5: shared with this host's own outdoor rest deps and dungeonContext.js's, forwarded the same way
@@ -10696,6 +10782,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // publish clock is reset, not the publish forced: the frame's own worldPublish sends it this same frame.
     onLootClaimed: () => { _worldPublishedAt = -Infinity; },
     peers: peersNear,
+    allyMarks: () => allyMarksNear(),   // AID1 onto ALLY-CAST: the dungeon's own cast engine gives to the same mates
     selfId: () => online?.id ?? null,
     dungeonAuthority,   // WORLD2: a dungeon built while another hosts starts as puppets
     // TTL1: the two spawned-dungeon clocks, from the mode machine's
@@ -12100,7 +12187,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // moved) opens the window exactly as before.
               pool.takeLoot(lootKey, (l) => townTalk.say(l),
                 inventoryDoorReady() ? (loot) => {
-                  if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l))) return;
+                  if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
                   townTalk.showOverlay(makeInventoryWindow({ loot }));
                 } : null);
               surfacePlayer();
@@ -12120,7 +12207,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               const _hooks = droppedLootHooks(pile);
               // QUICK-LOOT B4: the same door, on the player's own pile -
               // the hooks this arm was already building for the window.
-              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l))) return;
+              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
               townTalk.showOverlay(makeInventoryWindow({
                 // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
                 // This arm hand-rolled the window with the SAME eleven hooks
@@ -12169,6 +12256,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
       player.offsetOrigin(r.offset);   // EV1: shifts BOTH ends of the interpolation span - no 819-unit lerp frame
       sky.offsetOrigin(r.offset);   // VC4: the clouds and their shadow keep their place over the land
+      renderer.shadowOriginShift?.(r.offset);   // AUDIT SC1: the shadow cache's remembered placements follow the origin too, or every still caster reads as moved for a second
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
       doorGeneration += 1;   // WORLD-HOVER: the floating origin moved, so every door's WORLD matrix did
@@ -12483,6 +12571,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (cullOn) spherePlanes(multiply(proj, view, _pv), _planes);   // EV3 (GHOST1: normalised - the sphere test shares these)
     meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
+    // SHADOW-REACH (2026-09-23, Mac: "Can you tackle the 2 limitations"): THE CASTERS THE VIEW CULL REJECTS. Every
+    // gate below (the pixel's, a model's, a flat batch's, a townsman's) asks the renderer whether what it just
+    // rejected would cast into this frame's shadow maps - a sun cascade's frustum, which reaches 600 units
+    // toward the light, or a lantern's range - and RECORDS it for the maps without drawing it. Before this a tree
+    // behind the camera cast no sun shadow into the view, a wall just off screen cast none from the lantern beside
+    // it, and SC1's caches churned as the camera turned. The flats collect here and are recorded after the
+    // crowd's draw, on the same wind.
+    const castBatches = [];
     const groundQueue = [];   // GROUND-LAST: the visible pixels whose ground is drawn AFTER every opaque mesh of every pixel (near first, by the walk's order)
     // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance
     // improvements", with a readout showing 51 fps, script 23.3 ms and
@@ -12511,9 +12607,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     //
     // A culled peer casts no shadow while it is off screen - which is
     // exactly what the world's own flats have done since EV3, since the
-    // shadow pass reads the list this builds.
+    // shadow pass reads the list this builds. AUDIT REACH: unless a shadow
+    // reaches him - then he goes to the casters' list, as every other flat.
     if (remotePlayers) for (const b of remotePlayers.batches()) {   // ONLINE1: the others, at their feet
-      if (cullOn && billboardOutside(b)) continue;
+      if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; }   // AUDIT REACH
       allBatches.push(b);
     }
     if (peerRiders) for (const b of peerRiders.batches()) { if (!(cullOn && billboardOutside(b))) allBatches.push(b); }   // RIDE: the others in the saddle
@@ -12552,6 +12649,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // all run for a pixel behind the camera.
       const pixelVisible = !cullOn || !aabbOutside(_planes, p._box, t[0], t[1], t[2]);
       p._visible = pixelVisible;   // WATER1: the water pass below walks the same verdict
+      const pixelCasts = !pixelVisible && renderer.shadowReach(p._box, t[0], t[1], t[2]);   // SHADOW-REACH: off screen, but in a shadow's reach
       if (pixelVisible) {
         // EE5: the ground shadows under the SKY'S OWN deck - one field for the
         // cloud and for the shadow it casts. Null when there is no enhanced
@@ -12573,12 +12671,27 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         if (p.staticBatch) renderer.drawMesh(p.staticBatch, pixelMatrix, null);   // PERF4: every static model of the pixel, one call per texture (the keys are resolved in the merge)
         for (const m of p.models) {
           if (m._batched) continue;   // PERF4: drawn above
-          if (cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2])) continue;
+          const off = cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2]);
+          if (off && !renderer.shadowReach(m._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen AND out of every shadow's reach
           if (m._worldGen !== p._worldGen || !m._world) {
             m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16));
             m._worldGen = p._worldGen | 0;
           }
-          renderer.drawMesh(m.gpu, m._world, p.texRemap);
+          if (off) renderer.recordShadowMesh(m.gpu, m._world, p.texRemap);   // SHADOW-REACH: for the maps alone
+          else renderer.drawMesh(m.gpu, m._world, p.texRemap);
+        }
+      } else if (pixelCasts) {
+        // SHADOW-REACH: the whole pixel is off screen but inside a shadow's reach - its ground, its merged statics
+        // and its odd models go to the maps and nowhere else
+        renderer.recordShadowTerrain(p.terrain, pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
+        if (p.staticBatch) renderer.recordShadowMesh(p.staticBatch, pixelMatrix, null);
+        for (const m of p.models) {
+          if (m._batched || !renderer.shadowReach(m._box, t[0], t[1], t[2])) continue;
+          if (m._worldGen !== p._worldGen || !m._world) {
+            m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16));
+            m._worldGen = p._worldGen | 0;
+          }
+          renderer.recordShadowMesh(m.gpu, m._world, p.texRemap);
         }
       }
       // WM2b: THE SAILS, on the same eased wind vector the cloud deck
@@ -12590,6 +12703,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         for (const w of p.windmills) {
           advanceRotor(w.state, dt, windNow);
           if (pixelVisible) renderer.drawMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);
+          else if (pixelCasts) renderer.recordShadowMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);   // SHADOW-REACH: the sail's shadow sweeps in from off screen
         }
       }
       // WM4c: THE HUM - see exterior.js. Here the source MOVES every
@@ -12617,11 +12731,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // flats that move, and nothing else. Facing costs nothing here (a
       // uniform per pass), so a far flat that draws still turns.
       const ring = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
-      for (const b of p.batches) {
-        if (!pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]))) continue;   // EV3
-        if (!farFlatVisible({ ring, height: b.size?.h ?? 0, animated: b.frame != null })) continue;   // MAC1
+      // AUDIT REACH: a pixel neither seen nor reached has nothing to walk (the first cut asked the far-flat rule, an
+      // object a batch, of every batch of every streamed pixel); the rule runs after the cull again, for the batches it can keep
+      if (pixelVisible || pixelCasts) for (const b of p.batches) {
+        const off = !pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]));   // EV3
+        if (off && !renderer.shadowReach(b._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen and out of every shadow's reach
+        if (!farFlatVisible({ ring, height: b.size?.h ?? 0, animated: b.frame != null })) continue;   // MAC1 (a far flat the rule drops casts nothing either)
         b.origin = t;
-        allBatches.push(b);
+        (off ? castBatches : allBatches).push(b);   // SHADOW-REACH: the maps alone, or the frame
       }
     }
     // GROUND-LAST: the ground of every visible pixel, after every opaque
@@ -12860,10 +12977,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       for (let i = 0; i < livePersonBatches.length; i++) {
         const b = livePersonBatches[i];
         if (!billboardOutside(b)) livePersonBatches[keep++] = b;
+        else if (renderer.shadowReachBatch(b)) castBatches.push(b);   // SHADOW-REACH: a townsman just off screen still throws his shadow into it
       }
       livePersonBatches.length = keep;
     }
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
+    if (castBatches.length) renderer.recordShadowBillboards(castBatches, camRight, UP_Y);   // SHADOW-REACH: the flats the view cull rejected, for the maps alone (the wind is the frame's, set above)
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming
     // holds off until the deck is in. Classic: the sim's mode, as W1.
@@ -13157,7 +13276,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             drainExteriorFatigue(SWING_WEAPON_FATIGUE_LOSS);
             tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);
             const fwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
-            arrows.fire(cam.pos, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon, muzzle: weaponRig.thunderlockMuzzle(fieldOfView()) });   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // #64: LastBowUsed rides the shaft - the impact prices off it   // ROAD-H H1c: ArrowFlight.fire applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
+            arrows.fire(cam.pos, fwd, { fromPlayer: true, weapon: weaponRig.playerWeapon.weapon, muzzle: weaponRig.thunderlockMuzzle(fieldOfView()) }); weaponRig.noteShot?.(weaponRig.playerWeapon.weapon);   // SPELLFX1: the peers draw it   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // #64: LastBowUsed rides the shaft - the impact prices off it   // ROAD-H H1c: ArrowFlight.fire applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           }
           continue;
         }

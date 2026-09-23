@@ -426,6 +426,32 @@ export const storedMusicNames = () => assetNames(MUSIC_STORE);
 export const loadMusicFile = (fileName) => assetBytes(MUSIC_STORE, fileName);
 export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
 
+/** SNDREP1: a SOUND pack (DFU's StreamingAssets/Sound WAVs) rides the MUSIC store - it is audio the player supplied,
+ *  with the music pack's own lifecycle, and a store of its own would be a database version bump for two files. The
+ *  two packs cannot collide: each registration reads only the names it knows (song_*.ogg / AmbientCrickets.wav). */
+export async function storeSoundFiles(files) {
+  const { soundEntry } = await import('../systems/soundReplacer.js');
+  return storeAssets(MUSIC_STORE, files, (n) => !!soundEntry(n));
+}
+/** SNDREP1: REMOVE THE SOUND PACK - its WAVs leave the music store and the music pack beside them stays, which is
+ *  why this deletes by name rather than clearing the store. The registry is emptied with it, so the next night's
+ *  crickets are Daggerfall's own again. Answers how many files went. */
+export async function clearStoredSounds() {
+  const { soundEntry, setSoundReplacements } = await import('../systems/soundReplacer.js');
+  const names = (await storedMusicNames()).filter((n) => soundEntry(n));
+  if (names.length) {
+    const d = await getDb();
+    await new Promise((res, rej) => {
+      const tx = d.transaction(MUSIC_STORE, 'readwrite');
+      for (const n of names) tx.objectStore(MUSIC_STORE).delete(n);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  }
+  setSoundReplacements([], null);
+  return names.length;
+}
+
 /** One derived artifact, by key. Bytes in, bytes out - this door knows
  *  nothing about what it holds, and the artifact's OWN envelope (magic,
  *  version, checksum, whatever its writer chose) is what decides whether
@@ -961,7 +987,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:2609), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:3486), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */
@@ -1029,6 +1055,26 @@ export async function pickMusicFolder() {
       looks for.</p>`,
     store: storeMusicFiles,
     register: async () => setMusicReplacements(await storedMusicNames(), loadMusicFile),
+  });
+}
+
+export async function pickSoundFolder() {
+  const { setSoundReplacements } = await import('../systems/soundReplacer.js');
+  return pickAssetFolder({
+    title: 'Your own sounds',
+    blurb: `<p>Pick a folder of WAVs to play instead of Daggerfall's
+      built-in sounds. Nothing is uploaded - it is stored in this
+      browser.</p>
+      <p style="color:#999">A <b>Daggerfall Unity sound mod works
+      as-is</b> - pick its <b>StreamingAssets/Sound</b> folder. Supported
+      so far: <b>AmbientCrickets.wav</b> (the night crickets) and
+      <b>AmbientDistantHowl.wav</b> (the distant howl).</p>`,
+    store: storeSoundFiles,
+    register: async () => {
+      const n = setSoundReplacements(await storedMusicNames(), loadMusicFile);
+      if (n) (await import('../systems/audio.js')).audio.preloadReplacements?.();   // the next night's crickets are the pack's
+      return n;
+    },
   });
 }
 

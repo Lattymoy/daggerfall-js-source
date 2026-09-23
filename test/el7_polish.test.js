@@ -58,7 +58,7 @@ test('EL7: the constants and the shader laws - the glare\'s presence test and it
   assert.ok(!/<= \$\{AIR_GLARE_SLACK\}/.test(a) && !/\+ \$\{AIR_EMIT_SLACK\}/.test(a), 'no bare interpolation of a constant that could be whole');
   assert.doesNotMatch(a, /Math\.hypot\(L\[i \* 4\] - eye\[0\]/, 'LIGHT-NEAR1: no glare skip by distance to the eye - the hand\'s light is skipped by its flag (MAC-T1)');
   assert.match(a, /float w = abs\(viewDist\(depthAt\(uv\)\) - here\) <= uBlurRange \? 1\.0 : 0\.0;/, 'the blur weighs a tap by its depth');
-  assert.match(a, /outColor = vec4\(vec3\(wsum > 0\.0 \? acc \/ wsum : 1\.0\), 1\.0\);/, 'and normalises by the taps it kept');
+  assert.match(a, /float ao = clamp\(wsum > 0\.0 \? acc \/ wsum \/ \$\{AIR_AO_STORE\} : 1\.0, 0\.0, 1\.0\);/, 'and normalises by the taps it kept (AUDIT HQ1: unscaling the pixel\'s stored share, and clamping here, after the tile\'s average)');
   assert.match(a, /gl\.uniform1f\(this\.programs\.box\.uBlurRange, AIR_AO_RADIUS\);/); assert.equal(AIR_AO_RADIUS, 0.8);
   assert.deepEqual([...SHADOW_CASCADES], [12, 48, 240]);
   assert.ok(near(sunTexelWorld(0), 24 / 2048) && near(sunTexelWorld(2), 480 / 2048));

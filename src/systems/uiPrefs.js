@@ -80,6 +80,8 @@ export const PREF_DEFAULTS = Object.freeze({
   peerClassSprites: true,
   peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
   peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
+  nightCrickets: true,   // SNDREP1: the night crickets loop (SoundClips.AmbientCrickets) - on by default; off silences it
+  distantHowl: true,     // SNDREP1: the distant howl (SoundClips.AmbientDistantHowl) - on by default; off silences it
   // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is
   // declared on its Features row (systems/features.js), RF4's law - it
   // arrives through FEATURE_PREF_DEFAULTS below.

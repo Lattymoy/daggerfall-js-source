@@ -110,9 +110,44 @@ export const STARTING_SPELL_SETS = Object.freeze({
   6: [37],                 // Bard
 });
 
+/** HEAL1 (2026-09-23, co-op): THE HEALER'S SECOND HEAL - the class
+ *  starts able to heal ANOTHER player, not only itself. It is Balyna's
+ *  Balm (SPELLS.STD 97, the self heal the Healer set already carries)
+ *  with its effects copied field for field and the range turned from
+ *  CasterOnly to ByTouch - so it heals exactly as hard as the Balm at
+ *  every level, and costs the same (TARGET_COST_MULT is 1.0 for both).
+ *  Online the touch lands on a party mate through ALLY-CAST's cast
+ *  frame (systems/allyCast.js), which the target resolves as a self-cast
+ *  at the caster's level: no save, the Balm's own magnitude.
+ *
+ *  A MADE spell, not a SPELLS.STD record: it rides the save whole as
+ *  every custom spell does (save.js keeps `custom` spells as objects),
+ *  under one fixed negative index of its own, far below the ones the
+ *  spellmaker mints from -1 down, so a check for "already has it" is one
+ *  compare and the quick slot keys it like any other spell. */
+export const HEALER_CAREER_INDEX = 4;
+export const HEAL_OTHER_SOURCE_SPELL = 97;   // Balyna's Balm
+export const HEAL_OTHER_INDEX = -1000;
+export const HEAL_OTHER_NAME = "Balyna's Healing Touch";
+export function healOtherSpell(spellsByIndex) {
+  const src = spellsByIndex?.get?.(HEAL_OTHER_SOURCE_SPELL);
+  if (!src || !Array.isArray(src.effects)) return null;
+  return {
+    effects: src.effects.map((e) => ({ ...e })),   // the Balm's own numbers, empty slots and all
+    element: src.element,
+    rangeType: 1,                                   // ByTouch: another player, or a foe, in arm's reach
+    cost: 0,
+    name: HEAL_OTHER_NAME,
+    icon: src.icon,
+    index: HEAL_OTHER_INDEX,
+    custom: true,
+  };
+}
+
 /** The spells a new character KNOWS: set members resolved against
  *  the loaded SPELLS.STD map; missing records skip loudly (the
- *  source's own error path). */
+ *  source's own error path). HEAL1: a Healer also knows the touch
+ *  version of its Balm. */
 export function startingSpells(careerIndex, spellsByIndex) {
   const set = STARTING_SPELL_SETS[careerIndex];
   if (!set || !spellsByIndex) return [];
@@ -121,6 +156,10 @@ export function startingSpells(careerIndex, spellsByIndex) {
     const sp = spellsByIndex.get(id);
     if (sp) out.push(sp);
     else console.warn(`[chargen] starting spell ${id} missing from SPELLS.STD`);
+  }
+  if (careerIndex === HEALER_CAREER_INDEX) {
+    const touch = healOtherSpell(spellsByIndex);
+    if (touch) out.push(touch);
   }
   return out;
 }
