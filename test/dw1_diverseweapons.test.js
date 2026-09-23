@@ -37,14 +37,16 @@ const ARTIFACT = (subtype) => ({ artifact: true, enchantments: [{ type: ENCHANTM
 
 // ── the flag ──────────────────────────────────────────────────────────
 
-test('DW1: the flag is the mod’s Enabled switch, on by default, and a preset nobody selected is off', () => {
+test('DW1: the flag is the mod’s Enabled switch, on by default, and the preset on by default too (DW-CLIP)', () => {
   _resetModSettings();
   const v = MOD_SETTINGS['diverse-weapons'];
   assert.ok(v, 'the vendor is declared');
   assert.equal(v.title, 'Diverse Weapons'); assert.equal(v.author, 'RealAKP');
   assert.deepEqual(Object.keys(v.keys), ['Enabled', 'WeaponWidgetPreset'], 'the mod has no settings of its own: the flag, and the port’s reading of its readme');
   assert.equal(moddedWeaponHUDAnimsEnabled(), true, 'FPSWeapon.moddedWeaponHUDAnimsEnabled, as DiverseWeaponsMain.Start sets it');
-  assert.equal(diverseWeaponsPresetOn(), false, '"select Diverse Weapons settings preset" is a thing the player does');
+  assert.equal(diverseWeaponsPresetOn(), true, 'DW-CLIP (Mac: "mod should be defaulted on"): the look the readme asks for, without the hunt for the switch');
+  setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);
+  assert.equal(diverseWeaponsPresetOn(), false, 'and a player may take Weapon Widget\'s own settings back');
   setModSetting('diverse-weapons', 'Enabled', false);
   assert.equal(moddedWeaponHUDAnimsEnabled(), false);
   setModSetting('diverse-weapons', 'Enabled', true); setModSetting('diverse-weapons', 'WeaponWidgetPreset', true);
@@ -218,7 +220,8 @@ test('DW1: the Weapon Widget preset the bundle ships, restated exactly, laid ove
   assert.equal(mine['Bob.Length'], 100, 'and the player’s values are still theirs underneath');
   // through the reader the clone actually uses
   _resetModSettings();
-  assert.equal(readWidgetSettings().trueSize, false, 'a fresh store: the preset is not selected');
+  setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);
+  assert.equal(readWidgetSettings().trueSize, false, 'the preset off: Weapon Widget\'s own store');
   setModSetting('diverse-weapons', 'WeaponWidgetPreset', true);
   const r = readWidgetSettings();
   assert.equal(r.trueSize, true); assert.equal(r.doubleScale, true); assert.equal(r.inertia, true); assert.equal(r.bobLength, 1.42);
