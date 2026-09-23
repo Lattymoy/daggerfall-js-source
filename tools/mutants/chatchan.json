@@ -65,15 +65,15 @@
   {
     "name": "CC-party-line-before-the-welcome",
     "file": "src/net/online.js",
-    "old": "    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;",
-    "new": "    if (ch != null && !CHAT_LINE_CHANNELS.includes(ch)) return false;",
+    "old": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;",
+    "new": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && !CHAT_LINE_CHANNELS.includes(ch)) return false;",
     "tests": ["test/chatchan.test.js"]
   },
   {
     "name": "CC-unknown-channel-sent",
     "file": "src/net/online.js",
-    "old": "    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;",
-    "new": "    if (ch != null && !this.chanOk) return false;",
+    "old": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;",
+    "new": "    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online\n    if (ch != null && !this.chanOk) return false;",
     "tests": ["test/chatchan.test.js"]
   },
   {

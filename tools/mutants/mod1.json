@@ -74,8 +74,8 @@
   {
     "name": "MOD1-10-the-relay-hears-a-muted-line",
     "file": "server/src/index.js",
-    "old": "      if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }",
-    "new": "",
+    "old": "      if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }\n      await this._sayLine(ws, a, m.ch, { t: 'chat'",
+    "new": "      await this._sayLine(ws, a, m.ch, { t: 'chat'",
     "tests": ["test/mod1.test.js"],
     "note": "The mute is signed and carried and never enforced."
   },

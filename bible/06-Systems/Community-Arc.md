@@ -657,3 +657,31 @@ skin.
   spaces. The probe passes, with the button 82px tall on the phone (over the thumb's 44).
 
 Pinned in AUDIT SOC C8/C13's test (`test/soc3_socialpanel.test.js`); `tools/mutants/auditsoc.json` gains its mutant, dead.
+
+## A mutant record that names two sites (found by the arc's mutation rerun; older than the arc in part)
+
+`tools/mutate.mjs` replaces the FIRST occurrence of a record's `old`. A record whose text stands at two sites in its
+file is aimed at whichever is higher up, so a copy added above the site it was written for takes its mutant without a
+word. The record still applies, so AUDIT QS6 F7's sweep passes it, and the law it was written for is checked by nothing.
+- **MOD1-10** (the chat's mute) survived the rerun after the fourth merge. DICE1's roll arm repeats the chat's mute line
+  below it, and JOURNAL1's page arm repeats it ABOVE it, so the record muted the page's check, which MOD1's tests never
+  reach.
+- **CHAT-CHAN's two `sendChat` records** name a line that DICE1's `sendRoll` repeats below them. They still hit
+  `sendChat`, but only because of the order. `sendRoll`'s own copy had no record; DICE1 gains two, dead. Its version
+  half is not recorded, because the welcome opens `rollOk` and `chanOk` from one relay version and ROLL_RELAY_MIN is
+  CHAN_RELAY_MIN.
+- **Two of main's, which the PR had carried as survivors older than the arc:**
+  - AUDIT4-A8 was written when the HUD line had one site. NOTICE-SPAM's repeat branch (2026-09-22) put its exact text
+    above the push branch, and the record has mutated the repeat branch since.
+  - AUDIT-F4 names the billboard's tint and mutated the flats'.
+
+Each is aimed now by a line only its own site has, and dies.
+
+**The class is closed** in `test/mutantdrift.test.js` (MUT-AIM): every record names ONE site. The 25 records that
+already named more than one are carried in a map with their count of sites, so a copy added or taken away fails as
+well; the map can only shrink. Two of them need more than an aim, and are recorded for their arcs:
+- `el2` glsl-point-off-dark: the point guard is pinned by a regex over the whole shader, which the other copy satisfies
+  whichever one is mutated.
+- `macbugw5` W5-13 is named for the pool's gate and mutates the drip's. Aimed at each of the four gates in turn, only
+  `place()`'s dies (14 failing). Its tests (`test/blood1_decals.test.js`) never fail the drip, the footprint or the pool
+  asking for `raycastHit`, the door MAC-BUG W5 took them off.

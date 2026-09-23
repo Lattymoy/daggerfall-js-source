@@ -140,6 +140,22 @@
     "tests": ["test/dice1.test.js"]
   },
   {
+    "name": "DC-session-channel-door-gone",
+    "file": "src/net/online.js",
+    "old": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;\n",
+    "new": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n",
+    "tests": ["test/dice1.test.js"],
+    "note": "sendRoll's channel door, anchored on its own version door: the same line stands in sendChat above it, and CHAT-CHAN's records name that one."
+  },
+  {
+    "name": "DC-session-any-channel",
+    "file": "src/net/online.js",
+    "old": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;\n",
+    "new": "    if (!validRollSpec(spec) || !this.rollOk) return false;\n    if (ch != null && !this.chanOk) return false;\n",
+    "tests": ["test/dice1.test.js"],
+    "note": "A roll asked on a channel no relay routes leaves. The door's version half (chanOk) is not recorded: the welcome opens it and rollOk from one relay version, and ROLL_RELAY_MIN is CHAN_RELAY_MIN, so no session rolls without channels."
+  },
+  {
     "name": "DC-session-gate",
     "file": "src/net/online.js",
     "old": "    if (!gate.pass) return false;\n    const frame = { t: 'roll'",
