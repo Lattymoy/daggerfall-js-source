@@ -188,8 +188,10 @@ test('DW-CLIP: under the Diverse Weapons preset (DoubleScaleTextures + TrueTextu
   cw.customCache.set([...cw.customCache.keys()].find((n) => n.startsWith('w_')), { tex: 'double', width: 100, height: 80, doubled: true });
   c.frame();
   assert.deepEqual(cw.offset, [0.5, 0.5]);
-  assert.match(rd('src/combat/weaponWidget.js'), /if \(w\.s\.doubleScale && !w\.s\.trueSize && \(w\.weaponState === S\.Idle/);
-  assert.match(rd('src/combat/weaponWidget.js'), /if \(custom\?\.doubled\) w\.offset = /);
+  // DISC14-C: the gate is one helper now, shared with the doubled idle's bob - the shift and the centred bob ride the same doubling
+  assert.match(rd('src/combat/weaponWidget.js'), /function doubledIdleNow\(\) \{\s*\n\s*if \(!w\.s\.doubleScale \|\| w\.s\.trueSize \|\| !w\.art\) return false;/);
+  assert.match(rd('src/combat/weaponWidget.js'), /return record != null && !!customTexture\(record, Math\.max\(0, w\.currentFrame\)\)\?\.doubled;/);
+  assert.match(rd('src/combat/weaponWidget.js'), /if \(\(w\.weaponState === S\.Idle \|\| \(w\.currentWeaponType === T\.Bow && w\.currentFrame === 0\)\) && doubledIdleNow\(\)\) \{\s*\n\s*w\.offset = /);
   _resetModSettings();
   assert.equal(modSettingsOf('diverse-weapons').WeaponWidgetPreset, false, 'DISC14-B: the preset defaults OFF again (DW-CLIP had it on) - Mac\'s defaults are Weapon Widget\'s own, with DoubleScaleTextures on and Inertia.Scale 0');
 });

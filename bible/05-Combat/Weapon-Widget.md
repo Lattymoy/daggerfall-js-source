@@ -84,6 +84,15 @@ is the sprite's sheathe, and the arms sheathe with their own clips
 the sprite, which is what Mac asked for. The arms' own frame, stance,
 mirror and clip laws are untouched.
 
+**DISC14-C (2026-09-23): the arms keep the plain bob.** The bob's doubled
+-idle shape (centred on the rest) is for a doubled `w_` sprite texture.
+On the arms' full-screen composite it swung above the rest, and the
+floor pinned it there for half of every stride: Mac's "jitter on the
+Morrowind model". The arms have their own bob integrator on the plain
+shape (`armsPosition`), with the same inertia the sprite takes. The
+sprite takes the doubled shape only over a doubled `w_` hit, the rule
+DW-CLIP gave the half-size shift.
+
 ## Method by method
 
 | FPSWeaponClone (IL) | Home in `weaponWidget.js` | Notes |

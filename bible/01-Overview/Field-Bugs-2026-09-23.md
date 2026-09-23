@@ -1148,9 +1148,12 @@ correct."*
    *"Sorry but these need to be the default values ingame for diverse
    weapons. The current defaults are wrong on the screen"*, and stopped
    the audit.
+3. Mac, after B: *"I also notice littering on the morrowind model. I feel
+   like some of the diverse weapon settings arent needed because we have
+   other integrations that handle them"*.
 
 The pins are `test/disc14.test.js`; the mutants are
-`tools/mutants/disc14.json`, and all nine die.
+`tools/mutants/disc14.json`, and all thirteen die.
 
 ## DISC14-A: the horse drawn over the weapon
 
@@ -1208,17 +1211,52 @@ preset.
   benches put the shipped values back, so the clone's own laws are still
   tested against the mod.
 - ARROW2's pin (the nocked bow hidden through the loose's cooldown) went
-  red under the new default: one frame before the bow slides back, the
-  doubled-idle bob (Weapon Widget's own, bobStep's `xMin`/`yMax` at 0)
-  lifts the hidden bow 0.82 rows of a 200-line screen. That is about
-  four pixels at 1080, for 16 ms, and 1.4 s after the shaft left. It is
-  not the double arrow ARROW2 fixed. ARROW2's law stays pinned on the
-  mod's shipped settings, and a fourth case pins the new default: no
-  nocked frame while the loose plays out, and never more than that
-  sliver during the cooldown.
+  red under the new default. One frame before the bow slides back, the
+  doubled-idle bob lifted the hidden bow 0.82 rows of a 200-line screen:
+  about four pixels at 1080, for 16 ms, 1.4 s after the shaft left. That
+  was the first sign of DISC14-C below, and C removed it. ARROW2's law is
+  pinned on the mod's shipped settings, and a fourth case holds the same
+  law under the new default.
 
 **Not verified here:** the placement itself. The values are Mac's,
 chosen against what the old defaults drew. The idle audit that was
 running when the screenshot came was stopped, so no claim is made here
 about any screen shape or either hand.
+
+## DISC14-C: the Morrowind model's jitter, and B's own share of it
+
+**Cause, measured.** B made DoubleScaleTextures a default. Weapon
+Widget's bob has a second shape for a doubled idle (bobStep's `xMin` and
+`yMax` at 0): centred on the rest, so it swings above it as well as
+below. The port gave that shape to every idle once the module was on.
+But only a `w_` texture drawn into the doubled box sits half its size in,
+low enough to swing above its rest; DW-CLIP had already made the
+half-size shift ride that doubling. Everything else rests on
+`transformRect`'s floor, which pinned the upper half of every sway:
+
+| What was drawn | Frames pinned at the top, of 120 | Worst jerk |
+|---|---|---|
+| The Morrowind arms' composite (`armsTransform`) | 53 | 3.37 (0.73 with the module off) |
+| A classic sprite, or a plain hit through the fall-through | 63 | 1.26 (0.22 with the module off) |
+| A Diverse Weapons idle with its doubled `w_` | 1 | 0.22 |
+
+So the arm stopped dead at the top of each stride and snapped back into
+motion.
+
+**Fix.** The doubled idle's bob now rides the doubled hit, through one
+helper (`doubledIdleNow`) shared with the half-size shift. The Morrowind
+arms keep their own bob integrator on the plain shape, always, plus the
+same inertia the sprite takes. With the fix, all three cases above pin
+on one frame (the bob's own peak), and the arm moves exactly as it did
+before B. ARROW2's sliver went with it. DW-CLIP's two mutant records
+named the old gate and are re-aimed by content at the shared helper.
+
+**What Weapon Widget does to the Morrowind model at all** (checked in
+`weaponRig.js`). Only `armsTransform` reaches it: Bob, Inertia and Step
+move the arms' whole picture. Swings, Ambidexterity, Offset,
+DoubleScaleTextures, TrueTextureSize and Recoil drive the 2D sprite
+alone. The arms swing, sheathe and change hands with their own
+Morrowind clips. Whether the arms should take Weapon Widget's movement
+at all is Mac's call (WW1 added it at Mac's asking), and is left open
+here.
 

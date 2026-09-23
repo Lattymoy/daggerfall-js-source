@@ -38,8 +38,8 @@ async function bowRig({ drawback, widget, doubleScale = false }) {
   resetToDefaults(); _resetModSettings();
   setValue('Controls', 'BowDrawback', drawback ? 'True' : 'False');
   setModSetting('weapon-widget', 'Enabled', widget);
-  // DISC14-B: the law is pinned on the mod's SHIPPED Weapon Widget settings. The port defaults DoubleScaleTextures on
-  // now, and its doubled-idle bob (bobStep's xMin/yMax 0) can lift the hidden bow a sliver - the case below.
+  // DISC14-B: the law is pinned on the mod's SHIPPED Weapon Widget settings; the port defaults DoubleScaleTextures on
+  // now, and the case below holds the same law under that default.
   setModSetting('weapon-widget', 'Modules.DoubleScaleTextures', doubleScale);
   const quads = [];
   const renderer = { uploadTexture: (_k, name) => name, drawScreenQuad: (tex, rect) => quads.push({ tex, rect }) };
@@ -107,12 +107,11 @@ for (const drawback of [false, true]) {
   }
 }
 
-test('ARROW2 under DISC14-B\'s defaults (DoubleScaleTextures on): while the arrow flies the bow is off the screen, and through the cooldown no more than a sliver of it ever shows - under a pixel of the 200-line screen, the doubled-idle bob\'s lift', async () => {
+test('ARROW2 under DISC14-B\'s defaults (DoubleScaleTextures on): the same law - no nocked frame while the loose plays out or through its cooldown (DISC14-C: the doubled idle\'s bob rides a doubled hit, so a classic bow bobs as with the module off; before it, the centred bob lifted the hidden bow 0.82 rows a frame before its return)', async () => {
   for (const fps of [60, 50]) {
     const rows = await shoot({ drawback: true, widget: true, fps, doubleScale: true });
-    assert.equal(rows.filter((x) => x.state !== 'Idle' && x.drawn && NOCKED.test(x.drawn)).length, 0, `${fps} fps: no nocked frame while the loose plays out`);
-    const worst = Math.max(0, ...rows.filter((x) => x.cooling && x.drawn && NOCKED.test(x.drawn)).map((x) => x.shown));
-    assert.ok(worst < 1, `${fps} fps: the most of a nocked bow on screen before the cooldown ends is ${worst.toFixed(2)} of 200 rows`);
+    const during = rows.filter((x) => x.state !== 'Idle' || x.cooling);
+    assert.equal(during.filter((x) => x.drawn && NOCKED.test(x.drawn)).length, 0, `${fps} fps: no nocked frame before the cooldown ends`);
     assert.ok(rows.some((x) => !x.cooling && x.state === 'Idle' && x.drawn), 'and the bow comes back once the cooldown ends');
   }
 });

@@ -99,5 +99,49 @@
       "test/auditdw.test.js",
       "test/gunLab.test.js"
     ]
+  },
+  {
+    "name": "DISC14-C-the-arms-back-on-the-sprite-position",
+    "file": "src/combat/weaponWidget.js",
+    "old": "withOffset: false, position: w.armsPosition });",
+    "new": "withOffset: false });",
+    "tests": [
+      "test/disc14.test.js",
+      "test/auditdw.test.js",
+      "test/ww1_weaponwidget.test.js"
+    ]
+  },
+  {
+    "name": "DISC14-C-the-arms-bob-takes-the-doubled-shape",
+    "file": "src/combat/weaponWidget.js",
+    "old": "time: w.time, screenRect: w.screenRect, doubleScaleIdle: false,",
+    "new": "time: w.time, screenRect: w.screenRect, doubleScaleIdle: w.s.doubleScale && w.weaponState === S.Idle,",
+    "tests": [
+      "test/disc14.test.js",
+      "test/auditdw.test.js",
+      "test/ww1_weaponwidget.test.js"
+    ]
+  },
+  {
+    "name": "DISC14-C-the-bob-gate-back-to-the-module-alone",
+    "file": "src/combat/weaponWidget.js",
+    "old": "doubleScaleIdle: w.weaponState === S.Idle && doubledIdleNow(),",
+    "new": "doubleScaleIdle: w.s.doubleScale && w.weaponState === S.Idle,",
+    "tests": [
+      "test/disc14.test.js",
+      "test/auditdw.test.js",
+      "test/ww1_weaponwidget.test.js"
+    ]
+  },
+  {
+    "name": "DISC14-C-the-arms-miss-the-inertia",
+    "file": "src/combat/weaponWidget.js",
+    "old": "      w.armsPosition = [w.armsPosition[0] + i.delta[0], w.armsPosition[1] + i.delta[1]];   // DISC14-C: the arms lag the look as the sprite does\n",
+    "new": "",
+    "tests": [
+      "test/disc14.test.js",
+      "test/auditdw.test.js",
+      "test/ww1_weaponwidget.test.js"
+    ]
   }
 ]

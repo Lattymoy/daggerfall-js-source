@@ -15,6 +15,13 @@
 // Widget settings (DW-CLIP had switched it on): true texture size, inertia, step, recoil, a 142 bob - and the tile
 // kept showing the player's own values underneath, so what it showed was not what drew. The preset ships off again,
 // and Weapon Widget ships Mac's values: its own defaults with DoubleScaleTextures on and Inertia.Scale 0.
+//
+// ── DISC14-C: "I also notice littering on the morrowind model" (Mac, after B) ──
+// Jitter, measured: B's DoubleScaleTextures default turned on the doubled idle's bob (centred on the rest) for every
+// idle, and on anything that rests on transformRect's floor - the Morrowind arms' full-screen composite, a classic
+// frame, a plain hit through the fall-through - the upper half of every sway was pinned to the floor: 53 of 120 frames
+// on the arms (a jerk of 3.37 against 0.73), 63 on a classic sprite. The doubled bob now rides the doubled `w_` hit, as
+// DW-CLIP's half-size shift does, and the arms keep their own plain bob.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -24,6 +31,10 @@ import { readWidgetSettings, WEAPON_WIDGET_VENDOR } from '../src/combat/weaponWi
 import { diverseWeaponsPresetOn, moddedWeaponHUDAnimsEnabled } from '../src/combat/diverseWeapons.js';
 import { modModules, modDials } from '../src/systems/features.js';
 import { gunWidgetSettings, GUN_INERTIA_SCALE } from '../src/combat/gunViewmodel.js';
+import { createWeaponWidget } from '../src/combat/weaponWidget.js';
+import { WEAPON_TYPES, GENERAL_ANIMS } from '../src/combat/fpsWeapon.js';
+import { createWeaponMachine, machineStep } from '../src/characters/weaponStates.js';
+import { WEAPON_MATERIALS, WEAPONS } from '../src/characters/weapons.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
@@ -92,4 +103,59 @@ test('DISC14-B: the Thunderlock keeps its sway - its inertia runs at the mod\'s 
   assert.equal(gunWidgetSettings().inertiaScale, 200, 'a player who turns the module on sets its scale for the gun too');
   _resetModSettings();
   assert.equal(gunWidgetSettings({}).inertiaScale, 500, 'and the lab, which has no player, runs at the mod\'s scale');
+});
+
+// ── DISC14-C ─────────────────────────────────────────────────────────
+
+/** The real widget walking at 60 fps: a longsword idle (100x60 classic records) on a 640x400 screen. `wHit` answers the
+ *  `w_` idle with a doubled texture, as a Diverse Weapons idle is. Returns the sprite's drawn y and the arms' rect per frame. */
+function walkWidget(over = {}, { wHit = false, look = [0, 0] } = {}) {
+  _resetModSettings();
+  const widget = createWeaponWidget({ settings: () => readWidgetSettings(() => ({ ...modSettingsOf(WEAPON_WIDGET_VENDOR), ...over })), audio: { playOneShot() {} }, rolls: () => 0, handedness: () => false, bowDrawback: () => true });
+  const machine = createWeaponMachine(false, false);
+  const draws = [];
+  const canvas = { width: 640, height: 400 };
+  const renderer = { drawScreenQuad: (tex, rect) => draws.push({ tex, rect: { ...rect } }), uploadTexture: () => 'up' };
+  const records = [];
+  for (let r = 0; r < 7; r++) records.push({ width: 100, height: 60, frames: Array.from({ length: r === 0 ? 1 : 5 }, (_, i) => `tex:${r}:${i}`) });
+  const ctx = { renderer, canvas, entity: null, art: { weaponType: WEAPON_TYPES.LongBlade, anims: GENERAL_ANIMS, records },
+    weapon: { templateIndex: WEAPONS.Longsword, group: 'Weapons', name: 'Longsword' }, weaponType: WEAPON_TYPES.LongBlade, material: WEAPON_MATERIALS.Steel, machine,
+    sheathed: false, usingRightHand: true, equipCountdown: 0, shown: true, castPlaying: false, spellArmed: false, thirdPerson: false, reach: 2.5,
+    motion: { grounded: true, crouching: false, riding: false, standing: false, speedRatio: 1, baseSpeed: 4, localVel: [0, 0, 4] },
+    look, swingHeld: false, cursorActive: false, camera: () => ({ pos: [0, 1, 0], forward: [0, 0, 1] }), activateStarted: () => false };
+  const frame = () => { machineStep(machine, 1 / 60, 50); widget.lateUpdate(1 / 60, ctx); widget.draw(renderer, canvas); widget.endOfFrame(); };
+  frame();
+  const w = widget._w;
+  w.customMisses.add('LONGSWORD.CIF_0-0_Steel');   // no plain Diverse Weapons idle: the classic frame, unless the doubled one answers
+  if (wHit) w.customCache.set([...w.customCache.keys()].find((n) => n.startsWith('w_')), { tex: 'double', width: 100, height: 60, doubled: true });
+  else w.customMisses.add('w_LONGSWORD.CIF_0-0_Steel');
+  const sprite = [], arms = [];
+  for (let i = 0; i < 240; i++) {
+    frame();
+    sprite.push(draws.at(-1).rect.y);
+    arms.push(widget.armsTransform({ x: 0, y: 0, w: 640, h: 400 }));
+  }
+  return { sprite: sprite.slice(120), arms: arms.slice(120) };
+}
+const pinned = (ys) => { const lo = Math.min(...ys); return ys.filter((y) => Math.abs(y - lo) < 1e-9).length; };
+
+test('DISC14-C: the Morrowind arms bob the plain bob whatever DoubleScaleTextures says - never pinned to the screen\'s top for half a stride (mutants: the arms back on the sprite\'s position; the arms\' bob taking the doubled shape)', () => {
+  const on = walkWidget({}, { wHit: true }), off = walkWidget({ 'Modules.DoubleScaleTextures': false });
+  assert.deepEqual(on.arms, off.arms, 'the arms\' composite moves exactly as with the module off, even over a doubled Diverse Weapons idle');
+  assert.ok(pinned(on.arms.map((r) => r.y)) <= 2, `pinned at the top on ${pinned(on.arms.map((r) => r.y))} of 120 frames (53 before the fix)`);
+  assert.ok(Math.max(...on.arms.map((r) => r.y)) > 10, 'and it still bobs');
+});
+
+test('DISC14-C: a sprite takes the doubled idle\'s centred bob only over a doubled `w_` hit - a classic frame under DoubleScaleTextures bobs exactly as with it off (mutants: the bob\'s gate back to the module alone)', () => {
+  const classic = walkWidget({}, { wHit: false }), plain = walkWidget({ 'Modules.DoubleScaleTextures': false });
+  assert.deepEqual(classic.sprite, plain.sprite, 'no `w_` texture: the plain bob');
+  assert.ok(pinned(classic.sprite) <= 2, `a classic idle pinned on ${pinned(classic.sprite)} of 120 frames (63 before the fix)`);
+  const doubled = walkWidget({}, { wHit: true });
+  assert.notDeepEqual(doubled.sprite, plain.sprite, 'a doubled Diverse Weapons idle keeps the mod\'s centred bob');
+  assert.ok(pinned(doubled.sprite) <= 2, 'and it is not pinned either - its box sits half its size in');
+});
+
+test('DISC14-C: the arms still lag the look with Inertia on - the arms\' position is the plain bob plus the same inertia the sprite takes', () => {
+  const still = walkWidget({ 'Modules.Inertia': true, 'Inertia.Scale': 1 }), glance = walkWidget({ 'Modules.Inertia': true, 'Inertia.Scale': 1 }, { look: [0.5, 0] });
+  assert.notDeepEqual(glance.arms.map((r) => r.x), still.arms.map((r) => r.x), 'a glance moves the arms');
 });

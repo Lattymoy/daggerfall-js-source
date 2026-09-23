@@ -144,6 +144,7 @@ export function createWeaponWidget({
     animating: null, animatingCancel: false, hasCurrentAttackHit: false,
     offsetCurrent: [0, 0], offsetTarget: [0, 0],
     moveSmooth: 0, bobSmooth: [0, 0], inertiaCurrent: [0, 0], inertiaTarget: [0, 0], inertiaSpeedMod: 1,
+    armsPosition: [0, 0], armsMoveSmooth: 0, armsBobSmooth: [0, 0],   // DISC14-C: the Morrowind arms' own Position, on the plain bob (armsTransform)
     inertiaForwardCurrent: [0, 0], inertiaForwardTarget: [0, 0],
     leftHanded: false, flipHorizontal: false, isInThirdPerson: false, time: 0,
     specificWeapon: null, art: null, s: settings(),
@@ -321,9 +322,9 @@ export function createWeaponWidget({
 
   /** GetWeaponRect (IL 0x1590) over any base rect, with the clone's own
    *  channels and defaults - the arithmetic is widgetTransformRect's. */
-  function transformRect(base, { flip = w.flipHorizontal, scaleIt = w.currentWeaponType !== T.Werecreature, withOffset = true } = {}) {
+  function transformRect(base, { flip = w.flipHorizontal, scaleIt = w.currentWeaponType !== T.Werecreature, withOffset = true, position = w.position } = {}) {
     return widgetTransformRect(base, {
-      position: w.position, scale: w.scale, offset: w.offset, flip, scaleIt, withOffset,
+      position, scale: w.scale, offset: w.offset, flip, scaleIt, withOffset,
       stepInterval: w.s.stepTransforms ? w.s.stepLength * (w.screenRect.height / 64) : 0,
       screenHeight: w.screenRect.height, weaponOffsetHeight: w.weaponOffsetHeight,
     });
@@ -575,6 +576,15 @@ export function createWeaponWidget({
     resume(a);
   }
 
+  /** DW-CLIP / DISC14-C: the frame on screen is a `w_` texture drawn into the doubled box - DoubleScaleTextures without
+   *  TrueTextureSize, and a hit that IS the double-size repaint. The one case UpdateWeapon doubles the box, so the one
+   *  case the half-size shift and the centred bob are for. */
+  function doubledIdleNow() {
+    if (!w.s.doubleScale || w.s.trueSize || !w.art) return false;
+    const record = w.currentWeaponType === T.Bow ? 0 : anims()?.[w.weaponState]?.Record;
+    return record != null && !!customTexture(record, Math.max(0, w.currentFrame))?.doubled;
+  }
+
   // ---- LateUpdate (IL 0x189c): the frame ----
   /**
    * @param dt      the frame's seconds
@@ -593,7 +603,7 @@ export function createWeaponWidget({
     w.screenRect = { x: 0, y: 0, width: c.canvas?.width ?? NATIVE_W, height: c.canvas?.height ?? NATIVE_H };
     w.leftHanded = !!handedness();
     w.art = c.art ?? null;
-    w.position = [0, 0]; w.scale = [1, 1]; w.offset = [0, 0];
+    w.position = [0, 0]; w.scale = [1, 1]; w.offset = [0, 0]; w.armsPosition = [0, 0];
     // the weapon in hand changed (SpecificWeapon)
     if (c.weapon !== w.specificWeapon) {
       if (c.weapon) {
@@ -652,12 +662,23 @@ export function createWeaponWidget({
     let bobbing = machineStateIndex() === S.Idle;
     if (!bobbing && w.currentWeaponType === T.Bow && (w.weaponState === S.StrikeUp || w.weaponState === S.StrikeDown)) bobbing = true;
     if (w.s.bob && bobbing) {
+      // DISC14-C (Mac: jitter on the Morrowind model): the doubled idle's bob (bobStep's xMin/yMax 0, centred on the rest)
+      // belongs to the doubled BOX, as DW-CLIP made the half-size shift ride it: only a `w_` hit drawn doubled sits half
+      // its size in, low enough to swing above its rest. A classic frame, a plain hit through the fall-through and the
+      // Morrowind arms' composite all rest on transformRect's floor, and a centred bob pinned them there for half of
+      // every stride (63 of 120 frames on the sprite, 53 on the arms) - a hitch at each stop. So the sprite takes the
+      // doubled bob only with the doubled hit, and the arms keep their own integrator on the plain bob, always.
       const b = bobStep({
         moveSmooth: w.moveSmooth, bobSmooth: w.bobSmooth, time: w.time, screenRect: w.screenRect,
-        doubleScaleIdle: w.s.doubleScale && w.weaponState === S.Idle,
+        doubleScaleIdle: w.weaponState === S.Idle && doubledIdleNow(),
       }, w.s, { ...m, speedRatio }, dt);
       w.moveSmooth = b.moveSmooth; w.bobSmooth = b.bobSmooth;
       w.position = [w.position[0] + b.delta[0], w.position[1] + b.delta[1]];
+      const ba = bobStep({
+        moveSmooth: w.armsMoveSmooth, bobSmooth: w.armsBobSmooth, time: w.time, screenRect: w.screenRect, doubleScaleIdle: false,
+      }, w.s, { ...m, speedRatio }, dt);
+      w.armsMoveSmooth = ba.moveSmooth; w.armsBobSmooth = ba.bobSmooth;
+      w.armsPosition = [w.armsPosition[0] + ba.delta[0], w.armsPosition[1] + ba.delta[1]];
     }
     // Inertia (0x1fc0-0x2243): the look and the body's motion lag the sprite, and forward motion scales it
     if (w.s.inertia && w.weaponState === S.Idle) {
@@ -671,6 +692,7 @@ export function createWeaponWidget({
       w.inertiaForwardTarget = i.inertiaForwardTarget; w.inertiaForwardCurrent = i.inertiaForwardCurrent;
       w.scale = [w.scale[0] + i.scale[0], w.scale[1] + i.scale[1]];
       w.position = [w.position[0] + i.delta[0], w.position[1] + i.delta[1]];
+      w.armsPosition = [w.armsPosition[0] + i.delta[0], w.armsPosition[1] + i.delta[1]];   // DISC14-C: the arms lag the look as the sprite does
     }
     // DoubleScaleTextures (0x2248-0x22b1): the doubled idle sits half its size in, so its corner stays where the classic one was.
     // DW-CLIP (2026-09-23, a player on Discord: with the Diverse Weapons preset on "you dont see some weapons all the
@@ -679,11 +701,8 @@ export function createWeaponWidget({
     // TrueTextureSize the box is the painting's own size and is not doubled (the preset's idles are full-canvas
     // paintings, the war axe's 317x200 IS the screen), and with no `w_` hit at all it is the classic box; shifting
     // either half its size pushed the sprite half off the bottom-right - the snippet. The shift rides the doubling.
-    if (w.s.doubleScale && !w.s.trueSize && (w.weaponState === S.Idle || (w.currentWeaponType === T.Bow && w.currentFrame === 0))) {
-      const a = anims();
-      const record = w.currentWeaponType === T.Bow ? 0 : a?.[w.weaponState]?.Record;
-      const custom = record != null && w.art ? customTexture(record, Math.max(0, w.currentFrame)) : null;
-      if (custom?.doubled) w.offset = w.currentWeaponType === T.Werecreature ? [w.offset[0], w.offset[1] + 0.5] : [w.offset[0] + 0.5, w.offset[1] + 0.5];
+    if ((w.weaponState === S.Idle || (w.currentWeaponType === T.Bow && w.currentFrame === 0)) && doubledIdleNow()) {
+      w.offset = w.currentWeaponType === T.Werecreature ? [w.offset[0], w.offset[1] + 0.5] : [w.offset[0] + 0.5, w.offset[1] + 0.5];
     }
     // the frame's placement (OnGUI's UpdateWeapon)
     updateWeapon();
@@ -726,7 +745,7 @@ export function createWeaponWidget({
    *  Offset module's slide is the sprite's sheathe and is not applied,
    *  the arms sheathe with their own clips. */
   function armsTransform(base) {
-    return transformRect(base, { flip: false, scaleIt: true, withOffset: false });
+    return transformRect(base, { flip: false, scaleIt: true, withOffset: false, position: w.armsPosition });   // DISC14-C: on the plain bob
   }
 
   return {
