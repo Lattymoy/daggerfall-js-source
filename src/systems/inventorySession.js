@@ -33,6 +33,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './lootDataTables.js';
+import { STORAGE_CONTEXT } from './horseCartLaw.js';   // HCC: the storage contexts the runtime's CanAccessWagonStorage takes
 
 /** ItemGroups.Transportation.Small_cart's template index. */
 export const SMALL_CART_TEMPLATE = 93;
@@ -104,9 +105,27 @@ export function openState(deps = {}) {
   // leaves the action mode at OnPush's default, so a plain F6 near the
   // exit with a cart still EQUIPS on a local click. A loot target
   // outranks the wagon show: the corpse you just opened is what you meant.
-  if (deps.dungeon?.wagonPrompt) {
-    return { mode: 'remove', usingWagon: true, allowDungeonWagonAccess: true, chooseOne };
+  // HCC: TrailingWagonInventoryWindow.OnPush / ApplyOpeningAccess [IL_abb8, IL_ac9c] - with Horse Cart and Cargo on,
+  // the runtime decides whether the wagon may show: a dungeon-exit request asks CanAccessWagonFromDungeonExit and a
+  // refusal is a message box over the window; a selection request (a physical activation of the wagon) or a plain
+  // open asks CanAccessWagonInventory; DFU's own dungeon-wagon path is closed (`allowDungeonWagonAccess = false`).
+  // AUDIT HCC I1: OnPush [IL_abb8-IL_abcf] reads the exit request as `IsPlayerInsideDungeon && allowDungeonWagonAccess`
+  // - the flag alone is not one. Eye Of The Beholder's cart raises the same flag OUTDOORS (EOTB_WAGON_PACK), and
+  // read as an exit request it asked CanAccessWagonFromDungeonExit on open ground: "Your wagon is too far from the
+  // entrance." and no wagon. DFU's own OnPush runs FIRST (base.OnPush, CheckWagonAccess) and shows the wagon when
+  // the flag is set; ApplyOpeningAccess [IL_ac9c] then keeps it only if the runtime allows, selects it for a
+  // selection or an exit request with no loot open, and boxes the refusal of an exit request alone.
+  const rt = deps.horseCart?.() ?? null;
+  const selectWagon = !!rt?.consumeWagonSelectionRequest?.();
+  if (rt) {
+    const exitRequest = !!(deps.dungeon?.wagonPrompt && deps.dungeon?.inside);
+    const d = rt.canAccessWagonStorage(exitRequest ? STORAGE_CONTEXT.DungeonExitSelection : STORAGE_CONTEXT.NormalInventory);
+    if (exitRequest && !d.allowed) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };
+    const baseShown = !!deps.dungeon?.wagonPrompt;   // CheckWagonAccess's show, before the mod's pass
+    const usingWagon = d.allowed && (baseShown || ((selectWagon || exitRequest) && !deps.loot));
+    return { mode: usingWagon ? 'remove' : mode, usingWagon, allowDungeonWagonAccess: false, dungeonExitAccessGranted: exitRequest && d.allowed, chooseOne };
   }
+  if (deps.dungeon?.wagonPrompt) return { mode: 'remove', usingWagon: true, allowDungeonWagonAccess: true, chooseOne };
   const allowDungeonWagonAccess = !!(
     deps.dungeon?.inside && hasCart(deps.items?.() ?? []) && deps.dungeon?.nearExit?.()
   );
@@ -236,6 +255,16 @@ export function cycleDropIcon({ archive, texture }, by) {
  * @returns {{ok:true, usingWagon:boolean}|{ok:false, refusal:object}}
  */
 export function planWagonToggle(deps = {}, state = {}) {
+  // HCC: TrailingWagonInventoryWindow.WagonButton_OnMouseClick [IL_ad28] - showing, the click hides; hidden, the
+  // runtime's CanAccessWagonFromDungeonExit (a granted dungeon-exit request) or CanAccessWagonInventory decides,
+  // and a refusal is its own message. DFU's noWagon / exitTooFar ladder is the runtime's now.
+  const rt = deps.horseCart?.() ?? null;
+  if (rt) {
+    if (state.usingWagon) return { ok: true, usingWagon: false };
+    const d = rt.canAccessWagonStorage(state.dungeonExitAccessGranted && deps.dungeon?.inside ? STORAGE_CONTEXT.DungeonExitSelection : STORAGE_CONTEXT.NormalInventory);
+    if (!d.allowed) return { ok: false, refusal: { reason: 'horseCart', text: d.denialMessage } };
+    return { ok: true, usingWagon: true };
+  }
   if (!hasCart(deps.items?.() ?? [])) return { ok: false, refusal: WAGON_REFUSAL.noWagon };
   // The proximity check only speaks INSIDE a dungeon; outdoors the
   // cart is simply there.

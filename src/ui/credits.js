@@ -244,5 +244,15 @@ export const CREDITS = Object.freeze({
       terms: 'Carried by the author\u2019s permission, on Mac\u2019s word - the archive states no licence and names no author. Ported 1:1 from the shipped Lua, which is vendored whole; see vendor/oblivion-remaster-leveling/README.md for the open permission record.',
       vendor: Object.freeze(['oblivion-remaster-leveling']),
     }),
+    Object.freeze({
+      title: 'Horse Cart and Cargo',
+      version: '1.0.0-rc12',
+      author: 'demifiend000',
+      what: 'Your horse and wagon as things in the world (HCC): left where you dismount, following you or waiting on command, the horse hitched to the wagon and the pair mounted by walking up to them, summoned outdoors, the wagon reached from an entrance it is parked near, its cargo showing by weight and its wheels turning. Online, the others see them where you left them.',
+      terms: 'Ported 1:1 from the shipped bundle, read off its compiled assembly method by method; the mod\u2019s own horse art vendored out of the assembly - see vendor/horse-cart-and-cargo/README.md for the permission record.',
+      contact: 'demifiend000, through the Nexus page (daggerfallunity mod 1374)',
+      vendor: Object.freeze(['horse-cart-and-cargo']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/1374',
+    }),
   ]),
 });

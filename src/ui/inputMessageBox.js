@@ -44,6 +44,12 @@ import { drawText, measureText } from './text.js';
 import { typedChar } from './input.js';
 import { normalizeCode } from '../systems/dialogShortcuts.js';
 import { noteInputBoxClosed } from '../player/pointerLock.js';   // PL1: ReturnPlayerInputEvent's stamp (DaggerfallInputMessageBox.cs:301)
+import { isEnhanced } from '../systems/uiSkin.js';
+import { drawEnhancedInputBox, releaseEnhancedInputBox } from './enhancedInputBox.js';   // AUDIT HCC U5: the enhanced skin's face - the field's own window
+
+/** AUDIT HCC U5: the caption under the enhanced face - what closes THIS box (Return raises, Escape cancels); never
+ *  the notice's "click or press a key", which a field does not keep (a click reaches nothing, a key types). */
+export const INPUT_BOX_HINT = 'Enter to accept \u00b7 Escape to cancel';
 
 /** TextBox.maxCharacters' default (TextBox.cs:26): what every
  *  DaggerfallInputMessageBox takes unless its raiser narrows it. */
@@ -70,6 +76,7 @@ const ERASE = new Set(['backspace', 'Backspace']);
  * @property {(value: string) => void} [onSubmit]   OnGotUserInput - raised AFTER the box has closed
  * @property {() => void} [onCancel]         the base popup's Escape close; OnGotUserInput is not raised
  */
+let faceSeq = 0;
 export class InputMessageBoxWindow {
   /** @param {InputMessageBoxOptions} [opts] */
   constructor({
@@ -89,11 +96,13 @@ export class InputMessageBoxWindow {
     this.onCancel = onCancel;
     this.done = false;
     this.isChoiceWindow = true;   // raw browser codes on the native-window hosts
+    this._faceKey = `inputbox${++faceSeq}`;   // AUDIT HCC U5: this box's enhanced window
   }
 
   _close(submit) {
     if (this.done) return;
     this.done = true;
+    releaseEnhancedInputBox(this._faceKey);   // AUDIT HCC U5: the enhanced window leaves with the box
     if (submit) {
       // ReturnPlayerInputEvent (:298-304): CloseWindow() FIRST, then
       // the stamp timeClosedInputMessageBox (:301) - the 0.3s
@@ -156,6 +165,21 @@ export class InputMessageBoxWindow {
 
   draw(renderer, canvas, font, s = null) {
     const entry = this.entryText();
+    // AUDIT HCC U5 (Mac: "any new notifications or UI elements are enhancified"; FONT1: "Any enhanced UI or text must
+    // be our enhanced version"): THE FACE IS THE SKIN'S, THE FIELD IS DFU'S. Under the enhanced skin the box is its
+    // own window in the skin's face (ui/enhancedInputBox.js - ENH-NOTICE1's law kept: a field is a decision, never a
+    // click-anywhere notice) and nothing is painted here. The model does not move: the host still routes every key
+    // to `input`, the box stays modal, Return and Escape keep their DFU meanings. Horse Cart and Cargo's naming
+    // prompt is the one that brought it here; every raiser of the one DaggerfallInputMessageBox (ActionInputBox, the
+    // makers' names, the rename, the find) wears it with it.
+    if (isEnhanced() && typeof document !== 'undefined') {
+      if (this.done) return;
+      drawEnhancedInputBox({
+        key: this._faceKey, rows: this.lines.map((l) => (typeof l === 'string' ? l : (l?.text ?? ''))),
+        label: this.label, value: this.value, cursor: this.cursor, atTop: this.atTop, hint: INPUT_BOX_HINT,
+      });
+      return;
+    }
     // The field sizes the box by its MAXIMUM, not its current text
     // (TextBox.CalculateMaximumSize :314-331, the widest glyph times
     // MaxCharacters), so the parchment does not breathe as the player

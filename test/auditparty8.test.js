@@ -89,7 +89,7 @@ test('AUDIT PARTY-REST wire (world95, then world96 under ALLY-CAST, world97 unde
   assert.equal(validPartyPose({ ...P, readyAt: -5 }).readyAt, 0);
   assert.equal(validPartyPose({ ...P }).readyAt, null, 'a world94 client sends none');
   assert.equal(validPartyPose({ ...P, readyAt: 'now' }).readyAt, null, '...and a bad one lands as none, never refusing the pose');
-  assert.equal(RELAY_VERSION, 'world98', 'ALLY-CAST moved it again, AUDIT ALLY-CAST once more, and SPELLFX1\'s pose fields a third time');
+  assert.equal(RELAY_VERSION, 'world99', 'ALLY-CAST moved it again, AUDIT ALLY-CAST once more, SPELLFX1\'s pose fields a third time, and HCC-PARK + RIDE (the park frame, the pose\'s riding fields) a fourth');
   assert.equal(QUEST_ROOM_BYTES_PER_S, 4 * 1024 * 1024);
   // the quest fan's byte budget, as the hub charges it: a share times the tabs it reaches, borrowing, so one
   // full party's largest share lands whole and the flood behind it waits
@@ -375,7 +375,7 @@ test('AUDIT PARTY8 + PARTY-REST by source: world.js\'s seams - the mirror\'s key
   assert.match(w, /readyAt: _partyRestReady && Number\.isFinite\(_partyRestReadyAt\) && _partyRestReadyAt > 0 \? _partyRestReadyAt : null,/);
   assert.match(w, /if \(_partyRestVoteOrigin\) \{ _partyRestVoteOrigin\[0\] \+= r\.offset\[0\]; _partyRestVoteOrigin\[1\] \+= r\.offset\[1\]; _partyRestVoteOrigin\[2\] \+= r\.offset\[2\]; \}/, 'PARTY-REST16\'s origin follows the floating origin');
   assert.match(w, /if \(q\) _questSyncSeen\.set\(quest\.questName, q\.getLogMessages\(\)\?\.length \?\? 0\);/, 'what I just received is what I have seen: no echo');
-  assert.match(w, /peerBodies\.sync\(drawable, onlineToScene, dt, player\.pos, \{ priority: \(id\) => !!social\?\.isPartyPeer\(id\) \}\);/);
+  assert.match(w, /peerBodies\.sync\(afoot, onlineToScene, dt, player\.pos, \{ priority: \(id\) => !!social\?\.isPartyPeer\(id\) \}\);/);   // RIDE: the bodies stand the peers afoot - a rider is peerRiders' (hcc_park.test.js)
   assert.match(w, /inside: \(\) => \(modes\?\.mode \?\? 'exterior'\) !== 'exterior',/, 'the mirror\'s deps say where the follower stands');
   assert.match(w, /const restWin = !isEnhanced\(\) \? null/, 'ONLINE-REST1: a classic-skin rest is nobody\'s to mirror');
   assert.match(rd('src/scenes/worldModes.js'), /restEnemiesNearby: \(\) => interiorEnemiesNearby\(\{ resting: true \}\),/);

@@ -158,6 +158,10 @@ export const MOD_CURATED = Object.freeze({
   // not name them. The relaxed switch rides along: 3ARMS ships it off.
   'handheld-torches': Object.freeze(['Handling.ToggleLightInput', 'Handling.ManualDropInput', 'Throwing.ThrowTorchInput',
     'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
+  // HCC: the two hotkeys (the mod's own key store, as Handheld Torches'),
+  // the persistence switch, and the two distances a player reaches for.
+  'horse-cart-and-cargo': Object.freeze(['Hotkeys.QuickMountDismount', 'Hotkeys.SummonTransport', 'Persistence.PhysicalPersistence',
+    'Following.HorseFollowDistance', 'WagonAccess.InteriorAccessDistance', 'Following.AvoidCombat', 'Following.FollowFastTravel', 'Presentation.ShowTrailingWagon']),
   pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
     'criticalStrikesIncreaseDamage', 'conditionBasedEffectiveness', 'softMaterialRequirements',
     'fixedStrengthDamageModifier']),
@@ -636,6 +640,11 @@ export const FEATURES = Object.freeze([
   // BA1 (2026-09-16): BETTER AMBIENCE - read every frame; the dungeon's fog
   // and light are rolled at the door, so those two land on the next dungeon.
   modFeature('better-ambience', 'Takes effect at once. A dungeon\u2019s fog and light are rolled at its door.', 'world'),
+  // HCC (2026-09-23): HORSE CART AND CARGO - `world`, because what it
+  // changes is what stands in it: your horse and wagon as physical things.
+  // The runtime reads its switches every frame (HandleSettingsChanged is
+  // the mod's own listener); turning it off recalls the pair to you.
+  modFeature('horse-cart-and-cargo', 'Takes effect at once.', 'world'),
   // WS1 (2026-09-17): WEAPON SHEATHING - Greatness7's scabbards and the
   // OpenMW mechanism, on the port's Morrowind third-person body. The
   // switch is the port's own pref (the mod ships no settings of its own);

@@ -35,7 +35,7 @@ const MIN_MAP_PIXEL_X = 0;
 const MIN_MAP_PIXEL_Y = 0;
 const MAX_MAP_PIXEL_X = 1000;
 const MAX_MAP_PIXEL_Y = 500;
-const SCENE_MAP_RATIO = 1 / GLOBAL_SCALE;
+export const SCENE_MAP_RATIO = 1 / GLOBAL_SCALE;   // HCC: StreamingWorld.SceneMapRatio, the mod's scene<->world conversions read it by name
 const NATIVE_PIXEL = 32768; // MapsFile world units per map pixel
 
 /** Verbatim MapsFile.WorldCoordToMapPixel (truncating division). DFU
