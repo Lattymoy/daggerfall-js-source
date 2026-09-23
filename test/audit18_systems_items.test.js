@@ -316,8 +316,11 @@ test('audit18 items: book variant is Range(0, TotalVariants) = Range(0, 2)', () 
   // shop: the same draw, five rows off a quality-20 Bookseller
   const shelf = stockShopShelf({ buildingType: BUILDING_TYPES.Bookseller, quality: 20 }, { level: 5, gender: 'male' }, { rolls: () => 0.75 });
   const books = shelf.filter((i) => i.group === 'Books');
-  assert.equal(books.length, 5);
-  assert.deepEqual(books.map((b) => b.variant), [1, 1, 1, 1, 1]);
+  // AUDIT-RR2 G10: `items.AddItem(item)` (DaggerfallLoot.cs:250) merges a stackable into its stack, and Books stack
+  // (FormulaHelper.cs:2103) by message (ItemCollection.cs:710) - the same roll is the same book five times: ONE row of 5
+  assert.equal(books.length, 1);
+  assert.equal(books[0].stackCount, 5);
+  assert.deepEqual(books.map((b) => b.variant), [1]);
   // no producer can emit an out-of-range variant any more
   const rnd = lcg(7);
   const sweep = [];

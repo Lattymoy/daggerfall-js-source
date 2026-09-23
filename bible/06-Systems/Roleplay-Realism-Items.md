@@ -279,10 +279,57 @@ Suite `test/auditrr.test.js` (the Items test executes the class
 virtuals, the group registry under each switch and the stored weight;
 the shelf's second loop and the mints are pinned by source).
 
+## AUDIT-RR2 (2026-09-23) - the second pass on the Items
+
+Mac: *"One more audit."* The frame is on the Roleplay & Realism page;
+the reviewer here read RoleplayRealismItemsMod.cs whole and every item
+class again, diffed the tables by script (25 loot rows, 14 template
+rows, 20 patches, 280 sprite names - all identical), and walked every
+hook. The paid findings, numbered as the code comments carry them:
+
+- **G7 - an older save's fur piece kept the halved-leather weight.**
+  A fur piece folded before AUDIT-RR F5 carries no `weightInKg` and the
+  restore skips the fold (`rriVariant`), so it read the derived leather
+  half. `rriStoredWeight` answers the fold's number (the template's,
+  the jerkin's 2 kg off) and `setItemFields` writes it once on the way
+  in when the field is absent; a stored weight (Feather Weight) is kept.
+- **G8 - a custom weapon billed no equip delay.** DFU reads
+  `EquipDelayTimes[item.GroupIndex]` (DaggerfallInventoryWindow.cs
+  :1168-1182) and the classes answer their own GroupIndex virtual
+  (ItemArchersAxe.cs:28-31 -> 3, the short sword's 900 ms;
+  ItemLightFlail.cs:28-31 -> 6, the saber's 1600 ms); the port's
+  `513 - 113` fell off the table and the swap was free. The class's
+  index first.
+- **G9 - the shelf's classic loop read the UNPATCHED rows.**
+  `GetItemTemplate` reads the merged table (ItemHelper.cs:1494) and the
+  mod's patches move rarity (Tanto 1 -> 2, Wakizashi 2, Katana 2,
+  Dai-katana 3), so a quality-1 shop stocked a Tanto in the port and not
+  in DFU. `groupTemplates` and `templateFor` answer the override first.
+- **G10 - the shelf never merged a stack.** `items.AddItem(item)`
+  (DaggerfallLoot.cs:250) merges a stackable into its stack
+  (ItemCollection.cs:224-228, by message :710), so one bandage row is
+  what `StackableBandages_OnLootSpawned` sizes; the port pushed k rows
+  and sized the first. The shelf's add is `addItem`. The same law folds
+  same-message books and ingredients into one pile, so three shop pins
+  that counted rows now count stacks.
+- **G11 - the kit's armor took variant 0.** Every `CreateArmor` in
+  AssignSkillItems (:834-859) takes the default `variant = -1`
+  (ItemBuilder.cs:428) -> RandomizeArmorVariant; Leather Greaves roll
+  `Range(0, 2)` (:824-825). The port's helper defaults to -1.
+- **G12 - a nameless Archer's Axe.** `createWeapon`'s name came from
+  the classic enum, which has no 513/514; SetItem writes the template's
+  name (DaggerfallUnityItem.cs:551). The template's name is the fallback.
+- **Named:** the casual pants' second variant draw
+  (RoleplayRealismItemsMod.cs:788-789 draws twice; the port once - the
+  same distribution, a seeded stream differs).
+
+Suite `test/auditrr2.test.js` (shared with the RR page): G7-G10 by
+execution, G11/G12 by source.
+
 ## Record
 
 `vendor/roleplay-realism-items/`. Suites `test/rri1_items.test.js` (9),
-`test/rri2_realism.test.js` (11), `test/auditrr.test.js` (15, shared with the RR page). Campaigns `tools/mutants/rri1.json`
+`test/rri2_realism.test.js` (11), `test/auditrr.test.js` (15) and `test/auditrr2.test.js` (17, both shared with the RR page). Campaigns `tools/mutants/rri1.json`
 (11), `tools/mutants/rri2.json` (18). The shipped set:
 `public/art/roleplay-realism-items/` (280 PNGs), `src/systems/rriIndex.js`
 (generated), `tools/rriExtract.mjs`.

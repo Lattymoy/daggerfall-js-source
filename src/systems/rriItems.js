@@ -287,6 +287,15 @@ export function customItemsForGroup(group) {
   return Object.values(RRI_CLASSES).filter((c) => c.group === group && customItemClass(c.index)).map((c) => c.index);
 }
 
+/** AUDIT-RR2 G7: the weight the fold STORED for a fur piece (message 1: the template's, the jerkin's 2 kg off -
+ *  ItemJerkin.cs:43), for an item folded before the field was written; null for anything else. */
+export function rriStoredWeight(item) {
+  const cls = customItemClass(item?.templateIndex);
+  if (!cls || item?.group !== 'Armor' || item?.message !== 1 || item.templateIndex < 520) return null;   // the light set alone (520-526) folds Chain to fur; the chain set's fold writes no weight
+  const base = RRI_TEMPLATES.find((t) => t.index === item.templateIndex)?.baseWeight;
+  if (base == null) return null;
+  return item.templateIndex === 520 ? base - 2 : base;
+}
 /** The CurrentVariant setter's writes for a freshly minted item of one
  *  of these classes, or null. The port's minters run this where
  *  ApplyArmorSettings would have run SetVariant. */

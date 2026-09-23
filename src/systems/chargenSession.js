@@ -129,7 +129,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:266) early-returns for a
+  // updateEquippedArmorValues (equip.js:269) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -196,7 +196,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:266) early-returns for a
+  // updateEquippedArmorValues (equip.js:269) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -368,7 +368,7 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:2576, exterior.js:1292,
+  // through this function - world.js:2578, exterior.js:1292,
   // dungeonContext.js:2328 - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game

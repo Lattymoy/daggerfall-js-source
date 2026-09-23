@@ -131,7 +131,7 @@ test('AUDIT-RR F14/F25: the neck band is the sprite\'s BOTTOM fifth (Unity v = 0
   assert.equal(rrRidingNeckBand(0).v1, 0.8, 'no lift, no band');
   const mr = rd('src/player/mountRig.js');
   assert.match(mr, /import \{ horseOffsetHeight, dockedLargeHudHeight \} from '\.\.\/ui\/hudLarge\.js'/);
-  assert.match(mr, /const offset = dockedLargeHudHeight\(\);\s+rect\.y = c\.height - \(\(art\.height \+ yAdj\) \* scaleY\) - offset;\s+return \{ yAdj, scaleY, c, offset \};/);
+  assert.match(mr, /const offset = Math\.trunc\(dockedLargeHudHeight\(\)\);[^\n]*\n\s+rect\.y = c\.height - \(\(art\.height \+ yAdj\) \* scaleY\) - offset;\s+return \{ yAdj, scaleY, c, offset \};/);   // AUDIT-RR2 G4: `(int)` (EnhancedRiding.cs:257)
   assert.match(mr, /function drawNeckBand\(\{ yAdj, scaleY, c, offset \}, rect, art, r\)/);
   assert.match(mr, /\{ u0: band\.u0, v0: band\.v0, u1: band\.u1, v1: band\.v1 \}/);
 });
@@ -167,7 +167,7 @@ test('AUDIT-RR F15/F16/F17/F18: the riding component\'s contacts - a civilian un
   assert.equal(foe.ai.knockbackSpeed, RR_RIDING.chargeKnockback);
   assert.deepEqual(foe.ai.knockbackDir, [0, 0, 1]);
   assert.ok(log.some((l) => l[0] === 'clip' && l[1] === 7 && l[2] === 1), 'the heavy pain voice at full');
-  assert.equal(foe._rrCharged, true);
+  assert.equal(foe.entity.pickpocketAttempted, true, 'AUDIT-RR2 G24: the pickpocket latch');
   assert.equal(log.filter((l) => l[0] === 'damageFoe').length, 1, 'the far foe was not');
   rig.contacts();
   assert.equal(log.filter((l) => l[0] === 'damageFoe').length, 1, 'once');
@@ -177,7 +177,7 @@ test('AUDIT-RR F15/F16/F17/F18: the riding component\'s contacts - a civilian un
   const monster = { entity: { isClass: false }, mobileType: 0 };
   const v = enemyHeavyPainVoice(monster, () => 0.99);
   assert.ok(v && typeof v.clip === 'number', 'a monster answers');
-  assert.match(rd('src/scenes/hostCombat.js'), /export function enemyHeavyPainVoice\(f, rolls = Math\.random\) \{\s+if \(!f\) return null;\s+return combatVoice\(\{ race: foeVoiceRace\(f, rolls\), gender: foeVoiceGender\(f\), isAttack: false, heavyDamage: true, rolls \}\);/);
+  assert.match(rd('src/scenes/hostCombat.js'), /export function enemyHeavyPainVoice\(f, rolls = Math\.random\) \{\s+if \(!f\) return null;[\s\S]{0,400}const gender = \(f\.gender === 'male' \|\| f\.mobileType === KNIGHT_CITY_WATCH\) \? 'male' : 'female';\s+return combatVoice\(\{ race: foeVoiceRace\(f, rolls\), gender, isAttack: false, heavyDamage: true, rolls \}\);/);   // AUDIT-RR2 G2: the component's own pick (:190-194)
   // F15: both hosts hand LETHAL_HIT to the splash; both stand the component; the standalone exterior runs its contacts
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = rd(h);

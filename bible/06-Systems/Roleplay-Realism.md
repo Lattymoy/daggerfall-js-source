@@ -479,11 +479,132 @@ Suite `test/auditrr.test.js` (15). The float32 edges, the neck band,
 the riding contacts, the negative key, the class virtuals and the
 override context are pinned by execution; the hosts' wiring by source.
 
+## AUDIT-RR2 (2026-09-23) - the second pass, and the audit of AUDIT-RR
+
+Mac: *"One more audit."* Four reviewers again, the C# beside the port,
+one of them over AUDIT-RR's own payments (0de4bd6f): every changed
+signature's callers, every cited line re-read, the item weight's new
+read followed to every writer. Checked and standing this time: the
+eighteen switches, the archery and bandage arithmetic, the loan law,
+the enemy appearance rows and their readers, the variant tables entry
+by entry, the axis limits, the terrain sample, the neck band's numbers,
+the training flow's texts and order, the quests byte for byte, every
+quest action keyword, the world-data readers field by field, the block
+index assignment, the factions, the merchant service's routing, the
+discovery keys, the loader at every host, both test files' numbers.
+Twenty-seven findings, twenty-five paid, two named; the ones on this
+page's slices below, numbered as the code comments carry them
+(`AUDIT-RR2 Gn`); the Items page carries its own.
+
+**The audit of AUDIT-RR:**
+
+- **G1 - Extra Weight made an item weightless (a regression of F5).**
+  `ExtraWeight.cs:61` is `weightInKg *= 4` over the weight ItemBuilder
+  always stores; the port's payload multiplied an unset field and wrote
+  0, which nothing read until F5 made `unitWeightInKg` honour a stored
+  weight. The base is the derived read now; Feather Weight's 0.25 stands.
+- **G2 - the charge cry's gender.** The component's own pick
+  (EnhancedRiding.cs:190-194): Male for a rolled male or the city watch,
+  FEMALE for everything else - a monster is `MobileGender.Unspecified`
+  and cries in the female clip. F18 had borrowed WeaponManager's
+  male-default pick. `enemyHeavyPainVoice` picks its own.
+- **G3 - F37's throw fired after the region was written.** The checks
+  came after `locationCount++` and the two pushes, so a duplicate left
+  the region one row past its lookups; the C# pushes to LOCAL lists.
+  The checks stand first. And because the port's boot index reads every
+  region where DFU reads one at a time, one bad mod file is said
+  (`console.error`) and its location skipped rather than the world host
+  dying at boot - a departure, recorded at the loop.
+- **G4 - `(int)LargeHUD.ScreenHeight`** (:257): the docked offset is
+  truncated, as the classic arm's is.
+- **G5 - the charge cry lost its pitch lift.** EnemySounds plays the
+  clip on the enemy's source at `pitch + Range(0, 0.3)` (:172-175); the
+  shared home played a flat one-shot. `playVoice(f, v)` goes through the
+  host's spatial door with `1 + v.pitchLift`, at the foe.
+- **G6 - the wire.** A stored weight is honoured now, so a peer's
+  negative one is refused (`num({ min: 0 })`).
+- **G13 - a building entry did not set the last location key.**
+  `PlayerEnterExit.cs:695-696` "Ensure building variant checks use this
+  location" on EVERY transition; F32 set it at layout, and a streamed
+  neighbour laid out after the town left the key on itself, so the
+  armorer's door merged the pool's identity. Set at the door, both hosts.
+
+**RR2 (06bdf5d6):**
+
+- **G20 - the encumbrance round ran through synthetic time.** The C#
+  returns under `EntityEffectBroker.SyntheticTimeIncrease` (:587); the
+  port's hook drained every catch-up round of a fast travel, so an
+  over-encumbered traveller arrived at 100 fatigue. Gated.
+- **G21 - the five-day box took no keys.** QG1's PromptMulti rule
+  (click-only) was applied to every multi-button box, but
+  DaggerfallMessageBox binds a shortcut for every ENUM button (:377):
+  Yes and No answer Y and N in DFU, the out-of-enum 21 takes none,
+  AllowCancel false keeps Escape dead. The flow answers the two keys
+  when the list holds them.
+- **G22 - the ship gate asked the flag with Travel Options on.**
+  `travelOptionsEnabled` sends TO "hasPort" (:635-644) - Hazelnut's
+  hand-written port list (`travelPorts.js`) - and asks
+  `PortTownAndUnknown` only without it. The gate asks the list when the
+  vendored mod is on.
+- **G23 - PitchMaxLimit's lower clamp.** The setter is `Clamp(value,
+  PitchMin, PitchMax)` (PlayerMouseLook.cs:87-90) with PitchMin -90; a
+  steep bank's `terrainAngle + 18` fell past vertical in the port and
+  flipped the camera. Clamped at -90.
+- **G24 - the charge latch IS the pickpocket latch.**
+  `PickpocketByPlayerAttempted` (:185, :204): a foe already tried cannot
+  be charged and a charged one refuses the hand. The private flag is
+  gone; `entity.pickpocketAttempted` is the one field.
+- **G25 - the foe arm's knockback direction.** OnControllerColliderHit
+  hands `other.moveDirection` (:173) - the controller's motion, not the
+  look; the guard arm keeps `transform.forward` (:158). The shared home
+  takes the frame's displacement of the feet, normalised, and the look
+  while standing.
+- **G26 - the floor while paused.** The else arm (`IsGamePaused ||
+  !IsRiding`, :122-131) resets PitchMaxLimit every frame; the provider
+  answers null while paused.
+
+**RR3a (1ff1c28f) and RR3b (c7caa8e6):**
+
+- **G14 - an RDB JSON served a null body.** The C# deserialises a whole
+  DFBlock, RdbBlock included (:363-369); the port converts the RMB half
+  only and served an `.RDB.json` typed Rdb with `rdbBlock: null`, which
+  the dungeon layout would fall through. Said and not served (RR ships
+  none; the converter is future work).
+- **G15 - `newLocation` only inside the TryGetValue arm** (:176-182).
+- **G16 - the variant arm's prefix.** The mod arm (:284-292) takes every
+  asset the suffix finds; only the loose-file arm names `locationnew-*`.
+  The port's filter is gone.
+- **G17 - the label's "?"** (Services.cs:173-179), and the pin that
+  asserted `''` re-aimed.
+- **G19 - the padded building rows.** DFU's list is the JSON's length;
+  the port pads to its 32-slot shape and padded with Alchemist (0). It
+  pads with `BuildingTypes.None` (-1), and the pin that asserted 0 is
+  re-aimed.
+
+**Named, not changed:** `cachedColliderHitObject` (EnhancedRiding.cs
+:167-177) - a foe first touched while not galloping is cached, and a
+later gallop into the same foe does nothing until another object is
+touched; the port charges it. A C# quirk, recorded. The `locationnew`
+arm of WorldUpdate reads the captured name where DFU passes null and
+throws (WorldUpdate.cs:70-72) - the port's fix of DFU's slip stands.
+The squad's 600 placements run in one frame where FoeSpawner spreads
+them over frames - a stall at most, not a difference in what stands.
+`modelFromJson` drops XScale/YScale/ZScale (RMBLayout.cs:76) - a
+general port gap, no RR file carries them.
+
+Suite `test/auditrr2.test.js` (17). Extra Weight, the cry's gender, the
+riding contacts' latch and direction, the wire clamp, the stored fur
+weight, the equip delay, the merged table, the shelf's stack, the
+synthetic gate, the pitch clamp and the variant flag by execution; the
+hosts' wiring by source. Four mutant records re-aimed by content; all
+six campaigns re-run (rr1 18 dead + 1 equivalent, rr2 28, rr3 31 + 2,
+rr3b 24, rri1 11, rri2 18).
+
 ## Record
 
 `vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (11),
 `test/rr2_realism.test.js` (12), `test/rr3_questline.test.js` (11),
-`test/rr3b_worlddata.test.js` (9), `test/auditrr.test.js` (15). Campaigns `tools/mutants/rr1.json`
+`test/rr3b_worlddata.test.js` (9), `test/auditrr.test.js` (15), `test/auditrr2.test.js` (17). Campaigns `tools/mutants/rr1.json`
 (19: 18 dead, 1 equivalent), `tools/mutants/rr2.json` (28 dead),
 `tools/mutants/rr3.json` (33: 31 dead, 2 equivalent),
 `tools/mutants/rr3b.json` (24 dead).

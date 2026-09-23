@@ -39,20 +39,34 @@ export const RR_TRAMPLE_REACH = 0.9;
  *    setCrime(crime)                   - PlayerEntity.CrimeCommitted = crime
  *    retire(person)                    - mobileNpc.Motor.gameObject.SetActive(false)
  *    hurtGuard(f, damage, feet)        - the watch's DamageHealthFromSource (no knockback of its own)
+ *    playVoice(f, v)                   - the heavy pain cry at the foe, `1 + v.pitchLift` (EnemySounds.cs:172-175)
  *    damageFoe(f, damage, feet)        - the foe's
  *    voice(f)                          - EnemySounds.PlayCombatVoice(gender, false, true), answers { clip } or null
  *    rolls                             - UnityEngine.Random.Range's slot */
 export function createRrRidingContacts({
   playerEntity, feet, yaw, livePersons, foes, guards, isGuardRecord, splashBlood, playClip, ridingVolumeScale = () => RIDING_VOLUME_SCALE,
-  spawnGuards, spawnCityGuard, setCrime, retire, hurtGuard, damageFoe, voice = () => null, rolls = Math.random,
+  spawnGuards, spawnCityGuard, setCrime, retire, hurtGuard, damageFoe, voice = () => null, playVoice = (f, v) => playClip(v.clip, 1), rolls = Math.random,
 }) {
   const forward = () => { const y = yaw(); return [Math.sin(y), 0, Math.cos(y)]; };
+  let lastAt = null;
+  /** The controller's moveDirection (:173) as the frame's displacement of the feet, normalised on XZ; the look forward
+   *  while standing (a charge at rest is a contact the walker made). */
+  function moveDirection(at) {
+    const prev = lastAt; lastAt = [...at];
+    if (!prev) return forward();
+    const dx = at[0] - prev[0], dz = at[2] - prev[2];
+    const len = Math.hypot(dx, dz);
+    return len > 1e-6 ? [dx / len, 0, dz / len] : forward();
+  }
   /** HandleCharge (:180-215). */
   function chargeFoe(f, direction) {
-    if (!f || f._rrCharged) return false;
-    f._rrCharged = true;   // hitEnemyEntity.PickpocketByPlayerAttempted = true (:204)
+    // AUDIT-RR2 G24: `if (!hitEnemyEntity.PickpocketByPlayerAttempted)` (:185) and `= true` (:204) - the SAME latch the
+    // pickpocket sets (mobileEnemyActivate.js), so a foe already tried cannot be charged and a charged one refuses the hand
+    const latch = f?.entity ?? f;
+    if (!f || latch.pickpocketAttempted) return false;
+    latch.pickpocketAttempted = true;
     const v = voice(f);   // enemySounds.PlayCombatVoice(gender, false, true) (:195) - the heavy pain cry, no dice
-    if (v && v.clip >= 0) playClip(v.clip, 1);
+    if (v && v.clip >= 0) playVoice(f, v);   // AUDIT-RR2 G5: on the enemy's own source with EnemySounds' pitch lift (EnemySounds.cs:172-175) - the host's spatial door
     if (f.ai) { f.ai.knockbackSpeed = RR_RIDING.chargeKnockback; f.ai.knockbackDir = [...direction]; }   // (:199-200)
     playerEntity.fatigue = Math.max(0, (playerEntity.fatigue ?? 0) - FATIGUE_LOSS.Default * RR_RIDING.chargeFatigueMultiplier);   // (:205)
     const h2h = skillValue(playerEntity, SKILLS.HandToHand);
@@ -85,11 +99,14 @@ export function createRrRidingContacts({
         if (out.remove) { person.trampled = true; retire(person); }   // (:161)
       }
     }
+    // AUDIT-RR2 G25: OnControllerColliderHit hands `other.moveDirection` (:173) - the controller's own motion, not the
+    // look - so a strafing rider knocks the foe the way the horse moves; the guard arm above keeps transform.forward (:158)
+    const move = moveDirection(at);
     for (const f of [...foes(), ...guards()]) {
-      if (f.dead || f.puppet || f._rrCharged || !f.ai?.feet) continue;
+      if (f.dead || f.puppet || (f.entity ?? f).pickpocketAttempted || !f.ai?.feet) continue;
       const dx = f.ai.feet[0] - at[0], dz = f.ai.feet[2] - at[2];
       if (dx * dx + dz * dz > reach2) continue;
-      chargeFoe(f, fwd);
+      chargeFoe(f, move);
     }
   }
   return { contacts, chargeFoe };

@@ -67,8 +67,11 @@ export const getEquipSlot = (entity, item) => equipOf(entity).getEquipSlot(numer
  *  per hand); the port's single entity.equipCountdown sums them,
  *  the CH3 collapse kept. */
 export function equipDelayFor(item) {
-  const gi = item?.group === 'Weapons' ? item.templateIndex - 113
-    : item?.group === 'Armor' ? item.templateIndex - 102 : -1;
+  // AUDIT-RR2 G8: `EquipDelayTimes[item.GroupIndex]` (DaggerfallInventoryWindow.cs:1168-1182) - a custom class answers its
+  // own GroupIndex virtual (ItemArchersAxe.cs:28-31 -> 3, ItemLightFlail.cs:28-31 -> 6); 513 - 113 fell off the table
+  const gi = customItemClass(item?.templateIndex)?.groupIndex
+    ?? (item?.group === 'Weapons' ? item.templateIndex - 113
+      : item?.group === 'Armor' ? item.templateIndex - 102 : -1);
   return (gi >= 0 && gi < EQUIP_DELAY_TIMES.length) ? EQUIP_DELAY_TIMES[gi] : 0;
 }
 
@@ -312,7 +315,7 @@ export function rebuildEquipState(entity) {
  *  chargenSession.js:141 (?class= headless) and :221 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:2398, exterior.js:1192):
+ *  residue at the two host calls (world.js:2400, exterior.js:1192):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */

@@ -141,7 +141,14 @@ export class ServiceFlowWindow {
     // sets AllowCancel and ClickAnywhereToClose false, and the C#
     // shortcut table has no rows for out-of-enum button records. The
     // only way out is a button click.
-    if (t.buttonsMulti) return;
+    // AUDIT-RR2 G21: ... but an ENUM button in the list keeps its shortcut - DaggerfallMessageBox.cs:377 binds
+    // `ToShortcutButton(messageBoxButton)` for every AddButton, Yes and No have bindings, and the out-of-enum 21 falls to
+    // Buttons.None; AllowCancel false (:383) keeps Escape dead. The five-day offer answers Y and N in DFU.
+    if (t.buttonsMulti) {
+      if (code === 'KeyY' && t.buttonsMulti.includes(MB_BUTTONS.Yes)) this._advance(t.onButton?.(MB_BUTTONS.Yes) ?? null);
+      else if (code === 'KeyN' && t.buttonsMulti.includes(MB_BUTTONS.No)) this._advance(t.onButton?.(MB_BUTTONS.No) ?? null);
+      return;
+    }
     this._advance(t.onClick?.() ?? null);
   }
 

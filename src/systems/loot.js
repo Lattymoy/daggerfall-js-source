@@ -18,7 +18,7 @@
 // (setMagicItemTemplates), and EVERY host that can generate loot now
 // loads it: scenes/shared.js:115-118 (loadMagicRegistries) feeds the
 // module table this file reads, called from dungeonContext.js:1101,
-// world.js:2411 and exterior.js:1206 - interiors run inside those hosts
+// world.js:2413 and exterior.js:1206 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
 // that is DFU's own answer rather than a stand-in: shared.js:122
 // records it, the category simply stays empty.
@@ -288,7 +288,7 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   // G4: THE VALUE IS OVERWRITTEN (:632). The gap that stood here from
   // S4c - the enchantment cost sum unported, so a magic item sold at
   // its mundane base - closed with M4's catalogue: the sum is
-  // legacyEnchantmentValue (enchantments.js:222-240) and it is called
+  // legacyEnchantmentValue (enchantments.js:223-241) and it is called
   // on the `value:` line below. `newItem.value = value` REPLACES
   // whatever the base item was
   // worth, so a daedric longsword and a leather boot with the same

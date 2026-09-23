@@ -441,8 +441,8 @@ test('QG1 seams: the foe-click arm runs FIRST, skips Info mode, and does not con
 
 test('QG1 seams: the PromptMulti box contract - click-only, no cancel, records by value', () => {
   const sfw = readSrc('src/ui/guildServiceWindows.js');
-  assert.match(sfw, /if \(t\.buttonsMulti\) return;/,
-    'the multi box takes NO keys - AllowCancel false, PromptMulti.cs:87-88');
+  assert.match(sfw, /if \(t\.buttonsMulti\) \{\s+if \(code === 'KeyY' && t\.buttonsMulti\.includes\(MB_BUTTONS\.Yes\)\)[^\n]*\n\s+else if \(code === 'KeyN' && t\.buttonsMulti\.includes\(MB_BUTTONS\.No\)\)[^\n]*\n\s+return;\s+\}/,
+    'the multi box takes NO keys but an enum button\'s own shortcut (DaggerfallMessageBox.cs:377) - AllowCancel false, PromptMulti.cs:87-88; AUDIT-RR2 G21');
   assert.match(sfw, /t\.buttonsMulti\.includes\(hit\)\) this\._advance\(t\.onButton\?\.\(hit\) \?\? null\);/,
     'only a real button advances, answering its record number');
   assert.match(sfw, /\(t\.buttonsMulti \?\? \[\]\)/, 'the layout draws the declared records');

@@ -52,6 +52,7 @@ import { MINUTES_PER_DAY } from './gameDate.js';   // the canonical home - world
 import { syntheticTimeIncrease } from './effectBroker.js';   // AUDIT 63 F13: EntityEffectBroker.SyntheticTimeIncrease - a LEAF, for the same reason
 import { classicCastingCost } from './spellcost.js';   // E2: CastWhenHeld's equip durability hit IS the spell's classic casting cost
 import { skillValue } from './skills.js';
+import { unitWeightInKg } from './inventory.js';   // AUDIT-RR2 G1: ExtraWeight's base
 import { enchantmentCost, defaultParam } from './enchantmentCatalogue.js';   // G4: the legacy value sum reads M4's costs
 import { artifactHook } from './artifactEffects.js';   // V3: the nine artifact classes' sub-registry
 
@@ -494,7 +495,7 @@ const REGISTRY = new Map([
    *  write fires at the ITEM MAKER alone, so a looted magic item's
    *  weight is untouched, verbatim (the flag never fires on a mint). */
   [T.FeatherWeight, { flags: PAYLOAD.Enchanted, enchanted({ item }) { item.weightInKg = 0.25; } }],
-  [T.ExtraWeight, { flags: PAYLOAD.Enchanted, enchanted({ item }) { item.weightInKg = (item.weightInKg ?? 0) * 4; } }],
+  [T.ExtraWeight, { flags: PAYLOAD.Enchanted, enchanted({ item }) { item.weightInKg = (Number.isFinite(item.weightInKg) ? item.weightInKg : unitWeightInKg(item)) * 4; } }],   // AUDIT-RR2 G1: `weightInKg *= 4` (ExtraWeight.cs:61) over the weight ItemBuilder always stored - the port derives it, so the base is the derived read, not an unset field (which wrote 0: a weightless item)
   /** StrengthensArmor/WeakensArmor - Held constants on the armour
    *  channel (FormulaHelper.cs:1158 adds both to ArmorValues[part]). */
   [T.StrengthensArmor, { flags: PAYLOAD.Held, constant({ mods }) { setIncreasedArmorValueModifier(mods, STRENGTHENS_ARMOR_VALUE); } }],

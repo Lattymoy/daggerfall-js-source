@@ -146,7 +146,7 @@
   {
     "name": "RR3b-17-the-building-list-is-not-padded",
     "file": "src/formats/worldDataReplacement.js",
-    "old": "  while (buildingDataList.length < 32) buildingDataList.push(emptyBuildingData());\n",
+    "old": "  while (buildingDataList.length < 32) buildingDataList.push({ ...emptyBuildingData(), buildingType: -1 });",
     "new": "",
     "tests": [
       "test/rr3b_worlddata.test.js"

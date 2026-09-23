@@ -144,7 +144,7 @@ export function createWeapon(templateIndex, material, rolls = Math.random) {
       value: itemBaseValue({ group: 'Weapons', templateIndex: ARROW_TEMPLATE, material: 0 }),
     };
   }
-  const name = WEAPON_BY_INDEX[templateIndex];
+  const name = WEAPON_BY_INDEX[templateIndex] ?? templateByIndex(templateIndex)?.name;   // AUDIT-RR2 G12: SetItem's `shortName = itemTemplate.name` (DaggerfallUnityItem.cs:551) - the class enum has no 513/514
   return mintCondition({
     name, templateIndex, group: 'Weapons', material,
     flags: 0,

@@ -79,9 +79,10 @@ function clothing(female, templateIndex, rolls, { variant = -1, dye = DYE_COLORS
   const variants = templateByIndex(templateIndex)?.variants ?? 0;
   return mint({ group: female ? 'WomensClothing' : 'MensClothing', templateIndex, variant: variant < 0 ? (variants > 0 ? range(rolls, 0, variants) : 0) : variant, dye });
 }
-/** ItemBuilder.CreateArmor (:296-310): a variant of -1 takes
- *  RandomizeArmorVariant. */
-function armor(templateIndex, material, rolls, variant = 0) {
+/** ItemBuilder.CreateArmor (:428): `variant = -1` by default, and -1
+ *  takes RandomizeArmorVariant (:813-843) - the kit's calls
+ *  (RoleplayRealismItemsMod.cs:834-859) pass none (AUDIT-RR2 G11). */
+function armor(templateIndex, material, rolls, variant = -1) {
   return mint({ group: 'Armor', templateIndex, material, variant: variant < 0 ? randomizeArmorVariant(templateIndex, material, rolls) : variant });
 }
 const pick = (list, rolls) => list[range(rolls, 0, list.length)];

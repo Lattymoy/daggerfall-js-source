@@ -333,7 +333,7 @@ test('RR3 the merchant service: the registry, the gate, the route, the popup\'s 
   assert.equal(getCustomMerchantServiceLabel(1022), 'Custom Armor');
   assert.equal(typeof getCustomMerchantService(1022), 'function');
   assert.equal(registerMerchantService(1022, () => {}, 'x'), false, 'a faction with one is refused');
-  assert.equal(hasCustomMerchantService(1023), false); assert.equal(getCustomMerchantService(1023), null); assert.equal(getCustomMerchantServiceLabel(1023), '');
+  assert.equal(hasCustomMerchantService(1023), false); assert.equal(getCustomMerchantService(1023), null); assert.equal(getCustomMerchantServiceLabel(1023), '?');   // AUDIT-RR2 G17: Services.cs:173-179
   on('Enabled', false);
   assert.equal(hasCustomMerchantService(1022), false, 'the gate: the mod off is DFU\'s mod not loaded');
   assert.equal(getCustomMerchantService(1022), null);

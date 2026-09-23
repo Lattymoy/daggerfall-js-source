@@ -48,7 +48,7 @@
   { "name": "RR2-24-the-axes-forget-the-clamp", "file": "src/player/moveAxes.js",
     "old": "  return { forward: clamp(axes.forward, -(l.negVertical ?? 1), 1), strafe: clamp(axes.strafe, -(l.negHorizontal ?? 1), l.posHorizontal ?? 1) };", "new": "  return { forward: clamp(axes.forward, -(l.negVertical ?? 1), 1), strafe: axes.strafe };", "tests": ["test/rr2_realism.test.js"] },
   { "name": "RR2-25-the-floor-can-pass-the-reference", "file": "src/player/lookFilter.js",
-    "old": "return Number.isFinite(d) ? Math.min((d * Math.PI) / 180, PITCH_FLOOR) : PITCH_FLOOR; };", "new": "return Number.isFinite(d) ? (d * Math.PI) / 180 : PITCH_FLOOR; };", "tests": ["test/rr2_realism.test.js"] },
+    "old": "return Number.isFinite(d) ? Math.min((Math.max(d, -90) * Math.PI) / 180, PITCH_FLOOR) : PITCH_FLOOR; };", "new": "return Number.isFinite(d) ? (Math.max(d, -90) * Math.PI) / 180 : PITCH_FLOOR; };", "tests": ["test/rr2_realism.test.js"] },
   { "name": "RR2-26-the-band-is-full-width", "file": "src/player/mountRig.js",
     "old": "w: (art.width - band.widthTrim) * scaleX,", "new": "w: art.width * scaleX,", "tests": ["test/rr2_realism.test.js"] },
   { "name": "RR2-27-the-run-override-is-not-asked", "file": "src/systems/transport.js",

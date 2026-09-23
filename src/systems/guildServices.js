@@ -436,5 +436,5 @@ export function registerMerchantService(npcFactionId, service, serviceName, isOn
 /** GetCustomMerchantService (:168-171): the delegate, or null. */
 export const getCustomMerchantService = (npcFactionId) => (serviceOn(npcFactionId) ? _customMerchantServices.get(npcFactionId) : null);
 /** GetCustomMerchantServiceLabel (:173-175). */
-export const getCustomMerchantServiceLabel = (npcFactionId) => _customMerchantServiceNames.get(npcFactionId) ?? '';
+export const getCustomMerchantServiceLabel = (npcFactionId) => _customMerchantServiceNames.get(npcFactionId) ?? '?';   // AUDIT-RR2 G17: GetCustomMerchantServiceLabel's `else return "?"` (Services.cs:173-179)
 export function _resetMerchantServices() { _customMerchantServices.clear(); _customMerchantServiceNames.clear(); _customMerchantServiceGates.clear(); }

@@ -88,8 +88,8 @@ export function setBuildingVariant(blockName, recordIndex, variant, locationKey 
  *  { variant, newLocation }. */
 export function getLocationVariant(locationKey) {
   lastLocationKey = locationKey;
-  const newLocation = newLocationVariants.includes(locationKey);
-  return { variant: locationVariants.get(locationKey) ?? NO_VARIANT, newLocation };
+  const v = locationVariants.get(locationKey);
+  return { variant: v ?? NO_VARIANT, newLocation: v !== undefined && newLocationVariants.includes(locationKey) };   // AUDIT-RR2 G15: `newLocation` only inside the TryGetValue arm (:176-182)
 }
 /** GetBlockVariant(blockName) (:190-206): the last location's, else any's. */
 export function getBlockVariantHere(blockName) {

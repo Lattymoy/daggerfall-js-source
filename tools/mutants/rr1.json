@@ -130,8 +130,8 @@
   {
     "name": "RR1-19-the-resting-guard-is-lost",
     "file": "src/systems/rrInstall.js",
-    "old": "  if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0)) return null;",
-    "new": "  if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || !((entity.health ?? 0) > 0)) return null;",
+    "old": "  if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0) || syntheticTimeIncrease()) return null;",
+    "new": "  if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || !((entity.health ?? 0) > 0) || syntheticTimeIncrease()) return null;",
     "tests": ["test/rr1_realism.test.js"]
   }
 ]

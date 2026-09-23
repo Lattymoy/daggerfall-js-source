@@ -87,7 +87,7 @@ export function createMountRig({
     // AUDIT-RR F25: `LargeHUD && LargeHUDDocked` (EnhancedRiding.cs:256-257), not TransportManager's OffsetHorse arm - the
     // component draws the mount itself and asks its own question; ridingRect above took the classic arm's offset, so
     // it is taken back out here and the docked height put in
-    const offset = dockedLargeHudHeight();
+    const offset = Math.trunc(dockedLargeHudHeight());   // AUDIT-RR2 G4: `(int)LargeHUD.ScreenHeight` (EnhancedRiding.cs:257)
     rect.y = c.height - ((art.height + yAdj) * scaleY) - offset;
     return { yAdj, scaleY, c, offset };
   }
@@ -102,7 +102,7 @@ export function createMountRig({
     const scaleX = rect.w / art.width;
     renderer.drawScreenQuad(art.frames[r.frame], { x: rect.x, y: drawBottom, w: (art.width - band.widthTrim) * scaleX, h: c.height - drawBottom + scaleY - offset }, { u0: band.u0, v0: band.v0, u1: band.u1, v1: band.v1 });
   }
-  setPitchFloorProvider(() => (enhancedRiding?.() && isRiding(player.transportMode) ? _terrainAngle + RR_RIDING.pitchMaxOffset : null));
+  setPitchFloorProvider(() => (enhancedRiding?.() && isRiding(player.transportMode) && !paused() ? _terrainAngle + RR_RIDING.pitchMaxOffset : null));   // AUDIT-RR2 G26: the else arm (`IsGamePaused || !IsRiding`, :122-131) resets PitchMaxLimit every frame
   let art = null;                          // TR2: the four CFA frames of the mount under you
   const canvasOf = () => (typeof canvas === 'function' ? canvas() : canvas);
 

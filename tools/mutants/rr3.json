@@ -249,8 +249,8 @@
   {
     "name": "RR3-28-getlocationvariant-forgets-the-last-key",
     "file": "src/systems/worldDataVariants.js",
-    "old": "  lastLocationKey = locationKey;\n  const newLocation",
-    "new": "  const newLocation",
+    "old": "  lastLocationKey = locationKey;\n  const v = locationVariants",
+    "new": "  const v = locationVariants",
     "tests": [
       "test/rr3_questline.test.js"
     ]

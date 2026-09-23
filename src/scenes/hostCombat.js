@@ -303,7 +303,10 @@ export function enemyAttackVoice(f, rolls = Math.random) {
  *  too: the race/gender heavy pain sound (EnemySounds.cs:158-177). */
 export function enemyHeavyPainVoice(f, rolls = Math.random) {
   if (!f) return null;
-  return combatVoice({ race: foeVoiceRace(f, rolls), gender: foeVoiceGender(f), isAttack: false, heavyDamage: true, rolls });
+  // AUDIT-RR2 G2: the component's OWN gender pick (:190-194): Male only for a rolled male or the city watch; a monster
+  // (MobileGender.Unspecified) and a female take the FEMALE clip - not WeaponManager's male default
+  const gender = (f.gender === 'male' || f.mobileType === KNIGHT_CITY_WATCH) ? 'male' : 'female';
+  return combatVoice({ race: foeVoiceRace(f, rolls), gender, isAttack: false, heavyDamage: true, rolls });
 }
 
 /** The 40% enemy-class PAIN voice when the player's hit lands

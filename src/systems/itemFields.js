@@ -41,7 +41,7 @@ export const ITEM_STR_MAX = 128;
 export const ITEM_EQUIP_SLOTS = 27;
 
 const int = (o = {}) => ({ kind: 'int', ...o });
-const num = () => ({ kind: 'number' });
+const num = (o = {}) => ({ kind: 'number', ...o });
 const bool = () => ({ kind: 'bool' });
 const str = () => ({ kind: 'string', max: ITEM_STR_MAX });
 const oneOf = (values) => ({ kind: 'enum', values: Object.freeze([...values]) });
@@ -72,7 +72,7 @@ export const ITEM_FIELDS = Object.freeze({
   maxDamage: int(),
   message: int(),
   stackCount: int({ min: 0 }),
-  weightInKg: num(),
+  weightInKg: num({ min: 0 }),
   typeDependentData: int(),
   enchantmentPoints: int(),
   potionRecipeKey: int({ min: 0 }),
@@ -126,7 +126,10 @@ export function validItemField(name, v) {
       if (d.min != null && v < d.min) return undefined;
       if (d.max != null && v > d.max) return undefined;
       return v;
-    case 'number': return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+    case 'number':
+      if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
+      if (d.min != null && v < d.min) return undefined;   // AUDIT-RR2 G6: a stored weight is honoured now (AUDIT-RR F5) - a peer's negative one is refused
+      return v;
     case 'bool': return typeof v === 'boolean' ? v : undefined;
     case 'string': return typeof v === 'string' ? (v.length > d.max ? v.slice(0, d.max) : v) : undefined;
     case 'enum': return d.values.includes(v) ? v : undefined;

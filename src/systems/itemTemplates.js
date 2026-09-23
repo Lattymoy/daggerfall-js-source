@@ -12,7 +12,7 @@ import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
 import { itemDyeColor } from './itemDye.js';
-import { customItemClass, rriVariantFields } from './rriItems.js';   // RRI1: DFU's custom-item dispatch, asked first   // DW3: GetItemImage's `color = (int)item.dyeColor` (ItemHelper.cs:402) rides the image
+import { customItemClass, rriVariantFields, rriStoredWeight } from './rriItems.js';   // RRI1: DFU's custom-item dispatch, asked first   // DW3: GetItemImage's `color = (int)item.dyeColor` (ItemHelper.cs:402) rides the image
 
 export { GROUP_TEMPLATE_INDICES };
 
@@ -70,12 +70,12 @@ export const templateByIndex = (i) => _overrides.get(i) ?? ITEM_TEMPLATES[i] ?? 
 /** GetItemTemplate(group, groupIndex) - the group's j-th template. */
 export function templateFor(group, groupIndex) {
   const idx = GROUP_TEMPLATE_INDICES[group]?.[groupIndex];
-  return idx == null ? null : ITEM_TEMPLATES[idx];
+  return idx == null ? null : (_overrides.get(idx) ?? ITEM_TEMPLATES[idx]);   // AUDIT-RR2 G9: GetItemTemplate reads the MERGED table (ItemHelper.cs:1494) - a mod's rarity patch
 }
 
 /** The group's template metas in enum order (GetEnumArray + lookups). */
 export function groupTemplates(group) {
-  return (GROUP_TEMPLATE_INDICES[group] ?? []).map((i) => ITEM_TEMPLATES[i]);
+  return (GROUP_TEMPLATE_INDICES[group] ?? []).map((i) => _overrides.get(i) ?? ITEM_TEMPLATES[i]);   // AUDIT-RR2 G9: the shelf's rarity gate (DaggerfallLoot.cs:219-222) reads the patched row
 }
 
 // ItemBuilder.valueMultipliersByMaterial (weapons + plate armor).
@@ -128,9 +128,13 @@ export function setItemFields(item) {
   // the material folded to Leather with `message` 1. Marked, so a
   // second read of the same item does not prefix it twice.
   const variant = named.rriVariant ? null : rriVariantFields(named);
+  // AUDIT-RR2 G7: a fur piece folded before AUDIT-RR F5 carries no weightInKg (its save predates the field) and would
+  // read the derived leather half; the fold's stored number is written once on the way in
+  const legacyWeight = (named.rriVariant && !Number.isFinite(named.weightInKg)) ? rriStoredWeight(named) : null;
   return {
     ...named,
     ...(variant ? { ...variant, rriVariant: true } : {}),
+    ...(legacyWeight != null ? { weightInKg: legacyWeight } : {}),
     // AUDIT-RR F5: ApplyArmorMaterial runs BEFORE the class's SetVariant (ItemBuilder.cs:466-485), so a fur piece's
     // value is the CHAIN stage's (x2) - the fold to Leather comes after and value is a stored field; priced on `named`
     value: itemValueOf(named),

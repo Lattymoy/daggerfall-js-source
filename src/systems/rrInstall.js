@@ -14,6 +14,7 @@ import { registerMeleeWeaponAnimTime, CLASSIC_FRAME_UPDATE } from '../characters
 import { registerMaxBankLoan } from './banking.js';
 import { setShipAvailable } from './ship.js';
 import { registerMagicRoundHook } from './worldTick.js';
+import { syntheticTimeIncrease } from './effectBroker.js';   // AUDIT-RR2 G20: the encumbrance round's synthetic-time gate (RoleplayRealism.cs:587)
 import { registerEntityFold } from './entityMods.js';
 import { overridePotionRecipes } from './potions.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
@@ -178,7 +179,7 @@ export function installRoleplayRealism() {
  *  PermanentSpeed, CurrentFatigue - under the guards the port can answer
  *  (not resting, alive; a paused game or a fade runs no round here). */
 function encumbranceOf(entity) {
-  if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0)) return null;   // AUDIT-RR F5: the C# reads GameManager.Instance.PlayerEntity alone (:582) - a foe's loot is not its burden
+  if (!rrModule('encumbranceEffects') || !entity?.isPlayer || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0) || syntheticTimeIncrease()) return null;   // AUDIT-RR2 G20: `!EntityEffectBroker.SyntheticTimeIncrease` (:587) - a fast travel's catch-up rounds drain nothing   // AUDIT-RR F5: the C# reads GameManager.Instance.PlayerEntity alone (:582) - a foe's loot is not its burden
   return rrEncumbranceEffect({
     carriedWeight: carriedWeight(entity),
     maxEncumbrance: maxEncumbrance(liveStat(entity, 'strength')),

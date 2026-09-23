@@ -101,7 +101,7 @@ test('RR3b the block converter: RRFORT01.RMB in the port\'s DFBlock shape - the 
   assert.deepEqual(fh.blockPositions[0], { unknown1: 0, unknown2: 0, xPos: BLK.RmbBlock.SubRecords[0].XPos, zPos: BLK.RmbBlock.SubRecords[0].ZPos, yRotation: BLK.RmbBlock.SubRecords[0].YRotation });
   assert.equal(fh.buildingDataList.length, 32, 'the 32-slot list, the JSON\'s entries first');
   assert.equal(fh.buildingDataList[0].factionId, 852); assert.equal(fh.buildingDataList[0].buildingType, BUILDING_TYPES.House6); assert.equal(fh.buildingDataList[0].quality, 18);
-  assert.equal(fh.buildingDataList[1].buildingType, 0);
+  assert.equal(fh.buildingDataList[1].buildingType, -1, 'AUDIT-RR2 G19: the padding is None');
   assert.equal(fh.name, BLK.RmbBlock.FldHeader.Name); assert.equal(fh.otherNames, null);
   assert.ok(fh.autoMapData instanceof Uint8Array); assert.equal(fh.autoMapData.length, 4096);
   assert.ok(fh.groundData.header instanceof Uint8Array); assert.equal(fh.groundData.header.length, 8);

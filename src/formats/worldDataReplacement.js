@@ -109,8 +109,13 @@ export function getDFRegionAdditionalLocationData(regionIndex, dfRegion) {
   let locationAssignmentSuccess = true;
   for (const { name, json } of findAssets(`-${regionIndex}.json`)) {
     if (!name.startsWith('locationnew-')) continue;
-    const dfLocation = locationFromJson(json, regionIndex);
-    locationAssignmentSuccess = addLocationToRegion(regionIndex, dfRegion, dfLocation) && locationAssignmentSuccess;
+    // AUDIT-RR2 G3: DFU's throw escapes this one region's read (MapsFile.cs:984, outside ReadRegion's catch) when the
+    // region is first loaded; the port's boot index reads EVERY region, so one bad mod file is said and its location
+    // skipped rather than the whole world host dying at boot - a departure, recorded
+    try {
+      const dfLocation = locationFromJson(json, regionIndex);
+      locationAssignmentSuccess = addLocationToRegion(regionIndex, dfRegion, dfLocation) && locationAssignmentSuccess;
+    } catch (e) { console.error(`[worlddata] ${name}: ${e?.message ?? e}`); locationAssignmentSuccess = false; }
   }
   if (dfRegion.locationCount > dataLocationCount) {
     if (locationAssignmentSuccess) regions.set(regionIndex, snapshotRegion(dfRegion));
@@ -137,6 +142,12 @@ const snapshotRegion = (r) => ({ locationCount: r.locationCount, mapNames: r.map
 
 // ---- AddLocationToRegion (:510-530) ----
 function addLocationToRegion(regionIndex, dfRegion, dfLocation) {
+  // AUDIT-RR F37 / AUDIT-RR2 G3: `Dictionary.Add` (:521-522) THROWS on a mapId or name a vanilla location already has -
+  // the region load fails loudly in DFU, and a silent remap of the vanilla entry would be the port's own invention.
+  // Asked BEFORE any write: the C# pushes to LOCAL lists copied back only on success (:176-177), so its DFRegion is
+  // left whole; the port writes the region's own arrays and must not leave a row its lookups do not know
+  if (dfRegion.mapIdLookup.has(dfLocation.mapTableData.mapId)) throw new Error(`[worlddata] region ${regionIndex}: mapId ${dfLocation.mapTableData.mapId} is already a location's (${dfLocation.name})`);
+  if (dfRegion.mapNameLookup.has(dfLocation.name)) throw new Error(`[worlddata] region ${regionIndex}: a location named ${JSON.stringify(dfLocation.name)} already stands`);
   // Copy the location id for ReadLocationIdFast() to use instead of peeking the classic data files
   dfLocation.mapTableData.locationId = dfLocation.exterior.recordElement.header.locationId;
   const locationIndex = dfRegion.locationCount++;
@@ -144,10 +155,6 @@ function addLocationToRegion(regionIndex, dfRegion, dfLocation) {
   dfLocation.locationIndex = locationIndex;
   dfLocation.exterior.recordElement.header.unknown2 = locationIndex >>> 0;
   dfRegion.mapTable.push(dfLocation.mapTableData);
-  // AUDIT-RR F37: `Dictionary.Add` (:521-522) THROWS on a mapId or name a vanilla location already has - the region
-  // load fails loudly in DFU, and a silent remap of the vanilla entry would be the port's own invention
-  if (dfRegion.mapIdLookup.has(dfLocation.mapTableData.mapId)) throw new Error(`[worlddata] region ${regionIndex}: mapId ${dfLocation.mapTableData.mapId} is already a location's (${dfLocation.name})`);
-  if (dfRegion.mapNameLookup.has(dfLocation.name)) throw new Error(`[worlddata] region ${regionIndex}: a location named ${JSON.stringify(dfLocation.name)} already stands`);
   dfRegion.mapIdLookup.set(dfLocation.mapTableData.mapId, locationIndex);
   dfRegion.mapNameLookup.set(dfLocation.name, locationIndex);
   locations.set(String(makeLocationKey(regionIndex, locationIndex)), dfLocation);
@@ -186,7 +193,7 @@ export function loadNewDFLocationVariant(regionIndex, locationIndex, variant) {
   const locationVariantKey = `${locationKey}${variant}`;
   if (locations.has(locationVariantKey)) return false;
   for (const { name, json } of findAssets(`-${regionIndex}${variant}.json`)) {
-    if (!name.startsWith('locationnew-')) continue;   // the C# mod arm takes any asset with the suffix; the loose-file arm's pattern is locationnew-*, kept as the honest one
+    // AUDIT-RR2 G16: the mod arm (:284-292) takes EVERY asset the suffix finds - only the loose-file arm (:271) names locationnew-*
     const variantLocation = locationFromJson(json, regionIndex);
     addNewDFLocationVariant(locationIndex, locationVariantKey, variantLocation);
     return true;
@@ -235,8 +242,13 @@ export function getDFBlockReplacementData(block, blockName) {
     if (variant === NO_VARIANT) blocks.set(blockName, NO_REPLACEMENT);
     return null;
   }
+  if (!blockName.endsWith('.RMB')) {   // AUDIT-RR2 G14: the C# deserialises a whole DFBlock, RdbBlock included (:363-369); the port's converter reads the RMB half only, so an RDB/RDI file is said and NOT served with a null body the dungeon layout would fall through
+    console.warn(`[worlddata] ${blockName}: RDB/RDI block replacement is not converted by the port - ignored`);
+    if (variant === NO_VARIANT) blocks.set(blockName, NO_REPLACEMENT);
+    return null;
+  }
   const dfBlock = blockFromJson(json, block);
-  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);
+  replaceRmbBlockBuildingData(blockName, block, dfBlock);
   blocks.set(blockKey, dfBlock);
   console.log(`[worlddata] Found DFBlock override: ${blockName} (index: ${block})`);
   return dfBlock;
@@ -417,7 +429,7 @@ export function blockFromJson(json, index) {
   const miscFlat = (rmb.MiscFlatObjectRecords ?? []).map(flatFromJson);
   const blockPositions = new Array(32).fill(null).map((_, i) => ({ unknown1: 0, unknown2: 0, xPos: subRecords[i]?.xPos ?? 0, zPos: subRecords[i]?.zPos ?? 0, yRotation: subRecords[i]?.yRotation ?? 0 }));
   const buildingDataList = (fh.BuildingDataList ?? []).map(buildingDataFromJson);
-  while (buildingDataList.length < 32) buildingDataList.push(emptyBuildingData());
+  while (buildingDataList.length < 32) buildingDataList.push({ ...emptyBuildingData(), buildingType: -1 });   // AUDIT-RR2 G19: DFU's list is the JSON's length; the port's 32-slot shape pads with BuildingTypes.None (-1), not Alchemist (0)
   const name = json.Name ?? '';
   return {
     position: json.Position ?? 0,

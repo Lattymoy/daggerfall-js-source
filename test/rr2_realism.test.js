@@ -286,7 +286,7 @@ test('RR2 the trample and the charge on the hosts: the contacts each frame, the 
   assert.match(w, /if \(rrRidingOn\(\) && player\.riding && player\.isRunning\) rrRidingContacts\(\);/, 'TrampleCivilians && IsRiding && IsRunning, after the rig\'s frame');
   // AUDIT-RR F15: the contacts live in systems/rrRidingHost.js now and BOTH outdoor hosts stand one on their own reads
   const rh = rd('src/systems/rrRidingHost.js');
-  assert.match(rh, /f\._rrCharged = true;/, 'PickpocketByPlayerAttempted, the latch');
+  assert.match(rh, /latch\.pickpocketAttempted = true;/, 'PickpocketByPlayerAttempted, the latch (AUDIT-RR2 G24: the pickpocket\'s own)');
   assert.match(rh, /f\.ai\.knockbackSpeed = RR_RIDING\.chargeKnockback; f\.ai\.knockbackDir = \[\.\.\.direction\];/);
   assert.match(rh, /playerEntity\.fatigue = Math\.max\(0, \(playerEntity\.fatigue \?\? 0\) - FATIGUE_LOSS\.Default \* RR_RIDING\.chargeFatigueMultiplier\);/);
   assert.match(rh, /rrChargeDamage\(\{ minBase: handToHandMinDamage\(h2h\), maxBase: handToHandMaxDamage\(h2h\), agility: liveStat\(playerEntity, 'agility'\), willpower: liveStat\(playerEntity, 'willpower'\), roll: rolls\(\) \}\)/);

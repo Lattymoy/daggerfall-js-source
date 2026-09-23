@@ -50,7 +50,7 @@ export const PITCH_FLOOR = (75 * Math.PI) / 180;
 // (down-positive), or null for the owner's PITCH_FLOOR.
 let _floorProvider = null;
 export function setPitchFloorProvider(fn) { _floorProvider = typeof fn === 'function' ? fn : null; }
-export const pitchFloor = () => { const d = _floorProvider?.(); return Number.isFinite(d) ? Math.min((d * Math.PI) / 180, PITCH_FLOOR) : PITCH_FLOOR; };
+export const pitchFloor = () => { const d = _floorProvider?.(); return Number.isFinite(d) ? Math.min((Math.max(d, -90) * Math.PI) / 180, PITCH_FLOOR) : PITCH_FLOOR; };   // AUDIT-RR2 G23: `pitchMax = Mathf.Clamp(value, PitchMin, PitchMax)` (PlayerMouseLook.cs:87-90), PitchMin -90 - a steep bank cannot push the floor past vertical
 
 /** GetFrameRateScaledFractionOfProgression (:100-105), verbatim. */
 export function frameRateScaledFraction(fractionAt60FPS, dt) {
