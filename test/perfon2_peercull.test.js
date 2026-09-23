@@ -52,8 +52,8 @@ test('PERF-ON2: a peer outside the frustum is skipped, and one inside is kept - 
 
 test('PERF-ON2 / PERF-CROWD: the host culls the peers AND the live crowd, by the batch\u2019s own sphere, lifted for the bottom anchor', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /if \(cullOn && billboardOutside\(b\)\) continue;[\s\S]{0,80}?allBatches\.push\(b\);/,
-    'every peer batch is tested before it is submitted');
+  assert.match(w, /if \(cullOn && billboardOutside\(b\)\) \{ if \(renderer\.shadowReachBatch\(b\)\) castBatches\.push\(b\); continue; \}[\s\S]{0,120}?allBatches\.push\(b\);/,
+    'every peer batch is tested before it is submitted (AUDIT REACH: a rejected peer a shadow reaches goes to the casters\' list)');
   assert.doesNotMatch(w, /if \(remotePlayers\) for \(const b of remotePlayers\.batches\(\)\) allBatches\.push\(b\);/, 'the unconditional push is gone');
   // PERF-CROWD: and the townspeople, the watch, the foes, the piles, the
   // blow effects, the torches and the camps - the same list, never culled

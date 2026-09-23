@@ -178,7 +178,7 @@ export const AIR_SHAFT_TAPS = 32;
  *  tonemapped as elFinish tonemaps it, blurred once (the jitter), and added at the resolve. Fewer fragments walk
  *  fewer lights (a sixteenth of the pixels), and a wall casts its shadow into the air. */
 export const AIR_VOL_STEPS = 8;
-export const AIR_VOL_BLUR_SHARE = 0.15;   // VOL1: a blur tap counts while its ray's length is within this share of the centre's
+export const AIR_VOL_BLUR_SHARE = 0.15;   // VOL1: a blur tap counts while its view distance is within this share of the centre's
 export const AIR_SHAFT_DECAY = 0.96;
 export const AIR_SHAFT_STRENGTH = 0.35;
 export const AIR_SHAFT_REACH = 0.35;
@@ -358,6 +358,7 @@ uniform sampler2D uFrame;
 uniform sampler2D uPrev;   // AUDIT-EL F16: the eye's own multiplier, divided out - the frame is the ADAPTED image
 uniform vec4 uRect;     // the world rect in canvas pixels
 uniform vec2 uCanvas;
+uniform sampler2D uVol;    // AUDIT VOL1: the glow the resolve will add - the eye adapts to the frame it will see
 ${CODEC_GLSL}
 out vec4 outColor;
 void main() {
@@ -372,7 +373,7 @@ void main() {
     for (int x = 0; x < 4; x++) {
       vec2 t = vUV + (vec2(float(x), float(y)) + 0.5) * cell * 0.25 - cell * 0.5;
       vec2 uv = (uRect.xy + t * uRect.zw) / uCanvas;
-      vec3 c = airDecode(texture(uFrame, uv).rgb);
+      vec3 c = airDecode(texture(uFrame, uv).rgb) + airDecode(texture(uVol, t).rgb);   // AUDIT VOL1
       acc += log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)) / prev, 1e-9));
     }
   }
@@ -410,11 +411,12 @@ uniform sampler2D uFrame;
 uniform vec4 uRect;
 uniform vec2 uCanvas;
 uniform float uThreshold;
+uniform sampler2D uVol;   // AUDIT VOL1: a halo's core is bright enough to bloom
 ${CODEC_GLSL}
 out vec4 outColor;
 void main() {
   vec2 uv = (uRect.xy + vUV * uRect.zw) / uCanvas;
-  vec3 c = airDecode(texture(uFrame, uv).rgb);
+  vec3 c = airDecode(texture(uFrame, uv).rgb) + airDecode(texture(uVol, vUV).rgb);
   float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
   float k = smoothstep(uThreshold, 1.0, lum);
   outColor = vec4(c * k, 1.0);
@@ -560,12 +562,13 @@ void main() {
   outColor = vec4(vec3(vis / ${AIR_AO_DIRECTIONS}.0 * ${AIR_AO_STORE}), 1.0);
 }`;
 
-// EL7: THE BLUR IS DEPTH-AWARE. A plain box averaged a wall's occlusion into
-// the sky beside it and a pillar's into the floor behind it - a halo at every
-// edge. A tap counts only while its view distance is within uBlurRange of
-// the centre's (the AO radius: what could have occluded it at all).
-/** VOL1: the march - built with the lane's curve and integral and the shadow block handed in (this file is a leaf). */
-const volFs = ({ shadow, tonemap, scatter }, maxLights) => `#version 300 es
+/** VOL1: the march - built with the lane's curve and integral and the shadow block handed in (this file is a leaf).
+ *  AUDIT VOL1: with a float target (`linear`) the pixel stores its LINEAR estimate and the tile's blur averages light;
+ *  the tone pass (volToneFs) then tonemaps the average once. Tonemapping each pixel's eight-step estimate before the
+ *  blur dimmed a halo's core by a quarter at a lantern's range of 14 (Jensen: the mean of a concave curve's values is
+ *  under the curve of the mean), and a lantern's core changed brightness as it took or lost a caster slot. Without a
+ *  float target the old path stands, documented: tonemapped and encoded per pixel, blurred so. */
+const volFs = ({ shadow, tonemap, scatter }, maxLights, linear) => `#version 300 es
 precision highp float;
 in vec2 vUV;
 ${DEPTH_GLSL}
@@ -599,12 +602,17 @@ void main() {
     if (length(rel) > dist + range) continue;   // EL6: a lantern farther than the ray reaches plus its range glows on no part of it
     int k = uCasterOf[i];
     if (k < 0) { acc += elScatter(rel, range, dir, dist) * uPointColors[i]; continue; }   // no map (the hand's light, a far lantern): the closed form, as before
-    // the march: the same integrand as elScatter's, at AIR_VOL_STEPS points across the ray's overlap with the
-    // sphere, each let through by the caster's cube - the jitter spreads the steps over the 4x4 tile the blur averages
+    // the march: the same integrand as elScatter's, at AIR_VOL_STEPS points across the ray's CHORD through the
+    // sphere (AUDIT VOL1: a ray that misses the sphere walks nothing), each let through by the caster's cube - the
+    // jitter spreads the steps over the 4x4 tile the blur averages
     float t0 = dot(rel, dir);
     vec3 hv = rel - dir * t0;
-    float h2 = max(dot(hv, hv), 0.0625);
-    float ta = max(0.0, t0 - range), tb = min(dist, t0 + range);
+    float hraw = dot(hv, hv);
+    float chord = range * range - hraw;
+    if (chord <= 0.0) continue;
+    chord = sqrt(chord);
+    float h2 = max(hraw, 0.0625);
+    float ta = max(0.0, t0 - chord), tb = min(dist, t0 + chord);
     if (tb <= ta) continue;
     float dt = (tb - ta) / ${AIR_VOL_STEPS}.0;
     float sum = 0.0;
@@ -615,15 +623,32 @@ void main() {
     }
     acc += sum * dt * uPointColors[i];
   }
-  // tonemapped here as elFinish tonemaps the glow it adds - the resolve adds this image to the display-linear frame
-  outColor = vec4(airEncode(elTonemapRGB(acc * uScatter * uExposure * elAdapt())), 1.0);
+  ${linear
+    ? 'outColor = vec4(acc, 1.0);   // linear light, unclamped: the blur averages it and the tone pass curves the average'
+    : 'outColor = vec4(airEncode(elTonemapRGB(acc * uScatter * uExposure * elAdapt())), 1.0);   // no float target: tonemapped here, as elFinish tonemaps the glow it adds'}
+}`;
+
+/** AUDIT VOL1: the tone pass - the blurred linear glow through the lane's curve, once, into the byte image the eye,
+ *  the bloom and the resolve read (as elFinish tonemaps the glow it adds). Only with a float target. */
+const volToneFs = ({ tonemap }) => `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uSrc;
+uniform float uScatter;
+uniform float uExposure;
+${CODEC_GLSL}
+${AIR_ADAPT_GLSL}
+${tonemap}
+out vec4 outColor;
+void main() {
+  outColor = vec4(airEncode(elTonemapRGB(texture(uSrc, vUV).rgb * uScatter * uExposure * elAdapt())), 1.0);
 }`;
 
 // VOL1: THE GLOW'S BLUR IS DEPTH-AWARE TOO. A ray to a near wall glows little (short, far from the lantern) and the ray
 // past the wall's edge glows much; a plain blur put the second on the first - the lantern's light bleeding onto the
 // wall that hides it (the lighting probe read the wall a third brighter). One 4x4 tile of the ordered jitter, a tap
-// counting only while its ray reaches within AIR_VOL_BLUR_SHARE of the centre's own distance (a share, not a
-// range: the glow is a ray's, and rays to the same surface differ in length by little whatever their length).
+// counting only while its view distance is within AIR_VOL_BLUR_SHARE of the centre's own (a share, not a range: the
+// glow is a ray's, and rays to the same surface differ in length by little whatever their length).
 const VOLBLUR_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
@@ -645,6 +670,10 @@ void main() {
   outColor = vec4(wsum > 0.0 ? acc / wsum : texture(uSrc, vUV).rgb, 1.0);
 }`;
 
+// EL7: THE BLUR IS DEPTH-AWARE. A plain box averaged a wall's occlusion into
+// the sky beside it and a pillar's into the floor behind it - a halo at every
+// edge. A tap counts only while its view distance is within uBlurRange of
+// the centre's (the AO radius: what could have occluded it at all).
 const BOX_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
@@ -865,12 +894,12 @@ export class AirPass {
       emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
       glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uRect', 'uCanvas']),
       // EL4
-      lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas']),
+      lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas', 'uVol']),   // AUDIT VOL1: the eye sees the glow
       adapt: P(QUAD_VS, ADAPT_FS, ['uPrev', 'uLum', 'uAdaptParams', 'uAdaptRates']),
-      bright: P(QUAD_VS, BRIGHT_FS, ['uFrame', 'uRect', 'uCanvas', 'uThreshold']),
+      bright: P(QUAD_VS, BRIGHT_FS, ['uFrame', 'uRect', 'uCanvas', 'uThreshold', 'uVol']),   // AUDIT VOL1: the glow's core blooms
       resolve: P(QUAD_VS, RESOLVE_FS, ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade', 'uAO', 'uAOMix', 'uVol']),   // VOL1
       volBlur: P(QUAD_VS, VOLBLUR_FS, ['uSrc', 'uTexel', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),   // VOL1: the tile's average, by depth
-      vol: opts.glsl ? P(QUAD_VS, volFs(opts.glsl, opts.maxLights ?? 48), ['uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uCamPos', 'uViewRot', 'uPointLights', 'uPointColors', 'uPointCount', 'uScatter', 'uExposure', 'uAdapt']) : null,   // VOL1: only with the lane's GLSL in hand
+      vol: null, volTone: null,   // VOL1: built below, only with the lane's GLSL in hand
     };
     // the fullscreen quad and the glare's corner quad
     this.quadVao = gl.createVertexArray();
@@ -890,14 +919,26 @@ export class AirPass {
     gl.bindVertexArray(null);
     this.projInfo = new Float32Array(4);
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
-    // VOL1: the march's shadow block, the names ShadowPass.upload binds by (the sun's are null here - the shader declares them and reads none)
-    if (this.programs.vol) {
-      const p = this.programs.vol.p;
-      this.programs.vol.shadow = {
-        sunShadow: u(p, 'uSunShadow'), sunVP: u(p, 'uSunVP'), sunParams: u(p, 'uSunShadowParams'), sunTexel: u(p, 'uSunTexel'),
-        pointShadow: u(p, 'uPointShadow'), pointParams: u(p, 'uPointShadowParams'), shadowIndex: u(p, 'uShadowIndex'), casterOf: u(p, 'uCasterOf'),
-      };
+    // VOL1: the glow's programs, with the lane's blocks in hand. AUDIT VOL1: a float target where the GL has one (the
+    // linear path); and a shader the GL refuses (a link past its uniform budget) costs the glow alone, not the air pass
+    this.volLinear = !!(gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
+    if (opts.glsl) {
+      try {
+        const vol = P(QUAD_VS, volFs(opts.glsl, opts.maxLights ?? 48, this.volLinear), ['uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uCamPos', 'uViewRot', 'uPointLights', 'uPointColors', 'uPointCount', 'uScatter', 'uExposure', 'uAdapt']);
+        if (this.volLinear) this.programs.volTone = P(QUAD_VS, volToneFs(opts.glsl), ['uSrc', 'uScatter', 'uExposure', 'uAdapt']);
+        const p = vol.p;
+        // the march's shadow block, the names ShadowPass.upload binds by (the sun's are null here - the shader declares them and reads none)
+        this.programs.vol = vol;
+        vol.shadow = {
+          sunShadow: u(p, 'uSunShadow'), sunVP: u(p, 'uSunVP'), sunParams: u(p, 'uSunShadowParams'), sunTexel: u(p, 'uSunTexel'),
+          pointShadow: u(p, 'uPointShadow'), pointParams: u(p, 'uPointShadowParams'), shadowIndex: u(p, 'uShadowIndex'), casterOf: u(p, 'uCasterOf'),
+        };
+      } catch (e) {
+        this.programs.vol = null; this.programs.volTone = null;
+        console.warn('VOL1: the glow\'s shader did not build - the lane glows for itself', e);
+      }
     }
+    this.fresh = false;   // AUDIT VOL1: prepared for a world frame and not yet resolved - the images are drawn for such a frame alone
     this.volOn = true;                   // VOL1: the door (renderer.setVolumetrics)
     this._viewRot = new Float32Array(9);
     this._ones = new Float32Array(3 * (opts.maxLights ?? 48)).fill(1);
@@ -939,10 +980,11 @@ export class AirPass {
     const gl = this.gl;
     if (this.targets) this._free();
     this.width = w; this.height = h;
-    const color = (cw, ch) => {
+    const color = (cw, ch, linear = false) => {
       const tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, cw, ch, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      if (linear) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, cw, ch, 0, gl.RGBA, gl.HALF_FLOAT, null);   // AUDIT VOL1: the glow's linear light (EXT_color_buffer_float / _half_float)
+      else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, cw, ch, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -959,14 +1001,15 @@ export class AirPass {
       ao: color(aw, ah), aoBlur: color(aw, ah),
       bloom: color(bw, bh), bloomB: color(bw, bh),
       shaft: color(bw, bh),
-      vol: color(bw, bh), volB: color(bw, bh),   // VOL1: the glow and its blur's other half, at the bloom's size
+      vol: color(bw, bh, this.volLinear), volB: color(bw, bh, this.volLinear),   // VOL1: the glow and its blur, at the bloom's size (AUDIT VOL1: linear light in a float target where there is one)
     };
+    this.targets.volOut = this.volLinear ? color(bw, bh) : this.targets.volB;   // the byte image the eye, the bloom and the resolve read: the tone pass's, or the blurred tonemapped glow itself
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
   _free() {
     const gl = this.gl, t = this.targets;
-    for (const k of Object.keys(t)) { gl.deleteTexture(t[k].tex); gl.deleteFramebuffer(t[k].fbo); }
+    for (const x of new Set(Object.values(t))) { gl.deleteTexture(x.tex); gl.deleteFramebuffer(x.fbo); }   // AUDIT VOL1: volOut may alias volB - once each
     this.targets = null;
   }
 
@@ -1091,6 +1134,7 @@ export class AirPass {
     // EL8: the frame just resolved becomes the previous - its view-projection and terms, for the contact march
     if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }
     this.f = f;
+    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone
     this.rect.set(f.viewport);
     projInfo(f.proj, this.projInfo);
     multiply(f.proj, f.view, this._vp);
@@ -1185,15 +1229,26 @@ export class AirPass {
     gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);
   }
 
+  /** AUDIT VOL1: the images a frame the pass was not prepared for gets - black, so the resolve adds nothing of a
+   *  frame gone by (and the AO's mix is 0 for it already). */
+  _blank(quad) {
+    const gl = this.gl, T = this.targets;
+    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.vol = false;   // nothing drawn for it
+    gl.clearColor(0, 0, 0, 1);
+    for (const t of [T.bloom, T.shaft, T.volOut]) { quad(this.programs.box, t); gl.clear(gl.COLOR_BUFFER_BIT); }
+    if (this.f) gl.clearColor(this.f.clearColor[0], this.f.clearColor[1], this.f.clearColor[2], this.f.clearColor[3]);
+  }
+
   /** VOL1: the glow image - the march for every lantern in the frame when the door is open and the fog gives the air a
-   *  density, black otherwise (the resolve adds it either way). */
+   *  density, black otherwise (the resolve adds it either way). AUDIT VOL1: the march writes linear light into the float
+   *  target, the tile's blur averages it, the tone pass curves the average into volOut - or, with no float target, the
+   *  march tonemaps per pixel and the blur's image is volOut itself. */
   _volumetrics(f, sp, quad, depthOn) {
     const gl = this.gl, P = this.programs, T = this.targets;
     const L = f.pointLights, n = L ? L.length >> 2 : 0;
     const on = !!P.vol && this.volOn && n > 0 && f.scatter > 0 && !!sp;
     this.stats.vol = on;
-    quad(P.vol ?? P.box, T.volB);   // shut: the image the resolve reads, black
-    if (!on) { gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]); return; }
+    if (!on) { quad(P.box, T.volOut); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]); return; }   // shut: the image the resolve reads, black
     quad(P.vol, T.vol);
     depthOn(P.vol);
     gl.uniform3fv(P.vol.uCamPos, f.eye);
@@ -1209,12 +1264,21 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE0);
     sp.upload(P.vol.shadow);   // the cube maps and the caster table, on their own units
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    // the blur: the jitter spread the steps over the ordered tile; the tile's average, by depth, gathers it (into volB - the resolve reads that)
+    // the blur: the jitter spread the steps over the ordered tile; the tile's average, by depth, gathers it (into volB)
     quad(P.volBlur, T.volB);
     depthOn(P.volBlur);   // the depth on unit 0; the glow on unit 1
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.vol.tex); gl.uniform1i(P.volBlur.uSrc, 1);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform2f(P.volBlur.uTexel, 1 / T.vol.w, 1 / T.vol.h);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (!P.volTone) return;   // no float target: volB is the tonemapped image the readers take
+    // the tone pass: the blurred linear light through the lane's curve, once
+    quad(P.volTone, T.volOut);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, T.volB.tex); gl.uniform1i(P.volTone.uSrc, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex); gl.uniform1i(P.volTone.uAdapt, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1f(P.volTone.uScatter, f.scatter);
+    gl.uniform1f(P.volTone.uExposure, f.exposure ?? 1);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
@@ -1344,8 +1408,13 @@ export class AirPass {
       gl.useProgram(prog.p);
     };
     gl.activeTexture(gl.TEXTURE0);
-    // 0. EL6: the images, off the frame's depth (the frame is whole now)
-    if (this.f) this._images();
+    // 0. EL6: the images, off the frame's depth (the frame is whole now). AUDIT VOL1: for a frame the pass was PREPARED
+    // for - a world frame - and not otherwise: a menu's or a video's frame binds the frame target too, and its resolve
+    // used to paint the last world frame's glares, shafts and glow over it (the glow was the first to show); such a
+    // frame gets black images and no measure
+    if (this.f && this.fresh) this._images();
+    else { this._blank(quad); this.measured = false; }
+    this.fresh = false;
     gl.disable(gl.BLEND);
     gl.bindVertexArray(this.quadVao);
     // 1. the luminance image and its mean - AUDIT-EL F10: not off a frame the
@@ -1355,6 +1424,7 @@ export class AirPass {
     quad(P.lum, this.lum);
     gl.bindTexture(gl.TEXTURE_2D, F.tex);
     gl.uniform1i(P.lum.uFrame, 0);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.lum.uVol, 2); gl.activeTexture(gl.TEXTURE0);   // AUDIT VOL1: the eye adapts to the glow it will see
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex); gl.uniform1i(P.lum.uPrev, 1);   // AUDIT-EL F16
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform4fv(P.lum.uRect, this.rect);
@@ -1380,6 +1450,7 @@ export class AirPass {
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.bindTexture(gl.TEXTURE_2D, F.tex);
     gl.uniform1i(P.bright.uFrame, 0);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.bright.uVol, 2); gl.activeTexture(gl.TEXTURE0);   // AUDIT VOL1: a halo's core blooms
     gl.uniform4fv(P.bright.uRect, this.rect);
     gl.uniform2fv(P.bright.uCanvas, this.canvas);
     gl.uniform1f(P.bright.uThreshold, AIR_BRIGHT_THRESHOLD);
@@ -1405,7 +1476,7 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.bloom.tex); gl.uniform1i(P.resolve.uBloom, 1);
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex); gl.uniform1i(P.resolve.uShaft, 2);
     gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, T.aoBlur.tex); gl.uniform1i(P.resolve.uAO, 3);   // EL6
-    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, T.volB.tex); gl.uniform1i(P.resolve.uVol, 4);   // VOL1: the blurred glow
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.resolve.uVol, 4);   // VOL1: the blurred, tonemapped glow
     gl.uniform1f(P.resolve.uAOMix, this.f ? AIR_AO_RESOLVE : 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform4fv(P.resolve.uRect, this.rect);

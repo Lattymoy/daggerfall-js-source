@@ -72,15 +72,6 @@
     ]
   },
   {
-    "name": "bounce-door-ignored",
-    "file": "src/render/renderer.js",
-    "old": "    if (bLoc != null) gl.uniform1f(bLoc, this._bounceWanted === false ? 0 : (lane.bounce ?? 0));   // BOUNCE1",
-    "new": "    if (bLoc != null) gl.uniform1f(bLoc, lane.bounce ?? 0);",
-    "tests": [
-      "test/vol1_glow.test.js"
-    ]
-  },
-  {
     "name": "vol-blur-depth-blind",
     "file": "src/render/airPass.js",
     "old": "      float w = abs(viewDist(depthAt(uv)) - here) <= here * ${AIR_VOL_BLUR_SHARE} ? 1.0 : 0.0;",
@@ -90,40 +81,84 @@
     ]
   },
   {
-    "name": "bounce-read-at-the-surface",
-    "file": "src/render/enhancedLighting.js",
-    "old": "    float bsh = k >= 0 ? pointShadowOne(k, wp + n * ${glslFloat(EL_BOUNCE_REACH)}) : 1.0;",
-    "new": "    float bsh = k >= 0 ? pointShadowOne(k, wp) : 1.0;",
+    "name": "vol-chord-dropped",
+    "file": "src/render/airPass.js",
+    "old": "    float chord = range * range - hraw;\n    if (chord <= 0.0) continue;\n    chord = sqrt(chord);",
+    "new": "    float chord = range;",
     "tests": [
       "test/vol1_glow.test.js"
     ]
   },
   {
-    "name": "bounce-unshadowed",
-    "file": "src/render/enhancedLighting.js",
-    "old": "    acc += uELBounce * bsh * attOpen * (0.5 - 0.5 * n.y) * uPointColors[i];",
-    "new": "    acc += uELBounce * attOpen * (0.5 - 0.5 * n.y) * uPointColors[i];",
+    "name": "vol-tonemapped-before-the-blur",
+    "file": "src/render/airPass.js",
+    "old": "    ? 'outColor = vec4(acc, 1.0);   // linear light, unclamped: the blur averages it and the tone pass curves the average'",
+    "new": "    ? 'outColor = vec4(airEncode(elTonemapRGB(acc * uScatter * uExposure * elAdapt())), 1.0);'",
     "tests": [
       "test/vol1_glow.test.js"
     ]
   },
   {
-    "name": "bounce-weight-dropped",
-    "file": "src/render/enhancedLighting.js",
-    "old": "    acc += uELBounce * bsh * attOpen * (0.5 - 0.5 * n.y) * uPointColors[i];",
-    "new": "    acc += uELBounce * bsh * attOpen * uPointColors[i];",
+    "name": "vol-stale-frame-imaged",
+    "file": "src/render/airPass.js",
+    "old": "    if (this.f && this.fresh) this._images();\n    else { this._blank(quad); this.measured = false; }",
+    "new": "    if (this.f) this._images();",
     "tests": [
       "test/vol1_glow.test.js"
     ]
   },
   {
-    "name": "bounce-flat-unshadowed",
-    "file": "src/render/enhancedLighting.js",
-    "old": "    acc += sh * (1.0 + uELBounce * 0.5) * attOpen * uPointColors[i];",
-    "new": "    acc += (sh + uELBounce * 0.5) * attOpen * uPointColors[i];",
+    "name": "vol-eye-blind-to-the-glow",
+    "file": "src/render/airPass.js",
+    "old": "      vec3 c = airDecode(texture(uFrame, uv).rgb) + airDecode(texture(uVol, t).rgb);   // AUDIT VOL1",
+    "new": "      vec3 c = airDecode(texture(uFrame, uv).rgb);",
     "tests": [
-      "test/vol1_glow.test.js",
-      "test/el5_field.test.js"
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-core-does-not-bloom",
+    "file": "src/render/airPass.js",
+    "old": "  vec3 c = airDecode(texture(uFrame, uv).rgb) + airDecode(texture(uVol, vUV).rgb);",
+    "new": "  vec3 c = airDecode(texture(uFrame, uv).rgb);",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-gate-blind-to-fresh",
+    "file": "src/render/renderer.js",
+    "old": "  _airGlows() { return !!this._air && this._air.fresh && this._volumetricsWanted !== false",
+    "new": "  _airGlows() { return !!this._air && this._volumetricsWanted !== false",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "vol-shut-clears-the-wrong-image",
+    "file": "src/render/airPass.js",
+    "old": "    if (!on) { quad(P.box, T.volOut); gl.clearColor(0, 0, 0, 1);",
+    "new": "    if (!on) { quad(P.box, T.vol); gl.clearColor(0, 0, 0, 1);",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "scatter-slab-not-chord",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  float chord = range * range - h2;\n  if (chord <= 0.0) return 0.0;\n  chord = sqrt(chord);",
+    "new": "  float chord = range;",
+    "tests": [
+      "test/vol1_glow.test.js"
+    ]
+  },
+  {
+    "name": "bounce-back",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];\n",
+    "new": "    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];\n    acc += 0.18 * elAttenuation(d, uPointLights[i].w) * (0.5 - 0.5 * n.y) * uPointColors[i];\n",
+    "tests": [
+      "test/vol1_glow.test.js"
     ]
   }
 ]

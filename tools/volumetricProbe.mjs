@@ -1,11 +1,16 @@
 // VOL1 (2026-09-23, Mac: "Continue" - the second arc's last step): THE LANTERNS' GLOW THROUGH THEIR SHADOWS, on a
-// real GPU. A crate stands on a floor between the eye and a lantern behind it. The air between the eye and the
-// crate's front face is in the crate's shadow, so the marched glow (airPass.js VOL_FS, through the lantern's cube
-// map) must put LESS light on the crate's front than the lane's old closed-form glow did (which knew nothing of
-// the crate); the floor beside the crate, whose air is lit on both, must read alike either way.
+// real GPU. A crate stands on a floor between the eye and a lantern behind it, in a fogged night.
 //
-// The two are read on the same scene: the door open (renderer.setVolumetrics(true), the air pass marches) and shut
-// (the lane's analytic glow per fragment, as before EL1..HQ1 drew it).
+// AUDIT REACH: THE GLOW IS READ AS A DIFFERENCE. The first cut compared whole pixels, and on a lit floor the glow is a
+// two-hundredth of the pixel - a dead glow (uScatter 0) and a wrong ray (the view's rotation untransposed) both
+// passed. Three frames of the one scene: BASE (no glow anywhere - the door open so the lane's own glow is off, the
+// pass itself held shut), ON (the march) and OFF (the lane's closed-form glow per fragment, as before EL1..HQ1); the
+// glow of each is its frame minus BASE, and the checks are on the glows:
+//   - the sky above the lantern: the march glows there (a ray to the far plane; the lane, with no fragment on the
+//     sky, never did) - and by more than a byte;
+//   - a dark floor far past the crate, its air lit either way: the march's glow within a fifth of the closed form's
+//     (the march sums the closed form's own integrand over the same chord);
+//   - the crate's front, its air in the crate's own shadow: the march's glow under a third of the closed form's.
 //
 // Usage: node tools/volumetricProbe.mjs [outDir]
 import { createServer } from 'vite';
@@ -93,6 +98,14 @@ const result = await page.evaluate(async ({ W, H }) => {
   const grid = (pts) => pts;
   const front = []; for (let x = -1.2; x <= 1.2; x += 0.3) for (let y = 0.4; y <= 2.2; y += 0.3) front.push([x, y, 1]);   // the crate's front face
   const beside = []; for (let x = 2; x <= 3.5; x += 0.5) for (let z = -5; z <= -2; z += 1) beside.push([x, 0, z]);   // the floor on the eye's side of the crate, between it and the lantern: its air lit, the rays to it clear of the shadow (which spreads toward +z)
+  const farFloor = []; for (let x = -3; x <= 3; x += 0.5) for (let z = -18; z <= -14; z += 0.5) farFloor.push([x, 0, z]);   // dark, far past the crate: its air lit by the lantern either way
+  const skyMean = (img) => { let s = 0, n = 0; for (let y = H - 40; y < H - 5; y++) for (let x = W / 2 - 60; x < W / 2 + 60; x++) { const i = (y * W + x) * 4; s += (0.2126 * img[i] + 0.7152 * img[i + 1] + 0.0722 * img[i + 2]) / 255; n++; } return s / n; };
+  // BASE: no glow anywhere - the door open (the lane's own glow is 0 on a world frame the pass glows for) and the
+  // pass itself held shut
+  r.setVolumetrics(true); r.air.volOn = false;
+  for (let f = 0; f < 4; f++) draw();
+  const base = grab();
+  const baseStats = { ...r.air.stats };
   r.setVolumetrics(true);
   for (let f = 0; f < 4; f++) draw();
   const on = grab();
@@ -101,21 +114,26 @@ const result = await page.evaluate(async ({ W, H }) => {
   for (let f = 0; f < 4; f++) draw();
   const off = grab();
   const offStats = { ...r.air.stats };
+  const read = (img) => ({ front: lum(img, grid(front)), beside: lum(img, grid(beside)), far: lum(img, farFloor), sky: skyMean(img) });
+  const B = read(base), O = read(on), F = read(off);
+  const glow = (X) => ({ front: X.front - B.front, beside: X.beside - B.beside, far: X.far - B.far, sky: X.sky - B.sky });
   return {
-    w: W, h: H, on: Array.from(on), off: Array.from(off), err: gl.getError(), volStats, offStats,
-    frontOn: lum(on, grid(front)), frontOff: lum(off, grid(front)),
-    besideOn: lum(on, grid(beside)), besideOff: lum(off, grid(beside)),
+    w: W, h: H, on: Array.from(on), off: Array.from(off), err: gl.getError(), volStats, offStats, baseStats, linear: r.air.volLinear,
+    base: B, glowOn: glow(O), glowOff: glow(F),
   };
 }, { W, H });
 
 writeFileSync(`${outDir}/on.png`, png(result.w, result.h, Uint8Array.from(result.on)));
 writeFileSync(`${outDir}/off.png`, png(result.w, result.h, Uint8Array.from(result.off)));
-console.log(`crate front: marched ${result.frontOn.toFixed(4)} vs analytic ${result.frontOff.toFixed(4)}; floor beside: ${result.besideOn.toFixed(4)} vs ${result.besideOff.toFixed(4)}; stats ${JSON.stringify(result.volStats)} / ${JSON.stringify(result.offStats)}`);
+const g = (x) => x.toFixed(4);
+console.log(`float target: ${result.linear}; base ${JSON.stringify(result.base)}; glow marched ${JSON.stringify(result.glowOn)}; glow closed-form ${JSON.stringify(result.glowOff)}; stats ${JSON.stringify(result.volStats)} / ${JSON.stringify(result.offStats)} / base ${JSON.stringify(result.baseStats)}`);
 check('no GL error', result.err === 0, `${result.err}`);
-check('the glow was marched with the door open, and not with it shut', result.volStats.vol === true && result.offStats.vol === false);
-check('the crate\'s front, its air in the crate\'s own shadow, is DARKER through the march than under the analytic glow (a tenth at least)', result.frontOn < result.frontOff * 0.9, `${result.frontOn.toFixed(4)} vs ${result.frontOff.toFixed(4)}`);
-check('the floor on the eye\'s side, its air lit either way, reads alike within a twentieth (the march sums the closed form\'s own integrand)', Math.abs(result.besideOn - result.besideOff) < 0.05 * result.besideOff, `${result.besideOn.toFixed(4)} vs ${result.besideOff.toFixed(4)}`);
-check('the lit air glows at all', result.besideOff > 0.03, result.besideOff.toFixed(4));
+check('the glow was marched with the door open, not with it shut, not with the pass held', result.volStats.vol === true && result.offStats.vol === false && result.baseStats.vol === false);
+check('the sky above the lantern glows through the march (a ray to the far plane), by more than a byte', result.glowOn.sky > 1 / 255, `${g(result.glowOn.sky)} (the closed form, with no fragment on the sky: ${g(result.glowOff.sky)})`);
+check('the closed form glows on the far floor at all', result.glowOff.far > 0.004, g(result.glowOff.far));
+check('the far floor, its air lit either way: the march\'s glow within a fifth of the closed form\'s (the same integrand over the same chord)', Math.abs(result.glowOn.far - result.glowOff.far) < 0.2 * result.glowOff.far, `${g(result.glowOn.far)} vs ${g(result.glowOff.far)}`);
+check('the crate\'s front, its air in the crate\'s own shadow: the march\'s glow under a third of the closed form\'s', result.glowOff.front > 0.002 && result.glowOn.front < 0.34 * result.glowOff.front, `${g(result.glowOn.front)} vs ${g(result.glowOff.front)}`);
+check('the floor beside the crate, its rays clear of the shadow: alike within a fifth of the glow', Math.abs(result.glowOn.beside - result.glowOff.beside) < 0.2 * Math.max(result.glowOff.beside, 1e-3), `${g(result.glowOn.beside)} vs ${g(result.glowOff.beside)}`);
 if (pageErrors.length) { console.log('pageerrors:', pageErrors.join(' | ')); fails++; }
 await browser.close(); await server.close();
 console.log(fails === 0 ? 'VOLUMETRIC PROBE: ALL GREEN' : `VOLUMETRIC PROBE: ${fails} FAILURE(S)`);

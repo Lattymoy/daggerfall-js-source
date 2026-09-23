@@ -20,7 +20,7 @@
   {
     "name": "ql-all-reason-unsaid",
     "file": "src/systems/quickLoot.js",
-    "old": "    if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal ? ` ${refusal.text}` : ''));",
+    "old": "    if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : ''));",
     "new": "    if (n) say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);",
     "tests": [
       "test/quickloot.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "sc1-one-placement-per-mesh",
     "file": "src/render/shadowPass.js",
-    "old": "      if (inst.length >= SHADOW_INSTANCE_MAX) return true;",
-    "new": "      if (inst.length >= 1) return true;",
+    "old": "      if (inst.length >= SHADOW_INSTANCE_MAX) {",
+    "new": "      if (inst.length >= 1) {",
     "tests": [
       "test/audit_lighting.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "sc1-swing-unseen",
     "file": "src/render/shadowPass.js",
-    "old": "    if (!same) { m.set(matrix); best.at = this.frameNo; }\n    return best.at != null",
-    "new": "    if (!same) { m.set(matrix); }\n    return best.at != null",
+    "old": "    if (!same) { m.set(matrix); s.at = this.frameNo; }\n    return s.at != null",
+    "new": "    if (!same) { m.set(matrix); }\n    return s.at != null",
     "tests": [
       "test/audit_lighting.test.js",
       "test/sc1_shadowcache.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "sc1-dyn-ignored",
     "file": "src/render/shadowPass.js",
-    "old": "      const dyn = b._dyn === true || (windy && b.sway > 0) || (b._shMovedAt != null",
-    "new": "      const dyn = (windy && b.sway > 0) || (b._shMovedAt != null",
+    "old": "      const moving = b._dyn === true || (b._shMovedAt != null",
+    "new": "      const moving = (b._shMovedAt != null",
     "tests": [
       "test/audit_lighting.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "sc1-frame-forgotten",
     "file": "src/render/shadowPass.js",
-    "old": " && b._shFrame === fr)) b._shMovedAt = this.frameNo;",
-    "new": ")) b._shMovedAt = this.frameNo;",
+    "old": " && b._shFrame === fr && b._shRec === rec && b._shFlip === flip)) b._shMovedAt = this.frameNo;",
+    "new": " && b._shRec === rec && b._shFlip === flip)) b._shMovedAt = this.frameNo;",
     "tests": [
       "test/audit_lighting.test.js"
     ]

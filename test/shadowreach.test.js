@@ -13,10 +13,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
-import { SHADOW_CASCADES, SHADOW_SUN_DEPTH, shadowFarFor } from '../src/render/shadowPass.js';
+import { SHADOW_CASCADES, SHADOW_SUN_DEPTH, shadowFarFor, SHADOW_SWAY_STILL, SHADOW_SWAY_EVERY, swayLean } from '../src/render/shadowPass.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+const at = (x, y, z) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1]);
 
 function recordingGl() {
   const calls = [];
@@ -70,6 +71,7 @@ test('SHADOW-REACH: the pass answers for THIS frame\'s casters - a box within a 
   const draw = () => { r.drawMesh(room, I, null); r.drawTerrain(tile, I, {}, {}, 6.4); };
   frame(draw);
   assert.equal(sp.reaches(box(4, 0, 4)), false, 'no caster picked before the first replay: nothing reaches');
+  assert.equal(sp.reaches(box(0, 0, 0)), false, 'AUDIT REACH: nor does a box about the origin (an empty slot sits at the origin with no range - the guard)');
   frame(draw);   // the lantern at the origin, range 10, is this frame's caster
   assert.equal(sp.casters, 1);
   const far = sp.pointParams[3];   // the SHADOW's far - the range quantised up (PERF-FLICKER), which is what the map covers
@@ -80,12 +82,19 @@ test('SHADOW-REACH: the pass answers for THIS frame\'s casters - a box within a 
   assert.equal(sp.reaches(box(d + 0.5, 0, d + 0.5)), true, 'half a unit inside - the corner nearest the light is what is tested');
   assert.equal(sp.reaches(box(30, 0, 30)), false);
   assert.equal(sp.reaches(box(30, 0, 30), -26, 0, -26), true, 'translated to (4, 4): the box where it stands');
+  assert.equal(sp.reaches(box(0, 30, 0)), false, 'thirty up: past the range'); assert.equal(sp.reaches(box(0, 30, 0), 0, -28, 0), true, 'and brought down by the translation');
+  // AUDIT REACH: a lantern is tested against the box's ENCLOSING SPHERE - the cache's signature counts a caster by its
+  // bounding sphere, and a caster in by the sphere and out by the box was recorded on screen and dropped off it
+  const slab = [-10, -0.5, far + 1, 10, 0.5, far + 2];   // a wide wall a unit past the far: its box is out, its enclosing sphere (radius ~10) reaches in
+  assert.equal(sp.reaches(slab), true, 'in by the sphere the signature counts it by');
   assert.equal(r.shadowReach(box(4, 0, 4)), true); assert.equal(r.shadowReach(box(30, 0, 30)), false);
   assert.equal(sp.reachesSphere(far - 1, 0, 0, 1.5), true, 'a sphere touching the range');
   assert.equal(sp.reachesSphere(far + 2, 0, 0, 1.5), false);
   assert.equal(r.shadowReachBatch({ bounds: new Float32Array([0, 0, 0, 1]), origin: [far - 1, 0, 0], size: { w: 1, h: 2 } }), true, 'a batch on the sphere batchVisible builds');
   assert.equal(r.shadowReachBatch({ bounds: new Float32Array([0, 0, 0, 1]), origin: [far + 2, 0, 0], size: { w: 1, h: 2 } }), false);
   assert.equal(r.shadowReachBatch({ origin: [50, 0, 0] }), true, 'a batch with no bounds is drawn by every replay - and so reaches');
+  assert.equal(r.shadowReachBatch({ bounds: new Float32Array([0, 0, 0, 0.5]), origin: [0, -far - 1, 0], size: { w: 1, h: 2 * far + 2 } }), true, 'the sphere is lifted by half the flat\'s height, as batchVisible lifts it (a tall flat rooted far below the lantern)');
+  assert.equal(r.shadowReachBatch({ bounds: new Float32Array([0, 0, 0, 0.5]), origin: [0, -far - 1, 0], size: { w: 1, h: 0.2 } }), false);
   frame(draw, new Float32Array(0));   // no lantern
   assert.equal(sp.reaches(box(4, 0, 4)), false, 'the lantern gone: nothing reaches (the sun is off)');
 });
@@ -106,6 +115,10 @@ test('SHADOW-REACH: the sun\'s cascades reach - a box BEHIND the eye toward the 
   assert.equal(sp.reaches(box(px / pl * 400, 0, pz / pl * 400)), false, 'four hundred across: past every cascade');
   assert.equal(sp.reachesSphere(px / pl * 200, 0, pz / pl * 200, 5), true);
   assert.equal(sp.reachesSphere(px / pl * 400, 0, pz / pl * 400, 5), false);
+  assert.equal(sp.reachesSphere(px / pl * 250, 0, pz / pl * 250, 20), true, 'the radius counts: a sphere centred past the far cascade reaching back in');
+  assert.equal(sp.reachesSphere(px / pl * 250, 0, pz / pl * 250, 1), false);
+  assert.equal(sp.reaches(box(0, 0, 0), px / pl * 200, 0, pz / pl * 200), true, 'a translated box against the sun');
+  assert.equal(sp.reaches(box(0, 0, 0), px / pl * 400, 0, pz / pl * 400), false);
   // the sun moves: the cascades follow it, and so does the reach (the planes are the frame's, not the first frame's)
   const turned = new Float32Array([-lightDir[0], lightDir[1], -lightDir[2]]);
   const frame2 = (L) => { r.setPointLights(new Float32Array(0), new Float32Array([1, 1, 1])); r.beginFrame(I, I, L, WORLD_FRAME); draw(); r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 }); };
@@ -143,29 +156,37 @@ test('SHADOW-REACH: the record-only seams put a caster in the maps and NOTHING o
   });
 });
 
-test('SHADOW-REACH (the sway): a flora batch leaning in the wind is a dynamic while the wind blows - drawn over the cache at the cadence, the cache holding no lean - and still the moment the wind drops; a batch with no sway stands in the cache under any wind (mutants: the lean ignored; the sway ignored)', () => {
+test('SHADOW-REACH (the sway), AUDIT REACH: a flora batch leaning past half a texel is a dynamic ON THE SWAY\'S OWN CADENCE - drawn over the cache every SHADOW_SWAY_EVERY frames, the cache holding no lean - a breeze under the floor is still, a wind along z alone counts, a post never leans, and the wind dropping stills the wood at once; a mover near the same lantern takes the mover\'s cadence (mutants: the lean ignored; the floor dropped; the x rate alone; the sway on the mover\'s cadence)', () => {
   const { r, sp, room, tile, frame } = stand();
+  assert.equal(SHADOW_SWAY_STILL, 0.02); assert.equal(SHADOW_SWAY_EVERY, 4);
+  assert.ok(swayLean(3, 1, 4) > SHADOW_SWAY_STILL && swayLean(0.5, 1, 4) < SHADOW_SWAY_STILL, 'the lean law: a rate of three leans a four-unit tree past the floor, a breeze of half does not');
   const tree = { archive: 201, record: 1, vao: { id: 'vao-tree' }, indexCount: 6, size: { w: 2, h: 4 }, origin: [-3, 0, 1], bounds: new Float32Array([0, 0, 0, 2.3]), sway: 1 };
-  const post = { archive: 201, record: 1, vao: { id: 'vao-post' }, indexCount: 6, size: { w: 0.5, h: 2 }, origin: [3, 0, 1], bounds: new Float32Array([0, 0, 0, 1.1]), sway: 0 };
+  const post = { archive: 201, record: 1, vao: { id: 'vao-post' }, indexCount: 6, size: { w: 0.5, h: 4 }, origin: [3, 0, 1], bounds: new Float32Array([0, 0, 0, 2.1]), sway: 0 };   // as tall as the tree: a lean it does not have would pass the floor
   const draw = () => { r.drawMesh(room, I, null); r.drawTerrain(tile, I, {}, {}, 6.4); r.drawBillboards([tree, post], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])); };
   r.setFlatWind(null);
   frame(draw); let st = frame(draw);
   assert.equal(tree._shDyn, false, 'calm: the tree is still'); assert.equal(post._shDyn, false);
   assert.equal(st.staticFaces, 6); assert.equal(st.dynFaces, 0);
-  r.setFlatWind([3, 1, 12.5, 0.4]);
+  r.setFlatWind([0.5, 0, 12.5, 0.4]);
+  frame(draw); st = frame(draw);
+  assert.equal(tree._shDyn, false, 'a breeze under half a texel: still'); assert.equal(st.dynFaces, 0); assert.equal(st.staticFaces, 0, 'the cache stands');
+  r.setFlatWind([0, 5, 12.5, 0.4]);   // along z alone
   frame(draw);
-  assert.equal(tree._shDyn, true, 'the wind blows: the tree leans, a dynamic'); assert.equal(post._shDyn, false, 'the post has no sway');
+  assert.equal(tree._shDyn, true, 'the wind blows: the tree leans, a dynamic'); assert.equal(tree._shSway, true, 'by its sway alone'); assert.equal(post._shDyn, false, 'the post has no sway');
   st = frame(draw);
   assert.equal(st.staticFaces, 6, 'the cache redrawn once without the tree'); assert.equal(st.dynFaces, 6, 'the tree over it');
-  st = frame(draw);
-  assert.equal(st.staticFaces, 0); assert.equal(st.dynFaces, 6, 'every frame the wind blows (the nearest slot)');
+  const faces = []; for (let f = 0; f < 8; f++) { st = frame(draw); faces.push(st.dynFaces); }
+  assert.equal(faces.reduce((a, b) => a + b, 0), 6 * 2, `the sway\'s own cadence: twice in eight frames (${faces})`);
+  assert.ok(faces.every((v, i) => i === 0 || faces[i - 1] === 0 || v === 0), 'never two frames running');
+  // a mover beside it: the mover\'s cadence, every frame for the nearest slot
+  let x = 0;
+  const walking = () => { draw(); r.drawMesh({ vao: { id: 'vao-crate' }, buffers: [], bounds: new Float32Array([0, 0.5, 0, 0.8]), subMeshes: [{ textureArchive: 1, textureRecord: 1, startIndex: 0, primitiveCount: 2 }] }, at(x += 0.2, 0, 0), null); };
+  frame(walking); frame(walking); frame(walking);
+  const every = []; for (let f = 0; f < 4; f++) { st = frame(walking); every.push(st.dynFaces); }
+  assert.deepEqual(every, [6, 6, 6, 6], 'a mover near: every frame');
   r.setFlatWind(null);
   frame(draw);
   assert.equal(tree._shDyn, false, 'the wind dropped: still again, at once');
-  st = frame(draw);
-  assert.equal(st.staticFaces, 6, 'back into the cache'); assert.equal(st.dynFaces, 0);
-  frame(draw); st = frame(draw);
-  assert.equal(st.pointDraws, 0, 'and nothing');
 });
 
 test('SHADOW-REACH: the hosts ask at every cull gate, by source - world.js (the pixel, its models, the sail, the flat batches, the crowd; the flats recorded after the crowd\'s draw) and exterior.js (the draw list, the sails, the flat batches); no other host culls (mutants: a gate that still only skips)', () => {
@@ -175,7 +196,10 @@ test('SHADOW-REACH: the hosts ask at every cull gate, by source - world.js (the 
   assert.match(w, /if \(off\) renderer\.recordShadowMesh\(m\.gpu, m\._world, p\.texRemap\);[^\n]*\n\s*else renderer\.drawMesh\(m\.gpu, m\._world, p\.texRemap\);/, 'recorded, not drawn');
   assert.match(w, /\} else if \(pixelCasts\) \{\n(?:\s*\/\/[^\n]*\n)*\s*renderer\.recordShadowTerrain\(p\.terrain, pixelMatrix, renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4\);\n\s*if \(p\.staticBatch\) renderer\.recordShadowMesh\(p\.staticBatch, pixelMatrix, null\);/, 'an off-screen pixel in reach: its ground and its merged statics');
   assert.match(w, /else if \(pixelCasts\) renderer\.recordShadowMesh\(millParts\.rotor,/, 'the sail');
-  assert.match(w, /if \(\(pixelVisible \|\| pixelCasts\) && renderer\.shadowReach\(b\._box, t\[0\], t\[1\], t\[2\]\)\) \{ b\.origin = t; castBatches\.push\(b\); \}/, 'a flat batch');
+  assert.match(w, /if \(pixelVisible \|\| pixelCasts\) for \(const b of p\.batches\) \{\n\s*const off = !pixelVisible \|\| \(cullOn && aabbOutside\(_planes, b\._box, t\[0\], t\[1\], t\[2\]\)\);[^\n]*\n\s*if \(off && !renderer\.shadowReach\(b\._box, t\[0\], t\[1\], t\[2\]\)\) continue;[^\n]*\n\s*if \(!farFlatVisible\([^\n]*\n\s*b\.origin = t;\n\s*\(off \? castBatches : allBatches\)\.push\(b\);/, 'a flat batch (AUDIT REACH: a pixel neither seen nor reached walks none)');
+  assert.match(w, /if \(cullOn && billboardOutside\(b\)\) \{ if \(renderer\.shadowReachBatch\(b\)\) castBatches\.push\(b\); continue; \}/, 'a peer (AUDIT REACH)');
+  assert.match(w, /\} else if \(pixelCasts\) \{[\s\S]{0,700}?for \(const m of p\.models\) \{\n\s*if \(m\._batched \|\| !renderer\.shadowReach\(m\._box, t\[0\], t\[1\], t\[2\]\)\) continue;[\s\S]{0,300}?renderer\.recordShadowMesh\(m\.gpu, m\._world, p\.texRemap\);/, 'an off-screen pixel in reach: its odd models, each by its own reach');
+  assert.match(rd('src/render/renderer.js'), /recordShadowBillboards\(batches, camRight, camUp\) \{ if \(this\._casting && batches\?\.length\) this\._shadows\.recordBillboards\(batches, this\._flatWind, camRight, camUp\); \}/, 'the seam records with the FRAME\'s wind (an off-screen wood casts a sun shadow that leans as the wood does)');
   assert.match(w, /else if \(renderer\.shadowReachBatch\(b\)\) castBatches\.push\(b\);/, 'a townsman');
   assert.match(w, /renderer\.drawBillboards\(livePersonBatches, camRight, UP_Y\);\n\s*if \(castBatches\.length\) renderer\.recordShadowBillboards\(castBatches, camRight, UP_Y\);/, 'recorded after the crowd, on the frame\'s wind');
   const e = rd('src/scenes/exterior.js');

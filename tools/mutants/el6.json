@@ -101,8 +101,8 @@
   {
     "name": "images-before-resolve",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) this._images();\n    gl.disable(gl.BLEND);",
-    "new": "    gl.disable(gl.BLEND);",
+    "old": "    if (this.f && this.fresh) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n    gl.disable(gl.BLEND);",
+    "new": "    this._blank(quad); this.measured = false;\n    this.fresh = false;\n    gl.disable(gl.BLEND);",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "prepare-draws-nothing-broken",
     "file": "src/render/airPass.js",
-    "old": "    this.f = f;\n    this.rect.set(f.viewport);",
-    "new": "    this.f = null;\n    this.rect.set(f.viewport);",
+    "old": "    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);",
+    "new": "    this.f = null;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);",
     "tests": [
       "test/el3_air.test.js"
     ]

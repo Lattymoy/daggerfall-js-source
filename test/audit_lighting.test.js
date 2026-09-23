@@ -70,7 +70,7 @@ const bb = (extra = {}) => ({ archive: 201, record: 1, vao: { id: 'vao-bb' }, in
 
 test('AUDIT SC1: ONE MESH AT TWO PLACES - two doors of one model are both still (each draw matched to the remembered placement nearest it), and when one swings it is the dynamic alone: the cache is redrawn once without it and the other door stays in the cache (mutants: one placement per mesh, so the second door is dynamic; the swing unseen)', () => {
   const { r, sp, room, door, tile, frame } = stand();
-  assert.equal(SHADOW_INSTANCE_MAX, 64); assert.equal(SHADOW_INSTANCE_REACH, 2); assert.equal(SHADOW_STILL_EPS, 1e-3);
+  assert.equal(SHADOW_INSTANCE_MAX, 128); assert.equal(SHADOW_INSTANCE_REACH, 2); assert.equal(SHADOW_STILL_EPS, 1e-3);   // AUDIT REACH: 128, with a stale placement evicted
   let ax = 3;
   const draw = () => { r.drawMesh(room, I, null); r.drawTerrain(tile, I, {}, {}, 6.4); r.drawMesh(door, at(ax, 0, 0), null); r.drawMesh(door, at(-3, 0, 0), null); };
   frame(draw);

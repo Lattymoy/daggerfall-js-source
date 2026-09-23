@@ -87,23 +87,15 @@ export const EL_WHITE = 4;
  *  ray in Better Ambience's dungeon fog (linear, 0..~40 units) reads as a
  *  soft halo, not a searchlight. */
 export const EL_SCATTER = 0.35;
-/** BOUNCE1 (2026-09-23, Mac: "Continue" - the second arc's last step): THE LANTERN'S BOUNCE. A lantern's light
- *  lands mostly on the floor and the walls about it and comes back diffusely, so nothing near a lantern is pitch
- *  black on the side that faces away, and a ceiling over a lamp is warm. One bounce, unshadowed (it comes from all
- *  about), as this share of the light's own attenuated colour, weighted by how much a surface faces the lit ground
- *  (a ceiling most, a wall half, a floor least - it faces the ceiling, which is lit least). */
-export const EL_BOUNCE = 0.18;
-/** BOUNCE1: the bounce is read a reach OFF the surface - the lantern's shadow at the point a bounce-length along the
- *  normal, through its cube map. Unshadowed, a lantern in the next room bounced light onto this room's wall (the
- *  lighting probe read the wall between the eye and lantern A a third brighter); shadowed AT the surface, the bounce
- *  could fill no shadow, which is what it is for. A reach off: a wall between rooms is still in the lantern's shadow
- *  there (dark), a pillar's back a reach behind a thin pillar is not (filled), a ceiling a reach under itself over a
- *  lamp is lit (warm). A lantern with no map (past the eight) bounces unshadowed, as its direct light is unshadowed. */
-export const EL_BOUNCE_REACH = 1.5;
-/** BOUNCE1: `?bounce=off` - the door, for the eye's A/B. */
-export function bounceOn(search = globalThis.location?.search ?? '') {
-  return new URLSearchParams(search).get('bounce') !== 'off';
-}
+// BOUNCE1 (2026-09-23), WITHDRAWN THE SAME DAY BY ITS AUDIT. A per-lantern bounce - a share of the light's attenuated
+// colour weighted by facing the ground - was tried two ways and neither is sound: unshadowed it leaks through walls
+// (a lantern in the next room bounced onto this room's wall, and every lantern past the eight casters has no map to
+// shadow it by, so walls popped as lanterns took and lost their slots); shadowed by the lantern's cube map, a reach
+// off the surface or at it, it fills nothing it was meant to fill (a pillar's flat back is deeper in the umbra a reach
+// off, a wall between rooms is dark either way) and adds only where the light already lands. A bounce needs
+// VISIBILITY FROM THE BOUNCE SOURCE - the lit floor - which a lantern's own map does not hold; that is a reflective
+// shadow map (a colour and a normal beside the depth in the cube pass), its own step. Until then the fill is the
+// lane's own: the trilight's ground and sky terms.
 /** VOL1: `?volumetrics=off` - the lanterns' glow marched through their shadows (airPass.js VOL_FS) or the lane's
  *  own analytic glow per fragment, as before. */
 export function volumetricsOn(search = globalThis.location?.search ?? '') {
@@ -263,10 +255,18 @@ vec3 elTonemapRGB(vec3 c) {
 export const EL_SCATTER_GLSL = `
 // the single-scattering integral (elScatter in enhancedLighting.js), for
 // one light at L (relative to the eye) along the unit ray dir to dist
+// AUDIT VOL1: over the ray's CHORD through the light's sphere, not a slab of the range either side of the closest
+// point - a ray that misses the sphere glowed a little from air the light never reaches, and the march (which sums
+// this integrand) walked its eight steps across every such slab
 float elScatter(vec3 L, float range, vec3 dir, float dist) {
   float t0 = dot(L, dir);
-  float h = max(length(L - dir * t0), 0.25);
-  float ta = max(0.0, t0 - range), tb = min(dist, t0 + range);
+  vec3 hv = L - dir * t0;
+  float h2 = dot(hv, hv);
+  float chord = range * range - h2;
+  if (chord <= 0.0) return 0.0;
+  chord = sqrt(chord);
+  float h = max(sqrt(h2), 0.25);
+  float ta = max(0.0, t0 - chord), tb = min(dist, t0 + chord);
   if (tb <= ta) return 0.0;
   return (atan((tb - t0) / h) - atan((ta - t0) / h)) / h;
 }
@@ -274,7 +274,6 @@ float elScatter(vec3 L, float range, vec3 dir, float dist) {
 export const EL_GLSL = `
 uniform float uELExposure;   // EL1: scene exposure before the tonemap
 uniform float uELScatter;    // EL1: in-scatter gain x the fog's density (0 = no fog, no glow; VOL1: 0 on a world frame the air pass glows for)
-uniform float uELBounce;     // BOUNCE1: the share of a lantern's light that comes back off the ground (0 behind the door)
 uniform vec3 uFogColorLin;   // PERF-FOG: the fog colour ALREADY DECODED - see elFinish
 ${BAYER_GLSL}
 ${AIR_ADAPT_GLSL}
@@ -384,11 +383,8 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
     vec3 V = normalize(uCamPos - wp);
     vec3 H = normalize(Ln + V);
     float spec = pow(max(dot(n, H), 0.0), ${EL_SPEC_GLOSS}.0) * ${EL_SPEC_STRENGTH};
-    float attOpen = elAttenuation(d, uPointLights[i].w);
-    float att = sh * attOpen;
+    float att = sh * elAttenuation(d, uPointLights[i].w);
     acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];
-    float bsh = k >= 0 ? pointShadowOne(k, wp + n * ${glslFloat(EL_BOUNCE_REACH)}) : 1.0;   // BOUNCE1: the lantern's shadow a reach off the surface (a wall between rooms stays dark; a pillar's back fills)
-    acc += uELBounce * bsh * attOpen * (0.5 - 0.5 * n.y) * uPointColors[i];   // BOUNCE1: what came back off the ground - most on what faces down
     if (wet > 0.0) {
       float g = pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0);
       if (g > 0.0) glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];   // AUDIT BLOOD3 F5: this light's own angle, beside this light's own lobe
@@ -411,8 +407,7 @@ vec3 elPointFlat(vec3 wp, vec3 base) {
     float d = length(uPointLights[i].xyz - wp);
     if (d >= uPointLights[i].w) continue;   // EL5
     float sh = shadowOfLight(i, base, vec3(0.0, 1.0, 0.0));   // EL2; EL5: any caster's
-    float attOpen = elAttenuation(d, uPointLights[i].w);
-    acc += sh * (1.0 + uELBounce * 0.5) * attOpen * uPointColors[i];   // BOUNCE1: a flat stands upright - a wall's half share, through its base's own shadow (one value for the whole sprite)
+    acc += sh * elAttenuation(d, uPointLights[i].w) * uPointColors[i];
   }
   return acc;
 }
@@ -1055,7 +1050,6 @@ export const EL_LANE = Object.freeze({
   decodeN: elDecodeN,
   scatterDensity: elScatterDensity,
   scatter: EL_SCATTER,
-  bounce: EL_BOUNCE,   // BOUNCE1
   tonemapGlsl: EL_TONEMAP_GLSL, scatterGlsl: EL_SCATTER_GLSL,   // VOL1: the air pass's glow tonemaps and integrates as the lane does, without importing it (it is a leaf)
 });
 
@@ -1066,7 +1060,7 @@ export const EL_LANE = Object.freeze({
 export function syncLightingLane(renderer, search = globalThis.location?.search ?? '') {
   const on = enhancedLightingOn(search);
   renderer.setLightingLane(on ? EL_LANE : null);
-  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); renderer.setBounce?.(bounceOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's; VOL1/BOUNCE1
+  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's; VOL1: the glow's
   return on;
 }
 

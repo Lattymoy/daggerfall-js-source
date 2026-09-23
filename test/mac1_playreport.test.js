@@ -207,8 +207,8 @@ test('MAC1 D: the far rings draw the trees and the flats that move, and nothing 
   // batch's own height and the animator's frame as the "moves" bit
   const w = src('src/scenes/world.js');
   assert.match(w, /import \{ farFlatVisible \} from '\.\.\/world\/flatDistance\.js'/);
-  assert.match(w, /const ring = Math\.max\(Math\.abs\(p\.px - state\.current\.x\), Math\.abs\(p\.py - state\.current\.y\)\);\s*\n\s*for \(const b of p\.batches\) \{\s*\n\s*if \(!farFlatVisible\(\{ ring, height: b\.size\?\.h \?\? 0, animated: b\.frame != null \}\)\) continue;[^\n]*\n[^\n]*EV3/,
-    'the ring is Chebyshev from the player\'s pixel and the rule runs BEFORE the frustum test (SHADOW-REACH: a far flat the rule drops casts nothing either, so the frustum gate, which now asks the shadows for what it rejects, never sees it)');
+  assert.match(w, /const ring = Math\.max\(Math\.abs\(p\.px - state\.current\.x\), Math\.abs\(p\.py - state\.current\.y\)\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(pixelVisible \|\| pixelCasts\) for \(const b of p\.batches\) \{\s*\n\s*const off = [^\n]*EV3\s*\n\s*if \(off && !renderer\.shadowReach\(b\._box, t\[0\], t\[1\], t\[2\]\)\) continue;[^\n]*\n\s*if \(!farFlatVisible\(\{ ring, height: b\.size\?\.h \?\? 0, animated: b\.frame != null \}\)\) continue;/,
+    'the ring is Chebyshev from the player\'s pixel and the rule runs after the frustum test and the reach (AUDIT REACH: a pixel neither seen nor reached walks no batch at all, and the rule is asked only of a batch the frame or a shadow can keep)');
 });
 
 // ── H ────────────────────────────────────────────────────────────

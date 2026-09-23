@@ -12225,9 +12225,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     //
     // A culled peer casts no shadow while it is off screen - which is
     // exactly what the world's own flats have done since EV3, since the
-    // shadow pass reads the list this builds.
+    // shadow pass reads the list this builds. AUDIT REACH: unless a shadow
+    // reaches him - then he goes to the casters' list, as every other flat.
     if (remotePlayers) for (const b of remotePlayers.batches()) {   // ONLINE1: the others, at their feet
-      if (cullOn && billboardOutside(b)) continue;
+      if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; }   // AUDIT REACH
       allBatches.push(b);
     }
     // NEAR-FIRST (2026-09-21): THE PIXELS ARE WALKED NEAREST FIRST. The
@@ -12347,14 +12348,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // flats that move, and nothing else. Facing costs nothing here (a
       // uniform per pass), so a far flat that draws still turns.
       const ring = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
-      for (const b of p.batches) {
+      // AUDIT REACH: a pixel neither seen nor reached has nothing to walk (the first cut asked the far-flat rule, an
+      // object a batch, of every batch of every streamed pixel); the rule runs after the cull again, for the batches it can keep
+      if (pixelVisible || pixelCasts) for (const b of p.batches) {
+        const off = !pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]));   // EV3
+        if (off && !renderer.shadowReach(b._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen and out of every shadow's reach
         if (!farFlatVisible({ ring, height: b.size?.h ?? 0, animated: b.frame != null })) continue;   // MAC1 (a far flat the rule drops casts nothing either)
-        if (!pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]))) {   // EV3
-          if ((pixelVisible || pixelCasts) && renderer.shadowReach(b._box, t[0], t[1], t[2])) { b.origin = t; castBatches.push(b); }   // SHADOW-REACH
-          continue;
-        }
         b.origin = t;
-        allBatches.push(b);
+        (off ? castBatches : allBatches).push(b);   // SHADOW-REACH: the maps alone, or the frame
       }
     }
     // GROUND-LAST: the ground of every visible pixel, after every opaque

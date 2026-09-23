@@ -1761,7 +1761,7 @@ export class Renderer {
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
       /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object }} */
-      const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter'), gl.getUniformLocation(p, 'uELBounce')];   // BOUNCE1: the third
+      const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'),
         pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
@@ -1848,12 +1848,12 @@ export class Renderer {
   setContact(on) { this._contactWanted = !!on; }
   /** VOL1: the lanterns' glow marched through their shadows by the air pass (`?volumetrics=off` restores the lane's analytic glow per fragment). */
   setVolumetrics(on) { this._volumetricsWanted = !!on; if (this._airPass) this._airPass.volOn = this._volumetricsWanted; }
-  /** BOUNCE1: the lanterns' bounce off the ground (`?bounce=off`). */
-  setBounce(on) { this._bounceWanted = !!on; }
   /** EL1: the in-scatter gain folded with the fog's density (zero with the fog off, so clear air glows nowhere). */
   _scatterGain() { const lane = this._lane; return lane ? lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]) : 0; }
-  /** VOL1: does the air pass draw this frame's glow - a world frame with the pass on and the door open. */
-  _airGlows() { return !!this._air && this._volumetricsWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved; }
+  /** VOL1: does the air pass draw this frame's glow - a world frame the pass was prepared for and has not yet resolved
+   *  (AUDIT VOL1: `fresh` - a frame that is not the world's, the water lab's say, and a world draw after the resolve keep
+   *  the lane's own glow), with the door open, outside a sprite pass, a bake and a panel. */
+  _airGlows() { return !!this._air && this._air.fresh && this._volumetricsWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved; }
   /** LC1: the clustered loop's door - `?clusters=off` walks every light in every fragment (syncLightingLane reads it). */
   setClusters(on) { this._clustersWanted = !!on; }
   /** SC1: the static shadow cache's door - `?shadowcache=off` replays every caster at the cadence, as before (syncLightingLane reads it). */
@@ -1971,13 +1971,12 @@ export class Renderer {
   _uploadEl(key) {
     const lane = this._lane;
     if (!lane) return;
-    const gl = this.gl, [expLoc, scLoc, bLoc] = this._el[key];
+    const gl = this.gl, [expLoc, scLoc] = this._el[key];
     gl.uniform1f(expLoc, this._exposure);
     // VOL1: on a WORLD frame the air pass glows for the lanterns (marched through their shadows, at the resolve), so the
     // lane's own analytic glow is 0 there - and stands where the air pass draws nothing (a panel, a sprite pass, a
     // bake, the door shut): the same gate the contact block and the grid take
     gl.uniform1f(scLoc, this._airGlows() ? 0 : this._scatterGain());
-    if (bLoc != null) gl.uniform1f(bLoc, this._bounceWanted === false ? 0 : (lane.bounce ?? 0));   // BOUNCE1
     if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
     this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)
     // EL8: the contact block - the previous frame's depth, for a WORLD frame's own draws alone (a sprite pass, a bake or a panel is another view: the march would read a stranger's depth)
@@ -2112,7 +2111,7 @@ export class Renderer {
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
     // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of
-    // the seven - never said so. `composite()` binds units 0..3 and
+    // the seven - never said so. `composite()` binds units 0..4 (VOL1: the glow on 4) and
     // leaves its own unit selected, exactly what `markForeignPass`
     // exists for; the first screen quad after it found `_activeUnit`
     // still claiming TEXTURE0 and `_tex0Bound` still naming the sprite
@@ -2205,7 +2204,7 @@ export class Renderer {
    *  unsheathing, it spawns a weird water texture"). This block was
    *  COPIED at five seams and the sixth - `_compositeAir`, which runs
    *  the air pass and is as foreign as anything gets - was never given
-   *  one. `airPass.composite()` binds units 0..4 (VOL1) and leaves unit 4
+   *  one. `airPass.composite()` binds units 0..4 (VOL1: the glow on 4) and ends on TEXTURE0, not
    *  selected, so the first screen quad after a resolve found
    *  `_activeUnit` still claiming TEXTURE0 and `_tex0Bound` still
    *  naming the sprite it wanted: it skipped the bind, or bound to unit

@@ -146,7 +146,7 @@ test('EL5: every lane shader takes any caster\'s shadow through shadowOfLight, a
     assert.ok(!/uShadowIndex \?/.test(fs), `${name}: no single-index compare left`);
   }
   assert.match(EL_BB_FS, /float d = length\(uPointLights\[i\]\.xyz - wp\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    float sh = shadowOfLight\(i, base, vec3\(0\.0, 1\.0, 0\.0\)\);/);
-  assert.match(EL_BB_FS, /float attOpen = elAttenuation\(d, uPointLights\[i\]\.w\);\n    acc \+= sh \* \(1\.0 \+ uELBounce \* 0\.5\) \* attOpen \* uPointColors\[i\];/, 'the flat reuses the distance it tested (BOUNCE1: and takes a wall\'s half share of the bounce through its base\'s shadow)');
+  assert.match(EL_BB_FS, /acc \+= sh \* elAttenuation\(d, uPointLights\[i\]\.w\) \* uPointColors\[i\];/, 'the flat reuses the distance it tested');
 });
 
 test('EL5: the renderer\'s bundles carry bounds - a mesh and each sub-mesh, a terrain surface, a billboard batch about its origin', () => {

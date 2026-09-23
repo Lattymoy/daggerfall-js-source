@@ -267,7 +267,7 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
     }
     // AUDIT QL-WEIGHT1: a count with rows LEFT says why they stayed, on the same line - "You take 2 items." over a
     // pile that still holds three read as a door that stuck, with the reason unsaid
-    if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal ? ` ${refusal.text}` : ''));
+    if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : ''));   // AUDIT: a refusal with no line (none the loop can meet today) adds nothing
     else if (refusal) { say(refusal.text); return QUICK_LOOT_REFUSED; }
     return n ? items : null;
   }
