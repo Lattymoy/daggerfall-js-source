@@ -53,7 +53,7 @@ import {
   FOLLOWING_TEAM_EMERGENCY_SEPARATION, WAGON_INVENTORY_DISTANCE, DEFAULT_HORSE_FOLLOW_DISTANCE, DEFAULT_INTERIOR_ACCESS_DISTANCE, HORSE_DISMOUNT_REAR_OFFSET,
   HITCHED_HORSE_LOCAL_X, HITCHED_HORSE_LOCAL_Z, ACTIVATION_REACH, WAGON_SAVE_VERSION, TOO_FAR_SECONDS, STATIONARY_PROBE_HEIGHT, STATIONARY_PROBE_DISTANCE,
   GROUND_RETRY_SECONDS, POSE_POSITION_TOLERANCE_SQ, POSE_ANGLE_TOLERANCE_DEG, signedLongitudinalTravel, wheelRotationDegrees, wrapWheelAngle, cargoTier,
-  stepHorseWalk, freshHorseWalk,
+  stepHorseWalk, freshHorseWalk, hccActionRows,   // ACT-MENU: the plaque's rows over my three activators
 } from './horseCartLaw.js';
 import { HorseFollowPath, HorseFollowController, WagonTrail, groundedPoseStep, tryFindGround } from './horseFollow.js';
 import { quatLookRotation, quatForward, quatFromBasis, quatRotate, UNITY_QUAT_IDENTITY } from '../world/quat.js';
@@ -893,13 +893,15 @@ export function createHorseCartRuntime(deps) {
   function closeHorseNameInput() { if (!horseNameInputBox) return; const box = horseNameInputBox; horseNameInputBox = null; box.close?.(); }
 
   // ── the activations [IL_8828-IL_8bfb]
-  function handleDeployedWagonActivation(distance) {
+  // ACT-MENU: `mode` is the plaque row's (horseCartLaw.js hccActionRows) when the player chose a verb there, else the
+  // interaction mode the mod has always read - so the one handler serves both doors and says the same refusals.
+  function handleDeployedWagonActivation(distance, mode = null) {
     if (!physicalPersistenceEnabled) return false;
     if (!ready() || wagonState.Mode !== WAGON_MODE.Deployed || !deployedVisual) return false;
     if (distance > ACTIVATION_REACH) { tooFar(); return true; }
     if (!tm().hasCart()) { say(HCC_TEXT.noLongerOwnWagon); return true; }
     if (pee().isPlayerInside()) return true;
-    if (deps.activateMode() === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }
+    if ((mode ?? deps.activateMode()) === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }
     if (!tm().hasHorse()) { say(HCC_TEXT.needHorseToPull); return true; }
     if (isHorseFollowing()) {
       if (!isHorseCloseEnoughToHitch()) { say(`${horseSubject(true)} is too far from the wagon to hitch.`); return true; }
@@ -910,25 +912,25 @@ export function createHorseCartRuntime(deps) {
     hitchDeployedWagon();
     return true;
   }
-  function handleFollowingWagonActivation(distance) {
+  function handleFollowingWagonActivation(distance, mode = null) {
     if (!physicalPersistenceEnabled) return false;
     if (!ready() || !isTeamFollowing() || !wagonVisual?.interaction) return false;
     if (distance > ACTIVATION_REACH) { tooFar(); return true; }
     if (!tm().hasCart() || !tm().hasHorse()) { say(HCC_TEXT.noLongerOwnTeam); return true; }
-    if (deps.activateMode() === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }
+    if ((mode ?? deps.activateMode()) === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }
     if (!canMountNearbyDeployedCart()) { say(`${horseAndWagonSubject(true)} must both be close enough.`); return true; }
     hitchDeployedWagon();
     return true;
   }
-  function handleStationaryHorseActivation(distance) {
+  function handleStationaryHorseActivation(distance, mode = null) {
     if (!physicalPersistenceEnabled) return false;
     if (!ready() || !stationaryHorseVisual) return false;
     if (distance > ACTIVATION_REACH) { tooFar(); return true; }
     if (!tm().hasHorse()) { say(HCC_TEXT.noLongerOwnHorse); return true; }
     if (pee().isPlayerInside()) return true;
-    const mode = deps.activateMode();
-    if (isHorseNamingMode(mode)) { openHorseNamePrompt(); return true; }
-    const decision = resolveHorseActivation(wagonState.Mode, wagonState.HorseMode, tm().hasCart(), isHorseCommandMode(mode));
+    const activate = mode ?? deps.activateMode();
+    if (isHorseNamingMode(activate)) { openHorseNamePrompt(); return true; }
+    const decision = resolveHorseActivation(wagonState.Mode, wagonState.HorseMode, tm().hasCart(), isHorseCommandMode(activate));
     switch (decision) {
       case HORSE_ACTIVATION.Follow: startFollowingHorse(); return true;
       case HORSE_ACTIVATION.Wait: stopFollowingHorse(); return true;
@@ -937,6 +939,11 @@ export function createHorseCartRuntime(deps) {
       case HORSE_ACTIVATION.Ride: beginRidingHorse(); return true;
       default: say(`This is ${horseObject()}.`); return true;
     }
+  }
+  /** ACT-MENU: the plaque's rows over one of my three activators (hccActionRows), off the state the press will read. */
+  function actionRows(target) {
+    if (!physicalPersistenceEnabled || !ready()) return [];
+    return hccActionRows(target, { wagonMode: wagonState.Mode, horseMode: wagonState.HorseMode, ownsCart: tm().hasCart() });
   }
   function startFollowingHorse() {
     const pose = stationaryHorseVisual?.tryGetGroundedPose();
@@ -1261,7 +1268,7 @@ export function createHorseCartRuntime(deps) {
     handleHorseTransportButton: () => { tryUseTransport(TRANSPORT.Horse); }, handleCartTransportButton: () => { tryUseTransport(TRANSPORT.Cart); },
     handleQuickMountOrDismount, handleSummonTransport,
     canAccessWagonStorage, canAccessWagonInventory, canAccessWagonFromDungeonExit, consumeWagonSelectionRequest,
-    handleDeployedWagonActivation, handleFollowingWagonActivation, handleStationaryHorseActivation, openHorseNamePrompt,
+    handleDeployedWagonActivation, handleFollowingWagonActivation, handleStationaryHorseActivation, openHorseNamePrompt, actionRows,
     ownsStationaryHorseActivator,
     get physicalPersistenceEnabled() { return physicalPersistenceEnabled; },
     get horseName() { return horseName(); }, get hasHorseName() { return hasHorseName(); }, get horseTargetLabel() { return horseTargetLabel(wagonState.HorseName); },

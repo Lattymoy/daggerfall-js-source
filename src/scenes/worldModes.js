@@ -4586,7 +4586,7 @@ export function createWorldModes(host) {
    * the next line - so the sixth mode turns the suite red rather than
    * leaking a street.
    */
-  const setMode = (next) => { dropDoorCache(); mode = next; };
+  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };
   function exteriorDoorTargets() {
     const gen = doorGeneration?.();
     if (gen !== undefined && _doorCache && _doorCache.gen === gen) return _doorCache;
@@ -5521,7 +5521,7 @@ export function createWorldModes(host) {
     return +tMin.toFixed(2);
   }
 
-  function tryExit() {
+  function tryExit({ pressCast = false } = {}) {
     const eye = player.eye;
     const dir = eyeDir();
     // QG1, AUDIT 58: the quest-resource click arm, which this ray was
@@ -5563,6 +5563,10 @@ export function createWorldModes(host) {
       // door walked the player out. The host says which tap it was.
       if (host.activateLockOnly?.()) return false;
     }
+    // ACT-MENU (AUDIT DISC7 A11): a player the plaque lit a verb on takes the press here - after QG1's quest click,
+    // which does not consume, and the tap's lock, as the street's ladder orders them - never on a press that cast
+    // (A1: a touch heal on a party mate is the heal alone). The host re-picks them on this ray (A9) and walls block it.
+    if (!pressCast && host.plaquePeerAct?.(eye, dir)) return true;
     // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841),
     // the arm this ladder never had - a LIVING foe under the ray was
     // not an activation target in any host. The NEAR call is decided
@@ -6287,7 +6291,7 @@ export function createWorldModes(host) {
     return tryEnterDungeon(hit, entries, { preferEnterMarker: true });
   }
 
-  function tryExitDungeon() {
+  function tryExitDungeon({ pressCast = false } = {}) {
     const eye = player.eye;
     const dir = eyeDir();
     // QG1: the quest-resource click arm runs FIRST and does not
@@ -6307,6 +6311,9 @@ export function createWorldModes(host) {
       if (f) { host.lockToggle?.(f); return true; }
       if (host.activateLockOnly?.()) return false;   // TS1: the stick-half tap opens nothing (tryExit's note)
     }
+    // ACT-MENU (AUDIT DISC7 A11): the player the plaque lit - tryExit's arm, in the same place
+    if (!pressCast && host.plaquePeerAct?.(eye, dir)) return true;
+
     // AUDIT 63 F33: ActivateMobileEnemy (PlayerActivate.cs:800-841),
     // the arm this ladder never had - a LIVING foe under the ray was
     // not an activation target in any host. The NEAR call is decided
@@ -6891,7 +6898,7 @@ export function createWorldModes(host) {
       isHeld: (a) => held(keys, a), blocked: overlayHeld, entity: playerEntity,
       onTap: (slot) => (slot === 'spell' ? interiorKeyCtx.quickSpell() : interiorKeyCtx.quickUse(slot === 'c1' ? 1 : 2)),
     });
-    if ((_act.activate || useEdge) && !overlayHeld) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
+    if ((_act.activate || useEdge) && !overlayHeld) (mode === 'dungeon' ? tryExitDungeon : tryExit)({ pressCast: _act.pressCast });   // AUDIT DISC7 A1: whether the press was a cast (a touch spell's release)
     // A successful exit destroyed the modal context and flipped the
     // mode - the render below must NOT run against it. This frame is
     // the transition's; the host resumes next frame. (Root cause of
@@ -7110,7 +7117,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:8494's own wave-46 note); the interior
+          // a blow (world.js:8504's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9598,7 +9605,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3263-3285), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5703). So an F9 pressed in a shop
+     *  unconditionally (world.js:5713). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9632,7 +9639,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5796)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5806)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9642,7 +9649,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5942`
+     *  HARD2c: this used to spell them out, and named `world.js:5952`
      *  and `dungeonContext.js:6250` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

@@ -2,8 +2,8 @@
   {
     "name": "QUICK-LOOT-the-fold-does-not-clamp-to-the-last-row",
     "file": "src/systems/worldHover.js",
-    "old": "  return { key: frame.key, row: Math.max(0, Math.min(rows - 1, row)) };",
-    "new": "  return { key: frame.key, row };",
+    "old": "    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
+    "new": "    row = Math.max(floor, (at >= 0 ? at : prev.row) + d);",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QUICK-LOOT-the-fold-wraps-instead-of-stopping",
     "file": "src/systems/worldHover.js",
-    "old": "  return { key: frame.key, row: Math.max(0, Math.min(rows - 1, row)) };",
-    "new": "  return { key: frame.key, row: ((row % rows) + rows) % rows };",
+    "old": "    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
+    "new": "    row = ((((at >= 0 ? at : prev.row) + d) % rows) + rows) % rows;",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "QUICK-LOOT-a-new-container-inherits-the-old-row",
     "file": "src/systems/worldHover.js",
-    "old": "  const row = prev && prev.key === frame.key ? prev.row + d : 0;",
-    "new": "  const row = prev ? prev.row + d : 0;",
+    "old": "  if (prev && prev.key === frame.key) {\n    const at = prev.id",
+    "new": "  if (prev) {\n    const at = prev.id",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -113,7 +113,7 @@
   {
     "name": "QUICK-LOOT-the-wheel-is-eaten-with-nothing-listed",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!_sel || !clicks || !quickLootOn()) return false;",
+    "old": "  if (!_sel || !clicks || !(_actionIds || quickLootOn())) return false;",
     "new": "  if (!clicks) return false;",
     "tests": [
       "test/quickloot.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "QUICK-LOOT-the-nudge-is-never-spent",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;\n  _nudge = 0;",
-    "new": "  _sel = quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _lastKey = _sel ? frame.key : null;\n  _nudge = 0;",
+    "new": "  _lastKey = _sel ? frame.key : null;",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -131,7 +131,7 @@
   {
     "name": "QUICK-LOOT-the-switch-off-leaves-a-highlight-standing",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
     "new": "  _sel = nextSelection(_sel, frame, _nudge);",
     "tests": [
       "test/quickloot.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "QUICK-LOOT-a-key-arms-with-nothing-highlighted",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!quickLootOn() || !_sel) return false;",
-    "new": "  if (!quickLootOn()) return false;",
+    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false;",
+    "new": "  if (!quickLootOn() || _actionIds) return false;",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "QUICK-LOOT-the-take-reads-the-highlight-of-another-container",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!_sel || _sel.key !== key) return null;",
-    "new": "  if (!_sel) return null;",
+    "old": "  if (!_sel || _actionIds || _sel.key !== key) return null;",
+    "new": "  if (!_sel || _actionIds) return null;",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "QUICK-LOOT-the-draw-lights-no-row",
     "file": "src/ui/worldPlaque.js",
-    "old": "    if (i === sel) row.classList.add('sel');",
-    "new": "    ;",
+    "old": "    if (i === sel) row.classList.add('sel');\n    if (r.rarity)",
+    "new": "    ;\n    if (r.rarity)",
     "tests": [
       "test/worldhover.test.js"
     ]

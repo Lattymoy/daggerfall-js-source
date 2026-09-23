@@ -230,7 +230,7 @@ test('AUDIT-EL F16/F18/F19: the eye measures the scene with itself divided out o
   const a = read('src/render/airPass.js');
   assert.match(a, /acc \+= log2\(max\(dot\(c, vec3\(0\.2126, 0\.7152, 0\.0722\)\) \/ prev, 1e-9\)\);/, 'F16: divided by the eye');
   assert.match(a, /for \(int y = 0; y < 4; y\+\+\) \{\n\s+for \(int x = 0; x < 4; x\+\+\) \{/, 'F16: sixteen taps per texel');
-  assert.match(a, /if \(!\(w > 0 && h > 0\)\) \{ this\.f = null; return; \}   \/\/ AUDIT-EL F18/);
+  assert.match(a, /if \(!\(w > 0 && h > 0\)\) \{ this\.f = null; this\.prevValid = false; return; \}   \/\/ AUDIT-EL F18/);
   assert.match(a, /if \(!\(W > 0 && H > 0\)\) return null;   \/\/ AUDIT-EL F18/);
   assert.match(read('src/render/renderer.js'), /this\._restoreWorldViewport\(\);\n\s+this\.markForeignPass\(\);   \/\/ AUDIT-EL F19/);
   // a zero-size world viewport at beginFrame draws nothing and binds no frame
