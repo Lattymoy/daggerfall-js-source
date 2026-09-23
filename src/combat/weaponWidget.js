@@ -672,9 +672,18 @@ export function createWeaponWidget({
       w.scale = [w.scale[0] + i.scale[0], w.scale[1] + i.scale[1]];
       w.position = [w.position[0] + i.delta[0], w.position[1] + i.delta[1]];
     }
-    // DoubleScaleTextures (0x2248-0x22b1): the doubled idle sits half its size in, so its corner stays where the classic one was
-    if (w.s.doubleScale && (w.weaponState === S.Idle || (w.currentWeaponType === T.Bow && w.currentFrame === 0))) {
-      w.offset = w.currentWeaponType === T.Werecreature ? [w.offset[0], w.offset[1] + 0.5] : [w.offset[0] + 0.5, w.offset[1] + 0.5];
+    // DoubleScaleTextures (0x2248-0x22b1): the doubled idle sits half its size in, so its corner stays where the classic one was.
+    // DW-CLIP (2026-09-23, a player on Discord: with the Diverse Weapons preset on "you dont see some weapons all the
+    // time when idling only a small snippet of them"): the half-size shift is the DOUBLED box's - it moves a box that
+    // UpdateWeapon made twice the classic frame so the doubled `w_` repaint lands where the classic one stood. Under
+    // TrueTextureSize the box is the painting's own size and is not doubled (the preset's idles are full-canvas
+    // paintings, the war axe's 317x200 IS the screen), and with no `w_` hit at all it is the classic box; shifting
+    // either half its size pushed the sprite half off the bottom-right - the snippet. The shift rides the doubling.
+    if (w.s.doubleScale && !w.s.trueSize && (w.weaponState === S.Idle || (w.currentWeaponType === T.Bow && w.currentFrame === 0))) {
+      const a = anims();
+      const record = w.currentWeaponType === T.Bow ? 0 : a?.[w.weaponState]?.Record;
+      const custom = record != null && w.art ? customTexture(record, Math.max(0, w.currentFrame)) : null;
+      if (custom?.doubled) w.offset = w.currentWeaponType === T.Werecreature ? [w.offset[0], w.offset[1] + 0.5] : [w.offset[0] + 0.5, w.offset[1] + 0.5];
     }
     // the frame's placement (OnGUI's UpdateWeapon)
     updateWeapon();

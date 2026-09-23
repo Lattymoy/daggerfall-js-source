@@ -25,7 +25,7 @@ import { makeIconDrawer } from '../src/ui/itemScroller.js';
 import { createWeaponWidget, readWidgetSettings, WEAPON_WIDGET_VENDOR } from '../src/combat/weaponWidget.js';
 import { createWeaponMachine, machineStep } from '../src/characters/weaponStates.js';
 import { WEAPON_MATERIALS, WEAPONS } from '../src/characters/weapons.js';
-import { modSettingsOf, _resetModSettings } from '../src/systems/modSettings.js';
+import { modSettingsOf, _resetModSettings, setModSetting } from '../src/systems/modSettings.js';
 import { DYE_COLORS } from '../src/characters/dyes.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -92,6 +92,7 @@ test('AUDIT-DW F1: the list drawer decodes THE RECORD it draws before the upload
 // ── the widget clone's bench, the WW1 suite's shape ───────────────────
 function settingsOf(over = {}) {
   _resetModSettings();
+  setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // DW-CLIP: the preset defaults on now - the clone's own numbers are the bench's subject
   const base = modSettingsOf(WEAPON_WIDGET_VENDOR);
   return () => readWidgetSettings(() => ({ ...base, ...over }));
 }
@@ -165,4 +166,30 @@ test('AUDIT-DW: checked and standing - the shipped set, the index, the door orde
   const testing = rd('bible/09-Testing/Testing.md');
   for (const f of ['dw1_diverseweapons.test.js', 'dw2_shipped.test.js', 'dw3_icons.test.js', 'unitybundleworker.test.js', 'auditdw.test.js']) assert.match(testing, new RegExp(`\\| ${f.replace('.', '\\.')} \\| \\d+ \\|`), f);
   assert.match(rd('bible/05-Combat/Diverse-Weapons.md'), /## AUDIT-DW \(2026-09-23\)/);
+});
+
+test('DW-CLIP: under the Diverse Weapons preset (DoubleScaleTextures + TrueTextureSize 1) a full-canvas `w_` idle draws WHOLE at its painted size - the war axe\'s 317x200 fills the 320x200 screen, nothing pushed off the bottom-right', () => {
+  const b = bench({ weapon: { templateIndex: WEAPONS.War_Axe, group: 'Weapons', name: 'War Axe' }, weaponType: WEAPON_TYPES.Axe, over: { 'Modules.DoubleScaleTextures': true, 'Modules.TrueTextureSize': true, 'TrueTextureSize.TextureScaleFactor': 1, 'Modules.Offset': false, 'Modules.Bob': false, 'Modules.Inertia': false } });
+  b.frame();
+  const w = b.widget._w;
+  const name = [...w.customCache.keys()].find((n) => n.startsWith('w_'));
+  assert.ok(name, 'asked by the w_ name');
+  w.customCache.set(name, { tex: 'axe', width: 317, height: 200, doubled: true });
+  b.frame();
+  const d = b.draws.at(-1);
+  assert.equal(d.tex, 'axe');
+  assert.deepEqual([d.rect.w, d.rect.h], [317 * 2, 200 * 2], 'the painting\'s own size (x2 is the 640/320 screen scale)');
+  assert.ok(d.rect.x + d.rect.w <= 640 + 1e-6 && d.rect.y + d.rect.h <= 400 + 1e-6, `on screen: x ${d.rect.x} w ${d.rect.w}, y ${d.rect.y} h ${d.rect.h}`);
+  assert.deepEqual(w.offset, [0, 0], 'no half-size shift under TrueTextureSize');
+  // and without TrueTextureSize the same hit takes the doubled box and its shift, as the clone's IL has it
+  const c = bench({ over: { 'Modules.DoubleScaleTextures': true, 'Modules.Offset': false, 'Modules.Bob': false, 'Modules.Inertia': false } });
+  c.frame();
+  const cw = c.widget._w;
+  cw.customCache.set([...cw.customCache.keys()].find((n) => n.startsWith('w_')), { tex: 'double', width: 100, height: 80, doubled: true });
+  c.frame();
+  assert.deepEqual(cw.offset, [0.5, 0.5]);
+  assert.match(rd('src/combat/weaponWidget.js'), /if \(w\.s\.doubleScale && !w\.s\.trueSize && \(w\.weaponState === S\.Idle/);
+  assert.match(rd('src/combat/weaponWidget.js'), /if \(custom\?\.doubled\) w\.offset = /);
+  _resetModSettings();
+  assert.equal(modSettingsOf('diverse-weapons').WeaponWidgetPreset, true, 'DW-CLIP: the preset defaults on');
 });
