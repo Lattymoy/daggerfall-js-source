@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-WATCH1-A1-one-cap-for-foes-and-watch",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;",
-    "new": "      if (livePuppetsOf(from) + livePuppetsOf(from, true) >= CELL_PUPPETS_MAX) continue;",
+    "old": "      if (!site && (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
+    "new": "      if (!site && (livePuppetsOf(from) + livePuppetsOf(from, true) >= CELL_PUPPETS_MAX)) continue;",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-WATCH1-A1-the-watch-allowance-is-unbounded",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;",
-    "new": "      if (r.t !== KNIGHT_CITYWATCH_ID && livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;",
+    "old": "      if (!site && (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
+    "new": "      if (!site && (r.t !== KNIGHT_CITYWATCH_ID && livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-WATCH1-A1-the-count-does-not-tell-the-watch-apart",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead && (f.mobileType === KNIGHT_CITYWATCH_ID) === watch) n++;",
-    "new": "    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead) n++;",
+    "old": "    const kind = (t, site) => (site ? 'camp' : t === KNIGHT_CITYWATCH_ID ? 'watch' : 'foe');",
+    "new": "    const kind = (t, site) => (site ? 'camp' : 'foe');",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-WATCH1-G1-a-removed-watchman-still-rides",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (f.puppet || f.isQuestFoe || f.placed || (f.dead && !f.corpse)) continue;",
-    "new": "      if (f.puppet || f.isQuestFoe || f.placed) continue;",
+    "old": "      if (f.puppet || f.isQuestFoe || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
+    "new": "      if (f.puppet || f.isQuestFoe || (f.placed && !f.site)) continue;",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -301,7 +301,7 @@
   {
     "name": "AUDIT-ALL-A1-a-pending-builds-species-is-the-latest-word",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t }); continue; }",
+    "old": "      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t, _site: _pupPending.get(key)._site }); continue; }",
     "new": "      if (_pupPending.has(key)) { _pupPending.set(key, r); continue; }",
     "tests": [
       "test/watch1.test.js"

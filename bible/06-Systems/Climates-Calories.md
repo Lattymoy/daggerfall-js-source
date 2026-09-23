@@ -1293,8 +1293,8 @@ characters regardless of mode should start with supplies"* - had been read
 as every tier, Off's included, and shipped that way (SURV-KIT, `23ee51b8`).
 It is reverted whole (`4dffc8ef`), but for six line cites in the kit's
 fallback seam that had rotted before it and named moved lines (`equip.js`'s
-`startingGear.js:70`, `chargenSession.js:221` and `world.js:2959`, `startingGear.js`'s
-`equip.js:307` and `world.js:2959`, `exterior.js`'s `equip.js:306`): each
+`startingGear.js:70`, `chargenSession.js:221` and `world.js:3001`, `startingGear.js`'s
+`equip.js:307` and `world.js:3001`, `exterior.js`'s `equip.js:306`): each
 names its line again. Casual and Hard characters set out with the kit on
 every creation path there is - the wizard and `?class=` in each of the three
 hosts, and online, where the tier is the player's own - and Off's bag is
@@ -1557,6 +1557,13 @@ numbers, 11 were real.
   back rotted if the other side only shifted it. After a merge, compare
   what each side's cite named on its own head for every line whose
   numbers differ; the pins see only the pinned.
+
+Main moved three more commits during it (WOD7, AUDIT WOD7), merged the
+same way but per line - each line from the side that changed it, main's
+number only where both did - and the same eight cites came back rotted
+from main's copy (main still carries them stale) and were re-aimed by
+content again: the potion sentence's four, the kit's three, the rest
+window's `input.js`.
 
 The gate is green on the merged tree. One mutant survives that is not
 this branch's: main's own `MAC-BUG-W5-13` (`combat/bloodMarks.js`'s pool

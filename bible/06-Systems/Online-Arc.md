@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4094` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4136` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:227`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8054,3 +8054,15 @@ wheel and highlight - and the activate key (or F) presses the lit one through th
 The card stays where the plaque cannot (touch, the classic skin). AUDIT DISC7: a player's list starts unlit (a plain click sends nothing; the wheel or F lights a row), every act the card offers is listed with a refused one's reason, the press re-picks the player on its own ray with walls blocking and never fires on a touch cast; the riders' loop stands on a stale pose, is made within earshot only and moves with the floating origin, and `hs` is latched off a moving frame - `01-Overview/Field-Bugs-2026-09-23.md` (AUDIT DISC7). The pose carries `hs`, the rider's half-speed flag, mounted and moving
 only and omitted at 0; the receiving riding loop swaps the clop on it. RELAY_VERSION world100 with its law row. Record:
 `01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/disc7.test.js`.
+
+## WOD7 (2026-09-23, Mac: "and all the enemies are synced online?" ... "yes dude") - World of Daggerfall's camps, shared
+
+The first player to spring a World of Daggerfall marker owns what it made: its camp foes ride that player's cell
+stream tagged with the marker's site (`st`), a full frame names every marker the owner sprang (`sp`), and every
+reader stands the camp's puppets under `WOD_CAMP_PUPPETS_MAX` (16, apart from `CELL_PUPPETS_MAX` - AUDIT BRANCH
+M1's spent slots) and spends its own copy of each marker named (not one whose camp the allowance refused whole). A
+race goes to the first spring - the list carries each marker's age - and inside five seconds to the smaller id; the
+loser takes its camp down, a foe still building included. A camp foe hunts the peers. The treasure stays its springer's; a camp leaves with
+its owner; the relay remembers no marker. No wire or relay change: the tags ride the foes frame beside `c` and are
+checked at the reader (`world/wodShared.js`). The full record is `03-World/World-Of-Daggerfall.md` WOD7. Pins:
+`test/wod7_sharedcamps.test.js`; mutants `tools/mutants/wod7.json`.

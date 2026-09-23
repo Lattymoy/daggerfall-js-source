@@ -310,7 +310,7 @@ export function rebuildEquipState(entity) {
  *  chargenSession.js:140 (?class= headless) and :231 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:2989, exterior.js:1252):
+ *  residue at the two host calls (world.js:3031, exterior.js:1252):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */
