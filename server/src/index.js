@@ -180,7 +180,7 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, PARTY_CHAT_ROOM_HZ_MAX } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -188,6 +188,9 @@ import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, to
 // entry 'RELAY_VERSION': the provided value is not of type 'function or ExportedHandler'"), so the local relay would
 // not start at all. The production runtime let it through, which is why nothing caught it; the pins read wire.js.
 
+/** DICE1: the relay's own dice - 32 uniform bits from the runtime's CSPRNG a draw (net/dice.js rollDice throws a draw
+ *  back past the last whole multiple of the sides, so every face is exactly as likely). Workers carry `crypto`. */
+const rand32 = () => crypto.getRandomValues(new Uint32Array(1))[0];
 const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } });
 
 export default {
@@ -513,6 +516,40 @@ export class Room {
   /** WORLD2: the foes stream's own bucket (FOES_HZ_MAX), the same strikes - a stream beside the poses, never starving them. */
   /** AUDIT WORLD2 A4's instrument, one home (AUDIT WORLD6b A1/B3): a frame that should not have been sent is counted
    *  against its socket, and a stream of them is struck out. */
+  /** CHAT-CHAN + DICE1: A LINE OUT, on the channel it was said on - the chat's and the roll's one fan. `frame` is the
+   *  relay's own record of the line; the sender hears it back (the receipt).
+   *
+   *  A PARTY'S LINE (kurkku: "party chat") is said on the hub link and heard by the party's members alone - every tab
+   *  of each. The hub is the one room that knows the seats; anywhere else a party line has no party to reach, and it
+   *  is junk rather than a line for the room (struck off the attachment as it stands NOW - the caller's gate wrote it).
+   *  A seat gone since the client last looked says nothing to anyone. Its budget is the parties' own
+   *  (PARTY_CHAT_ROOM_HZ_MAX), never the room's: AUDIT CHAT A2 priced that one for a fan of everyone online, and a
+   *  party's is its seats. EVERY OTHER LINE is the room's: its budget, over which a line is dropped and nobody is
+   *  struck, and its fan - everyone in a channel, those in range in a place. */
+  async _sayLine(ws, a, ch, frame, now) {
+    if (ch === 'party') {
+      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, this._attach(ws)); return; }
+      if (!a.party) return;
+      const budget = tokenGate(this._partyChat, now, PARTY_CHAT_ROOM_HZ_MAX);
+      this._partyChat = budget.bucket;
+      if (!budget.pass) return;
+      let party = null;
+      try { party = await this._livingParty(a.party, now); } catch (e) { console.warn('[hub] party line failed', e?.message ?? e); return; }   // AUDIT SOC A2: contained
+      if (!party || !party.members.includes(a.acct)) { this._markParty(a.acct, null); return; }
+      const line = JSON.stringify({ ...frame, ch: 'party' });
+      for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);
+      return;
+    }
+    const room = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);
+    this._roomChat = room.bucket;
+    if (!room.pass) return;
+    const out = JSON.stringify(frame);
+    const chat = isChatRoom(a.key);
+    for (const [other, b] of [...this._all()]) {
+      if (!b.id) continue;
+      if (other === ws || chat || inRange(a.key ?? '', a.pose, b.pose)) this._send(other, out);   // the sender hears its own line back: that is the receipt
+    }
+  }
   _junk(ws, a) {
     const junk = (a.junk ?? 0) + 1;
     this._setAttach(ws, { ...a, junk });
@@ -1233,35 +1270,33 @@ export class Room {
       // the key is struck out exactly as anyone else would be, and a
       // refusal is never a free way to make the room answer.
       if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }
-      // CHAT-CHAN (2026-09-23, kurkku: "party chat"): A PARTY'S LINE is said on the hub link and heard by the party's
-      // members alone - every tab of each (the sender's own tabs too: the echo is the receipt). The hub is the one room
-      // that knows the seats; anywhere else a party line has no party to reach, and it is junk rather than a line for
-      // the room (struck off the attachment as it stands NOW - the gate above wrote it). A seat gone since the client
-      // last looked says nothing to anyone. Its budget is the parties' own (PARTY_CHAT_ROOM_HZ_MAX), never the room's:
-      // AUDIT CHAT A2 priced that one for a fan of everyone online, and a party's is its seats.
-      if (m.ch === 'party') {
-        if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, this._attach(ws)); return; }
-        if (!a.party) return;
-        const budget = tokenGate(this._partyChat, now, PARTY_CHAT_ROOM_HZ_MAX);
-        this._partyChat = budget.bucket;
-        if (!budget.pass) return;
-        let party = null;
-        try { party = await this._livingParty(a.party, now); } catch (e) { console.warn('[hub] party line failed', e?.message ?? e); return; }   // AUDIT SOC A2: contained
-        if (!party || !party.members.includes(a.acct)) { this._markParty(a.acct, null); return; }
-        const line = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub, ch: 'party' });
-        for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);
-        return;
-      }
-      // AUDIT CHAT A2: the room's own budget, over which a line is dropped and nobody is struck - the fan is everyone
-      const room = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);
-      this._roomChat = room.bucket;
-      if (!room.pass) return;
-      const out = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub });   // MOD1: the verified account beside the line
-      const chat = isChatRoom(a.key);
-      for (const [other, b] of [...this._all()]) {
-        if (!b.id) continue;
-        if (other === ws || chat || inRange(a.key ?? '', a.pose, b.pose)) this._send(other, out);   // the sender hears its own line back: that is the receipt
-      }
+      await this._sayLine(ws, a, m.ch, { t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub }, now);   // MOD1: the verified account beside the line
+      return;
+    }
+    if (m.t === 'roll') {
+      // ═══ DICE1 — THE RELAY ROLLS ════════════════════════════════════
+      //
+      // Addison Knox: "Chat dice-rolling". A roll the client made would
+      // be a number the client chose, so the client ASKS - n dice of m
+      // sides, plus k (net/dice.js, checked by parseClient) - and the
+      // relay rolls them from its own CSPRNG (crypto.getRandomValues,
+      // drawn unbiased) and says the result as a frame of its own TYPE,
+      // which no player can send out: a chat line that reads "rolls 2d6:
+      // 12" is a chat line. The roll goes where a line would, on the
+      // channel it was asked on - `_sayLine`, the chat's own fan - and
+      // on its own bucket and strikes, so rolling is never a way to
+      // talk past the chat gate, nor talking a way to roll past this one.
+      // A muted player's roll goes nowhere, as their line does.
+      const now = Date.now();
+      const gate = rollGate(a.rollBucket, now);
+      const rollDrops = gate.pass ? 0 : (a.rollDrops ?? 0) + 1;
+      this._setAttach(ws, { ...a, rollBucket: gate.bucket, rollDrops });
+      if (!gate.pass) { if (rollDrops > CHAT_STRIKES_MAX) this._refuse(ws, 'too many rolls'); return; }
+      if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }
+      const r = rollDice({ n: m.n, m: m.m, k: m.k }, rand32);
+      if (!r) return;
+      await this._sayLine(ws, a, m.ch, { t: 'roll', id: a.id, name: a.name, at: now, sub: a.sub, ...r }, now);
+      return;
     }
     if (m.t === 'say') {
       // ═══ RED1 — THE SERVER SPEAKING ═══════════════════════════════

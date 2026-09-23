@@ -137,9 +137,9 @@ test('CHAT-CHAN relay: the parties\' budget is their own - a party line never sp
   assert.equal(chats(b).at(-1).text, 'still there?', 'and the party\'s line goes regardless - its budget is its own');
   assert.equal(chats(c).filter((m) => m.ch === 'party').length, 0);
   const src = rd('server/src/index.js');
-  const arm = src.slice(src.indexOf("if (m.ch === 'party') {"), src.indexOf("const out = JSON.stringify({ t: 'chat', id: a.id"));
+  const arm = src.slice(src.indexOf('async _sayLine(ws, a, ch, frame, now) {'), src.indexOf('  _junk(ws, a) {'));   // DICE1: the chat's and the roll's one fan
   assert.match(arm, /tokenGate\(this\._partyChat, now, PARTY_CHAT_ROOM_HZ_MAX\)/, 'the parties\' own budget, spent in the party arm');
-  assert.ok(arm.indexOf("if (m.ch === 'party')") < arm.indexOf('tokenGate(this._roomChat'), 'and the room\'s is spent only after the party arm has returned');
+  assert.ok(arm.indexOf("if (ch === 'party')") >= 0 && arm.indexOf("if (ch === 'party')") < arm.indexOf('tokenGate(this._roomChat'), 'and the room\'s is spent only after the party arm has returned');
 }));
 
 test('CHAT-CHAN relay: the parties\' own budget HOLDS - eight seats at three tabs each, two lines a tab inside one instant, and the hub fans PARTY_CHAT_ROOM_HZ_MAX of them and drops the rest without a strike (mutants: the party budget left unchecked)', () => withHub(async (h) => {
@@ -326,8 +326,9 @@ test('CHAT-CHAN commands: a slash is a channel\'s command, the list, a host comm
   for (const h of HOST_COMMANDS) assert.deepEqual(parseChatLine(`/${h} x`), { kind: 'host', name: h }, `/${h}: the host's own`);
   assert.deepEqual(parseChatLine('/pary hi'), { kind: 'unknown', name: 'pary' });
   assert.deepEqual(parseChatLine('/'), { kind: 'unknown', name: '' });
-  assert.deepEqual(parseChatLine('/roll 2d6', [{ names: ['roll'], parse: (rest) => ({ kind: 'roll', rest }) }]), { kind: 'roll', rest: '2d6' }, 'a later slice\'s own table');
-  assert.deepEqual(parseChatLine('/roll', [{ names: ['roll'], parse: () => null }]), { kind: 'unknown', name: 'roll' }, 'a table that declines is no command');
+  assert.deepEqual(parseChatLine('/wave Ann', [{ names: ['wave'], parse: (rest) => ({ kind: 'emote', rest }) }]), { kind: 'emote', rest: 'Ann' }, 'a later slice\'s own table');
+  assert.deepEqual(parseChatLine('/wave', [{ names: ['wave'], parse: () => null }]), { kind: 'unknown', name: 'wave' }, 'a table that declines is no command');
+  assert.deepEqual(parseChatLine('/roll 2d6', [{ names: ['roll'], parse: () => ({ kind: 'other' }) }]), { kind: 'roll', spec: { n: 2, m: 6, k: 0 } }, 'DICE1: /roll is the grammar\'s own, before any table');
   assert.equal(new Set(CHANNEL_COMMANDS.flatMap((c) => c.names)).size, CHANNEL_COMMANDS.flatMap((c) => c.names).length, 'no alias twice');
   assert.ok(CHANNEL_COMMANDS.every((c) => CHAT_TABS.some((t) => t.id === c.tab)), 'every command names a tab there is');
   assert.ok(CHANNEL_COMMANDS.every((c) => HELP_LINES.includes(c.help)), 'and /help says each');

@@ -120,6 +120,17 @@ for (const touch of [false, true]) {
         return [style(lines.at(-2)), style(lines.at(-1))];
       });
       check('an aside out of character is drawn as one - leaning, and a line in character is not', ooc[0].ooc && ooc[0].italic === 'italic' && !ooc[1].ooc && ooc[1].italic === 'normal' && ooc[0].color !== ooc[1].color, JSON.stringify(ooc));
+      // DICE1: a roll the relay made, in its own colour and the dice's own words; a typed line that reads like one is not
+      const roll = await page.evaluate(() => {
+        const { log, panel } = globalThis.__chan;
+        log.push('local', { id: 'plocal000001', name: 'Ysolde', roll: { n: 2, m: 6, k: 3, dice: [4, 5], total: 12 } });
+        log.push('local', { id: 'plocal000002', name: 'Faker', text: 'rolls 2d6+3: 6 + 6 +3 = 15' });
+        panel.render({});
+        const lines = [...document.querySelectorAll('.dfchat-list .dfchat-line')];
+        const read = (n) => ({ roll: n.classList.contains('roll'), text: n.querySelector('.dfchat-text').textContent, color: getComputedStyle(n.querySelector('.dfchat-text')).color });
+        return [read(lines.at(-2)), read(lines.at(-1))];
+      });
+      check('a roll is drawn in its own colour, in the dice\'s words - and a typed line that reads like one is not', roll[0].roll && roll[0].text === 'rolls 2d6+3: 4 + 5 +3 = 12' && roll[0].color === 'rgb(231, 196, 106)' && !roll[1].roll && roll[1].color !== roll[0].color, JSON.stringify(roll));
       const peek = await page.evaluate(() => {
         const { log, panel } = globalThis.__chan;
         log.select('world'); panel.close?.(); log.setOpen(false);

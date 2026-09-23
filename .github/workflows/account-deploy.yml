@@ -49,6 +49,7 @@ on:
       - "src/net/moderation.js"
       - "src/net/playClock.js"
       - "src/net/wire.js"
+      - "src/net/dice.js"
       - "src/world/mat4.js"
       - "src/characters/nameGen.json"
       - ".github/workflows/account-deploy.yml"

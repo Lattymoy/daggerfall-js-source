@@ -99,10 +99,11 @@ export function bubbleSaid(text) {
   return said.trim() ? said : '';
 }
 
-/** Does this line earn a bubble? From somebody else, in character, with something to say - on any tab (CHAT-CHAN). */
+/** Does this line earn a bubble? From somebody else, in character, with something to say - on any tab (CHAT-CHAN), and
+ *  never a roll (DICE1): what stands over a head is what the character SAID. */
 export function bubbleLineOk(line) {
   if (!line || typeof line !== 'object') return false;
-  if (line.system || line.mine || line.kind === 'ooc') return false;
+  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;   // DICE1: a roll is the table's, not the character's words
   return typeof line.id === 'string' && !!line.id && typeof line.text === 'string' && !!line.text;
 }
 

@@ -190,10 +190,43 @@ only on a phone under about 380px wide does the strip scroll sideways - a swipe,
 fake document, and the host by source. `tools/mutants/chatchan.json`: 56, 56 dead. `tools/chatChanProbe.mjs` reads the
 real panel in Chromium - the bar on both skins at 440, 352 and a 320px phone's 292, bare and with three tabs unread
 (no tab squeezed below its own name, judged off the text's own box; every dot whole inside its button), the hovers,
-the placeholders, the aside's face, the peek's marks, `/help` keeping the chat open - 59 checks. Re-aimed, each to the same claim on
+the placeholders, the aside's face, the peek's marks, `/help` keeping the chat open - 59 checks (60 since DICE1 added a roll's look). Re-aimed, each to the same claim on
 the new shape: CHAT1's tabs, whitelist, line shape, link loop, rejoin, send and strip pins; the roster pins (ACC3c's key,
 CHAT-R1's rows, ROSTER-G's and CHAT-FIT's wiring - one session still answers the badge and the row); SOC3's tab count;
 SRV-N's and RED1's host pins; BUBBLE1's law (every tab, and the aside refused). The mutant records the move touched
 were re-aimed by content (`chatfit`, `name1`, `red1`, `soc1`); `name1.json`'s BUBBLE1-any-tab-speaks is retired with the
 law it held, which `chatchan.json`'s CC-aside-bubbles replaces. The relay is world99 (a new LAW row); the arc's later
 slices ride the same deploy and restate that row until the merge.
+
+## DICE1 - the relay rolls
+
+Addison Knox on Discord, 2026-09-23: "Chat dice-rolling".
+
+**Who rolls.** A roll the client made would be a number the client chose - a player who wants a 20 types one. So the
+client ASKS: `{t:'roll', n, m, k}`, how many dice, how many sides, what to add (`net/dice.js`, the one home both ends
+read, which joined the relay's bundle through wire.js). The relay rolls them from its own CSPRNG
+(`crypto.getRandomValues`) and draws UNBIASED - a draw at or past the last whole multiple of the sides below 2^32 is
+thrown back, so every face is exactly as likely where a bare `x % m` favours the low faces. It says the result as a
+frame of its own TYPE, `{t:'roll', id, name, n, m, k, dice, total}`, which no player can send out: a chat line that
+reads "rolls 2d6+3: 12" is a chat line, drawn as one. The client checks what it is told by the same law - n dice, each
+1..m, the total their sum plus k - and a roll that does not add up is no line at all, not even as the words beside it.
+
+**Where it goes.** Where a line would: the roll is said on the channel of the tab it was typed on, through the chat's
+one fan (`_sayLine`, which the relay's chat arm and roll arm now share) - the World, the region, a party's seats alone,
+or Local within earshot - and the asker hears it back as everyone does (the receipt is the roll). One roll a second a
+socket, struck and closed past CHAT_STRIKES_MAX like a flood of lines; a muted player's roll goes nowhere, and they are
+told. Every roll is SAID, so a table sees every try.
+
+**The grammar** is the tabletop's: `/roll 2d6+3`, `/roll d20`, `/roll 3d8-1`, `/roll d%` for a hundred, a bare `/roll
+100` one die of a hundred sides (the MMO's own), and `/roll` alone a d20; `/dice` is the same command. At most 10 dice of
+up to 1000 sides and a modifier within 1000, refused rather than clamped - a roll is exactly what was asked or nothing,
+and a refusal is said in words with the forms. A roll is drawn in its own colour, and never over a head: what stands
+over a head is what the character said, and a roll is the table's.
+
+**Pins.** `test/dice1.test.js` (10): the grammar and its bounds, the unbiased draw over a scripted source (three draws
+thrown back, two kept), the client's check; over the real Room, one roll the same numbers to everyone with the asker
+included and all six faces of a d6 reached over the relay's real CSPRNG, the gate and its strikes, the mute, a party's
+roll heard by the party alone; the session's door (the world99 welcome, one a second, a channel only where the channels
+are) and a forged total refused; the log's roll line and its fail-closed refusal; the bubble; the host by source.
+`tools/mutants/dice1.json`: 29, 29 dead. `tools/chatChanProbe.mjs` looks at a roll line in Chromium. Relay world99 -
+the same deploy as CHAT-CHAN, its LAW row restated.

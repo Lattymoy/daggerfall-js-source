@@ -221,6 +221,8 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-line.system .dfchat-text { color: #8fb8d8; font-style: italic; }
 /* CHAT-CHAN: an aside out of character - (( )) - is drawn as one: dimmed and leaning, the words kept readable */
 .dfchat-line.ooc .dfchat-text { color: #b3ab9c; font-style: italic; }
+/* DICE1: a roll the relay made - its own colour, which no typed line can wear (the kind is set from the FRAME's type) */
+.dfchat-line.roll .dfchat-text { color: #e7c46a; }
 /* CHAT-CHAN: the channel a peek line came from, when it is not the tab the chat opens on */
 .dfchat-chan { font-size: calc(10px * var(--dfchat-scale, 1)); letter-spacing: .05em; text-transform: uppercase; margin-right: 6px; color: var(--dim, #8b8578); }
 .dfchat-chan[data-tab="world"] { color: #d9c089; }
@@ -658,7 +660,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     return c;
   };
   const lineNode = (line, withTime, withChan = false) => {
-    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}${line.kind === 'ooc' ? ' ooc' : ''}`);
+    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}${line.kind === 'ooc' ? ' ooc' : ''}${line.kind === 'roll' ? ' roll' : ''}`);
     const chan = withChan ? chanOf(line) : null;
     if (chan) n.append(chan);
     const time = withTime ? el('span', 'dfchat-time', clockOf(line.at)) : null;

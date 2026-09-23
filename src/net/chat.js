@@ -26,6 +26,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
 import { CHAT_WORLD_ROOM } from './wire.js';
+import { validRoll, rollText } from './dice.js';   // DICE1: a roll's line is the dice's own words
 
 /** The tabs, in bar order. A tab is {id, label, room, link, hint}.
  *
@@ -66,6 +67,8 @@ export function nextRegionRoom(hold, want, current, now, holdMs = CHAT_REGION_HO
 export const regionJoinedText = (place) => `Region channel: ${place}.`;
 /** CHAT-CHAN: the Party and Region tabs on a relay from before the channels (CHAN_RELAY_MIN) - neither can be said. */
 export const CHAN_OLD_RELAY_TEXT = 'This channel needs the server\'s next update.';
+/** DICE1: a roll asked of a relay from before the dice (ROLL_RELAY_MIN) - it would close the socket on the frame. */
+export const ROLL_OLD_RELAY_TEXT = 'Dice need the server\'s next update.';
 /** CHAT-CHAN: how far a Local line carries, scene units - the distance a peer's NAME is drawn at (net/remotePlayers.js
  *  NAME_RANGE; a pin holds them equal): whoever you can read over a head can hear you, and nobody further. */
 export const CHAT_SAY_RANGE = 60;
@@ -166,8 +169,13 @@ export class ChatLog {
     return line;
   }
 
-  /** The line's record, or null for nothing to say. */
-  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false } = {}, tabId) {
+  /** The line's record, or null for nothing to say. DICE1: `roll` is a roll the RELAY made (the host hands it from the
+   *  frame type, `onRoll`, never from a chat line) - kept only when the dice's law holds, and then the line's words are
+   *  the dice's (rollText), its kind 'roll'. */
+  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, roll = null } = {}, tabId) {
+    const rolled = roll && validRoll(roll) ? { n: roll.n, m: roll.m, k: roll.k, dice: [...roll.dice], total: roll.total } : null;
+    if (roll && !rolled) return null;
+    if (rolled) text = rollText(rolled);
     if (typeof text !== 'string' || !text) return null;
     const now = this._now();
     // ACC1g: a line carried the relay's verdict on the name beside it
@@ -182,10 +190,12 @@ export class ChatLog {
     // cannot send at all, rather than from any field on a chat line.
     // Every red line is a system line too: nobody is speaking it.
     // CHAT-CHAN: `kind` is how the line is DRAWN - '' a line said, 'ooc' an aside out of character, read off the
-    // SPEAKER's own text (the (( )) mark is theirs to make) and never off a field, and never on a line nobody spoke.
+    // SPEAKER's own text (the (( )) mark is theirs to make) and never off a field, and never on a line nobody spoke;
+    // DICE1: 'roll', a roll the relay made (`roll` above), which no text can be.
     // `tab` is the tab the line was said on, or null for a line the game said on every tab.
     const sys = !!system || !!red;
-    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, kind: !sys && isOocText(text) ? 'ooc' : '', tab: tabId };
+    const kind = rolled ? 'roll' : !sys && isOocText(text) ? 'ooc' : '';
+    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, kind, tab: tabId, ...(rolled ? { roll: rolled } : {}) };
   }
 
   /** A line onto a tab, the oldest dropped past the cap. */

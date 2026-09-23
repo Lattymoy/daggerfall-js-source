@@ -287,8 +287,8 @@ import { enhancedHudScale } from '../ui/enhancedHud.js';   // AUDIT NAME1 F3: th
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
-import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
-import { parseChatLine, HELP_LINES, unknownCommandText, emptyCommandText, hostMisuseText } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS
+import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
+import { parseChatLine, HELP_LINES, unknownCommandText, emptyCommandText, hostMisuseText, badRollText } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll
 import { partyRosterSource, localRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom } from '../net/wire.js';   // CHAT-CHAN: a region's channel
@@ -9073,10 +9073,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     // keeps is what it can hear - its own line, and a line from a body within earshot (net/chat.js localLineHeard).
     // Local is not a private channel: the relay's reach is the room's, and the earshot is each hearer's own.
     online.onChat = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };
+    online.onRoll = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };   // DICE1: a roll at the table is heard as a line is
     for (const tab of chatLog.tabs) {
       if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
       link.onChat = (line) => chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);   // CHAT-CHAN: the hub's party lines to the Party tab - by the relay's own routing word, heard only on the hub
+      link.onRoll = (line) => chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);   // DICE1: a roll lands where a line would
       // RED1: the SERVER's own line, and it lands on the log with the
       // flag set HERE - from the frame type the relay used, never from
       // anything on the frame. It rides the ordinary log, so ChatLog's
@@ -9201,6 +9203,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (cmd.kind === 'unknown') { note(unknownCommandText(cmd.name)); return false; }
         if (cmd.kind === 'empty') { note(emptyCommandText(cmd.name)); return false; }
         if (cmd.kind === 'host') { note(hostMisuseText(cmd.name)); return false; }
+        if (cmd.kind === 'badroll') { note(badRollText(cmd.name)); return false; }
+        if (cmd.kind === 'roll') return chatRoll(tabId, cmd.spec);   // DICE1: the relay rolls, on this tab's channel
         if (cmd.kind === 'channel') return chatSend(cmd.tab, cmd.wrap === 'ooc' ? oocText(cmd.text) : cmd.text, tabId);
         return chatSend(tabId, cmd.text, tabId);   // false keeps the line in the field (B2)
       },
@@ -10319,6 +10323,17 @@ export async function bootWorld(canvas, renderer, params, status) {
       return socialLink()?.sendChat(text, { ch: 'party' }) ?? false;   // the relay fans it to the party's members alone - my own tabs too: the echo is the receipt
     }
     return chatLinks.get(tabId)?.sendChat(text) ?? false;
+  };
+  /** DICE1 (Addison Knox: "Chat dice-rolling"): a roll ASKED on `tabId`'s channel - the relay rolls it (net/dice.js) and
+   *  says it back to the channel, this player included. The tab's own door, chatSend's: the same session, the same
+   *  reasons it cannot (an older relay, no party). False keeps the line in the field. */
+  const chatRoll = (tabId, spec) => {
+    const why = (line) => { chatLog.push(tabId, { text: line, system: true }); return false; };
+    if ((tabId === 'party' || tabId === 'region') && chanOld()) return why(CHAN_OLD_RELAY_TEXT);
+    const s = tabId === 'local' ? online : tabId === 'party' ? socialLink() : chatLinks.get(tabId);
+    if (s?.status === 'open' && !s.rollOk) return why(ROLL_OLD_RELAY_TEXT);
+    if (tabId === 'party' && !social?.party) return why(NO_PARTY_TEXT);
+    return s?.sendRoll(spec, tabId === 'party' ? { ch: 'party' } : {}) ?? false;
   };
   /** CHAT-CHAN (kurkku: "players in Wayrest see messages from other players in Wayrest and so on"): THE REGION TAB
    *  FOLLOWS THE PLAYER - into the channel of the region they stand in (PlayerGPS.CurrentRegionIndex: the POLITIC map's

@@ -23,15 +23,15 @@
   {
     "name": "CC-party-line-to-the-room",
     "file": "server/src/index.js",
-    "old": "        for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);",
-    "new": "        for (const [other, b] of [...this._all()]) if (b.id) this._send(other, line);",
+    "old": "      for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);",
+    "new": "      for (const [other, b] of [...this._all()]) if (b.id) this._send(other, line);",
     "tests": ["test/chatchan.test.js"]
   },
   {
     "name": "CC-party-fan-skips-the-sender",
     "file": "server/src/index.js",
-    "old": "        for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);",
-    "new": "        for (const member of party.members) for (const other of this._socketsOf(member)) if (other !== ws) this._send(other, line);",
+    "old": "      for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);",
+    "new": "      for (const member of party.members) for (const other of this._socketsOf(member)) if (other !== ws) this._send(other, line);",
     "tests": ["test/chatchan.test.js"]
   },
   {
@@ -51,15 +51,15 @@
   {
     "name": "CC-stranger-line-to-the-room",
     "file": "server/src/index.js",
-    "old": "      if (m.ch === 'party') {\n        if (!isSocialRoom(a.key)",
-    "new": "      if (m.ch === 'party' && a.party) {\n        if (!isSocialRoom(a.key)",
+    "old": "    if (ch === 'party') {\n      if (!isSocialRoom(a.key)",
+    "new": "    if (ch === 'party' && a.party) {\n      if (!isSocialRoom(a.key)",
     "tests": ["test/chatchan.test.js"]
   },
   {
     "name": "CC-party-line-charged-to-the-room",
     "file": "server/src/index.js",
-    "old": "        const budget = tokenGate(this._partyChat, now, PARTY_CHAT_ROOM_HZ_MAX);\n        this._partyChat = budget.bucket;",
-    "new": "        const budget = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);\n        this._roomChat = budget.bucket;",
+    "old": "      const budget = tokenGate(this._partyChat, now, PARTY_CHAT_ROOM_HZ_MAX);\n      this._partyChat = budget.bucket;",
+    "new": "      const budget = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);\n      this._roomChat = budget.bucket;",
     "tests": ["test/chatchan.test.js"]
   },
   {
@@ -79,15 +79,15 @@
   {
     "name": "CC-forged-channel-believed",
     "file": "src/net/online.js",
-    "old": "      const ch = CHAT_LINE_CHANNELS.includes(m.ch) ? m.ch : null;\n      const g =",
-    "new": "      const ch = typeof m.ch === 'string' ? m.ch : null;\n      const g =",
+    "old": "      const ch = CHAT_LINE_CHANNELS.includes(m.ch) ? m.ch : null;\n      if (!this._lineIn(room, ch, now)) return;\n      // ACC1d",
+    "new": "      const ch = typeof m.ch === 'string' ? m.ch : null;\n      if (!this._lineIn(room, ch, now)) return;\n      // ACC1d",
     "tests": ["test/chatchan.test.js"]
   },
   {
     "name": "CC-party-lines-on-the-room-bucket",
     "file": "src/net/online.js",
-    "old": "      const g = ch === 'party' ? partyChatInGate(this._inPartyChat, now) : chatInGate(this._inChat.get(room), now);",
-    "new": "      const g = chatInGate(this._inChat.get(room), now);",
+    "old": "    const g = ch === 'party' ? partyChatInGate(this._inPartyChat, now) : chatInGate(this._inChat.get(room), now);",
+    "new": "    const g = chatInGate(this._inChat.get(room), now);",
     "tests": ["test/chatchan.test.js"]
   },
   {
@@ -128,8 +128,8 @@
   {
     "name": "CC-aside-on-a-notice",
     "file": "src/net/chat.js",
-    "old": "kind: !sys && isOocText(text) ? 'ooc' : ''",
-    "new": "kind: isOocText(text) ? 'ooc' : ''",
+    "old": "rolled ? 'roll' : !sys && isOocText(text) ? 'ooc' : ''",
+    "new": "rolled ? 'roll' : isOocText(text) ? 'ooc' : ''",
     "tests": ["test/chatchan.test.js"]
   },
   {
@@ -226,8 +226,8 @@
   {
     "name": "CC-aside-bubbles",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine || line.kind === 'ooc') return false;",
-    "new": "  if (line.system || line.mine) return false;",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;",
+    "new": "  if (line.system || line.mine || line.kind === 'roll') return false;",
     "tests": ["test/name1_bubbles.test.js"]
   },
   {
@@ -310,15 +310,15 @@
   {
     "name": "CC-channel-word-dropped",
     "file": "server/src/index.js",
-    "old": "        const line = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub, ch: 'party' });",
-    "new": "        const line = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub });",
+    "old": "      const line = JSON.stringify({ ...frame, ch: 'party' });",
+    "new": "      const line = JSON.stringify(frame);",
     "tests": ["test/chatchan.test.js"]
   },
   {
     "name": "CC-party-budget-unchecked",
     "file": "server/src/index.js",
-    "old": "        this._partyChat = budget.bucket;\n        if (!budget.pass) return;",
-    "new": "        this._partyChat = budget.bucket;",
+    "old": "      this._partyChat = budget.bucket;\n      if (!budget.pass) return;",
+    "new": "      this._partyChat = budget.bucket;",
     "tests": ["test/chatchan.test.js"]
   },
   {

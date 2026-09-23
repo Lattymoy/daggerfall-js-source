@@ -8,6 +8,7 @@
 //   /world /g <text>        the World channel          /region /r <text>     the region you stand in
 //   /party /p <text>        your party                 /local /l /say /s     those near enough to hear you
 //   /ooc <text>             a Local aside out of character - the line wrapped in (( ))
+//   /roll /dice [NdM+K]     dice the RELAY rolls, on the active tab (DICE1, net/dice.js) - a d20 when nothing is said
 //   /help /?                the list, as lines only you see
 //   //text                  a line that starts with a slash, said as it stands on the active tab
 //
@@ -16,6 +17,8 @@
 // own slices pin, so a known one never reaches this parser's `unknown` and the parser never needs their grammar.
 //
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
+
+import { parseRollSpec, ROLL_DICE_MAX, ROLL_SIDES_MAX } from './dice.js';   // DICE1: the dice's grammar
 
 /** The channel commands: each names the tab its text is said on. `wrap` is what the text becomes first. */
 export const CHANNEL_COMMANDS = Object.freeze([
@@ -31,6 +34,7 @@ export const HOST_COMMANDS = Object.freeze(['unstuck', 'red', 'mute', 'unmute', 
 export const HELP_LINES = Object.freeze([
   'Chat commands:',
   ...CHANNEL_COMMANDS.map((c) => c.help),
+  '/roll or /dice [NdM+K] - dice the server rolls, on this tab: /roll 2d6+3, /roll d20, /roll 100',
   '/ready - your vote on a party rest',
   '/unstuck - out through the door you came in by',
   '//text - a line that starts with a slash',
@@ -44,6 +48,8 @@ export const HELP_LINES = Object.freeze([
  *   { kind: 'host', name }                  - one of HOST_COMMANDS (the host tests these first)
  *   { kind: 'empty', name }                 - a channel command with nothing to say
  *   { kind: 'unknown', name }               - `/name` is no command: refused in words, never said
+ *   { kind: 'roll', spec }                  - DICE1: dice the relay rolls, on the active tab
+ *   { kind: 'badroll', name }               - a roll the dice's grammar or bounds refuse
  * A line starting `//` is said with one slash off it. `extra` is a later slice's own table of commands, each
  * { names, parse(rest) } - parse answers a result of its own or null to decline.
  */
@@ -58,6 +64,7 @@ export function parseChatLine(text, extra = []) {
   const rest = (m[2] ?? '').trim();
   if (name === 'help' || name === '?') return { kind: 'help' };
   if (HOST_COMMANDS.includes(name)) return { kind: 'host', name };
+  if (name === 'roll' || name === 'dice') { const spec = parseRollSpec(rest); return spec ? { kind: 'roll', spec } : { kind: 'badroll', name }; }
   const chan = CHANNEL_COMMANDS.find((c) => c.names.includes(name));
   if (chan) return rest ? { kind: 'channel', tab: chan.tab, text: rest, wrap: chan.wrap } : { kind: 'empty', name };
   for (const e of extra) {
@@ -71,6 +78,8 @@ export function parseChatLine(text, extra = []) {
 /** The line a refused command leaves in the log - said to the one who typed it, and nobody else. */
 export const unknownCommandText = (name) => `There is no /${name} command. /help lists them.`;
 export const emptyCommandText = (name) => `/${name} needs something to say.`;
+/** DICE1: a roll the grammar or the bounds refuse - the forms, and the bounds, in the player's words. */
+export const badRollText = (name) => `/${name} takes dice like 2d6+3, d20 or 100 - at most ${ROLL_DICE_MAX} dice of up to ${ROLL_SIDES_MAX} sides.`;
 /** A host command in a shape its own test refused (`/red` with nothing to say, `/unstuck now`) - refused in words
  *  too: before this slice such a line fell through to the room and was said there, slash and all. */
 export const hostMisuseText = (name) => (name === 'red' ? emptyCommandText(name) : `/${name} takes nothing after it.`);
