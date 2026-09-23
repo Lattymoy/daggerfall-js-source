@@ -135,7 +135,7 @@ import { BULLETIN_BOARD_ACTIVATION_DISTANCE, TOO_FAR_AWAY_TEXT, bulletinBoardRow
 import { tokenRows } from '../ui/messageBox.js';
 import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects, NO_POTION_INGREDIENTS } from '../systems/guildServiceFlow.js';
 import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
-import { isPotionRecipe } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347)
+import { isPotionRecipe, USE_TEXT, expandItemMacro } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347); RR1: the light's own "You douse the %it."
 import { canAccessService } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
@@ -146,7 +146,7 @@ import { npcServiceKind, freeHealing, freeMagickaRecharge, avoidDeath, AVOID_DEA
 import { createGuildForGroup, ORDERS } from '../systems/guildVariants.js';
 import { membershipOf, joinGuild, joinDecision, activeMemberships } from '../systems/guilds.js';   // V2e: GuildManager.Memberships, the per-read vampire book pick
 import { ensureFactionRep } from '../systems/factionRep.js';
-import { dateFromClassicMinutes, dateString, dayOfYearFromMinutes, MINUTES_PER_DAY, DAYS_PER_MONTH } from '../systems/gameDate.js';   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
+import { dateFromClassicMinutes, dateString, dayOfYearFromMinutes, MINUTES_PER_DAY, DAYS_PER_MONTH, isDayFromMinutes } from '../systems/gameDate.js';   // RR1: WorldTime.Now.IsDay   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
 import { serviceDestination } from '../systems/guildServiceFlow.js';
 import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
 import { preloadListPickerArt } from '../ui/listPicker.js';
@@ -264,6 +264,8 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host's DUNGEON_WATER_SCROLL was a third literal)
 import { onShopShelfStocked } from '../systems/rriKits.js';   // RRI2: the mod's PlayerActivate.OnLootSpawned subscribers (bandage stacks, store-quality wear, the alchemist's potions)
+import { bedSleepingOn, rrDouseOnDungeonExit } from '../systems/rrRealism.js';   // RR1: the bed's activation gate, the douse on leaving a dungeon
+import { setRrHostSeams } from '../systems/rrInstall.js';   // RR1: the host's foe-spawner seam for the underworld guilds' squad
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -828,6 +830,7 @@ export function createWorldModes(host) {
    *  other placement in this file: DFU's gate is a bare
    *  `Physics.OverlapSphere` (CreateFoe.cs:317-321), so a watchman
    *  standing in the room blocks a spot as surely as a daedra does. */
+  setRrHostSeams({ spawnFoe: (mobileType, opts) => standInteriorLooseFoe(mobileType, opts) });   // RR1: CreateFoeSpawner for the underworld guilds' squad, in this host's own vocabulary
   function standInteriorLooseFoe(mobileType, opts = {}) {
     if (!interiorCtx || !interiorFoes) return null;   // no building mounted: nothing to stand it in
     return standLooseFoe({
@@ -1021,7 +1024,7 @@ export function createWorldModes(host) {
    *
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
-   *  (worldTick.js:317-318), and no killIfAnyLiveStatZero. Both pools
+   *  (worldTick.js:324-325), and no killIfAnyLiveStatZero. Both pools
    *  READ the effect list every frame (exteriorFoes.js:857-857 and
    *  cityGuards.js:825-826 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
@@ -1981,7 +1984,7 @@ export function createWorldModes(host) {
       // The proceeds were weighed before they were paid: a purse that
       // would push the player past MaxEncumbrance becomes a letter of
       // credit instead. B2 gave it its destination - DepositAll_LOC
-      // (banking.js:480, DaggerfallBankingWindow :377-389) takes EVERY
+      // (banking.js:483, DaggerfallBankingWindow :377-389) takes EVERY
       // letter in the pack at face value - so the note that once stood
       // here saying there was nowhere to cash one is retired.
       if (proceeds?.kind === 'letterOfCredit') {
@@ -3329,7 +3332,7 @@ export function createWorldModes(host) {
           rows: rows(decision.textId),
           buttons: 'YesNo',
           onYes: () => {
-            joinGuild(memberships, guild, gameDate());
+            joinGuild(memberships, guild, gameDate(), store);   // RR1: the store, for a mod's join floor
             const welcome = new GuildServiceWindow(_welcomeHooks(guild, rows, () => welcome));
             mountServiceWindow(welcome);
           },
@@ -4899,6 +4902,9 @@ export function createWorldModes(host) {
     interiorCtx.containers.forEach((c, i) => {
       targets.push({ key: `container:${i}`, aabb: worldAabb(c.cpu.positions, c.matrix), distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE });   // S2b
     });
+    if (bedSleepingOn()) interiorCtx.beds?.forEach((bd, i) => {   // RR1: RegisterCustomActivation(41000..41002, BedActivation) - a target only while the module is on
+      targets.push({ key: `bed:${i}`, aabb: worldAabb(bd.cpu.positions, bd.matrix), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });
+    });
     interiorCtx.shelves.forEach((s, i) => {
       targets.push({ key: `shelf:${i}`, aabb: worldAabb(s.cpu.positions, s.matrix), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });   // E2; :850-853 for the Library/Guild/Temple bookshelf, :868-873 for a shop's ShopShelves - both 128 units
     });
@@ -4991,6 +4997,10 @@ export function createWorldModes(host) {
     if (!key.startsWith('exit:')) {
       if (key.startsWith('shelf:')) {
         openShelf(Number(key.split(':')[1]));   // E2: the browse/buy window (no-op outside shops)
+        return true;
+      }
+      if (key.startsWith('bed:')) {
+        interiorKeyCtx.toggleRest();   // RR1: BedActivation (RoleplayRealism.cs:464-506) IS DaggerfallUI's rest gate, then the window
         return true;
       }
       if (key.startsWith('person:')) {
@@ -5624,6 +5634,10 @@ export function createWorldModes(host) {
     mode = 'exterior';
     host.unlockOn?.();   // AUDIT 62 F16/F28: the lock never outlives a mode change
     host.applyWeaponPose?.(pose);   // JAN1: the exterior rig takes the pair the dungeon rig held
+    {   // RR1: OnTransitionToDungeonExterior_ExtinguishLight (RoleplayRealism.cs:633-640) - by day, the lit light is doused with its own box
+      const doused = rrDouseOnDungeonExit(playerEntity, { isDay: isDayFromMinutes(Math.floor(worldMinutes())) });
+      if (doused) townTalk?.showOverlay?.(new ActionTextBox([expandItemMacro(USE_TEXT.lightDouse, doused)]));
+    }
     mwViewTransition('Exterior');   // EOTB-IL: OnTransitionExterior is registered on PlayerEnterExit.OnTransitionDungeonExterior too (Start, IL_06e1)
     immersiveFootsteps.onTransitionExterior();   // IF1: OnTransitionDungeonExterior is wired to the same handler (Main.cs:162)
     betterAmbience.onTransition(null);   // BA1: OnTransitionDungeonExterior

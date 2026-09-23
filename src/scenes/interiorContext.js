@@ -28,6 +28,7 @@ import { billboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
 import { isHouseContainerModel, containerTextureRecord } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
+import { isBedModel } from '../systems/rrRealism.js';   // RR1: the three bed models a click may rest on
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
 import { mountMachineryChild } from '../world/windmills.js';
@@ -306,6 +307,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // Library/Guild/Temple bookshelves route at activation (BS1), and
   // the OWNED-house arm lands below (HC1).
   const shelves = [];
+  const beds = [];   // RR1: models 41000-41002 (RoleplayRealism.cs:126-128), listed always, activated under bedSleeping
   // IF1: the combined mesh's materials, as Immersive Footsteps reads them
   // off `CombinedModels` (Main.cs:237-308) - one name per texture in
   // first-appearance order over the models' submeshes, through the
@@ -415,6 +417,8 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       } else {
         shelves.push({ cpu, matrix, items: null });
       }
+    } else if (isBedModel(p.modelIdNum)) {
+      beds.push({ cpu, matrix });
     } else if (isHouseContainerModel(p.modelIdNum)) {
       // F209: `items: null` IS the stock-once latch, the shelf idiom
       // one line up - StockHouseContainer runs on first access
@@ -791,6 +795,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     ladders,
     containers,
     shelves,   // E2: shop shelf models (stocked lazily by the mode host)
+    beds,      // RR1: the bed models
     enterMarkers,
     treasureMarkers,   // AUDIT 63 F22: AddFlats' RandomTreasure arm, gated by the host
     spawnPoints,

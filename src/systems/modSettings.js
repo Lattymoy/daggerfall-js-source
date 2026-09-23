@@ -221,6 +221,49 @@ export const MOD_SETTINGS = Object.freeze({
       alchemistPotions: Object.freeze({ default: true, description: 'Adds random potions for sale at alchemist stores, for a premium price' }),
     }),
   }),
+  'roleplay-realism': Object.freeze({
+    title: 'Roleplay & Realism',
+    author: 'Hazelnut',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Hazelnut\u2019s Roleplay & Realism 1.8, 1:1: bows by their draw, no climbing with a weapon out, swing speed and material to-hit '
+          + 'moderated, armor worn by the blow, bank loans by level, ships from ports only, an encumbrance penalty, lights doused leaving a dungeon, '
+          + 'purification that cures poison, class enemies remixed, the underworld guilds expelling with prejudice, a bed you can click to sleep in. '
+          + 'The modules below are the mod\u2019s own switches.',
+      }),
+      // the mod's own descriptions (modsettings.json, Modules)
+      bedSleeping: Object.freeze({ default: true, description: 'Allows sleep to be initiated by clicking on a bed.' }),
+      advancedArchery: Object.freeze({ default: true, description: 'Alters to-hit and damage done by arrows depending on the length of draw.' }),
+      encumbranceEffects: Object.freeze({ default: true, description: 'Provides speed and fatigue penalties when carrying too much weight.' }),
+      bandaging: Object.freeze({ default: true, description: 'Allows bandages to be used for healing based on medical skill.' }),
+      shipPorts: Object.freeze({ default: true, description: 'Player can only board their ship when in a port town.' }),
+      underworldExpulsion: Object.freeze({ default: true, description: 'Enables underworld guilds to expel members for poor performance.. with prejudice.' }),
+      climbingRestriction: Object.freeze({ default: true, description: 'Prevents climbing with a weapon drawn.' }),
+      weaponSpeed: Object.freeze({ default: true, description: 'Moderates DPS of weapons for characters with high speed attributes.' }),
+      weaponMaterials: Object.freeze({ default: true, description: 'Moderates the to-hit bonuses of weapon materials so skill remains key factor' }),
+      equipDamage: Object.freeze({ default: true, description: 'Increases equipment damage proportional to max condition.' }),
+      enemyAppearance: Object.freeze({ default: true, description: 'Remixes human enemy appearance based on class' }),
+      purificationPotion: Object.freeze({ default: true, description: 'Changes purification potion to cure poison rather than grant invisibility' }),
+      autoExtinguishLight: Object.freeze({ default: true, description: 'Automatically extinguish any light sources when you exit a dungeon' }),
+      classicStrengthDamageBonus: Object.freeze({ default: false, description: 'Display the strength damage bonus like classic Daggerfall (half) rather than the value used internally that DFU displays' }),
+      variantNpcs: Object.freeze({ default: true, description: 'Enable variant NPC sprites in shops & taverns' }),
+      variantResidents: Object.freeze({ default: true, description: 'This populates 80% of houses with the townsfolk you see walking around insteam of random adventurer flats' }),
+      fightersTeachHandToHand: Object.freeze({ default: false, description: 'Enable this module to replace Giantish with Hand 2 Hand for training and guild ranks. (Not compatible with other mods that change Fighters Guild)' }),
+      loanAmountPerLevel: Object.freeze({ default: 4, options: Object.freeze(['2000', '4000', '6000', '8000', '10000', '20000', '30000', '40000', '50000']), description: 'Sets the maximum amount per level that can be borrowed from banks' }),
+      // EnhancedRiding (RR2)
+      'EnhancedRiding.enhancedRiding': Object.freeze({ default: true, description: 'Enable enhanced horse riding module, improving presentation and allowing galloping.' }),
+      'EnhancedRiding.RealisticMovement': Object.freeze({ default: true, description: 'Makes the horse and cart movement backwards and sideways more realistic and limited.' }),
+      'EnhancedRiding.followTerrainEnabled': Object.freeze({ default: true, description: 'Enables terrain following when riding.' }),
+      'EnhancedRiding.followTerrainSoftenFactor': Object.freeze({ default: 8, min: 0, max: 32, description: 'Scale factor to soften terrain gradient following. (0=none, 32=max soften)' }),
+      'EnhancedRiding.GallopingInTowns': Object.freeze({ default: false, description: 'Enables galloping (sprinting) while riding horses in towns.' }),
+      'EnhancedRiding.TrampleCivilians': Object.freeze({ default: true, description: 'Enables the crime of trampling innocent townsfolk when galloping in a town. Be careful!' }),
+      // RefinedTraining (RR2)
+      'RefinedTraining.refinedTraining': Object.freeze({ default: true, description: 'Enable refined skill training service.' }),
+      'RefinedTraining.variableTrainingPrice': Object.freeze({ default: true, description: 'Makes price of training based on skill level as well as player level.' }),
+      'RefinedTraining.intensiveTraining': Object.freeze({ default: false, description: 'Enables intensive training option for a session per day for five days, for extra cost.' }),
+    }),
+  }),
   'shield-widget': Object.freeze({
     title: 'Shield Widget',
     author: 'RedRoryOTheGlen',

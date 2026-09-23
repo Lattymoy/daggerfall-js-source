@@ -170,6 +170,14 @@ export const usingRightHandFromSaveVars = (saveVars) => !saveVars?.usingLeftHand
  */
 export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand } : null);
 
+/** RR1: WeaponManager.Sheathed / ScreenWeapon.WeaponType, asked by a law
+ *  that lives nowhere near the rig (Roleplay & Realism's climbing gate
+ *  reads both, RoleplayRealism.cs:323). The rig registers a probe when
+ *  it stands; a host with no rig answers null. */
+let _poseProbe = null;
+export function setWeaponPoseProbe(fn) { _poseProbe = typeof fn === 'function' ? fn : null; }
+export const currentWeaponPose = () => _poseProbe?.() ?? null;
+
 /**
  * SerializablePlayer.cs:420-421, into whichever rig is handed over.
  *

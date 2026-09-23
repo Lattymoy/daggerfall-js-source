@@ -132,7 +132,17 @@ export const POTION_RECIPES = Object.freeze([
 export const POTION_DEFAULT_TEXTURE_RECORD = 11;
 
 const _byKey = new Map(POTION_RECIPES.map((r) => [potionRecipeKey(r.ingredients), r]));
-export const potionRecipeByKey = (key) => _byKey.get(key) ?? null;
+// RR1: `EntityEffectBroker.RegisterEffectTemplate(new CureDiseasePotionRR(), true)`
+// (RoleplayRealism.cs:198) - a mod's effect class re-declares its potion
+// recipes and the broker's dictionary takes them over DFU's (allowReplacement).
+// The rows are keyed by their ingredients as the built ones are, so a
+// replaced recipe answers the same key.
+const _recipeOverrides = new Map();
+export function overridePotionRecipes(rows) {
+  _recipeOverrides.clear();
+  for (const r of rows ?? []) _recipeOverrides.set(potionRecipeKey(r.ingredients), Object.isFrozen(r) ? r : Object.freeze(r));
+}
+export const potionRecipeByKey = (key) => _recipeOverrides.get(key) ?? _byKey.get(key) ?? null;
 
 /** EntityEffectManager.DrinkPotion (:903-947), the bundle half.
  *

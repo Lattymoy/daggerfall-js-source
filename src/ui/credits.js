@@ -116,6 +116,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/61',
     }),
     Object.freeze({
+      title: 'Roleplay & Realism',
+      version: '1.8',
+      author: 'Hazelnut',
+      what: 'The mod\u2019s formula and rule modules (RR1): bows that hit and hurt by how long they were drawn, no climbing with a weapon out, swing speed blended from speed and strength, material to-hit bonuses moderated, armor worn by the blow, the classic strength bonus, bank loans by level, ships boarded from port towns only, an encumbrance penalty, lights doused leaving a dungeon by day, a purification potion that cures poison, class enemies remixed by class, the Thieves Guild and Dark Brotherhood expelling with prejudice, Fighters teaching hand-to-hand, and a bed you can click to sleep in; its NPC variants, enhanced riding, refined training and the Master Armorer quest line follow in later slices.',
+      terms: 'Ported 1:1 from the author\u2019s own source (MIT, every script\u2019s header), vendored verbatim. See vendor/roleplay-realism/README.md for the permission record.',
+      contact: 'Hazelnut, through the DFU forums (forums.dfworkshop.net) or the Nexus page (daggerfallunity mod 16)',
+      vendor: Object.freeze(['roleplay-realism']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/16',
+    }),
+    Object.freeze({
       title: 'Shield Widget',
       version: '1.6',
       author: 'RedRoryOTheGlen',

@@ -100,13 +100,13 @@ contradict the same file.** All 20 ledgerSweep suspects verified as
 VALID rows (the matcher is over-cautious - the right failure
 direction). The real staleness is where the sweep cannot see:
 - `:341` "**TWO LEFT**... only DaedraSummoning and ReceiveHouse are
-  still null" - `guildServiceFlow.js:259/:262` maps both (G7, H1);
+  still null" - `guildServiceFlow.js:263/:266` maps both (G7, H1);
   the row contradicts the GATED derived figure fifteen lines above it
   ("still unbuilt: 0") and is on its FOURTH stale generation - the
   row's own title records the previous three.
 - `:340` residue "a static NPC currently answers with the
   no-response line" - contradicts the same row's own head and row
-  `:446` (B7); `worldModes.js:1298-1309` opens the real talk window.
+  `:446` (B7); `worldModes.js:1301-1312` opens the real talk window.
 - `:339` "house/ship PURCHASE popups... still out" - contradicts row
   `:441` ("this row is now CLOSED", H1-H3) and
   `ui/bankPurchaseWindow.js`.
@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:4362-4363` routes them). UI-Arc carries no records
+  (`worldModes.js:4365-4366` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -235,11 +235,11 @@ opposite of their own code and deserve a slice's attention:
 
 `Port-Ledger.md:533` (save.js:29/:524/:533 → :28/:557/:587), `:544`
 (world.js:2390 → :2412); `Quest-Arc.md:719`/`:2905`
-(worldModes.js:515 → :903); `Player-Arc.md:955` (worldModes.js:736 →
+(worldModes.js:517 → :903); `Player-Arc.md:955` (worldModes.js:738 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:582` ships 9, and the doc missed two
 later revisions recorded in `paperdollViewer.js:138`), `:2114`
-(interiorContext.js:205 → :199); `Rendering.md:84`
+(interiorContext.js:206 → :199); `Rendering.md:84`
 (CHAR_SPRITE_RT_SIZE "256" → 512).
 
 ## What checked out clean

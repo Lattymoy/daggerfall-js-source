@@ -87,7 +87,7 @@ test('TR4: the picker\'s row is live for an owner, and Ship routes to the telepo
   // takes a SECOND gate - `!!onShip` - because the fixed-city host has
   // no world to sail across and a live row there would open onto
   // nothing. world.js is the host that has one, and hands it in.
-  assert.match(read('src/player/mountRig.js'), /shipAvailable: !!onShip && ownsShip\(playerEntity\),/,
+  assert.match(read('src/player/mountRig.js'), /shipAvailable: isShipAvailable\(\{ canSail: !!onShip, ownsShip: ownsShip\(playerEntity\), \.\.\.\(shipLocation\?\.\(\) \?\? \{\}\) \}\),/,   // RR1: the delegate; HasShip is its default
     'the row the bank arc has been able to answer since H3, and the host that can actually sail');
   assert.match(read('src/player/mountRig.js'), /if \(mode === TRANSPORT_MODES\.Ship\) \{ onShip\?\.\(\); return; \}/);
   assert.match(world, /onShip: \(\) => boardOrDisembark\(\),/, 'and world.js is the host that hands the teleport in');

@@ -245,7 +245,7 @@ test('DW3 wiring: the paper doll asks by item.dyeColor and blits an imported tex
   assert.match(rd('src/ui/enhancedInventory.js'), /requestIcon\(line\.image\.archive, line\.image\.record, \{ scale: 2, dye: line\.image\.dye, onReady: render \}\)/);
   assert.match(rd('src/ui/enhancedInventory.js'), /requestIcon\(line\.image\.archive, line\.image\.record, \{ scale: 4, dye: line\.image\.dye, onReady: render \}\)/);
   assert.match(rd('src/ui/enhancedHud.js'), /requestIcon\(image\.archive, image\.record, \{ scale: 2, dye: image\.dye, onReady:/);
-  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+const textures = storedTextureNames\(\)/, 'installed at the scene boot, before the archives load - not at worldTick\'s module scope (a TDZ through the cycle)');
+  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+installRoleplayRealism\(\);[^\n]*\n\s+const textures = storedTextureNames\(\)/, 'installed at the scene boot, before the archives load - not at worldTick\'s module scope (a TDZ through the cycle)');
   assert.ok(!/installDiverseWeaponsIcons/.test(rd('src/systems/worldTick.js')));
   for (const f of ['src/ui/itemScroller.js', 'src/ui/nativeInventory.js']) {
     assert.match(rd(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true, dye: img\.dye \}\)/, f);

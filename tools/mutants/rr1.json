@@ -1,0 +1,137 @@
+[
+  {
+    "name": "RR1-1-the-bow-hold-ladder-loses-its-first-arm",
+    "file": "src/systems/rrRealism.js",
+    "old": "  if (weaponAnimTime < 200) adjusted -= 40;\n  else if (weaponAnimTime < 500) adjusted -= 10;",
+    "new": "  if (weaponAnimTime < 500) adjusted -= 10;",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-2-the-draw-damage-is-not-truncated",
+    "file": "src/systems/rrRealism.js",
+    "old": "  else if (weaponAnimTime >= 9000) adjusted *= 0.25;\n  return Math.trunc(adjusted);",
+    "new": "  else if (weaponAnimTime >= 9000) adjusted *= 0.25;\n  return Math.round(adjusted);",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-3-bare-hands-drawn-refuse-the-climb",
+    "file": "src/systems/rrRealism.js",
+    "old": "  if (weaponDrawn && !weaponMelee) { say?.(NO_CLIMB_HOLDING_WEAPON); return 0; }",
+    "new": "  if (weaponDrawn) { say?.(NO_CLIMB_HOLDING_WEAPON); return 0; }",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-4-a-two-hander-swings-like-a-one-hander",
+    "file": "src/systems/rrRealism.js",
+    "old": "  if (hands === 'Both') { spdRatio = 0.5; strRatio = 0.5; capRatio = 0.15; }\n  else if",
+    "new": "  if",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-5-the-material-to-hit-keeps-dfu-x10",
+    "file": "src/systems/rrRealism.js",
+    "old": "export const rrWeaponToHit = (weapon) => weaponMaterialModifier(weapon?.material ?? 0) * 3;",
+    "new": "export const rrWeaponToHit = (weapon) => weaponMaterialModifier(weapon?.material ?? 0) * 10;",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-6-a-weapon-takes-the-armor-arm",
+    "file": "src/systems/rrRealism.js",
+    "old": "  if (item?.group !== 'Armor') return false;\n  lower(item, damage * 5);",
+    "new": "  lower(item, damage * 5);",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-7-the-loan-ignores-the-choice",
+    "file": "src/systems/rrRealism.js",
+    "old": "export const rrLoanMaxPerLevel = () => LOAN_VALUES[rrSetting('loanAmountPerLevel') ?? 4] ?? LOAN_VALUES[4];",
+    "new": "export const rrLoanMaxPerLevel = () => LOAN_VALUES[4];",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-8-the-wilderness-lets-you-board",
+    "file": "src/systems/rrRealism.js",
+    "old": "    return portTown && ownsShip;\n  }\n  return false;",
+    "new": "    return portTown && ownsShip;\n  }\n  return ownsShip;",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-9-the-encumbrance-forgets-the-120-cap",
+    "file": "src/systems/rrRealism.js",
+    "old": "  const encPc = Math.min(maxEncumbrance > 0 ? carriedWeight / maxEncumbrance : 0, 1.2);",
+    "new": "  const encPc = maxEncumbrance > 0 ? carriedWeight / maxEncumbrance : 0;",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-10-the-speed-penalty-can-take-the-live-speed-under-2",
+    "file": "src/systems/rrRealism.js",
+    "old": "  const speedEffect = Math.min(liveSpeed - 2, Math.trunc(permanentSpeed * encOver));",
+    "new": "  const speedEffect = Math.trunc(permanentSpeed * encOver);",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-11-the-douse-ignores-the-hour",
+    "file": "src/systems/rrRealism.js",
+    "old": "  if (!rrModule('autoExtinguishLight') || !entity?.lightSource || !isDay) return null;",
+    "new": "  if (!rrModule('autoExtinguishLight') || !entity?.lightSource) return null;",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-12-purification-keeps-invisibility",
+    "file": "src/systems/rrRealism.js",
+    "old": "secondary: ['10,8', '3,1'] }),",
+    "new": "secondary: ['10,8', '13,0'] }),",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-13-the-appearance-is-never-restored",
+    "file": "src/systems/rrRealism.js",
+    "old": "    for (const [k, v] of Object.entries(saved)) { if (v === undefined) delete target[k]; else target[k] = v; }",
+    "new": "",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-14-the-thieves-squad-halves",
+    "file": "src/systems/rrRealism.js",
+    "old": "    squad: (level) => [{ mobileType: MOBILE_TYPES.Rogue, count: 4 + Math.trunc(level / 1.5), minDistance: 1, maxDistance: 8 }, { mobileType: MOBILE_TYPES.Thief, count: 4 + Math.trunc(level / 1.5), minDistance: 1, maxDistance: 4 }],",
+    "new": "    squad: (level) => [{ mobileType: MOBILE_TYPES.Rogue, count: 4 + Math.trunc(level / 2), minDistance: 1, maxDistance: 8 }, { mobileType: MOBILE_TYPES.Thief, count: 4 + Math.trunc(level / 2), minDistance: 1, maxDistance: 4 }],",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-15-the-underworld-clamp-stands",
+    "file": "src/systems/guilds.js",
+    "old": "  return guild?.neverExpels && !underworldRuleOf(guild) && newRank < 0 ? 0 : newRank;",
+    "new": "  return guild?.neverExpels && newRank < 0 ? 0 : newRank;",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-16-the-join-floor-is-not-applied",
+    "file": "src/systems/guilds.js",
+    "old": "  if (store && floor != null && getReputation(store, guild.factionId) < floor) setReputation(store, guild.factionId, floor);",
+    "new": "",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-17-the-training-override-is-skipped",
+    "file": "src/systems/guildServices.js",
+    "old": "  return _trainingOverride?.(guild.name) ?? TRAINING_SKILLS[guild.name] ?? null;",
+    "new": "  return TRAINING_SKILLS[guild.name] ?? null;",
+    "tests": ["test/rr1_realism.test.js"]
+  },
+  {
+    "name": "RR1-18-items-weapon-balance-does-not-shadow-weapon-speed",
+    "file": "src/systems/rrInstall.js",
+    "old": "    if (!rrModule('weaponSpeed') || rriModule('weaponBalance') || !ctx?.entity) return null;",
+    "new": "    if (!rrModule('weaponSpeed') || !ctx?.entity) return null;",
+    "tests": ["test/rr1_realism.test.js"],
+    "equivalent": true,
+    "why": "Items' adapter answers first in the same registered function and returns non-null whenever its weaponBalance is on, so this mod's arm is never reached with the switch on; the guard restates InitMod :171 for the reader and cannot be observed"
+  },
+  {
+    "name": "RR1-19-the-resting-guard-is-lost",
+    "file": "src/systems/rrInstall.js",
+    "old": "  if (!rrModule('encumbranceEffects') || !entity?.stats || entity.isResting || !((entity.health ?? 0) > 0)) return null;",
+    "new": "  if (!rrModule('encumbranceEffects') || !entity?.stats || !((entity.health ?? 0) > 0)) return null;",
+    "tests": ["test/rr1_realism.test.js"]
+  }
+]

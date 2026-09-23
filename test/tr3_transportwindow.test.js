@@ -128,7 +128,7 @@ test('TR3/MAC-K3: the host door - grounded and outdoors only, and EVERY host tha
   // TR4 made the row live for an owner; tr4_ship.test.js holds that.
   // MAC-K3 added the second clause: a host with no ship teleport
   // darkens the row rather than opening onto nothing.
-  assert.match(rig, /shipAvailable: !!onShip && ownsShip\(playerEntity\),/);
+  assert.match(rig, /shipAvailable: isShipAvailable\(\{ canSail: !!onShip, ownsShip: ownsShip\(playerEntity\), \.\.\.\(shipLocation\?\.\(\) \?\? \{\}\) \}\),/);   // RR1: through TransportManager.ShipAvailiable's delegate, the host's own gate first
   // The mount's art is loaded on the pick and dropped when you dismount.
   assert.match(rig, /animator\.mount\(mode\);/);
   assert.match(rig, /if \(isRiding\(mode\)\) \{\s*\n\s*loadRidingArt\(fetchBytes, palette, renderer, mode\)/);

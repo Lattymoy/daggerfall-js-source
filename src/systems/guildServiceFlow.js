@@ -209,7 +209,11 @@ export function onPushEffects(entity, guild, memberships, store, now, {
   // F114: ownsHouse is the host's DaggerfallBankManager.OwnsHouse
   // read (current region), for the knightly rank-9 promotion text.
   const moved = updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse });
-  if (moved) steps.push({ textId: moved.textId, clickAnywhere: true, rankChange: moved });
+  if (moved) {
+    // RR1: a mod's TokensExpulsion rides as the box's own rows (centred, %pcn the player's name - MacroHelper's), ahead of the record's
+    const rows = moved.lines ? moved.lines.map((t) => ({ text: t.replaceAll('%pcn', entity?.name ?? ''), center: true })) : undefined;
+    steps.push({ textId: moved.textId, ...(rows ? { rows } : {}), clickAnywhere: true, rankChange: moved });
+  }
   if (freeHealing) {
     if ((entity.health ?? 0) < (entity.maxHealth ?? 0)) {
       entity.health = entity.maxHealth;

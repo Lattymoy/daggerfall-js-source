@@ -37,6 +37,7 @@ import { ownsShip } from '../systems/banking.js';
 import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
 import { mwViewHides } from './mwView.js';   // AUDIT-EOTB2: the sprite body on screen hides the FPV horse (Eye Of The Beholder's ToggleBillboard)
 import { SOUND } from '../systems/soundClips.js';
+import { isShipAvailable } from '../systems/ship.js';   // RR1: TransportManager.ShipAvailiable, the delegate
 
 /**
  * @param deps {
@@ -51,6 +52,7 @@ import { SOUND } from '../systems/soundClips.js';
 export function createMountRig({
   renderer, canvas, fetchBytes, palette, audio,
   player, playerEntity, showOverlay, onShip = null, paused = () => false,
+  shipLocation = null,   // RR1: () => ({ loaded, portTown, onShip }) - what TransportManager.ShipAvailiable's replacement reads (RoleplayRealism.cs:610-631); null when the host cannot say
   // AUDIT-TO1 J1: TransportManager.RidingVolumeScale, which Travel
   // Options zeroes for an accelerated journey (TravelOptionsMod.cs:1227
   // -1229) and restores at its end (:1264). A host that hands none
@@ -100,7 +102,7 @@ export function createMountRig({
         // TR4: the row is live when a ship is owned - AND when this
         // host can actually sail it. A fixed city has nowhere to sail
         // to, so the row goes dark rather than opening onto nothing.
-        shipAvailable: !!onShip && ownsShip(playerEntity),
+        shipAvailable: isShipAvailable({ canSail: !!onShip, ownsShip: ownsShip(playerEntity), ...(shipLocation?.() ?? {}) }),   // RR1: through the delegate (DFU's own answer is HasShip)
         onMode: (mode) => {
           if (mode === TRANSPORT_MODES.Ship) { onShip?.(); return; }
           setMode(mode);   // HC1: the art loads with the mode, in the one place

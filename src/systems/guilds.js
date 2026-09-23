@@ -62,7 +62,7 @@
 // there to be read all along - "Matriarch", "Sister", "Knight
 // Sister", "Dark Sister". Both ship, and the flag is retired.
 import { SKILLS, permanentSkillValue } from './skills.js';
-import { getReputation } from './factionRep.js';
+import { getReputation, setReputation } from './factionRep.js';   // RR1: the underworld guilds' join floor
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { dayOfYear } from './gameDate.js';   // S28: DaggerfallDateTime.DayOfYear
 
@@ -205,7 +205,7 @@ export const daySinceZero = (date) =>
  *  enchantment never moves guild rank. */
 export function numHighLowSkills(entity, guild, rank) {
   let high = 0, low = 0;
-  for (const skill of guild.skills) {
+  for (const skill of guildSkillsOf(guild)) {   // RR1: GuildSkills, the virtual
     const v = permanentSkillValue(entity, skill);
     if (v >= RANK_REQ_SKILL_HIGH[rank]) high++;
     else if (v >= RANK_REQ_SKILL_LOW[rank]) low++;
@@ -214,6 +214,26 @@ export function numHighLowSkills(entity, guild, rank) {
 }
 
 /** CalculateNewRank (:100-111). Returns -1 for expulsion. */
+// ---- RR1: the guild classes a mod registers over DFU's --------------------
+// GuildManager.RegisterCustomGuild(group, type) - Roleplay & Realism's
+// ThievesGuildRR / DarkBrotherhoodRR (AllowGuildExpulsion answering the
+// rank as it comes, a join floor on reputation, the death squad on
+// leaving, their own expulsion text) and FightersGuildRR (its skill
+// lists). The port's guilds are rows, so the class is a RULE by guild
+// name, registered once: `{ joinReputationFloor, squad(level),
+// expulsion: [lines] }` or null for DFU's own.
+let _underworldRule = null;
+export function setUnderworldRule(fn) { _underworldRule = typeof fn === 'function' ? fn : null; }
+export const underworldRuleOf = (guild) => _underworldRule?.(guild?.name) ?? null;
+/** Guild.Leave() (GuildManager.RemoveMembership :140 calls it): the
+ *  host's seam for what a mod's Leave does - the squad. */
+let _onExpelled = null;
+export function setGuildExpelledHook(fn) { _onExpelled = typeof fn === 'function' ? fn : null; }
+/** GuildSkills, the virtual (FightersGuildRR overrides it). */
+let _guildSkillsOverride = null;
+export function setGuildSkillsOverride(fn) { _guildSkillsOverride = typeof fn === 'function' ? fn : null; }
+export const guildSkillsOf = (guild) => _guildSkillsOverride?.(guild?.name) ?? guild?.skills ?? [];
+
 export function calculateNewRank(entity, guild, store) {
   // AUDIT 21 F1: DFU's shape exactly. Guild.CalculateNewRank is the base
   // computation; ThievesGuild and DarkBrotherhood OVERRIDE it as
@@ -223,7 +243,8 @@ export function calculateNewRank(entity, guild, store) {
   // first cut of this fix clamped only the loop's exit and did nothing,
   // because the early return got there first.
   const newRank = baseCalculateNewRank(entity, guild, store);
-  return guild?.neverExpels && newRank < 0 ? 0 : newRank;
+  // RR1: ThievesGuildRR / DarkBrotherhoodRR's AllowGuildExpulsion answers newRank as it comes (underworldExpulsion)
+  return guild?.neverExpels && !underworldRuleOf(guild) && newRank < 0 ? 0 : newRank;
 }
 
 /** Guild.CalculateNewRank (:98-116), the base every guild shares. */
@@ -268,8 +289,13 @@ export function updateRank(memberships, guild, entity, store, now, ctx = null) {
       : 'demotion';
   m.rank = newRank;
   m.lastRankChange = today;
-  if (outcome === 'expulsion') leaveGuild(memberships, guild);
-  return { outcome, rank: newRank, textId: textIdFor(guild, outcome, newRank, ctx) };
+  if (outcome === 'expulsion') {
+    leaveGuild(memberships, guild);
+    _onExpelled?.(guild, entity, ctx);   // RR1: Guild.Leave() - a mod's class sends its squad
+  }
+  // RR1: TokensExpulsion, the virtual - a mod's own lines stand in for record 668
+  const rule = outcome === 'expulsion' ? underworldRuleOf(guild) : null;
+  return { outcome, rank: newRank, textId: textIdFor(guild, outcome, newRank, ctx), lines: rule?.expulsion ?? null };
 }
 
 /** TokensPromotion is NOT one record per guild - AUDIT 20 found the
@@ -500,9 +526,12 @@ export const membershipKey = (guild) => guild.guildGroup;
 /** Join (:309-313): rank 0, and the 28-day clock starts now. The guild
  *  is stored beside the rank because the KEY no longer identifies it -
  *  one HolyOrder slot has to remember WHICH temple. */
-export function joinGuild(memberships, guild, now) {
+export function joinGuild(memberships, guild, now, store = null) {
   const m = { guild: guild.name, rank: 0, lastRankChange: daySinceZero(now) };
   memberships[membershipKey(guild)] = m;
+  // RR1: ThievesGuildRR / DarkBrotherhoodRR.Join - "Ensure reputation starts at at least 2 to give a 1 quest failure buffer"
+  const floor = underworldRuleOf(guild)?.joinReputationFloor;
+  if (store && floor != null && getReputation(store, guild.factionId) < floor) setReputation(store, guild.factionId, floor);
   return m;
 }
 

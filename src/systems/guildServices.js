@@ -164,8 +164,10 @@ export const TEMPLE_TRAINING_SKILLS = Object.freeze({
 export function trainingSkills(guild) {
   if (guild.divine) return TEMPLE_TRAINING_SKILLS[guild.divine];
   if (guild.order) return null;
-  return TRAINING_SKILLS[guild.name] ?? null;
+  return _trainingOverride?.(guild.name) ?? TRAINING_SKILLS[guild.name] ?? null;   // RR1: TrainingSkills, the virtual (FightersGuildRR)
 }
+let _trainingOverride = null;
+export function setTrainingSkillsOverride(fn) { _trainingOverride = typeof fn === 'function' ? fn : null; }
 
 /** GetTrainingMax (:335-338): defaultTrainingMax, and no guild
  *  overrides it. Training cannot take a skill past 50. */

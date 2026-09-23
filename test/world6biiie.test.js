@@ -1,6 +1,6 @@
 // WORLD6b-iii(e) (Mac, 2026-09-14: "Continue" after WORLD6b-iii(d)): THE STRIKER'S RIDER AND THE ROSTER'S BOUND - the two
 // residuals AUDIT WORLD6b recorded and did not pay. (1) The striker's POISON: FormulaHelper inflicts a poisoned blade's
-// or shaft's dose INSIDE the damage calc and clears it from the weapon either way (formulas.js:682-686), so at a puppet
+// or shaft's dose INSIDE the damage calc and clears it from the weapon either way (formulas.js:685-689), so at a puppet
 // the dose ran on the local shadow's entity and the owner's foe never felt it. Now the pool has ONE poison door
 // (`poisonFoe`): mine dosed here, a puppet's set aside and spent by the blow's divert (`pt` on the hit, the wire's
 // bound), landed at the owner as FormulaHelper lands it - inside a damaging blow, before the health moves, the foe's
