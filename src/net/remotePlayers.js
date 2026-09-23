@@ -39,7 +39,9 @@ import { getPref } from '../systems/uiPrefs.js';   // 2026-09-17: the 'peerClass
 import { CLASS_CAREERS } from '../systems/chargen.js';   // 2026-09-17 (bugfix): a stock class's CFG-loaded career carries no `.name` of its own - chargenSession.js's own class list already falls back to this array by careerIndex (`cf.career.name || CLASS_CAREERS[i]`), and composeLook needs the same fallback or every stock-class peer sends class:null
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';   // AUDIT DROPS E6: the hand a swing sound is read off
 import { FootstepMachine, FOOTSTEP_CLIP_SETS } from '../systems/footsteps.js';   // PEER-FS1: peer footsteps off the pose's own `fk`
-import { swingSoundFor } from '../systems/soundClips.js';   // PEER-FS2: a peer's own swing sound, off the pose's `an` edge and their equipped weapon
+import { RidingAnimator, RIDING_VOLUME_SCALE, nextNeighDelay } from '../systems/riding.js';   // RIDE-SOUND: a peer's hooves are TransportManager's own loop, clip swap and neigh
+import { TRANSPORT_MODES } from '../systems/transport.js';   // RIDE-SOUND: the pose's `rd` as the animator's mode
+import { swingSoundFor, SOUND } from '../systems/soundClips.js';   // PEER-FS2: a peer's own swing sound, off the pose's `an` edge and their equipped weapon
 
 /** entity.career?.name for a CUSTOM class; CLASS_CAREERS[entity.careerIndex] for a STOCK one, whose loaded career
  *  object does not carry its own name (see the import comment above) - null if neither resolves, same as before
@@ -399,12 +401,26 @@ export function cropRgba(rgba, w, r, { bottomUp = false } = {}) {
 
 let _dollSeq = 0;   // the record keys, monotonic (AUDIT ONLINE C10: a size-and-millisecond key could repeat)
 
+/** 3D-AUDIO: a peer's sounds play AT them - the linear falloff PEER-FS1 faked on a flat one-shot (full inside 6 m,
+ *  silent past 30), now the panner's own, so a peer's steps, swings and hooves come from where they stand. */
+export const PEER_SOUND_PROFILE = Object.freeze({ refDistance: 6, maxDistance: 30, distanceModel: 'linear' });
+/** Past the far edge nothing is made at all (a panner and a source per step for a peer nobody can hear). */
+export const peerInEarshot = (f, eye) => !(eye && eye.length === 3) || Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]) < PEER_SOUND_PROFILE.maxDistance;
+function peerSound(audio, clip, at, volume) {
+  if (audio.play3d) audio.play3d(clip, at, volume, PEER_SOUND_PROFILE);
+  else audio.playOneShot?.(clip, volume);
+}
+export const ridingLoopName = (id) => `peerRide:${id}`;
+/** AUDIT DISC7 B3: a mounted peer whose newest pose is older than this is standing still for the riding loop - a
+ *  rider in motion sends at POSE_HZ, so a second of silence is a stall, not a gallop. */
+export const PEER_RIDE_STALE_MS = 1000;
+
 /** The peers of a session, as billboards and names. */
 export class RemotePlayers {
   /**
    * @param {object} p
    * @param {import('../render/contract.js').RendererLike} p.renderer
-   * @param {{fetchBytes: Function, palette: object, getTexture?: Function, uploadRecordFrame?: Function, audio?: {playOneShot: Function}|null}|null} p.deps  the compositor's; PEER-FS1/2: and the one-shot audio door the peer sounds play through (null in a test, and then they are silent)
+   * @param {{fetchBytes: Function, palette: object, getTexture?: Function, uploadRecordFrame?: Function, audio?: {playOneShot: Function, play3d?: Function, setLoop3d?: Function, moveLoop3d?: Function}|null}|null} p.deps  the compositor's; PEER-FS1/2: and the one-shot audio door the peer sounds play through (null in a test, and then they are silent)
    * @param {Function} [p.compose] the compositor's door (composePaperDollPixels); a test hands in its own
    * @param {Function} [p.now]
    */
@@ -416,6 +432,8 @@ export class RemotePlayers {
     this._dolls = new Map();     // lookKey -> { rec, w, h } ready | Promise composing | { failedUntil } (insertion-ordered: the oldest first)
     this._footsteps = new Map(); // PEER-FS1: peer id -> FootstepMachine (the stride timing off their own pose)
     this._attackAn = new Map();  // PEER-FS2: peer id -> the last `an` heard, so a new swing count is a swing
+    this._riding = new Map();
+    this._onFoot = new Set();    // AUDIT DISC7 B4: peer ids last seen on foot - their next mount is a mount (the neigh soon after)    // RIDE-SOUND: peer id -> { anim: RidingAnimator, rd } - the mounted peer's hooves
     this._batches = new Map();   // peer id -> { batch, key, doll, peer } (doll kind) | { batch, kind: 'mobile', mobileType, gender, mobileUnit, archive, tex, height, lastAn, lastCn, peer } (mobile kind)
     this._shown = [];            // the last sync's drawable peers with their head heights - the name pass reads it
     this._wanted = new Set();    // SLAM7: the look keys the last sync ASKED FOR - composed or composing, drawn or not
@@ -597,9 +615,9 @@ export class RemotePlayers {
    * answers 0 for every peer.
    * @param {Iterable<any>} peers
    * @param {(p: any) => number[]} [toScene]
-   * @param {{bodyHeight?: (id: any) => number, dt?: number, eye?: number[]|null}} [opts]  PEER-FS1: `eye` is the listener, for the falloff
+   * @param {{bodyHeight?: (id: any) => number, dt?: number, eye?: number[]|null, poseAgeMs?: ((peer: any) => number)|null}} [opts]  PEER-FS1: `eye` is the listener, for the falloff
    */
-  sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0, dt = 0, eye = null } = {}) {
+  sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0, dt = 0, eye = null, poseAgeMs = null } = {}) {
     const live = new Set();
     this._shown = [];   // every drawable peer, doll, mobile or body, for the name pass
     this._wanted = new Set();   // SLAM7: rebuilt every frame - a look nobody is standing in any more stops being needed at once
@@ -612,6 +630,7 @@ export class RemotePlayers {
       seen.add(peer.id);
       this._syncFootsteps(peer, toScene, eye);
       this._syncAttackSound(peer, toScene, eye);
+      this._syncRidingSound(peer, toScene, dt, eye, poseAgeMs);
       // MWBODY1: a peer standing in a Morrowind body (net/peerBodies.js) draws no doll/mobile; its name still rides this pass, at the body's own head
       const bodyH = bodyHeight(peer.id);
       if (bodyH > 0) { this._shown.push({ peer, height: bodyH }); continue; }
@@ -650,6 +669,8 @@ export class RemotePlayers {
     // stale `an` played a phantom swing when that peer came back
     for (const id of this._footsteps.keys()) if (!seen.has(id)) this._footsteps.delete(id);
     for (const id of this._attackAn.keys()) if (!seen.has(id)) this._attackAn.delete(id);
+    for (const id of [...this._riding.keys()]) if (!seen.has(id)) this._stopRidingSound(id);   // RIDE-SOUND: a peer gone (or every peer, on the dead's empty sync) takes their hooves with them
+    for (const id of [...this._onFoot]) if (!seen.has(id)) this._onFoot.delete(id);   // AUDIT DISC7 B4: and what they were last seen on
   }
 
   /** PEER-FS1 (Mac, 2026-09-18: "footstep sounds depending where they walk
@@ -657,12 +678,10 @@ export class RemotePlayers {
    *  driven by their own synced position and the SURFACE KIND they sent in
    *  their own pose (`fk` - their client already knows what they're
    *  standing on; a receiver has no cheap way to ask its own terrain
-   *  queries about a point that is not the local player). No positional
-   *  audio engine exists here (systems/audio.js's `playOneShot` takes no
-   *  position at all) so distance is faked with a straight linear falloff
-   *  between FALLOFF_START (full volume) and FALLOFF_END (silent) - not
-   *  real 3D panning, just enough that a peer across the map does not
-   *  sound as loud as one beside you. */
+   *  queries about a point that is not the local player). 3D-AUDIO: the
+   *  step plays AT them (`peerSound`, the panner's linear falloff of
+   *  PEER_SOUND_PROFILE - full inside 6 m, silent past 30), where PEER-FS1
+   *  once faked that falloff on a flat one-shot. */
   _syncFootsteps(peer, toScene, eye) {
     if (!this.deps?.audio?.playOneShot || getPref('peerFootsteps') === false) return;
     let fm = this._footsteps.get(peer.id);
@@ -680,12 +699,8 @@ export class RemotePlayers {
     // AUDIT RIDE: a peer in the saddle takes no stride - the rider's own machine is silent on a mount (isOnFoot), so the others' is too
     const step = fm.update(f, { grounded: true, swimming: false, levitating: false, onFoot: !shown.rd, standingStill: !shown.mv, halfSpeed: false }, set);
     if (!step) return;
-    const hasEye = eye && eye.length === 3;
-    const dist = hasEye ? Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]) : 0;
-    const FALLOFF_START = 6, FALLOFF_END = 30;
-    const falloff = dist <= FALLOFF_START ? 1 : dist >= FALLOFF_END ? 0 : 1 - (dist - FALLOFF_START) / (FALLOFF_END - FALLOFF_START);
-    if (falloff <= 0) return;
-    this.deps.audio.playOneShot(step.clip, step.volume * falloff);
+    if (!peerInEarshot(f, eye)) return;
+    peerSound(this.deps.audio, step.clip, f, step.volume);
   }
 
   /** PEER-BUZZ: the floating origin moved - every peer's stride anchor re-seeds on its next frame, as the local
@@ -710,15 +725,68 @@ export class RemotePlayers {
     this._attackAn.set(peer.id, an);
     if (last == null || an === last) return;   // first sighting of this peer, or no new swing since
     const f = toScene(peer.shown);
-    const hasEye = eye && eye.length === 3;
-    const dist = hasEye ? Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]) : 0;
-    const FALLOFF_START = 6, FALLOFF_END = 30;
-    const falloff = dist <= FALLOFF_START ? 1 : dist >= FALLOFF_END ? 0 : 1 - (dist - FALLOFF_START) / (FALLOFF_END - FALLOFF_START);
-    if (falloff <= 0) return;
+    if (!peerInEarshot(f, eye)) return;
     // AUDIT DROPS E6: the weapon IN HAND (the look's right-hand slot), and none at all while the pose says sheathed
     // (`wd` 0 - a fist swings as a fist), not the first weapon anywhere in the look
     const weapon = peer.shown.wd ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === EQUIP_SLOTS.RightHand) ?? null) : null;
-    this.deps.audio.playOneShot(swingSoundFor(weapon), 1.1 * falloff);
+    peerSound(this.deps.audio, swingSoundFor(weapon), f, 1.1);
+  }
+
+  /** RIDE-SOUND (Mac: the known limit - "other players' horses make no hoof sounds yet"): A PEER IN THE SADDLE IS
+   *  HEARD. TransportManager's riding half (systems/riding.js RidingAnimator) runs for them as it does for me - the
+   *  loop's clip (the fast clop, the cart's own rattle), its 0.2 s stop, its volume and its neigh - off their pose
+   *  (`rd` the mount, `mv` moving), and it plays AT them: one named positional loop a peer, moved every frame, with
+   *  the peers' own falloff. Gated with their footsteps ('peerFootsteps' - hooves are a mount's steps). */
+  _syncRidingSound(peer, toScene, dt, eye = null, poseAgeMs = null) {
+    const audio = this.deps?.audio;
+    const rd = peer.shown?.rd | 0;
+    if (!audio?.setLoop3d || !rd || getPref('peerFootsteps') === false) {
+      this._stopRidingSound(peer.id);
+      if (!rd) this._onFoot.add(peer.id);   // AUDIT DISC7 B4: seen on foot - a mount after this is a real one
+      return;
+    }
+    const mode = rd === 2 ? TRANSPORT_MODES.Cart : TRANSPORT_MODES.Horse;
+    let r = this._riding.get(peer.id);
+    if (!r || r.rd !== rd) {
+      // AUDIT DISC7 B4: UpdateMode's mount neigh (1-4 s) is for a MOUNT - a change of mount, or a rider seen on foot
+      // before. A rider first seen already in the saddle (a room join, a cell crossing, back out of a building) did
+      // not just mount: their neigh keeps the ordinary 2-39 s cadence.
+      const mounted = !!r || this._onFoot.has(peer.id);
+      if (r) this._stopRidingSound(peer.id);
+      r = { anim: new RidingAnimator(), rd, at: null };
+      r.anim.mount(mode);
+      if (!mounted) r.anim.neighTime = r.anim.now + nextNeighDelay();
+      this._riding.set(peer.id, r);
+    }
+    this._onFoot.delete(peer.id);
+    // AUDIT DISC7 B3: a rider whose poses stopped (a tab in the background, a crash, a stall) stands - `visible` keeps
+    // them for up to PEER_TIMEOUT_MS on their last pose, and a frozen gallop clopped in place for all of it
+    const stale = typeof poseAgeMs === 'function' && poseAgeMs(peer) > PEER_RIDE_STALE_MS;
+    // DISC7: the rider's own half-speed flag off the pose (`hs`) - standing reads true, as the motor's own does
+    const moving = !!peer.shown.mv && !stale;
+    const out = r.anim.update(Math.max(0, dt), { mode, standingStill: !moving, movingLessThanHalfSpeed: !moving || !!peer.shown.hs });
+    const at = toScene(peer.shown);
+    r.at = at;
+    // AUDIT DISC7 B4: past earshot nothing is made - no panner and no source for a rider nobody can hear (the
+    // animator keeps its clock, so the loop comes back in step when they ride into range)
+    const heard = peerInEarshot(at, eye);
+    audio.setLoop3d(ridingLoopName(peer.id), out.playing && heard ? SOUND[out.clip] : null, at, { volume: out.volume, pitch: out.pitch, ...PEER_SOUND_PROFILE });
+    if (out.neigh && heard && audio.play3d) audio.play3d(SOUND.AnimalHorse, at, RIDING_VOLUME_SCALE, PEER_SOUND_PROFILE);
+  }
+  /** AUDIT DISC7 B6: the floating origin moved - every rider's loop is carried with it in the same frame the listener
+   *  is (the sync above ran before the recentre, so its panners stood in the old frame for one frame: a click). */
+  rebaseSounds(offset) {
+    if (!offset) return;
+    for (const [id, r] of this._riding) {
+      if (!r.at) continue;
+      r.at = [r.at[0] + offset[0], r.at[1] + offset[1], r.at[2] + offset[2]];
+      this.deps?.audio?.moveLoop3d?.(ridingLoopName(id), r.at);
+    }
+  }
+  _stopRidingSound(id) {
+    if (!this._riding.has(id)) return;
+    this._riding.delete(id);
+    this.deps?.audio?.setLoop3d?.(ridingLoopName(id), null);
   }
 
   /** The paperdoll path, unchanged in shape from before the mobile-billboard branch existed - just factored out of
@@ -959,6 +1027,7 @@ export class RemotePlayers {
 
   /** Every batch and every doll texture released - the host's teardown. */
   destroy() {
+    for (const id of [...this._riding.keys()]) this._stopRidingSound(id);   // RIDE-SOUND
     for (const e of this._batches.values()) this.renderer.destroyBillboardBatch?.(e.batch);
     this._batches.clear();
     this._wanted.clear();   // SLAM7: nothing is needed by a host that is gone

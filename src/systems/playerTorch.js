@@ -61,6 +61,7 @@
 import { templateByIndex } from './itemTemplates.js';
 import { isLightSource, expandItemMacro } from './useItem.js';
 import { getBool } from './settings.js';   // T1: EnablePlayerTorch reads its own setting, inside Update
+import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
 /** tickTimeInterval (:26) - REAL seconds, not game minutes. */
 export const TORCH_TICK_SECONDS = 20;
@@ -132,7 +133,7 @@ export function tickPlayerTorch(entity, dtSeconds, { fromItems = null, say = nul
     if (source.currentCondition === 0 && entity.lightSource === source) {
       say?.(expandItemMacro(LIGHT_DIES_TEXT, source));
       lit = false;
-      entity.lightSource = null;
+      setLightSource(entity, null);   // DISC7: the one door
       // A LANTERN survives its own death - it is the one that refuels.
       if (!(source.group === 'UselessItems2' && source.templateIndex === LANTERN_TEMPLATE)) {
         const items = entity.items ?? [];

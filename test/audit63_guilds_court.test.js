@@ -520,7 +520,7 @@ test('AUDIT 65 HP-3: the same arm\'s HUD line goes to the dungeon\'s ONE PopupTe
 
 test('AUDIT 65 HP-2/HP-3: each ladder\'s enemy sinks are its OWN host\'s - the four hosts and the standalone dungeon', () => {
   const wm = read('../src/scenes/worldModes.js');
-  const ladder = wm.slice(wm.indexOf('function tryExitDungeon() {'), wm.indexOf('function exitDungeonNow()'));
+  const ladder = wm.slice(wm.indexOf('function tryExitDungeon('), wm.indexOf('function exitDungeonNow()'));
   assert.ok(ladder.length > 1000, 'the dungeon ladder moved');
   // the standing structural rule this file's own header argues for
   // (worldModes.js: "a slot the frame never draws and the keydown arm

@@ -41,7 +41,7 @@ test('DQ1: the target walk and the click each have ONE home', () => {
 
 test('DQ1: BOTH rays offer the stands, each from its own list', () => {
   const s = wm();
-  const interior = s.slice(s.indexOf('function tryExit()'), s.indexOf('function tryExitDungeon') > 0
+  const interior = s.slice(s.indexOf('function tryExit('), s.indexOf('function tryExitDungeon') > 0
     ? s.indexOf('function tryExitDungeon') : s.length);
   assert.match(s, /targets\.push\(\.\.\.questFlatTargets\(questFlats\)\);/, 'the interior ray');
   // WORLD-HOVER: the dungeon arm no longer composes its list inline -

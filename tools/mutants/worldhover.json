@@ -20,8 +20,8 @@
   {
     "name": "WORLD-HOVER-unnamed-key-labels-itself",
     "file": "src/systems/worldHover.js",
-    "old": "  if (!named?.title) return null;\n  return frame(key, 'name', named.title, named.subs ?? []);",
-    "new": "  return frame(key, 'name', named?.title || key, named?.subs ?? []);",
+    "old": "  if (!named?.title) return null;\n  // ACT-MENU: a namer that answers verbs",
+    "new": "  if (!named?.title) return frame(key, 'name', key, []);\n  // ACT-MENU: a namer that answers verbs",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }",
-    "new": "  if (false) { hideWorldPlaque(); return null; }",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (false) { hideWorldPlaque(); return null; }   // (the hide",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -151,8 +151,8 @@
   {
     "name": "WORLD-HOVER-cursorActive-ignored",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (cursorActive || !eye || !dir || !collider) { showWorldPlaque(null); return null; }",
-    "new": "  if (!eye || !dir || !collider) { showWorldPlaque(null); return null; }",
+    "old": "  if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }",
+    "new": "  if (!eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -180,7 +180,7 @@
   {
     "name": "WORLD-HOVER-has-list-set-on-every-frame",
     "file": "src/ui/worldPlaque.js",
-    "old": "  n.classList.toggle('has-list', f.kind === 'items');",
+    "old": "  n.classList.toggle('has-list', f.kind === 'items' || f.kind === 'actions');",
     "new": "  n.classList.toggle('has-list', true);",
     "tests": [
       "test/worldhover.test.js"
@@ -603,8 +603,8 @@
   {
     "name": "WORLD-HOVER-the-hide-keeps-the-signature",
     "file": "src/ui/worldPlaque.js",
-    "old": "  _cancel(_watchdog);\n  _watchdog = null;\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "  _cancel(_watchdog);\n  _watchdog = null;\n  if (!node) return;\n  blank(node);\n}",
+    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  blank(node);\n}",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -612,8 +612,8 @@
   {
     "name": "WORLD-HOVER-the-hide-door-ensures-a-node",
     "file": "src/ui/worldPlaque.js",
-    "old": "  _cancel(_watchdog);\n  _watchdog = null;\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
-    "new": "  _cancel(_watchdog);\n  _watchdog = null;\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
+    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -675,8 +675,8 @@
   {
     "name": "WORLD-HOVER-the-street-s-doors-outlive-the-street",
     "file": "src/scenes/worldModes.js",
-    "old": "  const setMode = (next) => { dropDoorCache(); mode = next; };",
-    "new": "  const setMode = (next) => { mode = next; };",
+    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
+    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -885,8 +885,8 @@
   {
     "name": "AUDIT-WH2-the-seam-gate-stops-hiding",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }",
-    "new": "  if (!worldPlaqueOn()) return null;",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (!worldPlaqueOn()) { return null; }   // (the hide",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -1011,8 +1011,8 @@
   {
     "name": "AUDIT-WH2-the-mode-flip-forgets-the-door-cache",
     "file": "src/scenes/worldModes.js",
-    "old": "  const setMode = (next) => { dropDoorCache(); mode = next; };",
-    "new": "  const setMode = (next) => { mode = next; };",
+    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
+    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
     "tests": [
       "test/worldhover.test.js"
     ]

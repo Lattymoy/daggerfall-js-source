@@ -76,10 +76,11 @@ export function pickPeerInFront(camPos, fwd, peers, reach, distanceOf) {
 // prompt"): THE PLAQUE'S HALF OF THE SAME PICK. World Tooltips names what the crosshair rests on
 // (systems/worldHover.js, ui/worldPlaque.js) off the SAME ray race the press runs (player/activationRace.js
 // raceWinner), so another player under the crosshair is one more racer - `peerRayPick` dresses `pickPeerInFront`'s
-// answer in the race's own shape - and what the plaque says under their name is what the F-menu would offer at
-// this moment - `peerPromptText` reads the very `actionsFor`/`tradeActionsFor` bag ui/socialMenu.js draws its
-// rows from, so the prompt can never promise an act the menu would then refuse. Both are pure, so a test drives
-// them with plain numbers and plain words; scenes/world.js keeps the arm (the picks, the namer, the key's label).
+// answer in the race's own shape - and what the plaque lists under their name is what the F-menu would offer at
+// this moment: ACT-MENU (DISC7) lists the card's own rows (ui/socialMenu.js socialPlaqueRows, off the very
+// `actionsFor`/`tradeActionsFor` bag) for the wheel to light and the activate key to press, with the relation
+// (`peerRelationText`) under the name. Pure, so a test drives it with plain numbers and plain words; scenes/world.js
+// keeps the arm (the picks, the namer, the press).
 // ---------------------------------------------------------------------------------------------------------------
 
 /** The plaque key a player wears: `peer:<session id>` - a string like every other namer's, and one no other family
@@ -103,34 +104,14 @@ export function peerRayPick(hit, reach = SOCIAL_REACH) {
   return { key: PEER_KEY_PREFIX + hit.peer.id, distance: hit.distance, reach };
 }
 
-/** The menu's own three labels, in the menu's own order (ui/socialMenu.js socialMenuRows) - one home. */
-export const PEER_ACT_LABELS = Object.freeze({ friend: 'Add friend', invite: 'Invite to party', trade: 'Trade' });
-
 /**
- * WHAT THE PLAQUE SAYS UNDER A PLAYER'S NAME. `acts` is `{ ...social.actionsFor(id), ...tradeActionsFor(id) }` -
- * exactly the bag the F-menu is opened with - and `keyLabel` the interact key as the host spells it ('' when the
- * action is unbound: AUDIT SOC D10/C19, F is rebindable and a phone has no F, so the key is never assumed).
- *
- *   - The ENABLED acts, and only those, behind the key: `[F] Add friend · Invite to party · Trade`. A disabled
- *     act is not listed with its reason - the plaque is a readout the eye takes in at a glance, and the menu is
- *     one press away with every reason on its rows.
- *   - The trade row's own live label when the peer already asked ('Accept trade' - `tradeLabel`).
- *   - With nothing to offer, the RELATION instead and no key: 'In your party' beats 'Friend' (a party member is
- *     usually a friend too, and the seat is the more useful word), else 'Friend', else null - the name alone.
- *   - Unbound key: the acts alone, no bracket, so the line never reads `[] ...`.
- *
- * @param {{ canFriend?: boolean, canInvite?: boolean, canTrade?: boolean, tradeLabel?: string|null,
- *           relation?: string|null, whyNotInvite?: string|null }|null} acts
- * @param {string} [keyLabel]
+ * THE RELATION, under the name: 'In your party' beats 'Friend' (a party member is usually a friend too, and the seat
+ * is the more useful word), else 'Friend', else null - the name alone. PEER-PLAQUE1's tail, said beside the rows now.
+ * @param {{ relation?: string|null, whyNotInvite?: string|null }|null} acts
  * @returns {string|null}
  */
-export function peerPromptText(acts, keyLabel = '') {
+export function peerRelationText(acts) {
   if (!acts) return null;
-  const offers = [];
-  if (acts.canFriend) offers.push(PEER_ACT_LABELS.friend);
-  if (acts.canInvite) offers.push(PEER_ACT_LABELS.invite);
-  if (acts.canTrade) offers.push(acts.tradeLabel || PEER_ACT_LABELS.trade);
-  if (offers.length) return `${keyLabel ? `[${keyLabel}] ` : ''}${offers.join(' \u00b7 ')}`;
   if (acts.whyNotInvite === WHY_IN_PARTY) return 'In your party';
   if (acts.relation === 'friend') return 'Friend';
   return null;
