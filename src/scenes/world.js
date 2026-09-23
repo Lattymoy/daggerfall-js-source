@@ -11939,7 +11939,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // moved) opens the window exactly as before.
               pool.takeLoot(lootKey, (l) => townTalk.say(l),
                 inventoryDoorReady() ? (loot) => {
-                  if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l))) return;
+                  if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
                   townTalk.showOverlay(makeInventoryWindow({ loot }));
                 } : null);
               surfacePlayer();
@@ -11959,7 +11959,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               const _hooks = droppedLootHooks(pile);
               // QUICK-LOOT B4: the same door, on the player's own pile -
               // the hooks this arm was already building for the window.
-              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l))) return;
+              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
               townTalk.showOverlay(makeInventoryWindow({
                 // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
                 // This arm hand-rolled the window with the SAME eleven hooks
@@ -12008,6 +12008,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
       player.offsetOrigin(r.offset);   // EV1: shifts BOTH ends of the interpolation span - no 819-unit lerp frame
       sky.offsetOrigin(r.offset);   // VC4: the clouds and their shadow keep their place over the land
+      renderer.shadowOriginShift?.(r.offset);   // AUDIT SC1: the shadow cache's remembered placements follow the origin too, or every still caster reads as moved for a second
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
       doorGeneration += 1;   // WORLD-HOVER: the floating origin moved, so every door's WORLD matrix did
@@ -12318,6 +12319,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (cullOn) spherePlanes(multiply(proj, view, _pv), _planes);   // EV3 (GHOST1: normalised - the sphere test shares these)
     meterFor(renderer.gl)?.markCpu('batches');   // PERF-CPU: the pixel walk that fills allBatches, culling as it goes
     const allBatches = [];
+    // SHADOW-REACH (2026-09-23, Mac: "Can you tackle the 2 limitations"): THE CASTERS THE VIEW CULL REJECTS. Every
+    // gate below (the pixel's, a model's, a flat batch's, a townsman's) asks the renderer whether what it just
+    // rejected would cast into this frame's shadow maps - a sun cascade's frustum, which reaches 600 units
+    // toward the light, or a lantern's range - and RECORDS it for the maps without drawing it. Before this a tree
+    // behind the camera cast no sun shadow into the view, a wall just off screen cast none from the lantern beside
+    // it, and SC1's caches churned as the camera turned. The flats collect here and are recorded after the
+    // crowd's draw, on the same wind.
+    const castBatches = [];
     const groundQueue = [];   // GROUND-LAST: the visible pixels whose ground is drawn AFTER every opaque mesh of every pixel (near first, by the walk's order)
     // PERF-ON2 (2026-09-19, Mac: "Online mode needs further performance
     // improvements", with a readout showing 51 fps, script 23.3 ms and
@@ -12346,9 +12355,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     //
     // A culled peer casts no shadow while it is off screen - which is
     // exactly what the world's own flats have done since EV3, since the
-    // shadow pass reads the list this builds.
+    // shadow pass reads the list this builds. AUDIT REACH: unless a shadow
+    // reaches him - then he goes to the casters' list, as every other flat.
     if (remotePlayers) for (const b of remotePlayers.batches()) {   // ONLINE1: the others, at their feet
-      if (cullOn && billboardOutside(b)) continue;
+      if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; }   // AUDIT REACH
       allBatches.push(b);
     }
     // NEAR-FIRST (2026-09-21): THE PIXELS ARE WALKED NEAREST FIRST. The
@@ -12386,6 +12396,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // all run for a pixel behind the camera.
       const pixelVisible = !cullOn || !aabbOutside(_planes, p._box, t[0], t[1], t[2]);
       p._visible = pixelVisible;   // WATER1: the water pass below walks the same verdict
+      const pixelCasts = !pixelVisible && renderer.shadowReach(p._box, t[0], t[1], t[2]);   // SHADOW-REACH: off screen, but in a shadow's reach
       if (pixelVisible) {
         // EE5: the ground shadows under the SKY'S OWN deck - one field for the
         // cloud and for the shadow it casts. Null when there is no enhanced
@@ -12407,12 +12418,27 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         if (p.staticBatch) renderer.drawMesh(p.staticBatch, pixelMatrix, null);   // PERF4: every static model of the pixel, one call per texture (the keys are resolved in the merge)
         for (const m of p.models) {
           if (m._batched) continue;   // PERF4: drawn above
-          if (cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2])) continue;
+          const off = cullOn && aabbOutside(_planes, m._box, t[0], t[1], t[2]);
+          if (off && !renderer.shadowReach(m._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen AND out of every shadow's reach
           if (m._worldGen !== p._worldGen || !m._world) {
             m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16));
             m._worldGen = p._worldGen | 0;
           }
-          renderer.drawMesh(m.gpu, m._world, p.texRemap);
+          if (off) renderer.recordShadowMesh(m.gpu, m._world, p.texRemap);   // SHADOW-REACH: for the maps alone
+          else renderer.drawMesh(m.gpu, m._world, p.texRemap);
+        }
+      } else if (pixelCasts) {
+        // SHADOW-REACH: the whole pixel is off screen but inside a shadow's reach - its ground, its merged statics
+        // and its odd models go to the maps and nowhere else
+        renderer.recordShadowTerrain(p.terrain, pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);
+        if (p.staticBatch) renderer.recordShadowMesh(p.staticBatch, pixelMatrix, null);
+        for (const m of p.models) {
+          if (m._batched || !renderer.shadowReach(m._box, t[0], t[1], t[2])) continue;
+          if (m._worldGen !== p._worldGen || !m._world) {
+            m._world = multiply(pixelMatrix, m.local, m._world || new Float32Array(16));
+            m._worldGen = p._worldGen | 0;
+          }
+          renderer.recordShadowMesh(m.gpu, m._world, p.texRemap);
         }
       }
       // WM2b: THE SAILS, on the same eased wind vector the cloud deck
@@ -12424,6 +12450,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         for (const w of p.windmills) {
           advanceRotor(w.state, dt, windNow);
           if (pixelVisible) renderer.drawMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);
+          else if (pixelCasts) renderer.recordShadowMesh(millParts.rotor, mountRotor(multiply(pixelMatrix, w.local), ROTOR_HUB, w.state.angle), p.texRemap);   // SHADOW-REACH: the sail's shadow sweeps in from off screen
         }
       }
       // WM4c: THE HUM - see exterior.js. Here the source MOVES every
@@ -12451,11 +12478,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // flats that move, and nothing else. Facing costs nothing here (a
       // uniform per pass), so a far flat that draws still turns.
       const ring = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
-      for (const b of p.batches) {
-        if (!pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]))) continue;   // EV3
-        if (!farFlatVisible({ ring, height: b.size?.h ?? 0, animated: b.frame != null })) continue;   // MAC1
+      // AUDIT REACH: a pixel neither seen nor reached has nothing to walk (the first cut asked the far-flat rule, an
+      // object a batch, of every batch of every streamed pixel); the rule runs after the cull again, for the batches it can keep
+      if (pixelVisible || pixelCasts) for (const b of p.batches) {
+        const off = !pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]));   // EV3
+        if (off && !renderer.shadowReach(b._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen and out of every shadow's reach
+        if (!farFlatVisible({ ring, height: b.size?.h ?? 0, animated: b.frame != null })) continue;   // MAC1 (a far flat the rule drops casts nothing either)
         b.origin = t;
-        allBatches.push(b);
+        (off ? castBatches : allBatches).push(b);   // SHADOW-REACH: the maps alone, or the frame
       }
     }
     // GROUND-LAST: the ground of every visible pixel, after every opaque
@@ -12692,10 +12722,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       for (let i = 0; i < livePersonBatches.length; i++) {
         const b = livePersonBatches[i];
         if (!billboardOutside(b)) livePersonBatches[keep++] = b;
+        else if (renderer.shadowReachBatch(b)) castBatches.push(b);   // SHADOW-REACH: a townsman just off screen still throws his shadow into it
       }
       livePersonBatches.length = keep;
     }
     if (livePersonBatches.length) renderer.drawBillboards(livePersonBatches, camRight, UP_Y);
+    if (castBatches.length) renderer.recordShadowBillboards(castBatches, camRight, UP_Y);   // SHADOW-REACH: the flats the view cull rejected, for the maps alone (the wind is the frame's, set above)
     // WX2: what falls is what the front SHOWS - under the enhanced sky the
     // outgoing rain tapers after the sim has cleared and the incoming
     // holds off until the deck is in. Classic: the sim's mode, as W1.

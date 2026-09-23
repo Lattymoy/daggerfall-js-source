@@ -56,8 +56,8 @@
   {
     "name": "ao-hash-rotation",
     "file": "src/render/airPass.js",
-    "old": "  float ang = bayer4(gl_FragCoord.xy) * 6.2831853;",
-    "new": "  float ang = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) * 6.2831853;",
+    "old": "  float ang = bayer4(gl_FragCoord.xy) * 1.5707963;",
+    "new": "  float ang = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) * 1.5707963;",
     "tests": [
       "test/el6_field.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "images-before-resolve",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) this._images();\n    gl.disable(gl.BLEND);",
-    "new": "    gl.disable(gl.BLEND);",
+    "old": "    if (this.f && this.fresh) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n    gl.disable(gl.BLEND);",
+    "new": "    this._blank(quad); this.measured = false;\n    this.fresh = false;\n    gl.disable(gl.BLEND);",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "prepare-draws-nothing-broken",
     "file": "src/render/airPass.js",
-    "old": "    this.f = f;\n    this.rect.set(f.viewport);",
-    "new": "    this.f = null;\n    this.rect.set(f.viewport);",
+    "old": "    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);",
+    "new": "    this.f = null;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -119,7 +119,7 @@
   {
     "name": "prepare-keeps-stats",
     "file": "src/render/airPass.js",
-    "old": "    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false;   // this frame's, counted at the resolve\n",
+    "old": "    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.vol = false;   // this frame's, counted at the resolve\n",
     "new": "",
     "tests": [
       "test/el6_field.test.js"

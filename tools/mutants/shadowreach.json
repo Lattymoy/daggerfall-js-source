@@ -1,0 +1,173 @@
+[
+  {
+    "name": "reach-range-ignored",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (far > 0 && spheresTouch(cx, cy, cz, r, pp[k * 4], pp[k * 4 + 1], pp[k * 4 + 2], far)) return true;",
+    "new": "      if (far > 0) return true;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "reach-translation-dropped",
+    "file": "src/render/shadowPass.js",
+    "old": "    const cx = (box[0] + box[3]) * 0.5 + ox, cy = (box[1] + box[4]) * 0.5 + oy, cz = (box[2] + box[5]) * 0.5 + oz;",
+    "new": "    const cx = (box[0] + box[3]) * 0.5, cy = (box[1] + box[4]) * 0.5 + oy, cz = (box[2] + box[5]) * 0.5;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "reach-sun-arm-dropped",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (this.sunParams[3] > 0) {\n      this._ensureSunPlanes();\n      for (let c = 0; c < SHADOW_CASCADES.length; c++) if (!aabbOutside(this._sunPlanes[c], box, ox, oy, oz)) return true;\n    }",
+    "new": "",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "reach-sun-planes-stale",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (this._sunPlanesFrame === this.frameNo) return;",
+    "new": "    if (this._sunPlanesFrame >= 0) return;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "record-is-a-draw",
+    "file": "src/render/renderer.js",
+    "old": "  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap); }",
+    "new": "  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this.drawMesh(mesh, modelMatrix, texRemap); }",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "record-in-a-panel",
+    "file": "src/render/renderer.js",
+    "old": "  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length)",
+    "new": "  recordShadowBillboards(batches, camRight, camUp) { if (this._shadows && batches?.length)",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "sway-lean-ignored",
+    "file": "src/render/shadowPass.js",
+    "old": "      const dyn = moving || swaying;",
+    "new": "      const dyn = moving;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "sway-any-batch-leans",
+    "file": "src/render/shadowPass.js",
+    "old": "      const swaying = b.sway > 0 && b.size && swayLean(wl, b.sway, b.size.h) > SHADOW_SWAY_STILL;",
+    "new": "      const swaying = b.size && swayLean(wl, 1, b.size.h) > SHADOW_SWAY_STILL;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "world-model-gate-still-skips",
+    "file": "src/scenes/world.js",
+    "old": "          if (off && !renderer.shadowReach(m._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen AND out of every shadow's reach",
+    "new": "          if (off) continue;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "world-crowd-gate-still-skips",
+    "file": "src/scenes/world.js",
+    "old": "        else if (renderer.shadowReachBatch(b)) castBatches.push(b);   // SHADOW-REACH: a townsman just off screen still throws his shadow into it\n",
+    "new": "",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "exterior-flats-gate-still-skips",
+    "file": "src/scenes/exterior.js",
+    "old": "        if (renderer.shadowReach(b._box)) _castBatches.push(b);   // SHADOW-REACH\n",
+    "new": "",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "sway-floor-dropped",
+    "file": "src/render/shadowPass.js",
+    "old": "      const swaying = b.sway > 0 && b.size && swayLean(wl, b.sway, b.size.h) > SHADOW_SWAY_STILL;",
+    "new": "      const swaying = b.sway > 0 && b.size && wl > 0.0;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "sway-x-rate-alone",
+    "file": "src/render/shadowPass.js",
+    "old": "    const fw = r.flatWind, wl = Math.hypot(fw[0], fw[1]);",
+    "new": "    const fw = r.flatWind, wl = Math.abs(fw[0]);",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "sway-on-the-movers-cadence",
+    "file": "src/render/shadowPass.js",
+    "old": "        const dueDyn = dynNear === DYN_SWAY ? (this.frameNo + k) % SHADOW_SWAY_EVERY === 0 : due;",
+    "new": "        const dueDyn = due;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "reach-lantern-by-the-box",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (far > 0 && spheresTouch(cx, cy, cz, r, pp[k * 4], pp[k * 4 + 1], pp[k * 4 + 2], far)) return true;",
+    "new": "      if (far > 0 && spheresTouch(cx, cy, cz, 0.0, pp[k * 4], pp[k * 4 + 1], pp[k * 4 + 2], far)) return true;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "reach-far-guard-dropped",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (far > 0 && spheresTouch(cx, cy, cz, r, pp[k * 4], pp[k * 4 + 1], pp[k * 4 + 2], far)) return true;",
+    "new": "      if (spheresTouch(cx, cy, cz, r, pp[k * 4], pp[k * 4 + 1], pp[k * 4 + 2], far)) return true;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "reach-sphere-radius-dropped",
+    "file": "src/render/shadowPass.js",
+    "old": "      for (let c = 0; c < SHADOW_CASCADES.length; c++) if (sphereInPlanes(this._sunPlanes[c], x, y, z, r)) return true;",
+    "new": "      for (let c = 0; c < SHADOW_CASCADES.length; c++) if (sphereInPlanes(this._sunPlanes[c], x, y, z, 0)) return true;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "seam-records-no-wind",
+    "file": "src/render/renderer.js",
+    "old": "  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp); }",
+    "new": "  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, null, camRight, camUp); }",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  },
+  {
+    "name": "world-peer-gate-still-skips",
+    "file": "src/scenes/world.js",
+    "old": "      if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; }   // AUDIT REACH",
+    "new": "      if (cullOn && billboardOutside(b)) continue;",
+    "tests": [
+      "test/shadowreach.test.js"
+    ]
+  }
+]

@@ -505,6 +505,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   };
   const MILL_SAIL_PAD = 30;   // the sails sweep past the tower's own box
   const _visBatches = [];     // refilled per frame, never reallocated (the EV2 lesson)
+  const _castBatches = [];    // SHADOW-REACH: the flats the view cull rejected that a shadow still reaches - recorded for the maps, never drawn
   // WM2d: the mill's two parts, uploaded once for the location and only
   // when a block here actually stands one - a town with no farm pays
   // nothing. Enhanced skin only: the 1:1 lane sees the game's own farms.
@@ -4589,7 +4590,7 @@ export async function bootExterior(canvas, renderer, params, status) {
             // its callback rather than ahead of it.
             (lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards).takeLoot(lootKey, (l) => townTalk.say(l),
               inventoryDoorReady() ? (loot) => {
-                if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l))) return;
+                if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
                 townTalk.showOverlay(makeInventoryWindow({ loot }));
               } : null);
             surfacePlayer();
@@ -4607,7 +4608,7 @@ export async function bootExterior(canvas, renderer, params, status) {
             const pile = droppedLoot.pileFor(dropKey);
             const _hooks = droppedLootHooks(pile);
             // QUICK-LOOT B4: the same door, on the player's own pile.
-            if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l))) return;
+            if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
             townTalk.showOverlay(makeInventoryWindow({
               // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
               // This arm hand-rolled the window with the SAME eleven hooks
@@ -4823,7 +4824,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // mesh - the buildings, the mills, the rig, the arrows - below, just
     // before the sky. See world.js's note at its ground queue.
     for (const d of drawList) {
-      if (cullOn && aabbOutside(_planes, d.box)) continue;   // EV3
+      if (cullOn && aabbOutside(_planes, d.box)) {   // EV3
+        if (renderer.shadowReach(d.box)) renderer.recordShadowMesh(d.mesh, d.matrix, texRemap);   // SHADOW-REACH: off screen, in a shadow's reach - the maps alone (see world.js)
+        continue;
+      }
       renderer.drawMesh(d.mesh, d.matrix, texRemap);
     }
     // WM2b: THE SAILS. Driven by the SAME eased wind vector the cloud
@@ -4838,7 +4842,10 @@ export async function bootExterior(canvas, renderer, params, status) {
           // EV3: the ANGLE always advances (an off-screen mill keeps
           // turning); only the draw itself is gated.
           advanceRotor(w.state, dt, wind);
-          if (cullOn && aabbOutside(_planes, w.box)) continue;
+          if (cullOn && aabbOutside(_planes, w.box)) {
+            if (renderer.shadowReach(w.box)) renderer.recordShadowMesh(millParts.rotor, mountRotor(w.matrix, ROTOR_HUB, w.state.angle), texRemap);   // SHADOW-REACH
+            continue;
+          }
           renderer.drawMesh(millParts.rotor, mountRotor(w.matrix, ROTOR_HUB, w.state.angle), texRemap);
         }
       }
@@ -4918,7 +4925,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:12250-12450 is the shape.
+    // through the player for ever. world.js:12251-12477 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -5000,14 +5007,18 @@ export async function bootExterior(canvas, renderer, params, status) {
         waterUniforms({ seconds: now / 1000, wind: sky.wind(), rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() }),
         tilemapDim);   // WATER-AUDIT: the town's own tilemap side, not 128
     }
-    _visBatches.length = 0;
+    _visBatches.length = 0; _castBatches.length = 0;
     for (const b of billboardBatches) {
-      if (cullOn && aabbOutside(_planes, b._box)) continue;
+      if (cullOn && aabbOutside(_planes, b._box)) {
+        if (renderer.shadowReach(b._box)) _castBatches.push(b);   // SHADOW-REACH
+        continue;
+      }
       _visBatches.push(b);
     }
     bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.
     renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
     renderer.drawBillboards(_visBatches, camRight, UP_Y);
+    if (_castBatches.length) renderer.recordShadowBillboards(_castBatches, camRight, UP_Y);   // SHADOW-REACH: for the maps alone, on the same wind
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),
@@ -5166,7 +5177,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:12557's order, and the order
+          // BEFORE civilians - world.js:12587's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

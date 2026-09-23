@@ -420,7 +420,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
 
 **Blocked - host scope.**
 
-- **`src/scenes/exterior.js:2065`** - Recall pends here; the anchor
+- **`src/scenes/exterior.js:2066`** - Recall pends here; the anchor
   machinery lives in the streaming `?world` host. *(The triage measured
   this row at `:1033`; RE-RESOLVED onto the live refusal at ROAD-G G7,
   because this is the one row in the two lists that is still OPEN - a
@@ -437,7 +437,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   named exactly: a jump to an anchor on ANOTHER map pixel, which is
   `_teleportToPixel`'s - the streamer's - and there is no streamer here.
   Its refusal names the reason instead of eating the cast.*
-- ~~**`src/scenes/exterior.js:1755`** - PX3: this test host mounts no
+- ~~**`src/scenes/exterior.js:1756`** - PX3: this test host mounts no
   quest bridge, so the pause window's Quests tab says so.~~ **SHIPPED
   (QX1, 2026-09-03).** *The triage's premise - "this file has no bridge
   at all and constructs no quest machine" - was a missing construction,
@@ -594,7 +594,7 @@ are the **narrowed remainders** Wave D recorded rather than shipped
   `Utility/ViewportChanger.cs:52-61` and `HUDCrosshair.cs:43-52` are a dozen
   lines each; the cost is the seam. `gl.viewport` is set full-canvas at
   four sites inside the renderer's own frame brackets
-  (`render/renderer.js:2087, :2014, :2834, :3157`) and the 2D passes
+  (`render/renderer.js:2120, :2046, :2867, :3190`) and the 2D passes
   need the full canvas back. D10 withdrew one clause as stale with
   evidence: there are no screen-to-ray conversions to fix, because the
   port's activation ray is the camera's forward vector, not a pixel
@@ -668,9 +668,9 @@ could see the others' closures until the squash, which is how "leaving
   narrowed the header and **E3** built the console host they needed.
 
 Five of the sites that survived Wave E only MOVED, and `Home.md` was
-regenerated onto the new sites: ~~`exterior.js:1435` -> `:1206`~~
+regenerated onto the new sites: ~~`exterior.js:1436` -> `:1207`~~
 (**CLOSED at TP2**: the Recall interim narrowed to the one arm this host
-cannot take, `exterior.js:1777`), ~~`exterior.js:1827` -> `:1515`~~
+cannot take, `exterior.js:1778`), ~~`exterior.js:1828` -> `:1516`~~
 (**CLOSED at QX1**: this host took the quest bridge, so the pause window's
 Quests tab has a machine to read), ~~`world.js:3695` -> `:3688`~~
 (**CLOSED at the ship landing**), ~~`worldModes.js:1902` -> `:1782`~~

@@ -51,7 +51,7 @@ test('EL6: the constants and the shader laws - the lights archive, the emitter s
   assert.equal(SHADOW_POINT_CASTERS, 8);   // HQ1: eight, on SC1's cache
   assert.equal(AIR_EMIT_SLACK, 0.15); assert.equal(AIR_AO_RESOLVE, 0.75);
   const a = read('src/render/airPass.js');
-  assert.match(a, /float ang = bayer4\(gl_FragCoord\.xy\) \* 6\.2831853;/, 'the AO rotation is the 4x4 ordered threshold');
+  assert.match(a, /float ang = bayer4\(gl_FragCoord\.xy\) \* 1\.5707963;/, 'the AO rotation is the 4x4 ordered threshold (AUDIT HQ1: over a quarter turn - a slice is a line)');
   assert.ok(!/hash\(gl_FragCoord/.test(a), 'no hash rotation left');
   assert.match(a, /for \(int y = -2; y < 2; y\+\+\) \{\n    for \(int x = -2; x < 2; x\+\+\) \{/, 'and the blur is one 4x4 tile');
   assert.match(BAYER_GLSL, /float bayer4\(vec2 p\) \{/, 'the port\'s one Bayer (orderedDither.js), the skies\' too');
@@ -108,5 +108,5 @@ test('EL6: on the fake GL - nothing measured at prepare, the frame\'s depth is a
   assert.equal(ap.measured, false, 'AUDIT-EL F10 holds at the resolve');
   assert.equal(ap.stats.glares, 1, 'one lantern glared at that resolve');
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
-  assert.deepEqual(ap.stats, { emitDraws: 0, glares: 0, shafts: false }, 'prepare resets the counts - a probe reading them mid-frame reads this frame\'s');
+  assert.deepEqual(ap.stats, { emitDraws: 0, glares: 0, shafts: false, vol: false }, 'prepare resets the counts - a probe reading them mid-frame reads this frame\'s (VOL1: the glow\'s too)');
 });

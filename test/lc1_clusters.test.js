@@ -63,9 +63,12 @@ test('LC1: the grid - 16 x 9 x 24 cells over [0.25, 256] of depth in exponential
 });
 
 test('LC1: a sphere\'s cells - behind the near plane none, off-screen none, straight ahead a box of tiles about the centre and the slices its depth spans, the near face clamped to the near plane when the eye is inside it (mutants: the far corner projected without the clamp, which flips behind the eye; the slices from the centre alone)', () => {
-  const box = new Int16Array(6);
-  assert.equal(cellsOfSphere(0, 0, 5, 1, PROJ, box, 0), false, 'behind the eye (view z positive): no cell');
-  assert.equal(cellsOfSphere(0, 0, -0.1, 0.1, PROJ, box, 0), false, 'a sphere that ends before the near plane: no cell');
+  const box = new Int16Array(7);
+  assert.equal(cellsOfSphere(0, 0, 5, 1, PROJ, box, 0), false, 'wholly behind the eye (view z positive, past its radius): no cell');
+  // AUDIT LC1: a sphere that ends inside the near band is slice 0, EVERY tile - the hosts' near planes (0.05, 0.2)
+  // sit inside CLUSTER_NEAR, so fragments live there and read slice 0 at their own depth
+  assert.equal(cellsOfSphere(0, 0, -0.1, 0.1, PROJ, box, 0), true, 'a sphere inside the near band: slice 0, every tile');
+  assert.deepEqual([...box], [0, CLUSTER_X - 1, 0, CLUSTER_Y - 1, 0, 0, 1]);
   assert.equal(cellsOfSphere(200, 0, -10, 1, PROJ, box, 0), false, 'far off to the side: no cell');
   // a unit sphere ten ahead: a small box of tiles about the middle, slices spanning 9..11 of depth
   assert.equal(cellsOfSphere(0, 0, -10, 1, PROJ, box, 0), true);
@@ -73,13 +76,14 @@ test('LC1: a sphere\'s cells - behind the near plane none, off-screen none, stra
   assert.ok(x0 <= 7 && x1 >= 8 && x1 - x0 <= 3, `about the middle across: ${x0}..${x1}`);
   assert.ok(y0 <= 4 && y1 >= 4 && y1 - y0 <= 3, `about the middle down: ${y0}..${y1}`);
   assert.equal(z0, sliceOf(9)); assert.equal(z1, sliceOf(11));
+  assert.equal(box[6], 0, 'ten ahead: no part of it in the near band');
   // the eye inside the sphere: the near face is the near plane, and the box is the whole screen
   assert.equal(cellsOfSphere(0, 0, -0.5, 4, PROJ, box, 0), true);
-  assert.deepEqual([...box], [0, CLUSTER_X - 1, 0, CLUSTER_Y - 1, 0, sliceOf(4.5)], 'a light about the eye touches every tile from the first slice');
+  assert.deepEqual([...box], [0, CLUSTER_X - 1, 0, CLUSTER_Y - 1, 0, sliceOf(4.5), 1], 'a light about the eye touches every tile from the first slice, and is flagged for the band');
   // an orthographic matrix (w = 1) still gives cells - the extent through the matrix, the slices off the view depth (the renderer builds no grid for a panel frame, which is where such a matrix is used; the builder itself has no opinion)
   const ortho = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1]);
   assert.equal(cellsOfSphere(0, 0, -10, 1, ortho, box, 0), true);
-  assert.deepEqual([box[0], box[1], box[4], box[5]], [0, CLUSTER_X - 1, sliceOf(9), sliceOf(11)], 'a unit sphere spans the unit clip box: every tile across');
+  assert.deepEqual([box[0], box[1], box[4], box[5], box[6]], [0, CLUSTER_X - 1, sliceOf(9), sliceOf(11), 0], 'a unit sphere spans the unit clip box: every tile across');
   // a matrix that puts a corner behind the eye (w <= 0) is refused, never divided through
   const bad = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0]);
   assert.equal(cellsOfSphere(0, 0, -10, 1, bad, box, 0), false);
@@ -256,4 +260,26 @@ test('LC1: the host wiring by source - the build sits in beginFrame after the la
   assert.match(r, /this\._uploadClusters\(this\._el\[key\]\.cluster, this\._clustersLive && this\._spriteDepth === 0 && this\._studioDepth === 0 && !this\._panelSaved\);/);
   assert.match(r, /if \(lane\) this\._ensureClusters\(\);/);
   assert.match(r, /const vp = this\._worldViewportPx \?\? \[0, 0, this\.canvas\.width, this\.canvas\.height\];/, 'the docked-HUD viewport (ROAD-E E5) is the rect the tiles are cut over');
+});
+
+test('AUDIT LC1: THE NEAR BAND - a fragment nearer the eye than CLUSTER_NEAR (the hosts\' near planes are 0.05 and 0.2) still finds a light whose reach passes beside the view axis: the light is written to every tile of slice 0, and the hull serves the slices beyond (mutants: the band flag dropped, so the hull computed at 0.25 falls a tile short for a fragment at 0.1; a sphere inside the band dropped whole)', () => {
+  const near = mirrorProjectionX(perspective(Math.PI / 3, 16 / 9, 0.05, 400));   // the dungeon lens
+  const eye = lookAt([0, 1.7, 0], [0, 1.7, -1], [0, 1, 0]);
+  // the auditor's three: a lamp beside the axis with a fragment at depth 0.2 near the axis; a lamp above with a
+  // fragment at depth 0.1; a tiny light with a fragment at 54% of its range inside the band
+  const lights = new Float32Array([-1.8, 1.7, -0.3, 2, 0, 3.6, 0, 2, 0.1, 1.7, -0.12, 0.1]);
+  const sp = createClusterSpace();
+  assert.equal(buildLightClusters(lights, 3, eye, near, sp), true);
+  for (const [i, wp] of [[0, [0.19, 1.7, -0.2]], [1, [0.02, 1.69, -0.1]], [2, [0.06, 1.7, -0.1]]]) {
+    const cell = cellOfPoint(wp, eye, near, VP);
+    assert.ok(cell, `the fragment is on screen (${cell})`);
+    assert.equal(cell[2], 0, 'inside the band: slice 0');
+    assert.ok(cellLights(sp, ...cell).includes(i), `light ${i} listed in cell ${cell}`);
+  }
+  // the band flag does not spill past slice 0: a fragment well beyond the band still reads the hull, and the hull is right
+  const far = cellOfPoint([-1.0, 1.7, -1.5], eye, near, VP);
+  assert.ok(far[2] > 0 && cellLights(sp, ...far).includes(0));
+  const box = new Int16Array(7);
+  assert.equal(cellsOfSphere(-1.8, 0, -0.3, 2, near, box, 0), true); assert.equal(box[6], 1, 'flagged: it reaches into the band');
+  assert.equal(cellsOfSphere(0, 0, -10, 1, near, box, 0), true); assert.equal(box[6], 0, 'ten ahead: not flagged');
 });

@@ -1846,10 +1846,35 @@ export class Renderer {
   setAir(on) { this._airWanted = !!on; this._syncAir(); }
   /** EL8: the contact shadows' door (`?contact=off`); on by default. */
   setContact(on) { this._contactWanted = !!on; }
+  /** VOL1: the lanterns' glow marched through their shadows by the air pass (`?volumetrics=off` restores the lane's analytic glow per fragment). */
+  setVolumetrics(on) { this._volumetricsWanted = !!on; if (this._airPass) this._airPass.volOn = this._volumetricsWanted; }
+  /** EL1: the in-scatter gain folded with the fog's density (zero with the fog off, so clear air glows nowhere). */
+  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]) : 0; }
+  /** VOL1: does the air pass draw this frame's glow - a world frame the pass was prepared for and has not yet resolved
+   *  (AUDIT VOL1: `fresh` - a frame that is not the world's, the water lab's say, and a world draw after the resolve keep
+   *  the lane's own glow), with the door open, outside a sprite pass, a bake and a panel. */
+  _airGlows() { return !!this._air && this._air.fresh && this._volumetricsWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved; }
   /** LC1: the clustered loop's door - `?clusters=off` walks every light in every fragment (syncLightingLane reads it). */
   setClusters(on) { this._clustersWanted = !!on; }
   /** SC1: the static shadow cache's door - `?shadowcache=off` replays every caster at the cadence, as before (syncLightingLane reads it). */
   setShadowCache(on) { this._shadowCacheWanted = !!on; if (this._shadowPass) this._shadowPass.cacheOn = this._shadowCacheWanted; }
+  /** AUDIT SC1: the host's floating origin moved by `offset` - every remembered placement follows it (ShadowPass.shiftOrigin). */
+  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); }
+  /** SHADOW-REACH: would a caster whose world box is `box` (+ the translation) cast into this frame's shadow maps - a
+   *  host asks for what its VIEW cull rejected, and records it (below) rather than drawing it. False with no pass. */
+  shadowReach(box, ox = 0, oy = 0, oz = 0) { return this._casting && this._shadows.reaches(box, ox, oy, oz); }
+  /** SHADOW-REACH: the same for a flat batch, on the sphere the replays cull it by (batchVisible's). */
+  shadowReachBatch(b) {
+    if (!this._casting) return false;
+    const s = b.bounds; if (!s) return true;
+    const o = b.origin;
+    return this._shadows.reachesSphere(s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, s[2] + (o ? o[2] : 0), s[3]);
+  }
+  /** SHADOW-REACH: record a caster for the maps WITHOUT drawing it - the seams drawMesh, drawTerrain and drawBillboards
+   *  record through, with none of their draw. The billboards take the frame's wind as drawBillboards does. */
+  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap); }
+  recordShadowTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) { if (this._casting && surface?.vao) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize); }
+  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp); }
   /** LC1: the grid's two integer textures - the GRID (RG16UI: offset, count per cell) and the LIST (R8UI: light
    *  indices) - NEAREST, unfiltered, made once with the lane. Uploaded by texSubImage2D per world frame. */
   _ensureClusters() {
@@ -1917,7 +1942,11 @@ export class Renderer {
   }
   _syncAir() {
     const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records
-    if (want) this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS } });
+    if (want) {
+      // VOL1: the glow's shader is built from the lane's own curve and integral and the shadow block, handed over - the air pass is a leaf and imports neither
+      this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS }, glsl: { shadow: SHADOW_GLSL, tonemap: this._lane.tonemapGlsl, scatter: this._lane.scatterGlsl }, maxLights: this.maxPointLights });
+      this._air.volOn = this._volumetricsWanted !== false;
+    }
     else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }
   }
   /** EL4: the adaptation image, for a foreign pass that exposes on the lane (the far ring). */
@@ -1944,7 +1973,10 @@ export class Renderer {
     if (!lane) return;
     const gl = this.gl, [expLoc, scLoc] = this._el[key];
     gl.uniform1f(expLoc, this._exposure);
-    gl.uniform1f(scLoc, lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]));
+    // VOL1: on a WORLD frame the air pass glows for the lanterns (marched through their shadows, at the resolve), so the
+    // lane's own analytic glow is 0 there - and stands where the air pass draws nothing (a panel, a sprite pass, a
+    // bake, the door shut): the same gate the contact block and the grid take
+    gl.uniform1f(scLoc, this._airGlows() ? 0 : this._scatterGain());
     if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
     this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)
     // EL8: the contact block - the previous frame's depth, for a WORLD frame's own draws alone (a sprite pass, a bake or a panel is another view: the march would read a stranger's depth)
@@ -2050,6 +2082,7 @@ export class Renderer {
         viewport: this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height],
         shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
         windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
+        scatter: this._scatterGain(), exposure: this._exposure,   // VOL1: the glow's gain (the fog's) and the scene's exposure, for the march
       });
     }
     this._perf?.mark('world');   // VC6d: the passes' work is submitted; everything until the sky or the resolve is the world's own draws
@@ -2078,7 +2111,7 @@ export class Renderer {
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
     // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of
-    // the seven - never said so. `composite()` binds units 0..3 and
+    // the seven - never said so. `composite()` binds units 0..4 (VOL1: the glow on 4) and
     // leaves its own unit selected, exactly what `markForeignPass`
     // exists for; the first screen quad after it found `_activeUnit`
     // still claiming TEXTURE0 and `_tex0Bound` still naming the sprite
@@ -2171,7 +2204,7 @@ export class Renderer {
    *  unsheathing, it spawns a weird water texture"). This block was
    *  COPIED at five seams and the sixth - `_compositeAir`, which runs
    *  the air pass and is as foreign as anything gets - was never given
-   *  one. `airPass.composite()` binds units 0..3 and leaves unit 3
+   *  one. `airPass.composite()` binds units 0..4 (VOL1: the glow on 4) and ends on TEXTURE0, not
    *  selected, so the first screen quad after a resolve found
    *  `_activeUnit` still claiming TEXTURE0 and `_tex0Bound` still
    *  naming the sprite it wanted: it skipped the bind, or bound to unit
@@ -3696,6 +3729,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       light3Color: [...this._light3Color],
       windowEmission: this._windowEmission,
       pointLights: this._pointLights,
+      pointCarried: this._pointCarried,   // AUDIT LIGHT-NEAR1: the hand's mask rides with the lights (a subarray has no `.carried`)
       pointColor: this._pointColor,
       pointColors: this._pointColors,
       indirect: [this._indirect[0], this._indirect[1], this._indirect[2], this._indirect[3]],
@@ -3780,6 +3814,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._light3Color[2] = s.light3Color[2];
     this.setWindowEmission(s.windowEmission);
     this.setPointLights(s.pointLights, s.pointColor, s.pointColors);
+    this._pointCarried = s.pointCarried ?? null;   // AUDIT LIGHT-NEAR1: setPointLights read the mask off the array, and a snapshot's has none
     this.setIndirectLight([s.indirect[0], s.indirect[1], s.indirect[2]], s.indirect[3], s.indirectColor);
     this._proj = s.proj; this._view = s.view; this._lightDir = s.lightDir;
     this._frameStamp++;   // PERF3: a restored state is a new frame to the terrain block
