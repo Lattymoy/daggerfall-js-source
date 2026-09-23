@@ -5,7 +5,7 @@
 // over git.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { hunksFromDiff, lineMap, citeSpellings, planDoc, applyPlan, continuations, ANY_CITE, CONTINUATION, SELF_DOCS } from '../tools/citeShift.mjs';
+import { hunksFromDiff, lineMap, citeSpellings, planDoc, applyPlan, continuations, continuationsIn, regionStops, ANY_CITE, CONTINUATION, SELF_DOCS } from '../tools/citeShift.mjs';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -121,8 +121,24 @@ test('RF3: bare continuations MOVE under the content check - every spelling, up 
   assert.deepEqual(continuations('see world.js:10, :12', t, map, { oldLines, newLines }).map((c) => [c.text, c.from, c.to, c.status]), [[', :12', 12, 13, 'move']]);
   // the two regexes are one law, shared with citeMerge
   assert.ok(ANY_CITE.source.includes('|cs)') && CONTINUATION.source.includes('\\(:'), 'the .cs stop and the (: opener');
-  assert.match(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /import \{ hunksFromDiff, lineMap, citeSpellings, ANY_CITE, CONTINUATION, SELF_DOCS \} from '.\/citeShift\.mjs';/, 'citeMerge imports them');
-  assert.doesNotMatch(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /^const (ANY_CITE|CONTINUATION) =/m, 'and declares no copy');
+  assert.match(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /import \{ hunksFromDiff, lineMap, citeSpellings, regionStops, continuationsIn, SELF_DOCS \} from '.\/citeShift\.mjs';/, 'citeMerge imports them (CITE-SLASH, CITE-CS: through the two helpers that read ANY_CITE and CONTINUATION)');
+  assert.doesNotMatch(readFileSync(join(root, 'tools/citeMerge.mjs'), 'utf8'), /\b(ANY_CITE|CONTINUATION|CS_MEMBER)\b|function\*? *(continuationsIn|regionStops)/, 'and declares no copy, nor reads a regex past the helpers');
+});
+
+test('CITE-SLASH: a bare slash continues only the chain it touches - "8076/8077" a sentence after a cite is two message ids, not world.js:8077 (mutant: the touch dropped)', () => {
+  const oldLines = Array.from({ length: 9000 }, (_, i) => `l${i}`), newLines = ['NEW', ...oldLines];   // long enough that line 8077 exists and passes the content check
+  const map = lineMap([{ oldStart: 0, oldLen: 0, newStart: 1, newLen: 1 }]);
+  const out = (doc) => applyPlan(doc, planDoc({ docText: doc, target: 'src/scenes/world.js', oldLines, newLines, map }));
+  // the Ledger row that found it: the id moved at every shift (8076/11995, then 8076/12009 on main, 8076/12322 on the arc)
+  assert.equal(out('to this very seam (`answerPipeline.js:262`, `world.js:3714`). Work bands to 8076/8077 where DFU refuses with 8075'),
+    'to this very seam (`answerPipeline.js:262`, `world.js:3715`). Work bands to 8076/8077 where DFU refuses with 8075');
+  // the chain still moves: a slash against the cite, against a continuation, after a range, and a colon form anywhere
+  assert.equal(out("expressions are world.js:5681/5682's verbatim"), "expressions are world.js:5682/5683's verbatim");
+  assert.equal(out('see world.js:10, :12/14 and (:20/21)'), 'see world.js:11, :13/15 and (:21/22)');
+  assert.equal(out('world.js:100-120/130'), 'world.js:101-121/131');
+  // prose after a cite keeps its own numbers, however it spells them
+  assert.equal(out('world.js:1861 leaves 33/33 dead, 0.9/0.7/0.5 and rank-6/8 alone'), 'world.js:1862 leaves 33/33 dead, 0.9/0.7/0.5 and rank-6/8 alone');
+  assert.deepEqual([...continuationsIn('world.js:1/2 and 3/4', 'world.js:1'.length, 'world.js:1/2 and 3/4'.length)].map(({ m }) => m[0]), ['/2'], 'the helper yields the touching slash alone');
 });
 
 test('RF3: a test\'s escaped literal follows the row it pins - held while the docs carry the number on struck lines only', () => {
@@ -154,4 +170,21 @@ test('RF3: the tools\' own fixtures are not docs', () => {
     assert.match(readFileSync(join(root, tool), 'utf8'), /\.filter\([^\n]*!SELF_DOCS\.includes\(f\)\)[^\n]*\/\/ RF3/,
       `${tool} filters its doc list by SELF_DOCS`);
   }
+});
+
+test('CITE-CS: a C# member, or a table cell\'s edge, ends a cite\'s region as a `.cs:N` cite does - the Ledger\'s DFU column is C#, not the row\'s JS file (mutant: either stop dropped)', () => {
+  const oldLines = Array.from({ length: 2000 }, (_, i) => `l${i}`), newLines = ['NEW', ...oldLines];
+  const map = lineMap([{ oldStart: 0, oldLen: 0, newStart: 1, newLen: 1 }]);
+  const out = (doc) => applyPlan(doc, planDoc({ docText: doc, target: 'src/scenes/world.js', oldLines, newLines, map }));
+  // the Ledger row: the port's cite moves, the DFU column's lines are DFU's (they had moved from :689 to :874)
+  assert.equal(out('| **Work bands high** - the seam (`world.js:1714`, `:1716`) | TalkManager.GetReactionToPlayer_0_1_2 (:689-693) | Talk arc |'),
+    '| **Work bands high** - the seam (`world.js:1715`, `:1717`) | TalkManager.GetReactionToPlayer_0_1_2 (:689-693) | Talk arc |');
+  assert.equal(out('| `world.js:100` | TalkManager reaction seed (:744-748) |'), '| `world.js:101` | TalkManager reaction seed (:744-748) |', 'a DFU cell with no member name: the cell\'s edge stops it');
+  // in prose, the member name stops it; a JS continuation before the member still moves
+  assert.equal(out('world.js:1861 and (:1867) wrap it; the one underneath: DaggerfallRestWindow.CanRest (:762-831)'),
+    'world.js:1862 and (:1868) wrap it; the one underneath: DaggerfallRestWindow.CanRest (:762-831)');
+  // a JS name is camelCase after its dot, and a line that is not a table row has no cells: `a || b` is code
+  assert.equal(out('world.js:10 then terrainGen.setRoads (:12)'), 'world.js:11 then terrainGen.setRoads (:13)');
+  assert.equal(out('world.js:10 falls back `a || b` (:12)'), 'world.js:11 falls back `a || b` (:13)');
+  assert.deepEqual(regionStops('| a `world.js:1` | B.Cc (:2) |'), [0, 5, 17, 19, 29], 'the cite, the member and the cells\' edges, in order');
 });

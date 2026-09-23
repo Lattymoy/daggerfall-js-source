@@ -685,3 +685,29 @@ well; the map can only shrink. Two of them need more than an aim, and are record
 - `macbugw5` W5-13 is named for the pool's gate and mutates the drip's. Aimed at each of the four gates in turn, only
   `place()`'s dies (14 failing). Its tests (`test/blood1_decals.test.js`) never fail the drip, the footprint or the pool
   asking for `raycastHit`, the door MAC-BUG W5 took them off.
+
+## Two kinds of number the cite tools took for line cites (found at the sixth merge; older than the arc)
+
+The sixth merge's conflicts showed a Ledger row whose DFU message ids read "8076/12322" here and "8076/12009" on main.
+The struck row above it still reads "8076/8077", and DFU's TalkManager.cs answers with records 8075, 8076 and 8077
+(:2029-2035). `tools/citeShift.mjs` and `tools/citeMerge.mjs` had been moving it for as far back as the history goes.
+- **CITE-SLASH.** RF3's grammar read a bare `/N` after a cite, anywhere up to the next cite, as that cite's line. So
+  "8076/8077", a sentence after `world.js:3714`, was world.js:8077 to both tools, and it moved whenever that line did.
+  A bare `/N` now continues only the chain it touches: `world.js:6548/6549`, `:12/14`. The colon forms keep RF3's
+  reach, because the colon says what they are.
+- **CITE-CS.** RF3 ends a cite's region at a `.cs:N` cite, but DFU's members are mostly written without their file:
+  "| TalkManager.GetReactionToPlayer_0_1_2 (:689-693) |" in the Ledger's DFU column, and
+  "DaggerfallRestWindow.CanRest (:762-831)" in prose. A JS cite earlier in the row took each one for its own lines. Two
+  more stops now end the region: a C# member just before its `(:N`, and, in a table row, each cell's edge. Run
+  against the whole tree before they were written, the two stops exclude 99 continuations, and every one is C#.
+- **One law, as RF3's.** Both tools read `continuationsIn` and `regionStops`. Pinned in `test/citeshift.test.js` and
+  `test/citemerge.test.js`. `tools/mutants/citestops.json` has 5 mutants, all dead.
+
+**Repaired by content.** The history (lines matched by their shape) says which loose slashes had moved:
+- Port-Ledger: "Work bands to 8076/8077" (DFU TalkManager.cs:2029-2035).
+- Audit-24: FixRdbData's blocks "1025/1034/1036" (DFU BlocksFile.cs:521, :576, :602).
+- Active-Arcs: "Peak change 42/255". Testing.md: the road tile's corner columns "(63/64)". Each is the value the
+  history begins with.
+- `test/ledger.test.js` and Testing.md: "the ROADS 3/22 comment block". The two copies already disagreed (3/24 and
+  3/43) in the history's first commit, so neither is a person's number. The block holds the ROADS 3 and ROADS 22
+  comments, and ROADS 22 is the arc that wired Basic Roads' network there.
