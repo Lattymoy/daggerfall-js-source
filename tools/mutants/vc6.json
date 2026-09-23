@@ -291,8 +291,8 @@
   {
     "name": "VC6d-the-light-march-walks-a-lid-it-cannot-see-through",
     "file": "src/render/volumetricClouds.js",
-    "old": "    if (sum * EXT > 6.0) break;   // VC6d:",
-    "new": "    if (sum * EXT > 6000.0) break;   // VC6d:",
+    "old": "    if (sum * EXT * ${glslF(MS_B ** (MS_OCTAVES - 1))} > 6.0) break;   // VC6d:",
+    "new": "    if (sum * EXT * ${glslF(MS_B ** (MS_OCTAVES - 1))} > 6000.0) break;   // VC6d:",
     "tests": [
       "test/vc6_clouds.test.js"
     ]

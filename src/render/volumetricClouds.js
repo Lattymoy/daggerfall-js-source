@@ -58,6 +58,8 @@ import { createRenderTarget, withTarget, frameTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
 import { WEATHER_EASE_MINUTES, WEATHER_SKY, sunSkyDirection } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
 
+/** VC7e: a JS number as a GLSL float literal (airPass.js glslFloat's law: `${1}` is an int to the compiler). */
+const glslF = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
 /** The streaming world's pixel, in metres (terrainSampler.js TERRAIN_SIZE). */
 export const PIXEL_METRES = 819.2;
 /** The quality tiers: the sky map's texels, the march's steps, the
@@ -145,6 +147,35 @@ export const FIELD_PERIOD_METRES = PIXEL_METRES * 240;
 export const wrapField = (v) => v - Math.floor(v / FIELD_PERIOD_METRES) * FIELD_PERIOD_METRES;
 /** Extinction per metre at density 1. */
 export const EXTINCTION = 0.006;
+/** VC7e (2026-09-23, Mac: "Whatever is the most visually detailed and immersive"): THE LIGHT THROUGH A THICK DECK.
+ *  Beer's law alone is single scattering: a storm deck's optical depth runs 2 to 6 along the sun, and exp(-2) and
+ *  exp(-6) are both black, so every point under an overcast or a storm got the same nothing and the deck was one
+ *  flat lid whatever its thickness above. A real cloud passes light on by scattering it many times, which falls off
+ *  far more slowly - thin places in a deck glow and thick cores go dark, and THAT is its structure. The octave
+ *  approximation (Wrenninge, "Production Volume Rendering", 2013): octave i carries MS_A^i of the light,
+ *  extinguished by MS_B^i of the depth, its phase flattened by MS_C^i toward isotropic. MS_OCTAVES counts them,
+ *  the single-scattering term (octave 0) included. The same thickness dims the SKY's light on the cloud: the
+ *  ambient passes AMBIENT_THROUGH_K of the depth, never below AMBIENT_FLOOR, so a thick core's underside is darker
+ *  than a thin place beside it rather than one grey with it. */
+export const MS_OCTAVES = 3;
+export const MS_A = 0.5;
+export const MS_B = 0.35;
+export const MS_C = 0.5;
+/** VC7e: the octaves' total share at zero depth - the light is divided by it, so no depth takes more than an unshadowed path. */
+export const msSum = () => { let a = 1, t = 0; for (let o = 0; o < MS_OCTAVES; o++) { t += a; a *= MS_A; } return t; };
+export const AMBIENT_THROUGH_K = 0.35;
+export const AMBIENT_FLOOR = 0.15;
+/** VC7e: the deck's cells (density()): the Worley threshold band a cell's edge is drawn across, the cover band a
+ *  sky becomes a deck over, how far (in the band's height) a lane's base lifts, and how much of the column a lane
+ *  loses at the top. */
+export const CELL_EDGE_LO = 0.35;
+export const CELL_EDGE_HI = 0.65;
+export const DECK_COVER_LO = 0.4;
+export const DECK_COVER_HI = 0.95;
+export const CELL_BASE_LIFT = 0.07;
+export const CELL_THIN = 0.55;
+/** VC7e: how full a column is on the average (the shape noise past its coverage cut) - columnAbove's estimate. */
+export const COLUMN_FILL = 0.5;
 /** The shadow map's square, in metres: SIXTEEN pixels a side, the
  *  camera's pixel in the middle, so the near edge stands 6144 m out -
  *  past the fog's end at Land View Distance 4 (3200 m) either way.
@@ -541,32 +572,12 @@ float heightGradient(float h, float lidness) {   // not 'flat': GLSL ES 3.00 res
   float lid = smoothstep(0.0, 0.12, h) * (1.0 - smoothstep(0.25, 0.5, h));
   return mix(towers, lid, lidness);
 }
-float density(vec3 p, float mip) {
-  // VC6d: OUTSIDE THE BAND, NO SAMPLE IS TAKEN. Both marches walk the
-  // UNION slab - the zone's widened to hold every cell's - so under a
-  // sunny zone with a thunderhead somewhere on the horizon every ray
-  // walked 500 m to 4200 m while the zone's own cloud lives between
-  // 1400 and 3200. heightGradient answered 0 at both ends already (its
-  // two profiles are zero at h <= 0 and at h >= 1), but only after two
-  // 3D texture reads had been paid for. This is the same answer, for
-  // nothing. It must stay on the UNCLAMPED height and on the band's
-  // own ends, never on the gradient: the local flatness below can
-  // reopen a height the zone's would have closed.
-  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);
-  if (hr <= 0.0 || hr >= 1.0) return 0.0;
-  float h = hr;
-  // WIND4 (2026-09-15, Mac: "clouds dont follow on the world timer with
-  // the direction of the wind"): the drift is SUBTRACTED. uShift is the
-  // floating origin's recenter and is ADDED, because q must be the
-  // point's ABSOLUTE position in the field (setState does
-  // shift -= offset for exactly that). The drift is not a position - it
-  // is how far the AIR has travelled - and a field sampled at p + d
-  // shows the cloud that was at p + d standing at p, so the whole sky
-  // crept UPWIND at the wind's own speed. It is the one sign that
-  // cannot be seen from inside the shader and is plain from the ground:
-  // the wisps carry the wind one way (windWisps.js advances the wisp's
-  // POSITION by the offset) and the sky went the other.
-  vec3 q = vec3(p.x + uShift.x - uDrift.x + fShear * (p.y - fBase), p.y, p.z + uShift.y - uDrift.y);
+// VC7e: THE COLUMN over a ground point - everything density() knows before it reads the shape volume, and all of
+// it the same at every height: the variation sample, the cloud's type here, its ceiling, and the deck's cells.
+// Returns (the point's height in the band after its lane's lift, the ceiling, the local lidness, the variation);
+// v is the variation sample itself (its gb warp the shape read). ONE function, so the density and the sky's
+// light through the column above (columnAbove) can never disagree about where the cloud is.
+vec4 columnAt(vec3 p, out vec4 v) {
   // VC6a: ONE SAMPLE, FOUR JOBS. The weather's variation over the land
   // was already read here for the coverage alone, and only its R was
   // used. The volume is RGBA: R and A are two frequencies of the same
@@ -583,7 +594,7 @@ float density(vec3 p, float mip) {
   // the same cloud.
   // VC7a: the coverage rides its own, slower wind and turns through its slice over the day
   vec2 qv = vec2(p.x + uShift.x - uCoverDrift.x + fShear * (p.y - fBase), p.z + uShift.y - uCoverDrift.y);
-  vec4 v = textureLod(uShape, vec3(qv.x / VARIATION_M, 0.37 + uEvolve.z, qv.y / VARIATION_M), 0.0);
+  v = textureLod(uShape, vec3(qv.x / VARIATION_M, 0.37 + uEvolve.z, qv.y / VARIATION_M), 0.0);
   float variation = clamp(v.r * 0.65 + v.a * 0.35, 0.0, 1.0);
   // VC6a: the cloud's TYPE at this place. Where there is more cloud
   // there is flatter, deeper cloud - a settling deck; where there is
@@ -592,7 +603,48 @@ float density(vec3 p, float mip) {
   // collapses to the zone's flatness and its full ceiling.
   float flatHere = clamp(fFlat + (variation - 0.5) * fVary, 0.0, 1.0);
   float ceiling = 1.0 - fVary * (1.0 - variation) * 0.8;
-  float grad = heightGradient(clamp(h / max(ceiling, 0.05), 0.0, 1.0), flatHere);
+  // VC7e: THE DECK'S CELLS. A deck's column was the same thickness everywhere (its optical depth along the sun
+  // varied by a tenth), so no lighting could draw structure into it. The 32-cell Worley of the sample above - two
+  // kilometres a cell, a stratocumulus's own size, and the same at every height, so it shapes whole COLUMNS - thins
+  // the lanes between cells: a lower ceiling and a higher base there, so the underside hangs in lumps. It scales in
+  // with the cover, so a fair sky's towers are what they were.
+  float cells = smoothstep(${glslF(CELL_EDGE_LO)}, ${glslF(CELL_EDGE_HI)}, v.a);
+  float deck = smoothstep(${glslF(DECK_COVER_LO)}, ${glslF(DECK_COVER_HI)}, fCover);
+  float h = (p.y - fBase) / max(fTop - fBase, 1.0) - deck * ${glslF(CELL_BASE_LIFT)} * (1.0 - cells);
+  ceiling *= 1.0 - deck * ${glslF(CELL_THIN)} * (1.0 - cells);
+  return vec4(h, ceiling, flatHere, variation);
+}
+float density(vec3 p, float mip) {
+  // VC6d: OUTSIDE THE BAND, NO SAMPLE IS TAKEN. Both marches walk the
+  // UNION slab - the zone's widened to hold every cell's - so under a
+  // sunny zone with a thunderhead somewhere on the horizon every ray
+  // walked 500 m to 4200 m while the zone's own cloud lives between
+  // 1400 and 3200. heightGradient answered 0 at both ends already (its
+  // two profiles are zero at h <= 0 and at h >= 1), but only after two
+  // 3D texture reads had been paid for. This is the same answer, for
+  // nothing. It must stay on the UNCLAMPED height and on the band's
+  // own ends, never on the gradient: the local flatness below can
+  // reopen a height the zone's would have closed.
+  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);
+  if (hr <= 0.0 || hr >= 1.0) return 0.0;
+  // WIND4 (2026-09-15, Mac: "clouds dont follow on the world timer with
+  // the direction of the wind"): the drift is SUBTRACTED. uShift is the
+  // floating origin's recenter and is ADDED, because q must be the
+  // point's ABSOLUTE position in the field (setState does
+  // shift -= offset for exactly that). The drift is not a position - it
+  // is how far the AIR has travelled - and a field sampled at p + d
+  // shows the cloud that was at p + d standing at p, so the whole sky
+  // crept UPWIND at the wind's own speed. It is the one sign that
+  // cannot be seen from inside the shader and is plain from the ground:
+  // the wisps carry the wind one way (windWisps.js advances the wisp's
+  // POSITION by the offset) and the sky went the other.
+  vec3 q = vec3(p.x + uShift.x - uDrift.x + fShear * (p.y - fBase), p.y, p.z + uShift.y - uDrift.y);
+  vec4 v;
+  vec4 col = columnAt(p, v);   // VC7e: the column's own terms - its lane's lift, its ceiling, its type
+  float variation = col.w;
+  float h = col.x;
+  if (h <= 0.0) return 0.0;
+  float grad = heightGradient(clamp(h / max(col.y, 0.05), 0.0, 1.0), col.z);
   if (grad <= 0.0) return 0.0;
   q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp
   vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass
@@ -608,6 +660,15 @@ float density(vec3 p, float mip) {
   float erode = mix(dfbm, 1.0 - dfbm, clamp(h * 10.0, 0.0, 1.0));
   base = remap(base, erode * (0.15 + 0.35 * uSoft), 1.0, 0.0, 1.0);
   return clamp(base, 0.0, 1.0) * fDensity;
+}
+// VC7e: the optical depth of the column ABOVE p - the sky's light on a cloud comes down through it, whatever the
+// sun is doing (the sun's own path, lightDepth, runs sideways through kilometres of deck at dusk). heightGradient's
+// two profiles end at 1 (the towers) and 0.5 (the lid); the column is COLUMN_FILL full on the average.
+float columnAbove(vec3 p) {
+  vec4 v;
+  vec4 col = columnAt(p, v);
+  float top = col.y * mix(1.0, 0.5, col.z);
+  return EXT * fDensity * ${glslF(COLUMN_FILL)} * (fTop - fBase) * max(top - max(col.x, 0.0), 0.0);
 }
 `;
 
@@ -634,8 +695,8 @@ float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.y
 // through this, so a tint can only move a colour's hue and never its
 // brightness - the dusk must not be a way of turning the exposure up.
 vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }   // a colour with no light in it has no hue to lend: white, the tint that changes nothing
-// toward the light: a short march, Beer's law with the powder term
-float lightMarch(vec3 p) {
+// toward the light: a short march; the optical depth it found (VC7e: the octaves and the ambient read it)
+float lightDepth(vec3 p) {
   float sum = 0.0;
   float ds = (fTop - fBase) / float(uLightSteps) * 0.5;
   for (int i = 0; i < 8; i++) {
@@ -643,11 +704,19 @@ float lightMarch(vec3 p) {
     float step = ds * (1.0 + float(i) * 0.6);
     p += uLightDir * step;
     sum += density(p, 0.0) * step;   // the field itself, not a blurred level - a blurred one never occludes
-    if (sum * EXT > 6.0) break;   // VC6d: exp(-6) is two parts in a thousand - no later step can be seen, and a deep lid is where this march costs most
+    if (sum * EXT * ${glslF(MS_B ** (MS_OCTAVES - 1))} > 6.0) break;   // VC6d: past exp(-6) no step can be seen - VC7e: of the LAST octave, which sees furthest
   }
-  float beer = exp(-sum * EXT);
-  float powder = 1.0 - exp(-sum * EXT * 2.0);
-  return beer * mix(1.0, powder, 0.4);
+  return sum * EXT;
+}
+// VC7e: the light a point takes from the sun through depth tau - octave 0 is Beer's law with the powder term (the
+// single scattering it always was), each further octave a share of the light carried on by scattering again: less
+// of it, reaching deeper, its phase flatter
+vec3 lightOctaves(float tau) {
+  float powder = 1.0 - exp(-tau * 2.0);
+  float single = exp(-tau) * mix(1.0, powder, 0.4);
+  float multi = 0.0, a = ${glslF(MS_A)}, b = ${glslF(MS_B)};
+  for (int o = 1; o < ${MS_OCTAVES}; o++) { multi += a * exp(-b * tau); a *= ${glslF(MS_A)}; b *= ${glslF(MS_B)}; }
+  return vec3(single, multi, 0.0);
 }
 void main() {
   vec2 uv = gl_FragCoord.xy / uMapSize;
@@ -723,7 +792,8 @@ void main() {
     empty = 0;
     {
       float h = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);
-      float light = lightMarch(p);
+      float tau = lightDepth(p);
+      vec3 oct = lightOctaves(tau);   // VC7e: x the single scattering, y the octaves beyond it
       // the ambient carries the field's own low-frequency structure, so a
       // lid is mottled and an underside is not one flat grey
       float mottle = textureLod(uShape, vec3(p.x + uShift.x - uDrift.x, p.y, p.z + uShift.y - uDrift.y) / MOTTLE_M, 1.0).g;   // WIND4: the same sign as the density above - the mottle rides the same air
@@ -731,7 +801,13 @@ void main() {
       // WEATHER2c: a cell's grey pulls the lit colour toward the shade's, so a storm under a sunny zone is a storm's colour
       vec3 ambient = mix(uCloudShade, uCloudLit, sideLit * (1.0 - fGrey)) * (0.75 + 0.5 * mottle) * (1.0 - 0.5 * fDark * (1.0 - h)) * fTint;   // WEATHER2d: the cell's tint
       ambient *= mix(vec3(1.0), duskTint, low * 0.8);   // VC6b: gold toward the sun, blue away from it - a hue, never a brightness
-      vec3 S = uLightColor * light * phase * gain * (1.0 - 0.8 * fDark) * (1.0 - 0.5 * fGrey) * fTint + ambient;
+      // VC7e: the sky's light comes DOWN through a deck - a thick core's underside darker than a thin place's. Weighted
+      // by how much of a deck the sky is (the cells' own weight): a fair or cloudy sky's looks were tuned with the
+      // ambient whole, and a low sun's gold rides it (VC6b), so they keep it
+      float deckHere = smoothstep(${glslF(DECK_COVER_LO)}, ${glslF(DECK_COVER_HI)}, fCover);
+      ambient *= mix(1.0, max(${glslF(AMBIENT_FLOOR)}, exp(-columnAbove(p) * ${glslF(AMBIENT_THROUGH_K)})), deckHere);
+      float light = (oct.x * phase + oct.y * mix(phase, 1.0, ${glslF(1 - MS_C)})) / ${glslF(msSum())};   // VC7e: the octaves' phase flattened toward isotropic; divided by their total share, so no depth takes more than an unshadowed path
+      vec3 S = uLightColor * light * gain * (1.0 - 0.8 * fDark) * (1.0 - 0.5 * fGrey) * fTint + ambient;
       float Ti = exp(-rho * EXT * ds);
       col += T * S * (1.0 - Ti);
       T *= Ti;

@@ -319,6 +319,51 @@ the pins run on a fake GL that draws nothing.
   (115.7 > 90.3 > 49.6); the other five checks held either way. VC6c's
   probe now sets `?haze=off`'s door, so it measures the beams alone.
 
+### VC7e - cloud detail: the cloudy blur and the flat storm lid
+
+Mac, on the question VC7a raised (a cloudy sky an even blur, a storm a
+flat lid): "Whatever is the most visually detailed and immersive."
+
+**Measured first.** The sky lab, with the march's first-hit optical depth
+along the sun painted into the sky map: an overcast deck ran 0.56 to 0.80
+across the whole view, a storm 5.1 to 6.3, a cloudy sky 0.56 to 1.3. The
+3D noise averages out up a column, so a deck was the same thickness
+everywhere - no lighting could draw structure that was not in the field -
+and Beer's law alone, exp(-5) against exp(-6), made every point under a
+storm the same black. The first try (the octaves below, un-normalised)
+proved it: the whole sky brightened and no structure appeared.
+
+**VC7e shipped (2026-09-23).** Pinned by `test/vc7e_detail.test.js`
+(`tools/mutants/vc7e.json` 19/19 dead).
+- **The deck's cells.** `columnAt` - everything density() knows before the
+  shape read, now one function - takes the 32-cell Worley of the
+  variation sample (two kilometres a cell, a stratocumulus's own size, and
+  the same at every height, so it shapes whole COLUMNS) and thins the
+  lanes between cells: the base lifts CELL_BASE_LIFT (0.07) of the band
+  and the ceiling comes down CELL_THIN (0.55), scaled in with the cover
+  (DECK_COVER 0.4 to 0.95). A lane keeps 45% of a core's depth: the cut
+  that kept 20% went transparent in the lanes and opened holes to the
+  dome under the overcast and the storm.
+- **The octaves.** The sun's light through the deck is Wrenninge's
+  multiple-scattering octaves: octave 0 the single scattering it always
+  was, two more carrying half and a quarter of the light at 0.35 and
+  0.1225 of the depth, their phase flattened halfway to isotropic, the
+  sum divided by 1.75 so no depth outshines an unshadowed path. At a
+  storm's depth the single term is under 0.003; the octaves carry over
+  twenty times that, and a thin place stays visibly lighter than a thick
+  one. The light march stops where the last octave stops seeing.
+- **The ambient through the column above.** The sky's light on a cloud
+  comes down through the column over it (`columnAbove`, from the same
+  `columnAt`), never along the sun's path - the first cut used the sun's
+  depth, and at dusk that path runs sideways through kilometres of deck
+  and blackened the gold VC6b gave it. It is weighted by the same deck
+  amount, so a fair sky (none of it) and a cloudy one (under a fifth)
+  keep the looks they were tuned with; its floor (0.15) sits under a
+  storm core's light, where 0.35 had erased the contrast.
+- **In the lab**: rain rolls dark and heavy with lighter gaps between; a
+  storm has darker cores in the lid; an overcast has bands; a fair sky
+  and a low sun's gold are what they were.
+
 ### VC7c - rain shafts
 
 - A raining or storming cell hangs a curtain from its base to the ground:

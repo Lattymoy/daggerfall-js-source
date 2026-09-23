@@ -1,0 +1,21 @@
+[
+ {"name": "VC7e-single-scattering-only", "file": "src/render/volumetricClouds.js", "old": "export const MS_OCTAVES = 3;", "new": "export const MS_OCTAVES = 1;", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-octaves-shallower", "file": "src/render/volumetricClouds.js", "old": "export const MS_B = 0.35;", "new": "export const MS_B = 0.9;", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-octaves-unnormalised", "file": "src/render/volumetricClouds.js", "old": "/ ${glslF(msSum())};   // VC7e", "new": ";   // VC7e", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-octave-phase-not-flattened", "file": "src/render/volumetricClouds.js", "old": "mix(phase, 1.0, ${glslF(1 - MS_C)})", "new": "phase", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-octave-loop-from-zero", "file": "src/render/volumetricClouds.js", "old": "for (int o = 1; o < ${MS_OCTAVES}; o++)", "new": "for (int o = 0; o < ${MS_OCTAVES}; o++)", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-octave-b-never-shrinks", "file": "src/render/volumetricClouds.js", "old": "a *= ${glslF(MS_A)}; b *= ${glslF(MS_B)}; }", "new": "a *= ${glslF(MS_A)}; }", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-light-march-cut-at-beer", "file": "src/render/volumetricClouds.js", "old": "if (sum * EXT * ${glslF(MS_B ** (MS_OCTAVES - 1))} > 6.0) break;", "new": "if (sum * EXT > 6.0) break;", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-no-cells", "file": "src/render/volumetricClouds.js", "old": "  float cells = smoothstep(${glslF(CELL_EDGE_LO)}, ${glslF(CELL_EDGE_HI)}, v.a);", "new": "  float cells = 1.0;", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-cells-change-with-height", "file": "src/render/volumetricClouds.js", "old": "smoothstep(${glslF(CELL_EDGE_LO)}, ${glslF(CELL_EDGE_HI)}, v.a);", "new": "smoothstep(${glslF(CELL_EDGE_LO)}, ${glslF(CELL_EDGE_HI)}, fract(v.a + p.y * 0.001));", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-cells-under-a-fair-sky", "file": "src/render/volumetricClouds.js", "old": "  float deck = smoothstep(${glslF(DECK_COVER_LO)}, ${glslF(DECK_COVER_HI)}, fCover);", "new": "  float deck = 1.0;", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-lane-base-flat", "file": "src/render/volumetricClouds.js", "old": "- deck * ${glslF(CELL_BASE_LIFT)} * (1.0 - cells);", "new": ";", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-lane-top-flat", "file": "src/render/volumetricClouds.js", "old": "  ceiling *= 1.0 - deck * ${glslF(CELL_THIN)} * (1.0 - cells);\n", "new": "", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-lanes-open", "file": "src/render/volumetricClouds.js", "old": "export const CELL_THIN = 0.55;", "new": "export const CELL_THIN = 0.8;", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-ambient-down-the-sun", "file": "src/render/volumetricClouds.js", "old": "exp(-columnAbove(p) * ${glslF(AMBIENT_THROUGH_K)})", "new": "exp(-tau * ${glslF(AMBIENT_THROUGH_K)})", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-ambient-unweighted", "file": "src/render/volumetricClouds.js", "old": "exp(-columnAbove(p) * ${glslF(AMBIENT_THROUGH_K)})), deckHere);", "new": "exp(-columnAbove(p) * ${glslF(AMBIENT_THROUGH_K)})), 1.0);", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-ambient-floor-erases-the-storm", "file": "src/render/volumetricClouds.js", "old": "export const AMBIENT_FLOOR = 0.15;", "new": "export const AMBIENT_FLOOR = 0.35;", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-column-above-ignores-the-height", "file": "src/render/volumetricClouds.js", "old": "max(top - max(col.x, 0.0), 0.0);", "new": "max(top, 0.0);", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-column-above-own-column", "file": "src/render/volumetricClouds.js", "old": "float columnAbove(vec3 p) {\n  vec4 v;\n  vec4 col = columnAt(p, v);", "new": "float columnAbove(vec3 p) {\n  vec4 v = vec4(0.5);\n  vec4 col = vec4((p.y - fBase) / max(fTop - fBase, 1.0), 1.0, fFlat, 0.5);", "tests": ["test/vc7e_detail.test.js"]},
+ {"name": "VC7e-density-below-a-lane", "file": "src/render/volumetricClouds.js", "old": "  float h = col.x;\n  if (h <= 0.0) return 0.0;\n", "new": "  float h = max(col.x, 0.001);\n", "tests": ["test/vc7e_detail.test.js"]}
+]

@@ -19,18 +19,20 @@ import { fileURLToPath } from 'node:url';
 import {
   CLOUD_FIELD_GLSL, MARCH_FS, SHADOW_FS, MARCH_UNIFORMS, FIELD_UNIFORMS, VC_PROFILE,
   SHAPE_METRES, VARIATION_METRES, DETAIL_METRES, MOTTLE_METRES, WARP_METRES, FIELD_PERIOD_METRES,
-  PIXEL_METRES, MARCH_SLACK, QUALITY, packCells, cellOf, horizonDip, EARTH_RADIUS_M, duskWeight,
-} from '../src/render/volumetricClouds.js';
+  PIXEL_METRES, MARCH_SLACK, QUALITY, packCells, cellOf, horizonDip, EARTH_RADIUS_M, duskWeight, MS_B, MS_OCTAVES } from '../src/render/volumetricClouds.js';
 import { skyState } from '../src/render/enhancedSky.js';
 import { CLOUD_SHADOW_GLSL } from '../src/render/cloudShadow.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 /** The body of `density()` alone - where every VC6a and VC6d law lives. */
+// VC7e: the column's terms moved into columnAt, which density calls first - the two are the density, and
+// columnAbove (the sky's light through the column) follows them
 const densityBody = () => {
-  const i = CLOUD_FIELD_GLSL.indexOf('float density(vec3 p, float mip) {');
-  assert.ok(i > 0, 'the field declares density');
-  return CLOUD_FIELD_GLSL.slice(i);
+  const i = CLOUD_FIELD_GLSL.indexOf('vec4 columnAt(vec3 p, out vec4 v) {');
+  const j = CLOUD_FIELD_GLSL.indexOf('float columnAbove(vec3 p) {');
+  assert.ok(i > 0 && j > i && CLOUD_FIELD_GLSL.indexOf('float density(vec3 p, float mip) {') > i, 'the field declares the column, then density');
+  return CLOUD_FIELD_GLSL.slice(i, j);
 };
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -70,7 +72,7 @@ test('VC6a: one texture read does four jobs - two coverage frequencies and the d
   // the variation sample is taken FIRST, on the UNWARPED position, and
   // all four of its channels are spent
   // VC7a: read on the coverage's own drift and turning through its slice over the day - still one read, whole
-  assert.match(d, /vec4 v = textureLod\(uShape, vec3\(qv\.x \/ VARIATION_M, 0\.37 \+ uEvolve\.z, qv\.y \/ VARIATION_M\), 0\.0\);/, 'the weather over the land, read whole');
+  assert.match(d, /  v = textureLod\(uShape, vec3\(qv\.x \/ VARIATION_M, 0\.37 \+ uEvolve\.z, qv\.y \/ VARIATION_M\), 0\.0\);/, 'the weather over the land, read whole (VC7e: into columnAt\'s out parameter)');
   assert.match(d, /float variation = clamp\(v\.r \* 0\.65 \+ v\.a \* 0\.35, 0\.0, 1\.0\);/, 'two frequencies of coverage, not one');
   assert.match(d, /q\.xz \+= \(v\.gb \* 2\.0 - 1\.0\) \* WARP_M;/, 'and the other two read as a vector that bends the sample');
   // the ORDER is the whole trick: warp, then shape. A shape read before
@@ -86,7 +88,8 @@ test('VC6a: the cloud TYPE varies across the sky, and collapses to one thing for
   const d = densityBody();
   assert.match(d, /float flatHere = clamp\(fFlat \+ \(variation - 0\.5\) \* fVary, 0\.0, 1\.0\);/, 'flatter where there is more cloud, towers where there is less');
   assert.match(d, /float ceiling = 1\.0 - fVary \* \(1\.0 - variation\) \* 0\.8;/, 'and a lower ceiling where the cloud is thin');
-  assert.match(d, /float grad = heightGradient\(clamp\(h \/ max\(ceiling, 0\.05\), 0\.0, 1\.0\), flatHere\);/, 'the gradient is taken at the PLACE\'s flatness and ceiling');
+  assert.match(d, /  return vec4\(h, ceiling, flatHere, variation\);/, 'VC7e: the column hands its height, ceiling, flatness and variation back');
+  assert.match(d, /float grad = heightGradient\(clamp\(h \/ max\(col\.y, 0\.05\), 0\.0, 1\.0\), col\.z\);/, 'the gradient is taken at the PLACE\'s flatness and ceiling');
   // AT vary 0 THE WHOLE TERM IS THE OLD ONE. flatHere == fFlat and
   // ceiling == 1, so fog and a sandstorm are the lids they were - which
   // is what makes this safe to have added at all.
@@ -239,13 +242,16 @@ test('VC6d: no sample is taken outside the band, and the gate is the band\'s own
   // heightGradient already answered 0 outside the band - after two 3D
   // texture reads had been paid for.
   assert.match(d, /float hr = \(p\.y - fBase\) \/ max\(fTop - fBase, 1\.0\);\s*\n\s*if \(hr <= 0\.0 \|\| hr >= 1\.0\) return 0\.0;/, 'the UNCLAMPED height, and the band\'s own ends');
-  const gate = d.indexOf('if (hr <= 0.0 || hr >= 1.0) return 0.0;');
-  assert.ok(gate > 0 && gate < d.indexOf('textureLod('), 'and it returns before the first texture read');
+  // VC7e: density's own body - its first texture read is the column's (columnAt reads the variation sample)
+  const own = d.slice(d.indexOf('float density(vec3 p, float mip) {'));
+  const gate = own.indexOf('if (hr <= 0.0 || hr >= 1.0) return 0.0;');
+  const firstRead = Math.min(...['textureLod(', 'columnAt(p, v)'].map((t) => own.indexOf(t)).filter((i) => i >= 0));
+  assert.ok(gate > 0 && gate < firstRead, 'and it returns before the first texture read');
   // it must NOT be a gradient test: the local flatness computed below can
   // reopen a height the zone's flatness would have closed (a lid's
   // gradient is 0 above h 0.5, a tower's is not), and a gradient gate
   // would have culled cloud the field is meant to grow there.
-  const before = d.slice(0, gate).split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  const before = own.slice(0, gate).split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
   assert.doesNotMatch(before, /heightGradient/, 'the gate is not the gradient');
 });
 
@@ -259,7 +265,7 @@ test('VC6d: the march strides over empty air and walks the cloud\'s EDGE fine, a
     assert.ok(q.steps + MARCH_SLACK <= 96, `${name}: the slack stays inside the loop's own hard cap`);
   }
   // the light march stops once no later step could be seen
-  assert.match(MARCH_FS, /if \(sum \* EXT > 6\.0\) break;/, 'exp(-6) is two parts in a thousand');
+  assert.ok(MARCH_FS.includes(`if (sum * EXT * ${MS_B ** (MS_OCTAVES - 1)} > 6.0) break;`), 'exp(-6) is two parts in a thousand - VC7e: of the LAST octave, which sees furthest');
   // the SHADOW march takes NONE of it: it is 24 steps over a slab it
   // already sizes to the path, and its whole answer is one exponential
   // of the sum - there is no edge to resolve and nothing to stride past.

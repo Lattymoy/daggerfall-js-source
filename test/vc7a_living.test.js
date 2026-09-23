@@ -48,7 +48,7 @@ test('VC7a: THE BOIL IS IN THE FIELD - the shape and the detail read up their vo
   assert.match(d, /uniform vec3 uEvolve;/);
   assert.match(d, /uniform vec2 uCoverDrift;/);
   assert.match(d, /vec2 qv = vec2\(p\.x \+ uShift\.x - uCoverDrift\.x \+ fShear \* \(p\.y - fBase\), p\.z \+ uShift\.y - uCoverDrift\.y\);/, 'the coverage on the cover\'s own wind, sheared as the cloud is');
-  assert.match(d, /vec4 v = textureLod\(uShape, vec3\(qv\.x \/ VARIATION_M, 0\.37 \+ uEvolve\.z, qv\.y \/ VARIATION_M\), 0\.0\);/, 'turning through its slice');
+  assert.match(d, /  v = textureLod\(uShape, vec3\(qv\.x \/ VARIATION_M, 0\.37 \+ uEvolve\.z, qv\.y \/ VARIATION_M\), 0\.0\);/, 'turning through its slice');
   assert.match(d, /vec4 s = textureLod\(uShape, \(q \+ vec3\(0\.0, uEvolve\.x, 0\.0\)\) \/ SHAPE_M, mip\);/, 'the towers boil');
   assert.match(d, /vec4 d = textureLod\(uDetail, \(q \+ vec3\(0\.0, uEvolve\.y, 0\.0\)\) \/ DETAIL_M, mip\);/, 'the edges churn');
   assert.doesNotMatch(d, /vec3\(q\.x \/ VARIATION_M/, 'the coverage is no longer read on the air\'s own drift');
