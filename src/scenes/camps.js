@@ -31,7 +31,7 @@ import { FlatAnim } from '../render/flatAnimation.js';
 import { trs } from '../world/mat4.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';
 import { ListPickerWindow } from '../ui/listPicker.js';
-import { survivalOn } from '../systems/survival/switch.js';   // AUDIT SURV-TIERS: Off hides the pool (shown, below); it keeps what stands
+import { survivalOn } from '../systems/survival/switch.js';   // AUDIT SURV-TIERS: Off keeps what stands and uses none of it (shown, below); SURV-OFFSIGHT: it sees another's (seen)
 import {
   TENT_MODEL, FIRE_FLAT, FIRE_LIGHT_RANGE, CAMP_REACH, CAMP_KIND, CAMP_TEXT, CAMPS_PER_OWNER,
   placeCampItem, packCamp, stokeFire, fireLit, campExpired, tentPos, nearestFire, campInfoText, campMenu,
@@ -126,8 +126,20 @@ export function createCamps({
    * the wire keep every camp. What Off takes away is THIS player's use
    * of them - the sprite, the light, the tent, the ray, the warmth and
    * the rest a fire makes - which is every door that reads `shown()`.
+   *
+   * SURV-OFFSIGHT (2026-09-23, Mac: "No, not off.. theres no reason to
+   * have it in off, really only being able to see other people's
+   * campfires makes sense"). WHAT OFF SEES IS NOT WHAT IT USES. Another
+   * player's camp is part of the world the room shares - they sit at
+   * that fire and sleep in that tent - so the three doors of SIGHT (the
+   * flame, its light, the tent) read `seen()`: every camp with the arc
+   * on, and with it Off every camp that is not this player's. The ray,
+   * the name, the menu, the warmth and the camp's rest stay `shown()`'s,
+   * and Off has none of them. This player's own camps, stood while the
+   * arc was on, stay out of sight with the rest of the arc.
    */
   const shown = () => (survivalOn() ? camps : NO_CAMPS);
+  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c.rec)));
 
   /** THE PLACING: the pack's use of Camping Equipment or a Campfire Kit lands here (useItem's 'pitchCamp' / 'placeFire'). */
   function placeItem(item, list) {
@@ -189,17 +201,17 @@ export function createCamps({
       } else if (fireLit(c.rec, t) && _fire) mountFire(c);   // stoked: the flame is back
     }
   }
-  const batches = () => shown().map((c) => c.batch).filter(Boolean);
+  const batches = () => seen().map((c) => c.batch).filter(Boolean);
   function lights() {
     const t = now();
-    return shown().filter((c) => fireLit(c.rec, t)).map((c) => ({ x: c.rec.pos[0], y: c.rec.pos[1] + FIRE_LIGHT_UP, z: c.rec.pos[2], range: FIRE_LIGHT_RANGE }));
+    return seen().filter((c) => fireLit(c.rec, t)).map((c) => ({ x: c.rec.pos[0], y: c.rec.pos[1] + FIRE_LIGHT_UP, z: c.rec.pos[2], range: FIRE_LIGHT_RANGE }));
   }
   const tentMatrix = (rec) => { const p = tentPos(rec); return trs(p[0], p[1], p[2], 0, rec.yaw * 180 / Math.PI, 0); };
   /** The tents, in the host's world pass. */
   function draw(r = renderer, texRemap = null) {
     if (!_tent?.gpu || !r?.drawMesh) return 0;
     let n = 0;
-    for (const c of shown()) if (c.rec.kind === CAMP_KIND.Tent) { r.drawMesh(_tent.gpu, tentMatrix(c.rec), texRemap); n++; }
+    for (const c of seen()) if (c.rec.kind === CAMP_KIND.Tent) { r.drawMesh(_tent.gpu, tentMatrix(c.rec), texRemap); n++; }
     return n;
   }
 

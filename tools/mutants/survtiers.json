@@ -964,5 +964,95 @@
     "tests": [
       "test/citedrift.test.js"
     ]
+  },
+  {
+    "name": "SURVOFFSIGHT-off-sees-no-camp",
+    "file": "src/scenes/camps.js",
+    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c.rec)));",
+    "new": "  const seen = () => (survivalOn() ? camps : NO_CAMPS);",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-off-sees-its-own",
+    "file": "src/scenes/camps.js",
+    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c.rec)));",
+    "new": "  const seen = () => camps;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-off-sees-only-its-own",
+    "file": "src/scenes/camps.js",
+    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c.rec)));",
+    "new": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => mine(c.rec)));",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-the-flame-hidden-off",
+    "file": "src/scenes/camps.js",
+    "old": "  const batches = () => seen().map((c) => c.batch).filter(Boolean);",
+    "new": "  const batches = () => shown().map((c) => c.batch).filter(Boolean);",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-the-light-hidden-off",
+    "file": "src/scenes/camps.js",
+    "old": "    return seen().filter((c) => fireLit(c.rec, t))",
+    "new": "    return shown().filter((c) => fireLit(c.rec, t))",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-the-tent-hidden-off",
+    "file": "src/scenes/camps.js",
+    "old": "    for (const c of seen()) if (c.rec.kind === CAMP_KIND.Tent) {",
+    "new": "    for (const c of shown()) if (c.rec.kind === CAMP_KIND.Tent) {",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-off-rays-what-it-sees",
+    "file": "src/scenes/camps.js",
+    "old": "    for (const c of shown()) {\n      const p = c.rec.pos;",
+    "new": "    for (const c of seen()) {\n      const p = c.rec.pos;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-off-names-and-opens-what-it-sees",
+    "file": "src/scenes/camps.js",
+    "old": "  const forKey = (key) => shown().find(",
+    "new": "  const forKey = (key) => seen().find(",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-off-is-warmed-by-what-it-sees",
+    "file": "src/scenes/camps.js",
+    "old": "  const byFire = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now())",
+    "new": "  const byFire = (pos) => !!nearestFire(seen().map((c) => c.rec), pos, now())",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVOFFSIGHT-off-rests-at-what-it-sees",
+    "file": "src/scenes/camps.js",
+    "old": "  const campAt = (pos) => nearestFire(shown().map((c) => c.rec), pos, now());",
+    "new": "  const campAt = (pos) => nearestFire(seen().map((c) => c.rec), pos, now());",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
   }
 ]

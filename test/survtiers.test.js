@@ -61,7 +61,8 @@ import { withDom } from './invdrag.mjs';
 // The second pass ("One more audit before we merge") added the tests
 // marked "the second pass" and replaced the first pass's Off-gap shift
 // with the pause (bible/06-Systems/Climates-Calories.md, AUDIT
-// SURV-TIERS, both passes).
+// SURV-TIERS, both passes). SURV-OFFSIGHT (Mac: "really only being able
+// to see other people's campfires makes sense") added the last.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -973,4 +974,48 @@ test('AUDIT SURV-TIERS (the second pass): before six the enhanced tavern says th
       view?.unmount?.();
     });
   } finally { if (hadLoc) globalThis.location = loc; else delete globalThis.location; }
+});
+
+// ═══ SURV-OFFSIGHT (2026-09-23): OFF SEES OTHER PEOPLE'S CAMPFIRES ═══
+//
+// Mac: "No, not off.. theres no reason to have it in off, really only
+// being able to see other people's campfires makes sense". Off kept every
+// camp and hid all of them from this player (AUDIT SURV-TIERS); its eyes
+// see another player's now - the flame, its light, the tent - and nothing
+// of any camp is its to use. Its own, stood while the arc was on, stay out
+// of sight with the rest of the arc.
+test('SURV-OFFSIGHT: Off sees another player\'s camp - the flame, its light, the tent - and uses none of it; its own stay out of sight; on, every camp is seen and used', async () => {
+  const { createCamps, FIRE_LIGHT_UP } = await import('../src/scenes/camps.js');
+  const { TENT_MODEL, FIRE_LIGHT_RANGE } = await import('../src/systems/survival/camp.js');
+  setWorldMinutes(100);
+  const renderer = { createBillboardBatch: (archive, record, size, positions) => ({ pos: positions[0] }), destroyBillboardBatch: () => {} };
+  const pool = createCamps({
+    renderer, getTexture: async () => ({ getFrameCount: () => 3, getSize: () => ({ width: 40, height: 40 }) }), uploadRecordFrame: () => {},
+    meshes: { getGpuMesh: async () => ({ gpu: true }), cpuModels: new Map([[TENT_MODEL, { positions: [-1, 0, -1, 1, 2, 1] }]]) },
+    entity: body(), camera: () => ({ feet: [0, 0, 0], yaw: 0 }), selfId: () => 'me',
+  });
+  pool.restore([{ id: 'me:1', owner: 'me', kind: 'tent', pos: [1, 0, 1], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }]);   // mine, from a time the arc was on
+  pool.applyOwner('peer', [{ i: 'p:1', k: 0, p: [20, 0, 20], y: 0, u: 500, w: 0 }]);   // a peer's tent and its fire
+  await new Promise((r) => setTimeout(r, 0));   // the flame's frames and the tent's mesh are up
+  const sight = () => ({
+    flames: pool.batches().map((b) => b.pos),
+    lights: pool.lights().map((l) => [l.x, l.y, l.z, l.range]),
+    tents: (() => { let n = 0; pool.draw({ drawMesh: () => { n++; } }); return n; })(),
+  });
+  const use = () => ({
+    targets: pool.targets().map((t) => t.key),
+    names: [pool.hoverName('camp:me:1'), pool.hoverName('camp:p:1')],
+    warm: [pool.byFire([1, 0, 1]), pool.byFire([20, 0, 20])],
+    at: [pool.campAt([1, 0, 1])?.id ?? null, pool.campAt([20, 0, 20])?.id ?? null],
+  });
+  for (const tier of ['casual', 'hard']) {
+    setPref(SURVIVAL_PREF, tier);
+    assert.deepEqual(sight(), { flames: [[1, 0, 1], [20, 0, 20]], lights: [[1, FIRE_LIGHT_UP, 1, FIRE_LIGHT_RANGE], [20, FIRE_LIGHT_UP, 20, FIRE_LIGHT_RANGE]], tents: 2 }, `${tier}: every camp seen`);
+    assert.deepEqual(use(), { targets: ['camp:me:1', 'camp:me:1', 'camp:p:1', 'camp:p:1'], names: [{ title: 'Camp' }, { title: 'Camp' }], warm: [true, true], at: ['me:1', 'p:1'] }, `${tier}: and used`);
+  }
+  setPref(SURVIVAL_PREF, SURVIVAL_STORED[SURVIVAL_OFF]);
+  assert.deepEqual(sight(), { flames: [[20, 0, 20]], lights: [[20, FIRE_LIGHT_UP, 20, FIRE_LIGHT_RANGE]], tents: 1 }, 'Off: the peer\'s flame, its light and its tent - and none of this player\'s own');
+  assert.deepEqual(use(), { targets: [], names: [null, null], warm: [false, false], at: [null, null] }, 'Off: no ray, no name, no warmth, no camp\'s rest - seen, not used');
+  assert.deepEqual([pool.activate('camp:p:1', 'dialogue'), pool.activate('camp:p:1', 'grab')], [false, false], 'no word and no menu from it');
+  assert.equal(pool.fireNear([20, 0, 20]), true, 'the world still has the fire - the rest\'s place reads it (AUDIT SURV-TIERS)');
 });

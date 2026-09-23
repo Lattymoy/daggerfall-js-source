@@ -286,7 +286,7 @@ test('AUDIT SURV C: what the player is told - a vampire\'s strip has no hunger o
   assert.match(invSrc, /if \(usableItem\(picked\)\) \{\n\s+u\.onclick/, 'Use only where the law has an arm');
 });
 
-test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carries none, an empty word reaches the cell, a restore merges by id, Off keeps them and hides them; the dungeon rest pays its night asleep; the clock correction re-aligns', async () => {
+test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carries none, an empty word reaches the cell, a restore merges by id, Off keeps them, sees only another player\'s and uses none; the dungeon rest pays its night asleep; the clock correction re-aligns', async () => {
   const world = read('src/scenes/world.js'), dc = read('src/scenes/dungeonContext.js'), campsSrc = read('src/scenes/camps.js');
   assert.doesNotMatch(world, /camps\.collectPixel\(key\)/, 'a placed camp is not a dropped pile: the streaming sweep leaves it');
   assert.doesNotMatch(world, /camps: camps\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\),   \/\/ SURV3: my camps, in natives\n\s+\}\);\n\s+\}\n\s+function restoreExteriorScene|camps\.restore\(arrived\.camps/, 'the scene cache carries no camps - the pool is the truth');
@@ -297,8 +297,8 @@ test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carrie
   // camp and an Off host dropped its peers' camps from the room it passes on. Off hides; it does not burn.
   assert.doesNotMatch(campsSrc, /if \(!survivalOn\(\)\) return null;/, 'Off refuses no record');
   // the merge
-  const { createCamps } = await import('../src/scenes/camps.js');
-  const { TENT_MODEL } = await import('../src/systems/survival/camp.js');
+  const { createCamps, FIRE_LIGHT_UP } = await import('../src/scenes/camps.js');
+  const { TENT_MODEL, FIRE_LIGHT_RANGE } = await import('../src/systems/survival/camp.js');
   const entity = player(); const renderer = { gl: null };
   const pool = createCamps({
     renderer, getTexture: async () => ({ getFrameCount: () => 3, getSize: () => ({ width: 40, height: 40 }) }), uploadRecordFrame: () => {},
@@ -320,10 +320,13 @@ test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carrie
   assert.equal(pool.snapshot().length, 4, '...and the next save still carries it');
   assert.equal(pool.applyOwner('peer', [{ i: 'p:1', k: 1, p: [20, 0, 20], y: 0, u: 500, w: 0 }]), true, 'a peer\'s word lands too');
   assert.equal(pool.camps.length, 5);
-  assert.deepEqual([pool.targets(), pool.lights(), pool.batches(), tents()], [[], [], [], 0], 'but nothing is shown: no ray, no light, no flame, no tent');
-  assert.equal(pool.byFire([1, 0, 1]), false, 'no warmth and no camp\'s rest for this player');
-  assert.equal(pool.hoverName('camp:me:1'), null, 'no name');
-  assert.equal(pool.activate('camp:me:1', 'info'), false, 'no menu');
+  // SURV-OFFSIGHT (Mac: "really only being able to see other people's campfires makes sense"): Off SEES another
+  // player's camp and uses none of any; its own stay out of sight
+  assert.deepEqual([pool.targets(), pool.lights(), pool.batches(), tents()], [[], [{ x: 20, y: FIRE_LIGHT_UP, z: 20, range: FIRE_LIGHT_RANGE }], [], 0],
+    'no ray; of the lights, the peer\'s fire\'s alone - its own fires and its own tent are out of sight (this pool mounts no flame)');
+  assert.deepEqual([pool.byFire([1, 0, 1]), pool.byFire([20, 0, 20])], [false, false], 'no warmth and no camp\'s rest for this player, by its own fire or the peer\'s');
+  assert.deepEqual([pool.hoverName('camp:me:1'), pool.hoverName('camp:p:1')], [null, null], 'no name');
+  assert.deepEqual([pool.activate('camp:me:1', 'info'), pool.activate('camp:p:1', 'info')], [false, false], 'no menu');
   assert.equal(pool.fireNear([1, 0, 1]), true, 'the world still has the fire - the rest\'s PLACE reads it (shared.js createRestDeps)');
   const said = [];
   const off = createCamps({ entity, camera: () => ({ feet: [0, 0, 0], yaw: 0 }), say: (l) => said.push(l) });

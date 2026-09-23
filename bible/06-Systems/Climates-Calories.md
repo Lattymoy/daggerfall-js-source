@@ -56,6 +56,7 @@ carry, and everything static.
 | SURV6 | hunting, foraging and the water search as real-time events: the wilderness roll, the Yes/No box, the busy page, the finds and the harms, the hunted | `survival/hunting.js` (the law), `ui/huntWindow.js` (the three pages), `scenes/hunting.js` (composed), the overworld host's `createHunting` bag and its minute tick |
 | SURV7 | the feed: the four hosts say where the player stands and the minute law runs in every mode; the rest gate on DFU's seam; the needs aligned at a load and an arrival; fast travel charged; the records | `survival/env.js` (the feed, the gate); `scenes/shared.js` createPlayerTicker's `survivalEnv`; the four hosts' readers; `save.js`'s load arm; `worldTick.js` tickPlayerMinutes' `survival` |
 | SURV-TIERS | Off, Casual (the default) and Hard on the one key: the tiers as data, every charging law reading its tier's rules, Off stored as the old switch's own `false`; AUDIT SURV-TIERS: the loan, a rest is a rest, the house's order, Off keeping the camps and the place, four laws Hard shares | `survival/difficulty.js` (the table, the stored values), `survival/switch.js` (`survivalTier`, `survivalRules`), the laws (`needs.js`, `rest.js`, `food.js`, `hunting.js`, `tavernMenu.js`, `temperature.js`), the compositions (`env.js`, `scenes/shared.js`, `scenes/hunting.js`, `scenes/camps.js`, `useItem.js`, both tavern windows), `encounters.js` (the asks), `uiPrefs.js` (the load), the four hosts' `restKind`, the Features row |
+| SURV-OFFSIGHT | Off sees another player's camp - the flame, its light, the tent - and uses none of it; its own stay out of sight | `scenes/camps.js` (`seen`, the doors of sight, beside `shown`, the doors of use) |
 
 ### The temperature (SURV1)
 
@@ -883,9 +884,11 @@ tavern list and rest hour - but it is a setting, not an eraser, and AUDIT
 SURV-TIERS closed the ways it had been one:
 
 - **The camps are kept, not burned.** The pool keeps every camp through the
-  burn, the save, the scene cache and the wire, and hides them from THIS
-  player alone (`scenes/camps.js` `shown`): no sprite, light, tent, ray,
-  warmth or camp's rest. A camp kit used with the arc Off is refused in
+  burn, the save, the scene cache and the wire, and keeps their USE from
+  THIS player alone (`scenes/camps.js` `shown`): no ray, name, menu,
+  warmth or camp's rest. What Off SEES is another player's camp - the
+  flame, its light, the tent - and never its own (`seen`; SURV-OFFSIGHT,
+  at the end of this page). A camp kit used with the arc Off is refused in
   words - "Turn Climates & Calories on to make camp." (CAMP-SILENT's law:
   a refusal the player cannot see is a bug report nobody can act on).
 - **Its minutes are nobody's needs.** Hunger and wakefulness are
@@ -1041,7 +1044,8 @@ unchanged) - Mac's "still let it be able to be turned off for online".
 MODS-ONLINE-3's reading holds tier by tier: a tier decides only what THIS
 player's body pays; the counters, the camps and a corpse's food (the
 killer's word) are the world's in every tier - an Off player's camps stand
-for everyone else, and an Off host relays its peers' camps. A party rest's
+for everyone else, and an Off host relays its peers' camps; an Off
+player sees them and uses none (SURV-OFFSIGHT). A party rest's
 mirror (PARTY-REST4b) takes the leader's PLACE - every tier broadcasts it -
 and prices it by the member's own tier. Two world events stay the actor's
 tier's, as the actor's own act: a party rest's encounter roll is the
@@ -1050,7 +1054,7 @@ world and fights whoever is near it.
 
 ### The pins
 
-`test/survtiers.test.js`, 29 tests: the row, the table and the shelf agree
+`test/survtiers.test.js`, 30 tests: the row, the table and the shelf agree
 (the segments write the table's stored values); the switch's reads; the
 shelf, through a real one (an old Off kept as `false`, the default stored
 as nothing, five junk values dropped at the load); Hard's table is the arc
@@ -1080,8 +1084,9 @@ five live at the minute and at the read, null rules, Off paused as it
 passes and a long Off a fresh start - with a gap the arc was ON for still
 counting); and the second pass's own: the loan settled by whatever else
 refills the pool, the lit fire, the replay floor on exposure, the
-mirrored dungeon night and the wagon's tent. An `afterEach` resets the
-tier, the clock and the gate after every test.
+mirrored dungeon night and the wagon's tent; and SURV-OFFSIGHT's one (at
+the end of this page). An `afterEach` resets the tier, the clock and the
+gate after every test.
 
 The pre-tier pins moved only where their vocabulary or the source shape
 did: a test that set the switch `true` sets `'hard'` (or `'casual'`); one
@@ -1245,7 +1250,9 @@ crash in the tiers' own plumbing, never Hard's.
   snowy night) - which with a foe near kills. That is what a stamina
   cost is; the needs alone still never collapse anyone.
 - **A player who starts Off and turns Casual on later has no kit** - the
-  kit is chargen's, and the provisions shelf sells it.
+  kit is chargen's, and the provisions shelf sells it. Mac's own call the
+  same day: *"No, not off.. theres no reason to have it in off"*
+  (SURV-OFFSIGHT, at the end of this page).
 - **A new Hard character dies of exposure on their first snowy
   evening**, and a Hard blackout night is replayed as waking hours - both
   as they were before the tiers (the play lens ran the same sessions on
@@ -1257,3 +1264,61 @@ crash in the tiers' own plumbing, never Hard's.
 cautious or inns journey still replays its minutes awake - it now
 arrives at death's door in a Hard desert rather than dead, and Exhausted
 in either tier.
+
+## SURV-OFFSIGHT - OFF SEES OTHER PEOPLE'S CAMPFIRES (2026-09-23)
+
+> Mac, on a slice that had packed the survival kit in every tier: *"No,
+> not off.. theres no reason to have it in off, really only being able to
+> see other people's campfires makes sense"*.
+
+**The kit stays Casual's and Hard's.** Mac's first change - *"C&C
+characters regardless of mode should start with supplies"* - had been read
+as every tier, Off's included, and shipped that way (SURV-KIT, `23ee51b8`).
+It is reverted whole (`4dffc8ef`), but for six line cites in the kit's
+fallback seam that had rotted before it and named moved lines (`equip.js`'s
+`startingGear.js:70`, `:221` and `world.js:2460`, `startingGear.js`'s
+`equip.js:307` and `world.js:2460`, `exterior.js`'s `equip.js:306`): each
+names its line again. Casual and Hard characters set out with the kit on
+every creation path there is - the wizard and `?class=` in each of the three
+hosts, and online, where the tier is the player's own - and Off's bag is
+DFU's. The second pass's accepted "starts Off, no kit" (above) is Mac's own
+call now.
+
+**What Off sees is not what it uses.** Off kept every camp and hid all of
+them from its player (AUDIT SURV-TIERS). Another player's camp is part of
+the world a room shares - they sit at that fire and sleep in that tent - so
+the pool's three doors of sight (`scenes/camps.js` `batches`, `lights`,
+`draw`) read `seen()`: every camp with the arc on, and with it Off every
+camp that is not this player's (the record's owner, the test that lets only
+a camp's owner pack it). The doors of use stay `shown()`'s, and Off has none
+of them: no ray - so no name on hover, no word and no menu - no warmth and
+no camp's rest. This player's own camps, stood while the arc was on, stay
+out of sight with the rest of the arc. Alone there is nobody else, so
+single-player Off sees no camp, as before; the world's own braziers are
+DFU's scenery in every tier, unchanged.
+
+**The pins.** `test/survtiers.test.js` 29 -> 30: one pool holding this
+player's own tent camp and a peer's, each SEEN (the flame, its light, the
+tent) and USED (the ray, the name, the warmth, the camp's rest) in Casual
+and in Hard; Off sees the peer's alone and uses neither, with no word and no
+menu from it, and the world's own answer (`fireNear`, the rest's place)
+still finds the fire. AUDIT SURV B's Off pin (`auditsurv.test.js`), which
+held that Off saw no camp at all, holds the new law: the peer's fire's
+light and nothing of its own, and no warmth, name or menu from either.
+Against the old pool, both fail.
+
+Mutants: `tools/mutants/survtiers.json` 107 -> 117 - Off seeing no camp,
+its own, only its own; the flame, the light and the tent each hidden again;
+the ray, the name and menu, the warmth and the camp's rest each reading
+what Off sees - all dead. The run: every record whose target is
+`scenes/camps.js` and every record whose tests are a file this slice edited
+- 157 records over 7 lists, all dead. The first run of those 157 also read
+all dead, and was worth nothing for the ones `auditsurv.test.js` judges:
+the file did not parse (a new test title's unescaped apostrophe), so every
+mutant it was asked about "died" of the syntax error. The file was fixed,
+both files run clean first, and the run repeated. A mutation run proves
+nothing about a test file that does not pass unmutated.
+
+**Not driven in the container:** no ARENA2 and no second player, so an Off
+player has not watched a peer's fire in a live room; the pool is driven
+through its own doors, which are all a host calls.
