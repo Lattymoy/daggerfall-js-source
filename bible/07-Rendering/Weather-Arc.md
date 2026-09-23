@@ -415,3 +415,49 @@ lane is DFU's, 1:1, throughout.
 **Not DFU, and why.** DFU's weather is a zone's word rolled once a day;
 this is a world with weather in it. The port's departure, a Ledger A row
 superseding CLK2's evolution and WEATHER2b's field on the lane.
+
+### Slice A shipped - the map law (2026-09-22)
+
+`systems/weatherMap.js`, pure, and `systems/weatherTable.js` (DFU's
+table, dispatch and roll moved whole out of `weatherSim.js`, which
+re-exports every name, so the map and the sim read one table without an
+import cycle). Pinned by `test/weather3a_weathermap.test.js`, with
+`tools/mutants/weather3a.json` at 14/14 dead. Three things the build
+taught, each a change from the design above:
+
+- **Births are one Poisson process PER TYPE, not one typed draw per
+  node.** Each node draws a Poisson count of candidates per type, places
+  each uniformly in its cell and its eight hours, and keeps it with
+  probability (the type's weight for the climate under it and the season
+  at its birth, times the hour's factor) over the type's ceiling. That is
+  exactly a thinned homogeneous Poisson process. By Campbell's theorem
+  and the colouring theorem, the counts of each band covering a point are
+  then independent Poissons. So the worn word's share is closed form, and
+  the table can be solved BACKWARDS into birth weights (`birthLaw`)
+  instead of tuned toward. The wind is read at each system's birthplace:
+  it turns over ~240 km and a system rides at most tens, so the process
+  stays homogeneous to the eye and to the gate.
+- **A ring is an AREA in core areas, and a tight row THINS it.** The
+  first build had fixed ring radii, and no fixed shape reaches all 24
+  rows. The swamp's spring is a quarter rain and a sixth thunder but only
+  a tenth cloudy, so every storm's cloud skirt alone painted more cloud
+  than the table allows. The rings painting a word are now thinned
+  together to exactly its share where they would overshoot. A storm born
+  in the swamp spring has a thinner skirt than one born over the summer
+  woodlands, and every row is reachable by construction.
+- **The day re-aims the solve.** A type born more at some hours (fog in
+  the small hours, summer thunder in the afternoon, cloud by day) covers
+  unevenly, and a share is not linear in its covering mean. The flat
+  solve therefore fell two points short on subtropical summer. The solve
+  now iterates against the day-averaged shares (48 half-hour bins, each
+  type's exposure being its birth cosine smeared over the ages its
+  systems live to) until they ARE the table's.
+
+The sandstorm is a quarter of the desert table's cloudy
+(`SAND_SHARE_OF_CLOUDY`); the Chronicles have no sandstorm column, and
+the calibration counts one as the cloudy it came from. Measured: every
+row's analytic day shares match the table within 1e-4. Sampled, all 24
+rows land within ±1.7 points at 6,000 samples a row. The gate holds six
+rows to 2.6 points each and to a 0.8 mean. A player's query costs about
+0.1 ms, and every system within 40 km of the player (the sky's reach)
+about 0.3 ms.
