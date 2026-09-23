@@ -302,7 +302,7 @@ const PUBLIC_ALLOWLIST = new Map([
 ]);
 
 test('doctrine: nothing ships out of public/ that is not provably ours', () => {
-  const unexplained = tracked('public').filter((f) => !PUBLIC_ALLOWLIST.has(f));
+  const unexplained = tracked('public').filter((f) => !PUBLIC_ALLOWLIST.has(f) && !bundleArt(f));   // DW2: a vendored bundle's art under public/ answers to its manifest (BUNDLE_ART below)
   assert.deepEqual(unexplained, [],
     'these files are tracked under public/, which Vite copies verbatim into dist/ and\n'
     + 'deploy.yml uploads to GitHub Pages. Every one of them is PUBLISHED. If the pixels\n'
@@ -384,6 +384,15 @@ const BUNDLE_ART = new Map([
   ['vendor/shield-widget/Textures/',
     { manifest: 'vendor/shield-widget/shield-widget.dfmod.json',
       why: "THIRD-PARTY - Shield Widget 1.6 (RedRoryOTheGlen, animation art by WilhelmBlack); the mod's own first-person shield sprites - four shield shapes x twelve materials x three condition tiers x five animation frames - re-encoded from the bundle's Texture2D objects as indexed PNG (lossless for every drawn pixel; see the vendor README)" }],
+  // DW2 (2026-09-23, Mac: "this needs to be in the codebase, not an
+  // attachable file"): the 12,624 Diverse Weapons sprites. Under public/
+  // rather than vendor/ because that many files through the bundler's
+  // `new URL` glob is a 12,624-entry map in a chunk - public/ is served
+  // as it is - so the public sweep below accepts a derived row too. The
+  // same authority: the mod's own manifest names what may be here.
+  ['public/art/diverse-weapons/',
+    { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
+      why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],
 ]);
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is

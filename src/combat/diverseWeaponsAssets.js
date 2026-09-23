@@ -13,21 +13,27 @@
 // (`w_LONGSWORD.CIF_0-0_Iron`) and the inventory and paper-doll icons
 // in the same metals (`233_5-0_Elven`).
 //
-// They reach the game the way Weapon Widget's and Seasons of the Iliac
-// Bay's do (combat/weaponWidgetAssets.js, systems/seasonsIliacBayAssets
-// .js): the player attaches the mod's `.dfmod` through the textures
-// pick, this door opens the bundle by its manifest's GUID, and answers
-// a texture by the name DFU asks for - TextureReplacement.GetNameCifRci
-// 's spelling (TextureReplacement.cs:783-801), `<prefix><FILE>_<record>
-// -<frame>[_<Metal>]`. A loose PNG of the same name in the texture
-// folder answers too, as TryImportCifRci reads one in DFU when the
-// bundle has none. Without either, the law runs as it runs in DFU with
-// the flag on and no textures: every ask misses and the classic frame
-// draws.
+// DW2 (Mac, 2026-09-23: "this needs to be in the codebase, not an
+// attachable file"): THE SPRITES SHIP WITH THE PORT, under
+// public/art/diverse-weapons/, by the name DFU asks for -
+// TextureReplacement.GetNameCifRci's spelling (TextureReplacement.cs
+// :783-801), `<prefix><FILE>_<record>-<frame>[_<Metal>]` - the way
+// Shield Widget's 600 do (combat/shieldWidgetAssets.js): re-encoded
+// from the bundle's Texture2D objects by tools/diverseWeaponsExtract
+// .mjs, every drawn pixel identical. Which names the folder carries is
+// the mod's own manifest (tools/diverseWeaponsIndex.mjs -> combat/
+// diverseWeaponsIndex.js), so a miss costs no fetch. Under public/
+// rather than vendor/ because 12,624 files through the bundler's
+// `new URL` glob is a 12,624-entry map in a chunk; public/ is served
+// as it is, and the URL is computed off the app root (systems/appRoot
+// .js, the held map's shape).
 //
-// Not in the repository, on purpose: 58 MB is the reason that shows,
-// and the doctrine reason is bible/01-Overview/Port-Doctrine.md - the
-// port ships no mod's art, and reads it off the player's own copy.
+// The player's own `.dfmod` still answers FIRST when one is attached
+// through the textures pick (a newer version's art wins over the
+// shipped set), and a loose PNG of a name in the texture folder too,
+// as TryImportCifRci reads one in DFU. The two arms are the widget
+// door's (combat/weaponWidgetAssets.js, systems/seasonsIliacBayAssets
+// .js): the bundle opened once by its manifest's GUID, in a worker.
 //
 // Same registry shape as the widget's door - a name list and a loader,
 // the bundle opened once, never throwing.
@@ -37,6 +43,8 @@ import { toColor32, toScreenOrder } from '../formats/color32Order.js';   // WW3'
 import { decodePng } from '../systems/textureReplacement.js';
 import { DFMOD_KEY_PREFIX } from '../systems/seasonsIliacBayAssets.js';   // the stored-name prefix the texture pick writes for a bundle - one home
 import { weaponWidgetImage } from './weaponWidgetAssets.js';
+import { APP_ROOT } from '../systems/appRoot.js';   // DW2: the shipped sprites hang off the site root, as the held map does
+import { DIVERSE_WEAPONS_STEMS, DIVERSE_WEAPONS_METALS, DIVERSE_WEAPONS_BARE, DIVERSE_WEAPONS_ODD } from './diverseWeaponsIndex.js';   // DW2: generated from the manifest
 
 export const DIVERSE_WEAPONS_MOD = Object.freeze({
   guid: '8e83d67c-a0ac-4935-a8c5-6b18c9f35bfc',
@@ -54,6 +62,35 @@ const isDiversePng = (name) => {
   const base = name.slice(name.lastIndexOf('/') + 1);
   return /^(w_)?[A-Z0-9]+\.CIF_\d+-\d+(_[A-Za-z]+)?\.png$/i.test(base) || /^\d{3}_\d+-\d+_[A-Za-z]+\.png$/i.test(base);
 };
+
+// ---- DW2: the shipped set ---------------------------------------------
+
+/** The sprite's path in the repository, which is what the pins read. */
+export const SHIPPED_DIR = 'public/art/diverse-weapons';
+
+/** Does the shipped set carry this name? Decoded from the manifest's
+ *  index: a stem (`LONGSWORD.CIF_0-0`) with a bit per metal in
+ *  MetalTypes' order, bit 10 for the bare stem, and the odd list. No
+ *  fetch is made for a name this answers false to. */
+export function hasDiverseWeaponsSprite(name) {
+  if (typeof name !== 'string') return false;
+  const m = /^(.*?_\d+-\d+)(?:_([A-Za-z]+))?$/.exec(name);
+  if (!m) return DIVERSE_WEAPONS_ODD.includes(name);
+  const bits = DIVERSE_WEAPONS_STEMS[m[1]];
+  if (!bits) return DIVERSE_WEAPONS_ODD.includes(name);
+  if (m[2] === undefined) return (bits & DIVERSE_WEAPONS_BARE) !== 0;
+  const i = DIVERSE_WEAPONS_METALS.indexOf(m[2]);
+  return i >= 0 ? (bits & (1 << i)) !== 0 : DIVERSE_WEAPONS_ODD.includes(name);
+}
+
+/** How many names the shipped set carries (the manifest's count). */
+export const DIVERSE_WEAPONS_SPRITE_COUNT = Object.values(DIVERSE_WEAPONS_STEMS).reduce((n, b) => n + (b.toString(2).split('1').length - 1), 0) + DIVERSE_WEAPONS_ODD.length;
+
+/** The shipped sprite's URL - `<root>/art/diverse-weapons/<name>.png`,
+ *  off the app root the module URL names (systems/appRoot.js), else
+ *  the document's own base. */
+export const diverseWeaponsSpriteUrl = (name, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
+  new URL(`art/diverse-weapons/${encodeURIComponent(name)}.png`, root).href;
 
 // ---- the registry ----------------------------------------------------
 
@@ -133,35 +170,51 @@ export async function diverseWeaponsTexturesAttached() { return !!(await diverse
 
 /** One texture by name - `{ width, height, colors }` RGBA in the port's
  *  color32 (bottom-up) order, the shape renderer.uploadTexture reads -
- *  or null when neither the bundle nor a loose PNG carries it. Cached
- *  per name, misses included. The two arms are the widget door's
+ *  or null when neither an attached bundle, a loose PNG nor the shipped
+ *  set carries it. Cached per name, misses included. The two arms are the widget door's
  *  (WW3, HT3): the bundle's texel rows are Unity's, bottom-up, and
  *  `toColor32` is the flip into the port's order; a decoded PNG is
  *  top-first already and keeps its rows through `toScreenOrder`. */
-export function diverseWeaponsImage(name, { decode = decodePng } = {}) {
+export function diverseWeaponsImage(name, { decode = decodePng, fetchFn = globalThis.fetch } = {}) {
   if (!_images.has(name)) {
     _images.set(name, (async () => {
-      if (!_names.length) return null;   // nothing attached: the fast miss, so a weapon load with the flag on costs no work
-      const b = await diverseWeaponsBundle();
-      if (b?.byName.has(name)) {
-        // the pixels cross from the worker per ask (one transfer), and
-        // are flipped here: the reader answers Unity's bottom-up rows
-        try { const img = await b.bundle.rgba(name); if (img) return toColor32(img); } catch (e) { console.warn(`[diverse weapons] ${name} would not decode:`, e?.message ?? e); }
-      }
-      if (!_load) return null;
-      const loose = _names.find((n) => isPng(n) && n.slice(n.lastIndexOf('/') + 1).replace(/\.png$/i, '') === name);
-      if (!loose) return null;
+      const attached = _names.length ? await attachedImage(name, decode) : null;   // nothing attached: no bundle walk
+      if (attached) return attached;
+      // DW2: the shipped set, by the manifest's index - a name it lacks
+      // is a miss here and now, not a 404
+      if (!hasDiverseWeaponsSprite(name) || typeof fetchFn !== 'function') return null;
       try {
-        const bytes = await _load(loose);
-        if (!bytes || !bytes.byteLength) return null;
-        return toScreenOrder(await decode(bytes));
+        const res = await fetchFn(diverseWeaponsSpriteUrl(name));
+        if (!res?.ok) { console.warn(`[diverse weapons] ${name}.png is in the index and not on the site (${res?.status})`); return null; }
+        return toScreenOrder(await decode(new Uint8Array(await res.arrayBuffer())));   // a PNG's rows are top-first: no flip (HT3)
       } catch (e) {
-        console.warn(`[diverse weapons] ${loose} would not decode:`, e?.message ?? e);
+        console.warn(`[diverse weapons] ${name} would not load:`, e?.message ?? e);
         return null;
       }
     })());
   }
   return _images.get(name);
+}
+
+/** The attached arms: the player's bundle, then a loose PNG of the name. */
+async function attachedImage(name, decode) {
+  const b = await diverseWeaponsBundle();
+  if (b?.byName.has(name)) {
+    // the pixels cross from the worker per ask (one transfer), and
+    // are flipped here: the reader answers Unity's bottom-up rows
+    try { const img = await b.bundle.rgba(name); if (img) return toColor32(img); } catch (e) { console.warn(`[diverse weapons] ${name} would not decode:`, e?.message ?? e); }
+  }
+  if (!_load) return null;
+  const loose = _names.find((n) => isPng(n) && n.slice(n.lastIndexOf('/') + 1).replace(/\.png$/i, '') === name);
+  if (!loose) return null;
+  try {
+    const bytes = await _load(loose);
+    if (!bytes || !bytes.byteLength) return null;
+    return toScreenOrder(await decode(bytes));
+  } catch (e) {
+    console.warn(`[diverse weapons] ${loose} would not decode:`, e?.message ?? e);
+    return null;
+  }
 }
 
 /**

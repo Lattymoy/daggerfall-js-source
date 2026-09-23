@@ -46,12 +46,30 @@ the same `WEAPON_TYPES.LongBlade` with different sprite sets, an
 enchanted one a third, and the flag going off mid-game a fourth - so
 the key carries the name the atlas is asked by.
 
-## What the flag does with nothing attached
+## The sprites ship with the port (DW2)
 
-Exactly what it does in DFU with no textures installed: every ask
-misses and the classic frame draws. So the switch is on by default
-(MO1) and costs nothing until a bundle is attached - the door answers a
-miss without touching a loader when it has no sources.
+Mac, the same day: "this needs to be in the codebase, not an attachable
+file". So the 12,624 sprites are under `public/art/diverse-weapons/`,
+by the exact name DFU asks for, the way Shield Widget's 600 are under
+`vendor/shield-widget/Textures/`: re-encoded from the bundle's
+Texture2D objects by `tools/diverseWeaponsExtract.mjs` as indexed PNG
+where the picture fits one and RGBA where it does not, each file read
+back and compared to its texel before the next is written - every drawn
+pixel identical, every hidden pixel hidden. Under `public/` rather than
+`vendor/` because that many files through the bundler's `new URL` glob
+is a 12,624-entry map in a chunk; `public/` is served as it is, and the
+URL is computed off the app root (`systems/appRoot.js`, the held map's
+shape). What the folder may hold is the mod's own manifest:
+`tools/diverseWeaponsIndex.mjs` derives the door's index from it (1,298
+stems with a bitmask over MetalTypes' order - 39 KB where the names are
+350) and `test/doctrine.test.js` derives the folder's membership from
+it, so a name the set lacks is a miss without a fetch and a file the
+bundle did not ship cannot land there. The player's own `.dfmod`,
+attached, still answers first - a newer version's art wins.
+
+With no sprite for a name (the classic `WEAPON04.CIF` archives nothing
+was painted for, `w_` past record 0) the ask misses and the classic
+frame draws, exactly as in DFU with no texture installed.
 
 ## The door
 
@@ -161,4 +179,7 @@ sessions, would shorten it and is left for a follow-up.
 `vendor/diverse-weapons/` - the script verbatim, the manifest verbatim
 (12,937 files), the preset verbatim, the zip's readme. Campaign
 `tools/mutants/dw1.json` (21: 20 dead, 1 equivalent as recorded). Suites
-`test/dw1_diverseweapons.test.js`, `test/unitybundleworker.test.js`.
+`test/dw1_diverseweapons.test.js`, `test/unitybundleworker.test.js`,
+`test/dw2_shipped.test.js`. The shipped set: `public/art/diverse-weapons/`
+(12,624 PNGs), `src/combat/diverseWeaponsIndex.js` (generated), the two
+tools.

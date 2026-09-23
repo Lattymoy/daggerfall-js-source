@@ -233,7 +233,7 @@ test('DW1: the pick reaches the door at BOTH of its sites, the credits name the 
   for (const f of ['src/scenes/dataSource.js', 'src/scenes/shared.js']) {
     assert.match(src(f), /setDiverseWeaponsSources\(names, loadTextureFile\);/, `${f} fans the pick out to the door`);
   }
-  assert.match(src('src/scenes/dataSource.js'), /<b>Diverse Weapons<\/b>: a folder holding\s+its <b>\.dfmod<\/b>/, 'and the pick says so');
+  assert.match(src('src/scenes/dataSource.js'), /<b>Diverse Weapons<\/b>: its sprites ship\s+with the port; a folder holding a newer version's <b>\.dfmod<\/b>/, 'and the pick says so (DW2: the shipped set, the attached one winning)');
   const credits = src('src/ui/credits.js');
   assert.match(credits, /title: 'Diverse Weapons',\s*\n\s*version: '1\.7\.3',\s*\n\s*author: 'RealAKP',/);
   assert.match(credits, /vendor: Object\.freeze\(\['diverse-weapons'\]\),/);

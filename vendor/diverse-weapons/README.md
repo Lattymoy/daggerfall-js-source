@@ -46,20 +46,29 @@ inventory and paper-doll icons in every metal (`233_5-0_Elven`,
 classic flail and battle-axe archives (`WEAPON06.CIF`, `WEAPON08.CIF`)
 that another mod's custom weapons fall back on. 58 MB.
 
-They reach the game the way Weapon Widget's and Seasons of the Iliac
-Bay's do: FROM THE PLAYER'S OWN COPY OF THE MOD, at play time. Attach
-the mod's `.dfmod` through the textures pick (the Mods page), and
-`src/combat/diverseWeaponsAssets.js` opens the bundle by its GUID and
-answers each name Daggerfall Unity asks for. Without the bundle the mod
-runs as it runs in DFU with no textures installed: every ask misses,
-and the classic frame draws.
+THEY SHIP WITH THE PORT (DW2, 2026-09-23, Mac: "this needs to be in the
+codebase, not an attachable file"), under `public/art/diverse-weapons/`
+by the exact name Daggerfall Unity asks for, the way Shield Widget's 600
+do: re-encoded from the bundle's Texture2D objects by
+`tools/diverseWeaponsExtract.mjs` as indexed PNG where the picture fits
+one (every alpha 0 or 255, at most 255 opaque colours) and RGBA where it
+does not, each file read back and compared to its texel before the next
+is written - every drawn pixel identical, every hidden pixel hidden; not
+byte-lossless, because the ghost colour under the transparent pixels
+collapses to one index. What the folder may hold is this manifest's own
+file list (`tools/diverseWeaponsIndex.mjs` derives the door's index from
+it; `test/doctrine.test.js` derives the folder's membership from it), so
+the port cannot quietly widen it. These sprites are the author's own
+paintings rather than renders of ARENA2, so Port-Doctrine's "a render of
+game data is game data" ruling - the one that keeps Weapon Widget's and
+Seasons' repaints out of the repository - is not about them.
 
-The doctrine reason is `bible/01-Overview/Port-Doctrine.md`: the port
-ships no mod's art and reads it off the player's copy. (These sprites
-are the author's own paintings rather than renders of ARENA2, so the
-"a render of game data is game data" ruling that keeps Weapon Widget's
-and Seasons' repaints out is not what keeps these out; the size is, and
-the same door already existed.)
+A newer version's `.dfmod` attached through the textures pick (the Mods
+page) still wins over the shipped set: `src/combat/diverseWeaponsAssets
+.js` opens it by its GUID and asks it first. To refresh the shipped set
+for a new upstream version: vendor the new manifest, run
+`node tools/diverseWeaponsIndex.mjs`, then
+`node tools/diverseWeaponsExtract.mjs "<path to diverse weapons.dfmod>"`.
 
 **Two archives the port never asks for.** The bundle carries
 `513_*` and `514_*` (two records, ten metals each) - custom-item

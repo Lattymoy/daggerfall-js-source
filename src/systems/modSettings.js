@@ -185,7 +185,7 @@ export const MOD_SETTINGS = Object.freeze({
         default: true,
         description: 'RealAKP\u2019s Diverse Weapons 1.7.3: a first-person sprite set for every weapon, in every metal, plain and '
           + 'enchanted, where the classic art has one per weapon class - a longsword no longer swings the broadsword\u2019s '
-          + 'sprite. Attach the mod\u2019s .dfmod through the textures pick; without it the classic frames draw.',
+          + 'sprite. The sprites ship with the port; a newer version\u2019s .dfmod attached through the textures pick wins over them.',
       }),
       WeaponWidgetPreset: Object.freeze({
         default: false,

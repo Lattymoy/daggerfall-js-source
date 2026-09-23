@@ -1026,9 +1026,9 @@ export async function pickTextureFolder() {
       <p style="color:#999"><b>Weapon Widget</b> too: a folder holding
       its <b>.dfmod</b> gives its DoubleScaleTextures module the mod's
       own double-size weapon art.</p>
-      <p style="color:#999">And <b>Diverse Weapons</b>: a folder holding
-      its <b>.dfmod</b> gives every weapon its own first-person sprite
-      set, in its own metal.</p>`,
+      <p style="color:#999">And <b>Diverse Weapons</b>: its sprites ship
+      with the port; a folder holding a newer version's <b>.dfmod</b>
+      makes that version's art win over the shipped set.</p>`,
     store: storeTextureFiles,
     register: async () => {
       const names = await storedTextureNames();

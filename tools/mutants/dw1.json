@@ -119,8 +119,8 @@
   {
     "name": "DW1-14-nothing-attached-still-opens-a-loader",
     "file": "src/combat/diverseWeaponsAssets.js",
-    "old": "      if (!_names.length) return null;   // nothing attached: the fast miss, so a weapon load with the flag on costs no work",
-    "new": "",
+    "old": "      const attached = _names.length ? await attachedImage(name, decode) : null;   // nothing attached: no bundle walk",
+    "new": "      const attached = await attachedImage(name, decode);",
     "tests": [
       "test/dw1_diverseweapons.test.js"
     ],
@@ -130,10 +130,11 @@
   {
     "name": "DW1-15-the-loose-PNG-is-flipped-like-a-bundle-texel",
     "file": "src/combat/diverseWeaponsAssets.js",
-    "old": "        return toScreenOrder(await decode(bytes));",
-    "new": "        return toColor32(await decode(bytes));",
+    "old": "    return toScreenOrder(await decode(bytes));",
+    "new": "    return toColor32(await decode(bytes));",
     "tests": [
-      "test/dw1_diverseweapons.test.js"
+      "test/dw1_diverseweapons.test.js",
+      "test/dw2_shipped.test.js"
     ]
   },
   {
@@ -188,6 +189,42 @@
     "new": "",
     "tests": [
       "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW2-1-the-shipped-arm-fetches-for-a-name-the-index-lacks",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "      if (!hasDiverseWeaponsSprite(name) || typeof fetchFn !== 'function') return null;",
+    "new": "      if (typeof fetchFn !== 'function') return null;",
+    "tests": [
+      "test/dw2_shipped.test.js"
+    ]
+  },
+  {
+    "name": "DW2-2-the-shipped-PNG-is-flipped-like-a-bundle-texel",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "        return toScreenOrder(await decode(new Uint8Array(await res.arrayBuffer())));   // a PNG's rows are top-first: no flip (HT3)",
+    "new": "        return toColor32(await decode(new Uint8Array(await res.arrayBuffer())));",
+    "tests": [
+      "test/dw2_shipped.test.js"
+    ]
+  },
+  {
+    "name": "DW2-3-the-attached-bundle-no-longer-wins-over-the-shipped-set",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "      if (attached) return attached;",
+    "new": "",
+    "tests": [
+      "test/dw2_shipped.test.js"
+    ]
+  },
+  {
+    "name": "DW2-4-the-index-forgets-the-bare-stem",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "  if (m[2] === undefined) return (bits & DIVERSE_WEAPONS_BARE) !== 0;",
+    "new": "  if (m[2] === undefined) return true;",
+    "tests": [
+      "test/dw2_shipped.test.js"
     ]
   }
 ]
