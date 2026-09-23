@@ -41,7 +41,7 @@
 //                    {t:'social', k:'state'|'presence'|'party'|'invite'|'note'|'error', ...}   the hub's word on my friends and my party (SOC1)
 //                    {t:'party', acct, p}               a party member's pose, to the party alone (SOC1)
 //                    {t:'quest', acct, name, quest:{questName, displayName, data}}   a party member's shared quest, to the party alone (QUEST1)
-// A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr} in the room's frame -
+// A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar} in the room's frame -
 // a world cell's in MapsFile world units (the streaming world's
 // map-pixel origin, PIXEL_UNITS a pixel), every other room's in the
 // scene's own - mv 1 when walking, 2 when running (the sender's own
@@ -53,7 +53,10 @@
 // sheathed and never swung, since nothing of either travelled; am 1
 // while the sender has arrows (the look carries no inventory), sr 1
 // while a spell is readied, cn the sender's cast count and cr the
-// cast's range type (spellcast.js TARGET_TYPES' index) - MAC7 #2. A look is the paperdoll's recipe: race, gender,
+// cast's range type (spellcast.js TARGET_TYPES' index) - MAC7 #2 - and ce
+// its element (spellcast.js ELEMENTS, 0..4 - SPELLFX1: the missile a peer
+// draws for it, the Unity co-op's cast visual), and ar the count of arrows
+// the sender has loosed (SPELLFX1: the shaft a peer draws). A look is the paperdoll's recipe: race, gender,
 // face, and the equipped items projected onto the six fields the doll
 // art reads (AUDIT ONLINE A12: nothing else travels, so a look is small
 // by construction and never a stranger's junk rebroadcast).
@@ -185,6 +188,8 @@ export const NAME_MAX = 24;
 export const POSE_STRIKES = Object.freeze(['Idle', 'StrikeDown', 'StrikeDownLeft', 'StrikeLeft', 'StrikeRight', 'StrikeDownRight', 'StrikeUp']);
 /** A cast's range on the wire: DFU's TargetTypes order (systems/spellcast.js TARGET_TYPES), the pose's `cr` an index into it (MAC7 #2). */
 export const POSE_CAST_RANGES = 5;
+/** SPELLFX1: a cast's element on the wire - the classic element index (fire, frost, poison, shock, magic), the pose's `ce`. */
+export const POSE_CAST_ELEMENTS = 5;
 /** World units per map pixel in the frame the streaming world's poses
  *  travel in: MapsFile's (world/streamingWorld.js NATIVE_PIXEL). */
 export const PIXEL_UNITS = 32768;
@@ -841,7 +846,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world97';   // AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world98';   // SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -922,7 +927,7 @@ export function poseChanged(a, b, eps = 0.01) {
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
-  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, fk } = p;
+  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar, fk } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
   // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
@@ -948,6 +953,8 @@ export function validPose(p) {
     x, y, z, yaw: wrapAngle(yaw), pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
     wd: wd === 2 ? 2 : wd ? 1 : 0, an: uint(an, 65535) ?? 0, as: uint(as, POSE_STRIKES.length - 1) ?? 0,
     am: am ? 1 : 0, sr: sr ? 1 : 0, cn: uint(cn, 65535) ?? 0, cr: uint(cr, POSE_CAST_RANGES - 1) ?? 0,
+    ce: uint(ce, POSE_CAST_ELEMENTS - 1) ?? 4,   // SPELLFX1: the cast's element - a pose from before it reads Magic
+    ar: uint(ar, 65535) ?? 0,   // SPELLFX1: arrows loosed - a peer draws a shaft for each new one
     fk: uint(fk, 5) ?? 0,   // PEER-FS1: the footstep-sound kind (systems/footsteps.js FOOTSTEP_KIND), 0-5
   };
 }
@@ -1194,10 +1201,12 @@ export function parseClient(text, { hasHello = false } = {}) {
  *  that reads as "slow" and behaves as "off". A slower allowance needs
  *  a different shape (a stamp of the last pass, not a bucket), and
  *  whoever needs one should write that rather than pass a fraction. */
-export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX) {
-  const b = bucket ?? { tokens: rate, at: nowMs };
+/** FRIENDLY-SPELLS: `cap` is the bucket's depth - the burst it admits at once - and defaults to `rate`, which is
+ *  every gate's shape but the cast gate's (a blast is ONE cast and one frame per mate it reaches). */
+export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX, cap = rate) {
+  const b = bucket ?? { tokens: cap, at: nowMs };
   const refill = ((nowMs - b.at) / 1000) * rate;
-  const tokens = Math.min(rate, b.tokens + Math.max(0, refill));
+  const tokens = Math.min(cap, b.tokens + Math.max(0, refill));
   if (tokens < 1) return { bucket: { tokens, at: nowMs }, pass: false };
   return { bucket: { tokens: tokens - 1, at: nowMs }, pass: true };
 }
@@ -1759,7 +1768,13 @@ export const CAST_NAME_MAX = 32;
  *  The link refuses to send until the welcome says the relay can take it, as TRADE1's relaySupportsTrade does. */
 export const CAST_RELAY_MIN = 97;
 export const relaySupportsCast = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CAST_RELAY_MIN; };
-export const castGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_HZ_MAX);
+/** FRIENDLY-SPELLS: THE SENDER'S METER HOLDS ONE WHOLE BLAST. The meter was sized when one cast was one frame; a
+ *  beneficial blast is ONE cast and one frame for each party mate inside it, so a bucket CAST_HZ_MAX deep gave a
+ *  full party's blast to four mates and silently none to the rest. The depth is a party's mates, the refill stays
+ *  CAST_HZ_MAX a second, and the destination's per-sender funnel (CAST_HZ_MAX, the relay's cast arm) is untouched -
+ *  a blast sends each mate one frame. Client and relay read this one gate, so they agree on it. */
+export const CAST_BURST_MAX = PARTY_MAX - 1;
+export const castGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_HZ_MAX, CAST_BURST_MAX);
 export const castInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_IN_HZ_MAX);
 const CAST_SETTINGS = Object.freeze(['durationBase', 'durationMod', 'durationPerLevel', 'chanceBase', 'chanceMod', 'chancePerLevel',
   'magnitudeBaseLow', 'magnitudeBaseHigh', 'magnitudeLevelBase', 'magnitudeLevelHigh', 'magnitudePerLevel']);

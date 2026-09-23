@@ -119,8 +119,8 @@
   {
     "name": "AC-host-touch-gate-shut",
     "file": "src/scenes/hostMagic.js",
-    "old": "      if (!pickTouch(eye, dir) && !(!readiedFree && allyCastable(sp) && allyInReach(eye, dir, ALLY_TOUCH_REACH))) return false;",
-    "new": "      if (!pickTouch(eye, dir)) return false;",
+    "old": "      if (!pickTouch(eye, dir, sp) && !(!readiedFree && allyCastable(sp) && allyInReach(eye, dir, ALLY_TOUCH_REACH))) return false;",
+    "new": "      if (!pickTouch(eye, dir, sp)) return false;",
     "tests": [
       "test/allycast.test.js"
     ]

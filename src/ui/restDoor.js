@@ -38,7 +38,16 @@ function enhancedRestOverlay(deps, ignoreAllocatedBed = false) {
   const overlay = openEnhancedRest(deps, ignoreAllocatedBed);
   const bare = overlay.dispose;   // enhancedRest.js's own close(), guarded against re-entry
   let unregister = () => {};
-  overlay.dispose = () => { unregister(); unregister = () => {}; bare?.(); };
+  // PARTY-REST29 (2026-09-23, per-request: "when the leader starts resting but closes the resting window he should
+  // be able to initiate a resting vote again instantly"): a window closed with NO rest chosen (no session ever
+  // began) tells its host so, once - the host lifts the start cooldown the granted vote stamped (world.js
+  // cancelPartyRestStart), since no rest happened to cool down from.
+  let closedOnce = false;
+  overlay.dispose = () => {
+    const unrested = !overlay.session;
+    unregister(); unregister = () => {}; bare?.();
+    if (unrested && !closedOnce) { closedOnce = true; try { deps.onClosedUnrested?.(); } catch (err) { console.warn(`[rest] onClosedUnrested threw: ${err?.message ?? err}`); } }
+  };
   // AUDIT PARTY-REST: the stack's close (Tab) is the window's own Stop/OK/close, never a bare dispose - a running
   // rest ends into its wake box, a mirror's Stop asks the rester to stop too; only a page with no such arm disposes
   unregister = registerOverlay(() => { if (!overlay.stopOrClose?.()) overlay.dispose(); });
