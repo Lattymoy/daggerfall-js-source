@@ -314,7 +314,7 @@ test('EL2: the renderer\'s wiring - the three draw paths record behind one gate,
   assert.match(r, /if \(this\._casting && this\._spriteDepth === 0 && this\._studioDepth === 0\) this\._shadows\.recordCharacter\(mesh, modelMatrix\);/, 'EL7: the rigs, never from the sprite target or the studio');
   assert.match(r, /if \(!wire && this\._casting\) this\._shadows\.recordMesh\(mesh, modelMatrix, texRemap\);/, 'a wireframe draw (the automap) is not a caster');
   assert.match(r, /get _casting\(\) \{ return !!this\._shadows && !this\._panelSaved; \}/);
-  const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir, opts = null) {'), r.indexOf('beginFrame(proj, view, lightDir, opts = null) {') + 2600);   // AUDIT-EL F5
+  const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir, opts = null) {'), r.indexOf('beginFrame(proj, view, lightDir, opts = null) {') + 3200);   // AUDIT-EL F5; LC1: the grid's build sits between the passes and the clear, so the window grew
   const passes = bf.indexOf('this._beginLane(proj, view, lightDir, opts?.world === true)');
   assert.ok(passes > 0 && passes < bf.indexOf('gl.clear('), 'the maps before the clear (EL3: with the air\'s images; AUDIT-EL F5: one call, for a WORLD frame)');
   assert.match(r, /if \(this\._shadows && world\) this\._renderPasses\(proj, view, lightDir\);/);

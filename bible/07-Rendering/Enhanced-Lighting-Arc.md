@@ -907,3 +907,59 @@ torch beside it does not; the shader and the glare loop by text; every
 host that composes a player light does it through `withPlayerLights`.
 `bugs5_field`, `el2_shadows`, `mact_bugs`, `el5_field` and `el7_polish`
 re-aimed where they pinned the number.
+
+## LC1 - CLUSTERED LIGHTS (2026-09-23, Mac: "We need to take a chance and also make some insane improvements to our lighting system. Its already really good, but it could be much better while also improving performance")
+
+The first step of the second arc, and the foundation the rest stand on.
+
+**The cost it removes.** Every lit fragment of the lane walked ALL of the
+frame's lights - up to `EL_MAX_LIGHTS` (48) - and asked each one "am I in
+your range" before doing any work. On a 1080p frame that is two million
+fragments times forty-eight lengths and compares, for a question whose
+answer is "no" for nearly all of them: a tavern's fragment is in range of
+three lanterns, a street's of one or two. And the cap was the loop's, so
+the world could never carry more lights than a fragment could afford to
+ask.
+
+**The shape.** `render/lightClusters.js`. The view frustum is cut into
+16 x 9 x 24 cells - a tile of the screen by a slice of depth, the slices
+exponential over [0.25, 256] so a cell is roughly a cube in world units
+at every distance. Once a frame, on the CPU, every light's view-space
+bounding box (its eight corners, clamped to the near plane, put through
+the frame's own projection - the mirrored one the hosts pass) is written
+into the cells it touches. The lists go up as two small integer
+textures on units 9 and 10: the GRID (RG16UI, 144 x 24: an offset and a
+count per cell) and the LIST (R8UI, 256 wide: the light indices in cell
+order). The shader (`EL_CLUSTER_GLSL`, at the head of the lantern loop
+in all five lane programs) reads its cell off `gl_FragCoord` and the
+view depth (`uCamFwd`: the view's third row negated, so a dot and an add
+is the depth) and walks that cell's list alone - the same loop body,
+over two or three lights instead of forty-eight. The in-scatter loop is
+untouched: a glow along the whole view ray is no one cell's.
+
+**An acceleration, not a law.** Conservative: a fragment inside a light's
+sphere is inside its box, so its cell lists the light; a fragment inside
+the box but outside the sphere still runs the range test, which says no
+as it always did. Nothing lights that did not, nothing that lit goes
+dark. And OFF - every light, exactly as before LC1 - inside the
+character-sprite pass, the studio bake and a panel bracket (other views,
+other viewports: `uClusterOn` 0 under the contact block's own gate), on a
+frame whose lists would overflow `CLUSTER_LIST_CAP` (forty-eight lights each
+covering the whole screen), and behind `?clusters=off`. There is no third
+behaviour.
+
+**Seen on a GPU.** `tools/lightClusterProbe.mjs` draws
+enhancedLightingProbe's room and a night street of forty lanterns through
+the real renderer on SwiftShader, the grid on and off, and reads both
+back: the room pixel-identical (3 lights; a fragment walks 1.46 of them
+on average), the street within the dither's byte (max |diff| 2, no
+channel over; 12.9 of 40 walked). The build is a few hundred microseconds
+of JS for forty lights.
+
+**What it opens.** The loop's cost is now the lights IN RANGE of a
+fragment, not the frame's count - so the cap can rise (every candle a
+light) without the fragment paying for the ones across the room. That is
+the next step's door; this one changes no picture.
+
+Pinned: `test/lc1_clusters.test.js` (7). `el2_shadows`' wiring window
+grew for the build line.
