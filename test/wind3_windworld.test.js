@@ -98,8 +98,8 @@ test('WIND3 wisps: the count follows the strength with a floor; the renderer com
   // the shaders: the lab's wrap, a streak along the velocity, a life fade, the strength in both stages
   assert.match(WISP_VS, /p = mod\(p - uEye \+ uBox\*0\.5, uBox\) \+ uEye - uBox\*0\.5;/, 'the lab\'s wrap - a world position wrapped around the eye');
   assert.match(WISP_VS, /p \+= vec3\(uWindOff\.x, 0\.0, uWindOff\.y\) \* gust;/, 'PROTO-19: a distance already travelled, never wind x time');
-  assert.match(WISP_VS, /vLife = sin\(fract\(uTime\*rate \+ seed\*7\.0\) \* 3\.14159\);/);
-  assert.match(WISP_VS, /p \+= vel \* \(aCorner\.y-0\.5\) \* len;/, 'stretched along the wind');
+  assert.match(WISP_VS, /float ph = fract\(uTime\*rate \+ seed\*7\.0\);\n  vLife = sin\(ph \* 3\.14159\);/, 'the wisp\'s own clock (WIND5: its phase also draws the flourish on)');
+  assert.match(WISP_VS, /p \+= \(vel \* \(c\.x - 0\.5\) \+ up \* c\.y\) \* len;/, 'stretched along the wind (WIND5: along the flourish\'s path, down the wind and across it in the curl\'s plane)');
   assert.match(WISP_FS, /a \*= vLife \* \(uAlpha\.x \+ uAlpha\.y \* uStrength\);/, 'never more than a breath (WEATHER2d: the look\'s alpha)');
   assert.deepEqual([...WISP_LOOK.alpha], [0.10, 0.12]); assert.deepEqual([...WISP_LOOK.color], [0.86, 0.89, 0.94]);
   assert.doesNotMatch(WISP_VS + WISP_FS, /uTime \* uWindV|uWindV \* uTime/, 'no wind x time anywhere');

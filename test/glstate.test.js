@@ -316,7 +316,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
     const vs = tpl('LAB_GRASS_HEAD') + tpl('GAME_GRASS_FIELD') + tpl('LAB_GRASS_VS');
     const fs = tpl('LAB_GRASS_HEAD') + tpl('LAB_GRASS_FS');
     for (const [label, body] of [['labGrass VS', vs], ['labGrass FS', fs]]) {
-      const declared = new Set([...body.matchAll(/uniform\s+\w+\s+([^;]+);/g)].flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
+      const declared = new Set([...body.matchAll(/uniform\s+(?:(?:lowp|mediump|highp)\s+)?\w+\s+([^;]+);/g)].flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
       const used = new Set([...body.matchAll(/\bu[A-Z]\w*/g)].map((x) => x[0]));
       const missing = [...used].filter((u) => !declared.has(u));
       assert.deepEqual(missing, [], `${label} uses undeclared: ${missing.join(', ')}`);
@@ -348,7 +348,7 @@ test('AUDIT 47: no shader in the tree uses a uniform it did not declare in its o
       // lighting lane composes EL_GLSL + EL_FOG_GLSL + EL_POINT_LIT_GLSL into each of its shaders
       const body = m[2].replace(/\$\{CLOUD_SHADOW_GLSL\}/g, shared).replace(/\$\{CLOUD_FIELD_GLSL\}/g, field).replace(/\$\{SHADOW_GLSL\}/g, shadowGlsl).replace(/\$\{AIR_AO_GLSL\}/g, aoGlsl).replace(/\$\{AIR_ADAPT_GLSL\}/g, adaptGlsl)
         .replace(/\$\{([A-Z_]+)\}/g, (all, name) => { const b = s.match(new RegExp(`const ${name} = \`([^\`]*)\``)); return b ? b[1] : all; });
-      const declared = new Set([...body.matchAll(/uniform\s+\w+\s+([^;]+);/g)]
+      const declared = new Set([...body.matchAll(/uniform\s+(?:(?:lowp|mediump|highp)\s+)?\w+\s+([^;]+);/g)]
         .flatMap((x) => x[1].split(',').map((v) => v.trim().replace(/\[.*?\]/, '').split('//')[0].trim())));
       const used = new Set([...body.matchAll(/\bu[A-Z]\w*/g)].map((x) => x[0]));
       const missing = [...used].filter((u) => !declared.has(u));

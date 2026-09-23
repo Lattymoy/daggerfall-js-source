@@ -132,6 +132,10 @@ import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easin
 // this module to get it). Re-exported here, where MAP-FIELD put it.
 export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
 import { APP_ROOT } from '../systems/appRoot.js';
+import { systemsNear, forecastAt } from '../systems/weatherMap.js';   // WEATHER3e: the world weather map, read over the bay
+import { weatherMarks, paintWeatherGlyphs, paintWeatherLegend, paintWeatherRegions, weatherField, fieldRegions, fieldStrength, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS } from './weatherLayer.js';
+import { mapGround } from '../systems/weatherSim.js';   // AUDIT WEATHER3 R1: the ground law the player's own sky goes through
+import { TERRAIN_SIZE } from '../world/terrainSampler.js';
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
@@ -1004,6 +1008,7 @@ export class HeldMapWindow {
       staticKey: () => [
         this._marksVersion, this._portsShown() ? 1 : 0, this.markedMapId,
         this.filters.roads ? 1 : 0, this.filters.tracks ? 1 : 0,
+        this._weatherLayer()?.key ?? 'noweather',   // WEATHER3e: the weather's picture, read again every WEATHER_LAYER_REFRESH_MINUTES
       ].join('|'),
       paintStatic: (ctx, env) => {
         // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be
@@ -1026,6 +1031,9 @@ export class HeldMapWindow {
           markedMapId: this.markedMapId,
           markColor: rgbaCss(this._to?.settings?.markLocationColor),
         });
+        // WEATHER3e: the world weather map's systems, washed over the bay in the sheet's own hand
+        const wx = this._weatherLayer();
+        if (wx) this._paintWeather(ctx, env, wx);
       },
       paintOverlay: (ctx, env) => {
         paintInkOverlay(ctx, env.view, {
@@ -2340,7 +2348,7 @@ export class HeldMapWindow {
       const name = m.name || this._summaryName(m.summary);
       const region = REGION_NAMES[m.summary.regionIndex] ?? '';
       // UpdateRegionLabel's own "Region : Location" reading
-      return { label: region && name ? `${region} : ${name}` : name, cursor: 'pointer' };
+      return { label: this._withWeather(region && name ? `${region} : ${name}` : name, Math.floor(m.x), Math.floor(m.y)), cursor: 'pointer' };
     }
     const [mx, my] = toMap(this._view, sx, sy);
     const px = Math.floor(mx), py = Math.floor(my);
@@ -2350,9 +2358,78 @@ export class HeldMapWindow {
     const politic = this.deps.maps?.getPoliticIndex?.(px, py) ?? -1;
     const region = politic - 128;
     return {
-      label: (region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '',
+      label: this._withWeather((region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '', px, py),
       cursor: '',
     };
+  }
+
+  // ── WEATHER3e: THE WEATHER ON THE MAP ──────────────────────────────
+
+  /** The world weather map's systems as the sheet's marks, read again
+   *  every WEATHER_LAYER_REFRESH_MINUTES of the host's clock: `{ key,
+   *  marks }`, or null where the host hands no weather (the classic lane,
+   *  a pin, a host with no map) - the sheet is then the bay alone. The
+   *  whole bay is read, because the whole bay is on the paper at rest. */
+  _weatherLayer() {
+    const wx = this.deps.weather;
+    const climateAt = this.deps.getClimateIndex;
+    if (!wx?.on?.() || !climateAt) return null;
+    const bucket = Math.floor(wx.minutes() / WEATHER_LAYER_REFRESH_MINUTES);
+    if (this._wx?.bucket !== bucket) {
+      // the sheet's middle through the field's own frame (its y runs up from the bay's south edge, whatever this
+      // sheet's height), and a reach to its corners
+      const [cx, cz] = fieldOfMapPixel(this._size.width / 2 - 0.5, this._size.height / 2 - 0.5);
+      const reach = Math.hypot(this._size.width, this._size.height) * TERRAIN_SIZE / 2;
+      const minutes = bucket * WEATHER_LAYER_REFRESH_MINUTES;
+      // the host's own lookup, not a wrapper made here: the map's births are cached per lookup, and a window built at
+      // every open would read the whole bay cold each time (AUDIT WEATHER3 R2b) - the host's is the sim's, warm
+      const systems = systemsNear(cx, cz, minutes, climateAt, reach);
+      const ground = mapGround(climateAt);
+      this._wx = { bucket, key: `wx${bucket}`, minutes, ground, systems, marks: weatherMarks(systems, (w, x, z) => ground(w, x, z, minutes)), forecasts: new Map(), regions: null, strength: null };
+    }
+    return this._wx;
+  }
+
+  /** The weather on the sheet (WEATHER3h): the REGIONS - the worn word
+   *  read off the law over the whole bay once a refresh, traced into
+   *  loops and kept (a pan or a zoom redraws the loops, it never reads the
+   *  weather again - AUDIT WEATHER3 R2a's law) - filled with each word's
+   *  hatch and outlined in its ink, UNDER the pen already on the sheet
+   *  (destination-over, so the coast and the borders stay the pen's);
+   *  then the glyphs, a handful, and the legend over. */
+  _paintWeather(ctx, env, wx) {
+    const opts = { paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, bounds: [this._size.width, this._size.height] };
+    if (!wx.regions) {
+      // one read of the law for the refresh: the words' regions and, where something falls, how hard (WEATHER3i)
+      const field = weatherField(wx.systems, { width: this._size.width, height: this._size.height, ground: (w, x, z) => wx.ground(w, x, z, wx.minutes) });
+      wx.regions = fieldRegions(field);
+      wx.strength = fieldStrength(field);
+    }
+    const op = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = 'destination-over';
+    paintWeatherRegions(ctx, env.view, wx.regions, { ...opts, strength: wx.strength, under: true });
+    ctx.globalCompositeOperation = op ?? 'source-over';
+    paintWeatherGlyphs(ctx, env.view, wx.marks, opts);
+    paintWeatherLegend(ctx, opts);
+  }
+
+  /** A hover's label with the weather at its pixel and the forecast -
+   *  "Daggerfall : Daggerfall · Rain, heavy - clearing in about 3 hours".
+   *  The forecast is the same pure law read ahead, once per pixel per
+   *  refresh; the label alone where there is no weather to read. */
+  _withWeather(label, px, py) {
+    const wx = this._weatherLayer();
+    if (!wx) return label;
+    const key = `${px},${py}`;
+    let text = wx.forecasts.get(key);
+    if (text == null) {
+      const [fx, fz] = fieldOfMapPixel(px, py);
+      // read at the refresh's minute, the one the sheet's hatch was read at, so the hover names what is drawn under it
+      // (AUDIT-3i: read at the live minute, a hover nine minutes into a refresh named another strength than the hatch)
+      text = forecastText(forecastAt(fx, fz, wx.minutes, this.deps.getClimateIndex, { hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx.ground }), WEATHER_FORECAST_HOURS);
+      wx.forecasts.set(key, text);
+    }
+    return label ? `${label} \u00b7 ${text}` : text;
   }
 
   _pickAt(sx, sy) {

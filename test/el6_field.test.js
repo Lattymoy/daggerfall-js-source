@@ -67,7 +67,8 @@ test('EL6: the constants and the shader laws - the lights archive, the emitter s
   assert.ok(EL_FAR_RING_FS.includes(BAYER_GLSL));
   assert.ok(EL_FAR_RING_FS.includes(`outColor = vec4(elEncode(col) + ${dither}, 1.0);`), 'the ring\'s sky gradient dithers too');
   assert.match(EL_MESH_FS, /vec3 rel = uPointLights\[i\]\.xyz - uCamPos;\n    if \(length\(rel\) > dist \+ uPointLights\[i\]\.w\) continue;/, 'the in-scatter loop skips a lantern the ray cannot reach');
-  assert.match(a, /return texture\(uDepth, \(uRect\.xy \+ wuv \* uRect\.zw\) \/ uCanvas\)\.r;/, 'the depth block samples the canvas-sized frame at the world rect');
+  assert.match(a, /return textureLod\(uDepth, \(uRect\.xy \+ wuv \* uRect\.zw\) \/ uCanvas, 0\.0\)\.r;/, 'the depth block samples the canvas-sized frame at the world rect - its one level, by name (AUDIT-VC7 G3)');
+  assert.match(a, /uniform highp sampler2D uDepth;/, 'at a depth\'s precision: a fragment shader\'s samplers are lowp unless told (AUDIT-VC7 G2)');
   for (const [name, fs] of [['mesh', EMIT_MESH_FS], ['bb', EMIT_BB_FS]]) {
     assert.match(fs, /if \(occluded\(\)\) discard;   \/\/ EL6/, `${name}: an emitter behind the frame's depth does not bloom`);
     assert.match(fs, /return viewDist\(gl_FragCoord\.z\) > viewDist\(depthAt\(wuv\)\) \+ 0\.15;/, `${name}: its own slack, in world units`);
@@ -108,5 +109,5 @@ test('EL6: on the fake GL - nothing measured at prepare, the frame\'s depth is a
   assert.equal(ap.measured, false, 'AUDIT-EL F10 holds at the resolve');
   assert.equal(ap.stats.glares, 1, 'one lantern glared at that resolve');
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
-  assert.deepEqual(ap.stats, { emitDraws: 0, glares: 0, shafts: false, vol: false }, 'prepare resets the counts - a probe reading them mid-frame reads this frame\'s (VOL1: the glow\'s too)');
+  assert.deepEqual(ap.stats, { emitDraws: 0, glares: 0, shafts: false, haze: false, vol: false }, 'prepare resets the counts - a probe reading them mid-frame reads this frame\'s (VOL1: the glow\'s too)');
 });

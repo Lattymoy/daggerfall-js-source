@@ -102,7 +102,7 @@ test('VOL1: on the fake GL - a world frame with a lantern in a fogged air marche
   const ap = r.air;
   assert.ok(ap.programs.vol, 'the program, with the lane\'s blocks in hand');
   const sources = calls.filter((c) => c[0] === 'shaderSource').map((c) => c[2]);
-  const vol = sources.find((s) => s.includes('uniform mat3 uViewRot;'));
+  const vol = sources.find((s) => s.includes('uniform mat3 uViewRot;') && s.includes('uniform vec4 uPointLights['));   // VC7b: the shafts' shader takes the view's rotation too; the glow's alone walks the lanterns
   assert.ok(vol && vol.includes('float pointShadowOne(int k, vec3 wp)') && vol.includes('vec3 elTonemapRGB(vec3 c)') && vol.includes('float elScatter(vec3 L, float range, vec3 dir, float dist)'), 'the three blocks, in the one shader');
   assert.equal(ap.volOn, true);
   assert.equal(ap.volLinear, false, 'the fake GL has no float target: the byte path'); assert.equal(ap.programs.volTone, null); assert.equal(ap.targets, null);
@@ -149,7 +149,7 @@ test('VOL1: on the fake GL - a world frame with a lantern in a fogged air marche
   assert.equal(calls.slice(mid2).filter((c) => c[0] === 'uniform2f' && c[1] === 'uTexel').length, 1, 'the AO\'s tile blur alone');
   assert.ok(!calls.slice(mid2).some((c) => c[0] === 'uniform1i' && c[1] === 'uPointCount'), 'the march not drawn');
   assert.equal(volumetricsOn('?volumetrics=off'), false); assert.equal(volumetricsOn(''), true);
-  assert.match(rd('src/render/enhancedLighting.js'), /renderer\.setVolumetrics\?\.\(volumetricsOn\(search\)\); \}/, 'the door, at the lane\'s install');
+  assert.match(rd('src/render/enhancedLighting.js'), /renderer\.setVolumetrics\?\.\(volumetricsOn\(search\)\);/, 'the door, at the lane\'s install');
 });
 
 test('BOUNCE1, WITHDRAWN BY ITS AUDIT: no bounce term anywhere - a per-lantern bounce with no visibility from the lit floor either leaks through walls (unshadowed, and every lantern past the eight has no map) or fills nothing (shadowed a reach off, a flat back is deeper in the umbra); the lit loops are EL1\'s own again, the lane declares no uELBounce, the doors are the glow\'s alone (mutant: the term back)', () => {
@@ -162,5 +162,5 @@ test('BOUNCE1, WITHDRAWN BY ITS AUDIT: no bounce term anywhere - a per-lantern b
   const el = rd('src/render/enhancedLighting.js'), r = rd('src/render/renderer.js');
   assert.ok(!/export (const|function) (EL_BOUNCE|bounceOn)/.test(el) && !/setBounce|_bounceWanted/.test(r), 'the constants, the door and the setter are gone');
   assert.match(el, /BOUNCE1 \(2026-09-23\), WITHDRAWN THE SAME DAY BY ITS AUDIT/, 'and the reason stands where the term stood');
-  assert.match(el, /renderer\.setVolumetrics\?\.\(volumetricsOn\(search\)\); \}/, 'the glow\'s door alone');
+  assert.match(el, /renderer\.setVolumetrics\?\.\(volumetricsOn\(search\)\); renderer\.setHaze\?\.\(hazeOn\(search\)\); \}/, 'the glow\'s door, then VC7b\'s haze - and no bounce door between or after them');
 });

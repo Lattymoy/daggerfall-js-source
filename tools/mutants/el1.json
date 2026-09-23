@@ -220,8 +220,8 @@
   {
     "name": "sync-no-exposure",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); }",
-    "new": "  if (on) { renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); }",
+    "old": "if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search));",
+    "new": "if (on) { renderer.setAir(airOn(search));",
     "tests": [
       "test/el1_enhancedlighting.test.js"
     ]

@@ -9,13 +9,14 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { WEATHER_TYPES, FOG_SETTINGS, fogForWeather, weatherSunlightScale, precipitationForWeather, skyOffsetForWeather, weatherRng } from '../src/world/weather.js';
 import { WEATHER_SKY, weatherRow } from '../src/render/enhancedSky.js';
-import { VC_PROFILE, CELL_TINT, cellOf, packCells, slabOf, CLOUD_FIELD_GLSL, MARCH_FS, FIELD_UNIFORMS } from '../src/render/volumetricClouds.js';
+import { VC_PROFILE, CELL_TINT, cellOf, packCells, CLOUD_FIELD_GLSL, MARCH_FS, FIELD_UNIFORMS } from '../src/render/volumetricClouds.js';
 import { VIOLENCE, createWindModel } from '../src/systems/wind.js';
+import { fieldFns, unit } from './cloudSky.mjs';
 import { LAB_DIM } from '../src/render/labGrass.js';
 import { PRECIP_PEAK, precipKind, soundWeather, createWeatherFront } from '../src/systems/weatherFront.js';
 import { CELL_WORDS, SAND_FROM, sandCountry, cellSeats, cellCandidate, fieldAt, baseWordOf } from '../src/systems/weatherField.js';
 import {
-  resetWeatherSim, setWeatherFieldLaw, setSnowGroundLaw, sampleWeatherField, importClimateWeathers, currentWeather, currentWeatherRaw, WEATHER_ENUM, overGround,
+  resetWeatherSim, setWeatherFieldLaw, setSnowGroundLaw, sampleWeatherField, importClimateWeathers, currentWeather, currentWeatherRaw, WEATHER_ENUM, overGround, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
 import { WindWispsRenderer, wispCount, SAND_LOOK, WISP_LOOK, WISP_MAX, WISP_FLOOR, WISP_FS, WISP_VS } from '../src/render/windWisps.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
@@ -74,7 +75,8 @@ test('WEATHER2d the sky, the clouds, the wind, the grass: a tan row; a wall on t
   const c = cellOf('sandstorm', 10, 20, 9000);
   assert.deepEqual(c.tint, CELL_TINT.sandstorm); assert.equal(c.base, 0); assert.equal(c.cover, 0.9);
   assert.equal(cellOf('thunder', 0, 0, 1).tint, undefined, 'only the word that has one');
-  assert.deepEqual(slabOf(VC_PROFILE.sunny, [c]), { base: 0, top: 3200 }, 'the union slab reaches the ground');
+  const f = fieldFns([c]); f.raySpans([10, 0, 20], unit([0, 0.1, 1]));
+  assert.equal(f.globals.spanA[0], 0, 'its column reaches the ground (SLAB-SPAN: a ray\'s own spans, from the eye up inside its disc)');
   const k = packCells([c, cellOf('rain', 0, 0, 1)], 8);
   assert.deepEqual([...k.t.slice(0, 8)], [0.88, 0.72, 0.46, 0, 1, 1, 1, 0.25].map((v) => Math.fround(v)), 'the tints, white for a word without one; VC6a: the spare w is the cell\'s own type variation - a sandstorm 0, rain its row\'s');
   assert.match(CLOUD_FIELD_GLSL, /uniform vec4 uCellC\[8\];/); assert.match(CLOUD_FIELD_GLSL, /fTint = mix\(fTint, uCellC\[i\]\.rgb, w\);/);
@@ -119,7 +121,7 @@ test('WEATHER2d the field: a sandstorm seats on the desert tables\' land under a
   const woods = fieldAt({ day: 21, minuteOfDay: 0, at: inside, climateAt: WOODS, wordOfClimate: () => 'cloudy' });
   assert.deepEqual(woods.cells, []); assert.equal(woods.word, 'cloudy');
   // through the sim: the array's desert slot cloudy, the field's word at the place, the ground law untouched (never rain nor thunder)
-  resetWeatherSim(); setWeatherFieldLaw(true); setSnowGroundLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherFieldLaw(true); setSnowGroundLaw(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   importClimateWeathers(Uint8Array.of(E.cloudy, E.sunny, E.sunny, E.sunny, E.sunny, E.sunny));
   const now = 21 * 1440;
   assert.equal(sampleWeatherField(now, CLIMATES.Desert, inside, DESERT, 'jump'), true);
@@ -127,12 +129,12 @@ test('WEATHER2d the field: a sandstorm seats on the desert tables\' land under a
   assert.equal(overGround(E.sandstorm, CLIMATES.Woodlands, 0), E.sandstorm, 'a sandstorm over a winter woodland (it never is) would still be sand, not snow');
   assert.equal(sampleWeatherField(now, CLIMATES.Desert, clear, DESERT, 'live'), true);
   assert.equal(currentWeather(), 'cloudy');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
 });
 
 test('WEATHER2d the sand: the wisps\' program in the sand\'s look - tan, dense, short, a lower box, no floor - the front\'s intensity its strength; the look is a uniform set, the wisps\' own unchanged', () => {
-  assert.deepEqual(SAND_LOOK, { color: [0.80, 0.64, 0.40], alpha: [0.28, 0.30], len: [0.8, 1.2], count: 7000, floor: 0, box: 70 });
-  assert.deepEqual(WISP_LOOK, { color: [0.86, 0.89, 0.94], alpha: [0.10, 0.12], len: [1.6, 2.4], count: WISP_MAX, floor: WISP_FLOOR, box: 90 });   // WIND4: the count and the floor are the look's own constants, cut there
+  assert.deepEqual(SAND_LOOK, { color: [0.80, 0.64, 0.40], alpha: [0.28, 0.30], len: [0.8, 1.2], count: 7000, floor: 0, box: 70, curl: 0 });   // WIND5: the sand's streaks stay straight
+  assert.deepEqual(WISP_LOOK, { color: [0.86, 0.89, 0.94], alpha: [0.10, 0.12], len: [2.6, 2.0], count: WISP_MAX, floor: WISP_FLOOR, box: 90, curl: 1 });   // WIND5: a flourish - longer, to hold its curl   // WIND4: the count and the floor are the look's own constants, cut there
   assert.equal(wispCount(0, SAND_LOOK), 0, 'no sand without a storm'); assert.equal(wispCount(1, SAND_LOOK), 7000);
   assert.ok(wispCount(0.5, SAND_LOOK) > 0 && wispCount(0.5, SAND_LOOK) < 7000);
   assert.equal(wispCount(0), Math.round(WISP_MAX * WISP_FLOOR), 'the wisps keep their floor');

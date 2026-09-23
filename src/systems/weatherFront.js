@@ -147,11 +147,13 @@ export function soundWeather(sample, weather) {
 }
 
 /**
- * The front. `tick({ dt, weather, arrival, nowMinutes, tsec })` once a
- * frame: `dt` real seconds, `weather` the sim's current word, `arrival`
- * the wind model's 0..1 (1 under the classic sky, which has no front),
- * `nowMinutes` the classic clock (the episode's seed), `tsec` real
- * seconds (the wander's clock). Returns the sample, which `sample()`
+ * The front. `tick({ dt, weather, arrival, nowMinutes, tsec, jump, peak })`
+ * once a frame: `dt` real seconds, `weather` the sim's current word,
+ * `arrival` the wind model's 0..1 (1 under the classic sky, which has no
+ * front), `nowMinutes` the classic clock (the episode's seed), `tsec`
+ * real seconds (the wander's clock), `peak` the world weather map's
+ * intensity at the player (0..1, placed in the mode's range) or null
+ * where there is no map (the episode rolls its own). Returns the sample, which `sample()`
  * repeats:
  *   { changed, from, to, t, shown, kind, intensity, peak }
  * `changed` is true on the tick that saw a cut; `t` is the arrival,
@@ -170,7 +172,7 @@ export function createWeatherFront({ seed = 7 } = {}) {
   let out = null;
 
   return {
-    tick({ dt = 0, weather = 'sunny', arrival = 1, nowMinutes = 0, tsec = 0, jump = false } = {}) {
+    tick({ dt = 0, weather = 'sunny', arrival = 1, nowMinutes = 0, tsec = 0, jump = false, peak = null } = {}) {
       const first = last === null;
       // WX2a (AUDIT 57): a JUMP is a change the player was not present for
       // - a load, a travel landing, a respawn roll, a day rolled while
@@ -196,6 +198,10 @@ export function createWeatherFront({ seed = 7 } = {}) {
           episode = null;
         }
       }
+      // WEATHER3b: on the world weather map's lane the PLACE sets the peak - the system's envelope, falling from its
+      // heart out (weatherSim currentWeatherIntensity) - and it moves as the player or the storm does: walking in from
+      // the edge thickens a drizzle into the downpour; the seeded roll above is only the lanes without a map
+      if (episode && peak != null) episode.peak = rollPeak(episode.mode, peak);
       const a = whole && jump ? 1 : Math.min(1, Math.max(0, arrival));
       const inMode = episode?.mode ?? null;
       const outMode = outgoing?.mode ?? null;

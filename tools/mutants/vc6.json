@@ -20,8 +20,8 @@
   {
     "name": "VC6a-the-warp-is-applied-after-the-shape-is-sampled",
     "file": "src/render/volumetricClouds.js",
-    "old": "  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp\n  vec4 s = textureLod(uShape, q / SHAPE_M, mip);",
-    "new": "  vec4 s = textureLod(uShape, q / SHAPE_M, mip);\n  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp",
+    "old": "  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp\n  vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass",
+    "new": "  vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass\n  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp",
     "tests": [
       "test/vc6_clouds.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "VC6c-a-covered-sun-throws-shafts-again",
     "file": "src/render/airPass.js",
-    "old": "  outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through), 1.0);",
-    "new": "  outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y), 1.0);",
+    "old": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through);",
+    "new": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y);",
     "tests": [
       "test/vc6_clouds.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "VC6c-thin-cloud-dims-the-shafts-politely-instead-of-taking-them",
     "file": "src/render/airPass.js",
-    "old": "uShaftParams.y * through * through), 1.0);",
-    "new": "uShaftParams.y * through), 1.0);",
+    "old": "uShaftParams.y * through * through);",
+    "new": "uShaftParams.y * through);",
     "tests": [
       "test/vc6_clouds.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "VC6d-the-band-gate-is-taken-on-the-clamped-height-so-it-never-fires",
     "file": "src/render/volumetricClouds.js",
-    "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);\n  if (hr <= 0.0 || hr >= 1.0) return 0.0;",
-    "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);\n  if (hr < 0.0 || hr > 1.0) return 0.0;",
+    "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);\n",
+    "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);\n",
     "tests": [
       "test/vc6_clouds.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "VC6d-the-march-never-strides-over-empty-air",
     "file": "src/render/volumetricClouds.js",
-    "old": "    if (rho <= 0.0) { empty++; t += (empty > 4 ? coarse : ds); continue; }",
-    "new": "    if (rho <= 0.0) { empty++; t += ds; continue; }",
+    "old": "    if (rho <= 0.0) { empty++; strode = empty > 4 && fSkip > 0.5; t += strode ? coarse : ds; continue; }",
+    "new": "    if (rho <= 0.0) { empty++; strode = false; t += ds; continue; }",
     "tests": [
       "test/vc6_clouds.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "VC6d-the-stride-is-never-backed-out-so-a-clouds-edge-is-resolved-coarsely",
     "file": "src/render/volumetricClouds.js",
-    "old": "    if (empty > 4) { t -= coarse; empty = 0; continue; }",
-    "new": "    if (empty > 4) { empty = 0; }",
+    "old": "    if (strode) { t -= coarse; strode = false; empty = 0; continue; }",
+    "new": "    if (strode) { strode = false; empty = 0; }",
     "tests": [
       "test/vc6_clouds.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "VC6d-the-light-march-walks-a-lid-it-cannot-see-through",
     "file": "src/render/volumetricClouds.js",
-    "old": "    if (sum * EXT > 6.0) break;   // VC6d:",
-    "new": "    if (sum * EXT > 6000.0) break;   // VC6d:",
+    "old": "    if (sum * EXT * sees > 6.0) break;",
+    "new": "    if (sum * EXT * sees > 6000.0) break;",
     "tests": [
       "test/vc6_clouds.test.js"
     ]

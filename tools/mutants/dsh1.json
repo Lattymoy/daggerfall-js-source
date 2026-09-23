@@ -100,22 +100,22 @@
  {
   "name": "DSH1-the-near-early-out-goes-back-to-clear-sky-and-the-last-quarter-degree-opens",
   "file": "src/render/volumetricClouds.js",
-  "old": "  if (dir.y <= 0.004) { outColor = vec4(uHorizonColor, 0.0); return; }",
-  "new": "  if (dir.y <= 0.004) { outColor = vec4(0.0, 0.0, 0.0, 1.0); return; }",
+  "old": "  if (dir.y <= 0.004) { outColor = underCurtains(uHorizonColor, 0.0, cam, dir); return; }",
+  "new": "  if (dir.y <= 0.004) { outColor = underCurtains(vec3(0.0), 1.0, cam, dir); return; }",
   "tests": ["test/dsh1_horizon.test.js"]
  },
  {
   "name": "DSH1-the-near-early-out-covers-but-with-nothing-in-it",
   "file": "src/render/volumetricClouds.js",
-  "old": "  if (dir.y <= 0.004) { outColor = vec4(uHorizonColor, 0.0); return; }",
-  "new": "  if (dir.y <= 0.004) { outColor = vec4(0.0, 0.0, 0.0, 0.0); return; }",
+  "old": "  if (dir.y <= 0.004) { outColor = underCurtains(uHorizonColor, 0.0, cam, dir); return; }",
+  "new": "  if (dir.y <= 0.004) { outColor = underCurtains(vec3(0.0), 0.0, cam, dir); return; }",
   "tests": ["test/dsh1_horizon.test.js"]
  },
  {
   "name": "DSH1-the-two-early-outs-disagree-so-the-lid-seams-where-one-takes-over",
   "file": "src/render/volumetricClouds.js",
-  "old": "  if (t0 > 120000.0) { outColor = vec4(uHorizonColor, 0.0); return; }",
-  "new": "  if (t0 > 120000.0) { outColor = vec4(uHorizonColor, 1.0); return; }",
+  "old": "  if (t0 > 120000.0) { outColor = underCurtains(uHorizonColor, 0.0, cam, dir); return; }",
+  "new": "  if (t0 > 120000.0) { outColor = underCurtains(uHorizonColor, 1.0, cam, dir); return; }",
   "tests": ["test/dsh1_horizon.test.js"]
  },
  {
