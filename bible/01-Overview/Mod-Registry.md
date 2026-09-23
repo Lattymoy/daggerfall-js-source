@@ -82,6 +82,7 @@ not the date the slice shipped, where those differ.
 | `oblivion-remaster-leveling` | the whole mod: its ten shipped files - the 1,314 lines of Lua, the 487-byte `.omwaddon` (one GMST, `iLevelupTotal` 100), the manifest, both l10n yaml and the author's README | **not named in any shipped file** (Nexus Morrowind 56569) | 0.5.3 | shipped `.zip` `OblivionRemasterLikeLeveling_0.5.3-56569-v0-5-3-1748644502`; behaviour off the author's OWN LUA, which is the mod - there is nothing compiled to read | **the archive states NO LICENCE**; granted (Mac handed the archive over 2026-09-17) - **RECORD OPEN** | ORL1 | 2026-09-17 | `06-Systems/Oblivion-Remaster-Leveling.md` |
 | `pcaao` | manifest, settings | Kirk.O | 1.44 | shipped `.dfmod`, DLL decompiled (ILSpy 8.2.0.7535); **source repo only covers 1.40** (`6e19023`) | repository states none; granted (Mac handed the bundle over 2026-09-12) - **RECORD OPEN** | PCO1 | 2026-09-12 | `05-Combat/Physical-Combat-Overhaul.md` |
 | `raum-book` | the animated book itself | Mac (Lattymoy), project-raum | - | `Lattymoy/project-raum` @ `7fa7119e` | Mac's own work, at his word 2026-09-12 | the enhanced book | 2026-09-12 | `10-UI/UI-Arc.md` |
+| `roleplay-realism-items` | manifest, settings, `ItemTemplates.json`, the string table, the fifteen scripts (MIT, verbatim), and the 280 sprites with their `<rect>`s (`public/art/roleplay-realism-items/`, re-encoded from the bundle - RRI1) | Hazelnut & Ralzar | 1.3 | shipped zip `RoleplayRealism-Items-1.3-61-1-3-1707669833`; behaviour off the author's SOURCE (`ajrb/dfunity-mods` @ `0af2ec9`, `RoleplayRealismItems/`), the shipped bundle's manifest, settings, templates and string table diffed against it (identical) | code MIT (every script's header); **the sprites carry no licence text** - granted (Mac handed the zip over 2026-09-23) - **RECORD OPEN** | RRI1 | 2026-09-23 | `06-Systems/Roleplay-Realism-Items.md` |
 | `roads-hazelnut` | four 500,000-byte path masks | Hazelnut | - | `ajrb/dfunity-mods`, `BasicRoads/`, sha256-verified | code MIT; **data carries no licence text** - granted to Mac 2026-09-02 - **RECORD OPEN** | ROADS 22-25 | 2026-09-02 | `03-World/Roads.md` |
 | `seasons-iliac-bay` | manifest only; the bundle is the player's | RosyTheRascal | 1.1 | manifest verbatim; behaviour off the DLL's IL; textures read from the player's own `.dfmod` at runtime | granted to Mac 2026-09-05 - **RECORD OPEN** | SIB1 | 2026-09-05 | `07-Rendering/Seasons-Iliac-Bay.md` |
 | `silkscreen-five` | one glyph (U+0035), 520 bytes | The Silkscreen Project Authors | - | `googlefonts/silkscreen`, subset with `pyftsubset` | SIL OFL 1.1 (`OFL.txt` beside it) | the enhanced skin's digits | 2026-09-08 | `10-UI/UI-Arc.md` |
@@ -110,7 +111,8 @@ full account; this is the index to it.
   mod therefore never loads them.
 - **`handheld-torches`**, **`weapon-widget`**, **`shield-widget`**,
   **`seasons-iliac-bay`**, **`diverse-weapons`** (whose one script IS
-  vendored - it is source, and MIT),
+  vendored - it is source, and MIT), **`roleplay-realism-items`** (its
+  fifteen scripts vendored from the author's repository, MIT),
   **`pcaao`**, **`meanerMonsters`**, **`ambient-text`** - the mods' compiled DLLs are not
   vendored and never were. Behaviour was read method by method (IL, or
   the upstream source where one exists) and rewritten; the port's own

@@ -239,13 +239,13 @@ test('DW3 GL door: the list drawer asks the pipeline by dye and reads back the v
 test('DW3 wiring: the paper doll asks by item.dyeColor and blits an imported texture as it is; the DOM callers pass the dye; the install rides the scene boot; the drawers and the pipeline forward it', () => {
   const doll = rd('src/ui/paperDoll.js');
   assert.match(doll, /async function loadRecord\(archive, record, getTexture, dye = null\) \{/);
-  assert.match(doll, /const swap = decodedTextureTopDown\(archive, record, 0, 'Albedo', dye\);\n\s+if \(swap\) return \{ bmp: \{ width: swap\.width, height: swap\.height, data: null, rgba: swap\.rgba \}, off \};/, 'the import arm first, in the RGBA shape the vendor arm blits - no ChangeDye');
+  assert.match(doll, /const swap = decodedTextureTopDown\(archive, record, 0, 'Albedo', dye\);\n\s+if \(swap\) \{\n[\s\S]{0,900}?return \{ bmp: \{ width: swap\.width, height: swap\.height, data: null, rgba: swap\.rgba \}, off, mask \};/, 'the import arm first, in the RGBA shape the vendor arm blits - no ChangeDye (RRI1 adds the mask beside it)');
   assert.match(doll, /loadRecord\(res\.archive, res\.record, deps\.getTexture, itemDyeColor\(it\)\)/, 'the item\'s own dyeColor, not the remap\'s (an artifact\'s is Unchanged)');
   assert.match(doll, /loadRecord\(t\.playerTextureArchive \+ \(raceByKey\(deps\.race\)\?\.morphologyIndex \?\? HUMAN_MORPHOLOGY\), t\.playerTextureRecord, deps\.getTexture, itemDyeColor\(it\)\)/, 'the cloak interior too');
   assert.match(rd('src/ui/enhancedInventory.js'), /requestIcon\(line\.image\.archive, line\.image\.record, \{ scale: 2, dye: line\.image\.dye, onReady: render \}\)/);
   assert.match(rd('src/ui/enhancedInventory.js'), /requestIcon\(line\.image\.archive, line\.image\.record, \{ scale: 4, dye: line\.image\.dye, onReady: render \}\)/);
   assert.match(rd('src/ui/enhancedHud.js'), /requestIcon\(image\.archive, image\.record, \{ scale: 2, dye: image\.dye, onReady:/);
-  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+const textures = storedTextureNames\(\)/, 'installed at the scene boot, before the archives load - not at worldTick\'s module scope (a TDZ through the cycle)');
+  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+const textures = storedTextureNames\(\)/, 'installed at the scene boot, before the archives load - not at worldTick\'s module scope (a TDZ through the cycle)');
   assert.ok(!/installDiverseWeaponsIcons/.test(rd('src/systems/worldTick.js')));
   for (const f of ['src/ui/itemScroller.js', 'src/ui/nativeInventory.js']) {
     assert.match(rd(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true, dye: img\.dye \}\)/, f);

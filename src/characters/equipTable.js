@@ -19,7 +19,8 @@
 
 import { EQUIP_SLOTS } from './paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES, WEAPON_HANDS, SHIELD_INDICES } from './equipRules.js';
-import { getBool } from '../systems/settings.js';   // AUDIT 58: ItemEquipTable.cs:635 reads BowLeftHandWithSwitching
+import { getBool } from '../systems/settings.js';
+import { customItemClass } from '../systems/rriItems.js';   // RRI1: GetItemHands / GetEquipSlot are virtuals a custom class answers   // AUDIT 58: ItemEquipTable.cs:635 reads BowLeftHandWithSwitching
 import { THUNDERLOCK_TEMPLATE } from './thunderlockIds.js';   // FIELD-GUN2: the departure below - a leaf with no imports, so this cannot cycle
 
 export const ITEM_HANDS = Object.freeze({ None: 0, RightOnly: 1, LeftOnly: 2, Either: 3, Both: 4 });
@@ -62,6 +63,8 @@ export function getItemHands(item, { bowLeftHand = getBool('Enhancements', 'BowL
   // hold it. It is two-handed (the template's `isOneHanded: false`),
   // which is what a gun this size and this heavy has to be.
   if (group === ITEM_GROUPS.Weapons && item.templateIndex === THUNDERLOCK_TEMPLATE) return ITEM_HANDS.Both;
+  const cls = customItemClass(item.templateIndex);   // RRI1: ItemArchersAxe / ItemLightFlail answer Either
+  if (cls?.itemHands) return ITEM_HANDS[cls.itemHands];
   const w = WEAPON_HANDS[item.templateIndex];
   if (w) return ITEM_HANDS[w];
   if (SHIELD_INDICES.includes(item.templateIndex)) return ITEM_HANDS.LeftOnly;
@@ -81,6 +84,9 @@ export function createEquipTable() {
   };
 
   const getEquipSlot = (item) => {
+    // RRI1: a custom armor class names its slot (GetEquipSlot, a virtual)
+    const cls = item.group === ITEM_GROUPS.Armor ? customItemClass(item.templateIndex) : null;
+    if (cls?.equipSlot) return EQUIP_SLOTS[cls.equipSlot];
     switch (item.group) {
       case ITEM_GROUPS.Gems:
         return getFirstSlot(EQUIP_SLOTS.Crystal0, EQUIP_SLOTS.Crystal1);

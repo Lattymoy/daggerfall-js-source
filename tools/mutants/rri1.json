@@ -1,0 +1,101 @@
+[
+  {
+    "name": "RRI1-2-the-armor-switch-is-not-read",
+    "file": "src/systems/rriItems.js",
+    "old": "  if (!rriModule(cls.group === 'Weapons' ? 'newWeapons' : 'newArmor')) return null;",
+    "new": "",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-3-fur-keeps-its-chain-material",
+    "file": "src/systems/rriItems.js",
+    "old": "    out.material = ARMOR_MATERIAL.Leather;\n    out.message = 1;",
+    "new": "    out.message = 1;",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-4-brigandine-draws-the-leather-record",
+    "file": "src/systems/rriItems.js",
+    "old": "  if (raw(item) >= ARMOR_MATERIAL.Iron) return 8 + offset;\n  return (offset < 4) ? 16 : 17;",
+    "new": "  return (offset < 4) ? 16 : 17;",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-5-the-chain-table-loses-a-cell",
+    "file": "src/systems/rriItems.js",
+    "old": "    case M.Orcish: return 17;\n    case M.Daedric: return 18;",
+    "new": "    case M.Orcish: return 17;\n    case M.Daedric: return 17;",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-6-the-patches-merge-with-the-mod-off",
+    "file": "src/systems/rriInstall.js",
+    "old": "  registerTemplateOverrides(enabledAtBoot ? RRI_TEMPLATE_PATCHES : []);",
+    "new": "  registerTemplateOverrides(RRI_TEMPLATE_PATCHES);",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-7-the-doll-forgets-the-right-hand-record",
+    "file": "src/ui/paperDoll.js",
+    "old": "    if (item.group === 'Weapons' && item.equipSlot === EQUIP_SLOTS.RightHand && getItemHands(item) === ITEM_HANDS.Either) record += 1;\n    const m = item.material ?? 0;",
+    "new": "    const m = item.material ?? 0;",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-8-the-random-armor-forgets-the-custom-slots",
+    "file": "src/systems/loot.js",
+    "old": "  const i = Math.floor(rolls() * (ARMOR_PIECES.length + customs.length));",
+    "new": "  const i = Math.floor(rolls() * ARMOR_PIECES.length);",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-9-the-variant-prefixes-on-every-read",
+    "file": "src/systems/itemTemplates.js",
+    "old": "  const variant = named.rriVariant ? null : rriVariantFields(named);",
+    "new": "  const variant = rriVariantFields(named);",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-10-the-stand-in-size-reads-the-bare-key-alone",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  const size = (record) => { const d = decodedOf(archive, record); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };",
+    "new": "  const size = (record) => { const d = _decoded.get(textureKey(archive, record, 0)); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-11-a-dyed-mask-name-reads-as-a-dye",
+    "file": "src/systems/rriItems.js",
+    "old": "    const m = /^(\\d{3})_(\\d+)-(\\d+)(?:_(?!Mask)([A-Z][a-z]+))?(_Mask)?$/.exec(name);",
+    "new": "    const m = /^(\\d{3})_(\\d+)-(\\d+)(?:_([A-Z][a-z]+))?(_Mask)?$/.exec(name);",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  },
+  {
+    "name": "RRI1-12-the-helmet-takes-the-chain-table",
+    "file": "src/systems/rriItems.js",
+    "old": "  inventoryTextureRecord: helmet ? helmetRecord : lightRecord,\n  nativeMaterialValue: (item) => (raw(item) >= ARMOR_MATERIAL.Iron ? raw(item) - 0x0200 : raw(item)),\n  materialArmorValue: (item) => leatherMaterialArmorValue(raw(item), msg(item)),",
+    "new": "  inventoryTextureRecord: helmet ? helmetRecord : lightRecord,\n  nativeMaterialValue: (item) => (raw(item) >= ARMOR_MATERIAL.Iron ? raw(item) - 0x0200 : raw(item)),\n  materialArmorValue: (item) => chainmailMaterialArmorValue(raw(item)),",
+    "tests": [
+      "test/rri1_items.test.js"
+    ]
+  }
+]

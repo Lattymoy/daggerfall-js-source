@@ -128,7 +128,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:264) early-returns for a
+  // updateEquippedArmorValues (equip.js:265) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -194,7 +194,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:264) early-returns for a
+  // updateEquippedArmorValues (equip.js:265) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and

@@ -23,6 +23,7 @@
 import { mintCondition, templateByIndex } from './itemTemplates.js';   // AUDIT 23
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
+import { customItemClass } from './rriItems.js';   // RRI1: a custom armor's slot, for the body part its value lands on
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
 import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
 import { weaponSkillUsed } from '../characters/weapons.js';   // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
@@ -346,6 +347,8 @@ export { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue };
 
 /** GetBodyPartForEquipSlot (DaggerfallUnityItem.cs:1131-1153): only
  *  these seven slots map to an armor body part. */
+/** RRI1: the slot rule for an armor template - a custom class's own slot (GetEquipSlot) ahead of the generated table. */
+const armorSlotRule = (templateIndex) => { const slot = customItemClass(templateIndex)?.equipSlot; return slot ? { slot } : SLOT_RULES.Armor[templateIndex]; };
 const SLOT_BODY_PART = new Map([
   [EQUIP_SLOTS.Head, BODY_PARTS.Head], [EQUIP_SLOTS.RightArm, BODY_PARTS.RightArm],
   [EQUIP_SLOTS.LeftArm, BODY_PARTS.LeftArm], [EQUIP_SLOTS.ChestArmor, BODY_PARTS.Chest],
@@ -364,7 +367,7 @@ export const armorValuesOf = (entity) => (entity.armorValues ??= new Array(NUMBE
 export function armorBodyParts(item) {
   if (!item || item.group !== 'Armor') return [];
   if (isShieldTemplate(item.templateIndex)) return SHIELD_PARTS.get(item.templateIndex) ?? [];
-  const rule = SLOT_RULES.Armor[item.templateIndex];
+  const rule = armorSlotRule(item.templateIndex);
   const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot]) : null;
   return part == null ? [] : [part];
 }
@@ -386,7 +389,7 @@ export function updateEquippedArmorValues(entity, item, equipping) {
   if (!isShieldTemplate(item.templateIndex)) {
     // a non-shield armor piece's slot is FIXED by template (the C5c
     // rule table) - no equip-table state involved (DFU GetArmorSlot)
-    const rule = SLOT_RULES.Armor[item.templateIndex];
+    const rule = armorSlotRule(item.templateIndex);
     const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot])
       : (FOOTWEAR ? BODY_PARTS.Feet : null);   // clothing footwear -> Feet
     if (part == null) return;

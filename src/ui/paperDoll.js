@@ -46,12 +46,20 @@ import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
 import { decodedTextureTopDown, preloadTextureRecord } from '../systems/textureReplacement.js';   // DW3: GetItemImage's import arm, by the item's dye; AUDIT-DW F1: decoded when the doll asks
 import { itemDyeColor } from '../systems/itemDye.js';   // DW3: DaggerfallUnityItem.dyeColor, as the port's items carry it
+import { customItemClass } from '../systems/rriItems.js';   // RRI1: a custom class's own archive and record on the doll
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { raceArt, FACES_PER_RACE, raceByKey } from '../systems/races.js';   // S3c/U9: all eight races
 
 export const PAPERDOLL_W = 110;
 export const PAPERDOLL_H = 184;
 export const PAPERDOLL_ORIGIN = Object.freeze([200, 8]);   // paperDollOrigin
+/** A layer's top-left in the doll's own space. A classic record's
+ *  offset is in the 320x200 screen (paperDollOrigin subtracted, as
+ *  PaperDollRenderer does); RRI1: an imported sprite's <rect> is
+ *  already in the doll's space (TextureReplacement
+ *  .OverridePaperdollItemRect replaces the screen rect whole), and the
+ *  stand-in's offset says so with `paperdoll`. */
+export const dollXY = (off) => (off?.paperdoll ? [off.x, off.y] : [(off?.x ?? 0) - PAPERDOLL_ORIGIN[0], (off?.y ?? 0) - PAPERDOLL_ORIGIN[1]]);
 export const BG_SUBRECT = Object.freeze([8, 7, 110, 184]); // backgroundSubRect
 export const WAIST_HEIGHT = 40;
 // PaperDoll.armourLabelPos verbatim - the 7 armor value labels in
@@ -123,6 +131,21 @@ export function paperdollItemImage(item, { gender = 'male', race = 'Breton' } = 
   const morph = raceByKey(race)?.morphologyIndex ?? HUMAN_MORPHOLOGY;
   const t = getTemplate(item.templateIndex);
   if (!t) return null;
+  // RRI1: GetItemImage(forPaperDoll) reads the same two virtuals the
+  // inventory does (ItemHelper.cs:405-406), then bumps an Either-hand
+  // weapon worn right by one (:412-414) - the Archer's Axe's second
+  // record. The remap is the material's, as for any armor or weapon;
+  // an imported texture takes none (it never reaches `blit`).
+  const cls = customItemClass(item.templateIndex);
+  if (cls) {
+    const bodyArchive = armorArchive(gender, morph);
+    const archive = cls.inventoryTextureArchive ?? bodyArchive;
+    let record = cls.inventoryTextureRecord ? cls.inventoryTextureRecord(item, { playerTextureArchive: bodyArchive }) : t.playerTextureRecord;
+    if (item.group === 'Weapons' && item.equipSlot === EQUIP_SLOTS.RightHand && getItemHands(item) === ITEM_HANDS.Either) record += 1;
+    const m = item.material ?? 0;
+    const dye = item.group === 'Weapons' ? (MATERIAL_DYES[m] ?? DYE_COLORS.Unchanged) : (m >= ARMOR_MATERIAL.Iron ? MATERIAL_DYES[m - ARMOR_MATERIAL.Iron] ?? DYE_COLORS.Unchanged : DYE_COLORS.Unchanged);
+    return { archive, record, dye, target: DYE_TARGETS.WeaponsAndArmor };
+  }
   const variants = t.variants ?? 0;
   if (item.group === 'MensClothing' || item.group === 'WomensClothing') {
     let record = t.playerTextureRecord;
@@ -331,12 +354,26 @@ function blit(out, img, palette, { rows = null, remap = null, atOffset = null, u
  *  Everything else is `blit`'s, deliberately - the same origin, the
  *  same clip, the same offset arithmetic - so a layer that draws here
  *  lands exactly where the indexed one would have. */
-function blitRgba(out, img, { atOffset = null } = {}) {
-  const [orgX, orgY] = PAPERDOLL_ORIGIN;
+function blitRgba(out, img, { atOffset = null, under = null } = {}) {
   const off = atOffset ?? img.off;
-  const px = off.x - orgX, py = off.y - orgY;
+  const [px, py] = dollXY(off);
   const { width, height, rgba } = img.bmp;
   if (!rgba) return;
+  // RRI1: the mask first - where it is set, the background comes back
+  // (the hair under a helmet), and the sprite draws over that
+  if (under && img.mask?.rgba) {
+    const { width: mw, height: mh, rgba: m } = img.mask;
+    for (let y = 0; y < mh; y++) {
+      const dy = py + y;
+      if (dy < 0 || dy >= PAPERDOLL_H) continue;
+      for (let x = 0; x < mw; x++) {
+        const dx = px + x;
+        if (dx < 0 || dx >= PAPERDOLL_W || m[(y * mw + x) * 4 + 3] === 0) continue;
+        const o = (dy * PAPERDOLL_W + dx) * 4;
+        out[o] = under[o]; out[o + 1] = under[o + 1]; out[o + 2] = under[o + 2]; out[o + 3] = under[o + 3];
+      }
+    }
+  }
   for (let y = 0; y < height; y++) {
     const dy = py + y;
     if (dy < 0 || dy >= PAPERDOLL_H) continue;
@@ -467,7 +504,7 @@ async function composeDoll(art, deps, entity, { background = true } = {}) {
     // through the palette - it hands back RGBA instead, and it is the
     // port's own art rather than DFU's, so it takes neither the dye
     // nor the helm mask.
-    if (img.bmp?.rgba) { blitRgba(out, img); layout.push({ slot: it.equipSlot, img }); continue; }
+    if (img.bmp?.rgba) { blitRgba(out, img, { under }); layout.push({ slot: it.equipSlot, img }); continue; }   // RRI1: the imported helmet's mask erases the hair under it
     const remap = res.target == null ? null : (i) => applyDyeToIndex(i, res.dye, res.target);
     blit(out, img, art.palette, { remap, under });   // HM1: the helm's mask erases the hair
     layout.push({ slot: it.equipSlot, img });
@@ -531,7 +568,15 @@ async function loadRecord(archive, record, getTexture, dye = null) {
     // vendor arm already blits (FIELD-GUN4), because it has no index.
     await preloadTextureRecord(archive, record, 0, 'Albedo', dye);   // AUDIT-DW F1: this record's, on demand
     const swap = decodedTextureTopDown(archive, record, 0, 'Albedo', dye);
-    if (swap) return { bmp: { width: swap.width, height: swap.height, data: null, rgba: swap.rgba }, off };
+    if (swap) {
+      // RRI1: the MASK beside an imported texture (ItemHelper.cs:452-453,
+      // TryImportTexture(..., TextureMap.Mask)): "alpha 0 is unmasked
+      // areas of image and alpha 1 are masked areas" - the helmet's
+      // hair cutout. Asked by the same name with `_Mask`; absent for
+      // everything that has none.
+      const mask = (await preloadTextureRecord(archive, record, 0, 'Mask', dye)) ? decodedTextureTopDown(archive, record, 0, 'Mask', dye) : null;
+      return { bmp: { width: swap.width, height: swap.height, data: null, rgba: swap.rgba }, off, mask };
+    }
     return { bmp: tex.getDFBitmap(record, 0), off };
   } catch { return null; }
 }
@@ -550,7 +595,8 @@ export function slotAtPaperDoll(px, py) {
   const [orgX, orgY] = PAPERDOLL_ORIGIN;
   for (let i = _layout.length - 1; i >= 0; i--) {
     const { slot, img } = _layout[i];
-    const x = px - (img.off.x - orgX), y = py - (img.off.y - orgY);
+    const [ox, oy] = dollXY(img.off);
+    const x = px - ox, y = py - oy;
     if (x < 0 || y < 0 || x >= img.bmp.width || y >= img.bmp.height) continue;
     // FIELD-GUN4: an RGBA layer's "is there a pixel here" is its
     // ALPHA. Reading `data` for one answers undefined, which is

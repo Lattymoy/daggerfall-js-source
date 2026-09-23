@@ -11,7 +11,8 @@ import { conditionMultipliersByMaterial } from '../characters/weapons.js';   // 
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
-import { itemDyeColor } from './itemDye.js';   // DW3: GetItemImage's `color = (int)item.dyeColor` (ItemHelper.cs:402) rides the image
+import { itemDyeColor } from './itemDye.js';
+import { customItemClass, rriVariantFields } from './rriItems.js';   // RRI1: DFU's custom-item dispatch, asked first   // DW3: GetItemImage's `color = (int)item.dyeColor` (ItemHelper.cs:402) rides the image
 
 export { GROUP_TEMPLATE_INDICES };
 
@@ -46,7 +47,25 @@ export function registerCustomTemplates(rows) {
   return _custom.size;
 }
 export const customTemplateCount = () => _custom.size;
-export const templateByIndex = (i) => ITEM_TEMPLATES[i] ?? _custom.get(i) ?? null;
+// RRI1: A MOD'S PATCHES TO CLASSIC ROWS. ItemHelper.LoadItemTemplates
+// (:1488-1494) merges every loaded mod's ItemTemplates.json over the
+// classic table by index the moment the mod loads - a Katana at 3.5 kg
+// under Roleplay & Realism: Items, whatever its modules say. The frozen
+// DFU table stays what it is; a patched row is the classic row with the
+// patch over it, and templateByIndex answers it first.
+const _overrides = new Map();
+export function registerTemplateOverrides(rows) {
+  _overrides.clear();
+  for (const r of rows ?? []) {
+    const base = ITEM_TEMPLATES[r?.index];
+    if (!base) continue;
+    const t = { ...base, ...r };
+    _overrides.set(r.index, Object.freeze({ ...t, weight: t.baseWeight, worldTexArchive: t.worldTextureArchive, worldTexRecord: t.worldTextureRecord }));
+  }
+  return _overrides.size;
+}
+export const templateOverrideCount = () => _overrides.size;
+export const templateByIndex = (i) => _overrides.get(i) ?? ITEM_TEMPLATES[i] ?? _custom.get(i) ?? null;
 
 /** GetItemTemplate(group, groupIndex) - the group's j-th template. */
 export function templateFor(group, groupIndex) {
@@ -103,10 +122,16 @@ export function itemBaseValue(item) {
  *  value (an enchantment's sum, a book's price, a recipe's) keeps it -
  *  and answers a COPY, as the copies it replaces did. */
 export function setItemFields(item) {
+  const named = { ...item, name: item.name ?? templateByIndex(item.templateIndex)?.name };
+  // RRI1: a custom class's CurrentVariant setter runs ONCE at the mint
+  // (ApplyArmorSettings -> SetVariant): the name's prefix, and for fur
+  // the material folded to Leather with `message` 1. Marked, so a
+  // second read of the same item does not prefix it twice.
+  const variant = named.rriVariant ? null : rriVariantFields(named);
   return {
-    ...item,
-    name: item.name ?? templateByIndex(item.templateIndex)?.name,
-    value: itemValueOf(item),
+    ...named,
+    ...(variant ? { ...variant, rriVariant: true } : {}),
+    value: itemValueOf({ ...named, ...(variant ?? {}) }),
   };
 }
 /** JAN1 (2026-09-18, Janome: "when I try to sell certain items I get COST:NaN ... he offers me 0"): THE ONE VALUE
@@ -183,6 +208,19 @@ export function mintCondition(item) {
 export function inventoryItemImage(item, identity = undefined) {
   const t = templateByIndex(item.templateIndex);
   if (!t) return null;
+  // RRI1: a custom class answers InventoryTextureArchive/Record itself
+  // (DaggerfallUnityItem's virtuals, ItemHelper.cs:405-406) - the weapons
+  // their own archive (513/514) at the template's record, the chain set
+  // the body's archive at a record by material, the leather set their
+  // own archive at a record by body and material. GetItemImage's katana
+  // bump and the world fallback are for the classic rows, not these.
+  const cls = customItemClass(item.templateIndex);
+  if (cls) {
+    const bodyArchive = playerArchiveFor(item, t, identity);
+    const archive = cls.inventoryTextureArchive ?? bodyArchive;
+    const record = cls.inventoryTextureRecord ? cls.inventoryTextureRecord(item, { playerTextureArchive: bodyArchive }) : t.playerTextureRecord;
+    return { archive, record, dye: itemDyeColor(item) };
+  }
   let archive, record;
   if (usesWorldTexture(item, t)) {
     // AUDIT 63 F20/F21: GetInventoryTextureArchive/Record's WORLD arms

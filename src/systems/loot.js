@@ -16,14 +16,15 @@
 //     slots match the role per the approved engine-PRNG stance
 // MI (magic items) rolls need the MAGIC.DEF registry
 // (setMagicItemTemplates), and EVERY host that can generate loot now
-// loads it: scenes/shared.js:113-116 (loadMagicRegistries) feeds the
+// loads it: scenes/shared.js:114-117 (loadMagicRegistries) feeds the
 // module table this file reads, called from dungeonContext.js:1101,
 // world.js:2392 and exterior.js:1191 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
-// that is DFU's own answer rather than a stand-in: shared.js:120
+// that is DFU's own answer rather than a stand-in: shared.js:121
 // records it, the category simply stays empty.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
+import { customItemsForGroup, rriVariantFields } from './rriItems.js';   // RRI1: CreateRandomWeapon/Armor roll over the classic slots PLUS the registered custom items (ItemBuilder.cs:382-390, :451-459)
 import { ARROW_TEMPLATE } from './inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
@@ -99,7 +100,9 @@ const ARMOR_PIECES = Object.values(ARMOR_ENUM);   // 11 pieces incl shields
 /** ItemBuilder.CreateRandomWeapon: uniform over the 19 weapon slots;
  *  slot 18 is arrows - stack Range(1, 21), material 0. */
 export function createRandomWeapon(playerLevel, rolls = Math.random) {
-  const groupIndex = Math.floor(rolls() * 19);
+  const customs = customItemsForGroup('Weapons');   // RRI1: `Range(0, enumArray.Length + customItemTemplates.Length)`
+  const groupIndex = Math.floor(rolls() * (19 + customs.length));
+  if (groupIndex >= 19) return { group: 'Weapons', ...createWeapon(customs[groupIndex - 19], randomMaterial(playerLevel, rolls)) };
   // AUDIT 24 systems: the arrow branch makes THREE writes
   // (ItemBuilder.cs:395-398) - the stack, `currentCondition = 0`
   // ("not sure if this is necessary, but classic does it") and
@@ -121,8 +124,12 @@ export function createRandomWeapon(playerLevel, rolls = Math.random) {
 /** ItemBuilder.CreateRandomArmor: uniform over the 11 armor pieces
  *  (shields included) + RandomArmorMaterial. */
 export function createRandomArmor(playerLevel, rolls = Math.random) {
-  const piece = ARMOR_PIECES[Math.floor(rolls() * ARMOR_PIECES.length)];
-  return { group: 'Armor', templateIndex: piece, material: randomArmorMaterial(playerLevel, rolls) };
+  const customs = customItemsForGroup('Armor');   // RRI1: the registered custom armor rides the same roll
+  const i = Math.floor(rolls() * (ARMOR_PIECES.length + customs.length));
+  const piece = i < ARMOR_PIECES.length ? ARMOR_PIECES[i] : customs[i - ARMOR_PIECES.length];
+  const item = { group: 'Armor', templateIndex: piece, material: randomArmorMaterial(playerLevel, rolls) };
+  const variant = rriVariantFields(item);   // ApplyArmorSettings -> SetVariant: the class's own writes, once
+  return variant ? { ...item, ...variant, rriVariant: true } : item;
 }
 
 const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];

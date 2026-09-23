@@ -30,6 +30,7 @@
 //     a Legendary's record or an affix-inflated price lost on the
 //     way. Pinned by execution below, over the real doors.
 
+import './modsOff.js';   // RRI1: CreateRandomWeapon/Armor roll over the registered custom items too - these pins are DFU's own rolls, the mods off
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

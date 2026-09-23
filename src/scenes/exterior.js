@@ -1173,7 +1173,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // for the whole boot walk (the wizard is mounted further down, and
   // a save's chargenDone arrives after the walk), and were it ever
   // true the bag is already non-empty and seedStartingEquipment
-  // early-returns (equip.js:306).
+  // early-returns (equip.js:307).
   if (playerEntity.chargenDone) seedStartingEquipment(playerEntity);
   // S3c/U9 / THE FOUR HOSTS RULE: chargen lived only in the dungeon
   // host, so booting straight into a town left the player on the

@@ -195,6 +195,32 @@ export const MOD_SETTINGS = Object.freeze({
       }),
     }),
   }),
+  // RRI1: Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar) - eleven
+  // modules, each a bool in the mod's [Modules] section, the mod's own
+  // words. `Enabled` is the mod being loaded at all: the fourteen custom
+  // items and the twenty template patches ride it.
+  'roleplay-realism-items': Object.freeze({
+    title: 'Roleplay & Realism: Items',
+    author: 'Hazelnut & Ralzar',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Hazelnut and Ralzar\u2019s Roleplay & Realism: Items 1.3, 1:1: two new weapons and a light and a medium armor set '
+          + 'in every metal, and the mod\u2019s changes to what items weigh and cost. Its modules below are the mod\u2019s own switches.',
+      }),
+      lootRebalance: Object.freeze({ default: true, description: 'Rebalances loot on mobs and in piles' }),
+      bandaging: Object.freeze({ default: true, description: 'Allows bandages to stack, and to be used for healing based on medical skill' }),
+      conditionBasedPrices: Object.freeze({ default: true, description: 'Item prices are based on condition and loot you find can be quite worn out' }),
+      storeQualityItemCondition: Object.freeze({ default: true, description: 'Items in shops can be in a used condition dependent on the quality of the store' }),
+      realisticEnemyEquipment: Object.freeze({ default: true, description: 'Enemy equipment is realistic for their class and can be variable condition' }),
+      skillBasedStartingEquipment: Object.freeze({ default: true, description: 'Player starting equipment is based on skills' }),
+      skillBasedStartingSpells: Object.freeze({ default: true, description: 'Player starting spells are based on skills' }),
+      weaponBalance: Object.freeze({ default: true, description: 'Balances weapon attack speed and damage ranges against weight to give more valid choices' }),
+      newWeapons: Object.freeze({ default: true, description: 'Adds two new weapons to the game, Archers Axe and Light Flail' }),
+      newArmor: Object.freeze({ default: true, description: 'Adds new chest, arm, leg and foot armor pieces to the game' }),
+      alchemistPotions: Object.freeze({ default: true, description: 'Adds random potions for sale at alchemist stores, for a premium price' }),
+    }),
+  }),
   'shield-widget': Object.freeze({
     title: 'Shield Widget',
     author: 'RedRoryOTheGlen',

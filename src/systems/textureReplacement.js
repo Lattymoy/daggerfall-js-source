@@ -162,8 +162,9 @@ export function addVendorTextures(entries) {
   let n = 0;
   for (const e of entries ?? []) {
     if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || typeof e.load !== 'function') continue;
-    const key = textureKey(e.archive, e.record, e.frame ?? 0, 'Albedo', e.dye ?? null);
-    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true, offset: e.offset ?? null });   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
+    const map = e.map ?? 'Albedo';   // RRI1: a mod's helmet mask registers under TextureMap.Mask
+    const key = textureKey(e.archive, e.record, e.frame ?? 0, map, e.dye ?? null);
+    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true, offset: e.offset ?? null });   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
     n++;
   }
   return n;
@@ -220,9 +221,26 @@ function topDownRgba(decoded) {
   return out;
 }
 
+/** RRI1: the stand-in's per-record answers look past the DYE. A dyed
+ *  set (the mod's 520_10-0_Iron .. _Daedric, and a bare 520_10-0 for
+ *  leather) registers one entry per dye under one record; a size or an
+ *  offset is the record's, the same for every dye, so the first entry
+ *  of the record answers when the bare key has none. */
+const vendorEntryOf = (archive, record, map = 'Albedo') => {
+  const bare = _vendor.get(textureKey(archive, record, 0, map));
+  if (bare) return bare;
+  for (const e of _vendor.values()) if (e.archive === Number(archive) && e.record === Number(record) && e.frame === 0 && e.map === map) return e;
+  return null;
+};
+const decodedOf = (archive, record) => {
+  const bare = _decoded.get(textureKey(archive, record, 0));
+  if (bare) return bare;
+  for (const [k, e] of _vendor) if (e.archive === Number(archive) && e.record === Number(record) && e.frame === 0 && e.map === 'Albedo' && _decoded.has(k)) return _decoded.get(k);
+  return null;
+};
 export function vendorTextureStandIn(archive) {
   const recordCount = vendorRecordCount(archive);
-  const size = (record) => { const d = _decoded.get(textureKey(archive, record, 0)); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };
+  const size = (record) => { const d = decodedOf(archive, record); return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };
   return {
     vendor: true,
     recordCount,
@@ -232,7 +250,7 @@ export function vendorTextureStandIn(archive) {
     // and this one has nowhere else to get one, so the registration
     // supplies it. Zero stays the answer for art that is never worn -
     // every icon door measures from its own rect and never asks.
-    getOffset: (record) => _vendor.get(textureKey(archive, record ?? 0, 0))?.offset ?? { x: 0, y: 0 },
+    getOffset: (record) => vendorEntryOf(archive, record ?? 0)?.offset ?? { x: 0, y: 0 },
     getFrameCount: () => 1,
     getWidth: (record) => size(record).width,
     getHeight: (record) => size(record).height,
@@ -258,8 +276,8 @@ export function vendorTextureStandIn(archive) {
     // the other way round - the same HT3 fork the sprite itself just
     // paid, one pipeline over, and the reason it is resolved HERE is
     // that only this function knows which order it is holding.
-    getDFBitmap: (record) => ({ ...size(record), data: null, rgba: topDownRgba(_decoded.get(textureKey(archive, record, 0))) }),
-    getColor32: (record) => _decoded.get(textureKey(archive, record?.record ?? 0, 0)) ?? null,
+    getDFBitmap: (record) => ({ ...size(record), data: null, rgba: topDownRgba(decodedOf(archive, record)) }),
+    getColor32: (record) => decodedOf(archive, record?.record ?? 0) ?? null,
   };
 }
 const entryFor = (key) => _index.get(key) ?? _vendor.get(key) ?? null;

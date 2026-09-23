@@ -106,6 +106,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/242',
     }),
     Object.freeze({
+      title: 'Roleplay & Realism: Items',
+      version: '1.3',
+      author: 'Hazelnut & Ralzar',
+      what: 'Two new weapons (the Archer\u2019s Axe and the Light Flail) and a light and a medium armor set in every metal, with their own inventory and paper-doll art (RRI1); the mod\u2019s changes to what items weigh and cost; and, in the slices that follow, its loot tables, enemy kits, starting kits and shop stock.',
+      terms: 'Ported 1:1 from the author\u2019s own source (MIT, every script\u2019s header), vendored verbatim; the 280 sprites are the authors\u2019 own art, carried under public/art/roleplay-realism-items/. See vendor/roleplay-realism-items/README.md for the permission record.',
+      contact: 'Hazelnut, through the DFU forums (forums.dfworkshop.net) or the Nexus page (daggerfallunity mod 61)',
+      vendor: Object.freeze(['roleplay-realism-items']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/61',
+    }),
+    Object.freeze({
       title: 'Shield Widget',
       version: '1.6',
       author: 'RedRoryOTheGlen',

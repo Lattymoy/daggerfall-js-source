@@ -158,7 +158,7 @@ test('AUDIT-DW: checked and standing - the shipped set, the index, the door orde
   assert.match(door, /const attached = _names\.length \? await attachedImage\(name, decode\) : null;/);
   assert.match(door, /if \(!hasDiverseWeaponsSprite\(name\) \|\| typeof fetchFn !== 'function'\) return null;/);
   // the icon install sits at the scene boot, after the survival pair and before the archives load
-  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+const textures = storedTextureNames\(\)/);
+  assert.match(rd('src/scenes/shared.js'), /installDiverseWeaponsIcons\(\);[^\n]*\n\s+installRoleplayRealismItems\(\);[^\n]*\n\s+const textures = storedTextureNames\(\)/);
   // GetName's dye arm and its one exception, in one home
   assert.match(rd('src/characters/dyes.js'), /if \(!Number\.isFinite\(v\) \|\| v === DYE_COLORS\.Unchanged\) return '';/);
   // the records

@@ -95,6 +95,8 @@ export const ITEM_FIELDS = Object.freeze({
   timeEffectsLastRerolled: int({ min: 0 }),
   stockedDate: int({ min: 0 }),
   repairData: rec(validRepairData),
+  // RRI1: a custom class's CurrentVariant setter ran at the mint (itemTemplates.js setItemFields)
+  rriVariant: bool(),
   // quests (systems/quest/item.js)
   questItem: bool(),
   questUID: int({ min: 0 }),

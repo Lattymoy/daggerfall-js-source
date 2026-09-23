@@ -30,6 +30,7 @@ import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons
 import { atlasFileName } from './diverseWeapons.js';   // DW1: FPSWeapon.cs:637-644 - the per-template name under Diverse Weapons' flag
 import { customWeaponImage } from './diverseWeaponsAssets.js';   // DW1: TryImportCifRci's answer, off the player's own bundles
 import { MATERIAL_NAMES } from '../systems/itemInfo.js';   // MetalTypes' names, for GetNameCifRci's suffix
+import { customItemClass } from '../systems/rriItems.js';   // RRI1: GetWeaponType is a virtual a custom class answers
 import { THUNDERLOCK_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
@@ -205,6 +206,8 @@ export function weaponTypeForItem(item) {
   if (item.templateIndex === THUNDERLOCK_TEMPLATE) {
     return isEnchanted(item) ? T.Thunderlock_Magic : T.Thunderlock;
   }
+  const cls = customItemClass(item.templateIndex);   // RRI1: an Archer's Axe swings the battleaxe sheet, a Light Flail the flail's
+  if (cls?.weaponType) return T[cls.weaponType(isEnchanted(item))];
   let result;
   switch (item.templateIndex) {
     case W.Dagger: result = T.Dagger; break;

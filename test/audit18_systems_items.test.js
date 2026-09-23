@@ -4,6 +4,7 @@
 // (ItemBuilder.cs / LootTables.cs / DaggerfallLoot.cs /
 // DaggerfallUnityItem.cs / ItemCollection.cs / FormulaHelper.cs), not
 // a spot check of what the port happens to do.
+import './modsOff.js';   // RRI1: CreateRandomWeapon/Armor roll over the registered custom items too - these pins are DFU's own rolls, the mods off
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

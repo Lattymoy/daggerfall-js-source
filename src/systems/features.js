@@ -151,6 +151,8 @@ export const MOD_CURATED = Object.freeze({
   'shield-widget': Object.freeze(['Shield.Scale', 'Shield.OffsetHorizontal', 'Shield.WhenAttacking']),
   // DW1: the one key besides the switch - the mod's own Weapon Widget preset, which its readme asks players to select.
   'diverse-weapons': Object.freeze(['WeaponWidgetPreset']),
+  // RRI1: the three a player reaches for first - the new items, and what loot is.
+  'roleplay-realism-items': Object.freeze(['newWeapons', 'newArmor', 'lootRebalance']),
   'handheld-torches': Object.freeze(['Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
   pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
     'criticalStrikesIncreaseDamage', 'conditionBasedEffectiveness', 'softMaterialRequirements',
@@ -544,7 +546,8 @@ export const FEATURES = Object.freeze([
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),
   modFeature('weapon-widget', 'Takes effect at once.', 'combat'),   // WW1: the widget reads its switches every frame
   modFeature('shield-widget', 'Takes effect at once.', 'combat'),   // SW1: the same - every switch is read on the frame
-  modFeature('diverse-weapons', 'Takes effect when a weapon is next drawn.', 'combat'),   // DW1: the atlas name is chosen at the weapon's load (FPSWeapon.cs:637-644), and the rig's cache key carries it
+  modFeature('diverse-weapons', 'Takes effect when a weapon is next drawn.', 'combat'),
+  modFeature('roleplay-realism-items', 'Takes effect when the game next loads.', 'loot'),   // RRI1: the template patches are merged at load (ItemHelper.LoadItemTemplates); the classes read their switches live   // DW1: the atlas name is chosen at the weapon's load (FPSWeapon.cs:637-644), and the rig's cache key carries it
   modFeature('handheld-torches', 'Takes effect at once.', 'loot'),   // HT1: the component reads its switches every frame
   // AT0 (2026-09-15): AMBIENT TEXT - `world`, because what it talks
   // about is where you are. Its effect line is the mod's own pacing:
