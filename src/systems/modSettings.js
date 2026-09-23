@@ -109,6 +109,23 @@ export const MOD_SETTINGS = Object.freeze({
       RiversAndStreams: Object.freeze({ default: false, description: 'Enables rendering of rivers and streams on terrain' }),
     }),
   }),
+  // WOD1: WORLD OF DAGGERFALL 2.0 (Kamer). No modsettings of its own -
+  // `Enabled` alone (DFU enables a mod by listing it), the Meaner
+  // Monsters precedent. Read once, at the world's mount: the loader's
+  // instance list is built for the life of the world (LocationLoader.cs
+  // hangs it off the Start state), so a flip reaches the next world.
+  'world-of-daggerfall': Object.freeze({
+    title: 'World of Daggerfall',
+    author: 'Kamer',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Kamer’s World of Daggerfall 2.0, 1:1: “Adds details to the wilderness, New Locations, and Dungeon '
+          + 'Exterior detail.” Bandit camps and forts, ruins, shrines, mountains and rock fields across the Iliac Bay, the '
+          + 'ground levelled under each, with their bandits, bears and treasure - and a camp outside Privateer’s Hold.',
+      }),
+    }),
+  }),
   // MM1: MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
   // `Enabled` alone (DFU enables a mod by listing it). Listed BEFORE
   // the overhaul because the overhaul names it as a dependency and so

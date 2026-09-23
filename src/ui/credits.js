@@ -154,6 +154,18 @@ export const CREDITS = Object.freeze({
       contact: 'DFU Discord',
       vendor: Object.freeze(['windmills-kamer']),
     }),
+    // WOD1: Kamer's second - AFTER the mill, which the CR1 gate finds
+    // first by his name.
+    Object.freeze({
+      title: 'World of Daggerfall',
+      version: '2.0',
+      author: 'Kamer',
+      what: 'The wilderness: his 65 layouts - bandit camps and forts, ruins, shrines, mountains and rock fields - stood at 227,938 places across the Iliac Bay, on ground levelled under each as his loader levels it, with the bandits, bears, warriors and treasure they hold, and the camp he pitched outside Privateer’s Hold. Ported 1:1 from the source his own bundle ships.',
+      terms: 'Vendored with the author’s permission, confirmed by Mac (2026-09-23); see vendor/world-of-daggerfall/README.md.',
+      contact: 'DFU forums',
+      vendor: Object.freeze(['world-of-daggerfall']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/181',
+    }),
     Object.freeze({
       title: 'Basic Roads',
       version: '1.3.1',

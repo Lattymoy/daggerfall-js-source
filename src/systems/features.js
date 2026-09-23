@@ -607,6 +607,10 @@ export const FEATURES = Object.freeze([
   // its roads integration and its junction map), so a switch flipped
   // mid-session reaches the NEXT world.
   modFeature('travel-options', 'Takes effect when the world next loads.', 'world'),
+  // WOD1 (2026-09-23): WORLD OF DAGGERFALL - `world`, because it is the
+  // wilderness itself. Read at the world's mount, like the roads it
+  // consults: the loader's list is built once per world.
+  modFeature('world-of-daggerfall', 'Takes effect when the world next loads.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
   modFeature('pcaao', 'Takes effect at once.', 'combat'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),
