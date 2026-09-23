@@ -266,7 +266,7 @@ test('TI1 hosts: the three combat hosts wire swipe, tap, lock and dial; the fly-
     assert.match(s, /_tapLockOnly = !!opts\?\.lockOnly;/, `${h}: the tap carries the stick-half flag (TS1)`);
     assert.match(s, /locked: \(\) => lockOn\.locked,/, `${h}: the lock predicate`);
     assert.match(s, /dial: isEnhanced\(\),/, `${h}: AUDIT 62 F10 - it draws the dial only where Tab OPENS one (pixelDial refuses off the enhanced skin), not merely where the host routes Tab`);
-    assert.match(s, /swingSuppressesLook\(\{ swingHeld: rightHeld \|\| swipeHeld,/, `${h}: MAC-O2 - the swipe holds the swing-settle law like the mouse button, through the one seam`);
+    assert.match(s, /swingSuppressesLook\(\{ swingHeld: rightHeld \|\| swipeHeld \|\| swingKeyLatch,/, `${h}: MAC-O2 - the swipe holds the swing-settle law like the mouse button, through the one seam`);
     assert.match(s, /lockOn\.tick\(dt, cam, /, `${h}: the lock pays its facing every frame`);
     assert.match(s, /touch\.setLockDot\(/, `${h}: places the dot`);
     assert.match(s, /_tapArmed > 0 && --_tapArmed === 0/, `${h}: the tap is a ONE-frame press of the activate action`);
@@ -305,8 +305,8 @@ test('TS1: the stick-half tap LOCKS and opens nothing - the flag from touch.js t
   const d = read('src/scenes/dungeon.js');
   assert.match(d, /if \(_lockFoe\) \{ lockOn\.toggle\(_lockFoe\); return null; \}\n\s*if \(_tapLockOnly\) return null;/, 'dungeon: the ladder ends at the lock');
   const wm = read('src/scenes/worldModes.js');
-  const exit = wm.slice(wm.indexOf('function tryExit() {'), wm.indexOf('function tryExitDungeon() {'));
-  const dexit = wm.slice(wm.indexOf('function tryExitDungeon() {'), wm.indexOf('function exitDungeonNow() {'));
+  const exit = wm.slice(wm.indexOf('function tryExit('), wm.indexOf('function tryExitDungeon('));
+  const dexit = wm.slice(wm.indexOf('function tryExitDungeon('), wm.indexOf('function exitDungeonNow() {'));
   for (const [name, fn] of [['tryExit', exit], ['tryExitDungeon', dexit]]) {
     assert.match(fn, /!host\.activateLockOnly\?\.\(\)\) \{/, `${name}: the quest-click arm is gated`);
     assert.match(fn, /if \(f\) \{ host\.lockToggle\?\.\(f\); return true; \}[\s\S]{0,700}?if \(host\.activateLockOnly\?\.\(\)\) return false;/, `${name}: the ladder ends at the lock`);

@@ -100,7 +100,8 @@ nothing). A row's list is cut at its bound; a bad row refuses the frame; a
 party view whose leader is no member is no party; a note with a code the
 client has no words for is nothing. `{t:'party', acct, p}` a member's
 pose. The bounds: FRIENDS_MAX 64, PENDING_MAX 32 each way (and invites
-held), PARTY_MAX 4 ("the new 4 person party system"), PARTY_INVITES_MAX
+held), PARTY_MAX 8 (PARTY8, 2026-09-22: "increase the party limit to 8", over
+SOC1's "the new 4 person party system"), PARTY_INVITES_MAX
 8 outstanding from one party, INVITE_TTL_MS two minutes, PARTY_OFFLINE_MS
 five minutes for a seat whose member dropped, ACCOUNT_TABS_MAX 8 peer ids
 named per account. The gates: SOCIAL_HZ_MAX 2 a socket (the same strikes
@@ -360,6 +361,12 @@ so, and a player who rebound it keeps their own. Mac named F for the
 social key, so the port's action keeps it. `test/soc5_interact.test.js` -
 9 pins at SOC5, 16 since AUDIT SOC; 16 mutants driven, 16 dead.
 
+
+**ACT-MENU (DISC7 + AUDIT DISC7, 2026-09-23).** Where the enhanced World Tooltips plaque stands, the card's rows are
+the plaque's own (`ui/socialMenu.js socialPlaqueRows`): a player's list starts unlit, the wheel or F lights a row,
+the activate key or F presses it through the card's door, and a refused row shows and says its reason. F opens the
+card only where the plaque cannot serve - touch, the classic skin, a player a nearer thing hid from its race.
+Record: `01-Overview/Field-Bugs-2026-09-23.md`.
 ## SOC6 - the party on the map
 
 **One seam, two drawings.** The travel map's one dep bag (`world.js`

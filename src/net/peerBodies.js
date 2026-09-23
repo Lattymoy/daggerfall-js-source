@@ -67,6 +67,19 @@ export const BODY_REBUILD_MS = 10000;
 export const PENDING_FRAMES = 60;
 /** The drawn yaw eases toward the pose's at this rate (a second) - a turn the rig can see every frame, not one that stops between poses. */
 export const YAW_EASE = 12;
+/** PEER-CADENCE (2026-09-22, Mac: "look for ways to improve online performance"): how many frames apart a body's
+ *  SKIN is re-posed, by its distance from the eye (scene units, metres) - `[within, every]`, the first row that
+ *  holds. The clips advance every frame regardless (the rig's `pose: false`); what waits is poseAssembly, the mesh
+ *  upload and the particle step, the whole of a body's CPU cost (PERF-RIG1: ~0.3 ms a body a frame at 3,000
+ *  vertices, and eight bodies at once). The pose comes off the wire at POSE_HZ (10 a second) and the body is drawn
+ *  as a MW_ARM_PIXEL sprite, so a skin every third frame (20 Hz at 60 fps) beyond 25 m is still twice the wire and
+ *  under the block; within 10 m every frame, where a swing's arc is read. */
+export const POSE_CADENCE = [[10, 1], [25, 2], [Infinity, 3]];
+/** Frames between poses for a body at squared distance d2 - the first POSE_CADENCE row within which it stands. */
+export function poseCadenceFor(d2) {
+  for (const [within, every] of POSE_CADENCE) if (d2 <= within * within) return every;
+  return POSE_CADENCE[POSE_CADENCE.length - 1][1];
+}
 
 /** The rig's build options from a peer's look - the same inputs
  *  weaponRig.armBuildOptsOf maps the player's entity onto. `hasAmmo`
@@ -132,6 +145,8 @@ export class PeerBodies {
     this._bodies = new Map();   // peer id -> { id, key, rig, state: 'building'|'ok', cam, feet, yaw, speed, goneAt, far, d2, swing, cast, pending, held }
     this._failed = new Map();   // lookKey -> { until, reason }
     this._queue = Promise.resolve();
+    this._phase = 0;   // PEER-CADENCE: each new body takes the next phase, so bodies on the same cadence pose on different frames
+    this._frame = 0;   // AUDIT PEER-CADENCE F1: the frame the cadence counts on - the MODULE's, not each body's (see _place)
   }
 
   /** Is this body standing for its peer: built, in range, its peer present, the rig live? */
@@ -152,11 +167,12 @@ export class PeerBodies {
    * first, a far body giving its slot to a nearer peer - its camera
    * fed from the pose, stepped by dt within BODY_RANGE.
    */
-  sync(peers, toScene, dt, near = null) {
+  sync(peers, toScene, dt, near = null, { priority = null } = {}) {
     if (!this.enabled()) { if (this._bodies.size) this.destroy(); return; }
     const gen = this._generation();
     if (gen !== this._gen) { this._gen = gen; this._failed.clear(); this.destroy(); }   // AUDIT MWBODY A9: new data, new bodies
     const now = this._now();
+    this._frame++;
     // SLAM4: the failed looks age out. A look was only ever forgotten when a peer wearing THAT look asked again
     // (`:180`), so a look nobody wears again stayed for the life of the session - and a crowd is mostly looks seen
     // once. BODY_RETRY_MS has passed for these; they are nothing but memory.
@@ -166,7 +182,7 @@ export class PeerBodies {
     // the sweep first (the cap counts what stands, not what is leaving)
     for (const [id, b] of [...this._bodies]) {
       if (live.has(id)) { b.goneAt = null; continue; }
-      if (b.goneAt == null) { b.goneAt = now; b.swing = null; b.pending = null; }   // AUDIT WORLD C7: a body that lingers re-latches its counts on the way back - what happened out of sight is not replayed
+      if (b.goneAt == null) { b.goneAt = now; b.swing = null; b.pending = null; b.posed = false; }   // AUDIT WORLD C7: a body that lingers re-latches its counts on the way back - what happened out of sight is not replayed. AUDIT PEER-CADENCE F2: and its skin is stale on the way back - the first frame back poses
       else if (now - b.goneAt > BODY_LINGER_MS) this._release(id);
     }
     // the peers with a body: their feet, pace and camera
@@ -191,13 +207,19 @@ export class PeerBodies {
       const f = this._failed.get(lookKey(peer.look));
       if (f) { if (now < f.until) continue; this._failed.delete(lookKey(peer.look)); }
       const p = toScene(peer.shown);
-      want.push({ peer, d2: near ? dist2(p, near) : 0 });
+      want.push({ peer, d2: near ? dist2(p, near) : 0, pri: priority ? !!priority(peer.id) : false });
     }
-    want.sort((a, b) => a.d2 - b.d2);
+    // AUDIT PARTY8 (2026-09-23): A PARTY MATE BEFORE A STRANGER. The rigs were nearest-first alone, so with seven
+    // companions and one stranger nearer than the farthest of them, the stranger took the eighth body and a party
+    // mate stood as a paper doll. `priority` (the host's own `social.isPartyPeer`) sorts a mate first, and a mate
+    // may take a stranger's slot outright; a stranger never takes a mate's.
+    want.sort((a, b) => (a.pri === b.pri ? a.d2 - b.d2 : a.pri ? -1 : 1));
+    for (const [id, b] of this._bodies) b.pri = priority ? !!priority(id) : false;
     for (const w of want) {
-      if (this._bodies.size >= BODIES_MAX && !this._yield(w.d2)) break;
+      if (this._bodies.size >= BODIES_MAX && !this._yield(w.d2, w.pri)) break;
       const peer = w.peer;
-      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null, cast: null, pending: null, held: false, ammo: null, weapon: null };
+      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, pri: w.pri, builtAt: now, swing: null, cast: null, pending: null, held: false, ammo: null, weapon: null,
+        posed: false, phase: this._phase++, bank: 0 };   // PEER-CADENCE
       this._bodies.set(peer.id, b);
       b.rig.attach(this.renderer, () => b.cam);
       this._place(b, peer, toScene, dt, near);
@@ -206,13 +228,17 @@ export class PeerBodies {
   }
 
   /** The farthest body - a lingering one first - gives its slot to a peer nearer by SWAP_MARGIN; true when a slot was freed. */
-  _yield(d2) {
-    let victim = null;
+  _yield(d2, pri = false) {
+    let victim = null, stranger = null;
     for (const b of this._bodies.values()) {
       if (b.goneAt != null) { victim = b; break; }
+      if (b.pri && !pri) continue;   // AUDIT PARTY8: a stranger never takes a party mate's slot
       if (!victim || b.d2 > victim.d2) victim = b;
+      if (!b.pri && (!stranger || b.d2 > stranger.d2)) stranger = b;
     }
     if (!victim) return false;
+    // AUDIT PARTY8: a party mate takes the farthest stranger's slot outright, margin or none
+    if (pri && stranger && victim.goneAt == null) { this._release(stranger.id); return true; }
     if (victim.goneAt == null && !(victim.d2 > d2 * SWAP_MARGIN * SWAP_MARGIN)) return false;
     this._release(victim.id);
     return true;
@@ -240,9 +266,25 @@ export class PeerBodies {
       // AUDIT MWBODY A1: a throw from one peer's rig is that peer's doll, never the frame's end
       try {
         this._arm(b, peer.shown);
-        b.rig.update(dt);
+        // PEER-CADENCE: the skin on its cadence, the clocks every frame. A body with NO SKIN TO KEEP always poses:
+        // its first step (the third-person mesh is minted by the first upload, and `thirdActive` waits on it - a
+        // body that skipped its first frame would stand as the doll for a frame), its first step back from far or
+        // from a linger (the kept skin is seconds old - AUDIT PEER-CADENCE F2), and the step after a rebuild let the
+        // mesh go (setWeapon on an arrow's nock, setTorch - the rig releases the mesh in an async tick, and a skipped
+        // frame would have shown the doll: `thirdActive` says so - AUDIT PEER-CADENCE F3). Otherwise one frame in
+        // `every`, counted on the MODULE's frame with a phase per body, so bodies on one cadence skin on different
+        // frames whenever their builds landed (AUDIT PEER-CADENCE F1: a per-body tick started on the standing frame
+        // made the stagger an accident of the build queue - eight bodies landed a frame apart all skinned together).
+        // The skipped frames' dt is banked for the particle step, which keeps wall time on the frame that poses.
+        b.bank += dt;
+        const pose = !b.posed || !(b.rig.thirdActive?.() ?? true) || (this._frame + b.phase) % poseCadenceFor(b.d2) === 0;
+        if (pose) { b.rig.update(dt, { pose: true, effectsDt: b.bank }); b.bank = 0; b.posed = true; }
+        else b.rig.update(dt, { pose: false });
       } catch (e) { this._fail(b, `update threw: ${e?.message ?? e}`); }
-    } else if (b.swing != null) { b.swing = peer.shown.an | 0; b.cast = peer.shown.cn | 0; b.pending = null; }   // AUDIT WORLD C7: not arming (far, or frozen) - the counts follow, so a blow out of sight is not replayed on waking
+    } else {
+      b.posed = false;   // AUDIT PEER-CADENCE F2: far (or a frozen frame) - whatever skin stands is stale by the time it is stepped again
+      if (b.swing != null) { b.swing = peer.shown.an | 0; b.cast = peer.shown.cn | 0; b.pending = null; }   // AUDIT WORLD C7: not arming (far, or frozen) - the counts follow, so a blow out of sight is not replayed on waking
+    }
   }
 
   /** MAC7 #1 (Mac: "no weapons"): the weapon and the swing, off the wire's own bits - the rig's weapon drawn while

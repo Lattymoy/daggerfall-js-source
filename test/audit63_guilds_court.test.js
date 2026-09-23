@@ -520,7 +520,7 @@ test('AUDIT 65 HP-3: the same arm\'s HUD line goes to the dungeon\'s ONE PopupTe
 
 test('AUDIT 65 HP-2/HP-3: each ladder\'s enemy sinks are its OWN host\'s - the four hosts and the standalone dungeon', () => {
   const wm = read('../src/scenes/worldModes.js');
-  const ladder = wm.slice(wm.indexOf('function tryExitDungeon() {'), wm.indexOf('function exitDungeonNow()'));
+  const ladder = wm.slice(wm.indexOf('function tryExitDungeon('), wm.indexOf('function exitDungeonNow()'));
   assert.ok(ladder.length > 1000, 'the dungeon ladder moved');
   // the standing structural rule this file's own header argues for
   // (worldModes.js: "a slot the frame never draws and the keydown arm
@@ -632,21 +632,34 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
     // walk closed on the first one it met.
     const openAt = lines.findIndex((l, i) => i > at && l.includes('else if (lootKey)'));
     assert.ok(openAt > at, `${file}: the corpse opener under its refusal`);
+    // ...and the walk ENDS WHERE THE BRACES DO. It used to stop at
+    // `openAt + 12` as well, which was a guess about how long the arm
+    // would stay - and QUICK-LOOT B4 made it wrong by giving the
+    // opener a take and a note. A cap that can silently cut a
+    // statement in half hands `new Function` a fragment and fails as a
+    // SyntaxError rather than as the thing this pin is about, so the
+    // walk now runs to the closing brace and SAYS SO if it never comes.
     let end = openAt;
     let depth = 0;
     do {
       for (const ch of lines[end]) { if (ch === '{') depth++; else if (ch === '}') depth--; }
       end++;
-    } while (depth > 0 && end < openAt + 12);
+    } while (depth > 0 && end < lines.length);
+    assert.equal(depth, 0, `${file}: the corpse opener never closes`);
     const took = [];
     said.length = 0;
+    // QUICK-LOOT B4: the arm names the take and the entity it moves
+    // into. It answers null here - the switch is what the pin below
+    // drives, and this one is about the REFUSAL - so the fall-through
+    // to the window is what gets witnessed.
     const arm = new Function('lootKey', '_lootPick', 'exteriorFoes', 'cityGuards', 'townTalk',
       'surfacePlayer', 'setMidScreenText', 'TOO_FAR_AWAY_TEXT', 'inventoryDoorReady', 'makeInventoryWindow',
+      'quickLootTake', 'playerEntity',
       [lines[at], ...lines.slice(openAt, end)].join('\n'));
     const run = (pick) => arm('foeCorpse:1', pick,
       { takeLoot: (k) => took.push(k) }, { takeLoot: (k) => took.push(k) },
       { say: () => {}, showOverlay: () => {} }, () => {}, (t) => said.push(t), TOO_FAR_AWAY_TEXT,
-      () => true, (o) => o);
+      () => true, (o) => o, () => null, {});
     run({ distance: 8, reach: CORPSE_ACTIVATION_DISTANCE });
     assert.deepEqual(said, [TOO_FAR_AWAY_TEXT], `${file}: a body past 3.75 is refused`);
     assert.deepEqual(took, [], `${file}: ...and not opened`);
@@ -698,7 +711,8 @@ test('AUDIT 65 MC-2: per family - who reaches for the ray, who keeps the narrow 
     // ActivateStaticDoor (:364-369) as tryEnter's, gated :501-504 -
     // both reach for the ray, so a too-far click on the way out speaks
     ['the interior exit door (:501-504)', /interiorCtx\.doors\.map\(\(d, i\) => \(\{ key: `exit:\$\{i\}`, aabb: doorWorldAabb\(d\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE \}\)\)/],
-    ['the dungeon exit door (:501-504)', /dungeonCtx\.exitDoors\.map\(\(d, i\) => \(\{ key: `exit:\$\{i\}`, aabb: doorWorldAabb\(d\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE \}\)\)/],
+    // WORLD-HOVER: registered at the dungeon mount now, not composed in the press arm - same family, same reach.
+    ['the dungeon exit door (:501-504)', /ctx\.addActivationTargets\(\(\) => ctx\.exitDoors\.map\(\(d, i\) => \(\{ key: `exit:\$\{i\}`, aabb: doorWorldAabb\(d\), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE \}\)\)\)/],
   ]) assert.match(wm, re, `${what} does not reach for the ray`);
   // ...and the static door's rung sits where ActivateStaticDoor's own
   // first statement does: BELOW the NPC and board arms, which carry

@@ -427,7 +427,7 @@ test('AUDIT LV2 F4: the strip hangs in the HUD\'s own bottom column, not on the 
 
 test('AUDIT LV2 F5: the level\'s row names a key only when there IS one', () => {
   // `buttonText(null)` is KeyCode.None's own string, "NONE"
-  // (systems/controlsConfig.js:222), so a player who cleared the sheet
+  // (systems/controlsConfig.js:267), so a player who cleared the sheet
   // binding was handed a plate reading A LEVEL AWAITS / NONE.
   const store = loadOrCreateBindings();
   assert.notEqual(codeForAction(store, 'CharacterSheet'), null, 'the default build binds it');
@@ -435,8 +435,12 @@ test('AUDIT LV2 F5: the level\'s row names a key only when there IS one', () => 
   assert.notEqual(sheetKeyText(), 'NONE', 'and the chip names that key, not None');
   // The unbound answer is the one the row must not print.
   assert.equal(codeForAction({ primary: new Map(), secondary: new Map() }, 'CharacterSheet'), null);
-  assert.match(src('src/ui/levelNotice.js'),
-    /r\.kind === NOTICE_LEVEL && codeForAction\(bindings\(\), 'CharacterSheet'\) != null/);
+  // BOTH arms carry the guard - the click AND the key chip. One regex
+  // over the file matched the click's line alone, so the chip could lose
+  // its guard and the pin still passed (the record survived, and said so).
+  const ln = src('src/ui/levelNotice.js');
+  assert.match(ln, /const clickable = r\.kind === NOTICE_LEVEL && codeForAction\(bindings\(\), 'CharacterSheet'\) != null;/);
+  assert.match(ln, /if \(r\.kind === NOTICE_LEVEL && codeForAction\(bindings\(\), 'CharacterSheet'\) != null\) \{/, 'the key chip is guarded too');
 });
 
 test('LV2: the strip is the ONE call all four hosts already make, and the fork is not in any of them', () => {
@@ -464,7 +468,7 @@ test('LV2: the strip is the ONE call all four hosts already make, and the fork i
   // ...and the raises and the mastery go through the same module.
   const shared = src('src/scenes/shared.js');
   assert.match(shared, /import \{ announceSkillRaise, announceMastery \} from '\.\.\/ui\/levelNotice\.js'/);
-  assert.match(shared, /announceMastery\(id, \{ box, rows: \(\) => plainLines\(lines\?\.\(MASTERY_TEXT_ID\)\) \}\);/);
+  assert.match(shared, /announceMastery\(id, \{ box, rows: \(\) => expandRowValues\(plainLines\(lines\?\.\(MASTERY_TEXT_ID\)\), null\) \}\);/);
   assert.match(shared, /announceSkillRaise\(id, skillValue\(entity, id\), \{ say \}\)/);
   assert.match(shared, /audio\.playOneShot\(SOUND\.ArenaFanfareLevelUp, 1\);/, 'the mastery fanfare stays in BOTH lanes');
 });

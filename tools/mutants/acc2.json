@@ -1,0 +1,222 @@
+[
+  {
+    "name": "ACC2-1-the-wall-is-gone",
+    "file": "server-account/src/index.js",
+    "old": "        if (accountKind(who.player) !== 'linked') return no('saves-need-account', 403, origin);",
+    "new": "        if (false) return no('saves-need-account', 403, origin);",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "ACC0's wall, and the reason is sharper than the table: a guest account is one storage clear from gone, so a backup filed under it is a backup that cannot be restored - the one promise a backup may not break."
+  },
+  {
+    "name": "ACC2-2-a-query-over-saves-forgets-the-player",
+    "file": "server-account/src/saves.js",
+    "old": "  const obj = await bucket.get(saveKey(playerId, characterId, saveName, part));",
+    "new": "  const obj = await bucket.get(saveKey('', characterId, saveName, part));",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "The shape this kind of service gets wrong. Two accounts hold the same character id and the same slot name the moment two people name a save QuickSave, and a key without the player hands one of them the other's game."
+  },
+  {
+    "name": "ACC2-3-a-delete-reaches-past-its-own-account",
+    "file": "server-account/src/saves.js",
+    "old": "  await db.prepare('DELETE FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')\n    .bind(playerId, characterId, saveName).run();",
+    "new": "  await db.prepare('DELETE FROM saves WHERE character_id = ? AND save_name = ?')\n    .bind(characterId, saveName).run();",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "Catastrophic and silent: the caller sees their own slot go, and somebody else's went with it."
+  },
+  {
+    "name": "ACC2-4-a-blob-lands-without-a-card",
+    "file": "server-account/src/saves.js",
+    "old": "  if (!have) return { error: 'no-slot' };\n  await bucket.put(saveKey(playerId, characterId, saveName, part), body);",
+    "new": "  await bucket.put(saveKey(playerId, characterId, saveName, part), body);",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "SAV4's 'a slot is only real WITH its SaveInfo', and the only thing bounding R2: without it an account writes objects under keys no row names, and SAVES_MAX - which counts rows - bounds nothing."
+  },
+  {
+    "name": "ACC2-5-the-card-resets-the-bytes-already-up",
+    "file": "server-account/src/saves.js",
+    "old": "    + ' character_name = excluded.character_name, game_time = excluded.game_time, real_time = excluded.real_time,'",
+    "new": "    + ' character_name = excluded.character_name, game_time = excluded.game_time, real_time = excluded.real_time, bytes = 0,'",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "A good backup starts reading as an unfinished one, which is the one thing the `bytes` column exists to say truthfully."
+  },
+  {
+    "name": "ACC2-6-the-oldest-slot-is-taken-to-make-room",
+    "file": "server-account/src/saves.js",
+    "old": "    if ((n?.n ?? 0) >= SAVES_MAX) return { error: 'too-many-saves' };",
+    "new": "    if (false) return { error: 'too-many-saves' };",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "The bound is the whole of what stops one account filling a bucket nobody pays for, and refusing is the only answer a BACKUP may give - one that deletes to make room is not one."
+  },
+  {
+    "name": "ACC2-7-the-blob-goes-through-the-JSON-body-cap",
+    "file": "server-account/src/index.js",
+    "old": "          const max = slot.part === 'shot' ? SHOT_MAX_BYTES : SAVE_MAX_BYTES;",
+    "new": "          const max = MAX_BODY_BYTES;",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "MAX_BODY_BYTES is 4 KiB and right for every JSON route this service has; a save is hundreds of kilobytes, so this refuses every real save."
+  },
+  {
+    "name": "ACC2-8-the-announced-length-is-believed-and-nothing-else-is",
+    "file": "server-account/src/index.js",
+    "old": "          if (body.byteLength > max) return no('too-large', 413, origin);",
+    "new": "          if (false) return no('too-large', 413, origin);",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "A content-length is the caller's word about their own body. Believing it alone is a bound a liar walks through."
+  },
+  {
+    "name": "ACC2-9-a-name-with-a-slash-addresses-another-slot",
+    "file": "server-account/src/service.js",
+    "old": "  `${savePrefix(playerId)}${encodeURIComponent(characterId)}/${encodeURIComponent(saveName)}/${part}`;",
+    "new": "  `${savePrefix(playerId)}${characterId}/${saveName}/${part}`;",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "A save name is the player's own words. Unencoded, `a/b` and a slot called `a` with a part called `b` are the same key."
+  },
+  {
+    "name": "ACC2-10-a-control-character-rides-into-a-key",
+    "file": "server-account/src/service.js",
+    "old": "  if (!saveName || saveName.length > SAVE_NAME_MAX || /[\\u0000-\\u001f\\u007f]/.test(saveName)) return null;",
+    "new": "  if (!saveName) return null;",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "An unbounded, unprintable name is the one string a player types that becomes part of a key rows other people also live under."
+  },
+  {
+    "name": "ACC2-11-the-save-routes-stop-existing",
+    "file": "server-account/src/index.js",
+    "old": "    const slot = savePathOf(path);\n    if (!ROUTES.has(path) && !slot) return no('not-found', 404, origin);",
+    "new": "    const slot = savePathOf(path);\n    if (!ROUTES.has(path)) return no('not-found', 404, origin);",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "Every slot route is a 404 - the whole arc reachable only through a listing that answers an empty array."
+  },
+  {
+    "name": "ACC2-12-the-listing-shows-every-account-its-own-plus-everyone-elses",
+    "file": "server-account/src/saves.js",
+    "old": "    + ' FROM saves WHERE player_id = ? ORDER BY updated_at DESC LIMIT ?',",
+    "new": "    + ' FROM saves WHERE player_id = player_id ORDER BY updated_at DESC LIMIT ?',",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "`WHERE player_id = player_id` is always true and looks like a filter. Every account's slot list becomes everybody's."
+  },
+  {
+    "name": "ACC2-13-the-bucket-listing-falls-back-to-empty",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          list=$($WRANGLER r2 bucket list | sed 's/\\x1b\\[[0-9;]*m//g')",
+    "new": "          list=$($WRANGLER r2 bucket list 2>/dev/null || echo '')",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "AUDIT-ACC F1 verbatim, one command over: `|| echo` turns \"I could not read this\" into \"there is none of it\". That destructive default is what made the deploy re-mint the signing pair on every run."
+  },
+  {
+    "name": "ACC2-14-the-bucket-name-is-typed-into-the-workflow",
+    "file": ".github/workflows/account-deploy.yml",
+    "old": "          want=$(grep -oP '^bucket_name\\s*=\\s*\"\\K[^\"]+' server-account/wrangler.toml)",
+    "new": "          want=daggerfall-saves",
+    "tests": [
+      "test/accountdeploy.test.js"
+    ],
+    "note": "A second home for a fact that already has one. A rename in the config leaves the workflow creating the wrong bucket, and the Worker then will not start - which is SLAM13's shape and the exact thing AUDIT-ACC F16 paid for on the host."
+  },
+  {
+    "name": "ACC2b-15-the-card-is-not-sent-first",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  const card = await ask(io, slotPath(characterId, saveName), {",
+    "new": "  const card = await ask(io, slotPath(characterId, saveName) + '?skip', {",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "The card is what CREATES the slot, and the service refuses a blob no row names. A push whose card never lands fails its own next call for ever - and the failure reads as a service fault rather than a client one."
+  },
+  {
+    "name": "ACC2b-16-a-legacy-card-is-pushed-under-an-empty-character",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (!characterId) return { ok: false, error: 'no-character' };",
+    "new": "  if (false) return { ok: false, error: 'no-character' };",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "CHARID1: a card written before characters had ids. Without the check the slot is filed under an empty id, which the service's own matcher refuses - so the player is told 'the game may need updating' about a save that simply has not been loaded yet."
+  },
+  {
+    "name": "ACC2b-17-already-here-is-reported-as-a-failure",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (r.skipped) return { ok: true, key: null, skipped: true };",
+    "new": "  if (false) return { ok: true, key: null, skipped: true };",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "SP1's law skips a save the store already holds. A player who presses Restore on a save they already have has lost nothing, and an error there is a lie that sends them looking for a bug."
+  },
+  {
+    "name": "ACC2b-18-a-blip-signs-the-player-out",
+    "file": "src/systems/cloudSaves.js",
+    "old": "    if (error === 'auth') forgetSession(io.storage);",
+    "new": "    forgetSession(io.storage);",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "accountClient.js's law, reached through this module: `rate`, `no-storage` and `offline` say nothing about whether the credential is good, and a guest meeting the save wall would be signed out for being a guest."
+  },
+  {
+    "name": "ACC2b-19-the-shot-is-sent-even-when-there-is-none",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (slot.shot) shot = await ask(io, slotPath(characterId, saveName, 'shot'), { method: 'PUT', raw: slot.shot });",
+    "new": "  shot = await ask(io, slotPath(characterId, saveName, 'shot'), { method: 'PUT', raw: slot.shot ?? '' });",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "A save without a capture is ordinary - saveSlots.js drops the stale picture on an overwrite without one. An empty PUT spends a round trip to store nothing and makes `shotBytes` lie about a thumbnail that does not exist."
+  },
+  {
+    "name": "ACC2b-20-a-save-name-is-pasted-into-the-path",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  `/v1/saves/${encodeURIComponent(characterId)}/${encodeURIComponent(saveName)}${part ? `/${part}` : ''}`;",
+    "new": "  `/v1/saves/${characterId}/${saveName}${part ? `/${part}` : ''}`;",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "A save name is the player's own words - 'before the lich' has spaces, and a name with a slash addresses another slot's part. The service's matcher decodes exactly what this encodes."
+  },
+  {
+    "name": "ACC2b-21-a-signed-out-device-gets-an-io-anyway",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  if (!session) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "Not signed in is the ordinary state of most players, not an error - and an io built from a session that is not there reads `secret` off null on the connect path."
+  },
+  {
+    "name": "ACC2b-22-this-side-shadows-a-refusal-the-service-owns",
+    "file": "src/systems/cloudSaves.js",
+    "old": "  'no-save': 'That save is not on this device.',",
+    "new": "  'no-save': 'That save is not on this device.',\n  'too-many-saves': 'No more saves.',",
+    "tests": [
+      "test/cloudsaves.test.js"
+    ],
+    "note": "One word, one sentence. A table here that shadows a word the service can send means a player meets two different sentences for one refusal, depending on which module happened to translate it."
+  }
+]

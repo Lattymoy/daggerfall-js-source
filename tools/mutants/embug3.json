@@ -1,0 +1,51 @@
+[
+  {
+    "name": "EMBUG3-the-block-order-runs-with-Z-again",
+    "file": "src/ui/inkTown.js",
+    "old": "    const by = (gh - 1 - (b.y ?? 0)) * BLOCK_PX;",
+    "new": "    const by = (b.y ?? 0) * BLOCK_PX;",
+    "tests": ["test/townsheet.test.js"]
+  },
+  {
+    "name": "EMBUG3-the-grid-row-is-taken-straight-again",
+    "file": "src/ui/inkTown.js",
+    "old": "      const dst = (by + y) * w + bx;",
+    "new": "      const dst = (by + (BLOCK_PX - 1 - y)) * w + bx;",
+    "tests": ["test/townsheet.test.js"]
+  },
+  {
+    "name": "EMBUG3-anchor-space-is-sheet-space",
+    "file": "src/ui/inkTown.js",
+    "old": "export const sheetY = (fieldH, anchorY) => (fieldH - 1) - anchorY;",
+    "new": "export const sheetY = (fieldH, anchorY) => anchorY;",
+    "tests": ["test/townsheet.test.js"]
+  },
+  {
+    "name": "EMBUG3-the-flip-is-off-by-one",
+    "file": "src/ui/inkTown.js",
+    "old": "export const sheetY = (fieldH, anchorY) => (fieldH - 1) - anchorY;",
+    "new": "export const sheetY = (fieldH, anchorY) => fieldH - anchorY;",
+    "tests": ["test/townsheet.test.js"]
+  },
+  {
+    "name": "EMBUG3-a-plate-never-crosses",
+    "file": "src/ui/townSheet.js",
+    "old": "      const sy = sheetY(ensureField().h, ay);",
+    "new": "      const sy = ay;",
+    "tests": ["test/townsheet.test.js"]
+  },
+  {
+    "name": "EMBUG3-a-quest-ring-never-crosses",
+    "file": "src/ui/townSheet.js",
+    "old": "      out.push({ x, y: sheetY(ensureField().h, y) });   // EM-BUG3: into sheet space, as the plates are",
+    "new": "      out.push({ x, y });",
+    "tests": ["test/townsheet.test.js"]
+  },
+  {
+    "name": "EMBUG3-the-caret-never-crosses",
+    "file": "src/ui/townSheet.js",
+    "old": "    return { ...p, y: sheetY(ensureField().h, p.y) };",
+    "new": "    return { ...p };",
+    "tests": ["test/townsheet.test.js"]
+  }
+]

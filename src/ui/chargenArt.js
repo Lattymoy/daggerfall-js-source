@@ -38,7 +38,7 @@ import { FlcPlayer } from './flcPlayer.js';
 import { DFPalette } from '../formats/dfPalette.js';   // U18: CHGN00I0's own palette
 import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { generateBackstory } from '../systems/biography.js';   // U13
-import { bitmapToColor32 } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
 import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
 import { thumbSpan, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: the list picker's thumb, DFU's own slices
 import { drawText, measureText, makeFont } from './text.js';   // U15: the RANDOM button label; U18: the black scroll text; AUDIT 18: SmallFont

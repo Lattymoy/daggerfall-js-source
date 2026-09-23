@@ -9,7 +9,7 @@
 // characters/playerEntity.js:5). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:159/:1232-1234 both import and run
+// 126/:1364-1366 and exterior.js:179/:1310-1312 both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -368,8 +368,8 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:2578, exterior.js:1292,
-  // dungeonContext.js:2328 - so the question is asked once, in the
+  // through this function - world.js:3230, exterior.js:1366,
+  // dungeonContext.js:2447 - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game
   // never begins inside a building, that host runs no chargen at all
@@ -409,7 +409,7 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *
  * `isChoiceWindow` is a GETTER for the same reason: the wizard wants
  * raw key codes and the question wants the shared overlayAction names,
- * and the hosts read that flag at routing time (townTalk.js:373,
+ * and the hosts read that flag at routing time (townTalk.js:427,
  * worldModes.js's overlayIsNative), so one object can want both in
  * turn.
  *
@@ -520,9 +520,9 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1202-1213,
-    // the route itself :1211), dungeonContext.js through `overlayHover`
-    // (:6155), which dungeon.js:493 and worldModes.js:7860 both feed.
+    // exterior.js through `townTalk.hover` (townTalk.js:1280-1291,
+    // the route itself :1289), dungeonContext.js through `overlayHover`
+    // (:6732), which dungeon.js:528 and worldModes.js:8854 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.
@@ -629,11 +629,10 @@ function enhancedChargenOverlay(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *  lost. */
 async function chargenViewDeps() {
   const out = { picker: null, picture: null, palette: null, loadFaces: null, textRsc: null };
-  const [{ ImgFile }, { DFPalette }, { CifRciFile }, { TextRsc }, races, { bitmapCanvas }] =
+  const [{ ImgFile }, { DFPalette }, { TextRsc }, { loadFaceCanvases }] =
     await Promise.all([
       import('../formats/imgFile.js'), import('../formats/dfPalette.js'),
-      import('../formats/cifRciFile.js'), import('../formats/textRsc.js'),
-      import('./races.js'), import('../ui/bitmapCanvas.js'),
+      import('../formats/textRsc.js'), import('../ui/facePortrait.js'),
     ]);
   const { getBytes } = await import('../scenes/dataSource.js');
   const img = async (name) => {
@@ -651,16 +650,12 @@ async function chargenViewDeps() {
     out.picker = await img('TAMRIEL2.IMG');
     try { out.picture = await img('TMAP00I0.IMG'); }
     catch (e) { console.warn('[chargen] TMAP00I0 unavailable; the Imperial Province is absent', e); }
-    out.loadFaces = async (raceKey, gender) => {
-      const name = races.raceArt(raceKey, gender).heads;
-      const cif = new CifRciFile();
-      cif.load(await getBytes(name), name, pal);
-      const set = [];
-      for (let i = 0; i < races.FACES_PER_RACE; i++) {
-        set.push(bitmapCanvas(cif.getDFBitmap(i, 0), rgb, { scale: 2 }));
-      }
-      return set;
-    };
+    // TILE1: ONE HOME. This was the only place that knew which CIF a
+    // race's heads live in, which palette reads it and which record is
+    // which - and the save tiles are the second caller, so it moved to
+    // `ui/facePortrait.js` rather than being copied. Two copies of that
+    // drift the day one of them learns about a mod's replacement art.
+    out.loadFaces = (raceKey, gender) => loadFaceCanvases(raceKey, gender, { scale: 2 });
   } catch (e) {
     console.warn('[chargen] the map art is unavailable; the homelands fall to a list', e);
   }

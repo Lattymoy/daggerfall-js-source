@@ -1,0 +1,347 @@
+[
+  {
+    "name": "EM1-1-a-dungeon-offers-the-world-map",
+    "file": "src/systems/mapTabs.js",
+    "old": "  dungeon: Object.freeze(['automap']),",
+    "new": "  dungeon: Object.freeze(['automap', 'world']),",
+    "tests": [
+      "test/maptabs.test.js",
+      "test/mapstrip.test.js"
+    ],
+    "note": "Mac's sentence, reversed: 'if you open it in a dungeon, the world map would be not accessible'."
+  },
+  {
+    "name": "EM1-2-a-town-offers-no-world-map",
+    "file": "src/systems/mapTabs.js",
+    "old": "  town: Object.freeze(['town', 'world']),",
+    "new": "  town: Object.freeze(['town']),",
+    "tests": [
+      "test/maptabs.test.js",
+      "test/mapstrip.test.js"
+    ]
+  },
+  {
+    "name": "EM1-3-the-strip-order-is-the-offer-s-reverse",
+    "file": "src/systems/mapTabs.js",
+    "old": "export const MAP_SHEETS = Object.freeze(['automap', 'town', 'world']);",
+    "new": "export const MAP_SHEETS = Object.freeze(['world', 'town', 'automap']);",
+    "tests": [
+      "test/maptabs.test.js",
+      "test/mapstrip.test.js"
+    ],
+    "note": "The strip walks MAP_SHEETS order; reversing it puts the bay before the streets."
+  },
+  {
+    "name": "EM1-4-a-building-is-read-as-the-town-it-stands-in",
+    "file": "src/systems/mapTabs.js",
+    "old": "  if (insideBuilding) return 'building';\n",
+    "new": "",
+    "tests": [
+      "test/maptabs.test.js"
+    ],
+    "note": "The order of the flag tests IS the law - a shop in a town would offer the streets."
+  },
+  {
+    "name": "EM1-5-a-room-in-a-castle-is-read-as-a-building",
+    "file": "src/systems/mapTabs.js",
+    "old": "  if (insideDungeon) return 'dungeon';\n  if (insideBuilding) return 'building';",
+    "new": "  if (insideBuilding) return 'building';\n  if (insideDungeon) return 'dungeon';",
+    "tests": [
+      "test/maptabs.test.js"
+    ]
+  },
+  {
+    "name": "EM1-6-an-unknown-place-opens-blank",
+    "file": "src/systems/mapTabs.js",
+    "old": "  return AVAILABLE[context] ?? AVAILABLE.wilderness;",
+    "new": "  return AVAILABLE[context] ?? [];",
+    "tests": [
+      "test/maptabs.test.js",
+      "test/mapstrip.test.js"
+    ],
+    "note": "A map that opens blank is a bug report; the bay is readable from anywhere a player can stand."
+  },
+  {
+    "name": "EM1-7-openOn-obeys-an-ask-the-place-refuses",
+    "file": "src/systems/mapTabs.js",
+    "old": "  return wanted && sheetAvailable(context, wanted) ? wanted : defaultSheetFor(context);",
+    "new": "  return wanted || defaultSheetFor(context);",
+    "tests": [
+      "test/maptabs.test.js",
+      "test/mapstrip.test.js"
+    ],
+    "note": "The TravelMap key asking for the bay from inside a crypt would be obeyed."
+  },
+  {
+    "name": "EM1-8-the-slot-asks-the-TABLE-rather-than-what-it-can-ink",
+    "file": "src/ui/mapStrip.js",
+    "old": "      if (!ids.includes(sheet) || sheet === live) return false;",
+    "new": "      if (!sheetsFor(context).includes(sheet) || sheet === live) return false;",
+    "tests": [
+      "test/mapstrip.test.js",
+      "test/heldmap.test.js"
+    ],
+    "note": "The narrowing is what keeps a tab from being selected round the back while its sheet does not exist."
+  },
+  {
+    "name": "EM1-9-the-slot-ignores-what-the-window-can-ink",
+    "file": "src/ui/mapStrip.js",
+    "old": "  const ids = Object.freeze(has ? offer.filter((s) => has.includes(s)) : [...offer]);",
+    "new": "  const ids = Object.freeze([...offer]);",
+    "tests": [
+      "test/mapstrip.test.js",
+      "test/heldmap.test.js"
+    ],
+    "note": "A tab that inks nothing is worse than no tab - this is the gate that keeps EM1 from shipping a blank page."
+  },
+  {
+    "name": "EM1-10-a-sheet-forgets-where-it-was-looking",
+    "file": "src/ui/mapStrip.js",
+    "old": "      if (currentView) views.set(live, { ...currentView });",
+    "new": "",
+    "tests": [
+      "test/mapstrip.test.js",
+      "test/heldmap.test.js"
+    ],
+    "note": "A slot that forgets makes the tabs cost something to press."
+  },
+  {
+    "name": "EM1-11-the-remembered-view-is-the-window-s-own-object",
+    "file": "src/ui/mapStrip.js",
+    "old": "      if (currentView) views.set(live, { ...currentView });",
+    "new": "      if (currentView) views.set(live, currentView);",
+    "tests": [
+      "test/mapstrip.test.js"
+    ],
+    "note": "The window edits its view in place, so a kept reference would follow the live sheet around."
+  },
+  {
+    "name": "EM1-12-a-refused-select-remembers-anyway",
+    "file": "src/ui/mapStrip.js",
+    "old": "      if (!ids.includes(sheet) || sheet === live) return false;\n      if (currentView) views.set(live, { ...currentView });",
+    "new": "      if (currentView) views.set(live, { ...currentView });\n      if (!ids.includes(sheet) || sheet === live) return false;",
+    "tests": [
+      "test/mapstrip.test.js"
+    ],
+    "note": "The player never left, so nothing was left behind."
+  },
+  {
+    "name": "EM1-13-the-toggle-does-not-wrap",
+    "file": "src/ui/mapStrip.js",
+    "old": "      const next = ids[(((i + step) % ids.length) + ids.length) % ids.length];",
+    "new": "      const next = ids[i + step];",
+    "tests": [
+      "test/mapstrip.test.js"
+    ]
+  },
+  {
+    "name": "EM1-14-the-strip-walks-the-TABLE-rather-than-the-slot",
+    "file": "src/ui/mapStrip.js",
+    "old": "  for (const sheet of slot?.ids ?? []) {",
+    "new": "  for (const sheet of sheetsFor(context)) {",
+    "tests": [
+      "test/mapstrip.test.js",
+      "test/heldmap.test.js"
+    ],
+    "note": "Then a crypt's strip advertises the door Mac's own sentence closed."
+  },
+  {
+    "name": "EM1-15-the-tabs-overlap",
+    "file": "src/ui/mapStrip.js",
+    "old": "    x += w + gap;",
+    "new": "    x += gap;",
+    "tests": [
+      "test/mapstrip.test.js"
+    ]
+  },
+  {
+    "name": "EM1-16-a-tab-is-hit-only-on-its-own-ink",
+    "file": "src/ui/mapStrip.js",
+    "old": "  const i = grabHit(tabs, px, py, STRIP.grab * (layout?.scale ?? 1));",
+    "new": "  const i = grabHit(tabs, px, py, 0);",
+    "tests": [
+      "test/mapstrip.test.js"
+    ],
+    "note": "A hand-lettered word is a thin target for a mouse and a hopeless one for a thumb."
+  },
+  {
+    "name": "EM1-17-the-hit-box-has-no-bottom",
+    "file": "src/ui/mapStrip.js",
+    "old": "    if (px < b.x - g || px > b.x + b.w + g || py < b.y - g || py > b.y + b.h + g) continue;",
+    "new": "    if (px < b.x - g || px > b.x + b.w + g || py < b.y - g) continue;",
+    "tests": [
+      "test/mapstrip.test.js",
+      "test/inkautomap.test.js"
+    ],
+    "note": "The whole column under a tab would stop being map."
+  },
+  {
+    "name": "EM1-18-the-tabs-are-lettered-without-a-halo",
+    "file": "src/ui/mapStrip.js",
+    "old": "    ctx.strokeText(t.title, t.x, t.y);\n",
+    "new": "",
+    "tests": [
+      "test/mapstrip.test.js"
+    ],
+    "note": "MAP-FIELD6: the parchment's own cracks are the pen's hue; unhaloed letters tangle with them."
+  },
+  {
+    "name": "EM1-19-every-tab-is-drawn-live",
+    "file": "src/ui/mapStrip.js",
+    "old": "    ctx.fillStyle = t.live ? PEN.name : PEN.soft;",
+    "new": "    ctx.fillStyle = PEN.name;",
+    "tests": [
+      "test/mapstrip.test.js"
+    ]
+  },
+  {
+    "name": "EM1-20-the-strip-does-not-scale-with-the-paper",
+    "file": "src/ui/mapStrip.js",
+    "old": "  return clamp((paperW || STRIP.refPaper) / STRIP.refPaper, STRIP.scaleMin, STRIP.scaleMax);",
+    "new": "  return 1;",
+    "tests": [
+      "test/mapstrip.test.js"
+    ]
+  },
+  {
+    "name": "EM1-21-the-strip-scale-is-unbounded",
+    "file": "src/ui/mapStrip.js",
+    "old": "  return clamp((paperW || STRIP.refPaper) / STRIP.refPaper, STRIP.scaleMin, STRIP.scaleMax);",
+    "new": "  return (paperW || STRIP.refPaper) / STRIP.refPaper;",
+    "tests": [
+      "test/mapstrip.test.js"
+    ],
+    "note": "A tiny window must still be hittable and a huge one must not letter the tabs like a headline."
+  },
+  {
+    "name": "EM1-22-the-window-clamps-to-its-own-size-rather-than-the-live-sheet-s",
+    "file": "src/ui/heldMap.js",
+    "old": "    const size = this._sheet?.size?.() ?? this._size;",
+    "new": "    const size = this._size;",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "A sheet in world units and a sheet in map pixels would share one clamp."
+  },
+  {
+    "name": "EM1-23-the-window-derives-nothing-and-is-always-the-wilderness",
+    "file": "src/ui/heldMap.js",
+    "old": "      context: mapContextOf(deps.where?.() ?? {}),",
+    "new": "      context: 'wilderness',",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "The context is DERIVED off the host's flags; a constant is a host that forgot."
+  },
+  {
+    "name": "EM1-24-the-window-offers-every-sheet-the-place-does-whether-or-not-it-holds-one",
+    "file": "src/ui/heldMap.js",
+    "old": "      has: [...this._sheets.keys()],",
+    "new": "      has: null,",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "This is the mid-flight gate: until EM3/EM4 a town would grow a Town tab that inks nothing."
+  },
+  {
+    "name": "EM1-25-a-click-on-a-tab-also-picks-the-place-under-it",
+    "file": "src/ui/heldMap.js",
+    "old": "        if (tab) this._selectSheet(tab);\n        else this._sheet?.pickAt?.(px, py);",
+    "new": "        if (tab) this._selectSheet(tab);\n        this._sheet?.pickAt?.(px, py);",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "A tab's word sits over the sheet's own ink."
+  },
+  {
+    "name": "EM1-26-the-strip-is-never-asked-before-the-sheet",
+    "file": "src/ui/heldMap.js",
+    "old": "        const tab = stripHit(this._strip, px, py);\n        if (tab) this._selectSheet(tab);\n        else this._sheet?.pickAt?.(px, py);",
+    "new": "        this._sheet?.pickAt?.(px, py);",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "Then the tabs are ink nobody can press."
+  },
+  {
+    "name": "EM1-27-switching-a-sheet-keeps-the-old-sheet-s-kept-ink",
+    "file": "src/ui/heldMap.js",
+    "old": "      this._slot.live, sheet.staticKey()].join('|');",
+    "new": "      sheet.staticKey()].join('|');",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "Two sheets whose own keys agree would show the first one's ink under the second one's rule."
+  },
+  {
+    "name": "EM1-28-a-sheet-is-never-told-it-went-up",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._sheets.get(id)?.mount?.();\n",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "mount() is how a sheet claims the shared chrome it needs."
+  },
+  {
+    "name": "EM1-29-the-window-paints-the-world-rather-than-the-live-sheet",
+    "file": "src/ui/heldMap.js",
+    "old": "      sheet.paintStatic(target, env);",
+    "new": "      this._sheets.get('world').paintStatic(target, env);",
+    "tests": [
+      "test/heldmap.test.js"
+    ],
+    "note": "The window must never know which sheet is up."
+  },
+  {
+    "name": "EM1-30-the-model-comes-from-the-world-rather-than-the-live-sheet",
+    "file": "src/ui/heldMap.js",
+    "old": "    const model = sheet?.ensure?.() ?? null;",
+    "new": "    const model = this._ensureWorldModel();",
+    "tests": [
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "EM1-31-the-sheet-s-own-clock-never-runs",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._sheet?.tick?.(dt);\n",
+    "new": "",
+    "tests": [
+      "test/heldmap.test.js",
+      "test/soc6_partymap.test.js"
+    ],
+    "note": "For the world sheet that clock is SOC6's party poll."
+  },
+  {
+    "name": "EM1-32-the-grab-law-gives-an-overlap-to-the-FIRST-box-not-the-nearest",
+    "file": "src/ui/mapStrip.js",
+    "old": "    if (d < bestD) { bestD = d; best = i; }",
+    "new": "    return i;",
+    "tests": [
+      "test/inkautomap.test.js",
+      "test/mapstrip.test.js"
+    ],
+    "note": "THE SEAM BUG, put back. The floor strip's rows sit a gap apart narrower than two grab bands, so first-match handed every press near a seam to the row ABOVE - a player aiming at Floor 1 got Floor 2 every time."
+  },
+  {
+    "name": "EM1-33-the-grab-law-measures-to-the-GROWN-box-rather-than-the-ink",
+    "file": "src/ui/mapStrip.js",
+    "old": "    const dx = Math.max(b.x - px, 0, px - (b.x + b.w));\n    const dy = Math.max(b.y - py, 0, py - (b.y + b.h));",
+    "new": "    const dx = Math.max(b.x - g - px, 0, px - (b.x + b.w + g));\n    const dy = Math.max(b.y - g - py, 0, py - (b.y + b.h + g));",
+    "tests": [
+      "test/inkautomap.test.js"
+    ],
+    "note": "Measuring to the grown box makes every contained point tie at zero, so the first listed wins again - the seam bug by another road."
+  },
+  {
+    "name": "EM1-34-the-floor-strip-writes-its-own-hit-test",
+    "file": "src/ui/inkAutomap.js",
+    "old": "  const i = grabHit(rows, px, py, FLOOR_STRIP.grab * (layout?.scale ?? 1));",
+    "new": "  const i = rows.findIndex((r) => px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h);",
+    "tests": [
+      "test/inkautomap.test.js"
+    ],
+    "note": "ONE grab law for both inked strips, or the floor strip re-grows the seam bug on its own."
+  }
+]

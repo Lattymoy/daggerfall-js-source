@@ -408,6 +408,7 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
+import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf, spherePlanes, batchVisible } from './bounds.js';
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
@@ -435,10 +436,40 @@ export function anisotropyFor(tier, driverMax = 1) {
   if (tier === 'max') return cap;
   return Math.min(4, cap);
 }
+/**
+ * GRAIN AUDIT 1 (2026-09-21, Mac: "audit the filtering enhancement
+ * ensuring it doesnt degrade performance"): THE TIER IS SAMPLER STATE,
+ * AND THE FILTER IS PART OF IT.
+ *
+ * GRAIN1's `off` turned the anisotropy off and kept LINEAR_MIPMAP_LINEAR
+ * - trilinear, eight texel fetches a fragment on the pass that covers
+ * the most screen, where the ground had cost ONE before GRAIN1. So the
+ * cheapest tier on the dial was still eight times the old fetch count,
+ * and there was no way back to the old cost for the machine that felt
+ * it. The mipmap is what cures the grain, not the filter within a
+ * level: NEAREST_MIPMAP_NEAREST is one fetch, the boil is still gone,
+ * the texels stay square at every distance, and it is the filter every
+ * numeric archive in this renderer already uses (FilterMode.Point over
+ * a chain, MaterialReader.cs:104). `off` is that. `default` and `max`
+ * keep trilinear, because anisotropy wants a linear filter within the
+ * level to have anything to spread its taps over.
+ */
+export function groundSamplerFor(tier, driverMax = 1) {
+  return { aniso: anisotropyFor(tier, driverMax), minFilter: tier === 'off' ? 'NEAREST_MIPMAP_NEAREST' : 'LINEAR_MIPMAP_LINEAR' };
+}
+/** the tier in force: `?ground=off|default|max` over the pref. The door
+ *  exists so the one real-GPU instrument this port has (tools/perfProbe
+ *  .mjs, a fresh browser with an empty shelf every run) can be pointed
+ *  at each tier - without it the dial could not be measured at all. */
+export function groundSharpnessTier(search = globalThis.location?.search ?? '') {
+  return new URLSearchParams(search).get('ground') ?? getPref('groundSharpness');
+}
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
 import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
+import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/bloodArt.js';
+import { glslFloat } from './airPass.js';   // AUDIT BLOOD3 F9: a dial at a whole number is an INT literal in GLSL, and vec3 * int does not compile   // BLOOD3: the film's absorption - the classic mark takes the depth, the lane takes the sheen too
 import { SHADE_DARK } from '../systems/concealDraw.js';   // ECV1 / AUDIT 65 PN-3: the shade's pull toward black, interpolated into BB_FS below - the shader restated 0.12 as a second literal. The LEAF, not systems/combatVisuals.js, which re-exports it: that module's graph would take this file's closure from 13 modules to 69
 
 const BB_FS = `#version 300 es
@@ -724,8 +755,141 @@ const BB_CORNERS = Object.freeze([
 /** AUDIT-EL F5: what a WORLD host passes beginFrame - the lane replays its records for this frame and not for a map's, a video's or a menu's. */
 export const WORLD_FRAME = Object.freeze({ world: true });
 /** The classic world programs' point-light cap (uPointLights[16] in every shader above); a lane brings its own. */
+/** BLOOD1a - THE DECAL PASS, the port's own blood marks. The vertex shader
+ *  is shared by the classic program and the lane's twin (MAC-BUG W6):
+ *  a decal's corners are baked in world space by bloodDecals.js, so it
+ *  has no model matrix and no basis to carry. */
+const DECAL_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+layout(location=1) in vec2 aUV;
+layout(location=2) in vec4 aColor;
+layout(location=3) in float aWet;   // BLOOD2f: one fresh, zero dried - the lane's glint, nothing to the classic set
+uniform mat4 uProj, uView;
+out vec2 vUV; out vec4 vColor; out vec3 vWorld; out float vWet;
+void main() { vUV = aUV; vColor = aColor; vWorld = aPos; vWet = aWet; gl_Position = uProj * uView * vec4(aPos, 1.0); }`;
+/** The CLASSIC decal fragment shader - MAC-BUG W4's flat model, term for
+ *  term with BB_FS above. MAC-BUG W6 (Mac: "super dark coloring instead
+ *  of red"): this program has a LANE TWIN now, render/enhancedLighting.js's
+ *  EL_DECAL_FS, built into the lane's world set beside the other four -
+ *  because under the lane every colour the renderer uploads arrives
+ *  DECODED to linear, and a classic program handed linear light,
+ *  multiplying an sRGB texel and writing with no exposure, tonemap or
+ *  encode, drew a mark two to eight times darker than the flat beside
+ *  it. This one runs only on the classic set, where the flats take the
+ *  same display-space light it does. */
+const DECAL_FS = `#version 300 es
+precision highp float;
+in vec2 vUV; in vec4 vColor; in vec3 vWorld;
+uniform sampler2D uTex;
+uniform vec3 uTint;
+// MAC-BUG W4: the SAME terms the billboard pass gives a flat, and
+// spelled the same way on purpose - a mark on a floor and a chunk in
+// the air above it are the same blood, and they were lit by different
+// amounts of the scene.
+uniform vec3 uDecalSun;
+uniform int uPointCount;
+uniform vec4 uPointLights[16];   // xyz scene-space, w range
+uniform vec3 uPointColors[16];
+uniform vec4 uIndirect;
+uniform vec3 uIndirectColor;
+uniform vec3 uFogColor;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
+uniform vec3 uLightDir;
+uniform vec3 uDecalMoon;   // BLOOD AUDIT 5: the moon by N.L, as the mesh takes it - W4 folded its Lambert half into the ambient, so a mark on a wall facing away from Masser glowed at night
+uniform vec3 uMoonDir;
+uniform float uTrilight;   // BLOOD AUDIT 5: and the trilight ambient (BA1), as the mesh takes it
+uniform vec3 uAmbientSky;
+uniform vec3 uAmbientGround;
+${CLOUD_SHADOW_GLSL}
+out vec4 outColor;
+float fogFactorAt(vec3 worldPos) {
+  if (uFogMode == 0) return 1.0;
+  float d = length(worldPos - uCamPos);
+  if (uFogMode == 1) return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
+  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }
+  return exp(-uFogDensity * d);
+}
+void main() {
+  vec4 t = texture(uTex, vUV);
+  // A DEGENERATE SLOT still rasterises nothing, but a live one whose
+  // texel is fully clear must not draw a black square either.
+  if (t.a < 0.01) discard;
+  // MAC-BUG W4 (Mac: "Also blood is black"). THIS TOOK AMBIENT AND
+  // NOTHING ELSE, and the line that set it said what it was for - "the
+  // scene's own light, so a mark on a dungeon floor is as dark as the
+  // floor". It was darker than the floor by every term it left out: the
+  // floor is a mesh lit by ambient AND the sun AND the point lights,
+  // and a dungeon's ambient is 0.12, so a red mark came out at about
+  // two units of red. Black. Worse, the GIBS from the same kill go
+  // through drawBillboards and were lit in full, so one hit put lit
+  // chunks over a black smear.
+  //
+  // BLOOD AUDIT 4: A DECAL HAS A NORMAL - IT LIES ON A SURFACE. W4 gave
+  // it the billboard's model, "a decal has no normal, exactly as a
+  // billboard has none", and that was the inconsistency Mac saw
+  // outdoors: the mark on a sunlit floor and the mark on a shaded wall
+  // took the same Lambert-average half of the sun, while the floor and
+  // the wall under them took N.L - so blood was one brightness on
+  // every surface of a world that was not. The quad's own normal is in
+  // its derivatives (the lane's twin has read it since AUDIT 3), and
+  // the mark takes THE SURFACE'S terms now, as MESH_FS spells them: the
+  // sun by N.L, the lanterns and the indirect by N.L on the same
+  // squared falloff. The ambient stays the flat's (no trilight on a
+  // quad that is not a mesh). A quad seen edge-on has no derivative to
+  // speak of, so it takes up rather than NaN.
+  vec3 c = cross(dFdx(vWorld), dFdy(vWorld));
+  vec3 n = dot(c, c) > 1e-12 ? normalize(c) : vec3(0.0, 1.0, 0.0);
+  if (dot(n, uCamPos - vWorld) < 0.0) n = -n;
+  float diff = max(dot(n, uLightDir), 0.0);
+  float mdiff = max(dot(n, uMoonDir), 0.0);
+  vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uTint, uAmbientSky, n.y) : mix(uTint, uAmbientGround, -n.y)) : uTint;   // BA1: Trilight, as MESH_FS has it
+  vec3 pointAcc = vec3(0.0);
+  for (int i = 0; i < 16; i++) {
+    if (i >= uPointCount) break;
+    vec3 L = uPointLights[i].xyz - vWorld;
+    float d = length(L);
+    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
+    pointAcc += att * att * max(dot(n, L / max(d, 1e-4)), 0.0) * uPointColors[i];
+  }
+  vec3 iL = uIndirect.xyz - vWorld;
+  float iD = length(iL);
+  float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
+  // BLOOD1 AUDIT 3: the CLOUD'S SHADOW on the sun term, as every other
+  // classic world shader has it (BB_FS's sun term, under cloudShadowAt). The
+  // deck rides the Environments pref and this program rides the
+  // Lighting one being OFF, so a player with the deck and the classic
+  // set watched the ground go dark under a cloud while the blood on it
+  // stayed bright - W4's fault with the sign reversed.
+  vec3 lightAcc = ambient + uDecalSun * (diff * cloudShadowAt(vWorld)) + uDecalMoon * mdiff + pointAcc + (iAtt * iAtt * max(dot(n, iL / max(iD, 1e-4)), 0.0)) * uIndirectColor;
+  // BLOOD3 (Mac: "the blood is too shiny and flat"): THE MARK IS A
+  // FILM here too. The atlas's alpha is a thickness and the ink over it
+  // is white, so a mark was one flat red; Beer-Lambert through the film
+  // brightens a thinning rim toward orange and leaves the body the
+  // maroon it was (at full thickness the factor is exactly 1). The
+  // LANE's twin carries the rest of the slice - the meniscus normal and
+  // the sheen's Fresnel - because a classic mark has no glint to temper
+  // and no lantern rig to catch a rim with. See combat/bloodArt.js.
+  // AUDIT BLOOD3 F1: the ink is the thickness INVERTED (bloodArt.js), so
+  // the film reads it out rather than taking it for a density - BLOOD3
+  // had this running backwards over every shape in the sheet. And the
+  // ink is no longer an albedo factor: it WAS the shape's depth painted
+  // as a grey darkening, and the film is that darkening done properly,
+  // per channel. AUDIT BLOOD3 F3: the absorption is the ENCODED one,
+  // because this set has no decode and no encode - it works in display
+  // space end to end, where a gain of G shows as G and not G^(1/2.2).
+  // The same constant in both lanes made a thin rim up to 1.7x brighter
+  // here than on the lane, which is W6's fault with the sign reversed.
+  float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);
+  vec3 rgb = vColor.rgb * exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick)) * lightAcc;
+  float a = t.a * vColor.a;
+  float f = fogFactorAt(vWorld);
+  outColor = vec4(mix(uFogColor, rgb, f), a);
+}`;
 const CLASSIC_MAX_LIGHTS = 16;
-/** BLOOD1a: pos3 + uv2 + rgba4, in bytes. */
+/** BLOOD1a: pos3 + uv2 + rgba4 (+ wet1, BLOOD2f), in bytes. */
 const DECAL_STRIDE = DECAL_FLOATS_PER_VERTEX * 4;
 const ZERO_FLAT_WIND = new Float32Array(4);   // WIND3: a bare prototype (the crash-report tests) has no wind
 // MaterialReader.cs:448-453: the auto-emissive arm's EmissionColor.
@@ -838,7 +1002,7 @@ export const INTERIOR_CLEAR = Object.freeze([0, 0, 0, 1.0]);
  *  so unit 7 was written by a foreign pass while the renderer's
  *  per-program stamp still said the shadow map was there. 15 sits
  *  above the mod's nine and above every other pass in the tree (none
- *  goes past unit 3), and WebGL2 guarantees
+ *  goes past unit 4 - the grass's tuft sheet, GRASS-PX), and WebGL2 guarantees
  *  MAX_TEXTURE_IMAGE_UNITS >= 16, so 15 always exists. The shaders
  *  bind it by uniform name, so the number lives only here. */
 export const CLOUD_SHADOW_UNIT = 15;
@@ -856,7 +1020,7 @@ export function textureParams(gl, opts = {}) {
  * cutout, and only ui/titleScreen.js asks for anything else.
  */
 export function screenQuadBlends(tex, color, opts = {}) {
-  return (!tex && color[3] < 1) || Boolean(tex && opts.blend);
+  return (!tex && (color[3] ?? 1) < 1) || Boolean(tex && opts.blend);   // BLACK-ARMS: an absent alpha is 1, the upload's own law
 }
 
 /** setFog takes a STRING mode and shadows an int; the panel bracket
@@ -994,13 +1158,20 @@ export class Renderer {
     this._airWanted = false;
     this._frameFbo = null;   // EL4: the frame image the world pass draws into while the air is on (null = the canvas)
     this._spriteDepth = 0;   // AUDIT-EL F2: inside renderCharacterSprite (a foreign rect: no AO)
+    this._clusters = null;        // LC1: the grid's workspace, made with the lane's textures
+    this._clusterTex = null;      // LC1: { grid, list } - the two integer textures the world shaders read
+    this._clustersLive = false;   // LC1: this frame's grid is built and the shader may walk it
+    this._clustersWanted = true;  // LC1: `?clusters=off` (setClusters)
+    this._clusterRect = new Float32Array(4);
+    this._clusterZ = new Float32Array([1 / CLUSTER_NEAR, CLUSTER_Z_SCALE]);
+    this._camFwd = new Float32Array(4);
     this._panelLane = null;  // AUDIT-EL F7: the lane a panel bracket suspended
     this._studioDepth = 0;   // AUDIT-EL F1: inside the studio bake (a UI picture: no eye)
     this._adaptOneTex = null;
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // AUDIT F4: three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)
     this._pointColorDec = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
-    this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS });
+    this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
     this._installWorldSet(this._classicSet);
     this._ambientTri = null;
 
@@ -1046,9 +1217,12 @@ export class Renderer {
     // guards), each its own uncut call. Fixing seven call sites leaves an
     // eighth to be written next year. The test belongs here.
     /** GRAIN1: the anisotropy extension and its ceiling, fetched once -
-     *  not once an archive. null when the driver has neither. */
+     *  not once an archive. GRAIN AUDIT 1: `null` is "not asked yet" and
+     *  `false` is "asked, the driver has none" - the old `||=` re-asked on
+     *  every archive on exactly the drivers it was written to protect,
+     *  because the memo of an absent extension was null and null is falsy. */
     this._anisoExt = null;
-    this._anisoMax = 0;
+    this._anisoMax = 1;
     this._bbPlanes = new Float32Array(24);
     this._bbPv = new Float32Array(16);
     this._bbCullOff = cullDisabled();   // the ?cull=off door, read once
@@ -1202,6 +1376,14 @@ export class Renderer {
     // DFU's own `standardViewportRect = new Rect(0, 0, 1, 1)`.
     this._worldViewportPending = null;
     this._worldViewportPx = null;
+    // FIELD-GUN19: what the frame's world pass ACTUALLY used, kept
+    // past `endWorldPass`. `_worldViewportPx` is GL STATE and is
+    // cleared there on purpose (EV6: state the renderer owns must not
+    // leak between passes); this is a RECORD, and the 2D pass needs it
+    // because anything it draws in canvas pixels that has to line up
+    // with the world has to be mapped through the rect the world was
+    // drawn into. Normalized and bottom-left, exactly as it arrived.
+    this._worldViewportFrame = null;
   }
 
   /**
@@ -1225,8 +1407,24 @@ export class Renderer {
   }
 
   /** The pixel rect the frame's world pass is drawing into, or null
-   *  for the full canvas. */
+   *  for the full canvas. Cleared by `endWorldPass` - it is the GL
+   *  viewport, and it stops being true the moment the 2D pass starts. */
   get worldViewportPx() { return this._worldViewportPx ? [...this._worldViewportPx] : null; }
+
+  /**
+   * FIELD-GUN19: the NORMALIZED rect this frame's world pass used, and
+   * it OUTLIVES `endWorldPass` because it is a record rather than GL
+   * state. Null is the full canvas.
+   *
+   * The 2D pass draws in canvas pixels; the world pass draws into a
+   * rect the docked large HUD shrinks (ROAD-E E5). Anything drawn in
+   * the first that has to line up with something in the second must be
+   * mapped through this, and `player/tapRay.js` is the one home for
+   * that arithmetic (`worldRectPx`). The crosshair and the tap pick
+   * were converted when E5 shipped; the viewmodel's muzzle was not,
+   * and its shot came out of the barrel high up the screen.
+   */
+  get worldViewportRect() { return this._worldViewportFrame ? { ...this._worldViewportFrame } : null; }
 
   /** gl.viewport back to whatever this frame's world pass owns - the
    *  reduced rect if one is live, the full canvas otherwise. The
@@ -1416,6 +1614,16 @@ export class Renderer {
       char: this._buildProgram(CHAR_VS, src.charFs),
       bb: this._buildProgram(BB_VS, src.bbFs),
       terrain: this._buildProgram(TERRAIN_VS, src.terrainFs),
+      // MAC-BUG W6: the decal is the set's FIFTH program. A set that brings
+      // no twin lights its marks on the classic one - which is the exact
+      // state W6 was reported in, so the lane the port ships carries one
+      // (pinned), and this fallback exists for a foreign lane alone.
+      decal: this._buildProgram(DECAL_VS, src.decalFs ?? DECAL_FS),
+      // BLOOD1 AUDIT 3: and the cap that program DECLARES. A foreign lane
+      // with no twin gets the classic program under its own forty-eight,
+      // and an upload of forty-eight into a vec4[16] is an INVALID_OPERATION
+      // and an unlit mark - so the cut is the program's, never the lane's.
+      decalLights: src.decalFs ? (src.maxLights ?? CLASSIC_MAX_LIGHTS) : CLASSIC_MAX_LIGHTS,
     };
   }
 
@@ -1508,6 +1716,11 @@ export class Renderer {
     this._csLoc.mesh = [gl.getUniformLocation(this.program, 'uCloudShadowMap'), gl.getUniformLocation(this.program, 'uCloudShadowRect')];
     this._csLoc.char = [gl.getUniformLocation(this.charProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.charProgram, 'uCloudShadowRect')];
     this._csLoc.bb = [gl.getUniformLocation(this.bbProgram, 'uCloudShadowMap'), gl.getUniformLocation(this.bbProgram, 'uCloudShadowRect')];
+    // MAC-BUG W6: the decal pass is the set's, so its program, its table and its cloud-shadow pair are re-looked-up with the rest
+    this.decalProgram = set.decal;
+    this._decal = this._decalLocs(set.decal);
+    this._decalLights = set.decalLights ?? CLASSIC_MAX_LIGHTS;   // BLOOD1 AUDIT 3: the installed decal program's own cap
+    this._csLoc.decal = [gl.getUniformLocation(set.decal, 'uCloudShadowMap'), gl.getUniformLocation(set.decal, 'uCloudShadowRect')];
     this.tUTileArr = gl.getUniformLocation(this.terrainProgram, 'uTileArr');
     this.tUTilemap = gl.getUniformLocation(this.terrainProgram, 'uTilemap');
     this.tUTileSize = gl.getUniformLocation(this.terrainProgram, 'uTileSize');
@@ -1547,7 +1760,7 @@ export class Renderer {
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
-      /** @type {any[] & { shadow?: object, ao?: object, contact?: object }} */
+      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object }} */
       const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'),
@@ -1555,10 +1768,11 @@ export class Renderer {
         casterOf: gl.getUniformLocation(p, 'uCasterOf'),   // EL8
       };
       a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL4: the eye (EL6: the AO left the world shaders - the resolve applies it off the frame's depth)
-      a.contact = { prevDepth: gl.getUniformLocation(p, 'uPrevDepth'), prevVP: gl.getUniformLocation(p, 'uPrevVP'), prevProjInfo: gl.getUniformLocation(p, 'uPrevProjInfo'), contactParams: gl.getUniformLocation(p, 'uContactParams') };   // EL8
+      a.cluster = { grid: gl.getUniformLocation(p, 'uClusterGrid'), list: gl.getUniformLocation(p, 'uClusterList'), rect: gl.getUniformLocation(p, 'uClusterRect'), z: gl.getUniformLocation(p, 'uClusterZ'), fwd: gl.getUniformLocation(p, 'uCamFwd'), on: gl.getUniformLocation(p, 'uClusterOn') };   // LC1
+      a.contact = { prevDepth: gl.getUniformLocation(p, 'uPrevDepth'), prevVP: gl.getUniformLocation(p, 'uPrevVP'), prevProjInfo: gl.getUniformLocation(p, 'uPrevProjInfo'), prevRect: gl.getUniformLocation(p, 'uPrevRect'), contactParams: gl.getUniformLocation(p, 'uContactParams') };   // EL8
       return a;
     };
-    this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain) };
+    this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(set.terrain), decal: elLocs(set.decal) };   // MAC-BUG W6: the decal's lane uniforms ride the same table
     this._tFrameStamp = -1;
     this._csUploaded = {};
     this._emissionColorUp = null;
@@ -1589,7 +1803,8 @@ export class Renderer {
     if (this._fogLinFrom) this._fogLinFrom[0] = NaN;
     // EL2: the shadow pass rides a lane that asks for it; built once, kept
     if (lane?.shadows) {
-      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });   // EL7: the rigs cast
+      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });
+      this._shadows.cacheOn = this._shadowCacheWanted !== false;   // SC1   // EL7: the rigs cast
       // EL7: the water surface receives the lane's sun shadow - its own program with the receiver block, built once
       if (lane.shadows && !this.waterSurfaceProgramLane) {
         this.waterSurfaceProgramLane = this._buildProgram(WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL, SHADOW_GLSL));
@@ -1605,6 +1820,7 @@ export class Renderer {
       this._shadows = null;
     }
     this._syncAir();
+    if (lane) this._ensureClusters();   // LC1: the grid's textures, once - a lane program's usampler must always have an integer texture under it
     this.maxPointLights = lane ? lane.maxLights : CLASSIC_MAX_LIGHTS;
     const n = this.maxPointLights;
     if (this._flashLightScratch.length < n * 4) {
@@ -1630,9 +1846,107 @@ export class Renderer {
   setAir(on) { this._airWanted = !!on; this._syncAir(); }
   /** EL8: the contact shadows' door (`?contact=off`); on by default. */
   setContact(on) { this._contactWanted = !!on; }
+  /** VOL1: the lanterns' glow marched through their shadows by the air pass (`?volumetrics=off` restores the lane's analytic glow per fragment). */
+  setVolumetrics(on) { this._volumetricsWanted = !!on; if (this._airPass) this._airPass.volOn = this._volumetricsWanted; }
+  /** EL1: the in-scatter gain folded with the fog's density (zero with the fog off, so clear air glows nowhere). */
+  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]) : 0; }
+  /** VOL1: does the air pass draw this frame's glow - a world frame the pass was prepared for and has not yet resolved
+   *  (AUDIT VOL1: `fresh` - a frame that is not the world's, the water lab's say, and a world draw after the resolve keep
+   *  the lane's own glow), with the door open, outside a sprite pass, a bake and a panel. */
+  _airGlows() { return !!this._air && this._air.fresh && this._volumetricsWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved; }
+  /** LC1: the clustered loop's door - `?clusters=off` walks every light in every fragment (syncLightingLane reads it). */
+  setClusters(on) { this._clustersWanted = !!on; }
+  /** SC1: the static shadow cache's door - `?shadowcache=off` replays every caster at the cadence, as before (syncLightingLane reads it). */
+  setShadowCache(on) { this._shadowCacheWanted = !!on; if (this._shadowPass) this._shadowPass.cacheOn = this._shadowCacheWanted; }
+  /** AUDIT SC1: the host's floating origin moved by `offset` - every remembered placement follows it (ShadowPass.shiftOrigin). */
+  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); }
+  /** SHADOW-REACH: would a caster whose world box is `box` (+ the translation) cast into this frame's shadow maps - a
+   *  host asks for what its VIEW cull rejected, and records it (below) rather than drawing it. False with no pass. */
+  shadowReach(box, ox = 0, oy = 0, oz = 0) { return this._casting && this._shadows.reaches(box, ox, oy, oz); }
+  /** SHADOW-REACH: the same for a flat batch, on the sphere the replays cull it by (batchVisible's). */
+  shadowReachBatch(b) {
+    if (!this._casting) return false;
+    const s = b.bounds; if (!s) return true;
+    const o = b.origin;
+    return this._shadows.reachesSphere(s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, s[2] + (o ? o[2] : 0), s[3]);
+  }
+  /** SHADOW-REACH: record a caster for the maps WITHOUT drawing it - the seams drawMesh, drawTerrain and drawBillboards
+   *  record through, with none of their draw. The billboards take the frame's wind as drawBillboards does. */
+  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap); }
+  recordShadowTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) { if (this._casting && surface?.vao) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize); }
+  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp); }
+  /** LC1: the grid's two integer textures - the GRID (RG16UI: offset, count per cell) and the LIST (R8UI: light
+   *  indices) - NEAREST, unfiltered, made once with the lane. Uploaded by texSubImage2D per world frame. */
+  _ensureClusters() {
+    if (this._clusterTex) return;
+    const gl = this.gl;
+    const make = (unit, internal, w, h, format, type) => {
+      const tex = gl.createTexture();
+      this._activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return tex;
+    };
+    this._clusterTex = {
+      grid: make(CLUSTER_GRID_UNIT, gl.RG16UI, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT),
+      list: make(CLUSTER_LIST_UNIT, gl.R8UI, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, gl.RED_INTEGER, gl.UNSIGNED_BYTE),
+    };
+    this._activeTexture(gl.TEXTURE0);
+    this._clusters = createClusterSpace();
+  }
+  /** LC1: THE BUILD, at the top of a world frame on the lane - the frame's lights into the grid (lightClusters.js
+   *  buildLightClusters) and the two textures' used rows up; the shader's rect and z parameters set for the world
+   *  viewport this frame draws into. Answers whether the shader may walk the grid this frame. */
+  _buildClusters(proj, view) {
+    if (!this._clusters || !this._clustersWanted) return false;
+    const count = this._pointLights.length >> 2;
+    const ok = buildLightClusters(this._pointLights, count, view, proj, this._clusters);
+    if (!ok) return false;
+    const gl = this.gl, sp = this._clusters;
+    this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT, sp.grid);
+    if (sp.rows > 0) {
+      this._activeTexture(gl.TEXTURE0 + CLUSTER_LIST_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.list);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, CLUSTER_LIST_W, sp.rows, gl.RED_INTEGER, gl.UNSIGNED_BYTE, sp.list.subarray(0, sp.rows * CLUSTER_LIST_W));
+    }
+    this._activeTexture(gl.TEXTURE0);
+    const vp = this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];
+    this._clusterRect[0] = vp[0]; this._clusterRect[1] = vp[1];
+    this._clusterRect[2] = CLUSTER_X / Math.max(vp[2], 1); this._clusterRect[3] = CLUSTER_Y / Math.max(vp[3], 1);
+    // a point's view depth is -(view row 2 . p + view[14]): the row negated, so the shader's dot() + w is the depth
+    this._camFwd[0] = -view[2]; this._camFwd[1] = -view[6]; this._camFwd[2] = -view[10]; this._camFwd[3] = -view[14];
+    return true;
+  }
+  /** LC1: one program's cluster uniforms and the two textures on their units - part of _uploadEl. `on` is the
+   *  frame's word (the grid built, and this a world draw): 0 walks every light. */
+  _uploadClusters(loc, on) {
+    if (!loc?.grid || !this._clusterTex) return;
+    const gl = this.gl;
+    this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
+    this._activeTexture(gl.TEXTURE0 + CLUSTER_LIST_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.list);
+    this._activeTexture(gl.TEXTURE0);
+    gl.uniform1i(loc.grid, CLUSTER_GRID_UNIT);
+    gl.uniform1i(loc.list, CLUSTER_LIST_UNIT);
+    gl.uniform4fv(loc.rect, this._clusterRect);
+    gl.uniform2fv(loc.z, this._clusterZ);
+    gl.uniform4fv(loc.fwd, this._camFwd);
+    gl.uniform1i(loc.on, on ? 1 : 0);
+  }
   _syncAir() {
     const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records
-    if (want) this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS } });
+    if (want) {
+      // VOL1: the glow's shader is built from the lane's own curve and integral and the shadow block, handed over - the air pass is a leaf and imports neither
+      this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS }, glsl: { shadow: SHADOW_GLSL, tonemap: this._lane.tonemapGlsl, scatter: this._lane.scatterGlsl }, maxLights: this.maxPointLights });
+      this._air.volOn = this._volumetricsWanted !== false;
+    }
     else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }
   }
   /** EL4: the adaptation image, for a foreign pass that exposes on the lane (the far ring). */
@@ -1659,12 +1973,17 @@ export class Renderer {
     if (!lane) return;
     const gl = this.gl, [expLoc, scLoc] = this._el[key];
     gl.uniform1f(expLoc, this._exposure);
-    gl.uniform1f(scLoc, lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]));
+    // VOL1: on a WORLD frame the air pass glows for the lanterns (marched through their shadows, at the resolve), so the
+    // lane's own analytic glow is 0 there - and stands where the air pass draws nothing (a panel, a sprite pass, a
+    // bake, the door shut): the same gate the contact block and the grid take
+    gl.uniform1f(scLoc, this._airGlows() ? 0 : this._scatterGain());
     if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
     this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)
     // EL8: the contact block - the previous frame's depth, for a WORLD frame's own draws alone (a sprite pass, a bake or a panel is another view: the march would read a stranger's depth)
     if (this._air) this._air.uploadContact(this._el[key].contact, this._contactWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);
     else this._uploadNoContact(this._el[key].contact);
+    // LC1: the grid, under the contact block's own gate - a world draw of the frame the grid was built for; a sprite pass, a bake or a panel walks every light
+    this._uploadClusters(this._el[key].cluster, this._clustersLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);
   }
   /** EL8: with the air off the contact sampler still needs a texture (AUDIT-EL F1's law) and the params say off. */
   _uploadNoContact(loc) {
@@ -1721,9 +2040,16 @@ export class Renderer {
    *  made. Every non-panel frame draws into a frame image, resolved by its
    *  first screen draw or by resolveFrame(). */
   _beginLane(proj, view, lightDir, world) {
-    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
+    // PERF-READ1: the frame still owed resolves FIRST, under its own
+    // clock and its own counters. It used to resolve after the line
+    // below had reset `draws` and begun the new frame's clock, so the
+    // perf line it prints - the owed frame's - read `draws 0` on every
+    // frame whose resolve was deferred to here (an enhanced-skin frame
+    // draws no screen quad of its own), and its GPU clock was begun
+    // twice before it was ended once.
     if (this._air?.pending && !this._panelSaved) this._compositeAir();
     this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set
+    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
     if (this._shadows && world) this._renderPasses(proj, view, lightDir);
     // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
     this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
@@ -1756,6 +2082,7 @@ export class Renderer {
         viewport: this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height],
         shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
         windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
+        scatter: this._scatterGain(), exposure: this._exposure,   // VOL1: the glow's gain (the fog's) and the scene's exposure, for the march
       });
     }
     this._perf?.mark('world');   // VC6d: the passes' work is submitted; everything until the sky or the resolve is the world's own draws
@@ -1784,7 +2111,7 @@ export class Renderer {
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
     this._air.composite();   // EL4: the resolve - the frame to the canvas
     // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of
-    // the seven - never said so. `composite()` binds units 0..3 and
+    // the seven - never said so. `composite()` binds units 0..4 (VOL1: the glow on 4) and
     // leaves its own unit selected, exactly what `markForeignPass`
     // exists for; the first screen quad after it found `_activeUnit`
     // still claiming TEXTURE0 and `_tex0Bound` still naming the sprite
@@ -1877,7 +2204,7 @@ export class Renderer {
    *  unsheathing, it spawns a weird water texture"). This block was
    *  COPIED at five seams and the sixth - `_compositeAir`, which runs
    *  the air pass and is as foreign as anything gets - was never given
-   *  one. `airPass.composite()` binds units 0..3 and leaves unit 3
+   *  one. `airPass.composite()` binds units 0..4 (VOL1: the glow on 4) and ends on TEXTURE0, not
    *  selected, so the first screen quad after a resolve found
    *  `_activeUnit` still claiming TEXTURE0 and `_tex0Bound` still
    *  naming the sprite it wanted: it skipped the bind, or bound to unit
@@ -2554,8 +2881,8 @@ void main() {
   //
   // THE BUFFER IS THE RING. One slot per decal, written in place when
   // that slot is placed or cleared (`writeDecalSlot`), never rebuilt:
-  // the ring recycles oldest-first, so a placement touches exactly 36
-  // floats and the draw touches nothing. An empty slot is a zero-area
+  // the ring recycles oldest-first, so a placement touches exactly 40
+  // floats (BLOOD2f: the tenth is the wet) and the draw touches nothing. An empty slot is a zero-area
   // quad rather than a gap, so the index buffer is built once at boot
   // and the draw is always the whole capacity.
   //
@@ -2569,7 +2896,6 @@ void main() {
   createDecalBatch(capacity) {
     const gl = this.gl;
     const cap = Math.max(1, Math.floor(capacity));
-    this._ensureDecalProgram();
     const vao = gl.createVertexArray();
     this._bindVao(vao);
     const vb = gl.createBuffer();
@@ -2581,6 +2907,8 @@ void main() {
     gl.vertexAttribPointer(1, 2, gl.FLOAT, false, DECAL_STRIDE, 12);
     gl.enableVertexAttribArray(2);
     gl.vertexAttribPointer(2, 4, gl.FLOAT, false, DECAL_STRIDE, 20);
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 1, gl.FLOAT, false, DECAL_STRIDE, 36);   // BLOOD2f: the wet float
     const ib = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, decalIndices(cap), gl.STATIC_DRAW);
@@ -2588,7 +2916,7 @@ void main() {
     return { vao, vb, ib, capacity: cap };
   }
 
-  /** One slot's 36 floats, in place. `floats` is what
+  /** One slot's forty floats (BLOOD2f), in place - or a RUN of slots from the mirror (BLOOD AUDIT 4). `floats` is what
    *  `writeDecalQuad`/`clearDecalQuad` filled. */
   writeDecalSlot(batch, slot, floats) {
     if (!batch || slot < 0 || slot >= batch.capacity) return false;
@@ -2598,11 +2926,17 @@ void main() {
     return true;
   }
 
-  drawDecals(batch, tex) {
+  /** `ranges` (BLOOD1 AUDIT 3) is the pool's own list of half-open slot
+   *  ranges in AGE order (bloodDecals.js `ranges()`): an unwrapped ring
+   *  is one prefix and draws only the slots ever touched, a wrapped one
+   *  is two so the oldest marks composite first. Without it the whole
+   *  capacity is drawn, in slot order. */
+  drawDecals(batch, tex, ranges = null) {
     if (!batch || !tex) return;
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._use(this.decalProgram);
+    this._uploadCloudShadow('decal');   // MAC-BUG W6 / BLOOD1 AUDIT 3: the mark takes the cloud's shadow as the flat beside it does, on both programs
     const d = this._decal;
     gl.uniformMatrix4fv(d.proj, false, this._proj);
     gl.uniformMatrix4fv(d.view, false, this._view);
@@ -2625,49 +2959,64 @@ void main() {
       const am = this._c3(this._ambient, this._decA);
       const mc = this._c3(this._moonColor, this._decB);
       const sc = this._c3(this._sunColor, this._decC);
-      gl.uniform3f(d.tint,
-        am[0] + mc[0] * this._moonScale * 0.5,
-        am[1] + mc[1] * this._moonScale * 0.5,
-        am[2] + mc[2] * this._moonScale * 0.5);
-      gl.uniform3f(d.sun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);
+      // BLOOD AUDIT 5: THE BARE AMBIENT - the moon is its own term by N.L
+      // now, as the mesh has it (W4 folded the moon's Lambert half in
+      // here, and a wall mark facing away from Masser glowed at night).
+      gl.uniform3f(d.tint, am[0], am[1], am[2]);
+      gl.uniform3f(d.moon, mc[0] * this._moonScale, mc[1] * this._moonScale, mc[2] * this._moonScale);
+      // BLOOD AUDIT 4: THE WHOLE SUN, not the flat's half - the shader
+      // takes N.L off the quad's own normal now, as the mesh under the
+      // mark does (MESH_FS's uSunColor * (uSunScale * diff)).
+      gl.uniform3f(d.sun, sc[0] * this._sunScale, sc[1] * this._sunScale, sc[2] * this._sunScale);
     } else {
       gl.uniform3f(d.tint, 1, 1, 1);
       gl.uniform3f(d.sun, 0, 0, 0);
+      gl.uniform3f(d.moon, 0, 0, 0);
     }
-    // MAC-BUG W4 - THE DECAL IS A FIFTH CLASSIC PROGRAM AND HAS NO LANE
-    // TWIN, so it takes the CLASSIC SIXTEEN even where the Enhanced
-    // Lighting lane gives the other four forty-eight. Said out loud and
-    // clamped rather than left to be discovered: `_pointLights` really
-    // does hold 48 under the lane, and a shader declaring
-    // `uPointLights[16]` handed a count of 48 reads off the end of its
-    // own array.
-    //
-    // WHAT IT COSTS, honestly: the sixteen a decal gets are the sixteen
-    // NEAREST, because `nearestLights` has already sorted them by
-    // distance before any of this - the same sixteen the whole renderer
-    // had before the lane existed. A mark under the seventeenth lantern
-    // in a forty-eight-light hall is lit by the sixteen closer ones.
-    // The alternative is a fifth lane shader with its own exposure,
-    // in-scatter and encode, which is a slice rather than a bug fix.
-    const dCount = Math.min(this._pointLights.length >> 2, CLASSIC_MAX_LIGHTS);
+    if (d.lightDir) gl.uniform3fv(d.lightDir, this._lightDir);   // BLOOD AUDIT 4
+    if (d.moonDir) gl.uniform3fv(d.moonDir, this._moonDir);      // BLOOD AUDIT 5
+    // BLOOD AUDIT 5: the trilight ambient (BA1), as drawMesh uploads it
+    const tri = this._ambientTri;
+    gl.uniform1f(d.trilight, tri ? 1 : 0);
+    if (tri) { gl.uniform3fv(d.ambientSky, this._c3(tri.sky)); gl.uniform3fv(d.ambientGround, this._c3(tri.ground)); }
+    // MAC-BUG W4 pinned this as "a fifth classic program with no lane
+    // twin", cutting to the classic sixteen under the lane's forty-eight.
+    // MAC-BUG W6 gave it the twin (enhancedLighting.js EL_DECAL_FS), so
+    // the cap is the INSTALLED DECAL PROGRAM'S - sixteen on the classic
+    // one, forty-eight on the lane's - and a mark under the seventeenth
+    // lantern in a forty-eight-light hall is lit by all of them, as the
+    // chunk above it is. BLOOD1 AUDIT 3: the program's cap and not the
+    // lane's, because a lane that brings no twin runs the classic
+    // program under forty-eight lanterns (the set's `decalLights`).
+    const dCount = Math.min(this._pointLights.length >> 2, this._decalLights);
     gl.uniform1i(d.pointCount, dCount);
     if (dCount > 0) {
-      gl.uniform4fv(d.pointLights, this._pointLights.subarray(0, dCount * 4));
+      gl.uniform4fv(d.pointLights, this._pointLights.subarray ? this._pointLights.subarray(0, dCount * 4) : this._pointLights.slice(0, dCount * 4));   // BLOOD1 AUDIT 3: drawTerrain's own guard - a host handing a plain array
       gl.uniform3fv(d.pointColors, this._pointColorData(dCount));   // already cut to the slot count (AUDIT-EL F3)
     }
     gl.uniform4fv(d.indirect, this._indirect);
     gl.uniform3fv(d.indirectColor, this._c3(this._indirectColor));
+    this._uploadEl('decal');   // MAC-BUG W6: the exposure, the in-scatter, the shadow maps and the eye - what makes the lane's mark the lane's (a no-op on the classic set)
     this._bindVao(batch.vao);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);   // a mark on a ceiling is seen from behind its own normal
-    gl.drawElements(gl.TRIANGLES, batch.capacity * 6, gl.UNSIGNED_INT, 0);
+    if (ranges && ranges.length) {
+      for (const [a, b] of ranges) {
+        const lo = Math.max(0, a | 0), hi = Math.min(batch.capacity, b | 0);
+        if (hi > lo) { gl.drawElements(gl.TRIANGLES, (hi - lo) * 6, gl.UNSIGNED_INT, lo * 6 * 4); this.stats.draws++; }   // four bytes an index
+      }
+    } else {
+      gl.drawElements(gl.TRIANGLES, batch.capacity * 6, gl.UNSIGNED_INT, 0);
+      this.stats.draws++;
+    }
     gl.depthMask(true);
     gl.enable(gl.CULL_FACE);
     gl.disable(gl.BLEND);
     this._bindVao(null);
-    this.stats.texBinds++; this.stats.draws++;
+    // BLOOD AUDIT 4: no texBinds++ here - _bindTex0 above counts the bind
+    // it makes, and this line counted it a second time on every draw.
   }
 
   destroyDecalBatch(batch) {
@@ -2678,99 +3027,30 @@ void main() {
     gl.deleteVertexArray(batch.vao);
   }
 
-  /** PERF-WARM: built once, off the draw path, like every other
-   *  program in this file. */
-  _ensureDecalProgram() {
+  /** MAC-BUG W6: the decal program's uniform table, for whichever set is
+   *  installed - the classic DECAL_FS or the lane's twin (they share every
+   *  name; the lane's adds its own, which _uploadEl and the shadow, cloud
+   *  and fog tables look up by the same route the other four take). */
+  _decalLocs(P) {
     const gl = this.gl;
-    if (this.decalProgram) return;
-    const vs = `#version 300 es
-layout(location=0) in vec3 aPos;
-layout(location=1) in vec2 aUV;
-layout(location=2) in vec4 aColor;
-uniform mat4 uProj, uView;
-out vec2 vUV; out vec4 vColor; out vec3 vWorld;
-void main() { vUV = aUV; vColor = aColor; vWorld = aPos; gl_Position = uProj * uView * vec4(aPos, 1.0); }`;
-    const fs = `#version 300 es
-precision highp float;
-in vec2 vUV; in vec4 vColor; in vec3 vWorld;
-uniform sampler2D uTex;
-uniform vec3 uTint;
-// MAC-BUG W4: the SAME terms the billboard pass gives a flat, and
-// spelled the same way on purpose - a mark on a floor and a chunk in
-// the air above it are the same blood, and they were lit by different
-// amounts of the scene.
-uniform vec3 uDecalSun;
-uniform int uPointCount;
-uniform vec4 uPointLights[16];   // xyz scene-space, w range
-uniform vec3 uPointColors[16];
-uniform vec4 uIndirect;
-uniform vec3 uIndirectColor;
-uniform vec3 uFogColor;
-uniform int uFogMode;
-uniform float uFogDensity;
-uniform vec2 uFogRange;
-uniform vec3 uCamPos;
-out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }
-  return exp(-uFogDensity * d);
-}
-void main() {
-  vec4 t = texture(uTex, vUV);
-  // A DEGENERATE SLOT still rasterises nothing, but a live one whose
-  // texel is fully clear must not draw a black square either.
-  if (t.a < 0.01) discard;
-  // MAC-BUG W4 (Mac: "Also blood is black"). THIS TOOK AMBIENT AND
-  // NOTHING ELSE, and the line that set it said what it was for - "the
-  // scene's own light, so a mark on a dungeon floor is as dark as the
-  // floor". It was darker than the floor by every term it left out: the
-  // floor is a mesh lit by ambient AND the sun AND the point lights,
-  // and a dungeon's ambient is 0.12, so a red mark came out at about
-  // two units of red. Black. Worse, the GIBS from the same kill go
-  // through drawBillboards and were lit in full, so one hit put lit
-  // chunks over a black smear.
-  //
-  // A decal has no normal, exactly as a billboard has none, so it takes
-  // the billboard's model: attenuation-only point lights (squared
-  // linear falloff), the sun's Lambert-average half, and the indirect
-  // term on the same attenuation. Written to mirror that shader term
-  // for term so the two cannot drift.
-  vec3 pointAcc = vec3(0.0);
-  for (int i = 0; i < 16; i++) {
-    if (i >= uPointCount) break;
-    float d = length(uPointLights[i].xyz - vWorld);
-    float att = clamp(1.0 - d / uPointLights[i].w, 0.0, 1.0);
-    pointAcc += att * att * uPointColors[i];
-  }
-  float iD = length(uIndirect.xyz - vWorld);
-  float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);
-  vec3 lightAcc = uTint + uDecalSun + pointAcc + iAtt * iAtt * uIndirectColor;
-  vec3 rgb = t.rgb * vColor.rgb * lightAcc;
-  float a = t.a * vColor.a;
-  float f = fogFactorAt(vWorld);
-  outColor = vec4(mix(uFogColor, rgb, f), a);
-}`;
-    this.decalProgram = this._buildProgram(vs, fs);
-    const P = this.decalProgram;
-    this._decal = {
+    return {
       proj: gl.getUniformLocation(P, 'uProj'),
       view: gl.getUniformLocation(P, 'uView'),
       tex: gl.getUniformLocation(P, 'uTex'),
       tint: gl.getUniformLocation(P, 'uTint'),
       sun: gl.getUniformLocation(P, 'uDecalSun'),                 // MAC-BUG W4
+      lightDir: gl.getUniformLocation(P, 'uLightDir'),           // BLOOD AUDIT 4: the mark takes the sun by N.L, as the surface under it does
+      moon: gl.getUniformLocation(P, 'uDecalMoon'),              // BLOOD AUDIT 5: and the moon by N.L
+      moonDir: gl.getUniformLocation(P, 'uMoonDir'),
+      trilight: gl.getUniformLocation(P, 'uTrilight'),           // BLOOD AUDIT 5: and the trilight ambient
+      ambientSky: gl.getUniformLocation(P, 'uAmbientSky'),
+      ambientGround: gl.getUniformLocation(P, 'uAmbientGround'),
       pointCount: gl.getUniformLocation(P, 'uPointCount'),
       pointLights: gl.getUniformLocation(P, 'uPointLights'),
       pointColors: gl.getUniformLocation(P, 'uPointColors'),
       indirect: gl.getUniformLocation(P, 'uIndirect'),
       indirectColor: gl.getUniformLocation(P, 'uIndirectColor'),
-      fogColor: gl.getUniformLocation(P, 'uFogColor'),
-      fogMode: gl.getUniformLocation(P, 'uFogMode'),
-      fogDensity: gl.getUniformLocation(P, 'uFogDensity'),
-      fogRange: gl.getUniformLocation(P, 'uFogRange'),
-      camPos: gl.getUniformLocation(P, 'uCamPos'),
+      ...this._fogLocs(P),   // MAC-BUG W6: the lane's decal wants uFogColorLin too, and _fogLocs is the one table that knows the whole set
     };
   }
 
@@ -2854,9 +3134,20 @@ void main() {
       q.cw = gl.drawingBufferWidth; q.ch = gl.drawingBufferHeight;
     }
     gl.uniform4f(this._screenQuad.src, src.u0, src.v0, src.u1, src.v1);
-    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== color[3]) {
-      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], color[3]);
-      q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = color[3];
+    // BLACK-ARMS (2026-09-22, a player on Discord: "Weapon and torch are
+    // blacked out"): `color` is the shader's vec4, but the light a flat
+    // takes (`flatLightAt`, MAC-I) is an RGB triple, and the classic
+    // weapon, the torch hand and the casting hands all hand it here as
+    // it is. `color[3]` was then undefined, `uniform4f` takes an
+    // unrestricted float and uploaded NaN, and the fragment's alpha
+    // came out NaN - which ANGLE/D3D and most drivers store as 0 on the
+    // premultiplied canvas, so the page's black showed through every
+    // opaque texel: a solid silhouette with a perfect cutout, on THEIR
+    // machine and not on ours. An absent alpha is 1, as the default is.
+    const a = color[3] ?? 1;
+    if (q.r !== color[0] || q.g !== color[1] || q.b !== color[2] || q.a !== a) {
+      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], a);
+      q.r = color[0]; q.g = color[1]; q.b = color[2]; q.a = a;
     }
     const useTex = tex ? 1 : 0, blendTex = (tex && opts.blend) ? 1 : 0;
     if (q.useTex !== useTex) { gl.uniform1i(this._screenQuad.useTex, useTex); q.useTex = useTex; }
@@ -3322,6 +3613,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     {
       const r = this._worldViewportPending;
       this._worldViewportPending = null;
+      this._worldViewportFrame = r ? { ...r } : null;   // FIELD-GUN19: the record, for the 2D pass
       const W = this.canvas.width, H = this.canvas.height;
       this._worldViewportPx = r
         ? [Math.round(r.x * W), Math.round(r.y * H),
@@ -3330,6 +3622,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (this._worldViewportPx) this._restoreWorldViewport();
     }
     this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear
+    // LC1: the lantern grid for this frame's lights, on a WORLD frame of the lane alone (a panel bracket's frame is another view and another viewport: every light)
+    this._clustersLive = !!this._lane && opts?.world === true && !this._panelSaved && this._spriteDepth === 0 && this._studioDepth === 0 && this._buildClusters(proj, view);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this._use(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);
@@ -3420,6 +3714,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       fogRange: [this._fogRange[0], this._fogRange[1]],
       fogColor: this._fogColor,
       ambient: this._ambient,
+      // AUDIT-AMAP H5: setLighting's fourth argument defaults to null and
+      // forwards to setAmbientTrilight, so a restore that forgot the
+      // trilight dropped the dungeon's BA1 sky/ground pair on every pass
+      ambientTri: this._ambientTri ? { sky: Array.from(this._ambientTri.sky), ground: Array.from(this._ambientTri.ground) } : null,
       sunScale: this._sunScale,
       sunColor: this._sunColor,
       clockLit: this._clockLit,
@@ -3431,6 +3729,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       light3Color: [...this._light3Color],
       windowEmission: this._windowEmission,
       pointLights: this._pointLights,
+      pointCarried: this._pointCarried,   // AUDIT LIGHT-NEAR1: the hand's mask rides with the lights (a subarray has no `.carried`)
       pointColor: this._pointColor,
       pointColors: this._pointColors,
       indirect: [this._indirect[0], this._indirect[1], this._indirect[2], this._indirect[3]],
@@ -3504,6 +3803,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.setAutomapWater(s.automapWaterLevel, s.automapWaterColor);
     this.setFog(FOG_MODE_NAMES[s.fogMode] ?? 'off', s.fogDensity, s.fogRange[0], s.fogRange[1], s.fogColor);
     this.setLighting(s.ambient, s.sunScale, s.sunColor);
+    this.setAmbientTrilight(s.ambientTri);   // AUDIT-AMAP H5
     this._clockLit = s.clockLit;
     this.setMoonlight(s.moonScale ? { scale: s.moonScale, dir: s.moonDir, color: s.moonColor } : null);
     this._moonDir[0] = s.moonDir[0]; this._moonDir[1] = s.moonDir[1]; this._moonDir[2] = s.moonDir[2];
@@ -3514,6 +3814,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._light3Color[2] = s.light3Color[2];
     this.setWindowEmission(s.windowEmission);
     this.setPointLights(s.pointLights, s.pointColor, s.pointColors);
+    this._pointCarried = s.pointCarried ?? null;   // AUDIT LIGHT-NEAR1: setPointLights read the mask off the array, and a snapshot's has none
     this.setIndirectLight([s.indirect[0], s.indirect[1], s.indirect[2]], s.indirect[3], s.indirectColor);
     this._proj = s.proj; this._view = s.view; this._lightDir = s.lightDir;
     this._frameStamp++;   // PERF3: a restored state is a new frame to the terrain block
@@ -4211,7 +4512,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // another the way an atlas would - which is the other reason atlases
     // ship unmipped and this need not.
     gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     // GRAIN1: and anisotropy where the driver has it. Terrain is read at
     // a grazing angle almost everywhere, and an isotropic mip has to take
@@ -4224,20 +4524,65 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // the pass that covers the most screen, and this session cannot
     // measure that (its only GL is SwiftShader, whose cost profile is
     // nothing like a GPU's). So it is a dial rather than a number chosen
-    // once for everybody: `groundSharpness` off / default / max, read
-    // here, the player's own online.
-    const aniso = this._anisoExt ||= (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);
-    if (aniso) {
-      this._anisoMax ||= gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT) || 1;
-      const want = anisotropyFor(getPref('groundSharpness'), this._anisoMax);
-      if (want > 1) gl.texParameterf(gl.TEXTURE_2D_ARRAY, aniso.TEXTURE_MAX_ANISOTROPY_EXT, want);
-    }
+    // once for everybody: `groundSharpness` off / default / max, the
+    // player's own online.
+    //
+    // GRAIN AUDIT 1: the tier is applied by ONE method, here at upload
+    // and again over every cached array at each world load - the arrays
+    // are cached for the life of the page, so a tier read only at upload
+    // landed on a page reload and on no other occasion.
+    this._setGroundSampler(groundSharpnessTier());
     // DFU's terrain texture array wraps Clamp (TextureReader) - keeps
     // the far edge texel at transformed-uv 1.0 boundary ties.
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.tileArrays.set(archive, tex);
     return tex;
+  }
+
+  /** GRAIN AUDIT 1: the anisotropy extension, asked for ONCE - a driver
+   *  without it is remembered as `false`, not re-asked per archive. */
+  _anisoExtension() {
+    if (this._anisoExt === null) {
+      const gl = this.gl;
+      this._anisoExt = gl.getExtension('EXT_texture_filter_anisotropic') ?? false;
+      this._anisoMax = this._anisoExt ? (gl.getParameter(this._anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT) || 1) : 1;
+    }
+    return this._anisoExt;
+  }
+
+  /** GRAIN AUDIT 1: the ground tier onto the BOUND tile array - the min
+   *  filter and the anisotropy, both set every time, so a cached array
+   *  that was at 16x goes to 1x when the player asks for Off. */
+  _setGroundSampler(tier) {
+    const gl = this.gl;
+    const ext = this._anisoExtension();
+    const s = groundSamplerFor(tier, this._anisoMax);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl[s.minFilter]);
+    if (ext) gl.texParameterf(gl.TEXTURE_2D_ARRAY, ext.TEXTURE_MAX_ANISOTROPY_EXT, s.aniso);
+    this.groundTier = tier;
+    return s;
+  }
+
+  /** GRAIN AUDIT 1: THE DIAL LANDS. `uploadTileArray` returns the cached
+   *  array for any archive the page has seen, and the cache lives as long
+   *  as the renderer - the whole page - so a tier read at upload time
+   *  reached a player on a page reload, or on the first archive of a
+   *  climate they had not visited, and left the world at two tiers when
+   *  it did. Both exterior hosts call this at every world load: it walks
+   *  the cached arrays and re-sets the sampler state, which is a bind and
+   *  two parameter calls per archive and no upload. The row's "when the
+   *  world next loads" is true because of this line. */
+  applyGroundSharpness(tier = groundSharpnessTier()) {
+    const gl = this.gl;
+    let s = null;
+    for (const tex of this.tileArrays.values()) {
+      this._activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
+      s = this._setGroundSampler(tier);
+    }
+    this._tArrayTex = null;   // PERF-TEX2's shadow: the next terrain draw binds its own array again
+    return s;
   }
 
   /** EE5: the deck the terrain shadows under - {cover, soft, wind, time,

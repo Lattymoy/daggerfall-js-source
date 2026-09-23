@@ -88,8 +88,13 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:958).
-  assert.match(src, /idOf: \(g\) => g\.id/, 'lootTargets keys by a stable id');
+  // prune is the encounter pool's (exteriorFoes.js:996).
+  // AUDIT-WH H2 moved the spelling, not the law: the id function is
+  // one const now, read by the corpse lens AND by the live-foe
+  // producer the plaque races, so a guard and the body it becomes
+  // cannot key differently.
+  assert.match(src, /const idOf = \(g\) => g\.id;/, 'one stable id for this pool');
+  assert.match(src, /\n    idOf,\n/, 'and lootTargets keys by it');
   assert.doesNotMatch(src, /guardCorpse:\$\{i\}/, 'never by the array index again');
   assert.match(src, /guards\.find\(\(g\) => g\.id === id\)/, 'and takeLoot resolves the same name');
   assert.match(src, /for \(let i = guards\.length - 1; i >= 0; i--\) if \(guards\[i\]\.dead && !guards\[i\]\.corpse\) guards\.splice\(i, 1\);/,
@@ -202,7 +207,7 @@ test('audit24: preventNormalizingReputations is set by the prison jump and clear
 test('audit24: the three quest settings are LIVE reads, not hardcoded falses', async () => {
   // Every one had a live consumer and a launcher toggle, so the player
   // could flip a switch that reached nothing: adult quests were
-  // filtered out whatever ChildGuard said (questLists.js:176), the
+  // filtered out whatever ChildGuard said (questLists.js:195), the
   // guild list-box arm was unreachable (offerFlow.js:144), and the
   // journal's clocks never counted down (clock.js:164). The settings
   // tier map's own both-ways gate now covers them; this pins the
@@ -233,9 +238,10 @@ test('audit24: two async races - an abandoned pixel build and an in-flight loot 
   const loot = read('src/scenes/droppedLoot.js');
   assert.match(loot, /function mount\(pile\) \{[\s\S]{0,900}if \(pile\.dead\) return;/,
     'the loot mount checks its flag before publishing');
-  // and every removal path raises that flag - four of them
-  assert.equal((loot.match(/\.dead = true;/g) || []).length, 4,
-    'collectPixel, releaseEmptied, restoreWorld and restorePiles all mark');
+  // and every removal path raises that flag - five of them (AUDIT BRANCH (WoD) L1-3: takePixel lifts a pooled
+  // terrain's piles out, and marks them as the others do)
+  assert.equal((loot.match(/\.dead = true;/g) || []).length, 5,
+    'collectPixel, takePixel, releaseEmptied, restoreWorld and restorePiles all mark');
 });
 
 test('AUDIT 39: a third race - two cold callers for one model id must not each build a mesh', () => {

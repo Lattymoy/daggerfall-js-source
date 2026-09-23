@@ -186,9 +186,16 @@ export function buildAutomapModel(entries) {
   const byKey = new Map();
   for (const row of rows) if (!byKey.has(row.key)) byKey.set(row.key, row);
 
+  // AUDIT-AMAP T1: DENSE, never a hole. A block whose every placement
+  // failed to load contributes no row; an index assignment left its slot
+  // EMPTY, the save wire (JSON) wrote that as null, and the guard below
+  // then refused the dungeon's own layout on every load - wiping the
+  // reveals, the notes and the teleporters for ever.
   const blockNames = [];
   for (const row of rows) {
-    if (row.blockIndex >= 0 && blockNames[row.blockIndex] === undefined) blockNames[row.blockIndex] = row.blockName;
+    if (!(row.blockIndex >= 0)) continue;
+    while (blockNames.length <= row.blockIndex) blockNames.push(null);
+    if (blockNames[row.blockIndex] == null) blockNames[row.blockIndex] = row.blockName ?? null;
   }
 
   /** Every row whose AABB (grown by tol) holds the point. */
@@ -229,10 +236,14 @@ export function buildAutomapModel(entries) {
     const visited = [];
     const revealed = [];
     const undiscovered = [];
+    // AUDIT-AMAP F6: `revealed` is the DRAW GATE (MeshRenderer
+    // .enabled) and the keyword only picks the tier, so a key HideAll
+    // left in visitedThisRun but not in revealed is UNDISCOVERED
+    // (HideAll clears the first and leaves the second, :2450-2461).
     for (const row of rows) {
-      if (rec?.visitedThisRun?.has(row.key)) visited.push(row);
-      else if (rec?.revealed?.has(row.key)) revealed.push(row);
-      else undiscovered.push(row);
+      if (!rec?.revealed?.has(row.key)) undiscovered.push(row);
+      else if (rec?.visitedThisRun?.has(row.key)) visited.push(row);
+      else revealed.push(row);
     }
     return { visited, revealed, undiscovered };
   }
@@ -277,6 +288,6 @@ export function restoreMatchesLayout(model, savedBlockNames) {
   if (!Array.isArray(savedBlockNames)) return true;   // no record of names (pre-C2 envelope) - nothing to disagree with
   const have = model?.blockNames ?? [];
   if (have.length !== savedBlockNames.length) return false;
-  for (let i = 0; i < have.length; i++) if (have[i] !== savedBlockNames[i]) return false;
+  for (let i = 0; i < have.length; i++) if ((have[i] ?? null) !== (savedBlockNames[i] ?? null)) return false;   // AUDIT-AMAP T1: a hole and a null are the same absence
   return true;
 }

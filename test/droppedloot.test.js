@@ -169,6 +169,6 @@ test('droppedLoot P2 (items-2): the world host wiring - collect at teardown, sta
   assert.ok(/dropPile\(\[dfItem\], dropFeet\(\), `\$\{playerTravelPixel\(\)\.x\},\$\{playerTravelPixel\(\)\.y\}`\)/.test(s),
     'and so does the quest-reward one');
   assert.ok(s.includes('piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))'), 'the F9 envelope carries the piles in natives');
-  assert.ok(s.includes('droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1])'),
+  assert.ok(s.includes('droppedLoot.restoreWorld(restandRows(w.piles), (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1])'),   // TERRAIN-SCALE1: heights stood again on today's ground
     'the F11 load re-mints them after the teleport');
 });

@@ -1,0 +1,50 @@
+[
+  {
+    "name": "PW-1-the-hasher-takes-an-empty-credential-again",
+    "file": "server-account/src/password.js",
+    "old": "  if (!normalise(pw)) throw new Error('refusing to hash an empty credential - a caller handed this null or \"\"');\n",
+    "new": "",
+    "tests": ["test/accountworker.test.js"],
+    "note": "The exact state the Q fold shipped in: a minted code that does not canonicalise hashes the EMPTY STRING into recovery_hash, and `recover`'s own `canon ?? ''` then opens that account with any string that is not a code."
+  },
+  {
+    "name": "PW-2-the-constant-time-compare-fails-open-again",
+    "file": "server-account/src/password.js",
+    "old": "  if (!(a instanceof Uint8Array) || !(b instanceof Uint8Array)) return false;\n  const x = a; const y = b;",
+    "new": "  const x = a instanceof Uint8Array ? a : new Uint8Array(0);\n  const y = b instanceof Uint8Array ? b : new Uint8Array(0);",
+    "tests": ["test/accountworker.test.js"],
+    "note": "The coercion this audit removed. timingSafeEqual(null, null) answers TRUE - a defensive default that defends in the wrong direction, on the one primitive that must never guess."
+  },
+  {
+    "name": "PW-3-the-folding-eats-a-letter-the-alphabet-contains",
+    "file": "server-account/src/password.js",
+    "old": "    .replace(/O/g, '0').replace(/[IL]/g, '1');",
+    "new": "    .replace(/O/g, '0').replace(/[IL]/g, '1').replace(/Q/g, '0');",
+    "tests": ["test/accountworker.test.js"],
+    "note": "THE RECORDED BUG, restored. Q is IN the alphabet, so folding it makes a minted code canonicalise to a different string than the one that was hashed - and with PW-1's refusal in place it is now a loud 500 at registration rather than a silent skeleton key."
+  },
+  {
+    "name": "PW-4-verify-short-circuits-before-the-derivation",
+    "file": "server-account/src/password.js",
+    "old": "  const got = await derive(pw, salt, iters, subtle);\n  if (!parsed) return false;",
+    "new": "  if (!parsed) return false;\n  const got = await derive(pw, salt, iters, subtle);",
+    "tests": ["test/accountworker.test.js", "test/accountflow.test.js"],
+    "note": "\"This account has no password\" then costs nothing and \"this password is wrong\" costs 210,000 iterations - which is a username oracle on the clock, the exact thing login's own comment says it is paying for."
+  },
+  {
+    "name": "PW-5-the-length-is-not-part-of-the-compare",
+    "file": "server-account/src/password.js",
+    "old": "  let diff = x.length ^ y.length;",
+    "new": "  let diff = 0;",
+    "tests": ["test/accountworker.test.js"],
+    "note": "With the modulo indexing below, a short array that repeats into a longer one compares EQUAL - the length is the only thing that stops it."
+  },
+  {
+    "name": "PW-6-the-code-alphabet-stops-being-a-power-of-two",
+    "file": "server-account/src/password.js",
+    "old": "export const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';",
+    "new": "export const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ2';",
+    "tests": ["test/accountworker.test.js"],
+    "note": "33 characters masked with 32 is a biased draw over a 100-bit secret. The minter throws rather than drawing it, which is the guard the file writes out loud - this checks the guard is reachable and that the alphabet pin notices."
+  }
+]

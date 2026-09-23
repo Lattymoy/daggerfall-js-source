@@ -749,3 +749,65 @@ export function infoPanelShorten(rows) {
       .replaceAll(PANEL_AR_SRC, PANEL_AR_REP),
   }));
 }
+
+/**
+ * QUICK-LOOT-STATS (2026-09-22, a player to Mac: "i love the quick loot
+ * but can it show the stats of the items next to the quickloot window?
+ * So i dont have to pick up everything to check in my inventory if its
+ * worth keeping"): THE ROWS AN ITEM SAYS ABOUT ITSELF, ORDERED.
+ *
+ * A THIRD PRESENTER OVER THE SAME PRODUCERS, which is the law MAC-M1
+ * set above and the reason this is here rather than in the plaque: the
+ * classic popup's macro pass asks `%wdm` and `%mod`, the enhanced
+ * detail card builds its own model out of `itemLine`, and the plaque
+ * wants an ordered list of label/text pairs. Three shapes, three
+ * questions about which rows to show - and ONE set of numbers, so a
+ * longsword cannot hit for 1-15 under the crosshair and 3-17 in the
+ * pack.
+ *
+ * IT SHOWS WHAT THE INVENTORY SHOWS AND NOT ONE ROW MORE. The player's
+ * words are "so I don't have to pick up everything to check in my
+ * inventory", so the set is exactly what they would see if they did:
+ * `enhancedInventory.js itemLine`'s own fields, in the order the card
+ * draws them. In particular there is NO VALUE ROW, although a value is
+ * one read away (`itemTemplates.js itemValueOf`) and "is it worth
+ * keeping" sounds like it is asking for one. The card does not show a
+ * value, so showing one here would not be sparing the player a trip to
+ * the inventory - it would be inventing a number that surface has
+ * never carried. And it would be a MISLEADING one: `itemValueOf` is
+ * the base value, while what a shop actually pays runs through
+ * `shopStock.js calculateCost` with the shop's quality and the
+ * player's haggling in it, so a confident "Value: 420" under the
+ * crosshair would be wrong in every shop in the Bay.
+ *
+ * A survival item answers in its own tokens and NOT with a condition,
+ * for AUDIT SURV C's reason, which the card states: "Condition New
+ * 100%" on a stale loaf beside "25 uses left" is two words for one
+ * thing.
+ *
+ * Pure, and empty for an item that has nothing to say - a caller draws
+ * no panel rather than an empty one.
+ *
+ * @returns {{label: string, text: string}[]}
+ */
+export function itemStatRows(item) {
+  if (!item) return [];
+  const rows = [];
+  const push = (label, text) => { if (text != null && text !== '') rows.push({ label, text }); };
+  push('Damage', itemDamageLine(item));
+  push('Armour', itemArmourLine(item));
+  push('Hands', itemHandsLine(item));
+  // The material PREFIX is the name's (itemNameParts), so a Daedric
+  // Dagger does not read "Daedric Dagger / Material Daedric"; this row
+  // is for the groups whose name does not carry it. `materialName`
+  // answers '' outside Weapons and Armor, and push drops an empty.
+  if (item.group === 'Weapons' || item.group === 'Armor') push('Material', materialName(item));
+  const survival = isSurvivalItem(item);
+  if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);
+  else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);
+  // The weight is the STACK's, as `weightString` has it and as the
+  // rows above it are - a player looking at ×20 arrows is deciding
+  // about twenty arrows.
+  push('Weight', `${weightString(item)} kg`);
+  return rows;
+}

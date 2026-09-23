@@ -49,6 +49,7 @@ import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, i
 import { isShieldTemplate } from './armorMaterials.js';
 import { itemLongName, conditionPercentage } from './itemInfo.js';
 
+import { expandRowValues } from './quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 /** The slots a player fills. The two consumables are what the diamond's
  *  top and bottom cells show; `swap` is the second weapon the off-hand
  *  cell offers when the off hand is empty. */
@@ -97,7 +98,7 @@ const state = { c1: null, c2: null, swap: null };
  *  INDEX - a SPELLS.STD record number, or the negative one a made spell
  *  mints (systems/spellMaker.js:212-230) - and that index is already
  *  this port's name for "which spell": it is what the save writes
- *  (systems/save.js:299), what a restore reads back, and what
+ *  (systems/save.js:313), what a restore reads back, and what
  *  `setReadiedByIndex` resolves a readied spell by. So the slot keeps
  *  the same key the rest of the port keeps, and a book that changed
  *  under it (a spell sold, a made spell deleted) leaves a GHOST that
@@ -305,7 +306,7 @@ export function useQuickslot(slot, { entity = null, items = null, hooks = {}, sa
   // F9). A potion drunk through a live hook says nothing - the effect
   // is the HUD's, and the count is the slot's.
   const text = res.text
-    ?? (res.textId && hooks.rows ? (hooks.rows(res.textId) ?? []).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : null)
+    ?? (res.textId && hooks.rows ? expandRowValues(hooks.rows(res.textId) ?? [], res.macros ?? null).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : null)   // MACROS1
     ?? (res.pending ? (USE_PENDING[res.kind] ?? 'Nothing happens.') : null)
     ?? (res.enchanted ? USE_PENDING.enchanted : null);
   if (text) say?.(text);
@@ -342,7 +343,8 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
     say?.(QUICKSLOT_TEXT.swapGone(r.name)); return { kind: 'gone', name: r.name };
   }
   const refuse = (id, kind) => {
-    const text = rows ? (rows(id) ?? []).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : '';
+    // MACRO-3: the item is the record's macro source - "%it is broken."
+    const text = rows ? expandRowValues(rows(id) ?? [], { it: itemLongName(r.item) }).map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() : '';
     if (text) say?.(text);
     return { kind, name: r.name };
   };
@@ -564,7 +566,14 @@ export function consumableCandidates(entity, slot) {
 }
 
 /** The book, as the spell slot's candidate list. */
-export const spellCandidates = (entity) => bookOf(entity).filter(keyedSpell);
+export const spellCandidates = (entity) => {
+  // HOTSLOT: ONE entry per spell index. A bought stock spell, a classic
+  // import and the vampire/lycanthrope gifts each push a record without
+  // asking whether the book holds it, and findIndex on a doubled book
+  // always lands on the first copy - the cycle stuck on one spell.
+  const seen = new Set();
+  return bookOf(entity).filter((sp) => keyedSpell(sp) && !seen.has(sp.index) && (seen.add(sp.index), true));
+};
 
 /** The slots a hold can cycle - the two consumables and the spell. The
  *  off hand is not one: see the header. */
@@ -727,7 +736,7 @@ export function quickslotSaveData() {
   const out = {};
   for (const s of QUICKSLOTS) out[s] = state[s] ? { key: state[s].key, name: state[s].name } : null;
   // QS6: the spell slot rides the same block, keyed the way save.js
-  // already keys a spell - by index (systems/save.js:299).
+  // already keys a spell - by index (systems/save.js:313).
   out.spell = spellState ? { index: spellState.index, name: spellState.name } : null;
   return out;
 }

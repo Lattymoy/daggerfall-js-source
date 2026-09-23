@@ -48,7 +48,7 @@ import { modSettingsOf } from './modSettings.js';
 import { audio as defaultAudio } from './audio.js';
 import { FOOTSTEP } from './footsteps.js';
 import { multiply, trs } from '../world/mat4.js';
-import { currentWeather } from './weatherSim.js';
+import { heardWeather } from './weatherSim.js';   // DISC9: the weather the player HEARS outdoors, not the sim's word
 import { immersiveFootsteps } from './immersiveFootsteps.js';
 import { isSnowFreeClimate } from '../world/weather.js';
 import { perlinNoise } from '../world/perlin.js';   // Mathf.PerlinNoise's one home   // WeatherManager.IsSnowFreeClimate
@@ -518,7 +518,7 @@ export const reverbPresetFor = (level) => REVERB_PRESETS[level] ?? null;
  */
 export const TRANSITION_WAIT_FRAMES = 4;   // "Wait some frames XD" - four yields in UpdateDungeonFog and UpdateAmbientSoundSources
 
-export function createBetterAmbience({ audio = defaultAudio, settings = readBetterAmbienceSettings, random = Math.random, fetchClip = defaultFetchClip, weather = currentWeather, snowFree = isSnowFreeClimate } = {}) {
+export function createBetterAmbience({ audio = defaultAudio, settings = readBetterAmbienceSettings, random = Math.random, fetchClip = defaultFetchClip, weather = heardWeather, snowFree = isSnowFreeClimate } = {}) {
   let s = null;
   const footsteps = createBetterFootsteps({ audio, random, snowFree });
   const shaker = new CameraShaker(random);
@@ -575,6 +575,9 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
     rainWeather = w;
     if (w === 'rain' || w === 'thunder') {   // WeatherType.Rain / Rain_Normal / Thunder
       if (!rainLoop && present.has(AMBIENT_RAIN_CLIP)) {
+        // (a kind of 'exit' means settle4 read a dungeon with an exit, and BA-CRASH1 makes onTransition drop the kind with
+        // the place - so `place.dungeon.exitPos` is there whenever this branch runs; a guard here would only hide the
+        // next stale kind instead of crashing on it)
         rainLoop = rainKind === 'interior'
           ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), 1, { lowpass: AMBIENT_RAIN_LOWPASS_HZ })
           : audio.loop3d(baSoundKey(AMBIENT_RAIN_CLIP), place.dungeon.exitPos, 1, { refDistance: 1, maxDistance: 500, distanceModel: 'inverse', lowpass: AMBIENT_RAIN_LOWPASS_HZ });
@@ -622,7 +625,14 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
     },
     onStartGame() { syncSettings(); owe(); },
     onLoad() { syncSettings(); owe(); },
-    onTransition(next) { syncSettings(); place = { dungeon: next?.dungeon ?? null, building: !!next?.building }; fogState = null; stopRain(); owe(); footsteps.rebase(); },
+    // BA-CRASH1 (2026-09-20, Mac's screenshot: "Cannot read properties of null (reading 'exitPos')" in frame): THE KIND
+    // GOES WITH THE PLACE. `stopRain` stops the loop and forgets the weather it was started for, but `rainKind` kept
+    // the OLD place's answer - 'exit' from the dungeon just left - through the four wait frames until settle4()
+    // recomputed it. In those frames `frame()` saw a kind, a weather that differed (null after stopRain), and asked
+    // updateSource() for a 3D source at `place.dungeon.exitPos` with `place.dungeon` already null: leaving a dungeon
+    // into rain crashed the tab. In DFU the InteriorAmbientSoundSource is destroyed with the scene and Start makes
+    // the next one after the wait; here the kind is the component, so it is dropped here and made again at settle.
+    onTransition(next) { syncSettings(); place = { dungeon: next?.dungeon ?? null, building: !!next?.building }; fogState = null; stopRain(); rainKind = null; owe(); footsteps.rebase(); },
     /** For the pins: the wait, paid at once. */
     settleTransition() { waitFrames = -1; settle4(); },
     dungeonFog() { return fogState?.fog ?? null; },
@@ -633,6 +643,9 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
     classicClipKept(clip) { return CLASSIC_CLIPS_KEPT.has(clip); },
     settle,
     footsteps, shaker,
+    /** DISC6: whether the mod's muffled indoor rain is what the player hears in a building - the street's own loop
+     *  then stands down (systems/ambientEffects.js INDOOR_RAIN_GAIN). Read every indoor frame: no object built. */
+    indoorRainPlaying() { return !!rainLoop && rainKind === 'interior'; },
     status() {
       return { enabled: !!s?.Enabled, footstepsOn: !!s?.footstepsEnable, clipsLoaded, present: [...present], place, fog: fogState, reverb: reverbOn, rain: rainLoop ? rainKind : null, rainWeather, shake: { pos: shaker.posAddShake, rot: shaker.rotAddShake, instances: shaker.instances.length } };
     },

@@ -1,0 +1,58 @@
+[
+ {
+  "name": "MACRO-5-the-popup-walks-the-trade-source-again",
+  "file": "src/ui/spellbookWindow.js",
+  "old": "    const rows = expandRowValues(this.deps.rows?.(id) ?? [], sourceValues(effectMacroSource(e)));",
+  "new": "    const rows = this._boxText(id);",
+  "tests": ["test/macro5_effects.test.js"]
+ },
+ {
+  "name": "MACRO-5-unsupported-components-print-the-record-zeros",
+  "file": "src/systems/spellEffects.js",
+  "old": "  if (t?.duration) {",
+  "new": "  if (true) {",
+  "tests": ["test/macro5_effects.test.js"]
+ },
+ {
+  "name": "MACRO-5-no-per-level-floor",
+  "file": "src/systems/spellEffects.js",
+  "old": "    s.magnitudePerLevel = Math.max(e.magnitudePerLevel ?? 0, 1);",
+  "new": "    s.magnitudePerLevel = e.magnitudePerLevel ?? 0;",
+  "tests": ["test/macro5_effects.test.js"]
+ },
+ {
+  "name": "MACRO-5-chance-floor-dropped",
+  "file": "src/systems/spellEffects.js",
+  "old": "    s.chancePerLevel = Math.max(e.chancePerLevel ?? 0, 1);",
+  "new": "    s.chancePerLevel = e.chancePerLevel ?? 0;",
+  "tests": ["test/macro5_effects.test.js"]
+ },
+ {
+  "name": "MACRO-5-plus-min-reads-the-base",
+  "file": "src/systems/spellEffects.js",
+  "old": "    s.magnitudePlusMin = e.magnitudeLevelBase ?? 0;",
+  "new": "    s.magnitudePlusMin = e.magnitudeBaseLow ?? 0;",
+  "tests": ["test/macro5_effects.test.js"]
+ },
+ {
+  "name": "MACRO-5-signed-subtype-not-normalised",
+  "file": "src/systems/spellEffects.js",
+  "old": "  const t = e ? effectByKey(`${e.type},${e.subType & 0xff}`) : null;",
+  "new": "  const t = e ? effectByKey(`${e.type},${e.subType}`) : null;",
+  "tests": ["test/macro5_effects.test.js"]
+ },
+ {
+  "name": "MACRO-5-sourceValues-blocks-the-world",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "      return isErrorShape(v, token) ? null : v;",
+  "new": "      return isErrorShape(v, token) ? token : v;",
+  "tests": ["test/macro5_effects.test.js"]
+ },
+ {
+  "name": "MACRO-5-sourceValues-throw-escapes",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "      try { v = getMacroValue(token, mcp, null, null); } catch { return null; }",
+  "new": "      v = getMacroValue(token, mcp, null, null);",
+  "tests": ["test/macro5_effects.test.js"]
+ }
+]

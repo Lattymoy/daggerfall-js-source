@@ -57,6 +57,7 @@ import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../c
 import { setPlayerTorchOffsetOverride } from './playerTorch.js';
 import { toScreenOrder } from '../formats/color32Order.js';   // HT3: a SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from './textureReplacement.js';
+import { setLightSource, addLightSourceListener } from './lightSource.js';   // DISC7: the light in hand's one door
 
 export const HANDHELD_TORCHES_VENDOR = 'handheld-torches';
 export const HANDHELD_TORCHES_MOD = Object.freeze({
@@ -203,6 +204,17 @@ export function createHandheldTorches({
   };
   let ctx = null;
   let lightOffsetSet = null;   // the PlayerTorch position the mod last wrote (its transform keeps it)
+  // DISC7: THE LOOP ANSWERS THE TORCH, NOT THE RIG'S CLOCK. The update below still starts it (a lit torch in the rig
+  // that ticks), but a light that goes out - doused, stowed, dropped or burnt out from inside an open window, where the
+  // host holds this rig's frame - stops it on the change itself (systems/lightSource.js), not on the next tick.
+  // AUDIT DISC7 C1: subscribed by the UPDATE, as HT6's hand law is re-armed there - the mod's switch off disposes the
+  // component (weaponRig: "the switch off is a teardown") and the switch back on runs the same component again, so a
+  // subscription made once at birth was gone for the rest of the page after one toggle.
+  const onLight = (entity, now) => {
+    if (!w.loop || !ctx?.entity || entity !== ctx.entity || (now && isTorch(now))) return;
+    w.loop.stop?.(); w.loop = null;
+  };
+  let offLight = null;
 
   const light = () => ctx?.entity?.lightSource ?? null;
   const items = () => ctx?.entity?.items ?? [];
@@ -214,7 +226,7 @@ export function createHandheldTorches({
   const firstOf = (group, template) => getItem(items(), group, template, { allowEnchantedItem: true, allowQuestItem: true, priorityToConjured: false });
   const removeFromPack = (item) => { const l = items(); const i = l.indexOf(item); if (i >= 0) l.splice(i, 1); };
   const oneShot = (clip, volume = 1, pitch = 1) => audio?.playOneShot?.(clip, volume, pitch);
-  const setLight = (it) => { if (ctx?.entity) ctx.entity.lightSource = it; };
+  const setLight = (it) => { if (ctx?.entity) setLightSource(ctx.entity, it); };   // DISC7: the one door
 
   // ---- InitializeTextures (IL 0x1034): 112359 records 0 (torch) and 1 (lantern), frames until one is missing ----
   const loadTextures = (renderer) => {
@@ -330,18 +342,29 @@ export function createHandheldTorches({
     // and the ONE clause that stays stance-bound is the mod's own bare
     // right hand "in use" (0x2d53): an empty hand you are not swinging
     // with is free, which is what lets a weaponless player carry a light.
+    // 3ARMS (2026-09-22, a player on Discord: "Torch and a Two-Handed
+    // weapon simultaneously" - three arms on screen): the IL's
+    // `GetItemHands() == 2` was read as LeftOnly because the port's own
+    // ITEM_HANDS numbering puts LeftOnly at 2. DFU's enum is declared
+    // None, Either, Both, LeftOnly, RightOnly (DaggerfallUnityEnums.cs
+    // :526-533), so 2 is BOTH - and the mod's source says it in words:
+    // `GetItemHands(itemRightHand) == ItemHands.Both //if right hand
+    // item is two-handed, occupy the other hand even if free`
+    // (HandheldTorches.cs:1323). The arm fired on nothing for as long
+    // as the port has had it, so a lit torch stood beside every staff,
+    // claymore and warhammer, and never stowed for a swing. The left
+    // slot's arm (:1311) is the same compare: a Both-handed item or a
+    // bow in the left takes the right.
     if (left) {
       w.handLeft = false;
-      if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }
-      else if (isBow(left)) w.handRight = false;
-    }
+      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;
+    } else if (!sheathedNow && !usingRightNow) w.handLeft = false;   // bare left hand, in use for punching (:1315) - stance-bound like the right's below
     if (right) {
       w.handRight = false;
-      // IL 0x2d1a: `GetItemHands() == 2` (LeftOnly) - a two-hander
-      // answers Both (4), so the relaxed-two-hander arm below fires
-      // on nothing a right hand holds; kept exactly as the mod has it
-      if (getItemHands(right) === ITEM_HANDS.LeftOnly) {
-        if (w.s.twoHandedRelaxed) { if (isBow(right)) w.handLeft = false; else if (w.attacking) w.handLeft = false; }
+      if (getItemHands(right) === ITEM_HANDS.Both) {
+        // RelaxedTwoHandedWeapons: the off hand is taken for a bow, or
+        // while a swing is in flight; strict: always (:1325-1332)
+        if (w.s.twoHandedRelaxed) { if (isBow(right) || w.attacking) w.handLeft = false; }
         else w.handLeft = false;
       }
     } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up
@@ -540,6 +563,7 @@ export function createHandheldTorches({
    */
   function update(dt, c) {
     ctx = c;
+    offLight ??= addLightSourceListener(onLight);   // AUDIT DISC7 C1: (re)armed with the frame
     _liveHandLaw = applyHandLaw;   // HT6: this host has the player, so this component answers the equip change
     w.s = settings();
     w.time += dt;
@@ -731,10 +755,18 @@ export function createHandheldTorches({
     return true;
   }
 
-  function dispose() { w.loop?.stop?.(); w.loop = null; if (lightOffsetSet) { setPlayerTorchOffsetOverride(null); lightOffsetSet = null; } if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change
+  /** DISC6 (Discord, 2026-09-23: "sometimes even when putting it away it still makes the torch sound"): THE LOOP GOES
+   *  WITH THE RIG THAT LEAVES. Every host mode has its own rig (the street's, the building's, the dungeon's) and each
+   *  rig's component starts and stops its own burning loop in its own update - so a torch lit in the street kept the
+   *  street rig's loop sounding through a door (that rig no longer ticks), the building's rig started a second, and
+   *  stowing the torch indoors stopped only that one. A host calls this for the rig it leaves; the rig that takes the
+   *  frame starts the loop again on its next update if the torch still burns. Only the sound: the torch is the
+   *  entity's, not the rig's. */
+  function silence() { w.loop?.stop?.(); w.loop = null; }
+  function dispose() { offLight?.(); offLight = null; w.loop?.stop?.(); w.loop = null; if (lightOffsetSet) { setPlayerTorchOffsetOverride(null); lightOffsetSet = null; } if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change
 
   return {
-    update, lateUpdate, draw, dispose, receivePickedUp,
+    update, lateUpdate, draw, dispose, silence, receivePickedUp,
     toggleLightSourceAction, dropLightSourceAction, throwLightSourceAction, toggleLightPress,
     get hasFreeHand() { return hasFreeHand(); },
     get freeHand() { return getFreeHand(); },

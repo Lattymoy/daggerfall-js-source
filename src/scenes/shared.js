@@ -29,6 +29,7 @@ import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherMan
 import { seasonValue, SEASONS, dateFromClassicMinutes } from '../systems/gameDate.js';   // DS1: the winter arm of that scale
 import { hasActiveEffect, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, tallySkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';
+import { expandRowValues } from '../systems/quest/questMacros.js';   // MACRO-3: the mastery box's %pcn and %ski
 // LV2: the level-up notification's seams. The CLASSIC lane's line and
 // box are still this file's - the seam takes them and uses them - so
 // nothing about the old skin is decided in a UI module.
@@ -43,7 +44,7 @@ import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
-import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, restIgnoresNoRegen } from '../systems/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
 import { getPreventedRestMessage } from '../systems/restSession.js';
 import { registerPreventRestCondition } from '../systems/restSession.js';   // SURV7: the survival rest gate's seam
@@ -62,6 +63,7 @@ import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the p
 import { setPaintFile } from '../systems/itemInfo.js';
 import { music } from '../systems/music.js';
 import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EXT: SoundReplacement's registry
+import { setSoundReplacements } from '../systems/soundReplacer.js';   // SNDREP1: the player's sound pack, on the same seam
 import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
 import { setSeasonsSources } from '../systems/seasonsIliacBayAssets.js';   // SIB1: Seasons of the Iliac Bay's texture door
 import { setWeaponWidgetSources } from '../combat/weaponWidgetAssets.js';   // WW1: Weapon Widget's double-scale textures, from the player's own bundle
@@ -72,6 +74,7 @@ import { installRoleplayRealism } from '../systems/rrInstall.js';   // RR1: Role
 import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
+import { messageBox } from '../systems/notify.js';   // ENH-NOTICE3: the one door every DaggerfallUI.MessageBox goes through - the infection's popup names the KIND, never the host's window
 
 import { getBytes, storedMusicNames, loadMusicFile, storedTextureNames, loadTextureFile, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
 
@@ -1149,7 +1152,7 @@ export function ensureAudio(fetch = fetchBytes) {
   // songs play and the player is never told about a subsystem they did
   // not ask for.
   const replacements = storedMusicNames()
-    .then((names) => setMusicReplacements(names, loadMusicFile))
+    .then((names) => { if (setSoundReplacements(names, loadMusicFile)) audio.preloadReplacements?.(); return setMusicReplacements(names, loadMusicFile); })   // SNDREP1: a sound pack rides the music store
     .catch(() => 0);
   // M-TEX: textures register on the SAME seam, for the same reason.
   // Registration is a name list and a loader - no PNG is read until an
@@ -1264,6 +1267,17 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // was. THE FANFARE STAYS IN BOTH LANES: it is the reward, not the
   // interruption. The CLASSIC skin takes both arms exactly as written
   // before this slice, which is why they are still written here.
+  // MAC-LVL1: the minutes an ONLINE rest simulated (restSession's
+  // creditSkillMinutes) are spent here, by pulling the last-check
+  // marker back by them - the marker stays in the shared clock's past,
+  // so alignEntityClocks' clamp never sees a future stamp, and one
+  // night is one advancement pass on both lanes (RaiseSkills' 360-minute
+  // gate, PlayerEntity.cs:1367, opened by the rest's own RaiseTime).
+  // Offline the credit is never written (the clock itself moved).
+  if (entity.restSimMinutes > 0) {
+    entity.lastSkillCheckTime = (entity.lastSkillCheckTime ?? 0) - entity.restSimMinutes;
+    entity.restSimMinutes = 0;
+  }
   return raiseSkills(entity, Math.floor(worldMinutes()), rolls, onLevelUp,
     (id) => {
       // AUDIT LV2 F3: the TEXT.RSC read is a THUNK, so it happens on
@@ -1271,7 +1285,7 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
       // enhanced skin read record 4020 off disk at every mastery and
       // dropped it, under a surface that promises to read no game
       // data to announce one.
-      announceMastery(id, { box, rows: () => plainLines(lines?.(MASTERY_TEXT_ID)) });
+      announceMastery(id, { box, rows: () => expandRowValues(plainLines(lines?.(MASTERY_TEXT_ID)), null) });   // MACRO-3: %pcn and %ski are MacroHelper globals - DFU's box expands them with no source (PlayerEntity.cs:1397-1401)
       audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1);
     },
     (id) => announceSkillRaise(id, skillValue(entity, id), { say })) ?? [];
@@ -1684,7 +1698,7 @@ export async function endRunToTitleMenu(renderer, { play = playDeathVideo, watch
  * close callback is what carries the lifecycle forward and it runs on
  * every path out.
  */
-export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null, transferToCemetery = null } = {}) {
+export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null } = {}) {
   // AUDIT 39 (#37): answers the host it replaced. A context that mounts
   // over an outer one (the dungeon over worldModes) hands this back on
   // teardown - the leaner set it registers has no FACTION.TXT and no
@@ -1745,10 +1759,25 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
     // leaves behind is what makes the next host frame claim the window.
     raiseTime: (seconds) => { setSyntheticTimeIncrease(true); return advanceWorldMinutes(seconds / 60); },
     // "Death is not eternal" (:187-188) - a DaggerfallMessageBox on
-    // TEXT.RSC 401. The LINES are shared; the BOX is the host's, the
-    // same split D1's DeathScreen mount uses, because the dungeon
-    // draws an ActionTextBox where the town hosts draw a
-    // ChoiceWindow and neither is the other's overlay.
+    // TEXT.RSC 401.
+    //
+    // ENH-NOTICE3: THE PER-HOST SPLIT IS RETIRED. This used to take a
+    // `showText` from each of the four hosts, because "the dungeon
+    // draws an ActionTextBox where the town hosts draw a ChoiceWindow
+    // and neither is the other's overlay" - four wirings of ONE C#
+    // line, which is the drift the seam was opened to end (V5's
+    // `TypeError: text is not iterable` was the last time that split
+    // bit, and ROAD review-p had to convert all four by hand).
+    // VampirismInfection.cs:186-188 is `DaggerfallMessageBox mb =
+    // DaggerfallUI.MessageBox(deathIsNotEternalTextID); mb.Show();`,
+    // and DaggerfallUI.MessageBox (DaggerfallUI.cs:1346-1353) builds
+    // the box on `Instance.uiManager.TopWindow` and Show()s it - a
+    // PushWindow (UserInterfaceManager.cs:79-91). So the KIND is
+    // named once here and systems/notify.js finds whichever host's
+    // slot is live: the dungeon's stack underground, the interior
+    // mount inside a building, townTalk's overlay in the street. A
+    // push is the seam's default and it is this call's law, so no
+    // option is passed.
     messageBox: (id) => {
       // V5: plainLines, and it is a FIX rather than tidying. Three of
       // the four textAt providers hand back TEXT.RSC ROWS - world.js,
@@ -1756,13 +1785,13 @@ export function wireInfectionVideos(renderer, { textAt = null, showText = null, 
       // which answers { text, center } records - while dungeonContext
       // passes `textRsc.plainText(id)`, which answers strings. Both
       // windows this reaches iterate the STRING (ChoiceWindow
-      // talkWindow.js:58-59, ActionTextBox likewise), so "Death is not
+      // talkWindow.js:60-61, ActionTextBox likewise), so "Death is not
       // eternal" threw `TypeError: text is not iterable` on draw
       // everywhere above ground and worked only in a dungeon: the
       // four-hosts divergence this project keeps meeting. Flattened
       // HERE, at the one consumer, so no provider has to be right.
       const lines = plainLines(textAt?.(id));
-      if (lines?.length) showText?.(lines);
+      if (lines?.length) messageBox(lines);
     },
     // GetVampireClan's region read (:400-427), assembled from the
     // host's FACTION.TXT: the Province faction of the region the
@@ -1932,9 +1961,9 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  deltas it does not use and cost the player the one thing DFU still
  *  gives them: turning while the button is down.
  */
-export function routeMouseDrag({ walkMode, buttons, mode = 'exterior',
+export function routeMouseDrag({ walkMode, buttons, keys = null, mode = 'exterior',
   swingMode = getInt('Controls', 'WeaponSwingMode', 0, 2) } = {}) {
-  if (!walkMode || swingMode !== 0 || !swingHeld(buttons)) return 'look';   // FIX-F: the swing's button is the registry's, not the right one; MAC-O4: only Gesture (0) ever claims the drag
+  if (!walkMode || swingMode !== 0 || !swingHeld(buttons, keys)) return 'look';   // MAC-SWING1: `keys` answers a swing bound to a key   // FIX-F: the swing's button is the registry's, not the right one; MAC-O4: only Gesture (0) ever claims the drag
   return mode === 'exterior' ? 'swing' : 'modal';
 }
 
@@ -1965,7 +1994,7 @@ export const restFullyHealed = (entity) =>
   entity.health === entity.maxHealth
   && (entity.fatigue ?? 0) === maxFatigue(entity)
   && ((entity.magicka ?? 0) === (entity.maxMagicka ?? 0)
-    || hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
+    || (hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen()));   // REST-MANA1: online a no-regen career rests until its magicka is full too
 
 /**
  * The RestWindow deps every host shares, so a host adds rest with one
@@ -2003,6 +2032,26 @@ export function createRestDeps(entity, opts = {}) {
   } = opts;
   let _kind = REST_KIND.Rough;   // the running rest's kind, read at the open
   let _roughHours = 0;           // rested hours paid at the rough rate - the stiff morning follows them
+  // PARTY-REST10 (2026-09-21, per-request: confirmed by testing - health frozen for 10 straight simulated
+  // hours under Rough, not merely "sometimes rounds down"): see systems/survival/rest.js's own `restHour` doc
+  // comment for the full explanation. This is the PERSISTENT carry `restHour` now accepts - one per running
+  // rest, reset the moment a NEW rest opens (a fresh sleep owes nothing to whatever the last one banked), so
+  // the fractional point Math.trunc would otherwise discard every single hour instead accumulates toward the
+  // next one.
+  let _roughCarry = { health: 0, fatigue: 0, magicka: 0 };
+  // PARTY-REST4b (2026-09-21, per-request: "only the leader heals up hp not the members" - the REAL bug behind
+  // PARTY-REST4's own fix, found on closer inspection): `setResting` below is ONE closure, made ONCE right here,
+  // reading only the `restKind` local this call's own destructure bound - never a property looked up off
+  // whatever object it happens to be attached to. `partyRestMirrorDeps` (world.js) was spreading a `restKind`
+  // KEY onto a COPY of this returned object, but the copy's `setResting` is the exact same function reference as
+  // the original's - it still closes over THIS scope's `restKind`, not the copy's key, so the override sat there
+  // inert and every mirrored follower kept silently reading the position-based check (bed/houseOwned/ship/byFire
+  // asked of their OWN feet) that PARTY-REST4 thought it had already replaced. Fixed with an actual mutable slot
+  // INSIDE this closure, flipped through the one door below (`overrideRestKind`) that a caller reaches off the
+  // SAME object `setResting` itself reads from - not a sibling copy of it. Cleared the moment resting turns off,
+  // so an override always belongs to exactly the one session it was set for and can never bleed into this same
+  // entity's next real rest.
+  let _restKindOverride = null;
   return {
     // PlayerEntity.IsResting / IsLoitering (:268, :284, :789, :285).
     // Every host owes these identically - they are entity flags, not
@@ -2013,11 +2062,20 @@ export function createRestDeps(entity, opts = {}) {
       entity.isResting = !!b;
       // SURV4: the kind is read at the OPEN (the fire may die under a long night - it was lit when you lay down);
       // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the encounter roll's `roughRest`
-      if (b) { _kind = survivalOn() ? restKind() : REST_KIND.Bed; _roughHours = 0; }
+      // PARTY-REST4b: `_restKindOverride`, when one is set, wins over the inherited `restKind()` position check -
+      // see the doc comment above `_restKindOverride`'s declaration for the closure bug this replaces.
+      if (b) {
+        _kind = survivalOn() ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;
+        _roughCarry = { health: 0, fatigue: 0, magicka: 0 };   // PARTY-REST10: a fresh sleep owes nothing to whatever the last one banked
+      }
       // SURV4: rough hours rested are a stiff morning (STIFF_HOURS of speed and agility) on the way out - an interrupted
       // night too, since the hours were slept - said once; the hours are spent
       if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
       entity.restKind = b ? _kind : null;
+      // PARTY-REST4b: an override is good for exactly one session - the moment THIS session's resting flag drops,
+      // forget it, so a later real rest (this same entity choosing to actually rest for themselves) never
+      // silently inherits a stale kind broadcast by whoever they last mirrored.
+      if (!b) { _restKindOverride = null; }
     },
     setLoitering: (b) => { entity.isLoitering = !!b; },
     // THE PASS-THROUGH IS LOAD BEARING, and it is here because a review
@@ -2034,6 +2092,14 @@ export function createRestDeps(entity, opts = {}) {
     // spread.
     restPlace: place ?? rest.restPlace ?? undefined,
     enemiesNearby: rest.enemiesNearby ?? (() => false),
+    // PARTY-REST4b: the actual override door - see `_restKindOverride`'s own doc comment above (by `setResting`).
+    // Pass a function to make the NEXT `setResting(true)` read it instead of the inherited `restKind()`; pass
+    // null/undefined to go back to inheriting it. Reaches the same closure `setResting` reads from because it is
+    // defined in the SAME call to this function, over the SAME `_restKindOverride` variable - unlike a
+    // spread-added key on a copy of the returned object, which `setResting` was never able to see. Placed here,
+    // AFTER `...rest`, alongside the other composed deps this function's own doc comment already promises always
+    // win over a same-named key: a host's opts has no business shadowing the one door that reaches this closure.
+    overrideRestKind: (fn) => { _restKindOverride = fn ?? null; },
     // ROAD-B B5: GameManager.GetPreventedRestMessage, polled by
     // TickRest every frame of a running rest. It is a GameManager
     // member, not a host one - the registry is one module singleton -
@@ -2042,9 +2108,14 @@ export function createRestDeps(entity, opts = {}) {
     preventedRestMessage: getPreventedRestMessage,
     onRestFinished: () => raisePlayerSkills(entity, { say, onLevelUp, lines: rest.endLines, box }),
     // SURV4: the hour by its kind - DFU's whole hour in a bed or by a fire, half of it rough (survival/rest.js restHour)
-    tickVitals: () => { if (_kind === REST_KIND.Rough) _roughHours++; return restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() })); },
+    tickVitals: () => {
+      if (_kind === REST_KIND.Rough) _roughHours++;
+      const healed = restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() }), _roughCarry);
+      return healed;
+    },
     fullyHealed: () => restFullyHealed(entity),
     sharedMinutes: () => (sharedClockOn() ? worldMinutes() : null),   // WORLD5: a rest online is paced by the world's clock, not by the window's timer
+    creditSkillMinutes: (n) => { entity.restSimMinutes = (entity.restSimMinutes ?? 0) + n; },   // MAC-LVL1: the rest's simulated minutes, owed to the skill-check clock (raisePlayerSkills spends them)
     dead: () => entity.health <= 0,
     vitals: () => ({
       health: entity.health, maxHealth: entity.maxHealth,

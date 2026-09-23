@@ -6,6 +6,9 @@ import {
   createWeaponMachine, machineCancelBowDraw, machineAttack,
   getBowCooldownTime, MAX_GESTURE_SECONDS, ATTACK_THRESHOLD,
 } from '../src/characters/weaponStates.js';
+// SWING-DEFAULT1 (2026-09-22): these pins are the DRAG's law (WeaponSwingMode 0); the port's default is 2 now (click or hold), so the drag is asked for here, once for the file.
+import { setValue as _swingSetValue } from '../src/systems/settings.js';
+_swingSetValue('Controls', 'WeaponSwingMode', '0');
 
 const SABER = { name: 'Saber', templateIndex: 117 };
 

@@ -158,6 +158,14 @@ export const TEMPLE_TRAINING_SKILLS = Object.freeze({
     SKILLS.Spriggan, SKILLS.Streetwise, SKILLS.Thaumaturgy],
 });
 
+/** MACRO-4: %gdd - Temple.templeData's deityDesc column
+ *  (Temple.cs:134-141), DFU's Internal_Strings akatoshDesc..zenDesc. */
+export const DEITY_DESCRIPTIONS = Object.freeze({
+  Akatosh: 'God of Time', Arkay: 'God of Birth and Death', Dibella: 'Goddess of Beauty',
+  Julianos: 'God of Logic', Kynareth: 'Goddess of Air', Mara: 'Goddess of Love',
+  Stendarr: 'God of Mercy', Zenithar: 'God of Work and Commerce',
+});
+
 /** Which skills a guild will train. NULL for a knightly order, which
  *  trains NOTHING - KnightlyOrder.cs:81 returns null outright, and
  *  that is a law rather than a gap. */

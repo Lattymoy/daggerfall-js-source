@@ -131,6 +131,9 @@ export function chronicleModel(d = {}) {
     ...rail.active.map((q) => ({
       head: questTitleOf(q.name),
       body: [...q.entries].reverse().flat(),
+      uid: q.id,
+      questName: q.questName,
+      main: q.main,
     })),
     ...rail.finished.map((q) => ({
       head: `${questTitleOf(q.name)}${q.when ? ` \u2014 ${q.success === false ? 'ended' : 'completed'} ${q.when}` : ''}`,
@@ -315,8 +318,27 @@ function render() {
           rm.onclick = () => { deps.notebook().removeNote(i); render(); };
           top.append(rm);
         }
+        // QUEST1: the share button - never DFU's. Lives in every quest's
+        // own header row, folded or not, set off to the right of the
+        // fold/date the way a note's remove button already sits. ONLY
+        // an active, NON-MAIN quest (e.main, questRail's own
+        // isMainQuest - the storyline is the same one thread for
+        // everyone already, not a side or guild quest's own copy to
+        // hand off) and ONLY with a party to offer it to
+        // (deps.partyMembers, an online-only seam - a host with no
+        // online layer supplies none, so this never draws offline).
+        if (section === 'quests' && e.uid != null && !e.main
+          && (deps.partyMembers?.() ?? []).length) {
+          const share = el('button', 'cr-rm cr-share', 'Share');
+          share.title = 'Share this quest with your party';
+          share.setAttribute('aria-label', 'Share this quest with your party');
+          share.onclick = () => { deps.shareQuest?.(e.uid, e.questName, e.head); };
+          top.append(share);
+        }
         entry.append(top);
-        if (!isFolded(folded, section, i)) for (const line of e.body) entry.append(el('p', null, line));
+        if (!isFolded(folded, section, i)) {
+          for (const line of e.body) entry.append(el('p', null, line));
+        }
         box.append(entry);
       }
       detail.append(box);

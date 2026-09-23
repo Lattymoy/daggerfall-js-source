@@ -32,6 +32,11 @@ import { maxEncumbrance } from '../src/combat/formulas.js';
 import { carriedWeight, totalWeight } from '../src/systems/inventory.js';
 import { liveStat } from '../src/systems/statMods.js';
 import { _resetForTests } from '../src/systems/uiPrefs.js';
+// ENH-NOTICE3: the pane's `notice` line is DFU's click-anywhere box and
+// rides the enhanced notice panel now.
+import {
+  enhancedNoticeKeys, destroyEnhancedNotice, ENHANCED_NOTICE_ID,
+} from '../src/ui/enhancedNotice.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -93,7 +98,7 @@ test('U53: encumbrance is the same expression the sheet and the classic window u
     'LIVE strength - a drained player must not be told they can carry the undrained amount');
   // ...and the OTHER half. PlayerEntity.CarriedWeight (:184) is the
   // items PLUS the gold counter's weight, and the pane composes it by
-  // hand (enhancedInventory.js:190-191) because it is handed the list
+  // hand (enhancedInventory.js:201-202) because it is handed the list
   // and not the entity - so it must still land on inventory
   // .carriedWeight's answer.
   assert.equal(m.encumbrance.now, Math.trunc(carriedWeight(e)));
@@ -1056,28 +1061,93 @@ test('PX21d: the loot window\'s head is a centred stack, not a column header', (
     'and the buttons sit over the list they act on');
 });
 
-test('PX21c: the hover plaque names a pile without opening it, on the take\'s own pick', async () => {
-  const hov = read('src/ui/lootHover.js');
+test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the take\'s own pick', async () => {
+  const hov = read('src/ui/worldPlaque.js');
+  const model = read('src/systems/worldHover.js');
   // The lines are pure: names, a count only when a stack, and a tail
-  // rather than a list - a pile is a glance.
-  const { hoverLines, HOVER_MAX } = await import('../src/ui/lootHover.js');
+  // rather than a list - a pile is a glance. They live with the MODEL
+  // now, not the draw: the resolver answers a whole frame and the
+  // plaque paints exactly what is in it.
+  const { hoverLines, HOVER_MAX, resolveHover, frameSignature } = await import('../src/systems/worldHover.js');
   assert.deepEqual(hoverLines([]), { shown: [], rest: 0, empty: true });
-  assert.deepEqual(hoverLines([{ name: 'Ruby', stackCount: 3 }, { name: 'Helm' }]),
+  // QUICK-LOOT-STATS: a row carries its source `item` too, so the
+  // plaque can read the lit one's stats without a second walk. The law
+  // here is about what is DRAWN and the tail, so the drawn fields are
+  // compared and the reference is named on its own line.
+  const twoItems = [{ name: 'Ruby', stackCount: 3 }, { name: 'Helm' }];
+  const two = hoverLines(twoItems);
+  assert.deepEqual({ shown: two.shown.map(({ name, stack, rarity }) => ({ name, stack, rarity })), rest: two.rest, empty: two.empty },
     { shown: [{ name: 'Ruby', stack: 3, rarity: null }, { name: 'Helm', stack: 0, rarity: null }], rest: 0, empty: false });   // LR1: a row wears its tier, null with the switch off
+  assert.deepEqual(two.shown.map((r) => r.item), twoItems, 'each row carries its own item, in order');
   const many = hoverLines(Array.from({ length: HOVER_MAX + 4 }, (_, i) => ({ name: `x${i}` })));
   assert.equal(many.shown.length, HOVER_MAX);
   assert.equal(many.rest, 4);
   assert.deepEqual(hoverLines(null), { shown: [], rest: 0, empty: true }, 'nothing under the crosshair is not a crash');
-  // ONE NODE, rewritten only when the key changes - a per-frame rebuild
-  // is PX19k's entrance replay in another hat.
-  assert.match(hov, /if \(key === shownKey\) return;/);
-  assert.match(hov, /export function showLootHover\(key, items, title = 'Loot'\)/);
-  assert.match(hov, /export const HOVER_MAX = 6;/);
+
+  // THE REACH GATE IS THE RESOLVER'S OWN FIRST ACT. AUDIT 65 MC-2: the
+  // take's pick reaches as far as DFU's ONE ray does (RayDistance,
+  // PlayerActivate.cs:76/:314), so a too-far pile reaches the handler
+  // that REFUSES it out loud - and a plaque that trusted the pick alone
+  // would name a chest across the room that E cannot open.
+  const items = [{ name: 'Ruby', stackCount: 2 }];
+  // AUDIT-WH M5: the HOST's own namer supplies the title. The model
+  // used to fall back to the literal 'Loot' for an itemised key with
+  // no word, which is not a word World Tooltips contains and is how a
+  // dropped pile outdoors read "Loot" for a whole slice while the same
+  // pile indoors read the mod's "Loot Pile".
+  const pile = { contents: () => items, name: () => ({ title: 'Loot Pile' }) };
+  assert.equal(resolveHover({ key: 'loot:3', distance: 9, reach: 3.2 }, pile), null,
+    'out of reach is not named at all');
+  const near = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, pile);
+  assert.equal(near.kind, 'items');
+  assert.deepEqual(near.rows.map(({ name, stack, rarity }) => ({ name, stack, rarity })),
+    [{ name: 'Ruby', stack: 2, rarity: null }]);   // QUICK-LOOT-STATS: the drawn fields; the row also carries its item
+  assert.equal(resolveHover(null, {}), null, 'nothing under the crosshair');
+  // A key the ladder has no word for draws NOTHING - the mod's own
+  // behaviour (an empty `ret` leaves the tooltip down, .cs:169-172), and
+  // what stops an unported family labelling itself with its key string.
+  assert.equal(resolveHover({ key: 'act:2:41', distance: 1, reach: 3.2 }, { name: () => null }), null);
+  assert.equal(resolveHover({ key: 'door:2', distance: 1, reach: 3.2 },
+    { name: () => ({ title: 'Door', subs: ['Lock Level: 12'] }) }).kind, 'name');
+
+  // ONE NODE, rewritten only when what would be PAINTED changes. PX21c
+  // compared the KEY alone, which cannot see a list that changed under
+  // a constant key - safe then only by accident (taking needed a
+  // window, and the window unmounted the driver), and the accident goes
+  // the moment anything writes into a container being looked at.
+  assert.match(hov, /if \(sig === shownSig\) return;/);
+  assert.match(model, /export function frameSignature\(f\) \{/);
+  const a = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { ...pile, contents: () => [{ name: 'Ruby' }] });
+  const b = resolveHover({ key: 'loot:3', distance: 1, reach: 3.2 }, { ...pile, contents: () => [{ name: 'Helm' }] });
+  assert.equal(a.key, b.key, 'the same key');
+  assert.notEqual(frameSignature(a), frameSignature(b), 'and a different signature - the guard SEES the change');
+  assert.equal(frameSignature(null), null, 'nothing has no signature');
+  assert.match(model, /export const HOVER_MAX = 6;/);
+
   // A READOUT: no clicks, no keys, nothing to dismiss.
   const css = read('src/ui/enhancedStyle.js');
-  assert.match(css, /\.loothover \{[\s\S]{0,400}pointer-events: none;/);
+  assert.match(css, /\.wplaque \{[\s\S]{0,400}pointer-events: none;/);
   assert.match(hov, /setAttribute\('aria-hidden', 'true'\)/);
   assert.doesNotMatch(hov, /addEventListener|onclick/, 'a readout listens to nothing');
+
+  // IT HANGS OFF THE RETICLE, not off a guessed percentage. PX21c stood
+  // it at `bottom: 16%` to avoid a cross whose real place it had no way
+  // to read; hud.js exports the two terms its own crosshair draw uses,
+  // so there is one answer to "where is the reticle" and the plaque
+  // asks it. A docked large HUD moves the cross (ROAD-E E5) and moves
+  // this with it.
+  assert.match(hov, /import \{ hudReticle \} from '\.\/hud\.js';/);
+  assert.match(read('src/ui/hud.js'), /export const hudReticle = \(canvas\) => \(\{[\s\S]{0,200}largeHudHeight: dockedLargeHudHeight\(lastLargeHudBar\),/);
+  assert.match(hov, /crosshairCentreY\(canvas\.height, largeHudHeight\) \+ CROSSHAIR_ARM \* scale\) \/ dpr \+ PLAQUE_GAP/);
+  assert.match(css, /\.wplaque \{ position: fixed; left: var\(--wp-x, 50%\); top: var\(--wp-top, 55%\);/);
+  assert.doesNotMatch(css, /loothover/, 'the old key is gone from the sheet, not left beside the new one');
+
+  // AND IT IS OFF ON A TOUCH DEVICE. There the activation ray is
+  // through the FINGER, not the crosshair, so a centre-anchored plaque
+  // would name what a tap would NOT open - the founding law broken on
+  // every frame.
+  assert.match(hov, /_gateOn = isEnhanced\(\) && !isTouchDevice\(\);/);
+
   // AUDIT 39: AND THE SKIN GATE IS IN THE PLAQUE, ABOVE ensure().
   // The host gates only the PICK, and calls this every tick on every
   // skin - so with the gate only there, a classic-skin dungeon's first
@@ -1087,24 +1157,46 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
   // classic never loads a byte of this" is enhancedStyle.js's own
   // doctrine, and this is the line that keeps it true.
   assert.match(hov, /import \{ isEnhanced \} from '\.\.\/systems\/uiSkin\.js';/);
-  const show = hov.slice(hov.indexOf('export function showLootHover'));
-  assert.ok(show.indexOf('if (!isEnhanced()) return;') < show.indexOf('const n = ensure();'),
+  // BOTH doors gate, and each gates FIRST. worldHoverFrame is the one
+  // four hosts call, and it must refuse before it pulls a target list
+  // or casts a ray, not only before it paints.
+  // AUDIT-WH2 L3-F1: ...and it HIDES on the way out. This gate was a
+  // bare `return null` and showWorldPlaque's was the one that hid -
+  // and `grep -rn showWorldPlaque src/scenes/` is EMPTY, so the hide
+  // was unreachable in every host. A skin switch or a tablet-mode flip
+  // under a painted plaque stranded it. The `[\s\S]` window admits the
+  // comment that says so and nothing else: a statement between the
+  // brace and the gate would have to contain `{` or `;`.
+  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  if \(!worldPlaqueOn\(\)\) \{ hideWorldPlaque\(\); return null; \}/,
+    'the seam asks the skin as its first act - before the ray, before the list - and takes the plaque down when the answer is no');
+  const show = hov.slice(hov.indexOf('export function showWorldPlaque'));
+  assert.ok(show.indexOf('if (!worldPlaqueOn()) return;') < show.indexOf('const n = ensure();'),
     'the skin is asked BEFORE the node is built and the sheet injected');
-  // The host runs the SAME pick the take runs, throttled, enhanced only.
+  // THE MODEL NEVER REACHES FOR A DOCUMENT OR A SKIN. That is what lets
+  // the gate live in one place instead of four hosts' worth of places.
+  const modelCode = model.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(modelCode, /document|isEnhanced|injectEnhancedStyle/, 'the model is pure of the page');
+
+  // The host runs the SAME pick the take runs, enhanced only, and
+  // EVERY FRAME. PX21c throttled to 10Hz on a guess that "a raycast
+  // over every pile is not free"; measured, this pick is ~3us of a
+  // 16.7ms frame, and what the throttle bought was a plaque that lagged
+  // the crosshair by up to a tenth of a second.
   const ctx = read('src/scenes/dungeonContext.js');
-  const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('function drawFoes(') + 3500);   // AUDIT 65 MC-2 widened the window: the reach gate and its note sit inside it
-  assert.match(frame, /_hoverAt \+= dt;/);
-  assert.match(frame, /if \(_hoverAt >= 0\.1\)/, '10Hz: a raycast over every pile is not free');
-  assert.match(frame, /if \(isEnhanced\(\) && eye\)/, 'the classic HUD says nothing about a pile - Daggerfall\'s own answer');
-  // AUDIT 65 MC-2: the take's pick reaches as far as DFU's ONE ray does
-  // now (RayDistance, PlayerActivate.cs:76/:314) so a too-far pile can
-  // reach the handler that REFUSES it out loud - which means the plaque
-  // has to apply the handler's own reach itself, or it would name a
-  // chest across the room that E cannot open.
-  assert.match(frame, /pickActivatableHit\(eye, dir, api\.lootTargets\(\), collider\)/, 'the take\'s own pick');
-  assert.match(frame, /const k = hit && hit\.distance <= hit\.reach \? hit\.key : null;/,
-    'the plaque names only what the handler would actually open');
-  assert.match(frame, /showLootHover\(key, key \? api\.lootContents\(key\) : null,/);
+  const frame = ctx.slice(ctx.indexOf('function drawFoes('), ctx.indexOf('const _mobileBatches = [];'));   // AUDIT 65 MC-2 widened the window; BLOOD2e: the player's bleed line rides the head too. WORLD-HOVER anchored it on content rather than a character count, which silently gutted assertions when the block moved.
+  assert.ok(frame.length > 0 && frame.length < 12000, 'the window is the head of drawFoes, not the whole function');
+  assert.doesNotMatch(frame, /_hoverAt/, 'the 10Hz clock is GONE, not left ticking beside the per-frame call');
+  assert.match(frame, /worldHoverFrame\(\{/, 'one seam, called where the host already draws');
+  // AUDIT-WH H2 wrapped the thunk in a `pick` so the LIVE bodies can be
+  // raced beside the list, exactly as the press races them in an arm of
+  // its own - but it is still that one list, built once, inside the call.
+  assert.match(frame, /ground: pickActivatableHit\(eye, d, api\.dungeonActivationTargets\(\), collider\),/,
+    'a THUNK, and the SAME list the press races - one construction seam, so the plaque cannot name what the button ignores');
+  assert.match(frame, /foe: pickActivatableHit\(eye, d, liveFoeTargets\(foes, 'mobileFoe'\), collider\),/,
+    '...and the live foes beside it, through the one precedence both readers share');
+  assert.match(frame, /contents: api\.lootContents,/);
+  assert.match(hov, /const hit = pick \? pick\(\) : pickActivatableHit\(eye, dir, targets\?\.\(\) \?\? \[\], collider\);/,
+    'the take\'s own pick - or, where a host races seven sets rather than one, that host\'s own raced winner');
   // lootContents shares takeLoot's key vocabulary rather than a second one.
   assert.match(ctx, /lootContents\(key\) \{[\s\S]{0,400}const \[kind, iStr\] = key\.split\(':'\);/);
   for (const kind of ["'loot'", "'corpse'", "'droppedLoot'"]) {
@@ -1116,8 +1208,8 @@ test('PX21c: the hover plaque names a pile without opening it, on the take\'s ow
   // destroy - the first draft put the teardown ahead of it and
   // resourcesafety.test.js caught it.
   const destroyFn = ctx.slice(ctx.indexOf('    destroy() {'), ctx.indexOf('    destroy() {') + 500);
-  assert.ok(destroyFn.indexOf('_ctxDead = true;') < destroyFn.indexOf('destroyLootHover();'), 'the latch stays first');
-  assert.ok(destroyFn.includes('destroyLootHover();'));
+  assert.ok(destroyFn.indexOf('_ctxDead = true;') < destroyFn.indexOf('destroyWorldPlaque();'), 'the latch stays first');
+  assert.ok(destroyFn.includes('destroyWorldPlaque();'));
 });
 
 test('PX21e: the loot window never scrolls - it grows, then widens, and its head never moves', () => {
@@ -2094,4 +2186,171 @@ test('MAC-M2: itemLine carries the hands and the card draws the row', () => {
   // and NO second table: the word is itemInfo's, off equipTable's law.
   assert.doesNotMatch(src, /Two-handed/,
     'the skin names no weapon-hands words of its own - itemHandsLine owns them');
+});
+
+// ── JAN2 (2026-09-21, a player's CRASH "can't access property querySelector, l is null") ──
+// The card's button -> stow -> refuse -> render -> domRepaint's rebuild ->
+// host.querySelector, with `host` already nulled by an unmount. The module
+// is ONE pane (host, deps and the view state are singletons) and the door
+// mounts a fresh element per push, so a second mount over a live one left
+// the first pane orphaned on screen - still clickable - and the newer
+// view's unmount nulled `host` under it.
+test('JAN2: a second mount tears the first pane down - no orphan stays on screen with live buttons', () => {
+  withDom((dom) => {
+    const hostA = dom.mk('div'); dom.body.append(hostA);
+    const e = hero();
+    const viewA = mountEnhancedInventory(hostA, { entity: e, items: () => e.items, onExit: () => {} });
+    assert.ok(hostA.querySelectorAll('.itemrow').length, 'pane A drew its list');
+    const hostB = dom.mk('div'); dom.body.append(hostB);
+    const viewB = mountEnhancedInventory(hostB, { entity: e, items: () => e.items, onExit: () => {} });
+    assert.equal(hostA.querySelectorAll('.itemrow').length, 0, 'mutants: pane A left standing under pane B');
+    assert.equal(dom.body.children.includes(hostA), false, 'and its element is out of the document (a fixed inset:0 slab would still eat the pointer)');
+    assert.ok(hostB.querySelectorAll('.itemrow').length, 'pane B is the live one');
+    assert.doesNotThrow(() => viewA.repaint(), 'the old handle paints nothing');
+    viewB.unmount();
+    assert.equal(hostB.querySelectorAll('.itemrow').length, 0);
+  });
+});
+
+test('JAN2: a repaint that lands after the unmount paints nothing instead of throwing', () => {
+  withDom((dom) => {
+    const host = dom.mk('div'); dom.body.append(host);
+    const e = hero();
+    const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, onExit: () => {} });
+    assert.ok(host.querySelectorAll('.itemrow').length, 'the pack drew its list');
+    const repaint = view.repaint;   // the handle a stale closure keeps (the reader's failure report renders after onExit by design)
+    view.unmount();
+    assert.equal(host.querySelectorAll('.itemrow').length, 0, 'the unmount emptied the host');
+    assert.doesNotThrow(repaint, 'mutants: render() reaching host.querySelector with host null');
+    assert.equal(host.querySelectorAll('.itemrow').length, 0, 'and it does not put a closed window back up');
+  });
+});
+
+
+// ── ENH-NOTICE3: THE PANE'S `notice` IS A BOX, AND THE PANEL'S ────
+
+/** The live notice panels' rows, read off the stack in `doc`. LIVE by
+ *  the module's own key list: `withDom`'s nodes detach on remove, but a
+ *  released panel's node only leaves after the slide, so the keys are
+ *  the truthful probe. */
+const noticeTexts = (dom) => {
+  const live = new Set(enhancedNoticeKeys());
+  const stack = (dom.body.children ?? []).find((c) => c.id === ENHANCED_NOTICE_ID);
+  return (stack?.children ?? [])
+    .filter((c) => String(c.className).split(/\s+/).includes('notice') && live.has(c.dataset.owner))
+    .flatMap((panel) => (panel.children.find((c) => c.className === 'notice-body')?.children ?? [])
+      .filter((r) => r.style.display !== 'none').map((r) => r.textContent));
+};
+
+/** The pane over `skin`, with ONE broken longsword in the bag: picking
+ *  it and pressing Wear is DaggerfallInventoryWindow.cs's EquipItem
+ *  broken arm (:1330-1341, itemBrokenTextId 29, ClickAnywhereToClose). */
+function withBrokenPack(skin, fn) {
+  const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
+  globalThis.location = { search: `?skin=${skin}` };
+  try {
+    return withDom((dom) => {
+      const host = dom.mk('div');
+      dom.body.append(host);
+      const e = hero();
+      e.items = [mk('Longsword', 'Weapons', { currentCondition: 0 })];
+      const view = mountEnhancedInventory(host, {
+        entity: e, items: () => e.items, onExit: () => {},
+      });
+      const pick = () => host.querySelectorAll('.itemrow')[0].onclick();
+      // (this document's selector engine takes one compound
+      // selector, not a descendant pair - the button is found by its
+      // own class and named by its label)
+      const wear = () => host.querySelectorAll('.act')
+        .find((b) => b.textContent === 'Wear').onclick();
+      const sheetNotice = () => host.querySelectorAll('.sheet-notice').map((n) => n.textContent);
+      return fn({ dom, host, e, view, pick, wear, sheetNotice });
+    });
+  } finally {
+    if (had === undefined) delete globalThis.location; else globalThis.location = had;
+    destroyEnhancedNotice();
+  }
+}
+
+test('ENH-NOTICE3: the pack\'s refusal lands in the notice panel and NOT on the sheet, and it leaves on the next action and on the unmount (mutants: text-left-on-the-sheet, no-release-when-the-notice-clears, no-release-on-unmount)', () => {
+  withBrokenPack('enhanced', ({ dom, view, pick, wear, sheetNotice }) => {
+    assert.deepEqual(enhancedNoticeKeys(), [], 'a quiet pack raises no panel');
+    pick();
+    wear();   // :1330-1341 - the broken box
+    assert.equal(noticeTexts(dom).length, 1, 'one box, one panel');
+    assert.match(noticeTexts(dom)[0], /broken and cannot be worn/, 'the refusal, verbatim');
+    assert.deepEqual(sheetNotice(), [],
+      'and no .sheet-notice in the window - the box has ONE face on this skin');
+    assert.deepEqual(dom.body.querySelectorAll('.notice-hint').map((n) => n.textContent), [],
+      'AUDIT ENH-NOTICE3 B3: no hint - the pane takes no click and no key for a refusal, it clears on the next action');
+
+    // THE PANE'S OWN DISMISSAL: the next action clears `notice`
+    // (every writer opens with `notice = null`), and the panel with it
+    pick();   // a second click on the row deselects: an action, and a repaint
+    assert.deepEqual(enhancedNoticeKeys(), [], 'the panel goes when the line does');
+
+    // AND THE UNMOUNT: a HELD panel arms no watchdog
+    pick();
+    wear();
+    assert.equal(enhancedNoticeKeys().length, 1);
+    view.unmount();
+    assert.deepEqual(enhancedNoticeKeys(), [], 'unmount releases - a held panel with no release is a leak');
+  });
+});
+
+test('ENH-NOTICE3: JAN2 holds - a repaint after the unmount raises no panel of its own (mutants: the-hold-lifted-above-the-host-guard)', () => {
+  withBrokenPack('enhanced', ({ view, pick, wear }) => {
+    pick();
+    wear();
+    const repaint = view.repaint;
+    view.unmount();
+    assert.doesNotThrow(repaint);
+    assert.deepEqual(enhancedNoticeKeys(), [],
+      'render()\'s `if (!host) return` is ABOVE the hold: a dead pane never speaks');
+  });
+});
+
+test('ENH-NOTICE3: the classic skin is untouched - the sheet still says it and no stack is built (mutants: panel-on-every-skin)', () => {
+  withBrokenPack('classic', ({ dom, pick, wear, sheetNotice }) => {
+    pick();
+    wear();
+    assert.equal(sheetNotice().length, 1, 'the line is on the sheet, as it always was');
+    assert.match(sheetNotice()[0], /broken and cannot be worn/);
+    assert.deepEqual(enhancedNoticeKeys(), [], 'no panel');
+    assert.equal((dom.body.children ?? []).some((c) => c.id === ENHANCED_NOTICE_ID), false,
+      'and no stack was ever built');
+  });
+});
+
+test('ENH-NOTICE3 (AUDIT B/F5): a refusal raised over a LOOT PILE with the pack closed is the panel\'s too - the frame the player is reading keeps no second copy', () => {
+  // The line is painted in TWO places (the pack's footer and the loot
+  // frame), and only the pack's was driven. A loot session opens with
+  // the pack CLOSED (`packOpen = !d.loot`), so this is the arm a
+  // player meets when they open a corpse with a full purse.
+  const had = Object.hasOwn(globalThis, 'location') ? globalThis.location : undefined;
+  globalThis.location = { search: '?skin=enhanced' };
+  try {
+    withDom((dom) => {
+      const host = dom.mk('div');
+      dom.body.append(host);
+      const e = hero();
+      e.goldPieces = 2000000;   // CanCarryAmount's own gate: the coin weight alone fills the load (itemTransfer.js:271)
+      const pile = [mk('Claymore')];
+      const view = mountEnhancedInventory(host, {
+        entity: e, items: () => e.items, loot: { items: () => pile }, onExit: () => {},
+      });
+      const rows = host.querySelectorAll('.itemrow');
+      assert.equal(rows.length, 1, 'the loot frame is what the player is looking at');
+      rows[0].onclick();   // MAC-M2: a loot-side click TAKES, and this one is refused
+      assert.equal(noticeTexts(dom).length, 1, 'the refusal is on the panel');
+      assert.match(noticeTexts(dom)[0], /cannot carry/i);
+      assert.deepEqual(host.querySelectorAll('.sheet-notice').map((n) => n.textContent), [],
+        'mutant: the loot frame keeps its own copy - two faces for one box, which is the whole finding');
+      view.unmount();
+      assert.deepEqual(enhancedNoticeKeys(), []);
+    });
+  } finally {
+    if (had === undefined) delete globalThis.location; else globalThis.location = had;
+    destroyEnhancedNotice();
+  }
 });

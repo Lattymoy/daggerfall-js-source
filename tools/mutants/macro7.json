@@ -1,0 +1,30 @@
+[
+ {
+  "name": "MACRO-7-a-new-window-draws-a-record-raw",
+  "file": "src/ui/nativeInventory.js",
+  "old": "      rows: this.hooks.rows?.(FORBIDDEN_EQUIPMENT_TEXT_ID)",
+  "new": "      rows: this.hooks.rows?.(FORBIDDEN_EQUIPMENT_TEXT_ID) ?? this.hooks.rows?.(FORBIDDEN_EQUIPMENT_TEXT_ID + 1)",
+  "tests": ["test/macro7_gate.test.js"]
+ },
+ {
+  "name": "MACRO-7-the-broken-box-stops-walking",
+  "file": "src/ui/nativeInventory.js",
+  "old": "        rows: expandRowValues(this.hooks.rows?.(ITEM_BROKEN_TEXT_ID)",
+  "new": "        rows: (this.hooks.rows?.(ITEM_BROKEN_TEXT_ID)",
+  "tests": ["test/macro7_gate.test.js", "test/macro3_nowalk.test.js"]
+ },
+ {
+  "name": "MACRO-7-a-new-host-read-site",
+  "file": "src/scenes/world.js",
+  "old": "        const r = townTalk.lines(id)?.[0];",
+  "new": "        const r = townTalk.lines(id)?.[0]; townTalk.say(plainLines(townTalk.lines(29))?.[0] ?? '');",
+  "tests": ["test/macro7_gate.test.js"]
+ },
+ {
+  "name": "MACRO-7-the-trade-box-stops-walking",
+  "file": "src/ui/nativeTrade.js",
+  "old": "      text: expandGuildMacros(r.text, {\n        amount,",
+  "new": "      text: r.text, _x: ({\n        amount,",
+  "tests": ["test/macro7_gate.test.js"]
+ }
+]

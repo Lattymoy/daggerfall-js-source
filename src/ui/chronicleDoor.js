@@ -8,7 +8,7 @@
 //
 //   ui/charSheetNav.js:53   the sheet's LOGBOOK button
 //   ui/charSheetNav.js:61   the sheet's HISTORY button
-//   scenes/world.js:2464    the world host's own logbook
+//   scenes/world.js:3086    the world host's own logbook
 //   scenes/dungeonContext.js the dungeon's
 //
 // The seam is the U52/U53/PX23 shape a sixth time. What is new is the
@@ -72,6 +72,17 @@ export const historyDoorReady = () => isEnhanced() || playerHistoryArtLoaded();
  *                         ENHANCED window opens. The classic windows
  *                         are two, so this is also which of them the
  *                         classic skin gets.
+ *   partyMembers          QUEST1, OURS not DFU's: the party's OTHER
+ *                         accounts right now, or omitted/empty - the
+ *                         enhanced Quests section's Share button draws
+ *                         only when this is non-empty, and only the
+ *                         enhanced skin ever asks (the classic logbook
+ *                         is untouched). A host with no online layer
+ *                         supplies nothing, which is silence, not a bug.
+ *   shareQuest            QUEST1: (uid, questName, displayName) => void
+ *                         - the Share button's own click, wired to
+ *                         net/online.js's shareQuest through
+ *                         systems/questShare.js's prepareQuestShare.
  */
 export function createChronicleWindow(deps = {}) {
   const section = deps.section ?? 'notes';

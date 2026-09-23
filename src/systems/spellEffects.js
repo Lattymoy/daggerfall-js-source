@@ -317,6 +317,52 @@ export const SPELLBOOK_DESCRIPTION_IDS = new Map([
   ['44,255', 1305],                                      // Comprehend Languages
 ]);
 
+/** MACRO-5 - the EffectSettings a spellbook entry carries, as
+ *  EntityEffectBroker.ClassicEffectRecordToEffectSettings builds them
+ *  (:952-980): DefaultEffectSettings' eleven 1s (EntityEffect.cs
+ *  :946-968), then each component the effect SUPPORTS copied off the
+ *  classic record, its per-level divisor floored at 1. Every
+ *  description record prints all three components - a Damage Health
+ *  box reads "Duration: 1 + 1 per 1 level(s)" in DFU - so the
+ *  unsupported ones are the defaults, not the record's zeros. */
+export function classicEffectSettings(e) {
+  const t = e ? effectByKey(`${e.type},${e.subType & 0xff}`) : null;
+  const s = {
+    durationBase: 1, durationPlus: 1, durationPerLevel: 1,
+    chanceBase: 1, chancePlus: 1, chancePerLevel: 1,
+    magnitudeBaseMin: 1, magnitudeBaseMax: 1, magnitudePlusMin: 1, magnitudePlusMax: 1, magnitudePerLevel: 1,
+  };
+  if (t?.duration) {
+    s.durationBase = e.durationBase ?? 0;
+    s.durationPlus = e.durationMod ?? 0;
+    s.durationPerLevel = Math.max(e.durationPerLevel ?? 0, 1);
+  }
+  if (t?.chance) {
+    s.chanceBase = e.chanceBase ?? 0;
+    s.chancePlus = e.chanceMod ?? 0;
+    s.chancePerLevel = Math.max(e.chancePerLevel ?? 0, 1);
+  }
+  if (t?.magnitude) {
+    s.magnitudeBaseMin = e.magnitudeBaseLow ?? 0;
+    s.magnitudeBaseMax = e.magnitudeBaseHigh ?? 0;
+    s.magnitudePlusMin = e.magnitudeLevelBase ?? 0;
+    s.magnitudePlusMax = e.magnitudeLevelHigh ?? 0;
+    s.magnitudePerLevel = Math.max(e.magnitudePerLevel ?? 0, 1);
+  }
+  return s;
+}
+
+/** MACRO-5 - BaseEntityEffect.EntityEffectMacroDataSource
+ *  (EntityEffectMCP.cs:28-89): the eleven settings, each
+ *  `Settings.X.ToString()`. The spellbook's effect popup hands the
+ *  effect to MacroHelper as the box's source (ShowEffectPopup :658), and
+ *  every description record, 1202-1305, is built of these rows: the
+ *  port printed "%bdr + %adr per %cld level(s)" under every effect. */
+export function effectMacroSource(e) {
+  const s = classicEffectSettings(e);
+  return Object.fromEntries(Object.entries(s).map(([k, v]) => [k, () => String(v)]));
+}
+
 /** The record ShowEffectPopup would read for this classic key, or
  *  null where the effect class declares none (EntityEffect's default
  *  is a null token array, and the box is then empty). */

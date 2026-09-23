@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import {
   createHitEffects, bloodCentre, BLOOD_ARCHIVE, BLOOD_FPS, FORWARD_NUDGE,
 } from '../src/scenes/hitEffects.js';
+import { GLOBAL_SCALE } from '../src/world/meshReader.js';   // FIELD-GUN20: the rig's sprite height, in units
 import {
   createDamageFlash, playerDamageFlash, flashPlayerDamage,
   FLASH_ALPHA, FLASH_FADE_SPEED, FLASH_RGB,
@@ -37,6 +38,10 @@ const rd = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 // `Array.from(pos)` for the position copy, and `||` for `??` on the
 // nudge's y term (facing is never 0-valued there). Both survive.
 const tick = () => new Promise((r) => setImmediate(r));   // let the texture promise land
+// FIELD-GUN20: the pool's flats are CENTRED on their position (EnemyBlood.cs:32-35 never
+// AlignToBase), and the renderer anchors every batch at its BASE - so the base it is handed is
+// half the sprite's height under the position. The rig's sprite is 48 px = 48 * GLOBAL_SCALE tall.
+const HALF = (48 * GLOBAL_SCALE) / 2;
 
 function rig({ frameCount = 4, recordCount = 8 } = {}) {
   const built = [], destroyed = [];
@@ -75,7 +80,7 @@ test('audit24 wave39: bloodIndex finally has a consumer, and it is the right arc
   assert.equal(r.built.length, 1);
   assert.equal(r.built[0].archive, 380);
   assert.equal(r.built[0].record, 2, 'the record IS the bloodIndex');
-  assert.deepEqual(r.built[0].centres[0], [1, 2, 3]);
+  assert.deepEqual(r.built[0].centres[0], [1, 2 - HALF, 3], 'FIELD-GUN20: the base, half a height under the splash');
   assert.equal(r.built[0].frame, 0);
   // every frame is uploaded up front, as the shared arming seam does
   assert.deepEqual(r.uploads, [[380, 2, 0], [380, 2, 1], [380, 2, 2], [380, 2, 3]]);
@@ -133,11 +138,11 @@ test('audit24 wave39: the two positions DFU uses, and the nudge', async () => {
   const fx = createHitEffects({ renderer: r.renderer, getTexture: r.getTexture, uploadRecordFrame: () => {} });
   fx.showBloodSplash(0, [0, 0, 0], [0, 0, 1]);
   await tick();
-  assert.deepEqual(r.built[0].centres[0], [0, 0, FORWARD_NUDGE]);
+  assert.deepEqual(r.built[0].centres[0], [0, 0 - HALF, FORWARD_NUDGE]);
   // no facing given (the fall-damage site has none) leaves it alone
   fx.showBloodSplash(0, [5, 5, 5]);
   await tick();
-  assert.deepEqual(r.built[1].centres[0], [5, 5, 5]);
+  assert.deepEqual(r.built[1].centres[0], [5, 5 - HALF, 5]);
 });
 
 test('audit24 wave39: the pool survives a teardown mid-warm and a recenter mid-animation', async () => {
@@ -161,7 +166,7 @@ test('audit24 wave39: the pool survives a teardown mid-warm and a recenter mid-a
   await tick();
   fx2.offsetAll([-819.2, 0, -819.2]);
   assert.equal(r2.built.length, 2, 'the batch was REBUILT (centres are baked into a static buffer)');
-  assert.deepEqual(r2.built[1].centres[0], [10 - 819.2, 0, 10 - 819.2]);
+  assert.deepEqual(r2.built[1].centres[0], [10 - 819.2, 0 - HALF, 10 - 819.2]);
   assert.equal(r2.destroyed.length, 1, 'and the old one freed');
 });
 
@@ -312,7 +317,7 @@ test('audit24 wave39: the two DFU call sites deliberately NOT ported, and why', 
     // BLOOD1b carried the BLOW in beside it - a fall bleeds by what it
     // cost, like any other blow - and what this pin holds is unchanged:
     // record 0, at the transform.
-    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, f\.ai\._centre\(\), null, bloodHit\(\w+, f\.entity\)\);/, `${f}: fall damage bleeds at index 0, at the transform, carrying its blow`);
+    assert.match(rd(f), /hitEffects\?\.showBloodSplash\(0, f\.ai\._centre\(\), null, \{ \.\.\.bloodHit\(\w+, f\.entity\), markIndex: ENEMY_BASICS\[f\.mobileType\]\?\.bloodIndex \?\? 0 \}\);/, `${f}: fall damage bleeds at index 0, at the transform, carrying its blow - and (BLOOD1 AUDIT 3) the MARK is the foe's own, so a skeleton's fall stains nothing`);
     assert.doesNotMatch(rd(f), /showBloodSplash\(0, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]\)/, `${f}: not at the feet`);
     assert.match(rd(f), /SOUND\.FallDamage, \[f\.ai\.feet\[0\], f\.ai\.feet\[1\], f\.ai\.feet\[2\]\]/, `${f}: the FallDamage clip stays at FindGroundPosition() (EnemyMotor.cs:1409)`);
   }

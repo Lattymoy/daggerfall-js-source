@@ -1,0 +1,74 @@
+[
+  {
+    "name": "AUDIT-BRANCH-IL1-horse-mode-forced",
+    "file": "src/systems/horseCart.js",
+    "old": "      const hm = (entryMode === TRANSPORT.Cart && wagonState.HorseMode !== HORSE_MODE.None) ? HORSE_MODE.HitchedToWagon : wagonState.HorseMode;",
+    "new": "      const hm = (entryMode === TRANSPORT.Cart && wagonState.HorseMode === HORSE_MODE.None) ? HORSE_MODE.None : HORSE_MODE.HitchedToWagon;",
+    "tests": [
+      "test/audit_hcc_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-IL2-old-ground-kept",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (wagonVisual) { wagonVisual.pose.active = false; wagonVisual.pose.hasLastValid = false; }",
+    "new": "    if (wagonVisual) { wagonVisual.pose.active = false; }",
+    "tests": [
+      "test/audit_hcc_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-IL3-and-for-or",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (!recorded || !hitchedWagonPathInitialized) {",
+    "new": "    if (!recorded && !hitchedWagonPathInitialized) {",
+    "tests": [
+      "test/audit_hcc_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-IL4-real-dt",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    runtime?.lateUpdate(gameDt);",
+    "new": "    runtime?.lateUpdate(dt);",
+    "tests": [
+      "test/audit_hcc_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-IL4-host-real-dt",
+    "file": "src/scenes/world.js",
+    "old": "hcc.frame(dt, cam.pos, gamePaused() ? 0 : dt * worldTimeScale());",
+    "new": "hcc.frame(dt, cam.pos, dt);",
+    "tests": [
+      "test/audit_hcc_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-H2-lycan-opens",
+    "file": "src/scenes/world.js",
+    "old": "      if (sup) { hccRuntime.consumeWagonSelectionRequest(); townTalk.say(sup.text); return; }\n",
+    "new": "      void sup;\n",
+    "tests": [
+      "test/audit_hcc_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-H2-lycan-opens-exterior",
+    "file": "src/scenes/exterior.js",
+    "old": "      if (sup) { hccRuntime.consumeWagonSelectionRequest(); townTalk.say(sup.text); return; }\n",
+    "new": "      void sup;\n",
+    "tests": [
+      "test/audit_hcc_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BRANCH-H3-post-skipped",
+    "file": "src/scenes/world.js",
+    "old": "      if (hccPostDue) hccRuntimeOn()?.handlePostFastTravel();",
+    "new": "      void hccPostDue;",
+    "tests": [
+      "test/audit_hcc_branch.test.js"
+    ]
+  }
+]

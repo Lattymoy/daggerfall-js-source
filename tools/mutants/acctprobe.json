@@ -1,0 +1,34 @@
+[
+  {
+    "name": "PROBE-1-a-named-value-export-is-back-on-the-entrypoint",
+    "file": "server-account/src/index.js",
+    "old": "export default {",
+    "new": "export const PROBE_MUTANT = 1;\n\nexport default {",
+    "tests": ["tools/accountProbe.mjs"],
+    "note": "THE BUG THIS PROBE EXISTS FOR, restored. In a module Worker every named export of the entrypoint is read as an ENTRYPOINT, so workerd refuses to start over a constant - and the node suite stays green BECAUSE it imports those very names. If this survives, the probe has stopped asking the one question it was written to ask."
+  },
+  {
+    "name": "PROBE-2-the-R2-binding-is-not-the-one-the-code-asks-for",
+    "file": "server-account/wrangler.toml",
+    "old": "binding = \"SAVES\"",
+    "new": "binding = \"SAVE5\"",
+    "tests": ["tools/accountProbe.mjs"],
+    "note": "AUDIT-312 F4's whole point: a binding that is ABSENT does not crash. `env.SAVES` undefined answers `no-storage`, which reaches a player as \"Cloud saves are unavailable right now\" - with a green suite and a green deploy behind it, because the suite hands the Worker its own env and never reads this file."
+  },
+  {
+    "name": "PROBE-3-the-hash-cost-leaves-a-Workers-CPU-budget",
+    "file": "server-account/src/password.js",
+    "old": "export const PBKDF2_ITERS = PBKDF2_CAP;",
+    "new": "export const PBKDF2_ITERS = 21_000_000;",
+    "tests": ["tools/accountProbe.mjs"],
+    "note": "The suite gets SLOWER and stays green; only a real workerd says whether a registration still fits the budget. The probe measures it rather than assuming it, which is the second thing it claims to prove. AND THE PBKDF2 CAP TAUGHT THE LIMIT OF THAT CLAIM: workerd measures the COST and cannot see the CEILING - Cloudflare refuses anything above 100,000 and neither node nor workerd does, so this mutant is caught for being SLOW while the real 210,000 was caught by nobody until a player tried to register. The probe now asserts the cap as well as the cost, and the deploy makes a real registration against the deployed Worker."
+  },
+  {
+    "name": "PROBE-4-a-migration-stops-applying",
+    "file": "server-account/migrations/0003_saves.sql",
+    "old": "CREATE TABLE IF NOT EXISTS saves (",
+    "new": "CREATE TABLE IF NOT EXISTS saves (\n  this_is_not_sql_at_all !!!,",
+    "tests": ["tools/accountProbe.mjs"],
+    "note": "The suite applies the migrations to node:sqlite and would catch this too - but the probe applies them through WRANGLER'S OWN LEDGER, which is the thing the deploy runs and the thing ACC1-CI changed the pair of `d1 execute` lines for."
+  }
+]

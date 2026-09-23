@@ -62,11 +62,11 @@
 // a typing surface.
 
 import { ACTIONS, saveKeyBinds } from '../systems/inputActions.js';
-import { bindings, mouseCode } from './input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
+import { bindings, mouseCode, swingMode } from './input.js';   // MAC-K1: a mouse button is a binding, so the capture must be able to take one
 import {
   createUnsavedKeybinds, currentDict, setUnsavedBinding, checkDuplicates,
   applyUnsavedKeybinds, resetUnsavedToDefaults, buttonText, splitCamel,
-  comboFromEvent, removeKeybindPromptRows,
+  comboFromEvent, removeKeybindPromptRows, swingHint,
 } from '../systems/controlsConfig.js';
 
 /** The shell's own `el`, three lines, kept LOCAL on purpose:
@@ -135,7 +135,7 @@ const QUICKSLOT_ROWS = Object.freeze([
   Object.freeze({ action: 'QuickUse2', label: 'Use quickslot 2' }),
   // QS6: the SPELL slot, beside the two consumables it behaves like -
   // a tap readies, a hold cycles the book.
-  Object.freeze({ action: 'QuickSpell', label: 'Ready quickslot spell' }),
+  Object.freeze({ action: 'QuickSpell', label: 'Ready quickslot spell (hold to cycle the book)' }),   // HOTSLOT: the hold was said nowhere
   // QS6: the swap keeps its row and its rebind; what it lost is the
   // default key, so a player who wants one of their own comes here.
   Object.freeze({ action: 'QuickSwap', label: 'Swap weapon' }),
@@ -145,13 +145,38 @@ const QUICKSLOT_ROWS = Object.freeze([
 export const PORT_GROUP_TITLE = 'Online';
 /** QS2's own, the same way. */
 export const QUICKSLOT_GROUP_TITLE = 'Quickslots';
+/** QUICK-LOOT B4: ...and the plaque's two, under their own heading for
+ *  the same reason the two above have theirs - the CLASSIC windows
+ *  cannot draw a row DFU never had, so a clash against one of these is
+ *  a clash a classic player can neither see nor clear. */
+export const QUICKLOOT_GROUP_TITLE = 'Quick loot';
+const QUICKLOOT_ROWS = Object.freeze([
+  Object.freeze({ action: 'QuickLootAll', label: 'Take everything' }),
+  Object.freeze({ action: 'QuickLootOpen', label: 'Open the container' }),
+]);
+/** FREEMOUSE (2026-09-22, Mac: "an entirely new keybind. A mouse free
+ *  that allows you to toggle the use of your mouse"): its own heading,
+ *  and it holds ONE row on purpose. The alternative was to file it
+ *  under 'Online' - where the chat collision that motivates it lives -
+ *  and that is the mistake QS2 already named: a group whose title does
+ *  not describe its rows is worse than no group. Freeing the mouse is
+ *  not an online thing; it is a thing you do to read the screen. */
+export const MOUSE_GROUP_TITLE = 'Mouse';
+const MOUSE_ROWS = Object.freeze([
+  // The LABEL says what it does in the player's words, not the
+  // action's: "free the mouse" is the thing they came here looking
+  // for, and it is a toggle, so the row says both halves.
+  Object.freeze({ action: 'FreeMouse', label: 'Free the mouse (press again to look)' }),
+]);
 /** The port's own headings, in the order the pane draws them. */
 export const PORT_GROUPS = Object.freeze([
   Object.freeze({ title: PORT_GROUP_TITLE, rows: ONLINE_ROWS }),
   Object.freeze({ title: QUICKSLOT_GROUP_TITLE, rows: QUICKSLOT_ROWS }),
+  Object.freeze({ title: QUICKLOOT_GROUP_TITLE, rows: QUICKLOOT_ROWS }),
+  Object.freeze({ title: MOUSE_GROUP_TITLE, rows: MOUSE_ROWS }),
 ]);
 /** Every port row, flat: the coverage rule's half of the answer. */
-export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS]);
+export const PORT_ROWS = Object.freeze([...ONLINE_ROWS, ...QUICKSLOT_ROWS, ...QUICKLOOT_ROWS, ...MOUSE_ROWS]);
 
 /** ShowMultipleAssignmentsMessage's line, the string the classic grid
  *  draws (ui/controlsWindow.js's `top === 'dupes'` row). The same
@@ -356,6 +381,8 @@ function keyRow(action, label) {
   const row = el('div', 'row ctl-row');
   const main = el('div', 'row-main');
   main.append(el('div', 'row-name', label));
+  // SWING-LABEL: the one row whose button is not the whole answer - see swingHint.
+  if (action === 'SwingWeapon' && unsaved.usingPrimary) main.append(el('div', 'row-sub', swingHint(code ?? null, swingMode(), dict.get('ReadyWeapon') ?? null)));
   row.append(main);
 
   const ctl = el('div', 'ctl');
@@ -457,4 +484,13 @@ export function paneControls(body, { render = () => {} } = {}) {
   // and because the classic window - which this pane is the skin of - has no
   // place for it at all: the enhanced window is the one door to rebinding F.
   for (const g of PORT_GROUPS) group(body, g.title, g.rows.map((r) => [r.action, r.label]));
+  // TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" -
+  // the one Continue sat 53 rows above the row they had just bound, and
+  // leaving dropped the change): the head card is sticky now, and the
+  // list closes on a second Continue, the same applyAndSave.
+  const foot = el('div', 'card ctl-foot');
+  const cont2 = el('button', 'act primary ctl-continue ctl-continue-foot', 'Continue');
+  cont2.onclick = act(applyAndSave);
+  foot.append(cont2);
+  body.append(foot);
 }

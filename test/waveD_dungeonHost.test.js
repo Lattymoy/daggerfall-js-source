@@ -231,8 +231,10 @@ test('wave D: the dungeon host hands the ctx its OWN doors', () => {
   assert.match(mount, /feet: \(\) => lastPlayerFeet \?\? \[0, 0, 0\],/);
   assert.match(mount, /say: \(l\) => hudText\.add\(l\),/);
   // the two WINDOWS this host owns - the plaque stack and its ONE sheet
-  assert.match(mount, /pushDungeonWindow\(new ActionTextBox\(lines\)\)/,
-    'Azura\'s box goes through PushWindow, so an open window does not swallow it');
+  // ENH-NOTICE3: through the one door (systems/notify.js), whose
+  // default is the push and whose dungeon presenter IS pushDungeonWindow
+  assert.match(mount, /messageBox: \(id\) => \{\n\s*const lines = rscLines\(id\);\n\s*if \(lines\?\.length\) messageBox\(lines\);/,
+    'Azura\'s box goes through PushWindow (the seam\'s default over this context\'s presenter), so an open window does not swallow it');
   assert.match(mount, /openCharacterSheet: \(\) => api\.toggleCharSheet\(\),/,
     'the Oghma opens this host\'s one sheet construction, not a second bag');
   // the Wabbajack over this host's own pool, with DFU's quest guard.

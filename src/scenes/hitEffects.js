@@ -35,15 +35,19 @@
 // A third has no port equivalent yet rather than being unported here:
 // EnemyAttack.cs:332 is `ApplyDamageToNonPlayer`, foe-vs-foe melee,
 // which the port's pools do not do (documented at enemyCasting.js:149
-// and dungeonContext.js:1320). When friendly fire lands, its splash is
+// and dungeonContext.js:1423). When friendly fire lands, its splash is
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS, MISSILE_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond   // FIELD-GUN14: a flying flat's own rate, which is the missile's
-import { billboardSize } from '../world/rmbFlats.js';
+import { billboardSize, centredBase } from '../world/rmbFlats.js';
 import { BLOODLESS_INDEX } from '../combat/bloodDecals.js';   // BLOOD1a: which foes bleed, for the art hand-off below
 
 /** EnemyBlood.cs:23. */
+import { createBleedLedger } from '../combat/bloodBleed.js';   // BLOOD2c
+import { flashPlayerBleed } from '../ui/damageFlash.js';   // BLOOD2e: the reference's subtle flash with each of the player's own drips
 export const BLOOD_ARCHIVE = 380;
+/** BLOOD2d: the player's key in the marks' tracking table (a foe's is its own record). */
+export const PLAYER_WALKER = Object.freeze({ player: true });
 /** :37 - pinned to ten, not the general five. */
 export const BLOOD_FPS = 10;
 /** F033: UseSpellBillboardAnims(1, true) - record 1, one-shot. */
@@ -97,7 +101,11 @@ export function createHitEffects({
   // name. Null means no marks and exactly the splash this file always
   // drew.
   marks = null,
+  // BLOOD2c: the chance the bleeding ledger rolls its 2..5 s waits with -
+  // the game's own unless a pin holds it still.
+  rng = Math.random,
 } = {}) {
+  const bleeding = createBleedLedger({ rng });   // BLOOD2c: per pool, keyed by body
   // onSpawn/onRetire let a host whose draw list is PERSISTENT (the
   // dungeon's billboardBatches, which the missile impact already
   // pushes into and splices out of) register the batch instead of
@@ -156,7 +164,7 @@ export function createHitEffects({
       // which is the same knob asked the other way.
       //
       // THIS BRANCH NEVER RAN CORRECTLY. `billboardSize` answers a
-      // {w, h} RECORD (rmbFlats.js:133, and billboardXml's override
+      // {w, h} RECORD (rmbFlats.js:155, and billboardXml's override
       // keeps the shape), and neither arm of the old ternary was that:
       // an object is not an Array, so every scaled flat took
       // `entry.size * scale` - object times number, which is NaN. A
@@ -166,7 +174,14 @@ export function createHitEffects({
       // DEFAULT - drew nothing at all, at every host, since WW1. A
       // shape the value never had, in a branch nothing measured.
       if (scale !== 1 && entry.size) entry.size = { w: entry.size.w * scale, h: entry.size.h * scale };
-      entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [entry.pos]);
+      // FIELD-GUN20: the pool's flats are CENTRED on their position - a
+      // splash on the wound, an impact on the wall, an orb on the muzzle
+      // - where every block flat sits on its base. The renderer anchors
+      // at the base for all of them, so the base handed over is half a
+      // height under the position (rmbFlats.centredBase, the law's one
+      // home). The origin deltas below are centre-to-centre and do not
+      // move: the batch's base and its live position shift together.
+      entry.batch = renderer.createBillboardBatch(archive, record, entry.size, [centredBase(entry.pos, entry.size)]);
       entry.batch.frame = 0;
       onSpawn?.(entry.batch);
       // A single-frame record has no wrap to end on, so it would hang
@@ -206,9 +221,54 @@ export function createHitEffects({
      *  six rows DFU gives a 2 splash differently from everything else. */
     showBloodSplash: (bloodIndex, pos, facing = null, hit = null) => {
       const entry = spawn(bloodIndex ?? 0, pos, facing);
-      marks?.place?.(bloodIndex, pos, hit);   // BLOOD1a: the splash plays, the mark stays
+      marks?.place?.(hit?.markIndex ?? bloodIndex, pos, hit);   // BLOOD1a: the splash plays, the mark stays   // BLOOD1 AUDIT 3: a site whose SPLASH index is not the foe's (the fall sites' literal 0) names the mark's own, so the bloodless gate holds
       return entry;
     },
+
+    /**
+     * BLOOD2c: A WOUNDED BODY BLEEDS, A DEAD ONE BLEEDS OUT. The host
+     * hands the bodies it walks every frame and a VIEW that reads one -
+     * { feet, health, maxHealth, bloodIndex, dead, corpse } - and the
+     * ledger answers what is due: a drip of small drops at a wounded
+     * body's feet every 2..5 s (the reference's cadence, ramped by how
+     * hurt it is), and one spreading pool the first frame a body is seen
+     * dead with a corpse. Marks only - no splash plays for a drip.
+     */
+    bleed: (dt, bodies, view) => {
+      if (!marks) return 0;
+      let n = 0;
+      for (const a of bleeding.tick(dt, bodies, view)) {
+        if (a.kind === 'drip') { if (marks.drip?.(a.bloodIndex, a.pos, a.count)) n++; }
+        else if (a.kind === 'pool') { if (marks.spreadPool?.(a.bloodIndex, a.pos)) n++; }
+        else if (a.kind === 'step') { if (marks.step?.(a.body, a.pos, a.forward)) n++; }   // BLOOD2d: a foe treads in blood and tracks it
+      }
+      return n;
+    },
+
+    /** BLOOD2e: THE PLAYER BLEEDS. The reference bleeds the PLAYER -
+     *  below the threshold, every 2..5 s, a spawn ramped by how hurt
+     *  they are, with a subtle red flash, suppressed at zero health -
+     *  and BLOOD2c turned that shape on the foes first. This is the
+     *  player's own: the same ledger, keyed by PLAYER_WALKER, read
+     *  through a view of the entity's health at the feet the host
+     *  hands, with no strides (the footstep machine lays the player's
+     *  prints) and no corpse (a dead player is the death screen's, not
+     *  a pool's). Each drip that lands flashes. Answers the drips laid. */
+    bleedPlayer: (dt, feet, entity) => {
+      if (!marks || !feet || !entity) return 0;
+      const health = entity.health ?? 0, maxHealth = entity.maxHealth ?? 0;
+      const view = () => ({ feet, health, maxHealth, bloodIndex: 0, dead: !(health > 0), corpse: false, strides: false });
+      let n = 0;
+      for (const a of bleeding.tick(dt, [PLAYER_WALKER], view)) {
+        if (a.kind === 'drip' && marks.drip?.(a.bloodIndex, a.pos, a.count)) { n++; flashPlayerBleed(); }
+      }
+      return n;
+    },
+
+    /** BLOOD2d: THE PLAYER'S FOOTFALL - the hosts' footstep machine says
+     *  when a foot comes down; this says where. Treading in wet blood
+     *  tracks it for a few steps. `forward` is the way the player faces. */
+    footfall: (pos, forward = null) => marks?.step?.(PLAYER_WALKER, pos, forward) ?? null,
 
     /** ShowMagicSparkles (:41-54), record 3. */
     showMagicSparkles: (pos, facing = null) => spawn(SPARKLES_RECORD, pos, facing),
@@ -303,7 +363,7 @@ export function createHitEffects({
         if (!e.batch) continue;
         onRetire?.(e.batch);
         renderer.destroyBillboardBatch(e.batch);
-        e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [e.pos]);
+        e.batch = renderer.createBillboardBatch(e.archive, e.record, e.size, [centredBase(e.pos, e.size)]);   // FIELD-GUN20: rebuilt where it was built - centred
         e.batch.frame = e.anim?.frame ?? 0;
         if (e.tracked) e.batch.origin = [e.at[0] - e.pos[0], e.at[1] - e.pos[1], e.at[2] - e.pos[2]];   // FIELD-GUN14: a rebuilt batch starts at its centres again - the flight's delta has to be put back
         onSpawn?.(e.batch);
@@ -319,6 +379,7 @@ export function createHitEffects({
     clear() {
       for (let i = live.length - 1; i >= 0; i--) retire(live[i]);
       marks?.clear?.();   // BLOOD1a: a room thrown away takes its blood with it, on the call every host already makes
+      bleeding.clear();   // BLOOD AUDIT 4: ...and the ledger's memory of who pooled and who walked - the next room's bodies are met fresh
     },
     _live: live,
   };

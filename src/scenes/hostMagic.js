@@ -50,7 +50,8 @@ import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bu
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
 import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf arm the ONE cast engine wires
-import { billboardSize } from '../world/rmbFlats.js';
+import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, ALLY_TOUCH_REACH } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
+import { billboardSize, centredBase } from '../world/rmbFlats.js';
 import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
 import { createHitEffects } from './hitEffects.js';   // AUDIT 26 F033: DaggerfallMissile's impact flash
@@ -93,8 +94,47 @@ export function createPlayerMagic({
   // both resolve inline, without ever touching FPSSpellCasting).
   // @type {?(sp:object, onRelease:Function) => boolean}
   startCastAnim = null,
+  // ALLY-CAST (2026-09-23): the party mate under the crosshair within `reach`, as {id, name} or null - the host's own
+  // pick (player/socialPick.js pickPeerInFront over its peers, party membership and the link's reach); and the door
+  // the cast leaves through (online.sendCast), answering whether it went. A host with neither casts as before.
+  allyTarget = null,
+  castAtAlly = null,
+  // ALLY-CAST + AID1 (2026-09-23, the friendly-spells drop, integrated onto ALLY-CAST): THE PARTY MATES AS BODIES.
+  // `allyMarks()` answers the party mates standing in this scene - [{id, name, feet, height}] in this host's own frame,
+  // or null offline / on a relay that cannot carry the cast frame. The crosshair pick above still decides a cast at
+  // its release; these are for what the pick cannot see - a beneficial touch that meets a mate, a beneficial missile
+  // that strikes one, a beneficial blast they stand in. Each leaves through the SAME door (castAtAlly, the `cast`
+  // frame), so the receiver's law is ALLY-CAST's: a party mate's gift alone, the beneficial families alone, as a
+  // self-cast. A Fireball still passes through a friend: only an allyCastable spell ever considers a mate.
+  allyMarks = null,
+  // SPELLFX1: every player standing in this scene ([{id, feet, height}], the host's own frame) - for a peer's DRAWN
+  // missile alone, which stops on any body it meets; nothing is ever given or dealt through this
+  peerBodies = null,
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
+  /** The party mates as foe-shaped marks ({ally, id, name, ai:{feet, height}}) - the shape every target helper in
+   *  spellcast.js already reads - for a spell that may be given (allyCastable) and is not a FREE ready (AUDIT
+   *  ALLY-CAST A7: a trap's payload is not a gift); [] for anything else, offline, or with no seam. */
+  function allyMarksFor(sp, free = readiedFree) {
+    if (!allyMarks || !castAtAlly || !sp || free || !allyCastable(sp)) return [];
+    let list = null;
+    try { list = allyMarks() ?? null; } catch { return []; }
+    if (!Array.isArray(list)) return [];
+    const out = [];
+    for (const q of list) {
+      if (!q || typeof q.id !== 'string' || !Array.isArray(q.feet) || q.feet.length !== 3 || !q.feet.every(Number.isFinite)) continue;
+      out.push({ ally: true, id: q.id, name: q.name ?? 'a party member', dead: false, ai: { feet: q.feet, height: Number.isFinite(q.height) && q.height > 0 ? q.height : CAPSULE_HEIGHT } });
+    }
+    return out;
+  }
+  /** A gift landed on a mate: out through ALLY-CAST's door, the caster's line on success. Nothing lands here - the
+   *  mate's own client applies it (ALLY-CAST's receiver). */
+  function giveToAlly(mark, sp) {
+    let sent = false;
+    try { sent = !!castAtAlly?.(mark.id, allyCastFrame(sp, playerEntity.level, mark.id)); } catch { sent = false; }
+    if (sent) say(allyCastCasterLine(sp.name, mark.name));
+    return sent;
+  }
   // Classic click-to-cast: DFU's armed state IS the readied spell -
   // EntityEffectManager.cs:250 fires on `readySpell != null`, and
   // CastReadySpell clears it. The port used to mirror that in a
@@ -291,12 +331,15 @@ export function createPlayerMagic({
   /** The caster wrapper a missile carries: the player's for the player's, the foe's (its entity and sinks) for an
    *  enemy's, none for an enemy missile whose caster is gone. */
   const missileCaster = (m) => (m.fromPlayer === false ? (m.casterFoe ? { entity: m.casterFoe.entity, sinks: foeSinks(m.casterFoe) } : null) : playerCaster());
-  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null, playerHeight = CAPSULE_HEIGHT } = {}) {
+  function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null, playerHeight = CAPSULE_HEIGHT, allies = false } = {}) {
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes())) {
       if (excludeFoe && t === excludeFoe) continue;
       if (t.puppet && caster?.entity && caster.entity !== playerEntity) continue;   // AUDIT WORLD6b-iii(a) C15: a FOE's blast lands nothing on a PUPPET here - its owner's world resolves that foe (my own blast on a puppet still goes to its owner as my hit)
       applySpellToFoe(spell, casterLevel, t, caster);
     }
+    // AID1 onto ALLY-CAST: MY OWN beneficial blast reaches the party mates in it too (DoAreaOfEffect's OverlapSphere meets
+    // their colliders) - `allies` is the missile's own word that it may be given (not a free ready)
+    if (allies && caster?.entity === playerEntity) for (const t of sweepFoes(pos, EXPLOSION_RADIUS, allyMarksFor(spell, false))) giveToAlly(t, spell);
     // ROAD-H H2: the player is a COLLIDER in DFU's OverlapSphere like every foe (DaggerfallMissile.cs:481) - its CharacterController capsule, at the LIVE height PlayerHeightChanger keeps (:54-57/:475-478). This measured ONE POINT at the STANDING half-capsule, feet + 0.9: a metre and a half wrong on a mount, half a metre wrong crouched, and short of DFU's catch by a whole body radius in every stance. AUDIT 65 CV-2: and that body is the PLAYER's 0.35 (PlayerAdvanced.prefab:82), not the foe's 0.45 - the rim is 4.35.
     if (playerFeet && sphereOverlapsCapsule(pos, EXPLOSION_RADIUS, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) {
       applySpellToPlayer(spell, casterLevel, caster);
@@ -328,13 +371,34 @@ export function createPlayerMagic({
    *  (GetEntityTargetInTouchRange, :411-421) and once for real when the
    *  ByTouch missile's Start calls DoTouch on the release frame
    *  (DaggerfallMissile.cs:273-275). Both reads live here. */
-  function pickTouch(eye, dir) {
+  function pickTouch(eye, dir, sp = null) {
     if (!eye || !dir) return null;
-    return pickTouchTarget(eye, dir, foes(), (c, d) => {
+    const marks = allyMarksFor(sp);   // AID1 onto ALLY-CAST: a beneficial touch may land on a party mate - the nearest along the aim wins
+    return pickTouchTarget(eye, dir, marks.length ? [...foes(), ...marks] : foes(), (c, d) => {
       const l = d || 1, dx = (c[0] - eye[0]) / l, dy = (c[1] - eye[1]) / l, dz = (c[2] - eye[2]) / l;
       const hit = collider.raycast(eye, [dx, dy, dz], d);
       return !Number.isFinite(hit) || hit >= d - 1e-3;
     });
+  }
+
+  /** AUDIT ALLY-CAST A2/A6: THE PARTY MATE THE CAST WOULD LAND ON - the host's pick (`allyTarget`: the F key's ray
+   *  over the party, within `reach`, a member some socket of mine reaches) behind pickTouch's OWN line-of-sight rule:
+   *  the first cut redirected a Heal at a friend through a closed door or a dungeon wall, which a touch on a foe
+   *  never crosses. Null with no aim, no pick, a wall short of them, or a pick that throws (the host's seam, not the
+   *  cast's law - the spell then goes the ordinary way). The plaque asks the same question (A5), so it never promises
+   *  a cast the click would not make. */
+  function allyInReach(eye, dir, reach) {
+    if (!eye || !dir || !allyTarget) return null;
+    let ally = null;
+    try { ally = allyTarget(eye, dir, reach) ?? null; } catch { return null; }
+    if (!ally) return null;
+    const d = ally.distance;
+    if (Number.isFinite(d) && d > 0) {
+      const l = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+      const hit = collider.raycast(eye, [dir[0] / l, dir[1] / l, dir[2] / l], d);
+      if (Number.isFinite(hit) && hit < d - 1e-3) return null;
+    }
+    return ally;
   }
 
   /**
@@ -371,6 +435,22 @@ export function createPlayerMagic({
     const dir = lastAim ? lastAim.dir : p.dir;
     // :2141 - readySpellDoesNotCostSpellPoints clears with the ready.
     const done = (v) => { lastSpell = sp; onCastReadySpell?.(sp); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; };   // :2136-2141 (lastSpell = readySpell, the raise, then the clear)
+    // ALLY-CAST: THE PARTY MATE UNDER THE CROSSHAIR takes a beneficial CasterOnly, ByTouch or SingleTargetAtRange
+    // cast - the port's own targeting (systems/allyCast.js, a recorded departure): a CasterOnly Heal read off a
+    // friend is a touch on them, not on me. The spell is spent as any cast is (the magicka went at the cast, the
+    // tally is the same), and the ally's own client applies it. A frame that cannot leave (nobody reachable) falls
+    // through to the ordinary arm: the spell still does what it always did. AUDIT ALLY-CAST A7: a FREE ready (a
+    // trap's payload, readySpellDoesNotCostSpellPoints) is never redirected - it is the trap's spell on the player who
+    // sprang it, not a gift they chose to give.
+    const allyReach = allyReachFor(sp.rangeType);
+    const ally = !readiedFree && allyReach !== null && allyCastable(sp) ? allyInReach(eye, dir, allyReach) : null;
+    if (ally && castAtAlly?.(ally.id, allyCastFrame(sp, playerEntity.level, ally.id))) {
+      lastCastCost = cost;
+      tallyCastSkills(sp);
+      surfacePlayer();
+      say(allyCastCasterLine(sp.name, ally.name));
+      return done(true);
+    }
     if (sp.rangeType === 0) {
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; AssignBundle at :2117.
@@ -390,13 +470,14 @@ export function createPlayerMagic({
     }
     if (sp.rangeType === 1) {
       // The ByTouch missile's own DoTouch, on the release frame.
-      const t = pickTouch(eye, dir);
+      const t = pickTouch(eye, dir, sp);
       lastCastCost = cost;
       tallyCastSkills(sp);
       surfacePlayer();
       // Nothing in reach when the hands open: the spell is spent and
       // gone, exactly as DFU's touch missile that finds no entity.
-      if (t) applySpellToFoe(sp, playerEntity.level, t, playerCaster());
+      if (t?.ally) giveToAlly(t, sp);   // AID1 onto ALLY-CAST: the touch met a mate the crosshair pick did not name
+      else if (t) applySpellToFoe(sp, playerEntity.level, t, playerCaster());
       return done(true);
     }
     if (sp.rangeType === 3) {
@@ -407,13 +488,14 @@ export function createPlayerMagic({
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, foes())) {
         applySpellToFoe(sp, playerEntity.level, t, playerCaster());
       }
+      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, allyMarksFor(sp))) giveToAlly(t, sp);   // AID1 onto ALLY-CAST: the mates around me
       return done(true);
     }
     if (sp.rangeType !== 2 && sp.rangeType !== 4) return done(false);
     lastCastCost = cost;
     tallyCastSkills(sp);
     surfacePlayer();
-    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true });
+    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true, ally: !readiedFree && allyCastable(sp) });   // AID1 onto ALLY-CAST: may be given to a party mate it strikes (never a free ready's)
     return done(true);
   }
 
@@ -457,7 +539,9 @@ export function createPlayerMagic({
       // ByTouch: CastReadySpell aborts BEFORE spending when no target
       // sits in touch range (verbatim - the S9 'spends on a whiff'
       // rule was wrong and died at its audit).
-      if (!pickTouch(eye, dir)) return false;
+      // ALLY-CAST: the touch probe admits a party mate in touch reach as it admits a foe - the release frame (the
+      // ally arm there) is where the cast is aimed, but CastReadySpell's own gate runs first
+      if (!pickTouch(eye, dir, sp) && !(!readiedFree && allyCastable(sp) && allyInReach(eye, dir, ALLY_TOUCH_REACH))) return false;   // AID1 onto ALLY-CAST: a mate's body the touch meets is a target too
     }
     // :423-425 DecreaseMagicka - the spend is at the CAST, before a
     // single frame of hand motion has run.
@@ -503,7 +587,17 @@ export function createPlayerMagic({
     readiedFree = free;
     readiedCost = spellPointCost;
     onNewReadySpell?.(sp);   // :348 - after the assignment, before the CasterOnly instant cast
-    if (sp.rangeType === 0) { castInput(null, null); return; }
+    if (sp.rangeType === 0) {
+      // AUDIT ALLY-CAST A1: a CasterOnly spell with a PARTY MATE under the crosshair ARMS instead of firing on the
+      // spot. The instant arm (:350-351) gave the player no sign of where the cast would land - a Heal readied while
+      // a friend happened to stand in the way went to them, a Heal readied for a friend who had just stepped aside
+      // healed me - so the port's own targeting (systems/allyCast.js) shows itself first: armed, the plaque under
+      // the mate says "Cast Heal on Bran", and the next click resolves through releaseFrame's ally arm, or through
+      // the CasterOnly arm as ever if they moved. A free ready (A7) fires on the spot as DFU's does; so does one
+      // with nobody there.
+      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }
+      castInput(null, null); return;
+    }
     // AUDIT 24 scenes: SetReadySpell's own line, verbatim -
     // GetLocalizedText("pressButtonToFireSpell") = "Press button to
     // fire spell." (Internal_Strings_en, EntityEffectManager.cs:355).
@@ -526,7 +620,7 @@ export function createPlayerMagic({
     uploadRecord(archive, 0);
     const size = billboardSize(t, 0);
     m.firePos = [...m.pos];
-    m.batch = renderer.createBillboardBatch(archive, 0, size, [[m.firePos[0], m.firePos[1], m.firePos[2]]]);
+    m.batch = renderer.createBillboardBatch(archive, 0, size, [centredBase(m.firePos, size)]);   // FIELD-GUN20: a missile is CENTRED on its position (DaggerfallMissile.cs:601-602, no AlignToBase) - the base is half a height under it
     // FA1 slice 2: the missile flat ANIMATES while it flies -
     // DaggerfallMissile.cs:605 sets BillboardFramesPerSecond (5) on the
     // billboard it makes at :601. Frozen on frame 0, a fireball was a
@@ -575,11 +669,11 @@ export function createPlayerMagic({
       const hitWall = collider.raycast(m.pos, _unit, reach);
       if (Number.isFinite(hitWall) && hitWall <= reach) {
         const impact = [m.pos[0] + _unit[0] * hitWall, m.pos[1] + _unit[1] * hitWall, m.pos[2] + _unit[2] * hitWall];   // ROAD-H tail (review): the collider answers in the RAY's own units, and the ray is `_unit` - `m.dir` would scale the impact point by |dir| (`colliderPosition += direction.normalized * hitInfo.distance`, DaggerfallMissile.cs:347)
-        if (m.spell.rangeType === 4) {
+        if (m.spell.rangeType === 4 && !m.visual) {   // SPELLFX1: a peer's DRAWN missile lands nothing
           // AUDIT WORLD6b-iii(a) A1: an ENEMY missile's blast on a wall is the ENEMY's - its caster's level and sinks
           // (the flight's own arm below had them); this arm credited every enemy blast to ME at MY level, with the
           // reflect chain and the skill tallies mine to pay
-          explodeAt(impact, m.spell, m.fromPlayer === false ? (m.casterLevel ?? 1) : playerEntity.level, playerFeet, missileCaster(m), { playerHeight });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
+          explodeAt(impact, m.spell, m.fromPlayer === false ? (m.casterLevel ?? 1) : playerEntity.level, playerFeet, missileCaster(m), { playerHeight, allies: !!m.ally });   // ROAD-H H2: the blast's OverlapSphere meets the player's LIVE capsule
         }
         showImpactFlash(m, impact);   // F033: DFU flashes on ANY wall hit, AoE or not
         retireMissile(m);
@@ -589,6 +683,15 @@ export function createPlayerMagic({
       // The batch was built ONCE at the fire position; flight rides
       // the batch's origin uniform (zero GL churn).
       if (m.batch) m.batch.origin = [m.pos[0] - m.firePos[0], m.pos[1] - m.firePos[1], m.pos[2] - m.firePos[2]];
+      // SPELLFX1: A PEER'S MISSILE, DRAWN - it flies, meets a wall (above), a body or me, flashes and is gone, and
+      // applies NOTHING: the caster's own world decided what it hit (a beneficial one of theirs reached its target as ALLY-CAST's cast frame)
+      if (m.visual) {
+        const body = (playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS))
+          || foes().some((f) => !f.dead && missileHitsFoe(m.pos, f))
+          || (peerBodies?.() ?? []).some((q) => q && q.id !== m.casterId && Array.isArray(q.feet) && missileHitsCapsule(m.pos, q.feet, q.height ?? CAPSULE_HEIGHT, PLAYER_BODY_RADIUS));
+        if (body) { showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]); retireMissile(m); }
+        continue;
+      }
       // X3-slice: an ENEMY missile hunts the PLAYER (the dungeon's
       // arm: the caster wrapper rides the impact; foe-vs-foe
       // friendly fire pends the target sweep, the shared residual).
@@ -607,10 +710,24 @@ export function createPlayerMagic({
         }
         continue;
       }
+      // AID1 onto ALLY-CAST: a BENEFICIAL missile of mine meets a party mate's capsule the way it meets a foe's
+      // (DaggerfallMissile's SphereCast hits whatever collider is there) - an AreaAtRange one bursts, the rest are given
+      // to that mate alone
+      if (m.ally) {
+        const hitMate = allyMarksFor(m.spell, false).find((p) => missileHitsCapsule(m.pos, p.ai.feet, p.ai.height, PLAYER_BODY_RADIUS));
+        if (hitMate) {
+          const at = [m.pos[0], m.pos[1], m.pos[2]];
+          if (m.spell.rangeType === 4) explodeAt(at, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight, allies: true });
+          else giveToAlly(hitMate, m.spell);
+          showImpactFlash(m, at);
+          retireMissile(m);
+          continue;
+        }
+      }
       for (const f of foes()) {
         if (f.dead) continue;
         if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
-          if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight });   // ROAD-H H2
+          if (m.spell.rangeType === 4) explodeAt(m.pos, m.spell, playerEntity.level, playerFeet, playerCaster(), { playerHeight, allies: !!m.ally });   // ROAD-H H2
           else applySpellToFoe(m.spell, playerEntity.level, f, playerCaster());
           showImpactFlash(m, [m.pos[0], m.pos[1], m.pos[2]]);   // F033
           retireMissile(m);
@@ -773,6 +890,7 @@ export function createPlayerMagic({
     missileCount: () => missiles.length,   // M5 probe surface
     readied: () => readiedSpell,
     readiedIndex: () => readiedSpell?.index ?? null,
+    allyInReach,   // AUDIT ALLY-CAST A5: the plaque's question, answered by THIS engine's pick and collider
     setReadiedByIndex(index, spellsByIndex) {
       // S1: a MADE spell has no SPELLS.STD index (it carries a
       // negative one of its own), so the file table cannot answer for
@@ -792,6 +910,28 @@ export function createPlayerMagic({
       readiedSpell = sp ?? null;
       readiedFree = false;
       readiedCost = readiedSpell ? calculateCastCost(readiedSpell, playerEntity).sp : 0;   // :327-328
+    },
+    /** SPELLFX1: another player's cast, DRAWN (the Unity co-op's RpcPlayPlayerSpellCastVisual): a ranged cast flies as
+     *  a missile of its element from their eye along their aim, and a touch, self or area cast flashes where it went
+     *  off. Visual only - nothing is applied, spent, tallied or heard as a hit. */
+    spellVisual({ from, dir, element = 4, rangeType = 2, casterId = null }) {
+      if (!Array.isArray(from) || from.length !== 3 || !from.every(Number.isFinite)) return false;
+      const el = Number.isInteger(element) && element >= 0 && element <= 4 ? element : 4;
+      // SPELLFX2 (2026-09-23, per-request: "give the spell projectiles sound and casting sound like the player has
+      // for himself"): THE CAST IS HEARD WHERE IT WAS CAST. The player's own cast plays the element's cast sound
+      // at release (tallyCastSkills, PlayCastSound) - a missile of this engine carries no sound of its own after
+      // that, its whoosh IS the cast sound. A peer's cast plays that same clip from the peer's own position, on
+      // the enemy casters' 3D door and distance (EnemyCastReadySpell's play3dId, maxDistance 16).
+      try { audio.play3dId?.(SPELL_CAST_SOUND[el] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }); } catch { /* a sound never costs the visual */ }
+      if (rangeType === 2 || rangeType === 4) {
+        if (!Array.isArray(dir) || dir.length !== 3 || !dir.every(Number.isFinite)) return false;
+        missiles.push({ spell: { element: el, rangeType }, pos: [...from], dir: [...dir], age: 0, batch: null, fromPlayer: null, visual: true, casterId });
+        return true;
+      }
+      // a touch goes off at arm's length along the aim; a self or area cast on the caster's own body
+      const at = rangeType === 1 && Array.isArray(dir) ? [from[0] + dir[0] * 1.5, from[1] + dir[1] * 1.5, from[2] + dir[2] * 1.5] : [from[0], from[1] - 0.6, from[2]];
+      impacts.showImpactFlash(missileArchive(el), at);
+      return true;
     },
     /** X3-slice: an enemy spell missile joins the engine's pool -
      *  aimed by the caller (the host aims at the player mid-capsule

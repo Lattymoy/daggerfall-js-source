@@ -89,7 +89,7 @@ import { foeTarget, tickFoeTarget } from './hudFoeTarget.js';
 // styles show a corner word - imported rather than restated.
 import { crosshairEnabled, interactionIconStyle, iconReplacesCrosshair, modeIconEnabled, MODE_LABEL } from './hudCrosshair.js';
 import { getInteractionMode } from '../player/interactionMode.js';
-import { setEnhancedHudTextScale } from './enhancedHudText.js';   // AUDIT FONT F2: the popup column and the mid-screen label are layers beside this one, not inside it
+import { setEnhancedMidTextScale } from './enhancedHudText.js';   // AUDIT FONT F2: the mid-screen label is a layer beside this one, not inside it (the popup column it once scaled too is a toast in the notice stack since ENH-NOTICE3)
 
 /**
  * PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
@@ -608,12 +608,12 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     host.style.setProperty('--hud-scale', String(scale));
     // HN1: the damage numbers read the same scale, on their own layer.
     document.getElementById('enhanced-hitnums')?.style.setProperty('--hud-scale', String(scale));
-    // AUDIT FONT F2: ...and so do the popup column and the mid-screen
-    // label, which are layers of their own beside this one and never
-    // INHERITED the variable - they are siblings of `.hud` on
-    // document.body, not children of it. At hudScale 2 the column drew
-    // through the compass block at half size and at 0.5 it floated.
-    setEnhancedHudTextScale(scale, document);
+    // AUDIT FONT F2: ...and so does the mid-screen label, a layer of
+    // its own beside this one that never INHERITED the variable - a
+    // sibling of `.hud` on document.body, not a child of it. (The
+    // popup column this once scaled too is a toast in the notice stack
+    // since ENH-NOTICE3, at the box's size, and takes no HUD scale.)
+    setEnhancedMidTextScale(scale, document);
   }
 
   // THE COMPASS. Each point is placed by the same shortest-way-round
@@ -871,7 +871,18 @@ function drawSpellChip(view, tag) {
   last.qspell = sig;
   const chip = parts.spellChip;
   chip.chip.classList.toggle('on', !!sp);
-  if (!sp) return;
+  // HOTSLOT (2026-09-22): an EMPTY slot is a socket, as the diamond's
+  // cells are (departure 4) - drawn dim with its key, so the key is
+  // seen and, on a phone, the first tap has a chip to land on (the
+  // tap fills it from the book: spellQuickslotPress). Hidden, the slot
+  // could never be filled without a keyboard.
+  chip.chip.classList.toggle('empty', !sp);
+  if (!sp) {
+    chip.chip.classList.remove('readied', 'ghost', 'cycling');
+    chip.name.textContent = 'No spell';
+    quickTag(chip, 'spellcap', tag);
+    return;
+  }
   chip.chip.classList.toggle('readied', !!sp.readied);
   chip.chip.classList.toggle('ghost', !sp.spell);
   chip.chip.classList.toggle('cycling', lamp);

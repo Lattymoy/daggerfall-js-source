@@ -32,6 +32,25 @@
    this block into that page at build; the rest of the skin stays a
    string the game pays for only when a screen is mounted. */
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // FIX-D: Silkscreen's five ahead of Pixelify Sans
+import { badgeCss } from './playerBadge.js';   // ACC3c: one rule per title and per glyph, walked out of the vocabulary - the card writes a class and the skin carries the colour
+
+/**
+ * QUICK-LOOT-STATS: THE PLAQUE'S LAYOUT NUMBERS LIVE WITH THE DRESS.
+ *
+ * `ui/worldPlaque.js statsSide` decides which side the stat panel
+ * stands on, and that decision is arithmetic over these widths - so
+ * they cannot be a literal in the sheet AND a literal in the module, or
+ * the day one is tuned the panel is laid out against the other and runs
+ * off the screen edge. They live here because the sheet is the thing
+ * that DRAWS them; the plaque imports the sheet already (for
+ * `injectEnhancedStyle`), so this adds no edge and the reverse - the
+ * sheet importing the plaque - would be a cycle.
+ */
+export const PLAQUE_MAX_W = 300;
+export const STATS_W = 190;
+export const STATS_GAP = 8;
+/** The clearance kept between the stat panel and the window's edge. */
+export const STATS_MARGIN = 12;
 export const ENHANCED_TOKENS = `:root {
   --ink: #0e1013;
   --slate: #171b21;
@@ -83,53 +102,14 @@ export const fontsUrl = (families) =>
  *  own claim. */
 export const ENHANCED_FONTS_URL = fontsUrl([FONT_DISPLAY, FONT_DATA, FONT_PIXEL_BRAND, FONT_PIXEL_DATA]);
 
-/* FONT1: THE POPUP COLUMN'S TWO NUMBERS, in one home. The sheet below
-   sets them and ui/enhancedHudText.js reads them - the slide is
-   computed in pixels from the row height, so a row that is 20px in the
-   sheet and 18 in the module would scroll out by the wrong amount
-   every time a line leaves. `TOP` clears the compass strip and a named
-   target's bar (measured in Chromium, tools/font1Probe.mjs). */
-export const HUD_TEXT_TOP_PX = 96;
-export const HUD_TEXT_ROW_PX = 20;
-/* AUDIT FONT F9: the narrow top was a LITERAL in the max-width 860
-   block while the wide one was interpolated from the export above, so
-   a slice that moved the compass would have moved one of the two. It
-   is an export like its sibling, and the sheet interpolates both. */
-export const HUD_TEXT_TOP_NARROW_PX = 82;
-
-/* AUDIT FONT F7: THE COLUMN AND THE CHAT PEEK SHARE A CORNER, and at
-   the tops above they share it almost entirely. `.dfchat` (ui/chatPanel
-   .js) is fixed at top 44 - 72 on the touch skin - and its PEEK is
-   CHAT_PEEK (net/chat.js, 5) lines of `.dfchat-line` under it; the
-   panel is z-index 5 and the column z-index 4, so on a 430px phone the
-   chat's last five lines simply sat on top of "Your Long Blade skill
-   has improved." and neither was readable.
-   So where the chat is MOUNTED the column starts under the peek
-   instead. The numbers below are the chat sheet's own, and they are
-   CHECKED TWICE: test/hudtext.test.js reads the tops, the line box and
-   the gap back out of CHAT_CSS itself, so a chat that moves reddens
-   this rather than sliding back under the column; and
-   tools/font1Probe.mjs builds the real panel in Chromium and measures
-   where it actually ends (248.5 and 292.5 at the time of writing).
-   A peek line WRAPS at 440px more often than not, which is where the
-   two rows per line come from - the probe is the ruler for that.
-   The alternative, measuring the panel on every frame, is a forced
-   layout sixty times a second for a surface that moves twice a
-   session. */
-const CHAT_TOP_PX = 44;               // `.dfchat` top
-const CHAT_TOP_TOUCH_PX = 72;         // `.dfchat.touch` top
-const CHAT_PEEK_LINES = 5;            // net/chat.js CHAT_PEEK
-const CHAT_PEEK_ROWS = 2;             // a peek line wraps in a 440px box (measured)
-const CHAT_PEEK_LINE_PX = 13 * 1.35;  // `.dfchat-line` font-size x line-height
-const CHAT_PEEK_GAP_PX = 3;           // `.dfchat-peek` gap
-const CHAT_HINT_PX = 17;              // `.dfchat-hint` ("Enter to chat") and its 4px margin - the desktop tail
-const CHAT_OPEN_BTN_PX = 33;          // `.dfchat.touch .dfchat-open` (the Chat button) in the hint's place
-const CHAT_AIR_PX = 4;                // ...and a step of air, so the first popup line is not flush against it
-const chatPeekBottom = (top, tail) => Math.ceil(
-  top + CHAT_PEEK_LINES * CHAT_PEEK_ROWS * CHAT_PEEK_LINE_PX
-  + (CHAT_PEEK_LINES - 1) * CHAT_PEEK_GAP_PX + tail + CHAT_AIR_PX);
-export const HUD_TEXT_TOP_CHAT_PX = chatPeekBottom(CHAT_TOP_PX, CHAT_HINT_PX);
-export const HUD_TEXT_TOP_CHAT_TOUCH_PX = chatPeekBottom(CHAT_TOP_TOUCH_PX, CHAT_OPEN_BTN_PX);
+/* ENH-NOTICE3 (2026-09-21): the popup column's numbers - HUD_TEXT_TOP_PX
+   (96, under the compass block), HUD_TEXT_ROW_PX (20, the slide's row),
+   HUD_TEXT_TOP_NARROW_PX (AUDIT FONT F9) and the two chat-peek offsets
+   (AUDIT FONT F7, computed off the chat sheet's own line box) - left
+   with the column. PopupText's rows are toasts in the notice stack now
+   (ui/enhancedNotice.js, `.notice.notice-toast` below), at the right
+   edge, where the compass, the chat's peek and the mid-screen label
+   are not. Ledger A row "THE HUD LINE AS A TOAST". */
 
 export const ENHANCED_CSS = `
 /* ── FIX-D: the digit five is Silkscreen's - see ui/pixelifyFive.js */
@@ -247,6 +227,117 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
 .stats { display: grid; grid-template-columns: auto 1fr; gap: 7px 18px; margin: 0 0 18px; }
 .stats dt { color: var(--dim); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 .stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* ── TILE1: THE SAVE TILE (ui/saveTile.js) ─────────────────────────
+   Mac: "a detailed tile based design for your saves... showing your
+   portrait and character information".
+
+   A GRID RATHER THAN A LIST. Three panes listed the same slots as full
+   width cards, so four saves filled a screen and a player scrolled to
+   find a character they would have recognised at a glance. The tiles
+   are as wide as they need to be and as many as fit.
+
+   THE TILE ITSELF IS A THREE PART GRID: the face down the left in its
+   own column, everything about the character beside it, and the
+   actions along the foot spanning both - so the buttons line up across
+   every tile in a row however tall the text above them runs.
+
+   It borrows the skin rather than bringing one: --iron for the rule,
+   --bone for the name, --dim for the quiet lines, --brass for the
+   primary. Nothing here is a new design language. */
+.svgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.svtile {
+  /* THREE ROWS: the character, a filler that eats the slack, and the
+     foot. Without the filler every tile's buttons sat wherever its own
+     text ended, and a row of equal-height tiles had its buttons at four
+     different heights - measured in tools/saveTileProbe.mjs, and it
+     reads as four misaligned cards rather than one row. */
+  display: grid; grid-template-columns: 96px 1fr; grid-template-rows: auto 1fr auto;
+  gap: 0 16px;
+  border: 1px solid var(--iron); background: #12161b; padding: 16px; position: relative;
+}
+/* The slot this pane is ABOUT - the most recent, or the one a save
+   would overwrite. One brass edge, no badge and no extra word. */
+.svtile.sv-current { border-color: var(--brass); }
+
+/* THE WELL. A fixed box so a tile is the same height whether its
+   portrait loaded or not - a grid that reflows when ten CIF reads land
+   is a list that jumps under a player's finger. */
+.svface {
+  grid-row: 1 / span 2; width: 96px; height: 116px;
+  border: 1px solid var(--iron); background: #0a0c11;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.svface canvas {
+  /* THE PIXELS, AS THEY ARE. A 2x nearest-neighbour head is the art
+     Daggerfall shipped; smoothing it is a portrait of a different
+     game. */
+  image-rendering: pixelated; max-width: 100%; max-height: 100%; display: block;
+}
+.svinitial { font-family: var(--display); font-size: 40px; color: var(--iron); }
+
+.svwho { grid-column: 2; grid-row: 1; min-width: 0; }
+.svwho h3 { font-family: var(--display); font-weight: 400; font-size: 21px; margin: 0 0 2px; overflow-wrap: anywhere; }
+.svsub { color: var(--bone); font-size: 13px; margin: 0 0 2px; }
+.svwhen { color: var(--dim); font-size: 12px; margin: 0 0 10px; }
+.svwho .stats { gap: 4px 14px; margin: 0; }
+
+/* THE NAME AND THE SLOT SHARE ONE ROW. Not the slot pinned to the
+   tile's corner: a slot name is the player's own words and can be a
+   sentence, and pinned it ran straight into a long character name
+   (measured at "Mithriil Stormaire" beside "a very long slot name
+   indeed"). Sharing a row makes the slot GIVE WAY, which is the right
+   precedence - the character is who a player is looking for. */
+.svtop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.svtop h3 { flex: 0 1 auto; min-width: 0; }
+.svslot {
+  flex: 0 1 auto; min-width: 0;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── THE CLOUD LINE (ACC2) ───────────────────────────────────────
+   ONE line and at most one button, and only when there is an account
+   to have a backup on. ACC0's wall is at cloud saves, and a player
+   without one is not nagged about it on every tile. */
+/* The foot: pinned to the bottom row, spanning both columns. */
+.svfoot { grid-column: 1 / -1; grid-row: 3; }
+.svcloud {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--iron);
+}
+.svsay { font-size: 12px; letter-spacing: 0.06em; color: var(--dim); flex: 1 1 auto; }
+.svcloud.is-saved .svsay { color: var(--verdigris); }
+.svcloud.is-bad .svsay { color: var(--ruby); }
+/* ACC2c: a save whose ONLY copy is the backup. Brass rather than the
+   verdigris a backed-up local save gets, because they are opposite
+   facts wearing the same sentence shape - one says "there are two of
+   these" and this one says "there is one, and it is not here". */
+.svcloud.is-only .svsay { color: var(--brass); }
+.svcloud .act { padding: 7px 12px; min-height: 32px; font-size: 12px; }
+
+/* ── ACC2c: THE CLOUD-ONLY GRID ──────────────────────────────────
+   Its own block under the pane's own tiles, with a rule above it, so
+   the eye reads two groups rather than one grid of tiles that answer
+   different buttons. No new colours and no new box: the heading is the
+   display face every heading here is in, and the tiles inside are the
+   same tiles. */
+.svcloudonly { margin-top: 6px; padding-top: 16px; border-top: 1px solid var(--iron); }
+.svcloudonly h4 {
+  font-family: var(--display); font-weight: 400; font-size: 17px;
+  margin: 0 0 2px; color: var(--bone);
+}
+.svcloudonly .meta { margin: 0 0 14px; }
+
+.svtile .acts { margin-top: 12px; }
+.svtile .acts .act { padding: 9px 16px; min-height: 38px; }
+
+/* A phone holds one tile across, and the face beside the text still
+   reads - so the columns stay and only the gaps tighten. */
+@media (max-width: 560px) {
+  .svgrid { grid-template-columns: 1fr; }
+  .svtile { padding: 14px; gap: 4px 12px; }
+}
 
 .acts { display: flex; gap: 8px; flex-wrap: wrap; }
 .act {
@@ -777,8 +868,10 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    AUDIT INV2 A7: THE LADDER, walked rather than eyeballed. Every
    z-index literal in src/ and index.html: the doors' hosts are 11-14,
    the boot error and three bottom sheets are 20, enhancedChunk's "the
-   game was updated" scrim is 30, the asset picker is 40 (and
-   test/mwattach.test.js holds that it outranks everything). The first
+   game was updated" scrim is 30, the notice stack (ENH-NOTICE1; AUDIT
+   ENH-NOTICE3 A7 lifted it off a tie with that scrim) is 31, the asset
+   picker is 40 (and test/mwattach.test.js holds that it outranks
+   everything). The first
    cut put the ghost at 30 - a straight COLLISION with the update scrim,
    which won only by an accident of which host it happened to be mounted
    inside. 16 clears every door host and loses to every notice that
@@ -836,12 +929,12 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .itemname small { color: var(--dim); font-size: 11.5px; }
 /* LR1: THE TIER COLOURS (systems/lootRarity.js RARITIES - the four
    hexes here are pinned against that table). A rolled row wears
-   data-rarity; the picked card's heading and the pile plaque's rows
+   data-rarity; the picked card's heading and the plaque's rows
    wear the same attribute. Common wears nothing. */
-.itemrow[data-rarity="magic"] .itemname > span:first-child, .packdetail .card[data-rarity="magic"] h3, .loothover-row[data-rarity="magic"] > span:first-child { color: #6f9ee8; }
-.itemrow[data-rarity="rare"] .itemname > span:first-child, .packdetail .card[data-rarity="rare"] h3, .loothover-row[data-rarity="rare"] > span:first-child { color: #e4c34f; }
-.itemrow[data-rarity="legendary"] .itemname > span:first-child, .packdetail .card[data-rarity="legendary"] h3, .loothover-row[data-rarity="legendary"] > span:first-child { color: #e07a2e; }
-.itemrow[data-rarity="artifact"] .itemname > span:first-child, .packdetail .card[data-rarity="artifact"] h3, .loothover-row[data-rarity="artifact"] > span:first-child { color: #b57bee; }
+.itemrow[data-rarity="magic"] .itemname > span:first-child, .packdetail .card[data-rarity="magic"] h3, .wplaque-row[data-rarity="magic"] > span:first-child { color: #6f9ee8; }
+.itemrow[data-rarity="rare"] .itemname > span:first-child, .packdetail .card[data-rarity="rare"] h3, .wplaque-row[data-rarity="rare"] > span:first-child { color: #e4c34f; }
+.itemrow[data-rarity="legendary"] .itemname > span:first-child, .packdetail .card[data-rarity="legendary"] h3, .wplaque-row[data-rarity="legendary"] > span:first-child { color: #e07a2e; }
+.itemrow[data-rarity="artifact"] .itemname > span:first-child, .packdetail .card[data-rarity="artifact"] h3, .wplaque-row[data-rarity="artifact"] > span:first-child { color: #b57bee; }
 .packdetail ul.rarity { list-style: none; margin: 4px 0 10px; padding: 0; font-family: var(--data); font-size: 13px; line-height: 1.5; }
 .packdetail ul.rarity li:first-child { text-transform: uppercase; letter-spacing: 0.16em; font-size: 10.5px; color: var(--dim); }
 .packdetail ul.rarity li:last-child:not(:first-child):not(:nth-child(2)) { color: var(--dim); font-style: italic; }
@@ -889,7 +982,16 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .goldfield input:focus-visible { outline: none; border-color: var(--brass); }
 /* ONLINE1: the Online card's two fields */
 .card label.field { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
-.card label.field .fieldlabel { font-size: 13px; color: var(--ash); letter-spacing: 0.02em; }
+/* ACC1e F1: THIS SAID var(--ash) AND NOTHING HAS EVER DEFINED --ash.
+   Not here, not in enhanced.html, not in the landing page's injected
+   block - the whole tree has one USE of it and no declaration, so the
+   property was invalid at computed-value time and every field label in
+   the enhanced skin inherited --bone instead. ONLINE1's two fields, the
+   save slot's name, and now this arc's: all of them have been drawing
+   their labels in the body colour since the day the rule was written.
+   --dim is what this wanted and what .card .meta one line up already
+   uses for exactly this job - a quiet label over a loud value. */
+.card label.field .fieldlabel { font-size: 13px; color: var(--dim); letter-spacing: 0.02em; }
 .card label.field input {
   min-height: 44px; padding: 0 12px;
   background: #0b0e12; border: 1px solid var(--iron); color: var(--bone);
@@ -902,6 +1004,128 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .card label.field.bad input { border-color: #b4553f; }
 .card p.meta.nameveto:empty { display: none; }
 .card p.meta.nameveto.bad { color: #e0906f; }
+
+/* ── ACC1e: THE ACCOUNT CARD ────────────────────────────────────────
+   Three shapes and no fourth. Everything else it wears - .card, .tag,
+   .acts, .act, label.field, .fieldlabel - already existed and is
+   already worn by the Online pane this card sits inside. A screen that
+   arrives with its own palette is the drift this file exists to stop. */
+
+/* A FIELD'S HINT. The rule under the box ("at least 8 characters"),
+   said BEFORE the press rather than as a refusal after it. Quieter
+   than the label above it, because it is help rather than a name. */
+.card label.field .fieldhint { font-size: 11.5px; color: var(--dim); opacity: 0.85; }
+/* ...AND THE GROUP NEEDS ROOM UNDER IT, which the probe measured
+   rather than anybody eyeballing: at the shared 10px field margin a
+   hint sat 6px under its own box and 10px above the NEXT field's
+   label. Nearer its own, but by four pixels - which is not a grouping
+   a reader can see, so the hint read as a caption for the box below
+   it. The gap inside a field stays 6px and the gap BETWEEN fields
+   goes to 20px, so proximity says what belongs together. */
+.card.acct label.field { margin: 0 0 20px; }
+
+/* THE REFUSAL, AND THE CONFIRMATION. NAME-F2's own reasoning: the red
+   lives on the border and on this line, never on the text the player
+   typed, because what they have to do next is EDIT that text. The good
+   line is verdigris rather than a green - brass turning is the skin's
+   own idea of a thing that has settled. */
+.card p.meta.acctwhy { margin: 10px 0 14px; font-size: 13px; }
+.card p.meta.acctwhy.bad { color: #e0906f; }
+.card p.meta.acctwhy.good { color: var(--verdigris); }
+.card p.meta.acctwhy:empty { display: none; }
+
+/* ACC3c - THE WARDROBE. Mac put the equip control on the account card
+   ("tap the account icon to equip 1 feature along with signing out"),
+   so it borrows .fieldlabel and .act's own vocabulary rather than
+   bringing a third one - the rule this whole card was written under.
+
+   A TITLE BUTTON CARRIES ITS COLOUR AND NOTHING ELSE UNTIL IT IS WORN.
+   Unworn it is an outline in the title's own gold or red; worn it
+   fills, which is the one state change a player has to be able to read
+   across the room. The colour is written by the card from
+   ui/playerBadge.js - the same table the name over a head reads - so
+   the swatch here and the label in the world cannot drift.
+
+   THE GLYPHS ARE NOT BUTTONS and must not look like them: no border,
+   no hover, no pointer. A glyph is true of an account rather than
+   chosen by one, and a control that cannot be operated is worse than
+   a fact that never offered. */
+.card .acctwear { margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
+.card .acctwear .fieldlabel { margin-top: 6px; }
+.card .acctwearrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.card button.acttitle {
+  font: inherit; font-size: 13px; letter-spacing: 0.04em;
+  padding: 6px 12px; border: 1px solid currentColor; border-radius: 2px;
+  background: transparent; cursor: pointer;
+}
+.card button.acttitle:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.card button.acttitle:disabled { opacity: 0.5; cursor: default; }
+/* WORN vs HELD, and the difference has to read WITHOUT the colour,
+   because the colour already says WHICH title and cannot also say
+   whether it is on. Unworn is dimmed to two thirds behind a hairline;
+   worn is full strength behind a doubled edge with a faint fill under
+   it. A filled swatch was tried and refused: filling with
+   currentColor leaves the label on its own colour, invisible. */
+.card button.acttitle { opacity: 0.62; }
+.card button.acttitle.worn {
+  opacity: 1; border-width: 2px; padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.card .acctglyph {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--dim);
+}
+.card .acctglyphart { width: 15px; height: 15px; display: block; }
+/* One rule per title and per glyph, WALKED out of the vocabulary in
+   ui/playerBadge.js - so the gold on this card and the gold over a
+   head are one fact, and a title added to the token gets a colour
+   here without anybody remembering to write one. */
+${badgeCss()}
+
+/* THE SIGNED-IN FACTS. A key and a value per row, the key quiet and
+   letter-spaced the way .qs-mark and the rarity headings are, so it
+   reads as a label rather than as half a sentence. */
+.card ul.acctfacts { list-style: none; margin: 0 0 16px; padding: 0; }
+.card ul.acctfacts li {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 7px 0; border-bottom: 1px solid var(--iron);
+}
+.card ul.acctfacts li:last-child { border-bottom: 0; }
+.card ul.acctfacts .acctkey {
+  flex: 0 0 96px; font-size: 10.5px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--dim);
+}
+.card ul.acctfacts .acctval { flex: 1 1 auto; min-width: 0; color: var(--bone); font-size: 15px; }
+
+/* ═══ THE RECOVERY CODE ═══════════════════════════════════════════
+   THE ONE MOMENT THIS STRING EXISTS. Email is completely optional
+   (Mac), so there is no address to send a reset to and this code IS
+   the reset - a player who does not write it down has a forgotten
+   password away from losing the account and the saves behind it.
+   So it is drawn as a PLAQUE rather than as a line of text: brass on
+   ink inside a brass frame, the loudest thing the skin can say
+   without a colour it does not own, and wide letter-spacing because
+   what happens next is a human transcribing it onto paper.
+   Selectable on purpose - user-select: all makes one click take the
+   whole code, since a half-copied recovery code is worse than none. */
+.card .acctcode {
+  margin: 4px 0 16px; padding: 16px 12px;
+  border: 1px solid var(--brass); background: #0b0e12;
+  text-align: center;
+}
+.card .acctcode code {
+  font-family: var(--data); font-size: clamp(17px, 4.6vw, 23px); font-weight: 600;
+  letter-spacing: 0.22em; color: var(--brass);
+  word-break: break-all; user-select: all; -webkit-user-select: all;
+}
+/* The phone: 0.22em of tracking on a 23-line is what pushes a 23
+   character code into a second line, and a code that wraps mid-group
+   is a code somebody mistypes. The clamp above shrinks it first; this
+   loosens the grip rather than letting it overflow the card. */
+@media (max-width: 420px) {
+  .card .acctcode { padding: 14px 8px; }
+  .card .acctcode code { letter-spacing: 0.12em; }
+}
 .goldfield .meta { flex: 1 0 100%; color: var(--dim); font-size: 11.5px; margin: 0; }
 
 /* THE LISTS STACK BELOW THE PACK'S OWN BREAKPOINT, not at it: two
@@ -982,6 +1206,14 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .stagebody {
   flex: 1; min-height: 0; display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  /* CHARGEN-REFLEX: the row must be able to SHRINK. A grid's implicit
+     row is auto, which is max-content, so a stage taller than the
+     pane kept its full height while .stagebody itself shrank under
+     flex:1 + min-height:0 - and the difference spilled out of the
+     bottom as VISIBLE overflow, underneath the opaque .actionbar that
+     follows it. minmax(0, 1fr) is what lets the row give way so the
+     stage can scroll inside its own box instead. */
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--gap); background: var(--iron);
 }
 .stagebody.solo { grid-template-columns: 1fr; }
@@ -998,7 +1230,14 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
    Sex and the class METHOD are two choices each. Two choices get two
    large targets and an empty screen around them: a two-button question
    dressed as a form is a two-button question that reads as work. */
-.choose { display: grid; place-content: center; gap: 28px; padding: 40px 30px; height: 100%; }
+/* CHARGEN-REFLEX: "safe center" and a scroll, because plain "center"
+   is a trap. When the content is taller than the box, centred content
+   overflows BOTH ways and the half above the start edge can never be
+   scrolled to - "safe" falls back to "start" in exactly that case, and
+   overflow-y then makes the rest reachable. This stage is centred when
+   it fits and scrolls when it does not, which is what a question with
+   five tall answers needs on a short window. */
+.choose { display: grid; place-content: safe center; gap: 28px; padding: 40px 30px; height: 100%; overflow-y: auto; }
 .choose h2 {
   font-family: var(--display); font-weight: 300; font-size: 30px;
   margin: 0; text-align: center;
@@ -1317,7 +1556,6 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 }
 .hmpick.on { color: var(--brass); border-color: var(--brass); background: #12161b; }
 .hmtrip { margin: 12px 0 0; }
-.hmnotice { color: #d98074; font-size: 13px; margin: 10px 0 0; }
 /* the foot: the hint, the zoom band and (SOC6) the party legend in ONE
    row, so nothing floats at a guessed height (AUDIT SOC C10/D5's lesson) */
 .hmfoot {
@@ -1498,6 +1736,10 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-transform: uppercase; align-self: center; }
 .px-stat .v.won { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-stat .v.bad { color: var(--blood); }
+/* GUILD-REP: a guild row carries three facts - the affiliation, the
+   rank title and the reputation - so the title takes the slack and
+   the number keeps the social rows' right edge. */
+.px-guild .v.px-rank { margin-left: auto; font-size: 16px; align-self: center; }
 /* ── PX7: THE SYSTEM PAGE ── the shell's own panes repainted in whole
    pixels. The LAWS stay in the pane functions; every rule here is
    paint over the same markup (.card/.act/.empty/.stats/.tag/.row). */
@@ -1560,6 +1802,11 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .ctl-notice { margin: 10px 0 0; font-size: 13px; color: var(--dim); }
 .ctl-notice.bad { color: var(--blood); }
 .ctl-group h3 { margin-bottom: 2px; }
+/* TORCH-BIND (2026-09-22, a player: "Keybind changes do not stick?" - they
+   had not found Continue, 53 rows above): the head card with Continue stays
+   in view while the list scrolls, and a second Continue closes the list. */
+.ctl-head { position: sticky; top: 0; z-index: 2; }
+.ctl-foot { display: flex; justify-content: flex-end; }
 .ctl-row:last-child { border-bottom: 0; }
 /* ...and the window's face, where the same markup is drawn in whole
    pixels (the .px-sys block above). */
@@ -1686,6 +1933,87 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .px-about:hover, .px-about:focus-visible { outline: none;
   color: rgb(243,239,44); border-color: var(--brass);
   text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+/* ── ACC1f: THE PROFILE MARK AND THE ACCOUNT WINDOW ─────────────────
+   Mac: the online details live "as a popup on main menu startup and a
+   new profile icon". The mark takes the door's TOP-RIGHT corner - the
+   one the foot's About box does not use - and wears the About box's
+   own face rather than a new one, because two corner buttons that
+   look unrelated read as two different kinds of thing. */
+.px-profile {
+  position: absolute; top: 18px; right: 18px; z-index: 4;
+  display: flex; align-items: center; gap: 10px;
+  font: inherit; font-size: 15px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #d8cfae; cursor: pointer;
+  min-height: 44px; padding: 8px 16px;
+  background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+}
+.px-profile:hover, .px-profile:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* The gem is FILLED when there is a session and HOLLOW when there is
+   not - the same two glyphs the rail uses for on and off, so "am I
+   signed in" is answerable at a glance without reading the word. */
+.px-profileicon { font-size: 12px; line-height: 1; }
+.px-profilename { max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* THE WINDOW is the pause window's frame with the account card inside
+   it, so the door has ONE kind of modal rather than two. It is
+   shorter, because the card is a card and not a journal. */
+/* THE SCRIM. Without it the door's own menu reads straight through the
+   window - CONTINUE and NEW GAME sitting behind the sign-in copy - and
+   a modal you can read the page through is a modal nobody believes is
+   modal. The pause face uses rgba(10,12,17,0.55) over a LIVE frame;
+   this sits over the still door, so it can be heavier. */
+/* THE SCRIM SITS UNDER THE WORDMARK, not over it. The first cut
+   centred the window on the viewport, which put it across the logo -
+   the best thing on that screen, covered by a sign-in box - and used
+   an 0.82 scrim that flattened the whole door to mud. Lighter now, and
+   the window stands in the space the menu list occupies, which is what
+   it is standing in for. */
+.px-acctstage { position: absolute; inset: 0; z-index: 5;
+  display: grid; grid-template-rows: auto 1fr; justify-items: center;
+  padding: clamp(270px, 33vh, 400px) 16px 24px;
+  background: rgba(8,10,15,0.6); }
+.px-win.px-acctwin { height: auto; max-height: min(580px, 58dvh); width: min(500px, 92vw);
+  background: #0a0c11; align-self: start; }
+.px-win.px-acctwin .px-body { padding: 22px 26px 24px; }
+
+/* ═══ ONE AXIS ════════════════════════════════════════════════════
+   Mac: "Nothing is centered". It was true and it read as rushed - a
+   left-aligned tag over a left-aligned heading over left-aligned
+   buttons, with a Close centred underneath them. The window is
+   symmetrical about one line now, contents included. */
+.px-win.px-acctwin .card.acct { text-align: center; }
+.px-win.px-acctwin .card.acct .tag { display: inline-block; }
+.px-win.px-acctwin .card.acct .acts { justify-content: center; }
+.px-win.px-acctwin .card.acct label.field { align-items: center; }
+.px-win.px-acctwin .card.acct label.field input { text-align: center; width: 100%; }
+.px-win.px-acctwin .card.acct ul.acctfacts li { justify-content: center; }
+.px-win.px-acctwin .card.acct ul.acctfacts .acctkey,
+.px-win.px-acctwin .card.acct ul.acctfacts .acctval { flex: 0 0 auto; }
+/* The card inside brings its own frame, and a box inside a box reads
+   as a mistake - the window IS the frame here. */
+.px-win.px-acctwin .card.acct { border: 0; background: none; padding: 0; margin: 0; }
+.px-winfoot { display: flex; justify-content: center; padding: 6px 0 18px; }
+.px-winclose {
+  font: inherit; font-size: 16px; letter-spacing: 0.14em; text-indent: 0.14em;
+  text-transform: uppercase; color: #d8cfae; cursor: pointer;
+  min-height: 44px; padding: 8px 22px;
+  background: rgba(10,12,17,0.55); border: 2px solid #7d7460;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+}
+.px-winclose:hover, .px-winclose:focus-visible { outline: none;
+  color: rgb(243,239,44); border-color: var(--brass);
+  text-shadow: 2px 2px 0 rgb(93,77,12); }
+
+@media (max-width: 480px) {
+  /* On a phone the wordmark owns the top, so the mark loses its word
+     and keeps its gem - a 44px target either way. */
+  .px-profile { top: 10px; right: 10px; padding: 8px 12px; }
+  .px-profilename { display: none; }
+}
 @media (max-width: 480px) {
   .px-wordmark { font-size: 60px; }
   .px-menu button { font-size: 24px; letter-spacing: 0.12em; text-indent: 0.12em; }
@@ -1741,7 +2069,12 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-transform: uppercase; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .card, .shell .dcard { border: 2px solid rgba(125,116,96,0.55); border-radius: 0;
   background: rgba(0,0,0,0.35); }
-.shell .card h3, .shell .dcard h3, .shell .empty h3 { font-family: inherit; font-weight: 400;
+/* ACC1f: ...AND THE DOOR'S WINDOW, which is a third host for the same
+   markup. This rule was .shell only, so the account card's heading
+   came out in Cormorant inside a pixel-skinned window - the one thing
+   on the door not drawn in whole pixels. Found by screenshotting it. */
+.shell .card h3, .shell .dcard h3, .shell .empty h3,
+.px-win .card h3, .px-win .dcard h3, .px-win .empty h3 { font-family: inherit; font-weight: 400;
   letter-spacing: 0.12em; text-transform: uppercase;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 /* CR1: the credited work's title wears the pixel face like every other
@@ -1751,14 +2084,18 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .shell .tag { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12);
   letter-spacing: 0.24em; background: none; border: 0; }
-.shell .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
+/* ACC1f: the same widening as the heading above - these were .shell
+   only, so a card's buttons inside the door's window came out
+   lowercase and unspaced beside a CLOSE that was neither. */
+.shell .act, .px-win .card .act { border: 2px solid rgba(125,116,96,0.55); border-radius: 0; background: none;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--bone);
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-.shell .act:hover, .shell .act:focus-visible { color: rgb(243,239,44); border-color: var(--brass);
+.shell .act:hover, .shell .act:focus-visible,
+.px-win .card .act:hover, .px-win .card .act:focus-visible { color: rgb(243,239,44); border-color: var(--brass);
   background: none; text-shadow: 2px 2px 0 rgb(93,77,12); }
-.shell .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
+.shell .act.primary, .px-win .card .act.primary { color: rgb(243,239,44); border-color: var(--brass); background: none;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
-.shell .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
+.shell .act:disabled, .px-win .card .act:disabled { color: rgba(125,116,96,0.45); border-color: rgba(125,116,96,0.3); }
 /* ── the settings screen ── */
 .shell .subbtn { letter-spacing: 0.1em; text-transform: uppercase; border-radius: 0;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
@@ -2095,6 +2432,7 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 .hud-qspell { display: none; align-items: center; gap: 6px; padding: 3px 10px;
   max-width: 100%; background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.55); }
 .hud-qspell.on { display: flex; }
+.hud-qspell.empty { display: flex; opacity: 0.55; }   /* HOTSLOT: the empty socket, dim, wearing its key */
 .hud-qspell .hud-qstag { position: static; transform: none; background: none; border: 0;
   min-width: 0; height: auto; padding: 0; color: #7d7460; }
 .hud-qspname { font-size: 13px; color: #d8cfae; text-shadow: 2px 2px 0 rgba(10,12,17,0.9);
@@ -2244,62 +2582,6 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
   font-size: 12px; letter-spacing: 0.08em; color: var(--bone); }
 .hud-need.danger { color: rgb(243,239,44); border-color: var(--brass); text-shadow: 2px 2px 0 rgb(93,77,12); }
 
-/* ── FONT1: THE POPUP COLUMN ─────────────────────────────────────
-   Every line the game says without opening a window - the Ambient Text
-   mod's street lines, "Your Long Blade skill has improved.", the loot
-   tallies - drew in the classic BITMAP font under this skin until
-   FONT1, because the enhanced HUD replaced the bars and never took the
-   text (ui/enhancedHudText.js, ui/hudText.js). It is PopupText's own
-   column, in this skin's face: centred, growing downward, sliding up
-   by one row as the front line leaves, in the classic shadowed pair
-   the classic popup is drawn in (nativePanel DEFAULT_TEXT_COLOR is
-   rgb(243,239,44) and its shadow rgb(93,77,12) - the same yellow the
-   mode word wears above).
-
-   IT STARTS BELOW THE COMPASS. The classic column starts at the top of
-   the native panel; here the compass strip (top 18, 26 tall) and the
-   target bar stand there, so 96px clears both - measured, not guessed
-   (tools/font1Probe.mjs). The row box is 20px, which is
-   ENHANCED_HUD_TEXT_ROW_H in that module: the slide is computed in
-   pixels from it, so the two numbers are one number.
-
-   AUDIT FONT F1 - THE STACK AND THE COLUMNS. There is more than one
-   PopupText model alive in this port (scenes/townTalk.js's and
-   scenes/dungeonContext.js's, both live on ?world in a dungeon), so
-   the column is TWO elements: \`.hudtext-stack\`, one per document,
-   which owns the place, the z-index and --hud-scale; and a \`.hudtext\`
-   inside it PER OWNER, which owns that model's rows and that model's
-   own scroll-out. Two models stack rather than overwrite one element.
-
-   AUDIT FONT F2 - THE SLIDE IS INSIDE THE SCALE. \`--hudtext-slide\` is
-   a translateY on the inner column, so at --hud-scale 2 a row leaves
-   by two scaled rows rather than by one unscaled one.
-
-   AUDIT FONT F8 - A LONG LINE IS DRAWN WHOLE. The classic column draws
-   the whole string (PopupText.Draw measures it and centres it; nothing
-   clips), and a quest or TEXT.RSC line is regularly longer than 86vw
-   on a phone, so an ellipsis took the operative half of it. The rows
-   wrap; the box is a MINIMUM height, and the module measures the
-   front row rather than assuming it is one. */
-.hudtext-stack { position: fixed; left: 50%; top: ${HUD_TEXT_TOP_PX}px; z-index: 4; pointer-events: none;
-  transform: translateX(-50%) scale(var(--hud-scale, 1));
-  transform-origin: top center;
-  display: flex; flex-direction: column; align-items: center;
-  max-width: min(680px, 86vw); }
-.hudtext { display: flex; flex-direction: column; align-items: center; width: 100%;
-  transform: translateY(var(--hudtext-slide, 0px));
-  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
-  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
-  color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
-.hudtext-row { min-height: ${HUD_TEXT_ROW_PX}px; line-height: ${HUD_TEXT_ROW_PX}px; font-size: 14px;
-  letter-spacing: 0.04em; white-space: normal; overflow-wrap: anywhere; text-align: center; max-width: 100%; }
-
-/* AUDIT FONT F7: ...and it steps out of the chat's peek where the chat
-   is mounted. \`:has\` is the whole rule - a browser without it keeps the
-   compass-clearing top, which is what shipped. */
-body:has(.dfchat) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_PX}px; }
-body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
-
 /* FONT1: THE MID-SCREEN LABEL - DaggerfallHUD's OTHER text surface
    (AUDIT 64 F34, ui/midScreenText.js): one centred line that replaces
    itself, where the mode word and every "You are too far away" is
@@ -2358,8 +2640,6 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
   .hud-qicon { max-width: 32px; max-height: 32px; }
   .hud-qwtrack, .hud-qwfill { stroke-width: 6; }
   .hud-qcount { right: 18px; bottom: 13px; font-size: 11px; }
-  /* the compass and the bar above it move up with .hud-top, so the column follows them */
-  .hudtext-stack { top: ${HUD_TEXT_TOP_NARROW_PX}px; }
 }
 
 /* PX25: the doors the F5 sheet carried, on the page that is the sheet. */
@@ -2392,6 +2672,141 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
   justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }
 .sb-shell .sb-ask .card { max-width: 420px; margin: 0; text-align: center; }
 .sb-shell .sb-ask .sb-acts { justify-content: center; }
+
+/* ── THE TRADE COUNTER (enhancedTrade.js) ──────────────────────────
+   Same bones as the spellbook/chronicle shells above - centred frame,
+   the sb-top/sb-who header, the sb-ask confirm scrim - plus the
+   pack's own two-list grid (.packlists/.packcol/.itemrow, all
+   unscoped already) for the shelf and the basket. A window that wore
+   .px-home/.px-over alone and none of this got no centring, no scrim
+   overlay and no side-by-side lists - three symptoms of the one
+   missing class, not three separate faults. */
+.trade-shell { display: flex; align-items: center; justify-content: center; }
+.trade-shell .px-win { width: min(960px, 96vw); height: min(640px, 86dvh); }
+.trade-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; padding: 12px 16px;
+  border-bottom: 2px solid rgba(125,116,96,0.35); }
+.trade-shell .sb-who { text-align: center; }
+.trade-shell .sb-who h2 { font-family: inherit; font-weight: 400; font-size: 18px; margin: 0;
+  letter-spacing: 0.1em; text-indent: 0.1em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.trade-shell .sb-top .act { justify-self: end; }
+/* THE TWO LISTS. The shop's shelf/basket and the staged lot, side by
+   side - the same .packlists grid the pack's own remote pane uses, so
+   the two screens read as one family rather than two. Under 1100px it
+   stacks exactly as the pack's own does (the media query above this
+   block already covers .packlists unscoped). */
+.trade-shell .px-body { display: flex; flex-direction: column; overflow: hidden; padding: 18px 26px 0; }
+.trade-shell .packlists { margin: 0; flex: 1 1 auto; min-height: 0; }
+.trade-shell .packcol { padding: 0 2px 18px; overflow-y: auto; min-height: 0; }
+/* THE TABS. The base .packtab is flex: 1 1 auto in a wrapping row -
+   fine at the pack's own full width (four tabs, one row, never wraps),
+   but this column is half that wide: "Ingredients" alone wraps to its
+   own row and, still flex-growing, stretches to fill it - one
+   underline four times its neighbours' width. A small fixed 2x2 grid
+   has no row for a lone flex item to stretch across. */
+.trade-shell .packtabs { display: grid; grid-template-columns: repeat(2, 1fr); flex-wrap: unset; }
+.trade-shell .packtab { flex: unset; }
+.trade-shell .trade-footer { padding: 14px 26px;
+  border-top: 2px solid rgba(125,116,96,0.35); background: rgba(10,12,17,0.4); }
+.trade-shell .trade-cost { flex: 1 1 auto; color: var(--brass); font-size: 13px;
+  font-variant-numeric: tabular-nums; align-self: center; }
+.trade-shell .itemrow.on { background: rgba(125,116,96,0.16); box-shadow: inset 2px 0 0 var(--brass); }
+.trade-shell .itemrow.ghost { opacity: 0.5; }
+.trade-shell .itemrow.picked { background: rgba(125,116,96,0.22); box-shadow: inset 2px 0 0 var(--brass); }
+/* THE TOOLTIP STRIP - a single click's itemLine, read but not moved
+   (enhancedTrade.js's own "selected"); a double click, or the footer's
+   primary button reaching for this same pending pick, is the transfer.
+   One row rather than enhancedInventory.js's sliding third column -
+   this window is two columns, not three. */
+.trade-shell .trade-detail { display: flex; align-items: center; gap: 14px;
+  margin: 10px 0 0; padding: 10px 14px; background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(125,116,96,0.4); border-radius: 2px; flex: 0 0 auto; }
+.trade-shell .trade-detail .tile { flex: 0 0 auto; }
+.trade-shell .trade-detail-info { flex: 1 1 auto; min-width: 0; }
+.trade-shell .trade-detail-info h4 { margin: 0 0 4px; font-size: 14px; font-weight: 400;
+  color: #e8e0c8; }
+.trade-shell .trade-detail-info .meta { margin: 0; font-size: 12px; color: #a99b7a;
+  overflow-wrap: break-word; }
+.trade-shell .trade-detail-info .trade-quote { margin: 4px 0 0; font-size: 13px;
+  color: var(--brass); font-variant-numeric: tabular-nums; }
+/* THE CONFIRM/REFUSAL BOX, over the counter it interrupts - Buy/Sell's
+   Yes/No, the letter-of-credit notice, and the steal roll's own ask. */
+.trade-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }
+.trade-shell .sb-ask .card { max-width: 420px; margin: 0; text-align: center; }
+.trade-shell .sb-ask .sb-acts { justify-content: center; }
+
+/* ── THE TAVERN PANEL (enhancedTavern.js) ──────────────────────────
+   The SAME missing-shell bug the trade counter shipped with (above):
+   .px-win with no scoped rule over it centres nothing and keeps
+   whatever the base rule's own min(920px,94vw)/min(620px,74dvh)
+   computes to, which at most window sizes IS most of the screen. A
+   four-button panel, a one-line room form or an eleven-row drink list
+   need nowhere near that - this shell pins it to a small dialog
+   instead, the size the content actually asks for. */
+.tavern-shell { display: flex; align-items: center; justify-content: center; }
+/* AUDIT ENH-NOTICE3 B1: with the words on the notice panel the click-catcher is THE SCREEN, not the window's rectangle - DFU's ClickAnywhereToClose takes the press anywhere, and the panel stands at the right edge, outside a centred window. */
+.tavern-shell .sb-ask.sb-screen { position: fixed; inset: 0; }
+.tavern-shell .px-win { width: min(460px, 92vw); height: auto; max-height: min(560px, 82dvh); }
+/* PARTY-REST DROP (2026-09-22): the enhanced rest window (ui/enhancedRest.js) - a small centred dialog in the
+   tavern panel's own size class, never the generic .px-win default (min(920px,94vw) x min(620px,74dvh) - most of
+   the screen, pinned top-left, the same missing-shell bug the tavern and merchant panels shipped with); the hours
+   field big and centred, not the gold field's small left-aligned one; the vitals line under the meter (REST-VITALS1). */
+.rest-shell { display: flex; align-items: center; justify-content: center; }
+.rest-shell .px-win { width: min(420px, 92vw); height: auto; max-height: min(420px, 80dvh); }
+.rest-shell .selection-acts { flex-direction: column; align-items: stretch; }   /* AUDIT PARTY-REST: the four choices as a column, not a wrapped row */
+.rest-shell .hours-field { display: block; width: 140px; margin: 4px auto 22px; font-family: inherit;
+  font-size: 34px; text-align: center; background: #0e1013; color: var(--bone, #e9e4d9);
+  border: 1px solid var(--iron, #2b323b); border-radius: 3px; padding: 6px 8px; }
+.rest-shell .vitals-line { margin: 10px 0 0; font-size: 14px; color: var(--dim, #8b8578); font-variant-numeric: tabular-nums; }
+.tavern-shell .px-body { flex: 0 1 auto; overflow-y: auto; padding: 18px 22px 22px; }
+.tavern-shell .sb-top { display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; padding: 12px 16px;
+  border-bottom: 2px solid rgba(125,116,96,0.35); }
+.tavern-shell .sb-who { text-align: center; }
+.tavern-shell .sb-who h2 { font-family: inherit; font-weight: 400; font-size: 17px; margin: 0;
+  letter-spacing: 0.1em; text-indent: 0.1em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.tavern-shell .sb-top .act { justify-self: end; }
+.tavern-shell .tavern-greeting { margin: 0 0 16px; text-align: center; color: #c9bfa0;
+  font-size: 13px; line-height: 1.5; font-style: italic; }
+/* THE FOUR-BUTTON PANEL, a vertical stack rather than the footer's
+   horizontal row - this is the whole content of the main screen, not
+   an actions bar under something else. */
+.tavern-shell .tavern-menu-acts { display: flex; flex-direction: column; gap: 10px; }
+.tavern-shell .tavern-act { width: 100%; padding: 12px 16px; font-size: 14px;
+  text-align: center; justify-content: center; }
+/* THE ROOM FORM: one line, one field, one button. */
+.tavern-shell .tavern-room { display: flex; flex-direction: column; gap: 14px; }
+.tavern-shell .tavern-room .goldfield { display: flex; gap: 10px; align-items: center; }
+.tavern-shell .tavern-room .goldfield input { flex: 1 1 auto; background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(125,116,96,0.5); color: #e8e0c8; padding: 8px 10px;
+  font-family: inherit; font-size: 14px; border-radius: 2px; }
+/* THE FOOD & DRINK LIST - the pack's own itemrow, two columns (a name
+   and a price) rather than one run-on line, so it reads like every
+   other list this skin draws instead of the odd one out. */
+.tavern-shell .tavern-menu { padding: 0; overflow: visible; min-height: auto; }
+.tavern-shell .tavern-menu-list { display: flex; flex-direction: column; gap: 4px;
+  max-height: min(340px, 50dvh); overflow-y: auto; margin-bottom: 14px; }
+.tavern-shell .tavern-row { display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; width: 100%; text-align: left; }
+.tavern-shell .tavern-price { color: var(--brass); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+.tavern-shell .tavern-menu-header { margin: 10px 0 2px; font-size: 11px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #7d7460; }
+.tavern-shell .tavern-menu-header:first-child { margin-top: 0; }
+/* THE CONFIRM/REFUSAL BOX - the room offer's Yes/No, the not-hungry and
+   not-enough-gold notices, a meal or a drink's own line. */
+.tavern-shell .sb-ask { position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,12,17,0.72); padding: 20px; }
+.tavern-shell .sb-ask .card { max-width: 380px; margin: 0; text-align: center; }
+.tavern-shell .sb-ask .sb-acts { justify-content: center; }
+
+/* ── THE MERCHANT/REPAIR POPUP (enhancedMerchantPanel.js) ──────────
+   Reuses .tavern-shell's whole frame - centring, header, button-list
+   styling - just narrower: three or four short labels need nowhere
+   near the tavern's 460px. */
+.merchant-shell .px-win { width: min(320px, 88vw); }
 
 /* ── PX24: THE CHRONICLE ────────────────────────────────────────
    The spellbook's frame with a reading column instead of a card: the
@@ -2449,6 +2864,10 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .cr-shell .cr-foldall { margin: 0 0 14px; max-width: 66ch; }
 .cr-shell .cr-entry.cr-shut { padding-bottom: 12px; }
 .cr-shell .cr-entry.cr-shut .cr-head { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+/* QUEST1: the Share button, inside the chosen quest's own opened frame -
+   a small action set off from the prose below it, not another line of
+   journal text. */
+.cr-shell .cr-share { min-width: 60px; }
 .cr-shell .sb-frame { margin: 0 0 16px; }
 .cr-shell .cr-compose { display: flex; gap: 10px; margin: 0 0 18px; max-width: 66ch; }
 .cr-shell .cr-compose input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;
@@ -3188,8 +3607,6 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .pack-shell .packcarry .px-meter { width: 140px; height: 8px;
   border: 2px solid rgba(125,116,96,0.55); background: rgba(0,0,0,0.4); }
 .pack-shell .packgold { display: flex; align-items: baseline; }
-.pack-shell .sheet-notice { color: #c5bda2; text-align: center;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .pack-shell ::-webkit-scrollbar { display: none; }
 .pack-shell .pack-dock .packcol, .pack-shell .packlists, .loot-win { scrollbar-width: none; }
 .loot-win::-webkit-scrollbar { display: none; }
@@ -3287,27 +3704,107 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
 .loot-win .itemrow.on { background: rgba(192,138,62,0.14); outline: 0;
   box-shadow: inset 3px 0 0 var(--brass); }
 
-/* ── PX21c: THE LOOT HOVER PLAQUE ───────────────────────────────
-   A readout under the crosshair, not a control: centred low so it
-   never sits on the reticle, in the same dress as the floating
-   windows, with pointer-events off because nothing here is clickable.
-   It SNAPS on and off - the whole point is that it answers before you
-   have finished deciding to ask. */
-.loothover { position: fixed; left: 50%; bottom: 16%; transform: translateX(-50%);
-  z-index: 6; display: none; min-width: 190px; max-width: 300px; padding: 10px 14px;
+/* ── WORLD-HOVER (PX21c): THE PLAQUE AT THE CROSSHAIR ───────────
+   A readout, not a control: the same dress as the floating windows,
+   with pointer-events off because nothing here is clickable. It SNAPS
+   on and off - the whole point is that it answers before you have
+   finished deciding to ask.
+
+   PX21c stood it at "bottom: 16%" and said in a comment that it was
+   "centred low so it never sits on the reticle" - avoiding the cross
+   by standing far from it, because the rule had nowhere to read the
+   cross's real place. It does now: ui/worldPlaque.js measures the
+   reticle off hudCrosshair's own exports and writes --wp-x/--wp-top,
+   so the plaque hangs a fixed gap BELOW the cross and grows downward.
+   A docked large HUD moves the reticle (ROAD-E E5) and moves this with
+   it. The percentages are the fallback for a frame not yet drawn. */
+.wplaque { position: fixed; left: var(--wp-x, 50%); top: var(--wp-top, 55%);
+  transform: translateX(-50%);
+  z-index: 6; display: none; min-width: 190px; max-width: ${PLAQUE_MAX_W}px; padding: 10px 14px;
   background: rgba(10,12,17,0.9); border: 2px solid #7d7460; pointer-events: none;
   font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; color: #d8cfae;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
-.loothover.on { display: block; }
-.loothover-head { font-size: 11px; letter-spacing: 0.3em; text-indent: 0.3em;
-  text-transform: uppercase; color: #7d7460; text-align: center;
-  padding-bottom: 8px; margin-bottom: 8px;
+.wplaque.on { display: block; }
+.wplaque-title { font-size: 15px; line-height: 1.4; text-align: center; color: #d8cfae; }
+.wplaque-titleline { display: block; }
+.wplaque-sub { font-size: 12px; line-height: 1.4; text-align: center; color: #7d7460; }
+/* PX21c's head rule, re-homed. Its TYPOGRAPHY retires with it - 11px
+   uppercase letterspaced was a KIND label ("LOOT", "REMAINS"), and the
+   merged surface names the thing itself ("Wardrobe", "Shop Shelf",
+   "Skeletal Warrior (dead)"), which is strictly more. What survives is
+   the divider, and only where there is something to divide. */
+.wplaque.has-list .wplaque-title { padding-bottom: 8px; margin-bottom: 8px;
   border-bottom: 2px solid rgba(125,116,96,0.3); }
-.loothover-row { display: flex; align-items: baseline; gap: 10px; font-size: 14px;
+.wplaque-row { display: flex; align-items: baseline; gap: 10px; font-size: 14px;
   line-height: 1.5; }
-.loothover-count { margin-left: auto; color: var(--brass); font-size: 12px; }
-.loothover-empty, .loothover-more { color: #7d7460; font-size: 12px; }
+.wplaque-count { margin-left: auto; color: var(--brass); font-size: 12px; }
+/* QUICK-LOOT B3: THE HIGHLIGHT. Negative margins with matching padding
+   so the band reaches the plaque's inner edges without the row's own
+   box moving - a highlight that reflowed the list would shift every
+   name under it each time the wheel turned, which is the one thing a
+   readout at the crosshair must not do. The rarity colours above are
+   on the row's first span and are untouched by this, so a highlighted
+   artifact still reads as an artifact. */
+.wplaque-row.sel { background: rgba(125,116,96,0.28); box-shadow: inset 2px 0 0 var(--brass);
+  margin: 0 -14px; padding: 0 14px 0 12px; }
+/* AUDIT DISC7 A4: a refused verb (the F-card's disabled row): its reason in its name, italic in the card's own lighter bone (SOC C12's 4.9:1), never dimmed by opacity */
+.wplaque-row.off { font-style: italic; color: #c8c2b4; }
+/* ...and the line that says what the keys do, under the list. */
+.wplaque-keys { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(125,116,96,0.35);
+  color: #7d7460; font-size: 11px; text-align: center; }
+.wplaque-empty, .wplaque-more { color: #7d7460; font-size: 12px; }
+/* QUICK-LOOT-STATS: the lit row's numbers, beside the list. Same box as
+   the plaque itself - a player should read them as one surface, not as
+   a tooltip about a tooltip. Absolutely positioned against the plaque's
+   own fixed box, so it rides the reticle's anchor with no second
+   variable to keep in step. The SIDE is decided in JS (worldPlaque.js
+   statsSide) because it depends on the window's width, which a media
+   query cannot compare against the reticle's x. */
+.wplaque-stats { position: absolute; top: 0; width: ${STATS_W}px; box-sizing: border-box;
+  padding: 8px 10px; background: rgba(10,12,17,0.9); border: 2px solid #7d7460;
+  text-align: left; }
+.wplaque-stats[data-side="right"] { left: calc(100% + ${STATS_GAP}px); }
+.wplaque-stats[data-side="left"] { right: calc(100% + ${STATS_GAP}px); }
+/* BELOW is the phone's answer, and it is not a fallback that looks
+   broken: full width under the list, in the plaque's own flow rather
+   than beside it. */
+.wplaque-stats[data-side="below"] { position: static; width: auto; margin-top: 8px;
+  border: 0; border-top: 1px solid rgba(125,116,96,0.35); padding: 6px 0 0; background: none; }
+.wplaque-statrow { display: flex; align-items: baseline; gap: 10px; font-size: 12px;
+  line-height: 1.5; color: #d8cfae; }
+.wplaque-statkey { color: #7d7460; }
+/* The value is RIGHT-ALIGNED, not merely pushed right. A condition
+   reads "Slightly Used (75%)" and the panel is deliberately narrow, so
+   that row wraps - and a wrapped value that is only pushed by an auto
+   margin sets its second line hard against the LABEL, which reads as a
+   different row. Aligning the text keeps both lines flush to the same
+   edge as every value above and below it. Seen, not guessed:
+   tools/quickLootStatsProbe.mjs photographs this row. */
+.wplaque-statval { margin-left: auto; text-align: right; }
+/* A sentence row (a raw meat's "cook it at a fire") has no key, so it
+   must not be pushed to the right edge by the auto margin the paired
+   rows use for their value. */
+.wplaque-statnote .wplaque-statval { margin-left: 0; text-align: left; color: #a49a80; }
+/* AUDIT-WH R7: THE LIST HAS ITS OWN NODE AND HAD NO RULE. The draw
+   emits a .wplaque-list wrapper round the rows and nothing styled it,
+   so the block existed only to be an unstyled div - and a plaque under
+   the reticle GROWS DOWNWARD, which on a short viewport (a laptop
+   under browser chrome, a 16:10 window with a docked large HUD) walks
+   a six-row pile off the bottom of the screen. The cap is the room
+   BELOW the cross, which is what the anchor already knows: --wp-top is
+   the plaque's own top edge, so 100vh minus it is exactly what is
+   left. The TITLE never moves - it is the thing the reticle is about -
+   so the rows are what gives. No scrollbar chrome: a readout is not a
+   control (the whole surface is pointer-events: none), so the overflow
+   is a CLIP, and the "and N more" tail already tells the truth about
+   what is not shown. */
+.wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);
+  overflow: hidden; }
+/* AUDIT ENH-NOTICE3 A6's lesson: a more-specific base rule outranks a
+   media block, so every base selector above is one class. */
+@media (max-width: 720px) { .wplaque { max-width: 88vw; padding: 8px 12px; }
+  .wplaque-row, .wplaque-title { font-size: 13px; } .wplaque-sub { font-size: 11px; } }
 
 /* ── PX21a: THE TRANSPORT STRIP ─────────────────────────────────
    What you travel with, under what you wear and carry. Two plaques,
@@ -3445,7 +3942,7 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .hmmeta { color: #7d7460; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
   text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
-.hmprompt, .hmnotice { color: #c5bda2; text-align: center; font-size: 15px;
+.hmprompt { color: #c5bda2; text-align: center; font-size: 15px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 .hmpair { display: flex; justify-content: space-between; gap: 14px;
   border-bottom: 2px solid rgba(125,116,96,0.3); min-height: 32px; align-items: baseline; }
@@ -3590,12 +4087,11 @@ body:has(.dfchat.touch) .hudtext-stack { top: ${HUD_TEXT_TOP_CHAT_TOUCH_PX}px; }
    notification", with the window deferred - "Notify, then you choose".
 
    WHERE IT SITS, AND WHY NOT WHERE THE REFERENCE PUTS IT. Skyrim's
-   notification is top-centre; this HUD's top-centre is taken twice
-   over - the compass strip at 18 and the popup column at
-   HUD_TEXT_TOP_PX, which is the surface every other line in the game
-   arrives on. A second centred stack there would sit on the first the
-   first time an ambient line and a level-up landed together. So it
-   goes where THIS hud already puts what is happening to YOU: above
+   notification is top-centre; this HUD's top-centre is taken by the
+   compass strip at 18 (and was, until ENH-NOTICE3 moved PopupText's
+   rows to the right-edge notice stack, by the popup column under it,
+   which is where every other line in the game arrived). So it goes
+   where THIS hud already puts what is happening to YOU: above
    the bottom block, with the vitals and the quickslots, growing
    upward from a fixed foot so a flurry of skill rows never walks down
    into them.
@@ -3683,6 +4179,123 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
 }
 @media (max-height: 620px) {
   #enhanced-levelnotice { bottom: 118px; }
+}
+
+/* ── ENH-NOTICE1: THE NOTICE PANEL (ui/enhancedNotice.js) ── DFU's
+   click-anywhere message box, the enhanced way: a panel that slides in
+   from the RIGHT edge instead of the parchment in the middle. The
+   stack is pointer-transparent so the click that dismisses the box
+   lands on the canvas as it always has (ClickAnywhereToClose is the
+   box's law, not the panel's); the panel itself is the words, a rule
+   and the one-line hint. Two boxes at once stack downward, newest
+   last, each with its own slide. AUDIT ENH-NOTICE3 A1: the stack is
+   capped at 90vh and CLIPS what will not fit (a short viewport under
+   eight toasts and a box spilled the last toast off the screen); the
+   boxes stand first, so what is lost is the newest toast. */
+.notice-stack {
+  position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+  z-index: 31; pointer-events: none;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+  max-width: min(520px, 70vw); max-height: 90vh; overflow: hidden;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
+}
+/* THE SLIDE: appended a full width off the right edge, the \`notice-in\`
+   class carries it to rest; \`notice-out\` sends it back the way it came
+   and the module removes the node after the transition's length
+   (NOTICE_SLIDE_MS - keep the two in step, and keep the out-curve
+   plain: a back-loaded bezier left the panel half-way out when the
+   node was taken, measured in the headless browser). */
+/* NOTICE-FIT (2026-09-22, kurkku: "I think we also need the sizing of
+   the boxes to properly adjust for the text instead of always being
+   wide"): THE PANEL IS AS WIDE AS WHAT IT SAYS. This carried a FIXED
+   \`width\`, so "You are healthy." and a four-paragraph quest box were
+   the same slab - and at the right edge, where the panel is read
+   against the world behind it, the empty half is the thing the eye
+   reads first. A flex item under \`align-items: flex-end\` with no width
+   is already shrink-to-fit, so the cap alone is the whole law: the
+   rows set the width, wrapping only once they reach it. The HINT sets
+   a floor of its own (one short uppercase line) and a box never
+   narrows past it, which is what keeps a one-word box from becoming a
+   sliver; a toast wears no hint and hugs its line. */
+.notice {
+  box-sizing: border-box; max-width: min(520px, 70vw);
+  padding: 14px 20px 10px 18px;
+  background: rgba(10,12,17,0.9); border: 2px solid rgba(125,116,96,0.6); border-right: 0;
+  border-left: 4px solid var(--brass);
+  transform: translateX(110%); opacity: 0;
+  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 200ms ease-out;
+}
+.notice.notice-in { transform: translateX(0); opacity: 1; }
+.notice.notice-out { transform: translateX(110%); opacity: 0; transition-timing-function: ease-in, ease-in; }
+.notice-body { display: flex; flex-direction: column; gap: 2px; max-height: 70vh; overflow: hidden; }
+.notice-row { font-size: 15px; line-height: 1.35; min-height: 1.35em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.notice-row.center { text-align: center; }
+/* SetHighlightColor's row (AUDIT 64 F28/F35): the parchment reads it in
+   the caller's colour, the panel in the blood the sheet already
+   keeps for a warning. */
+.notice-row.highlight { color: var(--blood); }
+/* A tab-stopped row (the status box's columns): the cells keep their
+   columns as a grid keeps them, the parchment's x-stops become gaps. */
+.notice-row.cells { display: flex; gap: 1.2em; }
+.notice-cell { white-space: nowrap; }
+.notice-cell:first-child { min-width: 7em; }
+.notice-hint {
+  margin-top: 10px; padding-top: 6px; border-top: 1px solid rgba(125,116,96,0.35);
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #7d7460;
+  text-align: right;
+}
+/* ENH-NOTICE3: A TOAST - one PopupText row (DaggerfallUI.AddHUDText:
+   a Climates & Calories line, an ambient line, a skill-up, a loot
+   tally) in the same stack, timed by PopupText's own timer and never
+   dismissed, so it wears no hint and a quieter edge than the box the
+   player must answer: the popup column's yellow (nativePanel
+   DEFAULT_TEXT_COLOR rgb(243,239,44)) on the box's dark, so the two
+   kinds read apart at a glance. */
+.notice.notice-toast {
+  padding: 8px 18px 8px 14px; border-left-color: rgba(243,239,44,0.55);
+  background: rgba(10,12,17,0.82);
+}
+.notice.notice-toast .notice-row { font-size: 14px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); text-align: center; }
+/* AUDIT HCC U5: THE FIELD'S OWN WINDOW (ui/enhancedInputBox.js) - DaggerfallInputMessageBox in the skin's face.
+   ENH-NOTICE1's law: a field is a decision, not a notice, so it is not in the right-edge stack; it stands where the
+   player looks while typing - centred, or at the top for showAtTopOfScreen - in the box's own panel and rule. It
+   takes no pointer (the keys are the host's, routed to the box), and sits on the notice stack's rung. */
+.inputbox {
+  position: fixed; left: 50%; top: 46%; transform: translate(-50%, -50%); z-index: 31; pointer-events: none;
+  box-sizing: border-box; min-width: min(340px, 88vw); max-width: min(520px, 88vw);
+  padding: 14px 20px 10px 18px;
+  background: rgba(10,12,17,0.92); border: 2px solid rgba(125,116,96,0.6); border-left: 4px solid var(--brass);
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
+}
+.inputbox.top { top: 8px; transform: translateX(-50%); }
+.inputbox-rows { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.inputbox-field {
+  font-size: 15px; line-height: 1.35; white-space: pre; overflow: hidden;
+  padding: 4px 8px; border: 1px solid rgba(125,116,96,0.6); background: rgba(0,0,0,0.35);
+}
+.inputbox-label { color: #a89c7a; }
+.inputbox-caret { display: inline-block; width: 0.55em; height: 1.1em; vertical-align: text-bottom;
+  border-bottom: 2px solid var(--brass); animation: inputbox-caret 1s steps(1) infinite; }
+@keyframes inputbox-caret { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .inputbox-caret { animation: none; } }
+@media (max-width: 720px) {
+  .notice-stack { max-width: 88vw; gap: 6px; }
+  .notice { max-width: 88vw; padding: 10px 14px 8px 12px; }   /* NOTICE-FIT: the phone's cap, still a cap */
+  .notice.notice-toast { padding: 6px 12px 6px 10px; }
+  /* AUDIT ENH-NOTICE3 A6: the toast rule (0-2-1) outranked these
+     blocks' bare .notice-row (0-1-0), so a toast stayed 14px on a
+     phone while the box beside it dropped to 13 - the panel merely
+     read set larger than the one to answer. */
+  .notice-row, .notice.notice-toast .notice-row { font-size: 13px; }
+  .notice-cell:first-child { min-width: 5em; }
+}
+@media (max-height: 520px) {
+  .notice-body { max-height: 60vh; }
+  .notice-row, .notice.notice-toast .notice-row { font-size: 13px; line-height: 1.25; }
 }
 
 /* ── LV1: THE ASCENSION ── the level-up window, on the sky the enhanced

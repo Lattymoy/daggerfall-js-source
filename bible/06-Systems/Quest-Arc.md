@@ -716,7 +716,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:518). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:570). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -938,7 +938,8 @@ guildServiceFlow's FLAGGED Quests arm closes.
   second pass (the UI text arc's).
 - THE QUEST PICKER (GuildQuestListBox, default off): the
   gettingQuests wait box (the two Internal_Strings literals; %pcf
-  rides the generic pass), labels from HEADER-ONLY parses
+  rides the generic pass - which, until GQL1 below, NO box ran,
+  because the popup layer never boxed the step), labels from HEADER-ONLY parses
   (partialParse threads Parser.cs:144 through
   QuestListsManager.loadQuest), the localization override, the
   full parse on pick throwing out uncaught - and C#'s RemoveAt
@@ -1421,10 +1422,10 @@ triage: 25 kills at fails=5+ (one at fails=7 - the `| 0` int32 rail
 broke three pins at once), 2 survivors at the baseline 4, both
 PROVEN equivalents:
 
-- questBridge.js:63 `rawZ ?? 0 -> ?? 1`: the hash's only read of
+- questBridge.js:65 `rawZ ?? 0 -> ?? 1`: the hash's only read of
   rawZ is `z >> 2`, and `1 >> 2 === 0 === 0 >> 2` - for any record
   LACKING rawZ the mutated default is arithmetically invisible.
-- questBridge.js:70 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
+- questBridge.js:72 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
   gender reads bit 5 alone, and `1 & 32 === 0 === 0 & 32` - Male
   either way, every path.
 
@@ -1452,7 +1453,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1134's
+and both hosts mint a fresh one at every click - worldModes.js:1194's
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -2807,7 +2808,7 @@ banker and guild clerk in Daggerfall reached `TalkManager` with an
 empty name. Two things read it:
 
 - the greeting says the NPC's name once reaction is above zero, and
-  "stranger" below it (`townTalk.js:499`). Every static NPC in the
+  "stranger" below it (`townTalk.js:560`). Every static NPC in the
   game stayed a stranger no matter how well liked.
 - `topicTree`'s same-building-static test (`:558`) matches a topic
   caption against that name, so it never matched.
@@ -2893,7 +2894,7 @@ correct than the game it is a port of, which is the one thing this arc
 has never allowed. Expanding in place now. (The caller-side
 `if (quest)` went too - C# calls `ExpandQuestMessage` whether or not
 `GetQuest` found anything, and the null-parent bail is a forum-bug fix
-*inside* the helper, which `questMacros.js:478` already carries.)
+*inside* the helper, which `questMacros.js:550` already carries.)
 
 **Three nits with teeth.**
 
@@ -2901,7 +2902,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:518`. A pending marker over shipped
+already ships, at `worldModes.js:570`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -4857,7 +4858,7 @@ found `mode !== 'exterior'`, fell through, and turned the camera. So
 you swung and the view swung with you - every time, in every building
 and every dungeon reached from the town.
 
-`dungeon.js:267`, the standalone host, has always had the right shape:
+`dungeon.js:266`, the standalone host, has always had the right shape:
 attack, then `return`, with no mode in the test at all. It has no modal
 sibling to share the drag with, which is precisely why it never needed
 one - and why the difference between the three files never looked like
@@ -5469,7 +5470,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:2852-2941) — and
+spawns and the NPC-guard conversion with it (world.js:3688-3779) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5488,15 +5489,15 @@ knows its one city outright.
 This host owns a cast engine of its own, and `worldModes` takes *that
 instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
-ready-spell events (`hostMagic.js:76-77`), and those two doors are the
+ready-spell events (`hostMagic.js:77-78`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:799`/`:782`; C# subscribes them in the action's
+(`machine.js:847`/`:830`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:3157-3158`,
-`dungeonContext.js:2112-2113`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:4062-4063`,
+`dungeonContext.js:2222-2223`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:7074-7077`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:8301-8304`),
 absent which the action self-completes at *parse*
 (`actions.js:2757`/`:2764`) and the task can never arm at all.
 
@@ -5950,3 +5951,338 @@ die where they should.
 **What was wrong was the system describing itself** - a charter claiming
 loudness over a boolean, a dev scene missing 35 seams in silence, a gate
 reading one host by name - and three laws nothing was reading.
+
+## GQL1 - "THAT SERVICE IS NOT AVAILABLE YET" ON EVERY GUILD (2026-09-21)
+
+Discord, kurkku, playing online: "Are guild quests not in this? I get a
+message saying "this service isn't available" when I try to get one and
+can't tell if that's meant to happen."
+
+### The sentence, and where it comes from
+
+The popup's Quests service (worldModes' `onService`) asks
+`openServiceFlow` for a window; the `questOffer` arm runs the bridge's
+`offerGuildQuest` and boxes the step it answers with `offerBoxes`. An
+EMPTY chain is C#'s silent close (an active questor, no message 1000) and
+opens nothing, so the arm answers null - and the caller's null face is
+the one refusal sentence, `That service is not available yet.` The
+service was never gated online; nothing in the online lane touches this
+path.
+
+### The root cause
+
+`offerBoxes` boxed five step kinds - close, fail, offer, accepted,
+refused - and fell to `default: return []` for anything else. The offer
+flow answers TWO more. With **Choose Guild Jobs** on
+(`Enhancements/GuildQuestListBox`, the Features screen's own row, DFU's
+GuildQuestListBox) `offerGuildQuest`'s first step is `gettingQuests`
+(GettingQuestsBox, DaggerfallGuildServicePopupWindow.cs:610-622 - a
+click-anywhere message box whose generic macro pass expands %pcf) and
+its dismissal is `pickQuest` (GettingQuestsBox_OnClose :624-652, the
+DaggerfallListPickerWindow whose pick runs OfferQuest). Neither had a
+case. The flow was complete and pinned (`questoffers.test.js` drives
+both steps); the popup layer had never learned to SHOW them, so with the
+setting on every guild in the game refused every quest with the same
+sentence. The setting off, the classic random draw boxed fine - which is
+why nobody saw it until a player turned the row on.
+
+### The fix
+
+Two cases in `offerBoxes`, in the ServiceFlowWindow's own vocabulary: the
+wait step is a click-anywhere `{ rows, onClick }` box - the two literals
+with %pcf expanded to the player's FIRST name through the one macro walk
+(`expandMacroValues`, `firstName`) - whose click boxes the flow's
+`onClose`; the picker step is a `{ picker, onPick, onCancel }` box whose
+pick boxes the flow's `onPick(index)` and whose cancel offers nothing
+(the C# cancel pops the window). `default` stays the silent close, but
+only for a kind the flow cannot produce.
+
+### The pins (`test/gql1.test.js`, 5)
+
+The two boxes by shape; the walk through the REAL bridge and the REAL
+`ServiceFlowWindow` with the setting on - wait box, click, picker,
+pick, YesNo, Yes, the AcceptQuest popup, the quest LIVE in the machine;
+the setting off still boxing an offer; and a DERIVED law: every
+`kind: '...'` literal `offerFlow.js` can answer must be a `case` in
+`offerBoxes`, so a third kind reddens here rather than on Discord.
+Campaign `tools/mutants/gql1.json`: 9 mutants, 9 killed - each case
+unboxed again, the label renamed (the derived pin's own kill), %pcf raw
+and %pcf the whole name, the click not raising the picker, the pick not
+offering, the pick off by one, the entries not the flow's.
+
+### What is not proven
+
+The player was online. The defect above is real, matches the sentence
+word for word, and is the only path to it that the Quests service has -
+but whether that player's Choose Guild Jobs row was on is unconfirmed.
+If it was off, the refusal came from `questBridge`/`store` missing on
+the popup's host bag, which the online lane does not do either; the
+question to ask them is whether the row is on.
+
+## QT-LIVE1 - THE JOURNAL'S TIMER, LIVE (2026-09-21)
+
+Mac: "The time doesn't print out live?" - "Do it".
+
+### What stood
+
+The enhanced journal's "Time remains: N days N hours" line rendered
+once when the panel opened and again on a click. Every host holds the
+quest machine's tick under the pause gate - DFU's PauseGame sets
+timeScale 0 and QuestMachine.Update accumulates deltaTime, so nothing
+ticks under a window - which means `remainingTimeInSeconds` under the
+menu is the remainder as of the last tick BEFORE it opened. Offline the
+world clock stops under the menu too and the number is right. Online
+the world is wall time through the relay and runs on at twelve to one,
+so a minute fell off every five real seconds and the line did not move;
+when the menu closed the next tick charged the whole gap (one played
+step at most, WORLD7) in one go.
+
+### The fix, in two halves
+
+**The Clock answers its remainder as of now.** `chargeSeconds(caller)`
+is the tick's arithmetic pulled out into one home - the gap since the
+last sample, online clamped to `[0, step]`, truncated - and
+`liveRemainingSeconds(caller)` is the field less that charge, floored at
+zero, for a running clock; the field itself for one that is not
+running. The tick subtracts the same call, so a reader can never
+disagree with what the next tick leaves, and nothing is ticked under
+the gate. The bridge's `questLog()` walk asks each running clock for
+the live read and keeps the tightest.
+
+**The journal rewrites the line once a second.** `armQuestTimer` is
+armed inside the timer block of the selected row and re-reads the
+HOST's `questLog` each second (never a log captured at render), writing
+the words and the urgent class into the span in place - the panel is
+not rebuilt, so the selection and the scroll stand. A clock that fired
+or a quest that ended under the menu is a stale panel, and that
+repaints. The interval is module state with the ground clock's own two
+owners: cleared by every rebuild and by unmount.
+
+### Pins (`test/qtlive1.test.js`, 5)
+
+The live read against a real Clock - ninety seconds under the menu read
+off the line with the field unmoved, the played step's clamp, a
+backward sample charging nothing, the tick then landing on exactly what
+the read said, offline's raw gap both ways, the zero floor; the
+not-running faces; `questTimerWords` off a fresh log (urgent under a
+world day, null for a clockless or ended quest); the arming and the
+interval by content; and a DERIVED law - every `X = setInterval(` in
+the enhanced menu is module state cleared by the rebuild AND the
+unmount. Two pins re-aimed to the live read (`enhancedPause.test.js`'s
+walk pin, `questbridge.test.js`'s fixture, whose clock_b now says 130
+in its field and 120 live). Campaign `tools/mutants/qtlive1.json`: 15
+mutants, 15 killed.
+
+
+## AUDIT QUESTS - THE LINKAGE, AND THE STANDING GUARD OVER IT (2026-09-22)
+
+Mac: *"I want you to do a deep conprehensive audit and ensure everything
+is linked up properly with quests and such."*
+
+**The sweep came back clean on every axis execution could reach, and
+that is the finding this section is mostly about.** An audit that finds
+nothing is worth nothing tomorrow: the same holes can open on the next
+commit and nobody would know until a player reports a quest that does
+not start. So the walk is written down here, and every link it walked
+by hand is now a law in `test/auditquests_linkage.test.js`, driven over
+the whole shipped corpus.
+
+### What the walk found
+
+- **The registry is whole.** 83 action classes, 82 registered,
+  `ActionTemplate` the base, no duplicate type name.
+- **The corpus parses.** All 265 shipped quests through the real
+  machine, no quest throwing, none parsing to null.
+- **The round trip holds.** Every quest save → restore → save,
+  byte-identical.
+- **The offer is intact.** All 188 offerable rows have files; the
+  `-` disabled marker is honoured by `Table`, so no dashed name
+  reaches the picker.
+- **The bridge and the journal chain are wired** — `activeLogMessages`
+  → `getLogMessages` → `questBridge.questLog` → `host.pauseQuestLog`.
+- **The world surface is answered.** 28 `hooks.world.X` read by the
+  engine; 21 provided by `world.js`'s `questWorld`; the 7 remaining all
+  accounted for — three `talk*` layered by `talkMacroHooks(ctx)` when a
+  pipeline exists, four `court*` superseded because `arrestFlow.js`
+  calls `expandMacroValues` with an explicit value map and **no**
+  questLike context, so the handler table is never consulted there.
+
+Minor, recorded rather than fixed: `getFieldIntValue` (`parseUtils.js`)
+is dead everywhere; `expandQuestString`, `resetUid` and
+`resetQuestTables` are test-only.
+
+### The one gap, named rather than asserted
+
+`scenes/exterior.js` builds its own `questWorld` that is **16 keys
+behind** `scenes/world.js`'s. It is the dev scene reached by
+`?region=&loc=` — its own header says so — and it has no save path at
+all, so the pin does not hold it to the shipped host's surface. It is
+written down here so that promoting that host cannot quietly inherit
+the gap. (This is AUDIT-QUEST F2's finding still standing, narrowed:
+that audit made the bridge REPORT its unwired seams, which is what
+keeps this honest at runtime.)
+
+### Then the mutants found what the audit had not
+
+Two of the five new pins were written wrong, and the mutants said so
+before the commit. Both are the same family of mistake and both are
+worth more than the clean result above.
+
+**Pin 2 asserted a structurally impossible failure.** It looked for a
+`null` in `task.actions` as the sign of a quest line no template
+claimed. Nothing ever puts one there: `Task._readTaskLines`
+(`task.js:192-201`) pushes only truthy actions and pends the raw text
+of anything else on `pendingActionLines`. The pin could not have failed
+under any mutation, and the mutant that narrowed `Say`'s pattern walked
+straight past it.
+
+Reading the real signal instead turned up **four lines in the 265-quest
+corpus that match no template**, which the hand sweep had missed
+entirely. Each was checked against `Interkarma/daggerfall-unity`
+@2343305d1 and pends THERE too, so none is a port gap:
+
+| quest | line | why it pends upstream |
+| --- | --- | --- |
+| `B0B71Y03.txt` | `_0x3c_ 19` | the source's own previous line reads `-- Discovered a new op-code:` |
+| `M0B11Y18.txt` | `pc at _L.00_ set _S.12_` | DFU's PcAt pattern reads the PLACE as `\w+` and only the TASK as `[a-zA-Z0-9_.]+` (PcAt.cs:42-45), so a dotted place symbol matches in neither engine |
+| `S0000007.txt` | `location _tavern_ 100 27000` | the source's own next line reads `--not known what this intends to do`; no DFU action carries a `location` pattern |
+| `__DEMO01.txt` | `juggle 5 apples every 2 seconds drop 40%` | `JuggleAction` is COMMENTED OUT of DFU's RegisterActionTemplates (QuestMachine.cs:342) |
+
+An unmatched line is a quest step that silently does nothing, and
+nothing anywhere logs it — so the four are now a named fixture, and a
+fifth fails the pin.
+
+**Pin 3's fixture was too clean to carry the fault.** It round-tripped
+FRESHLY PARSED quests, where a constructor default and a saved default
+are the same value. Delete `this.questTombstoneTime = data.questTombstoneTime`
+from `restoreSaveData` and the pristine corpus still agreed, because
+the constructor's 0 and the saved 0 are both 0. Every quest is DIRTIED
+first now — outcome, log steps, one-time messages, task trigger and
+dropped flags, then tombstoned — and the restoring machine's clock is
+deliberately DIFFERENT, so a field the restore forgets and re-derives
+from `now` reads back wrong instead of reading back identical.
+
+And a round trip has a second blind spot that dirtying does not cover:
+**a field the quest never WRITES into its envelope round-trips
+perfectly and still loses the data** — save omits it, restore has
+nothing to read, re-save omits it again, and all three agree. The
+mutant that dropped the `time` stamp from `addLogStep` proved it (the
+journal dates every entry by that stamp via `getCurrentLogMessageTime`,
+so losing it dates the whole log to quest start). So the pin now checks
+what the envelope CAPTURED as well as what it copied.
+
+### The registry law that was actually missing
+
+The first draft of pin 1 compared `actions.js` against itself — every
+class the file defines is registered — which is true by construction
+the moment somebody adds both lines together. The real law is DFU's:
+`defaultActionTemplates` is meant to be `RegisterActionTemplates`
+(QuestMachine.cs:339-428) **slot for slot and in order**, because
+`getActionTemplate` is a first-match scan (:751-763), so a slot that
+moves changes which template claims an ambiguous line.
+
+Compared against DFU @2343305d1, it is **82 for 82, positionally
+exact.** Eight rows carry a different name and every one is documented:
+seven renames where the port's own modules already own the word
+(`Season`/`Weather`/`Climate`/`Enemies`/`KillFoe`/`SetPlayerCrime`/
+`SpawnCityGuards`), and slot 69, where DFU's `WorldUpdate` routes into
+the mod-facing WorldDataVariants system the Port-Ledger holds at "Not
+planned" and the port stands a `PendingTrigger` carrying DFU's verbatim
+pattern.
+
+`test/auditquest_patterns.test.js` already compares all 82 patterns far
+more deeply — structure for structure, regenerated from the C#. But it
+opens a DFU checkout, so it calls `t.skip` whenever `DFU_PATH` is unset,
+which is CI's normal state: the registry's ORDER was unguarded exactly
+where guarding matters. Pin 1 carries DFU's order as a recorded fixture
+instead and runs on every machine with no checkout at all. The two are
+the same law at different depths, and the shallow one is the one that
+is always on.
+
+**5 pins, 13 mutants, 13 dead** — a dropped slot, a duplicate, a
+swapped pair, a narrowed pattern, three forgotten restore fields, an
+unstamped log step, the disabled marker, two dropped host hooks, and an
+exemption gone stale.
+
+---
+
+## CRUX1 - THE ROAD INTO THE MANTELLAN CRUX, MADE OF DFU'S PARTS (2026-09-22, a player through Mac)
+
+> Got word the final dungeon mission is unbeatable
+
+No ARENA2 in this container, so the Crux itself could not be walked;
+what could be done was to read the whole road from Nulfaga's word to
+the Mantella's touch and find where the port's road differs from DFU's.
+Every action S0000016 and S0000008 use has a port implementation and the
+AUDIT QUESTS sweep was clean - but that sweep parses headless, with no
+world attached, so the Crux's fixed Place has never been RESOLVED in
+CI, and the road had three places where the port's law was not DFU's.
+
+**1. The teleport needed a door DFU never needs.** `transfer pc inside`
+is the one quest action that puts the player inside a dungeon from
+nowhere, and the Crux is the one dungeon nothing else reaches (region
+31 has no travel page - "entered through the main quest, not travelled
+to"). The port's respawn did `_teleportToPixel` and then
+`modes.startInDungeon()`, which took the FIRST `DUNGEON_ENTRANCE` door
+in the loaded exterior and answered false without one - and DFU's
+StartDungeonInterior(location) (PlayerEnterExit.cs:520-527 -> 968-997)
+builds the location's dungeon directly and never looks. A false there
+is the recorded "exterior fallback": TeleportPc still completes, the
+player surfaces at the map-corner sea pixel, and nothing retries - the
+Mantella is unreachable and global 36 (`FinishedMantellanCrux`, which
+only the Mantella's SetGlobalVar sets) is never set. The same gap was
+already written down twice, for the vampire's cemetery ("no door-less
+dungeon entry yet") and for a new game at a doorless location.
+`startInDungeon` falls back to the host's own word for the player's
+pixel now (`dungeonStartSite`: the location if it has a dungeon, its
+climate base, the interior season, the pixel as the exit's group, no
+door) through the same `tryEnterDungeon` - which was read to make sure
+it never touches `hit.door` - so the ENTER marker and north facing are
+as before and the exit's candidates are whatever entrance doors the
+pixel does carry. The vampire wakes in the crypt now, as DFU's does;
+the two records that said otherwise are closed.
+
+**2. A child that failed to set up killed its parent.** `start quest`
+goes through `scheduleQuestByName`, and that door had no catch where
+DFU's StartQuest -> ParseQuest does (QuestMachine.cs:670-687; the
+lists arm in the port has had the same catch since AUDIT 24). If
+S0000016's Place setup throws - "Could not find spawn marker in
+MantellanCrux" has no second chance - the throw came out of
+S0000008's update and the Tick loop error-terminated S0000008, the
+Totem quest, for it: click Nulfaga, nothing happens, the Totem quest
+gone from the journal. Under the catch now, logged in ParseQuest's
+words; the parent lives and its other children still start.
+
+**3. The ending's two videos played over each other.** On the tick the
+`_delay_` clock fires, the `_delay_` task (video 3, `say 1050`) and
+the totem-holder's ending task (video 14, or 6-10/15) start together.
+DFU pushes each DaggerfallVidPlayerWindow onto the UI stack and the
+second shows when the first pops; the port started a player per call.
+`systems/quest/videoQueue.js` is one promise chain: a play waits for
+the one before it, a failed play (the door never traps) releases the
+next.
+
+Not changed, and said plainly: whether the Crux's Mantella model
+carries its SetGlobalVar action with axis 36 in the reporter's data
+could not be checked here (SetGlobalVar shipped 2026-08-25; a save that
+touched the Mantella before that has nothing to re-arm); PlayerCrush is
+unported and rotating platforms are translation-only, and if a Crux
+puzzle needs either the player could still be stranded; leaving the
+Crux early is as unrecoverable as in DFU. If the report stands after
+this, the reporter's save (`machine.globalVars` for index 36, the
+console for `[quest] respawn:` or `Parsing quest S0000016 FAILED!`)
+says which of those it is.
+
+**Pinned** in `test/crux1.test.js` (3): a `start quest` whose child
+throws leaves the parent alive and its good child starting, logged in
+ParseQuest's words; the queue plays in turn and a failure releases the
+next; every seam by source. `tools/mutants/crux1.json`: 8, 8 dead.
+
+## DISC6-B - THE KILL THAT NEVER COUNTED (2026-09-23, Discord through Mac: "Theres no quest notification when you killed all monsters and no quest update in the log")
+
+A party's shared-quest resync (`machine.updateSharedQuest` -> `restoreSaveData`) rebuilt the live quest's resources
+under the foes already standing, and each foe's `QuestResourceBehaviour` kept the Foe it cached on its first frame -
+every death went to the orphan, the `killed N` trigger read the new one, and the last kill fired nothing. The
+behaviour now lets go of a target the quest no longer holds (by UID and by symbol) and resolves it again, and the
+resync keeps this world's Foe counters (the larger kill count; the injury and a pending kill this world's own events set - AUDIT DISC7 D7 dropped the restraint, which is the quest's word on both sides; C2 relinks every standing behaviour at the resync, symbol included, and C3 keeps this world's longer spell and item queues). Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in
+`test/disc6.test.js`; `tools/mutants/disc6.json`.

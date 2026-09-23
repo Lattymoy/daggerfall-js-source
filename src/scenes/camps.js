@@ -37,23 +37,12 @@ import {
   placeCampItem, packCamp, stokeFire, fireLit, campExpired, tentPos, nearestFire, campInfoText, campMenu,
   cookables, cookFood, hasSkillet, campWire, mergeOwnerCamps, BY_FIRE_REACH,
 } from '../systems/survival/camp.js';
-import { nearestHearth, hearthNear } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
+import { nearestHearth, hearthNear, hearthAabb } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
 
 /** The light hangs this far over the flame's base. */
 export const FIRE_LIGHT_UP = 0.6;
 /** The eye's box over a fire (a flame is about a metre tall) and a tent (its mesh's own bounds, or this). */
 export const FIRE_HALF = 0.5;
-/** HEARTH1: the eye's box over a world fire - a brazier's bowl is about this wide. */
-export const HEARTH_HALF = 0.6;
-/** HEARTH1 / AUDIT F3: how far the eye's box reaches BELOW a world fire.
- *  The position a host hands over is its LIGHT - the flame - and the
- *  three collectors put that anywhere from the middle of the flat to
- *  its top (survival/hearth.js says which is which), never at its foot.
- *  So the box reaches a sprite's height down to cover the bowl under
- *  the flame, and only HEARTH_HALF up, where there is nothing to aim
- *  at. It is deliberately not larger than that: a taller box would
- *  start eating clicks meant for whatever stands behind the fire. */
-export const HEARTH_DROP = 1.8;
 
 /**
  * deps = { renderer, getTexture, uploadRecordFrame, meshes ({ getGpuMesh, cpuModels } - the host's pipeline), entity (the player),
@@ -127,12 +116,39 @@ export function createCamps({
 
   /** THE PLACING: the pack's use of Camping Equipment or a Campfire Kit lands here (useItem's 'pitchCamp' / 'placeFire'). */
   function placeItem(item, list) {
+    // CAMP-SILENT (2026-09-22, DragynDance on Discord: "camp kits don't
+    // work for me"). USING AN ITEM ALWAYS SAYS SOMETHING. Every other
+    // arm below refuses with words - in town, indoors, foes near, no
+    // ground, worn out - and this one returned false with NO message at
+    // all, so a player whose host could not answer for the ground got
+    // an item that did nothing and no reason. That is the shape INFO1
+    // closed in the HUD a day earlier from the other end: a row with
+    // nothing in it. A refusal the player cannot see is a bug report
+    // nobody can act on, including us - "doesn't work" is all they can
+    // say, because it is all the game told them.
     const cam = camera?.();
-    if (!cam?.feet) return false;
+    if (!cam?.feet) { say(CAMP_TEXT.noSpot); return false; }
     const col = collider?.();
     const r = placeCampItem(item, list, {
       now: now(), owner: selfId?.() ?? null, feet: cam.feet, yaw: cam.yaw ?? 0,
-      probe: col?.raycast ? (o, d, m) => col.raycast(o, d, m) : null,
+      // CAMP-GROUND (2026-09-22, Mac: "camping not working in the world
+      // because of flat terrain"). THE PROBE WAS ASKING THE WRONG DOOR.
+      // `raycast` walks the collider's TRIANGLE BUCKETS alone, and
+      // outside the ground is not a mesh - it is `heightAt`, the
+      // terrain sampler. So a ray cast straight down from a player
+      // standing in open country hits NOTHING, campSpot answered a null
+      // ground, and campDecision refused with "There is no level ground
+      // here" - everywhere outdoors, on the flattest meadow in Daggerfall.
+      //
+      // `surfaceHit` is the door built for exactly this and is two days
+      // old: MAC-BUG W5, "blood doesn't work outside", the same
+      // collider, the same mistake, fixed there and never carried here.
+      // Its own note says who it is for - "a caller that reads 'nothing'
+      // as 'no surface' is right indoors and silently wrong in the whole
+      // outdoors". It answers whichever is NEARER, mesh or terrain, so a
+      // camp under a walkway still finds the walkway.
+      probe: col?.surfaceHit ? (o, d, m) => col.surfaceHit(o, d, m).dist
+        : (col?.raycast ? (o, d, m) => col.raycast(o, d, m) : null),
       place: place?.() ?? {}, standing: own().length, id: `${selfId?.() ?? 'me'}:${++_nextId}:${Math.trunc(now())}`,
     });
     if (r.text) say(r.text);
@@ -170,19 +186,19 @@ export function createCamps({
 
   /** The eye's targets: the fire's box and, for a tent, the mesh's bounds.
    *  HEARTH1: and a box on every world fire, so a brazier answers the
-   *  ray as a camp does - HEARTH_HALF either way, HEARTH_DROP below
-   *  (AUDIT F3: the position is the FLAME and the bowl is under it, by
-   *  a distance the three hosts each measure differently). */
+   *  ray as a camp does - the box its collector measured off the sprite
+   *  (FIX-D: the flame alone could only be guessed around, and the guess
+   *  reached across a door). */
   function targets() {
     const out = [];
     const wf = worldFires();
     if (wf) for (let i = 0; i < wf.length; i++) {
-      const h = wf[i];
-      out.push({
-        key: `hearth:${i}`,
-        aabb: { min: [h.x - HEARTH_HALF, h.y - HEARTH_DROP, h.z - HEARTH_HALF], max: [h.x + HEARTH_HALF, h.y + HEARTH_HALF, h.z + HEARTH_HALF] },
-        distance: RAY_DISTANCE, reach: CAMP_REACH,
-      });
+      // FIX-D: the SPRITE's own box (survival/hearth.js hearthAabb), not
+      // one guessed around the flame - and `noSurface`, because a flat
+      // has no collider, so every wall the ray meets in front of it is a
+      // wall and never the fire's own face (player/activate.js).
+      const aabb = hearthAabb(wf[i]);
+      if (aabb) out.push({ key: `hearth:${i}`, aabb, distance: RAY_DISTANCE, reach: CAMP_REACH, noSurface: true });
     }
     for (const c of camps) {
       const p = c.rec.pos;
@@ -197,6 +213,27 @@ export function createCamps({
     return out;
   }
   const forKey = (key) => camps.find((c) => `camp:${c.rec.id}` === key) ?? null;
+  /** WORLD-HOVER: the port's OWN world objects, named through World
+   *  Tooltips' extension API (vendor .cs:228-257) rather than wedged
+   *  into its ladder - the mod has no word for a camp because
+   *  Daggerfall has no camps. A tent and its fire share one `camp:`
+   *  key (two boxes, one subject), so the kind decides the word; a
+   *  `hearth:` is any world fire, which HEARTH1 stood a box on. */
+  function hoverName(key) {
+    // AUDIT-WH C1: the type guard `activate` eleven lines below has
+    // carried since HEARTH1, and this did not. The EXTERIOR door key is
+    // a bare NUMBER (worldModes' `key: i`), this namer is rung one of
+    // the host ladder, and that ladder runs ABOVE exteriorHoverName's
+    // own `typeof key === 'number'` test - so `key.startsWith` threw
+    // inside the frame body and killed requestAnimationFrame on the
+    // commonest interaction in a town. A namer is handed EVERY key the
+    // ray can win, not only the ones this module mints.
+    if (typeof key !== 'string') return null;
+    if (key.startsWith('hearth:')) return { title: 'Fire' };
+    const c = forKey(key);
+    if (!c) return null;
+    return { title: c.rec.kind === CAMP_KIND.Tent ? 'Camp' : 'Campfire' };
+  }
   /** Info and Talk name it; Grab and Steal open the menu. */
   function activate(key, mode) {
     // HEARTH1: a world fire is not a camp. It cannot be rested AT as an
@@ -348,7 +385,7 @@ export function createCamps({
   }
 
   return {
-    placeItem, tick, batches, lights, draw, targets, activate, openMenu, openCook, byFire, campAt,
+    placeItem, tick, batches, lights, draw, targets, hoverName, activate, openMenu, openCook, byFire, campAt,
     destroyAll, collectPixel, offsetAll, snapshot, restore, wireRecords, applyOwner, sweepOwners,
     get camps() { return camps; }, own,
   };

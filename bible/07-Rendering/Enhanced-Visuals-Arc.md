@@ -33,10 +33,10 @@ matrix/draw path (GC spikes riding the beat).
 
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
-crossing, footsteps.js:151), and `_playerStill` reads one moving
-frame per crossing (world.js:7152-7154).
+crossing, footsteps.js:166), and `_playerStill` reads one moving
+frame per crossing (world.js:8379-8381).
 
-frame per crossing (world.js:10581-10591).
+frame per crossing (world.js:13282-13298).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:50-57, DFU's own number) while the default 7x7
@@ -52,7 +52,7 @@ rows, terrainSurface.js:147-150): a permanent lighting lattice at every
 THERE IS NO CULLING AND NO MEASUREMENT. Zero frustum tests anywhere;
 ~1045 drawMesh calls in a city with per-call useProgram + per-submesh
 double texture binds and a template-string key allocated per submesh
-per frame (renderer.js:2903 - thousands of strings/frame, the single
+per frame (renderer.js:3169 - thousands of strings/frame, the single
 largest GC source). No FPS counter, no draw counter; the proven
 measurement pattern is window.__renderer + probe monkeypatching
 (hudCrosshairProbe), exposed today by the dungeon host alone.
@@ -74,7 +74,7 @@ tint term without a vertex-format change across ~20 call sites.
   handedness, the fparm studio borrow) and audit18_bible_docs pins
   Rendering.md's literal "directional light 0.45 + 0.55*diffuse" -
   shader math changes move the doc in the same commit.
-- `_clockLit` (renderer.js:767) is a regression latch: set once,
+- `_clockLit` (renderer.js:931) is a regression latch: set once,
   never cleared. Flats' tint path must keep it.
 - No sRGB anywhere; lighting happens on palette bytes; the enhanced
   sky's posterise pass and NEAREST/REPEAT cutout laws stay.
@@ -171,7 +171,7 @@ batching stays a UI-arc item.
   deliberately (restride keeps the main-thread call).
 - EV8 THE PROVINCE RING: real mountains on the horizon. A pure
   builder over woods.heightMapBuffer at one vertex per map pixel -
-  UN-exaggerated heights (max(byte*8, 27.2) * 1.5 - the streamed
+  UN-exaggerated heights (max(byte*8, 27.2) * 1.25 - the streamed
   law itself, not the travel map's x24 skin), real central-difference
   normals, overworldTint(climate, byte) vertex colours (the port's
   one documented map-pixel-to-ground-colour law, ocean-swamp trap and

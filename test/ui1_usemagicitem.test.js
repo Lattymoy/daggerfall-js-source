@@ -53,7 +53,7 @@ test('UI1: AllowCancel is false, and the pick CLOSES first, then uses (:88-97)',
     onClose: () => order.push('close'),
     onUse: (item, i) => order.push(`use:${item.name}:${i}`),
   });
-  assert.equal(win.allowCancel, false, 'Escape does not close it - the U key does');
+  assert.equal(win.allowCancel, false, 'the base class\'s Escape is off (:34-35) - the window closes itself on the U key or Escape (DISC8-D)');
   win.selectedIndex = 1;
   win.onPick(1, 'Sleep');
   assert.deepEqual(order, ['close', 'use:Sleep:1'], 'closed BEFORE the use');

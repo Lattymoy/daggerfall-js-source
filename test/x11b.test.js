@@ -420,7 +420,7 @@ test('DR1 dungeon host: Identify opens the REAL trade window there, not a refusa
   assert.ok(s.includes('function openIdentifySpellWindow('), 'the dungeon host builds no Identify window');
   const b = s.slice(s.indexOf('function openIdentifySpellWindow('),
     s.indexOf('function openDispelPicker('));
-  assert.ok(b.includes('new NativeTradeWindow('), 'the Identify builder mounts no trade window');
+  assert.ok(b.includes('createTradeWindow('), 'the Identify builder mounts no trade window');
   assert.ok(/mode: 'Identify'/.test(b) && /usingIdentifySpell: true/.test(b),
     'the dungeon Identify window is not the SPELL\'s');
   // 2. D7's live collection, spliceable, and the window's own equipped cut
@@ -440,7 +440,7 @@ test('DR1 dungeon host: Identify opens the REAL trade window there, not a refusa
   const arm = s.slice(s.indexOf('onIdentify: ({ chance, refund } = {}) => {'), s.indexOf('onDispelMagic:'));
   assert.ok(arm.includes('mountSpellWindow(openIdentifySpellWindow({ chance: chance ?? 0, cost: refund ?? 0 }))'),
     'the dungeon Identify seam no longer mounts the window');
-  assert.ok(arm.includes('!tradeArtLoaded()'), 'the seam no longer guards its art (X11b: a dead seam)');
+  assert.ok(arm.includes('!tradeDoorReady()'), 'the seam no longer guards its art (X11b: a dead seam)');
   // 5. and the art is warmed at BOOT, or tradeArtLoaded() is false for
   //    ever and the whole mount is silently dead (X11c's bug, one host over).
   assert.ok(s.includes('preloadTradeArt({ renderer, fetchBytes, palette });'),
@@ -459,7 +459,8 @@ test('DR1 dungeon host: Dispel Magic opens the REAL bundle picker there', () => 
   assert.ok(b.includes('dispelBundle(playerEntity, b.bundleId'), 'picking a bundle no longer removes it');
   // DFU's one asymmetry: the player's OWN casts always come off, and
   // only something cast AT them gets the roll.
-  assert.ok(b.includes("selfCast: b.bundleType === 'Spell' && b.selfCast !== false"), 'the self-cast asymmetry is gone');
+  // AUDIT ALLY-CAST C4: a party mate's gift (`ally`) comes off as the player's own - it was never cast AT them.
+  assert.ok(b.includes("selfCast: b.bundleType === 'Spell' && (b.selfCast !== false || b.ally === true)"), 'the self-cast asymmetry is gone');
   assert.ok(b.includes('roll01: Math.random(), chance'), 'the roll no longer weighs the spell\'s chance');
   assert.ok(b.includes('hudText.add(DISPEL_MAGIC_TEXT[r.alert])'), 'the outcome is no longer spoken');
   // ...through the host's own mount door

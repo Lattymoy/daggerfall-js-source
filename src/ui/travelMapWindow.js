@@ -110,7 +110,8 @@ import { ListPickerWindow, preloadListPickerArt, listPickerArtLoaded } from './l
 import { TravelPopUpWindow, preloadTravelPopUpArt, NOT_ENOUGH_GOLD_TEXT_ID } from './travelPopUp.js';
 import { TeleportPopUpWindow, preloadTeleportPopUpArt } from './teleportPopUp.js';   // G5
 import { drawText } from './text.js';
-import { typedChar, bindings } from './input.js';
+import { bindings } from './input.js';
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM8: Find is a pushed DaggerfallInputMessageBox
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // AUDIT 64 F23: the DaggerfallShortcut table, IsUpWith's modifier mask and all
 import { actionForCode } from '../systems/inputActions.js';
 import { ImgFile } from '../formats/imgFile.js';
@@ -315,7 +316,7 @@ let _art = null;
  *  (indices, not a texture - the region shapes are read out of it),
  *  the button sheets, the border, FMAP_PAL.COL and TEXT.RSC. */
 /** TO1: a PNG out of a vendored mod folder, in the shape `drawImg`
- *  reads. The precedent is systems/handheldTorches.js:755-760 -
+ *  reads. The precedent is systems/handheldTorches.js:787-792 -
  *  `toScreenOrder`, not `toColor32`, because this is drawn on a screen
  *  quad and the flip would stand it on its head. A file that is not
  *  there answers null and the caller draws nothing. */
@@ -489,7 +490,7 @@ export class TravelMapWindow {
     // consumes it (:443-455) and DFU's OnPop clears it (:370), so it
     // lasts exactly one visit the way teleportationTravel above does.
     this._gotoPlace = null;
-    this.findText = '';
+    this.findBox = null;   // CM8: the pushed find box while `top` is 'find'
     this._box = null;
     // the generated textures
     this._dotsKey = null;
@@ -1401,8 +1402,17 @@ export class TravelMapWindow {
   _findLocationButtonClick() {
     if (!this.regionSelected) return;
     this._click();
+    // `new DaggerfallInputMessageBox(uiManager, null, findLocationPrompt,
+    // ...)` (:965), 32 characters (:968). CM8: pushed; `top` stays 'find'
+    // so the map under it neither hovers nor scrolls, as under any box.
     this.top = 'find';
-    this.findText = '';
+    this.findBox = new InputMessageBoxWindow({
+      label: FIND_PROMPT,
+      value: '',
+      maxCharacters: FIND_MAX_CHARACTERS,
+      onSubmit: (text) => { this.top = null; this._handleLocationFindEvent(text); },
+      onCancel: () => { this.top = null; },
+    });
   }
 
   /** ArrowButtonClickHandler (:990-1022). */
@@ -1466,16 +1476,11 @@ export class TravelMapWindow {
       return;
     }
     if (this.top === 'find') {
-      if (code === 'Escape') { this.top = null; return; }
-      if (code === 'Enter' || code === 'NumpadEnter') {
-        const text = this.findText;
-        this.top = null;
-        this._handleLocationFindEvent(text);
-        return;
-      }
-      if (code === 'Backspace') { this.findText = this.findText.slice(0, -1); return; }
-      const ch = typedChar(code, e);
-      if (ch && this.findText.length < FIND_MAX_CHARACTERS) this.findText += ch;   // (:968)
+      // the pushed box owns the keyboard: its Return runs the find, its
+      // Escape closes it, both through the box (HandleLocationFindEvent :1435)
+      const box = this.findBox;
+      box?.input(code, e);
+      if (box?.done && this.findBox === box) this.findBox = null;
       return;
     }
     if (this.top === 'notfound') { this.top = null; return; }     // ClickAnywhereToClose
@@ -1890,9 +1895,8 @@ export class TravelMapWindow {
     if (this.top === 'find') {
       // DaggerfallInputMessageBox with NULL tokens (:965): the box is
       // the LABEL and the field, on one line, 32 characters wide.
-      this._box = layoutMessageBox(font, [`${FIND_PROMPT}${this.findText}_`], [],
-        { sizingRows: [`${FIND_PROMPT}${'M'.repeat(FIND_MAX_CHARACTERS)}_`] });
-      this._drawBox(renderer, m, font);
+      this._box = null;
+      this.findBox?.draw(renderer, canvas, font);
     } else if (this.top === 'notfound') {
       this._box = layoutMessageBox(font, _art?.textRsc?.linesById?.(13) ?? ['That place does not exist.'], []);
       this._drawBox(renderer, m, font);

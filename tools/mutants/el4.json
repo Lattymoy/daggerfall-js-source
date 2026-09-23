@@ -245,8 +245,8 @@
   {
     "name": "lane-no-adapt",
     "file": "src/render/enhancedLighting.js",
-    "old": "  float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure\n  vec3 tm = elTonemap(lit * ex);",
-    "new": "  float ex = uELExposure;   // EL4\n  vec3 tm = elTonemap(lit * ex);",
+    "old": "  float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure\n  vec3 tm = elTonemapRGB(lit * ex);   // HQ1: the colour through the curve",
+    "new": "  float ex = uELExposure;   // EL4\n  vec3 tm = elTonemapRGB(lit * ex);   // HQ1: the colour through the curve",
     "tests": [
       "test/el4_frame.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "lane-spec-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "    acc += sh * elAttenuation(d, uPointLights[i].w) * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];",
-    "new": "    acc += sh * elAttenuation(d, uPointLights[i].w) * max(dot(n, Ln), 0.0) * uPointColors[i];",
+    "old": "    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];",
+    "new": "    acc += att * max(dot(n, Ln), 0.0) * uPointColors[i];",
     "tests": [
       "test/el4_frame.test.js"
     ]

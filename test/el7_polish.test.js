@@ -17,7 +17,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { boundsOf } from '../src/render/bounds.js';
 import { SHADOW_CASCADES, sunTexelWorld, SHADOW_GLSL, ShadowPass } from '../src/render/shadowPass.js';
-import { AIR_GLARE_SIZE, AIR_GLARE_SLACK, AIR_GLARE_MIN_DISTANCE, AIR_AO_RADIUS, glslFloat, glareSize } from '../src/render/airPass.js';
+import { AIR_GLARE_SIZE, AIR_GLARE_SLACK, AIR_AO_RADIUS, glslFloat, glareSize } from '../src/render/airPass.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { waterSurfaceFs } from '../src/render/waterSurface.js';
@@ -49,16 +49,16 @@ function recordingGl() {
 }
 
 test('EL7: the constants and the shader laws - the glare\'s presence test and its size, the three cascades, the depth-aware blur, the float literal', () => {
-  assert.equal(AIR_GLARE_SIZE, 0.25); assert.equal(AIR_GLARE_SLACK, 0.25); assert.equal(AIR_GLARE_MIN_DISTANCE, 1.5);   // F4: the band is a quarter unit
+  assert.equal(AIR_GLARE_SIZE, 0.25); assert.equal(AIR_GLARE_SLACK, 0.25);   // LIGHT-NEAR1: no glare minimum distance any more   // F4: the band is a quarter unit
   assert.ok(near(glareSize(18), 0.25 * Math.sqrt(18)));
   assert.equal(glslFloat(1), '1.0'); assert.equal(glslFloat(1.0), '1.0'); assert.equal(glslFloat(0.15), '0.15'); assert.equal(glslFloat(2.5), '2.5');
   const a = read('src/render/airPass.js');
   assert.match(a, /return abs\(viewDist\(depthAt\(uv\)\) - lantern\) <= \$\{glslFloat\(AIR_GLARE_SLACK\)\} \? 1\.0 : 0\.0;/, 'presence: a surface within the slack of the light, either way');
   assert.match(a, /viewDist\(depthAt\(wuv\)\) \+ \$\{glslFloat\(AIR_EMIT_SLACK\)\};/, 'the emitter slack through the same door');
   assert.ok(!/<= \$\{AIR_GLARE_SLACK\}/.test(a) && !/\+ \$\{AIR_EMIT_SLACK\}/.test(a), 'no bare interpolation of a constant that could be whole');
-  assert.match(a, /if \(eye && Math\.hypot\(L\[i \* 4\] - eye\[0\], L\[i \* 4 \+ 1\] - eye\[1\], L\[i \* 4 \+ 2\] - eye\[2\]\) < AIR_GLARE_MIN_DISTANCE\) continue;/, 'no glare for the light in the hand');
+  assert.doesNotMatch(a, /Math\.hypot\(L\[i \* 4\] - eye\[0\]/, 'LIGHT-NEAR1: no glare skip by distance to the eye - the hand\'s light is skipped by its flag (MAC-T1)');
   assert.match(a, /float w = abs\(viewDist\(depthAt\(uv\)\) - here\) <= uBlurRange \? 1\.0 : 0\.0;/, 'the blur weighs a tap by its depth');
-  assert.match(a, /outColor = vec4\(vec3\(wsum > 0\.0 \? acc \/ wsum : 1\.0\), 1\.0\);/, 'and normalises by the taps it kept');
+  assert.match(a, /float ao = clamp\(wsum > 0\.0 \? acc \/ wsum \/ \$\{AIR_AO_STORE\} : 1\.0, 0\.0, 1\.0\);/, 'and normalises by the taps it kept (AUDIT HQ1: unscaling the pixel\'s stored share, and clamping here, after the tile\'s average)');
   assert.match(a, /gl\.uniform1f\(this\.programs\.box\.uBlurRange, AIR_AO_RADIUS\);/); assert.equal(AIR_AO_RADIUS, 0.8);
   assert.deepEqual([...SHADOW_CASCADES], [12, 48, 240]);
   assert.ok(near(sunTexelWorld(0), 24 / 2048) && near(sunTexelWorld(2), 480 / 2048));

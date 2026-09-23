@@ -67,6 +67,11 @@ export const CAMP_TEXT = Object.freeze({
   inWater: 'You cannot make camp in the water.',
   noGround: 'There is no level ground here.',
   tooMany: 'You have enough camps standing already.',
+  // CAMP-SILENT: the host could not say where the player is standing.
+  // It should never happen; the point is that it cannot happen SILENTLY
+  // (a player reported camping kits that "don't work", and a refusal
+  // with no words is indistinguishable from a broken item).
+  noSpot: 'You cannot find anywhere to make camp.',
   pitched: 'You pitch your tent and light a fire.',
   lit: 'You light a campfire.',
   kitSpent: 'That was the last of your campfire kit.',

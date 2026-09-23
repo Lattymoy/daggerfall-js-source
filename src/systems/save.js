@@ -37,8 +37,11 @@ import { setItemFields } from './itemTemplates.js';   // JAN1: an item saved bef
 import { restoreKnightlyOrderFlags } from './knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership book's key IS the guild group
 import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
+import { characterIdOf, adoptLegacyCards, mintCharacterId } from './characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
-import { respawnHealth } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
+import { STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
+import { respawnHealth, reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
+import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -63,6 +66,7 @@ export const QUICKSAVE_KEY = 'dagger.quicksave';
 
 const ENTITY_FIELDS = [
   'name', 'gender', 'race', 'raceId', 'faceIndex',   // S3c/U9: the identity rides the save
+  'characterId',   // CHARID1: and the id that IS the identity - minted at chargen, adopted onto a legacy character at its load
   'careerIndex', 'level', 'reflexes',
   'health', 'maxHealth', 'magicka', 'maxMagicka', 'fatigue',
   'currentBreath',   // P12 (SerializablePlayer carries it; missing = 0/surfaced on old saves)
@@ -104,6 +108,7 @@ const ENTITY_FIELDS = [
   // it a backward load left a FUTURE marker that froze all skill-raise
   // checks until the clock re-passed it.
   'lastSkillCheckTime',
+  'restSimMinutes',   // MAC-LVL1: an online rest's unspent skill-clock credit (spent at the rest's end; a save mid-rest is the only way it is ever non-zero)
   // AUDIT 26 F219/F100: the coven's daedra-of-the-day. DFU persists
   // DaedraSummonDay and DaedraSummonIndex one for one
   // (SerializablePlayer.cs:164-165, restored :332-333);
@@ -190,7 +195,7 @@ export const copyEffectEntry = (a) => {
 };
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, dungeon = null, travelMap = null, escortingFaces = null, quickslots = null, spawns = null, smallerDungeonsState = 0 } = {}) {
+export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, dungeon = null, travelMap = null, escortingFaces = null, quickslots = null, spawns = null, smallerDungeonsState = 0, modData = null } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
@@ -240,12 +245,21 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // in the `world` bag because that bag is written in EXTERIOR mode
   // alone, and the dungeon a spawn's clock is counting is exactly
   // where a player saves.
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState };
+  // AUDIT HCC H3: `modData` is DFU's per-mod save data (IHasModSaveData - SaveLoadManager writes one record per
+  // loaded mod beside the game's own), keyed by the mod's vendor name and opaque here like `world`. It rides EVERY
+  // save wherever it is taken: Horse Cart and Cargo's record rode the world half alone, so a dungeon save - the
+  // online page's close-the-tab save included - carried no horse, no name and no parked wagon.
+  // TERRAIN-SCALE1: every exterior height in this envelope - the player's, the piles', the pools', the anchor's -
+  // stands on ground drawn at this terrain scale. A save without the stamp was written on the prefab's 1.5, and the
+  // world host re-stands its heights on today's ground as it lands them (world.js restandHeight). Additive: SAVE_VERSION
+  // does not move, and an older build ignores the field.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
   // host's save carries it without a host edit.
   snap.weather = snapshotWeather();
+  characterIdOf(entity);   // CHARID1: a character that reached a save without an id (born before this) gets one here, before the copy
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
   snap.stats = { ...entity.stats };
   // SURV1: the needs record (survival/needs.js) - its markers are classic
@@ -537,10 +551,23 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // number, orphaning every maxMagickaModifier producer. Idempotent.
   defineLiveMaxMagicka(entity);
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
+  // CHARID1: A LEGACY SAVE IS ADOPTED HERE. An envelope written before
+  // the id existed carries none; its character gets one now, and every
+  // card of that name that has none is stamped with it - so the next
+  // QuickSave overwrites this character's own slot, as it always did,
+  // and a NEW character of the same name never can.
+  if (typeof snap.characterId !== 'string' || !snap.characterId) {
+    entity.characterId = mintCharacterId();
+    adoptLegacyCards(appStorage(), entity.name, entity.characterId);
+  }
   // ONLINE-DEATH-FIX: NEVER LOAD DEAD ONLINE. hurtPlayer fires the death only on the alive->0 TRANSITION, so a
   // character restored at 0 HP can never die again and is stuck at 0% (unkillable). Online, a death is a respawn, so a
   // dead save (the exit autosave can write one) comes back at the respawn's own half health. Offline is untouched.
-  if (isOnlinePage() && !((entity.health ?? 0) > 0)) entity.health = respawnHealth(entity.maxHealth);
+  // DEATHLOOP1: ...and the drains that killed them are ended with it.
+  // A save written by the exit autosave carries the poison that did it;
+  // restoring the health alone loads the player straight back into the
+  // same death, which is the loop from the other end.
+  if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);
   entity.stats = { ...snap.stats };
   entity.survival = snap.survival && typeof snap.survival === 'object' ? { ...snap.survival, notes: {} } : null;   // SURV1: a pre-SURV save starts fresh at the host's first tick
   // Pre-S15 saves carry no fatigue: default to rested (MaxFatigue =
@@ -589,7 +616,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // into an items array that was just replaced. A snapshot older than
   // this field carries none, which reads as "nothing lit".
   const li = snap.lightSourceIndex ?? -1;
-  entity.lightSource = li >= 0 ? (entity.items[li] ?? null) : null;
+  setLightSource(entity, li >= 0 ? (entity.items[li] ?? null) : null);   // DISC7: the one door
   // E4 - THE PRE-E4 MIGRATION, and two things about it are load-bearing.
   //
   // WHAT: a save written before gold became a counter carries the
@@ -772,7 +799,8 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   clearWorldDataVariants();
   restoreWorldVariationData(snap.worldVariation ?? null);
   // A1: a load replaces the automap store too; a pre-A1 save carries
-  // no field and restores an empty one (nothing was revealed then).
+  // no field and the store is LEFT ALONE (restoreAutomap's null arm,
+  // SaveLoadManager.cs:1508-1509 - AUDIT-AMAP F10 fixed this comment).
   // A dungeon context re-fetches its live record after this runs.
   restoreAutomap(snap.automap ?? null);
   // AUDIT 23: the sticky per-region price band (see snapshot side); a
@@ -816,7 +844,34 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   if (sharedClockOn()) alignSurvival(entity, Math.floor(worldMinutes()), Math.floor(snap.classicMinutes ?? 0));   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)
   // AUDIT 39: the three extras above ride back out too - a save from
   // before they were carried reads the same null/0 they used to.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5
+}
+
+/** CASTLE1 (2026-09-22, the same report's "(different dungeon - world
+ *  state left as built)"): WHICH DOOR StartDungeonInterior takes. DFU's
+ *  member builds the LOCATION it is handed (PlayerEnterExit.cs:968-997)
+ *  - the save's own, RespawnPlayer's GetLocation at the save's pixel
+ *  (:534-537). The port's arm took the FIRST dungeon-entrance door in
+ *  the loaded exterior, and the streaming world loads the neighbours
+ *  too: a load at Daggerfall carries the castle's twenty doors, a
+ *  nearby dungeon's and a keep's, and whichever pixel built first won
+ *  - the player re-entered a neighbour and the dungeon host said the
+ *  save was for a different dungeon. The saved dungeon's own door
+ *  first (by `dungeon:<locationId>`), then a door on the player's own
+ *  pixel (the `site`'s group, DFU's GetLocation), then the doorless
+ *  site itself, and only for a pixel with no dungeon at all the first
+ *  door there is (a site with no dungeon of its own is the fallback the
+ *  respawn keeps). Null when there is nothing to enter.
+ *  @param {Array<{door:{doorType:number}, group?:string, dfLocation?:any}>} doors  the DUNGEON_ENTRANCE doors alone
+ *  @param {{group?:string}|null} site  host.dungeonStartSite()'s answer
+ *  @param {string|null} locationKey  the save's `dungeon:<id>` */
+export function dungeonStartDoorFor(doors, site, locationKey = null) {
+  const id = /^dungeon:(\d+)$/.exec(String(locationKey ?? ''))?.[1] ?? null;
+  const list = doors ?? [];
+  const own = id != null ? list.find((e) => String(e?.dfLocation?.dungeon?.recordElement?.header?.locationId ?? '') === id) : null;
+  if (own) return own;
+  const here = site?.group != null ? list.find((e) => e?.group === site.group) : null;
+  return here ?? site ?? list[0] ?? null;
 }
 
 /** MAC6 #1: the dungeon a save was taken in, found by its id across

@@ -37,7 +37,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { CLIMATES, getPixelFromPixelID } from '../formats/mapsFile.js';
-import { SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE } from '../world/terrainSampler.js';   // AUDIT EV F-DOC7: one home for the byte*8 base term
+import { SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE, STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // AUDIT EV F-DOC7: one home for the byte*8 base term
 import { getPixelColorIndex, checkLocationDiscovered } from './travelMapWindow.js';
 
 // One map pixel = one scene unit; the streamed world's sign convention
@@ -48,7 +48,7 @@ export { BASE_HEIGHT_SCALE };   // AUDIT EV F-DOC7: re-exported from terrainSamp
 /** World units per map pixel in the STREAMED world - the divisor that
  *  brings the height law into map-pixel units. */
 const UNITS_PER_PIXEL = 819.2;
-const TRUE_VERTICAL = 1.5;            // DEFAULT_TERRAIN_SCALE - sample * 1539 * 1.5
+const TRUE_VERTICAL = STREAMING_TERRAIN_SCALE;   // the streamed world's own - sample * 1539 * 1.25 (TERRAIN-SCALE1)
 
 /** The height law in overworld units: max(byte*8, 27.2) through the
  *  streamed world's own vertical scale, exaggerated by OVERWORLD_RELIEF. */

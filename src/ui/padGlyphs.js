@@ -85,6 +85,29 @@ const L3 = ['o..', 'o..', 'o..', 'o..', 'ooo'];
 const R3 = ['oo.', 'o.o', 'oo.', 'o.o', 'o.o'];
 const B3 = ['oo.', 'o.o', 'oo.', 'o.o', 'oo.'];
 const ONE3 = ['.o.', 'oo.', '.o.', '.o.', 'ooo'];
+// PAD1: the triggers' letters - T for LT/RT, 2 for L2/R2
+const T3 = ['ooo', '.o.', '.o.', '.o.', '.o.'];
+const TWO3 = ['oo.', '..o', '.o.', 'o..', 'ooo'];
+
+/** PAD1: the d-pad - a cross of '#', the pressed arm filled with the
+ *  mark. One shape for both families, because a d-pad is a d-pad. */
+const dpad = (dir) => {
+  const u = dir === 'up' ? 'o' : '.', d = dir === 'down' ? 'o' : '.';
+  const l = dir === 'left' ? 'ooo' : '...', r = dir === 'right' ? 'ooo' : '...';
+  return [
+    '....###....',
+    `....#${u}#....`,
+    `....#${u}#....`,
+    `#####${u}#####`,
+    `#${l}...${r}#`,
+    `#${l}...${r}#`,
+    `#${l}...${r}#`,
+    `#####${d}#####`,
+    `....#${d}#....`,
+    `....#${d}#....`,
+    '....###....',
+  ];
+};
 
 const A5 = ['.ooo.', 'o...o', 'ooooo', 'o...o', 'o...o'];
 const B5 = ['oooo.', 'o...o', 'oooo.', 'o...o', 'oooo.'];
@@ -143,6 +166,15 @@ export const PAD_GLYPHS = Object.freeze({
     JoystickButton7: pill(BARS7),
     JoystickButton8: stick('left'),
     JoystickButton9: stick('right'),
+    // PAD1: the six AXIS KEYS a standard pad presses as buttons - the
+    // d-pad (axes 6/7, systems/gamepad.js unityAxes) and the triggers
+    // (axes 9/10) - the codes DEFAULT_SECONDARY_BINDINGS spends.
+    JoystickAxis7Button0: dpad('up'),
+    JoystickAxis7Button1: dpad('down'),
+    JoystickAxis6Button1: dpad('left'),
+    JoystickAxis6Button0: dpad('right'),
+    JoystickAxis9Button0: pill(word(L3, T3)),
+    JoystickAxis10Button0: pill(word(R3, T3)),
   }),
   ps: Object.freeze({
     JoystickButton0: ring(CROSS5),
@@ -155,14 +187,25 @@ export const PAD_GLYPHS = Object.freeze({
     JoystickButton7: pill(BARS7),
     JoystickButton8: stick('left'),
     JoystickButton9: stick('right'),
+    JoystickAxis7Button0: dpad('up'),
+    JoystickAxis7Button1: dpad('down'),
+    JoystickAxis6Button1: dpad('left'),
+    JoystickAxis6Button0: dpad('right'),
+    JoystickAxis9Button0: pill(word(L3, TWO3)),
+    JoystickAxis10Button0: pill(word(R3, TWO3)),
   }),
 });
+
+/** PAD1: the axis keys a glyph exists for - the four d-pad directions
+ *  and the two triggers' positive halves. Named once, so the tag law,
+ *  the defaults and the pin all read the same six. */
+export const GLYPH_AXIS_KEYS = Object.freeze(['JoystickAxis7Button0', 'JoystickAxis7Button1', 'JoystickAxis6Button1', 'JoystickAxis6Button0', 'JoystickAxis9Button0', 'JoystickAxis10Button0']);
 
 /** The button's bitmap, or null for anything that is not one of the
  *  ten - an axis key, a keyboard code, JoystickButton10 and up (Unity
  *  names twenty; the standard mapping reaches ten). */
 export function unityButtonGlyph(family, code) {
-  if (typeof code !== 'string' || !/^JoystickButton[0-9]$/.test(code)) return null;
+  if (typeof code !== 'string' || !(/^JoystickButton[0-9]$/.test(code) || GLYPH_AXIS_KEYS.includes(code))) return null;
   return PAD_GLYPHS[family === 'ps' ? 'ps' : 'xbox'][code] ?? null;
 }
 

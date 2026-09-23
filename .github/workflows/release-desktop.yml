@@ -16,26 +16,25 @@
 # folder on first run, exactly as the website does.
 name: release-desktop
 
-# THREE DOORS to a release, because a door is only a door for who can
-# open it: a pushed app-v* tag (anyone with tag push), a dispatch with
-# release_tag (anyone with workflow rights), and THE MARKER FILE - a
-# main push that touches .github/DESKTOP_RELEASE cuts a release at
-# whatever tag the file names. The marker is the door a branch-only
-# git relay can open through an ordinary merged PR, which is how the
-# first release was cut; it also leaves the release history readable
-# in git. It lives HERE and not in app/ because its first home,
-# app/RELEASE, collided with electron-builder's app/release output
-# directory on case-INSENSITIVE filesystems - mkdir EEXIST, and the
-# windows and macos legs of the first release died on it while ubuntu
-# sailed. The audit's own finding class, biting the release infra.
+# REL3 (2026-09-21, Mac: "is there a way to auto push a release on each
+# merge?"): EVERY MAIN PUSH CUTS A RELEASE, from the same commit the
+# site deploys. The version is DERIVED, never bumped by hand: MAJOR.MINOR
+# from app/package.json's committed base, PATCH the count of commits on
+# main - monotonic, reproducible from the commit, and no file to remember
+# to touch. The marker file that used to name the tag and the REL1 gate
+# that held it to the package version are retired with it: ONE shell
+# variable names the number, and both the tag and the stamp electron-
+# builder bakes in read it, which is the whole of REL1's lesson.
+# A pushed app-v* tag and a dispatch with release_tag remain as manual
+# doors (a re-cut, a hotfix off a branch) and take their version from
+# the tag they name. Runs queue rather than cancel: a release half
+# uploaded is worse than one late.
 on:
   push:
     tags:
       - 'app-v*'
     branches:
       - main
-    paths:
-      - '.github/DESKTOP_RELEASE'
   workflow_dispatch:
     inputs:
       release_tag:
@@ -45,6 +44,10 @@ on:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-desktop
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -59,24 +62,32 @@ jobs:
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # REL3: the version is the commit count, which needs the whole history
 
-      # One answer to "which tag, if any": the dispatch input, the
-      # pushed tag itself, or the marker file's first line. Empty
-      # means artifacts-only.
-      - name: Resolve release tag
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # REL3: ONE NUMBER. The dispatch input or the pushed tag names it
+      # outright; a main push derives it - MAJOR.MINOR from the committed
+      # base, PATCH from `git rev-list --count HEAD`. A dispatch with no
+      # tag is artifacts-only, as before. Both the release tag and the
+      # version electron-builder stamps come from this one VERSION.
+      - name: Resolve release version
         id: reltag
         shell: bash
         run: |
           TAG='${{ inputs.release_tag }}'
           if [ -z "$TAG" ] && [[ '${{ github.ref }}' == refs/tags/app-v* ]]; then TAG='${{ github.ref_name }}'; fi
-          if [ -z "$TAG" ] && [ -f .github/DESKTOP_RELEASE ]; then TAG=$(head -1 .github/DESKTOP_RELEASE | tr -d '[:space:]'); fi
-          case "$TAG" in app-v*) ;; *) TAG='' ;; esac
+          if [ -z "$TAG" ] && [ '${{ github.event_name }}' = push ] && [ '${{ github.ref }}' = refs/heads/main ]; then
+            BASE=$(node -p "require('./app/package.json').version.split('.').slice(0,2).join('.')")
+            TAG="app-v${BASE}.$(git rev-list --count HEAD)"
+          fi
+          case "$TAG" in app-v*) VERSION="${TAG#app-v}" ;; *) TAG=''; VERSION='' ;; esac
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "release tag: '${TAG:-<none - artifacts only>}'"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
 
       - name: Install site dependencies
         run: npm ci
@@ -93,6 +104,23 @@ jobs:
         run: npm ci
         working-directory: app
 
+      # REL3: the stamp. app.getVersion() and the installers' own metadata
+      # read package.json's version, so the release's number is written
+      # there before electron-builder runs - from the SAME variable the
+      # tag was cut from. Not committed: the working tree is the runner's.
+      - name: Stamp the version
+        if: steps.reltag.outputs.version != ''
+        run: npm version "${{ steps.reltag.outputs.version }}" --no-git-tag-version --allow-same-version
+        working-directory: app
+
+      # DA7: `--publish never` uploads nothing (softprops attaches the
+      # files below), but with a publish PROVIDER in app/package.json
+      # electron-builder still writes the updater's metadata - latest.yml
+      # / latest-linux.yml and the blockmaps beside the installers, and
+      # app-update.yml inside them - which is what electron-updater in
+      # the shell reads back from the release at that tag. The
+      # metadata rides the release with the installers, or the updater
+      # finds nothing and every copy falls back to the notice.
       - name: Build installers
         run: npx electron-builder --publish never
         working-directory: app
@@ -106,6 +134,8 @@ jobs:
             app/release/*.AppImage
             app/release/*.exe
             app/release/*.dmg
+            app/release/latest*.yml
+            app/release/*.blockmap
           generate_release_notes: true
 
       - name: Keep installers as run artifacts (manual runs)
@@ -117,4 +147,6 @@ jobs:
             app/release/*.AppImage
             app/release/*.exe
             app/release/*.dmg
+            app/release/latest*.yml
+            app/release/*.blockmap
           if-no-files-found: error

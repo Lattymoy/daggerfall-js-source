@@ -49,6 +49,16 @@ export const WOBBLE_SPEED = 10;
 /** [IL] IL_2280: CheckWagon's Info-mode line. */
 export const WAGON_INFO_TEXT = 'You see your wagon';
 
+/** WORLD-HOVER (AUDIT-WH M6): what the PLAQUE calls the cart. The mod
+ *  has no word for it - Eye Of The Beholder's wagon is a second mod's
+ *  object, standing in the same ray through `RegisterCustomActivation`
+ *  (41239, 3.2) - so it rides World Tooltips' extension API rather
+ *  than being wedged into its ladder, exactly as the dropped torches
+ *  and the camps do. The word is the noun out of the Info line above,
+ *  because the plaque and the press must say the same thing. */
+export const WAGON_HOVER_TEXT = 'Wagon';
+export const wagonHoverName = (key) => (key === 'eotbWagon' ? { title: WAGON_HOVER_TEXT } : null);
+
 /**
  * [IL] IL_2151-IL_21a8: the roll while the cart is moving.
  *   amp  = 2 + (sin t + 1)                 (IL_2151-IL_2167)

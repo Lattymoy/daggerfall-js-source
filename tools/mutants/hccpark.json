@@ -1,0 +1,317 @@
+[
+  {
+    "name": "PARK-store-from-anywhere",
+    "file": "server/src/index.js",
+    "old": "      if (m.data.r && cell === here) await this._parkStore(",
+    "new": "      if (m.data.r) await this._parkStore(",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D1-owner-is-peer-id",
+    "file": "server/src/index.js",
+    "old": "      const k = await parkKeyOf(a.sub, m.data.c);",
+    "new": "      const k = await parkKeyOf(a.id, m.data.c);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-registry-skipped",
+    "file": "server/src/index.js",
+    "old": "      await this._parkRegister(k, cell, now);\n",
+    "new": "      void cell;\n",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-superseded-kept",
+    "file": "server/src/index.js",
+    "old": "      else if (here && cell !== here) await this._parkDrop(k);",
+    "new": "      else if (false) await this._parkDrop(k);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-C3-welcome-silent-when-empty",
+    "file": "server/src/index.js",
+    "old": "        if (!this._send(ws, JSON.stringify({ t: 'parks', now, data: parks }))) return;",
+    "new": "        if (parks.length && !this._send(ws, JSON.stringify({ t: 'parks', now, data: parks }))) return;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D2-own-records-handed-back",
+    "file": "server/src/index.js",
+    "old": ".filter((e) => e.sub !== sub).map((e) => this._parkPublic(e));",
+    "new": ".map((e) => this._parkPublic(e));",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D2-fanned-to-owner",
+    "file": "server/src/index.js",
+    "old": "if (b.id && b.sub !== ownerSub) this._send(other, s);",
+    "new": "if (b.id) this._send(other, s);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-account-leaked",
+    "file": "server/src/index.js",
+    "old": "  _parkPublic(v) { return { k: v.k, id: v.id, name: v.name ?? '', r: v.r, at: v.at }; }",
+    "new": "  _parkPublic(v) { return { k: v.k, id: v.id, name: v.name ?? '', r: v.r, at: v.at, sub: v.sub }; }",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-never-expires",
+    "file": "server/src/index.js",
+    "old": "if (!v || typeof v.k !== 'string' || now - (v.at ?? 0) > PARK_TTL_MS) dead.push([k, v]);",
+    "new": "if (!v || typeof v.k !== 'string') dead.push([k, v]);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D5-expiry-silent",
+    "file": "server/src/index.js",
+    "old": "    for (const [, v] of dead) if (v && typeof v.k === 'string') this._parkFan(",
+    "new": "    for (const [, v] of []) if (v && typeof v.k === 'string') this._parkFan(",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D3-account-unbounded",
+    "file": "server/src/index.js",
+    "old": "    for (const e of mine.slice(0, Math.max(0, mine.length - PARK_ACCOUNT_MAX + 1))) {",
+    "new": "    for (const e of []) {",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-cell-unbounded",
+    "file": "server/src/index.js",
+    "old": "    for (const e of others.slice(0, Math.max(0, others.length - PARK_CELL_MAX + 1))) await this._parkDrop(e.k);",
+    "new": "    for (const e of []) await this._parkDrop(e.k);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-repeat-fanned",
+    "file": "server/src/index.js",
+    "old": "    if (had && had.id === id && had.name === name && JSON.stringify(had.r) === JSON.stringify(r)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-unmetered",
+    "file": "server/src/index.js",
+    "old": "      a = this._meterPark(ws, a, now); if (!a) return;",
+    "new": "      if (!a) return;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D4-registry-unordered",
+    "file": "server/src/index.js",
+    "old": "    if (prev && (prev.at ?? 0) > at) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D4-stale-cell-kept",
+    "file": "server/src/index.js",
+    "old": "      if (cell && cell !== prev.cell) await this._parkTellDrop(cell, k, at);",
+    "new": "      void cell;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D4-drop-crosses-store",
+    "file": "server/src/index.js",
+    "old": "    if (!had || (had.at ?? 0) > before) return;",
+    "new": "    if (!had) return;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D5-facing-unnormalised",
+    "file": "src/net/wire.js",
+    "old": "    rec.h = [h[0], h[1], h[2], h[3] / fl, h[4] / fl, 0];",
+    "new": "    rec.h = [h[0], h[1], h[2], h[3], h[4], 0];",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-no-character",
+    "file": "src/net/wire.js",
+    "old": "  if (typeof d.c !== 'string' || !PARK_CHAR_RE.test(d.c)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-relay-min-world98",
+    "file": "src/net/wire.js",
+    "old": "export const PARK_RELAY_MIN = 99;",
+    "new": "export const PARK_RELAY_MIN = 98;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-C2-kept-per-owner-only",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const slot = `${room}|${e.k}`;",
+    "new": "    const slot = e.k;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-kept-my-own",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (e.id === (selfId?.() ?? null)) return false;\n    const slot",
+    "new": "    const slot",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-live-hides-everywhere",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const h = e.h && !(l?.h && samePlace(l.h.position, e.h.position)) ? e.h : null;",
+    "new": "    const h = e.h && !l?.h ? e.h : null;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-double-drawn",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const w = e.w && !(l?.w && samePlace(l.w.position, e.w.position)) ? e.w : null;",
+    "new": "    const w = e.w;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-C3-empty-list-ignored",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    for (const [slot, e] of [..._kept]) if (e.room === room) { _kept.delete(slot); touched.add(e.k); }",
+    "new": "    for (const [slot, e] of []) if (e.room === room) { _kept.delete(slot); touched.add(e.k); }",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-D5-never-ages",
+    "file": "src/scenes/horseCartPool.js",
+    "old": " || (nowMs !== null && nowMs >= e.expires)) {",
+    "new": ") {",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-prune-nothing",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "if (!held.has(e.room) || (nowMs",
+    "new": "if (false || (nowMs",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-kept-not-named",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const who = peerName(p.ownerId ?? pk.owner) ?? (p.ownerName || null);",
+    "new": "    const who = peerName(p.ownerId ?? pk.owner);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-newest-ignored",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    for (const x of _kept.values()) if (x.k === k && (!e || x.seq > e.seq)) e = x;",
+    "new": "    for (const x of _kept.values()) if (x.k === k && !e) e = x;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-latest-word",
+    "file": "src/net/peerRiders.js",
+    "old": "      const pose = peer?.shown;",
+    "new": "      const pose = peer?.pose;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-riding-before-drawn",
+    "file": "src/net/peerRiders.js",
+    "old": "    isRiding: (id) => !!riders.get(id)?.batch,",
+    "new": "    isRiding: (id) => riders.has(id),",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-fixed-name-height",
+    "file": "src/net/peerRiders.js",
+    "old": "    heightOf: (id) => { const r = riders.get(id); return r?.batch && r.size && r.xml ? r.size.h + r.xml.y / r.xml.scale : 0; },",
+    "new": "    heightOf: (id) => (riders.has(id) ? 2.6 : 0),",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-never-retried",
+    "file": "src/net/peerRiders.js",
+    "old": "    if (have && 'failedAt' in have && clock() - have.failedAt >= RIDER_RETRY_MS) tex.delete(k);",
+    "new": "    if (false) tex.delete(k);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-cast-from-feet",
+    "file": "src/scenes/world.js",
+    "old": "(s.rd ? RIDE_EYE_HEIGHT : h - 0.2)",
+    "new": "(h - 0.2)",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-rider-steps",
+    "file": "src/net/remotePlayers.js",
+    "old": "onFoot: !shown.rd,",
+    "new": "onFoot: true,",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  }
+]

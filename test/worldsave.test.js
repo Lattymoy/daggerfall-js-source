@@ -85,7 +85,7 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   assert.ok(lf.includes("await _teleportToPixel(w.pixel.x, w.pixel.y, null, { modEvent: 'load' })"), 'the load teleports through the travel core - as a LOAD (SIB2: the Seasons mod hears SaveLoadManager.OnLoad, not the travel)');
   assert.ok(lf.includes('state.localFromWorld(w.nativeX, w.nativeZ)'), 'and lands at the exact native spot');
   assert.ok(lf.includes('_lastEncMinutes = Math.floor(playerTicker.classicMinutes)'), 'no encounter catch-up across a load (LoadInProgress parity)');
-  assert.ok(lf.includes('exteriorFoes.restoreWorld(w.foes,') && lf.includes('cityGuards.restoreWorld(w.guards,'),
+  assert.ok(lf.includes('exteriorFoes.restoreWorld(restandRows(w.foes),') && lf.includes('cityGuards.restoreWorld(restandRows(w.guards),'),   // TERRAIN-SCALE1: stood again on today's ground
     'F216/F217: both pools restore after the teleport, the pile law');
   assert.ok(lf.includes("extras.locationKey !== 'world'"), 'a dungeon-side save restores the character and says so');
 });

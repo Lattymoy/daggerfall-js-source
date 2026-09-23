@@ -16,7 +16,7 @@
 // - pointToNative: screen -> virtual for touch/click hit rects.
 
 import { ImgFile } from '../formats/imgFile.js';
-import { bitmapToColor32 } from './hud.js';
+import { bitmapToColor32 } from '../formats/color32Order.js';
 import { drawText, measureText } from './text.js';
 
 export const NATIVE_W = 320;

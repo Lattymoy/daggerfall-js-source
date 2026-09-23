@@ -232,14 +232,12 @@ test('audit58 pins2: CalculateEffectCosts TRUNCATES both magnitude averages', ()
 
 // ── 5. FIVE STRICT/NON-STRICT BOUNDARIES, EACH FROM BOTH SIDES ───────
 
-test('audit58 pins2: the three-ray agreement excludes its own boundary (Automap.cs:1121-1123)', () => {
-  // `Math.Abs(a.distance - b.distance) < 0.01f` - a disagreement of
-  // EXACTLY 0.01 fails the test and reveals nothing. The suite drove
-  // 0.02 and 0.009 and never 0.01 itself, so `< 0.01` and `<= 0.01`
-  // were indistinguishable. The stub answers 0 at the main ray's
-  // origin and `skew` at both protection origins, so the pairwise
-  // difference IS `skew` exactly - no float slop between the fixture
-  // and the law it drives.
+test('audit58 pins2 (re-pinned by AUDIT-AMAP F1): there is NO inter-ray distance test - DFU compares each ray to the TRUE geometry (Automap.cs:1121-1123), never to another ray', () => {
+  // The stub answers 0 at the main ray's origin and `skew` at both
+  // protection origins. AUDIT 58 pinned "exactly 0.01 reveals nothing"
+  // - a law DFU does not have: its three comparisons are each ray's
+  // true-vs-copy distance, and two parallel rays land apart on ANY
+  // surface off-square to them. Both skews reveal now.
   resetAutomapStore();
   try {
     const model = buildRevealIndex([{ key: 'hall', aabb: [-100, -100, -100, 100, 100, 100] }]);
@@ -249,13 +247,13 @@ test('audit58 pins2: the three-ray agreement excludes its own boundary (Automap.
         return { dist: atMainOrigin ? 0 : skew, key: 'hall', normal: null };
       },
     });
-    assert.equal(HIT_DISTANCE_AGREEMENT - 0, HIT_DISTANCE_AGREEMENT, 'the fixture\'s difference is the constant itself');
+    assert.equal(HIT_DISTANCE_AGREEMENT, 0.01, 'DFU\'s per-ray tolerance, recorded and not applied');
     const at = enterDungeonAutomap('audit58/at', 0);
     automapRevealTick(at, { eye: [0, 0, 0], fwd: [0, 0, 1], collider: collider(0.01), model });
-    assert.equal(at.revealed.size, 0, 'a disagreement of exactly 0.01 reveals NOTHING (the compare is strict)');
-    const under = enterDungeonAutomap('audit58/under', 0);
-    automapRevealTick(under, { eye: [0, 0, 0], fwd: [0, 0, 1], collider: collider(0.009), model });
-    assert.equal(under.revealed.has('hall'), true, '0.009 agrees and reveals');
+    assert.equal(at.revealed.has('hall'), true, 'mutants: the inter-ray test back - a skew of 0.01 revealing nothing');
+    const wide = enterDungeonAutomap('audit58/wide', 0);
+    automapRevealTick(wide, { eye: [0, 0, 0], fwd: [0, 0, 1], collider: collider(0.5), model });
+    assert.equal(wide.revealed.has('hall'), true, 'a 0.5 skew (a wall ~80 degrees off-square) reveals too');
   } finally { resetAutomapStore(); }
 });
 

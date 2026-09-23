@@ -1,0 +1,110 @@
+[
+  {
+    "name": "RELAY-H1-the-heartbeat-back-to-five-seconds",
+    "file": "src/net/wire.js",
+    "old": "export const HEARTBEAT_MS = 20000;",
+    "new": "export const HEARTBEAT_MS = 5000;",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "RELAY-H1-the-peer-timeout-a-literal-again",
+    "file": "src/net/online.js",
+    "old": "export const PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS;",
+    "new": "export const PEER_TIMEOUT_MS = 80000;",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "RELAY-H1-the-client-ping-spelled-differently",
+    "file": "src/net/online.js",
+    "old": "      const went = this._send({ t: 'ping' });",
+    "new": "      const went = this._send({ t: 'ping', at: now });",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "RELAY-H1-the-ping-touches-the-heartbeat-clock",
+    "file": "src/net/online.js",
+    "old": "      if (went) this._lastPingAt = now;",
+    "new": "      if (went) this._lastPingAt = this._lastSentAt = now;",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "RELAY-H1-no-presence-ping-at-all",
+    "file": "src/net/online.js",
+    "old": "    if (this.presence && this.status === 'open' && now - Math.max(this._lastSentAt, this._lastPingAt) >= PING_MS) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/relayh1.test.js"
+    ]
+  },
+  {
+    "name": "DEPLOY-1-the-trigger-is-not-read",
+    "file": "test/relaydeploy.test.js",
+    "old": "  const auto = /push:/.test(head) && /branches:\\s*\\[\\s*main\\s*\\]/.test(head);",
+    "new": "  const auto = true;",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "equivalent": true,
+    "why": "The workflow DOES deploy on push, so hard-coding the answer agrees with it today. What the derivation buys is the OTHER direction - the day someone makes the deploy manual again, the real reading flips the pin to require the files to say so and this one would silently keep demanding they do not. A fixture cannot see that without a second workflow to read, and inventing one would be pinning the fixture rather than the repo."
+  },
+  {
+    "name": "DEPLOY-2-a-stale-claim-passes",
+    "file": "test/relaydeploy.test.js",
+    "old": "const MANUAL_CLAIM = /(deploy(ed)?\\s+(is\\s+)?by\\s+hand|by\\s+hand\\s*[-,]\\s*`?npx wrangler|manual on purpose|nothing in CI does it|hand-deployed)/i;",
+    "new": "const MANUAL_CLAIM = /this phrase appears in no file/i;",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "note": "A gate that matches nothing is green over any prose at all - which is precisely the state the tree was in for fifteen weeks."
+  },
+  {
+    "name": "DEPLOY-3-the-cost-goes-unwritten",
+    "file": "server/wrangler.toml",
+    "old": "# once: peers vanish, chat goes quiet. That is the cost of merging a",
+    "new": "# once. That is the cost of merging a",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "note": "The old 'manual on purpose' sentence was CARRYING the cost; removing the claim must not take the cost with it. (The pin reads the phrase 'drops every connected player', which sits two lines up - so this mutant is aimed at the line that says what that COSTS a player.)"
+  },
+  {
+    "name": "DEPLOY-4-wrangler-stops-naming-the-workflow",
+    "file": "server/wrangler.toml",
+    "old": "# `.github/workflows/relay-deploy.yml` runs on EVERY PUSH TO MAIN. It",
+    "new": "# The CI workflow runs on EVERY PUSH TO MAIN. It",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "note": "A person opening the Worker's config must be able to find the thing that deploys it."
+  },
+  {
+    "name": "DEPLOY-5-the-population-stops-walking",
+    "file": "test/relaydeploy.test.js",
+    "old": "  const files = [...walk('src'), ...walk('server/src'), 'server/wrangler.toml']\n    .filter((f) => !bundled.has(f));",
+    "new": "  const files = ['server/wrangler.toml'];",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "equivalent": true,
+    "why": "Only wrangler.toml carries the claim today, so narrowing the population still passes. The walk is here for the file NOT YET WRITTEN - updateNotice.js was the worst offender of the three and no enumeration would have listed it. Held by the walk's own shape rather than by a fixture."
+  },
+  {
+    "name": "DEPLOY-6-the-exclusion-widens-past-the-bundle",
+    "file": "test/relaydeploy.test.js",
+    "old": "  const bundled = new Set(RELAY_GRAPH);   // see the note above: a comment here costs a deploy",
+    "new": "  const bundled = new Set([...RELAY_GRAPH, 'src/net/updateNotice.js']);",
+    "tests": [
+      "test/relaydeploy.test.js"
+    ],
+    "equivalent": true,
+    "why": "updateNotice.js carries no stale claim any more, so excusing it changes no verdict today. The pin that DOES hold this is the pair of assertions under it - the exclusion must still cover wire.js and something inside it must still be lying - and a widened set passes both. What a mutant cannot reach is the future file this is written for, which is the same reason the population is walked rather than listed."
+  }
+]

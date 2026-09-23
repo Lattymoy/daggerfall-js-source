@@ -95,9 +95,11 @@ test('c2/S2 every named global is written and written BACK to its entry value', 
   r.setWindowEmission(new Float32Array([0.3, 0.4, 0.5]));
   r.setPointLights(new Float32Array([1, 2, 3, 4]), new Float32Array([1, 0, 0]));
   r.setIndirectLight([5, 6, 7], 8, new Float32Array([0.2, 0.3, 0.4]));
+  r.setAmbientTrilight({ sky: [0.6, 0.7, 0.8], ground: [0.2, 0.15, 0.1] });   // AUDIT-AMAP H5: the dungeon's BA1 pair
   r._clearColor.set([0.53, 0.7, 0.92, 1]);
 
   const before = {
+    ambientTri: { sky: [...r._ambientTri.sky], ground: [...r._ambientTri.ground] },
     screenOffset: [...r.screenOffset],
     clipY: r._clipY,
     automapMode: r._automapMode,
@@ -140,6 +142,7 @@ test('c2/S2 every named global is written and written BACK to its entry value', 
   assert.equal(r._sunScale, before.sunScale, 'sun scale');
   assert.deepEqual([...r._sunColor], before.sunColor, 'sun colour');
   assert.equal(r._clockLit, before.clockLit, 'the clock-lit flag setLighting raises');
+  assert.deepEqual({ sky: [...r._ambientTri.sky], ground: [...r._ambientTri.ground] }, before.ambientTri, 'AUDIT-AMAP H5: the trilight - setLighting\'s fourth argument defaults to null and would drop it');
   assert.equal(r._moonScale, before.moonScale, 'moon scale');
   assert.deepEqual([...r._moonDir], before.moonDir, 'moon dir');
   assert.deepEqual([...r._moonColor], before.moonColor, 'moon colour');
@@ -206,7 +209,7 @@ test('c2/S2 the clear is DFU\'s: Unity default background, BLENDED, never an opa
   assert.equal(Math.round(PANEL_CLEAR_RGBA[3] * 1e6) / 1e6, 0.019608);
 
   // the quad, not a gl.clear: the alpha is under 1 so screenQuadBlends
-  // turns blending ON (renderer.js:710)
+  // turns blending ON (renderer.js:743)
   const log = [];
   const r = recordingRenderer(log);
   r.beginPanelFrame(identity(), identity(), new Float32Array([0, 1, 0]), PANEL);

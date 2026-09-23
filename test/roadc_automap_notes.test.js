@@ -26,6 +26,7 @@
 // BEFORE this stage restores with empty collections and is not wiped.
 
 import { test } from 'node:test';
+import { ZOOM_SPEED_MOUSE_WHEEL } from '../src/ui/automapCamera.js';   // AUDIT-AMAP T2
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -594,6 +595,22 @@ const FLOOR_HIT = [5.282, 0, 4.423];
 const SECOND_CLICK_X = CHROME_RECTS.panel.x + 240;
 const SECOND_FLOOR_HIT = [10.434, 0, 4.423];
 
+test('CM9 / AUDIT-CM: the note editor IS the one input box - youNote as the LABEL (Automap.cs:1597), no tokens above, MaxCharacters 50 (:1603), Escape writing nothing', () => {
+  const { w, rec } = openWindow();
+  try {
+    doubleClick(w, CLICK_X, CLICK_Y);
+    assert.ok(w.userNoteBox, 'the editor opened');
+    const box = w._noteBox.box;
+    assert.equal(box.label, AUTOMAP_STRINGS.youNote); assert.deepEqual(box.lines, []);
+    assert.equal(box.maxCharacters, NOTE_MAX_CHARACTERS); assert.equal(NOTE_MAX_CHARACTERS, 50);
+    for (let i = 0; i < 60; i++) w.input('KeyA', { code: 'KeyA', key: 'a' });
+    assert.equal(w.userNoteBox.value.length, 50, 'capped at MaxCharacters');
+    w.input('Escape', { code: 'Escape' });
+    assert.equal(w.userNoteBox, null, 'Escape closes');
+    assert.equal(rec.notes.get(0).note ?? '', '', 'and wrote nothing');
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+});
+
 test('c2/S8 a left double-click on the floor mints a note 0.7 above it', () => {
   const { w, rec } = openWindow();
   try {
@@ -794,12 +811,16 @@ test('c2/S8 the tween returns BEFORE base.Update() - a button still held does no
   rec.teleporters.set('K', { entrance: { pos: [...FLOOR_HIT], yawDeg: 0 }, exit: { pos: [40, 0, 40], yawDeg: 0 } });
   const { w } = openWindow({ rec });
   try {
-    w.pointer('down', CHROME_RECTS.upstairs.x + 2, 175, 0);   // held, and never released
-    w.pointer('down', CLICK_X, CLICK_Y, 0);
+    // AUDIT-AMAP W9 re-pinned this: a LEFT-held button sets
+    // alreadyInMouseDown and DFU then refuses a left panel press
+    // (:1916-1929), and one mouse cannot hold a button and double-click
+    // at once anyway - so the hold here is the Upstairs HOTKEY (PageUp,
+    // never released), which IsPressedWith polls the same way.
+    w.input('PageUp', { code: 'PageUp' });   // held, and never released
     w.tick(0.05);
     const rising = automapCameraState().pos[1];
-    assert.ok(rising > 0, 'the held button really does move the camera up while the map is live');
-    w.pointer('down', CLICK_X, CLICK_Y, 0);                   // the second press: the jump
+    assert.ok(rising > 0, 'the held hotkey really does move the camera up while the map is live');
+    doubleClick(w, CLICK_X, CLICK_Y);                         // the jump
     assert.equal(w.iTweenCameraAnimationIsRunning, true);
     const y = automapCameraState().pos[1];
     w.tick(0.2);
@@ -997,7 +1018,9 @@ test('c2/S8 SOURCE: the host installs the listener, the two dungeon hosts carry 
   // overwrite `actions.onTeleport` with their own motor warp, and
   // neither may need to know about this one
   assert.match(ctx, /actions\.onTeleportPortal = \(from, to\) => \{ recordTeleporterConnection\(automapRec, from, to\); \};/);
-  assert.match(ctx, /debugTeleport: \(pos\) => actions\.onTeleport\?\.\(/, 'the debug click reuses the warp door');
+  assert.match(ctx, /debugTeleport: \(pos\) => \{\s*\n\s*actions\.onTeleport\?\.\(/, 'the debug click reuses the warp door');
+  assert.match(ctx, /lastPlayerFeet = \[pos\[0\], pos\[1\], pos\[2\]\];\s*\n\s*_automapEye = \[pos\[0\], pos\[1\] \+ \(opts\.motorState\?\.\(\)\?\.eyeLevel \?\? EYE_HEIGHT\), pos\[2\]\];/,
+    'AUDIT-AMAP H4: and moves the marker\'s inputs with the player (Automap.cs:869-875) - non-overlay frames alone write them');
   assert.match(ctx, /automapCommand\(name\)/, 'and the three console verbs have a home');
   // ROAD-E E3: that home is now the real ConsoleCommandsDatabase -
   // AutoMapConsoleCommands.RegisterCommands lives with the laws in
@@ -1022,4 +1045,113 @@ test('c2/S8 SOURCE: the host installs the listener, the two dungeon hosts carry 
   // and the relay reports before it warps, in the source too
   assert.match(src('src/world/actionSystem.js'),
     /if \(from\) this\.onTeleportPortal\?\.\(from, dest\);\n\s*this\.onTeleport\?\.\(dest\);/);
+});
+
+
+// ── AUDIT-AMAP (2026-09-21): the window's lockouts and the wheel over the panel ──
+test('AUDIT-AMAP W4: while the note prompt is up the map is not the top window - a held hotkey moves nothing (DaggerfallUI.cs:430-433)', () => {
+  const { w } = openWindow();
+  try {
+    doubleClick(w, CLICK_X, CLICK_Y);   // the note prompt
+    assert.ok(w._noteBox, 'the prompt is pushed');
+    const y = automapCameraState().pos[1];
+    w.input('PageUp', { code: 'PageUp' });   // a typed key that is also the Upstairs hotkey
+    w.tick(0.5);
+    assert.equal(automapCameraState().pos[1], y, 'mutants: the held hotkey panning under the prompt');
+    w.input('Escape', { code: 'Escape' });
+    w.tick(0.1);
+    w.input('PageUp', { code: 'PageUp' });
+    w.tick(0.5);
+    assert.ok(automapCameraState().pos[1] > y, 'the prompt gone, the hotkey moves the map again');
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+});
+
+test('AUDIT-AMAP T2/W8: the wheel over the panel zooms at the RAW wheel speed toward the player, dt-free, drag or no drag (:1857-1865); over the chrome it does not', () => {
+  const { w } = openWindow();
+  try {
+    const p0 = [...automapCameraState().pos];
+    const main = [0, 1.7, 0];
+    const dist = Math.hypot(main[0] - p0[0], main[1] - p0[1], main[2] - p0[2]);
+    w.tick(0.001);   // a tiny dt: the wheel must not scale by it
+    w.hover(160, 85);
+    w.wheel(-1);
+    const p1 = automapCameraState().pos;
+    const moved = Math.hypot(p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]);
+    assert.ok(Math.abs(moved - ZOOM_SPEED_MOUSE_WHEEL * dist) < 1e-6, `mutants: scaled by dt, or the sign flipped (moved ${moved})`);
+    const closer = Math.hypot(main[0] - p1[0], main[1] - p1[1], main[2] - p1[2]);
+    assert.ok(closer < dist, 'scroll up is ZOOM IN - toward the player');
+    // W8: a live panel drag does not refuse the wheel
+    w.pointer('down', CLICK_X, CLICK_Y, 0);
+    w.pointer('move', CLICK_X + 1, CLICK_Y, 0);
+    const p2 = [...automapCameraState().pos];
+    w.wheel(-1);
+    assert.notDeepEqual([...automapCameraState().pos], p2, 'mutants: the inDragMode guard back on the panel wheel');
+    w.pointer('up', CLICK_X + 1, CLICK_Y, 0);
+    // over the chrome (the exit button): no zoom
+    const p3 = [...automapCameraState().pos];
+    w.hover(CHROME_RECTS.exit.x + 2, CHROME_RECTS.exit.y + 2);
+    w.wheel(-1);
+    assert.deepEqual([...automapCameraState().pos], p3, 'mutants: the inPanel gate dropped');
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+});
+
+test('AUDIT-AMAP H9: OnPop is public - the window stack and the death presenter can run it; _close still does', () => {
+  const { w } = openWindow();
+  try {
+    assert.equal(typeof w.onPop, 'function');
+    w.runVerb('ActionMoveForward', 1);
+    const moved = [...automapCameraState().pos];
+    w.onPop();   // saves the live mode's transform into the camera state (:648-660)
+    assert.deepEqual([...automapCameraState().pos], moved);
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+});
+
+test('AUDIT-AMAP W1: a right drag over the panel turns the map by speed * pixels * dt (:909-913 hand the bias to dt-scaled verbs)', () => {
+  const angle = (a, b) => Math.acos(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]))) * 180 / Math.PI;
+  const turn = (dt) => {
+    const { w } = openWindow();
+    try {
+      w.tick(dt);
+      const f0 = [...automapCameraState().fwd];
+      w.pointer('down', CLICK_X, CLICK_Y, 2);
+      w.pointer('move', CLICK_X + 10, CLICK_Y, 2);
+      w.pointer('up', CLICK_X + 10, CLICK_Y, 2);
+      return angle(f0, automapCameraState().fwd);
+    } finally { _resetForTests(); resetAutomapWindowState(); }
+  };
+  const slow = turn(1 / 60);
+  const fast = turn(1 / 6);
+  assert.ok(slow > 0, 'the drag turns');
+  assert.ok(Math.abs(fast / slow - 10) < 0.05, `mutants: dt ignored - a ten-pixel drag turning the same at any frame rate (${slow} vs ${fast})`);
+  assert.ok(slow < 5, `mutants: c2's literal dt of 1 - ten pixels turned ${slow} degrees at 60 fps`);
+});
+
+test('AUDIT-AMAP W5: the drag that started the portal jump resumes from where the pointer IS when the tween ends (:689-690)', () => {
+  const rec = freshRecord();
+  rec.teleporters.set('K', { entrance: { pos: [...FLOOR_HIT], yawDeg: 0 }, exit: { pos: [40, 0, 40], yawDeg: 0 } });
+  const { w } = openWindow({ rec });
+  try {
+    w.pointer('down', CLICK_X, CLICK_Y, 0); w.pointer('up', CLICK_X, CLICK_Y, 0);
+    w.tick(0.05);
+    w.pointer('down', CLICK_X, CLICK_Y, 0);   // the jump - and the button stays HELD
+    assert.equal(w.iTweenCameraAnimationIsRunning, true);
+    for (let i = 1; i <= 10; i++) { w.pointer('move', CLICK_X + i * 8, CLICK_Y, 0); w.tick(0.11); }   // 80 px away by the time it ends
+    assert.equal(w.iTweenCameraAnimationIsRunning, false);
+    const landed = [...automapCameraState().pos];
+    w.pointer('move', CLICK_X + 81, CLICK_Y, 0);   // one more pixel
+    const after = [...automapCameraState().pos];
+    const first = Math.hypot(after[0] - landed[0], after[1] - landed[1], after[2] - landed[2]);
+    w.pointer('move', CLICK_X + 82, CLICK_Y, 0);   // and one more: the control, from the same camera
+    const again = automapCameraState().pos;
+    const second = Math.hypot(again[0] - after[0], again[1] - after[1], again[2] - after[2]);
+    assert.ok(first > 0 && Math.abs(first / second - 1) < 0.05, `mutants: the whole 81-pixel delta applied as one pan (${first} vs a one-pixel pan of ${second})`);
+  } finally { _resetForTests(); resetAutomapWindowState(); }
+});
+
+test('AUDIT-AMAP W11: the note prompt carries TextBox.WidthOverride = 306 (Automap.cs:1604), and the box rounds it to 308 (DaggerfallInputMessageBox.cs:243-252)', () => {
+  const { w } = openWindow();
+  try {
+    doubleClick(w, CLICK_X, CLICK_Y);
+    assert.equal((w._noteBox?.box ?? w._noteBox)?.widthOverride, NOTE_WIDTH_OVERRIDE, 'mutants: the override not passed');
+  } finally { _resetForTests(); resetAutomapWindowState(); }
 });

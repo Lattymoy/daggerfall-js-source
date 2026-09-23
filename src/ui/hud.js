@@ -15,12 +15,16 @@
 //   Scale: classic pixels x floor(canvasHeight / 200) (the 320x200
 //   reference), min 1 - integer scaling keeps the art crisp.
 
+import { bitmapToColor32 } from '../formats/color32Order.js';   // BOOT2: the indexed-to-color32 door is a formats concern; it lived here and put the HUD on the entry's boot path through ui/cursor.js
 import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // PX30: the HUD is a skin too
 import { drawEnhancedHud } from './enhancedHud.js';   // PX30
 import { drawLevelNotices } from './levelNotice.js';   // LV2: the level-up notification, on the same one call
 import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
+import { playerBloodScreen, SCREEN_SPATTER_MIN } from './bloodScreen.js';   // BLOOD2e: blood on the lens rides the same call
+import { bloodScreenOn } from '../combat/bloodSwitch.js';   // BLOOD2e: its row
+import { bloodAtlas, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from '../combat/bloodArt.js';   // BLOOD2e: the lens wears the marks' own atlas
 import { hudFade } from './fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
 import { drawHudLarge, dockedLargeHudHeight, largeHudEnabled } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
 import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
@@ -31,12 +35,13 @@ import {
   mathfRound,   // AUDIT 64 F39: VerticalProgress.DrawProgress rounds EVERY fill, the breath bar's included
 } from './hudVitals.js';
 import { midScreenText } from './midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's SECOND text surface
+import { horseNameTooltip } from './horseNameTooltip.js';   // AUDIT HCC U6: Horse Cart and Cargo's HUD label (HorseNameTooltipController)
 import { hudRenderEnabled } from './hudShortcuts.js';   // AUDIT 64 F37: the Draw override's renderHUD flag
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
 import { drawEscortFaces } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { drawText, measureText } from './text.js';   // AUDIT 28 W2: the arrow counter's label
 import { HudFlickerController } from './hudFlicker.js';   // AUDIT 28 W2d: the near-death warning
-import { lastHealthLost } from './hudVitals.js';
+import { lastHealthLost, lastHealthLostPercent } from './hudVitals.js';   // BLOOD2e: HealthLostPercent, as CameraRecoiler reads it
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W2: EnableArrowCounter, BowLeftHandWithSwitching
 import { getItem, isSummoned, ARROW_TEMPLATE } from '../systems/inventory.js';   // AUDIT 28 W2: GetItem(Arrow, priorityToConjured)
 import { EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT 28 W2: the bow hand
@@ -173,23 +178,6 @@ export const hudScale = (canvasWidth, canvasHeight) =>
  * the art is absent - the HUD is data-gated like everything else.
  * ImgFile + palette come from the caller (scene layer owns data).
  */
-export function bitmapToColor32(bmp, palette, alphaIndex = 0) {
-  // alphaIndex is GetColor32's own parameter: classic IMG UI art keys
-  // index 0 transparent (the box corners) - the default every caller
-  // rode before it was a parameter - while a save screenshot
-  // (SAV3, IMAGE.RAW) is opaque edge to edge and passes -1.
-  const colors = new Uint32Array(bmp.width * bmp.height);
-  const u8 = new Uint8Array(colors.buffer);
-  for (let i = 0; i < bmp.data.length; i++) {
-    const idx = bmp.data[i];
-    const o = i * 4;
-    if (idx === alphaIndex) continue;
-    const c = palette.get(idx);
-    u8[o] = c.r; u8[o + 1] = c.g; u8[o + 2] = c.b; u8[o + 3] = 255;
-  }
-  return { width: bmp.width, height: bmp.height, colors };
-}
-
 export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
   // U46: the spell-icon sheet loads HERE, with the rest of the HUD's
   // art, and not with the spellbook window that used to be its only
@@ -237,6 +225,19 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
  *  makes a click fall through to the world. */
 let lastLargeHudBar = null;
 export const largeHudBar = () => lastLargeHudBar;
+
+/** WORLD-HOVER: WHERE THE RETICLE IS, for anything that must stand
+ *  beside it. This module's own comment already says the geometry
+ *  constants live here and that hudCrosshair must not import back into
+ *  it - so the plaque under the crosshair asks the same question the
+ *  crosshair's own draw asks, off the same two terms, rather than four
+ *  hosts each passing a scale and a bar height they would have to keep
+ *  in step by hand. Both are pure of the frame: `hudScale` is a
+ *  function of the canvas, and the docked bar is latched above. */
+export const hudReticle = (canvas) => ({
+  scale: hudScale(canvas?.width ?? 0, canvas?.height ?? 0),
+  largeHudHeight: dockedLargeHudHeight(lastLargeHudBar),
+});
 
 // U46 - THE ACTIVE-SPELL ICONS. One blink clock and one tooltip for
 // the whole game, because DFU has one HUD: four hosts each counting
@@ -447,7 +448,8 @@ export function drawCompassStrip(renderer, art, x, y, s, heading01) {
  * surfaces are DOM and stay painted until told otherwise (AUDIT 64
  * F37's law), so "You are too far away" stood over an open dungeon
  * window until the player closed it, and on ?dungeon - which has no
- * townTalk drawing a second column - the popup column stood too.
+ * townTalk drawing a second set - the popup rows stood too (toasts
+ * in the notice stack since ENH-NOTICE3, hidden by the same door).
  *
  * ONE call rather than two lines in each host, because the next host
  * to grow an early return is the one that remembers one of them.
@@ -455,6 +457,7 @@ export function drawCompassStrip(renderer, art, x, y, s, heading01) {
 export function hideHudTextSurfaces(hudText = null) {
   hudText?.hide();
   midScreenText.hide();
+  horseNameTooltip.hide();   // AUDIT HCC U6: the mod's HUD label, the same door
 }
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
@@ -551,6 +554,21 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // window's OWN panel - so it is painted by that window's Draw and
   // dies with it. Its cycle keeps stepping either way.
   drawNearDeathFlicker(renderer, canvas, cur, cursorActive ? 0 : dt, hudDrawn);   // AUDIT 28 W2d: the parent panel's tint, under everything
+  // BLOOD2e: BLOOD ON THE LENS rides the detector CameraRecoiler reads -
+  // a blow worth a tenth of a life in one frame throws drops on the
+  // screen (the marks' own atlas, blended in the blood's red), which
+  // slide and fade. Ticked and drawn HERE - after the detector and its
+  // tint (W2d's order: detector, tint, then whatever draws), above the
+  // `!art` return and the enhanced HUD's - for the damage flash's reason: every host makes
+  // this one call last and over the viewmodel. Off by its row, nothing
+  // is thrown; what is on the lens still fades.
+  // BLOOD AUDIT 5: AND A BLOW. The detector says how much; the damage
+  // flash's latch says a blow landed (the RemoveHealth edge - an enemy's
+  // hit, a trap, a fall; never a spell, a load or a surrender).
+  const blow = playerDamageFlash.takeBlow();
+  if (blow && bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());
+  playerBloodScreen.tick(dt);
+  if (playerBloodScreen.count && renderer.uploadTexture) playerBloodScreen.draw(renderer, canvas, renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, bloodAtlas(), { smooth: true }));
   // AUDIT 64 F34: the mid-screen label. What SetMidScreenText reads
   // off the live screen (:357-359) is fed every frame; the guard is
   // the LargeHUD SETTING, not whether a bar happens to be drawn.
@@ -579,6 +597,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // is told otherwise (this finding's own law, F37). On the classic
   // skin `hide()` is nothing, which is what the bare `if` meant there.
   if (hudDrawn) midScreenText.draw(renderer, canvas, font); else midScreenText.hide();
+  if (hudDrawn) horseNameTooltip.draw(renderer, canvas, font); else horseNameTooltip.hide();   // AUDIT HCC U6: HorseNameTooltipController's label, a NativePanel child of the same HUD
   // Above the `!art` return, like the flash: the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has vitals.
   // LV2: THE RISING rides the same one call, for the reason the flash

@@ -63,11 +63,12 @@
   ]
  },
  {
-  "name": "F3-hand-distance-old",
+  "name": "LIGHT-NEAR1-caster-distance-rule-back",
   "file": "src/render/shadowPass.js",
-  "old": "export const SHADOW_CASTER_MIN_DISTANCE = 1.5;",
-  "new": "export const SHADOW_CASTER_MIN_DISTANCE = 0.25;",
+  "old": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "new": "    if (d < 1.5 || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
   "tests": [
+   "test/lightnear1.test.js",
    "test/bugs5_field.test.js",
    "test/el2_shadows.test.js"
   ]
@@ -91,13 +92,12 @@
   ]
  },
  {
-  "name": "F3-march-hand-light",
+  "name": "LIGHT-NEAR1-march-distance-rule-back",
   "file": "src/render/enhancedLighting.js",
-  "old": "|| length(uPointLights[i].xyz - uCamPos) < ${glslFloat(SHADOW_CASTER_MIN_DISTANCE)}) ? 1.0",
-  "new": ") ? 1.0",
+  "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0",
+  "new": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length(uPointLights[i].xyz - uCamPos) < 1.5) ? 1.0",
   "tests": [
-   "test/el8_contact.test.js",
-   "test/el2_shadows.test.js"
+   "test/lightnear1.test.js"
   ]
  },
  {
@@ -132,8 +132,8 @@
  {
   "name": "F5-range-gate-dropped",
   "file": "src/render/enhancedLighting.js",
-  "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length",
-  "new": "      : (k == -2 || false || length",
+  "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0",
+  "new": "      : (k == -2 || false) ? 1.0",
   "tests": [
    "test/el8_contact.test.js"
   ]

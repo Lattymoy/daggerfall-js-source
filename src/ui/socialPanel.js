@@ -5,7 +5,7 @@
 //
 // WHAT IT IS. A DOM panel beside the chat - the enhanced skin's, like ui/chatPanel.js - with two tabs and nothing
 // else: FRIENDS (the requests waiting on me, then everyone I have, online first, each saying when they were last
-// seen) and PARTY (the four seats, who leads, where each member stands and how they fare, and the invitations
+// seen) and PARTY (the seats (PARTY_MAX), who leads, where each member stands and how they fare, and the invitations
 // standing). Plus one TOAST, which is the only part that draws while the panel is CLOSED: an invitation is good for
 // INVITE_TTL_MS and a player who never opened the panel would otherwise watch it lapse without ever being asked.
 // The toast has its OWN strip, centred at the top of the screen, and it takes no pointer but its two buttons
@@ -410,6 +410,11 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
           colour: me ? null : PARTY_GREEN_CSS,   // "the players name who are in a party together should turn green"
           lead: m.acct === p.leader,
         });
+        // AUDIT PARTY8 (2026-09-23): a member's POSE writes this one line in place on the live pass - it used to raise
+        // the picture's version, and a repaint rebuilds every button, so with the panel open a click that straddled a
+        // companion's pose (up to seven a second at eight seats) landed on a node that was no longer there: Kick,
+        // Leave and Accept silently did nothing. The row object `m` is the picture's own and applyParty writes its `p`.
+        if (n.subNode) liveSubs.push({ el: n.subNode, of: () => partyPoseText(m.p) });
         // KICK IS THE LEADER'S (SOC1's law, and the hub refuses anyone else) - so it is drawn for nobody else
         if (!me && leads) n.append(btn('Kick', { warn: true, run: () => act({ k: 'party.kick', acct: m.acct }) }));
         out.push(n);

@@ -205,6 +205,7 @@ test('AUDIT-EL F13 (EL6): the emission replay faces each flat as its record was 
   r.beginFrame(I, I, new Float32Array([0.3, 0.8, -0.2]), WORLD_FRAME);
   rights = calls.filter((c) => c[0] === 'uniform3fv' && c[1] === 'uRight').map((c) => [...c[2]].map((v) => +v.toFixed(3)));
   assert.ok(rights.length > 0 && rights.every((v) => !(v[0] === 0.6 && v[2] === 0.8)), 'the sun map drew it facing the sun');
+  assert.ok(r.shadows.stats.sunDraws > 0, 'AUDIT LIGHTING: and DREW it - a flame is only its own lantern\'s non-occluder (EL6), the sun\'s caster still (the basis upload alone was the old evidence, and it rides the record whether or not the flat is drawn)');
   assert.match(read('src/render/airPass.js'), /gl\.uniform3fv\(P\.emitBb\.uRight, r\.right\); gl\.uniform3fv\(P\.emitBb\.uUp, r\.up\);/);
   assert.ok(!/sp\.replay\(/.test(read('src/render/airPass.js')), 'EL6: no depth replay - the frame\'s own depth');
 });
@@ -229,7 +230,7 @@ test('AUDIT-EL F16/F18/F19: the eye measures the scene with itself divided out o
   const a = read('src/render/airPass.js');
   assert.match(a, /acc \+= log2\(max\(dot\(c, vec3\(0\.2126, 0\.7152, 0\.0722\)\) \/ prev, 1e-9\)\);/, 'F16: divided by the eye');
   assert.match(a, /for \(int y = 0; y < 4; y\+\+\) \{\n\s+for \(int x = 0; x < 4; x\+\+\) \{/, 'F16: sixteen taps per texel');
-  assert.match(a, /if \(!\(w > 0 && h > 0\)\) \{ this\.f = null; return; \}   \/\/ AUDIT-EL F18/);
+  assert.match(a, /if \(!\(w > 0 && h > 0\)\) \{ this\.f = null; this\.prevValid = false; return; \}   \/\/ AUDIT-EL F18/);
   assert.match(a, /if \(!\(W > 0 && H > 0\)\) return null;   \/\/ AUDIT-EL F18/);
   assert.match(read('src/render/renderer.js'), /this\._restoreWorldViewport\(\);\n\s+this\.markForeignPass\(\);   \/\/ AUDIT-EL F19/);
   // a zero-size world viewport at beginFrame draws nothing and binds no frame

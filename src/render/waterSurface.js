@@ -288,6 +288,13 @@ vec2 waveGradient(vec2 p, float t, float dist) {
 }
 void main() {
   vec2 unwrapped = vLocalXZ / uTileSize;
+  // GRAIN1: the same wrap, the same cure - the scrolled coordinate before
+  // the fract is what the footprint is measured from, or the water tile
+  // draws a blurred line wherever the scroll rolls over. GRAIN AUDIT 1:
+  // taken HERE, above the two discards - a derivative inside non-uniform
+  // control flow is undefined in GLSL ES 3.00, and a driver that ends a
+  // discarded lane hands the shoreline quad a garbage footprint.
+  vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);
   ivec2 cell = clamp(ivec2(floor(unwrapped)), ivec2(0), ivec2(uTileDim - 1));
   uint data = texelFetch(uTilemap, cell, 0).r;
   uint corners = waterCorners(data);
@@ -314,10 +321,6 @@ void main() {
   float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane
   // the classic texel, the body of the water, lit as the ground is lit
   vec2 uv = fract(f + vec2(uScroll));
-  // GRAIN1: the same wrap, the same cure - the scrolled coordinate before
-  // the fract is what the footprint is measured from, or the water tile
-  // draws a blurred line wherever the scroll rolls over.
-  vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);
   vec3 tex = textureGrad(uTileArr, vec3(uv, 0.0), wgx, wgy).rgb * uTint;
   float diff = max(dot(n, uLightDir), 0.0) * shadow;
   float mdiff = max(dot(n, uMoonDir), 0.0);

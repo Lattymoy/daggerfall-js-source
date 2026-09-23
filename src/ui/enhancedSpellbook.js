@@ -37,6 +37,7 @@ import {
   VAMPIRE_SPELL_TAG, LYCANTHROPY_SPELL_TAG,
 } from './spellbookWindow.js';
 import { effectByKey } from '../systems/spellEffects.js';   // the classic book's own source (spellbookWindow.js:120)
+import { spellQuickslot, setSpellQuickslot, clearSpellQuickslot } from '../systems/quickslots.js';   // HOTSLOT: the book is where a spell is slotted
 import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from './spellIcons.js';   // PX23b: the classic's OWN words for the two icons
 
 const el = (tag, cls, text) => {
@@ -98,7 +99,7 @@ export function effectWords(effect) {
 }
 
 /** The two words the classic shows as TOOLTIPS on the target and
- *  element icons (spellbookWindow.js:386/389). This window draws no
+ *  element icons (spellbookWindow.js:388/391). This window draws no
  *  icons - it reads no ARENA2 - so it prints what those icons mean,
  *  which is strictly more than the classic tells you at a glance. */
 export function spellFrame(spell) {
@@ -229,6 +230,21 @@ function render() {
     onExit();
   };
   acts.append(ready);
+  // HOTSLOT (2026-09-22, a player on Discord: "Cant change Hotslot
+  // spell"): the slot had ONE writer a player could reach - a 350 ms
+  // HOLD of the quick-spell key, said nowhere - so from the chair the
+  // key was a toggle stuck on the book's first spell, and on a phone
+  // the chip that takes the hold was hidden until the slot was filled.
+  // The book is where a spell is chosen, so the book slots it: the
+  // same Slot/Unslot pair the pack gives a consumable (quickslotActs).
+  const inSlot = Number.isFinite(sel.spell?.index) && spellQuickslot()?.index === sel.spell.index;
+  const slot = el('button', `act sb-slot${inSlot ? ' on' : ''}`, inSlot ? 'Unslot' : 'Quickslot');
+  slot.onclick = () => {
+    if (inSlot) clearSpellQuickslot(); else setSpellQuickslot(sel.spell);
+    notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';
+    render();
+  };
+  acts.append(slot);
   // RENAME. The classic asks "Enter spell name : " (ENTER_SPELL_NAME,
   // :934) and the first draft dropped it - a prettier window that can
   // do less, which is the chronicle's lesson one window over.

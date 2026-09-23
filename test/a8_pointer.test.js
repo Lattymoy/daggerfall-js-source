@@ -59,7 +59,7 @@ test('A8: a TOUCH spell is the stated exception - doors stay reachable (:255-258
   // ...and the release DOES activate, because the touch arm falls
   // through instead of returning
   const f = activateFrame(gate, { down: false, hasReadySpell: true, touchSpell: true });
-  assert.deepEqual(f, { cast: false, activate: true });
+  assert.deepEqual(f, { cast: false, activate: true, pressCast: true });   // AUDIT DISC7 A1: and it says the press was a cast, for the port's own arms
 });
 
 test('A8: castPending swallows the frame the cast’s own click would activate, and ONE frame only', () => {
@@ -90,8 +90,8 @@ test('A8: castPending swallows the frame the cast’s own click would activate, 
 test('A8: a gate that never sees the button does nothing', () => {
   const r = run([{}, {}, {}]);
   assert.deepEqual(r, [
-    { cast: false, activate: false }, { cast: false, activate: false },
-    { cast: false, activate: false },
+    { cast: false, activate: false, pressCast: false }, { cast: false, activate: false, pressCast: false },
+    { cast: false, activate: false, pressCast: false },
   ]);
 });
 

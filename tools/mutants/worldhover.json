@@ -1,0 +1,1156 @@
+[
+  {
+    "name": "WORLD-HOVER-reach-gate-removed",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (!(hit.distance <= hit.reach)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-reach-gate-becomes-strictly-less",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (!(hit.distance <= hit.reach)) return null;",
+    "new": "  if (!(hit.distance < hit.reach)) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-unnamed-key-labels-itself",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (!named?.title) return null;\n  // ACT-MENU: a namer that answers verbs",
+    "new": "  if (!named?.title) return frame(key, 'name', key, []);\n  // ACT-MENU: a namer that answers verbs",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-signature-is-the-key-alone",
+    "file": "src/systems/worldHover.js",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "new": "  return `${f.key}`;",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-signature-drops-the-sub-lines",
+    "file": "src/systems/worldHover.js",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.title}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-signature-drops-the-stack-count",
+    "file": "src/systems/worldHover.js",
+    "old": "  const rows = f.rows.map((r) => `${r.name}\\u0002${r.stack}\\u0002${r.rarity ?? ''}`).join('\\u001f');",
+    "new": "  const rows = f.rows.map((r) => `${r.name}`).join('\\u001f');",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-door-is-asked-for-contents",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (keyItemises(key)) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-corpse-prefix-stops-itemising",
+    "file": "src/systems/worldHover.js",
+    "old": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);",
+    "new": "export const ITEMISED_KEYS = Object.freeze(['loot:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:']);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-hover-max-widened",
+    "file": "src/systems/worldHover.js",
+    "old": "export const HOVER_MAX = 6;",
+    "new": "export const HOVER_MAX = 60;",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-namer-ladder-takes-the-last-answer",
+    "file": "src/systems/worldHover.js",
+    "old": "      if (r?.title) return r;",
+    "new": "      if (r) return r;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-namer-ladder-accepts-an-empty-title",
+    "file": "src/systems/worldHover.js",
+    "old": "      const r = fn?.(key, hit);\n      if (r?.title) return r;",
+    "new": "      const r = fn?.(key, hit);\n      if (r) return r;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-compose-drops-a-host-family",
+    "file": "src/systems/worldHover.js",
+    "old": "    if (t?.length) targets.push(...t);",
+    "new": "    if (t?.length && producers.indexOf(fn) === 0) targets.push(...t);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-skin-gate-removed-from-the-draw",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return; }\n  const n = ensure();",
+    "new": "  const n = ensure();",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (false) { hideWorldPlaque(); return null; }   // (the hide",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-touch-device-gets-the-plaque",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  _gateOn = isEnhanced() && !isTouchDevice();",
+    "new": "  _gateOn = isEnhanced();",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-null-frame-is-merely-skipped",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    blank(n);\n    return;\n  }\n  paint(n, frame, quickLootRow(frame), stats);",
+    "new": "    return;\n  }\n  paint(n, frame, quickLootRow(frame), stats);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-cursorActive-ignored",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }",
+    "new": "  if (!eye || !dir || !collider) { foldQuickLoot(null); showWorldPlaque(null); return null; }",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-plaque-hangs-above-the-cross",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    top: (crosshairCentreY(canvas.height, largeHudHeight) + CROSSHAIR_ARM * scale) / dpr + PLAQUE_GAP,",
+    "new": "    top: (crosshairCentreY(canvas.height, largeHudHeight) - CROSSHAIR_ARM * scale) / dpr - PLAQUE_GAP,",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/enhancedInventory.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-plaque-ignores-the-docked-large-hud",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const { scale, largeHudHeight } = hudReticle(canvas);",
+    "new": "  const { scale } = hudReticle(canvas); const largeHudHeight = 0;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-has-list-set-on-every-frame",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  n.classList.toggle('has-list', f.kind === 'items' || f.kind === 'actions');",
+    "new": "  n.classList.toggle('has-list', true);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-signature-guard-retires",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}|${statsSide(lastX, globalThis.innerWidth ?? 0)}`;\n  if (sig === shownSig) return;",
+    "new": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}|${statsSide(lastX, globalThis.innerWidth ?? 0)}`;\n  if (false) return;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-multi-line-title-is-flattened",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  for (const line of String(f.title).split('\\n')) {",
+    "new": "  for (const line of [String(f.title)]) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-multiTrigger-silence-removed",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (triggerFlag === TRIGGER_FLAGS.MultiTrigger && !multiOk) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-hideInteract-knob-ignored",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (named) return named;\n  return hideInteract ? null : INTERACT_TEXT;",
+    "new": "  if (named) return named;\n  return INTERACT_TEXT;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-every-trigger-is-named",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (!ACTION_TRIGGERS_NAMED.includes(triggerFlag)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-daedra-table-reordered",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  'Peryite', 'Sanguine', 'Sheogorath', 'Vaermina',",
+    "new": "  'Peryite', 'Sanguine', 'Vaermina', 'Sheogorath',",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-daedra-archive-widened",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export const DAEDRA_ARCHIVE = 175;",
+    "new": "export const DAEDRA_ARCHIVE = 334;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-pile-of-one-widened-to-any",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (list.length !== 1) return LOOT_PILE_TEXT;",
+    "new": "  if (list.length < 1) return LOOT_PILE_TEXT;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-stack-count-always-printed",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  return stack > 1 ? `${n} (${stack})` : n;",
+    "new": "  return `${n} (${stack})`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-lock-level-shown-when-unlocked",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (!unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);",
+    "new": "  if (unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-mod-closed-gate-reverted-to-DFU",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (!unlocked && buildingType <= BUILDING_TYPES.Palace",
+    "new": "  if (!unlocked && buildingType < BUILDING_TYPES.Temple",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-palace-substitution-dropped",
+    "file": "src/systems/worldTooltips.js",
+    "old": "      { subject: buildingType === BUILDING_TYPES.Palace ? 'Palace' : null }));",
+    "new": "      { subject: null }));",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-houseForSale-told-it-is-shut",
+    "file": "src/systems/worldTooltips.js",
+    "old": "    && buildingType !== BUILDING_TYPES.HouseForSale) {",
+    "new": "    && true) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-dungeon-exit-always-names-its-town",
+    "file": "src/systems/worldTooltips.js",
+    "old": "    const to = inTown ? locationName : (regionName ? `${regionName} Region` : '');",
+    "new": "    const to = locationName;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-city-walls-lose-their-special-case",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  const to = buildingType === BUILDING_TYPES.Town23\n    ? (locationName ? `${locationName} City Walls` : '')\n    : displayName;",
+    "new": "  const to = displayName;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-dresser-loses-a-model-id",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  ['Dresser', [41034, 41050, 41803, 41806]],",
+    "new": "  ['Dresser', [41034, 41050, 41806]],",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-container-default-stops-being-Interact",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;\n}",
+    "new": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-totem-loses-its-billboard",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  if (archive === TOTEM_ARCHIVE && record === TOTEM_RECORD) return TOTEM_TEXT;",
+    "new": "  if (false) return TOTEM_TEXT;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-nameless-body-grows-a-fallback-the-mod-has-not",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export const corpseName = (entityName) => `${entityName ?? ''} (dead)`;",
+    "new": "export const corpseName = (entityName) => `${entityName || 'Body'} (dead)`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-raceWinner-tie-order-inverted",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [foe, peer, person, ground, pile, corpse, torch, horseCart, wagon, water, camp]) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-raceWinner-takes-the-farthest",
+    "file": "src/player/activationRace.js",
+    "old": "    if (best === null || p.distance < best.distance) best = p;",
+    "new": "    if (best === null || p.distance > best.distance) best = p;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-raceWinner-ties-go-to-the-later",
+    "file": "src/player/activationRace.js",
+    "old": "    if (best === null || p.distance < best.distance) best = p;",
+    "new": "    if (best === null || p.distance <= best.distance) best = p;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-location-name-read-in-C-sharp",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const currentLocationName = () => host.currentLocation?.()?.name ?? '';",
+    "new": "  const currentLocationName = () => host.currentLocation?.()?.Name ?? '';",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-dungeon-exit-name-read-in-C-sharp",
+    "file": "src/scenes/worldModes.js",
+    "old": "        locationName: dungeonLoc?.name ?? '',",
+    "new": "        locationName: dungeonLoc?.Name ?? '',",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-location-name-dug-out-a-second-way",
+    "file": "src/scenes/worldModes.js",
+    "old": "        return staticDoorName('buildingExit', { locationName: currentLocationName() });",
+    "new": "        return staticDoorName('buildingExit', { locationName: host.currentLocation?.()?.locationName ?? '' });",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-body-answers-nothing-it-holds",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  if (!entry || entry.corpseDisabled) return null;\n  return entry.entity?.items ?? null;",
+    "new": "  if (!entry || entry.corpseDisabled) return null;\n  return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-disabled-body-is-still-listed",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  if (!entry || entry.corpseDisabled) return null;\n  return entry.entity?.items ?? null;",
+    "new": "  if (!entry) return null;\n  return entry.entity?.items ?? null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-an-empty-body-does-not-stop-the-contents-walk",
+    "file": "src/systems/worldHover.js",
+    "old": "      const r = fn?.(key);\n      if (r) return r;",
+    "new": "      const r = fn?.(key);\n      if (r?.length) return r;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-contents-ladder-takes-the-last-answer",
+    "file": "src/systems/worldHover.js",
+    "old": "export function composeContents(readers) {\n  return (key) => {\n    for (const fn of readers ?? []) {\n      const r = fn?.(key);\n      if (r) return r;\n    }\n    return null;\n  };\n}",
+    "new": "export function composeContents(readers) {\n  return (key) => {\n    let last = null;\n    for (const fn of readers ?? []) {\n      const r = fn?.(key);\n      if (r) last = r;\n    }\n    return last;\n  };\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-watch-answers-no-contents",
+    "file": "src/scenes/cityGuards.js",
+    "old": "  const hoverContents = (key) => corpseContents(corpseEntryFor(guards, key, 'guardCorpse', corpseLens));",
+    "new": "  const hoverContents = () => null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-puppets-pile-is-published",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    return e && !e.puppet ? corpseContents(e) : null;",
+    "new": "    return e ? corpseContents(e) : null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-streaming-host-lists-piles-alone",
+    "file": "src/scenes/world.js",
+    "old": "    (key) => exteriorFoes.hoverContents?.(key) ?? null,\n    (key) => cityGuards.hoverContents?.(key) ?? null,\n  ]);",
+    "new": "  ]);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-hostile-foe-is-named",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export function mobileEntityName(entityName, { hostile = false } = {}) {\n  if (hostile) return null;",
+    "new": "export function mobileEntityName(entityName, { hostile = false } = {}) {\n  if (false) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-nameless-townsperson-draws-an-empty-plaque",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export const mobilePersonName = (nameNPC) => (nameNPC || null);",
+    "new": "export const mobilePersonName = (nameNPC) => (nameNPC ?? '');",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-foe-beats-a-townsperson-on-a-tie",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, foe, peer, person]) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-townsperson-beats-the-door-on-a-tie",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, person, peer, ground, foe]) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-mobile-band-reaches-as-far-as-the-ray",
+    "file": "src/player/activate.js",
+    "old": "      distance: RAY_DISTANCE,\n      reach: MOBILE_NPC_ACTIVATION_DISTANCE,\n    });\n  }\n  return targets;\n}",
+    "new": "      distance: RAY_DISTANCE,\n      reach: RAY_DISTANCE,\n    });\n  }\n  return targets;\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-body-is-stood-as-a-live-foe",
+    "file": "src/player/activate.js",
+    "old": "    if (!f || f.dead) continue;   // AUDIT-WH2 L2-F6: `!f.entity` came off - the PRESS's own sweep (pickFoeAlong, below) never had it, and the two sweeps must agree on what the ray hit\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
+    "new": "    if (!f) continue;\n    const aabb = foeAabb(f);\n    if (!aabb) continue;\n    targets.push({",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-live-foe-box-is-not-the-press-s",
+    "file": "src/player/activate.js",
+    "old": "  const half = 0.45;\n  return {\n    min: [feet[0] - half, feet[1], feet[2] - half],\n    max: [feet[0] + half, feet[1] + h, feet[2] + half],\n  };",
+    "new": "  const half = 0.6;\n  return {\n    min: [feet[0] - half, feet[1], feet[2] - half],\n    max: [feet[0] + half, feet[1] + h, feet[2] + half],\n  };",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-liveFoeFor-drops-the-non-string-guard",
+    "file": "src/player/activate.js",
+    "old": "  if (typeof key !== 'string' || !key.startsWith(`${keyPrefix}:`)) return null;",
+    "new": "  if (!key.startsWith(`${keyPrefix}:`)) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dungeon-plaque-stops-racing-live-foes",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          foe: pickActivatableHit(eye, d, liveFoeTargets(foes, 'mobileFoe'), collider),\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-press-s-list-grows-a-live-foe",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      return composeActivationTargets([...activationTargets(actions.objects), ...lootTargets()], _hostTargets);",
+    "new": "      return composeActivationTargets([...activationTargets(actions.objects), ...lootTargets(), ...liveFoeTargets(foes, 'mobileFoe')], _hostTargets);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-tryActivate-keeps-its-own-person-scan",
+    "file": "src/scenes/townTalk.js",
+    "old": "    const near = nearestPerson(camPos, fwd, persons);\n    const best = near?.entry ?? null, bestDist = near?.distance ?? Infinity;",
+    "new": "    let best = null, bestDist = Infinity;\n    for (const p of persons) {\n      const d = rayPersonDistance(camPos, fwd, p.pos);\n      if (d < bestDist) { best = p; bestDist = d; }\n    }",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-fixed-city-stops-racing-townsfolk",
+    "file": "src/scenes/exterior.js",
+    "old": "            person: _hoverPersonPick(cam.pos, _hd),\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-streaming-host-stops-naming-townsfolk",
+    "file": "src/scenes/world.js",
+    "old": "      const t = mobilePersonName(_livePersons[Number(key.split(':')[1])]?.person?.nameNPC);",
+    "new": "      const t = null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-hide-door-is-gated-by-the-skin",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return; }",
+    "new": "  if (!worldPlaqueOn()) return;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-hide-keeps-the-signature",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  blank(node);\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-hide-door-ensures-a-node",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  if (!node) return;\n  shownSig = null;\n  blank(node);\n}",
+    "new": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n  const n = ensure();\n  if (!n) return;\n  shownSig = null;\n  blank(n);\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-world-hosted-dungeon-window-keeps-the-plaque",
+    "file": "src/scenes/worldModes.js",
+    "old": "dungeonCtx.hideHudText?.(); hideWorldPlaque();",
+    "new": "dungeonCtx.hideHudText?.();",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dev-door-window-keeps-the-plaque",
+    "file": "src/scenes/dungeon.js",
+    "old": "ctx.hideHudText?.(); hideWorldPlaque();",
+    "new": "ctx.hideHudText?.();",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dungeon-states-no-cursorActive",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      cursorActive: dungeonPaused() || !!opts.pointerSurfaceUp?.(),",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-interior-reads-one-stacks-top-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "        cursorActive: overlayHeld,",
+    "new": "        cursorActive: !!interiorOverlay,",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-held-frame-keeps-the-plaque",
+    "file": "src/scenes/world.js",
+    "old": "    if (frameHeld()) { frameAbort(); hideWorldPlaque(); last = now;",
+    "new": "    if (frameHeld()) { frameAbort(); last = now;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-fixed-city-never-tears-the-plaque-down",
+    "file": "src/scenes/exterior.js",
+    "old": "    if (!frameAlive(_frameToken)) { destroyWorldPlaque(); return; }",
+    "new": "    if (!frameAlive(_frameToken)) return;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-street-s-doors-outlive-the-street",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
+    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-door-cache-is-never-freed",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const dropDoorCache = () => { _doorCache = null; _extList = null; _extMark = null; _intList = null; _intMark = null; _doorTextKey = null; _doorText = null; };",
+    "new": "  const dropDoorCache = () => {};",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-container-default-takes-the-knob-again",
+    "file": "src/systems/worldTooltips.js",
+    "old": "export function houseContainerName(modelIdNum) {\n  return HOUSE_CONTAINER_NAMES[modelIdNum] ?? INTERACT_TEXT;\n}",
+    "new": "export function houseContainerName(modelIdNum, { hideInteract = false } = {}) {\n  const named = HOUSE_CONTAINER_NAMES[modelIdNum] ?? null;\n  if (named) return named;\n  return hideInteract ? null : INTERACT_TEXT;\n}",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-Mantella-promotes-itself-through-MultiTrigger",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  const multiOk = MT_OK_BY_NAME.has(modelIdNum) || MT_OK.has(modelIdNum);",
+    "new": "  const multiOk = named != null || MT_OK.has(modelIdNum);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-quest-plant-stand-differentiates-again",
+    "file": "src/systems/worldTooltips.js",
+    "old": "  return itemLongName(item, { differentiatePlantIngredients: false }) || null;",
+    "new": "  return itemLongName(item) || null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-board-reaches-as-far-as-the-ray",
+    "file": "src/scenes/worldModes.js",
+    "old": "key: `board:${i}`, aabb, distance: RAY_DISTANCE, reach: BULLETIN_BOARD_ACTIVATION_DISTANCE }));",
+    "new": "key: `board:${i}`, aabb, distance: RAY_DISTANCE }));",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dungeon-entrance-arm-loses-its-caller-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const entry = entries[key];\n      if (entry?.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) {\n        return staticDoorName('dungeonEntrance', { locationName: currentLocationName() });\n      }\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-itemised-default-comes-back",
+    "file": "src/systems/worldHover.js",
+    "old": "    if (!named?.title) return null;\n    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null);\n    return frame(key, 'items', named.title, named.subs ?? [], shown, rest, empty);",
+    "new": "    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null);\n    return frame(key, 'items', named?.title ?? 'Loot', named?.subs ?? [], shown, rest, empty);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-outdoors-a-dropped-pile-loses-its-word",
+    "file": "src/scenes/world.js",
+    "old": "    (key) => (typeof key === 'string' && key.startsWith('droppedLoot:')\n      ? { title: lootPileName(droppedLoot.contents?.(key) ?? null) } : null),\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-cart-loses-its-word",
+    "file": "src/scenes/exterior.js",
+    "old": "    (key) => wagonHoverName(key),\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-dry-water-source-says-nothing-about-it",
+    "file": "src/systems/survival/items.js",
+    "old": "export const waterSourceHoverName = (dry) => ({ title: WATER_SOURCE_NAME, subs: dry ? [DRY_SOURCE_TEXT] : [] });",
+    "new": "export const waterSourceHoverName = () => ({ title: WATER_SOURCE_NAME, subs: [] });",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-dungeon-runs-its-own-ladder-first-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const _namer = composeNamer([\n    (key) => droppedTorches.hoverName?.(key) ?? null,",
+    "new": "  const _namer = composeNamer([\n    _dungeonHoverName,\n    (key) => droppedTorches.hoverName?.(key) ?? null,",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-exterior-list-is-rebuilt-per-reader",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (mark !== null && _extMark === mark && _extList) return _extList;\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-interior-list-is-rebuilt-per-reader",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (_mark !== null && _intMark === _mark && _intList) return _intList;\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-a-frame-memo-outlives-its-frame",
+    "file": "src/systems/frameClock.js",
+    "old": "export const frameMark = () => open;",
+    "new": "let _lastMark = 0;\nexport const frameMark = () => (open ?? ++_lastMark);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-door-text-cache-ignores-the-generation",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;",
+    "new": "      if (_doorTextKey === key) return _doorText;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-door-text-is-resolved-every-frame-again",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const gen = doorGeneration?.() ?? 0;\n      if (_doorTextKey === key && _doorTextGen === gen) return _doorText;\n",
+    "new": "      const gen = doorGeneration?.() ?? 0;\n",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-plaque-list-has-no-height-cap",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);\n  overflow: hidden; }",
+    "new": ".wplaque-list { display: block; }",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-online-forces-the-readout-on",
+    "file": "src/systems/onlineLane.js",
+    "old": "  // AUDIT-WH R8: a readout is the player's - it stands nothing, rolls\n  // nothing, writes nothing and is not on the wire.\n  'world-tooltips',\n",
+    "new": "",
+    "tests": [
+      "test/onlinelane.test.js",
+      "test/worldhover.test.js",
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-water-lookup-goes-back-to-the-shared-slot",
+    "file": "src/scenes/world.js",
+    "old": "  const springAt = (key) => springList()[Number(key.split(':')[1])] ?? null;",
+    "new": "  const springAt = (key) => _springs[Number(key.split(':')[1])] ?? null;",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-teleport-stops-bumping-the-generation",
+    "file": "src/scenes/world.js",
+    "old": "    doorGeneration += 1;   // WORLD-HOVER: the origin was re-anchored, so every door's WORLD matrix moved with it",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-gate-memo-outlives-the-host",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  _gateMark = null;\n  _gateOn = false;\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "WORLD-HOVER-the-gate-memo-ignores-the-frame",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (mark !== null && _gateMark === mark) return _gateOn;",
+    "new": "  if (_gateMark !== null) return _gateOn;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-seam-gate-stops-hiding",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }   // (the hide",
+    "new": "  if (!worldPlaqueOn()) { return null; }   // (the hide",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-seam-drops-the-anchor",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    showWorldPlaque(frame, plaqueAnchor(canvas));",
+    "new": "    showWorldPlaque(frame);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-contained-frame-freezes-on-its-last-answer",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    try { showWorldPlaque(null); } catch { /* the draw itself is gone; nothing left to hide */ }\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-no-watchdog",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  _cancel(_watchdog);\n  _watchdog = _schedule(() => { _watchdog = null; hideWorldPlaque(); }, PLAQUE_WATCHDOG_MS);\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-plaque-is-never-attached",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  document.body.append(node);\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-teardown-orphans-the-node",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  try { node?.remove(); } catch { /* already gone */ }\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-fault-is-said-every-frame",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    if (!_faultSaid) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-gate-memo-is-switched-off",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const mark = frameMark();",
+    "new": "  const mark = null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-signature-stops-seeing-the-title",
+    "file": "src/systems/worldHover.js",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-signature-stops-seeing-the-tail",
+    "file": "src/systems/worldHover.js",
+    "old": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.rest}|${f.empty ? 'e' : ''}`;",
+    "new": "  return `${f.key}|${f.kind}|${f.title}|${f.subs.join('\\u001f')}|${rows}|${f.empty ? 'e' : ''}`;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-two-rows-run-together",
+    "file": "src/systems/worldHover.js",
+    "old": "  const rows = f.rows.map((r) => `${r.name}\\u0002${r.stack}\\u0002${r.rarity ?? ''}`).join('\\u001f');",
+    "new": "  const rows = f.rows.map((r) => `${r.name}\\u0002${r.stack}\\u0002${r.rarity ?? ''}`).join('');",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-a-holed-pack-is-not-filtered",
+    "file": "src/systems/worldHover.js",
+    "old": "  const rows = hoverItems(items).map((it) => ({",
+    "new": "  const rows = (items ?? []).map((it) => ({",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-door-text-survives-a-look-away",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (winner?.key !== _doorTextKey) { _doorTextKey = null; _doorText = null; }\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-a-missed-building-caches-the-negative",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!bd) return _doorText;",
+    "new": "      if (!bd) return null;",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-mode-flip-forgets-the-door-cache",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
+    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-dungeon-exit-town-types-are-narrowed",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const DUNGEON_EXIT_TOWN_TYPES = [LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage];",
+    "new": "  const DUNGEON_EXIT_TOWN_TYPES = [LOCATION_TYPES.TownCity];",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-every-dungeon-exit-claims-a-town",
+    "file": "src/scenes/worldModes.js",
+    "old": "        inTown: DUNGEON_EXIT_TOWN_TYPES.includes(dungeonLoc?.mapTableData?.locationType ?? -1),",
+    "new": "        inTown: true,",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-interior-pile-gets-the-invented-word-back",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (key.startsWith('droppedLoot:')) return { title: lootPileName(interiorDropped.contents?.(key) ?? null) };",
+    "new": "      if (key.startsWith('droppedLoot:')) return { title: 'Loot' };",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-puppets-pile-is-a-target-again",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    isCorpse: (f) => !!f.corpse && !!f.entity && (!f.puppet || (f._pup?.o | 0) > 0),",
+    "new": "    isCorpse: (f) => !!f.corpse && !!f.entity,",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-frameAbort-does-nothing",
+    "file": "src/systems/frameClock.js",
+    "old": "export function frameAbort() { open = null; }",
+    "new": "export function frameAbort() { }",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-modal-return-leaks-the-frame-token",
+    "file": "src/scenes/world.js",
+    "old": "      frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-mobile-band-goes-back-above-the-switch",
+    "file": "src/scenes/world.js",
+    "old": "names: _hoverNamers, modNames: _hoverModNamers }),",
+    "new": "names: [..._hoverNamers, ..._hoverModNamers] }),",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-title-is-painted-below-the-subs",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  n.append(title);\n  for (const s of f.subs) {\n    const sub = document.createElement('div');\n    sub.className = 'wplaque-sub';\n    sub.textContent = s;\n    n.append(sub);\n  }",
+    "new": "  for (const s of f.subs) {\n    const sub = document.createElement('div');\n    sub.className = 'wplaque-sub';\n    sub.textContent = s;\n    n.append(sub);\n  }\n  n.append(title);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-dungeon-brazier-eats-the-press-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode) ? 1 : 0;",
+    "new": "      if (kind === 'camp') return camps.activate(key, mode) ? 1 : 0;",
+    "tests": [
+      "test/surv3_camps.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WH2-the-live-entity-takes-the-corpses-member",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const t = mobileEntityName(liveEntityName(f, enemyDisplayName(f.mobileType)), { hostile: !!f.ai?.isHostile });",
+    "new": "    const t = mobileEntityName(enemyDisplayName(f.mobileType), { hostile: !!f.ai?.isHostile });",
+    "tests": [
+      "test/worldhover.test.js",
+      "test/citedrift.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-BODIES-the-room-stands-no-bodies",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (interiorFoes) targets.push(...interiorFoes.lootTargets());\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-BODIES-the-watch-s-bodies-are-not-stood",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (interiorGuards) targets.push(...interiorGuards.lootTargets());\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-BODIES-a-body-indoors-has-no-word",
+    "file": "src/scenes/worldModes.js",
+    "old": "    (key) => interiorFoes?.hoverName?.(key) ?? null,\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-BODIES-a-body-indoors-reads-Empty",
+    "file": "src/scenes/worldModes.js",
+    "old": "          (key) => interiorFoes?.hoverContents?.(key) ?? null,\n",
+    "new": "",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "INTERIOR-BODIES-the-press-arm-goes-back-to-silence",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (key.startsWith('foeCorpse:') || key.startsWith('guardCorpse:')) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  }
+]

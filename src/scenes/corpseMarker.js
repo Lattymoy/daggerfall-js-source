@@ -57,7 +57,7 @@
 import { getBool } from '../systems/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
 import { billboardSize } from '../world/rmbFlats.js';
-import { addItem, isGoldPieces, addGoldPieces } from '../systems/inventory.js';
+import { addItem, isGoldPieces, addGoldPieces, takeOneInto } from '../systems/inventory.js';   // QUICK-LOOT B2: the one-item door, which the bulk take below is now written over
 import { SOUND } from '../systems/soundClips.js';
 import { lootRarityOn, bestRarity, RARITIES } from '../systems/lootRarity.js';   // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
@@ -209,6 +209,59 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
 }
 
 /**
+ * WORLD-HOVER: WHICH BODY a corpse key names, off the same entry list
+ * and the same identity `corpseLootTargets` above mints its keys from.
+ *
+ * This is the half both pools genuinely share - walking their own list
+ * under the producer's own `isCorpse`/`idOf` law - and it lives beside
+ * the producer for the reason AUDIT 24 (wave 38) had to fix once
+ * already: the watch's bodies and the encounter pool's are the same
+ * kind of thing, and the moment one of them is walked by a second,
+ * hand-written rule they stop agreeing.
+ *
+ * It answers the ENTRY and not the word. The word is World Tooltips'
+ * (`corpseName`, vendor .cs:526) and the pools apply it - because this
+ * module is reached, through `unleveledLoot`, from `worldTick`, which
+ * `worldTooltips` itself imports by way of the building hours. An
+ * import from here would close that ring and this file's own
+ * `_deathHandlers` would be read before it exists. A caller of a rule
+ * is not a copy of it; a cycle is a crash at boot.
+ */
+export function corpseEntryFor(entries, key, keyPrefix, { isCorpse, idOf = null }) {
+  let i = -1;
+  for (const e of entries ?? []) {
+    i += 1;
+    if (!isCorpse(e)) continue;
+    const id = idOf ? idOf(e) : i;
+    if (`${keyPrefix}:${id}` === key) return e;
+  }
+  return null;
+}
+
+/**
+ * WORLD-HOVER: WHAT A BODY HOLDS, read-only.
+ *
+ * AUDIT-WH H3. `foeCorpse:` and `guardCorpse:` have been in the hover
+ * model's ITEMISED_KEYS since the first slice - the plaque opens a LIST
+ * for them rather than a name - and neither above-ground host answered
+ * their contents, so `contents?.(key) ?? null` fell to null and
+ * `hoverLines(null)` answered `empty`. Every body you killed in a
+ * street or in the wilderness read "Empty" over a full pack, which is
+ * the one thing the plaque exists not to do: it said the opposite of
+ * what the press would show you.
+ *
+ * It is the same read `openCorpseLoot` makes one line into the take
+ * (`entry.entity?.items`), and it lives beside it for that reason. A
+ * DISABLED body answers null and not `[]` - it is not a target any
+ * more (:942-947 disables the container), and the two answers draw
+ * differently.
+ */
+export function corpseContents(entry) {
+  if (!entry || entry.corpseDisabled) return null;
+  return entry.entity?.items ?? null;
+}
+
+/**
  * THE TAKE (MAC-E). This was PlayerActivate's whole corpse arm and is
  * not any more - `openCorpseLoot` above is. What is left is the
  * transfer itself, and its ONE caller is the online grant landing
@@ -329,19 +382,21 @@ export function takeCorpseLoot(entry, playerEntity, say = () => {}) {
   }
   playerEntity.items = playerEntity.items || [];
   let n = 0;
-  for (const item of items) {
-    // DoTransferItem's FIRST statement (DaggerfallInventoryWindow.cs:1562-1571):
-    // a Currency.Gold_pieces pile bound for PlayerEntity.Items is spent into
-    // the counter (`playerEntity.GoldPieces += item.stackCount`) and never
-    // added to the list. DFU reaches that door because :957 opens the window;
-    // the port's bulk take is the recorded UI residue above, so the door has
-    // to be spelled here too - E4's invariant is that the player's collection
-    // never holds Currency, and gold that lands in it is unspendable.
-    if (isGoldPieces(item)) addGoldPieces(playerEntity, item.stackCount ?? 1);
-    else addItem(playerEntity.items, item);
-    n++;
-  }
-  items.length = 0;
+  // DoTransferItem's FIRST statement (DaggerfallInventoryWindow.cs:1562-1571):
+  // a Currency.Gold_pieces pile bound for PlayerEntity.Items is spent into
+  // the counter (`playerEntity.GoldPieces += item.stackCount`) and never
+  // added to the list. DFU reaches that door because :957 opens the window;
+  // the port's bulk take is the recorded UI residue above, so the door has
+  // to be spelled away from the window too - E4's invariant is that the
+  // player's collection never holds Currency, and gold that lands in it is
+  // unspendable.
+  //
+  // QUICK-LOOT B2: and it is spelled ONCE now, in `takeOneInto`, because
+  // quick loot's single-row take needs the same door and a third copy of
+  // a law is a third chance to omit it (HARD2). This loop is that door
+  // applied to every row; `[...items]` because the door splices the
+  // source, so iterating it live would skip every second entry.
+  for (const item of [...items]) { if (takeOneInto(playerEntity, items, item)) n++; }
   say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);
   return n;
 }

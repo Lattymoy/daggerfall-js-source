@@ -1,0 +1,202 @@
+[
+  {
+    "name": "ql-resolver-dropped",
+    "file": "src/systems/quickLoot.js",
+    "old": "  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });",
+    "new": "  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest: null });",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "ql-host-passes-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText, { getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null })) {",
+    "new": "      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText)) {",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "ql-all-reason-unsaid",
+    "file": "src/systems/quickLoot.js",
+    "old": "    if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : ''));",
+    "new": "    if (n) say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "sc1-one-placement-per-mesh",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (inst.length >= SHADOW_INSTANCE_MAX) {",
+    "new": "      if (inst.length >= 1) {",
+    "tests": [
+      "test/audit_lighting.test.js"
+    ]
+  },
+  {
+    "name": "sc1-swing-unseen",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (!same) { m.set(matrix); s.at = this.frameNo; }\n    return s.at != null",
+    "new": "    if (!same) { m.set(matrix); }\n    return s.at != null",
+    "tests": [
+      "test/audit_lighting.test.js",
+      "test/sc1_shadowcache.test.js"
+    ]
+  },
+  {
+    "name": "sc1-shift-noop",
+    "file": "src/render/shadowPass.js",
+    "old": "    this._shiftAcc.push([a[0] + offset[0], a[1] + offset[1], a[2] + offset[2]]);\n    this._shiftGen++;",
+    "new": "    this._shiftAcc.push([a[0], a[1], a[2]]);\n    this._shiftGen++;",
+    "tests": [
+      "test/audit_lighting.test.js"
+    ]
+  },
+  {
+    "name": "sc1-batch-origin-left-behind",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (b._shSeen === true && b._shGen !== this._shiftGen) { const d = this._shiftDelta(b._shGen ?? 0); b._shOx += d[0]; b._shOy += d[1]; b._shOz += d[2]; }",
+    "new": "",
+    "tests": [
+      "test/audit_lighting.test.js"
+    ]
+  },
+  {
+    "name": "sc1-dyn-ignored",
+    "file": "src/render/shadowPass.js",
+    "old": "      const moving = b._dyn === true || (b._shMovedAt != null",
+    "new": "      const moving = (b._shMovedAt != null",
+    "tests": [
+      "test/audit_lighting.test.js"
+    ]
+  },
+  {
+    "name": "sc1-frame-forgotten",
+    "file": "src/render/shadowPass.js",
+    "old": " && b._shFrame === fr && b._shRec === rec && b._shFlip === flip)) b._shMovedAt = this.frameNo;",
+    "new": " && b._shRec === rec && b._shFlip === flip)) b._shMovedAt = this.frameNo;",
+    "tests": [
+      "test/audit_lighting.test.js"
+    ]
+  },
+  {
+    "name": "sc1-dynamicnear-counts-flames",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/audit_lighting.test.js"
+    ]
+  },
+  {
+    "name": "sc1-cache-with-the-lane",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (this.cacheOn && casters.length) this._ensureCache();   // AUDIT SC1",
+    "new": "    this._ensureCache();",
+    "tests": [
+      "test/audit_lighting.test.js",
+      "test/el2_shadows.test.js"
+    ]
+  },
+  {
+    "name": "near1-mask-dropped-on-restore",
+    "file": "src/render/renderer.js",
+    "old": "    this._pointCarried = s.pointCarried ?? null;   // AUDIT LIGHT-NEAR1: setPointLights read the mask off the array, and a snapshot's has none\n",
+    "new": "",
+    "tests": [
+      "test/audit_lighting.test.js"
+    ]
+  },
+  {
+    "name": "ao-point-at-the-sample",
+    "file": "src/render/airPass.js",
+    "old": "  vec2 uv = texelUV(uvIn);",
+    "new": "  vec2 uv = uvIn;",
+    "tests": [
+      "test/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "ao-distance-guard",
+    "file": "src/render/airPass.js",
+    "old": "    if (dot(s, n) > bias) h = max(h, c);",
+    "new": "    if (d > bias) h = max(h, c);",
+    "tests": [
+      "test/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "ao-aspect-upside-down",
+    "file": "src/render/airPass.js",
+    "old": "    vec2 dir = vec2(cos(a), sin(a) * abs(uProjInfo.y / uProjInfo.x));",
+    "new": "    vec2 dir = vec2(cos(a), sin(a) * abs(uProjInfo.x / uProjInfo.y));",
+    "tests": [
+      "test/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "ao-slice-by-screen-signs",
+    "file": "src/render/airPass.js",
+    "old": "    vec3 sliceDir = normalize(vec3(dir.x / uProjInfo.x, dir.y / uProjInfo.y, 0.0));",
+    "new": "    vec3 sliceDir = normalize(vec3(dir.x, dir.y, 0.0));",
+    "tests": [
+      "test/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "ao-empty-slice-counted",
+    "file": "src/render/airPass.js",
+    "old": "    if (npl < 1e-4) continue;",
+    "new": "    if (npl < 1e-4) { vis += 1.0; continue; }",
+    "tests": [
+      "test/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "ao-whole-turn",
+    "file": "src/render/airPass.js",
+    "old": "  float ang = bayer4(gl_FragCoord.xy) * 1.5707963;",
+    "new": "  float ang = bayer4(gl_FragCoord.xy) * 6.2831853;",
+    "tests": [
+      "test/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "lc1-near-band-hole",
+    "file": "src/render/lightClusters.js",
+    "old": "  box[at + 6] = nearFull ? 1 : 0;",
+    "new": "  box[at + 6] = 0;",
+    "tests": [
+      "test/lc1_clusters.test.js"
+    ]
+  },
+  {
+    "name": "hq1-tonemap-per-channel",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  return [r * k + (tr - r * k) * w(tr), g * k + (tg - g * k) * w(tg), b * k + (tb - b * k) * w(tb)];",
+    "new": "  return [tr, tg, tb];",
+    "tests": [
+      "test/audit_lighting.test.js"
+    ]
+  },
+  {
+    "name": "ao-clamped-before-blur",
+    "file": "src/render/airPass.js",
+    "old": "  outColor = vec4(vec3(vis / ${AIR_AO_DIRECTIONS}.0 * ${AIR_AO_STORE}), 1.0);",
+    "new": "  outColor = vec4(vec3(clamp(vis / ${AIR_AO_DIRECTIONS}.0, 0.0, 1.0) * ${AIR_AO_STORE}), 1.0);",
+    "tests": [
+      "test/el3_air.test.js"
+    ]
+  },
+  {
+    "name": "ao-strength-unapplied",
+    "file": "src/render/airPass.js",
+    "old": "  ao = 1.0 - (1.0 - ao) * uStrength;\n",
+    "new": "",
+    "tests": [
+      "test/el3_air.test.js"
+    ]
+  }
+]

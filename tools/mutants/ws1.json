@@ -173,8 +173,8 @@
   {
     "name": "prefs-sheathing-off",
     "file": "src/systems/features.js",
-    "old": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),",
-    "new": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: false, online: true }),",
+    "old": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),",
+    "new": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: false, online: 'player' }),",
     "tests": [
       "test/ws1_sheathing.test.js"
     ]
@@ -312,6 +312,16 @@
     "new": "bytes: shBytes, excludeNode: SHEATH_WEAPON_NODE });",
     "tests": [
       "test/ws1_sheathing.test.js"
+    ]
+  },
+  {
+    "name": "sheathing-forced-online-again",
+    "file": "src/systems/features.js",
+    "old": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),",
+    "new": "control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),",
+    "tests": [
+      "test/ws1_sheathing.test.js",
+      "test/modsonline.test.js"
     ]
   }
 ]

@@ -4,104 +4,138 @@
     "file": "src/combat/fpArm.js",
     "old": "  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice(), preTransform: LIGHT_ATTITUDE });   // MWT1",
     "new": "  parts.push({ slot: 'torch', bones: [TORCH_BONE], bytes: arc.get(path).slice() });",
-    "tests": ["test/mwtorch.test.js"]
+    "tests": [
+      "test/mwtorch.test.js"
+    ]
   },
   {
     "name": "MWT1-the-attitude-is-transposed",
     "file": "src/combat/fpArm.js",
     "old": "  a: Object.freeze([1, 0, 0, 0, 0, 1, 0, -1, 0]),",
     "new": "  a: Object.freeze([1, 0, 0, 0, 0, -1, 0, 1, 0]),",
-    "tests": ["test/mwtorch.test.js"]
+    "tests": [
+      "test/mwtorch.test.js"
+    ]
   },
   {
     "name": "MWT1-the-attitude-carries-a-translation-too",
     "file": "src/combat/fpArm.js",
     "old": "  t: Object.freeze([0, 0, 0]),",
     "new": "  t: Object.freeze([0, 1, 0]),",
-    "tests": ["test/mwtorch.test.js"]
+    "tests": [
+      "test/mwtorch.test.js"
+    ]
   },
   {
     "name": "MWT2-emissiveAt-reads-the-material-for-an-Emission-mesh-so-the-flame-takes-the-blacked-out-diffuse",
     "file": "src/formats/mwNifMesh.js",
     "old": "  if (colors && m === VERTEX_COLOR_MODE.Emission) {\n    return [colors[i * 4], colors[i * 4 + 1], colors[i * 4 + 2]];\n  }",
     "new": "  if (false) {\n    return [colors[i * 4], colors[i * 4 + 1], colors[i * 4 + 2]];\n  }",
-    "tests": ["test/mwnifmesh.test.js"]
+    "tests": [
+      "test/mwnifmesh.test.js"
+    ]
   },
   {
     "name": "MWT2-emissiveAt-substitutes-on-a-DIFFUSE-mode-mesh-too-so-every-coloured-surface-glows",
     "file": "src/formats/mwNifMesh.js",
     "old": "  if (colors && m === VERTEX_COLOR_MODE.Emission) {",
     "new": "  if (colors && m !== VERTEX_COLOR_MODE.None) {",
-    "tests": ["test/mwnifmesh.test.js"]
+    "tests": [
+      "test/mwnifmesh.test.js"
+    ]
   },
   {
     "name": "MWT2-a-material-with-no-emissive-field-throws-instead-of-reading-dark",
     "file": "src/formats/mwNifMesh.js",
     "old": "  return material?.emissive ?? [0, 0, 0];",
     "new": "  return material ? material.emissive : [0, 0, 0];",
-    "tests": ["test/mwnifmesh.test.js", "test/mwmaterial.test.js"]
+    "tests": [
+      "test/mwnifmesh.test.js",
+      "test/mwmaterial.test.js"
+    ]
   },
   {
     "name": "MWT2-the-pack-is-left-at-eleven-floats-so-the-UVs-and-the-emission-read-each-others",
     "file": "src/combat/fpArm.js",
     "old": "export const FP_FLOATS = 14;",
     "new": "export const FP_FLOATS = 11;",
-    "tests": ["test/mwnifmesh.test.js", "test/mwmaterial.test.js"]
+    "tests": [
+      "test/mwnifmesh.test.js",
+      "test/mwmaterial.test.js"
+    ]
   },
   {
     "name": "MWT2-the-emission-is-never-written-to-the-buffer",
     "file": "src/combat/fpArm.js",
-    "old": "        const [er, eg, eb] = emissiveAt(mat, cols, idx[i + k]);\n        buf[o++] = er; buf[o++] = eg; buf[o++] = eb;",
-    "new": "        buf[o++] = 0; buf[o++] = 0; buf[o++] = 0;",
-    "tests": ["test/mwnifmesh.test.js"]
+    "old": "    lanes[l++] = er; lanes[l++] = eg; lanes[l++] = eb;",
+    "new": "    lanes[l++] = 0; lanes[l++] = 0; lanes[l++] = 0;",
+    "tests": [
+      "test/mwnifmesh.test.js"
+    ]
   },
   {
     "name": "MWT2-the-fragment-has-no-emission-term-again",
     "file": "src/render/renderer.js",
     "old": "  lit += vEmissive * texel.rgb;",
     "new": "  lit += vec3(0.0);",
-    "tests": ["test/mwnifmesh.test.js"]
+    "tests": [
+      "test/mwnifmesh.test.js"
+    ]
   },
   {
     "name": "MWT2-the-emission-is-gated-on-the-albedo-which-LightMode_Emissive-blacked-out",
     "file": "src/render/renderer.js",
     "old": "  lit += vEmissive * texel.rgb;",
     "new": "  lit += albedo * vEmissive;",
-    "tests": ["test/mwnifmesh.test.js"]
+    "tests": [
+      "test/mwnifmesh.test.js"
+    ]
   },
   {
     "name": "MWT2-the-attribute-is-never-enabled-so-the-channel-reads-the-constant",
     "file": "src/render/renderer.js",
     "old": "      gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 44);",
     "new": "      gl.vertexAttribPointer(4, 3, gl.FLOAT, false, stride, 36);",
-    "tests": ["test/mwnifmesh.test.js"]
+    "tests": [
+      "test/mwnifmesh.test.js"
+    ]
   },
   {
     "name": "MWT2-the-voxel-rigs-are-given-the-wider-stride-they-never-packed",
     "file": "src/render/renderer.js",
     "old": "    const emissive = uv && opts.emissive !== false;",
     "new": "    const emissive = opts.emissive !== false;",
-    "tests": ["test/mwnifmesh.test.js"]
+    "tests": [
+      "test/mwnifmesh.test.js"
+    ]
   },
   {
     "name": "HT7-the-sheathed-stance-frees-a-worn-left-hand-again",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (left) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }\n      else if (isBow(left)) w.handRight = false;\n    }",
-    "new": "    if (left && !sheathedNow) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.LeftOnly) { if (!usingRightNow) w.handLeft = false; }\n      else if (isBow(left)) w.handRight = false;\n    }",
-    "tests": ["test/ht6_offhand.test.js", "test/ht1_handheldtorches.test.js"]
+    "old": "    if (left) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;\n    }",
+    "new": "    if (left && !sheathedNow) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;\n    }",
+    "tests": [
+      "test/ht6_offhand.test.js",
+      "test/ht1_handheldtorches.test.js"
+    ]
   },
   {
     "name": "HT7-a-bare-right-hand-is-in-use-while-the-weapon-is-away",
     "file": "src/systems/handheldTorches.js",
     "old": "    } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up",
     "new": "    } else if (usingRightNow) w.handRight = false;",
-    "tests": ["test/ht1_handheldtorches.test.js"]
+    "tests": [
+      "test/ht1_handheldtorches.test.js"
+    ]
   },
   {
     "name": "HT7-the-port-ships-the-mods-own-Drop-default-again",
     "file": "src/systems/modSettings.js",
     "old": "      'Handling.OnStow': Object.freeze({ default: 0, options: Object.freeze([\"Unequip\", \"Drop\"]), description: 'Behavior when forced to stow a light source' }),",
     "new": "      'Handling.OnStow': Object.freeze({ default: 1, options: Object.freeze([\"Unequip\", \"Drop\"]), description: 'Behavior when forced to stow a light source' }),",
-    "tests": ["test/ht6_offhand.test.js", "test/ht1_handheldtorches.test.js"]
+    "tests": [
+      "test/ht6_offhand.test.js",
+      "test/ht1_handheldtorches.test.js"
+    ]
   }
 ]

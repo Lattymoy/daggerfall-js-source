@@ -59,10 +59,15 @@ is unchanged; the storage seam is `src/systems/appStorage.js`.
 npm run build && cd app && npm install && npm start
 ```
 
-`npm run dist` in `app/` packages installers, and pushing a tag
-shaped `app-v*` builds them for all three OSes and attaches them to
-a GitHub Release (`.github/workflows/release-desktop.yml`) - the
-landing page's download section points at `releases/latest`. Details
+`npm run dist` in `app/` packages installers. Every push to main
+builds them for all three OSes and attaches them to a GitHub Release
+(`.github/workflows/release-desktop.yml`) at `app-v<major>.<minor>.<commit count>`
+- the version is derived from the commit, never bumped by hand - and
+the landing page's download section points at `releases/latest`.
+Pushing a tag shaped `app-v*` cuts one by hand. An installed copy
+(the Windows `-setup` install or the Linux AppImage) updates itself in
+place on quit; macOS and the portable exe get a notice with a Download
+button. Details
 in `bible/01-Overview/Desktop-App.md`; headless proof:
 `xvfb-run -a node tools/appShellProbe.mjs` (point `DAGGER_SHELL_EXE`
 at a packaged binary to prove an installer's payload). The packaged

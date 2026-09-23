@@ -10,7 +10,7 @@
 
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
-import { frameBegin, frameEnd } from '../systems/frameClock.js';   // PERF1: the frame's script time
+import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { getInteractionMode, setInteractionMode, MODE_ACTIONS } from '../player/interactionMode.js';   // R1: the global PlayerActivate mode; AUDIT 58: its four ACTIONS
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label
@@ -43,15 +43,17 @@ import { mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep } from '../pla
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { jumpSpeedMultiplier, isEnhancedJumping } from '../systems/skills.js';   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { pickFoe,   // TI1: the lock-on pick
-  pickActivatableHit, activationTargets,   // AUDIT 63 F33 (review): the pick hands its distance back so the enemy arm can lose to a nearer target
+  pickActivatableHit,   // AUDIT 63 F33 (review): the pick hands its distance back so the enemy arm can lose to a nearer target   // WORLD-HOVER: the LIST comes off the context's one seam now
   RAY_DISTANCE, TOO_FAR_AWAY_TEXT,   // AUDIT 65 MC-2: the ONE reach the foe arm competes at (DFU's one ray), and the refusal each handler speaks for itself
 } from '../player/activate.js';
 // AUDIT 63 F33: PlayerActivate.ActivateMobileEnemy (:800-841) - the
 // standalone dungeon's copy of the living-foe arm.
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
+import { hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // AUDIT-WH H4: the plaque's hide door, for the overlay branch that returns above drawFoes
+import { quickLootWheel, quickLootArm } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the plaque owns the wheel while it lists, and the two keys arm what the next activate means
 import { createMusicDirector, fetchBytes, motorStats, climbingDeps, ridePlatform, doorSpellFor, wireDoorSpells, claimFrame, frameAlive, frameHeld } from './shared.js';
-import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode, routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode, routeKey, routeKeyUp, held, moveHeld, anyMove, actionOf, swallowBrowserKey, mouseCode, isSwingButton, swingHeld, keyboardLook, installContextMenuGuard, swingKeyHeld } from '../ui/input.js';
 import { armUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
@@ -75,15 +77,11 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { carriedWeight } from '../systems/inventory.js';   // F027 / E4: PlayerEntity.CarriedWeight, the gold counter's term and all
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
-import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host, worldModes and the surface all crawled at their own 0.05)
 
-// Water surface color: presentation choice (see renderer WATER_VS note).
-// R11: the surface is the classic water tile (climate ground archive
-// record 0 - the 0xFF tilemap sentinel's target, same picture classic
-// tiles across oceans), tinted only by alpha; slow diagonal scroll is
-// the classic flow, presentation-tuned.
-// AUDIT 65 CV-3/MC-5: this 0.82 is the FLAT alpha drawWater's quad takes - NOT render/waterSurface.js's WATER_OPACITY, which is the enhanced surface's Fresnel FLOOR (a different pass, no Fresnel, no shore feather). They agree by taste, not by law; the scroll rate below is the one that IS a law, and it has one home.
-const WATER_COLOR = [1, 1, 1, 0.82];
+// Water surface: the classic water tile (R11), drawn by the context's
+// own frame function since WATER-D1 - its colour (DUNGEON_WATER_COLOR)
+// and its draw live in scenes/dungeonContext.js, one home for both
+// dungeon hosts. This host names the tile's archive below.
 
 // Milestone 5 scene: a full dungeon on the block grid.
 export async function bootDungeon(canvas, renderer, params, status) {
@@ -135,7 +133,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:5743), so each
+      // context owns none of its own (dungeonContext.js:6241), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -154,6 +152,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const waterArchive = dfLocation.climate.groundArchive;
   await pipeline.getTexture(waterArchive);
   pipeline.uploadRecord(waterArchive, 0);
+  ctx.setWaterArchive(waterArchive);   // WATER-D1: drawFoes draws the plane with it, inside the world pass
 
   // The classic dungeon spawn - ONE source (ctx.startSpawn: verbatim
   // MovePlayerToMarker + FixStanding). The old raw-marker spawn put
@@ -180,6 +179,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   }
   const headBobber = new HeadBobber();   // AUDIT 28 W10: HeadBobbing
   let rightHeld = false;   // AUDIT 28 F-C2: HasAction(SwingWeapon) - the raw button, ungated
+  let swingKeyLatch = false;   // MAC-SWING1: the same action, bound to a key or pad code
   // TI1: the touch layer's state. swipeHeld is the swipe's SwingWeapon
   // truth beside rightHeld (the settle law reads both); a tap arms a
   // ONE-frame ActivateCenterObject press (_tapArmed counts it down at
@@ -266,8 +266,13 @@ export async function bootDungeon(canvas, renderer, params, status) {
         playerFeet: player.pos,
         nothingText: () => ctx.randomText?.(FOUND_NOTHING_VALUABLE_TEXT_ID) || 'You found nothing valuable.',   // GetRandomText(8999)
       });
-    const targets = activationTargets(ctx.actions.objects);   // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
-    targets.push(...ctx.lootTargets());   // S2: piles + lootable corpses
+    // WORLD-HOVER: ONE construction seam, shared with the modal host
+    // and the hover plaque. This host registers NOTHING with it, and
+    // that is the recorded difference rather than an accident of two
+    // hand-copied lists: the dev door has no world to exit to and no
+    // `exit:` or `person:` arm in the ladder below, so standing those
+    // targets would win the pick and eat the press in silence.
+    const targets = ctx.dungeonActivationTargets();
     const _pick = pickActivatableHit(eye, dir, targets, ctx.collider);
     if (_enemyArm(RAY_DISTANCE, _pick?.distance ?? Infinity)) return null;   // MC-2: the split pair's FAR half ran with `nearerThan` Infinity, so a foe 20 off ate a click DFU gives a chest at 5
     const key = _pick?.key ?? null;
@@ -278,7 +283,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // they carry the droppedLoot: prefix. Without this arm a dungeon
     // drop was one-way - the pile drew, the ray found it, and E did
     // nothing. The probe caught it on the first pickup.
-    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:'))) {
+    // AUDIT-WH2 L2-F1/F2: `camp:` and `hearth:` too. The dungeon
+    // CONTEXT stands both for whichever host drives it - a Campfire Kit
+    // can be lit underground (only a TENT is refused there) and every
+    // brazier is a `hearth:` - and this host routed neither, so both
+    // read their name on the plaque and ate the press in silence. The
+    // modal dungeon arm answers them; two hosts over one context must
+    // not disagree about one key.
+    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:'))) {
       ctx.takeLoot(key, getInteractionMode());   // HT1: a dropped torch takes the mode (Grab/Steal picks it up, Info/Talk names it)
       return key;
     }
@@ -311,6 +323,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // InputManager.cs:487-503 returns before currentActions is
     // populated), so the mode must NOT flip under an open overlay -
     // the very next line already has the predicate.
+    // QUICK-LOOT B4: the two keys, under this host's overlay gate and
+    // above the mode ladder, for the reason the three hosts above put
+    // them high: `quickLootArm` refuses unless something is
+    // HIGHLIGHTED, so with no list under the crosshair the ladder falls
+    // through. It arms a mode and fires the one-frame activate
+    // (`_tapArmed`) the touch tap already uses, because the key is
+    // known here and only the FRAME has the ray and the pools.
+    if (!ctx.uiOverlayActive && quickLootArm(actionOf(e, keys))) { _tapArmed = 2; e.preventDefault(); return; }
     const im = MODE_ACTIONS[actionOf(e, keys)];
     if (im) {
       e.preventDefault();   // ALWAYS consumed - a repeat press must not reach the browser (F1 = help)
@@ -327,7 +347,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // DFU's `GetKeyUp` (the automap's two-phase toggle-close) or polls
   // `GetKey` (its twenty-two IsPressedWith camera arms) could not.
   // routeKey's mirror, on the same ctx.
-  addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(keyEdge, e.code); if (e.code === 'AltLeft') e.preventDefault(); routeKeyUp(e, ctx); });   // MWCROUCH: ...and the release, for SwitchHand's ActionComplete edge
+  addEventListener('keyup', (e) => {
+    keys.delete(e.code);
+    noteKeyUp(keyEdge, e.code);
+    if (e.code === 'AltLeft') e.preventDefault();
+    const hadOverlay = !!ctx.uiOverlayActive;
+    routeKeyUp(e, ctx);
+    if (hadOverlay && !ctx.uiOverlayActive) requestLook(canvas);
+  });   // MWCROUCH: ...and the release, for SwitchHand's ActionComplete edge
   // U14: an OPEN overlay owns the pointer - the click goes to the
   // window, not to the pointer lock. This host had no pointer path at
   // all, so chargen here was keyboard-only while the exterior hosts
@@ -386,7 +413,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // pickers); passive:false so the page never scrolls under the game.
   canvas.addEventListener('wheel', (e) => {
     if (!ctx.uiOverlayActive) {
-      // MW-D25: with no window up the wheel is the Morrowind camera.
+      // QUICK-LOOT B4: ...but the plaque is asked first, and answers
+      // only while it is listing a pile or a body. MW-D25: with no
+      // window up and no list under the crosshair the wheel is the
+      // Morrowind camera, exactly as before.
+      if (quickLootWheel(e.deltaY)) { e.preventDefault(); return; }
       if (walkMode && mwViewWheel(e.deltaY)) e.preventDefault();
       return;
     }
@@ -441,7 +472,11 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // site not updated - it still passed the old `dir` thunk, which
     // landed in setPlayerPos, so a quickload here restored the
     // character and left them standing wherever they were.
+    const hadOverlay = !!ctx.uiOverlayActive;
     if (routeKey(e, ctx, (p) => player.spawn(p[0], p[1], p[2]), keys)) e.preventDefault();   // P14: a load clears motion state (DFU CancelMovement + ClearFallingDamage)   // AUDIT 58 (f3/input): + the held-keys Set, so a rebound combo reaches the dispatch (InputManager.cs:1666-1712)
+    // MENU-RELOCK: reclaim inside the same key gesture that removed the
+    // final window; the frame-late look gate is outside user activation.
+    if (hadOverlay && !ctx.uiOverlayActive) requestLook(canvas);
   });
   addEventListener('mouseup', (e) => { if (isSwingButton(e.button)) rightHeld = false; const mc = mouseCode(e.button); if (mc) { keys.delete(mc); noteKeyUp(keyEdge, mc); } if (isSwingButton(e.button)) ctx.playerAttackInput(0, 0, false); });
   const inputHooks = {   // GP1: one hooks object for the finger AND the pad   // mobile: stick synthesizes WASD; the right half is classified (TI1)
@@ -499,7 +534,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // frame regardless of mousemove), so claiming the drag here in those
     // two modes fed the rig deltas it never reads and froze the look for
     // nothing. Same law as routeMouseDrag (scenes/shared.js, MAC-O4).
-    if (document.pointerLockElement === canvas && swingHeld(e.buttons) && getInt('Controls', 'WeaponSwingMode', 0, 2) === 0) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }   // FIX-F: the registry's button
+    if (document.pointerLockElement === canvas && swingHeld(e.buttons, keys) && getInt('Controls', 'WeaponSwingMode', 0, 2) === 0) { ctx.playerAttackInput(e.movementX, e.movementY, true); return; }   // FIX-F: the registry's button
     if (document.pointerLockElement !== canvas) return;
     // AUDIT 28 W7: the delta goes to the look filter's target, not the
     // camera - PlayerMouseLook.ApplyLook (:126); the frame pays it out
@@ -513,6 +548,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     `dungeon: ${ctx.blockCount} blocks, ${ctx.drawList.length} draws, table [${ctx.textureTable}], ` +
     `start ${JSON.stringify(ctx.startMarker)}, ${ctx.lights.length} lights, ${ctx.waterQuads.length} water, ${ctx.enemies.length} enemies`
   );
+  ctx.goLive?.();   // ENH-NOTICE3 (AUDIT F1): this host's one context is the live top window from here on
 
   // Verbatim dungeon lighting: PlayerAmbientLight.DungeonAmbientLight,
   // no sun; every light flickers (DaggerfallLight Animate).
@@ -662,13 +698,22 @@ export async function bootDungeon(canvas, renderer, params, status) {
   });
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   function frame(now) {
-    if (!frameAlive(_frameToken)) return;   // P0: a later boot or an unwind killed this loop
+    // AUDIT-WH L4: THE PLAQUE DIES WITH THE LOOP THAT RAISED IT. This
+    // is the host's only unwind point - a later boot or an unwind has
+    // taken the frame - and the plaque is a `document.body` child, so
+    // without this a name stayed painted over the next scene (or over
+    // the title menu) until something else happened to write it. The
+    // modal arms have said this at their mode exits since the slice
+    // shipped; the HOSTS that drive it never did, and `world.js`
+    // imported the door without ever calling it. A host that boots
+    // after this one rebuilds the node on its first painted frame.
+    if (!frameAlive(_frameToken)) { destroyWorldPlaque(); return; }   // P0: a later boot or an unwind killed this loop
     frameBegin(now);   // PERF1: the script time (systems/frameClock.js)
     beginInputFrame(keyEdge);   // MWCROUCH
     // AUDIT 39 (#160): a full-screen video owns the canvas for its
     // lifetime (DFU pauses the game for it). The loop WAITS - it
     // neither simulates nor draws - and the clock does not accrue.
-    if (frameHeld()) { last = now; requestAnimationFrame(frame); return; }
+    if (frameHeld()) { frameAbort(); hideWorldPlaque(); last = now; requestAnimationFrame(frame); return; }
     const dt = Math.min(0.1, (now - last) / 1000);
     // AUDIT 28 W7 + F-C1/F-C2 (self-audit 3): PlayerMouseLook.Update's
     // three answers - paused (:241-244) returns before ApplyLook and the
@@ -678,7 +723,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // camera is read.
     gamepad?.tick(dt);   // GP1: the pad's frame - its keys, its stick, its look - before the paused gate, so a window still sees Back and a lifted thumb still releases
     if (!(ctx.uiOverlayActive)) {
-      if (swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: ctx.weaponIsBow }) && walkMode) lookFilter.settle();   // MAC-O2: the law is lookFilter.js's one seam (:246-248, WeaponSwingMode included); `walkMode` is this host's own
+      if (swingSuppressesLook({ swingHeld: rightHeld || swipeHeld || swingKeyLatch, weaponIsBow: ctx.weaponIsBow }) && walkMode) lookFilter.settle();   // MAC-O2: the law is lookFilter.js's one seam (:246-248, WeaponSwingMode included); `walkMode` is this host's own
       else lookFilter.tick(dt, cam);
       // FIX-F: the KEYBOARD look - TurnLeft/TurnRight/LookUp/LookDown
       // (InputManager.cs:1854-1865), one look unit a frame in DFU, paid
@@ -786,6 +831,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // dungeon states DFU's indoor answer for itself.
       player.onExteriorWater = false;
       const jumpHeld = held(keys, 'Jump');
+      const swingKey = swingKeyHeld(keys);   // MAC-SWING1: a swing bound to a KEY or pad code has no mousedown - the latch is polled here, and fed to the rig on the change
+      if (swingKey !== swingKeyLatch) { swingKeyLatch = swingKey; if (!swingKey || !ctx.uiOverlayActive) ctx.playerAttackInput(0, 0, swingKey); }
       player.slowFalling = ctx.playerSlowFalling;   // S8 slowfall (P14: the verbatim constant-speed law lives in the motor)
       // P11: the swim toggle (PlayerEnterExit verbatim - the CENTER
       // + 50*GlobalScale - 0.95 below the block water surface swims)
@@ -888,6 +935,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
           // `height` getter IS controller.height, and the swim toggle
           // three dozen lines above already reads it.
           dungeonShallow: _footsteps.waterStep(player.pos[1] + player.height / 2, surf, player.swimming) }));
+        if (_step) ctx.hitEffects?.footfall?.(player.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // BLOOD2d: a foot came down - treading in blood tracks it
         if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
         // IF1: ImmersiveFootstepsObject.FixedUpdate - the dungeon arm off the water level (null = blockWaterLevel 10000) and the LIVE capsule centre.
         immersiveFootsteps.update(dt, {
@@ -1008,6 +1056,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     ctx.flatAnims.tick(dt);   // FA1: whoever draws the flats runs their clock
     // (the blood pool's clock runs inside ctx.drawFoes now - both dungeon
     // hosts call it, so neither can forget it; 2026-08-27)
+    ctx.bloodMarks?.draw?.(camRight, UP_Y);   // BLOOD1 AUDIT 3: the context's ring, drawn by THIS host beside the level's flats and under them - it used to ride drawFoes' gate, so a cleared level drew no blood at all
     renderer.drawBillboards([...ctx.billboardBatches, ...ctx.campBatches(), ...ctx.torchBatches()], camRight, UP_Y);   // HT1: the dropped torches on the same pass
     // AUDIT 23 (hosts-9 = audio-3) - SongManager.cs:193: Update() runs
     // every frame, windows open or not - THE MUSIC CONTEXT IS FED
@@ -1029,7 +1078,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // townTalk drawing a second column behind them either. So the hide
     // doors ride the branch's own first line, before the return.
     if (ctx.uiOverlayActive) {
-      ctx.hideHudText?.(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);
+      ctx.hideHudText?.(); hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);   // AUDIT-WH H4: the plaque is a DOM node and this return is ABOVE drawFoes, where the hover lives
       // U26: the shot counter advances HERE TOO. This early return
       // skipped it, so __frame froze the moment any overlay opened -
       // and the Process rule says a probe must frame-sync rather than
@@ -1038,13 +1087,22 @@ export async function bootDungeon(canvas, renderer, params, status) {
       frames++;
       if (shotMode) window.__frame = frames;
       capturePendingScreenshot(canvas);   // SS1: a save armed under an overlay still lands its shot
+      frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
     }
     ctx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, motionBagOf(player), player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching);   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // moveHeld: the collision-trigger input gate (verbatim)   // internally gated (S4b: missiles fire without foes)   // C8 E1+E2: rigged class enemies, classic senses + pursuit
-    renderer.drawWater(ctx.waterQuads, WATER_COLOR,
-      renderer.textures.get(`${waterArchive}_0`),
-      (now / 1000) * WATER_SCROLL_TILES_PER_SEC);
+    // WATER-D1: the water plane is drawn INSIDE drawFoes now, before the
+    // weapon overlay - a draw here landed after the lane's resolve and
+    // showed through every wall (dungeonContext.js's note at the draw).
+    // STATUS-LIVE: ...AND A NON-PAUSING OCCUPANT, LAST OF ALL. THE FOUR
+    // HOSTS RULE: this host mounts the SAME dungeonContext worldModes'
+    // dungeon arm does and routes the same key table at it, so a window
+    // the game is not stopped for - the status readout, ui/statusBox.js
+    // - has to be ticked and painted here too. The branch above is the
+    // PAUSED arm and it returns; without this line the Status key would
+    // open a readout on `?dungeon` that no frame ever draws.
+    if (ctx.unpausedOverlay) { ctx.tickOverlay(dt); ctx.drawOverlay(canvas); }
 
     frames++;
     if (shotMode) window.__frame = frames;

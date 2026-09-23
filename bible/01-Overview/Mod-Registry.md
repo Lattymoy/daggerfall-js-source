@@ -4,9 +4,13 @@
 > left as it wrote them.** They were true of the fifteen rows that
 > existed on 2026-09-15 and they are the record of what putting those
 > rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 19 directories and 11 of their READMEs still carry an
-> unfilled permission line, each shown as `RECORD OPEN` in the table.
-> ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
+> `vendor/` holds 30 directories and 17 of their READMEs still carry an
+> unfilled permission line, each shown as `RECORD OPEN` in the table
+> (AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
+> brought `horse-cart-and-cargo`, the twenty-seventh; WOD1 had counted 26
+> and 13 when it added the twenty-sixth;
+> the sentence had read 19 and 11 since ORL1 and nothing checks it, so
+> re-count rather than trust it). ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
 > that is not a Daggerfall Unity one - an OpenMW Lua mod for Morrowind.
 > It carries no `*.dfmod.json`, so the gate below reads no version or
 > author cell for it and its own suite checks both instead; its row in
@@ -78,6 +82,7 @@ not the date the slice shipped, where those differ.
 | `dfu-text` | data | Daggerfall Unity (Interkarma and contributors) | - | `Text/Master Localization CSV Files/Internal_RSC.csv` @ `master`, fetched 2026-09-18 | MIT | route (a) | 2026-09-18 | `01-Overview/Mac-Bugs-U.md` |
 | `dynamic-skies` | presets, textures, shader read | BadLuckBurt and carademono | 2.3.4 | `.dfmod` bundle, cross-read against `drcarademono/dynamic-skies` @ `04506e2` | granted to Mac 2026-09-04 - **RECORD OPEN** | DS1, DS2 | 2026-09-04 | `07-Rendering/Dynamic-Skies.md` |
 | `handheld-torches` | 39 textures, manifest, settings | RedRoryOTheGlen | 1.4.1 | shipped zip `Handheld_Torches-780-1-4-1`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | HT0-HT4 | 2026-09-14 (AUDIT 66) | `06-Systems/Handheld-Torches.md` |
+| `horse-cart-and-cargo` | manifest, settings, the text table, both assemblies with their IL dumps, the 45 horse PNGs out of the assembly's manifest resources | demifiend000 | 1.0.0-rc12 | shipped `.dfmod` `Horse_Cart_And_Cargo_1374_1.2.4_2026-09-16T01-22Z`; behaviour off the DLL's IL (`tools/ilDump.py`); `tools/hccAssets.mjs` reproduces every vendored file from the bundle (`formats/dotnetResources.js` for the embedded art) | granted (Mac handed the bundle over 2026-09-23) - **RECORD OPEN** | HCC | 2026-09-23 | `06-Systems/Horse-Cart-And-Cargo.md` |
 | `meanerMonsters` | 46 sprite-scale XML, manifest | Ralzar (header: Hazelnut and Ralzar) | 1.5.2 | shipped zip; code from `Ralzar81/Meaner-Monsters` master | MIT (source header) | MM1 | 2026-09-12 | `04-Characters/Meaner-Monsters.md` |
 | `oblivion-remaster-leveling` | the whole mod: its ten shipped files - the 1,314 lines of Lua, the 487-byte `.omwaddon` (one GMST, `iLevelupTotal` 100), the manifest, both l10n yaml and the author's README | **not named in any shipped file** (Nexus Morrowind 56569) | 0.5.3 | shipped `.zip` `OblivionRemasterLikeLeveling_0.5.3-56569-v0-5-3-1748644502`; behaviour off the author's OWN LUA, which is the mod - there is nothing compiled to read | **the archive states NO LICENCE**; granted (Mac handed the archive over 2026-09-17) - **RECORD OPEN** | ORL1 | 2026-09-17 | `06-Systems/Oblivion-Remaster-Leveling.md` |
 | `pcaao` | manifest, settings | Kirk.O | 1.44 | shipped `.dfmod`, DLL decompiled (ILSpy 8.2.0.7535); **source repo only covers 1.40** (`6e19023`) | repository states none; granted (Mac handed the bundle over 2026-09-12) - **RECORD OPEN** | PCO1 | 2026-09-12 | `05-Combat/Physical-Combat-Overhaul.md` |
@@ -94,6 +99,8 @@ not the date the slice shipped, where those differ.
 | `shield-widget` | manifest, settings, presets | RedRoryOTheGlen | 1.6 | shipped zip `Shield_Widget-733-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-19) - **RECORD OPEN** | SW1 | 2026-09-19 | `05-Combat/Shield-Widget.md` |
 | `diverse-weapons` | manifest, the script (MIT, verbatim), its Weapon Widget preset, the readme, and the 12,624 sprites (`public/art/diverse-weapons/`, re-encoded from the bundle - DW2) | RealAKP | 1.7.3 | shipped zip `Diverse Weapons 1.7.3` (Nexus 242, Mac's Drive link 2026-09-23); the law is DFU's own (`WeaponBasics.GetModdedWeaponFilename`, `FPSWeapon`) | granted (Mac handed the zip over 2026-09-23); the script MIT by its header, the sprites never in the repository - **RECORD OPEN** | DW1 | 2026-09-23 | `05-Combat/Diverse-Weapons.md` |
 | `windmills-kamer` | five `.dae` meshes + placements | Kamer | 2.0 | `WindMills.rar`, supplied by Mac 2026-08-29 | granted by the author, confirmed by Mac 2026-08-29 | WM1 | 2026-08-29 | `03-World/Windmills.md` |
+| `world-of-daggerfall` | manifest, the eight C# sources (carried inside the bundle as TextAssets, so nothing here is a decompile), the 65 prefab layouts verbatim, and the 2,413 instance lists read through the ported reader into one pack per region folder with every source file's sha256 recorded | Kamer | 2.0 | shipped `.rar` `World_of_Daggerfall_WindowsLinux-181-2-0-1773339543`, handed over by Mac 2026-09-23; `tools/worldOfDaggerfallAssets.mjs` reproduces every vendored file byte for byte | granted by the author (the grant that covers his windmills), confirmed by Mac 2026-09-23 | WOD1-WOD5 | 2026-09-23 | `03-World/World-Of-Daggerfall.md` |
+| `world-tooltips` | manifest, settings, and the mod's OWN source - the bundle ships `Modded_HUDTooltipWindow.cs` as a Unity TextAsset, so nothing here is a decompile | jefetienne | 1.1 | shipped zip `World_Tooltips_-_Windows_1.1-158-1-1-1655327614`, handed over by Mac 2026-09-21; `tools/worldTooltipsAssets.mjs` reproduces all three vendored files byte for byte | MIT ("Copyright (c) 2009-2018 jefetienne", shipped as `LICENSE-world-tooltips`, beside Daggerfall Workshop's own) | WORLD-HOVER | 2026-09-21 | `10-UI/UI-Arc.md` |
 
 ## Known deviations, per row
 
@@ -107,6 +114,12 @@ full account; this is the index to it.
   author's changelog heading and the Lua's own defaults. The archive
   names no author and states no licence, so the author cell is the Nexus
   id and the permission line is still a prompt.
+- **`world-of-daggerfall`** - the mod's 2,413 instance files (61.0 MB of
+  XML) are NOT carried as files. Each region folder is one pack of the
+  ported reader's output, in the mod's own load order, and
+  `locations.json` lists every source file with its sha256 and instance
+  count, so the archive re-derives each pack byte for byte. The 65
+  prefabs and the eight C# sources ARE verbatim.
 - **`dynamic-skies`** - the repository's `Resources/*Night.json` presets
   are NOT carried, because they are not in the shipped manifest and the
   mod therefore never loads them.

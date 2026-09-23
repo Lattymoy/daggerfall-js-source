@@ -38,7 +38,7 @@
 |---|---|
 | 171 keys / 13 sections, all raw strings | `src/systems/settingsDefaults.js`, pinned `test/settings.test.js:35‑35` |
 | Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings.js:64‑101` |
-| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1251‑1064` |
+| `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1425‑1064` |
 | `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:28‑31` |
 | Today's launcher draws at a **hardcoded `s=2`** | `src/scenes/launcherScene.js:62`, `:82` | *(DELETED at FD1, 2026-09-11)*
 | FONT0003: `fixedWidth 5`, `fixedHeight 7`, space glyph 4 | pinned `test/audit18_ui_native.test.js:66‑70` |
@@ -48,12 +48,12 @@
 | `layoutMessageBox` hard‑codes `(320‑w)/2, (200‑h)/2`; `drawMessageBox` returns `false` unless SPOP.RCI is preloaded — and nothing preloads it before the game | `src/ui/messageBox.js:144`, `:203` |
 | `ListPickerWindow.draw` calls `nativeMetrics(canvas)` **itself** | `src/ui/listPicker.js:148` |
 | `attachTouch` is called only by world/interior/exterior/dungeon; it unconditionally builds F5/F6/☰/C/SV/LD + a movement stick claiming the left half of the viewport | `src/ui/touch.js:52‑190` |
-| `ensureAudio(fetch)` is exported from `src/scenes/shared.js:473`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:71‑87`) | — |
-| `audio._out()` re‑reads `Controls/SoundVolume` on every connection (`audio.js:49`) — so a `DungeonDoorOpen` preview really demonstrates the slider | — |
+| `ensureAudio(fetch)` is exported from `src/scenes/shared.js:476`, is safe un‑awaited, and `audio.ensure` attaches its own gesture‑resume (`src/systems/audio.js:152`, `ensure`) | — |
+| `audio._out()` re‑reads `Controls/SoundVolume` on every connection (`audio.js:68`) — so a `DungeonDoorOpen` preview really demonstrates the slider | — |
 | `lookSettings.js:20` clamps `MouseLookSensitivity` to **0.1..4.0** while DFU's slider runs to 16.0 | — |
 | `saveSettings()`'s boolean is discarded at `launcher.js:100, :122, :193` **and inside `settings.js:240`** | — |
 | `SETTINGS_LABELS` (140 entries) / `SETTINGS_INFO` (78) are keyed by **DFU UI control names**, not ini keys; **no production file imports them** | `src/systems/settingsText.js:9`, `:152` |
-| `wrapText(fnt, text, maxWidth)` exists | `src/ui/talkWindow.js:15` |
+| `wrapText(fnt, text, maxWidth)` exists | `src/ui/talkWindow.js:17` |
 | `SOUND.ButtonClick = 360`, `SOUND.DungeonDoorOpen = 25` | `src/systems/soundClips.js:32`, `:9` |
 | `index.html` sets `user-scalable=no`, `touch-action:none`, `viewport-fit=cover`, no safe‑area insets | — |
 
@@ -480,7 +480,7 @@ Rows with no control (`readout`, `blocked`, `unavailable`, `info`) have `ctrlRec
 
 Everything is `nativePanel.drawRect` + `nativePanel.shadowText`. **No ARENA2 art is loaded by this screen** (SPOP.RCI / BUTTONS.RCI / PICK00I0.IMG are only preloaded by scenes that run *after* the launcher). **No glyph outside ASCII 33..126 is ever passed to `drawText`** — `FNT_ASCII_START = 33` (`fntFile.js:15`) means every arrow, ellipsis, degree sign and middle dot silently becomes a space. Every triangle/chevron/lock/knob is built from `drawRect`. Separators are `" - "`, truncation markers are `"..."`, "65 deg" not "65°".
 
-Text inside a filled button (PLAY, a selected rail plate, a dialog button) is drawn with **no shadow** — DFU's `ShadowPosition = zero` case, precedent `guildServiceWindow.js:177‑177`. Everything else goes through `shadowText` (DFU's `AddDefaultShadowedTextLabel`, `nativePanel.js:24‑25`, `:78‑84`).
+Text inside a filled button (PLAY, a selected rail plate, a dialog button) is drawn with **no shadow** — DFU's `ShadowPosition = zero` case, precedent `guildServiceWindow.js:178‑177`. Everything else goes through `shadowText` (DFU's `AddDefaultShadowedTextLabel`, `nativePanel.js:24‑25`, `:78‑84`).
 
 ### 3.1 `widgetFor(key)` — total, decidable, no implementer judgement
 
@@ -568,7 +568,7 @@ Coordinates below are relative to `ctrlRight = rx + rw - 3`, `ly = ry + rh - 9`.
 *Draw:* value text right‑aligned ending at `ctrlRight-30`; track frame `[ctrlRight-66, ly+2, 36, 4]` BORDER, well `[ctrlRight-65, ly+3, 34, 2]` PANEL_DEEP, fill `[ctrlRight-65, ly+3, round(t*34), 2]` TEXT, knob `[ctrlRight-66 + round(t*31), ly, 5, 7]` KNOB; triangles as for ENUM.
 *Keyboard:* `Left`/`Right` = one `step`; `Shift+Left/Right` = `coarse`; `Enter` opens the numeric prompt (§3.6).
 *Mouse/touch:* `sub.prev`/`sub.next` step; a tap in `sub.value` sets `t = clamp((px - trackX) / trackW)` and commits; a **drag** inside `sub.value` scrubs live and commits on `pointerup`.
-*Live preview (LAW, `:268-274`):* `Controls/MusicVolume` applies on every step. `Controls/SoundVolume` plays `SOUND.DungeonDoorOpen` **on release only** (`pointerup` / `keyup`) — never per scroll tick, or a held arrow machine‑guns it. Because `audio._out()` re‑reads `SoundVolume` per connection (`audio.js:49`), the preview genuinely demonstrates the setting. This works only because `launcherScene` now boots audio (§7.2).
+*Live preview (LAW, `:268-274`):* `Controls/MusicVolume` applies on every step. `Controls/SoundVolume` plays `SOUND.DungeonDoorOpen` **on release only** (`pointerup` / `keyup`) — never per scroll tick, or a held arrow machine‑guns it. Because `audio._out()` re‑reads `SoundVolume` per connection (`audio.js:68`), the preview genuinely demonstrates the setting. This works only because `launcherScene` now boots audio (§7.2).
 
 **COLOUR**
 *Draw:* swatch `[ctrlRight-20, ly, 18, 8]` filled with the parsed RGB inside a 1px BORDER frame; a 2px alpha strip under it `[ctrlRight-20, ly+8, round(18*A/255), 1]` in TEXT; the 8‑hex right‑aligned ending at `ctrlRight-22` in TEXT_SOFT. A value that is not 8 hex digits draws the swatch as diagonal BORDER hatching and the row becomes `blocked` with the reason *"This saved value is not a colour."*
@@ -821,11 +821,11 @@ export async function runLauncher(canvas, renderer, status) {
   let font;
   try { font = makeFont(renderer, new FntFile().load(await getBytes('FONT0003.FNT')), 'FONT0003'); }
   catch (e) { console.warn('[settings] FONT0003.FNT unavailable; skipping the settings screen', e); return; }
-  // AUDIT: boot audio HERE. main.js:65 runs this scene before the splash's
+  // AUDIT: boot audio HERE. main.js:83 runs this scene before the splash's
   // ensureAudio, so audio.enabled was false and every playOneShot in the old
   // launcher was silently a no-op. Un-awaited: audio.ensure creates the
   // context in its synchronous prefix and attaches its own gesture resume
-  // (audio.js:71-124), which is all the volume preview needs.
+  // (audio.js:90-143), which is all the volume preview needs.
   ensureAudio(getBytes);
   ...
 }
@@ -906,9 +906,9 @@ This single test would have caught the phone text halving, the 8‑px picker row
 | Clamp selection to the visible range | `ListBox`, precedent `listPicker.js:102-103` |
 | Scrollbar thumb = `DisplayUnits / TotalUnits` | `VerticalScrollBar.cs:187-198`, precedent `nativeTalk.js:94-95` |
 | Glyph advance, space width, trailing spacing | `DaggerfallFont.cs:377-383`, `:623-627` → `text.js` |
-| Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:24-25`; precedent `guildServiceWindow.js:177-179` |
+| Default text colour + `+1,+1` shadow; `ShadowPosition = zero` inside filled buttons | `DaggerfallUI` → `nativePanel.js:24-25`; precedent `guildServiceWindow.js:178-180` |
 | `ScreenDimColor` behind modals | `DaggerfallUI` → `nativePanel.js:26` |
-| The launcher gate (wizard shown when unvalidated OR `ShowOptionsAtStart` OR a held key; skip straight to Options when the path is good) | `SceneControl.cs:46`, wizard `:154` → `main.js:65` |
+| The launcher gate (wizard shown when unvalidated OR `ShowOptionsAtStart` OR a held key; skip straight to Options when the path is good) | `SceneControl.cs:46`, wizard `:154` → `main.js:83` |
 
 ### 9.2 OURS — the presentation split (Ledger A), flagged in each file's header
 
@@ -926,8 +926,8 @@ The **seven categories, their order, titles, blurbs and the whole key→category
 
 ### 9.4 Explicitly **out** of this slice (record as Ledger rows)
 
-* **The in‑game route.** `SettingsWindow` already satisfies the overlay contract (`isChoiceWindow` + `input(code,e)` + `click(vx,vy)` + `wheel(dir)` + `draw` + `done`), which is exactly the shape `dungeonContext.js:2785`, `worldModes.js:1425` and `townTalk.js:220` consume — but no pause window exists yet, so the only routes back in remain the `GUI/ShowOptionsAtStart` gate and `?launcher`. The confirm dialog names `?launcher` explicitly. Note the honest limit: the in‑game seam exposes `overlayClick`/`overlayWheel` but **no** `pointermove`/`pointerup`, so slider *drag* will not work in‑game until that seam grows — tapping the track will, so it is a convenience loss, not a trap. Say so in the Ledger row.
-* ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is worth doing and is a separate commit with its own pin; until then the row is `stored` and operable (its range is DFU law).~~ **STALE - STRUCK (ROAD-G G7 records sweep, 2026-09-04).** *Shipped by the SETT/MENU view-settings slice and never struck here, so this bullet went on naming five `Math.PI/3` sites that no longer exist - the whole reason the cites had rotted. `src/ui/viewSettings.js:23` is `fieldOfView()`, `GetInt(sectionVideo, "FieldOfView", 60, 120)` verbatim (SettingsManager.cs:418, clamp 60..120), READ AT THE POINT OF USE so a change lands on the next frame; the five projections that carried a copy each read it now - `worldModes.js:6142`, `world.js:10453`, `interior.js:333`, `exterior.js:4506`, `dungeon.js:966`. Wiring it also corrected the shipped view: every copy sat at 60, which is DFU's MINIMUM and not its 65 default.*
+* **The in‑game route.** `SettingsWindow` already satisfies the overlay contract (`isChoiceWindow` + `input(code,e)` + `click(vx,vy)` + `wheel(dir)` + `draw` + `done`), which is exactly the shape `dungeonContext.js:2905`, `worldModes.js:1476` and `townTalk.js:249` consume — but no pause window exists yet, so the only routes back in remain the `GUI/ShowOptionsAtStart` gate and `?launcher`. The confirm dialog names `?launcher` explicitly. Note the honest limit: the in‑game seam exposes `overlayClick`/`overlayWheel` but **no** `pointermove`/`pointerup`, so slider *drag* will not work in‑game until that seam grows — tapping the track will, so it is a convenience loss, not a trap. Say so in the Ledger row.
+* ~~**`Video/FieldOfView` as a live setting.** `Math.PI/3` is hardcoded at five hosts. Wiring it is worth doing and is a separate commit with its own pin; until then the row is `stored` and operable (its range is DFU law).~~ **STALE - STRUCK (ROAD-G G7 records sweep, 2026-09-04).** *Shipped by the SETT/MENU view-settings slice and never struck here, so this bullet went on naming five `Math.PI/3` sites that no longer exist - the whole reason the cites had rotted. `src/ui/viewSettings.js:23` is `fieldOfView()`, `GetInt(sectionVideo, "FieldOfView", 60, 120)` verbatim (SettingsManager.cs:418, clamp 60..120), READ AT THE POINT OF USE so a change lands on the next frame; the five projections that carried a copy each read it now - `worldModes.js:6991`, `world.js:13147`, `interior.js:351`, `exterior.js:4881`, `dungeon.js:1014`. Wiring it also corrected the shipped view: every copy sat at 60, which is DFU's MINIMUM and not its 65 default.*
 * **`GUI/InteractionModeIcon` and the other un‑vendored enums.** Extend `scripts/bakeSettingsText.mjs` to emit a `SETTINGS_VALUES` table from `vendor/dfu-settings/GameSettings.txt` and, where that file is silent, vendor the lists from `DaggerfallAdvancedSettingsWindow.cs`. Until a list is vendored the key stays `blocked('novalues')`. **Never guess an option name.**
 * **`index.html`'s `user-scalable=no`.** It removes the only text‑size escape hatch a low‑vision player has on a WebGL canvas. Removing it is a one‑token change with whole‑port consequences (the game canvas wants it) and belongs in its own row; the in‑screen `Text Size` row is this slice's answer.
 * **Safe‑area insets.** `viewport-fit=cover` is set with no `env(safe-area-inset-*)` anywhere in the tree, so on a notched phone the footer sits under the home‑indicator strip. A whole‑port row; note that this screen's `oy` letterbox partly absorbs it in comfort mode but not in portrait, where `oy = 0`.

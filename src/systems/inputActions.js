@@ -74,6 +74,34 @@ export const ACTIONS = Object.freeze([
   // rebindable - it only gives up the DEFAULT key, which the cell it is drawn
   // in (the off hand's) already carries.
   'QuickSpell',
+  // QUICK-LOOT B4: the plaque's two keys. APPENDED, like every port
+  // action before them, because an action is never removed from this
+  // list and its position is what a saved binding file resolves by.
+  //
+  // The third key quick loot needs is not here on purpose:
+  // ActivateCenterObject already exists, is UNLOSEABLE, and is what
+  // takes the highlighted row. Minting a second "activate, but for
+  // loot" would be two bindings for one press and the first thing a
+  // player would rebind into a clash.
+  'QuickLootAll',
+  'QuickLootOpen',
+  // FREEMOUSE (2026-09-22, Mac: "an entirely new keybind. A mouse free
+  // that allows you to toggle the use of your mouse"). APPENDED, like
+  // every port action before it.
+  //
+  // THE TOGGLE ITSELF IS NOT NEW - `ActivateCursor` is DFU's own
+  // (PlayerMouseLook.cs:190-198) and the port has read it since U45.
+  // What is new is a key that is ONLY that. ActivateCursor's default
+  // is Enter, and online Enter is also the chat's open
+  // (ui/chatPanel.js CHAT_OPEN_ACTION), so the one press a player
+  // reaches for to free the mouse is the same press that opens a text
+  // box - a collision PL3 had to work around rather than resolve,
+  // because DFU's binding is DFU's. A second ACTION resolves it
+  // instead of arguing with it: Enter keeps DFU's meaning, this is the
+  // player's own, and the two are ORed at the one reader
+  // (player/pointerLock.js bindCursorToggle) so there is no second
+  // toggle to keep in step.
+  'FreeMouse',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -86,7 +114,7 @@ export const ACTIONS = Object.freeze([
  *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -152,6 +180,51 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // there first). Rebindable like every other row - the enhanced controls
   // window's ONLINE group.
   ['KeyF', 'SocialInteract'],
+  // QUICK-LOOT B4: P takes the lot, J opens the container.
+  //
+  // Both were chosen by ELIMINATION, and it took two rounds. The first
+  // pass picked G and B off a sweep of what THIS table binds, and
+  // HT4's gate caught them - G is Handheld Torches' ManualDropInput
+  // and B is Eye Of The Beholder's Camera.SwitchShoulder, so either
+  // would have been one press doing two things. The second pass swept
+  // the vendored mods' DEFAULTS too and picked K, and the gate caught
+  // that as well: Travel Options offers K as one of the CHOICES on
+  // RoadsIntegration.FollowPathsKey, which a defaults-only sweep
+  // cannot see. J and P are what is left over once DFU's table, the
+  // port's own two (Tab, Escape), every mod's default and every mod's
+  // offered choice are all spent.
+  //
+  // Neither is near the movement hand, and that is the honest cost of
+  // a keymap this full rather than a preference: they are ACTIONS, so
+  // a player who wants them under WASD moves them there.
+  //
+  // Both are ACTIONS rather than a literal `e.code` test in a host,
+  // which is AUDIT 58's lesson: a key-literal table there made four
+  // rebindable rows inert in both directions.
+  ['KeyP', 'QuickLootAll'],
+  ['KeyJ', 'QuickLootOpen'],
+  // FREEMOUSE: Y, and it is what is LEFT rather than what is apt.
+  //
+  // The sweep QUICK-LOOT B4 ran, run again: of the twenty-six letters,
+  // DFU's own table spends A C D E F H I J L M N P Q R S T U V W Z,
+  // the port spends F (SOC5), J and P (quick loot), and the vendored
+  // mods' defaults and OFFERED CHOICES spend B (Eye Of The Beholder's
+  // SwitchShoulder), G (Handheld Torches' ManualDrop), K (Travel
+  // Options' FollowPaths choice), O and X. That leaves exactly one
+  // letter, and this is it.
+  //
+  // The obvious keys are all spoken for and each for a reason worth
+  // not undoing: Alt is Sneak, Backquote is the console, Tab is the
+  // pixel dial (PX15), and Enter is the very collision this action
+  // exists to get away from.
+  //
+  // A key that is merely free is the honest cost of a keymap this
+  // full - it is an ACTION, so a player who wants it under their
+  // thumb moves it in the controls pane, which is the whole reason
+  // this is a row rather than an `e.code` test in a host (AUDIT 58's
+  // lesson: a key-literal table there made four rebindable rows inert
+  // in both directions).
+  ['KeyY', 'FreeMouse'],
   // QS2: THE NUMBER ROW, which is the one place a Souls player's hand already
   // goes. Digit1-Digit4 are unspent by SetupDefaults, unspent by the port
   // (PX15's Tab, HT4's G, SOC5's F, HT's O and X are the whole of the port's
@@ -176,6 +249,56 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // slice spends and still unspent by DFU, by the port and by every vendored
   // mod's TextKey defaults.
   ['Digit4', 'QuickOffHand'],
+]);
+
+/**
+ * PAD1 (2026-09-21, Mac: "a comprehensive pass on m/kb keybinds and
+ * controller support ... including the quickbar"): THE PAD LAYOUT.
+ *
+ * DFU's ResetDefaults binds no action to a controller button. Out of the
+ * box a pad moves and looks (the axis dict) and clicks (the joystick UI
+ * dict: A left-click, Y right-click, X middle-click, B back), so it
+ * activates, swings and autoruns through the mouse codes those clicks
+ * stand for - and nothing else: no jump, no crouch, no menu, no
+ * spellbook, no quickslot, until the player binds each one in the grid.
+ * This is that binding done once, as DEFAULTS, and it is a Ledger A
+ * departure (DEFAULTS ONLY - the binding law, the dicts, the grid and
+ * the file are DFU's; only the rows are the port's).
+ *
+ * THE SECONDARY DICT, because DFU's is single-bind per dict and every
+ * one of these actions already holds its keyboard key in the primary.
+ * The codes are pad-only (the Unity button names the poller synthesises
+ * and the axis keys it edges - ui/gamepadInput.js), so a keyboard player
+ * never sees them, and they are filled by testSetBinding alone: a
+ * missing action, on a free code, never marked removed (the
+ * removedSecondary law) - so a file written before this slice gains them
+ * on the next boot and a player's own secondaries stand.
+ *
+ * The rows, on a standard-mapping pad (systems/gamepad.js unityAxes /
+ * unityButtons): the bumpers crouch and jump, View opens the pack, Menu
+ * pauses, L3 runs, R3 readies the weapon, LT opens the spellbook (the
+ * CastSpell action - the cast itself is the attack click, as DFU's), RT
+ * swings beside Y, and the D-PAD is the quickslot diamond - up and down
+ * the two consumables, left the spell, right the off hand - which is
+ * where a Souls player's thumb already goes. The UI dict is DFU's own and
+ * untouched: A/B/X/Y keep their clicks in a window and in the world.
+ * Sneak, the modes, the journals and the maps have no pad row: eight
+ * buttons and four directions is what a pad has, and the rest is the
+ * grid's to bind - a combo with View or Menu held is DFU's own way.
+ */
+export const DEFAULT_SECONDARY_BINDINGS = Object.freeze([
+  ['JoystickButton4', 'Crouch'],          // LB / L1
+  ['JoystickButton5', 'Jump'],            // RB / R1
+  ['JoystickButton6', 'Inventory'],       // View / Share
+  ['JoystickButton7', 'Escape'],          // Menu / Options
+  ['JoystickButton8', 'Run'],             // L3
+  ['JoystickButton9', 'ReadyWeapon'],     // R3
+  ['JoystickAxis9Button0', 'CastSpell'],  // LT / L2
+  ['JoystickAxis10Button0', 'SwingWeapon'],   // RT / R2, beside Y's right-click
+  ['JoystickAxis7Button0', 'QuickUse1'],  // d-pad up
+  ['JoystickAxis7Button1', 'QuickUse2'],  // d-pad down
+  ['JoystickAxis6Button1', 'QuickSpell'], // d-pad left
+  ['JoystickAxis6Button0', 'QuickOffHand'],   // d-pad right
 ]);
 
 // ── key combos ──────────────────────────────────────────────────────
@@ -344,6 +467,7 @@ export function createBindings() {
     secondary: new Map(),
     rev: 0,                      // bumped on every write; comboModifiers' cache key
     removedPrimary: new Set(),   // :87 - "don't autofill this default back"
+    removedSecondary: new Set(),   // PAD1: the same mark for the secondary dict, which carries the pad defaults
     unknown: new Map(),
     secondaryUnknown: new Map(),
     // GP1: the joystick dicts (:83-92) - axis name -> AxisAction,
@@ -420,6 +544,7 @@ export function setBinding(store, code, action, primary = true) {
   clearBinding(store, action, primary);
   if (code != null) {
     if (primary) store.removedPrimary.delete(action);
+    else store.removedSecondary.delete(action);   // PAD1
     dict.delete(code);
     dict.set(code, action);
   }
@@ -444,6 +569,15 @@ export function clearBindingByCode(store, code, primary = true) {
  *  would quietly re-bind the default on next launch. */
 export function addRemovedPrimaryAction(store, action) {
   store.removedPrimary.add(action);
+}
+
+/** PAD1: the secondary dict's own mark. DFU never needed one - its
+ *  ResetDefaults writes no secondary - but the pad defaults live there
+ *  (DEFAULT_SECONDARY_BINDINGS) and are autofilled on every load, so a
+ *  pad button a player cleared on purpose would come back at the next
+ *  boot without it. Same law, same file row (`removedSecondaryActions`). */
+export function addRemovedSecondaryAction(store, action) {
+  store.removedSecondary.add(action);
 }
 
 /** GetBinding (:641-671). One-arg walks the primary dict ("first
@@ -506,6 +640,7 @@ function testSetBinding(store, code, action, primary = true) {
   if (dict.has(code) || alt.has(code)) return;
   for (const a of dict.values()) if (a === action) return;
   if (primary && store.removedPrimary.has(action)) return;
+  if (!primary && store.removedSecondary.has(action)) return;   // PAD1
   if (comboModifiers(store).has(code)) return;
   setBinding(store, code, action, primary);
 }
@@ -521,11 +656,18 @@ export function resetDefaults(store, autofill = false) {
   if (!autofill) {
     store.primary.clear();
     store.removedPrimary.clear();
+    store.removedSecondary.clear();   // PAD1: a full reset forgets the pad marks too, and refills below
   }
   const set = autofill
     ? (code, action) => testSetBinding(store, code, action, true)
     : (code, action) => setBinding(store, code, action, true);
   for (const [code, action] of DEFAULT_BINDINGS) set(code, action);
+  // PAD1: THE PAD LAYOUT, in the SECONDARY dict and always by testSetBinding
+  // - a full reset restores the keyboard primaries as DFU's does (:956-960)
+  // and leaves every secondary a player chose standing, so the pad rows can
+  // only ever FILL a gap: a missing action, on a free code, not marked
+  // removed. The codes are pad-only, so no keyboard default is touched.
+  for (const [code, action] of DEFAULT_SECONDARY_BINDINGS) testSetBinding(store, code, action, false);
   // GP1: the joystick tail (:1034-1047). A full reset SETS the four
   // axes and four buttons over whatever stood (SetAxisBinding clears
   // the action's old axis, so a stick moved to Axis3 comes home); an
@@ -567,6 +709,7 @@ export function serializeKeyBinds(store) {
     actionKeyBinds,
     secondaryActionKeyBinds,
     removedPrimaryActions: [...store.removedPrimary],
+    removedSecondaryActions: [...store.removedSecondary],   // PAD1
     axisActionKeyBinds,
     axisActionInversions,
     joystickUIKeyBinds,
@@ -604,6 +747,21 @@ export function loadKeyBinds(store, data) {
       for (const a of store.primary.values()) if (a === action) bound = true;
       for (const a of store.secondary.values()) if (a === action) bound = true;
       if (!bound) store.removedPrimary.add(action);
+    }
+  }
+  // PAD1: the secondary marks. The primary's law above asks "bound
+  // nowhere", and a secondary mark's action is bound on the KEYBOARD
+  // almost by definition (Crouch keeps its C while its pad row is
+  // cleared) - so the secondary's law asks the one dict it is about: a
+  // mark loads for an action that holds no SECONDARY, and a file that
+  // names a secondary-bound action as removed is read as the binding.
+  if (Array.isArray(data.removedSecondaryActions)) {
+    for (const name of data.removedSecondaryActions) {
+      const action = parseActionName(name);
+      if (action === 'Unknown') continue;
+      let bound = false;
+      for (const a of store.secondary.values()) if (a === action) bound = true;
+      if (!bound) store.removedSecondary.add(action);
     }
   }
   // GP1: the joystick blocks (:1995-2035). Each is a raw map-set that
@@ -647,6 +805,72 @@ function storage() {
 
 /** The startup path (:441-452): load the file if it exists then
  *  autofill, else write defaults. Always answers a usable store. */
+/** MAC-D1 (SquidKamer on the desktop app, 2026-09-21: "I cant seem to
+ *  swing the weapon in the installed version of the game. I have to
+ *  enable the attack click but I prefer the mouse swing"): THE VERBS
+ *  A GAME CANNOT BE PLAYED WITHOUT CANNOT BE LEFT UNBOUND.
+ *
+ *  MAC-SWING1 fixed the READ - a swing bound to a key answers here
+ *  now, whatever it is bound to. It did not fix the STATE that
+ *  stranded the first reporter and has stranded another: an action
+ *  with no code at all. `setBinding` clears an action's old row when
+ *  a new code takes it, and `removedPrimary` is DFU's "keep this
+ *  unbound" mark, which is exactly what resetDefaults(autofill) obeys
+ *  - so a rebind that lands on an already-taken code, or a row
+ *  cleared in the controls window, leaves SwingWeapon addressing
+ *  nothing. Then `swingButton()` is -1, `held(keys, 'SwingWeapon')`
+ *  is false, and the gesture can never fire again. The desktop app
+ *  keeps its prefs file across reinstalls, so reinstalling does not
+ *  clear it either - which is why this reads as an installed-build
+ *  bug and why both reporters reached for Click mode instead.
+ *
+ *  A player may unbind a convenience. These are not conveniences:
+ *  without them there is no way to swing, move or interact at all,
+ *  and no way BACK, because the way back is itself a binding. So the
+ *  default is restored and the removal mark lifted - the narrowest
+ *  repair that cannot strand anyone, applied at the one door every
+ *  load comes through. */
+export const UNLOSEABLE_ACTIONS = Object.freeze(['SwingWeapon', 'ActivateCenterObject', 'MoveForwards', 'MoveBackwards', 'MoveLeft', 'MoveRight']);
+
+/** The codes an action answers to right now, across both dicts. */
+export function codesForAction(store, action) {
+  const out = [];
+  for (const dict of [store.primary, store.secondary]) {
+    for (const [code, a] of dict) if (a === action) out.push(code);
+  }
+  return out;
+}
+
+/** MAC-D1: ...and whether any of them is one a player at a keyboard
+ *  can actually press. A PAD row does not rescue a stranded action:
+ *  DEFAULT_SECONDARY_BINDINGS fills the pad codes on every load, so
+ *  an unbound SwingWeapon still answers `JoystickAxis10Button0` and
+ *  would look bound while nothing on the desk can swing. `swingButton`
+ *  reads the mouse codes and the rig's key latch reads the held set;
+ *  neither can ever see a pad code on a machine with no pad. */
+export const isPadCode = (code) => typeof code === 'string' && code.startsWith('Joystick');
+export const actionIsReachable = (store, action) => codesForAction(store, action).some((c) => !isPadCode(c));
+
+/** Restore any unloseable action that addresses nothing. Answers the
+ *  actions it had to repair, so a caller can say so. */
+export function repairUnloseableBindings(store) {
+  const fixed = [];
+  for (const action of UNLOSEABLE_ACTIONS) {
+    if (actionIsReachable(store, action)) continue;
+    const def = DEFAULT_BINDINGS.find(([, a]) => a === action);
+    if (!def) continue;
+    // The removal mark is DFU's "keep it unbound" and it is exactly what
+    // stopped the autofill pass putting this back - but lifting it here
+    // by hand is dead code: SetBinding's own first act is
+    // `removedPrimary.delete(action)` (:473), so the repair below
+    // clears the mark as part of binding. A mutant that deleted the
+    // hand-written lift survived, which is what said so.
+    setBinding(store, def[0], action, true);
+    fixed.push(action);
+  }
+  return fixed;
+}
+
 export function loadOrCreateBindings() {
   const store = createBindings();
   const ls = storage();
@@ -655,6 +879,10 @@ export function loadOrCreateBindings() {
     try {
       loadKeyBinds(store, JSON.parse(raw));
       resetDefaults(store, true);
+      // MAC-D1: ...and the autofill pass above will NOT do this, by
+      // design - it obeys the removal marks. This runs after it and
+      // writes the repair back, so the next load starts sound.
+      if (repairUnloseableBindings(store).length) saveKeyBinds(store);
       return store;
     } catch { /* a corrupt file falls through to defaults */ }
   }

@@ -12,16 +12,26 @@
 //                    {t:'pose', p}                       POSE_HZ_MAX a second at most
 //                    {t:'ping'}
 //                    {t:'chat', text}                   CHAT_HZ_MAX a second at most (CHAT1)
+//                    {t:'say', text}                    RED1: THE SERVER SPEAKING - only from a socket whose
+//                                                       TOKEN carried the dev glyph; fanned as {t:'red', text, at}
+//                    {t:'mute', order}                  MOD1: a mute ORDER the account service signed, carried by the moderator
+//                                                       who asked for it; the room checks the signature, not the carrier (MUTE_HZ_MAX)
 //                    {t:'world', data, final?}          the room's memory, from its host alone (WORLD1); final once, the farewell
 //                    {t:'foes', data}                   the host's live foes, FOES_HZ_MAX a second at most (WORLD2)
 //                    {t:'hit', data}                    a blow on the host's foe, from anyone but the host (WORLD2)
 //                    {t:'act', data}                    a change to the room's doors, levers, movers and loot, from anyone in it (WORLD3/WORLD4)
 //                    {t:'social', k, acct?, peer?, party?}   a friend or party act, in the HUB alone (SOC1): SOCIAL_HZ_MAX a second
 //                    {t:'party', p}                     my party pose - where I stand and how I fare - to the hub (SOC1): PARTY_HZ_MAX a second
-//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose}], host, world, now}   now: the relay's clock, ms (WORLD5)
-//                    {t:'join', id, name, look, pose}   {t:'leave', id}
+//   room -> client:  {t:'welcome', id, peers:[{id,name,look,pose,title?,glyphs?}], host, world, now}   now: the relay's clock, ms (WORLD5)
+//                    {t:'join', id, name, look, pose, title?, glyphs?}   {t:'leave', id}
+//                    ACC3: `title` and `glyphs` are read off the hello's VERIFIED token and are absent when there is no badge
+//                    {t:'quest', quest:{questName, displayName, data}}   a quest shared with my party, to the hub alone (QUEST1): QUEST_HZ_MAX a second
 //                    {t:'pose', id, p}                  {t:'pong'}
-//                    {t:'chat', id, name, text, at}     to everyone who hears it, the sender included
+//                    {t:'chat', id, name, text, at, sub?}   to everyone who hears it, the sender included
+//                    MOD1: `sub` is the sender's VERIFIED account id (the token's `s`), on a chat line and on a channel's
+//                    roster rows and joins - what a moderator's /mute names, since a name is not unique and an id is.
+//                    NOT `acct`: that word is the social hub's own account (SOC1), a different id with a different law
+//                    {t:'muted', until}                 MOD1: to the muted player alone - `until` in epoch seconds, 0 when lifted
 //                    {t:'host', id}                     the room's host changed (WORLD1)
 //                    {t:'world', id, data}              the room's memory, to a socket whose welcome carried none (AUDIT WORLD34 C1)
 //                    {t:'foes', id, data}               the host's live foes, to everyone but the host (WORLD2)
@@ -30,7 +40,8 @@
 //                    {t:'error', m}                     then the socket closes
 //                    {t:'social', k:'state'|'presence'|'party'|'invite'|'note'|'error', ...}   the hub's word on my friends and my party (SOC1)
 //                    {t:'party', acct, p}               a party member's pose, to the party alone (SOC1)
-// A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr} in the room's frame -
+//                    {t:'quest', acct, name, quest:{questName, displayName, data}}   a party member's shared quest, to the party alone (QUEST1)
+// A pose is {x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar} in the room's frame -
 // a world cell's in MapsFile world units (the streaming world's
 // map-pixel origin, PIXEL_UNITS a pixel), every other room's in the
 // scene's own - mv 1 when walking, 2 when running (the sender's own
@@ -42,7 +53,10 @@
 // sheathed and never swung, since nothing of either travelled; am 1
 // while the sender has arrows (the look carries no inventory), sr 1
 // while a spell is readied, cn the sender's cast count and cr the
-// cast's range type (spellcast.js TARGET_TYPES' index) - MAC7 #2. A look is the paperdoll's recipe: race, gender,
+// cast's range type (spellcast.js TARGET_TYPES' index) - MAC7 #2 - and ce
+// its element (spellcast.js ELEMENTS, 0..4 - SPELLFX1: the missile a peer
+// draws for it, the Unity co-op's cast visual), and ar the count of arrows
+// the sender has loosed (SPELLFX1: the shaft a peer draws). A look is the paperdoll's recipe: race, gender,
 // face, and the equipped items projected onto the six fields the doll
 // art reads (AUDIT ONLINE A12: nothing else travels, so a look is small
 // by construction and never a stranger's junk rebroadcast).
@@ -132,6 +146,7 @@
 // fast travel, no sentence, no ?tod, no ?timescale.
 
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap. The relay re-exports this module (server/src/relay.js), so this reaches the worker too - mat4.js imports nothing itself.
+import { TITLES, GLYPHS, GLYPHS_MAX } from './identityToken.js';   // ACC3: the badge vocabulary, closed - `badged` writes it and `readBadge` checks it back
 import { nameAllowed } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
 
 /** WORLD5: the instant the online world stood at the classic game start - 2026-09-14T00:00:00Z. */
@@ -173,6 +188,8 @@ export const NAME_MAX = 24;
 export const POSE_STRIKES = Object.freeze(['Idle', 'StrikeDown', 'StrikeDownLeft', 'StrikeLeft', 'StrikeRight', 'StrikeDownRight', 'StrikeUp']);
 /** A cast's range on the wire: DFU's TargetTypes order (systems/spellcast.js TARGET_TYPES), the pose's `cr` an index into it (MAC7 #2). */
 export const POSE_CAST_RANGES = 5;
+/** SPELLFX1: a cast's element on the wire - the classic element index (fire, frost, poison, shock, magic), the pose's `ce`. */
+export const POSE_CAST_ELEMENTS = 5;
 /** World units per map pixel in the frame the streaming world's poses
  *  travel in: MapsFile's (world/streamingWorld.js NATIVE_PIXEL). */
 export const PIXEL_UNITS = 32768;
@@ -190,6 +207,40 @@ export const CLOSE_BUSY = 1013;       // the room is full or its hello gate is s
 export const CHAT_MAX = 240;
 /** The most chat lines a client may send a second; the bucket's burst is the same number. */
 export const CHAT_HZ_MAX = 2;
+
+/** ═══ RED1: THE SERVER'S OWN LINE ════════════════════════════════
+ *
+ * Mac (2026-09-22): "I want to set up a red text system (kind of like
+ * warframe) where I can message chat as the server."
+ *
+ * A LINE NOBODY IS SPEAKING. It carries no id and no name, because it
+ * is not a person - which is also what makes it unforgeable in the
+ * one way that matters: `net/chat.js`'s own note says a notice
+ * recognised by the string 'Server' would be one rename away from a
+ * player announcing a fake one, so this arrives as its OWN FRAME TYPE
+ * and the client marks it from the type rather than from any field.
+ *
+ * IT IS BOUNDED LIKE A CHAT LINE because it IS one - `sanitizeChat`
+ * runs on it at both ends. A broadcast is not a licence to put four
+ * kilobytes over everybody's screen.
+ *
+ * RED_HZ_MAX IS DELIBERATELY BELOW CHAT_HZ_MAX. A player's line
+ * reaches the room; this reaches EVERY PLAYER IN THE GAME, so the
+ * thing that would be merely annoying at chat's rate is the whole
+ * population's screen at this one.
+ *
+ * AND IT IS 1 RATHER THAN THE 0.5 THIS WAS FIRST WRITTEN AS, because
+ * `tokenGate` CANNOT EXPRESS A RATE BELOW ONE A SECOND: a fresh bucket
+ * starts with `rate` tokens and the gate needs a whole one, so at 0.5
+ * the very first frame is refused and every one after it - the feature
+ * would have been silently dead rather than slow. The pins caught it;
+ * the constraint is now written down at `tokenGate` itself so the next
+ * slice that wants "one every ten seconds" meets it before shipping.
+ */
+export const RED_HZ_MAX = 1;
+/** MOD1: mute orders a socket may carry a second. One: an order is a
+ *  moderator's deliberate act, and tokenGate cannot go lower. */
+export const MUTE_HZ_MAX = 1;
 /** Over-rate chat lines dropped in a row before the socket is closed. */
 export const CHAT_STRIKES_MAX = 20;
 /** The most sockets a CHAT room holds - one room hears the whole world, so it runs deeper than a cell's. */
@@ -244,10 +295,39 @@ export const FOES_HZ_MAX = 12;
 export const FOES_PREFIX = '{"t":"foes"';
 /** The cap a frame's PREFIX earns before any parse (WORLD1/WORLD2): a world frame WORLD_FRAME_MAX, a foes frame
  *  FOES_FRAME_MAX, anything else MAX_FRAME_BYTES; the type keeps the cap after the parse (AUDIT WORLD A2). */
-export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX : MAX_FRAME_BYTES; }
+export function frameCap(text) { return text.startsWith(WORLD_PREFIX) ? WORLD_FRAME_MAX : text.startsWith(FOES_PREFIX) ? FOES_FRAME_MAX : text.startsWith(QUEST_PREFIX) ? QUEST_FRAME_MAX : MAX_FRAME_BYTES; }
 /** AUDIT WORLD2 A5: a room's foes fan spends this many bytes a second - the frame's size times its listeners; one host
  *  at FOES_HZ_MAX and FOES_FRAME_MAX into SOCKETS_MAX listeners would have been 191 MiB/s out of one object. */
 export const FOES_ROOM_BYTES_PER_S = 4 * 1024 * 1024;
+
+/** QUEST1 (2026-09-20, revised): sharing an accepted quest with the party - systems/questShare.js's own envelope
+ *  (Quest.getSaveData()'s shape). First measured at "a few hundred bytes to a few KB for most quests" - wrong in
+ *  practice: a quest with several resources and a handful of full-text messages routinely runs past
+ *  MAX_FRAME_BYTES (16 KiB), which a live report caught ("the quest is too complex to share" on an ordinary side
+ *  quest, not an edge case). Given its own bigger cap instead, same reasoning FOES_FRAME_MAX gets one over
+ *  MAX_FRAME_BYTES - and its OWN isolated arm in the pre-parse oversized-frame gate (_message, server/src/index.js),
+ *  built separately from the WORLD_PREFIX/FOES_PREFIX one rather than folded into it: that arm's own law is
+ *  world-room-shaped throughout (host-only frames, a cell's stream ingress budget) and none of that applies to a
+ *  hub-scoped, per-party frame, so a quest frame is metered and capped on its own before falling through to the
+ *  same parse+dispatch the ordinary path already has for `m.t === 'quest'`.
+ *  Hub-scoped like 'social'/'party', not world-room-scoped like 'foes'/'act', because party members sharing a quest
+ *  may not be standing in the same room at all - the one thing this act needs from the hub is "who is in my party
+ *  right now", which the hub already tracks for the party pose view. A deliberate, rare, one-off player action, not
+ *  a stream: QUEST_HZ_MAX is a full order of magnitude under even SOCIAL_HZ_MAX.
+ *  It also does NOT use the generic social-act shape (whose validator is deliberately a closed
+ *  {k, acct?, peer?, party?} set with no room for a payload field, AUDIT SOC B11) - it is its own top-level frame,
+ *  same reasoning 'party' (the pose) already gets one instead of riding inside 'social'. */
+/** The quest-share frame's own cap - FOES_FRAME_MAX's own scale, not MAX_FRAME_BYTES's: a quest's own save-data
+ *  envelope (many resources, several full-text messages) is a state dump, not a chat line. */
+export const QUEST_FRAME_MAX = 64 * 1024;
+/** How a quest-share frame begins on the wire - same fast-prefix law as WORLD_PREFIX/FOES_PREFIX. */
+export const QUEST_PREFIX = '{"t":"quest"';
+/** Quest shares a socket may send a second, hub-side and at home - one player's deliberate click, never a stream. */
+export const QUEST_HZ_MAX = 0.1;
+/** The hub's own per-room bound on quest-share acts, the same shape SOCIAL_ROOM_HZ_MAX gives every other hub act. */
+export const QUEST_ROOM_HZ_MAX = 8;
+/** The longest a quest's own display name may run (UTF-16 units) - a party-chat note's bound on the words around it. */
+export const QUEST_NAME_MAX = 80;
 /** AUDIT WORLD2 A6: the hits a room forwards onto its host's one socket a second, all joiners together. */
 export const HIT_ROOM_HZ_MAX = 60;
 /** AUDIT WORLD2 A6: a joiner's own hits a second, at home - the pose bucket's headroom over the client's POSE_HZ (10),
@@ -346,12 +426,18 @@ export const SOCIAL_ROOM_HZ_MAX = 64;
 export const PARTY_HZ_MAX = 2;
 /** The client's own floor between two party poses, ms (half the relay's rate, so a late one never trips the gate). */
 export const PARTY_SEND_MS = 1000;
+/** The client's own floor between two quest shares, ms - QUEST_HZ_MAX's own period (one every ten seconds), so the
+ *  client never even tries a send the hub would only drop. */
+export const QUEST_SEND_MS = 10_000;
 /** The most friends an account keeps. */
 export const FRIENDS_MAX = 64;
 /** The most requests an account holds each way, and the most party invites it holds. */
 export const PENDING_MAX = 32;
-/** A party's size - Mac's "4 person party system". */
-export const PARTY_MAX = 4;
+/** A party's size. SOC1 shipped Mac's "4 person party system"; PARTY8 (Mac, 2026-09-22: "increase the party limit
+ *  to 8") doubles it. Every rate the hub and the client derive from it (PARTY_IN_HZ_MAX, QUEST_IN_HZ_MAX,
+ *  QUEST_IN_MIN_MS) follows, and the relay version below moves with it - a party of five is a frame a world93 client
+ *  refuses. */
+export const PARTY_MAX = 8;
 /** The most invites one party has outstanding at once. */
 export const PARTY_INVITES_MAX = 8;
 /** How long a party invite stands before it is nothing. */
@@ -402,12 +488,28 @@ export const SOCIAL_IN_HZ_MAX = SOCIAL_ROOM_HZ_MAX;
 export const socialInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_IN_HZ_MAX);
 /** AUDIT SOC B3: a note or an error becomes a CHAT LINE (a line nobody sent), and net/chat.js keeps CHAT_KEEP of them -
  *  so those two kinds carry a rate of their own, well under the chat's, because an honest hub's notes are bounded by
- *  the reader's own lists (PENDING_MAX requests, PENDING_MAX invites, a party of four). */
+ *  the reader's own lists (PENDING_MAX requests, PENDING_MAX invites, a party of PARTY_MAX). */
 export const NOTE_IN_HZ_MAX = 10;
 export const noteInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, NOTE_IN_HZ_MAX);
 /** AUDIT SOC B3: the poses of a party's other members, at PARTY_HZ_MAX each. */
 export const PARTY_IN_HZ_MAX = PARTY_HZ_MAX * (PARTY_MAX - 1);
 export const partyInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_IN_HZ_MAX);
+/** QUEST1: the worst case at home - every OTHER party member sharing at their own outgoing rate. */
+/** QUEST1 BUG, same flaw as questShareGate's own (above): tokenGate's bucket cap means a sub-1 rate never passes.
+ *  This gated the RECEIVER's side - even a successfully-sent quest share would have been silently dropped here,
+ *  every time. Fixed the same way: a cooldown between individually-arriving frames rather than a token bucket.
+ *  QUEST_IN_HZ_MAX is kept as the worst-case sustained rate this describes (every other party member sharing at
+ *  their own throttled rate); QUEST_IN_MIN_MS is the matching per-frame spacing. */
+/** AUDIT PARTY8: the hub's quest fan pays in bytes (server/src/index.js, the quest arm) - a share's frame times the
+ *  tabs it reaches. Four MiB a second, borrowing, lets one full party's largest share land whole each second and
+ *  makes a second one wait, where the rate gate alone let eight 3.5 MiB fans through. (QUEST_IN_HZ_MAX and
+ *  QUEST_IN_MIN_MS, the receiver-side rates this comment once named, had no reader; the receiver's own gate is
+ *  questInGate below, per sender at QUEST_HUB_MIN_MS.) */
+export const QUEST_ROOM_BYTES_PER_S = 4 * 1024 * 1024;
+/** AUDIT DROPS C2: keyed PER SENDER (account) at home, not per room - two members sharing within QUEST_IN_MIN_MS
+ *  of each other lost the second share to a per-room cooldown the honest hub was said never to trip. Each sender
+ *  is held to half their own floor (QUEST_HUB_MIN_MS), the same rule the hub applies. */
+export const questInGate = (at, nowMs) => (at != null && nowMs - at < QUEST_HUB_MIN_MS ? { at, pass: false } : { at: nowMs, pass: true });
 
 /** AUDIT SOC B20: the widest frame an honest relay sends a client - a welcome carrying a room's memory (WORLD_FRAME_MAX)
  *  and a full roster of hellos (ROSTER_MAX looks, each under the hello's own MAX_FRAME_BYTES). Past it a frame is
@@ -419,6 +521,17 @@ const finite = (v) => typeof v === 'number' && Number.isFinite(v);
 const uint = (v, max) => (finite(v) && v >= 0 ? Math.min(max, Math.floor(v)) : null);
 const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
 const SECRET_RE = /^[A-Za-z0-9_-]{8,64}$/;
+/** ACC1d: what an identity token LOOKS like - `v1.<base64url body>.<base64url sig>`,
+ *  which is `src/net/identityToken.js`'s own shape. Bounded because an
+ *  unbounded string reaches WebCrypto on the relay, and the verifier
+ *  refuses an oversized one anyway (TOKEN_MAX there); this is the
+ *  cheaper refusal, before a frame is even accepted.
+ *
+ *  THE VERSION PREFIX IS NOT SPELLED OUT HERE. identityToken.js is the
+ *  one home for which version exists and the verifier refuses anything
+ *  else before parsing a byte; a second copy of `v1` in this file would
+ *  be a second thing to forget on the day there is a v2. */
+const TOKEN_RE = /^[A-Za-z0-9]{1,8}\.[A-Za-z0-9_-]{1,512}\.[A-Za-z0-9_-]{1,128}$/;
 
 /** The name a refused one becomes. Not a mask (`C**` is a shape a
  *  player treats as a puzzle) and not an error the relay could not
@@ -697,10 +810,23 @@ export const POSE_FAN_MAX = 32;
  *  carries is unmeasured (AUDIT SLAM C1). */
 export const POSE_FAR_SHARE = 4;
 
-/** A pose goes out at least this often, moved or not: the socket's keepalive and the peers' clock. SLAM13 moved it
- *  here from net/online.js, because the relay's keepalive floor (KEEPALIVE_FAN_MS) is a fraction of it and the two
- *  must never be tuned apart. */
-export const HEARTBEAT_MS = 5000;
+/** A pose goes out at least this often, moved or not: the peers' clock and the silence law's safety net. SLAM13 moved
+ *  it here from net/online.js, because the relay's keepalive floor (KEEPALIVE_FAN_MS) is a fraction of it and the two
+ *  must never be tuned apart.
+ *
+ *  RELAY-H1 (2026-09-20, Mac: "cloudflare hit its limit"): 5000 -> 20000, AND THE SOCKET'S LIVENESS IS NO LONGER THIS
+ *  FRAME'S JOB. A pose is a message, a message is an event at the Durable Object, and Cloudflare bills duration for
+ *  every second an object is awake; "billable duration does not accrue during hibernation" and "incoming requests
+ *  prevent hibernation" are the platform's own words. A standing player sent one every five seconds, so a room with
+ *  anyone in it never slept - the whole free tier (13,000 GB-s a day) was ~7 player-hours, and it was gone mid-stream.
+ *  The runtime answers `{"t":"ping"}` in the object's SLEEP (server/src/index.js setWebSocketAutoResponse), so the
+ *  socket's liveness rides a ping at PING_MS and the pose is sent only when it MOVED, or every HEARTBEAT_MS as the
+ *  peers' proof of life. Four times fewer wakes from a standing player, and gaps a hibernation can fit in. */
+export const HEARTBEAT_MS = 20000;
+/** RELAY-H1: the socket's own keepalive - a ping the runtime answers without waking the object. Derived from the
+ *  heartbeat so the two cannot be tuned apart: four pings to a pose, which keeps today's five-second on-wire cadence
+ *  (the cadence intermediaries and phones were already proven against) while the object sleeps between poses. */
+export const PING_MS = HEARTBEAT_MS / 4;
 /** SLAM13 (2026-09-16, AUDIT SLAM A2): A KEEPALIVE IS HEARD BY THE WHOLE CROWD AT MOST THIS OFTEN. SLAM8 fans an
  *  unmoved pose to everyone in range, untiered, because a standing player's heartbeat is the one frame whose whole job
  *  is to be heard - and it assumed that frame comes every HEARTBEAT_MS, which is what the port's client does. A
@@ -720,7 +846,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world83';   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite
+export const RELAY_VERSION = 'world100';   // DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -795,13 +921,15 @@ export function poseChanged(a, b, eps = 0.01) {
   return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
     || Math.abs(wrapAngle(a.yaw - b.yaw)) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)   // SLAM13: the yaw difference is WRAPPED - the relay keeps the pose the door wrapped into (-PI, PI], and a player standing at the seam drifts across it by 2PI, which the bare difference called a move
     || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0)   // MAC7 #1: a draw and a swing go out at once, as a step does
-    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
+    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0)   // MAC7 #2: and the arrow, the spell stance, the cast
+    || (a.rd | 0) !== (b.rd | 0) || (a.rv | 0) !== (b.rv | 0)   // RIDE: a mount or a dismount goes out at once, as a step does
+    || (a.hs | 0) !== (b.hs | 0);   // DISC7: and the clop's swap, as the rider's own swaps on its edge
 }
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
-  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr } = p;
+  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar, fk, rd, rv, hs } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
   // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
@@ -827,8 +955,29 @@ export function validPose(p) {
     x, y, z, yaw: wrapAngle(yaw), pitch, mv: mv === 2 ? 2 : mv ? 1 : 0,
     wd: wd === 2 ? 2 : wd ? 1 : 0, an: uint(an, 65535) ?? 0, as: uint(as, POSE_STRIKES.length - 1) ?? 0,
     am: am ? 1 : 0, sr: sr ? 1 : 0, cn: uint(cn, 65535) ?? 0, cr: uint(cr, POSE_CAST_RANGES - 1) ?? 0,
+    ce: uint(ce, POSE_CAST_ELEMENTS - 1) ?? 4,   // SPELLFX1: the cast's element - a pose from before it reads Magic
+    ar: uint(ar, 65535) ?? 0,   // SPELLFX1: arrows loosed - a peer draws a shaft for each new one
+    fk: uint(fk, 5) ?? 0,   // PEER-FS1: the footstep-sound kind (systems/footsteps.js FOOTSTEP_KIND), 0-5
+    // RIDE (2026-09-23, Mac: "need to ensure other people see others riding on horses"): THE MOUNT. `rd` is the
+    // transport the player is riding - POSE_RIDE's 1 the horse, 2 the cart - and `rv` which of Eye Of The Beholder's
+    // five mounted sprite sets they chose (Graphics.OnHorse, 0-4). OMITTED on foot, not written as zeros: a pose on
+    // foot serializes to the bytes it always did (validLook's `class` law), so every older pose pin and every deployed
+    // client that compares poses sees the shape it has always seen.
+    ...rideOf(rd, rv, hs),
   };
 }
+/** RIDE: the pose's mount - `rd` 1 the horse, 2 the cart (DFU's TransportModes riding), `rv` the mounted sprite set. */
+export const POSE_RIDE = Object.freeze({ Foot: 0, Horse: 1, Cart: 2 });
+export const POSE_RIDE_SPRITES = 5;
+// DISC7 (2026-09-23, Mac: "fix the known gaps"): `hs` - the rider is moving at LESS THAN HALF SPEED
+// (PlayerMotor.IsMovingLessThanHalfSpeed, the motor's own flag), the one fact TransportManager swaps the clop on
+// (HorseClop below it, HorseClop2 above, the volume halved - :255-269). A receiver cannot derive it: the eased pose's
+// speed is in the room's units and catches up at up to twice the real one, and the rider's SPD stat is not on the wire.
+// Mounted and moving only, and OMITTED when 0, so a gallop's pose and every pose on foot keep the bytes they had.
+const rideOf = (rd, rv, hs) => {
+  const r = uint(rd, POSE_RIDE.Cart) ?? 0;
+  return r ? { rd: r, rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(uint(hs, 1) ? { hs: 1 } : {}) } : {};   // AUDIT DISC7 B8: uint's law, as rd and rv
+};
 
 /** One equipped item as the look carries it - the six fields, clamped - or null. */
 export function validLookItem(it) {
@@ -924,7 +1073,7 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world'|'foes'|'hit'|'act'|'who', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'world'|'foes'|'hit'|'act'|'who'|'quest', ...}
  *  or {error} - the caller closes on an error. */
 export function parseClient(text, { hasHello = false } = {}) {
   if (typeof text !== 'string') return { error: 'text frames only' };
@@ -937,8 +1086,9 @@ export function parseClient(text, { hasHello = false } = {}) {
   if (!m || typeof m !== 'object') return { error: 'not an object' };
   // AUDIT WORLD A2: the prefix admitted the size, the TYPE keeps the cap - JSON's last duplicate key wins, so a frame
   // that began {"t":"world" and ended "t":"pose" parsed as a 512 KiB pose under the pose gate
-  if (m.t !== 'world' && m.t !== 'foes' && text.length > MAX_FRAME_BYTES) return { error: 'frame too large' };
+  if (m.t !== 'world' && m.t !== 'foes' && m.t !== 'quest' && text.length > MAX_FRAME_BYTES) return { error: 'frame too large' };
   if (m.t === 'foes' && text.length > FOES_FRAME_MAX) return { error: 'frame too large' };
+  if (m.t === 'quest' && text.length > QUEST_FRAME_MAX) return { error: 'frame too large' };
   if (m.t === 'world') {   // the room's memory, an object from a hello'd socket; final marks the socket's one farewell (B5)
     if (!hasHello) return { error: 'world before hello' };
     if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: 'bad world' };
@@ -948,6 +1098,23 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: `${m.t} before hello` };
     if (!m.data || typeof m.data !== 'object' || Array.isArray(m.data)) return { error: `bad ${m.t}` };
     return { t: m.t, data: m.data };
+  }
+  if (m.t === 'trade') {   // TRADE1: a directed trade frame - one KIND from TRADE_KINDS to one peer, projected by validTradeData; the relay reads none of the items
+    if (!hasHello) return { error: 'trade before hello' };
+    if (text.length > TRADE_FRAME_MAX) return { error: 'frame too large' };
+    const data = validTradeData(m.data);
+    return data ? { t: 'trade', data } : { error: 'bad trade' };
+  }
+  if (m.t === 'cast') {   // ALLY-CAST: a beneficial spell at a party mate - one directed frame, projected by validCastData; the receiver decides what lands
+    if (!hasHello) return { error: 'cast before hello' };
+    if (text.length > CAST_FRAME_MAX) return { error: 'frame too large' };
+    const data = validCastData(m.data);
+    return data ? { t: 'cast', data } : { error: 'bad cast' };
+  }
+  if (m.t === 'park') {   // HCC-PARK: my character's parked team - nothing (no anchor), or its anchor and, when shown, its record
+    if (!hasHello) return { error: 'park before hello' };
+    const data = validParkData(m.data);
+    return data ? { t: 'park', data } : { error: 'bad park' };
   }
   if (m.t === 'ping') return { t: 'ping' };
   if (m.t === 'hello') {
@@ -960,6 +1127,30 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!look) return { error: 'bad look' };
     const pose = validPose(m.pose);
     const hello = { t: 'hello', id, secret, name: sanitizeName(m.name), look, pose };
+    // ═══ ACC1d: THE IDENTITY TOKEN, OPTIONAL, AND ITS SHAPE ONLY ══
+    //
+    // `parseClient` is SYNC AND PURE and has to stay that way - it is
+    // the law both ends run, and a verifier needs WebCrypto, a public
+    // key and an await. So this checks that `tok` could be a token and
+    // nothing more; server/src/index.js does the arithmetic, because
+    // only the relay holds the key.
+    //
+    // A HELLO WITHOUT ONE IS ADMITTED, exactly as SOC1's account pair
+    // is admitted when absent: it is a build from before this slice, or
+    // a client that could not reach the account service. ACC1d's record
+    // (bible ACC1d D1) says why the token is not required - a second
+    // Worker's outage must not take the game offline - and says the
+    // honest limit out loud: a token makes a name TRUSTWORTHY, it does
+    // not yet make one MANDATORY.
+    //
+    // A MALFORMED ONE IS AN ERROR, not a quiet drop. A client that
+    // meant to send a token and sent rubbish should hear so, the same
+    // way a malformed account pair is `bad account` rather than a
+    // silent downgrade to no account at all.
+    if (m.tok !== undefined) {
+      if (typeof m.tok !== 'string' || !TOKEN_RE.test(m.tok)) return { error: 'bad token' };
+      hello.tok = m.tok;
+    }
     // SOC1: the account, optional - and BOTH or neither. A hello that names an account without its secret, or a
     // malformed either, is not the port's client (accountId/accountSecret mint the shape the law admits), so it is an
     // error like a bad id, not a hello quietly admitted without an account. A hello naming none is a build before
@@ -982,6 +1173,23 @@ export function parseClient(text, { hasHello = false } = {}) {
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
     return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
   }
+  if (m.t === 'say') {
+    // RED1: THE SERVER'S LINE, ASKED FOR. This checks the SHAPE and
+    // nothing else - whether this socket may actually speak as the
+    // server is a question about a SIGNATURE, and only the relay holds
+    // the key. `parseClient` is sync and pure and stays that way, the
+    // same split the token itself lives under (ACC1d).
+    if (!hasHello) return { error: 'say before hello' };
+    const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
+    return text ? { t: 'say', text } : { error: 'bad say' };
+  }
+  if (m.t === 'mute') {
+    // MOD1: THE SHAPE ONLY, as `say` is. Whether the order is real is a
+    // question about a signature, and the relay alone holds the key.
+    if (!hasHello) return { error: 'mute before hello' };
+    return typeof m.order === 'string' && m.order.length > 0 && m.order.length <= 1024
+      ? { t: 'mute', order: m.order } : { error: 'bad mute' };
+  }
   if (m.t === 'social') {   // SOC1: a friend or party act - a KIND from SOCIAL_ACTS naming what that kind must name, and nothing else
     if (!hasHello) return { error: 'social before hello' };
     const act = validSocialAct(m);
@@ -991,6 +1199,15 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!hasHello) return { error: 'party before hello' };
     const p = validPartyPose(m.p);
     return p ? { t: 'party', p } : { error: 'bad party' };
+  }
+  if (m.t === 'quest') {   // QUEST1: a quest shared with my party, hub-side alone - the hub already knows who my
+    // party is (the same roster the party pose view reads), so the frame names no target at all.
+    if (!hasHello) return { error: 'quest before hello' };
+    const questName = typeof m.quest?.questName === 'string' ? m.quest.questName.slice(0, QUEST_NAME_MAX) : '';
+    const displayName = typeof m.quest?.displayName === 'string' ? m.quest.displayName.slice(0, QUEST_NAME_MAX) : '';
+    const data = m.quest?.data;
+    if (!questName || !data || typeof data !== 'object' || Array.isArray(data)) return { error: 'bad quest' };
+    return { t: 'quest', quest: { questName, displayName, data } };
   }
   if (m.t === 'who') {   // WORLD6b-iii(e): a member beyond the welcome's roster asked for by name, from a hello'd socket
     if (!hasHello) return { error: 'who before hello' };
@@ -1002,10 +1219,19 @@ export function parseClient(text, { hasHello = false } = {}) {
 
 /** A token bucket of `rate` a second: the bucket after the frame and
  *  whether the frame passes. The pose gate and the hello gate ride it. */
-export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX) {
-  const b = bucket ?? { tokens: rate, at: nowMs };
+/** RED1 FOUND THE FLOOR, so it is stated here rather than rediscovered:
+ *  THIS GATE CANNOT EXPRESS A RATE BELOW ONE A SECOND. A fresh bucket
+ *  starts with `rate` tokens and a pass costs a whole one, so any rate
+ *  under 1 refuses the FIRST frame and every frame after it - a gate
+ *  that reads as "slow" and behaves as "off". A slower allowance needs
+ *  a different shape (a stamp of the last pass, not a bucket), and
+ *  whoever needs one should write that rather than pass a fraction. */
+/** FRIENDLY-SPELLS: `cap` is the bucket's depth - the burst it admits at once - and defaults to `rate`, which is
+ *  every gate's shape but the cast gate's (a blast is ONE cast and one frame per mate it reaches). */
+export function tokenGate(bucket, nowMs, rate = POSE_HZ_MAX, cap = rate) {
+  const b = bucket ?? { tokens: cap, at: nowMs };
   const refill = ((nowMs - b.at) / 1000) * rate;
-  const tokens = Math.min(rate, b.tokens + Math.max(0, refill));
+  const tokens = Math.min(cap, b.tokens + Math.max(0, refill));
   if (tokens < 1) return { bucket: { tokens, at: nowMs }, pass: false };
   return { bucket: { tokens: tokens - 1, at: nowMs }, pass: true };
 }
@@ -1055,10 +1281,27 @@ export const actGate = (bucket, nowMs) => tokenGate(bucket, nowMs, ACT_HZ_MAX);
 export const actFrameFits = (data) => JSON.stringify({ t: 'act', data }).length <= MAX_FRAME_BYTES;
 /** The chat rate gate: CHAT_HZ_MAX a second (CHAT1). */
 export const chatGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_HZ_MAX);
+/** RED1: the server line's own bucket, well under chat's - see RED_HZ_MAX. */
+export const redGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RED_HZ_MAX);
+/** MOD1: the mute order's own bucket - see MUTE_HZ_MAX. */
+export const muteGate = (bucket, nowMs) => tokenGate(bucket, nowMs, MUTE_HZ_MAX);
 /** SOC1: the social acts' gate - SOCIAL_HZ_MAX a second, at the hub and at home (an act the hub would refuse is never sent). */
 export const socialGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_HZ_MAX);
 /** SOC1: the party poses' gate - PARTY_HZ_MAX a second, at the hub and at home. */
 export const partyGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_HZ_MAX);
+/** QUEST1: a quest share's own gate - QUEST_HZ_MAX a second (one every ten), at the hub and at home. */
+/** QUEST1 BUG, found live: quest sharing is deliberately rarer than 1/second (once every QUEST_SEND_MS,
+ *  QUEST_HZ_MAX = 0.1) - tokenGate's own bucket is capped at the rate itself (`Math.min(rate, ...)`), so a rate
+ *  UNDER 1 can never accumulate a full token to spend. Every other rate this helper gates (SOCIAL_HZ_MAX,
+ *  PARTY_HZ_MAX - both 2) is at least 1, so this never came up before: fed the same way, a sub-1 rate silently
+ *  refused EVERY quest share, forever, no matter how long the wait. Fixed with a plain cooldown instead of a token
+ *  bucket - `at` is the timestamp of the last PASS, not a token count: pass once, then refuse until QUEST_SEND_MS
+ *  has actually elapsed since. */
+/** AUDIT DROPS C1: the hub's own cooldown on one socket's shares - HALF the client's floor (the PARTY_SEND_MS /
+ *  partyGate rule: a gate at exactly the client's rate drops the honest client's frame on clock skew - a share at
+ *  +9990 ms by the relay's clock was dropped while the client said "Shared"). */
+export const QUEST_HUB_MIN_MS = QUEST_SEND_MS / 2;
+export const questShareGate = (at, nowMs) => (at != null && nowMs - at < QUEST_HUB_MIN_MS ? { at, pass: false } : { at: nowMs, pass: true });
 
 /** CHAT-G (2026-09-17): THE THIRD SIDE, which nothing counted.
  *
@@ -1113,9 +1356,85 @@ export const relayVersionOf = (v) => (typeof v === 'string' && v.length > 0 && v
 /** What a joiner is told: everyone else in the room who has said hello
  *  - the nearest ROSTER_MAX to `near` when there is a pose to measure
  *  from (a world cell), the first ROSTER_MAX otherwise. */
+/** ═══ ACC3: THE BADGE ON A WIRE ROW, AND WHY IT IS OMITTED ════════
+ *
+ * Mac (2026-09-22): "Player titles appear above a player name ... name
+ * glyphs appear on the right side of the player name."
+ *
+ * Both ride BESIDE the name on every row that carries one - a welcome
+ * peer, a join, a channel roster - and the relay reads them off the
+ * VERIFIED token claims, never off anything a client said about itself
+ * (server/src/index.js `_named`). That is ACC1g's law applied to a
+ * stronger claim than a name: "Developer" over somebody's head reads
+ * as this project's own word about them.
+ *
+ * THE KEYS ARE ABSENT AND NOT NULL when there is no badge, which is
+ * the same discipline `look.class` keeps two hundred lines up and for
+ * the same two reasons. Most players wear nothing, so `"title":null`
+ * on every row of a 64-peer welcome is bytes paid for saying nothing;
+ * and a reader that has to tell "no title" from "the key is not in
+ * this build" has one answer instead of two.
+ *
+ * ONE HOME BOTH ENDS: the relay builds rows with it, and the client
+ * reads them, so neither can drift into carrying a field the other
+ * does not.
+ *
+ * @param {any} row  the row so far - returned, mutated, by design
+ * @param {any} from anything carrying `title` and `glyphs` (a token's
+ *                   claims as `_named` projects them, or an attachment)
+ */
+export function badged(row, from) {
+  const t = from?.title;
+  if (typeof t === 'string' && t) row.title = t;
+  const g = from?.glyphs;
+  if (Array.isArray(g) && g.length) row.glyphs = g;
+  return row;
+}
+
+/** ═══ AND THE INVERSE, because a reader is half of a field ════════
+ *
+ * `badged` is what the RELAY writes; this is what a client reads back,
+ * and the two live together so a badge cannot be written one way and
+ * understood another. The relay itself never calls it - it reads a
+ * badge out of a verified token, never off the wire - so this is the
+ * client's half of the pair, and it lives here because the alternative
+ * is a second spelling of one law in `net/online.js`.
+ *
+ * IT CHECKS THE VOCABULARY, and that is the point rather than a
+ * formality: this is a stranger's word about themselves. The relay
+ * only ever sends what a signature carried, so anything else is a
+ * relay that is older, newer, or not ours - and a name layer that
+ * trusts an unknown string is a name layer somebody paints text with.
+ * Duplicates go, and the list is cut at the vocabulary's own size.
+ *
+ * Answers `{ title, glyphs }` always: `null` and `[]` for no badge, so
+ * a caller never has to tell "absent" from "none".
+ */
+export function readBadge(row) {
+  const t = row?.title;
+  const title = typeof t === 'string' && TITLES.includes(t) ? t : null;
+  const glyphs = [];
+  if (Array.isArray(row?.glyphs)) {
+    for (const g of row.glyphs) {
+      if (typeof g !== 'string' || !GLYPHS.includes(g) || glyphs.includes(g)) continue;
+      if (glyphs.length >= GLYPHS_MAX) break;
+      glyphs.push(g);
+    }
+  }
+  return { title, glyphs };
+}
+
 export function rosterFor(peers, meId, near = null) {
   const out = [];
-  for (const p of peers) if (p && p.id && p.id !== meId) out.push({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null });
+  // ACC1g: AND `v` IS GONE FROM IT. ACC1d put the relay's verdict on
+  // every roster row and on the join beside it, for a good reason at
+  // the time - a roster that dropped it would have marked the people
+  // who arrive AFTER you and left everybody already standing there
+  // unmarked, a signal true half the time. The gate makes the whole
+  // field say one thing: every peer in this room was verified to get
+  // in, so a per-name verdict carries no information about any of them.
+  // ACC3: and the badge, off the attachment the token wrote - omitted, not nulled, when there is none (`badged`).
+  for (const p of peers) if (p && p.id && p.id !== meId) out.push(badged({ id: p.id, name: p.name, look: p.look, pose: p.pose ?? null }, p));
   // SLAM5 (2026-09-16, AUDIT SLAM): ONE METRIC. This ranked by `pixelDistance` - Chebyshev on MAP PIXELS, 32768 units
   // wide - while the pose fan ranks by squared Euclidean in the pose's own frame. Two different metrics over the same
   // set DO NOT NEST, so `POSE_FAN_MAX <= ROSTER_MAX` bought nothing: measured at an event standing, only 11 of the 32
@@ -1127,6 +1446,13 @@ export function rosterFor(peers, meId, near = null) {
 
 /** SOC1: an id off the wire (ID_RE - a peer's, an account's and a party's are one shape), or null. */
 const idOf = (v) => (typeof v === 'string' && ID_RE.test(v) ? v : null);
+
+/** MOD1: the verified account id (`sub`) a row or a line carries, or
+ *  null - the wire's own id law, read the same way at both ends. */
+export const subOf = (m) => idOf(m?.sub);
+
+/** MOD1: a `muted` frame's `until`, or null for a frame that is not one. */
+export const mutedUntilOf = (m) => (Number.isSafeInteger(m?.until) && m.until >= 0 ? m.until : null);
 
 /** SOC1 / AUDIT SOC B11: ONE ACT, PROJECTED - `{k, acct?, peer?, party?}` with exactly what its kind needs (SOCIAL_ACTS:
  *  an account, a peer, either one of the two but never both, a party, nothing) and nothing else, or null. ONE HOME:
@@ -1167,13 +1493,34 @@ export function sanitizeLabel(text, max = PARTY_LOC_MAX, { filter = true } = {})
  *  account's `a` at a glance (nothing checks the letter: one id law, ID_RE). */
 export const mintPartyId = (rand = Math.random, nowMs = Date.now()) => 'q' + nowMs.toString(36) + rand().toString(36).slice(2, 10).padEnd(8, '0');
 
+/** PARTY-REST1: a rest/loiter session's live state, mirrored on the leader's own party pose so a nearby member's
+ *  screen can show the SAME countdown - `null` when not resting. Mirrors restSession.js's own MAX_REST_HOURS (99)
+ *  without importing systems/ code into net/ - a net-layer bound only has to admit what the game can ever produce,
+ *  not track the systems module that produces it. */
+const PARTY_REST_HOURS_MAX = 99;
+/** loiter=0, timed=1, full=2 - restWindow.js's own `this.mode` strings ('loiter'|'timed'|'full'), numbered small
+ *  for the wire the way `in` already is. */
+const PARTY_REST_MODES = Object.freeze([0, 1, 2]);
+const PARTY_REST_KINDS = Object.freeze(['bed', 'camp', 'rough']);   // PARTY-REST4: systems/survival/rest.js's own REST_KIND values, unchanged - null (survival mode off, or not yet resolved) is valid too
+
 /** SOC1: A PARTY POSE the hub will keep and repeat, or null - where a member stands and how they fare, which is what
  *  the party HUD and the map draw of a member who may be a continent away: `px`,`py` the map pixel (in a dungeon or a
  *  building, the pixel of the place - "regardless of their location"); `in` 0 outside, 1 a dungeon, 2 a building;
  *  `loc` the place's name, a label; the six vitals, each finite in [0, FOE_HEALTH_MAX] (an entity's health,
  *  fatigue and magicka are all within it), rounded - a bar reads no fraction; and the portrait's recipe, `race`,
  *  `gender`, `face`, by validLook's own bounds, so the HUD draws the face the doll would. Refused WHOLE when any
- *  named field is outside its law: a member's card is never half landed. */
+ *  named field is outside its law: a member's card is never half landed.
+ *
+ *  PARTY-REST1 (2026-09-20, per-request: "when the party leader rests everyone in the party gets the resting
+ *  screen counting down"): two more fields, both optional and independently defaulted rather than folded into the
+ *  refuse-whole law above - a stale client sending neither must still land a valid pose.
+ *    `bk` - the building key `in === 2` stands in, so two shops sharing one town pixel are not the same "building"
+ *      to a nearby member's proximity check; null (never 0-as-a-fallback - 0 is a REAL building's own key) when
+ *      absent or outside a building, so an unset key never accidentally matches another unset key.
+ *    `rest` - `{mode, hoursRemaining, totalHours}` while I am resting or loitering for real (never while merely
+ *      mirroring someone else's - see world.js composePartyPose), or null. Refused WHOLE like the vitals above:
+ *      a rest object with one bad number is no rest object, not a best-effort one a follower's mirrored window
+ *      would have to guess the rest of. */
 export function validPartyPose(p) {
   if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
   const px = uint(p.px, MAP_PIXELS_X - 1), py = uint(p.py, MAP_PIXELS_Y - 1);
@@ -1187,6 +1534,91 @@ export function validPartyPose(p) {
   out.race = typeof p.race === 'string' && /^[A-Za-z]{1,16}$/.test(p.race) ? p.race : 'Breton';
   out.gender = p.gender === 'female' ? 'female' : 'male';
   out.face = uint(p.face, 9) ?? 0;
+  // PARTY-REST9 (2026-09-21, per-request: "youre not near the leader, you must gather your party i stand in
+  // the leader, tried beside him and it still comes up" - the bug this closes): 0xffff (65535) is far too small
+  // a cap for a real building key. `net/online.js`'s own `roomKeyFor` computes it as `buildingKey >>> 0` - a
+  // full unsigned 32-bit value - and an actual room key logged during this exact bug report
+  // (`interior:m206728581.131590`) already carries a building key of 131590, more than DOUBLE the old cap. Every
+  // such key got silently clamped down to 65535 on the way through this validator - not refused outright, which
+  // would at least have been visible, but SILENTLY CHANGED to a wrong-but-valid-looking number - so two players
+  // standing in the exact same building, with the exact same real (unclamped) key on each of their own local
+  // `myPartyLocation()`/`composePartyPose()` reads, disagreed the moment either read the OTHER's clamped
+  // broadcast value back off the wire: `samePlace`'s own `bk === bk` check (world.js) failed forever, for any
+  // building whose key exceeded 65535, no matter how close together the two of them actually stood. Widened to
+  // the full unsigned 32-bit range `roomKeyFor` itself already uses, so the wire can never disagree with the
+  // room key it already agreed to share.
+  out.bk = out.in === 2 ? uint(p.bk, 0xffffffff) : null;
+  if (p.rest != null) {
+    if (typeof p.rest !== 'object' || Array.isArray(p.rest)) return null;
+    const mode = PARTY_REST_MODES.includes(p.rest.mode) ? p.rest.mode : null;
+    const hoursRemaining = finite(p.rest.hoursRemaining) ? Math.min(PARTY_REST_HOURS_MAX, Math.max(0, Math.round(p.rest.hoursRemaining))) : null;
+    const totalHours = finite(p.rest.totalHours) ? Math.min(PARTY_REST_HOURS_MAX, Math.max(0, Math.round(p.rest.totalHours))) : null;
+    if (mode == null || hoursRemaining == null || totalHours == null) return null;
+    // PARTY-REST4: the kind the leader is ACTUALLY resting as (bed/camp/rough, systems/survival/rest.js's own
+    // REST_KIND) - null is valid (survival mode off, or the field simply absent) and reads as "no kind to
+    // inherit", never as a refusal; an unrecognised string is the one thing that still refuses the whole pose,
+    // same law every other field in this object already keeps.
+    if (p.rest.kind != null && !PARTY_REST_KINDS.includes(p.rest.kind)) return null;
+    out.rest = { mode, hoursRemaining, totalHours, kind: p.rest.kind != null ? p.rest.kind : null };
+  } else {
+    out.rest = null;
+  }
+  // PARTY-REST2 (2026-09-20, per-request: "we need a party member confirmation like 4/5 party member agree to
+  // rest... if not all party members are ready the leader can't rest"): the LEADER's proposed mode+hours, not
+  // started for real yet - `restPending` - and every member's own answer to it - `ready`, plain and always
+  // present, never null, because "not ready" IS its ordinary value, not an absent one. Same refuse-whole law as
+  // `rest`: a bad mode or a bad hour count refuses the whole pose, never a half-landed proposal a leader's own
+  // waiting screen would have to guess the rest of.
+  if (p.restPending != null) {
+    if (typeof p.restPending !== 'object' || Array.isArray(p.restPending)) return null;
+    const mode = PARTY_REST_MODES.includes(p.restPending.mode) ? p.restPending.mode : null;
+    const hours = finite(p.restPending.hours) ? Math.min(PARTY_REST_HOURS_MAX, Math.max(0, Math.round(p.restPending.hours))) : null;
+    if (mode == null || hours == null) return null;
+    out.restPending = { mode, hours };
+  } else {
+    out.restPending = null;
+  }
+  out.ready = p.ready === true;
+  // AUDIT PARTY-REST (2026-09-23, world95): WHEN the vote was cast, on the shared clock - `ready` alone was a bare
+  // boolean whose sixty-second expiry ran only on the voter's own frame, so a voter whose window was open when the
+  // rest started, or whose tab sat in the background, approved the leader's NEXT rest with a vote cast for the
+  // last one. A reader (systems/partyRestLaw.js voteStands) counts `ready` only while `readyAt` is younger than
+  // the timeout and later than the last rest that started here. Same bounds as voteAt below; absent reads null,
+  // which is "no vote" - a world94 client's `ready` carries none.
+  out.readyAt = finite(p.readyAt) ? Math.max(0, Math.round(p.readyAt)) : null;
+  // PARTY-REST2e (2026-09-20, per-request: "it only counts down the countdown for the player who initiated it
+  // not for the whole group... every one in the group can start a vote and has its own timer" - the bug this
+  // closed): the relay's own clock (net/social.js's `now()`, already offset-corrected so every tab reads the
+  // SAME moment regardless of whose machine it is), the instant THIS tab's own gate last asked "is everyone
+  // ready" and got a no - null the rest of the time, including while merely out of range (a leader alone, or a
+  // follower far from the leader, never starts this clock at all - "the vote time also shouldn't start when out
+  // of range"). A follower's own gate reads every near member's `voteAt` alongside its own, so ONE cooldown -
+  // whoever's is most recent - covers the whole group standing there, not a separate one per person asking.
+  out.voteAt = finite(p.voteAt) ? Math.max(0, Math.round(p.voteAt)) : null;
+  // PARTY-REST5 (2026-09-21, per-request: "the ones who not initiate need to also stop resting when an enemy
+  // appears for the initiator"): a monotonic marker, stamped only on a REAL enemy break
+  // (systems/restSession.js's own two call sites) - NOT nested inside `rest` above, deliberately, because a
+  // real session moves to 'ended' the same tick the break is discovered, so `rest` may already read null again
+  // by the next pose a follower's mirror reads. Same law as `voteAt`: a follower only ever compares this
+  // against its own last-seen copy of the SAME sender's value (world.js's `partyRestFollowTick`), never against
+  // its own clock, so an unrecognised (non-finite) value reads as "nothing to compare yet" rather than refusing
+  // the whole pose.
+  out.restEnemyAt = finite(p.restEnemyAt) ? Math.max(0, Math.round(p.restEnemyAt)) : null;
+  // PARTY-REST19 (2026-09-22, per-request: "An non initiator MUST cancel the rest for all if he cancels the
+  // ongoing resting"): stamped by a follower's own Stop click, naming the ONE account they were mirroring -
+  // `restCancelFor` uses the same `idOf` normalizer acct/leader already do, `restCancelAt` the same
+  // finite-timestamp law restEnemyAt/voteAt already do. The real rester's own session compares `restCancelFor`
+  // against their OWN account id and `restCancelAt` against its own last-seen copy of it (world.js's
+  // `canceledByFollower`), never against a local clock - same law as restEnemyAt.
+  out.restCancelFor = idOf(p.restCancelFor);
+  out.restCancelAt = finite(p.restCancelAt) ? Math.max(0, Math.round(p.restCancelAt)) : null;
+  // PARTY-REST21 (2026-09-22, per-request: confirmed by direct testing - "1/2 pops up again in the chat"/
+  // "the non initiator presses r again when all ready he starts a new vote... just put a cooldown on being
+  // able to start a new rest"): the last time this account's own rest actually started, for real or via
+  // mirror - on social.now() like voteAt (compared as a DURATION against it elsewhere, so it has to be the
+  // shared relay clock, never a local one), unlike restEnemyAt/restCancelAt above (which are only ever
+  // compared against a previously-seen copy of themselves, never against a clock).
+  out.restStartedAt = finite(p.restStartedAt) ? Math.max(0, Math.round(p.restStartedAt)) : null;
   return out;
 }
 
@@ -1275,4 +1707,313 @@ export function validPartyFrame(m) {
   if (!m || typeof m !== 'object' || Array.isArray(m) || m.t !== 'party') return null;
   const acct = idOf(m.acct), p = validPartyPose(m.p);
   return acct && p ? { t: 'party', acct, p } : null;
+}
+
+/** QUEST1: a quest shared by a party member, from the hub ({t:'quest', acct, name, quest:{questName, displayName,
+ *  data}}), projected, or null. `data` is systems/questShare.js's own envelope - opaque to the wire, exactly as
+ *  'world'/'foes'/'act' data is, since validating a quest's own save-data shape is the quest engine's job, not the
+ *  wire's. */
+export function validQuestFrame(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m) || m.t !== 'quest') return null;
+  const acct = idOf(m.acct);
+  if (!acct) return null;
+  const name = m.name == null ? null : sanitizeName(m.name);
+  const q = m.quest;
+  if (!q || typeof q !== 'object' || Array.isArray(q)) return null;
+  const questName = typeof q.questName === 'string' ? q.questName.slice(0, QUEST_NAME_MAX) : '';
+  const displayName = typeof q.displayName === 'string' ? q.displayName.slice(0, QUEST_NAME_MAX) : '';
+  if (!questName || !q.data || typeof q.data !== 'object' || Array.isArray(q.data)) return null;
+  return { t: 'quest', acct, name, quest: { questName, displayName, data: q.data } };
+}
+
+// ---- TRADE1 (2026-09-21): PLAYER-TO-PLAYER TRADE ------------------------------------------------------------------
+// Pressing F on a player offers "Trade" beside "Add friend" and "Invite to party". The RELAY IS A COURIER HERE: it never
+// sees an inventory, it never decides a trade, it carries one directed frame ({t:'trade', data:{to, k, s, ...}}) to the
+// peer `to` names, in the room the sender stands in, and stamps the sender's id on it - the `hit` frame's own routing.
+// Everything that matters (what may be offered, whether an item is a real item, what fits in a pack) is the CLIENTS' law
+// (net/tradeSession.js, systems/loot.js validLootList): "what this client will not say, it will not hear".
+//
+// A session is bound by `s`, a short id the asker mints; a frame naming another session is nothing. `r` is the revision
+// of the SENDER's offer, `o` the revision of the OTHER side's offer that the sender has seen: a lock or a confirm names
+// both, so a lock on an offer that has since changed is refused by arithmetic rather than by hope.
+/** Every kind a trade frame may carry. ask/yes/no open it; offer stages; lock/confirm agree; commit hands the goods over; cancel ends it. */
+export const TRADE_KINDS = Object.freeze(['ask', 'yes', 'no', 'offer', 'lock', 'confirm', 'commit', 'cancel']);
+/** The most item records one side's offer (and its commit) may carry. */
+export const TRADE_ITEMS_MAX = 16;
+/** The most gold one offer may name. */
+export const TRADE_GOLD_MAX = 1_000_000_000;
+/** The widest trade frame - the grant's own bound (scenes/exteriorFoes.js GRANT_FRAME_MAX), under MAX_FRAME_BYTES. */
+export const TRADE_FRAME_MAX = 12 * 1024;
+/** AUDIT DROPS B4: the widest trade DATA - the frame's cap less the wrapper the frame and the relay's fan-out put
+ *  around it (`{"t":"trade","id":"<16>","data":` and `}`, under 64 bytes). validTradeData bounded the DATA at the
+ *  FRAME's cap, so an honest offer of sixteen heavy items could pass at home and be refused at the relay's door as
+ *  'frame too large' - which CLOSES the socket. What passes here now fits parseClient at the relay by construction. */
+export const TRADE_DATA_MAX = TRADE_FRAME_MAX - 64;
+/** The most trade frames a socket may send a second, and the most one socket is sent (the destination's funnel). */
+export const TRADE_HZ_MAX = 8;
+export const TRADE_ROOM_HZ_MAX = 32;
+/** The room's trade BYTES a second, fanned - a commit carries a pack's worth of items, so the room budgets bytes as the hits do. */
+export const TRADE_ROOM_BYTES_PER_S = 192 * 1024;
+/** Why a trade ended, as a code the client puts words to (net/tradeSession.js tradeWhyText). */
+export const TRADE_WHY = Object.freeze(['declined', 'cancelled', 'left', 'busy', 'timeout', 'range', 'refused']);
+const TRADE_SID_RE = /^[A-Za-z0-9]{6,16}$/;
+const TRADE_REV_MAX = 1_000_000;
+
+export const tradeGate = (bucket, nowMs) => tokenGate(bucket, nowMs, TRADE_HZ_MAX);
+/** The client's gate on trade frames COMING IN, per room - twice the send rate: an honest peer never passes it. */
+export const TRADE_IN_HZ_MAX = TRADE_HZ_MAX * 2;
+export const tradeInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, TRADE_IN_HZ_MAX);
+
+// ALLY-CAST (2026-09-23, Mac: "the use of spells on players ... some sort of ally targeting system"): A SPELL CAST ON A
+// PARTY MATE, as ONE DIRECTED FRAME with the trade frame's own routing - `{t:'cast', data:{to, level, spell}}` from a
+// hello'd socket in a place room to the socket `to` names, the sender's id stamped on it. The relay reads the SHAPE
+// alone (validCastData: a bounded spell record - the classic effect entries SPELLS.STD and the spell maker both
+// produce, systems/spellMaker.js buildCustomSpell); the RECEIVER decides what lands (systems/allyCast.js
+// allyCastSpell: a party member's cast, its beneficial families alone). A cast costs the caster their magicka as any
+// cast does, so the honest rate is a few a second; the funnel onto one destination is the hit arm's shape.
+export const CAST_FRAME_MAX = 2 * 1024;
+export const CAST_HZ_MAX = 4;
+/** AUDIT ALLY-CAST B2: the destination's funnel is PER SENDER - a bounded list of sender buckets on the target's own
+ *  attachment (PARTY_MAX slots: a full party's seven mates and one more), the stalest evicted for a newcomer. One
+ *  bucket for every sender together let five strangers at their own rate starve a mate's heals (3 of 30 landed),
+ *  and the relay cannot tell a mate from a stranger. A mate's cast now waits only on the mate's own spamming. */
+export const CAST_DEST_SENDERS_MAX = 8;
+export const CAST_IN_HZ_MAX = CAST_HZ_MAX * 2;
+/** AUDIT ALLY-CAST B3/C3: the honest ceilings. A player is level 30 at most (classic's cap), SPELLS.STD's components
+ *  are bytes (formats/spellsStd.js) and the maker's spinners stop under 100 (spellMaker.js SPINNER_RANGES) - the
+ *  first cut's 60 and 1000 let a crafted mate grant a 61,000-point Shield for 42 game days. Nothing on the wire can
+ *  vouch for the level (no pose carries one); the bound is what the receiver can refuse. */
+export const CAST_LEVEL_MAX = 30;
+export const CAST_EFFECTS_MAX = 3;       // spellMaker.js MAX_EFFECTS_PER_SPELL, the classic record's three slots
+export const CAST_SETTING_MAX = 255;     // a duration/chance/magnitude component: the classic byte
+export const CAST_ICON_MAX = 68;         // spellMaker.js SPELL_ICON_COUNT - 1
+export const CAST_NAME_MAX = 32;
+/** AUDIT ALLY-CAST B1: the relay that first carries the cast arm. An older one answers a cast with 'unknown message'
+ *  and CLOSES the socket (the relay refuses what it cannot parse) - the caster was kicked offline by their own heal.
+ *  The link refuses to send until the welcome says the relay can take it, as TRADE1's relaySupportsTrade does. */
+export const CAST_RELAY_MIN = 97;
+/** HCC-PARK: the first relay that knows the `park` frame (an older one CLOSES the socket on it - the cast arm's law). */
+export const PARK_RELAY_MIN = 99;
+export const relaySupportsPark = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= PARK_RELAY_MIN; };
+export const relaySupportsCast = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CAST_RELAY_MIN; };
+/** FRIENDLY-SPELLS: THE SENDER'S METER HOLDS ONE WHOLE BLAST. The meter was sized when one cast was one frame; a
+ *  beneficial blast is ONE cast and one frame for each party mate inside it, so a bucket CAST_HZ_MAX deep gave a
+ *  full party's blast to four mates and silently none to the rest. The depth is a party's mates, the refill stays
+ *  CAST_HZ_MAX a second, and the destination's per-sender funnel (CAST_HZ_MAX, the relay's cast arm) is untouched -
+ *  a blast sends each mate one frame. Client and relay read this one gate, so they agree on it. */
+export const CAST_BURST_MAX = PARTY_MAX - 1;
+export const castGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_HZ_MAX, CAST_BURST_MAX);
+export const castInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_IN_HZ_MAX);
+const CAST_SETTINGS = Object.freeze(['durationBase', 'durationMod', 'durationPerLevel', 'chanceBase', 'chanceMod', 'chancePerLevel',
+  'magnitudeBaseLow', 'magnitudeBaseHigh', 'magnitudeLevelBase', 'magnitudeLevelHigh', 'magnitudePerLevel']);
+/** The cast frame's data, projected: `to` an id, `level` 1..CAST_LEVEL_MAX, and a spell record whose name is a label,
+ *  whose element and range type are the classic five, and whose effects are at most three entries of a classic type
+ *  (0..44, no empty slot rides the wire), a sub type (-1..255) and the eleven integer components bounded above.
+ *  Anything else refuses the whole frame - a half-landed spell is nobody's to guess. */
+export function validCastData(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  const to = typeof d.to === 'string' && ID_RE.test(d.to) ? d.to : null;
+  if (!to) return null;
+  const level = Number.isInteger(d.level) && d.level >= 1 && d.level <= CAST_LEVEL_MAX ? d.level : null;
+  if (level === null) return null;
+  const sp = d.spell;
+  if (!sp || typeof sp !== 'object' || Array.isArray(sp)) return null;
+  const element = Number.isInteger(sp.element) && sp.element >= 0 && sp.element <= 4 ? sp.element : null;
+  // AUDIT ALLY-CAST B4: a touch or a ranged single target - the two an honest frame carries (an area is never
+  // redirected, a CasterOnly leaves as a touch); the receiver applies the gift as a self-cast whatever this says
+  const rangeType = sp.rangeType === 1 || sp.rangeType === 2 ? sp.rangeType : null;
+  if (element === null || rangeType === null) return null;
+  const icon = sp.icon == null ? 0 : (Number.isInteger(sp.icon) && sp.icon >= 0 && sp.icon <= CAST_ICON_MAX ? sp.icon : null);
+  if (icon === null) return null;
+  if (!Array.isArray(sp.effects) || sp.effects.length < 1 || sp.effects.length > CAST_EFFECTS_MAX) return null;
+  const effects = [];
+  for (const e of sp.effects) {
+    if (!e || typeof e !== 'object' || Array.isArray(e)) return null;
+    if (!Number.isInteger(e.type) || e.type < 0 || e.type > 44) return null;
+    const subType = Number.isInteger(e.subType) && e.subType >= -1 && e.subType <= 255 ? e.subType : null;
+    if (subType === null) return null;
+    const out = { type: e.type, subType };
+    for (const k of CAST_SETTINGS) {
+      const v = e[k] ?? 0;
+      if (!Number.isInteger(v) || v < 0 || v > CAST_SETTING_MAX) return null;
+      out[k] = v;
+    }
+    effects.push(out);
+  }
+  const name = typeof sp.name === 'string' ? sanitizeLabel(sp.name).slice(0, CAST_NAME_MAX) : '';
+  return { to, level, spell: { name, element, rangeType, icon, effects } };
+}
+
+/** One trade frame's data, PROJECTED: `{to, k, s, ...exactly what its kind carries}` or null. Items are checked for
+ *  SHAPE only (an array of at most TRADE_ITEMS_MAX plain objects) - the relay is pure and cannot import the game's item
+ *  law; the receiving client projects each through validLootItem before a single field is read. One home: the relay's
+ *  parser and the client's sendTrade/receive run this same function. */
+export function validTradeData(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  if (typeof d.k !== 'string' || !TRADE_KINDS.includes(d.k)) return null;
+  const to = typeof d.to === 'string' && ID_RE.test(d.to) ? d.to : null;
+  const s = typeof d.s === 'string' && TRADE_SID_RE.test(d.s) ? d.s : null;
+  if (!to || !s) return null;
+  const out = { to, k: d.k, s };
+  const rev = (v) => (Number.isInteger(v) && v >= 0 && v <= TRADE_REV_MAX ? v : null);
+  const items = (v) => {
+    if (!Array.isArray(v) || v.length > TRADE_ITEMS_MAX) return null;
+    for (const it of v) if (!it || typeof it !== 'object' || Array.isArray(it)) return null;
+    return v;
+  };
+  const gold = (v) => (Number.isInteger(v) && v >= 0 && v <= TRADE_GOLD_MAX ? v : null);
+  switch (d.k) {
+    case 'ask': case 'yes': case 'no': break;
+    case 'offer': {
+      const r = rev(d.r), it = items(d.items), g = gold(d.g ?? 0);
+      if (r === null || it === null || g === null) return null;
+      out.r = r; out.items = it; out.g = g; break;
+    }
+    case 'lock': {
+      const r = rev(d.r), o = rev(d.o);
+      if (r === null || o === null || (d.l !== 0 && d.l !== 1)) return null;
+      out.r = r; out.o = o; out.l = d.l; break;
+    }
+    case 'confirm': {
+      const r = rev(d.r), o = rev(d.o);
+      if (r === null || o === null) return null;
+      out.r = r; out.o = o; break;
+    }
+    case 'commit': {
+      const r = rev(d.r), o = rev(d.o), it = items(d.items), g = gold(d.g ?? 0);
+      if (r === null || o === null || it === null || g === null) return null;
+      out.r = r; out.o = o; out.items = it; out.g = g; break;
+    }
+    case 'cancel': {
+      if (d.why !== undefined) { if (typeof d.why !== 'string' || !TRADE_WHY.includes(d.why)) return null; out.why = d.why; }
+      break;
+    }
+    default: return null;
+  }
+  if (JSON.stringify(out).length > TRADE_DATA_MAX) return null;   // AUDIT DROPS B4: the data's own cap, so the whole frame fits the relay's
+  return out;
+}
+
+/** A fresh session id for an ask: the wire's own alphabet, TRADE_SID_RE's length. */
+export const mintTradeSid = (rand = Math.random) => {
+  let s = '';
+  while (s.length < 10) s += rand().toString(36).slice(2);
+  return s.slice(0, 10).padEnd(10, '0');
+};
+
+/** TRADE1: the first relay deploy that routes trade frames. */
+export const TRADE_RELAY_MIN = 91;   // the drop said 84; the deploy that first carries it is world91 (QUEST1 + TRADE1 + PEER-FS1 in one)
+/** Does the relay that named itself `v` in its welcome route trade frames? A name that is not `world<N>` is not a relay this can vouch for. */
+export const relaySupportsTrade = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= TRADE_RELAY_MIN; };
+
+
+// ═══ HCC-PARK (2026-09-23, Mac: "I think we should build that") - A PARKED TEAM OUTLIVES ITS OWNER'S PRESENCE ═══
+//
+// HCC-ONLINE's word (`hv`, systems/horseCartWire.js) rides the owner's own foes frame, so a team stood for the others
+// only while its owner was in the cell room to say it: a wagon parked at a shop door vanished the moment its owner
+// walked in. A PARKED team is a thing left in the world, so the CELL keeps it: each cell room holds one record per
+// owner - the Deployed wagon and the horse standing loose or hitched to it, nothing that moves - in its storage,
+// handed to every joiner and fanned on every change, until the owner's word replaces it.
+//
+// THE OWNER SPEAKS FROM ANYWHERE, THE CELL KEEPS ONLY ITS OWN. A `park` frame names the team's ANCHOR (its natives)
+// and, when the owner's client is showing the team, its record. The room the frame lands in STORES it only when the
+// anchor stands in that room's own cell (a record cannot be planted in a cell its owner is not in - the camps' and
+// the foes' law: a peer speaks only for itself and only where it is); anywhere else the frame is the owner's word
+// about WHERE their team is, and nothing is stored. Either way the owner's REGISTRY (one object per owner,
+// `parkreg:<key>`) learns the cell, and when that cell changed - or nothing is parked - it tells the old cell to drop
+// the record. So a team summoned away, ridden off, re-parked across the map or loaded from an older save leaves no
+// ghost, whichever room its owner is standing in when it happens.
+//
+// WHO THE OWNER IS (AUDIT HCC-PARK D1/D2). Not the socket's peer id: that is the client's own choice, proved only
+// inside one room and minted again in every new tab - so a record keyed by it could be dropped or overwritten by
+// anyone who said the id somewhere else, and a player returning in a new tab left their old record standing beside
+// the new one. The owner is the ACCOUNT the identity token verified (the socket's `sub`) and the CHARACTER the frame
+// names (`c`, systems/characterId.js - one account holds several characters, each with its own team): the relay
+// keys the record by an opaque hash of the two (parkKeyOf), which is what the others are told. A player can reach
+// only their own account's records, and the account's subject never leaves the relay (a place room names no
+// account - MOD1). The relay never hands an account its own records back: its client draws its team off its save.
+//
+// Bounded four ways: PARK_CELL_MAX records a cell (the stalest evicted), PARK_ACCOUNT_MAX of them one account's
+// (its own stalest goes first - one account cannot empty a cell of everyone else's), PARK_TTL_MS since the owner last
+// said it (an owner who never returns takes theirs with them in the end), PARK_HZ_MAX frames a second a socket.
+
+/** A cell room's record key in its own storage (`k` the owner's parkKeyOf). */
+export const parkKey = (k) => `park:${k}`;
+/** The owner's registry object's name (a Room instance no park frame stores anything in). */
+export const parkRegistryRoom = (k) => `parkreg:${k}`;
+/** The owner's key: the account the token verified and the character the frame named, hashed - stable across tabs
+ *  and sessions, distinct per character, unforgeable (no one else's socket carries that account), and opaque (the
+ *  account's subject is not what the others are told). */
+export const PARK_KEY_RE = /^[0-9a-f]{24}$/;
+export async function parkKeyOf(sub, c) {
+  const bytes = new TextEncoder().encode(`${sub}\n${c}`);
+  const d = new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', bytes));
+  let hex = '';
+  for (let i = 0; i < 12; i++) hex += d[i].toString(16).padStart(2, '0');
+  return hex;
+}
+/** A character id as the frame may carry it (characterId.js mints a UUID, or a stamp and a random tail). */
+export const PARK_CHAR_RE = /^[A-Za-z0-9-]{8,64}$/;
+/** The two internal doors between objects - paths the public worker never forwards (it forwards /room/<key> alone). */
+export const PARK_INTERNAL_REG = '/internal/park/registry';
+export const PARK_INTERNAL_DROP = '/internal/park/drop';
+export const PARK_CELL_MAX = 32;
+export const PARK_ACCOUNT_MAX = 4;
+export const PARK_TTL_MS = 72 * 3600 * 1000;
+/** The same word again refreshes its record's time at most this often (and is fanned to nobody). */
+export const PARK_REFRESH_MS = 10 * 60 * 1000;
+export const PARK_HZ_MAX = 2;
+/** How far (natives, either axis) a record's wagon and horse may stand from its anchor - a hitched horse stands 3.1 m
+ *  ahead of its wagon; a quarter of a native pixel is room for any team and no room for a second place. */
+export const PARK_REACH = 8192;
+/** A world-frame point's cell room - the map pixel off the natives (MapsFile.WorldCoordToMapPixel: x / 32768,
+ *  499 - z / 32768) and the cell off the pixel (worldRoom). */
+export const cellRoomOfWire = (x, z) => worldRoom(Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS));
+const PARK_TIERS = new Set([0, 25, 50, 75, 90]);
+const PARK_KIND_DEPLOYED = 2;
+/** The per-socket park gate. */
+export const parkGate = (bucket, now) => tokenGate(bucket, now, PARK_HZ_MAX);
+
+/**
+ * A `park` frame's data through the door: `{ c, a?: [x, z], r?: { w?, h?, n? } }`. `c` the character (PARK_CHAR_RE);
+ * no `a`: nothing of that character's is parked. `a` the anchor in natives, inside the world. `r` the team as shown: `w` a DEPLOYED wagon only ([2, x, y, z, qx, qy, qz, qw, tier, 0] - a unit
+ * quaternion, a known tier), `h` a horse standing ([x, y, z, fx, fz, 0] - never walking: a walking horse is not
+ * parked), `n` the horse's name through the label door; every part within PARK_REACH of the anchor. Anything else is
+ * null - the frame is refused.
+ */
+export function validParkData(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  if (typeof d.c !== 'string' || !PARK_CHAR_RE.test(d.c)) return null;
+  const a = d.a;
+  if (a === undefined || a === null) return d.r === undefined || d.r === null ? { c: d.c } : null;
+  if (!Array.isArray(a) || a.length !== 2 || !a.every(finite) || a.some((v) => v < 0 || v > POSE_BOUND)) return null;
+  const out = { c: d.c, a: [a[0], a[1]] };
+  if (d.r === undefined || d.r === null) return out;
+  const r = d.r;
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+  const near = (x, z) => Math.abs(x - a[0]) <= PARK_REACH && Math.abs(z - a[1]) <= PARK_REACH;
+  const rec = {};
+  if (r.w !== undefined) {
+    const w = r.w;
+    if (!Array.isArray(w) || w.length !== 10 || !w.every(finite) || w[0] !== PARK_KIND_DEPLOYED) return null;
+    if (!near(w[1], w[3]) || Math.abs(w[2]) > POSE_Y_BOUND) return null;
+    const len = Math.hypot(w[4], w[5], w[6], w[7]);
+    if (!(len > 0.5 && len < 2) || !PARK_TIERS.has(w[8])) return null;
+    rec.w = [PARK_KIND_DEPLOYED, w[1], w[2], w[3], w[4] / len, w[5] / len, w[6] / len, w[7] / len, w[8], 0];
+  }
+  if (r.h !== undefined) {
+    const h = r.h;
+    if (!Array.isArray(h) || h.length !== 6 || !h.every(finite) || h[5] !== 0) return null;
+    const fl = Math.hypot(h[3], h[4]);
+    if (!near(h[0], h[2]) || Math.abs(h[1]) > POSE_Y_BOUND || !(fl > 1e-6)) return null;
+    rec.h = [h[0], h[1], h[2], h[3] / fl, h[4] / fl, 0];   // AUDIT HCC-PARK D5: a facing, so a unit one - 1e300 is stored and fanned no more
+  }
+  if (r.n !== undefined) {
+    if (typeof r.n !== 'string' || r.n.length > 124) return null;
+    const n = sanitizeLabel(r.n, 31);
+    if (n && rec.h) rec.n = n;
+  }
+  if (!rec.w && !rec.h) return null;
+  out.r = rec;
+  return out;
 }

@@ -497,7 +497,7 @@ test('AUDIT 63 F48 (review): the SHOP mount wires all six DoSteal effects, and t
   // Thieves Guild credit, no crime, no guards, no HUD line. Same shape
   // as theft.test.js:133's pin on the private-property arm.
   const modes = src('scenes/worldModes.js');
-  const at = modes.indexOf('return new NativeTradeWindow({');
+  const at = modes.indexOf('return createTradeWindow({');
   assert.ok(at > 0, 'the shop mount is where it was');
   const mount = modes.slice(at, modes.indexOf('shopName:', at));
   assert.match(mount, /pickpocketSkill: \(\) => skillValue\(playerEntity, SKILLS\.Pickpocket\),/,
@@ -517,7 +517,7 @@ test('AUDIT 63 F48 (review): the SHOP mount wires all six DoSteal effects, and t
   // (:316-322) while DoSteal re-checks it (:909) - so that mount
   // carries none of the six, on purpose and in writing.
   const dungeon = src('scenes/dungeonContext.js');
-  const idAt = dungeon.indexOf('return new NativeTradeWindow({');
+  const idAt = dungeon.indexOf('return createTradeWindow({');
   assert.ok(idAt > 0);
   const idMount = dungeon.slice(idAt, dungeon.indexOf('});', idAt));
   for (const hook of ['pickpocketSkill:', 'tallyPickpocket:', 'tallyCrimeGuild:', 'crimeTheft:', 'spawnCityGuards:', 'say:']) {

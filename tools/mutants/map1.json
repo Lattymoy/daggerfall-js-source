@@ -354,8 +354,8 @@
   {
     "name": "hover-nearest-only",
     "file": "src/ui/heldMap.js",
-    "old": "        .filter((m) => m.px === pm.px && m.py === pm.py)",
-    "new": "        .filter((m) => m === pm)",
+    "old": "        label: this._party.filter((m) => m.px === pm.px && m.py === pm.py).map(partyHoverText).join(' / '),",
+    "new": "        label: this._party.filter((m) => m === pm).map(partyHoverText).join(' / '),",
     "tests": [
       "test/soc6_partymap.test.js"
     ]
@@ -417,7 +417,7 @@
   {
     "name": "MAPFIELD2-the-art-foot-is-the-files-foot",
     "file": "src/ui/heldMap.js",
-    "old": "export const SPRITE_ART_FOOT = 0.895;",
+    "old": "export const SPRITE_ART_FOOT = 0.872;   // MAP-FIELD8: the fourth painting's lowest opaque row is 946 of 1086",
     "new": "export const SPRITE_ART_FOOT = 1;",
     "tests": [
       "test/heldmap.test.js"
@@ -480,8 +480,8 @@
   {
     "name": "MAPFIELD4-the-brightness-key-comes-back",
     "file": "src/ui/heldMap.js",
-    "old": "export const CUFF_BAND = 0.85;",
-    "new": "export const CUFF_BAND = 0.85;\nexport const MATTE_LUM = 8;",
+    "old": "export const CUFF_BAND = 0.827;   // MAP-FIELD8: the fourth painting's silhouette columns end by 0.8158 and its cut cuffs begin at 0.8379 (tools/heldMapArtProbe.mjs) - a 24-row gap, the band in its middle with eleven rows either side",
+    "new": "export const CUFF_BAND = 0.827;   // MAP-FIELD8: the fourth painting's silhouette columns end by 0.8158 and its cut cuffs begin at 0.8379 (tools/heldMapArtProbe.mjs) - a 24-row gap, the band in its middle with eleven rows either side\nexport const MATTE_LUM = 8;",
     "tests": [
       "test/heldmap.test.js"
     ]
@@ -696,8 +696,8 @@
   {
     "name": "AUDITMAPFIELD-the-halo-is-the-pen",
     "file": "src/ui/inkMap.js",
-    "old": "  halo: 'rgba(238, 222, 190, 0.80)',",
-    "new": "  halo: 'rgba(58, 40, 22, 0.80)',",
+    "old": "  halo: rgba(PARCHMENT_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name",
+    "new": "  halo: rgba(INK_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name",
     "tests": [
       "test/heldmap.test.js"
     ]

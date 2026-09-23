@@ -113,7 +113,6 @@ const PENDING = new Map([
   ['courtPenaltyText', 'the court record expands through arrestFlow\'s value map; the table row waits on a live court seam'],
   ['courtFine', 'the court record expands through arrestFlow\'s value map; the table row waits on a live court seam'],
   ['courtDaysInPrison', 'the court record expands through arrestFlow\'s value map; the table row waits on a live court seam'],
-  ['locationRevealedByMapItem', 'PlayerGPS.LocationRevealedByMapItem - no host holds the last map-item reveal'],
 ]);
 
 /** Bridge-ctx seams the HOST cannot answer yet. Same rule as PENDING

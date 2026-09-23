@@ -74,7 +74,7 @@
 // and SetSpell writes it back into the player's slot - the shared
 // SPELLS.STD record is untouched. The port's records are objects
 // shared by every caster, so confirmRename copies explicitly and
-// marks the copy `custom`, which is exactly the flag save.js:175
+// marks the copy `custom`, which is exactly the flag save.js:179
 // already reads to store a whole record instead of a bare index.
 // U4's "rename needs per-entity copies + name persistence first" is
 // answered: it has both.
@@ -129,13 +129,15 @@
 import { nativeMetrics, drawImg, drawRect, shadowText, loadImg, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from './messageBox.js';
 import { drawText } from './text.js';
-import { typedChar, bindings } from './input.js';
+import { bindings } from './input.js';
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM6: the rename is a pushed DaggerfallInputMessageBox
 import { actionForCode } from '../systems/inputActions.js';
 import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
 } from './spellIcons.js';
-import { effectByKey, spellBookDescriptionId } from '../systems/spellEffects.js';
+import { effectByKey, spellBookDescriptionId, effectMacroSource } from '../systems/spellEffects.js';
+import { expandRowValues, sourceValues } from '../systems/quest/questMacros.js';   // MACRO-5: the effect popup's source
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: DFU's own VerticalScrollBar, art and all - and ROAD-G G4: the LIVE component, drag included
@@ -268,7 +270,7 @@ export class SpellbookWindow {
     this.selectedIndex = -1;
     this.scrollIndex = 0;
     this.top = null;          // the pushed box: see _boxRows
-    this.renameText = '';
+    this.renameBox = null;    // CM6: the pushed rename box while `top` is 'rename'
     this.deleteSpellIndex = -1;
     this.presentedCost = 0;
     this._box = null;
@@ -628,25 +630,34 @@ export class SpellbookWindow {
   /** SpellNameLabel_OnMouseClick (:927-938) + RenameSpellPromptHandler
    *  (:940-951). */
   renameButton() {
-    if (this.selectedIndex === -1 || !this.selected) return;
-    this.renameText = this.selected.name ?? '';
+    if (this.selectedIndex === -1 || !this.selected || this.buyMode) return;   // the button exists in cast mode only (:465 gated, see the header)
+    // GetSpell, then `new DaggerfallInputMessageBox(uiManager, this)`
+    // seeded from bundle.Name under enterSpellName (:927-938). CM6: the
+    // box is PUSHED and owns the keyboard; `top` stays 'rename' so the
+    // list under it neither highlights nor scrolls, as under any box.
     this.top = 'rename';
+    this.renameBox = new InputMessageBoxWindow({
+      label: ENTER_SPELL_NAME,
+      value: this.selected.name ?? '',
+      maxCharacters: MAX_SPELL_NAME,   // TextBox.maxCharacters (TextBox.cs:26, :425), homed in spellMaker.js
+      onSubmit: (input) => this.confirmRename(input),
+      onCancel: () => { this.top = null; },
+    });
   }
 
-  /** RenameSpellPromptHandler (:937-950). DFU's EffectBundleSettings
+  /** RenameSpellPromptHandler (:940-951). DFU's EffectBundleSettings
    *  is a STRUCT: GetSpell hands back a COPY, the handler renames the
    *  copy, and SetSpell writes it into the player's slot - the shared
    *  SPELLS.STD record is never touched. The port's records are
    *  objects shared by every caster, so the copy has to be explicit,
-   *  and it is marked `custom` so save.js:175 stores the whole record
+   *  and it is marked `custom` so save.js:179 stores the whole record
    *  instead of the bare index it would otherwise write (which would
    *  reload the ORIGINAL name). That retires the U4 ledger's rename
    *  row: renaming is real and it persists. */
-  confirmRename() {
+  confirmRename(input) {
     // RAW, not trimmed: DFU's guard is string.IsNullOrEmpty (:944), so
     // a name of three spaces is a legal rename in classic and the
     // port keeps it legal rather than quietly being stricter.
-    const input = this.renameText;
     this.top = null;
     if (this.selectedIndex === -1 || !input) return;   // "Must not be blank" (:943-944)
     const list = this.deps.spells?.() ?? [];
@@ -732,14 +743,10 @@ export class SpellbookWindow {
   input(code, e = null) {
     if (this.top === 'iconPicker') { this._iconPicker?.input(code); return; }   // MC1: the picker is modal
     if (this.top === 'rename') {
-      if (code === 'Escape') { this.top = null; return; }
-      if (code === 'Enter' || code === 'NumpadEnter') { this.confirmRename(); return; }
-      if (code === 'Backspace') { this.renameText = this.renameText.slice(0, -1); return; }
-      const ch = typedChar(code, e);
-      // TextBox.maxCharacters (TextBox.cs:26, :425). The port already
-      // homes the 31 in spellMaker.js, where the maker's own name box
-      // reads it.
-      if (ch && this.renameText.length < MAX_SPELL_NAME) this.renameText += ch;
+      // the pushed box owns the keyboard (:927-938); its Return runs
+      // confirmRename and its Escape clears `top`, both through the box
+      this.renameBox?.input(code, e);
+      if (this.renameBox?.done) this.renameBox = null;
       return;
     }
     if (this.top === 'delete') {
@@ -792,8 +799,8 @@ export class SpellbookWindow {
 
   /** AUDIT 65 UI-1: THE HOSTS OWN THE THIRD AND FOURTH SLOTS. Every
    *  host that holds an overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1158`,
-   *  `scenes/worldModes.js:7716`, `scenes/dungeonContext.js:6022` - so
+   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1236`,
+   *  `scenes/worldModes.js:8818`, `scenes/dungeonContext.js:6561` - so
    *  a clock threaded positionally here arrived as `e.button === 2`, a
    *  BOOLEAN. `false ?? Date.now()` keeps the `false`, `false != null`
    *  is true and `false - false === 0 < 300`, which made EVERY second
@@ -913,7 +920,10 @@ export class SpellbookWindow {
     if (!e) return null;
     const id = spellBookDescriptionId(`${e.type},${e.subType & 0xff}`);
     if (id == null) return null;
-    const rows = this._boxText(id);
+    // MACRO-5: SetTextTokens(effect.SpellBookDescription, EFFECT) - the
+    // box's source is the effect itself (EntityEffectMCP), not the
+    // book's trade source, so %bdr..%clm are its own settings.
+    const rows = expandRowValues(this.deps.rows?.(id) ?? [], sourceValues(effectMacroSource(e)));
     return rows.length ? rows : null;
   }
 
@@ -1062,8 +1072,8 @@ export class SpellbookWindow {
       this._box = null;
       this._iconPicker?.draw(renderer, canvas, font);   // MC1: the picker rides over the book
     } else if (this.top === 'rename') {
-      this._box = layoutMessageBox(font, [`${ENTER_SPELL_NAME}${this.renameText}_`], []);
-      this._drawBox(renderer, m, font);
+      this._box = null;
+      this.renameBox?.draw(renderer, canvas, font);   // CM6: the pushed box rides over the book
     } else if (this.top) {
       const buttons = (this.top === 'delete' || this.top === 'sort' || this.top === 'trade')
         ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];

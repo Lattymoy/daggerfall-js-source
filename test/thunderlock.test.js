@@ -33,6 +33,7 @@ import { ORB_SCALE } from '../src/characters/thunderlockIds.js';   // FIELD-GUN1
 import { scaledBillboardSize } from '../src/world/rmbFlats.js';   // FIELD-GUN18: the shape the pool's scale branch never had
 import { playerMuzzleOrigin } from '../src/systems/spellcast.js';   // FIELD-GUN17
 import { muzzleRay } from '../src/combat/weaponRig.js';   // FIELD-GUN17
+import { worldRectPx } from '../src/player/tapRay.js';   // FIELD-GUN19: the world strip, in canvas pixels
 import { uniqueFinds, uniqueFindChance, rollLootRarity, legendariesFor, rarityEligible } from '../src/systems/lootRarity.js';
 // FIELD-GUN: the two the audit could not see, because every pin it
 // wrote asked about REGISTRATION and none of them picked the thing up.
@@ -361,7 +362,7 @@ test('F8: the game plays the weapon’s own clips - all four hosts, through the 
   assert.deepEqual([...registered.keys()].sort(), [SFX.close, SFX.fire, SFX.open].sort());
   // and the ONE place all four hosts share plays them
   const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
-  assert.match(rig, /thunderlockVoice\(dt\);/, 'the rig has a per-frame voice');
+  assert.match(rig, /thunderlockVoice\(dt, \{ armShoots, fired: held\.fired \}\);/, 'the rig has a per-frame voice (AUDIT FIELD-GUN-MW F1: told the arm\'s hold, so the shot\'s bang rides the release under the arm)');
   assert.match(rig, /audio\.playOneShot\(TL_SFX\.fire/, 'the shot');
   assert.match(rig, /audio\.playOneShot\(TL_SFX\.open/, 'the reload opening');
   assert.match(rig, /audio\.playOneShot\(TL_SFX\.close/, 'and the lock-up');
@@ -1203,10 +1204,13 @@ test('FIELD-GUN17a: the shot leaves the BARREL, and the barrel is measured off t
   // which is every bow, at every host, unchanged.
   const spell = readFileSync('src/systems/spellcast.js', 'utf8');
   assert.match(spell, /export function playerMuzzleOrigin\(eye, lookDir, muzzle\)/);
+  // AUDIT FIELD-GUN-MW F2 re-aimed this: the fork is ONE function (playerShotOrigin - a world muzzle for the
+  // third-person Morrowind body, a lens muzzle, or GetAimPosition), and both seams call it rather than restate it.
+  assert.match(spell, /export function playerShotOrigin\(eye, lookDir, muzzle\) \{[\s\S]*?return muzzle \? playerMuzzleOrigin\(eye, lookDir, muzzle\) : playerArrowOrigin\(eye, lookDir\);/,
+    'a muzzle wins, nothing supplied keeps the verbatim arm - at the fork\'s one home');
   for (const f of ['src/combat/arrowFlight.js', 'src/scenes/dungeonContext.js']) {
     const src = readFileSync(f, 'utf8');
-    assert.match(src, /muzzle\s*\?\s*playerMuzzleOrigin\([^)]*\)\s*:\s*playerArrowOrigin\(from, dir\)/,
-      `${f}: a muzzle wins, nothing supplied keeps the verbatim arm`);
+    assert.match(src, /playerShotOrigin\(from, dir, (?:meta\.)?muzzle\)/, `${f} spawns through the one fork`);
   }
 
   // ALL FOUR HOSTS hand it over - the FOUR HOSTS RULE, which this
@@ -1273,8 +1277,9 @@ test('FIELD-GUN17a: the shot leaves the BARREL, and the barrel is measured off t
   // the mirror moves it to the other side of the rect's own centre
   assert.ok(Math.abs(muzzleRay({ ...DRAWN, flip: true }, FOV, 1).right
     - ((640 + 0.75 * 320) / 1280 * 2 - 1) * tanX) < 1e-12, 'the mirror goes with the rect');
-  // the aspect is the CANVAS's: a wider canvas widens the sideways
-  // term and leaves the vertical one alone
+  // the aspect is the WORLD STRIP's, which for a frame with no docked
+  // large HUD IS the canvas (this fixture passes no viewport): a wider
+  // canvas widens the sideways term and leaves the vertical one alone
   const wide = muzzleRay({ ...DRAWN, canvasW: 2560, rect: { x: 1280, y: 400, w: 640, h: 200 } }, FOV, 1);
   assert.ok(Math.abs(wide.up - ray.up) < 1e-12, 'the vertical term does not move with the width');
   assert.ok(Math.abs(wide.right - ray.right * 2) < 1e-9, 'and the sideways one scales with the aspect');
@@ -1384,7 +1389,7 @@ test('FIELD-GUN18: the orb is scaled off the archive’s own size, at BOTH lanes
 
 test('FIELD-GUN18: the pool’s scale really scales - it was multiplying an OBJECT by a number', () => {
   // THE BUG THIS ASK WALKED INTO. `billboardSize` answers a {w, h}
-  // RECORD (rmbFlats.js:133; billboardXml's override keeps the shape),
+  // RECORD (rmbFlats.js:155; billboardXml's override keeps the shape),
   // and the branch that applied `scale` read:
   //
   //     Array.isArray(size) ? size.map(v => v * scale) : size * scale
@@ -1422,4 +1427,234 @@ test('FIELD-GUN18: the pool’s scale really scales - it was multiplying an OBJE
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     assert.match(readFileSync(f, 'utf8'), /missEffect: \(k, p, o\) => \w+\.showMissEffect\(k, p, o\)/, `${f} wires it`);
   }
+});
+
+test('FIELD-GUN19: the shot leaves the barrel through the WORLD STRIP, not the canvas', () => {
+  // Mac: "the orb projectile that shoots doesnt line up with the
+  // muzzle. It shoots out high on the screen."
+  //
+  // The muzzle is a CANVAS PIXEL and the orb is a WORLD OBJECT, and
+  // ROAD-E E5 made those two different spaces: the docked large HUD
+  // SHRINKS the world pass while the 2D pass takes the whole canvas
+  // back. Dividing the pixel by the taller of the two gives a LARGER
+  // `up`, so the shot came out above the barrel. E5 converted the
+  // crosshair and the tap pick for exactly this reason; the
+  // viewmodel's muzzle was the third consumer nobody counted.
+  const BASE = { rect: { x: 400, y: 480, w: 320, h: 200 }, canvasW: 1280, canvasH: 800, muzzle: { x: 0.8, y: 0.6 }, flip: false };
+  const FOV = 65 * Math.PI / 180;
+  // The HUD's bar is the bottom fifth; the world strip is the rest.
+  const VP = { x: 0, y: 0.2, w: 1, h: 0.8 };
+
+  const canvasOnly = muzzleRay(BASE, FOV, 1);
+  const strip = muzzleRay({ ...BASE, viewport: VP }, FOV, 1);
+  assert.ok(strip.up < canvasOnly.up,
+    'the strip is shorter than the canvas, so the same pixel is LOWER in it - which is the whole bug');
+
+  // ...and it is not merely lower, it is RIGHT. Computed here off the
+  // strip's own rect, the way the world's projection sees it.
+  const px = BASE.rect.x + BASE.muzzle.x * BASE.rect.w;       // 656
+  const py = BASE.rect.y + BASE.muzzle.y * BASE.rect.h;       // 600
+  const r = worldRectPx(VP, BASE.canvasW, BASE.canvasH);      // y 0..640, h 640
+  const tanY = Math.tan(FOV / 2);
+  const tanX = tanY * (r.w / r.h);
+  assert.ok(Math.abs(strip.up - (1 - ((py - r.y) / r.h) * 2) * tanY) < 1e-12);
+  assert.ok(Math.abs(strip.right - (((px - r.x) / r.w) * 2 - 1) * tanX) < 1e-12);
+  // The ASPECT moves too, and it has to: each host derives its own
+  // perspective() from the same strip (hudLarge.largeHudWorldAspect),
+  // so a ray built on the canvas's aspect would miss sideways as well.
+  assert.ok(Math.abs(tanX - tanY * (1280 / 800)) > 1e-6, 'the strip is not the canvas shape');
+
+  // NO VIEWPORT IS THE FULL CANVAS, which is what every host without a
+  // docked large HUD hands back - so this change cannot move a shot
+  // that was already right.
+  const explicitFull = muzzleRay({ ...BASE, viewport: { x: 0, y: 0, w: 1, h: 1 } }, FOV, 1);
+  assert.ok(Math.abs(explicitFull.up - canvasOnly.up) < 1e-12);
+  assert.ok(Math.abs(explicitFull.right - canvasOnly.right) < 1e-12);
+
+  // A muzzle BELOW the strip is a real point below the bottom of the
+  // view, not a miss: tapRay's own bounds test is right for a pick and
+  // would move the shot here, so it is deliberately not taken.
+  const low = muzzleRay({ ...BASE, rect: { x: 400, y: 700, w: 320, h: 90 }, viewport: VP }, FOV, 1);
+  assert.ok(low && low.up < strip.up, 'a muzzle over the HUD bar still answers, and answers lower');
+
+  // THE STRIP'S TOP EDGE COUNTS TOO, and this fixture cannot show it:
+  // the large HUD's bar is at the BOTTOM, so the strip starts at
+  // canvas row 0 and `r.y` is zero - a campaign mutant dropped the
+  // `- r.y` term entirely and passed everything above. The renderer's
+  // rect is general, so the pin has to be: a strip pushed DOWN the
+  // canvas puts the same pixel higher within it.
+  const LOW_STRIP = { x: 0, y: 0, w: 1, h: 0.8 };            // GL bottom-left: the strip is the BOTTOM 80%
+  const rLow = worldRectPx(LOW_STRIP, BASE.canvasW, BASE.canvasH);
+  assert.ok(rLow.y > 0, 'this strip really does start below the top of the canvas');
+  const pushed = muzzleRay({ ...BASE, viewport: LOW_STRIP }, FOV, 1);
+  assert.ok(Math.abs(pushed.up - (1 - ((py - rLow.y) / rLow.h) * 2) * tanY) < 1e-12);
+  assert.ok(pushed.up > strip.up,
+    'the same pixel sits higher inside a strip whose top edge is lower - drop the offset and these two are equal');
+
+  // AND THE RIG PARKS IT. The renderer's record outlives endWorldPass
+  // for this one reader; a draw that forgot it would leave every shot
+  // high again with nothing else to show for it.
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  assert.match(rig, /_tlDrawn = \{[^}]*viewport: renderer\.worldViewportRect \?\? null[^}]*\}/,
+    'drawThunderlock parks the strip the world was drawn into');
+  const renderer = readFileSync('src/render/renderer.js', 'utf8');
+  assert.match(renderer, /get worldViewportRect\(\)/, 'the renderer exposes the frame\'s strip');
+  // ...and SETS it where the pending rect is consumed. A getter over a
+  // field nobody assigns answers null for ever, which is the full
+  // canvas, which is the bug - and it survived a campaign that only
+  // asked whether the getter existed.
+  const begin = renderer.slice(renderer.indexOf('const r = this._worldViewportPending;'));
+  assert.match(begin.slice(0, 300), /this\._worldViewportFrame = r \? \{ \.\.\.r \} : null;/,
+    'the frame\'s strip is recorded where the pending rect is taken, or the getter is always null');
+  const endWorld = renderer.slice(renderer.indexOf('endWorldPass()'), renderer.indexOf('endWorldPass()') + 400);
+  assert.doesNotMatch(endWorld, /_worldViewportFrame/,
+    'endWorldPass clears the GL viewport, which is state - it must NOT clear the record the 2D pass reads');
+});
+
+test('FIELD-GUN19: a blown-out core has no opinion about hue', () => {
+  // Mac: "The muzzle flash texture itself needs to be blue like the
+  // orb and the lighting thats emitted needs to be blue."
+  //
+  // FIELD-GUN17 built the whole channel and the flash still came out
+  // white, and the fault is the STATISTIC rather than the wiring. A
+  // glowing missile sprite is an over-exposed white core inside a
+  // coloured halo; the core is the brightest and most opaque thing in
+  // the record, so an alpha-weighted mean is dominated by it, and
+  // peak-normalising a near-white mean makes it paler still.
+  const band = (n, r, g, b, a) => { const o = []; for (let i = 0; i < n; i++) o.push(r, g, b, a); return o; };
+  const orb = {
+    colors: [
+      ...band(140, 255, 255, 255, 255),   // the core, over-exposed
+      ...band(60, 230, 235, 255, 255),    // the hot edge, barely tinted
+      ...band(300, 70, 110, 255, 255),    // the halo - where the colour is
+      ...band(200, 40, 70, 210, 160),     // the soft fringe
+      ...band(900, 0, 0, 0, 0),           // the cutout: alpha 0, the palette's index 0
+    ],
+  };
+  const c = orbColourFrom(orb);
+  assert.ok(c[2] > c[0] * 2 && c[2] > c[1] * 1.6,
+    `this is meant to read BLUE, and it came back ${c.map((v) => Math.round(v * 255)).join(',')}`);
+
+  // ALPHA STILL COUNTS, and a campaign mutant that weighted by chroma
+  // ALONE passed the fixture above - because everything chromatic in
+  // it is blue. A cutout's edge is the case that tells them apart: a
+  // few almost-transparent texels of a stray palette colour are very
+  // saturated and cover almost nothing, and weighted by chroma alone
+  // they outvote the body of the sprite.
+  const fringed = {
+    colors: [
+      ...band(140, 255, 255, 255, 255),   // the same core
+      ...band(300, 70, 110, 255, 255),    // the same blue body
+      ...band(400, 255, 40, 40, 6),       // a red rim at alpha 6 - saturated, and covering nothing
+    ],
+  };
+  const f = orbColourFrom(fringed);
+  assert.ok(f[2] > f[0] * 2,
+    `a rim at alpha 6 must not repaint the orb: got ${f.map((v) => Math.round(v * 255)).join(',')}`);
+  assert.ok(Math.abs(Math.max(...c) - 1) < 1e-9, 'still peak-normalised: a tint direction, not a strength');
+
+  // THE PLAIN MEAN IS THE THING THIS REPLACED, computed here so the
+  // pin fails if the old statistic comes back rather than merely
+  // asserting a number somebody could retune to.
+  let r = 0; let g = 0; let b = 0; let w = 0;
+  for (let i = 0; i < orb.colors.length; i += 4) {
+    const a = orb.colors[i + 3];
+    if (!a) continue;
+    r += orb.colors[i] * a; g += orb.colors[i + 1] * a; b += orb.colors[i + 2] * a; w += a;
+  }
+  const peak = Math.max(r, g, b);
+  const mean = [r / peak, g / peak, b / peak];
+  assert.ok(mean[0] > 0.4, 'the old mean really was washed out - otherwise this fixture proves nothing');
+  assert.ok(c[0] < mean[0] * 0.7, 'the new answer is markedly more saturated than the mean it replaced');
+
+  // A GENUINELY GREY RECORD still answers, and answers white: the
+  // fallback is part of the rule, not a guard. A white orb should say
+  // white rather than nothing.
+  const grey = { colors: [...band(50, 200, 200, 200, 255), ...band(50, 90, 90, 90, 255)] };
+  assert.deepEqual(orbColourFrom(grey).map((v) => +v.toFixed(6)), [1, 1, 1]);
+  assert.equal(orbColourFrom({ colors: [] }), null);
+  assert.equal(orbColourFrom({ colors: [12, 34, 56, 0] }), null, 'nothing opaque is no answer, not black');
+  assert.equal(orbColourFrom({ colors: [0, 0, 0, 255] }), null, 'a black record leaves white alone');
+
+  // ONE HOME, BOTH CONSUMERS: the flash and the light must read the
+  // same function, or "the same colour as the orb" is two answers.
+  const rig = readFileSync('src/combat/weaponRig.js', 'utf8');
+  const sys = readFileSync('src/systems/thunderlock.js', 'utf8');
+  assert.match(rig, /const flash = orbColour\(\);/, 'the muzzle FLASH wears it');
+  assert.match(sys, /color: orbColour\(\),/, 'and so does the light it throws');
+});
+
+// FIELD-GUN20 (2026-09-21, Mac: "The orb projectile that fires is still
+// not alligned with coming out of the barrel (classic sprite not
+// morrowind)"). THE ANCHOR, after the origin (17) and the strip (19).
+//
+// The muzzle ray was right and the strip was right: the orb's POSITION
+// was on the barrel. The SPRITE was not, because the renderer anchors
+// every billboard batch at its BASE (`(aCorner.y + 0.5) * uSize.y` - the
+// centre half a height above the placement point) - which is
+// DaggerfallBillboard.AlignToBase (:410-416, `offset.y = Size.y / 2`)
+// baked in for every flat a block places. A MISSILE never calls it:
+// DaggerfallMissile.cs:601-602 makes its billboard at localPosition zero
+// on the missile's own transform, and EnemyBlood.cs:32-35 sets the
+// splash's transform.position to the hit point - CENTRED. So every
+// missile lane and the whole effect pool drew their sprite half a
+// height above where it was: the orb above the barrel, and a fireball
+// and a blood splash the same, unreported. `rmbFlats.centredBase` is the
+// one law: the position with half the billboard's height taken off.
+import { centredBase } from '../src/world/rmbFlats.js';
+
+test('FIELD-GUN20: a missile or effect sprite is CENTRED on its position - the base handed to the renderer is half a height under it', () => {
+  assert.deepEqual(centredBase([1, 2, 3], { w: 0.8, h: 1.2 }), [1, 2 - 0.6, 3], 'half the HEIGHT, not the width');
+  assert.deepEqual(centredBase([0, 0, 0], { w: 1, h: 0.5 }), [0, -0.25, 0]);
+  assert.deepEqual(centredBase([4, 5, 6], null), [4, 5, 6], 'no size yet: the position itself');
+  // the three lanes that place a sprite by its position, by source - every batch they build takes it
+  const seams = [
+    ['src/scenes/hitEffects.js', 2],       // spawn, and the rebuild on a recentre
+    ['src/scenes/hostMagic.js', 1],        // the world hosts' spell missiles
+    ['src/scenes/dungeonContext.js', 1],   // the fourth host's own missiles - the orb and every spell
+  ];
+  for (const [f, n] of seams) {
+    const s = readFileSync(f, 'utf8');
+    const builds = [...s.matchAll(/renderer\.createBillboardBatch\([^;]*\bcentredBase\(/g)].length;
+    assert.equal(builds, n, `${f}: ${n} batch build(s) at the centred base`);
+  }
+  const dc = readFileSync('src/scenes/dungeonContext.js', 'utf8');
+  const missile = dc.slice(dc.indexOf('async function ensureMissileBatch(m)'), dc.indexOf('function showImpactFlash(m, pos)'));
+  assert.match(missile, /m\.batch = renderer\.createBillboardBatch\(archive, record, size, \[centredBase\(m\.firePos, size\)\]\);/, 'the fourth host\'s missile');
+  assert.doesNotMatch(missile, /\[\[m\.firePos\[0\], m\.firePos\[1\], m\.firePos\[2\]\]\]/, 'and never the bare fire position');
+  const hm = readFileSync('src/scenes/hostMagic.js', 'utf8');
+  assert.match(hm, /m\.batch = renderer\.createBillboardBatch\(archive, 0, size, \[centredBase\(m\.firePos, size\)\]\);/, 'the world hosts\' spell missile');
+  // THE OTHER HALF OF THE LAW: a block's flats keep AlignToBase - they sit ON their base, and never take this
+  assert.doesNotMatch(readFileSync('src/world/rmbFlats.js', 'utf8').slice(readFileSync('src/world/rmbFlats.js', 'utf8').indexOf('export function collectBlockFlats')), /centredBase\(/, 'collectBlockFlats places at the base');
+  for (const f of ['src/world/rdbLayout.js', 'src/world/interiorLayout.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
+    // WOD3/WOD4: World of Daggerfall's own flats - the captive a kidnap marker stands and the camp at
+    // Privateer's Hold - are CreateDaggerfallBillboardGameObject with NO AlignToBase, so they are centred;
+    // those lines, and nothing else a world host stands
+    const centred = readFileSync(f, 'utf8').split('\n').filter((l) => /centredBase\(/.test(l));
+    const wod = { 'src/scenes/world.js': [/const base = centredBase\(w\.centre, size\);/, /\.\.\.centredBase\(\[origin\[12\] \+ hf\.pos\[0\]/], 'src/scenes/exterior.js': [/centredBase\(\[origin\[12\] \+ hf\.pos\[0\]/] }[f] ?? [];
+    assert.equal(centred.length, wod.length, `${f}: a flat that DFU AlignToBase-s is not centred`);
+    wod.forEach((re, i) => assert.match(centred[i], re, `${f}: only World of Daggerfall's own flats are centred`));
+  }
+});
+
+test('FIELD-GUN20: the pool lands the orb\'s CENTRE on the muzzle, and the flight\'s delta is centre-to-centre', async () => {
+  const { createHitEffects } = await import('../src/scenes/hitEffects.js');
+  const { GLOBAL_SCALE } = await import('../src/world/meshReader.js');
+  const built = [];
+  const fx = createHitEffects({
+    renderer: { createBillboardBatch: (a, r, size, centres) => { const b = { a, r, size, centres, frame: null, origin: null }; built.push(b); return b; }, destroyBillboardBatch: () => {} },
+    getTexture: async () => ({ recordCount: 1, getFrameCount: () => 1, getSize: () => ({ width: 32, height: 40 }), getScale: () => ({ width: 0, height: 0 }) }),
+    uploadRecordFrame: () => {},
+  });
+  const muzzle = [0.27, 1.5 - 0.48, 0.5];   // FIELD-GUN17a's own muzzle offset, on an eye at 1.5
+  const orb = fx.showFlyingFlat(378, muzzle, { scale: ORB_SCALE });
+  await new Promise((r) => setImmediate(r));
+  assert.equal(built.length, 1);
+  const h = 40 * GLOBAL_SCALE * ORB_SCALE;
+  assert.equal(built[0].size.h, h, 'the orb at its scale');
+  const base = built[0].centres[0];
+  assert.deepEqual([base[0], base[1] + h / 2, base[2]], muzzle, 'the sprite\'s centre IS the muzzle - the base is half its height under it');
+  assert.ok(base[1] < muzzle[1], 'the old base was the muzzle itself, which put the picture half an orb above the barrel');
+  orb.move([muzzle[0], muzzle[1], muzzle[2] + 3]);
+  assert.deepEqual(built[0].origin, [0, 0, 3], 'flight is a delta between centres, so it does not move with the anchor');
 });

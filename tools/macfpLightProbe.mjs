@@ -65,7 +65,7 @@ const out = await page.evaluate(async () => {
   // 5. and the channel really multiplies the sprite
   res.pixelWhite = drawWith([1, 1, 1, 1]);
   res.pixelQuarter = drawWith([0.25, 0.25, 0.25, 1]);
-  res.pixelTorch = drawWith([...r.flatLightAt([0, 0, 0]), 1]);
+  res.pixelTorch = drawWith(r.flatLightAt([0, 0, 0]));   // BLACK-ARMS: the TRIPLE the rig hands over - no alpha appended here that the runtime never passes
 
   // ---- MAC-P: the Morrowind arm's own pass -------------------------
   //
@@ -117,6 +117,7 @@ check('MAC-I: the same torch forty units off reaches nothing', out.farFromTorch.
 check('MAC-I: white tint leaves the sprite alone', out.pixelWhite[0] === 255 && out.pixelWhite[1] === 255, JSON.stringify(out.pixelWhite));
 check('MAC-I: a quarter tint really is a quarter on screen', Math.abs(out.pixelQuarter[0] - 64) <= 2, JSON.stringify(out.pixelQuarter));
 check('MAC-I: the torch’s own light reaches the sprite as colour', out.pixelTorch[0] > out.pixelTorch[2], JSON.stringify(out.pixelTorch));
+check('BLACK-ARMS: an RGB tint leaves the sprite OPAQUE - the alpha the triple lacks is 1, not NaN', out.pixelTorch[3] === 255, JSON.stringify(out.pixelTorch));
 // THE DEFECT, MEASURED. With no viewmodel light the pass takes the FRAME's
 // light on geometry that sits at the origin of a camera-local space: a black
 // room's ambient and nothing else, because every point light in it is a room

@@ -137,13 +137,15 @@ test('audit26 F165: the question hugs the right margin, the answer the left', ()
 
 // ---------------------------------------------------------------
 // F171: TextBox.maxCharacters defaults to 31 (TextBox.cs:26) and
-// RenameItem imposes no cap of its own.
+// RenameItem imposes no cap of its own. CM3 moved the field into the
+// shared DaggerfallInputMessageBox rather than keeping an inline copy.
 // ---------------------------------------------------------------
 test('audit26 F171: the rename field takes 31 characters, not 26', () => {
   assert.equal(MAX_ITEM_NAME, 31);
-  assert.match(src('src/ui/itemMakerWindow.js'),
-    /if \(ch && this\.itemName\.length < MAX_ITEM_NAME\) this\.itemName \+= ch;/);
-  assert.equal(/this\.itemName\.length < 26/.test(src('src/ui/itemMakerWindow.js')), false,
+  const s = src('src/ui/itemMakerWindow.js');
+  assert.match(s, /new InputMessageBoxWindow\(\{/);
+  assert.match(s, /maxCharacters: MAX_ITEM_NAME/);
+  assert.equal(/this\.itemName\.length < 26/.test(s), false,
     'the old cap is gone, not merely shadowed');
 });
 

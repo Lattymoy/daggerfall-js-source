@@ -1,0 +1,18 @@
+[
+ { "name": "CRUX1-no-door-no-dungeon", "file": "src/scenes/worldModes.js",
+   "old": "    const hit = dungeonStartDoorFor(entries.filter((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE), host.dungeonStartSite?.() ?? null, locationKey);", "new": "    const hit = dungeonStartDoorFor(entries.filter((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE), null, locationKey);", "tests": ["test/crux1.test.js"] },
+ { "name": "CRUX1-a-doorless-site-without-a-dungeon-is-entered", "file": "src/scenes/world.js",
+   "old": "      if (!dfLocation?.hasDungeon) return null;\n      return { dfLocation, climateBase:", "new": "      if (!dfLocation) return null;\n      return { dfLocation, climateBase:", "tests": ["test/crux1.test.js"] },
+ { "name": "CRUX1-the-site-takes-the-exterior-season", "file": "src/scenes/world.js",
+   "old": "season: INTERIOR_SEASON, group: key, door: null, dfBlock: null, recordIndex: -1 };", "new": "season: climateSeasonFromMinutes(worldMinutes()), group: key, door: null, dfBlock: null, recordIndex: -1 };", "tests": ["test/crux1.test.js"] },
+ { "name": "CRUX1-the-child-quests-throw-takes-the-parent", "file": "src/systems/quest/machine.js",
+   "old": "    try {\n      return this.scheduleQuest(lines, factionId, opts);\n    } catch (ex) {\n      console.warn(`[quest] Parsing quest ${questName} FAILED!\\r\\n${ex?.message ?? ex}`);\n      return null;\n    }", "new": "    return this.scheduleQuest(lines, factionId, opts);", "tests": ["test/crux1.test.js"] },
+ { "name": "CRUX1-the-videos-overlap-again", "file": "src/systems/quest/videoQueue.js",
+   "old": "    const turn = chain.then(() => play(name)).catch(() => undefined).finally(() => { depth--; });", "new": "    const turn = Promise.resolve().then(() => play(name)).catch(() => undefined).finally(() => { depth--; });", "tests": ["test/crux1.test.js"] },
+ { "name": "CRUX1-a-failed-video-holds-the-chain", "file": "src/systems/quest/videoQueue.js",
+   "old": "    const turn = chain.then(() => play(name)).catch(() => undefined).finally(() => { depth--; });\n    chain = turn;", "new": "    const turn = chain.then(() => play(name)).finally(() => { depth--; });\n    chain = turn;", "tests": ["test/crux1.test.js"] },
+ { "name": "CRUX1-the-host-plays-videos-outside-the-queue", "file": "src/scenes/world.js",
+   "old": "    playVideo: (name) => { _questVideos(name); },", "new": "    playVideo: (name) => { _questVideos(name); _questVideos(name); },", "tests": ["test/crux1.test.js"] },
+ { "name": "CRUX1-the-vampire-wakes-at-the-door-again", "file": "src/scenes/world.js",
+   "old": "      const entered = await (modes?.startInDungeon?.() ?? false);   // CRUX1: insideDungeon true - the crypt, not its door\n", "new": "", "tests": ["test/crux1.test.js"] }
+]

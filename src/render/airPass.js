@@ -100,9 +100,24 @@ export const AIR_AO_SCALE = 0.5;
 export const AIR_BLOOM_SCALE = 0.25;
 /** The hemisphere's radius in world units (a door is ~2 tall), the sample
  *  count, the strength (1 = a fully occluded crevice loses all ambient),
- *  and the depth bias against self-occlusion. */
+ *  and the depth bias against self-occlusion.
+ *
+ *  HQ1 (2026-09-23, Mac: "make some insane improvements to our lighting system"): HORIZON-BASED. EL3's occlusion
+ *  scattered twelve points through a hemisphere and counted the ones the depth image put behind a surface - a
+ *  coin toss per sample, so a crevice's darkness was a speckle the blur then smeared, and a flat floor beside a
+ *  wall took as much as the corner itself. This is the ground-truth form (GTAO, Jimenez 2016): in each of
+ *  AIR_AO_DIRECTIONS screen-space slices through the pixel, march AIR_AO_SAMPLES steps out each way along the
+ *  slice to the radius, keep the HIGHEST horizon angle either side (the steepest thing that could shade this
+ *  point), and integrate the cosine-weighted visibility of the arc between the two horizons - which is exactly
+ *  the ambient light a hemisphere of that shape lets in. The slices turn with the ordered rotation (EL6's Bayer:
+ *  the 4x4 box blur averages exactly one tile of it), and a step's distance falls off its weight so a wall
+ *  beyond the radius shades nothing. The result is smooth where the surface is flat, dark where two surfaces
+ *  meet, and reads the depth image no more times than EL3 did. */
 export const AIR_AO_RADIUS = 0.8;
-export const AIR_AO_SAMPLES = 12;
+export const AIR_AO_SAMPLES = 6;       // HQ1: steps per side of a slice
+export const AIR_AO_DIRECTIONS = 2;    // HQ1: slices per pixel (the blur's tile completes the turn)
+export const AIR_AO_STORE = 0.5;       // AUDIT HQ1: the AO image holds a pixel's UNCLAMPED share at this scale (two slices of a grazing floor reach 1.1; one reaches 1.55)
+export const AIR_AO_FALLOFF = 0.6;     // AUDIT HQ1: the share of the radius over which a step's claim eases to nothing (the reference's 0.615)
 export const AIR_AO_STRENGTH = 1.0;
 export const AIR_AO_BIAS = 0.02;
 /** EL6: how much of the AO the resolve applies to the whole frame (the
@@ -124,8 +139,6 @@ export const AIR_GLARE_SIZE = 0.25;   // EL7: a glare the size of a flame, not a
  *  candle, a lantern placed above its flat) drew a bright ball "not
  *  connected to the source". */
 export const AIR_GLARE_SLACK = 0.25;   // F4 (2026-09-17, Mac: "bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for "a flame" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else
-/** EL7: no glare for a light this close to the eye - the carried torch and the candle. */
-export const AIR_GLARE_MIN_DISTANCE = 1.5;
 /** EL8: SCREEN-SPACE CONTACT SHADOWS - for every lantern that has no caster
  *  slot (the forty-two past the six), a march from the fragment toward the
  *  light through the PREVIOUS frame's depth, reprojected by the previous
@@ -156,6 +169,16 @@ export const AIR_GLARE_MAX_RANGE = 120;
 /** The shafts: taps along the ray, the per-tap decay, the gain, the
  *  angular reach of the sun's mask (in the shaft image's UV). */
 export const AIR_SHAFT_TAPS = 32;
+/** VOL1 (2026-09-23, Mac: "Continue" - the second arc's last step): THE LANTERNS' GLOW THROUGH THEIR SHADOWS.
+ *  EL1's glow was one closed-form integral per lantern per FRAGMENT in every world shader, and it knew nothing of
+ *  what stood between the lantern and the air: a lamp behind a pillar glowed through it. The glow is the air
+ *  pass's now, at the bloom's size: per pixel, each lantern's overlap with the view ray is walked in AIR_VOL_STEPS
+ *  jittered steps, each step's share of the same integrand (1 / (h^2 + s^2), elScatter's) let through by the
+ *  lantern's own cube map (one tap, pointShadowOne), a lantern with no map keeping the closed form; the sum is
+ *  tonemapped as elFinish tonemaps it, blurred once (the jitter), and added at the resolve. Fewer fragments walk
+ *  fewer lights (a sixteenth of the pixels), and a wall casts its shadow into the air. */
+export const AIR_VOL_STEPS = 8;
+export const AIR_VOL_BLUR_SHARE = 0.15;   // VOL1: a blur tap counts while its view distance is within this share of the centre's
 export const AIR_SHAFT_DECAY = 0.96;
 export const AIR_SHAFT_STRENGTH = 0.35;
 export const AIR_SHAFT_REACH = 0.35;
@@ -230,23 +253,6 @@ export function sunScreenUV(proj, view, lightDir) {
   return [cx / cw * 0.5 + 0.5, cy / cw * 0.5 + 0.5];
 }
 
-/** The hemisphere kernel: n samples in the +z hemisphere, more of them
- *  near the origin (scale = lerp(0.1, 1, (i/n)^2)), from a fixed
- *  linear-congruential stream so every page draws the same noise. */
-export function aoKernel(n = AIR_AO_SAMPLES) {
-  const out = new Float32Array(n * 3);
-  let seed = 0x2545F491;
-  const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-  for (let i = 0; i < n; i++) {
-    let x = rnd() * 2 - 1, y = rnd() * 2 - 1, z = rnd();
-    const l = Math.hypot(x, y, z) || 1;
-    x /= l; y /= l; z /= l;
-    const t = i / n;
-    const scale = (0.1 + 0.9 * t * t) * rnd();
-    out[i * 3] = x * scale; out[i * 3 + 1] = y * scale; out[i * 3 + 2] = z * scale;
-  }
-  return out;
-}
 
 /** A lantern's glare sprite size, world units, from its range. */
 export function glareSize(range) {
@@ -272,6 +278,14 @@ float depthAt(vec2 wuv) {
 
 
 
+/** DISC7: the rect the previous frame's depth was written under, as the contact block samples it - the world
+ *  viewport in pixels (GL's bottom-left origin, `rect`) over the canvas it sits in (`canvas`, [W, H]). */
+export function holdPrevRect(out, rect, canvas) {
+  const W = canvas[0] > 0 ? canvas[0] : 1, H = canvas[1] > 0 ? canvas[1] : 1;
+  out[0] = rect[0] / W; out[1] = rect[1] / H; out[2] = rect[2] / W; out[3] = rect[3] / H;
+  return out;
+}
+
 /** EL8: THE CONTACT BLOCK, for the lit lane shaders (a solid's, the terrain's,
  *  a rig's - not a flat's): light i without a caster slot takes a contact
  *  shadow off the previous frame's depth. `toLight` is the unit direction,
@@ -281,6 +295,13 @@ uniform sampler2D uPrevDepth;
 uniform mat4 uPrevVP;
 uniform vec4 uPrevProjInfo;   // the previous frame's projection terms (viewDist)
 uniform vec4 uContactParams;  // x length, y thickness, z floor, w 1 = on
+// DISC7: the previous frame's WORLD RECT in the canvas, normalised (x, y, w, h). uPrevVP's clip space covers the
+// world viewport, and the depth it was written under is the whole canvas - a docked large HUD takes the bottom of it.
+// Every other screen pass maps through its rect (DEPTH_GLSL's depthAt); this block read the canvas as if the rect
+// were all of it, so under the docked bar every sample came from the wrong row and near the bottom from the bar's
+// cleared strip. The bounds tests stay in the rect's own [0,1].
+uniform vec4 uPrevRect;
+vec2 prevDepthUV(vec2 wuv) { return uPrevRect.xy + wuv * uPrevRect.zw; }
 float contactShadow(vec3 wp, vec3 n, vec3 toLight, float dist) {
   if (uContactParams.w <= 0.0) return 1.0;
   float len = min(dist, uContactParams.x);
@@ -295,7 +316,7 @@ float contactShadow(vec3 wp, vec3 n, vec3 toLight, float dist) {
   if (c0.w <= 0.0) return 1.0;
   vec2 uv0 = c0.xy / c0.w * 0.5 + 0.5;
   if (uv0.x < 0.0 || uv0.x > 1.0 || uv0.y < 0.0 || uv0.y > 1.0) return 1.0;
-  float z0 = texture(uPrevDepth, uv0).r * 2.0 - 1.0;
+  float z0 = texture(uPrevDepth, prevDepthUV(uv0)).r * 2.0 - 1.0;
   if (abs(c0.w - uPrevProjInfo.w / (z0 + uPrevProjInfo.z)) > uContactParams.y) return 1.0;
   for (int i = 1; i <= ${AIR_CONTACT_STEPS}; i++) {
     vec3 p = start + toLight * (len * float(i) / ${glslFloat(AIR_CONTACT_STEPS)});
@@ -303,7 +324,7 @@ float contactShadow(vec3 wp, vec3 n, vec3 toLight, float dist) {
     if (c.w <= 0.0) break;
     vec2 uv = c.xy / c.w * 0.5 + 0.5;
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) break;
-    float z = texture(uPrevDepth, uv).r * 2.0 - 1.0;
+    float z = texture(uPrevDepth, prevDepthUV(uv)).r * 2.0 - 1.0;
     float sceneDist = uPrevProjInfo.w / (z + uPrevProjInfo.z);
     float behind = c.w - sceneDist;   // c.w is the point's view distance under that projection
     if (behind > 0.02 && behind < uContactParams.y) return uContactParams.z;
@@ -352,6 +373,7 @@ uniform sampler2D uFrame;
 uniform sampler2D uPrev;   // AUDIT-EL F16: the eye's own multiplier, divided out - the frame is the ADAPTED image
 uniform vec4 uRect;     // the world rect in canvas pixels
 uniform vec2 uCanvas;
+uniform sampler2D uVol;    // AUDIT VOL1: the glow the resolve will add - the eye adapts to the frame it will see
 ${CODEC_GLSL}
 out vec4 outColor;
 void main() {
@@ -366,7 +388,7 @@ void main() {
     for (int x = 0; x < 4; x++) {
       vec2 t = vUV + (vec2(float(x), float(y)) + 0.5) * cell * 0.25 - cell * 0.5;
       vec2 uv = (uRect.xy + t * uRect.zw) / uCanvas;
-      vec3 c = airDecode(texture(uFrame, uv).rgb);
+      vec3 c = airDecode(texture(uFrame, uv).rgb) + airDecode(texture(uVol, t).rgb);   // AUDIT VOL1
       acc += log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)) / prev, 1e-9));
     }
   }
@@ -404,11 +426,12 @@ uniform sampler2D uFrame;
 uniform vec4 uRect;
 uniform vec2 uCanvas;
 uniform float uThreshold;
+uniform sampler2D uVol;   // AUDIT VOL1: a halo's core is bright enough to bloom
 ${CODEC_GLSL}
 out vec4 outColor;
 void main() {
   vec2 uv = (uRect.xy + vUV * uRect.zw) / uCanvas;
-  vec3 c = airDecode(texture(uFrame, uv).rgb);
+  vec3 c = airDecode(texture(uFrame, uv).rgb) + airDecode(texture(uVol, vUV).rgb);
   float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
   float k = smoothstep(uThreshold, 1.0, lum);
   outColor = vec4(c * k, 1.0);
@@ -427,6 +450,7 @@ uniform vec2 uCanvas;
 uniform vec4 uGrade;     // bloom gain, shaft gain, vignette, contrast
 uniform sampler2D uAO;   // EL6: the occlusion off the frame's own depth
 uniform float uAOMix;
+uniform sampler2D uVol;  // VOL1: the lanterns' glow, tonemapped, through their shadows
 ${CODEC_GLSL}
 ${BAYER_GLSL}
 out vec4 outColor;
@@ -436,6 +460,7 @@ void main() {
   if (wuv.x >= 0.0 && wuv.x <= 1.0 && wuv.y >= 0.0 && wuv.y <= 1.0) {
     c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole
     c += texture(uBloom, wuv).rgb * uGrade.x + texture(uShaft, wuv).rgb * uGrade.y;
+    c += airDecode(texture(uVol, wuv).rgb);   // VOL1: what elFinish added per fragment, once per pixel and shadowed
     float r = length((wuv - 0.5) * 2.0);
     c *= 1.0 - uGrade.z * smoothstep(0.55, 1.35, r);
   }
@@ -454,42 +479,210 @@ precision highp float;
 in vec2 vUV;
 ${DEPTH_GLSL}
 ${BAYER_GLSL}
-uniform vec3 uKernel[${AIR_AO_SAMPLES}];
 uniform vec4 uAOParams;     // radius, strength, bias, unused
 out vec4 outColor;
-vec3 posAt(vec2 uv) {
+// AUDIT HQ1: THE POINT IS THE TEXEL'S. A depth read lands on a whole texel of the frame's depth image, but the
+// position was reconstructed at the SAMPLE's own screen coordinate - a texel's depth paired with a point up to
+// half a texel away from it - so a flat floor came back a hair above and below its own plane, texel by texel,
+// and more so with distance (the depth slope per texel grows): the far floor of the probe read 0.73 with nothing
+// near it. The uv is snapped to the texel's centre first, in the canvas's own pixels (the depth image is the
+// canvas's; the world rect maps into it), so a surface point IS a point of the surface.
+vec2 texelUV(vec2 wuv) {
+  vec2 px = floor(uRect.xy + wuv * uRect.zw) + 0.5;
+  return (px - uRect.xy) / uRect.zw;
+}
+vec3 posAt(vec2 uvIn) {
+  vec2 uv = texelUV(uvIn);
   float z = depthAt(uv) * 2.0 - 1.0;
   float vz = -uProjInfo.w / (z + uProjInfo.z);
   vec2 ndc = uv * 2.0 - 1.0;
   return vec3(ndc.x * (-vz) / uProjInfo.x, ndc.y * (-vz) / uProjInfo.y, vz);
 }
+// HQ1: the horizon along one side of a slice - the highest angle (as a cosine against the view vector) any step
+// reaches, each step's claim weighted down by its distance so the radius is a soft edge and not a cliff
+float horizonAt(vec3 p, vec3 n, vec3 v, vec2 uv, vec2 dir, float radiusPx, float bias) {
+  float h = -1.0;
+  for (int i = 1; i <= ${AIR_AO_SAMPLES}; i++) {
+    float t = (float(i) - 0.5) / ${AIR_AO_SAMPLES}.0;
+    vec2 suv = uv + dir * t * radiusPx;
+    if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) break;
+    vec3 s = posAt(suv) - p;
+    float d = length(s);
+    float c = dot(s, v) / max(d, 1e-5);
+    float w = clamp((uAOParams.x - d) / (uAOParams.x * ${AIR_AO_FALLOFF}), 0.0, 1.0);   // a step's claim is whole to 1 - AIR_AO_FALLOFF of the radius, then eases to nothing at it (the reference's own shape)
+    c = mix(-1.0, c, w);
+    // AUDIT HQ1: a step must RISE above the surface's own plane by the bias to be a horizon - a flat floor read off
+    // a half-size depth image lands a hair above and below its own plane texel by texel, and without this every
+    // flat surface shaded itself a fifth (the crate top read 0.81 on the probe)
+    if (dot(s, n) > bias) h = max(h, c);
+  }
+  return h;
+}
 void main() {
   float d0 = depthAt(vUV);
   if (d0 >= 0.99999) { outColor = vec4(1.0); return; }
   vec3 p = posAt(vUV);
+  // AUDIT HQ1: the quad's derivative stands. A normal from the nearer neighbour each way (the silhouette-edge
+  // mitigation) was tried and read WORSE on SwiftShader (the crate's two flanks 0.71 / 0.95 against 0.95 / 0.96
+  // here); the depth-aware blur keeps an edge quad's normal from smearing past its edge.
   vec3 n = normalize(cross(dFdx(p), dFdy(p)));
   if (dot(n, -p) < 0.0) n = -n;   // a normal faces the eye whatever the projection's handedness did to the derivatives
-  // EL6: the kernel's rotation is a 4x4 ORDERED pattern, not a hash - the 4x4
+  vec3 v = normalize(-p);
+  // the radius on screen, in the AO image's uv: the world radius over the view distance, through the focal term
+  // (AUDIT HQ1: its magnitude - the hosts' projection is x-mirrored, so proj[0] is negative)
+  float radiusPx = uAOParams.x * abs(uProjInfo.x) / max(-p.z, 1e-3) * 0.5;
+  // EL6: the slices' rotation is a 4x4 ORDERED pattern, not a hash - the 4x4
   // box blur after it averages exactly one tile, so the pattern cancels; a
   // hash was grain that never cancelled, and in the dark the grain was all
   // a texture had ("textures in the dark look weird")
-  float ang = bayer4(gl_FragCoord.xy) * 6.2831853;
-  vec3 rnd = vec3(cos(ang), sin(ang), 0.0);
-  vec3 t = normalize(rnd - n * dot(rnd, n));
-  vec3 b = cross(n, t);
-  mat3 tbn = mat3(t, b, n);
-  float radius = uAOParams.x;
-  float occ = 0.0;
-  for (int i = 0; i < ${AIR_AO_SAMPLES}; i++) {
-    vec3 s = p + tbn * uKernel[i] * radius;
-    vec2 suv = vec2(s.x * uProjInfo.x, s.y * uProjInfo.y) / (-s.z) * 0.5 + 0.5;
-    if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) continue;
-    float sz = posAt(suv).z;
-    float range = smoothstep(0.0, 1.0, radius / abs(p.z - sz));
-    occ += (sz >= s.z + uAOParams.z ? 1.0 : 0.0) * range;
+  // AUDIT HQ1: a quarter turn, not a whole one - a slice is a LINE through the pixel and the second slice is the
+  // first's perpendicular, so orientations repeat every quarter turn; sixteen levels over a whole turn were four
+  // orientations said four times, which the 4x4 blur tile could not tell apart (rows paired up on the probe)
+  float ang = bayer4(gl_FragCoord.xy) * 1.5707963;
+  float vis = 0.0;
+  for (int k = 0; k < ${AIR_AO_DIRECTIONS}; k++) {
+    float a = ang + float(k) * ${(Math.PI / 2).toFixed(7)};   // HQ1: the slices a quarter turn apart
+    // AUDIT HQ1: the march is a CIRCLE IN VIEW SPACE. A uv step (du, dv) is a view step (du / proj[0], dv / proj[5])
+    // times the depth, so a view-space circle of radius r is the uv ellipse (cos a, sin a * |proj[5] / proj[0]|) *
+    // r * |proj[0]| / (2 depth) - the y term carries the ASPECT, |proj[5] / proj[0]| (1.6 at 16:9). The first cut
+    // had the ratio upside down, so the vertical marches reached a third of the radius and a floor's own plane read
+    // as a horizon where the too-short slice met its neighbour's.
+    vec2 dir = vec2(cos(a), sin(a) * abs(uProjInfo.y / uProjInfo.x));
+    // the slice's plane: the view vector and the marched direction IN VIEW SPACE - the unscaled circle, with screen
+    // +x being view -x under the hosts' mirrored projection (proj[0] < 0) - so the marched side and the projected
+    // normal's side agree, or the horizons' clamps land on the wrong sides
+    vec3 sliceDir = normalize(vec3(dir.x / uProjInfo.x, dir.y / uProjInfo.y, 0.0));   // AUDIT HQ1: exactly the view step a uv step of dir is (posAt divides by the same terms) - the sign and the aspect fall out of it
+    vec3 axis = normalize(cross(sliceDir, v));
+    vec3 np = n - axis * dot(n, axis);
+    float npl = length(np);
+    if (npl < 1e-4) continue;   // AUDIT HQ1: a slice the normal has no part in weighs nothing (the sum is weighted by the projected normal's length, and averages to one over the slices)
+    np /= npl;
+    float gamma = sign(dot(np, sliceDir)) * acos(clamp(dot(np, v), -1.0, 1.0));   // the projected normal's angle off the view vector, signed toward the slice
+    float h1 = acos(clamp(horizonAt(p, n, v, vUV, -dir, radiusPx, uAOParams.z), -1.0, 1.0));   // the horizon angles either side, from the view vector: h1 the -dir side
+    float h2 = acos(clamp(horizonAt(p, n, v, vUV, dir, radiusPx, uAOParams.z), -1.0, 1.0));    // h2 the +dir side (gamma is signed toward +dir)
+    // the arc the projected normal lets in: clamp each horizon to the hemisphere about it
+    h1 = gamma + max(-h1 - gamma, -1.5707963);
+    h2 = gamma + min(h2 - gamma, 1.5707963);
+    // the cosine-weighted visibility of the arc [h1, h2] about gamma (GTAO's inner integral, closed form)
+    float a1 = 0.25 * (-cos(2.0 * h1 - gamma) + cos(gamma) + 2.0 * h1 * sin(gamma));
+    float a2 = 0.25 * (-cos(2.0 * h2 - gamma) + cos(gamma) + 2.0 * h2 * sin(gamma));
+    vis += npl * (a1 + a2);
   }
-  float ao = 1.0 - occ / ${AIR_AO_SAMPLES}.0 * uAOParams.y;
-  outColor = vec4(vec3(ao), 1.0);
+  // AUDIT HQ1: NOT CLAMPED HERE. A slice's unoccluded visibility is |np| (cos gamma + gamma sin gamma), which is
+  // one only AVERAGED over every slice direction (0.2 to 1.55 for one slice of a floor seen at a grazing angle) -
+  // so two slices of one pixel read 0.87 to 1.09 by the pixel's rotation, and clamping each pixel to one before
+  // the blur averaged the losses and kept none of the gains: a flat floor read 0.85 at some rotations and 0.97 blurred.
+  // The pixel stores its share at half scale (the byte holds to 2.0) and the blur, which averages exactly one tile
+  // of rotations, is where one is one again - and where the strength and the clamp are applied.
+  outColor = vec4(vec3(vis / ${AIR_AO_DIRECTIONS}.0 * ${AIR_AO_STORE}), 1.0);
+}`;
+
+/** VOL1: the march - built with the lane's curve and integral and the shadow block handed in (this file is a leaf).
+ *  AUDIT VOL1: with a float target (`linear`) the pixel stores its LINEAR estimate and the tile's blur averages light;
+ *  the tone pass (volToneFs) then tonemaps the average once. Tonemapping each pixel's eight-step estimate before the
+ *  blur dimmed a halo's core by a quarter at a lantern's range of 14 (Jensen: the mean of a concave curve's values is
+ *  under the curve of the mean), and a lantern's core changed brightness as it took or lost a caster slot. Without a
+ *  float target the old path stands, documented: tonemapped and encoded per pixel, blurred so. */
+const volFs = ({ shadow, tonemap, scatter }, maxLights, linear) => `#version 300 es
+precision highp float;
+in vec2 vUV;
+${DEPTH_GLSL}
+${BAYER_GLSL}
+${CODEC_GLSL}
+${AIR_ADAPT_GLSL}
+uniform vec3 uCamPos;
+uniform mat3 uViewRot;              // world from view: the view's rotation, transposed
+uniform vec4 uPointLights[${maxLights}];
+uniform vec3 uPointColors[${maxLights}];
+uniform int uPointCount;
+uniform float uScatter;             // the lane's gain x the fog's density (uELScatter's own value)
+uniform float uExposure;
+${shadow}
+${tonemap}
+${scatter}
+out vec4 outColor;
+void main() {
+  vec2 ndc = vUV * 2.0 - 1.0;
+  vec3 vd = vec3(ndc.x / uProjInfo.x, ndc.y / uProjInfo.y, -1.0);   // the view ray through this pixel (posAt's own terms)
+  float vlen = length(vd);
+  vec3 dir = uViewRot * (vd / vlen);
+  float dist = viewDist(depthAt(vUV)) * vlen;   // the surface's distance along the ray; the sky's is the far plane's
+  float jitter = bayer4(gl_FragCoord.xy);
+  vec3 acc = vec3(0.0);
+  for (int i = 0; i < ${maxLights}; i++) {
+    if (i >= uPointCount) break;
+    vec4 Lr = uPointLights[i];
+    vec3 rel = Lr.xyz - uCamPos;
+    float range = Lr.w;
+    if (length(rel) > dist + range) continue;   // EL6: a lantern farther than the ray reaches plus its range glows on no part of it
+    int k = uCasterOf[i];
+    if (k < 0) { acc += elScatter(rel, range, dir, dist) * uPointColors[i]; continue; }   // no map (the hand's light, a far lantern): the closed form, as before
+    // the march: the same integrand as elScatter's, at AIR_VOL_STEPS points across the ray's CHORD through the
+    // sphere (AUDIT VOL1: a ray that misses the sphere walks nothing), each let through by the caster's cube - the
+    // jitter spreads the steps over the 4x4 tile the blur averages
+    float t0 = dot(rel, dir);
+    vec3 hv = rel - dir * t0;
+    float hraw = dot(hv, hv);
+    float chord = range * range - hraw;
+    if (chord <= 0.0) continue;
+    chord = sqrt(chord);
+    float h2 = max(hraw, 0.0625);
+    float ta = max(0.0, t0 - chord), tb = min(dist, t0 + chord);
+    if (tb <= ta) continue;
+    float dt = (tb - ta) / ${AIR_VOL_STEPS}.0;
+    float sum = 0.0;
+    for (int s = 0; s < ${AIR_VOL_STEPS}; s++) {
+      float t = ta + (float(s) + jitter) * dt;
+      float ds = t - t0;
+      sum += pointShadowOne(k, uCamPos + dir * t) / (h2 + ds * ds);
+    }
+    acc += sum * dt * uPointColors[i];
+  }
+  ${linear
+    ? 'outColor = vec4(acc, 1.0);   // linear light, unclamped: the blur averages it and the tone pass curves the average'
+    : 'outColor = vec4(airEncode(elTonemapRGB(acc * uScatter * uExposure * elAdapt())), 1.0);   // no float target: tonemapped here, as elFinish tonemaps the glow it adds'}
+}`;
+
+/** AUDIT VOL1: the tone pass - the blurred linear glow through the lane's curve, once, into the byte image the eye,
+ *  the bloom and the resolve read (as elFinish tonemaps the glow it adds). Only with a float target. */
+const volToneFs = ({ tonemap }) => `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uSrc;
+uniform float uScatter;
+uniform float uExposure;
+${CODEC_GLSL}
+${AIR_ADAPT_GLSL}
+${tonemap}
+out vec4 outColor;
+void main() {
+  outColor = vec4(airEncode(elTonemapRGB(texture(uSrc, vUV).rgb * uScatter * uExposure * elAdapt())), 1.0);
+}`;
+
+// VOL1: THE GLOW'S BLUR IS DEPTH-AWARE TOO. A ray to a near wall glows little (short, far from the lantern) and the ray
+// past the wall's edge glows much; a plain blur put the second on the first - the lantern's light bleeding onto the
+// wall that hides it (the lighting probe read the wall a third brighter). One 4x4 tile of the ordered jitter, a tap
+// counting only while its view distance is within AIR_VOL_BLUR_SHARE of the centre's own (a share, not a range: the
+// glow is a ray's, and rays to the same surface differ in length by little whatever their length).
+const VOLBLUR_FS = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uSrc;
+uniform vec2 uTexel;
+${DEPTH_GLSL}
+out vec4 outColor;
+void main() {
+  float here = viewDist(depthAt(vUV));
+  vec3 acc = vec3(0.0); float wsum = 0.0;
+  for (int y = -2; y < 2; y++) {
+    for (int x = -2; x < 2; x++) {
+      vec2 uv = vUV + (vec2(float(x), float(y)) + 0.5) * uTexel;
+      float w = abs(viewDist(depthAt(uv)) - here) <= here * ${AIR_VOL_BLUR_SHARE} ? 1.0 : 0.0;
+      acc += texture(uSrc, uv).rgb * w;
+      wsum += w;
+    }
+  }
+  outColor = vec4(wsum > 0.0 ? acc / wsum : texture(uSrc, vUV).rgb, 1.0);
 }`;
 
 // EL7: THE BLUR IS DEPTH-AWARE. A plain box averaged a wall's occlusion into
@@ -502,6 +695,7 @@ in vec2 vUV;
 uniform sampler2D uSrc;
 uniform vec2 uTexel;
 uniform float uBlurRange;
+uniform float uStrength;   // AUDIT HQ1: the strength on the occlusion, after the tile's average
 ${DEPTH_GLSL}
 out vec4 outColor;
 void main() {
@@ -515,7 +709,9 @@ void main() {
       wsum += w;
     }
   }
-  outColor = vec4(vec3(wsum > 0.0 ? acc / wsum : 1.0), 1.0);
+  float ao = clamp(wsum > 0.0 ? acc / wsum / ${AIR_AO_STORE} : 1.0, 0.0, 1.0);   // AUDIT HQ1: the tile's average, unscaled, is where the clamp belongs
+  ao = 1.0 - (1.0 - ao) * uStrength;
+  outColor = vec4(vec3(ao), 1.0);
 }`;
 
 const GAUSS_FS = `#version 300 es
@@ -705,18 +901,20 @@ export class AirPass {
     const u = (p, n) => gl.getUniformLocation(p, n);
     const P = (vs, fs, names) => { const p = opts.build(vs, fs); const o = { p }; for (const n of names) o[n] = u(p, n); return o; };
     this.programs = {
-      ao: P(QUAD_VS, AO_FS, ['uDepth', 'uProjInfo', 'uKernel', 'uAOParams', 'uRect', 'uCanvas']),
-      box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel', 'uBlurRange', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),
+      ao: P(QUAD_VS, AO_FS, ['uDepth', 'uProjInfo', 'uAOParams', 'uRect', 'uCanvas']),   // HQ1: no kernel - the horizons march the slices
+      box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel', 'uBlurRange', 'uStrength', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),
       gauss: P(QUAD_VS, GAUSS_FS, ['uSrc', 'uDir']),
       shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect']),   // VC6c: the cloud in front of the sun
       emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
       emitBb: P(opts.vs.bb, EMIT_BB_FS, ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uTex', 'uEmissionTex', 'uFlatWind', 'uSway', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
       glare: P(GLARE_VS, GLARE_FS, ['uProj', 'uView', 'uCenter', 'uSize', 'uDepth', 'uColor', 'uProjInfo', 'uRect', 'uCanvas']),
       // EL4
-      lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas']),
+      lum: P(QUAD_VS, LUM_FS, ['uFrame', 'uPrev', 'uRect', 'uCanvas', 'uVol']),   // AUDIT VOL1: the eye sees the glow
       adapt: P(QUAD_VS, ADAPT_FS, ['uPrev', 'uLum', 'uAdaptParams', 'uAdaptRates']),
-      bright: P(QUAD_VS, BRIGHT_FS, ['uFrame', 'uRect', 'uCanvas', 'uThreshold']),
-      resolve: P(QUAD_VS, RESOLVE_FS, ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade', 'uAO', 'uAOMix']),
+      bright: P(QUAD_VS, BRIGHT_FS, ['uFrame', 'uRect', 'uCanvas', 'uThreshold', 'uVol']),   // AUDIT VOL1: the glow's core blooms
+      resolve: P(QUAD_VS, RESOLVE_FS, ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade', 'uAO', 'uAOMix', 'uVol']),   // VOL1
+      volBlur: P(QUAD_VS, VOLBLUR_FS, ['uSrc', 'uTexel', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),   // VOL1: the tile's average, by depth
+      vol: null, volTone: null,   // VOL1: built below, only with the lane's GLSL in hand
     };
     // the fullscreen quad and the glare's corner quad
     this.quadVao = gl.createVertexArray();
@@ -734,15 +932,38 @@ export class AirPass {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
-    this.kernel = aoKernel();
     this.projInfo = new Float32Array(4);
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
+    // VOL1: the glow's programs, with the lane's blocks in hand. AUDIT VOL1: a float target where the GL has one (the
+    // linear path); and a shader the GL refuses (a link past its uniform budget) costs the glow alone, not the air pass
+    this.volLinear = !!(gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
+    if (opts.glsl) {
+      try {
+        const vol = P(QUAD_VS, volFs(opts.glsl, opts.maxLights ?? 48, this.volLinear), ['uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uCamPos', 'uViewRot', 'uPointLights', 'uPointColors', 'uPointCount', 'uScatter', 'uExposure', 'uAdapt']);
+        if (this.volLinear) this.programs.volTone = P(QUAD_VS, volToneFs(opts.glsl), ['uSrc', 'uScatter', 'uExposure', 'uAdapt']);
+        const p = vol.p;
+        // the march's shadow block, the names ShadowPass.upload binds by (the sun's are null here - the shader declares them and reads none)
+        this.programs.vol = vol;
+        vol.shadow = {
+          sunShadow: u(p, 'uSunShadow'), sunVP: u(p, 'uSunVP'), sunParams: u(p, 'uSunShadowParams'), sunTexel: u(p, 'uSunTexel'),
+          pointShadow: u(p, 'uPointShadow'), pointParams: u(p, 'uPointShadowParams'), shadowIndex: u(p, 'uShadowIndex'), casterOf: u(p, 'uCasterOf'),
+        };
+      } catch (e) {
+        this.programs.vol = null; this.programs.volTone = null;
+        console.warn('VOL1: the glow\'s shader did not build - the lane glows for itself', e);
+      }
+    }
+    this.fresh = false;   // AUDIT VOL1: prepared for a world frame and not yet resolved - the images are drawn for such a frame alone
+    this.volOn = true;                   // VOL1: the door (renderer.setVolumetrics)
+    this._viewRot = new Float32Array(9);
+    this._ones = new Float32Array(3 * (opts.maxLights ?? 48)).fill(1);
     this.shaftParams = new Float32Array([AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, 1]);
     this._noDeck = new Float32Array([0, 0, 0, 0]);   // VC6c: no cloud field - amount 0, full sun
     this.cloudShadow = null;   // VC6c: the frame's deck, set at the resolve
     this.f = null;   // EL6: the frame's inputs, from prepare() to composite()
     // EL8: the previous frame's view-projection and projection terms, for the contact march; valid once a frame has been prepared
     this.prevVP = new Float32Array(16); this.prevProjInfo = new Float32Array(4); this.prevValid = false;
+    this.prevRect = new Float32Array([0, 0, 1, 1]);   // DISC7: the previous frame's world rect in the canvas, normalised
     this.contactParams = new Float32Array([AIR_CONTACT_LENGTH, AIR_CONTACT_THICKNESS, AIR_CONTACT_FLOOR, 0]);
     this.pending = false;   // a resolve is owed to the frame
     this.width = 0; this.height = 0;
@@ -760,7 +981,7 @@ export class AirPass {
     this._lastResolve = 0;
     this.measured = false;   // AUDIT-EL F10
     this._now = opts.now ?? (() => (globalThis.performance?.now?.() ?? Date.now()));
-    this.stats = { emitDraws: 0, glares: 0, shafts: false };
+    this.stats = { emitDraws: 0, glares: 0, shafts: false, vol: false };   // VOL1: whether the glow was marched this frame
     this._identityView = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     this._planes = new Float32Array(24);   // EL5: the emission replay's frustum
     this._black = new Float32Array(3);
@@ -775,10 +996,11 @@ export class AirPass {
     const gl = this.gl;
     if (this.targets) this._free();
     this.width = w; this.height = h;
-    const color = (cw, ch) => {
+    const color = (cw, ch, linear = false) => {
       const tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, cw, ch, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      if (linear) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, cw, ch, 0, gl.RGBA, gl.HALF_FLOAT, null);   // AUDIT VOL1: the glow's linear light (EXT_color_buffer_float / _half_float)
+      else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, cw, ch, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -795,13 +1017,15 @@ export class AirPass {
       ao: color(aw, ah), aoBlur: color(aw, ah),
       bloom: color(bw, bh), bloomB: color(bw, bh),
       shaft: color(bw, bh),
+      vol: color(bw, bh, this.volLinear), volB: color(bw, bh, this.volLinear),   // VOL1: the glow and its blur, at the bloom's size (AUDIT VOL1: linear light in a float target where there is one)
     };
+    this.targets.volOut = this.volLinear ? color(bw, bh) : this.targets.volB;   // the byte image the eye, the bloom and the resolve read: the tone pass's, or the blurred tonemapped glow itself
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
   _free() {
     const gl = this.gl, t = this.targets;
-    for (const k of Object.keys(t)) { gl.deleteTexture(t[k].tex); gl.deleteFramebuffer(t[k].fbo); }
+    for (const x of new Set(Object.values(t))) { gl.deleteTexture(x.tex); gl.deleteFramebuffer(x.fbo); }   // AUDIT VOL1: volOut may alias volB - once each
     this.targets = null;
   }
 
@@ -921,16 +1145,17 @@ export class AirPass {
    */
   prepare(f) {
     const [, , w, h] = f.viewport;
-    if (!(w > 0 && h > 0)) { this.f = null; return; }   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)
+    if (!(w > 0 && h > 0)) { this.f = null; this.prevValid = false; return; }   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0); AUDIT DISC7 C7: and the next frame has no previous one - its held matrices and rect would be two frames old against last frame's depth
     this.resize(w, h);
     // EL8: the frame just resolved becomes the previous - its view-projection and terms, for the contact march
-    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }
+    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; holdPrevRect(this.prevRect, this.rect, this.canvas); }
     this.f = f;
+    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone
     this.rect.set(f.viewport);
     projInfo(f.proj, this.projInfo);
     multiply(f.proj, f.view, this._vp);
     this.measured = false;   // AUDIT-EL F10: set at the resolve, by whether the world drew
-    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false;   // this frame's, counted at the resolve
+    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.vol = false;   // this frame's, counted at the resolve
   }
 
   /**
@@ -949,7 +1174,7 @@ export class AirPass {
   /** EL6: the images, at the resolve, off the frame's depth. */
   _images() {
     const gl = this.gl, f = this.f, sp = f.shadows, T = this.targets, F = this.frame;
-    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false;
+    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.vol = false;
     this.measured = !!(sp && sp.count > 0);   // AUDIT-EL F10: a frame with no world in it (a video, a menu) is not one the eye adapts to
     const vp = multiply(f.proj, f.view, this._vp);
     const quad = (prog, target) => {
@@ -969,7 +1194,6 @@ export class AirPass {
     // 1. the ambient occlusion, then its box blur (exactly one tile of the ordered rotation)
     quad(this.programs.ao, T.ao);
     depthOn(this.programs.ao);
-    gl.uniform3fv(this.programs.ao.uKernel, this.kernel);
     gl.uniform4fv(this.programs.ao.uAOParams, this.aoParams);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     quad(this.programs.box, T.aoBlur);
@@ -978,7 +1202,10 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform2f(this.programs.box.uTexel, 1 / T.ao.w, 1 / T.ao.h);
     gl.uniform1f(this.programs.box.uBlurRange, AIR_AO_RADIUS);
+    gl.uniform1f(this.programs.box.uStrength, this.aoParams[1]);   // AUDIT HQ1
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // 1b. VOL1: the lanterns' glow, marched through their shadows, then blurred (the jitter's tile)
+    this._volumetrics(f, sp, quad, depthOn);
     // 2. the bloom source: the emitters (this frame's records, culled, occluded), and a glare per lantern
     gl.bindFramebuffer(gl.FRAMEBUFFER, T.bloom.fbo);
     gl.viewport(0, 0, T.bloom.w, T.bloom.h);
@@ -1016,6 +1243,59 @@ export class AirPass {
       gl.clear(gl.COLOR_BUFFER_BIT);
     }
     gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);
+  }
+
+  /** AUDIT VOL1: the images a frame the pass was not prepared for gets - black, so the resolve adds nothing of a
+   *  frame gone by (and the AO's mix is 0 for it already). */
+  _blank(quad) {
+    const gl = this.gl, T = this.targets;
+    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.vol = false;   // nothing drawn for it
+    gl.clearColor(0, 0, 0, 1);
+    for (const t of [T.bloom, T.shaft, T.volOut]) { quad(this.programs.box, t); gl.clear(gl.COLOR_BUFFER_BIT); }
+    if (this.f) gl.clearColor(this.f.clearColor[0], this.f.clearColor[1], this.f.clearColor[2], this.f.clearColor[3]);
+  }
+
+  /** VOL1: the glow image - the march for every lantern in the frame when the door is open and the fog gives the air a
+   *  density, black otherwise (the resolve adds it either way). AUDIT VOL1: the march writes linear light into the float
+   *  target, the tile's blur averages it, the tone pass curves the average into volOut - or, with no float target, the
+   *  march tonemaps per pixel and the blur's image is volOut itself. */
+  _volumetrics(f, sp, quad, depthOn) {
+    const gl = this.gl, P = this.programs, T = this.targets;
+    const L = f.pointLights, n = L ? L.length >> 2 : 0;
+    const on = !!P.vol && this.volOn && n > 0 && f.scatter > 0 && !!sp;
+    this.stats.vol = on;
+    if (!on) { quad(P.box, T.volOut); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]); return; }   // shut: the image the resolve reads, black
+    quad(P.vol, T.vol);
+    depthOn(P.vol);
+    gl.uniform3fv(P.vol.uCamPos, f.eye);
+    const v = f.view, R = this._viewRot;   // the view's rotation transposed: column j of the inverse is row j of the view
+    R[0] = v[0]; R[1] = v[4]; R[2] = v[8]; R[3] = v[1]; R[4] = v[5]; R[5] = v[9]; R[6] = v[2]; R[7] = v[6]; R[8] = v[10];
+    gl.uniformMatrix3fv(P.vol.uViewRot, false, R);
+    gl.uniform4fv(P.vol.uPointLights, L);
+    gl.uniform3fv(P.vol.uPointColors, f.pointColors ?? this._ones.subarray(0, n * 3));
+    gl.uniform1i(P.vol.uPointCount, n);
+    gl.uniform1f(P.vol.uScatter, f.scatter);
+    gl.uniform1f(P.vol.uExposure, f.exposure ?? 1);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex); gl.uniform1i(P.vol.uAdapt, 1);   // the eye, a frame old (as the world shaders read it)
+    gl.activeTexture(gl.TEXTURE0);
+    sp.upload(P.vol.shadow);   // the cube maps and the caster table, on their own units
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // the blur: the jitter spread the steps over the ordered tile; the tile's average, by depth, gathers it (into volB)
+    quad(P.volBlur, T.volB);
+    depthOn(P.volBlur);   // the depth on unit 0; the glow on unit 1
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.vol.tex); gl.uniform1i(P.volBlur.uSrc, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform2f(P.volBlur.uTexel, 1 / T.vol.w, 1 / T.vol.h);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (!P.volTone) return;   // no float target: volB is the tonemapped image the readers take
+    // the tone pass: the blurred linear light through the lane's curve, once
+    quad(P.volTone, T.volOut);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, T.volB.tex); gl.uniform1i(P.volTone.uSrc, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex); gl.uniform1i(P.volTone.uAdapt, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1f(P.volTone.uScatter, f.scatter);
+    gl.uniform1f(P.volTone.uExposure, f.exposure ?? 1);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
   _replayEmission(f, sp, vp, depthOn) {
@@ -1084,6 +1364,7 @@ export class AirPass {
     gl.uniform1i(loc.prevDepth, AIR_CONTACT_UNIT);
     gl.uniformMatrix4fv(loc.prevVP, false, this.prevVP);
     gl.uniform4fv(loc.prevProjInfo, this.prevProjInfo);
+    gl.uniform4fv(loc.prevRect, this.prevRect);   // DISC7
     this.contactParams[3] = live ? 1 : 0;
     gl.uniform4fv(loc.contactParams, this.contactParams);
   }
@@ -1108,11 +1389,9 @@ export class AirPass {
     gl.uniformMatrix4fv(P.uView, false, f.view);
     depthOn(P);   // EL5/EL6: the depth's reconstruction, off the frame's own
     gl.bindVertexArray(this.glareVao);
-    const eye = f.eye;
     for (let i = 0; i < n; i++) {
       const range = L[i * 4 + 3];
       if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern
-      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < AIR_GLARE_MIN_DISTANCE) continue;   // EL7: the torch in the hand, the candle
       if (f.carried && f.carried[i]) continue;   // MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat
       gl.uniform3f(P.uCenter, L[i * 4], L[i * 4 + 1], L[i * 4 + 2]);
       gl.uniform1f(P.uSize, glareSize(range));
@@ -1146,8 +1425,13 @@ export class AirPass {
       gl.useProgram(prog.p);
     };
     gl.activeTexture(gl.TEXTURE0);
-    // 0. EL6: the images, off the frame's depth (the frame is whole now)
-    if (this.f) this._images();
+    // 0. EL6: the images, off the frame's depth (the frame is whole now). AUDIT VOL1: for a frame the pass was PREPARED
+    // for - a world frame - and not otherwise: a menu's or a video's frame binds the frame target too, and its resolve
+    // used to paint the last world frame's glares, shafts and glow over it (the glow was the first to show); such a
+    // frame gets black images and no measure
+    if (this.f && this.fresh) this._images();
+    else { this._blank(quad); this.measured = false; }
+    this.fresh = false;
     gl.disable(gl.BLEND);
     gl.bindVertexArray(this.quadVao);
     // 1. the luminance image and its mean - AUDIT-EL F10: not off a frame the
@@ -1157,6 +1441,7 @@ export class AirPass {
     quad(P.lum, this.lum);
     gl.bindTexture(gl.TEXTURE_2D, F.tex);
     gl.uniform1i(P.lum.uFrame, 0);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.lum.uVol, 2); gl.activeTexture(gl.TEXTURE0);   // AUDIT VOL1: the eye adapts to the glow it will see
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.adapt[this.adaptIndex].tex); gl.uniform1i(P.lum.uPrev, 1);   // AUDIT-EL F16
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform4fv(P.lum.uRect, this.rect);
@@ -1182,6 +1467,7 @@ export class AirPass {
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.bindTexture(gl.TEXTURE_2D, F.tex);
     gl.uniform1i(P.bright.uFrame, 0);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.bright.uVol, 2); gl.activeTexture(gl.TEXTURE0);   // AUDIT VOL1: a halo's core blooms
     gl.uniform4fv(P.bright.uRect, this.rect);
     gl.uniform2fv(P.bright.uCanvas, this.canvas);
     gl.uniform1f(P.bright.uThreshold, AIR_BRIGHT_THRESHOLD);
@@ -1207,6 +1493,7 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.bloom.tex); gl.uniform1i(P.resolve.uBloom, 1);
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, T.shaft.tex); gl.uniform1i(P.resolve.uShaft, 2);
     gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, T.aoBlur.tex); gl.uniform1i(P.resolve.uAO, 3);   // EL6
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, T.volOut.tex); gl.uniform1i(P.resolve.uVol, 4);   // VOL1: the blurred, tonemapped glow
     gl.uniform1f(P.resolve.uAOMix, this.f ? AIR_AO_RESOLVE : 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform4fv(P.resolve.uRect, this.rect);

@@ -48,6 +48,11 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { bankingStatusRows } from '../systems/banking.js';   // AUDIT 64 F28: CreateBankingStatusBox's rows
 import { REGION_NAMES } from '../formats/mapsFile.js';       // GetLocalizedRegionName
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM4: the Name button's DaggerfallInputMessageBox
+import { ENTER_NEW_NAME } from './itemMakerWindow.js';          // CM4: Internal_Strings.enterNewName, homed with its first reader
+import { healthStatusRows } from '../systems/healthStatus.js';   // CM4: CreateHealthStatusBox's rows
+import { affiliations } from '../systems/affiliations.js';   // CM4: ShowAffiliationsDialog's book - GUILD-REP: one model, both skins
+import { firstHotkey } from '../systems/dialogShortcuts.js';   // CM4: the four buttons' DaggerfallShortcut bindings
 
 // U8a: the module-level art cache - hosts preload once at boot; a
 // failed load leaves the text fallback in charge.
@@ -137,9 +142,9 @@ export class LevelUpScreen {
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
     // AUDIT 58 (f3/input): + 'char:-'. This screen carries no
     // isChoiceWindow, so both hosts hand it overlayAction's answer
-    // (scenes/townTalk.js's keyed arm and ui/input.js:421-422) - and
+    // (scenes/townTalk.js's keyed arm and ui/input.js:528-529) - and
     // overlayAction can never answer 'minus', because its typed-
-    // character branch (ui/input.js:240) owns the hyphen. The bare
+    // character branch (ui/input.js:330) owns the hyphen. The bare
     // 'minus' arm stays: the SPINNER click (:405) and the sheet's own
     // code table (:196) both still produce it. Without this, a
     // level-up point could be spent from the keyboard and never taken
@@ -228,7 +233,7 @@ export const STATS_ROLLOUT_SPINNER = Object.freeze({ x: 176, y: 6, w: 15, h: 20,
  *  freeEdit OFF, so a moved stat draws green here. */
 export const STAT_MODIFIED_COLOR = Object.freeze([0, 1, 0, 1]);
 /** SelectStat + the spinner's two arrows, in both key vocabularies -
- *  the overlayAction names (ui/input.js:254-255) and the raw e.code a
+ *  the overlayAction names (ui/input.js:344-345) and the raw e.code a
  *  "native" window is handed. */
 const ROLLOUT_ACTIONS = Object.freeze({
   up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',
@@ -259,6 +264,47 @@ export const SKILL_HIGHLIGHT_COLOR = Object.freeze([219 / 255, 130 / 255, 40 / 2
 
 /** The four buttons that lead somewhere (:134-204). */
 export const NAV_BUTTONS = Object.freeze(['inventory', 'spellbook', 'logbook', 'history']);
+
+// ── CM4: the four RESIDUAL buttons - Name, Level, Health, Affiliations ──
+//
+// U32 wired the four navigation buttons; these four were still consumed
+// as no-ops ("pend their popups") until CM4. Each is what its
+// DaggerfallCharacterSheetWindow handler does (:769-812): ButtonClick,
+// then a pushed DaggerfallInputMessageBox (Name) or a ClickAnywhereToClose
+// DaggerfallMessageBox (the other three), owned as the sheet's `child`.
+
+/** TEXT.RSC record 19, "You have no affiliations." (ShowAffiliationsDialog :327-364). */
+export const NO_AFFILIATIONS_TEXT_ID = 19;
+/** Internal_Strings.levelProgress (LevelButton_OnMouseClick :784). */
+export const LEVEL_PROGRESS_PREFIX = 'Progress made to the next level: ';
+
+/** LevelButton_OnMouseClick (:779-786), verbatim arithmetic: the level
+ *  the skill sum has earned, its fraction as a whole percent. */
+export function levelProgressPercent(entity) {
+  const current = ((entity?.currentLevelUpSkillSum ?? 0)
+    - (entity?.startingLevelUpSkillSum ?? 0) + 28) / 15;
+  return Math.trunc((current % 1) * 100);
+}
+
+/** ShowAffiliationsDialog (:327-364): the tab-stopped table - a
+ *  highlighted "Affiliation / Rank" header, then one row a membership
+ *  with the faction's display name, the rank TITLE and the live
+ *  reputation - or record 19 when the book is empty. The rows are
+ *  systems/affiliations.js's, the one model the enhanced pause menu's
+ *  Standing page draws too (GUILD-REP). `rows` is the TEXT.RSC door the
+ *  sheet's other boxes share. */
+export function affiliationRows(entity, rows = null) {
+  const noAffiliations = () => rows?.(NO_AFFILIATIONS_TEXT_ID) ?? [{ text: 'You have no affiliations.', center: true }];
+  const book = affiliations(entity);
+  if (!book.length) return noAffiliations();
+  return [
+    { cells: [{ text: 'Affiliation', x: 0 }, { text: 'Rank', x: 125 }], highlight: true },
+    ...book.map((a) => ({ cells: [{ text: a.affiliation, x: 0 }, { text: `${a.title} (rep:${a.rep})`, x: 125 }] })),
+  ];
+}
+
+/** The four buttons' DaggerfallShortcut names, in the sheet's setup order. */
+const MODAL_HOTKEYS = Object.freeze(['CharacterSheetName', 'CharacterSheetLevel', 'CharacterSheetHealth', 'CharacterSheetAffiliations']);
 
 /** AUDIT 26 F164 - UpdatePlayerValues' stat colours
  *  (DaggerfallCharacterSheetWindow.cs:414-419), verbatim from
@@ -405,6 +451,39 @@ export class CharSheet {
     return true;
   }
 
+  // ── CM4: the four residual buttons' handlers ──
+
+  /** NameButton_OnMouseClick (:769-777): the input box seeded with the
+   *  current name; EnterName_OnGotUserInput (:794-799) writes a
+   *  non-empty answer only. */
+  _showName() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.child = new InputMessageBoxWindow({
+      label: ENTER_NEW_NAME,
+      value: this.entity?.name ?? '',
+      onSubmit: (input) => { if (input.length > 0 && this.entity) this.entity.name = input; },
+    });
+  }
+
+  /** LevelButton_OnMouseClick (:779-786). */
+  _showLevel() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.child = new ActionTextBox([`${LEVEL_PROGRESS_PREFIX}${levelProgressPercent(this.entity)}%`]);
+  }
+
+  /** HealthButton_OnMouseClick (:801-806) -> CreateHealthStatusBox. */
+  _showHealth() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    const rows = this.hooks.rows ? healthStatusRows(this.entity, this.hooks.rows) : [{ text: 'You are healthy.', center: true }];
+    this.child = new ActionTextBox(rows);
+  }
+
+  /** AffiliationsButton_OnMouseClick (:808-812) -> ShowAffiliationsDialog. */
+  _showAffiliations() {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this.child = new ActionTextBox(affiliationRows(this.entity, this.hooks.rows));
+  }
+
   tick(dt) { if (this.child) { this.child.tick?.(dt); this._stepChild(); } }
   wheel(dir) { if (this.child) { this.child.wheel?.(dir); this._stepChild(); return true; } return false; }
 
@@ -431,6 +510,15 @@ export class CharSheet {
     // A pushed window owns the keyboard until it closes.
     if (this.child) { this.child.input?.(action, e); this._stepChild(); return; }
     this.notice = null;
+    // CM4: the four residual buttons' DaggerfallShortcut bindings
+    // (CharacterSheetName N, CharacterSheetLevel V, CharacterSheetHealth,
+    // CharacterSheetAffiliations), ahead of the page digits and the
+    // toggle, as DFU's Hotkey assignments sit on the buttons themselves.
+    const modal = firstHotkey(MODAL_HOTKEYS, action, e);
+    if (modal === 'CharacterSheetName') { this._showName(); return; }
+    if (modal === 'CharacterSheetLevel') { this._showLevel(); return; }
+    if (modal === 'CharacterSheetHealth') { this._showHealth(); return; }
+    if (modal === 'CharacterSheetAffiliations') { this._showAffiliations(); return; }
     // Both vocabularies: input.js actions (dungeon routing) and raw
     // codes (the exterior hosts' overlay seam).
     // The mounted rollout owns the spinner keys. StatButton_OnMouseClick
@@ -579,10 +667,16 @@ export class CharSheet {
     for (const which of NAV_BUTTONS) {
       if (inRect(R[which], vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._open(which); return true; }
     }
-    // The remaining DFU buttons (name/level/health/affiliations) pend
-    // their popups; consume the click so it never escapes the
-    // window. They still CLICK - every DaggerfallCharacterSheetWindow
-    // button assigns ButtonClick (:772-952).
+    // CM4: the four residual buttons (:772-855). U32 left these
+    // consumed as no-ops; each pushes its DFU popup now.
+    if (inRect(R.name, vx, vy)) { this._showName(); return true; }
+    if (inRect(R.level, vx, vy)) { this._showLevel(); return true; }
+    if (inRect(R.health, vx, vy)) { this._showHealth(); return true; }
+    if (inRect(R.affiliations, vx, vy)) { this._showAffiliations(); return true; }
+    // Any other drawn rect still CLICKS and is consumed, so a press on
+    // the sheet never escapes to the host - every
+    // DaggerfallCharacterSheetWindow button assigns ButtonClick
+    // (:772-952).
     if (Object.values(R).some((r) => inRect(r, vx, vy))) {
       audio.playOneShot(SOUND.ButtonClick, 1);
       return true;

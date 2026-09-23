@@ -141,6 +141,21 @@ export class PerfMeter {
   }
   /** VC6d, DRAW PATH: close the last span of the frame. */
   stop() { if (this.cpu) this._cpuClose(); this._closeZone(); }
+  /** PERF-READ1 (2026-09-21, Mac's readout: `hud 7.09 | ... | world 0.06`):
+   *  close the CPU span at the END OF THE SCRIPT FRAME, and open nothing.
+   *
+   *  A CPU span closes at the next mark, and the next mark after the
+   *  frame's last one was the NEXT frame's first - so the last span of
+   *  every frame swallowed `requestAnimationFrame`'s wait: the vsync
+   *  idle, the compositor, the GPU's back-pressure. The host's last
+   *  span is `hud`, and Mac's readout showed it at 5 to 11 ms of a 12
+   *  to 19 ms total that summed, frame after frame, to 60 Hz's 16.7 -
+   *  because the total WAS the frame period. The HUD's own work is a
+   *  fraction of a millisecond of that. The host calls this where its
+   *  script frame ends, so the idle belongs to no span and the total is
+   *  the script's; the FPS counter carries frame time beside it, and
+   *  the difference between the two is the headroom. */
+  stopCpu() { if (this.cpu) this._cpuClose(); }
   /** PERF-CPU: a mark on the CPU clock ALONE.
    *
    *  The GPU arm can only tile the DRAW path - a span there is a pair of

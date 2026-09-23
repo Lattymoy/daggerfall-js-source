@@ -143,9 +143,16 @@ test('MAC-E: both exterior pools take the host’s inventory door, and both host
     const s = rd(f);
     const arm = s.split('\n').slice(
       s.split('\n').findIndex((l) => l.includes("lootKey.startsWith('foeCorpse:')")) - 1,
-      s.split('\n').findIndex((l) => l.includes("lootKey.startsWith('foeCorpse:')")) + 3).join('\n');
+      s.split('\n').findIndex((l) => l.includes("lootKey.startsWith('foeCorpse:')")) + 30).join('\n');
     assert.match(arm, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),/, `${f}: the say hook still rides`);
-    assert.match(arm, /inventoryDoorReady\(\) \? \(loot\) => townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\) : null/,
+    // QUICK-LOOT B4: the window callback grew a first line, and the law
+    // this pin holds is unchanged - the host's OWN factory is still the
+    // door and it is still behind the same art gate every pack arm
+    // takes. What quick loot added is a DECLINE in front of it: it is
+    // handed the same `loot` hooks the window would get, and a null
+    // answer (switch off, no highlight, the crosshair moved) falls
+    // through to exactly the call that was here before.
+    assert.match(arm, /inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\);\n\s*\} : null/,
       `${f}: ...and the host's OWN inventory factory is the door, behind the same art gate every pack arm takes`);
   }
 });

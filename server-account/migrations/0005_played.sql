@@ -1,0 +1,23 @@
+-- ACC4 (2026-09-22) - TIME PLAYED.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI).
+--
+-- Mac: "Lets add an account registered date and time played to the
+-- icon profile." The registered date needs nothing here - 0002 already
+-- stamps `registered_at`. Time played is the one fact no column held.
+--
+-- `played_s` is the running total, in seconds, credited by the
+-- SERVICE'S clock and never by a number a client sent (src/net/
+-- playClock.js says why). `played_at` is the moment of the account's
+-- last beat, which is what the next beat measures its gap from. NULL
+-- means no beat yet, and the first beat of a sitting credits nothing.
+--
+-- EVERY EXISTING ROW STARTS AT ZERO, and that is said rather than
+-- papered over: nothing before this migration counted time, so there
+-- is no history to derive a number from. A backfill would be a guess
+-- written down as a fact.
+ALTER TABLE players ADD COLUMN played_s INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE players ADD COLUMN played_at INTEGER;

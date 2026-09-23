@@ -38,7 +38,12 @@ test('P0: every rAF host claims at boot and checks at the top of every frame', (
     assert.match(s, /const _frameToken = claimFrame\(\);/, `${h} claims at boot`);
     // the guard is the FIRST statement of frame() - before any state
     // is touched, because the point is not to touch it
-    assert.match(s, /function frame\(now\) \{\n\s+if \(!frameAlive\(_frameToken\)\) return;/,
+    // AUDIT-WH L4 gave the guard a BODY: the host's world plaque is a
+    // `document.body` child and this is the host's one unwind point,
+    // so the node dies with the loop that raised it. It still touches
+    // no game state - the whole point of the guard - and a successor
+    // rebuilds the plaque on its first painted frame.
+    assert.match(s, /function frame\(now\) \{\n(?:\s*\/\/[^\n]*\n)*\s+if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}/,
       `${h} stops recursing the moment it loses ownership`);
   }
 });

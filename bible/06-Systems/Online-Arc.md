@@ -2165,6 +2165,15 @@ skin is enhanced (over `?skin=classic` too - a shared world has one
 lane), every enhancement the port owns is on, and every vendored mod is
 enabled, whatever the player's shelf says.
 
+> **Superseded in its mod half by MODS-ONLINE-2 (2026-09-22), below.**
+> Everything on this page about the SKIN and the port's own switches
+> still stands. The vendored mods do not: every mod's `Enabled` is the
+> player's now, online as offline, and the lane forces exactly the two
+> Basic Roads switches the room's terrain heights depend on. The
+> reading that got there - and why forcing `Enabled` while leaving
+> `SmoothRoads` a dial was giving the floor away anyway - is recorded
+> there.
+
 **A read, not a write.** The forcing lives in `systems/onlineLane.js`
 and is asked FIRST by the three places a switch is read - `uiSkin.js`
 (the skin), `uiPrefs.js getPref` (the port's own switches) and
@@ -2225,6 +2234,83 @@ off both copies before the menu runs, so a reload after an online
 session does not show the Mods pane locked for a player who has not
 chosen yet. One home, not a second read path. The record is
 `01-Overview/Mac-Bugs-N.md`.
+
+## MODS-ONLINE-2 (2026-09-22): the mods are the player's, the ground is the room's
+
+**Mac: "Is it possible to allow all mods to be toggled on and off for
+online?" and then, of the first answer, "So all mods can now be
+toggled?"** The first answer was half of one. MODS-ONLINE freed eight
+mods and left eight forced because they sounded like world state. This
+is the other half, and it comes from a reading of the PORT rather than
+a reading of the names.
+
+**The port is already owner-authoritative everywhere a mod could
+disagree.** A blow's damage is the STRIKER's number and the host
+applies it without recomputing (`dungeonContext.js applyHit`: "The
+number is a peer's word and the host trusts it"), so PCAAO's formulas
+were never shared. A foe's stats are minted where it SPAWNS
+(`meanerMonsters` edits `makeEnemyEntity`) and a peer steps a puppet,
+so a joiner already fights the host's foes under the host's numbers
+whatever their own shelf says. A corpse's pile is rolled and granted by
+the owner's word (WORLD6b-iii(c)), so Unleveled Loot's rolls are the
+owner's. A blow is mitigated where it LANDS - `damageShieldPool` inside
+`damageFoe` for a foe, inside `hurtPlayer` for me - so the Shield
+Widget's block is always the defender's own, which is the opposite of
+what MODS-ONLINE concluded from its name. Oblivion leveling is written
+into a character at creation and kept by that character; Handheld
+Torches is an item in my save with a light on my screen; Travel Options
+is my own journey, and OL2 already spends no world time online. None of
+that reaches a second machine as a RULE. It reaches it as a RESULT,
+which is what the wire carries.
+
+**One thing is not a rule - it is the floor.** Basic Roads rewrites
+TERRAIN HEIGHTS: `terrainGen.js` calls `smoothRoadHeights` over the
+road beds, so `Enabled` (whether Hazelnut's network or the port's own
+generated one is painted, BR3) and `SmoothRoads` (whether the beds are
+smoothed at all) decide where the ground IS. Two players who disagree
+stand on two floors along every road in the Bay, and a pose is a
+position on that floor, so each sees the other sunk into or floating
+over the bed.
+
+**And the old lane had it backwards.** It forced `Enabled` and left
+`SmoothRoads` alone, because `SmoothRoads` is a DIAL and the lane's
+rule was "force every mod's `Enabled`, leave its dials". So the
+heights have been diverging online since the lane was written, for
+anyone who turned the smoothing off for the "minor extra performance"
+its own description offers - forcing `Enabled` bought the room nothing
+while the dial beside it gave the floor away. The table is by KEY now,
+not by mod, which is what makes that fixable at all.
+`RiversAndStreams` is deliberately NOT in it, and that is measured
+rather than argued: `SMOOTHED_TILES` is `{46, 0xff}` - the road bed -
+and the painter lays a road before it ever considers water, so a river
+paints tiles and never moves a height. The pin runs the real smoother
+over every tile the river and stream tables can write and reads the
+heights back unchanged.
+
+**What the player sees.** The Mods pane's line used to be the lane's
+("On while online - the shared world is the enhanced lane, whole"),
+which stopped being true of that pane the moment a mod stopped being
+forced; the Online pane's door claimed "every enhancement and every mod
+is on for everyone". Both say what is true now, and the two locked road
+rows carry their OWN reason rather than the lane's - a lock that gives
+the wrong reason is as useless as a refusal nobody can see.
+
+**A declared key is an OWN key.** The surviving mutant found a second
+hole rather than a missing assertion. `modSettings.js` read
+`MOD_SETTINGS[vendor]?.keys?.[key]` and treated anything truthy as a
+declaration, so every name on `Object.prototype` was one: a read of
+`toString` or `constructor` sailed past "is not a declared switch" and
+answered `undefined`, and a WRITE of one coerced against a function and
+stored it. The same mistake in the lane is what exposed it -
+`room['toString']` is a function and would have been handed back as a
+forced setting value. All three doors take own keys now, vendor and key
+both.
+
+Pins: `test/modsonline.test.js` (7), `test/onlinelane.test.js`
+re-aimed, `test/worldhover.test.js` re-aimed; mutants:
+`tools/mutants/modsonline1.json` 12, 12 dead.
+Not verified in a browser: no online session exists in this container.
+
 
 ## OL2 (2026-09-14): the rest window says the clock, the trip says it arrives now
 
@@ -4234,7 +4320,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1087`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1148`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4603,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:5225` read, on one physical line:
+`src/scenes/worldModes.js:6112` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4618,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4020`). With the property missing that call is a
+(`dungeonContext.js:4231`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4745,9 +4831,9 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3331` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4177` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
-  provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
+  provenance argument `applySpellToFoe` hands them (`hostMagic.js:227`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
   Threading it touches four hosts.
 - **A building interior streams no foes at all.** `makeInteriorFoes`
@@ -6549,6 +6635,19 @@ layer is not hidden on `gamePaused()` (only on `hudCovered`, the gate the
 old call took); not destroyed at pagehide (a bfcached page's rejoin would
 be nameless for life).
 
+**ACC1d-MARK (2026-09-22) added one thing to this point.** The name
+carries the relay's verdict now (`vouched`, straight off the peer's `v`),
+and a name the relay CHECKED wears a mark - one ASCII glyph, in both
+faces, drawn BESIDE the label and never inside it, because the label is
+centred on the skull and a prefixed glyph would walk it off the head. The
+mark keeps the name's own colour: SOC4's green says who somebody is to
+you, and this says whether the SERVICE ISSUED the name at all. The
+polarity is Mac's own correction - the first cut marked the unvouched and
+he asked "Why a question mark since even guests get a name?", which is
+the right question: the verdict divides a name the player TYPED from a
+name the service ISSUED, not a guest from an account. Full record in
+`06-Systems/Accounts-And-Cloud-Saves-Arc.md`.
+
 ## RESPAWN1 - A DUNGEON'S DEAD STOOD BACK UP, AND THE DOOR WAS WHY (2026-09-17)
 
 Mac, forwarding a patch he was sent: a dungeon's kills did not persist.
@@ -6926,6 +7025,217 @@ slice of its own if a peer is ever to loot the watch; the foes' hit
 arm's reach; the striker's routing door pinned by source (an executed
 pin would have to stand world.js's own `dealDamage` closure).
 
+## RELAY-H1 (2026-09-20, Mac: "cloudflare hit its limit"): a standing player is heard by the runtime, not the room
+
+**The bill's root cause was the heartbeat.** Cloudflare bills a Durable Object
+for every second it is awake, and its own words are "billable duration does
+not accrue during hibernation" and "incoming requests prevent hibernation".
+The presence session sent a POSE every five seconds whether or not the player
+had moved (`HEARTBEAT_MS`, 5000) - a message, an event, a wake - so a room
+with anyone in it never slept. At a player's ~4 rooms (cell, halo, world,
+chat) the free tier's 13,000 GB-s a day was ~7 player-hours, and it was gone
+mid-stream. Paying (400,000 GB-s for $5) buys ~220 player-hours of the same
+waste; the waste is what this slice removes.
+
+**The relay already had the door.** `server/src/index.js:234` registers
+`setWebSocketAutoResponse('{"t":"ping"}', '{"t":"pong"}')`: the RUNTIME
+answers that exact string in the object's sleep, no event, no wake. Only a
+CHANNEL session (chat, `presence: false`) used it. A presence session's
+liveness rode the pose.
+
+**Now (`src/net/wire.js:820`, `src/net/online.js:1457`):**
+
+- `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
+  before) or every 20 s standing, as the peers' proof of life and the silence
+  law's net. Four times fewer wakes from a standing player, and gaps a
+  hibernation can fit in.
+- `PING_MS = HEARTBEAT_MS / 4`, new. A presence session sends `{ t: 'ping' }`
+  - serialised, byte for byte the auto-response request - when nothing has
+  gone for PING_MS, through the halo sockets too (each is its own object,
+  each intermediary idles a quiet socket by its own rule). The five-second
+  on-wire cadence the phones and proxies were proven against is kept; it
+  just no longer wakes anything.
+- The ping is on ITS OWN clock (`_lastPingAt`). A ping that touched
+  `_lastSentAt` would push the heartbeat pose back by a ping's width every
+  time, and the pose would drift off the grid the peers' silence law counts.
+- `PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS` (80000), DERIVED. It was the literal
+  20000 beside a 5000 heartbeat, and moving the heartbeat alone would have
+  hidden every standing peer at their first missed pose - SLAM8's zero-margin
+  blind spot, back by a different door. Four heartbeats is the margin the old
+  pair had; SLAM8's `>= 3` ratio pin holds. The cost: a half-open socket (a
+  peer whose leave never arrived) lingers as a ghost for 80 s where it was
+  20 s; a clean close still fans `{t:'leave'}` at once.
+- `KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2` follows (10000), so the relay's
+  whole-fan floor for a standing pose still sits under the heartbeat.
+- `RELAY_VERSION` world83 -> world84: the relay bundle's bytes moved.
+
+**A channel session is unchanged**: one ping per HEARTBEAT_MS, no pose
+(CHAT1), now 20 s apart.
+
+**The deploy is the merge.** `.github/workflows/relay-deploy.yml` runs on
+every push to main and deploys when the live relay's version is not the
+source's (SRV-N/CI); world84 is such a push, so merging this slice restarts
+every Durable Object and drops every connected player once, as any
+relay-changing merge does. The client is whole against the old relay for the
+minutes between the two deploys: the deployed relay answers the ping in its
+sleep already (the pair has been registered since CHAT1), fans a standing
+pose whole under a 2500 ms floor, and has no time-based reaping of its own.
+
+**Pins** (`test/relayh1.test.js`, 4): the numbers are one family (the
+heartbeat >= 20 s, PING_MS and PEER_TIMEOUT_MS derived and not a literal beside
+it, the timeout under two minutes); the client's ping serialised IS the
+relay's auto-response request, read off `server/src/index.js` rather than a
+copy here, and the older-runtime fallback still pongs it from the object; a
+standing session driven over a fake socket for a minute sends
+floor(60000/HEARTBEAT_MS) poses on the heartbeat grid with pings between and
+NO OTHER BYTES - a WAKE is counted as any raw frame that is not the
+auto-response request, so a ping with a key added is a wake; a channel session
+pings every HEARTBEAT_MS and never poses. Re-aimed: `chat1`'s "a presence
+session heartbeats with its pose, not a ping" (the law it pinned is the law
+this slice repeals; it now asserts the ping AND the undelayed pose),
+`watch1`'s RELAY_VERSION literal (world84), `slam13`'s `held()` helper (a
+literal 5000 that meant the heartbeat).
+
+**Mutants** (`tools/mutants/relayh1.json`): 5 mutations, 5 dead - the
+heartbeat back to 5000; the timeout a literal 80000 again; the ping spelled
+`{ t: 'ping', at: now }` (SURVIVED the first draft: a by-source regex found
+the channel's ping and was satisfied; the behavioural pin now counts wakes by
+raw bytes against the relay's registered string, and it dies); the ping
+touching `_lastSentAt`; no presence ping at all.
+
+### AUDIT RELAY-H1 (2026-09-20, Mac: "Audit everything first")
+
+Four lenses over the slice before its merge. Two findings paid, three
+hazards ruled out by reading, one transient recorded.
+
+- **F1 (claims, PAID): "the relay needs Mac's dispatch" was false.** The
+  record, the ledger row and the PR said the relay had to be deployed by
+  hand. `relay-deploy.yml` has drift-deployed on every push to main since
+  SRV-N/CI, keyed on `RELAY_VERSION`; the paragraph above now says what the
+  merge actually does, including that it drops every connected player once.
+- **F2 (pins, PAID): the spelling pin had the spelling in it.** The regex
+  that read the relay's auto-response pair spelled `{"t":"ping"}` inside
+  itself, so a relay registering another string would have failed the
+  *regex* rather than moved the law the client is held to. The pair is now
+  captured (`'([^']*)'`), the halo send and the older-runtime pong are
+  captured the same way, and each is held equal to what the relay
+  registered. Five mutants still die.
+- **H1 (does it break, RULED OUT): a presence room hibernating for the
+  first time.** Before this slice a cell with anyone in it never slept, so
+  every in-memory field of `Room` had only ever been exercised by chat rooms
+  and idle rooms. Read against `server/src/index.js:211`: every socket's
+  state rides its attachment (`serializeAttachment`, rebuilt by `_all()` from
+  `getWebSockets()`), the keepalive floor `kept` and the tier `turn` ride the
+  PASS patch on that attachment, and the instance fields are budgets and
+  caches each documented as awake-only (`_looks` re-reads storage after a
+  wake, `_cool` needs a flood that keeps the object awake). `_dead`/`_gone`
+  name sockets the object closed itself, which a wake does not list. Nothing
+  a hibernation loses is anything a presence room needs back.
+- **H2 (does it break, RULED OUT): a stand does not make the next step
+  crawl.** The ease runs over the interval measured MOVE to MOVE
+  (`_arrive`: an unchanged heartbeat is "seen, not re-eased", `movedAt`
+  untouched), capped at `GAP_MAX_MS` (1000). A peer that stood 20 s and
+  steps off eases over a second at most, as before.
+- **H3 (does it reach a player, RULED OUT): the ping goes where the pose
+  went.** Sent through `_send` on the primary and `h.ws.send` on every OPEN
+  halo socket, the same two doors `sendPose` uses; `tick` runs on the
+  session's own clock from the one host loop that owns it.
+- **T1 (transient, RECORDED): the deploy window's blink.** A tab still on
+  the OLD client (20 s timeout) that hears a NEW client standing (a pose
+  every 20 s) hides it at the timeout boundary and shows it again on the
+  next pose - SLAM8's zero margin, in mixed versions only. It lasts until
+  that tab reloads; the build poll (`updateNotice.js`, ten minutes) says
+  when. The new client cannot fix an old client's timeout, and the old
+  client sees nothing else wrong: the new relay still fans its 5 s
+  keepalives whole every other beat (KEEPALIVE_FAN_MS 10000 < 20000).
+
+## ONLINE-DUNGEON-FOES (2026-09-20): the non-layout run is private, and that is two of Mac's bugs
+
+**Mac: "Issues with non-reactive enemies in dungeons in the online mode" and
+"The lysander ghost enemy isn't synced online between players."** Two reports,
+one line. RECORDED, NOT CLOSED - the fix is a slice, and half of it would be
+worse than the bug.
+
+`dungeonContext.js` takes `_layoutFoes = foes.length` once, when the layout's
+run has been built. Every foe appended after that - a quest foe through
+`spawnQuestFoe`, an encounter through IntermittentEnemySpawn, a summon - lives
+past that bound, and the bound is load-bearing in two places at once:
+
+- **It is not streamed.** `foesFrame` loops `for (let i = 0; i < _layoutFoes;
+  i++)`. A foe past the run is in no frame any peer ever receives. The Lysandus
+  ghost is quest-placed, so it stands only on the client whose quest placed it;
+  nobody else has it to see, let alone to see move.
+- **It is not peer-aware.** The target machine's candidate list admits peers
+  only under `_authority && streamed`, and `streamed` IS `_fi < _layoutFoes`.
+  So a foe past the run never sees another player as a target at all. It
+  ignores everyone but the client it belongs to - which is what "non-reactive"
+  looks like from the other player's side.
+
+**The two halves must be paid together.** Arming a non-layout foe against peers
+while it is still unsynced is worse than leaving it alone: it would chase and
+swing at a player who cannot see it and has no damage frame to resolve the blow
+with. `test/world2.test.js` pins exactly that - the puppet gate and the
+targeting bound are one expression, and widening either alone goes red.
+
+**The answer already exists and is proven.** WORLD6b built it for the open
+country, in `scenes/exteriorFoes.js`: a cell has no host simulation, so A FOE IS
+ITS SPAWNER'S - the spawner steps it and streams it, everyone else puppets it by
+(owner, seq), and a blow on another's foe goes to its owner as a hit. The
+dungeon's non-layout run wants the same law: a new frame shape beside WORLD2's
+index-keyed one, puppet build and teardown, hit routing to the owner, and a
+stale sweep for an owner who leaves. That is the slice, and it is not small -
+exteriorFoes.js is 1,809 lines of it.
+
+## OL5 (2026-09-20): the town gate and the guild hall, open at night online
+
+**Mac: "Town gates online, guild services, should all be open at night time
+online mode."** OL4's own reasoning, applied to the two subjects it
+deliberately left out. OL4 gave the relief shift to storefronts and its pin
+said so in as many words - "guild access unchanged online". That was the right
+call for one slice and the wrong answer for a player: an online player cannot
+move the shared clock, so any classic schedule is a real-time lockout. A guild
+hall shut at 18:00 is a service nobody can buy for two real hours. A town gate
+is worse, because a gate is not a door - `SetOpen` swaps the MeshCollider along
+with the mesh (GameObjectHelper.cs:246-250), so the closed model is a WALL and
+a walled city at night is sealed with no way to sleep the clock forward.
+
+**The relief is a PREDICATE, not a second table.** `onlineReliefBuilding(type)`
+is the one place the membership is written down, and every caller - the door,
+the people, the shelves - already asks `buildingHoursState`, so naming a type
+there is the whole change. Today it is shops plus the guild hall. Houses stay
+out (a residence is not a service); palaces and ships stay out; temples and
+taverns were never in, because 0/25 means they never closed. Suns Rest remains
+a SHOP closure, so widening the relief did not quietly hand the holiday power
+over guild halls it never had.
+
+**Two things this slice FOUND rather than shipped.**
+
+The first: `buildingIsUnlocked`'s GuildHall arm called `isBuildingOpen(type,
+hour)` with no opts. The function takes an `online` and every other arm passes
+it; this one read the module default instead, so a caller handing
+`buildingIsUnlocked` an explicit `online` was silently ignored by exactly one
+arm. Harmless while guild halls had no relief - the answer was the same either
+way - and a lie the moment they do. It is threaded now, and pinned by driving
+the two answers apart.
+
+The second killed the first draft of the gate law. The obvious online arm is
+"the classic machine with `night` forced false", and it is wrong. `isOpen` is
+born TRUE whatever model the block laid (DaggerfallCityGate.cs:19), and the
+classic machine only ever reconciles that flag with the drawn model by
+CYCLING: a gate the block laid CLOSED starts as `isOpen: true` standing on 447,
+and it is the first 18:00 that notices. Take night away and nothing ever
+notices - the wall stands for the whole session, in the exact mode the change
+was meant to fix. The online arm is therefore stated on the MODEL, which is the
+thing that blocks: this gate is open, and it is open now. Its own pin is what
+caught it.
+
+**The law is the component's.** Two hosts tick city gates - `scenes/world.js`
+and `scenes/exterior.js` - and a rule both of them have to remember is a rule
+one of them forgets. `updateCityGate` owns it; both hosts still call it with a
+bare `night` and are pinned to carry no online rule of their own.
+
+NOT VERIFIED IN A BROWSER: no online session exists in this container.
+
 ## OL4 (2026-09-17): shops staffed around the clock online
 
 **A player complaint relayed by Mac: players could not shop at night
@@ -7161,3 +7471,598 @@ Pins: `test/watch1.test.js` (6), `test/lockpicking.test.js` (9),
 `test/econ1_world_prices.test.js` (6); mutants: watch1 39 (38 dead, 1
 equivalent), ol4 12 (12 dead), econ1 27 (25 dead, 2 equivalent as
 recorded).
+
+## DROPS (2026-09-22, Mac: "Alright this is a big one. These changes are made specific for our codebase") - four drops integrated, three additions
+
+**What arrived.** Four zips of whole files against older mains: `quest-sharing-FINAL`, `Trading`, `peer-footsteps-v3`, `EnemyDesyncDungeonFix`. Each file was three-way merged (`git merge-file`) against the main commit its copy was cut from (the smallest diff over the last six hundred), one drop at a time, conflicts resolved at BLOCK level - never a whole file taken from one side (that silently dropped main's hunks once before). The base-finder's smallest diff is not always the true base: for `ui/enhancedMenu.js` it chose a main from before BR1 and the merge quietly reverted the brand mark; the file was reset to main and only the two `prefRow` lines re-added. Every deletion against main was audited by hand; the rest were legitimate.
+
+**QUEST1 - a quest shared with the party.** `systems/questShare.js` (the three receiver gates over the catalog's own membership/minReq/oneTime rows) and `systems/quest/machine.js` (`getShareableQuestData`, `receiveSharedQuest` - a real live Quest rebuilt through restoreSaveData's own loop from a wire envelope, `updateSharedQuest` for a later resync, `REPLAYABLE_ONE_TIME_ACTIONS` = TeleportPc/GivePc/TrainPc re-armed on the receiver; PayMoney and GiveItem deliberately not). The wire: `{t:'quest'}` under `QUEST_FRAME_MAX` (64 KiB, a quest's save-data is not a pose), `QUEST_HZ_MAX` = 0.1 (one share per ten seconds, `QUEST_SEND_MS`), `questShareGate`/`questInGate` as plain cooldowns (a sub-1 rate never passes a token bucket - the drop's own BUG note), the hub fans it to the sender's party. The Share button sits in the chronicle's opened quest frame (`ui/enhancedChronicle.js`, `.cr-rm cr-share`), through `chronicleDoor.js` to world.js `shareQuestWithParty`; a received quest lands as a HUD line (`setMidScreenText`). `receiveSharedQuest` is the FOURTH door a live quest is born through, so `world5`/`world7`'s `questClockStepMax` count moved 3 -> 4.
+
+**TRADE1 - player-to-player trade.** `net/tradeSession.js` (the state machine: ask/yes/no, offer revisions, lock/confirm on both sides, commit only after MY goods left the socket - LOOT-DUP's law, `TRADE_RANGE_M` 5 metres between the two BODIES, never a pixel) and `systems/tradePack.js` (the real pack: reserve, release, apply). The wire: `{t:'trade', data}` projected by `validTradeData` per kind, `TRADE_FRAME_MAX` 12 KiB, routed by the relay to ONE peer inside one room (`server/src/index.js` `_meterTrade`), `sendTrade` down whichever open socket reports the peer (own cell or a halo - `_socketFor`), `TRADE_RELAY_MIN = 91` so a client never sends a frame an older relay would close the socket on (`relaySupportsTrade` off the welcome). The F-menu grew a third row (`ui/socialMenu.js` `canTrade`/`tradeLabel`: 'Accept trade' when the peer already asked), and the window is `ui/enhancedPlayerTrade.js` behind `ui/playerTradeDoor.js` - a DOM door in the enhanced skin alone, its overlay arms one per line so CRASH2's window gate reads it (the drop had them on one line and the gate reported the door unread). `tradeFrame()` ticks on the online frame after `chatFrame()`, before the dead return.
+
+**PARTY-REST1/2/3 - came in with the Trading drop's tree, kept whole.** `composePartyPose` carries `bk` (the building), `rest` (the leader's live session) and `ready` (this tab's `/ready` vote); a follower NEAR the leader (`nearAccount`: the same pixel/mode/building AND within `PARTY_REST_RADIUS` = 15 m by the bodies) mirrors the leader's nap through `partyRestFollowTick` - the SAME `RestWindow` class over `partyRestMirrorDeps()` (no encounter roll, no trespass charge of its own); the leader's `toggleRest` is gated by `partyRestGate` (everyone near must have typed `/ready`). The drop's world.js imported a `createRestWindow` from a `ui/restDoor.js` that is not in this tree - the app would not have loaded; restored to `new RestWindow(...)` in both places, and `restlodging`'s "one rest window path" pin now names the mirror as the one permitted second.
+
+**PEER-FS1/2 - peers heard.** The pose carries `fk` (the footstep-surface kind, `systems/footsteps.js FOOTSTEP_KIND` 0-5, cached on the exterior stride as `_lastFootstepKind` and composed into `arm`); `net/remotePlayers.js` runs a `FootstepMachine` per peer off their own pose and plays the clip pair (`FOOTSTEP_CLIP_SETS` - renamed from the drop's `FOOTSTEP_SETS`, which `immersiveFootsteps.js` already declares for its own set names) with a linear falloff 6 -> 30 m, and a swing sound on every `an` edge. Two switches, `peerFootsteps` and `peerAttackSounds`, on the peer-sprites card and in `ONLINE_PLAYERS_OWN_PREFS` (how OTHER players are heard on THIS machine, the same shape as `peerClassSprites`). `deps` may be null in a test, so the two sound doors read `this.deps?.audio`; `composeLook` keeps ONLINE-CLASS1's law (`class` OMITTED when the career has no name - a look is a cache key), which the drop had loosened to `class: null`.
+
+**SEAT-HEAL - the private dungeon.** A joiner whose host went quiet for `FOES_STALE_MS` took the foes for itself and never gave them back: `applyFoes` refused every frame while it was the authority, and the heartbeat that ends the authority is stamped only when a frame is APPLIED. `dungeonContext.js` `applyFoes` now wraps `applyFoesFrame`: an authority that receives a frame stands down and applies it, and takes the seat back only if the frame did not land. `test/seatheal.test.js` mounts the real statements (acorn-sliced) against a fake clock and session.
+
+**The relay.** `RELAY_VERSION` = `world91` (`world92` since AUDIT DROPS below, which re-metered the two frames), ONE bump for the three wire changes (the quest frame, the trade frame, the pose's `fk`); `test/relayversion.test.js` carries the row's sha. The merge to main deploys it: `relay-deploy.yml` drift-deploys on every push to main when the live Worker's version is not `RELAY_VERSION` (keyed on that one constant since SRV-N/CI - AUDIT RELAY-H1's F1 above paid this same false claim once already), and the deploy drops every connected player once. Until the merge lands, a client on this branch against the live world90 relay reads `tradeOk` false off the welcome and the row says 'relay not updated' - the wire's own guard, not a step for anyone. The Cloudflare token lives in the GitHub Actions secret and nowhere else (Mac's decision).
+
+**Three additions, per the same request.**
+
+*PEER-PLAQUE1 - "Using the world tooltip implementation for other players and interaction prompt."* (The prompt line behind the interact key is gone since DISC7 ACT-MENU: the card's acts are the plaque's rows - see DISC7 and AUDIT DISC7 below.) Another player under the crosshair is one more racer in `raceWinner`'s one precedence (`peer`, between the townsperson and the foe - a body measured through the same cylinder, and the press has no arm for it: the F key is its own gesture). `player/socialPick.js` grew the pure half: `peerRayPick` dresses SOC5's own `pickPeerInFront` hit (SOCIAL_REACH, `rayPersonDistance`) as `{ key: 'peer:<id>', distance, reach }`, `peerIdOfKey`, and `peerPromptText` - the ENABLED acts alone, in the menu's own order and labels (`PEER_ACT_LABELS`, pinned equal to `socialMenuRows`), behind the LIVE interact binding (`getBinding(bindings(), 'SocialInteract')`, 'KeyF' -> 'F', no bracket when unbound - AUDIT SOC D10/C19), the trade row's own live label, and with nothing to offer the relation ('In your party' before 'Friend', else the name alone). world.js names it in the PORT's own `_hoverNamers` (ungated - DFU has no other players, so it sits with the cart and the camps above the mod's switch) as `<name> <glyph marks>` (`ui/playerBadge.js glyphMarks`, the classic face's plain-text glyphs); the building and the dungeon race and name it through two new host doors, `peerHoverPick(eye, dir)` and `peerHoverName(key)`, over the mode's own eye - `worldModes.js` interior pick/namer, `buildDungeonContext` opts, `ctx.addActivationNamer`, `dungeonContext.js` pick.
+
+*PARTY-REST4 - "Notification when youre not near the party leader for resting."* `partyRestFarNotice(leaderRest, near, leaderRow)` in world.js, called from `partyRestFollowTick` on the SAME `near` the mirror reads and before the mirror acts on it: the leader's pose carries a rest and I am not near enough - said ONCE on `setMidScreenText` ("<leader> is resting - come within 15 m of them to rest with the party.", the radius the one law's own number), the latch re-armed only when that rest has ended or I have come near (then the mirror opens instead), stood down with the party. A follower who walks out mid-nap is told the frame their mirror ends. Lifted out and driven in `test/restfar.test.js` (sixty far frames say it once).
+
+*DROPS-FONT - "Ensuring enhanced font gets integrated with the new ui changes."* Verified and pinned rather than changed: the trade window's root is a `.px-home` (the one rule that carries `PIXEL_STACK`, unsmoothed, ligatures off) and its own sheet names no face; the gold field and the chronicle's Share button (`.cr-rm`) say `font: inherit` (a form control falls to the browser's face unless told); the F-menu's Trade row rides the `.dfpeer` card that already wears `PIXEL_FONT_CSS`. `test/tradefont.test.js`.
+
+**Types.** `net/tradeSession.js` opted into `// @ts-check` (HARD3: a seam file) and the checker was run to zero over the tree - the drops' JSDoc named `say`/`near`/`onEnd` as zero-argument functions, `remotePlayers`' deps contract lacked `uploadRecordFrame`/`audio`, the two per-peer maps were born lazily (`??=`) instead of in the constructor, `online.shareQuest`'s destructured default had no shape.
+
+Not verified in a browser: no online session exists in this container. Pins: `test/trade_session.test.js` (25, the drop's), `test/seatheal.test.js` (3, the drop's), `test/peerplaque.test.js` (5), `test/restfar.test.js` (2), `test/tradefont.test.js` (2); mutants: peerplaque 24 (23 dead, 1 equivalent as recorded), restfar 8 (8 dead), tradefont 5 (5 dead), worldhover re-aimed for the new racer (127 dead).
+
+## AUDIT DROPS (2026-09-22, Mac: "Lets do an audit before merging") - three lenses over the four drops and the three additions, twenty findings paid
+
+Three opus lenses, one each over the merge and the wire, the additions and the host wiring, the records and the pins. The merge itself was sound: no line of main's was lost but one comment (the `/unstuck` guard's AUDIT 24 wave37 rationale, restored) and three test messages' history (RELAY-H1's and ACC1d's version notes in watch1/soc1_hub/econ1, restored). The drops' own logic was not. Every finding below is paid, and pinned by execution in `test/auditdrops.test.js` (14) with `tools/mutants/auditdrops.json` (45: 41 dead, 4 equivalent as recorded).
+
+**A - the quest envelope was trusted whole (lens 1, HIGH).** `receiveSharedQuest` built a live Quest straight from the sender's bytes: any party member could hand the receiver a `GivePc` of anything, a `TeleportPc`, a global-var link. The wire's `questName` gated the receipt but the quest was built from `data.questName` (a share named HARMLESS with the data of a quest the receiver already ran gave them a second live copy); the main quest was refused on SEND only. Now (`systems/questShare.js`): the data must be the quest it names; the main quest is refused on RECEIPT; the envelope's SHAPE - every task symbol and every action TYPE in order, every resource symbol and type - must be the receiver's OWN parse of that quest by name (`machine.parseQuestShape`, the same parser the lists use, `shapeMismatch`), refused as 'mismatch', or 'unknown' with no local source; and every Item resource's item is the receiver's own roll (`takeLocalItems`) - a typed `daggerfallUnityItem` never lands. What remains the sender's: the Places' `siteDetails` (the party goes to the same dungeon), the Persons, the Foes, the task/action STATE - which is the point of sharing. **A2 - live sync paid rewards twice (HIGH).** A partner who was behind resynced my finished quest back into play (tombstoned -> live, a completed GivePc pending again), and a later resync re-armed it: paid twice; once the tombstone expired, a resync counted as a fresh receipt and re-armed everything. Now: a resync onto a `questComplete`/`questTombstoned` copy is refused; a tombstone moves the name from `sharedQuestNames` to `finishedSharedQuestNames`, and a fresh receipt of a finished name is 'done' for the session; action completion is MONOTONIC across a resync (never true -> false off an older copy - it would run, reward and all, when its task next ticked); a reward is re-armed AT MOST ONCE per action for the life of the quest (`_rearmed`). **A3 - a malformed resync corrupted the live quest (MEDIUM).** `restoreSaveData` clears as it goes; `{tasks: 7}` left the live quest with no resources and no tasks. Now the resync is DRY-RUN on a scratch Quest first and refused whole; a fresh receipt the restore chokes on lands nothing.
+
+**B - the trade.** *B1 (MEDIUM):* editing my offer after my Confirm unlocked both sides at home while the peer, who had confirmed and committed against the old revision, had their goods refused as "not valid" - and lost (the drop's own rig: B's ring and 5 gold vanished). `setOffer` now refuses once `myConfirm` stands, and the window stages, unstages and types nothing after it. *B2 (LOW):* a forged commit arriving while my own commit was still queued ended the session with my reservation neither sent nor restored; `_finish` restores a reserved-but-unsent lot on every ending. *B3 (MEDIUM):* the relay's trade byte budget was the ROOM's - two sockets at `TRADE_HZ_MAX` x `TRADE_FRAME_MAX` spent it and an honest commit whose sender's goods were already gone was dropped; it is the SENDER's now (`a.tbytes`), and the client's inbound trade gate is per sender too (`_inTradeBuckets`), so a flood starves only the flooder. *B4 (found paying B3):* `validTradeData` bounded the DATA at the FRAME's cap, so the widest honest offer passed at home and was refused at the relay's door as 'frame too large' - which closes the socket. `TRADE_DATA_MAX` = the frame cap less the wrapper; what passes at home fits `parseClient` by construction, and `sendTrade` guards the trade cap, not the general one.
+
+**C - the quest cooldowns (lens 1, LOW-MEDIUM).** The hub's cooldown equalled the client's floor (10 s): a share at +9990 ms by the relay's clock was dropped while the client said "Shared". `QUEST_HUB_MIN_MS` = half the floor (the PARTY_SEND_MS rule) at the hub AND at the receiver, where the gate is keyed by the SENDER's account (two members sharing within 3.3 s no longer lose the second); `questSyncTick` moves `seen` only when the share left, so a resync the floor refused is retried; the relay spends no room budget on a share with nobody to reach (no party; another tab speaks - AUDIT SOC B9).
+
+**D - party rest was outdoors only (both lenses, HIGH).** The Trading drop shipped only world.js, which read `modes.restState` and `modes.dungeonCtx.restState` off hosts that never had them and handed `partyRestGate` to a mode machine that never read it: a leader resting in a tavern or a dungeon broadcast `rest: null` (no mirror, no PARTY-REST4 notice) and skipped the `/ready` vote. Now both modal hosts expose `get restState()` (RESTING, never a mirror, never the wake box) and run `partyRestGate` before their rest window (the dungeon through `opts.partyRestGate`); the gate itself spends the `/ready` vote, for all three. *D2:* the outdoor `restWin` broadcast a rest while the leader's WAKE BOX was up (`state !== 'resting'`), so a follower whose mirror had ended reopened it every frame with 0 h left until the leader closed their box - `state === 'resting'` at all three, and a mirror the follower closed while the leader still rests is DECLINED for that nap. *D3:* a leader who went offline mid-nap left `rest` on their seat row (an offline leader rests nobody); the notice is not spent while the HUD is down for a death; a loiter is said as one; the label stays 4 s. *D5:* `toggleRest` read `_partyRestReady` and `partyRestGate` before their declarations during the boot awaits (a TDZ throw on R - audit24 wave37's class); `modes ? partyRestGate() : null`.
+
+**E - the additions and the peer sounds.** *E1 (MEDIUM):* indoors and underground the plaque painted over the F-menu the player had just opened on the very peer under the crosshair - the street's `pointerSurfaces` term never reached the two modal hosts; `pointerSurfaceUp` does now. *E2 (MEDIUM):* `fk` was cached on the street stride only, so a peer in a tavern crunched snow: the modal stride caches its kind off the very ctx its clip pair is picked from (`footstepKind`), and the pose reads the mode's. *E3 (LOW):* the modal plaque raced from the mode's eye while the F key races from `cam.pos` - in third person the two disagree; the plaque's pick is the key's own ray in every mode (`socialFwd`). *E4 (MEDIUM):* a BODY peer's stride machine and swing edge were never swept (the sweep walked `_batches`, which a body peer never joins - SLAM4's class), and a stale `an` played a phantom swing when they came back; swept against every peer seen. *E5:* the peer stride was fed the SCENE point, so a floating-origin recentre (819.2 units) was a step - the wire frame now ~~~~ (PEER-BUZZ, below: WRONG - the overworld's wire frame is forty scene units to one, and the fix was the buzz every player then reported; the stride is in scene units again, rebased at the recentre). *E6:* a swing sounded as the first weapon anywhere in the look, sheathed or not - the right-hand slot, and a fist while `wd` is 0. *F1:* the trade window's stack-quantity field had no `font: inherit` - every input in the window now.
+
+**The records (lens 3).** No re-aimed pin was weakened and every count and constant was true; the record named the wrong audit for the relay-deploy precedent (RELAY-H1's F1, not ONLINE-DUNGEON-FOES'), the Ledger said "a tenth-a-second cooldown" for one share per ten seconds, and 'in your party' lived in two files (one home now: `net/social.js WHY_IN_PARTY`). Re-aims the DROPS record left unsaid: `test/world2.test.js` moved its pin from `applyFoes` to `applyFoesFrame` (SEAT-HEAL's real change of law - the public door no longer refuses frames while it holds authority; seatheal pins the new behaviour); `watch1`, `econ1`, `auditworld2` (`'quest'` in the doc regex); mutants `slam15` Z6/Z7, `soc1` S38, `macfg` MAC-F. The drop laws no pin had held are held now (`test/auditdrops.test.js` F): the pose's `fk` clamp, the quest frame's own cap at the door, `relaySupportsTrade`, the real `tradePack` reserve/restore over a real entity, `tradeFrame` after `chatFrame` before the dead return. Left as found, on purpose: a modified client can offer gold or items it does not own (WORLD4's peer-loot trust - the receiver sees the offer before locking); peers' footsteps assume a grounded peer (the pose carries no swim/levitate bit); a shared TeleportPc lands the receiver at the sender's Place (party trust).
+
+**The relay:** `world92` - the trade bytes per sender, the hub's quest cooldown, the quest budget's order, the trade data cap. The merge deploys it (`relay-deploy.yml`).
+
+Not verified in a browser: no online session exists in this container.
+
+## PARTY-REST DROP (2026-09-22, Mac: "Add this to the batch") - the party-rest feature zip integrated over the audit, one getter per host, world93
+
+Eight files from Mac's tree (`net/wire.js`, `ui/enhancedRest.js`, `scenes/world.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js`, `scenes/shared.js`, `systems/restSession.js`, `systems/survival/rest.js`), each a whole-file copy against an older main, three-way merged per file against the main commit that minimised its diff, conflicts resolved at block level. What arrived, by the drop's own law names: PARTY-REST1 (the leader's live rest/loiter session rides the party pose; a follower near enough mirrors it - `partyRestFollowTick` every frame beside `partyFrame`, the mirror rolling no encounter of its own), PARTY-REST1c (ANY near resting member is mirrored, not the leader alone), PARTY-REST2/2b/2f/28 (`/ready` is a local chat command stamping `voteAt`, the vote expires in `PARTY_READY_TIMEOUT_MS`, `partyRestGate` refuses a rest until the near members are ready, `markPartyRestSpent` is the one reset every host runs on a granted rest, a refused gate clears back to -Infinity so a new vote can start), PARTY-REST4/4b (`partyRestMirrorDeps(restKind, targetAcct)` heals the follower at the leader's rate through `outdoorRestDeps.overrideRestKind`), PARTY-REST5/19 (the leader's `restEnemyAt` breaks every mirror; a follower's cancel rides `restCancelFor/At`), PARTY-REST6 (`restState` answers only while `state === 'resting'` - the wake box is not a live rest), PARTY-REST8 (`nearAccount`'s interior arm keys on `bk`, now 32-bit, PARTY-REST9), PARTY-REST10 (`restHour(entity, kind, tick, carry)`), PARTY-REST12/20/21/23/25/26/17/16/2d/2e (the gate's refusals and their cooldowns: `PARTY_REST_VOTE_COOLDOWN_MS` 60 s, `PARTY_REST_START_COOLDOWN_MS` 10 s), ONLINE-REST1 (the gate is enhanced+online only), TAVERN-REST1/GUILD-REST1 (`modes.insidePartyRestExempt`), STRANGER-REST1 (`strangerRestGate`: no rest within 100 m of a stranger outdoors, 30 m in a dungeon), REST-VITALS1/RESTFIX1/RESTFIX3/PARTY-REST1d (the enhanced rest window: vitals shown while healing, no rebuild per tick, the illegal-rest warning, pointer lock released for every member). The wire grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`, `restCancelAt`, `restStartedAt`; `RELAY_VERSION` is world93 (the LAW row hashed after the wire change; `server/src/index.js` is untouched by this drop - the version moves because the pose's shape did).
+
+**What the zip did not carry, written here.** The drop's three hosts import `ui/restDoor.js`, which no zip shipped: written - `createRestWindow(deps, ignoreAllocatedBed)` opens `ui/enhancedRest.js` under the enhanced skin (`openEnhancedRest`, the fixed host at z-index 13, `registerOverlay` around its `dispose`) and `new RestWindow(deps, ignoreAllocatedBed)` under the classic one; it touches no DOM itself, so CRASH2's door contract reads the view, not the door. The drop's own restlodging pins expect `createRestWindow` in `scenes/exterior.js` (not in the zip): converted. The drop's partyrest1 pins name `.rest-shell` rules `enhancedStyle.js` never had: added (the centred 420 px dialog, the hours field, the vitals line, `font-family: inherit` on the field - FONT1's law).
+
+**Reconciled with AUDIT DROPS.** *D1 re-done, not doubled:* the drop wrote the building's `restState` getter onto `interiorKeyCtx` - the interior KEY table's own ctx, which the mode factory never returns - so `modes?.restState` read `undefined` from a tavern and broadcast `rest: null`: the very hole D1 had closed on the returned object. The merge left both, and in the dungeon two getters on one `api` literal (the later wins). One getter per host now, on the object world.js reads, in the drop's shape with its PARTY-REST6 words; pinned by count and by position (test/auditdrops.test.js D1), a shadowing plain key killed as a mutant. *D2's declined latch* is superseded by PARTY-REST19's own cancel fields and dropped. *D5* stands: the outdoor toggle runs `strangerRestGate` then `partyRestGate` then `markPartyRestSpent` only once `modes` exists. *PARTY-REST4 (mine, the far notice)* is renamed PARTY-REST-FAR1 so it no longer collides with the drop's PARTY-REST4 (the heal rate): it scans `social.others()` for ANY resting member I cannot mirror (PARTY-REST1c's law), falls back to 'A party member', and stays quiet while dead. `canRest` and `ILLEGAL_REST_WARNING` now have two window callers (restwhere's sweep admits the enhanced twin).
+
+Not verified in a browser: no online session exists in this container.
+
+## MERGE - main onto this branch (2026-09-22), before the PR
+
+`origin/main` had moved two commits (FIX-A/B/D/E, SWING-LABEL) since the branch was cut: 70 files in conflict, 159 blocks, 157 of them citation drift on both sides (resolved to main's numbers, then `tools/citeMerge.mjs origin/main <branch head> --apply --struck` on the conflict-free tree BEFORE the merge commit, as Hardening.md asks - 395 cites moved), two real: Port-Status's departures tally (main's 168th departure kept over ours) and Testing.md's restwhere row (our note kept over main's). Section A of the Ledger holds both sides' rows (169) and Port-Status restates it; section 2's fourteen bare row identifiers and section C's bounds were re-resolved by anchor (main's Ledger row moved them one line); the one next-line continuation cite (chargenSession's `overlayHover`) re-aimed by hand. No relay LAW file changed on main, so world93 stands. Full suite green on the merged tree.
+
+## LOOT-REGEN (2026-09-22, Satranath on Discord, online: "I get killed and go back into the dungeon, and all the guys I killed before have loot again") - a quick-loot take is the room's word
+
+WORLD8 says taken loot comes back one real hour after it fell, and the relay keeps a dungeon's memory thirty days; neither failed. The death is remembered (the corpse stands on re-entry) and the corpse's loot is NOT: `_lootSeen` gains a `corpse:<i>` only when the room is told about it, and the QUICK-LOOT door (B4, 2026-09-22) told it nothing - it read the WORLD4 claim as a WINDOW's act and made none for a take that opened nothing, returning before the claim. The memory strips every foe's `items` (AUDIT WORLD4 D4) and carries only the seen containers' records, so a quick-looted corpse had no record; `patchFoe` on re-entry stood the remembered death over the fresh build's OWN roll. Quick Loot is on by default and every ordinary press on a highlighted corpse row takes one item through that door (the window opens only on J), so it hit everyone; death is just how Satranath left. `dungeonContext.js`: a take says what is left the moment it lands - `publishLoot(key)`, the stamp (WORLD8), the record, the seen-set, the first-word memory push (D5) - and settles an emptied pile's flat as the window's `onEmptied` would; C6's window order stands untouched behind it (the window's claim follows its mount). Buildings need nothing: a building's memory keys are `shelf:`/`container:` alone, and a cell's corpses are nobody's memory. Pin: `test/discord5.test.js` (the door by source, the word's four parts); mutants in `tools/mutants/discord5.json` (the word removed, the flat unsettled). Not verified in a browser: no online session exists in this container.
+
+## PEER-BUZZ (2026-09-22, Discord through Mac: "footstep sounds are broken", with a recording) - the peer stride was measured in world coordinates
+
+The recording is 52 seconds of a continuous buzz that rises while somebody walks and falls when they stop: not a
+wrong clip, not doubled steps - a footstep clip fired so often the copies merge (measured: a flat envelope, hits
+0.1-0.2 s apart where a walk is 0.8 s, a 6 Hz beat under it). One seam fires a footstep from a position delta, and
+AUDIT DROPS E5 had just moved it: `net/remotePlayers.js _syncFootsteps` fed each peer's FootstepMachine the
+WIRE's own x/z "which never recentres", to stop the floating-origin shift of the scene point counting as a stride.
+In a town, a building or a dungeon the wire's frame is the scene's. In the OVERWORLD it is world coordinates
+(world.js composes the pose from `wc`): 32768 units per map pixel against the scene's 819.2 - forty scene units
+to one. A peer walking at 3 u/s moved 120 wire units a second, the machine fired a step every 2.5 of them, and
+every player within thirty metres of a walker heard forty-eight footsteps a second. E5 shipped in the audit merge
+(#324) and the reports followed it.
+
+The stride is measured in SCENE units, as the local machine's is, and the floating origin is handled the way EV1
+handles it for the local machine: world.js's recentre block calls `remotePlayers.rebaseFootsteps()` beside
+`footsteps.rebase()`, every peer machine drops its anchor, and the 819.2-unit jump re-seeds instead of walking.
+E5's own pin is re-aimed to that shape (a recentre with the rebase is no step), its mutant inverted (the wire frame
+back is the buzz), and `test/peerstride.test.js` drives the real seam at the real scale: a peer at 3 u/s for five
+seconds in the overworld makes a walker's six steps, not two hundred and forty; a standing peer none; a recentre
+rebased none, and the same jump unrebased one - the negative control that shows the rebase is what matters.
+`tools/mutants/peerstride.json`: 3, 3 dead. Not verified in a browser; the recording is the measurement.
+
+## AUDIT PARTY8 (2026-09-23, Mac: "audit the 8 party integration we just pushed") - six lenses over the eight seats, the HUD and the party rest under them, world95
+
+PARTY8 (PR #330, main `07efc0999`) doubled the party to eight seats and redrew the HUD twice; it landed with no
+record here (the Ledger's SOC row said "four-seat", `Social-Party-Arc.md` said `PARTY_MAX 4`) and beneath it the
+PARTY-REST DROP, whose pins the third lens ran fourteen mutants through with thirteen surviving. Six lenses (three
+over PARTY8: the bound and the hub, the HUD, every mechanic at eight; three over the party rest: the session and
+gate, the four hosts, the wire/UI/relay/records), every finding traced to a line and run where it could be run.
+The offline crash the first lens found first (`markPartyRestSpent` reading `social.now()` with no social clock -
+every offline Rest press a red box) had already reached main as REST-OFFLINE1 from a Discord crash report while
+the lens was running; the rest is paid here.
+
+**The party rest (four real bugs, five risks).**
+- *A mirror opened again every frame.* Nothing remembered which nap a follower had already mirrored, so a mirror
+  that ended before the rester's - the follower already healed under "Rest Until Healed", a quest's prevent-rest
+  line, a Stop the rester had not honoured yet - reopened on the next frame and after every OK until the rester
+  woke. `mirrorKey` (the rester and their `restStartedAt`) is remembered; one mirror per nap. And a mirror opens
+  only where the follower could rest themselves: the rest gate's own `restDecision` (the host's foe scan through
+  a new `restEnemiesNearby` on the interior and dungeon APIs, swimming, the ground, a prevent-rest message, the
+  vampire block) and the interior window stack (`modes.overlayHeld`, which townTalk's own flag never covered).
+- *A follower's Stop was ignored, or replayed.* `restCancelAt` was each follower's own `performance.now()`
+  compared against ONE high-water mark for every sender: a Stop from a tab younger than the last canceller's did
+  nothing (and that follower was pulled straight back in), and a reload of the rester's tab replayed an old
+  request on the next rest's first tick. `systems/partyRestLaw.js`: the marker is compared per sender against a
+  snapshot taken as my rest begins (`snapshotCancels` in `markPartyRestSpent`, `cancelRequestFor` each tick), a
+  mirror is nobody's target (`canceledByFollower: () => false` in its deps), and a follower's request is dropped
+  when their next mirror starts.
+- *A disconnected seat blocked the party for five minutes.* The hub keeps a dropped member's seat with `online:
+  false` and no pose, and `net/social.js` carried the LAST pose over a view that has none; the gate counted that
+  ghost among the online ("gather the party", unsatisfiable until the seat lapsed), and indoors, where nearness is
+  the building key alone, its stale `rest` was mirrored after every OK. The picture keeps a carried pose only for
+  a seat the hub says is online, and every reader - the gate's count, `nearPartyMembers`, the mirror's search and
+  its continue check - asks `memberPresent`.
+- *A vote outlived the rest it approved.* `ready` was a bare boolean whose sixty-second expiry ran only on the
+  voter's own frame, so a voter whose window was open when the rest started (no mirror spent the vote) or whose
+  tab sat in the background approved the leader's NEXT rest with it. The pose carries `readyAt` on the shared
+  clock (world95); a reader (`voteStands`) counts a vote younger than the timeout and cast after the last rest
+  that started here. `/ready` keeps the Rest key's law too: a member answers the leader's round and never opens
+  one.
+- The risks paid: a wire stamp from the future (`voteAt: 1e300`, run against the real gate: "Resting vote
+  ongoing" for ever) is no stamp (`stampOf`, `latestStamp` at the four reduce sites); a classic-skin rest is
+  nobody's to mirror and stamps no `restStartedAt` (ONLINE-REST1, both ends); a follower's "gather the party" is
+  measured around the LEADER (`nearPartyMembers(feetOfPartyAccount(leader))`), not the follower - eight within
+  fifteen metres of the leader can stand twenty-eight apart; PARTY-REST16's vote origin follows the floating
+  origin (a recentre read as an 819-unit walk and cancelled the vote); the mirror's deps say where the follower
+  stands (`inside` by mode, RapidHealing's rate); the cancel scan tests the name before the nearness.
+- *The enhanced rest window against the classic one, arm by arm.* Three interior hooks the classic window calls
+  and this one never did (`moveToBed` after a timed or full start, `onRentExpired` as the end's first arm,
+  `updateNpcPresence` on close - a rented room's sleeper rested standing, an expired room was announced and never
+  removed, hidden shopkeepers stayed hidden); `ignoreAllocatedBed` reaches it through the door; the hours prompt
+  keeps classic's arms (an empty field back to selection, a loiter over `loiterLimitHours()` and a rest over 99
+  refused on their own page, a zero a zero-hour rest - this skin clamped 1..99 and started); Escape and the Rest
+  key do what classic's keyup arms do (Stop mid-rest, OK on the ended page, close a page), and the PX28 stack's
+  Tab close goes through the same one body - it disposed the window, ending a rest with no wake box, no raise,
+  and no cancel request, so a follower was pulled straight back in; a rest until healed shows the hours passed
+  and a meter that is the health; the four choices stand as a column.
+
+**PARTY8 (two real bugs, six risks).**
+- *The HUD's "with me" compared words, not places.* `withMe` matched placeText's strings, so two wilderness
+  pixels 800 apart, two shops of one town and two nameless dungeons all read as "with me" and drew no place
+  line - a healer three regions away looked beside me. It compares coordinates now (the pixel, the kind, the
+  building key - samePlace's own rule) against the pose the host last composed; `hereKeyOf` is the one string
+  the live pass compares.
+- *The open social panel rebuilt every button under the pointer.* A member's pose raised the picture's
+  `version`, a repaint replaces the body, and a click that straddled a companion's pose (up to seven a second at
+  eight seats - lens C watched seven Kick buttons replaced under one pose) landed on a node that was gone. A pose
+  that replaces one moves `poseVersion` alone; the panel writes the row's line in place on its live pass, and the
+  party HUD watches the pose version.
+- *The hub's lapse burst overran the client's note gate.* Seven founding seats lapsing at once (a late joiner
+  idle, sending no pose to prompt an earlier sweep) said `party.lapsed` and `party.leader` alternately - fourteen
+  notes against NOTE_IN_HZ_MAX ten, and the one dropped was "You lead the party now". The lapses each say their
+  note; the lead is said once, for whoever holds it at the end. And the lead passes to the longest-standing seat
+  that is ONLINE - handed to an away seat, nobody could kick for five minutes.
+- The risks paid: the quest fan pays in bytes (`QUEST_ROOM_BYTES_PER_S`, a 64 KiB share to seven members' eight
+  tabs is 3.5 MiB for one press and the rate gate alone let eight through); a receiver no longer echoes a resync
+  back to the party (`_questSyncSeen` learns what it received - one log line was eight hub acts and fifty-six
+  deliveries); a party mate takes a body before a stranger (`peerBodies.sync`'s `priority`: a mate seated first,
+  may take a stranger's slot outright, never loses hers to one); the flare comes off on `animationend` (a class
+  left on the fill replayed it whenever a window closed or a seat joined) and is keyed on the health, not its
+  percent; a seat with no pose shows its dashes, dimmed; the portrait plate is content-box (the sheet's
+  border-box squashed a 31-wide head); a phone held sideways caps the stack above the touch buttons.
+- Not paid, said plainly: a world93 client in a party of five drops its whole social picture silently (the hello
+  carries no client version and SKEW1 removed the client's own check) - the web build updates itself and the
+  relay is live at world95, so this is the desktop shells' release-day window and a version gate is its own
+  slice; the hub cannot vouch that `restCancelFor` came from a member that was mirroring the target (a party is
+  invite-only); a pose's staleness is invisible on the HUD (an honest client sends only on change, so a stamp
+  would mark the still as stale); the notice stack and the junction map overlap the party rows (older than
+  PARTY8); the bar hues are literals where the sheet has tokens.
+
+**Pins and mutants.** `test/auditparty8.test.js` (18) drives the law on a table (`stampOf`/`latestStamp`,
+`memberPresent`, `voteStands`, the cancel markers, `mirrorKey`), the wire's `readyAt` and the byte budget's
+arithmetic, the picture (the offline seat's pose dropped, a pose a quiet change), the enhanced rest window under
+a fake document (the bed through canRest's guild arm - bed ZERO, which classic's truthiness skips - the expired
+room, the presence re-roll, the hours prompt's four arms, Escape and the stack, the until-healed meter), the body
+allocator (a mate seated first, a stranger never takes hers, a mate takes a stranger's), and the hub over the
+fake room (seven lapses say the lead once, the lead to an online seat, the ninth seat refused at the ACCEPT
+path); the world.js seams by source at the foot. `test/party8b.test.js` re-aimed to coordinates and extended
+(the flare on a max that rose, on a one-point hit); nineteen pins in `partyrest1`/`auditdrops`/`restfar`/
+`restlodging`/`mwbody1` re-aimed to the fixed text; `partyrest1`'s dead slice (`(restKind) =>`, lens 3) stands
+as it was pinned by its own signature test. `tools/mutants/auditparty8.json`: 23, 23 dead. Five older records
+re-aimed. RELAY_VERSION world95 (the wire's `readyAt`, the hub's quest bytes, the lapse and lead changes) - the
+relay deploys itself on the merge to main. Not verified in a browser: no online session exists in this
+container; lens B measured the flare, the landscape overflow and the squashed plate in Chromium on the HEAD
+before the fixes.
+
+## ALLY-CAST (2026-09-23, Mac: "Can we implement the use of spells on players? For example healing and other buffs? ... some sort of ally targeting system" - "Do it") - a spell cast on a party mate, world96
+
+DFU has no other players, so its five target types only ever land on the caster, a foe or nothing. The port's law
+online is that a player's vitals and live effects are their own client's, so a cast on an ally is a FRAME and the
+target applies it.
+
+**The frame.** `{t:'cast', data:{to, level, spell}}` - directed like a trade frame (`net/wire.js validCastData`: the
+target's id, the caster's level 1..30, a spell record of name, element, range type (a touch or a ranged single
+target), icon and one to three classic effect entries with their eleven byte components; anything else refuses
+the whole frame - the bounds as the audit below left them). The relay's cast arm (`server/src/index.js`) is the
+trade arm's shape: its own meter (CAST_HZ_MAX 4 a second per sender, the strikes), a place room alone, routed to
+the one socket `to` names with the sender's id stamped on, a funnel onto the destination per sender
+(CAST_DEST_SENDERS_MAX slots), junk at one's own id. The client link (`net/online.js`) sends through its own
+projection first (`sendCast`) and delivers only a frame addressed to me, per-sender gated coming in (`onCast`).
+
+**The targeting (the port's own rule - a recorded departure).** Nobody aims a slow missile at a moving friend. On
+the release frame (`scenes/hostMagic.js releaseFrame`, before the four range arms) a beneficial spell looks for a
+PARTY MATE under the crosshair - the F key's own pick (`player/socialPick.js pickPeerInFront` over `peersNear()`,
+`townTalk.rayPersonDistance`), a party member (`social.isPartyPeer`), one some socket of mine reaches, behind the
+cast engine's own line of sight (`allyInReach`) - within touch reach (ALLY_TOUCH_REACH, the foe's own touch
+reach) for a CasterOnly or ByTouch spell and within ALLY_RANGE_REACH (24 m) for a SingleTargetAtRange one; the
+two area types are never redirected, nor is a free ready (a trap's). Found, the cast leaves as the frame (a
+CasterOnly leaves as a TOUCH, range type 1 - it is one, on the ally), the magicka is spent and the skills tallied
+as for any cast, and the caster reads "You cast Heal on Bran." Not found, or the link refusing, the spell does
+what it always did. CastReadySpell's touch gate admits the mate as it admits a foe. The departure is the
+CasterOnly conversion: DFU's spellbook is almost all CasterOnly, and kept 1:1 healing a friend would mean buying a
+ByTouch copy first - so a Heal readied with the crosshair on a party mate ARMS for them instead of firing on the
+spot, and the next click sends it (or heals you, if they stepped away). The plaque says so while a castable spell
+is armed and the mate is in reach ("Cast Heal on Bran").
+
+**The trust: the receiver decides** (`scenes/world.js online.onCast`). A cast from anyone outside my party is
+dropped unread (a party is invite-only, and that is the whole trust); so is one at a dead player. Of what arrived
+only the BENEFICIAL families are kept (`systems/allyCast.js ALLY_CAST_TYPES`: Cure, Elemental Resistance, Fortify,
+Heal, Invisibility, Levitate, Light, Regenerate, Spell Absorption/Reflection/Resistance, Chameleon, Shadow,
+Slowfall, Free Action, Jumping, Climbing, Water Breathing/Walking, Shield, Detect, Comprehend Languages - never
+Paralyze, Damage, Continuous Damage, Drain, Transfer, Disintegrate, Soul Trap, Silence, Lock/Open, Pacify/Charm,
+Dispel, Create Item, Identify, Teleport, Morph Self), and on the caster's side a spell is castable on an ally only
+when EVERY real effect is one of them - a Heal beside a Damage Health goes the ordinary way. What is kept goes
+through the one player door (`hostMagic applySpellToPlayer`) at the caster's level, AS A SELF-CAST (range type 0,
+whatever was sent: no saving throw against a gift - see the audit's C1) and tagged a mate's (never merged with my
+own bundle of the same kind, dispelled as my own), with "Bran casts Heal on you." said first and the healed line
+after it, as the health that actually moved. Friendly fire is off by construction and the relay never judges a
+spell.
+
+**Pins and mutants.** `test/allycast.test.js` (9): the law on a table (castable, the receiver's subset, the
+reach, the frame, the lines), the wire's projection and parse, the relay's arm over the fake room (to the one
+socket, junk at self, nothing in the hub), the magic host driven as itself (a CasterOnly Heal read off a friend
+leaves as a touch and the caster is not healed; nobody there or a refused door and it heals as before; ByTouch
+and ranged buffs at their reaches; a damage spell and an area spell never ask), the world.js/link/relay seams by
+source. `tools/mutants/allycast.json`: 15, 15 dead. RELAY_VERSION world96 with its law row; the relay deploys
+itself on the merge to main. Not verified in a browser: no online session exists in this container.
+
+## AUDIT ALLY-CAST (2026-09-23, Mac: "Lets audit this") - three lenses over the cast on a party mate, the findings paid, world97
+
+Three lenses over ALLY-CAST as shipped: the CASTER'S (the release frame, the ready, the pick, the plaque), the
+WIRE'S and the RELAY'S (the frame's bounds, the funnel, the version), and the RECEIVER'S (the door the gift goes
+through, the bundle it becomes). Every finding below is paid in the same commit and pinned by execution in
+`test/allycast.test.js`; nothing was deferred.
+
+**The caster's lens.**
+- A1 THE CONVERSION WAS INVISIBLE UNTIL IT FIRED. SetReadySpell's instant arm (:350-351) cast a CasterOnly spell
+  the moment it was readied, so the ally pick ran with no sign to the player: a Heal readied while a friend
+  happened to cross the crosshair went to them; one readied FOR a friend who stepped aside a frame earlier healed
+  me. Now a CasterOnly spell with a party mate in touch reach ARMS ("Press button to fire spell."), the plaque
+  under the mate says "Cast Heal on Bran", and the click resolves through the release frame's ally arm - or the
+  CasterOnly arm as ever if they moved. With nobody there, and for a free ready, the instant arm fires as DFU's.
+- A2 NO LINE OF SIGHT. A touch on a foe runs pickTouch's collider ray; the ally pick ran none, so a Heal landed
+  through a closed door or a dungeon wall. `hostMagic.js allyInReach` casts the collider's ray to the pick's
+  distance (the pick returns it now) and a wall short of the mate is nobody. Both engines run it, and the plaque
+  asks it, so the plaque never promises a cast the click would not make (A5).
+- A3 THE DUNGEON WAS UNWIRED. The dungeon runs its OWN createPlayerMagic (`dungeonContext.js`) and its deps
+  carried no `allyTarget`/`castAtAlly`, so underground the feature did not exist - while the plaque read the
+  SURFACE engine's stale ready and said "Cast Heal on Bran" over a mate the dungeon engine would never cast at.
+  The pair rides world.js's host object through worldModes' opts, and the plaque reads the live engine
+  (`modes.dungeonCtx.readiedSpell`/`allyInReach` underground).
+- A4 A "TOUCH" AT 6.4 m. ALLY_TOUCH_REACH was SOCIAL_REACH, the F key's 6.4 m - more than double what a touch on a
+  foe reaches (DaggerfallMissile's 0.25 sphere pushed 3.0 along the aim). It is the foe's own touch reach plus the
+  person's radius now (3.7 m, `systems/allyCast.js`).
+- A6 A PICK THAT THROWS. `allyTarget` is a host seam over peersNear() and the session; a throw there aborted the
+  release frame with the magicka spent and the ready cleared. `allyInReach` catches it and the spell goes the
+  ordinary way.
+- A7 A FREE READY REDIRECTED. A trap's CasterOnly payload readied `free` on the player who sprang it, and with a
+  mate under the crosshair went to THEM. Never redirected now: the release arm and the touch gate both read
+  `!readiedFree`.
+- A8 "You cast Heal on Bran." is said when the frame LEFT, and a frame can still be dropped downstream (the
+  relay's funnel, the receiver's inbound gate, a dead receiver, a subset that leaves nothing). Recorded as the
+  law, not paid: "sent" is not "landed", the receiver's own line is the landing, and the caster's line names the
+  act they performed - the same as a missile that flies and misses.
+
+**The wire's and the relay's lens.**
+- B1 AN OLDER RELAY CLOSED THE SOCKET. The link sent a `cast` frame to whatever relay welcomed it; a relay before
+  the frame's parse refuses an unknown frame by closing the socket, so a client ahead of its relay lost its room
+  on the first friendly Heal. `online.js castOk` reads the welcome's version (`relaySupportsCast`, CAST_RELAY_MIN
+  97 - world96 parsed a shape this client no longer sends) and `sendCast` refuses at home; the release then
+  falls through to the ordinary arm.
+- B2 ONE FUNNEL FOR EVERYONE. The destination's inbound funnel was one bucket (CAST_ROOM_HZ_MAX) shared by every
+  sender, and the relay cannot tell a mate from a stranger: five strangers casting at you starved your own
+  party's heals. The funnel is per sender now (`cin`, CAST_DEST_SENDERS_MAX 8 slots on the destination's
+  attachment, the stalest evicted for a newcomer, each slot at CAST_HZ_MAX), and the attachment stays under the
+  runtime's 2 KiB.
+- B3 THE BOUNDS WERE NOT THE GAME'S. Level admitted 1..60 (a level-60 Fortify scaled past anything a player can
+  reach), a component admitted any non-negative integer up to a large cap. CAST_LEVEL_MAX 30, CAST_SETTING_MAX
+  255 (the classic byte), CAST_ICON_MAX 68.
+- B4 A CRAFTED SELF-CAST SKIPPED THE SAVE. The wire admitted rangeType 0..4, and the receiver applied the type as
+  sent - so an honest frame took the target's saving throw while a crafted rangeType 0 did not. The wire admits
+  1 and 2 alone; the receiver decides the type (C1), so the sender's word about it is nothing.
+- B5 THE PINS. The relay pin read `a.att.drops` (the pose meter's strikes, never touched) for "junk"; it reads
+  `a.att.junk` now, and the meter, the per-sender funnel, the slot bound and the link's door are pinned by
+  execution (the fake room, `fakeSocketClass` + an `OnlineSession` fed a welcome).
+- B6 The relay's dead length check on the parsed frame (parseClient had already refused it) is gone; the link's
+  `_inCastSaid` is declared with its siblings; this record no longer claims the receiver rolls "absorption and
+  reflection" over a gift (they are self-cast law now, C1).
+
+**The receiver's lens.**
+- C1 THE SAVE ZEROED A THIRD OF HEALS. DFU save-scales every bundle that is not CasterOnly (EntityEffect
+  GetMagnitude) because in DFU only a foe ever receives an external bundle; carried as the touch it was sent as,
+  a friend's Heal landed ZERO on a full save (a third of casts at willpower 50, two thirds for a Breton, more
+  under Resist Magic), a Levitate was "Save versus spell made.", and the caster had paid. `allyCastSpell`
+  returns rangeType 0: THE GIFT LANDS AS A SELF-CAST, the port's own rule and a recorded departure - there is no
+  DFU law for a friend's spell, and a saving throw is a defence against an attack.
+- C2 INCUMBENTS MERGED. F12's incumbent law (a like-kind recast adds rounds and keeps the incumbent's magnitude)
+  was harmless while no outside source ever buffed a player; a level-1 mate's 1-point Shield capped the target's
+  own 60-point Shield at one for forty rounds. A mate's bundle is tagged (`bundleAlly`, `ctx.allyCast` through
+  applySpellToPlayer) and `findInc` merges only within a tag: theirs beside mine, never over it.
+- C3 The bounds (B3) at the receiver: the level the door is handed is the wire's 1..30.
+- C4 A MATE'S BUFF WAS HARD TO DISPEL AND WORE ICON 0. The dispel picker treated a gift as an external bundle (a
+  roll against the caster's chance), and the frame carried no icon. The picker reads `ally` and dispels a gift as
+  the target's own; the icon rides the frame and the bundle.
+- C5 THE LINES. "Bran casts Heal on you." was said AFTER the spell's own lines, and "You are healed N points."
+  reported the magnitude rolled, not the health that moved (a full-health player was "healed 20 points"). The
+  caster's line is first, the heal is the actual delta, and none when nothing moved.
+- C6 This record, corrected as above.
+- C7 Noted, not paid: a party of eight casting Light on one player can say eight lines in a second; the inbound
+  gate bounds it at CAST_IN_HZ_MAX, and the HUD's own text queue already coalesces.
+
+**Departures recorded.** The gift lands as a self-cast (C1); a CasterOnly ready arms for a mate in reach (A1);
+"sent" is not "landed" (A8); a client ahead of its relay keeps its spells to itself (B1).
+
+**Pins and mutants.** `test/allycast.test.js` (14, from 9): the reach's arithmetic, the receiver's self-cast and
+icon, the wire's new bounds and refusals (rangeType 0/3/4, level 31, byte 256, icon 69) and `relaySupportsCast`,
+the relay's junk counter, meter and per-sender funnel with the slot bound under 2 KiB, the link's door (a world96
+welcome, the gate, self, an unreported peer) and its inbound arm (own id, another's, a failed projection, the
+per-sender gate), the host (a CasterOnly ARMS then sends on the click; armed for a mate who steps away it heals
+me; a wall short of the mate, a pick that throws, a free ready, no aim fed; the touch gate refuses a mate behind a
+wall without spending), the receiver's door driven (a Heal whole as a self-cast where the same roll as a touch
+was zero; a gift beside my own Fortify; the mate's recast merging with the mate's; dispelled as my own), and every
+seam by source. `tools/mutants/allycast.json`: 37, 37 dead. RELAY_VERSION world97 with its law row; the relay
+deploys itself on the merge to main. Not verified in a browser: no online session exists in this container.
+
+## FRIENDLY-SPELLS (2026-09-23, Mac: "These files here need to be integrated, with a cavet. We also made changes to cricket sounds and the new player-to-player spellcasting. I don't want to override our previous changes") - two drops onto ALLY-CAST, world98
+
+Two archives from Mac's tree (`friendly-spells-patch_6`, `friendly-spells-and-Nightsound-toggle`), both whole-file
+copies cut from the PR #331 merge. Main had moved on since: ALLY-CAST and AUDIT ALLY-CAST (the `cast` frame, a
+party-only receiver, the gift landing as a self-cast), CRICKET-DUNGEON (the chorus stopped underground), and AUDIT
+PARTY8 / AUDIT PARTY-REST (`systems/partyRestLaw.js`, `voteStands`, the shared-clock `readyAt`). The caveat was
+not to override those. So nothing was copied over a file main had changed: each of the 29 files with real edits
+was a three-way merge against that base, and every doc file the drop carried differed from main only by its own
+citation shifts, so main's text stands and `tools/citeShift.mjs` re-maps it.
+
+**AID1 IS NOT A SECOND SYSTEM - ITS BEHAVIOUR RIDES ALLY-CAST'S DOOR.** The drop built its own friendly-spell path
+- an `aid` frame, a relay arm, a receiver in world.js, `online.onAid` - beside the one main had just shipped and
+audited. Two player-to-player spell systems would be two laws for one act: the `aid` receiver took gifts from
+anyone in the room, where AUDIT ALLY-CAST limits them to the party and to the beneficial subset; and the drop's
+relay minimum (world95) named a version main had already spent on AUDIT PARTY8. What the drop ADDED is kept, as
+new arms of the one engine: a beneficial TOUCH meets a party mate's body (`hostMagic.js pickTouch` over
+`allyMarksFor`), a beneficial MISSILE that strikes a mate is given to them and spent, and a beneficial BLAST -
+around me, or where a missile bursts - reaches every mate inside `EXPLOSION_RADIUS`. Every gift leaves through
+`giveToAlly`, which is ALLY-CAST's `castAtAlly(id, allyCastFrame(...))`, so the receiver, its party gate and its
+beneficial filter are the audited ones. A free ready (a trap's payload, AUDIT ALLY-CAST A7) and a hostile spell
+give nothing. The marks come from `world.js allyMarksNear`: party members a socket of mine reaches, and only while
+the relay routes the `cast` frame. No `aid` frame, relay arm or receiver exists anywhere in the tree.
+
+**THE SENDER'S METER, SIZED FOR A BLAST.** ALLY-CAST sized the sender's cast bucket when one cast was one frame:
+CAST_HZ_MAX (4) deep, 4 a second. A beneficial blast is one cast and one frame for each mate inside it, so the
+rerouted blast gave a full party's blast to four mates and silently nothing to the other three - the link's own
+gate refused the rest and the caster read no line for them. `wire.js castGate` is now CAST_BURST_MAX (PARTY_MAX - 1,
+seven) deep, still refilled at CAST_HZ_MAX a second; `tokenGate` took a depth argument that defaults to the rate,
+so every other gate keeps its shape. The destination's per-sender funnel on the relay is untouched - a blast sends
+each mate one frame. The client and the relay read the one gate, so they agree on it, and the change rides world98.
+
+**SPELLFX1/2 - A PEER'S CAST AND SHAFT, SEEN AND HEARD.** The pose carries the cast's element (`ce`, the classic
+five) and the arrows loosed (`ar`). `world.js peerCastVisuals` reads them off the drawable list before the bodies
+sync: a new cast count draws the peer's missile in the live mode's engine (`spellVisual`, the dungeon's own when
+underground), a new arrow count a shaft. A drawn missile or shaft stops on a body - mine, a foe's, another
+player's - flashes and applies NOTHING: the caster's own world decided what it hit, and a beneficial one of theirs
+reached its target through the cast frame. SPELLFX2: the cast sound is the element's, played at the peer
+(`audio.play3dId`). The pose change moves the relay's import graph, so `RELAY_VERSION` is world98 with its row in
+`test/relayversion.test.js`; the merge to main deploys it.
+
+**SNDREP1 - A SOUND PACK, AND TWO SWITCHES.** `systems/soundReplacer.js`: DFU's loose `StreamingAssets/Sound/<name>.wav`
+for the crickets and the distant howl, attached by the player like a music pack and never bundled (the mod the
+drop was written for forbids re-uploading its files). The engine's buffer key was renamed `soundBufferKey`, since
+`musicReplacement.js` already exports a `replacementKey` (the audit24 one-symbol-one-home ratchet). Two prefs,
+`nightCrickets` and `distantHowl`, silence each clip at the audio door; they are the player's own online
+(`ONLINE_PLAYERS_OWN_PREFS`, an ear and nothing the room agrees on). **Beside CRICKET-DUNGEON:** the door refuses
+a NEW loop for a silenced clip, but a chorus already sounding holds its own source and sang on for the rest of its
+bout - up to 45 seconds after "Off: silent". The crickets arm in `ambientEffects.js` now stops the loop for the
+switch exactly as CRICKET-DUNGEON stops it underground, one condition with two reasons, and the chorus clock holds
+for both. CRICKET-DUNGEON's own behaviour is unchanged, and its mutants are re-aimed to the shared line.
+
+**THE REST.** HEAL1: a Healer starts knowing Balyna's Healing Touch - the Balm's own effects at ByTouch, index
+-1000 - which ALLY-CAST gives to a mate. The test room's sorceress gets a Fireball and a Healing Bolt (-1001,
+-1002) to throw at a friend. REST-MANA1: online, a no-regen career's rested hour pays magicka; offline it is
+Daggerfall's. STRANGER-REST2: the outdoor stranger-rest radius is 50 m, not 100. QS8 (the drop called it QS7, a
+name taken since 2026-09-17): readying from the book puts the spell on the spell slot, and the free lycanthropy
+ready does not.
+
+**PARTY-REST29/30/31, ON THE AUDIT'S LAW.** The drop fixed the rest vote with its own state
+(`_partyRestReadySocialAt`, `_partyRestStaleReady`, `partyMemberReady`, `partyRestLastStartedAt`) written against
+the tree before AUDIT PARTY-REST. The fixes are ported onto the law instead. PARTY-REST29: `partyRestLaw.js
+cooldownStamp` - a start stamp its own member's newer vote supersedes cools nothing down, and the leader's own
+stamp is waived when their rest window closed unrested (`restDoor.js` reports that close once, through
+`onClosedUnrested`); `voteStands` still reads every grant, so the round is spent. PARTY-REST30: the gate asks the
+cooldown BEFORE marking me ready, so a refused start leaves no vote on the wire. PARTY-REST31: a member's vote
+dies with the leader's round and with the leader's grant, and a vote canceled by walking away takes the leader's
+own ready with it.
+
+`test/friendlyspells.test.js` (15 tests) pins it by execution and by source; `tools/mutants/friendlyspells.json`:
+22, 22 dead. Re-aimed where the merged code moved them: the ALLY-CAST touch gate, CRICKET-DUNGEON's two mutants,
+the relay version mutant, the player-capsule census (AUDIT 62 F21, AUDIT 65 CV-2: three drawn arms added, each at
+the player's own radius), the pose's field list, and ALLY-CAST's three meter pins (a whole blast deep). Not verified in a browser with two players: no online
+session exists in this container.
+
+## HCC-ONLINE (2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also enhance its online integration functionality") - a peer's horse and wagon stand in the cell
+
+Horse Cart and Cargo (`06-Systems/Horse-Cart-And-Cargo.md`) is single-player: its parked wagon, waiting horse,
+following horse and trailing team are objects in one Unity scene. Online they stand in a shared cell, so the port
+carries them to everyone near, under the camps' law (SURV3) and no new one:
+
+- **The record** (`systems/horseCartWire.js`): what the pool SHOWS, not the save - the wagon's kind (trailing /
+  parked / following), base, rotation as Unity spells it, cargo tier and wheel angle; the horse's base, horizontal
+  forward, walk frame and walking; the horse's name. Positions in the wire frame (natives, the compensation-free
+  height), rounded to the centimetre. It rides as `hv` on the cell's foes frame beside `c`: on every full frame
+  (`null` when none stand), and between them whenever the word moved - the foe pool's `foesFrame(full, force)`
+  sends a frame with no foe in it for the rider, so a walking horse is heard every FOES_MS and not every two
+  seconds.
+- **The door** (`validHccRecord`): shape, POSE_BOUND / POSE_Y_BOUND, a quaternion within 0.5..2 renormalised, a
+  known kind and a known tier, a frame the walk set has, walking a bit, the name at the mod's 31. A junk word drops
+  the owner's whole team; a frame without the field leaves the last word standing.
+- **The owner law** (`horseCartPool applyOwner / sweepOwners / clearPeers`): an owner's word replaces that owner's
+  alone and never mine; an owner gone from the room or quiet past FOES_STALE_MS is swept beside their puppets and
+  camps; a room change and a leave clear every peer's team.
+- **The landing**: a peer's team is drawn with the same five pieces, cargo and horse billboard as mine, EASED
+  between words (12 per second; a step past 20 m - a summon, a pixel crossing, a fast travel - snaps), the horse's
+  orientation the reader's own camera's. Their wagon and horse are targets under the one ray so the plaque names
+  whose they are ("<Name> (<Peer>'s horse)", "<Peer>'s wagon"); the press says so and opens nothing.
+- **Nothing of the storage rides**: a player's items are their own client's (the port's law since the first
+  inventory), and a peer's wagon is a thing to see and walk around.
+- **No relay change**: the relay reads nothing inside a foes frame (AUDIT WORLD2), so `hv` needs no version and no
+  law row; the pose already carries the transport mode a peer rides.
+
+Pinned: `test/hcc_pool.test.js` (the record, the door, the ease, the owner law by execution), `test/hcc_hosts.test.js`
+(the stream, the setOnHcc landing, the sweep, the clears, the relay untouched). Not verified in a browser: no
+online session exists in this container.
+
+### AUDIT HCC-ONLINE (2026-09-23, Mac: "Let's do an audit on this, ensure online is handled properly")
+
+One lens over the lane above, read whole; nine findings paid, one recorded (the full list with the other two lenses
+is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.js`, mutants in
+`tools/mutants/hcc.json`).
+
+- **The word lives in the wire frame (O1, O2).** A peer's team was converted to scene coordinates once, when it
+  landed, and `offsetAll` shifted only what was SHOWN - so my next recentre put their wagon, horse, plaque and box
+  819 m away until their next word (up to a full frame's 2 s for a parked team), and a fast travel's teardown
+  (`clearLive`, which re-anchors the origin with no offset to ride) kept them at old-frame points. The pool keeps
+  the validated record and the host's `campToScene`, and converts every frame (horseCartWire's own header law:
+  "a reader converts at landing and every frame after"); the foe pool's `destroy` takes the teams as
+  `clearPuppets` does.
+- **The parked wagon is a box (O3).** A peer's Deployed wagon stands `hccWagon:<owner>` in my collider, re-stood
+  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it takes the ray's
+  surface pardon.
+- **The door cleans the name (O4).** `n` rides `sanitizeLabel` at the mod's 31 on both ends - printable ASCII and
+  the name filter, the door a player's name and a party's place already go through.
+- **A standing horse is silent (O5).** The walk frame rode `h`, so the idle flicker (frames 5/6 at 2 fps) changed
+  the word twice a second for as long as a horse stood, forcing a foes frame to everyone in range. `h` carries
+  the walking bit (six words, not seven); the reader strides its own HorseWalkAnimationState over the pace it
+  shows. The change key is taken through `campToWire`, so my own recentre is not a word.
+- **Reach, switch, art (O6-O9).** A press on a peer's team past the mod's 3.2 is DFU's "too far"; my switch turned
+  off is a word at once; a viewer with the mod off lands nothing and loads nothing; a horse whose art is not up is
+  not named or pressed.
+- **O10, built as HCC-PARK below.** A team stood for the others only while its owner was in the cell room to say
+  it, so a parked wagon vanished when its owner went indoors, travelled or logged off.
+
+## HCC-PARK + HCC-TIP + RIDE (2026-09-23, Mac: "I think we should build that. And if not already, ensure this is compatible with our tooltip implementation and ensure it shows owned if another players. Also need to ensure over people see others riding on horses") - world98
+
+The full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-TIP and RIDE. Pins in
+`test/hcc_park.test.js` (11), mutants in `tools/mutants/hccpark.json` (22, every one dead).
+
+- **A cell keeps a parked team (HCC-PARK).** A new client frame, `{t:'park', data}`, says MY parked wagon or
+  waiting horse: its anchor in wire units and, while it is shown, the record the foes frame's `hv` already carries.
+  The cell room stores `park:<owner>` only when the anchor lies in that room's own cell (`cellRoomOfWire`), fans it
+  as `{t:'park'}` and hands a joiner the whole list after the welcome as `{t:'parks'}` with each owner's verified
+  name. It is bounded by `PARK_HZ_MAX` a socket, `PARK_CELL_MAX` a cell (stalest out) and `PARK_TTL_MS` (72 hours
+  since the owner last said it). An owner registry (one durable object per owner, `parkRegistryRoom`) drops the
+  old cell's record when the team moves or is taken up, over internal paths the public worker never forwards; the
+  cell also drops its own superseded record, so a dev worker with no registry binding keeps no ghost.
+- **The client's two words.** `hccParkTick` sends the word off the SAVE record when it changes (at most once a
+  second), again on a room change and once the cell's socket opens; `sendPark` routes it to the primary socket or
+  the halo holding that cell, else the anchor alone through the room I am in. The pool keeps the live word and the
+  kept one apart, draws the live one first per part, and the sweep takes only the live one; a kept team stays while
+  I hold its cell's socket.
+- **The owned line (HCC-TIP).** A peer's horse or wagon hovers as the mod's own word for it with "Owned by <name>"
+  under it, the owner's session name or the relay's stamp when they are away.
+- **The mount on the pose (RIDE).** `rd` (1 horse, 2 cart) and `rv` (the rider's Eye Of The Beholder mounted
+  sprite set) ride the pose, omitted on foot; a mount change is a pose change. `net/peerRiders.js` draws a riding
+  peer with EOTB's mounted sprites, before the Morrowind bodies and the dolls, which stand nothing for a rider.
+- **The deploy.** RELAY_VERSION world99 with its law row (world98 was FRIENDLY-SPELLS', merged first). An older
+  relay closes the socket on an unknown frame, so the client sends `park` only to world99 or later (`relaySupportsPark`, set on the primary welcome). The relay
+  deploys itself on the merge to main, which drops every connected player once. Not verified in a browser: no
+  online session exists in this container.
+
+### AUDIT BRANCH - the parked team's owner, the reader, the rider (2026-09-23, Mac: "Let's do an audit on everything before we merge. This needs to be perfect")
+
+The full list is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT BRANCH. Main had shipped FRIENDLY-SPELLS as world98 first,
+so the branch merged main and moved its relay law to world99; the client's park door opens at world99.
+
+- **The owner is the account and the character, never the peer id (D1, D2).** A record keyed by the id a client
+  chooses could be dropped or overwritten by anyone who said that id, and a new tab left the old record standing
+  beside the new one. The relay keys a record by `parkKeyOf(sub, c)`: the subject the identity token verified and the
+  character id the frame names (`systems/characterId.js`). The others are told only that opaque key. An account is
+  never handed or fanned its own records, so its client draws its own team off its save alone.
+- **Bounded per account, ordered, announced (D3-D5).** `PARK_ACCOUNT_MAX` records of one account a cell; the registry
+  stores when the owner spoke and ignores an older word, and a cell drops a record only if it is no newer than the
+  drop; an expired record is said gone; the same word again refreshes its time and is fanned to nobody; the horse's
+  facing is a unit vector at the door.
+- **The reader keeps each cell's word apart (C2-C4).** Kept words are stored per room and owner key, so one cell's
+  "gone" never removes another's fresh record; every cell welcome carries the list, an empty one included; the park
+  word is said again after any welcome, so a word lost with a dying socket is repeated. A kept part stands down only
+  where its owner's live word shows that same part.
+- **The rider (RIDE).** Drawn off the smoothed pose, with the gallop bit the rider's own sprite shows, only once its
+  sprite is up (failed art retried), with no human footsteps, the name at the sprite's top, gone over the death
+  screen, and its casts from the saddle's eye height.
+
+Pins: `test/hcc_park.test.js` (13); mutants `tools/mutants/hccpark.json` (35, all dead). RELAY_VERSION world99 with
+its law row (never deployed, so its row was still this branch's to write). The relay deploys itself on the merge to
+main and drops every connected player once. Not verified in a browser: no online session exists in this container.
+
+### AUDIT BRANCH (WoD) - a mod's placed foes never ride (2026-09-23, Mac: "Lets do a comprehensive audit before we decide to merge. This needs to be a perfect integration and hopefully bug free")
+
+The full list is `03-World/World-Of-Daggerfall.md` AUDIT BRANCH; this is its online half.
+
+- **M1: placed foes took a peer's puppet slots.** World of Daggerfall's markers stand PLACED foes - outside the
+  encounter cap and never distance-culled, as DFU's `CreateFoeGameObjects` leaves them - and the cell's frame streamed
+  them like any exterior foe. A reader stands at most `CELL_PUPPETS_MAX` (8) live puppets per owner, first come, so
+  eight left behind at two camps took every slot, and the owner's next real encounter never stood at the peer: the
+  peer could not see it, hit it, or be hit by it. Every client stands its own copy of each site, so the frame now skips
+  a placed foe as it skips a quest foe (`foesFrame`), and a placed foe takes no peer as a target (`_armed`) - no peer
+  holds its puppet, and a blow at a peer lands only through one. A camp no longer stands twice at a peer; two players
+  in one camp each fight their own camp's foes. `wire.js`'s comment on the cap ("the only number a legitimate owner can
+  exceed is by quest foes, which never ride") is left as it stands: its bytes are the deployed relay law
+  (`relayversion.test.js`), and what rides still keeps within it. The pool's comment names the placed foes.
+- **M2/m5: a region pack that fails for good.** A pack fetch stalls out after 15 s with no byte and is tried three
+  times. Online the list is every folder in one order; a player whose pack for a region failed every try played with
+  that region skipped, so its contested pixels could stand different ground from the room's for the page. WOD6 (the
+  same day) tries it again in the background - 5 s after, doubling to a minute, 12 more tries - and lands it in its
+  own place: the list is built again in the room's order, and the pixels it names that already stand are built again,
+  so the player's ground rejoins the room's.
+- **TERRAIN-SCALE1 moves every exterior height** (the game scene's TerrainScale, 1.25, where the port drew 1.5). A peer
+  is drawn at the height it sends, so a tab still on a build from before it shows peers on the new build off its
+  slopes until it reloads - the update notice's case. The one exterior height the relay keeps is a parked team's
+  (`park`, HCC): a record written before it stands at the old height until its owner's client sends it again or it
+  expires (`PARK_TTL_MS`, 72 h). The room's memory (WORLD1) holds keys, not heights. No relay change.
+
+Pins: `test/audit_wod_branch.test.js` (two pools, the world6b rig). No relay change.
+
+
+## RIDE-SOUND + 3D-AUDIO (2026-09-23, DISC6, Mac: "Can we tackle the known limit along with the following bug reports") - the peers' hooves, and every peer sound at the peer
+
+The known limit on the HCC page is gone: a riding peer is heard. Each one runs `RidingAnimator` (TransportManager's
+riding half) off the pose's `rd` and `mv`, and its loop plays at them through `audio.setLoop3d`, a named positional
+retrigger loop (DFU's ridingAudioSource shape). The loop moves every frame and stops 0.2 s after they stand, on a
+dismount, a departure, or the dead's empty sync. The neigh plays at them. Peer footsteps and swings play at the peer
+too (`peerSound` through `play3d`), where PEER-FS1 faked the falloff on a flat one-shot; all three share
+`PEER_SOUND_PROFILE` (full inside 6 m, silent past 30, linear). The hooves follow the peers' footsteps switch.
+
+The panning itself was mirrored for every positional sound in the port (the scene is left-handed, WebAudio
+right-handed) and equal-power, so nothing behind could be told from in front. Both are fixed at the audio door;
+the record is `01-Overview/Field-Bugs-2026-09-23.md` (DISC6-D). No wire or relay change: RELAY_VERSION stays.
+
+Pins: `test/audio3d.test.js` (4); mutants `tools/mutants/audio3d.json` (17, all dead). ~~The pose carries no speed,
+so a peer's horse keeps the fast clop (DFU's opening clip).~~ DISC7 put the rider's half-speed flag on the pose (`hs`,
+world100) and the clop swaps on it. Not verified in a browser.
+
+## DISC7 (2026-09-23, Mac: "fix the known gaps" and "reuse the loot scroll menu to select options") - the peers' verbs on the plaque, the clop's half speed, world100
+
+A player under the crosshair lists the F-menu's enabled acts as the World Tooltips plaque's rows - the loot list's own
+wheel and highlight - and the activate key (or F) presses the lit one through the card's own door, re-read at the press.
+The card stays where the plaque cannot (touch, the classic skin). AUDIT DISC7: a player's list starts unlit (a plain click sends nothing; the wheel or F lights a row), every act the card offers is listed with a refused one's reason, the press re-picks the player on its own ray with walls blocking and never fires on a touch cast; the riders' loop stands on a stale pose, is made within earshot only and moves with the floating origin, and `hs` is latched off a moving frame - `01-Overview/Field-Bugs-2026-09-23.md` (AUDIT DISC7). The pose carries `hs`, the rider's half-speed flag, mounted and moving
+only and omitted at 0; the receiving riding loop swaps the clop on it. RELAY_VERSION world100 with its law row. Record:
+`01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/disc7.test.js`.
+
+## WOD7 (2026-09-23, Mac: "and all the enemies are synced online?" ... "yes dude") - World of Daggerfall's camps, shared
+
+The first player to spring a World of Daggerfall marker owns what it made: its camp foes ride that player's cell
+stream tagged with the marker's site (`st`), a full frame names every marker the owner sprang (`sp`), and every
+reader stands the camp's puppets under `WOD_CAMP_PUPPETS_MAX` (16, apart from `CELL_PUPPETS_MAX` - AUDIT BRANCH
+M1's spent slots) and spends its own copy of each marker named (not one whose camp the allowance refused whole). A
+race goes to the first spring - the list carries each marker's age - and inside five seconds to the smaller id; the
+loser takes its camp down, a foe still building included. A camp foe hunts the peers. The treasure stays its springer's; a camp leaves with
+its owner; the relay remembers no marker. No wire or relay change: the tags ride the foes frame beside `c` and are
+checked at the reader (`world/wodShared.js`). The full record is `03-World/World-Of-Daggerfall.md` WOD7. Pins:
+`test/wod7_sharedcamps.test.js`; mutants `tools/mutants/wod7.json`.

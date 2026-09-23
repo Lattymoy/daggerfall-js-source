@@ -17,7 +17,7 @@
 //
 // HOW IT DRAWS, and why this needs no renderer change at all: the port
 // has ALREADY shipped a first-person pass. renderCharacterSprite
-// (render/renderer.js:1017) binds an offscreen target with its OWN depth
+// (render/renderer.js:1209) binds an offscreen target with its OWN depth
 // renderbuffer, clears colour AND depth, swaps the frame's proj/view for
 // ones the caller supplies, draws, and restores; drawScreenOverlayQuad
 // (:987) composites it fullscreen with an alpha cut and no depth test.
@@ -83,6 +83,7 @@ import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry in
 // MAP3: THE HELD SHEET - the pose deltas over the idle, the paper piece
 // the hands hold, and where its corners land on the composite
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
+import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -488,7 +489,7 @@ export function armReach(eye, unionBounds) {
 /**
  * PACK THE ASSEMBLY for drawCharacter's vertex stream: 9 floats per
  * vertex, [pos.xyz, colour.rgb, normal.xyz], NON-INDEXED, because
- * drawCharacter issues drawArrays (renderer.js:957). The MW readers hand
+ * drawCharacter issues drawArrays (renderer.js:1142). The MW readers hand
  * back indexed triangles, so the indices are expanded here.
  *
  * NORMALS ARE COMPUTED, not read. poseAssembly skins positions with a
@@ -502,42 +503,44 @@ export function armReach(eye, unionBounds) {
  * left arm is lit inside-out - dark where the right arm is bright - and
  * that is a lighting bug that reads as "the mesh is wrong" rather than
  * as "the mirror is wrong". drawCharacter disables back-face culling
- * (renderer.js:955), so the winding costs nothing else.
+ * (renderer.js:1140), so the winding costs nothing else.
  */
 export function packFpArm(pieces, out = null) {
   let tris = 0;
   for (const p of pieces) tris += (p.indices ? p.indices.length : 0) / 3;
   const buf = out && out.packed && out.packed.length === tris * 3 * FP_FLOATS
     ? out.packed : new Float32Array(tris * 3 * FP_FLOATS);
-  const ranges = [];
+  // PERF-RIG1 (2026-09-21): THE FRAME PATH MINTS NOTHING PER VERTEX. This
+  // ran every frame for the arm, the body and every peer's body, and per
+  // CORNER it built `[a, b, c]` to index, and took an `[r, g, b]` from
+  // diffuseAt and another from emissiveAt - three arrays a corner, some
+  // ten thousand a frame for one body, none of which outlived the call.
+  // And of the fourteen floats a corner, eight never change between
+  // frames: the diffuse, the UV and the emission are the authored
+  // vertex's, and only the position and the face normal follow the pose.
+  // So the static eight are resolved ONCE per piece (through the same
+  // diffuseAt/emissiveAt - one home for the colour law) into a lane
+  // buffer kept on the piece and keyed on what it was read from, and a
+  // frame copies them beside the six it computes. The corner order, the
+  // float order and every value written are the ones they were.
+  //
+  // The ranges are the piece list and carry the mesh's textures once
+  // hung (uploadThirdMesh, the fp path): a per-frame pack that answered
+  // a fresh array threw that identity away every frame and made the
+  // caller keep the first. When the pieces are the ones `out` was packed
+  // from, the same range objects come back, untouched.
+  const ranges = sameRanges(out, pieces) ? out.ranges : [];
+  const rebuild = ranges.length === 0;
   let o = 0;
   let first = 0;
   for (const p of pieces) {
     const pos = p.positions;
     const idx = p.indices;
     if (!pos || !idx) continue;
-    const uvs = p.uvs || null;
-    // MW-D13 / RULE 63: the colour written per vertex is the RESOLVED
-    // DIFFUSE, which is the vertex colour only when the mode says so.
-    // What stood here read p.colors directly and the shader MULTIPLIED
-    // it into the albedo - the exact error rule 63 opens by naming: "the
-    // single most likely place for a port to be silently wrong. OpenMW
-    // does not modulate the material by the vertex colour; the vertex
-    // colour SUBSTITUTES for whichever material channel the colour mode
-    // names." A mesh with both a material colour and vertex colours was
-    // being tinted twice and drawn dark.
-    const cols = p.colors || null;
-    const mat = p.material || null;
+    const lanes = pieceLanes(p);
     const flip = p.mirrored ? -1 : 1;
-    const textured = !!(uvs && p.material && p.material.textureFile);
-    // THE INVENTED SKIN TONE IS GONE. The reference's fragment starts at
-    // opaque WHITE with no diffuse map (objects.frag:152-154) and the
-    // NIF material defaults are overridden to white too
-    // (nifloader.cpp:2740-2742), so an untextured surface is white lit by
-    // the scene - not a flat colour somebody chose. The vertex colour,
-    // when the mesh HAS one, substitutes for the material's diffuse and
-    // ambient terms, which in this pass's single-product lighting is the
-    // same arithmetic: texel * colour * (ambient + sun * diff).
+    const textured = !!(p.uvs && p.material && p.material.textureFile);
+    let l = 0;
     for (let i = 0; i + 2 < idx.length; i += 3) {
       const a = idx[i] * 3; const b = idx[i + 1] * 3; const c = idx[i + 2] * 3;
       const ux = pos[b] - pos[a]; const uy = pos[b + 1] - pos[a + 1]; const uz = pos[b + 2] - pos[a + 2];
@@ -548,32 +551,59 @@ export function packFpArm(pieces, out = null) {
       const len = Math.hypot(nx, ny, nz);
       if (len > 1e-8) { nx /= len; ny /= len; nz /= len; } else { nx = 0; ny = 1; nz = 0; }
       for (let k = 0; k < 3; k++) {
-        const v = [a, b, c][k];
-        const vi = idx[i + k] * 2;
+        const v = k === 0 ? a : k === 1 ? b : c;
         buf[o++] = pos[v]; buf[o++] = pos[v + 1]; buf[o++] = pos[v + 2];
-        const [dr, dg, db] = diffuseAt(mat, cols, idx[i + k]);
-        buf[o++] = dr; buf[o++] = dg; buf[o++] = db;
+        buf[o++] = lanes[l]; buf[o++] = lanes[l + 1]; buf[o++] = lanes[l + 2];
         buf[o++] = nx; buf[o++] = ny; buf[o++] = nz;
-        buf[o++] = uvs ? uvs[vi] : 0;
-        buf[o++] = uvs ? uvs[vi + 1] : 0;
-        // MWT2: the reference adds the emission INTO the lighting sum and
-        // multiplies the texture by the whole of it (objects.frag's
-        // `gl_FragData[0].xyz *= lighting`, lighting.glsl's
-        // `... + getEmissionColor()`), so an emissive surface keeps its
-        // picture and stops caring what the room is lit by.
-        const [er, eg, eb] = emissiveAt(mat, cols, idx[i + k]);
-        buf[o++] = er; buf[o++] = eg; buf[o++] = eb;
+        buf[o++] = lanes[l + 3]; buf[o++] = lanes[l + 4];
+        buf[o++] = lanes[l + 5]; buf[o++] = lanes[l + 6]; buf[o++] = lanes[l + 7];
+        l += LANE_FLOATS;
       }
     }
     const count = (idx.length / 3) * 3;
-    // ONE RANGE PER PIECE, because a Morrowind arm is several meshes with
-    // several textures and the character path issues drawArrays. The
-    // range carries the piece's own texture name; the caller resolves it
-    // once and hangs the GL texture here.
-    ranges.push({ first, count, slot: p.slot, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null, hidden: false });
+    if (rebuild) ranges.push({ first, count, slot: p.slot, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null, hidden: false });
     first += count;
   }
   return { packed: buf, ranges };
+}
+
+/** PERF-RIG1: the eight static floats a corner - diffuse rgb, uv, emissive
+ *  rgb - in corner order, resolved once per piece through the pass's own
+ *  colour laws and kept on the piece until the arrays they were read from
+ *  change identity (a rebuilt wardrobe hands the piece new ones). */
+const LANE_FLOATS = 8;
+function pieceLanes(p) {
+  const idx = p.indices, uvs = p.uvs || null, cols = p.colors || null, mat = p.material || null;
+  const have = p._packLanes;
+  if (have && have.idx === idx && have.uvs === uvs && have.cols === cols && have.mat === mat) return have.lanes;
+  const lanes = new Float32Array(idx.length * LANE_FLOATS);
+  let l = 0;
+  for (let i = 0; i < idx.length; i++) {
+    const vi = idx[i] * 2;
+    const [dr, dg, db] = diffuseAt(mat, cols, idx[i]);
+    lanes[l++] = dr; lanes[l++] = dg; lanes[l++] = db;
+    lanes[l++] = uvs ? uvs[vi] : 0;
+    lanes[l++] = uvs ? uvs[vi + 1] : 0;
+    const [er, eg, eb] = emissiveAt(mat, cols, idx[i]);
+    lanes[l++] = er; lanes[l++] = eg; lanes[l++] = eb;
+  }
+  p._packLanes = { idx, uvs, cols, mat, lanes };
+  return lanes;
+}
+
+/** PERF-RIG1: true when `out.ranges` is the range list of exactly these
+ *  pieces - one range per drawable piece, in order, on the same piece
+ *  objects - so the frame can hand the same objects back. */
+function sameRanges(out, pieces) {
+  const r = out && out.ranges;
+  if (!r) return false;
+  let k = 0;
+  for (const p of pieces) {
+    if (!p.positions || !p.indices) continue;
+    const range = r[k++];
+    if (!range || range.piece !== p || range.count !== (p.indices.length / 3) * 3) return false;
+  }
+  return k === r.length;
 }
 
 /**
@@ -998,6 +1028,13 @@ export function daggerfallArrowCount(items) {
  */
 export function weaponPartPaths({ weapon, hasAmmo = false, allWeapons, has = null }) {
   const paths = [];
+  // FIELD-GUN-MW2: the same first question resolveWeaponParts asks, in
+  // the same order. A preload that skipped this would leave the read
+  // below it calling `arc.get` on a lazy archive that had not loaded -
+  // which MW-LOAD's findLoaded exists to catch and name, and which is a
+  // defect in THIS file every time it fires.
+  const own = ownWeaponModelFor(weapon);
+  if (own) return [`meshes/${own.model}`];
   const mwType = dfWeaponToMw(weapon, WEAPONS);
   if (mwType === MW_WEAPON_TYPE.None) return paths;
   const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D50: a record the archives carry
@@ -1083,6 +1120,7 @@ export const archiveHas = (archives) => (p) => (archives ?? []).some((a) => a.ha
  *  a fault the player sees from the chair and could not name - the
  *  card's note is the same sentence, but the card is a menu away. */
 import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf (see the file)
+import { ownWeaponModelFor } from '../characters/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have - a leaf too
 
 const saidArrow = new Set();
 function sayNoArrow(notes) {
@@ -1098,6 +1136,42 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   let weaponInfo = null;
   let arrowInfo = null;
   const mwType = dfWeaponToMw(weapon, WEAPONS);
+  // FIELD-GUN-MW2: THE PORT'S OWN WEAPONS FIRST, because Morrowind has
+  // no record for them and no type to look one up by. This arm cannot
+  // shadow a Morrowind weapon - `ownWeaponModelFor` answers only for
+  // template indices `registerCustomTemplates` minted, which are past
+  // every DFU index - and it returns before the type lookup rather than
+  // after it, so the note below ("Morrowind has no weapon type for what
+  // you are holding") stays true of the items it is actually about.
+  const own = ownWeaponModelFor(weapon);
+  if (own) {
+    const path = `meshes/${own.model}`;
+    const arc = find(path);
+    if (!arc) {
+      // Not "your archives do not carry it": ours is SHIPPED, so a miss
+      // here is the build's fault and not the player's, and saying so
+      // is the difference between a bug report and a wild goose chase.
+      notes.push(`weapon: ${path} ships with the port and did not load - this is a build problem, not your data`);
+    } else if (!skeletonHasBone(skeletonBytes, own.bone)) {
+      notes.push(`weapon: this skeleton has no "${own.bone}" bone to hang ${own.name} on`);
+    } else {
+      parts.push({ slot: 'weapon', bones: [own.bone], bytes: arc.get(path).slice() });
+      weaponInfo = { id: own.id, name: own.name, model: own.model, type: own.animateAs, bone: own.bone, speed: own.speed, own: true };
+    }
+    // THE BORROWED TYPE IS WHAT GOES BACK, not None, and it is the
+    // difference between a rig and a mesh on a bone: every caller of
+    // this function's `mwType` is an ANIMATION question - the stance
+    // group, the wind-up and release keys, whether the left hand
+    // carries anything - and `animWeaponType` turns None into
+    // HandToHand, so the arms would punch while holding the gun.
+    //
+    // ITS AMMUNITION IS NOT BORROWED. `ammoTypeFor` of a crossbow is
+    // Bolt, and the arm below would instance a Morrowind quarrel on
+    // the arrow bone. Returning here is what stops it, and `borrowsAmmo`
+    // on the row says so where somebody deciding to change this will
+    // read it.
+    return { mwType: own.animateAs, parts, weaponInfo, arrowInfo, notes };
+  }
   if (mwType !== MW_WEAPON_TYPE.None) {
     const rec = pickWeaponRecord(allWeapons, mwType, weapon ? materialName(weapon) : null, { has });   // MW-D38; MW-D50: a record the archives carry
     if (!rec) {
@@ -2203,6 +2277,12 @@ export function createFpArm() {
   let held = null;               // { spec, piece, aspect, eye, built, reach0 }
   let heldMemo = null;           // { base, spec, inner, tracks, sampler }
   let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
+  let lastThirdModel = null;   // AUDIT FIELD-GUN-MW F2: drawThird's model matrix, for the muzzle in the world
+  /** The muzzle vertex of a weapon piece, found once off its unposed source and kept on the piece. */
+  const muzzleIndexOf = (piece) => {
+    if (piece.muzzleIndex == null) piece.muzzleIndex = farthestVertexIndex(piece.source);
+    return piece.muzzleIndex;
+  };
   let drewLast = false;          // AUDIT-MAP2: whether the LAST draw() call composed the arm
   /** Put (or re-put) the sheet on the rig at the camera node's translation.
    *  The reach - which sets the pass's far plane (rule 54: the planes come
@@ -2344,7 +2424,10 @@ export function createFpArm() {
       // MW-D11: the textures go with the mesh that owns them. An arm
       // rebuilt on every attach would otherwise leak one upload per
       // piece per build, which is the shape of NT1's teardown leaks.
-      for (const r of m.ranges || []) if (r.tex) gl.deleteTexture(r.tex);
+      // AUDIT PERF-RIG1 F2: and the HANDLE goes with the texture. PERF-RIG1's
+      // pack hands the same range objects back while the pieces stand, so a
+      // range must never carry a deleted texture into the next mesh.
+      for (const r of m.ranges || []) if (r.tex) { gl.deleteTexture(r.tex); r.tex = null; }
       for (const e of m.effects || []) renderer.releaseParticleEffect(e);   // MAC-Q: the flame's buffer and texture go with the mesh
       m.effects = null;
     }
@@ -3554,6 +3637,25 @@ export function createFpArm() {
      *  held map draws the arms whatever the WEAPON's own `shown()` says. */
     holdingPaper() { return !!held; },
     setHeldPose(spec) { return held ? api.holdPaper(spec, { aspect: held.aspect }) : false; },
+    /** AUDIT FIELD-GUN-MW F2: WHERE THE BARREL ENDS, off the posed weapon
+     *  piece - the vertex farthest from the grip (the bake's origin),
+     *  through the pass the last draw of THIS view composed. First person
+     *  answers the classic muzzle's own shape, a lens-local offset in
+     *  metres ({ right, up, forward }); third person answers the world
+     *  point ({ world }), because the camera is behind the body and a lens
+     *  offset would put the orb in the air beside it. Null before a draw,
+     *  without a weapon piece, or under a rig that has not built. */
+    weaponMuzzle() {
+      if (viewMode === 'third') {
+        const t = thirdBuilt;
+        const piece = t && t.ok ? t.arm.pieces.find((p) => p.slot === 'weapon') : null;
+        if (!piece || !piece.positions || !piece.source || !lastThirdModel) return null;
+        return { world: worldPointOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastThirdModel) };
+      }
+      const piece = built && built.ok ? built.arm.pieces.find((p) => p.slot === 'weapon') : null;
+      if (!piece || !piece.positions || !piece.source || !lastFrame) return null;
+      return viewOffsetOf(posedVertex(piece.positions, muzzleIndexOf(piece)), lastFrame.model, lastFrame.view, MW_UNITS_PER_METER);
+    },
     /** MAP3: the sheet's four corners on the composite, in CSS px of the
      *  canvas (top-left, top-right, bottom-right, bottom-left), through
      *  the model, view and projection the last draw composed with - or
@@ -3708,8 +3810,22 @@ export function createFpArm() {
 
     /** PER FRAME. Synchronous, no allocation after the first pack, no
      *  await and no dynamic import - a promise per frame in a rAF body
-     *  is a stutter you cannot profile out. */
-    update(dt) {
+     *  is a stutter you cannot profile out.
+     *
+     *  PEER-CADENCE (2026-09-22): `pose: false` steps the CLOCKS and
+     *  not the SKIN - the four-slot machine advances, the movement
+     *  refresh reads the camera, the keys fire - and the third-person
+     *  frame stops short of poseAssembly, the mesh upload and the
+     *  particle step, which are the frame's cost (PERF-RIG1: ~0.3 ms a
+     *  body at 3,000 vertices, per body). A body posed from a 10 Hz
+     *  wire and drawn as a 3-px sprite does not need its skin every
+     *  frame; net/peerBodies.js decides which frames, by distance. The
+     *  particle systems are stepped by `effectsDt` on the frame that
+     *  poses - the caller banks the skipped frames' dt and hands it
+     *  over, so a puff's clock keeps wall time. The first-person arm
+     *  never takes `pose: false` (the held sheet reads the posed
+     *  camera node every frame). */
+    update(dt, { pose = true, effectsDt = dt } = {}) {
       if (!built || !built.ok || !renderer) return;
       const cam = camera && camera();
       sneaking = !!(cam && cam.sneaking);
@@ -3787,15 +3903,22 @@ export function createFpArm() {
         const tBase = poseSource ? poseSource.trackMap : t.tracks;
         const tOverlay = torchState && torchSource && t.leftArm && t.leftArm.size;
         if (tOverlay) overlayClock = torchState.time;
-        poseAssembly(t.arm, {
-          tracks: tOverlay ? overlayFor(tBase, t.leftArm) : tBase,
-          sampleTrack: tOverlay ? overlaySample : sampleTrack,
-          time: poseTime(state),   // MS1: a backhand's window runs backwards
-          accumRoot: t.accumRoot,
-        });
-        uploadThirdMesh(t);
-        // MAC-Q: the body's particle systems, on the clock its parts ride
-        stepRigEffects(t.arm, { dt, clock: tOverlay ? overlayClock : poseTime(state), renderer, mesh: thirdMesh, textures: t.textures, hidden: effectHidden });
+        // PEER-CADENCE: a frame that does not pose keeps last frame's
+        // skin, upload and bounds; the clips above advanced all the
+        // same, so the next posing frame lands where the clock is.
+        if (pose) {
+          poseAssembly(t.arm, {
+            tracks: tOverlay ? overlayFor(tBase, t.leftArm) : tBase,
+            sampleTrack: tOverlay ? overlaySample : sampleTrack,
+            time: poseTime(state),   // MS1: a backhand's window runs backwards
+            accumRoot: t.accumRoot,
+          });
+          uploadThirdMesh(t);
+          // MAC-Q: the body's particle systems, on the clock its parts ride
+          stepRigEffects(t.arm, { dt: effectsDt, clock: tOverlay ? overlayClock : poseTime(state), renderer, mesh: thirdMesh, textures: t.textures, hidden: effectHidden });
+          frames++;   // the POSED frames - a skipped one is not a frame the skin saw
+        }
+        if (!thirdMesh) return;   // never posed yet: nothing to hide
         // Rule 57 hides on the SAME flags: sheathed vanilla shows no
         // weapon on the body, and the arrow follows the shoot keys.
         for (const r of thirdMesh.ranges) {
@@ -3804,7 +3927,6 @@ export function createFpArm() {
           else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51
           else if (HOLSTER_SLOTS.includes(r.slot)) r.hidden = holsterHidden(r.slot, weaponShown, { arrowShown, tag: r.piece?.tag });   // WS1: the holster while the hand is empty, the scabbard always, the quiver less the round on the string
         }
-        frames++;
         return;
       }
       // MW-D51: RULES 25+26 FOR ONE MASK - the "torch" state wins the
@@ -4140,7 +4262,7 @@ export function createFpArm() {
      *
      * MW-D34, THE MEASURED CHIRALITY (mwArmProbe L5b, through the REAL
      * composite - MW-D23's law): this pass composites through the
-     * WORLD's lens, which is mirrorProjectionX (dungeon.js:669 et al.),
+     * WORLD's lens, which is mirrorProjectionX (dungeon.js:735 et al.),
      * and the port's world convention puts the player's RIGHT at +X at
      * yaw 0 (motor.js:663) - a LEFT-handed convention the mirror turns
      * into correct screen imagery. A right-handed NIF actor placed with
@@ -4167,6 +4289,7 @@ export function createFpArm() {
         trs(feet[0], feet[1], feet[2], 0, yawDeg, 0, -u * rs.weight, u * rs.height, u * rs.weight),
         NIF_TO_PASS,
       );
+      lastThirdModel = model;   // AUDIT FIELD-GUN-MW F2: the body's frame, for the muzzle behind the camera
       // The box the sprite law needs, measured off the POSED pieces in
       // MW axes and mapped: MW z is world up, MW x/y are the horizontal
       // pair. The azimuth-safe half-width holds under yaw for free,

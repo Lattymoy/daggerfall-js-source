@@ -87,6 +87,7 @@ import {
   goldPiecesOf, GOLD_PIECE_WEIGHT_KG,   // E4: the counter and its per-coin weight
 } from '../systems/inventory.js';
 import { goldAmount, deductGold } from '../systems/court.js';
+import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: this window's own click-anywhere boxes, as the enhanced panel
 // U56/U57: DFU's transfer ladder and DFU's remote side, both extracted
 // from the classic window so this pane runs them rather than a second
 // reading of them.
@@ -110,6 +111,7 @@ import { audio } from '../systems/audio.js';   // MAC-O6: the pack's own transfe
 import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // ES1: both cues ride the Enhanced sounds switch
 import { SOUND } from '../systems/soundClips.js';
 
+import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 /** Slot id -> where it sits on the body, and what to call it.
  *
  *  THE FIGURE FACES THE READER, so the character's RIGHT arm is drawn
@@ -495,7 +497,7 @@ export function useResultAction(r, { openBook = null, openSpellbook = null, plac
   const out = { kind: 'message', text: null, textId: null,
     repaint: r.kind === 'variant', closesWindow: !!r.closesWindow };
   if (r.text) out.text = r.text;
-  else if (r.textId) out.textId = r.textId;
+  else if (r.textId) { out.textId = r.textId; if (r.macros) out.macros = r.macros; }   // MACROS1: the record's context rides with its id
   else if (r.pending) out.text = USE_PENDING[r.kind] ?? 'Nothing happens.';
   if (r.enchanted && !r.text && !r.textId) out.text = USE_PENDING.enchanted;
   return out;
@@ -505,6 +507,7 @@ export function useResultAction(r, { openBook = null, openSpellbook = null, plac
 
 let host = null;
 let deps = {};
+let _view = null;   // JAN2: the live mount's handle - a second mount tears the first down
 let model = null;
 let worn = { rows: [], filled: 0, total: 0 };   // U59: the slots, as rows
 let pickedAt = null;   // PX19i: WHERE the pick happened ('worn'|'dock'|'loot') - the same item highlights in two places, and the tooltip anchors to the one the hand touched
@@ -514,6 +517,12 @@ let _renderedTab = null;          // PX22: the tab the current DOM shows
 let picked = null;      // the selected item object
 let side = 'local';     // which list `picked` came out of
 let notice = null;
+/** ENH-NOTICE3: the notice panel's OWNER. A module-level object and not
+ *  `_view`, because `_view` is null through the whole of the mount's
+ *  first `render()` and again from the moment `unmount` nulls it - and
+ *  the object that RAISED a panel has to be the object that releases
+ *  it, or the key is lost and the panel is a leak. */
+const noticeOwner = {};
 // U57: the window's own session - which list is remote, and the
 // session's drop pile. `dropped` is DFU's droppedItems and it MINTS ON
 // CLOSE (AUDIT B-C1), which is why the door reads it back out.
@@ -1134,7 +1143,7 @@ function use(item, collection = deps.items?.() ?? []) {
     return;
   }
   if (act.textId && deps.rows) {
-    const rows = deps.rows(act.textId) ?? [];
+    const rows = expandRowValues(deps.rows(act.textId) ?? [], act.macros ?? null);   // MACROS1: %map is the map's name
     notice = rows.map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() || null;
   } else if (act.text) {
     notice = act.text;
@@ -1196,13 +1205,13 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:798) and this one did not, so dragging a
+  // (nativeInventory.js:860) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
   // MAC-O6: the same cue this window's `take()` gained - storing (selling,
   // banking, dropping into a wagon or a pile) is a transfer too, and
-  // planStore already hands back the sound (itemTransfer.js:220), unread
+  // planStore already hands back the sound (itemTransfer.js:221), unread
   // until now.
   if (enhancedSoundsOn()) audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // ES1: the row's switch
   // PX24 (Mac: an action taken closes the tooltip): the transfer
@@ -1211,7 +1220,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:800). Without them
+  // the classic window's own call (nativeInventory.js:820). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1239,13 +1248,13 @@ function take(item) {
   });
   if (!plan.ok) return refuse(plan.refusal);
   // AUDIT INV2 B-F2: the map is an interception in EITHER direction
-  // (itemTransfer.js:242, "F156: either direction") - taking one off a
+  // (itemTransfer.js:243, "F156: either direction") - taking one off a
   // pile reveals and consumes it, exactly as stowing one does. The
   // classic window routes both; this one routed neither.
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:866) and this one never did - the ONLY
+  // window plays (nativeInventory.js:886) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -2152,7 +2161,61 @@ function detailCol() {
 }
 
 function render() {
+  // JAN2: UNMOUNTED - nothing to paint into. `unmount` nulls `host`,
+  // and the repaints that can land after it are not all async: the
+  // book reader's failure report renders after `onExit` by design
+  // (the `open(act.item, ...)` arm), and the two async ones
+  // (refreshFigure, the fpArm subscription) already guarded. A repaint
+  // after the pane is gone is a no-op, not a crash.
+  if (!host) return;
   repaints++;
+  // ENH-NOTICE3 - THE `notice` LINE IS DFU'S CLICK-ANYWHERE BOX, not a
+  // status line, and on the enhanced skin it is the panel's. Every
+  // writer of `notice` above is one of DaggerfallInventoryWindow.cs's
+  // own `DaggerfallMessageBox ... ClickAnywhereToClose = true` /
+  // `DaggerfallUI.MessageBox` sites - which is exactly how the CLASSIC
+  // twin renders them (ui/nativeInventory.js pushes each onto its
+  // `boxes` queue, the click-anywhere queue):
+  //
+  //   wear()   broken     -> :1330-1341 (itemBrokenTextId 29, ClickAnywhereToClose)
+  //            forbidden  -> :1370-1381 (forbiddenEquipmentTextId 1068, ditto)
+  //   use()    the use ladder's text/textId -> :1600-1618 (the info box
+  //            and its AddNextMessageBox chain), :1721 bookUnavailable,
+  //            :1736 cannotUseThis, :1754 the no-spells box,
+  //            :1777-1800 the five lantern lines, :1836-1844 the map's
+  //            own box and readMapFail
+  //   refuse() the transfer ladder's refusals -> :1420 cannotCarryAnymore,
+  //            :1431 cannotHoldAnymore, :1467/:1491 cannotRemoveItem
+  //   toggleWagon()        -> :1237 noWagon, :1239 exitTooFar
+  //   dropGold()           -> :1303 wagonFullGold
+  //
+  // The one line with no DFU box behind it is wear()'s "cannot be
+  // worn" (DFU's EquipItem simply returns when ItemEquipTable finds no
+  // slot, :1383-1392) - the PORT'S own refusal, added because this
+  // window offers Wear on rows DFU's window never would. It is the
+  // same KIND of thing - a refusal with no control under it - so it
+  // rides the same panel rather than being the one line left behind on
+  // a sheet nothing else writes to.
+  //
+  // What is NOT here, and stays where it is: the gold FIELD
+  // (DaggerfallInputMessageBox, :1274-1285) and the split-stack field
+  // (:1528-1545) are inputs, and the item's own info plaque is the
+  // window's, not a box.
+  //
+  // Decided ONCE per render, before the tree is built, because the
+  // sheet paints the line in two places (the pack's footer and the
+  // loot frame) and a second call would mint a second panel.
+  // (The `!onPanel` arms below are this module's classic-skin fork
+  // and unreachable in the shipping game - ui/inventoryDoor.js mounts
+  // this pane only under the enhanced skin with a document; kept so
+  // the fork is one place, unit-testable on both skins. AUDIT
+  // ENH-NOTICE3 B19.)
+  // No hint (AUDIT ENH-NOTICE3 B3): this pane takes no click and no
+  // key for a refusal - it clears when the next action rewrites it
+  // (a wear, a take-off, a transfer, a tab) - so the panel promises no
+  // dismissal the pane does not keep. (The classic twin queues each of
+  // these as a real click-anywhere box; the enhanced pane never did.)
+  const onPanel = noticeHold(noticeOwner, notice ? [{ text: notice, center: true }] : null, { hint: false });
   repaintKeepingScroll(host, () => {
     // PX22: the list's scroll position survives a repaint, per tab - an
     // equip, a drop or a tab's own re-render rebuilds the DOM, and a
@@ -2268,7 +2331,7 @@ function render() {
     gold.append(el('span', 'k', 'Gold'), el('span', 'v', model.gold.toLocaleString()));
     bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
     win.append(bar);
-    if (notice) win.append(el('p', 'sheet-notice', notice));
+    if (notice && !onPanel) win.append(el('p', 'sheet-notice', notice));
     }
 
     // The LOOT frame is built next, because with the pack closed it is
@@ -2280,7 +2343,7 @@ function render() {
     if (loot) {
       for (const c of ['tl', 'tr', 'bl', 'br']) loot.append(el('span', `px-gem px-corner px-${c}`));
       loot.append(remoteCol());
-      if (!packOpen && notice) loot.append(el('p', 'sheet-notice', notice));
+      if (!packOpen && notice && !onPanel) loot.append(el('p', 'sheet-notice', notice));
     }
     // PX20b: one FRAME owns the tooltip and the click-away - the pack
     // when it is open, the loot window when it is alone. Without this
@@ -2388,6 +2451,19 @@ function releaseLock() {
 export function mountEnhancedInventory(hostEl, d = {}) {
   injectEnhancedStyle();
   injectEnhancedFonts();
+  // JAN2 (2026-09-21, a player's CRASH "can't access property
+  // querySelector, l is null"): this module is ONE pane - `host`,
+  // `deps` and the view state are singletons - and the door mounts a
+  // fresh element on every push. A second mount over a live one left
+  // the first pane ORPHANED on screen, still clickable, and the newer
+  // view's unmount then nulled `host` under it: every button on the
+  // old pane threw. A second mount tears the first down - its
+  // listeners, its DOM, its element - so there is never an orphan.
+  if (host && host !== hostEl) {
+    const prev = host;
+    _view?.unmount();
+    prev.remove?.();
+  }
   host = hostEl;
   deps = d;
   // MW-D36: repaint when the body's build settles, so an equip change
@@ -2422,9 +2498,15 @@ export function mountEnhancedInventory(hostEl, d = {}) {
     usingWagon: open.usingWagon,
     allowDungeonWagonAccess: open.allowDungeonWagonAccess,
     chooseOne: open.chooseOne,
+    // AUDIT HCC I2: Horse Cart and Cargo's granted exit request - the wagon button's later click asks the dungeon-exit
+    // context with it (planWagonToggle), not the ordinary one that refuses what the player just did
+    dungeonExitAccessGranted: !!open.dungeonExitAccessGranted,
   };
   dropped = [];
   wagonLocal = [];
+  // AUDIT HCC I2: the opening refusal (ApplyOpeningAccess's MessageBox [IL_ad14] - "Your wagon is too far from the
+  // entrance.") is this window's own notice, as the classic window's box over itself is (nativeInventory.js)
+  if (open.refusal?.text) notice = open.refusal.text;
   refresh();
   render();
   // The classic window composes on construction; so does this. Without
@@ -2451,7 +2533,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
     filled: [...hostEl.querySelectorAll('.node.filled')].length,
     picked: picked?.name ?? null, notice,
   });
-  return {
+  _view = {
     repaint() { refresh(); render(); },
     /** The session's dropped items, for the door's close law. AUDIT
      *  B-C1: they MINT A WORLD PILE when this window goes, and the
@@ -2471,13 +2553,21 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       // pack closed mid-drag and left an item icon glued over the world,
       // which re-opening the pack did not clear either.
       dragAbort();
+      // ENH-NOTICE3 / EVERY ALLOCATION HAS AN OWNER: a HELD panel arms
+      // no watchdog, so nothing but this releases it. The pane is
+      // unmounted from paths that never touch `notice` (F6 again, the
+      // door's close law, a scene change), and a refusal left on
+      // screen would then outlive the pack that said it.
+      noticeRelease(noticeOwner);
       hostEl.innerHTML = '';
       host = null;
       deps = {};
       onExit = () => {};
       picked = null;
       remote = null;
+      _view = null;
       delete globalThis.__pack;
     },
   };
+  return _view;
 }

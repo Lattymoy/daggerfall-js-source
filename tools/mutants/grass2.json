@@ -12,11 +12,12 @@
  {
   "name": "GRASS2-the-whole-cell-is-submitted-so-the-fade-costs-full-vertex-work",
   "file": "src/render/labGrass.js",
-  "old": "      const budget = Math.min(n, Math.ceil(n * fade * 1.15));",
-  "new": "      const budget = n;",
+  "old": "      const budget = Math.min(m, Math.ceil(m * fade * 1.15));",
+  "new": "      const budget = m;",
   "tests": [
    "test/perf2.test.js"
-  ]
+  ],
+  "why": "GRASS AUDIT 1 re-aimed by content: the budget runs over the half in the pixel style."
  },
  {
   "name": "GRASS2-the-budget-is-taken-at-the-cells-CENTRE-so-its-near-edge-is-cut",
@@ -30,20 +31,22 @@
  {
   "name": "GRASS2-the-shader-is-told-the-PREFIX-count-so-it-thins-over-the-wrong-denominator",
   "file": "src/render/labGrass.js",
-  "old": "      gl.uniform1f(this.u.uSlotN, n);   // the fraction is over the CELL, not over the prefix",
-  "new": "      gl.uniform1f(this.u.uSlotN, budget);",
+  "old": "      gl.uniform1f(this.u.uSlotN, m);   // the fraction is over the CELL (or its half), not over the prefix",
+  "new": "      gl.uniform1f(this.u.uSlotN, budget);   // the fraction is over the CELL (or its half), not over the prefix",
   "tests": [
    "test/perf2.test.js"
-  ]
+  ],
+  "why": "GRASS AUDIT 1 re-aimed by content."
  },
  {
   "name": "GRASS2-every-cell-keeps-the-five-quad-blade",
   "file": "src/render/labGrass.js",
-  "old": "      const far = dn > range * GRASS_FAR_AT;",
-  "new": "      const far = false;",
+  "old": "      const far = this._oneQuad || dn > range * GRASS_FAR_AT;   // GRASS-PX2: the pixel style is one quad everywhere",
+  "new": "      const far = this._oneQuad || false;",
   "tests": [
    "test/perf2.test.js"
-  ]
+  ],
+  "why": "GRASS-PX2 re-aimed by content: the pixel style shares the far line."
  },
  {
   "name": "GRASS2-the-far-blade-is-the-near-blade-so-the-level-of-detail-buys-nothing",
@@ -87,11 +90,12 @@
  {
   "name": "GRASS2-the-tint-is-per-blade-noise-again-so-the-field-is-a-flat-carpet",
   "file": "src/render/labGrass.js",
-  "old": "  float clump = vnoise(root * 0.055) * 0.66 + vnoise(root * 0.017) * 0.34;\n  vTint = clamp(mix(aInst2.z, clump, 0.55), 0.0, 1.0);",
-  "new": "  vTint = aInst2.z;",
+  "old": "    const tint = bakedTint(tRnd, x, z);   // GRASS6: pulled toward the patch it stands in;",
+  "new": "    const tint = tRnd;   // GRASS6: pulled toward the patch it stands in;",
   "tests": [
    "test/labGrass.test.js"
-  ]
+  ],
+  "why": "GRASS AUDIT 1 re-aimed by content: the bake moved after keep()."
  },
  {
   "name": "GRASS2-the-blade-is-the-labs-height-again",

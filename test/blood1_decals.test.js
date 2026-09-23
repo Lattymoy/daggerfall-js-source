@@ -17,13 +17,14 @@ import {
   createBloodDecalPool, bloodRate, ladderRate, scaleRate, damagePercent, isOverkill,
   surfaceBasis, writeDecalQuad, clearDecalQuad, decalIndices,
   DECAL_FLOATS, DECAL_FLOATS_PER_VERTEX, RATE_LADDER, RATE_NEAR_LETHAL, RATE_MAX, OVERKILL_PERCENT, OVERKILL_RATE, OVERKILL_RATE_HEAVY, OVERKILL_SPEED, ORDINARY_SPEED, OVERKILL_REACH_SCALE, HEAVY_WEAPON_TEMPLATE, SURFACE_LIFT,
+  basisAlong, streakFor, STREAK_MAX,   // BLOOD2a
   bloodHit, LETHAL_HIT, SWING_PUSH, SWING_LEAN, swingThrow, looksUp, isCeilingNormal, CEILING_DOT, CEILING_EVERY, burstCount, burstRate, burstReach, BURST_DROPS_MAX, sprayCount, sprayRadius, sprayOffset, dropSize, SPRAY_SHARE, SPRAY_MAX, SPATTER_SCALE, SIZE_JITTER, SPRAY_WOBBLE, SPRAY_RADIUS_MIN, SPRAY_RADIUS_MAX,   // BLOOD1b
 } from '../src/combat/bloodDecals.js';
 
 import {
   throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs,
   GIB_COUNT, GIB_THROW_SIDE, GIB_THROW_UP, GIB_GRAVITY, GIB_GRAVITY_SCALE, UNITY_GRAVITY,
-  GIB_DRAG, GIB_LIFE, GIB_SPLASH_RATE, GIB_SPLASH_SPEED, GIB_SPRAY_LIFT, DRIP_SPLASH_RATE,
+  GIB_DRAG, GIB_LIFE, GIB_SPLASH_RATE, GIB_SPLASH_SPEED, GIB_SPRAY_LIFT, DRIP_SPLASH_RATE, GIB_FIXED_DT,
 } from '../src/combat/bloodGibs.js';
 import { GRAVITY as PLAYER_GRAVITY } from '../src/player/motor.js';
 
@@ -207,11 +208,14 @@ test('BLOOD1a: a mark is lifted off its surface, and the streaming world moves i
   assert.equal(pool.count, 0);
 });
 
-test('BLOOD1a: a mark can ride a moving body, and the module knows no renderer', () => {
+test('BLOOD1a: a mark carries its size and tint, rides NOTHING, and the module knows no renderer', () => {
   const pool = createBloodDecalPool({ capacity: 2, rng: () => 0.5 });
-  const body = { pos: [0, 0, 0] };
-  const d = pool.place([0, 1, 0], [0, 0, 1], { size: 2, tint: [1, 0, 0, 1], parent: body });
-  assert.equal(d.parent, body, 'blood on a body travels with the body');
+  const d = pool.place([0, 1, 0], [0, 0, 1], { size: 2, tint: [1, 0, 0, 1] });
+  // BLOOD1 AUDIT 3: this pin was titled "a mark can ride a moving body"
+  // and held a `parent` field that nothing read - the corners are baked
+  // into the GPU slot at place and shiftOrigin moved a parented mark
+  // too, so the capability never existed. The field is gone.
+  assert.ok(!('parent' in d), 'no parent - a mark rides nothing');
   assert.equal(d.size, 2);
   assert.deepEqual(d.tint, [1, 0, 0, 1]);
 
@@ -244,10 +248,10 @@ test('BLOOD1a: a decal is FOUR CORNERS around its own centre, and an empty slot 
   const out = new Float32Array(DECAL_FLOATS * 3);
   const next = writeDecalQuad(out, 0, d);
   assert.equal(next, DECAL_FLOATS, 'the writer chains');
-  assert.equal(DECAL_FLOATS_PER_VERTEX, 9, 'pos3 + uv2 + rgba4');
-  assert.equal(DECAL_FLOATS, 36);
+  assert.equal(DECAL_FLOATS_PER_VERTEX, 10, 'pos3 + uv2 + rgba4 + wet1 (BLOOD2f)');
+  assert.equal(DECAL_FLOATS, 40);
 
-  const vert = (i) => [...out.slice(i * 9, i * 9 + 9)];
+  const vert = (i) => [...out.slice(i * DECAL_FLOATS_PER_VERTEX, i * DECAL_FLOATS_PER_VERTEX + DECAL_FLOATS_PER_VERTEX)];   // BLOOD2f: ten a corner
   const pos = (i) => vert(i).slice(0, 3);
   const uv = (i) => vert(i).slice(3, 5);
 
@@ -275,9 +279,9 @@ test('BLOOD1a: a decal is FOUR CORNERS around its own centre, and an empty slot 
   // different colours and fades
   const red = pool.place([0, 0, 0], [0, 1, 0], { size: 1, tint: [1, 0, 0, 0.5], turn: 0 });
   writeDecalQuad(out, DECAL_FLOATS, red);
-  for (let i = 4; i < 8; i++) assert.deepEqual(vert(i).slice(5), [1, 0, 0, 0.5]);
+  for (let i = 4; i < 8; i++) assert.deepEqual(vert(i).slice(5, 9), [1, 0, 0, 0.5]);   // BLOOD2f: the tenth float is the wet, held by its own pin
   // ...and a decal with no tint of its own is white and opaque
-  assert.deepEqual(vert(0).slice(5), [1, 1, 1, 1]);
+  assert.deepEqual(vert(0).slice(5, 9), [1, 1, 1, 1]);
 
   // AN EMPTY SLOT IS A DEGENERATE QUAD, not a gap. The ring is drawn
   // whole in one call, so a hole has to be something the rasteriser
@@ -285,7 +289,7 @@ test('BLOOD1a: a decal is FOUR CORNERS around its own centre, and an empty slot 
   // live decals or an index rebuild on every placement.
   clearDecalQuad(out, 0);
   assert.deepEqual([...out.slice(0, DECAL_FLOATS)], new Array(DECAL_FLOATS).fill(0));
-  assert.deepEqual(vert(4).slice(5), [1, 0, 0, 0.5], 'and it clears its OWN slot only');
+  assert.deepEqual(vert(4).slice(5, 9), [1, 0, 0, 0.5], 'and it clears its OWN slot only');
 
   // the index buffer winds both triangles off the corner order above
   const idx = decalIndices(2);
@@ -304,15 +308,18 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
   assert.match(r, /const DECAL_STRIDE = DECAL_FLOATS_PER_VERTEX \* 4;/);
   assert.match(r, /gl\.bufferData\(gl\.ELEMENT_ARRAY_BUFFER, decalIndices\(cap\), gl\.STATIC_DRAW\);/);
 
-  const i = r.indexOf('  drawDecals(batch, tex) {');
+  const i = r.indexOf('  drawDecals(batch, tex, ranges = null) {');
   assert.ok(i > 0, 'the pass exists');
   const fn = r.slice(i, r.indexOf('\n  }\n', i));
 
-  // ONE CALL for the whole ring - an empty slot is a zero-area quad, so
-  // the draw never has to skip a hole and the index buffer is built
-  // once at boot.
-  assert.equal((fn.match(/gl\.draw(Elements|Arrays)/g) ?? []).length, 1, 'one draw call for the whole ring');
-  assert.match(fn, /gl\.drawElements\(gl\.TRIANGLES, batch\.capacity \* 6, gl\.UNSIGNED_INT, 0\);/);
+  // ONE CALL for the whole ring, or one per RANGE (BLOOD1 AUDIT 3: the
+  // pool hands its touched slots in age order - one prefix unwrapped,
+  // two ranges wrapped - so a ring of three marks draws three quads and
+  // the oldest go down first). Never one per slot: an empty slot is a
+  // zero-area quad, and the index buffer is built once at boot.
+  assert.equal((fn.match(/gl\.draw(Elements|Arrays)/g) ?? []).length, 2, 'the ranged draw and the whole-ring fallback, nothing per slot');
+  assert.match(fn, /gl\.drawElements\(gl\.TRIANGLES, \(hi - lo\) \* 6, gl\.UNSIGNED_INT, lo \* 6 \* 4\);/, 'a range: its quads’ indices, from its own byte offset');
+  assert.match(fn, /gl\.drawElements\(gl\.TRIANGLES, batch\.capacity \* 6, gl\.UNSIGNED_INT, 0\);/, 'and the whole ring for a caller that hands no ranges');
 
   // DEPTH TESTED, DEPTH NOT WRITTEN. The 2cm lift wins the test against
   // the surface; writing depth would make two overlapping marks fight
@@ -327,24 +334,36 @@ test('BLOOD1a by source: the decal pass is ONE draw call, depth-tested and depth
 
   // a placement touches ONE slot, never the whole buffer
   assert.match(r, /gl\.bufferSubData\(gl\.ARRAY_BUFFER, slot \* 4 \* DECAL_STRIDE, floats\);/);
-  // the program is built off the draw path, like every other one here
-  assert.match(r, /_ensureDecalProgram\(\) \{/);
-  assert.match(r, /createDecalBatch\(capacity\) \{\s*\n\s*const gl = this\.gl;[\s\S]{0,200}?this\._ensureDecalProgram\(\);/);
+  // the program is built off the draw path, like every other one here -
+  // MAC-BUG W6: as the SET'S fifth program, the classic one at boot and
+  // the lane's twin at install, never lazily on the first batch
+  assert.match(r, /decal: this\._buildProgram\(DECAL_VS, src\.decalFs \?\? DECAL_FS\),/);
+  assert.match(r, /decalFs: DECAL_FS \}\);/, 'the classic set names its own');
+  assert.doesNotMatch(r, /_ensureDecalProgram/, 'no lazy build left');
+  assert.match(r, /this\.decalProgram = set\.decal;/, 'the draw uses whichever set is installed');
 });
 
 // ---- the mark, on the seam the splash already uses ------------------
 
 import { createHitEffects } from '../src/scenes/hitEffects.js';
-import { createBloodMarks, MARK_DROP, MAX_BODIES, MAX_DRIPS, CEILING_REACH, GIB_QUAD, GIB_FRAME } from '../src/combat/bloodMarks.js';
+import { createBloodMarks, MARK_DROP, MAX_BODIES, MAX_DRIPS, CEILING_REACH, GIB_QUAD, GIB_FRAME, WALL_RUN_LEAN } from '../src/combat/bloodMarks.js';
 import { markSize, marksBlood, MARK_SIZE_MIN, MARK_SIZE_MAX, BLOODLESS_INDEX } from '../src/combat/bloodDecals.js';
 
 /** A renderer stub that records what the mark asked of it. */
 function rigHitEffects(over = {}) {
   const wrote = [];
+  const calls = [];
   const drew = [];
   const renderer = {
     createDecalBatch: (capacity) => ({ capacity, id: 'batch' }),
-    writeDecalSlot: (batch, slot, floats) => { wrote.push({ slot, floats: [...floats] }); return true; },
+    // BLOOD AUDIT 4: an upload is a RUN of slots from the mirror, so the
+    // stub records one entry a slot - the pins below count marks, and a
+    // call count of its own (`calls`) holds the runs
+    writeDecalSlot: (batch, slot, floats) => {
+      calls.push({ slot, n: floats.length / DECAL_FLOATS });
+      for (let k = 0; k * DECAL_FLOATS < floats.length; k++) wrote.push({ slot: slot + k, floats: [...floats.slice(k * DECAL_FLOATS, (k + 1) * DECAL_FLOATS)] });
+      return true;
+    },
     drawDecals: (batch, tex) => { drew.push({ batch, tex }); },
     createBillboardBatch: () => ({}),
   };
@@ -376,8 +395,9 @@ function rigHitEffects(over = {}) {
     getTexture: () => new Promise(() => {}),   // the splash half never warms here
     uploadRecordFrame: () => {},
     marks,
+    rng: o.rng,   // BLOOD2c: the bleeding ledger's waits roll the rig's one chance too
   });
-  return { fx, marks, wrote, drew, renderer };
+  return { fx, marks, wrote, calls, drew, renderer };
 }
 
 test('BLOOD1a: the mark rides the splash’s own call, finds its surface, and a bloodless foe stains nothing', () => {
@@ -486,17 +506,22 @@ test('BLOOD1a: blood over open air leaves no mark, and a host that wires none of
 });
 
 test('BLOOD1a: the ring recycles under the mark, the draw needs a texture, and a mode change blanks the buffer', () => {
-  const { fx, marks, wrote, drew } = rigHitEffects();
+  const { fx, marks, wrote, calls, drew } = rigHitEffects();
   // BLOOD1b: an event is a SPRAY, so a ring of four is spent by the
   // first blow and everything after it is recycling - which is what
   // the ring is for, and what "a count and not a lifetime" means once
   // the count is small enough to see.
   const per = onFloor(sprayCount(30));
-  for (let i = 0; i < 6; i++) fx.showBloodSplash(0, [i, 5, 0], null, { damage: 10, maxHealth: 40 });
+  for (let i = 0; i < 6; i++) {
+    wrote.length = 0;
+    fx.showBloodSplash(0, [i, 5, 0], null, { damage: 10, maxHealth: 40 });
+    assert.equal(wrote.length, per, 'a slot written for every drop of every spray');
+    // BLOOD AUDIT 4: an upload is a run in SLOT order, so the spray's
+    // slots are compared as a set - the oldest slots, always
+    assert.deepEqual(wrote.map((w) => w.slot).sort(), Array.from({ length: per }, (_, j) => (i * per + j) % 4).sort(),
+      'and the oldest slot is always the one rewritten');
+  }
   assert.equal(marks.count(), 4, 'the ring is four and stays four');
-  assert.equal(wrote.length, 6 * per, 'a slot written for every drop of every spray');
-  assert.deepEqual(wrote.map((w) => w.slot), Array.from({ length: 6 * per }, (_, k) => k % 4),
-    'and the oldest slot is always the one rewritten');
 
   // the draw is one call, and it needs art: no texture, no pass
   assert.equal(marks.draw(), true);
@@ -513,18 +538,25 @@ test('BLOOD1a: the ring recycles under the mark, the draw needs a texture, and a
   assert.equal(marks.shiftOrigin([100, 7, -3]), 4);
   assert.equal(wrote.length - beforeShift, 4, 'every live slot rewritten, not just the ring moved');
   // ...with the MOVED corners in them
+  // (BLOOD AUDIT 4: the four went up as ONE run in slot order, so the
+  // slot is read by its number rather than by its place in the list)
   const moved = marks._pool().decals()[0];
-  assert.ok(Math.abs(wrote.at(-4).floats[0] - (moved.pos[0] - moved.size / 2 * 1)) < 1, 'the corners are the new ones');
+  const movedWrite = wrote.slice(-4).find((w) => w.slot === moved.slot);
+  assert.ok(Math.abs(movedWrite.floats[0] - (moved.pos[0] - moved.size / 2 * 1)) < 1, 'the corners are the new ones');
+  assert.equal(calls.at(-1).n, 4, 'the whole ring, one upload');
   assert.ok(wrote.slice(-4).every((w) => w.floats.some((v) => v !== 0)), 'and none of them is a blank');
 
-  // A MODE CHANGE blanks the buffer SLOT BY SLOT rather than freeing
-  // it: the ring is the same ring next time, and rebuilding would cost
-  // an allocation every time the player opens a door.
+  // A MODE CHANGE keeps the ring - the same ring next time, and
+  // rebuilding would cost an allocation every time the player opens a
+  // door - and (BLOOD AUDIT 4) uploads NOTHING for it: the ring's
+  // ranges are empty, so no slot is rasterised, and a slot reused later
+  // is written before it is drawn. Blanking four slots a door was four
+  // GL calls of dead work; at a full ring it was nine hundred.
   const n = wrote.length;
   assert.equal(marks.clear(), 4);
   assert.equal(marks.count(), 0);
-  assert.equal(wrote.length - n, 4, 'four blanks written, no batch rebuilt');
-  assert.deepEqual(wrote.at(-1).floats, new Array(DECAL_FLOATS).fill(0));
+  assert.equal(wrote.length - n, 0, 'no slot written, no batch rebuilt');
+  assert.deepEqual(marks._pool().ranges(), []);
   assert.equal(marks.draw(), false, 'and nothing draws after');
 });
 
@@ -574,19 +606,21 @@ test('BLOOD1a: the collider is a GETTER, and the mark survives the world being s
   }
 });
 
-test('BLOOD1a: the mark wears the SPLASH’S SETTLED FRAME, so the port ships no blood art at all', () => {
+test('BLOOD1a/BLOOD2b: the mark wears the PORT’S OWN ART, made at boot - and the port still ships no blood picture', () => {
   const src = readFileSync(new URL('../src/scenes/hitEffects.js', import.meta.url), 'utf8');
-  // A splash plays out to the settled splat and then vanishes; that
-  // last frame IS the stain. Recorded at the upload because nothing
-  // else in the file can see `frameCount`.
-  // Only the splash pool can see the frame count, so it TELLS the mark
-  // pool rather than the mark pool guessing.
+  // BLOOD1a wore the splash's settled frame. BLOOD2b makes an atlas at
+  // boot (bloodArt.js) - the mark takes NOTHING from the splash now but
+  // the chunks' art, which is still the record's first frame, and only
+  // the splash pool can see the record, so it still tells this one.
   assert.match(src, /if \(archive === BLOOD_ARCHIVE && record !== BLOODLESS_INDEX\) marks\?\.useArt\?\.\(archive, record, frameCount\);/);
   const mk = readFileSync(new URL('../src/combat/bloodMarks.js', import.meta.url), 'utf8');
-  assert.match(mk, /_texKey = `\$\{archive\}_\$\{record\}#\$\{Math\.max\(0, frameCount - 1\)\}`;/);
-  // ...and the default means no host spells a texture key, so the four
-  // of them cannot spell it four ways
-  assert.match(mk, /const markTexture = texture \?\? \(\(\) => \(_texKey \? renderer\?\.textures\?\.get\?\.\(_texKey\) \?\? null : null\)\);/);
+  assert.match(mk, /function useArt\(archive, record\) \{/, 'the frame count is no longer the mark’s business');
+  assert.match(mk, /_gibArt = \{ archive, record \};/, 'the chunks still take the splash’s record');
+  assert.doesNotMatch(mk, /_texKey/, 'no splash frame key remains');
+  // the atlas: uploaded ONCE through the renderer's own cache, by one
+  // key every host spells the same, LINEAR so a splat's edge is soft
+  assert.match(mk, /_atlasTex = renderer\.uploadTexture\(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, atlas\(\), \{ smooth: true \}\) \?\? null;/);   // BLOOD AUDIT 4: built when first worn
+  assert.match(mk, /const markTexture = texture \?\? \(\(\) => _atlasTex\);/);
   // the port ships NO blood picture: the only archive named is the
   // classic one the splash already reads out of the player's ARENA2
   const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
@@ -615,7 +649,6 @@ test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw und
   for (const [host, bb] of [
     ['src/scenes/world.js', 'renderer.drawBillboards(allBatches, camRight, UP_Y);'],
     ['src/scenes/exterior.js', 'renderer.drawBillboards(_visBatches, camRight, UP_Y);'],
-    ['src/scenes/dungeonContext.js', 'renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],'],
   ]) {
     const h = read(host);
     // BLOOD1b gave it the camera basis, because the chunks over the
@@ -626,8 +659,27 @@ test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw und
     assert.match(h.slice(d, d + 80), /loodMarks\.draw\(\s*(camRight|new Float32Array\(\[-view)/, `${host}: on the basis the draw below uses`);
     assert.ok(d < h.indexOf(bb), `${host}: the marks go down BEFORE the billboards`);
   }
-  // ...and the world-hosted dungeon draws the CONTEXT's ring on its own pass
-  assert.match(read('src/scenes/worldModes.js'), /dungeonCtx\.bloodMarks\?\.draw\?\.\(camRight, UP_Y\);/);
+  // ...and the CONTEXT's ring is drawn by its HOSTS - the world-hosted
+  // dungeon and the standalone one - once each, on their own pass,
+  // beside the level's own flats and under them. BLOOD1 AUDIT 3: it was
+  // also drawn inside drawFoes, behind that function's gate, so the
+  // world-hosted dungeon drew it twice a frame and the standalone host
+  // drew it only while a foe, a drop or a spell was alive.
+  assert.equal((read('src/scenes/dungeonContext.js').match(/loodMarks\.draw\(/g) ?? []).length, 0, 'the context draws its own ring nowhere - the hosts own the pass');
+  for (const [host, line, bb] of [
+    ['src/scenes/worldModes.js', 'dungeonCtx.bloodMarks?.draw?.(camRight, UP_Y);', 'renderer.drawBillboards([...dungeonCtx.billboardBatches'],
+    ['src/scenes/dungeon.js', 'ctx.bloodMarks?.draw?.(camRight, UP_Y);', 'renderer.drawBillboards([...ctx.billboardBatches'],
+  ]) {
+    const h = read(host);
+    assert.equal(h.split(line).length - 1, 1, `${host}: draws the context’s ring exactly once`);
+    const d = h.indexOf(line);
+    assert.ok(d < h.indexOf(bb) && h.indexOf(bb) - d < 400, `${host}: beside and before the level’s flats`);
+    // ...at the SAME depth as the flats' own draw beside it: not behind
+    // a gate of its own (drawFoes' was `if (_mobileBatches.length || ...)`)
+    const indentOf = (at) => h.slice(h.lastIndexOf('\n', at) + 1, at);
+    assert.equal(indentOf(d), indentOf(h.indexOf(bb)), `${host}: at the flats’ own depth - unconditional, not behind a gate`);
+    assert.ok(!/^\s*if \(/.test(h.slice(h.lastIndexOf('\n', d) + 1, d + line.length)), `${host}: no gate on the line`);
+  }
 
   // BLOOD1 AUDIT (2026-09-20) - EVERY POOL BUILT IS A POOL DRAWN, and
   // this is the pin that was missing.
@@ -657,6 +709,7 @@ test('BLOOD1a by source: FOUR HOSTS, one spelling - the switch bag, the draw und
   }
   assert.equal(pools.length, 4, `four hosts build a pool (found ${pools.length})`);
   for (const [f, binding] of pools) {
+    if (f === 'src/scenes/dungeonContext.js') continue;   // BLOOD1 AUDIT 3: the context's ring is its two hosts' to draw, held above
     const h = read(f);
     const at = h.search(new RegExp(`\\b${binding}\\.draw\\(`));
     assert.ok(at > 0, `${f}: builds \`${binding}\` and never draws it - the marks would be computed and never rendered`);
@@ -717,24 +770,26 @@ test('BLOOD1a: the feature row owns the key and the default, and online it is th
   assert.equal(bloodDensity(), 1);
   assert.ok(BLOOD_CAPACITY_MIN < BLOOD_CAPACITY_DEFAULT && BLOOD_CAPACITY_DEFAULT < BLOOD_CAPACITY_MAX);
 
-  // THE CAPACITY IS CLAMPED, and that is not tidiness: the ring is
-  // ALLOCATED to this number at boot and a vertex buffer is built
-  // beside it, so a stored 5,000,000 is 180 MB of floats and a stored
-  // zero is a pool that divides by its own size. Neither can be
-  // reached from the panel; both can be reached from a hand-edited
-  // store, which is where settings come from often enough.
+  // BLOOD2g: THE TWO NUMBERS ARE THE TIER'S. The capacity is CLAMPED,
+  // and that is not tidiness: the ring is ALLOCATED to this number at
+  // boot and a vertex buffer is built beside it, so a tier could never
+  // ask for 180 MB of floats or a pool that divides by its own size -
+  // and the old keys, which a hand-edited store could, are retired.
   const { setPref } = await import('../src/systems/uiPrefs.js');
-  const { BLOOD_CAPACITY_PREF, BLOOD_DENSITY_PREF } = await import('../src/combat/bloodSwitch.js');
+  const sw = await import('../src/combat/bloodSwitch.js');
+  const { BLOOD_GORE_PREF, GORE_TIERS, GORE_DEFAULT, bloodGore } = sw;
+  assert.equal(sw.BLOOD_CAPACITY_PREF, undefined, 'the capacity key is retired'); assert.equal(sw.BLOOD_DENSITY_PREF, undefined, 'and the density key');
   const restore = [];
   try {
-    for (const [stored, want] of [[5e6, BLOOD_CAPACITY_MAX], [0, BLOOD_CAPACITY_MIN], [-40, BLOOD_CAPACITY_MIN], [1200.6, 1201], ['nonsense', BLOOD_CAPACITY_DEFAULT]]) {
-      setPref(BLOOD_CAPACITY_PREF, stored); restore.push(BLOOD_CAPACITY_PREF);
-      assert.equal(bloodCapacity(), want, `a stored ${stored} answers ${want}`);
+    for (const [tier, t] of Object.entries(GORE_TIERS)) {
+      assert.ok(t.capacity >= BLOOD_CAPACITY_MIN && t.capacity <= BLOOD_CAPACITY_MAX && t.density > 0 && t.density <= 1, `${tier} inside the bounds`);
+      setPref(BLOOD_GORE_PREF, tier); restore.push(BLOOD_GORE_PREF);
+      assert.equal(bloodGore(), tier); assert.equal(bloodCapacity(), t.capacity, `${tier}: its count`); assert.equal(bloodDensity(), t.density, `${tier}: its amount`);
     }
-    // ...and the density is a FRACTION, clamped the same way
-    for (const [stored, want] of [[2, 1], [-1, 0], [0.5, 0.5], ['x', 1]]) {
-      setPref(BLOOD_DENSITY_PREF, stored); restore.push(BLOOD_DENSITY_PREF);
-      assert.equal(bloodDensity(), want, `a stored ${stored} answers ${want}`);
+    for (const stored of ['nonsense', 7, null, '', 'constructor', 'toString']) {
+      setPref(BLOOD_GORE_PREF, stored);
+      assert.equal(bloodGore(), GORE_DEFAULT, `a stored ${JSON.stringify(stored)} is Normal`);
+      assert.equal(bloodCapacity(), BLOOD_CAPACITY_DEFAULT); assert.equal(bloodDensity(), 1);
     }
   } finally {
     for (const k of restore) setPref(k, undefined);
@@ -1096,11 +1151,16 @@ test('BLOOD1b: the gib law - ten chunks thrown UP, falling at three times gravit
   assert.deepEqual([g.vel[0], g.vel[2]], [0, 0]);
   const up0 = g.vel[1];
   const step = gibStep(g, 0.5);
-  assert.ok(Math.abs(g.vel[1] - (up0 * (1 - GIB_DRAG * 0.5) - GIB_GRAVITY * 0.5)) < 1e-9, 'damped, then pulled down');
+  // BLOOD1 AUDIT 3: at UNITY'S FIXED STEP, twenty-five of them in half a
+  // second - the frame's dt is not the physics' dt, so the same throw
+  // is the same arc at every frame rate (pinned on its own below).
+  let v = up0, moved = 0;
+  for (let k = 0; k < 25; k++) { v *= 1 - GIB_DRAG * GIB_FIXED_DT; v -= GIB_GRAVITY * GIB_FIXED_DT; moved += v * GIB_FIXED_DT; }
+  assert.ok(Math.abs(g.vel[1] - v) < 1e-9, 'damped, then pulled down, at the fixed step');
   assert.ok(g.vel[1] < 0, 'half a second and a chunk is already falling - three gravities is heavy');
   // the step is a SEGMENT for the host to ray, and nothing is committed
   assert.deepEqual(step.from, [0, 10, 0], 'the step starts where the chunk still is');
-  assert.ok(Math.abs(step.dist - Math.abs(g.vel[1]) * 0.5) < 1e-9);
+  assert.ok(Math.abs(step.dist - Math.abs(moved)) < 1e-9, 'the whole half second’s travel, as one segment');
   assert.ok(Math.abs(Math.hypot(...step.dir) - 1) < 1e-12, 'a unit direction, for the ray');
   assert.deepEqual(g.pos, [0, 10, 0], 'and the chunk has NOT moved until the host says so');
   gibFly(g, step);
@@ -1127,7 +1187,9 @@ test('BLOOD1b: the gib law - ten chunks thrown UP, falling at three times gravit
   const forever = throwGibs([0, 1e6, 0], () => 0.5)[0];
   const cap = Math.ceil((GIB_LIFE * 4) * 60);
   let frames = 0;
-  while (frames < cap && gibStep(forever, 1 / 60)) frames++;
+  // BLOOD1 AUDIT 3: a null answer is "nothing to move THIS frame" (a
+  // frame shorter than the fixed step banks its time); `still` is the stop.
+  while (frames < cap && !forever.still) { gibStep(forever, 1 / 60); frames++; }
   assert.ok(frames < cap, 'a chunk that never stopped is the bug this pin exists for');
   assert.ok(forever.still, 'it stops');
   assert.ok(Math.abs(frames / 60 - GIB_LIFE) < 0.05, `and it stops at four seconds (got ${(frames / 60).toFixed(2)})`);
@@ -1158,6 +1220,11 @@ test('BLOOD1b: a warhammer takes the body apart, and the chunks stain where they
         return drop >= 0 && drop <= max ? { dist: drop, normal: [0, 1, 0] } : null;
       },
     }),
+    // BLOOD1 AUDIT 3: VARIED throws. The rig's rng of one half threw
+    // ten identical chunks that landed on one frame with one overshoot,
+    // and two mutants - a landed chunk stepping on, a chunk landing at
+    // its segment's end rather than the hit - lived in that coincidence.
+    rng: (() => { let k = 0; return () => (k++ * 0.6180339887498949) % 1; })(),
     ...over,
   });
   const kill = { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true };
@@ -1176,6 +1243,7 @@ test('BLOOD1b: a warhammer takes the body apart, and the chunks stain where they
   const flown = marks.gibs().length;
   for (let i = 0; i < Math.ceil(GIB_LIFE * 60) && marks.gibs().some((g) => !g.still); i++) fx.tick(1 / 60);
   assert.ok(marks.gibs().length === 0 || marks.gibs().every((g) => g.still), 'they all come to rest');
+  assert.equal(marks.gibs().length, 0, 'and once every chunk is still the list is dropped, and their quads with it');
 
   // ...AND EACH ONE STAINED WHERE IT LANDED, with what it was
   // carrying. Twenty is BELOW the rate ladder's bottom rung, so a
@@ -1734,6 +1802,94 @@ test('BLOOD1 AUDIT: the chunks’ centre list is the chunks’ OWN arrays, so a 
   }
 });
 
+test('BLOOD1 AUDIT 2: the blood goes with the world - a teleport clears the ring, the chunks and the drips, and the ring is the same ring after', () => {
+  // THE FAULT. `_teleportToPixel` is the world host's ClearStreamingWorld:
+  // a fast travel, a quickload and every teleport go through it. It
+  // clears the live foes, the guards, the missiles and the arrows,
+  // destroys every pixel and then `state.init`s a NEW scene frame -
+  // mapOrigin moved, x/z compensation zeroed - with no recentre offset
+  // for anything to ride. The splash pool and its ring were the one
+  // world-space thing it did not clear, so every mark laid before the
+  // jump kept its old local coordinates in the new frame: a fight's
+  // blood at the same spot in the next town, floating or buried
+  // wherever the ground differed.
+  const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  const start = world.indexOf('  async function _teleportToPixel(');
+  assert.ok(start > 0, 'the world host has the one teleport door');
+  const body = world.slice(start, world.indexOf('\n  }\n', start));
+  const clear = body.indexOf('    hitEffects.clear();');
+  assert.ok(clear > 0, 'the teleport clears the splash pool, and the ring with it');
+  // ...in the SAME sweep as the rest of the world, before the pixels go
+  // and before the new frame is initialised
+  assert.ok(clear > body.indexOf('exteriorFoes.clearLive();'), 'beside the sweep that clears the foes');
+  assert.ok(clear < body.indexOf('for (const key of [...built.keys()])'), 'before the pixels are destroyed');
+  assert.ok(clear < body.indexOf('queue.push(...state.init(px, py));'), 'before the new frame is begun');
+  // ...and clear() is a FREE here and not a double free: this pool is
+  // built with no `onSpawn`, so it owns its splash batches (the
+  // dungeon's hands every batch to its billboard list, which is why
+  // its teardown must NOT call this - HARD1's own catch).
+  assert.match(world, /const hitEffects = createHitEffects\(\{ renderer, getTexture, uploadRecordFrame, marks: bloodMarks \}\);/, 'the world pool owns its batches');
+  assert.doesNotMatch(world.slice(start, start + 6000), /hitEffects\.dispose\(\)/, 'and it is cleared, never ended - the host lives on');
+
+  // THE LAW, DRIVEN ON THE POOL: everything in scene space goes, the
+  // ring's slots are blanked (a stale quad in a live buffer is a mark
+  // at the old place), and the ring is the SAME ring afterwards - the
+  // next blood reuses it rather than minting a batch.
+  const CEIL = 2.2;
+  const made = [];
+  const wrote = [];
+  const renderer = {
+    createDecalBatch: (capacity) => { const b = { capacity, id: `decals${made.length}` }; made.push(b); return b; },
+    writeDecalSlot: (batch, slot, floats) => { for (let k = 0; k * DECAL_FLOATS < floats.length; k++) wrote.push({ slot: slot + k, zero: floats.slice(k * DECAL_FLOATS, (k + 1) * DECAL_FLOATS).every((f) => f === 0) }); return true; },
+    drawDecals: () => {},
+    createBillboardBatch: () => ({}),
+    moveBillboardBatch: () => true,
+    destroyBillboardBatch: () => {},
+    drawBillboards: () => {},
+  };
+  const { fx, marks } = rigHitEffects({
+    renderer,
+    settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => true },
+    collider: () => ({
+      surfaceHit: (from, dir, max) => (dir[1] > 0
+        ? (CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null)
+        : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
+    }),
+  });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [3, 1, 3], null, { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true, throw: [0, 0] });
+  fx.tick(1 / 60);
+  assert.ok(marks.count() > 0, 'marks on the floor and the ceiling');
+  assert.ok(marks.gibs().length > 0, 'chunks in the air');
+  assert.ok(marks.drips().length > 0, 'and drips the ceiling has not let go of');
+  // a recentre mid-fight moves everything (the streaming case - pinned
+  // elsewhere; here it only proves the sweep below is not the shift)
+  fx.offsetAll([819.2, 0, 0]);
+  assert.equal(made.length, 1, 'one ring');
+  const placed = marks.count();
+  wrote.length = 0;
+
+  const beforeClear = wrote.length;
+  fx.clear();   // the teleport's line
+  assert.equal(marks.count(), 0, 'no marks');
+  assert.equal(marks.gibs().length, 0, 'no chunks');
+  assert.equal(marks.drips().length, 0, 'no drips');
+  assert.equal(marks.draw(new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])), false, 'nothing to draw');
+  // BLOOD AUDIT 4: and NOTHING IS UPLOADED for it. The slots were
+  // blanked one by one - nine hundred calls a door - and every one was
+  // dead work: the ring's ranges are empty, and a slot outside them is
+  // never rasterised.
+  assert.equal(wrote.length, beforeClear, 'a clear writes no slot');
+  assert.deepEqual(marks._pool().ranges(), [], 'and there is nothing to draw from');
+  assert.ok(placed > 0);
+
+  // ...and the ring is the same ring: the next blood, in the new
+  // frame, lands in it without a second batch
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+  assert.ok(marks.count() > 0, 'blood in the new place');
+  assert.equal(made.length, 1, 'on the ring it always had');
+});
+
 // ── MAC-BUG W4 (2026-09-20, Mac: "Also blood is black") ────────────
 test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of one blow agree, term for term', () => {
   // ONE BLOW, TWO PASSES. `bloodMarks.draw` sends the marks through
@@ -1754,48 +1910,68 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   // term, because a mark and a chunk are the same blood.
   const r = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
 
-  const decalFs = r.slice(r.indexOf('_ensureDecalProgram()'), r.indexOf('this.decalProgram = this._buildProgram'));
-  const bbFs = r.slice(r.indexOf('vec3 pointAcc = vec3(0.0);'));
+  const decalFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));   // MAC-BUG W6: the classic one, a module const now
+  const meshFs = r.slice(r.indexOf('const CHAR_FS = `'), r.indexOf('`;', r.indexOf('const CHAR_FS = `')));   // BLOOD AUDIT 4: the SURFACE's shader, which is what a mark lies on
 
-  // THE POINT-LIGHT TERM, character for character with the flats'.
-  // Attenuation-only squared linear falloff - a decal has no normal,
-  // exactly as a billboard has none.
-  const loop = /for \(int i = 0; i < 16; i\+\+\) \{\s*if \(i >= uPointCount\) break;\s*float d = length\(uPointLights\[i\]\.xyz - (vWorld|vBBWorld)\);\s*float att = clamp\(1\.0 - d \/ uPointLights\[i\]\.w, 0\.0, 1\.0\);\s*pointAcc \+= att \* att \* uPointColors\[i\];\s*\}/;
-  assert.match(decalFs, loop, 'the decal pass has the flats’ own point-light loop');
-  assert.match(bbFs, loop, '...and the flats still have it, so the two were compared against something real');
+  // BLOOD AUDIT 4: THE POINT-LIGHT TERM, character for character with
+  // THE MESH'S - W4 had the flats' attenuation-only loop here ("a decal
+  // has no normal, exactly as a billboard has none"), and that was the
+  // outdoor inconsistency: blood one brightness on every surface of a
+  // world lit by N.L. The quad's normal is in its derivatives, and the
+  // mark takes the surface's law.
+  const loop = /for \(int i = 0; i < 16; i\+\+\) \{\s*if \(i >= uPointCount\) break;\s*vec3 L = uPointLights\[i\]\.xyz - (vWorld|vWorldPos);\s*float d = length\(L\);\s*float att = clamp\(1\.0 - d \/ uPointLights\[i\]\.w, 0\.0, 1\.0\);\s*pointAcc \+= att \* att \* max\(dot\(n, L \/ max\(d, 1e-4\)\), 0\.0\) \* uPointColors\[i\];\s*\}/;
+  assert.match(decalFs, loop, 'the decal pass has the MESH’s own point-light loop - N.L on the squared falloff');
+  assert.match(meshFs, loop, '...and the mesh still has it, so the two were compared against something real');
+  assert.match(decalFs, /uniform vec3 uLightDir;/, 'the sun’s direction');
+  assert.match(decalFs, /vec3 c = cross\(dFdx\(vWorld\), dFdy\(vWorld\)\);\s*\n\s*vec3 n = dot\(c, c\) > 1e-12 \? normalize\(c\) : vec3\(0\.0, 1\.0, 0\.0\);/, 'the quad’s own normal - and up, not NaN, for a quad seen edge-on');
+  assert.match(decalFs, /if \(dot\(n, uCamPos - vWorld\) < 0\.0\) n = -n;/, 'facing the eye');
+  assert.match(decalFs, /float diff = max\(dot\(n, uLightDir\), 0\.0\);/, 'the sun by N.L - the mesh’s own line');
+  assert.match(meshFs, /float diff = max\(dot\(n, uLightDir\), 0\.0\);/);
 
-  // THE INDIRECT TERM, the same attenuation-only shape.
-  assert.match(decalFs, /float iD = length\(uIndirect\.xyz - vWorld\);/);
+  // THE INDIRECT TERM, the mesh's N.L shape on the same falloff.
+  assert.match(decalFs, /vec3 iL = uIndirect\.xyz - vWorld;\s*\n\s*float iD = length\(iL\);/);
   assert.match(decalFs, /float iAtt = clamp\(1\.0 - iD \/ max\(uIndirect\.w, 1e-4\), 0\.0, 1\.0\);/);
 
   // ...and they are SUMMED, not one of them used.
-  assert.match(decalFs, /vec3 lightAcc = uTint \+ uDecalSun \+ pointAcc \+ iAtt \* iAtt \* uIndirectColor;/);
-  assert.match(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* lightAcc;/);
+  // BLOOD AUDIT 5: the MOON by N.L and the TRILIGHT ambient too - W4 folded
+  // the moon's Lambert half into the ambient, so a wall mark facing away
+  // from Masser glowed at night against an unlit wall
+  assert.match(decalFs, /float mdiff = max\(dot\(n, uMoonDir\), 0\.0\);/, 'the moon by N.L');
+  assert.match(meshFs, /float mdiff = max\(dot\(n, uMoonDir\), 0\.0\);/);
+  assert.match(decalFs, /vec3 ambient = uTrilight > 0\.5 \? \(n\.y >= 0\.0 \? mix\(uTint, uAmbientSky, n\.y\) : mix\(uTint, uAmbientGround, -n\.y\)\) : uTint;/, 'the trilight ambient, as MESH_FS has it');
+  assert.match(decalFs, /vec3 lightAcc = ambient \+ uDecalSun \* \(diff \* cloudShadowAt\(vWorld\)\) \+ uDecalMoon \* mdiff \+ pointAcc \+ \(iAtt \* iAtt \* max\(dot\(n, iL \/ max\(iD, 1e-4\)\), 0\.0\)\) \* uIndirectColor;/);   // BLOOD1 AUDIT 3: and under the cloud's shadow, as the mesh's sun term is
+  assert.match(decalFs, /float thick = t\.a \* clamp\(\(1\.0 - t\.r\) \/ \$\{glslFloat\(INK_DEPTH\)\}, 0\.0, 1\.0\);\s*\n\s*vec3 rgb = vColor\.rgb \* exp\(vec3\(.*?\) \* \(1\.0 - thick\)\) \* lightAcc;/, 'AUDIT BLOOD3 F1/F3: the classic set recovers the depth off the sheet and takes the film in DISPLAY space, between the tint and the light; F9: through glslFloat, or a round value is an int literal');
   assert.doesNotMatch(decalFs, /vec3 rgb = t\.rgb \* vColor\.rgb \* uTint;/,
     'ambient alone is what made the mark black');
 
   // THE UPLOAD, and the same three-scratch rule the flats' own pass
   // had to learn the hard way (AUDIT PERF-SUN/FOG F4: two decodes into
   // one scratch computed the moon term from the sun's colour).
-  const fn = r.slice(r.indexOf('  drawDecals(batch, tex) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex) {')));
+  const fn = r.slice(r.indexOf('  drawDecals(batch, tex, ranges = null) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex, ranges = null) {')));
   assert.match(fn, /const am = this\._c3\(this\._ambient, this\._decA\);/);
   assert.match(fn, /const mc = this\._c3\(this\._moonColor, this\._decB\);/);
   assert.match(fn, /const sc = this\._c3\(this\._sunColor, this\._decC\);/);
   assert.equal(new Set(['_decA', '_decB', '_decC'].map((k) => fn.includes(k))).size, 1, 'three colours, three scratches');
-  assert.match(fn, /gl\.uniform3f\(d\.sun, sc\[0\] \* this\._sunScale \* 0\.5, sc\[1\] \* this\._sunScale \* 0\.5, sc\[2\] \* this\._sunScale \* 0\.5\);/,
-    'the sun’s Lambert-average HALF, which is the flats’ own number');
+  assert.match(fn, /gl\.uniform3f\(d\.sun, sc\[0\] \* this\._sunScale, sc\[1\] \* this\._sunScale, sc\[2\] \* this\._sunScale\);/,
+    'BLOOD AUDIT 4: the WHOLE sun - the shader takes N.L off the quad’s normal, as the mesh does; the flats’ half was for a thing with no normal');
+  assert.match(fn, /if \(d\.lightDir\) gl\.uniform3fv\(d\.lightDir, this\._lightDir\);/, 'and its direction, on both programs');
+  assert.match(fn, /gl\.uniform3f\(d\.tint, am\[0\], am\[1\], am\[2\]\);/, 'BLOOD AUDIT 5: the BARE ambient - no moon half folded in');
+  assert.match(fn, /gl\.uniform3f\(d\.moon, mc\[0\] \* this\._moonScale, mc\[1\] \* this\._moonScale, mc\[2\] \* this\._moonScale\);/, 'the whole moon, by N.L in the shader');
+  assert.match(fn, /if \(d\.moonDir\) gl\.uniform3fv\(d\.moonDir, this\._moonDir\);/);
+  assert.match(fn, /const tri = this\._ambientTri;\s*\n\s*gl\.uniform1f\(d\.trilight, tri \? 1 : 0\);\s*\n\s*if \(tri\) \{ gl\.uniform3fv\(d\.ambientSky, this\._c3\(tri\.sky\)\); gl\.uniform3fv\(d\.ambientGround, this\._c3\(tri\.ground\)\); \}/, 'the trilight, as drawMesh uploads it');
+  assert.match(fn, /gl\.uniform3f\(d\.moon, 0, 0, 0\);/, 'a clockless scene: no moon');
+  for (const u of ['uDecalMoon', 'uMoonDir', 'uTrilight', 'uAmbientSky', 'uAmbientGround']) { assert.match(decalFs, new RegExp(`uniform (vec3|float) ${u};`)); assert.match(r, new RegExp(`gl\\.getUniformLocation\\(P, '${u}'\\)`)); }
+  assert.match(r, /lightDir: gl\.getUniformLocation\(P, 'uLightDir'\),/, 'looked up with the rest of the decal’s locations');
   assert.match(fn, /gl\.uniform1i\(d\.pointCount, dCount\);/);
-  assert.match(fn, /gl\.uniform4fv\(d\.pointLights, this\._pointLights\.subarray\(0, dCount \* 4\)\);/);
+  assert.match(fn, /gl\.uniform4fv\(d\.pointLights, this\._pointLights\.subarray \? this\._pointLights\.subarray\(0, dCount \* 4\) : this\._pointLights\.slice\(0, dCount \* 4\)\);/, 'BLOOD1 AUDIT 3: with drawTerrain’s own guard for a plain array');
   assert.match(fn, /gl\.uniform3fv\(d\.pointColors, this\._pointColorData\(dCount\)\);/);
-  // THE DECAL IS A FIFTH CLASSIC PROGRAM WITH NO LANE TWIN, and that is
-  // pinned here as well as in EL1 because it is a LIMIT rather than an
-  // oversight: `_pointLights` holds 48 under the Enhanced Lighting
-  // lane, and a shader declaring `uPointLights[16]` handed a count of
-  // 48 reads off the end of its own array. The sixteen it takes are the
-  // sixteen NEAREST - `nearestLights` sorted them before any of this -
-  // which is what the whole renderer had before the lane existed.
-  assert.match(fn, /const dCount = Math\.min\(this\._pointLights\.length >> 2, CLASSIC_MAX_LIGHTS\);/,
-    'the decal cuts to the classic cap rather than trusting the lane\u2019s count');
+  // W4 pinned the decal as "a fifth classic program with no lane twin",
+  // cutting to CLASSIC_MAX_LIGHTS under the lane's forty-eight. MAC-BUG
+  // W6 gave it the twin, so the cut is to the INSTALLED set's cap - the
+  // classic sixteen or the lane's forty-eight, whichever `maxPointLights`
+  // says - and the W6 pins below hold the twin itself.
+  assert.match(fn, /const dCount = Math\.min\(this\._pointLights\.length >> 2, this\._decalLights\);/,
+    'the decal cuts to the installed decal PROGRAM\u2019s cap (BLOOD1 AUDIT 3: a lane with no twin runs the classic program under forty-eight)');
 
   // A CLOCKLESS SCENE keeps full bright, as the flats do - and its sun
   // goes to zero with it, or a scene with no clock would carry the last
@@ -1805,6 +1981,1017 @@ test('MAC-BUG W4: a MARK takes the same light a CHUNK takes - the two passes of 
   // and the probe that measured it is committed, so the next person
   // reads pixels rather than the shader
   assert.match(readFileSync(new URL('../package.json', import.meta.url), 'utf8'), /"blood": "node tools\/bloodProbe\.mjs"/);
+});
+
+// ── MAC-BUG W6 (2026-09-20, Mac: "super dark coloring instead of red") ──
+test('MAC-BUG W6 by source: the decal has a LANE TWIN, the flat’s model on the lane’s pipeline, and the renderer builds and feeds it as the set’s fifth program', async () => {
+  // THE FAULT. The port ships with the Enhanced Lighting lane ON, and
+  // under it the renderer DECODES every colour it uploads to linear
+  // (`_c3`, `_pointColorData`) because the lane's shaders light in
+  // linear and encode at the end. The decal pass was a classic program
+  // with, as W4 pinned it, "no lane twin": it took those linear values
+  // as display ones, multiplied an UNDECODED texel by them and wrote the
+  // product raw - no exposure, no tonemap, no encode. Measured beside a
+  // sprite in the same light (tools/bloodProbe.mjs, the LANE rows): dusk
+  // 25 against 69, a dark dungeon 2 against 17. W4's probe read the
+  // classic set alone, and was green the whole time.
+  const el = readFileSync(new URL('../src/render/enhancedLighting.js', import.meta.url), 'utf8');
+  const r = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  const { EL_LANE, EL_DECAL_FS, EL_BB_FS, EL_MAX_LIGHTS } = await import('../src/render/enhancedLighting.js');
+
+  // the lane carries it, by the key the set builder reads
+  assert.equal(EL_LANE.decalFs, EL_DECAL_FS, 'EL_LANE.decalFs is the twin');
+  assert.match(r, /decal: this\._buildProgram\(DECAL_VS, src\.decalFs \?\? DECAL_FS\),/, 'the set builds it from the lane’s key, the classic FS only for a lane that brings none');
+
+  // THE FLAT'S MODEL, TERM FOR TERM WITH EL_BB_FS - a mark and a chunk
+  // are the same blood, and under this lane they were not.
+  // AUDIT BLOOD3 F1: the TEXEL is no longer a colour factor here - the
+  // ink was the shape's depth painted as a grey darkening, and the film
+  // does that per channel now, so multiplying by both spent it twice in
+  // opposite directions. What AUDIT 3's law still governs is the TINT:
+  // it decodes on its own, because the curve is not linear.
+  assert.match(EL_DECAL_FS, /vec3 albedo = elDecode\(vColor\.rgb\)\s*\n\s*\* exp\(vec3\([\d., ]+\) \* \(1\.0 - thick\)\)\s*\n\s*\* mix\(1\.0, [\d.]+, clamp\(vWet, 0\.0, 1\.0\)\);/, 'the tint decodes on its own (BLOOD1 AUDIT 3), the film rides it, and a wet mark darkens (AUDIT BLOOD3 F5)');
+  assert.doesNotMatch(EL_DECAL_FS, /elDecode\(t\.rgb\)/, 'the ink is not a colour any more, so there is nothing of it left to decode');
+  assert.match(EL_BB_FS, /vec3 albedo = max\(elDecode\(tex\.rgb\) - emission, vec3\(0\.0\)\);/, '(the flat decodes its texel - the comparison is against something real)');
+  // BLOOD AUDIT 4: the SURFACE's terms on the lane too - elPointLit and
+  // elIndirectLit (N.L, the lantern's map, the contact shadow, the
+  // glint), which is what the mesh under the mark takes
+  assert.match(EL_DECAL_FS, /vec3 lit = albedo \* \(ambient \+ sunLit \+ moonLit \+ elPointLitWet\(vWorld, n, sheen, glint\) \+ elIndirectLit\(vWorld, n\)\);/, 'the mesh’s lantern and indirect terms, N.L - and (BLOOD AUDIT 5) the moon by N.L and the trilight ambient');
+  assert.match(EL_DECAL_FS, /vec3 moonLit = uDecalMoon \* max\(dot\(n, uMoonDir\), 0\.0\);/);
+  assert.match(EL_DECAL_FS, /vec3 ambient = uTrilight > 0\.5 \? \(n\.y >= 0\.0 \? mix\(uTint, uAmbientSky, n\.y\) : mix\(uTint, uAmbientGround, -n\.y\)\) : uTint;/);
+  assert.match(EL_DECAL_FS, /float sunVis = \(dot\(uDecalSun, uDecalSun\) > 0\.0 && ndl > 0\.0\) \? cloudShadowAt\(vWorld\) \* sunShadowAt\(vWorld, n\) : 0\.0;/, 'the sun’s visibility ONCE - the nine-tap map is read for the diffuse and the glint together');
+  assert.match(EL_DECAL_FS, /vec3 sunLit = uDecalSun \* \(ndl \* sunVis\);/);
+  assert.match(EL_DECAL_FS, /uniform vec3 uLightDir;/);
+  assert.match(EL_DECAL_FS, /float ndl = max\(dot\(n, uLightDir\), 0\.0\);/, 'the sun by N.L - the lane’s mesh line');
+  assert.match(EL_BB_FS, /vec3 lit = albedo \* \(uTint \+ sunLit \+ elPointFlat\(vBBWorld, base\) \+ elIndirectFlat\(vBBWorld\)\) \+ emission;/, '(the flat’s own line)');
+  assert.equal((EL_DECAL_FS.slice(EL_DECAL_FS.lastIndexOf('void main()')).match(/sunShadowAt\(/g) || []).length, 1, 'the sun map is read once per fragment');
+  assert.match(EL_DECAL_FS, /outColor = vec4\(elFinish\(lit, vWorld\), t\.a \* vColor\.a\);/, 'exposure, tonemap, fog in linear, in-scatter, ENCODE - the lane’s finish, with the mark’s own alpha');
+  assert.match(EL_DECAL_FS, new RegExp(`uniform vec4 uPointLights\\[${EL_MAX_LIGHTS}\\];`), 'the lane’s forty-eight');
+  assert.doesNotMatch(EL_DECAL_FS, /uPointLights\[16\]/, 'not the classic sixteen');
+  // THE ONE THING A MARK HAS THAT A FLAT DOES NOT is a surface: a flat
+  // reads its shadow half a unit UP from its base; a ceiling's mark read
+  // that way reads inside the rock. The mark's normal comes from its own
+  // quad, faces the eye, and the shadow is read half a unit out along it.
+  assert.match(EL_DECAL_FS, /vec3 dpx = dFdx\(vWorld\), dpy = dFdy\(vWorld\);[^\n]*\n\s*vec3 c = cross\(dpx, dpy\);\s*\n\s*vec3 n = dot\(c, c\) > 1e-12 \? normalize\(c\) : vec3\(0\.0, 1\.0, 0\.0\);/, 'the quad’s own normal - and up, not NaN, for a quad seen edge-on (BLOOD1 AUDIT 3); AUDIT BLOOD3 F2: off ONE derivative pair, taken outside any branch');
+  assert.match(EL_DECAL_FS, /if \(dot\(n, uCamPos - vWorld\) < 0\.0\) n = -n;/, 'facing the eye');
+  assert.doesNotMatch(EL_DECAL_FS.slice(EL_DECAL_FS.lastIndexOf('void main()')), /elPointFlat|elIndirectFlat|sunShadowSoftAt|vec3 base/, 'BLOOD AUDIT 4: none of the flat’s terms in the mark’s own main - it lies on a surface and is lit as one');
+  // the shared blocks the flat has - the decode/encode, the shadow
+  // receiver, the contact block, the fog, the lantern loop
+  for (const block of ['${EL_GLSL}', '${SHADOW_GLSL}', '${AIR_CONTACT_GLSL}', '${EL_FOG_GLSL}', '${EL_POINT_LIT_GLSL}']) {
+    const decalSrc = el.slice(el.indexOf('export const EL_DECAL_FS = `'), el.indexOf('`;', el.indexOf('export const EL_DECAL_FS = `')));
+    assert.ok(decalSrc.includes(block), `the twin interpolates ${block}`);
+  }
+  // and the same alpha law the classic program has: a clear texel draws nothing
+  assert.match(EL_DECAL_FS, /if \(t\.a < 0\.01\) discard;/);
+
+  // THE RENDERER FEEDS IT WHAT IT FEEDS THE FLATS. `_uploadEl` is the
+  // exposure, the in-scatter, the shadow maps and the eye; the cloud
+  // shadow is its own pair; both are keyed by program and the decal's
+  // entries ride the same tables the other four do.
+  const fn = r.slice(r.indexOf('  drawDecals(batch, tex, ranges = null) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex, ranges = null) {')));
+  assert.match(fn, /this\._uploadEl\('decal'\);/, 'the lane’s own uniforms');
+  assert.match(fn, /this\._uploadCloudShadow\('decal'\);/, 'the cloud’s shadow');
+  assert.ok(fn.indexOf("this._uploadEl('decal');") < fn.indexOf('gl.drawElements('), 'uploaded BEFORE the draw');
+  assert.ok(fn.indexOf("this._uploadCloudShadow('decal');") < fn.indexOf('gl.drawElements('), 'and so is the cloud');
+  assert.match(fn, /const dCount = Math\.min\(this\._pointLights\.length >> 2, this\._decalLights\);/, 'the installed decal program’s cap: sixteen classic, forty-eight lane, sixteen for a foreign lane with no twin');
+  assert.match(r, /decalLights: src\.decalFs \? \(src\.maxLights \?\? CLASSIC_MAX_LIGHTS\) : CLASSIC_MAX_LIGHTS,/, 'the set carries the cap its decal program declares');
+  assert.match(r, /decal: elLocs\(set\.decal\)/, 'the decal’s lane uniforms are looked up with the set');
+  assert.match(r, /this\._csLoc\.decal = \[gl\.getUniformLocation\(set\.decal, 'uCloudShadowMap'\), gl\.getUniformLocation\(set\.decal, 'uCloudShadowRect'\)\];/, 'and its cloud pair');
+  assert.match(r, /this\.decalProgram = set\.decal;\s*\n\s*this\._decal = this\._decalLocs\(set\.decal\);/, 'the program and its table are the installed set’s');
+  assert.match(r, /\.\.\.this\._fogLocs\(P\),/, 'the fog table is the one that knows uFogColorLin - the lane’s finish blends the DECODED fog');
+  // the classic program is untouched by all of this: no lane uniform in it
+  const classicFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));
+  assert.ok(!/uELExposure|elFinish|elDecode/.test(classicFs), 'the classic decal stays classic');
+  assert.match(classicFs, /uniform vec4 uPointLights\[16\];/);
+
+  // and the probe reads BOTH sets now - W4's rows were all classic, and
+  // that is how a fault in the shipped default went unread
+  const probe = readFileSync(new URL('../tools/bloodProbe.mjs', import.meta.url), 'utf8');
+  assert.match(probe, /r\.setLightingLane\(EL_LANE\);/, 'the probe installs the lane');
+  assert.match(probe, /LANE \$\{x\.what\}: the mark is lit as the wall it lies on is/, 'and holds the mark to the SURFACE it lies on (BLOOD AUDIT 4: a mesh facing the eye, not the flat beside it)');
+  assert.match(probe, /r\.drawMesh\(wall, IDENT\);/, 'the wall goes through the mesh pass');
+  assert.match(probe, /OWN \$\{lane\}: dried blood at noon is a RUST, browner than fresh/, 'and reads the atlas under the real tints');
+});
+
+// ── BLOOD1 AUDIT 3 (2026-09-20, Mac: "I think this deserves a real audit.
+// I doubt there's only one issue" / "the blood system needs to be as
+// visceral and detailed as possible ... inconsistencies with blood with
+// the exterior") - three lenses, the findings paid ──────────────────
+test('BLOOD1 AUDIT 3: the mark is the FOE’S even where the splash is record 0 - a skeleton’s fall stains nothing', () => {
+  // EnemyMotor's fall damage shows record 0 for EVERY foe (its own
+  // literal), and the two generic fall sites passed that 0 on to the
+  // marks too - so the bloodless gate, the whole point of
+  // BLOODLESS_INDEX, was bypassed for a skeleton walking off a ledge.
+  const { fx, marks } = rigHitEffects();
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 10, maxHealth: 40, markIndex: BLOODLESS_INDEX });
+  assert.equal(marks.count(), 0, 'record 0 splashes, the bloodless mark index marks nothing');
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 10, maxHealth: 40, markIndex: 0 });
+  assert.ok(marks.count() > 0, 'and a bleeding foe’s fall stains as any blow does');
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 10, maxHealth: 40 });
+  assert.ok(marks.count() > 0, 'a site naming no mark index keeps the splash’s own');
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  assert.match(read('src/scenes/hitEffects.js'), /marks\?\.place\?\.\(hit\?\.markIndex \?\? bloodIndex, pos, hit\);/);
+  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js']) {
+    assert.match(read(f), /showBloodSplash\(0, f\.ai\._centre\(\), null, \{ \.\.\.bloodHit\(\w+, f\.entity\), markIndex: ENEMY_BASICS\[f\.mobileType\]\?\.bloodIndex \?\? 0 \}\)/, `${f}: the fall site names the foe’s own mark index`);
+  }
+});
+
+test('BLOOD1 AUDIT 3: the dungeon’s hand-off splash pool is cleared ABOVE the list it hands to, so a warming splash cannot mint an orphan', async () => {
+  // THE HOLE: `entry.dead` is set by retire() alone, and the dungeon
+  // never called clear() (a clear BELOW the destroy loop was a double
+  // free). So a splash whose archive was still warming when the dungeon
+  // went minted a batch into the orphaned list, and nothing freed it.
+  // ABOVE the loop it is one free per batch: retire() splices the batch
+  // out of the list before it frees it.
+  const src = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  const d = src.indexOf('    destroy() {');
+  const body = src.slice(d, src.indexOf('\n    },\n', d));
+  const clear = body.indexOf('      hitEffects.clear();');
+  const loop = body.indexOf('      for (const b of billboardBatches) renderer.destroyBatch(b);');
+  assert.ok(clear > 0 && loop > 0 && clear < loop, 'the splash pool is cleared before the hand-off list is freed');
+  assert.ok(body.indexOf('bloodMarks.dispose();') < clear, 'and the ring, its own, is ended by its own name first');
+
+  // driven: a splash warming at teardown, with the hand-off wiring the
+  // dungeon uses - the continuation lands on a dead entry and builds
+  // nothing, and the list it would have pushed into is empty
+  const list = [];
+  let resolveTex = null;
+  const made = [];
+  const renderer = {
+    createBillboardBatch: (a, r, size, centers) => { const b = { a, r, centers }; made.push(b); return b; },
+    destroyBillboardBatch: () => {},
+    uploadTexture: () => {},
+  };
+  const fx = createHitEffects({
+    renderer,
+    getTexture: () => new Promise((res) => { resolveTex = res; }),
+    uploadRecordFrame: () => {},
+    onSpawn: (b) => list.push(b),
+    onRetire: (b) => { const i = list.indexOf(b); if (i >= 0) list.splice(i, 1); },
+  });
+  fx.showBloodSplash(0, [0, 1, 0]);
+  assert.equal(made.length, 0, 'warming: nothing built yet');
+  fx.clear();   // the dungeon goes
+  resolveTex({ recordCount: 8, getFrameCount: () => 6, getSize: () => ({ width: 8, height: 8 }), getScale: () => ({ width: 0, height: 0 }) });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(made.length, 0, 'the continuation builds nothing for a dead entry');
+  assert.equal(list.length, 0, 'and hands nothing to the orphaned list');
+});
+
+test('BLOOD1 AUDIT 3: the switch gates the DRAW and the TICK, the ring is built at boot, and a recentre moves the chunks’ quads before the draw', () => {
+  let enabled = true;
+  const made = [], moves = [];
+  const renderer = {
+    createDecalBatch: (capacity) => { const b = { capacity }; made.push(b); return b; },
+    writeDecalSlot: () => true,
+    drawDecals: () => {},
+    createBillboardBatch: (a, r, size, centers) => ({ a, r, centers }),
+    moveBillboardBatch: (batch, centers) => { moves.push(centers.map((c) => [...c])); return true; },
+    destroyBillboardBatch: () => {},
+    drawBillboards: () => {},
+  };
+  let capacityReads = 0;
+  const { fx, marks } = rigHitEffects({
+    renderer,
+    settings: { enabled: () => enabled, capacity: () => { capacityReads++; return 64; }, density: () => 1, overkill: () => true },
+    collider: () => ({ surfaceHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null), raycastHit: () => ({ dist: Infinity }) }),
+  });
+  // BUILT AT BOOT, as bloodSwitch.js always said - it was built at the
+  // first drop that landed, reading the capacity then.
+  assert.equal(made.length, 1, 'the ring exists before any blood');
+  assert.equal(capacityReads, 1, 'the capacity was read once, at boot');
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 70, maxHealth: 40, fromPlayer: true, heavy: true, throw: [0, 0] });
+  fx.showBloodSplash(0, [3, 1, 3], null, { damage: 10, maxHealth: 40 });
+  assert.equal(capacityReads, 1, 'and never again');
+  assert.ok(marks.count() > 0 && marks.gibs().length === GIB_COUNT);
+  // A RECENTRE MOVES THE QUADS NOW: the host shifts, then draws, then
+  // ticks, so the chunks drew one frame from the old buffer.
+  moves.length = 0;
+  fx.offsetAll([819.2, 0, 0]);
+  assert.equal(moves.length, 1, 'the chunks’ quads are rewritten at the shift');
+  assert.ok(moves[0].every((c) => c[0] >= 819.2 - 15), 'to the shifted positions');
+  assert.ok(marks.draw(new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])), 'drawn while on');
+  // THE SWITCH OFF MID-FIGHT: nothing drawn, the chunks and drips dropped
+  enabled = false;
+  assert.equal(marks.draw(new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])), false, 'off: nothing drawn, marks included');
+  fx.tick(1 / 60);
+  assert.equal(marks.gibs().length, 0, 'off: the chunks in the air are dropped');
+  assert.equal(marks.drips().length, 0, 'and the drips');
+  enabled = true;
+  assert.ok(marks.draw(new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])), 'on again: the marks that were laid are still there');
+});
+
+test('BLOOD1 AUDIT 3: the ring draws its TOUCHED slots in AGE order - one range unwrapped, two once wrapped - and the pool hands them to the pass', () => {
+  const pool = createBloodDecalPool({ capacity: 4, rng: () => 0.5 });
+  assert.deepEqual(pool.ranges(), [], 'empty: nothing to draw');
+  for (let i = 0; i < 3; i++) pool.place([i, 0, 0], [0, 1, 0]);
+  assert.deepEqual(pool.ranges(), [[0, 3]], 'three marks: the prefix, not the capacity');
+  assert.equal(pool.touched, 3);
+  pool.place([3, 0, 0], [0, 1, 0]);
+  assert.deepEqual(pool.ranges(), [[0, 4]], 'full and unwrapped: the whole ring, oldest first');
+  pool.place([4, 0, 0], [0, 1, 0]);   // wraps: slot 0 is now the NEWEST
+  assert.deepEqual(pool.ranges(), [[1, 4], [0, 1]], 'wrapped: the oldest slots first, the newest last - the burst under the pool holds');
+  // ...which is exactly decals()' order, range by range
+  const order = pool.ranges().flatMap(([a, b]) => Array.from({ length: b - a }, (_, k) => a + k));
+  assert.deepEqual(order, pool.decals().map((d) => d.slot));
+  pool.clear();
+  assert.deepEqual(pool.ranges(), []);
+  assert.equal(pool.touched, 0);
+  // the pass is handed the ranges
+  const drew = [];
+  const { fx, marks } = rigHitEffects({ renderer: { createDecalBatch: (capacity) => ({ capacity }), writeDecalSlot: () => true, drawDecals: (b, t, ranges) => { drew.push(ranges); }, createBillboardBatch: () => ({}) } });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 2, 0], null, { damage: 10, maxHealth: 40 });
+  marks.draw();
+  assert.ok(Array.isArray(drew[0]) && drew[0].length >= 1 && drew[0][0][0] === 0, 'the pool’s own ranges reach drawDecals');
+});
+
+test('BLOOD1 AUDIT 3: the spray’s wobble is a share of the SLOT, so the top rung’s drops never cross - and blood does not pass through walls', () => {
+  // 0.9 RADIANS of wobble on a 15-degree slot (the top rung's 24 drops)
+  // put drops on top of each other; nine tenths of a slot cannot.
+  for (const n of [4, 24, SPRAY_MAX]) {
+    for (let i = 1; i < n - 1; i++) {
+      const hi = Math.atan2(...sprayOffset(i, n, 1, () => 1).reverse());
+      const lo = Math.atan2(...sprayOffset(i + 1, n, 1, () => 0).reverse());
+      assert.ok(lo - hi > 1e-9 || lo - hi < -Math.PI, `n=${n}: drop ${i} at its widest never reaches drop ${i + 1} at its narrowest`);
+    }
+  }
+  assert.ok(SPRAY_WOBBLE < 1, 'a share of the slot');
+
+  // A WALL BETWEEN THE BODY AND THE DROP: the drop lands nowhere. The
+  // stub's wall stands at x = +0.3 for any ray heading +x.
+  const wallAt = 0.3;
+  const collider = (walled) => () => ({
+    surfaceHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null),
+    // BLOOD2a: a wall BEYOND the ray's reach is a miss, not a hit at the
+    // reach - the first cut of this stub clamped the distance and so
+    // reported a drop short of the wall as having met it there
+    raycastHit: (from, dir, max) => {
+      if (!walled || !(dir[0] > 0) || from[0] >= wallAt) return { dist: Infinity, normal: null };
+      const d = (wallAt - from[0]) / dir[0];
+      return d <= max ? { dist: d, normal: [-1, 0, 0] } : { dist: Infinity, normal: null };
+    },
+  });
+  const hit = { damage: 30, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] };   // the top rung: 24 drops over 1.8 m
+  const open = rigHitEffects({ collider: collider(false), settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false } });
+  open.marks.useArt(380, 1, 6); open.fx.showBloodSplash(0, [0, 1, 0], null, hit);
+  const walled = rigHitEffects({ collider: collider(true), settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false } });
+  walled.marks.useArt(380, 1, 6); walled.fx.showBloodSplash(0, [0, 1, 0], null, hit);
+  // BLOOD2a: the wall does not LOSE the drops, it TAKES them - every
+  // drop that would have passed through it stains it where it met it
+  // (MORE, not the same: a drop that would have looked UP past the wall and found no ceiling in this stub meets the wall first, and stains it)
+  assert.ok(walled.marks.count() >= open.marks.count(), 'no drop is lost to the wall');
+  assert.ok(walled.marks._pool().decals().every((d) => d.pos[0] <= wallAt + 1e-9), 'and none landed past it');
+  const onWall = walled.marks._pool().decals().filter((d) => Math.abs(d.normal[1]) < 1e-9);
+  assert.ok(onWall.length > 0, 'some are ON the wall');
+  for (const d of onWall) {
+    assert.ok(Math.abs(d.pos[0] - (wallAt - SURFACE_LIFT)) < 1e-9, 'at the wall, lifted toward the body it came from');
+    assert.deepEqual(d.normal, [-1, 0, 0], 'facing the way it came');
+    assert.equal(d.stretch, 1, 'a wall mark is round - a spurt meeting a wall head-on spreads');
+  }
+  assert.ok(walled.marks._pool().decals().some((d) => d.pos[0] === 0 && d.pos[2] === 0), 'the pool under the body still lands');
+});
+
+test('BLOOD1 AUDIT 3: the pure law refuses what would poison it - a NaN capacity, size or delta, a prototype swing, an endless throw - and `?blood=off` exists', async () => {
+  assert.doesNotThrow(() => createBloodDecalPool({ capacity: NaN }));
+  assert.doesNotThrow(() => createBloodDecalPool({ capacity: Infinity }));
+  const nanCap = createBloodDecalPool({ capacity: NaN, rng: () => 0.5 });
+  for (let i = 0; i < 1001; i++) nanCap.place([0, 0, 0], [0, 1, 0]);
+  assert.equal(nanCap.count, 1000, 'not a number is the default, as it is for the switch');
+  const pool = createBloodDecalPool({ capacity: 4, rng: () => 0.5 });
+  assert.equal(pool.place([0, 0, 0], [0, 1, 0], { size: NaN }).size, 0, 'a NaN size is a size of zero, not twelve NaN floats in the slot');
+  const d = pool.place([1, 2, 3], [0, 1, 0]);
+  assert.equal(pool.shiftOrigin([NaN, 0, 0]), 0, 'a non-finite delta moves nothing');
+  assert.deepEqual(d.pos.map((v) => Math.round(v * 1000) / 1000), [1, 2.02, 3], 'and the mark is where it was');
+  assert.deepEqual(swingThrow('constructor', [0, 0, 1]), [0, 0], 'a prototype key is not a swing');
+  assert.deepEqual(swingThrow('toString', [0, 0, 1]), [0, 0]);
+  assert.equal(throwGibs([0, 0, 0], () => 0.5, Infinity).length, GIB_COUNT, 'an endless throw is the default throw');
+  assert.equal(shiftGibs([null, { pos: [0, 0, 0] }], [1, 0, 0]), 1, 'a hole in the list is skipped');
+  assert.ok(!('parent' in pool.place([0, 0, 0], [0, 1, 0])), 'the dead field is gone');
+  const { bloodMarksOn } = await import('../src/combat/bloodSwitch.js');
+  assert.equal(bloodMarksOn('?blood=off'), false, 'the door the comment promised');
+  assert.equal(bloodMarksOn('?blood=on'), true);
+  assert.equal(bloodMarksOn(''), true);
+});
+
+test('BLOOD1 AUDIT 3: a chunk’s arc is the same arc at every frame rate - Unity’s fixed step, whole steps only, the remainder carried', () => {
+  // the SAME trajectory, sampled at whatever times a frame rate happens
+  // to land on: at every time two rates share, the chunk is in the same
+  // place. (The apex a frame SEES differs by a few millimetres, because
+  // a coarser rate looks between the steps less often - that is the
+  // frame's business, not the physics'.)
+  const fly = (dt, seconds, at) => {
+    const g = throwGibs([0, 0, 0], () => 0.5)[0];   // straight up at 10 m/s
+    const seen = [];
+    let frames = 0;
+    for (let t = 0; t < seconds - 1e-9; t += dt) {
+      const step = gibStep(g, dt); if (step) gibFly(g, step);
+      frames++;
+      if (at.some((a) => Math.abs(frames * dt - a) < 1e-9)) seen.push([...g.pos]);
+    }
+    return { seen, vel: [...g.vel] };
+  };
+  const times = [0.5, 1, 1.5, 2];
+  const at60 = fly(1 / 60, 2, times), at10 = fly(1 / 10, 2, times), at30 = fly(1 / 30, 2, times);
+  assert.equal(at60.seen.length, 4); assert.equal(at10.seen.length, 4); assert.equal(at30.seen.length, 4);
+  for (let k = 0; k < 4; k++) {
+    assert.ok(Math.abs(at60.seen[k][1] - at10.seen[k][1]) < 1e-6, `at ${times[k]}s: 60 fps ${at60.seen[k][1].toFixed(5)} is 10 fps ${at10.seen[k][1].toFixed(5)}`);
+    assert.ok(Math.abs(at60.seen[k][1] - at30.seen[k][1]) < 1e-6, `at ${times[k]}s: and 30 fps`);
+  }
+  assert.ok(Math.abs(at60.vel[1] - at10.vel[1]) < 1e-6);
+  assert.ok(at60.seen[0][1] > 1.0, 'and it really flew - past a metre, already on the way down by the half second');
+  // a frame shorter than a step banks its time rather than moving
+  const g = throwGibs([0, 0, 0], () => 0.5)[0];
+  assert.equal(gibStep(g, GIB_FIXED_DT / 2), null, 'half a step: nothing yet');
+  assert.ok(gibStep(g, GIB_FIXED_DT / 2), 'the other half: one whole step');
+  assert.equal(GIB_FIXED_DT, 0.02, 'Time.fixedDeltaTime');
+});
+
+test('BLOOD1 AUDIT 3: a mark on streamed terrain lies on the DRAWN ground, and the ray walk allocates nothing per bucket', () => {
+  // The world host's `heightAt` is a bilinear read the capsule walks on;
+  // the terrain is two triangles a quad, up to 0.08 apart from it - four
+  // times a mark's 2cm lift. The collider takes a second sampler for
+  // what is PLACED, and the capsule keeps its floor.
+  const c = new Collider(() => 5, () => 5.06);
+  const h = c.surfaceHit([0, 10, 0], [0, -1, 0], 20);
+  assert.ok(Math.abs(h.dist - 4.94) < 1e-9, 'the drawn ground, not the bilinear one');
+  assert.deepEqual(c.groundNormal(0, 0), [0, 1, 0]);
+  const slope = new Collider(() => 0, (x) => x * 0.5);   // the drawn ground rises with x; the capsule floor is flat
+  const n = slope.groundNormal(0, 0);
+  assert.ok(n[0] < 0 && Math.abs(n[0] / n[1] + 0.5) < 1e-9, 'the slope is the DRAWN surface’s');
+  assert.equal(new Collider(() => 5).surfaceHit([0, 10, 0], [0, -1, 0], 20).dist, 5, 'no second sampler: the floor as before');
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  const world = read('src/scenes/world.js');
+  assert.match(world, /const collider = new Collider\(heightAt, surfaceAt\);/, 'the world host hands both');
+  assert.match(world, /return surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\) \+ t\[1\];/, 'the drawn ground is the grass placer’s own sampler, on the pixel the point is in');
+  // the ray walk: one translation array a bucket, and no boxed origin
+  assert.equal((world.match(/\(\(o\) => \(\) => state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)/g) ?? []).length, 5, 'every bucket translation reuses its own array');   // WOD2: the fourth is World of Daggerfall's models, whose sites open the pixel's bucket (a location's pixel never has one); WOD4: the fifth is the camp at Privateer's Hold's
+  assert.doesNotMatch(world, /\(\) => state\.pixelTranslation\(px, py\)[,)]/, 'no bucket allocates a translation per call');
+  const col = read('src/player/collider.js');
+  const box = col.slice(col.indexOf('export function segmentHitsBox('), col.indexOf('\n}', col.indexOf('export function segmentHitsBox(')));
+  assert.doesNotMatch(box, /\[ox, oy, oz\]/, 'the box test reads its origin in place - no array of it in any spelling');
+  assert.match(box, /const ok = k === 0 \? ox : k === 1 \? oy : oz;/, 'the component by index, without a list');
+  // and the classic decal shader takes the cloud's shadow on its sun term
+  const r = read('src/render/renderer.js');
+  const classicFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));
+  assert.ok(classicFs.includes('${CLOUD_SHADOW_GLSL}'), 'the classic decal reads the cloud map');
+  assert.match(classicFs, /uDecalSun \* \(diff \* cloudShadowAt\(vWorld\)\)/, 'on the sun term, as the mesh has it');
+});
+
+// ── BLOOD2a (2026-09-21, Mac: "make it even more visceral and detailed" /
+// "Lets do it") - blood on walls, and spatter stretched along its travel ──
+test('BLOOD2a: a basis ALONG a travel - right is the travel in the plane, the frame is the same right-handed frame, and no travel in the plane falls back', () => {
+  // a floor, a drop that flew +x: right is +x, up closes the frame
+  const b = basisAlong([0, 1, 0], [3, 0, 0]);
+  assert.deepEqual(b.right, [1, 0, 0]);
+  assert.deepEqual(b.normal, [0, 1, 0]);
+  const cr = [b.right[1] * b.up[2] - b.right[2] * b.up[1], b.right[2] * b.up[0] - b.right[0] * b.up[2], b.right[0] * b.up[1] - b.right[1] * b.up[0]];
+  assert.ok(cr.every((v, k) => Math.abs(v - b.normal[k]) < 1e-12), 'right x up = normal, as surfaceBasis has it - the same winding, the same lift');
+  // the travel is PROJECTED: a drop that flew +x and fell lands along +x on the floor
+  const slanted = basisAlong([0, 1, 0], [2, -5, 0]);
+  assert.ok(Math.abs(slanted.right[0] - 1) < 1e-12 && Math.abs(slanted.right[1]) < 1e-12);
+  // a wall: the travel toward it has no component in its plane ONLY when
+  // it is dead-on; a slanted travel lies along the wall
+  const wall = basisAlong([-1, 0, 0], [1, 0, 1]);
+  assert.ok(Math.abs(wall.right[2] - 1) < 1e-12 && Math.abs(wall.right[0]) < 1e-12, 'along the wall');
+  // straight down onto a floor: nothing in the plane, the spun basis
+  const down = basisAlong([0, 1, 0], [0, -1, 0], 0.7);
+  assert.deepEqual(down, surfaceBasis([0, 1, 0], 0.7));
+  assert.deepEqual(basisAlong([0, 1, 0], null, 0.3), surfaceBasis([0, 1, 0], 0.3), 'no travel at all: the spun basis');
+  // a non-unit normal is normalised, as everywhere
+  assert.deepEqual(basisAlong([0, 4, 0], [0, 0, 2]).right, [0, 0, 1]);
+});
+
+test('BLOOD2a: the streak - round at the body, STREAK_MAX at the reach, clamped past it - and the quad is longer along `right` by it, not across', () => {
+  assert.equal(streakFor(0, 2), 1, 'the pool flew nowhere');
+  assert.equal(streakFor(2, 2), STREAK_MAX, 'the edge of the spray');
+  assert.equal(streakFor(5, 2), STREAK_MAX, 'and never past it');
+  assert.ok(Math.abs(streakFor(1, 2) - (1 + (STREAK_MAX - 1) / 2)) < 1e-12, 'half way, half the stretch');
+  assert.equal(streakFor(1, 0), 1); assert.equal(streakFor(NaN, 2), 1); assert.equal(streakFor(1, NaN), 1);
+  assert.ok(STREAK_MAX > 1 && STREAK_MAX <= 4, 'a streak, not a line');
+  const pool = createBloodDecalPool({ capacity: 4, rng: () => 0.5 });
+  const d = pool.place([0, 0, 0], [0, 1, 0], { size: 1, along: [1, 0, 0], stretch: 2.5 });
+  assert.equal(d.stretch, 2.5);
+  assert.deepEqual(d.right, [1, 0, 0], 'laid along the travel');
+  const out = new Float32Array(DECAL_FLOATS);
+  writeDecalQuad(out, 0, d);
+  const xs = [0, 1, 2, 3].map((k) => out[k * DECAL_FLOATS_PER_VERTEX]), zs = [0, 1, 2, 3].map((k) => out[k * DECAL_FLOATS_PER_VERTEX + 2]);
+  assert.ok(Math.abs(Math.max(...xs) - Math.min(...xs) - 2.5) < 1e-6, 'two and a half along the travel');
+  assert.ok(Math.abs(Math.max(...zs) - Math.min(...zs) - 1) < 1e-6, 'one across it');
+  // a round drop is round, and a stretch under one is one
+  const r = pool.place([0, 0, 0], [0, 1, 0], { size: 1, turn: 0 });
+  assert.equal(r.stretch, 1);
+  assert.equal(pool.place([0, 0, 0], [0, 1, 0], { size: 1, stretch: 0.2 }).stretch, 1);
+  assert.equal(pool.place([0, 0, 0], [0, 1, 0], { size: 1, stretch: NaN }).stretch, 1);
+});
+
+test('BLOOD2a: a spray’s spatter lies ALONG its travel and longer the further it flew; the pool stays round; the ceiling’s drops too', () => {
+  const CEIL = 2.2;
+  const { fx, marks } = rigHitEffects({
+    settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false },
+    collider: () => ({
+      surfaceHit: (from, dir, max) => (dir[1] > 0
+        ? (CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null)
+        : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
+      raycastHit: () => ({ dist: Infinity, normal: null }),
+    }),
+  });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 30, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] });   // the top rung
+  const ds = marks._pool().decals();
+  const pool = ds.find((d) => d.pos[0] === 0 && d.pos[2] === 0 && d.normal[1] > 0);
+  assert.ok(pool && pool.stretch === 1, 'the pool under the body is round');
+  const spatter = ds.filter((d) => d !== pool);
+  assert.ok(spatter.length > 4);
+  for (const d of spatter) {
+    const flown = Math.hypot(d.pos[0], d.pos[2]);
+    assert.ok(d.stretch > 1, 'every flung drop is a streak');
+    // laid ALONG the line from the body: right is the drop's own bearing (or its opposite, on a ceiling)
+    const bearing = [d.pos[0] / flown, 0, d.pos[2] / flown];
+    const dot = Math.abs(d.right[0] * bearing[0] + d.right[2] * bearing[2]);
+    assert.ok(dot > 1 - 1e-6, `along its travel (${dot})`);
+  }
+  // the further it flew, the longer - monotone over the spray
+  const sorted = [...spatter].sort((a, b) => Math.hypot(a.pos[0], a.pos[2]) - Math.hypot(b.pos[0], b.pos[2]));
+  for (let k = 1; k < sorted.length; k++) assert.ok(sorted[k].stretch >= sorted[k - 1].stretch - 1e-9, 'longer the further it flew');
+  assert.ok(sorted.at(-1).stretch > sorted[0].stretch, 'and not all the same');
+  assert.ok(ds.some((d) => d.normal[1] < 0 && d.stretch > 1), 'the ceiling’s drops are streaks too');
+});
+
+// ── BLOOD2b (2026-09-21) - the port's own blood art, made at boot, and marks that dry ──
+import {
+  buildBloodAtlas, bloodAtlas, pickCell, bloodMarkKind, freshTint, freshShade, dryStage, driedTint, mulberry32,
+  ATLAS_SIZE, ATLAS_CELLS, ATLAS_KINDS, BLOOD_BASE, FRESH_VARIANCE, DRIED_TINT, DRY_TIME, DRY_STAGES, DRY_TICK, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD,
+} from '../src/combat/bloodArt.js';
+
+test('BLOOD2b: the atlas is the kinds in four variants, every cell bordered so a soft sample cannot bleed, red, and the same picture on every boot', () => {
+  const a = buildBloodAtlas();
+  const cell = ATLAS_SIZE / ATLAS_CELLS;
+  assert.equal(a.width, ATLAS_SIZE); assert.equal(a.height, cell * ATLAS_KINDS.length, 'BLOOD2d: one row a kind, the sheet as tall as it needs');
+  assert.equal(a.cells.length, ATLAS_CELLS * ATLAS_KINDS.length);
+  assert.deepEqual([...new Set(a.cells.map((c) => c.kind))], [...ATLAS_KINDS], 'the kinds, one row each');
+  for (let k = 0; k < a.cells.length; k++) {
+    const c = a.cells[k], col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS);
+    // the uv rect is inset a texel inside the cell
+    assert.ok(Math.abs(c.u0 - (col * cell + 1) / ATLAS_SIZE) < 1e-12 && Math.abs(c.u1 - (col * cell + cell - 1) / ATLAS_SIZE) < 1e-12);
+    assert.ok(Math.abs(c.v0 - (row * cell + 1) / a.height) < 1e-12 && Math.abs(c.v1 - (row * cell + cell - 1) / a.height) < 1e-12);
+    let opaque = 0, border = 0, ink = 0;
+    for (let y = 0; y < cell; y++) {
+      for (let x = 0; x < cell; x++) {
+        const o = ((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4;
+        const al = a.colors[o + 3];
+        if (x < 2 || y < 2 || x >= cell - 2 || y >= cell - 2) { if (al !== 0) border++; continue; }
+        if (al > 128) { opaque++; if (a.colors[o] === a.colors[o + 1] && a.colors[o + 1] === a.colors[o + 2] && a.colors[o] > 0) ink++; }
+      }
+    }
+    assert.equal(border, 0, `${c.kind} ${col}: a clear two-texel border`);
+    assert.ok(opaque > cell * cell * 0.05, `${c.kind} ${col}: a shape that is there`);
+    assert.ok(opaque < cell * cell * 0.7, `${c.kind} ${col}: and room around it`);
+    assert.equal(ink, opaque, `${c.kind} ${col}: every opaque texel is INK - grey, the colour is the tint's (BLOOD AUDIT 4)`);
+  }
+  // a pool is the broadest, a run the narrowest
+  const cover = (kind) => { const k = a.cells.findIndex((c) => c.kind === kind); const col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS); let n = 0; for (let y = 0; y < cell; y++) for (let x = 0; x < cell; x++) if (a.colors[((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4 + 3] > 128) n++; return n; };
+  assert.ok(cover('pool') > cover('spatter') && cover('spatter') > cover('drip'), 'pool broadest, run narrowest');
+  assert.ok(cover('print') > cover('drip') && cover('print') < cover('pool'), 'BLOOD2d: a boot between them');
+  // a print's toe is at +u: the right third holds more than the left
+  { const k = a.cells.findIndex((c) => c.kind === 'print'); const col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS); let left = 0, right = 0; for (let y = 0; y < cell; y++) for (let x = 0; x < cell; x++) { const al = a.colors[((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4 + 3]; if (al > 128) { if (x < cell / 3) left++; else if (x > cell * 2 / 3) right++; } } assert.ok(right > left, 'the sole is heavier than the heel'); }
+  // a streak's head is at -u and its tail at +u: the left third holds more than the right third
+  { const k = a.cells.findIndex((c) => c.kind === 'streak'); const col = k % ATLAS_CELLS, row = Math.floor(k / ATLAS_CELLS); let left = 0, right = 0; for (let y = 0; y < cell; y++) for (let x = 0; x < cell; x++) { const al = a.colors[((row * cell + y) * ATLAS_SIZE + col * cell + x) * 4 + 3]; if (al > 128) { if (x < cell / 3) left++; else if (x > cell * 2 / 3) right++; } } assert.ok(left > right, 'the head is heavier than the tail'); }
+  // deterministic: the same seed, the same bytes; another seed, another picture
+  assert.ok(Buffer.compare(Buffer.from(buildBloodAtlas().colors.buffer), Buffer.from(a.colors.buffer)) === 0, 'the same picture on every boot');
+  assert.ok(Buffer.compare(Buffer.from(buildBloodAtlas({ seed: 7 }).colors.buffer), Buffer.from(a.colors.buffer)) !== 0);
+  assert.equal(bloodAtlas(), bloodAtlas(), 'one atlas for the page');
+  const r = mulberry32(1); assert.ok(r() !== r(), 'the generator moves');
+  // the base is a red, deeper than the splash's own - and it is the
+  // TINT'S now, not the texel's (BLOOD AUDIT 4)
+  // BLOOD4: the base went DARKER (Mac: "a tad bit darker") and this pin
+  // used to hold a bare threshold (`> 0.5`) that the new colour trips
+  // while being exactly as red as before. The law is what it always
+  // meant: a real red, every channel inside the curve, red dominant by
+  // a wide margin - and the HUE, which is what a pure darkening must
+  // not move.
+  assert.ok(BLOOD_BASE.every((c) => c > 0 && c < 1), 'inside the curve, or the lane\'s decode stops being honest');
+  assert.ok(BLOOD_BASE[0] > 6 * Math.max(BLOOD_BASE[1], BLOOD_BASE[2]), 'red, and not by a little');
+  assert.ok(Math.abs(BLOOD_BASE[1] / BLOOD_BASE[0] - 0.085) < 0.006, 'the green/red that makes it BLOOD rather than paint');
+  assert.ok(Math.abs(BLOOD_BASE[2] / BLOOD_BASE[0] - 0.068) < 0.006, 'and the blue/red beside it');
+  // ...and it is DARKER than the colour BLOOD2b shipped, which is the
+  // whole of the ask - stated against the old number so the direction
+  // is pinned and not just the value.
+  assert.ok(BLOOD_BASE[0] < 0.58, 'darker than the red it replaced');
+  // no picture is shipped: the atlas is made, not read
+  const art = readFileSync(new URL('../src/combat/bloodArt.js', import.meta.url), 'utf8');
+  assert.ok(!/BLOOD_BASE\[\d\] \* shade/.test(art), 'the atlas is not painted the base');
+  assert.ok(!/\.png|fetch\(|import .*\.png/.test(art), 'nothing loaded');
+});
+
+test('BLOOD4: a wall of marks is not one picture stamped - sixteen faces a kind, and the mirror is free', async () => {
+  // Mac (2026-09-22), with a shot of a room: "youll notice in the screen
+  // shot the repetition of the wall splatter. I think we should
+  // introduce more variations."
+  //
+  // A wall mark is ALWAYS the drip kind and ALWAYS near-plumb - it has
+  // to be, a run runs downward - so it has none of the freedom the
+  // floor's marks take from the throw. Four cells was four pictures,
+  // upright, for ever. This pin holds the two things that fixed it and
+  // the one thing that must not have changed with them.
+  const { filmThickness } = await import('../src/combat/bloodArt.js');   // BLOOD4: the dome is a THICKNESS law, so it is read back through the film's own inverse
+  const a = buildBloodAtlas();
+  const drips = a.cells.filter((c) => c.kind === 'drip');
+  assert.equal(drips.length, ATLAS_CELLS);
+  assert.ok(ATLAS_CELLS >= 8, 'a kind carries at least eight cells');
+
+  // THE CELLS ARE DIFFERENT PICTURES, and this is measured rather than
+  // asserted by proxy. The first cut of this pin compared a coverage
+  // count and a rounded centroid, which two near-identical drips can
+  // still pass; overlap cannot be fooled that way.
+  //
+  // IT IS ALSO THE PIN THAT FOUND THE REAL BUG. Doubling ATLAS_CELLS
+  // alone left the eight drips at IoU 0.96 against each other - the
+  // same picture eight times - because the shape had two degrees of
+  // freedom and neither moved the bead, the column or the foot. Raising
+  // the count without this number would have shipped Mac his own
+  // complaint back.
+  const cellPx = ATLAS_SIZE / ATLAS_CELLS;
+  const row = ATLAS_KINDS.indexOf('drip');
+  const maskOf = (col) => {
+    const m = [];
+    for (let y = 0; y < cellPx; y++) {
+      for (let x = 0; x < cellPx; x++) m.push(a.colors[(((row * cellPx) + y) * ATLAS_SIZE + col * cellPx + x) * 4 + 3] > 128 ? 1 : 0);
+    }
+    return m;
+  };
+  const masks = [];
+  for (let col = 0; col < ATLAS_CELLS; col++) {
+    const m = maskOf(col);
+    assert.ok(m.some((v) => v), `drip cell ${col} drew something`);
+    masks.push(m);
+  }
+  let worst = 0;
+  for (let i = 0; i < masks.length; i++) {
+    for (let j = i + 1; j < masks.length; j++) {
+      let inter = 0, uni = 0;
+      for (let k = 0; k < masks[i].length; k++) { const A = masks[i][k], B = masks[j][k]; if (A && B) inter++; if (A || B) uni++; }
+      worst = Math.max(worst, uni ? inter / uni : 1);
+    }
+  }
+  assert.ok(worst < 0.85, `no two drips are the same picture - worst overlap ${worst.toFixed(3)}`);
+  // and they are not all the same SIZE either, which is the sameness a
+  // pure position jitter would have left behind
+  const areas = masks.map((m) => m.reduce((n, v) => n + v, 0));
+  assert.ok(Math.max(...areas) > Math.min(...areas) * 1.6, 'the runs differ in how much wall they cover');
+
+  // SOME OF THEM NEVER RAN. A bead that hit dry stone and stayed a bead
+  // is the single biggest break in the "every mark has a tail" sameness,
+  // so at least one cell must be plainly shorter than the longest.
+  const extents = [];
+  for (let col = 0; col < ATLAS_CELLS; col++) {
+    let top = Infinity, bot = -1;
+    for (let y = 0; y < cellPx; y++) {
+      for (let x = 0; x < cellPx; x++) {
+        if (a.colors[(((row * cellPx) + y) * ATLAS_SIZE + col * cellPx + x) * 4 + 3] > 128) { if (y < top) top = y; if (y > bot) bot = y; }
+      }
+    }
+    extents.push({ col, span: bot - top, top, bot });
+  }
+  const shortest = extents.reduce((m, e) => (e.span < m.span ? e : m));
+  const longest = extents.reduce((m, e) => (e.span > m.span ? e : m));
+  assert.ok(shortest.span < longest.span * 0.6,
+    `at least one drip never ran - shortest ${shortest.span} against ${longest.span}`);
+
+  // ...AND A DROP IS A DOME. That short one still has to carry the whole
+  // film: its alpha ends at a hard rim, but its THICKNESS feathers to
+  // nothing just inside it, or a mark that never ran would read as a
+  // flat sticker - which is the fault BLOOD3 exists to have fixed.
+  const thicks = [];
+  for (let y = 0; y < cellPx; y++) {
+    for (let x = 0; x < cellPx; x++) {
+      const o = (((row * cellPx) + y) * ATLAS_SIZE + shortest.col * cellPx + x) * 4;
+      const al = a.colors[o + 3] / 255;
+      if (al >= 0.5) thicks.push(filmThickness(al, a.colors[o] / 255));
+    }
+  }
+  assert.ok(Math.max(...thicks) > 0.9, 'the heart of a bead is a full-thickness film');
+  assert.ok(Math.min(...thicks) < 0.2, 'and it feathers away inside its own rim - a dome, not a disc');
+
+  // THE MIRROR doubles them, and it is a NEW object every time - the
+  // cells are shared by every mark on the wall, so a swap in place
+  // would reach back and flip blood that is already up.
+  const one = a.cells.find((c) => c.kind === 'drip');
+  // a two-roll stub: pickCell rolls the CELL first, then the mirror
+  const rolls = (...v) => { let i = 0; return () => v[Math.min(v.length - 1, i++)]; };
+  const upright = pickCell(a, 'drip', rolls(0, 0.9));
+  const mirrored = pickCell(a, 'drip', rolls(0, 0.1));
+  assert.equal(upright.u0 < upright.u1, true, 'the unmirrored pick reads left to right');
+  assert.equal(mirrored.u0 > mirrored.u1, true, 'the mirrored one reads right to left');
+  assert.equal(mirrored.u0, upright.u1, 'and it is the SAME cell, turned about');
+  assert.equal(mirrored.u1, upright.u0);
+  assert.equal(one.u0 < one.u1, true, 'the atlas\'s own cell was not touched');
+  assert.equal(a.cells.every((c) => c.u0 < c.u1), true, 'nor any other');
+  assert.equal(mirrored.kind, 'drip', 'a mirrored cell is still its kind');
+  assert.equal(mirrored.v0, upright.v0, 'and the mirror is HORIZONTAL - a drip that flipped vertically would run up the wall');
+  assert.equal(mirrored.v1, upright.v1);
+
+  // SIXTEEN FACES A KIND, counted the way a player meets them.
+  const faces = new Set();
+  const rng = mulberry32(99);
+  for (let i = 0; i < 4000; i++) { const c = pickCell(a, 'drip', rng); faces.add(`${c.u0},${c.u1}`); }
+  assert.equal(faces.size, ATLAS_CELLS * 2, 'every cell, both ways round');
+});
+
+test('BLOOD2b: a mark wears a cell of its KIND, is born a fresh red of its own, and DRIES in bounded steps', () => {
+  // the law
+  assert.equal(bloodMarkKind({ pool: true, stretch: 3 }), 'pool');
+  assert.equal(bloodMarkKind({ wall: true, stretch: 3 }), 'drip');
+  assert.equal(bloodMarkKind({ stretch: 2 }), 'streak');
+  assert.equal(bloodMarkKind({ stretch: 1.2 }), 'spatter');
+  assert.equal(bloodMarkKind(), 'spatter');
+  const a = buildBloodAtlas();
+  for (const kind of ATLAS_KINDS) for (const v of [0, 0.5, 0.999]) assert.equal(pickCell(a, kind, () => v).kind, kind);
+  assert.notEqual(pickCell(a, 'pool', () => 0), pickCell(a, 'pool', () => 0.999), 'variants');
+  // BLOOD AUDIT 4: the tint IS the colour - fresh is the base by one
+  // shade on all three channels, so the variance is never a hue
+  const bright = freshTint(() => 0), dark = freshTint(() => 1);
+  assert.deepEqual(bright, [...BLOOD_BASE, 1], 'fresh is the base');
+  for (let k = 0; k < 3; k++) assert.ok(Math.abs(dark[k] - BLOOD_BASE[k] * (1 - FRESH_VARIANCE)) < 1e-12, 'one factor on all three - a shade, not a hue');
+  assert.ok(Math.abs(dark[1] / dark[0] - BLOOD_BASE[1] / BLOOD_BASE[0]) < 1e-12, 'the same G/R at every shade');
+  assert.equal(freshShade(bright), 1); assert.ok(Math.abs(freshShade(dark) - (1 - FRESH_VARIANCE)) < 1e-12); assert.equal(freshShade([1, 1, 1, 1]), 1, 'a tint that is not a fresh roll is shade one');
+  assert.equal(dryStage(0), 0); assert.equal(dryStage(-1), 0); assert.equal(dryStage(NaN), 0);
+  assert.equal(dryStage(DRY_TIME), DRY_STAGES); assert.equal(dryStage(DRY_TIME * 10), DRY_STAGES, 'never past dried');
+  for (let t = 0; t < DRY_TIME; t += 1) assert.ok(dryStage(t + 1) >= dryStage(t), 'monotone');
+  assert.deepEqual(driedTint(bright, 0), bright);
+  assert.deepEqual(driedTint(bright, DRY_STAGES), [...DRIED_TINT]);
+  assert.deepEqual(driedTint([1, 1, 1, 1], DRY_STAGES), [...DRIED_TINT]);
+  // BLOOD AUDIT 4: DRIED IS BROWNER, NOT BLACKER. The old tint was a
+  // multiply over a red texel - it halved the brightness and RAISED the
+  // saturation (G/R 0.082 fresh, 0.059 dried), a black-red on every mark
+  // older than three minutes. A rust: green and blue up against red,
+  // about as bright as fresh, every channel inside the curve.
+  const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  assert.ok(DRIED_TINT[1] / DRIED_TINT[0] > 2 * BLOOD_BASE[1] / BLOOD_BASE[0] && DRIED_TINT[2] / DRIED_TINT[0] > 2 * BLOOD_BASE[2] / BLOOD_BASE[0], 'browner: green and blue up against red');
+  assert.ok(lum(DRIED_TINT) > lum(BLOOD_BASE) * 0.8 && lum(DRIED_TINT) < lum(BLOOD_BASE) * 1.3, 'about as bright as fresh - not a black-red');
+  assert.ok(DRIED_TINT.slice(0, 3).every((c) => c > 0 && c < 1) && DRIED_TINT[0] > DRIED_TINT[1] && DRIED_TINT[1] > DRIED_TINT[2], 'a rust, inside the curve');
+  // a mark rolled darker dries darker: the shade is the mark's for life
+  const dd = driedTint(dark, DRY_STAGES);
+  for (let k = 0; k < 3; k++) assert.ok(Math.abs(dd[k] - DRIED_TINT[k] * (1 - FRESH_VARIANCE)) < 1e-12, 'dried at its own shade');
+  const half = driedTint(dark, DRY_STAGES / 2);
+  for (let k = 0; k < 3; k++) assert.ok(Math.abs(half[k] - (dark[k] + (dd[k] - dark[k]) * 0.5)) < 1e-12, 'halfway between its own two ends');
+
+  // the pool: kinds, tints in the slot, drying rewrites bounded
+  const CEIL = 2.2;
+  const uploads = [];
+  const writes = new Map();
+  const renderer = {
+    createDecalBatch: (capacity) => ({ capacity }),
+    writeDecalSlot: (batch, slot, floats) => { for (let k = 0; k * DECAL_FLOATS < floats.length; k++) writes.set(slot + k, (writes.get(slot + k) ?? 0) + 1); return true; },   // BLOOD AUDIT 4: a run is its slots
+    drawDecals: () => {},
+    createBillboardBatch: () => ({}),
+    moveBillboardBatch: () => true,
+    destroyBillboardBatch: () => {},
+    uploadTexture: (archive, record, img, opts) => { uploads.push({ archive, record, w: img.width, opts }); return { tex: `${archive}_${record}` }; },
+  };
+  const wallAt = 0.9;
+  const { fx, marks } = rigHitEffects({
+    renderer, texture: null, rng: mulberry32(3),   // a chance that MOVES - the rig's one-half would dress every mark alike
+    settings: { enabled: () => true, capacity: () => 256, density: () => 1, overkill: () => false },
+    collider: () => ({
+      surfaceHit: (from, dir, max) => (dir[1] > 0
+        ? (CEIL - from[1] <= max ? { dist: CEIL - from[1], normal: [0, -1, 0] } : null)
+        : (from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null)),
+      raycastHit: (from, dir, max) => { if (!(dir[0] > 0) || from[0] >= wallAt) return { dist: Infinity, normal: null }; const d = (wallAt - from[0]) / dir[0]; return d <= max ? { dist: d, normal: [-1, 0, 0] } : { dist: Infinity, normal: null }; },
+    }),
+  });
+  assert.deepEqual(uploads, [], 'BLOOD AUDIT 5: the ring is built at boot, the atlas waits for the first mark');
+  assert.deepEqual(marks.draw(), false, 'nothing yet');
+  // the LADDER'S TOP: twenty-four drops over 1.8 m (an overkill's blow with
+  // the burst row off), so drops land short of a third of the reach
+  // (spatter), past it (streaks), and against the wall at 0.9
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 80, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] });
+  const ds = marks._pool().decals();
+  assert.equal(ds.length, 24, 'the top rung, every drop landed somewhere');
+  assert.deepEqual(uploads, [{ archive: BLOOD_ATLAS_ARCHIVE, record: BLOOD_ATLAS_RECORD, w: ATLAS_SIZE, opts: { smooth: true } }], 'the atlas, uploaded ONCE with the first mark, smooth');
+  const pool = ds.find((d) => d.pos[0] === 0 && d.pos[2] === 0 && d.normal[1] > 0);
+  assert.equal(pool.uv.kind, 'pool', 'the pool wears a pool');
+  assert.ok(ds.some((d) => d.stretch > 1.5 && d.uv.kind === 'streak'), 'a drop that flew wears a streak');
+  assert.ok(ds.filter((d) => d.normal[1] === 0).length > 0, 'some met the wall');
+  assert.ok(ds.filter((d) => d.normal[1] === 0).every((d) => d.uv.kind === 'drip'), 'a wall’s mark wears a run');
+  // BLOOD4: the run may LEAN off plumb by WALL_RUN_LEAN either way, so
+  // that a wall of marks reads as many runs and not one stamp - but it
+  // still has to plainly hang DOWN, which is the law this pin is for.
+  // Bounded by the constant rather than by a number typed here, and
+  // checked from BOTH sides: no mark leans further than allowed, and
+  // (the arm a mutant that drops the lean would survive) the marks do
+  // not all share one angle.
+  const walls = ds.filter((d) => d.normal[1] === 0);
+  assert.ok(walls.every((d) => d.up[1] >= Math.cos(WALL_RUN_LEAN) - 1e-9),
+    'and its run still hangs DOWN the wall, inside the lean');
+  assert.ok(walls.every((d) => Math.abs(d.up[1] - 1) <= 1 - Math.cos(WALL_RUN_LEAN) + 1e-9),
+    'never further off plumb than WALL_RUN_LEAN');
+  assert.ok(new Set(walls.map((d) => d.up[1].toFixed(6))).size > 1,
+    'and they do not all lean the SAME way - the repetition is the thing being fixed');
+  // BOTH WAYS off plumb, not just one - and that needs a SAMPLE. A
+  // lean that only ever went one way would still vary the angle and
+  // still read as a set of marks that all fell the same way, which is
+  // the sameness this slice is for; but three marks cannot tell the
+  // two apart, so the splash is driven until there are enough wall
+  // marks to be sure. The sign lives in the HORIZONTAL part of the
+  // basis' up, since up is world up turned about the wall's normal.
+  const leanSign = (d) => Math.sign(Math.round((d.up[0] + d.up[2]) * 1e6));
+  const seen = new Set();
+  for (let shot = 0; shot < 12 && seen.size < 2; shot++) {
+    fx.showBloodSplash(0, [0, 1, 0], null, { damage: 80, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] });
+    for (const d of marks._pool().decals()) if (d.normal[1] === 0 && d.uv.kind === 'drip') seen.add(leanSign(d));
+  }
+  assert.ok(seen.has(1) && seen.has(-1), `the runs lean BOTH ways off plumb - saw ${[...seen].join(',')}`);
+  assert.ok(ds.some((d) => d.stretch <= 1.5 && d !== pool && d.normal[1] !== 0 && d.uv.kind === 'spatter'), 'the rest wear spatter');
+  for (const d of ds) { assert.ok(d.tint[0] <= BLOOD_BASE[0] && d.tint[0] >= BLOOD_BASE[0] * (1 - FRESH_VARIANCE) - 1e-12, 'born fresh - the base by a shade'); assert.equal(d.stage, 0); assert.equal(d.born, 0); }
+  assert.ok(new Set(ds.map((d) => d.tint[1].toFixed(4))).size > 1, 'each its own shade');
+  // the slot carries the cell and the tint: write one and read the floats back
+  const out = new Float32Array(DECAL_FLOATS);
+  writeDecalQuad(out, 0, pool, pool.uv);
+  assert.ok(Math.abs(out[3] - pool.uv.u0) < 1e-6 && Math.abs(out[4] - pool.uv.v0) < 1e-6, 'the first corner at the cell’s own corner');
+  assert.ok(Math.abs(out[5] - pool.tint[0]) < 1e-6 && Math.abs(out[6] - pool.tint[1]) < 1e-6, 'the tint in the colour floats');
+
+  // DRYING. Tick the pool through DRY_TIME and past it: every mark ends
+  // at DRIED_TINT, its slot rewritten at most DRY_STAGES times beyond
+  // its placing, and never again once dried.
+  const placedWrites = new Map(writes);
+  const step = 0.5;
+  for (let t = 0; t < DRY_TIME + DRY_TICK * 2; t += step) fx.tick(step);
+  for (const d of ds) {
+    assert.equal(d.stage, DRY_STAGES, 'dried');
+    for (let k = 0; k < 3; k++) assert.ok(Math.abs(d.tint[k] - DRIED_TINT[k] * freshShade(d.fresh)) < 1e-9, 'to DRIED_TINT at its own shade, exactly');
+    const extra = writes.get(d.slot) - placedWrites.get(d.slot);
+    assert.ok(extra >= 1 && extra <= DRY_STAGES, `rewritten ${extra} times, bounded by the stages`);
+  }
+  const after = new Map(writes);
+  for (let t = 0; t < 30; t += step) fx.tick(step);
+  assert.deepEqual([...writes], [...after], 'dried is dried - no rewrite ever again');
+  assert.ok(marks.clock() > DRY_TIME, 'the clock ran');
+  // a fresh mark laid now is born at the clock, not at zero, and starts wet
+  fx.showBloodSplash(0, [3, 1, 3], null, { damage: 10, maxHealth: 40 });
+  const young = marks._pool().decals().filter((d) => d.stage === 0);
+  assert.ok(young.length > 0 && young.every((d) => d.born > DRY_TIME), 'born now');
+  // a recentre keeps the cell and the tint
+  const before = young[0].uv;
+  fx.offsetAll([819.2, 0, 0]);
+  assert.equal(young[0].uv, before);
+  // the switch off drops nothing here; dispose drops the atlas HANDLE alone (the renderer's cache owns the texture)
+  marks.dispose();
+  assert.equal(marks.draw(), false);
+  // and the drying pass has a name of its own, for the next pin that wants to drive it
+  assert.equal(typeof marks.dry, 'function');
+});
+
+// ── BLOOD2c (2026-09-21) - a wounded body bleeds, a dead one bleeds out ──
+import {
+  createBleedLedger, bleedShare, bleedDrops, poolSizeAt,
+  BLEED_THRESHOLD, BLEED_WAIT, BLEED_DROPS_MAX, BLEED_RADIUS, BLEED_RATE, POOL_SIZE, POOL_SPREAD, POOL_STEPS,
+} from '../src/combat/bloodBleed.js';
+import { DRIP_FROM, BLEED_DROPS_CAP, MAX_SPREADS } from '../src/combat/bloodMarks.js';
+
+test('BLOOD2c: the ledger - the reference’s ramp and cadence on a wounded body, one pool for a body with a corpse, nothing for the bloodless', () => {
+  // the ramp: nothing at the threshold, everything at one percent
+  assert.equal(bleedShare(20, 40), 0, 'at the threshold: nothing');
+  assert.equal(bleedShare(40, 40), 0);
+  assert.ok(Math.abs(bleedShare(0.4, 40) - 1) < 1e-9, 'one percent: everything');
+  assert.ok(Math.abs(bleedShare(10, 40) - (1 - (0.25 - 0.01) / (0.5 - 0.01))) < 1e-12, 'the reference’s own arithmetic between');
+  assert.equal(bleedShare(0, 40), 0, 'dead is not bleeding'); assert.equal(bleedShare(5, 0), 0); assert.equal(bleedShare(NaN, 40), 0);
+  assert.equal(bleedDrops(0), 0); assert.equal(bleedDrops(0.01), 1, 'once bleeding, at least one'); assert.equal(bleedDrops(1), BLEED_DROPS_MAX);
+  assert.equal(BLEED_THRESHOLD, 0.5); assert.deepEqual([BLEED_WAIT.min, BLEED_WAIT.max], [2, 5], 'the reference’s 2..5 s');
+  // the pool's size: the start, steps, the end, and never past it
+  assert.equal(poolSizeAt(0), POOL_SIZE.start); assert.equal(poolSizeAt(POOL_SPREAD), POOL_SIZE.end); assert.equal(poolSizeAt(POOL_SPREAD * 3), POOL_SIZE.end);
+  assert.equal(new Set(Array.from({ length: 200 }, (_, k) => poolSizeAt(k * POOL_SPREAD / 199))).size, POOL_STEPS + 1, 'in steps');
+
+  // the ledger, with the wait held at its floor
+  const led = createBleedLedger({ rng: () => 0 });
+  const view = (b) => b;
+  const hurt = { feet: [1, 0, 1], health: 10, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  const well = { feet: [2, 0, 2], health: 30, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  const bone = { feet: [3, 0, 3], health: 1, maxHealth: 40, bloodIndex: 2, dead: false, corpse: false };
+  assert.deepEqual(led.tick(1, [hurt, well, bone], view), [], 'the first second: the wait is not up');
+  const a = led.tick(1.01, [hurt, well, bone], view);
+  assert.equal(a.length, 1, 'two seconds in: the wounded one drips, the well one and the skeleton do not');
+  assert.equal(a[0].kind, 'drip'); assert.equal(a[0].body, hurt); assert.deepEqual(a[0].pos, [1, 0, 1]);
+  assert.equal(a[0].count, bleedDrops(bleedShare(10, 40)));
+  assert.deepEqual(led.tick(1.5, [hurt], view), [], 'and waits again');
+  assert.equal(led.tick(0.6, [hurt], view).length, 1, 'the next, at the cadence');
+  // healed past the threshold: the wait is FRESH when it is wounded again -
+  // most of a wait spent, then healed, then wounded: the old remainder
+  // (half a second) would drip at once; a fresh wait (two) does not
+  led.tick(1.5, [hurt], view);
+  hurt.health = 30; led.tick(0.1, [hurt], view);
+  hurt.health = 10;
+  assert.deepEqual(led.tick(1.9, [hurt], view), [], 'a fresh wait, not the old remainder');
+  assert.equal(led.tick(0.2, [hurt], view).length, 1);
+  // a walking foe drips where it IS (BLOOD AUDIT 4: and its walk lays
+  // steps of its own along the way, held by the BLOOD2d pin - here the
+  // drips are read past them)
+  const noSteps = (acts) => acts.filter((x) => x.kind !== 'step');
+  hurt.feet = [5, 0, 5]; assert.deepEqual(noSteps(led.tick(1.9, [hurt], view)), []);
+  assert.deepEqual(noSteps(led.tick(0.2, [hurt], view))[0].pos, [5, 0, 5]);
+  // death: one pool, with a corpse, never a drip again
+  hurt.dead = true; hurt.corpse = true;
+  const d1 = led.tick(0.1, [hurt], view);
+  assert.deepEqual(d1.map((x) => x.kind), ['pool']); assert.deepEqual(d1[0].pos, [5, 0, 5]);
+  assert.deepEqual(led.tick(10, [hurt], view), [], 'once');
+  // (seen alive first - BLOOD AUDIT 4 makes a body FIRST met dead one that has already bled out, which would hide this law)
+  const gone = { feet: [0, 0, 0], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  led.tick(0.1, [gone], view);
+  gone.dead = true; gone.health = 0;
+  assert.deepEqual(led.tick(1, [gone], view), [], 'dead with no body (removed, walked away): no pool');
+  bone.dead = true; bone.corpse = true;
+  assert.deepEqual(led.tick(1, [bone], view), [], 'a skeleton has nothing to bleed out');
+  assert.deepEqual(led.tick(0, [hurt], view), []); assert.deepEqual(led.tick(1, null, view), []);
+  // the wait really is random within the band
+  const spread = createBleedLedger({ rng: () => 1 });
+  const slow = { feet: [0, 0, 0], health: 1, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  assert.deepEqual(spread.tick(4.9, [slow], view), []); assert.equal(spread.tick(0.2, [slow], view).length, 1, 'at the top of the band, five seconds');
+});
+
+test('BLOOD2c: the pool lays a drip at the feet and a corpse’s pool that spreads in steps; the splash pool maps the ledger onto it; the three foe pools hand their bodies over', () => {
+  const writes = new Map();
+  const renderer = {
+    createDecalBatch: (capacity) => ({ capacity }),
+    writeDecalSlot: (batch, slot, floats) => { for (let k = 0; k * DECAL_FLOATS < floats.length; k++) writes.set(slot + k, (writes.get(slot + k) ?? 0) + 1); return true; },   // BLOOD AUDIT 4: a run is its slots
+    drawDecals: () => {}, createBillboardBatch: () => ({}), moveBillboardBatch: () => true, destroyBillboardBatch: () => {},
+  };
+  const rays = [];
+  const { fx, marks } = rigHitEffects({
+    renderer,
+    settings: { enabled: () => true, capacity: () => 64, density: () => 1, overkill: () => false },
+    collider: () => ({ surfaceHit: (from, dir, max) => { rays.push([...from]); return dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null; }, raycastHit: () => ({ dist: Infinity, normal: null }) }),
+  });
+  marks.useArt(380, 1, 6);
+  // THE DRIP: `count` small drops within the radius, from KNEE height
+  // (a foe on a stair stains its step), the ladder's smallest size
+  rays.length = 0;
+  const d = marks.drip(0, [2, 0, 2], 3);
+  assert.ok(d, 'the drip landed');
+  assert.ok(rays.length >= 3 && rays.every((r) => Math.abs(r[1] - (0 + DRIP_FROM)) < 1e-9), 'every ray from knee height, not the chest');
+  const ds = marks._pool().decals();
+  assert.equal(ds.length, 3, 'three drops');
+  for (const m of ds) {
+    assert.ok(Math.hypot(m.pos[0] - 2, m.pos[2] - 2) <= BLEED_RADIUS + 1e-9, 'within the radius of the feet');
+    assert.ok(m.size <= markSize(BLEED_RATE) * 1.01 + SIZE_JITTER, 'small');
+  }
+  assert.equal(marks.drip(2, [2, 0, 2], 3), null, 'a skeleton drips nothing');
+  marks.drip(0, [2, 0, 2], 100);
+  assert.equal(marks._pool().decals().length - 3, BLEED_DROPS_CAP, 'capped - and every drop of a drip lands on the FLOOR: gravity’s blood never looks up for a ceiling');
+  assert.equal(DRIP_FROM, 0.5, 'knee height');
+  // THE POOL: laid at the feet as a pool, grows in steps to the end, then stops
+  writes.clear();
+  const p = marks.spreadPool(0, [4, 0, 4]);
+  assert.ok(p && p.uv.kind === 'pool' && p.size === POOL_SIZE.start, 'a pool, at its start size');
+  assert.equal(marks.spreads().length, 1);
+  const slotWrites = () => writes.get(p.slot) ?? 0;
+  const atPlace = slotWrites();
+  for (let t = 0; t < POOL_SPREAD + 1; t += 0.25) fx.tick(0.25);
+  assert.equal(p.size, POOL_SIZE.end, 'spread to its end');
+  assert.equal(slotWrites() - atPlace, POOL_STEPS, 'in exactly the steps');
+  assert.equal(marks.spreads().length, 0, 'and done');
+  const after = slotWrites();
+  fx.tick(5);
+  assert.equal(slotWrites(), after, 'never again');
+  assert.equal(marks.spreadPool(2, [4, 0, 4]), null, 'no pool for the bloodless');
+  // a slot the ring reuses under a spreading pool ends that spread
+  const q = marks.spreadPool(0, [6, 0, 6]);
+  for (let k = 0; k < 70; k++) marks.drip(0, [8, 0, 8], 1);   // the ring wraps
+  fx.tick(1);
+  assert.ok(!marks.spreads().some((x) => x.d === q), 'a reused slot is not rewritten as a pool');
+  // bounded
+  for (let k = 0; k < MAX_SPREADS + 5; k++) marks.spreadPool(0, [k, 0, 0]);
+  assert.ok(marks.spreads().length <= MAX_SPREADS);
+  // a mode change takes the spreads with the room
+  fx.clear();
+  assert.equal(marks.spreads().length, 0);
+
+  // THE SPLASH POOL MAPS THE LEDGER: a wounded body drips, a dead one pools
+  const hurt = { feet: [1, 0, 1], health: 5, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  assert.equal(fx.bleed(3.4, [hurt], (b) => b), 0, 'the rig’s chance of one half holds the wait at three and a half: not yet');
+  assert.equal(fx.bleed(0.2, [hurt], (b) => b), 1, 'one drip');
+  assert.ok(marks.count() > 0);
+  hurt.dead = true; hurt.corpse = true;
+  assert.equal(fx.bleed(0.1, [hurt], (b) => b), 1, 'one pool');
+  assert.equal(marks.spreads().length, 1);
+
+  // THE HOSTS: every foe pool hands its bodies to the ledger every frame,
+  // through a view that names the six fields, and the dungeon's kill
+  // paths mark the body a corpse
+  const read = (q) => readFileSync(new URL(`../${q}`, import.meta.url), 'utf8');
+  const VIEW = /\(\w\) => \(\{ feet: \w\.ai\?\.feet, health: \w\.entity\?\.health, maxHealth: \w\.entity\?\.maxHealth, bloodIndex: ENEMY_BASICS\[[\w.]+\]\?\.bloodIndex \?\? 0, dead: !!\w\.dead, corpse: !!\w\.corpse \}\)/;
+  for (const [f, call] of [
+    ['src/scenes/exteriorFoes.js', /hitEffects\?\.bleed\?\.\(dt, foes, foeBleedView\);/],
+    ['src/scenes/dungeonContext.js', /hitEffects\.bleed\(dt, foes, foeBleedView\);/],
+    ['src/scenes/cityGuards.js', /hitEffects\?\.bleed\?\.\(dt, guards, guardBleedView\);/],
+  ]) {
+    const src = read(f);
+    assert.match(src, call, `${f}: hands its bodies over`);
+    assert.match(src, VIEW, `${f}: through the six-field view`);
+  }
+  const dc = read('src/scenes/dungeonContext.js');
+  // the dungeon's body flag rides the ONE corpse mint (both the kill's
+  // door and the stream's reach it) and is cleared with the corpse, so a
+  // resurrected or respawned foe starts clean and a quest-removed one
+  // never has it
+  assert.match(dc, /async function spawnCorpseNow\(f\) \{\n\s*f\.corpse = true;/, 'a minted corpse is a body');
+  assert.match(dc, /function freeCorpse\(f\) \{\n\s*f\.corpse = false;/, 'a freed one is not');
+  assert.doesNotMatch(dc.slice(dc.indexOf('removeFoe: (f) => {'), dc.indexOf('removeFoe: (f) => {') + 400), /corpse = true/, 'a quest-removed foe has none');
+  const fxSrc = read('src/scenes/hitEffects.js');
+  assert.match(fxSrc, /const bleeding = createBleedLedger\(\{ rng \}\);/);
+  assert.match(fxSrc, /if \(a\.kind === 'drip'\) \{ if \(marks\.drip\?\.\(a\.bloodIndex, a\.pos, a\.count\)\) n\+\+; \}/);
+  assert.match(fxSrc, /else if \(a\.kind === 'pool'\) \{ if \(marks\.spreadPool\?\.\(a\.bloodIndex, a\.pos\)\) n\+\+; \}/);
+});
+
+// ── BLOOD2d (2026-09-21) - tracked blood: a walker who treads in it leaves prints ──
+import { STRIDE } from '../src/combat/bloodBleed.js';
+import { TRACK_STEPS, TRACK_WET_STAGE, PRINT_SIZE, PRINT_SPREAD } from '../src/combat/bloodMarks.js';
+import { PLAYER_WALKER } from '../src/scenes/hitEffects.js';
+
+test('BLOOD2d: treading in wet blood tracks it - alternating prints along the walk, fainter each step, none from dried blood or from a print', () => {
+  const { fx, marks } = rigHitEffects({
+    settings: { enabled: () => true, capacity: () => 128, density: () => 1, overkill: () => false },
+    collider: () => ({ surfaceHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null), raycastHit: () => ({ dist: Infinity, normal: null }) }),
+  });
+  marks.useArt(380, 1, 6);
+  const me = PLAYER_WALKER;
+  // a pool under the body, and a step a metre off it: nothing
+  fx.showBloodSplash(0, [0, 1.7, 0], null, { damage: 10, maxHealth: 40 });
+  const before = marks.count();
+  assert.equal(fx.footfall([3, 1.7, 3], [0, 0, 1]), null, 'a clean foot prints nothing');
+  assert.equal(marks.tracked(me), 0);
+  // a step IN the pool: the foot picks it up, and nothing is printed over the pool
+  assert.equal(fx.footfall([0, 1.7, 0], [0, 0, 1]), null);
+  assert.equal(marks.tracked(me), TRACK_STEPS, 'blood on the feet');
+  assert.equal(marks.count(), before);
+  // the next steps, walking +z: a print each, alternating feet about the line, fading, along the walk
+  const prints = [];
+  for (let k = 1; k <= TRACK_STEPS + 2; k++) {
+    const d = fx.footfall([0, 1.7, 2 + k * 0.7], [0, 0, 1]);
+    if (d) prints.push(d);
+  }
+  assert.equal(prints.length, TRACK_STEPS, 'exactly TRACK_STEPS prints, then a clean foot again');
+  assert.equal(marks.tracked(me), 0);
+  for (let k = 0; k < prints.length; k++) {
+    const d = prints[k];
+    assert.equal(d.uv.kind, 'print', 'wears the boot');
+    assert.equal(d.size, PRINT_SIZE); assert.equal(d.stretch, 1);
+    assert.ok(Math.abs(d.right[2] - 1) < 1e-9, 'the toe points the way the walker went');
+    assert.ok(Math.abs(Math.abs(d.pos[0]) - PRINT_SPREAD) < 1e-9, 'a foot’s width off the line');
+    if (k > 0) assert.ok(Math.sign(d.pos[0]) !== Math.sign(prints[k - 1].pos[0]), 'left, right, left');
+    assert.ok(Math.abs(d.tint[3] - (TRACK_STEPS - k) / TRACK_STEPS) < 1e-9, 'fainter each step');
+    assert.equal(d.fresh[3], d.tint[3], 'and drying keeps the fade');
+  }
+  // a print is never a trigger: stepping on one picks nothing up
+  assert.equal(fx.footfall([prints[0].pos[0], 1.7, prints[0].pos[2]], [0, 0, 1]), null);
+  assert.equal(marks.tracked(me), 0, 'a print is not wet blood');
+  // dried blood is not wet blood either
+  for (let t = 0; t < 200; t += 1) fx.tick(1);   // well past TRACK_WET_STAGE
+  assert.ok(marks._pool().decals().every((d) => d.stage > TRACK_WET_STAGE));
+  assert.equal(fx.footfall([0, 1.7, 0], [0, 0, 1]), null);
+  assert.equal(marks.tracked(me), 0, 'dried blood does not track');
+  // treading in it again while carrying refreshes rather than prints
+  fx.showBloodSplash(0, [10, 1.7, 10], null, { damage: 10, maxHealth: 40 });
+  fx.footfall([10, 1.7, 10], [1, 0, 0]);
+  fx.footfall([11, 1.7, 10], [1, 0, 0]); fx.footfall([12, 1.7, 10], [1, 0, 0]);
+  assert.equal(marks.tracked(me), TRACK_STEPS - 2);
+  assert.equal(fx.footfall([10, 1.7, 10], [1, 0, 0]), null);
+  assert.equal(marks.tracked(me), TRACK_STEPS, 'refreshed');
+  // no forward: a print still lands, un-turned
+  assert.ok(fx.footfall([14, 1.7, 10], null));
+
+  // A FOE'S STEPS come off the ground it covers, one every STRIDE, and
+  // track the same way through the ledger
+  // (a 10-of-40 hit's pool is MARK_SIZE_MIN wide - 0.35 - so the stride
+  // that picks it up has to END in it, not start there)
+  const foe = { feet: [10 - STRIDE, 0, 10], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  fx.bleed(0.1, [foe], (b) => b);                    // seen; a stride short of the pool
+  foe.feet = [10 + 0.01, 0, 10]; fx.bleed(0.1, [foe], (b) => b);   // one stride: a step, in the pool - picked up
+  assert.equal(marks.tracked(foe), TRACK_STEPS, 'the foe has blood on its feet');
+  const n0 = marks.count();
+  foe.feet = [10 + STRIDE + 0.02, 0, 10]; fx.bleed(0.1, [foe], (b) => b);
+  assert.equal(marks.count(), n0 + 1, 'and prints on its next stride');
+  foe.feet = [10 + STRIDE + 0.1, 0, 10]; fx.bleed(0.1, [foe], (b) => b);
+  assert.equal(marks.count(), n0 + 1, 'a shuffle short of a stride is no step');
+  foe.feet = [200, 0, 200]; fx.bleed(0.1, [foe], (b) => b);
+  assert.equal(marks.count(), n0 + 1, 'a teleport is not a walk');
+
+  // the hosts: every footstep machine's step reaches the pool that holds this mode's marks
+  const read = (q) => readFileSync(new URL(`../${q}`, import.meta.url), 'utf8');
+  for (const [f, line] of [
+    ['src/scenes/world.js', /if \(_step\) hitEffects\?\.footfall\?\.\(player\.pos, \[Math\.sin\(cam\.yaw\), 0, Math\.cos\(cam\.yaw\)\]\);/],
+    ['src/scenes/exterior.js', /if \(_step\) hitEffects\?\.footfall\?\.\(player\.pos, \[Math\.sin\(cam\.yaw\), 0, Math\.cos\(cam\.yaw\)\]\);/],
+    ['src/scenes/dungeon.js', /if \(_step\) ctx\.hitEffects\?\.footfall\?\.\(player\.pos, \[Math\.sin\(cam\.yaw\), 0, Math\.cos\(cam\.yaw\)\]\);/],
+    ['src/scenes/worldModes.js', /if \(_step\) \(mode === 'dungeon' \? dungeonCtx\?\.hitEffects : interiorHitEffects\)\?\.footfall\?\.\(player\.pos, \[Math\.sin\(cam\.yaw\), 0, Math\.cos\(cam\.yaw\)\]\);/],
+  ]) {
+    const src = read(f);
+    assert.match(src, line, `${f}: the footfall`);
+    const at = src.search(line);
+    assert.ok(src.slice(at, at + 400).includes('if (_step && classicFootstepAllowed(_step.clip))'), `${f}: beside the step that plays`);
+  }
+  assert.match(read('src/scenes/hitEffects.js'), /footfall: \(pos, forward = null\) => marks\?\.step\?\.\(PLAYER_WALKER, pos, forward\) \?\? null,/);
+  assert.match(read('src/scenes/hitEffects.js'), /else if \(a\.kind === 'step'\) \{ if \(marks\.step\?\.\(a\.body, a\.pos, a\.forward\)\) n\+\+; \}/);
 });
 
 // ── MAC-BUG W5 (2026-09-20, Mac: "Also blood doesn't work outside")
@@ -1828,7 +3015,7 @@ import { Collider } from '../src/player/collider.js';
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that knows it', () => {
-  // exterior.js:519 - `new Collider(() => GROUND_OFFSET * 0.025)`,
+  // exterior.js:557 - `new Collider(() => GROUND_OFFSET * 0.025)`,
   // and not one triangle under the player's feet.
   const outside = new Collider(() => 0);
   assert.equal(outside.raycastHit([0, 2, 0], [0, -1, 0], 8).dist, Infinity,
@@ -1852,7 +3039,7 @@ test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that
     'no surface overhead when the "surface" is the ground you are under');
   assert.equal(outside.surfaceHit([0, -3, 0], [0, 1, 0], 8).normal, null);
 
-  // A DUNGEON IS UNCHANGED. dungeonContext.js:263 hands `-Infinity`,
+  // A DUNGEON IS UNCHANGED. dungeonContext.js:291 hands `-Infinity`,
   // so there is no floor to find and the answer is the bucket ray's,
   // byte for byte - which is what keeps this a second door rather
   // than a change to the first.
@@ -1922,4 +3109,904 @@ test('MAC-BUG W5: and the blood really lands - the whole ladder, on an outdoor c
   });
   old.showBloodSplash(0, [10, 1.2, 10], null, { damage: 10, maxHealth: 40 });
   assert.equal(oldMarks.count(), 0, 'the bucket ray alone is the bug, reproduced');
+});
+
+// ── BLOOD AUDIT 4 (2026-09-21, Mac: "I just want to audit everything so
+// far before we continue") - four lenses over BLOOD2a..2d, every finding
+// verified here before it was paid (bible/05-Combat/Blood-Arc.md item 8).
+import { createBleedLedger as a4Ledger, TELEPORT_SPEED as A4_TELEPORT, BLEED_RATE as A4_BLEED_RATE, POOL_SPREAD as A4_POOL_SPREAD } from '../src/combat/bloodBleed.js';
+import { GIB_SPLASH_RATE as A4_GIB_RATE } from '../src/combat/bloodGibs.js';
+import { BLOOD_BASE as A4_BASE, FRESH_VARIANCE as A4_VAR, DRY_TIME as A4_DRY_TIME, DRY_TICK as A4_DRY_TICK, DRY_STAGES as A4_DRY_STAGES, mulberry32 as a4Rng } from '../src/combat/bloodArt.js';
+
+const a4Floor = () => ({ surfaceHit: (from, dir, max) => (dir[1] < 0 && from[1] <= max ? { dist: from[1], normal: [0, 1, 0] } : null), raycastHit: () => ({ dist: Infinity, normal: null }) });
+const a4Settings = { enabled: () => true, capacity: () => 64, density: () => 1, overkill: () => false };
+const a4Read = (q) => readFileSync(new URL(`../${q}`, import.meta.url), 'utf8');
+
+test('BLOOD AUDIT 4: a walker’s step rays from the KNEE - prints land on a mesh floor and on twisted terrain, where they never did', () => {
+  // THE DUNGEON: a mesh floor at y=0 and the walker's feet ON it (the
+  // motor clamps the feet to the floor). A ray that starts on the
+  // triangle never meets it - the walk refuses a hit inside its own
+  // epsilon - which is the whole bug: no print ever landed indoors.
+  const under = new Collider(() => -Infinity);
+  under.addMesh('floor', [-20, 0, -20, 20, 0, -20, 20, 0, 20, -20, 0, 20], [0, 1, 2, 0, 2, 3], IDENTITY);
+  assert.equal(under.surfaceHit([0, 0, 0], [0, -1, 0], MARK_DROP).dist, Infinity, 'from the feet: nothing (the bug)');
+  assert.ok(Math.abs(under.surfaceHit([0, DRIP_FROM, 0], [0, -1, 0], MARK_DROP).dist - DRIP_FROM) < 1e-9, 'from the knee: the floor');
+  const rig = (collider) => rigHitEffects({ collider: () => collider, settings: a4Settings });
+  const { fx, marks } = rig(under);
+  marks.useArt(380, 1, 6);
+  assert.ok(marks.spreadPool(0, [0, 0, 0]), 'the corpse’s pool lands - it always rayed from the knee');
+  assert.equal(fx.footfall([0, 0, 0], [0, 0, 1]), null);
+  assert.equal(marks.tracked(PLAYER_WALKER), TRACK_STEPS, 'the foot ON the floor picks the blood up');
+  const print = fx.footfall([0, 0, 1], [0, 0, 1]);
+  assert.ok(print && print.uv.kind === 'print', 'and prints on the mesh');
+  assert.ok(Math.abs(print.pos[1] - SURFACE_LIFT) < 1e-6, 'on the floor, lifted its two centimetres');
+  // THE WORLD: the capsule stands on the bilinear floor (heightAt) and
+  // the DRAWN triangle (surfaceAt) sits four centimetres above it, as
+  // it does on every quad of positive twist - so from the feet the
+  // drawn ground was behind the ray and the print was dropped
+  const twisted = new Collider(() => 0, () => 0.04);
+  assert.equal(twisted.surfaceHit([0, 0, 0], [0, -1, 0], MARK_DROP).dist, Infinity, 'from the feet: the drawn ground is behind the ray');
+  const w = rig(twisted);
+  w.marks.useArt(380, 1, 6);
+  assert.ok(w.marks.spreadPool(0, [5, 0, 5]));
+  w.fx.footfall([5, 0, 5], [1, 0, 0]);
+  assert.equal(w.marks.tracked(PLAYER_WALKER), TRACK_STEPS);
+  const p2 = w.fx.footfall([6, 0, 5], [1, 0, 0]);
+  assert.ok(p2, 'a print on the twisted quad');
+  assert.ok(Math.abs(p2.pos[1] - (0.04 + SURFACE_LIFT)) < 1e-6, 'on the DRAWN ground');
+  // ...and a foe's stride through the ledger lands the same way
+  const foe = { feet: [5, 0, 5 + STRIDE + 0.01], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  w.fx.bleed(0.1, [foe], (b) => b);
+  foe.feet = [5, 0, 5]; w.fx.bleed(0.1, [foe], (b) => b);   // one stride, ending a centimetre into the pool
+  assert.equal(w.marks.tracked(foe), TRACK_STEPS, 'the foe’s stride, from its feet on the floor, picks it up');
+  // by source: the knee, as the drip and the pool
+  const mk = a4Read('src/combat/bloodMarks.js');
+  const stepSrc = mk.slice(mk.indexOf('  function step(walker, pos, forward = null) {'), mk.indexOf('\n  }\n', mk.indexOf('  function step(walker, pos, forward = null) {')));
+  assert.match(stepSrc, /const h = col\.surfaceHit\(\[pos\[0\], pos\[1\] \+ DRIP_FROM, pos\[2\]\], DOWN, MARK_DROP\);/);
+  assert.match(stepSrc, /const foot = \[pos\[0\], pos\[1\] \+ DRIP_FROM - h\.dist, pos\[2\]\];/);
+});
+
+test('BLOOD AUDIT 4: the room thrown away takes the blood on everyone’s boots and the ledger’s memory with it', () => {
+  const { fx, marks } = rigHitEffects({ collider: a4Floor, settings: a4Settings });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 1.7, 0], null, { damage: 10, maxHealth: 40 });
+  fx.footfall([0, 1.7, 0], [0, 0, 1]);
+  assert.equal(marks.tracked(PLAYER_WALKER), TRACK_STEPS);
+  fx.clear();   // the door
+  assert.equal(marks.tracked(PLAYER_WALKER), 0, 'clean boots in the next room');
+  assert.equal(fx.footfall([3, 1.7, 3], [0, 0, 1]), null, 'no print on a floor never bled on');
+  // the ledger: a body that pooled in the old room and is met again
+  // after the door is a body first seen - dead, so it has bled out
+  // elsewhere and lays no pool here
+  const view = (b) => b;
+  const foe = { feet: [1, 0, 1], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  fx.bleed(0.1, [foe], view);
+  foe.dead = true; foe.corpse = true; foe.health = 0;
+  const before = marks.count();
+  fx.bleed(0.1, [foe], view);
+  assert.equal(marks.count(), before + 1, 'it pooled');
+  fx.clear();
+  assert.equal(marks.count(), 0);
+  fx.bleed(0.1, [foe], view);
+  assert.equal(marks.count(), 0, 'met dead after the clear: no second pool');
+  assert.match(a4Read('src/scenes/hitEffects.js'), /marks\?\.clear\?\.\(\);.*\n\s*bleeding\.clear\(\);/, 'the ledger clears on the same call');
+});
+
+test('BLOOD AUDIT 4: the ledger - alive again is a new life, a body met dead has bled out, feet nowhere skip the frame, a teleport is a SPEED, and the steps come off the ground covered', () => {
+  const led = a4Ledger({ rng: () => 0 });
+  const v = (b) => b;
+  const kinds = (acts) => acts.map((a) => a.kind);
+  const steps = (acts) => acts.filter((a) => a.kind === 'step');
+  // alive again: the load's rewind and the stream's un-death reuse the record
+  const b = { feet: [0, 0, 0], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  led.tick(0.1, [b], v);
+  b.dead = true; b.corpse = true; b.health = 0;
+  assert.deepEqual(kinds(led.tick(0.1, [b], v)), ['pool']);
+  assert.deepEqual(kinds(led.tick(0.1, [b], v)), [], 'once');
+  b.dead = false; b.corpse = false; b.health = 40;
+  led.tick(0.1, [b], v);
+  b.dead = true; b.corpse = true; b.health = 0;
+  assert.deepEqual(kinds(led.tick(0.1, [b], v)), ['pool'], 'killed again, it pools again');
+  // met dead: a restored corpse, a re-entered room, a peer's kill before this ledger was born
+  const old = { feet: [1, 0, 1], health: 0, maxHealth: 40, bloodIndex: 0, dead: true, corpse: true };
+  assert.deepEqual(led.tick(1, [old], v), []);
+  assert.deepEqual(led.tick(1, [old], v), [], 'and never');
+  // feet nowhere on the death frame: the frame is skipped, the pool kept for the frame the feet are somewhere
+  const lost = { feet: [2, 0, 2], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  led.tick(0.1, [lost], v);
+  lost.dead = true; lost.corpse = true; lost.health = 0; lost.feet = [NaN, 0, 2];
+  assert.deepEqual(led.tick(0.1, [lost], v), [], 'nowhere: nothing this frame');
+  lost.feet = [2, 0, 2];
+  assert.deepEqual(kinds(led.tick(0.1, [lost], v)), ['pool'], 'somewhere: the pool, not burnt');
+  // A TELEPORT IS A SPEED. Six metres in one second at one frame a
+  // second is a walk (6 m/s) - the old law read it as a teleport and
+  // erased the trail on every hitch - and it lays the steps the ground
+  // holds, ALONG the run, where the feet passed
+  const run = { feet: [0, 0, 0], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  led.tick(1, [run], v);
+  run.feet = [6.05, 0, 0];
+  const one = steps(led.tick(1, [run], v));
+  assert.equal(one.length, Math.floor(6.05 / STRIDE), 'one step a stride along the run');
+  for (let k = 0; k < one.length; k++) {
+    assert.ok(Math.abs(one[k].pos[0] - (k + 1) * STRIDE) < 1e-9, 'where the feet passed, not where they stopped');
+    assert.deepEqual(one[k].forward, [1, 0, 0]);
+  }
+  // the same walk at sixty frames: the same steps
+  const sixty = { feet: [0, 0, 0], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false };
+  led.tick(1 / 60, [sixty], v);
+  let n60 = 0;
+  for (let k = 1; k <= 60; k++) { sixty.feet = [6.05 * k / 60, 0, 0]; n60 += steps(led.tick(1 / 60, [sixty], v)).length; }
+  assert.equal(n60, one.length, 'frame-rate free');
+  // faster than TELEPORT_SPEED is a teleport, and the bank resets; the remainder carries otherwise
+  run.feet = [6.05 + A4_TELEPORT * 0.1 + 1, 0, 0];
+  assert.deepEqual(steps(led.tick(0.1, [run], v)), [], 'a teleport is not a walk');
+  run.feet[0] += 0.4; assert.deepEqual(steps(led.tick(0.1, [run], v)), [], 'four tenths: short of a stride');
+  run.feet[0] += 0.3; assert.equal(steps(led.tick(0.1, [run], v)).length, 1, 'and three more: the stride, off the carried remainder');
+  // the literals the arc states, so its text cannot drift from the code
+  assert.equal(STRIDE, 0.7); assert.equal(A4_TELEPORT, 40); assert.equal(A4_POOL_SPREAD, 12); assert.equal(STREAK_MAX, 2.5);
+  assert.equal(TRACK_WET_STAGE, 2); assert.equal(TRACK_STEPS, 6);
+  assert.equal(A4_BLEED_RATE, A4_GIB_RATE, 'the drip’s rate IS the gib’s splat rate');
+  assert.match(a4Read('src/combat/bloodBleed.js'), /export const BLEED_RATE = GIB_SPLASH_RATE;/, '...by import, not a second copy');
+});
+
+test('BLOOD AUDIT 4: the wet test is a FLOOR test at the ceiling’s own number, and a drip’s drops never wear a streak', () => {
+  const { fx, marks } = rigHitEffects({ collider: a4Floor, settings: a4Settings, rng: a4Rng(9) });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [20, 1.7, 20], null, { damage: 10, maxHealth: 40 });   // so the ring exists
+  const pool = marks._pool();
+  // a WALL's mark under the foot - a run down a wall the walker brushes past - is not wet floor
+  const wall = pool.place([0, 0, 0], [1, 0, 0], { size: 1 });
+  wall.uv = { kind: 'drip' }; wall.stage = 0;
+  assert.equal(fx.footfall([0, 1.7, 0], [0, 0, 1]), null);
+  assert.equal(marks.tracked(PLAYER_WALKER), 0, 'a wall’s mark does not make the foot wet');
+  // the boundary is CEILING_DOT, by name: a slope AT it is not a floor, just past it is
+  const at = pool.place([3, 0, 3], [Math.sqrt(1 - CEILING_DOT * CEILING_DOT), CEILING_DOT, 0], { size: 1 });
+  at.uv = { kind: 'pool' }; at.stage = 0;
+  fx.footfall([3, 1.7, 3], [0, 0, 1]);
+  assert.equal(marks.tracked(PLAYER_WALKER), 0, 'at the dot: not a floor');
+  const past = pool.place([6, 0, 6], [Math.sqrt(1 - 0.71 * 0.71), 0.71, 0], { size: 1 });
+  past.uv = { kind: 'pool' }; past.stage = 0;
+  fx.footfall([6, 1.7, 6], [0, 0, 1]);
+  assert.equal(marks.tracked(PLAYER_WALKER), TRACK_STEPS, 'past it: a floor');
+  // TRACK_WET_STAGE's boundary: at the stage is wet, one past is not
+  fx.clear();
+  fx.showBloodSplash(0, [20, 1.7, 20], null, { damage: 10, maxHealth: 40 });
+  for (const d of marks._pool().decals()) d.stage = TRACK_WET_STAGE;
+  fx.footfall([20, 1.7, 20], [0, 0, 1]);
+  assert.equal(marks.tracked(PLAYER_WALKER), TRACK_STEPS, 'at TRACK_WET_STAGE: still wet');
+  fx.clear();
+  fx.showBloodSplash(0, [20, 1.7, 20], null, { damage: 10, maxHealth: 40 });
+  for (const d of marks._pool().decals()) d.stage = TRACK_WET_STAGE + 1;
+  fx.footfall([20, 1.7, 20], [0, 0, 1]);
+  assert.equal(marks.tracked(PLAYER_WALKER), 0, 'one past: a stain');
+  // a drip fell, it did not fly: none of its drops is a streak, whatever radius it landed at
+  fx.clear();
+  for (let k = 0; k < 20; k++) marks.drip(0, [k, 0, 0], BLEED_DROPS_CAP);
+  const drops = marks._pool().decals();
+  assert.ok(drops.length >= 20);
+  assert.ok(drops.every((d) => d.uv.kind !== 'streak' && d.stretch === 1), 'gravity’s blood wears no streak');
+  assert.ok(drops.some((d) => Math.hypot(d.pos[0] - Math.round(d.pos[0]), d.pos[2]) > BLEED_RADIUS * 0.6), '(and some landed far enough out that the old law would have streaked them)');
+});
+
+test('BLOOD AUDIT 4: uploads are RUNS - a dry cohort is one call, a recentre one, a print one write, a clear none - and the cell survives the recentre in the BUFFER', () => {
+  const { fx, marks, wrote, calls } = rigHitEffects({ collider: a4Floor, settings: a4Settings, rng: a4Rng(5) });
+  marks.useArt(380, 1, 6);
+  // the ladder's top: twenty-four drops, one blow, contiguous slots
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 80, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] });
+  const n = marks.count();
+  assert.ok(n >= 12, `${n} marks`);   // twenty-four drops less the one in four that looked up at a sky
+  assert.equal(calls.length, 1, 'the blow’s marks went up as ONE run');
+  assert.equal(calls[0].n, n);
+  // drying: every stage the cohort crosses is one call for the whole cohort
+  calls.length = 0;
+  for (let t = 0; t < A4_DRY_TIME + A4_DRY_TICK * 2; t += 1) fx.tick(1);
+  assert.equal(calls.length, A4_DRY_STAGES, `${calls.length} uploads for eight stages - one a stage, not one a mark`);
+  assert.ok(calls.every((c) => c.n === n), 'each the whole cohort');
+  // the recentre: one call for the whole ring, and the cell rides IN THE BUFFER
+  calls.length = 0;
+  fx.offsetAll([819.2, 0, 0]);
+  assert.equal(calls.length, 1); assert.equal(calls[0].n, n);
+  const d = marks._pool().decals()[0];
+  const w = wrote.filter((x) => x.slot === d.slot).at(-1);
+  assert.ok(Math.abs(w.floats[3] - d.uv.u0) < 1e-6 && Math.abs(w.floats[4] - d.uv.v0) < 1e-6, 'the cell’s own corner, in the floats, after the recentre - the survivor');
+  assert.ok(Math.abs(w.floats[0] - (819.2 + d.pos[0] - w.floats[0])) > 100 || w.floats[0] > 800, 'and the corner moved');
+  // a print is ONE write, its fade dressed in
+  fx.showBloodSplash(0, [5, 1.7, 5], null, { damage: 10, maxHealth: 40 });
+  fx.footfall([5, 1.7, 5], [0, 0, 1]);
+  const before = wrote.length, cBefore = calls.length;
+  const print = fx.footfall([5, 1.7, 6], [0, 0, 1]);
+  assert.ok(print);
+  assert.equal(wrote.length - before, 1, 'one slot written');
+  assert.equal(calls.length - cBefore, 1, 'one call');
+  assert.ok(Math.abs(wrote.at(-1).floats[8] - (TRACK_STEPS - 1) / TRACK_STEPS) < 1e-6 || Math.abs(wrote.at(-1).floats[8] - 1) < 1e-6, 'with its fade in the alpha float');
+  // a clear uploads nothing
+  const c0 = calls.length;
+  fx.clear();
+  assert.equal(calls.length, c0, 'no call for a clear');
+  assert.deepEqual(marks._pool().ranges(), []);
+});
+
+test('BLOOD AUDIT 4: nothing per frame - the spread and the step read slots, never the ring as an array - and the ring, the batch and the atlas wait for blood ON', () => {
+  const { fx, marks } = rigHitEffects({ collider: a4Floor, settings: a4Settings });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [20, 1.7, 20], null, { damage: 10, maxHealth: 40 });
+  const pool = marks._pool();
+  const asArray = pool.decals;
+  let arrays = 0;
+  pool.decals = () => { arrays++; return asArray(); };
+  marks.spreadPool(0, [0, 0, 0]);
+  for (let t = 0; t < A4_POOL_SPREAD + 1; t += 0.25) fx.tick(0.25);
+  assert.equal(arrays, 0, 'twelve seconds of spreading read no array of the ring');
+  fx.footfall([0, 1.7, 0], [0, 0, 1]); fx.footfall([0, 1.7, 1], [0, 0, 1]);
+  assert.equal(arrays, 0, 'two footsteps read no array of the ring');
+  fx.offsetAll([1, 0, 0]);
+  assert.equal(arrays, 0, 'nor a recentre');
+  assert.ok(marks.count() > 0);
+  // BLOOD AUDIT 5: the ring and the batch are built AT BOOT to the tier
+  // held then, blood on or off (AUDIT 3's law - AUDIT 4 gated this on the
+  // row and the ring was sized by whenever the row was next switched on,
+  // which BLOOD2g's dial made live); what waits for the first mark is
+  // the ATLAS, the seventy milliseconds and the upload
+  let enabled = false, made = 0;
+  const uploads = [];
+  const renderer = {
+    createDecalBatch: (capacity) => { made++; return { capacity }; },
+    writeDecalSlot: () => true, drawDecals: () => {}, createBillboardBatch: () => ({}),
+    uploadTexture: (archive, record) => { uploads.push(`${archive}_${record}`); return { tex: 1 }; },
+  };
+  let cap = 8;
+  const off = rigHitEffects({ renderer, texture: null, collider: a4Floor, settings: { ...a4Settings, enabled: () => enabled, capacity: () => cap } });
+  assert.equal(made, 1, 'blood off: the ring and the batch still, at boot');
+  assert.equal(off.marks._pool().capacity, 8, 'to the tier held at boot');
+  assert.equal(uploads.length, 0, 'and no atlas upload');
+  off.fx.showBloodSplash(0, [0, 1.7, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(uploads.length, 0, 'still off: nothing laid, nothing uploaded');
+  enabled = true; cap = 300;
+  off.fx.showBloodSplash(0, [0, 1.7, 0], null, { damage: 10, maxHealth: 40 });
+  assert.equal(made, 1, 'the ring is the ring it always had');
+  assert.equal(off.marks._pool().capacity, 8, '- at the boot tier, not the one the store holds now (the count takes effect when the game is next reloaded)');
+  assert.deepEqual(uploads, ['38001_marks'], 'the first mark uploads the atlas');
+  const mk = a4Read('src/combat/bloodMarks.js');
+  assert.match(mk, /if \(renderer\?\.createDecalBatch\) ensure\(\);/);
+  assert.match(mk, /const atlas = \(\) => \(_atlas \?\?= bloodAtlas\(\)\);/, 'the atlas is built when first worn');
+  assert.doesNotMatch(mk, /const _atlas = bloodAtlas\(\)/);
+  assert.match(mk, /function dress\(d, kind, alpha = 1\) \{\s*\n\s*wear\(\);/, 'worn at the first dress');
+});
+
+test('BLOOD AUDIT 4: by source - the dungeon quickload clears the blood, every pool bleeds at the top of its update, the decal pass counts its bind once', () => {
+  const dc = a4Read('src/scenes/dungeonContext.js');
+  const rs = dc.indexOf('restoreSaved(extras, setPlayerPos');
+  const ap = dc.indexOf('applyWorld(extras.world)', rs);
+  const cl = dc.indexOf('hitEffects.clear();', rs);
+  assert.ok(rs > 0 && cl > rs && cl < ap, 'the dungeon quickload clears the blood before it applies the saved world');
+  // the bleed sits above every early return of the function it is in
+  for (const [f, line] of [
+    ['src/scenes/exteriorFoes.js', 'hitEffects?.bleed?.(dt, foes, foeBleedView);'],
+    ['src/scenes/cityGuards.js', 'hitEffects?.bleed?.(dt, guards, guardBleedView);'],
+    ['src/scenes/dungeonContext.js', 'hitEffects.bleed(dt, foes, foeBleedView);'],
+  ]) {
+    const src = a4Read(f);
+    const at = src.indexOf(line);
+    assert.ok(at > 0, `${f}: the bleed`);
+    const heads = [...src.slice(0, at).matchAll(/\n {2,4}(?:async )?function \w+\([^)]*\) \{/g)];
+    const head = heads.at(-1);
+    assert.ok(head, `${f}: inside a function`);
+    assert.doesNotMatch(src.slice(head.index, at), /\breturn\b/, `${f}: no return between the function’s head and the bleed - every frame, every body`);
+  }
+  // drawDecals: _bindTex0 counts the bind it makes; the pass does not count it again
+  const r = a4Read('src/render/renderer.js');
+  const fn = r.slice(r.indexOf('  drawDecals(batch, tex, ranges = null) {'), r.indexOf('\n  }\n', r.indexOf('  drawDecals(batch, tex, ranges = null) {')));
+  assert.match(fn, /this\._bindTex0\(tex\);/);
+  assert.doesNotMatch(fn, /this\.stats\.texBinds\+\+/, 'counted once, by the bind');
+});
+
+// ── BLOOD2e (2026-09-21) - THE PLAYER'S OWN BLOOD: the reference's player
+// bleeding on the same ledger, its subtle flash, and blood on the lens ──
+import { playerDamageFlash, flashPlayerDamage, BLEED_FLASH_ALPHA, FLASH_ALPHA as E_FLASH_ALPHA } from '../src/ui/damageFlash.js';
+import { createBloodScreen, screenDrops, screenDropAlpha, SCREEN_SPATTER_MIN, SCREEN_DROPS_MAX, SCREEN_DROPS_AT, SCREEN_DROPS_CAP, SCREEN_DROP_LIFE, SCREEN_FADE_SHARE, SCREEN_DROP_SIZE, SCREEN_DROP_SLIDE } from '../src/ui/bloodScreen.js';
+import { bleedDrops as eBleedDrops, bleedShare as eBleedShare, BLEED_WAIT as E_WAIT } from '../src/combat/bloodBleed.js';
+import { FEATURES as E_FEATURES } from '../src/systems/features.js';
+
+test('BLOOD2e: the player bleeds - the same ledger, no strides, no corpse, a subtle flash a drip that never lowers a blow’s, nothing at zero health', () => {
+  // the ledger: a view that says `strides: false` walks without steps
+  const led = a4Ledger({ rng: () => 0 });
+  const me = { feet: [0, 0, 0], health: 40, maxHealth: 40, bloodIndex: 0, dead: false, corpse: false, strides: false };
+  led.tick(0.1, [me], (b) => b);
+  me.feet = [3, 0, 0];
+  assert.deepEqual(led.tick(0.1, [me], (b) => b), [], 'three metres, no steps - the footstep machine lays the player’s');
+  const other = { ...me, strides: true };
+  led.tick(0.1, [other], (b) => b); other.feet = [6, 0, 0];
+  assert.ok(led.tick(0.1, [other], (b) => b).some((a) => a.kind === 'step'), '(a body that strides still does)');
+
+  // the seam: drips at the feet off the entity's health, on the rig's held chance (a wait of 3.5 s)
+  const { fx, marks } = rigHitEffects({ collider: a4Floor, settings: a4Settings });
+  marks.useArt(380, 1, 6);
+  const entity = { health: 10, maxHealth: 40 };
+  const wait = E_WAIT.min + 0.5 * (E_WAIT.max - E_WAIT.min);
+  playerDamageFlash.tick(10);   // clean
+  assert.equal(fx.bleedPlayer(wait - 0.1, [2, 1.7, 2], entity), 0, 'the wait is not up');
+  assert.equal(playerDamageFlash.alpha, 0);
+  assert.equal(fx.bleedPlayer(0.2, [2, 1.7, 2], entity), 1, 'then a drip');
+  const drops = marks._pool().decals();
+  assert.equal(drops.length, 3, 'the ramp’s count at a quarter of a life - round(0.51 x 6) - at the feet (the literal, not the law under test)');
+  assert.ok(drops.every((d) => Math.hypot(d.pos[0] - 2, d.pos[2] - 2) <= BLEED_RADIUS + 1e-9 && Math.abs(d.pos[1]) < 0.05), 'on the floor under the feet');
+  assert.ok(Math.abs(playerDamageFlash.alpha - BLEED_FLASH_ALPHA) < 1e-9, 'and the subtle flash');
+  assert.ok(BLEED_FLASH_ALPHA < E_FLASH_ALPHA / 3, 'subtle: under a third of a blow’s');
+  // a blow's flash is never lowered by a drip
+  flashPlayerDamage(5);
+  fx.bleedPlayer(wait + 0.1, [2, 1.7, 2], entity);
+  assert.equal(playerDamageFlash.alpha, E_FLASH_ALPHA, 'the blow’s flash stands');
+  playerDamageFlash.tick(10);
+  // walking while bleeding lays drips where the feet are and no prints
+  const n0 = marks.count();
+  fx.bleedPlayer(wait + 0.1, [9, 1.7, 9], entity);
+  assert.ok(marks._pool().decals().slice(n0).every((d) => d.uv.kind !== 'print' && Math.hypot(d.pos[0] - 9, d.pos[2] - 9) <= BLEED_RADIUS + 1e-9), 'drips, not prints, at the new feet');
+  // well: nothing; dead: nothing, and NO POOL - the death screen's, not the floor's
+  entity.health = 30;
+  assert.equal(fx.bleedPlayer(wait + 1, [2, 1.7, 2], entity), 0, 'above the threshold: nothing');
+  entity.health = 0;
+  const before = marks.count();
+  for (let k = 0; k < 10; k++) fx.bleedPlayer(1, [2, 1.7, 2], entity);
+  assert.equal(marks.count(), before, 'at zero health: no drip, no pool');
+  assert.equal(fx.bleedPlayer(1, null, entity), 0); assert.equal(fx.bleedPlayer(1, [0, 0, 0], null), 0);
+  // the four hosts, by source, beside the tick they already make
+  for (const [f, line] of [
+    // (BLOOD AUDIT 5: a held window passes dt 0 - no drip and no flash under
+    // the inventory - and the world hosts hand the feet they hand everything else)
+    ['src/scenes/world.js', 'hitEffects.bleedPlayer(townTalk.overlayActive ? 0 : dt, walkMode && playerSpawned ? player.pos : cam.pos, playerEntity);'],
+    ['src/scenes/exterior.js', 'hitEffects.bleedPlayer(popDt, walkMode ? player.pos : cam.pos, playerEntity);'],
+    ['src/scenes/dungeonContext.js', 'hitEffects.bleedPlayer(dt, playerFeet, playerEntity);'],
+    ['src/scenes/worldModes.js', 'interiorHitEffects.bleedPlayer(overlayHeld ? 0 : dt, player.pos, playerEntity);'],
+  ]) {
+    const src = a4Read(f);
+    const at = src.indexOf(line);
+    assert.ok(at > 0, `${f}: the player bleeds`);
+    assert.ok(src.slice(Math.max(0, at - 200), at).includes('.tick(dt);'), `${f}: beside the pool’s tick`);
+  }
+  assert.match(a4Read('src/scenes/hitEffects.js'), /dead: !\(health > 0\), corpse: false, strides: false/, 'the player’s view: no corpse, no strides');
+});
+
+test('BLOOD2e: blood on the lens - a real blow throws drops that slide and fade, one blended quad each in the blood’s red, capped; its row; the HUD’s one call', () => {
+  // the law
+  assert.equal(screenDrops(0), 0); assert.equal(screenDrops(SCREEN_SPATTER_MIN - 0.001), 0, 'a scratch throws nothing');
+  assert.equal(screenDrops(SCREEN_SPATTER_MIN), 1); assert.equal(screenDrops(SCREEN_DROPS_AT), SCREEN_DROPS_MAX); assert.equal(screenDrops(1), SCREEN_DROPS_MAX, 'never past the most');
+  assert.ok(screenDrops(0.3) > 1 && screenDrops(0.3) < SCREEN_DROPS_MAX, 'and between, between');
+  assert.equal(screenDropAlpha(0), 1); assert.equal(screenDropAlpha(SCREEN_DROP_LIFE * (1 - SCREEN_FADE_SHARE)), 1, 'holds');
+  assert.ok(screenDropAlpha(SCREEN_DROP_LIFE * 0.9) > 0 && screenDropAlpha(SCREEN_DROP_LIFE * 0.9) < 1, 'then fades'); assert.equal(screenDropAlpha(SCREEN_DROP_LIFE), 0); assert.equal(screenDropAlpha(-1), 0);
+  for (let t = 0; t < SCREEN_DROP_LIFE; t += 0.05) assert.ok(screenDropAlpha(t + 0.05) <= screenDropAlpha(t) + 1e-12, 'monotone');
+  assert.equal(SCREEN_SPATTER_MIN, 0.1); assert.equal(SCREEN_DROPS_MAX, 5); assert.equal(SCREEN_DROPS_CAP, 12); assert.equal(SCREEN_DROP_LIFE, 2.5);
+
+  // the lens
+  const atlas = buildBloodAtlas();
+  const lens = createBloodScreen({ rng: a4Rng(11) });
+  assert.equal(lens.spatter(0.05, atlas), 0); assert.equal(lens.count, 0);
+  assert.equal(lens.spatter(0.5, atlas), SCREEN_DROPS_MAX); assert.equal(lens.count, SCREEN_DROPS_MAX);
+  for (const d of lens._drops()) {
+    assert.ok(d.x > 0 && d.x < 1 && d.y > 0 && d.y < 1, 'on the screen');
+    assert.ok(d.size >= SCREEN_DROP_SIZE.min && d.size <= SCREEN_DROP_SIZE.max);
+    assert.equal(d.cell.kind, 'spatter', 'wears the atlas’s spatter');
+  }
+  assert.ok(new Set(lens._drops().map((d) => `${d.x.toFixed(3)},${d.size.toFixed(3)}`)).size === SCREEN_DROPS_MAX, 'each its own');
+  for (let k = 0; k < 5; k++) lens.spatter(1, atlas);
+  assert.equal(lens.count, SCREEN_DROPS_CAP, 'capped - the oldest go first');
+  // the draw: one blended quad a drop, the blood's red at the drop's alpha, sliding down with age
+  const quads = [];
+  const renderer = { drawScreenQuad: (tex, dst, src, color, opts) => { quads.push({ tex, dst, src, color, opts }); } };
+  const canvas = { width: 1600, height: 900 };
+  lens.clear(); lens.spatter(0.5, atlas);
+  assert.equal(lens.draw(renderer, canvas, 'atlas-tex'), SCREEN_DROPS_MAX);
+  assert.equal(quads.length, SCREEN_DROPS_MAX);
+  for (const q of quads) {
+    assert.equal(q.tex, 'atlas-tex'); assert.equal(q.opts.blend, true, 'blended - the atlas’s alpha is the shape');
+    assert.ok(Math.abs(q.color[0] - A4_BASE[0]) < 1e-12 && Math.abs(q.color[1] - A4_BASE[1]) < 1e-12 && Math.abs(q.color[2] - A4_BASE[2]) < 1e-12 && q.color[3] === 1, 'the blood’s red, fresh');
+    assert.ok(q.dst.w === q.dst.h && q.dst.w >= SCREEN_DROP_SIZE.min * 900 - 1e-9 && q.dst.w <= SCREEN_DROP_SIZE.max * 900 + 1e-9, 'sized by the canvas HEIGHT');
+    assert.equal(q.src.kind, 'spatter'); assert.ok(q.opts.rotate && Number.isFinite(q.opts.rotate.rad), 'turned');
+  }
+  const y0 = quads.map((q) => q.dst.y);
+  quads.length = 0;
+  lens.tick(SCREEN_DROP_LIFE * 0.8);
+  lens.draw(renderer, canvas, 'atlas-tex');
+  for (let k = 0; k < quads.length; k++) {
+    assert.ok(quads[k].dst.y > y0[k], 'slid down');
+    assert.ok(Math.abs(quads[k].dst.y - y0[k] - SCREEN_DROP_SLIDE * 900 * 0.8) < 1e-6, 'by its age’s share of the slide');
+    assert.ok(quads[k].color[3] < 1 && quads[k].color[3] > 0, 'fading');
+  }
+  lens.tick(SCREEN_DROP_LIFE);
+  assert.equal(lens.count, 0, 'gone'); assert.equal(lens.draw(renderer, canvas, 'atlas-tex'), 0);
+  assert.equal(lens.tick(-1), 0); assert.equal(lens.tick(NaN), 0);
+  lens.spatter(0.5, null); assert.equal(lens.draw(renderer, canvas, 'atlas-tex'), 0, 'no art, no quad - and no throw'); lens.clear();
+  assert.equal(lens.draw(renderer, canvas, null), 0);
+
+  // the row, on by default, the player's own online
+  const row = E_FEATURES.find((f) => f.id === 'blood-screen');
+  assert.ok(row && row.group === 'combat' && row.kinds.includes('enhanced'));
+  assert.deepEqual(row.control, { store: 'prefs', key: 'blood-screen', initial: true, online: 'player' });
+  assert.match(a4Read('src/combat/bloodSwitch.js'), /export const bloodScreenOn = \(\) => getPref\(BLOOD_SCREEN_PREF\) !== false;/);
+  // the HUD's one call: spattered off the detector CameraRecoiler reads, ticked and drawn above the `!art` return
+  const hud = a4Read('src/ui/hud.js');
+  const spat = hud.indexOf("if (blow && bloodScreenOn() && lastHealthLostPercent() >= SCREEN_SPATTER_MIN) playerBloodScreen.spatter(lastHealthLostPercent(), bloodAtlas());");
+  assert.ok(hud.indexOf('const blow = playerDamageFlash.takeBlow();') > 0 && hud.indexOf('const blow = playerDamageFlash.takeBlow();') < spat, 'BLOOD AUDIT 5: and a BLOW - the RemoveHealth latch, read once, before the amount');
+  const tick = hud.indexOf('playerBloodScreen.tick(dt);');
+  const draw = hud.indexOf('playerBloodScreen.draw(renderer, canvas, renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, bloodAtlas(), { smooth: true }));');
+  const detector = hud.indexOf('const rig = updateHudVitals(');
+  const artReturn = hud.indexOf('  if (!art) return;');
+  assert.ok(detector > 0 && spat > detector && tick > spat && draw > tick && draw < artReturn, 'after the detector, before the art return');
+  assert.match(a4Read('src/ui/damageFlash.js'), /export function flashPlayerBleed\(\) \{ playerDamageFlash\.bleed\(\); \}/);
+});
+
+
+// ── BLOOD2f (2026-09-21) - THE WET SHEEN: a fresh mark glints under the
+// enhanced lane, and the glint goes before the colour does ──
+import { wetAt, WET_POWER } from '../src/combat/bloodArt.js';
+import { EL_WET_GLOSS, EL_WET_STRENGTH, EL_SPEC_GLOSS as F_SPEC_GLOSS, EL_SPEC_STRENGTH as F_SPEC_STRENGTH, EL_DECAL_FS as F_DECAL_FS } from '../src/render/enhancedLighting.js';
+
+test('BLOOD2f: the wet float rides the slot - one fresh, falling as the square with the stages, zero dried; a mark that says nothing is dry', () => {
+  // the law
+  assert.equal(wetAt(0), 1); assert.equal(wetAt(A4_DRY_STAGES), 0); assert.equal(wetAt(NaN), 1); assert.equal(wetAt(A4_DRY_STAGES * 3), 0, 'never under zero');
+  assert.equal(WET_POWER, 2);
+  assert.ok(Math.abs(wetAt(A4_DRY_STAGES / 2) - 0.25) < 1e-12, 'half dried: a quarter wet - the sheen goes before the colour');
+  for (let k = 0; k < A4_DRY_STAGES; k++) assert.ok(wetAt(k + 1) < wetAt(k), 'monotone');
+  // the writer: the tenth float of every corner
+  const d = { pos: [1, 2, 3], size: 1, right: [1, 0, 0], up: [0, 0, 1], tint: [0.5, 0.1, 0.1, 1], wet: 0.75 };
+  const out = new Float32Array(DECAL_FLOATS);
+  writeDecalQuad(out, 0, d, null);
+  for (let i = 0; i < 4; i++) assert.ok(Math.abs(out[i * DECAL_FLOATS_PER_VERTEX + 9] - 0.75) < 1e-6, `corner ${i} carries the wet`);
+  writeDecalQuad(out, 0, { ...d, wet: undefined }, null);
+  for (let i = 0; i < 4; i++) assert.equal(out[i * DECAL_FLOATS_PER_VERTEX + 9], 0, 'a mark that says nothing is dry');
+  writeDecalQuad(out, 0, { ...d, wet: 7 }, null); assert.equal(out[9], 1, 'clamped');
+  writeDecalQuad(out, 0, { ...d, wet: -1 }, null); assert.equal(out[9], 0);
+  // the pool: born wet, dried by the stages on the same rewrites
+  const { fx, marks, wrote } = rigHitEffects({ collider: a4Floor, settings: a4Settings, rng: a4Rng(4) });
+  marks.useArt(380, 1, 6);
+  fx.showBloodSplash(0, [0, 1, 0], null, { damage: 10, maxHealth: 40 });
+  const ds = marks._pool().decals();
+  assert.ok(ds.length > 0 && ds.every((m) => m.wet === 1), 'born wet');
+  assert.ok(wrote.slice(-ds.length).every((w) => w.floats[9] === 1), 'and the slot says so');
+  for (let t = 0; t < A4_DRY_TIME / 2 + A4_DRY_TICK; t += 1) fx.tick(1);
+  assert.ok(ds.every((m) => m.stage === A4_DRY_STAGES / 2 && Math.abs(m.wet - wetAt(A4_DRY_STAGES / 2)) < 1e-12), 'half dried: a quarter wet');
+  assert.ok(wrote.slice(-ds.length).every((w) => Math.abs(w.floats[9] - 0.25) < 1e-6), 'in the buffer, on the dry pass’s own rewrite');
+  for (let t = 0; t < A4_DRY_TIME; t += 1) fx.tick(1);
+  assert.ok(ds.every((m) => m.wet === 0), 'dried: dry');
+  assert.ok(wrote.slice(-ds.length).every((w) => w.floats[9] === 0));
+  // a print is born wet too (fresh blood off a boot)
+  fx.showBloodSplash(0, [5, 1.7, 5], null, { damage: 10, maxHealth: 40 });
+  fx.footfall([5, 1.7, 5], [0, 0, 1]);
+  const print = fx.footfall([5, 1.7, 6], [0, 0, 1]);
+  assert.ok(print && print.wet === 1);
+});
+
+test('BLOOD2f: the lane glints a wet mark - the lamp and the sun seen in it at the wet gloss, scaled by the wetness, nothing when dry; the classic set does not know the float', () => {
+  assert.ok(EL_WET_GLOSS > F_SPEC_GLOSS * 2 && EL_WET_STRENGTH > F_SPEC_STRENGTH * 4, 'far tighter and far brighter than stone');
+  assert.equal(EL_WET_GLOSS, 64); assert.equal(EL_WET_STRENGTH, 0.55);   // BLOOD3: Schlick took the head-on case to 4%, so what is left is the grazing band
+  // the attribute, the varying
+  const r = a4Read('src/render/renderer.js');
+  const vs = r.slice(r.indexOf('const DECAL_VS = `'), r.indexOf('`;', r.indexOf('const DECAL_VS = `')));
+  assert.match(vs, /layout\(location=3\) in float aWet;/);
+  assert.match(vs, /out float vWet;/); assert.match(vs, /vWet = aWet;/);
+  assert.match(r, /gl\.vertexAttribPointer\(3, 1, gl\.FLOAT, false, DECAL_STRIDE, 36\);/, 'the tenth float, after the colour');
+  assert.match(r, /gl\.vertexAttribPointer\(2, 4, gl\.FLOAT, false, DECAL_STRIDE, 20\);\s*\n\s*gl\.enableVertexAttribArray\(3\);/);
+  const classicFs = r.slice(r.indexOf('const DECAL_FS = `'), r.indexOf('`;', r.indexOf('const DECAL_FS = `')));
+  assert.doesNotMatch(classicFs, /vWet/, 'the classic set has no specular at all - the float means nothing to it');
+  // the lane's term
+  assert.match(F_DECAL_FS, /in float vWet;/);
+  assert.match(F_DECAL_FS, /lit \+= glint \+ sunGlint;/, 'added AFTER the albedo multiply - a highlight is the light’s colour');
+  // AUDIT BLOOD3 F5: the sun's glint keeps BLOOD AUDIT 5's law - the wet
+  // gloss, the ONE sun visibility, skipped entirely when dry - and takes
+  // its Fresnel at ITS OWN half-vector, not at a view angle hoisted out
+  // in front of every light.
+  assert.match(F_DECAL_FS, /vec3 sunGlint = vec3\(0\.0\);\s*\n\s*if \(sheen > 0\.0\) \{\s*\n\s*vec3 V = normalize\(uCamPos - vWorld\);\s*\n\s*vec3 H = normalize\(uLightDir \+ V\);\s*\n\s*sunGlint = uDecalSun \* \(pow\(max\(dot\(n, H\), 0\.0\), 64\.0\) \* 0\.55 \* sheen \* wetFresnel\(dot\(V, H\)\) \* sunVis\);/, 'the sun glint: Blinn-Phong at the wet gloss, Schlick at its own half-vector, on the ONE sun visibility (BLOOD AUDIT 5)');
+  // BLOOD AUDIT 5: ONE lantern loop for the diffuse and the glint - the
+  // same shadow answer for both (a mark in a contact shadow is
+  // glint-shadowed too), the pow skipped where the mark is dry
+  const loop = F_DECAL_FS.slice(F_DECAL_FS.indexOf('vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {'), F_DECAL_FS.indexOf('\n}', F_DECAL_FS.indexOf('vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {')));
+  assert.ok(loop.length > 0, 'the lantern loop takes the wetness and answers the glint beside the diffuse');
+  assert.match(loop, /float att = sh \* elAttenuation\(d, uPointLights\[i\]\.w\);\s*\n\s*acc \+= att \* \(max\(dot\(n, Ln\), 0\.0\) \+ spec\) \* uPointColors\[i\];/, 'the diffuse as it was');
+  assert.match(loop, new RegExp(`if \\(wet > 0\\.0\\) \\{\\s*\\n\\s*float g = pow\\(max\\(dot\\(n, H\\), 0\\.0\\), ${EL_WET_GLOSS}\\.0\\);\\s*\\n\\s*if \\(g > 0\\.0\\) glint \\+= att \\* g \\* wetFresnel\\(dot\\(V, H\\)\\) \\* uPointColors\\[i\\];`), 'the glint on the SAME att - the same shadow, the same falloff - at the wet gloss, ITS colour, no pow when dry, and (AUDIT BLOOD3 F5) Schlick at ITS OWN half-vector');
+  assert.match(loop, new RegExp(`glint \\*= ${EL_WET_STRENGTH} \\* wet;`), 'scaled by the wetness');
+  assert.match(F_DECAL_FS, /vec3 elPointLit\(vec3 wp, vec3 n\) \{ vec3 g; return elPointLitWet\(wp, n, 0\.0, g\); \}/, 'the mesh’s call is the dry case of the one loop');
+  assert.doesNotMatch(F_DECAL_FS, /elWetGlint/, 'no second loop');
+  // the probe reads it
+  const probe = a4Read('tools/bloodProbe.mjs');
+  // AUDIT BLOOD3 F5: the row says BOTH halves now - the lamp's colour
+  // arriving in green and blue, and the red going the OTHER way,
+  // because a wet film is darker. A build with the old any-angle
+  // glint and no darkening fails the second half.
+  assert.match(probe, /a WET mark under a torch glints in the lamp.{0,2}s colour AND darkens in its own/);
+  assert.match(probe, /wT\[0\] < fT\[0\]/, 'the red falls - the wet darkening, driven by the picture');
+  assert.match(probe, /a wet mark is not a highlight - it is DARKER, and still blood/, 'and head-on in the sun, where Schlick gives almost nothing, the darkening is the whole cue');
+  assert.match(probe, /it is still BLOOD, not a white highlight/, 'BLOOD3: the picture settles what Mac reported - a wet mark is not a white patch');
+  assert.match(probe, /the wet float means nothing to the classic set/);
+  assert.match(probe, /new Float32Array\(4 \* 10\)/, 'ten floats a corner');
+  assert.doesNotMatch(probe, /new Float32Array\(4 \* 9\)/);
+});
+
+
+// ── BLOOD2g (2026-09-21) - THE GORE DIAL: one tier for how much blood there is ──
+test('BLOOD2g: the gore dial - one tier sets the amount and the count, the row names every tier and the default, a pool is sized by it', async () => {
+  const { GORE_TIERS, GORE_DEFAULT, BLOOD_GORE_PREF, bloodGore, bloodCapacity, bloodDensity, bloodDecalDeps, BLOOD_CAPACITY_MAX } = await import('../src/combat/bloodSwitch.js');
+  const { setPref } = await import('../src/systems/uiPrefs.js');
+  assert.deepEqual(Object.keys(GORE_TIERS), ['light', 'normal', 'heavy', 'abattoir']);
+  assert.deepEqual(GORE_TIERS.normal, { density: 1, capacity: 600 }, 'Normal is the defaults - nothing changes for anyone who never touches it');
+  assert.deepEqual(GORE_TIERS.light, { density: 0.5, capacity: 300 }, 'Light halves the amount');
+  assert.ok(GORE_TIERS.heavy.capacity > GORE_TIERS.normal.capacity && GORE_TIERS.abattoir.capacity > GORE_TIERS.heavy.capacity, 'more, and more');
+  assert.equal(GORE_TIERS.abattoir.capacity, BLOOD_CAPACITY_MAX, 'the ceiling');
+  assert.equal(GORE_DEFAULT, 'normal');
+  // the row: a tiered prefs row over the same key, every tier named, the default among them
+  const row = E_FEATURES.find((f) => f.id === 'blood-gore');
+  assert.ok(row && row.group === 'combat' && row.kinds.includes('enhanced'));
+  assert.equal(row.control.key, BLOOD_GORE_PREF); assert.equal(row.control.initial, GORE_DEFAULT); assert.equal(row.control.online, 'player');
+  assert.deepEqual(row.control.tiers.map(([v]) => v), Object.keys(GORE_TIERS), 'every tier, in order');
+  assert.ok(row.control.tiers.every(([v, l]) => typeof l === 'string' && l.toLowerCase() === v), 'named as itself');
+  // the dep bag reads the tier live: a pool built after the shelf changes is sized by it
+  const restore = () => setPref(BLOOD_GORE_PREF, undefined);
+  try {
+    setPref(BLOOD_GORE_PREF, 'light');
+    assert.equal(bloodDecalDeps.capacity(), 300); assert.equal(bloodDecalDeps.density(), 0.5);
+    const { marks } = rigHitEffects({ collider: a4Floor, settings: bloodDecalDeps });
+    assert.equal(marks._pool().capacity, 300, 'the ring is the tier’s count');
+    setPref(BLOOD_GORE_PREF, 'abattoir');
+    assert.equal(marks._pool().capacity, 300, 'and stays: allocated once (the count takes effect when the world next loads)');
+    assert.equal(bloodDecalDeps.density(), 1, 'the amount is live');
+    assert.equal(bloodGore(), 'abattoir');
+  } finally { restore(); }
+  assert.match(a4Read('src/combat/bloodSwitch.js'), /GORE_TIERS\[bloodGore\(\)\]\.capacity/); assert.match(a4Read('src/combat/bloodSwitch.js'), /GORE_TIERS\[bloodGore\(\)\]\.density/);
+  assert.doesNotMatch(a4Read('src/combat/bloodSwitch.js'), /'blood-capacity'|'blood-density'/, 'the old keys are gone, not aliased');
+});
+
+
+// ── BLOOD AUDIT 5 (2026-09-21, Mac: "Lets audit this") - four lenses over
+// BLOOD2e..2g and AUDIT 4's own fixes, every finding paid (Blood-Arc item 12) ──
+import { createDamageFlash as a5Flash } from '../src/ui/damageFlash.js';
+import { updateHudVitals as a5Vitals, resetVitalsDetector as a5Reset, lastHealthLostPercent as a5Lost, _resetHudVitals as a5Fresh } from '../src/ui/hudVitals.js';
+import { STEP_ABOVE } from '../src/combat/bloodMarks.js';
+
+test('BLOOD AUDIT 5: the lens needs a BLOW - the RemoveHealth latch answers once; a load resets the detector, so the loaded health is no loss', () => {
+  const f = a5Flash();
+  assert.equal(f.takeBlow(), false);
+  f.flash(); assert.equal(f.takeBlow(), true, 'a blow, once'); assert.equal(f.takeBlow(), false, 'and not twice');
+  f.bleed(); assert.equal(f.takeBlow(), false, 'a drip is not a blow');
+  f.flash(); f.flash(); assert.equal(f.takeBlow(), true); assert.equal(f.takeBlow(), false);
+  // the detector: live at 90 of 100, a save at 20 of 100 written IN PLACE
+  const cur = (health) => ({ health, maxHealth: 100, fatigue: 100, maxFatigue: 100, magicka: 10, maxMagicka: 10 });
+  a5Fresh();
+  a5Vitals(false, cur(90), 0.016, false); a5Vitals(false, cur(90), 0.016, false);
+  a5Vitals(false, cur(20), 0.016, false);
+  assert.ok(Math.abs(a5Lost() - 0.7) < 1e-9, '(without the reset the load reads as a seven-tenths blow - the recoil, the tint and the lens all fired on it)');
+  a5Vitals(false, cur(90), 0.016, false); a5Vitals(false, cur(90), 0.016, false);
+  a5Reset();
+  a5Vitals(false, cur(20), 0.016, false);
+  assert.equal(a5Lost(), 0, 'reset: the first frame primes from the loaded values and reports nothing');
+  a5Vitals(false, cur(10), 0.016, false);
+  assert.ok(Math.abs(a5Lost() - 0.1) < 1e-9, 'and the next real loss reads');
+  a5Fresh();
+  // the two load sites, beside the recoiler's own reset
+  assert.match(a4Read('src/scenes/world.js'), /cameraRecoiler\.reset\(\);\s*\n\s*resetVitalsDetector\(\);/, 'the world’s quickload');
+  assert.match(a4Read('src/scenes/dungeonContext.js'), /hitEffects\.clear\(\);\s*\n\s*resetVitalsDetector\(\);/, 'the dungeon’s restore');
+  assert.match(a4Read('src/ui/hudVitals.js'), /export function resetVitalsDetector\(\) \{ _detector\.primed = false; \}/);
+});
+
+test('BLOOD AUDIT 5: the lens keeps the NEWEST drops, a drip that landed nothing does not flash, the drops stay in the band, the bleed flash is 0.12', () => {
+  const atlas = buildBloodAtlas();
+  const lens = createBloodScreen({ rng: a4Rng(21) });
+  lens.spatter(1, atlas); lens.tick(0.5); lens.spatter(1, atlas); lens.tick(0.5); lens.spatter(1, atlas);
+  const ages = lens._drops().map((d) => +d.age.toFixed(3));
+  assert.equal(ages.filter((a) => a === 0).length, 5, 'all of the newest blow');
+  assert.equal(ages.filter((a) => a === 0.5).length, 5, 'all of the one before');
+  assert.equal(ages.filter((a) => a === 1).length, 2, 'and what room is left goes to the oldest - the oldest go first');
+  for (let k = 0; k < 40; k++) lens.spatter(1, atlas);
+  assert.ok(lens._drops().every((d) => d.x >= 0.1 && d.x <= 0.9 && d.y >= 0.1 && d.y <= 0.8), 'in the band, never half off the screen');
+  assert.equal(BLEED_FLASH_ALPHA, 0.12);
+  // levitating over nothing: the ledger drips, nothing lands, and nothing flashes
+  const { fx } = rigHitEffects({ collider: () => ({ surfaceHit: () => null, raycastHit: () => ({ dist: Infinity, normal: null }) }), settings: a4Settings });
+  playerDamageFlash.tick(10);
+  assert.equal(fx.bleedPlayer(E_WAIT.max + 1, [0, 10, 0], { health: 10, maxHealth: 40 }), 0);
+  assert.equal(playerDamageFlash.alpha, 0, 'no drip on the floor, no flash');
+});
+
+test('BLOOD AUDIT 5: the ring is minted once, the mirror goes with dispose, a surface above the feet is not the floor, and a dry cohort and a spread share one flush', () => {
+  // a renderer whose batch comes back empty: one ring, kept
+  const { fx, marks } = rigHitEffects({ renderer: { createDecalBatch: () => null, writeDecalSlot: () => true, drawDecals: () => {}, createBillboardBatch: () => ({}) }, collider: a4Floor, settings: a4Settings });
+  fx.showBloodSplash(0, [0, 1.7, 0], null, { damage: 10, maxHealth: 40 });
+  const p1 = marks._pool();
+  fx.showBloodSplash(0, [3, 1.7, 3], null, { damage: 10, maxHealth: 40 });
+  assert.equal(marks._pool(), p1, 'the same ring'); assert.ok(marks.count() >= 2, 'holding both blows');
+  // dispose ends the mirror
+  const rig2 = rigHitEffects({ collider: a4Floor, settings: a4Settings });
+  rig2.fx.showBloodSplash(0, [0, 1.7, 0], null, { damage: 10, maxHealth: 40 });
+  assert.ok(rig2.marks._mirror() instanceof Float32Array);
+  rig2.marks.dispose();
+  assert.equal(rig2.marks._mirror(), null, 'the pool ends what it owns');
+  // a surface met above the feet - streamed feet inside a step - is not the floor
+  assert.equal(STEP_ABOVE, 0.25);
+  let dist = 0.1;   // the knee ray meets something 0.4 m ABOVE the feet
+  const rig3 = rigHitEffects({ collider: () => ({ surfaceHit: (from, dir, max) => (dir[1] < 0 ? { dist, normal: [0, 1, 0] } : null), raycastHit: () => ({ dist: Infinity, normal: null }) }), settings: a4Settings });
+  rig3.marks.useArt(380, 1, 6);
+  assert.equal(rig3.marks.spreadPool(0, [0, 0, 0]), null, 'no pool floating above a corpse’s feet');
+  dist = DRIP_FROM - STEP_ABOVE + 0.01;   // just inside the tolerance: the drawn terrain, centimetres up
+  const pool = rig3.marks.spreadPool(0, [0, 0, 0]);
+  assert.ok(pool && Math.abs(pool.pos[1] - (STEP_ABOVE - 0.01 + SURFACE_LIFT)) < 1e-9, 'a floor a little above the feet is the floor');
+  dist = 0.1;
+  assert.equal(rig3.fx.footfall([0, 0, 0], [0, 0, 1]), null); assert.equal(rig3.marks.tracked(PLAYER_WALKER), 0, 'and the foot is not in it');
+  dist = DRIP_FROM - STEP_ABOVE + 0.01;
+  rig3.fx.footfall([0, 0, 0], [0, 0, 1]);
+  assert.equal(rig3.marks.tracked(PLAYER_WALKER), TRACK_STEPS);
+  // one flush for a tick that both dries a cohort and steps a spread
+  const rig4 = rigHitEffects({ collider: a4Floor, settings: a4Settings, rng: a4Rng(8) });
+  rig4.marks.useArt(380, 1, 6);
+  rig4.fx.showBloodSplash(0, [0, 1, 0], null, { damage: 80, maxHealth: 40, fromPlayer: true, heavy: false, throw: [0, 0] });
+  const n = rig4.marks.count();
+  for (let t = 0; t < 21; t++) rig4.fx.tick(1);
+  const pool4 = rig4.marks.spreadPool(0, [5, 0, 5]);
+  assert.equal(pool4.slot, n, 'the pool sits right after the cohort');
+  rig4.fx.tick(1); rig4.fx.tick(1);   // clock 23: the spread’s first step alone
+  rig4.calls.length = 0;
+  rig4.fx.tick(1);   // clock 24: the cohort crosses stage one AND the spread steps
+  assert.ok(rig4.marks._pool().decals()[0].stage === 1 && pool4.size > POOL_SIZE.start, 'both happened');
+  assert.equal(rig4.calls.length, 1, 'one flush, one run');
+  assert.equal(rig4.calls[0].n, n + 1, 'the cohort and the pool in it');
+});
+
+test('BLOOD AUDIT 5: by source - the menu shows a row’s default for a stored value that is no tier, the gore effect says when', () => {
+  const menu = a4Read('src/ui/enhancedMenu.js');
+  assert.match(menu, /const found = c\.tiers\.findIndex\(\(\[v\]\) => String\(v\) === cur\);\s*\n\s*const at = found >= 0 \? found : fallback;/, 'the tile');
+  assert.match(menu, /const fallback = Math\.max\(0, c\.tiers\.findIndex\(\(\[v\]\) => String\(v\) === String\(c\.default \?\? c\.initial\)\)\);/);
+  assert.match(menu, /const found = tiers\.findIndex\(\(\[v\]\) => String\(v\) === cur\);\s*\n\s*const at = found >= 0 \? found : Math\.max\(0, tiers\.findIndex/, 'the chooser');
+  const row = E_FEATURES.find((f) => f.id === 'blood-gore');
+  assert.match(row.effect, /when the game is next reloaded \(a dungeon takes it on entry\)/, 'three pools live a page; only the dungeon rebuilds on entry');
+});
+
+// ── BLOOD3: THE MARK IS A FILM ───────────────────────────────────
+// (2026-09-21, Mac: "I think the blood is too shiny and flat.")
+// Two faults, one line of the decal shader each, and both laws are pure
+// functions here so a pin drives them rather than reading them.
+test('BLOOD3 flat: the film is the tint at full thickness and brightens - and DESATURATES - as it thins', async () => {
+  const { filmColour, BLOOD_ABSORB, BLOOD_ABSORB_ENCODED, DISPLAY_GAMMA, BLOOD_BASE } = await import('../src/combat/bloodArt.js');
+  const sat = (c) => 1 - (c[1] + c[2]) / 2 / c[0];
+  // THE ANCHOR, and the whole reason the lighting-parity law survives
+  // this slice: at full thickness the film is exactly a no-op, so a
+  // mark on a wall is still lit as the wall is and is still its tint.
+  assert.deepEqual(filmColour(BLOOD_BASE, 1), [...BLOOD_BASE]);
+  assert.deepEqual(filmColour([0.4, 0.1, 0.1], 1), [0.4, 0.1, 0.1]);
+  // ...and thinner is brighter, every channel, monotonically
+  let prev = filmColour(BLOOD_BASE, 1);
+  for (const th of [0.8, 0.6, 0.4, 0.2, 0]) {
+    const c = filmColour(BLOOD_BASE, th);
+    for (let i = 0; i < 3; i++) assert.ok(c[i] > prev[i], `channel ${i} brightens at ${th}`);
+    assert.ok(sat(c) < sat(prev), 'and DESATURATES - green and blue are absorbed harder, so they gain more');
+    prev = c;
+  }
+  // AUDIT BLOOD3 F7: and it is a DESATURATION, not a warming. Green and
+  // blue take the SAME absorption, so a thinning mark holds its hue and
+  // loses its depth of colour - it goes toward pink, never toward
+  // orange, and the record says so now.
+  assert.equal(BLOOD_ABSORB[1], BLOOD_ABSORB[2], 'green and blue alike - blood is a red filter, not a tinted one');
+  for (const th of [0, 0.5, 1]) {
+    const c = filmColour(BLOOD_BASE, th);
+    assert.ok(Math.abs(c[1] / c[2] - BLOOD_BASE[1] / BLOOD_BASE[2]) < 1e-12, 'the hue of the green:blue pair never moves');
+  }
+  assert.ok(BLOOD_ABSORB[0] < BLOOD_ABSORB[1], 'red is absorbed least - it is the channel that passes');
+  // AUDIT BLOOD3 F3: the constants have a SIZE, not just a shape - a
+  // film nobody can see and a film that blows out both satisfied the
+  // ordering above, and neither had a pin or a mutant.
+  assert.ok(BLOOD_ABSORB[1] / BLOOD_ABSORB[0] > 1.5, 'green absorbs at least half again what red does, or there is no colour shift at all');
+  assert.ok(BLOOD_ABSORB[1] > 0.5 && BLOOD_ABSORB[1] < 1.5, 'and the gain at a rim is a real one without blowing out');
+  // ...the law itself, term for term
+  for (const th of [0, 0.35, 1]) {
+    const c = filmColour(BLOOD_BASE, th);
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(c[i] - BLOOD_BASE[i] * Math.exp(BLOOD_ABSORB[i] * (1 - th))) < 1e-12);
+  }
+  assert.deepEqual(filmColour(BLOOD_BASE, 2), [...BLOOD_BASE], 'clamped - a thickness past full is still full');
+  assert.deepEqual(filmColour(BLOOD_BASE, -1), filmColour(BLOOD_BASE, 0));
+  assert.deepEqual(filmColour(null, 1), [0, 0, 0], 'no tint, no colour - never NaN');
+  // AUDIT BLOOD3 F3: the CLASSIC set works in display space end to end,
+  // so the same gain shows there as G and here as G^(1/2.2). Its own
+  // absorption is the exponent divided by the display gamma - the same
+  // picture, which is what the two-lane law demands.
+  assert.equal(DISPLAY_GAMMA, 2.2);
+  for (let i = 0; i < 3; i++) {
+    assert.ok(Math.abs(BLOOD_ABSORB_ENCODED[i] - BLOOD_ABSORB[i] / DISPLAY_GAMMA) < 1e-12);
+    const lane = Math.exp(BLOOD_ABSORB[i] * 0.5) ** (1 / DISPLAY_GAMMA), classic = Math.exp(BLOOD_ABSORB_ENCODED[i] * 0.5);
+    assert.ok(Math.abs(lane - classic) < 1e-12, 'the two lanes show the same gain on the screen');
+  }
+});
+
+test('BLOOD3 depth: the atlas ink IS the thickness, inverted - and it runs the right way on every shape in the sheet', async () => {
+  const { buildBloodAtlas, ATLAS_KINDS, ATLAS_CELLS, INK_DEPTH, filmThickness } = await import('../src/combat/bloodArt.js');
+  // AUDIT BLOOD3 F1: THE PIN THAT WOULD HAVE CAUGHT IT. BLOOD3 read the
+  // sheet's ink as a DENSITY when the art paints it as a DARKENING -
+  // the same quantity with the sign reversed - so the film brightened
+  // exactly the texels the art had darkened. Nothing caught it because
+  // no test in that slice ever fed a real atlas texel to the law: the
+  // three executed pins drove synthetic numbers and the fourth read the
+  // shader's source. This one walks the sheet.
+  assert.equal(INK_DEPTH, 0.18);
+  const { colors, width, height, cells } = buildBloodAtlas();
+  const cell = width / ATLAS_CELLS;
+  const at = (x0, y0, px, py) => {
+    const o = ((y0 + py) * width + (x0 + px)) * 4;
+    return { a: colors[o + 3] / 255, ink: colors[o] / 255, g: colors[o + 1] / 255, b: colors[o + 2] / 255 };
+  };
+  // the sheet is still WHITE INK - the lens draws it through the plain
+  // 2D quad under the blood's tint and has no film, so r == g == b
+  // must hold and the ink must keep the range it always had
+  let lo = 1, hi = 0;
+  for (const kind of ATLAS_KINDS) {
+    const c = cells.find((x) => x.kind === kind);
+    const x0 = Math.round(c.u0 * width) - 1, y0 = Math.round(c.v0 * height) - 1;
+    const deep = [];
+    for (let py = 0; py < cell; py++) for (let px = 0; px < cell; px++) {
+      const t = at(x0, y0, px, py);
+      assert.ok(t.ink === t.g && t.g === t.b, `${kind}: white ink, so the lens is untouched by this slice`);
+      if (t.a >= 0.5) {
+        lo = Math.min(lo, t.ink); hi = Math.max(hi, t.ink);
+        deep.push({ px, py, thick: filmThickness(t.a, t.ink) });
+      }
+    }
+    // the recovery spans the WHOLE range across a mark at full coverage
+    const tk = deep.map((d) => d.thick);
+    assert.ok(Math.max(...tk) > 0.9, `${kind}: a heart is a full-thickness film`);
+    assert.ok(Math.min(...tk) < 0.1, `${kind}: and a rim is nearly nothing - the film has the whole range to work in`);
+    // ...and the deep end is where the ART says it is. A pool and a
+    // spatter are radial; a streak's head is at -u, a drip's bead high
+    // in the cell, a print's heel at -u. Each kind is asked about its
+    // OWN anchor, because a radius from the centre is the wrong
+    // question for three of the five.
+    const anchor = { pool: [0, 0], spatter: [0, 0], streak: [-0.55, 0], drip: [0, 0.5], print: [-0.5, 0] }[kind];
+    const pts = deep.map((d) => {
+      const x = ((d.px + 0.5) / cell) * 2 - 1, y = ((d.py + 0.5) / cell) * 2 - 1;
+      return { r: Math.hypot(x - anchor[0], y - anchor[1]), t: d.thick };
+    });
+    const n = pts.length, mr = pts.reduce((s, q) => s + q.r, 0) / n, mt = pts.reduce((s, q) => s + q.t, 0) / n;
+    let sxy = 0, sxx = 0, syy = 0;
+    for (const q of pts) { sxy += (q.r - mr) * (q.t - mt); sxx += (q.r - mr) ** 2; syy += (q.t - mt) ** 2; }
+    const corr = sxy / Math.sqrt(sxx * syy);
+    assert.ok(corr < -0.3, `${kind}: the thickness FALLS away from the shape's own deep end (corr ${corr.toFixed(3)}) - with the sign reversed this is about +0.9`);
+  }
+  assert.ok(Math.abs(lo - (1 - INK_DEPTH)) < 0.01, `the ink bottoms out at 1 - INK_DEPTH (${lo.toFixed(3)})`);
+  assert.ok(hi > 0.99, 'and tops out at 1 - the range and the sense the hand-painted shade had, so the lens did not move');
+  // the inversion is EXACT, both ways, and clamped at both ends
+  assert.ok(Math.abs(filmThickness(1, 1 - INK_DEPTH) - 1) < 1e-12, 'the deepest ink is a full-thickness film');
+  assert.equal(filmThickness(1, 1), 0, 'and the thinnest is none');
+  assert.ok(Math.abs(filmThickness(1, 1 - INK_DEPTH / 2) - 0.5) < 1e-12, 'linear between');
+  assert.ok(Math.abs(filmThickness(0.5, 1 - INK_DEPTH) - 0.5) < 1e-12, 'coverage times depth - a half-faded heart is a half film');
+  assert.equal(filmThickness(1, 0), 1, 'clamped: an ink below the ramp is still just full');
+  assert.equal(filmThickness(2, 2), 0); assert.equal(filmThickness(-1, 0), 0);
+});
+
+test('BLOOD3 shiny: the sheen is the mark’s own depth, the angle is Schlick at V.H per light, and a wet mark DARKENS', async () => {
+  const { wetGate, wetFresnel, wetSheen, wetAlbedo, WET_DARKEN, BLOOD_F0, WET_THICK_LO, WET_THICK_HI } = await import('../src/combat/bloodArt.js');
+  // the gate: the mark's own depth, so a dried rim does not shine while
+  // the heart still does. It carries NO angle (AUDIT BLOOD3 F5).
+  assert.equal(wetGate(0, 1), 0, 'a dry mark, whatever its depth');
+  assert.equal(wetGate(1, WET_THICK_LO), 0, 'at the dry end of the band, nothing');
+  assert.equal(wetGate(1, WET_THICK_HI), 1, 'at the wet end, all of it');
+  assert.ok(wetGate(1, (WET_THICK_LO + WET_THICK_HI) / 2) > 0.49 && wetGate(1, (WET_THICK_LO + WET_THICK_HI) / 2) < 0.51, 'smoothstep, halfway at halfway');
+  assert.ok(wetGate(0.5, 1) === 0.5, 'and it scales with the wetness itself');
+  // AUDIT BLOOD3 F6: the band has to SIT somewhere, not just be ordered.
+  // Against the old ink the gate was above 0.93 over 93-97% of every
+  // mark and the "wet core, dry rim" was never delivered; nothing
+  // pinned that, because the pins only related the two ends to
+  // each other.
+  assert.ok(WET_THICK_LO > 0.05 && WET_THICK_LO < 0.35, 'a rim is dry');
+  assert.ok(WET_THICK_HI > 0.6 && WET_THICK_HI < 0.95, 'a heart is wet');
+  assert.ok(WET_THICK_HI - WET_THICK_LO > 0.3, 'and the ramp between them is a ramp, not an edge');
+  // the angle: SCHLICK AT V.H, the specular form, not F(N.V)
+  assert.ok(Math.abs(wetFresnel(1) - BLOOD_F0) < 1e-12, 'head-on into the half-vector, a water film gives back its F0');
+  assert.ok(Math.abs(wetFresnel(0) - 1) < 1e-12, 'and at the full graze, all of it');
+  assert.ok(BLOOD_F0 <= 0.03, 'water, not glass and not plastic');
+  assert.ok(wetFresnel(0.2) > wetFresnel(0.5) && wetFresnel(0.5) > wetFresnel(0.9), 'monotone in the angle');
+  // AUDIT BLOOD3 F5: the exponent is FIVE, and that is a law. At 1 the
+  // curve is a straight line and there is no grazing band at all.
+  for (const c of [0.2, 0.5, 0.8]) {
+    assert.ok(Math.abs(wetFresnel(c) - (BLOOD_F0 + (1 - BLOOD_F0) * (1 - c) ** 5)) < 1e-12, 'Schlick, fifth power, term for term');
+  }
+  assert.ok(wetFresnel(0.5) < 0.1, 'a fifth power keeps the mid-angles dark - a lower one would light the whole mark');
+  assert.equal(wetSheen(1, 1, 1), wetGate(1, 1) * wetFresnel(1), 'the sheen is the gate times the angle, and nothing else');
+  assert.equal(wetSheen(0, 1, 0), 0);
+  // AUDIT BLOOD3 F5: AND THE CUE THAT READS AS WET HEAD-ON IS THE
+  // DARKENING. Fresnel gives 2% straight down; without this a wet mark
+  // underfoot is indistinguishable from a dry one, which is what BLOOD3
+  // shipped. Light goes into the film before it comes back.
+  assert.equal(wetAlbedo(0), 1, 'a dry mark is exactly what it was - the whole arc before this rests on that');
+  assert.equal(wetAlbedo(1), WET_DARKEN);
+  assert.ok(WET_DARKEN > 0.55 && WET_DARKEN < 0.9, 'darker and richer, not black');
+  assert.ok(wetAlbedo(0.5) > wetAlbedo(1) && wetAlbedo(0.5) < wetAlbedo(0), 'and it fades with the drying');
+});
+
+test('AUDIT BLOOD3 F9: every dial the blood shaders interpolate goes through glslFloat - a whole number is an INT in GLSL, and vec3 * int does not compile', async () => {
+  const { glslFloat } = await import('../src/render/airPass.js');
+  // THE FAILURE, EXACTLY. BLOOD_MENISCUS was set to 0.0 to photograph
+  // the meniscus against itself and the lane's decal program stopped
+  // compiling: "'*' : wrong operand types ... 'const int'". JS turns
+  // 0.0 into "0", GLSL reads that as an integer, and there is no
+  // vec3 * int. Every constant this arc interpolated was bare, so any
+  // of them at a round value was a landmine under the dials the record
+  // invites a reader to tune.
+  assert.equal(String(0.0), '0', 'this is the whole bug - JS stringifies it as an int literal');
+  assert.equal(glslFloat(0.0), '0.0'); assert.equal(glslFloat(1), '1.0'); assert.equal(glslFloat(-2), '-2.0');
+  assert.equal(glslFloat(0.85), '0.85', 'and a fractional value is left exactly as it is - no rounding, no drift');
+  assert.equal(glslFloat(0.02), '0.02');
+  // ...and no bare interpolation of a blood dial is left in either set
+  const lane = readFileSync(new URL('../src/render/enhancedLighting.js', import.meta.url), 'utf8');
+  const classic = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  for (const [name, src] of [['lane', lane], ['classic', classic]]) {
+    const bare = [...src.matchAll(/\$\{(BLOOD_[A-Z0-9_]*|WET_[A-Z_]*|INK_DEPTH|EL_WET_STRENGTH)(\[\d\])?\}/g)].map((m) => m[0]);
+    assert.deepEqual(bare, [], `${name}: these dials reach the shader without glslFloat`);
+  }
+  assert.match(classic, /import \{ glslFloat \} from '\.\/airPass\.js'/);
+  // THE LAW, DRIVEN: build the shader at an integral value and read what
+  // it actually emitted. A text pin on the built string proves nothing
+  // here - it reads whatever the current value happens to produce.
+  const { BLOOD_MENISCUS, WET_DARKEN, INK_DEPTH, BLOOD_F0 } = await import('../src/combat/bloodArt.js');
+  for (const v of [BLOOD_MENISCUS, WET_DARKEN, INK_DEPTH, BLOOD_F0, 1 - BLOOD_F0, 0, 1, 0.5]) {
+    assert.match(glslFloat(v), /^-?\d+(\.\d+)?$/, `${v} is a literal`);
+    assert.ok(glslFloat(v).includes('.'), `${v} reaches GLSL as a FLOAT - an int here is a compile error, not a wrong picture`);
+  }
+});
+
+test('BLOOD3 by source: both decal shaders recover the depth, and the LANE carries the meniscus, the wet darkening and the per-light Fresnel', async () => {
+  const { EL_DECAL_FS, EL_WET_STRENGTH } = await import('../src/render/enhancedLighting.js');
+  const { BLOOD_ABSORB, BLOOD_ABSORB_ENCODED, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI, INK_DEPTH, WET_DARKEN } = await import('../src/combat/bloodArt.js');
+  const classic = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
+  const recover = `float thick = t.a * clamp((1.0 - t.r) / ${INK_DEPTH}, 0.0, 1.0);`;
+  // AUDIT BLOOD3 F1: BOTH sets read the ink as the thickness INVERTED,
+  // off the one constant the sheet is written from - never a second
+  // copy of the ramp, and never the raw channel again.
+  assert.ok(EL_DECAL_FS.includes(recover), 'the lane recovers the depth');
+  assert.ok(classic.includes('float thick = t.a * clamp((1.0 - t.r) / ${glslFloat(INK_DEPTH)}, 0.0, 1.0);'), 'and so does the classic set');
+  assert.match(classic, /import \{ BLOOD_ABSORB_ENCODED, INK_DEPTH \} from '\.\.\/combat\/bloodArt\.js'/);
+  assert.ok(!/float thick = t\.a \* t\.r;/.test(EL_DECAL_FS) && !/\* t\.a \* t\.r\)/.test(EL_DECAL_FS), 'the raw ink is never a thickness again (the prose above the meniscus may still name the bug it fixed)');
+  assert.ok(!/vec3 albedo = elDecode\(t\.rgb\)/.test(EL_DECAL_FS) && !/vec3 rgb = t\.rgb \*/.test(classic),
+    'and the ink is not an albedo factor either - it WAS the depth, painted as a grey darkener, and the film does that per channel now');
+  // the film, in both, each in its own colour space (AUDIT BLOOD3 F3)
+  assert.ok(EL_DECAL_FS.includes(`* exp(vec3(${BLOOD_ABSORB[0]}, ${BLOOD_ABSORB[1]}, ${BLOOD_ABSORB[2]}) * (1.0 - thick))`), 'the lane, in linear');
+  assert.ok(classic.includes('exp(vec3(${glslFloat(BLOOD_ABSORB_ENCODED[0])}, ${glslFloat(BLOOD_ABSORB_ENCODED[1])}, ${glslFloat(BLOOD_ABSORB_ENCODED[2])}) * (1.0 - thick))'), 'the classic set, in display space');
+  assert.ok(BLOOD_ABSORB_ENCODED[0] < BLOOD_ABSORB[0], 'which is the smaller exponent, or the gain would show twice over');
+  // AUDIT BLOOD3 F5: the wet DARKENING, on the lane
+  assert.ok(EL_DECAL_FS.includes(`* mix(1.0, ${WET_DARKEN}, clamp(vWet, 0.0, 1.0));`), 'a wet mark is darker - the cue you can see from above');
+  // the meniscus: the SAME field on both taps and at the centre
+  assert.ok(EL_DECAL_FS.includes('vec2 ts = 1.0 / vec2(textureSize(uTex, 0));'), 'a texel of the atlas');
+  assert.ok(EL_DECAL_FS.includes(`vec2 duv = vec2(tU.a * clamp((1.0 - tU.r) / ${INK_DEPTH}, 0.0, 1.0),`)
+    && EL_DECAL_FS.includes(`tV.a * clamp((1.0 - tV.r) / ${INK_DEPTH}, 0.0, 1.0)) - vec2(thick);`),
+    'AUDIT BLOOD3 F1: both taps recover the depth exactly as the centre does - a difference of two different quantities is a pedestal, not a gradient');
+  assert.ok(!/vec2\(texture\(uTex, vUV \+ vec2\(ts\.x, 0\.0\)\)\.a,/.test(EL_DECAL_FS), 'never the bare alpha against a thickness again');
+  // the tangent frame itself, which nothing pinned before (AUDIT BLOOD3 F4)
+  assert.ok(EL_DECAL_FS.includes('vec3 tu = (duy.y * dpx - dux.y * dpy) / uvDet;')
+    && EL_DECAL_FS.includes('vec3 tv = (dux.x * dpy - duy.x * dpx) / uvDet;'),
+    'the quad’s own d(world)/d(uv), solved - so the tilt is IN the surface, whatever the mark is stuck to');
+  assert.ok(EL_DECAL_FS.includes('vec3 slope = duv.x * normalize(tu) + duv.y * normalize(tv);'));
+  assert.ok(EL_DECAL_FS.includes(`n = normalize(n - slope * ${BLOOD_MENISCUS});`), 'and the normal tilts AWAY from the rise - a bank of liquid, not a dent');
+  // AUDIT BLOOD3 F10: and it is the WHOLE mark's relief, not a rim lip.
+  // A pool's thickness is a smoothstep and a smoothstep is steepest in
+  // the MIDDLE of its ramp, so the picture shows the change twice as
+  // strong in the body as at the rim. The shader said "the rim has a
+  // shoulder" until a frame was finally differenced.
+  assert.ok(EL_DECAL_FS.includes('THE MARK IS A HEIGHT FIELD, NOT A PLANE'), 'the comment says what the code does');
+  assert.ok(!/RIM HAS A SHOULDER/.test(EL_DECAL_FS), '...and not what it was assumed to do');
+  assert.ok(BLOOD_MENISCUS > 0.3, 'by an amount that does something');
+  assert.ok(EL_DECAL_FS.indexOf('n = normalize(n - slope') > 0 && EL_DECAL_FS.indexOf('n = normalize(n - slope') < EL_DECAL_FS.indexOf('float sunVis'),
+    'before anything reads the normal, or the shadows and the sun would take the flat one');
+  // AUDIT BLOOD3 F2: ONE derivative pair, taken outside the branch, and
+  // the WORLD frame guarded as well as the UV one
+  assert.ok(EL_DECAL_FS.includes('vec3 dpx = dFdx(vWorld), dpy = dFdy(vWorld);') && EL_DECAL_FS.includes('vec3 c = cross(dpx, dpy);'));
+  assert.equal(EL_DECAL_FS.match(/dFdx\(vWorld\)/g).length, 1, 'taken once - a derivative in non-uniform control flow is undefined, and these were inside the branch');
+  assert.ok(EL_DECAL_FS.indexOf('vec3 dpx = dFdx(vWorld)') < EL_DECAL_FS.indexOf('if (dot(c, c) > 1e-12'));
+  assert.ok(EL_DECAL_FS.includes('if (dot(c, c) > 1e-12 && abs(uvDet) > 1e-12 && dot(duv, duv) > 0.0) {'),
+    'a degenerate WORLD frame, a degenerate UV frame or a flat patch is left alone - the AUDIT 3 fallback is not thrown away as NaN');
+  // the sheen: the gate here, the angle beside each light's own lobe
+  assert.ok(EL_DECAL_FS.includes(`float sheen = vWet * smoothstep(${WET_THICK_LO}, ${WET_THICK_HI}, thick);`), 'the gate is the mark’s own depth, and carries no angle');
+  assert.ok(EL_DECAL_FS.includes(`return ${BLOOD_F0} + ${1 - BLOOD_F0} * pow(1.0 - clamp(vdoth, 0.0, 1.0), 5.0);`),
+    'AUDIT BLOOD3 F8: Schlick off the constant itself - a toFixed here agreed with its own pin and would have drifted from the JS law silently');
+  assert.ok(EL_DECAL_FS.includes('glint += att * g * wetFresnel(dot(V, H)) * uPointColors[i];'), 'the lantern’s angle is ITS half-vector');
+  assert.ok(EL_DECAL_FS.includes('* sheen * wetFresnel(dot(V, H)) * sunVis);'), 'and the sun’s is the sun’s');
+  assert.ok(!/pow\(1\.0 - clamp\(dot\(n, normalize\(uCamPos - vWorld\)\)/.test(EL_DECAL_FS),
+    'never F(N.V) again - a Schlick hoisted out in front of a (N.H)^64 lobe peaks in the wrong regime and took the case underfoot down 82x');
+  assert.equal(EL_WET_STRENGTH, 0.55);
+  // the probe drives the picture where a pin cannot
+  const probe = readFileSync(new URL('../tools/bloodProbe.mjs', import.meta.url), 'utf8');
+  assert.ok(probe.includes('FILM ${f.lane}: a mark is not ONE red'), 'the probe reads the film off a real frame');
+  assert.ok(probe.includes('it is still BLOOD, not a white highlight'), '...and that a wet mark did not become a white patch');
+  assert.ok(probe.includes('MENISCUS lane: the mark is lit as a RELIEF'),
+    'AUDIT BLOOD3 F10: and the meniscus is DRAWN now - it went to main as the one law in the slice with no picture at all');
+  assert.ok(probe.includes('not a rim lip'), '...and the row says where the change lands, which is not where the record claimed');
 });

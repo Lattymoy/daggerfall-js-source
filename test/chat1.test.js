@@ -121,8 +121,8 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   // and says its joins, because the roster beside the chat is everyone online and the channel is where everyone is
   assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now });   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets; AUDIT SOC B7: and the relay's clock
   assert.equal(typeof a.sent[0].now, 'number');
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }], 'b is told who is in the channel - a, by name, no look, no pose');
-  assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002' }], 'and a hears b join - the name and nothing else');
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001', sub: 'acct-aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }], 'b is told who is in the channel - a, by name and verified account (MOD1: what /mute names), no look, no pose');
+  assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002', sub: 'acct-bbbb-0002' }], 'and a hears b join - the name and the verified account (MOD1), nothing else');
   assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
   assert.equal(r.store.has('hellos'), true, 'AUDIT CHAT A1: the hello bucket is kept - the gate is never off');
@@ -288,8 +288,8 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   ws.receive({ t: 'chat', id: 'mac-0001', name: 'Mac', text: 'hi all', at: 5 });
   ws.receive({ t: 'chat', id: 'bob-0002', name: '  Bob <b>  ', text: ' yo \u202e', at: 6 });
   assert.deepEqual(heard, [
-    { id: 'mac-0001', name: 'Mac', text: 'hi all', at: 5, mine: true },
-    { id: 'bob-0002', name: 'Bob <b>', text: 'yo', at: 6, mine: false },
+    { id: 'mac-0001', name: 'Mac', text: 'hi all', at: 5, mine: true, sub: null },   // MOD1: a line with no verified account says so - null, never a guess
+    { id: 'bob-0002', name: 'Bob <b>', text: 'yo', at: 6, mine: false, sub: null },   // ACC1g: no verdict on the name - every name in the room was verified to get in
   ], 'the line in: the name and the text checked by the relay\'s own law, mine by id');
   ws.receive({ t: 'chat', name: 'x', text: 'no id' }); ws.receive({ t: 'chat', id: 'bob-0002', text: '   ' }); ws.receive({ t: 'chat', id: 'bob-0002', text: 7 });
   assert.equal(heard.length, 2, 'a line with no id or nothing to say is dropped');
@@ -327,8 +327,12 @@ test('CHAT1 / AUDIT CHAT: the session as a CHANNEL (presence: false) - the hello
   const pw = sockets[4]; pw.open();
   assert.deepEqual(pw.sent[0].pose, { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 });
   assert.equal(p.sendPose({ x: 2, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 }), true, 'a presence session sends its pose');
+  // RELAY-H1 re-aimed this: a presence session now ALSO pings (PING_MS, runtime-answered in the object's sleep) so the
+  // socket's liveness no longer costs a wake; its proof of life to the PEERS is still the pose, which a ping never delays.
+  const pingsBefore = pw.sent.filter((m) => m.t === 'ping').length;
   clock += HEARTBEAT_MS * 2; p.tick();
-  assert.equal(pw.sent.filter((m) => m.t === 'ping').length, 0, 'a presence session heartbeats with its pose, not a ping');
+  assert.equal(pw.sent.filter((m) => m.t === 'ping').length - pingsBefore, 1, 'a standing presence session pings (RELAY-H1) - one per tick that finds PING_MS elapsed');
+  assert.equal(p.sendPose({ x: 2, y: 2, z: 3, yaw: 0, pitch: 0, mv: 1 }), true, 'and the heartbeat pose still goes at HEARTBEAT_MS, unmoved by the ping');
 });
 
 // ── THE LOG ──────────────────────────────────────────────────────────
@@ -350,7 +354,7 @@ test('CHAT1 / AUDIT CHAT: the log - the World tab from CHAT_TABS (one today, eac
   assert.equal(log.push('world', { id: 'a', name: 'A', text: '' }), null, 'nothing to say: nothing kept');
   assert.equal(log.version, v0, 'and nothing to show');
   const l1 = log.push('world', { id: 'a', name: 'A', text: 'one', at: 5 });
-  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false, system: false });   // SRV-N: every line carries the flag, and a player's is false
+  assert.deepEqual(l1, { seq: 1, id: 'a', name: 'A', text: 'one', at: 5, t: 10_000, mine: false, system: false, red: false });   // SRV-N: every line carries the flag, and a player's is false   // ACC1g: and no `v` - ACC1d's verdict left the wire with the gate   // RED1: and `red` the same way, false on a player's line - it is the SERVER speaking, set from the relay's own frame type and never from a field
   assert.equal(log.tab('world').unread, 1, 'closed: unread');
   assert.ok(log.version > v0);
   log.push('world', { id: 'me', name: 'Me', text: 'two', mine: true });
@@ -625,8 +629,31 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive \} from '\.\.\/player\/pointerLock\.js';/);   // AUDIT-TO1 I2: cursorActive joined the import
   assert.match(w, /if \(enhanced && typeof document !== 'undefined'\) chatStart\(\);/, 'the enhanced skin\'s, with a document (node has none)');
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
-  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);\s*link\.onRelay = onRelayVersion;\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
-  assert.match(w, /onSend: \(tabId, text\) => chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false,/, 'a typed line down its tab\'s session, and the answer back (B2)');
+  assert.match(w, /for \(const tab of chatLog\.tabs\) \{\s*const link = new OnlineSession\(\{ url: online\.url, name: online\.name, look: online\.look, id: online\.id, secret: online\.secret, presence: false \}\);\s*link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);[\s\S]{0,700}?link\.onRelay = onRelayVersion;\s*link\.join\(tab\.room\);\s*chatLinks\.set\(tab\.id, link\);/, 'a channel session per tab, the presence session\'s identity, a line to its tab');
+  // RED1: and the SERVER's own line beside the player's, with the flag
+  // set HERE from the relay's frame type - test/red1_server_say.test.js
+  // holds what that means; this holds that the host really wires it.
+  assert.match(w, /link\.onRed = \(line\) => chatLog\.push\(tab\.id, \{ text: line\.text, at: line\.at, red: true \}\);/, 'the server line lands on the same log');
+  // UNSTUCK1 (2026-09-20): onSend stopped being a one-liner - a LOCAL
+  // command is checked before the relay round trip - so the old pin,
+  // which matched the whole arrow verbatim, could no longer hold. It is
+  // re-aimed rather than relaxed, and it is STRONGER than the line it
+  // replaces: the B2 claim (the line goes down THIS TAB'S session and
+  // its answer is what onSend returns) is still matched character for
+  // character as the fall-through, AND the new claim is pinned beside
+  // it - the local command is tested FIRST, so a `/unstuck` never
+  // reaches the relay, and it answers true, which is what keeps the
+  // typed line out of the field. A pin that merely checked `sendChat`
+  // appeared somewhere in the host would pass on a handler that sent
+  // every line twice, or one that sent the command to the room.
+  assert.match(w, /return chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false;/, 'a typed line down its tab\'s session, and the answer back (B2)');
+  const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w);
+  assert.ok(onSend, 'UNSTUCK1: the host no longer carries an onSend block');
+  const cmdAt = onSend[1].indexOf("/^\\/unstuck$/i.test(text.trim())");
+  const sendAt = onSend[1].indexOf('sendChat(text)');
+  assert.ok(cmdAt > 0, 'UNSTUCK1: the local /unstuck command is gone from onSend');
+  assert.ok(cmdAt < sendAt, 'UNSTUCK1: the local command must be tested BEFORE the relay send, or the room hears it');
+  assert.match(onSend[1], /return true;/, 'UNSTUCK1: a spent command answers true, which is what clears the field');
   assert.match(w, /canOpen: \(\) => !gamePaused\(\) && !\(townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\)\)/, 'no chat under a window');
   assert.match(w, /onOpen: \(\) => surfaceOpen\('chat'\),/, 'AUDIT CHAT C2: the pointer freed on open (AUDIT SOC B6: by the first of the counted surfaces); PL3: the opening Enter reclaimed from the toggle');
   assert.match(w, /const surfaceOpen = \(name\) => \{ pointerSurfaces\.add\(name\); setCursorActive\(false\); releaseLook\(\); \};/);
@@ -649,7 +676,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   assert.match(wCode, /chatPanel\.render\(\{\s*covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\),/, 'covered under a window');
   assert.match(w, /status: link\?\.statusLine\('chat'\) \?\? null,/, 'the session\'s own line, labelled (B5)');
   assert.doesNotMatch(w, /chat: \$\{link\.error/, 'and no remake of it');
-  assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*\/\/[^\n]*\n)*\s*if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
+  assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*(?:\/\/[^\n]*|tradeFrame\(\);[^\n]*)\n)*\s*if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
   assert.match(w, /'pagehide', \(\) => \{\s*try \{ worldPublish\(performance\.now\(\), true\); \}\s*catch \(e\) \{[^\n]*\}\s*online\?\.leave\(\);\s*for \(const link of chatLinks\?\.values\(\) \?\? \[\]\) link\.leave\(\);\s*peerBodies\?\.destroy\(\);/, 'the goodbye leaves every channel - and AUDIT ONCRASH1 A7: the publish is behind its own guard, the leave is not behind the publish');
   assert.doesNotMatch(w, /chatPanel\?\.destroy\(\)/, 'AUDIT CHAT B4: and keeps the panel - a page restored from the cache gets its chat back');
   // CG2 rests on the host listening in the BUBBLE phase (AUDIT CHAT D2): a capture listener beside the panel's would fill the ring

@@ -105,13 +105,30 @@ test('WORLD1: the Room - the host is the hello\'d socket in the room longest, sa
   assert.deepEqual(welcomeOf(c).peers.map((p) => p.id).sort(), ['aaaa-0001', 'bbbb-0002'], 'and the roster still');
   // AUDIT WORLD D4: the joiner that LEADS (a stamp before everyone's - the same-millisecond tie the smaller id wins)
   // is said to the rest and not to itself, and its leave hands the seat back
-  { const tie = r.connect(); a.att.since += 10; b.att.since += 10; c.att.since += 10; r.wake();
-    await r.hello(tie, '0000-tie0', at(1, 1));
+  // ACC1g: the token is minted BEFORE the stamps are bumped. A hello
+  // mints one now, and minting is real Ed25519 - a few milliseconds
+  // between the bump and the hello, which is enough to undo a +10ms
+  // tie that this pin is entirely about.
+  const tieTok = await r.token('0000-tie0');
+  // ACC1g: AN EXACT TIE, not a ten-millisecond head start. The old
+  // fixture bumped the other three by +10ms and relied on this test
+  // reaching the hello inside that window; a hello mints a real
+  // Ed25519 token now, so it does not, and the pin was measuring the
+  // wall clock instead of the tie-break. The clock is FROZEN for this
+  // block and the three stamps are set to the same instant, which is
+  // exactly what the line above says the case is - "the
+  // same-millisecond tie the smaller id wins".
+  const realNow = Date.now; const froze = realNow();
+  try {
+    Date.now = () => froze;
+    const tie = r.connect(); a.att.since = froze; b.att.since = froze; c.att.since = froze; r.wake();
+    await r.hello(tie, '0000-tie0', at(1, 1), { tok: tieTok });
     assert.equal(welcomeOf(tie).host, '0000-tie0', 'the joiner leads');
     for (const ws of [a, b, c]) assert.deepEqual(ofType(ws, 'host').at(-1), { t: 'host', id: '0000-tie0' }, 'said to the rest');
     assert.equal(ofType(tie, 'host').length, 0, 'not to itself: its welcome said it');
     await r.drop(tie);
-    for (const ws of [a, b, c]) assert.deepEqual(ofType(ws, 'host').at(-1), { t: 'host', id: 'aaaa-0001' }, 'the seat handed back'); }
+    for (const ws of [a, b, c]) assert.deepEqual(ofType(ws, 'host').at(-1), { t: 'host', id: 'aaaa-0001' }, 'the seat handed back');
+  } finally { Date.now = realNow; }
   // the host leaves: the next-longest, said to everyone
   await r.drop(a);
   assert.deepEqual(ofType(b, 'host').at(-1), { t: 'host', id: 'bbbb-0002' }, 'b has been here longest now');
@@ -187,7 +204,18 @@ test('WORLD1: the hosts by source - the dungeon host\'s shared world is the layo
   assert.match(d, /for \(let i = foes\.length - 1; truncate && i >= \(w\.foes\?\.length \?\? 0\); i--\) \{/, 'the cut is the save\'s alone');
   assert.match(d, /sharedWorld\(\) \{\s*const w = collectWorld\(\);\s*w\.foes = w\.foes\.slice\(0, _layoutFoes\);\s*delete w\.teleportedIntoDungeon;\s*delete w\.droppedLoot;\s*delete w\.droppedTorches;\s*(?:\/\/[^\n]*\n\s*)*(?:\/\/[^\n]*\n\s*)*delete w\.piles;\s*for \(const f of w\.foes\) delete f\.items;\s*w\.loot = lootRecords\(\[\.\.\._lootSeen\]\);\s*(?:\/\/[^\n]*\n\s*)*w\.actions = \(w\.actions \?\? \[\]\)\.map\(sharedRecord\);\s*(?:w\.camps = campMemory\(\);[^\n]*\n\s*)?return \{ locationKey: _locationKey, stamp: _sharedStamp, world: w \};\s*\},/, 'the layout\'s run alone (AUDIT WORLD B2), nothing of the player\'s own - not the drops (B3) - keyed and stamped (B1); and since WORLD4 the containers the room has OPENED in place of every pile\'s contents, and since AUDIT WORLD4 D4 no foe item list either - `corpse:<i>` reads exactly that array');
   assert.match(d, /restoreSharedWorld\(shared\) \{\s*if \(!shared \|\| shared\.locationKey !== _locationKey \|\| !shared\.world \|\| typeof shared\.world !== 'object'\) return false;\s*if \(shared\.stamp === _sharedStamp \|\| _sharedApplied\) return false;\s*(?:\/\/[^\n]*\n\s*)*const acts = [^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*const sfoes = [^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*applyWorld\(\{ \.\.\.shared\.world, piles: undefined, actions: acts, foes: sfoes \}, \{ truncate: false, wire: true \}\);\s*applyLoot\(shared\.world\.loot\);[^\n]*\n\s*(?:applyCampMemory\(shared\.world\.camps\);[^\n]*\n\s*)?_sharedApplied = true;\s*return true;\s*\},/, 'another dungeon\'s memory refused, its own refused (B1), once (B7), the layout\'s run alone in (B2), the rest left standing; and since WORLD4 the room\'s opened containers through the live door');
-  assert.match(d, /for \(const e of enemies\) await buildFoeAt\(e\);\s*const _layoutFoes = foes\.length;/, 'the run measured right after the markers\' build');
+  // The law is that NO CODE runs between the markers' build and the measure -
+  // anything that appended a foe in between would be counted into the layout's
+  // run and streamed as if the layout had placed it. The pin used to spell that
+  // as `\s*`, which also forbade a COMMENT, and ONLINE-DUNGEON-FOES put a
+  // twenty-line FLAGGED note on that very line. Comment lines are allowed
+  // through and statements are still not, so the pin now forbids what it means.
+  const between = /for \(const e of enemies\) await buildFoeAt\(e\);\n([\s\S]*?)\n\s*const _layoutFoes = foes\.length;/.exec(d);
+  assert.ok(between, 'the run measured right after the markers\' build');
+  for (const l of between[1].split('\n')) {
+    assert.match(l, /^\s*(\/\/.*)?$/,
+      `a STATEMENT stands between the markers' build and the run's measure, and it would be counted into the layout: ${l.trim()}`);
+  }
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /dungeonSharedWorld\(\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.sharedWorld\(\) : null; \},/);
   assert.match(m, /restoreDungeonSharedWorld\(shared\) \{ return mode === 'dungeon' && dungeonCtx \? dungeonCtx\.restoreSharedWorld\(shared\) : false; \},/);

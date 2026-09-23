@@ -106,12 +106,18 @@ function fireListener(lineSrc, event = {}) {
   const latch = {};
   const createActivateGate = () => ({});
   const setClickDelay = () => seen.push({ type: 'setClickDelay' });
+  // QUICK-LOOT B4: the wheel statement grew a rung of its own - the
+  // plaque takes the notch while it is listing something. It answers
+  // false here (nothing is highlighted before the first frame, which is
+  // the state this pin fires in), so the fall-through past it is what
+  // gets witnessed, exactly as with `travelControlUI` above.
+  const quickLootWheel = () => false;
   new Function('canvas', 'townTalk', 'requestLook', 'routeLargeHudClick', 'hudCtx', 'mwViewWheel',
     'document', 'gamePaused', 'latch', 'createActivateGate', 'setClickDelay',
-    'travelControlUI', 'isEnhanced', 'nativeMetrics', 'pointToNative',
+    'travelControlUI', 'isEnhanced', 'nativeMetrics', 'pointToNative', 'quickLootWheel',
     `var modes; ${lineSrc}`)(canvas, townTalk, requestLook, routeLargeHudClick, hudCtx, mwViewWheel,
     document, gamePaused, latch, createActivateGate, setClickDelay,
-    travelControlUI, isEnhanced, nativeMetrics, pointToNative);
+    travelControlUI, isEnhanced, nativeMetrics, pointToNative, quickLootWheel);
   assert.equal(seen.length, 1, 'one listener registered');
   seen[0].fn({ preventDefault: () => seen.push({ type: 'preventDefault' }), button: 0, clientX: 0, clientY: 0, ...event });
   return seen.map((s) => s.type);

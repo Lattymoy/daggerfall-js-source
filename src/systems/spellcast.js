@@ -438,6 +438,16 @@ export function playerArrowOrigin(eye, lookDir, flipHorizontal = bowHandFlipped(
  * DRAWN RECT and thunderlockMuzzle has already applied it, where
  * PLAYER_ARROW_SIDE is a bare number that has to be flipped here.
  */
+/** AUDIT FIELD-GUN-MW F2: THE FORK, ONCE. Both arrow spawn seams (combat/arrowFlight.js and the dungeon host's
+ *  own missiles) used to restate it: a supplied muzzle wins, nothing supplied keeps GetAimPosition's bow-hand arm.
+ *  The Morrowind rig's third-person answer is a WORLD point (`{ world }`, combat/rigMuzzle.js) - behind the body a
+ *  lens offset is the wrong shape - and a third arm restated in two places is how the two drift, so the fork lives
+ *  here and the seams call it. */
+export function playerShotOrigin(eye, lookDir, muzzle) {
+  if (muzzle?.world) return [...muzzle.world];
+  return muzzle ? playerMuzzleOrigin(eye, lookDir, muzzle) : playerArrowOrigin(eye, lookDir);
+}
+
 export function playerMuzzleOrigin(eye, lookDir, muzzle) {
   const fl = Math.hypot(lookDir[0], lookDir[1], lookDir[2]) || 1;
   const f = [lookDir[0] / fl, lookDir[1] / fl, lookDir[2] / fl];

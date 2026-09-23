@@ -30,11 +30,11 @@ test('ROSTER-G: the channel\'s welcome NAMES who is in it - id and name, no look
     await r.hello(b, 'bbbb-0002', null, { name: 'Bravo' }); clock += 100;
     assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now }, 'first in: nobody to name, and the count says one');
     assert.equal(typeof a.sent[0].now, 'number', 'AUDIT SOC B7: the relay\'s clock rides the channel\'s welcome too');
-    assert.deepEqual(b.sent[0], { t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'Alpha' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }, 'second in: told the first, by name alone');
-    assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'Bravo' }], 'the first hears the second join - the name and nothing else');
+    assert.deepEqual(b.sent[0], { t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'Alpha', sub: 'acct-aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }, 'second in: told the first, by name and its verified account (MOD1: what /mute names)');
+    assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'Bravo', sub: 'acct-bbbb-0002' }], 'the first hears the second join - the name and the account, nothing else');
     await r.hello(c, 'cccc-0003', null, { name: 'Charlie' }); clock += 100;
     assert.deepEqual(c.sent[0].peers.map((p) => p.id).sort(), ['aaaa-0001', 'bbbb-0002']); assert.equal(c.sent[0].n, 3);
-    for (const p of c.sent[0].peers) assert.deepEqual(Object.keys(p).sort(), ['id', 'name'], 'a channel names; it does not dress or place');
+    for (const p of c.sent[0].peers) assert.deepEqual(Object.keys(p).sort(), ['id', 'name', 'sub'], 'a channel names; it does not dress or place');
     await r.drop(b);
     assert.deepEqual(ofType(a, 'leave'), [{ t: 'leave', id: 'bbbb-0002' }], 'and says the leave');
     assert.deepEqual(ofType(c, 'leave'), [{ t: 'leave', id: 'bbbb-0002' }]);
@@ -51,7 +51,7 @@ test('ROSTER-G: the list is CUT at CHAT_ROSTER_MAX and the count is not - a full
   const realNow = Date.now; let clock = 1e12; Date.now = () => clock;
   try {
     const n = CHAT_ROSTER_MAX + 3;
-    for (let i = 0; i < n; i++) { if (i % 40 === 39) clock += 1000; const s = r.connect(); await r.hello(s, `p${String(i).padStart(4, '0')}`, null, { name: `N${i}` }); }
+    for (let i = 0; i < n; i++) { if (i % 40 === 39) clock += 1000; const s = r.connect(); await r.hello(s, `p${String(i).padStart(4, '0')}`); }   // ACC1g: the id IS the name - `N16` folds to a slur under NAME-F1 and no token can carry one
     clock += 1000;
     const last = r.connect(); await r.hello(last, 'zzzz-9999', null, { name: 'Last' });
     const w = last.sent[0];
@@ -89,9 +89,9 @@ test('ROSTER-G: world.js hands the panel the ACTIVE CHANNEL\'s link, with the pr
   const world = rd('src/scenes/world.js');
   assert.match(world, /roster: \(\) => chatLinks\?\.get\(chatLog\?\.active\) \?\? online \?\? null,/, 'the tab\'s own link first');
   const panel = rd('src/ui/chatPanel.js');
-  assert.match(panel, /if \(dup\.has\(r\.name\.toLowerCase\(\)\)\) n\.append\(el\('span', 'dfchat-who-tag', '#' \+ r\.tag\)\);/, 'the tag is conditional on a shared name');
+  assert.match(panel, /if \(dup\.has\(r\.name\.toLowerCase\(\)\)\) line\.append\(el\('span', 'dfchat-who-tag', '#' \+ r\.tag\)\);/, 'the tag is conditional on a shared name (CHAT-FIT: on the row\'s one line)');
   // the relay's side, by source: a channel's welcome is built from `others` by name, cut and counted
   const idx = rd('server/src/index.js');
-  assert.match(idx, /const named = others\.slice\(0, CHAT_ROSTER_MAX\)\.map\(\(b\) => \(\{ id: b\.id, name: b\.name \}\)\);/);
+  assert.match(idx, /const named = others\.slice\(0, CHAT_ROSTER_MAX\)\.map\(\(b\) => badged\(\{ id: b\.id, name: b\.name, sub: b\.sub \}, b\)\);/, 'ACC1g took the per-name VERDICT off this row - every name in the room was verified to get in, so it said the same thing about everybody; ACC3 put a BADGE on it, which is the opposite kind of field: a title is held by a few and is read out of the signature');
   assert.doesNotMatch(idx, /if \(isChatRoom\(a\.key\)\) return;   \/\/ a channel announced no join/, 'the leave arm no longer skips a channel');
 });

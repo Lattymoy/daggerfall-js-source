@@ -15,7 +15,7 @@
 // fifth time - and the answer is the same answer: ONE seam that builds
 // the window, and each host hands it what only that host knows.
 //
-// THE BUY WINDOW IS NOT THIS. worldModes.js:2754 builds a SpellbookWindow
+// THE BUY WINDOW IS NOT THIS. worldModes.js:3004 builds a SpellbookWindow
 // too and looks like a duplicate from a distance; it is the spell
 // merchant's shop - buyMode, with `offered`, the building's quality,
 // the shop name, the haggling skills and the classic clock. Different
@@ -30,6 +30,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
 import { SpellbookWindow, spellbookArtLoaded } from './spellbookWindow.js';
+import { setSpellQuickslot } from '../systems/quickslots.js';   // QS8 (the drop's QS7, renamed - QS7 is one mode, one dispatch): a spell readied from the book becomes the spell slot's
 
 export { spellbookArtLoaded };
 
@@ -65,7 +66,15 @@ export function createSpellbookWindow(deps = {}) {
     // M3: SpellsListBox_OnUseSelectedItem (:770-784) is SetReadySpell
     // then PopToHUD, and the lycanthropy spell casts free. The window
     // decides WHICH spell is free; the engine owns what readying means.
-    onReady: (sp, { noSpellPointCost } = {}) => magic?.readySpell?.(sp, { free: !!noSpellPointCost }),
+    // QS8 (the spell slot never learned what the book readied): readying a
+    // spell from the book PUTS IT ON THE SPELL SLOT (key 3), so the next
+    // press of the key readies the spell last chosen here - the slot
+    // otherwise only ever took the book's first spell or a hold-cycle
+    // pick. The free lycanthropy cast is not a choice and leaves it alone.
+    onReady: (sp, { noSpellPointCost } = {}) => {
+      if (!noSpellPointCost) setSpellQuickslot(sp);
+      return magic?.readySpell?.(sp, { free: !!noSpellPointCost });
+    },
     rows: rows ?? (() => []),
   };
   if (isEnhanced() && typeof document !== 'undefined') {

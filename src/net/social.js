@@ -49,6 +49,8 @@ const kept = (storage, key, re, mint) => {
   try { back = storage?.getItem?.(key) ?? null; } catch { back = null; }
   return back === v ? v : null;
 };
+/** The reason `actionsFor` gives for a peer already seated with me - ONE home, read by player/socialPick.js peerRelationText too (AUDIT DROPS: a rewording here used to drop the plaque's 'In your party' line with every pin green). */
+export const WHY_IN_PARTY = 'in your party';
 export const accountId = (storage = appStorage()) => kept(storage, 'dagger.online.account', /^[A-Za-z0-9_-]{4,40}$/,
   () => 'a' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4));
 
@@ -105,6 +107,8 @@ export class SocialState {
     this.invites = new Map();
     /** Bumps on every change a panel would show; a panel repaints on a new number, never per frame (ChatLog's law). */
     this.version = 0;
+    /** AUDIT PARTY8: bumps on a member's pose alone - the rows read it in place; `version` no longer moves for one. */
+    this.poseVersion = 0;
     /** @type {((note: Note, text: string) => void)|null} a note in, with its words - the chat's system line */
     this.onNote = null;
     /** @type {((text: string) => void)|null} the hub refused one act, in words */
@@ -157,7 +161,9 @@ export class SocialState {
         // the party as the hub has it - the poses I already hold ride over, since a view says the LATEST pose the hub
         // holds and a pose frame in between is newer than a view composed before it only when it is
         if (f.party && this.party && f.party.id === this.party.id) {
-          for (const m of f.party.members) { const was = this.party.members.find((x) => x.acct === m.acct); if (was?.p && !m.p) m.p = was.p; }
+          // AUDIT PARTY-REST: ...unless the hub says the seat is OFFLINE - then its last pose is a ghost's, and a gate that
+          // counted it ("gather the party") or a mirror that read its stale `rest` acted on someone who is not here
+          for (const m of f.party.members) { const was = this.party.members.find((x) => x.acct === m.acct); if (was?.p && !m.p && m.online !== false) m.p = was.p; }
         }
         // AUDIT SOC B16: a view that says what I already hold moves nothing - the version is the panels' repaint clock
         const same = JSON.stringify(f.party) === JSON.stringify(this.party);
@@ -176,7 +182,7 @@ export class SocialState {
         // invitation that never lapses
         invite.got = this.now();
         if (!this.invites.has(invite.party) && this.invites.size >= PENDING_MAX) {
-          let oldest = null;
+          /** @type {[string, Invite]|null} */ let oldest = null;   // a TUPLE, said so: inferred as an array of string|Invite it failed `npm run types` on main (BA-CRASH1 found it in the way)
           for (const [id, inv] of this.invites) if (!oldest || inv.got < oldest[1].got) oldest = [id, inv];
           if (oldest) this.invites.delete(oldest[0]);
         }
@@ -209,8 +215,13 @@ export class SocialState {
     if (!this.party || !p) return false;
     const m = this.party.members.find((x) => x.acct === acct);
     if (!m) return false;
+    const first = !m.p;
     m.p = p;
-    this._changed('pose');
+    // AUDIT PARTY8: a pose that REPLACES one is a quiet change - the panels read the row in place (socialPanel's live
+    // pass, partyPanel's own paint) and a version bump rebuilt the open panel's every button under the pointer. The
+    // FIRST pose of a seat still repaints: its row has no line to write into yet.
+    if (first) this._changed('pose');
+    else { this.poseVersion++; this.onChange?.('pose'); }
     return true;
   }
 
@@ -233,7 +244,7 @@ export class SocialState {
   /** Seats left. */
   seatsFree() { return this.party ? Math.max(0, PARTY_MAX - this.party.members.length) : PARTY_MAX - 1; }
 
-  /** The peer ids of my party's other members - the names to draw green. A Set, fresh each call (cheap: at most three
+  /** The peer ids of my party's other members - the names to draw green. A Set, fresh each call (cheap: at most PARTY_MAX - 1
    *  members, at most ACCOUNT_TABS_MAX peers each). */
   partyPeers() {
     const out = new Set();
@@ -294,7 +305,7 @@ export class SocialState {
     else if (relation === 'friend') whyNotFriend = 'already friends';
     else if (relation === 'out') whyNotFriend = 'request sent';
     if (!whyNotInvite) {
-      if (seated) whyNotInvite = 'in your party';
+      if (seated) whyNotInvite = WHY_IN_PARTY;
       else if (this.party && this.seatsFree() === 0) whyNotInvite = 'the party is full';
       // any member may invite - the hub's law, so the leader's seat is no gate here
     }

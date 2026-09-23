@@ -138,9 +138,9 @@ test('AUDIT 28 F-C1/F-C2: settle drops the owed look (SetFacing -> Init), and ev
     // among them) are pinned in test/maco_lookswing.test.js, and what
     // stays here is that every host still asks it and still answers
     // Update's three cases in this order.
-    'src/scenes/world.js': ['gamePaused()', "swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: weaponRig.playerWeapon.machine?.isBow }) && walkMode && modeNow() === 'exterior'"],
-    'src/scenes/exterior.js': ['gamePaused()', "swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: weaponRig.playerWeapon.machine?.isBow }) && walkMode && modeNow() === 'exterior'"],
-    'src/scenes/dungeon.js': ['ctx.uiOverlayActive', 'swingSuppressesLook({ swingHeld: rightHeld || swipeHeld, weaponIsBow: ctx.weaponIsBow }) && walkMode'],
+    'src/scenes/world.js': ['gamePaused()', "swingSuppressesLook({ swingHeld: rightHeld || swipeHeld || swingKeyLatch, weaponIsBow: weaponRig.playerWeapon.machine?.isBow }) && walkMode && modeNow() === 'exterior'"],
+    'src/scenes/exterior.js': ['gamePaused()', "swingSuppressesLook({ swingHeld: rightHeld || swipeHeld || swingKeyLatch, weaponIsBow: weaponRig.playerWeapon.machine?.isBow }) && walkMode && modeNow() === 'exterior'"],
+    'src/scenes/dungeon.js': ['ctx.uiOverlayActive', 'swingSuppressesLook({ swingHeld: rightHeld || swipeHeld || swingKeyLatch, weaponIsBow: ctx.weaponIsBow }) && walkMode'],
     'src/scenes/interior.js': ['gamePaused()', 'false'],
   };
   const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

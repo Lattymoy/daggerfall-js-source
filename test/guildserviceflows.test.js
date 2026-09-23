@@ -140,11 +140,11 @@ test('U24 (ROAD-A7 CORRECTED): a click SELECTS the scrolled row; the DOUBLE clic
 
 test('AUDIT 65 UI-1: a BARE picker takes the HOST\'s four-argument click, and the 4th slot is not its clock', () => {
   // The mounts that hand a ListPickerWindow straight to an overlay slot
-  // - the U key's useMagicItemWindow (world.js:6244,
-  // dungeonContext.js:6288, worldModes.js:7535) and the bookshelf
-  // picker (worldModes.js:1720-1730) - are dispatched by the hosts'
-  // ONE shape: `click(vx, vy, right, middle)` (townTalk.js:1158,
-  // worldModes.js:7716, dungeonContext.js:6022). The window's header
+  // - the U key's useMagicItemWindow (world.js:7450,
+  // dungeonContext.js:6762, worldModes.js:8589) and the bookshelf
+  // picker (worldModes.js:1771-1956) - are dispatched by the hosts'
+  // ONE shape: `click(vx, vy, right, middle)` (townTalk.js:1205,
+  // worldModes.js:8807, dungeonContext.js:6496). The window's header
   // already defended the THIRD slot by content; the fourth was left
   // open, so `middle` arrived as `now`, `false ?? this._now()` kept the
   // `false`, and `false - false === 0 < 300` made every second click a
@@ -317,7 +317,8 @@ const store21 = () => createFactionRep(new Map([[21, { id: 21, rep: 0, children:
 test('U24: the donation field opens pre-filled on 1000 and refuses letters', () => {
   const e = player();
   const f = buildDonationFlow(e, store21(), 21, { rows });
-  assert.equal(f.top.rows[0].text, DONATE_HOW_MUCH);
+  // AUDIT-CM: serviceDonateHowMuch is the field's LABEL (SetTextBoxLabel :46), on its row - no tokens above
+  assert.deepEqual(f.top.rows, []); assert.equal(f.top.field.label, DONATE_HOW_MUCH); assert.equal(f._input.label, DONATE_HOW_MUCH);
   assert.deepEqual(f.top.field, DONATION_FIELD);
   assert.equal(f.value, '1000', 'TextBox.Text = "1000"');
   f.input('backspace'); f.input('backspace'); f.input('backspace'); f.input('backspace');
@@ -457,4 +458,11 @@ test('MAC-BUG2: the service windows fill %cpn and %cn - a cure offer is a TRADE 
   // is what Mac could see and name.
   assert.ok(expandGuildMacros(TRADE_LINE, { amount: 1 }).includes('%cpn'));
   assert.ok(expandGuildMacros(TRADE_LINE, { amount: 1, shopName: null, cityName: null }).includes('%cn'));
+});
+
+test('AUDIT-CM: Escape closes the donation box through the base popup - no write, no gold moved, the flow done', () => {
+  const e = player();
+  const f = buildDonationFlow(e, store21(), 21, { rows });
+  f.input('Escape');
+  assert.equal(f.done, true); assert.equal(goldAmount(e), 5000);
 });

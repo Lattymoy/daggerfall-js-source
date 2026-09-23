@@ -58,6 +58,8 @@ import { PlayerNotebook } from '../systems/notebook.js';
 import { GENDERS } from '../characters/nameHelper.js';
 import { ZERO_NPC_DATA, NPC_CONTEXT, raceFromFaction } from '../characters/staticNpc.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js';
+import { expandMacroValues, setMacroWorld } from '../systems/quest/questMacros.js';   // GQL1: the wait box's %pcf
+import { firstName } from '../systems/talkSession.js';
 import { getBool } from '../systems/settings.js';
 import { noteOfferPending } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI's GivePc.OnOfferPending subscription
 import { getTitle } from '../systems/guilds.js';
@@ -310,6 +312,10 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // HUD escort faces' quest-end sweep rides the world ctx
     onQuestEnded: (q) => ctx.onQuestEnded?.(q),
   });
+  // MACRO-ONE: this machine's hooks are the page's GameManager for every
+  // macro walk that is not handed a context of its own (questMacros.js
+  // setMacroWorld) - one registration, every window, every host.
+  setMacroWorld(() => machine.macroContext());
 
   questLists = new QuestListsManager({
     readListTable: (name) => ctx.data.readListTable(name),
@@ -319,7 +325,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // AUDIT 24 (the seven-slice sweep): a LIVE read, not a hardcoded
     // false. DaggerfallUnity.Settings.PlayerNudity is a real setting
     // the port already stores and the launcher already renders as a
-    // toggle - and questLists.js:176 gates adult quests on it, so
+    // toggle - and questLists.js:195 gates adult quests on it, so
     // flipping it did nothing at all. A GETTER because C# reads the
     // setting at the point of use, and the consumer reads
     // `deps.playerNudity` as a value.
@@ -386,7 +392,8 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         let clockSeconds = null;
         for (const r of q.resources.values()) {
           if (r.clockEnabled && !r.clockFinished && Number.isFinite(r.remainingTimeInSeconds)) {
-            clockSeconds = clockSeconds == null ? r.remainingTimeInSeconds : Math.min(clockSeconds, r.remainingTimeInSeconds);
+            const left = r.liveRemainingSeconds(q);   // QT-LIVE1: as of NOW, not as of the last tick the pause gate let through
+            clockSeconds = clockSeconds == null ? left : Math.min(clockSeconds, left);
           }
         }
         active.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, messages });
@@ -458,6 +465,26 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         case 'accepted':
         case 'refused':
           return step.popup ? [{ rows: tokensToRows(step.popup.tokens) }] : [];
+        // GQL1 (Discord, kurkku, 2026-09-21: "this service isn't
+        // available" on every guild quest): with Choose Guild Jobs ON
+        // the flow's first step is the 'gettingQuests' wait box and its
+        // dismissal is the 'pickQuest' picker - and this switch boxed
+        // neither, so the chain came back EMPTY, the questOffer arm
+        // read empty as C#'s silent close, and the popup printed its
+        // no-flow refusal. GettingQuestsBox (:610-622) is a
+        // click-anywhere DaggerfallMessageBox whose generic macro pass
+        // expands %pcf; its OnClose raises the DaggerfallListPickerWindow
+        // (:624-652), whose pick runs OfferQuest and whose cancel just
+        // pops the window.
+        case 'gettingQuests': return [{
+          rows: step.textLines.map((line) => expandMacroValues(line, { pcf: firstName(ctx.playerEntity?.name ?? '') })),
+          onClick: () => this.offerBoxes(step.onClose(), rows),
+        }];
+        case 'pickQuest': return [{
+          picker: step.entries,
+          onPick: (index) => this.offerBoxes(step.onPick(index), rows),
+          onCancel: () => [],
+        }];
         default: return [];
       }
     },

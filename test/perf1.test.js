@@ -55,7 +55,10 @@ test('PERF1 fpsCounter: the script line appears under the cadence once a host ha
 test('PERF1 pins: every host stamps its frame, the grass takes the pref\'s fraction and none at 0, the clouds take the pref behind the door, the pane has both dials (mutant: any one dropped)', () => {
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js']) {
     const s = read(h);
-    assert.match(s, /if \(!frameAlive\(_frameToken\)\) return;[^\n]*\n\s+frameBegin\(now\);/, `${h}: begin at the top of the live frame (a held frame returns before frameEnd, so it leaves no sample)`);
+    // AUDIT-WH L4 gave the ownership guard a body (the host's world
+    // plaque dies with the loop that raised it); `frameBegin` is still
+    // the first thing a LIVE frame does.
+    assert.match(s, /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}[^\n]*\n\s+frameBegin\(now\);/, `${h}: begin at the top of the live frame (a held frame returns before frameEnd, so it leaves no sample)`);
     assert.match(s, /frameEnd\(\);\s+\/\/ PERF1\n\s+requestAnimationFrame\(frame\);\n  \}\n  requestAnimationFrame\(frame\);/, `${h}: end before the loop re-arms`);
   }
   assert.equal(PREF_DEFAULTS.grassDensity, 1, 'the full field by default - the enhanced look is the law, the dial is the escape');

@@ -717,8 +717,16 @@ test('A2 wiring pins: the M-outside dispatch in both exterior hosts, gated on a 
   }
   const w = src('src/scenes/world.js');
   assert.match(w, /if \(!dfLoc \|\| !b\?\.locBlocks \|\| !b\.locOrigin\) return;/, 'empty wilderness opens nothing');
+  // EM4: the town map is behind a SKIN DOOR now - the classic skin
+  // still gets `new ExteriorAutomapWindow(...)`, from inside
+  // ui/townMapDoor.js, and the host opens whichever the skin wears.
+  // The law this line holds is that the host builds a town map at all,
+  // so it follows the build to the door rather than to the class.
   const e = src('src/scenes/exterior.js');
-  assert.match(e, /new ExteriorAutomapWindow\(/);
+  assert.match(e, /createTownMapWindow\(/, 'the host opens a town map');
+  assert.match(src('src/ui/townMapDoor.js'), /new ExteriorAutomapWindow\(/,
+    'and the classic arm of that door still builds DFU\'s own window');
+  assert.match(src('src/scenes/world.js'), /createTownMapWindow\(/, 'both exterior hosts, one door');
   assert.match(src('src/systems/inputActions.js'), /\['KeyM', 'AutoMap'\]/, 'and M is that action\'s default');
 });
 

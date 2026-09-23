@@ -238,5 +238,5 @@ test('WORLD6b-iii(e): the Room - who answers the asker alone with the member\'s 
   assert.equal(ofType(n, 'join').length, 0);
   const s = rd('server/src/index.js');
   assert.match(s, /if \(m\.t === 'who'\) \{[\s\S]{0,1200}a = this\._meterWho\(ws, a, now\); if \(!a\) return;\s*\n\s*if \(isChatRoom\(a\.key\)\) return;/, 'the ask\'s own meter, then the channel refusal');
-  assert.match(s, /this\._send\(ws, JSON\.stringify\(\{ t: 'join', id: b\.id, name: b\.name, look, pose: inRange\(a\.key \?\? '', a\.pose, b\.pose\) \? \(b\.pose \?\? null\) : null \}\)\);/, 'the answer: the asker alone, the pose within range (AUDIT WORLD6b-iii(e) B2)');
+  assert.match(s, /this\._send\(ws, JSON\.stringify\(badged\(\{ t: 'join', id: b\.id, name: b\.name, look, pose: inRange\(a\.key \?\? '', a\.pose, b\.pose\) \? \(b\.pose \?\? null\) : null \}, b\)\)\);/, 'the answer: the asker alone, and the pose within range (AUDIT WORLD6b-iii(e) B2). ACC1g took ACC1d\'s verdict off this frame with the rest of the wire: every name in the room was verified to get in, so a per-name `v` said the same thing about everybody. ACC3 put a badge back on it - and NOT a per-name verdict: a title is held by a few and is read off the signature, so it says something about the peer it is on (test/acc3titles.test.js drives the frame, this pin holds the shape)');
 });

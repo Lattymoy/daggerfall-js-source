@@ -184,6 +184,16 @@ function idbGet(db, key) {
   });
 }
 
+/** Is `key` stored? A count over the one key, so asking about a 10MB
+ *  BSA never reads the 10MB. */
+function idbHas(db, key) {
+  return new Promise((res, rej) => {
+    const req = db.transaction(STORE).objectStore(STORE).count(key);
+    req.onsuccess = () => res(req.result > 0);
+    req.onerror = () => rej(req.error);
+  });
+}
+
 function idbCount(db) {
   return new Promise((res, rej) => {
     const req = db.transaction(STORE).objectStore(STORE).count();
@@ -246,6 +256,10 @@ async function idbGetManifest(db) {
  *  (quota/full device is the mobile reality) - the partial store is
  *  wiped before returning so no poison remains. */
 async function finishIngest(entries, msg) {
+  // A2-WHOLE: an incomplete set is REFUSED here, before a byte is
+  // stored - see REQUIRED_ARENA2.
+  const missing = missingArena2(entries.map((e) => e[0]));
+  if (missing.length) return incompleteArena2Text(missing);
   try {
     const d = await getDb();
     await idbPutAll(d, entries, (done, n) => { msg.textContent = `storing ${done}/${n}...`; });
@@ -411,6 +425,32 @@ export async function storeMusicFiles(files) {
 export const storedMusicNames = () => assetNames(MUSIC_STORE);
 export const loadMusicFile = (fileName) => assetBytes(MUSIC_STORE, fileName);
 export const clearStoredMusic = () => clearAssets(MUSIC_STORE);
+
+/** SNDREP1: a SOUND pack (DFU's StreamingAssets/Sound WAVs) rides the MUSIC store - it is audio the player supplied,
+ *  with the music pack's own lifecycle, and a store of its own would be a database version bump for two files. The
+ *  two packs cannot collide: each registration reads only the names it knows (song_*.ogg / AmbientCrickets.wav). */
+export async function storeSoundFiles(files) {
+  const { soundEntry } = await import('../systems/soundReplacer.js');
+  return storeAssets(MUSIC_STORE, files, (n) => !!soundEntry(n));
+}
+/** SNDREP1: REMOVE THE SOUND PACK - its WAVs leave the music store and the music pack beside them stays, which is
+ *  why this deletes by name rather than clearing the store. The registry is emptied with it, so the next night's
+ *  crickets are Daggerfall's own again. Answers how many files went. */
+export async function clearStoredSounds() {
+  const { soundEntry, setSoundReplacements } = await import('../systems/soundReplacer.js');
+  const names = (await storedMusicNames()).filter((n) => soundEntry(n));
+  if (names.length) {
+    const d = await getDb();
+    await new Promise((res, rej) => {
+      const tx = d.transaction(MUSIC_STORE, 'readwrite');
+      for (const n of names) tx.objectStore(MUSIC_STORE).delete(n);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  }
+  setSoundReplacements([], null);
+  return names.length;
+}
 
 /** One derived artifact, by key. Bytes in, bytes out - this door knows
  *  nothing about what it holds, and the artifact's OWN envelope (magic,
@@ -671,6 +711,18 @@ async function _openMorrowindArchives() {
     archives.push(ws.weaponSheathingArchive());
   } catch (err) {
     console.warn(`weapon sheathing assets: ${err.message}`);
+  }
+  // FIELD-GUN-MW2: THE PORT'S OWN Morrowind assets - the Dwarven
+  // Thunderlock's mesh and texture, which no player's archives can
+  // carry because Morrowind has no firearm. Same rank and the same
+  // reason as the line above: after the loose files, so Mac dropping
+  // his own texture in REPLACES ours without a rebuild, and before
+  // every .bsa, where these names do not exist.
+  try {
+    const own = await import('../systems/ownMwAssets.js');
+    archives.push(own.ownMwArchive());
+  } catch (err) {
+    console.warn(`own morrowind assets: ${err.message}`);
   }
   for (const n of names) {
     try {
@@ -935,7 +987,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:2165), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:3489), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */
@@ -1003,6 +1055,26 @@ export async function pickMusicFolder() {
       looks for.</p>`,
     store: storeMusicFiles,
     register: async () => setMusicReplacements(await storedMusicNames(), loadMusicFile),
+  });
+}
+
+export async function pickSoundFolder() {
+  const { setSoundReplacements } = await import('../systems/soundReplacer.js');
+  return pickAssetFolder({
+    title: 'Your own sounds',
+    blurb: `<p>Pick a folder of WAVs to play instead of Daggerfall's
+      built-in sounds. Nothing is uploaded - it is stored in this
+      browser.</p>
+      <p style="color:#999">A <b>Daggerfall Unity sound mod works
+      as-is</b> - pick its <b>StreamingAssets/Sound</b> folder. Supported
+      so far: <b>AmbientCrickets.wav</b> (the night crickets) and
+      <b>AmbientDistantHowl.wav</b> (the distant howl).</p>`,
+    store: storeSoundFiles,
+    register: async () => {
+      const n = setSoundReplacements(await storedMusicNames(), loadMusicFile);
+      if (n) (await import('../systems/audio.js')).audio.preloadReplacements?.();   // the next night's crickets are the pack's
+      return n;
+    },
   });
 }
 
@@ -1098,6 +1170,38 @@ export const FOLDER_PICK_HINT = 'Some Linux browsers (Snap or Flatpak builds, wh
 
 const PROBE = 'ART_PAL.COL'; // small, universally present, first thing most scenes touch
 
+/** A2-WHOLE (Discord, 2026-09-22 - The Craziest Angel: "boot failed:
+ *  ARCH3D.BSA: 404 - not in the stored ARENA2 selection ... keep getting
+ *  this error even after uninstalling the daggerfall from steam and
+ *  reinstalling"): THE PICKER TOOK ANY FOLDER THAT HELD ONE DAGGERFALL
+ *  FILE AND STORED IT AS COMPLETE. The manifest is written last and its
+ *  presence is the completeness proof - but nothing ever asked whether
+ *  the set was complete, only whether the WRITE finished. So a folder
+ *  with the palettes and none of the BSAs (a DOS install's small ARENA2,
+ *  the CD's, a parent folder's stray files) was kept as a whole game,
+ *  the boot died on the first model it read, and the picker NEVER CAME
+ *  BACK, because the stored manifest said the set was done. Reinstalling
+ *  the game could not help: the bad copy lived in the browser.
+ *
+ *  These are the files every boot reads before a player sees a frame -
+ *  the models, the blocks, the map, the monsters, the terrain, the text
+ *  and the palette. A set without all of them is not stored, and the
+ *  picker says which are missing. */
+export const REQUIRED_ARENA2 = Object.freeze([
+  'ARCH3D.BSA', 'BLOCKS.BSA', 'MAPS.BSA', 'MONSTER.BSA', 'WOODS.WLD', 'TEXT.RSC', 'ART_PAL.COL',
+]);
+/** The required files a set of (normalized) names does not have. */
+export const missingArena2 = (names) => {
+  const have = new Set(names);
+  return REQUIRED_ARENA2.filter((n) => !have.has(n));
+};
+/** What the picker says about an incomplete folder - which files, and
+ *  the two ways to a whole one. */
+export const incompleteArena2Text = (missing) =>
+  `That is not a complete ARENA2 folder - it has no ${missing.join(', ')}. `
+  + 'Pick the ARENA2 folder inside your Daggerfall install (on Steam and GOG it is under DF/DAGGER/ARENA2), '
+  + 'or use DaggerfallGameFiles.zip below.';
+
 // ---- ZIP ingest (mobile path, 2026-08-13) ----
 // iOS Safari has no directory picker, so phones supply the data as a
 // ZIP (the official DaggerfallGameFiles.zip or a self-zipped arena2).
@@ -1185,7 +1289,16 @@ export async function ensureArena2() {
   try {
     const d = await getDb();
     const m = await idbGetManifest(d);
-    if (m && m.v === MANIFEST_V) return;   // complete, current-diet set
+    // A2-WHOLE: a manifest is only as good as the set under it. A set
+    // stored before the completeness check could be missing the files
+    // every boot needs - it is wiped here, so the picker comes back
+    // instead of the same 404 on every launch.
+    if (m && m.v === MANIFEST_V) {
+      let whole = true;
+      for (const n of REQUIRED_ARENA2) if (!(await idbHas(d, n))) { whole = false; break; }
+      if (whole) return;   // complete, current-diet set
+      await clearStoredData();
+    }
     if (await idbCount(d) > 0) await clearStoredData();   // partial or stale-diet: poison, wipe to the picker
   } catch { /* no IDB */ }
   try { const r = await fetch(`./arena2/${PROBE}`); if (r.ok) return; } catch { /* offline dev server */ }

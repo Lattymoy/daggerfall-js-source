@@ -44,7 +44,6 @@ export const PREF_DEFAULTS = Object.freeze({
   skin: 'enhanced',
   // ONLINE1 (2026-09-12): the Online door's two fields - the name over the
   // player's head and the relay to join (net/online.js DEFAULT_SERVER when empty).
-  onlineName: '',
   onlineServer: '',
   // CHAT-R2 (2026-09-16, Mac: "a hide chat button"): the chat put
   // away, across sessions. A player who hid it wants it hidden next
@@ -79,6 +78,10 @@ export const PREF_DEFAULTS = Object.freeze({
   // Defaults ON, unlike mwArms above: this needs no attached data and no build step, so there is nothing to opt
   // INTO the way Morrowind assets are - only a look a player might prefer to opt OUT of.
   peerClassSprites: true,
+  peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
+  peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
+  nightCrickets: true,   // SNDREP1: the night crickets loop (SoundClips.AmbientCrickets) - on by default; off silences it
+  distantHowl: true,     // SNDREP1: the distant howl (SoundClips.AmbientDistantHowl) - on by default; off silences it
   // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is
   // declared on its Features row (systems/features.js), RF4's law - it
   // arrives through FEATURE_PREF_DEFAULTS below.

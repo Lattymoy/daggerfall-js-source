@@ -122,7 +122,7 @@ test('AUDIT 39r: the interior arrow that lands on the player flashes the screen'
 // ---------------------------------------------------------------------
 
 test('AUDIT 39 #152: no host hides drawHud behind the classic HUD art', () => {
-  // hud.js:402-427 runs playerDamageFlash and the enhanced DOM branch
+  // hud.js:416-441 runs playerDamageFlash and the enhanced DOM branch
   // ABOVE its own `if (!art) return;` - "the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has
   // vitals". Three hosts wrapped the whole call in `if (hudArt)`, and
@@ -362,7 +362,9 @@ test('AUDIT-39r: the dungeon host runs the missile sweep at its OWN load door', 
   assert.ok(at > 0, 'the dungeon host owns a load door');
   // ONLINE-LOAD1 widened this window slightly: quickLoad now carries its own online guard
   // (F9/F11 reach it directly, with no pane in the way to stop them) ahead of the same call chain.
-  const body = ctx.slice(at, at + 2900);
+  // BLOOD AUDIT 4 widened it again: the blood's clear rides beside the sweep, with its reason.
+  // CASTLE1 widened it once more: the door hands a save from another place to the world host first, with its reason.
+  const body = ctx.slice(at, at + 5500);
   assert.match(body, /magic\.clearMissiles\(\);/, 'which sweeps its own flights');
   assert.ok(body.indexOf('magic.clearMissiles();') < body.indexOf('applyWorld(extras.world)'),
     'ahead of the world restore, as OnStartLoad is');
@@ -412,9 +414,11 @@ test('AUDIT 39 #130: the exterior host\'s attack TAP defers to a readied spell l
   // Mouse0 cast arm (`_act.cast`) is the new fourth door - a LIVE one,
   // unlike the drag hook it numerically replaces. The four doors are
   // mousemove, mousedown, the SWIPE (TI1) and the frame's cast dispatch.
+  // MAC-SWING1 (2026-09-21) added a FIFTH door: the frame's key latch
+  // for a swing bound to a key or pad code, gated exactly as mousedown.
   for (const [name, s] of HOSTS) {
-    assert.equal((s.match(/magic\.interceptAttack\(true\)/g) ?? []).length, 4,
-      `${name}: mousemove, mousedown, the swipe and the cast dispatch`);
+    assert.equal((s.match(/magic\.interceptAttack\(true\)/g) ?? []).length, 5,
+      `${name}: mousemove, mousedown, the swipe, the cast dispatch and the key latch`);
   }
 });
 

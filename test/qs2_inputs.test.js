@@ -31,7 +31,7 @@ import {
   createBindings, resetDefaults, setBinding, getBinding, actionForCode, loadKeyBinds, serializeKeyBinds,
 } from '../src/systems/inputActions.js';
 import { routeAction, QUICKSLOT_ACTIONS, POLLED_ACTIONS } from '../src/ui/input.js';
-import { GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, QUICKSLOT_GROUP_TITLE } from '../src/ui/enhancedControls.js';
+import { GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, QUICKSLOT_GROUP_TITLE, QUICKLOOT_GROUP_TITLE, MOUSE_GROUP_TITLE } from '../src/ui/enhancedControls.js';
 import { createWeaponRig } from '../src/combat/weaponRig.js';
 import { equipItem, equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { assignQuickslot, clearQuickslots, swapQuickslot, quickslotOf } from '../src/systems/quickslots.js';
@@ -45,6 +45,10 @@ const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 // action is never removed from ACTIONS, and the swap is still rebindable. What
 // it lost is its DEFAULT key, which the off-hand cell that draws it now carries.
 const QS = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']);
+/** QUICK-LOOT B4: the plaque's two, appended past the quickslots for
+ *  the same reason the quickslots were appended past SOC5's row - an
+ *  action is never inserted, because the classic grid draws by INDEX. */
+const QL = Object.freeze(['QuickLootAll', 'QuickLootOpen']);
 /** The three a HOLD belongs to: a tap performs the slot, a hold cycles it, and
  *  only the frame can tell those apart - so these are polled, not dispatched. */
 const HOLD = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSpell']);
@@ -52,14 +56,19 @@ const HOLD = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSpell']);
 // ── THE ACTIONS ──────────────────────────────────────────────────────
 
 test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5\'s row - parse, and never displace an index the classic grid draws by number (mutants: a name spliced mid-list; a name the parser answers Unknown for)', () => {
-  assert.deepEqual(ACTIONS.slice(-5), QS, 'the last five rows, in this order');
-  assert.equal(ACTIONS.length, 50, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1');
+  // FREEMOUSE appended one more past the plaque's two, so the slice
+  // that names "the last seven" now has an eighth row behind it. It is
+  // sliced from the END of the port's rows rather than widened to
+  // include a row this pin is not about.
+  assert.deepEqual(ACTIONS.slice(-8, -1), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
+  assert.equal(ACTIONS.at(-1), 'FreeMouse', 'and FREEMOUSE\'s is the newest, appended past them');
+  assert.equal(ACTIONS.length, 53, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
   assert.equal(ACTIONS[44], 'SocialInteract', 'and SOC5\'s keeps 44');
   assert.deepEqual([...GRID_ACTIONS], ACTIONS.slice(2, 40), 'so the classic grid\'s slice still means what it meant');
-  for (const a of QS) {
+  for (const a of [...QS, ...QL]) {
     assert.equal(ACTIONS.filter((x) => x === a).length, 1, `${a} once`);
     assert.equal(parseActionName(a), a);
   }
@@ -68,7 +77,7 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
 });
 
 test('QS2: the port\'s own actions YIELD in the classic windows - all four of them, because none of the four is on either classic face (mutant: the three left out of PORT_ACTIONS, so a classic player is told of a clash against a row they cannot see or clear)', () => {
-  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS]);
+  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS, ...QL, 'FreeMouse']);   // FREEMOUSE: the classic windows cannot draw its row either
   // The claim PORT_ACTIONS makes is "not drawable by a classic window", and it
   // is derived here rather than asserted: the classic grid is ACTIONS[2..40)
   // and the ADVANCED popup is its six.
@@ -142,12 +151,32 @@ test('QS2: a bindings blob written BEFORE this slice gains the three on the next
 // ── THE PANE ─────────────────────────────────────────────────────────
 
 test('QS2: the enhanced pane draws the three under their OWN heading, and the coverage rule still holds over every group (mutants: the rows dropped so the keys are unrebindable; the rows hidden under SOC5\'s Online heading; a row twice)', () => {
-  assert.deepEqual(PORT_GROUPS.map((g) => g.title), ['Online', QUICKSLOT_GROUP_TITLE]);
+  // QUICK-LOOT B4: a THIRD group, for the reason the second exists - a
+  // row the classic windows cannot draw needs a heading of its own, or
+  // a clash against it is one a classic player can neither see nor
+  // clear. The coverage rule below is what actually holds it: every
+  // bindable action has exactly one row across every group.
+  // FREEMOUSE: a FOURTH heading, one row. Filing it under 'Online'
+  // would repeat the mistake this pin's own note names - the Enter/chat
+  // collision that motivates the key is an online thing, but freeing
+  // the mouse is something you do to read the screen.
+  assert.deepEqual(PORT_GROUPS.map((g) => g.title), ['Online', QUICKSLOT_GROUP_TITLE, QUICKLOOT_GROUP_TITLE, MOUSE_GROUP_TITLE]);
+  assert.equal(MOUSE_GROUP_TITLE, 'Mouse');
+  assert.deepEqual(PORT_GROUPS[3].rows.map((r) => [r.action, r.label]), [
+    ['FreeMouse', 'Free the mouse (press again to look)'],
+  ]);
   assert.equal(QUICKSLOT_GROUP_TITLE, 'Quickslots');
+  assert.equal(QUICKLOOT_GROUP_TITLE, 'Quick loot');
+  assert.deepEqual(PORT_GROUPS[2].rows.map((r) => [r.action, r.label]), [
+    ['QuickLootAll', 'Take everything'],
+    ['QuickLootOpen', 'Open the container'],
+  ]);
+  assert.ok(!PORT_GROUPS[0].rows.concat(PORT_GROUPS[1].rows).some((r) => QL.includes(r.action)),
+    'not under Online and not under Quickslots - looting is neither');
   assert.deepEqual(PORT_GROUPS[1].rows.map((r) => [r.action, r.label]), [
     ['QuickUse1', 'Use quickslot 1'],
     ['QuickUse2', 'Use quickslot 2'],
-    ['QuickSpell', 'Ready quickslot spell'],   // QS6: the spell slot, beside the two it behaves like
+    ['QuickSpell', 'Ready quickslot spell (hold to cycle the book)'],   // QS6: the spell slot, beside the two it behaves like
     ['QuickSwap', 'Swap weapon'],              // QS6: still here, still rebindable, shipped unbound
     ['QuickOffHand', 'Off hand: light, douse or swap'],   // QS4's press, and QS6's fold
   ]);

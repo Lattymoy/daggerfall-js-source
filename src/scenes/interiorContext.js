@@ -26,7 +26,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { unityMaterialName } from '../systems/immersiveFootsteps.js';   // IF1: MaterialReader's material name, for the mod's floor walk
 import { billboardSize } from '../world/rmbFlats.js';
 import { Collider } from '../player/collider.js';
-import { isHouseContainerModel, containerTextureRecord } from '../systems/containers.js';
+import { isHouseContainerModel } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
 import { isBedModel } from '../systems/rrRealism.js';   // RR1: the three bed models a click may rest on
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
@@ -43,7 +43,7 @@ import { ActionSystem } from '../world/actionSystem.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { worldAabb } from '../player/activate.js';   // ROAD-C c2/S9: the automap rows' world bounds
-import { enterInteriorAutomap, exitInteriorAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, SCAN_INTERVAL_S, registerAutomapConsoleCommands } from '../systems/automap.js';   // ROAD-C c2/S9; ROAD-E E3 the console verbs
+import { enterInteriorAutomap, exitInteriorAutomap, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, SCAN_INTERVAL_S, registerAutomapConsoleCommands, capsuleCentreFromEye } from '../systems/automap.js';   // ROAD-C c2/S9; ROAD-E E3 the console verbs
 import { INTERIOR_ELEMENT_NAMES } from '../systems/automapModel.js';   // ROAD-C c2/S9
 // AUDIT 63 F22: AddFlats' own RandomTreasure arm - the gate, the
 // picture and the table index all live with the walk that finds the
@@ -413,9 +413,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
         // owned residence is never a shop or a Library/GuildHall/
         // Temple, so the two arms ahead of this one in DFU's chain
         // cannot fire on it.)
-        containers.push({ cpu, matrix, items: null, record: containerTextureRecord(p.modelIdNum) });
+        containers.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
       } else {
-        shelves.push({ cpu, matrix, items: null });
+        shelves.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
       }
     } else if (isBedModel(p.modelIdNum)) {
       beds.push({ cpu, matrix });
@@ -425,7 +425,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       // (PlayerActivate.cs:915-918), and the scene cache preserves
       // null so an unopened chest stays unstocked across visits. Born
       // `[]` it read as already-stocked-empty and no one ever filled it.
-      containers.push({ cpu, matrix, items: null, record: containerTextureRecord(p.modelIdNum) });
+      containers.push({ cpu, matrix, items: null, modelIdNum: p.modelIdNum });
     }
   }
   // Interior swing doors run on the ActionSystem (P4): the verbatim
@@ -664,7 +664,10 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     billboardSize(t210, record)) : [])
     .map((l) => {
       const [x, y, z] = parentPt(l.x, l.y, l.z);
-      return { ...l, x, y, z };
+      // FIX-D: the sprite's base goes into the parent frame with it -
+      // a building turns about its vertical, so the foot is the same
+      // column's point, not a height to carry across untransformed.
+      return { ...l, x, y, z, foot: parentPt(l.x, l.foot, l.z)[1] };
     });
 
   // Markers (all types - ladders climb against these too) into the
@@ -771,7 +774,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     automapTick(dt, eye, fwd) {
       automapScanT += dt;
       if (automapScanT < SCAN_INTERVAL_S) return;
-      automapScanT = 0;
+      automapScanT = (automapScanT - SCAN_INTERVAL_S) % SCAN_INTERVAL_S;   // AUDIT-AMAP F12
       automapRevealTick(automapRec, {
         eye, fwd, collider, model: automapModel,
         // The three-ray scan's door blocker: an interior swing door is
@@ -783,7 +786,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       // The entrance beacon's LOS check runs OUTSIDE the geometry block
       // (:1196-1274), so it ticks indoors too - and it is what re-lights
       // the beacon HideAll put out when the room was built.
-      automapEntranceTick(automapRec, automapEntrance, eye, collider);
+      automapEntranceTick(automapRec, automapEntrance, capsuleCentreFromEye(eye), collider);   // AUDIT-AMAP F9: the capsule centre (:1216)
     },
     dynamicDraws,
     billboardBatches,

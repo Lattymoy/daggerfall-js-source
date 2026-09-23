@@ -98,8 +98,11 @@ import { audio } from '../systems/audio.js';
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // IF1: the inventory close refreshes the mod's armour slots
 import { SOUND } from '../systems/soundClips.js';
 import { makeFont, drawText } from './text.js';
-import { typedChar } from './input.js';   // U26: one reader for both hosts' key routing
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM5: TransferItem's split popup
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
+import { expandRowValues } from '../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
+import { magicPowersLines } from '../systems/itemPowers.js';   // MACRO-3: %mpw
+import { itemIsIdentified } from '../systems/tradeModes.js';   // MACRO-3: MagicPowers' identified arm
 
 export const INV_RECTS = Object.freeze({
   tabWeapons: [0, 0, 92, 10],        // weaponsAndArmorRect
@@ -152,6 +155,17 @@ export const INFO_LABEL = Object.freeze({ x: 2, scale: 0.43, extraLeading: 3, ma
 /** TEXT.RSC 1016 - the "Item powers" box DFU chains behind an
  *  enchanted item's info (:1614). */
 export const INFO_TEXT_POWERS = 1016;
+/** MACRO-3: record 1016's rows with %mpw's row spread into one row per
+ *  power; every other row goes through the walk as it stands. */
+export function powersRows(recordRows, powers) {
+  const out = [];
+  for (const r of recordRows ?? []) {
+    const row = typeof r === 'string' ? { text: r } : r;
+    if (!String(row?.text ?? '').includes('%mpw')) { out.push(...expandRowValues([row], null)); continue; }
+    for (const p of powers) out.push({ ...row, text: String(row.text).replace('%mpw', p) });
+  }
+  return out;
+}
 
 /** U47: UpdateItemInfoPanelGold (:2249-2258). The GOLD button's hover
  *  fills the panel with two GENERATED lines rather than a TEXT.RSC
@@ -220,6 +234,34 @@ const SPELLBOOK_TEMPLATE = 132;    // MiscItems.Spellbook
 
 // DFU ItemTemplates.txt isIngredient - exactly indices 0..77
 export const isIngredientTemplate = (i) => i >= 0 && i <= 77;
+
+// ── CM5: TransferItem's SPLIT popup (:1515-1539) ──
+//
+// U56 moved TransferItem's guards and its amount into
+// systems/itemTransfer.js; what the ladder answers is HOW MANY fit
+// (plan.amount). DFU does not move that many at once: when the amount
+// is short of the stack - or either Control is held (Input.GetKey, a
+// STATE, polled at the click) - it pushes a DaggerfallInputMessageBox
+// labelled howManyItems, numeric, MaxCharacters 8, seeded with the
+// amount (or "0" under Control), and only SplitStackPopup_OnGotUserInput
+// (:1546-1560) performs the transfer, with the count the player typed.
+// An unparseable or over-large answer moves nothing (:1551-1552).
+
+/** TextManager's howManyItems, formatted (:1529). */
+export const HOW_MANY_ITEMS = (max) => `Pick how many items (max ${max})?`;
+/** mb.TextBox.MaxCharacters = 8 (:1533). */
+export const SPLIT_INPUT_MAX = 8;
+
+const amountOf = (item) => item?.stackCount ?? 1;
+const isControlCode = (code, e = null) =>
+  code === 'ControlLeft' || code === 'ControlRight'
+  || e?.code === 'ControlLeft' || e?.code === 'ControlRight'
+  || e?.key === 'Control';
+/** SplitStackPopup_OnGotUserInput's parse (:1549-1552): an integer in 1..max, else nothing moves. */
+const parsedAmount = (text, max) => {
+  const count = Number.parseInt(String(text), 10);
+  return Number.isInteger(count) && count >= 1 && count <= max ? count : null;
+};
 
 /** AUDIT 17e F36 - RefreshArmourValues' displayed number
  *  (PaperDoll.cs:159-173): (100 - armorValue) / 5, plus armorMod
@@ -357,7 +399,6 @@ export class NativeInventoryWindow {
     this.dropped = [];             // droppedItems (the default remote target)
     this.boxes = [];               // U25: the message-box queue (info, use, wagon, gold)
     this.infoItem = null;
-    this.goldEntry = null;         // the drop-gold field's live text
     // W-slice: the wagon as the remote target. usingWagon mirrors
     // ShowWagon's flag.
     this.usingWagon = open.usingWagon;
@@ -368,6 +409,8 @@ export class NativeInventoryWindow {
     // closing WITHOUT taking claims nothing.
     this.chooseOne = open.chooseOne;
     this.allowDungeonWagonAccess = open.allowDungeonWagonAccess;
+    this.dungeonExitAccessGranted = !!open.dungeonExitAccessGranted;   // HCC: ApplyOpeningAccess's `dungeonExitAccessGranted` - the wagon button asks the exit's door again while it holds
+    if (open.refusal) this.boxes = [{ rows: [{ text: open.refusal.text, center: true }] }];   // HCC: ApplyOpeningAccess [IL_ad0c-IL_ad14] - a dungeon-exit request the runtime refuses says why, over the window
     // G5: OnPush's drop-icon seed (:593-631) - the archive the remote
     // panel shows and the INDEX into that archive's dropIconIdxs list,
     // -1 when nothing has been picked.
@@ -387,6 +430,13 @@ export class NativeInventoryWindow {
     // button (:547) and to the paperdoll (:470) - four surfaces, one
     // tip. The gold button and the tab/action buttons get none.
     this._tip = makeSlotToolTip();
+    // CM5: the pushed DaggerfallInputMessageBox while one is up - the
+    // split popup's or the drop-gold prompt's - and Input.GetKey(Control),
+    // a STATE, not an event modifier, held from the down edge to the up
+    // edge (every host routes both to its overlay) so a later click sees
+    // exactly what TransferItem polls (:1516).
+    this.inputBox = null;
+    this._controlDown = false;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);   // AUDIT 17f: icons follow the wearer's morphology
     this._accessoryIcon = makeAccessoryIconDrawer(hooks.icons, () => hooks.entity);   // the twelve worn slots
     if (hooks.entity) refreshPaperDoll(hooks.entity);   // U8g: the doll composes fresh on open
@@ -550,8 +600,10 @@ export class NativeInventoryWindow {
     // prohibition chain, and with its own TEXT.RSC record.
     if (isBrokenItem(it)) {
       this.boxes = [{
-        rows: this.hooks.rows?.(ITEM_BROKEN_TEXT_ID)
-          ?? [{ text: 'This item is broken.', center: true }],
+        // MACRO-3: SetTextTokens(itemBrokenTextId, item) - the ITEM is the
+        // box's macro source, so "%it is broken." names it
+        rows: expandRowValues(this.hooks.rows?.(ITEM_BROKEN_TEXT_ID)
+          ?? [{ text: 'This item is broken.', center: true }], { it: this._longName(it) }),
       }];
       return true;
     }
@@ -617,7 +669,10 @@ export class NativeInventoryWindow {
       return;
     }
     this.boxes = [{ rows: infoRows }];
-    if (isEnchanted(it)) this.boxes.push({ rows: rows(INFO_TEXT_POWERS) ?? [] });
+    // MACRO-3: 1016 is "Item powers:" over %mpw, and %mpw is a LIST - one
+    // line per power (DaggerfallUnityItemMCP.MagicPowers), so the token's
+    // row becomes that many rows, each keeping the record row's alignment.
+    if (isEnchanted(it)) this.boxes.push({ rows: powersRows(rows(INFO_TEXT_POWERS) ?? [], magicPowersLines(it, { identified: itemIsIdentified(it), lines: rows })) });
     this.infoItem = it;
   }
 
@@ -675,7 +730,7 @@ export class NativeInventoryWindow {
       return;
     }
     if (r.text) this.boxes = [{ rows: [{ text: r.text, center: true }] }];
-    else if (r.textId && this.hooks.rows) this.boxes = [{ rows: this.hooks.rows(r.textId) ?? [] }];
+    else if (r.textId && this.hooks.rows) this.boxes = [{ rows: expandRowValues(this.hooks.rows(r.textId) ?? [], r.macros ?? null) }];   // MACROS1: %map is the map's name
     else if (r.pending) this.boxes = [{ rows: [{ text: USE_PENDING[r.kind] ?? 'Nothing happens.', center: true }] }];
     if (r.kind === 'variant' && this.hooks.entity) refreshPaperDoll(this.hooks.entity);
     // AUDIT 22 F9: `enchanted` is now a RIDER on the arm's own result
@@ -707,12 +762,19 @@ export class NativeInventoryWindow {
    *  entry is REFUSED OUTRIGHT below 1 or above what the player
    *  carries - not clamped. The gold lands in the remote pile, which
    *  is the ground when nothing else opened the window. */
+  /** GoldButton_OnMouseClick (:1269-1284): a DaggerfallInputMessageBox
+   *  with the goldToDrop record (25) as its text tokens and NO label,
+   *  numeric, MaxCharacters 8, seeded "0"; DropGoldPopup_OnGotUserInput
+   *  (:1286-1309) is the handler. CM5: the field is the one pushed box,
+   *  as the split popup's is (AUDIT-CM struck the " > " the first cut
+   *  invented for the label). */
   _dropGold() {
-    this.goldEntry = '0';
-    this.boxes = [{
-      rows: this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }],
-      field: true,
-      onInput: (text) => {
+    this.inputBox = new InputMessageBoxWindow({
+      lines: expandRowValues(this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }], null),   // MACRO-3: %gii, the world's
+      value: '0',
+      maxCharacters: 8,
+      numeric: true,
+      onSubmit: (text) => {
         // E4: `int playerGold = PlayerEntity.GoldPieces` (:1288) - the
         // COUNTER, so the purse is the entity's or there is none. A
         // host that mounts the window without one drops every amount
@@ -731,7 +793,7 @@ export class NativeInventoryWindow {
         deductGold(player, plan.amount);
         addItem(this._remote(), goldStack(plan.amount));
       },
-    }];
+    });
   }
 
   _use(it, collection) {
@@ -796,8 +858,15 @@ export class NativeInventoryWindow {
       // The use arm IS RecordLocationFromMap here, no-seam pending law
       // included.
       if (plan.map) { this._use(it, this.hooks.items()); return; }
-      audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
-      applyTransfer(it, plan, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true });   // F157: a lit torch leaving the pack goes out
+      // CM5: the split popup (:1515-1539), BELOW the quest arm the plan
+      // already ran and above DoTransferItem. The popup's handler is
+      // the same transfer with the typed count.
+      const perform = (amount) => {
+        audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
+        applyTransfer(it, { ...plan, amount }, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true });   // F157: a lit torch leaving the pack goes out
+      };
+      if (this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }
+      perform(plan.amount);
       return;
     }
     if (mode === 'use') { this._use(it, this.hooks.items()); return; }   // U25
@@ -816,6 +885,27 @@ export class NativeInventoryWindow {
       if (equipItem(this.hooks.entity, it) !== null) refreshPaperDoll(this.hooks.entity);
       return;
     }
+  }
+
+  /** TransferItem's split gate (:1515-1519): the amount is short of the
+   *  stack, or Control is held - and only for a stack (item.IsAStack(), :1519). */
+  _splitRequired(it, plan) {
+    return amountOf(it) > 1 && (plan.amount < amountOf(it) || this._controlDown);
+  }
+
+  /** The popup (:1523-1536): howManyItems with the max, numeric, 8
+   *  characters, seeded with the max - or "0" under Control (:1525),
+   *  which SplitStack(0) refuses (:1551), so Return on the seed moves
+   *  nothing. `perform(count)` is SplitStackPopup_OnGotUserInput's
+   *  transfer. */
+  _openSplit(it, max, perform) {
+    this.inputBox = new InputMessageBoxWindow({
+      label: HOW_MANY_ITEMS(max),
+      value: this._controlDown ? '0' : String(max),
+      maxCharacters: SPLIT_INPUT_MAX,
+      numeric: true,
+      onSubmit: (text) => { const count = parsedAmount(text, max); if (count !== null) perform(count); },
+    });
   }
 
   /** U56: the port's half of a refusal. The LADDER decides whether a
@@ -860,31 +950,37 @@ export class NativeInventoryWindow {
       });
       if (!plan.ok) { this._refuse(plan.refusal); return; }
       if (plan.map) { this._use(it, remote); return; }   // F156: either direction
-      // DoTransferItem: gold rides its own clink (:1569), everything
-      // else the button click (:1583) - after the carry gate, so a
-      // refused transfer stays silent.
-      audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
-      // E4: `PlayerEntity.Items == to` is TRUE on this side of the
-      // window - this is the arm DoTransferItem's gold interception
-      // (:1562-1571) exists for, so a pile taken here is spent into
-      // GoldPieces and the member RETURNS. The null IS that return: no
-      // equip (:1580), no choose-one close (:1585-1591).
-      const taken = applyTransfer(it, plan, remote, bag, { entity: this.hooks.entity, toPlayer: true });
-      if (taken === null) return;
-      if (plan.equip && this.hooks.entity) {
-        // S23: the taken item still has to pass the career gate
-        if (this._refuseForbidden(taken)) return;
-        if (equipItem(this.hooks.entity, taken) !== null) refreshPaperDoll(this.hooks.entity);
-      }
-      // G6 (:1585-1591): ONE is the whole gift. The window closes and
-      // the callback runs - which is where the rank's flag is set, so
-      // the claim and the taking are the same event.
-      if (plan.claimsChoice) {
-        const cb = this.chooseOne.onChoose;
-        this.chooseOne = null;
-        this._closeSilently();
-        cb?.(taken);
-      }
+      // CM5: the same split gate on this side (:1515-1539); the tail
+      // below is DoTransferItem's, run with the typed count.
+      const perform = (amount) => {
+        // DoTransferItem: gold rides its own clink (:1569), everything
+        // else the button click (:1583) - after the carry gate, so a
+        // refused transfer stays silent.
+        audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
+        // E4: `PlayerEntity.Items == to` is TRUE on this side of the
+        // window - this is the arm DoTransferItem's gold interception
+        // (:1562-1571) exists for, so a pile taken here is spent into
+        // GoldPieces and the member RETURNS. The null IS that return: no
+        // equip (:1580), no choose-one close (:1585-1591).
+        const taken = applyTransfer(it, { ...plan, amount }, remote, bag, { entity: this.hooks.entity, toPlayer: true });
+        if (taken === null) return;
+        if (plan.equip && this.hooks.entity) {
+          // S23: the taken item still has to pass the career gate
+          if (this._refuseForbidden(taken)) return;
+          if (equipItem(this.hooks.entity, taken) !== null) refreshPaperDoll(this.hooks.entity);
+        }
+        // G6 (:1585-1591): ONE is the whole gift. The window closes and
+        // the callback runs - which is where the rank's flag is set, so
+        // the claim and the taking are the same event.
+        if (plan.claimsChoice) {
+          const cb = this.chooseOne?.onChoose;   // deferred behind the split box: the claim is read when it runs
+          this.chooseOne = null;
+          this._closeSilently();
+          cb?.(taken);
+        }
+      };
+      if (this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }
+      perform(plan.amount);
     }
   }
 
@@ -893,22 +989,14 @@ export class NativeInventoryWindow {
   _dismissBox() { this.boxes.shift(); }
 
   input(code, e = null) {
-    const box = this.topBox;
-    if (box) {
-      if (box.field) {
-        if (code === 'Escape') { this._dismissBox(); return; }
-        if (code === 'Enter') { const v = this.goldEntry ?? ''; this._dismissBox(); box.onInput?.(v); return; }
-        if (code === 'backspace' || code === 'Backspace') { this.goldEntry = (this.goldEntry ?? '').slice(0, -1); return; }
-        // U26: the two hosts route keys differently - raw codes here,
-        // 'char:x' actions in the dungeon - so the field reads both
-        // through the one helper that knows the difference.
-        const ch = typedChar(code, e);
-        if (ch && /^[0-9]$/.test(ch) && (this.goldEntry ?? '').length < 8) this.goldEntry = (this.goldEntry ?? '') + ch;
-        return;
-      }
-      this._dismissBox();
+    // CM5: Input.GetKey(Control)'s down edge; keyup below is the other
+    if (isControlCode(code, e)) this._controlDown = true;
+    if (this.inputBox) {
+      this.inputBox.input(code, e);   // the pushed box owns the keyboard
+      if (this.inputBox.done) this.inputBox = null;
       return;
     }
+    if (this.topBox) { this._dismissBox(); return; }   // the click-anywhere boxes answer any key
     // F6 is the TOGGLE binding closing its own window (the port's
     // toggleClosedBinding arm); Escape and Enter are the overlay
     // seam's. Everything else on this screen is DaggerfallShortcut's,
@@ -1007,7 +1095,7 @@ export class NativeInventoryWindow {
    *  hand the live point in (they already compute it for hover); the
    *  remembered one is only the fallback for a caller that has none. */
   wheel(dir, vx = this._mouse[0], vy = this._mouse[1]) {
-    if (!dir || this.topBox) return;
+    if (!dir || this.topBox || this.inputBox) return;
     const R = INV_RECTS;
     const kind = dir > 0 ? 'down' : 'up';
     const wheelable = (k) => k === 'slot' || k === 'thumb' || k === 'page-up' || k === 'page-down';
@@ -1118,12 +1206,12 @@ export class NativeInventoryWindow {
     // stickiness (U47) is DFU's too. A pushed message box owns the
     // pointer, so it hides the tip; the hosts' (-1,-1) pointer-leave
     // sentinel does the same.
-    if (this.topBox || vx < 0 || vy < 0) this._tip.hide();
+    if (this.topBox || this.inputBox || vx < 0 || vy < 0) this._tip.hide();
     else {
       const t = this._tipItemAt(vx, vy);
       this._tip.show(t.item, vx, vy, { getQuest: this.hooks.getQuest ?? null, books: t.books });
     }
-    if (this.topBox) return;
+    if (this.topBox || this.inputBox) return;
     const R = INV_RECTS;
     // The GOLD button (:2243-2247). Not an item - two generated lines,
     // the amount and its weight.
@@ -1223,10 +1311,8 @@ export class NativeInventoryWindow {
    *  THREE separate click handlers (:437-439), so the middle button
    *  has to reach it or a third of the law is unreachable. */
   click(vx, vy, right = false, middle = false) {
-    if (this.topBox) {
-      if (!this.topBox.field) this._dismissBox();   // a field takes keys, not clicks
-      return true;
-    }
+    if (this.inputBox) { this.inputBox.click(vx, vy); return true; }   // CM5: modal, not click-anywhere
+    if (this.topBox) { this._dismissBox(); return true; }   // ClickAnywhereToClose
     const R = INV_RECTS;
     // G5: the drop-icon panel (:437-439). LEFT cycles the icon UP,
     // RIGHT cycles it DOWN and MIDDLE takes the next archive.
@@ -1335,6 +1421,11 @@ export class NativeInventoryWindow {
    *  VerticalScrollBar.Update's else arm (:123-129), for the frame the
    *  button comes up without a move to carry it. */
   release() { this._drag = null; }
+
+  /** ROAD-E E1's key-up half: only the Control state reads it here. */
+  keyup(code, e = null) {
+    if (isControlCode(code, e)) this._controlDown = false;
+  }
 
   draw(renderer, canvas, font) {
     if (!_art) { this._close(); return; }
@@ -1458,18 +1549,17 @@ export class NativeInventoryWindow {
     // the message-box queue (info, use, the equip refusal, wagon, gold)
     const box = this.topBox;
     if (box) {
-      const rows = box.field ? [...box.rows, ` > ${this.goldEntry ?? ''}_`] : box.rows;
+      const rows = box.rows;
       // ROAD-A7: a painting box carries an ImagePanel, which is part of
       // the SIZING (UpdatePanelSizes :527-534) - so the picture is
       // measured into the layout, not stamped over it. It arrives on a
       // later frame than the click, and until it does the box is the
       // plain parchment, which is exactly what a missing CIF leaves.
       const pic = box.painting ? paintingImage(box.painting) : null;
-      const laid = layoutMessageBox(font, rows, [],
-        box.field ? { sizingRows: [...box.rows, ` > ${'0'.repeat(8)}_`] }
-          : (pic ? { image: { width: pic.w, height: pic.h } } : {}));
+      const laid = layoutMessageBox(font, rows, [], pic ? { image: { width: pic.w, height: pic.h } } : {});
       drawMessageBox(renderer, m, font, laid, pic ? { image: pic.tex } : {});
     }
+    if (this.inputBox) this.inputBox.draw(renderer, canvas, font);   // CM5: the pushed input box, over the panel
     // AUDIT 64 F48: the shared tooltip draws LAST, over the panel and
     // over the box (DaggerfallBaseWindow.cs:110-111 draws defaultToolTip
     // after every other component).

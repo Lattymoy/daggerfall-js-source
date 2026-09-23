@@ -437,7 +437,7 @@ test('MAC-Q: stepRigEffects - the clock, the hide, the upload; nothing without m
 test('MAC-Q: the arm and the renderer - the seams, read', () => {
   const arm = read('src/combat/fpArm.js');
   assert.match(arm, /stepRigEffects\(built\.arm, \{ dt, clock: fOverlay \? overlayClock : poseTime\(state\), renderer, mesh, textures: built\.textures, hidden: effectHidden \}\)/, 'first person, after the mesh');
-  assert.match(arm, /stepRigEffects\(t\.arm, \{ dt, clock: tOverlay \? overlayClock : poseTime\(state\), renderer, mesh: thirdMesh, textures: t\.textures, hidden: effectHidden \}\)/, 'and the body');
+  assert.match(arm, /stepRigEffects\(t\.arm, \{ dt: effectsDt, clock: tOverlay \? overlayClock : poseTime\(state\), renderer, mesh: thirdMesh, textures: t\.textures, hidden: effectHidden \}\)/, 'and the body (PEER-CADENCE: on the banked dt)');
   assert.match(arm, /if \(eff\.slot === 'torch'\) return !torchVisible\(\);/, 'the flame hides with the torch (MW-D51’s carried-left rule)');
   assert.match(arm, /for \(const e of m\.effects \|\| \[\]\) renderer\.releaseParticleEffect\(e\);/, 'and is released with the mesh');
   assert.match(arm, /rigBuilt\.arm\.effects = \(rigBuilt\.arm\.effects \?\? \[\]\)\.filter\(\(e\) => e\.slot !== 'torch'\);/, 'a re-lit torch replaces its flame');

@@ -1,0 +1,20 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "GeneralSettings",
+            "Description": null,
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": false,
+                    "Name": "HideDefaultInteractTooltip",
+                    "Description": "Enable to not give a default indication on interactable objects that may have been intended to be secret, particularly regarding puzzles in the main quest.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

@@ -19,7 +19,7 @@
 // player is standing. The player arm and its damage law live here
 // now, one copy for the three hosts that share this flight.
 
-import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerArrowOrigin, playerMuzzleOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
+import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact
@@ -89,8 +89,10 @@ export class ArrowFlight {
     // and it is used INSTEAD of GetAimPosition's bow-hand arm; a host
     // that does not - and every bow, at every host - hands over
     // nothing and gets the verbatim arm, unchanged.
+    // AUDIT FIELD-GUN-MW F2: the fork is playerShotOrigin's, once, for both spawn seams - a muzzle may now be a
+    // WORLD point (the third-person Morrowind body's barrel, behind the camera).
     const origin = meta.fromPlayer
-      ? (meta.muzzle ? playerMuzzleOrigin(from, dir, meta.muzzle) : playerArrowOrigin(from, dir))
+      ? playerShotOrigin(from, dir, meta.muzzle)
       : [...from];
     this.arrows.push({ pos: origin, dir: [...dir], age: 0, gpu: null, dead: false, orb, orbFlat: null, ...meta });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
@@ -167,6 +169,14 @@ export class ArrowFlight {
       // AUDIT 39 (#64): the arm is the SHOOTER's, not a flag on one
       // side of it - an enemy shaft runs BowDamage's non-player arm,
       // a player shaft runs WeaponManager.WeaponDamage.
+      // SPELLFX1: ANOTHER PLAYER'S SHAFT, DRAWN (meta.visual) - neither arm: it stops on my capsule or a foe's and
+      // applies nothing, since the player who loosed it has already dealt whatever it did
+      if (m.visual) {
+        if ((playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS))
+          || (foeTargets ?? []).some((t) => t?.feet && !t.ref?.dead && missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height))) m.dead = true;
+        else if (c && m.pos[1] <= c.heightAt(m.pos[0], m.pos[2])) m.dead = true;
+        continue;
+      }
       const foeImpact = m.enemy ? onFoeHit : (m.fromPlayer ? onPlayerArrowHitFoe : null);
       if (foeImpact && foeTargets) {
         for (const t of foeTargets) {
@@ -224,7 +234,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2631), so the copy that survived
+ * now calls it (dungeonContext.js:2816), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into

@@ -52,14 +52,14 @@ test('PERF-ON2: a peer outside the frustum is skipped, and one inside is kept - 
 
 test('PERF-ON2 / PERF-CROWD: the host culls the peers AND the live crowd, by the batch\u2019s own sphere, lifted for the bottom anchor', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /if \(cullOn && billboardOutside\(b\)\) continue;[\s\S]{0,80}?allBatches\.push\(b\);/,
-    'every peer batch is tested before it is submitted');
+  assert.match(w, /if \(cullOn && billboardOutside\(b\)\) \{ if \(renderer\.shadowReachBatch\(b\)\) castBatches\.push\(b\); continue; \}[\s\S]{0,120}?allBatches\.push\(b\);/,
+    'every peer batch is tested before it is submitted (AUDIT REACH: a rejected peer a shadow reaches goes to the casters\' list)');
   assert.doesNotMatch(w, /if \(remotePlayers\) for \(const b of remotePlayers\.batches\(\)\) allBatches\.push\(b\);/, 'the unconditional push is gone');
   // PERF-CROWD: and the townspeople, the watch, the foes, the piles, the
   // blow effects, the torches and the camps - the same list, never culled
   // at all until now, and in a town most of the frame's billboards.
-  assert.match(w, /if \(cullOn && livePersonBatches\.length\) \{[\s\S]{0,400}?if \(!billboardOutside\(b\)\) livePersonBatches\[keep\+\+\] = b;[\s\S]{0,120}?livePersonBatches\.length = keep;/,
-    'the crowd is filtered IN PLACE - the cull mints no array of its own');
+  assert.match(w, /if \(cullOn && livePersonBatches\.length\) \{[\s\S]{0,400}?if \(!billboardOutside\(b\)\) livePersonBatches\[keep\+\+\] = b;\n\s*else if \(renderer\.shadowReachBatch\(b\)\) castBatches\.push\(b\);[\s\S]{0,160}?livePersonBatches\.length = keep;/,
+    'the crowd is filtered IN PLACE - the cull mints no array of its own (SHADOW-REACH: a rejected townsman a shadow reaches goes to the casters\' list, which the frame already holds)');
   assert.doesNotMatch(w, /const peerBatchOutside/, 'one test for both lists, not two');
   // THE LIFT is the whole correctness of it: the sphere is stored about the
   // placement point and the sprite stands its full height above that point.

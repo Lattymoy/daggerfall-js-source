@@ -364,13 +364,13 @@ test('MAC-N2: the selected tab is drawn as the INVE01I0 cutout over the base, an
 test('MAC-N2: every host that hands a window its pointer hands the trade window the event and the release it drags by', () => {
   // the interior host and the dungeon slot: hover(vx, vy, e) and release() on 'up' (ROAD-E E1's seams, now load-bearing for two more windows)
   assert.match(rd('src/scenes/worldModes.js'), /interiorOverlay\.hover\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/);
-  assert.match(rd('src/scenes/worldModes.js'), /interiorOverlay\.release\?\.\(\);/);
+  assert.match(rd('src/scenes/worldModes.js'), /interiorOverlay\?\.release\?\.\(\);/);   // STATUS-LIVE: the arm's gate is interiorPaused(); the slot read inside it is optional-chained
   assert.match(rd('src/scenes/dungeonContext.js'), /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \}/);
   assert.match(rd('src/scenes/dungeonContext.js'), /if \(phase === 'up'\) activeOverlay\?\.release\?\.\(\);/);
   assert.match(rd('src/scenes/townTalk.js'), /overlay\.hover\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/);
   assert.match(rd('src/scenes/townTalk.js'), /if \(phase === 'up'\) overlay\.release\?\.\(\);/);
   // and the wheel reaches the interior slot with its point
-  assert.match(rd('src/scenes/worldModes.js'), /interiorOverlay\.wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/);
+  assert.match(rd('src/scenes/worldModes.js'), /interiorOverlay\?\.wheel\?\.\(Math\.sign\(e\.deltaY\), v \? v\[0\] : -1, v \? v\[1\] : -1\);/);   // STATUS-LIVE: likewise
 });
 
 // ─────────────────────────────────────────────────────────────────

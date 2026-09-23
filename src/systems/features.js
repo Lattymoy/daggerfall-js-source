@@ -145,6 +145,8 @@ export const MOD_CURATED = Object.freeze({
   // through FT4's three-way - so without these five its particle settings had no tile to open.
   'dynamic-skies': Object.freeze(['ActivatePixelSnow', 'densitySetting', 'MinParticleSize',
     'MaxParticleSize', 'MaxParticles']),
+  // WORLD-HOVER: the mod's one knob, which is the one a player would move.
+  'world-tooltips': Object.freeze(['HideDefaultInteractTooltip']),
   'weapon-widget': Object.freeze(['Swings.Speed', 'Bob.Length', 'Inertia.Scale']),
   // SW1: the three a player reaches for first - how big the shield sits,
   // where it sits, and what it does when the weapon comes out.
@@ -154,7 +156,17 @@ export const MOD_CURATED = Object.freeze({
   // RRI1: the three a player reaches for first - the new items, and what loot is.
   'roleplay-realism-items': Object.freeze(['newWeapons', 'newArmor', 'lootRebalance']),
   'roleplay-realism': Object.freeze(['advancedArchery', 'climbingRestriction', 'underworldExpulsion']),
-  'handheld-torches': Object.freeze(['Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
+  // TORCH-BIND (2026-09-22, a player on Discord: "No option to rebind
+  // Handheld Torches actions"): the three TextKeys are the mod's own key
+  // store, read raw by the hosts, and the Mods pane that once captured
+  // them went with FT14 - this list was the only door left, and it did
+  // not name them. The relaxed switch rides along: 3ARMS ships it off.
+  'handheld-torches': Object.freeze(['Handling.ToggleLightInput', 'Handling.ManualDropInput', 'Throwing.ThrowTorchInput',
+    'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
+  // HCC: the two hotkeys (the mod's own key store, as Handheld Torches'),
+  // the persistence switch, and the two distances a player reaches for.
+  'horse-cart-and-cargo': Object.freeze(['Hotkeys.QuickMountDismount', 'Hotkeys.SummonTransport', 'Persistence.PhysicalPersistence',
+    'Following.HorseFollowDistance', 'WagonAccess.InteriorAccessDistance', 'Following.AvoidCombat', 'Following.FollowFastTravel', 'Presentation.ShowTrailingWagon']),
   pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
     'criticalStrikesIncreaseDamage', 'conditionBasedEffectiveness', 'softMaterialRequirements',
     'fixedStrengthDamageModifier']),
@@ -171,7 +183,7 @@ export const MOD_CURATED = Object.freeze({
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
-    'RoadsIntegration.FollowPathsKey',
+    'RoadsIntegration.FollowPathsKey', 'RoadsIntegration.FollowPathsCustomKeyBind',   // TORCH-BIND: the custom key travelOptions.js reads
   ]),
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
   // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this
@@ -179,7 +191,8 @@ export const MOD_CURATED = Object.freeze({
   // first: how far back the camera sits, which shoulder it sits over,
   // how fast it follows, and how big you are drawn. Everything else
   // stays in the mod's own pane.
-  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
+  // TORCH-BIND: the two keys eotbCamera.js reads ride the tile too - the same class as the torch keys.
+  'eye-of-the-beholder': Object.freeze(['Camera.SwitchShoulder', 'AutoTogglePerspective.ToggleInput', 'Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
     'Camera.Speed', 'Animation.BillboardScale']),
   // IF1: the clip quality and the two volumes are what a player reaches for.
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
@@ -353,6 +366,21 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]) }),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online
   }),
+  // GRASS-PX (2026-09-21, Mac: "turn the grass into a pixel art design").
+  // The style is a uniform in the one grass program, so the row flips
+  // live. Pixel is the default: it is the style the rest of the world's
+  // flats are drawn in.
+  Object.freeze({
+    id: 'grass-style',
+    group: 'sight',
+    title: 'Grass style',
+    note: 'Pixel draws each tuft as a hand-set sprite in four tones with a dithered distance, the way '
+      + 'the world\u2019s trees and people are drawn; Smooth is the lab\u2019s tapered, gradient-lit blade. Nothing to change unless '
+      + 'the enhanced outdoors are on and Grass density is above Off.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player', tiers: Object.freeze([['pixel', 'Pixel'], ['smooth', 'Smooth']]) }),
+  }),
   Object.freeze({
     id: 'cloud-quality',
     group: 'sight',
@@ -379,7 +407,8 @@ export const FEATURES = Object.freeze([
     group: 'sight',
     title: 'Ground sharpness',
     note: 'How sharply the ground reads into the distance, where a mipmapped tile would otherwise soften. '
-      + 'Off is the mipmap alone; Maximum is whatever the driver allows.',
+      + 'Off is the mipmap alone, point-sampled and the cheapest; Maximum is whatever the driver allows and costs GPU fill - '
+      + 'turn it down if frames suffer outdoors.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player', tiers: Object.freeze([['off', 'Off'], ['default', 'Default (4x)'], ['max', 'Maximum']]) }),
@@ -399,6 +428,37 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedCombatVisuals', initial: true, online: true }),   // ECV1: on by default like the other enhanced visuals; the rules are untouched either way
+  }),
+  // QUICK-LOOT B4 (2026-09-22, Mac: Arc B of the world-hover arcs, and
+  // "How does skyrim do it" when the shape was put to him). Vanilla
+  // Skyrim does not; what everyone means by it is the QuickLoot mod,
+  // and this is that adapted to the port: the plaque Arc A already
+  // draws under the crosshair grows a highlight the wheel moves, the
+  // activate key takes the highlighted row, and a key of its own takes
+  // the lot - without ever freeing the cursor or opening a window.
+  //
+  // It is NOT a port of anything. DFU has no quick loot and no mod in
+  // vendor/ carries one, so the row says so plainly: this is the
+  // port's own, and OFF is Daggerfall's loot exactly - the window the
+  // activate key has always opened, untouched.
+  //
+  // DFU's own precedent for taking with no window is real and narrow:
+  // a body holding nothing but arrows is taken whole (PlayerActivate
+  // .cs:948-952). This generalises that to any row the player has
+  // picked out, which is the departure and is recorded as one.
+  //
+  // It sits with LR1 in the `loot` group and AHEAD of it, because
+  // WIND3 pins its wisps row to the seat directly after LR1's - so
+  // the two loot rows stay together without moving a pinned one.
+  Object.freeze({
+    id: 'quick-loot',
+    group: 'loot',
+    title: 'Quick loot',
+    note: 'The wheel moves a highlight through the plaque\u2019s list, the activate key takes that row and one key takes '
+      + 'the lot \u2014 no cursor, no window, so looting never stops you aiming. Off is the inventory window as always.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'quickLoot', initial: true, online: 'player' }),   // the player's own: it stands nothing, rolls nothing and is not on the wire - the same category chatHidden is (OL1)
   }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
   // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with
@@ -477,6 +537,20 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'firstPersonLighting', initial: true, online: 'player' }),   // MAC-I: combat/weaponRig.js fpLightingOn
   }),
+  // MAP-TOGGLE (2026-09-22, Mac: "is the enhanced map a toggle?" - "Yes
+  // needs to be a toggle"): the held sheet was the enhanced skin's alone,
+  // with no way to keep the skin and take DFU's own maps back. The three
+  // map doors read this beside the skin now (ui/mapSkin.js heldMapWorn).
+  Object.freeze({
+    id: 'enhanced-map',
+    group: 'sight',
+    title: 'Enhanced map',
+    note: 'The map is a parchment in your own hands: the world, the town and the dungeon on one sheet, panned and '
+      + 'zoomed under the pen. Off is Daggerfall\u2019s own three map windows, as the classic skin draws them.',
+    effect: 'Takes effect the next time a map is opened.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: true, online: 'player' }),   // the player's own: what THEIR map looks like
+  }),
   Object.freeze({
     id: 'flora-sway',
     group: 'sight',
@@ -542,6 +616,10 @@ export const FEATURES = Object.freeze([
   // its roads integration and its junction map), so a switch flipped
   // mid-session reaches the NEXT world.
   modFeature('travel-options', 'Takes effect when the world next loads.', 'world'),
+  // WOD1 (2026-09-23): WORLD OF DAGGERFALL - `world`, because it is the
+  // wilderness itself. Read at the world's mount, like the roads it
+  // consults: the loader's list is built once per world.
+  modFeature('world-of-daggerfall', 'Takes effect when the world next loads.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
   modFeature('pcaao', 'Takes effect at once.', 'combat'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),
@@ -570,15 +648,29 @@ export const FEATURES = Object.freeze([
   // switches every frame; the stride is the mod's the moment its clips are
   // decoded (a fetch here, where the mod's LoadAudio is synchronous).
   modFeature('immersive-footsteps', 'Takes effect at once.', 'world'),
+  modFeature('world-tooltips', 'Takes effect at once.', 'world'),   // WORLD-HOVER: the hover reads the switch on the frame it draws
   // BA1 (2026-09-16): BETTER AMBIENCE - read every frame; the dungeon's fog
   // and light are rolled at the door, so those two land on the next dungeon.
   modFeature('better-ambience', 'Takes effect at once. A dungeon\u2019s fog and light are rolled at its door.', 'world'),
+  // HCC (2026-09-23): HORSE CART AND CARGO - `world`, because what it
+  // changes is what stands in it: your horse and wagon as physical things.
+  // The runtime reads its switches every frame (HandleSettingsChanged is
+  // the mod's own listener); turning it off recalls the pair to you.
+  modFeature('horse-cart-and-cargo', 'Takes effect at once.', 'world'),
   // WS1 (2026-09-17): WEAPON SHEATHING - Greatness7's scabbards and the
   // OpenMW mechanism, on the port's Morrowind third-person body. The
   // switch is the port's own pref (the mod ships no settings of its own);
   // RF4: declared here, once, the shelf's default and the online answer
-  // riding the row. Forced on online as the arms are (mwArms), so every
-  // body a peer sees wears its blade the same way.
+  // riding the row.
+  //
+  // MODS-ONLINE-3 (2026-09-22, Mac): THE PLAYER'S, like every other mod
+  // row. It was forced "so every body a peer sees wears its blade the
+  // same way" - which is a claim about how MY machine DRAWS someone
+  // else, not about anything the room agrees on. That is the same
+  // category as `peerClassSprites`, which this lane has always left
+  // alone for exactly this reason. A scabbard stands no object, rolls
+  // nothing, writes nothing and never reaches the wire; the pose's `wd`
+  // carries whether a peer's weapon is drawn either way.
   Object.freeze({
     id: 'mod-weapon-sheathing',
     group: 'combat',
@@ -587,7 +679,7 @@ export const FEATURES = Object.freeze([
       + 'Sheathing ships for it, with a quiver for a bow. Off, a lowered weapon vanishes as in vanilla Morrowind.',
     effect: 'Takes effect when the Morrowind body next builds; the Mods page\u2019s switch rebuilds it at once.',
     kinds: Object.freeze(['mod']),
-    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: true }),
+    control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),
   }),
   // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
   // Morrowind mod, and the only row whose effect line has to say NEXT
@@ -773,15 +865,64 @@ export const FEATURES = Object.freeze([
     // with no gameplay in it, so every player answers for themselves.
     control: Object.freeze({ store: 'prefs', key: 'blood-overkill', initial: true, online: 'player' }),
   }),
+  // BLOOD2e: the lens. The one piece of blood that is in the player's
+  // face rather than on the floor, so it is its own row - a player who
+  // wants the marks and not the face gets exactly that.
+  Object.freeze({
+    id: 'blood-screen',
+    group: 'combat',
+    title: 'Blood on the lens',
+    note: 'A blow that takes a real share of your health throws a few drops onto the screen, which slide and fade in a '
+      + 'couple of seconds. Off, the screen stays clean and the floor still bleeds.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'blood-screen', initial: true, online: 'player' }),
+  }),
+  // BLOOD2g: THE GORE DIAL - the one question a player asks, stepped.
+  // A tier is two numbers under one name (combat/bloodSwitch.js
+  // GORE_TIERS): how much of a blow's blood reaches the floor, and how
+  // many marks the world keeps before the oldest is reused.
+  Object.freeze({
+    id: 'blood-gore',
+    group: 'combat',
+    title: 'Gore',
+    note: 'How much blood there is. Light halves what a blow throws and keeps a few hundred marks; Normal keeps six '
+      + 'hundred; Heavy and Abattoir keep more of it on the floor for longer, at the cost of the memory the marks take.',
+    effect: 'The amount takes effect at once; how many marks the world keeps, when the game is next reloaded (a dungeon takes it on entry).',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({
+      store: 'prefs', key: 'blood-gore', initial: 'normal', online: 'player',
+      tiers: Object.freeze([['light', 'Light'], ['normal', 'Normal'], ['heavy', 'Heavy'], ['abattoir', 'Abattoir']]),
+    }),
+  }),
   Object.freeze({
     id: 'mod-climates-calories',   // a mod-row id: WM3's law reaches the credits' vendor through it
     group: 'character',
     title: 'Climates & Calories by Ralzar',   // AUDIT SURV E: the author's name, as every mod row carries it
     note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
       + 'campfire or a bed. Off is the classic game, with no needs at all.',
-    effect: 'Takes effect at once. Online the room decides.',
+    effect: 'Takes effect at once, online too.',
     kinds: Object.freeze(['mod', 'enhanced', 'classic']),   // AUDIT SURV E: a mod row, under the MOD AUTHORED filter
-    control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: true }),
+    // MODS-ONLINE-3 (2026-09-22, Mac): THIS IS A MOD ROW AND IT IS THE
+    // PLAYER'S. The lane forced it because the system is the PORT's code
+    // rather than a vendored mod - a distinction that exists nowhere a
+    // player can see it. It sits in the Mods pane under Ralzar's name,
+    // beside sixteen rows that are all the player's now, and it was the
+    // only one still locked.
+    //
+    // It passes the same reading they did. The system is resolved
+    // entirely on the machine that owns the actor: hunger, thirst,
+    // exposure and the temperature are computed fresh each tick from MY
+    // climate, MY clothes and MY race, onto MY entity; a camp is local
+    // (the braziers are scenery the terrain already carries either way);
+    // a shop's stock is its own. The one thing that leaves this machine
+    // is a corpse's food, minted by the KILLER in the enemy-death
+    // handler - and a corpse's pile is already the owner's word, granted
+    // to peers as it stands (WORLD6b-iii(c)). That is the same shape as
+    // Unleveled Loot, which is the player's: whoever swings rolls what
+    // falls. A room where one player's kills carry meat and another's do
+    // not is two players playing their own game, not two worlds.
+    control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: 'player' }),
   }),
 ]);
 

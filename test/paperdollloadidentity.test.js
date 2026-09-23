@@ -7,7 +7,7 @@
 // three chargen completions reload it on the wizard's answers; NOTHING
 // reloaded it for a character who arrived through systems/save.js
 // restorePlayer. `?load` is what the front door produces for Continue,
-// Load Game AND Online alike (main.js:145), so every session after the
+// Load Game AND Online alike (main.js:173), so every session after the
 // first composed the player's own items onto the stand-in's body and
 // face: a different face, and the other gender.
 //
@@ -110,8 +110,8 @@ test('THE ART FOLLOWS THE ENTITY: a character restored by restorePlayer draws HE
   assert.equal(snap.faceIndex, 4);
 
   // A FRESH PAGE: the entity is characters/playerEntity.js's pre-chargen
-  // stand-in again, and the host warms the doll with it (world.js:2387,
-  // exterior.js:1182 - the boot warm names no identity at all).
+  // stand-in again, and the host warms the doll with it (world.js:3009,
+  // exterior.js:1256 - the boot warm names no identity at all).
   Object.assign(playerEntity, { name: undefined, race: 'Breton', raceId: RACES.Breton, gender: 'male', faceIndex: 0, chargenDone: false });
   await preloadPaperDollArt(deps, {});
   await refreshPaperDoll(playerEntity);
@@ -119,14 +119,14 @@ test('THE ART FOLLOWS THE ENTITY: a character restored by restorePlayer draws HE
   assert.ok(stand.has(INDEX['SCBG00I0.IMG']), 'the stand-in backdrop');
   assert.ok(stand.has(FACE_BASE['FACE00I0.CIF'] + 0), 'the stand-in face');
 
-  // ...and then `?load` restores the character (main.js:145 - Continue,
+  // ...and then `?load` restores the character (main.js:173 - Continue,
   // Load Game and Online all produce it).
   assert.ok(restorePlayer(playerEntity, snap), 'the restore refused the envelope');
   assert.equal(playerEntity.gender, 'female');
   assert.equal(playerEntity.race, 'Redguard');
   assert.equal(playerEntity.faceIndex, 4);
 
-  // The inventory opens (nativeInventory.js:392 - refreshPaperDoll on
+  // The inventory opens (nativeInventory.js:442 - refreshPaperDoll on
   // every open) and the doll is HERS.
   await refreshPaperDoll(playerEntity);
   const drawn = indicesDrawn();

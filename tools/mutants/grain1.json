@@ -47,11 +47,12 @@
  {
   "name": "GRAIN1-minification-goes-back-to-NEAREST-so-the-grain-returns",
   "file": "src/render/renderer.js",
-  "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);",
-  "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);",
+  "old": "  return { aniso: anisotropyFor(tier, driverMax), minFilter: tier === 'off' ? 'NEAREST_MIPMAP_NEAREST' : 'LINEAR_MIPMAP_LINEAR' };",
+  "new": "  return { aniso: anisotropyFor(tier, driverMax), minFilter: 'NEAREST' };",
   "tests": [
    "test/grain1_terrainmip.test.js"
-  ]
+  ],
+  "why": "GRAIN AUDIT 1 re-aimed: the filter is the tier's, from groundSamplerFor."
  },
  {
   "name": "GRAIN1-MAGNIFICATION-goes-linear-and-smears-the-ground-underfoot",
@@ -65,21 +66,23 @@
  {
   "name": "GRAIN1-the-extension-is-refetched-for-every-archive",
   "file": "src/render/renderer.js",
-  "old": "    const aniso = this._anisoExt ||= (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);",
-  "new": "    const aniso = (gl.getExtension('EXT_texture_filter_anisotropic') ?? null);",
+  "old": "    if (this._anisoExt === null) {",
+  "new": "    if (!this._anisoExt) {",
   "tests": [
    "test/grain1_terrainmip.test.js"
-  ]
+  ],
+  "why": "GRAIN AUDIT 1 re-aimed: the memo of an absent extension is false; a falsy test re-asks on exactly the drivers without it."
  },
  {
   "name": "GRAIN1-the-water-pass-keeps-the-wrapped-footprint-so-the-scroll-rollover-draws-a-line",
   "file": "src/render/waterSurface.js",
-  "old": "  vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);\n  vec3 tex = textureGrad(uTileArr, vec3(uv, 0.0), wgx, wgy).rgb * uTint;",
+  "old": "  vec3 tex = textureGrad(uTileArr, vec3(uv, 0.0), wgx, wgy).rgb * uTint;",
   "new": "  vec3 tex = texture(uTileArr, vec3(uv, 0.0)).rgb * uTint;",
   "tests": [
    "test/grain1_terrainmip.test.js",
    "test/water.test.js"
-  ]
+  ],
+  "why": "GRAIN AUDIT 1 re-aimed: the derivatives moved above the discards."
  },
  {
   "name": "GRAIN2-the-dials-maximum-ignores-what-the-driver-allows",
@@ -120,11 +123,12 @@
  {
   "name": "GRAIN2-the-renderer-stops-reading-the-dial-and-hardcodes-a-number-again",
   "file": "src/render/renderer.js",
-  "old": "      const want = anisotropyFor(getPref('groundSharpness'), this._anisoMax);",
-  "new": "      const want = Math.min(4, this._anisoMax);",
+  "old": "    this._setGroundSampler(groundSharpnessTier());",
+  "new": "    this._setGroundSampler('default');",
   "tests": [
    "test/grain1_terrainmip.test.js"
-  ]
+  ],
+  "why": "GRAIN AUDIT 1 re-aimed."
  },
  {
   "name": "GRAIN2-the-row-is-everyones-instead-of-the-players-own",
@@ -132,6 +136,115 @@
   "old": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player',",
   "new": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'max', online: 'host',",
   "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-off-is-still-trilinear",
+  "file": "src/render/renderer.js",
+  "old": "minFilter: tier === 'off' ? 'NEAREST_MIPMAP_NEAREST' : 'LINEAR_MIPMAP_LINEAR' };",
+  "new": "minFilter: 'LINEAR_MIPMAP_LINEAR' };",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-door-is-ignored",
+  "file": "src/render/renderer.js",
+  "old": "  return new URLSearchParams(search).get('ground') ?? getPref('groundSharpness');",
+  "new": "  return getPref('groundSharpness');",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-a-cached-archive-is-re-uploaded",
+  "file": "src/render/renderer.js",
+  "old": "    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);\n    const gl = this.gl;\n    const tex = gl.createTexture();\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);",
+  "new": "    const gl = this.gl;\n    const tex = gl.createTexture();\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-apply-skips-the-anisotropy-so-a-16x-array-stays-16x",
+  "file": "src/render/renderer.js",
+  "old": "    if (ext) gl.texParameterf(gl.TEXTURE_2D_ARRAY, ext.TEXTURE_MAX_ANISOTROPY_EXT, s.aniso);",
+  "new": "    if (ext && s.aniso > 1) gl.texParameterf(gl.TEXTURE_2D_ARRAY, ext.TEXTURE_MAX_ANISOTROPY_EXT, s.aniso);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-apply-skips-the-filter",
+  "file": "src/render/renderer.js",
+  "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl[s.minFilter]);\n    if (ext)",
+  "new": "    if (ext)",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-apply-walks-nothing",
+  "file": "src/render/renderer.js",
+  "old": "    for (const tex of this.tileArrays.values()) {\n      this._activeTexture(gl.TEXTURE0);",
+  "new": "    for (const tex of []) {\n      this._activeTexture(gl.TEXTURE0);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-apply-leaves-the-array-shadow-stale",
+  "file": "src/render/renderer.js",
+  "old": "    this._tArrayTex = null;   // PERF-TEX2's shadow",
+  "new": "    // PERF-TEX2's shadow",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-world-host-forgets-to-apply-the-tier",
+  "file": "src/scenes/world.js",
+  "old": "    renderer.applyGroundSharpness();   // GRAIN AUDIT 1",
+  "new": "    // GRAIN AUDIT 1",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-town-host-forgets-to-apply-the-tier",
+  "file": "src/scenes/exterior.js",
+  "old": "  renderer.applyGroundSharpness();   // GRAIN AUDIT 1",
+  "new": "  // GRAIN AUDIT 1",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-row-leaves-the-classic-lane",
+  "file": "src/systems/features.js",
+  "old": "    kinds: Object.freeze(['enhanced', 'classic']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness',",
+  "new": "    kinds: Object.freeze(['enhanced']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness',",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-perf-probe-cannot-reach-the-dial",
+  "file": "tools/perfProbe.mjs",
+  "old": "  await page.goto(`http://localhost:${PORT}${url}${GROUND}`);",
+  "new": "  await page.goto(`http://localhost:${PORT}${url}`);",
+  "tests": [
+   "test/grain1_terrainmip.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-GRAIN-the-water-takes-its-derivatives-after-the-discards",
+  "file": "src/render/waterSurface.js",
+  "old": "  vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);\n  ivec2 cell",
+  "new": "  ivec2 cell",
+  "tests": [
+   "test/water.test.js",
    "test/grain1_terrainmip.test.js"
   ]
  }

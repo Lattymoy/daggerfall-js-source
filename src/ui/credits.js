@@ -166,6 +166,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/49',
     }),
     Object.freeze({
+      title: 'World Tooltips',
+      version: '1.1',
+      author: 'jefetienne',
+      what: 'A name under the crosshair for whatever you are looking at (WORLD-HOVER): a person, a shop sign and the hours it keeps, a door and its lock level, the dungeon you would walk into, a lever, a wheel, a ladder, a bookshelf, a Daedra at a summoning, and what a chest or a body holds. The mod\u2019s naming ladder ported 1:1 from its own source, in its own order, extension API included - worn in the enhanced skin\u2019s own dress at the reticle, where the port\u2019s loot plaque already stood, rather than the mod\u2019s Daggerfall tooltip panel.',
+      terms: 'Carried under its MIT License - the permission the source grants (Copyright (c) 2009-2018 jefetienne), beside Daggerfall Workshop\u2019s own; see vendor/world-tooltips/README.md.',
+      contact: 'jefetienne, through the DFU forums (the manifest\u2019s ContactInfo)',
+      vendor: Object.freeze(['world-tooltips']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/158',
+    }),
+    Object.freeze({
       title: 'Windmills of Daggerfall',
       version: '2.0',
       author: 'Kamer',
@@ -173,6 +183,18 @@ export const CREDITS = Object.freeze({
       terms: 'Vendored with the author\'s permission (2026-08-29).',
       contact: 'DFU Discord',
       vendor: Object.freeze(['windmills-kamer']),
+    }),
+    // WOD1: Kamer's second - AFTER the mill, which the CR1 gate finds
+    // first by his name.
+    Object.freeze({
+      title: 'World of Daggerfall',
+      version: '2.0',
+      author: 'Kamer',
+      what: 'The wilderness: his 65 layouts - bandit camps and forts, ruins, shrines, mountains and rock fields - named at 227,938 places across the Iliac Bay and stood where his loader stands them, one to a map pixel, on ground levelled under each as his loader levels it, with the bandits, bears, warriors and treasure they hold, and the camp he pitched outside Privateer’s Hold. Ported 1:1 from the source his own bundle ships.',
+      terms: 'Vendored with the author’s permission, confirmed by Mac (2026-09-23); see vendor/world-of-daggerfall/README.md.',
+      contact: 'DFU forums',
+      vendor: Object.freeze(['world-of-daggerfall']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/181',
     }),
     Object.freeze({
       title: 'Basic Roads',
@@ -263,6 +285,16 @@ export const CREDITS = Object.freeze({
       what: 'An alternative way to level, offered when you make a character (ORL1): every skill you raise fills a hundred-point bar instead of Daggerfall\u2019s skill sum - your primaries and majors fastest, your minors next, everything else slowest - with whatever spills over carried into the next level; and levelling up hands you a purse of virtues to spend across a few of your attributes, with Luck priced higher — how many, across how many, and what Luck costs are all yours to set on the mod’s own tile. The first MORROWIND mod in the port: it is an OpenMW Lua mod, ported 1:1 from the author\u2019s own source (systems/oblivionLeveling.js), in both lanes.',
       terms: 'Carried by the author\u2019s permission, on Mac\u2019s word - the archive states no licence and names no author. Ported 1:1 from the shipped Lua, which is vendored whole; see vendor/oblivion-remaster-leveling/README.md for the open permission record.',
       vendor: Object.freeze(['oblivion-remaster-leveling']),
+    }),
+    Object.freeze({
+      title: 'Horse Cart and Cargo',
+      version: '1.0.0-rc12',
+      author: 'demifiend000',
+      what: 'Your horse and wagon as things in the world (HCC): left where you dismount, following you or waiting on command, the horse hitched to the wagon and the pair mounted by walking up to them, summoned outdoors, the wagon reached from an entrance it is parked near, its cargo showing by weight and its wheels turning. Online, the others see them where you left them.',
+      terms: 'Ported 1:1 from the shipped bundle, read off its compiled assembly method by method; the mod\u2019s own horse art vendored out of the assembly - see vendor/horse-cart-and-cargo/README.md for the permission record.',
+      contact: 'demifiend000, through the Nexus page (daggerfallunity mod 1374)',
+      vendor: Object.freeze(['horse-cart-and-cargo']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/1374',
     }),
   ]),
 });

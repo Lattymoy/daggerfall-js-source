@@ -1,0 +1,112 @@
+[
+ {
+  "name": "SP1-the-shot-spellings-drift-from-the-apps",
+  "file": "src/systems/saveTransfer.js",
+  "old": "  ['Screenshot.jpg', 'image/jpeg'],\n  ['Screenshot.png', 'image/png'],\n  ['Screenshot.dataurl', null],\n]);\n/** the download's name */",
+  "new": "  ['Screenshot.jpeg', 'image/jpeg'],\n  ['Screenshot.png', 'image/png'],\n  ['Screenshot.dataurl', null],\n]);\n/** the download's name */",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-an-unknown-shot-is-written-under-the-jpg-spelling",
+  "file": "src/systems/saveTransfer.js",
+  "old": "  return { name: 'Screenshot.dataurl', data: enc.encode(shot) };",
+  "new": "  return { name: 'Screenshot.jpg', data: enc.encode(shot) };",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-the-crc-is-not-updated-per-byte",
+  "file": "src/systems/saveTransfer.js",
+  "old": "  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 255] ^ (c >>> 8);",
+  "new": "  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 255] ^ (c >>> 7);",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-the-central-directory-forgets-the-offset",
+  "file": "src/systems/saveTransfer.js",
+  "old": "...u16(0), ...u16(0), ...u32(0), ...u32(offset), ...nameB]));",
+  "new": "...u16(0), ...u16(0), ...u32(0), ...u32(0), ...nameB]));",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-a-hand-spelt-slot-number-imports",
+  "file": "src/systems/saveTransfer.js",
+  "old": "  if (!m || String(Number(m[1])) !== m[1]) return null;",
+  "new": "  if (!m) return null;",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-data-without-a-card-travels",
+  "file": "src/systems/saveTransfer.js",
+  "old": "    if (!info || !data) continue;\n    try { JSON.parse(info); } catch { continue; }",
+  "new": "",
+  "tests": [
+   "test/savetransfer.test.js"
+  ],
+  "equivalent": true,
+  "why": "slotsOf walks the CARD keys alone, so data with no card is never visited whatever the guard says; the guard is for a card whose data is missing, which the round-trip pin holds."
+ },
+ {
+  "name": "SP1-import-overwrites-a-taken-number",
+  "file": "src/systems/saveTransfer.js",
+  "old": "    const key = taken ? firstFreeKey(storage) : s.n;",
+  "new": "    const key = s.n;",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-a-save-already-held-is-doubled",
+  "file": "src/systems/saveTransfer.js",
+  "old": "    if (held.some((h) => sameSave(h, info))) { result.skipped++; continue; }",
+  "new": "",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-the-card-is-written-first-so-a-quota-throw-leaves-a-half-slot",
+  "file": "src/systems/saveTransfer.js",
+  "old": "      storage.setItem(SAVE_DATA_PREFIX + key, s.data);\n      if (s.shot) storage.setItem(SAVE_SHOT_PREFIX + key, s.shot);\n      storage.setItem(SAVE_INFO_PREFIX + key, s.info);",
+  "new": "      storage.setItem(SAVE_INFO_PREFIX + key, s.info);\n      storage.setItem(SAVE_DATA_PREFIX + key, s.data);\n      if (s.shot) storage.setItem(SAVE_SHOT_PREFIX + key, s.shot);",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-a-failed-import-leaves-its-data-behind",
+  "file": "src/systems/saveTransfer.js",
+  "old": "      try { storage.removeItem(SAVE_DATA_PREFIX + key); storage.removeItem(SAVE_SHOT_PREFIX + key); } catch { /* storage gone */ }",
+  "new": "",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-the-load-pane-lost-the-card",
+  "file": "src/ui/enhancedMenu.js",
+  "old": "  body.append(transferCard(saves.length));\n}",
+  "new": "}",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ },
+ {
+  "name": "SP1-the-zip-import-inflates-everything",
+  "file": "src/ui/enhancedMenu.js",
+  "old": "readZipEntries(f, { pick: (names) => names.filter((n) => slotPathOf(n)) })",
+  "new": "readZipEntries(f)",
+  "tests": [
+   "test/savetransfer.test.js"
+  ]
+ }
+]

@@ -251,9 +251,9 @@ test('AUDIT 65 CV-2: an enemy shaft meets the player at 0.45 + 0.35, two-sided, 
 test('AUDIT 65 CV-2: EVERY player-side capsule call carries the player body, at all five sites', () => {
   // The seam is five direct calls: hostMagic's AoE arm and its enemy
   // missile contact, dungeonContext's two enemy-missile player arms, and
-  // the shared ArrowFlight the three world hosts fly (world.js:255,
-  // exterior.js:35, worldModes.js:84; the dungeon runs its own loop and
-  // takes the shared player-arrow LAW at dungeonContext.js:73) - so
+  // the shared ArrowFlight the three world hosts fly (world.js:288,
+  // exterior.js:37, worldModes.js:87; the dungeon runs its own loop and
+  // takes the shared player-arrow LAW at dungeonContext.js:80) - so
   // worldModes.js and exterior.js hold no arrow contact of their own.
   // THE FOUR HOSTS RULE: the sweep is the WHOLE of src/, not a list of
   // three files, or a fifth host wiring its own contact escapes it.
@@ -268,11 +268,15 @@ test('AUDIT 65 CV-2: EVERY player-side capsule call carries the player body, at 
       sites.push([f.slice(root.length), line.trim()]);
     }
   }
+  // SPELLFX1 added three DRAWN arms (a peer's shaft in ArrowFlight and in
+  // the dungeon loop, a peer's missile in hostMagic): each stops a shot
+  // another player loosed on my body and applies nothing - still a
+  // player capsule, so still measured at the player's own radius.
   assert.deepEqual(sites.map(([f]) => f).sort(), [
-    'src/combat/arrowFlight.js',
-    'src/scenes/dungeonContext.js', 'src/scenes/dungeonContext.js',
-    'src/scenes/hostMagic.js', 'src/scenes/hostMagic.js',
-  ], 'five player-side capsule calls, and these are the files that own them');
+    'src/combat/arrowFlight.js', 'src/combat/arrowFlight.js',
+    'src/scenes/dungeonContext.js', 'src/scenes/dungeonContext.js', 'src/scenes/dungeonContext.js',
+    'src/scenes/hostMagic.js', 'src/scenes/hostMagic.js', 'src/scenes/hostMagic.js',
+  ], 'five player-side capsule calls plus the three SPELLFX1 drawn arms, and these are the files that own them');
   for (const [f, line] of sites) {
     assert.ok(line.includes('PLAYER_BODY_RADIUS'), `${f}: a player capsule measured without the player's body - ${line}`);
   }

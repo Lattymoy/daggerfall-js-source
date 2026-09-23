@@ -135,7 +135,7 @@
   {
     "name": "S8-heartbeat-9000",
     "file": "src/net/wire.js",
-    "old": "export const HEARTBEAT_MS = 5000;",
+    "old": "export const HEARTBEAT_MS = 20000;",
     "new": "export const HEARTBEAT_MS = 9000;",
     "tests": [
       "test/slam1.test.js",
@@ -148,14 +148,15 @@
       "test/slam8.test.js",
       "test/slam12.test.js",
       "test/mwbody1.test.js",
-      "test/world3.test.js"
+      "test/world3.test.js",
+      "test/relayh1.test.js"
     ]
   },
   {
     "name": "S9-timeout-5000",
     "file": "src/net/online.js",
-    "old": "export const PEER_TIMEOUT_MS = 20000;",
-    "new": "export const PEER_TIMEOUT_MS = 5000;",
+    "old": "export const PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS;",
+    "new": "export const PEER_TIMEOUT_MS = HEARTBEAT_MS;",
     "tests": [
       "test/slam1.test.js",
       "test/slam2.test.js",

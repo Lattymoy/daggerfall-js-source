@@ -175,10 +175,13 @@ export function createWeaponWidget({
   /** CheckForMirrorOverride: a two-handed weapon mirrored by its family's Miscellaneous switch. */
   function mirrorOverride() {
     if (!w.specificWeapon) return false;
-    // IL 0x3528: `GetItemHands() == 2`, which is ItemHands.LeftOnly - a
-    // two-handed weapon answers Both (4), so the three mirrors below
-    // fire on nothing a hand can hold; kept exactly as the mod has it.
-    if (getItemHands(w.specificWeapon) !== ITEM_HANDS.LeftOnly) return false;
+    // IL 0x3528: `GetItemHands() == 2` - and 2 is ItemHands.BOTH in DFU's
+    // own enum (None, Either, Both, LeftOnly, RightOnly), not the port's
+    // LeftOnly; the mod's source is `SpecificWeapon.GetItemHands() ==
+    // ItemHands.Both` (FPSWeaponClone.cs:2378). 3ARMS (2026-09-22) found
+    // the same misread in Handheld Torches; the three mirrors below fire
+    // on a two-hander now, as the mod's switches say.
+    if (getItemHands(w.specificWeapon) !== ITEM_HANDS.Both) return false;
     const t = w.currentWeaponType;
     if (w.s.mirrorTwoHandedSwords && (t === T.LongBlade || t === T.LongBlade_Magic)) return true;
     if (w.s.mirrorTwoHandedAxes && (t === T.Battleaxe || t === T.Battleaxe_Magic)) return true;

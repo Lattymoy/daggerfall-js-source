@@ -141,19 +141,23 @@ test('U25: the gold button drops gold into the remote pile, refusing bad amounts
   const entity = { isPlayer: true, items: bag, goldPieces: 500 };
   const w = new NativeInventoryWindow({ items: () => bag, icons: ICONS, entity });
   w.click(230, 130);            // the gold button
-  assert.equal(w.topBox.field, true);
-  assert.equal(w.goldEntry, '0', 'TextBox.Text = "0"');
+  // CM5: DropGoldPopup (:1246-1256) is a pushed DaggerfallInputMessageBox - numeric, 8 characters, seeded "0"
+  assert.ok(w.inputBox, 'the prompt is a pushed box');
+  assert.equal(w.inputBox.numeric, true); assert.equal(w.inputBox.maxCharacters, 8);
+  assert.equal(w.inputBox.label, '', 'GoldButton_OnMouseClick sets tokens (record 25) and no label (:1275)'); assert.ok(w.inputBox.lines.length, 'the record above the field');
+  assert.equal(w.inputBox.value, '0', 'TextBox.Text = "0"');
   // 0 is refused outright - DFU returns without clamping
   w.input('Enter');
+  assert.equal(w.inputBox, null, 'Return closes the box');
   assert.equal(entity.goldPieces, 500);
   // so is more than you carry
   w.click(230, 130);
-  w.goldEntry = '9999';
+  w.inputBox.value = '9999';
   w.input('Enter');
   assert.equal(entity.goldPieces, 500);
   // a real amount lands in the remote pile
   w.click(230, 130);
-  w.goldEntry = '120';
+  w.inputBox.value = '120';
   w.input('Enter');
   assert.equal(entity.goldPieces, 380);
   assert.equal(w._remote().find((it) => it.group === 'Currency')?.stackCount, 120);
@@ -207,18 +211,29 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // empty itself into the pack instead of opening at all - so the
     // slices below are found by what each one carries rather than by
     // being the first `showOverlay(makeInventoryWindow({` in the file.
-    const pileAt = src.indexOf('loot: droppedLootHooks(pile)');
+    // QUICK-LOOT B4: the hooks are HOISTED now - `const _hooks =
+    // droppedLootHooks(pile)` above the arm - because quick loot is
+    // handed the very same object the window would get, and minting it
+    // twice would be two identities for one pile. The law is unchanged
+    // and is asserted on the hoist instead of on the property.
+    const pileAt = src.indexOf('const _hooks = droppedLootHooks(pile);');
     assert.ok(pileAt > 0, `${f}: the pile arm no longer names its own identity`);
-    const pile = src.slice(src.lastIndexOf('townTalk.showOverlay(makeInventoryWindow({', pileAt), pileAt + 400);
+    const pile = src.slice(pileAt, pileAt + 1100);   // QUICK-LOOT B4: past the decline and its reasoning, to the property itself
     // G5: DaggerfallLoot's identity travels with the pile through the
     // ONE shared shape, so a fifth call site cannot ship a partial one.
-    assert.match(pile, /loot: droppedLootHooks\(pile\)/);
+    assert.match(pile, /loot: _hooks,/);
+    assert.match(pile, /quickLootTake\(dropKey, _hooks, playerEntity,/,
+      `${f}: ...and quick loot takes through that SAME identity, never a second one`);
     assert.match(pile, /onClose: \(\) => droppedLoot\.releaseEmptied\(\)/);
     // ...and the BODY's identity travels the same way, built by the
     // pool rather than the host (scenes/corpseMarker.js's
     // corpseLootHooks): the host hands over a door, the pool decides
     // what goes through it.
-    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\) : null\)/,
+    // QUICK-LOOT B4: ...with the decline in front of it. The body's
+    // identity still comes from the POOL (corpseLootHooks) and still
+    // reaches the same builder behind the same art gate; quick loot is
+    // handed that very object and answers null when it is not wanted.
+    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\);\n\s*\} : null\)/,
       `${f}: the corpse must reach the same builder, behind the same art gate`);
   }
   // the dungeon host has one too, and it is the door's
@@ -465,7 +480,12 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // survived restoring the defect.
   const tt = code('scenes/townTalk.js');
   const pd = tt.slice(tt.indexOf('function pointerdown(e) {'), tt.indexOf('function hover(e) {'));
-  assert.match(pd, /if \(!overlay\) return false;/, 'the guard is on the WINDOW');
+  // STATUS-LIVE (2026-09-22): the guard is still on the WINDOW - what
+  // it asks is the PAUSE. A box the game is not stopped for (the
+  // status readout, ui/statusBox.js) is standing in this slot while
+  // the player walks, and a press then belongs to the world.
+  assert.match(pd, /if \(!overlay \|\| !talkPaused\(\)\) return false;/, 'the guard is on the WINDOW');
+  assert.doesNotMatch(pd, /if \(!overlay\) return false;/, 'and not on the slot alone any more');
   assert.doesNotMatch(pd, /if \(!overlay\?\.click\)/, 'and not on its click method');
   assert.match(pd, /overlay\.click\?\.\(/, 'the call is what is optional');
   // AUDIT 18: F11 is QuickLoad AND the browser's fullscreen key. One
@@ -480,7 +500,7 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // destroyed the session (AUDIT 17e F41's own failure) and F11 went
   // fullscreen. A list a lane has to remember to extend is what let that
   // happen, so the pin now asks the tree which hosts register a keydown
-  // and holds every one of them to ui/input.js:545-546's "every host
+  // and holds every one of them to ui/input.js:652-653's "every host
   // that registers a keydown calls this FIRST".
   const SCENES = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'scenes');
   const hosts = readdirSync(SCENES).filter((f) => f.endsWith('.js')

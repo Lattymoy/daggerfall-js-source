@@ -179,14 +179,14 @@ test('SAV4: the host wiring source pins - per-character quickslots, the boot arm
   // window's saveAs share the ONE producer.
   assert.match(world, /function worldQuickSave\(saveName = QUICK_SAVE_NAME\)/);
   assert.match(world, /saveSlot\(playerEntity\.name, saveName, snap\)/);
-  assert.match(world, /: mostRecent \? \(mostRecentRestorable\(\)\?\.snap \?\? null\)\n\s*: quickLoadSlot\(playerEntity\.name\)/);
+  assert.match(world, /: mostRecent \? \(mostRecentRestorable\(\)\?\.snap \?\? null\)\n\s*: quickLoadSlot\(playerEntity\.name, undefined, playerEntity\.characterId \?\? null\)/);
   // The boot arm: a picked slot key wins, else the most-recent shape.
   assert.match(world, /\? \{ key: Number\(params\.get\('loadkey'\)\) \}\n\s*: \{ mostRecent: true \}/);
 
   const dungeon = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   assert.match(dungeon, /quickSave\(saveName = QUICK_SAVE_NAME\)/);
   assert.match(dungeon, /saveSlot\(playerEntity\.name, saveName, snap\)/);
-  assert.match(dungeon, /key != null \? loadSlot\(key\) : quickLoadSlot\(playerEntity\.name\)/);
+  assert.match(dungeon, /key != null \? loadSlot\(key\) : quickLoadSlot\(playerEntity\.name, undefined, playerEntity\.characterId \?\? null\)/);
 
   // The pause seam builds the slot-window doors from the hosts' seams.
   const pause = readFileSync(new URL('../src/ui/pauseWindow.js', import.meta.url), 'utf8');
@@ -393,13 +393,24 @@ test('SAV4 window: delete confirms and refreshes; rename prefills and writes onl
     win._select(0);
     win.click(...nat([SW_RECTS.rename[0], SW_RECTS.rename[1]]));
     assert.equal(win.top, 'rename');
-    assert.equal(win.renameText, 'Old', 'TextBox.Text prefills');
+    // CM10: RenameSaveButton_OnMouseClick pushes a DaggerfallInputMessageBox (:566-570), enterSaveName for its label
+    assert.equal(win.renameBox.value, 'Old', 'TextBox.Text prefills');
+    assert.equal(win.renameBox.label, 'Enter save name: ');
     win.input('Backspace'); win.input('Backspace'); win.input('Backspace');
     for (const ch of 'Better') win.input('char:' + ch);
     win.input('Enter');
-    assert.equal(win.top, null);
+    assert.equal(win.top, null); assert.equal(win.renameBox, null, 'Return pops the box');
     assert.equal(findSave('Alaric', 'Better', s) !== -1, true);
     assert.equal(win.nameText, 'Better');
+    // AUDIT-CM: Escape closes the box with no write, and an EMPTY answer is a no-op (:575)
+    win.click(...nat([SW_RECTS.rename[0], SW_RECTS.rename[1]]));
+    assert.equal(win.top, 'rename');
+    win.input('Escape');
+    assert.equal(win.top, null); assert.equal(win.renameBox, null); assert.equal(win.nameText, 'Better');
+    win.click(...nat([SW_RECTS.rename[0], SW_RECTS.rename[1]]));
+    win.renameBox.value = '';
+    win.input('Enter');
+    assert.equal(win.top, null); assert.equal(win.nameText, 'Better'); assert.equal(findSave('Alaric', 'Better', s) !== -1, true);
   });
 });
 

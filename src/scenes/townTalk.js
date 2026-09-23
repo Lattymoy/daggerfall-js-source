@@ -64,11 +64,14 @@ import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
 import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
 import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark side effect
-import { getNameBankOfRegion } from '../characters/nameHelper.js';
+import { getNameBankOfRegion, fullName as nameHelperFullName, GENDERS } from '../characters/nameHelper.js';   // MACRO-6: %fn/%mn in the engine-less answer
+import { talkMacroSource } from '../systems/talkMacros.js';
+import { bumpSeed } from '../formats/dfRandom.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';   // AUDIT 63 F4: TalkManager.cs:665 reads Stats.LivePersonality (DaggerfallStats.cs:55), not the base
 import { ActionTextBox } from '../ui/actionText.js';   // ROAD-D D10: DaggerfallUI.MessageBox, the port's parchment
+import { registerPresenter, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: this slot and this PopupText, offered to the one door every message goes through - and the door itself, for this host's own box seam
 import { preloadTalkArt, setNpcPortrait, clearNpcPortrait } from '../ui/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
 import { createTalkWindow, talkDoorReady } from '../ui/talkDoor.js';   // ET1: the ONE door - the classic window or the enhanced panel over it
 import { requestLook } from '../player/pointerLock.js';   // ET1: the panel's Goodbye relocks inside its own gesture (MAC1)
@@ -92,6 +95,33 @@ export const PERSON_HIT_HEIGHT = 1.8;
 
 /** Ray vs a vertical cylinder at feet (the person's controller):
  *  returns the along-ray distance or Infinity. */
+/**
+ * THE NEAREST TOWNSPERSON UNDER THE RAY - the press's own scan, lifted.
+ *
+ * AUDIT-WH H2. `tryActivate` below walked the street pool inline, and
+ * the world hover needed the same answer to race a townsperson against
+ * a shopfront (the mod's .cs:299-302 band). A second walk written at
+ * the plaque is the HARD2 failure in miniature: only a readout would
+ * read it, so nobody would notice it drifting from the one the button
+ * takes. One scan, two readers.
+ *
+ * The INDEX comes back with the entry because the plaque keys its
+ * frame by it - `mobileNpc:<i>` into the host's own live pool, the
+ * same shape worldModes' static `person:<i>` already uses.
+ *
+ * @returns {{entry: object, index: number, distance: number}|null}
+ */
+export function nearestPerson(camPos, fwd, persons) {
+  let best = null, bestI = -1, bestDist = Infinity;
+  let i = -1;
+  for (const p of persons ?? []) {
+    i += 1;
+    const d = rayPersonDistance(camPos, fwd, p.pos);
+    if (d < bestDist) { best = p; bestI = i; bestDist = d; }
+  }
+  return best ? { entry: best, index: bestI, distance: bestDist } : null;
+}
+
 export function rayPersonDistance(camPos, fwd, feet) {
   const cx = feet[0] - camPos[0], cz = feet[2] - camPos[2];
   // closest approach in XZ
@@ -107,7 +137,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, questBuildingSource = null }) {   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null }) {   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -143,6 +173,20 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return people;
   };
   let overlay = null;
+  /** AUDIT ENH-NOTICE3 C2 - WHEN THE TOASTS GO, AND WHEN THEY STAY.
+   *  DFU paints PopupText as part of the HUD window, which is the
+   *  BOTTOM of the stack (DaggerfallUI.cs:407-408), and a popup's Draw
+   *  paints its previousWindow first, dimmed (DaggerfallPopupWindow.cs
+   *  :77-85); every DaggerfallUI.MessageBox passes the then-top as
+   *  previousWindow (:1328-1362). So under a pushed BOX the rows stay;
+   *  under a window that cuts the chain (the inventory, the rest, the
+   *  sheet) they go. AUDIT FONT F4 asked "is the slot occupied", which
+   *  hid the toasts under the very box the notice stack was built to
+   *  stand beside; the question is the chain's - `hudCovered`, AUDIT 64
+   *  F35's port of it, on this slot and on the mode host's (the outer
+   *  hosts hand `modes.hudCovered` in) - and the held map's outright
+   *  HUD hide (MAP-FIELD2's `hidesHud`) beside it. */
+  const toastsCovered = () => (talkPaused() && windows.hudCovered(overlay)) || hidesHud(overlay) || !!otherHudCovered?.();
   /** ROAD-B B1: the DEPTH under this host's one slot. `overlay` is the
    *  live top - every draw, key, click and drain in this file already
    *  reads it - and the stack (UserInterfaceManager.cs, ported in
@@ -340,7 +384,17 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   function keydown(e) {
-    if (overlay) {
+    // STATUS-LIVE: THE GATE IS THE PAUSE, NOT THE SLOT. This rung
+    // consumes every key under an occupant, which is right for a
+    // window the game is stopped for and wrong for one it is not: the
+    // status readout (ui/statusBox.js) declares `pauseWhileOpen:
+    // false` and stands in this slot while the player walks, so a W
+    // eaten here would be a step not taken. `talkPaused` is the same
+    // latch `overlayActive` already publishes - the STACK's, so a
+    // non-pausing box laid over a pausing window still consumes - and
+    // the readout's own two keys reach it through routeAction's yield
+    // and its own toggle, not through here.
+    if (overlay && talkPaused()) {
       // CG2 (Mac: "unable to type in your name"): a key typed into a DOM
       // text field - the enhanced wizard's name boxes stand over the
       // canvas as real <input>s - is the FIELD's. This rung used to
@@ -381,6 +435,10 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // free before RaiseSkills can want it for a level-up screen -
       // and the unguarded re-read threw on the key that closes it.
       if (overlay?.done) dropOverlay();
+      // MENU-RELOCK: if that key dismissed the last window, reclaim
+      // mouselook while the closing key is still a browser user gesture.
+      // A frame-late makeLookGate request can be refused by pointer-lock.
+      if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
       return true;
     }
     // AUDIT 58 (talk lane) - THE MODE KEYS SIT UNDER THE WINDOW GATE.
@@ -431,10 +489,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  the overlay consumed it, the way `keydown` does; a host that
    *  drains its own key Set on the same event does that first. */
   function keyup(e) {
-    if (!overlay) return false;
+    if (!overlay || !talkPaused()) return false;   // STATUS-LIVE: the pause, not the slot - the release half of the keydown rung above
     if (typeof overlay.keyup !== 'function') return true;
     overlay.keyup(e.code, e);
     if (overlay?.done) dropOverlay();
+    // Automap and other two-phase windows can close on key-up rather
+    // than key-down; that release is also the transient gesture.
+    if (!overlay && !otherOverlayActive?.()) requestLook(canvas);
     return true;
   }
 
@@ -613,11 +674,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  this arm consumes strictly below it alone - :412 is reached for the ONE ray's own hit (activate.js has the law). */
   function tryActivate(camPos, fwd, persons, nearerThan = Infinity) {
     if (overlay) return true;
-    let best = null, bestDist = Infinity;
-    for (const p of persons) {
-      const d = rayPersonDistance(camPos, fwd, p.pos);
-      if (d < bestDist) { best = p; bestDist = d; }
-    }
+    const near = nearestPerson(camPos, fwd, persons);
+    const best = near?.entry ?? null, bestDist = near?.distance ?? Infinity;
     // AUDIT 23 (ui-native-3) - PlayerActivate.cs:76/:771-798: the ray
     // itself reaches RayDistance (76.8); each MODE's distance gates
     // inside with the 'youAreTooFarAway' line (Info/Grab/Talk 6.4, Steal
@@ -1050,17 +1108,30 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // the two exteriors, so isInside is false; %loc's mark side effect
     // (MacroHelper.cs:1085-1090) is the discoverBuilding call, keyed
     // region:location until the automap arc brings the map pixel id.
-    let hint = '';
-    if (raw.includes('%hnt')) {
+    //
+    // MACRO-6: the roll rides EACH OCCURRENCE - %hnt and %hnt2 each call
+    // GetKeySubjectBuildingHint in C# (DialogHint/DialogHint2's
+    // LocalBuilding arm, TalkManagerMCP.cs:82-122), so the hint is a
+    // function the walk calls per macro, and a record with neither
+    // never rolls.
+    const hint = () => {
       const h = buildingHint(rolls, false);
-      hint = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%di of here')   // MAC-U: the no-data fallback is the table's phrase too
+      const text = randomVariant(h.textId, h.reveal ? '... Let me just mark %loc here on your map' : '%di of here')   // MAC-U: the no-data fallback is the table's phrase too
         .replaceAll('%loc', building.name).replaceAll('%di', a.direction);
       // RP1: the discovery key is the CURRENT region's. This read the
       // boot region, so a building revealed after streaming across a
       // border was filed under the region the session started in and
       // the map never showed it where the player actually was.
       if (h.reveal) discoverBuilding(`${regionNow()}:${cityName()}`, building, null, questBuildingSource);   // AUDIT 63 F49: TalkManager.cs:1290's DiscoverBuilding takes the quest name-override arm too (PlayerGPS.cs:945-959)
-    }
+      return text;
+    };
+    // MACRO-6: FemaleName/MaleName off TalkManagerMCP's own source (the
+    // region's name bank, and MaleName's DFRandom seed nudge), the ones
+    // the engine path answers through - 7269 and 7275-7294 carry them.
+    const names = talkMacroSource({
+      fullName: (gender) => nameHelperFullName(getNameBankOfRegion(regionNow()), gender === 'female' ? GENDERS.Female : GENDERS.Male),
+      bumpSeed,
+    });
     // AUDIT 18 F1: ExpandRandomTextRecord (TalkManager.cs:3580-3587)
     // runs the FULL MacroHelper over the answer record - %oth and %cn
     // resolve here exactly as they do in the greeting.
@@ -1071,6 +1142,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       hint, key: building.name,
       honorific: honorificOf(playerEntity.gender),   // T4: the real %hnr/%ra
       race: raceDisplayName(playerEntity.race),
+      femaleName: () => names.femaleName(), maleName: () => names.maleName(),
     });
   }
 
@@ -1102,15 +1174,16 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // the DRAW half is gated - PopupText.Update retires rows from
     // DaggerfallHUD.Update, which renderHUD does not touch.
     // FONT1: ...and the ELSE says so out loud. The enhanced skin draws
-    // this column in the DOM (ui/enhancedHudText.js), and a DOM column
-    // stays painted unless it is told to hide - AUDIT 64 F37's own law -
-    // so a frame the gate refuses must reach `hide()` rather than simply
-    // skip the paint. On the classic skin `hide()` does nothing, which
-    // is what skipping the call always did.
+    // these rows in the DOM (toasts in the notice stack since
+    // ENH-NOTICE3, ui/enhancedNotice.js), and a DOM face stays painted
+    // unless it is told to hide - AUDIT 64 F37's own law - so a frame
+    // the gate refuses must reach `hide()` rather than simply skip the
+    // paint. On the classic skin `hide()` does nothing, which is what
+    // skipping the call always did.
     // AUDIT FONT F4: ...and the host REPORTS its window slot first. The classic column is drawn HERE and the overlay
-    // stack just below it, so on that skin a window covers it; the enhanced column is DOM at z-index 4 and covers the
+    // stack just below it, so on that skin a window covers it; the enhanced face is DOM over the canvas and covers the
     // window instead, so it is told to go for as long as one stands.
-    hud.observe(!!overlay);
+    hud.observe(toastsCovered());   // AUDIT ENH-NOTICE3 F3/C2: the HUD's cover, read the way DFU paints it - see toastsCovered
     if (font && hudRenderEnabled()) hud.draw(renderer, canvas, font, s); else hud.hide();
     // ROAD close-P: THE STACK IS PAINTED, NOT JUST ITS TOP.
     // DaggerfallPopupWindow.Draw (:77-86) runs `previousWindow.Draw()`
@@ -1139,7 +1212,12 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // does with it. worldModes.js carries the corrected shape with
     // this reasoning spelled out beside it; this host was the copy
     // that never got it.
-    if (!overlay) return false;
+    // STATUS-LIVE: ...and the same gate on the POINTER. A click under a
+    // non-pausing readout is the WORLD's - a swing, an activation -
+    // which is why the box itself declines `click()` (ui/statusBox.js).
+    // Consuming it here would swallow the press before the box could
+    // decline anything.
+    if (!overlay || !talkPaused()) return false;
     const r = canvas.getBoundingClientRect();
     const px = (e.clientX - r.left) * (canvas.width / r.width);
     const py = (e.clientY - r.top) * (canvas.height / r.height);
@@ -1185,7 +1263,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // dictionary, polled by VerticalScrollBar.Update :101-130), so a
     // window that latches on the press - the list picker's thumb drag -
     // needs the edge that ends it. `release()` is that edge.
-    if (!overlay) return false;
+    if (!overlay || !talkPaused()) return false;   // STATUS-LIVE: the pause, not the slot - see pointerdown
     if (!overlay.pointer && !(phase === 'up' && overlay.release)) return false;
     const r = canvas.getBoundingClientRect();
     const px = (e.clientX - r.left) * (canvas.width / r.width);
@@ -1222,7 +1300,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  the last point hover() happened to hand it - a pack opened with
    *  the Inventory key has had no mousemove at all. */
   function wheel(e) {
-    if (!overlay) return false;
+    if (!overlay || !talkPaused()) return false;   // STATUS-LIVE: the pause, not the slot - a notch under a readout scrolls whatever the world puts under it
     const r = canvas.getBoundingClientRect();
     const px = (e.clientX - r.left) * (canvas.width / r.width);
     const py = (e.clientY - r.top) * (canvas.height / r.height);
@@ -1231,6 +1309,23 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return true;
   }
 
+  // ENH-NOTICE3: THIS HOST'S SLOT AND THIS HOST'S PopupText, OFFERED
+  // ONCE. systems/notify.js is the door every DaggerfallUI.MessageBox
+  // and AddHUDText goes through, and a box it is handed reaches a
+  // host's slot only through a presenter. This one is the OUTDOOR
+  // slot, at priority 0: the modal mode hosts (worldModes' interior
+  // arm, the dungeon context) stand in front of it, which is the
+  // order world.js's showQuestBox ladder always asked them in. A push
+  // is pushOverlay (the box lands over what is open, B5's law); a
+  // replace is showOverlay (the dispatching door); no close callback
+  // rides the door (AUDIT ENH-NOTICE3 F6). No unregister: this
+  // host lives as long as the page (every scene change in this port
+  // ends in location.replace - ui/enhancedHudText.js, AUDIT FONT F12).
+  registerPresenter({
+    mount: (win, { push }) => { if (push) return pushOverlay(win); showOverlay(win); return true; },
+    hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },
+    priority: 0,
+  });
   return {
     keydown, keyup, tryActivate, frame, ensureLoaded, nextMode, setMode, showOverlay, pushOverlay, setTopics, pointerdown, pointer, wheel, hover,   // ROAD-B B1: pushOverlay is the stacking door beside the replacing one   // U45: setMode is the large HUD's mode panel, whose cycle is not nextMode's   // c2/S10: `pointer` is the RELEASE route (down rides pointerdown, move rides hover)
     openTalkWindow,   // B7: TalkToStaticNPC's window push routes here (worldModes' click + the guild popup's TALK)
@@ -1275,11 +1370,28 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  different member with a different draw. */
     recordTokens: (id) => textRsc?.tokensById(id) ?? [],
     /** AUDIT 63 F3: DaggerfallUI.MessageBox's parchment, the port's
-     *  ActionTextBox, through this host's one overlay door - the same
-     *  swap ROAD-D D10 made for the pickpocket boxes. The three
-     *  TalkToNpc refusals (TalkManager.cs:2626/:2632/:2645) are modal
-     *  boxes in DFU, never AddHUDText. */
-    showBox: (rows) => showOverlay(new ActionTextBox(rows.length ? rows : [''])),
+     *  ActionTextBox - the three TalkToNpc refusals
+     *  (TalkManager.cs:2626/:2632/:2645) are modal boxes in DFU,
+     *  never AddHUDText.
+     *
+     *  ENH-NOTICE3: through the ONE DOOR, and the two changes are
+     *  deliberate. (1) It no longer builds the window: this host's
+     *  presenter (registered above) is what the seam finds while the
+     *  player is in the street, and a caller standing in a building
+     *  or a dungeon now reaches THAT host's slot instead of painting
+     *  into an outdoor one nobody is looking at. (2) It PUSHES where
+     *  it used to REPLACE. `showOverlay` disposed whatever held the
+     *  slot; DFU's own door does not - `DaggerfallUI.MessageBox` is
+     *  `new DaggerfallMessageBox(uiManager, uiManager.TopWindow);
+     *  ...; messageBox.Show()` (DaggerfallUI.cs:1346-1353) and Show
+     *  is PushWindow (UserInterfaceManager.cs:79-91). Both remaining
+     *  kinds that come through here are that: the talk refusals
+     *  above, and Travel Options' H help, which the mod raises with
+     *  `DaggerfallUI.MessageBox(HelpText)` while its own control UI
+     *  is the top window (TravelOptionsMod.cs:1335-1338 ->
+     *  DisplayHelpInfo :1246-1256) - a box OVER the panel it explains,
+     *  never one that closes it. */
+    showBox: (rows) => messageBox(rows.length ? rows : ['']),
     /** AUDIT 24: TextProvider.GetRandomText - a flat pool of every Text
      *  token in the record, NOT a variant pick. %oth's seam. */
     randomText: (id) => textRsc?.randomTextById(id, rolls) ?? '',
@@ -1306,7 +1418,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  frame after the player walked out. It drives this directly. */
     hudFrame: (dt, font_ = font) => {
       hud.tick(dt);
-      hud.observe(!!overlay);   // AUDIT FONT F4: the same canvas-window report as the frame above, so the DOM column never stands over a native window
+      hud.observe(toastsCovered());   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2: the same report as the frame above, the interior slot this arm is drawn under included
       if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();   // AUDIT 64 F37: the same Draw gate as the frame above, with FONT1's hide door on its else (the enhanced column is DOM and persists)
     },
     get overlayActive() { return talkPaused(); },   // ROAD-tail: the STACK's pause latch, not this host's slot arithmetic
@@ -1368,6 +1480,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // watched here is now a real TEXT.RSC box in this queue.
       overlayBox: (overlay?.boxes?.[0]?.rows ?? []).map((r) => r.text ?? r).join(' | ') || null,
       overlayRest: !!overlay?.isRestWindow,   // U48: the rest probe, in BOTH hosts that draw here
+      hud: hud.lines.map((l) => l.text),   // CASTLE1 probe surface
     }),
   };
 }

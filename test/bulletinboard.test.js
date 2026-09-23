@@ -202,7 +202,15 @@ test('world.js collects the boards a pixel stands and hands them over shifted', 
 
 test('worldModes puts the board in the SAME ray, at the ray\'s reach', () => {
   const m = src('src/scenes/worldModes.js');
-  assert.ok(m.includes("boards.forEach((aabb, i) => targets.push({ key: `board:${i}`, aabb, distance: RAY_DISTANCE }));"),
+  // AUDIT-WH M1: the pick reaches to RayDistance AND carries the
+  // board's own gate beside it, which is what every other family in
+  // this ray does (MC-2's law). Omitting the reach does not default
+  // it - `pickActivatableHit` reads `reach ?? distance`, so a bare
+  // `distance: RAY_DISTANCE` PUBLISHES the ray as the reach, and the
+  // world plaque named a notice board halfway down the street. The
+  // PRESS is unchanged: its board arm returns above the reach gate,
+  // because the refusal is spoken inside activateBulletinBoard.
+  assert.ok(m.includes("boards.forEach((aabb, i) => targets.push({ key: `board:${i}`, aabb, distance: RAY_DISTANCE, reach: BULLETIN_BOARD_ACTIVATION_DISTANCE }));"),
     'the pick reaches to RayDistance - the board\'s own gate is inside the arm');
   assert.ok(m.includes("if (typeof key === 'string' && key.startsWith('board:')) {"),
     'and a board under the ray ENDS the activation, as C#\'s hit does');
@@ -227,7 +235,7 @@ test('the probe exterior host stands its boards too - the standing host rule', (
     "no mill in this host - the board opens on the location name alone, C#'s own empty arm");
   // ...AND THE NAME IS NOT FREE. The heading is PlayerGPS
   // .CurrentLocalizedLocationName (:721), which the arm reads off
-  // `buildingDirectory` (worldModes.js:2032) and off nothing else - so
+  // `buildingDirectory` (worldModes.js:2280) and off nothing else - so
   // a host that stands boards without handing one over opens the box
   // on a BLANK parchment, not "the location name alone": the head row
   // composes empty and bulletinBoard.js:97 shifts the starter row off,

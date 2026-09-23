@@ -25,7 +25,7 @@ them, with every pin green.
 caller, `TerrainGenClient`, constructed once in world.js. The four-hosts
 rule is satisfied by there being one host that streams terrain.
 
-**North is row 127.** terrainSampler.js:155-156 states the continuity
+**North is row 127.** terrainSampler.js:166-167 states the continuity
 law, the painter cites it, the pin drives N alone and reads row 127.
 
 **The line is held.** No byte of Hazelnut's data is in the tree; the

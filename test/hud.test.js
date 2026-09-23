@@ -3,10 +3,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  compassScroll, barFill, hudScale, bitmapToColor32,
+  compassScroll, barFill, hudScale,
   compassMarkerLerp, changeRange, DETECT_MARKER_W, DETECT_MARKER_H, DETECT_MARKER_RGB, DETECT_MARKER_ROWS,
   COMPASS_NON_WRAPPED, COMPASS_BOX_INTERIOR,
 } from '../src/ui/hud.js';
+import { bitmapToColor32 } from '../src/formats/color32Order.js';   // BOOT2: the door lives in the formats leaf now
 
 test('hud: compass scroll verbatim (trunc, wrap, window fits the strip)', () => {
   assert.equal(compassScroll(0), 0);

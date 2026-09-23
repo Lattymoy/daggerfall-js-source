@@ -64,24 +64,22 @@
 // DaggerfallListPickerWindow. This file is the panel, the hit rects
 // and the boxes.
 //
-// RECORDED DEPARTURES, both the house idiom rather than this window's:
-//   - the NAME strip types into the box THIS WINDOW DRAWS (the automap
-//     note / travel-map find idiom) where DFU pushes a
-//     DaggerfallInputMessageBox onto the stack (:911-918). Same
-//     31-character cap (TextBox.cs:26's default, which DFU never
-//     narrows here), same prompt record. Ledger A row TB1 carries it,
-//     cited BY NAME because the line this first cited rotted at once.
-//   - a message box whose TEXT.RSC record cannot be read (no ARENA2)
-//     falls back to the English of the record, as the rest of the
-//     port's windows do. NEVER TRAPS: DFU throws when an effect has
-//     no SpellMakerDescription (:262-266); here the parchment simply
-//     draws empty.
+// CM7 RETIRES the spell-name half of Ledger A row TB1: the NAME strip
+// now pushes the shared DaggerfallInputMessageBox just like DFU
+// (:911-918), with the same 31-character TextBox default and prompt.
+// A message box whose TEXT.RSC record cannot be read (no ARENA2)
+// falls back to the English of the record, as the rest of the port's
+// windows do. NEVER TRAPS: DFU throws when an effect has no
+// SpellMakerDescription (:262-266); here the parchment simply draws
+// empty.
 
 import {
   loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W, NATIVE_H,
 } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { InputMessageBoxWindow } from './inputMessageBox.js';
 import { ListPickerWindow, listPickerArtLoaded } from './listPicker.js';
 import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // SelectIconButton's window (:894-898)
 import { preloadSpellIcons, drawSpellIcon } from './spellIcons.js';   // the one home for ICON00I0
@@ -89,7 +87,6 @@ import { preloadLargeFont, questJournalLargeFont } from './questJournal.js';   /
 // Internal_Strings.csv:954 ("enterSpellName" + " ") already has a home:
 // the spellbook's own rename box types under the same prompt.
 import { ENTER_SPELL_NAME } from './spellbookWindow.js';
-import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import {
@@ -446,11 +443,12 @@ export class SpellMakerWindow {
     this.editor = null;
     this.box = null;
     this._boxLayout = null;
-    this.naming = false;
+    this.nameBox = null;
     this._updateAllowedButtons();
   }
 
   _close() {
+    noticeRelease(this);   // ENH-NOTICE2
     if (this.done) return;
     this.done = true;
     this.onClose?.();
@@ -721,10 +719,15 @@ export class SpellMakerWindow {
     audio.playOneShot(SOUND.ButtonClick, 1);
   }
 
-  /** NameSpellButton_OnMouseClick (:910-918). */
+  /** NameSpellButton_OnMouseClick (:911-919). */
   _openNameBox() {
     audio.playOneShot(SOUND.ButtonClick, 1);
-    this.naming = true;
+    this.nameBox = new InputMessageBoxWindow({
+      label: ENTER_SPELL_NAME,
+      value: this.name,
+      maxCharacters: MAX_SPELL_NAME,
+      onSubmit: (input) => { this.name = input; },
+    });
   }
 
   // ---- tips ----------------------------------------------------------
@@ -764,7 +767,7 @@ export class SpellMakerWindow {
   hover(vx, vy, e = null) {
     this._mouse = [vx, vy];
     if (this.picker) { this.picker.hover?.(vx, vy, e); return; }
-    if (this.editor || this.box || this.naming) return;
+    if (this.editor || this.box || this.nameBox) return;
     this._setHot(this.buttonAt(vx, vy));
   }
 
@@ -788,7 +791,11 @@ export class SpellMakerWindow {
       if (this.picker?.done || this.picker?.closed) this.picker = null;
       return;
     }
-    if (this.naming) { this._nameInput(code, e); return; }
+    if (this.nameBox) {
+      this.nameBox.input(code, e);
+      if (this.nameBox.done) this.nameBox = null;
+      return;
+    }
     if (this.box) {
       const c = normalizeCode(code, e);
       if (this.box.buttons) { if (c === 'Escape') this._dismissBox(null); }
@@ -809,16 +816,6 @@ export class SpellMakerWindow {
       const key = keys.find((k) => SPELL_MAKER_SHORTCUTS[k] === hit);
       if (key) this._press(key);
     }
-  }
-
-  /** DaggerfallInputMessageBox's keyboard, at MaxCharacters 31. */
-  _nameInput(code, e) {
-    const c = normalizeCode(code, e);
-    if (c === 'Enter') { this.naming = false; return; }   // EnterName_OnGotUserInput (:1030-1033)
-    if (c === 'Escape') { this.naming = false; return; }
-    if (c === 'Backspace') { this.name = this.name.slice(0, -1); return; }
-    const ch = typedChar(code, e);
-    if (ch && this.name.length < MAX_SPELL_NAME) this.name += ch;
   }
 
   /** One door for a button, whichever way it was pressed. */
@@ -846,7 +843,7 @@ export class SpellMakerWindow {
       if (this.picker?.done || this.picker?.closed) this.picker = null;
       return true;
     }
-    if (this.naming) { this.naming = false; return true; }
+    if (this.nameBox) { this.nameBox.click(vx, vy); return true; }
     if (this.box) {
       if (this.box.buttons) {
         const hit = this._boxLayout ? messageBoxHit(this._boxLayout, vx, vy) : null;
@@ -890,7 +887,7 @@ export class SpellMakerWindow {
       shadowText(renderer, font, L[key], m, SPELL_MAKER_LABELS[key][0], SPELL_MAKER_LABELS[key][1]);
     }
     // spellNameLabel.ShadowPosition = Vector2.zero (:266)
-    shadowText(renderer, font, L.spellName + (this.naming ? '_' : ''),
+    shadowText(renderer, font, L.spellName,
       m, SPELL_MAKER_LABELS.spellName[0], SPELL_MAKER_LABELS.spellName[1], { shadowOffset: 0 });
 
     // the three effect rows: LargeFont, centred, no shadow (:272-276)
@@ -902,18 +899,14 @@ export class SpellMakerWindow {
       shadowText(renderer, big, eff.name, m, px, py, { align: 'center', w: pw, shadowOffset: 0 });
     }
 
-    if (this.naming) {
-      const entry = `${ENTER_SPELL_NAME}${this.name}_`;
-      const box = layoutMessageBox(font, [{ text: entry, center: false }], [],
-        { sizingRows: [`${ENTER_SPELL_NAME}${'M'.repeat(MAX_SPELL_NAME)}_`] });
-      drawMessageBox(renderer, m, font, box);
-      return;
-    }
+    if (this.nameBox) { this.nameBox.draw(renderer, canvas, font); return; }
     if (this.editor) { this.editor.draw(renderer, canvas, font); return; }
     if (this.picker && (this.picker !== this.iconPicker ? listPickerArtLoaded() : true)) {
       this.picker.draw(renderer, canvas, font);
       return;
     }
+    // a box WITH buttons is a decision and keeps the parchment
+    if (noticeFrame(this, this.box && !this.box.buttons?.length ? this.box.rows : null)) { this._boxLayout = null; return; }
     if (this.box) {
       this._boxLayout = layoutMessageBox(font, this.box.rows, this.box.buttons ?? []);
       drawMessageBox(renderer, m, font, this._boxLayout);

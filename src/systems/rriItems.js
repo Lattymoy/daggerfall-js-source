@@ -23,7 +23,7 @@
 // enum, so this module imports none of the systems it feeds (no cycle,
 // no TDZ - the lesson of DW3's install).
 import { modSetting } from './modSettings.js';
-import { ARMOR_MATERIAL } from './armorMaterials.js';
+import { ARMOR_MATERIAL, FIRST_FEMALE_ARCHIVE } from './armorMaterials.js';   // MERGE 2026-09-23: one home for the female archive base (audit24 wave24's ratchet)
 import { DYE_COLORS, DYE_NAMES } from '../characters/dyes.js';
 import { RRI_SPRITES } from './rriIndex.js';
 
@@ -139,7 +139,7 @@ export const RRI_TEXT = Object.freeze({ mail: 'Mail ', fur: 'Fur ', brig: 'Briga
 /** ItemBuilder.firstFemaleArchive - the base the classes measure
  *  PlayerTextureArchive against: 245 + morphology for a woman, 249 +
  *  morphology for a man, so `offset` is 0-3 for her and 4-7 for him. */
-export const FIRST_FEMALE_ARCHIVE = 245;
+export { FIRST_FEMALE_ARCHIVE };   // re-exported for the RRI suites; declared in armorMaterials.js
 const raw = (item) => item?.material ?? ARMOR_MATERIAL.Leather;   // the class's `nativeMaterialValue` field
 const msg = (item) => item?.message ?? 0;
 

@@ -364,7 +364,7 @@ test('U42 sort: alphabetical, then point cost only if the alpha pass changed not
 });
 
 test('U42: every mutation lands on the player\'s OWN array - the save envelope sees it', () => {
-  // PlayerEntity.GetSpells() is the book itself and save.js:175 maps
+  // PlayerEntity.GetSpells() is the book itself and save.js:179 maps
   // that array in order. This pin fails if the window ever copies.
   const { entity, w } = book(spell('B', 5, { index: 7 }), spell('A', 5, { index: 9 }));
   const arr = entity.spells;
@@ -385,15 +385,18 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
   // RenameSpellPromptHandler (:937-950). DFU's EffectBundleSettings
   // is a struct, so GetSpell/SetSpell is a copy-then-write; the
   // port's records are shared objects, so the copy is explicit. The
-  // `custom` flag is what save.js:175 reads to store the whole
+  // `custom` flag is what save.js:179 reads to store the whole
   // record instead of a bare SPELLS.STD index.
   const shared = spell('Fireball', 20, { index: 12 });
   const { entity, w } = book(shared);
   w.renameButton();
   assert.equal(w.top, 'rename');
-  assert.equal(w.renameText, 'Fireball', 'the field opens holding the current name');
-  w.renameText = 'Nyra\'s Kindling';
-  w.confirmRename();
+  // CM6: the field is a pushed DaggerfallInputMessageBox (:927-938), seeded from bundle.Name under enterSpellName
+  assert.equal(w.renameBox.value, 'Fireball', 'the box opens holding the current name');
+  assert.equal(w.renameBox.label, ENTER_SPELL_NAME);
+  w.renameBox.value = 'Nyra\'s Kindling';
+  w.input('Enter');
+  assert.equal(w.renameBox, null, 'Return pops the box');
   assert.equal(entity.spells[0].name, 'Nyra\'s Kindling');
   assert.equal(entity.spells[0].custom, true, 'so the envelope stores the record, not the index');
   assert.equal(shared.name, 'Fireball', 'the SHARED SPELLS.STD record is untouched');
@@ -402,14 +405,14 @@ test('U42 rename: a COPY takes the new name, marked custom so the save carries i
 });
 
 test('U42 rename: the renamed COPY survives the save envelope', () => {
-  // The `custom` flag is not decoration - save.js:175 stores the whole
+  // The `custom` flag is not decoration - save.js:179 stores the whole
   // record for a custom spell and a bare SPELLS.STD index for every
   // other, so without it a reload would hand back the ORIGINAL name.
   // This drives the real envelope rather than asserting the flag.
   const { entity, w } = book(spell('Fireball', 20, { index: 12 }));
   w.renameButton();
-  w.renameText = 'Probe Spell';
-  w.confirmRename();
+  w.renameBox.value = 'Probe Spell';
+  w.input('Enter');
   const snap = snapshotPlayer(entity, {});
   assert.equal(typeof snap.spells[0], 'object', 'a custom record is stored WHOLE, not as an index');
   assert.equal(snap.spells[0].name, 'Probe Spell');
@@ -425,14 +428,14 @@ test('U42 rename: an EMPTY answer changes nothing, but spaces are a name (:943-9
   // port being quietly stricter than the game.
   const empty = book(spell('Fireball', 20));
   empty.w.renameButton();
-  empty.w.renameText = '';
-  empty.w.confirmRename();
+  empty.w.renameBox.value = '';
+  empty.w.input('Enter');
   assert.equal(empty.entity.spells[0].name, 'Fireball');
   assert.equal(empty.w.top, null, 'the prompt still closes');
   const spaces = book(spell('Fireball', 20));
   spaces.w.renameButton();
-  spaces.w.renameText = '   ';
-  spaces.w.confirmRename();
+  spaces.w.renameBox.value = '   ';
+  spaces.w.input('Enter');
   assert.equal(spaces.entity.spells[0].name, '   ', 'a name of spaces is legal in classic');
 });
 
@@ -441,9 +444,11 @@ test('U42 rename: the field caps at TextBox.maxCharacters', () => {
   // name box reads out of systems/spellMaker.js.
   const { w } = book(spell('Fireball', 20));
   w.renameButton();
-  w.renameText = '';
+  w.renameBox.value = '';
   for (let i = 0; i < 50; i++) w.input('KeyA', { key: 'a' });
-  assert.equal(w.renameText.length, MAX_SPELL_NAME, `capped at ${MAX_SPELL_NAME}`);
+  assert.equal(w.renameBox.value.length, MAX_SPELL_NAME, `capped at ${MAX_SPELL_NAME}`);
+  w.input('Escape');
+  assert.equal(w.renameBox, null); assert.equal(w.top, null, 'Escape closes the box and unblocks the book');
 });
 
 // ── the selection's panels ────────────────────────────────────────
@@ -815,7 +820,7 @@ test('U42 clicks: a list row selects, and a second click inside the double-click
   //
   // AUDIT 65 UI-1: driven through the HOST'S CALL SHAPE. Every host
   // that owns an overlay slot dispatches `click(vx, vy, right, middle)`
-  // - townTalk.js:1158, worldModes.js:7716, dungeonContext.js:6022 -
+  // - townTalk.js:1236, worldModes.js:8818, dungeonContext.js:6561 -
   // so the clock is stubbed on the window's OWN `_now()` seam, not
   // handed to a positional the hosts already fill with a button.
   // MUTANT: `click(vx, vy, now)` with `const t = now ?? Date.now()`

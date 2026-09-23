@@ -17,7 +17,8 @@
 //     data[x * dim + y].
 // World scale (StreamingWorld/DaggerfallTerrain, verbatim): one map pixel
 // spans WorldMapTerrainDim(32768) * GlobalScale = 819.2 world units;
-// world height = sample * MaxTerrainHeight * TerrainScale(1.5); pixel
+// world height = sample * MaxTerrainHeight * TerrainScale (1.25, the game
+// scene's - STREAMING_TERRAIN_SCALE below; TERRAIN-SCALE1); pixel
 // (X, Y) sits at (xdif * 819.2, 0, -ydif * 819.2) - map Y runs south.
 
 import { perlinNoise } from './perlin.js';
@@ -25,7 +26,17 @@ import { GLOBAL_SCALE } from './meshReader.js';
 
 export const HEIGHTMAP_DIMENSION = 129; // TerrainSampler.defaultHeightmapDimension
 export const MAX_TERRAIN_HEIGHT = 1539;
-export const DEFAULT_TERRAIN_SCALE = 1.5; // TerrainHelper.defaultTerrainScale
+export const DEFAULT_TERRAIN_SCALE = 1.5; // TerrainHelper.defaultTerrainScale - the StreamingWorld PREFAB's own value
+/** TERRAIN-SCALE1 (2026-09-23): THE SCALE THE GAME STREAMS AT. DaggerfallUnityGame.unity overrides the
+ *  StreamingWorld prefab instance's TerrainScale to 1.25 - the scene's one StreamingWorld, the one
+ *  GameManager.StreamingWorld names, at v0.11.0-beta, v1.0.0, v1.1.1 and master - and no script writes it at run
+ *  time. StreamingWorld hands it to every terrain it streams (StreamingWorld.cs:1209, :1243 ->
+ *  terrainData.size.y = MaxTerrainHeight * TerrainScale, DaggerfallTerrain.cs:307) and to the nature layout (:1271),
+ *  and a location stands on the terrain it samples (:1185). The port read the prefab's 1.5 until World of
+ *  Daggerfall's AUDIT BRANCH found the override (the mod reads StreamingWorld.TerrainScale, and its author's
+ *  commented-out constant is 1539 * 1.25 = 1923.75): every hill stood a fifth taller than DFU's. Every height the
+ *  streamed world draws, collides with or stands things on reads THIS. */
+export const STREAMING_TERRAIN_SCALE = 1.25;
 export const WORLD_MAP_TERRAIN_DIM = 32768; // MapsFile.WorldMapTerrainDim
 export const TERRAIN_SIZE = WORLD_MAP_TERRAIN_DIM * GLOBAL_SCALE; // 819.2
 const MAX_MAP_PIXEL_Y = 500; // MapsFile.MaxMapPixelY

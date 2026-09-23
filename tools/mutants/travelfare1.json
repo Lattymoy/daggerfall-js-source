@@ -1,0 +1,22 @@
+[
+  { "name": "the-popup-waives-the-fare-online-again", "file": "src/ui/travelPopUp.js",
+    "old": "      sleepModeInn: this.sleepModeInn,   // TRAVEL-FARE: billed online too",
+    "new": "      sleepModeInn: this.sleepModeInn && !this.noWorldTime(),",
+    "tests": ["test/ol2.test.js", "test/travelinn.test.js"] },
+  { "name": "the-popup-bills-an-inn-the-player-did-not-choose", "file": "src/ui/travelPopUp.js",
+    "old": "      sleepModeInn: this.sleepModeInn,   // TRAVEL-FARE: billed online too",
+    "new": "      sleepModeInn: true,",
+    "tests": ["test/travelinn.test.js", "test/ol2.test.js"] },
+  { "name": "the-map-and-the-popup-quote-different-prices", "file": "src/ui/heldMap.js",
+    "old": "      sleepModeInn: st.opts.sleepModeInn, hasShip: st.hasShip, travelShip: st.opts.travelShip,",
+    "new": "      sleepModeInn: st.opts.sleepModeInn && !nwt, hasShip: st.hasShip, travelShip: st.opts.travelShip,",
+    "tests": ["test/heldmap.test.js"] },
+  { "name": "online-starts-counting-days-again", "file": "src/ui/heldMap.js",
+    "old": "days: nwt ? 0 : travelDays(minutes), online: nwt };",
+    "new": "days: travelDays(minutes), online: nwt };",
+    "tests": ["test/heldmap.test.js"] },
+  { "name": "the-line-still-claims-no-inn-is-paid", "file": "src/ui/travelPopUp.js",
+    "old": "You arrive now - the journey is still paid for.';",
+    "new": "You arrive now, and no inn is paid.';",
+    "tests": ["test/ol2.test.js", "test/travelinn.test.js"] }
+]

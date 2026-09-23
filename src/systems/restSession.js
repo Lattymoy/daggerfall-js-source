@@ -563,8 +563,25 @@ export class RestSession {
     // enemies-nearby text, exactly like the hourly check below.
     if (this._abortEnemySpawn) {
       this._abortEnemySpawn = false;
+      // PARTY-REST5 (2026-09-21, per-request: "when the initiator spawns mobs only he gets taken out of the rest
+      // not the follower... the ones who not initiate need to also stop resting when an enemy appears for the
+      // initiator"): an optional dep, called ONLY on a real enemy break, never on an ordinary wake/healed/cancel
+      // finish - a follower's own mirror deps never supplies this hook, so nothing happens for the follower
+      // locally; a host that DOES supply it (world.js's `outdoorRestDeps`/the interior and dungeon equivalents)
+      // uses it to stamp a broadcast timestamp a follower's own mirror tick compares against (world.js's
+      // `composePartyPose`/`partyRestFollowTick`), so the leader's real interrupt reaches every mirror of it too.
+      this.deps.onEnemyBreak?.();
       return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
     }
+
+    // PARTY-REST19 (2026-09-22, per-request: "An non initiator MUST cancel the rest for all if he cancels
+    // the ongoing resting"): an optional dep, checked every tick like the enemy-abort latch above, so it
+    // takes effect the same frame a follower's own Stop click is pressed rather than waiting up to an hour.
+    // `endEarly()` (not a raw textId object) reuses this session's own mode-aware choice of message - a
+    // FullRest already healed still reports healed, a Loiter reports loiterDone, exactly as if THIS player
+    // had pressed Stop themselves - only the fact that someone else's Stop caused it is invisible to the
+    // message shown.
+    if (this.deps.canceledByFollower?.()) return this.endEarly();
 
     // TickRest :357-360, and the ORDER is DFU's: the abort latch above
     // outranks the poll, and the poll outranks the top-window test
@@ -595,6 +612,15 @@ export class RestSession {
       if (online) {
         if (this._onlineSimMinutes == null) this._onlineSimMinutes = Math.floor(this.deps.sharedMinutes());
         this._onlineSimMinutes += MINUTES_PER_TICK;
+        // MAC-LVL1 (2026-09-21, a player: "leveling doesn't work properly
+        // online ... how online changes the passage of time"): the same
+        // ten simulated minutes are CREDITED to the skill-check clock.
+        // DFU's RaiseSkills is called by exactly two things - this rest
+        // and fast travel - both of which have just raised world time,
+        // so its 360-minute gate always opens after a night; online the
+        // shared clock the gate reads moved 43 minutes in the 3.6 real
+        // seconds an 8-hour rest takes, and the gate stayed shut.
+        this.deps.creditSkillMinutes?.(MINUTES_PER_TICK);
       }
       this.deps.advanceMinutes(MINUTES_PER_TICK, online ? this._onlineSimMinutes : null);
       // TickRest :376-379, `RaiseTime` then `QuestMachine.Instance.
@@ -634,8 +660,9 @@ export class RestSession {
       // six-hour test while the sleeper gets no vitals and a timed rest
       // loses no hour off its counter.
       if (this._covered()) return null;
-      // A full hour: the enemy break first, then vitals/completion.
-      if (this.deps.enemiesNearby()) return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false };
+      // PARTY-REST5: see the doc comment on the abort-latch arm above - the same hook, the same law, the other
+      // of the two places a real session's enemy break can be discovered.
+      if (this.deps.enemiesNearby()) { this.deps.onEnemyBreak?.(); return { textId: REST_TEXT.enemiesNearby, enemyBroke: true, died: false }; }
       // :405-410 - the poll AGAIN, after the enemies and before the
       // vitals, so a condition that turns on during the hour's own
       // quest ticks stops the healing rather than following it.

@@ -1,0 +1,244 @@
+[
+  {
+    "name": "ACC1b-1-the-secret-is-stored-raw",
+    "file": "server-account/src/accounts.js",
+    "old": "  const hash = await hashSecret(secret, { subtle });\n  // A label is for a human reading a device list. It is truncated and",
+    "new": "  const hash = secret;\n  // A label is for a human reading a device list. It is truncated and",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A copy of the sessions table would then be a copy of everybody's credentials."
+  },
+  {
+    "name": "ACC1b-2-signing-out-one-device-signs-out-all",
+    "file": "server-account/src/accounts.js",
+    "old": "  const r = await db.prepare('DELETE FROM sessions WHERE id = ?').bind(sessionId).run();",
+    "new": "  const r = await db.prepare('DELETE FROM sessions WHERE player_id = (SELECT player_id FROM sessions WHERE id = ?)').bind(sessionId).run();",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Fight Life's bug from the other direction: signing out of a laptop drops the phone."
+  },
+  {
+    "name": "ACC1b-3-a-handle-is-ignored-for-the-displayed-name",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (typeof handle === 'string' && handle.length > 0) return handle;",
+    "new": "  if (false) return handle;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A linked player would be shown, and TOKENED, under their guest name."
+  },
+  {
+    "name": "ACC1b-4-everybody-is-a-guest",
+    "file": "server-account/src/accounts.js",
+    "old": "  return row?.handle ? 'linked' : 'guest';",
+    "new": "  return 'guest';",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The wall is at the saves and reads this; everyone would be on the wrong side of it."
+  },
+  {
+    "name": "ACC1b-5-the-device-label-is-stored-unbounded",
+    "file": "server-account/src/accounts.js",
+    "old": "  const label = typeof deviceLabel === 'string' ? deviceLabel.slice(0, 64) : null;",
+    "new": "  const label = typeof deviceLabel === 'string' ? deviceLabel : null;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Client-supplied text with no bound is a row somebody chooses the size of."
+  },
+  {
+    "name": "ACC1b-6-a-credential-shadow-ships-to-the-client",
+    "file": "server-account/src/accounts.js",
+    "old": "  return (r?.results ?? []).map((s) => ({\n    sessionId: s.id, label: s.device_label ?? null, createdAt: s.created_at, lastSeen: s.last_seen,\n  }));",
+    "new": "  return r?.results ?? [];",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The whole row includes secret_hash. A hash is a credential's shadow and there is no reason to ship one."
+  },
+  {
+    "name": "ACC1b-7-an-unusable-guest-name-is-minted-anyway",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!nameIsIssuable(name) || !isGuestShaped(name)) throw new Error(`guestName produced an unusable name: ${name}`);",
+    "new": "  if (false) throw new Error(`guestName produced an unusable name: ${name}`);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "equivalent": true,
+    "why": "The banks are the game's own and every name they can produce is issuable - a pin derives the bank's whole alphabet and proves it. So removing the check changes no outcome today. It is kept because a name that cannot ride a token is an account that cannot play, and the place to learn that is the mint rather than the player's first connection."
+  },
+  {
+    "name": "ACC1b-8-a-short-secret-is-looked-up-anyway",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (typeof secret !== 'string' || secret.length < 16 || secret.length > 128) return null;",
+    "new": "  if (typeof secret !== 'string') return null;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "equivalent": true,
+    "why": "A wrong secret of any length hashes to something no row holds, so the lookup answers null either way. The bound is here to say no before a digest and a query rather than after them, which is the same reason the Worker bounds a body before parsing it."
+  },
+  {
+    "name": "ACC1b-9-the-guest-shape-enumerates-an-alphabet-again",
+    "file": "src/net/handleShape.js",
+    "old": "export const GUEST_NAME_RE = /^\\S+ \\S+$/;",
+    "new": "export const GUEST_NAME_RE = /^[A-Za-z]+ [A-Za-z]+$/;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "THE DEFECT ITS OWN PIN FOUND, put back: DFU's banks carry apostrophes and hyphens, and Akh'ar Arabi is a name this rule calls malformed. RE-AIMED BY CONTENT (ACC1e): the two shapes moved to src/net/handleShape.js when the client needed to ask the same question, because every import in this repo runs server -> src and a client file reaching into server-account/ would have been the only edge going the other way. The law is unchanged; only the address is. test/mutantdrift.test.js caught the move."
+  },
+  {
+    "name": "ACC1b-10-a-handle-may-carry-a-space",
+    "file": "src/net/handleShape.js",
+    "old": "export const HANDLE_RE = /^[A-Za-z][^\\s]{2,23}$/;",
+    "new": "export const HANDLE_RE = /^[A-Za-z][^!]{2,23}$/;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The whole disjointness law: a handle with a space could be chosen to read exactly as a guest's name. RE-AIMED BY CONTENT (ACC1e): the two shapes moved to src/net/handleShape.js when the client needed to ask the same question, because every import in this repo runs server -> src and a client file reaching into server-account/ would have been the only edge going the other way. The law is unchanged; only the address is. test/mutantdrift.test.js caught the move."
+  },
+  {
+    "name": "ACC1b-11-the-draw-is-modulo-biased",
+    "file": "server-account/src/guestName.js",
+    "old": "    if (buf[0] < limit) return buf[0] % n;        // the tail above `limit` is thrown away",
+    "new": "    return buf[0] % n;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The low indices come up more often - the classic modulo bias, invisible in any single draw."
+  },
+  {
+    "name": "ACC1b-12-an-unknown-path-answers-401",
+    "file": "server-account/src/index.js",
+    "old": "    if (!ROUTES.has(path) && !slot) return no('not-found', 404, origin);",
+    "new": "    if (false) return no('not-found', 404, origin);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Every typo'd route then reads as an auth failure to a caller with no secret."
+  },
+  {
+    "name": "ACC1b-13-the-body-is-parsed-before-it-is-bounded",
+    "file": "server-account/src/index.js",
+    "old": "  if (text.length > MAX_BODY_BYTES) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A megabyte of nothing then costs a parse."
+  },
+  {
+    "name": "ACC1b-14-the-token-carries-a-name-the-client-sent",
+    "file": "server-account/src/index.js",
+    "old": "          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu },",
+    "new": "          { s: who.player.id, n: body.name ?? displayName(who.player), k: accountKind(who.player), ...wardrobe, mu },",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "THE WHOLE POINT OF THE TOKEN, undone: the client asserts its own name again, only now it is signed."
+  },
+  {
+    "name": "ACC1b-15-a-service-with-no-key-mints-nothing-and-says-nothing",
+    "file": "server-account/src/index.js",
+    "old": "        if (!key) return no('no-signing-key', 503, origin);",
+    "new": "        if (!key) return no('auth', 401, origin);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A deployment fault would read to every player as their own credential being wrong."
+  },
+  {
+    "name": "ACC1b-16-the-generator-hands-out-a-name-the-wire-cannot-carry",
+    "file": "server-account/src/guestName.js",
+    "old": "  for (let attempt = 0; attempt < 8; attempt++) {\n    const name = drawName(rand, b);\n    if (nameIsIssuable(name) && GUEST_NAME_RE.test(name)) return name;\n  }\n  throw new Error(`no issuable name could be drawn from ${b} - the bank and NAME_MAX have parted`);",
+    "new": "  return drawName(rand, b);",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "AUDIT-ACC F7 put back: the single unfiltered draw. Four of the bank's 173,330 names are 25 characters against a NAME_MAX of 24, so createGuest threw and /v1/auth/guest answered 500 for about one guest in 43,000. It survived ACC1b's own testing because that pin sampled draws - eighteen of them - and four in 173,330 is invisible to a sample. The pin that kills this enumerates the whole space and then drives the exact draw."
+  },
+  {
+    "name": "ACC1b-17-a-session-never-expires",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (Number.isSafeInteger(nowS) && Number.isSafeInteger(session.last_seen)\n      && nowS - session.last_seen > SESSION_IDLE_S) {",
+    "new": "  if (false && Number.isSafeInteger(nowS) && Number.isSafeInteger(session.last_seen)\n      && nowS - session.last_seen > SESSION_IDLE_S) {",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "AUDIT-ACC F9 put back. SESSION_IDLE_S was declared, documented as the bound 'before a sweep may take it', and enforced by nothing - there was no sweep. An abandoned credential worked forever."
+  },
+  {
+    "name": "ACC1b-18-the-idle-session-is-refused-but-kept",
+    "file": "server-account/src/accounts.js",
+    "old": "      await db.prepare('DELETE FROM sessions WHERE id = ?').bind(session.id).run();",
+    "new": "      void session;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Refusing without deleting leaves a dead credential in the table forever, to be re-refused on every attempt. Fight Life deletes on the spot and says why; this is the half of that which is easy to drop."
+  },
+  {
+    "name": "ACC1b-19-a-failed-touch-fails-the-request",
+    "file": "server-account/src/accounts.js",
+    "old": "    try {\n      await db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id).run();\n      await db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id).run();\n    } catch { /* cosmetic: the caller is authorised either way */ }",
+    "new": "    await db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id).run();\n    await db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id).run();",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "AUDIT-ACC F10 put back, verbatim - the unguarded shape that shipped. A D1 hiccup on a cosmetic freshness write turns an ALREADY AUTHORISED request into a 500."
+  },
+  {
+    "name": "ACC1b-20-an-authenticated-caller-is-unbounded",
+    "file": "server-account/src/index.js",
+    "old": "      if (await overRate(ctx, `acct:${who.player.id}`, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) {\n        return no('rate', 429, origin);\n      }",
+    "new": "      void ACCOUNT_MAX; void ACCOUNT_WINDOW_S;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "AUDIT-ACC F12 put back: the shape that shipped, where only the open routes were bounded. One valid session could mint Ed25519 signatures and spend D1 without limit - a limit on strangers and not on members is a limit on the wrong axis."
+  },
+  {
+    "name": "ACC1b-21-the-rate-limited-caller-is-told-their-secret-is-wrong",
+    "file": "server-account/src/index.js",
+    "old": "        return no('rate', 429, origin);\n      }",
+    "new": "        return no('auth', 401, origin);\n      }",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "A 401 sends a rate-limited player to reset a password that was never the problem, and hides a limiter behind what looks like a credential fault. Fight Life makes the same distinction beside its own check."
+  },
+  {
+    "name": "ACC1b-22-the-credential-goes-back-in-the-url",
+    "file": "server-account/src/index.js",
+    "old": "      const secret = bearer ?? (request.method === 'POST' ? body.secret : null);",
+    "new": "      const secret = bearer ?? (request.method === 'POST' ? body.secret : url.searchParams.get('secret'));",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "AUDIT-ACC F13 put back verbatim. A URL is written into Cloudflare's request logs, into any Referer the page emits, and into browser history - so this puts the session secret in all three. It reads harmless because the route is read-only, which is the excuse that let it ship."
+  },
+  {
+    "name": "ACC1b-23-the-body-overrides-the-header",
+    "file": "server-account/src/index.js",
+    "old": "      const secret = bearer ?? (request.method === 'POST' ? body.secret : null);",
+    "new": "      const secret = (request.method === 'POST' ? body.secret : null) ?? bearer;",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "Two sources for one credential need a stated winner, or a caller that sends both gets whichever the implementation happened to prefer - and that answer changes the day somebody reorders the expression."
+  },
+  {
+    "name": "ACC1b-24-the-preflight-forbids-the-header",
+    "file": "server-account/src/index.js",
+    "old": "          'access-control-allow-headers': 'content-type, authorization',",
+    "new": "          'access-control-allow-headers': 'content-type',",
+    "tests": [
+      "test/accountworker.test.js"
+    ],
+    "note": "The header the credential now rides in is one no browser will send unless the preflight allows it. Every cross-origin authenticated call would fail, and the failure would look like a CORS problem rather than the missing word it is."
+  }
+]

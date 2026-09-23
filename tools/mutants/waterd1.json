@@ -1,0 +1,73 @@
+[
+  {
+    "name": "WATERD1-a-second-water-draw-after-the-weapon-overlay-the-defect-back",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (playerFeet) weaponRig.draw({ paralyzed: _pParalyzed });\n",
+    "new": "    if (playerFeet) weaponRig.draw({ paralyzed: _pParalyzed });\n    if (waterQuads.length && _waterArchive != null) renderer.drawWater(waterQuads, DUNGEON_WATER_COLOR, renderer.textures.get(`${_waterArchive}_0`), _waterT * WATER_SCROLL_TILES_PER_SEC);\n",
+    "tests": ["test/waterd1.test.js"]
+  },
+  {
+    "name": "WATERD1-the-water-is-not-drawn-at-all",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (waterQuads.length && _waterArchive != null) {\n      renderer.drawWater(waterQuads, DUNGEON_WATER_COLOR,\n        renderer.textures.get(`${_waterArchive}_0`), _waterT * WATER_SCROLL_TILES_PER_SEC);\n    }\n",
+    "new": "",
+    "tests": ["test/waterd1.test.js"]
+  },
+  {
+    "name": "WATERD1-the-draw-no-longer-waits-for-a-named-tile",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (waterQuads.length && _waterArchive != null) {\n      renderer.drawWater(",
+    "new": "    if (waterQuads.length) {\n      renderer.drawWater(",
+    "tests": ["test/waterd1.test.js"]
+  },
+  {
+    "name": "WATERD1-the-scroll-clock-is-frozen",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    _waterT += dt > 0 ? dt : 0;\n",
+    "new": "    _waterT = 0;\n",
+    "tests": ["test/waterd1.test.js"]
+  },
+  {
+    "name": "WATERD1-the-standalone-host-never-names-the-tile",
+    "file": "src/scenes/dungeon.js",
+    "old": "  ctx.setWaterArchive(waterArchive);   // WATER-D1: drawFoes draws the plane with it, inside the world pass\n",
+    "new": "",
+    "tests": ["test/waterd1.test.js"]
+  },
+  {
+    "name": "WATERD1-the-world-host-never-names-the-tile",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ctx.setWaterArchive(waterArchive);   // WATER-D1: drawFoes draws the plane with it, inside the world pass\n",
+    "new": "",
+    "tests": ["test/waterd1.test.js"]
+  },
+  {
+    "name": "WATERD1-the-world-host-regrows-its-own-draw-after-drawFoes",
+    "file": "src/scenes/worldModes.js",
+    "old": "      host.drawPeerNames?.({ proj, view, eye: mwv.eye });   // ONLINE1: the names, last of the 3D\n",
+    "new": "      if (dungeonCtx.waterQuads.length) renderer.drawWater(dungeonCtx.waterQuads, [1, 1, 1, 0.82], renderer.textures.get(`${dungeonReturn.waterArchive}_0`), 0);\n      host.drawPeerNames?.({ proj, view, eye: mwv.eye });   // ONLINE1: the names, last of the 3D\n",
+    "why": "Re-aimed BY CONTENT: STATUS-LIVE (2026-09-22) put the non-pausing overlay's tick-and-draw between this line and the `return true;` the anchor used to reach, and a positional anchor that stops applying is a law nobody checks. The mutant is unchanged - it regrows the host-side water draw this slice deleted.",
+    "tests": ["test/waterd1.test.js"]
+  },
+  {
+    "name": "WATERD1-the-colour-drifts-in-its-one-home",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "export const DUNGEON_WATER_COLOR = Object.freeze([1, 1, 1, 0.82]);",
+    "new": "export const DUNGEON_WATER_COLOR = Object.freeze([1, 1, 1, 1]);",
+    "tests": ["test/waterd1.test.js"]
+  },
+  {
+    "name": "WATERD1-the-level-law-moves-with-the-draw",
+    "file": "src/world/rdbLayout.js",
+    "old": "    if (src.soundIndex !== 0) waterLevel = -8 * src.soundIndex;",
+    "new": "    if (src.soundIndex !== 0) waterLevel = 8 * src.soundIndex;",
+    "tests": ["test/waterd1.test.js"]
+  },
+  {
+    "name": "WATERD1-the-screen-quad-no-longer-resolves-the-frame",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._worldViewportPx) this.endWorldPass();\n    this._compositeAir();   // EL3: a no-op unless a render is owed\n    this._ensureScreenQuadProgram();",
+    "new": "    if (this._worldViewportPx) this.endWorldPass();\n    this._ensureScreenQuadProgram();",
+    "tests": ["test/waterd1.test.js"]
+  }
+]

@@ -9,7 +9,7 @@
 // defaults without a DOM.
 
 import { appStorage } from './appStorage.js';   // the one storage seam - localStorage lives there alone
-import { onlineForcedModSetting } from './onlineLane.js';   // OL1: online, every mod is enabled
+import { onlineForcedModSetting } from './onlineLane.js';   // MODS-ONLINE-2: online, the room's ground is forced and every other switch is the player's
 
 const STORE_KEY = 'dfjs-mod-settings';
 
@@ -50,6 +50,28 @@ export const MOD_SETTINGS = Object.freeze({
       MaxParticles: Object.freeze({ default: 20, min: 15, max: 20, description: 'Maximum number of snow flake particles (multiplied by 1000)' }),
     }),
   }),
+  // WORLD-HOVER: WORLD TOOLTIPS 1.1 (jefetienne). The mod ships exactly
+  // ONE key, and its description is the author's own word for word -
+  // it exists so the main quest's puzzles are not given away by a
+  // label on the thing you are meant to find for yourself.
+  // `Enabled` is the port's, as it is for every vendored mod (MO1).
+  'world-tooltips': Object.freeze({
+    title: 'World Tooltips',
+    author: 'jefetienne',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'A name under the crosshair for whatever you are looking at: a person, a shop and the hours it keeps, '
+          + 'a door and its lock level, the dungeon beyond an exit, a lever, a wheel, a ladder, a bookshelf, and a Daedra '
+          + 'waiting to be summoned. The mod\u2019s own ladder, in its own order, worn in the enhanced skin\u2019s dress. Off, the '
+          + 'plaque still lists what a chest or a body holds - that is the port\u2019s own and has no switch.',
+      }),
+      HideDefaultInteractTooltip: Object.freeze({
+        default: false,
+        description: 'Enable to not give a default indication on interactable objects that may have been intended to be secret, particularly regarding puzzles in the main quest.',
+      }),
+    }),
+  }),
   'seasons-iliac-bay': Object.freeze({
     title: 'Seasons of the Iliac Bay',
     author: 'RosyTheRascal',
@@ -85,6 +107,23 @@ export const MOD_SETTINGS = Object.freeze({
       }),
       SmoothRoads: Object.freeze({ default: true, description: 'Enables light smoothing of road surfaces, disable for minor extra performance.' }),
       RiversAndStreams: Object.freeze({ default: false, description: 'Enables rendering of rivers and streams on terrain' }),
+    }),
+  }),
+  // WOD1: WORLD OF DAGGERFALL 2.0 (Kamer). No modsettings of its own -
+  // `Enabled` alone (DFU enables a mod by listing it), the Meaner
+  // Monsters precedent. Read once, at the world's mount: the loader's
+  // instance list is built for the life of the world (LocationLoader.cs
+  // hangs it off the Start state), so a flip reaches the next world.
+  'world-of-daggerfall': Object.freeze({
+    title: 'World of Daggerfall',
+    author: 'Kamer',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Kamer’s World of Daggerfall 2.0, 1:1: “Adds details to the wilderness, New Locations, and Dungeon '
+          + 'Exterior detail.” Bandit camps and forts, ruins, shrines, mountains and rock fields across the Iliac Bay, the '
+          + 'ground levelled under each, with their bandits, bears and treasure - and a camp outside Privateer’s Hold.',
+      }),
     }),
   }),
   // MM1: MEANER MONSTERS 1.5.2 (Ralzar). No modsettings of its own -
@@ -431,7 +470,7 @@ export const MOD_SETTINGS = Object.freeze({
       'Handling.StowWhenSpellcasting': Object.freeze({ default: true, description: 'Casting, or holding a readied spell, stows the light: no free hand.' }),
       'Handling.StowWhenClimbing': Object.freeze({ default: true, description: 'Climbing stows the light: no free hand.' }),
       'Handling.StowWhenSwimming': Object.freeze({ default: true, description: 'Swimming stows the light: no free hand.' }),
-      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: true, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),
+      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),   // 3ARMS: the mod ships true; the port ships false - see the departure in Handheld-Torches.md
       'Handling.RelaxedLanterns': Object.freeze({ default: false, description: 'If enabled, will not stow lanterns when both hands are occupied' }),
       'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),
       'Throwing.ThrowStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the throw\u2019s speed (25 at full Strength).' }),
@@ -857,6 +896,44 @@ export const MOD_SETTINGS = Object.freeze({
       'LocationColours.Village': Object.freeze({ default: '#a56446ff', color: true, description: "The colour shown on the travel map" }),
     }),
   }),
+  // HCC (2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also
+  // enhance its online integration functionality"): HORSE CART AND CARGO -
+  // demifiend000's persistent horse and wagon, 1.0.0-rc12, its five
+  // sections restated verbatim (vendor/horse-cart-and-cargo/modsettings.json).
+  // The two TextKeys are Unity KeyCode names. THE PORT SHIPS THEM ON 5 AND 6
+  // (Alpha5 / Alpha6), NOT THE MOD'S K AND G (HCC-KEYS, a recorded departure
+  // on HT4's own law): K is Travel Options' FollowPathsKey and G is Handheld
+  // Torches' ManualDropInput here, both vendored before this mod, and every
+  // letter is spent - DFU's bindings, the port's own, the other mods'.
+  // AUDIT HCC K1: the first departure shipped F7 and F10 and neither was
+  // free. F10 is DFU's own LargeHUDToggle and Shift-F10 its HUDToggle
+  // (DialogShortcuts.txt, systems/dialogShortcuts.js) - the HUD shortcuts
+  // are world keys, not a window's, so one press flipped the HUD AND
+  // summoned the team - and F7 is the browser's caret-browsing prompt.
+  // The digits past the four quick slots are free on every count: DFU's
+  // bindings, its world shortcuts, every vendored mod, and the browser.
+  // The notes say the port's control, not the mod's text box: the Mods
+  // pane captures a key, and its clear writes `None`, which disables one.
+  'horse-cart-and-cargo': Object.freeze({
+    title: 'Horse Cart and Cargo',
+    author: 'demifiend000',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'demifiend000\u2019s Horse Cart and Cargo 1.0.0-rc12, 1:1: your horse and wagon stand in the world - '
+          + 'left where you dismount, following or waiting on command, hitched and mounted by walking up to them. '
+          + 'Online, the others see them where you left them.',
+      }),
+      'Persistence.PhysicalPersistence': Object.freeze({ default: true, description: 'Physical Horse & Wagon Persistence. On: horse and wagon positions persist when left behind. Off: remote positions are forgotten and owned transport is recalled for vanilla-style transport and wagon access; the moving trailing wagon remains. Re-enabling starts fresh with owned transport at the player.' }),
+      'Presentation.ShowTrailingWagon': Object.freeze({ default: true, description: 'Trailing Wagon While Riding. When disabled, hides only the wagon that trails behind you in Cart mode. Deployed and following wagons, cargo storage, physical persistence, and wagon gameplay remain enabled.' }),
+      'Following.HorseFollowDistance': Object.freeze({ default: 3, min: 2, max: 8, description: 'Horse Follow Distance. Sets how closely a following horse stays behind you. This also applies to the horse leading a following wagon.' }),
+      'Following.AvoidCombat': Object.freeze({ default: true, description: 'Following Horse Avoids Combat. When enabled, a following horse or horse-and-wagon team will try to keep away from hostile enemies during combat.' }),
+      'Following.FollowFastTravel': Object.freeze({ default: true, description: 'Following Transport Fast Travels With You. When disabled, transport currently commanded to Follow waits where it was when fast travel begins.' }),
+      'WagonAccess.InteriorAccessDistance': Object.freeze({ default: 50, min: 10, max: 100, description: 'Interior Wagon Access Distance. Sets how close your wagon must be parked to a building or dungeon entrance to access it from inside.' }),
+      'Hotkeys.QuickMountDismount': Object.freeze({ default: 'Alpha5', text: true, description: 'Quick Mount / Dismount. Mounts your last-used horse or wagon using the same range and ownership rules as the Transport menu. Pressing it while riding dismounts immediately. Click it and press a key to rebind; \u2715 clears it (None).' }),
+      'Hotkeys.SummonTransport': Object.freeze({ default: 'Alpha6', text: true, description: 'Summon Horse & Wagon. Teleports owned transport to a nearby layout while outdoors. Click it and press a key to rebind; \u2715 clears it (None).' }),
+    }),
+  }),
 });
 
 let memory = null;
@@ -874,11 +951,22 @@ let memory = null;
  *  it, and a player who deliberately chose F... also loses it, which is the trade - there is nothing in the file
  *  that tells the two apart, and a torch on the social key is the worse of the two wrongs. */
 const HT_LIGHT_KEY = Object.freeze({ vendor: 'handheld-torches', key: 'Handling.ToggleLightInput', was: 'F' });
+/** AUDIT HCC K1: the same law, twice more - Horse Cart and Cargo shipped its keys on F7 and F10 (HUD shortcuts and
+ *  the browser's), and a player who opened the Mods pane holds them SAVED. Exactly those values go, once. */
+export const KEY_MIGRATIONS = Object.freeze([
+  HT_LIGHT_KEY,
+  Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.QuickMountDismount', was: 'F7' }),
+  Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),
+]);
 function migrate(m) {
-  const held = m?.[HT_LIGHT_KEY.vendor];
-  if (!held || held[HT_LIGHT_KEY.key] !== HT_LIGHT_KEY.was) return false;
-  delete held[HT_LIGHT_KEY.key];
-  return true;
+  let changed = false;
+  for (const { vendor, key, was } of KEY_MIGRATIONS) {
+    const held = m?.[vendor];
+    if (!held || held[key] !== was) continue;
+    delete held[key];
+    changed = true;
+  }
+  return changed;
 }
 
 function load() {
@@ -974,13 +1062,32 @@ function coerce(def, v) {
  *  ModSettings - that answers undefined for a mod the port has not
  *  vendored (DFU: the mod is not loaded) instead of throwing. */
 export function modSettingIfDeclared(vendor, key) {
-  return MOD_SETTINGS[vendor]?.keys?.[key] ? modSetting(vendor, key) : undefined;
+  return declaredKey(vendor, key) ? modSetting(vendor, key) : undefined;
 }
 
+/**
+ * MODS-ONLINE-2: A DECLARED KEY IS AN OWN KEY. The three doors below
+ * read `MOD_SETTINGS[vendor].keys[key]` and treated anything truthy as
+ * a declaration - so every name on Object.prototype was one. A read of
+ * `toString`, `constructor` or `valueOf` sailed past "is not a declared
+ * switch" and answered `undefined` (its `def.default` does not exist)
+ * instead of throwing, and a WRITE of one coerced against a function
+ * and stored it under the vendor. Nothing in the port asks for those
+ * names, which is why it was never seen; a mod id or key that ever
+ * comes from data would have found it.
+ *
+ * The same mistake, made in the lane, is what caught this: the survivor
+ * of tools/mutants/modsonline1.json dropped `Object.hasOwn` from
+ * onlineForcedModSetting, where `room['toString']` is a FUNCTION and
+ * would have been handed back as a forced setting value.
+ */
+const declaredKey = (vendor, key) =>
+  (Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);
+
 export function modSetting(vendor, key) {
-  const def = MOD_SETTINGS[vendor]?.keys?.[key];
+  const def = declaredKey(vendor, key);
   if (!def) throw new Error(`modSetting: ${vendor}/${key} is not a declared switch`);
-  const forced = onlineForcedModSetting(vendor, key);   // OL1: online is the enhanced lane, whole - `Enabled` reads true and the store is not written
+  const forced = onlineForcedModSetting(vendor, key);   // MODS-ONLINE-2: online, a key the room's ground depends on reads the room's value and the store is not written
   if (forced !== undefined) return forced;
   const v = load()[vendor]?.[key];
   return v === undefined ? def.default : coerce(def, v);
@@ -997,7 +1104,7 @@ export function modSettingsOf(vendor) {
 }
 
 export function setModSetting(vendor, key, value) {
-  const def = MOD_SETTINGS[vendor]?.keys?.[key];
+  const def = declaredKey(vendor, key);
   if (!def) throw new Error(`setModSetting: ${vendor}/${key} is not a declared switch`);
   const m = load();
   const v = coerce(def, value);

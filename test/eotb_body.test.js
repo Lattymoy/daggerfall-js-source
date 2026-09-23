@@ -421,18 +421,26 @@ test('EOTB5: THE FOUR HOSTS are named, and the wiring is ONE site because all fo
   }
 });
 
-test('EOTB5: the mod\u2019s art is EXCLUDED from Vite\u2019s inlining, and nothing else is', () => {
+test('EOTB5: the mod\u2019s art is EXCLUDED from Vite\u2019s inlining - and since INLINE1, so is every other mod\u2019s', () => {
   assert.match(viteConfig, /assetsInlineLimit:/, 'the rule exists');
   const m = /assetsInlineLimit: \(filePath\) => \((.*?)\),/.exec(viteConfig);
   assert.ok(m, 'and it is a callback, not a number');
-  assert.match(m[1], /eye-of-the-beholder/, 'aimed at this mod\u2019s art');
-  assert.match(m[1], /\?\s*false\s*:\s*undefined/, 'false for this mod, UNDEFINED for everything else');
+  assert.match(m[1], /\?\s*false\s*:\s*undefined/, 'false for a mod\u2019s file, UNDEFINED for everything else');
+  // INLINE1 (2026-09-20): this pin used to hold "every other vendor asset keeps
+  // the default" and named dynamic-skies as the example. That was the premise
+  // that failed - the allow-list of three folders was an enumeration, twenty
+  // vendor folders landed after it and none joined, and Shield Widget's 275
+  // small sprites went into the boot chunk as 1.34 MB of base64. INVERTED, not
+  // deleted: the rule is now the CLASS (anything under vendor/), so the mod
+  // this pin was written for is still held, and so is the one it once held OUT.
   // eslint-disable-next-line no-new-func
   const rule = new Function('filePath', `return (${m[1]});`);
   assert.equal(rule('/x/vendor/eye-of-the-beholder/Textures/112364/112364_0-0.png'), false, 'never inline a sprite');
-  assert.equal(rule('/x/vendor/dynamic-skies/Textures/CdMSunny.png'), undefined, 'every other vendor asset keeps the default');
+  assert.equal(rule('/x/vendor/dynamic-skies/Textures/CdMSunny.png'), false, 'INLINE1: every vendor asset is a file - this one was the pinned exception');
   assert.equal(rule('/x/vendor/immersive-footsteps/Audio/Low_Quality/Climate/LQ_Grass_Footstep_1.mp3'), false, 'AUDIT-IF F1: Immersive Footsteps\' clips are the same class (test/if1_immersivefootsteps.test.js holds the measurement)');
   assert.equal(rule('C:\\x\\vendor\\eye-of-the-beholder\\Textures\\a.png'), false, 'and on a Windows path too');
+  assert.equal(rule('/x/src/ui/icons/diamond.png'), undefined, 'and everything OUTSIDE vendor/ keeps Vite\u2019s default - the rule is the class, not the tree');
+  assert.equal(rule('/x/src/assets/mw/textures/thunderlock.dds'), undefined, 'the port\u2019s own assets included');
 });
 
 test('EOTB5: the module-level body and camera are one pair', () => {

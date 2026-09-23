@@ -28,7 +28,7 @@
 // no picture either way - "does not toggle / toggles twice / gets
 // stuck". The torch half is downstream of the same line: Handheld
 // Torches' UpdateFreeHand reads the readied spell every frame
-// (handheldTorches.js:312, Handling.StowWhenSpellcasting) so a spell Z
+// (handheldTorches.js:324, Handling.StowWhenSpellcasting) so a spell Z
 // could not put away kept the light stowed for good.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -125,7 +125,7 @@ test('MAC-O1: the TORCH comes back - a spell Z can put away no longer keeps the 
   const store = Object.fromEntries(Object.entries(MOD_SETTINGS[HANDHELD_TORCHES_VENDOR].keys).map(([k, d]) => [k, d.default]));
   assert.equal(store['Handling.StowWhenSpellcasting'], true, 'the mod stows on a readied spell');
   // Handling.OnStow ships Drop; Unequip is the arm that REMEMBERS the
-  // light (handheldTorches.js:498-505), which is what makes the return
+  // light (handheldTorches.js:521-528), which is what makes the return
   // visible at all - the free hand is the law either way.
   store['Handling.OnStow'] = ON_STOW.Unequip;
   const { r, magic } = rig();

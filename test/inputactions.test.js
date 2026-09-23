@@ -3,7 +3,7 @@
 // quirk, the load path's raw adds, the unknown-action round trip.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
+import { DEFAULT_SECONDARY_BINDINGS,
   ACTIONS, DEFAULT_BINDINGS, parseActionName,
   createBindings, setBinding, clearBinding, clearBindingByCode,
   addRemovedPrimaryAction, getBinding, getBindings, actionForCode,
@@ -43,6 +43,12 @@ test('I1: the Actions enum, verbatim names and order (:324-384)', () => {
     // QS6: and the SPELL slot's, appended after that. 'QuickSwap' above keeps
     // its index - an action is never removed from this list, only unbound.
     'QuickSpell',
+    // QUICK-LOOT B4: the plaque's two, appended after THAT - same law,
+    // third time: an action is never inserted, because the classic grid
+    // draws by index.
+    'QuickLootAll', 'QuickLootOpen',
+    // FREEMOUSE: appended past the plaque's two, like every port row.
+    'FreeMouse',
   ]);
   // ActionNameToEnum's sentinel: unknown parses to Unknown, and
   // Unknown itself is NOT a bindable action.
@@ -73,6 +79,14 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
     // SOC5: the port's own row, past DFU's table - KeyF, which SetupDefaults
     // never spends. The forty-four above are still DFU's, row for row.
     'KeyF=SocialInteract',
+    // QUICK-LOOT B4: P and J, and they sit HERE because that is where
+    // the table declares them - the two rows were chosen by elimination
+    // against DFU's table, the port's own two keys and every vendored
+    // mod's defaults AND offered choices, which is what HT4's gate
+    // holds (it caught G, B and K in turn).
+    'KeyP=QuickLootAll',
+    'KeyJ=QuickLootOpen',
+    'KeyY=FreeMouse',   // FREEMOUSE: the one letter DFU, the port and every vendored mod all leave alone
     // QS2: the number row. Digit1-Digit3 are unspent by SetupDefaults, by the
     // port and by every vendored mod's TextKey defaults (the HT4 pin in
     // test/ht1_handheldtorches.test.js walks that whole set).
@@ -93,9 +107,12 @@ test('I1: ResetDefaults\' table, every row (:979-1032)', () => {
   // the swap gave Digit3 to the spell slot and ships UNBOUND, so the table is
   // one row shorter than the enum. It is still one default per action AT MOST,
   // and the one action without one is named rather than counted away.
-  assert.equal(DEFAULT_BINDINGS.length, 49);
-  assert.equal(bound.size, 49, 'no action is defaulted twice');
-  assert.equal(ACTIONS.length, 50);
+  // QUICK-LOOT B4 appended two more, each with a default (P and J),
+  // so the table and the enum both grow by two and the one unbound
+  // action below is still the only one.
+  assert.equal(DEFAULT_BINDINGS.length, 52);
+  assert.equal(bound.size, 52, 'no action is defaulted twice');
+  assert.equal(ACTIONS.length, 53);
   assert.deepEqual(ACTIONS.filter((a) => !bound.has(a)), ['QuickSwap'], 'exactly one action ships unbound');
   const codes = DEFAULT_BINDINGS.map(([c]) => c);
   assert.equal(new Set(codes).size, codes.length, 'and no KEY is spent twice - the number row was free');
@@ -140,14 +157,27 @@ test('I1: the two clears - by action walks all its codes, by code takes one (:80
 test('I1: a FULL reset clears primary and the removed list but NOT secondary (:956-960)', () => {
   const s = createBindings();
   resetDefaults(s);
-  assert.equal(s.primary.size, 49);   // SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's
+  assert.equal(s.primary.size, 52);   // SOC5: DFU's 44 plus SocialInteract; QS2: plus the three quickslot rows; QS4: plus the off hand's; QUICK-LOOT B4: plus the plaque's two; FREEMOUSE: plus the mouse toggle's own key
   // a secondary binding on a code no default uses SURVIVES the reset;
   // one on a default's code is stolen back by SetBinding's alt-removal.
-  setBinding(s, 'KeyP', 'Rest', false);
+  // QUICK-LOOT B4: this was KeyP, chosen because no default used it -
+  // and P is QuickLootAll's default now, so the fixture's own premise
+  // had gone. It moved to KeyY, the one letter DFU, the port and every
+  // vendored mod all left alone.
+  //
+  // FREEMOUSE (2026-09-22): AND THE SAME THING HAPPENED AGAIN, which
+  // is worth stating rather than quietly re-picking. This fixture
+  // needs a code NO default uses, and every time the port spends its
+  // last free letter this line is the first thing to notice - it is a
+  // canary for the keymap being full, not an ordinary fixture. KeyY is
+  // FreeMouse's default now, so it moves to F7: unspent by DFU's table
+  // (which stops at F9 and skips F7 and F10), unspent by the port, and
+  // not a key any vendored mod offers.
+  setBinding(s, 'F7', 'Rest', false);
   setBinding(s, 'KeyM', 'Jump', false);   // KeyM is AutoMap's default
   addRemovedPrimaryAction(s, 'Rest');
   resetDefaults(s);
-  assert.equal(s.secondary.get('KeyP'), 'Rest', 'secondary survives a full reset');
+  assert.equal(s.secondary.get('F7'), 'Rest', 'secondary survives a full reset');
   assert.equal(s.secondary.has('KeyM'), false, 'but a default steals its code back');
   assert.equal(s.primary.get('KeyM'), 'AutoMap');
   assert.equal(s.removedPrimary.size, 0, 'the removed list clears');
@@ -193,7 +223,9 @@ test('I1: the save shape and the unknown-action round trip (:871-930, :1950-1969
   const data = serializeKeyBinds(s);
   assert.equal(data.actionKeyBinds.KeyW, 'MoveForwards');
   assert.deepEqual(data.removedPrimaryActions, ['Sneak']);
-  assert.deepEqual(data.secondaryActionKeyBinds, {});
+  // PAD1: the secondary dict carries the pad layout after a reset - those rows and nothing else
+  assert.deepEqual(Object.keys(data.secondaryActionKeyBinds).sort(), DEFAULT_SECONDARY_BINDINGS.map(([c]) => c).sort());
+  assert.deepEqual(data.removedSecondaryActions, []);
 
   // a NEWER build's file: an action this build does not know, plus a
   // second key hand-bound to Rest.
@@ -257,4 +289,65 @@ test('I1: actionForCode answers primary over secondary, then null', () => {
   t.secondary.set('KeyK', 'Jump');
   assert.equal(actionForCode(t, 'KeyK'), 'Rest');
   assert.equal(actionForCode(t, 'KeyQ'), null);
+});
+
+// ── MAC-D1 (SquidKamer on the desktop app, 2026-09-21: "I cant seem to
+// swing the weapon in the installed version of the game. I have to
+// enable the attack click but I prefer the mouse swing") ─────────────
+test('MAC-D1: an action the game cannot be played without is never left addressing nothing, and a PAD row does not count as reachable', async () => {
+  const {
+    createBindings, resetDefaults, setBinding, repairUnloseableBindings,
+    codesForAction, actionIsReachable, isPadCode, UNLOSEABLE_ACTIONS,
+  } = await import('../src/systems/inputActions.js');
+
+  // MAC-SWING1 fixed the READ - a swing bound to a key answers now,
+  // whatever it is bound to. It did not fix the STATE: an action with
+  // no code at all. That is what stranded two reporters, and the
+  // desktop app's prefs file carries it across reinstalls.
+  assert.ok(UNLOSEABLE_ACTIONS.includes('SwingWeapon'), 'the verb this was reported about');
+  for (const a of ['MoveForwards', 'MoveBackwards', 'MoveLeft', 'MoveRight', 'ActivateCenterObject']) {
+    assert.ok(UNLOSEABLE_ACTIONS.includes(a), `${a}: there is no way to play without it and no way back except a binding`);
+  }
+
+  // A PAD ROW IS NOT A RESCUE. DEFAULT_SECONDARY_BINDINGS refills the
+  // pad codes on every load, so a stranded SwingWeapon still answers
+  // JoystickAxis10Button0 - and `swingButton` reads the MOUSE codes
+  // while the rig's latch reads the held set, neither of which can
+  // ever see a pad code on a machine with no pad.
+  assert.equal(isPadCode('JoystickAxis10Button0'), true);
+  assert.equal(isPadCode('Mouse1'), false); assert.equal(isPadCode('KeyH'), false);
+
+  const s = createBindings(); resetDefaults(s);
+  assert.ok(actionIsReachable(s, 'SwingWeapon'), 'a fresh store is sound');
+  assert.deepEqual(repairUnloseableBindings(s), [], 'and needs no repair - this only ever fires on a broken store');
+
+  // strand it exactly as the controls window can: the row cleared, and
+  // DFU's "keep it unbound" mark set
+  for (const [code, a] of [...s.primary]) if (a === 'SwingWeapon') s.primary.delete(code);
+  s.removedPrimary.add('SwingWeapon');
+  assert.equal(actionIsReachable(s, 'SwingWeapon'), false, 'stranded - nothing on the desk can swing');
+  assert.ok(codesForAction(s, 'SwingWeapon').every(isPadCode), '...though a pad row still answers, which is what hid it');
+
+  // the autofill pass CANNOT fix this, by design - it obeys the mark
+  resetDefaults(s, true);
+  assert.equal(actionIsReachable(s, 'SwingWeapon'), false, 'which is why the repair is its own pass and not a tweak to the autofill');
+
+  assert.deepEqual(repairUnloseableBindings(s), ['SwingWeapon'], 'repaired, and it says which');
+  assert.ok(actionIsReachable(s, 'SwingWeapon'));
+  assert.ok(codesForAction(s, 'SwingWeapon').includes('Mouse1'), 'back on its default');
+  assert.equal(s.removedPrimary.has('SwingWeapon'), false, 'and the mark is lifted, or the next load undoes the repair');
+
+  // A REBIND IS NOT A STRANDING. A player who moves the swing to a key
+  // keeps that key - the repair only ever fills an EMPTY action.
+  const s2 = createBindings(); resetDefaults(s2);
+  setBinding(s2, 'KeyH', 'SwingWeapon', true);
+  const before = codesForAction(s2, 'SwingWeapon');
+  assert.deepEqual(repairUnloseableBindings(s2), [], 'a swing on H is reachable, so nothing is touched');
+  assert.deepEqual(codesForAction(s2, 'SwingWeapon'), before, '...and the player keeps their key');
+  assert.ok(before.includes('KeyH'));
+
+  // the door every load comes through carries it
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/systems/inputActions.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(repairUnloseableBindings\(store\)\.length\) saveKeyBinds\(store\);/, 'run after the autofill pass, and written back');
 });

@@ -35,6 +35,7 @@ import { readFileSync } from 'node:fs';
 import { WORLD_CONTEXT, makeAnchor, teleportPlan, ANCHOR_MUST_BE_SET } from '../src/systems/teleportAnchor.js';
 import { locationWorldRect } from '../src/world/streamingWorld.js';
 import { GLOBAL_SCALE } from '../src/world/meshReader.js';
+import { STREAMING_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
 import { GROUND_OFFSET } from '../src/world/rmbLayout.js';
 import { ActionTextBox } from '../src/ui/actionText.js';
 import { plainLines } from '../src/scenes/shared.js';
@@ -108,7 +109,7 @@ const QW_PARAMS = [
   'placeFoeEnv', 'placeFoeFreely', 'entityOccupancy', 'questFoeGender', 'ENEMY_BASICS',
   'fieldOfView', 'walkMode', 'player', 'cam', 'collider', 'exteriorFoes', 'exteriorFoePool',
   // ...and the G4 spell registry CastSpellDo reads through this host's
-  // own `getClassicSpellEffects` (world.js:7191's seam).
+  // own `getClassicSpellEffects` (world.js:8418's seam).
   'spellRecordOfIndex',
 ];
 
@@ -304,7 +305,7 @@ test('QX1 review: every faction read is the PERSISTENT store, and the Person cha
   // (4) ...and the family degrades to the charter's refusal when
   // FACTION.TXT has not loaded - never a throw on `store.dict`. The
   // People/Courts pair is left out of this arm deliberately: their
-  // expressions are world.js:7242/7244's verbatim, and talk.js's
+  // expressions are world.js:8469/8471's verbatim, and talk.js's
   // findFactions dereferences the dictionary it is handed, so the two
   // hosts share one shape there and neither invents a private guard.
   const cold = mountQuestWorld({ factionDict: null });
@@ -482,17 +483,17 @@ test('ROAD-G G2: the outdoor arm is PlaceFoeExteriorLocation - the 5/20 ring, th
 // ─── ROAD-G G2 review: the seams the lane shipped and nothing held ───
 
 test('ROAD-G G2 review: the cast engine raises the two ready-spell doors into THIS host\'s machine', () => {
-  // hostMagic.js:76-77 declares `onNewReadySpell` / `onCastReadySpell`
+  // hostMagic.js:77-78 declares `onNewReadySpell` / `onCastReadySpell`
   // and is the ONLY raiser in the tree (SetReadySpell raises NEW right
   // after `readiedSpell = sp`; `done()` raises CAST on every release
-  // path, before the ready clears). machine.js:799/:805 fan them out,
+  // path, before the ready clears). machine.js:847/:853 fan them out,
   // and CastSpellDo / CastEffectDo latch on nothing else
   // (actions.js:2703 - C# subscribes them in its constructor). This
   // host owns its own cast engine, and worldModes takes THIS instance
   // for the interior mode, so while the mount passed neither key every
   // `cast X spell do` / `cast X effect do` on this route - and in every
-  // shop entered from it - was permanently deaf. world.js:3301-3302 and
-  // dungeonContext.js:2112-2113 wire the identical pair.
+  // shop entered from it - was permanently deaf. world.js:4198-4199 and
+  // dungeonContext.js:2222-2223 wire the identical pair.
   const doorSrc = slice('    onNewReadySpell: (sp) => questBridge',
     '    // ROAD-G G2 (a): THE THREE-ARM SHAPE');
   // ...and they are keys of the ENGINE MOUNT, not of some other bag:
@@ -527,7 +528,7 @@ test('ROAD-G G2 review: questWorld answers CastSpellDo\'s two classic-spell read
   // Without these the action self-completes at PARSE
   // (actions.js:2757/:2764 - no effects, so C#'s template completes and
   // the task can never fire), which would have left `cast X spell do`
-  // dead on this route even with the doors above wired. world.js:7191's
+  // dead on this route even with the doors above wired. world.js:8418's
   // pair, byte-folded on both sides exactly as MakeClassicKey folds.
   const { world } = mountQuestWorld();
   assert.deepEqual(world.getClassicSpellEffects(0x105), [{ type: 5, subType: 1 }],
@@ -568,7 +569,7 @@ test('ROAD-G G2 review: the encounter pool\'s frame seams - the tick, the draw, 
   assert.match(senses, /candidates: \(\) => exteriorFoePool\(\)\.filter\(\(f\) => !f\.dead\),/,
     'the senses walk the UNNARROWED street database, live records only');
 
-  // world.js:10857-10926's arrow shape: an enemy shaft hunts a WALKING
+  // world.js:13637-13706's arrow shape: an enemy shaft hunts a WALKING
   // player (the fly camera has no capsule), and both live pools are
   // impact candidates. `playerFeet: null` is every enemy arrow passing
   // through the player - the whole enemy arm the lane shipped.
@@ -744,7 +745,11 @@ test('QX1: every surface that recorded "no quest bridge" reads the machine now',
   // this is the pin that stops any being reverted alone.
   assert.match(SRC, /tickQuests: \(\) => questBridge\?\.machine\?\.tick\?\.\(\),/, 'TickRest :379');
   assert.match(SRC, /getQuest: \(uid\) => questBridge\?\.machine\?\.getQuest\?\.\(uid\) \?\? null,/, 'the quest letter\'s name');
-  assert.match(SRC, /statusInfoRows\(rows, questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null\)/, 'record 22\'s macros');
+  // STATUS-LIVE (2026-09-22): this host hands the macro context to the
+  // ONE composer (ui/statusBox.js) instead of calling statusInfoRows
+  // itself. The law QX1 holds is that it passes the LIVE context and
+  // not the `null` the fixed-city host used to - that is still here.
+  assert.match(SRC, /macroContext: questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null,/, 'record 22\'s macros');
   assert.match(SRC, /stampResidenceQuestNames\(summaries, discoveredBuildings\(locId\), \{/, 'the residence plates');
   assert.match(SRC, /\n {4}questBridge,\n/, 'the bridge rides into the mode machine - mountScene over this city');
   assert.match(SRC, /if \(!_overlayHeld\) questBridge\?\.tick\(dt\);/, 'QuestMachine.Update, behind the pause gate');
@@ -832,12 +837,12 @@ function mountRecall({ anchorContext, insideContext, mode = 'exterior', startInD
   };
   const api = new Function(
     'locationWorldRect', 'GLOBAL_SCALE', 'GROUND_OFFSET', 'WORLD_CONTEXT', 'makeAnchor', 'teleportPlan',
-    'ANCHOR_MUST_BE_SET', 'ActionTextBox', 'plainLines',
+    'ANCHOR_MUST_BE_SET', 'ActionTextBox', 'plainLines', 'STREAMING_TERRAIN_SCALE',
     'dfLocation', 'locationName', '_locPixel', 'walkMode', 'player', 'cam', 'playerEntity',
     'townTalk', 'surfacePlayer', 'ChoiceWindow', 'modes',
     `${body} return { setRecallAnchor, recallToAnchor, teleportPrompt, anchorLanding };`,
   )(locationWorldRect, GLOBAL_SCALE, GROUND_OFFSET, WORLD_CONTEXT, makeAnchor, teleportPlan,
-    ANCHOR_MUST_BE_SET, ActionTextBox, plainLines,
+    ANCHOR_MUST_BE_SET, ActionTextBox, plainLines, STREAMING_TERRAIN_SCALE,
     dfLocation, 'Daggerfall', { x: 207, y: 213 }, true, player, cam, playerEntity,
     townTalk, () => calls.push(['surfacePlayer']), function ChoiceWindow(o) { Object.assign(this, o); }, modes);
   return { ...api, calls, said, player, cam, playerEntity, modes };
@@ -855,6 +860,7 @@ test('TP2: SET ANCHOR works in this host, and the landing is the anchor\'s own n
   assert.deepEqual(a.pixel, { x: 207, y: 213 }, 'the location\'s own map pixel');
   assert.equal(a.yaw, 1.25);
   assert.equal(a.pitch, -0.5);
+  assert.equal(a.terrainScale, STREAMING_TERRAIN_SCALE, 'TERRAIN-SCALE1: stamped with the ground its height stands on');
   // The natives are stated in the STREAMING host's frame - the
   // location's world rect - not a private one, and the landing is the
   // exact inverse, so a recall lands where the anchor was set.

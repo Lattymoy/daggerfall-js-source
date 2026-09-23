@@ -48,7 +48,7 @@ import {
   chooseTable, deathTable, ORIENTATIONS, orientationFor, facingFor, frameTime, speedMod, frameCount, isFootstepFrame,
   stateFor, STATE_TABLES, STRING, meleeAnimTickTime, RANGED_TICK, SPELL_TICK, LYCAN_TICK, DEATH_TICK,
   usesPingPong, pingPongFrames, forwardFrames, holdDrawFrames, pingPongTickFrames, mirrorFlips, mirrorRevertTime,
-  DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY,
+  DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY, tableMoveSpeed,
 } from './eotbBillboard.js';
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors } from './eotbSprite.js';
 import { decodePng } from '../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
@@ -119,7 +119,6 @@ export function bodyState(s = {}) {
   const moving = !!((m.forward || 0) || (m.strafe || 0));
   const standing = m.standing != null ? !!m.standing : !moving;
   const stopped = s.stopped ?? (standing || (m.freeze || 0) > 0);
-  const diagonal = (m.forward || 0) && (m.strafe || 0);
   return {
     died: !!s.died,
     transformed: !!s.transformed,
@@ -139,7 +138,7 @@ export function bodyState(s = {}) {
     strafe: m.strafe || 0,
     // |PlayerMotor.MoveDirection.xz|: the applied speed, times the
     // diagonal's .7071 (PlayerMotor's limitDiagonalSpeed), zero at rest
-    moveSpeed: moving ? (m.speed || 0) * (diagonal ? Math.SQRT1_2 : 1) : 0,
+    moveSpeed: tableMoveSpeed(m.forward || 0, m.strafe || 0, m.speed),
     grounded: m.grounded !== false,
     running: !!m.running,
     crouching: !!m.crouching,
@@ -511,7 +510,39 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   }
   /** [IL] `LateUpdate` (IL_3d64-IL_3fa4). */
   function lateUpdate(dt) {
-    if (died) return;
+    // DEATH-BODY1 (2026-09-22). Muriel on Discord: "if you die in the
+    // tutorial dungeon and press F11 to load, you load the game but are
+    // visually a corpse. You can act normally, but are a corpse."
+    // kurkku saw the same; trashBattery found the workaround and named
+    // the cause in one line - "zooming into first person and then back
+    // out into 3rd person fixes it. looks like loading the game after a
+    // death doesn't update the character model state."
+    //
+    // He is exactly right. `died` is a LATCH: it is raised from the
+    // live `last.died` signal and then blocks every update below,
+    // holding the frozen death clip. The ONLY thing that lowers it is
+    // `initialize`, and the only caller of that is `toggle` going
+    // active - which is what scrolling out of first person and back in
+    // does, and why that clears it.
+    //
+    // THE MOD NEVER NEEDED MORE, and that is the whole divergence. In
+    // Daggerfall Unity a death ends the run: you load a save, the
+    // scene is rebuilt, and PlayerBillboard comes back as a fresh
+    // object with a fresh field. This port has revivals the mod has no
+    // concept of - a quickload straight back into play, the online
+    // respawn, a prison release - and the body is a MODULE-LEVEL
+    // instance that survives all of them. So the latch outlived the
+    // death that set it.
+    //
+    // The fix is at the signal, not at any one caller: the body follows
+    // the entity. Coming back to life lowers the latch wherever the
+    // life came from, so a load, a respawn and anything added later are
+    // all covered by the same line, rather than each having to remember
+    // to reach in here.
+    if (died) {
+      if (last.died) return;
+      initialize();   // alive again: the clip stops, the table returns to Idle, one forced orientation
+    }
     if (last.died) { died = true; playDeath(); return; }
     updateOrientation(false);
     if (!isAnimating) {

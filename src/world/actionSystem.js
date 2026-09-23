@@ -470,13 +470,14 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
   /** Register an effect action (Hurt/Poison/DrainMagicka/CastSpell):
    *  chain participant, no tween - the model stays in the static draw
    *  and the shared collider (the caller keeps those). */
-  addEffect(ns, positionKey, action, origin = null) {
+  addEffect(ns, positionKey, action, origin = null, modelIdNum = null) {
     const key = `act:${ns}:${positionKey}`;
     const o = {
       origin,
       key,
       ns,
       kind: 'effect',
+      modelIdNum,   // WORLD-HOVER: the model stays in the static draw, so there is no cpu here - the host hands its id
       actionFlag: action.actionFlag,
       magnitude: action.magnitude,
       index: action.index,
@@ -615,7 +616,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *  every link through them dies (audit 2026-08-16). aabb (when
    *  given) makes it a Direct/Attack/collision target like DFU's
    *  collider-carrying models. */
-  addRelay(ns, positionKey, action, aabb = null, origin = null) {
+  addRelay(ns, positionKey, action, aabb = null, origin = null, modelIdNum = null) {
     const key = `act:${ns}:${positionKey}`;
     const o = {
       key,
@@ -626,6 +627,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       // which is what the Teleport relay's automap report needs.
       positionKey,
       kind: 'relay',
+      modelIdNum,   // WORLD-HOVER: as addEffect
       actionFlag: action.actionFlag ?? ACTION_FLAGS.None,
       index: action.index,
       axisRaw: action.axisRaw,
@@ -657,6 +659,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       ns,
       kind: 'door',
       cpu,
+      modelIdNum: cpu?.modelIdNum ?? null,   // WORLD-HOVER: as addAction
       base: baseMatrix,
       duration: DOOR_OPEN_DURATION,
       rotation: { x: 0, y: DOOR_OPEN_ANGLE, z: 0 },
@@ -729,6 +732,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       ns,
       kind: 'action',
       cpu,
+      modelIdNum: cpu?.modelIdNum ?? null,   // WORLD-HOVER: WHICH model this is. DFU reads it off the GameObject's MeshFilter name (World Tooltips scrapes exactly that, .cs:408-420); the port reads it off the model record, which is the same fact without the string.
       base: baseMatrix,
       index: action.index,   // A2: the RDB soundIndex plays on every Play
       duration: action.duration / 20,

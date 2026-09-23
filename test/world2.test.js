@@ -170,7 +170,7 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s
   assert.match(d, /f\._castPending = false;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(_puppet && f\.mobile\) \{\s*if \(!f\._pupMine\) f\.mobile\.doMeleeDamage = false;[^\n]*\n\s*if \(f\._pupTarget == null\) f\.mobile\.shootArrow = false;[^\n]*\n\s*\}/, 'the latches dropped AFTER the mobile set them, the same frame (WORLD3: unless the blow is at ME, and a shaft at anyone flies; AUDIT WORLD6b-ii B10)');
   assert.match(d, /const PUPPET_EASE_S = 0\.2;/, 'the stream\'s interval'); assert.equal(FOES_MS, 200, 'and it is FOES_MS'); assert.ok(FOES_FULL_MS > FOES_MS); assert.equal(FOES_STALE_MS, 3 * FOES_FULL_MS);
   assert.match(d, /function foesFrame\(full = false\) \{\s*if \(!_authority\) return null;\s*const out = \[\];\s*for \(let i = 0; i < _layoutFoes; i\+\+\) \{\s*const f = foes\[i\];\s*if \(!f\) continue;\s*(?:\/\/[^\n]*\n\s*)*const _t = f\.ai\.target, g = [^\n]*\n\s*(?:\/\/[^\n]*\n\s*)*const r = \{ i, t: f\.mobileType, f: \[q2\(f\.ai\.feet\[0\]\), q2\(f\.ai\.feet\[1\]\), q2\(f\.ai\.feet\[2\]\)\], y: q3\(f\.ai\.yaw\), h: Number\.isFinite\(f\.entity\.health\) \? Math\.max\(0, Math\.min\(FOE_HEALTH_MAX, f\.entity\.health\)\) : 0, d: f\.dead \? 1 : 0, a: f\._atkA \| 0, m: f\.ai\.moving \? 1 : 0, g, c: f\._castN \| 0, s: f\._castIdx \| 0, \.\.\.\(f\.gender === 'female' \? \{ x: 1 \} : \{\}\) \};[^\n]*\n\s*const key = [^\n]*\n\s*if \(!full && f\._sentKey === key\) continue;\s*f\._sentKey = key;\s*out\.push\(r\);\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(!out\.length && !full\) return null;\s*return \{ n: \+\+_foesSeq, k: _locationKey, f: out \};/, 'the frame out: the layout\'s run alone (D2), the changed alone unless full, the species (B5) and the dungeon (C8) on it, nothing when nothing changed - but a full frame always, it is the heartbeat (AUDIT WORLD34 B3)');
-  assert.match(d, /function applyFoes\(data, from = null\) \{\s*if \(_authority \|\| !data \|\| !Array\.isArray\(data\.f\)\) return false;\s*(?:\/\/[^\n]*\n\s*)*if \(from !== _foesFrom\) \{ _foesFrom = from; _foesSeqIn = -1; for \(let i = 0; i < _layoutFoes; i\+\+\) \{ const f = foes\[i\]; if \(f\) \{ f\._pup = null; f\._pupMismatch = false; \} \} \}\s*if \(Number\.isFinite\(data\.n\)\) \{ if \(data\.n <= _foesSeqIn\) return false; _foesSeqIn = data\.n; \}\s*if \(data\.k != null && data\.k !== _locationKey\) \{[^\n]*return false; \}[^\n]*\n\s*for \(const r of data\.f\) \{\s*if \(!r \|\| typeof r !== 'object'\) continue;\s*const i = r\.i \| 0;\s*const f = foes\[i\];\s*if \(!f \|\| i >= _layoutFoes\) continue;\s*if \(r\.t != null && r\.t !== f\.mobileType\) \{[^\n]*\n\s*f\._pupMismatch = true;[\s\S]*?const tries = \(_retypeFails\.get\(i\) \?\? 0\);\s*if \(tries < RETYPE_TRIES\) \{\s*retypeFoe\(i, r\.t, GENDER_BIT\[r\.x === 1 \? 1 : 0\]\)\.then\(\(ok\) => \{[\s\S]*?\}\)\.catch\([\s\S]*?\);\s*\}\s*continue;\s*\}/, 'the frame in: never the authority\'s; a new host starts over with every puppet re-latched (A1/B2); never stale; never another dungeon\'s (C8); the layout\'s run alone (D3); a species mismatch left alone (B5) and rebuilt as the room\'s (WORLD3)');
+  assert.match(d, /function applyFoesFrame\(data, from = null\) \{\s*if \(_authority \|\| !data \|\| !Array\.isArray\(data\.f\)\) return false;\s*(?:\/\/[^\n]*\n\s*)*if \(from !== _foesFrom\) \{ _foesFrom = from; _foesSeqIn = -1; for \(let i = 0; i < _layoutFoes; i\+\+\) \{ const f = foes\[i\]; if \(f\) \{ f\._pup = null; f\._pupMismatch = false; \} \} \}\s*if \(Number\.isFinite\(data\.n\)\) \{ if \(data\.n <= _foesSeqIn\) return false; _foesSeqIn = data\.n; \}\s*if \(data\.k != null && data\.k !== _locationKey\) \{[^\n]*return false; \}[^\n]*\n\s*for \(const r of data\.f\) \{\s*if \(!r \|\| typeof r !== 'object'\) continue;\s*const i = r\.i \| 0;\s*const f = foes\[i\];\s*if \(!f \|\| i >= _layoutFoes\) continue;\s*if \(r\.t != null && r\.t !== f\.mobileType\) \{[^\n]*\n\s*f\._pupMismatch = true;[\s\S]*?const tries = \(_retypeFails\.get\(i\) \?\? 0\);\s*if \(tries < RETYPE_TRIES\) \{\s*retypeFoe\(i, r\.t, GENDER_BIT\[r\.x === 1 \? 1 : 0\]\)\.then\(\(ok\) => \{[\s\S]*?\}\)\.catch\([\s\S]*?\);\s*\}\s*continue;\s*\}/, 'the frame in: never the authority\'s; a new host starts over with every puppet re-latched (A1/B2); never stale; never another dungeon\'s (C8); the layout\'s run alone (D3); a species mismatch left alone (B5) and rebuilt as the room\'s (WORLD3)');
   assert.match(d, /if \(Number\.isFinite\(r\.h\)\) \{ if \(r\.h < f\.entity\.health\) p\.hurt = true; f\.entity\.health = r\.h; \}/, 'a drop is the hurt');
   assert.match(d, /if \(r\.a != null\) \{ const a = r\.a \| 0; if \(p\.a != null && a !== p\.a\) p\.strike = \(a & 1\) \? 'ranged' : 'melee'; p\.a = a; \}/, 'the attack once per count, never the count it arrived with');
   assert.match(d, /if \(r\.d === 1\) \{ if \(!f\.dead\) \{ f\.ai\.feet\[0\] = p\.feet\[0\]; f\.ai\.feet\[1\] = p\.feet\[1\]; f\.ai\.feet\[2\] = p\.feet\[2\]; \} setFoeDead\(f, true\); \}[^\n]*\n\s*else if \(r\.d === 0 && f\.dead\) \{[^\n]*\n\s*const idx = foes\.indexOf\(f\);\s*\n\s*if \(idx >= 0 && idx < _layoutFoes && !_retyping\.has\(idx\)\) retypeFoe\(idx, f\.mobileType, f\.gender \?\? null\)\.then\(\(ok\) => \{ if \(ok && !_authority && foes\[idx\]\) applyFoeRecord\(foes\[idx\], r\); \}\)\.catch\([\s\S]*?\);[^\n]*\n\s*else setFoeDead\(f, false\);\s*\n\s*\}/, 'death through the one kill door, where the host\'s foe fell (B10); the un-death a REBUILD (AUDIT WORLD7/8 B3)');
@@ -184,12 +184,18 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s
   assert.match(d, /    foesFrame,\s*applyFoes,\s*applyHit,\s*setAuthority,\s*isAuthority: \(\) => _authority,/, 'the API');
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /onFoeHit: \(hit\) => host\.onFoeHit\?\.\(hit\),/, 'the hit routed into the build');
-  assert.match(m, /dungeonCtx = ctx;\s*_dungeonAuthority = host\.dungeonAuthority\?\.\(\) \?\? true; ctx\.setAuthority\?\.\(_dungeonAuthority\);/, 'a dungeon built under the seat as it stands');
+  // WORLD-HOVER put the activation-target and namer registrations
+  // between these two lines, so the pin holds the ORDER by content
+  // rather than by adjacency - a character-counted window silently
+  // stops applying the moment anything lands inside it.
+  const _mount = m.indexOf('dungeonCtx = ctx;');
+  const _seat = m.indexOf('_dungeonAuthority = host.dungeonAuthority?.() ?? true; ctx.setAuthority?.(_dungeonAuthority);');
+  assert.ok(_mount > 0 && _seat > _mount, 'a dungeon built under the seat as it stands');
   assert.match(m, /setDungeonAuthority\(on\) \{ _dungeonAuthority = !!on; dungeonCtx\?\.setAuthority\?\.\(_dungeonAuthority\); \},/, 'the seat kept for the next dungeon');
   assert.match(m, /dungeonFoesFrame\(full = false\) \{ return mode === 'dungeon' && dungeonCtx \? \(dungeonCtx\.foesFrame\?\.\(full\) \?\? null\) : null; \},/);
   assert.match(m, /applyDungeonFoes\(id, data\) \{ return mode === 'dungeon' && dungeonCtx \? !!dungeonCtx\.applyFoes\?\.\(data, id\) : false; \}/, 'the host\'s id rides in (A1)');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const foesStream = \(now\) => \{\s*if \(!online \|\| online\.status !== 'open'\) return false;\s*(?:\/\/[^\n]*\n\s*)*const cell = isCellRoom\(online\.room\);\s*if \(!cell && \(!online\.isHost\(\) \|\| !isWorldRoom\(online\.room\)\)\) return false;\s*if \(now - _foesSentAt < FOES_MS\) return false;\s*_foesSentAt = now;[^\n]*\n\s*const full = now - _foesFullAt >= FOES_FULL_MS;\s*const frame = cell \? \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? exteriorFoes\.foesFrame\(full\) : null\) : modes\?\.dungeonFoesFrame\?\.\(full\);\s*if \(!frame\) return false;\s*(?:if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);[^\n]*\n\s*)?if \(!online\.sendFoes\(frame\)\) \{ _foesFullAt = -Infinity; return false; \}[^\n]*\n\s*if \(full\) _foesFullAt = now;/, 'the stream: the host\'s, in a world room, FOES_MS apart with the clock re-armed whether or not anything changed (B11), every foe FOES_FULL_MS apart, a refusal made good by the next full frame (A9); WORLD6b: in a cell everyone\'s own, the exterior pool\'s frame');
+  assert.match(w, /const foesStream = \(now\) => \{\s*if \(!online \|\| online\.status !== 'open'\) return false;\s*(?:\/\/[^\n]*\n\s*)*const cell = isCellRoom\(online\.room\);\s*if \(!cell && \(!online\.isHost\(\) \|\| !isWorldRoom\(online\.room\)\)\) return false;\s*if \(now - _foesSentAt < FOES_MS\) return false;\s*_foesSentAt = now;[^\n]*\n\s*const full = now - _foesFullAt >= FOES_FULL_MS;\s*const frame = cell \? \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? exteriorFoes\.foesFrame\(full, _hccDirty\) : null\) : modes\?\.dungeonFoesFrame\?\.\(full\);\s*if \(!frame\) return false;\s*(?:if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);[^\n]*\n\s*)?if \(!online\.sendFoes\(frame\)\) \{ _foesFullAt = -Infinity; return false; \}[^\n]*\n\s*if \(full\) _foesFullAt = now;/, 'the stream: the host\'s, in a world room, FOES_MS apart with the clock re-armed whether or not anything changed (B11), every foe FOES_FULL_MS apart, a refusal made good by the next full frame (A9); WORLD6b: in a cell everyone\'s own, the exterior pool\'s frame');
   assert.match(w, /const dungeonAuthority = \(now = performance\.now\(\)\) => !\(online\?\.room && isWorldRoom\(online\.room\) && online\.status === 'open' && online\.host && !online\.isHost\(\) && now - _foesInAt < FOES_STALE_MS\);/, 'the seat: mine unless a world room\'s open socket names another, and that seat was heard from within FOES_STALE_MS (C2/C3/C5)');
   assert.match(w, /online\.onFoes = \(id, data\) => \{\s*if \(isCellRoom\(online\.room\)\) \{ if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) exteriorFoes\.applyFoes\(id, data\); return; \}[\s\S]*?if \(modes\?\.applyDungeonFoes\?\.\(id, data\) && modes\?\.mode === 'dungeon'\) _foesInAt = performance\.now\(\);\s*\};/, 'the stream is the seat\'s heartbeat, the host\'s id rides in (AUDIT WORLD6a B8: a dungeon\'s heartbeat alone; WORLD6b: a cell\'s frame is the pool\'s, no heartbeat; AUDIT ONCRASH1 A4: and the heartbeat is the APPLY\'s word, so a stream that throws cannot hold the seat alive)');
   assert.match(w, /online\.onHit = \(id, data\) => \{ if \(isCellRoom\(online\.room\)\) exteriorFoes\.applyHit\(id, data\); else modes\?\.applyDungeonHit\?\.\(id, data\); \};/, 'the hits routed (WORLD6b: a cell\'s to the pool)');
@@ -213,4 +219,50 @@ test('WORLD2: the hosts by source - the dungeon host\'s hit door (the striker\'s
     assert.deepEqual([ai.isHostile, ai.hasEncounteredPlayer], [true, true], 'the foe\'s own stand');
     if (AI === EnhancedEnemyAI) assert.deepEqual([ai.path, ai.pathI, ai.repathT, ai.pathEpoch], [null, 1, 0, undefined], 'and the cached path with it');
   }
+});
+
+// ── THE NON-LAYOUT RUN: MAC'S TWO ONLINE-DUNGEON REPORTS, PINNED AS ONE HOLE ──
+
+test('ONLINE-DUNGEON-FOES: a foe past the layout run is neither streamed nor peer-aware, and the two must stay in step', () => {
+  // Mac, 2026-09-20: "Issues with non-reactive enemies in dungeons in the
+  // online mode" and "The lysander ghost enemy isn't synced online between
+  // players". Both are the SAME line - `_layoutFoes` - and this pin exists
+  // because the hole is recorded rather than closed (bible/Home.md's open
+  // flags carry it, from the FLAGGED note at the site). It is not a pin on
+  // the bug being present; it is a pin on the two halves being paid TOGETHER,
+  // which is the thing a future edit can quietly get wrong.
+  const dc = readFileSync(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+
+  // HALF ONE - the stream. `foesFrame` walks the layout run and stops. A foe
+  // appended past it (spawnQuestFoe, the encounter spawner, a summon) is in no
+  // frame any peer receives, which is why a quest-placed ghost exists only on
+  // the client whose quest placed it.
+  const frame = /function foesFrame\(full = false\) \{([\s\S]*?)\n  \}/.exec(dc);
+  assert.ok(frame, 'foesFrame is gone - re-aim this pin');
+  assert.match(frame[1], /for \(let i = 0; i < _layoutFoes; i\+\+\) \{/,
+    'the stream walks the layout run; if this bound widened, the sync half has moved');
+
+  // HALF TWO - the targeting. Peers reach the target machine only for a foe
+  // the stream carries, so a foe past the run never sees another player.
+  const cands = /candidates: foeDeps \? \(streamed = false\) =>([^\n]*)/.exec(dc);
+  assert.ok(cands, 'the candidates seam is gone - re-aim this pin');
+  assert.match(cands[1], /_authority && streamed \? peerCandidates\(\) : \[\]/,
+    'peers are candidates only for a streamed foe');
+  assert.match(dc, /_armed\(f, _senses, _fi < _layoutFoes\)/,
+    '...and `streamed` IS the layout bound');
+
+  // THE LAW THE FLAG STATES: arming a non-layout foe against peers while it is
+  // still unsynced is WORSE than the bug - it would chase and swing at a player
+  // who cannot see it and has no damage frame to resolve the blow. So the two
+  // bounds must be the same expression. The day someone widens the targeting
+  // bound alone, this goes red.
+  const puppet = /const _puppet = !_authority && ([^;]+);/.exec(dc);
+  assert.ok(puppet, 'the puppet gate is gone - re-aim this pin');
+  assert.equal(puppet[1].trim(), '_fi < _layoutFoes',
+    'the puppet gate and the targeting bound are one expression - widen them together or not at all');
+
+  // And the flag itself is still at the site, naming both halves, so the
+  // record cannot quietly outlive the code it describes.
+  assert.match(dc, /ONLINE-DUNGEON-FOES \(2026-09-20, Mac:/, 'the FLAGGED note is gone from the site');
+  assert.match(dc, /NOT SYNCED\./); assert.match(dc, /NOT REACTIVE\./);
 });

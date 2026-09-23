@@ -304,7 +304,7 @@ export function addItem(list, item, position = 'back') {
  *
  * ROAD-Ar R5 - THE REMAINDER, RESTATED. A2 recorded two surviving
  * inline re-spellings of this member (equip.js:249 and
- * potionMakerWindow.js:167, both on paths where nothing stackable is
+ * potionMakerWindow.js:168, both on paths where nothing stackable is
  * equippable) and missed a THIRD, which was the one on the main path:
  * itemTransfer._applyTransfer's partial arm, reached by every
  * pack<->wagon/loot and shelf->basket move that the wagon or carry
@@ -442,6 +442,44 @@ export function transferAll(fromList, toList) {
   for (const item of fromList) { addItem(toList, item); n++; }
   fromList.length = 0;
   return n;
+}
+
+/**
+ * ONE ITEM, OUT OF A CONTAINER AND INTO THE PLAYER - and the gold door
+ * with it.
+ *
+ * QUICK-LOOT B2. DoTransferItem's FIRST statement
+ * (DaggerfallInventoryWindow.cs:1562-1571) is that a Currency
+ * Gold_pieces stack bound for PlayerEntity.Items is SPENT INTO THE
+ * COUNTER (`playerEntity.GoldPieces += item.stackCount`) and never
+ * added to the list. DFU reaches that door because every take goes
+ * through the window; a take that does NOT open a window has to spell
+ * it, and E4's invariant is that the player's collection never holds
+ * Currency - gold that lands in it is unspendable.
+ *
+ * It lived twice already: once inside `takeCorpseLoot`'s loop with the
+ * reasoning written out, and it would have been three times the moment
+ * quick loot moved one row. Three copies of a law is three chances to
+ * omit it, which is the failure HARD2 names, so this is the one
+ * spelling and the bulk take reads it too.
+ *
+ * The item is matched by IDENTITY, not by index: the caller resolved a
+ * visible ROW through `hoverItemAt`, and a pile can have holes and can
+ * be re-ordered between the frame that drew it and the press that takes
+ * from it. Returns the item moved, or null when it is not in that
+ * container - so a stale row takes NOTHING rather than the wrong thing.
+ */
+export function takeOneInto(entity, fromList, item) {
+  if (!entity || !Array.isArray(fromList) || !item) return null;
+  const at = fromList.indexOf(item);
+  if (at < 0) return null;
+  fromList.splice(at, 1);
+  if (isGoldPieces(item)) addGoldPieces(entity, item.stackCount ?? 1);
+  else {
+    entity.items = entity.items || [];
+    addItem(entity.items, item);
+  }
+  return item;
 }
 
 /** Unity Mathf.Round: half rounds to EVEN (2.5 -> 2, 3.5 -> 4). */

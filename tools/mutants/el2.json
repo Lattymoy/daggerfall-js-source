@@ -72,19 +72,10 @@
   ]
  },
  {
-  "name": "caster-takes-eye",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
-  "new": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
-  "tests": [
-   "test/el2_shadows.test.js"
-  ]
- },
- {
   "name": "caster-takes-rangeless",
   "file": "src/render/shadowPass.js",
-  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
-  "new": "    if (d < minDist || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "old": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "new": "    if (lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
   "tests": [
    "test/el2_shadows.test.js"
   ]
@@ -281,12 +272,13 @@
  {
   "name": "renderer-panel-keeps",
   "file": "src/render/renderer.js",
-  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
-  "new": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
+  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
+  "new": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
   "tests": [
    "test/el2_shadows.test.js",
    "test/audit_el.test.js"
-  ]
+  ],
+  "why": "PERF-READ1 re-aimed by content: the perf reset sits after the deck line now."
  },
  {
   "name": "renderer-wire-casts",
@@ -318,8 +310,8 @@
  {
   "name": "renderer-maps-after-clear",
   "file": "src/render/renderer.js",
-  "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n",
-  "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);\n",
+  "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n",
+  "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n",
   "tests": [
    "test/el2_shadows.test.js"
   ]

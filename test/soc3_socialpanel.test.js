@@ -365,9 +365,10 @@ test('SOC3: Invite on a friend row is enabled only when they have a tab in the w
   panel.render();
   assert.equal(inviteOf('Ann').disabled, true); assert.equal(inviteOf('Ann').attrs.title, 'in your party');
 
-  // four seats and no fifth
-  social.apply({ t: 'social', k: 'party', party: { id: 'q-1', leader: 'acct-me', members: [member('me', { acct: 'acct-me', name: 'Mac' }), member('Cid'), member('Dar'), member('Eli')] } });
-  social.apply(stateFrame({ friends, party: { id: 'q-1', leader: 'acct-me', members: [member('me', { acct: 'acct-me', name: 'Mac' }), member('Cid'), member('Dar'), member('Eli')] } }));
+  // every seat the bound allows (PARTY8: eight) and not one more
+  const full = [member('me', { acct: 'acct-me', name: 'Mac' }), ...Array.from({ length: PARTY_MAX - 1 }, (_, i) => member(`S${i}`))];
+  social.apply({ t: 'social', k: 'party', party: { id: 'q-1', leader: 'acct-me', members: full } });
+  social.apply(stateFrame({ friends, party: { id: 'q-1', leader: 'acct-me', members: full } }));
   panel.render();
   assert.equal(social.seatsFree(), 0);
   assert.equal(inviteOf('Ann').disabled, true); assert.equal(inviteOf('Ann').attrs.title, 'the party is full');
@@ -388,7 +389,7 @@ test('SOC3: the party tab draws the seats out of PARTY_MAX, marks the leader, sa
   panel.open();
   find(root, 'dfsocial-tab')[1].fire('click');
   assert.equal(secs(root)[0], `Your party (3/${PARTY_MAX})`);
-  assert.equal(secs(root)[0], 'Your party (3/4)', 'Mac\'s "4 person party system", said in the header');
+  assert.equal(secs(root)[0], 'Your party (3/8)', 'PARTY_MAX in the header - eight since PARTY8 (Mac, 2026-09-22)');
   const rows = bodyRows(root);
   assert.deepEqual(textsOf(rows.slice(0, 3), 'dfsocial-name'), ['Mac', 'Bob', 'Cid']);
   assert.deepEqual(rows.slice(0, 3).map((r) => find(r, 'dfsocial-lead').length), [1, 0, 0], 'one leader, and it is the seat the view names');

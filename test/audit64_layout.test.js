@@ -182,9 +182,21 @@ test('AUDIT 64 F11: both exterior hosts stand the array, and the arm does NOT co
   assert.ok(arm.includes('bd.buildingType < BUILDING_TYPES.Temple')
     && arm.includes('bd.buildingType !== BUILDING_TYPES.HouseForSale'),
   'the closed popup gate is :473-474');
-  assert.ok(arm.includes('is closed. Open from ${OPEN_HOURS[bd.buildingType]}:00 to ${CLOSE_HOURS[bd.buildingType]}:00.'),
+  // WORLD-HOVER moved the SENTENCE to systems/buildingLocks.buildingClosedText,
+  // because the world hover says it too - without a click - and two producers of
+  // one DFU member is the first violation the bible names. The arm is a caller
+  // now, and the sentence is pinned where it lives.
+  assert.ok(arm.includes('townTalk?.say?.(buildingClosedText(bd.buildingType));'),
+    'the arm ASKS for the sentence rather than building a second copy of it');
+  const bl = src('src/systems/buildingLocks.js');
+  assert.ok(bl.includes('${which} is closed. Open from ${OPEN_HOURS[buildingType]}:00 to ${CLOSE_HOURS[buildingType]}:00.'),
     'Internal_Strings.csv:36-37, ":00" suffixes and all');
-  assert.ok(arm.includes("? 'Guild' : 'Store'"), 'GuildHall gets guildClosed, everything else storeClosed');
+  assert.ok(bl.includes("subject ?? (buildingType === BUILDING_TYPES.GuildHall ? 'Guild' : 'Store')"),
+    'GuildHall gets guildClosed, everything else storeClosed');
+  // And the host no longer reads the raw hour tables at all - if it did, it
+  // could build the sentence again without anyone noticing.
+  assert.doesNotMatch(m, /OPEN_HOURS|CLOSE_HOURS/,
+    'the exterior host asks for the sentence, not the two tables under it');
   // BuildingIsUnlocked is evaluated ONCE (PlayerActivate.cs:358) and
   // handed to both arms - one helper, never a thinner second copy.
   assert.equal((m.match(/buildingIsUnlocked\(bd, \{/g) ?? []).length, 1);
@@ -270,9 +282,15 @@ test('AUDIT 64 F13: the layout carries SetLayoutData(RdbObject) inputs, and the 
   // actions" is never activated as a person.
   assert.ok(d.includes('ACTION_FLAGS.ShowText') && d.includes('ACTION_FLAGS.ShowTextWithInput'));
   const m = src('src/scenes/worldModes.js');
-  assert.ok(m.includes('const dNpcs = dungeonCtx.npcTargets?.() ?? [];'),
+  // WORLD-HOVER: registered with the context at mount rather than
+  // composed inline on every press - one list for the press, the
+  // standalone host and the hover plaque. The people are still the
+  // dungeon's, at the same reach, routed the same way.
+  assert.ok(m.includes("ctx.addActivationTargets(() => (ctx.npcTargets?.() ?? []).map((pn, i) => ({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE })));"),
     'the dungeon ray carries person: targets at last');
-  assert.ok(m.includes('activateStaticNpc(dNpcs[Number(key.split(\':\')[1])]);'));
+  // ...and the handler reads THAT producer's list, not a second local
+  // copy of it - the `person:N` index is the producer's own.
+  assert.ok(m.includes("activateStaticNpc((dungeonCtx.npcTargets?.() ?? [])[Number(key.split(':')[1])]);"));
   // ...and the hook reaches the DUNGEON mount specifically. A bare
   // `m.includes('setupStaticNpc,')` also matches the INTERIOR mount, so
   // it cannot see the dungeon one being deleted: slice the
@@ -331,22 +349,77 @@ test('AUDIT 64 F14: DaggerfallCityGate.Update is a state machine, not an IsNight
   // standing - the day arm does nothing on the first frame, and only the
   // first 18:00 -> 06:00 cycle opens it. A `!isNight => 446` mapping
   // would open that gate a whole day early.
+  // OL5: `online: false` is stated rather than left to the default, so these
+  // pins say WHICH world they hold for - the classic one. The default itself
+  // is pinned separately below; relying on it here would make these pins go
+  // quietly vacuous the day it changed.
+  const OFF = { online: false };
   const closedByDay = makeCityGate(CITY_GATE_CLOSED_MODEL_ID);
-  assert.equal(updateCityGate(closedByDay, false), false, 'daytime frame one: no toggle');
+  assert.equal(updateCityGate(closedByDay, false, OFF), false, 'daytime frame one: no toggle');
   assert.equal(closedByDay.modelId, CITY_GATE_CLOSED_MODEL_ID, 'the block data still decides');
   // Night acts on frame one, which is what closes a location entered at 20:00.
   const openAtDusk = makeCityGate(CITY_GATE_OPEN_MODEL_ID);
-  assert.equal(updateCityGate(openAtDusk, true), true);
+  assert.equal(updateCityGate(openAtDusk, true, OFF), true);
   assert.equal(openAtDusk.modelId, CITY_GATE_CLOSED_MODEL_ID);
   assert.equal(openAtDusk.isOpen, false);
-  assert.equal(updateCityGate(openAtDusk, true), false, 'idempotent while the hour holds');
-  assert.equal(updateCityGate(openAtDusk, false), true, 'dawn opens it again');
+  assert.equal(updateCityGate(openAtDusk, true, OFF), false, 'idempotent while the hour holds');
+  assert.equal(updateCityGate(openAtDusk, false, OFF), true, 'dawn opens it again');
   assert.equal(openAtDusk.modelId, CITY_GATE_OPEN_MODEL_ID);
   // ...and the day-placed closed gate opens on its first NIGHT->day cycle.
-  assert.equal(updateCityGate(closedByDay, true), true);
+  assert.equal(updateCityGate(closedByDay, true, OFF), true);
   assert.equal(closedByDay.modelId, CITY_GATE_CLOSED_MODEL_ID);
-  assert.equal(updateCityGate(closedByDay, false), true);
+  assert.equal(updateCityGate(closedByDay, false, OFF), true);
   assert.equal(closedByDay.modelId, CITY_GATE_OPEN_MODEL_ID);
+});
+
+test('OL5: the shared world never lets a town gate shut, and a gate laid CLOSED still opens', () => {
+  // Mac, 2026-09-20: "Town gates online... should all be open at night time
+  // online mode". A closed gate carries a collider (GameObjectHelper.cs:246-250),
+  // so online this was a walled city sealed for two real hours with no way to
+  // sleep the clock forward.
+  const ON = { online: true };
+  // An open gate is never told it is night.
+  const open = makeCityGate(CITY_GATE_OPEN_MODEL_ID);
+  assert.equal(updateCityGate(open, true, ON), false, 'dusk does nothing online');
+  assert.equal(open.modelId, CITY_GATE_OPEN_MODEL_ID);
+  assert.equal(open.isOpen, true);
+  for (const night of [true, false, true, true, false]) updateCityGate(open, night, ON);
+  assert.equal(open.modelId, CITY_GATE_OPEN_MODEL_ID, 'and no sequence of hours shuts it');
+
+  // THE ONE THAT KILLED THE FIRST DRAFT. `isOpen` is born TRUE whatever model
+  // the block laid (DaggerfallCityGate.cs:19), so a gate laid CLOSED starts as
+  // "open" standing on 447 - a wall - and classic only notices at the first
+  // 18:00. An online arm written as "night is always false" never notices at
+  // all and the wall stands all session. Online the law is on the MODEL.
+  const laidShut = makeCityGate(CITY_GATE_CLOSED_MODEL_ID);
+  assert.equal(laidShut.isOpen, true, 'DaggerfallCityGate.cs:19 - isOpen is born true whatever the model');
+  assert.equal(updateCityGate(laidShut, true, ON), true, 'online, frame one opens it');
+  assert.equal(laidShut.modelId, CITY_GATE_OPEN_MODEL_ID);
+  assert.equal(updateCityGate(laidShut, true, ON), false, 'and then stays put');
+
+  // The same gate offline is classic: still shut at night.
+  const offline = makeCityGate(CITY_GATE_OPEN_MODEL_ID);
+  assert.equal(updateCityGate(offline, true, { online: false }), true, 'offline nothing moved');
+  assert.equal(offline.modelId, CITY_GATE_CLOSED_MODEL_ID);
+});
+
+test('OL5: the gate law is the COMPONENT\'s, and its default is the shared clock', () => {
+  const law = readFileSync(new URL('../src/world/cityGate.js', import.meta.url), 'utf8');
+  // AUDIT ALL O1's finding, paid here before it can bite: the predicate is the
+  // shared clock, not the URL, and the production default is PINNED - OL4
+  // shipped this same parameter unpinned and the audit had to come back for it.
+  assert.match(law, /import \{ sharedClockOn \} from '\.\.\/systems\/worldTick\.js';/,
+    'the default is the shared clock, not isOnlinePage');
+  assert.match(law, /export function updateCityGate\(gate, night, \{ online = sharedClockOn\(\) \} = \{\} \) \{|export function updateCityGate\(gate, night, \{ online = sharedClockOn\(\) \} = \{\}\) \{/,
+    'and it is the DEFAULT, so a host that passes nothing still gets the law');
+  // ONE HOME: neither host may carry the rule. Both call the component with a
+  // bare `night` - the day one of them starts deciding for itself is the day
+  // the two hosts disagree about whether a city is walled.
+  for (const p of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
+    const h = src(p);
+    assert.ok(h.includes('updateCityGate(g.gate, night)'), `${p}: calls the component plainly`);
+    assert.doesNotMatch(h, /updateCityGate\(g\.gate, night, /, `${p}: must not carry an online rule of its own - the law is cityGate.js's`);
+  }
 });
 
 test('AUDIT 64 F14: both hosts swap the DRAW mesh AND the collider, in a bucket of the gate\'s own', () => {

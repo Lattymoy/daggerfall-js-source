@@ -11,7 +11,7 @@
 // judgement call; it is DELEGATING, and the delegation is checkable:
 // the named file must carry a flag. world.js sent the reader to a
 // flag in systems/healthStatus.js that ST1 had shipped away, and
-// world.js:2187 sent them to one in dungeonContext.js that had never
+// world.js:2807 sent them to one in dungeonContext.js that had never
 // been written at all - which is the worse of the two, because the
 // work is real and the ledger could not see it.
 import { test } from 'node:test';
@@ -106,7 +106,13 @@ test('FS1: the record-22 delegation is retired, and ST1 really did ship it', () 
   // does not: statusInfoRows lives in that file and world.js calls it
   // with the macro context the bridge hands down.
   assert.match(read('src/systems/healthStatus.js'), /export function statusInfoRows\(/);
-  assert.match(read('src/scenes/world.js'), /new ActionTextBox\(statusInfoRows\(rows, questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null\)\)/);
+  // STATUS-LIVE (2026-09-22): world.js no longer builds the box - it
+  // hands the ONE composer its rows source and the same macro context,
+  // and ui/statusBox.js calls statusInfoRows. The delegation this pin
+  // guards against is a FLAG pointing at a file that does no work; the
+  // work is still done, one layer along.
+  assert.match(read('src/scenes/world.js'), /macroContext: questBridge\?\.machine\?\.macroContext\?\.\(\) \?\? null,/);
+  assert.match(read('src/ui/statusBox.js'), /\.\.\.statusInfoRows\(lines, macroContext\),/);
 });
 
 // ROAD-F GS2: THE THIRD KIND OF STALENESS - a retirement RECORD that
@@ -156,7 +162,7 @@ test('FS1: the melee/arrow clauses are retired, and the tree contradicts them', 
   // alone, and the fixed-city host took the same three-pool swing
   // verbatim; replacing its encounter arm with four comment lines (so
   // no cite could move) left the swing as watch -> civilians with the
-  // shipped comment still claiming world.js:11072's order, green.
+  // shipped comment still claiming world.js:13857's order, green.
   for (const [file, foeTargets] of [
     ['src/scenes/world.js', /foeTargets: \[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\]/],
     ['src/scenes/exterior.js', /foeTargets: exteriorFoePool\(\)\.filter\(\(t\) => !t\.dead && t\.ai\)/],
@@ -223,13 +229,13 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
   // it went on asserting "setDefaultEnchantCtx has exactly one caller
   // in the tree" - and "the flag now exists where the work does",
   // pointing at a flag this wave retired - after the second mount
-  // shipped. dungeonContext.js:1918 and hostEnchant.js:8 both say
+  // shipped. dungeonContext.js:2086 and hostEnchant.js:8 both say
   // "had"; the sentence a reader meets first must too.
   assert.equal(/setDefaultEnchantCtx has\n\s*\/\/ exactly one caller/.test(world), false,
     'the E2 header states the one-caller claim as HISTORY, not as present fact');
   assert.equal(/The flag now exists where the\n\s*\/\/ work does/.test(world), false,
     'the flag it pointed at was retired at the mount');
-  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:2253 mounts the same one/,
+  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:2430 mounts the same one/,
     'and the header names the shipped shape instead');
 });
 

@@ -12,6 +12,7 @@
 import { ServiceFlowWindow } from './guildServiceWindows.js';
 import { nativeMetrics } from './nativePanel.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
+import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: the busy page's own click-anywhere parchment, as the enhanced panel
 
 export const HUNT_PHASE = Object.freeze({ Ask: 'ask', Busy: 'busy', Result: 'result' });
 /** The busy page's dots: this many at the full wait. */
@@ -49,6 +50,14 @@ export class HuntWindow {
   _end(searched) {
     if (this.done) return;
     this.done = true;
+    // ENH-NOTICE3: EVERY PANEL AN OWNER RAISES IS RELEASED. This is the
+    // window's `_close` - the one door every way out comes through
+    // (Escape off the busy page, the ASK page's No, dispose() when the
+    // slot is taken) - so the busy panel leaves with the window, the
+    // same law the eight noticeFrame windows keep in their own _close.
+    // The RESULT page's panel is not this owner's: it belongs to the
+    // ServiceFlowWindow below, which releases it in its own _close.
+    noticeRelease(this);
     this._onClosed?.(searched);
   }
 
@@ -81,11 +90,29 @@ export class HuntWindow {
   release() { if (this.phase !== HUNT_PHASE.Busy) this._flow.release?.(); }
 
   draw(renderer, canvas, font) {
-    if (this.phase !== HUNT_PHASE.Busy) { this._flow.draw(renderer, canvas, font); return; }
+    // ENH-NOTICE3: the ASK page is a Yes/No DECISION and the RESULT page
+    // is the flow's own click-anywhere box - both are the
+    // ServiceFlowWindow's to decide (it calls noticeFrame itself,
+    // guildServiceWindows.js:214), so this owner's panel goes the
+    // moment the busy page turns.
+    if (this.phase !== HUNT_PHASE.Busy) { noticeRelease(this); this._flow.draw(renderer, canvas, font); return; }
     const m = nativeMetrics(canvas);
     const dots = this.dots;
     const rows = [{ text: this.busy, center: true }, { text: dots, center: true }];
     const sizing = [{ text: this.busy, center: true }, { text: '.'.repeat(BUSY_DOTS), center: true }];
+    // THE BUSY PAGE IS THE PANEL'S. It is drawn with `drawMessageBox`
+    // and no buttons, in the parchment's shape - but it is the PORT'S
+    // page, not a DaggerfallUI.MessageBox: Climates & Calories skips
+    // the clock an hour behind a box, and this page waits it out with
+    // a row of dots, taking no click (click() swallows) and Escape
+    // alone (input above). So it rides the same per-frame door the
+    // eight classic windows take (ui/restWindow.js:865,
+    // ui/bankWindow.js:410) with ITS OWN caption, never "click or
+    // press a key" (AUDIT ENH-NOTICE3 B2 - the hint tells the truth).
+    // A per-frame door and not noticeHold: this window IS drawn every
+    // frame, so the watchdog is the honest guard - a host that drops
+    // the overlay without closing it stops drawing, and the panel goes.
+    if (noticeFrame(this, rows, { hint: 'Escape to walk away' })) { this._box = null; return; }
     this._box = layoutMessageBox(font, rows, [], { sizingRows: sizing });
     drawMessageBox(renderer, m, font, this._box);
   }

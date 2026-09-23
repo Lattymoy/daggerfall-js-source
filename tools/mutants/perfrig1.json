@@ -1,0 +1,204 @@
+[
+ {
+  "name": "PERF-RIG1-scratch-remade-every-call",
+  "file": "src/formats/mwSkin.js",
+  "old": "  if (sc && sc.n === n) return sc;",
+  "new": "  if (sc && sc.n === n && false) return sc;",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-acc-not-zeroed",
+  "file": "src/formats/mwSkin.js",
+  "old": "  const acc = sc.acc; acc.fill(0);",
+  "new": "  const acc = sc.acc;",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-wsum-not-zeroed",
+  "file": "src/formats/mwSkin.js",
+  "old": "  const wsum = sc.wsum; wsum.fill(0);",
+  "new": "  const wsum = sc.wsum;",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-touched-not-zeroed",
+  "file": "src/formats/mwSkin.js",
+  "old": "  const touched = sc.touched; touched.fill(0);",
+  "new": "  const touched = sc.touched;",
+  "tests": [
+   "test/perfrig1.test.js",
+   "test/mwanim.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-bone-product-transposed",
+  "file": "src/formats/mwSkin.js",
+  "old": "        p.a[r * 3] * l.a[c] + p.a[r * 3 + 1] * l.a[3 + c] + p.a[r * 3 + 2] * l.a[6 + c];\n    }\n  }\n  out.t[0]",
+  "new": "        p.a[c] * l.a[r * 3] + p.a[3 + c] * l.a[r * 3 + 1] + p.a[6 + c] * l.a[r * 3 + 2];\n    }\n  }\n  out.t[0]",
+  "tests": [
+   "test/perfrig1.test.js",
+   "test/mwanim.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-bone-translation-dropped",
+  "file": "src/formats/mwSkin.js",
+  "old": "  out.t[2] = p.a[6] * l.t[0] + p.a[7] * l.t[1] + p.a[8] * l.t[2] + p.t[2];",
+  "new": "  out.t[2] = p.a[6] * l.t[0] + p.a[7] * l.t[1] + p.a[8] * l.t[2];",
+  "tests": [
+   "test/perfrig1.test.js",
+   "test/mwanim.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-bone-scratch-shared-as-a-double",
+  "file": "src/formats/mwSkin.js",
+  "old": "    boneMat: { a: new Float32Array(9), t: [0, 0, 0] },",
+  "new": "    boneMat: { a: new Float64Array(9), t: [0, 0, 0] },",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-lanes-key-ignores-colours",
+  "file": "src/combat/fpArm.js",
+  "old": "  if (have && have.idx === idx && have.uvs === uvs && have.cols === cols && have.mat === mat) return have.lanes;",
+  "new": "  if (have && have.idx === idx && have.uvs === uvs && have.mat === mat) return have.lanes;",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-lanes-rebuilt-every-frame",
+  "file": "src/combat/fpArm.js",
+  "old": "  if (have && have.idx === idx && have.uvs === uvs && have.cols === cols && have.mat === mat) return have.lanes;",
+  "new": "  void have;",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-corner-order-swapped",
+  "file": "src/combat/fpArm.js",
+  "old": "        const v = k === 0 ? a : k === 1 ? b : c;",
+  "new": "        const v = k === 0 ? a : k === 1 ? c : b;",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-lane-stride-off",
+  "file": "src/combat/fpArm.js",
+  "old": "        l += LANE_FLOATS;",
+  "new": "        l += LANE_FLOATS - 1;",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-uv-lane-swapped-with-emissive",
+  "file": "src/combat/fpArm.js",
+  "old": "        buf[o++] = lanes[l + 3]; buf[o++] = lanes[l + 4];\n        buf[o++] = lanes[l + 5]; buf[o++] = lanes[l + 6]; buf[o++] = lanes[l + 7];",
+  "new": "        buf[o++] = lanes[l + 5]; buf[o++] = lanes[l + 6];\n        buf[o++] = lanes[l + 3]; buf[o++] = lanes[l + 4]; buf[o++] = lanes[l + 7];",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-ranges-rebuilt-every-frame",
+  "file": "src/combat/fpArm.js",
+  "old": "  const ranges = sameRanges(out, pieces) ? out.ranges : [];",
+  "new": "  const ranges = [];",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-ranges-kept-for-a-swapped-piece",
+  "file": "src/combat/fpArm.js",
+  "old": "    if (!range || range.piece !== p || range.count !== (p.indices.length / 3) * 3) return false;",
+  "new": "    if (!range || range.count !== (p.indices.length / 3) * 3) return false;",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-RIG1-mirror-flip-dropped",
+  "file": "src/combat/fpArm.js",
+  "old": "    const flip = p.mirrored ? -1 : 1;\n    const textured",
+  "new": "    const flip = 1;\n    const textured",
+  "tests": [
+   "test/perfrig1.test.js",
+   "test/fparm.test.js"
+  ]
+ },
+ {
+  "name": "PERF-ZONE2-rig-mark-lost",
+  "file": "src/scenes/world.js",
+  "old": "    meterFor(renderer.gl)?.markCpu('rig');",
+  "new": "    void 0;",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-ZONE2-bodies-mark-after-its-subject",
+  "file": "src/scenes/world.js",
+  "old": "    meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow\n    // MW-D24: the player's own body, in third person only.\n    renderer.setCloudShadow(sky?.cloudShadow ?? null);",
+  "new": "    // MW-D24: the player's own body, in third person only.\n    renderer.setCloudShadow(sky?.cloudShadow ?? null);\n    meterFor(renderer.gl)?.markCpu('bodies');",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-PERF-RIG1-F2-deleted-texture-handle-kept",
+  "file": "src/combat/fpArm.js",
+  "old": "      for (const r of m.ranges || []) if (r.tex) { gl.deleteTexture(r.tex); r.tex = null; }",
+  "new": "      for (const r of m.ranges || []) if (r.tex) { gl.deleteTexture(r.tex); }",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-READ1-the-last-span-swallows-the-rAF-wait-again",
+  "file": "src/scenes/world.js",
+  "old": "    meterFor(renderer.gl)?.stopCpu();   // PERF-READ1",
+  "new": "    // PERF-READ1",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-READ1-stopCpu-closes-nothing",
+  "file": "src/render/perfMeter.js",
+  "old": "  stopCpu() { if (this.cpu) this._cpuClose(); }",
+  "new": "  stopCpu() { }",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-READ1-the-ui-span-is-gone-so-hud-is-the-travel-panel-too",
+  "file": "src/scenes/world.js",
+  "old": "    meterFor(renderer.gl)?.markCpu('ui');   // PERF-READ1",
+  "new": "    // PERF-READ1",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ },
+ {
+  "name": "PERF-READ1-the-owed-resolve-prints-draws-0-again",
+  "file": "src/render/renderer.js",
+  "old": "    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }",
+  "new": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }\n    if (this._air?.pending && !this._panelSaved) this._compositeAir();\n    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set",
+  "tests": [
+   "test/perfrig1.test.js"
+  ]
+ }
+]

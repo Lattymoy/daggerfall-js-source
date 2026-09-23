@@ -113,7 +113,7 @@ test('audit26 F033: the flash is record 1 of the MISSILE\'s archive at 15fps, wi
   assert.match(he, /spawn\(IMPACT_RECORD, pos, null,/);
   // the entry carries archive/fps so a recenter can REBUILD the batch
   assert.match(he, /const entry = \{ batch: null, anim: null, dead: false, record, pos: at, at: \[\.\.\.at\], size: null, archive, fps, scale, tracked \};/);
-  assert.match(he, /e\.batch = renderer\.createBillboardBatch\(e\.archive, e\.record, e\.size, \[e\.pos\]\);/);
+  assert.match(he, /e\.batch = renderer\.createBillboardBatch\(e\.archive, e\.record, e\.size, \[centredBase\(e\.pos, e\.size\)\]\);/);   // FIELD-GUN20: rebuilt where it was built - CENTRED on its position, the base half a height under it
   // ...and the ANIM is built on the entry's archive too. That is
   // unobservable today - flatFps overrides only ANIMALS (201) and
   // LIGHTS (210), so the blood archive and the five missile archives
@@ -137,8 +137,11 @@ test('audit26 F033: both missile hosts flash, gated on element None and ByTouch,
       `${f} gates on element None and ByTouch`);
     // three impacts: the wall and the two body hits
     // three CALLS - the lookbehind drops the helper's own declaration
-    assert.equal((s.match(/(?<!function )showImpactFlash\(m, /g) ?? []).length, 3,
-      `${f} flashes at all three impacts`);
+    // AID1: the shared engine has a FOURTH - a friendly missile of mine meeting another player's body;
+    // SPELLFX1: and a FIFTH - a peer's drawn missile meeting a body
+    const impacts = f === 'src/scenes/hostMagic.js' ? 5 : 3;
+    assert.equal((s.match(/(?<!function )showImpactFlash\(m, /g) ?? []).length, impacts,
+      `${f} flashes at all ${impacts} impacts`);
     // the wall flash is OUTSIDE the AoE branch - DFU flashes on any
     // wall hit, so hoisting `impact` out of it is the point.
     // `impact` is computed OUTSIDE the AoE branch and the flash reads

@@ -134,8 +134,10 @@ test('WATER1: the uniforms - the eased wind on the row\'s scale, null as calm, t
   // and scenes/worldModes.js (as DUNGEON_WATER_SCROLL) - and this line's own
   // message named scenes/dungeon.js while reading only this module, so retuning
   // either host could never redden it. Both hosts import the name now, and no
-  // scene may declare a second one.
-  for (const h of ['src/scenes/dungeon.js', 'src/scenes/worldModes.js']) {
+  // scene may declare a second one. WATER-D1 (2026-09-21): the dungeon draw
+  // moved into scenes/dungeonContext.js's own frame function (one home for
+  // both hosts), so the ONE importer is the context.
+  for (const h of ['src/scenes/dungeonContext.js']) {
     assert.match(rd(h), /^import \{ WATER_SCROLL_TILES_PER_SEC \} from '\.\.\/render\/waterSurface\.js';/m, `${h} imports the rate`);
   }
   const jsUnder = (dir) => readdirSync(join(ROOT, dir), { withFileTypes: true })
@@ -165,7 +167,8 @@ test('WATER1: the shader - the terrain\'s own grid lifted, the corner lookup by 
   // wrapped coordinate would draw a blurred line wherever the scroll
   // rolls over, which is the artefact the mipmap exists to remove.
   assert.match(fs, /vec2 uv = fract\(f \+ vec2\(uScroll\)\);/, 'the classic water texel, layer 0, scrolled');
-  assert.match(fs, /vec2 wgx = dFdx\(unwrapped\), wgy = dFdy\(unwrapped\);\s*\n\s*vec3 tex = textureGrad\(uTileArr, vec3\(uv, 0\.0\), wgx, wgy\)\.rgb \* uTint;/,
+  assert.ok(fs.indexOf('vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);') < fs.indexOf('if (corners == 0u) discard;'), 'GRAIN AUDIT 1: the derivatives are taken ABOVE the discards - inside non-uniform control flow they are undefined');
+  assert.match(fs, /vec3 tex = textureGrad\(uTileArr, vec3\(uv, 0\.0\), wgx, wgy\)\.rgb \* uTint;/,
     'and its footprint comes from the coordinate that does not wrap');
   // the trains fade with distance on their own scale - the far sea keeps the swell
   assert.match(fs, /exp\(-dist \* 0\.0015\)\) \* cos\(dot\(p, d0\)/);
@@ -238,8 +241,8 @@ test('WATER1: both exterior hosts - the gate, the has-water skip, and the slot a
   assert.ok(eslot < e.indexOf('renderer.drawBillboards(_visBatches, camRight, UP_Y);'), 'before the first flat');
   assert.match(e, /waterUniforms\(\{ seconds: now \/ 1000, wind: sky\.wind\(\), rain: precipMode === 'rain' \|\| precipMode === 'storm' \? fx\.intensity : 0, sky: sky\.waterSky\(\) \}\)/);
   assert.match(e, /sky: sky\.waterSky\(\) \}\),\s*\n\s*tilemapDim\);/, 'WATER-AUDIT (L2): the town\'s tilemap side reaches the shader');
-  // the dungeon's own water pass is untouched
-  assert.match(rd('src/scenes/dungeon.js'), /renderer\.drawWater\(/);
+  // the dungeon's own water pass is untouched - WATER-D1 moved it into the context's frame function, one home for both dungeon hosts
+  assert.match(rd('src/scenes/dungeonContext.js'), /renderer\.drawWater\(waterQuads, DUNGEON_WATER_COLOR,/);
 });
 
 test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and the record', () => {

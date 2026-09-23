@@ -110,7 +110,7 @@ test('WIND4 (3) the grass darkens: the sward takes the sun\'s SCALE and the moon
   // GR1's law: the lab is the same text, and sets the new uniforms itself
   const lab = read('grass-proto.html');
   assert.ok(lab.includes(LAB_GRASS_FS), 'the lab carries this fragment stage verbatim - GRASS2 changed no fragment law');
-  // GRASS2: the VERTEX stage is the lab's text plus three declared edits
+  // GRASS2: the VERTEX stage is the lab's text plus its declared edits (four since GRASS6)
   // now, so it is no longer a substring of the lab. The whole-text law
   // lives in labGrass.test.js, which applies the edits and compares; what
   // is checked here is that the lab still carries the lines those edits

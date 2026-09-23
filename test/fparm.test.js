@@ -1454,6 +1454,7 @@ import {
   MW_CLOTHING_TYPE, DF_CLOTHING_ROWS, mwClothingRecord, fpWornAdds,
 } from '../src/formats/mwItemMap.js';
 import { armorRecords, clothingRecords, raceBeastFlag, pickWeaponRecord, facePools } from '../src/formats/mwFirstPerson.js';
+import { OWN_MW_MODELS } from '../src/characters/ownWeaponModels.js';   // FIELD-GUN-MW2: counted off the table, not typed
 import { ARMOR_ENUM } from '../src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '../src/systems/armorMaterials.js';
 
@@ -1467,8 +1468,19 @@ test('MW-D28: the map is TOTAL - every DF equippable x material answers, or the 
   assert.deepEqual(holes, [], `unmapped item/material combinations:\n${holes.map((h) => `${h.material} ${h.item}`).join('\n')}`);
   // The space is the REAL space: 19 weapons x 10 materials + 11 armors
   // x 13 materials + 76 wearable garment indices (MW-D30), so removing
-  // an enum entry cannot shrink the claim.
-  assert.equal(cover.length, 19 * 10 + 11 * 13 + 76);
+  // an enum entry cannot shrink the claim. Plus one row per weapon of
+  // THE PORT'S OWN (FIELD-GUN-MW2) - counted off the table rather than
+  // typed, because that table's whole defect was being outside a
+  // population somebody had counted by hand.
+  assert.equal(cover.length, 19 * 10 + 11 * 13 + 76 + Object.keys(OWN_MW_MODELS).length);
+  // FIELD-GUN-MW2: and the port's own weapons are IN it. The census
+  // walked `WEAPONS` - DFU's frozen eighteen - so the Dwarven
+  // Thunderlock (template 560, minted at runtime) was never asked
+  // about, and this pin reported total coverage while the gun drew
+  // empty hands in Morrowind first person.
+  const own = cover.filter((c) => c.kind === 'own');
+  assert.equal(own.length, Object.keys(OWN_MW_MODELS).length, 'every own-model weapon answers a row');
+  assert.ok(own.every((o) => o.model && o.item), 'an own row names its mesh and its weapon');
   // Declared sprites are present, named, and reasoned.
   const sprites = cover.filter((c) => c.kind === 'sprite');
   assert.ok(sprites.length >= 10, 'the Arrow rows are not declared');
@@ -3068,7 +3080,9 @@ test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stan
   assert.match(src, /weaponGroup = composeWeaponGroup\(type, hasGroup\)\.group;/);
   // and the instant path exists in the engine exactly as described
   const hm = readFileSync('src/scenes/hostMagic.js', 'utf8');
-  assert.match(hm, /if \(sp\.rangeType === 0\) \{ castInput\(null, null\); return; \}/,
+  // AUDIT ALLY-CAST A1: the instant arm arms instead when a party mate is in touch reach; with nobody there it is
+  // the same synchronous castInput, which is the case F2 exists for.
+  assert.match(hm, /if \(sp\.rangeType === 0\) \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyInReach\([^\n]*\n\s*castInput\(null, null\); return;\n\s*\}/,
     'the CasterOnly instant cast is the case F2 exists for');
   // ROAD-E6 folded the four release arms' identical tail into one
   // `done` closure - RaiseOnCastReadySpell (:2129) still runs BEFORE

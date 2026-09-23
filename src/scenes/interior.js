@@ -9,7 +9,7 @@ import { Arch3dFile } from '../formats/arch3dFile.js';
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
-import { requestLook } from '../player/pointerLock.js';
+import { requestLook, makeLookGate } from '../player/pointerLock.js';   // AUDIT-AMAP H8: the lock gate the other hosts run
 import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT FONT F5: the touch layer's face gate (the skin cannot change without a reload, so the boot-time read is exact)
@@ -34,7 +34,7 @@ import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
-import { AutomapWindow, preloadAutomapArt } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the second interior host's M window
+import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automapDoor.js';   // ROAD-C c2/S9 + EM3: the second interior host's M window, behind the skin fork
 import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // ROAD-C c2/S9
 import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/hover labels
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
@@ -139,6 +139,7 @@ export async function bootInterior(canvas, renderer, params, status) {
    *  does not. */
   const windows = makeWindowStack({ onTop: (w) => { overlay = w; } });
   const gamePaused = () => windows.paused() || pauseWhileOpen(overlay);
+  const lookGate = makeLookGate(canvas);   // AUDIT-AMAP H8: a window up frees the cursor, or the map cannot be dragged
   let mapFont = null;
   makeFontFor().catch((e) => console.warn('[automap] FONT0003 unavailable:', e?.message ?? e));
   async function makeFontFor() {
@@ -150,7 +151,13 @@ export async function bootInterior(canvas, renderer, params, status) {
     if (overlay) return;
     // PushWindow (UserInterfaceManager.cs:79-91) - `onTop` writes the
     // slot every reader below already uses, and the latch rises with it.
-    windows.pushWindow(new AutomapWindow({
+    // EM3: the skin fork's gate stands BEFORE the push, exactly as it
+    // does in the other two automap hosts - `automapDoorReady()` is
+    // true only where the door can build something, so the push site
+    // stays a direct expression and CRASH2's closed-population pin can
+    // still read what can arrive here.
+    if (!automapDoorReady()) return;
+    windows.pushWindow(createAutomapWindow({
       record: () => ctx.automapRecord(),
       drawList: ctx.drawList, dynamicDraws: ctx.dynamicDraws, texRemap: ctx.texRemap,
       player: () => ({ feet: cam.pos, eye: cam.pos, yaw: cam.yaw }),
@@ -162,6 +169,8 @@ export async function bootInterior(canvas, renderer, params, status) {
       indexSize: ctx.automapModel.length,
       model: ctx.automapModel,
       insideBuilding: true,
+      where: () => ({ insideBuilding: true }),   // EM3
+      title: blockName,
     }));
   };
   const nativeAt = (e) => {
@@ -182,16 +191,24 @@ export async function bootInterior(canvas, renderer, params, status) {
     // rollout enumerated four, so F5 in the ?interior route reloaded
     // the page and destroyed the session - the exact failure AUDIT 17e
     // F41 recorded for the others - and F11 went fullscreen. The law
-    // (ui/input.js:545-546) is "every host that registers a keydown
+    // (ui/input.js:652-653) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:7393 sits
+    // returns before its own preventDefault - worldModes.js:8460 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
     // hosts that already carry it - including the toggle key, which the
     // window itself defers to its own close.
-    if (overlay) { overlay.input(e.code, e); drainOverlay(); e.preventDefault(); return; }
+    if (overlay) {
+      overlay.input(e.code, e);
+      drainOverlay();
+      // MENU-RELOCK: the close key is the browser gesture pointer-lock
+      // needs. Do not wait for the next animation frame to reclaim look.
+      if (!overlay && !gamePaused()) requestLook(canvas);
+      e.preventDefault();
+      return;
+    }
     // ROAD-G G3 - THE RING IS FILLED BEFORE THE LADDER, the law all four
     // hosts now carry. InputManager.PollInput (:1795-1809) adds every
     // held key before GameManager.Update reads an Action, and this add
@@ -216,6 +233,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     if (!overlay) return;
     overlay.keyup?.(e.code, e);
     drainOverlay();
+    if (!overlay && !gamePaused()) requestLook(canvas);
   });
   canvas.addEventListener('pointerdown', (e) => {
     // An open window withholds the pointer lock (the dungeon.js law) -
@@ -363,8 +381,9 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:717 and worldModes.js:5409/:5436 gate the same
+    // driver. dungeon.js:774 and worldModes.js:6389/:6417 gate the same
     // way; this is that gate for this host.
+    lookGate(!!overlay);   // AUDIT-AMAP H8
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);
     if (overlay) {
       overlay.tick(dt);

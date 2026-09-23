@@ -1,0 +1,200 @@
+[
+  {
+    "name": "FS-touch-marks-dropped",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    const marks = allyMarksFor(sp);   // AID1 onto ALLY-CAST",
+    "new": "    const marks = [];   // AID1 onto ALLY-CAST",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FS-gift-not-through-castAtAlly",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    try { sent = !!castAtAlly?.(mark.id, allyCastFrame(sp, playerEntity.level, mark.id)); } catch { sent = false; }",
+    "new": "    sent = true;",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FS-free-ready-given",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!allyMarks || !castAtAlly || !sp || free || !allyCastable(sp)) return [];",
+    "new": "    if (!allyMarks || !castAtAlly || !sp || !allyCastable(sp)) return [];",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FS-hostile-marks",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!allyMarks || !castAtAlly || !sp || free || !allyCastable(sp)) return [];",
+    "new": "    if (!allyMarks || !castAtAlly || !sp || free) return [];",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FS-missile-gift-flag-ignored",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (m.ally) {\n        const hitMate",
+    "new": "      if (false) {\n        const hitMate",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FS-blast-radius-ignored",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      for (const t of sweepFoes(eye, EXPLOSION_RADIUS, allyMarksFor(sp))) giveToAlly(t, sp);",
+    "new": "      for (const t of allyMarksFor(sp)) giveToAlly(t, sp);",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FS-strangers-marked",
+    "file": "src/scenes/world.js",
+    "old": "    return near.filter((p) => social.isPartyPeer(p.id) && online.reachesPeer?.(p.id))",
+    "new": "    return near.filter((p) => online.reachesPeer?.(p.id))",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FS-drawn-missile-lands",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (m.visual) {\n        const body =",
+    "new": "      if (false) {\n        const body =",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FS-meter-one-frame-per-cast",
+    "file": "src/net/wire.js",
+    "old": "export const castGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_HZ_MAX, CAST_BURST_MAX);",
+    "new": "export const castGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_HZ_MAX);",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FX1-element-past-table",
+    "file": "src/net/wire.js",
+    "old": "    ce: uint(ce, POSE_CAST_ELEMENTS - 1) ?? 4,",
+    "new": "    ce: uint(ce, POSE_CAST_ELEMENTS) ?? 4,",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FX1-arrows-dropped",
+    "file": "src/net/wire.js",
+    "old": "    ar: uint(ar, 65535) ?? 0,",
+    "new": "",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "SNDREP1-door-ignores-switch",
+    "file": "src/systems/audio.js",
+    "old": "      if (soundSilenced(index)) return null;",
+    "new": "",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "SNDREP1-chorus-sings-on",
+    "file": "src/systems/ambientEffects.js",
+    "old": "      if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
+    "new": "      if (deps.inside || deps.underground) {",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "SNDREP1-name-loose",
+    "file": "src/systems/soundReplacer.js",
+    "old": "if (base === `${name.toLowerCase()}.wav`) return name;",
+    "new": "if (base.startsWith(name.toLowerCase())) return name;",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "PR29-supersede-dropped",
+    "file": "src/systems/partyRestLaw.js",
+    "old": "    if (stampOf(m?.p?.voteAt, now) > t) continue;\n",
+    "new": "",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "PR29-cancel-keeps-cooldown",
+    "file": "src/scenes/world.js",
+    "old": "  const cancelPartyRestStart = () => { if (!social) return; _partyRestStartWaived = true; };",
+    "new": "  const cancelPartyRestStart = () => { if (!social) return; };",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "PR31-round-not-followed",
+    "file": "src/scenes/world.js",
+    "old": "        else if (round !== _partyRestReadyRound) { _partyRestReady = false; _partyRestReadyRound = null; }",
+    "new": "",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "HEAL1-left-caster-only",
+    "file": "src/systems/chargen.js",
+    "old": "    rangeType: 1,                                   // ByTouch",
+    "new": "    rangeType: 0,                                   // ByTouch",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "HEAL1-every-class",
+    "file": "src/systems/chargen.js",
+    "old": "  if (careerIndex === HEALER_CAREER_INDEX) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "FX1-test-room-doubles",
+    "file": "src/systems/testRoom.js",
+    "old": "    if (!entity.spells.some((k) => k === sp || (k?.index === sp.index && k?.name === sp.name))) entity.spells.push(sp);",
+    "new": "    entity.spells.push(sp);",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "REST-MANA1-online-arm-dropped",
+    "file": "src/systems/rest.js",
+    "old": "  if (hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen()) return 0;",
+    "new": "  if (hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints)) return 0;",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  },
+  {
+    "name": "QS8-free-ready-taken",
+    "file": "src/ui/spellbookDoor.js",
+    "old": "      if (!noSpellPointCost) setSpellQuickslot(sp);",
+    "new": "      setSpellQuickslot(sp);",
+    "tests": [
+      "test/friendlyspells.test.js"
+    ]
+  }
+]

@@ -1,0 +1,29 @@
+[
+  {
+    "name": "OL5-the-online-gate-arm-trusts-the-flag-not-the-model",
+    "file": "src/world/cityGate.js",
+    "old": "    if (gate.isOpen && gate.modelId === CITY_GATE_OPEN_MODEL_ID) return false;",
+    "new": "    if (gate.isOpen) return false;",
+    "tests": [
+      "test/audit64_layout.test.js"
+    ]
+  },
+  {
+    "name": "OL5-the-gate-default-is-a-literal-not-the-shared-clock",
+    "file": "src/world/cityGate.js",
+    "old": "export function updateCityGate(gate, night, { online = sharedClockOn() } = {}) {",
+    "new": "export function updateCityGate(gate, night, { online = false } = {}) {",
+    "tests": [
+      "test/audit64_layout.test.js"
+    ]
+  },
+  {
+    "name": "OL5-the-shared-world-still-shuts-the-gate",
+    "file": "src/world/cityGate.js",
+    "old": "  if (online) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/audit64_layout.test.js"
+    ]
+  }
+]

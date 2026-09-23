@@ -39,6 +39,7 @@
 //     the 101/102 lycanthropy ids are read.
 
 import { SKILLS } from './skills.js';
+import { mintCharacterId } from './characterId.js';   // CHARID1
 import { VAMPIRE_CLANS, LYCANTHROPY_TYPES } from './infection.js';
 import { raceById } from './races.js';
 import { RECORD_TYPES, ENVIRONMENTS, isWagonRecord } from '../formats/saveTreeFile.js';
@@ -762,6 +763,7 @@ export function classicSaveToSnapshot(saveGames, {
     currentLevelUpSkillSum: levelUpSkillSum({ career, skills: doc.workingSkills }),
     readyToLevelUp: false, pendingLevel: null, pendingBonusPool: null,
     chargenDone: true,
+    characterId: mintCharacterId(),   // CHARID1: a character read out of a classic save is a new character here
     // ORL1: A CLASSIC SAVE IS A CLASSIC CHARACTER. Daggerfall's own
     // SAVEVARS carries no leveling-system choice and no point bar -
     // there is nothing in the file to read one out of - so a character

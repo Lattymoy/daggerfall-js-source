@@ -368,7 +368,7 @@ test('c2/S9 SOURCE PINS: BOTH interior hosts tick the probes and route AutoMap, 
   const ic = src('src/scenes/interiorContext.js');
   assert.match(ic, /automapTick\(dt, eye, fwd\) \{/, 'the context carries the 5 Hz gate');
   assert.match(ic, /automapRecord: \(\) => automapRec,/);
-  assert.match(ic, /automapEntranceTick\(automapRec, automapEntrance, eye, collider\)/,
+  assert.match(ic, /automapEntranceTick\(automapRec, automapEntrance, capsuleCentreFromEye\(eye\), collider\)/,
     'the entrance LOS check ticks indoors too (:1196-1274)');
   assert.match(ic, /exitInteriorAutomap\(\);/, 'and the record dies with the room');
 
@@ -409,7 +409,11 @@ test('c2/S9 SOURCE PINS: BOTH interior hosts tick the probes and route AutoMap, 
   // now lands in: a host that routes `down` but not `up` latches the
   // drag and the map spins for ever.
   for (const phase of ['down', 'move', 'up']) {
-    assert.ok(new RegExp(`interiorOverlay\\.pointer\\?\\.\\('${phase}'`).test(wm), `worldModes routes '${phase}' to the interior slot`);
+    // STATUS-LIVE (2026-09-22): the ARM's gate moved to `interiorPaused()`
+    // - a press under a box the game is not stopped for is the world's -
+    // so the slot read inside it is optional-chained. All three phases
+    // still reach the slot, which is the rule this loop enforces.
+    assert.ok(new RegExp(`interiorOverlay\\?\\.pointer\\?\\.\\('${phase}'`).test(wm), `worldModes routes '${phase}' to the interior slot`);
     assert.ok(new RegExp(`overlay\\.pointer\\?\\.\\('${phase}'`).test(ij), `interior.js routes '${phase}'`);
   }
 

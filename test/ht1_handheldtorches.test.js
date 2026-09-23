@@ -6,7 +6,7 @@
 // hand law, the keys, the first-person sprite) and scenes/droppedTorches.js
 // (the pool: the dropped and thrown lights, the burning foe); the pins
 // here hold that restatement to the IL's laws - UpdateFreeHand's table
-// with its `== LeftOnly` quirk, the stow / drop / ignite / douse / throw
+// (IL `== 2` is ItemHands.Both, 3ARMS), the stow / drop / ignite / douse / throw
 // actions with their messages and clips, the sprite's three placements
 // and GetSpriteRect, the Bob and Inertia channels, the burn on the world
 // clock, the pickup's ceil(time / 20), the projectile's step, bounce and
@@ -145,7 +145,7 @@ test('HT1: the Mods pane entry is the shipped modsettings.json - every key, its 
   // RememberLastLightSource lights it again when a hand comes free -
   // and the mod's own value is one click away on the dial, which is
   // pinned below with both options in the shipped order.
-  const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Modules.Bob': true, 'Handling.ManualDropInput': 'G', 'Handling.ToggleLightInput': 'O', 'Handling.OnStow': 0 });
+  const PORT_DEFAULT = Object.freeze({ 'Modules.Sprite': true, 'Modules.Bob': true, 'Handling.ManualDropInput': 'G', 'Handling.ToggleLightInput': 'O', 'Handling.OnStow': 0, 'Handling.RelaxedTwoHandedWeapons': false });   // 3ARMS: the relaxed switch ships off - a held two-hander takes both hands, HT7's own reasoning
   let n = 0;
   const kinds = new Set();
   for (const section of shipped.Sections) {
@@ -237,7 +237,7 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
   // order. LoadSettings reads whatever the store says, so what is pinned
   // here is that it reads it, and that the DEFAULT store says Unequip.
   assert.equal(s.onStow, ON_STOW.Unequip); assert.equal(s.onPick, ON_PICK.Equip); assert.equal(s.lastLight, true);
-  assert.deepEqual([s.stowOnSpellcasting, s.stowOnClimbing, s.stowOnSwimming, s.twoHandedRelaxed, s.lanternRelaxed], [true, true, true, true, false]);
+  assert.deepEqual([s.stowOnSpellcasting, s.stowOnClimbing, s.stowOnSwimming, s.twoHandedRelaxed, s.lanternRelaxed], [true, true, true, false, false], '3ARMS: relaxed two-handers ship OFF');
   assert.deepEqual([s.throwStrength, s.throwAngle, s.throwSpread, s.throwGravity, s.throwBounce, s.throwScale, s.throwDrawTrajectory], [1, 15, 1, 1, 0.5, 1, true]);
   assert.deepEqual([s.fire, s.fireAccuracy, s.fireDuration, s.fireChance, s.fireDamageRange, s.fireLight, s.fireLightShadows], [true, 50, 3, 50, [1, 2], true, false]);
   // MODS-ON: the SPRITE is the port's own default now (the mod's whole
@@ -271,21 +271,25 @@ test('HT1: LoadSettings - the fields carry the mod\'s own multipliers (Speed x20
 
 // ═══ the hand law ═══════════════════════════════════════════════════════
 
-test('HT1: UpdateFreeHand - the table over the two slots: a bare right hand in use, a one-hander, a shield, a bow taking both, a two-hander freeing the off-hand by the IL\'s `== LeftOnly` compare, sheathed, and the four stows (spell, climb, swim, lycanthrope)', () => {
+test('HT1: UpdateFreeHand - the table over the two slots: a bare hand in use, a one-hander, a shield, a bow taking both, a two-hander taking the off hand (3ARMS: IL `== 2` is ItemHands.BOTH in DFU\'s enum - strict always, relaxed for a bow or a swing), sheathed, and the four stows (spell, climb, swim, lycanthrope)', () => {
   const r = rig();
   const hands = () => [r.h._w.handLeft, r.h._w.handRight];
   const slots = r.entity.equip.slots;
   // two frames each: UpdateFreeHand reads the slots, WeaponManager.Sheathed and UsingRightHand LIVE (IL 0x2c8a, 0x2cfc), but the cast, the climb and the swim are the mod's own fields latched in LateUpdate (0x1eea-0x1f25) after Update read them - the mod's own frame of lag on those three
   r.frame = ((f) => () => { f(); f(); })(r.frame);
   r.frame(); assert.deepEqual(hands(), [true, false], 'empty hands, the right in use: the left is free'); assert.equal(r.h.freeHand, FREE_HAND.Left);
-  r.ctx.usingRightHand = false; r.frame(); assert.deepEqual(hands(), [true, true], 'the right not in use: both'); assert.equal(r.h.freeHand, FREE_HAND.Left, 'GetFreeHand names the left first');
+  r.ctx.usingRightHand = false; r.frame(); assert.deepEqual(hands(), [false, true], '3ARMS: the LEFT in use for punching (HandheldTorches.cs:1315): the right is the free one'); assert.equal(r.h.freeHand, FREE_HAND.Right);
   r.ctx.usingRightHand = true;
   slots[EQUIP_SLOTS.LeftHand] = weapon(WEAPONS.Dagger); r.frame(); assert.deepEqual(hands(), [false, false], 'a dagger in the left, the bare right in use: none'); assert.equal(r.h.freeHand, FREE_HAND.None); assert.equal(r.h.hasFreeHand, false);
   delete slots[EQUIP_SLOTS.LeftHand]; slots[EQUIP_SLOTS.RightHand] = weapon(WEAPONS.Dagger); r.frame(); assert.deepEqual(hands(), [true, false], 'a dagger in the right: the left is free');
   slots[EQUIP_SLOTS.RightHand] = weapon(WEAPONS.Claymore);
   assert.equal(getItemHands(weapon(WEAPONS.Claymore)), ITEM_HANDS.Both, 'a claymore answers Both');
-  r.frame(); assert.deepEqual(hands(), [true, false], 'IL 0x2d1a compares to LeftOnly (2), never Both (4): a two-hander in the right leaves the left free');
-  r.store['Handling.RelaxedTwoHandedWeapons'] = false; r.frame(); assert.deepEqual(hands(), [true, false], 'the relaxed switch changes nothing - the arm fires on nothing a right hand holds');
+  r.store['Handling.RelaxedTwoHandedWeapons'] = true;
+  r.frame(); assert.deepEqual(hands(), [true, false], 'relaxed, at rest: a two-hander in the right leaves the left free (HandheldTorches.cs:1325-1330)');
+  r.machine.state = 'StrikeDown'; r.frame(); assert.deepEqual(hands(), [false, false], 'relaxed, a swing in flight: the off hand is taken - the torch stows for the swing');
+  r.machine.state = 'Idle';
+  r.store['Handling.RelaxedTwoHandedWeapons'] = false; r.frame(); assert.deepEqual(hands(), [false, false], 'strict (the port\'s default, 3ARMS): a two-hander takes both hands whether swinging or not');
+  slots[EQUIP_SLOTS.RightHand] = weapon(WEAPONS.Dagger); r.frame(); assert.deepEqual(hands(), [true, false], '...and a one-hander gives the left back');
   r.store['Handling.RelaxedTwoHandedWeapons'] = true;
   slots[EQUIP_SLOTS.LeftHand] = shield(); slots[EQUIP_SLOTS.RightHand] = weapon(WEAPONS.Dagger); r.frame(); assert.deepEqual(hands(), [false, false], 'a shield and a dagger: none');
   delete slots[EQUIP_SLOTS.RightHand]; r.ctx.usingRightHand = false; r.frame(); assert.deepEqual(hands(), [false, true], 'a shield alone, the right not in use: the right'); assert.equal(r.h.freeHand, FREE_HAND.Right);
@@ -311,7 +315,7 @@ test('HT1: UpdateFreeHand - the table over the two slots: a bare right hand in u
   delete slots[EQUIP_SLOTS.LeftHand]; r.frame();
   assert.deepEqual(hands(), [true, true], 'sheathed with nothing worn, both hands are free - a bare hand you are not swinging with is not in use (0x2d53)');
   slots[EQUIP_SLOTS.LeftHand] = weapon(WEAPONS.Dagger);
-  r.ctx.sheathed = false; delete slots[EQUIP_SLOTS.LeftHand]; r.ctx.usingRightHand = false;
+  delete slots[EQUIP_SLOTS.LeftHand]; r.ctx.usingRightHand = false;   // 3ARMS: still SHEATHED - drawn, the empty hand you fight with is in use (the left here, :1315), so both free needs the stance
   r.frame(); assert.deepEqual(hands(), [true, true]);
   r.ctx.castPlaying = true; r.frame(); assert.deepEqual(hands(), [false, false], 'casting stows'); r.ctx.castPlaying = false;
   r.ctx.spellArmed = true; r.frame(); assert.deepEqual(hands(), [false, false], 'a readied spell too');
@@ -329,7 +333,8 @@ test('HT1: Ambidexterity - the sprite in the free hand (flipped for the right), 
   const r = rig({ 'Presentation.Ambidexterity': true });
   const slots = r.entity.equip.slots;
   r.frame = ((f) => () => { f(); f(); })(r.frame);
-  r.ctx.usingRightHand = false; r.frame(); assert.equal(r.h.flipped, false, 'both free, a right-hander: unflipped');
+  // 3ARMS: both hands are free only with the weapon SHEATHED - an empty hand you fight with is in use (HandheldTorches.cs:1315 the left, 0x2d53 the right)
+  r.ctx.sheathed = true; r.ctx.usingRightHand = false; r.frame(); assert.equal(r.h.flipped, false, 'both free, a right-hander: unflipped');
   slots[EQUIP_SLOTS.LeftHand] = shield(); r.frame(); assert.equal(r.h.flipped, true, 'the left busy, the right free: flipped into the right');
   slots[EQUIP_SLOTS.RightHand] = weapon(WEAPONS.Dagger); r.frame(); assert.equal(r.h.flipped, true, 'both busy: the last');
   delete slots[EQUIP_SLOTS.LeftHand]; delete slots[EQUIP_SLOTS.RightHand]; r.frame(); assert.equal(r.h.flipped, false);
@@ -560,7 +565,7 @@ test('HT1: InitializeTextures, the three placements and GetSpriteRect - the guar
   r.store['Modules.Sprite'] = false; r.frame(); assert.equal(r.h.draw(renderer, r.ctx.canvas), false);
   // Ambidexterity flips the placement and the uv
   const f = rig({ 'Modules.Sprite': true, 'Presentation.Ambidexterity': true }, { renderer: fakeRenderer(), loadSprite, handedness: () => true });
-  f.entity.items = [torch()]; f.entity.lightSource = f.entity.items[0]; f.ctx.usingRightHand = false;
+  f.entity.items = [torch()]; f.entity.lightSource = f.entity.items[0]; f.ctx.usingRightHand = false; f.ctx.sheathed = true;   // 3ARMS: both free only sheathed - an empty hand in use is not free
   f.frame(); await f.h._w.texturesLoading; f.frame(1); f.frame(1);
   assert.equal(f.h.flipped, true); assert.deepEqual([f.h.positionTarget.x, f.h.positionTarget.y], [480, 350]); assert.deepEqual(f.h._w.curAnimRect, { u0: 1, v0: 0, u1: 0, v1: 1 });
   assert.equal(NATIVE_W, 320); assert.equal(NATIVE_H, 200);
@@ -851,15 +856,15 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
     assert.match(src, /const _torchPick = pickActivatableHit\(cam\.pos, useFwd, droppedTorches\.targets\(\), collider\);/, `${name}: the mod's RegisterCustomActivation on the same ray`);
     assert.match(src, /const _torchNearest = _race\.torchWins;/, `${name}: the torch arm reads the one race (HARD2)`);
     assert.match(src, /if \(_torchNearest\) \{ if \(_torchPick\.distance > _torchPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else droppedTorches\.activate\(_torchPick\.key, getInteractionMode\(\)\); \}/, `${name}: the 3.2 reach and the mode`);
-    assert.match(src, /if \(_mode\(\) !== _torchesMode\) \{ droppedTorches\.destroyAll\(\); _torchesMode = _mode\(\); \}[^\n]*\n\s*if \(modes\.frame\(dt, now\)\) \{/, `${name}: AUDIT 66 F11 - the transition sweep runs ABOVE the modal return, where the transition is`);
+    assert.match(src, /if \(_mode\(\) !== _torchesMode\) \{ droppedTorches\.destroyAll\(\); weaponRig\.silenceTorch\(\);[^\n]*? _torchesMode = _mode\(\); \}[^\n]*\n\s*if \(modes\.frame\(dt, now\)\) \{/, `${name}: AUDIT 66 F11 - the transition sweep runs ABOVE the modal return, where the transition is`);
     assert.match(src, /droppedTorches\.tick\(dt\);/, `${name}: the burn`);
     assert.match(src, /\.\.\.droppedTorches\.batches\(\)\)/, `${name}: drawn with the people`);
   }
   assert.match(world, /if \(collectLoose\) droppedTorches\.collectPixel\(key\);/, 'world: a dropped torch is a loose object, swept with its pixel');
   assert.match(world, /droppedTorches\.offsetAll\(r\.offset\);/, 'world: the recenter');
   assert.match(world, /droppedTorches: droppedTorches\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\),/, 'world: the save data in world coordinates');
-  assert.match(world, /droppedTorches\.restore\(w\.droppedTorches, \(p\) => \{ const \[lx, lz\] = state\.localFromWorld\(p\[0\], p\[2\]\); return \[lx, p\[1\] \+ state\.compensation\[1\], lz\]; \}\);/, 'world: restored into the local frame');
-  assert.match(world, /droppedTorches\.restore\(arrived\.droppedTorches,/, 'world: the F9 envelope too');
+  assert.match(world, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\), \(p\) => \{ const \[lx, lz\] = state\.localFromWorld\(p\[0\], p\[2\]\); return \[lx, p\[1\] \+ state\.compensation\[1\], lz\]; \}\);/, 'world: restored into the local frame');   // TERRAIN-SCALE1: stood again on today's ground first
+  assert.match(world, /droppedTorches\.restore\(arrived\.droppedTorches\.map\(/, 'world: the F9 envelope too');   // TERRAIN-SCALE1: stood again on today's ground
   // the interior mode
   assert.match(wm, /const interiorTorches = createDroppedTorches\(\{/);
   assert.match(wm, /\.\.\.interiorTorches\.lights\(\)\);/); assert.match(wm, /interiorTorches\.tick\(dt\);/); assert.match(wm, /const _torches = interiorTorches\.batches\(\);/);
@@ -871,7 +876,8 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.ok(_wmEnter > 0 && _wmEnter < wm.indexOf('restoreInteriorScene();'), 'and it lands ABOVE the restore in the file, as it does in the frame');
   assert.equal((wm.match(/interiorTorches\.destroyAll\(\);/g) ?? []).length, 3, 'the way in, the way out, and AUDIT 66 F6 the quest-teleport / load exit');
   assert.match(wm, /interiorDropped\.restorePiles\(null\);[^\n]*\n\s*interiorTorches\.destroyAll\(\);[^\n]*\n\s*interiorHitEffects\.clear\(\);/, 'AUDIT 66 F6: in the teardown list with its siblings');
-  assert.match(wm, /const droppedTorches = interiorTorches\.snapshot\(\);/); assert.match(wm, /interiorTorches\.restore\(data\.droppedTorches\);/);
+  // TERRAIN-SCALE1: measured from the building, and placed on this visit's origin
+  assert.match(wm, /const droppedTorches = interiorTorches\.snapshot\(\(p\) => \[p\[0\] - o\[0\], p\[1\] - o\[1\], p\[2\] - o\[2\]\]\);/); assert.match(wm, /interiorTorches\.restore\(data\.droppedTorches, place\);/);
   assert.match(wm, /key\.startsWith\('droppedTorch:'\)\) \{/, 'the dungeon arm\'s loot ladder takes the key');
   assert.match(wm, /\.\.\.dungeonCtx\.torchLights\(\)\)/); assert.match(wm, /\.\.\.dungeonCtx\.torchBatches\(\)/);
   // the dungeon context and the standalone dungeon
@@ -881,7 +887,7 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.match(dc, /delete w\.droppedLoot;\s*delete w\.droppedTorches;/, 'the shared world carries nothing of the player\'s own');
   assert.match(dc, /waterLevel: \(\) => \(_fpFeet \? blockWaterLevelAt\(/, 'the dungeon\'s water plane for the douse');
   assert.match(dc, /droppedTorches\.destroyAll\(\);\s*weaponRig\.dispose\?\.\(\);/, 'AUDIT 66 F5/F8: the pool and the rig\'s component leave with the dungeon, beside the foes\' batches and the wall torches\' loops');
-  assert.match(dj, /\.\.\.ctx\.torchLights\(\)\)/); assert.match(dj, /\.\.\.ctx\.torchBatches\(\)\]/); assert.match(dj, /key\.startsWith\('droppedTorch:'\)\)\) \{/);
+  assert.match(dj, /\.\.\.ctx\.torchLights\(\)\)/); assert.match(dj, /\.\.\.ctx\.torchBatches\(\)\]/); assert.match(dj, /key\.startsWith\('droppedTorch:'\) \|\| key\.startsWith\('camp:'\) \|\| key\.startsWith\('hearth:'\)\)\) \{/);   // AUDIT-WH2 L2-F1/F2: the fires joined this ladder - ?dungeon stood and NAMED camp:/hearth: and answered neither
   assert.match(dj, /keyDown: \(code\) => keys\.has\(code\)/);
 });
 

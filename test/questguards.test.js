@@ -356,7 +356,7 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
   // release handler does at :2137-2141.
   assert.match(hm, /const done = \(v\) => \{ lastSpell = sp; onCastReadySpell\?\.\(sp\); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; \};/,   // FIX-F: lastSpell first (:2136), as DFU's own order
     'every release path raises CAST before the ready clears');
-  assert.equal((hm.match(/return done\((?:true|false|v)\);/g) ?? []).length, 5,
+  assert.equal((hm.match(/return done\((?:true|false|v)\);/g) ?? []).length, 6,   // ALLY-CAST: and the cast on a party mate, a sixth
     'four range arms plus the unknown-range refusal all leave through it');
   const world = readSrc('src/scenes/world.js');
   assert.match(world, /onNewReadySpell: \(sp\) => questBridge\?\.machine\?\.notifyNewReadySpell\?\.\(sp\)/);
@@ -424,7 +424,7 @@ test('QG1 seams: the foe-click arm runs FIRST, skips Info mode, and does not con
   const wm = readSrc('src/scenes/worldModes.js');
   assert.equal((wm.match(/pickQuestFoe\(/g) ?? []).length, 2,
     'both of this host\'s rays carry the arm - the dungeon one and the interior one');
-  const tryExit = wm.slice(wm.indexOf('function tryExit() {'), wm.indexOf('function tryExitDungeon('));
+  const tryExit = wm.slice(wm.indexOf('function tryExit('), wm.indexOf('function tryExitDungeon('));
   assert.ok(tryExit.length > 0, 'the interior ray is found');
   assert.match(tryExit, /if \(getInteractionMode\(\) !== 'info' && interiorCtx && !host\.activateLockOnly\?\.\(\)\) \{[^\n]*\n\s+const qf = pickQuestFoe\(eye, dir, interiorFoePool\(\), interiorCtx\.collider\);\n\s+if \(qf\) qf\.questBehaviour\.doClick\(\);\n\s+\}/,   // TS1: the stick's tap is no click
     'the interior ray carries the dungeon ray\'s arm, over its own two pools');

@@ -1062,3 +1062,141 @@ host's read and the window's tag). Mutants: `tools/mutants/map3.json`
 grew three - the gate dropped, the gate hoisted above the arm branch,
 and the host raising a flag instead of asking the slot - 77 in total,
 75 dead and 2 equivalent as recorded.
+
+## MAP-POV - the map is read in the head (2026-09-20)
+
+Mac: *"on the morrowind model the new enhanced map feature isnt working.
+It shows the enhanced classic map sprite"*, then, once the state was
+named: *"If you're in 3rd person and decide to use the map, it should
+transition you to first person and then open the map. Both for the
+morrowind/non morrowind"*.
+
+**What was found, and how.** The shipped held-map probe drives `fpArm`
+directly with a synthetic holder, so it proves the lane and not the seam.
+A reproduction through the CALLER'S CONDITION - the real
+`createWeaponRig`, the world host's holder verbatim
+(`armsAvailable` / `holdPaper` / `armsDrawn() ? paperCorners() : null`),
+and the world's frame order (rig.frame, rig.draw, then the window's
+tick) - took the hands lane on the second tick and held it for the whole
+open in every first-person condition: sheathed, drawn, the default pose,
+and with Weapon Widget, Shield Widget and Handheld Torches on. The one
+state that gave the sprite was third person. `fpArm.active()` is
+first-person only, and AUDIT-MAP2 decided the third-person body holds
+nothing, so from third person `armsAvailable()` answered no thirty times
+and the window stayed on the painting - which is what Mac saw. (The
+first run of the reproduction hit it by accident: Eye of the Beholder
+defaults to enabled and to `StartInThirdPerson`, and on a page with no
+Morrowind third-person body `eotbHidesWeapon()` hid the arm outright.)
+No record before this one says the hands lane was seen live; MAP3 left
+the pose to be tuned in the game and the bone tuning never landed.
+
+**The change.** `player/mwView.js` gains `mwViewFirstPerson()`: INTO THE
+HEAD NOW, for whichever body answers. The EOTB lane takes the mod's own
+`ToggleOffset(false)`. The Morrowind lane takes the camera's restore
+door, not the wheel's crossing - the wheel queues the first-person
+boundary behind the upper body (camera.cpp:225-232) and the map is
+opening this frame - and moves the rig with it (`fpArm.setViewMode
+('first')`), so the arm is first-person before the window's first tick
+asks. The remembered zoom distance is kept: a wheel out afterwards lands
+where the player left the camera. `scenes/world.js`'s
+`buildTravelMapWindow` calls it first, then builds the window the skin
+wears - the held map or the classic sheet. It stands in the BUILDER and
+not at the doors: every door into the map (the key, the journal's goto,
+the guild's teleport) reaches the builder, and only after its own
+refusals (enemies near, the sun, a pending offer), so the camera moves
+for a map that opens and never for a press that was refused. The view
+is not put back when the map closes - Mac asked for a transition, and
+the wheel is where it was.
+
+**Pins** (`test/mappov.test.js`, 4): the Morrowind lane goes first at
+once with nothing queued, keeps its distance and moves the rig, and a
+view already first is left alone; the EOTB lane through its own toggle
+with the other camera untouched; by source, the builder is the one mint
+of the window and the only home of the move, both doors build through
+it, the key's door holds no copy and its refusals stand above the build;
+the seam's door takes the restore and never the wheel.
+
+**Mutants** (`tools/mutants/mappov.json`): 7 mutations, 7 dead - the
+EOTB toggle reversed; the EOTB lane never moving; the Morrowind test
+inverted; the wheel in place of the restore; the rig left behind the
+camera; the builder forgetting the move; a copy of the move at the door
+above the refusals.
+
+---
+
+## MW-MAP1 - the Morrowind hands on every sheet, not only the V key's (2026-09-22, a player through Mac)
+
+> Got word ... the morrowind map isnt showing
+
+There is no separate Morrowind map. "The Morrowind map" is this window's
+HANDS LANE (MAP3): when the Morrowind arm is the thing on screen, the
+sheet is handed to the rig and the ink is laid over the paper's projected
+corners; otherwise Mac's painted gauntlets stand. The lane opens on one
+thing - the `holder` the host hands the window, the arm's four doors -
+and MAP3 wrote that holder INLINE in world.js's TRAVEL map builder, the
+only door there was at the time. Then EM3 and EM4 gave the same window
+its M-key doors (the town plan through ui/townMapDoor.js, the dungeon
+and building automaps through ui/automapDoor.js), and none of those
+passed a holder. So a player with Morrowind arms saw the Morrowind hands
+on V outdoors and the painted gauntlets everywhere else - in a town, in
+a dungeon, in a building - which is most of the times a map is opened.
+MAP3's own record said it: "a host with no holder at all (every scene
+but the world) is the sprite lane", written before the other doors
+existed and never revisited when they were.
+
+**One holder, off the rig, on every door.** `sheetHolderOf(rig)` in
+combat/weaponRig.js is the holder - the four doors (would the arm draw,
+take the sheet, let it go, where are the corners), with AUDIT-MAP2's law
+kept (corners only from a frame the arm DREW) - handed the rig as a
+FUNCTION so a host whose rig can be swapped answers live and never a
+snapshot. The two doors pass `deps.holder` through to the window, and
+every host with a rig hands it to every door it opens: world.js's V and
+M, exterior.js's M, the dungeon's M off the dungeon rig, a building's M
+off the INTERIOR arm (worldModes' `interiorWeapon`). The one host with
+no rig - the `?interior` probe - hands none and keeps the sprite lane,
+honestly. And each of those doors goes INTO THE HEAD first
+(`mwViewFirstPerson`, MAP-POV's law: the map is read in the head, and
+the arm must be first-person before the window's first tick asks it),
+which MAP-POV had done for the V key alone.
+
+The fix is small because the pieces were all there; what was missing was
+one seam written once. test/mwmap1.test.js (3): the holder's four doors
+against a live, swapped, absent and doorless rig; the two doors carrying
+the holder into a real HeldMapWindow and null without one; every host by
+source. tools/mutants/mwmap1.json: 7, 7 dead; MAP3's two holder mutants
+re-aimed at the shared holder, still dead.
+
+## MAP-TOGGLE + MAP-FIELD8 - the sheet is a switch, and the fourth painting (2026-09-22, Mac)
+
+Mac asked whether the enhanced map was a toggle; it was not - the three map doors (`ui/travelMapDoor.js`,
+`ui/automapDoor.js`, `ui/townMapDoor.js`) forked on `isEnhanced()` alone, so DFU's own maps came back only with
+the whole classic skin. "Yes needs to be a toggle. Along with this change, replace the current paperdoll
+integration with this replacement" - and a fourth painting.
+
+**MAP-TOGGLE.** One gate, `ui/mapSkin.js`: `enhancedMapOn()` is the Features row `enhanced-map` (Sight,
+enhanced-only, prefs `heldMap`, on by default - the sheet is what the enhanced skin has drawn since MAP1);
+`heldMapChosen()` is the skin AND the switch; `heldMapWorn()` is chosen AND a document to mount in. The three
+doors read the gate and ask no skin of their own: the travel door's readiness is `heldMapChosen() ||
+travelMapArtLoaded()` (the sheet reads no ARENA2 art, so it is ready wherever it is chosen), the automap's and
+the town map's `heldMapWorn() || <their art>`. Off under the enhanced skin is DFU's three windows exactly - the
+classic art is preloaded on every host whatever the skin (ROAD-C c2's shape), so the classic arm is ready the
+moment the switch flips. Read on every open, never cached. The classic skin never wears the sheet: the row's
+kinds say `enhanced`.
+
+**MAP-FIELD8.** The painting in the hands is the fourth (`public/art/held-map.png`, 1648x1086 - wider than the
+third's 1448, the same height; a real alpha channel, 58.7% clear). Every constant that is a measurement of the
+picture was re-measured by `tools/heldMapArtProbe.mjs` (20 checks, all passing): `SPRITE` 1648x1086; `PAPER`
+x 0.226-0.775, y 0.196-0.704 (the sheet measures x 364-1285, y 206-772, and the ink overhangs it by 0 px);
+`THUMB_ZONES` 0.19-0.30 and 0.70-0.81 across, 0.40-0.725 down (the thumbs rest a little higher and reach less far
+in than the third's); `SPRITE_ART_FOOT` 0.872 (the lowest opaque row is 946); `CUFF_BAND` 0.827, in the 24-row gap
+between the hand's silhouette (ends by 0.8158) and the cut cuffs (begin at 0.8379), eleven rows either side -
+the first draft put it at 0.867 off a cruder measurement and the probe refused it; `HAND_CHROMA` stays 75 (87.9%
+of the thumb under the line, 66 of 396,440 sheet pixels). The stage is the sprite's own aspect (3:2 now, not
+4:3); on a 16:9 screen the sheet still fits at `HELD_MAP_HEIGHT`, and on a narrower one the height gives way as
+before. The Morrowind hands lane (MAP3/MW-MAP1) is untouched: it is the arm's own lane, entered only when a
+holder says the arm is drawn.
+
+Pins: `test/maptoggle.test.js` (4, driven: the gate on/off/classic, the doors handing out the held sheet or the
+classic null against a live switch, the row, the fourth painting's numbers against the file's own header);
+`test/heldmap.test.js` U61 re-aimed to the gate. `tools/mutants/maptoggle.json`: 9 records, 9 dead. Not
+verified in a browser beyond the probe.

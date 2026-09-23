@@ -225,6 +225,12 @@ too, matching Unity's vertex-lit billboards.
 
 ## Milestone R7 - dungeon water planes (SHIPPED)
 
+WATER-D1 (2026-09-21): the DRAW moved into `dungeonContext.drawFoes`,
+ahead of the weapon overlay - on the enhanced-lighting lane the overlay's
+screen quad resolves the frame, and a plane drawn after it (as both hosts
+did) lands on the canvas against an empty depth buffer. The level law
+below is untouched. `07-Rendering/Water-Arc.md`.
+
 Verbatim RDBLayout.AddWater semantics: one plane per dungeon block
 whose start-marker water level is not the 10000 sentinel, covering the
 RDB footprint (51.2 x 51.2) at the block origin, surface at
@@ -1905,6 +1911,163 @@ container, so nothing here was measured the way PERF-ON's names were.
 Said rather than implied.
 
 **Pinned** in `test/grasspath.test.js`.
+## BOOT2 - A CURSOR MUST NOT NEED THE HUD: ONE EDGE, 4.1 MB (2026-09-20)
+
+**Where BOOT1 left the entry.** With the four hosts behind doors, the
+entry's static graph was still 259 files and 4.9 MB of source, and the
+bundle's boot set 28 chunks / 492 KB gzipped - `travel` (257 KB) and
+`spellcast` (55 KB) the largest of them. The menu's own direct imports were
+not the cause (no single one costs more than 88 KB exclusively); the cause
+was a hub edge further down. Cutting edges one at a time on the entry's
+graph and measuring each: **`ui/cursor.js -> ui/hud.js` carries 216 files
+and 4,141 KB on its own** - `main.js` imports the cursor to install the
+document pointer, the cursor imports ONE pure function from the HUD
+(`bitmapToColor32`, an indexed bitmap through a palette), and the HUD
+imports the enhanced HUD, which imports the world tick, which imports the
+game. Cutting `worldTick -> weatherSim`/`diseases` instead saves nothing:
+the same modules arrive through `court.js -> factionRep.js -> save.js`. The
+edge that matters is the first one.
+
+**The helper was in the wrong home.** A conversion from a palette is a
+formats concern; the HUD was only where it happened to be written, and
+eleven modules imported it from there. It lives in
+`formats/color32Order.js` now - the file that already owns how a picture
+becomes color32 (the row-order doors of AUDIT 62 F26 and HT3) - and every
+importer takes it from the leaf, `hud.js` included. No re-export: a
+re-export would put the hub edge back for whoever took the shortcut, and
+`test/boot2.test.js` holds that as a law rather than a hope.
+
+**Measured.** The entry's static reach: 259 files / 4,991 KB -> 43 files /
+841 KB. What remains is the renderer, the settings, the data source and the
+crash/stale-chunk law - the things an entry genuinely needs before it knows
+which door it is going through. The bundle's boot set: 28 chunks / 492 KB ->
+**12 chunks / 104 KB gzipped**.
+
+**What did NOT move, said plainly.** The bytes a player waits for before the
+MENU is interactive - the entry's set plus the menu chunk's own static
+closure plus the intro - are ~656 KB gzipped, the same as before this slice.
+The menu chunk reaches the world tick directly AND through
+`ui/enhancedHud.js`, and reaches `travel` through `systems/saveSlots.js ->
+save.js -> weatherSim.js`; with several roots, no single cut helps, which is
+exactly what the exclusive-cost table said at the start. That is the next
+lever and a different shape of work: the clock (`worldMinutes`,
+`sharedClockOn`) split out of the world tick as a LEAF, so the nineteen
+modules that only want the time stop importing the heartbeat.
+
+**Three laws, derived, not listed.** One home (exactly one definition in the
+tree, in the leaf; nobody under src/ or test/ imports it from hud.js; hud.js
+exports it to nobody). The cursor is a leaf (its imports are read; none is
+under ui/). The entry's reach touches neither hub and stays under a ceiling
+the cut measured. 3 mutants, 3 killed.
+
+## BOOT1 - THE GAME HOSTS BEHIND A DOOR: THE BOOT GRAPH UN-INVERTED (2026-09-20)
+
+**INLINE1's "next lever" turned out to be the wrong lever.** The plan was to
+make `weaponRig` lazy (96 KB gzipped on the boot path). Walking the entry's
+static import graph first showed why that was small change: `src/main.js`
+imported all four scene hosts - `bootExterior`, `bootInterior`,
+`bootDungeon`, `bootWorld` - STATICALLY, and a static import of a host is the
+host's whole graph at module-evaluation time. **623 files and 13.4 MB of
+source were reached from the entry before `boot()` ran a line** - every
+scene, every system, every window - while the menu a player actually sees
+first (`ui/enhancedMenu.js`, `ui/introScreen.js`) was the thing loaded
+dynamically. The boot graph was inverted. Over the built bundle: 54 chunks,
+1,349 KB gzipped, had to arrive before the entry finished evaluating, and
+`main` alone was 517 KB of it.
+
+**The change is four lines, and every route reads as before.** Each host is
+a door now - a dynamic import at the moment of use, bound to the SAME name
+and called with the SAME shape the routes always used, so the routes and
+the pins that hold them (classicstart, hard2s, macn) are untouched. The
+hosts carry no import-time side effects (nothing at their top level runs),
+so evaluating them later changes nothing but WHEN.
+
+**And a warm-up.** Every door out of the enhanced menu ends in `bootWorld`,
+so the world host's import is kicked off - not awaited - the moment the
+menu branch is entered, behind the cinematic and the menu where the player
+is looking at something else; Play then finds the chunks in cache instead
+of paying for them at the click. It carries a `.catch`, and that is not
+optional: a deploy between page load and Play renames every chunk
+(`systems/staleChunk.js`), and a warm-up that rejected unhandled would be a
+console error for a failure the real import at Play reports properly
+through the same law.
+
+**Measured over the build.** The chunks a browser must fetch before the
+entry finishes evaluating: **54 -> 28; 1,349 KB -> 492 KB gzipped (-64%)**.
+Total JavaScript is unchanged (1,959 KB) - nothing was removed, it moved
+off the critical path. `test/boot1.test.js` walks the entry's static graph
+itself, transitively, with the host set derived from the tree, and holds a
+ceiling on the entry's reach so the graph cannot quietly re-invert. 3
+mutants, 3 killed.
+
+**And one thing the change found.** `test/moduleload_smoke.test.js` imports
+every module under src/ in node and keeps a list of the eleven that cannot
+load, each with its reason. `src/main.js` was on it as "import.meta.glob" -
+and that was only ever true by inheritance: its static import of world.js
+rejected the entry at LINK time, before a line of its body ran. With the
+hosts behind doors the entry's body runs in node, `boot()` reached for
+`document`, and its own catch reached for `document` again to report it -
+an unhandled rejection after the test ended, for a page that does not
+exist. The chain now starts from a resolved promise when there is no
+document; the entry stays on the list for what it is genuinely excluded for
+(the crash listeners at its module scope), and the "three modules fail for
+the glob" count is two, held there so a static host import returning to the
+entry reads as the regression it is.
+
+**What is still on the boot path, and why.** `travel` (257 KB gzipped, the
+largest chunk left) and `spellcast` (55 KB) are reached statically from the
+menu floor - `ui/enhancedMenu.js`'s own static graph is 315 files and 6.2 MB
+of source, and it pulls `world/windmillMesh.js` (250 KB) and 2.4 MB of
+`systems/` for things a menu does not draw. That is the next lever, and it
+is the menu's own import list, not the entry's.
+
+## INLINE1 - NOTHING UNDER vendor/ IS INLINED: A MEGABYTE OFF FIRST PAINT (2026-09-20)
+
+**Mac: "Want to talk about overall performance improvements."** The first
+thing measurable from the tree, and the cheapest: the JavaScript on the
+wire was 2,870 KB gzipped, and 1,002 KB of it was ONE chunk, `weaponRig`.
+Its raw size was 1,921 KB, and 1,343 KB of that was **432 PNGs inlined as
+base64** - Shield Widget's 275 under-4 KB sprites, Handheld Torches' 31,
+Climates & Calories' 18 and the rest. Base64 is nearly incompressible, which
+is why that chunk gzipped 1.9 -> 1.0 MB while `main` went 1.5 -> 0.5. And
+`scenes/world.js` imports the rig STATICALLY, so the chunk is on the boot
+path: every player pulled a megabyte of shield art before the menu drew.
+
+**The rule that let it happen was an enumeration.** EOTB5 met this class
+first - 3,035 sprites, a twelve-megabyte chunk - and excluded that mod's
+folder from Vite's `assetsInlineLimit` by path, narrow on purpose: "every
+other vendored texture keeps the default, because inlining a handful of
+small files is a win and the problem here is only ever the COUNT."
+AUDIT-IF F1 added Immersive Footsteps the same way. The premise was wrong -
+a vendored mod is never a handful of files, it ships in the hundreds - and
+the shape was the project's own named hazard: a rule enforced by memory.
+Twenty vendor folders landed after the allow-list of three, and not one
+joined it. The build exited 0 and said nothing, exactly as EOTB5 records it
+did the first time.
+
+**The rule is the class now.** `/[\/]vendor[\/]/` - nothing under
+vendor/ is ever inlined; everything outside it keeps Vite's default (a rule
+that inlined nothing anywhere would be the opposite mistake, and is pinned
+against). The pins that held the old rule named the folders it held OUT -
+"every other vendor asset keeps the default", with dynamic-skies and
+handheld-torches as the examples - and are INVERTED rather than deleted.
+The new pin, `test/vendorinline.test.js`, is GENERATIVE: it walks vendor/
+itself, puts every file under the 4 KB default through the real rule read
+out of vite.config.js, and holds that every one is refused and every vendor
+folder is covered whether or not it has small art today. The next mod holds
+without anyone remembering.
+
+**Measured over a real build.** `weaponRig` 1,921 KB -> 596 KB raw, 1,002
+KB -> 96 KB gzipped. Total JS on the wire 2,870 KB -> 1,945 KB (-32%). 357
+more files emitted to `dist/assets` (2,074 -> 2,431 PNGs), zero base64 PNGs
+left in any chunk. The sprites load the way EOTB's 2,000 and Immersive
+Footsteps' 210 clips already did - as files, when the mod asks for them.
+
+**What this does not do.** `weaponRig` is still 596 KB of code on the boot
+path because `world.js` imports it statically; nothing in it is needed
+before a game starts. Making the rig lazy is the next lever and is not
+this slice. `tools/mutants/inline1.json`: 2 dead, 0 survived.
+
 ## AUDIT-AIR1 - THE SIXTH SEAM (2026-09-19)
 
 > Mac, with a screenshot: *"the screenshot shows a bug where sometimes
@@ -2251,13 +2414,13 @@ beside them. Then the same shape turned up everywhere else:
 
 | host | list |
 |---|---|
-| `dungeonContext.js:5115` | the mobiles, the drops, the spells |
-| `worldModes.js:6204` | the dungeon's flats, camps, torches and peers |
-| `worldModes.js:6382` | the interior's flats and peers |
-| `worldModes.js:6388-6422` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:4831`, `world.js:10819` | the spell missiles |
-| `exterior.js:4893` | the fixed city's townspeople |
-| `interior.js:356`, `dungeon.js:1011` | the flats, the camps, the torches |
+| `dungeonContext.js:5335` | the mobiles, the drops, the spells |
+| `worldModes.js:7163` | the dungeon's flats, camps, torches and peers |
+| `worldModes.js:7345` | the interior's flats and peers |
+| `worldModes.js:7351-7409` | blood, torches, drops, foes, guards - **five separate uncut calls** |
+| `exterior.js:5203`, `world.js:13599` | the spell missiles |
+| `exterior.js:5281` | the fixed city's townspeople |
+| `interior.js:373`, `dungeon.js:1056` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
 them one at a time is how this bug got to be in eight places.** The test
@@ -2290,7 +2453,7 @@ bugs, it is one bug in the wrong layer.**
 
 Mac: *"distance terrian has a weird grain look"* - and, before asking for
 it, *"im not sure if we can tackle this without taking a performance
-hit"*. **It costs nothing, and it may give some back.** That is worth
+hit"*. **It costs nothing, and it may give some back.** *(GRAIN AUDIT 1: half right. Nothing on the CPU, measured; on the GPU the filter went from one fetch to eight-to-thirty-two per ground fragment, and the give-back is not real for an 896 KiB array that already lived in cache. See GRAIN AUDIT 1.)* That is worth
 saying first because the worry was reasonable.
 
 ### What the grain is
@@ -2762,6 +2925,157 @@ records re-aimed by content and one retired with the line it mutated.
 it is no cull at all - and it will sit there for months looking like one,
 because the code that would have caught it is the code it is standing in
 for.**
+
+## GRAIN AUDIT 1 - "ensuring it doesnt degrade performance" (2026-09-21)
+
+Mac: *"Can you audit the filtering enhancement we have implemented
+ensuring it doesnt degrade performance."* Three Opus lenses, read-only:
+the GL and texture side, the shader side, and the dial with its pins,
+records and measurement story. Every number below was counted, diffed
+or read back; SwiftShader's milliseconds were taken by nobody.
+
+### The answer first
+
+**On the CPU: nothing, measured.** A counting GL stub under the real
+`Renderer`: one `generateMipmap`, four `texParameteri` and one
+`texParameterf` per ground archive at upload, the extension and its
+ceiling fetched once per renderer, and in a frame of 121 terrain draws
+**zero** filter-related calls - the array binds once for the frame
+under PERF-TEX2's shadow. `getPref` is read once per archive. Nothing
+per layer, per streaming update or per map-pixel crossing.
+
+**On the GPU: a real cost, small at the default, not measured on any
+GPU, and GRAIN1's "it costs nothing, and it may give some back" was
+half wrong.** The sampling *instruction* is one either way, as the
+record said; the *filter* changed on the next line. Texel fetches per
+ground fragment: pre-GRAIN1 `NEAREST` no chain, **1**; GRAIN1 "Off"
+(trilinear, no anisotropy), **8**; Default (trilinear, 4x), **up to
+32**; Maximum (16x), **up to 128** - on the pass that covers the most
+screen, drawn FIRST with no depth prepass so its occluded fragments pay
+too, and paid TWICE over water, which re-shades the same fragments from
+the same array. The give-back is not real: the array is 56 layers of
+64x64 RGBA, 896 KiB, 1.17 MiB with its chain (GRAIN2's "under a
+megabyte with its chain" was wrong; GRAIN1's "the chain is a third of
+that" was right) - a texture that already lived in L2 had no bandwidth
+problem for a mipmap to solve, so the extra taps are pure cost.
+Compiled through ANGLE, the shipping shaders carry +103 SPIR-V
+instructions on the classic terrain stage (+15.6%) and +101 on the
+enhanced (+4.6%) against a GRAIN1-reverted copy - an upper bound, most
+of it folds - and two `dFdx`, two `dFdy`, four multiplies and two adds
+that do not. On Mac's own machine (PERF-TOWN1: CPU-bound, script at or
+over the frame) the honest estimate is *no measurable change*. On
+integrated graphics at 1080p, running the classic lane, the ground
+pass's sampler work is a real fraction of the frame and this multiplied
+it; low single digits to low teens of a percent is the range, and no
+one can narrow it without a GPU.
+
+**What the artefact was worth.** On a synthetic perspective ground
+plane the blurred-tile-edge line GRAIN1 was built to avoid touches
+**0.15% of pixels**, on 16 of 240 scanlines, at up to 218 of 255 -
+real, structured exactly as predicted, and O(perimeter) against a fix
+paid O(area). The grain itself is gone: horizontal high-frequency
+energy 45.0 -> 10.7 with the chain on. And the dial's shape is
+vindicated: Off -> Default moves 25% of pixels (mean 18); Default ->
+Maximum moves 6.3% (mean 1.5) for up to four times the filter work.
+"Maximum" buys almost nothing.
+
+### The findings, all paid
+
+1. **THE DIAL DID NOT LAND.** `uploadTileArray` returns the cached
+   array for any archive the page has seen, the cache lives as long as
+   the renderer - the page - and the tier was read only at upload. So
+   `groundSharpness` took effect on a page reload, or on the first
+   archive of a climate not yet visited, leaving the world at two tiers
+   when it did; a player who felt the cost and turned it Off kept
+   paying until they reloaded the page. The row said "when the world
+   next loads" and the pin asserted the sentence rather than the
+   behaviour. Now: `applyGroundSharpness()` walks the cached arrays and
+   re-sets the sampler state - a bind and two parameter calls per
+   archive, no upload, no chain - and both exterior hosts call it at
+   every world load. The sentence is true because of that line.
+2. **"OFF" WAS STILL TRILINEAR.** GRAIN1's Off turned the anisotropy
+   off and kept `LINEAR_MIPMAP_LINEAR`: eight fetches where the ground
+   had cost one, and no tier on the dial went lower. The mipmap is what
+   cures the grain, not the filter within a level. Off is
+   `NEAREST_MIPMAP_NEAREST` now - one fetch, the pre-GRAIN1 cost with
+   the boil gone, the texels square at every distance, and the filter
+   every numeric archive in this renderer already used (FilterMode
+   .Point over a chain, MaterialReader.cs:104). Measured on the near
+   field: `LINEAR_MIPMAP_LINEAR` at 1x took a 3-colour patch to 444
+   colours and changed 17.8% of its pixels; `NEAREST_MIPMAP_NEAREST`
+   took it to 4 and 7.3%. Which also corrects GRAIN1's "spends nothing
+   on the near field": `MAG = NEAREST` governs only where a texel is
+   larger than a pixel, a couple of metres out at eye height, and past
+   that the MIN filter blends. Default and Maximum keep trilinear,
+   because anisotropy wants a linear filter within the level.
+3. **NOTHING COULD MEASURE IT.** The port's one real-GPU instrument,
+   `tools/perfProbe.mjs`, opens a fresh browser with an empty shelf, so
+   it always measured Default and no run could ever say what a tier
+   cost. There is a `?ground=off|default|max` door now (a junk word is
+   the default, by `anisotropyFor`'s own law) and the probe takes
+   `GROUND=`. The experiment is ten minutes: `HEADED=1 SCENES=road
+   SECONDS=12 GROUND=off npm run perf`, again with `max`, and compare
+   `frameMs` while `scriptMs`, `draws` and `binds` hold flat. Without
+   the probe: set the dial, reload the WORLD (not the page, now), stand
+   at a low grazing outdoor view and read the FPS counter; same camera,
+   weather and hour. Note Mac's browser has no
+   `EXT_disjoint_timer_query_webgl2` (PERF-TOWN1), so a GPU zone would
+   read n/a for him; the frame time is the instrument.
+4. The extension memo `||=` re-asked `getExtension` on every archive on
+   exactly the drivers without it (a memo of null is falsy) - ten calls
+   over ten uploads on the stub; `null` is "not asked" and `false` is
+   "none" now, and the pin counts the calls.
+5. The water pass took its derivatives after two `discard`s -
+   undefined in non-uniform control flow, a garbage footprint on a
+   shoreline quad under a driver that ends discarded lanes; hoisted
+   above them.
+6. The row said nothing about cost, at the only place a laptop player
+   will look; it names which end is cheap now.
+7. The pins held the GL sequence by regex only and the cache - the one
+   law that makes this free per frame - not at all: deleting the
+   early return survived every pin. The new pin runs `uploadTileArray`
+   on a logging stub: one chain per archive after the layers, filter
+   and anisotropy by tier, ZERO calls on a cached archive, the re-apply
+   over both cached arrays with the anisotropy SET to 1 (not skipped -
+   a cached 16x array has to come down), the shadow forgotten, the
+   extension asked once with and without a driver that has it, both
+   hosts' calls, the probe's door. `kinds` is pinned too - dropping
+   `classic` had survived the campaign.
+8. Records: the index still carried GRAIN1's retracted "verified 16" and
+   no word of GRAIN2; GRAIN1's give-back and near-field sentences;
+   GRAIN2's cache-residency argument, which bounds the memory cost of
+   the taps and says nothing about their TMU throughput; the
+   Enhanced-Environments plan still saying "enhanced only / NEAREST for
+   classic" when both lanes mip the one array (the right call - DFU mips
+   terrain - and unrecorded).
+
+### Left on the record, not done
+
+- **The ground is drawn first, with no depth prepass.** Every ground
+  fragment under every building, tree and person is fully shaded - the
+  filter included - and overwritten; in a town that is a large share of
+  the pass, and it is the share GRAIN1 made dearer. Drawing the opaque
+  static batch before the ground, or a depth prepass for it, is the
+  highest-leverage change this audit found and it is not a filtering
+  change. It waits on Mac's word.
+- **The chain is built in sRGB space** by `generateMipmap` on an unsized
+  RGBA array, and the enhanced lane decodes the filtered texel as if it
+  were one texel (`elDecode(textureGrad(...))`); decode is convex, so
+  distant ground in that lane reads slightly darker than it should, more
+  so at higher tiers. An `SRGB8_ALPHA8` array would make the filter
+  linear and exact, and free. Recorded, not changed.
+- `textureLod` with a fragment-computed LOD was costed as the obvious
+  cheaper shader: it is not cheaper (+94 against +104 SPIR-V) and it
+  silently loses anisotropy, which would make the dial a no-op. A
+  vertex-stage LOD cannot work either: the tile index and rotation are
+  per fragment. There is no cheaper shader; every saving is sampler
+  state (2) or draw order (above).
+
+**The lesson: "one sample either way" was true of the instruction and
+false of the taps, and the one setting built to let a weak machine opt
+out neither reached the filter nor reached the machine without a page
+reload. A dial that cannot be measured and does not land is a promise,
+not a control.**
 
 ## GRAIN2 - "Why dont we crank it to 16?" (2026-09-19)
 

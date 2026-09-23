@@ -194,7 +194,7 @@ test('AUDIT-RR F6/F23/F24/F30: the bed\'s click rests in THAT bed (ignoreAllocat
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /interiorKeyCtx\.toggleRest\(\{ ignoreAllocatedBed: true \}\);/);
   assert.match(wm, /toggleRest\(\{ ignoreAllocatedBed = false \} = \{\}\) \{/);
-  assert.match(wm, /new RestWindow\(interiorRestDeps, ignoreAllocatedBed\)/);
+  assert.match(wm, /createRestWindow\(interiorRestDeps, ignoreAllocatedBed\)/);   // through main's rest door (RESTDOOR1), the flag riding
   const intensive = wm.indexOf('interiorTicker.advance(days * MINUTES_PER_DAY);   // RaiseTime(SecondsPerDay * 4) first');
   assert.ok(intensive > 0);
   assert.ok(wm.indexOf('playerEntity.skills[skill] = permanentSkillValue(playerEntity, skill) + points;   // SetPermanentSkillValue', intensive) > intensive, 'the days pass, then the +4');
@@ -275,5 +275,5 @@ test('AUDIT-RR: checked and standing - the named-not-changed departures are reco
   for (const f of ['F1', 'F2', 'F4', 'F5', 'F6', 'F7', 'F8', 'F13', 'F14', 'F15', 'F16', 'F17', 'F18', 'F23', 'F24', 'F25', 'F26', 'F30', 'F32', 'F33', 'F34', 'F35', 'F36', 'F37', 'F38', 'F39']) assert.match(rr, new RegExp(`\\*\\*${f} `), `${f} recorded`);
   for (const f of ['F3', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10']) assert.match(rri, new RegExp(`\\*\\*${f} `), `RRI ${f} recorded`);
   assert.match(rr, /named, not changed/i);
-  assert.match(rd('bible/06-Systems/Systems.md'), /196 modules live under/);
+  assert.match(rd('bible/06-Systems/Systems.md'), /\d+ modules live under/);   // the count is U42's to pin
 });

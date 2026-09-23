@@ -146,3 +146,88 @@ test('NT1 (F054): the no-landing throw frees the interior build it abandons', ()
   assert.ok(wm.includes("if (!landing) { ctx.destroy(); throw new Error('no interior landing'); }"),
     'the fully-built context is freed before the throw the hosts only log');
 });
+
+// ---------------------------------------------------------------
+// 4. AUDIT-WH R6 - THE PLAQUE'S OWN ALLOCATION, and the six doors
+//    that are supposed to close it
+// ---------------------------------------------------------------
+//
+// This file is the 17e ownership rule's gate and it had no opinion
+// about the world plaque, which is a `document.body` child with a
+// module-level handle - the exact shape NT1 exists for. The audit
+// found ONE of its six doors pinned anywhere in the tree: the modal
+// arms' mode exits. The five that were not are the two above-ground
+// hosts' unwinds, the standalone dungeon's, and the dungeon context's
+// own destroy - and `world.js` had imported the door without ever
+// calling it while `exterior.js` had no teardown at all.
+
+test('NT1 / AUDIT-WH R6: the world plaque has ONE owner per host, and every one of them frees it', () => {
+  const plaque = src('ui/worldPlaque.js');
+  // The node is module state with one creator and one destroyer.
+  assert.match(plaque, /function ensure\(\) \{\n  if \(node \|\| typeof document === 'undefined'\) return node;/,
+    'one creator, idempotent');
+  assert.match(plaque, /export function destroyWorldPlaque\(\) \{[\s\S]{0,400}node = null;/,
+    'one destroyer, and it drops the handle');
+  // ...and the destroyer resets EVERY piece of module state, or the
+  // next host inherits a guard that says the plaque already shows what
+  // it does not.
+  const destroy = plaque.slice(plaque.indexOf('export function destroyWorldPlaque() {'));
+  for (const slot of ['node = null;', 'shownSig = null;', 'lastX = null;', 'lastTop = null;',
+    '_faults = 0;', '_faultSaid = false;', '_gateMark = null;', '_gateOn = false;']) {
+    assert.ok(destroy.includes(slot), `destroyWorldPlaque leaves ${slot.split(' ')[0]} behind`);
+  }
+  // THE SIX DOORS. Five of them were unpinned before AUDIT-WH R6, and
+  // two of those were not merely unpinned - they did not exist.
+  const DOORS = [
+    ['scenes/world.js', /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}/, 'the streaming host\'s unwind'],
+    ['scenes/exterior.js', /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}/, 'the fixed city\'s unwind'],
+    ['scenes/dungeon.js', /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}/, 'the dev door\'s unwind'],
+    ['scenes/worldModes.js', /destroyWorldPlaque\(\);   \/\/ WORLD-HOVER/, 'the modal arms\' mode exits'],
+    ['scenes/dungeonContext.js', /destroyWorldPlaque\(\);/, 'the dungeon context\'s destroy'],
+  ];
+  for (const [f, re, what] of DOORS) assert.match(src(f), re, `${what} does not free the plaque`);
+  // The modal machine has THREE exits, not one - two back to the
+  // street and the machine's own destroy - and all three say it.
+  assert.equal((src('scenes/worldModes.js').match(/destroyWorldPlaque\(\);/g) ?? []).length, 3,
+    'every way out of a mode frees it');
+  // The seam itself allocates nothing that outlives a frame: the only
+  // persistent handles are the node and the watchdog's timer, and the
+  // only growing state is a fault COUNT.
+  //
+  // AUDIT-WH2 L3-F2: `_watchdog` is the second handle this module owns -
+  // a pending setTimeout - and `_schedule`/`_cancel` are the two clocks
+  // a test swaps for it. All three are in the allowlist BECAUSE the
+  // destroy-slot list below names the one that is a live resource.
+  assert.doesNotMatch(plaque, /^let (?!node|shownSig|lastX|lastTop|_faults|_faultSaid|_gateMark|_gateOn|_watchdog|_schedule|_cancel)/m,
+    'a new module-level slot needs an owner and a line in destroyWorldPlaque');
+  // ...and the timer is CANCELLED, not merely forgotten: a dropped
+  // handle keeps firing, and in a test run it holds the event loop
+  // open past the last assertion.
+  assert.match(plaque, /export function destroyWorldPlaque\(\) \{\n(?:\s*\/\/[^\n]*\n)*\s+_cancel\(_watchdog\);\n\s+_watchdog = null;/,
+    'the teardown frees the watchdog before anything else');
+  assert.match(plaque, /export function hideWorldPlaque\(\) \{\n(?:\s*\/\/[^\n]*\n)*\s+_cancel\(_watchdog\);\n\s+_watchdog = null;/,
+    'and so does the hide - the heartbeat stops with the thing it watches');
+  // QUICK-LOOT B3/B4: the highlight is ABOUT a key in the world this
+  // teardown is unmaking, so it dies with it - a selection carried
+  // across a mode change points the take at a pile that is gone, and a
+  // pending nudge spent in a dungeon would move the highlight in the
+  // street. The STATE is the feature's (systems/quickLoot.js, where the
+  // take can reach it without a systems module importing a draw); the
+  // teardown that frees it is still this module's, because this is the
+  // door the hosts call.
+  assert.match(plaque, /export function destroyWorldPlaque\(\)[\s\S]{0,1400}?\n\s+resetQuickLoot\(\);/,
+    'the teardown frees the feature\'s selection and pending nudge');
+  const ql = src('systems/quickLoot.js');
+  // ...and that is what freeing them means - EVERY slot the feature
+  // owns, held the same way the plaque's own destroy-slot list above
+  // holds its own: a name here per `let` there, and a new `let` with no
+  // line in the reset fails the second half.
+  const reset = ql.slice(ql.indexOf('export function resetQuickLoot() {'));
+  for (const slot of ['_sel = null;', '_nudge = 0;', '_pending = null;', '_actionIds = null;', '_lastKey = null;']) {   // ACT-MENU: the lit list's verbs
+    assert.ok(reset.slice(0, reset.indexOf('}')).includes(slot), `resetQuickLoot leaves ${slot.split(' ')[0]} behind`);
+  }
+  assert.doesNotMatch(ql, /^let (?!_sel|_nudge|_pending|_actionIds|_lastKey)/m,
+    'a new module-level slot needs an owner and a line in resetQuickLoot');
+  assert.doesNotMatch(ql, /from '\.\.\/ui\//,
+    'the feature owns its own state, so it never has to reach into a draw to read it');
+});

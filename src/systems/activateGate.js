@@ -32,8 +32,10 @@
 // maps DOM button 2 to the code 'Mouse1', SwingWeapon's default at
 // InputManager.cs:1010), but the hosts read `e.button === 2` directly
 // and never `held(keys, 'SwingWeapon')`, so a SwingWeapon rebind is
-// inert where this module's Mouse0 activate follows one. Both are
-// recorded departures, and neither is touched here - this module adds
+// inert where this module's Mouse0 activate follows one (MAC-SWING1,
+// 2026-09-21, closed that: ui/input.js swingHeld/swingKeyHeld read the
+// binding for any code). Both were recorded departures, and neither is
+// touched here - this module adds
 // the DFU button rather than replacing the port's.
 
 // ROAD-Ar - THE THREE FACTS ABOVE WERE THE WHOLE GATE, AND THE WHOLE
@@ -84,7 +86,7 @@ const nowSeconds = () =>
  *  the one action, plus PlayerActivate's castPending (:71) and its
  *  clickDelay/clickDelayStartTime pair (:1050-1054). */
 export function createActivateGate() {
-  return { down: false, castPending: false, clickDelay: 0, clickDelayStart: 0 };
+  return { down: false, castPending: false, clickDelay: 0, clickDelayStart: 0, pressCast: false };
 }
 
 /** PlayerActivate.SetClickDelay (:1050-1054), Mathf.Clamp01 included.
@@ -106,8 +108,12 @@ export function setClickDelay(gate, delay = 0.3, now = nowSeconds()) {
  * `hudBlocked` is LargeHUD.ActiveMouseOverLargeHUD (cursor freed AND
  * over the bar); `paused` is InputManager.IsPaused - any open window.
  *
- * Returns { cast, activate }: whether this frame casts the readied
- * spell, and whether it runs the activation ray.
+ * Returns { cast, activate, pressCast }: whether this frame casts the
+ * readied spell, whether it runs the activation ray, and - AUDIT DISC7 A1 -
+ * whether the press this release ends was a CAST. DFU lets a readied TOUCH
+ * spell's release run the activation too (:250-258) and the ladder keeps
+ * that; the port's own arms that are not DFU's (the plaque's verbs on a
+ * player - a touch heal on a party mate) must not also fire on it.
  */
 export function activateFrame(gate, {
   down = false, hasReadySpell = false, touchSpell = false,
@@ -138,6 +144,7 @@ export function activateFrame(gate, {
   // arms above it (:236-248) fire without a button at all and are the
   // effect system's own business, not this gate's.
   const cast = started && hasReadySpell;
+  if (started) gate.pressCast = cast;
 
   // Fact 4. PlayerActivate.cs:230-236, in its own position: ABOVE the
   // spell block, so castPending is neither set nor consumed here.
@@ -152,5 +159,5 @@ export function activateFrame(gate, {
     gate.castPending = false;
     return { cast, activate: false };
   }
-  return { cast, activate: complete };
+  return { cast, activate: complete, pressCast: complete && !!gate.pressCast };
 }

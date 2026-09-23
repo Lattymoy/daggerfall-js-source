@@ -2,8 +2,8 @@
   {
     "name": "S1-party-five-seats",
     "file": "src/net/wire.js",
-    "old": "export const PARTY_MAX = 4;",
-    "new": "export const PARTY_MAX = 5;",
+    "old": "export const PARTY_MAX = 8;",
+    "new": "export const PARTY_MAX = 9;",
     "tests": [
       "test/soc1_hub.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "S23-seat-passed-to-the-newest",
     "file": "server/src/index.js",
-    "old": "const leader = party.leader === acct ? members[0] : party.leader;",
-    "new": "const leader = party.leader === acct ? members[members.length - 1] : party.leader;",
+    "old": "const leader = party.leader === acct ? (members.find((id) => this._socketsOf(id).length) ?? members[0]) : party.leader;",
+    "new": "const leader = party.leader === acct ? (members.find((id) => this._socketsOf(id).length) ?? members[members.length - 1]) : party.leader;",
     "tests": [
       "test/soc1_hub.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "S37-picture-before-the-welcome",
     "file": "server/src/index.js",
-    "old": "        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });\n        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);",
-    "new": "        const said = JSON.stringify({ t: 'join', id: m.id, name: m.name });\n        if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch { /* the mutant's early hello */ } }\n        for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, said);",
+    "old": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject }, who));",
+    "new": "        const said = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, sub: who.subject }, who));\n        if (isSocialRoom(a.key) && m.acct) { try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); } }",
     "tests": [
       "test/soc1_hub.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "S38-version-not-bumped",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world83';",
-    "new": "export const RELAY_VERSION = 'world82';",
+    "old": "export const RELAY_VERSION = 'world100';",
+    "new": "export const RELAY_VERSION = 'world99';",
     "tests": [
       "test/soc1_hub.test.js",
       "test/relayversion.test.js"

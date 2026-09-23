@@ -28,7 +28,7 @@
 
 import { UMRandom } from '../formats/umRandom.js';
 import {
-  HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE,
+  HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE,
   TERRAIN_SIZE, SCALED_BEACH_ELEVATION,
 } from './terrainSampler.js';
 import { WORLD_MAP_TILE_DIM } from './terrainTiles.js';
@@ -63,7 +63,7 @@ export function makeTerrainKey(mapPixelX, mapPixelY) {
 export function layoutNature(heightmapData, tilemapData, opts) {
   const hDim = HEIGHTMAP_DIMENSION;
   const tDim = WORLD_MAP_TILE_DIM;
-  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // TerrainNature.LayoutNature's terrainScale - the game scene's (TERRAIN-SCALE1)
   const cell = TERRAIN_SIZE / (hDim - 1);
   const at = (x, y) => heightmapData[x * hDim + y] * worldHeight;
 

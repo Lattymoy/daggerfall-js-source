@@ -178,6 +178,9 @@ export const WARM_CHUNKS = Object.freeze([
   () => import('./enhancedTalk.js'),
   () => import('./enhancedBook.js'),
   () => import('./enhancedChronicle.js'),
+  () => import('./enhancedTrade.js'),
+  () => import('./enhancedTavern.js'),
+  () => import('./enhancedMerchantPanel.js'),
 ]);
 
 let warmed = false;

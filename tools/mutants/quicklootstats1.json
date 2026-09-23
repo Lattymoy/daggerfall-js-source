@@ -1,0 +1,141 @@
+[
+  {
+    "name": "the-damage-row-goes",
+    "file": "src/systems/itemInfo.js",
+    "old": "  push('Damage', itemDamageLine(item));",
+    "new": "",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "the-armour-row-goes",
+    "file": "src/systems/itemInfo.js",
+    "old": "  push('Armour', itemArmourLine(item));",
+    "new": "",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "every-group-gets-a-material-row",
+    "file": "src/systems/itemInfo.js",
+    "old": "  if (item.group === 'Weapons' || item.group === 'Armor') push('Material', materialName(item));",
+    "new": "  push('Material', materialName(item));",
+    "tests": [
+      "test/quicklootstats.test.js",
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "a-survival-item-gets-a-condition-row-too",
+    "file": "src/systems/itemInfo.js",
+    "old": "  if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);\n  else if ((item.maxCondition ?? 0) > 0)",
+    "new": "  if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);\n  if ((item.maxCondition ?? 0) > 0)",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "the-weight-is-one-rather-than-the-stacks",
+    "file": "src/systems/itemInfo.js",
+    "old": "  push('Weight', `${weightString(item)} kg`);",
+    "new": "  push('Weight', `${weightString({ ...item, stackCount: 1 })} kg`);",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "an-item-with-nothing-to-say-draws-an-empty-panel",
+    "file": "src/systems/itemInfo.js",
+    "old": "  if (!item) return [];\n  const rows = [];",
+    "new": "  const rows = [];\n  if (!item) item = {};",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "the-row-stops-carrying-its-item",
+    "file": "src/systems/worldHover.js",
+    "old": "    rarity: rarityAttr(it),   // LR1: null with the switch off or for Common\n    item: it,",
+    "new": "    rarity: rarityAttr(it),   // LR1: null with the switch off or for Common",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "the-panel-describes-row-zero-rather-than-the-lit-one",
+    "file": "src/systems/quickLoot.js",
+    "old": "  const row = quickLootRow(frame);\n  if (row < 0) return [];\n  return itemStatRows(frame?.rows?.[row]?.item ?? null);",
+    "new": "  return itemStatRows(frame?.rows?.[0]?.item ?? null);",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "the-panel-draws-with-nothing-lit",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (row < 0) return [];",
+    "new": "",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ],
+    "equivalent": true,
+    "why": "EQUIVALENT, and kept because the reason is worth reading. Removing the `row < 0` guard leaves `frame.rows[-1]`, which is `undefined` for an array, so itemStatRows answers [] exactly as the guard does - there is no input that tells them apart. The guard stays because the day this reads `rows.at(row)` instead, -1 stops meaning 'nothing' and starts meaning THE LAST ROW: the panel would quietly describe the bottom of a pile the player has no highlight in. It is a line about intent, not about today's behaviour, and no pin can honestly claim otherwise."
+  },
+  {
+    "name": "the-side-never-flips-left",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (anchorX + need <= viewportWidth) return 'right';\n  if (anchorX - need >= 0) return 'left';",
+    "new": "  if (anchorX - need >= 0) return 'left';",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "the-side-forgets-the-margin",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const need = half + STATS_GAP + STATS_W + STATS_MARGIN;",
+    "new": "  const need = half + STATS_GAP + STATS_W;",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "the-side-takes-the-plaques-half-at-its-minimum",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const half = PLAQUE_MAX_W / 2;",
+    "new": "  const half = 190 / 2;",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "a-window-that-has-not-reported-itself-is-guessed-at",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!Number.isFinite(anchorX) || !Number.isFinite(viewportWidth) || viewportWidth <= 0) return 'below';",
+    "new": "",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "below-hangs-off-the-edge-like-a-right",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".wplaque-stats[data-side=\"below\"] { position: static;",
+    "new": ".wplaque-stats[data-side=\"below\"] { position: absolute;",
+    "tests": [
+      "test/quicklootstats.test.js"
+    ]
+  },
+  {
+    "name": "the-side-falls-out-of-the-repaint-signature",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}|${statsSide(lastX, globalThis.innerWidth ?? 0)}`;",
+    "new": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}`;",
+    "tests": [
+      "test/quicklootstats.test.js",
+      "test/worldhover.test.js"
+    ]
+  }
+]

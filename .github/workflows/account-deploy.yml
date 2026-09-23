@@ -1,0 +1,466 @@
+# ACC1-CI (2026-09-21): THE ACCOUNT SERVICE STANDS ITSELF UP.
+#
+# Mac: "The token provided allows you to take this on yourself. I am
+# not needed at all."
+#
+# ACC1b shipped `server-account/` with a four-step list headed "WHAT A
+# PERSON HAS TO DO ONCE, BY HAND", on the reasoning that CI cannot
+# create resources - only deploy code to them. That reasoning was
+# wrong: the same API token that deploys the relay can create a D1
+# database and set a Worker secret, and every one of the four steps has
+# an idempotent spelling. So there is no by-hand list any more.
+#
+# ═══ WHY A PATH FILTER IS ALLOWED HERE, AND IS NOT ON THE RELAY ════
+#
+# `relay-deploy.yml` refuses a path filter and triggers on a VERSION
+# instead, because a relay deploy drops every connected player and
+# `src/net/wire.js` changes several times a day for reasons the running
+# Worker does not care about.
+#
+# THIS WORKER HOLDS NO SOCKETS. A deploy here restarts nothing a player
+# is attached to, so the worst a spurious run costs is a minute of
+# Actions time. That is the entire point of ACC1b's two-Worker split,
+# and it is what buys this file the simpler trigger.
+#
+# ═══ EVERY STEP IS IDEMPOTENT ══════════════════════════════════════
+#
+# Re-running the whole job must be safe, because that is how a failed
+# deploy gets retried - by the next push, not by somebody remembering.
+# So: the database is created only if absent, migrations are applied
+# through wrangler's own `d1_migrations` ledger, and THE SIGNING PAIR IS
+# MINTED ONLY IF THERE IS NOT ONE ALREADY. That last one is not a
+# nicety: re-minting would invalidate every token in flight and sign
+# out everybody who is online.
+name: Deploy account service (drops nobody)
+
+on:
+  push:
+    branches: [main]
+    # EVERY FILE OUTSIDE server-account/ THAT THE WORKER BUNDLES is
+    # listed, and test/accountdeploy.test.js walks the Worker's import
+    # graph and holds this list to it. Only identityToken.js was listed
+    # until ACC4 - a change to the name filter or the handle shape was
+    # bundled into this Worker and did not deploy it.
+    paths:
+      - "server-account/**"
+      - "src/net/identityToken.js"
+      - "src/net/handleShape.js"
+      - "src/net/nameFilter.js"
+      - "src/net/moderation.js"
+      - "src/net/playClock.js"
+      - "src/net/wire.js"
+      - "src/world/mat4.js"
+      - "src/characters/nameGen.json"
+      - ".github/workflows/account-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One at a time. Two runs racing on `d1 create` or `migrations apply`
+# is the one state this must not get into.
+concurrency:
+  group: account-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      DB_NAME: daggerfall-accounts
+      WRANGLER: npx --yes wrangler@4
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # THE TOKEN IS THE ONE THING THIS JOB CANNOT DERIVE. Say so in one
+      # line rather than letting wrangler fail four steps later with an
+      # authentication error that reads like a wrangler bug.
+      - name: Refuse to start without a token
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            exit 1
+          fi
+
+      # ── 1. THE DATABASE, IF IT IS NOT THERE ALREADY ───────────────
+      #
+      # `d1 create` on an existing name is an error, not a no-op, so the
+      # list is asked first. The id is then read back out of Cloudflare
+      # in BOTH branches - never remembered from the create - because
+      # the authority on a database's id is Cloudflare and not this job.
+      - name: Create the database if it does not exist, and resolve its id
+        id: d1
+        run: |
+          set -euo pipefail
+          list=$($WRANGLER d1 list --json 2>/dev/null || echo '[]')
+          if echo "$list" | jq -e --arg n "$DB_NAME" 'any(.[]; .name == $n)' >/dev/null; then
+            echo "$DB_NAME already exists"
+          else
+            echo "creating $DB_NAME"
+            $WRANGLER d1 create "$DB_NAME"
+            list=$($WRANGLER d1 list --json)
+          fi
+          id=$(echo "$list" | jq -r --arg n "$DB_NAME" 'map(select(.name == $n)) | .[0].uuid // .[0].id // empty')
+          if [ -z "$id" ]; then
+            echo "::error::$DB_NAME exists but Cloudflare did not report an id for it"
+            exit 1
+          fi
+          # A D1 id is not a secret, but it is also nobody's business in
+          # a public log, and printing it buys nothing - the steps below
+          # read it from the output, not from a human.
+          echo "::add-mask::$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "resolved the id for $DB_NAME"
+
+      # THE SENTINEL IS THE SEAM. `server-account/wrangler.toml` carries
+      # `database_id = "resolved-by-account-deploy-workflow"`, and this
+      # is the only place that string is replaced. The substitution is
+      # CHECKED rather than assumed: a `sed` that matched nothing exits
+      # 0 and hands wrangler a config naming a database that cannot
+      # exist, which is a deploy failure three steps from its cause.
+      - name: Write the id into the runner's copy of the config
+        run: |
+          set -euo pipefail
+          toml=server-account/wrangler.toml
+          sentinel='resolved-by-account-deploy-workflow'
+          grep -q "$sentinel" "$toml" || {
+            echo "::error::$toml no longer carries the sentinel this workflow substitutes"
+            exit 1
+          }
+          sed -i "s|\"$sentinel\"|\"${{ steps.d1.outputs.id }}\"|" "$toml"
+          if grep -q "$sentinel" "$toml"; then
+            echo "::error::the sentinel survived the substitution"
+            exit 1
+          fi
+          echo "the config in this runner now names the real database"
+
+      # ── 1b. THE BUCKET, IF IT IS NOT THERE ALREADY ────────────────
+      #
+      # ACC2. Same shape as the database above and for the same reason
+      # (Mac: "The token provided allows you to take this on yourself"),
+      # with one difference that makes it simpler: A BUCKET NAME IS NOT
+      # AN ID. Cloudflare mints no identifier to resolve, so the name in
+      # `wrangler.toml` IS the reference and there is no sentinel here.
+      #
+      # `r2 bucket create` on an existing name is an error rather than a
+      # no-op, exactly like `d1 create`, so the list is asked first - and
+      # the listing must SUCCEED and parse, never fall back to "empty".
+      # AUDIT-ACC F1 was that fallback: `|| echo '[]'` turned "I could
+      # not read this" into "there is none of it", and the destructive
+      # default it reached was re-minting the signing pair on every
+      # deploy. Here the same fallback would try to create a bucket that
+      # exists, which merely fails - but the lesson is the shape, not the
+      # blast radius.
+      #
+      # AND IT RUNS BEFORE THE DEPLOY, because a Worker whose toml binds
+      # a bucket that does not exist does not start.
+      - name: Create the save bucket if it does not exist
+        run: |
+          set -euo pipefail
+          # DERIVED, NEVER TYPED TWICE: the name comes out of the config
+          # this deploy actually ships, so a rename in one place cannot
+          # leave the other creating the wrong bucket.
+          want=$(grep -oP '^bucket_name\s*=\s*"\K[^"]+' server-account/wrangler.toml)
+          if [ -z "$want" ]; then
+            echo "::error::server-account/wrangler.toml declares no r2 bucket_name"
+            exit 1
+          fi
+          # NO `|| echo` FALLBACK. AUDIT-ACC F1: a listing that fails must
+          # fail the step, because "I could not read this" turning into
+          # "there is none of it" is how the deploy came to re-mint the
+          # signing pair on every run.
+          #
+          # `r2 bucket list` has no --json (checked against wrangler 4's
+          # own bundle, not assumed): it prints wrangler's labelled-value
+          # table, one `name:  <bucket>` line per bucket. awk splits on
+          # whitespace and compares the value EXACTLY, so no part of the
+          # name is read as a pattern and a bucket whose name merely
+          # contains ours is not mistaken for it.
+          list=$($WRANGLER r2 bucket list | sed 's/\x1b\[[0-9;]*m//g')
+          if printf '%s\n' "$list" | awk -v w="$want" '$1 == "name:" && $2 == w { found = 1 } END { exit !found }'; then
+            echo "$want already exists"
+          else
+            echo "creating $want"
+            $WRANGLER r2 bucket create "$want"
+          fi
+
+      # ── 2. THE MIGRATIONS ─────────────────────────────────────────
+      #
+      # `migrations apply` keeps a `d1_migrations` table in the database
+      # itself and runs only what is missing, in order. That is the
+      # whole reason it replaced two `d1 execute --file` lines: 0002 is
+      # NOT idempotent - `ALTER TABLE ADD COLUMN` has no IF NOT EXISTS -
+      # so "apply each one exactly once" has to be something a tool
+      # knows, not something a comment asks for.
+      - name: Apply migrations
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          $WRANGLER d1 migrations apply "$DB_NAME" --remote
+
+      # ── 3. DEPLOY, AND IT COMES BEFORE THE KEY ───────────────────
+      #
+      # AUDIT-ACC F15: THE ORDER USED TO BE THE OTHER WAY AND THE FIRST
+      # RUN COULD NEVER HAVE SUCCEEDED. `wrangler secret list` asks
+      # Cloudflare for a Worker's secrets, and on a Worker that does not
+      # exist yet it fails outright:
+      #
+      #   Worker "daggerfall-accounts" not found.
+      #   If this is a new Worker, run `wrangler deploy` first to create it.
+      #
+      # On the very first deploy that is the EXPECTED state, so the
+      # minting step aborted the job before anything was ever deployed.
+      #
+      # F1 is what made it fatal rather than merely wrong. Before F1 the
+      # step swallowed the failure with `|| echo '[]'` and blundered on;
+      # F1 correctly made an unreadable listing stop the job - and in
+      # doing so turned a first-run certainty into a hard stop. Both
+      # halves were right on their own. The order is what was wrong.
+      #
+      # DEPLOYING FIRST IS SAFE BECAUSE THE SERVICE IS BUILT FOR IT: a
+      # Worker with no signing key still hands out accounts and answers
+      # `no-signing-key` on /v1/auth/token rather than minting something
+      # the relay would refuse. That arm is pinned in
+      # test/accountworker.test.js and this is the moment it is for.
+      # `secret put` redeploys the Worker with the binding, so the
+      # window is seconds long and nothing is using the service yet.
+      - name: Deploy
+        id: deploy
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          # AUDIT-ACC F16: THE URL IS READ OFF THE DEPLOY, NOT TYPED.
+          # The verify steps used to build the host from the worker name
+          # plus a hardcoded `mackcothran` subdomain - the name derived
+          # from the config, the account typed beside it. That is a
+          # second home for a fact, and it is the exact shape SLAM13
+          # burned the relay on: a check pointed at a stale fact keeps
+          # passing, or keeps failing, for reasons that have nothing to
+          # do with what it is checking. wrangler prints the URL it
+          # deployed to; that is the authority on where this Worker now
+          # lives, and it makes this workflow portable to any account.
+          $WRANGLER deploy | tee /tmp/deploy.log
+          url=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/deploy.log | head -1)
+          if [ -z "$url" ]; then
+            echo "::error::wrangler did not print a workers.dev URL - cannot verify a deploy whose address is unknown"
+            exit 1
+          fi
+          echo "base=$url" >> "$GITHUB_OUTPUT"
+          echo "deployed to $url"
+
+      # ── 4. THE SIGNING PAIR, ONCE AND ONLY ONCE ───────────────────
+      #
+      # RE-MINTING IS THE DESTRUCTIVE CASE. Every token this service has
+      # ever signed verifies against the public half; replacing the pair
+      # makes all of them fail at once. So the secret list is asked
+      # first, and a pair that is already there is left completely
+      # alone.
+      #
+      # ═══ AUDIT-ACC F1: AND "I COULD NOT TELL" IS NOT "THERE IS NONE" ══
+      #
+      # The first cut of this step ran `secret list --json` and fell back
+      # to `[]` if that failed. Both halves of that were wrong, and
+      # together they were the destructive case arriving through the
+      # error path:
+      #
+      #   - THERE IS NO `--json` FLAG on `wrangler secret list`. It takes
+      #     `--format json|pretty` and already defaults to json. Given an
+      #     unknown flag wrangler printed its HELP TEXT and exited 0.
+      #   - `jq` then failed to parse that help text, the `if` went
+      #     false, and the step fell straight through to minting.
+      #
+      # So every deploy would have re-minted, signing out everybody
+      # online, while the guard sat right there looking correct. The
+      # fallback was the deeper fault: a DESTRUCTIVE default reached by
+      # not being able to read something. Now the listing must succeed
+      # AND parse as an array, or the step fails and mints nothing.
+      #
+      # Neither half is ever echoed, written to a file, or passed as an
+      # argument. One `node` run emits both (in that order, private
+      # first) and `read` takes them straight off the pipe into
+      # variables this step never prints. The public half - which is not
+      # a secret - goes into the job summary, because it is the thing
+      # ACC1d needs and /v1/pubkey will serve it anyway.
+      - name: Mint the signing pair if the service has none
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          # No `|| default`: a listing that fails must fail the step.
+          have=$($WRANGLER secret list --format json)
+          if ! echo "$have" | jq -e 'type == "array"' >/dev/null; then
+            echo "::error::secret list did not return a JSON array - refusing to decide whether a key exists"
+            exit 1
+          fi
+          if echo "$have" | jq -e 'any(.[]; .name == "IDENTITY_PRIVATE_KEY")' >/dev/null; then
+            echo "a signing key is already set - leaving it alone (re-minting would invalidate every token in flight)"
+            exit 0
+          fi
+          echo "no signing key yet - minting one"
+          { read -r priv; read -r pub; } < <(node ../tools/mintIdentityKeys.mjs --pipe)
+          if [ -z "$priv" ] || [ -z "$pub" ]; then
+            echo "::error::the key tool did not emit a pair"
+            exit 1
+          fi
+          printf '%s' "$priv" | $WRANGLER secret put IDENTITY_PRIVATE_KEY
+          printf '%s' "$pub" | $WRANGLER secret put IDENTITY_PUBLIC_KEY
+          unset priv
+          {
+            echo "### A new identity signing pair was minted"
+            echo ""
+            echo "The private half went straight into \`IDENTITY_PRIVATE_KEY\` and was never written down."
+            echo "The public half is **not a secret** - the service serves it at \`/v1/pubkey\`:"
+            echo ""
+            echo "    $pub"
+            echo ""
+            echo "This is the value ACC1d pins in the relay's config."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ...AND PROVE IT LANDED, BY CONTENT. The client's deploy has been
+      # verified this way since U60 and the relay's since SRV-N/CI, for
+      # the same reason both times: a wrangler exit code of 0 over an
+      # unchanged Worker is a green deploy that did not happen, and is
+      # indistinguishable from success without this.
+      #
+      # NEITHER THE VERSION NOR THE HOST IS TYPED HERE. The version is
+      # read from `wrangler.toml`, which owns it; the host comes from
+      # the deploy step, which is the only thing that actually knows
+      # where this Worker now lives (AUDIT-ACC F16 - it used to be the
+      # worker name from the config plus a hardcoded account subdomain,
+      # which is a second home for a fact and the exact shape SLAM13
+      # burned the relay on).
+      - name: Verify /v1/health names this deploy
+        run: |
+          set -euo pipefail
+          toml=server-account/wrangler.toml
+          want=$(grep -oP '^ACCOUNT_VERSION\s*=\s*"\K[^"]+' "$toml")
+          test -n "$want" || {
+            echo "::error::could not read ACCOUNT_VERSION out of $toml"
+            exit 1
+          }
+          url="${{ steps.deploy.outputs.base }}/v1/health"
+          for i in $(seq 1 24); do
+            got=$(curl -fsS --max-time 10 "$url" | sed -n 's/.*"v":"\([^"]*\)".*/\1/p' || true)
+            echo "attempt $i: live reports '${got:-unreachable}', want '$want'"
+            if [ "$got" = "$want" ]; then echo "VERIFIED: the account service serves $want"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::the account service never reported $want - the deploy did not take"
+          exit 1
+
+      # ═══ AND A REAL PASSWORD ROUTE ACTUALLY RUNS ══════════════════
+      #
+      # /v1/health proves the Worker is up and serving this version. It
+      # does NOT prove the service works, and the difference cost a live
+      # outage: Cloudflare Workers refuses PBKDF2 above 100,000
+      # iterations, this arc shipped 210,000, and register, login and
+      # recover ALL answered 500 from the day they deployed while every
+      # gate stayed green.
+      #
+      # NOTHING LOCAL COULD HAVE CAUGHT IT. The suite runs in node,
+      # which has no cap. tools/accountProbe.mjs stands the service in
+      # real workerd - the probe that exists because AUDIT-ACC F2 found
+      # a Worker that could not boot behind a green suite - and workerd
+      # has no cap either. It even measured the cost and passed.
+      #
+      # So the deploy makes the one request no local runtime can fake: a
+      # REGISTRATION, against the deployed Worker, on Cloudflare. A
+      # throwaway handle, a guest row that costs nothing, and a 500 here
+      # fails the deploy instead of a player.
+      - name: Verify a password route really runs on the platform
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          guest=$(curl -fsS --max-time 15 -X POST "$base/v1/auth/guest" \
+            -H 'content-type: application/json' -d '{"label":"deploy-smoke"}')
+          secret=$(echo "$guest" | sed -n 's/.*"secret":"\([^"]*\)".*/\1/p')
+          test -n "$secret" || { echo "::error::no guest session - /v1/auth/guest did not answer a secret"; echo "$guest"; exit 1; }
+
+          # ACC4: THE BEAT IS ONE UPDATE ... RETURNING with numbered
+          # parameters. node:sqlite runs both; this asks D1 itself.
+          code=$(curl -sS --max-time 15 -o /tmp/beat.json -w '%{http_code}' -X POST "$base/v1/account/played" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\"}")
+          echo "played -> $code"
+          cat /tmp/beat.json || true
+          echo
+          if [ "$code" != "200" ] || ! grep -q '"playedS":0' /tmp/beat.json; then
+            echo "::error::the time-played beat failed on the deployed Worker ($code) - a first beat must answer playedS 0"
+            exit 1
+          fi
+
+          # MOD1: THE MODERATION ROUTE IS LIVE AND SHUT. A guest is nobody's
+          # moderator, so it must be refused 403 - a 404 is a route that did
+          # not deploy, a 500 a migration that did not apply.
+          code=$(curl -sS --max-time 15 -o /tmp/mod.json -w '%{http_code}' -X POST "$base/v1/mod/mute" \
+            -H 'content-type: application/json' -d "{\"secret\":\"$secret\",\"target\":\"p_nobody\",\"minutes\":1}")
+          echo "mod/mute as a guest -> $code"
+          if [ "$code" != "403" ] || ! grep -q '"not-moderator"' /tmp/mod.json; then
+            echo "::error::/v1/mod/mute did not refuse a guest as not-moderator ($code)"; cat /tmp/mod.json || true; exit 1
+          fi
+
+          handle="smoke$(date +%s | tail -c 7)"
+          code=$(curl -sS --max-time 25 -o /tmp/reg.json -w '%{http_code}' -X POST "$base/v1/auth/register" \
+            -H 'content-type: application/json' \
+            -d "{\"secret\":\"$secret\",\"handle\":\"$handle\",\"password\":\"a-long-enough-password\"}")
+          echo "register -> $code"
+          cat /tmp/reg.json || true
+          echo
+          if [ "$code" != "200" ]; then
+            echo "::error::a REGISTRATION failed on the deployed Worker ($code). /v1/health is green and the service does not work - this is the PBKDF2-cap class: node and workerd have no iteration cap and Cloudflare does."
+            exit 1
+          fi
+          echo "VERIFIED: a password route runs on the real platform"
+
+      # AND THE PUBLIC KEY IS REACHABLE, which is what makes the minting
+      # step's "nobody ever sees it" safe. A pair minted into a Worker
+      # that cannot hand back its own public half is a pair that would
+      # have to be re-minted to be used.
+      - name: Verify the service can hand back its own public key
+        run: |
+          set -euo pipefail
+          body=$(curl -fsS --max-time 10 "${{ steps.deploy.outputs.base }}/v1/pubkey" || true)
+          key=$(echo "$body" | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
+          if [ -z "$key" ]; then
+            echo "::error::/v1/pubkey did not answer with a key - the signing pair is not usable by the relay"
+            exit 1
+          fi
+          echo "the service publishes a ${#key}-character public key"
+
+          # ═══ ACC1d D2: THE TWO COPIES ARE CHECKED AGAINST EACH OTHER
+          #
+          # The relay carries the public half as a plain var, because a
+          # key that can verify and cannot mint has nothing to hide, and
+          # fetching it at runtime would put this service in the relay's
+          # startup path - the coupling the two-Worker split exists to
+          # refuse. The price of that copy is drift, and drift here has
+          # the worst failure mode there is: EVERY verify fails, every
+          # hello is refused as `token bad signature`, and nothing says
+          # why. So it is caught at deploy, where it is free.
+          want=$(grep -oP '^IDENTITY_PUBLIC_KEY\s*=\s*"\K[^"]+' server/wrangler.toml || true)
+          if [ -z "$want" ]; then
+            echo "::error::server/wrangler.toml carries no IDENTITY_PUBLIC_KEY - the relay cannot verify anything"
+            exit 1
+          fi
+          if [ "$want" != "$key" ]; then
+            echo "::error::the relay's configured public key does not match the one this service publishes - every token would be refused"
+            {
+              echo "### The relay's identity key is stale"
+              echo ""
+              echo "\`server/wrangler.toml\` says \`IDENTITY_PUBLIC_KEY = \"$want\"\`,"
+              echo "but this service publishes:"
+              echo ""
+              echo "    $key"
+              echo ""
+              echo "Update the relay's config to that value and let the relay deploy."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "and the relay's configured copy matches it"

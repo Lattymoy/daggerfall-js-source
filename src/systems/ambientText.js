@@ -140,9 +140,11 @@ export const hasAmbientText = (key, texts = AMBIENT_TEXTS) => Object.prototype.h
  *                  it"): the mod says nothing about how its lines are
  *                  DRAWN and never did - the host's `say` is
  *                  townTalk.say, which is HudText.add, which is
- *                  PopupText. That column is the enhanced skin's own
- *                  face now (ui/enhancedHudText.js), so these lines
- *                  are too, and no line of this mod changed to do it.
+ *                  PopupText. Under the enhanced skin those rows are
+ *                  toasts in the notice stack (ui/enhancedNotice.js,
+ *                  ENH-NOTICE3 - the slide-in panel Mac asked every
+ *                  mod's text to use), so these lines are too, and
+ *                  no line of this mod changed to do it.
  *   rolls          Random.Range, as a [0, 1) source
  *   enabled()      the mod's own switch (the port's - DFU enables a mod by listing it)
  *   texts          AmbientText.AmbientTexts, the static Hashtable. A seam

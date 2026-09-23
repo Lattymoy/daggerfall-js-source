@@ -108,7 +108,7 @@ in the wave reports.
   UpdateNpcPresence on pop, the toggle-binding close - and, on the same
   stack, the two recorded stages Wave A routed here: the courtroom
   backdrop, ONE window on CORT01I0 with every box of the trial pushed
-  over it (`ui/prisonScreen.js:62`, `scenes/arrestFlow.js:121`), and
+  over it (`ui/prisonScreen.js:62`, `scenes/arrestFlow.js:123`), and
   the prison screen's held-Back accelerator, DFU's raw Escape poll
   rather than a binding (`ui/prisonScreen.js:68`). Both pinned by
   `test/roadb_court_backdrop.test.js` (10).
@@ -222,16 +222,16 @@ narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96` - the site id the flag list was
 measured on; the closure narrates at `:100` today) by building the
 console host they were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:4580`, the two ship pixels): the owner supplied the
+(`scenes/world.js:5597`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
-guild-service popup above ground (`scenes/worldModes.js:2070`) with the
+guild-service popup above ground (`scenes/worldModes.js:2318`) with the
 replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:165` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
 DR1 (2026-09-03) took another
-(`scenes/dungeonContext.js:2068`, the standalone dungeon host's two
+(`scenes/dungeonContext.js:2236`, the standalone dungeon host's two
 window seams) by BUILDING them: "a DFU original that does not exist"
 had been that flag's stated blocker, and it was a claim about the
 SCENE, not about the two windows - both of which have DFU originals
@@ -245,7 +245,7 @@ residence plates all read the machine instead of saying they cannot -
 and TP2 NARROWED the flag beside it, that host's Recall, to the one
 cross-LOCATION jump a route with no streamer cannot make (set-anchor,
 the same-interior move and the whole cross-context arm INSIDE the
-loaded pixel all ship). That leaves **6** open flags as
+loaded pixel all ship). That leaves **7** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch

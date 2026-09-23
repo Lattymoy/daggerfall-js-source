@@ -257,7 +257,7 @@ test('EOTB-IL: Mixed is a ping-pong on the first swing and every fourth, Mirror 
   _resetModSettings();
 });
 
-test('EOTB-IL: the death plays the two-frame table at half a second, FROZEN, and holds until the next Initialize', async () => {
+test('EOTB-IL: the death plays the two-frame table at half a second, FROZEN, and holds until the player is alive again', async () => {
   const { b } = await liveBody();
   ticks(b, 12, still());
   b.tick(1 / 60, still({ died: true }));
@@ -270,12 +270,36 @@ test('EOTB-IL: the death plays the two-frame table at half a second, FROZEN, and
   assert.equal(b.state().shown.frame, 1, 'the last frame stays');
   assert.equal(b.state().clip, null);
   assert.equal(b.state().died, true);
+  // DEATH-BODY1 - AND THIS IS WHERE THIS PIN USED TO DEFEND THE BUG.
+  // It read `ticks(b, 12, walk({ died: false }))` and then asserted the
+  // table was STILL 'Idle', on the IL's own authority: LateUpdate does
+  // return while `died` holds, and Initialize is the only thing that
+  // lowers it. That is faithful to the mod and it is exactly why three
+  // players ended up walking around as corpses - because the mod CANNOT
+  // have this bug. In Daggerfall Unity a death ends the run, so the
+  // only way back is a load, and a load rebuilds the scene and the
+  // billboard object with it. The port revives a LIVING module-level
+  // body instead - a quickload straight back into play, the online
+  // respawn, a prison release - and none of those is an Initialize.
+  //
+  // So the port diverges here, deliberately: the body follows the
+  // ENTITY. While the player is dead the latch holds exactly as the IL
+  // says; the moment they are alive again it lowers itself, wherever
+  // that life came from.
   ticks(b, 12, walk({ died: false }));
-  assert.equal(b.state().table, 'Idle', 'LateUpdate returns while died holds - the loop never runs (IL_3ea6-IL_3eae)');
-  b.toggle(true, false);   // Initialize clears it (IL_3b60)
-  assert.equal(b.state().died, false);
-  ticks(b, 12, walk());
-  assert.equal(b.state().table, 'Move');
+  assert.equal(b.state().died, false, 'alive again lowers the latch - a load must not leave a corpse walking');
+  assert.equal(b.state().table, 'Move', 'and the loop runs again');
+  assert.equal(b.state().clip, null, 'with no death clip left in flight');
+
+  // ...and the IL's own door still works, unchanged.
+  const { b: b2 } = await liveBody();
+  b2.tick(1 / 60, still({ died: true }));
+  tickSeconds(b2, 3, still({ died: true }));
+  assert.equal(b2.state().died, true, 'while they are dead it holds (IL_3ea6-IL_3eae)');
+  ticks(b2, 12, walk({ died: true }));
+  assert.equal(b2.state().table, 'Idle', 'LateUpdate returns for as long as they are dead');
+  b2.toggle(true, false);   // Initialize clears it (IL_3b60)
+  assert.equal(b2.state().died, false);
   // a transformed death is the lycan table
   const { b: wolf } = await liveBody();
   wolf.tick(1 / 60, still({ transformed: true, died: true }));
@@ -420,8 +444,8 @@ test('EOTB-IL: AutoTogglePerspective ships DISARMED - the sum of nine Don\'tChan
   closeLane();
   assert.equal(mwViewTransition('Interior'), false, 'off the lane the door does nothing');
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /mode = 'interior';\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/);
-  assert.match(wm, /mode = 'dungeon';\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/, 'OnTransitionDungeonInterior (IL_06bf)');
+  assert.match(wm, /setMode\('interior'\);\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/);   // AUDIT-WH2 L1-F5: the flip is setMode now - the ORDER this pin holds is unchanged
+  assert.match(wm, /setMode\('dungeon'\);\s*\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);/, 'OnTransitionDungeonInterior (IL_06bf)');
   assert.equal((wm.match(/mwViewTransition\('Exterior'\)/g) ?? []).length, 2, 'the building\'s exit and the dungeon\'s (IL_06e1)');
 });
 

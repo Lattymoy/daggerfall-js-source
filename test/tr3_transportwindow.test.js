@@ -124,7 +124,7 @@ test('TR3/MAC-K3: the host door - grounded and outdoors only, and EVERY host tha
   const rig = read('src/player/mountRig.js');
   // dfuiOpenTransportWindow (:690-700): airborne is SILENTLY ignored.
   assert.match(rig, /if \(!player\.grounded \|\| !transportArtLoaded\(\)\) return;/);
-  assert.match(rig, /hasHorse: hasHorse\(playerEntity\.items \?\? \[\]\),/);
+  assert.match(rig, /hasHorse: rt \? !!rt\.canMountHorseFromTransportWindow\(\) : hasHorse\(playerEntity\.items \?\? \[\]\),/, 'HCC: with Horse Cart and Cargo on the row is the runtime\'s answer; off, DFU\'s Items.Contains');
   // TR4 made the row live for an owner; tr4_ship.test.js holds that.
   // MAC-K3 added the second clause: a host with no ship teleport
   // darkens the row rather than opening onto nothing.

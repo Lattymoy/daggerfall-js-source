@@ -1,0 +1,20 @@
+{
+    "ModTitle": "World_of_Daggerfall",
+    "ModVersion": "2.0",
+    "ModAuthor": "Kamer",
+    "ContactInfo": "DFU forums",
+    "DFUnity_Version": "0.11.0",
+    "ModDescription": "Adds details to the wilderness, New Locations, and Dungeon Exterior detail.",
+    "GUID": "98f05888-989f-4ff1-b455-f4cafedaeb88",
+    "Files": [
+        "Assets/Game/Mods/CustomLocations/LocationData.cs",
+        "Assets/Game/Mods/CustomLocations/LocationHelper.cs",
+        "Assets/Game/Mods/CustomLocations/LocationEnemySpawner.cs",
+        "Assets/Game/Mods/CustomLocations/LocationLoader.cs",
+        "Assets/Game/Mods/CustomLocations/LocationModLoader.cs",
+        "Assets/Game/Mods/MainQuestExt/DungeonExterior.cs",
+        "Assets/Game/Mods/MainQuestExt/MainQuestLocationOverhaul.cs",
+        "Assets/Game/Mods/MainQuestExt/PrivateersHold.cs",
+        "Assets/Game/Mods/WorldofDaggerfall/worldofdaggerfall.dfmod.json"
+    ]
+}

@@ -1,0 +1,76 @@
+[
+  {
+    "name": "the-veto-is-never-registered",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "  registerPlayerDamageVeto(inCourt);",
+    "new": "",
+    "tests": [
+      "test/arrestshield.test.js"
+    ]
+  },
+  {
+    "name": "the-guard-arm-keeps-its-own-copy-of-the-question",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (inCourt()) return true;",
+    "new": "    if (sharedClockOn() && (awaitingSurrenderAnswer || playerEntity.arrested)) return true;",
+    "tests": [
+      "test/arrestshield.test.js"
+    ]
+  },
+  {
+    "name": "the-flow-never-lets-its-veto-go",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "  function dispose() { registerPlayerDamageVeto(null); }",
+    "new": "  function dispose() { }",
+    "tests": [
+      "test/arrestshield.test.js"
+    ]
+  },
+  {
+    "name": "the-veto-sits-behind-the-shield-pool",
+    "file": "src/characters/playerEntity.js",
+    "old": "  if (playerDamageWithheld()) return false;   // ARREST-SHIELD: before the shield pool AND before the SetHealth(0) door\n  if (!(dmg > 0)) return false;",
+    "new": "  if (!(dmg > 0)) return false;",
+    "tests": [
+      "test/arrestshield.test.js"
+    ]
+  },
+  {
+    "name": "the-setHealth0-door-walks-past-the-veto",
+    "file": "src/characters/playerEntity.js",
+    "old": "  if (playerDamageWithheld()) return false;   // ARREST-SHIELD: before the shield pool AND before the SetHealth(0) door",
+    "new": "  if (!bypassShield && playerDamageWithheld()) return false;",
+    "tests": [
+      "test/arrestshield.test.js"
+    ]
+  },
+  {
+    "name": "a-throwing-veto-takes-the-damage-door-with-it",
+    "file": "src/characters/playerEntity.js",
+    "old": "export const playerDamageWithheld = () => { try { return !!_damageVeto?.(); } catch { return false; } };",
+    "new": "export const playerDamageWithheld = () => !!_damageVeto?.();",
+    "tests": [
+      "test/arrestshield.test.js"
+    ]
+  },
+  {
+    "name": "any-rubbish-registers-as-a-veto",
+    "file": "src/characters/playerEntity.js",
+    "old": "export function registerPlayerDamageVeto(fn) { _damageVeto = typeof fn === 'function' ? fn : null; }",
+    "new": "export function registerPlayerDamageVeto(fn) { _damageVeto = fn ?? null; }",
+    "tests": [
+      "test/arrestshield.test.js"
+    ],
+    "equivalent": true,
+    "why": "EQUIVALENT TODAY, AND KEPT FOR WHY. With `fn ?? null` a non-function is STORED, and `_damageVeto?.()` then throws a TypeError on the next blow - which the try/catch in playerDamageWithheld swallows into `false`. So no input tells the two apart: the blow lands either way. The type check earns its place by keeping the rubbish OUT of the slot rather than catching it on every hit afterwards, and by surviving the day someone narrows that catch to the throw it was written for (a veto closing over a torn-down entity) - at which point storing a string would take the damage door down on the next swing in the game."
+  },
+  {
+    "name": "the-withheld-blow-is-queued-for-later",
+    "file": "src/characters/playerEntity.js",
+    "old": "  if (playerDamageWithheld()) return false;   // ARREST-SHIELD: before the shield pool AND before the SetHealth(0) door",
+    "new": "  if (playerDamageWithheld()) { entity._heldDmg = (entity._heldDmg ?? 0) + dmg; return false; }\n  if (entity._heldDmg) { dmg += entity._heldDmg; entity._heldDmg = 0; }",
+    "tests": [
+      "test/arrestshield.test.js"
+    ]
+  }
+]

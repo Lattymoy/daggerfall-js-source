@@ -37,6 +37,9 @@
 // window is INERT - unlike the Mouse0 activate, which A8 deliberately
 // routed through `held(keys, 'ActivateCenterObject')` and which does
 // follow a rebind. The seam when that is closed is held(), same as A8's.
+// CLOSED by MAC-SWING1 (2026-09-21): swingHeld reads `held(keys,
+// 'SwingWeapon')` for a non-mouse binding and swingKeyHeld is the latch
+// the four hosts poll - a swing bound to a key or a pad button swings.
 //
 // AbortSpell and RecastSpell have no consumer here yet - the actions
 // are in the registry and the ladder simply does not answer them.
@@ -47,13 +50,100 @@ import {
 // AUDIT 64 F36/F37: DaggerfallHUD.Update's own shortcut arms. A leaf
 // on systems/ alone, so this module can take it without a cycle.
 import { hudShortcutKey } from './hudShortcuts.js';
+import { statusReadoutTakesAction, setStatusBindings } from '../systems/statusReadout.js';   // STATUS-LIVE: the readout yields to whatever wants the slot, and the panel names the live Status key. A LEAF - this module is in ui/actionText.js's own import ring (through ui/inputMessageBox.js), so reaching for the BOX from here put its class body in a temporal dead zone
+import { getInt, getFloat } from '../systems/settings.js';   // SWING-SAY: the swing mode and its threshold, for the boot readout
 
 // The registry singleton - built on first read, so the module can be
 // imported by tests without touching storage until asked.
 let _bindings = null;
-export function bindings() { return (_bindings ??= loadOrCreateBindings()); }
+export function bindings() {
+  if (_bindings) return _bindings;
+  _bindings = loadOrCreateBindings();
+  setStatusBindings(_bindings);   // STATUS-LIVE: the readout's caption names the key that actually answers
+  saySwingChain();   // SWING-SAY: once, at the moment the store is first real
+  return _bindings;
+}
 /** Tests (and the I3 controls window) swap the live store. */
-export function setBindings(b) { _bindings = b; }
+export function setBindings(b) { _bindings = b; setStatusBindings(b); }   // STATUS-LIVE: a rebound Status key renames the readout's caption with it
+
+/**
+ * SWING-SAY (2026-09-22, Mac: "its not working on the install but works
+ * on the browser. Each time I bring this up you avoid it"): THE SWING
+ * CHAIN, SAID OUT LOUD, BECAUSE IT CANNOT BE READ FROM HERE.
+ *
+ * Three reports now - SquidKamer, Mango, Hawkiinz - all "the swing does
+ * not work in the installed build, it works in the browser". MAC-SWING1
+ * and MAC-D1 each found a real fault behind that sentence and each
+ * shipped; the reports continue. The whole chain reads sound from the
+ * source and the gesture fires in a test at ten pixels of travel, so
+ * whatever is left is STATE, and the state that differs between the two
+ * is the only asymmetry there is: the browser keeps its store in
+ * localStorage and the desktop app keeps its own FILE, which survives
+ * updates and reinstalls. One player, one machine, two stores - and the
+ * app's is the old one.
+ *
+ * What cannot be read from here can still be made to speak. This prints
+ * the live answer to every question the chain asks, in one line, at the
+ * one moment the store becomes real:
+ *
+ *   - every code SwingWeapon answers to, in both dicts, so a swing that
+ *     moved to a key or lost its mouse row is visible rather than
+ *     inferred;
+ *   - which DOM button that resolves to (-1 = none, and then the drag
+ *     has no button to hold, which is MAC-SWING1's case);
+ *   - whether the action is REACHABLE without a gamepad (MAC-D1's);
+ *   - the swing MODE, because Vanilla is the only mode that tracks a
+ *     drag and both earlier reporters worked around the bug by moving
+ *     to Click - a setting the app's file has kept ever since;
+ *   - the travel a swing needs, in pixels, which is the number that
+ *     would make a threshold fault obvious.
+ *
+ * It is a READOUT and nothing else: it changes no state and repairs
+ * nothing. A fix guessed from here would be a fix aimed at a machine I
+ * cannot see - this is the smallest thing that turns the next report
+ * into an answer instead of another round of this.
+ */
+export function swingChainState({ width = globalThis.innerWidth ?? 0, height = globalThis.innerHeight ?? 0 } = {}) {
+  const b = _bindings ?? bindings();
+  const codes = [];
+  for (const dict of [b.primary, b.secondary]) for (const [code, a] of dict) if (a === 'SwingWeapon') codes.push(code);
+  const button = swingButton();
+  const mode = swingMode();
+  const threshold = getFloat('Controls', 'WeaponAttackThreshold', 0.001, 1.0);
+  return {
+    codes,
+    button,                                   // -1: no mouse code, so the drag has no button
+    reachable: codes.some((c) => !c.startsWith('Joystick')),
+    mode,                                     // 0 Vanilla (the drag), 1 Click, 2 Hold
+    modeName: ['Vanilla', 'Click', 'Hold'][mode] ?? String(mode),
+    threshold,
+    travelPx: Math.round(threshold * Math.max(width, height)),
+  };
+}
+/** Controls/WeaponSwingMode - 0 Gesture (the drag), 1 Click, 2 Click or
+ *  Hold. SWING-LABEL: one reader for the readout above and the enhanced
+ *  controls pane's Swing Weapon line. */
+export function swingMode() { return getInt('Controls', 'WeaponSwingMode', 0, 2); }
+let _said = false;
+/** Tests only: the line is said ONCE per session by design, so driving
+ *  it over several states needs the latch let go. */
+export function _resetSwingSay() { _said = false; }
+export function saySwingChain() {
+  if (_said || typeof console === 'undefined') return;
+  _said = true;
+  try {
+    const s = swingChainState();
+    // A WARNING when the drag cannot work, a log when it can - so the
+    // one state that matters stands out in a console a player is
+    // reading for the first time.
+    const broken = s.mode !== 0 || s.button < 0 || !s.reachable;
+    (broken ? console.warn : console.log)(
+      `[swing] SwingWeapon=${s.codes.join('+') || 'NOTHING'} button=${s.button} reachable=${s.reachable} `
+      + `mode=${s.modeName}(${s.mode}) threshold=${s.threshold} (~${s.travelPx}px of drag)`
+      + (s.mode !== 0 ? ' - only Vanilla tracks a drag' : '')
+      + (s.button < 0 ? ' - no mouse button holds the swing; the drag cannot start' : ''));
+  } catch { /* a readout never costs a boot */ }
+}
 
 /**
  * A8 - GetUnaryKey's COMBO ARM (:1670-1712) over the port's held-keys
@@ -376,10 +466,27 @@ export function swingButton() {
 export const isSwingButton = (button) => button === swingButton();
 /** MouseEvent.buttons' bit for a MouseEvent.button: left 1, MIDDLE 4, right 2. */
 const BUTTONS_BIT = Object.freeze([1, 4, 2]);
-export function swingHeld(buttons) {
+export function swingHeld(buttons, keys = null) {
   const b = swingButton();
-  return b >= 0 && (buttons & BUTTONS_BIT[b]) !== 0;
+  if (b >= 0) return (buttons & BUTTONS_BIT[b]) !== 0;
+  // MAC-SWING1 (2026-09-21, a player on the desktop app: "can't swing
+  // my weapon on the installed version, tried binding it to other
+  // keys too"): a swing bound to a KEY or a pad code answered false
+  // here and everywhere, and nothing read `held(keys, 'SwingWeapon')`
+  // - the recorded departure at the top of this file. setBinding
+  // clears the Mouse1 row when a key takes the action, the desktop
+  // app's prefs file keeps the result across reinstalls, and the row
+  // in the controls window could only ever DISABLE the swing. The
+  // registry's own read is the answer for any code: `keys` carries the
+  // mouse codes too (every host adds mouseCode(e.button) to it), so
+  // this is InputManager.HasAction(SwingWeapon) whatever it is bound to.
+  return keys ? held(keys, 'SwingWeapon') : false;
 }
+/** MAC-SWING1: the rig's held latch for a swing bound to a KEY or pad
+ *  code - the one no mousedown/mouseup ever raises. Each host polls it
+ *  beside its other held reads and feeds attackInput on the change,
+ *  exactly as its mouse handlers do for a mouse binding. */
+export function swingKeyHeld(keys) { return swingButton() < 0 && held(keys, 'SwingWeapon'); }
 
 /** FIX-F: THE KEYBOARD LOOK, InputManager.FindKeyboardActions'
  *  four arms (:1854-1865): x is +1 for TurnRight and -1 for TurnLeft,
@@ -670,6 +777,17 @@ export function swallowBrowserKey(e) {
 }
 
 export function routeAction(action, ctx, setPlayerPos = null) {
+  // STATUS-LIVE: THE READOUT YIELDS, BEFORE ANY ARM BELOW RUNS. The
+  // status panel does not pause the game, so it is still standing in a
+  // host's overlay slot while the player presses the next key - and
+  // the arms below are exactly the keys that WANT that slot. Two of
+  // the four hosts would simply have refused (the dungeon's free-slot
+  // guards, the interior arm's push), which is a key that silently
+  // does nothing. Here, once, because this is the one door every
+  // host's window keys and the large HUD's eleven panels come through.
+  // Escape is SPENT by the close (the truthy answer): at a panel, that
+  // key means "close this", not "and also open the pause menu".
+  if (statusReadoutTakesAction(action)) return true;
   switch (action) {
     // Escape with no overlay up opens the pause options window
     // (GameManager's escape door; the window closes itself on the

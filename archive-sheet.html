@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Archive Contact Sheet</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #14141a; color: #cfcfda; font-family: -apple-system, system-ui, sans-serif; padding: 16px; }
+  h1 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  p.hint { font-size: 12px; color: #8a8a99; margin-bottom: 12px; }
+  #bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  input[type=text] { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 6px; padding: 8px 10px; font-size: 13px; width: 260px; }
+  button { background: #23232e; color: #cfcfda; border: 1px solid #34343f; border-radius: 999px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+  button:hover { background: #2e2e3a; }
+  #drop { border: 1px dashed #3a3a48; border-radius: 10px; padding: 18px; text-align: center; font-size: 13px; color: #8a8a99; margin-bottom: 14px; }
+  #drop.on { border-color: #6a6a88; color: #cfcfda; }
+  #sheet { display: flex; flex-wrap: wrap; gap: 10px; }
+  .cell { background: #1c1c24; border: 1px solid #2a2a34; border-radius: 8px; padding: 8px; width: 132px; text-align: center; }
+  .cell canvas { image-rendering: pixelated; background: #0c0c10; border-radius: 4px; max-width: 116px; }
+  .cell .n { font-size: 11px; color: #9a9ab0; margin-top: 6px; }
+  .cell .d { font-size: 10px; color: #6a6a80; }
+  .cell.mark { border-color: #c8a13a; }
+  #status { font-size: 12px; color: #8a8a99; margin-bottom: 10px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Archive contact sheet</h1>
+<p class="hint">Drop your ARENA2 folder below (or pick it), then read off which record is which. The cell the item templates point at is outlined.</p>
+<div id="bar">
+  <label style="font-size:13px">archive <input type="text" id="arc" value="213"></label>
+  <label style="font-size:13px">mark record <input type="text" id="mark" value="1" style="width:60px"></label>
+  <button id="go">draw</button>
+</div>
+<div id="drop">drop ARENA2 here &middot; <input type="file" id="pick" webkitdirectory directory multiple style="font-size:12px"></div>
+<div id="status">waiting for data</div>
+<div id="sheet"></div>
+<script type="module">
+import { TextureFile } from './src/formats/textureFile.js';
+import { DFPalette } from './src/formats/dfPalette.js';
+import { bitmapToColor32 } from './src/formats/color32Order.js';
+
+const files = new Map();          // UPPERCASE name -> File
+const status = (s) => { document.getElementById('status').textContent = s; };
+
+function take(list) {
+  for (const f of list) files.set((f.name || '').toUpperCase(), f);
+  status(`${files.size} files loaded. Pick an archive and press draw.`);
+}
+document.getElementById('pick').addEventListener('change', (e) => take(e.target.files));
+const drop = document.getElementById('drop');
+drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('on'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('on'));
+drop.addEventListener('drop', async (e) => {
+  e.preventDefault(); drop.classList.remove('on');
+  const out = [];
+  const walk = async (entry) => {
+    if (entry.isFile) return new Promise((r) => entry.file((f) => { out.push(f); r(); }));
+    const rd = entry.createReader();
+    const ents = await new Promise((r) => rd.readEntries(r));
+    for (const c of ents) await walk(c);
+  };
+  for (const it of e.dataTransfer.items) { const en = it.webkitGetAsEntry?.(); if (en) await walk(en); }
+  take(out);
+});
+
+const bytesOf = async (name) => {
+  const f = files.get(name.toUpperCase());
+  if (!f) throw new Error(`${name} not in the dropped folder`);
+  return new Uint8Array(await f.arrayBuffer());
+};
+
+document.getElementById('go').addEventListener('click', async () => {
+  const sheet = document.getElementById('sheet');
+  sheet.innerHTML = '';
+  const arc = Number(document.getElementById('arc').value.trim());
+  const mark = Number(document.getElementById('mark').value.trim());
+  try {
+    const name = TextureFile.indexToFileName(arc);
+    status(`reading ${name}...`);
+    const pal = new DFPalette();
+    pal.load(await bytesOf('ART_PAL.COL'), 'ART_PAL.COL');
+    const tex = new TextureFile();
+    tex.load(await bytesOf(name), name, pal);
+    status(`${name}: ${tex.recordCount} records`);
+    for (let r = 0; r < tex.recordCount; r++) {
+      const bmp = tex.getDFBitmap(r, 0);
+      const { width, height } = tex.getSize(r);
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (r === mark ? ' mark' : '');
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, width); cv.height = Math.max(1, height);
+      if (width && height) {
+        // bitmapToColor32 answers a Uint32Array of packed RGBA; ImageData
+        // wants the same bytes as a clamped u8 view, not a copy of the
+        // numbers - new Uint8ClampedArray(u32) would coerce each pixel
+        // word to one byte and paint noise.
+        const c32 = bitmapToColor32(bmp, pal, 0);
+        const img = new ImageData(new Uint8ClampedArray(c32.colors.buffer), cv.width, cv.height);
+        cv.getContext('2d').putImageData(img, 0, 0);
+      }
+      const n = document.createElement('div'); n.className = 'n'; n.textContent = `${arc}/${r}`;
+      const d = document.createElement('div'); d.className = 'd'; d.textContent = `${width}x${height}`;
+      cell.append(cv, n, d);
+      sheet.append(cell);
+    }
+  } catch (err) { status(`failed: ${err.message}`); }
+});
+</script>
+</body>
+</html>

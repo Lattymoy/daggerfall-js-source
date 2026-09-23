@@ -28,6 +28,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players to stand in front of. Ledger A row (ONLINE).
 import { MOBILE_NPC_ACTIVATION_DISTANCE } from './activate.js';
+import { WHY_IN_PARTY } from '../net/social.js';   // AUDIT DROPS: the seat's reason, one home
 
 /** HOW NEAR "on their body" IS. PlayerActivate.cs:88 MobileNpcActivationDistance (256 * GlobalScale = 6.4) - the
  *  game's OWN reach for a person, the one scenes/townTalk.js refuses a conversation past ('You are too far away...').
@@ -68,4 +69,50 @@ export function pickPeerInFront(camPos, fwd, peers, reach, distanceOf) {
   }
   if (!best || !(bestDist <= reach)) return null;
   return { peer: best, distance: bestDist };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// PEER-PLAQUE1 (2026-09-22, Mac: "Using the world tooltip implementation for other players and interaction
+// prompt"): THE PLAQUE'S HALF OF THE SAME PICK. World Tooltips names what the crosshair rests on
+// (systems/worldHover.js, ui/worldPlaque.js) off the SAME ray race the press runs (player/activationRace.js
+// raceWinner), so another player under the crosshair is one more racer - `peerRayPick` dresses `pickPeerInFront`'s
+// answer in the race's own shape - and what the plaque lists under their name is what the F-menu would offer at
+// this moment: ACT-MENU (DISC7) lists the card's own rows (ui/socialMenu.js socialPlaqueRows, off the very
+// `actionsFor`/`tradeActionsFor` bag) for the wheel to light and the activate key to press, with the relation
+// (`peerRelationText`) under the name. Pure, so a test drives it with plain numbers and plain words; scenes/world.js
+// keeps the arm (the picks, the namer, the press).
+// ---------------------------------------------------------------------------------------------------------------
+
+/** The plaque key a player wears: `peer:<session id>` - a string like every other namer's, and one no other family
+ *  can mint (net/wire.js ID_RE has no colon). */
+export const PEER_KEY_PREFIX = 'peer:';
+
+/** The session id under a `peer:` key, or null for any other key (a namer is handed EVERY key the ray can win -
+ *  AUDIT-WH2 L2-F5's guard, so a non-string never reaches `startsWith`). */
+export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length ? key.slice(PEER_KEY_PREFIX.length) : null);
+
+/**
+ * `pickPeerInFront`'s answer as a RAY PICK the race reads - `{ key, distance, reach }`, `reach` the same SOCIAL_REACH
+ * the pick was already measured against (so `resolveHover`'s own `distance <= reach` gate agrees with the pick's,
+ * and a plaque never names a player the key would not reach). Null in, null out.
+ * @param {{ peer: { id: string }, distance: number }|null} hit
+ * @param {number} [reach]
+ * @returns {{ key: string, distance: number, reach: number }|null}
+ */
+export function peerRayPick(hit, reach = SOCIAL_REACH) {
+  if (!hit?.peer?.id || !Number.isFinite(hit.distance)) return null;
+  return { key: PEER_KEY_PREFIX + hit.peer.id, distance: hit.distance, reach };
+}
+
+/**
+ * THE RELATION, under the name: 'In your party' beats 'Friend' (a party member is usually a friend too, and the seat
+ * is the more useful word), else 'Friend', else null - the name alone. PEER-PLAQUE1's tail, said beside the rows now.
+ * @param {{ relation?: string|null, whyNotInvite?: string|null }|null} acts
+ * @returns {string|null}
+ */
+export function peerRelationText(acts) {
+  if (!acts) return null;
+  if (acts.whyNotInvite === WHY_IN_PARTY) return 'In your party';
+  if (acts.relation === 'friend') return 'Friend';
+  return null;
 }

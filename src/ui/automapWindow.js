@@ -94,15 +94,14 @@
 //    shader is injected into the duplicated GEOMETRY alone (:1906).
 //  - THE PICK RUNS ON THE PASS'S OWN proj/view, mirrored X included, so
 //    the picker cannot disagree with what was drawn.
-//  - THE PANEL MOUSE STICKS. DFU reads `panelRenderAutomap
-//    .ScaledMousePosition`, which BaseScreenComponent only writes while
-//    the pointer is inside the component (:598-618) and never clears -
-//    so hover text found at the edge of the map survives the pointer
-//    leaving it. The port keeps that by tracking a separate panel-local
-//    position that only updates inside the rect. (It starts unset
-//    rather than at Unity's uninitialised (0,0); nothing is pickable at
-//    a panel corner, so the difference is the first frame of a window
-//    nobody has pointed at yet.)
+//  - THE PANEL MOUSE CLEARS ON THE WAY OUT. DFU reads `panelRenderAutomap
+//    .ScaledMousePosition`, which BaseScreenComponent.Update resets to
+//    -Vector2.one at its top (:575) and rewrites only while the pointer
+//    is inside the component (:607-610) - so hover text and the
+//    teleporter connection go the frame the pointer leaves the map.
+//    (c2/S7 read the write-only-inside half and missed the reset, and
+//    the port kept the text and the cylinder up; AUDIT-AMAP W3.) The
+//    port tracks a panel-local position that is null outside the rect.
 //
 // THE KEYED FALLBACK SURVIVES. A boot with no ARENA2 art still gets a
 // working map: the same geometry pass in the same panel rect, with a
@@ -145,7 +144,7 @@ import { mirrorProjectionX, perspective, lookAt, trs, UP_Y } from '../world/mat4
 import { getBool, getString } from '../systems/settings.js';
 import {
   slicingPositionY, DEFAULT_SLICING_BIAS_Y,
-  tryAddOrEditUserNote, tryRemoveUserNote, setUserNote, NOTE_MAX_CHARACTERS,
+  tryAddOrEditUserNote, tryRemoveUserNote, setUserNote, NOTE_MAX_CHARACTERS, NOTE_WIDTH_OVERRIDE,
   automapDebugTeleportMode,
 } from '../systems/automap.js';
 import { RDB_SIDE } from '../world/dungeonLayout.js';
@@ -160,7 +159,7 @@ import {
 import { automapTooltipFor, shortcutOrFallback, AUTOMAP_STRINGS } from './automapText.js';
 import { automapMarkerSet, markerModels, MARKER_TEXELS, teleporterConnectionTransform } from './automapMarkers.js';   // c2/S7, c2/S8
 import { createAutomapPicker, hoverKeyForHit, MARKER_NAMES } from '../systems/automapPick.js';        // c2/S7
-import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // c2/S8: the note editor
+import { InputMessageBoxWindow } from './inputMessageBox.js';   // c2/S8: the note editor; CM9: the ONE DaggerfallInputMessageBox
 import { drawToolTipBox } from './toolTip.js';
 import { drawCompassStrip } from './hud.js';
 import { bindings } from './input.js';
@@ -586,7 +585,7 @@ export class AutomapWindow {
     // itself; the NOTE editor pushed over this window; the hover
     // connection cylinder; and the pass the gestures unproject through.
     this._jump = null;         // { from, to, t }
-    this._noteBox = null;      // { id, value }
+    this._noteBox = null;      // { id, box } - the marker being noted and the pushed input box (CM9)
     this._connection = null;   // the connection cylinder's matrix, or null
     this._pass = null;         // the last frame's { proj, view }
     this._onPush();
@@ -654,7 +653,9 @@ export class AutomapWindow {
    *  the whole of it that survives into the port - the render texture
    *  and its Texture2D that DFU destroys here never existed (the c2/S2
    *  bracket draws straight into the panel). */
-  _onPop() {
+  /** OnPop (:648-660): public, so the window stack's RemoveWindow and
+   *  the death presenter's forced overwrite run it too (AUDIT-AMAP H9). */
+  onPop() {
     if (!_cam) return;
     _cam = _cam.viewMode === VIEW_2D ? saveCameraTransformViewFromTop(_cam) : saveCameraTransformView3D(_cam);
   }
@@ -662,7 +663,7 @@ export class AutomapWindow {
   _click() { audio.playOneShot(SOUND.ButtonClick, 1); }
 
   _close() {
-    this._onPop();
+    this.onPop();
     this.done = true;
     this.dispose();
   }
@@ -799,7 +800,11 @@ export class AutomapWindow {
     if (this._jump) return;
     // ...and the note editor is a PUSHED window, so it owns the keyboard
     // while it is up (DaggerfallInputMessageBox.Show()).
-    if (this._noteBox) { this._noteBoxInput(code, e); return; }
+    if (this._noteBox) {
+      this._noteBox.box.input(code, e);
+      if (this._noteBox.box.done) this._noteBox = null;
+      return;
+    }
     if (this.automapBinding && normalizeCode(code, e) === this.automapBinding) {
       this.isCloseWindowDeferred = true;
       return;
@@ -883,6 +888,11 @@ export class AutomapWindow {
     // would spin under the next mouse move.
     if (this._jump || this._noteBox) {
       if (phase === 'up') this.chrome.pointer(phase, nx, ny, button);   // flags only; the verbs are what the lockout refuses
+      // AUDIT-AMAP W5: "update oldMousePosition to prevent problems with
+      // drag and drop action that starts before animation is over"
+      // (:689-690) - the anchor follows the pointer through the tween,
+      // or the first move after it pans the whole accumulated delta
+      else this.chrome.syncDragAnchor(nx, ny);
       return;
     }
     if (phase !== 'up') { this._mouse = [nx, ny]; this._trackPanelMouse(nx, ny); }
@@ -1018,10 +1028,30 @@ export class AutomapWindow {
 
   /** TryToAddOrEditUserNoteMarker... (:763-799) with the model half in
    *  systems/automap.js; what stays here is DFU's EditUserNote
-   *  (:1591-1607) - the box seeded with the marker's existing note. */
+   *  (Automap.cs:1593-1608) - the box seeded with the marker's existing note. */
   _tryAddOrEditNote(rec, hit, editOnCreation) {
     const r = tryAddOrEditUserNote(rec, hit, { editOnCreation });
-    if (r.edit && r.id != null) this._noteBox = { id: r.id, value: rec.notes.get(r.id)?.note ?? '' };
+    if (r.edit && r.id != null) this._noteBox = { id: r.id, box: this._openNoteBox(rec, r.id) };
+  }
+
+  /** EditUserNote (Automap.cs:1593-1608): `new DaggerfallInputMessageBox(
+   *  DaggerfallUI.UIManager, DaggerfallUI.Instance.AutomapWindow)` with
+   *  youNote as the LABEL (SetTextBoxLabel, :1597 - no text tokens
+   *  above it), MaxCharacters 50 (:1603), seeded with the marker's
+   *  existing note so editing is editing rather than retyping. Enter
+   *  raises OnGotUserInput, which writes the note home
+   *  (UserNote_OnGotUserInput, :2504-2508); Escape closes with no write.
+   *  CM9: the field is the one DaggerfallInputMessageBox, pushed.
+   *  AUDIT-CM: the first cut put youNote above the field and invented
+   *  a " > " label. */
+  _openNoteBox(rec, id) {
+    return new InputMessageBoxWindow({
+      label: AUTOMAP_STRINGS.youNote,
+      value: rec.notes.get(id)?.note ?? '',
+      maxCharacters: NOTE_MAX_CHARACTERS,
+      widthOverride: NOTE_WIDTH_OVERRIDE,   // AUDIT-AMAP W11: TextBox.WidthOverride = 306 (Automap.cs:1604), rounded to 308 by the box
+      onSubmit: (value) => setUserNote(this.deps.record?.() ?? null, id, value),
+    });
   }
 
   /** TryTeleportPlayerToDungeonSegmentAtScreenPosition (:858-870):
@@ -1034,26 +1064,6 @@ export class AutomapWindow {
     const hit = this._pickPanel(nx, ny);
     if (!hit) return;
     this.deps.debugTeleport?.([hit.point[0], hit.point[1] + DEBUG_TELEPORT_Y_OFFSET, hit.point[2]]);
-  }
-
-  /** The note field: DaggerfallInputMessageBox's keyboard, at
-   *  MaxCharacters 50. Enter raises OnGotUserInput (which is what writes
-   *  the note home, :1608-1614); Escape closes with no write. */
-  _noteBoxInput(code, e = null) {
-    const c = normalizeCode(code, e);
-    if (c === 'Enter' || c === 'NumpadEnter') {
-      const rec = this.deps.record?.() ?? null;
-      setUserNote(rec, this._noteBox.id, this._noteBox.value);
-      this._noteBox = null;
-      return;
-    }
-    if (c === 'Escape') { this._noteBox = null; return; }
-    if (c === 'Backspace') { this._noteBox.value = this._noteBox.value.slice(0, -1); return; }
-    const ch = e?.key;
-    if (typeof ch === 'string' && ch.length === 1 && !e?.ctrlKey && !e?.metaKey
-      && this._noteBox.value.length < NOTE_MAX_CHARACTERS) {
-      this._noteBox.value += ch;
-    }
   }
 
   /**
@@ -1069,7 +1079,7 @@ export class AutomapWindow {
     const p = this.deps.player?.() ?? null;
     const mainPos = p?.eye ?? p?.feet ?? [0, 0, 0];
     if (kind === 'pan') { _cam = dragPan(_cam, dx * s, dy * s, mainPos); return; }
-    if (kind === 'rotate') { _cam = dragRotate(_cam, dx * s, dy * s); return; }
+    if (kind === 'rotate') { _cam = dragRotate(_cam, dx * s, dy * s, this._dt || 1 / 60); return; }   // AUDIT-AMAP W1: the three rotate verbs are dt-scaled
     // the MIDDLE drag moves the slice, with dt folded in (:925-927)
     _cam = actionMoveSliceLevel(_cam, dy * s, this._dt ?? 0);
   }
@@ -1078,13 +1088,17 @@ export class AutomapWindow {
     if (nx >= 0 && ny >= 0) { this._mouse = [nx, ny]; this._trackPanelMouse(nx, ny); }
   }
 
-  /** c2/S7: ScaledMousePosition's law - written only while the pointer
-   *  is INSIDE the render panel, and never cleared on the way out. */
+  /** ScaledMousePosition's law (AUDIT-AMAP W3 corrected c2/S7's
+   *  reading): BaseScreenComponent.Update sets it to -Vector2.one
+   *  FIRST (:575) and rewrites it only while the pointer is inside the
+   *  component (:607-610) - so it clears the frame the pointer leaves,
+   *  the hover text goes to "" and the connection cylinder is torn
+   *  down (Automap.cs:681-688). */
   _trackPanelMouse(nx, ny) {
     const P = CHROME_RECTS.panel;
     const px = nx - P.x;
     const py = ny - P.y;
-    if (px < 0 || py < 0 || px >= P.w || py >= P.h) return;
+    if (px < 0 || py < 0 || px >= P.w || py >= P.h) { this._panelMouse = null; return; }
     this._panelMouse = [px, py];
   }
 
@@ -1099,8 +1113,9 @@ export class AutomapWindow {
     const [nx, ny] = this._mouse;
     const verb = this.chrome.wheel(nx, ny, dir);
     if (verb) { this.runVerb(verb, this._dt ?? 0); return; }
-    // over the render panel itself: zoom at the RAW wheel speed
-    if (this.chrome.inDragMode()) return;
+    // over the render panel itself: zoom at the RAW wheel speed. No
+    // drag guard here - PanelAutomap_OnMouseScrollUp/Down carry none
+    // (:1857-1865); only the grid button's do (AUDIT-AMAP W8)
     const inPanel = nx >= CHROME_RECTS.panel.x && ny >= CHROME_RECTS.panel.y
       && nx < CHROME_RECTS.panel.x + CHROME_RECTS.panel.w
       && ny < CHROME_RECTS.panel.y + CHROME_RECTS.panel.h;
@@ -1116,6 +1131,12 @@ export class AutomapWindow {
     // before the deferred close - so the jump is the only thing that
     // happens on these frames.
     if (this._jump) { this._advanceJump(dt); return; }
+    // AUDIT-AMAP W4: while the note prompt is pushed it is the TOP
+    // window, and DaggerfallUI updates only the top (DaggerfallUI.cs
+    // :430-433) - no IsPressedWith poll, no button hold, no tooltip
+    // clock under it. A typed letter that is a bound hotkey must not
+    // pan the map.
+    if (this._noteBox) return;
     // ROAD-E E1: the IsPressedWith arms run HERE, before the mouse half
     // - DFU's Update order is the deferred close, the debug teleport,
     // the IsDownWith hotkeys, the IsPressedWith hotkeys, THEN the mouse
@@ -1147,7 +1168,7 @@ export class AutomapWindow {
   /** Probe surface: `Automap.ITweenCameraAnimationIsRunning` (:265). */
   get iTweenCameraAnimationIsRunning() { return !!this._jump; }
   /** Probe surface: the live note editor, or null. */
-  get userNoteBox() { return this._noteBox; }
+  get userNoteBox() { return this._noteBox ? { id: this._noteBox.id, value: this._noteBox.box.value } : null; }
 
   /** Release the window's GL resources. Idempotent; also called by
    *  the death presenter when it force-replaces the overlay slot. */
@@ -1224,7 +1245,11 @@ export class AutomapWindow {
       row.push({ mesh, matrix, water: byKey?.get(key)?.waterLevel ?? null });
     };
     for (const d of this.deps.drawList) push(d.mesh, d.matrix, d.key);
-    for (const d of this.deps.dynamicDraws) push(d.gpu, d.object.matrix, d.object.key);
+    // AUDIT-AMAP H6: at the AT-REST matrix the reveal index and the
+    // picker hold (dungeonContext amapRow), not the live one - DFU's
+    // automap is a static duplicate (CreateDungeonGeometryForAutomap),
+    // and a raised elevator drawn live would sit where the pick is not
+    for (const d of this.deps.dynamicDraws) push(d.gpu, byKey?.get(d.object.key)?.matrix ?? d.object.matrix, d.object.key);
     return { visited, prior };
   }
 
@@ -1250,7 +1275,7 @@ export class AutomapWindow {
   /**
    * c2/S7: SetupBeacons' object list for THIS frame. DFU rebuilds the
    * beacons' transforms in UpdateAutomapStateOnWindowPush (:407-414)
-   * and their pivot rotation in UpdateAutomapView (window :1297), which
+   * and their pivot rotation in UpdateAutomapView (window :1292), which
    * together is "every time the map is drawn" - so this is computed per
    * draw and nothing caches a stale position.
    */
@@ -1524,15 +1549,7 @@ export class AutomapWindow {
       // c2/S8: the note editor is a PUSHED window, so it draws over the
       // map and under nothing (:1594 - `new DaggerfallInputMessageBox(
       // DaggerfallUI.UIManager, DaggerfallUI.Instance.AutomapWindow)`).
-      // The sizing row fixes the box's width the way WidthOverride 306
-      // does, so it does not breathe as the note is typed.
-      if (this._noteBox && messageBoxArtLoaded()) {
-        const entry = ` > ${this._noteBox.value}_`;
-        const box = layoutMessageBox(font,
-          [{ text: AUTOMAP_STRINGS.youNote, center: false }, { text: entry, center: false }], [],
-          { sizingRows: [AUTOMAP_STRINGS.youNote, ` > ${'M'.repeat(NOTE_MAX_CHARACTERS)}_`] });
-        drawMessageBox(renderer, m, font, box);
-      }
+      if (this._noteBox) this._noteBox.box.draw(renderer, canvas, font, s);
       // the tooltip is the LAST component drawn, over everything
       const tip = this._tooltipRect ? automapTooltipFor(this._tooltipRect, this.automapBinding) : null;
       if (tip) drawToolTipBox(renderer, m, font, tip, this._mouse[0], this._mouse[1]);

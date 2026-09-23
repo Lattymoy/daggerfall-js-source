@@ -1,0 +1,222 @@
+[
+  {
+    "name": "QUICK-LOOT-the-fold-does-not-clamp-to-the-last-row",
+    "file": "src/systems/worldHover.js",
+    "old": "    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
+    "new": "    row = Math.max(floor, (at >= 0 ? at : prev.row) + d);",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-fold-wraps-instead-of-stopping",
+    "file": "src/systems/worldHover.js",
+    "old": "    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
+    "new": "    row = ((((at >= 0 ? at : prev.row) + d) % rows) + rows) % rows;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-a-new-container-inherits-the-old-row",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (prev && prev.key === frame.key) {\n    const at = prev.id",
+    "new": "  if (prev) {\n    const at = prev.id",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-a-listless-frame-keeps-the-highlight",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (!frame || !rows) return null;",
+    "new": "  if (!frame) return null;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-lit-row-is-not-checked-against-the-frame",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (!sel || !frame || sel.key !== frame.key) return -1;",
+    "new": "  if (!sel || !frame) return -1;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-lit-row-outruns-a-shortened-list",
+    "file": "src/systems/worldHover.js",
+    "old": "  return sel.row >= 0 && sel.row < rows ? sel.row : -1;",
+    "new": "  return sel.row >= 0 ? sel.row : -1;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-row-walk-runs-past-the-drawn-rows",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (!Number.isInteger(row) || row < 0 || row >= max) return null;",
+    "new": "  if (!Number.isInteger(row) || row < 0) return null;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-row-walk-does-not-skip-the-holes-the-draw-skips",
+    "file": "src/systems/worldHover.js",
+    "old": "  return hoverItems(items)[row] ?? null;",
+    "new": "  return (items ?? [])[row] ?? null;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-gold-lands-in-the-item-list",
+    "file": "src/systems/inventory.js",
+    "old": "  if (isGoldPieces(item)) addGoldPieces(entity, item.stackCount ?? 1);",
+    "new": "  if (false) addGoldPieces(entity, item.stackCount ?? 1);",
+    "tests": [
+      "test/quickloot.test.js",
+      "test/nativeinventory.test.js",
+      "test/mace_corpse_window.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-taken-item-is-left-in-the-container",
+    "file": "src/systems/inventory.js",
+    "old": "  fromList.splice(at, 1);",
+    "new": "  ;",
+    "tests": [
+      "test/quickloot.test.js",
+      "test/mace_corpse_window.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-a-stranger-to-the-container-is-taken-anyway",
+    "file": "src/systems/inventory.js",
+    "old": "  if (at < 0) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-wheel-turns-the-highlight-the-wrong-way",
+    "file": "src/systems/quickLoot.js",
+    "old": "  const clicks = deltaY > 0 ? 1 : deltaY < 0 ? -1 : 0;",
+    "new": "  const clicks = deltaY > 0 ? -1 : deltaY < 0 ? 1 : 0;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-wheel-is-eaten-with-nothing-listed",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!_sel || !clicks || !(_actionIds || quickLootOn())) return false;",
+    "new": "  if (!clicks) return false;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-nudge-is-never-spent",
+    "file": "src/systems/quickLoot.js",
+    "old": "  _lastKey = _sel ? frame.key : null;\n  _nudge = 0;",
+    "new": "  _lastKey = _sel ? frame.key : null;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-switch-off-leaves-a-highlight-standing",
+    "file": "src/systems/quickLoot.js",
+    "old": "  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
+    "new": "  _sel = nextSelection(_sel, frame, _nudge);",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-armed-key-outlives-the-press-it-rode",
+    "file": "src/systems/quickLoot.js",
+    "old": "  const how = _pending;\n  _pending = null;",
+    "new": "  const how = _pending;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-open-key-takes-the-row-instead",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (how === 'open') return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-bulk-take-walks-the-list-it-is-splicing",
+    "file": "src/systems/quickLoot.js",
+    "old": "    for (const it of [...items]) {\n      const got = takeThrough(playerEntity, items, it, getQuest);",
+    "new": "    for (const it of items) {\n      const got = takeThrough(playerEntity, items, it, getQuest);",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-take-runs-with-the-switch-off",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!quickLootOn() || !hooks || !playerEntity) return null;",
+    "new": "  if (!hooks || !playerEntity) return null;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-a-key-arms-with-nothing-highlighted",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false;",
+    "new": "  if (!quickLootOn() || _actionIds) return false;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-take-reads-the-highlight-of-another-container",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!_sel || _actionIds || _sel.key !== key) return null;",
+    "new": "  if (!_sel || _actionIds) return null;",
+    "tests": [
+      "test/quickloot.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-a-moved-highlight-does-not-repaint",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const sig = `${frameSignature(frame)}|${quickLootRow(frame)}|${statsSide(lastX, globalThis.innerWidth ?? 0)}`;",
+    "new": "  const sig = frameSignature(frame);",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-draw-lights-no-row",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    if (i === sel) row.classList.add('sel');\n    if (r.rarity)",
+    "new": "    ;\n    if (r.rarity)",
+    "tests": [
+      "test/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "QUICK-LOOT-the-bulk-corpse-take-walks-the-list-it-is-splicing",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "  for (const item of [...items]) { if (takeOneInto(playerEntity, items, item)) n++; }",
+    "new": "  for (const item of items) { if (takeOneInto(playerEntity, items, item)) n++; }",
+    "tests": [
+      "test/mace_corpse_window.test.js",
+      "test/quickloot.test.js"
+    ]
+  }
+]

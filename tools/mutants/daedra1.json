@@ -1,0 +1,119 @@
+[
+ {
+  "name": "DAEDRA1-the-walk-refuses-a-context-alone",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "  if (!hasValues && !questLike && !macroWorld()) return rows;",
+  "new": "  if (!hasValues) return rows;",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA1-the-context-never-reaches-the-walk",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "  const one = (t) => expandMacroValues(t ?? '', values ?? {}, questLike);",
+  "new": "  const one = (t) => expandMacroValues(t ?? '', values ?? {}, null);",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA1-a-null-daedra-prints-a-hole",
+  "file": "src/systems/daedraSummoning.js",
+  "old": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name ?? null });",
+  "new": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name ?? '' });",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA1-the-coven-hands-its-records-over-raw-again",
+  "file": "src/scenes/worldModes.js",
+  "old": "    const rows = (id) => expandRowValues(rawRows(id), null, null);",
+  "new": "    const rows = (id) => rawRows(id);",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA1-the-summoning-loses-its-prince",
+  "file": "src/scenes/worldModes.js",
+  "old": "      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), null);",
+  "new": "      const say = (id) => rows?.(id) ?? [];",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA1-a-box-reads-its-random-record-twice",
+  "file": "src/scenes/worldModes.js",
+  "old": "      const box = (id, d, fallback) => { const r = say(id, d); return r.length ? r : [{ text: fallback, center: true }]; };",
+  "new": "      const box = (id, d, fallback) => (say(id, d).length ? say(id, d) : [{ text: fallback, center: true }]);",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA1-the-princes-offer-goes-out-raw",
+  "file": "src/scenes/worldModes.js",
+  "old": "            const boxes = offered ? questBridge.offerBoxes(offered, (id) => say(id, r.daedra)) : [];",
+  "new": "            const boxes = offered ? questBridge.offerBoxes(offered, (id) => townTalk?.lines?.(id) ?? []) : [];",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA1b-the-flow-takes-the-expanded-reader-again",
+  "file": "src/scenes/worldModes.js",
+  "old": "        guild: null, memberships: [], store, rows: rawRows, route: null,",
+  "new": "        guild: null, memberships: [], store, rows, route: null,",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA1b-the-ladder-stops-marking-what-it-cannot-answer",
+  "file": "src/systems/quest/questMacros.js",
+  "old": "  return symbolStr + '[srcDataUnknown]';",
+  "new": "  return symbolStr;",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA2-the-summoning-gates-on-coins-again",
+  "file": "src/scenes/worldModes.js",
+  "old": "            gold: totalGoldAmount(playerEntity),",
+  "new": "            gold: goldAmount(playerEntity),",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA2-the-shelf-gates-on-coins-again",
+  "file": "src/scenes/worldModes.js",
+  "old": "    if (totalGoldAmount(playerEntity) < price) return null;",
+  "new": "    if (goldAmount(playerEntity) < price) return null;",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA2-the-repair-counter-gates-on-coins-again",
+  "file": "src/scenes/worldModes.js",
+  "old": "    if (totalGoldAmount(playerEntity) < price) {",
+  "new": "    if (goldAmount(playerEntity) < price) {",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ },
+ {
+  "name": "DAEDRA2-a-letter-stops-being-tender",
+  "file": "src/systems/court.js",
+  "old": "export function totalGoldAmount(player) {\n  return goldAmount(player) + creditAmount(player);\n}",
+  "new": "export function totalGoldAmount(player) {\n  return goldAmount(player);\n}",
+  "tests": [
+   "test/daedrasummoning.test.js"
+  ]
+ }
+]
