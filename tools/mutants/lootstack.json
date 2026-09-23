@@ -1,0 +1,266 @@
+[
+  {
+    "name": "LS-reach-gate-dropped",
+    "file": "src/player/lootStack.js",
+    "old": "    if (!hit || !(hit.distance <= hit.reach)) break;",
+    "new": "    if (!hit) break;",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A body across the room joins the pile, and a turn to it earns 'You are too far away'."
+  },
+  {
+    "name": "LS-members-out-of-order",
+    "file": "src/player/lootStack.js",
+    "old": "    out.push(hit);",
+    "new": "    out.unshift(hit);",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The pile's front is no longer the nearest body."
+  },
+  {
+    "name": "LS-no-body-list-clears",
+    "file": "src/player/lootStack.js",
+    "old": "  if (!Array.isArray(targets) || !targets.some(isBody)) return first;",
+    "new": "  if (!Array.isArray(targets)) return first;",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The pile-of-drops pick a host casts in the same frame forgets the body the player turned to."
+  },
+  {
+    "name": "LS-stale-choice-kept",
+    "file": "src/player/lootStack.js",
+    "old": "  if (stack.length < 2) { _chosen = null; _seen = null; return first; }",
+    "new": "  if (stack.length < 2) { _seen = null; return first; }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "Looking away keeps a choice about a pile the player has left."
+  },
+  {
+    "name": "LS-vanished-body-chosen",
+    "file": "src/player/lootStack.js",
+    "old": "  if (at < 0) _chosen = null;",
+    "new": "",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A body emptied and disabled stays the choice."
+  },
+  {
+    "name": "LS-chosen-at-own-distance",
+    "file": "src/player/lootStack.js",
+    "old": "  return { key: stack[at].key, distance: first.distance, reach: stack[at].reach };",
+    "new": "  return { key: stack[at].key, distance: stack[at].distance, reach: stack[at].reach };",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A dropped pile lying between two bodies steals the click the player turned to the second one for."
+  },
+  {
+    "name": "LS-turn-when-pile-lost",
+    "file": "src/player/lootStack.js",
+    "old": "  if (at < 0) return null;   // the pile did not win: a door, a person or a foe stands in front of it",
+    "new": "",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A turn with a door in front of the pile turns the pile behind the door."
+  },
+  {
+    "name": "LS-no-wrap",
+    "file": "src/player/lootStack.js",
+    "old": "  const next = (at + n) % _seen.length;",
+    "new": "  const next = Math.min(at + n, _seen.length - 1);",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The back of the pile never turns to its front."
+  },
+  {
+    "name": "LS-turn-kept",
+    "file": "src/player/lootStack.js",
+    "old": "  const n = _turns;\n  _turns = 0;",
+    "new": "  const n = _turns;",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A turn is spent twice - and a turn armed at a door lands later on a pile."
+  },
+  {
+    "name": "LS-drop-noop",
+    "file": "src/player/lootStack.js",
+    "old": "export function dropBodyTurns() { _turns = 0; }",
+    "new": "export function dropBodyTurns() { }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A turn armed before a window lands after it."
+  },
+  {
+    "name": "LS-turn-text-off-by-one",
+    "file": "src/player/lootStack.js",
+    "old": "`Body ${index + 1} of ${count}.`",
+    "new": "`Body ${index} of ${count}.`",
+    "tests": ["test/lootstack.test.js"],
+    "note": "'Body 0 of 3.'"
+  },
+  {
+    "name": "LS-pick-bypasses-stack",
+    "file": "src/player/activate.js",
+    "old": "  return chooseBody(nearestActivatableHit(eye, dir, targets, collider), targets, (rest) => nearestActivatableHit(eye, dir, rest, collider));",
+    "new": "  return nearestActivatableHit(eye, dir, targets, collider);",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The key turns nothing any reader of the ray hears."
+  },
+  {
+    "name": "LS-walk-ignores-the-world",
+    "file": "src/player/activate.js",
+    "old": "(rest) => nearestActivatableHit(eye, dir, rest, collider));",
+    "new": "(rest) => nearestActivatableHit(eye, dir, rest, { raycast: () => Infinity }));",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A body behind a wall joins the pile."
+  },
+  {
+    "name": "LS-mark-gone",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    const frame = markBodyStack(resolveHover(hit, { name, contents }));",
+    "new": "    const frame = resolveHover(hit, { name, contents });",
+    "tests": ["test/lootstack.test.js"],
+    "note": "Nothing tells the player the body under the reticle is one of three."
+  },
+  {
+    "name": "LS-key-named-from-a-literal",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const tag = quickslotTag(NEXT_BODY_ACTION, { bindings: bindings() });",
+    "new": "  const tag = { kind: 'key', text: ']' };",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A player who rebound the key is told to press the old one."
+  },
+  {
+    "name": "LS-unbound-key-named",
+    "file": "src/ui/worldPlaque.js",
+    "old": "${key ? ` \\u00b7 ${key} for the next` : ''}",
+    "new": "${` \\u00b7 ${key} for the next`}",
+    "tests": ["test/lootstack.test.js"],
+    "note": "An action bound to nothing reads 'null for the next'."
+  },
+  {
+    "name": "LS-no-repick-after-turn",
+    "file": "src/ui/worldPlaque.js",
+    "old": "      if (turned) { setMidScreenText(bodyTurnText(turned)); hit = reticle(); }",
+    "new": "      if (turned) { setMidScreenText(bodyTurnText(turned)); }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "On the turn's own frame the plaque names the body the press will no longer open."
+  },
+  {
+    "name": "LS-turn-landing-under-a-window",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (cursorActive || !eye || !dir || !collider) { dropBodyTurns(); if (on) showWorldPlaque(null); return null; }",
+    "new": "  if (cursorActive || !eye || !dir || !collider) { if (on) showWorldPlaque(null); return null; }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A turn pressed as a window opened lands on whatever the reticle meets when it closes."
+  },
+  {
+    "name": "LS-classic-cannot-turn",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!on && !bodyTurnArmed()) return null;",
+    "new": "  if (!on) return null;",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The classic skin's key does nothing."
+  },
+  {
+    "name": "LS-classic-picks-every-frame",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!on && !bodyTurnArmed()) return null;",
+    "new": "",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The classic frame casts the reticle's ray every frame for a plaque it never draws."
+  },
+  {
+    "name": "LS-teardown-keeps-the-choice",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  resetBodyStack();\n}",
+    "new": "}",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A choice made in a dungeon points the street's press at a body that is not there."
+  },
+  {
+    "name": "LS-surface-bodies-unmarked",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "      body: true,\n",
+    "new": "",
+    "tests": ["test/lootstack.test.js"],
+    "note": "Every body above ground is one body again - the key turns nothing in the street or indoors."
+  },
+  {
+    "name": "LS-dungeon-bodies-unmarked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "reach: CORPSE_ACTIVATION_DISTANCE, body: true });",
+    "new": "reach: CORPSE_ACTIVATION_DISTANCE });",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The key turns nothing underground."
+  },
+  {
+    "name": "LS-default-on-a-spent-key",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['BracketRight', 'NextBody'],",
+    "new": "  ['KeyG', 'NextBody'],",
+    "tests": ["test/lootstack.test.js", "test/ht1_handheldtorches.test.js"],
+    "note": "One press turns the pile and drops the torch (Handheld Torches' G)."
+  },
+  {
+    "name": "LS-row-missing-from-the-pane",
+    "file": "src/ui/enhancedControls.js",
+    "old": "  Object.freeze({ action: 'NextBody', label: 'Next body in a pile' }),\n",
+    "new": "",
+    "tests": ["test/lootstack.test.js", "test/enhancedControls.test.js"],
+    "note": "The key cannot be rebound on the enhanced skin."
+  },
+  {
+    "name": "LS-world-turn-fires-the-activate",
+    "file": "src/scenes/world.js",
+    "old": "act === 'NextBody' && armBodyTurn()) { e.preventDefault(); return; }",
+    "new": "act === 'NextBody' && armBodyTurn()) { _tapArmed = 2; e.preventDefault(); return; }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The pile's key activates whatever is under the reticle - a live foe in Steal mode is pickpocketed."
+  },
+  {
+    "name": "LS-exterior-turn-fires-the-activate",
+    "file": "src/scenes/exterior.js",
+    "old": "act === 'NextBody' && armBodyTurn()) { e.preventDefault(); return; }",
+    "new": "act === 'NextBody' && armBodyTurn()) { _tapArmed = 2; e.preventDefault(); return; }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The same, in the standalone exterior host."
+  },
+  {
+    "name": "LS-dungeon-turn-fires-the-activate",
+    "file": "src/scenes/dungeon.js",
+    "old": "actionOf(e, keys) === 'NextBody' && armBodyTurn()) { e.preventDefault(); return; }",
+    "new": "actionOf(e, keys) === 'NextBody' && armBodyTurn()) { _tapArmed = 2; e.preventDefault(); return; }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The same, in the standalone dungeon host."
+  },
+  {
+    "name": "LS-divider-back-at-the-title",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".wplaque-list { padding-top: 8px; margin-top: 8px; border-top: 2px solid rgba(125,116,96,0.3); }",
+    "new": ".wplaque.has-list .wplaque-title { padding-bottom: 8px; margin-bottom: 8px; border-bottom: 2px solid rgba(125,116,96,0.3); }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "A chest's lock level and a pile's mark draw as the first row of the list."
+  },
+  {
+    "name": "LS-band-margin-a-literal",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "margin: 0 calc(-1 * var(--wp-pad-x)); padding: 0 var(--wp-pad-x); }",
+    "new": "margin: 0 -14px; padding: 0 var(--wp-pad-x); }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "On the narrow sheet the band runs 2px into the border."
+  },
+  {
+    "name": "LS-band-left-padding-12",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "margin: 0 calc(-1 * var(--wp-pad-x)); padding: 0 var(--wp-pad-x); }",
+    "new": "margin: 0 calc(-1 * var(--wp-pad-x)); padding: 0 var(--wp-pad-x) 0 12px; }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The lit name stands 2px left of every other name - the band moves a name."
+  },
+  {
+    "name": "LS-narrow-padding-a-literal",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "--wp-pad-x: 12px; padding: 8px var(--wp-pad-x); }",
+    "new": "padding: 8px 12px; }",
+    "tests": ["test/lootstack.test.js"],
+    "note": "The narrow sheet pads 12 while the band still reaches out 14."
+  },
+  {
+    "name": "LS-clip-across-again",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  overflow: hidden; overflow-x: visible; overflow-y: clip; }",
+    "new": "  overflow: hidden; }",
+    "tests": ["test/lootstack.test.js", "test/worldhover.test.js"],
+    "note": "The list cuts the highlight band off at its edges, and the lit name's first letter with it."
+  }
+]

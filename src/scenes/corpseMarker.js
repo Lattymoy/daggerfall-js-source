@@ -203,6 +203,10 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
       aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] },
       distance: RAY_DISTANCE,
       reach: CORPSE_ACTIVATION_DISTANCE,
+      // LOOT-STACK: a BODY, in the producer's own word - the pick turns a
+      // pile of these (player/lootStack.js) and reads no key's prefix to
+      // know one.
+      body: true,
     });
   });
   return targets;

@@ -102,6 +102,14 @@ export const ACTIONS = Object.freeze([
   // (player/pointerLock.js bindCursorToggle) so there is no second
   // toggle to keep in step.
   'FreeMouse',
+  // LOOT-STACK (2026-09-23, Janome: "a toggle key to switch between the
+  // inventories of enemies stacked on top of each other"). APPENDED,
+  // like every port action before it. It turns the pile of bodies under
+  // the reticle to the next one (player/lootStack.js) - which body the
+  // plaque names and the next press opens - and does nothing else: it
+  // never activates, so a live foe or a townsperson in front of the
+  // pile cannot be pickpocketed or talked to by it.
+  'NextBody',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -114,7 +122,7 @@ export const ACTIONS = Object.freeze([
  *  because it draws the row (ui/enhancedControls.js PORT_ROWS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse', 'NextBody']);   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -225,6 +233,20 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // lesson: a key-literal table there made four rebindable rows inert
   // in both directions).
   ['KeyY', 'FreeMouse'],
+  // LOOT-STACK: ] - and it is chosen by the same elimination, which is
+  // now past the letters. FREEMOUSE spent the last one (Y); of what is
+  // left, DFU's table also spends Space, Backspace, Enter, the arrows
+  // left and right, Insert, Delete, Home, PageUp, PageDown, the left
+  // Shift, Ctrl and Alt, Backquote, F1-F6, F8, F9 and F11 (F10 is its
+  // large-HUD shortcut); the port spends Tab (PX15's dial), Escape and
+  // Digit1-Digit4 (the diamond); the vendored mods' defaults spend the
+  // keypad's Enter and Plus, and none of them offers a key outside the
+  // letters. Of the keys still free, ] is the one that already MEANS
+  // "the next one" in this port - the enhanced automap steps a floor up
+  // on it (ui/automapSheet.js), inside its own window, where no pile is
+  // ever under a reticle - and it is two keys from P, where the pile's
+  // other two keys (P, J) already send the hand that leaves the mouse.
+  ['BracketRight', 'NextBody'],
   // QS2: THE NUMBER ROW, which is the one place a Souls player's hand already
   // goes. Digit1-Digit4 are unspent by SetupDefaults, unspent by the port
   // (PX15's Tab, HT4's G, SOC5's F, HT's O and X are the whole of the port's

@@ -48,6 +48,10 @@ import { pickActivatableHit } from '../player/activate.js';
 import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P3: the frame in flight, so the gate's two terms are computed once in it
 import { resolveHover, frameSignature } from '../systems/worldHover.js';
 import { foldQuickLoot, quickLootRow, quickLootStats, resetQuickLoot } from '../systems/quickLoot.js';   // QUICK-LOOT B3: the highlight is the FEATURE's - this draws it and frees it, it does not own it; QUICK-LOOT-STATS: and the lit row's own numbers
+import { bodyTurnArmed, turnBodyStack, bodyTurnText, bodyStackMark, dropBodyTurns, resetBodyStack } from '../player/lootStack.js';   // LOOT-STACK: the pile's turn is spent where the reticle's pick is, and the plaque says where the body stands in it
+import { setMidScreenText } from './midScreenText.js';   // LOOT-STACK: a turn speaks in DFU's own mid-screen voice, on both skins
+import { quickslotTag } from './quickslotTags.js';   // LOOT-STACK: the turn key's own name, the classic way, the way the diamond names its keys
+import { bindings } from './input.js';   // ...off the live store, so a rebind renames it
 
 /** The gap in CSS pixels between the cross's lower arm tip and the
  *  plaque's top edge. Large enough that the two never read as one
@@ -427,12 +431,24 @@ export function worldHoverFrame({
   // can call `ensure()` (AUDIT 39: the gate is about DRAWING - a classic
   // page must not reach injectEnhancedStyle(), and hiding an existing
   // node injects nothing).
-  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }
+  //
+  // LOOT-STACK: ...EXCEPT FOR A TURN OF THE PILE, which is about the RAY
+  // and not about drawing. This is the one seam every host already calls
+  // once a frame with the reticle's own pick - raced exactly as its press
+  // races it - so a turn armed by its key (player/lootStack.js) is spent
+  // here on both skins: a classic player turns a pile too, and DFU's
+  // mid-screen line is the plaque they have. With no turn armed, the
+  // plaque's gates below run exactly as they always did.
+  const on = worldPlaqueOn();
+  if (!on) hideWorldPlaque();
   // `cursorActive` is the crosshair's OWN first statement (there is no
   // reticle while a window is up, hudCrosshair.js:114) and so it is the
   // plaque's. In the dungeon this was an accident of scheduling - the
   // driver only ran with no overlay up - and an accident is not a law.
-  if (cursorActive || !eye || !dir || !collider) { showWorldPlaque(null); return null; }
+  // LOOT-STACK: and a turn armed before a window came up is dropped, not
+  // kept to land on whatever the reticle meets after it.
+  if (cursorActive || !eye || !dir || !collider) { dropBodyTurns(); if (on) showWorldPlaque(null); return null; }
+  if (!on && !bodyTurnArmed()) return null;
   // CONTAINED, COUNTED AND SAID - ONCRASH1's law, and a READOUT is a
   // stronger case for it than the wire frame that law was written for:
   // nothing this surface can compute is worth a dead game.
@@ -450,8 +466,17 @@ export function worldHoverFrame({
   // console), and the plaque goes down rather than freezing on its
   // last answer: a readout that cannot answer shows nothing.
   try {
-    const hit = pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider);
-    const frame = resolveHover(hit, { name, contents });
+    const reticle = () => (pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider));
+    let hit = reticle();
+    // LOOT-STACK: the turn, on the stack this very pick stood - and when
+    // it turned, the pick again, so the plaque names the body the next
+    // press will open.
+    if (bodyTurnArmed()) {
+      const turned = turnBodyStack(hit);
+      if (turned) { setMidScreenText(bodyTurnText(turned)); hit = reticle(); }
+    }
+    if (!on) return null;
+    const frame = markBodyStack(resolveHover(hit, { name, contents }));
     // QUICK-LOOT B3: the highlight is folded HERE, inside the
     // containment, because `nextSelection` reads the frame a host
     // closure just produced - and the whole reason this try/catch
@@ -471,6 +496,25 @@ export function worldHoverFrame({
     return null;
   }
 }
+
+/**
+ * LOOT-STACK: A BODY IN A PILE SAYS WHERE IT STANDS IN IT - "2 of 3" - and
+ * the key that turns it, named off the live bindings the way the diamond
+ * names its keys (ui/quickslotTags.js: the classic short name, and no word
+ * at all for an action bound to nothing, or to a pad button a line of text
+ * cannot draw). The mark is a sub-line, so the repaint guard sees it
+ * change (frameSignature reads the subs).
+ */
+function markBodyStack(f) {
+  if (!f) return f;
+  const m = bodyStackMark(f.key);
+  if (!m) return f;
+  const tag = quickslotTag(NEXT_BODY_ACTION, { bindings: bindings() });
+  const key = tag?.kind === 'key' ? tag.text : null;
+  return { ...f, subs: [...f.subs, `${m.index + 1} of ${m.count}${key ? ` \u00b7 ${key} for the next` : ''}`] };
+}
+/** The action a pile's turn answers (systems/inputActions.js). */
+export const NEXT_BODY_ACTION = 'NextBody';
 
 /** For tests and the console: how many frames the seam has contained. */
 export const worldHoverFaults = () => _faults;
@@ -501,6 +545,9 @@ export function destroyWorldPlaque() {
   // that frees it is still this module's, because this is what the
   // hosts call.
   resetQuickLoot();
+  // LOOT-STACK: and the pile's choice with it, for the same reason - it
+  // names a body in the world this teardown is unmaking.
+  resetBodyStack();
 }
 
 /** For tests. */

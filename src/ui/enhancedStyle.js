@@ -3720,7 +3720,7 @@ ${badgeCss()}
    it. The percentages are the fallback for a frame not yet drawn. */
 .wplaque { position: fixed; left: var(--wp-x, 50%); top: var(--wp-top, 55%);
   transform: translateX(-50%);
-  z-index: 6; display: none; min-width: 190px; max-width: ${PLAQUE_MAX_W}px; padding: 10px 14px;
+  z-index: 6; display: none; min-width: 190px; max-width: ${PLAQUE_MAX_W}px; --wp-pad-x: 14px; padding: 10px var(--wp-pad-x);
   background: rgba(10,12,17,0.9); border: 2px solid #7d7460; pointer-events: none;
   font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; color: #d8cfae;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
@@ -3733,9 +3733,16 @@ ${badgeCss()}
    uppercase letterspaced was a KIND label ("LOOT", "REMAINS"), and the
    merged surface names the thing itself ("Wardrobe", "Shop Shelf",
    "Skeletal Warrior (dead)"), which is strictly more. What survives is
-   the divider, and only where there is something to divide. */
-.wplaque.has-list .wplaque-title { padding-bottom: 8px; margin-bottom: 8px;
-  border-bottom: 2px solid rgba(125,116,96,0.3); }
+   the divider, and only where there is something to divide.
+   LOOT-STACK moved it from the TITLE's foot to the LIST's top edge. It
+   divides the LABEL - the title and every sub-line under it - from what
+   the thing holds, and at the title's foot it stood between the title
+   and its own sub-lines: a locked chest's "Lock Level: 12" drew as the
+   first row of its contents, and a pile's "2 of 3" as a heading over
+   the body's list (tools/lootStackProbe.mjs photographed it). The list
+   exists only on an itemised frame (has-list), so the divider still
+   stands only where there is something to divide. */
+.wplaque-list { padding-top: 8px; margin-top: 8px; border-top: 2px solid rgba(125,116,96,0.3); }
 .wplaque-row { display: flex; align-items: baseline; gap: 10px; font-size: 14px;
   line-height: 1.5; }
 .wplaque-count { margin-left: auto; color: var(--brass); font-size: 12px; }
@@ -3745,9 +3752,16 @@ ${badgeCss()}
    name under it each time the wheel turned, which is the one thing a
    readout at the crosshair must not do. The rarity colours above are
    on the row's first span and are untouched by this, so a highlighted
-   artifact still reads as an artifact. */
+   artifact still reads as an artifact.
+   LOOT-STACK (tools/lootStackProbe.mjs measured it): the margin is the
+   PLAQUE's own padding (--wp-pad-x), not a second 14 - the narrow sheet
+   pads 12, and there the band ran 2px into the border on both sides -
+   and the padding MATCHES it on both sides, where the left was 12 and
+   stood the lit name 2px left of every other name in the list, the
+   very shift this rule exists to prevent (the brass bar is an inset
+   shadow and takes no room). */
 .wplaque-row.sel { background: rgba(125,116,96,0.28); box-shadow: inset 2px 0 0 var(--brass);
-  margin: 0 -14px; padding: 0 14px 0 12px; }
+  margin: 0 calc(-1 * var(--wp-pad-x)); padding: 0 var(--wp-pad-x); }
 /* ...and the line that says what the keys do, under the list. */
 .wplaque-keys { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(125,116,96,0.35);
   color: #7d7460; font-size: 11px; text-align: center; }
@@ -3796,12 +3810,19 @@ ${badgeCss()}
    so the rows are what gives. No scrollbar chrome: a readout is not a
    control (the whole surface is pointer-events: none), so the overflow
    is a CLIP, and the "and N more" tail already tells the truth about
-   what is not shown. */
+   what is not shown.
+   LOOT-STACK: and the clip is DOWNWARD only. The cap is about height -
+   the rows are what gives - and hidden clipped across as well, which
+   cut QUICK-LOOT B3's highlight band off at the list's edges (it reaches
+   out to the plaque's) and the first two pixels of the lit name with it.
+   A clip on the one axis leaves the other visible (hidden cannot: it
+   makes the other axis auto); a browser without clip drops that
+   declaration and keeps hidden, today's clip, whole. */
 .wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);
-  overflow: hidden; }
+  overflow: hidden; overflow-x: visible; overflow-y: clip; }
 /* AUDIT ENH-NOTICE3 A6's lesson: a more-specific base rule outranks a
    media block, so every base selector above is one class. */
-@media (max-width: 720px) { .wplaque { max-width: 88vw; padding: 8px 12px; }
+@media (max-width: 720px) { .wplaque { max-width: 88vw; --wp-pad-x: 12px; padding: 8px var(--wp-pad-x); }
   .wplaque-row, .wplaque-title { font-size: 13px; } .wplaque-sub { font-size: 11px; } }
 
 /* ── PX21a: THE TRANSPORT STRIP ─────────────────────────────────

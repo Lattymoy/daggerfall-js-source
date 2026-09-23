@@ -227,11 +227,11 @@ test('FIX-F: the pane offers the classic grid’s 38 actions and the ADVANCED si
   // describe its rows is worse than no group.
   assert.deepEqual(PORT_ROWS.map((r) => r.action),
     ['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand',
-      'QuickLootAll', 'QuickLootOpen', 'FreeMouse']);   // QS6: the spell slot, above the swap it took the key from
+      'QuickLootAll', 'QuickLootOpen', 'NextBody', 'FreeMouse']);   // QS6: the spell slot, above the swap it took the key from; LOOT-STACK: the pile's turn with the pile's other two
   assert.deepEqual(PORT_GROUPS.map((g) => [g.title, ...g.rows.map((r) => r.action)]), [
     ['Online', 'SocialInteract'],
     ['Quickslots', 'QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickSwap', 'QuickOffHand'],
-    ['Quick loot', 'QuickLootAll', 'QuickLootOpen'],
+    ['Loot', 'QuickLootAll', 'QuickLootOpen', 'NextBody'],   // LOOT-STACK: the heading renamed to describe its third row
     ['Mouse', 'FreeMouse'],
   ]);
   assert.deepEqual(PORT_GROUPS.flatMap((g) => g.rows), [...PORT_ROWS], 'the union really is the groups, not a second list beside them');

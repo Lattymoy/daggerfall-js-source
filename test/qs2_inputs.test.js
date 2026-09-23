@@ -31,7 +31,7 @@ import {
   createBindings, resetDefaults, setBinding, getBinding, actionForCode, loadKeyBinds, serializeKeyBinds,
 } from '../src/systems/inputActions.js';
 import { routeAction, QUICKSLOT_ACTIONS, POLLED_ACTIONS } from '../src/ui/input.js';
-import { GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, QUICKSLOT_GROUP_TITLE, QUICKLOOT_GROUP_TITLE, MOUSE_GROUP_TITLE } from '../src/ui/enhancedControls.js';
+import { GRID_ACTIONS, ADVANCED_ROWS, PORT_ROWS, PORT_GROUPS, QUICKSLOT_GROUP_TITLE, LOOT_GROUP_TITLE, MOUSE_GROUP_TITLE } from '../src/ui/enhancedControls.js';
 import { createWeaponRig } from '../src/combat/weaponRig.js';
 import { equipItem, equipTableOf, EQUIP_SLOTS } from '../src/systems/equip.js';
 import { assignQuickslot, clearQuickslots, swapQuickslot, quickslotOf } from '../src/systems/quickslots.js';
@@ -60,9 +60,10 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
   // that names "the last seven" now has an eighth row behind it. It is
   // sliced from the END of the port's rows rather than widened to
   // include a row this pin is not about.
-  assert.deepEqual(ACTIONS.slice(-8, -1), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
-  assert.equal(ACTIONS.at(-1), 'FreeMouse', 'and FREEMOUSE\'s is the newest, appended past them');
-  assert.equal(ACTIONS.length, 53, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1');
+  // LOOT-STACK appended one more past FREEMOUSE's, so the slice ends two short of the end now.
+  assert.deepEqual(ACTIONS.slice(-9, -2), [...QS, ...QL], 'the seven rows QS2 and QUICK-LOOT own, in this order');
+  assert.deepEqual(ACTIONS.slice(-2), ['FreeMouse', 'NextBody'], 'and FREEMOUSE\'s past them, and LOOT-STACK\'s past that - the newest');
+  assert.equal(ACTIONS.length, 54, 'DFU\'s 44 + SOC5\'s 1 + QS2\'s 3 + QS4\'s 1 + QS6\'s 1 + QUICK-LOOT\'s 2 + FREEMOUSE\'s 1 + LOOT-STACK\'s 1');
   // Every index DFU's own enum had, it still has. This is the whole reason the
   // list is appended to and never inserted into (ui/controlsWindow.js).
   assert.equal(ACTIONS[43], 'AutoRun', 'DFU\'s last row keeps index 43');
@@ -77,7 +78,7 @@ test('QS2: the three actions are APPENDED - past DFU\'s forty-four and past SOC5
 });
 
 test('QS2: the port\'s own actions YIELD in the classic windows - all four of them, because none of the four is on either classic face (mutant: the three left out of PORT_ACTIONS, so a classic player is told of a clash against a row they cannot see or clear)', () => {
-  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS, ...QL, 'FreeMouse']);   // FREEMOUSE: the classic windows cannot draw its row either
+  assert.deepEqual([...PORT_ACTIONS], ['SocialInteract', ...QS, ...QL, 'FreeMouse', 'NextBody']);   // FREEMOUSE: the classic windows cannot draw its row either; LOOT-STACK: nor the pile's turn
   // The claim PORT_ACTIONS makes is "not drawable by a classic window", and it
   // is derived here rather than asserted: the classic grid is ACTIONS[2..40)
   // and the ADVANCED popup is its six.
@@ -160,16 +161,19 @@ test('QS2: the enhanced pane draws the three under their OWN heading, and the co
   // would repeat the mistake this pin's own note names - the Enter/chat
   // collision that motivates the key is an online thing, but freeing
   // the mouse is something you do to read the screen.
-  assert.deepEqual(PORT_GROUPS.map((g) => g.title), ['Online', QUICKSLOT_GROUP_TITLE, QUICKLOOT_GROUP_TITLE, MOUSE_GROUP_TITLE]);
+  assert.deepEqual(PORT_GROUPS.map((g) => g.title), ['Online', QUICKSLOT_GROUP_TITLE, LOOT_GROUP_TITLE, MOUSE_GROUP_TITLE]);
   assert.equal(MOUSE_GROUP_TITLE, 'Mouse');
   assert.deepEqual(PORT_GROUPS[3].rows.map((r) => [r.action, r.label]), [
     ['FreeMouse', 'Free the mouse (press again to look)'],
   ]);
   assert.equal(QUICKSLOT_GROUP_TITLE, 'Quickslots');
-  assert.equal(QUICKLOOT_GROUP_TITLE, 'Quick loot');
+  // LOOT-STACK: 'Quick loot' -> 'Loot' - the third row turns a pile on either skin with quick loot on or off, and a
+  // heading must describe its rows (FREEMOUSE's own rule, above)
+  assert.equal(LOOT_GROUP_TITLE, 'Loot');
   assert.deepEqual(PORT_GROUPS[2].rows.map((r) => [r.action, r.label]), [
     ['QuickLootAll', 'Take everything'],
     ['QuickLootOpen', 'Open the container'],
+    ['NextBody', 'Next body in a pile'],   // LOOT-STACK
   ]);
   assert.ok(!PORT_GROUPS[0].rows.concat(PORT_GROUPS[1].rows).some((r) => QL.includes(r.action)),
     'not under Online and not under Quickslots - looting is neither');

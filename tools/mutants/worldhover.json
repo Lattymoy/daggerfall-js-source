@@ -122,8 +122,8 @@
   {
     "name": "WORLD-HOVER-skin-gate-removed-from-the-seam",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }",
-    "new": "  if (false) { hideWorldPlaque(); return null; }",
+    "old": "  const on = worldPlaqueOn();",
+    "new": "  const on = true;",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -151,8 +151,8 @@
   {
     "name": "WORLD-HOVER-cursorActive-ignored",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (cursorActive || !eye || !dir || !collider) { showWorldPlaque(null); return null; }",
-    "new": "  if (!eye || !dir || !collider) { showWorldPlaque(null); return null; }",
+    "old": "  if (cursorActive || !eye || !dir || !collider) { dropBodyTurns(); if (on) showWorldPlaque(null); return null; }",
+    "new": "  if (!eye || !dir || !collider) { dropBodyTurns(); if (on) showWorldPlaque(null); return null; }",
     "tests": [
       "test/worldhover.test.js",
       "test/enhancedInventory.test.js"
@@ -828,7 +828,7 @@
   {
     "name": "WORLD-HOVER-the-plaque-list-has-no-height-cap",
     "file": "src/ui/enhancedStyle.js",
-    "old": ".wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);\n  overflow: hidden; }",
+    "old": ".wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);\n  overflow: hidden; overflow-x: visible; overflow-y: clip; }",
     "new": ".wplaque-list { display: block; }",
     "tests": [
       "test/worldhover.test.js"
@@ -885,8 +885,8 @@
   {
     "name": "AUDIT-WH2-the-seam-gate-stops-hiding",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }",
-    "new": "  if (!worldPlaqueOn()) return null;",
+    "old": "  if (!on) hideWorldPlaque();",
+    "new": "  if (false) hideWorldPlaque();",
     "tests": [
       "test/worldhover.test.js"
     ]

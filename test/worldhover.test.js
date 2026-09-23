@@ -2040,7 +2040,9 @@ test('AUDIT-WH R7/R8/P7/P9: the list has a cap, a readout is the player\'s onlin
   // viewport. The cap is the room BELOW the cross, which the anchor
   // already knows - `--wp-top` IS the plaque's top edge.
   const css = read('src/ui/enhancedStyle.js');
-  assert.match(css, /\.wplaque-list \{ display: block; max-height: calc\(100vh - var\(--wp-top, 55%\) - 24px\);\s*\n\s*overflow: hidden; \}/);
+  // LOOT-STACK: ...DOWNWARD only - `hidden` clipped across too and cut the highlight band off at the list's edges
+  // (tools/lootStackProbe.mjs); `hidden` stays as the fallback a browser without `clip` keeps
+  assert.match(css, /\.wplaque-list \{ display: block; max-height: calc\(100vh - var\(--wp-top, 55%\) - 24px\);\s*\n\s*overflow: hidden; overflow-x: visible; overflow-y: clip; \}/);
   // ...and it CLIPS rather than scrolls, because the whole surface is
   // pointer-events: none - a readout is not a control, and the
   // "and N more" tail already tells the truth about the rest.

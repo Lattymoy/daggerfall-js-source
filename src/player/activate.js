@@ -13,6 +13,7 @@
 // duplicates do until they do not.
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { isActionDoorObject } from '../world/actionSystem.js';   // MC-2: ActionDoorCheck's own classifier (PlayerActivate.cs:374 vs :380)
+import { chooseBody } from './lootStack.js';   // LOOT-STACK: the ray's last word on a pile of bodies
 
 export { GLOBAL_SCALE };
 
@@ -342,9 +343,24 @@ export function pickActivatable(eye, dir, targets, collider) {
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.
  *
+ * LOOT-STACK (Janome: "a toggle key to switch between the inventories of
+ * enemies stacked on top of each other"): and when the nearest hit is a
+ * BODY with others behind it inside their reach, the body the player
+ * turned to - handed on at the nearest's distance, so everything that
+ * races the pile races it as before (player/lootStack.js holds the law).
+ * Here, and not at the call sites, so every reader of the ray - the
+ * presses, the plaque, quick loot's take - means the same body.
+ *
  * @returns {{key:string, distance:number, reach:number}|null}
  */
 export function pickActivatableHit(eye, dir, targets, collider) {
+  return chooseBody(nearestActivatableHit(eye, dir, targets, collider), targets, (rest) => nearestActivatableHit(eye, dir, rest, collider));
+}
+
+/** The ray's nearest hit - DFU's one raycast, as the port spells it (the
+ *  law documented above). LOOT-STACK's stack walks it too, over the bodies
+ *  behind the front one, so each member is found as the front one was. */
+function nearestActivatableHit(eye, dir, targets, collider) {
   let bestKey = null;
   let bestDist = Infinity;
   let bestAabb = null;
