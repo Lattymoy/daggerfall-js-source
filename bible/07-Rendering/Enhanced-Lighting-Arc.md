@@ -963,3 +963,59 @@ the next step's door; this one changes no picture.
 
 Pinned: `test/lc1_clusters.test.js` (7). `el2_shadows`' wiring window
 grew for the build line.
+
+## SC1 - THE STATIC CASTERS ARE DRAWN ONCE (2026-09-23, Mac: "make some insane improvements to our lighting system ... while also improving performance")
+
+The second step, and the one the shadow draws were waiting for.
+
+**The cost it removes.** A lantern's cube map was replayed - six faces
+of everything in its range - every frame for the two nearest slots and
+every third for the rest (EL8's cadence), whether or not anything in
+that range had moved. Performance-Town.md's readout was about 1,700
+shadow draws a frame, most of them lanterns. In a tavern nothing has
+moved: the walls, the tables and the beams stand where they stood, and
+the only things that ever change a lantern's shadow are the light
+itself, a door on its swing, a rig walking through, a foe.
+
+**The shape.** `render/shadowPass.js`. Every record is CLASSIFIED as it
+is recorded: a mesh at the matrix it was drawn with last frame is
+static, one that moved is dynamic - and stays dynamic for
+`SHADOW_DYNAMIC_HOLD` (60) recorded frames after it stops, so a door that
+swings and stops or a walker who pauses does not redraw every cache in
+reach at each step; a rig is always dynamic; a flat is dynamic while its
+origin moves, per batch, remembered on the batch. Each caster slot keeps
+a CACHE of its static casters - a second depth array of the same shape,
+six layers per slot - drawn only when the light itself or the SET of
+static casters in its reach changes: `_staticSignature`, an order-free
+fold over the identities and positions of the still records whose
+spheres touch the light's (the hosts' draw order is the culling's and
+must not count). The live layers are then the cache BLITTED
+(`_blitSlot`: six depth blits, no rasterisation) with the dynamics
+drawn on top at EL8's cadence - and nothing at all when no dynamic is
+near. A still room costs zero shadow draws a frame.
+
+**Sticky slots.** A light keeps the slot it had while it stays among the
+picked, matched by its POSITION and not its index (the hosts re-sort
+their lights by distance every frame, so an index is no name); a walk
+past a lamp does not throw its cache away. The cadence's "nearest two"
+reads the light's rank by distance, whatever slot it holds.
+
+**The door.** `?shadowcache=off` (`renderer.setShadowCache`) is the old
+path whole: every caster in range into the live layers at the cadence,
+no cache, no blit.
+
+**Seen on a GPU.** `tools/shadowCacheProbe.mjs` draws
+enhancedLightingProbe's room with a walker crossing it through the real
+renderer on SwiftShader, the cache on and off, eight frames, and reads
+both back frame by frame: pixel-identical; the cache's point draws fall
+to the walker alone while it crosses, and to zero when it is gone,
+while the old path draws the room every frame.
+
+**Memory.** The cache doubles the casters' depth storage: two arrays of
+6 x 6 x 512^2 x 24-bit, about 75 MB together. The lane is the enhanced
+skin's, on the desktop GPU it was built for.
+
+Pinned: `test/sc1_shadowcache.test.js` (7). `el8_contact`'s cadence pin
+drives a walking mesh now; `el2_shadows`/`el5_field` count the cache's
+layers and storage; `weeds1_flatcasters`' replay signature carries the
+filter.

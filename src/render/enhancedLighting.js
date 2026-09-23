@@ -60,7 +60,7 @@
 import { getPref } from '../systems/uiPrefs.js';
 import { BLOOD_ABSORB, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI, INK_DEPTH, WET_DARKEN } from '../combat/bloodArt.js';   // BLOOD3: the film's own law, beside the tints it already owns
 import { isEnhanced } from '../systems/uiSkin.js';
-import { SHADOW_GLSL } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern
+import { SHADOW_GLSL, shadowCacheOn } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; SC1: the cache's door
 import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AIR_CONTACT_RANGE_FRACTION, airOn, contactOn, glslFloat } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';
 import { CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, clustersOn } from './lightClusters.js';   // LC1: the grid the lantern loop walks, and its door   // EL6: the dither at the encode - the port's one Bayer
@@ -999,7 +999,7 @@ export const EL_LANE = Object.freeze({
 export function syncLightingLane(renderer, search = globalThis.location?.search ?? '') {
   const on = enhancedLightingOn(search);
   renderer.setLightingLane(on ? EL_LANE : null);
-  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's
+  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's
   return on;
 }
 

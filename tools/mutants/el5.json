@@ -92,8 +92,8 @@
   {
     "name": "render-one-caster",
     "file": "src/render/shadowPass.js",
-    "old": "    for (let k = 0; k < casters.length; k++) {",
-    "new": "    for (let k = 0; k < Math.min(1, casters.length); k++) {",
+    "old": "    for (let rank = 0; rank < casters.length; rank++) {\n      const i = casters[rank], k = slotOf[rank];",
+    "new": "    for (let rank = 0; rank < Math.min(1, casters.length); rank++) {\n      const i = casters[rank], k = slotOf[rank];",
     "tests": [
       "test/el5_field.test.js"
     ]

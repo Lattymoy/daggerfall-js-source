@@ -220,8 +220,8 @@
  {
   "name": "sync-no-exposure",
   "file": "src/render/enhancedLighting.js",
-  "old": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's",
-  "new": "  if (on) { renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); }",
+  "old": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's",
+  "new": "  if (on) { renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); }",
   "tests": [
    "test/el1_enhancedlighting.test.js"
   ]

@@ -67,6 +67,10 @@ directory by `test/audit18_bible_docs.test.js`:
   thing on the ground is no standing card (`noShadow`, archive 216, flats
   under half a unit), a cascade skips casters under two of its texels).
   See `07-Rendering/Enhanced-Lighting-Arc.md`.
+  SC1 (2026-09-23): the static casters are drawn ONCE - every record classified
+  static or dynamic as it is recorded, each caster slot's statics cached in a
+  second depth array and blitted under the movers, sticky slots by position,
+  `?shadowcache=off` the old path (`Enhanced-Lighting-Arc.md`, SC1).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `lightClusters.js` - LC1 CLUSTERED LIGHTS (2026-09-23): the frustum cut into
   16 x 9 x 24 cells once a frame on the CPU, each light written into the cells
