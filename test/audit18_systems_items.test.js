@@ -164,8 +164,9 @@ test('audit18 items: the female weapon archive-1 rule reaches the item art', () 
   // the archive is race-blind for weapons (SetRace only offsets clothing/armor)
   assert.equal(playerArchiveFor(longsword, ITEM_TEMPLATES[120], { gender: 'female', race: 'Argonian' }), 233);
   // and it reaches the inventory list / native trade window icon
-  assert.deepEqual(inventoryItemImage(longsword, { gender: 'female', race: 'Breton' }), { archive: 233, record: 12 });
-  assert.deepEqual(inventoryItemImage(longsword, { gender: 'male', race: 'Breton' }), { archive: 234, record: 12 });
+  const archiveRecord = ({ archive, record }) => ({ archive, record });   // DW3: the image carries the dye too
+  assert.deepEqual(archiveRecord(inventoryItemImage(longsword, { gender: 'female', race: 'Breton' })), { archive: 233, record: 12 });
+  assert.deepEqual(archiveRecord(inventoryItemImage(longsword, { gender: 'male', race: 'Breton' })), { archive: 234, record: 12 });
   // arrows are untouched - they draw the world texture either way
   const arrow = { group: 'Weapons', templateIndex: ARROW_TEMPLATE };
   assert.equal(playerArchiveFor(arrow, ITEM_TEMPLATES[ARROW_TEMPLATE], { gender: 'female' }), ITEM_TEMPLATES[ARROW_TEMPLATE].playerTextureArchive);

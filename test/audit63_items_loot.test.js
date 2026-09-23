@@ -30,6 +30,9 @@ import { INTERIOR_MARKER } from '../src/world/interiorLayout.js';
 import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from '../src/systems/crimeGuilds.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 
+/** DW3: the image carries the item's dye now; these pins are about the archive and record. */
+const archiveRecord = ({ archive, record }) => ({ archive, record });
+
 /** A dropped-loot pool over a stub renderer - the same shape all four
  *  hosts build, so the laws below run rather than being read off the
  *  port's own source. */
@@ -189,8 +192,8 @@ test('AUDIT 63 F20: the setter\'s two gates - IsPotion, and the null recipe', ()
   const sheet = items[0];
   assert.equal(sheet.templateIndex, GROUP_TEMPLATE_INDICES.MiscItems[4]);
   assert.equal(sheet.worldTextureRecord, undefined, 'the record write is gated on IsPotion');
-  assert.deepEqual(inventoryItemImage(sheet),
-    inventoryItemImage({ group: 'MiscItems', templateIndex: sheet.templateIndex }),
+  assert.deepEqual(archiveRecord(inventoryItemImage(sheet)),
+    archiveRecord(inventoryItemImage({ group: 'MiscItems', templateIndex: sheet.templateIndex })),
     'a recipe sheet draws exactly what its bare template draws');
 
   // `if (potionRecipe != null)` (:392): a key no recipe answers leaves
@@ -198,7 +201,7 @@ test('AUDIT 63 F20: the setter\'s two gates - IsPotion, and the null recipe', ()
   // template's 205/11 and the template's price.
   const unknown = createPotion(12345);
   assert.equal(unknown.worldTextureRecord, undefined);
-  assert.deepEqual(inventoryItemImage(unknown), { archive: 205, record: 11 });
+  assert.deepEqual(archiveRecord(inventoryItemImage(unknown)), { archive: 205, record: 11 });
 });
 
 test('AUDIT 63 F20: the quest mint goes through ItemBuilder, both arms', () => {
@@ -233,7 +236,7 @@ test('AUDIT 63 F21: an artifact draws MAGIC.DEF\'s record, not its base template
   const oghma = createArtifact(templates, 5);
   const book = templateByIndex(oghma.templateIndex);
   assert.deepEqual([book.playerTextureArchive, book.playerTextureRecord], [209, 2], 'the named failure case');
-  assert.deepEqual(inventoryItemImage(oghma), { archive: 432, record: 16 });
+  assert.deepEqual(archiveRecord(inventoryItemImage(oghma)), { archive: 432, record: 16 });
 
   // A Jewellery base whose template art is 0/0 used to fall through
   // GetItemImage's `archive == 0 && record == 0` arm to the template's
@@ -247,14 +250,14 @@ test('AUDIT 63 F21: an artifact draws MAGIC.DEF\'s record, not its base template
   // artifact gets its art.
   const rose = createArtifact(templates, 4);
   assert.equal(rose.group, 'PlantIngredients1');
-  assert.deepEqual(inventoryItemImage(rose), { archive: rose.worldTextureArchive, record: rose.worldTextureRecord });
+  assert.deepEqual(archiveRecord(inventoryItemImage(rose)), { archive: rose.worldTextureArchive, record: rose.worldTextureRecord });
 
   // A female character's artifacts are archive 433 (ItemHelper.cs:51).
   assert.equal(inventoryItemImage(createArtifact(templates, 5, { gender: 'female' })).archive, 433);
 
   // ANTI-OVERREACH: an ordinary Book is still the Book template's 209/2
   // (audit18_systems_chargen pins the same pair).
-  assert.deepEqual(inventoryItemImage({ group: 'Books', templateIndex: oghma.templateIndex }), { archive: 209, record: 2 });
+  assert.deepEqual(archiveRecord(inventoryItemImage({ group: 'Books', templateIndex: oghma.templateIndex })), { archive: 209, record: 2 });
 });
 
 test('AUDIT 63 F21: FromItemRecord\'s four texture fields survive a classic import', () => {
@@ -273,7 +276,7 @@ test('AUDIT 63 F21: FromItemRecord\'s four texture fields survive a classic impo
   assert.equal(item.worldTextureArchive, 432);
   assert.equal(item.worldTextureRecord, 20);
   // ...so an imported artifact draws its own art, not the Book's
-  assert.deepEqual(inventoryItemImage(item), { archive: 432, record: 16 });
+  assert.deepEqual(archiveRecord(inventoryItemImage(item)), { archive: 432, record: 16 });
   // ...and Open.CheckCastByItem's Skeleton's Key test (Open.cs:176-180)
   // has the pair it reads.
   assert.equal(item.worldTextureArchive === 432 && item.worldTextureRecord === 20, true);

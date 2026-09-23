@@ -66,6 +66,7 @@ import { setTextureReplacements } from '../systems/textureReplacement.js';   // 
 import { setSeasonsSources } from '../systems/seasonsIliacBayAssets.js';   // SIB1: Seasons of the Iliac Bay's texture door
 import { setWeaponWidgetSources } from '../combat/weaponWidgetAssets.js';   // WW1: Weapon Widget's double-scale textures, from the player's own bundle
 import { setDiverseWeaponsSources } from '../combat/diverseWeaponsAssets.js';   // DW1: Diverse Weapons' per-weapon sprites, from the player's own bundle
+import { installDiverseWeaponsIcons } from '../combat/diverseWeaponsIcons.js';   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
 import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -1151,6 +1152,7 @@ export function ensureAudio(fetch = fetchBytes) {
   // M-TEX: textures register on the SAME seam, for the same reason.
   // Registration is a name list and a loader - no PNG is read until an
   // archive that has replacements is actually loaded.
+  installDiverseWeaponsIcons();   // DW3: before the archives load, so 233/234's preload carries the mod's icons
   const textures = storedTextureNames()
     .then((names) => {
       setSeasonsSources(names, loadTextureFile);   // SIB1: Seasons of the Iliac Bay's bundle or folders, from the same pick

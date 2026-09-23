@@ -926,7 +926,7 @@ function quickIcon(part, slot, item, name) {
   const image = item ? inventoryItemImage(item, liveEntity ?? undefined) : null;
   const src = item
     ? (modelIconUrl(item, 96, fpArm)
-      || (image ? requestIcon(image.archive, image.record, { scale: 2, onReady: () => { last[`${slot}Icon`] = null; last.quick = null; } }) : null))
+      || (image ? requestIcon(image.archive, image.record, { scale: 2, dye: image.dye, onReady: () => { last[`${slot}Icon`] = null; last.quick = null; } }) : null))
     : null;
   // NO WIDTH ATTRIBUTE, for enhancedInventory itemTile's own reason: a
   // dagger is tall and narrow and a cuirass wide, and forcing a square

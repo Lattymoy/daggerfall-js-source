@@ -25,6 +25,7 @@
 
 import { getBool } from './settings.js';
 import { toColor32 } from '../formats/color32Order.js';   // ROAD-H H4: the one door a decoded PNG crosses into the port's texel convention
+import { dyeToken } from '../characters/dyes.js';   // DW3: GetName's dye arm - the key carries the dye a caller asks with
 
 /** TextureReplacement.cs:39-47, in declaration order. Albedo is the
  *  default and carries NO suffix, which is why it leads. */
@@ -93,9 +94,17 @@ export function textureEntry(fileName) {
 
 /** The lookup key a caller asks with. Frame is part of it: an animated
  *  flat replaces frame by frame, which is how DFU's own per-frame
- *  import works. */
-export const textureKey = (archive, record, frame = 0, map = 'Albedo') =>
-  `${Number(archive)}_${Number(record)}-${Number(frame)}${map && map !== 'Albedo' ? `_${map}` : ''}`;
+ *  import works. DW3: and the DYE - GetName (TextureReplacement.cs
+ *  :725-735) writes `_<Dye>` before the map for every dye but
+ *  Unchanged, and GetItemImage asks with the item's own (ItemHelper.cs
+ *  :453, :458), so an Iron dagger's icon and a Daedric one's are two
+ *  keys. This key used to drop it, so a pack's `233_5-0_Iron` and
+ *  `233_5-0_Daedric` collided on one entry. `dye` is a DyeColors value
+ *  or the name already read off a file name. */
+export const textureKey = (archive, record, frame = 0, map = 'Albedo', dye = null) => {
+  const d = dyeToken(dye);
+  return `${Number(archive)}_${Number(record)}-${Number(frame)}${d ? `_${d}` : ''}${map && map !== 'Albedo' ? `_${map}` : ''}`;
+};
 
 // ---- the registry, one shape with music ----------------------------
 
@@ -112,7 +121,7 @@ export function setTextureReplacements(fileNames, load) {
     // music, but textures have no format preference to rank by - one
     // extension only - so a duplicate name IS the same texture twice
     // and keeping the first is stable and enough.
-    const key = textureKey(e.archive, e.record, e.frame, e.map);
+    const key = textureKey(e.archive, e.record, e.frame, e.map, e.dye);   // DW3: the dye rides the key
     if (!_index.has(key)) _index.set(key, e);
   }
   _load = typeof load === 'function' ? load : null;
@@ -131,8 +140,12 @@ export const textureReplacementCount = () => _index.size;
 // stand-in TextureFile for them (vendorTextureStandIn) and draws the
 // decoded PNGs through the same swap arm a replacement uses.
 const _vendor = new Map();
-/** Register vendored files: [{ archive, record, frame?, load, standIn? }]
- *  where `load()` resolves to the PNG bytes.
+/** Register vendored files: [{ archive, record, frame?, dye?, gate?, load, standIn? }]
+ *  where `load()` resolves to the PNG bytes. DW3: `dye` is the
+ *  DyeColors value (or name) the entry answers for, GetName's way;
+ *  `gate` is a predicate read at lookup - a vendored mod's art behind
+ *  that mod's own switch (Diverse Weapons' icons), decoded once and
+ *  answering only while it is on.
  *
  *  `standIn` IS THE WHOLE DIFFERENCE BETWEEN THE TWO KINDS, and it is
  *  declared rather than guessed at (SURV-TENT). A vendored file is
@@ -149,8 +162,8 @@ export function addVendorTextures(entries) {
   let n = 0;
   for (const e of entries ?? []) {
     if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || typeof e.load !== 'function') continue;
-    const key = textureKey(e.archive, e.record, e.frame ?? 0, 'Albedo');
-    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true, offset: e.offset ?? null });   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows
+    const key = textureKey(e.archive, e.record, e.frame ?? 0, 'Albedo', e.dye ?? null);
+    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true, offset: e.offset ?? null });   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows
     n++;
   }
   return n;
@@ -259,9 +272,10 @@ export function clearTextureReplacements() {
 
 /** Synchronous, and for the same reason music's is: the upload path
  *  has to know which branch it is on before it can proceed. */
-export function hasTextureReplacement(archive, record, frame = 0, map = 'Albedo') {
-  const key = textureKey(archive, record, frame, map);
-  if (_vendor.has(key)) return true;
+export function hasTextureReplacement(archive, record, frame = 0, map = 'Albedo', dye = null) {
+  const key = textureKey(archive, record, frame, map, dye);
+  const v = _vendor.get(key);
+  if (v) return !v.gate || v.gate() === true;   // DW3: a gated entry answers only while its switch is on
   if (!textureReplacementEnabled()) return false;
   return _index.has(key);
 }
@@ -270,9 +284,9 @@ export function hasTextureReplacement(archive, record, frame = 0, map = 'Albedo'
  * Bytes for a replacement, or null. NEVER THROWS - a texture that will
  * not load is a cosmetic failure with the classic art right behind it.
  */
-export async function textureReplacementBytes(archive, record, frame = 0, map = 'Albedo') {
-  if (!hasTextureReplacement(archive, record, frame, map)) return null;
-  const entry = entryFor(textureKey(archive, record, frame, map));
+export async function textureReplacementBytes(archive, record, frame = 0, map = 'Albedo', dye = null) {
+  if (!hasTextureReplacement(archive, record, frame, map, dye)) return null;
+  const entry = entryFor(textureKey(archive, record, frame, map, dye));
   const load = entry?.load ?? _load;
   if (!entry || !load) return null;
   try {
@@ -346,20 +360,30 @@ export async function decodePng(bytes) {
  * Idempotent, and never throws: one unreadable PNG costs that texture
  * and leaves the rest of the pack working.
  */
-export async function preloadTextureArchive(archive, { decode = decodePng } = {}) {
+/** DW3: how many of an archive's replacements load at once. Diverse
+ *  Weapons registers 280 icons on archive 233 alone, each its own
+ *  fetch; one at a time was 280 round trips in a row before the first
+ *  inventory could draw a mod icon. A gated entry is decoded whether
+ *  or not its switch is on, so flipping the switch takes effect at
+ *  once - the gate is read at lookup, not here. */
+export const PRELOAD_CONCURRENCY = 8;
+export async function preloadTextureArchive(archive, { decode = decodePng, concurrency = PRELOAD_CONCURRENCY } = {}) {
   let done = 0;
   const sources = [..._vendor.entries(), ...(textureReplacementEnabled() && _load ? _index.entries() : [])];   // SURV2: the port's own art first, ungated
-  for (const [key, entry] of sources) {
-    if (entry.archive !== Number(archive) || _decoded.has(key)) continue;
+  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !_decoded.has(key));
+  const one = async ([key, entry]) => {
     try {
       const bytes = await (entry.load ?? _load)(entry.fileName);
-      if (!bytes || !bytes.byteLength) continue;
+      if (!bytes || !bytes.byteLength) return;
       _decoded.set(key, toColor32(await decode(bytes)));   // H4: into the port's color32 contract at the door, never at the upload sites
       done++;
     } catch (e) {
       console.warn(`[texture] ${entry.fileName} would not decode:`, e?.message ?? e);
     }
-  }
+  };
+  let next = 0;
+  const lane = async () => { while (next < todo.length) await one(todo[next++]); };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, todo.length)) }, lane));
   return done;
 }
 
@@ -368,11 +392,20 @@ export async function preloadTextureArchive(archive, { decode = decodePng } = {}
  *  two arms in scenes/dataPipeline.js can write `swap ?? t.getColor32(...)`
  *  and upload either without knowing which it got. Null means "draw the
  *  classic". */
-export function decodedTexture(archive, record, frame = 0, map = 'Albedo') {
-  const key = textureKey(archive, record, frame, map);
-  if (_vendor.has(key)) return _decoded.get(key) ?? null;   // SURV2: the port's own, ungated
+export function decodedTexture(archive, record, frame = 0, map = 'Albedo', dye = null) {
+  const key = textureKey(archive, record, frame, map, dye);
+  const v = _vendor.get(key);
+  if (v) return (!v.gate || v.gate() === true) ? (_decoded.get(key) ?? null) : null;   // SURV2: the port's own, ungated - DW3: unless its registration gates it
   if (!textureReplacementEnabled()) return null;
   return _decoded.get(key) ?? null;
+}
+
+/** DW3: the same, with the rows top-down - what a compositor into a
+ *  top-down buffer (the paper doll) blits. `topDownRgba`'s reversal,
+ *  answered from the one place that knows which order it holds. */
+export function decodedTextureTopDown(archive, record, frame = 0, map = 'Albedo', dye = null) {
+  const d = decodedTexture(archive, record, frame, map, dye);
+  return d ? { width: d.width, height: d.height, rgba: topDownRgba(d) } : null;
 }
 
 export const decodedTextureCount = () => _decoded.size;

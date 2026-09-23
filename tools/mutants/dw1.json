@@ -226,5 +226,69 @@
     "tests": [
       "test/dw2_shipped.test.js"
     ]
+  },
+  {
+    "name": "DW3-1-GetName-prints-Unchanged",
+    "file": "src/characters/dyes.js",
+    "old": "  if (!Number.isFinite(v) || v === DYE_COLORS.Unchanged) return '';",
+    "new": "  if (!Number.isFinite(v)) return '';",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-2-a-gated-vendor-entry-answers-while-off",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (v) return (!v.gate || v.gate() === true) ? (_decoded.get(key) ?? null) : null;   // SURV2: the port's own, ungated - DW3: unless its registration gates it",
+    "new": "  if (v) return _decoded.get(key) ?? null;",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-3-the-icon-upload-asks-the-bare-swap",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "    const swap = decodedTexture(archive, record, 0, 'Albedo', dye);",
+    "new": "    const swap = decodedTexture(archive, record, 0);",
+    "tests": [
+      "test/dw3_icons.test.js",
+      "test/texturereplacement.test.js"
+    ]
+  },
+  {
+    "name": "DW3-4-the-Silver-named-icon-is-registered-as-the-bare-key",
+    "file": "src/combat/diverseWeaponsIcons.js",
+    "old": "      if (!dyeToken(dye)) continue;",
+    "new": "",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-5-an-artifact-asks-by-its-metal",
+    "file": "src/systems/itemDye.js",
+    "old": "  if (item.artifact) return DYE_COLORS.Unchanged;   // SetArtifact :611, the last writer",
+    "new": "",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-6-the-list-drawer-forgets-the-dye-in-its-key",
+    "file": "src/ui/itemScroller.js",
+    "old": "    const key = `${img.archive}_${img.record}${token ? `_${token}` : ''}`;",
+    "new": "    const key = `${img.archive}_${img.record}`;",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-7-the-DOM-door-draws-the-replacement-through-the-classic-arm",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  const swap = hasTextureReplacement(archive, record, 0, 'Albedo', dye)",
+    "new": "  const swap = false",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
   }
 ]

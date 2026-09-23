@@ -11,6 +11,7 @@ import { conditionMultipliersByMaterial } from '../characters/weapons.js';   // 
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
+import { itemDyeColor } from './itemDye.js';   // DW3: GetItemImage's `color = (int)item.dyeColor` (ItemHelper.cs:402) rides the image
 
 export { GROUP_TEMPLATE_INDICES };
 
@@ -241,5 +242,8 @@ export function inventoryItemImage(item, identity = undefined) {
   // TEMPLATE's, deliberately (ItemHelper.cs:425-429 reads
   // item.ItemTemplate, not the item).
   if (archive === 0 && record === 0) { archive = t.worldTextureArchive; record = t.worldTextureRecord; }
-  return { archive, record };
+  // DW3: the DYE rides the image - GetItemImage reads item.dyeColor
+  // first (:402) and asks the replacement door by it (:453, :458), so
+  // an icon door that draws this must ask by it too.
+  return { archive, record, dye: itemDyeColor(item) };
 }

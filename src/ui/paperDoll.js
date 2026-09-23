@@ -44,6 +44,8 @@ import { getBool } from '../systems/settings.js';   // UI3: EnableGeographicBack
 import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
 import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
+import { decodedTextureTopDown } from '../systems/textureReplacement.js';   // DW3: GetItemImage's import arm, by the item's dye
+import { itemDyeColor } from '../systems/itemDye.js';   // DW3: DaggerfallUnityItem.dyeColor, as the port's items carry it
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { raceArt, FACES_PER_RACE, raceByKey } from '../systems/races.js';   // S3c/U9: all eight races
 
@@ -422,7 +424,7 @@ async function composeDoll(art, deps, entity, { background = true } = {}) {
     const it = table[slot];
     if (!it || !CLOAK_TEMPLATES.has(it.templateIndex)) continue;
     const t = getTemplate(it.templateIndex);
-    const img = await loadRecord(t.playerTextureArchive + (raceByKey(deps.race)?.morphologyIndex ?? HUMAN_MORPHOLOGY), t.playerTextureRecord, deps.getTexture);
+    const img = await loadRecord(t.playerTextureArchive + (raceByKey(deps.race)?.morphologyIndex ?? HUMAN_MORPHOLOGY), t.playerTextureRecord, deps.getTexture, itemDyeColor(it));
     if (img) {
       blit(out, img, art.palette, { remap: (i) => applyDyeToIndex(i, it.dye ?? DYE_COLORS.Blue, DYE_TARGETS.Clothing), under });
       // AUDIT 18: BlitCloakInterior passes the cloak to DrawTexture
@@ -459,7 +461,7 @@ async function composeDoll(art, deps, entity, { background = true } = {}) {
   for (const it of ordered) {
     const res = paperdollItemImage(it, { gender: deps.gender, race: deps.race });
     if (!res) continue;
-    const img = await loadRecord(res.archive, res.record, deps.getTexture);
+    const img = await loadRecord(res.archive, res.record, deps.getTexture, itemDyeColor(it));   // DW3: the import ask is by item.dyeColor (an artifact's is Unchanged); the remap below stays res.dye
     if (!img) continue;
     // FIELD-GUN4: a vendor-only archive has no indexed bitmap to blit
     // through the palette - it hands back RGBA instead, and it is the
@@ -517,11 +519,18 @@ export async function refreshPaperDoll(entity) {
 
 /** One TEXTURE.### record as an indexed bitmap + its baked offset
  *  (with DFU's 237/52+54 bad-offset fix). */
-async function loadRecord(archive, record, getTexture) {
+async function loadRecord(archive, record, getTexture, dye = null) {
   try {
     const tex = await getTexture(archive);
     if (!tex || record >= tex.recordCount) return null;
     const off = (archive === 237 && (record === 52 || record === 54)) ? { x: 237, y: 43 } : tex.getOffset(record);
+    // DW3: GetItemImage's import arm FIRST (ItemHelper.cs:458-462) - a
+    // replacement by the item's dye is assigned as the texture, drawn
+    // as it is: no ChangeDye (:466-476 is the else branch), and the
+    // classic record's offset. It comes back in the RGBA shape the
+    // vendor arm already blits (FIELD-GUN4), because it has no index.
+    const swap = decodedTextureTopDown(archive, record, 0, 'Albedo', dye);
+    if (swap) return { bmp: { width: swap.width, height: swap.height, data: null, rgba: swap.rgba }, off };
     return { bmp: tex.getDFBitmap(record, 0), off };
   } catch { return null; }
 }

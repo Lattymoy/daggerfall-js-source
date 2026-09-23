@@ -149,18 +149,56 @@ is not selected. `flattenModPreset` is the general reader for DFU's
 `{ Values: { Section: { Key: "string" } } }` shape, coercing by the
 declared key's kind ("False" is `false`, not a non-empty string).
 
-## Not carried, said plainly
+## The icons (DW3)
 
-**The icons.** `233`/`234` by metal and `432`/`433` for the Wabbajack
-are asked for in DFU through `ItemHelper.GetItemImage` with the item's
-**dye** in the name (`TextureReplacement.GetName` :725-736,
-`233_5-0_Elven`; `TryImportTexture(archive, record, 0, item.dyeColor,
-...)` :240-243, no undyed fallback). The port's replacement index keys
-without a dye (`textureKey`) and its icon doors ask without one
-(`decodedTexture(archive, record, 0)`), and two dyed names differing
-only in dye collide there today. That is a second slice on the icon
-pipeline - a dye-aware key, the item's dye at the three icon doors, and
-the bundle's icons registered as vendor entries - and not this one.
+`233`/`234` by metal and `432`/`433` for the Wabbajack are asked for in
+DFU through `ItemHelper.GetItemImage` with the item's **dye** in the
+name: `color = (int)item.dyeColor` (:402), then
+`TryImportTexture(archive, record, 0, item.dyeColor, Albedo)` (:458),
+whose name `TextureReplacement.GetName` (:725-735) spells
+`archive_record-frame[_Dye][_Map]` - the dye for every value but
+`Unchanged`, and `Unchanged` **is 18, which is `Silver`**, so a silver
+weapon asks by the bare name and a `_Silver` file can never be asked
+for. An imported texture is assigned as it is - no `ChangeDye`, no mask
+strip - and there is no bare fallback for a dyed ask.
+
+The port's replacement key dropped the dye (`textureKey` was
+`archive_record-frame[_map]`, so a pack's `233_5-0_Iron` and
+`233_5-0_Daedric` collided on one entry), and none of its three icon
+doors carried one. DW3:
+
+- `characters/dyes.js` `DYE_NAMES` / `dyeToken` - GetName's dye arm;
+  `systems/textureReplacement.js` `textureKey(archive, record, frame,
+  map, dye)`, and `hasTextureReplacement` / `decodedTexture` /
+  `decodedTextureTopDown` ask by it; a vendor entry may carry a `gate`
+  read at lookup.
+- `systems/itemDye.js` `itemDyeColor(item)` - `DaggerfallUnityItem
+  .dyeColor` as the port's items carry it: a weapon's `dyeColor`
+  (CreateWeapon :412), an armor's by material (CreateArmor :510,
+  `armorDyeColor` verbatim), clothing's `dye`, an artifact's `Unchanged`
+  (SetArtifact :611, the last writer), else `Unchanged` (SetItem :559).
+  `inventoryItemImage` carries it as `dye`.
+- The three doors ask by it: the GL lists (`ui/itemScroller.js`,
+  `ui/nativeInventory.js` -> `dataPipeline.uploadRecord(..., { dye })`,
+  which uploads a dyed swap under its own `#ui_<Dye>` variant and answers
+  which; the size stays the classic record's, ItemListScroller.cs:440),
+  the DOM screens (`ui/textureCanvas.js requestIcon(..., { dye })`, the
+  replacement arm before the classic one), and the paper doll
+  (`ui/paperDoll.js loadRecord(..., dye)`: the import arm first, blitted
+  as RGBA as the vendor arm is, the remap untouched).
+- `combat/diverseWeaponsIcons.js` registers the shipped icons off the
+  index as vendor entries by dye (the bare stem for the silver ask; the
+  one `_Silver` file skipped, since keyed by its dye it would be the
+  bare key; `513`/`514` skipped, no template here draws them), loaded
+  from `public/art/diverse-weapons/` when the archive is first drawn -
+  `preloadTextureArchive` runs in eight lanes now, 280 icons on 233 -
+  and gated on the mod's switch at lookup, so the switch takes effect
+  without a reload. Installed at the scene boot (`scenes/shared.js`),
+  not at `worldTick`'s module scope, where the mod's law sits in an
+  import cycle (a TDZ, caught by `test/tdz.test.js`'s kind of failure
+  on the first run).
+
+## Not carried, said plainly
 
 **Two archives nothing asks for.** `513`/`514` are another mod's
 custom-item archives (Roleplay & Realism: Items); the port has no such
@@ -180,6 +218,6 @@ sessions, would shorten it and is left for a follow-up.
 (12,937 files), the preset verbatim, the zip's readme. Campaign
 `tools/mutants/dw1.json` (21: 20 dead, 1 equivalent as recorded). Suites
 `test/dw1_diverseweapons.test.js`, `test/unitybundleworker.test.js`,
-`test/dw2_shipped.test.js`. The shipped set: `public/art/diverse-weapons/`
+`test/dw2_shipped.test.js`, `test/dw3_icons.test.js`. The shipped set: `public/art/diverse-weapons/`
 (12,624 PNGs), `src/combat/diverseWeaponsIndex.js` (generated), the two
 tools.

@@ -11,6 +11,7 @@
 // which D7 shipped: scrollerToolTipText below is :464 and
 // makeSlotToolTip is the per-window ToolTip every item button shares.
 
+import { dyeToken } from '../characters/dyes.js';   // DW3
 import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { drawText, measureText } from './text.js';
 import { loadImg, drawImgCrop, drawRect } from './nativePanel.js';
@@ -255,6 +256,7 @@ export function drawCellBackground(renderer, m, rect, slot, colour) {
 export function makeIconDrawer(icons, identityOf = null) {
   const warm = new Set();
   const sizes = new Map();
+  const glKeys = new Map();   // DW3: warm key -> the GL texture key the upload answered
   const drawer = (renderer, m, it, rect, slot) => {
     // AUDIT 17e F9: the lists used to draw the WORLD texture for every
     // item. DFU's GetItemImage draws the PLAYER (inventory) texture
@@ -266,17 +268,25 @@ export function makeIconDrawer(icons, identityOf = null) {
     // list drew the morphology-0 (Argonian) row.
     const img = inventoryItemImage(it, identityOf?.() ?? undefined);
     if (!img || !img.archive) return false;
-    const key = `${img.archive}_${img.record}`;
+    // DW3: the DYE is part of the ask (GetItemImage :458 imports by
+    // item.dyeColor), so it is part of this key; the upload answers
+    // which GL variant it went under - a dyed replacement its own, the
+    // classic the shared `#ui`. The size stays the CLASSIC record's
+    // (ItemListScroller.cs:440-441: the panel is sized from the base
+    // image and the texture, imported or not, is drawn into it).
+    const token = dyeToken(img.dye);
+    const key = `${img.archive}_${img.record}${token ? `_${token}` : ''}`;
     if (!warm.has(key)) {
       warm.add(key);
       icons.getTexture(img.archive).then((tex) => {
         if (img.record < tex.recordCount) {
-          icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
+          const variant = icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true, dye: img.dye });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
+          glKeys.set(key, `${img.archive}_${img.record}${variant ?? '#ui'}`);
           sizes.set(key, tex.getSize(img.record));
         }
       }).catch(() => {});
     }
-    const glTex = icons.textures.get(`${key}#ui`);   // the un-mipped variant (REVIEW 2026-09-05)
+    const glTex = icons.textures.get(glKeys.get(key) ?? `${img.archive}_${img.record}#ui`);   // the un-mipped variant (REVIEW 2026-09-05)
     const size = sizes.get(key);
     if (!glTex || !size?.width) return false;
     const fit = Math.min(1, (CELL_W - CELL_MARGIN * 2) / size.width, (SLOT_H - CELL_MARGIN * 2) / size.height);

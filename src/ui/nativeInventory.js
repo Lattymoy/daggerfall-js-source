@@ -92,6 +92,7 @@ import { LIST_SLOTS, scrollerHit, applyScroll, makeIconDrawer, drawStackLabel, s
   preloadScrollerArrowArt, drawScrollerArrows, drawScrollerThumb, playScrollerArrowClick,
   makeSlotToolTip, itemBackgroundColour, drawCellBackground } from './itemScroller.js';
 import { templateByIndex, itemBaseValue, inventoryItemImage } from '../systems/itemTemplates.js';
+import { dyeToken } from '../characters/dyes.js';   // DW3: the per-dye icon key
 import { FntFile } from '../formats/fntFile.js';
 import { audio } from '../systems/audio.js';
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // IF1: the inventory close refreshes the mod's armour slots
@@ -289,20 +290,29 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
 function makeAccessoryIconDrawer(icons, identityOf = null) {
   const warm = new Set();
   const sizes = new Map();
+  const glKeys = new Map();   // DW3: warm key -> the GL texture key the upload answered
   const drawer = (renderer, m, it, rect) => {
     const img = inventoryItemImage(it, identityOf?.() ?? undefined);
     if (!img || !img.archive) return false;
-    const key = `${img.archive}_${img.record}`;
+    // DW3: the DYE is part of the ask (GetItemImage :458 imports by
+    // item.dyeColor), so it is part of this key; the upload answers
+    // which GL variant it went under - a dyed replacement its own, the
+    // classic the shared `#ui`. The size stays the CLASSIC record's
+    // (ItemListScroller.cs:440-441: the panel is sized from the base
+    // image and the texture, imported or not, is drawn into it).
+    const token = dyeToken(img.dye);
+    const key = `${img.archive}_${img.record}${token ? `_${token}` : ''}`;
     if (!warm.has(key)) {
       warm.add(key);
       icons.getTexture(img.archive).then((tex) => {
         if (img.record < tex.recordCount) {
-          icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
+          const variant = icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true, dye: img.dye });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
+          glKeys.set(key, `${img.archive}_${img.record}${variant ?? '#ui'}`);
           sizes.set(key, tex.getSize(img.record));
         }
       }).catch(() => {});
     }
-    const glTex = icons.textures.get(`${key}#ui`);   // the un-mipped variant (REVIEW 2026-09-05)
+    const glTex = icons.textures.get(glKeys.get(key) ?? `${img.archive}_${img.record}#ui`);   // the un-mipped variant (REVIEW 2026-09-05)
     const size = sizes.get(key);
     if (!glTex || !size?.width) return false;
     const [rx, ry, rw, rh] = rect;

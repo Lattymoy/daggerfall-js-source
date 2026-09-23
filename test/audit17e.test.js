@@ -23,6 +23,9 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/** DW3: the image carries the item's dye now; these pins are about the archive and record. */
+const archiveRecord = ({ archive, record }) => ({ archive, record });
+
 test('audit17e F2/F3: buy and sell resolve value the SAME way, so no round trip mints gold', () => {
   // The defect: buyPrice fell back to 1 while sellPrice fell back to
   // itemBaseValue, and only sellPrice multiplied by the stack. A
@@ -208,14 +211,14 @@ test('audit17e W1: F9 the inventory icon draws the PLAYER texture, not the world
   // (DaggerfallUnityItem.cs:1728-1764) + UseWorldTexture (:1830-1855).
   const dagger = inventoryItemImage({ group: 'Weapons', templateIndex: 113 });
   const t113 = templateByIndex(113);
-  assert.deepEqual(dagger, { archive: t113.playerTextureArchive, record: t113.playerTextureRecord });
+  assert.deepEqual(archiveRecord(dagger), { archive: t113.playerTextureArchive, record: t113.playerTextureRecord });
   assert.notEqual(dagger.archive, t113.worldTextureArchive, 'the world sprite is a DIFFERENT archive');
   // the Katana +1 inventory bump (it uses the right-hand image)
   const t121 = templateByIndex(121);
   assert.equal(inventoryItemImage({ group: 'Weapons', templateIndex: 121 }).record, t121.playerTextureRecord + 1);
   // UseWorldTexture: arrows, ingredients, and the three groups
   const t131 = templateByIndex(131);
-  assert.deepEqual(inventoryItemImage({ group: 'Weapons', templateIndex: 131 }),
+  assert.deepEqual(archiveRecord(inventoryItemImage({ group: 'Weapons', templateIndex: 131 })),
     { archive: t131.worldTextureArchive, record: t131.worldTextureRecord }, 'arrows keep the world sprite');
   assert.equal(usesWorldTexture({ group: 'PlantIngredients1', templateIndex: 0 }), true, 'isIngredient');
   assert.equal(usesWorldTexture({ group: 'MiscItems', templateIndex: 132 }), true);
