@@ -1,0 +1,358 @@
+// @ts-check
+// HORSE CART AND CARGO - THE PRESENTATION (HCC, 2026-09-23). What the runtime (systems/horseCart.js) says, drawn:
+// the trailing / following wagon and the parked one as the five pieces of classic model 41214 (systems/wagon41214.js
+// - the body and shafts on the wagon's frame, each wheel turned about its own pivot), the cargo pieces the tier
+// shows (WagonCargoVisual's twelve), and the horse as an eight-orientation billboard off the mod's own 45 PNGs
+// (five drawn views, three mirrored - StationaryHorseBillboard). It also ANSWERS the runtime's physics
+// (Physics.RaycastAll / SphereCast over the port's collider, the threats off the foe pool), stands the parked
+// wagon's collider (the mod's non-trigger BoxCollider over the model's bounds), hands the hosts their activation
+// targets and hover names, and - HCC-ONLINE - draws every peer's wagon and horse off their `hv` records the way
+// camps.js draws a peer's camps.
+//
+// deps = { renderer, meshes: { getGpuMesh, cpuModels }, collider() -> the host's, now() -> unscaled seconds,
+//          threats() -> [[x,y,z]] (the qualifying foes' positions, CollectThreats), fetchFn, selfId(),
+//          peerName(id) -> string | null, onChanged() (the host's online publish), log }
+import { GLOBAL_SCALE, RAY_DISTANCE } from '../player/activate.js';
+import { localAabb, transformedAabb } from '../render/frustum.js';
+import { multiply } from '../world/mat4.js';
+import { mat4FromQuatPos, mat4FromQuatPosScale, quatAngleAxis, quatLookRotation, quatSlerp, UNITY_QUAT_IDENTITY } from '../world/quat.js';
+import { buildWagonParts, usableBounds, CARGO_DEFINITIONS, cargoPiecesShown } from '../systems/wagon41214.js';
+import {
+  WAGON_MODEL_ID, HORSE_VIEWS, HORSE_WALK_FRAMES, HORSE_SPRITE_WIDTH, HORSE_SPRITE_HEIGHT, HORSE_WALK_SPRITE_HEIGHT,
+  calculateHorseOrientation, horseViewFor, horseTargetLabel, ACTIVATION_REACH, HORSE_BOX_CENTER, HORSE_BOX_SIZE,
+} from '../systems/horseCartLaw.js';
+import { WAGON_HOVER_TEXT } from '../player/eotbWagon.js';   // the hover word for a wagon - the noun of Eye Of The Beholder's Info line, so both carts read alike
+import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
+import { decodePng } from '../systems/textureReplacement.js';
+import { toColor32 } from '../formats/color32Order.js';
+
+/** The horse art's archive key and record names on the renderer's texture map: `hcc_h<view>` a standing view,
+ *  `hcc_w<view>#<frame>` a walk frame (the foes' own `record#frame` folding, scenes/exteriorFoes.js). */
+export const HORSE_ARCHIVE = 'hcc';
+export const horseStillRecord = (view) => `h${view}`;
+export const horseWalkRecord = (view, frame) => `w${view}#${frame}`;
+/** StationaryHorseVisual.Initialize [IL_40b7-IL_40d9]: 121 x 0.025 by 94 (or 95, the walk set) x 0.025. */
+export const HORSE_BILLBOARD_WIDTH = HORSE_SPRITE_WIDTH * GLOBAL_SCALE;
+export const HORSE_BILLBOARD_HEIGHT = HORSE_SPRITE_HEIGHT * GLOBAL_SCALE;
+export const HORSE_WALK_BILLBOARD_HEIGHT = HORSE_WALK_SPRITE_HEIGHT * GLOBAL_SCALE;
+/** The parked wagon's collider bucket on the host's collider - skipped by the runtime's own ground probes. */
+export const WAGON_BUCKET = 'hccWagon';
+/** The activation keys the hosts race. */
+export const KEY_WAGON = 'hccWagon', KEY_FOLLOWING_WAGON = 'hccFollowingWagon', KEY_HORSE = 'hccHorse';
+export { WAGON_HOVER_TEXT, HORSE_BOX_CENTER, HORSE_BOX_SIZE };   // the pool's callers read them here (the pins do)
+export const peerKey = (owner, what) => `hccPeer:${owner}:${what}`;
+/** How many surfaces a RaycastAll answers before it stops looking (a ray through a town meets a handful). */
+export const RAYCAST_ALL_MAX_HITS = 8;
+
+const texturePath = (file) => new URL(`../../vendor/horse-cart-and-cargo/Textures/${file}`, import.meta.url).href;
+const horseStillFile = (view) => `horse${view + 1}.png`;
+const horseWalkFile = (view, frame) => `Walk.${view}-${frame + 1}.png`;
+const WHEEL_AXIS = Object.freeze([1, 0, 0]);
+const ZERO3 = Object.freeze([0, 0, 0]);
+const HORSE_LOCAL_BOX = Object.freeze([
+  HORSE_BOX_CENTER[0] - HORSE_BOX_SIZE[0] / 2, HORSE_BOX_CENTER[1] - HORSE_BOX_SIZE[1] / 2, HORSE_BOX_CENTER[2] - HORSE_BOX_SIZE[2] / 2,
+  HORSE_BOX_CENTER[0] + HORSE_BOX_SIZE[0] / 2, HORSE_BOX_CENTER[1] + HORSE_BOX_SIZE[1] / 2, HORSE_BOX_CENTER[2] + HORSE_BOX_SIZE[2] / 2,
+]);
+const aabbOf = (box) => ({ min: [box[0], box[1], box[2]], max: [box[3], box[4], box[5]] });
+
+/** The twelve triangles of a local box (the mod's BoxCollider over the model's bounds) for the collider. */
+export function boxTriangles(min, max) {
+  const p = [
+    min[0], min[1], min[2], max[0], min[1], min[2], max[0], max[1], min[2], min[0], max[1], min[2],
+    min[0], min[1], max[2], max[0], min[1], max[2], max[0], max[1], max[2], min[0], max[1], max[2],
+  ];
+  const i = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 7, 6, 3, 6, 2, 0, 4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5];
+  return { positions: new Float32Array(p), indices: new Uint32Array(i) };
+}
+
+/**
+ * Physics.RaycastAll over the port's collider: every surface along the ray, nearest first, the parked wagon's own
+ * bucket left out (the mod's IsIgnoredCollider). `surfaceHit` answers the nearest mesh-or-terrain hit; the ray is
+ * re-cast from just past each hit until nothing answers or the budget is spent.
+ * @returns {{ point:number[], distance:number, normal:number[] }[]}
+ */
+export function raycastAllOver(col, origin, dir, maxDist, skip = [WAGON_BUCKET]) {
+  const hits = [];
+  if (!col?.surfaceHit) return hits;
+  const filter = skip.length ? { skip } : null;
+  let travelled = 0;
+  let o = [origin[0], origin[1], origin[2]];
+  for (let n = 0; n < RAYCAST_ALL_MAX_HITS && travelled < maxDist; n++) {
+    const h = col.surfaceHit(o, dir, maxDist - travelled, filter);
+    if (!h || !Number.isFinite(h.dist)) break;
+    const d = travelled + h.dist;
+    hits.push({ point: [origin[0] + dir[0] * d, origin[1] + dir[1] * d, origin[2] + dir[2] * d], distance: d, normal: h.normal ?? [0, 1, 0] });
+    const step = h.dist + 1e-3;
+    travelled += step;
+    o = [o[0] + dir[0] * step, o[1] + dir[1] * step, o[2] + dir[2] * step];
+  }
+  return hits;
+}
+
+export function createHorseCartPool({
+  renderer = null, meshes = null, collider = () => null, now = () => performance.now() / 1000, threats = () => [],
+  fetchFn = null, decode = decodePng, selfId = () => null, peerName = (/** @type {string} */ _id) => null, onChanged = null, log = console,
+} = {}) {
+  /** @type {any} */ let runtime = null;
+  let enabled = true;   // the mod's Enabled switch: off, nothing of the mod stands, draws, answers the ray or rides the wire
+  // the wagon: the five part meshes, the cargo meshes, the collider's box
+  let _parts = null;         // buildWagonParts' result plus gpu handles: { ..., gpu: { body, shaftLeft, shaftRight, wheelLeft, wheelRight }, box }
+  let _partsLoading = null, _partsFailed = null;
+  const _cargo = new Map();  // modelId -> gpu | null
+  const _cargoLoading = new Map();
+  let _bucketKey = null;     // the pose the parked wagon's collider stands at
+  // the horse art
+  const _still = new Array(HORSE_VIEWS).fill(null);   // view -> true once uploaded
+  let _stillLoading = null, _stillReady = false, _stillFailed = false;
+  let _walkLoading = null, _walkReady = false;
+  // the billboards: mine and the peers'
+  const _horseBatches = new Map();   // owner ('' mine) -> batch
+  // the peers: owner -> { wagon, horse, name, at, shownWagon, shownHorse, walk }
+  const _peers = new Map();
+  let _lastKey = '';
+
+  const fetchPng = async (file) => {
+    const f = fetchFn ?? globalThis.fetch;
+    const res = await f(texturePath(file));
+    if (!res?.ok) throw new Error(`${file}: HTTP ${res?.status}`);
+    return toColor32(await decode(new Uint8Array(await res.arrayBuffer())));
+  };
+
+  // ── the wagon's meshes (DeployedWagonVisual.Initialize's CreateDaggerfallMeshGameObject(41214) + TryBuild)
+  function ensureParts() {
+    if (_parts || _partsLoading || _partsFailed || !meshes?.getGpuMesh) return;
+    _partsLoading = Promise.resolve(meshes.getGpuMesh(WAGON_MODEL_ID)).then((gpu) => {
+      const cpu = meshes.cpuModels?.get?.(WAGON_MODEL_ID);
+      if (!gpu || !cpu) throw new Error('DFU returned no object for vanilla wagon model 41214');
+      const parts = buildWagonParts(cpu);
+      const up = (m) => (renderer?.createMesh ? renderer.createMesh(m) : null);
+      _parts = { ...parts, gpu: { body: up(parts.body), shaftLeft: up(parts.shaftLeft), shaftRight: up(parts.shaftRight), wheelLeft: up(parts.wheelLeft), wheelRight: up(parts.wheelRight) }, box: [...parts.bounds.min, ...parts.bounds.max] };
+      for (const d of CARGO_DEFINITIONS) ensureCargo(d.modelId);
+      onChanged?.();
+    }).catch((e) => { _partsFailed = e?.message ?? String(e); log?.error?.(`[TrailingWagon] the wagon's mesh would not build: ${_partsFailed}`); }).finally(() => { _partsLoading = null; });
+  }
+  function ensureCargo(modelId) {
+    if (_cargo.has(modelId) || _cargoLoading.has(modelId) || !meshes?.getGpuMesh) return;
+    _cargoLoading.set(modelId, Promise.resolve(meshes.getGpuMesh(modelId)).then((gpu) => { _cargo.set(modelId, gpu ?? null); }).catch(() => { _cargo.set(modelId, null); }).finally(() => _cargoLoading.delete(modelId)));
+  }
+  /** The runtime's `presentation.wagonParts()`: the pivots, the radius and the bounds once the mesh is up, else null (it retries every second). */
+  function wagonParts() { ensureParts(); return _parts; }
+
+  // ── the horse art (HorseTextureSet.TryLoad / HorseWalkAnimationSet.TryLoad)
+  function ensureStationary() {
+    if (_stillReady) return true;
+    if (_stillFailed || _stillLoading || !renderer?.uploadTexture) return false;
+    _stillLoading = Promise.all(Array.from({ length: HORSE_VIEWS }, (_, v) => fetchPng(horseStillFile(v)).then((px) => {
+      renderer.uploadTexture(HORSE_ARCHIVE, horseStillRecord(v), px);
+      _still[v] = true;
+    }))).then(() => { _stillReady = true; onChanged?.(); }).catch((e) => { _stillFailed = true; log?.error?.(`[TrailingWagon] the horse art would not load: ${e?.message ?? e}`); }).finally(() => { _stillLoading = null; });
+    return false;
+  }
+  function ensureWalk() {
+    if (_walkReady || _walkLoading || !renderer?.uploadTexture) return;
+    const jobs = [];
+    for (let v = 0; v < HORSE_VIEWS; v++) for (let f = 0; f < HORSE_WALK_FRAMES; f++) jobs.push(fetchPng(horseWalkFile(v, f)).then((px) => renderer.uploadTexture(HORSE_ARCHIVE, horseWalkRecord(v, f), px)));
+    _walkLoading = Promise.all(jobs).then(() => { _walkReady = true; }).catch((e) => { log?.warn?.(`[TrailingWagon] the horse walk frames would not load; the standing views stay: ${e?.message ?? e}`); }).finally(() => { _walkLoading = null; });
+  }
+  const horseArt = { ensureStationary, ensureWalk, hasWalk: () => _walkReady, failed: () => _stillFailed };
+
+  // ── the runtime's physics
+  const phys = {
+    now,
+    raycastAll: (origin, dir, maxDist) => raycastAllOver(collider(), origin, dir, maxDist),
+    sphereCastClear: (origin, radius, dir, distance) => { const col = collider(); if (!col?.sphereCast) return true; const h = col.sphereCast(origin, radius, dir, distance, { skip: [WAGON_BUCKET] }); return !(h.dist < distance); },
+    threats: () => threats() ?? [],
+  };
+
+  // ── the parked wagon's collider (the root's non-trigger BoxCollider over the source mesh's bounds)
+  function standWagonCollider(m) {
+    const col = collider();
+    if (!col?.addMesh || !_parts) return;
+    const key = m ? Array.from(m, (v) => v.toFixed(3)).join(',') : null;
+    if (key === _bucketKey) return;
+    col.removeBucket?.(WAGON_BUCKET);
+    _bucketKey = key;
+    if (!m) return;
+    const b = usableBounds(_parts.bounds);   // EnsureUsableBoundsSize [IL_10f1]
+    const tri = boxTriangles(b.min, b.max);
+    col.addMesh(WAGON_BUCKET, tri.positions, tri.indices, m);
+  }
+
+  // ── matrices
+  const wagonMatrix = (position, rotation) => mat4FromQuatPos(rotation, position);
+  const wheelMatrix = (m, pivot, angle) => multiply(m, mat4FromQuatPos(quatAngleAxis(angle, WHEEL_AXIS), pivot));
+  const cargoMatrix = (m, def) => multiply(m, mat4FromQuatPosScale(def.rotation, def.position, def.scale));
+
+  /** One wagon - mine or a peer's - in the host's world pass. */
+  function drawWagon(r, texRemap, position, rotation, tier, angle) {
+    if (!_parts?.gpu?.body || !r?.drawMesh) return false;
+    const m = wagonMatrix(position, rotation);
+    const g = _parts.gpu;
+    r.drawMesh(g.body, m, texRemap);
+    if (g.shaftLeft) r.drawMesh(g.shaftLeft, m, texRemap);
+    if (g.shaftRight) r.drawMesh(g.shaftRight, m, texRemap);
+    if (g.wheelLeft) r.drawMesh(g.wheelLeft, wheelMatrix(m, _parts.wheelLeftPivot, angle), texRemap);
+    if (g.wheelRight) r.drawMesh(g.wheelRight, wheelMatrix(m, _parts.wheelRightPivot, angle), texRemap);
+    for (const def of cargoPiecesShown(tier)) { const gpu = _cargo.get(def.modelId); if (gpu) r.drawMesh(gpu, cargoMatrix(m, def), texRemap); }
+    return true;
+  }
+
+  /** What the runtime shows this frame, in one shape (the wire's, the draw's, the targets'). */
+  function shown() {
+    if (!runtime || !enabled) return null;
+    const v = runtime.view();
+    let wagon = null;
+    if (v.deployed?.isGrounded) wagon = { kind: HCC_WIRE_KIND.Deployed, position: v.deployed.position, rotation: v.deployed.rotation, tier: v.deployed.cargoTier, angle: 0 };
+    else if (v.moving?.pose?.active) wagon = { kind: v.teamFollowing ? HCC_WIRE_KIND.Following : HCC_WIRE_KIND.Trailing, position: v.moving.pose.position, rotation: v.moving.pose.rotation, tier: v.moving.cargoTier, angle: v.moving.wheel?.angle ?? 0 };
+    const h = v.horse;
+    const horse = h?.isInteractive ? { position: h.position, forward: h.forward, frame: h.walk?.animationFrame ?? 0, walking: !!h.walk?.walking } : null;
+    return { wagon, horse, name: v.state?.HorseName ?? '', interaction: !!v.moving?.interaction, deployed: !!v.deployed?.isGrounded };
+  }
+
+  // ── the horse billboards
+  function horseBatch(owner) {
+    let b = _horseBatches.get(owner);
+    if (b || !renderer?.createBillboardBatch) return b ?? null;
+    b = renderer.createBillboardBatch(HORSE_ARCHIVE, horseStillRecord(0), { w: HORSE_BILLBOARD_WIDTH, h: HORSE_BILLBOARD_HEIGHT }, [[0, 0, 0]]);
+    b.origin = [0, 0, 0];
+    _horseBatches.set(owner, b);
+    return b;
+  }
+  function dropHorseBatch(owner) { const b = _horseBatches.get(owner); if (b) { renderer?.destroyBillboardBatch?.(b); _horseBatches.delete(owner); } }
+  /** StationaryHorseBillboard.LateUpdate: the orientation off the camera, the view and the flip, the frame. */
+  function poseHorseBatch(b, cameraPos, horse) {
+    const view = horseViewFor(calculateHorseOrientation(cameraPos, horse.position, horse.forward));
+    if (!view) return;
+    const walk = _walkReady;
+    b.record = walk ? horseWalkRecord(view.view, horse.frame) : horseStillRecord(view.view);
+    const h = walk ? HORSE_WALK_BILLBOARD_HEIGHT : HORSE_BILLBOARD_HEIGHT;
+    b.size = { w: view.flip ? -HORSE_BILLBOARD_WIDTH : HORSE_BILLBOARD_WIDTH, h };
+    b.origin[0] = horse.position[0]; b.origin[1] = horse.position[1]; b.origin[2] = horse.position[2];
+  }
+
+  /** The frame: the runtime's LateUpdate, then the collider and the billboards after what it decided. */
+  function frame(dt, cameraPos) {
+    if (!enabled) { if (_horseBatches.size || _peers.size || _bucketKey) destroyAll(); return; }
+    runtime?.lateUpdate(dt);
+    const s = shown();
+    if (s?.wagon) ensureParts();   // a wagon shown before the runtime asked for the parts (a peer's, a restored one) starts the build
+    if (s?.deployed && _parts && s.wagon) standWagonCollider(wagonMatrix(s.wagon.position, s.wagon.rotation)); else standWagonCollider(null);
+    if (s?.horse && _stillReady) { const b = horseBatch(''); if (b) poseHorseBatch(b, cameraPos, s.horse); } else dropHorseBatch('');
+    for (const [owner, p] of _peers) {
+      if (p.horse) {
+        p.shownHorse = easeToward(p.shownHorse, p.horse.position, dt);
+        if (_stillReady) { const b = horseBatch(owner); if (b) poseHorseBatch(b, cameraPos, { ...p.horse, position: p.shownHorse }); }
+      } else dropHorseBatch(owner);
+      if (p.wagon) { p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }
+    }
+    // HCC-ONLINE: a moved word asks for a frame (the host's stream reads `dirty`); a full frame carries it regardless
+    const key = hccRecordKey(hccWireRecord(s));
+    if (key !== _lastKey) { _lastKey = key; onChanged?.(); }
+  }
+  const batches = () => [..._horseBatches.values()];
+  function draw(r = renderer, texRemap = null) {
+    let n = 0;
+    const s = shown();
+    if (s?.wagon && drawWagon(r, texRemap, s.wagon.position, s.wagon.rotation, s.wagon.tier, s.wagon.angle)) n++;
+    for (const p of _peers.values()) if (p.wagon && p.shownWagon && drawWagon(r, texRemap, p.shownWagon, p.shownRotation ?? p.wagon.rotation, p.wagon.tier, p.wagon.angle)) n++;
+    return n;
+  }
+
+  // ── the ray: the activation targets (RegisterCustomActivation at 3.2 - the runtime's ACTIVATION_REACH)
+  const horseBox = (horse) => transformedAabb(HORSE_LOCAL_BOX, mat4FromQuatPos(quatLookRotation(horse.forward), horse.position));
+  function targets() {
+    const out = [];
+    const s = shown();
+    if (s?.wagon && _parts) {
+      const box = transformedAabb(_parts.box, wagonMatrix(s.wagon.position, s.wagon.rotation));
+      if (s.wagon.kind === HCC_WIRE_KIND.Deployed) out.push({ key: KEY_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH });
+      else if (s.wagon.kind === HCC_WIRE_KIND.Following && s.interaction) out.push({ key: KEY_FOLLOWING_WAGON, aabb: aabbOf(box), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
+    }
+    if (s?.horse) out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
+    for (const [owner, p] of _peers) {
+      if (p.wagon && p.shownWagon && _parts) out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(_parts.box, wagonMatrix(p.shownWagon, p.shownRotation ?? p.wagon.rotation))), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
+      if (p.horse && p.shownHorse) out.push({ key: peerKey(owner, 'h'), aabb: aabbOf(horseBox({ ...p.horse, position: p.shownHorse })), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
+    }
+    return out;
+  }
+  const peerOfKey = (key) => { if (typeof key !== 'string' || !key.startsWith('hccPeer:')) return null; const i = key.lastIndexOf(':'); return { owner: key.slice(8, i), what: key.slice(i + 1) }; };
+  /** WORLD-HOVER: the plaque's word - the horse's name or "Horse" (HorseTargetLabel), "Wagon", and a peer's by whose it is. */
+  function hoverName(key) {
+    if (typeof key !== 'string') return null;
+    if (key === KEY_WAGON || key === KEY_FOLLOWING_WAGON) return { title: WAGON_HOVER_TEXT };
+    if (key === KEY_HORSE) return { title: runtime ? runtime.horseTargetLabel : horseTargetLabel('') };
+    const pk = peerOfKey(key);
+    if (!pk) return null;
+    const p = _peers.get(pk.owner);
+    if (!p) return null;
+    const who = peerName(pk.owner) ?? 'Another player';
+    if (pk.what === 'w') return { title: `${who}'s ${WAGON_HOVER_TEXT.toLowerCase()}` };
+    return { title: p.name ? `${p.name} (${who}'s horse)` : `${who}'s horse` };
+  }
+  /** The press: the runtime's three activators; a peer's answers with whose it is (nothing of theirs opens here). */
+  function activate(key, distance, say = null) {
+    if (!runtime) return false;
+    if (key === KEY_WAGON) return runtime.handleDeployedWagonActivation(distance);
+    if (key === KEY_FOLLOWING_WAGON) return runtime.handleFollowingWagonActivation(distance);
+    if (key === KEY_HORSE) return runtime.handleStationaryHorseActivation(distance);
+    const pk = peerOfKey(key);
+    if (!pk || !_peers.has(pk.owner)) return false;
+    const n = hoverName(key);
+    if (n) say?.(`That is ${n.title}.`);
+    return true;
+  }
+
+  // ── the floating origin
+  function offsetAll(offset) {
+    runtime?.rebase?.(offset);
+    for (const p of _peers.values()) {
+      for (const v of [p.shownHorse, p.shownWagon]) if (v) { v[0] += offset[0]; v[1] += offset[1]; v[2] += offset[2]; }
+    }
+    _bucketKey = null;   // the collider box stands again at the shifted pose on the next frame
+  }
+  /** Every transition and every load: the peers' art goes; the runtime keeps its own record (the mod's handlers). */
+  function clearPeers() { for (const owner of [..._peers.keys()]) dropPeer(owner); }
+  function dropPeer(owner) { dropHorseBatch(owner); _peers.delete(owner); }
+  function destroyAll() { clearPeers(); dropHorseBatch(''); standWagonCollider(null); }
+
+  // ── ONLINE (HCC-ONLINE)
+  /** My word, or null when nothing of mine stands. */
+  const wireRecord = (toWire = (p) => p) => hccWireRecord(shown(), toWire);
+  /** Another's word through validHccRecord, in this scene's frame; `null` (or an invalid record) drops theirs. */
+  function applyOwner(owner, raw, toScene = (p) => p, nowMs = 0) {
+    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;
+    const r = raw == null ? null : validHccRecord(raw);
+    if (!r) { if (_peers.has(owner)) dropPeer(owner); return raw == null; }
+    let p = _peers.get(owner);
+    if (!p) { p = { wagon: null, horse: null, name: '', at: nowMs, shownWagon: null, shownHorse: null, shownRotation: null }; _peers.set(owner, p); }
+    p.at = nowMs;
+    p.wagon = r.w ? { ...r.w, position: toScene(r.w.position) } : null;
+    if (!p.wagon) { p.shownWagon = null; p.shownRotation = null; }
+    p.horse = r.h ? { ...r.h, position: toScene(r.h.position) } : null;
+    if (!p.horse) p.shownHorse = null;
+    p.name = r.n ?? '';
+    if (p.horse) { ensureStationary(); ensureWalk(); }
+    if (p.wagon) ensureParts();
+    return true;
+  }
+  /** An owner gone from the room, or quiet past staleMs, takes theirs with them (the camps' law). */
+  function sweepOwners(alive, nowMs, staleMs = 0) {
+    for (const [owner, p] of [..._peers]) {
+      if (alive?.has?.(owner) && !(staleMs > 0 && nowMs - p.at > staleMs)) continue;
+      dropPeer(owner);
+    }
+  }
+
+  return {
+    attach(rt) { runtime = rt; return this; },
+    /** The mod's own switch (modSettings Enabled): a disabled mod is one DFU never loaded. */
+    setEnabled(on) { enabled = !!on; if (!enabled) destroyAll(); },
+    get enabled() { return enabled; },
+    get runtime() { return runtime; },
+    presentation: { wagonParts, horseArt, onChanged: () => onChanged?.() },
+    phys,
+    frame, batches, draw, targets, hoverName, activate, offsetAll, destroyAll, clearPeers, shown,
+    wireRecord, applyOwner, sweepOwners,
+    get peers() { return _peers; }, get parts() { return _parts; },
+  };
+}

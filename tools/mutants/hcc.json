@@ -1,0 +1,518 @@
+[
+  {
+    "name": "HCC-tier-90-at-75",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  if (f >= 0.9) return 90;",
+    "new": "  if (f >= 0.75) return 90;",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-name-unbounded",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  return t.length > HORSE_NAME_MAX ? t.slice(0, HORSE_NAME_MAX) : t;",
+    "new": "  return t;",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-empty-name-wipes",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  return n ? n : normalizeHorseName(current);",
+    "new": "  return n;",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-ground-farthest-height",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  if (dCand < dBest - 0.001) return true;",
+    "new": "  if (dCand > dBest + 0.001) return true;",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-orientation-no-mirror",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "    case 5: return { view: 3, flip: true };",
+    "new": "    case 5: return { view: 3, flip: false };",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-walk-no-hysteresis",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  const walking = wasWalking ? speed > STOP_WALKING_SPEED : speed > START_WALKING_SPEED;",
+    "new": "  const walking = speed > START_WALKING_SPEED;",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-wheel-no-wrap",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "export const wrapWheelAngle = (a) => { const r = a + 180; return (r - Math.floor(r / 360) * 360) - 180; };",
+    "new": "export const wrapWheelAngle = (a) => a;",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-persistence-off-hitches",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  return { WagonMode: hasCart ? WAGON_MODE.WithPlayer : WAGON_MODE.None, HorseMode: hasHorse ? HORSE_MODE.WithPlayer : HORSE_MODE.None, TransportMode: m, RequiresHorseMessage: false };",
+    "new": "  return { WagonMode: hasCart ? WAGON_MODE.WithPlayer : WAGON_MODE.None, HorseMode: hasHorse ? HORSE_MODE.HitchedToWagon : HORSE_MODE.None, TransportMode: m, RequiresHorseMessage: false };",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-mount-distances-wagon-only",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  isWithinHorizontalDistance(player, wagon, WAGON_INVENTORY_DISTANCE) && isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE) && isWithinHorizontalDistance(horse, wagon, HORSE_WAGON_HITCH_DISTANCE);",
+    "new": "  isWithinHorizontalDistance(player, wagon, WAGON_INVENTORY_DISTANCE) && isWithinHorizontalDistance(player, horse, HORSE_MENU_MOUNT_DISTANCE);",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-quickmount-forgets-cart",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  if (last === LAST_MOUNT.Cart && hasCart) return TRANSPORT.Cart;",
+    "new": "  if (last === LAST_MOUNT.Cart && hasCart) return TRANSPORT.Horse;",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-scene-to-world-no-truncate",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  return [castWorldCoordinate(playerWorldX + dx), castWorldCoordinate(playerWorldZ + dz)];",
+    "new": "  return [playerWorldX + dx, playerWorldZ + dz];",
+    "tests": [
+      "test/hcc_law.test.js"
+    ]
+  },
+  {
+    "name": "HCC-path-never-reseeds",
+    "file": "src/systems/horseFollow.js",
+    "old": "    if (this.hasLastPlayerPosition && horizontalDistance(playerPosition, this.lastPlayerPosition) > PATH_DISCONTINUITY_DISTANCE) { this.seed(playerPosition, playerForward); return false; }",
+    "new": "    if (false) { this.seed(playerPosition, playerForward); return false; }",
+    "tests": [
+      "test/hcc_follow.test.js"
+    ]
+  },
+  {
+    "name": "HCC-evade-speed-normal",
+    "file": "src/systems/horseFollow.js",
+    "old": "  if (evading) return EVASION_SPEED;",
+    "new": "  if (evading) return NORMAL_SPEED;",
+    "tests": [
+      "test/hcc_follow.test.js"
+    ]
+  },
+  {
+    "name": "HCC-accel-no-floor",
+    "file": "src/systems/horseFollow.js",
+    "old": "  return Math.max(ordinarySpeed, playerSpeed + catchUp);",
+    "new": "  return Math.max(ordinarySpeed, playerSpeed);",
+    "tests": [
+      "test/hcc_follow.test.js"
+    ]
+  },
+  {
+    "name": "HCC-ally-is-threat",
+    "file": "src/systems/horseFollow.js",
+    "old": "export const isQualifyingThreatState = (isEnemy, hostile, playerAlly, targetsPlayer, detected) => isEnemy && hostile && !playerAlly && targetsPlayer && detected;",
+    "new": "export const isQualifyingThreatState = (isEnemy, hostile, playerAlly, targetsPlayer, detected) => isEnemy && hostile && targetsPlayer && detected;",
+    "tests": [
+      "test/hcc_follow.test.js"
+    ]
+  },
+  {
+    "name": "HCC-step-ignores-body",
+    "file": "src/systems/horseFollow.js",
+    "old": "export const isStepClear = (phys, start, direction, distance) => phys.sphereCastClear(vadd(start, [0, BODY_PROBE_HEIGHT, 0]), BODY_PROBE_RADIUS, direction, distance + 0.05);",
+    "new": "export const isStepClear = (phys, start, direction, distance) => phys.sphereCastClear(vadd(start, [0, BODY_PROBE_HEIGHT, 0]), 0, direction, distance);",
+    "tests": [
+      "test/hcc_follow.test.js",
+      "test/hcc_hosts.test.js"
+    ]
+  },
+  {
+    "name": "HCC-step-any-height",
+    "file": "src/systems/horseFollow.js",
+    "old": "    if (Math.abs(g[1] - start[1]) > MAXIMUM_STEP_HEIGHT_CHANGE) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/hcc_follow.test.js"
+    ]
+  },
+  {
+    "name": "HCC-evasion-never-clears",
+    "file": "src/systems/horseFollow.js",
+    "old": "    if (this.combatEvading && now - this.lastThreatTime >= COMBAT_CLEAR_DELAY) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/hcc_follow.test.js"
+    ]
+  },
+  {
+    "name": "HCC-threat-safe-always",
+    "file": "src/systems/horseFollow.js",
+    "old": "    for (const t of this.threats) { const dx = candidate[0] - t[0], dz = candidate[2] - t[2]; if (dx * dx + dz * dz < THREAT_CLEARANCE * THREAT_CLEARANCE) return false; }",
+    "new": "    for (const t of this.threats) { const dx = candidate[0] - t[0], dz = candidate[2] - t[2]; if (dx * dx + dz * dz < 1) return false; }",
+    "tests": [
+      "test/hcc_follow.test.js"
+    ]
+  },
+  {
+    "name": "HCC-trail-no-prune",
+    "file": "src/systems/horseFollow.js",
+    "old": "    if (removeCount > 0) this.points.splice(0, removeCount);\n  }\n  /** TryGetTrailingPoint:",
+    "new": "    if (false) this.points.splice(0, removeCount);\n  }\n  /** TryGetTrailingPoint:",
+    "tests": [
+      "test/hcc_follow.test.js"
+    ]
+  },
+  {
+    "name": "HCC-pose-on-the-ground",
+    "file": "src/systems/horseFollow.js",
+    "old": "      next.lastValidPosition = vadd(best.point, vscale(normal, NORMAL_GROUND_OFFSET));",
+    "new": "      next.lastValidPosition = [...best.point];",
+    "tests": [
+      "test/hcc_follow.test.js"
+    ]
+  },
+  {
+    "name": "HCC-wheels-not-planar-test",
+    "file": "src/systems/wagon41214.js",
+    "old": "  if (wheels[0].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE || wheels[1].bounds.size[0] > WHEEL_PLANARITY_TOLERANCE) throw new Error('Model 41214 wheel components are no longer planar on local X.');",
+    "new": "  if (false) throw new Error('Model 41214 wheel components are no longer planar on local X.');",
+    "tests": [
+      "test/hcc_wagon41214.test.js"
+    ]
+  },
+  {
+    "name": "HCC-weld-too-tight",
+    "file": "src/systems/wagon41214.js",
+    "old": "      if (dx * dx + dy * dy + dz * dz > POSITION_WELD_TOLERANCE_SQUARED) continue;",
+    "new": "      if (dx * dx + dy * dy + dz * dz > 0) continue;",
+    "tests": [
+      "test/hcc_wagon41214.test.js"
+    ]
+  },
+  {
+    "name": "HCC-mesh-not-rebased",
+    "file": "src/systems/wagon41214.js",
+    "old": "    positions[i * 3] = model.positions[s * 3] - pivot[0]; positions[i * 3 + 1] = model.positions[s * 3 + 1] - pivot[1]; positions[i * 3 + 2] = model.positions[s * 3 + 2] - pivot[2];",
+    "new": "    positions[i * 3] = model.positions[s * 3]; positions[i * 3 + 1] = model.positions[s * 3 + 1]; positions[i * 3 + 2] = model.positions[s * 3 + 2];",
+    "tests": [
+      "test/hcc_wagon41214.test.js"
+    ]
+  },
+  {
+    "name": "HCC-cargo-tier-exclusive",
+    "file": "src/systems/wagon41214.js",
+    "old": "export const cargoPiecesShown = (tier) => CARGO_DEFINITIONS.filter((d) => tier >= d.threshold);",
+    "new": "export const cargoPiecesShown = (tier) => CARGO_DEFINITIONS.filter((d) => tier === d.threshold);",
+    "tests": [
+      "test/hcc_wagon41214.test.js"
+    ]
+  },
+  {
+    "name": "HCC-bounds-never-widened",
+    "file": "src/systems/wagon41214.js",
+    "old": "    if (size >= 0.1) continue;",
+    "new": "    if (true) continue;",
+    "tests": [
+      "test/hcc_wagon41214.test.js"
+    ]
+  },
+  {
+    "name": "HCC-wire-no-name",
+    "file": "src/systems/horseCartWire.js",
+    "old": "  if (n && out.h) out.n = n;",
+    "new": "  if (false) out.n = n;",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-door-any-tier",
+    "file": "src/systems/horseCartWire.js",
+    "old": "    if (!TIERS.has(w[8])) return null;",
+    "new": "    if (false) return null;",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-door-any-frame",
+    "file": "src/systems/horseCartWire.js",
+    "old": "    if (!Number.isInteger(h[5]) || h[5] < 0 || h[5] >= HORSE_WALK_FRAMES) return null;",
+    "new": "    if (false) return null;",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-door-unbounded",
+    "file": "src/systems/horseCartWire.js",
+    "old": "    if (!inBounds(p)) return null;\n    const q = [w[4], w[5], w[6], w[7]];",
+    "new": "    const q = [w[4], w[5], w[6], w[7]];",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-ease-never-snaps",
+    "file": "src/systems/horseCartWire.js",
+    "old": "  if (dx * dx + dy * dy + dz * dz > snap * snap) return [...target];",
+    "new": "  if (false) return [...target];",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-raycastall-first-only",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "  for (let n = 0; n < RAYCAST_ALL_MAX_HITS && travelled < maxDist; n++) {",
+    "new": "  for (let n = 0; n < 1 && travelled < maxDist; n++) {",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-mirror-never",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    b.size = { w: view.flip ? -HORSE_BILLBOARD_WIDTH : HORSE_BILLBOARD_WIDTH, h };",
+    "new": "    b.size = { w: HORSE_BILLBOARD_WIDTH, h };",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-my-own-word-lands",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
+    "new": "    if (typeof owner !== 'string' || !owner) return false;",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-sweep-ignores-stale",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      if (alive?.has?.(owner) && !(staleMs > 0 && nowMs - p.at > staleMs)) continue;",
+    "new": "      if (alive?.has?.(owner)) continue;",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-wagon-box-never-stood",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    col.addMesh(WAGON_BUCKET, tri.positions, tri.indices, m);",
+    "new": "    void tri;",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-disabled-still-shows",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (!runtime || !enabled) return null;",
+    "new": "    if (!runtime) return null;",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-following-box-without-trigger",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      else if (s.wagon.kind === HCC_WIRE_KIND.Following && s.interaction) out.push(",
+    "new": "      else if (s.wagon.kind === HCC_WIRE_KIND.Following) out.push(",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "HCC-dismount-never-parks",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (prev === TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer && !pee().isPlayerInside() && !hasPendingInteriorDeployment) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-horse-dismount-stays-with-player",
+    "file": "src/systems/horseCart.js",
+    "old": "    } else if (prev === TRANSPORT.Horse && mode === TRANSPORT.Foot && wagonState.HorseMode === HORSE_MODE.WithPlayer && !pee().isPlayerInside() && !hasPendingInteriorHorseDeployment) {\n      deployHorseBehindPlayer();",
+    "new": "    } else if (false) {\n      deployHorseBehindPlayer();",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-too-far-ignored",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (!ready() || !stationaryHorseVisual) return false;\n    if (distance > ACTIVATION_REACH) { tooFar(); return true; }",
+    "new": "    if (!ready() || !stationaryHorseVisual) return false;",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-selection-never-consumed",
+    "file": "src/systems/horseCart.js",
+    "old": "  function consumeWagonSelectionRequest() { const r = selectWagonOnNextInventoryOpen; selectWagonOnNextInventoryOpen = false; return r; }",
+    "new": "  function consumeWagonSelectionRequest() { return selectWagonOnNextInventoryOpen; }",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-failed-entry-keeps-parking",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (hadWagon) resetWagonState(WAGON_MODE.WithPlayer);\n    if (hadHorse) setHorseWithPlayer();",
+    "new": "    if (false) resetWagonState(WAGON_MODE.WithPlayer);\n    if (hadHorse) setHorseWithPlayer();",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ],
+    "equivalent": true,
+    "why": "the pending deployment is committed only by the SUCCESSFUL transition (commitDeployment in handleSuccessfulInteriorTransition); on a failure Mode is still WithPlayer, so ResetWagonState(WithPlayer) re-zeroes fields already zero - the mod's own belt-and-braces [IL_9c0c], kept as read"
+  },
+  {
+    "name": "HCC-exit-never-closes-access",
+    "file": "src/systems/horseCart.js",
+    "old": "    clearInteriorAccess(); clearPendingInteriorState();\n    if (isHorseFollowing()) { followingTransitionSuspended = false; horseFollower.resetTransient(); }\n  }",
+    "new": "    clearPendingInteriorState();\n    if (isHorseFollowing()) { followingTransitionSuspended = false; horseFollower.resetTransient(); }\n  }",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-summon-indoors",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (pee().isPlayerInside() || tm().isOnShip()) { say(HCC_TEXT.summonOutdoorsOnly); return; }",
+    "new": "    if (tm().isOnShip()) { say(HCC_TEXT.summonOutdoorsOnly); return; }",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-fast-travel-never-relocates",
+    "file": "src/systems/horseCart.js",
+    "old": "    fastTravelFollowingSuspended = true; pendingFastTravelHorseRelocation = true;\n  }\n  function convertFollowingTransportToWaitAtDeparture() {",
+    "new": "    fastTravelFollowingSuspended = false; pendingFastTravelHorseRelocation = false;\n  }\n  function convertFollowingTransportToWaitAtDeparture() {",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-rebase-forgets-trail",
+    "file": "src/systems/horseCart.js",
+    "old": "    trail.offset(d); hitchedWagonPath.offset(d); horseFollower.offset(d);",
+    "new": "    hitchedWagonPath.offset(d); horseFollower.offset(d);",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-show-trailing-ignored",
+    "file": "src/systems/horseCart.js",
+    "old": "    if (!showTrailingWagon) return false;\n    const teamOk",
+    "new": "    const teamOk",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-hitch-offset-dropped",
+    "file": "src/systems/horseCart.js",
+    "old": "      pos = vadd(vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X)), vscale(fwd, HITCHED_HORSE_LOCAL_Z));",
+    "new": "      pos = vadd(pos, vscale(horizontalRight(fwd), HITCHED_HORSE_LOCAL_X));",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-two-wheel-lean-accepted",
+    "file": "src/systems/horseCart.js",
+    "old": "  if (vdot(up, [0, 1, 0]) <= 0) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-horse-any-hair-reposes",
+    "file": "src/systems/horseCart.js",
+    "old": "      if (dx * dx + dz * dz > POSE_POSITION_TOLERANCE_SQ) needsPose = true;",
+    "new": "      if (dx * dx + dz * dz > 0) needsPose = true;",
+    "tests": [
+      "test/hcc_runtime.test.js"
+    ]
+  },
+  {
+    "name": "HCC-race-ignores-horsecart",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
+    "tests": [
+      "test/hcc_hosts.test.js"
+    ]
+  },
+  {
+    "name": "HCC-race-horsecart-before-cart",
+    "file": "src/player/activationRace.js",
+    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, horseCart, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
+    "tests": [
+      "test/hcc_hosts.test.js"
+    ]
+  },
+  {
+    "name": "HCC-spherecast-drops-filter",
+    "file": "src/player/collider.js",
+    "old": "    return this.capsuleCast(origin, origin, radius, dir, maxDist, 1, filter);",
+    "new": "    return this.capsuleCast(origin, origin, radius, dir, maxDist, 1);",
+    "tests": [
+      "test/hcc_hosts.test.js"
+    ]
+  },
+  {
+    "name": "HCC-inventory-ignores-runtime-refusal",
+    "file": "src/systems/inventorySession.js",
+    "old": "      if (!d.allowed) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };",
+    "new": "      if (false) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };",
+    "tests": [
+      "test/hcc_hosts.test.js"
+    ]
+  },
+  {
+    "name": "HCC-toggle-asks-plain-inside",
+    "file": "src/systems/inventorySession.js",
+    "old": "    const d = rt.canAccessWagonStorage(state.dungeonExitAccessGranted && deps.dungeon?.inside ? STORAGE_CONTEXT.DungeonExitSelection : STORAGE_CONTEXT.NormalInventory);",
+    "new": "    const d = rt.canAccessWagonStorage(STORAGE_CONTEXT.NormalInventory);",
+    "tests": [
+      "test/hcc_hosts.test.js"
+    ]
+  },
+  {
+    "name": "HCC-foes-frame-never-forced",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (!out.length && !full && !force) return null;",
+    "new": "    if (!out.length && !full) return null;",
+    "tests": [
+      "test/hcc_hosts.test.js"
+    ]
+  }
+]

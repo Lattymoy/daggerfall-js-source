@@ -58,7 +58,7 @@ test('TR5/MAC-K3: ONE place changes the mode - and it is ONE PLACE ACROSS THE PO
   assert.ok(!/pegas|mesh|rig|nif/i.test(door), 'no 3D horse hangs off it');
   // TR4 put the Ship arm in front of the mode set - it is a teleport,
   // not a mode - so the pick reaches setMode past it.
-  assert.match(rig, /if \(mode === TRANSPORT_MODES\.Ship\) \{ onShip\?\.\(\); return; \}\s*\n\s*setMode\(mode\);/, 'the T-key pick');
+  assert.match(rig, /if \(mode === TRANSPORT_MODES\.Ship\) \{ onShip\?\.\(\); return; \}\s*\n\s*if \(rt && \(mode === TRANSPORT_MODES\.Horse \|\| mode === TRANSPORT_MODES\.Cart\)\) \{ rt\.tryUseTransport\(mode\); return; \}[^\n]*\n\s*setMode\(mode\);/, 'the T-key pick (HCC: the mod\'s TryUseTransport stands between the ship arm and the mode set, and reaches setMode through the runtime\'s transport.set)');
 
   // ONE MOTOR CALL IN THE WHOLE PORT, derived rather than counted in
   // one file: `player.setTransportMode(` may be spelled exactly once

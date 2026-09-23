@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6022` read, on one physical line:
+`src/scenes/worldModes.js:6033` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4219`). With the property missing that call is a
+(`dungeonContext.js:4220`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3469` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3549` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:193`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7813,3 +7813,35 @@ was zero; a gift beside my own Fortify; the mate's recast merging with the mate'
 seam by source. `tools/mutants/allycast.json`: 37, 37 dead. RELAY_VERSION world97 with its law row; the relay
 deploys itself on the merge to main. Not verified in a browser: no online session exists in this container.
 
+
+## HCC-ONLINE (2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also enhance its online integration functionality") - a peer's horse and wagon stand in the cell
+
+Horse Cart and Cargo (`06-Systems/Horse-Cart-And-Cargo.md`) is single-player: its parked wagon, waiting horse,
+following horse and trailing team are objects in one Unity scene. Online they stand in a shared cell, so the port
+carries them to everyone near, under the camps' law (SURV3) and no new one:
+
+- **The record** (`systems/horseCartWire.js`): what the pool SHOWS, not the save - the wagon's kind (trailing /
+  parked / following), base, rotation as Unity spells it, cargo tier and wheel angle; the horse's base, horizontal
+  forward, walk frame and walking; the horse's name. Positions in the wire frame (natives, the compensation-free
+  height), rounded to the centimetre. It rides as `hv` on the cell's foes frame beside `c`: on every full frame
+  (`null` when none stand), and between them whenever the word moved - the foe pool's `foesFrame(full, force)`
+  sends a frame with no foe in it for the rider, so a walking horse is heard every FOES_MS and not every two
+  seconds.
+- **The door** (`validHccRecord`): shape, POSE_BOUND / POSE_Y_BOUND, a quaternion within 0.5..2 renormalised, a
+  known kind and a known tier, a frame the walk set has, walking a bit, the name at the mod's 31. A junk word drops
+  the owner's whole team; a frame without the field leaves the last word standing.
+- **The owner law** (`horseCartPool applyOwner / sweepOwners / clearPeers`): an owner's word replaces that owner's
+  alone and never mine; an owner gone from the room or quiet past FOES_STALE_MS is swept beside their puppets and
+  camps; a room change and a leave clear every peer's team.
+- **The landing**: a peer's team is drawn with the same five pieces, cargo and horse billboard as mine, EASED
+  between words (12 per second; a step past 20 m - a summon, a pixel crossing, a fast travel - snaps), the horse's
+  orientation the reader's own camera's. Their wagon and horse are targets under the one ray so the plaque names
+  whose they are ("<Name> (<Peer>'s horse)", "<Peer>'s wagon"); the press says so and opens nothing.
+- **Nothing of the storage rides**: a player's items are their own client's (the port's law since the first
+  inventory), and a peer's wagon is a thing to see and walk around.
+- **No relay change**: the relay reads nothing inside a foes frame (AUDIT WORLD2), so `hv` needs no version and no
+  law row; the pose already carries the transport mode a peer rides.
+
+Pinned: `test/hcc_pool.test.js` (the record, the door, the ease, the owner law by execution), `test/hcc_hosts.test.js`
+(the stream, the setOnHcc landing, the sweep, the clears, the relay untouched). Not verified in a browser: no
+online session exists in this container.
