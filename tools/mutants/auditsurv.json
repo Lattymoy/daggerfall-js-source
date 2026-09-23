@@ -93,8 +93,8 @@
   {
     "name": "AUDITSURV-the-mod-off-keeps-the-drains",
     "file": "src/systems/worldTick.js",
-    "old": "  } else if (!survival) clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind",
-    "new": "  }",
+    "old": "    clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind\n",
+    "new": "",
     "tests": [
       "test/auditsurv.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "AUDITSURV-exposure-hurts-every-minute-and-in-your-sleep",
     "file": "src/systems/survival/needs.js",
-    "old": "    if (rules.health && abs > NEED.DAMAGE_AT && !sleeping && harmTick) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));",
-    "new": "    if (rules.health && abs > NEED.DAMAGE_AT) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));",
+    "old": "    if (rules.health && abs > NEED.DAMAGE_AT && !sleeping && harmTick) {",
+    "new": "    if (rules.health && abs > NEED.DAMAGE_AT) {",
     "tests": [
       "test/auditsurv.test.js"
     ]

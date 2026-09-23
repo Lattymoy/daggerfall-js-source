@@ -118,8 +118,8 @@ export function createCamps({
    * AUDIT SURV-TIERS: OFF HIDES THE CAMPS; IT DOES NOT BURN THEM.
    *
    * The pool refused to restore or relay a camp with the arc off (AUDIT
-   * SURV B), so a player who switched Off and saved lost every camp in
-   * the save, and an Off host dropped its peers' camps from the room it
+   * SURV B), so a save LOADED with the arc Off dropped every camp in it
+   * (the next save then had none), and an Off host dropped its peers' camps from the room it
    * hands on - Off destroyed the ground under the tiers' own promise
    * that switching it back finds the world where it was. So the DATA is
    * the world's in every tier: the burn, the save, the scene cache and

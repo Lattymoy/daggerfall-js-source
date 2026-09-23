@@ -215,6 +215,17 @@ export function applySurvivalMods(entity, mods) {
   return entry;
 }
 
+/** AUDIT SURV-TIERS: the record's loan held to `room` (the pool's shortfall) - each need's share cut in proportion,
+ *  whole units, and a need owed nothing leaves the record. */
+function settleLoan(s, room) {
+  const b = s.borrowed;
+  let total = 0;
+  for (const k of Object.keys(b)) total += b[k];
+  if (total <= room) return;
+  for (const k of Object.keys(b)) { b[k] = Math.floor((b[k] * room) / total); if (!(b[k] > 0)) delete b[k]; }
+  if (!Object.keys(b).length) delete s.borrowed;
+}
+
 /** Say a line at most once per NOTE_EVERY_MINUTES per key. Stage lines
  *  (`once`) fire when the stage is first reached and not again until it
  *  is left. */
@@ -280,6 +291,12 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // what it takes, and so keeps what was taken).
   if (!rules.attributes && s.stiffUntil) s.stiffUntil = 0;
   if (!repays && s.borrowed) delete s.borrowed;
+  // AUDIT SURV-TIERS (the second pass): A LOAN IS NEVER MORE THAN THE POOL IS SHORT. A bed, a potion, the fed
+  // hour or the collapse's hour refills the pool without meeting the need - and the loan stayed owed, so the meal
+  // after paid it AGAIN: a player who slept starving banked a pool of stamina a day and ate it mid-fight. Whatever
+  // refilled the pool has paid that much of the loan, so it is settled down to the pool's shortfall here, before
+  // the minute charges anything (each charge then adds to both alike).
+  if (repays && s.borrowed) settleLoan(s, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));
 
   // WET: rain and water raise it; warmth dries it, a fire dries it fast.
   s.wet = Math.min(NEED.WET_MAX, s.wet + temp.wetGain);
@@ -397,10 +414,22 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   if (abs > NEED.EXPOSURE_AT) s.exposure = Math.min(s.exposure + 1, 600); else s.exposure = Math.max(0, s.exposure - 2);
   const harmTick = now % HARM_EVERY_MINUTES === 0;
   const hurtFloored = (n) => { if ((entity.health ?? 0) > HEALTH_FLOOR) sinks.hurt?.(n); };
-  const tempRed = temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom;
+  // AUDIT SURV-TIERS (the second pass): and in a tier whose `fireWarms` says so (Casual), a lit fire answers the cold
+  // outright - the fire's fifteen degrees alone left a camper in a snowstorm Deadly cold beside it, charged, and the
+  // cold's loan never repaid. The felt reading stays the world's; the body is warm.
+  const warmedByFire = !!(rules.stamina.fireWarms && env.byFire && temp.felt < 0);
+  const tempRed = !warmedByFire && (temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom);
   if (!resting || !env.byFire) {
     if (tempRed && (!resting || rules.stamina.duringRest)) tire(DRAIN.heatPer20 * Math.trunc(abs / 20), 'temp');
-    if (rules.health && abs > NEED.DAMAGE_AT && !sleeping && harmTick) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));
+    // AUDIT SURV-TIERS (the second pass): SURV-THIRST1's law for a harm that can kill (above), which this one never
+    // had - a REPLAYED minute (a jump) wounds to the floor and no further, and the minute the player stands in may
+    // finish them. A cautious fast travel through a summer desert healed the traveller whole and then replayed the
+    // trip's heat as waking minutes: dead on arrival, in Hard, since SURV1.
+    if (rules.health && abs > NEED.DAMAGE_AT && !sleeping && harmTick) {
+      const bite = Math.max(1, Math.trunc((abs - 40) / 10));
+      if (!replay) sinks.hurt?.(bite);
+      else if ((entity.health ?? 0) > HEALTH_FLOOR) sinks.hurt?.(Math.min(bite, (entity.health ?? 0) - HEALTH_FLOOR));
+    }
   }
   // AUDIT SURV A/E: the strip's own words (temperature.js temperatureWord), one note a word said once - an escalation
   // speaks at once and a held reading never repeats (a cold afternoon said three lines every five minutes)
@@ -517,23 +546,6 @@ export function runSurvivalMinutes(entity, from, to, env, deps) {
   // after it must not pay the same night awake; a marker from a clock ahead of this one (a rewind) is re-anchored
   let last = Number.isFinite(s.lastMinute) ? s.lastMinute : Math.floor(from);
   if (last > end + MAX_CATCHUP_MINUTES) last = Math.floor(from);
-  // AUDIT SURV-TIERS: MINUTES NO LAW PAID ARE NOBODY'S NEEDS. The record's
-  // last paid minute behind this walk's own start means minutes passed
-  // with no law running at all - the arc switched Off (every host's feed
-  // is null then) - and hunger and wakefulness are TIMESTAMPS, so a player
-  // who spent five days in Off and turned Casual back on was Starving in
-  // the first minute (and in Hard had lost ten from every attribute).
-  // Off is the classic game: its minutes are nobody's needs, so the two
-  // markers move forward by them and the needs resume where they stood.
-  // A walk's own minutes are untouched - a jump is walked from its start,
-  // which the last paid minute already is - and so is the two-day cap.
-  const idle = Math.floor(from) - last;
-  if (idle > 0) {
-    s.lastAte = (s.lastAte ?? last) + idle;
-    s.awakeSince = (s.awakeSince ?? last) + idle;
-    last = Math.floor(from);
-    s.lastMinute = last;
-  }
   const start = Math.max(Math.floor(from), last, end - MAX_CATCHUP_MINUTES);
   // SURV-THIRST1 AUDIT: WHICH MINUTE IS THE PLAYER ACTUALLY LIVING IN.
   // Every minute but the last is a REPLAY - a jump's minutes, fabricated
@@ -545,10 +557,46 @@ export function runSurvivalMinutes(entity, from, to, env, deps) {
   // one the player is standing in, and it is the one that may finish
   // them. ONE object, mutated - this loop runs up to 2,880 times and a
   // fresh deps per minute would be 2,880 objects a jump (EV2's rule).
+  if (s.offFor) delete s.offFor;   // AUDIT SURV-TIERS: the arc is on again - an Off span ends (pauseSurvival)
   const walk = { ...deps, replay: true };
   for (let m = start + 1; m <= end; m++) { walk.replay = m < end; temp = survivalMinute(entity, m, env, walk); }
   if (end > (s.lastMinute ?? -Infinity)) s.lastMinute = end;
   return temp;
+}
+/**
+ * AUDIT SURV-TIERS: OFF'S MINUTES ARE NOBODY'S NEEDS - paused as they
+ * pass. Hunger and wakefulness are TIMESTAMPS, so a player back from five
+ * days Off was Starving in the first minute (and in Hard had lost ten
+ * from every attribute). The world tick (worldTick.js tickPlayerMinutes)
+ * calls this for every span it walks with the arc Off, and it carries the
+ * two markers forward by the span, with the record's last paid minute:
+ * the needs stand where they were, and resume there.
+ *
+ * The first cut did it the other way - the walk, on the arc's return,
+ * moved the markers by the whole gap behind its start - and the second
+ * audit found both ways that was wrong: a meal eaten while Off (which
+ * writes `lastAte` inside the gap) was moved a second time, days into
+ * the future; and WORLD5's online load (worldTick.js alignEntityClocks)
+ * leaves exactly such a gap for a short absence ON PURPOSE - "an hour
+ * away keeps its hunger" - which the shift forgave in every tier. Paused
+ * here, per span, only while Off, neither can happen: a meal writes a
+ * marker the next span carries, and a gap the arc was on for is not
+ * touched. A player with no record is given none.
+ */
+export function pauseSurvival(entity, from, to) {
+  const s = entity?.survival;
+  if (!s || typeof s !== 'object') return false;
+  const span = Math.floor(to) - Math.floor(from);
+  if (!(span > 0)) return false;
+  if (Number.isFinite(s.lastAte)) s.lastAte += span;
+  if (Number.isFinite(s.awakeSince)) s.awakeSince += span;
+  s.lastMinute = Math.floor(to);
+  // ...AND A LONG ONE IS A FRESH START, WORLD5's own rule for an absence (alignSurvival, below): paused whole, five
+  // days Off came back Drenched and Very drunk, the drink's penalty with them. Past the grace the body has lived the
+  // classic game's days - fed, watered, rested, dry and sober - and the needs start again from there.
+  s.offFor = (s.offFor ?? 0) + span;
+  if (s.offFor > ALIGN_GRACE_MINUTES) { alignSurvival(entity, Math.floor(to), null); s.offFor = 0; }
+  return true;
 }
 /** AUDIT SURV A: the feed stopped (the mod off, a host with no reader) - the drains the last minute wrote go with it. */
 export function clearSurvivalMods(entity) {

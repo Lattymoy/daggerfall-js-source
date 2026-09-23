@@ -1052,7 +1052,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         open: () => townTalk.showOverlay(makeCharSheetWindow()),
       });
     },
-    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),   // SURV7: the dungeon's own tick feeds its own
+    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null) : survivalEnvNow()),   // SURV7: the dungeon's own tick feeds its own - AUDIT SURV-TIERS (the second pass): but a rest running on THIS ticker underground (a mirrored one, world.js) is fed the dungeon's reader, one sentence with world.js's
   });   // AUDIT 18: the per-minute tick every host owes
   // AUDIT 21 (hosts lane, F6): this host's death presenter. Guard damage,
   // fall damage and the ticker's disease/poison sink all reach the one damage
@@ -2434,7 +2434,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   });
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
-    placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3
+    placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3 - AUDIT SURV-TIERS: off the list they were used from (the pack or the wagon)
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection

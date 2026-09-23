@@ -74,8 +74,8 @@
  {
   "name": "SURV7-the-world-feeds-the-dungeon-too",
   "file": "src/scenes/world.js",
-  "old": "    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),\n",
-  "new": "    survivalEnv: () => survivalEnvNow(),   // SURV7\n",
+  "old": "    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null) : survivalEnvNow()),",
+  "new": "    survivalEnv: () => survivalEnvNow(),",
   "tests": [
    "test/surv7_feed.test.js"
   ],

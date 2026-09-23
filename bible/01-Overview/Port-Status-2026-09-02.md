@@ -905,10 +905,10 @@ ships, which is the warning the section's own preamble opens with.
 *Stale - the row is a claim the tree has outrun:*
 
 9. **`:587` UseItem's unbuilt destinations.** Every arm the row names is
-   built: `DrinkPotion` (`systems/useItem.js:199`, `:281-291`),
+   built: `DrinkPotion` (`systems/useItem.js:204`, `:287-303`),
    `RecordLocationFromMap`/`DiscoverRandomLocation`
    (`ui/nativeInventory.js:798-802`, `scenes/world.js:4067`), the
-   quest-item click (`useItem.js:231`, `:244-245`) and
+   quest-item click (`useItem.js:246`, `:254-255`) and
    `DoItemEnchantmentPayloads(Used)` (already struck at E2). D10 closed
    the last residue in the row's book-reader clause - the fixed 10px row
    is now `LayoutBookLabels` in each label's own face.

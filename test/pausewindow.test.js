@@ -251,7 +251,7 @@ test('AUDIT 65 UI-2: the classic pause window relocks on RESUME, and only on res
     // PRODUCER mints, which is the whole point of this arm. All three
     // shipping pause hosts hand over saveAs + loadKey + pushWindow
     // (world.js:6841-6848, worldModes.js:8397-8403,
-    // dungeonContext.js:5826-5832), so `saveLoadPushes` is true and the
+    // dungeonContext.js:5827-5833), so `saveLoadPushes` is true and the
     // door PUSHES the slot window: the pause window rides UNDER it,
     // `done` stays false and `_closeWith` is never reached at all. A
     // relock here would take away the cursor the slot window is for.

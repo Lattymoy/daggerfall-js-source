@@ -36,6 +36,7 @@ export const MAX_STAT_VALUE = 100;
 export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TIERS: `skipKind` leaves one entry kind out - the survival law caps its own entry against the stat WITHOUT it
   const base = entity.stats?.[statName] ?? 0;
   let mod = 0;
+  let survival = 0;   // AUDIT SURV-TIERS: the needs' entry, capped below against everything else
   const list = entity.activeEffects;
   if (list) {
     for (const a of list) {
@@ -58,7 +59,7 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
       // SURV1: the needs' one entry - hunger, thirst, sleep, exposure and
       // drink as a signed map rewritten every world minute
       // (survival/needs.js applySurvivalMods), never a duration
-      if (a.kind === 'survival') { mod += a.statMods?.[statName] ?? 0; continue; }
+      if (a.kind === 'survival') { survival += a.statMods?.[statName] ?? 0; continue; }
       if (a.stat !== statName) continue;
       if (a.kind === 'fortifyAttribute') mod += a.magnitude;
       else if (a.kind === 'drainAttribute' || a.kind === 'transferAttribute') mod -= a.magnitude;
@@ -69,6 +70,13 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   // every equip change and every magic round) - a field read, so this
   // leaf stays import-free; empty with every switch off.
   mod += entity._mods?.stats?.[statName] ?? 0;
+  // AUDIT SURV-TIERS (the second pass): THE NEEDS' DRAIN IS CAPPED WHERE THE STAT IS READ. The minute law caps its
+  // entry five above the stat as it stands (survival/needs.js applySurvivalMods) - but only once a minute, and the
+  // zero-stat kill below reads every 0.2 real seconds: an ale's -2 on a live 7, then a Drain of 5 between two
+  // minutes, made a live 0 and killed. So the entry's drain is held here too, against the stat WITHOUT it (and never
+  // past the permanent stat's five), whatever lands between the minutes.
+  if (survival < 0) survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));
+  mod += survival;
   return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE);
 }
 

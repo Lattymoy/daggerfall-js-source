@@ -43,7 +43,7 @@
 //   { forceTalk: true })`, which this file consumes at :343 and :354.
 // - AddPermanentScene (:246) shipped at P1 - systems/tavern.js:143
 //   addPermanentScene / :93 removePermanentScene, with this window
-//   handing rentRoom its sceneCache at :223. A rented room's CONTENTS
+//   handing rentRoom its sceneCache at :261. A rented room's CONTENTS
 //   survive now, not just the rental.
 // - the HOTKEYS: DaggerfallShortcut is indeed a SECOND binding table
 //   next to I1's input registry, but it is a text database and not a

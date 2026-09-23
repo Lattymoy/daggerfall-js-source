@@ -1774,7 +1774,7 @@ test('TO-FIELD: the accelerated journey waits for the ground; TO-FIELD3 took the
   // and sunburn ticks and the byFire exposure damage (the health), and
   // - never counted by the change that set it - SURV6's hunting roll,
   // which refuses outright on `resting` (hunting.js:114).
-  assert.match(w, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null : survivalEnvNow\(\)\),/,
+  assert.match(w, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? \(playerEntity\.isResting \? modes\?\.dungeonCtx\?\.survivalEnvNow\?\.\(\) \?\? null : null\) : survivalEnvNow\(\)\),/,
     'the journey feeds the needs the world it is actually in');
   assert.doesNotMatch(w, /resting: true \}\n?\s*: survivalEnvNow/, 'and no travel arm sits the traveller down');
   assert.doesNotMatch(w, /worldTimeScale\(\) > 1 \? \{ \.\.\.survivalEnvNow\(\)/, 'the mod\'s clock does not reach the needs at all');

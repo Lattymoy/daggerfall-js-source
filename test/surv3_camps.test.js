@@ -312,9 +312,9 @@ test('SURV3: the pack\'s hand-off - both skins close and hand the placeable to t
   assert.deepEqual(useResultAction({ kind: 'placeFire', item: r.item }, {}), { kind: 'message', text: USE_PENDING.placeFire });
   assert.equal(USE_PENDING.pitchCamp, 'There is nowhere to set that up here.');
   const native = read('src/ui/nativeInventory.js');
-  assert.match(native, /if \(r\.kind === 'pitchCamp' \|\| r\.kind === 'placeFire'\) \{\s*\n\s*if \(this\.hooks\.placeCamp\) \{ this\._closeSilently\(\); this\.hooks\.placeCamp\(r\.item\); \}/);
+  assert.match(native, /if \(r\.kind === 'pitchCamp' \|\| r\.kind === 'placeFire'\) \{\s*\n\s*if \(this\.hooks\.placeCamp\) \{ this\._closeSilently\(\); this\.hooks\.placeCamp\(r\.item, collection\); \}/);   // AUDIT SURV-TIERS: with the list it came from (the wagon's tent)
   const enh = read('src/ui/enhancedInventory.js');
-  assert.match(enh, /if \(act\.kind === 'placeCamp'\) \{\s*\n\s*const place = deps\.placeCamp;\s*\n\s*onExit\(\);[^\n]*\n\s*place\(act\.item\);/);
+  assert.match(enh, /if \(act\.kind === 'placeCamp'\) \{\s*\n\s*const place = deps\.placeCamp;\s*\n\s*onExit\(\);[^\n]*\n\s*place\(act\.item, collection\);/);
   const cache = createSceneCache();
   cacheScene(cache, 'x', { camps: [{ id: 'a', pos: [1, 2, 3] }], droppedTorches: [{ position: [1, 2, 3], time: 5, itemTemplateIndex: 247 }] });
   const back = restoreCachedScene(cache, 'x');
@@ -325,7 +325,7 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   const world = read('src/scenes/world.js'), ext = read('src/scenes/exterior.js'), dc = read('src/scenes/dungeonContext.js'), modes = read('src/scenes/worldModes.js');
   for (const [name, src] of [['world', world], ['exterior', ext], ['dungeon', dc]]) {
     assert.match(src, /const camps = createCamps\(\{/, `${name}: stands the pool`);
-    assert.match(src, /placeCamp: \(item\) => camps\.placeItem\(item, playerEntity\.items \?\? \[\]\)/, `${name}: the pack's hand-off`);
+    assert.match(src, /placeCamp: \(item, list\) => camps\.placeItem\(item, list \?\? playerEntity\.items \?\? \[\]\)/, `${name}: the pack's hand-off - off the list the item was used from (AUDIT SURV-TIERS)`);
     assert.match(src, /camps\.tick\(dt\)/, `${name}: the fires burn`);
   }
   for (const [name, src] of [['world', world], ['exterior', ext]]) {

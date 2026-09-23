@@ -128,7 +128,7 @@
   {
     "name": "SURV1-liveStat-ignores-the-survival-entry",
     "file": "src/systems/statMods.js",
-    "old": "      if (a.kind === 'survival') { mod += a.statMods?.[statName] ?? 0; continue; }",
+    "old": "      if (a.kind === 'survival') { survival += a.statMods?.[statName] ?? 0; continue; }",
     "new": "      if (a.kind === 'survival') { continue; }",
     "tests": [
       "test/surv1_model.test.js"

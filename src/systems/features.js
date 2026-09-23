@@ -892,8 +892,8 @@ export const FEATURES = Object.freeze([
     group: 'character',
     title: 'Climates & Calories by Ralzar',   // AUDIT SURV E: the author's name, as every mod row carries it
     note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
-      + 'campfire or a bed. Casual only lends stamina (never below half), repaid when the need is met; Hard costs '
-      + 'attributes and health and brings sickness; Off is the classic game.',
+      + 'campfire or a bed. Casual\u2019s needs only borrow stamina, never past half the bar, and repay it when met; '
+      + 'Hard costs attributes and health and brings sickness; Off is the classic game.',
     effect: 'Takes effect at once, online too - each player picks their own.',
     kinds: Object.freeze(['mod', 'enhanced', 'classic']),   // AUDIT SURV E: a mod row, under the MOD AUTHORED filter
     // MODS-ONLINE-3 (2026-09-22, Mac): THIS IS A MOD ROW AND IT IS THE

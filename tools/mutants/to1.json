@@ -1062,8 +1062,8 @@
   {
     "name": "TOFIELD3-the-journey-is-sat-as-resting-again",
     "file": "src/scenes/world.js",
-    "old": "    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),\n    // AUDIT 64 F27",
-    "new": "    survivalEnv: () => (_mode() === 'dungeon' ? null\n      : worldTimeScale() > 1 ? { ...survivalEnvNow(), resting: true }\n        : survivalEnvNow()),\n    // AUDIT 64 F27",
+    "old": "    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null) : survivalEnvNow()),",
+    "new": "    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null)\n      : worldTimeScale() > 1 ? { ...survivalEnvNow(), resting: true }\n        : survivalEnvNow()),",
     "tests": [
       "test/to1_travelOptions.test.js"
     ]

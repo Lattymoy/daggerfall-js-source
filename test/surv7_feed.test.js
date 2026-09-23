@@ -138,7 +138,7 @@ test('SURV7: by source - the four hosts feed their env (the roof, the floor, the
     // journey as `resting`; Mac took it off ("journeys no longer sit as
     // resting"), and the two readers are one sentence again - which is
     // what a FOUR HOSTS reader should be.
-    assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null : survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground`);
+    assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? \(playerEntity\.isResting \? modes\?\.dungeonCtx\?\.survivalEnvNow\?\.\(\) \?\? null : null\) : survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground - but for a mirrored rest, which runs here (AUDIT SURV-TIERS)`);
     assert.doesNotMatch(src, /resting: true \}\n?\s*: survivalEnvNow/, `${name}: and no arm sits the traveller down`);
     assert.match(src, /survivalEnv: \(\) => survivalEnvNow\(\),/, `${name}: the host bag's reader`);
   }

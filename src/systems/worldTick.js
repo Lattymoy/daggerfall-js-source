@@ -65,7 +65,7 @@ installThunderlockIcons();   // THUNDERLOCK: the templates, the find and the leg
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
-import { runSurvivalMinutes, clearSurvivalMods } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops
+import { runSurvivalMinutes, clearSurvivalMods, pauseSurvival } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops; AUDIT SURV-TIERS: and paused while Off
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
 import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
@@ -812,7 +812,10 @@ export function tickPlayerMinutes({
   let felt = null;
   if (survival && nowMinutes > lastMinutes) {
     felt = runSurvivalMinutes(entity, lastMinutes, nowMinutes, survival.env ?? {}, { ...(survival.deps ?? {}), sinks: survival.deps?.sinks ?? sinks, rolls });
-  } else if (!survival) clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
+  } else if (!survival) {
+    clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
+    if (!survivalOn() && nowMinutes > lastMinutes) pauseSurvival(entity, lastMinutes, nowMinutes);   // AUDIT SURV-TIERS: Off's minutes are nobody's needs (needs.js pauseSurvival) - a host with no reader while the arc is ON keeps WORLD5's clocks
+  }
 
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
   // 0.2s real-time cadence: a live stat at zero kills the host. It sits

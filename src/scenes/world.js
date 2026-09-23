@@ -2216,7 +2216,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Mac's word, and the whole of it: `resting` is not a fatigue knob,
     // it is the needs' one word for "sat still", and three other laws
     // read it. It held the bare-skin block's naked-cold and sunburn
-    // ticks and the byFire exposure damage (needs.js:419, :401) - the
+    // ticks and the byFire exposure damage (needs.js:448, :422) - the
     // health Mac wants ticking - and, the one TO-FIELD never counted,
     // it shut the HUNTING roll off entirely (hunting.js:114 refuses on
     // `resting`), so a traveller could not hunt on the road at all.
@@ -2232,7 +2232,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Mac wants it played - camp out, stop at inns, or travel
     // cautiously - and the survival mod's own switch turns all of it
     // off for anyone who would rather it did not.
-    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),
+    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null) : survivalEnvNow()),   // AUDIT SURV-TIERS (the second pass): a party rest MIRRORED in a dungeon runs on this ticker (partyRestMirrorDeps' advanceMinutes) while its window holds the dungeon's frame - underground the dungeon's own reader, or the night paid no sleep
     // AUDIT 64 F27: the ticker's lines are HUD POPUPS, not a log.
     // LoanChecker.CheckOverdueLoans posts its two 6/3/1-month reminders
     // with DaggerfallUI.AddHUDText (LoanChecker.cs:42-45) - the only
@@ -4162,7 +4162,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
-    placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground
+    placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground - AUDIT SURV-TIERS: off the list they were used from (the pack or the wagon)
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -5703,7 +5703,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6221), so exterior mode and a
+    // composer, dungeonContext.js:6222), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {

@@ -214,8 +214,11 @@ function openSurvivalMenu() {
   const h = deps;
   const now = h.now();
   const m = tavernMenu({ climateIndex: h.climateIndex(), quality: h.quality?.() ?? 5, hour: Math.trunc((now % 1440) / 60) });
-  if (m.closed) { say(line(m.closedText)); return; }
   menu = { rows: m.rows, pick: (i) => pickSurvival(m.rows[i], now) };
+  // AUDIT SURV-TIERS (the second pass): before six the kitchen refuses in the mod's two words and the DRINKS STILL
+  // POUR - the classic window's picker follows its refusal (AUDIT SURV C/D), and this one returned on the words and
+  // served nothing. The list is the drinks alone then (tavernMenu stands no food row while the kitchen is shut).
+  if (m.closed) { say(line(m.closedText)); return; }
   render();
 }
 

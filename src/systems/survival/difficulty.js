@@ -22,8 +22,11 @@
 //      temperature, the food and its spoiling, the water, the camps, the
 //      tavern menus and the hunt's events are the world's and identical in
 //      both tiers - so the HUD, the status page and every notice say the
-//      same things, and two players on different tiers stand in one world
-//      online. Only what the body PAYS differs, and that is all this holds.
+//      same things about the world, and two players on different tiers
+//      stand in one world online. Only what the body PAYS differs, and that
+//      is all this holds - with the few words that say what a tier did (a
+//      barkeep's or a kitchen's refusal, a loan repaid, a hunt's safe twin,
+//      a Hard morning's Stiff).
 //   2. STAMINA IS THE ONLY PRICE OF NEGLECT. Casual never takes an
 //      attribute, a point of health, an item's condition, a disease, a coin
 //      or an hour. (The drink's own attribute swing stays: it is a choice
@@ -33,12 +36,18 @@
 //      Parched and Dehydrated; Exhausted; Freezing, Deadly cold and
 //      Scorching. Amber is information. The rates are Hard's own (needs.js
 //      DRAIN) - the body tires as fast in both tiers once it is in trouble.
+//      (Wetness and the drink are not needs: Drenched is red as a warning -
+//      it works through the felt temperature - and the drink's swing is
+//      the drink's, from its amber Drunk on.)
 //   4. BORROWED, NOT TAKEN. The needs may take stamina down to half the
 //      pool and no further - so on their own they can never raise DFU's
 //      exhaustion collapse, which kills a player with a foe near
 //      (systems/rest.js exhaustionOutcome) - and what a need took it gives
 //      back the moment the need is met: a meal repays the hunger, a drink
-//      the thirst, a sleep the exhaustion, a warm place the cold.
+//      the thirst, a sleep the exhaustion, a warm place or a lit fire the
+//      cold. The floor is the NEEDS' share: DFU's own walking and running
+//      drain still runs below it, as it does with the arc off. And a loan is
+//      never more than the pool is short (needs.js settleLoan).
 //   5. NOTHING REFUSED, NOTHING ROLLED AGAINST YOU, NOTHING WASTED. No rest
 //      gate, and a rest is always a rest (the needs charge nothing while
 //      the player rests, so a rest can always finish); no second encounter
@@ -98,8 +107,12 @@ export const SURVIVAL_RULES = deepFreeze({
      *  freezing past -30); `bareFeet` is the barefoot tax; `duringRest`
      *  whether the heat and the cold still charge a rest away from a fire
      *  (the other needs never do); `repaid` whether what a need took comes
-     *  back when the need is met (needs.js, the record's `borrowed`). */
-    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true },
+     *  back when the need is met (needs.js, the record's `borrowed`);
+     *  `fireWarms` whether a lit fire answers the cold outright - AUDIT
+     *  SURV-TIERS, the second pass: its fifteen degrees alone left a camper
+     *  in a snowstorm Deadly cold, charged and never repaid, beside the
+     *  very fire the rules send them to. */
+    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true, fireWarms: true },
     attributes: false,   // starving, exposure, dehydration, lost sleep and the stiff morning lower the attributes
     health: false,       // dehydration, exposure, and bare skin in the cold or the sun wound
     rust: false,         // wet metal armour loses condition
@@ -116,7 +129,7 @@ export const SURVIVAL_RULES = deepFreeze({
   },
   hard: {
     id: 'hard',
-    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false },
+    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false, fireWarms: false },
     attributes: true,
     health: true,
     rust: true,

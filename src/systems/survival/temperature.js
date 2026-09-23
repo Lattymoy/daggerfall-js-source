@@ -122,9 +122,10 @@ export function naturalTemperature({ climateIndex, month, hour, weather, insideB
 /** The hour's swing: evening and dawn cool, the small hours coldest, the
  *  day itself the climate's own. AUDIT SURV-TIERS: the bands are whole
  *  hours and the hosts hand the clock's fractional hour ((minutes % 1440)
- *  / 60), so 15:30 fell through every band to the small hours - a
- *  mountain afternoon read Deadly cold for the half of 07, 15 and 19 past
- *  the hour. The hour a minute is IN is its floor. */
+ *  / 60), so every minute past 07, 15 and 19 o'clock but the hour itself
+ *  fell through the bands to the small hours' -20 - a mountain afternoon
+ *  read Deadly cold from 15:01 to 15:59. The hour a minute is IN is its
+ *  floor. */
 export function hourTemperature(hour, climateIndex) {
   const h = ((Math.floor(hour ?? 12)) % 24 + 24) % 24;
   const m = NIGHT_MULT[climateIndex] ?? 1;

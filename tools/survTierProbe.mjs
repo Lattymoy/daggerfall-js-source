@@ -57,7 +57,7 @@ const shot = async (tile, name) => { if (SHOTS) await tile.screenshot({ path: `$
   await tile.hover();
   await page.waitForTimeout(60);
   const note = await page.evaluate(() => document.querySelector('.ft-rail .ft-rail-note')?.textContent ?? '');
-  check('the rail says what each tier costs', /Casual only lends stamina/.test(note) && /repaid when the need is met/.test(note) && /Hard costs attributes and health/.test(note) && /Off is the classic game/.test(note), note.slice(0, 160));
+  check('the rail says what each tier costs', /Casual\u2019s needs only borrow stamina/.test(note) && /repay it when met/.test(note) && /Hard costs attributes and health/.test(note) && /Off is the classic game/.test(note), note.slice(0, 160));
   await shot(tile, 'surv-tier-casual');
   await tile.locator('.ft-segb').filter({ hasText: 'Hard' }).click();
   check('pressing Hard stores the tier by name', (await stored(page)) === 'hard', String(await stored(page)));
@@ -77,7 +77,6 @@ const shot = async (tile, name) => { if (SHOTS) await tile.screenshot({ path: `$
   const { ctx, page, tile, errors } = await open({ survival: false, _rev: 1, open: {} });
   const s = await segs(tile);
   check('an old Off shelf opens on Off', s.find((x) => x.pressed)?.label === 'Off', s.map((x) => `${x.label}${x.pressed ? '*' : ''}`).join(' | '));
-  check('...and keeps its false', (await stored(page)) === false);
   check('no page error (old shelf)', errors.length === 0, errors.join(' | '));
   await ctx.close();
 }

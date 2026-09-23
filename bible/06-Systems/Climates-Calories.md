@@ -19,8 +19,8 @@ the manifest, the mod's item templates and sixteen of its item icons.
 > **SURV-TIERS (2026-09-23): THE ARC IS PLAYED AT ONE OF THREE TIERS -
 > OFF, CASUAL (the default) and HARD.** Everything from here to
 > SURV-TENT describes HARD, the arc at full strength and unchanged to the
-> number (but for four laws both tiers share, which AUDIT SURV-TIERS
-> fixed). CASUAL is the same world - every clock, stage, item, camp,
+> number (but for the laws both tiers share that the two AUDIT
+> SURV-TIERS passes fixed). CASUAL is the same world - every clock, stage, item, camp,
 > menu, hunt and word below - with five rules on what it COSTS: stamina
 > only, only at the stages the HUD paints red, lent down to half the pool
 > at most and repaid when the need is met, nothing refused, nothing
@@ -792,8 +792,9 @@ tavern menu in its own panel.
 
 **One key, three answers.** The `survival` pref was a boolean; it is a
 tier: **Off** (the classic game - no needs, no items, no camps), **Casual**
-(the new default) and **Hard** (everything above this section, unchanged,
-but for the four laws AUDIT SURV-TIERS fixed under both tiers - below).
+(the new default) and **Hard** (everything above this section, unchanged
+but for the laws both tiers share that the two AUDIT SURV-TIERS passes
+fixed - below, "Where Hard moved, all told").
 The Features tile's bar reads `Off | Casual | Hard`.
 
 ### The design: the same world, different stakes
@@ -805,9 +806,11 @@ Casual is not Hard with the numbers turned down. It is five rules, and
    temperature, the food and its spoiling, the water, the camps, the
    tavern menus and the hunt's events are the world's and identical in
    both tiers - so the HUD strip, the status page and every notice say the
-   same things, and two players on different tiers stand in one world
-   online. Only what the body PAYS differs - and what it is owed back
-   (rule 4), which is the body's too.
+   same things about the world, and two players on different tiers stand
+   in one world online. Only what the body PAYS differs - and what it is
+   owed back (rule 4), which is the body's too - with the few words that
+   say what a tier did: a barkeep's or a kitchen's refusal, a loan repaid,
+   a hunt's safe twin, a Hard morning's Stiff.
 2. **Stamina is the only price of neglect.** Casual never takes an
    attribute, a point of health, an item's condition, a disease, a coin or
    an hour. The drink's attribute swing stays in every tier - it is chosen
@@ -816,15 +819,21 @@ Casual is not Hard with the numbers turned down. It is five rules, and
    already paints red (`status.js` `HUD_NEED_WORDS`): Starving; Parched and
    Dehydrated; Exhausted; Freezing, Deadly cold and Scorching. Amber is
    information. The rates are Hard's own (`needs.js` `DRAIN`) - once the
-   body is in trouble it tires as fast in both tiers. Wetness is no need:
-   it works through the felt temperature, in both.
+   body is in trouble it tires as fast in both tiers. Wetness and the
+   drink are no needs: Drenched is red as a warning - it works through the
+   felt temperature, in both - and the drink's swing is the drink's, from
+   its amber Drunk on.
 4. **Borrowed, not taken.** The needs may take stamina down to half the
    pool and no further - so on their own they can never raise DFU's
    exhaustion collapse, which kills a player with a foe near
    (`systems/rest.js` `exhaustionOutcome`), and a neglected player still
    has half a pool to fight and run with - and what a need took it gives
    back the moment it is met: a meal repays the hunger, a drink the
-   thirst, a sleep the exhaustion, a warm place or a fire the cold.
+   thirst, a sleep the exhaustion, a warm place or a lit fire the cold.
+   The floor is the NEEDS' share - DFU's own walking and running drain
+   still runs below it, as with the arc off - and a loan is never more
+   than the pool is short: whatever else refills the pool settles that
+   much of it.
 5. **Nothing refused, nothing rolled against you, nothing wasted.** No rest
    gate, and a rest is always a rest - nothing is charged while the player
    rests, the cold included, so a rest can always finish; no second
@@ -848,7 +857,7 @@ sources, the tavern's menus and the hunt's finds are all there.
 | Hunger | Starving: 4 fatigue a minute; -2 to every attribute a starving day, to -20 | Starving: 4 a minute, to half the pool - lent, and repaid by the meal |
 | Thirst | Parched 6, Dehydrated 12 a minute; attributes past 100; health from 120 on the harm tick - it can kill (SURV-THIRST1) | Parched 6, Dehydrated 12 a minute, to half the pool - repaid by the drink |
 | Sleep | Exhausted: 8 a minute; -2 / -5 / -10 to every attribute at tired / drowsy / exhausted | Exhausted: 8 a minute, to half the pool - repaid by the sleep |
-| Heat and cold | from 20 felt either way, 6 per 20 degrees, resting or not (away from a fire); exposure lowers attributes past 30; wounds past 50 - it can kill | only at the red words (Scorching past 50; Freezing and Deadly cold past -30), the same 6 per 20, to half the pool, never while resting - repaid by a warm place or a fire |
+| Heat and cold | from 20 felt either way, 6 per 20 degrees, resting or not (away from a fire); exposure lowers attributes past 30; wounds past 50 - it can kill, in the minute you stand in (a jump's replayed minutes wound to the floor, SURV-THIRST1's law) | only at the red words (Scorching past 50; Freezing and Deadly cold past -30), the same 6 per 20, to half the pool, never while resting and never beside a lit fire - repaid by a warm place or a fire |
 | Bare skin | naked in the cold and the sun on bare skin wound (never the last five points); bare feet 4 a minute | the lines alone - the cold and the sun are already in the felt temperature |
 | Wet armour | rusts, a point on a 5% minute | never |
 | Food | raw, stale or worse risks a disease on a failed luck roll | no roll - Hard's lucky branch, every time; spoiled still feeds less, putrid still will not go down |
@@ -856,7 +865,7 @@ sources, the tavern's menus and the hunt's finds are all there.
 | The hunt | bites that poison, a foul pool that sickens, a fall, a boar, the beast | each harm's safe twin - the same search on the same rolls, the same catch, no harm |
 | The tavern | past the endurance you black out: the night passes and the morning is a rough one; a meal on a stomach too full for it is charged, takes its half hour and goes to waste (the mod's quirk) | the barkeep will not pour the drink that would carry the counter past the endurance, and the kitchen will not sell a meal to a stomach too full for it - both asked after the gold and before the coin changes hands; a soft drink always pours |
 | The stamina floor | none: the needs can empty the pool, and the collapse is the cost (AUDIT-DEATH1) | half the pool |
-| What a need took | kept - the pool refills only as it always did | lent - repaid the minute that need is met, up to the pool |
+| What a need took | kept - the pool refills only as it always did | lent - repaid the minute that need is met, up to the pool; whatever else refills the pool settles it |
 
 Spoilage and the stamina cost were Mac's to hand over ("Your choice").
 **Spoilage stays**, at the world's pace, because it is what makes the food
@@ -881,10 +890,15 @@ SURV-TIERS closed the ways it had been one:
   a refusal the player cannot see is a bug report nobody can act on).
 - **Its minutes are nobody's needs.** Hunger and wakefulness are
   timestamps, so a player back from five days Off was Starving in the first
-  minute (and in Hard had lost ten from every attribute). The walk
-  (`needs.js` `runSurvivalMinutes`) moves both markers by the minutes no
-  law paid - the record's last paid minute behind the walk's own start -
-  and the needs resume where they stood.
+  minute (and in Hard had lost ten from every attribute). The world tick
+  pauses them as the minutes pass (`worldTick.js` `tickPlayerMinutes`,
+  wherever the feed is null because the arc is Off, calls `needs.js`
+  `pauseSurvival`): both markers and the last paid minute are carried by
+  each span, so the needs stand where they were - a meal eaten Off
+  included - and past a day Off the body has lived the classic game's days
+  and starts fresh (fed, watered, rested, dry and sober: WORLD5's own rule
+  for an absence). A gap the arc was ON for - a short online absence, a
+  host with no reader - is not Off, and counts as it always did.
 - **A leftover meal is fed, never sickened** (`useItem.js` hands Casual's
   rules when the arc is Off; it had handed none, which is Hard's roll).
 - **The place is still the place.** A rest opened Off is priced as DFU's
@@ -934,7 +948,18 @@ SURV-TIERS closed the ways it had been one:
   strength returning."). A rest pauses the charge, not the need - a
   starving sleeper is repaid when fed. A tier that does not repay carries
   no loan: a Casual loan is dropped at the first Hard minute, because Hard
-  keeps what it takes.
+  keeps what it takes. And a loan is never more than the pool is short
+  (`settleLoan`, the top of every minute): a bed, a potion, the fed hour or
+  the collapse's hour that refills the pool has paid that much of it, each
+  need's share cut in proportion - or the meal after would pay it again.
+- **The cap is read, not only written** (`statMods.js` `liveStat`): the
+  needs' drain holds five above the stat as it stands without it wherever
+  the stat is READ, so a Drain landing between two survival minutes cannot
+  turn it into the live zero the 0.2-second kill check reads.
+- **A lit fire answers the cold in Casual** (`stamina.fireWarms`): beside
+  one, no cold is charged and the cold's loan comes back, whatever the
+  strip reads - the storm is still the world's. It warms; it does not
+  cool.
 - **A rest is a rest** (`stamina.duringRest`): the heat and the cold
   charge a rest away from a fire only in the tier whose gate refuses the
   worst of it. Casual has no gate, and its rest in a blizzard had been
@@ -1025,7 +1050,7 @@ world and fights whoever is near it.
 
 ### The pins
 
-`test/survtiers.test.js`, 22 tests: the row, the table and the shelf agree
+`test/survtiers.test.js`, 29 tests: the row, the table and the shelf agree
 (the segments write the table's stored values); the switch's reads; the
 shelf, through a real one (an old Off kept as `false`, the default stored
 as nothing, five junk values dropped at the load); Hard's table is the arc
@@ -1049,36 +1074,35 @@ through the whole `useItem` ladder in each tier); the hunt (twelve
 thousand seeded searches, Casual equal to Hard with the twins swapped, and
 the host's own hunt composed in both tiers); the house through the
 classic window (the gold first, the pour and the kitchen, the boundaries
-of both); the enhanced tavern DRIVEN through a fake document; the
-composed ticker; and the four laws Hard shares (the hour, the live cap,
-null rules, the Off gap).
+of both, null rules); the enhanced tavern DRIVEN through a fake document,
+and before six; the composed ticker; the laws both tiers share (the hour,
+five live at the minute and at the read, null rules, Off paused as it
+passes and a long Off a fresh start - with a gap the arc was ON for still
+counting); and the second pass's own: the loan settled by whatever else
+refills the pool, the lit fire, the replay floor on exposure, the
+mirrored dungeon night and the wagon's tent. An `afterEach` resets the
+tier, the clock and the gate after every test.
 
 The pre-tier pins moved only where their vocabulary or the source shape
 did: a test that set the switch `true` sets `'hard'` (or `'casual'`); one
 that set it `false` still does, since that is Off's stored value; a test
 that pinned a Hard-only cost under the defaults sets `'hard'` first; the
 source pins follow the reshaped lines. The FT15 notes budget rose by
-exactly the row's growth - 107 characters in all: a row whose one control
-became three, then the loan, in two sentences where there had been three.
+exactly the row's growth - 116 characters in all: a row whose one control
+became three, then the loan, in two sentences where there had been three,
+then the needs that BORROW and the half that is theirs (the second pass).
 
-Mutants: `tools/mutants/survtiers.json`, 79 records - every rule
-of both tiers broken one at a time, the stored values and the load, the
-row, the floor's door and budget, the band, the loan (never written, never
-repaid, repaid by a rest, repaid past the pool, carried into Hard), the
-rest's band, the sleep floor, the twins, the house (the pour, the kitchen,
-each boundary, the gold's order, the enhanced window's refusal and its
-menu), the place and the price, the asks, the camps under Off, the four
-shared laws - all 79 dead. The run that closed the audit is stated as
-its rule, so it can be run again: every record in the eleven survival
-lists (`surv1`-`surv7`, `surv_thirst1`, `auditsurv`, `hearth1`,
-`survtiers`), every record in any other list whose tests are a file this
-audit changed, and every record whose target lies within six lines of a
-line it changed - 417 records over 21 lists, 416 dead and the one recorded equivalent (`to1.json`'s `direction-diagonals-inclusive`, older than this slice), none survived, none stale, none unapplied.
+Mutants: `tools/mutants/survtiers.json`, 107 records after the second pass - every Casual rule and each rule the two tiers differ on, broken one at a time, the stored values and the load, the row and its two sentences, the floor's door and budget and the refund before it, the band, the loan (never written, never repaid, repaid by a rest, repaid past the pool, carried into Hard, left owed after a refill, cut unevenly), the pause for Off and a long Off's fresh start, the rest's band, the sleep floor, the twins, the house (the pour, the kitchen, each boundary, null rules, the gold's order in both windows, the words, the menu, the kitchen before six), the place and the price, the asks and a count that never ends, the camps under Off, the fire, the replay floor, the cap at the read, the wagon's tent, the mirrored dungeon night, the partyrest1 slice, the potion cite - all 107 dead. The run that closed each pass is stated as its rule, so it can be run again: every record in the eleven survival lists (`surv1`-`surv7`, `surv_thirst1`, `auditsurv`, `hearth1`, `survtiers`), every record in any other list whose tests are a file the pass changed, and every record whose target lies within six lines of a line it changed - the first pass: 417 records over 21 lists, 416 dead and `to1.json`'s recorded equivalent; the second: 463 records over 21 lists, 462 dead and the same recorded equivalent - three had first survived and were answered (a re-aim that had landed on the thirst harm's identical line, and two assertions the law's own outputs lacked once the loan's settle and the read-time cap stood behind them).
 
 **Not driven in the container:** no ARENA2, so the game itself was not
 played at either tier. The Features tile's three segments were checked in
 Chromium against the dev server with `tools/survTierProbe.mjs`, committed
-so the check can be run again (fifteen checks, all passed: the three segments in order, Casual pressed on a fresh shelf, each press's stored value - Hard by name, Off as `false`, Casual as nothing - the rail's words, an old Off shelf opening on Off, and a hand-edited `'false'` string opening on the default); the enhanced tavern's refusals
+so the check can be run again (fourteen checks, all passed: the three
+segments in order, Casual pressed on a fresh shelf, each press's stored
+value - Hard by name, Off as `false`, Casual as nothing - the rail's
+words, an old Off shelf opening on Off, and a hand-edited `'false'` string
+opening on the default; the second pass dropped a fifteenth that read back
+its own seed); the enhanced tavern's refusals
 are DRIVEN in the suite now, through a fake document (`test/invdrag.mjs`
 `withDom`), not read off its source.
 
@@ -1092,7 +1116,8 @@ stood, to the number, and does anything in it leak or regress), **Casual**
 experience), **wiring** (every caller, host, save, relay and skin), and
 **tests and records** (do the pins bite, are the records true). Every
 finding was reproduced before it was fixed, and every fix has a pin and a
-mutant.
+mutant (the ones this pass claimed and did not have were added by the
+second, #32).
 
 ### Found and fixed
 
@@ -1103,7 +1128,7 @@ mutant.
 | 3 | The design said the stamina cost "reverses completely with a meal, a drink, a sleep or a fire" - it did not; only the fed hour's point an hour came back | Casual | the loan: `stamina.repaid`, the record's `borrowed`, repaid the minute the need is met |
 | 4 | The hour's band read a fractional hour raw, so 15:30 fell through every band to the night's -20 | both | `hourTemperature` floors the hour |
 | 5 | The survival drain was capped against the PERMANENT stat while every other drain stacks on the live one - a Drain Agility spell and a tavern ale made a live 0, and a live 0 kills | both | capped five above the stat as it stands without its own entry; the drink's bands read the live endurance |
-| 6 | Five days Off and back on: Starving at the first minute (and ten gone from every attribute in Hard) - Off's minutes were charged to the timestamps | both | `runSurvivalMinutes` moves the markers by the minutes no law paid |
+| 6 | Five days Off and back on: Starving at the first minute (and ten gone from every attribute in Hard) - Off's minutes were charged to the timestamps | both | `runSurvivalMinutes` moves the markers by the minutes no law paid - REPLACED in the second pass (#22): inferring Off from any gap was the wrong fix |
 | 7 | An interior's hearth made no camp's rest - HEARTH1 warmed the room and the interior's `restKind` knew only a bed or the boards | both | `fireNear` in the interior's `restKind` |
 | 8 | The minute law threw on `null` rules - `survivalRules()` answers null for Off | latent | every law takes null as no rules |
 | 9 | Off stamped every rest a BED, and the party pose broadcasts it - a follower mirroring an Off leader slept a bed's night in a field | Off | the place and the price are two answers (`_place`, `_kind`) |
@@ -1113,7 +1138,7 @@ mutant.
 | 13 | The barkeep was asked before the purse - a player who could not pay heard the barkeep's verdict | Casual | the gold first, then the house, then the coin |
 | 14 | "will not pour you another" on a first spirit | Casual | "The barkeep shakes their head: that one would put you on the floor." |
 | 15 | A NaN count asked no encounter at all, an Infinity count never stopped asking | latent | a count that is no finite number is one |
-| 16 | The Features note was three sentences (FT15 allows two) | - | two |
+| 16 | The Features note was three sentences (FT15's title asks for one or two) | - | two, and pinned by survtiers in the second pass (#32) |
 | 17 | `test/partyrest1.test.js` sliced from a declaration that had grown a parameter - the slice was empty and four assertions passed against nothing | - | the marker is the declaration as it stands, and the slice is held non-empty (and a mutant proves it) |
 | 18 | The record said the sweep ran "every climate, month, hour and weather" - it ran two months, two hours and two weathers; "over twelve thousand" searches were exactly twelve thousand; the refund-first budget was claimed and unpinned | - | the sweep runs all of them (92,160 minutes); the count is exact; the refund is pinned |
 | 19 | A mutant (the switch reading the old boolean) became EQUIVALENT once Off was `false` again; one named `row-default-true` made the default `'hard'`; one duplicated `modsonline1.json`'s | - | replaced, renamed, removed |
@@ -1163,3 +1188,72 @@ mutant.
 5. **DFU's tavern heal** (a meal restores health on DFU's list) is absent
    from the survival menu in both tiers - older than the tiers.
 6. **Spoiled food sells for nothing** - older than the tiers.
+
+### The second pass, before the merge (2026-09-23)
+
+> Mac: *"One more audit before we merge"*.
+
+`origin/main` had moved nine commits (HCC, FRIENDLY-SPELLS and seven
+more) since the branch began, so it was merged in first and the merged
+tree was what was audited - five conflicts, each resolved by content:
+the `drinkPotion` sentence in `potions.js` had rotted on BOTH sides (its
+hostMagic, world and dungeonContext halves named lines that had moved,
+and no citedrift entry captured them; every half is pinned now), and the
+rest were counts and index lines.
+
+Four lenses again, each fresh, each on its own copy of the merged tree:
+**the fixes themselves** (the first pass's, attacked), **integration**
+(the tiers against main's nine commits, the save, the wire, both skins),
+**play** (scripted sessions through the real laws and compositions, a
+character's first days in each tier, jumps, taverns, hunts, tier
+switches, the death risks) and **records** (every claim, count and cite,
+whether each pin bites, merge-readiness). Every finding reproduced
+before it was fixed; the pass found the first pass's own fixes wrong in
+three places, and says so.
+
+| # | Finding | Tier | Fix |
+|---|---|---|---|
+| 22 | THE FIRST PASS'S OFF-GAP FIX WAS WRONG TWICE. It inferred Off from ANY gap behind a walk's start: WORLD5's online load leaves exactly such a gap for a short absence on purpose ("an hour away keeps its hunger") and the shift forgave it, in Hard too; a host with no reader while the arc was on, and the collapse's re-entry, were forgiven the same way; and a meal eaten Off (which writes its marker inside the gap) was moved a second time, days into the future - fed for as long as the arc had been Off, a clean Hard exploit | both | the shift is gone; the world tick PAUSES the markers per span while the arc is Off (`needs.js` `pauseSurvival`, called from `worldTick.js` `tickPlayerMinutes` when the feed is null because the arc is Off) - a gap the arc was on for is untouched |
+| 23 | Five days Off came back Drenched and Very drunk, the drink's penalty with them | both | an Off span past a day is a fresh start - WORLD5's own rule for an absence (`alignSurvival`); a shorter one is paused whole |
+| 24 | THE LOAN PAID TWICE. A bed, a potion, the fed hour or the collapse's hour refilled the pool without meeting the need, and the loan stayed owed - a player who slept starving banked a pool of stamina a day and ate it mid-fight (up to 2.3 pools, fuzzed) | Casual | a loan is never more than the pool is short: settled at the top of each minute, each need's share cut in proportion (`needs.js` `settleLoan`) |
+| 25 | THE LIVE CAP HELD ONLY AT THE MINUTE. The zero-stat kill reads every 0.2 real seconds; an ale's -2 on a live 7, then a Drain of 5 before the next minute, made a live 0 and killed | both | the needs' drain is capped where the stat is READ (`statMods.js` `liveStat`), against the stat without it |
+| 26 | "A warm place or a fire repays the cold" was false in snow: the fire's fifteen degrees left a camper Deadly cold beside it, charged and never repaid | Casual | `stamina.fireWarms`: in Casual a lit fire answers the cold outright (the strip still reads the world's cold); it does not cool the heat |
+| 27 | A jump could kill with the heat or the cold: a cautious fast travel through a summer desert healed the traveller whole and then replayed the trip's heat as waking minutes - dead on arrival. SURV-THIRST1's floor had covered thirst alone | Hard | a REPLAYED minute's exposure harm wounds to the floor and no further; the minute the player stands in still can (DEATHLOOP2's lethality kept) |
+| 28 | A party rest mirrored in a DUNGEON paid no sleep: the mirror runs on the outer host's ticker, which read no needs underground, while its window holds the dungeon's frame - the follower woke Exhausted | both (older) | underground, a resting player's ticker reads the dungeon's own reader (`world.js`/`exterior.js` `survivalEnv`, `dungeonContext.js` `survivalEnvNow`) |
+| 29 | A tent used from the WAGON never left it - both windows handed the item, every host placed it off the pack - so one tent pitched and packed into a new one each time (HCC made the wagon the gear's home) | both (older) | both windows hand the list the item was used from; the hosts place off it |
+| 30 | Before six the enhanced tavern said the kitchen was shut and served nothing; the classic window's drinks still pour | both (older) | the kitchen's words, then the drinks |
+| 31 | `test/partyrest1.test.js` still could not fail for `dead` or `vitals` - the first pass's fix built `dead\s*:\s*:`, two colons | - | one key, one colon, on a word boundary; mutants prove all four |
+| 32 | Pins the first pass claimed and did not have: the note's two sentences (FT15 counts only characters, and a dozen other rows run longer - this row is pinned at two by survtiers), the Infinity ask (its pin could only fail by hanging - the rolls now stop answering after a thousand), the kitchen's null rules; and mutants for the exterior's and the dungeon's `fireNear`, the enhanced window's gold-first order, the barkeep's words, the refund-first budget, the potion cite | - | each added |
+| 33 | The Features note said Casual "lends" stamina "never below half": the loan runs the other way (the needs borrow), and the half is the needs' share - DFU's own walking and running drain runs below it | - | "Casual's needs only borrow stamina, never past half the bar, and repay it when met" |
+| 34 | Records: the first pass named three different "four laws Hard shares"; null rules were latent, not wrong since SURV1-7; rule 1 claimed every word is the same (the refusals, the repaid line, a twin's line and the Stiff chip are the tier's); rule 3 read as if Drenched cost; a camps comment blamed the save where it was the load; a probe check read back its own seed; tests left the tier and the clock set when an assert failed; stale cites beside re-aimed ones (Travel-Options' `:369`, `tavern.js`'s popup Talk, `tavernWindow.js`'s sceneCache, Port-Status item 9's four `useItem` numbers, `enhancedInventory.js`'s `nativeInventory` cite) | - | each said as it is; an `afterEach` resets the tier, the clock and the gate after every tier test |
+
+**Where Hard moved, all told.** Hard is the arc as SURV1-7 built it but
+for these laws both tiers share, each a bug and each fixed where it
+lives: the hour's band (#4), the drain's cap - five live, at the minute
+(#5) and at the read (#25) - the interior hearth's rest (#7), the pause
+for Off (#22, which replaced #6) and a long Off's fresh start (#23), the
+replay floor on exposure (#27), the mirrored dungeon night (#28), the
+wagon's tent (#29) and the tavern before six (#30); and, through Off,
+the place an Off leader broadcasts (#9). Null rules (#8) were a latent
+crash in the tiers' own plumbing, never Hard's.
+
+**Accepted in the second pass:**
+
+- **The collapse comes sooner in Casual than Off.** The floor holds the
+  NEEDS above half the bar; DFU's own drain runs below it, and red needs
+  bring DFU's collapse forward (about a third, on the play lens's
+  snowy night) - which with a foe near kills. That is what a stamina
+  cost is; the needs alone still never collapse anyone.
+- **A player who starts Off and turns Casual on later has no kit** - the
+  kit is chargen's, and the provisions shelf sells it.
+- **A new Hard character dies of exposure on their first snowy
+  evening**, and a Hard blackout night is replayed as waking hours - both
+  as they were before the tiers (the play lens ran the same sessions on
+  the pre-tier tree); Hard is the arc as it stood.
+- **Mixed builds online:** an Off leader on a build from before the tiers
+  still broadcasts every rest as a bed. It ends with that build.
+
+**Open, for Mac** (the first pass's six stand; the first is sharper): a
+cautious or inns journey still replays its minutes awake - it now
+arrives at death's door in a Hard desert rather than dead, and Exhausted
+in either tier.

@@ -298,7 +298,10 @@ test('DEATHLOOP2: survival exposure is left LETHAL - the design is not what was 
   const needs = readFileSync(new URL('../src/systems/survival/needs.js', import.meta.url), 'utf8');
   // SURV-TIERS: in the tier that wounds (Hard) - Casual's cold costs stamina alone, BY ITS TIER (survival/difficulty.js),
   // never by making Hard's cold survivable
-  assert.match(needs, /if \(rules\.health && abs > NEED\.DAMAGE_AT && !sleeping && harmTick\) sinks\.hurt\?\.\(/,
+  // AUDIT SURV-TIERS (the second pass): unfloored in the minute the player STANDS in; a REPLAYED minute (a jump) is
+  // floored, SURV-THIRST1's law for the other harm that kills - so a fast travel cannot arrive dead, and the next
+  // live minute in the heat or the cold still can
+  assert.match(needs, /if \(rules\.health && abs > NEED\.DAMAGE_AT && !sleeping && harmTick\) \{\n\s*const bite = Math\.max\(1, Math\.trunc\(\(abs - 40\) \/ 10\)\);\n\s*if \(!replay\) sinks\.hurt\?\.\(bite\);/,
     'the temperature harm reaches sinks.hurt unfloored, as designed');
   assert.match(needs, /they are not meant to kill, and this one is/,
     'and the departure is stated where it is taken');

@@ -327,7 +327,9 @@ test('SURV1: a jump owes at most two days, and a player arriving from longer awa
 });
 
 test('SURV1: by source - liveStat reads the survival entry, and the model is three modules that import no host', () => {
-  assert.match(read('src/systems/statMods.js'), /if \(a\.kind === 'survival'\) \{ mod \+= a\.statMods\?\.\[statName\] \?\? 0; continue; \}/);
+  // AUDIT SURV-TIERS (the second pass): read, and capped at the read - five above the stat as it stands without it
+  assert.match(read('src/systems/statMods.js'), /if \(a\.kind === 'survival'\) \{ survival \+= a\.statMods\?\.\[statName\] \?\? 0; continue; \}/);
+  assert.match(read('src/systems/statMods.js'), /if \(survival < 0\) survival = -Math\.min\(-survival, Math\.max\(0, Math\.min\(base, Math\.min\(Math\.max\(base \+ mod, 0\), MAX_STAT_VALUE\)\) - 5\)\);\n\s*mod \+= survival;/);
   for (const f of ['temperature', 'food', 'needs']) {
     const src = read(`src/systems/survival/${f}.js`);
     assert.doesNotMatch(src, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/effects|document\.|window\./, `${f}.js is pure - and off the formulas -> equip cycle`);

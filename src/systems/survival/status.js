@@ -12,7 +12,7 @@ import { survivalOf, hungerStage, thirstStage, sleepStage, wetStage, hungerMinut
 import { temperatureWord } from './temperature.js';
 import { isStiff } from './rest.js';
 
-/** The chip's severity: 'warn' is felt, 'danger' is costing you (SURV-TIERS: in Casual, a red NEED's stamina, lent - difficulty.js). */
+/** The chip's severity: 'warn' is felt, 'danger' is costing you (SURV-TIERS: in Casual, a red NEED's stamina, lent - difficulty.js; Drenched is red as a warning and costs through the felt temperature, and the drink's swing starts at its amber Drunk). */
 export const HUD_NEED_WORDS = Object.freeze({
   hunger: Object.freeze({ peckish: ['Peckish', 'warn'], hungry: ['Hungry', 'warn'], starving: ['Starving', 'danger'] }),
   thirst: Object.freeze({ thirsty: ['Thirsty', 'warn'], parched: ['Parched', 'danger'], dehydrated: ['Dehydrated', 'danger'] }),

@@ -340,8 +340,10 @@ test('REST-VITALS1 confirmed by code, not just by test: a follower\'s mirror hea
   const at = w.indexOf('const partyRestMirrorDeps = (restKind, targetAcct) => {');
   const mirrorDeps = w.slice(at, w.indexOf('/** PARTY-REST1 (2026-09-20', at));
   assert.ok(at > 0 && mirrorDeps.includes('...outdoorRestDeps,'), 'the slice is the mirror\'s own deps');
-  for (const untouched of ['tickVitals', 'fullyHealed', 'dead:', 'vitals:']) {
-    assert.doesNotMatch(mirrorDeps, new RegExp(`${untouched.replace(':', '\\s*:')}\\s*:`), `partyRestMirrorDeps never overrides ${untouched} - inherited unchanged from outdoorRestDeps via the spread`);
+  // AUDIT SURV-TIERS (the second pass): 'dead:' and 'vitals:' built `dead\s*:\s*:` - two colons, which no key has - so
+  // those two could never fail. One key, one colon, on a word boundary.
+  for (const untouched of ['tickVitals', 'fullyHealed', 'dead', 'vitals']) {
+    assert.doesNotMatch(mirrorDeps, new RegExp(`\\b${untouched}\\s*:`), `partyRestMirrorDeps never overrides ${untouched} - inherited unchanged from outdoorRestDeps via the spread`);
   }
 });
 
