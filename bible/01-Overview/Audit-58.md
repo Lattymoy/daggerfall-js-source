@@ -35,7 +35,7 @@ briefly shared a name.
 **Why the findings are numbered from F3.** The tree cites `AUDIT 58 F3`,
 `F4` and `F5` by number **37 times across 14 files** - `src/world/terrainGenClient.js:143`,
 `src/world/terrainGenWorker.js:45`, `src/world/terrainHelper.js:2`,
-`src/world/roadsCache.js:17`, `src/scenes/world.js:122`,
+`src/world/roadsCache.js:17`, `src/scenes/world.js:129`,
 `src/formats/woodsFile.js:93`, `test/modsettings.test.js`,
 `test/audit58_terrainhelper.test.js`, `test/ledger.test.js:245`,
 `test/citedrift.test.js`, `Port-Ledger.md:82-83`, `Testing.md` - and
@@ -143,7 +143,7 @@ confirmed, 21 refuted.**
 
 **The road height smoother wrote the transposed heightmap index.** The
 port's heightmap is x-major with z fastest - `data[x * hDim + y]`
-(`src/world/terrainSampler.js:144`, DFU's `JobA.Idx(y, x, hDim)` at
+(`src/world/terrainSampler.js:155`, DFU's `JobA.Idx(y, x, hDim)` at
 `TerrainSampler.cs:123`) - and every consumer in the tree obeys it.
 `smoothRoadHeights` read its tile correctly at `tilemap[y * tDim + x]` and
 then wrote the four corner samples from `y * hDim + x`, the mirror. A
@@ -168,11 +168,11 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:1009-1077`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:1010-1078`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
-`src/scenes/exterior.js:57` now, and the pool it answers with is the
+`src/scenes/exterior.js:59` now, and the pool it answers with is the
 live one). **`scenes/interior.js` registered a keydown listener and never
 called `swallowBrowserKey`**, so F5 inside a building reloaded the page
 and destroyed the session - against `src/ui/input.js:643-665`'s own law,
@@ -521,7 +521,7 @@ Left, deliberately, each recorded at its site or here:
   a zero-damage arrow into a pacified watchman turned nobody while the
   identical SWING turned the area. `handleAttackFromPlayer` is on the
   pool's public surface now (as the encounter pool's has always been,
-  `exteriorFoes.js:1863`) and all three seams route by pool membership.
+  `exteriorFoes.js:1931`) and all three seams route by pool membership.
 - ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the

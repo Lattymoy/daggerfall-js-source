@@ -34,9 +34,9 @@ matrix/draw path (GC spikes riding the beat).
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
 crossing, footsteps.js:166), and `_playerStill` reads one moving
-frame per crossing (world.js:7758-7760).
+frame per crossing (world.js:8341-8343).
 
-frame per crossing (world.js:12610-12620).
+frame per crossing (world.js:13263-13279).
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
 units (weather.js:50-57, DFU's own number) while the default 7x7
@@ -171,7 +171,7 @@ batching stays a UI-arc item.
   deliberately (restride keeps the main-thread call).
 - EV8 THE PROVINCE RING: real mountains on the horizon. A pure
   builder over woods.heightMapBuffer at one vertex per map pixel -
-  UN-exaggerated heights (max(byte*8, 27.2) * 1.5 - the streamed
+  UN-exaggerated heights (max(byte*8, 27.2) * 1.25 - the streamed
   law itself, not the travel map's x24 skin), real central-difference
   normals, overworldTint(climate, byte) vertex colours (the port's
   one documented map-pixel-to-ground-colour law, ocean-swamp trap and

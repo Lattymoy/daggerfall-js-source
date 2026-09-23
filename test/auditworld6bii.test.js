@@ -121,7 +121,7 @@ test('AUDIT WORLD6b-ii A5/A8: the player\'s slot is named in the target walk (fo
   assert.deepEqual(pool.foesFrame(true).f.map((r) => r.g), [''], 'A8: not stepped yet - none, not \'.\' (which latched the puppet hostile)');
   const t = rd('src/characters/enemyTargets.js');
   assert.match(t, /const walk = \(candidates \?\? \[\]\)\.includes\(PLAYER_TARGET\) \? \[\.\.\.candidates\] : \[\.\.\.\(candidates \?\? \[\]\), PLAYER_TARGET\];/, 'A5: the caller names my slot');
-  assert.match(rd('src/scenes/exteriorFoes.js'), /runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.peerCandidates\(\)\], pf, cdt, \{/, 'and the pool puts the peers after me');
+  assert.match(rd('src/scenes/exteriorFoes.js'), /runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.\(f\.placed && !f\.site \? \[\] : peerCandidates\(\)\)\], pf, cdt, \{/, 'and the pool puts the peers after me');
   void rat;
 });
 
@@ -256,7 +256,7 @@ test('AUDIT WORLD6b-ii by source: the Seducer transforms for ME in both pools (A
   assert.match(rd('src/ui/enhancedMenu.js'), /everyone nearby sees and fights - and its creatures can hurt you too\./, 'C3');
   assert.match(w, /const h = peerBodies\?\.heightOf\(p\.id\) \|\| 0;\s*if \(h > 0\) _peerHeights\.set\(p\.id, h\);\s*out\.push\(\{ id: p\.id, feet: onlineToScene\(p\.shown\), height: _peerHeights\.get\(p\.id\) \}\);/, 'C5');
   assert.match(w, /\{ const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\); \}/, 'C2: the prune reads the same list');
-  assert.match(x, /if \(_playerDist > ENCOUNTER_CULL_DISTANCE && !\(f\.ai\.detected && f\.ai\.targetIsLocalPlayer !== false\)\) \{/, 'A2');
+  assert.match(x, /if \(!f\.placed && _playerDist > ENCOUNTER_CULL_DISTANCE && !\(f\.ai\.detected && f\.ai\.targetIsLocalPlayer !== false\)\) \{/, 'A2');   // WOD3: a mod-placed foe is never culled
   assert.match(x, /f\.ai\.targetIsLocalPlayer = f\._pupMine;\s*if \(f\._pupMine\) \{\s*f\.ai\._senses\?\.\(playerFeet, null\);/, 'A6/B8');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b-ii \(2026-09-14\)/, 'the record');
 });

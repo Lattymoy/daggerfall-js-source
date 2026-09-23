@@ -3,7 +3,7 @@
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
 // through systems/chargenSession.js - dungeonContext.js:2105,
-// world.js:2670, exterior.js:1311 and applyHeadlessChargen for the
+// world.js:3211, exterior.js:1360 and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //
 // NOT A GAP (recorded): the stand-ins below - flat skills 30,

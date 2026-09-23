@@ -74,7 +74,7 @@ test('AUDIT 39 #121: snapshotPlayer NAMES the three, and the hosts that own them
   // the callee half - the line the fix changed
   assert.match(s, /interior = null, dungeon = null, travelMap = null, escortingFaces = null, quickslots = null, spawns = null, smallerDungeonsState = 0, modData = null \} = \{\}\)/,
     'the destructured options name all three, or they are dropped in silence');
-  assert.match(s, /const snap = \{[^\n]*travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData \}/,
+  assert.match(s, /const snap = \{[^\n]*travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE \}/,   // TERRAIN-SCALE1 rides last
     'and the envelope literal carries them out');
   // the caller half, which was always right
   assert.match(s, /travelMap: travelMapSaveData\(\),/, 'composeSessionState composes the travel map');

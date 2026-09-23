@@ -131,7 +131,7 @@ test('OL1 by source: the three read paths ask the one home first, the menu locks
   assert.match(rd('src/systems/modSettings.js'), /const forced = onlineForcedModSetting\(vendor, key\);[^\n]*\n\s*if \(forced !== undefined\) return forced;\s*const v = load\(\)\[vendor\]\?\.\[key\];/);
   const menu = rd('src/ui/enhancedMenu.js');
   assert.match(menu, /if \(onlineForcedPref\(key\) !== undefined\) lockOnline\(b, main\);/, 'a forced pref row is locked');
-  assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: vendor === 'roads-hazelnut' \? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE, value: ground \}\);/, 'a forced mod row is locked, with the reason it is actually locked FOR');
+  assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: ONLINE_GROUND_VENDORS\.includes\(vendor\) \? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE, value: ground \}\);/, 'a forced mod row is locked, with the reason it is actually locked FOR');   // WOD1: the ground's words for both terrain-writing vendors
   assert.match(menu, /function lockOnline\(b, main, \{ note = ONLINE_LOCK_NOTE, value = true \} = \{\}\) \{\s*b\.textContent = value \? 'On \(online\)' : 'Off \(online\)';/, 'the lock says so and answers nothing');
   assert.match(menu, /if \(isOnlinePage\(\)\) body\.append\(el\('p', 'meta', ONLINE_MODS_NOTE\)\);/, 'the Mods pane says it once at the top');
   assert.match(menu, /Online is the enhanced lane: every enhancement the port owns is on for everyone\./, 'the Online pane');

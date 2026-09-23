@@ -863,8 +863,8 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.match(world, /if \(collectLoose\) droppedTorches\.collectPixel\(key\);/, 'world: a dropped torch is a loose object, swept with its pixel');
   assert.match(world, /droppedTorches\.offsetAll\(r\.offset\);/, 'world: the recenter');
   assert.match(world, /droppedTorches: droppedTorches\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\),/, 'world: the save data in world coordinates');
-  assert.match(world, /droppedTorches\.restore\(w\.droppedTorches, \(p\) => \{ const \[lx, lz\] = state\.localFromWorld\(p\[0\], p\[2\]\); return \[lx, p\[1\] \+ state\.compensation\[1\], lz\]; \}\);/, 'world: restored into the local frame');
-  assert.match(world, /droppedTorches\.restore\(arrived\.droppedTorches,/, 'world: the F9 envelope too');
+  assert.match(world, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\), \(p\) => \{ const \[lx, lz\] = state\.localFromWorld\(p\[0\], p\[2\]\); return \[lx, p\[1\] \+ state\.compensation\[1\], lz\]; \}\);/, 'world: restored into the local frame');   // TERRAIN-SCALE1: stood again on today's ground first
+  assert.match(world, /droppedTorches\.restore\(arrived\.droppedTorches\.map\(/, 'world: the F9 envelope too');   // TERRAIN-SCALE1: stood again on today's ground
   // the interior mode
   assert.match(wm, /const interiorTorches = createDroppedTorches\(\{/);
   assert.match(wm, /\.\.\.interiorTorches\.lights\(\)\);/); assert.match(wm, /interiorTorches\.tick\(dt\);/); assert.match(wm, /const _torches = interiorTorches\.batches\(\);/);
@@ -876,7 +876,8 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   assert.ok(_wmEnter > 0 && _wmEnter < wm.indexOf('restoreInteriorScene();'), 'and it lands ABOVE the restore in the file, as it does in the frame');
   assert.equal((wm.match(/interiorTorches\.destroyAll\(\);/g) ?? []).length, 3, 'the way in, the way out, and AUDIT 66 F6 the quest-teleport / load exit');
   assert.match(wm, /interiorDropped\.restorePiles\(null\);[^\n]*\n\s*interiorTorches\.destroyAll\(\);[^\n]*\n\s*interiorHitEffects\.clear\(\);/, 'AUDIT 66 F6: in the teardown list with its siblings');
-  assert.match(wm, /const droppedTorches = interiorTorches\.snapshot\(\);/); assert.match(wm, /interiorTorches\.restore\(data\.droppedTorches\);/);
+  // TERRAIN-SCALE1: measured from the building, and placed on this visit's origin
+  assert.match(wm, /const droppedTorches = interiorTorches\.snapshot\(\(p\) => \[p\[0\] - o\[0\], p\[1\] - o\[1\], p\[2\] - o\[2\]\]\);/); assert.match(wm, /interiorTorches\.restore\(data\.droppedTorches, place\);/);
   assert.match(wm, /key\.startsWith\('droppedTorch:'\)\) \{/, 'the dungeon arm\'s loot ladder takes the key');
   assert.match(wm, /\.\.\.dungeonCtx\.torchLights\(\)\)/); assert.match(wm, /\.\.\.dungeonCtx\.torchBatches\(\)/);
   // the dungeon context and the standalone dungeon

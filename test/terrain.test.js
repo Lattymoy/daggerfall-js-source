@@ -360,7 +360,7 @@ test('terrain: makeTerrainKey and nextIntRange semantics', async () => {
 test('terrain: nature scatter rules - rect, beach, tile classes, slope sink', async () => {
   const { layoutNature } = await import('../src/world/terrainNature.js');
   const hDim = HEIGHTMAP_DIMENSION;
-  // Flat land well above the beach: normalized 0.1 -> 230.85 world raw.
+  // Flat land well above the beach: normalized 0.1 -> 192.375 world raw (1539 * 1.25, the game scene's TerrainScale - TERRAIN-SCALE1).
   const flat = new Float32Array(hDim * hDim).fill(0.1);
   const grass = new Uint8Array(128 * 128).fill(2);
   const base = {
@@ -371,7 +371,7 @@ test('terrain: nature scatter rules - rect, beach, tile classes, slope sink', as
   // Full chance on grass (elevationScale 1): ~90% of 16384 tiles.
   assert.ok(flats.length > 13500 && flats.length < 16000, String(flats.length));
   // Flat ground: no slope sink; y = sample * worldHeight exactly.
-  approx(flats[0].y, 0.1 * MAX_TERRAIN_HEIGHT * 1.5, 1e-3);
+  approx(flats[0].y, 0.1 * MAX_TERRAIN_HEIGHT * 1.25, 1e-3);
 
   // Location rect excludes scatter inside (+4 clearance, max-exclusive).
   const rected = layoutNature(flat, grass, {

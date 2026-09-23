@@ -1,0 +1,227 @@
+[
+  {
+    "name": "a-ruin-turns-the-other-way",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "model(43509, at(45.55, 4.71, 5.41), -210),",
+    "new": "model(43509, at(45.55, 4.71, 5.41), -201),",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "a-fire-loses-its-light",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "flat(210, 17, at(77.889, 2.88, 8.46), true),",
+    "new": "flat(210, 17, at(77.889, 2.88, 8.46), false),",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-firelight-reaches-21",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "lift: 1, range: 20, intensity: 1,",
+    "new": "lift: 1, range: 21, intensity: 1,",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-firelight-sits-on-the-fire",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "lift: 1, range: 20,",
+    "new": "lift: 0, range: 20,",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-assassin-is-a-thief",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "mobileType: MOBILE_TYPES.Assassin, pos: at(81.2, 1, 43)",
+    "new": "mobileType: MOBILE_TYPES.Thief, pos: at(81.2, 1, 43)",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "twenty-stands-a-foe",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "if (!(enemyChance > 20)) continue;",
+    "new": "if (!(enemyChance >= 20)) continue;",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-chance-reaches-30",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "const enemyChance = rangeInt(0, 30, rolls);",
+    "new": "const enemyChance = rangeInt(0, 31, rolls);",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-facing-rolls-before-the-gender",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "    const gender = createFoeGender(rolls);\n    const yawDeg = rangeInt(0, 180, rolls);",
+    "new": "    const yawDeg = rangeInt(0, 180, rolls);\n    const gender = createFoeGender(rolls);",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-turn-is-doubled",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "const half = (m.yawDeg * Math.PI) / 360;",
+    "new": "const half = (m.yawDeg * Math.PI) / 180;",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-turn-is-mirrored",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "{ x: 0, y: Math.sin(half), z: 0, w: Math.cos(half) }",
+    "new": "{ x: 0, y: -Math.sin(half), z: 0, w: Math.cos(half) }",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-turn-is-a-double",
+    "file": "src/world/wodPrivateersHold.js",
+    "old": "yawDeg: f(yawDeg) });",
+    "new": "yawDeg });",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-host-never-finds-the-block",
+    "file": "src/scenes/world.js",
+    "old": "        if (wod && b.blockName === PRIVATEERS_HOLD_BLOCK) holdBlocks.push(originMatrix);   // WOD4\n",
+    "new": "",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-camp-keeps-its-default-textures",
+    "file": "src/scenes/world.js",
+    "old": "          await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);\n          const local = multiply(origin, holdModelMatrix(hm));",
+    "new": "          const local = multiply(origin, holdModelMatrix(hm));",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-camp-foes-join-the-cap",
+    "file": "src/scenes/world.js",
+    "old": "gender: r.gender, placed: true, groundAlign: { hitDist: null }, site })\n          .then((f) => {",
+    "new": "gender: r.gender, placed: false, groundAlign: { hitDist: null }, site })\n          .then((f) => {",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "a-late-foe-outlives-its-block",
+    "file": "src/scenes/world.js",
+    "old": "if (st.gone) exteriorFoes.removeFoe(f); else st.foes.push(f);",
+    "new": "st.foes.push(f);",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "start-runs-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "    const st = p.privateersHold.state;\n    st.rolled = true;\n",
+    "new": "    const st = p.privateersHold.state;\n",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-unload-leaves-the-foes",
+    "file": "src/scenes/world.js",
+    "old": "if (collectLoose && p.privateersHold) { p.privateersHold.state.gone = true; for (const f of p.privateersHold.state.foes) exteriorFoes.removeFoe(f); }",
+    "new": "if (collectLoose && p.privateersHold) { p.privateersHold.state.gone = true; }",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-sweep-keeps-the-carry",
+    "file": "src/scenes/world.js",
+    "old": "    wodCarry.clear();   // WOD3/WOD4: a sweep is an unload - nothing carries past it\n",
+    "new": "",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-carry-is-adopted-twice",
+    "file": "src/scenes/world.js",
+    "old": "    wodCarry.delete(key);\n",
+    "new": "",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-camp-rerolls-on-a-rebuild",
+    "file": "src/scenes/world.js",
+    "old": "    if (privateersHold && carried.hold) privateersHold.state = carried.hold;",
+    "new": "",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-probe-never-rolls",
+    "file": "src/scenes/exterior.js",
+    "old": "    tickHold();   // WOD4: DungeonExterior.Update finds the block; PrivateersHold.Start runs\n",
+    "new": "",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-probe-rolls-every-frame",
+    "file": "src/scenes/exterior.js",
+    "old": "    holdRolled = true;\n",
+    "new": "",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-fires-take-the-lantern-colour",
+    "file": "src/scenes/exterior.js",
+    "old": "holdSel ? wodLightColors(lit.length / 4, lit.length / 4 - holdSel.data.length / 4, holdSel.colors, CITY_LIGHT_COLOR_F32) : null);",
+    "new": "null);",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-lanterns-burn-by-day",
+    "file": "src/scenes/exterior.js",
+    "old": "if (!lanternsOn) return nearestLights(holdLights, eye,",
+    "new": "if (!lanternsOn) return nearestLights(_holdAll, eye,",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  },
+  {
+    "name": "the-probe-never-loads-the-camp",
+    "file": "src/scenes/exterior.js",
+    "old": "      for (const hm of HOLD_MODELS) modelIds.add(hm.modelId);\n",
+    "new": "",
+    "tests": [
+      "test/wod4_privateershold.test.js"
+    ]
+  }
+]

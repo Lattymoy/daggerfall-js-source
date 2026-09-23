@@ -110,8 +110,8 @@
   {
     "name": "SNDREP1-chorus-sings-on",
     "file": "src/systems/ambientEffects.js",
-    "old": "      if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
-    "new": "      if (deps.underground) {",
+    "old": "      if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) {",
+    "new": "      if (deps.inside || deps.underground) {",
     "tests": [
       "test/friendlyspells.test.js"
     ]

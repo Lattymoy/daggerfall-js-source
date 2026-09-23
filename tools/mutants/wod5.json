@@ -1,0 +1,93 @@
+[
+  {
+    "name": "the-mirror-is-never-seen",
+    "file": "src/render/staticBatch.js",
+    "old": "const mirrored = det3(local) < 0;",
+    "new": "const mirrored = false;",
+    "tests": [
+      "test/wod5_audit.test.js"
+    ]
+  },
+  {
+    "name": "the-determinant-loses-a-sign",
+    "file": "src/render/staticBatch.js",
+    "old": "m[0] * (m[5] * m[10] - m[9] * m[6])",
+    "new": "m[0] * (m[5] * m[10] + m[9] * m[6])",
+    "tests": [
+      "test/wod5_audit.test.js"
+    ]
+  },
+  {
+    "name": "the-swap-is-half-made",
+    "file": "src/render/staticBatch.js",
+    "old": "run[i + 1] = run[i + 2]; run[i + 2] = t;",
+    "new": "run[i + 1] = run[i + 2];",
+    "tests": [
+      "test/wod5_audit.test.js"
+    ]
+  },
+  {
+    "name": "the-crossing-is-not-heard",
+    "file": "src/scenes/world.js",
+    "old": "      if (wod) { const region = maps.getRegionIndexAt(r.current.x, r.current.y); wodOpened.then((ok) => { if (ok) wod.noteRegion(region); }); }\n",
+    "new": "",
+    "tests": [
+      "test/wod5_audit.test.js"
+    ]
+  },
+  {
+    "name": "the-crossing-beats-awake",
+    "file": "src/scenes/world.js",
+    "old": "wodOpened.then((ok) => { if (ok) wod.noteRegion(region); });",
+    "new": "wod.noteRegion(region);",
+    "tests": [
+      "test/wod5_audit.test.js"
+    ]
+  },
+  {
+    "name": "the-captive-is-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "    w.flat = { kind: 'billboard', archive: act.archive, record: act.record };\n",
+    "new": "",
+    "tests": [
+      "test/wod5_audit.test.js"
+    ]
+  },
+  {
+    "name": "the-captive-never-restands",
+    "file": "src/scenes/world.js",
+    "old": "        if (w.restand) { w.restand = false; standWodAction(p, w, w.flat); }   // WOD5: the captive stands again on the rebuilt pixel\n",
+    "new": "",
+    "tests": [
+      "test/wod5_audit.test.js"
+    ]
+  },
+  {
+    "name": "the-carry-drops-the-captive",
+    "file": "src/scenes/world.js",
+    "old": "spawners.get(k).push({ spawner: w.spawner, flat: w.flat ?? null });",
+    "new": "spawners.get(k).push({ spawner: w.spawner, flat: null });",
+    "tests": [
+      "test/wod5_audit.test.js"
+    ]
+  },
+  {
+    "name": "the-pile-rides-the-save",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "piles.filter((p) => p.items.length && !p.unsaved)",
+    "new": "piles.filter((p) => p.items.length)",
+    "tests": [
+      "test/wod5_audit.test.js"
+    ]
+  },
+  {
+    "name": "the-pile-is-saved-after-all",
+    "file": "src/scenes/world.js",
+    "old": "null, key, { unsaved: true });   // WOD5",
+    "new": "null, key);   // WOD5",
+    "tests": [
+      "test/wod3_spawner.test.js",
+      "test/wod5_audit.test.js"
+    ]
+  }
+]

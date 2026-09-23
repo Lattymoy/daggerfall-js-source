@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE, TERRAIN_SIZE,
+  HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE,
   SCALED_OCEAN_ELEVATION, cubicInterpolator, getNoise,
   generateSamples, sampleKernel, ghostSampler,
 } from '../src/world/terrainSampler.js';
@@ -140,7 +140,7 @@ test('EV4: ghost rows make edge normals central differences - a plane lights fla
   // differences the x=0 and x=128 columns computed a HALVED slope -
   // the lighting lattice at every 819.2-unit seam. With a ghost that
   // continues the plane, every normal on the grid is identical.
-  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const slope = 2 ** -13;   // exactly representable: 0.25 + k*slope is exact in f32 for the whole grid
   const samples = new Float32Array(hDim * hDim);
   for (let x = 0; x < hDim; x++) for (let y = 0; y < hDim; y++) samples[x * hDim + y] = 0.25 + slope * x;

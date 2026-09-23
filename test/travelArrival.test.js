@@ -33,7 +33,7 @@ test('TL3: the fast-travel arrival takes DFU\'s reposition - the start marker or
   assert.equal(REPOSITION.RandomStartMarker, 'RandomStartMarker');
   // the teleport core: the landing is computed only for that method, the default point is the pixel's centre,
   // and the roof guard runs only with a landing - which the arrival now always has
-  const core = w.slice(w.indexOf('async function _teleportToPixel('), w.indexOf('async function _teleportToPixel(') + 9000);
+  const core = w.slice(w.indexOf('async function _teleportToPixel('), w.indexOf('\n  }\n', w.indexOf('async function _teleportToPixel(')));   // WOD4: to the function's own close - a fixed 9000 characters broke on one added line
   assert.match(core, /const wantsLanding = reposition === REPOSITION\.RandomStartMarker\s*\n\s*\|\| reposition === REPOSITION\.DirectionFromStartMarker;/, 'both marker methods take the landing arm (StreamingWorld.cs:279-282)');
   assert.match(core, /const landing = wantsLanding \? locationLandingFor\(px, py, \{ travelStart: hint \}\) : null;/);
   assert.match(core, /const raw = local \?\? \[TERRAIN_SIZE \/ 2, dest\.centerHeight \+ state\.compensation\[1\] \+ 2, TERRAIN_SIZE \/ 2\];/, 'the default point is the centre of the pixel - the town\'s middle');
