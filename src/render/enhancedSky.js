@@ -432,6 +432,7 @@ export function skyState({ minuteOfDay, weather = 'sunny', classicMinutes = 0, s
     wind: w.wind, seconds,
     drift: drift ? [wrapDeck(drift[0]), wrapDeck(drift[1])] : [w.wind[0] * seconds, w.wind[1] * seconds],   // WIND2: the integrated cloud offset; a caller without one gets the old product. CLK1 review: wrapped ONCE, here, where it becomes the state both the shader and the CPU twin read
     night: isNight(minuteOfDay),
+    minuteOfDay, minutes: classicMinutes,   // VC7a: the clock the clouds live on - the game's own, so every player sees one sky
     daylight: day,   // CLK3 review: the rig's own curve, for a moonlight that rises with the dusk and not with the hour
     // What the hosts read for the distance haze and the clear (the
     // classic pass's clearColor/fillColor roles).

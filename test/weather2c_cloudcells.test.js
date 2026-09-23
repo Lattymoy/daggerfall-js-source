@@ -25,7 +25,7 @@ test('WEATHER2c cells: every tier caps its cells under the shader\'s eight; a ce
   assert.equal(CELL_EDGE, 0.35);
   for (const w of WEATHER_TYPES) {
     const c = cellOf(w, 100, -200, 3000);
-    assert.deepEqual(c, { x: 100, z: -200, r: 3000, edge: 3000 * CELL_EDGE, ...VC_PROFILE[w], cover: WEATHER_SKY[w].cover, grey: WEATHER_SKY[w].grey, ...(CELL_TINT[w] ? { tint: CELL_TINT[w] } : {}) }, `${w}: the profile, the row's cover and grey (WEATHER2d: and a tint where the word has one)`);
+    assert.deepEqual(c, { x: 100, z: -200, r: 3000, edge: 3000 * CELL_EDGE, ...VC_PROFILE[w], word: w, cover: WEATHER_SKY[w].cover, grey: WEATHER_SKY[w].grey, ...(CELL_TINT[w] ? { tint: CELL_TINT[w] } : {}) }, `${w}: the profile, the row's cover and grey (WEATHER2d: and a tint where the word has one; VC7a: and the word, for the day's convection)`);
   }
   const storm = cellOf('thunder', 0, 0, 3000);
   assert.equal(storm.top, 4200); assert.equal(storm.dark, 0.7); assert.equal(storm.cover, 1.0); assert.ok(storm.grey > 0.9, 'a thunderhead is dark');
@@ -111,7 +111,7 @@ test('WEATHER2c the class and the controller: setState takes the cells (the cont
   const vc = rd('src/render/volumetricClouds.js');
   assert.match(vc, /setState\(state, row, weather, easeDt, drift, flash = 0, pos = null, cells = null\) \{/);
   assert.match(vc, /if \(this\.testCellSpec && !this\.testCell && pos\) this\.testCell = parseCloudCellDoor\(this\.testCellSpec, pos\);/);
-  assert.match(vc, /this\.cells = pickCells\(cells \?\? \(this\.testCell \? \[this\.testCell\] : \[\]\), this\.q\.cells \?\? MAX_CELLS\);/, 'capped by the tier (WEATHER3c: through pickCells - a list with no importance is cut in its own order, as before)');
+  assert.match(vc, /this\.cells = pickCells\(cells \?\? \(this\.testCell \? \[this\.testCell\] : \[\]\), this\.q\.cells \?\? MAX_CELLS\)\.map\(\(c\) => convectCell\(c, this\.conv\)\);/, 'capped by the tier (WEATHER3c: through pickCells - a list with no importance is cut in its own order, as before; VC7a: then the day\'s convection on the fair ones)');
   assert.match(vc, /gl\.uniform1f\(u\.uDark, p\.dark\); gl\.uniform1f\(u\.uVary, p\.vary \?\? 0\);[^\n]*\n[^\n]*\n\s*const slab = slabOf\(p, this\.cells\);\s*\n\s*gl\.uniform1f\(u\.uSlabBase, slab\.base\); gl\.uniform1f\(u\.uSlabTop, slab\.top\);/, 'uploaded with the field, for both marches (VC6a: the zone\'s type variation beside the dark)');
   assert.match(vc, /const k = packCells\(this\.cells, this\.q\.cells \?\? MAX_CELLS, this\._packed\);\s*\n\s*gl\.uniform1i\(u\.uCellCount, k\.count\);\s*\n\s*if \(k\.count > 0\) \{ gl\.uniform4fv\(u\.uCell, k\.c\); gl\.uniform4fv\(u\.uCellA, k\.a\); gl\.uniform4fv\(u\.uCellB, k\.b\); gl\.uniform4fv\(u\.uCellC, k\.t\); gl\.uniform4fv\(u\.uCellK, k\.k\); gl\.uniform4fv\(u\.uCellS, k\.s\); gl\.uniform4fv\(u\.uCellU, k\.u\); gl\.uniform4fv\(u\.uCellKS, k\.ks\); gl\.uniform4fv\(u\.uCellKU, k\.ku\); \}/, 'the arrays only when there are cells');
   assert.match(vc, /if \(this\.testCell\) \{ this\.testCell\.x \+= offset\[0\]; this\.testCell\.z \+= offset\[2\]; \}/, 'the recenter');

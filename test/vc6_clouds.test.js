@@ -69,12 +69,15 @@ test('VC6a: one texture read does four jobs - two coverage frequencies and the d
   const d = densityBody();
   // the variation sample is taken FIRST, on the UNWARPED position, and
   // all four of its channels are spent
-  assert.match(d, /vec4 v = textureLod\(uShape, vec3\(q\.x \/ VARIATION_M, 0\.37, q\.z \/ VARIATION_M\), 0\.0\);/, 'the weather over the land, read whole');
+  // VC7a: read on the coverage's own drift and turning through its slice over the day - still one read, whole
+  assert.match(d, /vec4 v = textureLod\(uShape, vec3\(qv\.x \/ VARIATION_M, 0\.37 \+ uEvolve\.z, qv\.y \/ VARIATION_M\), 0\.0\);/, 'the weather over the land, read whole');
   assert.match(d, /float variation = clamp\(v\.r \* 0\.65 \+ v\.a \* 0\.35, 0\.0, 1\.0\);/, 'two frequencies of coverage, not one');
   assert.match(d, /q\.xz \+= \(v\.gb \* 2\.0 - 1\.0\) \* WARP_M;/, 'and the other two read as a vector that bends the sample');
   // the ORDER is the whole trick: warp, then shape. A shape read before
   // the warp would be the unbent lattice the eye was finding.
-  assert.ok(d.indexOf('q.xz += (v.gb') < d.indexOf('vec4 s = textureLod(uShape, q / SHAPE_M, mip);'), 'the warp is applied BEFORE the shape is sampled');
+  // VC7a: the shape is read boiled up its volume - still after the warp
+  const shapeRead = d.indexOf('vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);');
+  assert.ok(shapeRead > 0 && d.indexOf('q.xz += (v.gb') < shapeRead, 'the warp is applied BEFORE the shape is sampled');
   // and it cost nothing: the same three reads the field always took
   assert.equal((d.match(/textureLod\(/g) || []).length, 3, 'the variation, the shape and the detail - no fourth read was added');
 });

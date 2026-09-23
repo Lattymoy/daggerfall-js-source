@@ -20,8 +20,8 @@
   {
     "name": "VC6a-the-warp-is-applied-after-the-shape-is-sampled",
     "file": "src/render/volumetricClouds.js",
-    "old": "  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp\n  vec4 s = textureLod(uShape, q / SHAPE_M, mip);",
-    "new": "  vec4 s = textureLod(uShape, q / SHAPE_M, mip);\n  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp",
+    "old": "  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp\n  vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass",
+    "new": "  vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass\n  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp",
     "tests": [
       "test/vc6_clouds.test.js"
     ]

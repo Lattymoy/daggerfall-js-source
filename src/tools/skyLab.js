@@ -99,7 +99,10 @@ function frame() {
     const labMinutes = ((405 * 360 + day) * MINUTES_PER_DAY) + minuteOfDay;
     sky.setState(dyn.tick({ minuteOfDay, classicMinutes: labMinutes, weather: $('weather').value, seconds, dt: still ? 0 : 1 / 60, weatherScale: weatherSunlightScale($('weather').value, false) }));
   } else {
-    sky.setState(skyState({ minuteOfDay, weather: $('weather').value, phases, seconds, drift: labDrift }));
+    // VC7a: the lab's game minute - the day slider's day and the hour's minute, plus `?t=` minutes more for the clouds'
+    // own life (a time series at one sun)
+    const labClock = ((405 * 360 + day) * MINUTES_PER_DAY) + minuteOfDay + (Number(params.get('t')) || 0);
+    sky.setState(skyState({ minuteOfDay, weather: $('weather').value, classicMinutes: labClock, phases, seconds, drift: labDrift }));
   }
   sky.fogMix = Number($('fog').value);
   sky.fogColor = sky.clearColor;

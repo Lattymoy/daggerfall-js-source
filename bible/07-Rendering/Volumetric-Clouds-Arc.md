@@ -1,4 +1,4 @@
-# Volumetric Clouds - the arc (VC, opened 2026-09-07, CLOSED 2026-09-07; REOPENED and CLOSED again 2026-09-18 for VC6)
+# Volumetric Clouds - the arc (VC, opened 2026-09-07, CLOSED 2026-09-07; REOPENED and CLOSED again 2026-09-18 for VC6; REOPENED 2026-09-23 for VC7)
 
 **Mac (2026-09-07): "one thing I want to do pertaining to our enhanced
 environments is to remove the pixelated sky look and overhaul the
@@ -189,3 +189,112 @@ inside a backed-out stride is the one thing to look at first.
    thunderhead stands over the hills under a sunny zone and its shadow
    falls where it stands. The Weather arc's C
    (`07-Rendering/Weather-Arc.md`); `?cloudcell=` the door.
+
+## VC7 - more immersive (the design, 2026-09-23)
+
+Mac, alongside WEATHER3i: "I really want to improve the volumetric cloud
+system to be more immersive." Asked which kinds, the answer was "All of
+the above": living clouds, light shafts, rain shafts under storms and a
+high cirrus layer. Each is a slice of its own, shipped with pins,
+mutants and before/after renders from the sky lab (`sky.html`, SwiftShader
+here, since there is no ARENA2 in the container).
+
+**What the lab showed before.** A fair morning reads well. A cloudy
+afternoon is a soft even blur, dusk an even cotton mottle, and a storm a
+flat dark lid with no structure. Nothing ever changes shape: the field is
+a fixed noise volume slid across the land by the wind integral, so a bank
+is the same bank from the moment it comes over the horizon until it
+leaves.
+
+### VC7a - living clouds
+
+- **They change as they pass.** Two clocks, both read from the game's
+  minutes so every player online sees the same sky:
+  - the shape volume is read through its own height as time passes, so
+    the towers' structure rises through the cloud and the edges billow
+    rather than slide;
+  - the coverage field drifts at a fraction of the wind, not with it, so
+    a place's cover changes under the air moving through it: banks build
+    on the upwind side and dissolve on the downwind side as they travel.
+  Both clocks wrap to the field's own periods, as CLK1's drift does, so a
+  year of game time never outgrows a float.
+- **The day's convection.** Fair-weather cloud (the sunny and cloudy
+  rows) builds through the day: flat cumulus in the morning, towering by
+  mid-afternoon, settling at dusk. It lives in the towers' HEIGHT; the
+  cover stays DFU's row. The first cut also redistributed the cover over
+  the day (its daily mean kept), and the lab showed why not: this slab's
+  scattered cumulus sits right at its coverage threshold, and a fair
+  row's cover raised by a tenth turned the afternoon into a smeared haze.
+- **A front thickens as it arrives.** A weather-map cell's cloud takes
+  its system's envelope: a newborn front is a thin deck that deepens and
+  darkens as it grows, and a dying one thins. The same numbers already
+  drive the rain under it (WEATHER3i), so the cloud and the fall agree.
+- One field still: the ground's shadow and the sun's disc read the same
+  density, so a billowing bank's shadow billows with it.
+
+**VC7a shipped (2026-09-23).** Pinned by `test/vc7a_living.test.js`
+(`tools/mutants/vc7a.json` 22/22 dead).
+- The sky state carries the game's minute (`skyState` `minutes`,
+  `minuteOfDay`), and `cloudClocks` reads the three clocks from it: the
+  shape read up its volume 120 m a game minute (an updraft's 2 m/s), the
+  detail 300 m, and the coverage turning through its slice once a day,
+  riding COVER_DRIFT_SHARE (0.6) of the air's drift. Every offset is
+  wrapped to its own volume's period. The lab's `?t=` steps the clock at
+  one sun, so the life can be watched apart from the day.
+- In the lab, a cloudy afternoon sampled 20 and 40 game minutes apart
+  reshapes rather than slides; a fair morning's arrangement reads as
+  before.
+- The day's convection is in the towers' HEIGHT only: `convection`'s
+  depth runs from 0.4 of the row's through the night and the morning to
+  the whole row CONVECTION_LAG_MINUTES (150) after the sun is highest,
+  and settles toward dusk. The first cut also moved the cover (its daily
+  mean kept); the lab showed a fair row's cover raised by a tenth smeared
+  the afternoon into haze, and a cut with the boil off pinned the smear
+  on the cover, not the boil. So the cover is DFU's row at every hour.
+- A weather-map cell carries its system's envelope (`skyCells` `env`),
+  and `cellOfField` grows its cloud by it (`grownCell`): at birth half
+  the cover, 0.45 of the depth and 0.7 of the density, the whole profile
+  at full growth.
+- Seen and not changed here: a cloudy sky reads as a soft even blur and a
+  storm as a flat lid, as they did before VC7. That is the slab at high
+  cover and the sky map's texel (about five screen pixels at a 65-degree
+  view), not the life; it is recorded for Mac as its own question.
+
+### VC7b - light shafts
+
+- **Through the gaps.** EL3's screen-space shafts take the sky mask from
+  the depth alone, and VC6c turns them off when the deck covers the sun.
+  The mask will carry the cloud map's own transmittance, so broken cloud
+  in front of the sun throws beams through its gaps and a solid deck
+  throws none, without a switch.
+- **In the haze, away from the sun.** Shadow shafts slanting under a
+  broken deck are seen from any direction, not only toward the sun. The
+  world's fog gains an in-scattered sun term marched a few steps along
+  the view ray through the air under the clouds, each step reading the
+  same shadow map the ground reads (a point at height y sees the sun
+  through the slab where its sun ray meets the ground). Where the sun
+  reaches the air it glows; where the bank shades it, it does not. It
+  scales with the air's haze (humid weather, low sun) and is off indoors.
+
+### VC7c - rain shafts
+
+- A raining or storming cell hangs a curtain from its base to the ground:
+  density that falls off toward its rim, streaked vertically and moving
+  with the cell, in the same field both marches read. From afar it is a
+  grey veil under the storm, where the weather map puts it; it fades as
+  the player comes under it, where the falling rain itself takes over.
+- Only what falls hangs one (rain, thunder, snow; a sandstorm is already a
+  wall on the ground), with its intensity from the same law as the rain.
+
+### VC7d - a high cirrus layer
+
+- A thin layer of ice cloud at 8-10 km, far above the slab: a single
+  sample per ray where the ray meets its altitude, from the noise volumes
+  stretched along the wind into streaks, lit thin and bright in forward
+  scatter.
+- It uses VC6b's horizon dip at its own altitude, so it keeps the sun's
+  colour for minutes after the deck below has gone grey: the last colour
+  in a sunset sky.
+- Fair and cloudy skies carry it; an overcast lid or a storm hides it
+  behind their own cloud.
+

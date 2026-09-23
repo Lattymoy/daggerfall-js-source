@@ -765,7 +765,7 @@ export function skyCells(systems, x, z, ground = null) {
     for (const [r, raw] of s.bands) {
       const word = ground ? ground(raw, s.x, s.z) : raw;
       const imp = (SKY_WEIGHT[word] ?? 0.5) * (d <= r ? 2 : r / d);
-      out.push({ x: s.x, z: s.z, r, word, imp, rank: RANK[word] ?? PRIORITY.length, id: `${s.id}:${raw}`, d, shape: s.shape ?? null, clip: s.clip ?? null });
+      out.push({ x: s.x, z: s.z, r, word, imp, rank: RANK[word] ?? PRIORITY.length, id: `${s.id}:${raw}`, d, shape: s.shape ?? null, clip: s.clip ?? null, env: s.env ?? 1 });   // VC7a: its envelope - the cloud grows and thins with its system
     }
   }
   return out;

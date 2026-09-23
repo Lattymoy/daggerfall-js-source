@@ -56,7 +56,7 @@
 
 import { createRenderTarget, withTarget, frameTarget } from './renderTarget.js';
 import { CloudNoise } from './cloudNoise.js';
-import { WEATHER_EASE_MINUTES, WEATHER_SKY } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row
+import { WEATHER_EASE_MINUTES, WEATHER_SKY, sunSkyDirection } from './enhancedSky.js';   // WEATHER2c: a cell's cover and grey are its weather's row; VC7a: the sun that drives the day's convection
 
 /** The streaming world's pixel, in metres (terrainSampler.js TERRAIN_SIZE). */
 export const PIXEL_METRES = 819.2;
@@ -188,6 +188,88 @@ export const VC_PROFILE = Object.freeze({
 export const CELL_TINT = Object.freeze({ sandstorm: Object.freeze([0.88, 0.72, 0.46]) });
 const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];   // VC6a: `vary` eases with the rest
 
+// ═══ VC7a (2026-09-23): LIVING CLOUDS ════════════════════════════════
+// Mac: "improve the volumetric cloud system to be more immersive". The
+// field was a fixed noise volume slid across the land by the wind: a bank
+// was the same bank from the horizon to the horizon. Three clocks now
+// give it a life, every one of them read from the GAME's minutes (the
+// sky state's `minutes`), so every player online sees the same sky:
+//   - THE BOIL: the shape volume is read through its own height as the
+//     minutes pass (EVOLVE_M_PER_MINUTE), the detail faster, so the
+//     towers' structure rises through the cloud and its edges churn;
+//   - THE COVER'S OWN WIND: the coverage field drifts at COVER_DRIFT_SHARE
+//     of the air, not with it, and turns through its own slice over the
+//     day, so a place's cover changes under the air passing through it -
+//     banks build on one side and dissolve on the other as they travel;
+//   - THE DAY'S CONVECTION: fair-weather cloud (FAIR_WEATHERS) builds
+//     through the day and settles at dusk (`convection`): its TOPS rise
+//     from flat morning cumulus to the afternoon's towers and sink again.
+//     Its cover stays DFU's row: the lab showed this slab's scattered
+//     cumulus sits right at its coverage threshold - a fair row's cover
+//     raised by a tenth turned the afternoon into a smeared haze - so the
+//     day lives in the towers' height, not in how much sky they take.
+// And a weather-map cell's cloud takes its system's envelope (`grownCell`):
+// a newborn front is a thin deck that deepens as it grows. Every offset
+// is wrapped to its own volume's period, as CLK1 wraps the drift, so a
+// year of game minutes never outgrows a float.
+/** Metres per game minute the shape volume is read upward - an updraft's
+ *  order (2 m/s of game time), and the detail's two and a half times it. */
+export const EVOLVE_M_PER_MINUTE = 120;
+export const DETAIL_EVOLVE_M_PER_MINUTE = 300;
+/** The share of the air's drift the coverage field moves with. */
+export const COVER_DRIFT_SHARE = 0.6;
+/** How far through the coverage volume's slice a game minute turns it: a
+ *  whole turn a game day, so the weather's lay of cover renews daily. */
+export const COVER_EVOLVE_PER_MINUTE = 1 / 1440;
+/** The rows that convect - the fair-weather sky; a deck, a front, fog and a
+ *  sandstorm keep their own profile through the day. */
+export const FAIR_WEATHERS = Object.freeze(['sunny', 'cloudy']);
+/** THE DAY'S CONVECTION: the ground heats behind the sun, so the lift
+ *  follows the sun's height CONVECTION_LAG_MINUTES late (the towers peak
+ *  mid-afternoon); the tops never below CONVECTION_DEPTH_FLOOR of the
+ *  row's depth - a morning's and a night's flat cumulus. */
+export const CONVECTION_LAG_MINUTES = 150;
+export const CONVECTION_DEPTH_FLOOR = 0.4;
+const liftAt = (minuteOfDay) => Math.max(0, sunSkyDirection((((minuteOfDay - CONVECTION_LAG_MINUTES) % 1440) + 1440) % 1440)[1]);
+const LIFT_PEAK = (() => { let peak = 0; for (let m = 0; m < 1440; m++) peak = Math.max(peak, liftAt(m)); return peak; })();
+/** The day's convection at a minute of the day: `depth`, the share of a
+ *  fair row's depth its tops reach - 1 at the afternoon's peak,
+ *  CONVECTION_DEPTH_FLOOR through the night. Pure. */
+export function convection(minuteOfDay) {
+  return { depth: CONVECTION_DEPTH_FLOOR + (1 - CONVECTION_DEPTH_FLOOR) * liftAt(minuteOfDay) / LIFT_PEAK };
+}
+/** A cloud cell of a fair weather under the day's convection `conv`: its
+ *  tops brought down toward its base by the hour, its cover the row's;
+ *  any other weather's cell as it is. Pure. */
+export function convectCell(cell, conv) {
+  if (!cell || !conv || !FAIR_WEATHERS.includes(cell.word)) return cell;
+  return { ...cell, top: cell.base + (cell.top - cell.base) * conv.depth };
+}
+/** How thin a cell's cloud is at its system's birth: the share of its
+ *  cover, its depth and its density at an envelope of 0 (1 at full
+ *  growth). */
+export const GROWTH_FLOOR = Object.freeze({ cover: 0.5, depth: 0.45, density: 0.7 });
+/** A cell's cloud at its system's envelope `env`: grown in cover, depth
+ *  and density from GROWTH_FLOOR at birth to the whole profile; no
+ *  envelope, the whole profile. Pure. */
+export function grownCell(cell, env) {
+  if (!cell || env == null || env >= 1) return cell;
+  const e = Math.max(0, env), at = (floor) => floor + (1 - floor) * e;
+  return { ...cell, cover: cell.cover * at(GROWTH_FLOOR.cover), top: cell.base + (cell.top - cell.base) * at(GROWTH_FLOOR.depth), density: cell.density * at(GROWTH_FLOOR.density) };
+}
+/** The three clocks at a game minute and a drift (world metres, already
+ *  wrapped): the shape's and the detail's reading offsets (metres, each
+ *  wrapped to its own volume's period), the coverage slice's turn (0..1)
+ *  and the coverage field's own drift (wrapped to the field's period).
+ *  Pure. */
+export function cloudClocks(minutes, driftWorld) {
+  const wrap = (v, period) => v - Math.floor(v / period) * period;
+  return {
+    evolve: [wrap(minutes * EVOLVE_M_PER_MINUTE, SHAPE_METRES), wrap(minutes * DETAIL_EVOLVE_M_PER_MINUTE, DETAIL_METRES), wrap(minutes * COVER_EVOLVE_PER_MINUTE, 1)],
+    coverDrift: [wrapField(driftWorld[0] * COVER_DRIFT_SHARE), wrapField(driftWorld[1] * COVER_DRIFT_SHARE)],
+  };
+}
+
 // ═══ WEATHER2c (2026-09-14): CLOUD TYPES BY PLACE ═══════════════════
 // Mac: "different generative cloud types, like being able to see a
 // thunderhead in the distance with the weather happening elsewhere."
@@ -211,7 +293,7 @@ const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary']
 export function cellOf(weather, x, z, r) {
   const p = VC_PROFILE[weather];
   if (!p) return null;
-  return { x, z, r, edge: r * CELL_EDGE, ...p, cover: WEATHER_SKY[weather]?.cover ?? 1, grey: WEATHER_SKY[weather]?.grey ?? 0, ...(CELL_TINT[weather] ? { tint: CELL_TINT[weather] } : {}) };
+  return { x, z, r, edge: r * CELL_EDGE, ...p, word: weather, cover: WEATHER_SKY[weather]?.cover ?? 1, grey: WEATHER_SKY[weather]?.grey ?? 0, ...(CELL_TINT[weather] ? { tint: CELL_TINT[weather] } : {}) };   // VC7a: the word it is, for the day's convection
 }
 
 /** WEATHER3c/3g: a world weather map cell (weatherMap.js skyCells, in
@@ -222,7 +304,7 @@ export function cellOf(weather, x, z, r) {
  *  exterior hosts make. Pure over toHost. */
 export function cellOfField(c, toHost) {
   const [x, z] = toHost(c.x, c.z);
-  const cell = cellOf(c.word, x, z, c.r);
+  const cell = grownCell(cellOf(c.word, x, z, c.r), c.env);   // VC7a: as grown as its system
   if (!cell || c.imp == null) return cell;
   const out = { ...cell, imp: c.imp, rank: c.rank };
   if (c.shape) out.shape = c.shape;   // WEATHER3h: its outline; a frame change is a translation, the shape rides it
@@ -408,6 +490,8 @@ uniform vec4 uCellU[8];
 uniform vec4 uCellKS[8];  // WEATHER3h: its clip's shape (its front's)
 uniform vec4 uCellKU[8];
 uniform vec2 uDrift;      // world metres
+uniform vec3 uEvolve;     // VC7a: the shape's and the detail's reading offset up their volumes (metres), the coverage slice's turn
+uniform vec2 uCoverDrift; // VC7a: the coverage field's own drift - a share of the air's, so cover builds and dissolves in it
 uniform vec2 uShift;      // the floating origin's recenters, accumulated - added to every position so the field is sampled where it ABSOLUTELY is
 uniform vec2 uCamXZ;      // the camera's world position, the sky map's own origin
 const float EXT = ${EXTINCTION.toFixed(4)};
@@ -497,7 +581,9 @@ float density(vec3 p, float mip) {
   // pixels) divides the field's (240), so a position moved by a whole
   // field period is still warped by the same vector and still samples
   // the same cloud.
-  vec4 v = textureLod(uShape, vec3(q.x / VARIATION_M, 0.37, q.z / VARIATION_M), 0.0);
+  // VC7a: the coverage rides its own, slower wind and turns through its slice over the day
+  vec2 qv = vec2(p.x + uShift.x - uCoverDrift.x + fShear * (p.y - fBase), p.z + uShift.y - uCoverDrift.y);
+  vec4 v = textureLod(uShape, vec3(qv.x / VARIATION_M, 0.37 + uEvolve.z, qv.y / VARIATION_M), 0.0);
   float variation = clamp(v.r * 0.65 + v.a * 0.35, 0.0, 1.0);
   // VC6a: the cloud's TYPE at this place. Where there is more cloud
   // there is flatter, deeper cloud - a settling deck; where there is
@@ -509,7 +595,7 @@ float density(vec3 p, float mip) {
   float grad = heightGradient(clamp(h / max(ceiling, 0.05), 0.0, 1.0), flatHere);
   if (grad <= 0.0) return 0.0;
   q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp
-  vec4 s = textureLod(uShape, q / SHAPE_M, mip);
+  vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass
   float lowFbm = s.g * 0.625 + s.b * 0.25 + s.a * 0.125;
   float base = remap(s.r, -(1.0 - lowFbm), 1.0, 0.0, 1.0) * grad;
   // the row's cover is the dome's deck's word; the slab's coverage is
@@ -517,7 +603,7 @@ float density(vec3 p, float mip) {
   float coverage = clamp(pow(fCover, 1.6) * (0.6 + 0.8 * variation), 0.0, 1.0);
   base = remap(base, 1.0 - coverage, 1.0, 0.0, 1.0);
   if (base <= 0.0) return 0.0;
-  vec4 d = textureLod(uDetail, q / DETAIL_M, mip);
+  vec4 d = textureLod(uDetail, (q + vec3(0.0, uEvolve.y, 0.0)) / DETAIL_M, mip);   // VC7a: the edges churn faster
   float dfbm = d.r * 0.625 + d.g * 0.25 + d.b * 0.125;
   float erode = mix(dfbm, 1.0 - dfbm, clamp(h * 10.0, 0.0, 1.0));
   base = remap(base, erode * (0.15 + 0.35 * uSoft), 1.0, 0.0, 1.0);
@@ -767,7 +853,7 @@ function link(gl, vs, fs) {
 }
 
 /** The field's uniforms, shared by both marches. */
-export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
+export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps'];   // VC6b: uSkyTint, uDusk
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos'];   // WEATHER3d: the distant strike
@@ -844,11 +930,14 @@ export class VolumetricClouds {
     this.state = state; this.row = row;
     // WEATHER2c: the field's cells for this frame - the controller's, else the test door's one
     if (this.testCellSpec && !this.testCell && pos) this.testCell = parseCloudCellDoor(this.testCellSpec, pos);
-    this.cells = pickCells(cells ?? (this.testCell ? [this.testCell] : []), this.q.cells ?? MAX_CELLS);   // WEATHER3c: the map's cells by importance, drawn by rank
+    // VC7a: the day's convection at the sky's own minute, on the fair cells and the fair zone
+    this.conv = convection(state.minuteOfDay ?? ((((state.minutes ?? 0) % 1440) + 1440) % 1440));
+    this.cells = pickCells(cells ?? (this.testCell ? [this.testCell] : []), this.q.cells ?? MAX_CELLS).map((c) => convectCell(c, this.conv));   // WEATHER3c: the map's cells by importance, drawn by rank
     const target = VC_PROFILE[weather] ?? VC_PROFILE.sunny;
     this.profile = easeProfile(this.profile, target, easeDt);
     this.weather = weather;
     this.drift = [wrapField(drift[0] * WORLD_PER_DRIFT), wrapField(drift[1] * WORLD_PER_DRIFT)];   // CLK1: wrapped to the field's period
+    this.clocks = cloudClocks(state.minutes ?? 0, [drift[0] * WORLD_PER_DRIFT, drift[1] * WORLD_PER_DRIFT]);   // VC7a: the boil and the cover's own wind
     this.flash = flash;
     if (pos) { this.cam[0] = pos[0]; this.cam[1] = pos[2]; }
     const o = shadowOrigin(this.cam[0], this.cam[1]);
@@ -911,8 +1000,10 @@ export class VolumetricClouds {
     const gl = this.gl, r = this.row, p = this.profile;
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D, this.noise.shape.tex); gl.uniform1i(u.uShape, 0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_3D, this.noise.detail.tex); gl.uniform1i(u.uDetail, 1);
+    // VC7a: the zone convects as a fair cell does
+    const zone = convectCell({ word: this.weather, base: p.base, top: p.top }, this.conv);
     gl.uniform1f(u.uCover, r.cover); gl.uniform1f(u.uSoft, r.soft);
-    gl.uniform1f(u.uBase, p.base); gl.uniform1f(u.uTop, p.top); gl.uniform1f(u.uDensity, p.density);
+    gl.uniform1f(u.uBase, p.base); gl.uniform1f(u.uTop, zone.top); gl.uniform1f(u.uDensity, p.density);
     gl.uniform1f(u.uFlat, p.flat); gl.uniform1f(u.uShear, p.shear);
     gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uVary, p.vary ?? 0);   // VC6a
     // WEATHER2c: the union slab and the cells
@@ -924,6 +1015,9 @@ export class VolumetricClouds {
     gl.uniform2f(u.uDrift, this.drift[0], this.drift[1]);
     gl.uniform2f(u.uShift, wrapField(this.shift[0]), wrapField(this.shift[1]));   // CLK1: wrapped to the field's period
     gl.uniform2f(u.uCamXZ, this.cam[0], this.cam[1]);
+    const ck = this.clocks ?? cloudClocks(0, [0, 0]);
+    gl.uniform3f(u.uEvolve, ck.evolve[0], ck.evolve[1], ck.evolve[2]);
+    gl.uniform2f(u.uCoverDrift, ck.coverDrift[0], ck.coverDrift[1]);
   }
 
   /** DRAW PATH: march this frame's stripe of the sky map and of the
