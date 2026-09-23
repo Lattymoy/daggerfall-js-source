@@ -33,6 +33,7 @@ export const SOUND = {
   EquipFlail: 414,
   EquipAxe: 415,
   EquipBow: 416,
+  EquipLeather: 417,   // RRI1: the light set's equip sound
   DungeonDoorClose: 24,
   DungeonDoorOpen: 25,
   NormalDoorClose: 93,
@@ -150,10 +151,15 @@ const SWING_LOW = new Set([126, 127, 121, 122, 123, 125]);      // Warhammer, Ba
 const SWING_MEDIUM = new Set([118, 120, 119, 117, 128, 115, 124]); // Broadsword, Longsword, Saber, Wakazashi, War Axe, Staff, Mace
 const SWING_HIGH = new Set([113, 114, 116]);                    // Dagger, Tanto, Shortsword
 const SWING_BOWS = new Set([129, 130]);                         // Short Bow, Long Bow -> ArrowShoot
+/** RRI1: a custom weapon class's GetSwingSound (a virtual), registered
+ *  by its installer so this file stays the leaf weapons.js counts on. */
+const _customSwing = new Map();
+export function registerSwingSound(templateIndex, clip) { if (clip == null) _customSwing.delete(templateIndex); else _customSwing.set(templateIndex, clip); }
 export function swingSoundFor(weapon) {
   if (!weapon) return SOUND.SwingHighPitch;
   if (weapon.werecreatureClaws) return SOUND.SwingHighPitch;   // V4: SetFPSWeapon's SwingWeaponSound (:339)
   const t = weapon.templateIndex;
+  if (_customSwing.has(t)) return _customSwing.get(t);
   if (SWING_LOW.has(t)) return SOUND.SwingLowPitch;
   if (SWING_MEDIUM.has(t)) return SOUND.SwingMediumPitch;
   if (SWING_HIGH.has(t)) return SOUND.SwingHighPitch;

@@ -23,6 +23,8 @@
 import { mintCondition, templateByIndex } from './itemTemplates.js';   // AUDIT 23
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
+import { customItemClass, rriNativeMaterialValue, rriEquipSound } from './rriItems.js';
+import { SOUND } from './soundClips.js';   // AUDIT-RR F8: the class's equip sound, by name   // RRI1: a custom armor's slot, for the body part its value lands on; AUDIT-RR F7/F8: the class's two virtuals
 import { createEquipTable, getItemHands as handsOf, ITEM_HANDS } from '../characters/equipTable.js';
 import { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue, SHIELD_VALUES, SHIELD_PARTS, isShieldTemplate } from './armorMaterials.js';
 import { weaponSkillUsed } from '../characters/weapons.js';   // wave 29: GetWeaponSkillUsed keys on the TEMPLATE
@@ -65,8 +67,11 @@ export const getEquipSlot = (entity, item) => equipOf(entity).getEquipSlot(numer
  *  per hand); the port's single entity.equipCountdown sums them,
  *  the CH3 collapse kept. */
 export function equipDelayFor(item) {
-  const gi = item?.group === 'Weapons' ? item.templateIndex - 113
-    : item?.group === 'Armor' ? item.templateIndex - 102 : -1;
+  // AUDIT-RR2 G8: `EquipDelayTimes[item.GroupIndex]` (DaggerfallInventoryWindow.cs:1168-1182) - a custom class answers its
+  // own GroupIndex virtual (ItemArchersAxe.cs:28-31 -> 3, ItemLightFlail.cs:28-31 -> 6); 513 - 113 fell off the table
+  const gi = customItemClass(item?.templateIndex)?.groupIndex
+    ?? (item?.group === 'Weapons' ? item.templateIndex - 113
+      : item?.group === 'Armor' ? item.templateIndex - 102 : -1);
   return (gi >= 0 && gi < EQUIP_DELAY_TIMES.length) ? EQUIP_DELAY_TIMES[gi] : 0;
 }
 
@@ -170,7 +175,7 @@ export function isForbiddenEquip(career, item) {
     // returned at the shield arm and never reached the material test.
     const shield = isShieldTemplate(item.templateIndex);
     if (shield && ((1 << (item.templateIndex - SHIELD_TEMPLATE_START)) & forbiddenShields) !== 0) return true;
-    if (!shield && ((1 << (item.material >> 8)) & forbiddenArmors) !== 0) return true;
+    if (!shield && ((1 << (rriNativeMaterialValue(item) >> 8)) & forbiddenArmors) !== 0) return true;   // AUDIT-RR F7: `item.NativeMaterialValue >> 8` (:1352) - the class's virtual: a mail hauberk is chain, a brigandine jerkin leather
     // the plate-only gate on the material test - shields included
     return (item.material >> 8) === 2 && ((1 << (item.material & 0xff)) & forbiddenMaterials) !== 0;
   }
@@ -307,10 +312,10 @@ export function rebuildEquipState(entity) {
  *  SUPERSEDED, not pending. S3d shipped the real roll -
  *  systems/startingGear.js:74 assignStartingGear (ItemHelper's
  *  AssignStartingGear), run on both creation paths at
- *  chargenSession.js:140 (?class= headless) and :231 (the wizard) -
+ *  chargenSession.js:141 (?class= headless) and :233 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:3031, exterior.js:1252):
+ *  residue at the two host calls (world.js:3052, exterior.js:1267):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */
@@ -346,6 +351,8 @@ export { BODY_PARTS, NUMBER_BODY_PARTS, materialArmorValue, itemArmorValue };
 
 /** GetBodyPartForEquipSlot (DaggerfallUnityItem.cs:1131-1153): only
  *  these seven slots map to an armor body part. */
+/** RRI1: the slot rule for an armor template - a custom class's own slot (GetEquipSlot) ahead of the generated table. */
+const armorSlotRule = (templateIndex) => { const slot = customItemClass(templateIndex)?.equipSlot; return slot ? { slot } : SLOT_RULES.Armor[templateIndex]; };
 const SLOT_BODY_PART = new Map([
   [EQUIP_SLOTS.Head, BODY_PARTS.Head], [EQUIP_SLOTS.RightArm, BODY_PARTS.RightArm],
   [EQUIP_SLOTS.LeftArm, BODY_PARTS.LeftArm], [EQUIP_SLOTS.ChestArmor, BODY_PARTS.Chest],
@@ -364,7 +371,7 @@ export const armorValuesOf = (entity) => (entity.armorValues ??= new Array(NUMBE
 export function armorBodyParts(item) {
   if (!item || item.group !== 'Armor') return [];
   if (isShieldTemplate(item.templateIndex)) return SHIELD_PARTS.get(item.templateIndex) ?? [];
-  const rule = SLOT_RULES.Armor[item.templateIndex];
+  const rule = armorSlotRule(item.templateIndex);
   const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot]) : null;
   return part == null ? [] : [part];
 }
@@ -386,7 +393,7 @@ export function updateEquippedArmorValues(entity, item, equipping) {
   if (!isShieldTemplate(item.templateIndex)) {
     // a non-shield armor piece's slot is FIXED by template (the C5c
     // rule table) - no equip-table state involved (DFU GetArmorSlot)
-    const rule = SLOT_RULES.Armor[item.templateIndex];
+    const rule = armorSlotRule(item.templateIndex);
     const part = rule ? SLOT_BODY_PART.get(EQUIP_SLOTS[rule.slot])
       : (FOOTWEAR ? BODY_PARTS.Feet : null);   // clothing footwear -> Feet
     if (part == null) return;
@@ -472,11 +479,14 @@ export function getEquipSound(item) {
     case 'Jewellery':
     case 'Gems':
       return 383;   // EquipJewellery
-    case 'Armor':
+    case 'Armor': {
+      const own = rriEquipSound(item);   // AUDIT-RR F8: the class's GetEquipSound override comes first
+      if (own != null && SOUND[own] != null) return SOUND[own];
       if (isShieldTemplate(item.templateIndex) || item.templateIndex === 107) return 419;   // GetIsShield() || Helm
       if (item.material === 0x0000) return 417;   // ArmorMaterialTypes.Leather
       if (item.material === 0x0100) return 418;   // ArmorMaterialTypes.Chain, exactly
       return 419;   // EquipPlate
+    }
     case 'Weapons':
       switch (item.templateIndex) {
         case 127: case 128: return 415;              // Battle_Axe, War_Axe

@@ -438,7 +438,10 @@ export function setDefaulted(accounts, regionIndex, defaulted) {
 /** CalculateMaxBankLoan (:2006-2015) - level times 50k, and nothing
  *  else. Reputation does not enter it, which DFU's comment says it
  *  tested for. */
-export const calculateMaxBankLoan = (level) => level * LOAN_MAX_PER_LEVEL;
+// RR1: `if (TryGetOverride("CalculateMaxBankLoan", out del)) return del();` (FormulaHelper.cs:2008-2010) - Roleplay & Realism's loanAmountPerLevel
+let _maxLoanOverride = null;
+export function registerMaxBankLoan(fn) { _maxLoanOverride = typeof fn === 'function' ? fn : null; }
+export const calculateMaxBankLoan = (level) => _maxLoanOverride?.(level) ?? level * LOAN_MAX_PER_LEVEL;
 /** CalculateBankLoanRepayment (:2017-2024) - `(int)(amount + amount *
  *  .1)`, a FLOAT sum truncated once at the end. */
 export const calculateBankLoanRepayment = (amount) => Math.trunc(amount + amount * 0.1);
@@ -739,7 +742,7 @@ export function bankingStatusRows(accounts, { regionName = () => '' } = {}) {
 //    the permanent-scene set, so housesForSale, allocateHouseToPlayer
 //    and sellHouse above are live; H2/H4 brought the BUY UI itself -
 //    DaggerfallBankPurchasePopUp is ui/bankPurchaseWindow.js
-//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2741
+//    (BankPurchaseWindow :102), mounted at scenes/worldModes.js:2782
 //    openPurchase with drawBankModelPreview (:1938) as the dedicated
 //    3D model panel, and ui/bankWindow.js:244-252 routes BUY HOUSE's
 //    'pick' into it (a host without the window still falls back to

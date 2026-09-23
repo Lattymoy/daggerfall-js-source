@@ -444,7 +444,7 @@
   {
     "name": "SURVTIERS3-the-kit-cite-headless-chargen-rots",
     "file": "src/systems/equip.js",
-    "old": "chargenSession.js:140 (?class= headless)",
+    "old": "chargenSession.js:141 (?class= headless)",
     "new": "chargenSession.js:139 (?class= headless)",
     "tests": [
       "test/citedrift.test.js"
@@ -453,7 +453,7 @@
   {
     "name": "SURVTIERS3-the-kit-cite-wizard-rots",
     "file": "src/systems/equip.js",
-    "old": "(?class= headless) and :231 (the wizard)",
+    "old": "(?class= headless) and :233 (the wizard)",
     "new": "(?class= headless) and :221 (the wizard)",
     "tests": [
       "test/citedrift.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
     "file": "src/systems/equip.js",
-    "old": "(world.js:3031, exterior.js:1252)",
-    "new": "(world.js:2460, exterior.js:1252)",
+    "old": "(world.js:3052, exterior.js:1267)",
+    "new": "(world.js:2460, exterior.js:1267)",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -471,7 +471,7 @@
   {
     "name": "SURVTIERS3-the-gear-cite-equip-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "// (equip.js:317), which survives",
+    "old": "// (equip.js:322), which survives",
     "new": "// (equip.js:307), which survives",
     "tests": [
       "test/citedrift.test.js"
@@ -480,8 +480,8 @@
   {
     "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "world.js:3031 and exterior.js:1252 seed it",
-    "new": "world.js:2460 and exterior.js:1252 seed it",
+    "old": "world.js:3052 and exterior.js:1267 seed it",
+    "new": "world.js:2460 and exterior.js:1267 seed it",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -489,7 +489,7 @@
   {
     "name": "SURVTIERS3-the-exterior-cite-equip-guard-rots",
     "file": "src/scenes/exterior.js",
-    "old": "early-returns (equip.js:318).",
+    "old": "early-returns (equip.js:323).",
     "new": "early-returns (equip.js:306).",
     "tests": [
       "test/citedrift.test.js"
@@ -498,8 +498,8 @@
   {
     "name": "SURVTIERS3-the-rest-window-cite-input-rots",
     "file": "src/ui/restWindow.js",
-    "old": "exterior.js:3016, ui/input.js:813)",
-    "new": "exterior.js:3016, ui/input.js:525)",
+    "old": "exterior.js:3052, ui/input.js:813)",
+    "new": "exterior.js:3052, ui/input.js:525)",
     "tests": [
       "test/citedrift.test.js"
     ]

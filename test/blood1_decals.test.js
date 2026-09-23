@@ -845,7 +845,10 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   }
   // the count is pinned too: a site DELETED is as much a drift as one
   // added, and both should be read by a person rather than pass quietly
-  assert.equal(sites.length, 11, `eleven splash sites across five files (found ${sites.length})`);
+  // RR2 wrote the twelfth: Roleplay & Realism's trample (world.js's
+  // rrRidingContacts) - the civilian's own rung, LETHAL_HIT.
+  // AUDIT-RR F15 moved the trample's site into both outdoor hosts' deps (world.js, exterior.js): thirteen.
+  assert.equal(sites.length, 13, `thirteen splash sites across six files (found ${sites.length})`);
   for (const [f, args] of sites) {
     assert.ok(/bloodHit\(|LETHAL_HIT/.test(args),
       `${f}: a splash site that hands over no blow - the ladder would read it as a graze`);
@@ -3012,7 +3015,7 @@ import { Collider } from '../src/player/collider.js';
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that knows it', () => {
-  // exterior.js:545 - `new Collider(() => GROUND_OFFSET * 0.025)`,
+  // exterior.js:557 - `new Collider(() => GROUND_OFFSET * 0.025)`,
   // and not one triangle under the player's feet.
   const outside = new Collider(() => 0);
   assert.equal(outside.raycastHit([0, 2, 0], [0, -1, 0], 8).dist, Infinity,

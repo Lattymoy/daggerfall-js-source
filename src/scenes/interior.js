@@ -14,6 +14,8 @@ import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT FONT F5: the touch layer's face gate (the skin cannot change without a reload, so the boot-time read is exact)
 import { BlocksFile } from '../formats/blocksFile.js';
+import { bindWorldDataBlocks } from '../formats/worldDataReplacement.js';   // RR3b
+import { loadModWorldData } from './modWorldData.js';   // RR3b
 import { DFPalette } from '../formats/dfPalette.js';
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
@@ -67,6 +69,8 @@ export async function bootInterior(canvas, renderer, params, status) {
   palette.load(palBytes, 'ART_PAL.COL');
   const blocks = new BlocksFile();
   blocks.load(blocksBytes);
+  bindWorldDataBlocks(blocks);   // RR3b: WorldDataReplacement's ContentReader.BlockFileReader - the new block indices start past this BSA's count
+  await loadModWorldData();   // RR3b: ModManager's world-data assets on the door before the first region or block loads
   const arch = new Arch3dFile();
   arch.load(archBytes);
 
@@ -190,7 +194,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // (ui/input.js:652-653) is "every host that registers a keydown
     // calls this FIRST", and it is NOT conditional on the host having
     // a destination for the key. First, because every arm below
-    // returns before its own preventDefault - worldModes.js:8409 sits
+    // returns before its own preventDefault - worldModes.js:8460 sits
     // ahead of its arms for the same reason.
     swallowBrowserKey(e);
     // The open map owns the keyboard, exactly as it does in the three
@@ -377,7 +381,7 @@ export async function bootInterior(canvas, renderer, params, status) {
     // scan, for the reason DFU states on the gate (SetActive(false) on
     // the geometry would mess with the open map's rendering). Update's
     // own call at :1001 is the one-shot lazy init, not a per-frame
-    // driver. dungeon.js:770 and worldModes.js:6342/:6370 gate the same
+    // driver. dungeon.js:774 and worldModes.js:6389/:6417 gate the same
     // way; this is that gate for this host.
     lookGate(!!overlay);   // AUDIT-AMAP H8
     if (!gamePaused()) ctx.automapTick?.(dt, cam.pos, fwd);

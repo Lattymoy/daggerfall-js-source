@@ -172,8 +172,10 @@ export const DEITY_DESCRIPTIONS = Object.freeze({
 export function trainingSkills(guild) {
   if (guild.divine) return TEMPLE_TRAINING_SKILLS[guild.divine];
   if (guild.order) return null;
-  return TRAINING_SKILLS[guild.name] ?? null;
+  return _trainingOverride?.(guild.name) ?? TRAINING_SKILLS[guild.name] ?? null;   // RR1: TrainingSkills, the virtual (FightersGuildRR)
 }
+let _trainingOverride = null;
+export function setTrainingSkillsOverride(fn) { _trainingOverride = typeof fn === 'function' ? fn : null; }
 
 /** GetTrainingMax (:335-338): defaultTrainingMax, and no guild
  *  overrides it. Training cannot take a skill past 50. */
@@ -416,3 +418,31 @@ export const reducedRepairCost = (guild, m, price) =>
  *  cycle of life is the one who discounts curing you. */
 export const reducedCureCost = (guild, m, price) =>
   (guild.divine === 'Arkay' ? scaleByRank(10 - (m?.rank ?? 0), price) : price);
+
+// ── Services.cs:146-175 - the custom merchant services ──────────────────
+// A mod's service on a merchant NPC, by the NPC's faction id: the popup
+// shows its name on the service button and the button runs it (RR3 -
+// Roleplay & Realism's master armorer, faction 1022). `service(window)`
+// receives the popup's own door: { messageBox(text), openBuy(items) }.
+const _customMerchantServices = new Map();
+const _customMerchantServiceNames = new Map();
+const _customMerchantServiceGates = new Map();
+const serviceOn = (id) => _customMerchantServices.has(id) && (_customMerchantServiceGates.get(id)?.() ?? true);
+/** HasCustomMerchantService (:151-154) - under the port's gate: a mod's
+ *  Enabled off is DFU's "mod not loaded", so its service is not there. */
+export const hasCustomMerchantService = (npcFactionId) => serviceOn(npcFactionId);
+/** RegisterMerchantService (:156-166): false when the faction has one.
+ *  `isOn` is the registering mod's switch (the port's stand-in for the
+ *  mod being loaded at all). */
+export function registerMerchantService(npcFactionId, service, serviceName, isOn = null) {
+  if (_customMerchantServices.has(npcFactionId)) return false;
+  _customMerchantServices.set(npcFactionId, service);
+  _customMerchantServiceNames.set(npcFactionId, serviceName);
+  if (typeof isOn === 'function') _customMerchantServiceGates.set(npcFactionId, isOn);
+  return true;
+}
+/** GetCustomMerchantService (:168-171): the delegate, or null. */
+export const getCustomMerchantService = (npcFactionId) => (serviceOn(npcFactionId) ? _customMerchantServices.get(npcFactionId) : null);
+/** GetCustomMerchantServiceLabel (:173-175). */
+export const getCustomMerchantServiceLabel = (npcFactionId) => _customMerchantServiceNames.get(npcFactionId) ?? '?';   // AUDIT-RR2 G17: GetCustomMerchantServiceLabel's `else return "?"` (Services.cs:173-179)
+export function _resetMerchantServices() { _customMerchantServices.clear(); _customMerchantServiceNames.clear(); _customMerchantServiceGates.clear(); }

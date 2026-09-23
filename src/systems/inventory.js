@@ -23,6 +23,7 @@ import { weightMultipliersByMaterial } from '../characters/weapons.js';
 // is a leaf of this module's import graph - it reads the same JSON).
 import { mintCondition, rollPaintingMessage, templateByIndex } from './itemTemplates.js';
 import { ammoTemplateFor } from '../characters/thunderlockIds.js';   // what a ranged weapon spends - a leaf, so no cycle (see the file)
+import { isRriStackable } from './rriRealism.js';   // RRI2: the IsItemStackable override - an added yes (FormulaHelper.cs:2100-2102)
 
 /** DaggerfallUnityItem.IsEnchanted verbatim
  *  (DaggerfallUnityItem.cs:266-269): DERIVED from the enchantment
@@ -183,6 +184,7 @@ export function isStackable(item) {
   // marks worn items with equipSlot (equip.js) - so all three clauses
   // of DFU's rule were no-ops.
   if (item.equipSlot != null || isEnchanted(item) || item.questItem) return false;   // never stack
+  if (isRriStackable(item)) return true;   // RRI2: "Only return if override returns true" - the bandage, under bandaging
   if (templateByIndex(item.templateIndex)?.isIngredient) return true;   // IsIngredient (SURV2: through the one reader, so a custom row answers)
   if (templateByIndex(item.templateIndex)?.stackable) return true;     // SURV2: a custom template that says it stacks (rations)
   if (item.group === 'UselessItems1' && item.templateIndex === GLASS_BOTTLE_TEMPLATE) return true;   // IsPotion
@@ -230,7 +232,7 @@ export function stacksWith(a, b) {
     // oil have none, and the one stackable WEAPON is the arrow, whose
     // material DFU itself zeroes - CreateWeapon's arrow arm writes
     // `newItem.nativeMaterialValue = 0` and skips ApplyWeaponMaterial
-    // entirely (ItemBuilder.cs:359-364), which enemyEquipment.js:135-142
+    // entirely (ItemBuilder.cs:359-364), which enemyEquipment.js:137-144
     // reproduces. So `(a.material ?? 0) === (b.material ?? 0)` is true
     // wherever ItemCollection.cs:706-714 would have matched, and the
     // `?? 0` above is the fix that keeps it that way.
@@ -301,7 +303,7 @@ export function addItem(list, item, position = 'back') {
  * are called by name rather than respelled.
  *
  * ROAD-Ar R5 - THE REMAINDER, RESTATED. A2 recorded two surviving
- * inline re-spellings of this member (equip.js:244 and
+ * inline re-spellings of this member (equip.js:249 and
  * potionMakerWindow.js:168, both on paths where nothing stackable is
  * equippable) and missed a THIRD, which was the one on the main path:
  * itemTransfer._applyTransfer's partial arm, reached by every
@@ -519,6 +521,9 @@ export function weightForMaterial(weightKg, weaponMaterial) {
  *  zero it, that flag gates only encumbrance. */
 export function unitWeightInKg(item) {
   const t = templateByIndex(item.templateIndex);   // SURV2: custom rows too
+  // AUDIT-RR F5: DFU's weightInKg is an INSTANCE field (GetWeight reads it, DaggerfallUnityItem.cs); an item that carries
+  // one - a fur piece after its class's fold, a Feather Weight enchantment's 0.25 - answers it, the derivation is for the rest
+  if (Number.isFinite(item.weightInKg)) return item.weightInKg + (Number.isFinite(item.water) && item.water > 0 ? item.water : 0);
   let base = t ? t.baseWeight : 0;
   if (Number.isFinite(item.water) && item.water > 0) base += item.water;   // SURV2: a waterskin weighs its water
   if (item.group === 'Weapons' && item.name !== 'Arrow' && item.material != null) {

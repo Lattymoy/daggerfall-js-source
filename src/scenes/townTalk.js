@@ -33,6 +33,7 @@
 //     reports as `modal` and the steal arm below routes on.
 
 import { FactionFile } from '../formats/factionFile.js';
+import { addCustomFactions } from '../systems/factionRep.js';   // RR3: a mod's registered factions, on this reader too
 import { racialSuppressTalk } from '../systems/lycanthropy.js';   // V4: the transformed talk refusal
 import { TextRsc } from '../formats/textRsc.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -268,6 +269,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       try {
         factions = new FactionFile();
         factions.load(await fetchBytes('FACTION.TXT'));
+        addCustomFactions(factions.factionDict, factions.factionNameToId);   // RR3: DFU's TalkManager reads PlayerEntity.FactionData, which AddCustomFactions has filled - this reader stands in for it
         _peopleRegion = regionNow();
         people = getPeopleOfCurrentRegion(factions.factionDict, _peopleRegion);
       } catch (e) { console.warn('[town] FACTION.TXT unavailable:', e.message); }
@@ -1097,7 +1099,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // U8b: the answer STRING, shared by the native talk window and the
   // fallback chain (the T3c-T3f pipeline unchanged).
   function answerText(building) {
-    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:453 never consumes it
+    const a = whereIsAnswer(topics.playerPos(), building, playerEntity.stats?.personality != null ? liveStat(playerEntity, 'personality') : 50, _talkNpc?._talkSeed ?? 0, 0, { tier: tierNow() });   // AUDIT 63 F4: LivePersonality here too, though this caller always supplies `tier` so talkTopics.js:472 never consumes it
     const raw = randomVariant(a.textId, '%hnt');
     // T4: %hnt is WHERE DFU rolls the reveal (GetKeySubjectBuildingHint
     // rides MacroHelper's %hnt), so the fork runs only when the record

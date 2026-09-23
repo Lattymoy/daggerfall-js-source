@@ -40,14 +40,15 @@
 import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // F209: StockHouseContainer's one classic-stream draw
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields, templateByIndex } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { customItemsForGroup } from './rriItems.js';   // AUDIT-RR F3: GetCustomItemsForGroup - the shelf's second loop (DaggerfallLoot.cs:255-287)
 import { createRandomBook } from './books.js';   // B1; A2: CreateRandomBook whole, priced off the book FILE
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
-import { OIL_TEMPLATE } from './inventory.js';   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
+import { OIL_TEMPLATE, addItem } from './inventory.js';   // AUDIT-RR2 G10: the shelf's AddItem   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
 import { getBool } from './settings.js';   // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
 import { findFactionByTypeAndRegion } from './talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
@@ -129,6 +130,7 @@ import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddP
 import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
 import { provisionsStock } from './survival/items.js';   // SURV2: the general store's provisions shelf
 import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
+import { conditionBasedPricesOn, conditionCostBase } from './rriRealism.js';   // RRI2: the CalculateCost override's condition arm
 
 export { BOOK_TEMPLATE };
 
@@ -207,7 +209,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     // shelf minted them with none, so every painting seeded
     // InitPaintingInfo from 0 and they were all the same picture.
     if (it.group === 'Paintings' && it.message == null) it.message = rollPaintingMessage(rolls);
-    items.push(it);
+    addItem(items, it);   // AUDIT-RR2 G10: `items.AddItem(item)` (DaggerfallLoot.cs:250) MERGES a stackable into its stack (ItemCollection.cs:224-228) - one bandage row for RRI's OnLootSpawned to size, arrows and ingredients as one pile
   };
   const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];
   if (buildingType === BUILDING_TYPES.Alchemist) {
@@ -337,6 +339,24 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
         if (torchesFromItems && group === 'UselessItems2' && templateIndex === OIL_TEMPLATE)
           it.stackCount = 5 + Math.floor(rolls() * 16);   // UnityEngine.Random.Range(5, 20 + 1) - 5..20 inclusive
         add(it);
+      }
+    }
+    // AUDIT-RR F3: DaggerfallLoot.cs:255-287 - the CUSTOM items registered for the group, the same rarity gate
+    // and stock chance, a weapon at RandomMaterial, an armor at RandomArmorMaterial (ApplyArmorSettings is the
+    // class's own variant setter, which the mint runs). `chanceMod == 0 && Transportation -> 20` is the C#'s
+    // own arm for a custom transport item (none registered here; kept for the law's sake).
+    {
+      const customs = customItemsForGroup(group);
+      let customChanceMod = chanceMod;
+      if (customChanceMod === 0 && group === 'Transportation') customChanceMod = 20;
+      for (const templateIndex of customs) {
+        const t = templateByIndex(templateIndex);
+        if (!t || t.rarity > quality) continue;
+        const stockChance = Math.trunc(customChanceMod * 5 * (21 - t.rarity) / 100);
+        if (!dice100(stockChance, rolls())) continue;
+        if (group === 'Weapons') add({ group, templateIndex, material: randomMaterial(level, rolls), flags: 0 });
+        else if (group === 'Armor') add({ group, templateIndex, material: randomArmorMaterial(level, rolls) });
+        else add({ group, templateIndex });
       }
     }
   }
@@ -623,9 +643,14 @@ export function updateRegionalPrices(playerEntity, factionDict, times, rolls = M
   }
 }
 
-/** FormulaHelper.CalculateCost, verbatim C# integer math. */
-export function calculateCost(baseValue, shopQuality, priceAdjustment = 1000) {
-  let cost = baseValue;
+/** FormulaHelper.CalculateCost, verbatim C# integer math. RRI2: the
+ *  third C# parameter, `conditionPercentage = -1` (:1884), which DFU's
+ *  own arm never reads and Roleplay & Realism: Items' CalculateConditionCost
+ *  override does - the base scaled by the item's condition, floored at a
+ *  fifth - under conditionBasedPrices; the two lines after it are the
+ *  same in both. */
+export function calculateCost(baseValue, shopQuality, priceAdjustment = 1000, conditionPercentage = -1) {
+  let cost = conditionBasedPricesOn() ? conditionCostBase(baseValue, conditionPercentage) : baseValue;
   if (cost < 1) cost = 1;
   cost = Math.trunc(cost * priceAdjustment / 1000);   // ApplyRegionalPriceAdjustment
   if (cost < 1) cost = 1;

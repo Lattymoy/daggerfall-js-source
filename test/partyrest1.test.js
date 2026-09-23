@@ -183,7 +183,7 @@ test('PARTY-REST2/28: the SAME gate reaches all three hosts - world.js\'s own ou
   assert.match(w, /markPartyRestSpent: \(\) => markPartyRestSpent\(\),/, 'the reset itself is handed into createWorldModes too, the same way partyRestGate already is');
 
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /const partyRefusal = host\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ mountInterior\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*\/\/[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*host\.markPartyRestSpent\?\.\(\);\s*\n\s*mountInterior\(createRestWindow\(interiorRestDeps\)\);/,
+  assert.match(wm, /const partyRefusal = host\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ mountInterior\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*\/\/[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*host\.markPartyRestSpent\?\.\(\);\s*\n\s*mountInterior\(createRestWindow\(interiorRestDeps, ignoreAllocatedBed\)\);/,   // AUDIT-RR F6: the bed's flag rides through the door
     'the interior host: the SAME shape, reading the injected deps rather than a closure of its own - worldModes.js has no `social` to ask directly, and now also actually spends the vote it was granted, not just checks it');
   assert.match(wm, /partyRestGate: \(\) => host\.partyRestGate\?\.\(\),/, 'and forwarded again into dungeonContext.js\'s own opts, unchanged, so the dungeon does not need a fourth copy of the same wiring');
   assert.match(wm, /markPartyRestSpent: \(\) => host\.markPartyRestSpent\?\.\(\),/, 'the reset is forwarded into dungeonContext.js\'s own opts the same way partyRestGate itself already is');

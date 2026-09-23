@@ -397,7 +397,7 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
   // readable only as long as nobody asked which two.
   const roadText = read(ROAD);
   for (const site of ['combat/fpsSpellCasting.js:178', 'characters/enemyCasting.js:91',
-    'systems/inventory.js:49', 'systems/talkMacros.js:314', 'ui/hudLarge.js:75',
+    'systems/inventory.js:50', 'systems/talkMacros.js:314', 'ui/hudLarge.js:75',
     'ui/exteriorAutomapWindow.js:96']) {
     assert.ok(roadText.includes(site), `Road-To-1-1.md does not name the retired flag ${site}`);
   }
@@ -566,7 +566,7 @@ const SOURCE_CITES = [
   // the line goes red at the citation instead of at a reader.
   ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
     EX, /createChargenFlow\(fetchBytes\)\.then/],
-  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:4084\)/,
+  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:4129\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
   ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:\d+/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
@@ -648,9 +648,9 @@ const SOURCE_CITES = [
   ['src/systems/equip.js', /systems\/startingGear\.js:(\d+) assignStartingGear/,
     'src/systems/startingGear.js', /^export function assignStartingGear\(/],
   ['src/systems/equip.js', /chargenSession\.js:(\d+) \(\?class= headless\)/,
-    'src/systems/chargenSession.js', /^ {2}assignStartingGear\(playerEntity, \{ classIndex \}\);$/],
+    'src/systems/chargenSession.js', /^ {2}assignStartingEquipment\(playerEntity, \{ classIndex \}\);$/],   // RRI (main): the kit's delegate, which runs assignStartingGear unless a mod's assigner answers
   ['src/systems/equip.js', /\(\?class= headless\) and :(\d+) \(the wizard\)/,
-    'src/systems/chargenSession.js', /assignStartingGear\(playerEntity, \{ classIndex: result\.careerIndex/],
+    'src/systems/chargenSession.js', /assignStartingEquipment\(playerEntity, \{ classIndex: result\.careerIndex/],
   ['src/systems/equip.js', /host calls \(world\.js:(\d+), exterior\.js:\d+\)/,
     WO, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
   ['src/systems/startingGear.js', /\/\/ \(equip\.js:(\d+)\), which survives/,
@@ -678,10 +678,10 @@ const SOURCE_CITES = [
   // to a comment in input.js's header (525) while the Rest arm moved to 813.
   ['src/ui/restWindow.js', /exterior\.js:\d+, ui\/input\.js:(\d+)\)/,
     'src/ui/input.js', /case 'Rest': ctx\.toggleRest\?\.\(\); return true;/],
-  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:1430/, EX, /playerTicker\.advance\(60\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:3709/,
+  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:1442/, EX, /playerTicker\.advance\(60\);/],
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:3734/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:3709/,
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:3734/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
   ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-\d+/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
@@ -692,16 +692,16 @@ const SOURCE_CITES = [
   ['test/roade_up_seam.test.js', /exterior\.js:\d+\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
-  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:1426`/, EX, /playerTicker\.advance\(60\);/],
+  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:1438`/, EX, /playerTicker\.advance\(60\);/],
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:6753` for a line
-  // that is 5921, `world.js:12023` for 8836, `interior.js:315` for 329,
-  // `dungeon.js:935` for 959). Every one is captured now, against the
+  // four of the five had been stale for waves (`worldModes.js:6804` for a line
+  // that is 5921, `world.js:12069` for 8836, `interior.js:319` for 329,
+  // `dungeon.js:939` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:\d+`, `dungeon\.js:(\d+)`/, 'src/scenes/dungeon.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],
@@ -722,7 +722,7 @@ const SOURCE_CITES = [
   // PAIRS never checked. Five Ledger rows cite `world.js:N`, `exterior.js:M`
   // and this table captured M alone - so M was resolved at every wave and N
   // was never read at all. All five N's were stale by thousands of lines
-  // (`world.js:5696` for a line that is 8950; `:878` for 1215; `:1762` for
+  // (`world.js:5741` for a line that is 8950; `:890` for 1215; `:1775` for
   // 2194; `:3903` for 3066; `:3920` for 8907), and citeMerge rewrote one of
   // them INSIDE THE PICK REGEX at the QS6 merge - which is WM3's hazard
   // exactly: a literal in the pick decides whether the entry matches at all,
@@ -760,7 +760,7 @@ const SOURCE_CITES = [
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
   // exactly the defect this file exists to catch - the leading number
   // was re-resolved and the trailing one left where it was, leaving a
-  // range that cannot exist (`exterior.js:1701-1366`).
+  // range that cannot exist (`exterior.js:1716-1381`).
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-\d+` build `createDetectFeed`/,
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` build `createDetectFeed`/,
@@ -974,8 +974,8 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:811-721`, `world.js:8298-8272`,
-// `worldModes.js:1274 against :1070`. Forty of them came out as ranges
+// multi-number citation: `cityGuards.js:811-721`, `world.js:8343-8317`,
+// `worldModes.js:1280 against :1076`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //

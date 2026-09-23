@@ -30,7 +30,7 @@ import { liveStat } from './statMods.js';   // wave 28: MaxMagicka reads LiveInt
 // arithmetic (statUp clamped at MAX_STAT_VALUE, statDown floored at
 // the rolled value, skillUp/skillDown per group pool - StatsRollout /
 // SkillsRollout), spent per spinner at :1147 spendStat and :1173
-// spendSkill, and chargenSession.js:249 finishChargen hands the
+// spendSkill, and chargenSession.js:252 finishChargen hands the
 // hand-distributed result to applyCharacter. The headless policy
 // below (one point at a time into the LOWEST of the eligible set,
 // pool exhausted so the character stays classic-legal) survives only
@@ -148,6 +148,18 @@ export function healOtherSpell(spellsByIndex) {
  *  the loaded SPELLS.STD map; missing records skip loudly (the
  *  source's own error path). HEAL1: a Healer also knows the touch
  *  version of its Balm. */
+// ---- StartGameBehaviour.AssignStartingSpells, the delegate (:87, :116) ----
+/** `public PlayerStartingSpells AssignStartingSpells { get; set; }`,
+ *  defaulted to SetStartingSpells and reassigned by a mod (Roleplay &
+ *  Realism: Items' AssignSkillSpellbook, under skillBasedStartingSpells).
+ *  A registered assigner answers the list from the CAREER (its skills),
+ *  or null to let SetStartingSpells' set answer. */
+let _spellsAssigner = null;
+export function setStartingSpellsAssigner(fn) { _spellsAssigner = typeof fn === 'function' ? fn : null; }
+export function assignStartingSpells(careerIndex, spellsByIndex, career = null) {
+  return _spellsAssigner?.(career, spellsByIndex) ?? startingSpells(careerIndex, spellsByIndex);
+}
+
 export function startingSpells(careerIndex, spellsByIndex) {
   const set = STARTING_SPELL_SETS[careerIndex];
   if (!set || !spellsByIndex) return [];
@@ -193,7 +205,7 @@ export function hitPointsPerLevelUp(career, endurance, rolls = Math.random) {
  *  the eligible set. The chargen UI replaced it on the shipping
  *  creation path (ui/chargen.js spendStat/spendSkill), so what is
  *  left is a documented fallback, and every caller is a degraded or
- *  headless path: the ?class= wizard skip (chargenSession.js:117
+ *  headless path: the ?class= wizard skip (chargenSession.js:118
  *  applyHeadlessChargen), the no-FONT-art escapes in
  *  scenes/dungeonContext.js (:1705 chargenInputFallback, :4162 and
  *  :4172 the font-less level-up, each console.warn'd first), and

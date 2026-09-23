@@ -200,7 +200,7 @@ test('AUDIT 39 #82: the biography lands BEFORE the starting kit', () => {
   // builds its own kit and has always run in DFU's order)
   const src = read('src/systems/chargenSession.js');
   const seam = src.slice(src.indexOf('export function applyCreationExtras'));
-  assert.ok(seam.indexOf('applyBiographyEffects(playerEntity') < seam.indexOf('assignStartingGear(playerEntity'),
+  assert.ok(seam.indexOf('applyBiographyEffects(playerEntity') < seam.indexOf('assignStartingEquipment(playerEntity'),
     'ApplyEffects then AssignStartingEquipment, StartGameBehaviour.cs:415-419');
   assert.ok(seam.indexOf('attachFactionRep(playerEntity') < seam.indexOf('bootstrapRegionPower(playerEntity.factionRep'),
     'and the store exists before InitializeRegionData walks it');

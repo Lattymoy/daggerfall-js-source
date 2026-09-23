@@ -20,6 +20,7 @@ import { restartHeldEnchantments } from './enchantments.js';   // E2: the held b
 import { snapshotWeather, restoreWeather, rollClimateWeathersForDay } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host; AUDIT WORLD5 C4: the shared day's sky over a loaded one
 import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';   // S42: the CONDITION half of RegionDataRecord
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
+import { getWorldVariationSaveData, restoreWorldVariationData, clearWorldDataVariants } from './worldDataVariants.js';   // RR3b: the world-data variants ride the save
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
@@ -162,9 +163,9 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  Masque of Clavicus buffed five social groups instead of eleven for
  *  the life of that character. Dropping the member costs nothing:
  *  enchantmentMagicRound clears the player's array at the head of
- *  every magic round (enchantments.js:841, DFU's ClearReactionMods at
+ *  every magic round (enchantments.js:842, DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
- *  pass, off worldTick.js:325 - so a load lands DFU's own shape, the
+ *  pass, off worldTick.js:332 - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives
  *  them eleven wide. An older snapshot's key is simply ignored (the
  *  restore loop skips what REP_ARRAYS does not name), so the envelope
@@ -326,7 +327,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // back out UNCHANGED beside them. Without this the holding in
   // `restorePlayer` would only postpone the loss by one save.
   snap.spells = [
-    ...(entity.spells ?? []).map((sp) => (sp?.custom ? JSON.parse(JSON.stringify(sp)) : sp.index)),
+    ...(entity.spells ?? []).map((sp) => ((sp?.custom || sp?.rri) ? JSON.parse(JSON.stringify(sp)) : sp.index)),   // AUDIT-RR F9: a mod's spell (RRI's nine, past SPELLS.STD) is serialised whole, as DFU serialises every EffectBundleSettings - an index no file answers would be held forever
     ...(entity.spellsPending ?? []),
   ];
   // E2: ITEM-PINNED entries (held enchantments) are NOT serialized -
@@ -418,6 +419,8 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // DFU serialises it in SaveData_v1). Module-level world state, so
   // the snapshot reads the store, not the entity.
   snap.discovery = snapshotDiscovery();
+  // RR3b: WorldDataVariants.GetWorldVariationSaveData (SaveLoadManager.cs:1125) - the variants a quest set
+  snap.worldVariation = getWorldVariationSaveData();
   // A1: the automap dungeon-discovery dictionary (Automap.GetState -
   // DFU serialises it in SaveData_v1's sceneCache). Module-level
   // world state beside the discovery store; the snapshot itself runs
@@ -793,6 +796,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);
+  // RR3b: WorldDataVariants.RestoreWorldVariationData (SaveLoadManager.cs:1465-1466); a save without the field restores nothing, as the C#'s null does
+  clearWorldDataVariants();
+  restoreWorldVariationData(snap.worldVariation ?? null);
   // A1: a load replaces the automap store too; a pre-A1 save carries
   // no field and the store is LEFT ALONE (restoreAutomap's null arm,
   // SaveLoadManager.cs:1508-1509 - AUDIT-AMAP F10 fixed this comment).

@@ -16,14 +16,15 @@
 //     slots match the role per the approved engine-PRNG stance
 // MI (magic items) rolls need the MAGIC.DEF registry
 // (setMagicItemTemplates), and EVERY host that can generate loot now
-// loads it: scenes/shared.js:114-117 (loadMagicRegistries) feeds the
-// module table this file reads, called from dungeonContext.js:1182,
-// world.js:3044 and exterior.js:1266 - interiors run inside those hosts
+// loads it: scenes/shared.js:120-123 (loadMagicRegistries) feeds the
+// module table this file reads, called from dungeonContext.js:1255,
+// world.js:3074 and exterior.js:1281 - interiors run inside those hosts
 // and read the same table. What is left is the data-absent boot, and
-// that is DFU's own answer rather than a stand-in: shared.js:122
+// that is DFU's own answer rather than a stand-in: shared.js:134
 // records it, the category simply stays empty.
 
 import { randomMaterial, randomArmorMaterial, createWeapon, WEAPONS_ENUM, ARMOR_ENUM } from '../combat/enemyEquipment.js';
+import { customItemsForGroup } from './rriItems.js';   // RRI1: CreateRandomWeapon/Armor roll over the classic slots PLUS the registered custom items (ItemBuilder.cs:382-390, :451-459)
 import { ARROW_TEMPLATE } from './inventory.js';   // X11b: CreateWeapon's arrow arm keys on it
 import { dice100 } from '../combat/formulas.js';
 import { goldStack } from './inventory.js';
@@ -35,6 +36,7 @@ import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRa
 import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from './potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
 import { themedIngredientPool } from './lootThemes.js';   // MOD: a monster's CreatureIngredients roll draws from ITS OWN curated subset, not the full mismatched pool
+import { rriLootMatrix, rriEnemyLootTableKey, conditionBasedPricesOn, randomConditionLootItems } from './rriRealism.js';   // RRI2: LootRealismTables over DefaultLootTables, MobLootKeys over the basics' key, the condition roll on tabled loot
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
@@ -99,7 +101,9 @@ const ARMOR_PIECES = Object.values(ARMOR_ENUM);   // 11 pieces incl shields
 /** ItemBuilder.CreateRandomWeapon: uniform over the 19 weapon slots;
  *  slot 18 is arrows - stack Range(1, 21), material 0. */
 export function createRandomWeapon(playerLevel, rolls = Math.random) {
-  const groupIndex = Math.floor(rolls() * 19);
+  const customs = customItemsForGroup('Weapons');   // RRI1: `Range(0, enumArray.Length + customItemTemplates.Length)`
+  const groupIndex = Math.floor(rolls() * (19 + customs.length));
+  if (groupIndex >= 19) return { group: 'Weapons', ...createWeapon(customs[groupIndex - 19], randomMaterial(playerLevel, rolls)) };
   // AUDIT 24 systems: the arrow branch makes THREE writes
   // (ItemBuilder.cs:395-398) - the stack, `currentCondition = 0`
   // ("not sure if this is necessary, but classic does it") and
@@ -121,8 +125,12 @@ export function createRandomWeapon(playerLevel, rolls = Math.random) {
 /** ItemBuilder.CreateRandomArmor: uniform over the 11 armor pieces
  *  (shields included) + RandomArmorMaterial. */
 export function createRandomArmor(playerLevel, rolls = Math.random) {
-  const piece = ARMOR_PIECES[Math.floor(rolls() * ARMOR_PIECES.length)];
-  return { group: 'Armor', templateIndex: piece, material: randomArmorMaterial(playerLevel, rolls) };
+  const customs = customItemsForGroup('Armor');   // RRI1: the registered custom armor rides the same roll
+  const i = Math.floor(rolls() * (ARMOR_PIECES.length + customs.length));
+  const piece = i < ARMOR_PIECES.length ? ARMOR_PIECES[i] : customs[i - ARMOR_PIECES.length];
+  // AUDIT-RR F6: the class ctor names the item from its template BEFORE SetVariant prefixes it (ItemJerkin.cs:29-46), and
+  // ApplyArmorMaterial prices it before the fold - both are SetItem's own order, so the mint goes through it
+  return setItemFields({ group: 'Armor', templateIndex: piece, material: randomArmorMaterial(playerLevel, rolls) });
 }
 
 const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
@@ -280,7 +288,7 @@ export function createRegularMagicItem(templates, playerLevel, gender, rolls = M
   // G4: THE VALUE IS OVERWRITTEN (:632). The gap that stood here from
   // S4c - the enchantment cost sum unported, so a magic item sold at
   // its mundane base - closed with M4's catalogue: the sum is
-  // legacyEnchantmentValue (enchantments.js:222-240) and it is called
+  // legacyEnchantmentValue (enchantments.js:223-241) and it is called
   // on the `value:` line below. `newItem.value = value` REPLACES
   // whatever the base item was
   // worth, so a daedric longsword and a leather boot with the same
@@ -573,9 +581,14 @@ export function validLootList(v) {
 }
 
 export function generateItems(lootTableKey, who, rolls = Math.random, opts = {}) {
-  const matrix = LOOT_MATRICES[lootTableKey] ?? LOOT_MATRICES['-'];
+  // RRI2: `LootTables.DefaultLootTables = LootRealismTables` (RoleplayRealismItemsMod.cs:87) - the whole matrix, while lootRebalance is on
+  const matrix = rriLootMatrix(lootTableKey) ?? LOOT_MATRICES[lootTableKey] ?? LOOT_MATRICES['-'];
   return generateRandomLoot(matrix, who, rolls, opts);
 }
+/** RRI2: the key a mobile rolls with - the basics row's, or the mod's
+ *  MobLootKeys row for it (`EnemyBasics.Enemies[id].LootTableKey = ...`,
+ *  RoleplayRealismItemsMod.cs:79-84) while lootRebalance is on. */
+export const enemyLootTableKey = (mobileType, key) => rriEnemyLootTableKey(mobileType, key);
 
 // ---- The three rolls nobody ran (AUDIT 24, wave 43) ----------------
 // SetEnemyCareer does not stop at the loot table. EnemyEntity.cs:388-397:
@@ -723,6 +736,10 @@ export function addPileLootExtras(items, lootTableKey, rolls = Math.random) {
   randomlyAddMap(PILE_MAP_CHANCES[alphabetIndex - 10], items, rolls);
   randomlyAddPotion(4, items, rolls);
   randomlyAddPotionRecipe(2, items, rolls);
+  // RRI2: LootTables.OnLootSpawned (:163) fires here, after the tail - the
+  // mod's RandomConditionLootItems (RoleplayRealismItemsMod.cs:227-245)
+  // wears a pile's armor, weapons and books to 20-75% under conditionBasedPrices
+  if (conditionBasedPricesOn()) randomConditionLootItems(items, rolls);
   return items;
 }
 

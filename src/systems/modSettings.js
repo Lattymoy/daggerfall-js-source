@@ -205,6 +205,104 @@ export const MOD_SETTINGS = Object.freeze({
   // the bundle's own order with the bundle's own defaults, ranges and
   // descriptions. The six keys the mod ships with no description carry
   // the port's words instead. Plus the port's `Enabled` (MO1: on).
+  // DW1: Diverse Weapons 1.7.3 (RealAKP) ships no settings of its own -
+  // its one script sets FPSWeapon.moddedWeaponHUDAnimsEnabled and stops
+  // (vendor/diverse-weapons/DiverseWeaponsMain.cs:37). `Enabled` IS that
+  // flag. The second key is the port's rendering of the mod's readme -
+  // "For Weapon Widget users, select Diverse Weapons settings preset in
+  // Weapon Widget mod options": the preset the bundle carries
+  // (vendor/diverse-weapons/weapon-widget-preset.json) is laid over the
+  // player's Weapon Widget settings while this is on, and their own
+  // values are untouched underneath, where DFU's preset picker would
+  // have overwritten them. Off by default, as a preset nobody has
+  // selected is; the readme says select it, so the switch says so too.
+  'diverse-weapons': Object.freeze({
+    title: 'Diverse Weapons',
+    author: 'RealAKP',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'RealAKP\u2019s Diverse Weapons 1.7.3: a first-person sprite set for every weapon, in every metal, plain and '
+          + 'enchanted, where the classic art has one per weapon class - a longsword no longer swings the broadsword\u2019s '
+          + 'sprite. The sprites ship with the port; a newer version\u2019s .dfmod attached through the textures pick wins over them.',
+      }),
+      WeaponWidgetPreset: Object.freeze({
+        default: false,
+        description: 'Use the mod\u2019s own Weapon Widget preset while this is on - double-scale idles, true texture size, inertia, '
+          + 'recoil and its bob - the settings its readme asks Weapon Widget users to select. Your own Weapon Widget '
+          + 'settings are kept underneath and come back when this is off.',
+      }),
+    }),
+  }),
+  // RRI1: Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar) - eleven
+  // modules, each a bool in the mod's [Modules] section, the mod's own
+  // words. `Enabled` is the mod being loaded at all: the fourteen custom
+  // items and the twenty template patches ride it.
+  'roleplay-realism-items': Object.freeze({
+    title: 'Roleplay & Realism: Items',
+    author: 'Hazelnut & Ralzar',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Hazelnut and Ralzar\u2019s Roleplay & Realism: Items 1.3, 1:1: two new weapons and a light and a medium armor set '
+          + 'in every metal, and the mod\u2019s changes to what items weigh and cost. Its modules below are the mod\u2019s own switches.',
+      }),
+      lootRebalance: Object.freeze({ default: true, description: 'Rebalances loot on mobs and in piles' }),
+      bandaging: Object.freeze({ default: true, description: 'Allows bandages to stack, and to be used for healing based on medical skill' }),
+      conditionBasedPrices: Object.freeze({ default: true, description: 'Item prices are based on condition and loot you find can be quite worn out' }),
+      storeQualityItemCondition: Object.freeze({ default: true, description: 'Items in shops can be in a used condition dependent on the quality of the store' }),
+      realisticEnemyEquipment: Object.freeze({ default: true, description: 'Enemy equipment is realistic for their class and can be variable condition' }),
+      skillBasedStartingEquipment: Object.freeze({ default: true, description: 'Player starting equipment is based on skills' }),
+      skillBasedStartingSpells: Object.freeze({ default: true, description: 'Player starting spells are based on skills' }),
+      weaponBalance: Object.freeze({ default: true, description: 'Balances weapon attack speed and damage ranges against weight to give more valid choices' }),
+      newWeapons: Object.freeze({ default: true, description: 'Adds two new weapons to the game, Archers Axe and Light Flail' }),
+      newArmor: Object.freeze({ default: true, description: 'Adds new chest, arm, leg and foot armor pieces to the game' }),
+      alchemistPotions: Object.freeze({ default: true, description: 'Adds random potions for sale at alchemist stores, for a premium price' }),
+    }),
+  }),
+  'roleplay-realism': Object.freeze({
+    title: 'Roleplay & Realism',
+    author: 'Hazelnut',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Hazelnut\u2019s Roleplay & Realism 1.8, 1:1: bows by their draw, no climbing with a weapon out, swing speed and material to-hit '
+          + 'moderated, armor worn by the blow, bank loans by level, ships from ports only, an encumbrance penalty, lights doused leaving a dungeon, '
+          + 'purification that cures poison, class enemies remixed, the underworld guilds expelling with prejudice, a bed you can click to sleep in. '
+          + 'The modules below are the mod\u2019s own switches.',
+      }),
+      // the mod's own descriptions (modsettings.json, Modules)
+      bedSleeping: Object.freeze({ default: true, description: 'Allows sleep to be initiated by clicking on a bed.' }),
+      advancedArchery: Object.freeze({ default: true, description: 'Alters to-hit and damage done by arrows depending on the length of draw.' }),
+      encumbranceEffects: Object.freeze({ default: true, description: 'Provides speed and fatigue penalties when carrying too much weight.' }),
+      bandaging: Object.freeze({ default: true, description: 'Allows bandages to be used for healing based on medical skill.' }),
+      shipPorts: Object.freeze({ default: true, description: 'Player can only board their ship when in a port town.' }),
+      underworldExpulsion: Object.freeze({ default: true, description: 'Enables underworld guilds to expel members for poor performance.. with prejudice.' }),
+      climbingRestriction: Object.freeze({ default: true, description: 'Prevents climbing with a weapon drawn.' }),
+      weaponSpeed: Object.freeze({ default: true, description: 'Moderates DPS of weapons for characters with high speed attributes.' }),
+      weaponMaterials: Object.freeze({ default: true, description: 'Moderates the to-hit bonuses of weapon materials so skill remains key factor' }),
+      equipDamage: Object.freeze({ default: true, description: 'Increases equipment damage proportional to max condition.' }),
+      enemyAppearance: Object.freeze({ default: true, description: 'Remixes human enemy appearance based on class' }),
+      purificationPotion: Object.freeze({ default: true, description: 'Changes purification potion to cure poison rather than grant invisibility' }),
+      autoExtinguishLight: Object.freeze({ default: true, description: 'Automatically extinguish any light sources when you exit a dungeon' }),
+      classicStrengthDamageBonus: Object.freeze({ default: false, description: 'Display the strength damage bonus like classic Daggerfall (half) rather than the value used internally that DFU displays' }),
+      variantNpcs: Object.freeze({ default: true, description: 'Enable variant NPC sprites in shops & taverns' }),
+      variantResidents: Object.freeze({ default: true, description: 'This populates 80% of houses with the townsfolk you see walking around insteam of random adventurer flats' }),
+      fightersTeachHandToHand: Object.freeze({ default: false, description: 'Enable this module to replace Giantish with Hand 2 Hand for training and guild ranks. (Not compatible with other mods that change Fighters Guild)' }),
+      loanAmountPerLevel: Object.freeze({ default: 4, options: Object.freeze(['2000', '4000', '6000', '8000', '10000', '20000', '30000', '40000', '50000']), description: 'Sets the maximum amount per level that can be borrowed from banks' }),
+      // EnhancedRiding (RR2)
+      'EnhancedRiding.enhancedRiding': Object.freeze({ default: true, description: 'Enable enhanced horse riding module, improving presentation and allowing galloping.' }),
+      'EnhancedRiding.RealisticMovement': Object.freeze({ default: true, description: 'Makes the horse and cart movement backwards and sideways more realistic and limited.' }),
+      'EnhancedRiding.followTerrainEnabled': Object.freeze({ default: true, description: 'Enables terrain following when riding.' }),
+      'EnhancedRiding.followTerrainSoftenFactor': Object.freeze({ default: 8, min: 0, max: 32, description: 'Scale factor to soften terrain gradient following. (0=none, 32=max soften)' }),
+      'EnhancedRiding.GallopingInTowns': Object.freeze({ default: false, description: 'Enables galloping (sprinting) while riding horses in towns.' }),
+      'EnhancedRiding.TrampleCivilians': Object.freeze({ default: true, description: 'Enables the crime of trampling innocent townsfolk when galloping in a town. Be careful!' }),
+      // RefinedTraining (RR2)
+      'RefinedTraining.refinedTraining': Object.freeze({ default: true, description: 'Enable refined skill training service.' }),
+      'RefinedTraining.variableTrainingPrice': Object.freeze({ default: true, description: 'Makes price of training based on skill level as well as player level.' }),
+      'RefinedTraining.intensiveTraining': Object.freeze({ default: false, description: 'Enables intensive training option for a session per day for five days, for extra cost.' }),
+    }),
+  }),
   'shield-widget': Object.freeze({
     title: 'Shield Widget',
     author: 'RedRoryOTheGlen',
@@ -1013,6 +1111,37 @@ export function setModSetting(vendor, key, value) {
   (m[vendor] ??= {})[key] = v;
   save();
   return v;
+}
+
+/**
+ * DW1: A DFU ModSettings PRESET, flattened to this store's keys.
+ *
+ * A mod's presets ship as `{ Values: { Section: { Key: "string" } } }`
+ * (ModSettingsData.cs's Preset, every value a string - "True", "142",
+ * "1"), and a preset one mod ships FOR ANOTHER mod's settings is the
+ * same shape under the other mod's sections. This turns one into the
+ * `Section.Key` map this store speaks, each value coerced by the
+ * DECLARED key's kind, and drops any key the vendor does not declare
+ * rather than inventing a switch. `presetKeys` the other way round, for
+ * a caller that wants to know what a preset would touch.
+ */
+export function flattenModPreset(vendor, values) {
+  const keys = MOD_SETTINGS[vendor]?.keys;
+  if (!keys || !values || typeof values !== 'object') return Object.freeze({});
+  const out = {};
+  for (const [section, entries] of Object.entries(values)) {
+    if (!entries || typeof entries !== 'object') continue;
+    for (const [key, raw] of Object.entries(entries)) {
+      const name = `${section}.${key}`;
+      const def = keys[name];
+      if (!def) continue;
+      // DFU writes booleans as "True"/"False"; `coerce`'s boolean arm is
+      // `!!v`, which would read the string "False" as on.
+      const v = (typeof raw === 'string' && /^(true|false)$/i.test(raw.trim())) ? /^true$/i.test(raw.trim()) : raw;
+      out[name] = coerce(def, v);
+    }
+  }
+  return Object.freeze(out);
 }
 
 /** For tests: forget everything. */

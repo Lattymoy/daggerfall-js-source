@@ -32,6 +32,19 @@ export const MOVE_ACCELERATION_CONST = 9.8;
 
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 
+// RR2: InputManager's NegVerticalLimit / NegHorizontalLimit /
+// PosHorizontalLimit (:130-134 of EnhancedRiding.cs set them while
+// riding) - the axes are clamped to them after the frame's forces. A
+// registered provider answers { negVertical, negHorizontal, posHorizontal }
+// each frame, or null for 1 / 1 / 1.
+let _limits = null;
+export function setAxisLimitsProvider(fn) { _limits = typeof fn === 'function' ? fn : null; }
+const clampAxes = (axes) => {
+  const l = _limits?.();
+  if (!l) return axes;
+  return { forward: clamp(axes.forward, -(l.negVertical ?? 1), 1), strafe: clamp(axes.strafe, -(l.negHorizontal ?? 1), l.posHorizontal ?? 1) };
+};
+
 export class MoveAxes {
   constructor() {
     this.horizontal = 0;   // strafe: right +, left -
@@ -73,7 +86,7 @@ export class MoveAxes {
       this.vertical = ay !== 0 ? ay : (held.forwards || held.backwards)
         ? ((held.forwards ? 1 : 0) - (held.backwards ? 1 : 0))
         : (held.autorun ? 1 : 0);
-      return { forward: this.vertical, strafe: this.horizontal };
+      return clampAxes({ forward: this.vertical, strafe: this.horizontal });   // RR2: InputManager's limits
     }
     let posH = false, negH = false, posV = false, negV = false;
     const force = (axis, scale) => clamp(axis + (MOVE_ACCELERATION_CONST * scale) * dt, -1, 1);
@@ -111,6 +124,6 @@ export class MoveAxes {
     if (!negV && this.vertical < 0) this.vertical = clamp(this.vertical + step, this.vertical, 0);
     if (!posH && this.horizontal > 0) this.horizontal = clamp(this.horizontal - step, 0, this.horizontal);
     if (!negH && this.horizontal < 0) this.horizontal = clamp(this.horizontal + step, this.horizontal, 0);
-    return { forward: this.vertical, strafe: this.horizontal };
+    return clampAxes({ forward: this.vertical, strafe: this.horizontal });   // RR2: InputManager's limits
   }
 }

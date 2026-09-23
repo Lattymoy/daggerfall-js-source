@@ -9,7 +9,7 @@
 // characters/playerEntity.js:5). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:170/:1295-1297 both import and run
+// 126/:1364-1366 and exterior.js:179/:1310-1312 both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -22,11 +22,11 @@ import { ClassFile } from '../formats/classFile.js';
 import { TextRsc } from '../formats/textRsc.js';   // U18: the class questions ride TEXT.RSC 9000
 import { parseQuestionLibrary } from './classQuestions.js';   // U18
 import { ChargenFlow } from '../ui/chargen.js';
-import { applyCharacter, createCharacter, startingSpells, CLASS_CAREERS } from './chargen.js';
+import { applyCharacter, createCharacter, assignStartingSpells, CLASS_CAREERS } from './chargen.js';   // RRI2: AssignStartingSpells, the delegate
 import { levelUpSkillSum } from './advancement.js';   // AUDIT 18: SetCurrentLevelUpSkillSum, one home
 import { overlayAction } from '../ui/input.js';
 import { isEnhanced } from './uiSkin.js';   // THE SKIN: which wizard
-import { assignStartingGear } from './startingGear.js';   // S3d
+import { assignStartingEquipment } from './startingGear.js';   // S3d; RRI2: AssignStartingEquipment, the delegate
 import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // wave 28: CharacterDocument's 7-part table
 import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
@@ -35,6 +35,7 @@ import { customSpellSetIndex } from './customClass.js';   // U20a
 import { SOCIAL_GROUP_COUNT, FactionFile } from '../formats/factionFile.js';   // U20a + S25
 import { attachFactionRep } from './factionRep.js';   // S25
 import { createRegionConditions } from './regionConditions.js';
+import { clearWorldDataVariants } from './worldDataVariants.js';   // AUDIT-RR F39: PlayerEntity.Reset (:818) clears the world variants at every new game
 import { bootstrapRegionPower } from './regionPower.js';   // AUDIT 26 F107   // PlayerEntity.InitializeRegionData (:2189-2218), at every new game
 // ORL1: the leveling choice - its screen, and the two names the
 // answer is spelled with.
@@ -118,7 +119,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   const cf = new ClassFile();
   cf.load(await fetchBytes(`CLASS${String(classIndex).padStart(2, '0')}.CFG`));
   createCharacter(playerEntity, cf.career, classIndex);
-  playerEntity.spells = startingSpells(classIndex, spellsByIndex);
+  playerEntity.spells = assignStartingSpells(classIndex, spellsByIndex, cf.career);
   // S3d: the same kit every other creation path gets
   playerEntity.items = [];
   playerEntity.equip = null;
@@ -128,7 +129,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:264) early-returns for a
+  // updateEquippedArmorValues (equip.js:269) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -137,7 +138,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // in DFU and 30+0-50 = -20 in the port, clamped to the 3% floor.
   // Enemies essentially could not hit a new character.
   playerEntity.armorValues = new Array(NUMBER_BODY_PARTS).fill(100);
-  assignStartingGear(playerEntity, { classIndex });
+  assignStartingEquipment(playerEntity, { classIndex });
   // AUDIT 20 / THE ONE CONSTRUCTION SEAM, again. This path is a SECOND
   // copy of the construction - it hand-rolls the kit rather than going
   // through applyCreationExtras - and so it silently missed the faction
@@ -148,6 +149,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // StartGameBehaviour.cs:433 InitializeRegionData - the same store the
   // wizard's path mints, on the second construction copy above.
   playerEntity.regionConditions = createRegionConditions();
+  clearWorldDataVariants();   // AUDIT-RR F39: PlayerEntity.Reset (:818) - a new game starts with no variant set
   // AUDIT 26 F107: InitializeRegionData's own tail (:2211-2217).
   bootstrapRegionPower(playerEntity.factionRep, { regionConditions: playerEntity.regionConditions });
   // ORL1: THE SKIP IS NOT A CHOICE, so it takes the port's own law.
@@ -184,7 +186,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
 export function applyCreationExtras(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) {
   if (spellsByIndex) {
     const setIndex = result.isCustom ? customSpellSetIndex(result.career) : result.careerIndex;
-    playerEntity.spells = setIndex == null ? [] : startingSpells(setIndex, spellsByIndex);
+    playerEntity.spells = setIndex == null ? [] : assignStartingSpells(setIndex, spellsByIndex, result.career);
   }
   playerEntity.items = [];
   playerEntity.equip = null;
@@ -194,7 +196,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:264) early-returns for a
+  // updateEquippedArmorValues (equip.js:269) early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -228,7 +230,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // was then thrown away, since attachFactionRep rebuilds fresh
   // records out of the dictionary.
   if (result.factionDict) attachFactionRep(playerEntity, result.factionDict);
-  assignStartingGear(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
+  assignStartingEquipment(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
   // StartGameBehaviour.cs:432-433 "Initialize region data" ->
   // PlayerEntity.InitializeRegionData (:2189-2218): every new character
   // is born with the 62-region condition store, so the writers that
@@ -239,6 +241,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // recorded a blank store. Nothing in the mint reads the character,
   // so it sits with the rest of what creation hands out.
   playerEntity.regionConditions = createRegionConditions();
+  clearWorldDataVariants();   // AUDIT-RR F39: PlayerEntity.Reset (:818) - a new game starts with no variant set
   bootstrapRegionPower(playerEntity.factionRep, { regionConditions: playerEntity.regionConditions });   // AUDIT 26 F107: InitializeRegionData's tail (:2211-2217)
   return playerEntity;
 }
@@ -365,7 +368,7 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:3209, exterior.js:1351,
+  // through this function - world.js:3230, exterior.js:1366,
   // dungeonContext.js:2448 - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game
@@ -406,7 +409,7 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *
  * `isChoiceWindow` is a GETTER for the same reason: the wizard wants
  * raw key codes and the question wants the shared overlayAction names,
- * and the hosts read that flag at routing time (townTalk.js:425,
+ * and the hosts read that flag at routing time (townTalk.js:427,
  * worldModes.js's overlayIsNative), so one object can want both in
  * turn.
  *
@@ -517,9 +520,9 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1278-1289,
-    // the route itself :1287), dungeonContext.js through `overlayHover`
-    // (:6743), which dungeon.js:524 and worldModes.js:8803 both feed.
+    // exterior.js through `townTalk.hover` (townTalk.js:1280-1291,
+    // the route itself :1289), dungeonContext.js through `overlayHover`
+    // (:6743), which dungeon.js:528 and worldModes.js:8854 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

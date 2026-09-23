@@ -22,7 +22,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, encoding: 'utf8' })
+const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })   // RRI1: 13,000 tracked sprites outgrew the 1 MB default (ENOBUFS)
   .split('\n').filter(Boolean);
 
 /** Everything the port may ship out of public/, and WHY it is ours.
@@ -378,7 +378,7 @@ test('doctrine: nothing ships out of public/ or src/assets/ that is not provably
   // so bundled art has the same ownership check as public/". The
   // reverse read did; this one did not, so a NEW file bundled out of
   // src/assets needed no row at all and nobody would have noticed.
-  const unexplained = [...tracked('public'), ...tracked('src/assets')].filter((f) => !PUBLIC_ALLOWLIST.has(f));
+  const unexplained = [...tracked('public'), ...tracked('src/assets')].filter((f) => !PUBLIC_ALLOWLIST.has(f) && !bundleArt(f));   // DW2: a vendored bundle's art under public/ answers to its manifest (BUNDLE_ART below)
   assert.deepEqual(unexplained, [],
     'these files are tracked under public/ or src/assets/, which Vite copies into dist/ and\n'
     + 'deploy.yml uploads to GitHub Pages. Every one of them is PUBLISHED. If the pixels\n'
@@ -460,6 +460,25 @@ const BUNDLE_ART = new Map([
   ['vendor/shield-widget/Textures/',
     { manifest: 'vendor/shield-widget/shield-widget.dfmod.json',
       why: "THIRD-PARTY - Shield Widget 1.6 (RedRoryOTheGlen, animation art by WilhelmBlack); the mod's own first-person shield sprites - four shield shapes x twelve materials x three condition tiers x five animation frames - re-encoded from the bundle's Texture2D objects as indexed PNG (lossless for every drawn pixel; see the vendor README)" }],
+  // DW2 (2026-09-23, Mac: "this needs to be in the codebase, not an
+  // attachable file"): the 12,624 Diverse Weapons sprites. Under public/
+  // rather than vendor/ because that many files through the bundler's
+  // `new URL` glob is a 12,624-entry map in a chunk - public/ is served
+  // as it is - so the public sweep below accepts a derived row too. The
+  // same authority: the mod's own manifest names what may be here.
+  // RRI1: Roleplay & Realism: Items' 280 sprites, the same way and for the
+  // same reasons - the mod's own inventory and paper-doll art for items
+  // classic Daggerfall does not have (there is no ARENA2 original of a
+  // hauberk or an archer's axe).
+  ['public/art/roleplay-realism-items/',
+    { manifest: 'vendor/roleplay-realism-items/roleplay-realism-items.dfmod.json',
+      why: "THIRD-PARTY - Roleplay & Realism: Items 1.3 (Hazelnut & Ralzar); the mod's own inventory and paper-doll sprites for its fourteen custom items in every metal, and the helmet's masks - re-encoded from the bundle's Texture2D objects by tools/rriExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],
+  ['public/art/roleplay-realism/',
+    { manifest: 'vendor/roleplay-realism/roleplay-realism.dfmod.json',
+      why: "THIRD-PARTY - Roleplay & Realism 1.8 (Hazelnut); the mod's own seven variant shop and tavern keeper sprites (197_0-0 .. 197_6-0, the XML scale beside each under vendor/) and its seventeen BUTTONS.RCI records 21-37 (the training window's '5 Days' and the rest of its index) - the PNGs the mod ships in its Textures/ folder, byte for byte (see the vendor README)" }],
+  ['public/art/diverse-weapons/',
+    { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
+      why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],
 ]);
 /** The basenames each bundle manifest names, lowercased. Memoised: the
  *  membership test runs once per tracked raster and the manifest is
