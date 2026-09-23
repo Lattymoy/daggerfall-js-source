@@ -1,0 +1,30 @@
+[
+  {
+    "name": "PB-stride-in-the-wire-frame",
+    "file": "src/net/remotePlayers.js",
+    "old": "    const step = fm.update(f, { grounded: true,",
+    "new": "    const step = fm.update([shown.x, shown.y, shown.z], { grounded: true,",
+    "tests": [
+      "test/peerstride.test.js"
+    ]
+  },
+  {
+    "name": "PB-rebase-does-nothing",
+    "file": "src/net/remotePlayers.js",
+    "old": "    for (const fm of this._footsteps.values()) fm.rebase();",
+    "new": "    for (const fm of this._footsteps.values()) void fm;",
+    "tests": [
+      "test/peerstride.test.js",
+      "test/auditdrops.test.js"
+    ]
+  },
+  {
+    "name": "PB-recentre-forgets-the-peers",
+    "file": "src/scenes/world.js",
+    "old": "      remotePlayers?.rebaseFootsteps?.();   // PEER-BUZZ",
+    "new": "      // remotePlayers?.rebaseFootsteps?.();   // PEER-BUZZ",
+    "tests": [
+      "test/peerstride.test.js"
+    ]
+  }
+]

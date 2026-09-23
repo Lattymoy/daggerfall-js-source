@@ -11881,6 +11881,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // stillness gate's last-position (one false "moving" frame).
       footsteps.rebase();
       betterAmbience.rebase();   // BA1: the same anchor, the mod's own machine
+      remotePlayers?.rebaseFootsteps?.();   // PEER-BUZZ: and every peer's - their strides are measured in scene units now, so they recentre with the rest
       mwViewRebase(r.offset);   // EOTB-IL: FloatingOrigin.OnPositionUpdate - the sprite camera's smoothing follows the origin
       if (_lastPlayerPos) { _lastPlayerPos[0] += r.offset[0]; _lastPlayerPos[1] += r.offset[1]; _lastPlayerPos[2] += r.offset[2]; }
       // ONLINE1 (AUDIT ONLINE D5): the others' billboards were placed before this step from the old origin - they follow it, or every peer jumps a tile for one frame at each crossing

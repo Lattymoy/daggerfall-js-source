@@ -306,14 +306,15 @@ test('AUDIT DROPS E4: a BODY peer\'s stride machine and swing edge are swept whe
   assert.equal(played.filter((p) => p.clip === SOUND.SwingHighPitch).length, 0, 'a returning peer\'s first `an` is a sighting, not a swing');
 });
 
-test('AUDIT DROPS E5: the peer stride is measured in the WIRE\'s frame - a floating-origin shift of the scene point is not a step', () => {
+test('AUDIT DROPS E5, as PEER-BUZZ keeps it: the peer stride is measured in the SCENE\'s frame in scene units, and a floating-origin shift of the scene point is not a step because the recentre REBASES every peer machine (the wire\'s frame is forty scene units to one in the overworld - measured there, the stride fired forty-eight times a second)', () => {
   const { rp, played } = peerRig();
   const opts = { bodyHeight: () => 2, eye: [0, 1.7, 0] };
   let x = 0;
   for (let i = 0; i < 40 && !played.length; i++) { x += 0.6; rp.sync([body('bob-0001', x)], undefined, opts); }
   assert.ok(played.length >= 1, 'walking makes a step');
   const before = played.length;
-  const shifted = { bodyHeight: () => 2, eye: [x + 819.2, 1.7, 0] };   // the origin recentred: the scene point jumps (and the listener with it), the wire point does not
+  const shifted = { bodyHeight: () => 2, eye: [x + 819.2, 1.7, 0] };   // the origin recentred: the scene point jumps (and the listener with it)
+  rp.rebaseFootsteps();   // world.js's recentre block, the line beside footsteps.rebase()
   rp.sync([body('bob-0001', x)], (p) => [p.x + 819.2, p.y, p.z], shifted);
   rp.sync([body('bob-0001', x)], (p) => [p.x + 819.2, p.y, p.z], shifted);
   assert.equal(played.length, before, 'no step for a recentre');
