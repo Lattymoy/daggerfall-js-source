@@ -11,6 +11,9 @@ import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pack's switch
 import { openWodWorld, wodOn, wodLightColors } from '../world/worldOfDaggerfall.js';   // WOD2: World of Daggerfall's loader, one per page
 import { wodLightPosition, wodLightProperties } from '../world/wodLocationObjects.js';   // WOD2: the mod's own AddLight
+import { WodSpawner, WOD_LOOT_LOCATION_INDEX, WOD_LOOT_ALIGN } from '../world/wodSpawner.js';   // WOD3: LocationEnemySpawner
+import { alignBillboardToGround } from '../world/groundAlign.js';   // WOD3: SpawnLoot's drop
+import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive } from '../player/pointerLock.js';   // AUDIT-TO1 I2: the strip's click router wants the FREED cursor   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
@@ -192,7 +195,7 @@ import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, MOBILE_NPC_ACTIVATION_DISTAN
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's centred label, where PlayerActivate's refusals go
 import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk.js';   // GetRandomText(8999)
-import { spellRecordOfIndex } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry)
+import { spellRecordOfIndex, DUNGEON_LOOT_KEYS, generateItems as generateLootItems, addPileLootExtras } from '../systems/loot.js';   // QG1: CastSpellDo's classic-record read (the G4 registry); WOD3: LootTables.GenerateLoot for the camps' piles
 import { preloadCharSheetArt } from '../ui/charsheet.js';   // U8a. AUDIT 44 (a11): no LevelUpScreen here - a level-up opens the SHEET, and the skin fork behind charSheetDoor decides which face it wears.
 import { createCharSheetWindow, charSheetDoorReady, warmLevelUpWindow } from '../ui/charSheetDoor.js';
 import { announceLevelUp, levelOwed } from '../ui/levelNotice.js';   // LV2: the level-up notification, and the skin fork over whether the window opens itself   // U52: the sheet's ONE seam, and the skin fork in front of it
@@ -1017,6 +1020,72 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  materials AND the MeshCollider (:246-250) - a closed gate blocks -
    *  and then re-runs ApplyCurrentClimate, which is the remapSubMeshes
    *  pass both variants took at pixel build. */
+  // WOD3: LocationEnemySpawner.Start / Update for every marker standing,
+  // exterior frames only (inside, DFU's whole streamed world is
+  // inactive). What a marker answers is stood here: a foe through the
+  // exterior pool's own spawn - CreateFoeGameObjects' placement (the
+  // controller dropped to the ground within 3), a PLACED foe outside the
+  // encounter cap - a dropped-loot pile (GenerateLoot at dungeon type 3,
+  // the pile dropped to the ground within 2), or the captive's flat in
+  // the marker's place. Distances are PlayerMotor's (the capsule's
+  // centre) to the marker's centre.
+  const _wodT = [0, 0, 0];
+  const _DOWN = [0, -1, 0];
+  const tickWodSpawners = () => {
+    if (!wod) return;
+    const standing = walkMode && playerSpawned;
+    const feet = standing ? player.pos : cam.pos;
+    const cx = feet[0], cy = feet[1] + (standing ? player.height / 2 : 0), cz = feet[2];
+    for (const p of built.values()) {
+      if (!p.wodSpawners) continue;
+      const t = state.pixelTranslation(p.px, p.py, _wodT);
+      for (const w of p.wodSpawners) {
+        if (!w.spawner.active) continue;
+        const x = w.centre[0] + t[0], y = w.centre[1] + t[1], z = w.centre[2] + t[2];
+        const act = w.spawner.tick(Math.hypot(x - cx, y - cy, z - cz));
+        if (act) standWodAction(p, w, act, x, y, z);
+      }
+    }
+  };
+  const hitDistance = (hit) => (hit && Number.isFinite(hit.dist) ? hit.dist : null);
+  function standWodAction(p, w, act, x, y, z) {
+    const key = `${p.px},${p.py}`;
+    if (act.kind === 'foe') {
+      const hit = collider.surfaceHit([x, y + 0.2, z], _DOWN, 3);   // AlignControllerToGround's ray, cast the frame the foe is made
+      exteriorFoes.spawnFoe(act.mobileType, [x, y, z], { yaw: act.yawDeg * Math.PI / 180, gender: act.gender, allied: act.allied, placed: true, groundAlign: { hitDist: hitDistance(hit) } })
+        .then((f) => { if (f && !act.hostile && f.ai) f.ai.isHostile = false; })   // MobileReactions.Passive
+        .catch(() => {});
+      return;
+    }
+    if (act.kind === 'loot') {
+      const hit = collider.surfaceHit([x, y + 0.2, z], _DOWN, WOD_LOOT_ALIGN.distance);
+      const centreY = alignBillboardToGround(y, hitDistance(hit), WOD_LOOT_ALIGN.sizeY, WOD_LOOT_ALIGN.distance);
+      const lootKey = DUNGEON_LOOT_KEYS[WOD_LOOT_LOCATION_INDEX];
+      const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });
+      addPileLootExtras(items, lootKey);
+      rollLootRarity(items, pileSource(dungeonRarityTier(WOD_LOOT_LOCATION_INDEX)), { luck: liveStat(playerEntity, 'luck') });   // LR1: every list a host mints, at its source - GenerateLoot's dungeon type
+      getTexture(216).then((t) => {
+        if (built.get(key) !== p) return;   // the pixel went while the art loaded, and its terrain's children with it
+        const h = act.record < t.recordCount ? billboardSize(t, act.record).h : 0;
+        droppedLoot.seedPile(items, [x, centreY - h / 2, z], { archive: 216, record: act.record }, null, key);
+      }).catch(() => {});
+      return;
+    }
+    // the captive, the merchant or the prisoner, CENTRED where the marker
+    // stood (CreateDaggerfallBillboardGameObject, no AlignToBase), a plain
+    // flat of the pixel's own from here on
+    getTexture(act.archive).then((t) => {
+      if (built.get(key) !== p || act.record >= t.recordCount) return;
+      uploadRecord(act.archive, act.record);
+      const size = billboardSize(t, act.record);
+      const base = [w.centre[0], w.centre[1] - size.h / 2, w.centre[2]];
+      const batch = renderer.createBillboardBatch(act.archive, act.record, size, [base]);
+      batch._box = flatBatchAabb([base], size);
+      for (let i = 0; i < 3; i++) { p._box[i] = Math.min(p._box[i], batch._box[i]); p._box[3 + i] = Math.max(p._box[3 + i], batch._box[3 + i]); }
+      armFlatAnim(batch, t, act.archive, act.record, p.flatAnims, uploadRecordFrame);
+      p.batches.push(batch);
+    }).catch(() => {});
+  }
   const tickCityGates = (minute) => {
     const night = isNight(minute);
     for (const p of built.values()) {
@@ -1651,7 +1720,17 @@ export async function bootWorld(canvas, renderer, params, status) {
         const sound = ANIMAL_SOUND_BY_RECORD[f.record];
         if (sound != null) pixelAnimals.push({ pos: [f.base[0], f.base[1], f.base[2]], sound });
       }
-      wodSpawners = place.spawners;   // WOD3 stands the LocationEnemySpawners
+      // WOD3: every marker's LocationEnemySpawner, at the marker's CENTRE -
+      // the flat was AlignToBase'd, so its transform sits half a scaled
+      // height over its base - which is what Vector3.Distance measures.
+      if (place.spawners.length) {
+        wodSpawners = [];
+        for (const s of place.spawners) {
+          const t = await getTexture(s.archive);
+          const h = s.record < t.recordCount ? billboardSize(t, s.record).h : 0;
+          wodSpawners.push({ spawner: new WodSpawner(s), centre: [s.base[0], s.base[1] + (h * s.scaleY) / 2, s.base[2]] });
+        }
+      }
       const site = [...wodPicks].reverse().find((p) => p.flatten);
       if (site) wodSite = { xMin: site.rect.x, xMax: site.rect.x + site.rect.width, yMin: site.rect.y, yMax: site.rect.y + site.rect.height };
     }
@@ -3775,7 +3854,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:377-382) never looks the record up in `foes`, and
+    // (exteriorFoes.js:393-398) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1344-1358) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -12391,6 +12470,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // and the clock's answer.
     renderer.setWindowEmission(windowEmissionRGB(
       params.has('window') ? params.get('window') : windowStyleForTime(minute)));
+    tickWodSpawners();   // WOD3: LocationEnemySpawner.Update, every exterior frame
     tickCityGates(minute);   // AUDIT 64 F14: DaggerfallCityGate.Update, every frame as DFU's is - and on the first frame after a pixel builds, which is what closes a gate streamed in at 20:00
     const currentEntry = built.get(`${state.current.x},${state.current.y}`);
     // DaggerfallSky.cs:363-367 - a non-Normal WeatherStyle (every rain,

@@ -146,10 +146,10 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
    *  and the marker's own coordinates (DaggerfallInterior.cs:885-889)
    *  so a restore applies to the right container and an emptied one,
    *  absent from the cache, is simply rebuilt. */
-  function seedPile(items, feet, icon, key = null) {
+  function seedPile(items, feet, icon, key = null, pixelKey = null) {   // WOD3: a pixelKey, for a scene container parented to a TERRAIN (dies with its pixel)
     const pile = {
       id: ++_nextId, items: items ?? [], pos: [feet[0], feet[1], feet[2]],
-      archive: icon.archive, record: icon.record, batch: null, pixelKey: null,
+      archive: icon.archive, record: icon.record, batch: null, pixelKey,
       container: true, containerKey: key,
     };
     piles.push(pile);

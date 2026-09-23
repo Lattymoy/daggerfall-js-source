@@ -196,7 +196,7 @@ export class WodWorld {
         if (c.animal) out.animals.push(flat);
         for (const s of c.spawners) {
           out.spawners.push({
-            ...s, archive: c.archive, record: c.record, base: pos, treasure: c.treasure,
+            ...s, archive: c.archive, record: c.record, base: pos, scaleY: obj.scale.y, treasure: c.treasure,
             locationID: this.session.locationID[pick.index], objectID: obj.objectID,
           });
         }

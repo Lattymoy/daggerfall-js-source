@@ -1,0 +1,328 @@
+[
+  {
+    "name": "start-spares-a-marker-at-300",
+    "file": "src/world/wodSpawner.js",
+    "old": "if (dist <= WOD_STAND_DOWN_RADIUS)",
+    "new": "if (dist < WOD_STAND_DOWN_RADIUS)",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "update-misses-a-marker-at-100",
+    "file": "src/world/wodSpawner.js",
+    "old": "if (!(dist <= WOD_SPAWN_RADIUS)) return null;",
+    "new": "if (!(dist < WOD_SPAWN_RADIUS)) return null;",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "start-runs-every-frame",
+    "file": "src/world/wodSpawner.js",
+    "old": "      this.started = true;\n",
+    "new": "",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-thief-rolls-swap",
+    "file": "src/world/wodSpawner.js",
+    "old": "    const enemyType = rangeInt(1, 3, rolls);\n    const spawnTrue = rangeInt(1, 100, rolls);",
+    "new": "    const spawnTrue = rangeInt(1, 100, rolls);\n    const enemyType = rangeInt(1, 3, rolls);",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-barbarian-becomes-reachable",
+    "file": "src/world/wodSpawner.js",
+    "old": "const enemyType = rangeInt(1, 3, rolls);",
+    "new": "const enemyType = rangeInt(1, 4, rolls);",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-thieves-need-51",
+    "file": "src/world/wodSpawner.js",
+    "old": "if (!this.spawnFinished && spawnTrue >= 50) out = this._foe(THIEF_ARMS",
+    "new": "if (!this.spawnFinished && spawnTrue > 50) out = this._foe(THIEF_ARMS",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-bears-need-41",
+    "file": "src/world/wodSpawner.js",
+    "old": "spawnTrue >= 40",
+    "new": "spawnTrue > 40",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-healer-becomes-reachable",
+    "file": "src/world/wodSpawner.js",
+    "old": "const enemyType = rangeInt(1, 6, rolls);",
+    "new": "const enemyType = rangeInt(1, 7, rolls);",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-warriors-need-51",
+    "file": "src/world/wodSpawner.js",
+    "old": "if (!this.spawnFinished && spawnTrue >= 50) out = this._foe(WARRIOR_ARMS",
+    "new": "if (!this.spawnFinished && spawnTrue > 50) out = this._foe(WARRIOR_ARMS",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-gender-threshold-takes-its-edge",
+    "file": "src/world/wodSpawner.js",
+    "old": "rolls() < FOE_MALE_CHANCE",
+    "new": "rolls() <= FOE_MALE_CHANCE",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-facing-rolls-before-the-gender",
+    "file": "src/world/wodSpawner.js",
+    "old": "    const gender = rolls() < FOE_MALE_CHANCE ? 'male' : 'female';\n    const yawDeg = rangeInt(0, 180, rolls);",
+    "new": "    const yawDeg = rangeInt(0, 180, rolls);\n    const gender = rolls() < FOE_MALE_CHANCE ? 'male' : 'female';",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-good-thieves-are-not-allied",
+    "file": "src/world/wodSpawner.js",
+    "old": "allied: !hostile",
+    "new": "allied: false",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-good-bear-arm-spends-the-marker",
+    "file": "src/world/wodSpawner.js",
+    "old": "        if (this.enemyID === WOD_ENEMY_ID.Bandits) return this._thieves(rolls, false);\n        return null;",
+    "new": "        if (this.enemyID === WOD_ENEMY_ID.Bandits) return this._thieves(rolls, false);\n        this.active = false; return null;",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-bear-arm-runs-the-warriors",
+    "file": "src/world/wodSpawner.js",
+    "old": "if (this.enemyID === WOD_ENEMY_ID.Bears) return this._bears(rolls);",
+    "new": "if (this.enemyID === WOD_ENEMY_ID.Bears) return this._warriors(rolls);",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-loot-needs-under-50",
+    "file": "src/world/wodSpawner.js",
+    "old": "spawnTrue <= 50 ?",
+    "new": "spawnTrue < 50 ?",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-loot-record-loses-46",
+    "file": "src/world/wodSpawner.js",
+    "old": "record: rangeInt(0, 47, rolls)",
+    "new": "record: rangeInt(0, 46, rolls)",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-loot-marker-stays-live",
+    "file": "src/world/wodSpawner.js",
+    "old": "    const out = spawnTrue <= 50 ? { kind: 'loot', record: rangeInt(0, 47, rolls) } : null;\n    this.active = false;\n",
+    "new": "    const out = spawnTrue <= 50 ? { kind: 'loot', record: rangeInt(0, 47, rolls) } : null;\n",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-captive-band-takes-11",
+    "file": "src/world/wodSpawner.js",
+    "old": "if (spawnTrue < 11)",
+    "new": "if (spawnTrue <= 11)",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-merchant-band-takes-19",
+    "file": "src/world/wodSpawner.js",
+    "old": "if (spawnTrue > 19 && spawnTrue < 30)",
+    "new": "if (spawnTrue >= 19 && spawnTrue < 30)",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-quest-range-takes-40",
+    "file": "src/world/wodSpawner.js",
+    "old": "const spawnTrue = rangeInt(1, 40, rolls);",
+    "new": "const spawnTrue = rangeInt(1, 41, rolls);",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-quest-marker-stays-live",
+    "file": "src/world/wodSpawner.js",
+    "old": "record: 31 };\n    }\n    this.active = false;\n",
+    "new": "record: 31 };\n    }\n",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-pile-rolls-another-dungeon",
+    "file": "src/world/wodSpawner.js",
+    "old": "export const WOD_LOOT_LOCATION_INDEX = 3;",
+    "new": "export const WOD_LOOT_LOCATION_INDEX = 2;",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-spent-guard-goes",
+    "file": "src/world/wodSpawner.js",
+    "old": "if (!this.spawnFinished && spawnTrue >= 40)",
+    "new": "if (spawnTrue >= 40)",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ],
+    "equivalent": true,
+    "why": "spawnFinished only turns true in the same call that deactivates the marker, so no later call reaches the guard - the C#'s belt, ported as written"
+  },
+  {
+    "name": "the-billboard-lift-is-a-half",
+    "file": "src/world/groundAlign.js",
+    "old": "return centreY + 0.2 - hitDist + sizeY * 0.52;",
+    "new": "return centreY + 0.2 - hitDist + sizeY * 0.5;",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-billboard-ray-loses-its-end",
+    "file": "src/world/groundAlign.js",
+    "old": "if (hitDist == null || !(hitDist <= distance)) return centreY;\n  return centreY + 0.2 - hitDist + sizeY",
+    "new": "if (hitDist == null || !(hitDist < distance)) return centreY;\n  return centreY + 0.2 - hitDist + sizeY",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-billboard-reach-is-3",
+    "file": "src/world/groundAlign.js",
+    "old": "export function alignBillboardToGround(centreY, hitDist, sizeY, distance = 2)",
+    "new": "export function alignBillboardToGround(centreY, hitDist, sizeY, distance = 3)",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-controller-reach-is-2",
+    "file": "src/world/groundAlign.js",
+    "old": "export function alignControllerToGround(centreY, hitDist, controllerHeight, distance = 3)",
+    "new": "export function alignControllerToGround(centreY, hitDist, controllerHeight, distance = 2)",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-controller-lift-forgets-the-02",
+    "file": "src/world/groundAlign.js",
+    "old": "controllerHeight * 0.52",
+    "new": "controllerHeight * 0.5",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-host-measures-from-the-feet",
+    "file": "src/scenes/world.js",
+    "old": "const cx = feet[0], cy = feet[1] + (standing ? player.height / 2 : 0), cz = feet[2];",
+    "new": "const cx = feet[0], cy = feet[1], cz = feet[2];",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-marker-centre-ignores-its-scale",
+    "file": "src/scenes/world.js",
+    "old": "s.base[1] + (h * s.scaleY) / 2",
+    "new": "s.base[1] + h / 2",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-camp-foe-counts-against-the-cap",
+    "file": "src/scenes/world.js",
+    "old": "allied: act.allied, placed: true,",
+    "new": "allied: act.allied, placed: false,",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-pile-skips-the-ladder",
+    "file": "src/scenes/world.js",
+    "old": "      rollLootRarity(items, pileSource(dungeonRarityTier(WOD_LOOT_LOCATION_INDEX)), { luck: liveStat(playerEntity, 'luck') });",
+    "new": "",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-cap-counts-a-placed-foe",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "!f.dead && !f.puppet && !f.placed",
+    "new": "!f.dead && !f.puppet",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-aligned-foe-takes-the-walker-lift",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(feetGiven || groundAlign ? 0 : 0.1)",
+    "new": "(feetGiven ? 0 : 0.1)",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-drop-reads-the-player-capsule",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "alignControllerToGround(pos[1], groundAlign.hitDist, enemyControllerHeight(idleH, behaviour))",
+    "new": "alignControllerToGround(pos[1], groundAlign.hitDist, 1.8)",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  },
+  {
+    "name": "the-placed-foe-is-culled",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (!f.placed && _playerDist > ENCOUNTER_CULL_DISTANCE",
+    "new": "if (_playerDist > ENCOUNTER_CULL_DISTANCE",
+    "tests": [
+      "test/wod3_spawner.test.js"
+    ]
+  }
+]

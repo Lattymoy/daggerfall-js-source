@@ -162,6 +162,72 @@ flat, by its ARCHIVE STRING:
 - **201 calls**: `AddAnimalAudioSource` is RMBLayout's table verbatim,
   so the town animals' list carries the camps' horses.
 
+## The spawn points (WOD3)
+
+`LocationEnemySpawner` is a state machine over one number, the
+player's distance, and is ported as one (`world/wodSpawner.js`):
+`tick(dist)` is one Unity frame for one marker.
+
+- **Start spends, Update springs.** A marker the player is within 300
+  of on its first frame deactivates for good: a camp that streams in
+  around you never springs. Otherwise it springs once, the first frame
+  the player comes within 100. The distance runs from PlayerMotor's
+  transform (the capsule's centre) to the marker's centre, where
+  `AlignToBase` and the scale fix leave it. `OnLoad` repeats Start's
+  test after a load; the port rebuilds the world on every load, so
+  every marker meets that test in its own Start.
+- **The rolls are Unity's.** `Random.Range` on ints EXCLUDES its
+  maximum, and the rolls run in the C#'s order. The exclusion is
+  load-bearing three times: `Range(1, 3)` never answers 3, so the
+  thieves' Barbarian arm is dead; `Range(1, 6)` never answers 6, so the
+  warriors' Healer arm is dead; `Range(1, 100)` is 1..99, so "SpawnTrue
+  >= 50" is 50 chances in 99 (the bears' 40 is 60 in 99).
+  `CreateFoeGameObjects` rolls the gender (under 0.55 is male) before
+  the caller's `Rotate` rolls the facing.
+- **The arms.** Bandits stand a Thief or a Rogue; bears a Grizzly;
+  warriors a Warrior, Sorcerer, Ranger, Mage or Knight. The good
+  bandits are a Thief or a Rogue, `MobileReactions.Passive` and allied
+  to the player. The good bear and warrior arms are commented out, so
+  those markers do nothing and stay LIVE for as long as the player
+  stands near. The loot marker drops a pile half the time (1..50 of
+  1..99), at a random treasure record 0..46. `LootTables.GenerateLoot(loot, 3)`
+  fills it with dungeon type 3's key, "N", plus the pile's map, potion
+  and recipe tail. LR1 then rolls its ladder over the pile at that
+  source, as it does over every list a host mints. The kidnap marker
+  (quest 0) rolls `Range(1, 40)` and stands:
+  - the captive (357.6) at 1..10;
+  - a merchant (182.0) at 20..29;
+  - a prisoner (184.31) at 30..39;
+  - nobody at 11..19.
+
+  The flat is centred where the marker stood (no `AlignToBase`) and is
+  a plain flat of the pixel from then on. Billboard Person (type 1) is
+  an empty arm. `spawnFinished` never guards anything: it turns true
+  only in the call that deactivates the marker.
+- **The ground aligns are GameObjectHelper's**, ported once
+  (`world/groundAlign.js`). Each moves the CENTRE to the hit plus 0.52
+  of a height:
+  - A pile takes the `size` its caller passes, (0, 1), not its
+    sprite's, so a tall treasure sinks and a short one floats.
+  - A foe takes its own capsule. SetupDemoEnemy sizes it from the
+    sprite with a 1.6 floor, bottom-justified, so a short creature
+    stands proud and then falls.
+
+  The ray is cast on the frame the foe is made. The drop lands in
+  `spawnFoe` once the sprite has sized the capsule.
+- **The foes are the exterior pool's, PLACED.** `CreateFoeGameObjects`
+  caps nothing, so these foes neither count against the encounter cap
+  nor are refused by it. They are never distance-culled either. DFU's
+  loose enemies stand until a load or a teleport sweeps them
+  (`CleanupUntrackedObjects`, `ClearStreamingWorld`; the port's
+  `clearLive`), and `SerializableEnemy` saves every one, so the save
+  carries these foes with their flag. They outlive their marker's
+  pixel, as a StreamingTarget child outlives its terrain. The pile is
+  the terrain's child and dies with its pixel.
+- **Only while outside.** Inside, DFU's streamed world is inactive and
+  no marker updates; the port ticks the markers on exterior frames
+  only.
+
 ## THE FOUR HOSTS
 
 - `scenes/world.js` - WIRED. It is the one host that streams terrain.
@@ -173,7 +239,9 @@ flat, by its ARCHIVE STRING:
   before the grid and the nature - the order `OnPromoteTerrainData`
   holds in DFU - and the averages ride back. The objects stand after the
   location block, pixel-local, so `destroyPixel` takes them with the
-  pixel as the C# destroys the terrain's children at every promote.
+  pixel as the C# destroys the terrain's children at every promote. The
+  markers ride the built pixel too, and are ticked every exterior frame
+  (WOD3).
 - `scenes/exterior.js` - FLAGGED: one fixed location on a flat ground
   quad, no streamer, no heightmap - there is no wilderness pixel to stand
   a site on.
@@ -195,6 +263,13 @@ mod levels the ground, which is what a room must agree on. So the mod's
 one switch is ROOM-OWNED (`systems/onlineLane.js`, beside the roads),
 and an online page loads every folder at once in one order: 17 first,
 then ascending. Offline the list is the reference's, path and all.
+
+The spawn points need nothing of the room's. Each client runs its own
+markers against its own player, on its own stream. A foe a marker
+stands is its maker's pool's and reaches the others as every exterior
+foe does, a puppet on their screens. A pile is its maker's alone. Two
+players who walk into one camp therefore spring its markers twice, and
+the room sees both sets.
 
 ## What the data says, measured
 
@@ -224,6 +299,9 @@ then ascending. Offline the list is the reference's, path and all.
   data: the archive-string arms, the mod's `AddLight`, the transform.
 - `src/world/worldOfDaggerfall.js` - the page's one loader: Awake, the
   region events in order, the room's list, the placements.
+- `src/world/wodSpawner.js` - `LocationEnemySpawner.cs`: Start, Update
+  and the five arms as one machine.
+- `src/world/groundAlign.js` - GameObjectHelper's two ground aligns.
 - `src/world/roadsProducer.js` `basicRoadsPathsPoint` - the question the
   loader asks Basic Roads.
 - `tools/worldOfDaggerfallAssets.mjs` - the archive to `vendor/`.
