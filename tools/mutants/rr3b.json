@@ -1,0 +1,218 @@
+[
+  {
+    "name": "RR3b-1-the-location-key-is-not-copied-for-readlocationidfast",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  dfLocation.mapTableData.locationId = dfLocation.exterior.recordElement.header.locationId;\n",
+    "new": "",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-2-the-new-location-forgets-unknown2",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  dfLocation.exterior.recordElement.header.unknown2 = locationIndex >>> 0;\n  dfRegion.mapTable.push",
+    "new": "  dfRegion.mapTable.push",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-3-a-region-with-no-file-is-not-cached-as-none",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  regions.set(regionIndex, NO_REPLACEMENT);\n  return false;",
+    "new": "  return false;",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-4-the-cached-region-is-not-relaid",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "    if (cached !== NO_REPLACEMENT) { copyRegionInto(cached, dfRegion); return true; }",
+    "new": "    if (cached !== NO_REPLACEMENT) { return true; }",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-5-a-mod-that-is-off-still-ships-its-assets",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "const assetOn = (a) => !!a && (a.isOn?.() ?? true);",
+    "new": "const assetOn = (a) => !!a;",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-6-the-injection-gate-is-ignored",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  if (!assetInjectionOn() || !dfRegion) return false;",
+    "new": "  if (!dfRegion) return false;",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-7-the-new-block-index-starts-at-zero",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  if (nextBlockIndex === 0) nextBlockIndex = _blocksFile.count;\n",
+    "new": "",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-8-a-classic-block-name-is-reassigned",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "    if (_blocksFile.getBlockIndex(blockName) === -1) assignNextIndex(blockName);\n  }\n  for (const dungeonBlock",
+    "new": "    assignNextIndex(blockName);\n  }\n  for (const dungeonBlock",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-9-no-reader-still-caches-the-region",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  if (!_blocksFile) return false;   // ContentReader/BlockFileReader null",
+    "new": "  if (!_blocksFile) return true;   // ContentReader/BlockFileReader null",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-10-a-variant-block-with-no-file-is-cached-as-none",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "    if (variant === NO_VARIANT) blocks.set(blockName, NO_REPLACEMENT);\n    return null;",
+    "new": "    blocks.set(blockKey, NO_REPLACEMENT);\n    return null;",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-11-the-json-block-keeps-its-own-index",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  const dfBlock = blockFromJson(json, block);",
+    "new": "  const dfBlock = blockFromJson(json, json.Index ?? block);",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-12-the-building-is-served-without-its-variant",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  const variant = getBuildingVariantHere(blockName, recordIndex, NO_VARIANT);\n  const key = `${blockIndex}|${recordIndex}|${variant}`;",
+    "new": "  const variant = '_master';\n  const key = `${blockIndex}|${recordIndex}|${variant}`;",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-13-the-automap-merge-takes-the-thirties",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  for (let i = 0; i < AUTO_MAP_DATA_SIZE; i++) if (src[i] !== 30) blockAutoMapData[i] = src[i];",
+    "new": "  for (let i = 0; i < AUTO_MAP_DATA_SIZE; i++) blockAutoMapData[i] = src[i];",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-14-the-ground-tiles-are-unflattened-x-outer",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  for (let y = 0; y < 16; y++) {\n    for (let x = 0; x < 16; x++, i++) {",
+    "new": "  for (let x = 0; x < 16; x++) {\n    for (let y = 0; y < 16; y++, i++) {",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-15-the-flat-bitfield-is-not-rebuilt",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  textureBitfield: (((f.TextureArchive ?? 0) << 7) | ((f.TextureRecord ?? 0) & 0x7f)) & 0xffff,",
+    "new": "  textureBitfield: 0,",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-16-the-location-type-is-not-spelled",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "locationType: enumOf(LOCATION_TYPES, mt.LocationType, LOCATION_TYPES.None),",
+    "new": "locationType: LOCATION_TYPES.None,",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-17-the-building-list-is-not-padded",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  while (buildingDataList.length < 32) buildingDataList.push({ ...emptyBuildingData(), buildingType: -1 });",
+    "new": "",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-18-the-block-positions-forget-the-subrecords",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "xPos: subRecords[i]?.xPos ?? 0, zPos: subRecords[i]?.zPos ?? 0, yRotation: subRecords[i]?.yRotation ?? 0 }));",
+    "new": "xPos: 0, zPos: 0, yRotation: 0 }));",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-19-the-merge-keeps-the-pool-draw",
+    "file": "src/systems/talkTopics.js",
+    "old": "          if (drawn) drawn.used = false;\n",
+    "new": "",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-20-the-merge-does-not-vary-the-seed",
+    "file": "src/systems/talkTopics.js",
+    "old": "          list[i].nameSeed = (replacement.nameSeed + locationIndex) & 0xffff;",
+    "new": "          list[i].nameSeed = replacement.nameSeed;",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-21-the-merge-takes-the-type-only-with-a-faction",
+    "file": "src/systems/talkTopics.js",
+    "old": "        list[i].buildingType = replacement.buildingType;\n      }\n      // RMBLayout.cs:677-683",
+    "new": "      }\n      // RMBLayout.cs:677-683",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-22-the-readers-lose-the-region-ask",
+    "file": "src/formats/mapsFile.js",
+    "old": "    worldDataDoor()?.getDFRegionAdditionalLocationData(region, rec.dfRegion);\n",
+    "new": "",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-23-the-block-reader-loses-the-building-ask",
+    "file": "src/formats/blocksFile.js",
+    "old": "      const replacement = door?.getBuildingReplacementData(rec.name, rec.dfBlock.index, i);",
+    "new": "      const replacement = null;",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  },
+  {
+    "name": "RR3b-24-the-save-forgets-the-variants",
+    "file": "src/systems/save.js",
+    "old": "  snap.worldVariation = getWorldVariationSaveData();\n",
+    "new": "",
+    "tests": [
+      "test/rr3b_worlddata.test.js"
+    ]
+  }
+]

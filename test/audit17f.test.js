@@ -19,6 +19,9 @@ import { ChargenFlow } from '../src/ui/chargen.js';
 import { startingSpells, STARTING_SPELL_SETS } from '../src/systems/chargen.js';
 import { SKILLS } from '../src/systems/skills.js';
 
+/** DW3: the image carries the item's dye now; these pins are about the archive and record. */
+const archiveRecord = ({ archive, record }) => ({ archive, record });
+
 const STARTING_SPELL_IDS = STARTING_SPELL_SETS[0] ?? [];
 
 // ---- F1: SetRace reaches the INVENTORY LIST, not just the doll ----
@@ -49,7 +52,7 @@ test('17f F1: archive 0 stays 0 - the world-texture fallback survives', () => {
   // (ItemHelper.cs:424-430): offsetting the 0 sentinel would forge a
   // real archive number and break the fallback.
   assert.equal(templateByIndex(132).playerTextureArchive, 0, 'Spellbook has no player texture');
-  assert.deepEqual(inventoryItemImage({ group: 'MiscItems', templateIndex: 132 }, { race: 'Khajiit' }),
+  assert.deepEqual(archiveRecord(inventoryItemImage({ group: 'MiscItems', templateIndex: 132 }, { race: 'Khajiit' })),
     { archive: templateByIndex(132).worldTextureArchive, record: templateByIndex(132).worldTextureRecord });
   assert.equal(playerArchiveFor({ group: 'MensClothing' }, { playerTextureArchive: 0 }, { race: 'Khajiit' }), 0);
 });
@@ -192,7 +195,7 @@ test('17f F15: the gold stack is Currency.Gold_pieces, minted once', () => {
   const g = goldStack(100);
   assert.equal(g.name, 'Gold Pieces');
   assert.equal(templateByIndex(GOLD_TEMPLATE).playerTextureArchive, 0, 'no player texture: the world pile is the icon');
-  assert.deepEqual(inventoryItemImage(g), { archive: 216, record: 1 });
+  assert.deepEqual(archiveRecord(inventoryItemImage(g)), { archive: 216, record: 1 });
   assert.equal(itemWeight(g), 0.25, '0.0025 kg a piece, from the TEMPLATE');
   // E4 REPLACED THE MERGE WITH AN INVARIANT. The three producers no
   // longer mint a stack at all - PlayerEntity.Items cannot hold

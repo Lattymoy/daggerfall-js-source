@@ -169,11 +169,11 @@ test('texture: the pipeline decodes AHEAD and overrides SYNCHRONOUSLY', () => {
   // auto-emissive arm reuses that same albedo as its emission map
   // (TextureReader.cs:301-308) - a pack's replacement must light the
   // lantern it replaces, not the classic art beside it.
-  assert.match(p, /const swap = decodedTexture\(archive, record, 0\);/);
+  assert.match(p, /const swap = decodedTexture\(archive, record, 0, 'Albedo', dye\);/);
   // INCIDENT 2026-09-04: the record door carries the caller's alphaIndex
   // choice - a mesh material is opaque (-1), a flat cuts index 0.
   assert.match(p, /const color32 = swap \?\? t\.getColor32\(removeMask \? changeMask\(bitmap\) : bitmap, opaque \? -1 : 0\);/);
-  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, \{ opaque, mips \}\);/);
+  assert.match(p, /renderer\.uploadTexture\(archive, record, color32, variant !== undefined \? \{ opaque, mips, variant \} : \{ opaque, mips \}\);/);
   assert.match(p, /const swapFrame = decodedTexture\(archive, record, frame\);/);
   assert.match(p, /const color32 = swapFrame \?\? t\.getColor32\(bitmap, 0\);/);
   assert.match(p, /renderer\.uploadTexture\(archive, key, color32\);/);

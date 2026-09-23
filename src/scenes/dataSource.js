@@ -987,7 +987,7 @@ export const ASSET_PICKER_Z = 40;
 /** MWFIX: is the asset picker on screen? A modal opened FROM another
  *  overlay has to be able to say so, because the opener may own the
  *  keyboard - the enhanced shell takes Escape on `globalThis` in
- *  CAPTURE and stops it (enhancedMenu.js:3489), which is right for a
+ *  CAPTURE and stops it (enhancedMenu.js:3494), which is right for a
  *  screen with nothing above it and wrong the moment something is.
  *  Its own stated law is that a modal overlay owns its input; this is
  *  how the one above it says "that's me". */
@@ -1082,6 +1082,7 @@ export async function pickTextureFolder() {
   const { setTextureReplacements } = await import('../systems/textureReplacement.js');
   const { setSeasonsSources } = await import('../systems/seasonsIliacBayAssets.js');
   const { setWeaponWidgetSources } = await import('../combat/weaponWidgetAssets.js');   // WW1
+  const { setDiverseWeaponsSources } = await import('../combat/diverseWeaponsAssets.js');   // DW1
   return pickAssetFolder({
     title: 'Your own textures',
     blurb: `<p>Pick a folder of PNGs to draw instead of Daggerfall's
@@ -1096,12 +1097,16 @@ export async function pickTextureFolder() {
       and winter.</p>
       <p style="color:#999"><b>Weapon Widget</b> too: a folder holding
       its <b>.dfmod</b> gives its DoubleScaleTextures module the mod's
-      own double-size weapon art.</p>`,
+      own double-size weapon art.</p>
+      <p style="color:#999">And <b>Diverse Weapons</b>: its sprites ship
+      with the port; a folder holding a newer version's <b>.dfmod</b>
+      makes that version's art win over the shipped set.</p>`,
     store: storeTextureFiles,
     register: async () => {
       const names = await storedTextureNames();
       const n = setTextureReplacements(names, loadTextureFile);
       setWeaponWidgetSources(names, loadTextureFile);   // WW1: Weapon Widget's bundle, its double-scale textures
+      setDiverseWeaponsSources(names, loadTextureFile);   // DW1: Diverse Weapons' bundle, a sprite set per weapon
       return n + setSeasonsSources(names, loadTextureFile);   // SIB1: the mod's own files (its bundle counts one)
     },
   });

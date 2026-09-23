@@ -21,6 +21,27 @@ export const DYE_COLORS = Object.freeze({
   Ebony: 23, Orcish: 24, Daedric: 25,
 });
 export const DYE_TARGETS = Object.freeze({ Clothing: 0, WeaponsAndArmor: 1 });
+
+/** DW3: DyeColors' names by value, as C#'s `dye.ToString()` prints them
+ *  into a replacement's file name (TextureReplacement.GetName :725-735:
+ *  `{archive:000}_{record}-{frame}[_{dye}][_{map}]`). 18 is four names
+ *  in the enum (Chain, Unchanged, SilverOrElven, Silver) and is NEVER
+ *  printed - GetName appends the dye only when it is not Unchanged, and
+ *  Unchanged IS 18 - so a silver weapon asks by the bare name. */
+export const DYE_NAMES = Object.freeze(Object.fromEntries(
+  Object.entries(DYE_COLORS).filter(([n]) => !['Chain', 'Unchanged', 'SilverOrElven'].includes(n)).map(([n, v]) => [v, n]),
+));
+/** GetName's dye arm: the `_<Dye>` a replacement's name carries for
+ *  this dye, or '' - for null, for Unchanged, and so for Silver. A
+ *  string is a name already parsed off a file (textureEntry) and is
+ *  kept as it is. */
+export function dyeToken(dye) {
+  if (dye == null || dye === '') return '';
+  if (typeof dye === 'string') return dye;
+  const v = Number(dye);
+  if (!Number.isFinite(v) || v === DYE_COLORS.Unchanged) return '';
+  return DYE_NAMES[v] ?? String(v);
+}
 export const CLOTHING_DYES = Object.freeze([
   DYE_COLORS.Blue, DYE_COLORS.Grey, DYE_COLORS.Red, DYE_COLORS.DarkBrown,
   DYE_COLORS.Purple, DYE_COLORS.LightBrown, DYE_COLORS.White,

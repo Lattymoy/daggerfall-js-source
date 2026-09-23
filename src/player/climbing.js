@@ -49,6 +49,14 @@ const lerp = (a, b, t) => a + (b - a) * Math.min(1, Math.max(0, t));   // Mathf.
  *  Climbing (+30 Khajiit; x2 under the Climbing effect - pends its
  *  effect, the seam is here), clamped 5..95; chance = (int)(Lerp(base,
  *  100, skill/100) + Lerp(0, 10, luck/100)). */
+// RR1: `if (TryGetOverride("CalculateClimbingChance", out del)) return
+// del(player, basePercentSuccess);` (FormulaHelper.cs:295-297). The
+// override takes the same inputs the deps answer, plus what a mod's arm
+// reads that DFU's does not (the drawn weapon, a mid-screen say).
+let _chanceOverride = null;
+export function registerClimbingChanceOverride(fn) { _chanceOverride = typeof fn === 'function' ? fn : null; }
+export const climbingChanceOverride = (base, inputs) => _chanceOverride?.(base, inputs) ?? null;
+
 export function climbingChance(base, liveClimbing, liveLuck, { khajiit = false, enhanced = false } = {}) {
   let skill = liveClimbing + (khajiit ? KHAJIIT_CLIMBING_BONUS : 0);
   if (enhanced) skill *= 2;
@@ -87,7 +95,7 @@ export class ClimbingState {
   skillCheck(base) {
     this.deps.tally?.();
     const i = this.deps.inputs?.() ?? { climbing: 0, luck: 0 };
-    const chance = climbingChance(base, i.climbing ?? 0, i.luck ?? 0, i);
+    const chance = climbingChanceOverride(base, { ...i, say: this.deps.say ?? null }) ?? climbingChance(base, i.climbing ?? 0, i.luck ?? 0, i);   // RR1: a registered override first
     const rolls = this.deps.rolls ?? Math.random;
     if (Math.floor(rolls() * 100) >= chance) {          // Dice100.FailedRoll
       if (!this.deps.waterForgiven?.()) return false;   // dry land: the fail stands

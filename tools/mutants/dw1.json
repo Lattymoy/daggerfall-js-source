@@ -1,0 +1,341 @@
+[
+  {
+    "name": "DW1-1-the-flag-reads-true-with-the-switch-off",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "export const moddedWeaponHUDAnimsEnabled = () => modSetting('diverse-weapons', 'Enabled') === true;",
+    "new": "export const moddedWeaponHUDAnimsEnabled = () => true;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-2-the-artifact-table-is-asked-after-the-magic-one",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "    if (isArtifact(weapon)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-3-the-staff-loop-stops-walking-in-order",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "            } else {\n              return 'STAFFOFMAGNUS.CIF';\n            }",
+    "new": "            }",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-4-a-custom-template-invents-a-name",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "    case W.Arrow: return 'ARROW.CIF';\n    default: return '';\n  }\n}",
+    "new": "    case W.Arrow: return 'ARROW.CIF';\n    default: return 'WEAPON04.CIF';\n  }\n}",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-5-the-flag-off-still-asks-by-the-modded-name",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  if (!enabled || !item) return classic;",
+    "new": "  if (!item) return classic;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-6-an-empty-modded-name-is-asked-for-literally",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  return moddedWeaponFilename(item) || classic;",
+    "new": "  return moddedWeaponFilename(item);",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-7-the-w-ask-no-longer-falls-through-to-the-plain-name",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  return doubleScale ? [`w_${plain}`, plain] : [plain];",
+    "new": "  return doubleScale ? [`w_${plain}`] : [plain];",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-8-None-grows-a-metal-suffix",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  const plain = `${file}_${record}-${frame}${metalName ? `_${metalName}` : ''}`;",
+    "new": "  const plain = `${file}_${record}-${frame}_${metalName}`;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-9-the-preset-is-laid-over-the-settings-even-when-off",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  if (!on) return settings;",
+    "new": "  if (false) return settings;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-10-the-preset-rides-its-own-switch-alone-not-the-mods",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  moddedWeaponHUDAnimsEnabled() && modSetting('diverse-weapons', 'WeaponWidgetPreset') === true;",
+    "new": "  modSetting('diverse-weapons', 'WeaponWidgetPreset') === true;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-11-a-DFU-False-string-reads-as-on",
+    "file": "src/systems/modSettings.js",
+    "old": "      const v = (typeof raw === 'string' && /^(true|false)$/i.test(raw.trim())) ? /^true$/i.test(raw.trim()) : raw;",
+    "new": "      const v = raw;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-12-an-undeclared-preset-key-becomes-a-switch",
+    "file": "src/systems/modSettings.js",
+    "old": "      if (!def) continue;\n      // DFU writes booleans",
+    "new": "      if (!def) { out[name] = raw; continue; }\n      // DFU writes booleans",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-13-the-door-takes-every-dfmod-in-the-pick",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "  const names = (fileNames ?? []).filter((n) => (n.startsWith(DFMOD_KEY_PREFIX) && isDiverseDfmod(n)) || (isPng(n) && isDiversePng(n)));",
+    "new": "  const names = (fileNames ?? []).filter((n) => n.startsWith(DFMOD_KEY_PREFIX) || (isPng(n) && isDiversePng(n)));",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-14-nothing-attached-still-opens-a-loader",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "      const attached = _names.length ? await attachedImage(name, decode) : null;   // nothing attached: no bundle walk",
+    "new": "      const attached = await attachedImage(name, decode);",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ],
+    "equivalent": true,
+    "why": "the guard is cost, not answer: with no names registered the bundle walk finds nothing and the PNG find finds nothing, so every ask answers null without calling the loader either way; what the guard saves is a promise and a bundle-walk per ask on a weapon load with the flag on and nothing attached"
+  },
+  {
+    "name": "DW1-15-the-loose-PNG-is-flipped-like-a-bundle-texel",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "    return toScreenOrder(await decode(bytes));",
+    "new": "    return toColor32(await decode(bytes));",
+    "tests": [
+      "test/dw1_diverseweapons.test.js",
+      "test/dw2_shipped.test.js"
+    ]
+  },
+  {
+    "name": "DW1-16-the-widget-door-is-asked-first",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "  return (await diverseWeaponsImage(name)) ?? (await weaponWidgetImage(name)) ?? null;",
+    "new": "  return (await weaponWidgetImage(name)) ?? (await diverseWeaponsImage(name)) ?? null;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-17-the-base-lane-drops-the-metal-suffix",
+    "file": "src/combat/fpsWeapon.js",
+    "old": "export const frameName = (askName, record, frame, metal) => `${askName}_${record}-${frame}${metal ? `_${metal}` : ''}`;",
+    "new": "export const frameName = (askName, record, frame) => `${askName}_${record}-${frame}`;",
+    "tests": [
+      "test/auditdw.test.js",
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-18-the-rig-cache-forgets-the-atlas-name",
+    "file": "src/combat/weaponRig.js",
+    "old": "    const key = `${type}:${item?.material ?? 0}:${thunderlock ? '' : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;",
+    "new": "    const key = `${type}:${item?.material ?? 0}`;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-19-the-clone-asks-by-the-classic-name",
+    "file": "src/combat/weaponWidget.js",
+    "old": "    const file = atlasFileName(w.specificWeapon, classic);",
+    "new": "    const file = classic;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-20-a-miss-blocks-the-next-name-for-ever",
+    "file": "src/combat/weaponWidget.js",
+    "old": "      if (misses.has(name)) continue;   // answered \"nothing carries it\": the next name's turn",
+    "new": "",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-21-one-pick-site-forgets-the-door",
+    "file": "src/scenes/shared.js",
+    "old": "      setDiverseWeaponsSources(names, loadTextureFile);   // DW1: Diverse Weapons' bundle, from the same pick\n",
+    "new": "",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW2-1-the-shipped-arm-fetches-for-a-name-the-index-lacks",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "      if (!hasDiverseWeaponsSprite(name) || typeof fetchFn !== 'function') return null;",
+    "new": "      if (typeof fetchFn !== 'function') return null;",
+    "tests": [
+      "test/dw2_shipped.test.js"
+    ]
+  },
+  {
+    "name": "DW2-2-the-shipped-PNG-is-flipped-like-a-bundle-texel",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "        return toScreenOrder(await decode(new Uint8Array(await res.arrayBuffer())));   // a PNG's rows are top-first: no flip (HT3)",
+    "new": "        return toColor32(await decode(new Uint8Array(await res.arrayBuffer())));",
+    "tests": [
+      "test/dw2_shipped.test.js"
+    ]
+  },
+  {
+    "name": "DW2-3-the-attached-bundle-no-longer-wins-over-the-shipped-set",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "      if (attached) return attached;",
+    "new": "",
+    "tests": [
+      "test/dw2_shipped.test.js"
+    ]
+  },
+  {
+    "name": "DW2-4-the-index-forgets-the-bare-stem",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "  if (m[2] === undefined) return (bits & DIVERSE_WEAPONS_BARE) !== 0;",
+    "new": "  if (m[2] === undefined) return true;",
+    "tests": [
+      "test/dw2_shipped.test.js"
+    ]
+  },
+  {
+    "name": "DW3-1-GetName-prints-Unchanged",
+    "file": "src/characters/dyes.js",
+    "old": "  if (!Number.isFinite(v) || v === DYE_COLORS.Unchanged) return '';",
+    "new": "  if (!Number.isFinite(v)) return '';",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-2-a-gated-vendor-entry-answers-while-off",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (v) return (!v.gate || v.gate() === true) ? (_decoded.get(key) ?? null) : null;   // SURV2: the port's own, ungated - DW3: unless its registration gates it",
+    "new": "  if (v) return _decoded.get(key) ?? null;",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-3-the-icon-upload-asks-the-bare-swap",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "    const swap = decodedTexture(archive, record, 0, 'Albedo', dye);",
+    "new": "    const swap = decodedTexture(archive, record, 0);",
+    "tests": [
+      "test/dw3_icons.test.js",
+      "test/texturereplacement.test.js"
+    ]
+  },
+  {
+    "name": "DW3-4-the-Silver-named-icon-is-registered-as-the-bare-key",
+    "file": "src/combat/diverseWeaponsIcons.js",
+    "old": "      if (!dyeToken(dye)) continue;",
+    "new": "",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-5-an-artifact-asks-by-its-metal",
+    "file": "src/systems/itemDye.js",
+    "old": "  if (item.artifact) return DYE_COLORS.Unchanged;   // SetArtifact :611, the last writer",
+    "new": "",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-6-the-list-drawer-forgets-the-dye-in-its-key",
+    "file": "src/ui/itemScroller.js",
+    "old": "    const key = `${img.archive}_${img.record}${token ? `_${token}` : ''}`;",
+    "new": "    const key = `${img.archive}_${img.record}`;",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "DW3-7-the-DOM-door-draws-the-replacement-through-the-classic-arm",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  const swap = hasTextureReplacement(archive, record, 0, 'Albedo', dye)",
+    "new": "  const swap = false",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F1-the-archive-preload-takes-the-lazy-entries",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !entry.lazy && !_decoded.has(key));",
+    "new": "  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !_decoded.has(key));",
+    "tests": [
+      "test/dw3_icons.test.js",
+      "test/auditdw.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F1-the-list-drawer-uploads-before-the-record-is-decoded",
+    "file": "src/ui/itemScroller.js",
+    "old": "          await icons.preloadRecord?.(img.archive, img.record, img.dye);   // AUDIT-DW F1: this record's replacement, decoded when it is drawn - not the archive's 280 before the first classic icon",
+    "new": "",
+    "tests": [
+      "test/auditdw.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F1-a-gated-off-icon-is-fetched",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (!hasTextureReplacement(archive, record, frame, map, dye)) return Promise.resolve(null);\n  if (!_decoding.has(key)) {\n    const entry = entryFor(key);",
+    "new": "  if (!_decoding.has(key)) {\n    const entry = entryFor(key);\n    if (!entry) return Promise.resolve(null);",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F2-a-frame-is-awaited-alone",
+    "file": "src/combat/fpsWeapon.js",
+    "old": "      asks.push(Promise.resolve(ask(name)).then((img) => { row[f] = img ?? null; }, () => { row[f] = null; }));",
+    "new": "      row[f] = (await Promise.resolve(ask(name)).catch(() => null)) ?? null;",
+    "tests": [
+      "test/auditdw.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F3-the-plain-fall-through-draws-doubled",
+    "file": "src/combat/weaponWidget.js",
+    "old": "      else if (w.s.doubleScale && custom.doubled !== false) {   // AUDIT-DW F3: only a `w_` texture is drawn into the doubled box",
+    "new": "      else if (w.s.doubleScale) {",
+    "tests": [
+      "test/auditdw.test.js"
+    ]
+  }
+]

@@ -439,7 +439,7 @@ export class Place extends QuestResource {
         blocks.push({ dfBlock, x, y });
       }
     }
-    const merged = mergeNamedBuildings(location.exterior.buildings, blocks.filter((b) => b.dfBlock));
+    const merged = mergeNamedBuildings(location.exterior.buildings, blocks.filter((b) => b.dfBlock), { locationIndex: location.locationIndex ?? 0 });   // AUDIT-RR F34: the replacement seed is NameSeed + LocationIndex here too (RMBLayout.cs:669)
 
     for (const b of blocks) {
       if (!b.dfBlock) continue;

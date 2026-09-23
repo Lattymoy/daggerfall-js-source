@@ -137,18 +137,75 @@ export function readUnityFs(bytes) {
   }
   if (newFlags && (flags & BLOCK_INFO_NEED_PADDING)) r.align(16);
   if (flags & BLOCKS_INFO_AT_END) r.pos = start;
-  // Every block, decompressed, into one stream the directory indexes.
-  let total = 0;
-  for (const b of blocks) total += b.uncompressedSize;
-  const data = new Uint8Array(total);
-  let at = 0;
-  for (const b of blocks) {
-    const chunk = decompress(r.bytesOf(b.compressedSize), b.uncompressedSize, b.flags);
-    data.set(chunk, at);
-    at += b.uncompressedSize;
-  }
-  const files = nodes.map((n) => ({ path: n.path, flags: n.flags, bytes: data.subarray(n.offset, n.offset + n.size) }));
+  // DW1: THE BLOCKS STAY COMPRESSED. This used to decompress every
+  // block into one stream the directory indexed - which is the whole
+  // bundle in memory, and for a bundle that is 58 MB of LZ4 around
+  // 1.69 GB of pixels (Diverse Weapons: 12,934 textures inline in one
+  // serialized file, no .resS) that is the tab. A file is a byte
+  // SOURCE now: `read(offset, length)` decompresses only the blocks
+  // that span the range, through a small LRU, and `bytes` materialises
+  // the whole file for the callers that want it (a test's CAB, a
+  // manifest) - a mod's whole bundle is never held at once.
+  const stream = blockStream(bytes, r.pos, blocks);
+  const files = nodes.map((n) => {
+    let whole = null;
+    return {
+      path: n.path, flags: n.flags, size: n.size,
+      read: (offset, length) => stream.read(n.offset + offset, length),
+      get bytes() { return whole ??= stream.read(n.offset, n.size); },
+    };
+  });
   return { signature, version, unityVersion, unityRevision, flags, files };
+}
+
+/** How many decompressed blocks are kept. Unity's ChunkBasedCompression
+ *  writes 128 KB blocks, so this is a few MB - enough that an index
+ *  pass over objects laid out in order re-decompresses nothing, and a
+ *  texture spanning a block edge finds both halves. */
+export const BLOCK_CACHE = 32;
+
+/** The compressed blocks as one addressable uncompressed stream, a
+ *  block at a time. `read` answers a fresh Uint8Array of exactly
+ *  `length` bytes (short at the end of the stream), never a view into
+ *  the cache, so a caller may hold it while the cache turns over. */
+function blockStream(bytes, dataStart, blocks) {
+  const cOff = new Array(blocks.length);   // compressed offset of block i in `bytes`
+  const uOff = new Array(blocks.length + 1);   // uncompressed offset of block i; the last entry is the total
+  let c = dataStart, u = 0;
+  for (let i = 0; i < blocks.length; i++) { cOff[i] = c; uOff[i] = u; c += blocks[i].compressedSize; u += blocks[i].uncompressedSize; }
+  uOff[blocks.length] = u;
+  const cache = new Map();   // block index -> decompressed bytes, insertion order = age
+  const block = (i) => {
+    let d = cache.get(i);
+    if (d) { cache.delete(i); cache.set(i, d); return d; }   // touched: youngest again
+    const b = blocks[i];
+    d = decompress(bytes.subarray(cOff[i], cOff[i] + b.compressedSize), b.uncompressedSize, b.flags);
+    cache.set(i, d);
+    if (cache.size > BLOCK_CACHE) cache.delete(cache.keys().next().value);
+    return d;
+  };
+  const total = u;
+  return {
+    size: total,
+    read(offset, length) {
+      if (!(offset >= 0) || !(length >= 0)) throw new Error(`unity bundle: bad read ${offset}+${length}`);
+      const end = Math.min(total, offset + length);
+      const out = new Uint8Array(Math.max(0, end - offset));
+      if (!out.length) return out;
+      // the first block holding `offset`, by binary search over the prefix sums
+      let lo = 0, hi = blocks.length - 1;
+      while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (uOff[mid] <= offset) lo = mid; else hi = mid - 1; }
+      let at = offset, put = 0;
+      for (let i = lo; i < blocks.length && at < end; i++) {
+        const d = block(i);
+        const from = at - uOff[i];
+        const n = Math.min(d.length - from, end - at);
+        out.set(d.subarray(from, from + n), put);
+        at += n; put += n;
+      }
+      return out;
+    },
+  };
 }
 
 // ---- SerializedFile ----------------------------------------------------
@@ -229,16 +286,20 @@ function readTypeTreeBlob(r, version) {
  *  from version 22 the 32-bit size slot is written as 0 and the real
  *  64-bit size follows the endian byte, so the size is read where that
  *  version keeps it (the reference readers' IsSerializedFile rule). */
-function looksSerialized(bytes) {
-  if (bytes.length < 20) return false;
-  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+/** Whether a file's first bytes are a SerializedFile header whose
+ *  recorded size is the file's own. `size` is the whole file's length;
+ *  `head` need only be its first 48 bytes (DW1: a lazy file is not
+ *  read whole to be recognised). */
+function looksSerialized(head, size = head.length) {
+  if (head.length < 20) return false;
+  const v = new DataView(head.buffer, head.byteOffset, head.byteLength);
   const version = v.getUint32(8);
   if (version < 5 || version > 40) return false;
   if (version >= 22) {
-    if (bytes.length < 48) return false;
-    return Number(v.getBigInt64(24)) === bytes.length;
+    if (head.length < 48) return false;
+    return Number(v.getBigInt64(24)) === size;
   }
-  return v.getUint32(4) === bytes.length;
+  return v.getUint32(4) === size;
 }
 
 /**
@@ -246,9 +307,22 @@ function looksSerialized(bytes) {
  * @param {Uint8Array} bytes the file within the container
  * @param {string} name the container path
  */
-export function readSerializedFile(bytes, name) {
+export function readSerializedFile(source, name) {
+  // DW1: a Uint8Array, or a lazy `{ size, read(offset, length) }` from
+  // readUnityFs. The header and the metadata are read once, whole; an
+  // object's body is read when `read()` is called, and only that body.
+  const src = source instanceof Uint8Array
+    ? { size: source.length, read: (o, n) => source.subarray(o, Math.min(source.length, o + n)) }
+    : source;
+  const head = new Reader(src.read(0, Math.min(src.size, 48)), false);
+  let metadataSize = head.u32();
+  head.u32();   // fileSize, re-read below
+  const headerVersion = head.u32();
+  if (headerVersion >= 22) { head.u32(); head.u8(); head.bytesOf(3); metadataSize = head.u32(); }
+  const headerSize = headerVersion >= 22 ? 48 : 20;
+  const bytes = src.read(0, Math.min(src.size, headerSize + metadataSize + 64));   // the metadata, and a little slack for the alignment its tail takes
   const r = new Reader(bytes, false);
-  let metadataSize = r.u32();
+  metadataSize = r.u32();
   let fileSize = r.u32();
   const version = r.u32();
   let dataOffset = r.u32();
@@ -312,7 +386,7 @@ export function readSerializedFile(bytes, name) {
     objects.push({
       pathId, classId, byteStart: dataOffset + byteStart, byteSize, type,
       /** Parse the object through its type tree. */
-      read: () => readObject(bytes, dataOffset + byteStart, byteSize, type?.node, littleEndian),
+      read: () => readObject(src.read(dataOffset + byteStart, byteSize), 0, byteSize, type?.node, littleEndian),
     });
   }
   return { name, version, unityVersion, targetPlatform, littleEndian, metadataSize, fileSize, dataOffset, types, objects };
@@ -470,15 +544,15 @@ export function readUnityBundle(bytes) {
   const resources = new Map();
   const assets = [];
   for (const f of fs.files) {
-    if (looksSerialized(f.bytes)) assets.push(readSerializedFile(f.bytes, f.path));
-    else resources.set(f.path, f.bytes);
+    if (looksSerialized(f.read(0, 48), f.size)) assets.push(readSerializedFile(f, f.path));
+    else resources.set(f.path, f);
   }
   const resource = (path, offset, size) => {
     const base = path.slice(path.lastIndexOf('/') + 1);
     const res = resources.get(base) ?? resources.get(path);
     if (!res) throw new Error(`unity bundle: resource ${path} is not in the container`);
-    if (offset < 0 || size < 0 || offset + size > res.length) throw new Error(`unity bundle: ${path} stream ${offset}+${size} runs past ${res.length} bytes`);
-    return res.subarray(offset, offset + size);
+    if (offset < 0 || size < 0 || offset + size > res.size) throw new Error(`unity bundle: ${path} stream ${offset}+${size} runs past ${res.size} bytes`);
+    return res.read(offset, size);
   };
   const textures = [];
   const textAssets = [];
@@ -489,7 +563,12 @@ export function readUnityBundle(bytes) {
         textures.push({
           name: tex.m_Name, width: tex.m_Width, height: tex.m_Height, format: tex.m_TextureFormat,
           mipCount: tex.m_MipCount, filterMode: tex.m_TextureSettings?.m_FilterMode, wrapU: tex.m_TextureSettings?.m_WrapU,
-          rgba: () => decodeTexture2D(tex, resource),
+          // DW1: the body is READ AGAIN on decode rather than kept. `tex`
+          // holds the pixels inline (`image data`), and a closure over
+          // it for 12,934 textures is the whole bundle in memory by
+          // another road; the index above keeps the few fields it needs
+          // and the object's own read is a block or two.
+          rgba: () => decodeTexture2D(o.read(), resource),
         });
       } else if (o.classId === CLASS_ID.TextAsset) {
         const t = o.read();

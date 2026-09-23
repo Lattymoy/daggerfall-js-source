@@ -1,0 +1,65 @@
+{
+    "Title": "Diverse Weapons",
+    "Author": "RealAKP",
+    "Description": "Recommended settings for DW",
+    "SettingsVersion": "1.0",
+    "Values": {
+        "Modules": {
+            "Swings": "True",
+            "Ambidexterity": "True",
+            "Offset": "True",
+            "Bob": "True",
+            "Inertia": "True",
+            "Step": "True",
+            "DoubleScaleTextures": "True",
+            "TrueTextureSize": "True",
+            "Recoil": "True"
+        },
+        "Swings": {
+            "Speed": "1",
+            "Windup": "1",
+            "Recovery": "0",
+            "VanillaAlignmentOverride": "True",
+            "VanillaRecoveryOverride": "False",
+            "NoDaggerMirroredStrikes": "True"
+        },
+        "Offset": {
+            "Speed": "1"
+        },
+        "Bob": {
+            "Length": "142",
+            "Offset": "0",
+            "SizeX": "1",
+            "SizeY": "1",
+            "SpeedMove": "1",
+            "SpeedState": "1",
+            "Shape": "0",
+            "BobWhileIdle": "True"
+        },
+        "Step": {
+            "Length": "1",
+            "Condition": "0"
+        },
+        "Inertia": {
+            "Scale": "1",
+            "Speed": "1",
+            "ForwardDepth": "1",
+            "ForwardSpeed": "1"
+        },
+        "TrueTextureSize": {
+            "TextureScaleFactor": "1"
+        },
+        "Recoil": {
+            "Condition": "0",
+            "Chance": "100",
+            "PlayEntityMissEffects": "True",
+            "DetectEnvironment": "True",
+            "PlayEnvironmentMissEffects": "True",
+            "MissEffectPlacement": "0"
+        },
+        "Miscellaneous": {
+            "MirrorBows": "False"
+        }
+    },
+    "$version": "v1"
+}

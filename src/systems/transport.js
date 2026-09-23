@@ -75,7 +75,12 @@ export function toggleMount(mode, items = []) {
 export const rideBaseFor = (mode) => (mode === TRANSPORT_MODES.Cart ? DF_CART_BASE : DF_RIDE_BASE);
 
 /** CanRunUnlessRiding (:137-140). */
-export const canRunUnlessRiding = (mode) => !isRiding(mode);
+// RR2: `GameManager.Instance.SpeedChanger.CanRun = CanRunUnlessRidingCart`
+// (EnhancedRiding.cs:69) - a mod's delegate over PlayerSpeedChanger.CanRun;
+// DFU's own is CanRunUnlessRiding. Answers a boolean, or null for DFU's.
+let _canRun = null;
+export function setCanRunOverride(fn) { _canRun = typeof fn === 'function' ? fn : null; }
+export const canRunUnlessRiding = (mode) => _canRun?.(mode) ?? !isRiding(mode);
 
 /** HandleTransition (:196-202): a building or dungeon interior puts
  *  you back on foot. Anything else leaves the mode alone. */

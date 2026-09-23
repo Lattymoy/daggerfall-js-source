@@ -22,6 +22,20 @@ const _tables = {
   spells: null,
 };
 
+/** RR3: rows a mod adds with `QuestMachine.PlacesTable.AddIntoTable(...)`
+ *  (RoleplayRealism.cs:250-251) - by table key, applied to a loaded
+ *  table at once and to a later load as it lands, so a mod that
+ *  registers at boot (before the pack loads) is not lost. */
+const _extraRows = { places: [], factions: [], items: [], foes: [] };
+export function addIntoQuestTables(rows = {}) {
+  for (const [key, lines] of Object.entries(rows)) {
+    if (!_extraRows[key] || !Array.isArray(lines)) continue;
+    _extraRows[key].push(...lines);
+    if (_tables[key]) _tables[key].addIntoTable(lines);
+  }
+}
+export function _resetExtraQuestRows() { for (const k of Object.keys(_extraRows)) _extraRows[k].length = 0; }
+
 /** Load from raw file text keyed by DFU table name. */
 export function loadQuestTables(sources) {
   const map = {
@@ -36,7 +50,10 @@ export function loadQuestTables(sources) {
     'Quests-Spells': 'spells',
   };
   for (const [file, key] of Object.entries(map)) {
-    if (sources[file] != null) _tables[key] = new Table(sources[file]);
+    if (sources[file] != null) {
+      _tables[key] = new Table(sources[file]);
+      if (_extraRows[key]?.length) _tables[key].addIntoTable(_extraRows[key]);   // RR3: the mod's rows ride the fresh table
+    }
   }
 }
 

@@ -4,6 +4,7 @@
 // its two quirks: the longest job's queue stretch and the
 // never-decrease clamp.
 
+import './modsOff.js';   // RRI2: DFU's own numbers - the mod's condition prices are pinned in rri2_realism.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {

@@ -10,9 +10,11 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
-import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
+import { decodedTexture, preloadTextureArchive, preloadTextureRecord, isVendorArchive, vendorTextureStandIn } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT-DW F1: an icon's replacement is decoded when it is drawn
+import { dyeToken } from '../characters/dyes.js';   // DW3: the per-dye UI variant
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
+import { flatFaceOverride } from '../characters/staticNpc.js';   // RR2: FLATS.CFG's dictionary, as a mod rewrites it
 
 /** ROAD-H H4: `fetch` defaults to the one data seam every scene uses
  *  (shared.js's fetchBytes) and is a parameter for the same reason
@@ -43,7 +45,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     return flats;
   })());
   const flatCaption = (archive, record) => flats?.caption(archive, record) ?? null;
-  const flatFaceIndex = (archive, record) => flats?.faceIndex(archive, record) ?? -1;
+  const flatFaceIndex = (archive, record) => flatFaceOverride(archive, record) ?? flats?.faceIndex(archive, record) ?? -1;   // RR2: a mod's flatsDict write first
   async function getTexture(archive) {
     if (textureFiles.has(archive)) return textureFiles.get(archive);
     if (!texturePromises.has(archive)) {
@@ -78,7 +80,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const t = textureFiles.get(archive);
     return { width: t.getWidth(record), height: t.getHeight(record) };
   };
-  const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false } = {}) => {   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload
+  const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false, dye = null } = {}) => {   // DW3: `dye` - GetItemImage asks the replacement by the item's dye (ItemHelper.cs:458); the icon uploads under a per-dye variant and answers which   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload
     const t = textureFiles.get(archive);
     const bitmap = t.getDFBitmap(record, 0);
     // Spectral archives (ghost/wraith/Lysandus) take the verbatim
@@ -100,7 +102,15 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // BELOW the spectral arm: that path builds its albedo AND an
     // emission mask together from one remap, and replacing half of it
     // would leave a ghost lit by a texture it no longer wears.
-    const swap = decodedTexture(archive, record, 0);
+    // DW3: with a dye, the ask is the DYED name and that alone - DFU's
+    // TryImportTexture(archive, record, 0, item.dyeColor) has no bare
+    // fallback (GetName :729-730 appends the dye; a bare file answers a
+    // bare ask, which is a dye of Unchanged). A dyed swap is uploaded
+    // under its own UI variant, so an Iron dagger and a Daedric one are
+    // two textures; a classic upload keeps the shared `#ui` key.
+    const token = dyeToken(dye);
+    const swap = decodedTexture(archive, record, 0, 'Albedo', dye);
+    const variant = mips === false ? (swap && token ? `#ui_${token}` : '#ui') : undefined;
     // INCIDENT (2026-09-04, the see-through lines in dungeon walls): a
     // MODEL texture is opaque. DaggerfallMesh.cs:141/:169 fetch a mesh's
     // material through MaterialReader.GetMaterial(archive, record) whose
@@ -111,7 +121,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // index-0 mortar run in a wall texture became a slit the model
     // shader discarded, and the room behind it showed through.
     const color32 = swap ?? t.getColor32(removeMask ? changeMask(bitmap) : bitmap, opaque ? -1 : 0);   // HM1: a clone - the cached record keeps its mask for the doll
-    renderer.uploadTexture(archive, record, color32, { opaque, mips });
+    renderer.uploadTexture(archive, record, color32, variant !== undefined ? { opaque, mips, variant } : { opaque, mips });
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).
     if (isExteriorWindow(archive, record)) {
@@ -125,6 +135,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       // sitting at scene ambient beside the light it casts.
       renderer.uploadEmissionTexture(archive, record, color32, { white: true });
     }
+    return variant;   // DW3: the icon drawers read the GL texture by `${archive}_${record}${variant}`
   };
   // C11 mobile monsters: per-FRAME uploads under a composite record
   // key (`${record}#${frame}` - the renderer keys textures by
@@ -277,6 +288,8 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   }
 
   loadFlats();   // warm it with the scene; the getters answer null until it lands
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
+  /** AUDIT-DW F1: the icon doors' per-record ask - decode THIS record's replacement (by the item's dye) before it is uploaded. Resolves once it is decoded or known absent; never throws. */
+  const preloadRecord = (archive, record, dye = null) => preloadTextureRecord(archive, record, 0, 'Albedo', dye).catch(() => null);
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, preloadRecord, getGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
     loadFlats, flatCaption, flatFaceIndex, flatsFile: () => flats };
 }

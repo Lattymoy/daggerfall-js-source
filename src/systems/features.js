@@ -151,6 +151,11 @@ export const MOD_CURATED = Object.freeze({
   // SW1: the three a player reaches for first - how big the shield sits,
   // where it sits, and what it does when the weapon comes out.
   'shield-widget': Object.freeze(['Shield.Scale', 'Shield.OffsetHorizontal', 'Shield.WhenAttacking']),
+  // DW1: the one key besides the switch - the mod's own Weapon Widget preset, which its readme asks players to select.
+  'diverse-weapons': Object.freeze(['WeaponWidgetPreset']),
+  // RRI1: the three a player reaches for first - the new items, and what loot is.
+  'roleplay-realism-items': Object.freeze(['newWeapons', 'newArmor', 'lootRebalance']),
+  'roleplay-realism': Object.freeze(['advancedArchery', 'climbingRestriction', 'underworldExpulsion']),
   // TORCH-BIND (2026-09-22, a player on Discord: "No option to rebind
   // Handheld Torches actions"): the three TextKeys are the mod's own key
   // store, read raw by the hosts, and the Mods pane that once captured
@@ -620,6 +625,9 @@ export const FEATURES = Object.freeze([
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),
   modFeature('weapon-widget', 'Takes effect at once.', 'combat'),   // WW1: the widget reads its switches every frame
   modFeature('shield-widget', 'Takes effect at once.', 'combat'),   // SW1: the same - every switch is read on the frame
+  modFeature('diverse-weapons', 'Takes effect when a weapon is next drawn.', 'combat'),
+  modFeature('roleplay-realism-items', 'Takes effect when the game next loads.', 'loot'),   // RRI1: the template patches are merged at load (ItemHelper.LoadItemTemplates); the classes read their switches live; RRI2: the nine modules read theirs at each roll (a corpse, a shelf, a price), the starting kit and spellbook at the next character   // DW1: the atlas name is chosen at the weapon's load (FPSWeapon.cs:637-644), and the rig's cache key carries it
+  modFeature('roleplay-realism', 'Takes effect when the game next loads.', 'loot'),   // RR1: the class enemies' appearance is written into the basics at load (RoleplayRealism.cs:186-189); every other arm reads its switch at the roll
   modFeature('handheld-torches', 'Takes effect at once.', 'loot'),   // HT1: the component reads its switches every frame
   // AT0 (2026-09-15): AMBIENT TEXT - `world`, because what it talks
   // about is where you are. Its effect line is the mod's own pacing:

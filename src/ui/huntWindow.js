@@ -93,7 +93,7 @@ export class HuntWindow {
     // ENH-NOTICE3: the ASK page is a Yes/No DECISION and the RESULT page
     // is the flow's own click-anywhere box - both are the
     // ServiceFlowWindow's to decide (it calls noticeFrame itself,
-    // guildServiceWindows.js:205), so this owner's panel goes the
+    // guildServiceWindows.js:214), so this owner's panel goes the
     // moment the busy page turns.
     if (this.phase !== HUNT_PHASE.Busy) { noticeRelease(this); this._flow.draw(renderer, canvas, font); return; }
     const m = nativeMetrics(canvas);

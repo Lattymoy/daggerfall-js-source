@@ -43,6 +43,14 @@ export { PITCH_LIMIT };
  *  clamp is applied, to the TARGET, so a pitch restored from a save
  *  below the floor glides up to it rather than snapping. */
 export const PITCH_FLOOR = (75 * Math.PI) / 180;
+// RR2: `playerMouseLook.PitchMaxLimit = terrainAngle + 18` (EnhancedRiding.cs
+// :288) - a mod lowers how far DOWN the rider may look. DFU's Pitch is
+// down-positive; the port's is up-positive, so PitchMaxLimit is the
+// FLOOR here. A registered provider answers DFU's limit in DEGREES
+// (down-positive), or null for the owner's PITCH_FLOOR.
+let _floorProvider = null;
+export function setPitchFloorProvider(fn) { _floorProvider = typeof fn === 'function' ? fn : null; }
+export const pitchFloor = () => { const d = _floorProvider?.(); return Number.isFinite(d) ? Math.min((Math.max(d, -90) * Math.PI) / 180, PITCH_FLOOR) : PITCH_FLOOR; };   // AUDIT-RR2 G23: `pitchMax = Mathf.Clamp(value, PitchMin, PitchMax)` (PlayerMouseLook.cs:87-90), PitchMin -90 - a steep bank cannot push the floor past vertical
 
 /** GetFrameRateScaledFractionOfProgression (:100-105), verbatim. */
 export function frameRateScaledFraction(fractionAt60FPS, dt) {
@@ -149,7 +157,7 @@ export class LookFilter {
    */
   tick(dt, cam, { smoothing = getFloat('Controls', 'MouseLookSmoothingFactor', 0, SMOOTHING_MAX) } = {}) {
     // Clamp the TARGET pitch to the range, then owe only what remains.
-    const targetPitch = Math.max(-PITCH_FLOOR, Math.min(PITCH_LIMIT, cam.pitch + this.residualPitch));   // MAC1: the floor is the owner's, the ceiling the reference's
+    const targetPitch = Math.max(-pitchFloor(), Math.min(PITCH_LIMIT, cam.pitch + this.residualPitch));   // RR2: a mod's PitchMaxLimit rides the floor   // MAC1: the floor is the owner's, the ceiling the reference's
     this.residualPitch = targetPitch - cam.pitch;
     const s = frameSmoothing(_controllerLook && smoothing < 0.5 ? 0.5 : smoothing, dt);   // GP1: the controller's floor
     const stepYaw = this.residualYaw * (1 - s);

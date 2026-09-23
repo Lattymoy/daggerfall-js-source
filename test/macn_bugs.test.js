@@ -147,12 +147,12 @@ test('MAC-N1: every Armor mint in the tree goes through SetItem\'s writes, and t
   const bareArmor = SRC.filter(([, s]) => /mintCondition\(\{\s*group: 'Armor'/.test(s)).map(([p]) => p);
   assert.deepEqual(bareArmor, [], 'an Armor record minted with a condition and no value');
   const through = SRC.filter(([, s]) => /mintCondition\(setItemFields\(\{\s*group: 'Armor'/.test(s)).map(([p]) => p).sort();
-  assert.deepEqual(through, ['src/combat/enemyEquipment.js', 'src/scenes/worldModes.js', 'src/systems/createItem.js', 'src/systems/testRoom.js'],
-    'the corpse, the knightly gift, the Create Item spell and the test room - the four sites that minted armor bare or by hand');
+  assert.deepEqual(through, ['src/combat/enemyEquipment.js', 'src/combat/rriEnemyEquipment.js', 'src/scenes/worldModes.js', 'src/systems/createItem.js', 'src/systems/testRoom.js'],
+    'the corpse, the knightly gift, the Create Item spell and the test room - the four sites that minted armor bare or by hand (RRI2: and the mod\'s enemy kit, through the same export)');
   // ONE home for `value ?? itemBaseValue` as a MINT (readers - itemInfo's %wth, the keyed shelf's itemValue - may fall back)
   const copies = SRC.filter(([p, s]) => p !== 'src/systems/itemTemplates.js' && /value: item\.value \?\? itemBaseValue\(item\)/.test(s)).map(([p]) => p);
   assert.deepEqual(copies, [], 'the five private copies of SetItem\'s value write are gone');
-  assert.match(rd('src/systems/itemTemplates.js'), /export function setItemFields\(item\) \{\s*return \{\s*\.\.\.item,\s*name: item\.name \?\? templateByIndex\(item\.templateIndex\)\?\.name,\s*value: itemValueOf\(item\),\s*\};\s*\}/, 'JAN1: the value write reads through itemValueOf - a non-finite saved value is an absent one');
+  assert.match(rd('src/systems/itemTemplates.js'), /export function setItemFields\(item\) \{\s*const named = \{ \.\.\.item, name: item\.name \?\? templateByIndex\(item\.templateIndex\)\?\.name \};[\s\S]{0,700}?return \{\s*\.\.\.named,\s*\.\.\.\(variant \? \{ \.\.\.variant, rriVariant: true \} : \{\}\),\s*(?:[^\n]*\n){1,3}\s*value: itemValueOf\(named\),\s*\};\s*\}/, 'JAN1: the value write reads through itemValueOf - a non-finite saved value is an absent one (AUDIT-RR F5: priced BEFORE the class\'s variant fold, as ApplyArmorMaterial runs before SetVariant)');
 });
 
 test('MAC-N1: the recovered arrow is CreateWeapon\'s arrow with stackCount 1 (EnemyAttack.cs:145-147), minted by ONE export at every host', () => {

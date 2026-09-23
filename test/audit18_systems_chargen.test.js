@@ -28,6 +28,9 @@ const arena = (name) => new Uint8Array(readFileSync(join(ARENA2, name)));
 import { applyHeadlessChargen } from '../src/systems/chargenSession.js';
 import { getReputation } from '../src/systems/factionRep.js';
 
+/** DW3: the image carries the item's dye now; these pins are about the archive and record. */
+const archiveRecord = ({ archive, record }) => ({ archive, record });
+
 // ---- a career shaped like a CLASS*.CFG one, so the synthetic arms
 // need no data files ----
 const synthCareer = (over = {}) => ({
@@ -154,12 +157,12 @@ test('AUDIT 18 F3: a biography Book rolls a variant, and the icon follows it', (
   assert.equal(applyBiographyEffect(e, 'IT 7 0 0', { rolls: () => 0.6 }), 'item');
   assert.equal(e.items[0].variant, 1);
   // playerTextureRecord 2 + min(variant, variants - 1)
-  assert.deepEqual(inventoryItemImage(e.items[0]), { archive: 209, record: 3 });
+  assert.deepEqual(archiveRecord(inventoryItemImage(e.items[0])), { archive: 209, record: 3 });
 
   const e0 = freshEntity();
   applyBiographyEffect(e0, 'IT 7 0 0', { rolls: () => 0.1 });
   assert.equal(e0.items[0].variant, 0);
-  assert.deepEqual(inventoryItemImage(e0.items[0]), { archive: 209, record: 2 });
+  assert.deepEqual(archiveRecord(inventoryItemImage(e0.items[0])), { archive: 209, record: 2 });
 });
 
 // =====================================================================

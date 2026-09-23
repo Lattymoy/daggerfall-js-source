@@ -44,6 +44,7 @@ import { unequipItem } from './equip.js';   // DaggerfallUnityItem.UnequipItem (
 import { templateByIndex } from './itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
+import { customItemClass } from './rriItems.js';   // RRI1: GetEnchantmentPower is a virtual the armor classes answer
 
 /** SetEnchantments' `maxEnchantments` (:1273) - and the same ten the
  *  two picker buttons test against (DaggerfallItemMakerWindow.cs:629,
@@ -109,6 +110,8 @@ export const armorEnchantmentMultiplier = (material) =>
 export function itemEnchantmentPower(item) {
   if (!item) throw new Error('itemEnchantmentPower: item is null');
   const basePower = templateByIndex(item.templateIndex)?.enchantmentPoints ?? 0;
+  const cls = customItemClass(item.templateIndex);
+  if (cls?.enchantmentPower) return cls.enchantmentPower(item, { enchantmentPoints: basePower, armorEnchantmentMultiplier });
   let multiplier = 0;
   if (item.group === 'Weapons') multiplier = weaponEnchantmentMultiplier(item.material);
   else if (item.group === 'Armor') multiplier = armorEnchantmentMultiplier(item.material);
