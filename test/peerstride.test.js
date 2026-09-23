@@ -54,7 +54,7 @@ test('PEER-BUZZ, driven: the floating-origin recentre is not a stride - world.js
   rp.sync([peer(wireX)], toScene, opts);   // back to the unshifted frame WITHOUT a rebase - the anchor holds the shifted point
   assert.equal(played.length, before + 1, 'unrebased, the jump counts as walked distance and fires - which is what the rebase exists to stop');
   // by source: the seam and the call
-  assert.match(rd('src/net/remotePlayers.js'), /const step = fm\.update\(f, \{ grounded: true, swimming: false, levitating: false, onFoot: true, standingStill: !shown\.mv, halfSpeed: false \}, set\);/, 'the SCENE point');
+  assert.match(rd('src/net/remotePlayers.js'), /const step = fm\.update\(f, \{ grounded: true, swimming: false, levitating: false, onFoot: !shown\.rd, standingStill: !shown\.mv, halfSpeed: false \}, set\);/, 'the SCENE point');
   assert.match(rd('src/net/remotePlayers.js'), /rebaseFootsteps\(\) \{\s*for \(const fm of this\._footsteps\.values\(\)\) fm\.rebase\(\);\s*\}/);
   assert.match(rd('src/scenes/world.js'), /footsteps\.rebase\(\);\s*\n\s*betterAmbience\.rebase\(\);[^\n]*\n\s*remotePlayers\?\.rebaseFootsteps\?\.\(\);/, 'called in the recentre block, beside the local machine\'s rebase');
 });

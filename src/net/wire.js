@@ -1105,9 +1105,8 @@ export function parseClient(text, { hasHello = false } = {}) {
     const data = validCastData(m.data);
     return data ? { t: 'cast', data } : { error: 'bad cast' };
   }
-  if (m.t === 'park') {   // HCC-PARK: my parked team's word - null (nothing of mine parked), or its anchor and, when shown, its record
+  if (m.t === 'park') {   // HCC-PARK: my character's parked team - nothing (no anchor), or its anchor and, when shown, its record
     if (!hasHello) return { error: 'park before hello' };
-    if (m.data === null) return { t: 'park', data: null };
     const data = validParkData(m.data);
     return data ? { t: 'park', data } : { error: 'bad park' };
   }
@@ -1915,22 +1914,48 @@ export const relaySupportsTrade = (v) => { const m = /^world(\d+)$/.exec(typeof 
 // anchor stands in that room's own cell (a record cannot be planted in a cell its owner is not in - the camps' and
 // the foes' law: a peer speaks only for itself and only where it is); anywhere else the frame is the owner's word
 // about WHERE their team is, and nothing is stored. Either way the owner's REGISTRY (one object per owner,
-// `parkreg:<id>`) learns the cell, and when that cell changed - or the word is null - it tells the old cell to drop
+// `parkreg:<key>`) learns the cell, and when that cell changed - or nothing is parked - it tells the old cell to drop
 // the record. So a team summoned away, ridden off, re-parked across the map or loaded from an older save leaves no
 // ghost, whichever room its owner is standing in when it happens.
 //
-// Bounded three ways: PARK_CELL_MAX records a cell (the stalest evicted), PARK_TTL_MS since the owner last said it
-// (an owner who never returns takes theirs with them in the end), PARK_HZ_MAX frames a second a socket.
+// WHO THE OWNER IS (AUDIT HCC-PARK D1/D2). Not the socket's peer id: that is the client's own choice, proved only
+// inside one room and minted again in every new tab - so a record keyed by it could be dropped or overwritten by
+// anyone who said the id somewhere else, and a player returning in a new tab left their old record standing beside
+// the new one. The owner is the ACCOUNT the identity token verified (the socket's `sub`) and the CHARACTER the frame
+// names (`c`, systems/characterId.js - one account holds several characters, each with its own team): the relay
+// keys the record by an opaque hash of the two (parkKeyOf), which is what the others are told. A player can reach
+// only their own account's records, and the account's subject never leaves the relay (a place room names no
+// account - MOD1). The relay never hands an account its own records back: its client draws its team off its save.
+//
+// Bounded four ways: PARK_CELL_MAX records a cell (the stalest evicted), PARK_ACCOUNT_MAX of them one account's
+// (its own stalest goes first - one account cannot empty a cell of everyone else's), PARK_TTL_MS since the owner last
+// said it (an owner who never returns takes theirs with them in the end), PARK_HZ_MAX frames a second a socket.
 
-/** A cell room's record key in its own storage. */
-export const parkKey = (owner) => `park:${owner}`;
-/** The owner's registry object's name (a Room instance the worker never routes a socket to). */
-export const parkRegistryRoom = (owner) => `parkreg:${owner}`;
+/** A cell room's record key in its own storage (`k` the owner's parkKeyOf). */
+export const parkKey = (k) => `park:${k}`;
+/** The owner's registry object's name (a Room instance no park frame stores anything in). */
+export const parkRegistryRoom = (k) => `parkreg:${k}`;
+/** The owner's key: the account the token verified and the character the frame named, hashed - stable across tabs
+ *  and sessions, distinct per character, unforgeable (no one else's socket carries that account), and opaque (the
+ *  account's subject is not what the others are told). */
+export const PARK_KEY_RE = /^[0-9a-f]{24}$/;
+export async function parkKeyOf(sub, c) {
+  const bytes = new TextEncoder().encode(`${sub}\n${c}`);
+  const d = new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', bytes));
+  let hex = '';
+  for (let i = 0; i < 12; i++) hex += d[i].toString(16).padStart(2, '0');
+  return hex;
+}
+/** A character id as the frame may carry it (characterId.js mints a UUID, or a stamp and a random tail). */
+export const PARK_CHAR_RE = /^[A-Za-z0-9-]{8,64}$/;
 /** The two internal doors between objects - paths the public worker never forwards (it forwards /room/<key> alone). */
 export const PARK_INTERNAL_REG = '/internal/park/registry';
 export const PARK_INTERNAL_DROP = '/internal/park/drop';
 export const PARK_CELL_MAX = 32;
+export const PARK_ACCOUNT_MAX = 4;
 export const PARK_TTL_MS = 72 * 3600 * 1000;
+/** The same word again refreshes its record's time at most this often (and is fanned to nobody). */
+export const PARK_REFRESH_MS = 10 * 60 * 1000;
 export const PARK_HZ_MAX = 2;
 /** How far (natives, either axis) a record's wagon and horse may stand from its anchor - a hitched horse stands 3.1 m
  *  ahead of its wagon; a quarter of a native pixel is room for any team and no room for a second place. */
@@ -1944,17 +1969,19 @@ const PARK_KIND_DEPLOYED = 2;
 export const parkGate = (bucket, now) => tokenGate(bucket, now, PARK_HZ_MAX);
 
 /**
- * A `park` frame's data through the door: `{ a: [x, z], r?: { w?, h?, n? } }`. `a` the anchor in natives, inside
- * the world. `r` the team as shown: `w` a DEPLOYED wagon only ([2, x, y, z, qx, qy, qz, qw, tier, 0] - a unit
+ * A `park` frame's data through the door: `{ c, a?: [x, z], r?: { w?, h?, n? } }`. `c` the character (PARK_CHAR_RE);
+ * no `a`: nothing of that character's is parked. `a` the anchor in natives, inside the world. `r` the team as shown: `w` a DEPLOYED wagon only ([2, x, y, z, qx, qy, qz, qw, tier, 0] - a unit
  * quaternion, a known tier), `h` a horse standing ([x, y, z, fx, fz, 0] - never walking: a walking horse is not
  * parked), `n` the horse's name through the label door; every part within PARK_REACH of the anchor. Anything else is
  * null - the frame is refused.
  */
 export function validParkData(d) {
   if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  if (typeof d.c !== 'string' || !PARK_CHAR_RE.test(d.c)) return null;
   const a = d.a;
+  if (a === undefined || a === null) return d.r === undefined || d.r === null ? { c: d.c } : null;
   if (!Array.isArray(a) || a.length !== 2 || !a.every(finite) || a.some((v) => v < 0 || v > POSE_BOUND)) return null;
-  const out = { a: [a[0], a[1]] };
+  const out = { c: d.c, a: [a[0], a[1]] };
   if (d.r === undefined || d.r === null) return out;
   const r = d.r;
   if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
@@ -1971,8 +1998,9 @@ export function validParkData(d) {
   if (r.h !== undefined) {
     const h = r.h;
     if (!Array.isArray(h) || h.length !== 6 || !h.every(finite) || h[5] !== 0) return null;
-    if (!near(h[0], h[2]) || Math.abs(h[1]) > POSE_Y_BOUND || !(Math.hypot(h[3], h[4]) > 1e-6)) return null;
-    rec.h = [h[0], h[1], h[2], h[3], h[4], 0];
+    const fl = Math.hypot(h[3], h[4]);
+    if (!near(h[0], h[2]) || Math.abs(h[1]) > POSE_Y_BOUND || !(fl > 1e-6)) return null;
+    rec.h = [h[0], h[1], h[2], h[3] / fl, h[4] / fl, 0];   // AUDIT HCC-PARK D5: a facing, so a unit one - 1e300 is stored and fanned no more
   }
   if (r.n !== undefined) {
     if (typeof r.n !== 'string' || r.n.length > 124) return null;

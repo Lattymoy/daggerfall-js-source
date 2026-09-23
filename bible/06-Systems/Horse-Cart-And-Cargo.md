@@ -273,27 +273,38 @@ horses."
   drawn: a deployed wagon, or a horse standing loose or hitched to a
   deployed wagon. It carries the anchor `a` (the wagon's, else the horse's,
   in wire units) and the record `r` only while the team is shown. The host
-  (`hccParkTick`, after the frame's out-words) sends it when it changes, at
-  most once a second, again on a room change and when the cell's socket
-  opens. It goes to the anchor's own cell room (`cellRoomOfWire`, through
+  (`hccParkTick`, after the frame's out-words) adds the character's id `c`
+  and sends it when it changes, at most once a second, and again after any
+  room change and any socket's welcome. It goes to the anchor's own cell room (`cellRoomOfWire`, through
   MapsFile's pixel); through any other room it goes as the anchor alone,
   which asks the registry to clean up and stores nothing.
-- The relay. A cell room stores `park:<owner>` only from a socket in that
+- The owner. The verified account from the identity token plus the
+  character id, hashed into an opaque key (`parkKeyOf`). A player reaches
+  only their own account's records, a new tab replaces the old record, and
+  the account's subject never leaves the relay.
+- The relay. A cell room stores `park:<key>` only from a socket in that
   same cell, so a player can park only where they stand. It fans the word
-  as `{t:'park'}` and gives a joiner the whole list after the welcome as
-  `{t:'parks'}`, with the owner's verified name. Bounds: `PARK_HZ_MAX`
-  words a second per socket, `PARK_CELL_MAX` teams a cell with the stalest
-  out, `PARK_TTL_MS` (72 hours) since the owner last said it.
-- The registry. One durable object per owner (`parkRegistryRoom`) knows
-  the cell holding their team. When the team moves or is taken up, it tells
-  the old cell to drop it, over internal paths the public worker never
-  forwards. The cell also drops its own superseded record, so a dev worker
-  with no registry binding keeps no ghost.
-- The reader. The pool keeps the live word (`hv`) and the kept one apart
-  and draws, per part, the live one first. The sweep takes only the live
-  word, so a team stays after its owner leaves. A kept team belongs to its
-  cell: it stays while I hold that cell's socket, mine or a halo's, and
-  the next welcome brings it back.
+  as `{t:'park'}` and gives every joiner the list after the welcome as
+  `{t:'parks'}`, an empty one included, with the owner's verified name. An
+  account is never sent its own records. Bounds: `PARK_HZ_MAX` words a
+  second per socket, `PARK_ACCOUNT_MAX` records of one account a cell,
+  `PARK_CELL_MAX` teams a cell with the stalest out, `PARK_TTL_MS` (72
+  hours) since the owner last said it. An expired record is announced
+  gone, and a repeated word refreshes its time without a fan.
+- The registry. One durable object per owner key (`parkRegistryRoom`)
+  knows the cell holding their team, stamped with when the owner said it.
+  When the team moves or is taken up, it tells the old cell to drop it,
+  over internal paths the public worker never forwards. An older word never
+  overrides a newer one, and a drop never removes a newer record. The cell
+  also drops its own superseded record, so a dev worker with no registry
+  binding keeps no ghost.
+- The reader. The pool keeps live words by peer id and kept words by room
+  and owner key, so one cell's "gone" never removes another's record. A
+  kept team is drawn under its own key from the newest word any held cell
+  sent. A kept part hides only when its owner's live word shows that part
+  within ten metres of it. The sweep takes only live words, so a team stays
+  after its owner leaves. A kept team stays while I hold its cell's socket
+  and until its time on the relay runs out.
 - Compatibility. An older relay closes the socket on an unknown frame, so
   the client sends `park` only to world99 or later (`relaySupportsPark`).
   The deploy drops every connected player once.
@@ -314,10 +325,91 @@ on everyone else's screen.
   same eight views, idle, walk and gallop tables, size and offsets as the
   player's own third-person billboard. The move bit picks the table (2 is
   the gallop). The rider layer runs first, the Morrowind body and the doll
-  stand nothing for a rider, and the name tag rides at `RIDER_NAME_HEIGHT`.
+  stand nothing for a rider once its sprite is drawn. The name tag rides
+  at the sprite's own top.
 - The art is drawn whether or not the viewer has EOTB switched on. It is
   the only art the port has of a person on a horse, and seeing a peer ride
   is the port's own online feature, not the mod's.
+
+## AUDIT BRANCH (2026-09-23)
+
+Mac: "Let's do an audit on everything before we merge. This needs to be
+perfect." Main had moved on first: FRIENDLY-SPELLS shipped `world98`, so
+this branch was merged with main and its relay law moved to `world99`.
+Five review lenses then read the whole branch. Every finding below is
+fixed. The park and rider findings are pinned in `test/hcc_park.test.js`,
+the others in `test/audit_hcc_branch.test.js`. The mutants are in
+`tools/mutants/hccpark.json` and `tools/mutants/auditbranch.json`, and
+every one dies.
+
+**The parked team (relay and client).**
+- D1: records were keyed by the peer id, which the client chooses. Anyone
+  could erase or overwrite another player's parked team by saying their id
+  in another cell or in theirs. Records are now keyed by the verified
+  account and the character.
+- D2: a new tab minted a new id, so the old record stood beside the new
+  one for 72 hours, and the owner saw their own wagon as someone else's.
+  The same key now replaces it, and an account is never sent its own
+  records.
+- D3: one account could fill a cell and push every real team out.
+  `PARK_ACCOUNT_MAX` bounds one account's records in a cell.
+- D4: two registry updates in flight could leave it naming the wrong cell.
+  The registry is now ordered by when the owner spoke, and a late drop
+  never removes a newer record.
+- D5: a horse facing of 1e300 was stored and fanned. It is normalised now.
+  An expired record is announced to whoever is drawing it. A repeated word
+  costs no fan.
+- C2: a "gone" from one cell deleted the owner's fresh record from another.
+  Kept words are stored per room.
+- C3: a welcome with no parked teams sent nothing, so a team taken up
+  while a socket was away stayed drawn. Every cell welcome now sends the
+  list.
+- C4: a word sent down a socket that died was never repeated. The word is
+  sent again after any welcome.
+
+**The riders.**
+- The rider was drawn at the newest pose, up to a second ahead of its own
+  name. It now uses the smoothed pose that bodies and names use.
+- Peers never saw a gallop, because the motor never "runs" a mount. The
+  pose now sends the gallop bit that the rider's own sprite shows
+  (`tableMoveSpeed`, one home with the rider's sprite).
+- A rider whose art had not loaded, or had failed, was drawn as nothing.
+  It keeps its doll or body until the sprite is up, and failed art is
+  retried after `RIDER_RETRY_MS`.
+- A mounted peer played human footsteps. A rider takes no stride, as the
+  local player's own step machine rules.
+- The name tag sat inside the rider's head on gallop frames. It now sits
+  at the sprite's top.
+- Riders stood frozen over the death screen. They go with the bodies.
+- A mounted peer's spells and arrows started at a standing height. They
+  start at the saddle's eye height (`RIDE_EYE_HEIGHT`).
+
+**The mod's own machine (against the IL).**
+- IL1 [IL_9b1a-IL_9b3e]: entering a building with the wagon forced the
+  horse to "hitched" and moved it to the door. Only a cart entry does;
+  otherwise the horse keeps its own mode.
+- IL2 [SeedTrail IL_5968-IL_59e7]: a jump re-seeded the trail but kept the
+  old ground, so the wagon snapped back and a dismount parked it 200 m
+  away. The seed now forgets the old ground and hides the wagon until it
+  grounds again.
+- IL3 [IL_51ef-IL_51f9]: a following team re-seeded its path only when
+  both conditions held; the IL re-seeds when either does.
+- IL4: the runtime ran on real time. It now runs on Unity's
+  `Time.deltaTime`: zero while the game is paused, scaled with the world.
+  Other players' teams keep easing on real time.
+
+**The hosts.**
+- H2: the wagon's inventory door skipped the host's werewolf refusal and
+  art check. It goes through the host's own door, and a refusal clears the
+  wagon pre-selection.
+- H3: a fast travel that threw never ran the post step, so a following
+  horse stayed suspended. The post step now runs from `finally`.
+- H4: the mod's switch and the rider's sprite set each built a whole
+  settings object every frame, and the wagon's collider built a string key
+  every frame. Each now reads one key or compares numbers.
+
+**Not built.** Riding peers make no hoof sound. The local rider hears the
+riding loop; hearing a peer's would be a new feature.
 
 ## What is and is not ported
 
@@ -358,12 +450,13 @@ no other:
   follow, wait, name, the windows' questions, the doors, the save, fast
   travel, Travel Options, the persistence setting, the origin),
   `test/hcc_pool.test.js` (13, the presentation, the wire and the audit's
-  online rows), `test/hcc_park.test.js` (11, HCC-PARK, HCC-TIP, RIDE), `test/audit_hcc.test.js` (9, AUDIT HCC),
+  online rows), `test/hcc_park.test.js` (13, HCC-PARK, HCC-TIP, RIDE and the audit's park and rider rows),
+  `test/audit_hcc_branch.test.js` (6, the branch audit's IL and host rows), `test/audit_hcc.test.js` (9, AUDIT HCC),
   `test/hcc_hosts.test.js` (10, the hosts' seams by execution and by
   source), `test/hcc_scope.test.js` (4, the table), `test/hcc_assets.test.js`
   (3, the vendored files are the assembly's).
-- `tools/mutants/hcc.json` and `tools/mutants/hccpark.json`: the mutation
-  lists, every one dead.
+- `tools/mutants/hcc.json`, `tools/mutants/hccpark.json` and
+  `tools/mutants/auditbranch.json`: the mutation lists, every one dead.
 - Not verified in a browser: no session exists in this container. The
   first thing to look at in one is the trailing wagon behind the cart and
   the horse standing where you dismounted; online, a second client seeing a

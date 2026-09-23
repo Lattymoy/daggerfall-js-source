@@ -23,7 +23,7 @@ import {
   calculateHorseOrientation, horseViewFor, horseTargetLabel, ACTIVATION_REACH, HORSE_BOX_CENTER, HORSE_BOX_SIZE,
   stepHorseWalk, freshHorseWalk, START_WALKING_SPEED, WAGON_MODE, HORSE_MODE,
 } from '../systems/horseCartLaw.js';
-import { PARK_REACH } from '../net/wire.js';   // HCC-PARK: how far a kept team's parts may stand from its anchor - the relay's own bound
+import { PARK_REACH, PARK_TTL_MS } from '../net/wire.js';   // HCC-PARK: how far a kept team's parts may stand from its anchor, and how long the relay keeps one
 import { WAGON_HOVER_TEXT } from '../player/eotbWagon.js';   // the hover word for a wagon - the noun of Eye Of The Beholder's Info line, so both carts read alike
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
 import { decodePng } from '../systems/textureReplacement.js';
@@ -49,6 +49,9 @@ export { WAGON_HOVER_TEXT, HORSE_BOX_CENTER, HORSE_BOX_SIZE };   // the pool's c
 export const peerKey = (owner, what) => `hccPeer:${owner}:${what}`;
 /** HCC-TIP: the plaque's owner row for another player's horse or wagon. */
 export const ownedLine = (who) => (who ? `Owned by ${who}` : 'Owned by another player');
+/** HCC-PARK: how near (natives, either axis) an owner's live part must stand to a kept part to be the same one -
+ *  ten metres: a parked team's rounding and a live word's ease, never a second team a street away. */
+export const PARK_SAME_NATIVES = 400;
 /** How many surfaces a RaycastAll answers before it stops looking (a ray through a town meets a handful). */
 export const RAYCAST_ALL_MAX_HITS = 8;
 
@@ -120,7 +123,8 @@ export function createHorseCartPool({
   // SCENE frame), name, at, shownWagon, shownRotation, shownHorse, walk (the reader's own stride), bucketKey }
   const _peers = new Map();
   const _live = new Map();   // HCC-PARK: owner -> their live word { w, h, n, toScene, at } (the foes frame's `hv`)
-  const _kept = new Map();   // HCC-PARK: owner -> the cell's kept word { w, h, n, name, room, toScene } (the relay's memory)
+  const _kept = new Map();   // HCC-PARK: `${room}|${k}` -> a cell's kept word { room, k, id, w, h, n, name, expires, toScene, seq } (the relay's memory; AUDIT HCC-PARK: per ROOM and per owner KEY, so one cell's word never unsays another's)
+  let _keptSeq = 0;
   let _lastKey = '';
 
   const fetchPng = async (file) => {
@@ -179,11 +183,14 @@ export function createHorseCartPool({
   // ── the parked wagon's collider (the root's non-trigger BoxCollider over the source mesh's bounds)
   /** Stand (or take down) one wagon's box under `bucket` at matrix `m`; answers the pose key it now stands at
    *  (null: nothing stands, so the next call tries again). */
+  /** The box stands again only when its matrix moved past a millimetre - compared number by number (AUDIT HCC, the
+   *  branch audit: a sixteen-string key was built and joined every frame for every parked wagon). */
+  const sameMatrix = (a, b) => { if (!a || !b || a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) >= 5e-4) return false; return true; };
   function standBox(bucket, m, prevKey) {
     const col = collider();
     if (!col?.addMesh || !_parts) return prevKey;
-    const key = m ? Array.from(m, (v) => v.toFixed(3)).join(',') : null;
-    if (key === prevKey) return prevKey;
+    if (m ? sameMatrix(m, prevKey) : prevKey === null) return prevKey;
+    const key = m ? Float64Array.from(m) : null;
     col.removeBucket?.(bucket);
     if (!m) return null;
     const b = usableBounds(_parts.bounds);   // EnsureUsableBoundsSize [IL_10f1]
@@ -251,9 +258,13 @@ export function createHorseCartPool({
   }
 
   /** The frame: the runtime's LateUpdate, then the collider and the billboards after what it decided. */
-  function frame(dt, cameraPos) {
+  /** One frame. `dt` real seconds (the peers' easing and strides - another player's team keeps moving while my
+   *  window is open); `gameDt` Unity's Time.deltaTime for MY runtime [IL_1dac, IL_5d8d, IL_37c3]: zero while the game
+   *  is paused, scaled with the world's time (AUDIT HCC, the branch audit - a following horse walked on under an open
+   *  inventory, and a Travel Options journey left the trailing wagon 15 m behind the cart). */
+  function frame(dt, cameraPos, gameDt = dt) {
     if (!enabled) { if (_horseBatches.size || _peers.size || _bucketKey) destroyAll(); return; }
-    runtime?.lateUpdate(dt);
+    runtime?.lateUpdate(gameDt);
     const s = shown();
     if (s?.wagon) ensureParts();   // a wagon shown before the runtime asked for the parts (a peer's, a restored one) starts the build
     if (s?.deployed && _parts && s.wagon) standWagonCollider(wagonMatrix(s.wagon.position, s.wagon.rotation)); else standWagonCollider(null);
@@ -319,7 +330,7 @@ export function createHorseCartPool({
     // as the mod names it - the horse by its name (HorseTargetLabel's "Horse" when unnamed), the wagon "Wagon" - and a
     // second row says whose it is, the way the plaque's other rows speak: the owner's session name, or the name the
     // relay stamped on the cell's memory when the owner is away (HCC-PARK), never nobody's.
-    const who = peerName(pk.owner) ?? (p.ownerName || null);
+    const who = peerName(p.ownerId ?? pk.owner) ?? (p.ownerName || null);
     const owned = ownedLine(who);
     if (pk.what === 'w') return { title: WAGON_HOVER_TEXT, subs: [owned] };
     return { title: horseTargetLabel(p.name ?? ''), subs: [owned] };
@@ -358,7 +369,7 @@ export function createHorseCartPool({
   /** Every transition and every load: the peers' LIVE words go (their art with them, where the cell keeps nothing of
    *  theirs); the runtime keeps its own record (the mod's handlers). HCC-PARK: the kept records are the cell's and
    *  go with the cell (pruneKept), not with a room change's puppets. */
-  function clearPeers() { const owners = [..._live.keys()]; _live.clear(); for (const owner of owners) syncPeer(owner); for (const owner of [..._peers.keys()]) if (!_kept.has(owner)) dropPeer(owner); }
+  function clearPeers() { const owners = [..._live.keys()]; _live.clear(); for (const owner of owners) syncPeer(owner); for (const key of [..._peers.keys()]) if (!isKeptKey(key)) dropPeer(key); }
   function dropPeer(owner) {
     const p = _peers.get(owner);
     if (p?.bucketKey) collider()?.removeBucket?.(peerWagonBucket(owner));
@@ -380,30 +391,47 @@ export function createHorseCartPool({
     p.horse = p.wire.h ? { ...p.wire.h, position: p.toScene(p.wire.h.position) } : null;
   }
   /**
-   * HCC-PARK: WHAT A PEER'S TEAM IS, per part. Two words stand behind it: the owner's LIVE word (`hv` on their foes
-   * frame, present while they are in the room) and the cell's KEPT word (the relay's memory of their parked team,
-   * present whether they are or not). The wagon is the live one's, else the kept one's; the horse likewise - so an
-   * owner standing across the cell from their parked wagon (live says nothing of it, their client is not showing it)
-   * still leaves it standing, and a live word that moved the team wins over the memory the owner is about to
-   * replace. Nothing of either: the display goes.
+   * HCC-PARK: WHAT STANDS FOR A PEER. Two kinds of word, two kinds of display. An owner's LIVE word (`hv` on their
+   * foes frame, present while they are in the room) stands under their peer id. A cell's KEPT word (the relay's
+   * memory of a parked team, present whether its owner is here or not) stands under its owner KEY (`kept:<k>`, the
+   * relay's opaque account-and-character key) - so an owner who came back in a new tab, or plays another character
+   * in the same tab, is never confused with the team they left (AUDIT HCC-PARK D2). One team is never drawn twice: a
+   * kept part stands down while its owner's live word shows that same part in the same place (PARK_SAME_NATIVES) -
+   * the owner is here saying it, and the live word is the fresher one.
    */
-  function syncPeer(owner) {
-    const l = _live.get(owner) ?? null, k = _kept.get(owner) ?? null;
-    const w = l?.w ?? k?.w ?? null, h = l?.h ?? k?.h ?? null;
-    if (!enabled || (!w && !h)) { if (_peers.has(owner)) dropPeer(owner); return; }
-    let p = _peers.get(owner);
-    if (!p) { p = { wire: null, toScene: null, wagon: null, horse: null, name: '', ownerName: '', at: 0, kept: false, shownWagon: null, shownHorse: null, shownRotation: null, walk: freshHorseWalk(), bucketKey: null }; _peers.set(owner, p); }
-    p.wire = { w, h };
-    p.toScene = l?.toScene ?? k?.toScene ?? ((q) => q);
-    p.at = l?.at ?? p.at;
-    p.name = (l?.h ? l.n : k?.n) ?? '';
-    p.ownerName = k?.name ?? '';
-    p.kept = !l;   // shown off the cell's memory alone: the owner is not here to say it
+  const keptKey = (k) => `kept:${k}`;
+  const isKeptKey = (key) => typeof key === 'string' && key.startsWith('kept:');
+  function showPeer(key, v) {
+    if (!enabled || !v || (!v.w && !v.h)) { if (_peers.has(key)) dropPeer(key); return; }
+    let p = _peers.get(key);
+    if (!p) { p = { wire: null, toScene: null, wagon: null, horse: null, name: '', ownerId: null, ownerName: '', at: 0, kept: false, shownWagon: null, shownHorse: null, shownRotation: null, walk: freshHorseWalk(), bucketKey: null }; _peers.set(key, p); }
+    p.wire = { w: v.w, h: v.h };
+    p.toScene = v.toScene ?? ((q) => q);
+    p.at = v.at ?? p.at;
+    p.name = v.n ?? '';
+    p.ownerId = v.ownerId; p.ownerName = v.ownerName ?? ''; p.kept = !!v.kept;
     retarget(p);
     if (!p.wagon) { p.shownWagon = null; p.shownRotation = null; }
     if (!p.horse) p.shownHorse = null;
     if (p.horse) { ensureStationary(); ensureWalk(); }
     if (p.wagon) ensureParts();
+  }
+  function syncPeer(owner) {
+    const l = _live.get(owner) ?? null;
+    showPeer(owner, l ? { w: l.w, h: l.h, n: l.h ? l.n : '', toScene: l.toScene, at: l.at, ownerId: owner, ownerName: '', kept: false } : null);
+    for (const k of new Set([..._kept.values()].filter((e) => e.id === owner).map((e) => e.k))) syncKept(k);
+  }
+  const samePlace = (a, b) => !!a && !!b && Math.abs(a[0] - b[0]) <= PARK_SAME_NATIVES && Math.abs(a[2] - b[2]) <= PARK_SAME_NATIVES;
+  /** The kept word a key stands on: the newest any held cell said (two cells hold one owner's record only while the
+   *  registry's drop of the older is in flight). */
+  function syncKept(k) {
+    let e = null;
+    for (const x of _kept.values()) if (x.k === k && (!e || x.seq > e.seq)) e = x;
+    if (!e) { showPeer(keptKey(k), null); return; }
+    const l = _live.get(e.id) ?? null;
+    const w = e.w && !(l?.w && samePlace(l.w.position, e.w.position)) ? e.w : null;
+    const h = e.h && !(l?.h && samePlace(l.h.position, e.h.position)) ? e.h : null;
+    showPeer(keptKey(k), { w, h, n: h ? e.n : '', toScene: e.toScene, ownerId: e.id, ownerName: e.name, kept: true });
   }
   /** Another's word through validHccRecord, kept in the WIRE frame; `null` (or an invalid record) drops theirs. */
   function applyOwner(owner, raw, toScene = (p) => p, nowMs = 0) {
@@ -426,29 +454,38 @@ export function createHorseCartPool({
   }
 
   // ── HCC-PARK: THE CELL'S MEMORY OF A PARKED TEAM (net/wire.js's header)
-  /** A cell room's word about one owner's parked team: `r` their record (the relay's projection), or null - gone.
-   *  `name` is the owner's as the relay stamped it, so a team whose owner is away is still named. */
-  function applyKept(room, owner, name, r, toScene = (p) => p) {
-    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;
-    const v = r == null ? null : validHccRecord(r);
+  /** A cell room's word about one owner's parked team (online.js's projection): `k` the owner key, `id` the peer id
+   *  it was last said under, `name` the owner's as the relay stamped it (so a team whose owner is away is still
+   *  named), `r` the record or null - gone, `ttl` its life left. Only THIS room's word for that key changes. */
+  function applyKept(room, e, toScene = (p) => p, nowMs = 0) {
+    if (!e || typeof e !== 'object' || typeof e.k !== 'string' || !e.k || typeof e.id !== 'string' || !e.id) return false;
+    if (e.id === (selfId?.() ?? null)) return false;
+    const slot = `${room}|${e.k}`;
+    const v = e.r == null ? null : validHccRecord(e.r);
     if (!v || !(v.w?.kind === HCC_WIRE_KIND.Deployed || v.w == null) || (!v.w && !v.h)) {
-      if (_kept.get(owner)?.room === room || r == null) _kept.delete(owner);
-      syncPeer(owner);
-      return r == null;
+      _kept.delete(slot);
+      syncKept(e.k);
+      return e.r == null;
     }
-    _kept.set(owner, { w: v.w ?? null, h: v.h ?? null, n: v.n ?? '', name: typeof name === 'string' ? name.slice(0, 32) : '', room, toScene });
-    syncPeer(owner);
+    const ttl = Number.isFinite(e.ttl) ? Math.max(0, Math.min(PARK_TTL_MS, e.ttl)) : PARK_TTL_MS;
+    _kept.set(slot, { room, k: e.k, id: e.id, w: v.w ?? null, h: v.h ?? null, n: v.n ?? '', name: typeof e.name === 'string' ? e.name.slice(0, 32) : '', expires: nowMs + ttl, toScene, seq: ++_keptSeq });
+    syncKept(e.k);
     return true;
   }
-  /** A cell room's whole memory (its welcome): every kept word of that room replaced by the list. */
-  function replaceKept(room, list, toScene = (p) => p) {
-    for (const [owner, k] of [..._kept]) if (k.room === room) { _kept.delete(owner); syncPeer(owner); }
-    for (const e of Array.isArray(list) ? list : []) if (e && typeof e === 'object') applyKept(room, e.id, e.name, e.r, toScene);
+  /** A cell room's whole memory (its welcome - an empty one included): every kept word of that room replaced. */
+  function replaceKept(room, list, toScene = (p) => p, nowMs = 0) {
+    const touched = new Set();
+    for (const [slot, e] of [..._kept]) if (e.room === room) { _kept.delete(slot); touched.add(e.k); }
+    for (const e of Array.isArray(list) ? list : []) if (e && typeof e === 'object' && applyKept(room, e, toScene, nowMs)) touched.delete(e.k);
+    for (const k of touched) syncKept(k);
   }
-  /** The rooms I hold now (my cell, my halo): a kept word of a room I left goes. */
-  function pruneKept(rooms) {
+  /** The rooms I hold now (my cell, my halo): a kept word of a room I left goes, and one past its life on the relay
+   *  (AUDIT HCC-PARK D5: the relay's sweep says so only to a socket it is listing for). */
+  function pruneKept(rooms, nowMs = null) {
     const held = rooms instanceof Set ? rooms : new Set(rooms ?? []);
-    for (const [owner, k] of [..._kept]) if (!held.has(k.room)) { _kept.delete(owner); syncPeer(owner); }
+    const touched = new Set();
+    for (const [slot, e] of [..._kept]) if (!held.has(e.room) || (nowMs !== null && nowMs >= e.expires)) { _kept.delete(slot); touched.add(e.k); }
+    for (const k of touched) syncKept(k);
   }
   /**
    * HCC-PARK: MY word for the cell - what of mine is PARKED, off the save record (the runtime's WagonSaveData), never
@@ -482,7 +519,7 @@ export function createHorseCartPool({
     setEnabled(on) {
       const was = enabled;
       enabled = !!on;
-      if (!was && enabled) { for (const owner of [..._kept.keys()]) syncPeer(owner); return; }   // HCC-PARK: the cell's parked teams, back with the switch
+      if (!was && enabled) { for (const k of new Set([..._kept.values()].map((e) => e.k))) syncKept(k); return; }   // HCC-PARK: the cell's parked teams, back with the switch
       if (!was || enabled) return;
       runtime?.suspend?.();   // AUDIT HCC H4: the machine lets go of what it was observing
       destroyAll();

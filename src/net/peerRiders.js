@@ -21,8 +21,9 @@ import { POSE_RIDE } from './wire.js';
 
 /** The table a riding pose shows: standing, walking, galloping (EOTB's three mounted tables). */
 export const rideTable = (mv) => (mv === 2 ? 'GallopHorse' : mv === 1 ? 'MoveHorse' : 'IdleHorse');
-/** How tall a rider's name stands (metres over the feet): the saddle's sprite top, near enough for the tag. */
-export const RIDER_NAME_HEIGHT = 2.6;
+/** AUDIT RIDE: a sprite whose fetch or decode failed is asked for again after this long (a long-open tab across a
+ *  deploy that moved the art's hashes answers 404 until it reloads - not forever). */
+export const RIDER_RETRY_MS = 30000;
 
 async function decodeUrl(url) {
   const res = await fetch(url);
@@ -34,16 +35,17 @@ async function decodeUrl(url) {
  * `renderer` the host's (uploadTexture, createBillboardBatch, destroyBillboardBatch); `urlFor` / `decode` the art's
  * doors (the pins drive fakes). `enabled()` is whether riders are drawn at all (the art is Eye Of The Beholder's).
  */
-export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, enabled = () => true } = {}) {
+export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, decode = decodeUrl, enabled = () => true, clock = () => Date.now() } = {}) {
   const riders = new Map();   // id -> { table, frame, clock, batch, batchKey, size, xml, mirror }
-  const tex = new Map();      // `${archive}:${rec}` -> { w, h } | Promise | null
+  const tex = new Map();      // `${archive}:${rec}` -> { w, h } | Promise | null (no art at all) | { failedAt } (asked again after RIDER_RETRY_MS)
   const pixels = new Map();   // sprite key -> decode promise
 
   function ensure(s) {
     const k = `${s.archive}:${s.rec}`;
     const have = tex.get(k);
-    if (have && !(have instanceof Promise)) return have;
-    if (have !== undefined || !renderer?.uploadTexture) return null;
+    if (have && !(have instanceof Promise) && !('failedAt' in have)) return have;
+    if (have && 'failedAt' in have && clock() - have.failedAt >= RIDER_RETRY_MS) tex.delete(k);
+    else if (have !== undefined || !renderer?.uploadTexture) return null;
     const url = urlFor(s.key);
     if (!url) { tex.set(k, null); return null; }
     let img = pixels.get(s.key);
@@ -53,7 +55,7 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
       return { w: width, h: height };
     });
     tex.set(k, p);
-    p.then((r) => tex.set(k, r), () => tex.set(k, null));
+    p.then((r) => tex.set(k, r), () => tex.set(k, { failedAt: clock() }));
     return null;
   }
   function drop(id) {
@@ -70,8 +72,10 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
     const on = enabled();
     const seen = new Set();
     for (const peer of on ? peers ?? [] : []) {
-      const pose = peer?.pose;
-      if (!peer?.shown || !pose || !(pose.rd === POSE_RIDE.Horse || pose.rd === POSE_RIDE.Cart)) continue;
+      // AUDIT RIDE: the SHOWN pose - the one the session eases between words, which the bodies, the dolls, the names
+      // and the casts all read; the latest word ran up to a whole interval ahead of the rider's own name
+      const pose = peer?.shown;
+      if (!pose || !(pose.rd === POSE_RIDE.Horse || pose.rd === POSE_RIDE.Cart)) continue;
       seen.add(peer.id);
       let r = riders.get(peer.id);
       if (!r) { r = { table: null, frame: 0, clock: 0, batch: null, batchKey: null, size: null, xml: null, mirror: false }; riders.set(peer.id, r); }
@@ -110,10 +114,12 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
 
   return {
     sync,
-    /** Whether a peer is drawn in the saddle this frame - the other two layers stand nothing for them. */
-    isRiding: (id) => riders.has(id),
-    /** The name tag's height over a rider's feet (0: not riding) - remotePlayers' `bodyHeight` hand-off. */
-    heightOf: (id) => (riders.has(id) ? RIDER_NAME_HEIGHT : 0),
+    /** Whether a peer is DRAWN in the saddle this frame - the other two layers stand nothing for them. AUDIT RIDE: a
+     *  rider whose art is not up yet (or failed) is not drawn, so it keeps its doll or body - never nothing at all. */
+    isRiding: (id) => !!riders.get(id)?.batch,
+    /** The name tag's height over a rider's feet (0: not drawn) - remotePlayers' `bodyHeight` hand-off: the sprite's
+     *  own top this frame (its size over the feet plus EOTB's y offset), as a body's head is its own. */
+    heightOf: (id) => { const r = riders.get(id); return r?.batch && r.size && r.xml ? r.size.h + r.xml.y / r.xml.scale : 0; },
     batches: () => [...riders.values()].map((r) => r.batch).filter(Boolean),
     offsetAll(offset) { for (const r of riders.values()) if (r.batch?.origin) { r.batch.origin[0] += offset[0]; r.batch.origin[1] += offset[1]; r.batch.origin[2] += offset[2]; } },
     destroy() { for (const id of [...riders.keys()]) drop(id); },

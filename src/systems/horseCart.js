@@ -791,7 +791,9 @@ export function createHorseCartRuntime(deps) {
     const hx = pendingInteriorHorseWorldX, hz = pendingInteriorHorseWorldZ, hheading = pendingInteriorHorseHeading;
     const entryMode = pendingInteriorTransportMode;
     if (hadWagon) {
-      const hm = (entryMode === TRANSPORT.Cart && wagonState.HorseMode === HORSE_MODE.None) ? HORSE_MODE.None : HORSE_MODE.HitchedToWagon;
+      // AUDIT HCC (branch audit) [IL_9b1a-IL_9b3e]: by CART with a horse the team goes in hitched; otherwise the horse keeps
+      // its own mode - a horse waiting down the road, or following, is not teleported to the wagon at the door
+      const hm = (entryMode === TRANSPORT.Cart && wagonState.HorseMode !== HORSE_MODE.None) ? HORSE_MODE.HitchedToWagon : wagonState.HorseMode;
       commitDeployment(wx, wz, heading, hm);
     }
     if (hadHorse && !isCartInteriorDeployment(hadWagon, entryMode)) setHorseLoose(hx, hz, hheading);
@@ -1064,15 +1066,24 @@ export function createHorseCartRuntime(deps) {
     w.prevPos = [...pos]; w.prevFwd = [...fwd];
   }
   function updateCargoFullness(weight, limit) { if (wagonVisual) wagonVisual.cargoTier = cargoTier(weight, limit); }
+  /** SeedTrail [IL_5968-IL_59e7] whole: the trail from the player, and EVERYTHING the old one grounded - the ground
+   *  state (the pose's own last valid ground, which ApplyGroundedPose reads: AUDIT HCC, the branch audit - a jump left
+   *  it standing, so the wagon snapped back to the old ground and a dismount parked it 200 m away), the moving world
+   *  pose, the wheels - and the wagon hidden until it grounds again. */
+  function seedTrail(playerPos, forward) {
+    trail.seed(playerPos, forward);
+    hasLastValidGroundState = false; hasMovingWorldPose = false; resetWheelMotionState();
+    if (wagonVisual) { wagonVisual.pose.active = false; wagonVisual.pose.hasLastValid = false; }
+  }
   function updateMovingPresentation(weight, limit, dt) {
     const m = movement();
     const playerPos = m.position;
     if (!wagonVisual) {
-      trail.seed(playerPos, m.forward);
+      seedTrail(playerPos, m.forward);
       if (!createWagonVisual()) return;
     }
     updateCargoFullness(weight, limit);
-    if (trail.isDiscontinuity(playerPos, wagonVisual ? wagonPosition() : null)) { trail.seed(playerPos, m.forward); hasLastValidGroundState = false; hasMovingWorldPose = false; resetWheelMotionState(); wagonVisual.pose.active = false; }
+    if (trail.isDiscontinuity(playerPos, wagonVisual ? wagonPosition() : null)) seedTrail(playerPos, m.forward);
     else trail.record(playerPos, m.forward);
     const tp = trail.trailingPoint(playerPos);
     if (!tp) return;
@@ -1103,7 +1114,7 @@ export function createHorseCartRuntime(deps) {
     }
     updateCargoFullness(weight, limit);
     const recorded = hitchedWagonPath.record(horse.position, horse.forward);
-    if (!recorded && !hitchedWagonPathInitialized) {
+    if (!recorded || !hitchedWagonPathInitialized) {   // AUDIT HCC (branch audit) [IL_51ef-IL_51f9]: EITHER - a jump Record refused re-seeds from the wagon, not behind the horse's heading
       const trailingSeed = (wagonVisual && wagonActive()) ? [...wagonPosition()] : wagonSeedPos;
       hitchedWagonPath.seedBehind(horse.position, horse.forward, trailingSeed); hitchedWagonPathInitialized = true;
     }

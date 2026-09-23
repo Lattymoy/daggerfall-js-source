@@ -126,7 +126,7 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     /new InputMessageBoxWindow\(\{ lines: \[\], label, value, maxCharacters/,
     /isQualifyingThreatState\(true, !!f\.ai\.isHostile, f\.entity\?\.team === 'PlayerAlly', isLocalPlayerTarget\(f\.ai\.target\), !!f\.ai\.detected\)/,
     // AUDIT HCC H1: LateUpdate ONCE a frame, in every mode - the modal branch, and the exterior frame before the world pass
-    /hcc\.setEnabled\(hccOn\(\)\); if \(hcc\.enabled\) hccPollSettings\(nowMs\); hcc\.frame\(dt, cam\.pos\);/,
+    /hcc\.setEnabled\(hccOn\(\)\); if \(hcc\.enabled\) hccPollSettings\(nowMs\); hcc\.frame\(dt, cam\.pos, gamePaused\(\) \? 0 : dt \* (?:worldTimeScale|hccTimeScale)\(\)\);/,   // AUDIT HCC (branch audit): the runtime's Time.deltaTime - held by the pause, scaled with the world
     /hccTick\(dt, now\);[^\n]*\n\s+townTalk\.frame\(dt\);\n\s+capturePendingScreenshot\(canvas\);/,
     /hccTick\(dt, now\);[^\n]*\n\s+renderer\.setClearColor\(SKY_CLEAR\);/,
     /if \(hcc\.enabled && _mode\(\) === 'exterior'\) livePersonBatches\.push\(\.\.\.hcc\.batches\(\)\);/,
@@ -145,9 +145,9 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     /horseCartSave: \(\) => hccRuntime\.getSaveData\(\),/, /horseCartLoad: \(rec\) => \{ hccRuntime\.handleStartLoad\(\); if \(rec\) hccRuntime\.restoreSaveData\(rec\); \},/,
     /if \(!_loadedGame\) hccRuntime\.handleNewGame\(\);/, /horseCart: hccRuntimeOn,\s+\/\/ HCC: the runtime's transition handlers/,
     // AUDIT HCC H2: the travel map's journey (the mod's one subscription), and the online respawn treated as one
-    /if \(_traveling\) return;\n(?:\s*\/\/[^\n]*\n)*\s+hccRuntimeOn\(\)\?\.handlePreFastTravel\(\);\n\s+_traveling = true;/,
-    /travelStart, modEvent: 'travel' \}\);\n\s+hccRuntimeOn\(\)\?\.handlePostFastTravel\(\);/,
-    /hccRuntimeOn\(\)\?\.handlePreFastTravel\(\);\n\s+await _teleportToPixel\(land\.x, land\.y, null, \{ reposition: REPOSITION\.RandomStartMarker \}\);\n\s+hccRuntimeOn\(\)\?\.handlePostFastTravel\(\);/,
+    /if \(_traveling\) return;\n(?:\s*\/\/[^\n]*\n)*\s+hccRuntimeOn\(\)\?\.handlePreFastTravel\(\);\n\s+let hccPostDue = true;[^\n]*\n\s+_traveling = true;/,
+    /travelStart, modEvent: 'travel' \}\);\n\s+hccPostDue = false; hccRuntimeOn\(\)\?\.handlePostFastTravel\(\);/, /if \(hccPostDue\) hccRuntimeOn\(\)\?\.handlePostFastTravel\(\);[^\n]*\n\s+_traveling = false;/,
+    /hccRuntimeOn\(\)\?\.handlePreFastTravel\(\);\n\s+try \{ await _teleportToPixel\(land\.x, land\.y, null, \{ reposition: REPOSITION\.RandomStartMarker \}\); \}\n\s+finally \{ hccRuntimeOn\(\)\?\.handlePostFastTravel\(\); \}/,
     /exteriorFoes\.foesFrame\(full, _hccDirty\)/, /if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\); if \(cell && \(full \|\| _hccDirty\)\) \{ frame\.hv = hcc\.wireRecord\(campToWire\); _hccDirty = false; \}/,
     /if \(isCellRoom\(online\.room\)\) \{ const ids = ownerIds\(\); if \(ids\) camps\.sweepOwners\(ids, now, FOES_STALE_MS\); \}[^\n]*\n\s*if \(isCellRoom\(online\.room\)\) \{ const ids = ownerIds\(\); if \(ids\) hcc\.sweepOwners\(ids, now, FOES_STALE_MS\); \}/,
     /exteriorFoes\.setOnHcc\(\(from, hv, at\) => hcc\.applyOwner\(from, hv, campToScene, at\), \(\) => hcc\.clearPeers\(\)\);/,
@@ -164,7 +164,7 @@ test('HCC hosts: exterior.js mirrors the same seams over the fixed city (no stre
     /gps: \{ worldX: \(\) => _anchorNative\(player\.pos\)\.x, worldZ: \(\) => _anchorNative\(player\.pos\)\.z/,
     /streaming: \{ isReady: \(\) => true, isInit: \(\) => false, mapPixelX: \(\) => _locPixel\.x, mapPixelY: \(\) => _locPixel\.y, ratio: \(\) => 1 \/ GLOBAL_SCALE \}/,
     /isOnShip: \(\) => false/,
-    /hcc\.setEnabled\(hccOn\(\)\); if \(hcc\.enabled\) hccPollSettings\(nowMs\); hcc\.frame\(dt, cam\.pos\);/,
+    /hcc\.setEnabled\(hccOn\(\)\); if \(hcc\.enabled\) hccPollSettings\(nowMs\); hcc\.frame\(dt, cam\.pos, gamePaused\(\) \? 0 : dt \* (?:worldTimeScale|hccTimeScale)\(\)\);/,   // AUDIT HCC (branch audit): the runtime's Time.deltaTime - held by the pause, scaled with the world
     /hccTick\(dt, now\);[^\n]*\n\s+townTalk\.frame\(dt\);/, /hccTick\(dt, now\);[^\n]*\n\s+renderer\.setClearColor\(SKY_CLEAR\);/,
     /if \(hcc\.enabled\) personBatches\.push\(\.\.\.hcc\.batches\(\)\);/,
     /const hccKeyDown = \(name\) => \{ const c = domCodeForKeyCode\(name\); return !!c && !gamePaused\(\) && pressedCode\(latch\.edge, c\); \};/,

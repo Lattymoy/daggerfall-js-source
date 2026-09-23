@@ -159,9 +159,9 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
     // never laid on the frame - the relay ignores what a client says
     // about its own badge, and a harness that could set one on the
     // frame would be testing the wrong half forever.
-    const tok = 'tok' in over ? over.tok : await token(id, { n: over.name ?? String(id), t: over.title, g: over.glyphs, mu: over.mu });
+    const tok = 'tok' in over ? over.tok : await token(id, { s: over.tokenSub, n: over.name ?? String(id), t: over.title, g: over.glyphs, mu: over.mu });   // AUDIT HCC-PARK: `tokenSub` names the verified account the token carries (default acct-<id>; never a frame field - a social hello's own `acct` is the hub's) - one player in a second tab is one account under two ids
     const frame = { t: 'hello', id, secret: 'secret-of-' + id, name: id, look, pose, ...over };
-    delete frame.title; delete frame.glyphs; delete frame.mu;   // ACC3/MOD1: they went into the token above; the wire has no such hello field
+    delete frame.title; delete frame.glyphs; delete frame.mu; delete frame.tokenSub;   // ACC3/MOD1: they went into the token above; the wire has no such hello field
     if (tok == null) delete frame.tok; else frame.tok = tok;
     return room.webSocketMessage(ws, JSON.stringify(frame));
   };

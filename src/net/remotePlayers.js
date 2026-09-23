@@ -677,7 +677,8 @@ export class RemotePlayers {
     // 2.5 of them: forty-eight a second, the buzz. The stride is measured in SCENE units, as the local one is, and
     // the recentre is handled the way EV1 handles it for the local machine - world.js calls `rebaseFootsteps` in
     // the same block that calls `footsteps.rebase()`, so the anchor re-seeds and the 819.2-unit jump is no stride.
-    const step = fm.update(f, { grounded: true, swimming: false, levitating: false, onFoot: true, standingStill: !shown.mv, halfSpeed: false }, set);
+    // AUDIT RIDE: a peer in the saddle takes no stride - the rider's own machine is silent on a mount (isOnFoot), so the others' is too
+    const step = fm.update(f, { grounded: true, swimming: false, levitating: false, onFoot: !shown.rd, standingStill: !shown.mv, halfSpeed: false }, set);
     if (!step) return;
     const hasEye = eye && eye.length === 3;
     const dist = hasEye ? Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]) : 0;

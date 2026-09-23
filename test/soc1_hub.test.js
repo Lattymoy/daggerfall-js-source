@@ -546,7 +546,7 @@ test('SOC1 hub: the gates - SOCIAL_HZ_MAX a socket (over it dropped, a strike co
   // outside the hub: junk, counted, closed past the strikes
   await withHub(async (cell) => {
     const w = cell.r.connect(); await cell.r.hello(w, 'peer-w', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 }, { acct: 'acct-w', asecret: 'secret-of-acct-w' }); cell.tick();
-    assert.deepEqual(w.sent.map((m) => m.t), ['welcome'], 'a cell keeps no account and says no social word');
+    assert.deepEqual(w.sent.map((m) => m.t), ['welcome', 'parks'], 'a cell keeps no account and says no social word (HCC-PARK: its welcome is followed by the cell\'s parked teams, an empty list included - not a social word)');
     assert.equal(w.att.acct, undefined);
     await cell.act(w, { k: 'party.leave' }); cell.tick(); await cell.pose(w); cell.tick();
     assert.equal(w.att.junk, 2, 'junk, counted'); assert.equal(errors(w).length, 0);

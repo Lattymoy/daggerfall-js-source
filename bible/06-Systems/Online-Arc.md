@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3571` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3581` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:227`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:820`, `src/net/online.js:1451`):**
+**Now (`src/net/wire.js:820`, `src/net/online.js:1457`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7974,3 +7974,29 @@ The full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-T
   relay closes the socket on an unknown frame, so the client sends `park` only to world99 or later (`relaySupportsPark`, set on the primary welcome). The relay
   deploys itself on the merge to main, which drops every connected player once. Not verified in a browser: no
   online session exists in this container.
+
+### AUDIT BRANCH - the parked team's owner, the reader, the rider (2026-09-23, Mac: "Let's do an audit on everything before we merge. This needs to be perfect")
+
+The full list is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT BRANCH. Main had shipped FRIENDLY-SPELLS as world98 first,
+so the branch merged main and moved its relay law to world99; the client's park door opens at world99.
+
+- **The owner is the account and the character, never the peer id (D1, D2).** A record keyed by the id a client
+  chooses could be dropped or overwritten by anyone who said that id, and a new tab left the old record standing
+  beside the new one. The relay keys a record by `parkKeyOf(sub, c)`: the subject the identity token verified and the
+  character id the frame names (`systems/characterId.js`). The others are told only that opaque key. An account is
+  never handed or fanned its own records, so its client draws its own team off its save alone.
+- **Bounded per account, ordered, announced (D3-D5).** `PARK_ACCOUNT_MAX` records of one account a cell; the registry
+  stores when the owner spoke and ignores an older word, and a cell drops a record only if it is no newer than the
+  drop; an expired record is said gone; the same word again refreshes its time and is fanned to nobody; the horse's
+  facing is a unit vector at the door.
+- **The reader keeps each cell's word apart (C2-C4).** Kept words are stored per room and owner key, so one cell's
+  "gone" never removes another's fresh record; every cell welcome carries the list, an empty one included; the park
+  word is said again after any welcome, so a word lost with a dying socket is repeated. A kept part stands down only
+  where its owner's live word shows that same part.
+- **The rider (RIDE).** Drawn off the smoothed pose, with the gallop bit the rider's own sprite shows, only once its
+  sprite is up (failed art retried), with no human footsteps, the name at the sprite's top, gone over the death
+  screen, and its casts from the saddle's eye height.
+
+Pins: `test/hcc_park.test.js` (13); mutants `tools/mutants/hccpark.json` (35, all dead). RELAY_VERSION world99 with
+its law row (never deployed, so its row was still this branch's to write). The relay deploys itself on the merge to
+main and drops every connected player once. Not verified in a browser: no online session exists in this container.
