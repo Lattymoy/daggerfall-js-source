@@ -1120,18 +1120,25 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _wodPeerSprung = new Set();
   let _wodSprungChanged = false;   // a new spring asks the stream for a full frame, so the peers hear it at once
   const WOD_PEER_SITES_MAX = 4096;
-  const wodSiteOf = (p, w) => wodSiteId(p.px, p.py, w.oid ?? 'x');
+  const wodSiteOf = (p, w) => wodSiteId(p.px, p.py, w.oid ?? 'x', w.oidN ?? 0);
+  const WOD_SPRUNG_MAX = 256;   // AUDIT WOD7: my list is bounded - the oldest go first
   function wodSprang(site) {
     if (!online) return;
-    _wodSprung.set(site, performance.now());
+    _wodSprung.delete(site); _wodSprung.set(site, performance.now());   // re-sprung (a rebuild's fresh marker): newest again
+    if (_wodSprung.size > WOD_SPRUNG_MAX) _wodSprung.delete(_wodSprung.keys().next().value);
     _wodSprungChanged = true;
   }
-  /** WOD7: markers a peer sprang - mine are spent; one I sprang too is a race, settled by id (yieldsTo). */
+  /** WOD7: my sprung list for the frame - [[site, ageMs]], newest first, so the frame's cap drops the oldest. */
+  const wodSprungList = () => { const now = performance.now(); return [..._wodSprung].reverse().map(([s, at]) => [s, now - at]); };
+  /** AUDIT WOD7: a pixel promoted afresh (no carry) mints fresh markers - a peer's old spring there is spent no more. */
+  function wodForgetPeerSites(key) { for (const s of [..._wodPeerSprung]) if (s.startsWith(`${key}:`)) _wodPeerSprung.delete(s); }
+  /** WOD7: markers a peer sprang, [[site, ageMs|null]] - mine are spent; one I sprang too is a race: the first
+   *  spring keeps it, a tie inside the window goes to the smaller id (yieldsTo), an age not yet heard waits. */
   function wodPeerSites(from, sites) {
-    for (const s of sites) {
+    for (const [s, age] of sites) {
       const mine = _wodSprung.get(s);
       if (mine != null) {
-        if (!yieldsTo(online?.id ?? '', from, mine, performance.now())) continue;   // mine stands; theirs yields at their end
+        if (!yieldsTo(online?.id ?? '', from, performance.now() - mine, age)) continue;   // mine stands (or waits for their age); theirs yields at their end
         _wodSprung.delete(s);
         exteriorFoes.removeSiteFoes(s);
       }
@@ -2000,11 +2007,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // height over its base - which is what Vector3.Distance measures.
       if (place.spawners.length) {
         wodSpawners = [];
+        const oidSeen = new Map();   // AUDIT WOD7: a layout may number two markers alike (WOD_Nature_01's two bears, WOD_Ruins_04's three warriors, all 0)
         for (const s of place.spawners) {
           const t = await getTexture(s.archive);
           const h = s.record < t.recordCount ? billboardSize(t, s.record).h : 0;
           const centre = [s.base[0], s.base[1] + (h * s.scaleY) / 2, s.base[2]];
-          wodSpawners.push({ spawner: new WodSpawner(s), centre, flat: null, restand: false, oid: s.objectID });   // WOD7: oid - the marker's site with the pixel   // a carried one replaces it at publish (m4)
+          const n = oidSeen.get(s.objectID) ?? 0; oidSeen.set(s.objectID, n + 1);
+          wodSpawners.push({ spawner: new WodSpawner(s), centre, flat: null, restand: false, oid: s.objectID, oidN: n });   // WOD7: oid (and its index among the pixel's alike) - the marker's site with the pixel   // a carried one replaces it at publish (m4)
         }
       }
       const site = [...wodPicks].reverse().find((p) => p.flatten);
@@ -2148,6 +2157,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // cleared it, so a stale roll never stands in the new world.
     const wodKept = adoptWodCarry(key, wodSpawners, privateersHold);
     const wodLife = wodKept.life ?? {};   // L1-3: this terrain's identity - kept across a rebuild or a pool, new on a promote
+    if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again
     if (_building.get(key) === made) _building.delete(key);   // BUILD-FAIL1: the entry owns them from here
     built.set(key, {
       staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
@@ -4310,7 +4320,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:398-403) never looks the record up in `foes`, and
+    // (exteriorFoes.js:400-405) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1344-1358) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -9717,7 +9727,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
     });
-    exteriorFoes.setOnSites((from, sites) => wodPeerSites(from, sites), () => [..._wodSprung.keys()]);   // WOD7: a peer's sprung markers - mine are spent; mine ride my full frames
+    exteriorFoes.setOnSites((from, sites) => wodPeerSites(from, sites), wodSprungList);   // WOD7: a peer's sprung markers - mine are spent; mine ride my full frames
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
     online.onPark = (room, e) => hcc.applyKept(room, e, campToScene, performance.now());   // HCC-PARK: a cell's word about a parked team (mine or a halo's cell), its owner here or not

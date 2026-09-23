@@ -558,8 +558,11 @@ private copy (the AUDIT BRANCH's M1 had kept those foes home because
 they spent a peer's puppet slots). Now THE FIRST PLAYER TO SPRING A
 MARKER OWNS WHAT IT MADE (`world/wodShared.js`):
 - **A marker's site** is the key every client shares without a word:
-  the map pixel and the marker's objectID (unique inside its layout, one
-  layout to a pixel), or `hold` for Privateer's Hold's camp.
+  the map pixel (one layout stands to a pixel - every shipped pack
+  checked) and the marker's objectID, with its index among the pixel's
+  markers of that objectID when a layout repeats one (`WOD_Nature_01`
+  numbers two bears 0, `WOD_Ruins_04` three warriors), or `hold` for
+  Privateer's Hold's camp.
 - **The owner** tags each camp foe with its site (`spawnFoe`'s `site`);
   a foe with a site rides the cell stream as any encounter foe does and
   hunts the peers (a siteless placed foe still never rides - the fixed
@@ -570,11 +573,18 @@ MARKER OWNS WHAT IT MADE (`world/wodShared.js`):
 - **A reader** stands the camp's puppets under `WOD_CAMP_PUPPETS_MAX`
   (16), apart from the encounter allowance - the slots M1 found spent -
   and spends its own copy of every marker named: it never runs, stands
-  nothing and drops no pile. A captive's flat is each player's own.
-- **A race** - two players springing one marker inside
-  `WOD_CLAIM_WINDOW_MS` (5 s) - goes to the smaller player id; the other
-  takes its camp down. Past the window both stand: nobody's fight is
-  taken from under them.
+  nothing and drops no pile. A camp the allowance refused whole is not
+  spent: that marker stays the reader's to spring. A captive's flat is
+  each player's own.
+- **Bounds.** The owner's list keeps its newest 256 and a frame names
+  the newest 64. A reader forgets a peer's springs on a pixel it
+  promotes afresh (its markers are new), and hears them again on the
+  owner's next full frame if the camp still stands.
+- **A race** - two players who both sprang one marker - goes to the one
+  who sprang it FIRST: the sprung list carries each marker's age, so
+  both sides reach the same answer; inside `WOD_CLAIM_WINDOW_MS` (5 s),
+  where latency cannot order them, the smaller player id. The other
+  takes its camp down, and a foe of it still building ends as it lands.
 - **No wire or relay change.** The tags ride the foes frame beside
   SURV3's camps and are checked at the reader; the relay counts a
   frame's records and reads nothing else, so RELAY_VERSION stays.
@@ -582,8 +592,16 @@ MARKER OWNS WHAT IT MADE (`world/wodShared.js`):
 Limits, stated: the treasure pile stays its springer's (the others'
 markers are spent, so nobody else gets a copy); a camp's foes leave with
 their owner, as an encounter's do; the relay remembers no sprung marker,
-so a player who arrives after the owner has left the cell can spring it
-again. Pinned in `test/wod7_sharedcamps.test.js` and the audit's rig
+so a player who arrives after the owner has left the cell - or who
+promotes the pixel afresh - can spring it again.
+
+The audit of WOD7 (two lenses, the protocol and the host) found seven
+things, each verified and fixed: the repeated objectIDs; the race
+measured on each side's own clock (a pair ten seconds apart doubled or
+collapsed by id order); a race lost while the camp still built; a
+reader's allowance full of an owner's old camps spending a new marker
+it could not show; the owner's list sending its oldest 64 for ever; a
+peer's springs never forgotten; and the stale paragraph above. Pinned in `test/wod7_sharedcamps.test.js` and the audit's rig
 (`test/audit_wod_branch.test.js`); mutants `tools/mutants/wod7.json`.
 
 ## THE FOUR HOSTS
@@ -628,20 +646,19 @@ one switch is ROOM-OWNED (`systems/onlineLane.js`, beside the roads),
 and an online page loads every folder at once in one order: 17 first,
 then ascending. Offline the list is the reference's, path and all.
 
-The spawn points need nothing of the room's. Each client stands its
-own copy of every site and runs its own markers against its own player,
-on its own stream. So a foe a marker stands, or the Hold rolls, is its
-maker's alone and never rides (AUDIT BRANCH M1). Before that fix a
+The spawn points were each client's own until WOD7 (below): each client
+ran its own markers against its own player, on its own stream, so a foe
+a marker stood, or the Hold rolled, was its maker's alone and never rode
+(AUDIT BRANCH M1). Before that fix a
 placed foe rode like any exterior foe: every peer stood the camp twice,
 its own and the maker's, and because placed foes are outside the
 encounter cap and never culled, eight of them left behind took every
 one of a peer's `CELL_PUPPETS_MAX` slots for their owner, so the owner's
 next real encounter never stood there. A placed foe hunts no peer
 either: no peer holds its puppet, and a blow at a peer lands only
-through one. A pile is its maker's alone. Two players who walk into one
-camp each fight their own camp's foes, and each sees the other fight
-foes it cannot see. The camp at Privateer's Hold is the same: each
-client rolls its own seven.
+through one. WOD7 shares the camps again, tagged with their markers and
+under an allowance of their own; a siteless placed foe (the fixed city
+host's Hold) still never rides.
 
 A region pack is fetched with a stall timeout and three tries (AUDIT
 BRANCH M2). One that fails every try is warned and skipped; online, that

@@ -7,11 +7,11 @@
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { wodSiteId, validSites, validSiteTags, yieldsTo, WOD_SITES_MAX, WOD_CAMP_PUPPETS_MAX, WOD_CLAIM_WINDOW_MS } from '../src/world/wodShared.js';
+import { wodSiteId, validSites, validSiteTags, yieldsTo, WOD_SITES_MAX, WOD_CAMP_PUPPETS_MAX, WOD_CLAIM_WINDOW_MS, WOD_AGE_MAX } from '../src/world/wodShared.js';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { CELL_PUPPETS_MAX } from '../src/net/wire.js';
 import { isPeerTarget } from '../src/characters/enemyTargets.js';
@@ -61,26 +61,43 @@ const camp = async (pool, n, site, x0 = 2000) => { const out = []; for (let i = 
 test('WOD7: a marker\'s site is the pixel and its objectID (or the Hold) - every client names it alike; frames name at most WOD_SITES_MAX, projected', () => {
   assert.equal(wodSiteId(625, 418, 33), '625,418:33');
   assert.equal(wodSiteId(-1, 7, 'hold'), '-1,7:hold');
-  assert.deepEqual(validSites(['625,418:33', '625,418:33', 'bad', 7, '1,2:hold', '1,2:x']), ['625,418:33', '1,2:hold'], 'valid, once each');
+  assert.equal(wodSiteId(3, 12, 0, 1), '3,12:0.1', 'AUDIT WOD7: the second marker of an objectID a layout repeats (WOD_Nature_01\'s two bears, both 0)');
+  assert.equal(wodSiteId(3, 12, 0, 0), '3,12:0');
+  assert.deepEqual(validSites([['625,418:33', 5], ['625,418:33', 9], 'bad', ['1,2:hold', -3], ['1,2:x', 1], ['3,12:0.1', 1e12], ['4,4:1', NaN]]),
+    [['625,418:33', 5], ['1,2:hold', 0], ['3,12:0.1', WOD_AGE_MAX]], 'valid, once each, the age clamped');
   assert.deepEqual(validSites('625,418:33'), []);
-  assert.equal(validSites(Array.from({ length: 200 }, (_, i) => `1,1:${i}`)).length, WOD_SITES_MAX);
+  assert.equal(validSites(Array.from({ length: 200 }, (_, i) => [`1,1:${i}`, i])).length, WOD_SITES_MAX);
+  // every shipped layout, read: two repeat an objectID among their markers - the index covers them
+  const V = join(ROOT, 'vendor/world-of-daggerfall/LocationPrefab');
+  const dup = [];
+  for (const f of readdirSync(V)) {
+    const t = readFileSync(join(V, f), 'utf8');
+    const ids = [...t.matchAll(/<name>(\d+\.\d+)<\/name>[\s\S]*?<objectID>(-?\d+)<\/objectID>/g)].filter((m) => /^(199|216|457|478|201)\./.test(m[1])).map((m) => m[2]);
+    if (new Set(ids).size !== ids.length) dup.push(f);
+  }
+  assert.deepEqual(dup.sort(), ['WOD_Nature_01.txt', 'WOD_Ruins_04.txt'], 'two bears both 0; three warriors both 0');
   assert.deepEqual([...validSiteTags([[3, '1,1:5'], [-1, '1,1:6'], [4, 'nope'], [5], 'x', [6, '2,2:hold']])], [[3, '1,1:5'], [6, '2,2:hold']]);
   assert.ok(WOD_CAMP_PUPPETS_MAX > CELL_PUPPETS_MAX, 'a camp has room of its own beyond the encounter allowance');
 });
 
-test('WOD7: two players who spring one marker at once are settled by id - the smaller keeps it, inside the claim window; past it both camps stand', () => {
-  assert.equal(yieldsTo('mmmm-0002', 'aaaa-0001', 0, 100), true, 'the peer\'s id is smaller: mine yields');
-  assert.equal(yieldsTo('aaaa-0001', 'mmmm-0002', 0, 100), false, 'mine is smaller: theirs yields at their end');
-  assert.equal(yieldsTo('mmmm-0002', 'aaaa-0001', 0, WOD_CLAIM_WINDOW_MS + 1), false, 'a fight already begun is never taken');
+test('WOD7: two players who spring one marker - the FIRST keeps it, the smaller id inside the claim window; both sides reach the same answer from the two ages', () => {
+  assert.equal(yieldsTo('mmmm-0002', 'aaaa-0001', 100, 200), true, 'a tie inside the window: the smaller id keeps it');
+  assert.equal(yieldsTo('aaaa-0001', 'mmmm-0002', 200, 100), false, '...and the smaller id, asked, keeps it');
+  // AUDIT WOD7: ten seconds apart, the first spring keeps it whichever id is smaller - from both sides
+  const first = 12000, second = 2000;
+  assert.equal(yieldsTo('aaaa-0001', 'mmmm-0002', second, first), true, 'I sprang second: mine yields, though my id is smaller');
+  assert.equal(yieldsTo('mmmm-0002', 'aaaa-0001', first, second), false, 'I sprang first: mine stands');
+  assert.equal(yieldsTo('mmmm-0002', 'aaaa-0001', 100, null), false, 'an age not yet heard decides nothing');
   assert.equal(yieldsTo('mmmm-0002', 'mmmm-0002', 0, 0), false);
   assert.equal(yieldsTo('', 'aaaa-0001', 0, 0), false, 'offline, nothing yields');
+  assert.ok(WOD_CLAIM_WINDOW_MS < first - second);
 });
 
 // ── the pool: the owner's half ──────────────────────────────────────────
 
 test('WOD7: an owner\'s camp foes ride its stream tagged with their marker; a full frame names every marker it sprang; a placed foe WITHOUT a site still never rides', async () => {
   const A = createExteriorFoes(poolRig());
-  A.setNet(netFor('aaaa-0001')); A.setOnSites(() => {}, () => ['3,12:99']);
+  A.setNet(netFor('aaaa-0001')); A.setOnSites(() => {}, () => [['3,12:99', 40]]);
   const foes = await camp(A, 10, '3,12:7');
   await A.spawnFoe(0, [3000, 0, 3000], { placed: true, groundAlign: { hitDist: 0.5 } });   // a placed foe of no site (the exterior host's Hold)
   const enc = [];
@@ -88,9 +105,15 @@ test('WOD7: an owner\'s camp foes ride its stream tagged with their marker; a fu
   const frame = A.foesFrame(true);
   assert.deepEqual(frame.f.map((r) => r.i).sort((a, b) => a - b), [...foes, ...enc].map((f) => f.seq).sort((a, b) => a - b), 'the camp and the encounter; the siteless placed foe stays home (M1)');
   assert.deepEqual(new Map(frame.st), new Map(foes.map((f) => [f.seq, '3,12:7'])), 'each camp record carries its marker');
-  assert.deepEqual(frame.sp.sort(), ['3,12:7', '3,12:99'], 'the full frame: my live camps\' sites and the host\'s sprung list (a treasure I took)');
+  assert.deepEqual(frame.sp, [['3,12:99', 40], ['3,12:7', WOD_AGE_MAX]], 'the full frame: the host\'s sprung list with its ages (newest first), then a live camp it no longer lists, as old');
   const delta = A.foesFrame(false);
   assert.equal(delta, null, 'nothing moved: no delta, no sprung list');
+  // AUDIT WOD7: past WOD_SITES_MAX the frame keeps the NEWEST (the host's list comes newest first) - it sent the oldest 64 for ever
+  const many = Array.from({ length: 70 }, (_, k) => [`5,5:${69 - k}`, k]);   // newest first
+  A.setOnSites(() => {}, () => many);
+  const big = A.foesFrame(true).sp;
+  assert.equal(big.length, WOD_SITES_MAX);
+  assert.deepEqual(big[0], ['5,5:69', 0], 'the newest spring rides');
 });
 
 test('WOD7: a shared camp\'s foe hunts the peers as an encounter\'s does - a siteless placed foe still does not', async () => {
@@ -117,13 +140,17 @@ test('WOD7: removeSiteFoes takes down my foes of that site alone - a race lost',
   A.removeSiteFoes('3,12:7');
   await flush();
   assert.deepEqual(A.foes.filter((f) => !f.dead && !f._removed).map((f) => f.site).filter(Boolean).sort(), ['3,12:8', '3,12:8']);
+  // AUDIT WOD7: a foe of that site still BUILDING when the race was lost ends as it lands - it never stands, never rides
+  const late = await A.spawnFoe(0, [2100, 0, 2000], { placed: true, groundAlign: { hitDist: 0.5 }, site: '3,12:7' });
+  assert.equal(late, null);
+  assert.ok(!A.foesFrame(true).st?.some(([, s]) => s === '3,12:7'));
 });
 
 // ── the pool: the reader's half ─────────────────────────────────────────
 
 test('WOD7: a reader stands an owner\'s camp under WOD_CAMP_PUPPETS_MAX, apart from the encounter\'s CELL_PUPPETS_MAX, and hears which markers the owner sprang', async () => {
   const A = createExteriorFoes(poolRig());
-  A.setNet(netFor('aaaa-0001')); A.setOnSites(() => {}, () => ['3,12:99']);
+  A.setNet(netFor('aaaa-0001')); A.setOnSites(() => {}, () => [['3,12:99', 40]]);
   await camp(A, WOD_CAMP_PUPPETS_MAX + 4, '3,12:7');
   const enc = [];
   for (let i = 0; i < CELL_PUPPETS_MAX; i++) enc.push(await A.spawnFoe(3, [10 + i, 0, 10], { feetGiven: true }));
@@ -137,7 +164,16 @@ test('WOD7: a reader stands an owner\'s camp under WOD_CAMP_PUPPETS_MAX, apart f
   const pups = B.foes.filter((f) => f.puppet === 'aaaa-0001' && !f.dead);
   assert.equal(pups.filter((f) => f.site === '3,12:7').length, WOD_CAMP_PUPPETS_MAX, 'the camp, under its own allowance');
   assert.equal(pups.filter((f) => !f.site).length, CELL_PUPPETS_MAX, 'and every encounter foe still stands beside it - the bug M1 kept the camps home for');
-  assert.deepEqual(heard, [['aaaa-0001', ['3,12:7', '3,12:99']]], 'the host is told both: the camp it sees and the treasure it does not');
+  assert.deepEqual(heard, [['aaaa-0001', [['3,12:7', WOD_AGE_MAX], ['3,12:99', 40]]]], 'the host is told both, with their ages: the camp it sees and the treasure it does not');
+  // AUDIT WOD7: a camp the allowance refused whole is NOT spent here - B's allowance for A is full, so A's next camp stands
+  // nowhere at B, and B's own marker for it must stay B's to spring
+  await camp(A, 3, '3,14:2', 2600);
+  heard.length = 0;
+  B.applyFoes('aaaa-0001', JSON.parse(JSON.stringify(A.foesFrame(true))));
+  await flush();
+  assert.equal(B.foes.filter((f) => f.site === '3,14:2').length, 0, 'refused');
+  assert.ok(!heard[0][1].some(([s]) => s === '3,14:2'), 'and not spent');
+  assert.ok(heard[0][1].some(([s]) => s === '3,12:7'), 'the camp it does stand, still spent');
   // a record whose tag is garbage is an ordinary record, under the ordinary allowance
   const C = createExteriorFoes(poolRig()); C.setNet(netFor('cccc-0003'));
   C.applyFoes('aaaa-0001', { ...frame, st: frame.st.map(([i]) => [i, 'not a site']) });
@@ -154,26 +190,39 @@ test('WOD7: the host - a marker I spring is recorded and asks for a full frame; 
   const removed = [];
   let clock = 0;
   const mk = (id) => new Function('online', 'performance', 'exteriorFoes', 'wodSiteId', 'yieldsTo',
-    `${WORLD.slice(i, j)}\nreturn { wodSprang, wodPeerSites, wodSiteOf, sprung: _wodSprung, peer: _wodPeerSprung, changed: () => _wodSprungChanged };`)(
+    `${WORLD.slice(i, j)}\nreturn { wodSprang, wodPeerSites, wodSiteOf, sprung: _wodSprung, peer: _wodPeerSprung, changed: () => _wodSprungChanged, list: wodSprungList, forget: wodForgetPeerSites };`)(
     id ? { id } : null, { now: () => clock }, { removeSiteFoes: (s) => removed.push(s) }, wodSiteId, yieldsTo);
   const off = mk(null);
   off.wodSprang('1,1:1');
   assert.equal(off.sprung.size, 0, 'offline: nothing recorded, nothing rides');
   const me = mk('mmmm-0002');
   assert.equal(me.wodSiteOf({ px: 3, py: 12 }, { oid: 7 }), '3,12:7');
+  assert.equal(me.wodSiteOf({ px: 3, py: 12 }, { oid: 0, oidN: 1 }), '3,12:0.1', 'AUDIT WOD7: a repeated objectID\'s second marker');
   me.wodSprang('3,12:7'); me.wodSprang('3,12:8');
   assert.ok(me.changed(), 'a new spring asks for a full frame');
-  me.wodPeerSites('aaaa-0001', ['3,12:7', '3,12:9']);
-  assert.deepEqual(removed, ['3,12:7'], 'raced by a smaller id inside the window: my camp comes down');
+  me.wodPeerSites('aaaa-0001', [['3,12:7', 0], ['3,12:9', 0]]);
+  assert.deepEqual(removed, ['3,12:7'], 'a tie inside the window, a smaller id: my camp comes down');
   assert.deepEqual([...me.sprung.keys()], ['3,12:8']);
   assert.deepEqual([...me.peer].sort(), ['3,12:7', '3,12:9']);
-  me.wodPeerSites('zzzz-0009', ['3,12:8']);
-  assert.deepEqual(removed, ['3,12:7'], 'raced by a larger id: mine stands (theirs yields at their end)');
+  me.wodPeerSites('zzzz-0009', [['3,12:8', 0]]);
+  assert.deepEqual(removed, ['3,12:7'], 'a larger id: mine stands (theirs yields at their end)');
   assert.ok(!me.peer.has('3,12:8'));
+  me.wodPeerSites('aaaa-0001', [['3,12:8', null]]);
+  assert.ok(me.sprung.has('3,12:8'), 'a tag without an age decides nothing yet');
   clock = WOD_CLAIM_WINDOW_MS * 2;
-  me.wodSprang('3,12:10'); clock += WOD_CLAIM_WINDOW_MS + 1;
-  me.wodPeerSites('aaaa-0001', ['3,12:10']);
-  assert.ok(me.sprung.has('3,12:10') && !removed.includes('3,12:10'), 'past the window both stand');
+  me.wodSprang('3,12:10'); clock += WOD_CLAIM_WINDOW_MS * 2;
+  me.wodPeerSites('aaaa-0001', [['3,12:10', 0]]);
+  assert.ok(me.sprung.has('3,12:10') && !removed.includes('3,12:10'), 'AUDIT WOD7: I sprang first: mine stands, whatever the ids');
+  me.wodPeerSites('zzzz-0009', [['3,12:10', WOD_CLAIM_WINDOW_MS * 5]]);
+  assert.ok(removed.includes('3,12:10'), '...and a peer who sprang it before me takes it, whatever the ids');
+  // newest first, bounded
+  for (let k = 0; k < 300; k++) { clock += 1; me.wodSprang(`9,9:${k}`); }
+  assert.equal(me.sprung.size, 256, 'bounded: the oldest go first');
+  assert.equal(me.list()[0][0], '9,9:299', 'the frame\'s list is newest first');
+  // a fresh promote forgets a peer's springs on that pixel
+  me.wodPeerSites('aaaa-0001', [['4,4:1', 0], ['4,40:1', 0]]);
+  me.forget('4,4');
+  assert.ok(!me.peer.has('4,4:1') && me.peer.has('4,40:1'), 'that pixel\'s alone');
   // the frame and the tick, by source
   assert.match(WORLD, /if \(_wodPeerSprung\.has\(wodSiteOf\(p, w\)\)\) \{ w\.spawner\.active = false; continue; \}/, 'a peer\'s marker never springs here');
   assert.match(WORLD, /if \(act\) \{ standWodAction\(p, w, act, x, y, z\); if \(act\.kind === 'foe' \|\| act\.kind === 'loot'\) wodSprang\(wodSiteOf\(p, w\)\); \}/, 'a foe or a treasure makes the marker mine; a captive\'s flat is each player\'s own');
@@ -182,5 +231,7 @@ test('WOD7: the host - a marker I spring is recorded and asks for a full frame; 
   const EF = rd('src/scenes/exteriorFoes.js');
   assert.match(EF, /        site: f\.site \?\? null,/, 'a camp foe\'s site rides the save...');
   assert.match(EF, /        if \(typeof sf\.site === 'string'\) f\.site = sf\.site;/, '...and comes back with it, so a loaded camp still rides');
-  assert.match(WORLD, /exteriorFoes\.setOnSites\(\(from, sites\) => wodPeerSites\(from, sites\), \(\) => \[\.\.\._wodSprung\.keys\(\)\]\);/);
+  assert.match(WORLD, /exteriorFoes\.setOnSites\(\(from, sites\) => wodPeerSites\(from, sites\), wodSprungList\);/);
+  assert.match(WORLD, /if \(!wodKept\.life\) wodForgetPeerSites\(key\);/, 'a fresh promote forgets them');
+  assert.match(WORLD, /const n = oidSeen\.get\(s\.objectID\) \?\? 0; oidSeen\.set\(s\.objectID, n \+ 1\);\n\s*wodSpawners\.push\(\{[^\n]*oid: s\.objectID, oidN: n \}\);/, 'the index among the pixel\'s alike');
 });

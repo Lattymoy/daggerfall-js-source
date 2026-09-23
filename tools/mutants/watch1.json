@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-WATCH1-A1-one-cap-for-foes-and-watch",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (site ? livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX : r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;",
-    "new": "      if (site ? livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX : livePuppetsOf(from) + livePuppetsOf(from, true) >= CELL_PUPPETS_MAX) continue;",
+    "old": "      if (!site && (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
+    "new": "      if (!site && (livePuppetsOf(from) + livePuppetsOf(from, true) >= CELL_PUPPETS_MAX)) continue;",
     "tests": [
       "test/watch1.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-WATCH1-A1-the-watch-allowance-is-unbounded",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (site ? livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX : r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;",
-    "new": "      if (site ? livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX : r.t !== KNIGHT_CITYWATCH_ID && livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;",
+    "old": "      if (!site && (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
+    "new": "      if (!site && (r.t !== KNIGHT_CITYWATCH_ID && livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;",
     "tests": [
       "test/watch1.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "WOD7-larger-id-wins",
     "file": "src/world/wodShared.js",
-    "old": "theirs < mine;",
-    "new": "theirs > mine;",
+    "old": "  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs < mine;",
+    "new": "  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs > mine;",
     "tests": [
       "test/wod7_sharedcamps.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WOD7-no-claim-window",
     "file": "src/world/wodShared.js",
-    "old": "return now - sprungAt <= WOD_CLAIM_WINDOW_MS && theirs < mine;",
-    "new": "return theirs < mine;",
+    "old": "  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs < mine;\n  return theirAge > myAge;",
+    "new": "  return theirs < mine;",
     "tests": [
       "test/wod7_sharedcamps.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "WOD7-sites-unbounded",
     "file": "src/world/wodShared.js",
-    "old": "    if (out.length >= WOD_SITES_MAX) break;\n    if (typeof s",
-    "new": "    if (typeof s",
+    "old": "    if (out.length >= WOD_SITES_MAX) break;\n    if (!Array.isArray(e) || e.length !== 2) continue;",
+    "new": "    if (!Array.isArray(e) || e.length !== 2) continue;",
     "tests": [
       "test/wod7_sharedcamps.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "WOD7-sites-duplicated",
     "file": "src/world/wodShared.js",
-    "old": " && !out.includes(s)) out.push(s);",
-    "new": ") out.push(s);",
+    "old": " || seen.has(s) || !Number.isFinite(age)) continue;",
+    "new": " || !Number.isFinite(age)) continue;",
     "tests": [
       "test/wod7_sharedcamps.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "WOD7-sprung-list-without-host",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "...(_sprungOf?.() ?? []), ",
-    "new": "",
+    "old": "      sp = [...(_sprungOf?.() ?? [])];",
+    "new": "      sp = [];",
     "tests": [
       "test/wod7_sharedcamps.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "WOD7-camp-under-encounter-cap",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "if (site ? livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX : r.t",
-    "new": "if (r.t",
+    "old": "      if (site && livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX) { refused.add(site); continue; }",
+    "new": "      if (site && livePuppetsOf(from) >= CELL_PUPPETS_MAX) { refused.add(site); continue; }",
     "tests": [
       "test/wod7_sharedcamps.test.js"
     ]
@@ -121,7 +121,7 @@
   {
     "name": "WOD7-host-not-told",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (sprung.size) _onSites?.(from, [...sprung]);",
+    "old": "    if (spent.size) _onSites?.(from, [...spent]);\n",
     "new": "",
     "tests": [
       "test/wod7_sharedcamps.test.js"
@@ -159,8 +159,8 @@
   {
     "name": "WOD7-offline-records",
     "file": "src/scenes/world.js",
-    "old": "    if (!online) return;\n    _wodSprung.set(site, performance.now());",
-    "new": "    _wodSprung.set(site, performance.now());",
+    "old": "    if (!online) return;\n    _wodSprung.delete(site);",
+    "new": "    _wodSprung.delete(site);",
     "tests": [
       "test/wod7_sharedcamps.test.js"
     ]
@@ -187,7 +187,7 @@
   {
     "name": "WOD7-race-always-yields",
     "file": "src/scenes/world.js",
-    "old": "        if (!yieldsTo(online?.id ?? '', from, mine, performance.now())) continue;",
+    "old": "        if (!yieldsTo(online?.id ?? '', from, performance.now() - mine, age)) continue;",
     "new": "",
     "tests": [
       "test/wod7_sharedcamps.test.js"
@@ -215,6 +215,123 @@
     "name": "WOD7-load-drops-site",
     "file": "src/scenes/exteriorFoes.js",
     "old": "        if (typeof sf.site === 'string') f.site = sf.site;   // WOD7: a shared camp's foe keeps riding for its site\n",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-younger-spring-wins",
+    "file": "src/world/wodShared.js",
+    "old": "  return theirAge > myAge;",
+    "new": "  return theirAge < myAge;",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-unheard-age-decides",
+    "file": "src/world/wodShared.js",
+    "old": "  if (!Number.isFinite(theirAge) || !Number.isFinite(myAge)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-age-unclamped",
+    "file": "src/world/wodShared.js",
+    "old": "    out.push([s, Math.max(0, Math.min(WOD_AGE_MAX, age))]);",
+    "new": "    out.push([s, age]);",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-sprung-list-oldest-first",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      sp = sp.slice(0, WOD_SITES_MAX);",
+    "new": "      sp = sp.slice(-WOD_SITES_MAX);",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-refused-camp-spent",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    for (const [s, age] of validSites(data.sp)) if (!refused.has(s) || stood.has(s)) spent.set(s, age);",
+    "new": "    for (const [s, age] of validSites(data.sp)) spent.set(s, age);",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-lost-site-builds-anyway",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (site && !f.puppet && _lostSites.has(site)) { questPoolOps.removeFoe(f); return null; }",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-lost-site-forgotten",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    _lostSites.add(site);   // AUDIT WOD7: and one still building ends as it lands\n",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-sprung-unbounded",
+    "file": "src/scenes/world.js",
+    "old": "    if (_wodSprung.size > WOD_SPRUNG_MAX) _wodSprung.delete(_wodSprung.keys().next().value);\n",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-list-oldest-first",
+    "file": "src/scenes/world.js",
+    "old": "return [..._wodSprung].reverse().map(",
+    "new": "return [..._wodSprung].map(",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-peer-springs-forever",
+    "file": "src/scenes/world.js",
+    "old": "for (const s of [..._wodPeerSprung]) if (s.startsWith(`${key}:`)) _wodPeerSprung.delete(s);",
+    "new": "",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-repeated-oid-one-site",
+    "file": "src/scenes/world.js",
+    "old": "wodSiteId(p.px, p.py, w.oid ?? 'x', w.oidN ?? 0)",
+    "new": "wodSiteId(p.px, p.py, w.oid ?? 'x', 0)",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-oid-index-unminted",
+    "file": "src/scenes/world.js",
+    "old": "const n = oidSeen.get(s.objectID) ?? 0; oidSeen.set(s.objectID, n + 1);",
+    "new": "const n = 0;",
+    "tests": [
+      "test/wod7_sharedcamps.test.js"
+    ]
+  },
+  {
+    "name": "WOD7-fresh-promote-remembers",
+    "file": "src/scenes/world.js",
+    "old": "    if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again\n",
     "new": "",
     "tests": [
       "test/wod7_sharedcamps.test.js"

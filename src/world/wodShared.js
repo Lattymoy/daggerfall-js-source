@@ -6,13 +6,14 @@
 // its foes ride that player's cell stream tagged with the marker's site, every reader stands them as puppets under
 // an allowance of their own, and a reader's own copy of the marker is spent - one camp, everyone's.
 //
-// A marker's SITE is the key every client shares without a word: the map pixel and the marker's objectID (unique
-// inside its layout, and one layout stands to a pixel), or `hold` for Privateer's Hold's camp. The tags and the
-// owner's sprung list ride the foes frame beside `c` (SURV3's camps) - validated here, at the reader, never by the
-// relay, which reads a frame's record count and nothing else. No wire or relay change.
+// A marker's SITE is the key every client shares without a word: the map pixel (one layout stands to a pixel) and the
+// marker's objectID - with its index among the pixel's markers of that objectID when there is more than one
+// (WOD_Nature_01 numbers two bears 0, WOD_Ruins_04 three warriors; AUDIT WOD7) - or `hold` for Privateer's Hold's camp. The tags and
+// the owner's sprung list ride the foes frame beside `c` (SURV3's camps) - validated here, at the reader, never by
+// the relay, which reads a frame's record count and nothing else. No wire or relay change.
 
 /** A site id: `px,py:objectID` or `px,py:hold`. */
-export const WOD_SITE_RE = /^-?\d{1,5},-?\d{1,5}:(?:\d{1,10}|hold)$/;
+export const WOD_SITE_RE = /^-?\d{1,5},-?\d{1,5}:(?:\d{1,10}(?:\.\d{1,3})?|hold)$/;
 /** The most sites one frame may name, as tags or as the sprung list. */
 export const WOD_SITES_MAX = 64;
 /** A reader's allowance for one owner's camp foes - apart from CELL_PUPPETS_MAX, as the watch's is (WATCH1): a camp
@@ -20,19 +21,29 @@ export const WOD_SITES_MAX = 64;
  *  well under this. */
 export const WOD_CAMP_PUPPETS_MAX = 16;
 /** Two players who spring one marker inside this window (a frame's latency, generously) are a RACE, settled by id;
- *  past it both camps stand - neither is taken from under a fight already begun. */
+ *  past it the one who sprang FIRST keeps it (AUDIT WOD7: each side measured only its own spring's age, so a pair
+ *  ten seconds apart doubled or collapsed by id order alone). */
 export const WOD_CLAIM_WINDOW_MS = 5000;
 
-/** @param {number} px @param {number} py @param {number|string} oid */
-export const wodSiteId = (px, py, oid) => `${px},${py}:${oid}`;
+/** The longest age a sprung list states, in ms (a day) - older is as old. */
+export const WOD_AGE_MAX = 86400000;
 
-/** A frame's sprung list, projected: the valid site ids, at most WOD_SITES_MAX; anything else is none. */
+/** @param {number} px @param {number} py @param {number|string} oid @param {number} [n] the index among the pixel's
+ *  markers of that objectID - 0, the only one, is left unwritten */
+export const wodSiteId = (px, py, oid, n = 0) => `${px},${py}:${oid}${n > 0 ? `.${n}` : ''}`;
+
+/** A frame's sprung list - `[[site, ageMs], ...]`, newest first: how long ago the owner sprang each - projected:
+ *  the valid entries, at most WOD_SITES_MAX, each site once, the age clamped to [0, WOD_AGE_MAX]. */
 export function validSites(raw) {
   if (!Array.isArray(raw)) return [];
-  const out = [];
-  for (const s of raw) {
+  const out = [], seen = new Set();
+  for (const e of raw) {
     if (out.length >= WOD_SITES_MAX) break;
-    if (typeof s === 'string' && WOD_SITE_RE.test(s) && !out.includes(s)) out.push(s);
+    if (!Array.isArray(e) || e.length !== 2) continue;
+    const [s, age] = e;
+    if (typeof s !== 'string' || !WOD_SITE_RE.test(s) || seen.has(s) || !Number.isFinite(age)) continue;
+    seen.add(s);
+    out.push([s, Math.max(0, Math.min(WOD_AGE_MAX, age))]);
   }
   return out;
 }
@@ -51,12 +62,15 @@ export function validSiteTags(raw) {
 }
 
 /**
- * Who keeps a marker two players both sprang: the smaller id, inside the claim window; past it, both.
+ * Who keeps a marker two players both sprang: the one who sprang it first; inside the claim window (a frame's
+ * latency cannot order them), the smaller id. Both sides reach the same answer from the two ages.
  * @param {string} mine my id  @param {string} theirs the peer's id
- * @param {number} sprungAt when I sprang it  @param {number} now
- * @returns {boolean} true when MY copy yields to theirs
+ * @param {number} myAge how long ago I sprang it, ms  @param {?number} theirAge theirs, as their sprung list says
+ * @returns {boolean} true when MY copy yields to theirs; never on an age not yet heard
  */
-export function yieldsTo(mine, theirs, sprungAt, now) {
+export function yieldsTo(mine, theirs, myAge, theirAge) {
   if (typeof mine !== 'string' || typeof theirs !== 'string' || !mine || !theirs || mine === theirs) return false;
-  return now - sprungAt <= WOD_CLAIM_WINDOW_MS && theirs < mine;
+  if (!Number.isFinite(theirAge) || !Number.isFinite(myAge)) return false;
+  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs < mine;
+  return theirAge > myAge;
 }
