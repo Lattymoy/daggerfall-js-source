@@ -118,8 +118,7 @@ test('MAC-T2: an H typed into the chat line switches no hand - the field stops t
 // reads) skip a carried light in any camera. DFU's PlayerTorch is a bare point light with no flare.
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 import { EL_LANE, EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS } from '../src/render/enhancedLighting.js';
-import { pickShadowCasters, pickShadowCaster, SHADOW_CASTER_MIN_DISTANCE } from '../src/render/shadowPass.js';
-import { AIR_GLARE_MIN_DISTANCE } from '../src/render/airPass.js';
+import { pickShadowCasters, pickShadowCaster } from '../src/render/shadowPass.js';
 import { withPlayerLights } from '../src/scenes/magicCandle.js';
 import { playerTorchLight } from '../src/systems/playerTorch.js';
 import { perspective, mirrorProjectionX } from '../src/world/mat4.js';
@@ -154,7 +153,7 @@ function drawWorld(r) {
 }
 /** Two frames on the fake GL: the lights set, the world drawn, the first screen quad resolving the images - the
  *  glare count and the glare centres are the observables (el3_air's shape). The eye is at the origin (the identity
- *  view): a torch 3 units in front of it is the THIRD-PERSON case, well past AIR_GLARE_MIN_DISTANCE. */
+ *  view): a torch 3 units in front of it is the THIRD-PERSON case, well past the 1.5 the old camera-distance proxy read (LIGHT-NEAR1: gone). */
 function glareFrame(lights) {
   const { calls, canvas } = recordingGl();
   const r = new Renderer(canvas);
@@ -178,7 +177,7 @@ const thirdPersonTorch = () => playerTorchLight(torchEntity, [0, -0.9, -3], 0); 
 test('MAC-T1 (a): the carried torch draws NO glare sprite in third person - the lantern beside it still does; strip the mask and the ball is back; the torch takes no caster slot and stands -2 in the caster table', () => {
   const torch = thirdPersonTorch();
   assert.equal(torch.carried, true, 'the torch record says what it is');
-  assert.ok(Math.hypot(torch.x, torch.y, torch.z) > AIR_GLARE_MIN_DISTANCE, 'the third-person case: the light is past the camera-distance proxy');
+  assert.ok(Math.hypot(torch.x, torch.y, torch.z) > 1.5, 'the third-person case: the light is past the 1.5 the old camera-distance proxy read');
   const masked = withPlayerLights(lantern, torch);
   assert.deepEqual([...masked.carried], [1, 0]);
   const on = glareFrame(masked);
@@ -229,8 +228,8 @@ test('MAC-T1 (d): the caster pick skips a carried light in any camera; by source
   const lights = new Float32Array([0.3, 0.9, -2.8, 14, 5, 2, 1, 14, -4, 2, 2, 12]);   // the torch nearest, then two lanterns
   const eye = [0, 0, 0];
   assert.deepEqual(pickShadowCasters(lights, eye, 6), [0, 2, 1], 'the old law: the torch 2.9 from the camera is a caster, and the nearest (then the lanterns by distance)');
-  assert.deepEqual(pickShadowCasters(lights, eye, 6, SHADOW_CASTER_MIN_DISTANCE, new Uint8Array([1, 0, 0])), [2, 1], 'masked: never');
-  assert.equal(pickShadowCaster(lights, eye, SHADOW_CASTER_MIN_DISTANCE, new Uint8Array([1, 0, 0])), 2);
+  assert.deepEqual(pickShadowCasters(lights, eye, 6, new Uint8Array([1, 0, 0])), [2, 1], 'masked: never');
+  assert.equal(pickShadowCaster(lights, eye, new Uint8Array([1, 0, 0])), 2);
   assert.match(rd('src/systems/playerTorch.js'), /range: st\.range,\n(?:\s*\/\/[^\n]*\n)*\s*carried: true,\n\s*\};/, 'the torch record');
   assert.match(rd('src/scenes/magicCandle.js'), /range: CANDLE\.range, carried: true \}/, 'the candle record');
   assert.match(rd('src/render/airPass.js'), /if \(f\.carried && f\.carried\[i\]\) continue;/, 'the glare');

@@ -171,15 +171,6 @@
     ]
   },
   {
-    "name": "glare-texel-old",
-    "file": "src/render/airPass.js",
-    "old": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < AIR_GLARE_MIN_DISTANCE) continue;",
-    "new": "      if (false) continue;",
-    "tests": [
-      "test/el7_polish.test.js"
-    ]
-  },
-  {
     "name": "lane-ao-back",
     "file": "src/render/enhancedLighting.js",
     "old": "  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)",
@@ -209,8 +200,8 @@
   {
     "name": "casters-five",
     "file": "src/render/shadowPass.js",
-    "old": "export const SHADOW_POINT_CASTERS = 6;   // EL6: six - a gate passage has that many lanterns in reach",
-    "new": "export const SHADOW_POINT_CASTERS = 5;   // EL6: six - a gate passage has that many lanterns in reach",
+    "old": "export const SHADOW_POINT_CASTERS = 8;   // EL6: six - a gate passage has that many lanterns in reach; HQ1: eight - SC1's cache made a still caster nearly free, so a tavern's every lamp throws its shadow",
+    "new": "export const SHADOW_POINT_CASTERS = 5;   // EL6",
     "tests": [
       "test/el2_shadows.test.js"
     ]

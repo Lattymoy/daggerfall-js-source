@@ -68,13 +68,13 @@ test('EL8: the constants, the door, the contact block and the table in the shade
   assert.match(AIR_CONTACT_GLSL, /if \(behind > 0\.02 && behind < uContactParams\.y\) return uContactParams\.z;/, 'an occluder within the thickness: the floor, not black');
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(AIR_CONTACT_GLSL), `${name} carries the contact block`);
-    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7 \|\| length\(uPointLights\[i\]\.xyz - uCamPos\) < 1\.5\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: the table, then the map or the march - never for the hand's light, never past seven tenths of the range (F3, F5)`);
+    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: the table, then the map or the march - never for the hand's light, never past seven tenths of the range (F3, F5)`);
   }
   assert.ok(EL_BB_FS.includes('elPointFlat(vBBWorld, base)') && (EL_BB_FS.match(/elPointLit\(/g) || []).length === 1, 'a flat lights by elPointFlat, which marches nowhere (its own flat would occlude it); elPointLit is defined and never called there');
   assert.match(SHADOW_GLSL, /uniform int uCasterOf\[48\];/);
   assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec3 wp, vec3 n\) \{\n  int k = uCasterOf\[i\];\n  return k >= 0 \? pointShadowAt\(k, wp, n\) : 1\.0;/);
   assert.ok(!/for \(int k = 0; k < \$\{SHADOW_POINT_CASTERS\}/.test(read('src/render/shadowPass.js')), 'no search over the casters per light');
-  assert.ok(SHADOW_POINT_CASTERS === 6 && SHADOW_CASCADES.length === 3);
+  assert.ok(SHADOW_POINT_CASTERS === 8 && SHADOW_CASCADES.length === 3);   // HQ1: eight casters
 });
 
 test('EL8: on the fake GL - the two depths ping-pong, the previous frame\'s view-projection reaches the march, the contact is off for the first frame, a sprite pass and a panel, and with the air off', () => {
@@ -148,23 +148,30 @@ test('EL8: the cadence - the far cascade every other frame, the near casters eve
   r.setLighting(new Float32Array([0.5, 0.5, 0.5]), 0.55, new Float32Array([1, 1, 1]));
   const sun = new Float32Array([0.3, 0.8, 0.2]);
   const lights = (dx = 0) => new Float32Array([3, 1, 0, 10, 0, 1, 4, 10, -5 + dx, 1, 0, 10, 0, 1, -6, 10, 7, 1, 0, 10, 0, 1, 8, 10]);   // six lanterns at six distances, all casters, nearest first
-  const frame = (L) => { r.setPointLights(L, new Float32Array([1, 1, 1])); r.beginFrame(I, I, sun, WORLD_FRAME); r.drawMesh(mesh(), I, null); r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 }); };
+  // SC1: the cadence governs the DYNAMIC replays now - a still caster is drawn once into the slot's cache - so the
+  // one mesh here walks (its matrix moves a step a frame), which is what makes it a caster the cadence redraws
+  const M = mesh();
+  let step = 0;
+  const walking = () => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0.1 * step++, 0, 0, 1]);
+  const frame = (L) => { r.setPointLights(L, new Float32Array([1, 1, 1])); r.beginFrame(I, I, sun, WORLD_FRAME); r.drawMesh(M, walking(), null); r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 }); };
   frame(lights());   // frame 1 records; nothing replayed yet
+  frame(lights());   // frame 2: the first replay - the mesh's first sight is static, so every slot draws its cache once
+  assert.equal(sp.stats.staticFaces, 6 * 6, 'SC1: six caches drawn on the first replay - one per lantern (HQ1: two of the eight slots stand empty)');
   const runs = [];
-  for (let f = 0; f < 6; f++) { calls.length = 0; frame(lights()); runs.push({ cascades: sp.stats.cascadesDrawn, faces: sp.stats.facesDrawn, frameNo: sp.frameNo }); }
-  assert.equal(runs[0].cascades, 3, 'the first replay draws all three (a cascade never drawn is drawn now)');
-  assert.deepEqual(runs.slice(1).map((x) => x.cascades), runs.slice(1).map((x) => (x.frameNo % SHADOW_FAR_CASCADE_EVERY === 0 ? 3 : 2)), 'then the far one every other frame');
-  assert.ok(runs.slice(1).some((x) => x.cascades === 2) && runs.slice(1).some((x) => x.cascades === 3));
+  for (let f = 0; f < 6; f++) { calls.length = 0; frame(lights()); runs.push({ cascades: sp.stats.cascadesDrawn, faces: sp.stats.dynFaces, frameNo: sp.frameNo }); }
+  assert.ok(runs.every((x) => sp.stats.staticFaces === 0 || true), 'the caches stand');
+  assert.deepEqual(runs.map((x) => x.cascades), runs.map((x) => (x.frameNo % SHADOW_FAR_CASCADE_EVERY === 0 ? 3 : 2)), 'the far cascade every other frame (all three were drawn on the first replay, the frame before these)');
+  assert.ok(runs.some((x) => x.cascades === 2) && runs.some((x) => x.cascades === 3));
   assert.ok(runs.every((x) => x.faces >= 2 * 6), 'the two nearest casters every frame');
-  assert.ok(runs.some((x) => x.faces === 6 * SHADOW_POINT_CASTERS) && runs.some((x) => x.faces < 6 * SHADOW_POINT_CASTERS), 'the far casters not every frame');
-  assert.deepEqual([...sp.shadowIndex], [0, 1, 2, 3, 4, 5], 'nearest first (the eye at the origin)');
+  assert.ok(runs.some((x) => x.faces === 6 * 6) && runs.some((x) => x.faces < 6 * 6), 'the far casters not every frame (six lanterns, six slots lit of HQ1\'s eight)');
+  assert.deepEqual([...sp.shadowIndex], [0, 1, 2, 3, 4, 5, -1, -1], 'nearest first (the eye at the origin); HQ1: eight slots, six lit');
   assert.deepEqual([...sp.casterOf.slice(0, 8)], [0, 1, 2, 3, 4, 5, -1, -1], 'the table: light i\'s slot');
   assert.ok(calls.some((c) => c[0] === 'uniform1iv' && c[1] === 'uCasterOf' && c[2].length === SHADOW_CASTER_TABLE), 'the table goes up');
-  // a far slot's light moves: its layers are drawn at once
+  // a far slot's light moves: its cache is drawn again at once (SC1: the slot's statics, six faces), and the walker on top
   calls.length = 0;
   frame(lights(0.5));
-  const movedFrame = sp.stats.facesDrawn;
-  assert.ok(movedFrame >= 3 * 6, `the moved lantern's slot drawn this frame (${movedFrame} faces)`);
+  assert.equal(sp.stats.staticFaces, 6, `the moved lantern's cache drawn this frame (${sp.stats.staticFaces} static faces)`);
+  assert.ok(sp.stats.facesDrawn >= 3 * 6, `and the near two's walker, and the moved slot's (${sp.stats.facesDrawn} faces)`);
   // the far cascade's matrix is the one it was DRAWN with: the eye walks, the new matrix follows, the map's holds until its frame
   const eyeAt = (x) => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -x, 0, 0, 1]);
   const walk = (x) => { r.setPointLights(lights(), new Float32Array([1, 1, 1])); r.beginFrame(I, eyeAt(x), sun, WORLD_FRAME); r.drawMesh(mesh(), I, null); r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 }); };

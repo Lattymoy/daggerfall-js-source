@@ -15,9 +15,9 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  airOn, AIR_AO_SCALE, AIR_BLOOM_SCALE, AIR_AO_RADIUS, AIR_AO_SAMPLES, AIR_AO_STRENGTH, AIR_AO_BIAS, AIR_BLOOM_STRENGTH,
+  airOn, AIR_AO_SCALE, AIR_BLOOM_SCALE, AIR_AO_RADIUS, AIR_AO_SAMPLES, AIR_AO_DIRECTIONS, AIR_AO_STRENGTH, AIR_AO_BIAS, AIR_BLOOM_STRENGTH,
   AIR_GLARE_SIZE, AIR_SHAFT_TAPS, AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, AIR_AO_RESOLVE,
-  projInfo, viewDepth, sunScreenUV, aoKernel, glareSize, EMIT_MESH_FS, EMIT_BB_FS, AirPass,
+  projInfo, viewDepth, sunScreenUV, glareSize, EMIT_MESH_FS, EMIT_BB_FS, AirPass,
 } from '../src/render/airPass.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS } from '../src/render/enhancedLighting.js';
 import { SHADOW_SUN_UNIT, SHADOW_POINT_UNIT } from '../src/render/shadowPass.js';
@@ -70,7 +70,7 @@ function drawWorld(r) {
 test('EL3: the door and the constants - ?air=off, the two scales, the AO\'s radius, count, strength and bias, the bloom and shaft gains, the unit below the shadow maps', () => {
   assert.equal(airOn(''), true); assert.equal(airOn('?air=off'), false); assert.equal(airOn('?air=on'), true);
   assert.equal(AIR_AO_SCALE, 0.5); assert.equal(AIR_BLOOM_SCALE, 0.25);
-  assert.equal(AIR_AO_RADIUS, 0.8); assert.equal(AIR_AO_SAMPLES, 12); assert.equal(AIR_AO_STRENGTH, 1); assert.equal(AIR_AO_BIAS, 0.02);
+  assert.equal(AIR_AO_RADIUS, 0.8); assert.equal(AIR_AO_SAMPLES, 6); assert.equal(AIR_AO_STRENGTH, 1); assert.equal(AIR_AO_BIAS, 0.02);   // HQ1: six steps a side
   assert.equal(AIR_BLOOM_STRENGTH, 0.6); assert.equal(AIR_GLARE_SIZE, 0.25);   // EL7: a flame's size
   assert.equal(AIR_SHAFT_TAPS, 32); assert.equal(AIR_SHAFT_DECAY, 0.96); assert.equal(AIR_SHAFT_STRENGTH, 0.35); assert.equal(AIR_SHAFT_REACH, 0.35);
   assert.equal(AIR_AO_RESOLVE, 0.75); assert.ok(SHADOW_SUN_UNIT < SHADOW_POINT_UNIT && SHADOW_POINT_UNIT < CLOUD_SHADOW_UNIT, 'four reserved units, in a row');
@@ -123,21 +123,22 @@ test('EL3: the sun\'s screen position - the centre when looked at, off-centre th
   assert.ok(uv && near(uv[0], 0.5, 1e-6) && uv[1] > 0.5);
 });
 
-test('EL3: the kernel - twelve samples in the +z hemisphere, inside the unit ball, denser near the origin, the same on every page', () => {
-  const k = aoKernel();
-  assert.equal(k.length, 36);
-  let firstHalf = 0, secondHalf = 0;
-  for (let i = 0; i < 12; i++) {
-    const x = k[i * 3], y = k[i * 3 + 1], z = k[i * 3 + 2];
-    assert.ok(z >= 0, `sample ${i} above the surface`);
-    const l = Math.hypot(x, y, z);
-    assert.ok(l <= 1 + 1e-9 && l > 0, `sample ${i} inside the ball and not the origin`);
-    if (i < 6) firstHalf += l; else secondHalf += l;
-  }
-  assert.ok(firstHalf < secondHalf, 'the early samples sit nearer the origin');
-  assert.deepEqual([...aoKernel()], [...k], 'deterministic');
-  assert.ok(near(k[0], aoKernel(12)[0]));
-  assert.ok(near(k[0], KERNEL_FIRST[0], 1e-6) && near(k[1], KERNEL_FIRST[1], 1e-6) && near(k[2], KERNEL_FIRST[2], 1e-6), `the fixed seed's first sample: ${k[0]}, ${k[1]}, ${k[2]}`);
+test('EL3/HQ1: the ambient occlusion is HORIZON-BASED now - no kernel; two slices a quarter turn apart through the ordered rotation, six steps a side to the radius, the highest horizon either side clamped to the projected normal\'s hemisphere, the cosine-weighted arc in closed form, the strength on the occlusion (mutants: the kernel back; the horizon unclamped; the distance weight dropped, so a wall past the radius shades)', () => {
+  assert.equal(AIR_AO_SAMPLES, 6); assert.equal(AIR_AO_DIRECTIONS, 2);
+  const a = read('src/render/airPass.js');
+  assert.ok(!/aoKernel|uKernel/.test(a), 'no kernel anywhere');
+  const fs = a.slice(a.indexOf('const AO_FS = `'), a.indexOf('// EL7: THE BLUR IS DEPTH-AWARE.'));
+  assert.match(fs, /float horizonAt\(vec3 p, vec3 v, vec2 uv, vec2 dir, float radiusPx, float bias\) \{/);
+  assert.match(fs, /for \(int i = 1; i <= \$\{AIR_AO_SAMPLES\}; i\+\+\) \{/, 'the steps a side, by the constant');
+  assert.match(fs, /float w = clamp\(1\.0 - d \/ uAOParams\.x, 0\.0, 1\.0\);   \/\/ beyond the radius a step says nothing\n    c = mix\(-1\.0, c, w\);/, 'the distance weight');
+  assert.match(fs, /if \(d > bias\) h = max\(h, c\);/, 'the highest horizon, past the bias');
+  assert.match(fs, /float ang = bayer4\(gl_FragCoord\.xy\) \* 6\.2831853;/, 'EL6: the ordered rotation still');
+  assert.match(fs, /for \(int k = 0; k < \$\{AIR_AO_DIRECTIONS\}; k\+\+\) \{\n    float a = ang \+ float\(k\) \* \$\{\(Math\.PI \/ 2\)\.toFixed\(7\)\};/, 'the slices a quarter turn apart');
+  assert.match(fs, /h1 = gamma \+ max\(-h1 - gamma, -1\.5707963\);\n    h2 = gamma \+ min\(h2 - gamma, 1\.5707963\);/, 'the horizons clamped to the hemisphere about the projected normal');
+  assert.match(fs, /float a1 = 0\.25 \* \(-cos\(2\.0 \* h1 - gamma\) \+ cos\(gamma\) \+ 2\.0 \* h1 \* sin\(gamma\)\);/, 'the closed-form arc');
+  assert.match(fs, /vis \+= npl \* \(a1 \+ a2\);/, 'weighted by the projected normal\'s length');
+  assert.match(fs, /ao = 1\.0 - \(1\.0 - ao\) \* uAOParams\.y;/, 'the strength on the occlusion');
+  assert.match(a, /ao: P\(QUAD_VS, AO_FS, \['uDepth', 'uProjInfo', 'uAOParams', 'uRect', 'uCanvas'\]\),/, 'the program\'s uniforms, no kernel');
 });
 
 test('EL3: the receiver block and the shaders - the AO by screen position, off at width 0; the three lit lane shaders multiply their ambient alone; the flat and the ring take none; the emission shaders', () => {

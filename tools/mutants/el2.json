@@ -72,19 +72,10 @@
   ]
  },
  {
-  "name": "caster-takes-eye",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
-  "new": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
-  "tests": [
-   "test/el2_shadows.test.js"
-  ]
- },
- {
   "name": "caster-takes-rangeless",
   "file": "src/render/shadowPass.js",
-  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
-  "new": "    if (d < minDist || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "old": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "new": "    if (lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
   "tests": [
    "test/el2_shadows.test.js"
   ]
@@ -319,8 +310,8 @@
  {
   "name": "renderer-maps-after-clear",
   "file": "src/render/renderer.js",
-  "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n",
-  "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);\n",
+  "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n",
+  "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n",
   "tests": [
    "test/el2_shadows.test.js"
   ]

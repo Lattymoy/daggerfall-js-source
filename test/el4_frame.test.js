@@ -157,10 +157,10 @@ test('EL4: the eye in the shaders - every lane shader and the far ring multiply 
   assert.ok(EL_GLSL.includes(AIR_ADAPT_GLSL), 'the lane\'s block carries the eye');
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS], ['bb', EL_BB_FS]]) {
     assert.match(fs, /float ex = uELExposure \* elAdapt\(\);   \/\/ EL4/, `${name}: the eye rides the exposure`);
-    assert.match(fs, /vec3 tm = elTonemap\(lit \* ex\);/); assert.match(fs, /col \+= elTonemap\(elInScatter\(wp\) \* ex\);/);
+    assert.match(fs, /vec3 tm = elTonemapRGB\(lit \* ex\);/); assert.match(fs, /col \+= elTonemapRGB\(elInScatter\(wp\) \* ex\);/);   // HQ1: the colour through the curve
     assert.ok(!/lit \* uELExposure/.test(fs), `${name}: no bare exposure left`);
   }
-  assert.match(EL_FAR_RING_FS, /float ex = uELExposure \* elAdapt\(\);/); assert.match(EL_FAR_RING_FS, /elTonemap\(lit \* ex\)/);
+  assert.match(EL_FAR_RING_FS, /float ex = uELExposure \* elAdapt\(\);/); assert.match(EL_FAR_RING_FS, /elTonemapRGB\(lit \* ex\)/);   // HQ1
   const fr = read('src/render/farRing.js');
   assert.match(fr, /'uELExposure', 'uAdapt'\]/); assert.match(fr, /gl\.bindTexture\(gl\.TEXTURE_2D, adaptTex \?\? this\._adaptOne\(\)\);/);
   assert.match(fr, /new Uint8Array\(\[128, 128, 128, 255\]\)/, 'the bare image holds the multiplier 1');

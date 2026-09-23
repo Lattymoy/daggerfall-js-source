@@ -39,6 +39,8 @@ directory by `test/audit18_bible_docs.test.js`:
   four steps within seven tenths of a range, the glare's band a quarter
   unit. `?air=off`, `?contact=off`. See
   `07-Rendering/Enhanced-Lighting-Arc.md`.
+  HQ1 (2026-09-23): the occlusion is horizon-based (GTAO's arc, two slices,
+  six steps a side), no kernel (`Enhanced-Lighting-Arc.md`, HQ1).
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
@@ -63,11 +65,23 @@ directory by `test/audit18_bible_docs.test.js`:
   programs are the renderer's own vertex shaders (EL7: three cascades, the
   rigs recorded too, the water surface a receiver; EL8: the caster table
   `uCasterOf`, the far cascade and the far casters on a cadence; BUGS-5:
-  the light in the hand never casts (`SHADOW_CASTER_MIN_DISTANCE` 1.5), a
+  the light in the hand never casts (by its `carried` flag - MAC-T1; LIGHT-NEAR1 removed the 1.5 camera-distance proxy that dropped the lamp overhead too), a
   thing on the ground is no standing card (`noShadow`, archive 216, flats
   under half a unit), a cascade skips casters under two of its texels).
   See `07-Rendering/Enhanced-Lighting-Arc.md`.
+  SC1 (2026-09-23): the static casters are drawn ONCE - every record classified
+  static or dynamic as it is recorded, each caster slot's statics cached in a
+  second depth array and blitted under the movers, sticky slots by position,
+  `?shadowcache=off` the old path (`Enhanced-Lighting-Arc.md`, SC1).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
+- `lightClusters.js` - LC1 CLUSTERED LIGHTS (2026-09-23): the frustum cut into
+  16 x 9 x 24 cells once a frame on the CPU, each light written into the cells
+  its view-space box touches, uploaded as two integer textures (the grid's
+  offset and count per cell, the list of indices) that the lane's lantern loop
+  reads to walk the fragment's own cell's lights instead of the frame's
+  forty-eight. Conservative, and off (every light) in the sprite pass, the
+  studio bake, a panel bracket, an overflowed frame and behind `?clusters=off`
+  (`Enhanced-Lighting-Arc.md`, LC1).
 - `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders
   verbatim, its placer law, and a renderer of its own beside the world's,
   drawn on grass records of the near ring outside winter. GR2 darkened

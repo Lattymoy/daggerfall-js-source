@@ -74,7 +74,7 @@
   {
     "name": "casters-three",
     "file": "src/render/shadowPass.js",
-    "old": "export const SHADOW_POINT_CASTERS = 6;",
+    "old": "export const SHADOW_POINT_CASTERS = 8;",
     "new": "export const SHADOW_POINT_CASTERS = 5;",
     "tests": [
       "test/el5_field.test.js"
@@ -90,19 +90,10 @@
     ]
   },
   {
-    "name": "pick-no-min-dist",
-    "file": "src/render/shadowPass.js",
-    "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11\n    if (picked.length === max",
-    "new": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11\n    if (picked.length === max",
-    "tests": [
-      "test/el5_field.test.js"
-    ]
-  },
-  {
     "name": "render-one-caster",
     "file": "src/render/shadowPass.js",
-    "old": "    for (let k = 0; k < casters.length; k++) {",
-    "new": "    for (let k = 0; k < Math.min(1, casters.length); k++) {",
+    "old": "    for (let rank = 0; rank < casters.length; rank++) {\n      const i = casters[rank], k = slotOf[rank];",
+    "new": "    for (let rank = 0; rank < Math.min(1, casters.length); rank++) {\n      const i = casters[rank], k = slotOf[rank];",
     "tests": [
       "test/el5_field.test.js"
     ]
@@ -225,11 +216,12 @@
     ]
   },
   {
-    "name": "glare-no-texel",
+    "name": "LIGHT-NEAR1-glare-distance-skip-back",
     "file": "src/render/airPass.js",
-    "old": "< AIR_GLARE_MIN_DISTANCE) continue;   // EL7: the torch in the hand, the candle",
-    "new": "< 0.0) continue;   // EL7: the torch in the hand, the candle",
+    "old": "      if (f.carried && f.carried[i]) continue;   // MAC-T1",
+    "new": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < 1.5) continue;\n      if (f.carried && f.carried[i]) continue;   // MAC-T1",
     "tests": [
+      "test/lightnear1.test.js",
       "test/el7_polish.test.js"
     ]
   },

@@ -22,15 +22,17 @@ import {
 import { takeOneInto, GOLD_TEMPLATE } from '../src/systems/inventory.js';
 import {
   quickLootOn, tookItemText, containerEmptied, quickLootWheel, foldQuickLoot,
-  quickLootRow, quickLootSelection, resetQuickLoot, quickLootTake, quickLootArm,
+  quickLootRow, quickLootSelection, resetQuickLoot, quickLootTake, quickLootArm, QUICK_LOOT_REFUSED,
 } from '../src/systems/quickLoot.js';
+import { planTake, CANNOT_CARRY_TEXT } from '../src/systems/itemTransfer.js';   // QL-WEIGHT1: the window's plan, asked the same question
+import { isMap } from '../src/systems/useItem.js';
 import { PREF_DEFAULTS, setPref } from '../src/systems/uiPrefs.js';
 
 // ── FIXTURES ─────────────────────────────────────────────────────
 
 const gold = (n) => ({ name: 'Gold', group: 'Currency', templateIndex: GOLD_TEMPLATE, stackCount: n });
 const item = (name, extra = {}) => ({ name, group: 'Weapons', templateIndex: 121, ...extra });
-const player = () => ({ items: [], goldPieces: 0 });
+const player = (strength = 50) => ({ items: [], goldPieces: 0, stats: { strength } });   // QL-WEIGHT1: a carry limit (75 kg at 50) - the gate is the window's now, and a hero with no strength carries nothing
 
 /** A frame as `resolveHover` mints one - the shape the fold is asked
  *  about. TEST THE SHAPE THE PRODUCER MINTS: the rows are `hoverLines`'
@@ -381,4 +383,74 @@ test('QUICK-LOOT: a take that empties a body does NOT disable it', () => withQui
   assert.deepEqual(body.entity.items, []);
   assert.equal(containerEmptied(body.entity.items), true);
   assert.equal(body.corpseDisabled, undefined, 'the take does not disable - the next activation does');
+}));
+
+// ── QL-WEIGHT1: THE TAKE IS THE WINDOW'S TAKE ────────────────────
+// (2026-09-23, Satranath on Discord: "The quick loot system lets you pick
+// up items even if you are overencumbered. Applies only to quick loot -
+// vanilla loot interaction still gives the appropriate error that you
+// are carrying too much.")
+
+test('QL-WEIGHT1: a row the hero cannot carry is REFUSED with the window\'s own line, stays on the pile, and the press is handled - not "open the window" (mutants: the gate dropped, so the row moves; null answered, so the window opens over the refusal; the line unsaid)', () => withQuickLoot(() => {
+  // strength 2: 3 kg of carry. A Katana (template 121) is 2.5 kg - one fits, the second does not.
+  const p = player(2);
+  const items = [item('Katana'), item('Katana')];
+  const f = frameOf('pile:1', items);
+  foldQuickLoot(f);
+  const said = [];
+  const first = quickLootTake('pile:1', hooks(items), p, (l) => said.push(l));
+  assert.equal(first.name, 'Katana', 'the first fits');
+  assert.deepEqual(said, ['You take the Katana.']);
+  foldQuickLoot(frameOf('pile:1', items));
+  const second = quickLootTake('pile:1', hooks(items), p, (l) => said.push(l));
+  assert.equal(second, QUICK_LOOT_REFUSED, 'the second is refused - and the answer is truthy, so the host does not open the window');
+  assert.notEqual(second, null);
+  assert.equal(said[1], CANNOT_CARRY_TEXT, 'the window\'s words: "You cannot carry any more stuff."');
+  assert.deepEqual(items.map((i) => i.name), ['Katana'], 'and the row stayed on the pile');
+  assert.equal(p.items.length, 1);
+  // the same hero at the window: the same answer, because it is the same plan
+  assert.equal(planTake(items[0], { bag: p.items, entity: p }).ok, false);
+}));
+
+test('QL-WEIGHT1: a stack that half fits is SPLIT - what fits is taken and the rest stays (the window\'s Enter on the split box), and gold still spends into the counter through the same door (mutants: the whole stack moved; the remainder lost)', () => withQuickLoot(() => {
+  // strength 20: 30 kg. 10,000 gold pieces weigh 25 kg; 14,000 do not fit whole.
+  const p = player(20);
+  const items = [gold(14000), item('Katana')];
+  foldQuickLoot(frameOf('pile:1', items));
+  const said = [];
+  const got = quickLootTake('pile:1', hooks(items), p, (l) => said.push(l));
+  assert.ok(got && got !== QUICK_LOOT_REFUSED, 'a partial fit is a take');
+  assert.equal(p.goldPieces, 12000, 'exactly what fits: 30 kg of pieces');
+  assert.deepEqual(items.map((i) => [i.name, i.stackCount]), [['Gold', 2000], ['Katana', undefined]], 'the rest is still on the pile');
+  assert.deepEqual(p.items, [], 'a purse is never an item in the pack');
+  assert.equal(said[0], 'You take the Gold.');
+}));
+
+test('QL-WEIGHT1: QuickLootAll takes what fits and leaves the rest - the count line when something moved, the refusal when nothing did (mutants: the loop stopped at the first refusal; the refusal said over a count)', () => withQuickLoot(() => {
+  const p = player(2);   // 3 kg: one Katana of three
+  const items = [item('Katana'), item('Katana'), item('Katana')];
+  foldQuickLoot(frameOf('pile:1', items));
+  assert.equal(quickLootArm('QuickLootAll'), true);
+  const said = [];
+  assert.ok(quickLootTake('pile:1', hooks(items), p, (l) => said.push(l)));
+  assert.equal(p.items.length, 1);
+  assert.equal(items.length, 2, 'two stay');
+  assert.deepEqual(said, ['You take 1 item.']);
+  // full: the lot refused, and the press still handled
+  foldQuickLoot(frameOf('pile:1', items));
+  quickLootArm('QuickLootAll');
+  const r = quickLootTake('pile:1', hooks(items), p, (l) => said.push(l));
+  assert.equal(r, QUICK_LOOT_REFUSED);
+  assert.equal(said[1], CANNOT_CARRY_TEXT);
+  assert.equal(items.length, 2);
+}));
+
+test('QL-WEIGHT1: a map is left for the window - it is a row the window USES rather than takes (F156), and quick loot has no reader (mutant: the map moved into the pack unread)', () => withQuickLoot(() => {
+  const p = player();
+  const items = [item('Map', { group: 'Maps', templateIndex: 287 })];
+  assert.equal(isMap(items[0]), true, 'the fixture is what the door asks about');
+  foldQuickLoot(frameOf('pile:1', items));
+  assert.equal(quickLootTake('pile:1', hooks(items), p), null, 'null: the window opens, and reads it there');
+  assert.equal(items.length, 1);
+  assert.deepEqual(p.items, []);
 }));

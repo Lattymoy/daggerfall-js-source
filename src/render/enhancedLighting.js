@@ -60,9 +60,10 @@
 import { getPref } from '../systems/uiPrefs.js';
 import { BLOOD_ABSORB, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI, INK_DEPTH, WET_DARKEN } from '../combat/bloodArt.js';   // BLOOD3: the film's own law, beside the tints it already owns
 import { isEnhanced } from '../systems/uiSkin.js';
-import { SHADOW_GLSL, SHADOW_CASTER_MIN_DISTANCE } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; F3: the hand's distance
+import { SHADOW_GLSL, shadowCacheOn } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; SC1: the cache's door
 import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AIR_CONTACT_RANGE_FRACTION, airOn, contactOn, glslFloat } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
-import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the dither at the encode - the port's one Bayer
+import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';
+import { CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, clustersOn } from './lightClusters.js';   // LC1: the grid the lantern loop walks, and its door   // EL6: the dither at the encode - the port's one Bayer
 import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
@@ -164,10 +165,29 @@ export function elAttenuation(d, range) {
 }
 
 /** Extended Reinhard: x (1 + x / W^2) / (1 + x). Identity-like below
- *  ~0.05, W maps to 1.0, above W clips. Per channel. */
+ *  ~0.05, W maps to 1.0, above W clips. The CURVE - one channel, or a
+ *  luminance. */
 export function elTonemap(x, white = EL_WHITE) {
   if (!(x > 0)) return 0;
   return x * (1 + x / (white * white)) / (1 + x);
+}
+/** HQ1 (2026-09-23, Mac: "make some insane improvements to our lighting system"): THE COLOUR THROUGH THE CURVE.
+ *  Per-channel Reinhard bends HUE as it compresses: a torch's warm light (r > g > b) has its red channel on the
+ *  shoulder while its blue is still on the slope, so the brighter the flame the more it went yellow-white and
+ *  then flat white, and a sunlit red wall lost its red before it lost its light. This is the luminance-preserving
+ *  blend ("Reinhard-Jodie"): the curve applied to the LUMINANCE keeps the colour's ratios (the flame stays orange
+ *  as it brightens); the curve applied PER CHANNEL is what the eye expects at the very top (light desaturates
+ *  toward white); the two are mixed by the per-channel result itself, so the dark and the mid-tones take the first
+ *  and only the highlights the second. Every law of the curve holds: 0 to 0, identity in the dark end, the white
+ *  point to display white, monotone, a grey unchanged (both terms agree on a grey). */
+export function elTonemapRGB(c, white = EL_WHITE) {
+  const r = Math.max(c[0], 0), g = Math.max(c[1], 0), b = Math.max(c[2], 0);
+  const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const tl = elTonemap(l, white);
+  const tr = elTonemap(r, white), tg = elTonemap(g, white), tb = elTonemap(b, white);
+  const k = l > 0 ? tl / l : 0;
+  const w = (t) => Math.min(Math.max(t, 0), 1);
+  return [r * k + (tr - r * k) * w(tr), g * k + (tg - g * k) * w(tg), b * k + (tb - b * k) * w(tb)];
 }
 
 /** The single-scattering integral of a point light along a view ray:
@@ -227,6 +247,16 @@ float elAttenuation(float d, float range) {
 vec3 elTonemap(vec3 x) {
   return x * (1.0 + x / ${EL_WHITE}.0 / ${EL_WHITE}.0) / (1.0 + x);
 }
+// HQ1: the colour through the curve - the luminance's curve keeps the hue, the per-channel curve desaturates the
+// highlights, mixed by the per-channel result (elTonemapRGB in enhancedLighting.js, term for term)
+vec3 elTonemapRGB(vec3 c) {
+  c = max(c, vec3(0.0));
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  float tl = (l * (1.0 + l / ${EL_WHITE}.0 / ${EL_WHITE}.0) / (1.0 + l));
+  vec3 tc = elTonemap(c);
+  vec3 hue = l > 0.0 ? c * (tl / l) : vec3(0.0);
+  return mix(hue, tc, clamp(tc, 0.0, 1.0));
+}
 // the single-scattering integral (elScatter in enhancedLighting.js), for
 // one light at L (relative to the eye) along the unit ray dir to dist
 float elScatter(vec3 L, float range, vec3 dir, float dist) {
@@ -250,10 +280,39 @@ float fogFactorAt(vec3 worldPos) {
 }
 `;
 
+/** LC1: THE CLUSTER BLOCK - the grid and the list (render/lightClusters.js), read once per fragment. With the
+ *  grid off (`uClusterOn` 0: a sprite pass, a panel, an overflowed frame, `?clusters=off`) a cell is "every
+ *  light", so the loop below has ONE body and two ways to count. Interpolated at the head of the lantern loop. */
+export const EL_CLUSTER_GLSL = `
+uniform highp usampler2D uClusterGrid;   // LC1: (offset, count) per cell, texel (x + y * CLUSTER_X, z)
+uniform highp usampler2D uClusterList;   // LC1: the light indices, ${CLUSTER_LIST_W} to a row
+uniform vec4 uClusterRect;               // LC1: the world viewport's x, y, and CLUSTER_X / w, CLUSTER_Y / h
+uniform vec2 uClusterZ;                  // LC1: 1 / CLUSTER_NEAR, CLUSTER_Z / log(FAR / NEAR)
+uniform vec4 uCamFwd;                    // LC1: the view's third row negated - dot(xyz, wp) + w is a point's view depth
+uniform int uClusterOn;                  // LC1: 1 on a world frame with a grid built; 0 walks every light
+// the fragment's cell as (offset, count) into the list - or (0, uPointCount) with the grid off
+uvec2 elCluster(vec3 wp) {
+  if (uClusterOn == 0) return uvec2(0u, uint(uPointCount));
+  ivec2 t = clamp(ivec2((gl_FragCoord.xy - uClusterRect.xy) * uClusterRect.zw), ivec2(0), ivec2(${CLUSTER_X - 1}, ${CLUSTER_Y - 1}));
+  float depth = dot(uCamFwd.xyz, wp) + uCamFwd.w;
+  int z = clamp(int(log(max(depth * uClusterZ.x, 1.0)) * uClusterZ.y), 0, ${CLUSTER_Z - 1});
+  return texelFetch(uClusterGrid, ivec2(t.x + t.y * ${CLUSTER_X}, z), 0).rg;
+}
+// the j-th light of a cell - the list's byte, or j itself with the grid off
+int elClusterLight(uvec2 cell, int j) {
+  if (uClusterOn == 0) return j;
+  int at = int(cell.x) + j;
+  return int(texelFetch(uClusterList, ivec2(at & ${CLUSTER_LIST_W - 1}, at >> ${Math.log2(CLUSTER_LIST_W)}), 0).r);
+}
+`;
+
 // The lantern loop and the in-scatter loop, shared by the three lit
 // programs. `n` is the surface normal (the billboard passes none and
 // takes the attenuation alone - it has no normal, as in the classic lane).
+// LC1: the loop walks the fragment's CELL (elCluster) - two or three
+// lights where it walked forty-eight - and every light with the grid off.
 const EL_POINT_LIT_GLSL = `
+${EL_CLUSTER_GLSL}
 // BLOOD2f / BLOOD AUDIT 5: the lantern loop with a WET surface's glint
 // beside the diffuse - ONE loop, ONE shadow answer for both (a mark in a
 // contact shadow is glint-shadowed as it is diffuse-shadowed), the
@@ -273,18 +332,21 @@ float wetFresnel(float vdoth) {
 vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
   vec3 acc = vec3(0.0);
   glint = vec3(0.0);
-  for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
-    if (i >= uPointCount) break;
+  uvec2 cell = elCluster(wp);   // LC1
+  int cellCount = int(cell.y);
+  for (int j = 0; j < ${EL_MAX_LIGHTS}; j++) {
+    if (j >= cellCount) break;
+    int i = elClusterLight(cell, j);
     vec3 L = uPointLights[i].xyz - wp;
     float d = length(L);
     if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it
     vec3 Ln = L / max(d, 1e-4);
     int k = uCasterOf[i];   // EL8: the light's caster slot in one lookup
     // EL2: the lantern's map; EL8: every other lantern a contact shadow off the previous frame's depth;
-    // F3: never for the light in the hand (the torch, a hand's width from every corner - shadowPass's SHADOW_CASTER_MIN_DISTANCE, the same law that keeps it out of the caster slots);
+    // F3/MAC-T1: never for the light in the hand - by name, -2 in the caster table (LIGHT-NEAR1: and no longer by its distance to the camera, which dropped the lamp overhead too);
     // F5: and only within the share of the range where the light is worth a shadow
     float sh = k >= 0 ? pointShadowAt(k, wp, n)
-      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)} || length(uPointLights[i].xyz - uCamPos) < ${glslFloat(SHADOW_CASTER_MIN_DISTANCE)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name
+      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name
       : contactShadow(wp, n, Ln, d);
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
     vec3 V = normalize(uCamPos - wp);
@@ -306,8 +368,11 @@ vec3 elPointLit(vec3 wp, vec3 n) { vec3 g; return elPointLitWet(wp, n, 0.0, g); 
 // would shadow itself)
 vec3 elPointFlat(vec3 wp, vec3 base) {
   vec3 acc = vec3(0.0);
-  for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
-    if (i >= uPointCount) break;
+  uvec2 cell = elCluster(wp);   // LC1
+  int cellCount = int(cell.y);
+  for (int j = 0; j < ${EL_MAX_LIGHTS}; j++) {
+    if (j >= cellCount) break;
+    int i = elClusterLight(cell, j);
     float d = length(uPointLights[i].xyz - wp);
     if (d >= uPointLights[i].w) continue;   // EL5
     float sh = shadowOfLight(i, base, vec3(0.0, 1.0, 0.0));   // EL2; EL5: any caster's
@@ -345,7 +410,7 @@ vec3 elInScatter(vec3 wp) {
 // colour in linear, add the tonemapped glow, encode
 vec3 elFinish(vec3 lit, vec3 wp) {
   float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure
-  vec3 tm = elTonemap(lit * ex);
+  vec3 tm = elTonemapRGB(lit * ex);   // HQ1: the colour through the curve
   // PERF-FOG (2026-09-19): THE FOG COLOUR ARRIVES DECODED. This line read
   // elDecode(uFogColor) - three pow() calls, per fragment, on a UNIFORM.
   // The value is the same for every pixel of the frame and it was being
@@ -357,7 +422,7 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   // renderer reaches through the lane it was handed - so this needs no
   // second copy of the law, only a place to keep the answer.
   vec3 col = mix(uFogColorLin, tm, fogFactorAt(wp));
-  col += elTonemap(elInScatter(wp) * ex);
+  col += elTonemapRGB(elInScatter(wp) * ex);   // HQ1
   return elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it
 }
 `;
@@ -931,7 +996,7 @@ void main() {
   vec3 lit = elDecode(vColor) * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   float base = uHazeHold * clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
   float rim = (1.0 - uHazeHold) * smoothstep(uRimStart, uRimEnd, vDist);
-  vec3 col = mix(elTonemap(lit * ex), elDecode(uFogColor), min(base + rim, 1.0));
+  vec3 col = mix(elTonemapRGB(lit * ex), elDecode(uFogColor), min(base + rim, 1.0));   // HQ1
   outColor = vec4(elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0, 1.0);   // EL6: the ring's sky gradient, dithered at the byte
 }`;
 
@@ -963,7 +1028,7 @@ export const EL_LANE = Object.freeze({
 export function syncLightingLane(renderer, search = globalThis.location?.search ?? '') {
   const on = enhancedLightingOn(search);
   renderer.setLightingLane(on ? EL_LANE : null);
-  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too
+  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's
   return on;
 }
 

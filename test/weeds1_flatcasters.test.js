@@ -81,7 +81,7 @@ test('WEEDS1: the lantern replays are untouched, and that is the point of passin
   // point replays pass no texel, so they get the floor alone - exactly
   // what they had before.
   const sp = read('src/render/shadowPass.js');
-  assert.match(sp, /replay\(f, vp, lightPos, recordBasis = false, minRadius = 0, texel = 0\)/, 'the texel is an argument with a zero default');
+  assert.match(sp, /replay\(f, vp, lightPos, recordBasis = false, minRadius = 0, texel = 0, filter = REPLAY_ALL\)/, 'the texel is an argument with a zero default (SC1: and the filter after it, every record by default)');
   assert.match(sp, /const minFlatH = texel > 0 \? Math\.max\(SHADOW_FLAT_MIN_HEIGHT, texel \* SHADOW_FLAT_MIN_TEXELS\) : SHADOW_FLAT_MIN_HEIGHT;/,
     'no texel means the floor, unchanged');
   assert.match(sp, /this\.replay\(f, this\.faceVP\[face\], pos\)/, 'and the point replay passes none');

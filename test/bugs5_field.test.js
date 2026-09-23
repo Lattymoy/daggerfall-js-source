@@ -8,10 +8,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  SHADOW_CASTER_MIN_DISTANCE, SHADOW_NO_CAST_ARCHIVES, SHADOW_FLAT_MIN_HEIGHT, SHADOW_CASCADE_MIN_RADIUS_TEXELS, SHADOW_LIGHT_FLATS,
+  SHADOW_NO_CAST_ARCHIVES, SHADOW_FLAT_MIN_HEIGHT, SHADOW_CASCADE_MIN_RADIUS_TEXELS, SHADOW_LIGHT_FLATS,
   pickShadowCasters, sunTexelWorld, SHADOW_CASCADES,
 } from '../src/render/shadowPass.js';
-import { AIR_GLARE_SLACK, AIR_GLARE_MIN_DISTANCE, AIR_CONTACT_STEPS, AIR_CONTACT_RANGE_FRACTION } from '../src/render/airPass.js';
+import { AIR_GLARE_SLACK, AIR_CONTACT_STEPS, AIR_CONTACT_RANGE_FRACTION } from '../src/render/airPass.js';
 import { EL_LANE } from '../src/render/enhancedLighting.js';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
 
@@ -54,8 +54,10 @@ function rig() {
 }
 
 test('F2/F3/F4/F5: the constants - the hand\'s distance, the archives and height that cast nothing, the far cascade\'s texel rule, the glare\'s band, the march\'s steps and share', () => {
-  assert.equal(SHADOW_CASTER_MIN_DISTANCE, 1.5, 'F3: the light in the hand (0.8 from the eye) takes no caster slot');
-  assert.equal(SHADOW_CASTER_MIN_DISTANCE, AIR_GLARE_MIN_DISTANCE, 'one hand distance for the glare and the shadows');
+  // LIGHT-NEAR1: F3's "one hand distance" (a caster and a glare minimum of 1.5 from the eye) is GONE - the hand's
+  // light is excluded by MAC-T1's `carried` flag alone; the lamp overhead casts (test/lightnear1.test.js)
+  assert.doesNotMatch(rd('src/render/shadowPass.js'), /export const SHADOW_CASTER_MIN_DISTANCE/);
+  assert.doesNotMatch(rd('src/render/airPass.js'), /export const AIR_GLARE_MIN_DISTANCE/);
   assert.ok(SHADOW_NO_CAST_ARCHIVES.has(216) && SHADOW_NO_CAST_ARCHIVES.size === 1, 'F2: the treasure archive');
   assert.ok(!SHADOW_NO_CAST_ARCHIVES.has(SHADOW_LIGHT_FLATS), 'the flame flats have their own law (EL6: never from a lantern, still from the sun)');
   assert.equal(SHADOW_FLAT_MIN_HEIGHT, 0.5);
@@ -64,13 +66,13 @@ test('F2/F3/F4/F5: the constants - the hand\'s distance, the archives and height
   assert.ok(SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(0) < 0.03, 'the near one skips nothing a player could see');
   assert.equal(AIR_GLARE_SLACK, 0.25, 'F4: a quarter unit');
   assert.equal(AIR_CONTACT_STEPS, 4); assert.equal(AIR_CONTACT_RANGE_FRACTION, 0.7);
-  // F3: the picker
+  // F3: the picker - the hand's light BY NAME (MAC-T1), never by its distance (LIGHT-NEAR1)
   const eye = [0, 1.7, 0];
   const hand = [0.34, 1.0, -0.25, 6];   // Handheld Torches' flame: left, below, ahead - 0.8 away
   const lantern = [3, 2, 0, 10];
-  assert.deepEqual(pickShadowCasters(new Float32Array([...hand, ...lantern]), eye), [1], 'the hand\'s light is passed over, the lantern takes the slot');
-  assert.deepEqual(pickShadowCasters(new Float32Array([...hand, ...lantern]), eye, 6, 0.25), [0, 1], 'at the old quarter unit it was the nearest caster of all');
-  assert.deepEqual(pickShadowCasters(new Float32Array([1.6, 1.7, 0, 8]), eye), [0], 'a lantern you stand beside, a unit and a half off, still casts');
+  assert.deepEqual(pickShadowCasters(new Float32Array([...hand, ...lantern]), eye, 6, new Uint8Array([1, 0])), [1], 'the hand\'s light is passed over by its flag, the lantern takes the slot');
+  assert.deepEqual(pickShadowCasters(new Float32Array([...hand, ...lantern]), eye, 6), [0, 1], 'unflagged it is a light like any other - the nearest caster of all, as it was before F3');
+  assert.deepEqual(pickShadowCasters(new Float32Array([1.6, 1.7, 0, 8]), eye), [0], 'a lantern you stand beside still casts');
   assert.match(rd('src/systems/handheldTorches.js'), /torch: \{ left: 0\.34, up: 0\.9, forward: 0\.25 \}/, 'the offset the law was measured against');
   assert.match(rd('src/scenes/droppedLoot.js'), /pile\.batch\.noShadow = true;/); assert.match(rd('src/scenes/droppedLoot.js'), /p\.batch\.noShadow = true;/);
 });

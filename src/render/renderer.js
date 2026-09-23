@@ -408,6 +408,7 @@ void main() {
   gl_Position = uProj * uView * vec4(world, 1.0);
 }`;
 
+import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf, spherePlanes, batchVisible } from './bounds.js';
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
@@ -1157,6 +1158,13 @@ export class Renderer {
     this._airWanted = false;
     this._frameFbo = null;   // EL4: the frame image the world pass draws into while the air is on (null = the canvas)
     this._spriteDepth = 0;   // AUDIT-EL F2: inside renderCharacterSprite (a foreign rect: no AO)
+    this._clusters = null;        // LC1: the grid's workspace, made with the lane's textures
+    this._clusterTex = null;      // LC1: { grid, list } - the two integer textures the world shaders read
+    this._clustersLive = false;   // LC1: this frame's grid is built and the shader may walk it
+    this._clustersWanted = true;  // LC1: `?clusters=off` (setClusters)
+    this._clusterRect = new Float32Array(4);
+    this._clusterZ = new Float32Array([1 / CLUSTER_NEAR, CLUSTER_Z_SCALE]);
+    this._camFwd = new Float32Array(4);
     this._panelLane = null;  // AUDIT-EL F7: the lane a panel bracket suspended
     this._studioDepth = 0;   // AUDIT-EL F1: inside the studio bake (a UI picture: no eye)
     this._adaptOneTex = null;
@@ -1752,7 +1760,7 @@ export class Renderer {
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
-      /** @type {any[] & { shadow?: object, ao?: object, contact?: object }} */
+      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object }} */
       const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'),
@@ -1760,6 +1768,7 @@ export class Renderer {
         casterOf: gl.getUniformLocation(p, 'uCasterOf'),   // EL8
       };
       a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL4: the eye (EL6: the AO left the world shaders - the resolve applies it off the frame's depth)
+      a.cluster = { grid: gl.getUniformLocation(p, 'uClusterGrid'), list: gl.getUniformLocation(p, 'uClusterList'), rect: gl.getUniformLocation(p, 'uClusterRect'), z: gl.getUniformLocation(p, 'uClusterZ'), fwd: gl.getUniformLocation(p, 'uCamFwd'), on: gl.getUniformLocation(p, 'uClusterOn') };   // LC1
       a.contact = { prevDepth: gl.getUniformLocation(p, 'uPrevDepth'), prevVP: gl.getUniformLocation(p, 'uPrevVP'), prevProjInfo: gl.getUniformLocation(p, 'uPrevProjInfo'), contactParams: gl.getUniformLocation(p, 'uContactParams') };   // EL8
       return a;
     };
@@ -1794,7 +1803,8 @@ export class Renderer {
     if (this._fogLinFrom) this._fogLinFrom[0] = NaN;
     // EL2: the shadow pass rides a lane that asks for it; built once, kept
     if (lane?.shadows) {
-      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });   // EL7: the rigs cast
+      this._shadows = this._shadowPass ??= new ShadowPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS, terrain: TERRAIN_VS, char: CHAR_VS } });
+      this._shadows.cacheOn = this._shadowCacheWanted !== false;   // SC1   // EL7: the rigs cast
       // EL7: the water surface receives the lane's sun shadow - its own program with the receiver block, built once
       if (lane.shadows && !this.waterSurfaceProgramLane) {
         this.waterSurfaceProgramLane = this._buildProgram(WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL, SHADOW_GLSL));
@@ -1810,6 +1820,7 @@ export class Renderer {
       this._shadows = null;
     }
     this._syncAir();
+    if (lane) this._ensureClusters();   // LC1: the grid's textures, once - a lane program's usampler must always have an integer texture under it
     this.maxPointLights = lane ? lane.maxLights : CLASSIC_MAX_LIGHTS;
     const n = this.maxPointLights;
     if (this._flashLightScratch.length < n * 4) {
@@ -1835,6 +1846,75 @@ export class Renderer {
   setAir(on) { this._airWanted = !!on; this._syncAir(); }
   /** EL8: the contact shadows' door (`?contact=off`); on by default. */
   setContact(on) { this._contactWanted = !!on; }
+  /** LC1: the clustered loop's door - `?clusters=off` walks every light in every fragment (syncLightingLane reads it). */
+  setClusters(on) { this._clustersWanted = !!on; }
+  /** SC1: the static shadow cache's door - `?shadowcache=off` replays every caster at the cadence, as before (syncLightingLane reads it). */
+  setShadowCache(on) { this._shadowCacheWanted = !!on; if (this._shadowPass) this._shadowPass.cacheOn = this._shadowCacheWanted; }
+  /** LC1: the grid's two integer textures - the GRID (RG16UI: offset, count per cell) and the LIST (R8UI: light
+   *  indices) - NEAREST, unfiltered, made once with the lane. Uploaded by texSubImage2D per world frame. */
+  _ensureClusters() {
+    if (this._clusterTex) return;
+    const gl = this.gl;
+    const make = (unit, internal, w, h, format, type) => {
+      const tex = gl.createTexture();
+      this._activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return tex;
+    };
+    this._clusterTex = {
+      grid: make(CLUSTER_GRID_UNIT, gl.RG16UI, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT),
+      list: make(CLUSTER_LIST_UNIT, gl.R8UI, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, gl.RED_INTEGER, gl.UNSIGNED_BYTE),
+    };
+    this._activeTexture(gl.TEXTURE0);
+    this._clusters = createClusterSpace();
+  }
+  /** LC1: THE BUILD, at the top of a world frame on the lane - the frame's lights into the grid (lightClusters.js
+   *  buildLightClusters) and the two textures' used rows up; the shader's rect and z parameters set for the world
+   *  viewport this frame draws into. Answers whether the shader may walk the grid this frame. */
+  _buildClusters(proj, view) {
+    if (!this._clusters || !this._clustersWanted) return false;
+    const count = this._pointLights.length >> 2;
+    const ok = buildLightClusters(this._pointLights, count, view, proj, this._clusters);
+    if (!ok) return false;
+    const gl = this.gl, sp = this._clusters;
+    this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT, sp.grid);
+    if (sp.rows > 0) {
+      this._activeTexture(gl.TEXTURE0 + CLUSTER_LIST_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.list);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, CLUSTER_LIST_W, sp.rows, gl.RED_INTEGER, gl.UNSIGNED_BYTE, sp.list.subarray(0, sp.rows * CLUSTER_LIST_W));
+    }
+    this._activeTexture(gl.TEXTURE0);
+    const vp = this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];
+    this._clusterRect[0] = vp[0]; this._clusterRect[1] = vp[1];
+    this._clusterRect[2] = CLUSTER_X / Math.max(vp[2], 1); this._clusterRect[3] = CLUSTER_Y / Math.max(vp[3], 1);
+    // a point's view depth is -(view row 2 . p + view[14]): the row negated, so the shader's dot() + w is the depth
+    this._camFwd[0] = -view[2]; this._camFwd[1] = -view[6]; this._camFwd[2] = -view[10]; this._camFwd[3] = -view[14];
+    return true;
+  }
+  /** LC1: one program's cluster uniforms and the two textures on their units - part of _uploadEl. `on` is the
+   *  frame's word (the grid built, and this a world draw): 0 walks every light. */
+  _uploadClusters(loc, on) {
+    if (!loc?.grid || !this._clusterTex) return;
+    const gl = this.gl;
+    this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
+    this._activeTexture(gl.TEXTURE0 + CLUSTER_LIST_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.list);
+    this._activeTexture(gl.TEXTURE0);
+    gl.uniform1i(loc.grid, CLUSTER_GRID_UNIT);
+    gl.uniform1i(loc.list, CLUSTER_LIST_UNIT);
+    gl.uniform4fv(loc.rect, this._clusterRect);
+    gl.uniform2fv(loc.z, this._clusterZ);
+    gl.uniform4fv(loc.fwd, this._camFwd);
+    gl.uniform1i(loc.on, on ? 1 : 0);
+  }
   _syncAir() {
     const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records
     if (want) this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS } });
@@ -1870,6 +1950,8 @@ export class Renderer {
     // EL8: the contact block - the previous frame's depth, for a WORLD frame's own draws alone (a sprite pass, a bake or a panel is another view: the march would read a stranger's depth)
     if (this._air) this._air.uploadContact(this._el[key].contact, this._contactWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);
     else this._uploadNoContact(this._el[key].contact);
+    // LC1: the grid, under the contact block's own gate - a world draw of the frame the grid was built for; a sprite pass, a bake or a panel walks every light
+    this._uploadClusters(this._el[key].cluster, this._clustersLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);
   }
   /** EL8: with the air off the contact sampler still needs a texture (AUDIT-EL F1's law) and the params say off. */
   _uploadNoContact(loc) {
@@ -3507,6 +3589,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (this._worldViewportPx) this._restoreWorldViewport();
     }
     this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear
+    // LC1: the lantern grid for this frame's lights, on a WORLD frame of the lane alone (a panel bracket's frame is another view and another viewport: every light)
+    this._clustersLive = !!this._lane && opts?.world === true && !this._panelSaved && this._spriteDepth === 0 && this._studioDepth === 0 && this._buildClusters(proj, view);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     this._use(this.program);
     gl.uniformMatrix4fv(this.uProj, false, proj);

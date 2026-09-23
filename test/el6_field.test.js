@@ -48,7 +48,7 @@ function recordingGl() {
 
 test('EL6: the constants and the shader laws - the lights archive, the emitter slack, the ordered rotation, the dither at both encodes, the scatter early-out', () => {
   assert.equal(SHADOW_LIGHT_FLATS, LIGHTS_ARCHIVE, 'the flame flats are the lights archive');
-  assert.equal(SHADOW_POINT_CASTERS, 6);
+  assert.equal(SHADOW_POINT_CASTERS, 8);   // HQ1: eight, on SC1's cache
   assert.equal(AIR_EMIT_SLACK, 0.15); assert.equal(AIR_AO_RESOLVE, 0.75);
   const a = read('src/render/airPass.js');
   assert.match(a, /float ang = bayer4\(gl_FragCoord\.xy\) \* 6\.2831853;/, 'the AO rotation is the 4x4 ordered threshold');
