@@ -207,31 +207,40 @@ function rig() {
 const rider = (x, extra = {}) => ({ id: 'bob-0001', name: 'bob', shown: { x, y: 0, z: 4, yaw: 0, pitch: 0, mv: 1, wd: 0, an: 0, fk: 0, rd: 1, rv: 0, ...extra }, look: null });
 const toScene = (p) => [p.x, p.y, p.z];
 
-test('AUDIT DISC7 B3/B4: a rider whose poses stopped stands (no frozen gallop), nothing is made past earshot, and a rider first seen already mounted does not neigh a mount (mutants: the pose age ignored; the loop past earshot)', () => {
-  const { e } = rig();
-  const rp = new RemotePlayers({ renderer: {}, deps: { fetchBytes: async () => null, palette: null, audio: e }, compose: async () => null });
-  let age = 0;
-  const sync = (p, eye = [0, 1.7, 0], dt = 1 / 30) => rp.sync([p], toScene, { bodyHeight: () => 2, eye, dt, poseAgeMs: () => age });
-  sync(rider(1));
-  assert.ok(e._loops3d.has(ridingLoopName('bob-0001')), 'riding and heard');
-  const r = rp._riding.get('bob-0001');
-  assert.ok(r.anim.neighTime - r.anim.now >= 2, 'first seen in the saddle: the ordinary neigh cadence, not the mount\'s 1-4 s');
-  age = PEER_RIDE_STALE_MS + 1;
-  sync(rider(1), undefined, 0.1); sync(rider(1), undefined, 0.3);   // the stop arms, then DFU's 0.2 s runs out
-  assert.equal(e._loops3d.has(ridingLoopName('bob-0001')), false, 'a stale pose stands the horse (after DFU\'s 0.2 s stop)');
-  age = 0;
-  sync(rider(1));
-  assert.ok(e._loops3d.has(ridingLoopName('bob-0001')));
-  sync(rider(100), [0, 1.7, 0]);
-  assert.equal(e._loops3d.has(ridingLoopName('bob-0001')), false, 'past earshot: no panner, no source');
-  sync(rider(1));
-  assert.ok(e._loops3d.has(ridingLoopName('bob-0001')), 'and back in range, back in step');
-  // seen on foot, then mounted: that IS a mount
-  const rp2 = new RemotePlayers({ renderer: {}, deps: { fetchBytes: async () => null, palette: null, audio: rig().e }, compose: async () => null });
-  rp2.sync([rider(1, { rd: 0 })], toScene, { eye: [0, 1.7, 0], dt: 1 / 30 });
-  rp2.sync([rider(1)], toScene, { eye: [0, 1.7, 0], dt: 1 / 30 });
-  const r2 = rp2._riding.get('bob-0001');
-  assert.ok(r2.anim.neighTime - r2.anim.now <= 4, 'a real mount neighs soon (UpdateMode)');
+test('AUDIT DISC7 B3/B4: a rider whose poses stopped stands (no frozen gallop), nothing is made past earshot, and a rider first seen already mounted does not neigh a mount (mutants: the pose age ignored; the loop past earshot; the mount neigh kept for a rider first seen in the saddle)', () => {
+  // THE NEIGH'S DELAYS ARE DICE (systems/riding.js: a mount's 1-4 s, the ordinary cadence's 2-39 s), and the two ranges
+  // OVERLAP - so a pin that reads one roll cannot tell them apart. This one asserted `>= 2` and failed its OWN code one
+  // run in 38: a cadence roll of 2 s, less the frame's dt the first update spends, is under 2. And it let the mutant it
+  // names live three runs in four (a mount roll of 2-4 passes `>= 2`). So the dice are fixed for this pin: at 0.5 the
+  // cadence is 21 s and a mount's 3 s, and the line between them is the mount's longest, 4 s.
+  const realRandom = Math.random;
+  Math.random = () => 0.5;
+  try {
+    const { e } = rig();
+    const rp = new RemotePlayers({ renderer: {}, deps: { fetchBytes: async () => null, palette: null, audio: e }, compose: async () => null });
+    let age = 0;
+    const sync = (p, eye = [0, 1.7, 0], dt = 1 / 30) => rp.sync([p], toScene, { bodyHeight: () => 2, eye, dt, poseAgeMs: () => age });
+    sync(rider(1));
+    assert.ok(e._loops3d.has(ridingLoopName('bob-0001')), 'riding and heard');
+    const r = rp._riding.get('bob-0001');
+    assert.ok(r.anim.neighTime - r.anim.now > 4, 'first seen in the saddle: the ordinary neigh cadence (21 s at these dice), not the mount\'s 1-4 s');
+    age = PEER_RIDE_STALE_MS + 1;
+    sync(rider(1), undefined, 0.1); sync(rider(1), undefined, 0.3);   // the stop arms, then DFU's 0.2 s runs out
+    assert.equal(e._loops3d.has(ridingLoopName('bob-0001')), false, 'a stale pose stands the horse (after DFU\'s 0.2 s stop)');
+    age = 0;
+    sync(rider(1));
+    assert.ok(e._loops3d.has(ridingLoopName('bob-0001')));
+    sync(rider(100), [0, 1.7, 0]);
+    assert.equal(e._loops3d.has(ridingLoopName('bob-0001')), false, 'past earshot: no panner, no source');
+    sync(rider(1));
+    assert.ok(e._loops3d.has(ridingLoopName('bob-0001')), 'and back in range, back in step');
+    // seen on foot, then mounted: that IS a mount
+    const rp2 = new RemotePlayers({ renderer: {}, deps: { fetchBytes: async () => null, palette: null, audio: rig().e }, compose: async () => null });
+    rp2.sync([rider(1, { rd: 0 })], toScene, { eye: [0, 1.7, 0], dt: 1 / 30 });
+    rp2.sync([rider(1)], toScene, { eye: [0, 1.7, 0], dt: 1 / 30 });
+    const r2 = rp2._riding.get('bob-0001');
+    assert.ok(r2.anim.neighTime - r2.anim.now <= 4, 'a real mount neighs soon (UpdateMode)');
+  } finally { Math.random = realRandom; }
 });
 
 test('AUDIT DISC7 B6/B7: the riders\' loops move with the floating origin in the frame it moves, and a loop whose clip could not play comes back when it can (mutants: no rebase; the dead channel)', () => {
