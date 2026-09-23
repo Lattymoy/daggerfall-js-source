@@ -128,7 +128,7 @@ test('MODS-ON, executed: the two switches a lit torch was invisible without are 
   assert.equal(SETTINGS_DEFAULTS.Enhancements.PlayerTorchFromItems, 'False',
     "and the generated table still carries DFU's own default");
   // the layer is ONE key wide, and everything else still reads the ini
-  assert.deepEqual(Object.keys(PORT_DEFAULTS), ['Enhancements']);
+  assert.deepEqual(Object.keys(PORT_DEFAULTS), ['Enhancements', 'Controls']);   // SWING-DEFAULT1: the swing mode joined the layer (test/swingdefault1.test.js)
   assert.deepEqual(Object.keys(PORT_DEFAULTS.Enhancements), ['PlayerTorchFromItems']);
   assert.equal(getBool('Enhancements', 'AlternateRandomEnemySelection'), false, 'a neighbouring key still answers the ini');
   assert.match(read('bible/06-Systems/Handheld-Torches.md'), /^## HT2-AUDIT - A LIT TORCH IS INVISIBLE BY DEFAULT/m);

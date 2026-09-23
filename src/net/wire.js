@@ -428,8 +428,11 @@ export const QUEST_SEND_MS = 10_000;
 export const FRIENDS_MAX = 64;
 /** The most requests an account holds each way, and the most party invites it holds. */
 export const PENDING_MAX = 32;
-/** A party's size - Mac's "4 person party system". */
-export const PARTY_MAX = 4;
+/** A party's size. SOC1 shipped Mac's "4 person party system"; PARTY8 (Mac, 2026-09-22: "increase the party limit
+ *  to 8") doubles it. Every rate the hub and the client derive from it (PARTY_IN_HZ_MAX, QUEST_IN_HZ_MAX,
+ *  QUEST_IN_MIN_MS) follows, and the relay version below moves with it - a party of five is a frame a world93 client
+ *  refuses. */
+export const PARTY_MAX = 8;
 /** The most invites one party has outstanding at once. */
 export const PARTY_INVITES_MAX = 8;
 /** How long a party invite stands before it is nothing. */
@@ -480,7 +483,7 @@ export const SOCIAL_IN_HZ_MAX = SOCIAL_ROOM_HZ_MAX;
 export const socialInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SOCIAL_IN_HZ_MAX);
 /** AUDIT SOC B3: a note or an error becomes a CHAT LINE (a line nobody sent), and net/chat.js keeps CHAT_KEEP of them -
  *  so those two kinds carry a rate of their own, well under the chat's, because an honest hub's notes are bounded by
- *  the reader's own lists (PENDING_MAX requests, PENDING_MAX invites, a party of four). */
+ *  the reader's own lists (PENDING_MAX requests, PENDING_MAX invites, a party of PARTY_MAX). */
 export const NOTE_IN_HZ_MAX = 10;
 export const noteInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, NOTE_IN_HZ_MAX);
 /** AUDIT SOC B3: the poses of a party's other members, at PARTY_HZ_MAX each. */
@@ -834,7 +837,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world93';   // PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world94';   // PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's

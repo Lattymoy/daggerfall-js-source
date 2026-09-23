@@ -54,12 +54,12 @@ function doorHolds(ws, tag) {
 test('SOC1 wire: the hub is the world channel, the bounds are what Mac asked for, and the version moved (mutants: the hub a room of its own that nobody is in; a five-seat party; the version left at world77)', () => {
   assert.equal(SOCIAL_ROOM, CHAT_WORLD_ROOM, 'the one room every player online is in');
   assert.ok(isSocialRoom('chat:world')); assert.ok(!isSocialRoom('world:1,2')); assert.ok(!isSocialRoom('chat:trade')); assert.ok(!isSocialRoom(null));
-  assert.equal(PARTY_MAX, 4, '"the new 4 person party system"');
+  assert.equal(PARTY_MAX, 8, 'PARTY8 (2026-09-22, Mac: "increase the party limit to 8") over "the new 4 person party system"');
   assert.ok(FRIENDS_MAX >= 32 && PENDING_MAX >= 8 && PARTY_INVITES_MAX >= PARTY_MAX, 'room to be popular');
   assert.ok(INVITE_TTL_MS >= 60_000 && INVITE_TTL_MS <= 10 * 60_000, 'an invite stands for minutes, not for ever');
   assert.ok(PARTY_OFFLINE_MS >= 60_000, 'a refresh keeps a seat');
   assert.ok(PARTY_SEND_MS * PARTY_HZ_MAX >= 1000, 'the client\'s floor never trips the relay\'s gate');
-  assert.equal(RELAY_VERSION, 'world93', 'PARTY-REST DROP (the pose\'s rest kind, the vote and cancel stamps, the 32-bit building key - world93); AUDIT DROPS (the trade bytes per sender, the hub\'s quest cooldown, the quest budget\'s order - world92); QUEST1 + TRADE1 + PEER-FS1 (three drops, one deploy: the quest frame, the trade frame, the pose\'s fk - world91); SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair); AUDIT WATCH1 again (wire.js gained CELL_WATCH_PUPPETS_MAX); the main merge again (a comment line in wire.js moved - the bytes are the law)');
+  assert.equal(RELAY_VERSION, 'world94', 'PARTY-REST DROP (the pose\'s rest kind, the vote and cancel stamps, the 32-bit building key - world94); AUDIT DROPS (the trade bytes per sender, the hub\'s quest cooldown, the quest budget\'s order - world92); QUEST1 + TRADE1 + PEER-FS1 (three drops, one deploy: the quest frame, the trade frame, the pose\'s fk - world91); SOC1 changed the relay: bumped; AUDIT SOC again; RESPAWN1 again (the foe door\'s team pair); AUDIT WATCH1 again (wire.js gained CELL_WATCH_PUPPETS_MAX); the main merge again (a comment line in wire.js moved - the bytes are the law)');
   assert.deepEqual(Object.keys(SOCIAL_ACTS), ['friend.request', 'friend.accept', 'friend.decline', 'friend.cancel', 'friend.remove', 'party.invite', 'party.accept', 'party.decline', 'party.leave', 'party.kick']);
   assert.deepEqual(SOCIAL_KINDS, ['state', 'presence', 'party', 'invite', 'note', 'error']);
   assert.ok(NOTE_CODES.includes('party.joined') && NOTE_CODES.includes('friend.requested') && NOTE_CODES.includes('party.leader') && NOTE_CODES.includes('party.lapsed'));
@@ -191,7 +191,7 @@ test('SOC1 wire: the client\'s door on a hub frame - every kind projected, a bad
   const view = { id: 'q1234567', leader: 'acct-0002', members: [member, { acct: 'acct-0003', name: 'Charlie', online: false, seen: 5, peers: [], p: null }] };
   assert.deepEqual(validPartyView(view), view);
   assert.equal(validPartyView({ ...view, leader: 'acct-0009' }), null, 'the leader is a member');
-  assert.equal(validPartyView({ ...view, members: [...view.members, ...view.members, ...view.members] }), null, 'more than PARTY_MAX is no party');
+  assert.equal(validPartyView({ ...view, members: Array.from({ length: PARTY_MAX + 1 }, (_, i) => ({ ...member, acct: `acct-${String(i + 10).padStart(4, '0')}` })) }), null, 'more than PARTY_MAX is no party');
   assert.equal(validPartyView({ ...view, members: [member, { acct: 'acct-0003', p: { px: 1 } }] }), null, 'a bad pose on one member refuses the view');
   const invite = { party: 'q1234567', from: { acct: 'acct-0002', name: 'Bravo' }, members: [{ acct: 'acct-0002', name: 'Bravo' }], at: 1e12, expires: 1e12 + INVITE_TTL_MS };
   assert.deepEqual(validInvite(invite), invite);
@@ -391,9 +391,14 @@ test('SOC1 hub: the party - an invite by peer makes the party with me in the sea
   await act(b, { k: 'party.accept', party: pid }); tick(); assert.equal(errors(b).at(-1), 'no such invite');
   // AUDIT SOC A6: a stranger is invited BY PEER - met in the world; by account alone is for a friend (who sees my presence anyway), or 'they are not online' would answer any id
   await act(b, { k: 'party.invite', acct: 'acct-c' }); tick(); assert.equal(errors(b).at(-1), 'meet them first'); assert.equal(ofKind(c, 'invite').length, 0);
-  // any member may invite; the fourth seat fills; the fifth is refused
+  // any member may invite; every seat the bound allows fills (PARTY8: eight); the one past it is refused
   await act(b, { k: 'party.invite', peer: 'peer-c' }); tick(); await act(c, { k: 'party.accept', party: pid }); tick();
   await act(a, { k: 'party.invite', peer: 'peer-d' }); tick(); await act(d, { k: 'party.accept', party: pid }); tick();
+  const extra = [];
+  for (let i = 4; i < PARTY_MAX; i++) {
+    const x = await join(`x${i}`); extra.push(x);
+    await act(a, { k: 'party.invite', peer: `peer-x${i}` }); tick(); await act(x, { k: 'party.accept', party: pid }); tick();
+  }
   assert.equal(lastOf(a, 'party').party.members.length, PARTY_MAX);
   await act(a, { k: 'party.invite', peer: 'peer-e' }); tick(); assert.equal(errors(a).at(-1), 'the party is full');
   await act(a, { k: 'party.invite', peer: 'peer-d' }); tick(); assert.equal(errors(a).at(-1), 'already in your party');
@@ -621,7 +626,7 @@ test('SOC1 hub: the source - the account is handled after the channel\'s welcome
   assert.match(partyArm, /if \(!isSocialRoom\(a\.key\) \|\| !a\.acct\) \{ this\._junk\(ws, a\); return; \}/, 'a party pose outside the hub, or without an account, is junk');
   const w = rd('src/net/wire.js');
   assert.match(w, /export const SOCIAL_ROOM = CHAT_WORLD_ROOM;/);
-  assert.match(w, /export const RELAY_VERSION = 'world93';/, 'AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again, RELAY-H1 again, ACC1d again, the three drops again (world91), AUDIT DROPS again (world92), the party-rest drop again (world93)');
+  assert.match(w, /export const RELAY_VERSION = 'world94';/, 'AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again, RELAY-H1 again, ACC1d again, the three drops again (world91), AUDIT DROPS again (world92), the party-rest drop again (world94)');
 });
 
 test('PARTY-REST2e wire: `voteAt` is a plain, bounded timestamp or null - never negative, never a fraction, refusing nothing (it is not part of the refuse-whole `rest`/`restPending` objects, just its own field, same law as `ready`) (mutants: a negative or fractional value admitted; absent reading as 0 instead of null; the whole pose refused for a bad voteAt instead of the field alone landing as null)', () => {

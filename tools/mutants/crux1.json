@@ -1,6 +1,6 @@
 [
  { "name": "CRUX1-no-door-no-dungeon", "file": "src/scenes/worldModes.js",
-   "old": "    const hit = entries.find((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) ?? host.dungeonStartSite?.() ?? null;", "new": "    const hit = entries.find((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) ?? null;", "tests": ["test/crux1.test.js"] },
+   "old": "    const hit = dungeonStartDoorFor(entries.filter((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE), host.dungeonStartSite?.() ?? null, locationKey);", "new": "    const hit = dungeonStartDoorFor(entries.filter((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE), null, locationKey);", "tests": ["test/crux1.test.js"] },
  { "name": "CRUX1-a-doorless-site-without-a-dungeon-is-entered", "file": "src/scenes/world.js",
    "old": "      if (!dfLocation?.hasDungeon) return null;\n      return { dfLocation, climateBase:", "new": "      if (!dfLocation) return null;\n      return { dfLocation, climateBase:", "tests": ["test/crux1.test.js"] },
  { "name": "CRUX1-the-site-takes-the-exterior-season", "file": "src/scenes/world.js",

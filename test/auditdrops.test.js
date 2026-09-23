@@ -271,7 +271,7 @@ test('AUDIT DROPS D1 (as the party-rest drop now keeps it): the building and the
   assert.match(m, /markPartyRestSpent: \(\) => host\.markPartyRestSpent\?\.\(\),/);
   assert.match(w, /const restWin = mode === 'interior' \? modes\?\.restState\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState/, 'world.js reads the two getters');
   assert.match(w, /townTalk\.overlay\.session && townTalk\.overlay\.state === 'resting'/, 'D2: outdoors too, RESTING - not the wake box');
-  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*_partyRestReady = false;/, 'PARTY-REST28: the one shared reset every host runs on a granted rest');
+  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'PARTY-REST28: the one shared reset every host runs on a granted rest (REST-OFFLINE1: a no-op with no social clock)');
   assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;/, 'D5: no TDZ before the mode machine stands');
   assert.match(w, /const strangerRefusal = modes \? strangerRestGate\(\) : null;/, 'D5: the stranger gate the same');
   assert.match(w, /if \(modes\) markPartyRestSpent\(\);/, 'D5: and the spend');

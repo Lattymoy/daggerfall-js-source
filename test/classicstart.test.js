@@ -75,13 +75,13 @@ test('U31: the start cell comes from settings, and starting inside is gated the 
 
 test('U31: startInDungeon routes through tryEnterDungeon, which is what makes the dungeon exitable', () => {
   const modes = src('scenes/worldModes.js');
-  assert.match(modes, /async function startInDungeon\(\)/, 'the world host needs a start-inside entry point');
+  assert.match(modes, /async function startInDungeon\(\{ locationKey = null \} = \{\}\)/, 'the world host needs a start-inside entry point (CASTLE1: the load names its dungeon)');
   // The whole point: it must REUSE tryEnterDungeon rather than repeat
   // its body, because tryEnterDungeon is what records dungeonReturn -
   // the entrance-door candidates tryExitDungeon computes its landing
   // from. A copied body that skipped that would enter fine and strand
   // the player exactly as before.
-  const body = modes.slice(modes.indexOf('async function startInDungeon()'));
+  const body = modes.slice(modes.indexOf('async function startInDungeon({ locationKey = null } = {})'));   // CASTLE1: the load names its dungeon
   const fnEnd = body.indexOf('\n  }');
   // DE1 re-anchored this from the exact argument list onto the call.
   // startInDungeon now passes { preferEnterMarker: true } - it is

@@ -123,6 +123,7 @@ import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
 import { hudScale } from '../ui/hud.js';
 import { containerTextureRecord } from '../systems/containers.js';
+import { dungeonStartDoorFor } from '../systems/save.js';   // CASTLE1: the load's door is the saved dungeon's own
 import { composeNamer, composeContents } from '../systems/worldHover.js';   // INTERIOR-BODIES: the interior stands itemised bodies now, so its contents reader is a LADDER like the other three hosts' rather than one prefix
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER: the race's WINNER, so the plaque names what the press would open
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, and the hide door for the branches that return above it
@@ -5526,7 +5527,7 @@ export function createWorldModes(host) {
     // (PlayerActivate.cs:325-339 - no return, skipped in Info mode):
     // the door/ladder/loot ladder below still runs. Over BOTH pools,
     // as the exterior arm runs over its own two; pickQuestFoe skips
-    // any foe without a questBehaviour (activate.js:160), so the
+    // any foe without a questBehaviour (activate.js:169), so the
     // watch costs nothing.
     if (getInteractionMode() !== 'info' && interiorCtx && !host.activateLockOnly?.()) {   // TS1: the stick's tap is no click
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
@@ -5878,7 +5879,6 @@ export function createWorldModes(host) {
           activateHeld: () => held(keys, 'ActivateCenterObject') || !!host.activateDown?.(),
           survivalEnv: () => host.survivalEnv?.() ?? null,   // SURV7: the outer host's env; the dungeon overrides the flags it owns
           // PARTY-REST2: forwarded straight from THIS host's own host.partyRestGate (world.js's own gate) - see its doc comment.
-          partyRestGate: () => host.partyRestGate?.(),
           // PARTY-REST28: forwarded straight from THIS host's own host.markPartyRestSpent (world.js's own
           // function), the same way partyRestGate itself already is - see its doc comment for the bug this closes.
           markPartyRestSpent: () => host.markPartyRestSpent?.(),
@@ -5900,6 +5900,7 @@ export function createWorldModes(host) {
           shareQuest: (uid, questName, displayName) => host.shareQuest?.(uid, questName, displayName),
           // PEER-PLAQUE1: the plaque's peer pick, delegated the same way - the dungeon's own eye, the outer host's peers
           peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye
+          partyRestGate: () => host.partyRestGate?.(),   // PARTY-REST2 (AUDIT DROPS D1): the dungeon's rest asks the party too - ONE copy (main carried two; eslint no-dupe-keys)
           pointerSurfaceUp: () => !!host.pointerSurfaceUp?.(),   // AUDIT DROPS E1: the plaque comes down under a pointer surface
           // D-ONLINE1: the dungeon death screen's own door - see
           // dungeonContext.js's DeathScreen construction. Delegates to
@@ -5951,6 +5952,11 @@ export function createWorldModes(host) {
           // context, so the dungeon's own togglePause (dungeonContext.js)
           // had nothing to read and its Load pane never refused online.
           dungeonOnline: () => host.dungeonOnline?.() ?? false,
+          // CASTLE1: the world host's load, for a save the dungeon's own
+          // door finds was taken somewhere else (dungeonContext.js
+          // quickLoad). Absent on a host with no such load, and the
+          // context keeps its line.
+          worldLoad: host.loadSave ? (key) => host.loadSave(key) : null,
           // TTL1: the spawned-dungeon clocks. The context tells the host
           // when it has built a synthesized dungeon and when the place
           // is empty; the host owns the ledger and the map pixel.
@@ -6234,7 +6240,7 @@ export function createWorldModes(host) {
    *  candidates the exit landing is computed from. The classic start
    *  used to boot scenes/dungeon.js, which has no exit path at all, so
    *  Privateer's Hold was a sealed box: the whole reason this exists. */
-  async function startInDungeon() {
+  async function startInDungeon({ locationKey = null } = {}) {
     const entries = doorTargets();
     // CRUX1 (2026-09-22, "the final dungeon mission is unbeatable"):
     // AND WITHOUT A DOOR. DFU's StartDungeonInterior(location) builds
@@ -6251,7 +6257,10 @@ export function createWorldModes(host) {
     // candidates whatever entrance doors the pixel does carry. The
     // exterior fallback the respawn keeps is for a site with no
     // dungeon at all, which is what it was always for.
-    const hit = entries.find((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE) ?? host.dungeonStartSite?.() ?? null;
+    // CASTLE1: and WHICH door - the save's own dungeon, then this
+    // pixel's, never a neighbour's because it built first
+    // (systems/save.js dungeonStartDoorFor has the law and the report).
+    const hit = dungeonStartDoorFor(entries.filter((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE), host.dungeonStartSite?.() ?? null, locationKey);
     if (!hit) return false;
     // DE1: this is StartDungeonInterior, not the door transition - the
     // player is placed inside without ever walking through, so the
@@ -7734,6 +7743,29 @@ export function createWorldModes(host) {
       actions: dungeonCtx.actions.objects.size,
     }) : null;
     window.__dungeonExit = () => tryExitDungeon();
+    window.__dungeonQuickLoad = (key = null) => { dungeonCtx?.quickLoad?.((p) => player.spawn(p[0], p[1], p[2]), key); return !!dungeonCtx; };   // CASTLE1 probe surface: the dungeon's OWN load door (F12 / the pause menu underground)
+    // CASTLE1 probe surface: what the dungeon ray sees from the current eye.
+    window.__dungeonProbe = () => {
+      if (!dungeonCtx) return null;
+      const eye = player.eye;
+      const dir = eyeDir();
+      const targets = dungeonCtx.dungeonActivationTargets();
+      const pick = pickActivatableHit(eye, dir, targets, dungeonCtx.collider);
+      return JSON.stringify({
+        mode, transitioning, eye: eye.map((v) => +v.toFixed(2)), dir: dir.map((v) => +v.toFixed(3)),
+        feet: player.pos.map((v) => +v.toFixed(2)),
+        nTargets: targets.length, pick, wall: dungeonCtx.collider.raycast(eye, dir, 50),
+        overlay: !!dungeonCtx.uiOverlayActive, talkOverlay: !!townTalk?.overlayActive, overlayKind: dungeonCtx.overlayWindow?.()?.constructor?.name ?? null,
+        people: (dungeonCtx.npcTargets?.() ?? []).map((pn) => ({ x: +pn.x.toFixed(2), y: +pn.y.toFixed(2), z: +pn.z.toFixed(2), w: pn.width, h: pn.height, arch: pn.textureArchive, rec: pn.textureRecord, action: pn.action?.actionFlag ?? null })),
+        exits: dungeonCtx.exitDoors.map((d) => ({ pos: doorWorldPosition(d).map((v) => +v.toFixed(2)), normal: doorWorldNormal(d).map((v) => +v.toFixed(3)) })),
+        startMarker: dungeonCtx.startMarker, enterMarker: dungeonCtx.enterMarker,
+        inCastle: !!dungeonCtx.inCastle, locationKey: dungeonCtx.locationKey?.() ?? null,
+        picked: (() => { const o = pick ? dungeonCtx.actions.objects.get(pick.key) : null; return o ? { kind: o.kind, actionFlag: o.actionFlag, triggerFlag: o.triggerFlag, modelIdNum: o.modelIdNum ?? null, state: o.state ?? null, aabb: o.aabb ? [...o.aabb.min, ...o.aabb.max].map((v) => +v.toFixed(2)) : null } : null; })(),
+        containing: targets.filter((t) => eye[0] >= t.aabb.min[0] && eye[0] <= t.aabb.max[0] && eye[1] >= t.aabb.min[1] && eye[1] <= t.aabb.max[1] && eye[2] >= t.aabb.min[2] && eye[2] <= t.aabb.max[2]).map((t) => t.key),
+        hud: dungeonCtx.hudLines?.() ?? null,
+        nearTargets: targets.map((t) => ({ key: t.key, d: +Math.hypot((t.aabb.min[0] + t.aabb.max[0]) / 2 - eye[0], (t.aabb.min[1] + t.aabb.max[1]) / 2 - eye[1], (t.aabb.min[2] + t.aabb.max[2]) / 2 - eye[2]).toFixed(2), aabb: [...t.aabb.min, ...t.aabb.max].map((v) => +v.toFixed(2)) })).sort((a, b) => a.d - b.d).slice(0, 12),
+      });
+    };
 
     // V4 (the first-hour playthrough probe): THE WORLD HOST'S DUNGEON
     // MODE HAD NO COMBAT OR LOOT SURFACE AT ALL. worldModes mounts a

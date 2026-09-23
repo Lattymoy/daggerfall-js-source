@@ -75,7 +75,7 @@
   {
     "name": "party-name-back-to-14px",
     "file": "src/ui/partyPanel.js",
-    "old": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 13px;",
+    "old": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px;",
     "new": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 14px;",
     "tests": [
       "test/soc4_partyhud.test.js"
@@ -84,7 +84,7 @@
   {
     "name": "party-title-blurred-shadow",
     "file": "src/ui/partyPanel.js",
-    "old": "  color: var(--dim, #8b8578); text-shadow: ${PIXEL_TEXT_SHADOW}; }",
+    "old": "  color: var(--dim, #8b8578); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }",
     "new": "  color: var(--dim, #8b8578); text-shadow: 0 1px 2px #000; }",
     "tests": [
       "test/soc4_partyhud.test.js"
