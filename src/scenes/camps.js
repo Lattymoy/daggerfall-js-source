@@ -31,7 +31,7 @@ import { FlatAnim } from '../render/flatAnimation.js';
 import { trs } from '../world/mat4.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';
 import { ListPickerWindow } from '../ui/listPicker.js';
-import { survivalOn } from '../systems/survival/switch.js';   // AUDIT SURV B: the pool stands nothing with the mod off
+import { survivalOn } from '../systems/survival/switch.js';   // AUDIT SURV-TIERS: Off hides the pool (shown, below); it keeps what stands
 import {
   TENT_MODEL, FIRE_FLAT, FIRE_LIGHT_RANGE, CAMP_REACH, CAMP_KIND, CAMP_TEXT, CAMPS_PER_OWNER,
   placeCampItem, packCamp, stokeFire, fireLit, campExpired, tentPos, nearestFire, campInfoText, campMenu,
@@ -43,6 +43,7 @@ import { nearestHearth, hearthNear, hearthAabb } from '../systems/survival/heart
 export const FIRE_LIGHT_UP = 0.6;
 /** The eye's box over a fire (a flame is about a metre tall) and a tent (its mesh's own bounds, or this). */
 export const FIRE_HALF = 0.5;
+const NO_CAMPS = Object.freeze([]);
 
 /**
  * deps = { renderer, getTexture, uploadRecordFrame, meshes ({ getGpuMesh, cpuModels } - the host's pipeline), entity (the player),
@@ -113,9 +114,27 @@ export function createCamps({
     if (i >= 0) camps.splice(i, 1);
   }
   const own = () => camps.filter((c) => c.owner == null).map((c) => c.rec);
+  /**
+   * AUDIT SURV-TIERS: OFF HIDES THE CAMPS; IT DOES NOT BURN THEM.
+   *
+   * The pool refused to restore or relay a camp with the arc off (AUDIT
+   * SURV B), so a player who switched Off and saved lost every camp in
+   * the save, and an Off host dropped its peers' camps from the room it
+   * hands on - Off destroyed the ground under the tiers' own promise
+   * that switching it back finds the world where it was. So the DATA is
+   * the world's in every tier: the burn, the save, the scene cache and
+   * the wire keep every camp. What Off takes away is THIS player's use
+   * of them - the sprite, the light, the tent, the ray, the warmth and
+   * the rest a fire makes - which is every door that reads `shown()`.
+   */
+  const shown = () => (survivalOn() ? camps : NO_CAMPS);
 
   /** THE PLACING: the pack's use of Camping Equipment or a Campfire Kit lands here (useItem's 'pitchCamp' / 'placeFire'). */
   function placeItem(item, list) {
+    // AUDIT SURV-TIERS: a camp stood with the arc off could be neither
+    // seen nor used (shown, above) - so it is not stood, and the refusal
+    // says what would change it (CAMP-SILENT, below).
+    if (!survivalOn()) { say(CAMP_TEXT.arcOff); return false; }
     // CAMP-SILENT (2026-09-22, DragynDance on Discord: "camp kits don't
     // work for me"). USING AN ITEM ALWAYS SAYS SOMETHING. Every other
     // arm below refuses with words - in town, indoors, foes near, no
@@ -170,17 +189,17 @@ export function createCamps({
       } else if (fireLit(c.rec, t) && _fire) mountFire(c);   // stoked: the flame is back
     }
   }
-  const batches = () => camps.map((c) => c.batch).filter(Boolean);
+  const batches = () => shown().map((c) => c.batch).filter(Boolean);
   function lights() {
     const t = now();
-    return camps.filter((c) => fireLit(c.rec, t)).map((c) => ({ x: c.rec.pos[0], y: c.rec.pos[1] + FIRE_LIGHT_UP, z: c.rec.pos[2], range: FIRE_LIGHT_RANGE }));
+    return shown().filter((c) => fireLit(c.rec, t)).map((c) => ({ x: c.rec.pos[0], y: c.rec.pos[1] + FIRE_LIGHT_UP, z: c.rec.pos[2], range: FIRE_LIGHT_RANGE }));
   }
   const tentMatrix = (rec) => { const p = tentPos(rec); return trs(p[0], p[1], p[2], 0, rec.yaw * 180 / Math.PI, 0); };
   /** The tents, in the host's world pass. */
   function draw(r = renderer, texRemap = null) {
     if (!_tent?.gpu || !r?.drawMesh) return 0;
     let n = 0;
-    for (const c of camps) if (c.rec.kind === CAMP_KIND.Tent) { r.drawMesh(_tent.gpu, tentMatrix(c.rec), texRemap); n++; }
+    for (const c of shown()) if (c.rec.kind === CAMP_KIND.Tent) { r.drawMesh(_tent.gpu, tentMatrix(c.rec), texRemap); n++; }
     return n;
   }
 
@@ -200,7 +219,7 @@ export function createCamps({
       const aabb = hearthAabb(wf[i]);
       if (aabb) out.push({ key: `hearth:${i}`, aabb, distance: RAY_DISTANCE, reach: CAMP_REACH, noSurface: true });
     }
-    for (const c of camps) {
+    for (const c of shown()) {
       const p = c.rec.pos;
       out.push({ key: `camp:${c.rec.id}`, aabb: { min: [p[0] - FIRE_HALF, p[1], p[2] - FIRE_HALF], max: [p[0] + FIRE_HALF, p[1] + 1, p[2] + FIRE_HALF] }, distance: RAY_DISTANCE, reach: CAMP_REACH });
       if (c.rec.kind === CAMP_KIND.Tent) {
@@ -212,7 +231,7 @@ export function createCamps({
     }
     return out;
   }
-  const forKey = (key) => camps.find((c) => `camp:${c.rec.id}` === key) ?? null;
+  const forKey = (key) => shown().find((c) => `camp:${c.rec.id}` === key) ?? null;
   /** WORLD-HOVER: the port's OWN world objects, named through World
    *  Tooltips' extension API (vendor .cs:228-257) rather than wedged
    *  into its ladder - the mod has no word for a camp because
@@ -307,7 +326,10 @@ export function createCamps({
    * it: a fire bowl answered the activation ray with a cooking list and
    * reported `byFire` to a law nobody had turned on. Off, every seam is
    * DFU's - that is the arc's own sentence and this is where it was
-   * about to stop being true.
+   * about to stop being true. (AUDIT SURV-TIERS: the camps did need one
+   * - a camp stood before the switch went off stayed standing, and a
+   * peer's arrived regardless. `shown` is theirs now; this is the
+   * braziers'.)
    */
   const worldFires = () => (survivalOn() && hearths ? hearths() : null);
   const hearthAt = (pos) => nearestHearth(worldFires(), pos, BY_FIRE_REACH);
@@ -322,9 +344,20 @@ export function createCamps({
    * through `restKind`), and a player standing over a roaring brazier
    * had been as cold and as roughly rested as one standing in a field.
    */
-  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now())
+  const byFire = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now())
     || hearthNear(worldFires(), pos, BY_FIRE_REACH);   // AUDIT HEARTH1 F2: the FIRST fire in reach, not the nearest - this runs every frame
-  const campAt = (pos) => nearestFire(camps.map((c) => c.rec), pos, now());
+  const campAt = (pos) => nearestFire(shown().map((c) => c.rec), pos, now());
+  /**
+   * AUDIT SURV-TIERS: the WORLD's answer to the same question - anyone's
+   * lit camp or one of the world's fires in reach - in EVERY tier. The
+   * rest's PLACE reads it (each host's `restKind`; scenes/shared.js
+   * createRestDeps): where a sleep is, is the world's, and a party
+   * follower mirrors it - a follower beside an Off leader's fire sees
+   * the fire. Everything this player USES reads `byFire`, which is Off's
+   * to hide.
+   */
+  const fireNear = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now())
+    || hearthNear(hearths ? hearths() : null, pos, BY_FIRE_REACH);
 
   /** DestroyLightSources' twin: every transition and every load. */
   function destroyAll() {
@@ -344,7 +377,6 @@ export function createCamps({
   /** This player's own camps for the save and the scene cache, in the host's frame. */
   const snapshot = (toWorld = (p) => p) => own().map((rec) => { const p = toWorld(rec.pos); return { ...rec, pos: [p[0], p[1], p[2]] }; });
   function restore(list, fromWorld = (p) => p) {
-    if (!survivalOn()) return null;
     // AUDIT SURV B: a MERGE by id, not a clear-and-stand - the save's list and a peer's memory join what stands
     for (const r of Array.isArray(list) ? list : []) {
       if (!r || typeof r !== 'object' || !Array.isArray(r.pos) || r.pos.length !== 3 || !(r.kind === CAMP_KIND.Tent || r.kind === CAMP_KIND.Fire)) continue;
@@ -360,7 +392,6 @@ export function createCamps({
   const wireRecords = (toWire = (p) => p) => own().map((rec) => campWire(rec, toWire));
   /** Another's word: their camps replace theirs, through the door. */
   function applyOwner(owner, records, toScene = (p) => p, nowMs = 0) {
-    if (!survivalOn()) return null;
     if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;
     const merged = mergeOwnerCamps(camps.filter((c) => c.owner === owner).map((c) => c.rec), owner, records, toScene);
     const fresh = merged.filter((r) => r.owner === owner);
@@ -385,7 +416,7 @@ export function createCamps({
   }
 
   return {
-    placeItem, tick, batches, lights, draw, targets, hoverName, activate, openMenu, openCook, byFire, campAt,
+    placeItem, tick, batches, lights, draw, targets, hoverName, activate, openMenu, openCook, byFire, campAt, fireNear,
     destroyAll, collectPixel, offsetAll, snapshot, restore, wireRecords, applyOwner, sweepOwners,
     get camps() { return camps; }, own,
   };

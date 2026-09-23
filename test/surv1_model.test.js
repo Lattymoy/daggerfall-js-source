@@ -467,5 +467,5 @@ test('SURV-THIRST1 AUDIT: the replay flag is the WALK’s, and only the last min
     'the walk marks every minute but the last as a replay, from one object');
   // a bare survivalMinute - the live per-minute call every host makes -
   // is NOT a replay, or nothing would ever die of thirst
-  assert.match(src, /replay = false, rules = HARD_RULES \} = deps;/, 'a caller that says nothing is live (and, SURV-TIERS, runs Hard)');
+  assert.match(src, /autoEat = true, replay = false \} = deps;\n\s+const rules = deps\.rules \?\? HARD_RULES;/, 'a caller that says nothing is live (and, SURV-TIERS, runs Hard - AUDIT SURV-TIERS: a null too)');
 });

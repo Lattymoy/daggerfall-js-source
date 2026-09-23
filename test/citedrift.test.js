@@ -623,8 +623,13 @@ const SOURCE_CITES = [
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
   ['src/systems/loot.js', /world\.js:\d+ and exterior\.js:(\d+)/,
     EX, /loadMagicRegistries\(fetchBytes\)\.then/],
-  ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:297/,
+  ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:\d+/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
+  // AUDIT SURV-TIERS: the entry above baked this half in as a literal
+  // (WM3's own trap, above) - and it sat one line short, on the comment
+  // over the call, since before SURV-TIERS moved it. Captured now.
+  ['src/systems/potions.js', /exterior\.js:\d+\) and useItem\.js:(\d+)/,
+    'src/systems/useItem.js', /const drank = drinkPotion \? drinkPotion\(item\.potionRecipeKey \?\? 0\) : null;/],
   ['src/systems/startingGear.js', /world\.js:\d+ and exterior\.js:(\d+) seed it/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
   ['src/ui/pauseWindow.js', /world\.js:\d+, exterior\.js:(\d+),/,

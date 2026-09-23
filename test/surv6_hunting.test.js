@@ -271,7 +271,7 @@ test('SURV6: composed - once a game minute the roll; the window in the slot, non
   assert.equal(p2.items.filter((i) => i.templateIndex === TEMPLATE.RawMeat).length, 1, 'the volley\'s three birds, halved by HUNT_LOOT_SCALE');   // MOD: -50%
   assert.deepEqual(tallied2, [SKILLS.Archery, SKILLS.Stealth]);
   // the switch
-  setPref('survival', 'off');
+  setPref('survival', false);
   const h3 = createHunting({ entity: player(), env: () => ({ ...e, minute: 9000 }), rolls: seq(0) });
   assert.equal(h3.tick(), null);
   _resetForTests();

@@ -162,7 +162,7 @@ test('SURV5: the tavern window - the survival menu in the one picker: a meal cha
   assert.equal(out[0].rows[0].text, TAVERN_MENU_TEXT.blackout);
   assert.deepEqual(b.passed, [DRINK_MINUTES, 7 * 60 - DRINK_MINUTES], 'the night passes to six');
   assert.equal(b.entity.survival.drunk, 12); assert.equal(b.entity.survival.stiffUntil, b.now + 7 * 60 + STIFF_HOURS * 60, 'a rough morning');
-  setPref('survival', 'off');
+  setPref('survival', false);
   const off = mk();
   off.w._food();
   assert.equal(off.w.flow.top.picker.length, 11, 'DFU\'s eleven-line menu with the mod off');

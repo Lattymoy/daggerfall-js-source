@@ -136,20 +136,26 @@ test('SURV4: the composed deps - the kind is read at the open and rides the enti
   assert.equal(c.survival, undefined, 'and no stiff morning');
   const dn = createRestDeps(player(), { advanceMinutes: () => {} });
   dn.setResting(true); assert.equal(dn.tickVitals !== undefined, true);
-  setPref('survival', 'off');
+  setPref('survival', false);
   const off = player();
   const doff = createRestDeps(off, { advanceMinutes: () => {}, restKind: () => 'rough', day: () => false, inside: () => true });
-  doff.setResting(true); assert.equal(off.restKind, 'bed', 'the mod off, every rest is DFU\'s bed');
-  doff.tickVitals(); assert.equal(off.health, full.health);
+  // AUDIT SURV-TIERS: the entity carries WHERE it sleeps in every tier (the party pose broadcasts it); the mod off
+  // PRICES every place as DFU's bed - the whole hour, one ask
+  doff.setResting(true); assert.equal(off.restKind, 'rough', 'the place is the world\'s');
+  assert.equal(off.restAsks, 1, 'one ask');
+  doff.tickVitals(); assert.equal(off.health, full.health, 'the mod off, every rest is DFU\'s whole hour');
+  doff.setResting(false); assert.equal(off.survival, undefined, 'and no stiff morning');
   _resetForTests(); setWorldMinutes(0);
 });
 
 test('SURV4: by source - the four hosts name their kind, the three rolls carry the rest\'s asks, the law is pure', () => {
   const w = read('src/scenes/world.js'), x = read('src/scenes/exterior.js'), dc = read('src/scenes/dungeonContext.js'), wm = read('src/scenes/worldModes.js');
-  assert.match(w, /restKind: \(\) => \(camps\.byFire\(walkMode && playerSpawned \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);
-  assert.match(x, /restKind: \(\) => \(camps\.byFire\(walkMode \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);
-  assert.match(dc, /restKind: \(\) => \(_fpFeet && camps\.byFire\(_fpFeet\) \? 'camp' : 'rough'\),/);
-  assert.match(wm, /restKind: \(\) => \{ const p = interiorRestPlaceHere\(\); return p\.houseOwned \|\| p\.isShip \|\| !!p\.room \? 'bed' : 'rough'; \},/);
+  // AUDIT SURV-TIERS: the place reads the WORLD's fire (camps.js fireNear - in every tier; `byFire` is what this
+  // player may use, which Off hides), and an interior's hearth is a camp's rest as a brazier is outdoors
+  assert.match(w, /restKind: \(\) => \(camps\.fireNear\(walkMode && playerSpawned \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);
+  assert.match(x, /restKind: \(\) => \(camps\.fireNear\(walkMode \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);
+  assert.match(dc, /restKind: \(\) => \(_fpFeet && camps\.fireNear\(_fpFeet\) \? 'camp' : 'rough'\),/);
+  assert.match(wm, /restKind: \(\) => \{ const p = interiorRestPlaceHere\(\); return p\.houseOwned \|\| p\.isShip \|\| !!p\.room \? 'bed' : interiorCamps\.fireNear\(player\.pos\) \? 'camp' : 'rough'; \},/);
   // SURV-TIERS: the three rolls hand the rest's asks, its kind priced by the player's tier at the open (scenes/shared.js)
   assert.match(w, /restAsks: playerEntity\.isResting \? playerEntity\.restAsks : 1,/);
   assert.match(x, /restAsks: playerEntity\.isResting \? playerEntity\.restAsks : 1,/);
@@ -157,8 +163,9 @@ test('SURV4: by source - the four hosts name their kind, the three rolls carry t
   const sh = read('src/scenes/shared.js');
   assert.match(sh, /restKind = \(\) => REST_KIND\.Rough, \.\.\.rest/, 'a host that says nothing sleeps rough');
   // PARTY-REST4b/10 (the party-rest drop): the override slot and the rough-carry reset both live inside this same `if (b)` arm now - narrowed to the one invariant this test holds
-  // SURV-TIERS: the tier is read at the open beside the kind - null (the mod off) is DFU's bed
-  assert.match(sh, /_rules = survivalRules\(\);[^\n]*\n\s*_kind = _rules \? \(_restKindOverride \?\? restKind\)\(\) : REST_KIND\.Bed; _roughHours = 0;/, 'read at the open, DFU\'s bed with the mod off');
+  // SURV-TIERS: the tier is read at the open beside the place - null (the mod off) prices it as DFU's bed
+  assert.match(sh, /_rules = survivalRules\(\);[^\n]*\n\s*_place = \(_restKindOverride \?\? restKind\)\(\);\n\s*_kind = _rules \? _place : REST_KIND\.Bed; _roughHours = 0;/, 'read at the open, DFU\'s bed with the mod off');
+  assert.match(sh, /entity\.restKind = b \? _place : null;/, 'the entity carries the place');
   const law = read('src/systems/survival/rest.js');
   assert.doesNotMatch(law, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/effects|from '\.\.\/worldTick|document\.|window\./);
 });

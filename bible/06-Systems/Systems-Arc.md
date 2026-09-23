@@ -7966,11 +7966,13 @@ formulas in. ONE SWITCH (`survival/switch.js`, the enhanced pane's
 mod off, and off it every seam is DFU's own: the bed's hour, the
 eleven-line tavern list, no chips, no gate, no roll.
 **SUPERSEDED IN PART BY SURV-TIERS (2026-09-23, Mac: "Off, Casual,
-Hard")**: the switch is three tiers on the same key - Off (as above),
-Casual (the default: the same world, costing stamina alone and never
-below half the pool) and Hard (the arc as recorded here). The design,
-the table and the migration are in `06-Systems/Climates-Calories.md`,
-section SURV-TIERS.
+Hard")**: the switch is three tiers on the same key - Off (as above,
+the classic game, though it keeps the camps and the rest's place),
+Casual (the default: the same world, costing stamina alone, lent down to
+half the pool at most and repaid when the need is met) and Hard (the arc
+as recorded here). The design, the table, the stored values and the
+audit are in `06-Systems/Climates-Calories.md`, sections SURV-TIERS and
+AUDIT SURV-TIERS.
 
 AUDIT SURV (2026-09-18, Mac: "Let's audit everything so far"): five
 opus lenses over the arc - laws, wiring, surfaces, records, a Chromium

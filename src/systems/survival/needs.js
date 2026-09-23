@@ -29,11 +29,13 @@
 // THE TIER'S. Everything above moves the same way in Casual and Hard;
 // what a minute CHARGES - the stamina, the attributes, the health, the
 // rust - is read off the tier's rules (survival/difficulty.js), handed in
-// as `deps.rules` by the host's feed (env.js survivalFeed). No rules is
-// Hard, the law at full strength.
+// as `deps.rules` by the host's feed (env.js survivalFeed). No rules
+// (undefined or null) is Hard, the law at full strength. A tier that
+// repays (Casual) keeps one more field, `borrowed`: the stamina each need
+// took, returned when that need is met.
 import { feltTemperature, temperatureWord } from './temperature.js';
 import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, foodStage, FOOD_STAGE, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
-import { STAT_KEYS_ORDER, maxFatigue } from '../statMods.js';
+import { STAT_KEYS_ORDER, maxFatigue, liveStat } from '../statMods.js';
 import { HARD_RULES } from './difficulty.js';
 /** SURV4: speed and agility down by this while stiff (survival/rest.js's STIFF_PENALTY, restated here so rest.js may import this module). */
 const STIFF_PENALTY = 5;
@@ -112,6 +114,7 @@ export const SURVIVAL_TEXT = Object.freeze({
   armorCold: 'Your armor is getting cold.',
   rust: (name) => `Your ${name} is getting rusty...`,
   rot: 'Your food is getting a bit ripe...',
+  repaid: 'You feel your strength returning.',   // AUDIT SURV-TIERS: a tier that repays - the need met, what it borrowed comes back
   ateRations: 'You eat some rations.',
   emptiedRations: 'You empty your sack of rations.',
 });
@@ -166,7 +169,7 @@ export function survivalStatMods(s, temp, now, { endurance = 50, rules = HARD_RU
   const mods = {};
   const sub = (keys, n) => { if (n > 0) for (const k of keys) mods[k] = (mods[k] ?? 0) - n; };
   const ALL = ['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed'];
-  if (rules.attributes) {
+  if ((rules ?? HARD_RULES).attributes) {   // AUDIT SURV-TIERS: null is no rules too, as in every other law
     const starve = starvingDays(hungerMinutes(s, now));
     if (starve > 0) sub(ALL, Math.min(20, starve * 2));
     if (temp && temp.abs > NEED.EXPOSURE_AT) sub(ALL, Math.trunc(Math.min(s.exposure, temp.abs - NEED.EXPOSURE_AT) / 4));
@@ -184,7 +187,15 @@ export function survivalStatMods(s, temp, now, { endurance = 50, rules = HARD_RU
 }
 
 /** Write the map onto the entity's one 'survival' effect entry (made
- *  or removed as needed) and cap each drain against the permanent stat. */
+ *  or removed as needed) and cap each drain so the stat stays at five.
+ *  AUDIT SURV-TIERS: FIVE LIVE, NOT FIVE PERMANENT. The cap read the
+ *  permanent stat alone, and every other drain stacks on top in the live
+ *  one (statMods.js liveStat) - a Drain Agility spell at a live 4 and the
+ *  drink's -5 made a live 0, and a live zero kills (worldTick.js
+ *  killIfAnyLiveStatZero): a tavern ale killed a Casual player. The
+ *  floor is five of whichever is lower, the permanent stat or the live
+ *  one without this entry, so a fortified stat drains no further than
+ *  it ever did and a drained one is never taken past five. */
 export function applySurvivalMods(entity, mods) {
   const list = entity.activeEffects ??= [];
   let entry = list.find((a) => a?.kind === 'survival');
@@ -194,7 +205,8 @@ export function applySurvivalMods(entity, mods) {
     const m = mods[k] ?? 0;
     if (m === 0) continue;
     const perm = entity.stats?.[k] ?? 0;
-    capped[k] = m < 0 ? -Math.min(-m, Math.max(0, perm - 5)) : m;
+    const floorAt = Math.min(perm, liveStat(entity, k, 'survival'));
+    capped[k] = m < 0 ? -Math.min(-m, Math.max(0, floorAt - 5)) : m;
     if (capped[k] !== 0) any = true;
   }
   if (!any) { if (entry) list.splice(list.indexOf(entry), 1); return null; }
@@ -228,7 +240,8 @@ const clearNote = (s, key) => { if (s.notes[key] === 'on') delete s.notes[key]; 
  */
 export function survivalMinute(entity, now, env = {}, deps = {}) {
   const s = survivalOf(entity, now);
-  const { worn = null, sinks = {}, rolls = Math.random, autoDrink = true, autoEat = true, replay = false, rules = HARD_RULES } = deps;
+  const { worn = null, sinks = {}, rolls = Math.random, autoDrink = true, autoEat = true, replay = false } = deps;
+  const rules = deps.rules ?? HARD_RULES;   // AUDIT SURV-TIERS: null is no rules too - survivalRules() answers null for Off
   const say = sinks.say ?? deps.say ?? null;
   const items = entity.items ?? [];
   const ctx = { ...(deps.ctx ?? {}), wet: s.wet, hasWater: !!findDrink(items) };
@@ -242,20 +255,31 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // with one (Casual, half the pool) spends only what lies above it, read
   // at the minute's first charge - after the well-fed hour's refund - and
   // counted down here, so two needs in one minute share one budget
-  // whatever the sink does with them.
+  // whatever the sink does with them. AUDIT SURV-TIERS: in a tier that
+  // repays, what each need takes is written to `borrowed` under the need's
+  // name, and handed back below when the need is met.
   const floorShare = rules.stamina.floor;
+  const repays = !!rules.stamina.repaid;
   let budget = null;
-  const tire = (n) => {
+  const tire = (n, need) => {
     if (!(n > 0)) return;
-    if (!(floorShare > 0)) { sinks.drainFatigue?.(n); return; }
-    budget ??= Math.max(0, (entity.fatigue ?? 0) - Math.floor(maxFatigue(entity) * floorShare));
-    const d = Math.min(n, budget);
-    if (d > 0) { budget -= d; sinks.drainFatigue?.(d); }
+    let d = n;
+    if (floorShare > 0) {
+      budget ??= Math.max(0, (entity.fatigue ?? 0) - Math.floor(maxFatigue(entity) * floorShare));
+      d = Math.min(n, budget);
+      if (!(d > 0)) return;
+      budget -= d;
+    }
+    sinks.drainFatigue?.(d);
+    if (repays) { const b = (s.borrowed ??= {}); b[need] = (b[need] ?? 0) + d; }
   };
   // A tier without the attribute costs carries no stiff morning either: a
   // Hard night's stiffness lifts the minute the player turns to Casual, so
-  // the HUD's Stiff chip never names a cost the tier does not charge.
+  // the HUD's Stiff chip never names a cost the tier does not charge. And a
+  // tier that does not repay carries no loan (Casual to Hard: Hard keeps
+  // what it takes, and so keeps what was taken).
   if (!rules.attributes && s.stiffUntil) s.stiffUntil = 0;
+  if (!repays && s.borrowed) delete s.borrowed;
 
   // WET: rain and water raise it; warmth dries it, a fire dries it fast.
   s.wet = Math.min(NEED.WET_MAX, s.wet + temp.wetGain);
@@ -279,9 +303,10 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   const hungerAfter = vampire ? 'fed' : hungerStage(hungerMinutes(s, now));
   if (hungerAfter !== 'fed') note(s, `hunger:${hungerAfter}`, now, say, SURVIVAL_TEXT[hungerAfter], { once: true });
   for (const k of ['peckish', 'hungry', 'starving']) if (k !== hungerAfter) clearNote(s, `hunger:${k}`);
-  if (hungerAfter === 'starving' && !resting) tire(DRAIN.starving);
+  if (hungerAfter === 'starving' && !resting) tire(DRAIN.starving, 'hunger');
 
   // THIRST: the heat drives it; a skin in the pack answers it.
+  let thirstRed = false;   // AUDIT SURV-TIERS: the stage a repaying tier charges (and repays when it lifts)
   if (!vampire) {
     const rate = THIRST_PER_MINUTE * Math.max(0.5, 1 + Math.max(0, temp.felt - 10) / 10);
     s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);
@@ -289,9 +314,10 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     const thirstNow = thirstStage(s.thirst);
     if (thirstNow !== 'fine') note(s, `thirst:${thirstNow}`, now, say, SURVIVAL_TEXT[thirstNow], { once: true });
     for (const k of ['thirsty', 'parched', 'dehydrated']) if (k !== thirstNow) clearNote(s, `thirst:${k}`);
+    thirstRed = thirstNow === 'parched' || thirstNow === 'dehydrated';
     if (!resting) {
-      if (thirstNow === 'parched') tire(DRAIN.parched);
-      else if (thirstNow === 'dehydrated') tire(DRAIN.dehydrated);
+      if (thirstNow === 'parched') tire(DRAIN.parched, 'thirst');
+      else if (thirstNow === 'dehydrated') tire(DRAIN.dehydrated, 'thirst');
     }
     // SURV-THIRST1 (2026-09-19, Mac: "You should also should die on
     // dehydration"). THE DEPARTURE, and the only one in this block.
@@ -343,6 +369,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   }
 
   // SLEEP: the debt grows past the free hours; sleep pays it by quality.
+  let sleepRed = false;
   if (!vampire) {
     if (sleeping) {
       const rate = sleeping === 'rough' ? 0.5 : 1.5;   // hours of debt per hour asleep
@@ -356,18 +383,23 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     const sleepNow = sleepStage(s.sleepDebt);
     if (sleepNow !== 'rested') note(s, `sleep:${sleepNow}`, now, say, SURVIVAL_TEXT[sleepNow], { once: true });
     for (const k of ['tired', 'drowsy', 'exhausted']) if (k !== sleepNow) clearNote(s, `sleep:${k}`);
-    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted);
+    sleepRed = sleepNow === 'exhausted';
+    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted, 'sleep');
   }
 
   // TEMPERATURE: the body pays for the heat and the cold.
   // SURV-TIERS: from the tier's band (Hard: twenty either way; Casual: the red words only), and it wounds only in a
-  // tier that wounds.
+  // tier that wounds. AUDIT SURV-TIERS: and a rest away from a fire pays it only in a tier whose `duringRest` says so
+  // (Hard, whose gate refuses the worst of it). Casual has no gate, so a Casual rest in a blizzard charged the band
+  // faster than DFU's hour restored it: the sleeper woke more tired than they lay down, and a rest until healed
+  // never ended. In Casual a rest is a rest.
   const abs = temp.abs;
   if (abs > NEED.EXPOSURE_AT) s.exposure = Math.min(s.exposure + 1, 600); else s.exposure = Math.max(0, s.exposure - 2);
   const harmTick = now % HARM_EVERY_MINUTES === 0;
   const hurtFloored = (n) => { if ((entity.health ?? 0) > HEALTH_FLOOR) sinks.hurt?.(n); };
+  const tempRed = temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom;
   if (!resting || !env.byFire) {
-    if (temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom) tire(DRAIN.heatPer20 * Math.trunc(abs / 20));
+    if (tempRed && (!resting || rules.stamina.duringRest)) tire(DRAIN.heatPer20 * Math.trunc(abs / 20), 'temp');
     if (rules.health && abs > NEED.DAMAGE_AT && !sleeping && harmTick) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));
   }
   // AUDIT SURV A/E: the strip's own words (temperature.js temperatureWord), one note a word said once - an escalation
@@ -395,7 +427,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     }
     if (!feet && !env.transport && abs > endurance / 2 && !env.swimming) {
       feet0 = true;
-      if (rules.stamina.bareFeet) tire(DRAIN.bareFeet);
+      if (rules.stamina.bareFeet) tire(DRAIN.bareFeet, 'feet');
       note(s, 'feet', now, say, temp.felt > 0 ? SURVIVAL_TEXT.bareFeetHot : SURVIVAL_TEXT.bareFeetCold, { once: true });
     }
   }
@@ -426,7 +458,22 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // DRUNK: one off every ten minutes.
   if (s.drunk > 0 && now % 10 === 0) s.drunk = Math.max(0, s.drunk - 1);
 
-  applySurvivalMods(entity, survivalStatMods(s, temp, now, { endurance, rules }));
+  // AUDIT SURV-TIERS: THE LOAN COMES BACK WITH THE ANSWER. A tier that repays hands back what each need took the
+  // minute that need leaves its costing stage - a meal the hunger's, a drink the thirst's, a sleep the exhaustion's,
+  // a warm place (or a fire) the cold's - whatever the sink or the rest did in between, up to the pool. A rest
+  // pauses the charge, not the need: a starving sleeper is repaid when fed, not when lying down.
+  if (repays && s.borrowed) {
+    const met = { hunger: hungerAfter !== 'starving', thirst: !thirstRed, sleep: !sleepRed, temp: !tempRed, feet: !feet0 };
+    let back = 0;
+    for (const k of Object.keys(s.borrowed)) if (met[k]) { back += s.borrowed[k]; delete s.borrowed[k]; }
+    if (!Object.keys(s.borrowed).length) delete s.borrowed;
+    const give = Math.min(back, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));
+    if (give > 0) { sinks.restoreFatigue?.(give); note(s, 'repaid', now, say, SURVIVAL_TEXT.repaid); }
+  }
+
+  // AUDIT SURV-TIERS: the drink's bands on the LIVE endurance - the mod's LiveEndurance, the one the tavern, the HUD
+  // and the status page already read (the permanent stat here put the swing out of step with the word that named it)
+  applySurvivalMods(entity, survivalStatMods(s, temp, now, { endurance: liveStat(entity, 'endurance'), rules }));
   s.lastMinute = now;   // AUDIT SURV B: the last minute paid - a span run under a rest is not run again by the frame
   s.felt = temp.felt;   // SURV5: the last felt reading rides the record - the HUD strip and the status page read it without the env
   return temp;
@@ -470,6 +517,23 @@ export function runSurvivalMinutes(entity, from, to, env, deps) {
   // after it must not pay the same night awake; a marker from a clock ahead of this one (a rewind) is re-anchored
   let last = Number.isFinite(s.lastMinute) ? s.lastMinute : Math.floor(from);
   if (last > end + MAX_CATCHUP_MINUTES) last = Math.floor(from);
+  // AUDIT SURV-TIERS: MINUTES NO LAW PAID ARE NOBODY'S NEEDS. The record's
+  // last paid minute behind this walk's own start means minutes passed
+  // with no law running at all - the arc switched Off (every host's feed
+  // is null then) - and hunger and wakefulness are TIMESTAMPS, so a player
+  // who spent five days in Off and turned Casual back on was Starving in
+  // the first minute (and in Hard had lost ten from every attribute).
+  // Off is the classic game: its minutes are nobody's needs, so the two
+  // markers move forward by them and the needs resume where they stood.
+  // A walk's own minutes are untouched - a jump is walked from its start,
+  // which the last paid minute already is - and so is the two-day cap.
+  const idle = Math.floor(from) - last;
+  if (idle > 0) {
+    s.lastAte = (s.lastAte ?? last) + idle;
+    s.awakeSince = (s.awakeSince ?? last) + idle;
+    last = Math.floor(from);
+    s.lastMinute = last;
+  }
   const start = Math.max(Math.floor(from), last, end - MAX_CATCHUP_MINUTES);
   // SURV-THIRST1 AUDIT: WHICH MINUTE IS THE PLAYER ACTUALLY LIVING IN.
   // Every minute but the last is a REPLAY - a jump's minutes, fabricated

@@ -19,11 +19,14 @@ the manifest, the mod's item templates and sixteen of its item icons.
 > **SURV-TIERS (2026-09-23): THE ARC IS PLAYED AT ONE OF THREE TIERS -
 > OFF, CASUAL (the default) and HARD.** Everything from here to
 > SURV-TENT describes HARD, the arc at full strength and unchanged to the
-> number. CASUAL is the same world - every clock, stage, item, camp,
+> number (but for four laws both tiers share, which AUDIT SURV-TIERS
+> fixed). CASUAL is the same world - every clock, stage, item, camp,
 > menu, hunt and word below - with five rules on what it COSTS: stamina
-> only, only at the stages the HUD paints red, never below half the pool,
-> nothing refused and nothing rolled against the player. The design, the
-> table and the migration are in **SURV-TIERS** at the end of this page.
+> only, only at the stages the HUD paints red, lent down to half the pool
+> at most and repaid when the need is met, nothing refused, nothing
+> rolled against the player and nothing wasted. The design, the table,
+> Off, the stored values and the audit are in **SURV-TIERS** and **AUDIT
+> SURV-TIERS** at the end of this page.
 
 ## What the mod was (read off the DLL)
 
@@ -52,7 +55,7 @@ carry, and everything static.
 | SURV5 | what the player is told: the HUD's needs strip, the status page's third box, the survival items' info box; the mod's regional tavern menus with the meal, the drink and the blackout | `survival/status.js`, `survival/tavernMenu.js`; `ui/enhancedHud.js` + `enhancedStyle.js`; `itemInfo.js`; `ui/tavernWindow.js` + the interior host's hooks; the four hosts' status chain |
 | SURV6 | hunting, foraging and the water search as real-time events: the wilderness roll, the Yes/No box, the busy page, the finds and the harms, the hunted | `survival/hunting.js` (the law), `ui/huntWindow.js` (the three pages), `scenes/hunting.js` (composed), the overworld host's `createHunting` bag and its minute tick |
 | SURV7 | the feed: the four hosts say where the player stands and the minute law runs in every mode; the rest gate on DFU's seam; the needs aligned at a load and an arrival; fast travel charged; the records | `survival/env.js` (the feed, the gate); `scenes/shared.js` createPlayerTicker's `survivalEnv`; the four hosts' readers; `save.js`'s load arm; `worldTick.js` tickPlayerMinutes' `survival` |
-| SURV-TIERS | Off, Casual (the default) and Hard on the one key: the tiers as data, every charging law reading its tier's rules, the old boolean converted at the load | `survival/difficulty.js` (the table), `survival/switch.js` (`survivalTier`, `survivalRules`), the laws (`needs.js`, `rest.js`, `food.js`, `hunting.js`, `tavernMenu.js`), the compositions (`env.js`, `scenes/shared.js`, `scenes/hunting.js`, `useItem.js`, both tavern windows), `encounters.js` (the asks), `uiPrefs.js` (the conversion), the Features row |
+| SURV-TIERS | Off, Casual (the default) and Hard on the one key: the tiers as data, every charging law reading its tier's rules, Off stored as the old switch's own `false`; AUDIT SURV-TIERS: the loan, a rest is a rest, the house's order, Off keeping the camps and the place, four laws Hard shares | `survival/difficulty.js` (the table, the stored values), `survival/switch.js` (`survivalTier`, `survivalRules`), the laws (`needs.js`, `rest.js`, `food.js`, `hunting.js`, `tavernMenu.js`, `temperature.js`), the compositions (`env.js`, `scenes/shared.js`, `scenes/hunting.js`, `scenes/camps.js`, `useItem.js`, both tavern windows), `encounters.js` (the asks), `uiPrefs.js` (the load), the four hosts' `restKind`, the Features row |
 
 ### The temperature (SURV1)
 
@@ -259,9 +262,11 @@ spawn taken), and you rise stiff - four hours of speed and agility off
 the survival entry, said once on the window's close. The kind is read
 at the window's OPEN by the host that knows where it stands (the four
 `restKind` deps: the exterior hosts and the dungeon ask the camp pool,
-the interior asks its rental record), rides the entity as
-`entity.restKind` for the needs law's `sleeping` and the roll's
-`roughRest`, and with the mod off every rest is DFU's bed. Online the
+the interior its rental record and then its own hearth - AUDIT
+SURV-TIERS), rides the entity as `entity.restKind` for the needs law's
+`sleeping` and the party pose (the roll takes the rest's ASKS since
+SURV-TIERS, `entity.restAsks`), and with the mod off every rest is priced
+as DFU's bed. Online the
 same law under RESTX2's real-time pacing: a fire or a bed is a short
 real wait for a full restore, the window alone the same wait for half
 of one and a stiff morning.
@@ -787,7 +792,8 @@ tavern menu in its own panel.
 
 **One key, three answers.** The `survival` pref was a boolean; it is a
 tier: **Off** (the classic game - no needs, no items, no camps), **Casual**
-(the new default) and **Hard** (everything above this section, unchanged).
+(the new default) and **Hard** (everything above this section, unchanged,
+but for the four laws AUDIT SURV-TIERS fixed under both tiers - below).
 The Features tile's bar reads `Off | Casual | Hard`.
 
 ### The design: the same world, different stakes
@@ -800,27 +806,33 @@ Casual is not Hard with the numbers turned down. It is five rules, and
    tavern menus and the hunt's events are the world's and identical in
    both tiers - so the HUD strip, the status page and every notice say the
    same things, and two players on different tiers stand in one world
-   online. Only what the body PAYS differs.
+   online. Only what the body PAYS differs - and what it is owed back
+   (rule 4), which is the body's too.
 2. **Stamina is the only price of neglect.** Casual never takes an
-   attribute, a point of health, an item's condition, a disease or an
-   hour. The drink's attribute swing stays in every tier - it is chosen at
-   a bar, with an upside, not a need left unmet.
+   attribute, a point of health, an item's condition, a disease, a coin or
+   an hour. The drink's attribute swing stays in every tier - it is chosen
+   at a bar, with an upside, not a need left unmet.
 3. **Red means it costs.** A need charges only at the stages the HUD
    already paints red (`status.js` `HUD_NEED_WORDS`): Starving; Parched and
    Dehydrated; Exhausted; Freezing, Deadly cold and Scorching. Amber is
    information. The rates are Hard's own (`needs.js` `DRAIN`) - once the
    body is in trouble it tires as fast in both tiers. Wetness is no need:
    it works through the felt temperature, in both.
-4. **Bounded.** The needs may take stamina down to half the pool and no
-   further - so on their own they can never raise DFU's exhaustion
-   collapse, which kills a player with a foe near
+4. **Borrowed, not taken.** The needs may take stamina down to half the
+   pool and no further - so on their own they can never raise DFU's
+   exhaustion collapse, which kills a player with a foe near
    (`systems/rest.js` `exhaustionOutcome`), and a neglected player still
-   has half a pool to fight and run with.
-5. **Nothing refused, nothing rolled against you.** No rest gate, no second
+   has half a pool to fight and run with - and what a need took it gives
+   back the moment it is met: a meal repays the hunger, a drink the
+   thirst, a sleep the exhaustion, a warm place or a fire the cold.
+5. **Nothing refused, nothing rolled against you, nothing wasted.** No rest
+   gate, and a rest is always a rest - nothing is charged while the player
+   rests, the cold included, so a rest can always finish; no second
    encounter ask, no stiff morning, no sickness roll, no bite, fall or
-   beast from a hunt, no blackout. Where Hard has a harmful outcome,
-   Casual has a DECLARED safe one in its place - never a harm rolled and
-   then cancelled.
+   beast from a hunt, no blackout and no wasted meal. Where Hard has a
+   harmful outcome, Casual has a DECLARED safe one in its place, read off
+   the same rolls - the search is the same search, and the harm never
+   lands.
 
 What Casual keeps as the reason to engage is everything that was never a
 penalty: a bed or a fire pays sleep debt three times faster than the rest
@@ -833,53 +845,102 @@ sources, the tavern's menus and the hunt's finds are all there.
 
 | | Hard (the arc as it stood) | Casual |
 |---|---|---|
-| Hunger | Starving: 4 fatigue a minute; -2 to every attribute a starving day, to -20 | Starving: 4 a minute, to half the pool |
-| Thirst | Parched 6, Dehydrated 12 a minute; attributes past 100; health from 120 on the harm tick - it can kill (SURV-THIRST1) | Parched 6, Dehydrated 12 a minute, to half the pool |
-| Sleep | Exhausted: 8 a minute; -2 / -5 / -10 to every attribute at tired / drowsy / exhausted | Exhausted: 8 a minute, to half the pool |
-| Heat and cold | from 20 felt either way, 6 per 20 degrees; exposure lowers attributes past 30; wounds past 50 - it can kill | only at the red words (Scorching past 50; Freezing and Deadly cold past -30), the same 6 per 20, to half the pool |
+| Hunger | Starving: 4 fatigue a minute; -2 to every attribute a starving day, to -20 | Starving: 4 a minute, to half the pool - lent, and repaid by the meal |
+| Thirst | Parched 6, Dehydrated 12 a minute; attributes past 100; health from 120 on the harm tick - it can kill (SURV-THIRST1) | Parched 6, Dehydrated 12 a minute, to half the pool - repaid by the drink |
+| Sleep | Exhausted: 8 a minute; -2 / -5 / -10 to every attribute at tired / drowsy / exhausted | Exhausted: 8 a minute, to half the pool - repaid by the sleep |
+| Heat and cold | from 20 felt either way, 6 per 20 degrees, resting or not (away from a fire); exposure lowers attributes past 30; wounds past 50 - it can kill | only at the red words (Scorching past 50; Freezing and Deadly cold past -30), the same 6 per 20, to half the pool, never while resting - repaid by a warm place or a fire |
 | Bare skin | naked in the cold and the sun on bare skin wound (never the last five points); bare feet 4 a minute | the lines alone - the cold and the sun are already in the felt temperature |
 | Wet armour | rusts, a point on a 5% minute | never |
 | Food | raw, stale or worse risks a disease on a failed luck roll | no roll - Hard's lucky branch, every time; spoiled still feeds less, putrid still will not go down |
-| The rest window | half DFU's hour; two encounter asks a minute; stiff four hours (-5 speed and agility); the debt never paid below tired; too cold or too hot refuses the sleep | DFU's whole hour; one ask; no morning; the debt paid down to nothing at 0.5 an hour (a bed or a fire pays 1.5); never refused |
+| The rest window | half DFU's hour; two encounter asks a minute; stiff four hours (-5 speed and agility); the debt never paid below tired; too cold or too hot refuses the sleep | DFU's whole hour; one ask; no morning; the debt paid down to nothing at 0.5 an hour (a bed or a fire pays 1.5); never refused, never charged |
 | The hunt | bites that poison, a foul pool that sickens, a fall, a boar, the beast | each harm's safe twin - the same search on the same rolls, the same catch, no harm |
-| The tavern | past the endurance you black out: the night passes and the morning is a rough one | the barkeep will not pour the drink that would cross the endurance, and says so before the coin changes hands; a soft drink always pours |
+| The tavern | past the endurance you black out: the night passes and the morning is a rough one; a meal on a stomach too full for it is charged, takes its half hour and goes to waste (the mod's quirk) | the barkeep will not pour the drink that would carry the counter past the endurance, and the kitchen will not sell a meal to a stomach too full for it - both asked after the gold and before the coin changes hands; a soft drink always pours |
 | The stamina floor | none: the needs can empty the pool, and the collapse is the cost (AUDIT-DEATH1) | half the pool |
+| What a need took | kept - the pool refills only as it always did | lent - repaid the minute that need is met, up to the pool |
 
 Spoilage and the stamina cost were Mac's to hand over ("Your choice").
 **Spoilage stays**, at the world's pace, because it is what makes the food
 choices mean something - bread keeps, raw fish does not - and it was never
 the punishment; the sickness was, and Casual has none. **The stamina cost
-stays**, bounded, because it is the one price that makes a need a need
-without ever endangering the player: it is legible (the fatigue bar), it
-reverses completely with a meal, a drink, a sleep or a fire, and the floor
+stays**, bounded and lent, because it is the one price that makes a need a
+need without ever endangering the player: it is legible (the fatigue bar),
+it comes back the moment the need is met (the loan, rule 4), and the floor
 means it can never be what kills.
+
+### Off
+
+Off is the classic game - no needs, no chips, no gate, no roll, DFU's own
+tavern list and rest hour - but it is a setting, not an eraser, and AUDIT
+SURV-TIERS closed the ways it had been one:
+
+- **The camps are kept, not burned.** The pool keeps every camp through the
+  burn, the save, the scene cache and the wire, and hides them from THIS
+  player alone (`scenes/camps.js` `shown`): no sprite, light, tent, ray,
+  warmth or camp's rest. A camp kit used with the arc Off is refused in
+  words - "Turn Climates & Calories on to make camp." (CAMP-SILENT's law:
+  a refusal the player cannot see is a bug report nobody can act on).
+- **Its minutes are nobody's needs.** Hunger and wakefulness are
+  timestamps, so a player back from five days Off was Starving in the first
+  minute (and in Hard had lost ten from every attribute). The walk
+  (`needs.js` `runSurvivalMinutes`) moves both markers by the minutes no
+  law paid - the record's last paid minute behind the walk's own start -
+  and the needs resume where they stood.
+- **A leftover meal is fed, never sickened** (`useItem.js` hands Casual's
+  rules when the arc is Off; it had handed none, which is Hard's roll).
+- **The place is still the place.** A rest opened Off is priced as DFU's
+  bed - the whole hour, one ask - but the entity carries WHERE it is, which
+  the party pose broadcasts (below).
+- **It is stored as the old switch's own `false`**, so a build from before
+  the tiers reading the same shelf still reads Off.
 
 ### How it is built - rules as data, read at the compositions
 
 - **The table** (`survival/difficulty.js`, an import-free leaf): a field
-  exists only where the tiers DIFFER - the stamina floor and heat band and
-  the barefoot tax, whether the attributes, the health, the rust, the
-  sickness, the hunt's harms, the gate and the blackout apply, and the
-  rough rest's price with the sleep-debt stage a rough night cannot pay
-  below. The world's numbers (the stages, the drain rates, the sleep a bed
-  pays) stay with their laws.
-- **The switch** (`survival/switch.js`): `survivalTier()` is the stored
-  tier, or the default for any value that is not one - the SAME rule the
-  Features bar draws by (`tileStates`, BLOOD AUDIT 5), so the bar and the
-  laws can never disagree; `survivalOn()` is "not Off" for everything the
-  arc merely switches on; `survivalRules()` is what a law that CHARGES reads.
-- **The laws take the rules as an argument** and run Hard when handed none,
-  so every pin written before the tiers still pins Hard: `survivalMinute` /
+  exists only where the tiers DIFFER - the stamina floor, heat band and
+  barefoot tax, whether a rest still pays the band (`duringRest`) and
+  whether a met need repays its loan (`repaid`); whether the attributes,
+  the health, the rust, the sickness, the hunt's harms, the gate, the
+  blackout and the wasted meal apply; and the rough rest's price with the
+  sleep-debt stage a rough night cannot pay below. The world's numbers
+  (the stages, the drain rates, the sleep a bed pays) stay with their laws.
+- **The stored values** (`SURVIVAL_STORED`): Off is `false`, Casual and
+  Hard are stored by name, and the default is never stored at all (PREF1).
+  `tierOfStored` reads a stored value back and anything else as the
+  default - the rule the Features bar draws by (`tileStates`, BLOOD AUDIT
+  5) - and the shelf's load drops any value that names no tier
+  (`uiPrefs.js` `loadPrefs`), because the bar matches a stored value by
+  its STRING: a hand-edited `'false'` drew Off while the laws ran the
+  default.
+- **The switch** (`survival/switch.js`): `survivalTier()` is
+  `tierOfStored` of the shelf; `survivalOn()` is "not Off" for everything
+  the arc merely switches on; `survivalRules()` is what a law that CHARGES
+  reads - null for Off.
+- **The laws take the rules as an argument** and run Hard when handed none
+  - or null, which is what `survivalRules()` answers for Off (the minute
+  law threw on `null.stamina` until AUDIT SURV-TIERS): `survivalMinute` /
   `survivalStatMods` (`deps.rules`), `restCost` / `restHour` / `stiffen`,
-  `eatLaw`, `huntOutcome`, `tavernPour` / `tavernDrink`. Each reads the
-  tier's field at the point the cost is charged; nothing is charged and
-  then refunded, and nothing is rolled and then cancelled.
+  `eatLaw`, `huntOutcome`, `tavernOrder` / `tavernPour` / `tavernDrink`.
+  So every pin written before the tiers still pins Hard.
 - **The needs' stamina leaves by one door** (`tire` inside
   `survivalMinute`): a tier with no floor hands each charge to the sink as
   before; one with a floor spends only the budget above it, read at the
   minute's first charge (after the well-fed hour's refund) and counted
   down in the law, so two needs in one minute share one budget whatever
-  the host's sink does with them.
+  the host's sink does with them. In a tier that repays, what each need
+  takes is written to the record's `borrowed` under the need's name
+  (`hunger`, `thirst`, `sleep`, `temp`, `feet`); the minute that need
+  leaves its costing stage, its loan comes back through the sink's
+  `restoreFatigue`, up to the pool, and one line says so ("You feel your
+  strength returning."). A rest pauses the charge, not the need - a
+  starving sleeper is repaid when fed. A tier that does not repay carries
+  no loan: a Casual loan is dropped at the first Hard minute, because Hard
+  keeps what it takes.
+- **A rest is a rest** (`stamina.duringRest`): the heat and the cold
+  charge a rest away from a fire only in the tier whose gate refuses the
+  worst of it. Casual has no gate, and its rest in a blizzard had been
+  charged the band faster than DFU's hour restored it - the sleeper woke
+  more tired than they lay down (63-68% of the pool, reproduced), and a
+  rest until healed never ended.
 - **The hunt's safe twins** (`hunting.js` `HUNT_SAFE_TWIN`): every key
   whose outcome can carry a poison, a disease, a wound, the boar's
   fatigue or a beast names the outcome Casual takes instead, and the twin
@@ -888,28 +949,39 @@ means it can never be what kills.
   rolls: on the same rolls a Casual hunt IS the Hard hunt with its harms
   swapped out. The port adds one line to the mod's text - `trailCold`, the
   roar's twin, for a hunter with or without a bow.
-- **The barkeep** (`tavernMenu.js` `tavernPour`): asked by both tavern
-  windows BEFORE the coin changes hands; the enhanced window keeps its menu
-  up after a refusal, as it does for a purse too light, so a soft drink or
-  a meal still serves.
+- **The house** (`tavernMenu.js` `tavernOrder`): both tavern windows ask
+  it after the gold and BEFORE the coin changes hands, so a refusal never
+  costs a coin or a minute. A drink is the pour's question (`tavernPour` -
+  the counter carried past the endurance, where a tier has no blackout);
+  a meal is tavernEat's own test (the hunger under the meal's worth),
+  refused where a tier has no `wastedMeal`. The enhanced window keeps its
+  menu up after a refusal, as it does for a purse too light.
 - **The compositions read the live tier once, where they already read the
   switch**: the feed (`env.js` `survivalFeed` puts `rules` in the minute
-  law's deps), the rest (`scenes/shared.js` `createRestDeps` reads the tier
-  at the open beside the kind - the kind stays WHERE the sleep is, the tier
-  prices it: the hour, the morning and the encounter asks, all at the tier
-  the rest opened with), the gate (`env.js` `survivalGateOn` - Hard's
-  alone), a meal (`useItem.js`), a hunt (`scenes/hunting.js`), a drink
-  (both windows).
-- **The resting encounter roll takes a COUNT** now (`encounters.js`
-  `intermittentEnemySpawn`'s `restAsks`, one when absent, as DFU has it).
-  `createRestDeps` stamps it on the resting player at the open
-  (`entity.restAsks`, beside `entity.restKind`, both cleared when the rest
-  ends): Hard's rough night two, every Casual night and every bed or camp
-  one. **The four hosts rule (17e):** `world.js` (the overworld, and the
-  interiors - `worldModes.js` has no roll of its own; its interior rest
-  rings `world.js`'s) and `exterior.js` hand
-  `restAsks: playerEntity.isResting ? playerEntity.restAsks : 1` where they
-  handed the rough flag, `dungeonContext.js`'s own rest roll hands the
+  law's deps), the rest (`scenes/shared.js` `createRestDeps`, at the open:
+  the PLACE - where the sleep is, read in every tier and stamped on the
+  entity as `restKind`, which the party pose broadcasts - and the PRICE,
+  the place under the tier's rules, DFU's bed with the arc Off: the hour,
+  the morning and the encounter asks, all at the tier the rest opened
+  with), the gate (`env.js` `survivalGateOn` - Hard's alone), a meal
+  (`useItem.js`), a hunt (`scenes/hunting.js`), an order (both windows).
+- **The place reads the world's fire.** Each host's `restKind` asks the
+  camp pool's `fireNear` - anyone's lit camp or one of the world's fires
+  in reach, in EVERY tier - where everything the player USES asks `byFire`,
+  which is Off's to hide. The interior host now asks it too: a room's own
+  hearth is a camp's rest, as a brazier is outdoors (HEARTH1 had warmed
+  the room and forgotten the sleep).
+- **The resting encounter roll takes a COUNT** (`encounters.js`
+  `intermittentEnemySpawn`'s `restAsks`, one when absent, as DFU has it,
+  and one for anything that is no finite number - NaN had asked nothing
+  and Infinity never stopped). `createRestDeps` stamps it on the resting
+  player at the open (`entity.restAsks`, beside `entity.restKind`, both
+  cleared when the rest ends): Hard's rough night two, every Casual or Off
+  night and every bed or camp one. **The four hosts rule (17e):**
+  `world.js` (the overworld, and the interiors - `worldModes.js` has no
+  roll of its own; its interior rest rings `world.js`'s) and `exterior.js`
+  hand `restAsks: playerEntity.isResting ? playerEntity.restAsks : 1` where
+  they handed the rough flag, `dungeonContext.js`'s own rest roll hands the
   stamp; `worldModes.js` is named and needs nothing. Every host's rest runs
   through the one `createRestDeps` and every host's minute through the one
   `survivalFeed`, so the tier reaches all four through those two doors -
@@ -926,13 +998,16 @@ real now, as a tier's rule - `stamina.floor`, none in Hard, half in Casual.
 
 ### Moving the players already on it
 
-The key is unchanged. Since PREF1 the shelf stores only choices that
-differ from the default, and `true` was the default - so an old shelf
-carries at most `survival: false`, a player who turned the arc off. The
-load (`uiPrefs.js` `loadPrefs`) reads it as **Off** and the next save writes
-the tier. Every other player - everyone who was on it, since PREF1 cannot
-tell a pressed On from the default - moves to **Casual**, as Mac asked. A
-hand-written `true` names no tier and reads as the default.
+The key is unchanged, and so is Off's stored value - the switch's own
+`false`. Since PREF1 the shelf stores only choices that differ from the
+default, and `true` was the default, so an old shelf carries at most
+`survival: false` - a player who turned the arc off - and it reads as
+**Off** with no conversion at all. Every other player - everyone who was
+on it, since PREF1 cannot tell a pressed On from the default - moves to
+**Casual**, as Mac asked. Any other value on the key (a hand-edited
+`true`, a corrupted one) names no tier: the load drops it and it reads as
+the default. (The first cut converted `false` to a new `'off'` string,
+which a build from before the tiers reads as ON - AUDIT SURV-TIERS, below.)
 
 ### Online
 
@@ -940,48 +1015,151 @@ Every tier, Off included, is the player's online (`online: 'player'`,
 unchanged) - Mac's "still let it be able to be turned off for online".
 MODS-ONLINE-3's reading holds tier by tier: a tier decides only what THIS
 player's body pays; the counters, the camps and a corpse's food (the
-killer's word) are the world's in every tier. A party rest's mirror
-(PARTY-REST4b) takes the leader's KIND and prices it by the member's own
-tier.
+killer's word) are the world's in every tier - an Off player's camps stand
+for everyone else, and an Off host relays its peers' camps. A party rest's
+mirror (PARTY-REST4b) takes the leader's PLACE - every tier broadcasts it -
+and prices it by the member's own tier. Two world events stay the actor's
+tier's, as the actor's own act: a party rest's encounter roll is the
+leader's, asked at the leader's count; a Hard hunter's beast stands in the
+world and fights whoever is near it.
 
 ### The pins
 
-`test/survtiers.test.js`, 16 tests: the row, the table and the shelf agree;
-the switch's reads; the conversion at the load (through a real shelf);
-Hard's table is the arc as it stood; Casual's five rules; RED MEANS IT
-COSTS, degree by degree against `temperatureWord` and the HUD's own
-levels, and stage by stage for hunger, thirst and sleep, and swept through
-the law across every climate, month, hour and weather, shod and barefoot;
-THE WORST DAY (starving, dehydrated, exhausted, half naked and barefoot in
-a mountain blizzard in wet plate - Casual ends it at exactly half the pool,
-every word still said, and nothing else touched); SAME WORLD (two players,
-two tiers, one night - the records identical); the floor's budget; a Hard
-morning lifting under Casual; the rest, the asks, the gate; the meal; the
-hunt (over twelve thousand seeded searches, Casual equal to Hard with the
-twins swapped, and every harmful key covered); the barkeep, through the
-classic window; and the composed ticker in a blizzard.
+`test/survtiers.test.js`, 22 tests: the row, the table and the shelf agree
+(the segments write the table's stored values); the switch's reads; the
+shelf, through a real one (an old Off kept as `false`, the default stored
+as nothing, five junk values dropped at the load); Hard's table is the arc
+as it stood and a law handed no rules runs it; Casual's five rules; RED
+MEANS IT COSTS - degree by degree against `temperatureWord` and the HUD's
+own levels, stage by stage for hunger, thirst and sleep, and through the
+law over every climate, month, hour and weather there is, shod and
+barefoot, in both tiers (92,160 minutes); THE WORST DAY (starving,
+dehydrated, exhausted, half naked and barefoot in a mountain blizzard in
+wet plate - Casual ends it at exactly half the pool, all of it on loan,
+every word still said and nothing else touched); SAME WORLD (two players,
+two tiers, one night - the records identical but for the loan, which is
+the body's); the floor's one budget a minute, read after the fed hour's
+refund; BORROWED, NOT TAKEN (each need's loan under its own name, a rest
+repaying nothing, a meal, a drink, a sleep and a warm room each repaying
+its own, the pool as the ceiling, Hard lending nothing and dropping a
+loan it inherits); a Hard morning lifting under Casual; the rest (a
+Casual rest in a blizzard charged nothing, Off's place kept and priced as
+a bed, the asks and a count that is no number); the gate; the meal (and
+through the whole `useItem` ladder in each tier); the hunt (twelve
+thousand seeded searches, Casual equal to Hard with the twins swapped, and
+the host's own hunt composed in both tiers); the house through the
+classic window (the gold first, the pour and the kitchen, the boundaries
+of both); the enhanced tavern DRIVEN through a fake document; the
+composed ticker; and the four laws Hard shares (the hour, the live cap,
+null rules, the Off gap).
 
 The pre-tier pins moved only where their vocabulary or the source shape
-did: a test that set the switch `true` or `false` sets `'hard'` or `'off'`;
-a test that pinned a Hard-only cost under the defaults sets `'hard'`
-first; the source pins follow the reshaped lines. The FT15 notes budget
-rose by exactly the row's growth (77 characters: a row whose one control
-became three).
+did: a test that set the switch `true` sets `'hard'` (or `'casual'`); one
+that set it `false` still does, since that is Off's stored value; a test
+that pinned a Hard-only cost under the defaults sets `'hard'` first; the
+source pins follow the reshaped lines. The FT15 notes budget rose by
+exactly the row's growth - 107 characters in all: a row whose one control
+became three, then the loan, in two sentences where there had been three.
 
-Mutants: `tools/mutants/survtiers.json`, 43 records - every Casual rule
-broken one at a time, the default, the conversion, the row, the floor's
-door and budget, the band, the sleep floor, the twins, the barkeep, the
-compositions, the asks' stamp and the host that hands it - 43 dead. Twenty-one records in nine older lists
-(`surv1`, `surv2`, `surv4`, `surv5`, `surv7`, `surv_thirst1`, `auditsurv`,
-`deathloop1`, `modsonline1`) targeted lines this slice reshaped and were
-re-aimed with their intent unchanged. Then every record in every list that
-lands on the survival paths - the laws, the rest composition, the row, the
-shelf's conversion, the encounter roll, the tavern windows - was run
-again, the new list with them: 193 records over twenty lists, all dead,
-none stale (the one whose pin was itself red during that run, DEATHLOOP2's,
-re-run once its pin was re-aimed - dead).
+Mutants: `tools/mutants/survtiers.json`, 79 records - every rule
+of both tiers broken one at a time, the stored values and the load, the
+row, the floor's door and budget, the band, the loan (never written, never
+repaid, repaid by a rest, repaid past the pool, carried into Hard), the
+rest's band, the sleep floor, the twins, the house (the pour, the kitchen,
+each boundary, the gold's order, the enhanced window's refusal and its
+menu), the place and the price, the asks, the camps under Off, the four
+shared laws - all 79 dead. The run that closed the audit is stated as
+its rule, so it can be run again: every record in the eleven survival
+lists (`surv1`-`surv7`, `surv_thirst1`, `auditsurv`, `hearth1`,
+`survtiers`), every record in any other list whose tests are a file this
+audit changed, and every record whose target lies within six lines of a
+line it changed - 417 records over 21 lists, 416 dead and the one recorded equivalent (`to1.json`'s `direction-diagonals-inclusive`, older than this slice), none survived, none stale, none unapplied.
 
 **Not driven in the container:** no ARENA2, so the game itself was not
-played at either tier; the Features tile's three segments were checked in
-a browser against the dev server (the rail probe needs no game data), the
-enhanced tavern window's refusal by source.
+played at either tier. The Features tile's three segments were checked in
+Chromium against the dev server with `tools/survTierProbe.mjs`, committed
+so the check can be run again (fifteen checks, all passed: the three segments in order, Casual pressed on a fresh shelf, each press's stored value - Hard by name, Off as `false`, Casual as nothing - the rail's words, an old Off shelf opening on Off, and a hand-edited `'false'` string opening on the default); the enhanced tavern's refusals
+are DRIVEN in the suite now, through a fake document (`test/invdrag.mjs`
+`withDom`), not read off its source.
+
+## AUDIT SURV-TIERS (2026-09-23)
+
+> Mac: *"Lets first do a comprehensive audit and ensure this is perfect"*.
+
+Four lenses over the slice, each on its own: **Hard** (is it the arc as it
+stood, to the number, and does anything in it leak or regress), **Casual**
+(does every rule hold at every seam, and is it ever a punished
+experience), **wiring** (every caller, host, save, relay and skin), and
+**tests and records** (do the pins bite, are the records true). Every
+finding was reproduced before it was fixed, and every fix has a pin and a
+mutant.
+
+### Found and fixed
+
+| # | Finding | Tier | Fix |
+|---|---|---|---|
+| 1 | A Casual rest in a red temperature was charged the band faster than DFU's hour restored it - the sleeper woke at 63-68% of the pool, and a rest until healed never ended (HIGH: rule 5 broken) | Casual | `stamina.duringRest` - the band charges a rest only where a gate refuses the worst of it (Hard) |
+| 2 | A Casual meal on a full stomach was charged, took its half hour and was wasted - a coin and an hour lost (rule 2) | Casual | `wastedMeal`; `tavernOrder` refuses it before the coin, in words |
+| 3 | The design said the stamina cost "reverses completely with a meal, a drink, a sleep or a fire" - it did not; only the fed hour's point an hour came back | Casual | the loan: `stamina.repaid`, the record's `borrowed`, repaid the minute the need is met |
+| 4 | The hour's band read a fractional hour raw, so 15:30 fell through every band to the night's -20 | both | `hourTemperature` floors the hour |
+| 5 | The survival drain was capped against the PERMANENT stat while every other drain stacks on the live one - a Drain Agility spell and a tavern ale made a live 0, and a live 0 kills | both | capped five above the stat as it stands without its own entry; the drink's bands read the live endurance |
+| 6 | Five days Off and back on: Starving at the first minute (and ten gone from every attribute in Hard) - Off's minutes were charged to the timestamps | both | `runSurvivalMinutes` moves the markers by the minutes no law paid |
+| 7 | An interior's hearth made no camp's rest - HEARTH1 warmed the room and the interior's `restKind` knew only a bed or the boards | both | `fireNear` in the interior's `restKind` |
+| 8 | The minute law threw on `null` rules - `survivalRules()` answers null for Off | latent | every law takes null as no rules |
+| 9 | Off stamped every rest a BED, and the party pose broadcasts it - a follower mirroring an Off leader slept a bed's night in a field | Off | the place and the price are two answers (`_place`, `_kind`) |
+| 10 | Off refused to restore or relay a camp - a save made Off lost them all; an Off host dropped its peers' from the room it passes on | Off | the pool keeps the data and hides it (`shown`); placing one is refused in words |
+| 11 | A leftover meal under Off was Hard's sickness roll | Off | Casual's rules |
+| 12 | Off stored as a new `'off'` string - a build from before the tiers reads it as ON; and junk on the key read one way in the bar and another in the laws | Off | Off is `false`, as it always was; the load drops junk |
+| 13 | The barkeep was asked before the purse - a player who could not pay heard the barkeep's verdict | Casual | the gold first, then the house, then the coin |
+| 14 | "will not pour you another" on a first spirit | Casual | "The barkeep shakes their head: that one would put you on the floor." |
+| 15 | A NaN count asked no encounter at all, an Infinity count never stopped asking | latent | a count that is no finite number is one |
+| 16 | The Features note was three sentences (FT15 allows two) | - | two |
+| 17 | `test/partyrest1.test.js` sliced from a declaration that had grown a parameter - the slice was empty and four assertions passed against nothing | - | the marker is the declaration as it stands, and the slice is held non-empty (and a mutant proves it) |
+| 18 | The record said the sweep ran "every climate, month, hour and weather" - it ran two months, two hours and two weathers; "over twelve thousand" searches were exactly twelve thousand; the refund-first budget was claimed and unpinned | - | the sweep runs all of them (92,160 minutes); the count is exact; the refund is pinned |
+| 19 | A mutant (the switch reading the old boolean) became EQUIVALENT once Off was `false` again; one named `row-default-true` made the default `'hard'`; one duplicated `modsonline1.json`'s | - | replaced, renamed, removed |
+| 20 | Stale words: `shared.js`'s rest and gate comments, `world.js`'s mirror fallback, `onlineLane.js`'s "boolean switches", `status.js`'s severity note, `credits.js`'s "a costed rest", the Port Ledger's and Home's "one switch", this page's intro | - | each said now as it is |
+| 21 | Cites found wrong on the way, older than the slice: `potions.js`'s `useItem.js` cite sat a line short (and `citedrift`'s pick for it baked the number in - WM3's own trap), `tavern.js`'s and `tavernWindow.js`'s TALK cites named lines that had moved | - | re-aimed by content; the citedrift entry captures each half |
+
+### Accepted, and why
+
+- **A rest kind that is no kind prices as rough** (two asks in Hard):
+  `restCost`'s law - a bed and a camp are named; anything else is the
+  ground.
+- **One minute after Hard to Casual**, the floor's budget reads the pool
+  as Hard left it, and a Hard save loaded into Casual carries Hard's
+  attribute entry until the first minute rewrites it. A minute, then
+  Casual's own.
+- **The flavour lines are the world's** ("The sun burns your bare
+  skin.", "Your bare feet are getting burned.") and said in every tier,
+  though in Casual nothing but the felt temperature charges for them -
+  rule 1.
+- **The classic skin has no needs strip** - older than the tiers; the
+  status page carries the needs there.
+- **`wire.js` keeps "survival mode off" in two comments** about a null
+  rest kind. `test/relayversion.test.js` (SLAM8) hashes the relay's
+  bundle, comments included, and a comment edit there is a relay version
+  and a deploy; the words ride the next wire change.
+
+### Open, for Mac
+
+1. **Fast travel replays the trip awake.** A cautious or inns journey
+   walks its minutes as waking ones and arrives Exhausted in both tiers.
+   Recommend: the nights of an inns or camping journey count as sleep and
+   heal, as DFU's own travel does.
+2. **Hard's own rest between the band and the gate.** Hard charges from
+   twenty felt either way, and its gate refuses only freezing and deadly
+   cold without a fire or a roof, and scorching anywhere - so a Hard rest
+   in the warm, the hot or the cold (or freezing under a roof) still pays
+   the band, and a rest until healed there may not finish. Hard is the arc
+   as it stood, so it is unchanged. Recommend: a Hard rest pays the band
+   only where the gate would refuse it.
+3. **SURV4's brief** ("the rest window is a last resort that comes with a
+   cost") stands for Hard; Casual's rough night is DFU's whole hour.
+   Confirm.
+4. **Mixed tiers in one party:** the leader's encounter roll and a Hard
+   hunter's beast are the actor's own acts and reach everyone near
+   (Online, above). Confirm, or the roll could take the gentlest tier in
+   the party.
+5. **DFU's tavern heal** (a meal restores health on DFU's list) is absent
+   from the survival menu in both tiers - older than the tiers.
+6. **Spoiled food sells for nothing** - older than the tiers.

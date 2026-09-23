@@ -97,7 +97,7 @@ test('settings: the LIVE tier does not lie - each consumer really reads the stor
   assert.equal(loiterLimitHours(), 8);
   assert.ok(cannotLoiterLines()[1].includes('8'), 'the refusal line quotes the live cap');
   // PlayerTorchFromItems - the kit seam
-  setPref('survival', 'off');   // AUDIT SURV E: the survival kit rides after DFU's bag; this pin is DFU's bag alone
+  setPref('survival', false);   // AUDIT SURV E: the survival kit rides after DFU's bag; this pin is DFU's bag alone
   setValue('Enhancements', 'PlayerTorchFromItems', true);
   const e = { items: [], stats: {}, skills: [] };
   assignStartingGear(e, { classIndex: 0, rolls: () => 0 });

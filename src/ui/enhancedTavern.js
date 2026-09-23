@@ -42,7 +42,7 @@ import {
   rentalDecision, rentRoom, canEat, eatOrDrink,
 } from '../systems/tavern.js';
 import { survivalOn, survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: the tier prices the drink
-import { tavernMenu, tavernEat, tavernDrink, tavernPour, blackout } from '../systems/survival/tavernMenu.js';
+import { tavernMenu, tavernEat, tavernDrink, tavernOrder, blackout } from '../systems/survival/tavernMenu.js';
 import { survivalOf } from '../systems/survival/needs.js';
 import { stiffen, REST_KIND } from '../systems/survival/rest.js';
 
@@ -226,10 +226,10 @@ function pickSurvival(row, now) {
   const s = survivalOf(h.entity, now);
   const endurance = h.endurance?.() ?? 50;
   const rules = survivalRules();
-  // SURV-TIERS: a tier without the blackout refuses the drink that would take the night - before the coin changes hands
-  const pour = row.kind === 'drink' ? tavernPour(s, row.strength, { endurance, rules }) : null;
-  if (pour && !pour.ok) { say(line(pour.text)); return; }   // the menu stays up, as it does for the gold: a soft drink or a meal still serves
   if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }
+  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste
+  const order = tavernOrder(s, now, row, { endurance, rules });
+  if (!order.ok) { say(line(order.text)); return; }   // the menu stays up, as it does for the gold: a lighter drink still serves
   deductGold(h.entity, row.price);
   const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });
   h.advanceMinutes?.(r.minutes);

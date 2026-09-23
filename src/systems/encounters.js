@@ -184,8 +184,9 @@ export function intermittentEnemySpawn(ctx, rolls = Math.random) {
   // SURV4: a ROUGH rest (survival/rest.js - the window opened on bare ground, no bed and no fire) doubles the
   // minute's chance: the same decision asked twice, the first spawn taken. SURV-TIERS: how many asks a rest
   // costs is its kind priced by the player's tier at the open (scenes/shared.js createRestDeps stamps `restAsks` -
-  // Hard's rough night two, every Casual night one), so the host hands the COUNT. Without it, one ask, as DFU has it.
-  const asks = Math.max(1, Math.trunc(ctx.restAsks ?? 1));
+  // Hard's rough night two, every Casual night one), so the host hands the COUNT. Without one - or with no finite
+  // number: AUDIT SURV-TIERS, NaN asked nothing at all and Infinity never stopped asking - one ask, as DFU has it.
+  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;
   let r = null;
   for (let i = 0; i < asks && !r; i++) r = intermittentEnemySpawnOnce(ctx, rolls);
   return r;

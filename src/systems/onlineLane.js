@@ -111,7 +111,7 @@ export function declareOnlinePrefs(table) {
   }
 }
 
-/** The boolean switches the lane deliberately leaves to the player -
+/** The switches the lane deliberately leaves to the player (SURV-TIERS: and one tier, the survival pref) -
  *  the pin fails on a boolean uiPrefs key that is in neither list. */
 export const ONLINE_PLAYERS_OWN_PREFS = [
   'touchAnalogStick', 'touchGyroLook', 'touchHaptics', 'touchFullscreen',   // TI2: how this phone is held

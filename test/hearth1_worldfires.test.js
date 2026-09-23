@@ -146,10 +146,10 @@ test('HEARTH1: a world fire is nobody’s - it opens the cooking list and nothin
   // camp needs - a brazier does not go out.
   assert.match(c, /if \(c && !fireLit\(c\.rec, now\(\)\)\) \{ say\(CAMP_TEXT\.cold\); return null; \}/, 'the embers test is the CAMP’s');
   // byFire asks both pools
-  assert.match(c, /const byFire = \(pos\) => !!nearestFire\(camps\.map\(\(c\) => c\.rec\), pos, now\(\)\)\n\s*\|\| hearthNear\(worldFires\(\), pos, BY_FIRE_REACH\);/, 'both pools, the cheap question of the big one (AUDIT F2)');
+  assert.match(c, /const byFire = \(pos\) => !!nearestFire\(shown\(\)\.map\(\(c\) => c\.rec\), pos, now\(\)\)\n\s*\|\| hearthNear\(worldFires\(\), pos, BY_FIRE_REACH\);/, 'both pools, the cheap question of the big one (AUDIT F2) - the camps this player is SHOWN (AUDIT SURV-TIERS)');
   // ...and campAt does NOT - a hearth is not a camp, and the menu,
   // the pack and the online record all key on a camp record.
-  assert.match(c, /const campAt = \(pos\) => nearestFire\(camps\.map\(\(c\) => c\.rec\), pos, now\(\)\);/, 'campAt stays the camps’ own');
+  assert.match(c, /const campAt = \(pos\) => nearestFire\(shown\(\)\.map\(\(c\) => c\.rec\), pos, now\(\)\);/, 'campAt stays the camps’ own');
   // a host that passes no door has no world fires, which is every
   // caller's behaviour before this shipped
   assert.match(c, /const worldFires = \(\) => \(survivalOn\(\) && hearths \? hearths\(\) : null\);/, 'and a host that passes no door has no world fires - as every caller did before this shipped');
@@ -225,7 +225,7 @@ test('AUDIT HEARTH1 F1: the world\u2019s fires are behind the mod\u2019s own swi
     assert.equal(pool.targets().length, 1, '...and the ray sees it');
     setPref(SURVIVAL_PREF, 'hard');
     assert.equal(pool.byFire([0, 0, 0]), true, '...in Hard as in Casual');
-    setPref(SURVIVAL_PREF, 'off');
+    setPref(SURVIVAL_PREF, false);
     assert.equal(pool.byFire([0, 0, 0]), false, 'with the mod OFF, there is no such law to answer');
     assert.deepEqual(pool.targets(), [], '...and nothing to activate');
   } finally { setPref(SURVIVAL_PREF, before); }

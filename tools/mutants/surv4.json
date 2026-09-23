@@ -74,7 +74,7 @@
   {
     "name": "SURV4-every-rest-asks-twice",
     "file": "src/systems/encounters.js",
-    "old": "  const asks = Math.max(1, Math.trunc(ctx.restAsks ?? 1));",
+    "old": "  const asks = Number.isFinite(ctx.restAsks) ? Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
     "new": "  const asks = 2;",
     "tests": [
       "test/surv4_rest.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "SURV4-the-kind-is-read-every-hour",
     "file": "src/scenes/shared.js",
-    "old": "        _kind = _rules ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;",
-    "new": "        _kind = REST_KIND.Rough; _roughHours = 0;",
+    "old": "        _place = (_restKindOverride ?? restKind)();",
+    "new": "        _place = REST_KIND.Rough;",
     "tests": [
       "test/surv4_rest.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SURV4-the-mod-off-still-costs",
     "file": "src/scenes/shared.js",
-    "old": "_kind = _rules ? (_restKindOverride ?? restKind)() : REST_KIND.Bed;",
-    "new": "_kind = (_restKindOverride ?? restKind)();",
+    "old": "_kind = _rules ? _place : REST_KIND.Bed;",
+    "new": "_kind = _place;",
     "tests": [
       "test/surv4_rest.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "SURV4-the-entity-never-says-how-it-sleeps",
     "file": "src/scenes/shared.js",
-    "old": "      entity.restKind = b ? _kind : null;",
+    "old": "      entity.restKind = b ? _place : null;",
     "new": "      entity.restKind = null;",
     "tests": [
       "test/surv4_rest.test.js"

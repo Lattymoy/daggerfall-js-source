@@ -1862,7 +1862,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       });
     },
     day: () => !isNight(minuteNow()), inside: () => false,
-    restKind: () => (camps.byFire(walkMode ? player.pos : cam.pos) ? 'camp' : 'rough'),   // SURV4
+    restKind: () => (camps.fireNear(walkMode ? player.pos : cam.pos) ? 'camp' : 'rough'),   // SURV4 (AUDIT SURV-TIERS: the world's fire, in every tier)
   });
   const toggleRest = () => {
     if (townTalk.overlayActive) return;

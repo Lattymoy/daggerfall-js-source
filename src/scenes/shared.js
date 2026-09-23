@@ -1360,7 +1360,7 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
   // add a line to its frame body.
   const subscribers = [];
   // SURV7: the rest gate on DFU's RegisterPreventRestCondition seam, with this host's readers - too cold without a
-  // fire or a roof, too hot anywhere (survival/rest.js restBlock); inert with the mod off
+  // fire or a roof, too hot anywhere (survival/rest.js restBlock); inert but in Hard (SURV-TIERS: env.js survivalGateOn)
   if (survivalEnv) installSurvivalGate(registerPreventRestCondition, () => entity, survivalEnv);
 
   return {
@@ -2021,7 +2021,8 @@ export function createRestDeps(entity, opts = {}) {
     // host that says nothing sleeps rough, which is what the window alone has always been
     restKind = () => REST_KIND.Rough, ...rest
   } = opts;
-  let _kind = REST_KIND.Rough;   // the running rest's kind, read at the open
+  let _kind = REST_KIND.Rough;   // the running rest's kind as the laws PRICE it, read at the open - DFU's bed with the arc off
+  let _place = REST_KIND.Rough;  // AUDIT SURV-TIERS: WHERE the running rest is, read at the open in every tier (see setResting)
   let _rules = null;             // SURV-TIERS: the running rest's tier rules (survival/difficulty.js), read at the open - null with the arc off
   let _roughHours = 0;           // rested hours paid at the rough rate - the stiff morning follows them
   // PARTY-REST10 (2026-09-21, per-request: confirmed by testing - health frozen for 10 straight simulated
@@ -2053,20 +2054,25 @@ export function createRestDeps(entity, opts = {}) {
     setResting: (b) => {
       entity.isResting = !!b;
       // SURV4: the kind is read at the OPEN (the fire may die under a long night - it was lit when you lay down);
-      // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the encounter roll's `roughRest`
+      // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the kind the party pose broadcasts
       // PARTY-REST4b: `_restKindOverride`, when one is set, wins over the inherited `restKind()` position check -
       // see the doc comment above `_restKindOverride`'s declaration for the closure bug this replaces.
+      // AUDIT SURV-TIERS: WHERE and WHAT IT COSTS are two answers. The place is the world's, read in every tier and
+      // stamped on the entity - a party follower mirrors it (world.js partyRestMirrorDeps), and an Off leader had
+      // been broadcasting every field as a bed, so a Casual or Hard follower beside them slept a bed's night. The
+      // price is the tier's: with the arc off every rest is DFU's whole hour (a bed's), in any place.
       if (b) {
-        _rules = survivalRules();   // SURV-TIERS: the kind is WHERE the sleep is; the tier read beside it prices it (restHour, stiffen, the asks)
-        _kind = _rules ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;
+        _rules = survivalRules();   // SURV-TIERS: the tier read beside the place prices it (restHour, stiffen, the asks)
+        _place = (_restKindOverride ?? restKind)();
+        _kind = _rules ? _place : REST_KIND.Bed; _roughHours = 0;
         _roughCarry = { health: 0, fatigue: 0, magicka: 0 };   // PARTY-REST10: a fresh sleep owes nothing to whatever the last one banked
       }
       // SURV4: rough hours rested are a stiff morning (STIFF_HOURS of speed and agility) on the way out - an interrupted
       // night too, since the hours were slept - said once; the hours are spent
       // SURV-TIERS: under the tier the rest opened with - a Casual morning costs nothing, so nothing is said
       if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough, _rules)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
-      entity.restKind = b ? _kind : null;
-      entity.restAsks = b ? restCost(_kind, _rules).encounters : null;   // SURV-TIERS: the resting encounter roll's asks a minute - Hard's rough night two, every Casual night one
+      entity.restKind = b ? _place : null;
+      entity.restAsks = b ? restCost(_kind, _rules).encounters : null;   // SURV-TIERS: the resting encounter roll's asks a minute - Hard's rough night two, every Casual or Off night one
       // PARTY-REST4b: an override is good for exactly one session - the moment THIS session's resting flag drops,
       // forget it, so a later real rest (this same entity choosing to actually rest for themselves) never
       // silently inherits a stale kind broadcast by whoever they last mirrored.

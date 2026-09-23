@@ -2204,7 +2204,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Mac's word, and the whole of it: `resting` is not a fatigue knob,
     // it is the needs' one word for "sat still", and three other laws
     // read it. It held the bare-skin block's naked-cold and sunburn
-    // ticks and the byFire exposure damage (needs.js:387, :369) - the
+    // ticks and the byFire exposure damage (needs.js:419, :401) - the
     // health Mac wants ticking - and, the one TO-FIELD never counted,
     // it shut the HUNTING roll off entirely (hunting.js:114 refuses on
     // `resting`), so a traveller could not hunt on the road at all.
@@ -4365,7 +4365,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT PARTY-REST: where the sleeper stands, not where this bag was built - a follower's mirror inherits this
     // bag in a dungeon or a building too (partyRestMirrorDeps), and RapidHealing's InLight/InDarkness rate reads it.
     inside: () => (modes?.mode ?? 'exterior') !== 'exterior',
-    restKind: () => (camps.byFire(walkMode && playerSpawned ? player.pos : cam.pos) ? 'camp' : 'rough'),   // SURV4: a lit fire near is the sleep; the window alone is rough
+    restKind: () => (camps.fireNear(walkMode && playerSpawned ? player.pos : cam.pos) ? 'camp' : 'rough'),   // SURV4: a lit fire near is the sleep; the window alone is rough (AUDIT SURV-TIERS: the world's fire, in every tier)
   });
   const toggleRest = () => {
     if (townTalk.overlayActive) return;
@@ -9482,8 +9482,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  hourly recovery, floored (systems/survival/rest.js's own restHour) - while the person they were mirroring
    *  slept in the real bed at the real rate. A follower now shares the exact quality of rest the person they are
    *  mirroring is actually getting, since that is what mirroring a rest is supposed to mean. Falls back to the
-   *  inherited position-based check only if the broadcast carried no kind at all (an older peer, or survival mode
-   *  off) - never silently to Rough specifically. */
+   *  inherited position-based check only if the broadcast carried no kind at all (an older peer; AUDIT SURV-TIERS:
+   *  every tier sends its place now) - never silently to Rough specifically. */
   /** AUDIT PARTY-REST: the rest gate's own questions, asked of the FOLLOWER before a mirror opens - the outdoor
    *  toggleRest's restDecision inputs, with the foe scan taken from whichever host I stand in (the hosts answer
    *  `restEnemiesNearby`), plus the interior/dungeon window stack (`modes.overlayHeld`, which townTalk's own
@@ -9513,7 +9513,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // itself the moment resting turns off - so this call must run before the mirror's window-construction call
     // fires `setResting(true)` at construction (world.js's own call site does exactly that: this factory runs to
     // completion, THEN the window is built). Falls back to the inherited position-based check when the broadcast
-    // carried no kind at all (an older peer, or survival mode off) - never silently to Rough specifically.
+    // carried no kind at all (an older peer - every tier sends its place) - never silently to Rough specifically.
     outdoorRestDeps.overrideRestKind(restKind ? () => restKind : null);
     return {
     ...outdoorRestDeps,

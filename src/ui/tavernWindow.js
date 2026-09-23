@@ -39,8 +39,8 @@
 //
 // The three clauses that stood here are all closed (D1):
 // - the TALK button routes to TalkManager.TalkToStaticNPC (:263):
-//   worldModes.js:2892 supplies `onTalk: () => openStaticNpc(pn,
-//   { forceTalk: true })`, which this file consumes at :256 and :265.
+//   worldModes.js:3357 supplies `onTalk: () => openStaticNpc(pn,
+//   { forceTalk: true })`, which this file consumes at :343 and :354.
 // - AddPermanentScene (:246) shipped at P1 - systems/tavern.js:143
 //   addPermanentScene / :93 removePermanentScene, with this window
 //   handing rentRoom its sceneCache at :223. A rented room's CONTENTS
@@ -64,7 +64,7 @@ import { audio } from '../systems/audio.js';   // F145: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 import { survivalOn, survivalRules } from '../systems/survival/switch.js';   // SURV5: the mod's menu stands in for DFU's while the arc is on; SURV-TIERS: the tier prices the drink
-import { tavernMenu, tavernEat, tavernDrink, tavernPour, blackout, TAVERN_MENU_TEXT } from '../systems/survival/tavernMenu.js';
+import { tavernMenu, tavernEat, tavernDrink, tavernOrder, blackout, TAVERN_MENU_TEXT } from '../systems/survival/tavernMenu.js';
 import { survivalOf } from '../systems/survival/needs.js';
 import { stiffen, REST_KIND } from '../systems/survival/rest.js';
 import {
@@ -282,10 +282,10 @@ export class TavernWindow {
         const s = survivalOf(h.entity, now);
         const endurance = h.endurance?.() ?? 50;
         const rules = survivalRules();
-        // SURV-TIERS: a tier without the blackout refuses the drink that would take the night - before the coin changes hands
-        const pour = row.kind === 'drink' ? tavernPour(s, row.strength, { endurance, rules }) : null;
-        if (pour && !pour.ok) return [{ rows: line(pour.text) }];
         if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
+        // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste
+        const order = tavernOrder(s, now, row, { endurance, rules });
+        if (!order.ok) return [{ rows: line(order.text) }];
         deductGold(h.entity, row.price);
         const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });
         h.advanceMinutes?.(r.minutes);

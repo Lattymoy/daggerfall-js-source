@@ -120,8 +120,8 @@
  {
   "name": "AUDIT-FIELD-resting-pays-the-starving-fatigue-anyway",
   "file": "src/systems/survival/needs.js",
-  "old": "  if (hungerAfter === 'starving' && !resting) tire(DRAIN.starving);",
-  "new": "  if (hungerAfter === 'starving') tire(DRAIN.starving);",
+  "old": "  if (hungerAfter === 'starving' && !resting) tire(DRAIN.starving, 'hunger');",
+  "new": "  if (hungerAfter === 'starving') tire(DRAIN.starving, 'hunger');",
   "tests": [
    "test/surv7_feed.test.js"
   ]
@@ -129,8 +129,8 @@
  {
   "name": "AUDIT-FIELD-resting-pays-the-exhausted-fatigue-anyway",
   "file": "src/systems/survival/needs.js",
-  "old": "    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted);",
-  "new": "    if (sleepNow === 'exhausted') tire(DRAIN.exhausted);",
+  "old": "    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted, 'sleep');",
+  "new": "    if (sleepNow === 'exhausted') tire(DRAIN.exhausted, 'sleep');",
   "tests": [
    "test/surv7_feed.test.js"
   ]

@@ -83,7 +83,7 @@
   {
     "name": "SURV1-a-drain-can-empty-a-stat",
     "file": "src/systems/survival/needs.js",
-    "old": "    capped[k] = m < 0 ? -Math.min(-m, Math.max(0, perm - 5)) : m;",
+    "old": "    capped[k] = m < 0 ? -Math.min(-m, Math.max(0, floorAt - 5)) : m;",
     "new": "    capped[k] = m;",
     "tests": [
       "test/surv1_model.test.js"

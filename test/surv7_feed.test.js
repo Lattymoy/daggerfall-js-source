@@ -49,7 +49,7 @@ test('SURV7: the feed - null with the mod off or no env; the env over the defaul
   assert.deepEqual([g.deps.ctx.lycanthrope, g.deps.ctx.beastForm, g.deps.ctx.fireResist, g.deps.ctx.frostResist], [true, true, 30, 10]);
   assert.deepEqual(survivalCtx({ raceId: RACES.Breton, activeEffects: [] }).raceTemplate, raceById(RACES.Breton));
   assert.equal(survivalFeed({ ...p, equip: null }, NOON).deps.worn, null, 'no table, nothing worn');
-  setPref('survival', 'off');
+  setPref('survival', false);
   assert.equal(survivalFeed(p, NOON), null, 'off with the switch');
   _resetForTests();
   assert.equal(ENV_DEFAULTS.climateIndex, 232); assert.equal(ENV_DEFAULTS.sleeping, null);
@@ -77,7 +77,7 @@ test('SURV7: the gate - the record\'s felt word, the host\'s fire and roof, on D
   assert.equal(getPreventedRestMessage(), REST_TEXT_SURVIVAL.tooHot);
   env = { byFire: true, insideBuilding: true };
   assert.equal(getPreventedRestMessage(), REST_TEXT_SURVIVAL.tooHot, 'no fire or roof helps the heat');
-  setPref('survival', 'off');
+  setPref('survival', false);
   assert.equal(getPreventedRestMessage(), null, 'off with the switch');
   _resetForTests();
   clearPreventRestConditions();
@@ -104,7 +104,7 @@ test('SURV7: composed - the ticker feeds the minute law from the host\'s env (th
   assert.equal(q.survival, undefined, 'no env, no needs');
   assert.equal(getPreventedRestMessage(), null, 'and no gate');
   // the mod off
-  setPref('survival', 'off');
+  setPref('survival', false);
   setWorldMinutes(3 * 1440 + 12 * 60);
   const r = player();
   createPlayerTicker(r, { say: () => {}, isInside: () => false, survivalEnv: () => env }).advance(120);

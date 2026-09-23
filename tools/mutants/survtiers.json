@@ -2,8 +2,8 @@
   {
     "name": "SURVTIERS-casual-has-no-floor",
     "file": "src/systems/survival/difficulty.js",
-    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false },",
-    "new": "    stamina: { floor: 0, hotFrom: 51, coldFrom: -31, bareFeet: false },",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true },",
+    "new": "    stamina: { floor: 0, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true },",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SURVTIERS-casual-charges-amber-heat",
     "file": "src/systems/survival/difficulty.js",
-    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false },",
-    "new": "    stamina: { floor: 0.5, hotFrom: 31, coldFrom: -31, bareFeet: false },",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 31, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true },",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SURVTIERS-casual-charges-amber-cold",
     "file": "src/systems/survival/difficulty.js",
-    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false },",
-    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -11, bareFeet: false },",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -11, bareFeet: false, duringRest: false, repaid: true },",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SURVTIERS-casual-taxes-bare-feet",
     "file": "src/systems/survival/difficulty.js",
-    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false },",
-    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: true },",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: true, duringRest: false, repaid: true },",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SURVTIERS-hard-grows-a-floor",
     "file": "src/systems/survival/difficulty.js",
-    "old": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true },",
-    "new": "    stamina: { floor: 0.5, hotFrom: 20, coldFrom: -20, bareFeet: true },",
+    "old": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false },",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -155,32 +155,32 @@
   {
     "name": "SURVTIERS-a-non-tier-reads-as-itself",
     "file": "src/systems/survival/difficulty.js",
-    "old": "export const normalizeTier = (v) => (typeof v === 'string' && SURVIVAL_TIER_IDS.includes(v) ? v : SURVIVAL_DEFAULT);",
-    "new": "export const normalizeTier = (v) => (v === false ? 'off' : typeof v === 'string' && SURVIVAL_TIER_IDS.includes(v) ? v : SURVIVAL_DEFAULT);",
+    "old": "export const tierOfStored = (v) => TIER_OF_STORED.get(v) ?? SURVIVAL_DEFAULT;",
+    "new": "export const tierOfStored = (v) => TIER_OF_STORED.get(v) ?? (typeof v === 'string' ? v : SURVIVAL_DEFAULT);",
     "tests": [
       "test/survtiers.test.js"
     ]
   },
   {
-    "name": "SURVTIERS-switch-reads-the-old-boolean",
+    "name": "SURVTIERS-switch-reads-the-raw-shelf",
     "file": "src/systems/survival/switch.js",
-    "old": "export const survivalOn = () => survivalTier() !== SURVIVAL_OFF;",
-    "new": "export const survivalOn = () => getPref(SURVIVAL_PREF) !== false;",
+    "old": "export const survivalTier = () => tierOfStored(getPref(SURVIVAL_PREF));",
+    "new": "export const survivalTier = () => getPref(SURVIVAL_PREF);",
     "tests": [
       "test/survtiers.test.js"
     ]
   },
   {
-    "name": "SURVTIERS-migration-dropped",
+    "name": "SURVTIERS-the-load-keeps-a-value-that-is-no-tier",
     "file": "src/systems/uiPrefs.js",
-    "old": "        if (p.survival === false) _prefs.survival = SURVIVAL_OFF;",
-    "new": "        if (p.survival === 'never') _prefs.survival = SURVIVAL_OFF;",
+    "old": "        if (p.survival !== undefined && !isStoredTier(p.survival)) _prefs.survival = PREF_DEFAULTS.survival;",
+    "new": "",
     "tests": [
       "test/survtiers.test.js"
     ]
   },
   {
-    "name": "SURVTIERS-row-default-true",
+    "name": "SURVTIERS-row-default-hard",
     "file": "src/systems/features.js",
     "old": "store: 'prefs', key: 'survival', initial: 'casual', online: 'player',",
     "new": "store: 'prefs', key: 'survival', initial: 'hard', online: 'player',",
@@ -189,19 +189,10 @@
     ]
   },
   {
-    "name": "SURVTIERS-row-forced-online",
-    "file": "src/systems/features.js",
-    "old": "store: 'prefs', key: 'survival', initial: 'casual', online: 'player',",
-    "new": "store: 'prefs', key: 'survival', initial: 'casual', online: true,",
-    "tests": [
-      "test/survtiers.test.js"
-    ]
-  },
-  {
     "name": "SURVTIERS-tire-ignores-the-floor",
     "file": "src/systems/survival/needs.js",
-    "old": "    if (!(floorShare > 0)) { sinks.drainFatigue?.(n); return; }",
-    "new": "    { sinks.drainFatigue?.(n); return; }",
+    "old": "    if (floorShare > 0) {\n      budget ??=",
+    "new": "    if (false) {\n      budget ??=",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -227,8 +218,8 @@
   {
     "name": "SURVTIERS-heat-band-ignored",
     "file": "src/systems/survival/needs.js",
-    "old": "    if (temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom) tire(",
-    "new": "    if (abs >= 20) tire(",
+    "old": "  const tempRed = temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom;",
+    "new": "  const tempRed = abs >= 20;",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -245,8 +236,8 @@
   {
     "name": "SURVTIERS-stat-mods-ignore-the-tier",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (rules.attributes) {\n    const starve",
-    "new": "  if (true) {\n    const starve",
+    "old": "  if ((rules ?? HARD_RULES).attributes) {",
+    "new": "  if (true) {",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -362,9 +353,9 @@
     ]
   },
   {
-    "name": "SURVTIERS-window-pours-after-the-coin",
+    "name": "SURVTIERS-window-serves-what-the-house-refused",
     "file": "src/ui/tavernWindow.js",
-    "old": "        if (pour && !pour.ok) return [{ rows: line(pour.text) }];",
+    "old": "        if (!order.ok) return [{ rows: line(order.text) }];",
     "new": "",
     "tests": [
       "test/survtiers.test.js"
@@ -386,6 +377,340 @@
     "new": "      restAsks: 1,",
     "tests": [
       "test/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rest-pays-the-cold",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: true, repaid: true },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-takes-for-good",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false, duringRest: false, repaid: false },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-wastes-the-meal",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    wastedMeal: false,   // a meal bought",
+    "new": "    wastedMeal: true,   // a meal bought",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hard-rest-sheltered-from-the-band",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false },",
+    "new": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: false, repaid: false },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hard-repays",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: false },",
+    "new": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true, duringRest: true, repaid: true },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-stored-by-name",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "export const SURVIVAL_STORED = Object.freeze({ off: false,",
+    "new": "export const SURVIVAL_STORED = Object.freeze({ off: 'off',",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-row-stores-off-by-name",
+    "file": "src/systems/features.js",
+    "old": "tiers: Object.freeze([[false, 'Off'],",
+    "new": "tiers: Object.freeze([['off', 'Off'],",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-rest-charges-the-band",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (tempRed && (!resting || rules.stamina.duringRest)) tire(",
+    "new": "    if (tempRed) tire(",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-loan-is-never-written",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (repays) { const b = (s.borrowed ??= {}); b[need] = (b[need] ?? 0) + d; }",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-loan-is-never-repaid",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (repays && s.borrowed) {\n    const met",
+    "new": "  if (false) {\n    const met",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-rest-repays-the-hunger",
+    "file": "src/systems/survival/needs.js",
+    "old": "    const met = { hunger: hungerAfter !== 'starving',",
+    "new": "    const met = { hunger: hungerAfter !== 'starving' || resting,",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-repaid-past-the-pool",
+    "file": "src/systems/survival/needs.js",
+    "old": "    const give = Math.min(back, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));",
+    "new": "    const give = back;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hard-keeps-a-casual-loan",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (!repays && s.borrowed) delete s.borrowed;",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-null-rules-crash-the-minute",
+    "file": "src/systems/survival/needs.js",
+    "old": "  const rules = deps.rules ?? HARD_RULES;",
+    "new": "  const rules = deps.rules === undefined ? HARD_RULES : deps.rules;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-cap-reads-the-permanent-stat",
+    "file": "src/systems/survival/needs.js",
+    "old": "    const floorAt = Math.min(perm, liveStat(entity, k, 'survival'));",
+    "new": "    const floorAt = perm;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-cap-counts-its-own-drain",
+    "file": "src/systems/survival/needs.js",
+    "old": "liveStat(entity, k, 'survival')",
+    "new": "liveStat(entity, k)",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-drink-reads-the-permanent-endurance",
+    "file": "src/systems/survival/needs.js",
+    "old": "survivalStatMods(s, temp, now, { endurance: liveStat(entity, 'endurance'), rules })",
+    "new": "survivalStatMods(s, temp, now, { endurance, rules })",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-minutes-are-needs",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (idle > 0) {\n    s.lastAte",
+    "new": "  if (false) {\n    s.lastAte",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-walk-shifts-too",
+    "file": "src/systems/survival/needs.js",
+    "old": "  const idle = Math.floor(from) - last;",
+    "new": "  const idle = Math.floor(to) - last;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-half-hour-falls-to-night",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  const h = ((Math.floor(hour ?? 12)) % 24 + 24) % 24;",
+    "new": "  const h = ((hour ?? 12) % 24 + 24) % 24;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-stamps-a-bed",
+    "file": "src/scenes/shared.js",
+    "old": "      entity.restKind = b ? _place : null;",
+    "new": "      entity.restKind = b ? _kind : null;",
+    "tests": [
+      "test/survtiers.test.js",
+      "test/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-count-that-is-no-number-asks-nothing",
+    "file": "src/systems/encounters.js",
+    "old": "Math.max(1, Math.trunc(ctx.restAsks)) : 1;",
+    "new": "Math.max(1, Math.trunc(ctx.restAsks)) : 0;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-rest-place-reads-the-shown-fire",
+    "file": "src/scenes/world.js",
+    "old": "restKind: () => (camps.fireNear(walkMode && playerSpawned",
+    "new": "restKind: () => (camps.byFire(walkMode && playerSpawned",
+    "tests": [
+      "test/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-interiors-hearth-is-bare-ground",
+    "file": "src/scenes/worldModes.js",
+    "old": " : interiorCamps.fireNear(player.pos) ? 'camp' : 'rough'; },",
+    "new": " : 'rough'; },",
+    "tests": [
+      "test/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-kitchen-sells-casual-a-waste",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && now - (s?.lastAte ?? now) < (row.worth ?? 0)) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-kitchen-refuses-at-the-worth",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "now - (s?.lastAte ?? now) < (row.worth ?? 0)) return",
+    "new": "now - (s?.lastAte ?? now) <= (row.worth ?? 0)) return",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-order-skips-the-pour",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if (row?.kind === 'drink') return tavernPour(s, row.strength, { endurance, rules });",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-pour-refuses-at-the-endurance",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if ((s?.drunk ?? 0) + (strength | 0) > endurance)",
+    "new": "  if ((s?.drunk ?? 0) + (strength | 0) >= endurance)",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-window-asks-the-house-before-the-gold",
+    "file": "src/ui/tavernWindow.js",
+    "old": "        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];\n        // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n        const order = tavernOrder(s, now, row, { endurance, rules });\n        if (!order.ok) return [{ rows: line(order.text) }];",
+    "new": "        const order = tavernOrder(s, now, row, { endurance, rules });\n        if (!order.ok) return [{ rows: line(order.text) }];\n        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-enhanced-serves-what-the-house-refused",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "  if (!order.ok) { say(line(order.text)); return; }",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-enhanced-closes-the-menu-on-a-refusal",
+    "file": "src/ui/enhancedTavern.js",
+    "old": "  if (!order.ok) { say(line(order.text)); return; }",
+    "new": "  if (!order.ok) { menu = null; say(line(order.text)); return; }",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-eats-at-hard",
+    "file": "src/systems/useItem.js",
+    "old": "rules: survivalRules() ?? SURVIVAL_RULES.casual });",
+    "new": "rules: survivalRules() ?? undefined });",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-shows-the-camps-it-keeps",
+    "file": "src/scenes/camps.js",
+    "old": "  const shown = () => (survivalOn() ? camps : NO_CAMPS);",
+    "new": "  const shown = () => camps;",
+    "tests": [
+      "test/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-drops-a-peers-camps",
+    "file": "src/scenes/camps.js",
+    "old": "  function applyOwner(owner, records, toScene = (p) => p, nowMs = 0) {\n",
+    "new": "  function applyOwner(owner, records, toScene = (p) => p, nowMs = 0) {\n    if (!survivalOn()) return null;\n",
+    "tests": [
+      "test/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-off-stands-a-camp-it-cannot-show",
+    "file": "src/scenes/camps.js",
+    "old": "    if (!survivalOn()) { say(CAMP_TEXT.arcOff); return false; }",
+    "new": "",
+    "tests": [
+      "test/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-fireNear-is-the-tiers-again",
+    "file": "src/scenes/camps.js",
+    "old": "  const fireNear = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now())",
+    "new": "  const fireNear = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now())",
+    "tests": [
+      "test/auditsurv.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-mirror-overrides-a-vital",
+    "file": "src/scenes/world.js",
+    "old": "    enemiesNearby: () => false,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
+    "new": "    enemiesNearby: () => false,\n    fullyHealed: () => false,\n    advanceMinutes: (n) => { playerTicker.advance(n); },",
+    "tests": [
+      "test/partyrest1.test.js"
     ]
   }
 ]

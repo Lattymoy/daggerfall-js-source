@@ -238,10 +238,10 @@
     ]
   },
   {
-    "name": "AUDITSURV-the-pool-stands-camps-with-the-mod-off",
+    "name": "AUDITSURV-off-refuses-the-saves-camps-again",
     "file": "src/scenes/camps.js",
-    "old": "  function restore(list, fromWorld = (p) => p) {\n    if (!survivalOn()) return null;",
-    "new": "  function restore(list, fromWorld = (p) => p) {",
+    "old": "  function restore(list, fromWorld = (p) => p) {\n    // AUDIT SURV B: a MERGE by id",
+    "new": "  function restore(list, fromWorld = (p) => p) {\n    if (!survivalOn()) return null;\n    // AUDIT SURV B: a MERGE by id",
     "tests": [
       "test/auditsurv.test.js"
     ]
@@ -276,7 +276,7 @@
   {
     "name": "AUDITSURV-bare-feet-cost-blood-every-minute",
     "file": "src/systems/survival/needs.js",
-    "old": "      if (rules.stamina.bareFeet) tire(DRAIN.bareFeet);\n",
+    "old": "      if (rules.stamina.bareFeet) tire(DRAIN.bareFeet, 'feet');\n",
     "new": "      sinks.hurt?.(1);\n",
     "tests": [
       "test/auditsurv.test.js"

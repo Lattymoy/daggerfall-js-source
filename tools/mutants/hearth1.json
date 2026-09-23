@@ -74,8 +74,8 @@
  {
   "name": "HEARTH1-byFire-forgets-the-world-fires-again-and-only-a-placed-camp-counts",
   "file": "src/scenes/camps.js",
-  "old": "  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now())\n    || hearthNear(worldFires(), pos, BY_FIRE_REACH);   // AUDIT HEARTH1 F2: the FIRST fire in reach, not the nearest - this runs every frame",
-  "new": "  const byFire = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now());",
+  "old": "  const byFire = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now())\n    || hearthNear(worldFires(), pos, BY_FIRE_REACH);   // AUDIT HEARTH1 F2: the FIRST fire in reach, not the nearest - this runs every frame",
+  "new": "  const byFire = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now());",
   "tests": [
    "test/hearth1_worldfires.test.js"
   ]
@@ -83,8 +83,8 @@
  {
   "name": "HEARTH1-campAt-answers-with-a-hearth-so-a-brazier-becomes-a-camp-to-pack-and-publish",
   "file": "src/scenes/camps.js",
-  "old": "  const campAt = (pos) => nearestFire(camps.map((c) => c.rec), pos, now());",
-  "new": "  const campAt = (pos) => nearestFire(camps.map((c) => c.rec), pos, now()) ?? hearthAt(pos);",
+  "old": "  const campAt = (pos) => nearestFire(shown().map((c) => c.rec), pos, now());",
+  "new": "  const campAt = (pos) => nearestFire(shown().map((c) => c.rec), pos, now()) ?? hearthAt(pos);",
   "tests": [
    "test/hearth1_worldfires.test.js"
   ]

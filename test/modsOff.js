@@ -12,7 +12,7 @@ import { setPref, _resetForTests } from '../src/systems/uiPrefs.js';   // SURV2:
 export function modsOff() {
   _resetModSettings();
   for (const [vendor, def] of Object.entries(MOD_SETTINGS)) if (def.keys.Enabled) setModSetting(vendor, 'Enabled', false);   // Basic Roads has no switch: it is the road network itself
-  _resetForTests(); setPref('survival', 'off');   // SURV2: Climates & Calories rides the prefs shelf (survival/switch.js), not modSettings - off with the rest, so the corpse and the shelf are DFU's (SURV-TIERS: its Off tier)
+  _resetForTests(); setPref('survival', false);   // SURV2: Climates & Calories rides the prefs shelf (survival/switch.js), not modSettings - off with the rest, so the corpse and the shelf are DFU's (SURV-TIERS: its Off tier)
 }
 
 modsOff();

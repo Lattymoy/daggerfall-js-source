@@ -665,7 +665,7 @@ third was a thing the port never said out loud.
 
   **And `resting` holds two HEALTH arms with the fatigue ones** (F12),
   which the first cut did not disclose: the bare-skin block's naked-cold
-  and sunburn ticks (`needs.js:387`), and, for a traveller who is also
+  and sunburn ticks (`needs.js:419`), and, for a traveller who is also
   `byFire`, the exposure damage at `:369`. Harm you cannot answer while
   the autopilot holds the controls is not a loss worth keeping. The law
   is executed now, not matched: `test/surv7_feed.test.js` runs ten game

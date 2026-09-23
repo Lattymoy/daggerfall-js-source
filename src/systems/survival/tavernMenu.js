@@ -25,9 +25,12 @@
 // SURV-TIERS (2026-09-23): the blackout is the tier's (`blackout`,
 // survival/difficulty.js - Hard's alone). A tier without it never takes
 // the night: the barkeep will not pour the drink that would carry the
-// counter past the endurance (`tavernPour`, asked BEFORE the coin
-// changes hands), so a Casual evening ends very drunk at worst, and a
-// soft drink always pours.
+// counter past the endurance (`tavernPour`), so a Casual evening ends
+// very drunk at worst, and a soft drink always pours. AUDIT SURV-TIERS:
+// and the wasted meal is the tier's too (`wastedMeal`) - a tier without
+// it will not sell a meal to a stomach too full for it. Both are asked
+// in one place, `tavernOrder`, after the gold and BEFORE the coin
+// changes hands, so a refusal never costs a coin or a minute.
 import { NEED } from './needs.js';
 import { HARD_RULES } from './difficulty.js';
 
@@ -128,7 +131,12 @@ export const TAVERN_MENU_TEXT = Object.freeze({
   gettingDrunk: 'You are getting drunk...',
   veryDrunk: 'You are very drunk...',
   blackout: 'The room spins. You black out.',
-  cutOff: 'The barkeep takes one look at you and will not pour you another.',   // SURV-TIERS: the tier without the blackout
+  // SURV-TIERS: the tier without the blackout. AUDIT SURV-TIERS: the
+  // line said "another", and a first spirit on a low endurance is
+  // refused too - it names the reason instead, which also tells the
+  // player a lighter drink may still pour.
+  cutOff: 'The barkeep shakes their head: that one would put you on the floor.',
+  fullForMeal: 'You are too full to eat a meal yet.',   // AUDIT SURV-TIERS: the tier without the wasted meal
   noGold: 'You do not have enough gold.',
   drinksHeader: '--- Drinks ---',
 });
@@ -165,6 +173,16 @@ export function tavernEat(s, now, worth) {
 export function tavernPour(s, strength, { endurance = 50, rules = HARD_RULES } = {}) {
   if ((rules ?? HARD_RULES).blackout || !((strength | 0) > 0)) return { ok: true };
   if ((s?.drunk ?? 0) + (strength | 0) > endurance) return { ok: false, text: TAVERN_MENU_TEXT.cutOff };
+  return { ok: true };
+}
+/** AUDIT SURV-TIERS: whether the house serves this row at all - both windows ask it after the gold and BEFORE the
+ *  coin changes hands. A drink is the pour's question (tavernPour). A meal on a stomach too full for it (the
+ *  hunger under the meal's worth - tavernEat's own test) is Hard's to sell: TavernFood charges it, passes the half
+ *  hour and wastes it, the mod's quirk kept (`wastedMeal`). A tier without the waste will not sell it. Never
+ *  touches the record. */
+export function tavernOrder(s, now, row, { endurance = 50, rules = HARD_RULES } = {}) {
+  if (row?.kind === 'drink') return tavernPour(s, row.strength, { endurance, rules });
+  if (row?.kind === 'food' && !(rules ?? HARD_RULES).wastedMeal && now - (s?.lastAte ?? now) < (row.worth ?? 0)) return { ok: false, text: TAVERN_MENU_TEXT.fullForMeal };
   return { ok: true };
 }
 /** TavernDrink: the thirst quenched, the counter up by the strength; the word by the endurance bands; past it, the

@@ -800,6 +800,10 @@ export const FEATURES = Object.freeze([
   // the food, water and camping items the store shelves and a new
   // character carries, camps and campfires, the costed rest, hunting.
   // Off is the classic game: no needs, no provisions minted.
+  // SURV-TIERS (2026-09-23): the one switch is three tiers now - Off,
+  // Casual (the default: the needs only borrow stamina, and a rest,
+  // a meal or a drink never costs more than it gives) and Hard (the arc
+  // as above, the costed rest with it); survival/difficulty.js.
   // BLOOD1 (2026-09-19, Mac: "I really want to try and build our own
   // version as close to 1:1 as possible" / "read in how their module
   // works so we can achieve our own type of parity") - THE PORT'S OWN
@@ -879,8 +883,8 @@ export const FEATURES = Object.freeze([
     group: 'character',
     title: 'Climates & Calories by Ralzar',   // AUDIT SURV E: the author's name, as every mod row carries it
     note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
-      + 'campfire or a bed. Casual costs only stamina, never below half; Hard costs attributes and health and brings '
-      + 'sickness. Off is the classic game.',
+      + 'campfire or a bed. Casual only lends stamina (never below half), repaid when the need is met; Hard costs '
+      + 'attributes and health and brings sickness; Off is the classic game.',
     effect: 'Takes effect at once, online too - each player picks their own.',
     kinds: Object.freeze(['mod', 'enhanced', 'classic']),   // AUDIT SURV E: a mod row, under the MOD AUTHORED filter
     // MODS-ONLINE-3 (2026-09-22, Mac): THIS IS A MOD ROW AND IT IS THE
@@ -907,13 +911,15 @@ export const FEATURES = Object.freeze([
     // default, "but still let it be able to be turned off for online"):
     // THREE TIERS ON THE ONE KEY, and the same reading holds for each -
     // a tier decides only what MY body pays (survival/difficulty.js), so
-    // every tier, Off included, stays the player's online. The ids are
-    // difficulty.js SURVIVAL_TIER_IDS and the default its SURVIVAL_DEFAULT
-    // (test/survtiers.test.js holds the row to them, as the Gore row is
-    // held to GORE_TIERS).
+    // every tier, Off included, stays the player's online. The segments
+    // write difficulty.js SURVIVAL_STORED - Off as the old switch's own
+    // `false` (AUDIT SURV-TIERS: an older build reading the same shelf
+    // still sees Off as off), Casual and Hard by name - and the default
+    // is its SURVIVAL_DEFAULT (test/survtiers.test.js holds the row to
+    // them, as the Gore row is held to GORE_TIERS).
     control: Object.freeze({
       store: 'prefs', key: 'survival', initial: 'casual', online: 'player',
-      tiers: Object.freeze([['off', 'Off'], ['casual', 'Casual'], ['hard', 'Hard']]),
+      tiers: Object.freeze([[false, 'Off'], ['casual', 'Casual'], ['hard', 'Hard']]),
     }),
   }),
 ]);

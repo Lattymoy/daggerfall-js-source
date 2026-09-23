@@ -72,6 +72,10 @@ export const CAMP_TEXT = Object.freeze({
   // (a player reported camping kits that "don't work", and a refusal
   // with no words is indistinguishable from a broken item).
   noSpot: 'You cannot find anywhere to make camp.',
+  // AUDIT SURV-TIERS: with the arc Off a camp could be neither seen nor
+  // used (scenes/camps.js shown), so none is stood - and the refusal
+  // names the one thing that would change it, CAMP-SILENT's law.
+  arcOff: 'Turn Climates & Calories on to make camp.',
   pitched: 'You pitch your tent and light a fire.',
   lit: 'You light a campfire.',
   kitSpent: 'That was the last of your campfire kit.',

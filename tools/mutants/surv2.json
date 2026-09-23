@@ -101,7 +101,7 @@
   {
     "name": "SURV2-the-ladder-reaches-the-book-arm-for-our-items",
     "file": "src/systems/useItem.js",
-    "old": "  if (isSurvivalItem(item)) out = useSurvivalItem(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease, rules: survivalRules() ?? undefined });",
+    "old": "  if (isSurvivalItem(item)) out = useSurvivalItem(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease, rules: survivalRules() ?? SURVIVAL_RULES.casual });",
     "new": "  if (false) out = null;",
     "tests": [
       "test/surv2_items.test.js"

@@ -144,7 +144,7 @@ test('AUDIT SURV A/B: the minute marker - a span run under a rest is not run aga
   clearSurvivalMods(p);
   assert.equal(p.activeEffects.some((a) => a.kind === 'survival'), false);
   applySurvivalMods(p, { strength: -12 });
-  setPref('survival', 'off');
+  setPref('survival', false);
   setWorldMinutes(3 * 1440);
   createPlayerTicker(p, { say: () => {}, isInside: () => false, survivalEnv: () => NOON }).advance(10);
   assert.equal(p.activeEffects.some((a) => a.kind === 'survival'), false, 'the tick with no feed drops the drains the mod left');
@@ -286,14 +286,16 @@ test('AUDIT SURV C: what the player is told - a vampire\'s strip has no hunger o
   assert.match(invSrc, /if \(usableItem\(picked\)\) \{\n\s+u\.onclick/, 'Use only where the law has an arm');
 });
 
-test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carries none, an empty word reaches the cell, a restore merges by id, the mod off stands nothing; the dungeon rest pays its night asleep; the clock correction re-aligns', async () => {
+test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carries none, an empty word reaches the cell, a restore merges by id, Off keeps them and hides them; the dungeon rest pays its night asleep; the clock correction re-aligns', async () => {
   const world = read('src/scenes/world.js'), dc = read('src/scenes/dungeonContext.js'), campsSrc = read('src/scenes/camps.js');
   assert.doesNotMatch(world, /camps\.collectPixel\(key\)/, 'a placed camp is not a dropped pile: the streaming sweep leaves it');
   assert.doesNotMatch(world, /camps: camps\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\),   \/\/ SURV3: my camps, in natives\n\s+\}\);\n\s+\}\n\s+function restoreExteriorScene|camps\.restore\(arrived\.camps/, 'the scene cache carries no camps - the pool is the truth');
   assert.match(world, /if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);/, 'an empty list says "none stand"');
   assert.match(world, /if \(Math\.abs\(offsetMs - was\) > 1000\) \{ onlineArrival\(\); alignSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(worldMinutes\(\)\)\); \}/, 'a clock correction re-aligns the needs');
   assert.match(dc, /const feed = survivalFeed\(playerEntity, survivalEnvNow\(\), \{ say: \(msg\) => hudText\.add\(msg\) \}\);\n\s+if \(feed\) runSurvivalMinutes\(playerEntity, start, Math\.floor\(end\), feed\.env, \{ \.\.\.feed\.deps, sinks: playerSinks, rolls: Math\.random \}\);/, 'the dungeon rest pays its night asleep, under the window');
-  assert.match(campsSrc, /if \(!survivalOn\(\)\) return null;/, 'the pool stands nothing with the mod off');
+  // AUDIT SURV-TIERS: the pool REFUSED a restore and a peer's word with the arc off, so a save made Off lost every
+  // camp and an Off host dropped its peers' camps from the room it passes on. Off hides; it does not burn.
+  assert.doesNotMatch(campsSrc, /if \(!survivalOn\(\)\) return null;/, 'Off refuses no record');
   // the merge
   const { createCamps } = await import('../src/scenes/camps.js');
   const { TENT_MODEL } = await import('../src/systems/survival/camp.js');
@@ -308,10 +310,28 @@ test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carrie
   assert.equal(pool.camps.length, 2, 'a second restore of the same records stands no twins');
   pool.restore([{ id: 'me:3', kind: 'fire', pos: [9, 0, 1], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }]);
   assert.equal(pool.camps.length, 3, 'and a new record joins the standing ones');
-  _resetForTests(); setPref('survival', 'off');
+  setWorldMinutes(100);
+  await new Promise((r) => setTimeout(r, 0));   // the tent's mesh is up
+  const tents = () => pool.draw({ drawMesh: () => {} });
+  assert.deepEqual([pool.byFire([1, 0, 1]), tents()], [true, 1], 'on, the fire warms and the tent stands');
+  _resetForTests(); setPref('survival', false);
   pool.restore([{ id: 'me:4', kind: 'fire', pos: [9, 0, 9], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }]);
-  assert.equal(pool.camps.length, 3, 'the mod off: nothing stands');
+  assert.equal(pool.camps.length, 4, 'Off: the save\'s camp is kept');
+  assert.equal(pool.snapshot().length, 4, '...and the next save still carries it');
+  assert.equal(pool.applyOwner('peer', [{ i: 'p:1', k: 1, p: [20, 0, 20], y: 0, u: 500, w: 0 }]), true, 'a peer\'s word lands too');
+  assert.equal(pool.camps.length, 5);
+  assert.deepEqual([pool.targets(), pool.lights(), pool.batches(), tents()], [[], [], [], 0], 'but nothing is shown: no ray, no light, no flame, no tent');
+  assert.equal(pool.byFire([1, 0, 1]), false, 'no warmth and no camp\'s rest for this player');
+  assert.equal(pool.hoverName('camp:me:1'), null, 'no name');
+  assert.equal(pool.activate('camp:me:1', 'info'), false, 'no menu');
+  assert.equal(pool.fireNear([1, 0, 1]), true, 'the world still has the fire - the rest\'s PLACE reads it (shared.js createRestDeps)');
+  const said = [];
+  const off = createCamps({ entity, camera: () => ({ feet: [0, 0, 0], yaw: 0 }), say: (l) => said.push(l) });
+  assert.equal(off.placeItem(createSurvivalItem(TEMPLATE.Campfire), [createSurvivalItem(TEMPLATE.Campfire)]), false, 'Off stands no new camp');
+  assert.deepEqual([said, off.camps.length], [[CAMP_TEXT.arcOff], 0], '...and says what would change that (CAMP-SILENT)');
   _resetForTests();
+  assert.deepEqual([pool.byFire([1, 0, 1]), pool.byFire([20, 0, 20]), tents()], [true, true, 1], 'on again, every kept camp is back where it was');
+  setWorldMinutes(0);
 });
 
 test('AUDIT SURV D: the save carries the record - the markers and the cooldown round-trip, the notes do not', () => {
@@ -330,7 +350,7 @@ test('AUDIT SURV D: the save carries the record - the markers and the cooldown r
   assignStartingGear(born, { classIndex: 0, rolls: () => 0.5 });
   assert.ok(born.items.some((i) => isSurvivalItem(i) && i.templateIndex === TEMPLATE.Waterskin), 'a waterskin in the chargen kit');
   assert.ok(born.items.some((i) => i.templateIndex === TEMPLATE.Rations) && born.items.some((i) => i.templateIndex === TEMPLATE.Campfire), 'rations and a fire kit');
-  setPref('survival', 'off');
+  setPref('survival', false);
   const bare = { items: [], gender: 'male', stats: { ...STATS }, career: {}, activeEffects: [] };
   assignStartingGear(bare, { classIndex: 0, rolls: () => 0.5 });
   assert.equal(bare.items.some((i) => isSurvivalItem(i)), false, 'the mod off: DFU\'s kit alone');

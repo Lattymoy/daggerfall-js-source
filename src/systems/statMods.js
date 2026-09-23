@@ -33,12 +33,13 @@ export const MAX_STAT_VALUE = 100;
  *  per-minute and per-day damage, fortify magnitudes) accumulate
  *  unbounded, as DFU's do. Combat and advancement read THIS, never
  *  the raw base. */
-export function liveStat(entity, statName) {
+export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TIERS: `skipKind` leaves one entry kind out - the survival law caps its own entry against the stat WITHOUT it
   const base = entity.stats?.[statName] ?? 0;
   let mod = 0;
   const list = entity.activeEffects;
   if (list) {
     for (const a of list) {
+      if (skipKind != null && a?.kind === skipKind) continue;
       // disease/poison entries carry a signed per-stat statMods map
       // (poison drugs push POSITIVE mods - S19b)
       if (a.kind === 'disease' || a.kind === 'poison') { mod += a.statMods?.[statName] ?? 0; continue; }
