@@ -74,7 +74,7 @@
   {
     "name": "casters-three",
     "file": "src/render/shadowPass.js",
-    "old": "export const SHADOW_POINT_CASTERS = 6;",
+    "old": "export const SHADOW_POINT_CASTERS = 8;",
     "new": "export const SHADOW_POINT_CASTERS = 5;",
     "tests": [
       "test/el5_field.test.js"

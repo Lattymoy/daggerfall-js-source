@@ -67,6 +67,7 @@ const W = 640, H = 400;
 const result = await page.evaluate(async ({ W, H }) => {
   const { Renderer, WORLD_FRAME } = await import('/src/render/renderer.js');
   const { EL_LANE, lanternColor, dungeonAmbient, dungeonFog } = await import('/src/render/enhancedLighting.js');
+  const { SHADOW_POINT_CASTERS } = await import('/src/render/shadowPass.js');   // HQ1: the contact scene fills every slot
   const { perspective, lookAt, mirrorProjectionX, identity } = await import('/src/world/mat4.js');
   const { DUNGEON_FOG } = await import('/src/render/underwaterFog.js');
 
@@ -160,7 +161,7 @@ const result = await page.evaluate(async ({ W, H }) => {
       const mask = new Uint8Array(L.length >> 2); mask[mask.length - 1] = 1; L.carried = mask;
     }
     if (contact !== null) {   // EL8: six dim lanterns beside the eye take the caster slots, so A and B are contact-shadowed, not mapped (BUGS-5 F3: two units out - a light within 1.5 of the eye is the hand's and never casts)
-      const dummies = []; for (let k = 0; k < 6; k++) dummies.push(eye[0] + 2 * Math.cos(k), eye[1] - 0.5, eye[2] + 2 * Math.sin(k), 0.3);
+      const dummies = []; for (let k = 0; k < SHADOW_POINT_CASTERS; k++) dummies.push(eye[0] + 2 * Math.cos(k), eye[1] - 0.5, eye[2] + 2 * Math.sin(k), 0.3);
       L = new Float32Array([...dummies, ...L]);
       r.setContact(contact);
     } else r.setContact(true);

@@ -1019,3 +1019,45 @@ Pinned: `test/sc1_shadowcache.test.js` (7). `el8_contact`'s cadence pin
 drives a walking mesh now; `el2_shadows`/`el5_field` count the cache's
 layers and storage; `weeds1_flatcasters`' replay signature carries the
 filter.
+
+## HQ1 - THE COLOUR THROUGH THE CURVE, THE HORIZONS, EIGHT CASTERS (2026-09-23, Mac: "Go" - the visible step of the second arc)
+
+**The colour through the curve** (`elTonemapRGB`, enhancedLighting.js).
+Per-channel Reinhard bends HUE as it compresses: a torch's warm light
+(r > g > b) has its red on the shoulder while its blue is still on the
+slope, so the brighter the flame the more it went yellow-white and then
+flat white, and a sunlit red wall lost its red before it lost its light.
+The lane's finish, the in-scatter glow and the far ring take the
+luminance-preserving blend now ("Reinhard-Jodie"): the curve on the
+LUMINANCE keeps a colour's ratios, the curve PER CHANNEL is what the eye
+expects at the very top (light desaturates toward white), mixed by the
+per-channel result itself - so the dark and the mid-tones take the
+first and only the highlights the second. Every law of the curve holds
+(`elTonemap` is the same function): 0 to 0, identity in the dark end,
+the white point to display white, monotone, a grey unchanged. A flame at
+three times white reads (0.91, 0.77, 0.54) now against (0.89, 0.78, 0.60)
+before: orange, not straw.
+
+**The horizons** (`AO_FS`, airPass.js). EL3's occlusion scattered twelve
+points through a hemisphere and counted the ones the depth image put
+behind a surface - a coin toss per sample, so a crevice's darkness was a
+speckle the blur then smeared, and a flat floor beside a wall took as
+much as the corner itself. The ground-truth form now (GTAO, Jimenez
+2016): in each of `AIR_AO_DIRECTIONS` (2) screen-space slices through the
+pixel, a quarter turn apart and turned by EL6's ordered rotation, march
+`AIR_AO_SAMPLES` (6) steps out each way to the radius, keep the highest
+horizon either side (each step's claim weighted down by its distance, so
+the radius is a soft edge), clamp the two to the hemisphere about the
+projected normal, and integrate the cosine-weighted visibility of the arc
+in closed form. Smooth where the surface is flat, dark where two
+surfaces meet, no more depth reads than before. The depth-aware blur
+(EL7) stands.
+
+**Eight casters.** SC1 made a still caster nearly free, so
+`SHADOW_POINT_CASTERS` is 8: a tavern's every lamp throws its shadow.
+The two depth arrays are 100 MB together at 512^2.
+
+Pinned: el1/el4 (the finish through `elTonemapRGB`), el3 (the horizon
+shader by text, the constants), el2/el5/el6/el8 (eight slots). Seen on
+SwiftShader by `tools/enhancedLightingProbe.mjs` - every assertion
+standing - and the scenes' PNGs beside EL5's for the eye.

@@ -39,6 +39,8 @@ directory by `test/audit18_bible_docs.test.js`:
   four steps within seven tenths of a range, the glare's band a quarter
   unit. `?air=off`, `?contact=off`. See
   `07-Rendering/Enhanced-Lighting-Arc.md`.
+  HQ1 (2026-09-23): the occlusion is horizon-based (GTAO's arc, two slices,
+  six steps a side), no kernel (`Enhanced-Lighting-Arc.md`, HQ1).
 - `characterMesh.js` - the voxel character mesh path.
 - `characterSprite.js` - the classic-visuals sprite pass (one fixed
   CHAR_SPRITE_RT_SIZE target).
