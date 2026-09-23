@@ -76,7 +76,8 @@ test('UI2: the host raises the popup for BOTH services, and the direct arms are 
   assert.match(s, /if \(!forceTalk && route\.kind === 'merchant'\s*\n\s*&& \(route\.service === 'banking' \|\| route\.service === 'sell'\)\s*\n\s*&& merchantServiceArtLoaded\(\) && _shopFont\) \{/);
   assert.match(s, /service: banking \? 'Banking' : 'Sell',/);
   assert.match(s, /onTalk: \(\) => openStaticNpc\(pn, \{ forceTalk: true \}\),/, 'the Talk row DFU has and the port had lost');
-  assert.match(s, /onService: \(\) => \{ if \(banking\) openBank\(\); else openMerchantSell\(\); \},/);
+  // RR3: the custom-service arm (DaggerfallMerchantServicePopupWindow.cs:149-151) stands in front of the two
+  assert.match(s, /onService: \(\) => \{ if \(custom\) openCustomMerchantService\(custom\); else if \(banking\) openBank\(\); else openMerchantSell\(\); \},/);
   // The old direct arms stay BELOW it - the never-traps law, for a
   // build whose GNRC01I0 did not load.
   const popupAt = s.indexOf('MerchantServiceWindow({');

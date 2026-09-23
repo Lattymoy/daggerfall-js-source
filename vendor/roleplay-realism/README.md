@@ -51,14 +51,29 @@ source tree carries at `0af2ec9`, unchanged. They carry no licence
 text of their own (the MIT header is the scripts') - granted, as the
 Mod-Registry row records. Both are what the mod's manifest names.
 
+## The quests (RR3a)
+
+`Quests/QuestList-RoleplayRealism.txt` and `Quests/RRMSTARM0-2.txt`,
+verbatim from the source tree (MIT, the mod's own header). The pack
+loader globs them beside DFU's own (`src/scenes/questData.js`).
+
 ## Not vendored yet
 
-The three quests and the quest list (RR3), the two world-data files
-and the building variant (the Northrock Fort and the master armorer's
-shop, RR3).
+The two world-data files and the building variant (the Northrock Fort
+and the master armorer's shop, RR3b).
 
 ## What is ported, and where
 
+- **RR3a** (2026-09-23): the Master Armorer quest line's registrations -
+  `src/systems/rrQuestLine.js` (the tables, the factions, the fort's
+  tracks, the shop's discovery, the custom armor service) over four DFU
+  mod hooks ported for it: `registerCustomFaction`, `registerQuestList`,
+  `registerMerchantService`, `systems/worldDataVariants.js` + the
+  quest machine's WorldUpdate.
+- **RR2** (2026-09-23): the NPC sprite variants (`src/systems/
+  rrVariants.js`), EnhancedRiding and RefinedTraining (laws in
+  `rrRealism.js`; the mount rig, the look filter, the move axes, the
+  guild training flow and the world host carry the seams).
 - **RR1** (2026-09-23): the formula overrides and the rule modules -
   `src/systems/rrRealism.js` (the laws), `src/systems/rrInstall.js`
   (InitMod's registrations at the scene boot), the seams they hang on

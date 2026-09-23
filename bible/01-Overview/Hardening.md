@@ -170,7 +170,7 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:5453` and
+`worldModes.js` that pointed between them cited `world.js:5459` and
 `dungeonContext.js:5805` - lines that had moved to `:4680` and `:5788`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
@@ -232,7 +232,7 @@ has and `exterior.js` lacks is the streaming host's own (terrain pixels,
 riding, online peers). Everything `exterior.js` has and `world.js` lacks
 is a `?rig`/`?rigNear`/`?shot` probe rig, its own `refreshSeason` - whose
 streaming twin `tickSeason` is documented AND cites `refreshSeason` by
-name at `world.js:419` - and two math helpers in the shot path. **No
+name at `world.js:421` - and two math helpers in the shot path. **No
 drift.**
 
 **S2 - the mode-transition teardown order. Three candidate findings, all
@@ -249,11 +249,11 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:4449`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:4455`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:8363` disposes the dungeon overlay that
+3. *"`worldModes.js:8383` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
    known, already written down, at `dungeonContext.js:6464-6465`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
@@ -548,7 +548,7 @@ frame**.
 
 **F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve
 window classes are constructed straight into a host slot, and
-`townTalk.js:1122` paints every *covered* window as well
+`townTalk.js:1124` paints every *covered* window as well
 (`eachCoveredWindow((w) => w.draw(...))`), so depth is in the contract
 too, not just the top of the stack.
 
@@ -556,7 +556,7 @@ too, not just the top of the stack.
 
 Read off the four hosts that own a window stack, scoped to the enclosing
 function rather than a fixed lookback (the first pass used four lines and
-mis-read `townTalk.js:1209` as unguarded; its guard sits eight lines up -
+mis-read `townTalk.js:1211` as unguarded; its guard sits eight lines up -
 HARD2's D10 pin was re-aimed for the same reason):
 
 | arm | required by | note |

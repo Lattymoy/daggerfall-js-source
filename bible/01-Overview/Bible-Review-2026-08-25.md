@@ -163,7 +163,7 @@ per arc:
   `:3368`); `:4722` is now flatly false ("the interior host's
   char-sheet and inventory panels swallow their click and do
   nothing") and contradicts U43 in the same file
-  (`worldModes.js:4374-4375` routes them). UI-Arc carries no records
+  (`worldModes.js:4394-4395` routes them). UI-Arc carries no records
   at all for H1-H3 - the banking windows exist only in the Ledger.
 - *Combat.md*: the status head (first 51 lines) is the stale part -
   DrainMagicka "INTERIM no-op" (`:19`, real since S4a and
@@ -234,7 +234,7 @@ opposite of their own code and deserve a slice's attention:
 ## Line-citation drift (low, batched)
 
 `Port-Ledger.md:533` (save.js:29/:524/:533 → :28/:557/:587), `:544`
-(world.js:2400 → :2412); `Quest-Arc.md:719`/`:2905`
+(world.js:2402 → :2412); `Quest-Arc.md:719`/`:2905`
 (worldModes.js:518 → :903); `Player-Arc.md:955` (worldModes.js:739 →
 :2764), `:304` (world.js "531 lines" → 3,564); `Characters-Arc.md:190`
 (CHAR_PIXEL "7" - `renderer.js:582` ships 9, and the doc missed two

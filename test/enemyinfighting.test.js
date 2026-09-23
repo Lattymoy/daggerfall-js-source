@@ -226,6 +226,6 @@ test('MT-iii: the guard list shrank again - QG1 left ONE - and both MT rows are 
   assert.ok(!guards.includes('ChangeFoeTeam:'), 'both of them');
   assert.match(a, /new ChangeFoeInfighting\(null\),\n\s*new ChangeFoeTeam\(null\),/, 'the C#-order registry slots are real templates now');
   const rows = (guards.match(/^ {2}\w+: \//gm) ?? []).length;
-  assert.equal(rows, 1, 'WorldUpdate alone - and it names its blocker');
-  assert.ok(guards.includes('- WorldUpdate'), 'WorldUpdate still names itself');
+  assert.equal(rows, 0, 'RR3 took WorldUpdate too - the registry is empty, and says who emptied it');
+  assert.ok(guards.includes('WorldUpdate'), 'the record of the last guard stays in the header');
 });

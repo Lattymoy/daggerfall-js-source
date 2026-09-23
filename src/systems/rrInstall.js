@@ -29,6 +29,11 @@ import { rriModule } from './rriItems.js';
 import { setCanRunOverride } from './transport.js';
 import { setAxisLimitsProvider } from '../player/moveAxes.js';
 import { installRoleplayRealismArt } from './rrVariants.js';
+import { registerQuestList } from './quest/questLists.js';
+import { addIntoQuestTables } from './quest/tables.js';
+import { registerCustomFaction } from '../formats/factionFile.js';
+import { registerMerchantService } from './guildServices.js';
+import { RR_QUEST_LIST, RR_CUSTOM_FACTIONS, RR_PLACES_TABLE, RR_FACTIONS_TABLE, RR_FACTION_IDS, RR_TEXT, rrCustomArmorService } from './rrQuestLine.js';
 import {
   rrEnabled, rrModule, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage, rrClimbingChance, rrMeleeWeaponAnimTime,
   rrWeaponToHit, rrConditionDamageThroughPhysicalHit, rrDamageModifierClassic, rrMaxBankLoan, rrShipAvailable,
@@ -144,6 +149,19 @@ export function installRoleplayRealism() {
   // RR2 - variantNpcs / variantResidents (:220-235) and refinedTraining's
   // "5 Days" button (:250-256): the mod's own art on its doors
   installRoleplayRealismArt();
+
+  // RR3 - the Master Armorer quest line (:241-256): the quest list, the
+  // three factions, the two table additions, the custom armor service.
+  // None of these read a switch in the C# - they ride the mod's presence,
+  // which is its Enabled here: the list and the service carry it as
+  // their gate (read at the load and at the click), the factions are
+  // registered while it is on (the dictionary is built at the load, so
+  // a toggle takes effect when the game next loads, as the Features row
+  // says), the table rows are names and stand either way.
+  if (!registerQuestList(RR_QUEST_LIST, () => rrEnabled())) throw new Error('Quest list name is already in use, unable to register RoleplayRealism quest list.');
+  if (rrEnabled()) for (const f of RR_CUSTOM_FACTIONS) registerCustomFaction(f.id, f);
+  addIntoQuestTables({ places: [...RR_PLACES_TABLE], factions: [...RR_FACTIONS_TABLE] });
+  registerMerchantService(RR_FACTION_IDS.OrthusDharjen, (window, entity) => rrCustomArmorService(window, entity), RR_TEXT.customArmor, () => rrEnabled());
   return true;
 }
 

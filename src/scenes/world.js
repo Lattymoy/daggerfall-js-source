@@ -350,7 +350,9 @@ import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an e
 import { drawEnhancedStatusLine } from '../ui/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
 import { rrRidingOn, rrRidingSetting, rrTrampleOutcome, rrChargeDamage, RR_RIDING } from '../systems/rrRealism.js';   // RR2: EnhancedRiding's laws
 import { LETHAL_HIT } from '../combat/bloodDecals.js';   // RR2: the trample's splash hands its blow over - a civilian, from the player, gone in one contact
-import { setRrHostSeams } from '../systems/rrInstall.js';   // RR2: what the riding component reads off the scene
+import { setRrHostSeams, rrEnabled } from '../systems/rrInstall.js';   // RR2: what the riding component reads off the scene
+import { rrFortProximityLines, rrMasterArmorerDiscovery } from '../systems/rrQuestLine.js';   // RR3: the two PlayerGPS subscribers
+import { getBuildingVariant, setLastLocationKeyTo } from '../systems/worldDataVariants.js';   // RR3: the shop variant the quest set
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -2668,6 +2670,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (_travelRegionSeen !== null && _region !== _travelRegionSeen) travelOptions.onRegionIndexChanged();
       _travelRegionSeen = _region;
     }
+    // RR3: RoleplayRealism.PlayerGPS_OnMapPixelChanged (:270-297) - the fort's tracks, AddHUDText for 5 seconds
+    if (rrEnabled()) { const _px = playerTravelPixel(); for (const line of rrFortProximityLines(_px.x, _px.y)) townTalk.say(line, 5); }
+    // WorldDataVariants.SetLastLocationKeyTo - the location the variant getters answer for (PlayerGPS.cs's own call on the pixel change)
+    if (dfLocation) setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);
     // TV-slice: entering a location's pixel DISCOVERS it (PlayerGPS
     // DiscoverCurrentLocation on the location-rect entry) - the write
     // half of the travel map's visibility law; fast-travel arrivals
@@ -3445,7 +3451,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2253 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:4731
+  // that context through modes.dungeonCtx - so worldModes.js:4751
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -7093,7 +7099,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:7624-7687 -
+  // worldModes answers it in BOTH modes (worldModes.js:7644-7707 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9764,7 +9770,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:617, :598). So every HUD line raised in a modal
+      // (townTalk.js:619, :600). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -10879,6 +10885,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // (ThievesGuild.cs:197-206, handler :227-229), so the hall
         // reveal follows the member into every town.
         revealMemberGuildHalls();
+        // RR3: RoleplayRealism.PlayerGPS_OnEnterLocationRect (:259-267) - the master armorer's shop discovered under its own name
+        if (rrEnabled()) {
+          const arm = rrMasterArmorerDiscovery(_musicLoc, getBuildingVariant);
+          if (arm) discoverBuilding(`${_musicLoc.regionIndex}:${_musicLoc.name}`, (topicTree.listBuildings ?? []).find((b) => b.buildingKey === arm.buildingKey) ?? { buildingKey: arm.buildingKey }, arm.name);
+        }
         // AUDIT 64 F10: the THIRD law on this edge - PlayerEnterExit
         // .PlayerGPS_OnEnterLocationRect primes the holiday text
         // (:1404-1409), but only on its TOWN arm (:1382-1383), so a

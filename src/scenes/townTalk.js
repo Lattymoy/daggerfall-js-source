@@ -33,6 +33,7 @@
 //     reports as `modal` and the steal arm below routes on.
 
 import { FactionFile } from '../formats/factionFile.js';
+import { addCustomFactions } from '../systems/factionRep.js';   // RR3: a mod's registered factions, on this reader too
 import { racialSuppressTalk } from '../systems/lycanthropy.js';   // V4: the transformed talk refusal
 import { TextRsc } from '../formats/textRsc.js';
 import { FntFile } from '../formats/fntFile.js';
@@ -224,6 +225,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       try {
         factions = new FactionFile();
         factions.load(await fetchBytes('FACTION.TXT'));
+        addCustomFactions(factions.factionDict, factions.factionNameToId);   // RR3: DFU's TalkManager reads PlayerEntity.FactionData, which AddCustomFactions has filled - this reader stands in for it
         _peopleRegion = regionNow();
         people = getPeopleOfCurrentRegion(factions.factionDict, _peopleRegion);
       } catch (e) { console.warn('[town] FACTION.TXT unavailable:', e.message); }

@@ -43,6 +43,7 @@
 // half-delta - a crime penalty, an enemy's share of a reward - so
 // every halving here is Math.trunc.
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
+import { customFactions, relinkChildren } from '../formats/factionFile.js';   // RR3: AddCustomFactions' registry and the relink
 import { restoreFactionRep } from './save.js';   // AUDIT 23 C1: the stashed-load replay
 
 /** Mathf.Clamp bounds (:32-35). */
@@ -86,6 +87,22 @@ const half = (n) => Math.trunc(n / 2);
  *  reputation change reach into the shared reader and corrupt every
  *  later load. This CLONES each record AND its children array. Same
  *  semantics, and the only way to get them. */
+/** PersistentFactionData.AddCustomFactions (:139-155): every registered
+ *  custom faction not already in the dictionary is added (a copy - the
+ *  C#'s struct), and the children are relinked when one names a parent.
+ *  `nameToId` is factionNameToIDDict where the caller keeps one. */
+export function addCustomFactions(dict, nameToId = null) {
+  let relink = false;
+  for (const [id, f] of customFactions()) {
+    if (dict.has(id)) continue;
+    dict.set(id, { ...f, children: f.children ? [...f.children] : f.children });
+    nameToId?.set?.(f.name, id);
+    if (f.parent > 0) relink = true;
+  }
+  if (relink) relinkChildren(dict);
+  return relink;
+}
+
 export function createFactionRep(factionDict) {
   const dict = new Map();
   // The spread detaches the RECORD; `children` is an array and would
@@ -93,6 +110,7 @@ export function createFactionRep(factionDict) {
   // through the store. AUDIT 20 found the header promising a clone
   // that was only one level deep.
   for (const [id, f] of factionDict) dict.set(id, { ...f, children: f.children ? [...f.children] : f.children });
+  addCustomFactions(dict);   // Reset (:331): the custom factions ride every fresh dictionary
   return { dict };
 }
 

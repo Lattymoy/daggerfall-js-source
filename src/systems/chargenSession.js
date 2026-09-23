@@ -365,7 +365,7 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:2567, exterior.js:1281,
+  // through this function - world.js:2569, exterior.js:1281,
   // dungeonContext.js:2328 - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game
@@ -406,7 +406,7 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *
  * `isChoiceWindow` is a GETTER for the same reason: the wizard wants
  * raw key codes and the question wants the shared overlayAction names,
- * and the hosts read that flag at routing time (townTalk.js:371,
+ * and the hosts read that flag at routing time (townTalk.js:373,
  * worldModes.js's overlayIsNative), so one object can want both in
  * turn.
  *
@@ -517,9 +517,9 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1200-1211,
-    // the route itself :1209), dungeonContext.js through `overlayHover`
-    // (:6155), which dungeon.js:489 and worldModes.js:7840 both feed.
+    // exterior.js through `townTalk.hover` (townTalk.js:1202-1213,
+    // the route itself :1211), dungeonContext.js through `overlayHover`
+    // (:6155), which dungeon.js:489 and worldModes.js:7860 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

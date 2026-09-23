@@ -1,0 +1,303 @@
+[
+  {
+    "name": "RR3-1-the-fort-pixel-answers-near-not-verynear",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "  if (mapPixelX === 938 && mapPixelY === 51) return [RR_TEXT.fortVerynear1, RR_TEXT.fortVerynear2];\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-2-the-tracks-reach-a-fourth-column",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "  if (!(mapPixelX >= 937 && mapPixelX <= 939 && mapPixelY >= 50 && mapPixelY <= 52)) return [];",
+    "new": "  if (!(mapPixelX >= 936 && mapPixelX <= 939 && mapPixelY >= 50 && mapPixelY <= 52)) return [];",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ],
+    "equivalent": true,
+    "why": "the bounds test is a fast path over the direction table - a pixel it lets through with no table row still answers []; only 938,51 and the eight keyed neighbours ever say anything"
+  },
+  {
+    "name": "RR3-3-west-and-east-swapped",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "'939,51': 'west'",
+    "new": "'939,51': 'east'",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-4-penmore-gets-pjigas-key",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "    case 18: return 197134;",
+    "new": "    case 18: return 131342;",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-5-the-discovery-ignores-the-variant",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "  if (variantOf(location.regionIndex, location.locationIndex, RR_ARMORER_BLOCK, RR_ARMORER_RECORD) == null) return null;\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-6-the-armor-is-offered-at-8",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "export const rrCustomArmorOffered = (level) => level >= 9;",
+    "new": "export const rrCustomArmorOffered = (level) => level >= 8;",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-7-daedric-at-15",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "      || (level < 18 && material >= ARMOR_MATERIAL.Daedric)) break;",
+    "new": "      ) break;",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-8-the-ladder-continues-instead-of-breaking",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "      || (level < 18 && material >= ARMOR_MATERIAL.Daedric)) break;\n    out.push(material);",
+    "new": "      || (level < 18 && material >= ARMOR_MATERIAL.Daedric)) continue;\n    out.push(material);",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ],
+    "equivalent": true,
+    "why": "customArmorMaterials is ascending, so every material after the first the level cannot have is also barred - continue and break pick the same set"
+  },
+  {
+    "name": "RR3-9-greaves-start-at-1",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "    case 104: return [2, 5];                        // Greaves",
+    "new": "    case 104: return [1, 5];                        // Greaves",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-10-the-helm-includes-its-last-variant",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "    case 108: case 107: return [1, templateVariants - 1];   // Boots, Helm",
+    "new": "    case 108: case 107: return [1, templateVariants];   // Boots, Helm",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-11-shields-are-sold",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "    default: return null;\n  }\n}\n/** The shelf",
+    "new": "    default: return [1, 1];\n  }\n}\n/** The shelf",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-12-the-custom-classes-are-not-stocked",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "    for (const templateIndex of customTemplates) items.push(mint({ group: 'Armor', templateIndex, material }));\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-13-the-service-opens-the-shelf-under-9",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "  if (!rrCustomArmorOffered(level)) { window.messageBox?.(RR_TEXT.notEnoughMaterials); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-14-the-captain-is-orphaned",
+    "file": "src/systems/rrQuestLine.js",
+    "old": "  Object.freeze({ id: 1021, parent: 1020,",
+    "new": "  Object.freeze({ id: 1021, parent: 0,",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-15-a-second-registration-overwrites",
+    "file": "src/formats/factionFile.js",
+    "old": "  if (_customFactions.has(factionId)) return false;\n  _customFactions.set",
+    "new": "  _customFactions.set",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-16-addcustomfactions-skips-the-relink",
+    "file": "src/systems/factionRep.js",
+    "old": "  if (relink) relinkChildren(dict);\n  return relink;",
+    "new": "  return relink;",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-17-the-fresh-dictionary-lacks-them",
+    "file": "src/systems/factionRep.js",
+    "old": "  addCustomFactions(dict);   // Reset (:331): the custom factions ride every fresh dictionary\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-18-the-rows-registered-before-the-load-are-lost",
+    "file": "src/systems/quest/tables.js",
+    "old": "      if (_extraRows[key]?.length) _tables[key].addIntoTable(_extraRows[key]);   // RR3: the mod's rows ride the fresh table\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-19-the-rows-added-after-the-load-wait",
+    "file": "src/systems/quest/tables.js",
+    "old": "    if (_tables[key]) _tables[key].addIntoTable(lines);\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-20-the-registered-list-is-not-loaded",
+    "file": "src/systems/quest/questLists.js",
+    "old": "    for (const questList of registeredQuestLists()) this._loadQuestList(questList);   // :160-161 - the registered lists\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-21-the-list-gate-is-ignored",
+    "file": "src/systems/quest/questLists.js",
+    "old": "export const registeredQuestLists = () => _questLists.filter((n) => _questListGates.get(n)?.() ?? true);",
+    "new": "export const registeredQuestLists = () => _questLists.slice();",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-22-a-list-name-in-use-is-registered-again",
+    "file": "src/systems/quest/questLists.js",
+    "old": "  if (_questLists.includes(name)) return false;\n  _questLists.push(name);",
+    "new": "  _questLists.push(name);",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-23-the-service-gate-is-ignored",
+    "file": "src/systems/guildServices.js",
+    "old": "const serviceOn = (id) => _customMerchantServices.has(id) && (_customMerchantServiceGates.get(id)?.() ?? true);",
+    "new": "const serviceOn = (id) => _customMerchantServices.has(id);",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-24-a-second-service-replaces-the-first",
+    "file": "src/systems/guildServices.js",
+    "old": "  if (_customMerchantServices.has(npcFactionId)) return false;\n  _customMerchantServices.set(npcFactionId, service);",
+    "new": "  _customMerchantServices.set(npcFactionId, service);",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-25-the-location-key-is-region-first",
+    "file": "src/systems/worldDataVariants.js",
+    "old": "export const makeLocationKey = (regionIndex, locationIndex) => (locationIndex * 100) + regionIndex;",
+    "new": "export const makeLocationKey = (regionIndex, locationIndex) => (regionIndex * 100) + locationIndex;",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-26-the-any-fallback-is-gone",
+    "file": "src/systems/worldDataVariants.js",
+    "old": "  return buildingVariants.get(buildingKey(lastLocationKey, blockName, recordIndex)) ?? buildingVariants.get(buildingKey(ANY_LOCATION_KEY, blockName, recordIndex)) ?? NO_VARIANT;",
+    "new": "  return buildingVariants.get(buildingKey(lastLocationKey, blockName, recordIndex)) ?? NO_VARIANT;",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-27-novariant-sets-an-empty-variant",
+    "file": "src/systems/worldDataVariants.js",
+    "old": "  if (variant === NO_VARIANT) buildingVariants.delete(key);\n  else buildingVariants.set(key, variant);",
+    "new": "  buildingVariants.set(key, variant);",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-28-getlocationvariant-forgets-the-last-key",
+    "file": "src/systems/worldDataVariants.js",
+    "old": "  lastLocationKey = locationKey;\n  const newLocation",
+    "new": "  const newLocation",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-29-restore-drops-a-null-half",
+    "file": "src/systems/worldDataVariants.js",
+    "old": "  if (data.blockVariants != null) blockVariants = new Map(Object.entries(data.blockVariants));",
+    "new": "  blockVariants = new Map(Object.entries(data.blockVariants ?? {}));",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-30-worldupdate-dash-is-a-variant",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (this.variant === '-') this.variant = NO_VARIANT;\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-31-worldupdate-building-writes-everywhere",
+    "file": "src/systems/quest/actions.js",
+    "old": "      case 'building': setBuildingVariant(this.blockName, this.recordIndex, this.variant, makeLocationKey(this.regionIndex, this.locationIndex)); break;",
+    "new": "      case 'building': setBuildingVariant(this.blockName, this.recordIndex, this.variant); break;",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-32-worldupdate-forgets-the-record",
+    "file": "src/systems/quest/actions.js",
+    "old": "    const recordIndex = pick('recordIndex'); if (recordIndex !== undefined) action.recordIndex = questParseInt(recordIndex);\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "RR3-33-the-route-ignores-the-custom-service",
+    "file": "src/systems/guildServiceFlow.js",
+    "old": "    if (hasCustomMerchantService(npcFactionId)) return { kind: 'merchant', service: 'sell' };\n",
+    "new": "",
+    "tests": [
+      "test/rr3_questline.test.js"
+    ]
+  }
+]

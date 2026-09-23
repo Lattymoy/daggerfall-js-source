@@ -136,7 +136,7 @@ import { tokenRows } from '../ui/messageBox.js';
 import { staticNpcRoute, showsJoinButton, serviceAccess, onPushEffects, NO_POTION_INGREDIENTS } from '../systems/guildServiceFlow.js';
 import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
 import { isPotionRecipe, USE_TEXT, expandItemMacro } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347); RR1: the light's own "You douse the %it."
-import { canAccessService } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
+import { canAccessService , hasCustomMerchantService, getCustomMerchantService, getCustomMerchantServiceLabel } from '../systems/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
   receiveHouseDecision, claimHouse, ALREADY_GIVEN_HOUSE,   // H1
@@ -1822,6 +1822,22 @@ export function createWorldModes(host) {
    *  building's own collection - the same place the shelf flow puts
    *  them, which is what makes a sold item buyable back. A building
    *  with no shelf yet gets one lazily, exactly as openShelf does. */
+  /** RR3: the custom service's door - `DaggerfallUI.MessageBox(text)` and
+   *  the Buy trade window over the items it built (:481-484: a Trade
+   *  window in Buy mode with MerchantItems set). */
+  function openCustomMerchantService(service) {
+    const b = interiorBuilding ?? {};
+    service({
+      messageBox: (text) => mountInterior(new ActionTextBox([text])),
+      openBuy: (items) => {
+        if (!tradeArtLoaded() || !_shopFont) return false;
+        const win = openTradeWindow({ items }, b, 'Buy');
+        win.hooks.onClose = () => { if (interiorOverlay === win) interiorOverlay = null; };
+        interiorOverlay = win;
+        return true;
+      },
+    }, playerEntity);
+  }
   function openMerchantSell() {
     const b = interiorBuilding;
     if (!b || !tradeArtLoaded() || !_shopFont) return false;
@@ -2407,6 +2423,7 @@ export function createWorldModes(host) {
       isRepairShop,
       isBank: (t) => t === BUILDING_TYPES.Bank,
       isTavern: (t) => t === BUILDING_TYPES.Tavern,
+      hasCustomMerchantService,   // RR3: Services.HasCustomMerchantService (PlayerActivate.cs:1574)
     });
     if (route.kind === 'guildService') { openGuildService(pn, route, npcData); return; }
     // CW1: the coven's own popup (StaticNPCClick's WitchesCoven arm).
@@ -2459,10 +2476,13 @@ export function createWorldModes(host) {
       && (route.service === 'banking' || route.service === 'sell')
       && merchantServiceArtLoaded() && _shopFont) {
       const banking = route.service === 'banking';
+      // RR3: a registered custom merchant service (DaggerfallMerchantServicePopupWindow.cs:112-115, :149-151) - its own label on the button, its own body on the click
+      const custom = getCustomMerchantService(pn.factionID);
       mountInterior(new MerchantServiceWindow({
         service: banking ? 'Banking' : 'Sell',
+        label: custom ? getCustomMerchantServiceLabel(pn.factionID) : undefined,
         onTalk: () => openStaticNpc(pn, { forceTalk: true }),
-        onService: () => { if (banking) openBank(); else openMerchantSell(); },
+        onService: () => { if (custom) openCustomMerchantService(custom); else if (banking) openBank(); else openMerchantSell(); },
       }));
       return;
     }
@@ -2504,7 +2524,7 @@ export function createWorldModes(host) {
     // does not write, so every shopkeeper, priest and guild clerk in
     // the game reached TalkManager as ''. The visible half is
     // TalkManager's greeting, which says the NPC's name once reaction
-    // is above zero and "stranger" below it (townTalk.js:497) - so
+    // is above zero and "stranger" below it (townTalk.js:499) - so
     // every static NPC stayed a stranger no matter how well liked -
     // and topicTree's same-building-static test (:558), which matches
     // a topic caption against this name and therefore never matched.
@@ -6310,7 +6330,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7903's own wave-46 note); the interior
+          // a blow (world.js:7909's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -8595,7 +8615,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3028-3050), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5248). So an F9 pressed in a shop
+     *  unconditionally (world.js:5254). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8622,7 +8642,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5340)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5346)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8632,7 +8652,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5453`
+     *  HARD2c: this used to spell them out, and named `world.js:5459`
      *  and `dungeonContext.js:5805` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

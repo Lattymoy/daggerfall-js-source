@@ -110,8 +110,8 @@ Read against the C#:
 
 Not in this slice: variantNpcs / variantResidents, EnhancedRiding,
 RefinedTraining (all RR2, below), the Master Armorer quest line -
-`RRMSTARM0-2`, Northrock Fort, the three factions, the custom armor
-service (RR3).
+`RRMSTARM0-2`, the three factions, the custom armor service (RR3a,
+below), Northrock Fort and the armorer's shop variant (RR3b).
 
 ## RR2 - the NPC sprite variants, EnhancedRiding, RefinedTraining
 
@@ -187,8 +187,78 @@ its arms to `rrInstall.js`.
   record's offer with the skill's name spliced after its first word
   (:68-70). The gold gate is DFU's NOT_ENOUGH_GOLD on either price.
 
+## RR3a - the Master Armorer quest line: the registrations
+
+RoleplayRealism.cs:241-256 registers what the line needs and DFU's
+mod hooks provide; the port had none of the four hooks, so this slice
+is as much DFU as mod. Laws in `systems/rrQuestLine.js`; the install
+adds InitMod's four calls to `rrInstall.js`.
+
+- **The quest list** - `QuestListsManager.RegisterQuestList(
+  "RoleplayRealism")` (:241) is `quest/questLists.registerQuestList`
+  (QuestListsManager.cs:138-147); `LoadQuestLists` reads the registered
+  lists after Classic and DFU (:160-161). The list and its three quests
+  (`RRMSTARM0` Mountain Rumors - Fighters rank 9, one-time; `RRMSTARM1`
+  The Master Armorer and `RRMSTARM2` A Careless Price, chained from it)
+  are vendored verbatim under `vendor/roleplay-realism/Quests/` and ride
+  the pack loader's globs (`scenes/questData.js`), the list into the
+  tables map and the sources into the pack's. All three parse under the
+  port's parser with no line pended.
+- **The two tables** - `PlacesTable.AddIntoTable` / `FactionsTable.
+  AddIntoTable` (:250-251) is `quest/tables.addIntoQuestTables`: the
+  rows are kept and applied to a loaded table at once and to a later
+  load as it lands (the install runs before the pack). Aldleigh and the
+  two fort sites, the three named individuals.
+- **The three factions** - `FactionFile.RegisterCustomFaction` (:659-706)
+  is `formats/factionFile.registerCustomFaction` (FactionFile.cs:702-719),
+  read by `factionRep.addCustomFactions` (PersistentFactionData.cs:139-155)
+  on every fresh player dictionary (Reset, :331) and by the talk host's
+  own reader. DFU's RelinkChildren adds without clearing, so after a
+  parented custom faction lands every parent lists its children twice -
+  kept, pinned.
+- **The custom armor service** - `Services.RegisterMerchantService(1022,
+  CustomArmorService, "Custom Armor")` (:254) is `guildServices.
+  registerMerchantService` (Services.cs:146-175); the static-NPC route
+  reads `HasCustomMerchantService` before the shop test (PlayerActivate.
+  cs:1574), the merchant popup shows the service's own label and runs
+  it from the service button (DaggerfallMerchantServicePopupWindow.cs
+  :112-115, :149-151). The service (:419-484): under level 9 the apology
+  box; else a Buy trade window over a shelf of every plate piece in
+  every material the level allows (Mithril at 9, Adamantium and Ebony at
+  12, Orcish at 15, Daedric at 18 - the foreach breaks) in its variant
+  span (cuirass and pauldrons 1-3, greaves 2-5, gauntlets 1, boots and
+  helm 1..variants-1, no shields), plus every registered custom armor
+  class at each material.
+- **The two PlayerGPS subscribers** - OnMapPixelChanged (:270-297): at
+  938,51 the two "very near" lines, on the eight neighbours "near" with
+  the fort's direction, AddHUDText for 5 seconds; OnEnterLocationRect
+  (:259-267): a location whose `ARMRAM03.RMB` building 14 carries a
+  variant discovers the shop under "Dharjen Custom Armor" at the
+  region's key (Pjiga 131342, Penmore 197134, Paponirea 131598).
+- **WorldDataVariants + WorldUpdate** - the quest's three `worldupdate
+  building ... variant master` lines were the one action the port
+  guarded (QG1's last PendingTrigger). `systems/worldDataVariants.js`
+  is WorldDataVariants.cs whole (the four setters with the C#'s own
+  return values, the here/any getters, `MakeLocationKey`, save and
+  restore); `quest/actions.WorldUpdate` is WorldUpdate.cs (six forms,
+  `-` is NoVariant). The registry's READER - WorldDataReplacement's
+  block and building JSON, the new location - is RR3b.
+- The list, the factions and the service ride the mod's Enabled: DFU
+  has no switch for them (a loaded mod registers), so the port's
+  Enabled stands in - the list and the service read it at the load and
+  the click, the factions are registered while it is on at boot.
+
+Not yet (RR3b): `locationnew-RRfort01-16.json` (Northrock Fort, a new
+location in the Wrothgarian Mountains at 938,51), `RRFORT01.RMB.json`
+(its block) and `ARMRAM03.RMB-765-building14_master.json` (the
+armorer's shop as the quest rebuilds it) through a WorldDataReplacement
+door - until then `RRMSTARM1`'s two fort places have no location to
+stand on.
+
 ## Record
 
 `vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (11),
-`test/rr2_realism.test.js` (12). Campaigns `tools/mutants/rr1.json`
-(19: 18 dead, 1 equivalent), `tools/mutants/rr2.json` (28 dead).
+`test/rr2_realism.test.js` (12), `test/rr3_questline.test.js` (11).
+Campaigns `tools/mutants/rr1.json` (19: 18 dead, 1 equivalent),
+`tools/mutants/rr2.json` (28 dead), `tools/mutants/rr3.json` (33: 31
+dead, 2 equivalent).

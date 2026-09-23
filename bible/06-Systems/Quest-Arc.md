@@ -2807,7 +2807,7 @@ banker and guild clerk in Daggerfall reached `TalkManager` with an
 empty name. Two things read it:
 
 - the greeting says the NPC's name once reaction is above zero, and
-  "stranger" below it (`townTalk.js:497`). Every static NPC in the
+  "stranger" below it (`townTalk.js:499`). Every static NPC in the
   game stayed a stranger no matter how well liked.
 - `topicTree`'s same-building-static test (`:558`) matches a topic
   caption against that name, so it never matched.
@@ -5242,7 +5242,10 @@ each verbatim against its Actions/*.cs, and the machinery two of them
 
 The ONE guard left names its blocker in GUARD_PATTERNS: WorldUpdate
 (the world-data variant system - no block/building variant swaps exist
-in the port).
+in the port). RR3a (2026-09-23) took it: Roleplay & Realism's Master
+Armorer line writes `worldupdate building`, so WorldDataVariants was
+ported (`systems/worldDataVariants.js`) and WorldUpdate is a real
+template; the registry is empty (`06-Systems/Roleplay-Realism.md`).
 
 Pins: 15 in `test/questguards.test.js` on the Q5 harness (which taught
 its startup-task lesson again - bare QBN lines form the startup task;
@@ -5466,7 +5469,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:2837-2926) — and
+spawns and the NPC-guard conversion with it (world.js:2843-2932) — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5490,12 +5493,12 @@ ready-spell events (`hostMagic.js:76-77`), and those two doors are the
 (`machine.js:799`/`:782`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:3142-3143`,
+other two engine-owning hosts wire (`world.js:3148-3149`,
 `dungeonContext.js:2112-2113`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:7089-7092`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:7095-7098`),
 absent which the action self-completes at *parse*
-(`actions.js:2756`/`:2763`) and the task can never arm at all.
+(`actions.js:2757`/`:2764`) and the task can never arm at all.
 
 Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
 the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on
@@ -5782,10 +5785,10 @@ MAP - and the three findings it produced, all paid in the same commit.
 ### What came back clean, and is worth saying
 
 - **The 82-action registry is complete.** DFU ships 82 action classes;
-  the port implements 81 and *declares and guards* the 82nd
-  (`WorldUpdate`, blocked on WorldDataVariants), with
-  `test/questguards.test.js` pinning that exactly one guard stands and
-  that it names its own blocker. An 82-item enumeration that has not
+  the port implements 81 and *declared and guarded* the 82nd
+  (`WorldUpdate`, blocked on WorldDataVariants) until RR3a (2026-09-23)
+  ported it with the registry it needed; `test/questguards.test.js`
+  pins that no guard stands now. An 82-item enumeration that has not
   lost a member is unusual, and it is pinned rather than remembered.
 - **All 265 vendored quests parse and start.** No throws, no nulls.
 - **The shipping host wires 64 of the bridge's 65 seams**, the one

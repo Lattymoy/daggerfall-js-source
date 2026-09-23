@@ -41,6 +41,26 @@ export const MEMBERSHIP_STATUS = Object.freeze({
 const INIT_AT_GAME_START = 'InitAtGameStart';
 const isInt = (s) => /^\s*[+-]?\d+\s*$/.test(s);   // int.TryParse's accepting surface
 
+/** QuestListsManager.RegisterQuestList (:138-147): a mod's list by name,
+ *  false when the name is in use; LoadQuestLists reads every registered
+ *  one after the two shipped lists (:160-161). The list file is
+ *  `QuestList-<name>.txt` through the same data seam (the pack loader
+ *  globs a vendored mod's Quests/ folder beside DFU's). */
+const _questLists = [];
+const _questListGates = new Map();
+/** `isOn` is the port's stand-in for "the mod is loaded": a list whose
+ *  gate answers false is skipped by LoadQuestLists (read when the
+ *  manager loads - the mod's Enabled takes effect when the game next
+ *  loads, as its Features row says). */
+export function registerQuestList(name, isOn = null) {
+  if (_questLists.includes(name)) return false;
+  _questLists.push(name);
+  if (typeof isOn === 'function') _questListGates.set(name, isOn);
+  return true;
+}
+export const registeredQuestLists = () => _questLists.filter((n) => _questListGates.get(n)?.() ?? true);
+export function _resetQuestLists() { _questLists.length = 0; _questListGates.clear(); }
+
 export class QuestListsManager {
   constructor(deps = {}) {
     this.deps = deps;
@@ -51,14 +71,16 @@ export class QuestListsManager {
     this.loadQuestLists();
   }
 
-  /** LoadQuestLists (:151-162): the two shipped lists; quest-pack
-   *  lists are mod infrastructure (recorded above). */
+  /** LoadQuestLists (:151-162): the two shipped lists, then every list
+   *  a mod registered (RR3 - the discovery half, StreamingAssets folders,
+   *  stays DFU-mod infrastructure). */
   loadQuestLists() {
     this.guilds.clear();
     this.social.clear();
     this.init.length = 0;
     this._loadQuestList('Classic');
     this._loadQuestList('DFU');
+    for (const questList of registeredQuestLists()) this._loadQuestList(questList);   // :160-161 - the registered lists
   }
 
   _loadQuestList(name) {

@@ -353,7 +353,7 @@ test('AUDIT 58: the 112-day faction drift does NOT fan out (PlayerEntity.cs:2239
   // hierarchy: a propagating walk over it has nowhere to go. This one is
   // a root with two children, which is exactly what a walk would move -
   // propagateReputationChange gives a `parent === 0` root the FULL
-  // amount (factionRep.js:165-174).
+  // amount (factionRep.js:183-192).
   const rec = (id, o) => Object.assign({
     id, parent: 0, type: 0, name: 'f' + id, rep: 0, ally1: 0, ally2: 0, ally3: 0,
     enemy1: 0, enemy2: 0, enemy3: 0, sgroup: 0, ggroup: 0, children: null,
