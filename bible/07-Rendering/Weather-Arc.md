@@ -972,3 +972,35 @@ paid.
   dying front's. A hover's pixel and its 2-pixel field cell can differ in
   step at a region's edge.
 
+
+### BOLT - the lightning itself (2026-09-24)
+
+Mac: "Can we do detailed cloud and cloud to ground lighting? Not just when in storms but also being able to be
+seen far away?" A storm's lightning had only ever been light: the storm overhead strobed the sun (DFU's
+LightningPlayer) and a distant storm lit its own cloud (slice D). No channel was ever drawn.
+- **The strike** (`systems/lightning.js`, pure): from its seed, cloud-to-ground (CG_SHARE, three in ten, as in a
+  real storm) or in the cloud. A ground strike fires two to four return strokes down one channel tens of
+  milliseconds apart, the first the brightest; a flash in the cloud two to five softer pulses over most of a second.
+  `flickerAt` is that brightness, and the channel, the cloud's glow and the land's light all read it.
+- **The channel**: a stepped leader from the cloud's base to the ground - 30 m steps, each kinked sideways with a
+  little of the last one's heading, branches that fork, thin and die before the ground, the main channel alone
+  reaching it. Every strike's channel is its seed's, so a distant storm's strike (seeded by the storm and the minute,
+  slice D) is the same channel for every client.
+- **Where**: a distant storm's strikes land inside its core (`strikePlace`) and are heard from there; the storm
+  overhead's land where DFU's schedule throws them (`localStrike`: a crack 600 m to 4 km off and mostly to the ground,
+  a roll 2.5 to 8 km and mostly in the cloud). The cloud's base is the sky's own thunder base above the eye, and
+  both ends drop by the Earth's curve at the strike's distance.
+- **Drawn** (`render/lightningBolts.js`): ribbons turned to the eye, a hot core and a soft halo, added onto the
+  frame and tested against the world's depth. **Far away**: never thinner than BOLT_MIN_PX (1.4 px) on the
+  screen, the air thinning its light over BOLT_SEEN_M (45 km); past the camera's six-kilometre far plane each vertex
+  is drawn along its own sight line just inside it, where it lands on the screen and how wide it is unchanged.
+  The strikes stand round, and the ribbons face, the eye the view is built from - world.js's is the camera
+  machine's (`mwv.eye`), which in third person stands metres off the head (`cam.pos`); the first shots, taken
+  with no body spawned, drew every strike 22° off its cloud until the host handed that eye.
+- **The land's light**: a ground strike within FLASH_REACH_M (3.5 km) lights the land round the player from its
+  side - the renderer's flash light, 300 m toward the strike and 250 m up, as Dynamic Skies' own flash stands over
+  the player (the lane's lights are clustered and fall off over their range; a light at a foot kilometres off lit
+  nothing). Under the mod its own flash keeps the light; the channels are drawn under it too (it draws none).
+- `?bolttest=<metres>` holds one ground strike that far east of the eye at its first stroke's peak, for shots.
+- Pinned by `test/bolt_lightning.test.js` (9 tests: the laws on the strike, the flicker, the channel, the column,
+  the store, the storm overhead, the distant strikes, and both shaders run in JS).

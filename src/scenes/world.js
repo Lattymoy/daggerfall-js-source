@@ -379,6 +379,8 @@ import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the c
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach, currentMapSystems, weatherMapOn, sampleWeatherIndoors, weatherArrivalStamp, mapGround } from '../systems/weatherSim.js';
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
+import { createStormLights } from '../systems/lightning.js';   // BOLT: the strikes themselves - their channels and their light
+import { LightningBoltsRenderer } from '../render/lightningBolts.js';   // BOLT: the channels, drawn
 import { fieldFromNative, nativeFromField, fieldOfPixelLocal } from '../systems/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
 import { cellOfField } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
@@ -894,6 +896,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
   const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance - their strikes and their thunder on its way
+  const stormLights = createStormLights();   // BOLT: every strike's channel and light, the storm overhead's and the distant ones'
+  const boltsGl = sky.enhanced ? new LightningBoltsRenderer(renderer.gl) : null;   // BOLT: built on the enhanced lane (the wisps' law)
+  let boltFrame = { bolts: [], flash: null };   // BOLT: this frame's burning channels and the light a near ground strike throws
   let seenArrival = 0;   // AUDIT WEATHER3 R5: the sim's arrival stamp at the last frame
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
@@ -13301,15 +13306,23 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // seeded schedule: its own cloud lights (the clouds' composite, in its direction) and its thunder arrives its
     // distance over the speed of sound later, quieter the further, from its side. The storm overhead stays DFU's
     // strobe and ambience above. Enhanced only; nothing off the map's lane (no systems); a jump forgets the old place.
-    if (jump || weatherArrivalStamp() !== seenArrival) distantStorms.reset();   // AUDIT WEATHER3 R5: any landing, the word moved or not
+    if (jump || weatherArrivalStamp() !== seenArrival) { distantStorms.reset(); stormLights.reset(); }   // AUDIT WEATHER3 R5: any landing, the word moved or not; BOLT: the strikes burning were the old place's
     seenArrival = weatherArrivalStamp();
+    const struckFar = [];   // BOLT: the distant strikes fired this frame, in host metres
     if (isEnhanced() && !weatherOverride) {
       const ds = distantStorms.tick({ systems: currentMapSystems(), at: fieldXZ(), minutes: playerTicker.classicMinutes, seconds: now / 1000, ground: mapGroundHere });
       const hostOf = (x, z) => { const n = nativeFromField(x, z); return state.localFromWorld(n[0], n[1]); };
       const bh = ds.bolt && hostOf(ds.bolt.x, ds.bolt.z);
       sky.distantBolt?.(bh ? { x: bh[0], z: bh[1], r: ds.bolt.r, strength: ds.bolt.strength } : null);
       for (const s of ds.sounds) { const h = hostOf(s.x, s.z); audio.play3d(s.clip, thunderSourceAt(cam.pos, h[0], h[1]), s.volume, { refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M * 8 }); }
+      for (const s of ds.strikes) { const h = hostOf(s.x, s.z); struckFar.push({ x: h[0], z: h[1], seed: s.seed, kind: s.kind, strength: s.strength }); }
     }
+    // BOLT: THE STRIKES THEMSELVES - a ground strike's channel from its cloud's base to the land, far or overhead, and
+    // the light a near one throws on it (systems/lightning.js). Enhanced only. Under Dynamic Skies too: the mod draws no
+    // channel, and its own flash keeps the light (setFlashLight below takes the mod's first).
+    boltFrame = isEnhanced()
+      ? stormLights.frame({ seconds: now / 1000, eye: mwv.eye, distant: struckFar, player: lightning, shown: !!lightningShown, test: Number(params.get('bolttest')) || 0 })
+      : { bolts: [], flash: null };
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
@@ -13403,7 +13416,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     hccTick(dt, now);   // AUDIT HCC H1: LateUpdate - after the motor and the recentre, before the world pass draws the wagon
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
-    renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
+    renderer.setFlashLight(sky.lightningLight() ?? boltFrame.flash);   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored; BOLT: else a near ground strike's own light, from where it struck
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, sunDirection(minute), WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
     meterFor(renderer.gl)?.markCpu('bodies');   // PERF-ZONE2: the Morrowind bodies - the player's, every peer's - the wagon and the camps, which the renderer's own 'world' mark used to swallow
@@ -13892,6 +13905,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // pass like the rain. Their row is read every frame.
     if (wisps && wd.on && wispsOn()) {
       wisps.draw(wd, proj, view, new Float32Array(cam.pos), now / 1000);
+      renderer.markForeignPass();
+    }
+    // BOLT: the burning channels, over what the world drew and behind what stands in front of them - from the eye the
+    // view was built from (mwv.eye: a third-person camera stands metres off the head, cam.pos)
+    if (boltsGl && boltFrame.bolts.length) {
+      boltsGl.draw(boltFrame.bolts, proj, view, new Float32Array(mwv.eye));
       renderer.markForeignPass();
     }
     // GR1: THE LAB'S GRASS. The scatter is the lab's 1,200,000 candidates
