@@ -100,7 +100,7 @@ test('the third pass: a LOAD drops the player\'s own camps before it stands the 
   pool.dropOwn(); pool.restore(save);   // ...and so do the camps (world.js worldQuickLoad, the dungeon's truncating load)
   assert.deepEqual(pool.camps.map((c) => c.owner), ['peer'], 'the save had no camp of mine; the peer\'s stands on their word');
   const world = read('src/scenes/world.js'), dc = read('src/scenes/dungeonContext.js');
-  assert.match(world, /camps\.dropOwn\(\);[^\n]*\n\s+camps\.restore\(w\.camps, campFromNatives\);/, 'the world host\'s load drops mine first');
+  assert.match(world, /camps\.dropOwn\(\);[^\n]*\n\s+camps\.restore\(restandAt\('pos'\)\(w\.camps\), campFromNatives\);/, 'the world host\'s load drops mine first (the heights stood again on today\'s ground - TERRAIN-SCALE1, main\'s)');
   assert.match(dc, /if \(truncate\) \{ camps\.dropOwn\(\); camps\.restore\(w\.camps\); \}/, 'and the dungeon\'s');
 });
 
@@ -122,7 +122,7 @@ test('the third pass: a TELEPORT re-anchors the scene frame, and the camps go th
   pool.restore(held, fromNatives);
   assert.deepEqual(natives(), pitched, 'a fast travel leaves the tent where it was pitched');
   const w = read('src/scenes/world.js');
-  assert.match(w, /const campsHeld = camps\.snapshot\(campToNatives\);\n\s+camps\.destroyAll\(\);\n\s+for \(const key of \[\.\.\.built\.keys\(\)\]\) \{[\s\S]{0,200}?queue\.push\(\.\.\.state\.init\(px, py\)\);\n\s+camps\.restore\(campsHeld, campFromNatives\);/,
+  assert.match(w, /const campsHeld = camps\.snapshot\(campToNatives\);\n\s+camps\.destroyAll\(\);\n\s+for \(const key of \[\.\.\.built\.keys\(\)\]\) \{[\s\S]{0,200}?queue\.push\(\.\.\.state\.init\(px, py\)\);\n(?:[^\n]*\n){0,2}?\s+camps\.restore\(campsHeld, campFromNatives\);/,
     'the world host\'s teleport holds them across state.init');
 });
 

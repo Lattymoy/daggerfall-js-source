@@ -1293,8 +1293,8 @@ characters regardless of mode should start with supplies"* - had been read
 as every tier, Off's included, and shipped that way (SURV-KIT, `23ee51b8`).
 It is reverted whole (`4dffc8ef`), but for six line cites in the kit's
 fallback seam that had rotted before it and named moved lines (`equip.js`'s
-`startingGear.js:70`, `chargenSession.js:221` and `world.js:2460`, `startingGear.js`'s
-`equip.js:307` and `world.js:2460`, `exterior.js`'s `equip.js:306`): each
+`startingGear.js:70`, `chargenSession.js:221` and `world.js:2959`, `startingGear.js`'s
+`equip.js:307` and `world.js:2959`, `exterior.js`'s `equip.js:306`): each
 names its line again. Casual and Hard characters set out with the kit on
 every creation path there is - the wizard and `?class=` in each of the three
 hosts, and online, where the tier is the player's own - and Off's bag is
@@ -1522,3 +1522,44 @@ door.
 host's dungeon has not been looted by a Casual joiner in a live room; the
 handler is driven through `raiseEnemyDeath` and the door, the stream's arm
 mounted, and the arrival's by source.
+
+## THE MERGE OF MAIN BEFORE THE BRANCH MERGES (2026-09-23)
+
+> Mac: *"Merge"*.
+
+`origin/main` had moved eighteen commits (World of Daggerfall WOD1-WOD6
+and its audit, DISC8, DISC9, TERRAIN-SCALE1, BUILD-FAIL1, the patch
+notes). 75 files conflicted over 157 hunks: 146 differed only in cite
+numbers, 11 were real.
+
+- **The real ones.** The teleport's camps restore stands after WoD's two
+  arrival lines (WoD's pins hold `state.init` and its step adjacent); the
+  quickload's camps restore runs under TERRAIN-SCALE1's `restandAt` (the
+  heights stood again on today's ground) with this branch's `dropOwn` and
+  `campFromNatives`; the Features ceiling is both rows' growth summed; the
+  suite line both sides' tests; the arcs index and Testing rows kept from
+  both. Three windows over the teleport moved again: audit26's widened,
+  TL3 took main's "to the function's own close", U41's widened.
+- **The cite hunks were resolved to main's numbers and `citeMerge` mapped
+  them - and that UNDID THIS BRANCH'S RE-AIMS.** A line both sides touched
+  took main's number, and where main's copy of the cite had rotted (the
+  second and third passes had re-aimed ours by content) the rot came back:
+  citedrift caught six. A content check found the rest - for every line
+  whose two sides' numbers differed, what each side's cite named on its
+  own head against what the merged one names: the potion sentence's four
+  halves, the kit's three, the rest window's `input.js` half, the tavern's
+  four and two Port-Status `useItem` numbers, each re-aimed by content.
+  The struck Ledger rows keep main's held numbers (the struck law).
+  `citeMerge` also misread three ambiguous basenames (`loot.js` once,
+  `rest.js` twice - each names `systems/`, not `survival/`), put back.
+- **The lesson.** "Resolve to main's numbers, then map" is right for a
+  SHIFT and wrong for a RE-AIM: a cite one side corrected by content comes
+  back rotted if the other side only shifted it. After a merge, compare
+  what each side's cite named on its own head for every line whose
+  numbers differ; the pins see only the pinned.
+
+The gate is green on the merged tree. One mutant survives that is not
+this branch's: main's own `MAC-BUG-W5-13` (`combat/bloodMarks.js`'s pool
+gate asking `raycastHit` in place of `surfaceHit`) lives on main's head
+too - a gap in main's pins, left to its owner.
+

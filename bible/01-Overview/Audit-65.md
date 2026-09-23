@@ -150,7 +150,7 @@ half the lanes' own mutation tallies could not see.
   player's slot from a stale array - the restored sky was gone by hour
   five. `WeatherManager.cs:538-542`'s else arm is not "at boot", it is
   "in case of loaded savegame", every time. One line at
-  `weatherSim.js:463`; no envelope change. The CLK4 pin stayed green
+  `weatherSim.js:476`; no envelope change. The CLK4 pin stayed green
   under this bug for a whole audit because it opens with
   `resetWeatherSim()` - a restore pin that starts from a fresh module
   tests the boot load only, and the boot load was never the broken
@@ -356,7 +356,7 @@ half the lanes' own mutation tallies could not see.
   `Hand-to-Hand 30%` on one line and a damage range computed from 60 on
   the next. `charsheet.js:798` and `enhancedCharSheet.js:152` read
   `skillValue` now, which moves the enhanced skin's meter with its
-  number (`enhancedMenu.js:2459-2460`) - correctly, since the attribute
+  number (`enhancedMenu.js:2462-2463`) - correctly, since the attribute
   bars beside it were already live. The art-less `_drawFallback` pane
   still prints `''` for an absent skill (both refuters: decide the
   blank case first); DFU has no such pane.
@@ -667,7 +667,7 @@ cites that were already wrong at the base (the mapper renumbers a wrong
 number onto a differently wrong line), the renderer's `setClearColor`
 self-cite (a bare `:N` inside its own file, which the mapper does not
 spell), and two escaped-regex cites in tests (`dungeon\.js:531`,
-`worldModes\.js:562`), which the mapper cannot see - the CS1 edge AUDIT
+`worldModes\.js:563`), which the mapper cannot see - the CS1 edge AUDIT
 64's integration hit first. The Suite line restamped once; the full
 suite green over the merged tree. Round two (after the reset) took the
 five remaining reviews and the activation lane, merged onto round one's

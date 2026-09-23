@@ -304,7 +304,11 @@ test('U41: the world host mounts the art window and keeps performFastTravel\'s o
   // floating origin and returns no offset, so the recenter bump cannot
   // see it, and the teleport was safe only because the destroy loop
   // above happens to run first.
-  const core = src.slice(k, k + 5800);
+  // PIN MOVED (AUDIT SURV-TIERS, the third pass, at the merge of main),
+  // 5800 -> 6600: the camps go through natives across the re-anchored
+  // frame - their snapshot and teardown, with their own note, above the
+  // needles - beside WoD's own arrival lines.
+  const core = src.slice(k, k + 6600);
   for (const needle of ['destroyPixel(bx, by)', 'state.init(px, py)', 'buildPixel(first.px']) {
     assert.ok(core.includes(needle), `the core carries ${needle}`);
   }

@@ -4,7 +4,7 @@
  {"name": "CRICKET-QUIET-full-volume", "file": "src/systems/ambientEffects.js",
   "old": "  volume: 0.55,", "new": "  volume: 1,", "tests": ["test/cricketquiet.test.js"]},
  {"name": "CRICKET-QUIET-no-swell", "file": "src/systems/ambientEffects.js",
-  "old": "this._cricketsLoop?.setVolume?.(volume * gain * Math.max(0, swell));", "new": "this._cricketsLoop?.setVolume?.(volume * gain);", "tests": ["test/cricketquiet.test.js"]},
+  "old": "this._cricketsLoop?.setVolume?.(volume * Math.max(0, swell));", "new": "this._cricketsLoop?.setVolume?.(volume);", "tests": ["test/cricketquiet.test.js"]},
  {"name": "CRICKET-QUIET-opens-loud", "file": "src/systems/ambientEffects.js",
   "old": "this.engine.loop(AMBIENT_CRICKETS_LOOP, 0);", "new": "this.engine.loop(AMBIENT_CRICKETS_LOOP, 1);", "tests": ["test/cricketquiet.test.js"]},
  {"name": "CRICKET-QUIET-quiet-never-ends", "file": "src/systems/ambientEffects.js",

@@ -11,11 +11,25 @@ import { SHORTCUT_TEXT } from '../src/systems/dialogShortcuts.js';
 import { PlayerWeapon, weaponPoseOf, applyWeaponPose } from '../src/combat/playerWeapon.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../src/combat/fpsWeapon.js';
 import { blendLocationTerrain } from '../src/world/terrainTiles.js';
-import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
+import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
 import { tileWeight } from '../src/world/cityNavigation.js';
 import { AIR_GLARE_SLACK } from '../src/render/airPass.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+
+/** The brace-matched literal after `opener` (comments and strings skipped) - mac1_playreport's literalBody. */
+function literalBody(text, opener) {
+  const i = text.indexOf(opener); assert.ok(i >= 0, opener);
+  const open = text.indexOf('{', i + opener.length); let depth = 0;
+  for (let k = open; k < text.length; k++) {
+    const c = text[k];
+    if (c === '/' && text[k + 1] === '/') { k = text.indexOf('\n', k); continue; }
+    if (c === '/' && text[k + 1] === '*') { k = text.indexOf('*/', k) + 1; continue; }
+    if (c === '\'' || c === '"' || c === '`') { const q = c; for (k++; k < text.length; k++) { if (text[k] === '\\') k++; else if (text[k] === q) break; } continue; }
+    if (c === '{') depth++; else if (c === '}' && --depth === 0) return text.slice(open, k + 1);
+  }
+  assert.fail(`unclosed ${opener}`);
+}
 const defaults = () => { const b = createBindings(); resetDefaults(b); return b; };
 
 test('JAN1 (hand): THE RING RELEASES ONLY WHAT IT CAPTURED - a key whose down a window ate (T opens the picker, its H accelerator picks the horse and closes it on the down edge) lands no up on the ring, so SwitchHand, the one action read off the up edge, does not fire; a real press does; a press taken under no window and released under one still lets go; the collision is the reference\'s own two tables', () => {
@@ -82,9 +96,14 @@ test('JAN1 (fist): THE POSE IS THE PLAYER\'S, NOT THE RIG\'S - the port has four
   assert.match(wm, /setMode\('interior'\);\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);[^\n]*\n\s*setWeaponPose\(interiorWeapon\.playerWeapon, host\.weaponPose\?\.\(\) \?\? null\);/, 'a building\'s entry seeds the interior rig from the exterior\'s');
   assert.match(wm, /const dungeonPose = \(\) => weaponPoseOf\(dungeonCtx\?\.weaponRig\?\.\(\)\?\.playerWeapon \?\? null\);/, 'the dungeon rig\'s pair has one reader');
   assert.match(wm, /setMode\('dungeon'\);\n\s*host\.unlockOn\?\.\(\);[^\n]*\n\s*mwViewTransition\('Interior'\);[^\n]*\n\s*setWeaponPose\(dungeonCtx\?\.weaponRig\?\.\(\)\?\.playerWeapon \?\? null, host\.weaponPose\?\.\(\) \?\? null\);/, 'a dungeon\'s entry seeds the dungeon rig');
+  // DISC8-E: the pair must sit in the bag worldModes READS them from - JAN1 parked them in the inventory window's
+  // deps, a text match anywhere in the file passed, and no door ever handed the pose
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const h = rd(f);
-    assert.ok(h.includes('weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),') && h.includes('applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),'), `${f}: the host hands its rig's pair both ways`);
+    const bag = literalBody(rd(f), 'var modes = createWorldModes(');
+    assert.match(bag, /\n\s*weaponPose: \(\) => weaponPoseOf\(weaponRig\.playerWeapon\),/, `${f}: host.weaponPose is the createWorldModes bag's`);
+    assert.match(bag, /\n\s*applyWeaponPose: \(p\) => applyWeaponPose\(weaponRig\.playerWeapon, p\),/, `${f}: host.applyWeaponPose likewise`);
+    const inv = literalBody(rd(f), 'const makeInventoryWindow = (extra = {}) => createInventoryWindow(');
+    assert.doesNotMatch(inv, /\bweaponPose:/, `${f}: the inventory window reads no pose - a door parked there is dead`);
   }
   // the asymmetry that made the picture: the torch is read off the ENTITY, the sheath off the RIG
   const rig = rd('src/combat/weaponRig.js');
@@ -95,7 +114,7 @@ test('JAN1 (fist): THE POSE IS THE PLAYER\'S, NOT THE RIG\'S - the port has four
 test('JAN1 (sky): the streaming host grounds a walker on the TERRAIN, not the location\'s average - the navgrid is the block rect, the flattened rect is the stamped tiles plus a clearance and is smaller, and blendLocationTerrain only eases the band between toward the average: a walker there stood metres in the air', () => {
   // Daggerfall city\'s own numbers (terrain.test.js pins the rect at {11,116} over a navgrid of tiles 0..128)
   const rect = { xMin: 11, xMax: 116, yMin: 11, yMax: 116 };
-  const hDim = HEIGHTMAP_DIMENSION, worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const hDim = HEIGHTMAP_DIMENSION, worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const avg = 0.166147;
   const s = new Float32Array(hDim * hDim).fill(avg);
   for (let x = 0; x < hDim; x++) for (let y = 0; y < hDim; y++) s[x * hDim + y] = avg - 0.004443 * Math.max(0, (14 - x) / 14);   // the pixel's edge falls away, as the real one does

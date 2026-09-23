@@ -56,7 +56,7 @@
   {
     "name": "SURVTIERS3-a-teleport-carries-the-camps-again",
     "file": "src/scenes/world.js",
-    "old": "    camps.restore(campsHeld, campFromNatives);\n",
+    "old": "    camps.restore(campsHeld, campFromNatives);   // AUDIT SURV-TIERS (the third pass): the camps, in the new frame\n",
     "new": "",
     "tests": [
       "test/survtiers3.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
     "file": "src/systems/equip.js",
-    "old": "(world.js:2490, exterior.js:1203)",
-    "new": "(world.js:2460, exterior.js:1203)",
+    "old": "(world.js:2989, exterior.js:1252)",
+    "new": "(world.js:2460, exterior.js:1252)",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "world.js:2490 and exterior.js:1203 seed it",
-    "new": "world.js:2460 and exterior.js:1203 seed it",
+    "old": "world.js:2989 and exterior.js:1252 seed it",
+    "new": "world.js:2460 and exterior.js:1252 seed it",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -498,8 +498,8 @@
   {
     "name": "SURVTIERS3-the-rest-window-cite-input-rots",
     "file": "src/ui/restWindow.js",
-    "old": "exterior.js:2967, ui/input.js:813)",
-    "new": "exterior.js:2967, ui/input.js:525)",
+    "old": "exterior.js:3015, ui/input.js:813)",
+    "new": "exterior.js:3015, ui/input.js:525)",
     "tests": [
       "test/citedrift.test.js"
     ]

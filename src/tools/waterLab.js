@@ -12,7 +12,7 @@ import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';
 import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // WATER-DRAW1: the lab is the PASS's lab
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
 import { generateTileData, assignTiles } from '../world/terrainTiles.js';
-import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE } from '../world/terrainSampler.js';
+import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
 import { perspective, lookAt, identity, mirrorProjectionX } from '../world/mat4.js';
 
@@ -109,7 +109,7 @@ function frame() {
 
   // the camera: on the island's south shore, looking where the sliders say
   const yaw = Number($('yaw').value) * Math.PI / 180, pitch = Number($('pitch').value) * Math.PI / 180;
-  const seaY = seaNorm * MAX_TERRAIN_HEIGHT * 1.5;
+  const seaY = seaNorm * MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const eye = [TERRAIN_SIZE * 0.5, seaY + Number($('height').value), TERRAIN_SIZE * 0.5 + Number(params.get('z') ?? -330)];   // off the south shore by default, the sea between here and the beach; ?z= moves the eye along the axis
   const dir = [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
   const view = lookAt(eye, [eye[0] + dir[0], eye[1] + dir[1], eye[2] + dir[2]], [0, 1, 0]);

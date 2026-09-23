@@ -349,7 +349,7 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   // AUDIT SURV-TIERS (the third pass): the save's two converters are named once, for the save, the load and the teleport
   assert.match(world, /const campToNatives = \(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \};/);
   assert.equal((world.match(/camps: camps\.snapshot\(campToNatives\)/g) ?? []).length, 1, 'the save envelope alone carries the camps (AUDIT SURV B: the scene cache no longer does)');
-  assert.doesNotMatch(world, /camps\.restore\(arrived\.camps,/); assert.match(world, /camps\.restore\(w\.camps,/);
+  assert.doesNotMatch(world, /camps\.restore\(arrived\.camps,/); assert.match(world, /camps\.restore\(restandAt\('pos'\)\(w\.camps\),/);   // TERRAIN-SCALE1: stood again on today's ground
   assert.match(world, /camps\.offsetAll\(r\.offset\);/);
   assert.match(world, /if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);/, 'my camps ride my full foes frame (AUDIT SURV B: an empty list too)');
   assert.match(world, /exteriorFoes\.setOnCamps\(\(from, c, at\) => camps\.applyOwner\(from, c, campToScene, at\)\);/, 'a peer\'s arrive with their foes, off the pool\'s own apply');

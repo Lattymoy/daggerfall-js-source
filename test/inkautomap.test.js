@@ -157,7 +157,7 @@ test('EM3: the painters are guarded on a real context, as every painter in this 
 test('EM3: the caret says which way the player FACES, and it is the last thing drawn', () => {
   const ctx = recordingCtx();
   // facing north (yaw 0): the motor measures yaw from -Z clockwise, and
-  // the plan lays z straight down the paper, so north is UP
+  // every sheet lays +Z UP the paper (DISC8-C), so north is UP
   paintPlanOverlay(ctx, VIEW, { ...PAPER, player: { x: 5, z: 5, yaw: 0 } });
   const [cx, cy] = toPaper(VIEW, 5, 5);
   const tip = ctx.calls.find((c) => c.fn === 'moveTo');

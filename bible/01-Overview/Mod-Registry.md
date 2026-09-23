@@ -4,9 +4,13 @@
 > left as it wrote them.** They were true of the fifteen rows that
 > existed on 2026-09-15 and they are the record of what putting those
 > rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 19 directories and 11 of their READMEs still carry an
-> unfilled permission line, each shown as `RECORD OPEN` in the table.
-> ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
+> `vendor/` holds 27 directories and 14 of their READMEs still carry an
+> unfilled permission line, each shown as `RECORD OPEN` in the table
+> (AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
+> brought `horse-cart-and-cargo`, the twenty-seventh; WOD1 had counted 26
+> and 13 when it added the twenty-sixth;
+> the sentence had read 19 and 11 since ORL1 and nothing checks it, so
+> re-count rather than trust it). ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
 > that is not a Daggerfall Unity one - an OpenMW Lua mod for Morrowind.
 > It carries no `*.dfmod.json`, so the gate below reads no version or
 > author cell for it and its own suite checks both instead; its row in
@@ -92,6 +96,7 @@ not the date the slice shipped, where those differ.
 | `weapon-widget` | manifest, settings | RedRoryOTheGlen | 1.6 | shipped zip `Weapon_Widget-860-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-14) - **RECORD OPEN** | WW1-WW4 | 2026-09-14 | `05-Combat/Weapon-Widget.md` |
 | `shield-widget` | manifest, settings, presets | RedRoryOTheGlen | 1.6 | shipped zip `Shield_Widget-733-1-6`; behaviour off the DLL's IL | granted (Mac handed the zip over 2026-09-19) - **RECORD OPEN** | SW1 | 2026-09-19 | `05-Combat/Shield-Widget.md` |
 | `windmills-kamer` | five `.dae` meshes + placements | Kamer | 2.0 | `WindMills.rar`, supplied by Mac 2026-08-29 | granted by the author, confirmed by Mac 2026-08-29 | WM1 | 2026-08-29 | `03-World/Windmills.md` |
+| `world-of-daggerfall` | manifest, the eight C# sources (carried inside the bundle as TextAssets, so nothing here is a decompile), the 65 prefab layouts verbatim, and the 2,413 instance lists read through the ported reader into one pack per region folder with every source file's sha256 recorded | Kamer | 2.0 | shipped `.rar` `World_of_Daggerfall_WindowsLinux-181-2-0-1773339543`, handed over by Mac 2026-09-23; `tools/worldOfDaggerfallAssets.mjs` reproduces every vendored file byte for byte | granted by the author (the grant that covers his windmills), confirmed by Mac 2026-09-23 | WOD1-WOD5 | 2026-09-23 | `03-World/World-Of-Daggerfall.md` |
 | `world-tooltips` | manifest, settings, and the mod's OWN source - the bundle ships `Modded_HUDTooltipWindow.cs` as a Unity TextAsset, so nothing here is a decompile | jefetienne | 1.1 | shipped zip `World_Tooltips_-_Windows_1.1-158-1-1-1655327614`, handed over by Mac 2026-09-21; `tools/worldTooltipsAssets.mjs` reproduces all three vendored files byte for byte | MIT ("Copyright (c) 2009-2018 jefetienne", shipped as `LICENSE-world-tooltips`, beside Daggerfall Workshop's own) | WORLD-HOVER | 2026-09-21 | `10-UI/UI-Arc.md` |
 
 ## Known deviations, per row
@@ -106,6 +111,12 @@ full account; this is the index to it.
   author's changelog heading and the Lua's own defaults. The archive
   names no author and states no licence, so the author cell is the Nexus
   id and the permission line is still a prompt.
+- **`world-of-daggerfall`** - the mod's 2,413 instance files (61.0 MB of
+  XML) are NOT carried as files. Each region folder is one pack of the
+  ported reader's output, in the mod's own load order, and
+  `locations.json` lists every source file with its sha256 and instance
+  count, so the archive re-derives each pack byte for byte. The 65
+  prefabs and the eight C# sources ARE verbatim.
 - **`dynamic-skies`** - the repository's `Resources/*Night.json` presets
   are NOT carried, because they are not in the shipped manifest and the
   mod therefore never loads them.

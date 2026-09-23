@@ -163,7 +163,7 @@ test('PERF-COL1: sphereTouchesBox - the box test, the skin, the empty bucket', (
 test('PERF-COL1: the walks keep their laws - the live local point per triangle, the test before the cells, one scratch set', () => {
   const src = read('src/player/collider.js');
   const resolve = src.slice(src.indexOf('  _resolveSphere(center, radius, out'), src.indexOf('  _resolveCapsule(feet, out'));
-  assert.match(resolve, /if \(!sphereTouchesBox\(center\[0\] - t\[0\], center\[1\] - t\[1\], center\[2\] - t\[2\], radius \+ SKIN, bucket\.min, bucket\.max\)\) continue;\s*\n\s*const gx = /, 'the box before the cells, at the contact radius');
+  assert.match(resolve, /if \(!sphereTouchesBox\(center\[0\] - t\[0\], center\[1\] - t\[1\], center\[2\] - t\[2\], radius \+ SKIN, bucket\.min, bucket\.max\)\) continue;\s*\n\s*const visited = VISITED;\s*\n\s*visited\.clear\(\);\s*\n\s*for \(const cell of nearCells\(bucket, /, 'the box before the cells (AUDIT BRANCH (WoD) B1: the cells are nearCells\' - the fine 3x3, then any wide triangles), at the contact radius');
   assert.match(resolve, /const visited = VISITED;\s*\n\s*visited\.clear\(\);/, 'the module\'s scratch, cleared per bucket');
   assert.match(resolve, /for \(const ti of cell\) \{[\s\S]*?const lx = center\[0\] - t\[0\];/, 'the local point stays LIVE per triangle - earlier pushes are seen by later triangles');
   const overlaps = src.slice(src.indexOf('  sphereOverlaps(center, radius) {'), src.indexOf('  capsuleCast('));

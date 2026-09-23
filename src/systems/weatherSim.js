@@ -353,6 +353,19 @@ function applyFromArray(climateIndex, nowMinutes) {
   return _set(weatherForClimate(climateIndex), climateIndex, nowMinutes);   // WEATHER2a: through the ground
 }
 
+/** DISC9 (Mac, 2026-09-23: "now it's not raining outside and you can hear it raining inside"): THE WEATHER THE
+ *  PLAYER HEARS. On the enhanced lane the sim's word is not what is falling: the front (systems/weatherFront.js)
+ *  eases an episode in behind the cloud's arrival and has dry spells inside it, and the street's ear follows the
+ *  drops (`soundWeather`), so a 'rain' word over a dry street is a cloudy day. Every reader of "is it raining here"
+ *  that the player HEARS must take that same word - Better Ambience's indoor rain read the sim's instead, and played
+ *  a shower in the tavern that the street outside did not have. The outdoor frame writes the word it heard; indoors
+ *  it holds (the front does not tick there, as DFU's WeatherManager does not). A JUMP - a load, a travel landing, a
+ *  respawn - lands the player under the sim's sky whole, so a word heard before it no longer stands. */
+let _heard = null;
+let _heardAtJump = -1;
+export function setHeardWeather(word) { _heard = word ?? null; _heardAtJump = _jumps; }
+export const heardWeather = () => (_heard != null && _heardAtJump === _jumps ? _heard : currentWeather());
+
 /** WX2a: the count of weather changes that were jumps. A host keeps the
  *  last value it saw; a new one means the change on this frame (if any)
  *  is to be taken whole, not built toward. */
@@ -558,6 +571,7 @@ export function resetWeatherSim() {
   _updateFromClimateArray = false;
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
   _jumps = 0;
+  _heard = null; _heardAtJump = -1;   // DISC9
   _crossings = 0; _fieldCells = []; _fieldInside = null; _fieldOverride = null; _fieldUrlDoor = null;   // WEATHER2b
   _rolledAtMinutes = null;
   _zoneChangedAtMinutes = new Array(6).fill(null);

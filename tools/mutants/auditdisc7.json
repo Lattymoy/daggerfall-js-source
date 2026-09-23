@@ -236,8 +236,8 @@
   {
     "name": "B1-exterior-word-forced",
     "file": "src/scenes/exterior.js",
-    "old": "      ambience.setPreset(presetForExterior(ambientWord, isNight(minuteNow())));\n      ambience.update(dt, { inside: true,",
-    "new": "      ambientWord = weather;\n      ambience.setPreset(presetForExterior(ambientWord, isNight(minuteNow())));\n      ambience.update(dt, { inside: true,",
+    "old": "      ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));",
+    "new": "      ambience.setPreset(presetForExterior(weather, isNight(minuteNow())));",
     "tests": [
       "test/disc6.test.js"
     ]
