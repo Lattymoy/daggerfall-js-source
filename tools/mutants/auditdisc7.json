@@ -1,0 +1,317 @@
+[
+  {
+    "name": "C1-subscribed-only-at-birth",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    offLight ??= addLightSourceListener(onLight);   // AUDIT DISC7 C1: (re)armed with the frame\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "C2-resync-finds-no-behaviour",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (b.questUID === uid) out.push(b);",
+    "new": "      if (false) out.push(b);",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "C2-symbol-left-stale",
+    "file": "src/systems/quest/resourceBehaviour.js",
+    "old": "    if (this.targetResource?.symbol) this.targetSymbol = this.targetResource.symbol;\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "C2-behaviours-never-registered",
+    "file": "src/systems/quest/resourceBehaviour.js",
+    "old": "    machine?._registerBehaviour?.(this);",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "C3-spell-queue-replaced",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "C3-item-queue-replaced",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "D7-pending-kill-dropped",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (was.dying) r.deathTrigger = true;\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "D7-injury-dropped",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (was.injured) r.injuredTrigger = true;\n      if (was.dying)",
+    "new": "      if (was.dying)",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "C6-redraw-by-the-margin-rank",
+    "file": "src/render/shadowPass.js",
+    "old": "      const due = nearestRank(casters, L, f.eye, rank) < SHADOW_NEAR_CASTERS",
+    "new": "      const due = rank < SHADOW_NEAR_CASTERS",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "C6-nearest-rank-counts-farther",
+    "file": "src/render/shadowPass.js",
+    "old": "if (d < mine || (d === mine && r < rank)) n++;",
+    "new": "if (d > mine || (d === mine && r < rank)) n++;",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "C7-bailed-frame-keeps-its-previous",
+    "file": "src/render/airPass.js",
+    "old": "{ this.f = null; this.prevValid = false; return; }",
+    "new": "{ this.f = null; return; }",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "A1-gate-never-says-a-cast",
+    "file": "src/systems/activateGate.js",
+    "old": "  if (started) gate.pressCast = cast;\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "A1-street-presses-on-a-cast",
+    "file": "src/scenes/world.js",
+    "old": "          else if (!_act.pressCast && plaquePeerAct(cam.pos, useFwd)) {",
+    "new": "          else if (plaquePeerAct(cam.pos, useFwd)) {",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "A1-modal-press-cast-lost",
+    "file": "src/scenes/worldModes.js",
+    "old": "tryExit)({ pressCast: _act.pressCast });",
+    "new": "tryExit)({ pressCast: false });",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "A2-player-list-starts-lit",
+    "file": "src/systems/worldHover.js",
+    "old": "    if (named.actionsUnlit) f.startUnlit = true;\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "A2-unlit-floor-lost",
+    "file": "src/systems/worldHover.js",
+    "old": "  const floor = frame.startUnlit ? -1 : 0;",
+    "new": "  const floor = 0;",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "A2-F-lights-nothing",
+    "file": "src/systems/quickLoot.js",
+    "old": "  _sel = { key, row: 0, id: _actionIds[0] };\n  return true;",
+    "new": "  return false;",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "A3-verb-slides-by-row",
+    "file": "src/systems/worldHover.js",
+    "old": "    const at = prev.id != null ? frame.rows.findIndex((r) => r.id === prev.id) : -1;",
+    "new": "    const at = -1;",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "A4-refusal-not-on-the-row",
+    "file": "src/systems/worldHover.js",
+    "old": "      name: a.disabled ? `${a.label} (${a.why || 'not now'})` : a.label,",
+    "new": "      name: a.label,",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "A4-refusal-not-said",
+    "file": "src/scenes/world.js",
+    "old": "    else peerNote?.(row.refusal);\n",
+    "new": "",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "A7-one-verb-eats-the-wheel",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (_actionIds && _actionIds.length <= 1 && _sel.row >= 0) return false;\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "A8-fault-keeps-the-highlight",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    foldQuickLoot(null);   // AUDIT DISC7 A8: a contained fault lights nothing - a click must not press the last good frame's verb\n",
+    "new": "",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "A6-wall-ignored",
+    "file": "src/scenes/world.js",
+    "old": "    return wall < hit.distance - 0.05 ? null : hit;",
+    "new": "    return hit;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "A9-press-not-re-picked",
+    "file": "src/scenes/world.js",
+    "old": "    if (peerInSight(eye, dir)?.peer?.id !== id) return false;\n",
+    "new": "",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "A10-hitched-wagon-hitched-again",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "horseMode === HORSE_MODE.HitchedToWagon ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.hitch",
+    "new": "HCC_ACTION_TEXT.hitch",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "B1-world-rain-forced-full",
+    "file": "src/scenes/world.js",
+    "old": "      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });",
+    "new": "      ambience.rainGain = 1;\n      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "B1-exterior-word-forced",
+    "file": "src/scenes/exterior.js",
+    "old": "      ambience.setPreset(presetForExterior(ambientWord, isNight(minuteNow())));\n      ambience.update(dt, { inside: true,",
+    "new": "      ambientWord = weather;\n      ambience.setPreset(presetForExterior(ambientWord, isNight(minuteNow())));\n      ambience.update(dt, { inside: true,",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "B2-latch-reads-the-stop",
+    "file": "src/scenes/world.js",
+    "old": "_hsLatch = !!player.movingLessThanHalfSpeed; }",
+    "new": "_hsLatch = true; }",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "B3-stale-pose-gallops-on",
+    "file": "src/net/remotePlayers.js",
+    "old": "    const stale = typeof poseAgeMs === 'function' && poseAgeMs(peer) > PEER_RIDE_STALE_MS;",
+    "new": "    const stale = false;",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "B4-loop-past-earshot",
+    "file": "src/net/remotePlayers.js",
+    "old": "out.playing && heard ? SOUND[out.clip] : null",
+    "new": "out.playing ? SOUND[out.clip] : null",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "B4-first-sight-neighs-a-mount",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (!mounted) r.anim.neighTime = r.anim.now + nextNeighDelay();\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "B6-loops-left-in-the-old-frame",
+    "file": "src/net/remotePlayers.js",
+    "old": "      this.deps?.audio?.moveLoop3d?.(ridingLoopName(id), r.at);\n",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "B7-dead-channel-stays-dead",
+    "file": "src/systems/audio.js",
+    "old": "    if (ch) { ch.want = clip; ch.rearm?.(); ch.setVolume(volume);",
+    "new": "    if (ch) { ch.want = clip; ch.setVolume(volume);",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "B7-panner-built-for-a-silent-clip",
+    "file": "src/systems/audio.js",
+    "old": "    if (!this._buffer(clip)) return null;   // AUDIT DISC7 B7",
+    "new": "",
+    "tests": [
+      "test/auditdisc7.test.js"
+    ]
+  },
+  {
+    "name": "B8-truthy-hs",
+    "file": "src/net/wire.js",
+    "old": "...(uint(hs, 1) ? { hs: 1 } : {})",
+    "new": "...(hs ? { hs: 1 } : {})",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  }
+]

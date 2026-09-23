@@ -209,7 +209,7 @@ test('TR-AUDIT F-F3: the riding channel SWAPS its clip rather than restarting - 
   // The port's channel is that shape: one non-looping source re-armed
   // on `ended`, reading `want` each time.
   const audioSrc = read('src/systems/audio.js');
-  assert.match(audioSrc, /_makeRetriggerLoop\(index, volume, pitch\) \{/);
+  assert.match(audioSrc, /_makeRetriggerLoop\(index, volume, pitch, out = null\) \{/);
   assert.match(audioSrc, /src\.onended = \(\) => \{ if \(ch\.playing === src\) \{ ch\.playing = null; arm\(\); \} \};/);
   assert.match(audioSrc, /const buf = this\._buffer\(ch\.want\);/, 'the NEXT arm reads the wanted clip, so a swap lands at the seam');
   assert.doesNotMatch(audioSrc, /src\.loop = true;\s*\n\s*src\.playbackRate/, 'no true-loop source on this channel');

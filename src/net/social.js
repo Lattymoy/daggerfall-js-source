@@ -49,7 +49,7 @@ const kept = (storage, key, re, mint) => {
   try { back = storage?.getItem?.(key) ?? null; } catch { back = null; }
   return back === v ? v : null;
 };
-/** The reason `actionsFor` gives for a peer already seated with me - ONE home, read by player/socialPick.js peerPromptText too (AUDIT DROPS: a rewording here used to drop the plaque's 'In your party' line with every pin green). */
+/** The reason `actionsFor` gives for a peer already seated with me - ONE home, read by player/socialPick.js peerRelationText too (AUDIT DROPS: a rewording here used to drop the plaque's 'In your party' line with every pin green). */
 export const WHY_IN_PARTY = 'in your party';
 export const accountId = (storage = appStorage()) => kept(storage, 'dagger.online.account', /^[A-Za-z0-9_-]{4,40}$/,
   () => 'a' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4));

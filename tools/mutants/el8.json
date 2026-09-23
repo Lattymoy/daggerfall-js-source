@@ -101,7 +101,7 @@
   {
     "name": "prepare-no-prev",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }\n",
+    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; holdPrevRect(this.prevRect, this.rect, this.canvas); }\n",
     "new": "",
     "tests": [
       "test/el8_contact.test.js"
@@ -110,7 +110,7 @@
   {
     "name": "prepare-prev-is-current",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }\n    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
+    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; holdPrevRect(this.prevRect, this.rect, this.canvas); }\n    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
     "new": "    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame;",
     "tests": [
       "test/el8_contact.test.js"
@@ -236,7 +236,7 @@
   {
     "name": "cadence-casters-every-frame",
     "file": "src/render/shadowPass.js",
-    "old": "      const due = rank < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;   // SC1: by the light's RANK - the nearest two, whatever slot they hold",
+    "old": "      const due = nearestRank(casters, L, f.eye, rank) < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;",
     "new": "      const due = true;",
     "tests": [
       "test/el8_contact.test.js"

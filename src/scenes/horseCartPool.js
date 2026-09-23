@@ -317,11 +317,16 @@ export function createHorseCartPool({
     return out;
   }
   const peerOfKey = (key) => { if (typeof key !== 'string' || !key.startsWith('hccPeer:')) return null; const i = key.lastIndexOf(':'); return { owner: key.slice(8, i), what: key.slice(i + 1) }; };
+  /** ACT-MENU: a word with the runtime's verbs for it, when it has any (none while the mod is not ready). */
+  const withActions = (named, target) => { const actions = runtime?.actionRows?.(target) ?? []; return actions.length ? { ...named, actions } : named; };
   /** WORLD-HOVER: the plaque's word - the horse's name or "Horse" (HorseTargetLabel), "Wagon", and a peer's by whose it is. */
   function hoverName(key) {
     if (typeof key !== 'string') return null;
-    if (key === KEY_WAGON || key === KEY_FOLLOWING_WAGON) return { title: WAGON_HOVER_TEXT };
-    if (key === KEY_HORSE) return { title: runtime ? runtime.horseTargetLabel : horseTargetLabel('') };
+    // ACT-MENU: my own three carry the mod's verbs as the plaque's rows (horseCartLaw.js hccActionRows) - the wheel
+    // lights one and the activate key presses it, in place of the interaction mode set beforehand
+    if (key === KEY_WAGON) return withActions({ title: WAGON_HOVER_TEXT }, 'deployedWagon');
+    if (key === KEY_FOLLOWING_WAGON) return withActions({ title: WAGON_HOVER_TEXT }, 'followingWagon');
+    if (key === KEY_HORSE) return withActions({ title: runtime ? runtime.horseTargetLabel : horseTargetLabel('') }, 'horse');
     const pk = peerOfKey(key);
     if (!pk) return null;
     const p = _peers.get(pk.owner);
@@ -344,12 +349,13 @@ export function createHorseCartPool({
     return pick?.key === KEY_HORSE && pick.distance <= ACTIVATION_REACH ? String(runtime.horseTargetLabel ?? '') : '';
   }
   /** The press: the runtime's three activators; a peer's answers with whose it is (nothing of theirs opens here) -
-   *  inside the mod's own reach, else DFU's "too far" (AUDIT HCC O6, the dropped torch's arm). */
-  function activate(key, distance, say = null, tooFar = null) {
+   *  inside the mod's own reach, else DFU's "too far" (AUDIT HCC O6, the dropped torch's arm). ACT-MENU: `mode` is
+   *  the plaque row the player lit (null where no plaque stands: the interaction mode decides, as the mod's does). */
+  function activate(key, distance, say = null, tooFar = null, mode = null) {
     if (!runtime) return false;
-    if (key === KEY_WAGON) return runtime.handleDeployedWagonActivation(distance);
-    if (key === KEY_FOLLOWING_WAGON) return runtime.handleFollowingWagonActivation(distance);
-    if (key === KEY_HORSE) return runtime.handleStationaryHorseActivation(distance);
+    if (key === KEY_WAGON) return runtime.handleDeployedWagonActivation(distance, mode);
+    if (key === KEY_FOLLOWING_WAGON) return runtime.handleFollowingWagonActivation(distance, mode);
+    if (key === KEY_HORSE) return runtime.handleStationaryHorseActivation(distance, mode);
     const pk = peerOfKey(key);
     if (!pk || !_peers.has(pk.owner)) return false;
     if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }
