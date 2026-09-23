@@ -13,6 +13,20 @@
 // (the bars say their shape; the digits were the clutter), and the seat count sits in the title, because a party of
 // eight is the kind whose count matters.
 //
+// PARTY8-B (2026-09-23, Mac, shown three renders and asked "how can we really push the fidelity and reduce clutter":
+// "B"): QUIET ROWS. The clutter was never the facts, it was the chrome - seven boxed, blurred cards were fourteen
+// edges over the world, and every card carried a line of digits and a place whether or not they said anything. A
+// row is now a portrait in a 1px frame with a hard shadow, the green name, ONE real health bar (5px) and two
+// hairlines (2px, stamina and magicka side by side) under it, with no plate behind any of it - the HUD's own hard
+// pixel shadow under the text is what keeps it legible, the way ui/hudVitals.js' bars stand over the world. And
+// EACH FACT APPEARS ONLY WHEN IT IS ACTIONABLE: the health digits are drawn only while a seat is under half
+// health, in the health's red (a healthy party is names and bars and nothing else); the place line is drawn only
+// for a seat that is NOT where I am (a party walking together says nothing under the bars; the one who wandered
+// into a dungeon says where - `here` is the host's word for my own place, the last party pose it composed); an
+// away seat greys whole and says when it was last seen where its place would go. A hit flashes the health fill
+// for a beat, so the eye is pulled to the seat that took it. Every text node is still WRITTEN as before (the
+// pins read them) - what moved is which of them the sheet draws.
+//
 // WHY A SECOND SURFACE AND NOT A ROW IN THE FRIENDS PANEL. A friends list is a thing you OPEN; a party is a thing you
 // are IN while you play. The four-seat party is the formation you fight in, so the one question it must answer
 // without a click is "is my healer about to die" - which is a portrait, three bars and a place, drawn over the world
@@ -63,9 +77,9 @@ export const VITALS_BLANK = '- / -';
 export const FACE_BLANK_MARK = '?';
 /** The portrait plate, in CSS pixels. A racial head record fits this at 1x and draws at an integer NEAREST scale
  *  (1996 pixels, and they should look it - ui/bitmapCanvas.js' own rule); anything larger is clamped by the sheet's
- *  max-width rather than overflowing the card. PARTY8 halved it from 72x80: the compact card's plate. */
-export const FACE_BOX_W = 40;   // PARTY8: a head record drawn at 1x - the compact card's plate
-export const FACE_BOX_H = 44;
+ *  max-width rather than overflowing the card. PARTY8 halved it from 72x80; PARTY8-B fits it to the record. */
+export const FACE_BOX_W = 32;   // PARTY8-B: the widest head record measured in FACE##I0.CIF is 31x32 (tools/partyHudProbe.mjs' note): 1x fits, and the plate is no bigger than the face
+export const FACE_BOX_H = 34;
 
 /** The panel's sheet: the enhanced skin's tokens (ui/enhancedStyle.js) where they exist, a fallback where the
  *  skin's sheet is not loaded - the same shape ui/chatPanel.js uses, so the two surfaces agree over the world.
@@ -98,39 +112,56 @@ ${PIXELIFY_FIVE_FACE}
   color: var(--dim, #8b8578); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .dfparty-count { margin-left: 6px; letter-spacing: 0; color: var(--bone, #e9e4d9); font-variant-numeric: tabular-nums; }
 .dfparty-list { display: flex; flex-direction: column; gap: 3px; }
-/* PARTY8: the compact card - a plate, a name, three thin bars, one small line */
-.dfparty-card { display: flex; gap: 6px; padding: 4px; border-radius: 4px;
-  background: rgba(14, 16, 19, .72); border: 1px solid var(--iron, #2b323b); backdrop-filter: blur(3px); }
+/* PARTY8-B: QUIET ROWS - no plate behind a card (no border, no fill, no blur: seven boxed cards were fourteen edges
+   over the world). A row is a portrait, a name and thin lines under it; the text carries the HUD's hard shadow. */
+.dfparty-card { display: flex; gap: 6px; padding: 3px 0; }
 /* away: the whole card goes quiet - the portrait too, so a grey face is never mistaken for a live one */
 .dfparty-card.away { opacity: .46; filter: grayscale(1); }
-.dfparty-face { flex: none; width: ${FACE_BOX_W}px; height: ${FACE_BOX_H}px; overflow: hidden; border-radius: 3px;
+.dfparty-face { flex: none; width: ${FACE_BOX_W}px; height: ${FACE_BOX_H}px; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, #232830, #14171b); border: 1px solid var(--iron, #2b323b); }
+  background: linear-gradient(180deg, #232830, #14171b); border: 1px solid var(--iron, #2b323b);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
 .dfparty-facepix { display: none; max-width: 100%; max-height: 100%; image-rendering: pixelated; }
 .dfparty-face.has .dfparty-facepix { display: block; }
 .dfparty-face.has .dfparty-facemark { display: none; }
-.dfparty-facemark { font-size: 16px; font-weight: 600; color: var(--dim, #8b8578); opacity: .45; }
-.dfparty-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
-.dfparty-head { display: flex; align-items: baseline; gap: 4px; min-width: 0; }
+.dfparty-facemark { font-size: 13px; font-weight: 600; color: var(--dim, #8b8578); opacity: .45; }
+.dfparty-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.dfparty-head { display: flex; align-items: baseline; gap: 4px; min-width: 0; text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px; line-height: 1.2;
   color: ${PARTY_GREEN_CSS}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dfparty-lead { flex: none; font-size: 10px; line-height: 1; color: var(--brass, #c08a3e); }
 .dfparty-lead.off { display: none; }
-.dfparty-bars { display: flex; flex-direction: column; gap: 2px; }
+/* the health digits, at the row's right edge: drawn ONLY while the seat is under half health (.low), in the
+   health's own red - a healthy party is names and bars and nothing else. The node is written for every pose. */
+.dfparty-hp { margin-left: auto; flex: none; font-size: 10px; line-height: 1.2; color: #e2554c; font-variant-numeric: tabular-nums; }
+.dfparty-hp.off { display: none; }
+/* the health is the one real bar; stamina and magicka are two hairlines under it, side by side - their shape, not
+   their weight. The tracks are square-cornered and black, the enhanced HUD's own. */
+.dfparty-bars { display: flex; flex-direction: column; gap: 3px; }
 .dfparty-vital { display: flex; align-items: center; }
-.dfparty-track { flex: 1; min-width: 0; height: 4px; border-radius: 2px; overflow: hidden;
-  background: rgba(0, 0, 0, .55); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .8); }
+.dfparty-track { flex: 1; min-width: 0; height: 5px; overflow: hidden;
+  background: rgba(0, 0, 0, .65); box-shadow: 0 0 0 1px rgba(0, 0, 0, .5); }
+.dfparty-thin { display: flex; gap: 3px; }
+.dfparty-thin .dfparty-vital { flex: 1; min-width: 0; }
+.dfparty-thin .dfparty-track { height: 2px; }
 .dfparty-fill { height: 100%; width: 0%; }
-.dfparty-vital.health .dfparty-fill { background: linear-gradient(180deg, #e2554c, #8a1d17); }
-.dfparty-vital.fatigue .dfparty-fill { background: linear-gradient(180deg, #62d26a, #1e7a2b); }
-.dfparty-vital.magicka .dfparty-fill { background: linear-gradient(180deg, #7089f2, #222f8e); }
-/* the digits beside a bar are kept on the node (a pin reads them) and drawn nowhere: the bar says the shape, and
-   the one number a party reads - the health - is on the foot line */
+/* the skin's own hues - the blood red, a moss green, a dusk blue - not the web's primaries */
+.dfparty-vital.health .dfparty-fill { background: linear-gradient(180deg, #d9463c, #7d1b15); }
+.dfparty-vital.fatigue .dfparty-fill { background: linear-gradient(180deg, #4faa58, #2d6b34); }
+.dfparty-vital.magicka .dfparty-fill { background: linear-gradient(180deg, #5d74d8, #33418f); }
+/* a hit: the health fill flares for a beat, so the eye is pulled to the seat that took it. Two names for one
+   animation - a fresh hit on a fill still flaring takes the other name, which restarts it with no reflow forced. */
+@keyframes dfparty-hit { 0% { filter: brightness(2.6); } 100% { filter: brightness(1); } }
+@keyframes dfparty-hit2 { 0% { filter: brightness(2.6); } 100% { filter: brightness(1); } }
+.dfparty-fill.hit { animation: dfparty-hit .6s ease-out; }
+.dfparty-fill.hit2 { animation: dfparty-hit2 .6s ease-out; }
+/* the digits beside a bar are kept on the node (a pin reads them) and drawn nowhere: the bar says the shape */
 .dfparty-num { display: none; }
-.dfparty-foot { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 9px; line-height: 1.2; }
-.dfparty-hp { flex: none; color: var(--bone, #e9e4d9); font-variant-numeric: tabular-nums; }
-.dfparty-where { flex: 1; min-width: 0; color: var(--dim, #8b8578); text-align: right;
+/* the place line: drawn only for a seat that is NOT where I am (.off otherwise) - a party walking together says
+   nothing under the bars; the one who wandered into a dungeon says where. An away seat says when it was last seen. */
+.dfparty-where { font-size: 9px; line-height: 1.2; color: var(--dim, #8b8578); text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dfparty-where.off { display: none; }
 `;
 
 /** The sheet, once (ui/chatPanel.js injectChatStyle's own shape). */
@@ -171,6 +202,14 @@ export function barPercent(v, max) {
   if (!Number.isFinite(m) || m <= 0 || !Number.isFinite(x)) return 0;
   return Math.max(0, Math.min(100, Math.round((x / m) * 100)));
 }
+
+/** PARTY8-B: the health digits are drawn only under this fill - "is my healer about to die" is a question about
+ *  the bottom half of the bar, and a number beside a full one is clutter. */
+export const HP_DIGITS_BELOW = 50;
+/** PARTY8-B: is this seat where I am? Two places are the same place when their words are (placeText's, which
+ *  fold the name AND the kind - a companion outside the shop I am in is somewhere else). No word for my own
+ *  place (the host has not composed a pose yet) means nothing can be said to be with me: the line is drawn. */
+export const withMe = (p, hereText) => hereText !== '' && placeText(p) === hereText;
 
 /** The digits beside a bar: "50 / 60". */
 export function vitalsText(v, max) {
@@ -218,8 +257,11 @@ export function createFaceLoader({ fetchBytes, palette } = {}) {
  * The returned panel: `render({ covered })` once a frame from the host, `setHidden(covered)` for the same word said
  * on its own, and `destroy()`.
  */
-export function createPartyPanel({ social, doc = document, art = null, faceLoader = null, touch = isTouchDevice() } = {}) {
+export function createPartyPanel({ social, doc = document, art = null, faceLoader = null, touch = isTouchDevice(), here = null } = {}) {
   injectPartyStyle(doc);
+  // PARTY8-B: my own place, as the host last composed it (scenes/world.js partyFrame's pose) - read, never composed
+  // here (AUDIT SOC B18: composing a pose reads the travel pixel and the location index, and this runs per frame)
+  const hereText = () => placeText(here?.() ?? null);
   const loader = faceLoader ?? createFaceLoader(art ?? {});
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const setText = (n, t) => { if (n.textContent !== t) n.textContent = t; };
@@ -243,6 +285,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   const faces = new Map();     // race|gender|face -> the decoded image, or null when the art could not be read
   const pending = new Map();   // the same key -> the load in flight, so two seats with one face load it once
   let painted = -1;            // the `social.version` the cards were written from
+  let hereWas = '';            // PARTY8-B: my place's words at the last pass, so the place lines follow ME as well as them
   let covered = false;         // the host's word: a window over the HUD
   let showing = false;         // is there a party with somebody else in it
   let alive = true;
@@ -309,11 +352,9 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     const lead = el('span', 'dfparty-lead off', LEADER_MARK);
     lead.setAttribute('title', 'Party leader');
     lead.setAttribute('aria-label', 'Party leader');
-    head.append(name, lead);
-    const where = el('span', 'dfparty-where');
-    const hp = el('span', 'dfparty-hp', VITALS_BLANK);   // PARTY8: the one number the card says - the health
-    const foot = el('div', 'dfparty-foot');
-    foot.append(hp, where);
+    const hp = el('span', 'dfparty-hp off', VITALS_BLANK);   // PARTY8: the one number the card says - the health; PARTY8-B: drawn only while it is low
+    head.append(name, lead, hp);
+    const where = el('div', 'dfparty-where off');   // PARTY8-B: under the bars, drawn only for a seat that is not with me
     const bars = el('div', 'dfparty-bars');
     const vitals = PARTY_VITALS.map((v) => {
       const row = el('div', `dfparty-vital ${v.key}`);
@@ -328,10 +369,13 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       row.setAttribute('aria-label', v.label);
       return { row, fill, num };
     });
-    bars.append(...vitals.map((v) => v.row));
-    body.append(head, bars, foot);
+    // PARTY8-B: the health row stands alone; stamina and magicka share one hairline row
+    const thin = el('div', 'dfparty-thin');
+    thin.append(vitals[1].row, vitals[2].row);
+    bars.append(vitals[0].row, thin);
+    body.append(head, bars, where);
     node.append(facebox, body);
-    return { node, facebox, pix, name, lead, where, hp, vitals, faceKey: null, drawn: null, away: null };
+    return { node, facebox, pix, name, lead, where, hp, vitals, faceKey: null, drawn: null, away: null, hpPct: null, hitFlip: false };
   };
 
   /** One member onto one card - written PART BY PART, and only where the part differs. */
@@ -346,12 +390,23 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     // Online: where they are. Away: when they were last seen, in the picture's own words (the relay's clock).
     card.away = m.online ? null : { seen: m.seen };   // AUDIT SOC B8: the live pass re-reads this one sentence
     setText(card.where, m.online ? placeText(p) : lastOnlineText(false, m.seen, social.now()));
+    // PARTY8-B: the place line is drawn for an away seat (its "last online") and for a live seat somewhere else
+    setCls(card.where, `dfparty-where${!m.online || (p && !withMe(p, hereText())) ? '' : ' off'}`);
     for (let i = 0; i < PARTY_VITALS.length; i++) {
       const v = PARTY_VITALS[i], slot = card.vitals[i];
       setWidth(slot.fill, `${p ? barPercent(p[v.now], p[v.max]) : 0}%`);
       setText(slot.num, p ? vitalsText(p[v.now], p[v.max]) : VITALS_BLANK);
     }
-    setText(card.hp, card.vitals[0].num.textContent);   // PARTY8: the health digits, on the foot line
+    setText(card.hp, card.vitals[0].num.textContent);   // PARTY8: the health digits, written for every pose
+    // PARTY8-B: ...and DRAWN only while the health is low; a DROP flares the fill (a heal, a first pose and an
+    // away seat's stale pose do not - the flare says "took a hit", nothing else)
+    const pct = p ? barPercent(p.h, p.hm) : null;
+    setCls(card.hp, `dfparty-hp${pct != null && pct < HP_DIGITS_BELOW && m.online ? '' : ' off'}`);
+    if (pct != null && card.hpPct != null && pct < card.hpPct && m.online) {
+      card.hitFlip = !card.hitFlip;
+      setCls(card.vitals[0].fill, `dfparty-fill ${card.hitFlip ? 'hit' : 'hit2'}`);
+    }
+    card.hpPct = pct;
     const key = p ? faceKeyOf(p) : null;
     if (key !== card.faceKey) {
       card.faceKey = key;
@@ -371,6 +426,18 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
    *  WRITTEN only where the words differ, so a party with everyone present still costs nothing at all (the pins
    *  count the writes) and a seat that dropped does not sit at "just now" for the rest of the session. */
   const paintLive = () => {
+    // PARTY8-B: the place lines follow MY place too - I walk into a dungeon and the party outside is now
+    // "somewhere else". One string compare a frame; the classes are re-read only when my words moved, and
+    // written only where they differ (a seat whose line was already right costs nothing).
+    const ht = hereText();
+    if (ht !== hereWas) {
+      hereWas = ht;
+      for (const [acct, card] of cards) {
+        if (card.away) continue;
+        const p = social.party?.members?.find((x) => x.acct === acct)?.p ?? null;
+        setCls(card.where, `dfparty-where${p && !withMe(p, ht) ? '' : ' off'}`);
+      }
+    }
     for (const card of cards.values()) {
       if (!card.away) continue;
       setText(card.where, lastOnlineText(false, card.away.seen, social.now()));
@@ -378,6 +445,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   };
 
   const paint = () => {
+    hereWas = hereText();   // PARTY8-B: paintCard reads my place as it writes each line; the live pass starts from there
     const rows = social?.others?.() ?? [];
     const leader = social?.party?.leader ?? null;
     showing = rows.length > 0;

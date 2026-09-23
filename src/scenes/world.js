@@ -8709,7 +8709,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // friends list and the party HUD), the names over the world (green for my party), the F-menu on a body and the map;
   // an act goes out through `socialLink()` (sendSocial). `partyFrame` sends my own party pose once a second while I
   // sit in a party. Nothing here draws: the seams are the state and the link.
-  let social = null, _partyComposedAt = -Infinity;
+  let social = null, _partyComposedAt = -Infinity, _partyPose = null;   // PARTY8-B: the last pose composed, for the party HUD's own "where am I"
   let _partyRestReady = false;   // PARTY-REST2: this tab's own /ready vote, broadcast in composePartyPose's own `ready` field
   let _partyRestReadyAt = 0;   // PARTY-REST2b: when it was set - see PARTY_READY_TIMEOUT_MS below
   let _partyRestGateRefusedAt = -Infinity;   // PARTY-REST2d/e: when partyRestGate last genuinely refused (social.now(), the relay's clock - comparable across every tab) - see PARTY_REST_VOTE_COOLDOWN_MS below
@@ -9224,7 +9224,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // SOC4: the party HUD (portraits, health / stamina / magicka) is made here, over `social`
     // The art pair is the ESCORT FACES' own (initEscortFaces above): one fetch door and one palette for every
     // classic record this host reads, so a portrait is the same CIF the paper doll draws and nothing is loaded twice.
-    partyPanel = createPartyPanel({ social, art: { fetchBytes, palette } });
+    // PARTY8-B: `here` is the pose partyFrame last SENT - the HUD draws a seat's place only when it is not mine,
+    // and reads the composed pose rather than composing one (AUDIT SOC B18: that read is twice a second, not per frame)
+    partyPanel = createPartyPanel({ social, art: { fetchBytes, palette }, here: () => _partyPose });
     // SOC5 (Mac: "which should show options to add as a friend or invite to a party"): the F-menu, over the same
     // picture and the same link. Its acts leave through `socialLink()` and not the `link` captured above, because a
     // reconnect replaces the session object and a captured one would send into a closed socket for the rest of the
@@ -10052,7 +10054,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     social.setClockOffset(hub?.clockRead ? hub.clockOffsetMs : (online?.clockOffsetMs ?? 0));
     if (!social.party || nowMs - _partyComposedAt < PARTY_SEND_MS / 2) return;
     _partyComposedAt = nowMs;
-    socialLink()?.sendParty(composePartyPose());
+    _partyPose = composePartyPose();
+    socialLink()?.sendParty(_partyPose);
   };
   // SRV-N (Mac: "a server restart notice whenever we push server
   // updates. Like a notice that pushes in the chat window"): A NOTICE
