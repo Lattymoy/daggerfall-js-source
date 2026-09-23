@@ -717,9 +717,11 @@ with a JS cite. Git cannot give their originals, because its first commit is a s
 values. Each was re-derived by reading DFU master 2343305, the port's reference (tools/parity clones master). Where a
 row cites the same code with its `.cs` file, that cite never moved, and it anchors the range. Four read-only passes
 worked a batch each, and every span was checked here against the source before it was written.
-- 30 are restored in this pass. For example, GetReactionToPlayer_0_1_2's reaction sum is TalkManager.cs:663-667 (it
-  read :874-878), and StockHouseContainer is DaggerfallLoot.cs:291-375 (it read :319-403). The remaining 12 follow in
-  their own commit.
+- All 42 are restored. For example, GetReactionToPlayer_0_1_2's reaction sum is TalkManager.cs:663-667 (it read
+  :874-878), StockHouseContainer is DaggerfallLoot.cs:291-375 (it read :319-403), and CanRest is
+  DaggerfallRestWindow.cs:542-599 (it read :762-831). DaggerfallBookshelf's permission gate is :67-77 in master. The
+  same row's prose `DaggerfallBookshelf.cs:70-80` predates a change to DFU's own file, which is not drift; it is left
+  for a person.
 - Nine prose ranges no stop can tell apart are written with their file now, so RF3's `.cs:N` stop protects them:
   - `ResetNPCKnowledge (TalkManager.cs:546-553)`;
   - WeaponManager.cs:230-233 and :275-281;
