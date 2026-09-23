@@ -255,8 +255,8 @@
   {
     "name": "VC6d-the-march-never-strides-over-empty-air",
     "file": "src/render/volumetricClouds.js",
-    "old": "    if (rho <= 0.0) { empty++; t += (empty > 4 ? coarse : ds); continue; }",
-    "new": "    if (rho <= 0.0) { empty++; t += ds; continue; }",
+    "old": "    if (rho <= 0.0) { empty++; strode = empty > 4 && fSkip > 0.5; t += strode ? coarse : ds; continue; }",
+    "new": "    if (rho <= 0.0) { empty++; strode = false; t += ds; continue; }",
     "tests": [
       "test/vc6_clouds.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "VC6d-the-stride-is-never-backed-out-so-a-clouds-edge-is-resolved-coarsely",
     "file": "src/render/volumetricClouds.js",
-    "old": "    if (empty > 4) { t -= coarse; empty = 0; continue; }",
-    "new": "    if (empty > 4) { empty = 0; }",
+    "old": "    if (strode) { t -= coarse; strode = false; empty = 0; continue; }",
+    "new": "    if (strode) { strode = false; empty = 0; }",
     "tests": [
       "test/vc6_clouds.test.js"
     ]

@@ -17,5 +17,5 @@
  {"name": "VC7e-ambient-floor-erases-the-storm", "file": "src/render/volumetricClouds.js", "old": "export const AMBIENT_FLOOR = 0.15;", "new": "export const AMBIENT_FLOOR = 0.35;", "tests": ["test/vc7e_detail.test.js"]},
  {"name": "VC7e-column-above-ignores-the-height", "file": "src/render/volumetricClouds.js", "old": "max(top - max(col.x, 0.0), 0.0);", "new": "max(top, 0.0);", "tests": ["test/vc7e_detail.test.js"]},
  {"name": "VC7e-column-above-own-column", "file": "src/render/volumetricClouds.js", "old": "float columnAbove(vec3 p) {\n  vec4 v;\n  vec4 col = columnAt(p, v);", "new": "float columnAbove(vec3 p) {\n  vec4 v = vec4(0.5);\n  vec4 col = vec4((p.y - fBase) / max(fTop - fBase, 1.0), 1.0, fFlat, 0.5);", "tests": ["test/vc7e_detail.test.js"]},
- {"name": "VC7e-density-below-a-lane", "file": "src/render/volumetricClouds.js", "old": "  float h = col.x;\n  if (h <= 0.0) return 0.0;\n", "new": "  float h = max(col.x, 0.001);\n", "tests": ["test/vc7e_detail.test.js"]}
+ {"name": "VC7e-density-below-a-lane", "file": "src/render/volumetricClouds.js", "old": "  if (h <= 0.0) { fSkip = 0.0; return 0.0; }", "new": "  h = max(h, 0.001);", "tests": ["test/vc7e_detail.test.js"]}
 ]

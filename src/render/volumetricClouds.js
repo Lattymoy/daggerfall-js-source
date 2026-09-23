@@ -174,6 +174,39 @@ export const DECK_COVER_LO = 0.4;
 export const DECK_COVER_HI = 0.95;
 export const CELL_BASE_LIFT = 0.07;
 export const CELL_THIN = 0.55;
+/** VC7c (2026-09-23, Mac: "improve the volumetric cloud system to be more immersive" - rain shafts): THE CURTAINS
+ *  UNDER A STORM. A cell whose weather falls hangs a veil from its base to the ground: a vertical cylinder of
+ *  CURTAIN_SHARE of the cell's radius (the fall comes out of the core, not the skirt), its optical depth CURTAIN_EXT
+ *  a metre at a full fall, thinning toward its rim, streaked vertically by CURTAIN_STREAKS streaks around its axis,
+ *  and fading as the eye comes under it (the falling rain itself takes over there). CURTAIN_FALL is each word's
+ *  fall - rain, the storm's heavier, snow lighter and paler (kind 1); a sandstorm is already a wall on the ground,
+ *  and fog and cloud do not fall. */
+export const CURTAIN_SHARE = 0.55;
+/** VC7c: rain's own extinction, per metre at a fall of one - Koschmieder's 3.0 over moderate rain's five-kilometre
+ *  visibility. The first cut took a fifth of it and a storm's curtain was a faint smear at the horizon: a real shaft
+ *  a few kilometres across is near opaque, which is why one reads from thirty kilometres off. */
+export const CURTAIN_EXT = 0.0006;
+export const CURTAIN_STREAKS = 40;
+/** VC7c: the fibres - a second, finer octave of streaks (three to each), and the share of a streak's weight it takes. */
+export const CURTAIN_FIBRE = 0.4;
+/** VC7c: THE RAGGED FOOT - toward its rim a curtain's streaks stop short of the ground (the rain evaporates on the
+ *  way down: virga), each by its own amount, up to this share of the base at the rim; the core reaches the ground. */
+export const CURTAIN_VIRGA = 0.6;
+/** VC7c: how many sky-map texels a streak must span before it is drawn at full contrast - under it, a far curtain's
+ *  streaks would alias to shimmer as they cross the map's texels, so they fade to the curtain's mean. */
+export const CURTAIN_STREAK_TEXELS = 3;
+/** VC7c: how far up INTO its cell a curtain reaches, a share of the cell's depth, thinning to nothing at the top -
+ *  a cloud's visible underside sits above its nominal base (the height ramp, VC7e's lifted lanes), and a curtain cut
+ *  at the base left a strip of sky between the rain and the cloud it falls from. */
+export const CURTAIN_INTO = 0.12;
+/** VC7c: the veils' own aerial perspective, metres - the slab's 14 km is the far lid's, and at a storm's 20 km it
+ *  handed three quarters of a curtain to the horizon: a storm that far off stands out plainly in clear air. */
+export const CURTAIN_FADE_M = 40000;
+export const CURTAIN_FALL = Object.freeze({ rain: Object.freeze([1, 0]), thunder: Object.freeze([1.3, 0]), snow: Object.freeze([0.7, 1]) });
+/** VC7c: how far under the coverage cut the shape must read before the sky march may stride past it, where the
+ *  column's profile can move within a stride - the smallest margin that measured the same picture as no stride at
+ *  all (the arc's table: 0.01 left 95 pixels off, this 85, which is the dither's own jitter at a cloud's edge). */
+export const SKIP_ROOM = 0.02;
 /** VC7e: how full a column is on the average (the shape noise past its coverage cut) - columnAbove's estimate. */
 export const COLUMN_FILL = 0.5;
 /** The shadow map's square, in metres: SIXTEEN pixels a side, the
@@ -286,7 +319,7 @@ export const GROWTH_FLOOR = Object.freeze({ cover: 0.5, depth: 0.45, density: 0.
 export function grownCell(cell, env) {
   if (!cell || env == null || env >= 1) return cell;
   const e = Math.max(0, env), at = (floor) => floor + (1 - floor) * e;
-  return { ...cell, cover: cell.cover * at(GROWTH_FLOOR.cover), top: cell.base + (cell.top - cell.base) * at(GROWTH_FLOOR.depth), density: cell.density * at(GROWTH_FLOOR.density) };
+  return { ...cell, cover: cell.cover * at(GROWTH_FLOOR.cover), top: cell.base + (cell.top - cell.base) * at(GROWTH_FLOOR.depth), density: cell.density * at(GROWTH_FLOOR.density), fall: (cell.fall ?? 0) * e };   // VC7c: a young system's rain is young too
 }
 /** The three clocks at a game minute and a drift (world metres, already
  *  wrapped): the shape's and the detail's reading offsets (metres, each
@@ -324,7 +357,8 @@ export function cloudClocks(minutes, driftWorld) {
 export function cellOf(weather, x, z, r) {
   const p = VC_PROFILE[weather];
   if (!p) return null;
-  return { x, z, r, edge: r * CELL_EDGE, ...p, word: weather, cover: WEATHER_SKY[weather]?.cover ?? 1, grey: WEATHER_SKY[weather]?.grey ?? 0, ...(CELL_TINT[weather] ? { tint: CELL_TINT[weather] } : {}) };   // VC7a: the word it is, for the day's convection
+  const fall = CURTAIN_FALL[weather];   // VC7c: what falls under it, and what kind
+  return { x, z, r, edge: r * CELL_EDGE, ...p, word: weather, cover: WEATHER_SKY[weather]?.cover ?? 1, grey: WEATHER_SKY[weather]?.grey ?? 0, fall: fall ? fall[0] : 0, fallKind: fall ? fall[1] : 0, ...(CELL_TINT[weather] ? { tint: CELL_TINT[weather] } : {}) };   // VC7a: the word it is, for the day's convection
 }
 
 /** WEATHER3c/3g: a world weather map cell (weatherMap.js skyCells, in
@@ -363,6 +397,7 @@ export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4)
   out.t ??= new Float32Array(MAX_CELLS * 4);   // WEATHER2d: the tints
   out.k ??= new Float32Array(MAX_CELLS * 4);   // WEATHER3g: the clips
   for (const key of ['s', 'u', 'ks', 'ku']) out[key] ??= new Float32Array(MAX_CELLS * 4);   // WEATHER3h: the shapes
+  out.f ??= new Float32Array(MAX_CELLS * 4);   // VC7c: the fall under each
   const shape = (sh, a, b, o) => {
     a[o] = sh ? sh[0] : 1; a[o + 1] = sh ? sh[1] : 0; a[o + 2] = sh ? sh[2] : 0; a[o + 3] = sh ? sh[3] : 0;
     b[o] = sh ? sh[4] : 0; b[o + 1] = sh ? sh[5] : 0; b[o + 2] = sh ? sh[6] : 0; b[o + 3] = 0;
@@ -378,6 +413,7 @@ export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4)
     if (c.clip) { out.k[o] = c.clip[0]; out.k[o + 1] = c.clip[1]; out.k[o + 2] = c.clip[2]; out.k[o + 3] = out.c[o + 3]; } else { out.k[o] = 0; out.k[o + 1] = 0; out.k[o + 2] = -1; out.k[o + 3] = 1; }
     shape(c.shape, out.s, out.u, o);
     shape(c.clip?.[3], out.ks, out.ku, o);
+    out.f[o] = c.fall ?? 0; out.f[o + 1] = c.fallKind ?? 0; out.f[o + 2] = 0; out.f[o + 3] = 0;   // VC7c
   }
   out.count = n;
   return out;
@@ -541,6 +577,15 @@ float shapeF(vec4 a, vec4 b, vec2 u) {
   return a.x * (1.0 + a.y * c2 + a.z * s2 + a.w * c3 + b.x * s3 + b.y * c4 + b.z * s4);
 }
 float shapedDist(vec2 v, vec4 a, vec4 b) { float l = length(v); return l / shapeF(a, b, v / max(l, 1e-3)); }
+// VC7c: THE STRIDE'S EVIDENCE - density() sets it with every answer: 1 when its zero is one that holds for a stride
+// (outside the band, whose ends move only at a cell's rim; under the coverage cut, whose field is kilometres across),
+// 0 when it does not. VC7e's deck cells lift a lane's base and lower its ceiling every two kilometres, and a ray that
+// read "nothing here" above a lane strode clean over the core beside it - specks of sky in a cloud's crown.
+float fSkip;
+// VC7c: whether a cell is within a stride of here (resolveAt), so the column's base, top and type can change before
+// the next sample; fReach is how far a stride reaches, set by the sky march (0 for the shadow march, which never strides)
+float fNear;
+float fReach = 0.0;
 // WEATHER2c: THE PROFILE AT A PLACE. The zone's terms, with every cell
 // whose rim reaches this ground point blended over them by its weight -
 // resolved before a march and again at every step while cells stand,
@@ -550,10 +595,13 @@ float fBase, fTop, fDensity, fFlat, fShear, fCover, fDark, fGrey, fVary;
 vec3 fTint;
 void resolveAt(vec2 xz) {
   fBase = uBase; fTop = uTop; fDensity = uDensity; fFlat = uFlat; fShear = uShear; fCover = uCover; fDark = uDark; fGrey = 0.0; fTint = vec3(1.0); fVary = uVary;
+  fNear = 0.0;
   for (int i = 0; i < 8; i++) {
     if (i >= uCellCount) break;
     vec4 c = uCell[i];
-    float w = 1.0 - smoothstep(c.z - c.w, c.z, shapedDist(xz - c.xy, uCellS[i], uCellU[i]));   // WEATHER3h: its own outline
+    float dc = shapedDist(xz - c.xy, uCellS[i], uCellU[i]);
+    if (dc < c.z + fReach) fNear = 1.0;   // VC7c: its rim is within a stride
+    float w = 1.0 - smoothstep(c.z - c.w, c.z, dc);   // WEATHER3h: its own outline
     vec4 k = uCellK[i];
     if (k.z > 0.0) w *= 1.0 - smoothstep(k.z - k.w, k.z, shapedDist(xz - k.xy, uCellKS[i], uCellKU[i]));   // WEATHER3g: only inside its front
     if (w <= 0.0) continue;
@@ -625,6 +673,7 @@ float density(vec3 p, float mip) {
   // nothing. It must stay on the UNCLAMPED height and on the band's
   // own ends, never on the gradient: the local flatness below can
   // reopen a height the zone's would have closed.
+  fSkip = 1.0 - fNear;   // VC7c: outside the band - whose ends move only at a cell's rim
   float hr = (p.y - fBase) / max(fTop - fBase, 1.0);
   if (hr <= 0.0 || hr >= 1.0) return 0.0;
   // WIND4 (2026-09-15, Mac: "clouds dont follow on the world timer with
@@ -643,18 +692,28 @@ float density(vec3 p, float mip) {
   vec4 col = columnAt(p, v);   // VC7e: the column's own terms - its lane's lift, its ceiling, its type
   float variation = col.w;
   float h = col.x;
-  if (h <= 0.0) return 0.0;
-  float grad = heightGradient(clamp(h / max(col.y, 0.05), 0.0, 1.0), col.z);
-  if (grad <= 0.0) return 0.0;
+  float deckCells = smoothstep(${glslF(DECK_COVER_LO)}, ${glslF(DECK_COVER_HI)}, fCover);   // VC7c: whether the cells shape this column
+  if (h <= 0.0) { fSkip = 0.0; return 0.0; }   // VC7c: under a lane's lifted base - the core beside it comes lower
+  float hn = clamp(h / max(col.y, 0.05), 0.0, 1.0);
+  float grad = heightGradient(hn, col.z);
+  // VC7c: the ramp can grow within a stride - sideways in a lane's lift and ceiling or a cell's rim, and UP the ramp's
+  // foot (heightGradient peaks at 0.08 for a tower and 0.12 for a lid), which every ray of the sky map climbs
+  bool moves = deckCells > 0.0 || fNear > 0.5 || hn < mix(0.08, 0.12, col.z);
+  if (grad <= 0.0) { fSkip = moves ? 0.0 : 1.0; return 0.0; }   // VC7c: over a lane's lowered ceiling the core beside it stands taller
   q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp
   vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass
   float lowFbm = s.g * 0.625 + s.b * 0.25 + s.a * 0.125;
-  float base = remap(s.r, -(1.0 - lowFbm), 1.0, 0.0, 1.0) * grad;
+  float raw = remap(s.r, -(1.0 - lowFbm), 1.0, 0.0, 1.0);
+  float base = raw * grad;
   // the row's cover is the dome's deck's word; the slab's coverage is
   // sharper - a sunny 0.32 is a scattered sky, an overcast 0.94 a lid
   float coverage = clamp(pow(fCover, 1.6) * (0.6 + 0.8 * variation), 0.0, 1.0);
+  // VC7c: under the cut, a stride by a margin - on the shape BEFORE the height ramp where the profile moves (a lid's
+  // thin top reads far under the cut where the shape itself is not), on the value itself where it does not
+  float room = (1.0 - coverage) - (moves ? raw : base);
   base = remap(base, 1.0 - coverage, 1.0, 0.0, 1.0);
-  if (base <= 0.0) return 0.0;
+  if (base <= 0.0) { fSkip = room > ${glslF(SKIP_ROOM)} ? 1.0 : 0.0; return 0.0; }
+  fSkip = 0.0;   // VC7c: inside the shape - only the detail's erosion stands between here and cloud
   vec4 d = textureLod(uDetail, (q + vec3(0.0, uEvolve.y, 0.0)) / DETAIL_M, mip);   // VC7a: the edges churn faster
   float dfbm = d.r * 0.625 + d.g * 0.25 + d.b * 0.125;
   float erode = mix(dfbm, 1.0 - dfbm, clamp(h * 10.0, 0.0, 1.0));
@@ -686,9 +745,74 @@ uniform vec3 uSkyTint;    // VC6b: the zenith's colour - the sky that lights a c
 uniform float uDusk;      // VC6b: how much of the low-sun look this frame takes (duskWeight) - the SUN's own angle and weight, so the MOON can never drive it
 uniform int uSteps;
 uniform int uLightSteps;
+uniform vec4 uCellF[8];   // VC7c: the fall under each cell - its amount (0 none), its kind (0 rain, 1 snow)
 out vec4 outColor;
 const float PI = 3.14159265;
 ${CLOUD_FIELD_GLSL}
+// VC7c: a smooth 1D noise, periodic in its period - the streaks around a curtain's axis close on themselves
+float streakNoise(float x, float period) {
+  float i = floor(x), f = fract(x);
+  float a = fract(sin(mod(i, period) * 127.1) * 43758.5453);
+  float b = fract(sin(mod(i + 1.0, period) * 127.1) * 43758.5453);
+  return mix(a, b, f * f * (3.0 - 2.0 * f));
+}
+// VC7c: THE CURTAINS - the veils under the falling cells a ray crosses before the slab, analytic (no texture read):
+// each cell's cylinder from its foot to its base, the ray's chord through it, thinning toward the rim, streaked
+// around its axis in two octaves (the shafts and their fibres, each faded to its mean where the map's texels could
+// not hold it), the rim's streaks stopping short of the ground each by its own amount, gone as the eye comes under
+// it. Returns the veil's premultiplied colour and its transmittance.
+vec4 curtains(vec3 cam, vec3 dir) {
+  float tau = 0.0, tNear = 1e9;
+  vec3 tint = vec3(0.0);
+  for (int i = 0; i < 8; i++) {
+    if (i >= uCellCount) break;
+    vec4 F = uCellF[i];
+    if (F.x <= 0.0) continue;
+    float rad = uCell[i].z * ${glslF(CURTAIN_SHARE)};
+    vec2 o = cam.xz - uCell[i].xy, d = dir.xz;
+    float dd = dot(d, d);
+    if (dd < 1e-8) continue;
+    float b = dot(o, d) / dd;
+    float h2 = dot(o, o) - b * b * dd;   // the ray's closest approach to the axis, squared
+    if (h2 >= rad * rad) continue;
+    float hw = sqrt((rad * rad - h2) / dd);   // not 'half': GLSL ES 3.00 reserves it
+    float yb = uCellA[i].x, yt = yb + ${glslF(CURTAIN_INTO)} * (uCellA[i].y - yb);   // the base, and the top it thins to inside the cell
+    float up = max(dir.y, 1e-4);
+    float ta = max(-b - hw, 0.0), tb = min(-b + hw, yt / up);
+    if (tb <= ta) continue;
+    vec2 e = o + d * ta;
+    float around = atan(e.y, e.x) / (2.0 * PI) + 0.5;
+    // a streak's width on the map, in texels: the arc between two streaks over the distance, against a texel's turn
+    float span = rad * uMapSize.x / (${glslF(CURTAIN_STREAKS)} * max(ta, rad));
+    float s = 0.5 + ${glslF(1 - CURTAIN_FIBRE)} * smoothstep(1.0, ${glslF(CURTAIN_STREAK_TEXELS)}, span) * (streakNoise(around * ${glslF(CURTAIN_STREAKS)}, ${glslF(CURTAIN_STREAKS)}) - 0.5)
+                  + ${glslF(CURTAIN_FIBRE)} * smoothstep(1.0, ${glslF(CURTAIN_STREAK_TEXELS)}, span / 3.0) * (streakNoise(around * ${glslF(3 * CURTAIN_STREAKS)}, ${glslF(3 * CURTAIN_STREAKS)}) - 0.5);
+    float streak = 0.35 + 0.65 * s;
+    float core = 1.0 - h2 / (rad * rad);
+    // the ragged foot: the core's streaks reach the ground, the rim's stop short, each its own way
+    float foot = min(yb * ${glslF(CURTAIN_VIRGA)} * (1.0 - core) * (0.5 + s), 0.95 * yb);
+    ta = max(ta, foot / up);
+    if (tb <= ta) continue;
+    // the chord's length at full weight below the base, and linearly thinning from the base to the top above it
+    float tB = yb / up, t1 = max(ta, tB);
+    float len = max(min(tb, tB) - ta, 0.0) + (tb > t1 ? (tb - t1) * (yt - 0.5 * dir.y * (tb + t1)) / max(yt - yb, 1.0) : 0.0);
+    float near = smoothstep(0.5 * rad, 1.5 * rad, length(o));
+    float ti = ${glslF(CURTAIN_EXT)} * F.x * len * core * streak * near;
+    tau += ti;
+    tint += mix(mix(uCloudShade * (1.0 - 0.6 * uCellB[i].x), uHorizonColor, 0.3), mix(uCloudLit, uHorizonColor, 0.4), F.y) * ti;   // rain the cell's own dark grey, snow pale
+    tNear = min(tNear, ta);
+  }
+  float Tv = exp(-tau);
+  if (tau <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
+  vec3 veil = tint / tau * (1.0 - Tv);
+  veil = mix(veil, uHorizonColor * (1.0 - Tv), 1.0 - exp(-tNear / ${glslF(CURTAIN_FADE_M)}));   // their own aerial perspective
+  return vec4(veil, Tv);
+}
+// VC7c: what a ray answers, with the curtains nearer than whatever is behind them - every exit of the march takes it,
+// so the horizon's own rows (where the rain meets the ground) carry the veil too
+vec4 underCurtains(vec3 col, float T, vec3 cam, vec3 dir) {
+  vec4 veil = curtains(cam, dir);
+  return vec4(veil.rgb + veil.a * col, T * veil.a);
+}
 float hg(float c, float g) { float g2 = g * g; return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * c, 1.5)); }
 float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 // VC6b: a colour's HUE at luminance one. Every tint below is taken
@@ -722,6 +846,7 @@ void main() {
   vec2 uv = gl_FragCoord.xy / uMapSize;
   float az = uv.x * 2.0 * PI, el = uv.y * 0.5 * PI;
   vec3 dir = vec3(sin(az) * cos(el), sin(el), cos(az) * cos(el));
+  vec3 cam = vec3(uCamXZ.x, 0.0, uCamXZ.y);
   // DSH1: the rows the slab cannot be reached from are the AERIAL FADE'S
   // colour at full opacity, not clear sky. They used to write "no cloud,
   // nothing absorbed", which let whatever the dome drew in the last
@@ -729,14 +854,15 @@ void main() {
   // in-scattering strip, a hard red line at dusk under a full overcast.
   // The far early-out below already answers uHorizonColor; this is the
   // same answer for the near one.
-  if (dir.y <= 0.004) { outColor = vec4(uHorizonColor, 0.0); return; }
+  if (dir.y <= 0.004) { outColor = underCurtains(uHorizonColor, 0.0, cam, dir); return; }
   // the march covers the slab, or the first 24 km of it at a grazing
   // angle - the aerial fade takes the rest, so the deck reaches the
   // horizon instead of stopping short of it in a rim of bare dome
   float t0 = uSlabBase / dir.y, t1 = min(uSlabTop / dir.y, t0 + 24000.0);   // WEATHER2c: the union slab
-  if (t0 > 120000.0) { outColor = vec4(uHorizonColor, 0.0); return; }
+  if (t0 > 120000.0) { outColor = underCurtains(uHorizonColor, 0.0, cam, dir); return; }
   float ds = (t1 - t0) / float(uSteps);
   float coarse = ds * 3.0;   // VC6d: the stride over empty air
+  fReach = coarse;   // VC7c: how near a cell's rim must be to count
   float t = t0 + ds * hash12(gl_FragCoord.xy);
   float cosTheta = dot(dir, uLightDir);
   float phase = min(mix(hg(cosTheta, 0.55), hg(cosTheta, -0.1), 0.4) * 4.0 * PI, 2.5);   // the average over the sphere is 1; the forward peak capped
@@ -763,10 +889,10 @@ void main() {
   float toward = clamp(cosTheta * 0.5 + 0.5, 0.0, 1.0);
   vec3 duskTint = mix(hue(uSkyTint), hue(uLightColor), toward);
   float gain = mix(0.7, 1.05, low);
-  vec3 cam = vec3(uCamXZ.x, 0.0, uCamXZ.y);
   vec3 col = vec3(0.0);
   float T = 1.0;
   int empty = 0;   // VC6d: how many steps in a row have found nothing
+  bool strode = false;   // VC7c: whether the last step was a stride - only a stride is backed out
   resolveAt((cam + dir * t0).xz);   // WEATHER2c: the zone's terms, and the cell at the slab's foot
   for (int i = 0; i < 96; i++) {
     // VC6d: the ray may now finish BEFORE its step budget (it strides
@@ -787,8 +913,8 @@ void main() {
     // first finds cloud on, it backs the stride out and walks in fine,
     // so the cloud's EDGE is never resolved coarsely - which is the
     // whole reason a plain 'take bigger steps' would have shown.
-    if (rho <= 0.0) { empty++; t += (empty > 4 ? coarse : ds); continue; }
-    if (empty > 4) { t -= coarse; empty = 0; continue; }
+    if (rho <= 0.0) { empty++; strode = empty > 4 && fSkip > 0.5; t += strode ? coarse : ds; continue; }   // VC7c: a stride only on a zero that holds for one
+    if (strode) { t -= coarse; strode = false; empty = 0; continue; }
     empty = 0;
     {
       float h = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);
@@ -818,7 +944,7 @@ void main() {
   // aerial perspective: a far bank takes the horizon's colour
   float fade = 1.0 - exp(-t0 / 14000.0);
   col = mix(col, uHorizonColor * (1.0 - T), fade);
-  outColor = vec4(col, T);
+  outColor = underCurtains(col, T, cam, dir);   // VC7c: the curtains hang BELOW the slab, so they stand in front of it along the ray
 }`;
 
 /** VC4: the shadow map - one ground texel per fragment, the
@@ -930,7 +1056,7 @@ function link(gl, vs, fs) {
 
 /** The field's uniforms, shared by both marches. */
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
-export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps'];   // VC6b: uSkyTint, uDusk
+export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos'];   // WEATHER3d: the distant strike
 
@@ -1122,6 +1248,7 @@ export class VolumetricClouds {
       gl.uniform3fv(u.uSkyTint, s.zenith);   // VC6b: the sky that lights the side the sun does not
       gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b: the SUN's own angle and weight - zero at night, so the whole slice is off
       gl.uniform1i(u.uSteps, q.steps); gl.uniform1i(u.uLightSteps, q.light);
+      if (this._packed?.count > 0) gl.uniform4fv(u.uCellF, this._packed.f);   // VC7c: the curtains' falls, packed with the cells this frame
       withTarget(gl, this.map, viewport, () => {
         gl.viewport(0, y0, q.width, Math.min(rows, q.height - y0));
         gl.drawArrays(gl.TRIANGLES, 0, 3);

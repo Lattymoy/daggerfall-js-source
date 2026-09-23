@@ -118,7 +118,7 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
   }
   assert.match(MARCH_FS, /float t = t0 \+ ds \* hash12\(gl_FragCoord\.xy\);/, 'the jitter is a hash of the texel, never the clock - no flicker');
   assert.match(MARCH_FS, /sum \+= density\(p, 0\.0\) \* step;/, 'the light march reads the field itself, not a blurred level');
-  assert.match(MARCH_FS, /outColor = vec4\(col, T\);/, 'colour and transmittance');
+  assert.match(MARCH_FS, /outColor = underCurtains\(col, T, cam, dir\);/, 'colour and transmittance - VC7c: with the curtains in front (vc7c_curtains pins the helper)');
   const src = read('src/render/volumetricClouds.js');
   assert.match(src, /gl\.blendFuncSeparate\(gl\.ONE, gl\.SRC_ALPHA, gl\.ZERO, gl\.ONE\);   \/\/ sky \* T \+ cloud/, 'the colour blends sky * T + cloud; the buffer\'s alpha is left alone (ONE, SRC_ALPHA on alpha too would leave it 2T)');
   // VC4d: the flash lights the WHOLE sky on the composite, never one stripe of the map

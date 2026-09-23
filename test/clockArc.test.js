@@ -56,7 +56,7 @@ test('CLK1: the controller - the presentation differences the host\'s classicMin
   const lab = read('src/tools/skyLab.js');
   assert.match(lab, /const dtMin = still \? 0 : Math\.min\(1, \(nowReal - labLast\) \/ 1000\) \/ WIND_SECONDS_PER_MINUTE;/);
   assert.match(lab, /labDrift\[0\] \+= rowWind\[0\] \* dtMin \* WIND_SECONDS_PER_MINUTE;/);
-  assert.match(lab, /clouds\.setState\(cst, \{ cover: cst\.cloudCover, soft: cst\.cloudSoft \}, \$\('weather'\)\.value, dtMin, labDrift, 0\);/);
+  assert.match(lab, /clouds\.setState\(cst, \{ cover: cst\.cloudCover, soft: cst\.cloudSoft \}, \$\('weather'\)\.value, dtMin, labDrift, 0, \[0, 0, 0\]\);/);
   // VC7a: the lab hands its own game minute too, the clock the clouds live on
   assert.match(lab, /skyState\(\{ minuteOfDay, weather: \$\('weather'\)\.value, classicMinutes: labClock, phases, seconds, drift: labDrift \}\)/);
   // the seconds-named constant is gone from the tree's readers

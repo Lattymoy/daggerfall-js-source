@@ -374,6 +374,66 @@ proved it: the whole sky brightened and no structure appeared.
 - Only what falls hangs one (rain, thunder, snow; a sandstorm is already a
   wall on the ground), with its intensity from the same law as the rain.
 
+**VC7c shipped (2026-09-23).** Pinned by `test/vc7c_curtains.test.js`
+(`tools/mutants/vc7c.json`). Two departures from the plan, both measured:
+the curtain is ANALYTIC in the sky march alone, not a density in the field
+both marches read (a ray against a cylinder costs arithmetic, a field
+sample two texture reads, and the cloud above already shadows the ground
+under it); and it is composited IN FRONT of the slab along the ray, since
+it hangs below it.
+- **The veil.** A cell whose word falls (`CURTAIN_FALL`: rain 1, thunder
+  1.3, snow 0.7 and pale) hangs a cylinder of CURTAIN_SHARE (0.55) of its
+  radius from the ground to its base. Its extinction is rain's own:
+  Koschmieder's 3.0 over moderate rain's five-kilometre visibility, 0.0006
+  a metre. The first cut took a fifth of that, and a storm's curtain was a
+  smear on the horizon; at the real value a thunder core's chord passes
+  under a twentieth, which is why a real shaft reads from thirty kilometres
+  off. It thins to its rim, fades as the eye comes under it (the falling
+  rain takes over there), and takes its own aerial perspective (40 km; the
+  slab's 14 km handed three quarters of a far storm's curtain to the
+  horizon). A system's rain is as grown as its cloud (`grownCell`).
+- **The detail.** Streaks around the axis in two octaves, the shafts and
+  three fibres to each, every octave faded to its mean where the sky map's
+  texels could not hold it (so a far curtain on the low tier keeps its
+  shafts and loses only its fibres, never shimmering). The rim's streaks
+  stop short of the ground, each by its own amount, up to 0.6 of the base
+  (virga); the core's reach it. The curtain rises CURTAIN_INTO (0.12) of
+  its cell's depth into the cloud and thins to nothing there: a cloud's
+  visible underside sits above its nominal base, and a curtain cut at the
+  base left a strip of sky between the rain and the cloud it fell from.
+- **Every row.** The march's two early rows (the horizon's own, and past
+  its reach) answer through the same `underCurtains`, so the rain meets
+  the ground instead of stopping a quarter-degree above it.
+
+**FOUND ON THE WAY: VC7e BROKE VC6d's STRIDE.** A fair sky with a rain
+cell showed specks of blue in the cloud's crown, a few before VC7e and
+dashes of them after. Forcing the stride off removed them; a bigger step
+budget did not. VC6d strode three steps on any zero, measured safe on
+2026-09-18 because every zero then held for a stride. Three did not:
+- VC7e's deck cells lift a lane's base and lower its ceiling every two
+  kilometres, so a ray above a lane strode over the core beside it.
+- A cell's rim blends its base, top and type into the zone's.
+- The height ramp's foot (a tower's to 0.08 of its band, a lid's to 0.12)
+  grows as the ray climbs, and every ray of the sky map climbs.
+`density()` now says whether its zero holds (`fSkip`). It is always a
+stride outside the band, except where a cell's rim is within one
+(`resolveAt` flags it, `fReach` the march's own stride). It is never a
+stride under a lane's lifted base, and never over a lowered ceiling where
+anything moves. Under the coverage cut it strides only by SKIP_ROOM
+(0.02), read on the shape BEFORE the height ramp wherever the ramp can
+grow (a lid's thin top reads far under the cut where the shape itself is
+not). And only a stride is backed out. Against the sky marched with no
+stride at all (the lab, 960x540, pixels off by more than 8 levels; the
+march's steps as a share of the no-stride count):
+
+| sky | VC6d's stride | always the raw margin | **VC7c** |
+|---|---|---|---|
+| a rain cell under a fair sky, low | 1301 px (170 over 24), 0.48 | 85 px, 0.66 | **23 px (none over 24), 0.50** |
+| a fair sky | 2 px, 0.66 | 0 px, 0.90 | **0 px, 0.66** |
+| cloudy (a deck: it never strides) | - | - | **0 px, 1.00** |
+
+The picture is the no-stride sky's, and the fair sky keeps VC6d's saving.
+
 ### VC7d - a high cirrus layer
 
 - A thin layer of ice cloud at 8-10 km, far above the slab: a single

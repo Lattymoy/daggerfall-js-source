@@ -20,7 +20,7 @@
  {"name": "WEATHER3h-pack-drops-shape", "file": "src/render/volumetricClouds.js",
   "old": "    shape(c.shape, out.s, out.u, o);", "new": "    shape(null, out.s, out.u, o);", "tests": ["test/weather3h_shapes.test.js"]},
  {"name": "WEATHER3h-shader-round", "file": "src/render/volumetricClouds.js",
-  "old": "    float w = 1.0 - smoothstep(c.z - c.w, c.z, shapedDist(xz - c.xy, uCellS[i], uCellU[i]));", "new": "    float w = 1.0 - smoothstep(c.z - c.w, c.z, length(xz - c.xy));", "tests": ["test/weather2c_cloudcells.test.js"]},
+  "old": "    float dc = shapedDist(xz - c.xy, uCellS[i], uCellU[i]);", "new": "    float dc = length(xz - c.xy);", "tests": ["test/weather2c_cloudcells.test.js"]},
  {"name": "WEATHER3h-field-buckets-round", "file": "src/ui/weatherLayer.js",
   "old": "rp = (s.reach ?? s.r * shapeBound(s.shape)) / TERRAIN_SIZE;", "new": "rp = s.r / TERRAIN_SIZE;", "tests": ["test/weather3h_shapes.test.js"]},
  {"name": "WEATHER3h-regions-unrounded", "file": "src/ui/weatherLayer.js",

@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  QUALITY, MAX_CELLS, CELL_EDGE, CELL_TINT, VC_PROFILE, cellOf, slabOf, packCells, parseCloudCellDoor,
+  QUALITY, MAX_CELLS, CELL_EDGE, CELL_TINT, VC_PROFILE, CURTAIN_FALL, cellOf, slabOf, packCells, parseCloudCellDoor,
   CLOUD_FIELD_GLSL, MARCH_FS, SHADOW_FS, FIELD_UNIFORMS, MARCH_UNIFORMS, SHADOW_UNIFORMS,
 } from '../src/render/volumetricClouds.js';
 import { WEATHER_SKY } from '../src/render/enhancedSky.js';
@@ -25,7 +25,7 @@ test('WEATHER2c cells: every tier caps its cells under the shader\'s eight; a ce
   assert.equal(CELL_EDGE, 0.35);
   for (const w of WEATHER_TYPES) {
     const c = cellOf(w, 100, -200, 3000);
-    assert.deepEqual(c, { x: 100, z: -200, r: 3000, edge: 3000 * CELL_EDGE, ...VC_PROFILE[w], word: w, cover: WEATHER_SKY[w].cover, grey: WEATHER_SKY[w].grey, ...(CELL_TINT[w] ? { tint: CELL_TINT[w] } : {}) }, `${w}: the profile, the row's cover and grey (WEATHER2d: and a tint where the word has one; VC7a: and the word, for the day's convection)`);
+    assert.deepEqual(c, { x: 100, z: -200, r: 3000, edge: 3000 * CELL_EDGE, ...VC_PROFILE[w], word: w, cover: WEATHER_SKY[w].cover, grey: WEATHER_SKY[w].grey, fall: CURTAIN_FALL[w]?.[0] ?? 0, fallKind: CURTAIN_FALL[w]?.[1] ?? 0, ...(CELL_TINT[w] ? { tint: CELL_TINT[w] } : {}) }, `${w}: the profile, the row's cover and grey (WEATHER2d: and a tint where the word has one; VC7a: and the word, for the day's convection; VC7c: and what falls under it)`);
   }
   const storm = cellOf('thunder', 0, 0, 3000);
   assert.equal(storm.top, 4200); assert.equal(storm.dark, 0.7); assert.equal(storm.cover, 1.0); assert.ok(storm.grey > 0.9, 'a thunderhead is dark');
@@ -77,7 +77,7 @@ test('WEATHER2c the field: the cells and the slab declared once for both marches
   assert.match(CLOUD_FIELD_GLSL, /fVary = mix\(fVary, uCellC\[i\]\.w, w\);/, 'VC6a: a cell brings its own type variation, on the tint array\'s spare lane');
   assert.match(CLOUD_FIELD_GLSL, /for \(int i = 0; i < 8; i\+\+\) \{\s*\n\s*if \(i >= uCellCount\) break;/, 'a fixed loop under a uniform count');
   // WEATHER3h: in the cell's own shape's measure - a circle's shape (1, 0, 0, 0 | 0, 0, 0, 0) is length() exactly
-  assert.match(CLOUD_FIELD_GLSL, /float w = 1\.0 - smoothstep\(c\.z - c\.w, c\.z, shapedDist\(xz - c\.xy, uCellS\[i\], uCellU\[i\]\)\);/, 'the rim\'s weight');
+  assert.match(CLOUD_FIELD_GLSL, /float dc = shapedDist\(xz - c\.xy, uCellS\[i\], uCellU\[i\]\);[^\n]*\n[^\n]*\n    float w = 1\.0 - smoothstep\(c\.z - c\.w, c\.z, dc\);/, 'the rim\'s weight, on its own outline (VC7c: the distance read once, the stride\'s reach asks it too)');
   assert.match(CLOUD_FIELD_GLSL, /fBase = mix\(fBase, a\.x, w\); fTop = mix\(fTop, a\.y, w\); fDensity = mix\(fDensity, a\.z, w\); fFlat = mix\(fFlat, a\.w, w\);/);
   assert.match(CLOUD_FIELD_GLSL, /fDark = mix\(fDark, b\.x, w\); fShear = mix\(fShear, b\.y, w\); fCover = mix\(fCover, b\.z, w\); fGrey = mix\(fGrey, b\.w, w\);/);
   const dens = CLOUD_FIELD_GLSL.slice(CLOUD_FIELD_GLSL.indexOf('float density(vec3 p, float mip) {'));

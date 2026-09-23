@@ -82,7 +82,7 @@ test('VC7e: THE DECK\'S CELLS - whole columns thinned in the lanes, scaled in wi
   assert.equal((col.match(/textureLod\(/g) || []).length, 1, 'one read - the variation sample density always took');
   const den = fnBody(CLOUD_FIELD_GLSL, 'float density(vec3 p, float mip)');
   assert.match(den, /vec4 col = columnAt\(p, v\);/);
-  assert.match(den, /float h = col\.x;\n  if \(h <= 0\.0\) return 0\.0;/, 'below a lane\'s lifted base, nothing');
+  assert.match(den, /float h = col\.x;\n[^\n]*\n  if \(h <= 0\.0\) \{ fSkip = 0\.0; return 0\.0; \}/, 'below a lane\'s lifted base, nothing (VC7c: and no stride over it)');
   assert.equal((den.match(/textureLod\(/g) || []).length, 2, 'the shape and the detail - the column read is columnAt\'s');
   const above = fnBody(CLOUD_FIELD_GLSL, 'float columnAbove(vec3 p)');
   assert.match(above, /vec4 col = columnAt\(p, v\);/, 'the ambient reads the SAME column the density is made of');

@@ -32,7 +32,7 @@
  {"name": "WEATHER3g-field-unclipped", "file": "src/systems/weatherMap.js",
   "old": " || !insideClip(s, x, z)) continue;   // beyond", "new": ") continue;   // beyond", "tests": ["test/weather3g_fronts.test.js"]},
  {"name": "WEATHER3g-cells-hard-rim", "file": "src/render/volumetricClouds.js",
-  "old": "float w = 1.0 - smoothstep(c.z - c.w, c.z, shapedDist(", "new": "float w = 1.0 - smoothstep(c.z - 0.001, c.z, shapedDist(", "tests": ["test/weather2c_cloudcells.test.js"]},
+  "old": "float w = 1.0 - smoothstep(c.z - c.w, c.z, dc);", "new": "float w = 1.0 - smoothstep(c.z - 0.001, c.z, dc);", "tests": ["test/weather2c_cloudcells.test.js"]},
  {"name": "WEATHER3g-glyph-on-the-margin", "file": "src/ui/weatherLayer.js",
   "old": "    if (bounds && !(m.x >= 0 && m.y >= 0 && m.x < bounds[0] && m.y < bounds[1])) continue;\n", "new": "", "tests": ["test/weather3g_fronts.test.js"]},
  {"name": "WEATHER3g-glyph-outside-front", "file": "src/ui/weatherLayer.js",

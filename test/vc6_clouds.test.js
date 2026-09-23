@@ -89,7 +89,7 @@ test('VC6a: the cloud TYPE varies across the sky, and collapses to one thing for
   assert.match(d, /float flatHere = clamp\(fFlat \+ \(variation - 0\.5\) \* fVary, 0\.0, 1\.0\);/, 'flatter where there is more cloud, towers where there is less');
   assert.match(d, /float ceiling = 1\.0 - fVary \* \(1\.0 - variation\) \* 0\.8;/, 'and a lower ceiling where the cloud is thin');
   assert.match(d, /  return vec4\(h, ceiling, flatHere, variation\);/, 'VC7e: the column hands its height, ceiling, flatness and variation back');
-  assert.match(d, /float grad = heightGradient\(clamp\(h \/ max\(col\.y, 0\.05\), 0\.0, 1\.0\), col\.z\);/, 'the gradient is taken at the PLACE\'s flatness and ceiling');
+  assert.match(d, /float hn = clamp\(h \/ max\(col\.y, 0\.05\), 0\.0, 1\.0\);\n  float grad = heightGradient\(hn, col\.z\);/, 'the gradient is taken at the PLACE\'s flatness and ceiling (VC7c: the height named, the stride reads it too)');
   // AT vary 0 THE WHOLE TERM IS THE OLD ONE. flatHere == fFlat and
   // ceiling == 1, so fog and a sandstorm are the lids they were - which
   // is what makes this safe to have added at all.
@@ -257,8 +257,8 @@ test('VC6d: no sample is taken outside the band, and the gate is the band\'s own
 
 test('VC6d: the march strides over empty air and walks the cloud\'s EDGE fine, and the slack is what keeps a far bank', () => {
   assert.match(MARCH_FS, /float coarse = ds \* 3\.0;/);
-  assert.match(MARCH_FS, /if \(rho <= 0\.0\) \{ empty\+\+; t \+= \(empty > 4 \? coarse : ds\); continue; \}/, 'four empty steps, then stride');
-  assert.match(MARCH_FS, /if \(empty > 4\) \{ t -= coarse; empty = 0; continue; \}/, 'and the step that finds cloud BACKS THE STRIDE OUT - the edge is never resolved coarsely, which is what a plain bigger step would have shown');
+  assert.match(MARCH_FS, /if \(rho <= 0\.0\) \{ empty\+\+; strode = empty > 4 && fSkip > 0\.5; t \+= strode \? coarse : ds; continue; \}/, 'four empty steps, then stride - VC7c: only over a zero that holds for one (vc7c_curtains pins the evidence)');
+  assert.match(MARCH_FS, /if \(strode\) \{ t -= coarse; strode = false; empty = 0; continue; \}/, 'and the step that finds cloud BACKS THE STRIDE OUT - the edge is never resolved coarsely, which is what a plain bigger step would have shown');
   assert.match(MARCH_FS, /if \(i >= uSteps \+ 12 \|\| t > t1\) break;/, 'the ray may finish early, or need a few steps more than its budget');
   assert.equal(MARCH_SLACK, 12);
   for (const [name, q] of Object.entries(QUALITY)) {

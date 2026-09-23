@@ -118,7 +118,8 @@ function frame() {
     const cst = dynamicOn
       ? cloudsStateUnderMod(sky.state, dynamicMoonState(dyn, minuteOfDay, row.cover), { minuteOfDay, weather: $('weather').value, phases, seconds, drift: labDrift })
       : sky.state;
-    clouds.setState(cst, { cover: cst.cloudCover, soft: cst.cloudSoft }, $('weather').value, dtMin, labDrift, 0);   // CLK1: game minutes, the lab's own integral
+    clouds.testCellSpec ??= params.get('cloudcell');   // VC7c: the game's `?cloudcell=<weather>,<ahead>,<radius>` door, so the lab can hang a storm - and its curtain - over the land
+    clouds.setState(cst, { cover: cst.cloudCover, soft: cst.cloudSoft }, $('weather').value, dtMin, labDrift, 0, [0, 0, 0]);   // CLK1: game minutes, the lab's own integral; the eye at the origin, where the lab has always put it
     clouds.update([0, 0, w, h]);
     if (params.has('shadowmap')) clouds.drawShadowView();   // VC4: the ground's map as a picture
     else clouds.draw(yaw, pitch, 65 * Math.PI / 180, w / h);
