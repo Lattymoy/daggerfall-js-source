@@ -107,7 +107,7 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
 });
 
 test('WW1: LoadSettings - the fields carry the mod\'s own multipliers (Offset x10, Bob.Length /100, Size x2, SpeedMove x4, SpeedState x500, Shape x0.5, Inertia x500, Forward x0.2, Chance /100)', () => {
-  _resetModSettings();
+  _resetModSettings(); setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // DW-CLIP: the preset defaults on
   const s = readWidgetSettings();
   assert.equal(s.enabled, true);
   assert.deepEqual([s.swing, s.ambidexterity, s.offset, s.bob, s.inertia, s.stepTransforms, s.doubleScale, s.trueSize, s.recoil], [true, true, true, true, false, false, false, false, false], 'the nine modules as shipped');
@@ -158,6 +158,7 @@ test('WW1: Unity\'s pieces - MoveTowards (scalar and Vector2), Mathf.Round half 
 /** A store the widget reads: the shipped defaults with overrides. */
 function settingsOf(over = {}) {
   _resetModSettings();
+  setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // DW-CLIP: the preset defaults on now - the clone's own numbers are the bench's subject
   const base = modSettingsOf(WEAPON_WIDGET_VENDOR);
   return () => readWidgetSettings(() => ({ ...base, ...over }));
 }
@@ -523,10 +524,18 @@ test('WW1: Offset, Bob and Inertia - the channels the frame publishes: the sheat
   held.ctx.look = [1, 1]; held.ctx.swingHeld = true; held.ctx.motion.localVel = [2, 0, 0]; held.frame(0.05);
   assert.deepEqual(held.widget._w.inertiaTarget, [-0.2 * 0.5 * 500, 0]);
   // DoubleScaleTextures: the idle sits half its size in (the werecreature only down)
+  // DW-CLIP: the shift is the DOUBLED box's - a `w_` hit under the module, and never under TrueTextureSize
+  const seedDoubled = (x) => { const name = [...x.widget._w.customCache.keys()].find((n) => n.startsWith('w_')); assert.ok(name, 'asked by the w_ name'); x.widget._w.customCache.set(name, { tex: 'double', width: 100, height: 80, doubled: true }); };
   const ds = bench({ over: { 'Modules.DoubleScaleTextures': true, 'Modules.Offset': false, 'Modules.Bob': false } }); ds.frame();
+  assert.deepEqual(ds.widget.offset, [0, 0], 'the classic frame (no w_ art) is not doubled, so not shifted');
+  seedDoubled(ds); ds.frame();
   assert.deepEqual(ds.widget.offset, [0.5, 0.5]);
   const dw = bench({ weapon: { werecreatureClaws: true }, weaponType: T.Werecreature, anims: WERECREATURE_ANIMS, over: { 'Modules.DoubleScaleTextures': true, 'Modules.Offset': false, 'Modules.Bob': false } }); dw.frame();
+  seedDoubled(dw); dw.frame();
   assert.deepEqual(dw.widget.offset, [0, 0.5]);
+  const ts = bench({ over: { 'Modules.DoubleScaleTextures': true, 'Modules.TrueTextureSize': true, 'Modules.Offset': false, 'Modules.Bob': false } }); ts.frame();
+  seedDoubled(ts); ts.frame();
+  assert.deepEqual(ts.widget.offset, [0, 0], 'TrueTextureSize: the painting\'s own box, unshifted');
   assert.equal(ds.widget.rect.x, ds.widget.weaponPosition.x + ds.widget.weaponPosition.w * 0.5, 'GetWeaponRect carries it as a fraction of the rect');
 });
 
