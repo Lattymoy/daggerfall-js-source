@@ -56,6 +56,7 @@ export function createMountRig({
   // -1229) and restores at its end (:1264). A host that hands none
   // rides at DFU's own 1.
   ridingVolumeScale = () => 1,
+  horseCart = null,   // HCC: () => the Horse Cart and Cargo runtime, or null - TrailingWagonTransportWindow's gate and route
 }) {
   const animator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
   let art = null;                          // TR2: the four CFA frames of the mount under you
@@ -94,15 +95,21 @@ export function createMountRig({
      */
     open() {
       if (!player.grounded || !transportArtLoaded()) return;
+      // HCC: TrailingWagonTransportWindow.Setup [IL_b008] - with the mod on, the horse and cart rows are live only
+      // when the runtime's CanMountHorseFromTransportWindow / CanUseCartFromTransportWindow say so (a horse waiting
+      // across the map cannot be mounted from here), and a click goes through TryUseTransport rather than the
+      // direct set - the runtime walks the player to the team, or says why not.
+      const rt = horseCart?.() ?? null;
       showOverlay(new TransportWindow({
-        hasHorse: hasHorse(playerEntity.items ?? []),
-        hasCart: hasCart(playerEntity.items ?? []),
+        hasHorse: rt ? !!rt.canMountHorseFromTransportWindow() : hasHorse(playerEntity.items ?? []),
+        hasCart: rt ? !!rt.canUseCartFromTransportWindow() : hasCart(playerEntity.items ?? []),
         // TR4: the row is live when a ship is owned - AND when this
         // host can actually sail it. A fixed city has nowhere to sail
         // to, so the row goes dark rather than opening onto nothing.
         shipAvailable: !!onShip && ownsShip(playerEntity),
         onMode: (mode) => {
           if (mode === TRANSPORT_MODES.Ship) { onShip?.(); return; }
+          if (rt && (mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart)) { rt.tryUseTransport(mode); return; }   // HCC: HandleHorseTransportButton / HandleCartTransportButton [IL_b170, IL_b1ac]
           setMode(mode);   // HC1: the art loads with the mode, in the one place
         },
       }));

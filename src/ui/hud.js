@@ -35,6 +35,7 @@ import {
   mathfRound,   // AUDIT 64 F39: VerticalProgress.DrawProgress rounds EVERY fill, the breath bar's included
 } from './hudVitals.js';
 import { midScreenText } from './midScreenText.js';   // AUDIT 64 F34: DaggerfallHUD's SECOND text surface
+import { horseNameTooltip } from './horseNameTooltip.js';   // AUDIT HCC U6: Horse Cart and Cargo's HUD label (HorseNameTooltipController)
 import { hudRenderEnabled } from './hudShortcuts.js';   // AUDIT 64 F37: the Draw override's renderHUD flag
 import { preloadSpellIcons } from './spellIcons.js';   // U46: the sheet the rows draw from
 import { drawEscortFaces } from './hudEscortFaces.js';   // FE1: the quest escorts' portrait column
@@ -456,6 +457,7 @@ export function drawCompassStrip(renderer, art, x, y, s, heading01) {
 export function hideHudTextSurfaces(hudText = null) {
   hudText?.hide();
   midScreenText.hide();
+  horseNameTooltip.hide();   // AUDIT HCC U6: the mod's HUD label, the same door
 }
 
 export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
@@ -595,6 +597,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // is told otherwise (this finding's own law, F37). On the classic
   // skin `hide()` is nothing, which is what the bare `if` meant there.
   if (hudDrawn) midScreenText.draw(renderer, canvas, font); else midScreenText.hide();
+  if (hudDrawn) horseNameTooltip.draw(renderer, canvas, font); else horseNameTooltip.hide();   // AUDIT HCC U6: HorseNameTooltipController's label, a NativePanel child of the same HUD
   // Above the `!art` return, like the flash: the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has vitals.
   // LV2: THE RISING rides the same one call, for the reason the flash

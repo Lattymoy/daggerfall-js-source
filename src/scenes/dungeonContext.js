@@ -236,7 +236,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1858); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1863); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -1572,6 +1572,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // reachable only within 5 units of an EXIT door
       // (DungeonWagonAccessProximityCheck :1099-1116; the classic
       // "your cart waits at the entrance" rule).
+      horseCart: () => opts.horseCart?.() ?? null,   // HCC: the runtime's storage-access word, when the outer host runs the mod
       dungeon: {
         inside: true,
         wagonPrompt,   // AUDIT 28 W2c: AllowDungeonWagonAccess() before the push - CheckWagonAccess's FIRST arm
@@ -1651,7 +1652,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8568 / exterior.js:3453), set
+  // host's own townTalk sink (world.js:8700 / exterior.js:3544), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1975,6 +1976,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // too - three more hosts ask it, and two were asking a much coarser
   // question before this slice.
   const _restDeps = createRestDeps(playerEntity, {
+    onClosedUnrested: () => opts.cancelPartyRestStart?.(),   // PARTY-REST29: the window closed with no rest chosen (restDoor.js)
     // ROAD-B B5: `uiManager.TopWindow` for TickRest's two top-window
     // tests (:364, :399). B1 made this host's slot the MIRROR OF THE
     // TOP of its window stack, so the slot IS the answer - and the
@@ -2306,6 +2308,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
 
   const magic = createPlayerMagic({
+    // AID1 onto ALLY-CAST: the party mates in this dungeon as bodies a beneficial touch, missile or blast may meet (the
+    // outer host's list, in this dungeon's frame) - they leave through castAtAlly below; the standalone ?dungeon probe
+    // passes none
+    allyMarks: opts.allyMarks ? () => opts.allyMarks() : null,
+    peerBodies: opts.peers ? () => opts.peers() : null,   // SPELLFX1: every player's body, where a peer's drawn missile stops
     // QG1: the ready-spell doors - this host's own cast engine raises
     // into the same machine the world lane's does (opts.questBridge is
     // handed down by world.js/worldModes; the standalone ?dungeon
@@ -2696,7 +2703,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6917 against :6941).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6935 against :6959).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3253,6 +3260,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // through the middle of the orb.
         if (!m.flatArchive) ensureArrowModel(m);
         if (m.draw && m.draw.object) m.draw.object.matrix = arrowMatrix(m);
+        // SPELLFX1: A PEER'S SHAFT, DRAWN - it stops on me or a foe and applies nothing (their game dealt it)
+        if (m.visual) {
+          if ((playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) || foes.some((f) => !f.dead && missileHitsFoe(m.pos, f))) retireMissile(m);
+          continue;
+        }
         if (m.fromPlayer) {
           for (const f of foes) {
             if (f.dead) continue;
@@ -3260,8 +3272,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:12957,
-              // exterior.js:4960 and worldModes.js:7117 already ran;
+              // playerArrowHitFoe is the one copy world.js:13235,
+              // exterior.js:5058 and worldModes.js:7135 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3633,7 +3645,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1858). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1863). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -4112,7 +4124,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1497's restoreWorld goes through
+    // construction (exteriorFoes.js:1500's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4989,7 +5001,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // pre-sheathes at zero). WHICH round is the weapon's answer:
           // a bow spends an Arrow, the Thunderlock a Dwemer Pellet.
           if (!spendAmmoFor(playerEntity.items, playerWeapon.weapon)) continue;
-          fireArrow(eye, lookDir, playerWeapon.weapon, true, null, null, weaponRig.thunderlockMuzzle(fieldOfView()));   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
+          fireArrow(eye, lookDir, playerWeapon.weapon, true, null, null, weaponRig.thunderlockMuzzle(fieldOfView())); weaponRig.noteShot?.(playerWeapon.weapon);   // SPELLFX1: the peers draw it   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           // WeaponManager.cs:419-436, in DFU's order: the swing costs
           // fatigue whatever it hits, and a BOW always takes the tally
           // arm (`!hitEnemy && WeaponType != Bow` is false for a bow),
@@ -6033,6 +6045,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // through the host's own absorption path (the same function the
     // foe-cast and missile-impact sites call).
     applySpellToPlayer: magic.applySpellToPlayer,
+    spellVisual: magic.spellVisual,   // SPELLFX1: a peer's cast, drawn in this dungeon's own engine
+    /** SPELLFX1: a peer's arrow, drawn: this pool's own shaft, flagged visual - it stops on a wall or a body and lands nothing. */
+    visualArrow: (from, dir) => { missiles.push({ arrow: true, visual: true, flatArchive: null, weapon: null, fromPlayer: false, shooterFoe: null, aimFoe: null, pos: [...from], dir: [...dir], age: 0, batch: null, draw: null }); return true; },
     // V3 probe surface: the ONE foe damage door. Soul Trap's kill
     // intercept lives inside it, so a probe that killed a foe any
     // other way would be testing a path the game never takes.
@@ -6265,6 +6280,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // departure and its reason are on the export.
         smallerDungeonsState: smallerDungeonsStamp(dfLocation),
         world: collectWorld(),
+        // AUDIT HCC H3: DFU's per-mod save data rides a dungeon save too - Horse Cart and Cargo's record (the horse,
+        // its name, the parked wagon, the entrance it waits at) from the world host that runs the mod
+        modData: opts.horseCartSave ? { 'horse-cart-and-cargo': opts.horseCartSave() } : null,
       });
       const r = saveSlot(playerEntity.name, saveName, snap);
       // SS1: arm the deferred shot; the HOST's frame loop delivers it
@@ -6305,6 +6323,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }
+      opts.horseCartLoad?.(extras.modData?.['horse-cart-and-cargo'] ?? null);   // AUDIT HCC H3: OnStartLoad, then RestoreSaveData - the same-dungeon load is a load too
       this.restoreSaved(extras, setPlayerPos);
     },
     /** MAC6 #1: the load's second half - everything after restorePlayer

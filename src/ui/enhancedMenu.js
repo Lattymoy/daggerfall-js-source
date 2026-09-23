@@ -112,6 +112,7 @@ import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
 import { brandMark } from './brandMark.js';   // INTRO2: Mac's supplied logo, shared with the final splash
+import { soundReplacementCount } from '../systems/soundReplacer.js';   // SNDREP1: the sound pack's count
 import { textureReplacementCount } from '../systems/textureReplacement.js';   // M-TEX: and the texture half
 import { isTouchDevice } from './touch.js';   // TI2: the Touch card mounts only where a finger can reach it
 import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/gameDate.js';
@@ -135,7 +136,7 @@ import { playerEntity } from '../characters/playerEntity.js';
 import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../systems/modSettings.js';
-import { keyCodeForDomCode } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
+import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
@@ -2055,11 +2056,24 @@ function packsCard() {
   const c = el('div', 'card');
   c.append(el('h3', null, 'Replacement packs'));
   c.append(el('p', 'meta', 'Your own music (a folder of tracks named as DFU\u2019s replacement music expects) and texture packs, stored in this browser like ARENA2. Nothing uploads.'));
-  c.append(el('p', 'meta', `Music files supplied: ${replacementCount()} \u00b7 Texture files supplied: ${textureReplacementCount()}`));   // the row reports what the pick covers
+  c.append(el('p', 'meta', `Music files supplied: ${replacementCount()} \u00b7 Texture files supplied: ${textureReplacementCount()} \u00b7 Sound files supplied: ${soundReplacementCount()}`));   // the row reports what the pick covers
   c.append(acts([
     { label: 'Attach music pack', onClick: async () => { const ds = await import('../scenes/dataSource.js'); await ds.pickMusicFolder(); render(); } },
     { label: 'Attach texture pack', onClick: async () => { const ds = await import('../scenes/dataSource.js'); await ds.pickTextureFolder(); render(); } },
+    { label: 'Attach sound pack', onClick: async () => { const ds = await import('../scenes/dataSource.js'); await ds.pickSoundFolder(); render(); } },   // SNDREP1
+    // SNDREP1: and the way back - only while a pack is attached; the music pack beside it is kept
+    ...(soundReplacementCount() > 0 ? [{ label: 'Remove sound pack', onClick: async () => { const ds = await import('../scenes/dataSource.js'); try { await ds.clearStoredSounds(); } catch (err) { console.warn(`[sounds] could not remove the sound pack: ${err?.message ?? err}`); } render(); } }] : []),
   ]));
+  return c;
+}
+
+/** SNDREP1: the two night sounds a player may want gone - on by default, as Daggerfall has them. Off silences the
+ *  sound whether it is the classic one or a sound pack's replacement. */
+function nightSoundsCard() {
+  const c = el('div', 'card');
+  c.append(el('h3', null, 'Night sounds'));
+  c.append(prefRow('nightCrickets', 'Crickets', 'On: the crickets chirp outdoors on clear nights. Off: silent.', { home: true }));
+  c.append(prefRow('distantHowl', 'Distant howl', 'On: the far-off howl near graveyards. Off: silent.', { home: true }));
   return c;
 }
 
@@ -2082,6 +2096,7 @@ function modsFooter(body) {
   body.append(morrowindCard());   // SO1: the assets card, off the Enhanced pane
   body.append(peerSpritesCard()); // 2026-09-17: other players' look, without a Morrowind body of their own
   body.append(packsCard());       // SO1/M-EXT: the packs' door, off the launcher
+  body.append(nightSoundsCard()); // SNDREP1: crickets and howl, on or off
   const c = el('div', 'card');
   c.append(el('h3', null, "Daggerfall Unity\u2019s own mod system"));
   for (const key of ['Enhancements/LypyL_ModSystem', 'Enhancements/AssetInjection',
@@ -2130,7 +2145,13 @@ function modRow(vendor, key, def, { name = null, note = null, home = false } = {
       };
       addEventListener('keydown', onKey, true);
     };
-    ctl.append(b);
+    // AUDIT HCC K4: the clear - every TextKey's reader takes `None` as "no key" (systems/keyCodes.js KEYCODE_NONE),
+    // and the capture alone could never write it (Escape cancels). The controls pane's own clear, its own class.
+    const clear = el('button', 'act ctl-clear', '\u2715');
+    clear.setAttribute('type', 'button');
+    clear.title = 'Clear this key';
+    clear.onclick = () => { b.textContent = setModSetting(vendor, key, KEYCODE_NONE); };
+    ctl.append(b, clear);
   } else if (isTupleKey(def)) {
     // HT1: a TupleIntKey / TupleFloatKey - two steppers, one a half
     const pair = () => modSetting(vendor, key);

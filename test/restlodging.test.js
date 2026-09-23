@@ -466,7 +466,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   // that hardcoded the flags inside restVitals, or dropped them from
   // createRestDeps' tickVitals, passed. RapidHealing InLight is the
   // ONE place they differ: +100 instead of +60, and only by daylight
-  // OUTDOORS. (rest.js:45-57.)
+  // OUTDOORS. (rest.js:46-58.)
   const lit = (over) => ({
     isPlayer: true, level: 5, health: 0, maxHealth: 50, magicka: 40, maxMagicka: 40,
     fatigue: 0, stats: { strength: 50, endurance: 50, willpower: 50 }, skills: 30,

@@ -45,7 +45,7 @@ export const TEST_PRESETS = Object.freeze([
   { id: 'nord-warrior', label: 'Nord Warrior', race: 'Nord', gender: 'male', faceIndex: 0, classIndex: 16,
     blurb: 'The plain human male baseline - steel and a longsword.' },
   { id: 'breton-sorceress', label: 'Breton Sorceress', race: 'Breton', gender: 'female', faceIndex: 2, classIndex: 3,
-    blurb: 'The female body and animation column, robes in the pack.' },
+    blurb: 'The female body and animation column, robes in the pack - and a Fireball and a Healing Bolt to throw.' },
   { id: 'redguard-archer', label: 'Redguard Archer', race: 'Redguard', gender: 'female', faceIndex: 4, classIndex: 13,
     blurb: 'Bows and a full quiver - the drawn arrow rides the string.' },
   { id: 'darkelf-nightblade', label: 'Dark Elf Nightblade', race: 'DarkElf', gender: 'male', faceIndex: 1, classIndex: 5,
@@ -289,6 +289,47 @@ export function seedTestLoot(entity, rolls = Math.random) {
   return added;
 }
 
+/** SPELLFX1 (2026-09-23): THE SORCERESS GETS MISSILES. The Mage set she
+ *  starts with has nothing that flies, and the co-op spell work needs
+ *  two things to throw at a friend in the test room: a FIREBALL (the
+ *  hostile missile - a peer must see it fly and it must pass through
+ *  them) and a HEALING BOLT (the friendly one - it must land on them
+ *  through ALLY-CAST's cast frame, a party mate). Fireball is SPELLS.STD's own record when the
+ *  loaded file has one by that name, and a made one otherwise; the bolt
+ *  is always made - Heal Health at range, the Balm's shape. Fixed
+ *  negative indices below the Healer's touch (-1000), so a re-apply
+ *  does not double them. */
+const TEST_MISSILE_EFFECT = (type, subType, lo, hi) => ({
+  type, subType,
+  durationBase: 0, durationMod: 0, durationPerLevel: 1,
+  chanceBase: 0, chanceMod: 0, chancePerLevel: 1,
+  magnitudeBaseLow: lo, magnitudeBaseHigh: hi, magnitudeLevelBase: 1, magnitudeLevelHigh: 2, magnitudePerLevel: 1,
+});
+export const TEST_FIREBALL_INDEX = -1001;
+export const TEST_HEAL_BOLT_INDEX = -1002;
+export function testMissileSpells(spellsByIndex = null) {
+  let fireball = null;
+  for (const sp of spellsByIndex?.values?.() ?? []) {
+    if (String(sp?.name ?? '').trim().toLowerCase() === 'fireball' && sp.rangeType >= 2) { fireball = sp; break; }
+  }
+  fireball ??= {
+    name: 'Fireball', element: 0, rangeType: 4, icon: 0, cost: 0, index: TEST_FIREBALL_INDEX, custom: true,
+    effects: [TEST_MISSILE_EFFECT(4, 0, 10, 20)],   // Damage Health, fire, a burst at range
+  };
+  const healBolt = {
+    name: 'Healing Bolt', element: 4, rangeType: 2, icon: 0, cost: 0, index: TEST_HEAL_BOLT_INDEX, custom: true,
+    effects: [TEST_MISSILE_EFFECT(10, 8, 5, 10)],   // Heal Health, a single target at range
+  };
+  return [fireball, healBolt];
+}
+export function addTestMissileSpells(entity, spellsByIndex = null) {
+  entity.spells ??= [];
+  for (const sp of testMissileSpells(spellsByIndex)) {
+    if (!entity.spells.some((k) => k === sp || (k?.index === sp.index && k?.name === sp.name))) entity.spells.push(sp);
+  }
+  return entity.spells;
+}
+
 /**
  * A preset to a live character: the identity FIRST, because
  * applyCharacter honors pre-seeded race/gender/faceIndex over its
@@ -304,6 +345,7 @@ export async function applyTestCharacter(playerEntity, preset, { fetchBytes, spe
   playerEntity.faceIndex = preset.faceIndex | 0;
   playerEntity.name = preset.label;
   await applyHeadlessChargen(playerEntity, preset.classIndex, { fetchBytes, spellsByIndex });
+  if (preset.id === 'breton-sorceress') addTestMissileSpells(playerEntity, spellsByIndex);   // SPELLFX1: something that FLIES, to test with
   const added = seedTestGear(playerEntity);
   // Dress the baseline so the room opens with something ON: the steel
   // suit's cuirass and a longsword in hand - through the real equip

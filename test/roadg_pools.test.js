@@ -23,7 +23,7 @@
 //      the refusal into the code instead. In the street the arm handed
 //      a struck watchman to the ENCOUNTER pool's `removeFoe` - which
 //      was not a leak: that remover never looks the record up in
-//      `foes` (exteriorFoes.js:388-393) and both pools share the host's
+//      `foes` (exteriorFoes.js:390-395) and both pools share the host's
 //      one renderer, so the watchman got exactly what `removeGuard`
 //      gives it. Routing by POOL MEMBERSHIP is an OWNERSHIP law: each
 //      pool owns the teardown of its own records, and `removeFoe`'s
@@ -182,8 +182,8 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   // ROAD-G G1 (review): the lane wired the aggro block for the MELEE
   // arms only. An arrow reaches a pool through TWO seams - `dealDamage`,
   // which arrowFlight calls inside its own `dmg > 0` fork
-  // (arrowFlight.js:297-303), and `onAttackFromPlayer`, which it calls
-  // unconditionally at :306 because that is where WeaponManager.cs:630
+  // (arrowFlight.js:305-311), and `onAttackFromPlayer`, which it calls
+  // unconditionally at :314 because that is where WeaponManager.cs:630
   // lives - and all three hosts that resolve a player shaft EXCLUDED the
   // guards from the second one, on a sentence this pool's own
   // `handleAttackFromPlayer` had already falsified. DFU makes no such
@@ -225,7 +225,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:1858), so every host can reach it.
+  // (exteriorFoes.js:1863), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');
@@ -311,7 +311,7 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
 
   // ROAD-G G1 (review): the RATIONALE this lane first wrote was FALSE
   // and is struck in all seven places it reached. `removeFoe`
-  // (exteriorFoes.js:388-393) never looks a record up in `foes` and
+  // (exteriorFoes.js:390-395) never looks a record up in `foes` and
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
   // `dead = true`, no corpse, skipped by cityGuards.js:823 and spliced

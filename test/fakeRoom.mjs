@@ -101,7 +101,7 @@ export function roomSigner(env, now = () => Date.now()) {
   return { token, signer };
 }
 
-export function fakeRoom(key, { now = () => Date.now() } = {}) {
+export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
   const sockets = [];
   const store = new Map();
   const alarm = { at: null };
@@ -130,7 +130,7 @@ export function fakeRoom(key, { now = () => Date.now() } = {}) {
   // ACC1g: the room's config, filled in by `signer()` before the first
   // hello reaches it. The object identity is what matters - the Room
   // captures it at construction and reads the key lazily.
-  const env = {};
+  const env = ROOMS ? { ROOMS } : {};   // HCC-PARK: a shared binding, so one object can reach another (fakeRooms below)
   let room = new Room(state, env);
   const wake = () => { room = new Room(state, env); };
   const { token, signer } = roomSigner(env, now);
@@ -159,9 +159,9 @@ export function fakeRoom(key, { now = () => Date.now() } = {}) {
     // never laid on the frame - the relay ignores what a client says
     // about its own badge, and a harness that could set one on the
     // frame would be testing the wrong half forever.
-    const tok = 'tok' in over ? over.tok : await token(id, { n: over.name ?? String(id), t: over.title, g: over.glyphs, mu: over.mu });
+    const tok = 'tok' in over ? over.tok : await token(id, { s: over.tokenSub, n: over.name ?? String(id), t: over.title, g: over.glyphs, mu: over.mu });   // AUDIT HCC-PARK: `tokenSub` names the verified account the token carries (default acct-<id>; never a frame field - a social hello's own `acct` is the hub's) - one player in a second tab is one account under two ids
     const frame = { t: 'hello', id, secret: 'secret-of-' + id, name: id, look, pose, ...over };
-    delete frame.title; delete frame.glyphs; delete frame.mu;   // ACC3/MOD1: they went into the token above; the wire has no such hello field
+    delete frame.title; delete frame.glyphs; delete frame.mu; delete frame.tokenSub;   // ACC3/MOD1: they went into the token above; the wire has no such hello field
     if (tok == null) delete frame.tok; else frame.tok = tok;
     return room.webSocketMessage(ws, JSON.stringify(frame));
   };
@@ -173,4 +173,23 @@ export function fakeRoom(key, { now = () => Date.now() } = {}) {
   const drop = (ws) => { const i = sockets.indexOf(ws); if (i >= 0) sockets.splice(i, 1); return room.webSocketClose(ws, 1005, ''); };
   const fire = () => room.alarm();
   return { get room() { return room; }, state, store, sockets, alarm, connect, hello, token, signer, env, pose, chat, ping, world, raw, drop, wake, fire, now, look };
+}
+
+/**
+ * HCC-PARK: A WORLD OF ROOMS - the worker's `ROOMS` binding over fake objects, so a Room that calls another (the
+ * park registry, a cell's drop) reaches a real Room over its own fake state. Each named object is made on its first
+ * use and kept, as the runtime keeps a Durable Object's storage; `room(name)` is the harness of that one.
+ */
+export function fakeRooms({ now = () => Date.now() } = {}) {
+  const made = new Map();
+  const ROOMS = {
+    idFromName: (name) => name,
+    get: (id) => ({ fetch: (request) => room(id).room.fetch(request) }),
+  };
+  function room(name) {
+    let r = made.get(name);
+    if (!r) { r = fakeRoom(name, { now, ROOMS }); made.set(name, r); }
+    return r;
+  }
+  return { room, ROOMS, made };
 }

@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -193,7 +193,10 @@ export function lerpPose(from, to, t) {
     yaw: lerpAngle(from.yaw, to.yaw, k), pitch: from.pitch + (to.pitch - from.pitch) * k, mv: to.mv,
     wd: to.wd ?? 0, an: to.an ?? 0, as: to.as ?? 0,   // MAC7 #1: the arm's three ride the drawn pose whole - nothing to ease
     am: to.am ?? 0, sr: to.sr ?? 0, cn: to.cn ?? 0, cr: to.cr ?? 0,   // MAC7 #2: and the other four
+    ce: to.ce ?? 4,   // SPELLFX1: the cast's element, whole
+    ar: to.ar ?? 0,   // SPELLFX1: and the arrows loosed
     fk: to.fk ?? 0,   // PEER-FS1: the footstep-sound kind - discrete, rides the drawn pose whole like the rest
+    ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0 } : {}),   // RIDE: the mount, discrete, omitted on foot as the wire omits it
   };
 }
 
@@ -284,11 +287,17 @@ export class OnlineSession {
     this._inCastSaid = false;
     this.onTrade = null;          // TRADE1: (id, data) => void - a trade frame from a peer, projected by the wire's validTradeData, addressed to ME
     this.onCast = null;           // ALLY-CAST: (id, data) => void - a party mate's spell at ME, projected by the wire's validCastData; the host decides what lands
+    this.parkOk = false;          // HCC-PARK: the relay that welcomed my primary socket knows the `park` frame (relaySupportsPark) - an older one closes on it
+    this.onPark = null;           // HCC-PARK: (room, { k, id, name, r|null, ttl }) => void - a cell's word about one owner's parked team (my cell's or a halo's)
+    this.onParks = null;          // HCC-PARK: (room, [{ k, id, name, r, ttl }]) => void - a cell's whole memory, after its welcome (an empty one included)
+    this.welcomes = 0;            // AUDIT HCC-PARK (client C4): every welcome on any socket - a word sent down a socket that died before the relay read it is said again when a socket is welcomed
+    this._pkbucket = null;        // HCC-PARK: my park words out, PARK_HZ_MAX a second
     this._tbucket = null;         // TRADE1: the trade frames' own gate at home (TRADE_HZ_MAX)
     this._inCastBuckets = new Map();   // ALLY-CAST: the gate on cast frames coming in, per sender - the trade gate's shape
     this._cbucket = null;   // ALLY-CAST: my own casts out, CAST_HZ_MAX a second
     this._inTradeBuckets = new Map();   // TRADE1: and the gate on trade frames coming IN, per sender (AUDIT DROPS B3) - a peer is chosen by the sender, so a flood is a peer's, never the relay's
     this._inTradeSaid = false;
+    this._inAidSaid = false;
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
     this.onAct = null;            // WORLD3: (id, data) => void - a door, a lever or a platform moved by another in my room
     this._abucket = null;         // WORLD3: the actions' own gate at home (ACT_HZ_MAX)
@@ -586,6 +595,28 @@ export class OnlineSession {
     try { this._ws.send(s); } catch { return false; }
     this._fbucket = gate.bucket; this.stats.sent++; this.stats.foes++;
     return true;
+  }
+
+  /** HCC-PARK: my parked team's word out (net/wire.js's park law). It goes down the socket of the CELL the team stands
+   *  in when I hold one (my own cell's, or a halo's) - the only room that will keep it; otherwise down my own socket as
+   *  the word about WHERE (the anchor alone: a record said through another room is stored nowhere, so it is not sent).
+   *  `{ c }` alone: nothing of that character's is parked. Never at a relay that does not know the frame. Answers
+   *  'cell' (it went down the cell's own socket), 'room' (the anchor alone, down mine) or false (not sent). */
+  sendPark(data, cell = null) {
+    if (!this.parkOk || !data || typeof data !== 'object' || typeof data.c !== 'string' || (data.a !== undefined && !Array.isArray(data.a))) return false;
+    const primaryOpen = this.status === 'open' && this._ws;
+    const halo = cell && cell !== this.room ? this._halo.get(cell) : null;
+    let ws = null, inCell = false;
+    if (cell && cell === this.room && primaryOpen) { ws = this._ws; inCell = true; }
+    else if (halo?.status === 'open' && halo.ws) { ws = halo.ws; inCell = true; }
+    else if (primaryOpen) ws = this._ws;
+    if (!ws) return false;
+    const gate = parkGate(this._pkbucket, this._now());
+    if (!gate.pass) return false;
+    const out = data.a && !inCell ? { c: data.c, a: data.a } : data;
+    try { ws.send(JSON.stringify({ t: 'park', data: out })); } catch { return false; }
+    this._pkbucket = gate.bucket; this.stats.sent++;
+    return inCell ? 'cell' : 'room';
   }
 
   /** WORLD2: a blow on the host's foe out - anyone but the host (the host applies its own), in a world room. */
@@ -1106,6 +1137,7 @@ export class OnlineSession {
     const now = this._now();
     const primary = room === this.room;   // WORLD6b-iii(b): a halo room's frames place its peers and carry a peer's foes and blows; the host, the clock and the memory are my own room's alone
     if (m.t === 'welcome') {
+      this.welcomes++;   // AUDIT HCC-PARK (client C4)
       // SLAM12 (AUDIT SLAM): THE BACKOFF IS RESET HERE, BY THE WELCOME, AND NOT BY THE SOCKET OPENING. A full room's
       // CLOSE_BUSY arrives AFTER the socket opens (the relay's hello gate), so a reset at `onopen` undid the hard
       // back-off CLOSE_BUSY had just set: a client against a busy room retried at a fixed 2500 ms for ever, and the
@@ -1123,6 +1155,7 @@ export class OnlineSession {
       if (relayV) this._deliver('relay', () => this.onRelay?.(relayV));
       if (primary) this.tradeOk = relaySupportsTrade(relayV);   // TRADE1
       if (primary) this.castOk = relaySupportsCast(relayV);   // AUDIT ALLY-CAST B1
+      if (primary) this.parkOk = relaySupportsPark(relayV);   // HCC-PARK: the same law for the park frame
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {
@@ -1209,6 +1242,24 @@ export class OnlineSession {
           const d = validCastData(m.data);
           if (d && d.to === this.id) this._deliver('cast', () => this.onCast?.(m.id, d));
         }
+      }
+    } else if (m.t === 'park') {
+      // HCC-PARK: a cell's word about one owner's parked team - on any cell socket I hold (my own cell's or a halo's:
+      // a team parked across the seam stands for me too), never my own back; the name is the relay's stamp
+      // AUDIT HCC-PARK: keyed by the relay's opaque owner key `k` (the account and the character), which the relay
+      // never sends an account for its own records; `ttl` what is left of the record's life on the relay's clock
+      if (isCellRoom(room) && typeof m.k === 'string' && PARK_KEY_RE.test(m.k) && typeof m.id === 'string' && m.id !== this.id) {
+        const e = { k: m.k, id: m.id, name: typeof m.name === 'string' ? m.name.slice(0, 32) : '', r: m.data ?? null, ttl: PARK_TTL_MS };
+        this._deliver('park', () => this.onPark?.(room, e));
+      }
+    } else if (m.t === 'parks') {
+      // HCC-PARK: a cell's whole memory, after the welcome that reset this socket - an empty list is the whole truth too
+      if (isCellRoom(room) && Array.isArray(m.data)) {
+        const now = Number.isFinite(m.now) ? m.now : null;
+        const list = m.data.slice(0, PARK_CELL_MAX).filter((e) => e && typeof e === 'object' && typeof e.k === 'string' && PARK_KEY_RE.test(e.k) && typeof e.id === 'string' && e.id !== this.id)
+          .map((e) => ({ k: e.k, id: e.id, name: typeof e.name === 'string' ? e.name.slice(0, 32) : '', r: e.r ?? null,
+            ttl: now !== null && Number.isFinite(e.at) ? Math.max(0, Math.min(PARK_TTL_MS, PARK_TTL_MS - (now - e.at))) : PARK_TTL_MS }));
+        this._deliver('parks', () => this.onParks?.(room, list));
       }
     } else if (m.t === 'act') {
       // WORLD3: a door, a lever or a platform moved by another in my world room - never my own back, never outside one

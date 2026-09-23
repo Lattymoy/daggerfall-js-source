@@ -37,7 +37,7 @@ import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } 
 import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
 import { weaponOffsetHeight } from '../ui/hudLarge.js';   // FIELD-GUN7: the lab's raise rides the bar's offset rather than replacing it
 import { betterAmbience } from '../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
-import { orbColour, MUZZLE_FORWARD } from '../characters/thunderlockIds.js';   // FIELD-GUN17: the flash wears the orb's own colour, sampled rather than named
+import { orbColour, MUZZLE_FORWARD, orbArchiveFor } from '../characters/thunderlockIds.js';   // FIELD-GUN17: the flash wears the orb's own colour, sampled rather than named
 import { worldRectPx } from '../player/tapRay.js';   // FIELD-GUN19: the docked HUD's world strip, in canvas pixels - ROAD-E E5's one home for that flip
 import { installThunderlockSounds, SFX as TL_SFX } from '../systems/thunderlock.js';   // AUDIT-THUNDERLOCK F8: the weapon's own clips, through the mod-sound door   // the port's own weapon: its art is a sheet, not a CIF   // MAC-I: the tint's switch, with the sprite it tints
 // ROAD-tail (FPSSpellCasting.cs): the classic spellcasting HANDS. A
@@ -194,8 +194,8 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2830), townTalk.say
- *                     (exterior.js:1945, world.js:3420) and
+ *                     (dungeonContext.js:2837), townTalk.say
+ *                     (exterior.js:2035, world.js:3528) and
  *                     worldModes' own interior sink (worldModes.js:418,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
@@ -686,7 +686,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  (a classic-skin player swings too, and the peers in Morrowind bodies must see it); the host reads it into the pose. */
   const swing = { n: 0, strike: 'StrikeDown' };
   /** MAC7 #2: the wire's cast - { n, rangeType }, counted at castSpellAnim, the one door both lanes' hands come through. */
-  const cast = { n: 0, rangeType: 2 };
+  const cast = { n: 0, rangeType: 2, element: 4 };   // SPELLFX1: and the element, so a peer can draw the missile
+  const shot = { n: 0 };   // SPELLFX1: arrows loosed from a BOW, for the wire (a gun's orb is not counted - peers draw a shaft)
   function fpAttack(strike) {
     swing.n = (swing.n + 1) & 0xffff; swing.strike = strike;
     // EOTB-IL: the sprite's one-shots are no longer started here - the
@@ -1128,13 +1129,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  refused - already playing, or an element with no CIF archive -
      *  in which case the engine resolves on the spot. */
     castSpellAnim: (rangeType, element, onRelease = null) => {
-      cast.n = (cast.n + 1) & 0xffff; cast.rangeType = rangeType | 0;   // MAC7 #2: the wire's cast, counted before either lane's own gate. EOTB-IL: the sprite's cast is polled off FPSSpellCasting.IsPlayingAnim (IL_3f57), not called from here
+      cast.n = (cast.n + 1) & 0xffff; cast.rangeType = rangeType | 0; cast.element = Number.isInteger(element) && element >= 0 && element <= 4 ? element : 4;   // MAC7 #2: the wire's cast, counted before either lane's own gate. EOTB-IL: the sprite's cast is polled off FPSSpellCasting.IsPlayingAnim (IL_3f57), not called from here
       fpArm.castSpell(rangeType);
       return fpsSpellCasting.playOneShot(element, onRelease);
     },
     playerWeapon,
     swing,   // MAC7 #1: { n, strike } - the count and the kind of the last strike started, for the wire
     cast,    // MAC7 #2: { n, rangeType } - the count and the range of the last cast, for the wire
+    shot,    // SPELLFX1: { n } - arrows loosed, for the wire
+    /** SPELLFX1: every host's player loose calls this once, with the weapon it loosed from. */
+    noteShot(weapon) { if (!orbArchiveFor(weapon)) shot.n = (shot.n + 1) & 0xffff; },
     /** Host mouse events buffer here (sheathed = no attack processing).
      *  CH3 (characters-13): a running SWAP PAUSE blocks the attack
      *  the same way (WeaponManager.cs:276-278 returns before the

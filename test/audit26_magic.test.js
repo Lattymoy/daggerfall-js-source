@@ -148,7 +148,7 @@ test('audit26 F122: the paperdoll armorMod is Decreased MINUS Increased, the com
 // nothing read it.
 // ---------------------------------------------------------------
 test('audit26 F044: the fatigue multiplier is 1.0 / 0.9 / 0.8, and the enchantment arm needs the career', () => {
-  // hasSpecialAbility masks the bitfield's low byte (rest.js:29-30)
+  // hasSpecialAbility masks the bitfield's low byte (rest.js:30-31)
   const athlete = () => ({ abilityFlagsAndSpellPointsBitfield: SPECIAL_ABILITY.Athleticism });
   const enchanted = (over) => ({ ...over, _enchantMods: { improvedAthleticism: true } });
 

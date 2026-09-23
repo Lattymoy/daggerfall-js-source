@@ -181,8 +181,9 @@ test('AUDIT 62 F21: an enemy missile aims at the TARGET transform, and the conta
   assert.equal([...d.matchAll(/if \(missileHitsFoe\(m\.pos, af\)\) \{/g)].length, 1, 'the foe-vs-foe SPELL arm reads the capsule');
   assert.match(d, /if \(missileHitsFoe\(m\.pos, f\)\) \{ struckFoe = f; break; \}/,
     '...and the foe-vs-foe ARROW arm sweeps every live body with the same test');
-  assert.equal([...d.matchAll(/missileHitsCapsule\(m\.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS\)/g)].length, 2,
-    "and both PLAYER arms sweep the player's own live capsule, at the player's OWN radius (AUDIT 65 CV-2)");
+  // SPELLFX1's drawn peer shaft is the third: it stops on me and applies nothing.
+  assert.equal([...d.matchAll(/missileHitsCapsule\(m\.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS\)/g)].length, 3,
+    "and both PLAYER arms (plus SPELLFX1's drawn peer shaft) sweep the player's own live capsule, at the player's OWN radius (AUDIT 65 CV-2)");
   assert.doesNotMatch(d, /const ay = af\.ai\.feet\[1\] \+ \(af\.ai\.height \?\? 1\.8\) \/ 2 - m\.pos\[1\];/, 'the single-point arrow test is gone');
   assert.doesNotMatch(d, /const sy = af\.ai\.feet\[1\] \+ \(af\.ai\.height \?\? 1\.8\) \/ 2 - m\.pos\[1\];/, 'and the single-point spell test');
   // a 4.0m flyer: capsule halved to 2.0, transform 2.0 up. The flight
