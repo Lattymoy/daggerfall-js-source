@@ -1,0 +1,231 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "Modules",
+            "Description": "Enable or disable the optional modules contained in this mod depending on personal preferences and playstyle.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "bedSleeping",
+                    "Description": "Allows sleep to be initiated by clicking on a bed.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "advancedArchery",
+                    "Description": "Alters to-hit and damage done by arrows depending on the length of draw.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "encumbranceEffects",
+                    "Description": "Provides speed and fatigue penalties when carrying too much weight.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "bandaging",
+                    "Description": "Allows bandages to be used for healing based on medical skill.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "shipPorts",
+                    "Description": "Player can only board their ship when in a port town.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "underworldExpulsion",
+                    "Description": "Enables underworld guilds to expel members for poor performance.. with prejudice.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "climbingRestriction",
+                    "Description": "Prevents climbing with a weapon drawn.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "weaponSpeed",
+                    "Description": "Moderates DPS of weapons for characters with high speed attributes.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "weaponMaterials",
+                    "Description": "Moderates the to-hit bonuses of weapon materials so skill remains key factor",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "equipDamage",
+                    "Description": "Increases equipment damage proportional to max condition.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "enemyAppearance",
+                    "Description": "Remixes human enemy appearance based on class",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "purificationPotion",
+                    "Description": "Changes purification potion to cure poison rather than grant invisibility",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "autoExtinguishLight",
+                    "Description": "Automatically extinguish any light sources when you exit a dungeon",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "classicStrengthDamageBonus",
+                    "Description": "Display the strength damage bonus like classic Daggerfall (half) rather than the value used internally that DFU displays",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "variantNpcs",
+                    "Description": "Enable variant NPC sprites in shops & taverns",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "variantResidents",
+                    "Description": "This populates 80% of houses with the townsfolk you see walking around insteam of random adventurer flats",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "fightersTeachHandToHand",
+                    "Description": "Enable this module to replace Giantish with Hand 2 Hand for training and guild ranks. (Not compatible with other mods that change Fighters Guild)",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Options": [
+                        "2000",
+                        "4000",
+                        "6000",
+                        "8000",
+                        "10000",
+                        "20000",
+                        "30000",
+                        "40000",
+                        "50000"
+                    ],
+                    "Value": 4,
+                    "Name": "loanAmountPerLevel",
+                    "Description": "Sets the maximum amount per level that can be borrowed from banks",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "EnhancedRiding",
+            "Description": "Enhanced horse riding implementation settings.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "enhancedRiding",
+                    "Description": "Enable enhanced horse riding module, improving presentation and allowing galloping.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "RealisticMovement",
+                    "Description": "Makes the horse and cart movement backwards and sideways more realistic and limited.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "followTerrainEnabled",
+                    "Description": "Enables terrain following when riding.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 32,
+                    "Value": 8,
+                    "Name": "followTerrainSoftenFactor",
+                    "Description": "Scale factor to soften terrain gradient following. (0=none, 32=max soften)",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "GallopingInTowns",
+                    "Description": "Enables galloping (sprinting) while riding horses in towns.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "TrampleCivilians",
+                    "Description": "Enables the crime of trampling innocent townsfolk when galloping in a town. Be careful!",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        },
+        {
+            "Name": "RefinedTraining",
+            "Description": "Refines guild training service so skill is selected first.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "refinedTraining",
+                    "Description": "Enable refined skill training service.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "variableTrainingPrice",
+                    "Description": "Makes price of training based on skill level as well as player level.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "intensiveTraining",
+                    "Description": "Enables intensive training option for a session per day for five days, for extra cost.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

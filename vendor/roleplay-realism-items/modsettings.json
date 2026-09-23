@@ -1,0 +1,90 @@
+{
+    "Version": "1.0",
+    "Sections": [
+        {
+            "Name": "Modules",
+            "Description": "Enable or disable the optional modules contained in this mod depending on personal preferences and playstyle.",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "lootRebalance",
+                    "Description": "Rebalances loot on mobs and in piles",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "bandaging",
+                    "Description": "Allows bandages to stack, and to be used for healing based on medical skill",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "conditionBasedPrices",
+                    "Description": "Item prices are based on condition and loot you find can be quite worn out",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "storeQualityItemCondition",
+                    "Description": "Items in shops can be in a used condition dependent on the quality of the store",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "realisticEnemyEquipment",
+                    "Description": "Enemy equipment is realistic for their class and can be variable condition",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "skillBasedStartingEquipment",
+                    "Description": "Player starting equipment is based on skills",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "skillBasedStartingSpells",
+                    "Description": "Player starting spells are based on skills",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "weaponBalance",
+                    "Description": "Balances weapon attack speed and damage ranges against weight to give more valid choices",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "newWeapons",
+                    "Description": "Adds two new weapons to the game, Archers Axe and Light Flail",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "newArmor",
+                    "Description": "Adds new chest, arm, leg and foot armor pieces to the game",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Value": true,
+                    "Name": "alchemistPotions",
+                    "Description": "Adds random potions for sale at alchemist stores, for a premium price",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

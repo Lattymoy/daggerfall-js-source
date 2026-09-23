@@ -11,6 +11,8 @@ import { conditionMultipliersByMaterial } from '../characters/weapons.js';   // 
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
 import { playerArchiveFor, resolvePaperdollRecord } from '../characters/paperdollArt.js';   // AUDIT 17f: SetRace, one home; NT3 (F006): the record law too
+import { itemDyeColor } from './itemDye.js';
+import { customItemClass, rriVariantFields, rriStoredWeight } from './rriItems.js';   // RRI1: DFU's custom-item dispatch, asked first   // DW3: GetItemImage's `color = (int)item.dyeColor` (ItemHelper.cs:402) rides the image
 
 export { GROUP_TEMPLATE_INDICES };
 
@@ -45,17 +47,35 @@ export function registerCustomTemplates(rows) {
   return _custom.size;
 }
 export const customTemplateCount = () => _custom.size;
-export const templateByIndex = (i) => ITEM_TEMPLATES[i] ?? _custom.get(i) ?? null;
+// RRI1: A MOD'S PATCHES TO CLASSIC ROWS. ItemHelper.LoadItemTemplates
+// (:1488-1494) merges every loaded mod's ItemTemplates.json over the
+// classic table by index the moment the mod loads - a Katana at 3.5 kg
+// under Roleplay & Realism: Items, whatever its modules say. The frozen
+// DFU table stays what it is; a patched row is the classic row with the
+// patch over it, and templateByIndex answers it first.
+const _overrides = new Map();
+export function registerTemplateOverrides(rows) {
+  _overrides.clear();
+  for (const r of rows ?? []) {
+    const base = ITEM_TEMPLATES[r?.index];
+    if (!base) continue;
+    const t = { ...base, ...r };
+    _overrides.set(r.index, Object.freeze({ ...t, weight: t.baseWeight, worldTexArchive: t.worldTextureArchive, worldTexRecord: t.worldTextureRecord }));
+  }
+  return _overrides.size;
+}
+export const templateOverrideCount = () => _overrides.size;
+export const templateByIndex = (i) => _overrides.get(i) ?? ITEM_TEMPLATES[i] ?? _custom.get(i) ?? null;
 
 /** GetItemTemplate(group, groupIndex) - the group's j-th template. */
 export function templateFor(group, groupIndex) {
   const idx = GROUP_TEMPLATE_INDICES[group]?.[groupIndex];
-  return idx == null ? null : ITEM_TEMPLATES[idx];
+  return idx == null ? null : (_overrides.get(idx) ?? ITEM_TEMPLATES[idx]);   // AUDIT-RR2 G9: GetItemTemplate reads the MERGED table (ItemHelper.cs:1494) - a mod's rarity patch
 }
 
 /** The group's template metas in enum order (GetEnumArray + lookups). */
 export function groupTemplates(group) {
-  return (GROUP_TEMPLATE_INDICES[group] ?? []).map((i) => ITEM_TEMPLATES[i]);
+  return (GROUP_TEMPLATE_INDICES[group] ?? []).map((i) => _overrides.get(i) ?? ITEM_TEMPLATES[i]);   // AUDIT-RR2 G9: the shelf's rarity gate (DaggerfallLoot.cs:219-222) reads the patched row
 }
 
 // ItemBuilder.valueMultipliersByMaterial (weapons + plate armor).
@@ -102,10 +122,22 @@ export function itemBaseValue(item) {
  *  value (an enchantment's sum, a book's price, a recipe's) keeps it -
  *  and answers a COPY, as the copies it replaces did. */
 export function setItemFields(item) {
+  const named = { ...item, name: item.name ?? templateByIndex(item.templateIndex)?.name };
+  // RRI1: a custom class's CurrentVariant setter runs ONCE at the mint
+  // (ApplyArmorSettings -> SetVariant): the name's prefix, and for fur
+  // the material folded to Leather with `message` 1. Marked, so a
+  // second read of the same item does not prefix it twice.
+  const variant = named.rriVariant ? null : rriVariantFields(named);
+  // AUDIT-RR2 G7: a fur piece folded before AUDIT-RR F5 carries no weightInKg (its save predates the field) and would
+  // read the derived leather half; the fold's stored number is written once on the way in
+  const legacyWeight = (named.rriVariant && !Number.isFinite(named.weightInKg)) ? rriStoredWeight(named) : null;
   return {
-    ...item,
-    name: item.name ?? templateByIndex(item.templateIndex)?.name,
-    value: itemValueOf(item),
+    ...named,
+    ...(variant ? { ...variant, rriVariant: true } : {}),
+    ...(legacyWeight != null ? { weightInKg: legacyWeight } : {}),
+    // AUDIT-RR F5: ApplyArmorMaterial runs BEFORE the class's SetVariant (ItemBuilder.cs:466-485), so a fur piece's
+    // value is the CHAIN stage's (x2) - the fold to Leather comes after and value is a stored field; priced on `named`
+    value: itemValueOf(named),
   };
 }
 /** JAN1 (2026-09-18, Janome: "when I try to sell certain items I get COST:NaN ... he offers me 0"): THE ONE VALUE
@@ -167,6 +199,18 @@ export function usesWorldTexture(item, template = templateByIndex(item.templateI
 export const PAINTING_MESSAGE_RANGE = 65536;
 export const rollPaintingMessage = (rolls = Math.random) => Math.floor(rolls() * PAINTING_MESSAGE_RANGE);
 
+/** DaggerfallUnityItem.ConditionPercentage (:460-463): `maxCondition > 0
+ *  ? 100 * currentCondition / maxCondition : 100`, C# integer division. */
+export const conditionPercentage = (item) => ((item?.maxCondition ?? 0) > 0 ? Math.trunc(100 * (item.currentCondition ?? 0) / item.maxCondition) : 100);
+
+// ---- ItemHelper.RegisterItemUseHandler (ItemHelper.cs:113-116) --------
+/** `Dictionary<int, ItemUseHandler> itemUseHandlers` - a mod's handler for
+ *  a template, asked by DaggerfallInventoryWindow.UseItem ahead of the
+ *  normal-items ladder (:1703-1709). RRI2: the bandage. */
+const _useHandlers = new Map();
+export function registerItemUseHandler(templateIndex, handler) { if (typeof handler === 'function') _useHandlers.set(templateIndex, handler); else _useHandlers.delete(templateIndex); }
+export const itemUseHandler = (templateIndex) => _useHandlers.get(templateIndex) ?? null;
+
 export function mintCondition(item) {
   if (item.maxCondition != null) return item;
   if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
@@ -207,6 +251,19 @@ export function inventoryItemImage(item, identity = undefined) {
   // nothing reads as "no picture for this"; a cart drawn as a tomato
   // reads as a broken game, which is how it was reported.
   if (TRANSPORTATION_INDICES.has(item.templateIndex)) return null;
+  // RRI1: a custom class answers InventoryTextureArchive/Record itself
+  // (DaggerfallUnityItem's virtuals, ItemHelper.cs:405-406) - the weapons
+  // their own archive (513/514) at the template's record, the chain set
+  // the body's archive at a record by material, the leather set their
+  // own archive at a record by body and material. GetItemImage's katana
+  // bump and the world fallback are for the classic rows, not these.
+  const cls = customItemClass(item.templateIndex);
+  if (cls) {
+    const bodyArchive = playerArchiveFor(item, t, identity);
+    const archive = cls.inventoryTextureArchive ?? bodyArchive;
+    const record = cls.inventoryTextureRecord ? cls.inventoryTextureRecord(item, { playerTextureArchive: bodyArchive }) : t.playerTextureRecord;
+    return { archive, record, dye: itemDyeColor(item) };
+  }
   let archive, record;
   if (usesWorldTexture(item, t)) {
     // AUDIT 63 F20/F21: GetInventoryTextureArchive/Record's WORLD arms
@@ -266,5 +323,8 @@ export function inventoryItemImage(item, identity = undefined) {
   // TEMPLATE's, deliberately (ItemHelper.cs:425-429 reads
   // item.ItemTemplate, not the item).
   if (archive === 0 && record === 0) { archive = t.worldTextureArchive; record = t.worldTextureRecord; }
-  return { archive, record };
+  // DW3: the DYE rides the image - GetItemImage reads item.dyeColor
+  // first (:402) and asks the replacement door by it (:453, :458), so
+  // an icon door that draws this must ask by it too.
+  return { archive, record, dye: itemDyeColor(item) };
 }

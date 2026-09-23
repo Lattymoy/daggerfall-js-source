@@ -147,6 +147,20 @@ function parseFactionBlock(block, faction) {
   }
 }
 
+/** FactionFile.RegisterCustomFaction (:702-719): a mod's faction that
+ *  is not in FACTION.TXT, keyed by id; false when the id is taken. The
+ *  registry is read by PersistentFactionData.AddCustomFactions (the
+ *  port's factionRep.addCustomFactions) when the player's dictionary
+ *  is reset, and by the talk host over its own reader. */
+const _customFactions = new Map();
+export function registerCustomFaction(factionId, factionData) {
+  if (_customFactions.has(factionId)) return false;
+  _customFactions.set(factionId, Object.freeze({ ...newFaction(), ...factionData, id: factionId }));
+  return true;
+}
+export const customFactions = () => _customFactions;
+export function _resetCustomFactions() { _customFactions.clear(); }
+
 export function relinkChildren(dict) {
   for (const faction of [...dict.values()]) {
     const parent = dict.get(faction.parent);

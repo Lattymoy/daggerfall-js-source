@@ -216,7 +216,7 @@ uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:2820`), and
 (`renderer.js:404-406`). The seasonal record arrived in PNG raster
 order instead - `decodeTexture2D` flips Unity's bottom-up rows to
 top-down for its own consumers, and the loose arm is a canvas
-`getImageData` - and `world.js:1963` / `exterior.js:931` handed that
+`getImageData` - and `world.js:1976` / `exterior.js:943` handed that
 straight to `uploadTexture`. So a seasonal flat drew mirrored against
 the classic flat uploaded five lines later in the same batch loop. In
 DFU there is nothing to reconcile: the mod's asset is a Unity
@@ -295,7 +295,7 @@ order is getColor32, pointing at the seasons door that converts, the
 way the door's own header already points back at the reader; the
 door's closing line drops "for their other consumers" with it, and so
 does F26's paragraph above. The BEHAVIOUR is untouched: the reader's
-row-order pin (`test/seasonsIliacBay.test.js:539-543`, which asserts
+row-order pin (`test/seasonsIliacBay.test.js:385-389`, which asserts
 the top row of the image is the LAST row Unity stored) still holds and
 was rightly left alone by F26, and the end-to-end
 `texImage2D`-vs-`getColor32` pin is what fixes the order that reaches

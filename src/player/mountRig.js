@@ -34,9 +34,13 @@ import { TRANSPORT_MODES, isRiding, hasHorse, hasCart } from '../systems/transpo
 import { RidingAnimator, loadRidingArt, ridingRect, RIDING_VOLUME_SCALE } from '../systems/riding.js';
 import { TransportWindow, transportArtLoaded } from '../ui/transportWindow.js';
 import { ownsShip } from '../systems/banking.js';
-import { horseOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse
+import { horseOffsetHeight, dockedLargeHudHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse; AUDIT-RR F25: EnhancedRiding's own arm asks LargeHUDDocked (EnhancedRiding.cs:256-257)
 import { mwViewHides } from './mwView.js';   // AUDIT-EOTB2: the sprite body on screen hides the FPV horse (Eye Of The Beholder's ToggleBillboard)
 import { SOUND } from '../systems/soundClips.js';
+import { isShipAvailable } from '../systems/ship.js';   // RR1: TransportManager.ShipAvailiable, the delegate
+import { NATIVE_SCREEN_HEIGHT } from '../systems/riding.js';   // RR2: the 200-line native screen the sprite scales by
+import { RR_RIDING, rrTerrainAngle, rrTerrainFollow, rrRidingYAdj, rrRidingNeckBand } from '../systems/rrRealism.js';   // RR2: EnhancedRiding's draw laws
+import { setPitchFloorProvider } from './lookFilter.js';   // RR2: PitchMaxLimit while riding
 
 /**
  * @param deps {
@@ -51,6 +55,11 @@ import { SOUND } from '../systems/soundClips.js';
 export function createMountRig({
   renderer, canvas, fetchBytes, palette, audio,
   player, playerEntity, showOverlay, onShip = null, paused = () => false,
+  shipLocation = null,   // RR1: () => ({ loaded, portTown, onShip }) - what TransportManager.ShipAvailiable's replacement reads (RoleplayRealism.cs:610-631); null when the host cannot say
+  // RR2 (EnhancedRiding.cs): the host's reads the component makes - the
+  // look's pitch (radians, up-positive) and yaw, the ground's height at a
+  // world x/z, and whether the module is on with its two settings
+  lookPitch = null, lookYaw = null, groundHeightAt = null, enhancedRiding = null,
   // AUDIT-TO1 J1: TransportManager.RidingVolumeScale, which Travel
   // Options zeroes for an accelerated journey (TravelOptionsMod.cs:1227
   // -1229) and restores at its end (:1264). A host that hands none
@@ -59,6 +68,42 @@ export function createMountRig({
   horseCart = null,   // HCC: () => the Horse Cart and Cargo runtime, or null - TrailingWagonTransportWindow's gate and route
 }) {
   const animator = new RidingAnimator();   // TR2: the mount's frames, loop and neigh
+  // RR2: the terrain ring (EnhancedRiding.cs:26-31) and the pitch floor the
+  // component sets (`PitchMaxLimit = terrainAngle + 18`, :288) - registered
+  // for as long as this rig stands; off the mount, the owner's floor
+  const _terrainAngles = new Array(RR_RIDING.samples).fill(0);
+  let _sampleIdx = 0;
+  let _terrainAngle = 0;
+  /** RR2: EnhancedRiding.OnGUI (:265-322) - TransportManager.DrawHorse is
+   *  off and the component draws the mount itself: `yAdj = (Pitch -
+   *  terrainAngle - 10) * 2.6` (DFU's Pitch down-positive) lifts the
+   *  sprite's bottom edge off the screen's, over the averaged terrain
+   *  ring. Rewrites `rect.y`; answers { yAdj, scaleY, c }. */
+  function liftForLook(rect, art, enhanced) {
+    const c = canvasOf();
+    _terrainAngle = rrTerrainFollow(_terrainAngles, enhanced.softenFollow ?? 0, enhanced.terrainFollowing !== false);
+    const pitchDeg = -((lookPitch?.() ?? 0) * 180) / Math.PI;
+    const yAdj = rrRidingYAdj(pitchDeg, _terrainAngle);
+    const scaleY = c.height / NATIVE_SCREEN_HEIGHT;
+    // AUDIT-RR F25: `LargeHUD && LargeHUDDocked` (EnhancedRiding.cs:256-257), not TransportManager's OffsetHorse arm - the
+    // component draws the mount itself and asks its own question; ridingRect above took the classic arm's offset, so
+    // it is taken back out here and the docked height put in
+    const offset = Math.trunc(dockedLargeHudHeight());   // AUDIT-RR2 G4: `(int)LargeHUD.ScreenHeight` (EnhancedRiding.cs:257)
+    rect.y = c.height - ((art.height + yAdj) * scaleY) - offset;
+    return { yAdj, scaleY, c, offset };
+  }
+  /** OnGUI's neck band (:303-320): when the lifted sprite leaves a gap
+   *  under it, a strip of the same riding texture fills it (no neck CFA
+   *  here - see rrRealism), `width - 14` wide, from 0.2 of the texture
+   *  down by `yAdj / 100`. */
+  function drawNeckBand({ yAdj, scaleY, c, offset }, rect, art, r) {
+    const drawBottom = rect.y + rect.h - scaleY;
+    if (drawBottom >= c.height) return;
+    const band = rrRidingNeckBand(yAdj);
+    const scaleX = rect.w / art.width;
+    renderer.drawScreenQuad(art.frames[r.frame], { x: rect.x, y: drawBottom, w: (art.width - band.widthTrim) * scaleX, h: c.height - drawBottom + scaleY - offset }, { u0: band.u0, v0: band.v0, u1: band.u1, v1: band.v1 });
+  }
+  setPitchFloorProvider(() => (enhancedRiding?.() && isRiding(player.transportMode) && !paused() ? _terrainAngle + RR_RIDING.pitchMaxOffset : null));   // AUDIT-RR2 G26: the else arm (`IsGamePaused || !IsRiding`, :122-131) resets PitchMaxLimit every frame
   let art = null;                          // TR2: the four CFA frames of the mount under you
   const canvasOf = () => (typeof canvas === 'function' ? canvas() : canvas);
 
@@ -86,6 +131,8 @@ export function createMountRig({
     setMode,
     /** For a host that needs to know whether the sprite is up. */
     loaded: () => !!art,
+    /** Tests only: the art without ARENA2 (RR2's lift and band are drawn off it). */
+    _setArt: (a) => { art = a; },
 
     /**
      * TR3: dfuiOpenTransportWindow (DaggerfallUI.cs:690-700) - indoors
@@ -106,7 +153,7 @@ export function createMountRig({
         // TR4: the row is live when a ship is owned - AND when this
         // host can actually sail it. A fixed city has nowhere to sail
         // to, so the row goes dark rather than opening onto nothing.
-        shipAvailable: !!onShip && ownsShip(playerEntity),
+        shipAvailable: isShipAvailable({ canSail: !!onShip, ownsShip: ownsShip(playerEntity), ...(shipLocation?.() ?? {}) }),   // RR1: through the delegate (DFU's own answer is HasShip)
         onMode: (mode) => {
           if (mode === TRANSPORT_MODES.Ship) { onShip?.(); return; }
           if (rt && (mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Cart)) { rt.tryUseTransport(mode); return; }   // HCC: HandleHorseTransportButton / HandleCartTransportButton [IL_b170, IL_b1ac]
@@ -141,14 +188,28 @@ export function createMountRig({
       // AUDIT-EOTB2 [SETTINGS]: and not while the Eye Of The Beholder body
       // is the one on screen - the horse archives draw the rider WITH the
       // horse, so the FPV horse hides (Compatibility.Don'tHideHorse keeps it)
+      // RR2: EnhancedRiding.Update's terrain sample (:139-146) - the ground
+      // under the rider against one unit ahead, into a ring of sixteen,
+      // while riding and not paused
+      const enhanced = enhancedRiding?.() ?? null;
+      if (enhanced && isRiding(player.transportMode) && !ridePaused && groundHeightAt && player.pos) {
+        const yaw = lookYaw?.() ?? 0;
+        const here = groundHeightAt(player.pos[0], player.pos[2]);
+        const ahead = groundHeightAt(player.pos[0] + Math.sin(yaw), player.pos[2] + Math.cos(yaw));
+        if (Number.isFinite(here) && Number.isFinite(ahead)) { _terrainAngles[_sampleIdx++] = rrTerrainAngle(here, ahead); if (_sampleIdx >= RR_RIDING.samples) _sampleIdx = 0; }
+      }
       if (art && isRiding(player.transportMode) && !ridePaused && !mwViewHides().horse) {
         // ROAD-D D10: horseOffsetHeight (TransportManager.cs :304-309)
         // - the bar the LAST drawHud drew, lifted out from under the
         // mount. Docking is not asked here; DFU's horse arm never asks.
         const rect = ridingRect(canvasOf(), art, horseOffsetHeight());
+        const lift = enhanced ? liftForLook(rect, art, enhanced) : null;   // RR2: EnhancedRiding.OnGUI - the sprite rides the look
         renderer.drawScreenQuad(art.frames[r.frame], rect);
+        if (lift) drawNeckBand(lift, rect, art, r);   // RR2: and the gap under it is filled
       }
       return r;
     },
+    /** RR2: OnGUI's averaged terrain angle, for the look's floor. */
+    terrainAngle: () => _terrainAngle,
   };
 }

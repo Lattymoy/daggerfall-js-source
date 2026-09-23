@@ -1,0 +1,164 @@
+[
+  {
+    "name": "RRI2-1-the-loot-matrix-is-not-replaced",
+    "file": "src/systems/loot.js",
+    "old": "  const matrix = rriLootMatrix(lootTableKey) ?? LOOT_MATRICES[lootTableKey] ?? LOOT_MATRICES['-'];",
+    "new": "  const matrix = LOOT_MATRICES[lootTableKey] ?? rriLootMatrix(lootTableKey) ?? LOOT_MATRICES['-'];",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-2-the-mob-keys-are-not-read",
+    "file": "src/systems/rriRealism.js",
+    "old": "export const rriEnemyLootTableKey = (mobileType, key) => (lootRebalanceOn() ? (RRI_MOB_LOOT_KEYS[mobileType] ?? key) : key);",
+    "new": "export const rriEnemyLootTableKey = (mobileType, key) => key;",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-3-the-bandage-heal-ignores-the-cap",
+    "file": "src/systems/rriRealism.js",
+    "old": "export const bandageHeal = (medical, maxHealth) => Math.trunc(Math.min(Math.trunc(medical / 3), maxHealth * 0.4));",
+    "new": "export const bandageHeal = (medical, maxHealth) => Math.trunc(medical / 3);",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-4-the-stackable-override-can-say-no",
+    "file": "src/systems/inventory.js",
+    "old": "  if (isRriStackable(item)) return true;   // RRI2: \"Only return if override returns true\" - the bandage, under bandaging",
+    "new": "  if (item.group === 'UselessItems2' && item.templateIndex === 249) return isRriStackable(item);",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-5-the-condition-floor-is-lost",
+    "file": "src/systems/rriRealism.js",
+    "old": "  const conditionMod = conditionPercentage === -1 ? 1 : Math.max(conditionPercentage / 100, 0.2);",
+    "new": "  const conditionMod = conditionPercentage === -1 ? 1 : conditionPercentage / 100;",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-6-the-repair-factor-ignores-instant-repairs",
+    "file": "src/systems/rriRealism.js",
+    "old": "  const repairCostScaleFactor = instantRepairs ? INSTANT_REPAIR_COST_FACTOR : REPAIR_COST_FACTOR;",
+    "new": "  const repairCostScaleFactor = REPAIR_COST_FACTOR;",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-7-the-loot-condition-roll-wears-artifacts",
+    "file": "src/systems/rriRealism.js",
+    "old": "    if ((item.group === 'Armor' || item.group === 'Weapons' || item.group === 'Books') && !item.artifact) {\n      const conditionMod = 0.2 + rolls() * (0.75 - 0.2);",
+    "new": "    if ((item.group === 'Armor' || item.group === 'Weapons' || item.group === 'Books')) {\n      const conditionMod = 0.2 + rolls() * (0.75 - 0.2);",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-8-quality-18-stocks-used",
+    "file": "src/systems/rriRealism.js",
+    "old": "  if (quality <= 17) return 0.75;       // 14 - 17, almost new+\n  return null;",
+    "new": "  return 0.75;",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-9-the-alchemist-potion-is-not-doubled",
+    "file": "src/systems/rriKits.js",
+    "old": "      item.value = (item.value ?? itemBaseValue(item)) * 2;",
+    "new": "      item.value = (item.value ?? itemBaseValue(item));",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-10-the-swing-time-forgets-the-speed-cap",
+    "file": "src/systems/rriRealism.js",
+    "old": "    const playerSpeed = Math.min(liveSpeed, 98);",
+    "new": "    const playerSpeed = liveSpeed;",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-11-the-max-damage-override-is-skipped",
+    "file": "src/characters/weapons.js",
+    "old": "  const o = _damageOverride.max?.(weapon);   // TryGetOverride(\"CalculateWeaponMaxDamage\")\n  if (o != null) return o;",
+    "new": "",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-12-the-sidearm-is-worn",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "      if (dice100(chance, rolls())) add(mintWeapon(randomShortblade(rolls), randomMaterial(itemLevel, rolls), rolls));\n      add(mintClothing(female, female ? WOMENS_PLAIN_ROBES : MENS_PLAIN_ROBES, rolls), true);",
+    "new": "      if (dice100(chance, rolls())) add(mintWeapon(randomShortblade(rolls), randomMaterial(itemLevel, rolls), rolls), true);\n      add(mintClothing(female, female ? WOMENS_PLAIN_ROBES : MENS_PLAIN_ROBES, rolls), true);",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-13-the-armor-ladder-does-not-fall",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "  if (dice100(armored, rolls())) armor('ChestArmor');\n  armored -= 10;",
+    "new": "  if (dice100(armored, rolls())) armor('ChestArmor');",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-14-the-warlord-converts-from-ebony",
+    "file": "src/combat/rriEnemyEquipment.js",
+    "old": "  const convertFrom = entity.mobileType === M.OrcWarlord ? WEAPON_MATERIALS.Mithril : WEAPON_MATERIALS.Ebony;",
+    "new": "  const convertFrom = WEAPON_MATERIALS.Ebony;",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-15-the-kit-keeps-the-class-weapon",
+    "file": "src/systems/startingGear.js",
+    "old": "  return _assigner?.(entity, opts) ?? assignStartingGear(entity, opts);",
+    "new": "  _assigner?.(entity, opts); return assignStartingGear(entity, opts);",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-16-the-upgrade-forgets-the-forbidden-steel",
+    "file": "src/systems/rriKits.js",
+    "old": "  if ((upgrade && !materialForbidden(career, MATERIAL_BITS.steel)) || materialForbidden(career, MATERIAL_BITS.iron)) weaponMaterial = WEAPON_MATERIALS.Steel;",
+    "new": "  if (upgrade || materialForbidden(career, MATERIAL_BITS.iron)) weaponMaterial = WEAPON_MATERIALS.Steel;",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-17-rise-is-not-primary-only",
+    "file": "src/systems/rriKits.js",
+    "old": "      classic(2);   // Buoyancy\n      if (primary) spells.push(RRI_SPELLS.rise);",
+    "new": "      classic(2);   // Buoyancy\n      spells.push(RRI_SPELLS.rise);",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  },
+  {
+    "name": "RRI2-18-the-use-handler-runs-after-the-ladder",
+    "file": "src/systems/useItem.js",
+    "old": "    if (handled) return questItem ? { ...handled, questItem: true } : handled;",
+    "new": "    if (handled && false) return questItem ? { ...handled, questItem: true } : handled;",
+    "tests": [
+      "test/rri2_realism.test.js"
+    ]
+  }
+]

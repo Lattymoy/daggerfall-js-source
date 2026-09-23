@@ -122,7 +122,7 @@ export const hasArtifactEffect = (item) => (Array.isArray(item?.enchantments) ? 
 /** IsRingOfNamira / isWearingHircineRing's shape: an EQUIPPED item
  *  carrying SpecialArtifactEffect with the given subtype param. */
 export function isWearingArtifact(entity, subtype) {
-  const slots = equipTableOf(entity);   // the SLOTS dict itself (equip.js:39)
+  const slots = equipTableOf(entity);   // the SLOTS dict itself (equip.js:41)
   if (!slots) return false;
   for (const item of Object.values(slots)) {
     if (hasArtifactSubtype(item, subtype)) return true;

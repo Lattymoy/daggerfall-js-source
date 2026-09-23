@@ -22,10 +22,13 @@ import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActi
 import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
+import { bindWorldDataBlocks } from '../formats/worldDataReplacement.js';   // RR3b
+import { loadModWorldData } from './modWorldData.js';   // RR3b
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { settlementsOf, loadModRoads, basicRoadsPathsPoint } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches
+import { hasPort } from '../systems/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
@@ -78,7 +81,7 @@ import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, setWorldMinutes, setSharedClock, sharedClockOn, alignEntityClocks, setWorldPriceTilt } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
-import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
+import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon, enemyHeavyPainVoice } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';
 import { resetVitalsDetector } from '../ui/hudVitals.js';   // BLOOD AUDIT 5: the load's detector reset   // AUDIT 24 (wave 46): the arrow owes the flash too   // AUDIT 23 (C14)
 import { hudFade } from '../ui/fadeLayer.js';   // D4: performFastTravel's and TeleportAway's fade from black
@@ -405,6 +408,13 @@ import { createActivateGate, activateFrame, setClickDelay } from '../systems/act
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { isEnhanced } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
 import { drawEnhancedStatusLine } from '../ui/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
+import { rrRidingOn, rrRidingSetting } from '../systems/rrRealism.js';   // RR2: EnhancedRiding's switches
+import { createRrRidingContacts } from '../systems/rrRidingHost.js';   // RR2 / AUDIT-RR F15: the trample and the charge, one home for both outdoor hosts
+import { LETHAL_HIT } from '../combat/bloodDecals.js';   // the trample's splash hands its blow over - a civilian, from the player, gone in one contact
+import { RIDING_VOLUME_SCALE } from '../systems/riding.js';   // AUDIT-RR F16: the trample clip at RidingVolumeScale
+import { setRrHostSeams, rrEnabled } from '../systems/rrInstall.js';   // RR2: what the riding component reads off the scene
+import { rrFortProximityLines, rrMasterArmorerDiscovery } from '../systems/rrQuestLine.js';   // RR3: the two PlayerGPS subscribers
+import { getBuildingVariant, setLastLocationKeyTo } from '../systems/worldDataVariants.js';   // RR3: the shop variant the quest set
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -501,6 +511,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   palette.load(palBytes, 'ART_PAL.COL');
   const blocks = new BlocksFile();
   blocks.load(blocksBytes);
+  bindWorldDataBlocks(blocks);   // RR3b: WorldDataReplacement's ContentReader.BlockFileReader - the new block indices start past this BSA's count
+  await loadModWorldData();   // RR3b: ModManager's world-data assets on the door before the first region or block loads
   const arch = new Arch3dFile();
   arch.load(archBytes);
   const maps = new MapsFile();
@@ -1687,6 +1699,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AUDIT 39 (#18): the skin reaches the layout, because the mill's
       // subrecord widens the block's building count and must not exist
       // on the classic one.
+      setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);   // AUDIT-RR F32: WorldDataVariants' last key is THIS location's before its blocks are read - DFU reads the DFLocation right before RMBLayout (MapsFile.cs:999 sets it); the boot index here read every location and left the key on the last
       const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() });   // WM3: the pack's own switch
       locBlocks = loc.blocks;
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
@@ -2128,7 +2141,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:417-435). FLATS.CFG is awaited because
+    // (interiorContext.js:419-439). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -2991,8 +3004,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     onShip: () => boardOrDisembark(),
     paused: () => gamePaused(),
     ridingVolumeScale: () => (_travelSoundsOff ? 0 : 1),   // AUDIT-TO1 J1: TransportManager.RidingVolumeScale = 0 for the journey
+    // RR1: IsShipAvailiable's reads - the location under the player (loaded, a port) and whether they stand on the ship
+    // AUDIT-RR2 G22: `travelOptionsEnabled` asks TO's "hasPort" (RoleplayRealism.cs:635-644; TravelOptionsMapWindow.cs:870-873 - the hand-written port list), else the flag
+    shipLocation: () => { const loc = _questLoc(); return loc ? { loaded: true, portTown: (modSetting('travel-options', 'Enabled') === true ? hasPort(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { loaded: false, onShip: false }; },
+    // RR2: EnhancedRiding's reads - the look, the ground, the module's settings
+    lookPitch: () => cam.pitch, lookYaw: () => cam.yaw, groundHeightAt: (x, z) => heightAt(x, z),
+    enhancedRiding: () => (rrRidingOn() ? { terrainFollowing: rrRidingSetting('followTerrainEnabled') === true, softenFollow: rrRidingSetting('followTerrainSoftenFactor') ?? 8 } : null),
     horseCart: () => hccRuntimeOn(),   // HCC: TrailingWagonTransportWindow's gate and route (declared below; read at open)
   });
+  // RR2: the seams EnhancedRiding's component reads off the scene - in a town (PlayerGPS.IsPlayerInTown(true)), the transport mode
+  setRrHostSeams({ inTown: () => _isPlayerInTownStrict(), transportMode: () => player.transportMode, riding: () => player.riding });
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
   // B1 + AUDIT B-C2: an async open must not clobber a window the
   // player opened while the book was loading.
@@ -3291,6 +3312,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (_travelRegionSeen !== null && _region !== _travelRegionSeen) travelOptions.onRegionIndexChanged();
       _travelRegionSeen = _region;
     }
+    // RR3: RoleplayRealism.PlayerGPS_OnMapPixelChanged (:270-297) - the fort's tracks, AddHUDText for 5 seconds
+    if (rrEnabled()) { const _px = playerTravelPixel(); for (const line of rrFortProximityLines(_px.x, _px.y)) townTalk.say(line, 5); }
+    // WorldDataVariants.SetLastLocationKeyTo - the location the variant getters answer for (PlayerGPS.cs's own call on the pixel change)
+    if (dfLocation) setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);
     // TV-slice: entering a location's pixel DISCOVERS it (PlayerGPS
     // DiscoverCurrentLocation on the location-rect entry) - the write
     // half of the travel map's visibility law; fast-travel arrivals
@@ -3992,6 +4017,26 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  written) said the arm was unreachable because "this host's pool
    *  is the exterior street"; the pool it needed is worldModes' own,
    *  and this is the routing. */
+  /** RR2: EnhancedRiding's two contacts (EnhancedRiding.cs:135-215) - the trample and the charge -
+   *  through their one home (systems/rrRidingHost.js, AUDIT-RR F15), on this host's own reads. */
+  const rrRiding = createRrRidingContacts({
+    playerEntity,
+    feet: () => player.pos, yaw: () => cam.yaw,
+    livePersons: () => _livePersons, foes: () => exteriorFoes.foes, guards: () => cityGuards.guards,
+    isGuardRecord: (f) => f._encounter === undefined && cityGuards.guards.includes(f),
+    splashBlood: (pos, fwd) => hitEffects.showBloodSplash(0, pos, fwd, LETHAL_HIT),
+    playClip: (clip, volume) => audio.playOneShot(clip, volume),
+    ridingVolumeScale: () => (_travelSoundsOff ? 0 : RIDING_VOLUME_SCALE),   // TransportManager.RidingVolumeScale - 0 for the journey (AUDIT-TO1 J1)
+    spawnGuards: () => _spawnGuards(true),
+    spawnCityGuard: (pos, yaw, feet) => cityGuards.spawnCityGuard(pos, yaw, feet),
+    setCrime: (crime) => setCrimeCommitted(playerEntity, crime),
+    retire: (person) => { for (const p of built.values()) if (p.population?.retire(person)) break; },
+    hurtGuard: (f, damage, feet) => cityGuards.hurtGuard?.(f, damage, feet, null),
+    damageFoe: (f, damage, feet) => exteriorFoes.damageFoe(f, damage, feet, null, { kind: 'melee' }),
+    voice: (f) => enemyHeavyPainVoice(f),
+    playVoice: (f, v) => audio.play3d(v.clip, [f.ai.feet[0], f.ai.feet[1] + 0.9, f.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + v.pitchLift }),   // AUDIT-RR2 G5: EnemySounds.cs:172-175
+  });
+  function rrRidingContacts() { rrRiding.contacts(); }
   function _spawnGuards(immediate) {
     if (modes?.spawnCityGuardsInside?.(immediate)) return;
     const feet = walkMode && playerSpawned ? player.pos : cam.pos;
@@ -4246,7 +4291,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2432 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5575
+  // that context through modes.dungeonCtx - so worldModes.js:5618
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4333,7 +4378,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // encounter pool's remover for both. That was not a leak: removeFoe
     // (exteriorFoes.js:400-405) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1344-1358) gives it -
+    // got exactly what removeGuard (cityGuards.js:1344-1362) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
     // (cityGuards.js:823) and spliced out at the end of it (:1012).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
@@ -7180,7 +7225,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // is a microtask and the player must not be re-read after it.
     const locationId = `${dfLoc.regionIndex}:${dfLoc.name}`;
     const buildings = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
-      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex) });
+      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex), locationIndex: dfLoc.locationIndex ?? 0 });
     // AUDIT 63 F9 (review round): THE NAME IS A FILE READ, so the
     // reveal WAITS on it - the same gate the fixed-city host already
     // carries (exterior.js). GetGuildName -> GetAffiliation
@@ -7249,7 +7294,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // HALF B: the plates now come off the Position-bearing subrecord
     // walk over ALL buildings, not off the discovered doors.
     const summaries = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
-      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex) });
+      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex), locationIndex: dfLoc.locationIndex ?? 0 });
     // ROAD-D D5: CreateBuildingNameplates' residence arm (:682-709).
     // DFU resolves the quest name for every discovered residence AS IT
     // BUILDS THE NAMEPLATES - once per open (:273), never per frame -
@@ -8017,7 +8062,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:228, "a right-click on a window is the window's...
+  // (dungeon.js:232, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -8267,7 +8312,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8692-8756 -
+  // worldModes answers it in BOTH modes (worldModes.js:8743-8807 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9102,7 +9147,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // AddMembership pushes no welcome window the way the walk-in join
       // does.
       const initiated = guildInitiationQuestEnded(activeMemberships(playerEntity), q?.questName ?? '',
-        !!q?.questSuccess, dateFromClassicMinutes(playerTicker.classicMinutes));
+        !!q?.questSuccess, dateFromClassicMinutes(playerTicker.classicMinutes), _questStore());   // AUDIT-RR F2: the store, so Join()'s rep floor (RR1) runs on the initiation path too
       // AUDIT 63 F9: both guilds override Join() to reveal their hall
       // on the town map at once (ThievesGuild.cs:168-173,
       // DarkBrotherhood.cs:177-182) - the join is one of DFU's three
@@ -11864,7 +11909,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // so the house you were given was never yours.
       const px = built.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
       return {
-        buildings: px?.locBlocks ? locationBuildings(loc.exterior?.buildings ?? [], px.locBlocks) : [],
+        buildings: px?.locBlocks ? locationBuildings(loc.exterior?.buildings ?? [], px.locBlocks, { locationIndex: loc.locationIndex ?? 0 }) : [],
         mapId: loc.mapTableData?.mapId ?? 0,
         regionIndex: loc.regionIndex ?? 0,
         locationName: loc.name ?? '',
@@ -12155,10 +12200,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       const raw = hit.pixelLocal ? null
         : buildingDoors.find((e) => e.pixelKey === hit.pixelKey && e.dfBlock === hit.dfBlock && e.recordIndex === hit.recordIndex);
       const m = (raw ?? hit).door.matrix;
+      setLastLocationKeyTo(dfLoc.regionIndex, dfLoc.locationIndex ?? 0);   // AUDIT-RR2 G13: "Ensure building variant checks use this location" (PlayerEnterExit.cs:695-696) - a streamed neighbour may have left the key on itself
       const d = buildingDataForDoor(dfLoc.exterior.buildings, p.locBlocks, {
         dfBlock: hit.dfBlock, recordIndex: hit.recordIndex,
         position: [m[12] - p.locOrigin[0], m[13] - p.locOrigin[1], m[14] - p.locOrigin[2]],
-      });
+      }, { locationIndex: dfLoc.locationIndex ?? 0 });
       if (!d) return null;
       return { ...d, regionIndex: dfLoc.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
     },
@@ -12203,7 +12249,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:108, so the
+  // only reader of `load` in the whole tree is dungeon.js:112, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -12647,7 +12693,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:651, :659). So every HUD line raised in a modal
+      // (townTalk.js:653, :661). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -13922,6 +13968,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // (ThievesGuild.cs:197-206, handler :227-229), so the hall
         // reveal follows the member into every town.
         revealMemberGuildHalls();
+        // RR3: RoleplayRealism.PlayerGPS_OnEnterLocationRect (:259-267) - the master armorer's shop discovered under its own name
+        if (rrEnabled()) {
+          const arm = rrMasterArmorerDiscovery(_musicLoc, getBuildingVariant);
+          const armRec = arm ? (topicTree.listBuildings ?? []).find((b) => b.buildingKey === arm.buildingKey) : null;
+          if (arm && armRec) discoverBuilding(`${_musicLoc.regionIndex}:${_musicLoc.name}`, armRec, arm.name);   // AUDIT-RR F36: DiscoverBuilding returns when GetBaseBuildingDiscoveryData fails (PlayerGPS.cs:932-933) - no phantom record
+        }
         // AUDIT 64 F10: the THIRD law on this edge - PlayerEnterExit
         // .PlayerGPS_OnEnterLocationRect primes the holiday text
         // (:1404-1409), but only on its TOWN arm (:1382-1383), so a
@@ -14434,6 +14486,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // host now mounts, so the mount cannot behave differently in a
         // town than it does on the road.
         mountRig.frame(dt);
+        // RR2: EnhancedRiding.OnTriggerEnter / OnControllerColliderHit (:157-215)
+        // - a galloping rider tramples the townsperson under the hooves and
+        // charges down the foe in the way, once each
+        if (rrRidingOn() && player.riding && player.isRunning) rrRidingContacts();
       }
       drawPeerNames(proj, view, mwv.eye);   // ONLINE1: the names over the heads
       // WORLD-HOVER: the plaque, where this host already draws its HUD.

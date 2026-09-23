@@ -23,14 +23,14 @@
 // optional environment-attack ray (interiors: bash/Receive on action
 // objects; open exteriors have nothing in reach).
 
-import { PlayerWeapon, WEAPON_REACH } from './playerWeapon.js';
+import { PlayerWeapon, WEAPON_REACH, setWeaponPoseProbe, weaponPoseOf } from './playerWeapon.js';   // RR1: the rig's drawn state and weapon type, for laws that ask off-rig
 import { eotbBody } from '../player/eotbBody.js';   // EOTB5: the sprite body, for a player with no Morrowind data
 import { eotbCamera } from '../player/eotbCamera.js';
 import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
-import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
+import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
 import { createRecoil, createScreenShake, GUN_FEEL, gunPitch, muzzleGlow, GUN_TICK_SECONDS } from './gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm
 import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from './gunViewmodel.js';   // FIELD-GUN12: the PROTOTYPE's frame, run rather than resembled
@@ -60,6 +60,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
 import { createWeaponWidget } from './weaponWidget.js';
+import { atlasFileName } from './diverseWeapons.js';   // DW1: the art cache's third key
 // SW1: SHIELD WIDGET. The sibling, beside the weapon's clone and driven
 // on the same frame - the shield the game never drew, in the hand the
 // weapon is not in.
@@ -195,8 +196,8 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
  *                     (dungeonContext.js:2839), townTalk.say
- *                     (exterior.js:2085, world.js:4090) and
- *                     worldModes' own interior sink (worldModes.js:419,
+ *                     (exterior.js:2121, world.js:4135) and
+ *                     worldModes' own interior sink (worldModes.js:424,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -295,6 +296,8 @@ export function sheetHolderOf(rig) {
 
 export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
+  playerWeapon.animCtx = () => ({ entity, weaponType: weaponTypeForItem(playerWeapon.weapon), usingRightHand: playerWeapon.usingRightHand });   // AUDIT-RR F1: GetMeleeWeaponAnimTime(player, weaponType, weaponHands) - the swing clock's own ask, so RR's weaponSpeed and RRI's weaponBalance time the blow that lands, not only the widget's clone
+  setWeaponPoseProbe(() => ({ ...weaponPoseOf(playerWeapon), weaponType: weaponTypeForItem(playerWeapon.weapon) }));   // RR1: WeaponManager.Sheathed (the pair through its one law, HARD2c) + ScreenWeapon.WeaponType
   // WW1: WEAPON WIDGET. One clone per rig, as DFU has one FPSWeaponClone
   // beside its one FPSWeapon; it reads the machine every frame and draws
   // in the sprite's place while its Enabled is on. The recoil's word on
@@ -571,12 +574,26 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // classic weapon still cannot.
     const thunderlock = type === WEAPON_TYPES.Thunderlock || type === WEAPON_TYPES.Thunderlock_Magic;
     if (!thunderlock && !palette) return null;
-    const key = `${type}:${item?.material ?? 0}`;
+    // DW1: the key carries the name the atlas is ASKED by. Under Diverse
+    // Weapons a longsword and a broadsword are the same WEAPON_TYPE with
+    // different sprite sets, and an enchanted one a third - and the flag
+    // going off mid-game is a fourth answer for the same type and metal.
+    // `${type}:${material}` alone handed the first weapon's frames to
+    // every later one of its class - WHICH IS WHAT DFU DOES (AUDIT-DW
+    // F4, a named departure): FPSWeapon reloads its atlas only when
+    // WeaponType or MetalType change (FPSWeapon.cs:138) and caches the
+    // custom frames by the CLASSIC file name and metal (:743-750), so a
+    // steel broadsword drawn after a steel longsword wears the
+    // longsword's set there until the metal or class changes. The port
+    // keys by the name the atlas is asked by: the mod's per-template art
+    // is what the mod is for, and its author's tables are honoured over
+    // DFU's cache slot.
+    const key = `${type}:${item?.material ?? 0}:${thunderlock ? '' : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;
     if (!cache.has(key)) {
       cache.set(key, null);
       (thunderlock
         ? loadThunderlockArt(renderer, { magic: type === WEAPON_TYPES.Thunderlock_Magic })
-        : loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0))
+        : loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0, item))
         .then((art) => cache.set(key, art))
         .catch((e) => console.warn('[weaponRig] art load failed', key, e));
     }
@@ -1282,7 +1299,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const c = cv();
       // MW-D12: THE RETURN VALUE WAS BEING THROWN AWAY, and it is the
       // only signal that a blow has started. gesture() answers with the
-      // strike the drag resolved to (playerWeapon.js:226-229) and
+      // strike the drag resolved to (playerWeapon.js:234-237) and
       // clickAttack() with the one the click rolled - the Morrowind arm
       // needs exactly that to pick rule 11's attack type.
       const strike = !paralyzed && c

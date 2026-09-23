@@ -263,7 +263,7 @@ yellow `DaggerfallFont` texture.)
 
 Wave D's three unshipped slices are the honest ones: the chargen
 picker's scroll-bar HIT (`chargenArt.js:749`, narrowed to itself), the
-gold stack in `inventory.js:49`, and the docked large-HUD occlusion
+gold stack in `inventory.js:50`, and the docked large-HUD occlusion
 (`hudLarge.js:56`) - each rewritten in place with the evidence rather
 than left as a token.
 

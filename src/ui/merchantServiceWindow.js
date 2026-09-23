@@ -27,10 +27,11 @@
 //   DaggerfallPopupWindow's hard-clear ScreenDimColor: the room stays
 //   visible behind the panel.
 //
-// The custom-merchant-service arms (:75-77, :95-97) are Hazelnut's mod
+// The custom-merchant-service arms (:112-115, :149-151) are Hazelnut's mod
 // hook - `Guilds.Services.HasCustomMerchantService`, a registry only a
-// mod writes to. Not ported: there are no mods here, and DFU's own
-// answer with an empty registry is the switch below.
+// mod writes to. RR3 ported the registry (systems/guildServices.js) for
+// Roleplay & Realism's master armorer: the host hands the label in as
+// `hooks.label` and runs the service from its own `onService`.
 
 import { loadImg, drawImg, nativeMetrics, DEFAULT_TEXT_COLOR } from './nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
@@ -119,7 +120,7 @@ export class MerchantServiceWindow {
     drawScreenDimBackdrop(renderer, canvas);
     if (_art) drawImg(renderer, _art, m, MERCHANT_PANEL_X, MERCHANT_PANEL_Y);
     const [sx, sy, sw] = MERCHANT_RECTS.service;
-    const label = merchantServiceLabel(this.hooks.service);
+    const label = this.hooks.label ?? merchantServiceLabel(this.hooks.service);   // RR3: GetServiceLabelText's custom arm (:114-115) - the registered service's own name
     const lw = measureText(font.fnt, label);
     drawText(renderer, font, label,
       m.ox + (MERCHANT_PANEL_X + sx + Math.round((sw - lw) / 2)) * m.s,

@@ -290,6 +290,13 @@ export function claimMagicRounds(fromMinute, toMinute) {
  *
  * @returns {number} rounds run
  */
+/** RR1: `EntityEffectBroker.OnNewMagicRound += ...` for a law that is not
+ *  an effect - Roleplay & Realism's encumbrance penalty subscribes so.
+ *  Registered by name; `fn(entity, { nowMinutes, sinks, say })` runs after
+ *  the entity's own round, for every entity the ticker fans out to. */
+const _roundHooks = new Map();
+export function registerMagicRoundHook(name, fn) { if (typeof fn === 'function') _roundHooks.set(name, fn); else _roundHooks.delete(name); }
+
 export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random, say = () => {} , enchantCtx = null } = {}) {
   if (!entity || !(to > from)) return 0;
   let rounds = 0;
@@ -334,6 +341,7 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
     // fold - its magery arm SUMS the two producers into the one
     // maxMagickaModifier the accessor reads. Player-gated inside.
     passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, sinks });
+    for (const fn of _roundHooks.values()) fn(entity, { nowMinutes: r + 1, sinks, say });   // RR1: EntityEffectBroker.OnNewMagicRound's other subscribers (a mod's, by name)
     rounds++;
   }
   return rounds;

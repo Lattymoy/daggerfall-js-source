@@ -243,6 +243,34 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   pcaao: Object.freeze({ Enabled: true }),
   // MODS-ONLINE-4: a roll that leaves the roller's hands.
   unleveledLoot: Object.freeze({ Enabled: true }),
+  // RRI1/RR1 (merged 2026-09-23), asked MODS-ONLINE-4's question - "does
+  // my switch reach another player?": Roleplay & Realism: Items' custom
+  // items stand in shared containers (lootRebalance), on the host's foes
+  // (realisticEnemyEquipment) and in the piles a killer grants to peers
+  // (newWeapons, newArmor) - a peer with the class unregistered receives
+  // a nameless record, Unleveled Loot's exact shape. Its formula and
+  // pricing dials are the player's own. Roleplay & Realism adds a
+  // LOCATION to a region (RR3b's world data, under Enabled) - the ground
+  // - and rewrites the host's foes' behaviour (enemyAppearance: a
+  // Sorcerer that casts); every other switch is the player's own run.
+  'roleplay-realism-items': Object.freeze({ Enabled: true, newWeapons: true, newArmor: true, lootRebalance: true, realisticEnemyEquipment: true }),
+  // MODS-ONLINE-5 (2026-09-23, Mac, asked which of RR's switches to
+  // force "especially when it comes to balance", then: "Yeah its the
+  // reason we forced PCAAO"): ONE RULESET PER ROOM. PCAAO was forced
+  // whole - its player-side formulas with its foe-side ones - and RR's
+  // six combat overrides are the same kind of thing (FormulaHelper
+  // overrides on the striker's own blow, the wearer's own armor, the
+  // walker's own load), so they take the same answer for the same
+  // reason, forced to the mod's own shipped defaults. And ONE that is
+  // an exploit rather than a preference: intensive training spends four
+  // days of world time for its +4, and the shared clock refuses the
+  // days (CLOCK-REFUSAL) - online it would be four points for nothing.
+  // Forced OFF, which is what the mod ships anyway.
+  'roleplay-realism': Object.freeze({
+    Enabled: true, enemyAppearance: true,
+    advancedArchery: true, weaponSpeed: true, weaponMaterials: true, classicStrengthDamageBonus: false, equipDamage: true, encumbranceEffects: true,
+    'RefinedTraining.intensiveTraining': false,
+  }),
 });
 
 /**
@@ -278,6 +306,7 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'handheld-torches',            // an item in my save with a light on my screen
   'oblivion-remaster-leveling',  // written into a character at creation and kept by that character
   'travel-options',              // my own journey; OL2 already spends no world time online
+  'diverse-weapons',        // DW1: the first-person weapon's and the icons' art - drawn on your own screen and nowhere else
   'horse-cart-and-cargo',   // HCC: whose horse and wagon stand where is the player's own; the others only SEE them (the online half rides the pose and the cell's frame, never a switch of the room's ground)
 ];
 

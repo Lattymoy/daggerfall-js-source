@@ -132,7 +132,17 @@ export const POTION_RECIPES = Object.freeze([
 export const POTION_DEFAULT_TEXTURE_RECORD = 11;
 
 const _byKey = new Map(POTION_RECIPES.map((r) => [potionRecipeKey(r.ingredients), r]));
-export const potionRecipeByKey = (key) => _byKey.get(key) ?? null;
+// RR1: `EntityEffectBroker.RegisterEffectTemplate(new CureDiseasePotionRR(), true)`
+// (RoleplayRealism.cs:198) - a mod's effect class re-declares its potion
+// recipes and the broker's dictionary takes them over DFU's (allowReplacement).
+// The rows are keyed by their ingredients as the built ones are, so a
+// replaced recipe answers the same key.
+const _recipeOverrides = new Map();
+export function overridePotionRecipes(rows) {
+  _recipeOverrides.clear();
+  for (const r of rows ?? []) _recipeOverrides.set(potionRecipeKey(r.ingredients), Object.isFrozen(r) ? r : Object.freeze(r));
+}
+export const potionRecipeByKey = (key) => _recipeOverrides.get(key) ?? _byKey.get(key) ?? null;
 
 /** EntityEffectManager.DrinkPotion (:903-947), the bundle half.
  *
@@ -273,9 +283,9 @@ export function gatherRecipe(recipe, availableTemplateIndices) {
 //  - the potion's EFFECT when drunk is the recipe->effect map, and it
 //    is potionBundle above (:138) - DrinkPotion's EffectBundleSettings
 //    (:903-947). U44 mounted it: scenes/hostMagic.js:626-633 builds the
-//    bundle, all three hosts hand `drinkPotion` down (world.js:4159,
-//    dungeonContext.js:1389, exterior.js:2441) and useItem.js:295
+//    bundle, all three hosts hand `drinkPotion` down (world.js:4149,
+//    dungeonContext.js:1411, exterior.js:2477) and useItem.js:304
 //    routes the bottle into it.
-//  - RandomlyAddPotionRecipe(25) is live in shopStock.js:205-211
+//  - RandomlyAddPotionRecipe(25) is live in shopStock.js:207-213
 //    (AUDIT 26 F129, DaggerfallLoot.cs:165 - the Alchemist arm), so a
 //    shop stocks a recipe scroll.

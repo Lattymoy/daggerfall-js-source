@@ -174,7 +174,7 @@ test('audit24 wave26: locationCompassDirection keeps the last-match and (0,0) sh
   };
   const mkRegion = (mapNames, mapTable) => {
     // MapsFile.cs:1082-1083 builds MapNameLookup FIRST-WINS, and
-    // mapsFile.js:519 does the same; the fixture must too or it is
+    // mapsFile.js:523 does the same; the fixture must too or it is
     // not the shape under test.
     const mapNameLookup = new Map();
     mapNames.forEach((n, i) => { if (!mapNameLookup.has(n)) mapNameLookup.set(n, i); });

@@ -136,7 +136,9 @@ test('WW3 the door and the site: the widget converts with toColor32 in both arms
   assert.match(door, /return toScreenOrder\(await decodePng\(bytes\)\);/, 'the loose arm');
   assert.match(door, /`\{ width, height, colors \}` RGBA in the port's\n \*  color32 \(bottom-up\) order, the SHAPE renderer\.uploadTexture reads/, 'the door says which shape it answers');
   const site = rd('src/combat/weaponWidget.js');
-  assert.match(site, /\}\)\.catch\(\(e\) => console\.warn\('\[weapon widget\] texture load failed', name, e\)\);/, 'no bare swallow');
+  // DW1 reshaped the catch: a throw is ALSO a miss for that name (so the
+  // `w_` ask falls through to the plain one next frame), and still says so
+  assert.match(site, /\}\)\.catch\(\(e\) => \{ misses\.add\(name\); console\.warn\('\[weapon widget\] texture load failed', name, e\); \}\);/, 'no bare swallow');
   assert.ok(!/\.catch\(\(\) => \{\}\)/.test(site), 'and none left anywhere in the widget');
   // the one home the fix leans on, unchanged
   const conv = rd('src/formats/color32Order.js');

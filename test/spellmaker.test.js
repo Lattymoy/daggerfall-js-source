@@ -197,5 +197,5 @@ test('S1 wiring pins: the readied MADE spell restores through the player book', 
   assert.match(src('src/scenes/hostMagic.js'),
     /playerEntity\?\.spells \?\? \[\]\)\.find\(\(sp\) => sp\?\.index === index\)/,
     'the player book answers for indexes the file table cannot');
-  assert.match(src('src/systems/save.js'), /sp\?\.custom \? JSON\.parse\(JSON\.stringify\(sp\)\) : sp\.index/);
+  assert.match(src('src/systems/save.js'), /\(sp\?\.custom \|\| sp\?\.rri\) \? JSON\.parse\(JSON\.stringify\(sp\)\) : sp\.index/);   // AUDIT-RR F9: a mod's spell rides whole too
 });

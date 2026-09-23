@@ -12,7 +12,8 @@ import templates from './itemTemplates.json' with { type: 'json' };
 import { DYE_COLORS, DYE_TARGETS, getDyeColorTable } from './dyes.js';
 import { SKILLS } from '../systems/skills.js';   // GetWeaponSkillIDAsShort's return set
 import { SOUND } from '../systems/soundClips.js';   // F023: GetEquipSound's clips (soundClips is a leaf)
-import { THUNDERLOCK_TEMPLATE } from './thunderlockIds.js';   // the port's own weapon - a leaf, so no cycle (see the file)
+import { THUNDERLOCK_TEMPLATE } from './thunderlockIds.js';
+import { customItemClass } from '../systems/rriItems.js';   // RRI1: a custom weapon class answers its own skill, damage and equip sound (virtuals)   // the port's own weapon - a leaf, so no cycle (see the file)
 
 export const WEAPONS = Object.freeze({
   Dagger: 113, Tanto: 114, Staff: 115, Shortsword: 116, Wakazashi: 117,
@@ -36,6 +37,8 @@ export const WEAPONS = Object.freeze({
 export function equipSoundFor(item) {
   const W = WEAPONS;
   if (!item || item.werecreatureClaws) return null;
+  const cls = customItemClass(item.templateIndex);   // RRI1: GetEquipSound
+  if (cls?.equipSound) return SOUND[cls.equipSound];
   switch (item.templateIndex) {
     case W.Battle_Axe: case W.War_Axe:
       return SOUND.EquipAxe;
@@ -78,7 +81,22 @@ const MIN_DAMAGE = new Map([
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
 export function weaponMinDamage(weapon) {
   if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.min;   // THE DEPARTURE, below
+  const cls = customItemClass(weapon);   // RRI1: GetBaseDamageMin
+  if (cls?.baseDamageMin) return cls.baseDamageMin();
+  const o = _damageOverride.min?.(weapon);   // TryGetOverride("CalculateWeaponMinDamage") - RRI2's weaponBalance registers one
+  if (o != null) return o;
   return MIN_DAMAGE.get(weapon) ?? 0;
+}
+
+// ---- FormulaHelper.RegisterOverride for the two damage formulas ----------
+/** CalculateWeaponMin/MaxDamage each begin `if (TryGetOverride(...)) return
+ *  del(weapon)`. This module is a leaf (see the header), so the override
+ *  is REGISTERED rather than imported: `{ min, max }`, each answering a
+ *  number or null for DFU's turn. */
+const _damageOverride = { min: null, max: null };
+export function registerWeaponDamageOverride({ min = null, max = null } = {}) {
+  _damageOverride.min = typeof min === 'function' ? min : null;
+  _damageOverride.max = typeof max === 'function' ? max : null;
 }
 
 // FormulaHelper.CalculateWeaponMaxDamage, verbatim case groups.
@@ -94,6 +112,10 @@ const MAX_DAMAGE = new Map([
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
 export function weaponMaxDamage(weapon) {
   if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.max;   // THE DEPARTURE, below
+  const cls = customItemClass(weapon);   // RRI1: GetBaseDamageMax
+  if (cls?.baseDamageMax) return cls.baseDamageMax();
+  const o = _damageOverride.max?.(weapon);   // TryGetOverride("CalculateWeaponMaxDamage")
+  if (o != null) return o;
   return MAX_DAMAGE.get(weapon) ?? 0;
 }
 
@@ -143,6 +165,8 @@ export function weaponSkillUsed(templateIndex) {
   // which skill a hit was scored on answers Archery from here, without
   // any of them learning that a new weapon exists.
   if (templateIndex === THUNDERLOCK_TEMPLATE) return SKILLS.Archery;
+  const cls = customItemClass(templateIndex);   // RRI1: GetWeaponSkillUsed
+  if (cls?.weaponSkillUsed) return SKILLS[cls.weaponSkillUsed];
   return WEAPON_SKILL_USED.get(templateIndex) ?? null;
 }
 

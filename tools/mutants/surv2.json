@@ -83,7 +83,7 @@
   {
     "name": "SURV2-a-vendor-archive-is-gated-like-a-pick",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (_vendor.has(key)) return true;\n  if (!textureReplacementEnabled()) return false;\n  return _index.has(key);",
+    "old": "  const v = _vendor.get(key);\n  if (v) return !v.gate || v.gate() === true;   // DW3: a gated entry answers only while its switch is on\n  if (!textureReplacementEnabled()) return false;\n  return _index.has(key);",
     "new": "  if (!textureReplacementEnabled()) return false;\n  return _index.has(key) || _vendor.has(key);",
     "tests": [
       "test/surv2_items.test.js"

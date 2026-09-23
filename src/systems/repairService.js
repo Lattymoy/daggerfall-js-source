@@ -32,6 +32,8 @@ import { calculateCost } from './shopStock.js';
 import { templateByIndex } from './itemTemplates.js';
 import { isEnchantedItem } from './enchantments.js';
 import { MINUTES_PER_DAY } from './gameDate.js';
+import { getBool } from './settings.js';   // RRI2: InstantRepairs picks the mod's repair factor
+import { conditionBasedPricesOn, conditionRepairCostBase } from './rriRealism.js';   // RRI2: the CalculateItemRepairCost override
 
 /** CalculateItemRepairCost (:1901-1922): free at full condition; ten
  *  percent of the item's base value floored at 1, through the shop's
@@ -40,9 +42,12 @@ import { MINUTES_PER_DAY } from './gameDate.js';
  *  rank scaling; every other guild returns the price unchanged).
  *  NOTE the condition/max pair gates the zero alone - DFU's repair
  *  price does NOT scale with how damaged the item is. */
-export function calculateItemRepairCost(baseItemValue, shopQuality, condition, max, { reducedRepairCost = null, priceAdjustment = 1000 } = {}) {
+export function calculateItemRepairCost(baseItemValue, shopQuality, condition, max, { reducedRepairCost = null, priceAdjustment = 1000, instantRepairs = getBool('Controls', 'InstantRepairs') } = {}) {
   if (condition === max) return 0;
-  let cost = Math.trunc(10 * baseItemValue / 100);
+  // RRI2: the mod's override (RoleplayRealismItemsMod.cs:262-278) scales the
+  // tenth by the damage - 0.6 (0.9 under InstantRepairs) of the missing
+  // fraction - under conditionBasedPrices; the rest is DFU's own
+  let cost = conditionBasedPricesOn() ? conditionRepairCostBase(baseItemValue, condition, max, instantRepairs) : Math.trunc(10 * baseItemValue / 100);
   if (cost < 1) cost = 1;
   cost = calculateCost(cost, shopQuality, priceAdjustment);
   return reducedRepairCost ? reducedRepairCost(cost) : cost;

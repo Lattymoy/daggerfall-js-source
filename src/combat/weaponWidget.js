@@ -68,9 +68,12 @@ import { WEAPON_TYPES, STATE_INDEX, ALIGN, NATIVE_W, NATIVE_H, WEAPON_FILE, weap
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
 import { swingSoundFor, SOUND } from '../systems/soundClips.js';
 import { isEnchanted } from '../systems/inventory.js';
+import { atlasFileName, customTextureNames } from './diverseWeapons.js';   // DW1
+import { customWeaponImage } from './diverseWeaponsAssets.js';   // DW1: both bundles, this mod's first
+import { MATERIAL_NAMES } from '../systems/itemInfo.js';
+import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { getItemHands } from '../systems/equip.js';
 import { ITEM_HANDS } from '../characters/equipTable.js';
-import { widgetTextureName, weaponWidgetImage } from './weaponWidgetAssets.js';
 
 import { WINDUP, RECOVERY, RECOIL_CONDITION, MISS_VFX_AT } from './weaponWidgetMotion.js';
 
@@ -101,9 +104,9 @@ const FRAME = 'frame';   // WaitForEndOfFrame
  *  [0, 2] is the tick's [0, 0.398]; SPD 0 lands at 0.317, the bow's
  *  0.0625 at 0.094 - which only the field carries, the bow coroutine
  *  ticking the classic 0.0625 itself). */
-export function widgetAnimTickTime(weaponType, liveSpeed, swing) {
+export function widgetAnimTickTime(weaponType, liveSpeed, swing, ctx = null) {
   let t = CLASSIC_UPDATE_INTERVAL;
-  if (weaponType !== T.Bow) t = getMeleeWeaponAnimTime(liveSpeed);
+  if (weaponType !== T.Bow) t = getMeleeWeaponAnimTime(liveSpeed, ctx);   // RRI2: the entity and the hand ride along for a registered override
   if (!swing) return t;
   return lerp(0.045917998999357224, 0.35204100608825684, inverseLerp(0, 2, t / 0.19897900521755219));
 }
@@ -151,6 +154,7 @@ export function createWeaponWidget({
   const machineFrame = () => ctx?.machine?.frame ?? 0;
   const hitFrame = () => (ctx?.machine?.isBow ? HIT_FRAME_BOW : HIT_FRAME_MELEE);
   const liveSpeed = () => (ctx?.entity ? liveStat(ctx.entity, 'speed') : 50);
+  const animCtx = () => ({ entity: ctx?.entity ?? null, weaponType: w.currentWeaponType, usingRightHand: usingRightHand() });   // RRI2: what GetMeleeWeaponAnimTime's C# signature carries
   const anims = () => w.art?.anims ?? null;
   const usingRightHand = () => ctx?.usingRightHand !== false;
   const sheathed = () => !!ctx?.sheathed;
@@ -218,27 +222,42 @@ export function createWeaponWidget({
     w.currentWeaponType = ctx.weaponType;
     w.currentMetalType = ctx.material;
     w.currentTemplateIndex = w.specificWeapon?.templateIndex ?? -1;
-    w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing);
+    w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx());
     w.customCache = new Map();
+    w.customMisses = new Set();   // DW1: the names that answered nothing, per atlas
   }
   /** GetWeaponTextureAtlas's custom arm (IL 0x2d72-0x2e12): with
    *  DoubleScaleTextures the `w_` set, else the plain name - the
    *  player's own textures by TryImportCifRci's spelling. Asked once per
    *  name; null until it lands, null for good when nothing carries it. */
   function customTexture(record, frame) {
-    const file = weaponFileName(w.currentWeaponType);
-    if (!file || !ctx?.renderer) return null;
-    const name = widgetTextureName(file, record, frame, w.currentMetalType, w.s.doubleScale ? 'w_' : '');
+    const classic = weaponFileName(w.currentWeaponType);
+    if (!classic || !ctx?.renderer) return null;
+    // DW1: the name is the per-template one under Diverse Weapons' flag
+    // (FPSWeapon.cs:637-644 - the clone reads the same static), and
+    // under DoubleScaleTextures the `w_` ask falls through to the plain
+    // one (combat/diverseWeapons.js customTextureNames says why).
+    const file = atlasFileName(w.specificWeapon, classic);
+    const metal = w.currentMetalType != null && w.currentMetalType !== WEAPON_MATERIALS.None ? MATERIAL_NAMES[w.currentMetalType] : null;
     const cache = (w.customCache ??= new Map());
-    if (!cache.has(name)) {
-      cache.set(name, null);
-      weaponWidgetImage(name).then((img) => {
-        if (!img) return;
-        const tex = ctx.renderer.uploadTexture('img', `ww:${name}`, img);
-        cache.set(name, { tex, width: img.width, height: img.height });
-      }).catch((e) => console.warn('[weapon widget] texture load failed', name, e));   // WW3: the rig's neighbours say so too (weaponRig.js art/spell loads) - a bare `catch (() => {})` here is how a shape fault reaches a player instead of a console line
+    const misses = (w.customMisses ??= new Set());
+    for (const name of customTextureNames(file, record, frame, metal, w.s.doubleScale)) {
+      if (misses.has(name)) continue;   // answered "nothing carries it": the next name's turn
+      if (!cache.has(name)) {
+        cache.set(name, null);
+        customWeaponImage(name).then((img) => {
+          if (!img) { misses.add(name); return; }
+          const tex = ctx.renderer.uploadTexture('img', `ww:${name}`, img);
+          // AUDIT-DW F3: WHICH name answered rides the hit. The clone doubles
+          // a custom idle's box under DoubleScaleTextures because a `w_`
+          // texture IS double size; a plain name that answered through the
+          // DW1 fall-through is not, and doubled it drew at twice its size
+          cache.set(name, { tex, width: img.width, height: img.height, doubled: name.startsWith('w_') });
+        }).catch((e) => { misses.add(name); console.warn('[weapon widget] texture load failed', name, e); });   // WW3: the rig's neighbours say so too (weaponRig.js art/spell loads) - a bare `catch (() => {})` here is how a shape fault reaches a player instead of a console line
+      }
+      return cache.get(name);   // a hit, or null while this name is still landing - the classic frame until then
     }
-    return cache.get(name);
+    return null;
   }
 
   // ---- UpdateWeapon (IL 0x2328) and the three alignments ----
@@ -260,7 +279,7 @@ export function createWeaponWidget({
     let width = rec.width, height = rec.height;
     if (custom) {
       if (w.s.trueSize) { width = custom.width / w.s.textureScaleFactor; height = custom.height / w.s.textureScaleFactor; }
-      else if (w.s.doubleScale) {
+      else if (w.s.doubleScale && custom.doubled !== false) {   // AUDIT-DW F3: only a `w_` texture is drawn into the doubled box
         if (w.currentWeaponType === T.Bow) { if (w.currentFrame === 0) { width *= 2; height *= 2; } }
         else if (w.weaponState === S.Idle) { width *= 2; height *= 2; }
       }
@@ -277,7 +296,7 @@ export function createWeaponWidget({
       case ALIGN.Right: alignRight(anim, width, height); break;
       default: break;
     }
-    w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing);
+    w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx());
   }
   const bottomY = (height) => w.screenRect.y + w.screenRect.height - height * w.weaponScaleY - w.weaponOffsetHeight;
   function alignLeft(anim, width, height) {
@@ -365,7 +384,7 @@ export function createWeaponWidget({
   function* playWeaponAnimation(state) {
     w.hasCurrentAttackHit = false;
     w.animatingCancel = false;
-    let tickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing) / 5 / (w.s.swingSpeed || 1e-6);
+    let tickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx()) / 5 / (w.s.swingSpeed || 1e-6);
     if (w.s.swingWindup === WINDUP.FirstFrame) changeWeaponState(state); else changeWeaponState(S.Idle);
     if (w.s.swingRecoveryOverride && recoveryOverride()) tickTime *= 0.5;
     // the wind-up: the pose the setting names, held until the ORIGINAL reaches its hit frame
@@ -441,7 +460,7 @@ export function createWeaponWidget({
   function* playVanillaWeaponAnimation(state) {
     w.hasCurrentAttackHit = false;
     w.animatingCancel = false;
-    const tickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing);
+    const tickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx());
     changeWeaponState(state);
     const last = () => numFrames(ctx?.machine?.isBow, STATE_NAMES[w.weaponState]) - 1;
     while (w.currentFrame < last() && !w.hasCurrentAttackHit) {

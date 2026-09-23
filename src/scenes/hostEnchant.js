@@ -58,7 +58,7 @@ export const LOOSE_FOE_PLACE_ATTEMPTS = 12;
  *  `spawn(mobileType, pos, { yawRad, allied })` is the host's own pool
  *  door - the placement is shared, the pool never is. */
 export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn },
-  mobileType, { allied = false, lineOfSightCheck = true } = {}) {
+  mobileType, { allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS } = {}) {   // AUDIT-RR F4: CreateFoeSpawner's own distances and its attempt budget ride in (GameObjectHelper.cs:1314 - the defaults are its own)
   if (!feet || !collider || !spawn) return null;
   const env = placeFoeEnv({
     collider,
@@ -70,8 +70,8 @@ export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn 
     isOccupied: entityOccupancy((f) => f.ai?.feet, () => foes, feet),
   });
   let spot = null;
-  for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i++) {
-    spot = placeFoeFreely(env, { minDistance: 4, maxDistance: 20, lineOfSightCheck });
+  for (let i = 0; i < attempts && !spot; i++) {
+    spot = placeFoeFreely(env, { minDistance, maxDistance, lineOfSightCheck });
   }
   if (!spot) return null;
   // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from

@@ -149,14 +149,14 @@ test('SD1: the stander uses the ONE placement law, the live world, and the live 
   assert.match(body, /playerFeet: \[feet\[0\], feet\[1\] \+ 0\.9, feet\[2\]\],/, 'the cast origin is the controller centre, as tryPlaceFoe has it');
   assert.match(body, /isOccupied: entityOccupancy\(\(f\) => f\.ai\?\.feet, \(\) => foes, feet\)/,
     'the occupancy term reads the pool it was handed, so a dungeon foe blocks a dungeon spawn');
-  assert.match(body, /spot = placeFoeFreely\(env, \{ minDistance: 4, maxDistance: 20, lineOfSightCheck \}\);/);
+  assert.match(body, /spot = placeFoeFreely\(env, \{ minDistance, maxDistance, lineOfSightCheck \}\);/);   // AUDIT-RR F4: CreateFoeSpawner's own distances ride in, 4..20 the defaults
   // FinalizeFoe's fork, and the LookAt
   assert.match(body, /const fly = \(ENEMY_BASICS\[mobileType\]\?\.behaviour \?\? 'General'\) === 'Flying';/);
   assert.match(body, /const pos = \[spot\.x, fly \? spot\.y \+ 1\.5 : spot\.y, spot\.z\];/);
   assert.match(body, /const yaw = Math\.atan2\(feet\[0\] - spot\.x, feet\[2\] - spot\.z\);/);
   // and the retry is BOUNDED - DFU leaves a MonoBehaviour running free
   assert.match(he, /export const LOOSE_FOE_PLACE_ATTEMPTS = 12;/);
-  assert.match(body, /for \(let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !spot; i\+\+\)/);
+  assert.match(body, /for \(let i = 0; i < attempts && !spot; i\+\+\)/);   // AUDIT-RR F4: the budget is the caller's, LOOSE_FOE_PLACE_ATTEMPTS the default
 
   // the world host: the two terms it owns, and the interior refusal
   const world = read('src/scenes/world.js');
