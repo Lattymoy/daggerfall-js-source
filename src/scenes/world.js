@@ -1104,6 +1104,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // `origin` and `loadAt` ride the floating origin like any world point.
   let _wodArrival = { keys: new Set(), origin: [0, 0, 0], loadAt: null };
   const wodArrivalOf = (list) => ({ keys: new Set(list.map((p) => `${p.px},${p.py}`)), origin: [0, 0, 0], loadAt: null });
+  // WOD6 (dungeon loads): THE EXTERIOR IS OFF WHILE THE PLAYER IS INSIDE. The markers hang under StreamingTarget, a
+  // child of the scene's Exterior object (DaggerfallUnityGame.unity), which EnableDungeonParent/EnableInteriorParent
+  // deactivate; StreamingWorld itself sits at the root and keeps promoting. So an arrival that lands INSIDE - a load or
+  // a recall into a dungeon or a building, the vampire's crypt - promotes its markers with nobody running them: they
+  // subscribe to no OnLoad, and meet Start on the way out, from the player at the door. `_wodInside` holds the ticks
+  // from the moment such an arrival begins (the port builds the exterior over several frames of it); the first frame
+  // inside ends the arrival, and a landing outside instead drops the hold.
+  let _wodInside = false;
   /** WOD6: SaveLoadManager.OnLoad, heard by every standing marker that has run Start. */
   function wodOnLoad(centre) {
     if (!wod) return;
@@ -1150,7 +1158,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     return { life: carried.life, piles: carried.piles };
   }
   const tickWodSpawners = () => {
-    if (!wod) return;
+    if (!wod || _wodInside) return;
     // AUDIT BRANCH (WoD) m3 / WOD6: while an arrival is under way the port's
     // player still stands where it left, in a frame the sweep has just
     // re-anchored - and DFU's stands at the scene origin (above). The
@@ -5697,6 +5705,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         modes?.forceExitToExterior({ cacheScene: plan.cacheScene === 'building' });
       }
       const a = plan.anchor;
+      _wodInside = plan.arrive === 'dungeon' || plan.arrive === 'building';   // WOD6: an arrival that lands inside
       await _teleportToPixel(a.pixel.x, a.pixel.y);
       // RestorePositionHelper's three arms (PlayerEnterExit.cs
       // :622-655), in its own order: dungeon first, then building
@@ -5728,6 +5737,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         landed = !!(await modes?.restoreInterior?.(a.interior, anchorLanding(a)));
         if (!landed) townTalk.say('Building has no exterior doors. Repositioning player.');
       }
+      if (!landed) _wodInside = false;   // WOD6: it landed outside after all
       if (landed) {
         cam.pos = player.eyeAt();   // EV1: the interpolated render eye
       } else if (plan.arrive !== 'dungeon') {
@@ -5887,9 +5897,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);
     Promise.resolve().then(async () => {
+      _wodInside = true;   // WOD6: the crypt is inside
       await _teleportToPixel(pos.x, pos.y);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);
       const entered = await (modes?.startInDungeon?.() ?? false);   // CRUX1: insideDungeon true - the crypt, not its door
+      if (!entered) _wodInside = false;
       if (!entered) console.warn('[infection] the cemetery has no dungeon to wake in - the vampire wakes at its exterior');
     });
   }
@@ -6379,6 +6391,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })) _questStarted = true;
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
+        _wodInside = !!extras.interior;   // WOD6: an inside save lands inside
         await _teleportToPixel(w.pixel.x, w.pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
         // TERRAIN-SCALE1: every height below stood on ground drawn at the
         // save's own scale; each is stood again on today's (restandHeight -
@@ -6409,6 +6422,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             fromNative: (nx, nz) => state.localFromWorld(nx, nz), yOffset: state.compensation[1],
           }) ?? false)
           : false;
+        if (!inside) _wodInside = false;
         if (inside) {
           playerSpawned = true;
           cam.pos = [lx, ly, lz];
@@ -6466,10 +6480,11 @@ export async function bootWorld(canvas, renderer, params, status) {
           { const s = walkMode && playerSpawned; const f = s ? player.pos : cam.pos; wodOnLoad([f[0], f[1] + (s ? player.height / 2 : 0), f[2]]); }
           townTalk.say(undergroundWakeText(wake.kind));
         } else {
+          _wodInside = true;   // WOD6: a dungeon save lands inside - no marker hears this load
           await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
           const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey }) ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
           if (entered) { playerSpawned = true; modes?.restoreDungeonSave?.(extras); }
-          else townTalk.say('(the dungeon has no entrance here - character restored at its door)');
+          else { _wodInside = false; townTalk.say('(the dungeon has no entrance here - character restored at its door)'); }   // WOD6: it landed outside after all
         }
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
@@ -12184,6 +12199,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // (0x7d1), not a frame-tail chore.
     if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); _torchesMode = _mode(); }   // HT1
     if (modes.frame(dt, now)) {
+      if (_wodInside) { _wodInside = false; _wodArrival = wodArrivalOf([]); }   // WOD6: inside - the arrival's markers meet Start on the way out, from the player
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: the exterior parent is inactive indoors in DFU and its
       // AudioSources stop with it; the mills fall silent and the

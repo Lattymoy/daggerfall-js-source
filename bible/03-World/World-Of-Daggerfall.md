@@ -535,9 +535,19 @@ long tail and BUILD-FAIL1) found five things, each verified and fixed:
 The lenses found the rest correct: no height derived from 1.5 is left,
 DFU reads `defaultTerrainScale` nowhere else, the relay keeps no world
 height but a parked team's, and every save height is converted once or
-rightly left alone. Left open: a load that puts the player INSIDE a
-dungeon raises no OnLoad over the exterior; what DFU's markers measure
-from when the player later leaves is not settled here.
+rightly left alone.
+
+The one question the audit left open - a load inside a dungeon - is
+settled by the scene itself. The markers hang under `StreamingTarget`, a
+child of the scene's `Exterior` object (DaggerfallUnityGame.unity), which
+`EnableDungeonParent` and `EnableInteriorParent` switch off;
+StreamingWorld sits at the root and keeps promoting. So an arrival that
+lands INSIDE - a load or a recall into a dungeon or a building, the
+vampire's crypt - promotes markers nobody runs: they subscribe to no
+OnLoad, and meet Start on the way out, from the player at the door. The
+port holds the ticks from the moment such an arrival begins
+(`_wodInside`), and the first frame inside ends the arrival; one that
+lands outside after all drops the hold.
 
 ## THE FOUR HOSTS
 

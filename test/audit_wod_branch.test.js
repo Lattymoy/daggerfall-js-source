@@ -404,7 +404,7 @@ ${SLICE.pubB}
     }
     wodSlots.step(100, 100, state.terrainDistance, StreamingWorldState.onMap);   // the scene's start, as the host steps it
     return { tick: tickWodSpawners, destroyPixel, publish, sweep, cross, carryOf: (k) => wodCarry.get(k), arriving: (v) => { _seasonStraightening = v; }, siteWas: _wodSiteWas,
-      arrival: (list) => { _wodArrival = wodArrivalOf(list); }, onLoad: (c) => wodOnLoad(c) };`;
+      arrival: (list) => { _wodArrival = wodArrivalOf(list); }, onLoad: (c) => wodOnLoad(c), inside: (v) => { _wodInside = v; } };`;
   const api = new Function(...names, '__WodSpawner', '__LOOT', 'StreamingWorldState', body)(...names.map((k) => env[k]), WodSpawner, WOD_SPAWN_TYPE.Loot, StreamingWorldState);
   return { ...api, built, droppedLoot, state, player, cold: (v) => { cold = v; }, release: () => release?.() };
 }
@@ -562,6 +562,29 @@ test('WOD6 (audit): a pixel is the arrival\'s until its first frame - a marker m
   assert.equal(h.droppedLoot.piles?.length ?? 0, 0);
   assert.match(WORLD, /destroyPixel\(next\.px, next\.py, \{ collectLoose: false \}\);\n      _wodArrival\.keys\.delete\(`\$\{next\.px\},\$\{next\.py\}`\);\n      state\.release\(next\.px, next\.py\);/, 'a build that failed is torn down with its key, and is no longer the arrival\'s');
   assert.match(WORLD, /reposition: REPOSITION\.RandomStartMarker \}\);\n[^\n]*\n          \{ const s = walkMode && playerSpawned; const f = s \? player\.pos : cam\.pos; wodOnLoad\(/, 'the online underground wake is a load: OnLoad last');
+});
+
+test('WOD6 (dungeon loads): an arrival that lands INSIDE runs no marker - DFU\'s Exterior is off, so they hear no OnLoad and meet Start on the way out, from the player at the door', () => {
+  const h = host();
+  h.arrival([{ px: 100, py: 100 }]);
+  h.inside(true);   // a load into a dungeon: the teleport builds the exterior over frames of it
+  const p = h.publish(100, 100, [[640, 50, 660]]);   // ~920 from the corner, beside the dungeon's door
+  h.player.pos = worldAt(h, 100, 100, [640, 49.1, 650]);
+  h.tick();
+  h.onLoad(worldAt(h, 100, 100, [640, 50, 650]));
+  assert.deepEqual([p.wodSpawners[0].spawner.started, p.wodSpawners[0].spawner.active], [false, true], 'nothing runs, nothing hears the load');
+  // the first frame inside ends the arrival (world.js's frame, pinned below); out of the door, Start from the player
+  h.inside(false); h.arrival([]);
+  const orig = Math.random; Math.random = () => 0.1;
+  try { h.tick(); } finally { Math.random = orig; }
+  assert.deepEqual([p.wodSpawners[0].spawner.started, p.wodSpawners[0].spawner.active], [true, false], 'Start from the player at the door, within 300: stood down');
+  assert.match(WORLD, /if \(modes\.frame\(dt, now\)\) \{\n      if \(_wodInside\) \{ _wodInside = false; _wodArrival = wodArrivalOf\(\[\]\); \}/);
+  assert.match(WORLD, /if \(!wod \|\| _wodInside\) return;/);
+  assert.match(WORLD, /_wodInside = plan\.arrive === 'dungeon' \|\| plan\.arrive === 'building';[^\n]*\n      await _teleportToPixel\(a\.pixel\.x, a\.pixel\.y\);/, 'a recall inside');
+  assert.match(WORLD, /_wodInside = !!extras\.interior;[^\n]*\n        await _teleportToPixel\(w\.pixel\.x, w\.pixel\.y/, 'a load inside a building');
+  assert.match(WORLD, /_wodInside = true;[^\n]*\n          await _teleportToPixel\(pixel\.x, pixel\.y, null, \{ modEvent: 'load' \}\);/, 'a load inside a dungeon');
+  assert.match(WORLD, /_wodInside = true;[^\n]*\n      await _teleportToPixel\(pos\.x, pos\.y\);/, 'the vampire\'s crypt');
+  assert.equal((WORLD.match(/_wodInside = false;/g) ?? []).length, 6, 'the declaration, the frame inside, and each of the four arrivals that lands outside after all');
 });
 
 test('WOD6: the pixels a late region names are built again on the list in its order - those standing now, nearest first; one still building once it stands; the player\'s own under the season hold', () => {

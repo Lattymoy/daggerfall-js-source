@@ -448,5 +448,50 @@
     "tests": [
       "test/audit_wod_branch.test.js"
     ]
+  },
+  {
+    "name": "WOD6-inside-ticks-anyway",
+    "file": "src/scenes/world.js",
+    "old": "    if (!wod || _wodInside) return;",
+    "new": "    if (!wod) return;",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD6-inside-keeps-arrival",
+    "file": "src/scenes/world.js",
+    "old": "      if (_wodInside) { _wodInside = false; _wodArrival = wodArrivalOf([]); }",
+    "new": "      if (_wodInside) { _wodInside = false; }",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD6-recall-inside-unheld",
+    "file": "src/scenes/world.js",
+    "old": "      _wodInside = plan.arrive === 'dungeon' || plan.arrive === 'building';",
+    "new": "",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD6-dungeon-load-unheld",
+    "file": "src/scenes/world.js",
+    "old": "          _wodInside = true;   // WOD6: a dungeon save lands inside - no marker hears this load\n",
+    "new": "",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "WOD6-failed-inside-stays-held",
+    "file": "src/scenes/world.js",
+    "old": "          else { _wodInside = false; townTalk.say(",
+    "new": "          else { townTalk.say(",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
   }
 ]
