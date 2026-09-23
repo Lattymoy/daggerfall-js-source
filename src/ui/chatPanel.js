@@ -403,8 +403,13 @@ ${PIXELIFY_FIVE_FACE}
    grow the name. */
 .dfchat-who-row.dfchat-act { cursor: pointer; }
 .dfchat-rowmenu { display: flex; flex-direction: column; gap: 2px; padding: 3px 0 4px; }
-.dfchat-rowbtn { display: flex; align-items: baseline; gap: 4px; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit;
+.dfchat-rowbtn { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit;
   font-size: 11px; text-align: left; padding: 3px 6px; cursor: pointer; }
+/* THE LABEL AND ITS REASON WRAP (tools/font1Probe.mjs's touch spill, older than the community arc): a row button is one
+   line of a label and, when the act is refused, its reason beside it (AUDIT SOC C11) - in a roster column 148px wide at
+   the chat's own scale. On the touch skin the label is 13px for a thumb (AUDIT SOC C8) and "Invite to party" beside
+   "already in a party" is 94px of text in an 89px box, so it ran out of the button. The reason drops under the label
+   when the two do not fit, and a label wider than the column breaks at its spaces. */
 .dfchat-rowbtn[disabled] { opacity: .45; cursor: default; }
 /* AUDIT SOC C11: the reason a row is dead, drawn beside its label - a title is a hover, and a finger cannot hover. */
 .dfchat-rowwhy { font-size: 10px; font-style: italic; color: var(--dim, #8b8578); margin-left: auto; }

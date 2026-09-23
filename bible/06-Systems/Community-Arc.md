@@ -643,3 +643,17 @@ was rerun (41 lists, 1,462 mutants): no survivor it caused. Re-aimed to the new 
 - AUDIT ATTACH's widest place socket, flood table and wake table, which gain the page arm.
 
 World101's LAW row is restated, and the cites that moved with the new lines were moved (tools/citeShift.mjs).
+
+## The roster's row menu on a phone (found by `tools/font1Probe.mjs`; older than this arc)
+
+`tools/font1Probe.mjs` measures the enhanced surfaces for text wider than its box, on the desktop skin and the touch
+skin. Through this arc it reported one spill, and main spills the same way: the chat roster's row menu on the touch
+skin.
+- A row button is a label and, when the act is refused, its reason beside it (AUDIT SOC C11), in a roster column 148px
+  wide at the chat's own scale.
+- On the touch skin the label is 13px for a thumb (AUDIT SOC C8), and "Invite to party" beside "already in a party" is
+  94px of text in an 89px box, so it ran out of the button.
+- The button's line wraps now: the reason drops under its label, and a label wider than the column breaks at its
+  spaces. The probe passes, with the button 82px tall on the phone (over the thumb's 44).
+
+Pinned in AUDIT SOC C8/C13's test (`test/soc3_socialpanel.test.js`); `tools/mutants/auditsoc.json` gains its mutant, dead.

@@ -819,6 +819,10 @@ test('AUDIT SOC C8/C13: the touch skin\'s 44px targets, and the panel BELOW the 
   assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-who-row\.dfchat-act \{ min-height: 44px;/, 'a roster row is a door, so it is a 44px door');
   assert.doesNotMatch(CHAT_CSS, /\.dfchat-who-row\.act\b/, 'and never the unprefixed one again');
   assert.match(CHAT_CSS, /\.dfchat\.touch \.dfchat-rowbtn \{ min-height: 44px;/);
+  // tools/font1Probe.mjs's touch spill, older than the community arc: a row button is its label and a refused act's
+  // reason on one line, in a 148px column - "Invite to party" beside "already in a party" at the thumb's 13px was 94px
+  // of text in an 89px box. The button's line wraps: the reason drops under its label.
+  assert.match(CHAT_CSS, /\n\.dfchat-rowbtn \{ display: flex; flex-wrap: wrap;/);
   // ...and none of it on a desktop: the mouse's sizes are the mouse's
   assert.doesNotMatch(SOCIAL_CSS, /\n\.dfsocial-tab \{[^}]*min-height: 44px/);
   assert.doesNotMatch(CHAT_CSS, /\n\.dfchat-rowbtn \{[^}]*min-height: 44px/);
