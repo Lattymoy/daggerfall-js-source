@@ -27,7 +27,9 @@ import {
   cureDiseaseOffer, payForCure, cureForFree,
   expandGuildMacros, NOT_ENOUGH_GOLD_ID, TRAINING_TOO_SKILLED_ID,
 } from '../systems/guildServiceActions.js';
-import { SKILL_NAMES } from '../systems/skills.js';
+import { SKILL_NAMES, permanentSkillValue } from '../systems/skills.js';
+import { trainingMax } from '../systems/guildServices.js';   // RR2: the cap the refined price scales against
+import { rrTrainingCost, rrIntensiveCost, rrIntensiveOffered, RR_WEEK_BUTTON, RR_INTENSIVE_DAYS, RR_INTENSIVE_SKILL_POINTS, RR_TRAINING_LINES } from '../systems/rrRealism.js';   // RR2: GuildServiceTrainingRR's laws
 import { goldAmount } from '../systems/court.js';
 import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 
@@ -276,6 +278,76 @@ export function buildTrainingFlow(entity, guild, membership, deps) {
 }
 
 // ── DONATION ──────────────────────────────────────────────────────
+
+/** RR2: GuildServiceTrainingRR (RoleplayRealism's RefinedTraining), the
+ *  window UIWindowFactory.RegisterCustomUIWindow put over DFU's: the
+ *  SKILL is picked first (:44-55), then the price - halved for a raw
+ *  skill under variableTrainingPrice (:62-66) - is offered with Yes / No,
+ *  and with the "5 Days" button (BUTTONS.RCI 21, the mod's own art) when
+ *  intensiveTraining is on and the skill sits more than four under the
+ *  cap (:86-96): four days pass, the skill rises four, and the fifth
+ *  session is DFU's TrainSkill (:130-146). `applyIntensive(skill, days,
+ *  points)` is the host's clock and skill store, ahead of applyTraining. */
+export function buildRefinedTrainingFlow(entity, guild, membership, deps) {
+  const { rows, now, applyTraining, applyIntensive = null, onClose, rolls = Math.random, guildTitle = '', shopName = null, cityName = null,
+    variablePrice = true, intensive = false, level = entity.level ?? 1 } = deps;
+  const offer = trainingOffer(entity, guild, membership, now());
+  const baseCtx = { gold: goldAmount(entity), guildTitle, playerName: entity.name ?? '', ...identity(entity, { shopName, cityName }) };
+  if (offer.kind === 'tooSoon') {
+    return new ServiceFlowWindow([{ rows: macroRows(rows, offer.textId, { ...baseCtx, amount: offer.price }) }], { onClose });
+  }
+  const skills = trainableSkills(guild);
+  return new ServiceFlowWindow([{
+    picker: skills.map((s) => SKILL_NAMES[s] ?? String(s)),
+    onPick: (i) => {
+      const skill = skills[i];
+      if (tooSkilledToTrain(entity, guild, skill)) {
+        return [{ rows: macroRows(rows, TRAINING_TOO_SKILLED_ID, { ...baseCtx, guildTitle }) }];
+      }
+      const skillValue = permanentSkillValue(entity, skill);
+      const max = trainingMax();
+      const trainingCost = rrTrainingCost(offer.price, skillValue, max, variablePrice);
+      const intensiveCost = rrIntensiveCost(trainingCost, level);
+      const skillName = SKILL_NAMES[skill] ?? String(skill);
+      const ctx = { ...baseCtx, amount: trainingCost };
+      const pay = (cost, train) => {
+        if (goldAmount(entity) < cost) return [{ rows: macroRows(rows, NOT_ENOUGH_GOLD_ID, ctx) }];
+        return train();
+      };
+      const trainOnce = (cost) => {
+        const result = trainSkill(entity, skill, now(), rolls);
+        applyTraining?.(result, cost);
+        return [{ rows: macroRows(rows, result.textId, ctx) }];
+      };
+      const trainIntense = () => {
+        // TrainSkillIntense (:130-146): RaiseTime(SecondsPerDay * 4), +4 permanent, then TrainSkill, then the mod's own box
+        applyIntensive?.(skill, RR_INTENSIVE_DAYS, RR_INTENSIVE_SKILL_POINTS);
+        const result = trainSkill(entity, skill, now(), rolls);
+        applyTraining?.(result, intensiveCost);
+        const L = RR_TRAINING_LINES;
+        return [{ rows: [{ text: L.trainingSkillIntense1, center: true }, { text: L.trainingSkillIntense2.replace('{0}', skillName), center: true }, { text: L.trainingSkillIntense3, center: true }] }];
+      };
+      if (rrIntensiveOffered(intensive, skillValue, max)) {
+        const L = RR_TRAINING_LINES;
+        const lines = [
+          { text: expandGuildMacros(L.trainingSkill1.replace('{0}', skillName), ctx), center: true }, { text: '', center: true },
+          { text: L.trainingSkill2, center: true }, { text: L.trainingSkill3.replace('{0}', String(intensiveCost)), center: true }, { text: '', center: true },
+          { text: L.trainingSkill4.replace('{0}', skillName), center: true },
+        ];
+        return [{ rows: lines, buttonsMulti: [MB_BUTTONS.Yes, RR_WEEK_BUTTON, MB_BUTTONS.No], onButton: (n) => (n === MB_BUTTONS.Yes ? pay(trainingCost, () => trainOnce(trainingCost)) : n === RR_WEEK_BUTTON ? pay(intensiveCost, trainIntense) : null) }];
+      }
+      // the record's own offer with the skill's name spliced in after its first word (:68-70)
+      const offerRows = macroRows(rows, offer.textId, ctx).map((r, k) => (k === 0 ? { ...r, text: spliceSkillName(r.text, skillName) } : r));
+      return [{ rows: offerRows, buttons: 'YesNo', onYes: () => pay(trainingCost, () => trainOnce(trainingCost)) }];
+    },
+  }], { onClose });
+}
+/** `tokens[0].text.Substring(0, pos) + " " + skillName + tokens[0].text.Substring(pos)` - after the first space. */
+export function spliceSkillName(text, skillName) {
+  const pos = (text ?? '').indexOf(' ');
+  if (pos < 0) return text;
+  return `${text.slice(0, pos)} ${skillName}${text.slice(pos)}`;
+}
 
 /** DonationService (:44-83). The field opens pre-filled with 1000 and
  *  is numeric-only. */

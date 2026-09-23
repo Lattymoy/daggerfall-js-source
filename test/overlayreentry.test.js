@@ -52,7 +52,7 @@ function hostSlot() {
   return host;
 }
 
-/** A rest window wired exactly as exterior.js:1757 and world.js:2866
+/** A rest window wired exactly as exterior.js:1761 and world.js:2876
  *  wire it - the PopToHUD door S40 opened. */
 function restWindowOn(host, over = {}) {
   const win = new RestWindow({
@@ -239,7 +239,7 @@ test('CRASH 2026-08-29: the real talk host survives a window that closes it from
     isRestWindow: true,
     dispose() {
       depth++; deepest = Math.max(deepest, depth);
-      if (tt.overlay?.isRestWindow) tt.closeOverlay?.();   // exterior.js:1757, world.js:2866
+      if (tt.overlay?.isRestWindow) tt.closeOverlay?.();   // exterior.js:1761, world.js:2876
       depth--;
     },
   });

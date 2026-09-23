@@ -70,7 +70,7 @@
 // slice of its own rather than an oversight: ui/deathScreen.js:71-72,
 // ui/restWindow.js:852, ui/saveWindow.js:615+ (shadowText, eight
 // sites), ui/travelPopUp.js:685, ui/questJournal.js:641-642,
-// ui/messageBox.js:431/:434 and ui/actionText.js:41/:152 (every
+// ui/messageBox.js:450/:453 and ui/actionText.js:41/:152 (every
 // ActionTextBox). Each of those is a native window whose every drawn
 // element cites a DFU rect (THE NATIVE-WINDOW RULE), so the face cannot
 // change without the metrics changing with it.

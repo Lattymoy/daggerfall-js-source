@@ -1286,6 +1286,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     g.dead = true;   // no `corpse` - a removed guard is destroyed, not killed
   }
   return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, activeCount, lootTargets, takeLoot, snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,
+    /** RR2: PlayerEntity.SpawnCityGuard(position, direction) (PlayerEntity.cs:678-694) for a caller
+     *  outside the watch's own call - the ONE watchman minted where a walker stood, facing their
+     *  way, hostile to the player. Resolves to the guard record (or null when the world moved on). */
+    spawnCityGuard: (pos, yaw, attackerFeet = null) => spawnGuardAt([...pos], yaw, attackerFeet),
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.

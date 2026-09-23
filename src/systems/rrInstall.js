@@ -26,16 +26,21 @@ import { equipTableOf, EQUIP_SLOTS, lowerCondition } from './equip.js';
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
 import { rriAnimTimeOverride } from './rriKits.js';
 import { rriModule } from './rriItems.js';
+import { setCanRunOverride } from './transport.js';
+import { setAxisLimitsProvider } from '../player/moveAxes.js';
+import { installRoleplayRealismArt } from './rrVariants.js';
 import {
   rrEnabled, rrModule, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage, rrClimbingChance, rrMeleeWeaponAnimTime,
   rrWeaponToHit, rrConditionDamageThroughPhysicalHit, rrDamageModifierClassic, rrMaxBankLoan, rrShipAvailable,
   rrEncumbranceEffect, RR_POTION_RECIPES, applyEnemyAppearance, rrUnderworldRule, rrFightersGuildSkills, rrFightersTrainingSkills,
+  rrRidingOn, rrRidingSetting, rrCanRunRiding, rrRidingInputLimits,
 } from './rrRealism.js';
 
 /** The host's seams a registered arm needs and no module can import: the
- *  foe spawner (CreateFoeSpawner, for the underworld guilds' squad). Set
- *  by the world host at mount. */
-const _host = { spawnFoe: null };
+ *  foe spawner (CreateFoeSpawner, for the underworld guilds' squad), and
+ *  RR2's riding reads (PlayerGPS.IsPlayerInTown, TransportManager's mode,
+ *  PlayerMotor.IsRiding). Set by the world hosts at mount. */
+const _host = { spawnFoe: null, inTown: null, transportMode: null, riding: null };
 export function setRrHostSeams(seams = {}) { Object.assign(_host, seams); }
 export const rrHostSeams = () => _host;
 
@@ -124,6 +129,21 @@ export function installRoleplayRealism() {
 
   // the bank loan (:98, :309-312) rides the mod's Enabled alone
   registerMaxBankLoan((level) => rrMaxBankLoan(level));
+
+  // RR2 - enhancedRiding (:236-247): the EnhancedRiding component. Its
+  // PlayerMotor.CanRun arm (EnhancedRiding.cs:106-112) and the
+  // RealisticMovement axis limits (:128-136) register here; the terrain
+  // follow, the look floor and the mount's draw ride the mount rig's deps.
+  setCanRunOverride((mode) => (rrRidingOn()
+    ? rrCanRunRiding({ mode, riding: !!_host.riding?.(), inTown: !!_host.inTown?.(), gallopingInTowns: rrRidingSetting('GallopingInTowns') === true })
+    : null));
+  setAxisLimitsProvider(() => (rrRidingOn() && rrRidingSetting('RealisticMovement') === true
+    ? rrRidingInputLimits({ riding: !!_host.riding?.(), mode: _host.transportMode?.() ?? 'Foot' })
+    : null));
+
+  // RR2 - variantNpcs / variantResidents (:220-235) and refinedTraining's
+  // "5 Days" button (:250-256): the mod's own art on its doors
+  installRoleplayRealismArt();
   return true;
 }
 

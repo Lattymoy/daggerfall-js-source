@@ -323,7 +323,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   for (const [pi, p] of interior.placements.entries()) {
     const matrix = parent(p.matrix);
     // NEVER TRAPS: getGpuMesh returns NULL for a model id this data set
-    // does not carry (dataPipeline.js:98, and it CACHES the null), and
+    // does not carry (dataPipeline.js:99, and it CACHES the null), and
     // cpuModels is written only on its success path - so an absent
     // model used to push a {mesh: null} draw entry AND then read
     // `cpu.positions` off undefined one line later. Every other builder
@@ -464,7 +464,13 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const visible = opts.peopleVisible ?? true;
   const people = collectInteriorPeople(recordData).map((pn) => {
     const [x, y, z] = parentPt(pn.x, pn.y, pn.z);
-    return { ...pn, x, y, z, active: visible, questBehaviour: null };
+    // RR2: a mod's SetMaterial over the person's billboard (Roleplay &
+    // Realism's variant keepers and residents, RoleplayRealism.cs:775-932)
+    // - the host's decision, asked as each person is listed; the person
+    // keeps its born archive/record for StaticNPC's identity (the name
+    // seed, the FLATS.CFG face) and draws the answered one
+    const v = opts.variantPerson?.(pn) ?? null;
+    return { ...pn, x, y, z, active: visible, questBehaviour: null, ...(v ? { drawArchive: v.textureArchive, drawRecord: v.textureRecord } : {}) };
   });
   // AUDIT 24 (wave 20): AddPeople's LAST act on every person it stands
   // is `QuestMachine.Instance.SetupIndividualStaticNPC(go, obj.FactionID)`
@@ -556,7 +562,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   } else {
     for (const pn of people) {
       if (!pn.active) continue;   // SetActive(false): the away copy does not draw
-      const key = `${pn.textureArchive}_${pn.textureRecord}`;
+      const key = `${pn.drawArchive ?? pn.textureArchive}_${pn.drawRecord ?? pn.textureRecord}`;   // RR2: the re-materialised billboard
       if (!flatGroups.has(key)) flatGroups.set(key, []);
       flatGroups.get(key).push([pn.x, pn.y, pn.z]);
     }
@@ -590,9 +596,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   // size is read here, off the archive, either way.
   for (const pn of people) {
     if (!pn.active) continue;   // SetActive(false) takes the BoxCollider with it
-    const t = await getTexture(pn.textureArchive);
-    if (!t || pn.textureRecord >= t.recordCount) continue;
-    const size = billboardSize(t, pn.textureRecord);
+    const t = await getTexture(pn.drawArchive ?? pn.textureArchive);   // RR2: the re-materialised billboard, where a mod set one
+    if (!t || (pn.drawRecord ?? pn.textureRecord) >= t.recordCount) continue;
+    const size = billboardSize(t, pn.drawRecord ?? pn.textureRecord);
     pn.width = size.w;
     pn.height = size.h;
   }
@@ -618,17 +624,17 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       charDraws.push(pn.lateDraw);
     }
     (async () => {
-      const t = await getTexture(pn.textureArchive);
-      if (!t || pn.textureRecord >= t.recordCount) return;
-      const size = billboardSize(t, pn.textureRecord);
+      const t = await getTexture(pn.drawArchive ?? pn.textureArchive);   // RR2
+      if (!t || (pn.drawRecord ?? pn.textureRecord) >= t.recordCount) return;
+      const size = billboardSize(t, pn.drawRecord ?? pn.textureRecord);
       pn.width = size.w;
       pn.height = size.h;
       // Flipped back (or destroyed) while the archive was loading, or
       // drawn as a voxel body already: no billboard.
       if (_rigFor || !pn.lateStood || pn.lateBatch) return;
-      uploadRecord(pn.textureArchive, pn.textureRecord);   // REVIEW 2026-09-05: a FLAT - alphaIndex 0 (DaggerfallBillboard.cs:289-293), the cutout key drawBillboards reads; PR #55 had sent it through the mesh door and the person never drew
-      pn.lateBatch = renderer.createBillboardBatch(pn.textureArchive, pn.textureRecord, size, [[pn.x, pn.y, pn.z]]);
-      armFlatAnim(pn.lateBatch, t, pn.textureArchive, pn.textureRecord, flatAnims, uploadRecordFrame);
+      uploadRecord(pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord);   // RR2: the re-materialised billboard   // REVIEW 2026-09-05: a FLAT - alphaIndex 0 (DaggerfallBillboard.cs:289-293), the cutout key drawBillboards reads; PR #55 had sent it through the mesh door and the person never drew
+      pn.lateBatch = renderer.createBillboardBatch(pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord, size, [[pn.x, pn.y, pn.z]]);
+      armFlatAnim(pn.lateBatch, t, pn.drawArchive ?? pn.textureArchive, pn.drawRecord ?? pn.textureRecord, flatAnims, uploadRecordFrame);
       billboardBatches.push(pn.lateBatch);
     })().catch((e) => console.error('[interior] late stand failed:', e));
   };

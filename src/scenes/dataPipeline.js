@@ -14,6 +14,7 @@ import { decodedTexture, preloadTextureArchive, preloadTextureRecord, isVendorAr
 import { dyeToken } from '../characters/dyes.js';   // DW3: the per-dye UI variant
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
+import { flatFaceOverride } from '../characters/staticNpc.js';   // RR2: FLATS.CFG's dictionary, as a mod rewrites it
 
 /** ROAD-H H4: `fetch` defaults to the one data seam every scene uses
  *  (shared.js's fetchBytes) and is a parameter for the same reason
@@ -44,7 +45,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     return flats;
   })());
   const flatCaption = (archive, record) => flats?.caption(archive, record) ?? null;
-  const flatFaceIndex = (archive, record) => flats?.faceIndex(archive, record) ?? -1;
+  const flatFaceIndex = (archive, record) => flatFaceOverride(archive, record) ?? flats?.faceIndex(archive, record) ?? -1;   // RR2: a mod's flatsDict write first
   async function getTexture(archive) {
     if (textureFiles.has(archive)) return textureFiles.get(archive);
     if (!texturePromises.has(archive)) {

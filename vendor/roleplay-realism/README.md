@@ -40,10 +40,20 @@ are the author's own art and carry no licence line of their own.]**
   not on disk in the session that vendored this, so the diff Items'
   record carries has not been run for this one).
 
+## The textures (RR2)
+
+`Textures/197_N-0.xml` (seven) are the mod's own billboard scales,
+verbatim; the seven `197_N-0.png` sprites (the variant shop and tavern
+keepers) and the seventeen `Textures/Buttons/BUTTONS.RCI_21..37-0.png`
+records (the training window's "5 Days" and the rest of `indexButtons.
+txt`) ship under `public/art/roleplay-realism/`, the PNG bytes the
+source tree carries at `0af2ec9`, unchanged. They carry no licence
+text of their own (the MIT header is the scripts') - granted, as the
+Mod-Registry row records. Both are what the mod's manifest names.
+
 ## Not vendored yet
 
-The seven `197_N-0` textures (the variant shop and tavern NPCs, RR2),
-the three quests and the quest list (RR3), the two world-data files
+The three quests and the quest list (RR3), the two world-data files
 and the building variant (the Northrock Fort and the master armorer's
 shop, RR3).
 

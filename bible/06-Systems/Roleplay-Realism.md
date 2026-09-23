@@ -108,12 +108,87 @@ Read against the C#:
 - **bandaging** cannot register: `rrItemsMod == null` is never true in
   the port. Recorded, the law ported.
 
-Not in this slice: variantNpcs / variantResidents (the `197_N-0`
-textures, RR2), EnhancedRiding (RR2), RefinedTraining (RR2), the Master
-Armorer quest line - `RRMSTARM0-2`, Northrock Fort, the three factions,
-the custom armor service (RR3).
+Not in this slice: variantNpcs / variantResidents, EnhancedRiding,
+RefinedTraining (all RR2, below), the Master Armorer quest line -
+`RRMSTARM0-2`, Northrock Fort, the three factions, the custom armor
+service (RR3).
+
+## RR2 - the NPC sprite variants, EnhancedRiding, RefinedTraining
+
+Three components that are not formula overrides: two interior
+transition subscribers that re-materialise billboards, a MonoBehaviour
+on the player that draws the mount and reads the ground, and a custom
+UI window registered over the guild's training service. Laws in
+`rrRealism.js` (riding, training) and `rrVariants.js` (the sprites -
+it reads the walker tables the leaf must not import); the install adds
+its arms to `rrInstall.js`.
+
+- **variantNpcs / variantResidents** (RoleplayRealism.cs:775-1077).
+  DFU walks the interior's Billboards after `OnTransitionInterior` and
+  swaps materials; the port stands its people once, so the interior
+  context asks the host's `opts.variantPerson(pn)` as each person is
+  listed and draws the answer (`drawArchive`/`drawRecord` beside the
+  born `textureArchive`/`textureRecord`, which StaticNPC's identity -
+  the name seed, the FLATS.CFG face - keeps). The keeper (:790-849): a
+  shop's or tavern's `182_0` to `197_{0..3}` by quality (6-9, 10-13,
+  14-17, 18-20), `182_1` to 4 under 12 and 5 past 14, `182_2` to 6
+  past 12. The resident (:862-932): a faction-0 person of a known
+  gender (GetGender182/184's tables verbatim), `faceVariant = nameSeed
+  % 29` under 24 (four in five), `outfitVariant = nameSeed % 4`, the
+  climate race's walker archive (Redguard, Nord, else Breton - GetClimateRace)
+  at the idle record, and `flatsDict[bornFlat] = { faceIndex }` - the
+  port's `setFlatFaceOverride`, which `dataPipeline.flatFaceIndex`
+  reads before FLATS.CFG. The Villager Variety arm (:948-978) has no
+  counterpart; `materialSet` is false and the walker's archive is
+  taken, the C#'s else. The seven `197_N-0` sprites ship under
+  `public/art/roleplay-realism/` on the replacement door (lazy, gated
+  on variantNpcs; a classic archive, so ordinary entries), the mod's
+  XML scale beside them through `registerBillboardXml`.
+- **EnhancedRiding** (EnhancedRiding.cs). `CanRunUnlessRidingCart`
+  (:95-99) on `transport.setCanRunOverride`: no gallop with the cart
+  nor in a town unless GallopingInTowns (the host's `inTown`, `riding`,
+  `transportMode` reads on `setRrHostSeams`). RealisticMovement
+  (:128-136) on `moveAxes.setAxisLimitsProvider`: back 0.5 / sideways
+  0.4 riding (a cart 0.2 / 0.1), 1 on foot. The terrain sample
+  (:139-146) - `Atan2(here - ahead, 1) * 100` into a ring of 16 - lives
+  in the mount rig with the host's `groundHeightAt`; OnGUI (:265-322)
+  averages it over `16 + softenFollow` (0 unless followTerrainEnabled),
+  lifts the sprite by `yAdj = (Pitch - terrainAngle - 10) * 2.6` (the
+  port's up-positive radians turned into DFU's down-positive degrees)
+  and fills the gap under it with a band of the same texture (`width -
+  14` wide, `0.2 - yAdj / 100 .. 0.2` down, `0.06 .. 0.84` across); no
+  neck CFA is imported, so the band is the texture's own, the C#'s
+  fallback. `PitchMaxLimit = terrainAngle + 18` (:288) is
+  `lookFilter.setPitchFloorProvider`, clamped at DFU's 75. The trample
+  (:135-163) and the charge (:189-215) are the world host's
+  `rrRidingContacts`, run after the rig's frame while riding and
+  running: a walker within 0.9 (Unity's two 0.45 cylinders) bleeds at
+  `BloodPos` (2 ahead, 1 up; the civilian's own rung), cries the Breton
+  pain clip of their gender at RidingVolumeScale, `SpawnCityGuards
+  (true)`, Assault, and is retired from the pool (`TownPopulation.
+  retire`, the C#'s `SetActive(false)`); a guard walker is replaced by
+  `cityGuards.spawnCityGuard` where they stood and charged. A foe at
+  the mount's touch is charged once (`_rrCharged`, the C#'s
+  PickpocketByPlayerAttempted latch): its combat voice, knockback 100
+  the way the rider faces, the rider spends 15 x DefaultFatigueLoss,
+  and takes hand-to-hand's span + Agility / 10 + Willpower / 10.
+- **RefinedTraining** (GuildServiceTrainingRR.cs) -
+  `buildRefinedTrainingFlow`, chosen over DFU's training flow at
+  worldModes' service arm while the switch is on
+  (RegisterCustomUIWindow). The picker opens first (:39-41); the
+  chosen skill's price is `cost -= (int)(cost * (1 - skill / 50) / 2)`
+  under variableTrainingPrice; under intensiveTraining and `skill < 46`
+  the mod's own four lines offer a session or five days at
+  `(cost + Level * 8 + 72) * 5` with a Yes / "5 Days" (BUTTONS.RCI
+  record 21, the mod's own PNG on `messageBox.registerButtonArt`) / No
+  box; the week is four days off the clock and +4 permanent (the
+  host's `applyIntensive`), then the fifth session through DFU's own
+  TrainSkill and the three "intensively training" lines. Otherwise the
+  record's offer with the skill's name spliced after its first word
+  (:68-70). The gold gate is DFU's NOT_ENOUGH_GOLD on either price.
 
 ## Record
 
-`vendor/roleplay-realism/`. Suite `test/rr1_realism.test.js` (11).
-Campaign `tools/mutants/rr1.json` (19: 18 dead, 1 equivalent).
+`vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (11),
+`test/rr2_realism.test.js` (12). Campaigns `tools/mutants/rr1.json`
+(19: 18 dead, 1 equivalent), `tools/mutants/rr2.json` (28 dead).

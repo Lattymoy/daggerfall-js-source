@@ -75,6 +75,7 @@ import { shadowText } from './nativePanel.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { clampScrollIndex, thumbSpan, drawScrollThumb } from './verticalScrollBar.js';
+import { decodePng } from '../systems/textureReplacement.js';   // RR2: a mod's button PNGs
 
 /** MessageBoxButtons (DaggerfallMessageBox.cs:67-90) - the value IS
  *  the BUTTONS.RCI record. */
@@ -157,6 +158,19 @@ function buttonTex(record) {
   if (!_art) return null;
   let t = _art.buttons.get(record);
   if (t === undefined) {
+    // RR2: a mod's own button art (Roleplay & Realism ships BUTTONS.RCI
+    // records 21-37 as PNGs - the classic file ends at 20). Registered
+    // loaders decode on first use; until the bytes land the slot draws
+    // nothing, then the next draw finds it.
+    const custom = _buttonArt.get(record);
+    if (custom && (custom.isOn?.() ?? true)) {
+      _art.buttons.set(record, null);
+      Promise.resolve(custom.load()).then((bytes) => decodePng(bytes)).then((img) => {
+        const colors = new Uint32Array(img.data.buffer, img.data.byteOffset, img.width * img.height);
+        _art.buttons.set(record, _art.renderer.uploadTexture('img', `buttons:${record}`, { width: img.width, height: img.height, colors }));
+      }).catch((e) => console.warn('[messagebox] a registered button did not load:', e?.message ?? e));
+      return null;
+    }
     try {
       t = _art.renderer.uploadTexture('img', `buttons:${record}`, bitmapToColor32(_art.btnCif.getDFBitmap(record, 0), _art.palette));
     } catch { t = null; }
@@ -164,6 +178,11 @@ function buttonTex(record) {
   }
   return t;
 }
+/** RR2: `registerButtonArt(record, load, isOn)` - `load()` answers the PNG
+ *  bytes (a Promise), `isOn` the mod's switch. */
+const _buttonArt = new Map();
+export function registerButtonArt(record, load, isOn = null) { if (typeof load === 'function') _buttonArt.set(record, { load, isOn }); else _buttonArt.delete(record); }
+export const buttonArtRegistered = (record) => _buttonArt.has(record);
 
 const roundUpSlice = (v) => (v > MIN_BOX_SIDE ? Math.ceil(v / SLICE) * SLICE : MIN_BOX_SIDE);
 

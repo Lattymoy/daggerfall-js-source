@@ -85,7 +85,7 @@ import { ArrowFlight, playerArrowHitFoe } from '../combat/arrowFlight.js';   // 
 import { calculateAttackDamage, dice100 } from '../combat/formulas.js';   // AUDIT 39 (#64/#65): the interior arrow's damage, both ways   // ROAD-B: the two exterior-door bash rolls
 import { WEAPON_REACH, weaponPoseOf, applyWeaponPose as setWeaponPose } from '../combat/playerWeapon.js';   // ROAD-B: AttemptExteriorDoorBash rides the SWING's reach, not the click's; HARD2c: the sheath+hand pair, aliased because this host's own seam method carries the same name
 import { inflictPoison } from '../systems/poisons.js';   // AUDIT 39 (#64/#65): a poisoned shaft doses its mark
-import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
+import { tallySkill, skillValue, SKILLS, permanentSkillValue } from '../systems/skills.js';
 import { tallySwingSkills, SWING_WEAPON_FATIGUE_LOSS, playPlayerVoice, playerPainVoice, makeEnemiesHostile, isBowWeapon } from './hostCombat.js';   // AUDIT 21 hosts F8: the swing law, shared with the dungeon and the guards; IF: the pain cry   // ROAD-B: GameManager.MakeEnemiesHostile
 import { createExteriorFoes } from './exteriorFoes.js'; import { INTERIOR_CLEAR } from '../render/renderer.js';   // IF: the ONE foe-pool factory - see interiorFoes below; REVIEW 2026-09-05: the mode frames clear BLACK (CameraClearManager.cs:23-25)
 import { createCityGuards } from './cityGuards.js';   // ROAD-B: SpawnCityGuards' INDOOR arm needs a watch pool in the building
@@ -148,7 +148,7 @@ import { membershipOf, joinGuild, joinDecision, activeMemberships } from '../sys
 import { ensureFactionRep } from '../systems/factionRep.js';
 import { dateFromClassicMinutes, dateString, dayOfYearFromMinutes, MINUTES_PER_DAY, DAYS_PER_MONTH, isDayFromMinutes } from '../systems/gameDate.js';   // RR1: WorldTime.Now.IsDay   // B2: the loan due date   // H1: the month the houses-for-sale list turns over on
 import { serviceDestination } from '../systems/guildServiceFlow.js';
-import { buildTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
+import { buildTrainingFlow, buildRefinedTrainingFlow, buildDonationFlow, buildCureDiseaseFlow } from '../ui/guildServiceWindows.js';
 import { preloadListPickerArt } from '../ui/listPicker.js';
 import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
@@ -264,7 +264,8 @@ import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfVie
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host's DUNGEON_WATER_SCROLL was a third literal)
 import { onShopShelfStocked } from '../systems/rriKits.js';   // RRI2: the mod's PlayerActivate.OnLootSpawned subscribers (bandage stacks, store-quality wear, the alchemist's potions)
-import { bedSleepingOn, rrDouseOnDungeonExit } from '../systems/rrRealism.js';   // RR1: the bed's activation gate, the douse on leaving a dungeon
+import { bedSleepingOn, rrDouseOnDungeonExit, rrRefinedTrainingOn, rrSetting } from '../systems/rrRealism.js';   // RR1: the bed's activation gate, the douse on leaving a dungeon; RR2: the refined training window's switches
+import { rrVariantPerson } from '../systems/rrVariants.js';   // RR2: the variant keepers and residents
 import { setRrHostSeams } from '../systems/rrInstall.js';   // RR1: the host's foe-spawner seam for the underworld guilds' squad
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
@@ -3852,8 +3853,16 @@ export function createWorldModes(host) {
       return makerWin;
     }
     if (destination === 'guildServiceTraining') {
-      flow = buildTrainingFlow(playerEntity, guild, membership, {
+      // RR2: UIWindowFactory.RegisterCustomUIWindow(GuildServiceTraining, GuildServiceTrainingRR) under RefinedTraining
+      const refined = rrRefinedTrainingOn();
+      flow = (refined ? buildRefinedTrainingFlow : buildTrainingFlow)(playerEntity, guild, membership, {
         rows, now, onClose: () => closeSelf(),
+        variablePrice: rrSetting('RefinedTraining.variableTrainingPrice') === true, intensive: rrSetting('RefinedTraining.intensiveTraining') === true,
+        // TrainSkillIntense (GuildServiceTrainingRR.cs:130-134): four days off the clock and four permanent points, before the fifth session
+        applyIntensive: (skill, days, points) => {
+          if (playerEntity.skills && typeof playerEntity.skills === 'object') playerEntity.skills[skill] = permanentSkillValue(playerEntity, skill) + points;   // SetPermanentSkillValue
+          interiorTicker.advance(days * MINUTES_PER_DAY);
+        },
         guildTitle: getTitle(membership, playerEntity, guild),
         shopName: b?.name ?? null, cityName: townTalk?.cityName?.() ?? null,   // MAC-BUG2: NOT_ENOUGH_GOLD_ID is a TRADE record too
         // The clock advance and the fatigue drain are the HOST's -
@@ -4703,6 +4712,12 @@ export function createWorldModes(host) {
         hit.dfBlock, hit.dfBlock.index, hit.recordIndex, hit.climateBase, hit.season,
         hit.door.matrix, {
           voxelfolk, piece, paint, setupStaticNpc, houseOwned, peopleVisible,
+          // RR2: Roleplay & Realism's variant keepers and residents (RoleplayRealism.cs:775-932) - the decision per person, with StaticNPC's own name seed and the location's climate
+          variantPerson: (pn) => rrVariantPerson(pn, {
+            buildingType: interiorBuilding?.buildingType ?? -1, quality: interiorBuilding?.quality ?? 0,
+            nameSeed: staticNpcData(pn, { ...(questSceneCtx?.() ?? {}), buildingKey: interiorBuilding?.buildingKey ?? 0 }).nameSeed,
+            worldClimate: hit.dfLocation?.climate?.climateType ?? null,
+          }),
           // ROAD-C c2/S9: SetupBeacons(door)'s building arm - the
           // entrance beacon stands at the door walked through
           // (Automap.cs:1450-1457), with rayEntrancePosOffset (0,0,0).
@@ -6295,7 +6310,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:7843's own wave-46 note); the interior
+          // a blow (world.js:7903's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7112,7 +7127,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3434`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3438`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8578,9 +8593,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3024-3046), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3028-3050), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5188). So an F9 pressed in a shop
+     *  unconditionally (world.js:5248). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -8607,7 +8622,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5280)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5340)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -8617,7 +8632,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5393`
+     *  HARD2c: this used to spell them out, and named `world.js:5453`
      *  and `dungeonContext.js:5805` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */

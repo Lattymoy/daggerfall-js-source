@@ -153,6 +153,21 @@ export class TownPopulation {
     }
   }
 
+  /** RR2: `mobileNpc.Motor.gameObject.SetActive(false)` (EnhancedRiding.cs
+   *  :161) - the trampled walker leaves the street at once, and its
+   *  pool slot is free for the next spawn (DFU's recycle sees an
+   *  inactive object and reuses it). Answers whether the person was
+   *  in this pool. */
+  retire(person) {
+    for (const it of this.pool) {
+      if (it.person !== person) continue;
+      if (it.active) it.person.release();
+      it.active = false; it.scheduleEnable = false; it.scheduleRecycle = false; it.visible = false;
+      return true;
+    }
+    return false;
+  }
+
   _inView(dx, dz, viewYaw) {
     // Within the 180-degree forward view (Vector3.Angle <= 90)
     const fx = Math.sin(viewYaw), fz = Math.cos(viewYaw);

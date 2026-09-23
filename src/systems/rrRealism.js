@@ -324,3 +324,109 @@ export const rrFightersTrainingSkills = (guildName) => (guildName === 'FightersG
  *  rest window - the port's host `toggleRest`, which is that gate. */
 export const isBedModel = (modelIdNum) => BED_MODELS.includes(modelIdNum);
 export const bedSleepingOn = () => rrModule('bedSleeping');
+
+// ======================================================================
+// RR2 - the laws past the rule modules: enhanced riding (EnhancedRiding.cs)
+// and the refined training service (GuildServiceTrainingRR.cs). The NPC
+// sprite variants are systems/rrVariants.js (they read tables this leaf
+// must not import).
+// ======================================================================
+
+// ---- EnhancedRiding.cs -------------------------------------------------
+export const RR_RIDING = Object.freeze({
+  lookPitchRatio: 2.6,      // LookPitchRatio (:22)
+  extX: 0.06, extW: 0.78,   // the neck band's texcoords (:23-24)
+  samples: 16,              // the terrain angle ring (:26)
+  pitchMaxOffset: 18,       // `PitchMaxLimit = terrainAngle + 18` (:288)
+  chargeKnockback: 100,     // `KnockbackSpeed = 100` (:200)
+  chargeFatigueMultiplier: 15,   // `DecreaseFatigue(DefaultFatigueLoss * 15)` (:204)
+});
+export const rrRidingOn = () => rrEnabled() && rrSetting('EnhancedRiding.enhancedRiding') === true;
+export const rrRidingSetting = (key) => rrSetting(`EnhancedRiding.${key}`);
+/** CanRunUnlessRidingCart (:95-99): `!((mode == Cart || inTownNoGallop) &&
+ *  IsRiding)` - no galloping with the cart, nor in a town unless
+ *  GallopingInTowns. `riding` is PlayerMotor.IsRiding. */
+export function rrCanRunRiding({ mode = 'Foot', riding = false, inTown = false, gallopingInTowns = false } = {}) {
+  const inTownNoGallop = inTown && !gallopingInTowns;
+  return !((mode === 'Cart' || inTownNoGallop) && riding);
+}
+/** Update's RealisticMovement arm (:128-136): InputManager's axis limits
+ *  while riding - backwards 0.5 (a cart 0.2), sideways 0.4 (a cart 0.1);
+ *  off the mount, all three back to 1. */
+export function rrRidingInputLimits({ riding = false, mode = 'Foot' } = {}) {
+  if (!riding) return { negVertical: 1, negHorizontal: 1, posHorizontal: 1 };
+  const cart = mode === 'Cart';
+  return { negVertical: cart ? 0.2 : 0.5, negHorizontal: cart ? 0.1 : 0.4, posHorizontal: cart ? 0.1 : 0.4 };
+}
+/** Update's terrain sample (:139-146): the ground under the player against
+ *  the ground one unit ahead, `Atan2(heightDiff, 1) * 100`. */
+export const rrTerrainAngle = (hereY, aheadY) => Math.atan2(hereY - aheadY, 1) * 100;
+/** OnGUI's average (:281-287): the ring's sum over `samples + softenFollow`
+ *  when TerrainFollowing, else 0. */
+export function rrTerrainFollow(samples, softenFollow = 0, following = true) {
+  if (!following || !samples?.length) return 0;
+  let sum = 0;
+  for (const a of samples) sum += a;
+  return sum / (samples.length + softenFollow);
+}
+/** `yAdj = (Pitch - terrainAngle - 10) * LookPitchRatio` (:289) - the
+ *  mount's sprite rises and falls with the look; `pitchDegrees` is
+ *  PlayerMouseLook.Pitch (up negative in DFU's convention). */
+export const rrRidingYAdj = (pitchDegrees, terrainAngle) => (pitchDegrees - terrainAngle - 10) * RR_RIDING.lookPitchRatio;
+/** OnGUI's neck band (:303-320): when the sprite's bottom lifts off the
+ *  screen bottom, the gap is filled with a strip of the riding texture
+ *  itself (no neck CFA imported here: TryImportCifRci answers nothing
+ *  for the port) - `yAdjNeck = yAdj / 100` of the texture from 0.2 down,
+ *  `extX .. extX + extW` across, `width - 14` wide. */
+export function rrRidingNeckBand(yAdj) {
+  const yAdjNeck = yAdj / 100;
+  return { u0: RR_RIDING.extX, u1: RR_RIDING.extX + RR_RIDING.extW, v0: 0.2 - yAdjNeck, v1: 0.2, widthTrim: 14 };
+}
+/** HandleCharge's blow (:206-210): CalculateHandToHandMin/MaxDamage over
+ *  the live skill, `Range(min, max + 1)`, plus Agility / 10 and
+ *  Willpower / 10 (C# int division). `roll` is Random.Range's slot. */
+export function rrChargeDamage({ minBase = 1, maxBase = 1, agility = 50, willpower = 50, roll = 0 } = {}) {
+  let damage = minBase + Math.floor(roll * (maxBase + 1 - minBase));
+  damage += Math.trunc(agility / 10);
+  damage += Math.trunc(willpower / 10);
+  return damage;
+}
+/** OnTriggerEnter's trample (:157-186): a running ride into a townsperson -
+ *  a civilian bleeds, cries the Breton pain clip of their gender, the
+ *  watch is called and the crime is Assault ("Nearest to manslaughter");
+ *  a guard is charged instead (a fresh guard stands where they were) and
+ *  the crime is the same. Either way the person is taken off the street. */
+export function rrTrampleOutcome({ isGuard = false, female = false } = {}) {
+  return isGuard
+    ? { chargeGuard: true, spawnGuards: false, blood: false, clip: null, crime: 'Assault', remove: true }
+    : { chargeGuard: false, spawnGuards: true, blood: true, clip: female ? 'BretonFemalePain3' : 'BretonMalePain3', crime: 'Assault', remove: true };
+}
+
+// ---- GuildServiceTrainingRR.cs ---------------------------------------------
+export const RR_WEEK_BUTTON = 21;   // `weekButton = (MessageBoxButtons)21` - the mod's own BUTTONS.RCI record ("5 Days")
+export const RR_INTENSIVE_DAYS = 4;          // `RaiseTime(SecondsPerDay * 4)` then the fifth session
+export const RR_INTENSIVE_SKILL_POINTS = 4;  // `SetPermanentSkillValue(skill, value + 4)`
+export const rrRefinedTrainingOn = () => rrEnabled() && rrSetting('RefinedTraining.refinedTraining') === true;
+/** TrainingSkillPicker_OnItemPicked (:62-66): `trainingCost -=
+ *  (int)(trainingCost * skillOfMax / 2)` with `skillOfMax = 1 - skill /
+ *  max` under variableTrainingPrice - a raw skill trains for half. */
+export function rrTrainingCost(baseCost, skillValue, trainingMax, variable = true) {
+  if (!variable || !(trainingMax > 0)) return baseCost;
+  const skillOfMax = 1 - skillValue / trainingMax;
+  return baseCost - Math.trunc(baseCost * skillOfMax / 2);
+}
+/** `intensiveCost = (trainingCost + (Level * 8) + 72) * 5` (:71). */
+export const rrIntensiveCost = (trainingCost, level) => (trainingCost + level * 8 + 72) * 5;
+/** The week button is offered `if (intensive && skillValue < trainingMax - 4)` (:86). */
+export const rrIntensiveOffered = (intensive, skillValue, trainingMax) => !!intensive && skillValue < trainingMax - 4;
+/** RoleplayRealismModData.csv - the training window's lines; `{0}` the
+ *  skill name or the intensive cost, `%a` the session's cost. */
+export const RR_TRAINING_LINES = Object.freeze({
+  trainingSkill1: 'Training your {0} skill will cost %a gold for a single session.',
+  trainingSkill2: 'You can also pay extra to train intensively for five days if you wish,',
+  trainingSkill3: 'with a training session each day, this will cost {0} gold in total.',
+  trainingSkill4: 'So, would you like to train your {0} skill with me?',
+  trainingSkillIntense1: 'You have spent the last 4 days intensively training your ',
+  trainingSkillIntense2: '{0} skill, and have improved it significantly.',
+  trainingSkillIntense3: "Now it's time to begin your fifth and final session...",
+});
