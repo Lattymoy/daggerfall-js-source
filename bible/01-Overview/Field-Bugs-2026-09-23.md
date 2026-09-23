@@ -819,7 +819,9 @@ loose; the one-step clock and the long frame; the gun's carry. Mutants:
 `tools/mutants/arrow2.json` (9, all dead). `machijp.json` MAC-I re-aimed by
 content.
 
-Not changed, recorded: the flying shaft is not opted out of the Enhanced
-Lighting shadow pass (`render/shadowPass.js`), so it can throw a shaft's
-shadow outdoors - unverified by eye.
+Not changed, and rightly: the flying shaft casts a shadow under Enhanced
+Lighting (`render/shadowPass.js`). DFU's shaft is
+`CreateDaggerfallMeshGameObject(99800, ...)` (DaggerfallMissile.cs:238), a
+plain MeshRenderer that nothing turns off, so it casts in DFU too - a
+shadow on the ground, not a second arrow.
 
