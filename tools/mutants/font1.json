@@ -20,8 +20,8 @@
   {
     "name": "chat-blurred-shadow-under-a-pixel-face",
     "file": "src/ui/chatPanel.js",
-    "old": ".dfchat-line { flex: none; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: ${PIXEL_TEXT_SHADOW}; }",
-    "new": ".dfchat-line { flex: none; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.85); }",
+    "old": ".dfchat-line { flex: none; font-size: calc(13px * var(--dfchat-scale, 1)); line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: ${PIXEL_TEXT_SHADOW}; }",
+    "new": ".dfchat-line { flex: none; font-size: calc(13px * var(--dfchat-scale, 1)); line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: 0 1px 2px #000, 0 0 6px rgba(0,0,0,.85); }",
     "tests": [
       "test/chat1.test.js"
     ]

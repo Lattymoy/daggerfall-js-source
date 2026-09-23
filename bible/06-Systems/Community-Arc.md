@@ -53,3 +53,44 @@ badge parts included, a clamped scrollTop - so a hidden box that forgets its pla
 scroll and a reader who scrolled up are all real there. `tools/mutants/chatscroll.json`: 7, 7 dead.
 `tools/chatScrollProbe.mjs` reads the real panel in Chromium: every open lands on the newest line, badged or not; a
 reader who scrolled up keeps their place with the bar counting 3; the bar's click lands.
+
+## CHAT-SIZE - the chat dragged to size, the text along with it
+
+Mac, 2026-09-23: "I want to implement the ability to click and drag the chat to resize/along with the text".
+
+**The corner.** A grip stands at the chat box's bottom-right corner - the BOX's, past the roster column (the first cut
+put it at the end of the form's row, which the Chromium probe found in the middle of the box, 227px short of the
+corner). A press captures the pointer to the grip, and the box is anchored at its top-left, so the grip's travel IS
+the size's change: the WIDTH, and the text's scale with it - `width / 440`, the sheet's own width, bounded 0.8..1.8,
+so the width runs 352..792 - and the HEIGHT, the list's lines (80px at the least, three quarters of the screen at the
+most; the sheet caps it too). "Along with the text" is the width: every size the chat's TEXT is drawn at is
+`calc(Npx * var(--dfchat-scale, 1))` - the lines, their tags, times, titles and glyphs, the hint, the status, the jump
+bar, the roster's head, rows, tags and glyphs and its column's width, the field - so a wider chat is a bigger chat
+whose lines wrap where they did, and a taller one is more history at the same size. What a THUMB presses does not
+scale: the buttons and the tabs are AUDIT SOC C8's targets. Arrow keys on the focused grip step the two sizes by 20px
+(stopped at the grip - the host's ring never walks), and a double click gives the sheet's own size back. A reader on
+the newest line stays on it through the drag; a reader who scrolled up is not moved.
+
+**The player's.** `uiPrefs` `chatWidth` / `chatListHeight`, CSS pixels, null for the sheet's own (so a player who never
+drags gets the sheet byte for byte: nothing is written). Both are numbers, so the online lane's boolean pin (OL1) has
+nothing to say about them.
+
+**The friends panel.** `ui/socialPanel.js` stood beside the chat at a FIXED 466px (14 + 440 + 12) over 840px and under
+it at a fixed 390px below that (AUDIT SOC C13, which found the two sharing a corner). A resized chat would have slid
+under both numbers. The chat now publishes its footprint on the document - its width and its list height as the same
+custom properties its own rules read, and `data-dfchat-fit` for the side: beside when 14 + the box + 12 + the panel's
+360 + 14 fits the screen, which at the sheet's own size is exactly the old 840 - and the panel places itself off them:
+beside, past the box's right edge; below, past the open box's floor (`min(220px, 34vh) + 170` IS the old 390 at the
+chat's own size). The old two rules stand for a page with no chat. The fit is re-said on the frame the screen changes
+(a rotate, a resized window), on a change only; the chat's one window listener stays the key's.
+
+**Pins.** `test/chatsize.test.js` (5): the law (the scale IS the width; the fit at the sheet's size is the old
+breakpoint), the drag (captured, both axes, kept across a session, published), the bounds, the keys and the reset, a
+reader kept on the newest line (and one who scrolled up left alone, another pointer's move and a right press
+ignored), the fit following the screen, and by source every text size on the scale and no button on it.
+`tools/mutants/chatsize.json`: 13, 13 dead. Re-aimed: `chatfit.json`'s badge-pass record and `font1.json`'s chat-line
+record (the line's size is the scale's now); two CSS pins moved to the new forms, `chatfit` (the roster column) and
+`soc3` (the list's height), each with its default unchanged. `tools/chatSizeProbe.mjs` drags the real grip in Chromium
+at 1440x900 and 900x900: 660px and 19.5px after a 220px drag, the list taller by exactly the travel, Send still 14px,
+the grip clear of the Close button, the friends panel beside the box at 1440 and under it at 900 and over it at
+neither, the size back after a reload, and the sheet's own size after a double click - 24 checks.

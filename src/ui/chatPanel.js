@@ -103,6 +103,25 @@
 // A host that passes none of the three gets the chat it had, byte for
 // byte: no button is built, no colour is asked for, no row is a door.
 //
+// CHAT-SIZE (2026-09-23, Mac: "I want to implement the ability to click and
+// drag the chat to resize/along with the text"): THE CORNER. A grip at the
+// box's bottom-right corner drags it from there: the WIDTH is
+// the text's scale (width / 440, the sheet's own width, between 0.8 and
+// 1.8 - every size the chat's TEXT is drawn at is `calc(Npx * scale)`:
+// the lines, the tags and the times, the roster's rows and its column,
+// the field) and the HEIGHT is how many lines the list shows. So a wider
+// chat is a bigger chat, its lines wrapping where they did, and a taller
+// one is more history. What a THUMB presses does not scale (the buttons,
+// the tabs: AUDIT SOC C8's 44px targets are the targets). The two numbers
+// are the player's (uiPrefs chatWidth/chatListHeight; null is the sheet's
+// own size), arrow keys on the focused grip step them, and a double click
+// on it gives the sheet's size back. The panel publishes its footprint on
+// the document - the width and the list height as the same custom
+// properties its own rules read, and `data-dfchat-fit` for whether the
+// friends panel (ui/socialPanel.js) still fits BESIDE it - because that
+// panel was placed off the chat's old fixed size (AUDIT SOC C13) and a
+// resized chat would have slid under it.
+//
 // CHAT-SCROLL (2026-09-23, Starempire42 on Discord: "Make it so when you
 // open the chat it automatically scrolls to the newest message ...
 // Currently when you open the chat it just stays idle so you have to
@@ -143,6 +162,32 @@ import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelif
 /** The action whose key opens the chat: DFU's own cursor key (Enter by default), since opening frees the cursor. */
 export const CHAT_OPEN_ACTION = 'ActivateCursor';
 
+/** CHAT-SIZE: the sheet's own width, which is the text's scale 1 - the scale is the dragged width over it, inside these
+ *  bounds, so the width bounds are the scale's. */
+export const CHAT_WIDTH_BASE = 440;
+export const CHAT_SCALE_MIN = 0.8;
+export const CHAT_SCALE_MAX = 1.8;
+export const CHAT_WIDTH_MIN = Math.round(CHAT_WIDTH_BASE * CHAT_SCALE_MIN);
+export const CHAT_WIDTH_MAX = Math.round(CHAT_WIDTH_BASE * CHAT_SCALE_MAX);
+/** CHAT-SIZE: the list's height - a few lines at the least, never past three quarters of the screen (the sheet says so too). */
+export const CHAT_LIST_MIN = 80;
+export const CHAT_LIST_MAX_VH = 75;
+/** CHAT-SIZE: one arrow key on the focused grip, in CSS pixels. */
+export const CHAT_SIZE_STEP = 20;
+/** CHAT-SIZE: the friends panel's width (ui/socialPanel.js SOCIAL_CSS - a pin holds the two equal): the chat is what
+ *  knows its own size, so it is the chat that says whether that panel still fits beside it. */
+export const SOCIAL_PANEL_WIDTH = 360;
+/** CHAT-SIZE: the text's scale for a dragged width. */
+export const chatScaleFor = (width) => Math.min(CHAT_SCALE_MAX, Math.max(CHAT_SCALE_MIN, width / CHAT_WIDTH_BASE));
+/** CHAT-SIZE: 'beside' when the friends panel fits to the right of the chat box on this screen (14 + the box + 12 +
+ *  the panel + 14 - the sheet's own gutters), else 'below'. `width` null is the sheet's own. At the sheet's size this
+ *  is the friends panel's old 840px breakpoint exactly. */
+export function chatFit(viewportWidth, width = null) {
+  const vw = Number(viewportWidth) || 0;
+  const box = Math.min(width ?? CHAT_WIDTH_BASE, vw - 28);
+  return vw >= 14 + box + 12 + SOCIAL_PANEL_WIDTH + 14 ? 'beside' : 'below';
+}
+
 export const CHAT_STYLE_ID = 'dagger-chat-style';
 
 /** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is not loaded.
@@ -164,13 +209,13 @@ export const CHAT_STYLE_ID = 'dagger-chat-style';
 export const CHAT_CSS = `
 ${PIXELIFY_FIVE_FACE}
 .dfchat { position: fixed; left: calc(14px + env(safe-area-inset-left, 0px)); top: calc(44px + env(safe-area-inset-top, 0px));
-  width: min(440px, calc(100vw - 28px)); z-index: 5; pointer-events: none;
+  width: min(var(--dfchat-w, 440px), calc(100vw - 28px)); z-index: 5; pointer-events: none;
   ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfchat.touch { top: calc(72px + env(safe-area-inset-top, 0px)); }
 .dfchat-peek { display: flex; flex-direction: column; gap: 3px; }
-.dfchat-line { flex: none; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: ${PIXEL_TEXT_SHADOW}; }
+.dfchat-line { flex: none; font-size: calc(13px * var(--dfchat-scale, 1)); line-height: 1.35; overflow-wrap: anywhere; overflow: hidden; text-shadow: ${PIXEL_TEXT_SHADOW}; }
 .dfchat-name { color: var(--brass, #c08a3e); font-weight: 600; }
-.dfchat-tag { color: var(--dim, #8b8578); font-size: 10px; margin: 0 6px 0 2px; }
+.dfchat-tag { color: var(--dim, #8b8578); font-size: calc(10px * var(--dfchat-scale, 1)); margin: 0 6px 0 2px; }
 .dfchat-line.mine .dfchat-name { color: #dcc27c; }
 .dfchat-line.system .dfchat-text { color: #8fb8d8; font-style: italic; }
 /* RED1 - THE SERVER SPEAKING. Every red line is a system line too
@@ -181,14 +226,14 @@ ${PIXELIFY_FIVE_FACE}
    colour, the one a refusal already wears. */
 .dfchat-line.red .dfchat-text { color: #e2453a; font-style: normal; font-weight: 600;
   letter-spacing: .01em; }
-.dfchat-time { color: var(--dim, #8b8578); font-size: 10px; margin-right: 6px; }
-.dfchat-hint { margin-top: 4px; font-size: 11px; color: var(--dim, #8b8578); opacity: .75; text-shadow: ${PIXEL_TEXT_SHADOW}; }
-.dfchat-status { margin-top: 4px; font-size: 11px; color: #e0b070; text-shadow: ${PIXEL_TEXT_SHADOW}; }
+.dfchat-time { color: var(--dim, #8b8578); font-size: calc(10px * var(--dfchat-scale, 1)); margin-right: 6px; }
+.dfchat-hint { margin-top: 4px; font-size: calc(11px * var(--dfchat-scale, 1)); color: var(--dim, #8b8578); opacity: .75; text-shadow: ${PIXEL_TEXT_SHADOW}; }
+.dfchat-status { margin-top: 4px; font-size: calc(11px * var(--dfchat-scale, 1)); color: #e0b070; text-shadow: ${PIXEL_TEXT_SHADOW}; }
 .dfchat-status:empty { display: none; }
 .dfchat-open { display: none; pointer-events: auto; margin-top: 4px; align-items: center; gap: 6px; }
 .dfchat.touch .dfchat-open { display: inline-flex; }
 .dfchat.touch .dfchat-hint { display: none; }
-.dfchat-box { display: none; pointer-events: auto; background: rgba(14, 16, 19, .84); border: 1px solid var(--iron, #2b323b); border-radius: 6px; backdrop-filter: blur(4px); }
+.dfchat-box { display: none; position: relative; pointer-events: auto; background: rgba(14, 16, 19, .84); border: 1px solid var(--iron, #2b323b); border-radius: 6px; backdrop-filter: blur(4px); }
 .dfchat[data-state="open"] .dfchat-box { display: flex; flex-direction: column; }
 .dfchat[data-state="open"] .dfchat-peek, .dfchat[data-state="open"] .dfchat-hint, .dfchat[data-state="open"] .dfchat-open { display: none; }
 .dfchat-tabs { display: flex; gap: 2px; padding: 4px 4px 0; border-bottom: 1px solid var(--iron, #2b323b); }
@@ -197,16 +242,25 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-tab.active { color: var(--bone, #e9e4d9); border-bottom-color: var(--brass, #c08a3e); }
 .dfchat-badge { margin-left: 6px; background: var(--brass, #c08a3e); color: var(--ink, #0e1013); border-radius: 8px; padding: 0 6px; font-size: 11px; }
 .dfchat-badge:empty { display: none; }
-.dfchat-list { height: min(220px, 34vh); overflow-y: auto; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
+.dfchat-list { height: var(--dfchat-list-h, min(220px, 34vh)); overflow-y: auto; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
 .dfchat-list .dfchat-line { text-shadow: none; }
 /* CHAT-SCROLL: the lines that arrived under a reader who scrolled up, and the way back down to them */
 .dfchat-jump { display: none; flex: none; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-top: 1px solid var(--iron, #2b323b);
-  font: inherit; font-size: 11px; padding: 3px 8px; cursor: pointer; text-align: center; }
+  font: inherit; font-size: calc(11px * var(--dfchat-scale, 1)); padding: 3px 8px; cursor: pointer; text-align: center; }
 .dfchat-jump.on { display: block; }
-.dfchat-form { display: flex; gap: 4px; padding: 6px; border-top: 1px solid var(--iron, #2b323b); }
-.dfchat-input { flex: 1; min-width: 0; background: var(--ink, #0e1013); color: var(--bone, #e9e4d9); border: 1px solid var(--iron, #2b323b); border-radius: 3px; padding: 6px 8px; font: inherit; font-size: 14px; }
+.dfchat-form { display: flex; gap: 4px; padding: 6px 16px 6px 6px; border-top: 1px solid var(--iron, #2b323b); }
+.dfchat-input { flex: 1; min-width: 0; background: var(--ink, #0e1013); color: var(--bone, #e9e4d9); border: 1px solid var(--iron, #2b323b); border-radius: 3px; padding: 6px 8px; font: inherit; font-size: calc(14px * var(--dfchat-scale, 1)); }
 .dfchat-input:focus { outline: 1px solid var(--brass, #c08a3e); }
 .dfchat-send, .dfchat-close, .dfchat-open, .dfchat-hide, .dfchat-show { background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit; font-size: 14px; padding: 6px 10px; cursor: pointer; }
+/* CHAT-SIZE: the corner the box is dragged from - the BOX's own bottom-right, over both columns (the form's row ends
+   where the conversation column does, and the roster stands beyond it). The width it gives is the text's scale
+   (--dfchat-scale), the height the list's lines; arrow keys on it step the same two, and a double click puts the
+   sheet's own size back. The form keeps its last button clear of it, and the roster its last row. */
+.dfchat-grip { position: absolute; right: 0; bottom: 0; width: 12px; height: 12px; cursor: nwse-resize; touch-action: none; border-bottom-right-radius: 6px;
+  background: linear-gradient(135deg, transparent 0 50%, var(--dim, #8b8578) 50% 58%, transparent 58% 70%, var(--dim, #8b8578) 70% 78%, transparent 78%); opacity: .75; }
+.dfchat-grip:hover, .dfchat-grip:focus-visible { opacity: 1; outline: none; }
+.dfchat.touch .dfchat-grip { width: 26px; height: 26px; }
+.dfchat.touch .dfchat-form { padding-right: 30px; }
 
 /* CHAT-R2: THE BOX IS TWO COLUMNS - the conversation and who is in it.
    The roster is a SIBLING of the list rather than a floating panel, so
@@ -221,35 +275,35 @@ ${PIXELIFY_FIVE_FACE}
    do. The column's content is ABSOLUTE inside it now: the column is
    exactly as tall as the conversation beside it, whatever the room
    holds, and the list scrolls inside that. */
-.dfchat-who { flex: none; width: 148px; border-left: 1px solid var(--iron, #2b323b); position: relative; min-height: 0; }
+.dfchat-who { flex: none; width: calc(148px * var(--dfchat-scale, 1)); border-left: 1px solid var(--iron, #2b323b); position: relative; min-height: 0; }
 .dfchat-who-inner { position: absolute; inset: 0; display: flex; flex-direction: column; min-height: 0; }
-.dfchat-whohead { flex: none; padding: 6px 8px 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim, #8b8578); }
-.dfchat-wholist { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 6px; display: flex; flex-direction: column; gap: 1px; }
+.dfchat-whohead { flex: none; padding: 6px 8px 4px; font-size: calc(11px * var(--dfchat-scale, 1)); letter-spacing: .06em; text-transform: uppercase; color: var(--dim, #8b8578); }
+.dfchat-wholist { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 14px; display: flex; flex-direction: column; gap: 1px; }
 /* CHAT-FIT: A ROW IS ONE LINE. Title, name, glyphs and tag stand in a
    nowrap flex line; the NAME is the part that gives (ellipsis, the full
    name in its title), because a title and a glyph are a few pixels and
    the name is what the row is for. overflow-wrap: anywhere had every
    long name folding under its own title. The row itself stays a block,
    so SOC3's action menu opens UNDER the line and not beside it. */
-.dfchat-who-row { font-size: 12px; line-height: 1.35; color: var(--bone, #e9e4d9); }
+.dfchat-who-row { font-size: calc(12px * var(--dfchat-scale, 1)); line-height: 1.35; color: var(--bone, #e9e4d9); }
 .dfchat-who-line { display: flex; align-items: baseline; white-space: nowrap; min-width: 0; }
 .dfchat-who-row.me .dfchat-who-name { color: #dcc27c; }
 .dfchat-who-name { font-weight: 600; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dfchat-who-title, .dfchat-who-glyph, .dfchat-who-tag { flex: none; }
-.dfchat-who-tag { color: var(--dim, #8b8578); font-size: 10px; margin-left: 4px; }
+.dfchat-who-tag { color: var(--dim, #8b8578); font-size: calc(10px * var(--dfchat-scale, 1)); margin-left: 4px; }
 /* ACC3c: the title BEFORE the name and the glyphs AFTER it, which is
    the world label read left to right. A roster column is narrow, so
    the title is small and may not push the name off the row - it
    shrinks first, and the name is what has to survive. */
-.dfchat-who-title { font-size: 10px; letter-spacing: .05em; margin-right: 4px;
+.dfchat-who-title { font-size: calc(10px * var(--dfchat-scale, 1)); letter-spacing: .05em; margin-right: 4px;
   text-transform: uppercase; }
-.dfchat-who-glyph { width: 11px; height: 11px; display: inline-block; vertical-align: -1px;
+.dfchat-who-glyph { width: calc(11px * var(--dfchat-scale, 1)); height: calc(11px * var(--dfchat-scale, 1)); display: inline-block; vertical-align: -1px;
   margin-left: 3px; }
 /* CHAT-FIT: the same badge on a chat LINE - the title before the name
    at the tag's size, the glyphs after it at the roster's size. */
-.dfchat-line-title { font-size: 10px; letter-spacing: .05em; text-transform: uppercase; margin-right: 4px; }
-.dfchat-line-glyph { width: 11px; height: 11px; display: inline-block; vertical-align: -1px; margin-left: 3px; }
-.dfchat-who-more { font-size: 11px; color: var(--dim, #8b8578); padding-top: 4px; }
+.dfchat-line-title { font-size: calc(10px * var(--dfchat-scale, 1)); letter-spacing: .05em; text-transform: uppercase; margin-right: 4px; }
+.dfchat-line-glyph { width: calc(11px * var(--dfchat-scale, 1)); height: calc(11px * var(--dfchat-scale, 1)); display: inline-block; vertical-align: -1px; margin-left: 3px; }
+.dfchat-who-more { font-size: calc(11px * var(--dfchat-scale, 1)); color: var(--dim, #8b8578); padding-top: 4px; }
 /* the roster is the first thing to go when there is no width for it */
 @media (max-width: 560px) { .dfchat-who { display: none; } }
 
@@ -389,6 +443,12 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const send = el('button', 'dfchat-send', 'Send'); send.type = 'submit';
   const close = el('button', 'dfchat-close', '✕'); close.type = 'button';
   close.setAttribute('aria-label', 'Close chat');
+  // CHAT-SIZE: the corner the box is dragged from - the last thing in the form's row, so it stands at the box's corner
+  const grip = el('div', 'dfchat-grip');
+  grip.tabIndex = 0;
+  grip.setAttribute('role', 'button');
+  grip.setAttribute('aria-label', 'Resize chat');
+  grip.setAttribute('title', 'Drag to resize - wider is larger text, taller is more lines. Double-click for the usual size.');
   const hide = el('button', 'dfchat-hide', 'Hide'); hide.type = 'button';
   hide.setAttribute('aria-label', 'Hide chat');
   const show = el('button', 'dfchat-show', 'Chat'); show.type = 'button';
@@ -437,7 +497,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   if (social) tabs.append(socialButton('dfchat-social-tab'));
   main.append(list, jump, form);
   cols.append(main, who);
-  box.append(tabs, cols);
+  box.append(tabs, cols, grip);   // CHAT-SIZE: the grip stands at the BOX's corner, over both columns
   // the Social button follows the Chat button (they share a line when both are drawn); `show` and the box keep their places
   root.append(peek, hint, status, openBtn, ...(socialOut ? [socialOut] : []), show, box);
   doc.body.append(root);
@@ -470,6 +530,48 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   };
   /** CHAT-SCROLL: to the newest line, and nothing is left unseen below it. */
   const toNewest = () => { list.scrollTop = list.scrollHeight ?? 0; unseen = 0; paintJump(); };
+
+  // CHAT-SIZE: the player's two numbers - the box's width and the list's height, CSS pixels, null for the sheet's own.
+  // They are written as the custom properties the sheet reads, on the DOCUMENT (the friends panel places itself off the
+  // same two), falling back to the panel's own root where a document has no element of its own (the tests' fakes).
+  const sizeOf = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null);
+  let sizeW = sizeOf(getPref('chatWidth'));
+  let sizeH = sizeOf(getPref('chatListHeight'));
+  let fit = null;
+  const docEl = doc.documentElement ?? null;
+  const vw = () => Number(win.innerWidth) || 1280;
+  const vh = () => Number(win.innerHeight) || 800;
+  const clampW = (w) => Math.round(Math.min(CHAT_WIDTH_MAX, Math.max(CHAT_WIDTH_MIN, w)));
+  const clampH = (h) => Math.round(Math.max(CHAT_LIST_MIN, Math.min(h, vh() * CHAT_LIST_MAX_VH / 100)));
+  const setVar = (k, v) => { const st = docEl?.style ?? root.style; if (v == null) st.removeProperty?.(k); else st.setProperty?.(k, v); };
+  /** The friends panel's side of the chat, said once per change. */
+  const publishFit = () => {
+    const next = chatFit(vw(), sizeW);
+    if (next === fit) return;
+    fit = next;
+    docEl?.setAttribute?.('data-dfchat-fit', fit);
+  };
+  const applySize = () => {
+    setVar('--dfchat-w', sizeW == null ? null : `${sizeW}px`);
+    setVar('--dfchat-scale', sizeW == null ? null : String(Math.round(chatScaleFor(sizeW) * 1000) / 1000));
+    setVar('--dfchat-list-h', sizeH == null ? null : `min(${sizeH}px, ${CHAT_LIST_MAX_VH}vh)`);
+    publishFit();
+  };
+  const keepSize = () => { setPref('chatWidth', sizeW); setPref('chatListHeight', sizeH); };
+  /** The size a drag or a key starts from: the player's, or the box as the sheet drew it. */
+  const widthNow = () => sizeW ?? clampW(Math.min(CHAT_WIDTH_BASE, vw() - 28));
+  /** The list's own padding, top and bottom: its clientHeight carries it, and the height the sheet sets does not. */
+  const listPadY = () => { try { const cs = win.getComputedStyle?.(list); return cs ? (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0) : 0; } catch { return 0; } };
+  const listNow = () => sizeH ?? clampH((Number(list.clientHeight) || Math.min(220, vh() * 0.34)) - listPadY());
+  /** To a size, keeping a reader who was on the newest line on it (a list that shrinks under them hides it). */
+  const resizeTo = (w, h, follow) => {
+    sizeW = clampW(w); sizeH = clampH(h);
+    applySize();
+    if (follow) list.scrollTop = list.scrollHeight ?? 0;
+  };
+  const resetSize = () => { sizeW = null; sizeH = null; applySize(); keepSize(); if (log.open && unseen === 0) list.scrollTop = list.scrollHeight ?? 0; };
+  let drag = null;   // { id, x, y, w, h, follow } while the grip is held
+  applySize();
 
   /** A drawn line, and the span its AUTHOR's name is in - SOC3 colours that span from the host's `nameColor` without
    *  rebuilding the row, so a party formed while the chat is open turns the names green where they already stand. */
@@ -808,6 +910,38 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   // are the ELEMENTS' listeners - the panel's one window listener stays the key's (AUDIT CHAT D5).
   jump.addEventListener('click', () => { toNewest(); input.focus?.(); });
   list.addEventListener('scroll', () => { if (unseen && log.open && atNewest()) { unseen = 0; paintJump(); } });
+  // CHAT-SIZE: THE GRIP. A press captures the pointer to the grip, so the drag keeps its target however far the hand
+  // travels and the host never sees the moves as a press anywhere else (the box already swallows the press itself,
+  // and a release is never stopped - AUDIT CHAT C5). The box is anchored at its top-left, so the grip's travel IS the
+  // size's change. All of it is the grip's own listeners: the panel's one window listener stays the key's (D5).
+  grip.addEventListener('pointerdown', (e) => {
+    if (e.button != null && e.button !== 0) return;
+    e.preventDefault?.();
+    drag = { id: e.pointerId ?? null, x: Number(e.clientX) || 0, y: Number(e.clientY) || 0, w: widthNow(), h: listNow(), follow: unseen === 0 && atNewest() };
+    if (e.pointerId != null) grip.setPointerCapture?.(e.pointerId);
+  });
+  grip.addEventListener('pointermove', (e) => {
+    if (!drag || (drag.id != null && e.pointerId != null && e.pointerId !== drag.id)) return;
+    resizeTo(drag.w + ((Number(e.clientX) || 0) - drag.x), drag.h + ((Number(e.clientY) || 0) - drag.y), drag.follow);
+  });
+  const endDrag = () => {
+    if (!drag) return;
+    const id = drag.id;
+    drag = null;
+    if (id != null) grip.releasePointerCapture?.(id);
+    keepSize();
+  };
+  grip.addEventListener('pointerup', endDrag);
+  grip.addEventListener('pointercancel', endDrag);
+  grip.addEventListener('dblclick', () => resetSize());
+  // the keyboard's way: arrows step the width and the list's height, stopped here so the host's ring never walks
+  grip.addEventListener('keydown', (e) => {
+    const step = { ArrowLeft: [-CHAT_SIZE_STEP, 0], ArrowRight: [CHAT_SIZE_STEP, 0], ArrowUp: [0, -CHAT_SIZE_STEP], ArrowDown: [0, CHAT_SIZE_STEP] }[e.code];
+    if (!step) return;
+    e.preventDefault?.(); e.stopPropagation?.();
+    resizeTo(widthNow() + step[0], listNow() + step[1], unseen === 0 && atNewest());
+    keepSize();
+  });
 
   /**
    * CHAT-R2: PUT IT AWAY, and bring it back.
@@ -851,6 +985,9 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     /** CHAT-R2: the hidden state, for the host and for the pins. */
     isHidden: () => hidden,
     setHidden,
+    /** CHAT-SIZE: the player's size (null: the sheet's own), and the way back to the sheet's. */
+    size: () => ({ width: sizeW, listHeight: sizeH, scale: sizeW == null ? 1 : chatScaleFor(sizeW), fit }),
+    resetSize,
     // AUDIT-CHATR F5: a `whoRows()` accessor stood here, labelled "for
     // the pins". No pin ever called it - they read the drawn column out
     // of the fake document, which is the stronger reading anyway - so it
@@ -873,6 +1010,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       if (!alive) return;
       if (covered || overlay()) { if (log.open) closePanel(); if (root.style.display !== 'none') root.style.display = 'none'; return; }
       if (root.style.display !== '') root.style.display = '';
+      publishFit();   // CHAT-SIZE: the screen can change under the chat (a rotate, a resized window) - said on a change only
       if (log.version !== painted) paint();
       // CHAT-R2/R1: the dataset the sheet reads, and the roster - both
       // every frame, because neither rides the log's version: a peer
@@ -891,6 +1029,9 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       if (!alive) return;
       alive = false;
       win.removeEventListener('keydown', onKey, true);
+      // CHAT-SIZE: the footprint it published goes with it - a page with no chat places the friends panel by the sheet
+      for (const k of ['--dfchat-w', '--dfchat-scale', '--dfchat-list-h']) setVar(k, null);
+      docEl?.removeAttribute?.('data-dfchat-fit');
       root.remove?.();
     },
   };

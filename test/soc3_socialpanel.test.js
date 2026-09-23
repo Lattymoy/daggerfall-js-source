@@ -828,7 +828,7 @@ test('AUDIT SOC C8/C13: the touch skin\'s 44px targets, and the panel BELOW the 
   assert.match(SOCIAL_CSS, /@media \(min-width: 840px\) \{ \.dfsocial \{ left: calc\(466px \+ env\(safe-area-inset-left, 0px\)\); \} \}/, 'and beside it where there is room, as before');
   // the two numbers are a pair with the chat's own box: top 44 + tabs + list min(220px, 34vh) + form
   assert.match(CHAT_CSS, /\.dfchat \{[^}]*top: calc\(44px \+ env\(safe-area-inset-top, 0px\)\);/);
-  assert.match(CHAT_CSS, /\.dfchat-list \{ height: min\(220px, 34vh\);/);
+  assert.match(CHAT_CSS, /\.dfchat-list \{ height: var\(--dfchat-list-h, min\(220px, 34vh\)\);/, 'CHAT-SIZE: the dragged height when there is one, the sheet\'s own otherwise');
 });
 
 test('AUDIT SOC C11: a disabled control DRAWS its reason as well as titling it - on the panel\'s buttons and on a roster row\'s menu (mutants: the reason left on `title` alone, where a finger can never read it; the reason drawn on a live control too; the title dropped, which the mouse still wants)', () => {

@@ -99,6 +99,19 @@ ${PIXELIFY_FIVE_FACE}
 @media (max-width: 839px) {
   .dfsocial, .dfsocial.touch { top: calc(390px + env(safe-area-inset-top, 0px)); max-height: min(460px, calc(100vh - 398px)); }
 }
+/* CHAT-SIZE (2026-09-23, Mac: "click and drag the chat to resize"): the chat is dragged to size now, so the two rules
+   above are only a page's with no chat panel. The chat says which side of it this panel fits on (data-dfchat-fit on
+   the document: beside when 14 + its box + 12 + this panel's 360 + 14 fits the screen, which at the chat's own size
+   is exactly the 840px above) and publishes the width and the list height its own rules read. BESIDE: past the box's
+   right edge, at the box's own top. BELOW: past the open box's floor - the list's height plus the box's fixed parts
+   (top 44, tabs 34, the form, the jump bar), with the old 390's room to spare: min(220px, 34vh) + 170 IS 390 at the
+   chat's own size - and a scaled field's growth on top. */
+:root[data-dfchat-fit="beside"] .dfsocial { left: calc(26px + min(var(--dfchat-w, 440px), 100vw - 28px) + env(safe-area-inset-left, 0px));
+  top: calc(44px + env(safe-area-inset-top, 0px)); max-height: min(460px, 70vh); }
+:root[data-dfchat-fit="beside"] .dfsocial.touch { top: calc(72px + env(safe-area-inset-top, 0px)); }
+:root[data-dfchat-fit="below"] .dfsocial, :root[data-dfchat-fit="below"] .dfsocial.touch { left: calc(14px + env(safe-area-inset-left, 0px));
+  top: calc(var(--dfchat-list-h, min(220px, 34vh)) + 170px + 20px * (var(--dfchat-scale, 1) - 1) + env(safe-area-inset-top, 0px));
+  max-height: min(460px, calc(100vh - var(--dfchat-list-h, min(220px, 34vh)) - 178px - 20px * (var(--dfchat-scale, 1) - 1))); }
 .dfsocial-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--iron, #2b323b); }
 .dfsocial-title { flex: 1; min-width: 0; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
 .dfsocial-close { flex: none; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-radius: 3px; font: inherit; font-size: 13px; padding: 2px 8px; cursor: pointer; }

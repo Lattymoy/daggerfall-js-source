@@ -56,7 +56,7 @@ function mount({ badges = new Map(), svg = true, roster = null } = {}) {
 
 test('CHAT-FIT: the sheet - the column is absolute inside a relative column of fixed width, a row\'s line is nowrap flex and only the NAME shrinks (ellipsis), and the line badge classes exist at the roster\'s sizes', () => {
   const who = rule('.dfchat-who');
-  assert.equal(who.position, 'relative'); assert.equal(who.width, '148px'); assert.equal(who.display, undefined, 'the column is not a flex column any more - its inner is');
+  assert.equal(who.position, 'relative'); assert.equal(who.width, 'calc(148px * var(--dfchat-scale, 1))', 'CHAT-SIZE: 148px at the sheet\'s own size, and wider with the text'); assert.equal(who.display, undefined, 'the column is not a flex column any more - its inner is');
   const inner = rule('.dfchat-who-inner');
   assert.equal(inner.position, 'absolute'); assert.equal(inner.inset, '0'); assert.equal(inner.display, 'flex'); assert.equal(inner['flex-direction'], 'column');
   const list = rule('.dfchat-wholist'); assert.equal(list['overflow-y'], 'auto'); assert.equal(list['min-height'], '0');
