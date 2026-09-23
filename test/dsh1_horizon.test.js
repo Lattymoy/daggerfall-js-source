@@ -85,8 +85,8 @@ test('DSH1: the lid clears the horizon by a skirt, and the near early-out is the
   assert.match(COMPOSITE_FS, /max\(el, 0\.0\) \/ \(0\.5 \* PI\)/, 'over the skirt the map’s bottom row is held, not sampled off the end');
   // the march's two early-outs agree: both answer the aerial fade's
   // colour, so the lid has no seam where one takes over from the other.
-  assert.match(MARCH_FS, /if \(dir\.y <= 0\.004\) \{ outColor = vec4\(uHorizonColor, 0\.0\); return; \}/, 'the near early-out: the fade’s colour, fully covering');
-  assert.match(MARCH_FS, /if \(t0 > 120000\.0\) \{ outColor = vec4\(uHorizonColor, 0\.0\); return; \}/, 'the far one, unchanged, and the same answer');
+  assert.match(MARCH_FS, /if \(dir\.y <= 0\.004\) \{ outColor = underCurtains\(uHorizonColor, 0\.0, cam, dir\); return; \}/, 'the near early-out: the fade’s colour, fully covering (VC7c: with the rain curtains in front of it)');
+  assert.match(MARCH_FS, /if \(t0 > 120000\.0\) \{ outColor = underCurtains\(uHorizonColor, 0\.0, cam, dir\); return; \}/, 'the far one, unchanged, and the same answer');
   assert.doesNotMatch(MARCH_FS, /outColor = vec4\(0\.0, 0\.0, 0\.0, 1\.0\); return;/, 'no row answers "clear sky" at the horizon any more');
 });
 

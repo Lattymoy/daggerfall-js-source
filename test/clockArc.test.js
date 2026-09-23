@@ -50,14 +50,15 @@ test('CLK1: the controller - the presentation differences the host\'s classicMin
   assert.doesNotMatch(use, /60 \/ 12|\* 12\b/, 'no time scale hard-coded in the presentation');
   assert.match(use, /weatherRowNow = easeWeather\(weatherRowNow, want, easeDt\);/);
   assert.match(use, /driftXZ\[0\] \+= weatherRowNow\.wind\[0\] \* dt \* WIND_SECONDS_PER_MINUTE;\s*\n\s*driftXZ\[1\] \+= weatherRowNow\.wind\[1\] \* dt \* WIND_SECONDS_PER_MINUTE;/);
-  assert.match(use, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ,/, 'the clouds take the same minutes');
+  assert.match(use, /clouds\.setState\(cloudSky, cb\.row, cb\.word, easeDt, driftXZ,/, 'the clouds take the same minutes (WEATHER3c: on the row and word they stand on)');
   assert.match(shared, /let lastMin = null;/);
   // the lab keeps the same shape: a game-minute clock, its own integral, ?still stopping both
   const lab = read('src/tools/skyLab.js');
   assert.match(lab, /const dtMin = still \? 0 : Math\.min\(1, \(nowReal - labLast\) \/ 1000\) \/ WIND_SECONDS_PER_MINUTE;/);
   assert.match(lab, /labDrift\[0\] \+= rowWind\[0\] \* dtMin \* WIND_SECONDS_PER_MINUTE;/);
-  assert.match(lab, /clouds\.setState\(cst, \{ cover: cst\.cloudCover, soft: cst\.cloudSoft \}, \$\('weather'\)\.value, dtMin, labDrift, 0\);/);
-  assert.match(lab, /skyState\(\{ minuteOfDay, weather: \$\('weather'\)\.value, phases, seconds, drift: labDrift \}\)/);
+  assert.match(lab, /clouds\.setState\(cst, \{ cover: cst\.cloudCover, soft: cst\.cloudSoft \}, \$\('weather'\)\.value, dtMin, labDrift, 0, \[0, 0, 0\]\);/);
+  // VC7a: the lab hands its own game minute too, the clock the clouds live on
+  assert.match(lab, /skyState\(\{ minuteOfDay, weather: \$\('weather'\)\.value, classicMinutes: labClock, phases, seconds, drift: labDrift \}\)/);
   // the seconds-named constant is gone from the tree's readers
   for (const f of ['src/render/enhancedSky.js', 'src/render/volumetricClouds.js', 'src/scenes/shared.js', 'src/world/windmills.js']) assert.doesNotMatch(read(f), /WEATHER_EASE_SECONDS/, `${f}: no reader of the old constant`);
 });
@@ -83,7 +84,7 @@ test('CLK1: the wrap - the drift and the recenter shift are unbounded integrals;
 import {
   resetWeatherSim, setWeatherEvolution, weatherEvolutionOn, evolveClimateWeathers, rollClimateWeathersForDay, tickWeather,
   weatherForClimate, restoreWeather, weatherJumpStamp, EVOLVE_CHANCE_PER_HOUR, ZONE_CLIMATES, STALE_DRAIN_MINUTES, WEATHER_ENUM,
-  currentWeather, WEATHER_TYPES, setWeather,
+  currentWeather, WEATHER_TYPES, setWeather, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
@@ -91,7 +92,7 @@ import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 const zonesNow = () => ZONE_CLIMATES.map((c) => weatherForClimate(c));
 
 test('CLK2: the evolution - hourly, seeded on the hour and the zone, replayable; a day of it turns most zones at least once; the classic lane never sees it', () => {
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   setWeatherEvolution(true);
   assert.equal(weatherEvolutionOn(), true);
   const day0 = 100 * MINUTES_PER_DAY;
@@ -107,12 +108,12 @@ test('CLK2: the evolution - hourly, seeded on the hour and the zone, replayable;
   const after = zonesNow();
   assert.notDeepEqual(after, before, 'the zones moved');
   // REPLAYABLE: the same day evolves the same way
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
   for (let m = day0 + 60; m <= day0 + MINUTES_PER_DAY; m += 10) evolveClimateWeathers(m);
   assert.deepEqual(zonesNow(), after, 'seeded on the hour and the zone - whoever watches');
   // and the ten-minute walk and the one-hour walk agree: the hour is the unit
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
   for (let m = day0 + 60; m <= day0 + MINUTES_PER_DAY; m += 60) evolveClimateWeathers(m);
   assert.deepEqual(zonesNow(), after, 'the same hours, however the clock is stepped');
@@ -120,19 +121,19 @@ test('CLK2: the evolution - hourly, seeded on the hour and the zone, replayable;
   assert.ok(EVOLVE_CHANCE_PER_HOUR > 0.05 && EVOLVE_CHANCE_PER_HOUR < 0.3);
   assert.ok(after.every((w) => w >= 0 && w <= 6));
   // THE CLASSIC LANE: off, the hours pass and nothing moves
-  resetWeatherSim(); setWeatherEvolution(false);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(false);
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
   let moved = false;
   for (let m = day0 + 60; m <= day0 + MINUTES_PER_DAY; m += 60) moved = evolveClimateWeathers(m) || moved;
   assert.equal(moved, false);
   assert.deepEqual(zonesNow(), before, 'DFU\'s day roll is the whole machine there');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
 });
 
 test('CLK2: the change lands through DFU\'s own drain - live under the sky it is a front, out of sight it is a jump; a jump of days walks only the last 24 hours; a load re-anchors', () => {
   const day0 = 200 * MINUTES_PER_DAY;
   // find an hour that changes the Woodlands zone, from sunny
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
   let hourOfChange = null;
   for (let h = 1; h <= 24 * 20 && hourOfChange === null; h++) {
@@ -142,7 +143,7 @@ test('CLK2: the change lands through DFU\'s own drain - live under the sky it is
   }
   assert.ok(hourOfChange !== null, 'the woodlands turn within twenty days');
   // LIVE: the drain on the next frame (a rest's sub-tick lands within the hour) - no jump stamp
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
   tickWeather(day0 + 1, CLIMATES.Woodlands);   // the day's own drain first
   const stamp0 = weatherJumpStamp();
@@ -152,7 +153,7 @@ test('CLK2: the change lands through DFU\'s own drain - live under the sky it is
   assert.equal(weatherJumpStamp(), stamp0, 'five minutes after its hour: live, a front');
   assert.equal(currentWeather(), WEATHER_TYPES[weatherForClimate(CLIMATES.Woodlands)], 'the drain applied the zone the player stands in');
   // STALE: the same change found by a tick hours later (a day inside) drains as a jump
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
   tickWeather(day0 + 1, CLIMATES.Woodlands);
   const stamp1 = weatherJumpStamp();
@@ -161,23 +162,23 @@ test('CLK2: the change lands through DFU\'s own drain - live under the sky it is
   assert.equal(tickWeather(day0 + hourOfChange * 60 + STALE_DRAIN_MINUTES + 1, CLIMATES.Woodlands), true);
   assert.equal(weatherJumpStamp(), stamp1 + 1, 'past the stale window from the change\'s OWN hour: a jump');
   // A JUMP OF DAYS in one tick walks only the last 24 hours (the earlier ones were the day roll's)
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
   evolveClimateWeathers(day0 + 5 * MINUTES_PER_DAY);
   const jumped = zonesNow();
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 4 * MINUTES_PER_DAY + 1);
   for (let h = 1; h <= 24; h++) evolveClimateWeathers(day0 + 4 * MINUTES_PER_DAY + h * 60);
   assert.deepEqual(zonesNow(), jumped, 'the five-day jump and the last day walked hour by hour agree');
   // A LOAD re-anchors: the loaded clock's hour rolls nothing, the next hour does
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);
   rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1);
   restoreWeather('rain');
   assert.equal(evolveClimateWeathers(day0 + 7 * MINUTES_PER_DAY + 30), false, 'the first tick after a load anchors');
   // A REWOUND clock (a load to an earlier save) re-anchors too
   assert.equal(evolveClimateWeathers(day0 + 30), false);
   assert.equal(evolveClimateWeathers(day0 + 30), false, 'and the same hour again rolls nothing');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
   // the wiring: the tick calls it after the day roll; the lane's door
   const tick = read('src/systems/worldTick.js');
   assert.match(tick, /runDayChange\(\{ entity, lastMinutes, nowMinutes, rolls, say \}\);\s*\n(\s*\/\/[^\n]*\n)*\s*evolveClimateWeathers\(nowMinutes\);/, 'after the day roll, wherever the player is');
@@ -276,7 +277,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   // (1) THE PLAYER'S ZONE'S STAMP: the day rolls at midnight while the player is inside; a DISTANT zone turns at
   // 03:00; the player steps out at 03:10 - the drain is stale (the day roll's three hours), not live (the distant turn)
   const day0 = 300 * MINUTES_PER_DAY;
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   rollClimateWeathersForDay(day0 - MINUTES_PER_DAY, () => 0.0); evolveClimateWeathers(day0 - MINUTES_PER_DAY + 1);
   tickWeather(day0 - MINUTES_PER_DAY + 1, CLIMATES.Woodlands);
   setWeather('rain');   // the sky the player stands under
@@ -288,7 +289,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
       const after = zonesNow();
       const woodlands = ZONE_CLIMATES.indexOf(CLIMATES.Woodlands);
       if (after[woodlands] === before[woodlands]) distantTurn = h;   // a zone that is not the player's moved
-      else { resetWeatherSim(); setWeatherEvolution(true); rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1); setWeather('rain'); }
+      else { resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true); rollClimateWeathersForDay(day0, () => 0.0); evolveClimateWeathers(day0 + 1); setWeather('rain'); }
     }
   }
   assert.ok(distantTurn !== null, 'some hour turns a zone that is not the woodlands');
@@ -296,7 +297,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   assert.equal(tickWeather(day0 + distantTurn * 60 + 10, CLIMATES.Woodlands), true, 'the drain applies the day roll\'s Sunny to the woodlands');
   assert.equal(weatherJumpStamp(), stamp + 1, 'and it is a JUMP - the woodlands\' change is the day roll\'s, hours old; the distant zone\'s turn ten minutes ago is not the player\'s');
   // (2) A LOADED SAVE: the array was never rolled (all Sunny); the evolution rolls nothing off it, the loaded sky stands
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);
   restoreWeather('rain');
   evolveClimateWeathers(day0 + 1);
   let moved = false;
@@ -308,7 +309,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   moved = false;
   for (let h = 1; h <= 24 * 20; h++) moved = evolveClimateWeathers(day0 + MINUTES_PER_DAY + h * 60) || moved;
   assert.equal(moved, true, 'and after the day roll the evolution runs again');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
   // (3) THE DOOR IS LIVE: the source reads the skin and the pref every call, and caches only the URL
   const sim = read('src/systems/weatherSim.js');
   assert.doesNotMatch(sim, /_evolveDoor\b/, 'no cached lane answer');
@@ -376,7 +377,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
 // "in case of loaded savegame", every time.
 test('CLK2 / AUDIT 65 SL-1: an IN-SESSION load lowers the evolution guard - the loaded sky survives a day of hourly evolution in a session that had already rolled', () => {
   const day0 = 300 * MINUTES_PER_DAY;
-  resetWeatherSim(); setWeatherEvolution(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherEvolution(true);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   // the OUTGOING session's boot roll: a real, valid six-zone array (all Sunny)
   tickWeather(day0 - 200, CLIMATES.Woodlands, () => 0.0);
   assert.equal(currentWeather(), 'sunny', 'the outgoing session stands under its own rolled sky');
@@ -394,7 +395,7 @@ test('CLK2 / AUDIT 65 SL-1: an IN-SESSION load lowers the evolution guard - the 
   let moved = false;
   for (let h = 1; h <= 24 * 20; h++) moved = evolveClimateWeathers(day0 + MINUTES_PER_DAY + h * 60) || moved;
   assert.equal(moved, true, 'the guard is dormant, not dead');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
   // THE CLASSIC IMPORT'S ORDER: restorePlayer reaches restoreWeather (save.js),
   // which now lowers the flag; importClimateWeathers raises it again for the
   // imported array - so the import must run AFTER the restore or the imported

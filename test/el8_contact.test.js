@@ -57,7 +57,7 @@ test('EL8: the constants, the door, the contact block and the table in the shade
   assert.equal(contactOn('?x=1'), true); assert.equal(contactOn('?contact=off'), false); assert.equal(contactOn('?air=off&contact=off'), false);
   assert.equal(SHADOW_CASTER_TABLE, EL_MAX_LIGHTS, 'one slot per light the lane can hold');
   assert.equal(SHADOW_FAR_CASCADE_EVERY, 2); assert.equal(SHADOW_FAR_CASTER_EVERY, 3); assert.equal(SHADOW_NEAR_CASTERS, 2);
-  assert.match(AIR_CONTACT_GLSL, /uniform sampler2D uPrevDepth;\nuniform mat4 uPrevVP;\nuniform vec4 uPrevProjInfo;/);
+  assert.match(AIR_CONTACT_GLSL, /uniform highp sampler2D uPrevDepth;.*\nuniform mat4 uPrevVP;\nuniform vec4 uPrevProjInfo;/);
   assert.match(AIR_CONTACT_GLSL, /if \(uContactParams\.w <= 0\.0\) return 1\.0;/, 'off is lit');
   assert.match(AIR_CONTACT_GLSL, /float len = min\(dist, uContactParams\.x\);/, 'the march stops at the light');
   assert.match(AIR_CONTACT_GLSL, /for \(int i = 1; i <= 4; i\+\+\) \{/);

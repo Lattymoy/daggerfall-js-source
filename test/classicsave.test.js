@@ -1499,7 +1499,7 @@ import {
   LOAD_BUTTON_RECT, EXIT_BUTTON_RECT, LOAD_CLASSIC_IMG,
 } from '../src/ui/loadClassicWindow.js';
 import {
-  importClimateWeathers, resetWeatherSim, tickWeather, currentWeatherEnum, WEATHER_ENUM, setSnowGroundLaw, currentWeatherRaw,
+  importClimateWeathers, resetWeatherSim, tickWeather, currentWeatherEnum, WEATHER_ENUM, setSnowGroundLaw, currentWeatherRaw, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
 import { bitmapToColor32 } from '../src/formats/color32Order.js';
 import {
@@ -1557,7 +1557,7 @@ test('SAV3: with no valid slot, the Load button does not exist (:155-159)', () =
 });
 
 test('SAV3: importClimateWeathers - the imported array wears on the next tick, no re-roll', () => {
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   setSnowGroundLaw(false);   // WEATHER2a: the classic lane's word - minute 0 is Winter and 223 wears snow, and the enhanced lane would turn this rain to snow (test/weather2a_snowground.test.js)
   assert.equal(importClimateWeathers(Uint8Array.of(4, 4, 4)), false, 'six zones or nothing');
   assert.equal(importClimateWeathers(Uint8Array.of(4, 4, 4, 4, 4, 4)), true);
@@ -1567,7 +1567,7 @@ test('SAV3: importClimateWeathers - the imported array wears on the next tick, n
   assert.equal(changed, true);
   assert.equal(currentWeatherEnum(), WEATHER_ENUM.rain ?? 4);
   assert.equal(currentWeatherRaw(), 'rain', 'the table\'s own word, kept beside the worn one');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
 });
 
 test('SAV3: bitmapToColor32 grows the GetColor32 alphaIndex - -1 draws index 0 opaque', () => {

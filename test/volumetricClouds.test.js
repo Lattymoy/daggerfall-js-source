@@ -116,14 +116,15 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
     const declared = [...fs.matchAll(/uniform\s+\w+\s+(\w+)/g)].map((m) => m[1]);
     assert.deepEqual(declared.sort(), [...names].sort(), 'every uniform the shader declares has its location fetched, and none is fetched that it lacks');
   }
-  assert.match(MARCH_FS, /float t = t0 \+ ds \* hash12\(gl_FragCoord\.xy\);/, 'the jitter is a hash of the texel, never the clock - no flicker');
+  assert.match(MARCH_FS, /float jit = hash12\(gl_FragCoord\.xy\);\s*\n\s*float t = t0 \+ ds \* jit;/, 'the jitter is a hash of the texel, never the clock - no flicker (SLAB-SPAN: kept, and taken again at each span the ray jumps to)');
+  assert.match(MARCH_FS, /if \(t < spanA\[span\]\) \{ t = spanA\[span\] \+ ds \* jit;/);
   assert.match(MARCH_FS, /sum \+= density\(p, 0\.0\) \* step;/, 'the light march reads the field itself, not a blurred level');
-  assert.match(MARCH_FS, /outColor = vec4\(col, T\);/, 'colour and transmittance');
+  assert.ok(MARCH_FS.includes('outColor = vec4(front.rgb + front.a * col, T * front.a);'), 'colour and transmittance - VC7c: with the curtains in front (vc7c_curtains runs them)');
   const src = read('src/render/volumetricClouds.js');
   assert.match(src, /gl\.blendFuncSeparate\(gl\.ONE, gl\.SRC_ALPHA, gl\.ZERO, gl\.ONE\);   \/\/ sky \* T \+ cloud/, 'the colour blends sky * T + cloud; the buffer\'s alpha is left alone (ONE, SRC_ALPHA on alpha too would leave it 2T)');
   // VC4d: the flash lights the WHOLE sky on the composite, never one stripe of the map
   assert.doesNotMatch(MARCH_FS, /uFlash/, 'the march (a stripe a frame) carries no flash');
-  assert.match(COMPOSITE_FS, /outColor = vec4\(c\.rgb \* \(1\.0 \+ uFlash \* 2\.0\), c\.a\);/, 'the composite lights every texel for the frame');
+  assert.match(COMPOSITE_FS, /outColor = vec4\(c\.rgb \* \(1\.0 \+ uFlash \* 2\.0 \+ bolt \* 3\.0\), c\.a\);/, 'the composite lights every texel for the frame (WEATHER3d: and a distant strike its own cloud beside it)');
   assert.match(src, /gl\.uniform1f\(u\.uFlash, this\.flash\);/);
   assert.match(src, /createRenderTarget\(gl, this\.q\.width, this\.q\.height, \{ filter: 'LINEAR', wrapS: 'REPEAT', wrapT: 'CLAMP_TO_EDGE' \}\)/, 'the azimuth wraps, the elevation clamps');
   assert.match(src, /gl\.viewport\(0, y0, q\.width, Math\.min\(rows, q\.height - y0\)\);/, 'a stripe per frame');
@@ -137,7 +138,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(shared, /if \(clouds && dynamicSky\) dynamicSky\.cloudsExternal = true;/, 'and the mod\'s own sheets (DS2)');
   assert.match(shared, /weatherJump\(\) \{[\s\S]{0,300}?clouds\?\.jump\(\);/, 'a jump drops the profile with the row');
   const vc = read('src/render/volumetricClouds.js');
-  assert.match(vc, /jump\(\) \{ this\.profile = null; this\.stripe = 0; this\.shadowFull = true; \}/);
+  assert.match(vc, /jump\(\) \{ this\.profile = null; this\.cirrusCover = null; this\.fair = null; this\.stripe = 0; this\.shadowFull = true; \}/);
   // VC4 review: the floating origin - the field is sampled at the ABSOLUTE position
   // WIND4: ...and the drift is SUBTRACTED from it. The recenter is a
   // position (added, so q is absolute); the drift is how far the AIR
@@ -172,7 +173,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   }
   const before = shadowOrigin(3 * p - 1, 0), after = shadowOrigin(3 * p + 1, 0);
   assert.ok(Math.abs(after[0] - before[0] - p) < 1e-6 && after[1] === before[1], 'a crossing moves the square by exactly one pixel, on that axis only');
-  assert.match(SHADOW_FS, /int steps = min\(24, max\(uSteps, int\(ceil\(\(t1 - t0\) \/ 150\.0\)\)\)\);/, 'a low sun\'s long slant is sampled no coarser than 150 m');
+  assert.match(SHADOW_FS, /int steps = min\(24, max\(uSteps, int\(ceil\(len \/ 150\.0\)\)\)\);/, 'a low sun\'s long slant is sampled no coarser than 150 m (SLAB-SPAN: over the length of its own spans)');
   for (const q of Object.values(QUALITY)) assert.ok(q.shadowSteps >= 8 && q.shadowSteps <= 24, 'the tier\'s count is the floor under the ceiling');
   // the far ring stands outside the square: a cover-derived dim on the slab's own law
   assert.match(shared, /farSunFactor\(\) \{\s*\n\s*if \(!clouds\) return this\.sunFactor\(\);\s*\n\s*return 1 - 0\.7 \* Math\.pow\(weatherRowNow\?\.cover \?\? 0, 1\.6\);/);
@@ -199,7 +200,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(rr, /finally \{\s*\n\s*gl\.bindFramebuffer\(gl\.FRAMEBUFFER, this\._frameFbo \?\? null\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*this\._restoreWorldViewport\(\);\s*\n\s*const cc = this\._clearColor;\s*\n\s*gl\.clearColor\(cc\[0\], cc\[1\], cc\[2\], cc\[3\]\);\s*\n\s*this\._proj = sp; this\._view = sv; this\._fogMode = sf;\s*\n(?:\s*this\._spriteDepth--;[^\n]*\n)?\s*if \(sd\) \{ this\._cloudShadow = sd; this\._csStamp\+\+; \}\s*\n\s*\}/, 'and returned with the stamp bumped, whatever the draw did');   // AUDIT-EL F2: the sprite depth returns in the same finally
   assert.match(read('src/combat/fpArm.js'), /renderer\.renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, fw, fh, \{ lensLocal: true, viewmodelLight: vmLight \}\)/, 'the arm says so');
   assert.doesNotMatch(read('src/render/characterSprite.js'), /lensLocal/, 'the rig sprite box is in the world: it keeps the deck');
-  assert.match(shared, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null, extra\?\.cells \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position (WEATHER2c: and the field\'s cells)');
+  assert.match(shared, /const cb = cloudBaseOf\(extra, weatherName, weatherRowNow\);\s*\n\s*const cloudSky = cb\.row === weatherRowNow \? enhancedSky\.state : skyState\(\{ minuteOfDay, weather: cb\.word, classicMinutes: extra\?\.classicMinutes \?\? 0, seconds, drift: driftXZ, row: cb\.row \}\);\s*\n\s*clouds\.setState\(cloudSky, cb\.row, cb\.word, easeDt, driftXZ, extra\?\.flash \?\? 0, extra\?\.pos \?\? null, extra\?\.cells \?\? null\);/, 'the eased row, the front-stretched dt, the one drift integral, the host\'s flash and position (WEATHER2c: and the field\'s cells; WEATHER3c: the dome\'s own state off the map\'s lane, clear air\'s on it)');
   assert.match(shared, /const meter = meterFor\(gl\);\s*\n\s*meter\?\.mark\('sky'\);\s*\n\s*\(enhancedSky \?\? dynamicSky \?\? sky\)\.draw\(yaw, pitch, fovY, aspect\);\s*\n\s*if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}[^\n]*\n\s*meter\?\.mark\('world'\);/, 'marched then composited after the dome, inside the host\'s marked span (VC6d: and inside its own perf span, which hands the frame back to the world\'s)');
   const dome = read('src/render/enhancedSky.js');
   assert.match(dome, /gl\.uniform1f\(u\.uCloudCover, this\.cloudsExternal \? 0 : s\.cloudCover\);/, 'cover 0 to the dome\'s shader under the clouds; the state keeps the row\'s');
