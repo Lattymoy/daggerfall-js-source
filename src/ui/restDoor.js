@@ -29,16 +29,18 @@ export { preloadRestArt };
 
 /** The rest window for this skin over `deps` (scenes/shared.js createRestDeps's bag, or a follower's mirror deps). */
 export function createRestWindow(deps, ignoreAllocatedBed = false) {
-  if (isEnhanced() && typeof document !== 'undefined') return enhancedRestOverlay(deps);
+  if (isEnhanced() && typeof document !== 'undefined') return enhancedRestOverlay(deps, ignoreAllocatedBed);
   return new RestWindow(deps, ignoreAllocatedBed);
 }
 
 /** The enhanced card, on the PX28 stack for its whole life - see the header. */
-function enhancedRestOverlay(deps) {
-  const overlay = openEnhancedRest(deps);
+function enhancedRestOverlay(deps, ignoreAllocatedBed = false) {
+  const overlay = openEnhancedRest(deps, ignoreAllocatedBed);
   const bare = overlay.dispose;   // enhancedRest.js's own close(), guarded against re-entry
   let unregister = () => {};
   overlay.dispose = () => { unregister(); unregister = () => {}; bare?.(); };
-  unregister = registerOverlay(() => overlay.dispose());
+  // AUDIT PARTY-REST: the stack's close (Tab) is the window's own Stop/OK/close, never a bare dispose - a running
+  // rest ends into its wake box, a mirror's Stop asks the rester to stop too; only a page with no such arm disposes
+  unregister = registerOverlay(() => { if (!overlay.stopOrClose?.()) overlay.dispose(); });
   return overlay;
 }

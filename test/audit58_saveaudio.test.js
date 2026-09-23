@@ -137,7 +137,7 @@ test('AUDIT 58: the graveyard ambient layer is armed in BOTH exterior hosts', ()
     'and the fixed-city host arms it too - it never leaves its one location\'s rect');
   // the `!playerEnterExit.IsPlayerInside` guard (:154-162) reads the
   // host's own state rather than an absent dep in both.
-  for (const src of [w, x]) assert.match(src, /ambience\.update\(dt, \{ playerPos: [A-Za-z.]+, inside: false \}\)/);
+  for (const src of [w, x]) assert.match(src, /ambience\.update\(dt, \{ playerPos: [A-Za-z.]+, inside: false(?:, underground: [^}]+)? \}\)/);   // CRICKET-DUNGEON: the streaming host says whether the player is underground; ?exterior has no dungeon to be under
   // the two INTERIOR hosts must NOT arm it - DFU's handler sets it only
   // when the player is outside, so this is a law about all four hosts,
   // not an omission in two.

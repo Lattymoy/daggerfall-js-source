@@ -2755,6 +2755,7 @@ ${badgeCss()}
    field big and centred, not the gold field's small left-aligned one; the vitals line under the meter (REST-VITALS1). */
 .rest-shell { display: flex; align-items: center; justify-content: center; }
 .rest-shell .px-win { width: min(420px, 92vw); height: auto; max-height: min(420px, 80dvh); }
+.rest-shell .selection-acts { flex-direction: column; align-items: stretch; }   /* AUDIT PARTY-REST: the four choices as a column, not a wrapped row */
 .rest-shell .hours-field { display: block; width: 140px; margin: 4px auto 22px; font-family: inherit;
   font-size: 34px; text-align: center; background: #0e1013; color: var(--bone, #e9e4d9);
   border: 1px solid var(--iron, #2b323b); border-radius: 3px; padding: 6px 8px; }

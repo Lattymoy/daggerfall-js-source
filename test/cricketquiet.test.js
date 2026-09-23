@@ -6,6 +6,7 @@
 // with silent spells between.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { AmbientEffects, CRICKET_CHORUS, AMBIENT_CRICKETS_LOOP } from '../src/systems/ambientEffects.js';
 
 const stub = () => {
@@ -92,4 +93,27 @@ test('CRICKET-QUIET: dawn, a storm or a video stop it; the chorus resumes after 
   assert.equal(live(loops).length, 0, 'day stops it');
   run(a, 200);
   assert.equal(loops.length, 2, 'and no chorus starts by day');
+});
+
+test('CRICKET-DUNGEON (2026-09-23, Mac: "turn off cricket noises in dungeons"): under the ground the chorus is STOPPED and its clock holds; back on the surface it takes the night up where it stood - the rain loop is untouched, as DFU keeps it', () => {
+  const { engine, loops } = stub();
+  const a = new AmbientEffects({ minWait: 5, maxWait: 25 }, engine, () => 0);
+  a.setPreset('clearNight');
+  run(a, CRICKET_CHORUS.fade + 1);
+  assert.equal(live(loops).length, 1, 'singing on the surface');
+  const t0 = a._cricketT;
+  for (let t = 0; t < 30; t += 0.1) a.update(0.1, { underground: true });
+  assert.equal(live(loops).length, 0, 'the dungeon is silent of crickets');
+  assert.equal(a._cricketT, t0, 'and the chorus clock held - the night is not spent under the ground');
+  assert.equal(a._cricketPhase, 'bout');
+  a.update(0.1, { underground: false });
+  assert.equal(live(loops).length, 1, 'the surface: a fresh loop, the same chorus');
+  assert.ok(loops.at(-1).volumes.at(-1) > 0, 'taken up mid-swell, not from silence');
+  // the rain is DFU's own quirk and stays: it follows the player underground
+  const r = stub(); const b = new AmbientEffects({ minWait: 5, maxWait: 25 }, r.engine, () => 0);
+  b.setPreset('rain'); b.update(0.1, { underground: true });
+  assert.equal(live(r.loops).length, 1, 'the rain loop is not this departure\'s');
+  // by source: the world host says where the player is
+  const w = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(w, /ambience\.update\(dt, \{ playerPos: cam\.pos, inside: false, underground: modes\?\.mode === 'dungeon' \}\);/);
 });

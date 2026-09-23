@@ -107,6 +107,8 @@ export class SocialState {
     this.invites = new Map();
     /** Bumps on every change a panel would show; a panel repaints on a new number, never per frame (ChatLog's law). */
     this.version = 0;
+    /** AUDIT PARTY8: bumps on a member's pose alone - the rows read it in place; `version` no longer moves for one. */
+    this.poseVersion = 0;
     /** @type {((note: Note, text: string) => void)|null} a note in, with its words - the chat's system line */
     this.onNote = null;
     /** @type {((text: string) => void)|null} the hub refused one act, in words */
@@ -159,7 +161,9 @@ export class SocialState {
         // the party as the hub has it - the poses I already hold ride over, since a view says the LATEST pose the hub
         // holds and a pose frame in between is newer than a view composed before it only when it is
         if (f.party && this.party && f.party.id === this.party.id) {
-          for (const m of f.party.members) { const was = this.party.members.find((x) => x.acct === m.acct); if (was?.p && !m.p) m.p = was.p; }
+          // AUDIT PARTY-REST: ...unless the hub says the seat is OFFLINE - then its last pose is a ghost's, and a gate that
+          // counted it ("gather the party") or a mirror that read its stale `rest` acted on someone who is not here
+          for (const m of f.party.members) { const was = this.party.members.find((x) => x.acct === m.acct); if (was?.p && !m.p && m.online !== false) m.p = was.p; }
         }
         // AUDIT SOC B16: a view that says what I already hold moves nothing - the version is the panels' repaint clock
         const same = JSON.stringify(f.party) === JSON.stringify(this.party);
@@ -211,8 +215,13 @@ export class SocialState {
     if (!this.party || !p) return false;
     const m = this.party.members.find((x) => x.acct === acct);
     if (!m) return false;
+    const first = !m.p;
     m.p = p;
-    this._changed('pose');
+    // AUDIT PARTY8: a pose that REPLACES one is a quiet change - the panels read the row in place (socialPanel's live
+    // pass, partyPanel's own paint) and a version bump rebuilt the open panel's every button under the pointer. The
+    // FIRST pose of a seat still repaints: its row has no line to write into yet.
+    if (first) this._changed('pose');
+    else { this.poseVersion++; this.onChange?.('pose'); }
     return true;
   }
 
@@ -235,7 +244,7 @@ export class SocialState {
   /** Seats left. */
   seatsFree() { return this.party ? Math.max(0, PARTY_MAX - this.party.members.length) : PARTY_MAX - 1; }
 
-  /** The peer ids of my party's other members - the names to draw green. A Set, fresh each call (cheap: at most three
+  /** The peer ids of my party's other members - the names to draw green. A Set, fresh each call (cheap: at most PARTY_MAX - 1
    *  members, at most ACCOUNT_TABS_MAX peers each). */
   partyPeers() {
     const out = new Set();

@@ -47,7 +47,7 @@ test('PARTY-REST1: partyRestModeCode and partyRestModeFromCode are exact inverse
 test('PARTY-REST1: composePartyPose reads exactly one host\'s own live session - worldModes.js\'s restState indoors, dungeonContext.js\'s in a dungeon, this host\'s own outdoor overlay outside - and NEVER a mirrored one, so a follower watching someone else\'s countdown never reads back as its own leader (mutants: a mirrored session broadcast as real; the wrong host read for the mode; the wire\'s mode code read from a raw string)', () => {
   const w = rd('src/scenes/world.js');
   const pose = w.slice(w.indexOf('const composePartyPose = () => {'), w.indexOf('/** PARTY-REST1: the wire\'s small numbers'));
-  assert.match(pose, /const restWin = mode === 'interior' \? modes\?\.restState\s*\n\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState\s*\n(?:\s*\/\/[^\n]*\n)*\s*: \(townTalk\.overlay\?\.isRestWindow && !townTalk\.overlay\.isPartyRestMirror && townTalk\.overlay\.session && townTalk\.overlay\.state === 'resting'/,
+  assert.match(pose, /const restWin = !isEnhanced\(\) \? null[^\n]*\n\s*: mode === 'interior' \? modes\?\.restState\s*\n\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState\s*\n(?:\s*\/\/[^\n]*\n)*\s*: \(townTalk\.overlay\?\.isRestWindow && !townTalk\.overlay\.isPartyRestMirror && townTalk\.overlay\.session && townTalk\.overlay\.state === 'resting'/,
     'interior -> worldModes.js, dungeon -> dungeonContext.js, else this host\'s own overlay - and the overlay arm excludes a mirror of its own, AND (PARTY-REST6) requires the window still actually be ticking (state === \'resting\'), not merely holding a session object - a window sitting on its own ended/refused screen must not go on broadcasting as live');
   assert.match(pose, /bk: mode === 'interior' \? \(modes\?\.interiorBuilding\?\.buildingKey \?\? null\) : null,/, 'a building key only indoors - a dungeon and the open air both leave it null');
   assert.match(pose, /rest: restWin \? \{ mode: partyRestModeCode\(restWin\.mode\), hoursRemaining: restWin\.hoursRemaining, totalHours: restWin\.totalHours, kind: playerEntity\.restKind \?\? null \} : null,/,
@@ -87,14 +87,14 @@ test('PARTY-REST1c (2026-09-20, per-request: "when the member initializes the re
   // "target stopped resting" (PARTY-REST7) and distance checks - matched loosely around the enemy-break arm
   // (PARTY-REST5) and any diagnostics between them, since those additions are the point of PARTY-REST5/6/7's
   // own tests elsewhere and are not what this assertion is pinning.
-  assert.match(tick, /if \(mirroring\) \{[\s\S]*?const mirrorRow = social\.party\.members\.find\(\(m\) => m\.acct === ov\._mirrorAcct\);[\s\S]*?if \(!mirrorRow\?\.p\?\.rest\) \{[\s\S]{0,400}?ov\._end\(ov\.session\.endEarly\(\)\);[\s\S]{0,50}?\}\s*\n\s*if \(!nearAccount\(ov\._mirrorAcct, mirrorRow\?\.p\)\) \{[\s\S]{0,400}?ov\._end\(ov\.session\.endEarly\(\)\);\s*\n\s*\}\s*\n\s*return;\s*\n\s*\}/,
+  assert.match(tick, /if \(mirroring\) \{[\s\S]*?const mirrorRow = social\.party\.members\.find\(\(m\) => m\.acct === ov\._mirrorAcct\);[\s\S]*?if \(!mirrorRow\?\.p\?\.rest\) \{[\s\S]{0,400}?ov\._end\(ov\.session\.endEarly\(\)\);[\s\S]{0,50}?\}\s*\n\s*if \(!memberPresent\(mirrorRow\) \|\| !nearAccount\(ov\._mirrorAcct, mirrorRow\?\.p\)\) \{[\s\S]{0,400}?ov\._end\(ov\.session\.endEarly\(\)\);\s*\n\s*\}\s*\n\s*return;\s*\n\s*\}/,
     'the continuing check reads ov._mirrorAcct, set once at start - never re-searches "anyone nearby resting" while already running, and still ends (via session.endEarly()) on either the tracked account no longer resting or the distance check failing');
   assert.match(tick, /if \(townTalk\.overlayActive \|\| playerEntity\.isResting \|\| playerEntity\.isLoitering \|\| playerEntity\.health <= 0\) \{[\s\S]{0,300}?return;\s*\n\s*\}/,
     'never steals an open window, never doubles a real rest of my own, never starts on a dead player');
   // PARTY-REST1c itself: ANY near member with a live `rest`, not just the leader\'s row.
-  assert.match(tick, /const others = social\.others\(\);[\s\S]{0,200}?const restingRow = others\.find\(\(m\) => m\.p\?\.rest && nearAccount\(m\.acct, m\.p\)\);\s*\n\s*if \(!restingRow\) return;/,
+  assert.match(tick, /const restingRow = nearPartyMembers\(\)\.find\(\(m\) => m\.p\.rest\);\s*\n\s*if \(!restingRow\) return;/,   // AUDIT PARTY-REST: over the PRESENT near members (memberPresent + nearAccount, the one list the gate reads)
     'the search is over every other seated member, filtered to one who is both near AND actually resting for real - the leader is one candidate among however many, not a special case');
-  assert.match(tick, /win\.isPartyRestMirror = true;\s*\n\s*win\._mirrorAcct = restingRow\.acct;[\s\S]{0,300}?\n\s*townTalk\.showOverlay\(win\);/,
+  assert.match(tick, /win\.isPartyRestMirror = true;\s*\n\s*win\._mirrorAcct = restingRow\.acct;[\s\S]{0,700}?\n\s*townTalk\.showOverlay\(win\);/,
     'tagged and pinned to the resting account BEFORE it is shown, so the very first frame it is read back by composePartyPose/restState it already excludes itself');
   assert.match(tick, /win\._start\(partyRestModeFromCode\(restingRow\.p\.rest\.mode\), restingRow\.p\.rest\.hoursRemaining\);/,
     'seeded with the RESTING MEMBER\'S own live hoursRemaining (not the leader\'s specifically) - a follower who joins mid-nap sees the same clock the resting member does, whoever that is');
@@ -106,15 +106,15 @@ test('PARTY-REST1c (2026-09-20, per-request: "when the member initializes the re
   // positions CAMP-REST's own group-roll guard already reads (peersNear/player.feetAt), not the wire's
   // own coarse px/py.
   assert.match(w2, /const PARTY_REST_RADIUS = 15;/, 'a room/camp-circle scale, not GROUP_ROLL_RADIUS\'s 100 - that guard only keeps unrelated camps from double-rolling, this one means "close enough to rest together"');
-  assert.match(w2, /const distanceToPartyAccount = \(acct\) => \{\s*const row = social\?\.party\?\.members\.find\(\(m\) => m\.acct === acct\);\s*const peer = row \? peersNear\(\)\?\.find\(\(p\) => row\.peers\.includes\(p\.id\)\) : null;\s*if \(!peer\?\.feet\) return Infinity;/,
+  assert.match(w2, /const feetOfPartyAccount = \(acct\) => \{\s*const row = social\?\.party\?\.members\.find\(\(m\) => m\.acct === acct\);\s*const peer = row \? peersNear\(\)\?\.find\(\(p\) => row\.peers\.includes\(p\.id\)\) : null;\s*return peer\?\.feet \? \[[^\n]*?\] : null;\s*\};\s*const distanceToPartyAccount = \(acct, from = player\.feetAt\(\)\) => \{\s*const peerFeet = feetOfPartyAccount\(acct\);\s*if \(!peerFeet\) return Infinity;/,   // AUDIT PARTY8: the feet are asked once, and the distance is measured from `from` (the leader's feet for a follower's gather check)
     'a member not even a rendered, visible peer right now (out of stream range, or never loaded in) is Infinity away - too far, not an error');
   // PARTY-REST8 (2026-09-21): restructured from a single expression into a block body so the meters-based
   // distance check can be skipped indoors (a building's own key is already precise enough - see the doc
   // comment on nearAccount itself) - but samePlace is still asked FIRST and is still REQUIRED either way, and
   // distanceToPartyAccount is still the deciding factor whenever it does run (outdoors, or in a dungeon).
-  assert.match(w2, /const nearAccount = \(acct, pose\) => \{\s*if \(!pose \|\| !samePlace\(myPartyLocation\(\), \{ px: pose\.px, py: pose\.py, in: pose\.in, bk: pose\.bk \}\)\) return false;\s*\n\s*if \(\(modes\?\.mode \?\? 'exterior'\) === 'interior'\) return true;[^\n]*\n\s*return distanceToPartyAccount\(acct\) <= PARTY_REST_RADIUS;\s*\n\s*\};/,
+  assert.match(w2, /const nearAccount = \(acct, pose, from = player\.feetAt\(\)\) => \{\s*if \(!pose \|\| !samePlace\(myPartyLocation\(\), \{ px: pose\.px, py: pose\.py, in: pose\.in, bk: pose\.bk \}\)\) return false;\s*\n\s*if \(\(modes\?\.mode \?\? 'exterior'\) === 'interior'\) return true;[^\n]*\n\s*return distanceToPartyAccount\(acct, from\) <= PARTY_REST_RADIUS;\s*\n\s*\};/,   // AUDIT PARTY8: measured from `from` - my feet by default, the leader's for a follower's gather check
     'samePlace is asked first and is still required either way; indoors (a building key match) is sufficient on its own; outdoors/dungeon still fall through to the real distance check');
-  assert.match(w2, /const nearPartyMembers = \(\) => \{\s*if \(!social\?\.party\) return \[\];\s*return social\.others\(\)\.filter\(\(m\) => nearAccount\(m\.acct, m\.p\)\);\s*\};/,
+  assert.match(w2, /const nearPartyMembers = \(from = player\.feetAt\(\)\) => \{\s*if \(!social\?\.party\) return \[\];\s*return social\.others\(\)\.filter\(\(m\) => memberPresent\(m\) && nearAccount\(m\.acct, m\.p, from\)\);[^\n]*\n\s*\};/,   // AUDIT PARTY-REST/PARTY8: present members, measured from `from`
     'the gate\'s own list is built from the exact same nearAccount the follower\'s mirror reads');
 });
 
@@ -130,20 +130,20 @@ test('PARTY-REST1: partyRestFollowTick runs every frame, not throttled to the po
 test('PARTY-REST2 (2026-09-20, per-request: "a party member confirmation like 4/5 party member agree to rest... if not all party members are ready the leader can\'t rest"): `/ready` is a LOCAL chat command, never sent to the relay, toggling one boolean that composePartyPose then carries out as `ready` (mutants: the command forwarded to the relay as chat; the toggle inverted; a stray leading/trailing character defeating the match)', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /let _partyRestReady = false;/);
-  assert.match(w, /if \(\/\^\\\/ready\$\/i\.test\(text\.trim\(\)\)\) \{\s*_partyRestReady = !_partyRestReady;/, 'a whole-line, case-insensitive match on the trimmed text - not a substring, so "already" or "I am ready" do not fire it');
+  assert.match(w, /if \(\/\^\\\/ready\$\/i\.test\(text\.trim\(\)\)\) \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\?\.party\)[^\n]*\n\s*if \(!_partyRestReady && !social\.leads\(\) && !partyRoundActive\(\)\)[^\n]*\n\s*_partyRestReady = !_partyRestReady;/, 'a whole-line, case-insensitive match on the trimmed text - not a substring, so "already" or "I am ready" do not fire it');
   assert.match(w, /ready: _partyRestReady,/, 'composePartyPose carries this tab\'s own vote out, plain');
 });
 
 test('PARTY-REST2 (extended, per-request: "can this also initiate a rest vote... only when the member is near the leader", then per-request: "when the leader or the party member starts resting when outside the range a pop up should appear - for the leader \'you must gather the party\' and for the member \'you\'re not near the leader\'", then per-request: "when someone presses R and another member presses R it starts a new vote for the other member. Put a cooldown of 1 minute on it and when someone tries to rest while the vote is going it has to tell Resting vote ongoing", then per-request: "it only counts down the countdown for the player who initiated it not for the whole group... every one in the group can start a vote and has its own timer. The vote time also shouldn\'t start when out of range"): partyRestGate is null only with no party at all, or once everyone standing here has voted; the leader-alone and follower-far-from-leader lines RETURN IMMEDIATELY, never touching the cooldown clock at all - being merely out of range is never mistaken for an ongoing vote; only the third line (not everyone ready) reads AND writes the clock, and reads it as the MOST RECENT of my own last refusal and every near member\'s own broadcast voteAt, so the whole group standing there shares one cooldown rather than each of them getting an independent timer of their own (mutants: a follower near the leader let through ungated; a follower gated even when the leader is nowhere near them; the two role-specific lines swapped or merged into one; one unready member among several not enough to block; the leader-alone or follower-far lines touching the cooldown clock at all; the cooldown read from ONLY my own _partyRestGateRefusedAt, ignoring near members\' broadcast voteAt - each member back to their own separate timer; the cooldown checked BEFORE the line is computed, blocking an already-cleared rest; the clock read on the relay\'s own social.now() swapped for the page-local performance.now(), which two different machines can never meaningfully compare)', () => {
   const w = rd('src/scenes/world.js');
   const gate = w.slice(w.indexOf('const partyRestGate = () => {'), w.indexOf('const refusePartyRest = '));
-  assert.match(gate, /if \(!social\?\.party\) return null;[\s\S]{0,4800}?const nearHere = nearPartyMembers\(\);\s*const iAmLeader = social\.leads\(\);[\s\S]{0,1600}?const onlineOtherCount = social\.others\(\)\.filter\(\(m\) => m\.p\)\.length;\s*\n\s*if \(iAmLeader\) \{\s*if \(nearHere\.length < onlineOtherCount\) return 'You must gather the party before you can rest\.';/,
+  assert.match(gate, /if \(!social\?\.party\) return null;[\s\S]{0,4800}?const nearHere = nearPartyMembers\(\);\s*const iAmLeader = social\.leads\(\);[\s\S]{0,1600}?const onlineOtherCount = social\.others\(\)\.filter\(memberPresent\)\.length;[^\n]*\n\s*if \(iAmLeader\) \{\s*if \(nearHere\.length < onlineOtherCount\) return 'You must gather the party before you can rest\.';/,
     'the leader-alone/not-whole-party line returns immediately - no cooldown clock touched');
   assert.match(gate, /\} else if \(!nearHere\.some\(\(m\) => m\.acct === social\.party\.leader\)\) \{\s*return 'You are not near the leader\.';/,
     'the follower-far-from-leader line ALSO returns immediately - no cooldown clock touched');
   // PARTY-REST18: null is still the eventual fallthrough once nobody near is left unready - just no longer
   // unconditional, since someone else's earlier press may still own this specific round (checked first).
-  assert.match(gate, /const notReady = nearHere\.filter\(\(m\) => !m\.p\.ready\);[\s\S]{0,1800}?if \(!notReady\.length\) \{[\s\S]{0,700}?return null;\s*\n\s*\}/, 'null the moment nobody near is left unready - not a majority, not a count, ALL of them');
+  assert.match(gate, /const notReady = nearHere\.filter\(\(m\) => !voteStands\(m\.p, social\.now\(\), lastStartedAt\)\);[\s\S]{0,1800}?if \(!notReady\.length\) \{[\s\S]{0,700}?return null;\s*\n\s*\}/, 'null the moment nobody near is left unready - not a majority, not a count, ALL of them');
   // PARTY-REST12: reworded from "Not everyone is ready" to "You are ready to rest" - the popup itself is now
   // the confirmation the presser asked for (pressing Rest sets their own ready flag first), folded into the
   // same line as the tally and the waiting-on list, rather than a separate message.
@@ -161,7 +161,9 @@ test('PARTY-REST2 (extended, per-request: "can this also initiate a rest vote...
   // nothing left to derive or disagree about.
   assert.match(gate, /if \(!notReady\.length\) \{\s*\n\s*if \(!iAmLeader\) return 'Everyone is ready\. The leader must press Rest to start\.';\s*\n\s*return null;\s*\n\s*\}/,
     'everyone ready succeeds ONLY for the leader\'s own press - anyone else\'s completing press is refused, told the leader must be the one to press Rest');
-  assert.match(gate, /const groupVoteAt = nearHere\.reduce\(\(latest, m\) => Math\.max\(latest, m\.p\.voteAt \?\? 0\), _partyRestGateRefusedAt\);\s*\n\s*if \(social\.now\(\) - groupVoteAt < PARTY_REST_VOTE_COOLDOWN_MS\) return 'Resting vote ongoing\.';\s*\n\s*_partyRestGateRefusedAt = social\.now\(\);[\s\S]{0,1200}?return refusePartyRest\(line\);/,
+  assert.match(gate, /if \(partyRoundActive\(nearHere\)\) return 'Resting vote ongoing\.';\s*\n\s*_partyRestGateRefusedAt = social\.now\(\);[\s\S]{0,1200}?return refusePartyRest\(line\);/,
+    'AUDIT PARTY-REST: the round is ONE question (partyRoundActive - latestStamp over every near member\'s voteAt and my own refusal, each read against the shared clock, a stamp from the future refused)');
+  assert.match(w, /const partyRoundActive = \(nearHere = nearPartyMembers\(\)\) => \{\s*\n\s*const now = social\.now\(\);\s*\n\s*return now - latestStamp\(nearHere, 'voteAt', _partyRestGateRefusedAt, now\) < PARTY_REST_VOTE_COOLDOWN_MS;\s*\n\s*\};/,
     'the cooldown is read as the MOST RECENT of mine and every near member\'s broadcast voteAt (one shared clock for the group), on the relay\'s own now(), and only ever WRITTEN on this one path - a fresh vote round, never the leader-alone/follower-far lines, never the already-ready success path');
   assert.match(w, /let _partyRestGateRefusedAt = -Infinity;/, 'starts effectively expired, so the very first ever refusal is never throttled');
   assert.match(w, /const PARTY_REST_VOTE_COOLDOWN_MS = 60_000;/, '"put a cooldown of 1 minute on it"');
@@ -176,7 +178,7 @@ test('PARTY-REST2/28: the SAME gate reaches all three hosts - world.js\'s own ou
   const w = rd('src/scenes/world.js');
   assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;[^\n]*\n\s*if \(partyRefusal\) \{ townTalk\.showOverlay\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*if \(modes\) markPartyRestSpent\(\);[^\n]*\n\s*townTalk\.showOverlay\(createRestWindow\(outdoorRestDeps\)\);/,
     'the outdoor host: gated, then spent (through the shared function, not its own inline copy), then the real window - in that order');
-  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'the reset itself (REST-OFFLINE1: a no-op with no social clock) - a real function, not an inline block only world.js\'s own toggleRest could reach');
+  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!isEnhanced\(\)\) return;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'the reset itself (REST-OFFLINE1: a no-op with no social clock) - a real function, not an inline block only world.js\'s own toggleRest could reach');
   assert.match(w, /partyRestGate: \(\) => partyRestGate\(\),/, 'handed into createWorldModes as one more host dep, the same door onDungeonLeave and the rest already ride');
   assert.match(w, /markPartyRestSpent: \(\) => markPartyRestSpent\(\),/, 'the reset itself is handed into createWorldModes too, the same way partyRestGate already is');
 
@@ -194,11 +196,12 @@ test('PARTY-REST2/28: the SAME gate reaches all three hosts - world.js\'s own ou
 test('PARTY-REST2b (2026-09-20, per-request: "it\'s only asking the first time... [when I] start with the leader [it does] not ask for a vote"): a /ready vote carries its own timestamp and expires on its own after PARTY_READY_TIMEOUT_MS, checked unconditionally on every frame - the bug this closes was a vote that cleared someone ELSE\'s gate (the ordinary case - the leader\'s own /ready is what usually clears a FOLLOWER\'s check) never getting reset at all, so it silently pre-approved every rest after the first, forever (mutants: the timestamp never set on toggle; the expiry check dropped, gated behind a condition that skips it, or only run for the leader/only for a follower; the timeout absent or checked against the wrong clock)', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /let _partyRestReady = false;.*\n\s*let _partyRestReadyAt = 0;/, 'the vote and its timestamp are declared together');
-  assert.match(w, /if \(\/\^\\\/ready\$\/i\.test\(text\.trim\(\)\)\) \{\s*_partyRestReady = !_partyRestReady;\s*_partyRestReadyAt = performance\.now\(\);/,
+  assert.match(w, /if \(\/\^\\\/ready\$\/i\.test\(text\.trim\(\)\)\) \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\?\.party\)[^\n]*\n\s*if \(!_partyRestReady[^\n]*\n\s*_partyRestReady = !_partyRestReady;\s*_partyRestReadyAt = social\.now\(\);/,
     'every toggle - on AND off - stamps the moment, so a stale "yes" from an old vote cannot outlive a fresh "no"');
-  assert.match(w, /const PARTY_READY_TIMEOUT_MS = 60_000;/);
+  assert.match(rd('src/systems/partyRestLaw.js'), /export const PARTY_READY_TIMEOUT_MS = 60_000;/, 'AUDIT PARTY-REST: the one number, in the law module the wire\'s reader and the voter share');
+  assert.match(w, /import \{ PARTY_READY_TIMEOUT_MS, memberPresent, latestStamp, voteStands, snapshotCancels, cancelRequestFor, mirrorKey \} from '\.\.\/systems\/partyRestLaw\.js';/);
   const tick = w.slice(w.indexOf('const partyRestFollowTick = () => {'), w.indexOf('/** SOC6 (Mac: "Party members should be able to be seen on the world map'));
-  assert.match(tick, /^\s*if \(_partyRestReady && performance\.now\(\) - _partyRestReadyAt > PARTY_READY_TIMEOUT_MS\) _partyRestReady = false;/m,
+  assert.match(tick, /^\s*if \(_partyRestReady && \(!social \|\| social\.now\(\) - _partyRestReadyAt > PARTY_READY_TIMEOUT_MS\)\) _partyRestReady = false;/m,   // AUDIT PARTY-REST: on the shared clock the readers use
     'the FIRST thing partyRestFollowTick does, every frame, unconditionally - before the mirroring/leader/party checks below it, which all reach it only in SOME frames');
 });
 
@@ -229,7 +232,8 @@ test('enhancedRest.js now matches ui/restWindow.js\'s own three deps calls exact
   const close = js.slice(js.indexOf('const close = () => {'), js.indexOf('render();\n  releaseLock();'));
   assert.match(close, /deps\.setResting\?\.\(false\);\s*\n\s*deps\.setLoitering\?\.\(false\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(lockHandler[^\n]*\n\s*host\?\.remove\(\);/,
     'both flags cleared BEFORE host teardown/onClose - restWindow.js\'s own _close(): "The flags first and UNGUARDED... Then the dispatch, ONCE"');
-  assert.match(js, /ok\.onclick = \(\) => \{ close\(\); deps\.onRestFinished\?\.\(\); \};/,
+  assert.match(js, /ok\.onclick = \(\) => stopOrClose\(\);/, 'AUDIT PARTY-REST: through the one body the keys and the stack share');
+  assert.match(js, /if \(overlay\.state === 'ended'\) \{ close\(\); deps\.onRestFinished\?\.\(\); return true; \}/,
     'the ended screen\'s OK button calls onRestFinished too, not just close() - the died/no-lines path in overlay._end already called both together; this was the OTHER of restWindow.js\'s own two call sites, and the one this skin was missing entirely');
 });
 
@@ -276,7 +280,7 @@ test('PARTY-REST2f (2026-09-20, per-request: "it also seems it cant initiate a n
   const w = rd('src/scenes/world.js');
   assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;[^\n]*\n\s*if \(partyRefusal\) \{ townTalk\.showOverlay\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*if \(modes\) markPartyRestSpent\(\);[^\n]*\n\s*townTalk\.showOverlay\(createRestWindow\(outdoorRestDeps\)\);/,
     'the leader/gated-follower\'s own toggleRest: spent (through the shared function - PARTY-REST28) happens AFTER the gate has already cleared, right before the real window opens');
-  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;   \/\/ PARTY-REST2: spent the moment it is acted on - next nap asks again\s*\n\s*\/\/ PARTY-REST2f[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*_partyRestGateRefusedAt = -Infinity;/,
+  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!isEnhanced\(\)\) return;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;   \/\/ PARTY-REST2: spent the moment it is acted on - next nap asks again\s*\n\s*\/\/ PARTY-REST2f[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*_partyRestGateRefusedAt = -Infinity;/,
     'the shared reset itself: ready cleared, then (PARTY-REST2f) the cooldown clock cleared too, in that order');
   assert.match(w, /win\._start\(partyRestModeFromCode\(restingRow\.p\.rest\.mode\), restingRow\.p\.rest\.hoursRemaining\);\s*\n\s*_partyRestReady = false;[^\n]*\n\s*_partyRestGateRefusedAt = -Infinity;/,
     'a follower\'s mirror start ALSO clears it - this round is resolved from their own side too, not only the initiator\'s');
@@ -286,7 +290,7 @@ test('PARTY-REST2f (2026-09-20, per-request: "it also seems it cant initiate a n
 
 test('REST-VITALS1 (2026-09-20, per-request: "while healing fully you dont see your magica and health and fatigue so you dont know when its somewhat full you need to still track it. Make it visible again"): the resting screen shows the SAME Health/Fatigue/Magicka line ui/restWindow.js\'s own resting page already draws (restingLines()/its native counter draw both read deps.vitals()), reading the exact same shared deps.vitals() a mirror inherits unchanged from outdoorRestDeps - so a follower sees their own real numbers advancing too, not just the leader (mutants: the vitals line missing entirely; deps.vitals() never called, or called but not written into the line; a hand-rolled health/fatigue/magicka read instead of the shared deps.vitals() every OTHER skin and the classic window already agree on)', () => {
   const js = rd('src/ui/enhancedRest.js');
-  assert.match(js, /const vit = deps\.vitals\?\.\(\);\s*\n\s*_restingRefs\.vitalsLine\.textContent = vit \? `Health \$\{vit\.health\}\/\$\{vit\.maxHealth\} {2}Fatigue \$\{vit\.fatigue\} {2}Magicka \$\{vit\.magicka\}` : '';/,
+  assert.match(js, /const vit = deps\.vitals\?\.\(\);[\s\S]{0,700}?_restingRefs\.vitalsLine\.textContent = vit \? `Health \$\{vit\.health\}\/\$\{vit\.maxHealth\} {2}Fatigue \$\{vit\.fatigue\} {2}Magicka \$\{vit\.magicka\}` : '';/,
     'the exact same line shape restWindow.js\'s own restingLines()/native counter draw already use, read off deps.vitals() - never a separate health/fatigue/magicka read of its own; written by updateRestingDisplay (RESTFIX1), not rebuilt by restingCard on every tick');
   const rw = rd('src/ui/restWindow.js');
   assert.match(rw, /lines\.push\(`Health \$\{v\.health\}\/\$\{v\.maxHealth\} {2}Fatigue \$\{v\.fatigue\} {2}Magicka \$\{v\.magicka\}`\);/,
@@ -310,8 +314,8 @@ test('RESTFIX1 (2026-09-21, the bug this closed): overlay.tick() no longer calls
   assert.match(js, /_restingRefs = \{ hourLabel: v, fill, vitalsLine \};\s*\n\s*updateRestingDisplay\(\);/,
     'restingCard() builds the structure ONCE (on the real state change into \'resting\') and immediately primes the first frame\'s numbers through the SAME update path tick() uses later - never a separate initial render of the text');
   assert.match(js, /function updateRestingDisplay\(\) \{\s*\n\s*if \(!_restingRefs\) return;/, 'safe to call before the resting card has ever built its nodes');
-  assert.match(js, /_restingRefs\.hourLabel\.textContent = overlay\.mode === 'loiter' \? `\$\{s\?\.totalHours \?\? 0\}h` : `\$\{s\?\.hoursRemaining \?\? 0\}h`;/);
-  assert.match(js, /_restingRefs\.fill\.style\.width = `\$\{Math\.max\(0, Math\.min\(100, \(done \/ total\) \* 100\)\)\}%`;/);
+  assert.match(js, /_restingRefs\.hourLabel\.textContent = overlay\.mode === 'timed' \? `\$\{s\?\.hoursRemaining \?\? 0\}h` : `\$\{s\?\.totalHours \?\? 0\}h`;/, 'AUDIT PARTY-REST: a rest until healed counts the hours passed, as loiter does');
+  assert.match(js, /_restingRefs\.fill\.style\.width = `\$\{Math\.max\(0, Math\.min\(100, frac \* 100\)\)\}%`;/);
   // the Stop button itself: built once, inside restingCard - never inside updateRestingDisplay, which only
   // ever WRITES into existing text/style, never creates a button at all.
   const update = js.slice(js.indexOf('function updateRestingDisplay() {'), js.indexOf('function endedCard()'));
@@ -319,7 +323,7 @@ test('RESTFIX1 (2026-09-21, the bug this closed): overlay.tick() no longer calls
   // PARTY-REST19: the Stop button now also fires deps.onManualStop() before _end() - matched loosely so this
   // survives that addition while still pinning the one thing this assertion actually cares about: built once,
   // never touched by updateRestingDisplay.
-  assert.match(js, /const stop = el\('button', 'act', 'Stop'\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*stop\.onclick = \(\) => \{ deps\.onManualStop\?\.\(\); if \(overlay\.session\) overlay\._end\(overlay\.session\.endEarly\(\)\); \};/,
+  assert.match(js, /const stop = el\('button', 'act', 'Stop'\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*stop\.onclick = \(\) => stopOrClose\(\);/,
     'the Stop button is built exactly once, inside restingCard, and never touched again while the same rest keeps running');
 });
 
@@ -361,7 +365,7 @@ test('PARTY-REST4 (2026-09-21, per-request: "15m away from the leader do not cha
 
 test('RESTFIX3 (2026-09-21, per-request: "normaly when you start resting it asks you if you really want to rest cause its not allowed and when you press yes the guards come. This message is missing entirely now" - the bug this closed): the enhanced skin\'s Rest-for-a-While and Rest-Until-Healed buttons now route through the EXACT SAME two pure functions ui/restWindow.js\'s own _restButton/_canRest call - illegalRestWarning() (a settings preference) and canRest() (systems/restSession.js) - never a reimplementation of either; a confirm box shows ILLEGAL_REST_WARNING verbatim when camping in the open street of a town and the preference is on; canRest\'s own crime is committed regardless of which arm answers, and an outright refusal shows canRest\'s own text and closes the window rather than raising RaiseSkills (never routed through the \'ended\' state). Loiter is NOT gated by any of this, matching restWindow.js\'s own explicit exclusion (mutants: Loiter also routed through the confirm/canRest check; commitCrime only called on the refusal path, never on an ALLOWED-after-crime one; a refusal routed through the normal ended/onRestFinished path instead of closing without it; canRest\'s own logic duplicated here instead of imported and called)', () => {
   const js = rd('src/ui/enhancedRest.js');
-  assert.match(js, /import \{ RestSession, MAX_REST_HOURS, PROMPT_INITIAL, canRest, illegalRestWarning, ILLEGAL_REST_WARNING, REST_TEXT \} from '\.\.\/systems\/restSession\.js';/,
+  assert.match(js, /import \{ RestSession, MAX_REST_HOURS, PROMPT_INITIAL, canRest, illegalRestWarning, ILLEGAL_REST_WARNING, REST_TEXT, loiterLimitHours, cannotLoiterLines, CANNOT_REST_MORE_THAN_99_HOURS_ID \} from '\.\.\/systems\/restSession\.js';/,
     'the same pure functions classic imports - never a local reimplementation of the legality/crime law');
   assert.match(js, /btn\('Rest for a While', \(\) => continueRest\('while', false\)\);/);
   assert.match(js, /btn\('Rest Until Healed', \(\) => continueRest\('healed', false\)\);/);

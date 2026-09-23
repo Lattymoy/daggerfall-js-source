@@ -269,9 +269,9 @@ test('AUDIT DROPS D1 (as the party-rest drop now keeps it): the building and the
   assert.match(d, /const strangerRefusal = opts\.strangerRestGate\?\.\(\);\s*if \(strangerRefusal\) \{ activeOverlay = new ActionTextBox\(\[strangerRefusal\]\); return; \}[\s\S]{0,600}?const partyRefusal = opts\.partyRestGate\?\.\(\);\s*if \(partyRefusal\) \{ activeOverlay = new ActionTextBox\(\[partyRefusal\]\); return; \}[\s\S]{0,600}?opts\.markPartyRestSpent\?\.\(\);\s*activeOverlay = createRestWindow\(_restDeps\);/, 'the dungeon: the same four, through the outer host\'s doors');
   assert.match(m, /partyRestGate: \(\) => host\.partyRestGate\?\.\(\),/, 'handed down to the dungeon');
   assert.match(m, /markPartyRestSpent: \(\) => host\.markPartyRestSpent\?\.\(\),/);
-  assert.match(w, /const restWin = mode === 'interior' \? modes\?\.restState\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState/, 'world.js reads the two getters');
+  assert.match(w, /const restWin = !isEnhanced\(\) \? null[^\n]*\n\s*: mode === 'interior' \? modes\?\.restState\s*: mode === 'dungeon' \? modes\?\.dungeonCtx\?\.restState/, 'world.js reads the two getters (AUDIT PARTY-REST: under the enhanced skin alone - ONLINE-REST1)');
   assert.match(w, /townTalk\.overlay\.session && townTalk\.overlay\.state === 'resting'/, 'D2: outdoors too, RESTING - not the wake box');
-  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'PARTY-REST28: the one shared reset every host runs on a granted rest (REST-OFFLINE1: a no-op with no social clock)');
+  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!isEnhanced\(\)\) return;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'PARTY-REST28: the one shared reset every host runs on a granted rest (REST-OFFLINE1: a no-op with no social clock)');
   assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;/, 'D5: no TDZ before the mode machine stands');
   assert.match(w, /const strangerRefusal = modes \? strangerRestGate\(\) : null;/, 'D5: the stranger gate the same');
   assert.match(w, /if \(modes\) markPartyRestSpent\(\);/, 'D5: and the spend');
@@ -306,14 +306,15 @@ test('AUDIT DROPS E4: a BODY peer\'s stride machine and swing edge are swept whe
   assert.equal(played.filter((p) => p.clip === SOUND.SwingHighPitch).length, 0, 'a returning peer\'s first `an` is a sighting, not a swing');
 });
 
-test('AUDIT DROPS E5: the peer stride is measured in the WIRE\'s frame - a floating-origin shift of the scene point is not a step', () => {
+test('AUDIT DROPS E5, as PEER-BUZZ keeps it: the peer stride is measured in the SCENE\'s frame in scene units, and a floating-origin shift of the scene point is not a step because the recentre REBASES every peer machine (the wire\'s frame is forty scene units to one in the overworld - measured there, the stride fired forty-eight times a second)', () => {
   const { rp, played } = peerRig();
   const opts = { bodyHeight: () => 2, eye: [0, 1.7, 0] };
   let x = 0;
   for (let i = 0; i < 40 && !played.length; i++) { x += 0.6; rp.sync([body('bob-0001', x)], undefined, opts); }
   assert.ok(played.length >= 1, 'walking makes a step');
   const before = played.length;
-  const shifted = { bodyHeight: () => 2, eye: [x + 819.2, 1.7, 0] };   // the origin recentred: the scene point jumps (and the listener with it), the wire point does not
+  const shifted = { bodyHeight: () => 2, eye: [x + 819.2, 1.7, 0] };   // the origin recentred: the scene point jumps (and the listener with it)
+  rp.rebaseFootsteps();   // world.js's recentre block, the line beside footsteps.rebase()
   rp.sync([body('bob-0001', x)], (p) => [p.x + 819.2, p.y, p.z], shifted);
   rp.sync([body('bob-0001', x)], (p) => [p.x + 819.2, p.y, p.z], shifted);
   assert.equal(played.length, before, 'no step for a recentre');

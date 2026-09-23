@@ -331,12 +331,12 @@
     ]
   },
   {
-    "name": "AD-E5-stride-in-the-scene-frame",
+    "name": "AD-E5-stride-in-the-wire-frame",
     "file": "src/net/remotePlayers.js",
-    "old": "    const step = fm.update([shown.x, shown.y, shown.z],",
-    "new": "    const step = fm.update(f,",
+    "old": "    const step = fm.update(f,",
+    "new": "    const step = fm.update([shown.x, shown.y, shown.z],",
     "tests": [
-      "test/auditdrops.test.js"
+      "test/peerstride.test.js"
     ]
   },
   {

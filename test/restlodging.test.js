@@ -492,7 +492,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   assert.match(src('src/scenes/dungeonContext.js'), /day: \(\) => false, inside: \(\) => true,/);
   assert.match(src('src/scenes/worldModes.js'), /day: \(\) => false, inside: \(\) => true,/);
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(src(f), /day: \(\) => !isNight\(minuteNow\(\)\), inside: \(\) => false/, f);
+    assert.match(src(f), /day: \(\) => !isNight\(minuteNow\(\)\),(?: inside: \(\) => false|\s*\n(?:\s*\/\/[^\n]*\n)*\s*inside: \(\) => \(modes\?\.mode \?\? 'exterior'\) !== 'exterior')/, f);
   }
   // ...and createRestDeps CALLS them rather than closing over a value.
   assert.match(src('src/scenes/shared.js'),
@@ -624,7 +624,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     assert.match(s, /inTownOutside: _isPlayerInTownStrict\(\)/, f);
     assert.match(s, /insideBuilding: false/, f);
     // CalculateHealthRecoveryRate's flags are LIVE outdoors.
-    assert.match(s, /day: \(\) => !isNight\(minuteNow\(\)\), inside: \(\) => false/, f);
+    assert.match(s, /day: \(\) => !isNight\(minuteNow\(\)\),(?: inside: \(\) => false|\s*\n(?:\s*\/\/[^\n]*\n)*\s*inside: \(\) => \(modes\?\.mode \?\? 'exterior'\) !== 'exterior')/, f);
   }
 
   // ...and the interior host gets the bare IsPlayerInTown from both.

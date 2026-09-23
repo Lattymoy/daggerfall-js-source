@@ -459,7 +459,8 @@ test('DR1 dungeon host: Dispel Magic opens the REAL bundle picker there', () => 
   assert.ok(b.includes('dispelBundle(playerEntity, b.bundleId'), 'picking a bundle no longer removes it');
   // DFU's one asymmetry: the player's OWN casts always come off, and
   // only something cast AT them gets the roll.
-  assert.ok(b.includes("selfCast: b.bundleType === 'Spell' && b.selfCast !== false"), 'the self-cast asymmetry is gone');
+  // AUDIT ALLY-CAST C4: a party mate's gift (`ally`) comes off as the player's own - it was never cast AT them.
+  assert.ok(b.includes("selfCast: b.bundleType === 'Spell' && (b.selfCast !== false || b.ally === true)"), 'the self-cast asymmetry is gone');
   assert.ok(b.includes('roll01: Math.random(), chance'), 'the roll no longer weighs the spell\'s chance');
   assert.ok(b.includes('hudText.add(DISPEL_MAGIC_TEXT[r.alert])'), 'the outcome is no longer spoken');
   // ...through the host's own mount door

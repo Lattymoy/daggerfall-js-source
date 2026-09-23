@@ -167,7 +167,7 @@ export class PeerBodies {
    * first, a far body giving its slot to a nearer peer - its camera
    * fed from the pose, stepped by dt within BODY_RANGE.
    */
-  sync(peers, toScene, dt, near = null) {
+  sync(peers, toScene, dt, near = null, { priority = null } = {}) {
     if (!this.enabled()) { if (this._bodies.size) this.destroy(); return; }
     const gen = this._generation();
     if (gen !== this._gen) { this._gen = gen; this._failed.clear(); this.destroy(); }   // AUDIT MWBODY A9: new data, new bodies
@@ -207,13 +207,18 @@ export class PeerBodies {
       const f = this._failed.get(lookKey(peer.look));
       if (f) { if (now < f.until) continue; this._failed.delete(lookKey(peer.look)); }
       const p = toScene(peer.shown);
-      want.push({ peer, d2: near ? dist2(p, near) : 0 });
+      want.push({ peer, d2: near ? dist2(p, near) : 0, pri: priority ? !!priority(peer.id) : false });
     }
-    want.sort((a, b) => a.d2 - b.d2);
+    // AUDIT PARTY8 (2026-09-23): A PARTY MATE BEFORE A STRANGER. The rigs were nearest-first alone, so with seven
+    // companions and one stranger nearer than the farthest of them, the stranger took the eighth body and a party
+    // mate stood as a paper doll. `priority` (the host's own `social.isPartyPeer`) sorts a mate first, and a mate
+    // may take a stranger's slot outright; a stranger never takes a mate's.
+    want.sort((a, b) => (a.pri === b.pri ? a.d2 - b.d2 : a.pri ? -1 : 1));
+    for (const [id, b] of this._bodies) b.pri = priority ? !!priority(id) : false;
     for (const w of want) {
-      if (this._bodies.size >= BODIES_MAX && !this._yield(w.d2)) break;
+      if (this._bodies.size >= BODIES_MAX && !this._yield(w.d2, w.pri)) break;
       const peer = w.peer;
-      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, builtAt: now, swing: null, cast: null, pending: null, held: false, ammo: null, weapon: null,
+      const b = { id: peer.id, key: lookKey(peer.look), rig: this._createRig(), state: 'building', cam: null, feet: null, yaw: peer.shown.yaw, speed: 0, goneAt: null, far: false, d2: w.d2, pri: w.pri, builtAt: now, swing: null, cast: null, pending: null, held: false, ammo: null, weapon: null,
         posed: false, phase: this._phase++, bank: 0 };   // PEER-CADENCE
       this._bodies.set(peer.id, b);
       b.rig.attach(this.renderer, () => b.cam);
@@ -223,13 +228,17 @@ export class PeerBodies {
   }
 
   /** The farthest body - a lingering one first - gives its slot to a peer nearer by SWAP_MARGIN; true when a slot was freed. */
-  _yield(d2) {
-    let victim = null;
+  _yield(d2, pri = false) {
+    let victim = null, stranger = null;
     for (const b of this._bodies.values()) {
       if (b.goneAt != null) { victim = b; break; }
+      if (b.pri && !pri) continue;   // AUDIT PARTY8: a stranger never takes a party mate's slot
       if (!victim || b.d2 > victim.d2) victim = b;
+      if (!b.pri && (!stranger || b.d2 > stranger.d2)) stranger = b;
     }
     if (!victim) return false;
+    // AUDIT PARTY8: a party mate takes the farthest stranger's slot outright, margin or none
+    if (pri && stranger && victim.goneAt == null) { this._release(stranger.id); return true; }
     if (victim.goneAt == null && !(victim.d2 > d2 * SWAP_MARGIN * SWAP_MARGIN)) return false;
     this._release(victim.id);
     return true;

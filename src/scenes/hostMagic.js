@@ -50,6 +50,7 @@ import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bu
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
 import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf arm the ONE cast engine wires
+import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, ALLY_TOUCH_REACH } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
 import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
@@ -93,6 +94,11 @@ export function createPlayerMagic({
   // both resolve inline, without ever touching FPSSpellCasting).
   // @type {?(sp:object, onRelease:Function) => boolean}
   startCastAnim = null,
+  // ALLY-CAST (2026-09-23): the party mate under the crosshair within `reach`, as {id, name} or null - the host's own
+  // pick (player/socialPick.js pickPeerInFront over its peers, party membership and the link's reach); and the door
+  // the cast leaves through (online.sendCast), answering whether it went. A host with neither casts as before.
+  allyTarget = null,
+  castAtAlly = null,
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
   // Classic click-to-cast: DFU's armed state IS the readied spell -
@@ -337,6 +343,26 @@ export function createPlayerMagic({
     });
   }
 
+  /** AUDIT ALLY-CAST A2/A6: THE PARTY MATE THE CAST WOULD LAND ON - the host's pick (`allyTarget`: the F key's ray
+   *  over the party, within `reach`, a member some socket of mine reaches) behind pickTouch's OWN line-of-sight rule:
+   *  the first cut redirected a Heal at a friend through a closed door or a dungeon wall, which a touch on a foe
+   *  never crosses. Null with no aim, no pick, a wall short of them, or a pick that throws (the host's seam, not the
+   *  cast's law - the spell then goes the ordinary way). The plaque asks the same question (A5), so it never promises
+   *  a cast the click would not make. */
+  function allyInReach(eye, dir, reach) {
+    if (!eye || !dir || !allyTarget) return null;
+    let ally = null;
+    try { ally = allyTarget(eye, dir, reach) ?? null; } catch { return null; }
+    if (!ally) return null;
+    const d = ally.distance;
+    if (Number.isFinite(d) && d > 0) {
+      const l = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+      const hit = collider.raycast(eye, [dir[0] / l, dir[1] / l, dir[2] / l], d);
+      if (Number.isFinite(hit) && hit < d - 1e-3) return null;
+    }
+    return ally;
+  }
+
   /**
    * ROAD-E6: PlayerSpellCasting_OnReleaseFrame (:2098-2143) - the four
    * range arms, each recording the refund-cap cost, tallying, and
@@ -371,6 +397,22 @@ export function createPlayerMagic({
     const dir = lastAim ? lastAim.dir : p.dir;
     // :2141 - readySpellDoesNotCostSpellPoints clears with the ready.
     const done = (v) => { lastSpell = sp; onCastReadySpell?.(sp); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; };   // :2136-2141 (lastSpell = readySpell, the raise, then the clear)
+    // ALLY-CAST: THE PARTY MATE UNDER THE CROSSHAIR takes a beneficial CasterOnly, ByTouch or SingleTargetAtRange
+    // cast - the port's own targeting (systems/allyCast.js, a recorded departure): a CasterOnly Heal read off a
+    // friend is a touch on them, not on me. The spell is spent as any cast is (the magicka went at the cast, the
+    // tally is the same), and the ally's own client applies it. A frame that cannot leave (nobody reachable) falls
+    // through to the ordinary arm: the spell still does what it always did. AUDIT ALLY-CAST A7: a FREE ready (a
+    // trap's payload, readySpellDoesNotCostSpellPoints) is never redirected - it is the trap's spell on the player who
+    // sprang it, not a gift they chose to give.
+    const allyReach = allyReachFor(sp.rangeType);
+    const ally = !readiedFree && allyReach !== null && allyCastable(sp) ? allyInReach(eye, dir, allyReach) : null;
+    if (ally && castAtAlly?.(ally.id, allyCastFrame(sp, playerEntity.level, ally.id))) {
+      lastCastCost = cost;
+      tallyCastSkills(sp);
+      surfacePlayer();
+      say(allyCastCasterLine(sp.name, ally.name));
+      return done(true);
+    }
     if (sp.rangeType === 0) {
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; AssignBundle at :2117.
@@ -457,7 +499,9 @@ export function createPlayerMagic({
       // ByTouch: CastReadySpell aborts BEFORE spending when no target
       // sits in touch range (verbatim - the S9 'spends on a whiff'
       // rule was wrong and died at its audit).
-      if (!pickTouch(eye, dir)) return false;
+      // ALLY-CAST: the touch probe admits a party mate in touch reach as it admits a foe - the release frame (the
+      // ally arm there) is where the cast is aimed, but CastReadySpell's own gate runs first
+      if (!pickTouch(eye, dir) && !(!readiedFree && allyCastable(sp) && allyInReach(eye, dir, ALLY_TOUCH_REACH))) return false;
     }
     // :423-425 DecreaseMagicka - the spend is at the CAST, before a
     // single frame of hand motion has run.
@@ -503,7 +547,17 @@ export function createPlayerMagic({
     readiedFree = free;
     readiedCost = spellPointCost;
     onNewReadySpell?.(sp);   // :348 - after the assignment, before the CasterOnly instant cast
-    if (sp.rangeType === 0) { castInput(null, null); return; }
+    if (sp.rangeType === 0) {
+      // AUDIT ALLY-CAST A1: a CasterOnly spell with a PARTY MATE under the crosshair ARMS instead of firing on the
+      // spot. The instant arm (:350-351) gave the player no sign of where the cast would land - a Heal readied while
+      // a friend happened to stand in the way went to them, a Heal readied for a friend who had just stepped aside
+      // healed me - so the port's own targeting (systems/allyCast.js) shows itself first: armed, the plaque under
+      // the mate says "Cast Heal on Bran", and the next click resolves through releaseFrame's ally arm, or through
+      // the CasterOnly arm as ever if they moved. A free ready (A7) fires on the spot as DFU's does; so does one
+      // with nobody there.
+      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }
+      castInput(null, null); return;
+    }
     // AUDIT 24 scenes: SetReadySpell's own line, verbatim -
     // GetLocalizedText("pressButtonToFireSpell") = "Press button to
     // fire spell." (Internal_Strings_en, EntityEffectManager.cs:355).
@@ -773,6 +827,7 @@ export function createPlayerMagic({
     missileCount: () => missiles.length,   // M5 probe surface
     readied: () => readiedSpell,
     readiedIndex: () => readiedSpell?.index ?? null,
+    allyInReach,   // AUDIT ALLY-CAST A5: the plaque's question, answered by THIS engine's pick and collider
     setReadiedByIndex(index, spellsByIndex) {
       // S1: a MADE spell has no SPELLS.STD index (it carries a
       // negative one of its own), so the file table cannot answer for

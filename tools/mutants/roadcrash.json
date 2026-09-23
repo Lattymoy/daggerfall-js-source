@@ -1,0 +1,38 @@
+[
+  {
+    "name": "RC-ring-keeps-the-name",
+    "file": "src/systems/travelOptions.js",
+    "old": "      st.destinationName = null;\n      st.corners = locBorderCornerRects(st.locationRect, st.locationBorderRect);",
+    "new": "      st.corners = locBorderCornerRects(st.locationRect, st.locationBorderRect);",
+    "tests": [
+      "test/roadcrash.test.js"
+    ]
+  },
+  {
+    "name": "RC-walk-reads-null-rects",
+    "file": "src/systems/travelOptions.js",
+    "old": "    if (!st.locationRect || !st.locationBorderRect) {\n      ui?.closeWindow();\n      if (st.autopilot) interruptTravel();\n      return;\n    }",
+    "new": "    if (false) {\n      ui?.closeWindow();\n      if (st.autopilot) interruptTravel();\n      return;\n    }",
+    "tests": [
+      "test/roadcrash.test.js"
+    ]
+  },
+  {
+    "name": "RC-guard-closes-but-leaves-the-leg",
+    "file": "src/systems/travelOptions.js",
+    "old": "      ui?.closeWindow();\n      if (st.autopilot) interruptTravel();\n      return;",
+    "new": "      ui?.closeWindow();\n      return;",
+    "tests": [
+      "test/roadcrash.test.js"
+    ]
+  },
+  {
+    "name": "RC-giveup-is-a-leg",
+    "file": "src/systems/travelOptions.js",
+    "old": "        if (countSetBits(dir) === 1) {",
+    "new": "        if (countSetBits(dir) >= 1) {",
+    "tests": [
+      "test/roadcrash.test.js"
+    ]
+  }
+]
