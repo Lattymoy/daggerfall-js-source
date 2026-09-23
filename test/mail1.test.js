@@ -123,7 +123,10 @@ test('MAIL1 law: a letter carries the chat\'s characters (visibleText - one law)
   }
   const wire = src('src/net/wire.js');
   assert.match(wire, /export function sanitizeChat\(text\) \{\n  let s = visibleText\(text\)\.replace\(\/\\s\+\/g, ' '\)\.trim\(\)\.slice\(0, CHAT_MAX\);/, 'the chat line is visibleText, folded and bounded');
-  assert.match(src('src/net/letterLaw.js'), /import \{ visibleText \} from '\.\/wire\.js';/, 'the letter reads the same law');
+  // JOURNAL1 moved the letter's line law into wire.js beside visibleText (wordsLine, foldBlankLines), where the journal
+  // page reads it too - one law for a player's lines, and that law is still visibleText's
+  assert.match(src('src/net/letterLaw.js'), /import \{ wordsLine, foldBlankLines \} from '\.\/wire\.js';/, 'the letter reads the same law');
+  assert.match(wire, /export const wordsLine = \(line\) => visibleText\(String\(line \?\? ''\)/, 'and a line of it is visibleText\'s');
 });
 
 test('MAIL1 law: a letter past its bound is REFUSED, never cut - one word each (the service returns them verbatim, and every one has a sentence); and the widest letter a player can type always fits the service\'s 4 KiB body (mutants: a bound off by one; a letter trimmed to fit)', () => {

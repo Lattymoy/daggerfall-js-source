@@ -139,8 +139,8 @@
   {
     "name": "PEER-PLAQUE1-trade-half-of-the-bag-dropped",
     "file": "src/scenes/world.js",
-    "old": "({ ...social.actionsFor(peerId), ...tradeActionsFor(peerId), canInspect: true });",
-    "new": "({ ...social.actionsFor(peerId), canInspect: true });",
+    "old": "({ ...social.actionsFor(peerId), ...tradeActionsFor(peerId), canInspect: true, canReadPage: !!pageOffers.get(peerId) });",
+    "new": "({ ...social.actionsFor(peerId), canInspect: true, canReadPage: !!pageOffers.get(peerId) });",
     "tests": [
       "test/peerplaque.test.js"
     ]

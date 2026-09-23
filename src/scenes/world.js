@@ -317,15 +317,19 @@ import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced s
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letterbox the Letters tab draws and the frame polls
-import { createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
+import { createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT, LETTERS_SIGNED_OUT_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { glyphMarks } from '../ui/playerBadge.js';   // PEER-PLAQUE1: a badge's plain-text marks, for the plaque's title
 import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerRelationText } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
 import { allyCastSpell, allyCastable, allyReachFor, allyCastTargetLine, allyCastPlaqueLine } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at a party mate
-import { createTradeManager, TRADE_RANGE_M, inTradeRange } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
+import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { createProfileWindow, profileView } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { createPageWindow, pageView } from '../ui/pageWindow.js';   // JOURNAL1: a page another player holds out, read and kept
+import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageTokens, keptLetterTokens, letterOfPage, PAGE_UNSUPPORTED_TEXT, PAGE_NO_READERS_TEXT, PAGE_GONE_TEXT } from '../net/journalPage.js';   // JOURNAL1: a page of the journal shown, and one shown to me kept
+import { quickslotTag } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
+import { isTouchDevice } from '../ui/touchDevice.js';   // JOURNAL1: ...or a tap, where a finger points
 import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
 import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, RELAY_RESTART_TEXT, BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
 import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
@@ -4239,7 +4243,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2430 mounts the same one, gated on
+  // and dungeonContext.js:2432 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5575
@@ -4898,6 +4902,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // dungeon delegation this now feeds explained there).
       partyMembers: partyMembersHere,
       shareQuest: shareQuestWithParty,
+      // JOURNAL1: a note's Share - who a page can be held out to, and the letter (pageShareHere, below)
+      pageShare: () => pageShareHere(),
       mode,
       // HandleQuestClicks' three world questions (:439-466). This is the
       // host that owns the travel map, so this is the host that answers
@@ -6280,7 +6286,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6221), so exterior mode and a
+    // composer, dungeonContext.js:6223), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8261,7 +8267,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8691-8755 -
+  // worldModes answers it in BOTH modes (worldModes.js:8692-8756 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9505,6 +9511,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // opens the list, which is the same gesture one step out.
   let socialMenu = null;
   let profileWin = null;   // INSPECT1: the profile over a player the F key found - made beside the F-menu it opens from
+  let pageWin = null;   // JOURNAL1: the page a player held out to me, read - made beside the profile, under its gate
+  const pageOffers = new PageOffers();   // JOURNAL1: the pages held out to me, one per writer, waiting to be read
+  let _letterPending = null;   // JOURNAL1: { draft, at } - a page sent as a letter, waiting for the chronicle to come down so the letters can open on it
   let _profileAsk = null;   // INSPECT1: { peerId, at, sent } - the card asked for and not yet answered; the frame retries the send and times the wait
   const cardAnswers = createCardAnswerGate();   // INSPECT1: one asker answered once in a while, whoever asks
   let peerAct = null;   // ACT-MENU: the chosen act's door (set with the menu, over the same link and chat tab)
@@ -9789,6 +9798,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       const p = online.peers.get(id) ?? null;
       profileWin?.update(id, profileView({ name: peerName(id), peer: p, look: p?.look ?? null, card: d.card, state: 'answered' }));
     };
+    // JOURNAL1 (Addison Knox: "Player journals ... shared in-world for storytelling"): A PAGE HELD OUT TO ME. Held,
+    // never opened over my game (net/journalPage.js PageOffers: a writer's newest replaces their last and waits
+    // PAGE_HOLD_MS), under the name the room knows them by now, and said on the social tab once in a while per writer
+    // with how to read it: I read it when I turn to them (the F-menu's 'Read their page', peerActsFor). Where there is
+    // no F-menu to read it by (no account, so no social arms), it is not held at all.
+    online.onPage = (id, d) => {
+      if (!socialMenu || !pageWin || !d?.page) return;
+      if (!pageOffers.offer(id, d.page, peerName(id))) return;
+      tradeSay(pageOfferText(peerName(id), pageReadHow()));
+    };
     online.onAct = (id, data) => { modes?.applyPlaceActions?.(id, data); };   // WORLD3: another's door, lever or platform; WORLD6a: in a building too
     // WORLD5: this save's time markers are set to the WORLD's time - a save a month behind catches up no loans and no
     // diseases on its first frame, one a year ahead reads no negative day - and the day's weather is rolled from the
@@ -10020,7 +10039,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       },   // no chat under a window: the window's keys are the window's
       onOpen: () => surfaceOpen('chat'),   // AUDIT CHAT C2: the panel is a pointer surface - the mouse is freed on open (AUDIT SOC B6: by the first surface up - the friends panel and the F-menu are surfaces too)   // PL3: the Enter that opened the chat is the CHAT'S - the toggle (the same key, a capture listener bound earlier) had already flipped cursorActive on it, and the close's relock was refused by the precedence line for the rest of the session
       onClose: () => surfaceClose('chat'),   // and taken back inside the closing gesture (MAC1's rule, ui/pauseDoor.js) - by the last surface down
-      above: () => !!(socialPanel?.isOpen?.() || socialMenu?.isOpen?.() || profileWin?.isOpen?.()),   // INSPECT1: and the profile. AUDIT SOC C2/C14: ONE ESCAPE, ONE SURFACE - the chat yields the key while the friends panel or the F-menu stands over it (each of the three closes on its own Escape and stops it; the topmost answers)
+      above: () => !!(socialPanel?.isOpen?.() || socialMenu?.isOpen?.() || profileWin?.isOpen?.() || pageWin?.isOpen?.()),   // INSPECT1: and the profile; JOURNAL1: and a page being read. AUDIT SOC C2/C14: ONE ESCAPE, ONE SURFACE - the chat yields the key while the friends panel or the F-menu stands over it (each of the three closes on its own Escape and stops it; the topmost answers)
       // SOC3: the three social seams of the chat, all read LAZILY - `social` and `socialPanel` are made by
       // socialStart below, which runs after this call (the panel has to exist before the picture lands beside it),
       // so every one of these is a closure that asks at the moment of the click or the frame, never a value.
@@ -10100,10 +10119,11 @@ export async function bootWorld(canvas, renderer, params, status) {
       social,
       mail,
       send: (act) => socialLink()?.sendSocial(act) ?? false,   // false is the rate gate's answer: the panel keeps the button and says "try again"
+      keepLetter: (letter) => keepLetterInJournal(letter),   // JOURNAL1: a letter kept in my journal, as a page is
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),
       onOpen: () => surfaceOpen('social'),   // AUDIT SOC B6: counted with the chat's and the F-menu's - the first up frees the mouse, the last down takes it back
       onClose: () => surfaceClose('social'),
-      above: () => !!(socialMenu?.isOpen?.() || profileWin?.isOpen?.()),   // AUDIT SOC C2/C14: the F-menu stands over the panel - its Escape is the menu's; INSPECT1: and the profile opened from it
+      above: () => !!(socialMenu?.isOpen?.() || profileWin?.isOpen?.() || pageWin?.isOpen?.()),   // AUDIT SOC C2/C14: the F-menu stands over the panel - its Escape is the menu's; INSPECT1: and the profile opened from it; JOURNAL1: and a page read from it
     });
     // AUDIT SOC B14/D11: `hudCtx.openSocial` stood here as a second door to the panel; nothing dispatched through it
     // (SOC5's key reaches the panel through socialInteract's nobody-in-front arm), and a door nothing opens is a
@@ -10130,6 +10150,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerNote = (text) => { if (text) chatLog.push(tab.id, { text, system: true }); };
     // ACT-MENU: the one door a chosen act leaves by - the F-card's rows and the plaque's (plaquePeerAct) alike
     peerAct = (act) => {
+      if (act.k === 'page.read') { readPage(act.peer); return; }   // JOURNAL1: not a hub act - a page they hold out to me, read
       if (act.k === 'profile.inspect') { inspectPeer(act.peer); return; }   // INSPECT1: not a hub act - a look at someone standing here, and a card asked of them
       if (act.k === 'trade.request') {   // TRADE1: not a hub act - two players in one room, so the host routes it to the trade manager (or, if they had asked first, accepts)
         const r = tradeMgr.request(act.peer);
@@ -10154,6 +10175,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       canOpen: socialMenuCanOpen,
       onOpen: () => surfaceOpen('profile'),
       onClose: () => { surfaceClose('profile'); _profileAsk = null; },   // a card closed is a card no longer waited on
+    });
+    // JOURNAL1: the page window, beside the profile and under the same gate - the F-menu's 'Read their page' opens it
+    // over a page held out to me (pageOffers), and F again puts it away (socialInteract). Keep files the page it shows
+    // in my journal (keepPage).
+    pageWin = createPageWindow({
+      doc: document, win: globalThis,
+      canOpen: socialMenuCanOpen,
+      onOpen: () => surfaceOpen('page'),
+      onClose: () => surfaceClose('page'),
+      onKeep: (peerId, view) => keepPage(peerId, view),
     });
   };
   let _noAccountSaid = false;   // AUDIT SOC B10: the no-account line goes on the tab once
@@ -10217,7 +10248,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  manager says, and the look (INSPECT1: a player standing in front of you can always be looked at). The F-card's
    *  rows, the plaque's verbs and the plaque's press all read this one bag, so the two surfaces offer the same rows
    *  through the one door (`peerAct`) - main's ACT-MENU law, which a bag built three times would drift from. */
-  const peerActsFor = (peerId) => ({ ...social.actionsFor(peerId), ...tradeActionsFor(peerId), canInspect: true });
+  const peerActsFor = (peerId) => ({ ...social.actionsFor(peerId), ...tradeActionsFor(peerId), canInspect: true, canReadPage: !!pageOffers.get(peerId) });   // JOURNAL1: and a page they hold out to me, while it waits
   /** The trade's frame: retries and timeouts, and the two things that end a live trade for free - the peer leaving (no open
    *  socket of mine reports them any more) and, inside tick(), the peer stepping past TRADE_RANGE_M metres (`near`). The
    *  range rule holds in the overworld, an interior and a dungeon alike now - the old overworld-only guard is gone with the
@@ -11201,12 +11232,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
       status: chatStatus(chatLog.active),   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5); CHAT-CHAN: or the tab's own reason
     });
+    // JOURNAL1: A PAGE SENT AS A LETTER opens the letters on it the first frame the panel may stand - the chronicle it was
+    // sent from is a window over the HUD, and it is down only once its host has seen it close. The same draft is handed
+    // again each frame until then (openLetters answers whether the panel stood); a panel that cannot stand within a
+    // minute - a pause left up, another window - is said, and the page stays in the journal. Before the panel's own render
+    // below, so the frame that opens it draws it (and ahead of the party's run, which SOC3/SOC4 pin as renders alone).
+    if (_letterPending) {
+      if (socialPanel?.openLetters({ draft: _letterPending.draft })) _letterPending = null;
+      else if (performance.now() - _letterPending.at > LETTER_PENDING_MS) { _letterPending = null; tradeSay('Your letters could not open - the page is still in your journal.'); }
+    }
     partyRestFollowTick();   // PARTY-REST1: every frame, not throttled to the send cadence - a few property reads, and a follower's own countdown should start and end as promptly as the leader's does
     partyFrame(performance.now());   // SOC2: my party pose rides the chat frame - before the dead return with it, so a dead member's card says so as their vitals read zero
     // SOC3: and the friends + party panel repaints on the same frame, under the same covering rule as the chat -
     // its body only when the picture moved, its countdowns and its invite toast every time (ui/socialPanel.js).
     socialPanel?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });
     profileWin?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });   // INSPECT1: the F-menu's own covering word
+    pageWin?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });   // JOURNAL1: and the page read from it
     socialMenu?.render({ covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() });   // SOC5: a window over the HUD takes the F-menu with it, the same word the chat's own `covered` carries - a card left over a window would take the clicks the window is owed
     // SOC4: and the party HUD is drawn from the same frame, under the SAME `covered` word the chat panel takes - a
     // window over the HUD covers both. The panel itself costs one version compare on a frame where nothing moved.
@@ -11334,6 +11375,92 @@ export async function bootWorld(canvas, renderer, params, status) {
     const p = online?.peers.get(id) ?? null;
     profileWin?.update(id, profileView({ name: peerName(id), peer: p, look: p?.look ?? null, state: 'silent' }));
   };
+  // ═══ JOURNAL1 - A PAGE OF MY JOURNAL, SHOWN; AND ONE SHOWN TO ME, READ AND KEPT ═══════════════════════════════════
+  // Addison Knox: "Player journals ... shared in-world for storytelling". The journal is DFU's notebook, which the
+  // chronicle draws; net/journalPage.js is the shapes and the words, and this block connects them to this scene's
+  // socket, peers, notebook, social tab, F-menu and letters.
+  /** How long a page sent as a letter waits for the letters to stand before it is said they could not - a minute, since
+   *  a chronicle opened from the pause window comes down onto the pause, and the letters stand once the player is back. */
+  const LETTER_PENDING_MS = 60000;
+  /** How a reader turns to a writer to read their page, in the notice: the F-menu's own key, named off the live bindings
+   *  (a rebound key is the key the line names), or the phone's own F (ui/touch.js's social button) where a finger points;
+   *  null for an unbound key, which the line says as "turn to them". */
+  const pageReadHow = () => {
+    if (isTouchDevice()) return 'face them and press \u263a';
+    const tag = quickslotTag('SocialInteract', { bindings: bindings() });
+    return tag?.kind === 'key' ? `press ${tag.text} on them` : null;
+  };
+  /** WHO A PAGE CAN BE HELD OUT TO: the players standing within the reach a talk has (player/socialPick.js SOCIAL_REACH,
+   *  DFU's own distance for a person - the F-menu's), in metres between two bodies (net/tradeSession.js tradeDistance,
+   *  the trade's one measure), that a socket of mine reports, nearest first. Nobody where the relay cannot carry a page. */
+  const pageReaders = () => {
+    if (!online?.pageOk) return [];
+    const near = peersNear();
+    if (!near) return [];
+    const me = player.feetAt();
+    return near.map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone', d: tradeDistance(me, p.feet) }))
+      .filter((p) => p.d <= SOCIAL_REACH && online.reachesPeer(p.id))
+      .sort((a, b) => a.d - b.d)
+      .map(({ id, name }) => ({ id, name }));
+  };
+  /** Hold a page out to one reader - measured again at the press, because the list was drawn a moment ago and they may
+   *  have walked on. The sentence that says what happened, for the chronicle to say under the note. */
+  const showPage = (id, page) => {
+    const name = peerName(id);
+    if (!online || online.status !== 'open') return `${NOT_CONNECTED_TEXT}.`;
+    if (!online.pageOk) return PAGE_UNSUPPORTED_TEXT;
+    if (!pageReaders().some((p) => p.id === id)) return pageTooFarText(name);
+    return online.sendPage({ to: id, page }) ? pageShownText(name) : `${TRY_AGAIN_TEXT}.`;
+  };
+  /** A page sent as a letter: true when the letters will open on it once the chronicle is down (the frame's
+   *  `_letterPending`), or the sentence that says why they cannot - the Letters tab's own words. */
+  const letterPage = (page) => {
+    if (!mail || !socialPanel) return accountRefusalText('mail-needs-account');
+    if (mail.state === 'signed-out') return LETTERS_SIGNED_OUT_TEXT;
+    if (mail.state === 'guest') return accountRefusalText('mail-needs-account');
+    _letterPending = { draft: letterOfPage(page), at: performance.now() };
+    return true;
+  };
+  /** THE CHRONICLE'S SHARE (ui/chronicleDoor.js `pageShare` says the shape): null with no online layer at all - no Share
+   *  is drawn - else who a page can be held out to now, why nobody can, and the two doors. */
+  const pageShareHere = () => {
+    if (!online && !mail) return null;
+    const readers = pageReaders();
+    const why = readers.length ? null
+      : (!online || online.status !== 'open') ? `${NOT_CONNECTED_TEXT}.`
+        : (!online.pageOk ? PAGE_UNSUPPORTED_TEXT : PAGE_NO_READERS_TEXT);
+    return { readers, why, show: showPage, letter: mail ? letterPage : null };
+  };
+  /** The F-menu's 'Read their page': the page they hold out, in the window - if it still waits. */
+  const readPage = (peerId) => {
+    const o = pageOffers.get(peerId);
+    if (!o || !pageWin) { tradeSay(PAGE_GONE_TEXT); return false; }
+    return pageWin.show(peerId, pageView({ name: o.name ?? peerName(peerId), page: o.page, kept: o.kept, canKeep: !!questBridge?.notebook }));
+  };
+  /** A page KEPT: the page the window shows, into my journal - the notebook's own AddNote(tokens), dated where and when I
+   *  keep it, under the name the window shows (net/journalPage.js keptPageTokens) - and the offer marked, so reading it
+   *  again offers no second copy. False with no journal to keep it in. */
+  const keepPage = (peerId, view) => {
+    const nb = questBridge?.notebook;
+    if (!nb || !view?.page) return false;
+    nb.addNoteTokens(keptPageTokens(view.name, view.page));
+    pageOffers.markKept(peerId, view.page);
+    return true;
+  };
+  /** A LETTER KEPT (the Letters tab's Keep): the same, for a letter (keptLetterTokens). */
+  const keepLetterInJournal = (letter) => {
+    const nb = questBridge?.notebook;
+    if (!nb || !letter) return false;
+    nb.addNoteTokens(keptLetterTokens(letter));
+    return true;
+  };
+  /** The frame: a page whose writer is not in the room any more goes with them; no link, no pages. Nothing is made on a
+   *  frame: the session's own peer map is what is asked. */
+  const pageFrame = () => {
+    if (!pageOffers.held.size) return;
+    if (!online) { pageOffers.clear(); return; }
+    pageOffers.keepOnly(online.peers);
+  };
   /** ACT-MENU: THE PRESS ON A PLAYER. The plaque's race named them (the nearest thing under the ray - WORLD-HOVER H2)
    *  and the wheel (or F) lit a verb; this presses it through the F-menu's own door (`peerAct`). AUDIT DISC7:
    *  - nothing lit, nothing pressed: a player's list starts unlit (A2), so a plain click on them goes on to the
@@ -11357,6 +11484,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const socialInteract = () => {
     if (!social) return false;
     if (profileWin?.isOpen()) { profileWin.hide(); return true; }   // INSPECT1: F again closes the profile, as it closes the F-menu
+    if (pageWin?.isOpen()) { pageWin.hide(); return true; }   // JOURNAL1: and the page read from it
     if (socialMenu?.isOpen()) { socialMenu.hide(); return true; }
     // ACT-MENU: where the plaque stands, the choosing is ITS - F presses the lit verb as the activate key does, and on
     // a player whose list is still unlit F lights its first row (AUDIT DISC7 A2: the keyboard's way onto the list, as
@@ -11377,6 +11505,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     tradeFrame();   // TRADE1: retries, timeouts, a peer gone or out of reach - before the dead return, as the chat's is
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
+    pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
@@ -11851,6 +11980,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // works while actually standing in a dungeon, not only back outside it.
     partyMembers: () => partyMembersHere(),
     shareQuest: (uid, questName, displayName) => shareQuestWithParty(uid, questName, displayName),
+    pageShare: () => pageShareHere(),   // JOURNAL1: a note's Share, delegated the same way into the dungeon's own chronicle
     useMagicItem: (item) => useMagicItem(item),   // UI1: MagicItemPicker's use, through the world host's one seam
     // TR5: the interior hosts dismount through the world host, which
     // owns the motor, the animator and the mount's art together.

@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -305,6 +305,11 @@ export class OnlineSession {
     this._cardBucket = null;      // INSPECT1: my own card frames out, asks and answers together - cardGate's law
     this._inCardBuckets = new Map();   // INSPECT1: the gate on card frames coming in, per sender - the cast gate's shape
     this._inCardSaid = false;
+    this.pageOk = false;          // JOURNAL1: the relay that welcomed this socket routes page frames (relaySupportsPage) - an older one CLOSES the socket on one, so no page is shown through it
+    this.onPage = null;           // JOURNAL1: (id, data) => void - a page of another player's journal held out to ME, projected by the wire's validPageData
+    this._pageBucket = null;      // JOURNAL1: my own pages out - pageGate's law
+    this._inPageBuckets = new Map();   // JOURNAL1: the gate on pages coming in, per sender - the card gate's shape
+    this._inPageSaid = false;
     // name (below), so once Local chat went down this session a heal cast at a mate spent a chat line and a chat line a cast
     this._inTradeBuckets = new Map();   // TRADE1: and the gate on trade frames coming IN, per sender (AUDIT DROPS B3) - a peer is chosen by the sender, so a flood is a peer's, never the relay's
     this._inTradeSaid = false;
@@ -744,6 +749,23 @@ export class OnlineSession {
     if (s.length > CARD_FRAME_MAX) return false;   // the relay's own door on a card frame - over it the relay closes the socket
     try { ws.send(s); } catch { return false; }
     this._cardBucket = gate.bucket; this.stats.sent++; this.stats.cards = (this.stats.cards ?? 0) + 1;
+    return true;
+  }
+
+  /** JOURNAL1: a page of my journal held out to one peer, through the socket that reports them (`_socketFor`), through
+   *  the wire's own law first (validPageData: its words cleaned, refused past its bound), PAGE_HZ_MAX a second, never at
+   *  a relay that would close the socket for it. False when it cannot go - the journal then says so. */
+  sendPage(data) {
+    const d = validPageData(data);
+    if (!d || d.to === this.id || !this.pageOk) return false;
+    const ws = this._socketFor(d.to);
+    if (!ws) return false;
+    const gate = pageGate(this._pageBucket, this._now());
+    if (!gate.pass) return false;
+    const s = JSON.stringify({ t: 'page', data: d });
+    if (s.length > PAGE_FRAME_MAX) return false;   // the relay's own door - the law keeps every page under it, and this keeps a frame that is not from ever closing the socket
+    try { ws.send(s); } catch { return false; }
+    this._pageBucket = gate.bucket; this.stats.sent++; this.stats.pages = (this.stats.pages ?? 0) + 1;
     return true;
   }
 
@@ -1228,6 +1250,7 @@ export class OnlineSession {
       if (primary) this.rollOk = relaySupportsRoll(relayV);   // DICE1
       if (primary) this.emoteOk = relaySupportsEmote(relayV);   // EMOTE1
       if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1
+      if (primary) this.pageOk = relaySupportsPage(relayV);   // JOURNAL1
       if (primary) this.parkOk = relaySupportsPark(relayV);   // HCC-PARK: the same law for the park frame
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
@@ -1328,6 +1351,21 @@ export class OnlineSession {
         } else {
           const d = validCardData(m.data);
           if (d && d.to === this.id) this._deliver('card', () => this.onCard?.(m.id, d));
+        }
+      }
+    } else if (m.t === 'page') {
+      // JOURNAL1: a page of another player's journal the relay routed to me - on any socket I hold, never my own back,
+      // gated coming in per sender (the card arm's law), projected by the wire, addressed to ME. The host holds it for
+      // me to read; nothing opens over my game on its own.
+      if (typeof m.id === 'string' && m.id !== this.id) {
+        if (this._inPageBuckets.size > TRADE_IN_SENDERS_MAX) this._inPageBuckets.clear();
+        const g = pageInGate(this._inPageBuckets.get(m.id) ?? null, now);
+        this._inPageBuckets.set(m.id, g.bucket);
+        if (!g.pass) {
+          if (!this._inPageSaid) { this._inPageSaid = true; console.warn(`[online] pages are arriving faster than ${PAGE_IN_HZ_MAX}/s - frames are being dropped.`); }
+        } else {
+          const d = validPageData(m.data);
+          if (d && d.to === this.id) this._deliver('page', () => this.onPage?.(m.id, d));
         }
       }
     } else if (m.t === 'park') {

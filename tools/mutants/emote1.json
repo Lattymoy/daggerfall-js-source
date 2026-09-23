@@ -99,10 +99,10 @@
   },
   {
     "name": "EM-segmenter-splits-pairs",
-    "file": "src/ui/nameLayer.js",
-    "old": "  const parts = Seg ? Array.from(new Seg(undefined, { granularity: 'grapheme' }).segment(text), (g) => g.segment) : Array.from(text);",
-    "new": "  const parts = text.split('');",
-    "tests": ["test/emote1.test.js"]
+    "file": "src/systems/graphemes.js",
+    "old": "  return Array.from(segmenter.segment(s), (g) => g.segment);",
+    "new": "  return s.split('');",
+    "tests": ["test/emote1.test.js", "test/journal1.test.js"]
   },
   {
     "name": "EM-empty-me-said",

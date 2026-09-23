@@ -46,6 +46,7 @@
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
 import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
@@ -92,15 +93,13 @@ export function bubbleText(text) {
 
 /** EMOTE1: THE CUT FALLS BETWEEN CHARACTERS AS A READER COUNTS THEM. A bare `slice` counts UTF-16 units, so the cut
  *  could halve a surrogate pair (a stray replacement box after a face) or a joined emoji (a family cut to a man and
- *  a joiner). The longest run of whole graphemes within `max` units - Intl.Segmenter where the runtime has one, and
- *  whole code points where it does not (a pair is never split either way). */
+ *  a joiner). The longest run of whole graphemes within `max` units - the characters systems/graphemes.js counts,
+ *  which the notebook's line break reads too (JOURNAL1), so the two cuts agree on what a character is. */
 export function graphemeCut(s, max) {
   const text = String(s ?? '');
   if (text.length <= max) return text;
   let out = '';
-  const Seg = globalThis.Intl?.Segmenter;
-  const parts = Seg ? Array.from(new Seg(undefined, { granularity: 'grapheme' }).segment(text), (g) => g.segment) : Array.from(text);
-  for (const g of parts) { if (out.length + g.length > max) break; out += g; }
+  for (const g of graphemesOf(text)) { if (out.length + g.length > max) break; out += g; }
   return out;
 }
 

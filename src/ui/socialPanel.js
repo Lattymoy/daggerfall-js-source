@@ -72,6 +72,9 @@ export const NO_PARTY_TEXT = 'You are not in a party.';
  *  had two different answers for one event. The world tab's wording wins (it is the one a player reads without
  *  opening anything) and the host imports THIS constant rather than keeping a second copy of the words. */
 export const TRY_AGAIN_TEXT = 'Try again in a moment';
+/** JOURNAL1: a letter kept in the journal, and a keep the journal could not take. */
+export const LETTER_KEPT_NOTE = 'A copy is in your journal, under Notes.';
+export const LETTER_KEEP_FAILED_TEXT = 'Your journal cannot take it right now.';
 /** MAIL1: the Letters tab's own sentences - the states the box can be in before there is anything to list. */
 export const NO_LETTERS_TEXT = 'No letters yet. A letter waits here for you while you are away.';
 export const LETTERS_SIGNED_OUT_TEXT = 'Sign in to an account to send and read letters.';
@@ -273,7 +276,7 @@ export function friendOrder(friends) {
  * a panel with something above it IGNORES the key (does not close, does not stop it), and the one that handles it
  * calls `stopImmediatePropagation` so no other window listener - the host's pause door included - sees that press.
  */
-export function createSocialPanel({ social, send = null, mail = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
+export function createSocialPanel({ social, send = null, mail = null, keepLetter = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
   injectSocialStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
 
@@ -334,7 +337,8 @@ export function createSocialPanel({ social, send = null, mail = null, canOpen = 
   // MAIL1: the Letters tab's own state. `mode` is the view (the box, one letter, the form); `draft` is the form's words,
   // kept HERE and written on every keystroke, so a repaint - or a close and a reopen - never loses a letter half
   // written; `sending` holds the Send button down while one is out; `del` is the letter whose Delete is armed.
-  const letters = { mode: 'list', id: null, draft: { to: '', subject: '', body: '' }, sending: false, del: null, delAt: -Infinity, word: '' };
+  // JOURNAL1: `kept` - the letters this sitting has copied into the journal, so Keep says it has and is not pressed twice
+  const letters = { mode: 'list', id: null, draft: { to: '', subject: '', body: '' }, sending: false, del: null, delAt: -Infinity, word: '', kept: new Set() };
   /** A look at the box when the tab opens - unless one landed a moment ago (the host's poll, or the last opening). The
    *  box's own clock, not the relay's (`social.now()`): `at` is stamped by it. What the look finds repaints on the
    *  next frame, off `mail.version`, like everything else here. */
@@ -578,9 +582,19 @@ export function createSocialPanel({ social, send = null, mail = null, canOpen = 
     head.append(el('div', 'dfsocial-subject', l.subject), senderNode('dfsocial-sub', `From ${l.from}${l.title ? ` - ${l.title}` : ''}`, l), age);
     out.push(head, el('div', 'dfsocial-lettertext', l.body));
     if (letters.word) out.push(el('div', 'dfsocial-err', letters.word));
+    if (keepLetter && letters.kept.has(l.id)) out.push(el('div', 'dfsocial-empty', LETTER_KEPT_NOTE));
     const acts = el('div', 'dfsocial-acts');
     // a reply goes to whoever wrote - their name as the letter carries it is the handle it came from
     acts.append(btn('Reply', { enabled: handleShapeOk(l.from), why: 'no username', run: () => writeTo(l.from, replySubject(l.subject)) }));
+    // JOURNAL1 (Addison Knox: "Player journals ... shared"): a letter KEPT in my journal - a note, dated when I kept it,
+    // that says who wrote it and what about (net/journalPage.js keptLetterTokens); once, where the host has a journal
+    if (keepLetter) {
+      const kept = letters.kept.has(l.id);
+      acts.append(btn(kept ? 'Kept in your journal' : 'Keep in my journal', { enabled: !kept, run: () => {
+        if (keepLetter(l) === true) { letters.kept.add(l.id); letters.word = ''; } else letters.word = LETTER_KEEP_FAILED_TEXT;
+        ui++; if (open) repaint();
+      } }));
+    }
     // ONE CLICK ARMS, THE SECOND THROWS IT AWAY - the friends list's Remove, for the same reasons
     acts.append(letters.del === l.id
       ? btn('Sure?', { warn: true, run: () => {
@@ -785,12 +799,15 @@ export function createSocialPanel({ social, send = null, mail = null, canOpen = 
     isOpen: () => open,
     /** Which tab is up - for the host and for the pins. */
     tab: () => tab,
-    /** MAIL1: open on the Letters tab - on the form to `to` when a name is given, on the box otherwise. False where the
-     *  host handed no letterbox, or the panel cannot open now. */
-    openLetters({ to = null } = {}) {
+    /** MAIL1: open on the Letters tab - on the form to `to` when a name is given, on the box otherwise; JOURNAL1: on the
+     *  form with a whole `draft` ({to, subject, body}) when one is given. False where the host handed no letterbox, or
+     *  the panel cannot open now. */
+    openLetters({ to = null, draft = null } = {}) {
       if (!mail) return false;
       tab = 'letters'; confirm = null;
-      if (to != null) writeTo(to); else { letters.mode = 'list'; letters.id = null; ui++; }
+      // JOURNAL1: a whole draft - a page of the journal sent as a letter (net/journalPage.js letterOfPage), to anyone
+      if (draft) { letters.draft = { to: String(draft.to ?? ''), subject: String(draft.subject ?? ''), body: String(draft.body ?? '') }; letters.word = ''; lettersTo('write'); }
+      else if (to != null) writeTo(to); else { letters.mode = 'list'; letters.id = null; ui++; }
       lookAtLetters();
       if (open) { repaint(); return true; }
       return openPanel();

@@ -2,7 +2,7 @@
 // pressing F on their body, which should show options to add as a friend or invite to a party"): THE MENU ON A BODY -
 // a small DOM card near the middle of the screen, over the player the ray struck.
 //
-// WHAT IT IS. Three buttons and a name (and, where the host offers them, Inspect first and Trade after - INSPECT1, TRADE1). `show({ name, peerId, actions })` draws it; `actions` is
+// WHAT IT IS. Three buttons and a name (and, where the host offers them, Inspect first, a page they hold out after it, and Trade after the rest - INSPECT1, JOURNAL1, TRADE1). `show({ name, peerId, actions })` draws it; `actions` is
 // net/social.js `actionsFor(peerId)` as it stands at the moment of the press - `canFriend` / `canInvite` and, when
 // either is false, `whyNotFriend` / `whyNotInvite` in words. A button that cannot be pressed is DISABLED AND SAYS WHY
 // (the reason on `title`, and beside the label on the row) rather than being hidden: "already friends" is an answer,
@@ -87,7 +87,7 @@ export function injectSocialMenuStyle(doc = document) {
  *  friendship is. `relation` and `acct` are no longer read at all - callers still hand the WHOLE of `actionsFor`
  *  in (they should not have to strip it), and the extra keys are simply ignored, which is what an object argument
  *  is for. */
-export function socialMenuRows({ peerId, canFriend = false, canInvite = false, whyNotFriend = null, whyNotInvite = null, canTrade, whyNotTrade = null, tradeLabel = null, canInspect } = {}) {
+export function socialMenuRows({ peerId, canFriend = false, canInvite = false, whyNotFriend = null, whyNotInvite = null, canTrade, whyNotTrade = null, tradeLabel = null, canInspect, canReadPage } = {}) {
   const rows = [
     { key: 'friend', label: 'Add friend', enabled: !!canFriend, why: canFriend ? null : (whyNotFriend ?? null), act: { k: 'friend.request', peer: peerId } },
     { key: 'invite', label: 'Invite to party', enabled: !!canInvite, why: canInvite ? null : (whyNotInvite ?? null), act: { k: 'party.invite', peer: peerId } },
@@ -95,6 +95,10 @@ export function socialMenuRows({ peerId, canFriend = false, canInvite = false, w
   // INSPECT1 (kurkku: "a profile page that you can bring up when you're near them"): the look before the ask - FIRST,
   // present only when the host says (`canInspect` given), as Trade is. Not a hub act either: the host opens the
   // profile (ui/profileWindow.js) and asks the player for their card over the room's own socket.
+  // JOURNAL1 (Addison Knox: "Player journals ... shared in-world"): a page they hold out to me, read - present ONLY while
+  // one waits (`canReadPage` given: net/journalPage.js PageOffers), beside the look, because turning to them is how a
+  // page held out is taken. Not a hub act: the host opens the page it holds (ui/pageWindow.js); nothing was asked.
+  if (canReadPage) rows.unshift({ key: 'page', label: 'Read their page', enabled: true, why: null, act: { k: 'page.read', peer: peerId } });
   if (canInspect !== undefined) rows.unshift({ key: 'inspect', label: 'Inspect', enabled: !!canInspect, why: null, act: { k: 'profile.inspect', peer: peerId } });
   // TRADE1: the third act. It is present ONLY when the host says whether a trade can be had (`canTrade` given): offline, on a
   // page with no account, or on a skin that cannot draw the window, the host says nothing and the card is exactly the two

@@ -640,6 +640,25 @@ export function sanitizeChat(text) {
   return s.trim();
 }
 
+/** MAIL1 + JOURNAL1: ONE LINE OF A PLAYER'S WORDS WHERE THE WORDS KEEP THEIR LINES - a letter's (net/letterLaw.js) and a
+ *  journal page's (the page law below): the characters a player's words may carry (visibleText), a tab one space, every
+ *  run of whitespace one space (the two Unicode line separators with it: a line is one line), trimmed; '' for a line
+ *  with nothing on it, which is the blank line between two paragraphs. MAIL1 wrote it for the letter; JOURNAL1 moved it
+ *  here when a page needed the same law, so a letter kept in a journal and a page sent as a letter are cleaned by one
+ *  law, not two that drift. Idempotent. */
+export const wordsLine = (line) => visibleText(String(line ?? '').replace(/\t/g, ' ')).replace(/\s+/g, ' ').trim();
+
+/** ...and those lines laid out: a run of blank lines one blank line, none at either end. A new array; idempotent. */
+export function foldBlankLines(lines) {
+  const out = [];
+  for (const line of lines) {
+    if (!line && (!out.length || out[out.length - 1] === '')) continue;
+    out.push(line);
+  }
+  while (out.length && out[out.length - 1] === '') out.pop();
+  return out;
+}
+
 /** Is this key a channel's: one of CHAT_ROOMS - no poses relayed, no roster, every line to everyone. */
 export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));
 
@@ -896,7 +915,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world101';   // MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world101';   // JOURNAL1 (the same deploy): the `page` frame - a page of a player's journal shown to one player standing near them, directed like a card through the cast arm's per-sender funnel, on its own meter, never from a muted player; its words cleaned by the letter's line law, which moves here from net/letterLaw.js (`wordsLine`, `foldBlankLines`) so the letter and the page read one law. MAIL1 (the same deploy): no frame of its own - the letters are the account service's - but the characters' law left sanitizeChat as visibleText, which the letter reads too (one law, not a copy; a chat line comes out of it unchanged). THE MERGE (the same deploy): main's park meter's strikes its own (`parkDrops` - they were the party pose meter's `pdrops`, so either meter's pass forgave the other's flood). INSPECT1 (the same deploy): the `card` frame - a player's card asked for and answered, directed like a cast frame through the cast arm's own per-sender funnel onto the destination, the relay reading none of it. AUDIT ATTACH (the same deploy): every per-socket meter is the Room instance's, not its attachment's - the widest place attachment was past the runtime's 2 KiB and a write it refused froze a meter open; the attachment keeps what a wake must recompute. EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world101. Before it: DISC7 (2026-09-23): the pose's half-speed bit (`hs`, mounted and moving slower than half, omitted at 0) - the peers' clop swaps as the rider's own does - world100. Before it: HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1123,7 +1142,7 @@ export function inRange(roomKey, from, to) {
   return pixelDistance(from, to) <= RANGE_PIXELS;
 }
 
-/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'mute'|'world'|'foes'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'park', ...}
+/** One client frame, parsed and checked: {t:'hello'|'pose'|'ping'|'chat'|'roll'|'say'|'mute'|'world'|'foes'|'hit'|'act'|'who'|'quest'|'social'|'party'|'trade'|'cast'|'card'|'page'|'park', ...}
  *  or {error} - the caller closes on an error. INSPECT1: every arm below, named - this line had fallen seven behind
  *  (test/auditworld2.test.js derives the list from the arms now, so it cannot fall behind again - the merge with
  *  main's HCC-PARK was its first catch: the park arm, unnamed). */
@@ -1168,6 +1187,12 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (text.length > CARD_FRAME_MAX) return { error: 'frame too large' };
     const data = validCardData(m.data);
     return data ? { t: 'card', data } : { error: 'bad card' };
+  }
+  if (m.t === 'page') {   // JOURNAL1: a page of a player's journal, shown to one player - one directed frame, projected by validPageData (its words cleaned, refused past its bound)
+    if (!hasHello) return { error: 'page before hello' };
+    if (text.length > PAGE_FRAME_MAX) return { error: 'frame too large' };
+    const data = validPageData(m.data);
+    return data ? { t: 'page', data } : { error: 'bad page' };
   }
   if (m.t === 'park') {   // HCC-PARK: my character's parked team - nothing (no anchor), or its anchor and, when shown, its record
     if (!hasHello) return { error: 'park before hello' };
@@ -1998,6 +2023,68 @@ export function validCardData(d) {
   if (d.ask !== undefined || d.card === undefined) return null;
   const card = validCard(d.card);
   return card ? { to, card } : null;
+}
+
+// JOURNAL1 (2026-09-23, the community arc - Addison Knox: "Player journals ... shared in-world for storytelling"): A
+// PAGE OF A PLAYER'S JOURNAL, SHOWN TO ONE PLAYER STANDING NEAR THEM, as one directed frame with the card's routing -
+// `{t:'page', data:{to, page:{head, lines}}}` from a hello'd socket in a place room to the socket `to` names, the
+// sender's id stamped on it by the relay, on a meter of its own, and never from a muted player: a page is words, and a
+// mute that stopped a line and let a page through would be no mute (MOD1). The page is the SENDER's journal as their
+// game keeps it (systems/notebook.js): `head` the date and place the entry was written (the notebook's dated header;
+// '' on a page with none, which is how the notebook files an entry's continuation), `lines` the entry as the notebook
+// laid it out, '' for the blank line between two paragraphs. Its words are cleaned by the letter's law (wordsLine,
+// foldBlankLines above), and a page past its bound is REFUSED, never cut - a page shown is the page as written, and the
+// sender's journal says why before anything is sent (net/journalPage.js reads pageLaw's words).
+/** A page's head, lines and line count, at most. A notebook line is MAX_LINE_LENGTH (70, systems/notebook.js - a pin
+ *  holds this above it; this file is the relay's and imports no game module) and an entry the notebook files from a
+ *  talk or a kept letter runs to about fifty lines before its split law starts the next, so the bounds are sanity
+ *  bounds over what a journal holds: no page a journal can hold is refused by them. */
+export const PAGE_HEAD_MAX = 120;
+export const PAGE_LINE_MAX = 80;
+export const PAGE_LINES_MAX = 60;
+/** The relay's door on a page frame. The widest page the law admits, every character one JSON escapes, fits under it
+ *  (a pin builds it), so a page the law takes is never a frame the relay refuses; and it stands under MAX_FRAME_BYTES. */
+export const PAGE_FRAME_MAX = 12 * 1024;
+/** A socket's pages, a second - a page is held out by a hand on a button, once. On the way in it rides the cast arm's
+ *  per-sender funnel onto its destination (with the card and the spell: what one sender makes one player take is
+ *  bounded once), and the reader's own gate takes twice this from any one sender. */
+export const PAGE_HZ_MAX = 1;
+export const PAGE_IN_HZ_MAX = PAGE_HZ_MAX * 2;
+/** The relay that first routes a page - an older one answers the frame with 'unknown message' and CLOSES the socket, so
+ *  no page is shown through it (the journal says the server cannot carry one yet). The same deploy as the card. */
+export const PAGE_RELAY_MIN = 101;
+export const relaySupportsPage = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= PAGE_RELAY_MIN; };
+export const pageGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PAGE_HZ_MAX);
+export const pageInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PAGE_IN_HZ_MAX);
+/**
+ * A page, checked: `{ page: { head, lines } }` cleaned and laid out, or the ONE word that refuses it - the relay's
+ * projection (validPage) and the sender's reason (the journal's Share says it) from one reading.
+ * @param {unknown} p
+ * @returns {{ page: { head: string, lines: string[] } } | { error: 'no-page' | 'head-long' | 'line-long' | 'no-words' | 'page-long' }}
+ */
+export function pageLaw(p) {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return { error: 'no-page' };
+  const { head: rawHead, lines: rawLines } = /** @type {{ head?: unknown, lines?: unknown }} */ (p);
+  if (typeof rawHead !== 'string' || !Array.isArray(rawLines) || rawLines.some((l) => typeof l !== 'string')) return { error: 'no-page' };
+  const head = wordsLine(rawHead);
+  if (head.length > PAGE_HEAD_MAX) return { error: 'head-long' };
+  const cleaned = rawLines.map(wordsLine);
+  if (cleaned.some((l) => l.length > PAGE_LINE_MAX)) return { error: 'line-long' };
+  const lines = foldBlankLines(cleaned);
+  if (!lines.length) return { error: 'no-words' };
+  if (lines.length > PAGE_LINES_MAX) return { error: 'page-long' };
+  return { page: { head, lines } };
+}
+/** A page, projected - pageLaw's page, or null. */
+export const validPage = (p) => { const r = pageLaw(p); return 'page' in r ? r.page : null; };
+/** A page frame's data, projected: `{ to, page }` or null. One home: the relay's parser, the sender's sendPage and the
+ *  reader's receive run it. */
+export function validPageData(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  const to = typeof d.to === 'string' && ID_RE.test(d.to) ? d.to : null;
+  if (!to) return null;
+  const page = validPage(d.page);
+  return page ? { to, page } : null;
 }
 
 /** One trade frame's data, PROJECTED: `{to, k, s, ...exactly what its kind carries}` or null. Items are checked for

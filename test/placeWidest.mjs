@@ -1,7 +1,7 @@
 // AUDIT ATTACH: THE WIDEST PLACE SOCKET, built over the real Room - shared by the tests that measure its attachment
 // (test/auditattach.test.js) and any slice that gives a place socket a new arm, which must add its frame to
 // placeFrames and its meter to PLACE_METER_FIELDS (or a field to PLACE_ATTACH_FIELDS) and be measured with the rest.
-import { NAME_MAX, POSE_BOUND, POSE_Y_BOUND, CAST_DEST_SENDERS_MAX, POSE_RIDE, POSE_RIDE_SPRITES } from '../src/net/wire.js';
+import { NAME_MAX, POSE_BOUND, POSE_Y_BOUND, CAST_DEST_SENDERS_MAX, POSE_RIDE, POSE_RIDE_SPRITES, PAGE_HEAD_MAX, PAGE_LINE_MAX, PAGE_LINES_MAX } from '../src/net/wire.js';
 import { TITLES, GLYPHS } from '../src/net/identityToken.js';
 import { fakeRoom } from './fakeRoom.mjs';
 
@@ -17,6 +17,8 @@ export const WIDE_POSE = Object.freeze({ x: -(POSE_BOUND - 0.012345678901234), y
 export const HEAL_SPELL = { name: 'H'.repeat(32), element: 4, rangeType: 1, effects: [{ type: 10, subType: 8, magnitudeBaseLow: 20, magnitudeBaseHigh: 20, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1, durationBase: 0, durationMod: 0, durationPerLevel: 1, chanceBase: 100, chanceMod: 0, chancePerLevel: 1 }] };
 /** INSPECT1: a card the wire carries - its contents never touch the attachment, only its arm's meter does. */
 export const WIDE_CARD = Object.freeze({ level: 999, attrs: [100, 100, 100, 100, 100, 100, 100, 100], vitals: [99999, 99999, 99999], look: { race: 'Nord', gender: 'male', faceIndex: 0, items: [] } });
+/** JOURNAL1: the widest page the law admits - its words never touch the attachment either, only its arm's meter does. */
+export const WIDE_PAGE = Object.freeze({ head: 'H'.repeat(PAGE_HEAD_MAX), lines: Array.from({ length: PAGE_LINES_MAX }, () => 'W'.repeat(PAGE_LINE_MAX)) });
 export const PARTY_POSE = { px: 100, py: 200, loc: 'Daggerfall', in: 0, h: 50, hm: 60, f: 1000, fm: 2000, m: 10, mm: 20, race: 'Nord', gender: 'male', face: 2 };
 
 /** Everything a place socket's attachment carries - what a wake must recompute, and nothing else. */
@@ -26,6 +28,7 @@ export const PLACE_METER_FIELDS = Object.freeze([
   'bucket', 'drops', 'wbucket', 'wdrops', 'sbucket', 'sdrops', 'pbucket', 'pdrops', 'tradeBucket', 'tdrops', 'tbytes', 'tinbucket',
   'castBucket', 'castDrops', 'cin', 'abucket', 'adrops', 'abytes', 'fbucket', 'fdrops', 'hbucket', 'cbucket', 'cdrops',
   'rollBucket', 'rollDrops', 'rbucket', 'mbucket', 'junk', 'cardBucket', 'cardDrops', 'parkBucket', 'parkDrops',
+  'pageBucket', 'pageDrops',   // JOURNAL1
 ]);
 /** Every frame a place socket can send, once - the room's host, so its memory and its stream are its own. */
 export const placeFrames = (other) => [
@@ -35,6 +38,7 @@ export const placeFrames = (other) => [
   { t: 'social', k: 'party.leave' }, { t: 'party', p: PARTY_POSE }, { t: 'chat', text: 'hello' },
   { t: 'roll', n: 1, m: 20, k: 0 }, { t: 'say', text: 'hello all' }, { t: 'mute', order: 'v1.a.b' },
   { t: 'card', data: { to: other, card: WIDE_CARD } },   // INSPECT1
+  { t: 'page', data: { to: other, page: WIDE_PAGE } },   // JOURNAL1 (from a muted socket, as the widest is: the meter is spent, the page goes nowhere)
   { t: 'park', data: { c: 'c'.repeat(64), a: [1, 1] } },   // HCC-PARK (main's, merged): a character id at PARK_CHAR_RE's bound
 ];
 

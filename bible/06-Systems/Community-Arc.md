@@ -552,3 +552,94 @@ Pins: `test/mail1.test.js` (17); `tools/mutants/mail1.json` (51, all dead); `too
 photographs at a desktop, a narrow window and a phone). Re-aimed: ACC1b's table list, ACC1e's refusal walk (which reads
 letterLaw's words, since the service returns them verbatim), CHAT1's and AUDIT DROPS F's online-frame order, and
 SOC3's host pin.
+
+## JOURNAL1 - a page of a player's journal, held out and kept (2026-09-23, Addison Knox)
+
+Addison Knox, on Discord: "Player journals ... shared in-world for storytelling."
+
+- **The journal is the one the game already keeps.** That is DFU's PlayerNotebook (`systems/notebook.js`): the Notes the
+  chronicle draws and its composer writes, saved with the game. A second journal beside it would be two places a
+  player's story lives. So a note gets two doors, one for each way a story is passed on: shown to someone standing
+  near, or sent as a letter to anyone. A page or a letter that reaches a player can be kept in their own journal.
+- **Shown to someone standing near.** A note in the chronicle has a Share button; a message, a quest and the history do
+  not. It is drawn only where the host has an online layer (`pageShare`, delegated into the dungeon's chronicle as
+  QUEST1's hooks are). It opens a strip under the note: "Show to", and a button for each player within the reach a
+  talk has (`player/socialPick.js` SOCIAL_REACH - DFU's own distance for a person, the F-menu's), in metres between two
+  bodies (`net/tradeSession.js` tradeDistance), nearest first. The reach is measured again at the press, so a player
+  who walked away is said to be too far. The page goes as one directed frame through the relay.
+- **Held out, never pushed.** A page that reaches a player does not open over their game: a window that opened whenever
+  somebody near them pressed a button would be the other player's to open, not theirs. It WAITS
+  (`net/journalPage.js` PageOffers):
+  - one per writer, the newest replacing the last;
+  - for five minutes, and gone with its writer when they leave the room;
+  - said on the social tab once in thirty seconds per writer, with how to read it: "Ann holds out a page of their
+    journal - press F on them to read it" (the F-menu's own key, off the live bindings; "face them and press" the
+    phone's social button on a touch device).
+  The F-menu, and the World Tooltips plaque that reads the same rows, offers "Read their page" after Inspect while one
+  waits.
+- **Read and kept (`ui/pageWindow.js`).** The card says whose journal it is, the date and place they wrote it (the
+  note's own dated head), and the page as their notebook laid it out, with a blank line where it broke. A word too long
+  for the card breaks inside it. "Keep in my journal" files it as a NOTE in the reader's own journal, through the
+  notebook's own AddNote(tokens): dated where and when it was kept (the notebook's own header), and opening "From the
+  journal of Ann - <their date>:". It keeps once; read again, the card says it is kept. The pointer is freed and taken
+  back as the profile's is, and F again, Escape or a window over the HUD puts it away.
+- **Sent as a letter.** "Send as a letter" closes the chronicle and opens MAIL1's form on the page - "A page from my
+  journal", its date, a blank line, its lines - to anyone the writer names. The letters open on the first frame the
+  panel may stand, because the chronicle covers the HUD until its host sees it close. A page longer than a letter is
+  refused in the form, never cut, and the draft stays to be cut down. A letter being read has "Keep in my journal" too:
+  "A letter from Ann: Terms", a blank line, its lines.
+- **The page's law (`net/wire.js` pageLaw).** A page is a player's words with their lines, which is the letter's line
+  law. That law moved out of `net/letterLaw.js` into wire.js (`wordsLine`, `foldBlankLines`), so the letter and the page
+  read one law: the chat's characters (visibleText), a tab and a run of spaces one space, a run of blank lines one, none
+  at either end. The bounds are a head of 120, lines of 80 and 60 lines - sanity bounds over what a notebook holds (its
+  line is 70, and an entry its split law files runs to about fifty lines). A page past a bound is refused whole, never
+  cut, and the chronicle says why before anything is sent. The widest page the law takes, with every character one
+  JSON escapes, is a frame under the relay's door, and a pin builds it.
+- **The relay (world101).** The `page` frame takes the card's routing: from a hello'd socket in a PLACE room to the one
+  socket `to` names, with the writer's id stamped on it and the cast arm's per-sender funnel onto the reader
+  (`_senderFunnel`, one helper for the spell, the card and the page). It has a meter of its own (a page a second, its
+  strikes its own `pageDrops`), and the chat's MOD1 wall: a muted player's page goes nowhere, and they are told until
+  when. A page at one's own id is junk. The client sends a page only to a relay that routes one (PAGE_RELAY_MIN), and
+  takes one only when it is addressed to it, projected by the same law, two a second per writer.
+- **The crash it fixed at the root: `systems/notebook.js` breakableNote.** DFU's WrapLinesIntoNote throws when the first
+  71 characters left to wrap carry no space. That is unreachable in DFU, whose note box stops at 70. The enhanced
+  chronicle's composer takes 200, so a pasted address or one long word THREW out of its submit handler and the note was
+  lost; and a page or a letter kept can carry anything. breakableNote makes text takeable before it is handed over, and
+  leaves the wrap DFU's:
+  - a run is what lies between SPACES, because the wrap breaks on nothing else - a tab or a no-break space is part of
+    the run;
+  - a run longer than the line is cut into pieces of at most 70 units with a space between each, which is the break the
+    wrap then spends;
+  - each cut falls between the characters a reader counts: `systems/graphemes.js`, EMOTE1's law, lifted out of the chat
+    bubble so the two cuts cannot come to disagree. A joined family is never parted and a face never halved;
+  - a character wider than a line (a letter under a hundred marks) goes by its code points, so no text is refused.
+  The composer, a kept page and a kept letter all go through it.
+- **Found on the way.**
+  - The chronicle's Remove used a card's place in the list as the note's place in the notebook. An empty entry is
+    dropped from the drawing, so after one, every later card's Remove took the note before it. Each entry now carries
+    its notebook index, and Remove and Share act on the note the card draws.
+  - **The probe found one fault.** A note's line of one long word - the seventy-column run the notebook keeps, a kept
+    page's, breakableNote's own pieces - ran out of its card, and the Notes section scrolled sideways (672px in 624 at a
+    desktop, 652 in 315 on a phone). The chronicle's text now breaks a word too long for its column, as the page
+    window's does.
+- **Recorded, not built.**
+  - No block list for pages either: the mute and the reader's own gate are the walls, and nothing opens until the
+    reader turns to the writer.
+  - A page is words. A quest is shared through QUEST1's own door, and things change hands in the trade window.
+  - The classic skin's logbook shares nothing; online is the enhanced lane.
+- **The deploy.** world101's LAW row is restated, the relay's one deploy carrying the page frame. The account worker's
+  behaviour does not change - its line law moved into wire.js, which it already bundled - so `acct6` stands.
+
+Pins: `test/journal1.test.js` (14); `tools/mutants/journal1.json` (69, all dead); `tools/journalProbe.mjs` (35 checks,
+15 photographs at a desktop, a narrow window and a phone). Every other list whose target or test this slice touched
+was rerun (41 lists, 1,462 mutants): no survivor it caused. Re-aimed to the new code:
+- MAIL1's law pin and five of its mutants, for the line law's new home;
+- PX24b's composer and Remove pins;
+- AUDIT DROPS F's and CHAT1's online-frame order;
+- INSPECT1's and PEER-PLAQUE1's one bag, and their mutants;
+- AUDIT SOC's and INSPECT1's Escape order;
+- SOC3's import;
+- EMOTE1's segmenter mutant, now in graphemes.js;
+- AUDIT ATTACH's widest place socket, flood table and wake table, which gain the page arm.
+
+World101's LAW row is restated, and the cites that moved with the new lines were moved (tools/citeShift.mjs).

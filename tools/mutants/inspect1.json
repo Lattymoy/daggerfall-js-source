@@ -379,8 +379,8 @@
   {
     "name": "INS-host-row-not-offered",
     "file": "src/scenes/world.js",
-    "old": "...tradeActionsFor(peerId), canInspect: true });",
-    "new": "...tradeActionsFor(peerId) });",
+    "old": "...tradeActionsFor(peerId), canInspect: true, canReadPage:",
+    "new": "...tradeActionsFor(peerId), canReadPage:",
     "tests": ["test/inspect1.test.js"],
     "note": "The host never offers the row - on the card or on the plaque (the merge's one bag, peerActsFor)."
   }

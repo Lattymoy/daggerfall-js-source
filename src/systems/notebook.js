@@ -27,6 +27,8 @@
 //   midDateTimeString() - Now.MidDateTimeString() (the quest header)
 //   cityName()          - MacroHelper.CityName (the note header's %cn)
 
+import { graphemesOf } from './graphemes.js';   // JOURNAL1: a long run is cut between the reader's characters
+
 export const MAX_LINE_LENGTH = 70;         // PlayerNotebook.MaxLineLenth
 export const MAX_MESSAGE_COUNT = 50;
 const PREFIX_DATE_HEADER = 'D:';
@@ -206,6 +208,35 @@ export class PlayerNotebook {
     this.notes = (data.notebookEntries ?? []).map(convertLines);
     this.finishedQuests = (data.finishedQuestEntries ?? []).map(convertLines);
   }
+}
+
+/**
+ * JOURNAL1: THE WORDS THE NOTEBOOK CAN TAKE. DFU's WrapLinesIntoNote (below, verbatim) throws when the first 71
+ * characters left to wrap carry no SPACE - and in DFU that is unreachable, because the note box stops at 70 (the
+ * classic journal's own cap, ui/questJournal.js). The port reached it the moment a surface let a longer note through:
+ * the enhanced chronicle's composer takes 200, so a pasted address or one long word threw out of its submit handler
+ * and the note was lost; and a page another player shows you, or a letter you keep, can carry anything.
+ *
+ * So the text is made TAKEABLE before it is handed over, and the wrap stays DFU's. The wrap breaks at a space and
+ * nowhere else - not a tab, not a no-break space - so a run is what lies between SPACES, and every run longer than
+ * MAX_LINE_LENGTH is cut into pieces of at most that many units with a space between each: the break the wrap then
+ * spends, so the note reads as a hard-wrapped line would. Each cut falls between the reader's characters
+ * (systems/graphemes.js, EMOTE1's law), and a character wider than a line on its own goes by its code points, so no
+ * text can be refused. Text with no such run comes back as it was.
+ */
+export function breakableNote(str) {
+  return String(str ?? '').split(/( +)/).map((run, k) => (k % 2 || run.length <= MAX_LINE_LENGTH ? run : pieces(run))).join('');
+}
+
+function pieces(run) {
+  const out = [''];
+  for (const g of graphemesOf(run)) {
+    for (const u of g.length > MAX_LINE_LENGTH ? Array.from(g) : [g]) {
+      if (out[out.length - 1].length + u.length > MAX_LINE_LENGTH) out.push('');
+      out[out.length - 1] += u;
+    }
+  }
+  return out.join(' ');
 }
 
 /** WrapLinesIntoNote (:121-138): break on the LAST space at or before

@@ -638,7 +638,7 @@ test('SOC3: a roster row is a DOOR - the menu is the host\'s answers, a refused 
 test('SOC3: the host by source - world.js makes the panel in socialStart over the picture the hub filled, hands the chat the button, the colours and the roster\'s doors as LAZY closures, puts the panel on hudCtx for SOC5, and renders it on the chat frame under the chat\'s own covering rule (mutants: the panel made before the picture; the closures captured eagerly; the render outside the chat frame; the pointer doors dropped)', () => {
   const w = rd('src/scenes/world.js');
   const bare = w.replace(/^\s*\/\/.*$/gm, '');
-  assert.match(w, /import \{ createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT \} from '\.\.\/ui\/socialPanel\.js';/, 'AUDIT SOC B17: the panel\'s own "try again" is the F-menu\'s too (CHAT-CHAN: and its "not in a party" the Party tab\'s)');
+  assert.match(w, /import \{ createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT, LETTERS_SIGNED_OUT_TEXT \} from '\.\.\/ui\/socialPanel\.js';/, 'AUDIT SOC B17: the panel\'s own "try again" is the F-menu\'s too (CHAT-CHAN: and its "not in a party" the Party tab\'s; JOURNAL1: and its signed-out word the chronicle\'s letter)');
   assert.match(w, /import \{ SocialState, accountId, accountSecret \} from '\.\.\/net\/social\.js';/,
     'the host imports no colour at all - the one module that knows what a party is answers cssColorOf (SOC7 integration: SOC4 holds world.js to naming no green)');
   assert.match(w, /\n  let socialPanel = null;/, 'beside `social`, in the host\'s own scope');

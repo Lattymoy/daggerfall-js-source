@@ -232,8 +232,8 @@
   {
     "name": "LAW-lines-collapsed",
     "file": "src/net/letterLaw.js",
-    "old": "  return out.join('\\n');",
-    "new": "  return out.join(' ');",
+    "old": "  return foldBlankLines(String(text ?? '').split(LINE_BREAK).map(wordsLine)).join('\\n');",
+    "new": "  return foldBlankLines(String(text ?? '').split(LINE_BREAK).map(wordsLine)).join(' ');",
     "tests": [
       "test/mail1.test.js"
     ],
@@ -241,33 +241,36 @@
   },
   {
     "name": "LAW-blank-runs-kept",
-    "file": "src/net/letterLaw.js",
+    "file": "src/net/wire.js",
     "old": "    if (!line && (!out.length || out[out.length - 1] === '')) continue;\n",
     "new": "    if (!line && !out.length) continue;\n",
     "tests": [
-      "test/mail1.test.js"
+      "test/mail1.test.js",
+      "test/journal1.test.js"
     ],
-    "note": "Forty blank lines between two words."
+    "note": "Forty blank lines between two words - in a letter, and on a page (JOURNAL1 moved the law into wire.js, where both read it)."
   },
   {
     "name": "LAW-trailing-blank-kept",
-    "file": "src/net/letterLaw.js",
+    "file": "src/net/wire.js",
     "old": "  while (out.length && out[out.length - 1] === '') out.pop();\n",
     "new": "",
     "tests": [
-      "test/mail1.test.js"
+      "test/mail1.test.js",
+      "test/journal1.test.js"
     ],
-    "note": "A letter that ends in a blank line."
+    "note": "A letter, or a page, that ends in a blank line (the law's home is wire.js since JOURNAL1)."
   },
   {
     "name": "LAW-own-characters",
-    "file": "src/net/letterLaw.js",
-    "old": "const cleanLine = (line) => visibleText(String(line).replace(/\\t/g, ' ')).replace(/\\s+/g, ' ').trim();",
-    "new": "const cleanLine = (line) => String(line).replace(/\\t/g, ' ').replace(/\\s+/g, ' ').trim();",
+    "file": "src/net/wire.js",
+    "old": "export const wordsLine = (line) => visibleText(String(line ?? '').replace(/\\t/g, ' ')).replace(/\\s+/g, ' ').trim();",
+    "new": "export const wordsLine = (line) => String(line ?? '').replace(/\\t/g, ' ').replace(/\\s+/g, ' ').trim();",
     "tests": [
-      "test/mail1.test.js"
+      "test/mail1.test.js",
+      "test/journal1.test.js"
     ],
-    "note": "A letter carries a bidi override the chat would never pass - two laws for one keyboard."
+    "note": "A letter - or a page - carries a bidi override the chat would never pass: two laws for one keyboard."
   },
   {
     "name": "LAW-subject-one-long",
@@ -302,8 +305,8 @@
   {
     "name": "LAW-subject-keeps-lines",
     "file": "src/net/letterLaw.js",
-    "old": "  return cleanLine(String(text ?? '').split(LINE_BREAK).join(' '));",
-    "new": "  return cleanLine(String(text ?? ''));",
+    "old": "  return wordsLine(String(text ?? '').split(LINE_BREAK).join(' '));",
+    "new": "  return wordsLine(String(text ?? ''));",
     "tests": [
       "test/mail1.test.js"
     ],

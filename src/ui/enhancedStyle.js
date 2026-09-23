@@ -2815,7 +2815,12 @@ ${badgeCss()}
    classic's four-lines-and-a-Next-button. */
 .cr-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
 .cr-shell .cr-prose p, .cr-shell .cr-entry p { margin: 0 0 10px; font-size: 15px;
-  line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+  line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+  overflow-wrap: anywhere; }
+/* JOURNAL1 (tools/journalProbe.mjs found it): A WORD TOO LONG FOR THE COLUMN BREAKS INSIDE IT. The notebook's lines are
+   seventy columns of DFU's fixed-width page, and one unbroken run of them - a word, an address, a page kept from another
+   player, the pieces breakableNote cuts - is wider than this proportional column; without the break the text ran out of
+   its card and the whole section scrolled sideways (672px in 624 at a desktop, 652 in 315 on a phone). */
 .cr-shell .cr-prose { max-width: 62ch; }
 /* PX24b: AN ENTRY IS A CARD WITH A DATE. The notebook stamps every
    note with the day and the city it was written in; the first draft
@@ -2868,6 +2873,18 @@ ${badgeCss()}
    a small action set off from the prose below it, not another line of
    journal text. */
 .cr-shell .cr-share { min-width: 60px; }
+/* JOURNAL1: A NOTE'S SHARE - the strip under the note's head: who the page can be held out to (the players near
+   enough to talk to, a button each, which wraps as the names do), and the letter. What the last press did is said
+   under it in the journal's dim hand. A name at its widest breaks inside its button rather than out of the card. */
+.cr-shell .cr-sharebox { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; padding: 10px 12px;
+  background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.3); }
+.cr-shell .cr-sharerow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.cr-shell .cr-sharelabel { flex: none; color: var(--brass); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.cr-shell .cr-sharewhy, .cr-shell .cr-shareword { color: #b9b094; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.cr-shell .cr-sharebox .act { max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+@media (pointer: coarse) { .cr-shell .cr-sharebox .act { min-height: 44px; } }
 .cr-shell .sb-frame { margin: 0 0 16px; }
 .cr-shell .cr-compose { display: flex; gap: 10px; margin: 0 0 18px; max-width: 66ch; }
 .cr-shell .cr-compose input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;

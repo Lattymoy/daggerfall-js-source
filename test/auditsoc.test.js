@@ -354,7 +354,7 @@ test('AUDIT SOC B5/B18/B10: the party pose says fatigue in the sheet\'s digits (
   assert.match(w, /const NO_ACCOUNT_TEXT = 'Friends and parties are off: this browser keeps no storage, so there is no account to be anyone by';/);
   // AUDIT SOC C2/C14/C9: the host's word on which surface is TOPMOST (ui/chatPanel.js, ui/socialPanel.js, ui/socialMenu.js
   // take `above`), and the phone's F handed to the touch layer as the host's own door
-  assert.match(w, /above: \(\) => !!\(socialPanel\?\.isOpen\?\.\(\) \|\| socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\)\),/, 'the chat yields to the panel, the menu and the profile (INSPECT1)');
-  assert.match(start, /above: \(\) => !!\(socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\)\),/, 'the panel yields to the menu, and to the profile opened from it (INSPECT1)');
+  assert.match(w, /above: \(\) => !!\(socialPanel\?\.isOpen\?\.\(\) \|\| socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\) \|\| pageWin\?\.isOpen\?\.\(\)\),/, 'the chat yields to the panel, the menu and the profile (INSPECT1) - and a page read from the menu (JOURNAL1)');
+  assert.match(start, /above: \(\) => !!\(socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\) \|\| pageWin\?\.isOpen\?\.\(\)\),/, 'the panel yields to the menu, and to the profile opened from it (INSPECT1) and the page read from it (JOURNAL1)');
   assert.match(w, /socialInteract: \(\) => socialInteract\(\),/, 'the touch layer\'s hook is the host\'s door (AUDIT SOC C9)');
 });

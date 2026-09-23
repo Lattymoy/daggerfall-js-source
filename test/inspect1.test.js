@@ -398,7 +398,7 @@ test('INSPECT1 the F-menu\'s Inspect row: first, when the host offers it, acting
 
 test('INSPECT1 host by source: the Inspect row is offered on every body the F key finds; its act opens the profile at once from the room\'s half and asks for the card only of a relay that routes it, retried by the frame and timed at CARD_WAIT_MS; an ask is answered through the gate with my own card, an answer drawn only on the card that asked; F again closes the profile; the other surfaces yield their Escape to it (mutants: an ask sent to an old relay; the answer drawn for anyone; the wait never said)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const peerActsFor = \(peerId\) => \(\{ \.\.\.social\.actionsFor\(peerId\), \.\.\.tradeActionsFor\(peerId\), canInspect: true \}\);/, 'one bag: the hub\'s acts, the trade\'s, and the look');
+  assert.match(w, /const peerActsFor = \(peerId\) => \(\{ \.\.\.social\.actionsFor\(peerId\), \.\.\.tradeActionsFor\(peerId\), canInspect: true, canReadPage: !!pageOffers\.get\(peerId\) \}\);/, 'one bag: the hub\'s acts, the trade\'s, and the look (JOURNAL1: and a page they hold out to me)');
   assert.match(w, /peerId: hit\.peer\.id, actions: peerActsFor\(hit\.peer\.id\) \}\) === true;/, 'the F-card reads it');
   assert.match(w, /const acts = social \? peerActsFor\(id\) : null;/, 'the plaque\'s rows read it (ACT-MENU)');
   assert.match(w, /const row = plaqueRowFor\(sel\.id, id, peerActsFor\(id\)\);/, 'and the plaque\'s press');
@@ -413,8 +413,9 @@ test('INSPECT1 host by source: the Inspect row is offered on every body the F ke
   assert.match(onCard, /if \(!d\?\.card \|\| _profileAsk\?\.peerId !== id\) return;/);
   assert.match(onCard, /profileWin\?\.update\(id, profileView\(\{ name: peerName\(id\), peer: p, look: p\?\.look \?\? null, card: d\.card, state: 'answered' \}\)\);/);
   assert.match(w, /if \(profileWin\?\.isOpen\(\)\) \{ profileWin\.hide\(\); return true; \}/, 'F again closes the profile');
-  assert.match(w, /above: \(\) => !!\(socialPanel\?\.isOpen\?\.\(\) \|\| socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\)\),/, 'the chat yields its Escape');
-  assert.match(w, /above: \(\) => !!\(socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\)\),/, 'the friends panel yields its Escape');
+  // JOURNAL1: and each yields it to a page read from the F-menu too (the page window stands where the profile does)
+  assert.match(w, /above: \(\) => !!\(socialPanel\?\.isOpen\?\.\(\) \|\| socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\) \|\| pageWin\?\.isOpen\?\.\(\)\),/, 'the chat yields its Escape');
+  assert.match(w, /above: \(\) => !!\(socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\) \|\| pageWin\?\.isOpen\?\.\(\)\),/, 'the friends panel yields its Escape');
   assert.match(w, /onOpen: \(\) => surfaceOpen\('profile'\),\s*\n\s*onClose: \(\) => \{ surfaceClose\('profile'\); _profileAsk = null; \},/, 'a pointer surface, and a card closed is no longer waited on');
   assert.match(w, /profileWin\?\.render\(\{ covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\) \}\);/, 'drawn under the F-menu\'s own covering word');
   assert.match(w, /tradeFrame\(\);[^\n]*\n\s*profileFrame\(\);/, 'its ask retried and its wait timed in the online frame, beside the trade\'s own - before the dead return');
