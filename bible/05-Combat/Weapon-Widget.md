@@ -170,6 +170,18 @@ port did. The Features home's row (`mod-weapon-widget`) is the mod's own
 Enabled switch; "takes effect at once", the widget reads its switches
 every frame.
 
+**Two defaults are not the mod's (DISC14-B, 2026-09-23).** Mac, with a
+screenshot of this tile: *"these need to be the default values ingame
+for diverse weapons. The current defaults are wrong on the screen."*
+`Modules.DoubleScaleTextures` ships ON here (off in the mod), and
+`Inertia.Scale` ships 0 (1.0 in the mod). Every other key is as shipped.
+Diverse Weapons is on by default, and these are the values Mac chose
+for its idles against what the old defaults drew. WW1's shipped-defaults pin names
+the two, and the clone's benches put the shipped values back, so the
+clone's own laws are still tested against the mod. The Thunderlock
+turns Inertia on as its own departure, and keeps the mod's scale for it
+while the player's module is off (`gunViewmodel.js` `GUN_INERTIA_SCALE`).
+
 ## Hosts
 
 All four rigs (the streaming world, the exterior location, the interior

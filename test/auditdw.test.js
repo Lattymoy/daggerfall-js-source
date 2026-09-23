@@ -191,5 +191,5 @@ test('DW-CLIP: under the Diverse Weapons preset (DoubleScaleTextures + TrueTextu
   assert.match(rd('src/combat/weaponWidget.js'), /if \(w\.s\.doubleScale && !w\.s\.trueSize && \(w\.weaponState === S\.Idle/);
   assert.match(rd('src/combat/weaponWidget.js'), /if \(custom\?\.doubled\) w\.offset = /);
   _resetModSettings();
-  assert.equal(modSettingsOf('diverse-weapons').WeaponWidgetPreset, true, 'DW-CLIP: the preset defaults on');
+  assert.equal(modSettingsOf('diverse-weapons').WeaponWidgetPreset, false, 'DISC14-B: the preset defaults OFF again (DW-CLIP had it on) - Mac\'s defaults are Weapon Widget\'s own, with DoubleScaleTextures on and Inertia.Scale 0');
 });

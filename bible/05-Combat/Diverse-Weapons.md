@@ -144,11 +144,21 @@ DFU's preset picker **overwrites** the player's values. The port lays
 the preset over them while the mod's `WeaponWidgetPreset` switch is on
 (`withDiverseWeaponsPreset`, at `readWidgetSettings`) and leaves their
 own underneath, so turning it off gives them back; Weapon Widget's
-`Enabled` is never in it. **On by default** since DW-CLIP (2026-09-23,
-Mac, off a Discord report that the mod needed "a setting turned on":
-"mod should be defaulted on") - it was off at DW1 because a preset
-nobody selected is not selected, and the first player to meet it had
-to go looking for the switch. `flattenModPreset` is the general reader for DFU's
+`Enabled` is never in it. It was **on by default** from DW-CLIP
+(2026-09-23, Mac, off a Discord report that the mod needed "a setting
+turned on": "mod should be defaulted on"). It was off at DW1, because a
+preset nobody selected is not selected.
+
+**Off by default again since DISC14-B** (the same day). Mac sent a
+screenshot of Weapon Widget's tile: *"these need to be the default
+values ingame for diverse weapons. The current defaults are wrong on the
+screen."* The preset's true texture size, inertia, step, recoil and 142
+bob were what drew wrong. And because it lay OVER the player's settings,
+the tile went on showing their own values underneath: what the tile
+showed was not what drew. The defaults are now Weapon Widget's own, with
+DoubleScaleTextures on and Inertia.Scale 0 (Weapon-Widget.md, the
+settings), so the tile shows exactly what draws. The preset stays a
+switch for anyone who wants the mod's recommendation. `flattenModPreset` is the general reader for DFU's
 `{ Values: { Section: { Key: "string" } } }` shape, coercing by the
 declared key's kind ("False" is `false`, not a non-empty string).
 
@@ -298,9 +308,10 @@ fall-through and the classic frame were never doubled and are not
 shifted either. Pinned on the clone's bench: the three cases' offsets,
 and the war axe's full painting drawn whole under the preset.
 
-The preset itself defaults **on** now (above). Weapon Widget's own
-`DoubleScaleTextures` default is off, so a player without the preset
-sees no change.
+The preset itself defaulted **on** from here until DISC14-B (above),
+which turned it off and made DoubleScaleTextures Weapon Widget's own
+default instead. The shift law above is unchanged: without
+TrueTextureSize, a `w_` hit takes the doubled box and its shift.
 
 ## Record
 

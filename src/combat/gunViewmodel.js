@@ -80,11 +80,18 @@ export function widgetDefaults() {
  * textures") and this art is exactly the case that warning names.
  * Everything rides `readWidgetSettings`, the mod's own reader, so
  * every multiplier it applies is applied here too.
+ *
+ * DISC14-B: and the inertia the gun turns on runs at the mod's own
+ * shipped scale (GUN_INERTIA_SCALE). The port's default Inertia.Scale
+ * is 0 now (Mac's defaults for Diverse Weapons, with the module off),
+ * and a scale set for a module the player left off is not a word
+ * about the gun. A player who turns the module ON gets their own.
  */
+export const GUN_INERTIA_SCALE = 1.0;   // vendor/weapon-widget/modsettings.json, Inertia.Scale's shipped Value
 export function gunWidgetSettings(overrides = null) {
-  if (overrides) return readWidgetSettings(() => ({ ...widgetDefaults(), 'Modules.Inertia': true, ...overrides }));
+  if (overrides) return readWidgetSettings(() => ({ ...widgetDefaults(), 'Modules.Inertia': true, 'Inertia.Scale': GUN_INERTIA_SCALE, ...overrides }));
   const s = readWidgetSettings();
-  return s.inertia ? s : { ...s, inertia: true };
+  return s.inertia ? s : { ...s, inertia: true, inertiaScale: readWidgetSettings(() => ({ 'Inertia.Scale': GUN_INERTIA_SCALE })).inertiaScale };
 }
 
 /**

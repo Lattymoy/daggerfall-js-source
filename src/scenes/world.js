@@ -14158,7 +14158,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           }).catch((e) => console.error('[civil]', e));
         }
       }
-      weaponRig.draw({ paralyzed });
     }
     // AUDIT 21 (hosts lane, F7): THE HUD, which this host did not have.
     //
@@ -14206,6 +14205,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // charges down the foe in the way, once each
         if (rrRidingOn() && player.riding && player.isRunning) rrRidingContacts();
       }
+      // DISC14 (Starempire42 on Discord: "is there a way to make it so I can see my weapon above my horse?"): the
+      // weapons draw OVER the mount. OnGUI puts the horse at GUI.depth 2, "behind other HUD elements & weapons"
+      // (TransportManager's own comment, and EnhancedRiding.cs:234-235's), and the rig drew first, so the horse's
+      // head covered the hand and the blade's root. Drawn here, after the mount and before drawHud.
+      if (walkMode && playerSpawned) weaponRig.draw({ paralyzed });
       drawPeerNames(proj, view, mwv.eye);   // ONLINE1: the names over the heads
       // WORLD-HOVER: the plaque, where this host already draws its HUD.
       // It races EXACTLY what the press races - the same six live picks

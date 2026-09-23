@@ -5420,7 +5420,6 @@ export async function bootExterior(canvas, renderer, params, status) {
           }).catch((e) => console.error('[civil]', e));
         }
       }
-      weaponRig.draw({ paralyzed });
     }
     // AUDIT 21 (hosts lane, F7): THE HUD, which this host did not have.
     //
@@ -5453,6 +5452,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // depth 2, UNDER the HUD's own elements, so it goes in before
       // drawHud - the same place in the ladder world.js puts it.
       if (hudArt) mountRig.frame(dt);
+      if (walkMode && !tpMode) weaponRig.draw({ paralyzed });   // DISC14: the weapons draw OVER the mount (GUI.depth 2 is behind them) - world.js says why
       if (rrRidingOn() && player.riding && player.isRunning) rrRiding.contacts();   // AUDIT-RR F15: EnhancedRiding's contacts (TrampleCivilians && IsRiding && IsRunning; the charge under IsRiding && IsRunning)
       // WORLD-HOVER: the plaque, where this host already draws its HUD.
       // The SAME seam world.js calls, with this host's own picks - the

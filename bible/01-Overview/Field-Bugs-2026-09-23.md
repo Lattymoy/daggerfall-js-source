@@ -1131,3 +1131,94 @@ rule ship OFF and put shipPorts on Roleplay & Realism's tile, so the
 boat came back for everyone who does not ask for the port rule. This
 fix is the other half: with the rule on, a port answers as a port. The
 two met at the merge on the same tile line, and main's stands.
+
+---
+
+# DISC14 - the weapon under the horse, and Diverse Weapons' idles
+
+Mac, with a Discord screenshot: *"Weapon shows below the horse while on
+horseback. Also audit diverse weapon and ensure their idle positions are
+correct."*
+
+1. Starempire42: *"is there a way to make it so I can see my weapon above
+   my horse?"* (riding, the horse's head over the hand and the root of a
+   curved blade).
+2. Mac: an audit of Diverse Weapons' idle positions. While it was
+   running, Mac sent a screenshot of Weapon Widget's tile instead:
+   *"Sorry but these need to be the default values ingame for diverse
+   weapons. The current defaults are wrong on the screen"*, and stopped
+   the audit.
+
+The pins are `test/disc14.test.js`; the mutants are
+`tools/mutants/disc14.json`, and all nine die.
+
+## DISC14-A: the horse drawn over the weapon
+
+**Cause.** DFU draws the mount in OnGUI at `GUI.depth = 2`, "behind other
+HUD elements & weapons". That is TransportManager's own comment, and
+Roleplay & Realism's EnhancedRiding carries it word for word
+(EnhancedRiding.cs:234-235). Both hosts that ride (`world.js`,
+`exterior.js`) drew the weapon rig at the end of the walk block and the
+mount later, in the HUD block, just before `drawHud`. So the horse's
+head landed on the hand and the root of the blade, and on the shield,
+the torch and the casting hands with them. The HUD's own order was
+right: the mount went in before `drawHud`, as the comment above it
+says. The weapon was the half the comment did not name.
+
+**Fix.** The rig draws after the mount and before `drawHud`, under the
+walk block's own gate. The mount stays where it was. Nothing draws
+between the rig's old place and its new one (the Detect feed's tick
+only reads), so no other layer changes order. Only these two hosts
+build a mount rig.
+
+**Named, not changed:** EnhancedRiding tints the mount with
+`TransportManager.Tint`, "the current tint from FPS lighting". The port
+lights the weapon, the shield and the torch with MAC-I's flat light
+(`fpTint`) but draws the horse untinted, so at night the horse is
+brighter than the hand on it.
+
+## DISC14-B: Diverse Weapons' defaults are Mac's
+
+**What Mac asked for** (the tile's chips and dials in the screenshot):
+Swings, Ambidexterity, Offset, Bob and DoubleScaleTextures on; Inertia,
+Step, TrueTextureSize and Recoil off; Swings.Speed 1, Bob.Length 100,
+Inertia.Scale 0.
+
+**What drew before.** Diverse Weapons' preset, on by default since
+DW-CLIP, laid the mod's recommended Weapon Widget settings OVER the
+player's: TrueTextureSize on, Inertia on at scale 1, Step and Recoil on,
+a 142 bob. Weapon Widget's tile reads the player's own settings, so it
+went on showing values the preset was overriding. Pressing a chip there
+changed nothing that drew.
+
+**Fix.** The preset ships off again. Weapon Widget ships its own
+defaults except two, which are now Mac's: DoubleScaleTextures on (off in
+the mod) and Inertia.Scale 0 (1.0 in the mod). Those twelve values are
+what a fresh game draws, and the tile shows them. A press on any chip or
+dial reaches the weapon, and a player can still ask for the mod's
+preset.
+
+**Three things checked on the way:**
+
+- The Thunderlock turns Inertia on as its own departure. It keeps the
+  mod's shipped scale while the player's module is off
+  (`gunViewmodel.js` `GUN_INERTIA_SCALE`); otherwise the new 0 would
+  have taken its sway away.
+- WW1's shipped-defaults pin names the two departures, and the clone's
+  benches put the shipped values back, so the clone's own laws are still
+  tested against the mod.
+- ARROW2's pin (the nocked bow hidden through the loose's cooldown) went
+  red under the new default: one frame before the bow slides back, the
+  doubled-idle bob (Weapon Widget's own, bobStep's `xMin`/`yMax` at 0)
+  lifts the hidden bow 0.82 rows of a 200-line screen. That is about
+  four pixels at 1080, for 16 ms, and 1.4 s after the shaft left. It is
+  not the double arrow ARROW2 fixed. ARROW2's law stays pinned on the
+  mod's shipped settings, and a fourth case pins the new default: no
+  nocked frame while the loose plays out, and never more than that
+  sliver during the cooldown.
+
+**Not verified here:** the placement itself. The values are Mac's,
+chosen against what the old defaults drew. The idle audit that was
+running when the screenshot came was stopped, so no claim is made here
+about any screen shape or either hand.
+

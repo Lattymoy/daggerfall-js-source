@@ -64,6 +64,10 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
       const def = m.keys[name];
       assert.ok(def, `${name} is on the pane`);
       const kind = k.$type.slice(k.$type.lastIndexOf('.') + 1);
+      // DISC14-B (2026-09-23, Mac: "these need to be the default values ingame for diverse weapons"): the two recorded
+      // departures from the mod's defaults - DoubleScaleTextures on, Inertia.Scale 0 - with everything else as shipped
+      const DISC14B = { 'Modules.DoubleScaleTextures': [false, true], 'Inertia.Scale': [1, 0] };
+      if (DISC14B[name]) { assert.deepEqual([k.Value, def.default], DISC14B[name], `${name}: shipped ${k.Value}, the port's default ${def.default} (DISC14-B)`); if (kind === 'SliderFloatKey') assert.deepEqual([def.min, def.max], [k.Min, k.Max], name); continue; }
       if (kind === 'ToggleKey') { assert.equal(typeof def.default, 'boolean', name); assert.equal(def.default, k.Value, `${name} defaults as shipped`); assert.ok(!isIntKey(def) && !isFloatKey(def) && !isChoiceKey(def), name); }
       else if (kind === 'SliderIntKey') { assert.ok(isIntKey(def), `${name} is an int slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); }
       else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
@@ -110,11 +114,11 @@ test('WW1: LoadSettings - the fields carry the mod\'s own multipliers (Offset x1
   _resetModSettings(); setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // DW-CLIP: the preset defaults on
   const s = readWidgetSettings();
   assert.equal(s.enabled, true);
-  assert.deepEqual([s.swing, s.ambidexterity, s.offset, s.bob, s.inertia, s.stepTransforms, s.doubleScale, s.trueSize, s.recoil], [true, true, true, true, false, false, false, false, false], 'the nine modules as shipped');
+  assert.deepEqual([s.swing, s.ambidexterity, s.offset, s.bob, s.inertia, s.stepTransforms, s.doubleScale, s.trueSize, s.recoil], [true, true, true, true, false, false, true, false, false], 'the nine modules as shipped - but DoubleScaleTextures, DISC14-B\'s one module departure');
   assert.equal(s.swingWindup, WINDUP.Idle); assert.equal(s.swingRecovery, RECOVERY.Hide); assert.equal(s.swingSpeed, 1);
   assert.equal(s.offsetSpeed, 10); assert.equal(s.bobLength, 1); assert.equal(s.bobSizeXMod, 2); assert.equal(s.bobSizeYMod, 2);
   assert.equal(s.moveSmoothSpeed, 4); assert.equal(s.bobSmoothSpeed, 500); assert.equal(s.bobShape, 0); assert.equal(s.bobWhileIdle, true);
-  assert.equal(s.inertiaScale, 500); assert.equal(s.inertiaSpeed, 500); near(s.inertiaForwardScale, 0.2); near(s.inertiaForwardSpeed, 0.2);
+  assert.equal(s.inertiaScale, 0, 'DISC14-B: Inertia.Scale defaults to 0 (the x500 is the injected store\'s, below)'); assert.equal(s.inertiaSpeed, 500); near(s.inertiaForwardScale, 0.2); near(s.inertiaForwardSpeed, 0.2);
   assert.equal(s.stepLength, 1); assert.equal(s.stepCondition, STEP_CONDITION.SheatheAttackOnly);
   assert.equal(s.recoilChance, 1); assert.equal(s.recoilCondition, RECOIL_CONDITION.HitsOnly);
   assert.deepEqual([s.recoilEnvironment, s.playMissVFXEntity, s.playMissVFXEnvironment], [true, true, true]); assert.equal(s.playMissVFXPos, MISS_VFX_AT.Target);
@@ -159,7 +163,7 @@ test('WW1: Unity\'s pieces - MoveTowards (scalar and Vector2), Mathf.Round half 
 function settingsOf(over = {}) {
   _resetModSettings();
   setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);   // DW-CLIP: the preset defaults on now - the clone's own numbers are the bench's subject
-  const base = modSettingsOf(WEAPON_WIDGET_VENDOR);
+  const base = { ...modSettingsOf(WEAPON_WIDGET_VENDOR), 'Modules.DoubleScaleTextures': false, 'Inertia.Scale': 1 };   // DISC14-B: the bench is the mod's SHIPPED defaults - the port's two departures put back
   return () => readWidgetSettings(() => ({ ...base, ...over }));
 }
 /** The rig's art for one weapon type: 5 frames a strike, 1 the idle, 100x60 records. */
