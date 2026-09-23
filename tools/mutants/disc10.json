@@ -628,5 +628,95 @@
     "tests": [
       "test/disc10_lycan.test.js"
     ]
+  },
+  {
+    "name": "DISC10-E-online-owner-never-reports",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f.dead) _net?.onPeerHit?.({ to: from, k: data.k ?? _net?.room?.() ?? null, i: data.i | 0, slain: 1 });\n",
+    "new": "\n",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-owner-reports-every-blow",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f.dead) _net?.onPeerHit?.({ to: from, k:",
+    "new": "    if (true) _net?.onPeerHit?.({ to: from, k:",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-striker-never-stamps",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        f._struckAt = _now();   // DISC10-E",
+    "new": "        // DISC10-E",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-unwindowed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "new": "if (!f || f._struckAt == null) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-lands-unstruck",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "new": "if (!f) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-lands-twice",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      f._struckAt = null;\n      playerWeaponKillReported",
+    "new": "      playerWeaponKillReported",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-shape-unchecked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (data.slain !== 1) return false;\n",
+    "new": "\n",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-trusts-any-owner",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const f = _pupIndex.get(pupKey(from, data.i | 0)) ?? null;\n      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS)",
+    "new": "      const f = foes.find((x) => x.puppet && x.seq === (data.i | 0)) ?? null;\n      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS)",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-feeds-the-vampire",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (!player?.racialOverride) return;\n  onLycanthropeHit(player, { health: 0 }, { nowMinutes, isCivilian, mobileType });",
+    "new": "  if (!player?.racialOverride) return;\n  onVampireHit(player, nowMinutes);\n  onLycanthropeHit(player, { health: 0 }, { nowMinutes, isCivilian, mobileType });",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-reads-no-type",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      playerWeaponKillReported(playerEntity, { mobileType: f.mobileType });",
+    "new": "      playerWeaponKillReported(playerEntity, { mobileType: 146 });",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
   }
 ]

@@ -888,7 +888,21 @@ lists naming a changed file, five survivors also survive on the base and
 are not this round's (enhnotice3 AUDIT4-A8, font1 F2, macro4 MACRO-4,
 qs1 QS4, red1 RED1-12).
 
-Open, recorded: an innocent owned by another client (online) dies at its
-owner, so the werewolf's kill there does not satisfy the urge - that needs
-the owner to report the death back over the wire.
+**Online, the other player's watchman (closed the same day, Mac: "Do the
+still open stuff").** A peer's watchman is a puppet in the striker's
+encounter pool; the blow goes to its owner and he dies THERE, so the
+striker's OnWeaponHitEntity read a live puppet and the urge was never
+satisfied by the city watch online. The owner now answers a lethal blow
+with `slain` down the loot grant's own path back (`hit`, to the striker, by
+the watchman's number, keyed to the cell - no wire or relay change: the
+relay routes a cell `hit` by `to`, and an older client's `applyHit` reads no
+`dmg` in it and refuses it whole). The striker's pool lands it only for a
+puppet of THAT owner's it struck, inside the take's window, once, and runs
+KilledInnocent alone on the live minute
+(`worldTick.playerWeaponKillReported`) - the vampire fed on the blow and is
+not fed twice. Civilians and building interiors were always local to each
+client (their kills were seen dead at the striker), and no dungeon holds
+the city watch. Pinned by execution in `test/disc10_online_kill.test.js`
+(two clients, the blow out, the death at the owner, the report back);
+mutants in `disc10.json` (79, all dead).
 

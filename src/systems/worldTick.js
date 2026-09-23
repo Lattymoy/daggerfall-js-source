@@ -69,6 +69,19 @@ export function playerWeaponHitEntity(player, target, { nowMinutes = Math.floor(
   onVampireHit(player, nowMinutes);
   onLycanthropeHit(player, target, { nowMinutes, isCivilian, mobileType: mobileType ?? target?.mobileType ?? null });
 }
+/**
+ * DISC10-E online: OnWeaponHitEntity's DEATH, reported. DFU reads the
+ * target's health after DecreaseHealth, in the same call; online a peer's
+ * watchman dies at its OWNER, so the striker's call above read a live
+ * puppet and the owner's "your blow killed it" arrives a round trip later
+ * (exteriorFoes' `slain` arm). Only the half that asks about the death
+ * runs - KilledInnocent - on the live minute: the vampire already fed on
+ * the blow itself, and feeding twice for one blow is no law of DFU's.
+ */
+export function playerWeaponKillReported(player, { nowMinutes = Math.floor(worldMinutes()), isCivilian = false, mobileType = null } = {}) {
+  if (!player?.racialOverride) return;
+  onLycanthropeHit(player, { health: 0 }, { nowMinutes, isCivilian, mobileType });
+}
 // DISC10-D V2: the deploy's own curse mint (DeployFullBlownVampirism
 // :176-184 assigns the curse inside the deploy, after the RaiseTime). The
 // curses import infection.js, so infection.js cannot import them; this

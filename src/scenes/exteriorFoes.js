@@ -43,7 +43,7 @@ import { rand } from '../formats/dfRandom.js';
 import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
-import { MINUTES_PER_DAY, playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher
+import { MINUTES_PER_DAY, playerWeaponHitEntity, playerWeaponKillReported } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher
 import { FOES_MS } from '../net/online.js';   // AUDIT ALL B2: the watchman moved since the frame the striker swung at
 import { validFoeRecord, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, HIT_ARROWS_MAX } from '../net/wire.js';
 import { CORPSE_ACTIVATION_DISTANCE, liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
@@ -83,6 +83,8 @@ const TAKES_PER_S = 3;
 /** AUDIT WORLD6b-iii(c) B1/C1: how long an ask stands at the taker - a grant lands only for a body I asked for inside
  *  it, once; an unasked grant is refused whole (a peer wrote into my pack at will until now). */
 const TAKE_WINDOW_MS = 3000;
+// DISC10-E: how long after my blow on a puppet its owner's `slain` report is mine - the take's round trip, the same bound
+const SLAIN_WINDOW_MS = TAKE_WINDOW_MS;
 const PUPPET_LEAP = 3;
 const PUPPET_LEAP_SLACK = 2;   // the stream's x bit, decoded (no roll - the owner's word; WORLD3's spelling)
 /** AUDIT WORLD6b-iii(c) A1/C7: how far a peer may stand from my foe's body and take from it - the taker's own reach
@@ -551,6 +553,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // AUDIT WORLD6b-iii(e) A5: read inside the provenance gate - a fall's or a foe's door on this puppet leaves it
         const _pt = f._divertPt ?? null; f._divertPt = null;
         f._divertFrame = _peerFrame;
+        f._struckAt = _now();   // DISC10-E: the owner's `slain` answers THIS blow, inside SLAIN_WINDOW_MS, or nothing
         _net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, dmg: Math.max(0, Math.round(Number(damage) || 0)), kind,   // WORLD6b-iii(b): keyed to the OWNER's cell (its frame's k) - across the seam that is not mine
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
@@ -1801,6 +1804,19 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (n === 0) { f.corpseDisabled = true; f._closedN = Number.isInteger(data.n) ? data.n : (_owners.get(from)?.n ?? -1); }   // A7: closed as of the owner's frame counter
       return true;
     }
+    if (data.slain !== undefined) {
+      // DISC10-E: THE OWNER SAYS MY BLOW KILLED ITS FOE. OnWeaponHitEntity reads the target dead after DecreaseHealth
+      // (WeaponManager.cs:627-635) - a peer's watchman dies at its owner, so my own call read a live puppet and a
+      // werewolf's KilledInnocent never saw the city watch fall online. The report lands for a puppet of THIS owner's
+      // that I STRUCK, inside the window, once (the grant's law above: any socket in the cell could otherwise feed the
+      // urge at will); the pool's puppet says what it was, never the frame.
+      if (data.slain !== 1) return false;
+      const f = _pupIndex.get(pupKey(from, data.i | 0)) ?? null;
+      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;
+      f._struckAt = null;
+      playerWeaponKillReported(playerEntity, { mobileType: f.mobileType });
+      return true;
+    }
     // WATCH1: the number names one of my foes or one of my watchmen (one counter, so never both); a watchman's blow
     // lands through the watch's own door below, with the ring, the blood, the pain and the dose landed here alike
     const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0)) ?? watchOf(data.i | 0);
@@ -1854,6 +1870,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // AUDIT WORLD6b-iii(e) A1: BOUNDED - HIT_ARROWS_MAX Arrows a body from peers' shafts, past it the blow lands and no
     // Arrow (a crafted stream minted a stack the projection refused whole, and the grant dropped the pile with it)
     if (data.ar === 1 && kind === 'arrow' && !(onWatch && f.dead) && arrowsIn(f.entity.items ??= []) < HIT_ARROWS_MAX) addItem(f.entity.items, bowDamageArrow());   // MAC-N1: minted, not a bare literal; AUDIT ALL A4: not into a watch body a peer's shaft just felled - that body carries nothing (AUDIT WATCH1 A3), and the shaft landed after the kill emptied it
+    // DISC10-E: and if that blow killed it (it was alive at the door above), the striker is told - its OnWeaponHitEntity
+    // asks whether the target died, and the death happened HERE. The grant's own path back (to, the cell, the number);
+    // an older client's applyHit reads no `dmg` in it and refuses it whole.
+    if (f.dead) _net?.onPeerHit?.({ to: from, k: data.k ?? _net?.room?.() ?? null, i: data.i | 0, slain: 1 });
     return true;
   }
   /** The owners gone from the cell (the session's peer map no longer holds them) or gone quiet (no frame in staleMs,
