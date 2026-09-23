@@ -12,6 +12,7 @@ import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pac
 import { openWodWorld, wodOn, wodLightColors } from '../world/worldOfDaggerfall.js';   // WOD2: World of Daggerfall's loader, one per page
 import { wodLightPosition, wodLightProperties } from '../world/wodLocationObjects.js';   // WOD2: the mod's own AddLight
 import { WodSpawner, WOD_LOOT_LOCATION_INDEX, WOD_LOOT_ALIGN } from '../world/wodSpawner.js';   // WOD3: LocationEnemySpawner
+import { wodSiteId, yieldsTo } from '../world/wodShared.js';   // WOD7: a camp's marker, shared online
 import { alignBillboardToGround } from '../world/groundAlign.js';   // WOD3: SpawnLoot's drop
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFireLights, rollHoldFoes } from '../world/wodPrivateersHold.js';   // WOD4: the camp at Privateer's Hold
 import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles
@@ -1112,6 +1113,39 @@ export async function bootWorld(canvas, renderer, params, status) {
   // from the moment such an arrival begins (the port builds the exterior over several frames of it); the first frame
   // inside ends the arrival, and a landing outside instead drops the hold.
   let _wodInside = false;
+  // WOD7: SHARED CAMPS (world/wodShared.js). `_wodSprung` - the markers I sprang (site -> when), on my full foes
+  // frames; `_wodPeerSprung` - the ones a peer sprang, which mine never spring again. Offline nothing is recorded:
+  // no frame goes out and none comes in.
+  const _wodSprung = new Map();
+  const _wodPeerSprung = new Set();
+  let _wodSprungChanged = false;   // a new spring asks the stream for a full frame, so the peers hear it at once
+  const WOD_PEER_SITES_MAX = 4096;
+  const wodSiteOf = (p, w) => wodSiteId(p.px, p.py, w.oid ?? 'x', w.oidN ?? 0);
+  const WOD_SPRUNG_MAX = 256;   // AUDIT WOD7: my list is bounded - the oldest go first
+  function wodSprang(site) {
+    if (!online) return;
+    _wodSprung.delete(site); _wodSprung.set(site, performance.now());   // re-sprung (a rebuild's fresh marker): newest again
+    if (_wodSprung.size > WOD_SPRUNG_MAX) _wodSprung.delete(_wodSprung.keys().next().value);
+    _wodSprungChanged = true;
+  }
+  /** WOD7: my sprung list for the frame - [[site, ageMs]], newest first, so the frame's cap drops the oldest. */
+  const wodSprungList = () => { const now = performance.now(); return [..._wodSprung].reverse().map(([s, at]) => [s, now - at]); };
+  /** AUDIT WOD7: a pixel promoted afresh (no carry) mints fresh markers - a peer's old spring there is spent no more. */
+  function wodForgetPeerSites(key) { for (const s of [..._wodPeerSprung]) if (s.startsWith(`${key}:`)) _wodPeerSprung.delete(s); }
+  /** WOD7: markers a peer sprang, [[site, ageMs|null]] - mine are spent; one I sprang too is a race: the first
+   *  spring keeps it, a tie inside the window goes to the smaller id (yieldsTo), an age not yet heard waits. */
+  function wodPeerSites(from, sites) {
+    for (const [s, age] of sites) {
+      const mine = _wodSprung.get(s);
+      if (mine != null) {
+        if (!yieldsTo(online?.id ?? '', from, performance.now() - mine, age)) continue;   // mine stands (or waits for their age); theirs yields at their end
+        _wodSprung.delete(s);
+        exteriorFoes.removeSiteFoes(s);
+      }
+      _wodPeerSprung.delete(s); _wodPeerSprung.add(s);
+      if (_wodPeerSprung.size > WOD_PEER_SITES_MAX) _wodPeerSprung.delete(_wodPeerSprung.values().next().value);
+    }
+  }
   /** WOD6: SaveLoadManager.OnLoad, heard by every standing marker that has run Start. */
   function wodOnLoad(centre) {
     if (!wod) return;
@@ -1172,7 +1206,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     const feet = standing ? player.pos : cam.pos;
     const cx = arriving ? o[0] : feet[0], cy = arriving ? o[1] : feet[1] + (standing ? player.height / 2 : 0), cz = arriving ? o[2] : feet[2];
     for (const p of built.values()) {
-      if (p.privateersHold && !p.privateersHold.state.rolled) standHold(p);   // WOD4: DungeonExterior.Update finds the block; PrivateersHold.Start runs
+      if (p.privateersHold && !p.privateersHold.state.rolled) {   // WOD4: DungeonExterior.Update finds the block; PrivateersHold.Start runs
+        const hs = wodSiteId(p.px, p.py, 'hold');
+        if (_wodPeerSprung.has(hs)) p.privateersHold.state.rolled = true;   // WOD7: a peer's roll stands here
+        else { standHold(p, hs); wodSprang(hs); }
+      }
       // WOD6 (audit): a pixel belongs to the arrival until its first frame - the frame its promotion's markers meet
       // Start. A marker made on it later (a rebuild on a late region's list) is a later promotion's, and measures from
       // the player; left in the set, it met Start from an origin the player had long left and sprang at their feet.
@@ -1182,11 +1220,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const w of p.wodSpawners) {
         if (w.restand) { w.restand = false; standWodAction(p, w, w.flat); }   // WOD5: the captive stands again on the rebuilt pixel
         if (!w.spawner.active) continue;
+        if (_wodPeerSprung.has(wodSiteOf(p, w))) { w.spawner.active = false; continue; }   // WOD7: a peer sprang it - its camp is everyone's
         const x = w.centre[0] + t[0], y = w.centre[1] + t[1], z = w.centre[2] + t[2];
         // WOD6: a marker of the arrival's first grid meets Start from the origin, then the load's OnLoad
         const first = init && !w.spawner.started;
         const act = w.spawner.tick(first ? Math.hypot(x - o[0], y - o[1], z - o[2]) : Math.hypot(x - cx, y - cy, z - cz));
-        if (act) standWodAction(p, w, act, x, y, z);
+        if (act) { standWodAction(p, w, act, x, y, z); if (act.kind === 'foe' || act.kind === 'loot') wodSprang(wodSiteOf(p, w)); }   // WOD7: the marker is mine now
         const l = _wodArrival.loadAt;
         if (first && l) w.spawner.onLoad(Math.hypot(x - l[0], y - l[1], z - l[2]));
       }
@@ -1197,7 +1236,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const key = `${p.px},${p.py}`;
     if (act.kind === 'foe') {
       const hit = collider.surfaceHit([x, y + 0.2, z], _DOWN, 3);   // AlignControllerToGround's ray, cast the frame the foe is made
-      exteriorFoes.spawnFoe(act.mobileType, [x, y, z], { yaw: act.yawDeg * Math.PI / 180, gender: act.gender, allied: act.allied, placed: true, groundAlign: { hitDist: hitDistance(hit) } })
+      exteriorFoes.spawnFoe(act.mobileType, [x, y, z], { yaw: act.yawDeg * Math.PI / 180, gender: act.gender, allied: act.allied, placed: true, groundAlign: { hitDist: hitDistance(hit) }, site: wodSiteOf(p, w) })   // WOD7: tagged with its marker
         .then((f) => { if (f && !act.hostile && f.ai) f.ai.isHostile = false; })   // MobileReactions.Passive
         .catch(() => {});
       return;
@@ -1245,13 +1284,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // takes it as a miss - and is the BLOCK's child: placed (no cap, no
   // distance cull), it dies with the pixel, as CollectLooseObjects
   // destroys the location and all it holds.
-  function standHold(p) {
+  function standHold(p, site = null) {
     const st = p.privateersHold.state;
     st.rolled = true;
     const t = state.pixelTranslation(p.px, p.py, _wodT);
     for (const o of p.privateersHold.origins) {
       for (const r of rollHoldFoes()) {
-        exteriorFoes.spawnFoe(r.mobileType, [o[0] + r.pos[0] + t[0], o[1] + r.pos[1] + t[1], o[2] + r.pos[2] + t[2]], { yaw: r.yawDeg * Math.PI / 180, gender: r.gender, placed: true, groundAlign: { hitDist: null } })
+        exteriorFoes.spawnFoe(r.mobileType, [o[0] + r.pos[0] + t[0], o[1] + r.pos[1] + t[1], o[2] + r.pos[2] + t[2]], { yaw: r.yawDeg * Math.PI / 180, gender: r.gender, placed: true, groundAlign: { hitDist: null }, site })
           .then((f) => { if (!f) return; if (st.gone) exteriorFoes.removeFoe(f); else st.foes.push(f); })
           .catch(() => {});
       }
@@ -1968,11 +2007,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // height over its base - which is what Vector3.Distance measures.
       if (place.spawners.length) {
         wodSpawners = [];
+        const oidSeen = new Map();   // AUDIT WOD7: a layout may number two markers alike (WOD_Nature_01's two bears, WOD_Ruins_04's three warriors, all 0)
         for (const s of place.spawners) {
           const t = await getTexture(s.archive);
           const h = s.record < t.recordCount ? billboardSize(t, s.record).h : 0;
           const centre = [s.base[0], s.base[1] + (h * s.scaleY) / 2, s.base[2]];
-          wodSpawners.push({ spawner: new WodSpawner(s), centre, flat: null, restand: false });   // a carried one replaces it at publish (m4)
+          const n = oidSeen.get(s.objectID) ?? 0; oidSeen.set(s.objectID, n + 1);
+          wodSpawners.push({ spawner: new WodSpawner(s), centre, flat: null, restand: false, oid: s.objectID, oidN: n });   // WOD7: oid (and its index among the pixel's alike) - the marker's site with the pixel   // a carried one replaces it at publish (m4)
         }
       }
       const site = [...wodPicks].reverse().find((p) => p.flatten);
@@ -2116,6 +2157,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // cleared it, so a stale roll never stands in the new world.
     const wodKept = adoptWodCarry(key, wodSpawners, privateersHold);
     const wodLife = wodKept.life ?? {};   // L1-3: this terrain's identity - kept across a rebuild or a pool, new on a promote
+    if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again
     if (_building.get(key) === made) _building.delete(key);   // BUILD-FAIL1: the entry owns them from here
     built.set(key, {
       staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
@@ -4278,7 +4320,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:395-400) never looks the record up in `foes`, and
+    // (exteriorFoes.js:400-405) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1344-1358) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -9685,6 +9727,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
     });
+    exteriorFoes.setOnSites((from, sites) => wodPeerSites(from, sites), wodSprungList);   // WOD7: a peer's sprung markers - mine are spent; mine ride my full frames
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
     online.onPark = (room, e) => hcc.applyKept(room, e, campToScene, performance.now());   // HCC-PARK: a cell's word about a parked team (mine or a halo's cell), its owner here or not
@@ -11257,6 +11300,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (online.room !== _foesRoom) { const seam = isCellRoom(online.room) && isCellRoom(_foesRoom); _foesRoom = online.room; _foesFullAt = -Infinity; if (!seam) exteriorFoes.clearPuppets(); }   // AUDIT WORLD6b C7: a new room hears every foe of mine at once
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) exteriorFoes.pruneOwners(ids, now); }   // PERF11: the one list   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     worldPublish(now);   // WORLD1: the room's memory, every WORLD_PUBLISH_MS while this player hosts a dungeon
+    if (_wodSprungChanged) { _wodSprungChanged = false; _foesFullAt = -Infinity; }   // WOD7: a marker I just sprang goes out whole
     foesStream(now);   // WORLD2: the host's changed foes, every FOES_MS; WORLD6b: mine, in a cell
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
     hitFlush(now);     // AUDIT FOES FOE2: and a BLOW the wire refused - a joiner applies none locally, so a lost frame is a lost blow

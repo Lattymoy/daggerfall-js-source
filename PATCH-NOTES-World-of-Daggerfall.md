@@ -5,6 +5,7 @@
 - Camps can spring an ambush when you get close: bandits, bears, warriors and treasure. A camp already next to you when it loads in stays quiet.
 - Privateer's Hold has its bandit camp outside, with the fires lit.
 - Online, everyone in a room sees the same sites in the same places.
+- Online, camps are shared: the first player to set one off owns it, and everyone nearby sees and fights the same enemies. Its treasure goes to whoever set the camp off.
 
 ## Terrain now matches Daggerfall Unity
 - Hills and mountains were about 20% too tall. The whole world now uses Daggerfall Unity's real terrain height.
