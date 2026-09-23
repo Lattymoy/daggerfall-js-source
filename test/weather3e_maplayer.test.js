@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  weatherMarks, paintWeatherLayer, forecastText, weatherPhrase, mapOfField, fieldOfMapPixel, WEATHER_INK, WASH_ALPHA,
+  weatherMarks, paintWeatherLayer, forecastText, weatherPhrase, mapOfField, fieldOfMapPixel, WEATHER_INK, WASH_ALPHA, INK_LEAN,
   WASH_RIM, GLYPH_MIN_ENV, GLYPH_MIN_PX, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS, WEATHER_NAMES,
 } from '../src/ui/weatherLayer.js';
 import { forecastAt, PRIORITY } from '../src/systems/weatherMap.js';
@@ -72,7 +72,14 @@ test('WEATHER3e: THE WASH - a soft-rimmed disc per band in its weather\'s pigmen
     assert.match(c.g.stops[0][1], new RegExp(`rgba\\(${WEATHER_INK[word].map(Math.round).join(', ')}, ${WASH_ALPHA[word]}\\)`), `${word}: its pigment at its full strength`);
     assert.match(c.g.stops[1][1], /, 0\)$/, 'nothing at the edge');
   });
-  for (const rgb of Object.values(WEATHER_INK)) for (let k = 0; k < 3; k++) assert.ok(Math.abs(rgb[k] - INK_RGB[k]) < 200, 'every pigment is mixed toward the pen');
+  // WEATHER3g: every pigment leans INK_LEAN toward the pen (no channel brighter than white leaned that far), and each is
+  // its own colour - no two weathers within a visible distance of each other
+  for (const rgb of Object.values(WEATHER_INK)) for (let k = 0; k < 3; k++) assert.ok(rgb[k] <= 255 - (255 - INK_RGB[k]) * INK_LEAN + 1e-9, 'every pigment leans toward the pen');
+  const inks = Object.entries(WEATHER_INK);
+  for (let i = 0; i < inks.length; i++) for (let j = i + 1; j < inks.length; j++) {
+    const d = Math.hypot(...inks[i][1].map((v, k) => v - inks[j][1][k]));
+    assert.ok(d > 30, `${inks[i][0]} and ${inks[j][0]} are told apart (${d.toFixed(0)})`);
+  }
   assert.ok(calls.some((c) => c.fn === 'stroke'), 'the grown storm is signed');
   // a young storm: a lighter wash, no glyph
   const young = paint([{ ...storm, env: GLYPH_MIN_ENV - 0.1 }]);

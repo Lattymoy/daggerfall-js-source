@@ -19,7 +19,7 @@
 // THE LAW, AND WHY IT IS CALIBRATED BY CONSTRUCTION
 //
 // Births are a POISSON PROCESS in space and time, one per system type:
-// the land is cut into NODES (NODE_M on a side, NODE_MINUTES long); a
+// the land is cut into NODES (each type's own `node` a side and long); a
 // node draws a Poisson count of candidates per type from a generator
 // keyed on (gx, gz, gt, type) and a world constant - never the day - and
 // places each uniformly inside its cell and its period. A Poisson count
@@ -58,10 +58,6 @@ import { WEATHER_TABLE, weatherTableFor } from './weatherTable.js';
 import { pixelOfField } from './weatherField.js';
 import { seededRng, VIOLENCE } from './wind.js';
 
-/** The lattice births are keyed on: a node is NODE_M on a side and
- *  NODE_MINUTES long (8 game hours). */
-export const NODE_M = 40000;
-export const NODE_MINUTES = 480;
 const WORLD_SEED = 0x57584D50;   // 'WXMP'
 
 /** The priority where systems overlap: the worn word is the first
@@ -71,16 +67,29 @@ const RANK = Object.freeze(Object.fromEntries(PRIORITY.map((w, i) => [w, i])));
 
 /**
  * THE SYSTEM TYPES. Each is a CORE - the type's own word - with RINGS of
- * lower words around it, so a storm is SEEN coming: cloud first, then the
- * rain, the thunder at its heart. `core` is the core's radius range at
- * full growth (metres); `rings` the words outward, each as its AREA in
- * core areas (`[word, share]` - the ring's outer edge is where the disc's
- * area reaches 1 + the shares so far); `life` the lifetime range (game
+ * lower words around it, so a front is SEEN coming: cloud first, then the
+ * deck, then the rain. `core` is the core's radius range at full growth
+ * (metres); `rings` the words outward, each as its AREA in core areas
+ * (`[word, share]` - the ring's outer edge is where the disc's area
+ * reaches 1 + the shares so far); `life` the lifetime range (game
  * minutes); `speed` the metres per game minute the type rides the wind
  * at (the wind field's own magnitude is at most 1); `grow` and `decay`
  * the envelope's ramps as shares of the life; `diurnal` the birth rate's
  * swing over the day ([amplitude, peak hour], per season or `other`), a
- * cosine whose day mean is 1.
+ * cosine whose day mean is 1; `node` the lattice its births are keyed on
+ * ([metres a side, game minutes long], sized to the type, so a search
+ * walks a handful of nodes whatever the type's reach).
+ *
+ * WEATHER3g (Mac: "this needs more clarity"): the weather is REGIONAL. A
+ * rain system is a FRONT tens of kilometres across, and a thunderstorm is
+ * a CELL of a front (`parent`), riding with it - so a storm reads as a
+ * rain front mottled with its cells, not a rash of small storms over the
+ * whole bay. A cell has no lattice and no speed of its own: it is found
+ * through its front, stands where it was born in the front's frame, and
+ * paints only inside its front's core as the core is now (`clip`) - it
+ * dies with its front. The speeds keep a system's drift over its life to
+ * tens of kilometres: the table is a climate's law, and a front that rode
+ * hundreds would carry one climate's weather deep into the next.
  *
  * The ring shares are each type's shape AT MOST: a climate whose table
  * leaves too little of a word for every storm's ring of it (the swamp's
@@ -90,34 +99,42 @@ const RANK = Object.freeze(Object.fromEntries(PRIORITY.map((w, i) => [w, i])));
  */
 export const SYSTEM_TYPES = Object.freeze({
   thunder: Object.freeze({
-    core: [4000, 7000], rings: [['rain', 1.5], ['cloudy', 3]], life: [180, 420], speed: 22, grow: 0.25, decay: 0.35,
+    parent: 'rain', core: [8000, 16000], rings: [], life: [150, 420], grow: 0.25, decay: 0.35,
     diurnal: { [SEASONS.Summer]: [0.7, 16], other: [0.3, 16] },   // summer storms are born in the afternoon heat
   }),
   rain: Object.freeze({
-    core: [9000, 17000], rings: [['overcast', 1], ['cloudy', 1]], life: [360, 960], speed: 16, grow: 0.2, decay: 0.3,
-    diurnal: { other: [0, 0] },
+    core: [40000, 75000], rings: [['overcast', 1], ['cloudy', 1]], life: [720, 1800], speed: 30, grow: 0.2, decay: 0.3,
+    node: [160000, 1440], diurnal: { other: [0, 0] },
   }),
   snow: Object.freeze({
-    core: [10000, 19000], rings: [['overcast', 1.2]], life: [360, 1080], speed: 14, grow: 0.2, decay: 0.3,
-    diurnal: { other: [0, 0] },
+    core: [40000, 75000], rings: [['overcast', 1.2]], life: [720, 1800], speed: 25, grow: 0.2, decay: 0.3,
+    node: [160000, 1440], diurnal: { other: [0, 0] },
   }),
   sandstorm: Object.freeze({
-    core: [5500, 10000], rings: [['cloudy', 1]], life: [180, 480], speed: 26, grow: 0.2, decay: 0.3,
-    diurnal: { other: [0.4, 15] },   // the desert wind rises with the day's heat
+    core: [15000, 30000], rings: [['cloudy', 1]], life: [240, 600], speed: 40, grow: 0.2, decay: 0.3,
+    node: [80000, 720], diurnal: { other: [0.4, 15] },   // the desert wind rises with the day's heat
   }),
   fog: Object.freeze({
-    core: [6000, 14000], rings: [], life: [240, 600], speed: 4, grow: 0.25, decay: 0.3,
-    diurnal: { other: [0.8, 4] },   // born in the small hours; a bank born at 04:00 is gone by early afternoon
+    core: [15000, 35000], rings: [], life: [240, 600], speed: 5, grow: 0.25, decay: 0.3,
+    node: [80000, 720], diurnal: { other: [0.8, 4] },   // born in the small hours; a bank born at 04:00 is gone by early afternoon
   }),
   overcast: Object.freeze({
-    core: [13000, 24000], rings: [['cloudy', 1]], life: [480, 1200], speed: 11, grow: 0.2, decay: 0.25,
-    diurnal: { other: [0, 0] },
+    core: [45000, 85000], rings: [['cloudy', 1]], life: [720, 1800], speed: 25, grow: 0.2, decay: 0.25,
+    node: [160000, 1440], diurnal: { other: [0, 0] },
   }),
   cloudy: Object.freeze({
-    core: [14000, 30000], rings: [], life: [360, 960], speed: 13, grow: 0.2, decay: 0.25,
-    diurnal: { other: [0.25, 14] },   // clear nights stay clear more often than days
+    core: [40000, 80000], rings: [], life: [480, 1440], speed: 28, grow: 0.2, decay: 0.25,
+    node: [160000, 1440], diurnal: { other: [0.25, 14] },   // clear nights stay clear more often than days
   }),
 });
+/** Each front type's cell type (`rain` -> `thunder`): the types born
+ *  only inside another's core. */
+export const CELL_OF = Object.freeze(Object.fromEntries(PRIORITY.filter((t) => SYSTEM_TYPES[t].parent).map((t) => [SYSTEM_TYPES[t].parent, t])));
+// the Cox law below holds only while a front's own word and its cell's are painted by nothing but the front's cores
+// and the cells: no ring may carry either (a ring-painted rain would be rain with no cells under it)
+for (const [front, cell] of Object.entries(CELL_OF)) {
+  for (const t of PRIORITY) for (const [word] of SYSTEM_TYPES[t].rings) if (word === front || word === cell) throw new Error(`weatherMap: ${t}'s ring paints ${word}, a front's or a cell's word`);
+}
 const TYPE_SALT = Object.freeze({ thunder: 1, rain: 2, snow: 3, sandstorm: 4, fog: 5, overcast: 6, cloudy: 7 });
 
 /** A newborn system's size as a share of its full size: it swells from
@@ -184,18 +201,41 @@ export function coverMeans(targets) {
   return mu;
 }
 
-const NODE_VOLUME = NODE_M * NODE_M * NODE_MINUTES;
+/** A type's lattice node, in m^2 x game minutes. */
+const nodeVolume = (type) => SYSTEM_TYPES[type].node[0] * SYSTEM_TYPES[type].node[0] * SYSTEM_TYPES[type].node[1];
+
+/**
+ * A FRONT AND ITS CELLS, as covering means (WEATHER3g). Cells are Poisson
+ * inside the fronts' cores, and the fronts are Poisson: with K fronts over
+ * a point (K ~ Poisson(nu)) and `c` the cells' covering mean over a point
+ * inside one front, the cells over it are Poisson(cK), so the chance of
+ * none is E[e^-(1-e^-c)K] = exp(-nu (1 - e^-c)) - the Poisson's
+ * generating function. So the cell's word has the covering mean
+ * nu (1 - e^-c) and the front's own nu e^-c: together nu, the fronts'.
+ */
+const cellMean = (nu, c) => nu * (1 - Math.exp(-c));
+
 /** One solve of the law at FLAT exposure (no daily cycle): each word's
  *  covering mean met top priority down. Answers { core, rings } - `core`
- *  the covering mean each type's cores give, `rings` as below. */
+ *  the covering mean each type's cores give (a cell type's: over a point
+ *  inside one of its fronts), `rings` as below. */
 function solveFlat(targets) {
   const mu = coverMeans(targets);
   const painters = Object.fromEntries(PRIORITY.map((word) => [word, []]));   // word -> the rings painting it: { ring, mu (their type's core mean) }
   const core = {}, rings = {};
   for (const type of PRIORITY) {
+    if (SYSTEM_TYPES[type].parent) continue;   // a cell type is solved with its front, below
     const painted = painters[type].reduce((sum, p) => sum + p.mu * p.ring[1], 0);
     if (painted > mu[type]) for (const p of painters[type]) p.ring[1] *= mu[type] / painted;
     core[type] = Math.max(0, mu[type] - painted);
+    const cell = CELL_OF[type];
+    if (cell) {
+      // the fronts cover their own word AND their cells': nu is the pair's covering mean, and c inverts cellMean
+      const nu = core[type] + mu[cell];
+      core[type] = nu;
+      core[cell] = nu > 0 ? -Math.log(1 - Math.min(mu[cell] / nu, 0.999)) : 0;
+      rings[cell] = [];
+    }
     rings[type] = SYSTEM_TYPES[type].rings.map(([word, share]) => [word, share]);
     if (core[type] > 0) for (const ring of rings[type]) painters[ring[0]].push({ ring, mu: core[type] });
   }
@@ -241,8 +281,13 @@ export function dayShares({ core, rings }, season) {
   for (let i = 0; i < DAY_BINS; i++) {
     const mu = Object.fromEntries(PRIORITY.map((w) => [w, 0]));
     for (const type of PRIORITY) {
+      if (SYSTEM_TYPES[type].parent) continue;
       const m = core[type] * exposure(type, season)[i];
-      mu[type] += m;
+      const cell = CELL_OF[type];
+      if (cell) {
+        const cells = cellMean(m, core[cell] * exposure(cell, season)[i]);
+        mu[cell] += cells; mu[type] += m - cells;
+      } else mu[type] += m;
       for (const [word, share] of rings[type]) mu[word] += m * share;
     }
     let free = 1;
@@ -254,8 +299,9 @@ export function dayShares({ core, rings }, season) {
 const _laws = new Map();   // table -> season -> law, solved once
 /**
  * THE BIRTH LAW for a climate and season: `weight[type]`, the expected
- * births per node, and `rings[type]`, the type's rings as born there
- * ([word, share], each share at most the type's own).
+ * births per node of the type's lattice (a cell type's: per m^2 x game
+ * minute of its fronts' cores), and `rings[type]`, the type's rings as
+ * born there ([word, share], each share at most the type's own).
  *
  * Solved top priority down: every ring carries a LOWER-priority word than
  * its core, so by the time a word is reached every higher type that
@@ -287,7 +333,7 @@ export function birthLaw(climateIndex, season) {
     if (worst < 1e-6) break;
     flat = solveFlat(aim);
   }
-  const weight = Object.fromEntries(PRIORITY.map((t) => [t, flat.core[t] * NODE_VOLUME / coreVolume(t)]));
+  const weight = Object.fromEntries(PRIORITY.map((t) => [t, flat.core[t] * (SYSTEM_TYPES[t].parent ? 1 : nodeVolume(t)) / coreVolume(t)]));
   const rings = Object.fromEntries(PRIORITY.map((t) => [t, Object.freeze(flat.rings[t].map((r) => Object.freeze(r)))]));
   law = Object.freeze({ weight: Object.freeze(weight), rings: Object.freeze(rings) });
   bySeason.set(season, law);
@@ -379,36 +425,53 @@ export function windPath(x, z, t0, t) {
 
 // ---- the systems ---------------------------------------------------
 
-/** The climate under a field position; off the map is the sea. */
+/** The climate under a field position; off the map, the climate at the
+ *  nearest pixel of its edge (WEATHER3g: the map's edge is land to the
+ *  north and east, and a system born past it rides tens of kilometres in
+ *  - read as the sea, it carried the sea's weather onto the mountains). */
 function climateOfField(climateAt, x, z) {
   const p = pixelOfField(x, z);
-  if (p.x < 0 || p.y < 0 || p.x >= MAX_MAP_PIXEL_X || p.y >= MAX_MAP_PIXEL_Y) return CLIMATES.Ocean;
-  return climateAt(p.x, p.y);
+  return climateAt(Math.min(MAX_MAP_PIXEL_X - 1, Math.max(0, p.x)), Math.min(MAX_MAP_PIXEL_Y - 1, Math.max(0, p.y)));
 }
 
-/** A Poisson draw by Knuth's product (the means here are small). */
+/** A Poisson draw by Knuth's product, a mean over POISSON_CHUNK taken as
+ *  a sum of chunks (a sum of Poissons is Poisson; the product's limit
+ *  e^-lambda underflows past ~745). */
+const POISSON_CHUNK = 30;
 function poisson(lambda, r) {
+  let k = 0;
+  for (; lambda > POISSON_CHUNK; lambda -= POISSON_CHUNK) k += poisson(POISSON_CHUNK, r);
   const limit = Math.exp(-lambda);
-  let k = 0, p = r();
+  let p = r();
   while (p > limit) { k++; p *= r(); }
   return k;
 }
 
-/** The births of `type` in node (gx, gz, gt): the kept candidates, each
- * { type, id, bornX, bornZ, bornAt, life, core, rings } - `core` its core
- * radius at full growth, `rings` as the birth law made them where and
- * when it was born. Pure over climateAt. */
+/** The births of `type` in node (gx, gz, gt) of its own lattice: the kept
+ * candidates, each { type, id, bornX, bornZ, bornAt, life, core, rings } -
+ * `core` its core radius at full growth, `rings` as the birth law made
+ * them where and when it was born. Pure over climateAt. */
 export function birthsIn(type, gx, gz, gt, climateAt) {
+  return memoised(`${type}:${gx}:${gz}:${gt}`, climateAt, () => drawBirths(type, gx, gz, gt, climateAt));
+}
+/** The cells a front throws over its life (WEATHER3g), each { type, id,
+ *  front, ox, oz, bornX, bornZ, bornAt, life, core, rings } - (ox, oz) its
+ *  place in the front's frame, where it stays. [] for a type with no
+ *  cells. Pure over climateAt. */
+export function cellsOf(front, climateAt) {
+  if (!CELL_OF[front.type]) return [];
+  return memoised(`cells:${front.id}`, climateAt, () => drawCells(front, climateAt));
+}
+function memoised(key, climateAt, draw) {
   let memo = _births.get(climateAt);
   if (!memo) _births.set(climateAt, memo = new Map());
-  const key = `${type}:${gx}:${gz}:${gt}`;
   let out = memo.get(key);
   if (out) return out;
   // a node's births are a pure function of it, so dropping them costs only the redraw - and the OLDEST quarter goes
   // (insertion order: the nodes the clock has left behind), never the whole cache at once (AUDIT WEATHER3 R2c: a
   // whole-bay read is ~12,500 keys, and a wholesale clear under it cost the next read the bay again, cold)
   if (memo.size >= BIRTHS_MEMO) { let drop = BIRTHS_MEMO >> 2; for (const k of memo.keys()) { memo.delete(k); if (--drop <= 0) break; } }
-  memo.set(key, out = Object.freeze(drawBirths(type, gx, gz, gt, climateAt)));
+  memo.set(key, out = Object.freeze(draw()));
   return out;
 }
 /** The births cache, per climate lookup (a host's lookup is one function
@@ -418,15 +481,16 @@ export const BIRTHS_MEMO = 40000;
 
 function drawBirths(type, gx, gz, gt, climateAt) {
   const ceiling = ceilings()[type];
-  if (!(ceiling > 0)) return [];
+  if (!(ceiling > 0) || SYSTEM_TYPES[type].parent) return [];   // a cell type is born in its fronts (cellsOf), not on a lattice
   const r = seededRng((Math.imul(gx, 73856093) ^ Math.imul(gz, 19349663) ^ Math.imul(gt, 83492791) ^ Math.imul(TYPE_SALT[type], 2971215073) ^ WORLD_SEED) >>> 0);
   const n = poisson(ceiling, r);
   const spec = SYSTEM_TYPES[type];
+  const [nodeM, nodeMinutes] = spec.node;
   const out = [];
   for (let i = 0; i < n; i++) {
     // every draw is taken whether or not the candidate is kept, so one
     // candidate's fate never moves another's
-    const bornX = (gx + r()) * NODE_M, bornZ = (gz + r()) * NODE_M, bornAt = (gt + r()) * NODE_MINUTES;
+    const bornX = (gx + r()) * nodeM, bornZ = (gz + r()) * nodeM, bornAt = (gt + r()) * nodeMinutes;
     const keep = r(), rc = r(), rl = r();
     const season = seasonValue(dateFromClassicMinutes(bornAt));
     const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);
@@ -442,16 +506,77 @@ function drawBirths(type, gx, gz, gt, climateAt) {
   return out;
 }
 
+/**
+ * A front's cells: candidates at the cell type's ceiling rate over the
+ * front's core at FULL growth widened by a cell's largest radius, from a
+ * cell's longest life BEFORE the front's birth to its death, each kept by
+ * the birth law at its own birthplace, season and hour (a front drifting
+ * over a desert grows no storms there). A cell paints only inside its
+ * front's core as it is now, and only while the front lives - so every
+ * point of the core, rim or heart, a newborn front or an old one, has
+ * cells over it at the one steady rate: the Cox law's `c`, exactly (a
+ * front whose cells only began at its birth would be born with too few).
+ * Every draw is taken whether or not a candidate is kept.
+ */
+function drawCells(front, climateAt) {
+  const type = CELL_OF[front.type];
+  const ceiling = ceilings()[type];
+  if (!(ceiling > 0)) return [];
+  const fspec = SYSTEM_TYPES[front.type], spec = SYSTEM_TYPES[type];
+  let h = 0x811c9dc5;
+  for (let i = 0; i < front.id.length; i++) h = Math.imul(h ^ front.id.charCodeAt(i), 0x01000193);
+  const r = seededRng((h ^ Math.imul(TYPE_SALT[type], 2971215073) ^ WORLD_SEED) >>> 0);
+  const reach = front.core + spec.core[1], lead = spec.life[1];
+  const n = poisson(ceiling * Math.PI * reach * reach * (lead + front.life), r);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const bornAt = front.bornAt - lead + r() * (lead + front.life), rad = reach * Math.sqrt(r()), ang = r() * Math.PI * 2;
+    const keep = r(), rc = r(), rl = r();
+    const ox = rad * Math.cos(ang), oz = rad * Math.sin(ang);
+    const [px, pz] = windPath(front.bornX, front.bornZ, front.bornAt, bornAt);
+    const bornX = front.bornX + px * fspec.speed + ox, bornZ = front.bornZ + pz * fspec.speed + oz;
+    const season = seasonValue(dateFromClassicMinutes(bornAt));
+    const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);
+    const hour = (((bornAt % 1440) + 1440) % 1440) / 60;
+    if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
+    out.push(Object.freeze({
+      type, id: `${front.id}/${i}`, front, ox, oz, bornX, bornZ, bornAt,
+      core: spec.core[0] + rc * (spec.core[1] - spec.core[0]),
+      life: spec.life[0] + rl * (spec.life[1] - spec.life[0]),
+      rings: law.rings[type],
+    }));
+  }
+  return out;
+}
+
+/** Where a born system stands at `minutes` (alive or not): its birthplace
+ *  ridden on the wind - a cell, its front's place plus its own offset. */
+function placeAt(b, minutes) {
+  const host = b.front ?? b, speed = SYSTEM_TYPES[host.type].speed;
+  const [px, pz] = windPath(host.bornX, host.bornZ, host.bornAt, minutes);
+  return [host.bornX + px * speed + (b.ox ?? 0), host.bornZ + pz * speed + (b.oz ?? 0)];
+}
+
 /** A born system at `minutes`: null before its birth or after its death,
  * else where it stands, its envelope, and its BANDS now - [outer radius,
- * word], core out - with `r` the whole disc's radius. */
+ * word], core out - with `r` the whole disc's radius, and `clip` (a cell's)
+ * the disc [x, z, r] it paints within, else null. */
 export function systemAt(b, minutes) {
   const age = minutes - b.bornAt;
   if (age < 0 || age >= b.life) return null;
   const spec = SYSTEM_TYPES[b.type];
   const env = envelope(spec, age / b.life);
-  const [px, pz] = windPath(b.bornX, b.bornZ, b.bornAt, minutes);
+  const [x, z] = placeAt(b, minutes);
   const core = b.core * radiusShare(env);
+  let clip = null;
+  if (b.front) {
+    // a cell paints only inside its front's core as the core is now, and dies with its front
+    const fAge = minutes - b.front.bornAt;
+    if (fAge < 0 || fAge >= b.front.life) return null;
+    const [fx, fz] = placeAt(b.front, minutes);
+    clip = [fx, fz, b.front.core * radiusShare(envelope(SYSTEM_TYPES[b.front.type], fAge / b.front.life))];
+    if (Math.hypot(x - fx, z - fz) >= clip[2] + core) return null;   // wholly outside it: nowhere to paint
+  }
   const bands = [[core, b.type]];
   let area = 1;
   for (const [word, share] of b.rings) {
@@ -459,32 +584,39 @@ export function systemAt(b, minutes) {
     area += share;
     bands.push([core * Math.sqrt(area), word]);
   }
-  return {
-    ...b, age, env, bands,
-    x: b.bornX + px * spec.speed, z: b.bornZ + pz * spec.speed,
-    r: bands[bands.length - 1][0],
-  };
+  return { ...b, age, env, bands, x, z, r: bands[bands.length - 1][0], clip };
 }
 
 /** Every system alive at `minutes` whose disc comes within `range` of
  *  (x, z), nearest centre first, each with its distance `d`. */
 export function systemsNear(x, z, minutes, climateAt, range = 0) {
   const out = [];
+  const take = (b) => {
+    const s = systemAt(b, minutes);
+    if (!s) return;
+    const d = Math.hypot(s.x - x, s.z - z);
+    if (d - s.r <= range) out.push({ ...s, d });
+  };
   for (const type of PRIORITY) {
     const spec = SYSTEM_TYPES[type];
-    const reach = maxRadius(type) + spec.speed * spec.life[1] + range;   // the furthest a birth can sit from a disc that touches the range
-    const gx0 = Math.floor((x - reach) / NODE_M), gx1 = Math.floor((x + reach) / NODE_M);
-    const gz0 = Math.floor((z - reach) / NODE_M), gz1 = Math.floor((z + reach) / NODE_M);
-    const gt0 = Math.floor((minutes - spec.life[1]) / NODE_MINUTES), gt1 = Math.floor(minutes / NODE_MINUTES);
+    if (spec.parent) continue;   // cells are found through their fronts
+    const cell = CELL_OF[type] && SYSTEM_TYPES[CELL_OF[type]];
+    // a cell lives only while its front does, within the front's core at full growth widened by its own radius
+    const lives = spec.life[1];
+    const reach = Math.max(maxRadius(type), cell ? spec.core[1] + 2 * cell.core[1] : 0) + spec.speed * lives + range;   // the furthest a birth can sit from a disc that touches the range
+    const [nodeM, nodeMinutes] = spec.node;
+    const gx0 = Math.floor((x - reach) / nodeM), gx1 = Math.floor((x + reach) / nodeM);
+    const gz0 = Math.floor((z - reach) / nodeM), gz1 = Math.floor((z + reach) / nodeM);
+    const gt0 = Math.floor((minutes - lives) / nodeMinutes), gt1 = Math.floor(minutes / nodeMinutes);
     for (let gt = gt0; gt <= gt1; gt++) {
       for (let gx = gx0; gx <= gx1; gx++) {
         for (let gz = gz0; gz <= gz1; gz++) {
           for (const b of birthsIn(type, gx, gz, gt, climateAt)) {
-            const s = systemAt(b, minutes);
-            if (!s) continue;
-            const d = Math.hypot(s.x - x, s.z - z);
-            if (d - s.r > range) continue;
-            out.push({ ...s, d });
+            take(b);
+            if (!cell || minutes < b.bornAt || minutes >= b.bornAt + b.life) continue;
+            const [fx, fz] = placeAt(b, minutes);
+            if (Math.hypot(fx - x, fz - z) - (b.core + 2 * cell.core[1]) > range) continue;
+            for (const c of cellsOf(b, climateAt)) take(c);
           }
         }
       }
@@ -503,6 +635,10 @@ export function bandAt(s, d) {
   return band ? { word: band[1], intensity: s.env * (1 - 0.8 * f * f) } : null;
 }
 
+/** Whether (x, z) is within a system's `clip` (a cell's front core now);
+ *  always, for a system with none. */
+export const insideClip = (s, x, z) => !s.clip || Math.hypot(s.clip[0] - x, s.clip[1] - z) < s.clip[2];
+
 /**
  * THE WORN WORD AMONG SYSTEMS already found (each standing where it is
  * this minute): the highest-priority word any of them paints over (x, z)
@@ -516,6 +652,7 @@ export function bandAt(s, d) {
 export function wornAmong(systems, x, z, ground = null) {
   let best = null;
   for (const s of systems) {
+    if (!insideClip(s, x, z)) continue;
     const band = bandAt(s, Math.hypot(s.x - x, s.z - z));
     if (!band) continue;
     const word = ground ? ground(band.word, x, z) : band.word;
@@ -558,7 +695,7 @@ export function skyCells(systems, x, z, ground = null) {
     for (const [r, raw] of s.bands) {
       const word = ground ? ground(raw, s.x, s.z) : raw;
       const imp = (SKY_WEIGHT[word] ?? 0.5) * (d <= r ? 2 : r / d);
-      out.push({ x: s.x, z: s.z, r, word, imp, rank: RANK[word] ?? PRIORITY.length, id: `${s.id}:${raw}`, d });
+      out.push({ x: s.x, z: s.z, r, word, imp, rank: RANK[word] ?? PRIORITY.length, id: `${s.id}:${raw}`, d, clip: s.clip ?? null });
     }
   }
   return out;

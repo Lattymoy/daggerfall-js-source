@@ -133,7 +133,7 @@ import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easin
 export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 import { systemsNear, forecastAt } from '../systems/weatherMap.js';   // WEATHER3e: the world weather map, read over the bay
-import { weatherMarks, paintWeatherLayer, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS, WASH_LAYER_SCALE } from './weatherLayer.js';
+import { weatherMarks, paintWeatherLayer, paintWeatherLegend, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS, WASH_LAYER_SCALE } from './weatherLayer.js';
 import { mapGround } from '../systems/weatherSim.js';   // AUDIT WEATHER3 R1: the ground law the player's own sky goes through
 import { TERRAIN_SIZE } from '../world/terrainSampler.js';
 
@@ -2394,9 +2394,13 @@ export class HeldMapWindow {
    *  own map-sized layer and drawn under the view - a pan or a zoom is one
    *  image, not a few thousand gradients (AUDIT WEATHER3 R2a) - and the
    *  glyphs, a handful, inked at the paper's own resolution. With no canvas
-   *  to keep (a headless host) the washes are inked straight on. */
+   *  to keep (a headless host) the washes are inked straight on. WEATHER3g:
+   *  the washes go UNDER the ink already on the sheet (destination-over),
+   *  so the coast and the borders stay the pen's over the weather, and
+   *  the legend names the colours. */
   _paintWeather(ctx, env, wx) {
-    const opts = { paperW: env.paperW, paperH: env.paperH, dpr: env.dpr };
+    const opts = { paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, bounds: [this._size.width, this._size.height] };
+    const under = (paint) => { const op = ctx.globalCompositeOperation; ctx.globalCompositeOperation = 'destination-over'; paint(); ctx.globalCompositeOperation = op ?? 'source-over'; };
     if (wx.washes === null) {
       const k = WASH_LAYER_SCALE, c = typeof document !== 'undefined' ? document.createElement('canvas') : null;
       const lctx = c?.getContext?.('2d');
@@ -2409,9 +2413,13 @@ export class HeldMapWindow {
     if (wx.washes) {
       const v = env.view, s = v.scale;
       ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
-      ctx.drawImage(wx.washes, -v.ox * s, -v.oy * s, this._size.width * s, this._size.height * s);
+      under(() => ctx.drawImage(wx.washes, -v.ox * s, -v.oy * s, this._size.width * s, this._size.height * s));
       paintWeatherLayer(ctx, v, wx.marks, { ...opts, washes: false });
-    } else paintWeatherLayer(ctx, env.view, wx.marks, opts);
+    } else {
+      under(() => paintWeatherLayer(ctx, env.view, wx.marks, { ...opts, glyphs: false }));
+      paintWeatherLayer(ctx, env.view, wx.marks, { ...opts, washes: false });
+    }
+    paintWeatherLegend(ctx, opts);
   }
 
   /** A hover's label with the weather at its pixel and the forecast -

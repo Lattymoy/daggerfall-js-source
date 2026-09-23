@@ -356,7 +356,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate
 import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach, currentMapSystems, weatherMapOn, sampleWeatherIndoors, weatherArrivalStamp, mapGround } from '../systems/weatherSim.js';
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
 import { fieldFromNative, nativeFromField, fieldOfPixelLocal } from '../systems/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
-import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
+import { cellOfField } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -839,7 +839,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const fieldXZ = () => { const wc = state.worldCoords(walkMode ? player.pos : cam.pos); return fieldFromNative(wc.x, wc.z); };
   const climateAt = (px, py) => maps.getClimateIndex(px, py);
   const mapGroundHere = mapGround(climateAt);   // AUDIT WEATHER3 R1: the ground law the map's words go through, here
-  const fieldCellsHere = () => currentFieldCells().map((c) => { const n = nativeFromField(c.x, c.z); const h = state.localFromWorld(n[0], n[1]); const cell = cellOf(c.word, h[0], h[1], c.r); return cell && c.imp != null ? { ...cell, imp: c.imp, rank: c.rank } : cell; }).filter(Boolean);   // WEATHER3c: the map's cells carry their importance and rank to the renderer's pick
+  const fieldCellsHere = () => currentFieldCells().map((c) => cellOfField(c, (x, z) => { const n = nativeFromField(x, z); return state.localFromWorld(n[0], n[1]); })).filter(Boolean);   // WEATHER3c: the map's cells carry their importance and rank to the renderer's pick; WEATHER3g: a storm cell its clip
   function applyWeather(w) {
     weather = w;
     weatherFog = weatherFogRow(w);   // EV4; DS1: the mod's table, unscaled

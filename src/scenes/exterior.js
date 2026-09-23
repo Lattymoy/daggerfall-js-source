@@ -191,7 +191,7 @@ import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJump
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
 import { fieldOfPixelLocal, pixelLocalOfField } from '../systems/weatherField.js';
 import { TERRAIN_SIZE } from '../world/terrainSampler.js';   // AUDIT WEATHER3 R3: a pixel's centre, the place the indoor sample reads   // WEATHER2b: this host's pixel-local frame to the field's metres, and back
-import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells
+import { cellOfField } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells
 import { SEASON } from '../world/climateSwaps.js';
 import { addGold, goldAmount, totalGoldAmount, deductGold, deductGoldPieces, setCrimeCommitted, legalRepOf, changeLegalRep, CRIMES } from '../systems/court.js';   // U10 probe surface; V4: the one crime setter; QX1: the quest layer's gold, legal-rep and crime doors
 import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';   // SETT: MouseLookSensitivity + InvertMouseVertical
@@ -443,7 +443,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   let seenCrossing = weatherCrossingStamp();   // WEATHER2b: the sim's crossing stamp as this host last saw it
   const climateAt = (px, py) => maps.getClimateIndex(px, py);   // WEATHER2b: the map's climate lookup for the field
   const mapGroundHere = mapGround(climateAt);   // AUDIT WEATHER3 R1: the ground law the map's words go through, here
-  const fieldCellsHere = () => currentFieldCells().map((c) => { const h = pixelLocalOfField(_locPixel.x, _locPixel.y, c.x, c.z); const cell = cellOf(c.word, h[0], h[1], c.r); return cell && c.imp != null ? { ...cell, imp: c.imp, rank: c.rank } : cell; }).filter(Boolean);   // WEATHER2b/c; WEATHER3c: the map's cells carry their importance and rank
+  const fieldCellsHere = () => currentFieldCells().map((c) => cellOfField(c, (x, z) => pixelLocalOfField(_locPixel.x, _locPixel.y, x, z))).filter(Boolean);   // WEATHER2b/c; WEATHER3c: the map's cells carry their importance and rank; WEATHER3g: a storm cell its clip
   function applyWeather(w) {
     weather = w;
     weatherFog = fogForWeather(w, sky.fogSettings);   // DS1

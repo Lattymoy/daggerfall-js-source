@@ -677,3 +677,102 @@ afternoon); that every slice has its own kill door (`?wxmap=off` is the
 only one); that the wind is noise in space and time (it is noise over
 the land plus two fixed turns); and a "37 ms" refresh nobody measured.
 Each is corrected where it stood, with the build's own numbers.
+
+### Slice G - clarity: fronts, not a rash (the design, 2026-09-23)
+
+Mac, on the first real render of the travel map: "this needs more
+clarity". The render (a high-summer afternoon over a stand-in bay, no
+ARENA2 here) showed about 1,930 systems, 1,270 of them thunderstorms
+4-7 km across. Each is a few map pixels, so the bay read as a speckle of
+grey dots, not "sunny here, a rainstorm over there". The pigments, mixed
+a third of the way to the pen's brown, came out as one grey-blue.
+
+The shares were right; the SCALE was wrong. Every type was born as an
+independent Poisson process, so a climate's 15% of thunder came as
+thousands of small independent cells.
+
+**The model (G1).**
+- **Rain is a FRONT.** A rain system is regional: a core tens of
+  kilometres in radius (built at 25-50 km; shipped at 40-75 km after the
+  second render still read as circles), with overcast and cloud rings
+  around it, living half a day to a day and a half.
+- **Thunderstorms are born INSIDE rain fronts.** A thunder cell is a
+  child of a front. It is born at a place inside the front's core and
+  rides with it rigidly, so a storm is a rain front mottled with its
+  cells, not a cell on its own. The cells are thinned by the land and the
+  season where each is born, so a front drifting over a desert grows no
+  storms there.
+- **The other types are larger too.** Overcast decks and cloud fields
+  are regional, fog banks and sandstorms are tens of kilometres, and each
+  type is born on its own lattice, sized to it.
+- **The calibration stays exact.** Thunder is now a Cox process: cells
+  are Poisson inside the fronts' cores, and the fronts are Poisson. With
+  K fronts over a point and c the cells' covering mean per front, the
+  chance of no thunder is E[e^-(1-e^-c)K], which is exp(-nu(1-e^-c)).
+  The effective covering means are nu(1-e^-c) for thunder and nu e^-c for
+  rain, so the solve and the day's re-aim run as before. What the
+  closed form does not see - a cell poking past its front's rim, a front
+  growing past cells born when it was smaller - is measured by the
+  sampled calibration gate.
+- **Known cost:** a front that drifts from one climate into another
+  carries its rain with it. The table holds per climate on average over
+  its land, not at its borders.
+
+**The map (G2).** Distinct pigments (rain blue, storm violet, snow white,
+overcast slate, cloud pale grey, fog cream, sand ochre), mixed only
+lightly toward the pen. A legend on the sheet.
+
+### Slice G shipped - clarity (2026-09-23)
+
+Pinned by `test/weather3g_fronts.test.js` (`tools/mutants/weather3g.json`
+22/22 dead). The pins slices A-F held on the old shapes were re-aimed at
+the new law, and their mutant records moved with it: 3a 14/14, 3b 17/17,
+3c 15/15, 3d 15/15, 3e 15/15, 3f 15/15. The build taught four things the
+design above did not have:
+
+- **A cell paints only inside its front's core as it is now (`clip`).**
+  A cell near the rim poked past the front, so thunder fell where the
+  Cox law has no front, and the sampled rain and thunder drifted a point
+  or two off the table. The clip travels everywhere the word does: the
+  worn word (`insideClip`), the sky (`uCellK`, a clip disc per cloud cell
+  in the shader, fading at the front's rim with the cell's own rim), the
+  travel map (`ctx.clip`), and the hosts' one conversion (`cellOfField`
+  in `render/volumetricClouds.js`, which both exterior hosts now call).
+- **Cells are drawn over the front's grown core widened by a cell, and
+  from a cell's life BEFORE the front's birth.** Drawn only inside the
+  core, a grown front's rim is short of storms (31.9% of it under a cell
+  where the law says 38.9%, the pin's own measure). Begun only at the
+  front's birth, a young front is. With both, every point of a live core
+  has cells at the one steady rate, so the Cox law is exact: the analytic
+  day shares match every row within 1e-6.
+- **Drift is capped at tens of kilometres.** At 120 metres a game minute
+  a front rode up to 216 km over its life, and one climate's weather
+  reached deep into the next. Every type now drifts at most 60 km in its
+  longest life (pinned). A front still visibly moves over hours.
+- **Off the map is the climate at its nearest edge, not the sea.** Found
+  by the desert showing overcast its table has none of: fronts born past
+  the map's edge were read as ocean, and their weather rode 140 km onto
+  the land. The Iliac Bay map's north and east edges are land.
+
+Measured, over a patchwork of every climate and at the gate:
+- **Calibration.** All 24 rows sampled over the whole map, edges
+  included, across 20 years of each season: a mean miss of 0.33 points
+  and a worst of 1.7. The gate now samples the same way. One season
+  alone sees only a few hundred independent fronts, and its noise
+  reached 3.4 points.
+- **Regional.** Two places 10 km apart share their weather 72-79% of
+  the time, 44-55% at 30 km, and 24-32% at 100 km.
+- **Cost.** The bay holds 400-700 systems, not 1,900. A whole-bay read
+  is 55-115 ms cold and 3-8 ms a refresh. A player's query is 0.12 ms,
+  the sky's 40 km read 0.2 ms, and a 12-hour hover forecast about 3 ms.
+
+**The map (G2).** Every weather has its own pigment, leaning 12% toward
+the pen, not a third. The pin holds every pair of pigments a visible
+distance apart, and caught fog and snow as one white, so snow is now an
+icy blue. The washes are laid UNDER the ink already on the sheet
+(destination-over), so the coast and the borders stay the pen's. A
+cell's wash thins across most of its disc, so a front's cells run into
+one dark heart. Fog is signed only on a wide bank. No glyph is drawn on
+the margin past the map's edge. A legend in the sheet's top-right corner
+(the hands hold its lower edge) names every weather, with the pen's sign
+on the four that would otherwise read as the same pale.

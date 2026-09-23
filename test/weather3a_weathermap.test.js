@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import {
   weatherAt, systemsNear, forecastAt, birthLaw, dayShares, exposure, targetShares, coverMeans,
   birthsIn, systemAt, bandAt, windAt, windPath, envelope, maxRadius, coreVolume, resetWeatherMap,
-  SYSTEM_TYPES, PRIORITY, NODE_M, NODE_MINUTES, SAND_SHARE_OF_CLOUDY,
+  SYSTEM_TYPES, PRIORITY, SAND_SHARE_OF_CLOUDY, CELL_OF, cellsOf, insideClip,
 } from '../src/systems/weatherMap.js';
 import { WEATHER_TABLE, weatherTableFor, rollWeather, WEATHER_ENUM } from '../src/systems/weatherTable.js';
 import * as sim from '../src/systems/weatherSim.js';
@@ -21,6 +21,8 @@ const SEASON_DAYS = { [SEASONS.Winter]: [0, 60], [SEASONS.Spring]: [60, 150], [S
 const ROW_ORDER = ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'snow', 'thunder'];   // the table's compiled order
 const TABLE_CLIMATES = { desert: CLIMATES.Desert, mountains: CLIMATES.Mountain, jungle: CLIMATES.Rainforest, swamp: CLIMATES.Swamp, subtropical: CLIMATES.Subtropical, woodlands: CLIMATES.Woodlands };
 const everywhere = (climate) => () => climate;
+const LATTICE_TYPES = PRIORITY.filter((t) => !SYSTEM_TYPES[t].parent);   // WEATHER3g: a cell type is born in its fronts
+const nodeOf = (type) => SYSTEM_TYPES[type].node;
 
 test('WEATHER3a: the table moved whole - the sim re-exports the SAME objects, and the roll is unchanged', () => {
   assert.equal(sim.WEATHER_TABLE, WEATHER_TABLE);
@@ -34,8 +36,9 @@ test('WEATHER3a: THE LAW SOLVES THE TABLE - every climate and season, averaged o
   for (const [name, table] of Object.entries(WEATHER_TABLE)) {
     for (const season of Object.values(SEASONS)) {
       const law = birthLaw(TABLE_CLIMATES[name], season);
-      // the covering mean a type's cores give: its weight (births per node) x its core's volume / the node's
-      const core = Object.fromEntries(PRIORITY.map((t) => [t, law.weight[t] * coreVolume(t) / (NODE_M * NODE_M * NODE_MINUTES)]));
+      // the covering mean a type's cores give: its weight (births per node) x its core's volume / the node's; a cell
+      // type's weight is already per m^2 x minute of its fronts' cores (WEATHER3g), so its mean over a point in one
+      const core = Object.fromEntries(PRIORITY.map((t) => [t, law.weight[t] * coreVolume(t) / (SYSTEM_TYPES[t].parent ? 1 : nodeOf(t)[0] ** 2 * nodeOf(t)[1])]));
       const got = dayShares({ core, rings: law.rings }, season);
       const want = targetShares(table, season);
       for (const w of PRIORITY) assert.ok(Math.abs(got[w] - want[w]) < 1e-4, `${name} season ${season} ${w}: ${got[w]} vs ${want[w]}`);
@@ -50,12 +53,13 @@ test('WEATHER3a: THE LAW SOLVES THE TABLE - every climate and season, averaged o
   }
 });
 
-test('WEATHER3a: a tight row THINS the storms\' rings instead of missing the table (the swamp\'s spring: a tenth cloudy)', () => {
+test('WEATHER3a: a tight row THINS the fronts\' rings instead of missing the table (the swamp\'s spring: a tenth cloudy)', () => {
   const swampSpring = birthLaw(CLIMATES.Swamp, SEASONS.Spring);
   const cloudy = (rings) => rings.find(([w]) => w === 'cloudy')[1];
-  assert.ok(cloudy(swampSpring.rings.thunder) < SYSTEM_TYPES.thunder.rings[1][1], 'the thunderstorm\'s cloud skirt is thinner in the swamp spring');
+  assert.ok(cloudy(swampSpring.rings.rain) < SYSTEM_TYPES.rain.rings[1][1], 'the rain front\'s cloud skirt is thinner in the swamp spring');
   const woodsSummer = birthLaw(CLIMATES.Woodlands, SEASONS.Summer);
-  assert.equal(cloudy(woodsSummer.rings.thunder), SYSTEM_TYPES.thunder.rings[1][1], 'where the table has room, the storm keeps its whole shape');
+  assert.equal(cloudy(woodsSummer.rings.rain), SYSTEM_TYPES.rain.rings[1][1], 'where the table has room, the front keeps its whole shape');
+  assert.deepEqual(swampSpring.rings.thunder, [], 'a storm cell has no rings: it stands in its front');
   // the covering means read the table the priority down
   const mu = coverMeans({ thunder: 0.5, rain: 0.25 });
   assert.ok(Math.abs(mu.thunder - Math.log(2)) < 1e-12);
@@ -81,6 +85,9 @@ test('WEATHER3a: the sandstorm is born only on the desert table\'s land, a share
 // are the ones that exercise every law: the daily swing at its strongest
 // (subtropical summer thunder, the swamp's fog), thinned rings (the swamp
 // spring), the sandstorm (desert spring), snow's ring (mountain winter).
+// WEATHER3g: the samples run over the WHOLE map, edges included (off it is its edge's climate), and across twenty
+// years of the season: a front is ~100 km and a day across, so one season's samples see only a few hundred
+// independent systems and the noise alone would reach three points.
 const GATE_ROWS = [['subtropical', SEASONS.Summer], ['swamp', SEASONS.Spring], ['swamp', SEASONS.Fall], ['desert', SEASONS.Spring], ['mountains', SEASONS.Winter], ['woodlands', SEASONS.Fall]];
 test('WEATHER3a: THE CALIBRATION GATE - the sampled map holds each worn word to the Chronicles row', () => {
   const N = 3000;
@@ -91,8 +98,8 @@ test('WEATHER3a: THE CALIBRATION GATE - the sampled map holds each worn word to 
     const count = {};
     const [d0, d1] = SEASON_DAYS[season];
     for (let i = 0; i < N; i++) {
-      const x = 100000 + r() * 600000, z = 50000 + r() * 300000;
-      const m = YEAR + (d0 + 2 + r() * (d1 - d0 - 4)) * 1440;
+      const x = 20000 + r() * 780000, z = 20000 + r() * 370000;
+      const m = YEAR + Math.floor(r() * 20) * 360 * 1440 + (d0 + 2 + r() * (d1 - d0 - 4)) * 1440;
       let w = weatherAt(x, z, m, everywhere(climate)).word;
       if (w === 'sandstorm') w = 'cloudy';   // the Chronicles' cloudy it was drawn from
       count[w] = (count[w] ?? 0) + 1;
@@ -139,35 +146,36 @@ test('WEATHER3a: PERSISTENT - nothing is re-dealt at midnight (the day is no see
   // a system born before midnight stands after it
   let crossed = null;
   for (let gx = 2; gx < 12 && !crossed; gx++) {
-    for (const b of birthsIn('rain', gx, 5, Math.floor((day + 1380) / NODE_MINUTES), at)) {
+    for (const b of birthsIn('rain', gx, 1, Math.floor((day + 1380) / nodeOf('rain')[1]), at)) {
       if (b.bornAt < day + 1440 && b.bornAt + b.life > day + 1440 + 120) { crossed = b; break; }
     }
   }
-  assert.ok(crossed, 'a rain band born before midnight and living past two');
+  assert.ok(crossed, 'a rain front born before midnight and living past two');
   const s = systemAt(crossed, day + 1440 + 60);
   assert.ok(['rain', 'thunder'].includes(weatherAt(s.x, s.z, day + 1440 + 60, at).word), 'its core still rains at one in the morning (only a storm outranks it)');
 });
 
-test('WEATHER3a: A SYSTEM\'S SHAPE - thunder at the heart, rain around it, cloud at the edge, clear air beyond', () => {
-  const b = { type: 'thunder', id: 't', bornX: 0, bornZ: 0, bornAt: 0, life: 300, core: 6000, rings: SYSTEM_TYPES.thunder.rings };
-  const s = systemAt(b, 150);   // mid-life: full growth
+test('WEATHER3a: A SYSTEM\'S SHAPE - rain at the heart of a front, the deck around it, cloud at the edge, clear air beyond', () => {
+  const b = { type: 'rain', id: 'r', bornX: 0, bornZ: 0, bornAt: 0, life: 1000, core: 40000, rings: SYSTEM_TYPES.rain.rings };
+  const s = systemAt(b, 500);   // mid-life: full growth
   assert.equal(s.env, 1);
-  const [core, rain, cloud] = s.bands.map(([r]) => r);
-  assert.equal(core, 6000);
-  assert.ok(Math.abs(rain - 6000 * Math.sqrt(2.5)) < 1e-6 && Math.abs(cloud - 6000 * Math.sqrt(5.5)) < 1e-6, 'each ring\'s area is its share of core areas');
-  assert.equal(bandAt(s, 0).word, 'thunder');
-  assert.equal(bandAt(s, (core + rain) / 2).word, 'rain');
-  assert.equal(bandAt(s, (rain + cloud) / 2).word, 'cloudy');
+  const [core, deck, cloud] = s.bands.map(([r]) => r);
+  assert.equal(core, 40000);
+  assert.ok(Math.abs(deck - 40000 * Math.sqrt(2)) < 1e-6 && Math.abs(cloud - 40000 * Math.sqrt(3)) < 1e-6, 'each ring\'s area is its share of core areas');
+  assert.equal(bandAt(s, 0).word, 'rain');
+  assert.equal(bandAt(s, (core + deck) / 2).word, 'overcast');
+  assert.equal(bandAt(s, (deck + cloud) / 2).word, 'cloudy');
   assert.equal(bandAt(s, cloud + 1), null);
+  assert.equal(s.clip, null, 'a front paints its whole disc');
   assert.ok(bandAt(s, 0).intensity > bandAt(s, core * 0.9).intensity, 'the downpour at the heart, a drizzle toward the edge');
   // the envelope: born small, full grown, dying away
-  assert.equal(envelope(SYSTEM_TYPES.thunder, 0), 0);
-  assert.equal(envelope(SYSTEM_TYPES.thunder, 0.5), 1);
-  assert.ok(systemAt(b, 10).bands[0][0] < core && systemAt(b, 290).bands[0][0] < core);
-  assert.equal(systemAt(b, -1), null); assert.equal(systemAt(b, 300), null, 'not before its birth, not after its death');
+  assert.equal(envelope(SYSTEM_TYPES.rain, 0), 0);
+  assert.equal(envelope(SYSTEM_TYPES.rain, 0.5), 1);
+  assert.ok(systemAt(b, 30).bands[0][0] < core && systemAt(b, 990).bands[0][0] < core);
+  assert.equal(systemAt(b, -1), null); assert.equal(systemAt(b, 1000), null, 'not before its birth, not after its death');
   // a thinned ring is no band at all
-  const bare = systemAt({ ...b, rings: [['rain', 0], ['cloudy', 1]] }, 150);
-  assert.deepEqual(bare.bands.map(([, w]) => w), ['thunder', 'cloudy']);
+  const bare = systemAt({ ...b, rings: [['overcast', 0], ['cloudy', 1]] }, 500);
+  assert.deepEqual(bare.bands.map(([, w]) => w), ['rain', 'cloudy']);
 });
 
 test('WEATHER3a: PRIORITY - where systems overlap the worn word is the highest, and the ground law runs first', () => {
@@ -175,7 +183,7 @@ test('WEATHER3a: PRIORITY - where systems overlap the worn word is the highest, 
   let checked = 0;
   for (let i = 0; i < 400 && checked < 30; i++) {
     const x = 120000 + i * 1733, z = 80000 + i * 911, m = YEAR + 120 * 1440 + i * 37;
-    const painted = systemsNear(x, z, m, at, 0).map((s) => bandAt(s, s.d)).filter(Boolean);
+    const painted = systemsNear(x, z, m, at, 0).filter((s) => insideClip(s, x, z)).map((s) => bandAt(s, s.d)).filter(Boolean);
     if (painted.length < 2) continue;
     const top = painted.map((p) => p.word).sort((a, b) => PRIORITY.indexOf(a) - PRIORITY.indexOf(b))[0];
     assert.equal(weatherAt(x, z, m, at).word, top);
@@ -193,11 +201,12 @@ test('WEATHER3a: THE SEARCH MISSES NOTHING - every system over a point, against 
   const at = everywhere(CLIMATES.Swamp);
   const brute = (x, z, m) => {
     const want = new Set();
-    for (const type of PRIORITY) {
-      const spec = SYSTEM_TYPES[type];
-      const gx = Math.floor(x / NODE_M), gz = Math.floor(z / NODE_M), gt = Math.floor(m / NODE_MINUTES);
-      for (let a = gx - 4; a <= gx + 4; a++) for (let c = gz - 4; c <= gz + 4; c++) for (let t = gt - Math.ceil(spec.life[1] / NODE_MINUTES) - 2; t <= gt; t++) {
-        for (const b of birthsIn(type, a, c, t, at)) { const s = systemAt(b, m); if (s && Math.hypot(s.x - x, s.z - z) < s.r) want.add(s.id); }
+    const over = (b) => { const s = systemAt(b, m); if (s && Math.hypot(s.x - x, s.z - z) < s.r) want.add(s.id); };
+    for (const type of LATTICE_TYPES) {
+      const spec = SYSTEM_TYPES[type], [nm, nt] = spec.node;
+      const gx = Math.floor(x / nm), gz = Math.floor(z / nm), gt = Math.floor(m / nt);
+      for (let a = gx - 3; a <= gx + 3; a++) for (let c = gz - 3; c <= gz + 3; c++) for (let t = gt - Math.ceil(spec.life[1] / nt) - 2; t <= gt; t++) {
+        for (const b of birthsIn(type, a, c, t, at)) { over(b); for (const cell of cellsOf(b, at)) over(cell); }   // every front's every cell, however far
       }
     }
     return [...want].sort();
@@ -206,9 +215,9 @@ test('WEATHER3a: THE SEARCH MISSES NOTHING - every system over a point, against 
   // the hard places: the DOWNWIND edge of a system at the end of its full growth - as wide as it gets, and as
   // far from its birth as it gets while that wide
   let probes = 0;
-  for (const type of PRIORITY) {
+  for (const type of LATTICE_TYPES) {
     for (let g = 0; g < 16; g++) {
-      for (const b of birthsIn(type, 5 + (g % 8), 4 + (g >> 3), Math.floor((YEAR + 250 * 1440) / NODE_MINUTES) + g, at)) {
+      for (const b of birthsIn(type, 5 + (g % 8), 4 + (g >> 3), Math.floor((YEAR + 250 * 1440) / nodeOf(type)[1]) + g, at)) {
         const m = b.bornAt + b.life * (1 - SYSTEM_TYPES[type].decay) - 1, s = systemAt(b, m);
         const dx = s.x - b.bornX, dz = s.z - b.bornZ, len = Math.hypot(dx, dz) || 1;
         const x = s.x + (dx / len) * s.r * 0.97, z = s.z + (dz / len) * s.r * 0.97;
@@ -223,13 +232,13 @@ test('WEATHER3a: THE SEARCH MISSES NOTHING - every system over a point, against 
   // and the edges only the DRIFT reaches: the system rode so far that its birth node lies outside a box of its
   // size alone - found only because the search allows for the whole ride
   let beyond = 0;
-  for (const type of ['thunder', 'sandstorm']) {
+  for (const type of ['sandstorm', 'rain', 'cloudy']) {
     for (let g = 0; g < 400 && beyond < 3; g++) {
-      for (const b of birthsIn(type, 5 + (g % 20), 4 + ((g / 20) | 0), Math.floor((YEAR + 250 * 1440) / NODE_MINUTES) + g, at)) {
+      for (const b of birthsIn(type, 5 + (g % 20), 4 + ((g / 20) | 0), Math.floor((YEAR + 250 * 1440) / nodeOf(type)[1]) + g, at)) {
         const m = b.bornAt + b.life * (1 - SYSTEM_TYPES[type].decay) - 1, s = systemAt(b, m);
         const dx = s.x - b.bornX, dz = s.z - b.bornZ, len = Math.hypot(dx, dz) || 1;
         const x = s.x + (dx / len) * s.r * 0.97, z = s.z + (dz / len) * s.r * 0.97;
-        const node = (v) => Math.floor(v / NODE_M), R = maxRadius(type);
+        const node = (v) => Math.floor(v / nodeOf(type)[0]), R = maxRadius(type);
         const outside = (v, born) => node(born) < node(v - R) || node(born) > node(v + R);
         if (!outside(x, b.bornX) && !outside(z, b.bornZ)) continue;
         assert.ok(found(x, z, m).includes(s.id), `${s.id}: found ${Math.round(Math.hypot(x - b.bornX, z - b.bornZ))} m from its birth`);
@@ -242,17 +251,33 @@ test('WEATHER3a: THE SEARCH MISSES NOTHING - every system over a point, against 
     const x = 200000 + i * 9973, z = 150000 + i * 7919, m = YEAR + 250 * 1440 + i * 211;
     assert.deepEqual(found(x, z, m), brute(x, z, m));
   }
-  assert.ok(maxRadius('thunder') > SYSTEM_TYPES.thunder.core[1]);
+  assert.ok(maxRadius('rain') > SYSTEM_TYPES.rain.core[1]);
+  // and the storm cells: a point inside a front's core with its cells over it finds each of them
+  let cells = 0;
+  for (let g = 0; g < 40 && cells < 5; g++) {
+    for (const b of birthsIn('rain', 3 + (g % 6), 2 + ((g / 6) | 0), Math.floor((YEAR + 250 * 1440) / nodeOf('rain')[1]) + g, at)) {
+      const m = b.bornAt + b.life / 2;
+      for (const c of cellsOf(b, at)) {
+        const s = systemAt(c, m);
+        if (!s || !insideClip(s, s.x, s.z)) continue;
+        assert.ok(found(s.x, s.z, m).includes(s.id), `${s.id}: the cell over its own heart is found`);
+        assert.deepEqual(found(s.x, s.z, m), brute(s.x, s.z, m));
+        cells++; break;
+      }
+    }
+  }
+  assert.ok(cells >= 5, `${cells} cells probed`);
 });
 
 test('WEATHER3a: a candidate the land refuses moves no other - the births in one half of a node never hear of the other half\'s climate', () => {
-  const gx = 7, gz = 3;
-  const split = (px) => (px * 819.2 < (gx + 0.5) * NODE_M ? CLIMATES.Woodlands : CLIMATES.Desert);
+  const gx = 2, gz = 1;
   const woods = everywhere(CLIMATES.Woodlands);
   let compared = 0;
-  for (const type of ['rain', 'thunder', 'overcast', 'cloudy']) {
+  for (const type of ['rain', 'fog', 'overcast', 'cloudy']) {
+    const NODE_M = nodeOf(type)[0];
+    const split = (px) => (px * 819.2 < (gx + 0.5) * NODE_M ? CLIMATES.Woodlands : CLIMATES.Desert);
     for (let gt = 0; gt < 40; gt++) {
-      const t = Math.floor((YEAR + 100 * 1440) / NODE_MINUTES) + gt;
+      const t = Math.floor((YEAR + 100 * 1440) / nodeOf(type)[1]) + gt;
       const west = (list) => list.filter((b) => b.bornX < (gx + 0.5) * NODE_M);
       const a = west(birthsIn(type, gx, gz, t, woods)), b = west(birthsIn(type, gx, gz, t, (px) => split(px)));
       assert.deepEqual(b, a, `${type} node ${gt}: the west half's births are the same whatever the east half is`);
@@ -273,12 +298,14 @@ test('WEATHER3a: THE WIND - systems ride it, its path is its own integral, and s
   // the wind turns over the land and the days
   const here = windAt(x, z, t0), far = windAt(x + 400000, z, t0), later = windAt(x, z, t0 + 3 * 1440);
   assert.ok(Math.hypot(here[0] - far[0], here[1] - far[1]) > 0.05 && Math.hypot(here[0] - later[0], here[1] - later[1]) > 0.05);
-  // a system moves: storms fast, fog barely
-  const storm = { type: 'thunder', id: 's', bornX: x, bornZ: z, bornAt: t0, life: 400, core: 5000, rings: [] };
+  // a system moves: a front rides, fog barely - and no system drifts past tens of km in its longest life, so the table
+  // stays each climate's (WEATHER3g: a front that rode hundreds carried one climate's weather deep into the next)
+  const storm = { type: 'rain', id: 's', bornX: x, bornZ: z, bornAt: t0, life: 400, core: 40000, rings: [] };
   const fog = { ...storm, type: 'fog', id: 'f' };
   const moved = (b) => { const s = systemAt(b, t0 + 300); return Math.hypot(s.x - x, s.z - z); };
-  assert.ok(moved(storm) > 1000, 'a storm crosses kilometres in five hours');
+  assert.ok(moved(storm) > 1000, 'a front crosses kilometres in five hours');
   assert.ok(moved(fog) < moved(storm) / 4, 'a fog bank barely drifts');
+  for (const t of LATTICE_TYPES) assert.ok(SYSTEM_TYPES[t].speed * SYSTEM_TYPES[t].life[1] <= 60000, `${t} drifts at most 60 km in its longest life`);
 });
 
 test('WEATHER3a: THE DAY - fog is born in the small hours and summer storms in the afternoon; the day mean stays 1', () => {
@@ -313,16 +340,21 @@ test('WEATHER3a: THE FORECAST reads the same law ahead', () => {
   } else assert.ok(f.steps.every((s) => s.word === f.now.word));
 });
 
-test('WEATHER3a: the land under a birth - off the map is the sea, and each climate births its own weather', () => {
+test('WEATHER3a: the land under a birth - off the map is its edge\'s climate, and each climate births its own weather', () => {
   const calls = [];
   const probe = (px, py) => { calls.push([px, py]); return CLIMATES.Desert; };
   weatherAt(-500000, -500000, YEAR, probe);
-  assert.ok(calls.every(([px, py]) => px >= 0 && py >= 0 && px < 1000 && py < 500), 'the map is never asked about a pixel it does not have');
+  assert.ok(calls.length > 0 && calls.every(([px, py]) => px >= 0 && py >= 0 && px < 1000 && py < 500), 'the map is never asked about a pixel it does not have');
+  // WEATHER3g: past the edge is the edge's own climate - a system born there is the land's weather, not the sea's
+  const edge = (px, py) => (px === 0 || py === 0 ? CLIMATES.Mountain : CLIMATES.Swamp);
+  let snowed = 0;
+  for (let i = 0; i < 200; i++) if (weatherAt(-200000 - i * 3001, -150000, YEAR + 20 * 1440 + i * 13, edge).word === 'snow') snowed++;
+  assert.ok(snowed > 30, `past the mountains' edge it snows as the mountains do (${snowed} of 200)`);
   // a desert summer never rains; a mountain winter snows
   for (let i = 0; i < 200; i++) {
     assert.notEqual(weatherAt(100000 + i * 3001, 90000, YEAR + 190 * 1440 + i * 13, everywhere(CLIMATES.Desert)).word, 'rain');
   }
   let snow = 0;
-  for (let i = 0; i < 200; i++) if (weatherAt(100000 + i * 3001, 90000, YEAR + 20 * 1440 + i * 13, everywhere(CLIMATES.Mountain)).word === 'snow') snow++;
+  for (let i = 0; i < 200; i++) if (weatherAt(100000 + i * 3001, 90000, YEAR + i * 360 * 1440 + 20 * 1440 + i * 13, everywhere(CLIMATES.Mountain)).word === 'snow') snow++;   // a winter day in each of 200 years: a front is a day and 100 km wide, one day's line is one or two of them
   assert.ok(snow > 30, 'the mountain winter snows');
 });

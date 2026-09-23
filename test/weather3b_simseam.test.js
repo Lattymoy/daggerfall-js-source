@@ -14,7 +14,7 @@ import {
   weatherRespawn, restoreWeather, currentFieldCells, currentFieldCell, setSharedWeather, setSnowGroundLaw,
   weatherForClimate, WEATHER_ENUM, MAP_JUMP_M, STALE_DRAIN_MINUTES,
 } from '../src/systems/weatherSim.js';
-import { weatherAt, systemsNear, wornAmong } from '../src/systems/weatherMap.js';
+import { weatherAt, systemsNear, wornAmong, bandAt } from '../src/systems/weatherMap.js';
 import { FIELD_RANGE_M } from '../src/systems/weatherField.js';
 import { createWeatherFront, PRECIP_PEAK } from '../src/systems/weatherFront.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
@@ -80,7 +80,7 @@ test('WEATHER3b: A CROSSING is a live change close in time and place; a clock ju
   const j0 = weatherJumpStamp();
   assert.equal(currentWeather(), 'rain');
   let x = p.x, crossed = false;
-  for (let i = 0; i < 400 && !crossed; i++) {
+  for (let i = 0; i < 3000 && !crossed; i++) {   // WEATHER3g: a front is up to 260 km across
     x += 100;
     const c0 = weatherCrossingStamp();
     if (sampleWeatherField(p.m, WOODS, [x, p.z], woods, 'live')) { crossed = weatherCrossingStamp() === c0 + 1; break; }
@@ -200,7 +200,7 @@ test('WEATHER3b/c: the clouds get every system near, most important first, and t
   for (let i = 0; i < 20000 && !q; i++) {
     const x = 60000 + (i % 100) * 4000, z = 60000 + Math.floor(i / 100) * 4000, m = YEAR + 250 * 1440 + 5 * 60 + (i % 7) * 60;
     if (weatherAt(x, z, m, swamp).word !== 'fog') continue;
-    const over = systemsNear(x, z, m, swamp, 0).some((sy) => sy.type === 'overcast' && Math.hypot(sy.x - x, sy.z - z) < sy.bands[0][0]);
+    const over = systemsNear(x, z, m, swamp, 0).some((sy) => bandAt(sy, Math.hypot(sy.x - x, sy.z - z))?.word === 'overcast');   // a deck, or a front's own deck
     if (over) q = { x, z, m };
   }
   assert.ok(q, 'a fog bank under a deck');

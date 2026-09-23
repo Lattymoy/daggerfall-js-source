@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { skyCells, approachAt, systemsNear, weatherAt, SKY_WEIGHT, APPROACH_M, PRIORITY } from '../src/systems/weatherMap.js';
-import { pickCells, cellOf, CELL_EDGE, MAX_CELLS, VC_PROFILE } from '../src/render/volumetricClouds.js';
+import { pickCells, cellOf, cellOfField, CELL_EDGE, MAX_CELLS, VC_PROFILE } from '../src/render/volumetricClouds.js';
 import { cloudBaseOf } from '../src/scenes/shared.js';
 import { weatherRow } from '../src/render/enhancedSky.js';
 import { createWindModel, VIOLENCE } from '../src/systems/wind.js';
@@ -54,12 +54,13 @@ test('WEATHER3c: THE SLOTS - the most important cells, drawn lowest priority fir
 // The shader's resolve (volumetricClouds.js resolveAt), in JS: every cell whose rim reaches the point blended over
 // what came before by its weight, last over first. Where the last full-weight cell over the player lands is the sky
 // overhead - it must be the word the player wears.
+const smooth = (lo, hi, v) => { const t = Math.min(1, Math.max(0, (v - lo) / (hi - lo))); return t * t * (3 - 2 * t); };
 function overhead(cells, x, z) {
   let word = 'sunny';
   for (const c of cells) {
-    const d = Math.hypot(c.x - x, c.z - z), edge = Math.max(1, c.edge ?? c.r * CELL_EDGE);
-    const t = Math.min(1, Math.max(0, (d - (c.r - edge)) / edge));
-    const w = 1 - t * t * (3 - 2 * t);
+    const edge = Math.max(1, c.edge ?? c.r * CELL_EDGE);
+    let w = 1 - smooth(c.r - edge, c.r, Math.hypot(c.x - x, c.z - z));
+    if (c.clip) w *= 1 - smooth(c.clip[2] - edge, c.clip[2], Math.hypot(c.clip[0] - x, c.clip[1] - z));   // WEATHER3g: uCellK
     if (w >= 1) word = c.word;
   }
   return word;
@@ -70,10 +71,12 @@ test('WEATHER3c: THE BLEND AGREES WITH THE WORD - over hundreds of places, the c
     const x = 120000 + (i % 40) * 9001, z = 80000 + Math.floor(i / 40) * 11003, m = SPRING + (i % 17) * 211;
     const worn = weatherAt(x, z, m, woods).word;
     const near = systemsNear(x, z, m, woods, 40000);
-    const cells = pickCells(skyCells(near, x, z).map((c) => ({ ...cellOf(c.word, c.x, c.z, c.r), word: c.word, imp: c.imp, rank: c.rank })), MAX_CELLS);
-    // only places deep inside their band (the rims blend by design) or in clear air
+    const cells = pickCells(skyCells(near, x, z).map((c) => ({ ...cellOfField(c, (cx, cz) => [cx, cz]), word: c.word })), MAX_CELLS);
+    // only places deep inside their band (the rims blend by design) or in clear air - a storm cell's rims include
+    // its front's core, where it is clipped
     const bandHere = near.map((s) => ({ s, d: Math.hypot(s.x - x, s.z - z) })).filter(({ s, d }) => d < s.r);
-    const inRim = bandHere.some(({ s, d }) => s.bands.some(([r]) => Math.abs(d - r) < r * CELL_EDGE + 1));
+    const inRim = bandHere.some(({ s, d }) => s.bands.some(([r]) => Math.abs(d - r) < r * CELL_EDGE + 1
+      || (s.clip && Math.abs(Math.hypot(s.clip[0] - x, s.clip[1] - z) - s.clip[2]) < r * CELL_EDGE + 1)));
     if (inRim) continue;
     assert.equal(overhead(cells, x, z), worn, `at ${x},${z} minute ${m}`);
     checked++; if (worn === 'sunny') clear++;
@@ -152,7 +155,7 @@ test('WEATHER3c: the hosts hand the clouds the base, the wind the approach, and 
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = rd(host);
     assert.match(h, /cells: fieldCellsHere\(\), cloudBase: weatherOverride \? null : currentCloudBase\(\), approach: weatherOverride \? 0 : currentWindApproach\(\) \}\);/, host);
-    assert.match(h, /return cell && c\.imp != null \? \{ \.\.\.cell, imp: c\.imp, rank: c\.rank \} : cell; \}\)\.filter\(Boolean\);/, `${host}: the cells carry the pick`);
+    assert.match(h, /currentFieldCells\(\)\.map\(\(c\) => cellOfField\(c, \(x, z\) => /, `${host}: the cells carry the pick (WEATHER3g: through the one conversion)`);
   }
   assert.match(rd('src/scenes/shared.js'), /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName, extra\?\.violence \?\? weatherName, extra\?\.approach \?\? 0\);/);
   assert.match(rd('src/render/volumetricClouds.js'), /this\.cells = pickCells\(/);
