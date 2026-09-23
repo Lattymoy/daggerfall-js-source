@@ -36,6 +36,7 @@ import { createRandomBook, BOOK_TEMPLATE } from './books.js';   // IM1: CreateRa
 import { potionRecipeByKey, POTION_DEFAULT_TEXTURE_RECORD } from './potions.js';   // F103: PotionRecipeKey's price side effect; AUDIT 63 F20: and its texture-record half
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, DROP_ICON_ARCHIVES, DROP_ICON_IDXS } from './lootDataTables.js';   // G5: DaggerfallLootDataTables.cs, its own file again
 import { themedIngredientPool } from './lootThemes.js';   // MOD: a monster's CreatureIngredients roll draws from ITS OWN curated subset, not the full mismatched pool
+import { rriLootMatrix, rriEnemyLootTableKey, conditionBasedPricesOn, randomConditionLootItems } from './rriRealism.js';   // RRI2: LootRealismTables over DefaultLootTables, MobLootKeys over the basics' key, the condition roll on tabled loot
 
 // LootChanceMatrix rows, verbatim (22 keys, '-' included).
 export const LOOT_MATRICES = Object.freeze({
@@ -580,9 +581,14 @@ export function validLootList(v) {
 }
 
 export function generateItems(lootTableKey, who, rolls = Math.random, opts = {}) {
-  const matrix = LOOT_MATRICES[lootTableKey] ?? LOOT_MATRICES['-'];
+  // RRI2: `LootTables.DefaultLootTables = LootRealismTables` (RoleplayRealismItemsMod.cs:87) - the whole matrix, while lootRebalance is on
+  const matrix = rriLootMatrix(lootTableKey) ?? LOOT_MATRICES[lootTableKey] ?? LOOT_MATRICES['-'];
   return generateRandomLoot(matrix, who, rolls, opts);
 }
+/** RRI2: the key a mobile rolls with - the basics row's, or the mod's
+ *  MobLootKeys row for it (`EnemyBasics.Enemies[id].LootTableKey = ...`,
+ *  RoleplayRealismItemsMod.cs:79-84) while lootRebalance is on. */
+export const enemyLootTableKey = (mobileType, key) => rriEnemyLootTableKey(mobileType, key);
 
 // ---- The three rolls nobody ran (AUDIT 24, wave 43) ----------------
 // SetEnemyCareer does not stop at the loot table. EnemyEntity.cs:388-397:
@@ -730,6 +736,10 @@ export function addPileLootExtras(items, lootTableKey, rolls = Math.random) {
   randomlyAddMap(PILE_MAP_CHANCES[alphabetIndex - 10], items, rolls);
   randomlyAddPotion(4, items, rolls);
   randomlyAddPotionRecipe(2, items, rolls);
+  // RRI2: LootTables.OnLootSpawned (:163) fires here, after the tail - the
+  // mod's RandomConditionLootItems (RoleplayRealismItemsMod.cs:227-245)
+  // wears a pile's armor, weapons and books to 20-75% under conditionBasedPrices
+  if (conditionBasedPricesOn()) randomConditionLootItems(items, rolls);
   return items;
 }
 

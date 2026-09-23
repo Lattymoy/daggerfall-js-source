@@ -147,8 +147,8 @@ test('MAC-N1: every Armor mint in the tree goes through SetItem\'s writes, and t
   const bareArmor = SRC.filter(([, s]) => /mintCondition\(\{\s*group: 'Armor'/.test(s)).map(([p]) => p);
   assert.deepEqual(bareArmor, [], 'an Armor record minted with a condition and no value');
   const through = SRC.filter(([, s]) => /mintCondition\(setItemFields\(\{\s*group: 'Armor'/.test(s)).map(([p]) => p).sort();
-  assert.deepEqual(through, ['src/combat/enemyEquipment.js', 'src/scenes/worldModes.js', 'src/systems/createItem.js', 'src/systems/testRoom.js'],
-    'the corpse, the knightly gift, the Create Item spell and the test room - the four sites that minted armor bare or by hand');
+  assert.deepEqual(through, ['src/combat/enemyEquipment.js', 'src/combat/rriEnemyEquipment.js', 'src/scenes/worldModes.js', 'src/systems/createItem.js', 'src/systems/testRoom.js'],
+    'the corpse, the knightly gift, the Create Item spell and the test room - the four sites that minted armor bare or by hand (RRI2: and the mod\'s enemy kit, through the same export)');
   // ONE home for `value ?? itemBaseValue` as a MINT (readers - itemInfo's %wth, the keyed shelf's itemValue - may fall back)
   const copies = SRC.filter(([p, s]) => p !== 'src/systems/itemTemplates.js' && /value: item\.value \?\? itemBaseValue\(item\)/.test(s)).map(([p]) => p);
   assert.deepEqual(copies, [], 'the five private copies of SetItem\'s value write are gone');

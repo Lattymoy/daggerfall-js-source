@@ -578,7 +578,7 @@ if (inShop) {
     await waitFrames(4);
     // ...and BUY raises the merchant's HAGGLE OFFER, a Yes/No box
     // ("I can sell for no less than N gold pieces") - ShowTradePopup's
-    // three bands, ported at systems/tradeModes.js:281. A purchase is
+    // three bands, ported at systems/tradeModes.js:282. A purchase is
     // THREE gestures: stage, ask, agree.
     const offer = await J(() => window.__shopOverlay());
     check('the merchant makes an offer', offer?.box?.buttons === 'YesNo',

@@ -547,7 +547,7 @@ export const FEATURES = Object.freeze([
   modFeature('weapon-widget', 'Takes effect at once.', 'combat'),   // WW1: the widget reads its switches every frame
   modFeature('shield-widget', 'Takes effect at once.', 'combat'),   // SW1: the same - every switch is read on the frame
   modFeature('diverse-weapons', 'Takes effect when a weapon is next drawn.', 'combat'),
-  modFeature('roleplay-realism-items', 'Takes effect when the game next loads.', 'loot'),   // RRI1: the template patches are merged at load (ItemHelper.LoadItemTemplates); the classes read their switches live   // DW1: the atlas name is chosen at the weapon's load (FPSWeapon.cs:637-644), and the rig's cache key carries it
+  modFeature('roleplay-realism-items', 'Takes effect when the game next loads.', 'loot'),   // RRI1: the template patches are merged at load (ItemHelper.LoadItemTemplates); the classes read their switches live; RRI2: the nine modules read theirs at each roll (a corpse, a shelf, a price), the starting kit and spellbook at the next character   // DW1: the atlas name is chosen at the weapon's load (FPSWeapon.cs:637-644), and the rig's cache key carries it
   modFeature('handheld-torches', 'Takes effect at once.', 'loot'),   // HT1: the component reads its switches every frame
   // AT0 (2026-09-15): AMBIENT TEXT - `world`, because what it talks
   // about is where you are. Its effect line is the mod's own pacing:

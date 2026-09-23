@@ -56,7 +56,7 @@
 import { calculateCost, calculateTradePrice } from './shopStock.js';
 import { GOLD_PIECE_WEIGHT_KG, isEnchanted } from './inventory.js';
 import { calculateItemRepairCost, repairRefusal } from './repairService.js';
-import { itemValueOf } from './itemTemplates.js';   // JAN1: the one value read
+import { itemValueOf, conditionPercentage } from './itemTemplates.js';   // JAN1: the one value read; RRI2: ConditionPercentage, the Sell arm's third argument
 import { HOLIDAYS } from './holidays.js';
 import { GUILDS } from './guilds.js';
 import {
@@ -127,7 +127,7 @@ export const IDENTIFY_COST_MULTIPLIER = 25;
  *  no magic in it at all. It was never seen because the Identify
  *  destination was a null and the mode could not be opened; X7 opened
  *  it, so the derivation had to be right first. Both paths run at
- *  worldModes.js:1802-1836 now - the paid service and the spell. */
+ *  worldModes.js:1803-1837 now - the paid service and the spell. */
 export const itemIsIdentified = (item) => !isEnchanted(item) || item?.isIdentified === true;
 
 /** FormulaHelper.CalculateItemIdentifyCost (:1935-1955). FREE on the
@@ -238,9 +238,10 @@ export function tradeCost(mode, staged = [], {
         break;
       case 'Sell':
         modeActionEnabled = true;
-        // NOT by condition - see the header. DFU passes
-        // ConditionPercentage into a slot CalculateCost never reads.
-        cost += calculateCost(itemValueOf(item), quality, priceAdjustment) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN
+        // DFU passes ConditionPercentage (:462) into a slot its own
+        // CalculateCost never reads - see the header; RRI2: Roleplay &
+        // Realism: Items' override reads it, so the slot is passed.
+        cost += calculateCost(itemValueOf(item), quality, priceAdjustment, conditionPercentage(item)) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN
         break;
       case 'SellMagic':
         // DFU's own TODO sits on this line: "Fencing base price higher
@@ -404,12 +405,12 @@ export const DOESNT_NEED_IDENTIFY = 'This does not need to be identified.';
 
 // The three clauses that stood here are all closed:
 //  - the IDENTIFY SPELL arm (:956-996) is live. identifySpellPass
-//    (:161) feeds worldModes.js:1807-1827, which spends the magicka
+//    (:161) feeds worldModes.js:1808-1828, which spends the magicka
 //    ONCE for the whole list whatever the outcome and tells the player
 //    "N of M identified"; the window opens from openIdentifyWindow
-//    (worldModes.js:7152), the entry point the magic arc owed.
+//    (worldModes.js:7153), the entry point the magic arc owed.
 //  - the LETTER OF CREDIT is tender and bankable: minted at systems/
-//    inventory.js:68, summed by creditAmount at systems/court.js:207,
+//    inventory.js:69, summed by creditAmount at systems/court.js:207,
 //    spent letters-before-coins by deductGold at court.js:249, and
 //    moved at systems/banking.js:482 depositAllLetters / :476
 //    withdrawLetter.

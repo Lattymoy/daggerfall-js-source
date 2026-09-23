@@ -22,11 +22,11 @@ import { ClassFile } from '../formats/classFile.js';
 import { TextRsc } from '../formats/textRsc.js';   // U18: the class questions ride TEXT.RSC 9000
 import { parseQuestionLibrary } from './classQuestions.js';   // U18
 import { ChargenFlow } from '../ui/chargen.js';
-import { applyCharacter, createCharacter, startingSpells, CLASS_CAREERS } from './chargen.js';
+import { applyCharacter, createCharacter, assignStartingSpells, CLASS_CAREERS } from './chargen.js';   // RRI2: AssignStartingSpells, the delegate
 import { levelUpSkillSum } from './advancement.js';   // AUDIT 18: SetCurrentLevelUpSkillSum, one home
 import { overlayAction } from '../ui/input.js';
 import { isEnhanced } from './uiSkin.js';   // THE SKIN: which wizard
-import { assignStartingGear } from './startingGear.js';   // S3d
+import { assignStartingEquipment } from './startingGear.js';   // S3d; RRI2: AssignStartingEquipment, the delegate
 import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // wave 28: CharacterDocument's 7-part table
 import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
@@ -118,7 +118,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   const cf = new ClassFile();
   cf.load(await fetchBytes(`CLASS${String(classIndex).padStart(2, '0')}.CFG`));
   createCharacter(playerEntity, cf.career, classIndex);
-  playerEntity.spells = startingSpells(classIndex, spellsByIndex);
+  playerEntity.spells = assignStartingSpells(classIndex, spellsByIndex, cf.career);
   // S3d: the same kit every other creation path gets
   playerEntity.items = [];
   playerEntity.equip = null;
@@ -137,7 +137,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // in DFU and 30+0-50 = -20 in the port, clamped to the 3% floor.
   // Enemies essentially could not hit a new character.
   playerEntity.armorValues = new Array(NUMBER_BODY_PARTS).fill(100);
-  assignStartingGear(playerEntity, { classIndex });
+  assignStartingEquipment(playerEntity, { classIndex });
   // AUDIT 20 / THE ONE CONSTRUCTION SEAM, again. This path is a SECOND
   // copy of the construction - it hand-rolls the kit rather than going
   // through applyCreationExtras - and so it silently missed the faction
@@ -184,7 +184,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
 export function applyCreationExtras(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) {
   if (spellsByIndex) {
     const setIndex = result.isCustom ? customSpellSetIndex(result.career) : result.careerIndex;
-    playerEntity.spells = setIndex == null ? [] : startingSpells(setIndex, spellsByIndex);
+    playerEntity.spells = setIndex == null ? [] : assignStartingSpells(setIndex, spellsByIndex, result.career);
   }
   playerEntity.items = [];
   playerEntity.equip = null;
@@ -228,7 +228,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // was then thrown away, since attachFactionRep rebuilds fresh
   // records out of the dictionary.
   if (result.factionDict) attachFactionRep(playerEntity, result.factionDict);
-  assignStartingGear(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
+  assignStartingEquipment(playerEntity, { classIndex: result.careerIndex, isCustom: result.isCustom ?? false, rolls });
   // StartGameBehaviour.cs:432-433 "Initialize region data" ->
   // PlayerEntity.InitializeRegionData (:2189-2218): every new character
   // is born with the 62-region condition store, so the writers that
@@ -519,7 +519,7 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the wizard already routes a mousemove here: world.js and
     // exterior.js through `townTalk.hover` (townTalk.js:1200-1211,
     // the route itself :1209), dungeonContext.js through `overlayHover`
-    // (:6155), which dungeon.js:489 and worldModes.js:7810 both feed.
+    // (:6155), which dungeon.js:489 and worldModes.js:7811 both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

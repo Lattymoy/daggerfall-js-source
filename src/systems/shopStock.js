@@ -129,6 +129,7 @@ import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddP
 import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
 import { provisionsStock } from './survival/items.js';   // SURV2: the general store's provisions shelf
 import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
+import { conditionBasedPricesOn, conditionCostBase } from './rriRealism.js';   // RRI2: the CalculateCost override's condition arm
 
 export { BOOK_TEMPLATE };
 
@@ -623,9 +624,14 @@ export function updateRegionalPrices(playerEntity, factionDict, times, rolls = M
   }
 }
 
-/** FormulaHelper.CalculateCost, verbatim C# integer math. */
-export function calculateCost(baseValue, shopQuality, priceAdjustment = 1000) {
-  let cost = baseValue;
+/** FormulaHelper.CalculateCost, verbatim C# integer math. RRI2: the
+ *  third C# parameter, `conditionPercentage = -1` (:1884), which DFU's
+ *  own arm never reads and Roleplay & Realism: Items' CalculateConditionCost
+ *  override does - the base scaled by the item's condition, floored at a
+ *  fifth - under conditionBasedPrices; the two lines after it are the
+ *  same in both. */
+export function calculateCost(baseValue, shopQuality, priceAdjustment = 1000, conditionPercentage = -1) {
+  let cost = conditionBasedPricesOn() ? conditionCostBase(baseValue, conditionPercentage) : baseValue;
   if (cost < 1) cost = 1;
   cost = Math.trunc(cost * priceAdjustment / 1000);   // ApplyRegionalPriceAdjustment
   if (cost < 1) cost = 1;

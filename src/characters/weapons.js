@@ -83,7 +83,20 @@ export function weaponMinDamage(weapon) {
   if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.min;   // THE DEPARTURE, below
   const cls = customItemClass(weapon);   // RRI1: GetBaseDamageMin
   if (cls?.baseDamageMin) return cls.baseDamageMin();
+  const o = _damageOverride.min?.(weapon);   // TryGetOverride("CalculateWeaponMinDamage") - RRI2's weaponBalance registers one
+  if (o != null) return o;
   return MIN_DAMAGE.get(weapon) ?? 0;
+}
+
+// ---- FormulaHelper.RegisterOverride for the two damage formulas ----------
+/** CalculateWeaponMin/MaxDamage each begin `if (TryGetOverride(...)) return
+ *  del(weapon)`. This module is a leaf (see the header), so the override
+ *  is REGISTERED rather than imported: `{ min, max }`, each answering a
+ *  number or null for DFU's turn. */
+const _damageOverride = { min: null, max: null };
+export function registerWeaponDamageOverride({ min = null, max = null } = {}) {
+  _damageOverride.min = typeof min === 'function' ? min : null;
+  _damageOverride.max = typeof max === 'function' ? max : null;
 }
 
 // FormulaHelper.CalculateWeaponMaxDamage, verbatim case groups.
@@ -101,6 +114,8 @@ export function weaponMaxDamage(weapon) {
   if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.max;   // THE DEPARTURE, below
   const cls = customItemClass(weapon);   // RRI1: GetBaseDamageMax
   if (cls?.baseDamageMax) return cls.baseDamageMax();
+  const o = _damageOverride.max?.(weapon);   // TryGetOverride("CalculateWeaponMaxDamage")
+  if (o != null) return o;
   return MAX_DAMAGE.get(weapon) ?? 0;
 }
 

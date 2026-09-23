@@ -140,9 +140,28 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
   // AFTER DFU's own bag (the spellbook first, the clothes, the class kit, the torches - 17f's order holds). It
   // rode equip.js's seedStartingEquipment alone - the retired PRE-CHARGEN fallback - so a character who came
   // through chargen set out with no water, no food, no gear and no fire while the needs drained.
-  if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }
+  addSurvivalProvisions(entity, added);
   addStartingGold(entity, STARTING_GOLD);
   return added;
+}
+
+/** The port's own tail (AUDIT SURV E), one home: rides DFU's kit above and
+ *  a mod's kit alike (RRI2's assignSkillEquipment), after the bag. */
+export function addSurvivalProvisions(entity, added = []) {
+  if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }
+  return added;
+}
+
+// ---- StartGameBehaviour.AssignStartingEquipment, the delegate (:84, :115) ----
+/** `public PlayerStartingEquipment AssignStartingEquipment { get; set; }`,
+ *  defaulted to ItemHelper.AssignStartingGear and reassigned by a mod
+ *  (Roleplay & Realism: Items' AssignSkillEquipment, under
+ *  skillBasedStartingEquipment). The port's seam: a registered assigner
+ *  answers the items it added, or null to let AssignStartingGear run. */
+let _assigner = null;
+export function setStartingEquipmentAssigner(fn) { _assigner = typeof fn === 'function' ? fn : null; }
+export function assignStartingEquipment(entity, opts = {}) {
+  return _assigner?.(entity, opts) ?? assignStartingGear(entity, opts);
 }
 
 /** `playerEntity.GoldPieces += 100` (ItemHelper.cs:1354), verbatim

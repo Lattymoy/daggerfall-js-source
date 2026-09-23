@@ -143,16 +143,100 @@ record, one entry per dye, the same size and rect for all).
 
 ### Not in this slice
 
-The mod's other nine modules - lootRebalance (the loot matrix and the
-mob loot keys), bandaging, conditionBasedPrices, storeQualityItemCondition,
-realisticEnemyEquipment, skillBasedStartingEquipment,
-skillBasedStartingSpells (nine new spells), weaponBalance,
-alchemistPotions - are RRI2. Their switches are on the pane already
-(the mod's own defaults, all on) and read by nothing yet.
+The mod's other nine modules were RRI2, below.
+
+## RRI2 - the nine modules past the items
+
+`RoleplayRealismItemsMod.cs` past `RegisterCustomItem`: what InitMod
+(:74-165) registers, hooks or replaces under each switch. DFU reads
+the switches once at Awake; the port reads each at its site every
+time, so a pane toggle takes effect at the next roll - the Features
+row says so. Three modules and their seams:
+
+- `systems/rriRealism.js` - the laws that touch no entity: the loot
+  matrix and the mob keys, the bandage's arithmetic, the condition
+  price and repair factors, the store-quality table, the potion count,
+  the two damage tables, the swing time. A leaf (`rriItems`,
+  `weapons`, `mobileTypes`), so the loot table and the trade window
+  import it.
+- `combat/rriEnemyEquipment.js` - the mod's
+  `AssignEnemyStartingEquipment` and `ConvertOrcish`.
+- `systems/rriKits.js` - what mints and equips: the starting kit by
+  skill, the spellbook by skill (the nine spells), the three shelf
+  hooks, the bandage's use handler, the swing-time adapter.
+
+`rriInstall.installRoleplayRealismModules` (run by the RRI1 install
+at the scene boot) registers the six that DFU installs as delegates or
+formula overrides; the rest are read-through arms at the port's site
+for the C# member.
+
+| mod law (RoleplayRealismItemsMod.cs) | DFU seam | the port's site |
+|---|---|---|
+| `LootTables.DefaultLootTables = LootRealismTables` (:87) | the matrix | `loot.js generateItems`: `rriLootMatrix(key) ?? LOOT_MATRICES[key]` |
+| `Enemies[id].LootTableKey = MobLootKeys[id]` (:79-84) | the basics row | `loot.js enemyLootTableKey`, read by `hostCombat.spawnEnemyLoot` |
+| `IsItemStackable` override (:168-171) | FormulaHelper.cs:2100-2102, an added yes | `inventory.js isStackable`, one arm |
+| `RegisterItemUseHandler(Bandage, UseBandage)` (:93) | ItemHelper's handler dictionary, asked by UseItem (:1703-1709) | `itemTemplates.registerItemUseHandler` / `useItem.js`, the delegate arm ahead of the ladder |
+| `StackableBandages_OnLootSpawned`, `StoreQualityItemCondition`, `AddPotions_OnLootSpawned` | PlayerActivate.OnLootSpawned (:885) | `rriKits.onShopShelfStocked`, at both of worldModes' shelf doors |
+| `RandomConditionEnemyItems` / `RandomConditionLootItems` | EnemyEntity.OnLootSpawned (:399), LootTables.OnLootSpawned (:163) | `hostCombat.spawnEnemyLoot` after the trio (the worn set walked too - DFU's Items holds it, the port's droppable cut does not); `loot.addPileLootExtras` after the J..O tail |
+| `CalculateCost` override (:247-260) | FormulaHelper.cs:1884 - `conditionPercentage`, the third parameter DFU's arm never reads | `shopStock.calculateCost`'s fourth argument; `tradeModes` Sell passes `conditionPercentage(item)` as DaggerfallTradeWindow.cs:462 does |
+| `CalculateItemRepairCost` override (:262-278) | FormulaHelper.cs:1901 | `repairService.calculateItemRepairCost`, 0.6 / 0.9 under InstantRepairs |
+| `EnemyEntity.AssignEnemyEquipment = ...` (:113) | EnemyEntity.cs:133, the delegate | `enemyEquipment.setEnemyEquipmentAssigner`; `assignEnemyStartingEquipment` dispatches; the roll and the armor-value pass are two exports now (`rollEnemyEquipment`, `enemyArmorValues`), the pass reading a custom piece's own `GetMaterialArmorValue` and its class's slot |
+| `AssignStartingEquipment = AssignSkillEquipment` (:118) | StartGameBehaviour.cs:84/:115 | `startingGear.setStartingEquipmentAssigner`; `assignStartingEquipment` dispatches at both chargen seeds |
+| `AssignStartingSpells = AssignSkillSpellbook` (:122) | StartGameBehaviour.cs:87/:116 | `chargen.setStartingSpellsAssigner`; `assignStartingSpells(careerIndex, spellsByIndex, career)` |
+| `CalculateWeaponMin/MaxDamage` overrides (:130-131) | FormulaHelper's TryGetOverride | `weapons.registerWeaponDamageOverride`, an arm after the custom class and before the verbatim table; `enemyEquipment.createWeapon` mints through the same two functions now |
+| `GetMeleeWeaponAnimTime` override (:129) | FormulaHelper.cs:830 | `weaponStates.registerMeleeWeaponAnimTime`; the widget passes `{ entity, weaponType, usingRightHand }` so the override reads the strength and the held weapon's `baseWeight` |
+
+Read against the C#:
+
+- **The enemy kit.** A class enemy's whole loadout by class (:523-681);
+  `AddOrEquipWornItem` wears every armor, weapon and garment to
+  `Range(0.3f, 0.75f)`; the sidearms are carried, not worn; the mage's
+  robes are `CreateMensClothing(Plain_robes, race)` with the factory's
+  defaults (a random variant, Blue). The kit answers `items` (what
+  AddItem put in Items, the corpse's loot) and `worn` (what EquipItem
+  put on); `hostCombat.equipEnemy` slots only `worn`. The poison roll
+  (:660-680) is the same numbers as ItemHelper's and stays at the
+  port's one home for it (`poisons.rollEnemyWeaponPoison`). A monster
+  runs ItemHelper's arm and then ConvertOrcish (:683-705): the Orcs
+  team, 80%, Ebony and up (a Warlord's Mithril and up), the material
+  re-applied over the template's weight, value and condition - which
+  the port's mint derives from the material alone.
+- **The starting kit** (:759-810) sets AssignStartingGear aside whole:
+  no class weapon, no 100 gold; `Range(5, Luck)` gold, the iron dagger,
+  the ebony dagger a biography answer gave at 20%, six torches and
+  four candles under PlayerTorchFromItems. `AssignSkillItems` never
+  passes `equip`, so every skill's item is carried; the shirt and pants
+  go on. The upgrade is `Dice100(Luck / (Luck < 56 ? 2 : 1))` against
+  DFCareer's forbidden flags (`(flags & f) == f`; armor
+  `(WeaponArmorShieldsBitfield >> 6) & 7`). The port's survival
+  provisions ride after either kit (`startingGear.addSurvivalProvisions`).
+- **The nine spells** are `EffectBundleSettings` in the mod; the port's
+  spellbook and caster read SPELLS.STD-shaped records, and
+  `EntityEffectBroker.ClassicEffectRecordToEffectSettings` (:950-977)
+  is the map between the two - `RRI_SPELLS` carries each as the
+  classic record it converts from (type/subType from each effect's
+  `MakeClassicKey`, the target and element indices from :985-1027,
+  the icon). A field the mod's initialiser leaves unset is the C#
+  struct's 0 and is 0 here (Knock's DurationBase/Plus, which Open -
+  chance only - never reads). Their indices are the port's own (990+),
+  past every SPELLS.STD record; the cost is `classicCastingCost` over
+  the record, as the caster prices it.
+- **The swing time**: `weaponType == Melee || weapon == null` reads
+  the live speed; a weapon's `baseWeight` scaled by `150 - Strength`
+  per cent, times 3.4, comes off a speed capped at 98 as
+  `speed * reduction / 90` (an int cast), then DFU's `3 * (115 -
+  speed)` over the classic frame update.
+- **ConditionPercentage** has one home now (`itemTemplates`), the
+  C# integer division; itemInfo re-exports it.
+
+The suites that pin DFU's own numbers for the repair price and the
+Sell arm (`repairservice`, `trademodes`) import `modsOff` first; the
+mod's numbers are pinned in `rri2_realism`.
 
 ## Record
 
-`vendor/roleplay-realism-items/`. Suite `test/rri1_items.test.js` (9).
-Campaign `tools/mutants/rri1.json` (11). The shipped set:
+`vendor/roleplay-realism-items/`. Suites `test/rri1_items.test.js` (9),
+`test/rri2_realism.test.js` (11). Campaigns `tools/mutants/rri1.json`
+(11), `tools/mutants/rri2.json` (18). The shipped set:
 `public/art/roleplay-realism-items/` (280 PNGs), `src/systems/rriIndex.js`
 (generated), `tools/rriExtract.mjs`.

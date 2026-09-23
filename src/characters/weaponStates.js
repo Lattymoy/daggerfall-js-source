@@ -13,9 +13,19 @@ export const WEAPON_STATES = ['Idle', 'StrikeDown', 'StrikeDownLeft', 'StrikeLef
 // FormulaHelper.cs verbatim
 export const CLASSIC_FRAME_UPDATE = 980;           // const int classicFrameUpdate
 export const CLASSIC_UPDATE_INTERVAL = 0.0625;     // GameManager.classicUpdateInterval (classic 16Hz); bow anim tick
-export function getMeleeWeaponAnimTime(liveSpeed) {
+export function getMeleeWeaponAnimTime(liveSpeed, ctx = null) {
+  const o = _animTimeOverride?.(liveSpeed, ctx, CLASSIC_FRAME_UPDATE);   // TryGetOverride("GetMeleeWeaponAnimTime") - RRI2's weaponBalance registers one
+  if (o != null) return o;
   return (3 * (115 - liveSpeed)) / CLASSIC_FRAME_UPDATE;   // seconds per anim frame
 }
+/** FormulaHelper.RegisterOverride("GetMeleeWeaponAnimTime"): the C# takes
+ *  (player, weaponType, weaponHands); the port's callers pass the live
+ *  speed and, where they have one, `ctx` = { entity, weaponType,
+ *  usingRightHand } so an override can read the strength and the held
+ *  weapon. Answers seconds per frame, or null for DFU's line. This
+ *  module is a leaf, so the override is registered. */
+let _animTimeOverride = null;
+export function registerMeleeWeaponAnimTime(fn) { _animTimeOverride = typeof fn === 'function' ? fn : null; }
 export function getBowCooldownTime(liveSpeed) {
   return (10 * (100 - liveSpeed) + 800) / CLASSIC_FRAME_UPDATE;
 }

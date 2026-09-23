@@ -263,6 +263,7 @@ import { GENDERS } from '../characters/nameHelper.js';
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
 import { WATER_SCROLL_TILES_PER_SEC } from '../render/waterSurface.js';   // AUDIT 65 CV-3: the classic texel's flow, one home (this host's DUNGEON_WATER_SCROLL was a third literal)
+import { onShopShelfStocked } from '../systems/rriKits.js';   // RRI2: the mod's PlayerActivate.OnLootSpawned subscribers (bandage stacks, store-quality wear, the alchemist's potions)
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -1775,7 +1776,7 @@ export function createWorldModes(host) {
     const fresh = needsRestock(shelf, today);   // AUDIT WORLD6a A5: said at the window's mount, whichever window
     if (fresh) {
       shelf.stockedDate = today;
-      shelf.items = stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity);
+      shelf.items = onShopShelfStocked(stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity), b);   // RRI2: PlayerActivate.OnLootSpawned (:885), the mod's three shelf hooks
     }
     // AUDIT 26 F066: DFU NEVER opens a paying trade window in a
     // closed shop. PlayerActivate gates shelf activation on
@@ -1830,7 +1831,7 @@ export function createWorldModes(host) {
     if (fresh) {
       target.stockedDate = today;
       target.items = isShop(b.buildingType)
-        ? stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity)
+        ? onShopShelfStocked(stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity), b)   // RRI2: the same OnLootSpawned, whichever door stocked it
         : [];
     }
     let win = null;

@@ -29,7 +29,7 @@
 // and recorded in the Ledger; the port's startPoison refuses an
 // unregistered type the same way rather than indexing past its
 // tables.
-import { templateByIndex } from './itemTemplates.js';
+import { templateByIndex, itemUseHandler } from './itemTemplates.js';   // RRI2: ItemHelper's registered use handlers
 import { doItemEnchantmentPayloads, PAYLOAD } from './enchantments.js';   // E2: the Used payload arm
 import { inflictPoison } from './poisons.js';
 import { inflictDisease } from './diseases.js';   // SURV2: a bad meal's sickness, handed to the food law
@@ -266,6 +266,15 @@ export function useItem(item, collection, {
     }
   }
 
+  // "Try to handle use with a registered delegate" (:1703-1709): a mod's
+  // handler for the template runs ahead of the ladder, and a true answer
+  // RETURNS - past the ladder and past the Used-payload tail alike.
+  const handler = itemUseHandler(item.templateIndex);
+  if (handler) {
+    const handled = handler(item, collection, { entity, rolls, nowMinute });
+    if (handled) return questItem ? { ...handled, questItem: true } : handled;
+  }
+
   let out = null;
   // SURV2: the survival items (food, the waterskin, camping gear, the
   // campfire kit, the skillet) answer from their own module - their
@@ -357,7 +366,7 @@ export function useItem(item, collection, {
     // ItemCollection.GetItem verbatim now, allowQuestItem: false
     // included (:1791) - the port grew quest items (item.questItem,
     // read at :211) and inventory.getItem already ports that filter
-    // (inventory.js:285), so a quest lantern is invisible to the oil
+    // (inventory.js:287), so a quest lantern is invisible to the oil
     // exactly as it is in DFU and the bottle refuses instead.
     const lantern = getItem(bag ?? [], 'UselessItems2', TEMPLATES.Lantern, { allowQuestItem: false });
     const oil = item.currentCondition ?? 0;

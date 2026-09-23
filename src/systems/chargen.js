@@ -112,6 +112,18 @@ export const STARTING_SPELL_SETS = Object.freeze({
 /** The spells a new character KNOWS: set members resolved against
  *  the loaded SPELLS.STD map; missing records skip loudly (the
  *  source's own error path). */
+// ---- StartGameBehaviour.AssignStartingSpells, the delegate (:87, :116) ----
+/** `public PlayerStartingSpells AssignStartingSpells { get; set; }`,
+ *  defaulted to SetStartingSpells and reassigned by a mod (Roleplay &
+ *  Realism: Items' AssignSkillSpellbook, under skillBasedStartingSpells).
+ *  A registered assigner answers the list from the CAREER (its skills),
+ *  or null to let SetStartingSpells' set answer. */
+let _spellsAssigner = null;
+export function setStartingSpellsAssigner(fn) { _spellsAssigner = typeof fn === 'function' ? fn : null; }
+export function assignStartingSpells(careerIndex, spellsByIndex, career = null) {
+  return _spellsAssigner?.(career, spellsByIndex) ?? startingSpells(careerIndex, spellsByIndex);
+}
+
 export function startingSpells(careerIndex, spellsByIndex) {
   const set = STARTING_SPELL_SETS[careerIndex];
   if (!set || !spellsByIndex) return [];

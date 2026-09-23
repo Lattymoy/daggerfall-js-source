@@ -1466,7 +1466,7 @@ function releaseLock() {
  * paints no chart and its overlay ticks nothing, so the same lock is
  * three to seven seconds of dead buttons over a picture nobody drew.
  *
- * The seam is injectable for exactly this reason (chargen.js:236-240,
+ * The seam is injectable for exactly this reason (chargen.js:248-252,
  * "so the headless suite drives an animation with no renderer"), and
  * a start that reports 0 is the flow's own signal to run the anim-end
  * body AT ONCE - the same path a host with no art takes. Nothing else

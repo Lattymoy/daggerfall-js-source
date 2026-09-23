@@ -128,7 +128,7 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   // that promises a penalty the game does not apply is teaching a
   // player to spend a point on nothing.
   strength: 'Adds to every blow you land, and to the weight your pack will hold.',
-  // systems/chargen.js:211 - spellPoints(intelligence, multiplier) is the whole magicka pool.
+  // systems/chargen.js:223 - spellPoints(intelligence, multiplier) is the whole magicka pool.
   intelligence: 'Sets your pool of spell points, by your class\'s own multiplier.',
   // systems/spellcast.js:158 - `saving += magicResist(liveStat(target,
   // 'willpower'))`, the CONSUMER of DFU's MagicResist. The first cut

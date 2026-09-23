@@ -1,5 +1,6 @@
 // U40: the trade window's mode flow, law half - against
 // DaggerfallTradeWindow.cs and FormulaHelper's two cost formulas.
+import './modsOff.js';   // RRI2: DFU's own numbers - the mod's condition prices are pinned in rri2_realism.test.js
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';

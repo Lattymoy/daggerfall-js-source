@@ -157,7 +157,7 @@ export const isEnchantedItem = (item) => !!itemEnchantments(item);
 // ported" - and M4's catalogue is that sum's missing half, so it
 // closed here and stays closed: legacyEnchantmentValue (:222-238) is
 // the sum, over VALUE_COUNTS_BELOW (:179), spellEnchantPtCost (:214)
-// and the SoulBound/CastWhen arms, and systems/loot.js:273 prices
+// and the SoulBound/CastWhen arms, and systems/loot.js:274 prices
 // every minted legacy item through it.
 //
 // THE BOUND IS THE ENUM'S OWN ORDER (:604-605): only

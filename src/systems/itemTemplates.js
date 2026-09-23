@@ -190,6 +190,18 @@ export function usesWorldTexture(item, template = templateByIndex(item.templateI
 export const PAINTING_MESSAGE_RANGE = 65536;
 export const rollPaintingMessage = (rolls = Math.random) => Math.floor(rolls() * PAINTING_MESSAGE_RANGE);
 
+/** DaggerfallUnityItem.ConditionPercentage (:460-463): `maxCondition > 0
+ *  ? 100 * currentCondition / maxCondition : 100`, C# integer division. */
+export const conditionPercentage = (item) => ((item?.maxCondition ?? 0) > 0 ? Math.trunc(100 * (item.currentCondition ?? 0) / item.maxCondition) : 100);
+
+// ---- ItemHelper.RegisterItemUseHandler (ItemHelper.cs:113-116) --------
+/** `Dictionary<int, ItemUseHandler> itemUseHandlers` - a mod's handler for
+ *  a template, asked by DaggerfallInventoryWindow.UseItem ahead of the
+ *  normal-items ladder (:1703-1709). RRI2: the bandage. */
+const _useHandlers = new Map();
+export function registerItemUseHandler(templateIndex, handler) { if (typeof handler === 'function') _useHandlers.set(templateIndex, handler); else _useHandlers.delete(templateIndex); }
+export const itemUseHandler = (templateIndex) => _useHandlers.get(templateIndex) ?? null;
+
 export function mintCondition(item) {
   if (item.maxCondition != null) return item;
   if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition

@@ -322,7 +322,7 @@ test('AUDIT 58: ApplyRegionalPriceAdjustment has its OWN floor of 1 (FormulaHelp
   assert.equal(calculateCost(1, 12, 250), 2, 'PRICE_ADJUSTMENT_MIN, the worst case');
   // and the live wire that reaches it: CalculateItemRepairCost hands
   // CalculateCost a base of exactly 1 for any item worth <= 10 gold
-  // (repairService.js:44-46), so without the floor a cheap repair in a
+  // (repairService.js:46-51), so without the floor a cheap repair in a
   // cheap province is FREE.
   assert.equal(calculateItemRepairCost(5, 10, 0, 100, { priceAdjustment: 750 }), 2);
 });

@@ -56,8 +56,8 @@
   {
     "name": "JAN1-the-sell-arm-reads-the-value-raw",
     "file": "src/systems/tradeModes.js",
-    "old": "        cost += calculateCost(itemValueOf(item), quality, priceAdjustment) * stack;   // JAN1",
-    "new": "        cost += calculateCost(item.value, quality, priceAdjustment) * stack;   // JAN1",
+    "old": "        cost += calculateCost(itemValueOf(item), quality, priceAdjustment, conditionPercentage(item)) * stack;   // JAN1",
+    "new": "        cost += calculateCost(item.value, quality, priceAdjustment, conditionPercentage(item)) * stack;   // JAN1",
     "tests": [
       "test/jan1_fixes.test.js"
     ]

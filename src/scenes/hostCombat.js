@@ -17,10 +17,11 @@ import {
 } from '../combat/formulas.js';
 import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, playerVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice; playerVoice AUDIT 24 (wave 46)
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
-import { assignEnemyEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';
+import { assignEnemyStartingEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';   // RRI2: EnemyEntity.AssignEnemyEquipment, the delegate
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';
-import { generateItems, addEnemyLootExtras } from '../systems/loot.js';   // RF2: the spawn chain's DFU half, in its one home
+import { generateItems, addEnemyLootExtras, enemyLootTableKey } from '../systems/loot.js';   // RF2: the spawn chain's DFU half, in its one home; RRI2: MobLootKeys
+import { conditionBasedPricesOn, randomConditionLootItems } from '../systems/rriRealism.js';   // RRI2: EnemyEntity.OnLootSpawned's subscriber
 import { isHumanoid } from '../systems/survival/loot.js';   // MOD: the same humanoid test SURV2's corpse food already draws its line with
 import { rollCorpseLoot } from '../systems/lootRarity.js';   // RF2: and the port's, after it
 import { liveStat } from '../systems/statMods.js';   // RF2: the player's live luck for the roll   // AUDIT 58: ItemHelper's EquipItem half - a foe's equip table is what DamageEquipment's struck side reads
@@ -111,9 +112,16 @@ export const hasBowAttack = (basics) =>
 const HUMANOID_LOOT_ITEM_SCALE = 0.25;   // MOD: keep a quarter of the item chance (drop 75%)
 export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random } = {}) {
   const itemChanceScale = isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1;
-  entity.items = generateItems(basics?.lootTableKey ?? '-', { level: player.level, gender: player.gender }, undefined, { itemChanceScale, mobileType });
-  equipEnemy(entity, mobileType, player.level, rolls);
+  entity.items = generateItems(enemyLootTableKey(mobileType, basics?.lootTableKey ?? '-'), { level: player.level, gender: player.gender }, undefined, { itemChanceScale, mobileType });
+  const eq = equipEnemy(entity, mobileType, player.level, rolls, { player });
   addEnemyLootExtras(entity.items, basics, rolls);
+  // RRI2: EnemyEntity.OnLootSpawned (EnemyEntity.cs:399) fires here, after
+  // the trio and with the kit already in Items - the mod's
+  // RandomConditionEnemyItems (RoleplayRealismItemsMod.cs:222-245) wears
+  // every armor, weapon and book on the corpse to 20-75%. The worn set is
+  // walked too: DFU's Items holds all of it, the port's droppable cut
+  // (above) does not, and a foe's cuirass is worn either way.
+  if (conditionBasedPricesOn()) randomConditionLootItems([...new Set([...entity.items, ...(eq?.worn ?? [])])], rolls);
   rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck') });
   return entity.items;
 }
@@ -137,10 +145,10 @@ export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Mat
  *  are built from the FULL `worn` set regardless, so the foe still
  *  fights at its real armour and swings its real weapon - it is worn,
  *  just not always left behind. */
-export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random) {
+export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random, { player = null } = {}) {
   const variant = equipmentVariantFor(entity.careerIndex, entity.isClass);
   if (variant === null) return null;
-  const eq = assignEnemyEquipment(entity, variant, playerLevel);
+  const eq = assignEnemyStartingEquipment(entity, variant, playerLevel, { player, rolls });   // RRI2: EnemyEntity.AssignEnemyEquipment, the delegate (a mod's arm first)
   entity.armorValues = eq.armorValues;
   entity.weapon = eq.rightHand;
   // S19b: ItemHelper's poisoned-weapon roll rides the spawn -
@@ -152,8 +160,10 @@ export function equipEnemy(entity, mobileType, playerLevel, rolls = Math.random)
   // AssignEnemyStartingEquipment adds every equipped piece to the
   // entity's items - the corpse's droppable loot.
   entity.items = entity.items ?? [];
-  const worn = equipmentItems(eq);
-  const droppable = isHumanoid(entity) ? worn.filter(() => rolls() < HUMANOID_LOOT_ITEM_SCALE) : worn;
+  const all = equipmentItems(eq);   // everything AddItem put in Items - RRI2: an assigner's unequipped sidearm and arrow pile ride here too
+  const worn = eq.worn ?? all;
+  eq.worn = worn;
+  const droppable = isHumanoid(entity) ? all.filter(() => rolls() < HUMANOID_LOOT_ITEM_SCALE) : all;
   entity.items.push(...droppable);
   // AUDIT 58: AND IT PUTS THEM ON. ItemHelper.cs:1382/:1392/:1400 and
   // :1421-1450 pair every roll with

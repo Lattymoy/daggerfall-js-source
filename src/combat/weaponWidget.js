@@ -104,9 +104,9 @@ const FRAME = 'frame';   // WaitForEndOfFrame
  *  [0, 2] is the tick's [0, 0.398]; SPD 0 lands at 0.317, the bow's
  *  0.0625 at 0.094 - which only the field carries, the bow coroutine
  *  ticking the classic 0.0625 itself). */
-export function widgetAnimTickTime(weaponType, liveSpeed, swing) {
+export function widgetAnimTickTime(weaponType, liveSpeed, swing, ctx = null) {
   let t = CLASSIC_UPDATE_INTERVAL;
-  if (weaponType !== T.Bow) t = getMeleeWeaponAnimTime(liveSpeed);
+  if (weaponType !== T.Bow) t = getMeleeWeaponAnimTime(liveSpeed, ctx);   // RRI2: the entity and the hand ride along for a registered override
   if (!swing) return t;
   return lerp(0.045917998999357224, 0.35204100608825684, inverseLerp(0, 2, t / 0.19897900521755219));
 }
@@ -154,6 +154,7 @@ export function createWeaponWidget({
   const machineFrame = () => ctx?.machine?.frame ?? 0;
   const hitFrame = () => (ctx?.machine?.isBow ? HIT_FRAME_BOW : HIT_FRAME_MELEE);
   const liveSpeed = () => (ctx?.entity ? liveStat(ctx.entity, 'speed') : 50);
+  const animCtx = () => ({ entity: ctx?.entity ?? null, weaponType: w.currentWeaponType, usingRightHand: usingRightHand() });   // RRI2: what GetMeleeWeaponAnimTime's C# signature carries
   const anims = () => w.art?.anims ?? null;
   const usingRightHand = () => ctx?.usingRightHand !== false;
   const sheathed = () => !!ctx?.sheathed;
@@ -218,7 +219,7 @@ export function createWeaponWidget({
     w.currentWeaponType = ctx.weaponType;
     w.currentMetalType = ctx.material;
     w.currentTemplateIndex = w.specificWeapon?.templateIndex ?? -1;
-    w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing);
+    w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx());
     w.customCache = new Map();
     w.customMisses = new Set();   // DW1: the names that answered nothing, per atlas
   }
@@ -292,7 +293,7 @@ export function createWeaponWidget({
       case ALIGN.Right: alignRight(anim, width, height); break;
       default: break;
     }
-    w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing);
+    w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx());
   }
   const bottomY = (height) => w.screenRect.y + w.screenRect.height - height * w.weaponScaleY - w.weaponOffsetHeight;
   function alignLeft(anim, width, height) {
@@ -380,7 +381,7 @@ export function createWeaponWidget({
   function* playWeaponAnimation(state) {
     w.hasCurrentAttackHit = false;
     w.animatingCancel = false;
-    let tickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing) / 5 / (w.s.swingSpeed || 1e-6);
+    let tickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx()) / 5 / (w.s.swingSpeed || 1e-6);
     if (w.s.swingWindup === WINDUP.FirstFrame) changeWeaponState(state); else changeWeaponState(S.Idle);
     if (w.s.swingRecoveryOverride && recoveryOverride()) tickTime *= 0.5;
     // the wind-up: the pose the setting names, held until the ORIGINAL reaches its hit frame
@@ -456,7 +457,7 @@ export function createWeaponWidget({
   function* playVanillaWeaponAnimation(state) {
     w.hasCurrentAttackHit = false;
     w.animatingCancel = false;
-    const tickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing);
+    const tickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx());
     changeWeaponState(state);
     const last = () => numFrames(ctx?.machine?.isBow, STATE_NAMES[w.weaponState]) - 1;
     while (w.currentFrame < last() && !w.hasCurrentAttackHit) {

@@ -220,7 +220,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   // the list; DFU reaches it because :957 opens the window over the
   // corpse. The port's bulk take is the residue this file records, so
   // the door is spelled in takeCorpseLoot - without it a corpse's
-  // loot-table gold (loot.js:183) lands in the pack, where
+  // loot-table gold (loot.js:184) lands in the pack, where
   // court.goldAmount cannot see it and it is unspendable forever.
   say.length = 0;
   player.items = [];
@@ -229,7 +229,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   assert.equal(takeCorpseLoot(rich, player, s), 2, 'the pile still counts toward the line');
   assert.deepEqual(say, ['You take 2 items.']);
   assert.equal(player.items.some((it) => it.group === 'Currency'), false,
-    'the player\'s collection can NEVER hold Currency (inventory.js:49-57)');
+    'the player\'s collection can NEVER hold Currency (inventory.js:50-58)');
   assert.equal(player.items.length, 1);
   assert.equal(player.goldPieces, 550, 'playerEntity.GoldPieces += item.stackCount');
   assert.equal(goldAmount(player), 550, 'and it is spendable');

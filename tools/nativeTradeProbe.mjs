@@ -66,7 +66,7 @@ if (o.remote > 0) {
   await click(226 + 15, 134 + 7);   // TRADE_RECTS.modeAction - the BUY button
   // ...and BUY raises the merchant's HAGGLE OFFER, a Yes/No box
   // ("I can sell for no less than N gold pieces") - ShowTradePopup's
-  // three bands, ported at systems/tradeModes.js:281. So a purchase is
+  // three bands, ported at systems/tradeModes.js:282. So a purchase is
   // THREE gestures: stage, ask, agree.
   o = JSON.parse(await page.evaluate(() => window.__shopOverlay()));
   if (!(o.box?.buttons === 'YesNo')) { console.log('NO HAGGLE OFFER', JSON.stringify(o.box)); process.exit(1); }
