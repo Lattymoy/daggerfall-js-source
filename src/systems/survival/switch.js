@@ -4,8 +4,8 @@
 // owns the key and the default) and read through the prefs shelf so
 // the online lane can force it for a room. A leaf: it imports the
 // shelf and the tier table (itself import-free) and nothing else, so
-// the item minters (equip.js's starting kit, shopStock.js's shelf)
-// can ask without a cycle.
+// the item minters (shopStock.js's shelf) can ask without a cycle. The
+// starting kit asks no more (SURV-KIT: every tier's character has it).
 //
 // SURV-TIERS (2026-09-23): THE ANSWER IS A TIER NOW - Off, Casual (the
 // default) or Hard, on the same key (survival/difficulty.js is the table

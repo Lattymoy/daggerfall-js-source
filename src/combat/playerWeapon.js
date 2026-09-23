@@ -324,7 +324,7 @@ export class PlayerWeapon {
    * `sum over both hands of (EquipDelayTimes[GroupIndex] - 500)`,
    * divided by 1.7, onto the hand now in use.
    *
-   * PORT NOTE (the CH3 collapse, equip.js:65): DFU keeps a countdown
+   * PORT NOTE (the CH3 collapse, equip.js:64): DFU keeps a countdown
    * PER HAND and this bill lands on the used one; the port sums both
    * into entity.equipCountdown, so the bill lands on the one clock.
    * Same delay, same block on the swing - only the per-hand split is

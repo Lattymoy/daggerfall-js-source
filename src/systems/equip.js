@@ -29,7 +29,6 @@ import { weaponSkillUsed } from '../characters/weapons.js';   // wave 29: GetWea
 import { SKILLS, WEAPON_SKILL } from './skills.js';   // S23: the weapon partition, single-sourced
 import { EQUIP_DELAY_TIMES } from '../characters/weaponStates.js';   // CH3 (characters-13): the swap-pause table gains its consumer
 import { startingProvisions } from './survival/items.js';   // SURV2: the new character's kit
-import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
 
 export { EQUIP_SLOTS, ITEM_HANDS };
 const ARROW = 131;
@@ -305,12 +304,12 @@ export function rebuildEquipState(entity) {
  *  like any other item. Idempotent per entity.
  *
  *  SUPERSEDED, not pending. S3d shipped the real roll -
- *  systems/startingGear.js:70 assignStartingGear (ItemHelper's
+ *  systems/startingGear.js:73 assignStartingGear (ItemHelper's
  *  AssignStartingGear), run on both creation paths at
- *  chargenSession.js:140 (?class= headless) and :221 (the wizard) -
+ *  chargenSession.js:140 (?class= headless) and :231 (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
- *  residue at the two host calls (world.js:2460, exterior.js:1203):
+ *  residue at the two host calls (world.js:2490, exterior.js:1203):
  *  a chargenDone entity whose bag AND equip table are both empty
  *  still takes a free dagger here. Deleting the calls is a behaviour
  *  change, so it waits for a slice that owns one. */
@@ -323,8 +322,9 @@ export function seedStartingEquipment(entity) {
   // SURV2: a new character sets out with provisions - two sacks of
   // rations, a full waterskin, worn camping gear and a fire kit with
   // two lights left (survival/items.js startingProvisions; the mod's
-  // own OnStartGame kit, plus the port's fire).
-  if (survivalOn()) for (const it of startingProvisions()) entity.items.push(it);
+  // own OnStartGame kit, plus the port's fire) - in every tier since
+  // SURV-KIT, as startingGear.js gives it.
+  for (const it of startingProvisions()) entity.items.push(it);
 }
 
 // ---- U8h: ARMOR VALUES (DaggerfallEntity.UpdateEquippedArmorValues

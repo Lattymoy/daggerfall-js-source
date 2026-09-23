@@ -350,10 +350,11 @@ test('AUDIT SURV D: the save carries the record - the markers and the cooldown r
   assignStartingGear(born, { classIndex: 0, rolls: () => 0.5 });
   assert.ok(born.items.some((i) => isSurvivalItem(i) && i.templateIndex === TEMPLATE.Waterskin), 'a waterskin in the chargen kit');
   assert.ok(born.items.some((i) => i.templateIndex === TEMPLATE.Rations) && born.items.some((i) => i.templateIndex === TEMPLATE.Campfire), 'rations and a fire kit');
-  setPref('survival', false);
+  setPref('survival', false);   // SURV-KIT (Mac: "C&C characters regardless of mode should start with supplies")
   const bare = { items: [], gender: 'male', stats: { ...STATS }, career: {}, activeEffects: [] };
   assignStartingGear(bare, { classIndex: 0, rolls: () => 0.5 });
-  assert.equal(bare.items.some((i) => isSurvivalItem(i)), false, 'the mod off: DFU\'s kit alone');
+  const kitOf = (e) => e.items.filter((i) => isSurvivalItem(i)).map((i) => [i.templateIndex, i.stackCount ?? 1, i.currentCondition]);
+  assert.deepEqual(kitOf(bare), kitOf(born), 'the arc Off: the same kit, after DFU\'s bag');
   _resetForTests();
   assert.equal(MOBILE_TYPES.GrizzlyBear, 4);
 });

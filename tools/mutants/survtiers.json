@@ -964,5 +964,41 @@
     "tests": [
       "test/citedrift.test.js"
     ]
+  },
+  {
+    "name": "SURVKIT-the-wizard-sets-out-with-nothing",
+    "file": "src/systems/startingGear.js",
+    "old": "  for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }\n",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVKIT-the-kit-packed-before-DFUs-bag",
+    "file": "src/systems/startingGear.js",
+    "old": "  for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }\n",
+    "new": "  for (const it of startingProvisions()) { entity.items.unshift(it); added.push(it); }\n",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVKIT-the-fallback-sets-out-with-nothing",
+    "file": "src/systems/equip.js",
+    "old": "  for (const it of startingProvisions()) entity.items.push(it);\n",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVKIT-the-kit-packed-twice",
+    "file": "src/systems/startingGear.js",
+    "old": "  for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }\n",
+    "new": "  for (const it of [...startingProvisions(), ...startingProvisions()]) { addItem(entity.items, it); added.push(it); }\n",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
   }
 ]

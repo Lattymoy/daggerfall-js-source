@@ -2,7 +2,6 @@
 // themselves. Every pin below fails under a one-character mutation of
 // the law it names (checked by hand at authoring time).
 import { test } from 'node:test';
-import { setPref } from '../src/systems/uiPrefs.js';
 import assert from 'node:assert/strict';
 import { inventoryItemImage, templateByIndex } from '../src/systems/itemTemplates.js';
 import { paperdollItemImage } from '../src/ui/paperDoll.js';
@@ -97,16 +96,17 @@ test('17f F4: the pants variant rolls over the TEMPLATE variant count', () => {
 });
 
 test('17f F12: item names come from the TEMPLATE, not a hand copy', () => {
-  setPref('survival', false);   // AUDIT SURV E: the survival kit rides after DFU's bag; this pin is DFU's bag alone
   // DaggerfallUnityItem.ItemName is ItemTemplate.name - the port's
   // hand-written "Short shirt"/"Casual pants" were lower-cased.
   const e = { gender: 'female', race: 'Khajiit' };
   assignStartingGear(e, { classIndex: 13, rolls: () => 0.1, torchesFromItems: false });   // MODS-ON turned the setting on; this pin is about the class kit's NAMES, so it names the flag rather than reading the store
   // E4: the kit's last row used to be a 'Gold Pieces' stack. Gold is
   // PlayerEntity.GoldPieces now (ItemHelper.cs:1354's `+= 100`), so
-  // the bag ends at the arrows and the purse is a number.
+  // the bag ends at the arrows and the purse is a number. SURV-KIT: the
+  // survival kit rides after DFU's bag in every tier, its names its
+  // templates' too.
   assert.deepEqual(e.items.map((i) => i.name),
-    ['Spellbook', 'Short Shirt', 'Casual Pants', 'Long Bow', 'Battle Axe', 'Arrow']);
+    ['Spellbook', 'Short Shirt', 'Casual Pants', 'Long Bow', 'Battle Axe', 'Arrow', 'Rations', 'Waterskin', 'Camping Equipment', 'Campfire Kit']);
   assert.equal(e.items.find((i) => i.name === 'Arrow').stackCount, 24);
   assert.equal(e.goldPieces, STARTING_GOLD);
   assert.equal(e.items.filter((i) => i.group === 'Currency').length, 0);

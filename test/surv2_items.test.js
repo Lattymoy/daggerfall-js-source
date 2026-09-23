@@ -270,13 +270,16 @@ test('SURV2: the mod\'s sixteen icons are vendored, allow-listed, and ride the t
   clearVendorTextures();
 });
 
-test('SURV2: by source - the pipeline stands a vendor archive in, the weight law adds water, the ladder\'s first arm is ours, the shelf and the kit are gated by the one switch', () => {
+test('SURV2: by source - the pipeline stands a vendor archive in, the weight law adds water, the ladder\'s first arm is ours, the shelf is gated by the one switch and the kit is not (SURV-KIT)', () => {
   const pipe = read('src/scenes/dataPipeline.js');
   assert.match(pipe, /if \(isVendorArchive\(archive\)\) \{\s*\n\s*await preloadTextureArchive\(archive\)\.catch\(\(\) => \{\}\);\s*\n\s*const v = vendorTextureStandIn\(archive\);/, 'no TEXTURE file is fetched for the port\'s own archives');
   assert.match(read('src/systems/inventory.js'), /if \(Number\.isFinite\(item\.water\) && item\.water > 0\) base \+= item\.water;/);
   assert.match(read('src/systems/useItem.js'), /if \(isSurvivalItem\(item\)\) out = useSurvivalItem\(item, collection, \{ entity, now: nowMinute, rolls, currentDay: Math\.trunc\(nowMinute \/ 1440\), inflict: inflictDisease, rules: survivalRules\(\) \?\? SURVIVAL_RULES\.casual \}\);\s*\n[\s\S]*?else if \(isBook\(item\)\)/);   // SURV-TIERS: the live tier decides the meal's sickness (AUDIT SURV-TIERS: Off eats as Casual - never sickened)
   assert.match(read('src/systems/shopStock.js'), /if \(survivalOn\(\)\) for \(const it of provisionsStock\(quality, rolls\)\) items\.push\(it\);/);
-  assert.match(read('src/systems/equip.js'), /if \(survivalOn\(\)\) for \(const it of startingProvisions\(\)\) entity\.items\.push\(it\);/);
+  // SURV-KIT (Mac: "C&C characters regardless of mode should start with supplies"): both mints pack the kit in every tier
+  assert.match(read('src/systems/equip.js'), /\n  for \(const it of startingProvisions\(\)\) entity\.items\.push\(it\);/);
+  assert.match(read('src/systems/startingGear.js'), /\n  for \(const it of startingProvisions\(\)\) \{ addItem\(entity\.items, it\); added\.push\(it\); \}/);
+  for (const f of ['src/systems/equip.js', 'src/systems/startingGear.js']) assert.doesNotMatch(read(f), /survivalOn|survivalTier|survivalRules/, `${f} asks no tier`);
   assert.match(read('src/systems/worldTick.js'), /installSurvivalIcons\(\);[^\n]*\n\s*installSurvivalLoot\(\{ enabled: survivalOn \}\);/, 'the corpse\'s food is off with the one switch');
   // SURV-TIERS: the one switch reads a TIER now - on is anything but Off, and a value that is no tier reads as the default
   assert.match(read('src/systems/survival/switch.js'), /export const survivalTier = \(\) => tierOfStored\(getPref\(SURVIVAL_PREF\)\);\nexport const survivalOn = \(\) => survivalTier\(\) !== SURVIVAL_OFF;/);

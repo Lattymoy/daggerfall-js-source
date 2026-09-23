@@ -36,7 +36,7 @@
 
 | Fact | Where |
 |---|---|
-| 171 keys / 13 sections, all raw strings | `src/systems/settingsDefaults.js`, pinned `test/settings.test.js:35‑35` |
+| 171 keys / 13 sections, all raw strings | `src/systems/settingsDefaults.js`, pinned `test/settings.test.js:34‑35` |
 | Tier counts today: **8 live, 18 unavailable, 145 stored** | `src/systems/settings.js:64‑101` |
 | `canvas.width = canvas.clientWidth` — CSS px, **DPR 1** | `src/render/renderer.js:1425‑1064` |
 | `nativeMetrics` floors to **s=1 on every phone in both orientations** | `src/ui/nativePanel.js:28‑31` |
@@ -751,7 +751,7 @@ No zebra striping (a 1.1:1 band does nothing but add a second ground to test aga
 | `src/ui/settingsWidgets.js` | `drawSwitch/drawEnum/drawNumber/drawColour/drawText/drawReadout/drawGroup/drawInfo/drawButton`, `drawTriangle(renderer,m,rect,dir,color)`, `drawPadlock(...)` — each takes `(renderer, m, font, item, state)` and draws **only** inside the rects `layout()` produced |  <!-- DELETED from the plan: folded into settingsWindow.js -->
 | `src/ui/settingsDialog.js` | `layoutDialog(font, m, {title, body, buttons, list})`, `drawDialog(renderer, m, font, d)`, `dialogHit(d, vx, vy)` (returns a button id or `'outside'`) |  <!-- DELETED from the plan: folded into settingsWindow.js -->
 | `src/ui/settingsWindow.js` | `class SettingsWindow` — see 7.3 | *(DELETED at FD1, 2026-09-11)*
-| `src/systems/uiPrefs.js` | `PREF_DEFAULTS`, `getPref(k)`, `setPref(k,v)`, `allPrefs()`, `resetPrefs()`. Storage key **`dagger.ui.v1`**, separate from `dagger.settings.v1`. Keys: `textScale` (0\|1), `category` (id), `open` (`{"video:stored":true,…}`), `seenLegend` (bool). Never touches the 171 — `test/settings.test.js:36` pins `ALL_KEYS.length === 171` and a 172nd key would break parity. |
+| `src/systems/uiPrefs.js` | `PREF_DEFAULTS`, `getPref(k)`, `setPref(k,v)`, `allPrefs()`, `resetPrefs()`. Storage key **`dagger.ui.v1`**, separate from `dagger.settings.v1`. Keys: `textScale` (0\|1), `category` (id), `open` (`{"video:stored":true,…}`), `seenLegend` (bool). Never touches the 171 — `test/settings.test.js:35` pins `ALL_KEYS.length === 171` and a 172nd key would break parity. |
 | `src/ui/fullscreen.js` | `fullscreenSupported()`, `applyFullscreen(canvas)`, `isFullscreen()` — the consumer that makes `Video/Fullscreen` live (§9) |  <!-- DELETED from this slice: Video/Fullscreen stays unavailable, browser-owned -->
 
 ### 7.2 Existing modules reused (unchanged)
@@ -893,7 +893,7 @@ This single test would have caught the phone text halving, the 8‑px picker row
 
 | Law | Citation |
 |---|---|
-| 171 keys, 13 sections, defaults | `SettingsManager` / vendored `defaults.ini.txt` → `settingsDefaults.js`, pinned `settings.test.js:29-42` |
+| 171 keys, 13 sections, defaults | `SettingsManager` / vendored `defaults.ini.txt` → `settingsDefaults.js`, pinned `settings.test.js:28-41` |
 | Typed getters and their failure modes (unparseable bool → `False`; unparseable clamped int/float → `MIN`; `GetString` raw) | `SettingsManager.cs:911-996` → `settings.js:169-201` |
 | Booleans stringify capitalised `True`/`False` | C# `value.ToString()` → `settings.js:212-223` |
 | Enum value **names and order** | `DaggerfallAdvancedSettingsWindow.cs:244-252, :277-282, :291-297, :298-305, :309-321, :327-341, :342-354, :360-379, :380-395` — table §3.2 |
@@ -922,7 +922,7 @@ The **seven categories, their order, titles, blurbs and the whole key→category
 2. **`src/systems/settings.js:64-107`** — move `'Video/Fullscreen'` out of `UNAVAILABLE` and into `LIVE` as `'src/ui/fullscreen.js'`. A settings toggle **is** the user gesture `canvas.requestFullscreen()` needs, so the reason "the browser owns fullscreen" is no longer true; `Video/ExclusiveFullscreen` stays unavailable. This gives the Video category a real `WORKS NOW` row. `src/ui/fullscreen.js` reads `getBool('Video','Fullscreen')`, calls `requestFullscreen`/`exitFullscreen` from the click handler, listens for `fullscreenchange` to write the value back, and reports `fullscreenSupported()` false (→ the row shows `not supported` as a readout) when the API is absent.  <!-- DELETED from this slice: Video/Fullscreen stays unavailable, browser-owned -->
 3. **`src/scenes/dataSource.js`** — add `export function dataSourceLabel()` returning one of the three short strings of §5, set at each `ensureArena2` branch.
 4. **`src/scenes/launcherScene.js`** — rewritten per §7.4. *(DELETED at FD1, 2026-09-11)*
-5. **Deletions/rewrites:** `src/ui/launcher.js` DELETED; `test/settings.test.js:167-204` and `:215-232` rewritten (T8, T11); `tools/launcherProbe.mjs` → `tools/settingsProbe.mjs` (T16).
+5. **Deletions/rewrites:** `src/ui/launcher.js` DELETED; `test/settings.test.js:168-205` and `:215-232` rewritten (T8, T11); `tools/launcherProbe.mjs` → `tools/settingsProbe.mjs` (T16).
 
 ### 9.4 Explicitly **out** of this slice (record as Ledger rows)
 

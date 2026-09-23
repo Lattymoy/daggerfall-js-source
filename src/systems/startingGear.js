@@ -1,8 +1,8 @@
 // S3d: STARTING EQUIPMENT - ItemHelper.AssignStartingGear verbatim
 // (ItemHelper.cs:1277-1364, MIT Daggerfall Workshop). This retires
 // the iron-dagger stand-in seedStartingEquipment used to hand out
-// (equip.js:307), which survives only as the PRE-CHARGEN fallback its
-// two hosts gate it to - world.js:2460 and exterior.js:1203 seed it
+// (equip.js:316), which survives only as the PRE-CHARGEN fallback its
+// two hosts gate it to - world.js:2490 and exterior.js:1203 seed it
 // solely for an entity that never ran chargen. A new character now
 // begins dressed, with a spellbook, their CLASS's weapon, and 100
 // gold, exactly as classic does.
@@ -33,8 +33,7 @@ import { templateByIndex, mintCondition, setItemFields } from './itemTemplates.j
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon's one home (the arrow arm)
 import { getBool } from './settings.js';   // SETT: PlayerTorchFromItems
-import { survivalOn } from './survival/switch.js';   // AUDIT SURV E: the survival kit reaches the character chargen makes
-import { startingProvisions } from './survival/items.js';
+import { startingProvisions } from './survival/items.js';   // AUDIT SURV E: the survival kit reaches the character chargen makes
 
 // ItemEnums template indices
 const SHORT_SHIRT_M = 165, CASUAL_PANTS_M = 151;
@@ -140,7 +139,10 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
   // AFTER DFU's own bag (the spellbook first, the clothes, the class kit, the torches - 17f's order holds). It
   // rode equip.js's seedStartingEquipment alone - the retired PRE-CHARGEN fallback - so a character who came
   // through chargen set out with no water, no food, no gear and no fire while the needs drained.
-  if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }
+  // SURV-KIT (2026-09-23, Mac: "C&C characters regardless of mode should start with supplies"): in EVERY tier,
+  // Off's too. The tier is a setting the player moves at any hour and the kit is the character's own: born Off,
+  // the arc turned on later, a character set out with nothing. Off's bag is DFU's with the kit after it.
+  for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }
   addStartingGold(entity, STARTING_GOLD);
   return added;
 }
