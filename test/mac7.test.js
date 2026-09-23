@@ -36,7 +36,7 @@ import { PeerBodies } from '../src/net/peerBodies.js';
 import { EQUIP_SLOTS } from '../src/systems/equip.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
-const ARM0 = { wd: 0, an: 0, as: 0, am: 0, sr: 0, cn: 0, cr: 0, fk: 0 };   // PEER-FS1: and the footstep kind, 0 (outside) when unsaid
+const ARM0 = { wd: 0, an: 0, as: 0, am: 0, sr: 0, cn: 0, cr: 0, ce: 4, ar: 0, fk: 0 };   // SPELLFX1: an unsaid element reads Magic   // PEER-FS1: and the footstep kind, 0 (outside) when unsaid
 
 test('MAC7: the wire - POSE_STRIKES is DFU\'s WeaponStates order (fpsWeapon\'s own index) and POSE_CAST_RANGES the TargetTypes\' count, one home at both ends; the pose carries the arm\'s seven clamped, a pose from before them reads sheathed, unswung, unarrowed and uncast; a draw, a swing, an arrow, a stance or a cast is a change; the eased pose carries them whole', () => {
   for (const [name, i] of Object.entries(STATE_INDEX)) assert.equal(POSE_STRIKES[i], name, `${name} at ${i}: the WeaponStates order`);
@@ -45,7 +45,7 @@ test('MAC7: the wire - POSE_STRIKES is DFU\'s WeaponStates order (fpsWeapon\'s o
   assert.equal(relay.POSE_STRIKES, POSE_STRIKES, 'the same object at both ends'); assert.equal(relay.POSE_CAST_RANGES, POSE_CAST_RANGES);
   const base = { x: 1, y: 2, z: 3, yaw: 0.5, pitch: 0.1 };
   assert.deepEqual(validPose({ ...base, mv: 1 }), { ...base, mv: 1, ...ARM0 }, 'a pose from before the arm: sheathed, unswung, unarrowed, uncast');
-  assert.deepEqual(validPose({ ...base, mv: 2, wd: 1, an: 17, as: 3, am: 1, sr: 1, cn: 4, cr: 2 }), { ...base, mv: 2, wd: 1, an: 17, as: 3, am: 1, sr: 1, cn: 4, cr: 2, fk: 0 });
+  assert.deepEqual(validPose({ ...base, mv: 2, wd: 1, an: 17, as: 3, am: 1, sr: 1, cn: 4, cr: 2 }), { ...base, mv: 2, wd: 1, an: 17, as: 3, am: 1, sr: 1, cn: 4, cr: 2, ce: 4, ar: 0, fk: 0 });
   assert.equal(validPose({ ...base, wd: 'yes' }).wd, 1, 'a truthy wd is drawn'); assert.equal(validPose({ ...base, wd: 0 }).wd, 0);
   assert.equal(validPose({ ...base, wd: 2 }).wd, 2, 'MAC7 #2: 2 is the bow at full draw'); assert.equal(validPose({ ...base, wd: 3 }).wd, 1, 'anything else truthy: drawn');
   assert.equal(validPose({ ...base, an: 70000 }).an, 65535, 'the count clamped to the wire\'s width'); assert.equal(validPose({ ...base, an: -3 }).an, 0);
@@ -53,7 +53,7 @@ test('MAC7: the wire - POSE_STRIKES is DFU\'s WeaponStates order (fpsWeapon\'s o
   assert.equal(validPose({ ...base, as: 99 }).as, POSE_STRIKES.length - 1, 'the kind clamped to the list'); assert.equal(validPose({ ...base, as: NaN }).as, 0);
   assert.equal(validPose({ ...base, am: 'arrows' }).am, 1); assert.equal(validPose({ ...base, sr: {} }).sr, 1);
   assert.equal(validPose({ ...base, cn: 1e9 }).cn, 65535); assert.equal(validPose({ ...base, cr: 9 }).cr, POSE_CAST_RANGES - 1, 'the range clamped to the TargetTypes'); assert.equal(validPose({ ...base, cr: -1 }).cr, 0);
-  const full = { ...base, mv: 0, wd: 2, an: 2, as: 6, am: 1, sr: 0, cn: 1, cr: 1, fk: 0 };
+  const full = { ...base, mv: 0, wd: 2, an: 2, as: 6, am: 1, sr: 0, cn: 1, cr: 1, ce: 0, ar: 3, fk: 0 };   // SPELLFX1: a fire cast
   assert.deepEqual(parseClient(JSON.stringify({ t: 'pose', p: full }), { hasHello: true }), { t: 'pose', p: full }, 'through the frame');
   const a = { ...base, mv: 1, ...ARM0 };
   assert.equal(poseChanged(a, { ...a }), false);
@@ -184,14 +184,14 @@ test('MAC7 #2: the bow\'s hold - a swing that arrives with wd 2 is the draw, hel
 
 test('MAC7: the hosts by source - weaponRig counts every strike it starts before the Morrowind arm\'s gate and every cast at castSpellAnim, and exposes both; world.js reads the sheath, the bow\'s hold off the machine, the swing, the arrow, the spell stance and the cast into every pose it sends; peerBodies drives the rig\'s doors inside the update guard and withholds release while the sender holds', () => {
   const rig = rd('src/combat/weaponRig.js');
-  assert.match(rig, /const swing = \{ n: 0, strike: 'StrikeDown' \};(?:\s*\/\*\*[\s\S]*?\*\/)?\s*const cast = \{ n: 0, rangeType: 2 \};\s*function fpAttack\(strike\) \{\s*swing\.n = \(swing\.n \+ 1\) & 0xffff; swing\.strike = strike;\s*(?:\/\/[^\n]*\n\s*)*(?:eotbBody\.attack\([^\n]*\n\s*)?if \(!fpArm\.ready\(\)\) return;/, 'the strike counted before the arm\'s own gate: a classic-skin player swings too');
+  assert.match(rig, /const swing = \{ n: 0, strike: 'StrikeDown' \};(?:\s*\/\*\*[\s\S]*?\*\/)?\s*const cast = \{ n: 0, rangeType: 2, element: 4 \};[^\n]*\s*const shot = \{ n: 0 \};[^\n]*\s*function fpAttack\(strike\) \{\s*swing\.n = \(swing\.n \+ 1\) & 0xffff; swing\.strike = strike;\s*(?:\/\/[^\n]*\n\s*)*(?:eotbBody\.attack\([^\n]*\n\s*)?if \(!fpArm\.ready\(\)\) return;/, 'the strike counted before the arm\'s own gate: a classic-skin player swings too');
   assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\s*cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n\s*(?:eotbBody\.cast\(\);[^\n]*\n\s*)?fpArm\.castSpell\(rangeType\);/, 'the cast counted at the one door both lanes come through');
   assert.match(rig, /\n    swing,   \/\/ MAC7 #1/); assert.match(rig, /\n    cast,    \/\/ MAC7 #2/);
   assert.equal((rig.match(/fpAttack\(strike\)/g) ?? []).length, 3, 'the one counter sits under both strike doors (the click and the gesture)');
   const w = rd('src/scenes/world.js');
   assert.match(w, /import \{ POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes \} from '\.\.\/net\/wire\.js';/);   // WORLD6b: the cell's law rides the same import; WORLD6b-iii(b): and the seam's
   assert.match(w, /import \{ hasDaggerfallArrows \} from '\.\.\/combat\/fpArm\.js';/, 'the arrow read weaponRig\'s own per-frame read takes');
-  assert.match(w, /const live = modes\?\.liveArm\?\.\(\) \?\? null;\s*const rig = live\?\.rig \?\? weaponRig;\s*const wm = rig\.playerWeapon\.machine;\s*const arm = \{\s*mv,\s*fk: \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? _lastFootstepKind : \(modes\?\.footstepKind \?\? 0\),[^\n]*\n\s*wd: rig\.playerWeapon\.sheathed \? 0 : \(wm\?\.isBow && wm\.state === 'StrikeUp' \? 2 : 1\),\s*an: rig\.swing\.n, as: Math\.max\(0, POSE_STRIKES\.indexOf\(rig\.swing\.strike\)\),\s*am: hasDaggerfallArrows\(playerEntity\.items\) \? 1 : 0, sr: \(live \? live\.armed : magic\.spellArmed\(\)\) \? 1 : 0,\s*cn: rig\.cast\.n, cr: rig\.cast\.rangeType \| 0,\s*\};/, 'the arm\'s seven off the MODE\'s rig (AUDIT WORLD C1: world.js\'s own is never stepped indoors or underground), the entity and the mode\'s spell seam');
+  assert.match(w, /const live = modes\?\.liveArm\?\.\(\) \?\? null;\s*const rig = live\?\.rig \?\? weaponRig;\s*const wm = rig\.playerWeapon\.machine;\s*const arm = \{\s*mv,\s*fk: \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? _lastFootstepKind : \(modes\?\.footstepKind \?\? 0\),[^\n]*\n\s*wd: rig\.playerWeapon\.sheathed \? 0 : \(wm\?\.isBow && wm\.state === 'StrikeUp' \? 2 : 1\),\s*an: rig\.swing\.n, as: Math\.max\(0, POSE_STRIKES\.indexOf\(rig\.swing\.strike\)\),\s*am: hasDaggerfallArrows\(playerEntity\.items\) \? 1 : 0, sr: \(live \? live\.armed : magic\.spellArmed\(\)\) \? 1 : 0,\s*cn: rig\.cast\.n, cr: rig\.cast\.rangeType \| 0, ce: rig\.cast\.element \?\? 4,[^\n]*\s*ar: rig\.shot\?\.n \?\? 0,[^\n]*\s*\};/, 'the arm\'s seven off the MODE\'s rig (AUDIT WORLD C1: world.js\'s own is never stepped indoors or underground), the entity and the mode\'s spell seam');
   assert.equal((w.match(/\{ \.\.\.pose, \.\.\.arm \}/g) ?? []).length, 2, 'into the hello and every pose');
   assert.doesNotMatch(w, /\{ \.\.\.pose, mv \}/);
   const pb = rd('src/net/peerBodies.js');

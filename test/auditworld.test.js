@@ -238,7 +238,7 @@ test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and 
   assert.match(pb, /if \(b\.goneAt == null\) \{ b\.goneAt = now; b\.swing = null; b\.pending = null; b\.posed = false; \}/, 'C7: the linger re-latches (AUDIT PEER-CADENCE F2: and forgets its skin)');
   assert.match(pb, /\} else \{\s*b\.posed = false;[^\n]*\n\s*if \(b\.swing != null\) \{ b\.swing = peer\.shown\.an \| 0; b\.cast = peer\.shown\.cn \| 0; b\.pending = null; \}/, 'C7: out of range the counts follow (AUDIT PEER-CADENCE F2: and the skin is forgotten)');
   const wire = rd('src/net/wire.js');
-  assert.match(wire, /A pose is \{x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr\}/, 'D11');
+  assert.match(wire, /A pose is \{x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar\}/, 'D11 (SPELLFX1: plus ce and ar)');
   // the record
   const arc = rd('bible/06-Systems/Online-Arc.md');
   assert.doesNotMatch(arc, /the only thing shared is presence/, 'D2: the arc\'s head'); assert.doesNotMatch(arc, /none of the\nsharing/, 'D2');

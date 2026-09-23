@@ -38,6 +38,7 @@
 // when `!playerEnterExit.IsPlayerInside` (:518-529).
 
 import { audio as defaultAudio } from './audio.js';
+import { soundSilenced } from './soundReplacer.js';   // SNDREP1: the player's crickets switch
 import { rand } from '../formats/dfRandom.js';
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 
@@ -93,8 +94,8 @@ export function presetForExterior(weather, night) {
  *  STATIC event - DaggerfallVidPlayerWindow.OnVideoStart/OnVideoEnd,
  *  subscribed per instance at AmbientEffectsPlayer.cs:92-93. The port
  *  has no static events, and the video player can reach none of the
- *  three hosts that own an instance privately (dungeonContext.js:4607,
- *  exterior.js:4015, world.js:11069), so the registry IS that event:
+ *  three hosts that own an instance privately (dungeonContext.js:4618,
+ *  exterior.js:4015, world.js:11156), so the registry IS that event:
  *  every instance joins on construction and leaves on dispose(). A
  *  mute wired into one host only would leave the rain audible over a
  *  video raised from another. */
@@ -372,8 +373,13 @@ export class AmbientEffects {
     // under the ground - the loop is stopped while `deps.underground`
     // and the chorus clock holds, so the surface takes the night up
     // where it stood. A recorded departure (Port-Ledger A).
+    // SNDREP1 (uiPrefs `nightCrickets`): the player's switch is the same
+    // stop. The audio door already refuses a NEW loop for a silenced clip,
+    // but a chorus already sounding holds its own source - it would sing
+    // on for the rest of its bout (up to 45 s) after "Off: silent". So
+    // the arm stops it here and holds the clock, as it does underground.
     if (this.preset === 'clearNight') {
-      if (deps.underground) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }
+      if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }
       else this._updateCrickets(dt);
     }
     this._busy = Math.max(0, this._busy - dt);
