@@ -665,7 +665,7 @@ third was a thing the port never said out loud.
 
   **And `resting` holds two HEALTH arms with the fatigue ones** (F12),
   which the first cut did not disclose: the bare-skin block's naked-cold
-  and sunburn ticks (`needs.js:448`), and, for a traveller who is also
+  and sunburn ticks (`needs.js:480`), and, for a traveller who is also
   `byFire`, the exposure damage at `:422`. Harm you cannot answer while
   the autopilot holds the controls is not a loss worth keeping. The law
   is executed now, not matched: `test/surv7_feed.test.js` runs ten game
@@ -739,7 +739,7 @@ which `InitLocationRects` keeps refreshing the rects MID-journey
 (`:606-612`, `autopilot == null || destinationName != null`;
 `travelOptions.js:458-461`). A town's ring reaches into its neighbour
 pixels; the crossing fired `OnMapPixelChanged`, the host's
-`locationTileRect` answered null for the neighbour (world.js:6338 -
+`locationTileRect` answered null for the neighbour (world.js:6351 -
 null both for a pixel not yet built and for one with no location),
 `SetLocationRects` nulled both rects (`:602-604`), and the walk's own
 `OnArrival` (`circumnavigateLocation`, `:753-797`) read

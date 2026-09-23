@@ -290,12 +290,13 @@ export class TavernWindow {
         const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });
         h.advanceMinutes?.(r.minutes);
         h.entity.lastTimePlayerAteOrDrankAtTavern = now;
+        let b = null;
         if (r.blackout) {
-          const b = blackout(s, now + r.minutes, { endurance });
+          b = blackout(s, now + r.minutes, { endurance });
           stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules);   // the night on the boards is a rough one (SURV4), at the tier's price
           h.advanceMinutes?.(b.minutes);
         }
-        return [{ rows: line(r.text) }];
+        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }];   // AUDIT SURV-TIERS (the third pass): and the waking
       },
       onCancel: () => null,
     };

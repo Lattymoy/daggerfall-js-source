@@ -323,7 +323,7 @@ export function seedStartingEquipment(entity) {
   // SURV2: a new character sets out with provisions - two sacks of
   // rations, a full waterskin, worn camping gear and a fire kit with
   // two lights left (survival/items.js startingProvisions; the mod's
-  // own OnStartGame kit, plus the port's fire).
+  // own OnStartGame kit, plus the port's fire). Casual and Hard alone, by decision (Mac, 2026-09-23: "No, not off.. theres no reason to have it in off" - SURV-KIT, withdrawn).
   if (survivalOn()) for (const it of startingProvisions()) entity.items.push(it);
 }
 

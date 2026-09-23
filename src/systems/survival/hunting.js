@@ -214,8 +214,8 @@ export const HUNT_LOOT_SCALE = 0.5;
  *  can carry a poison, a disease, a wound, the boar's fatigue or a beast.
  *  The twin keeps what the search FOUND (its meat, fruit and the skills it
  *  used) and nothing that harms; a foul pool's water is its harm's vehicle
- *  and goes with it. test/survtiers.test.js walks every event, weapon and
- *  roll to hold that no harm survives a Casual hunt. */
+ *  and goes with it. test/survtiers.test.js walks every event and weapon at
+ *  three skill levels on 200 seeded rolls (12,000 hunts) to hold that no harm survives a Casual hunt. */
 export const HUNT_SAFE_TWIN = Object.freeze({
   snakeShotBite: 'snakeShot', snakeMissBite: 'snakeMiss', snakeGrabBite: 'snakeGrab', snakeBite: 'snakeGone',
   lizardBite: 'lizardGone', fruitStrange: 'fruitNone', foul: 'unsafe',

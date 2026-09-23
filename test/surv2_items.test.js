@@ -140,7 +140,7 @@ test('SURV2: using a waterskin drinks a tenth and says so, an empty one says whe
   e.items.push(skin);
   survivalOf(e, now).thirst = 90;
   let r = useSurvivalItem(skin, e.items, { entity: e, now });
-  assert.deepEqual([r.kind, r.text, r.left], ['drank', 'Your water skin is nearly empty.', 0.15]);
+  assert.deepEqual([r.kind, r.text, r.left], ['drank', 'Your waterskin is nearly empty.', 0.15]);   // AUDIT SURV-TIERS (the third pass): the automatic drink's spelling
   assert.equal(e.survival.thirst, 50);
   r = useSurvivalItem(skin, e.items, { entity: e, now });
   assert.equal(r.text, 'You drain your waterskin.');

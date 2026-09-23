@@ -224,7 +224,7 @@ export const CURE_BASE_COST_PER_DISEASE = 250;
  *  rather than taking it from a host. The field arrives from the
  *  classic import (formats/characterRecord.js:183, offset 0x1f3 ->
  *  classicSave.js:203/:807) and round-trips through the save envelope
- *  (save.js:425 out, :492 back). It
+ *  (save.js:426 out, :493 back). It
  *  reaches a character only through AssignCharacter (PlayerEntity.cs
  *  :856), i.e. a classic import - the port's own infections are
  *  disease effects and diseaseCount already counts those - so a

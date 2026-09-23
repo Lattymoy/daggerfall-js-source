@@ -119,8 +119,8 @@
   {
     "name": "SURV1-the-stage-line-repeats-every-minute",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (once) { if (n[key] === 'on') return; n[key] = 'on'; say?.(text); return; }",
-    "new": "  if (once) { say?.(text); return; }",
+    "old": "  if (stage === was) return;\n  const sev = STAGE_SEVERITY[family], now = sev[stage] ?? 0, before = was ? sev[was] ?? 0 : 0;\n  if (Math.sign(now) !== Math.sign(before) || Math.abs(now) > Math.abs(before)) say?.(text);",
+    "new": "  say?.(text);",
     "tests": [
       "test/surv1_model.test.js"
     ]

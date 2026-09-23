@@ -490,7 +490,7 @@
   {
     "name": "SURVTIERS-hard-keeps-a-casual-loan",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (!repays && s.borrowed) delete s.borrowed;",
+    "old": "  if (!repays && s.borrowed) { delete s.borrowed; delete s.loanPool; }",
     "new": "",
     "tests": [
       "test/survtiers.test.js"
@@ -526,8 +526,8 @@
   {
     "name": "SURVTIERS-drink-reads-the-permanent-endurance",
     "file": "src/systems/survival/needs.js",
-    "old": "survivalStatMods(s, temp, now, { endurance: liveStat(entity, 'endurance'), rules })",
-    "new": "survivalStatMods(s, temp, now, { endurance, rules })",
+    "old": "survivalStatMods(s, temp, now, { endurance: liveStat(entity, 'endurance'), rules, vampire })",
+    "new": "survivalStatMods(s, temp, now, { endurance, rules, vampire })",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -734,7 +734,7 @@
   {
     "name": "SURVTIERS-a-long-off-is-paused-whole",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (s.offFor > ALIGN_GRACE_MINUTES) { alignSurvival(entity, Math.floor(to), null); s.offFor = 0; }",
+    "old": "  if (s.offFor > ALIGN_GRACE_MINUTES) { alignSurvival(entity, Math.floor(to), null); delete s.offFor; }",
     "new": "",
     "tests": [
       "test/survtiers.test.js"
@@ -752,7 +752,7 @@
   {
     "name": "SURVTIERS-a-refilled-pool-still-owes",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (repays && s.borrowed) settleLoan(s, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));",
+    "old": "  if (repays && s.borrowed && !((entity.fatigue ?? 0) <= (s.loanPool ?? -Infinity))) settleLoan(s, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));",
     "new": "",
     "tests": [
       "test/survtiers.test.js"
@@ -968,7 +968,7 @@
   {
     "name": "SURVOFFSIGHT-off-sees-no-camp",
     "file": "src/scenes/camps.js",
-    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c.rec)));",
+    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c)));",
     "new": "  const seen = () => (survivalOn() ? camps : NO_CAMPS);",
     "tests": [
       "test/survtiers.test.js"
@@ -977,7 +977,7 @@
   {
     "name": "SURVOFFSIGHT-off-sees-its-own",
     "file": "src/scenes/camps.js",
-    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c.rec)));",
+    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c)));",
     "new": "  const seen = () => camps;",
     "tests": [
       "test/survtiers.test.js"
@@ -986,8 +986,8 @@
   {
     "name": "SURVOFFSIGHT-off-sees-only-its-own",
     "file": "src/scenes/camps.js",
-    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c.rec)));",
-    "new": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => mine(c.rec)));",
+    "old": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => !mine(c)));",
+    "new": "  const seen = () => (survivalOn() ? camps : camps.filter((c) => mine(c)));",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -1004,8 +1004,8 @@
   {
     "name": "SURVOFFSIGHT-the-light-hidden-off",
     "file": "src/scenes/camps.js",
-    "old": "    return seen().filter((c) => fireLit(c.rec, t))",
-    "new": "    return shown().filter((c) => fireLit(c.rec, t))",
+    "old": "    const lit = seen().filter((c) => fireLit(c.rec, t));",
+    "new": "    const lit = shown().filter((c) => fireLit(c.rec, t));",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -1020,19 +1020,19 @@
     ]
   },
   {
-    "name": "SURVOFFSIGHT-off-rays-what-it-sees",
+    "name": "SURVOFFSIGHT-the-ray-passes-through-what-is-seen",
     "file": "src/scenes/camps.js",
-    "old": "    for (const c of shown()) {\n      const p = c.rec.pos;",
-    "new": "    for (const c of seen()) {\n      const p = c.rec.pos;",
+    "old": "    for (const c of seen()) {   // AUDIT SURV-TIERS (the third pass): sight - a seen camp stops the ray",
+    "new": "    for (const c of shown()) {",
     "tests": [
       "test/survtiers.test.js"
     ]
   },
   {
-    "name": "SURVOFFSIGHT-off-names-and-opens-what-it-sees",
+    "name": "SURVOFFSIGHT-what-is-seen-has-no-name-and-no-look",
     "file": "src/scenes/camps.js",
-    "old": "  const forKey = (key) => shown().find(",
-    "new": "  const forKey = (key) => seen().find(",
+    "old": "  const forKey = (key) => seen().find(",
+    "new": "  const forKey = (key) => shown().find(",
     "tests": [
       "test/survtiers.test.js"
     ]
@@ -1047,10 +1047,10 @@
     ]
   },
   {
-    "name": "SURVOFFSIGHT-off-rests-at-what-it-sees",
+    "name": "SURVOFFSIGHT-off-opens-the-menu-of-what-it-sees",
     "file": "src/scenes/camps.js",
-    "old": "  const campAt = (pos) => nearestFire(shown().map((c) => c.rec), pos, now());",
-    "new": "  const campAt = (pos) => nearestFire(seen().map((c) => c.rec), pos, now());",
+    "old": "    if (!survivalOn()) return true;   // SURV-OFFSIGHT (the third pass): with the arc Off the click is taken and opens nothing\n",
+    "new": "",
     "tests": [
       "test/survtiers.test.js"
     ]

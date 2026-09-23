@@ -139,7 +139,7 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
   // AUDIT SURV E: the mod's OnStartGame kit, plus the port's fire kit (survival/items.js startingProvisions),
   // AFTER DFU's own bag (the spellbook first, the clothes, the class kit, the torches - 17f's order holds). It
   // rode equip.js's seedStartingEquipment alone - the retired PRE-CHARGEN fallback - so a character who came
-  // through chargen set out with no water, no food, no gear and no fire while the needs drained.
+  // through chargen set out with no water, no food, no gear and no fire while the needs drained. Casual and Hard alone, by decision (Mac, 2026-09-23: "No, not off.. theres no reason to have it in off" - SURV-KIT, withdrawn).
   if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }
   addStartingGold(entity, STARTING_GOLD);
   return added;

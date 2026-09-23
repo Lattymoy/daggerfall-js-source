@@ -165,16 +165,19 @@ export const awakeHours = (s, now) => Math.max(0, now - (s.awakeSince ?? now)) /
  *  (the caller clamps against the permanent stat). SURV-TIERS: the
  *  needs' drains are the tier's `attributes`; the drink's swing is
  *  every tier's - it is chosen at a bar, not a need left unmet. */
-export function survivalStatMods(s, temp, now, { endurance = 50, rules = HARD_RULES } = {}) {
+export function survivalStatMods(s, temp, now, { endurance = 50, rules = HARD_RULES, vampire = false } = {}) {
   const mods = {};
   const sub = (keys, n) => { if (n > 0) for (const k of keys) mods[k] = (mods[k] ?? 0) - n; };
   const ALL = ['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed'];
   if ((rules ?? HARD_RULES).attributes) {   // AUDIT SURV-TIERS: null is no rules too, as in every other law
-    const starve = starvingDays(hungerMinutes(s, now));
+    // AUDIT SURV-TIERS (the third pass): a VAMPIRE has no need for food, drink or sleep (the minute law calls them
+    // fed and freezes the thirst and the debt; the page says so) - and these read the frozen markers, so a Hard
+    // vampire lost two from every attribute a day to a hunger it cannot have, down to twenty. Since SURV1.
+    const starve = vampire ? 0 : starvingDays(hungerMinutes(s, now));
     if (starve > 0) sub(ALL, Math.min(20, starve * 2));
     if (temp && temp.abs > NEED.EXPOSURE_AT) sub(ALL, Math.trunc(Math.min(s.exposure, temp.abs - NEED.EXPOSURE_AT) / 4));
-    if (s.thirst >= NEED.DEHYDRATED) sub(ALL, Math.trunc((s.thirst - 90) / 10));
-    const sleep = sleepStage(s.sleepDebt);
+    if (!vampire && s.thirst >= NEED.DEHYDRATED) sub(ALL, Math.trunc((s.thirst - 90) / 10));
+    const sleep = vampire ? 'rested' : sleepStage(s.sleepDebt);
     if (sleep === 'tired') sub(ALL, 2); else if (sleep === 'drowsy') sub(ALL, 5); else if (sleep === 'exhausted') sub(ALL, 10);
     if (Number.isFinite(s.stiffUntil) && now < s.stiffUntil) sub(['speed', 'agility'], STIFF_PENALTY);   // SURV4: the rough night's morning
   }
@@ -217,7 +220,7 @@ export function applySurvivalMods(entity, mods) {
 
 /** AUDIT SURV-TIERS: the record's loan held to `room` (the pool's shortfall) - each need's share cut in proportion,
  *  whole units, and a need owed nothing leaves the record. */
-function settleLoan(s, room) {
+export function settleLoan(s, room) {
   const b = s.borrowed;
   let total = 0;
   for (const k of Object.keys(b)) total += b[k];
@@ -237,6 +240,34 @@ function note(s, key, now, say, text, { once = false } = {}) {
   say?.(text);
 }
 const clearNote = (s, key) => { if (s.notes[key] === 'on') delete s.notes[key]; };
+/**
+ * AUDIT SURV-TIERS (the third pass): A STAGE LINE IS SAID WHEN THE STAGE
+ * WORSENS - reached from a milder one, or from none - and never on the way
+ * back. Each stage was a note of its own, cleared the moment another took
+ * over, so every stage passed through spoke: a sleep paying off Exhausted
+ * announced "You are drowsy" and a yawn, a cup of milk from Dehydrated
+ * said "You are getting thirsty", and a warming morning said the cold was
+ * seeping in. `s.notes[family]` holds the stage last reached; a stage on
+ * the other side (the cold after the heat) is a new one. A jump's
+ * replayed minutes leave it alone, so the minute the player lands in says
+ * the net change, once (runSurvivalMinutes).
+ */
+const STAGE_SEVERITY = Object.freeze({
+  wet: Object.freeze({ damp: 1, wet: 2, soaked: 3, drenched: 4 }),
+  hunger: Object.freeze({ peckish: 1, hungry: 2, starving: 3 }),
+  thirst: Object.freeze({ thirsty: 1, parched: 2, dehydrated: 3 }),
+  sleep: Object.freeze({ tired: 1, drowsy: 2, exhausted: 3 }),
+  temp: Object.freeze({ cold: -1, freezing: -2, deadly: -3, warm: 1, hot: 2, scorching: 3 }),
+});
+function stageNote(s, family, stage, say, text, replay) {
+  if (replay) return;
+  const was = s.notes[family];
+  if (!stage) { delete s.notes[family]; return; }
+  if (stage === was) return;
+  const sev = STAGE_SEVERITY[family], now = sev[stage] ?? 0, before = was ? sev[was] ?? 0 : 0;
+  if (Math.sign(now) !== Math.sign(before) || Math.abs(now) > Math.abs(before)) say?.(text);
+  s.notes[family] = stage;
+}
 
 /**
  * ONE WORLD MINUTE of the needs.
@@ -290,13 +321,18 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // tier that does not repay carries no loan (Casual to Hard: Hard keeps
   // what it takes, and so keeps what was taken).
   if (!rules.attributes && s.stiffUntil) s.stiffUntil = 0;
-  if (!repays && s.borrowed) delete s.borrowed;
+  if (!repays && s.borrowed) { delete s.borrowed; delete s.loanPool; }
   // AUDIT SURV-TIERS (the second pass): A LOAN IS NEVER MORE THAN THE POOL IS SHORT. A bed, a potion, the fed
   // hour or the collapse's hour refills the pool without meeting the need - and the loan stayed owed, so the meal
   // after paid it AGAIN: a player who slept starving banked a pool of stamina a day and ate it mid-fight. Whatever
   // refilled the pool has paid that much of the loan, so it is settled down to the pool's shortfall here, before
   // the minute charges anything (each charge then adds to both alike).
-  if (repays && s.borrowed) settleLoan(s, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));
+  // AUDIT SURV-TIERS (the third pass): ...AND ONLY BY A REFILL. A pool whose CEILING fell - a Drain on endurance, a
+  // ring of strength taken off, a Fortify's end - had its loan cut as if refilled, and what the need took never came
+  // back when the need was met. The settle runs when the pool has RISEN since the last minute left it (`loanPool`,
+  // the fed hour's refund counted as the rise it is); a pool that only shrank still owes the loan, and the repayment
+  // below never fills past the ceiling.
+  if (repays && s.borrowed && !((entity.fatigue ?? 0) <= (s.loanPool ?? -Infinity))) settleLoan(s, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));
 
   // WET: rain and water raise it; warmth dries it, a fire dries it fast.
   s.wet = Math.min(NEED.WET_MAX, s.wet + temp.wetGain);
@@ -306,20 +342,19 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     s.wet = Math.max(0, s.wet - dry);
   }
   const wetNow = wetStage(s.wet);
-  if (wetNow !== 'dry') note(s, `wet:${wetNow}`, now, say, SURVIVAL_TEXT[wetNow], { once: true });
-  for (const k of ['damp', 'wet', 'soaked', 'drenched']) if (k !== wetNow) clearNote(s, `wet:${k}`);
+  stageNote(s, 'wet', wetNow === 'dry' ? null : wetNow, say, SURVIVAL_TEXT[wetNow], replay);
 
   // HUNGER: the marker stands; the tallies move.
   const hunger = hungerMinutes(s, now);
   const hungerNow = vampire ? 'fed' : hungerStage(hunger);
-  if (hungerNow === 'fed' && !vampire) { s.fed += 1; if (s.fed >= WELL_FED_MINUTES) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); } }
+  let refunded = 0;   // AUDIT SURV-TIERS (the third pass): the fed hour's refund is a refill the loan is settled by (loanPool)
+  if (hungerNow === 'fed' && !vampire) { s.fed += 1; if (s.fed >= WELL_FED_MINUTES) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); refunded = DRAIN.wellFed; } }
   if (hungerNow === 'starving' && autoEat) {
     const sack = items.find((i) => i.templateIndex === TEMPLATE.Rations && isFood(i));
     if (sack) { eatRations(entity, sack, now, say); }
   }
   const hungerAfter = vampire ? 'fed' : hungerStage(hungerMinutes(s, now));
-  if (hungerAfter !== 'fed') note(s, `hunger:${hungerAfter}`, now, say, SURVIVAL_TEXT[hungerAfter], { once: true });
-  for (const k of ['peckish', 'hungry', 'starving']) if (k !== hungerAfter) clearNote(s, `hunger:${k}`);
+  stageNote(s, 'hunger', hungerAfter === 'fed' ? null : hungerAfter, say, SURVIVAL_TEXT[hungerAfter], replay);
   if (hungerAfter === 'starving' && !resting) tire(DRAIN.starving, 'hunger');
 
   // THIRST: the heat drives it; a skin in the pack answers it.
@@ -329,8 +364,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);
     if (autoDrink && s.thirst >= NEED.THIRSTY) drinkWater(entity, now, say);   // AUDIT SURV E: at the stage, so the chip never blinks with a skin in the pack
     const thirstNow = thirstStage(s.thirst);
-    if (thirstNow !== 'fine') note(s, `thirst:${thirstNow}`, now, say, SURVIVAL_TEXT[thirstNow], { once: true });
-    for (const k of ['thirsty', 'parched', 'dehydrated']) if (k !== thirstNow) clearNote(s, `thirst:${k}`);
+    stageNote(s, 'thirst', thirstNow === 'fine' ? null : thirstNow, say, SURVIVAL_TEXT[thirstNow], replay);
     thirstRed = thirstNow === 'parched' || thirstNow === 'dehydrated';
     if (!resting) {
       if (thirstNow === 'parched') tire(DRAIN.parched, 'thirst');
@@ -398,8 +432,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
       s.sleepDebt = Math.min(NEED.SLEEP_DEBT_MAX, s.sleepDebt + 1 / 60);
     }
     const sleepNow = sleepStage(s.sleepDebt);
-    if (sleepNow !== 'rested') note(s, `sleep:${sleepNow}`, now, say, SURVIVAL_TEXT[sleepNow], { once: true });
-    for (const k of ['tired', 'drowsy', 'exhausted']) if (k !== sleepNow) clearNote(s, `sleep:${k}`);
+    stageNote(s, 'sleep', sleepNow === 'rested' ? null : sleepNow, say, SURVIVAL_TEXT[sleepNow], replay);
     sleepRed = sleepNow === 'exhausted';
     if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted, 'sleep');
   }
@@ -418,6 +451,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // outright - the fire's fifteen degrees alone left a camper in a snowstorm Deadly cold beside it, charged, and the
   // cold's loan never repaid. The felt reading stays the world's; the body is warm.
   const warmedByFire = !!(rules.stamina.fireWarms && env.byFire && temp.felt < 0);
+  if (warmedByFire) s.warmed = true; else if (s.warmed) delete s.warmed;   // AUDIT SURV-TIERS (the third pass): the strip's word for it (status.js)
   const tempRed = !warmedByFire && (temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom);
   if (!resting || !env.byFire) {
     if (tempRed && (!resting || rules.stamina.duringRest)) tire(DRAIN.heatPer20 * Math.trunc(abs / 20), 'temp');
@@ -435,9 +469,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // speaks at once and a held reading never repeats (a cold afternoon said three lines every five minutes)
   const tw = temperatureWord(temp.felt);
   const word = tw === 'scorching' ? 'scorching' : tw === 'hot' ? 'hot' : tw === 'warm' ? 'warm' : tw === 'deadly cold' ? 'deadly' : tw === 'freezing' ? 'freezing' : tw === 'cold' ? 'cold' : null;
-  const tempKey = word && !(env.insideDungeon && word === 'warm') ? `temp:${word}` : null;
-  if (tempKey) note(s, tempKey, now, say, SURVIVAL_TEXT[word], { once: true });
-  for (const k of ['scorching', 'hot', 'warm', 'deadly', 'freezing', 'cold']) if (`temp:${k}` !== tempKey) clearNote(s, `temp:${k}`);
+  stageNote(s, 'temp', word && !(env.insideDungeon && word === 'warm') ? word : null, say, SURVIVAL_TEXT[word], replay);
 
   // BARE SKIN: naked in the cold, bare feet, the sun on uncovered skin.
   // AUDIT SURV E: never asleep or sat resting (the bedroll and the fire), once every ten minutes, never the last five points;
@@ -499,10 +531,11 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     const give = Math.min(back, Math.max(0, maxFatigue(entity) - (entity.fatigue ?? 0)));
     if (give > 0) { sinks.restoreFatigue?.(give); note(s, 'repaid', now, say, SURVIVAL_TEXT.repaid); }
   }
+  if (s.borrowed) s.loanPool = (entity.fatigue ?? 0) - refunded; else if ('loanPool' in s) delete s.loanPool;
 
   // AUDIT SURV-TIERS: the drink's bands on the LIVE endurance - the mod's LiveEndurance, the one the tavern, the HUD
   // and the status page already read (the permanent stat here put the swing out of step with the word that named it)
-  applySurvivalMods(entity, survivalStatMods(s, temp, now, { endurance: liveStat(entity, 'endurance'), rules }));
+  applySurvivalMods(entity, survivalStatMods(s, temp, now, { endurance: liveStat(entity, 'endurance'), rules, vampire }));
   s.lastMinute = now;   // AUDIT SURV B: the last minute paid - a span run under a rest is not run again by the frame
   s.felt = temp.felt;   // SURV5: the last felt reading rides the record - the HUD strip and the status page read it without the env
   return temp;
@@ -517,7 +550,6 @@ export function drinkWater(entity, now, say = null) {
   if (!r.ok) return false;
   skin.name = waterskinName(skin);
   s.thirst = Math.max(0, s.thirst - DRINK_RELIEF);
-  s.notes['thirst:thirsty'] = s.notes['thirst:parched'] = s.notes['thirst:dehydrated'] = undefined;
   say?.(r.empty ? SURVIVAL_TEXT.drained : r.low ? SURVIVAL_TEXT.drankLow : SURVIVAL_TEXT.drank);
   return true;
 }
@@ -528,7 +560,6 @@ export function eatRations(entity, sack, now, say = null) {
   const s = survivalOf(entity, now);
   const items = entity.items ?? [];
   s.lastAte = now - 10;   // a sack is a full meal: fed, whatever the hunger was
-  for (const k of Object.keys(s.notes)) if (k.startsWith('hunger:')) delete s.notes[k];
   say?.(SURVIVAL_TEXT.ateRations);
   if ((sack.stackCount ?? 1) <= 1) { const i = items.indexOf(sack); if (i >= 0) items.splice(i, 1); say?.(SURVIVAL_TEXT.emptiedRations); }
   else sack.stackCount -= 1;
@@ -558,8 +589,19 @@ export function runSurvivalMinutes(entity, from, to, env, deps) {
   // them. ONE object, mutated - this loop runs up to 2,880 times and a
   // fresh deps per minute would be 2,880 objects a jump (EV2's rule).
   if (s.offFor) delete s.offFor;   // AUDIT SURV-TIERS: the arc is on again - an Off span ends (pauseSurvival)
-  const walk = { ...deps, replay: true };
-  for (let m = start + 1; m <= end; m++) { walk.replay = m < end; temp = survivalMinute(entity, m, env, walk); }
+  // AUDIT SURV-TIERS (the third pass): AND WHAT A JUMP SAYS, IT SAYS ONCE, AS IT LANDS. Every replayed minute spoke
+  // as if lived, so a three-day journey arrived with thirty lines - eighteen of them "You drink from your waterskin."
+  // - and a blackout night drank from the skin while its drinker was out cold. The replay's lines are gathered, each
+  // said once when the walk reaches the minute the player stands in; the stage lines wait for that minute
+  // (stageNote), which says the net change.
+  const sinks = deps.sinks ?? {};
+  const heard = [];
+  const walk = { ...deps, replay: true, sinks: { ...sinks, say: (t) => { if (!heard.includes(t)) heard.push(t); } } };
+  for (let m = start + 1; m <= end; m++) {
+    walk.replay = m < end;
+    if (!walk.replay) { walk.sinks = sinks; const say = sinks.say ?? deps.say; for (const t of heard) say?.(t); }
+    temp = survivalMinute(entity, m, env, walk);
+  }
   if (end > (s.lastMinute ?? -Infinity)) s.lastMinute = end;
   return temp;
 }
@@ -591,11 +633,33 @@ export function pauseSurvival(entity, from, to) {
   if (Number.isFinite(s.lastAte)) s.lastAte += span;
   if (Number.isFinite(s.awakeSince)) s.awakeSince += span;
   s.lastMinute = Math.floor(to);
+  // AUDIT SURV-TIERS (the third pass): ...BUT THE WORLD'S OWN DECAYS RUN. What is paused is the NEEDS - the two
+  // timestamps that are hunger and wakefulness, and the thirst that stands. A drink wears off and a soaking dries in
+  // any game, and they had been frozen with the needs: twenty hours Off in a dry inn came back Very drunk and
+  // Drenched, the drink's swing on every attribute with it (the symptom the fresh start below cures, under its one
+  // day). They run at their slowest rates - one off every ten minutes for the drink, one a minute for the wet - and
+  // the body's exposure cools as it does indoors.
+  if (s.drunk > 0) s.drunk = Math.max(0, s.drunk - (Math.floor(to / 10) - Math.floor(from / 10)));
+  if (s.wet > 0) s.wet = Math.max(0, s.wet - span);
+  if (s.exposure > 0) s.exposure = Math.max(0, s.exposure - 2 * span);
   // ...AND A LONG ONE IS A FRESH START, WORLD5's own rule for an absence (alignSurvival, below): paused whole, five
   // days Off came back Drenched and Very drunk, the drink's penalty with them. Past the grace the body has lived the
   // classic game's days - fed, watered, rested, dry and sober - and the needs start again from there.
   s.offFor = (s.offFor ?? 0) + span;
-  if (s.offFor > ALIGN_GRACE_MINUTES) { alignSurvival(entity, Math.floor(to), null); s.offFor = 0; }
+  if (s.offFor > ALIGN_GRACE_MINUTES) { alignSurvival(entity, Math.floor(to), null); delete s.offFor; }   // AUDIT SURV-TIERS (the third pass): gone, not nought - a 0 rode every save after
+  return true;
+}
+/**
+ * AUDIT SURV-TIERS (the third pass): A CORRECTION IS NOT AN ABSENCE. The relay's clock stepping this machine's by
+ * `delta` minutes moved the world under the needs' timestamps - worldTick.js alignEntityClocks moves every other
+ * marker by it - so a player fed a minute before the socket opened on a clock three hours slow read Starving, and in
+ * Hard lost two from every attribute. The record rides the same delta: the needs stand where they were. (A LOAD's
+ * gap is different, and save.js keeps it: an hour away is an hour hungrier - WORLD5.)
+ */
+export function shiftSurvival(entity, delta) {
+  const s = entity?.survival;
+  if (!s || typeof s !== 'object' || !Number.isFinite(delta) || delta === 0) return false;
+  for (const k of ['lastAte', 'awakeSince', 'lastMinute', 'stiffUntil']) if (Number.isFinite(s[k]) && s[k] !== 0) s[k] += delta;
   return true;
 }
 /** AUDIT SURV A: the feed stopped (the mod off, a host with no reader) - the drains the last minute wrote go with it. */

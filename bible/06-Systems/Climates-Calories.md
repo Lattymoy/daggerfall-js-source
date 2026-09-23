@@ -19,14 +19,15 @@ the manifest, the mod's item templates and sixteen of its item icons.
 > **SURV-TIERS (2026-09-23): THE ARC IS PLAYED AT ONE OF THREE TIERS -
 > OFF, CASUAL (the default) and HARD.** Everything from here to
 > SURV-TENT describes HARD, the arc at full strength and unchanged to the
-> number (but for the laws both tiers share that the two AUDIT
+> number (but for the laws both tiers share that the three AUDIT
 > SURV-TIERS passes fixed). CASUAL is the same world - every clock, stage, item, camp,
 > menu, hunt and word below - with five rules on what it COSTS: stamina
 > only, only at the stages the HUD paints red, lent down to half the pool
 > at most and repaid when the need is met, nothing refused, nothing
 > rolled against the player and nothing wasted. The design, the table,
-> Off, the stored values and the audit are in **SURV-TIERS** and **AUDIT
-> SURV-TIERS** at the end of this page.
+> Off, the stored values and the audit are in **SURV-TIERS**, **AUDIT
+> SURV-TIERS** (three passes) and **SURV-OFFSIGHT** at the end of this
+> page.
 
 ## What the mod was (read off the DLL)
 
@@ -470,8 +471,9 @@ front door, not the 3D scene). What they found, all fixed and pinned
   and the cache carries none (the pool is the truth, the save envelope
   carries it, a restore merges by id); packing the last camp never
   reached peers (an empty `c` says "none stand"); the pool stands
-  nothing with the mod off; a relay clock correction re-aligns the
-  needs.
+  nothing with the mod off (superseded: AUDIT SURV-TIERS #10 keeps and
+  hides them, SURV-OFFSIGHT shows a peer's); a relay clock correction
+  re-aligns the needs.
 - THE LAWS (A): a rough nap raised a rested sleeper's debt to tired
   (the floor clamped upward); the rust arm wrote a phantom
   `condition` field; food aged from the world's first rot-day, not its
@@ -792,9 +794,10 @@ tavern menu in its own panel.
 > design. No band aids"*.
 
 **One key, three answers.** The `survival` pref was a boolean; it is a
-tier: **Off** (the classic game - no needs, no items, no camps), **Casual**
+tier: **Off** (the classic game - no needs and no items, and no use of any
+camp: it keeps its own and sees another player's, SURV-OFFSIGHT), **Casual**
 (the new default) and **Hard** (everything above this section, unchanged
-but for the laws both tiers share that the two AUDIT SURV-TIERS passes
+but for the laws both tiers share that the three AUDIT SURV-TIERS passes
 fixed - below, "Where Hard moved, all told").
 The Features tile's bar reads `Off | Casual | Hard`.
 
@@ -858,7 +861,7 @@ sources, the tavern's menus and the hunt's finds are all there.
 | Hunger | Starving: 4 fatigue a minute; -2 to every attribute a starving day, to -20 | Starving: 4 a minute, to half the pool - lent, and repaid by the meal |
 | Thirst | Parched 6, Dehydrated 12 a minute; attributes past 100; health from 120 on the harm tick - it can kill (SURV-THIRST1) | Parched 6, Dehydrated 12 a minute, to half the pool - repaid by the drink |
 | Sleep | Exhausted: 8 a minute; -2 / -5 / -10 to every attribute at tired / drowsy / exhausted | Exhausted: 8 a minute, to half the pool - repaid by the sleep |
-| Heat and cold | from 20 felt either way, 6 per 20 degrees, resting or not (away from a fire); exposure lowers attributes past 30; wounds past 50 - it can kill, in the minute you stand in (a jump's replayed minutes wound to the floor, SURV-THIRST1's law) | only at the red words (Scorching past 50; Freezing and Deadly cold past -30), the same 6 per 20, to half the pool, never while resting and never beside a lit fire - repaid by a warm place or a fire |
+| Heat and cold | from 20 felt either way, 6 per 20 degrees, awake anywhere and resting away from a fire; exposure lowers attributes past 30; wounds past 50 - it can kill, in the minute you stand in (a jump's replayed minutes wound to the floor, SURV-THIRST1's law) | only at the red words (Scorching past 50; Freezing and Deadly cold past -30), the same 6 per 20, to half the pool, never while resting, and never for the cold beside a lit fire (a fire warms; it does not cool - its chip goes amber there, the third pass) - repaid when the reading leaves the red |
 | Bare skin | naked in the cold and the sun on bare skin wound (never the last five points); bare feet 4 a minute | the lines alone - the cold and the sun are already in the felt temperature |
 | Wet armour | rusts, a point on a 5% minute | never |
 | Food | raw, stale or worse risks a disease on a failed luck roll | no roll - Hard's lucky branch, every time; spoiled still feeds less, putrid still will not go down |
@@ -885,10 +888,11 @@ SURV-TIERS closed the ways it had been one:
 
 - **The camps are kept, not burned.** The pool keeps every camp through the
   burn, the save, the scene cache and the wire, and keeps their USE from
-  THIS player alone (`scenes/camps.js` `shown`): no ray, name, menu,
-  warmth or camp's rest. What Off SEES is another player's camp - the
-  flame, its light, the tent - and never its own (`seen`; SURV-OFFSIGHT,
-  at the end of this page). A camp kit used with the arc Off is refused in
+  THIS player alone (`scenes/camps.js` `shown`): no menu, warmth or camp's
+  rest. What Off SEES is another player's camp - the flame, its light, the
+  tent, and (the third pass) the ray's stop, its name and a look - and
+  never its own (`seen`; SURV-OFFSIGHT, at the end of this page); a click
+  on it opens nothing. A camp kit used with the arc Off is refused in
   words - "Turn Climates & Calories on to make camp." (CAMP-SILENT's law:
   a refusal the player cannot see is a bug report nobody can act on).
 - **Its minutes are nobody's needs.** Hunger and wakefulness are
@@ -945,7 +949,8 @@ SURV-TIERS closed the ways it had been one:
   down in the law, so two needs in one minute share one budget whatever
   the host's sink does with them. In a tier that repays, what each need
   takes is written to the record's `borrowed` under the need's name
-  (`hunger`, `thirst`, `sleep`, `temp`, `feet`); the minute that need
+  (`hunger`, `thirst`, `sleep`, `temp`, and `feet` - that one only in a
+  tier that both taxes bare feet and repays, which none does today); the minute that need
   leaves its costing stage, its loan comes back through the sink's
   `restoreFatigue`, up to the pool, and one line says so ("You feel your
   strength returning."). A rest pauses the charge, not the need - a
@@ -955,6 +960,14 @@ SURV-TIERS closed the ways it had been one:
   (`settleLoan`, the top of every minute): a bed, a potion, the fed hour or
   the collapse's hour that refills the pool has paid that much of it, each
   need's share cut in proportion - or the meal after would pay it again.
+  AUDIT SURV-TIERS (the third pass): settled only when the pool has RISEN
+  since the last minute left it (`loanPool`, the fed hour's refund counted
+  as the rise it is) - a pool whose ceiling fell (a Drain on endurance, a
+  ring off, a Fortify's end) had its loan cut as if refilled, and the meal
+  gave nothing back. It still owes, and the repayment never fills past the
+  ceiling. (Between two minutes a charge or the refund can stand the loan a
+  little over the room; the next minute's settle takes it back before any
+  repayment.)
 - **The cap is read, not only written** (`statMods.js` `liveStat`): the
   needs' drain holds five above the stat as it stands without it wherever
   the stat is READ, so a Drain landing between two survival minutes cannot
@@ -1042,8 +1055,12 @@ which a build from before the tiers reads as ON - AUDIT SURV-TIERS, below.)
 Every tier, Off included, is the player's online (`online: 'player'`,
 unchanged) - Mac's "still let it be able to be turned off for online".
 MODS-ONLINE-3's reading holds tier by tier: a tier decides only what THIS
-player's body pays; the counters, the camps and a corpse's food (the
-killer's word) are the world's in every tier - an Off player's camps stand
+player's body pays; the counters and the camps are the world's in every
+tier. A corpse's food is not quite (AUDIT SURV-TIERS, the third pass,
+correcting this line): it is minted by whoever raises the death - the
+foe's owner in a cell, the host in a dungeon - at THAT player's tier, so an
+Off host's dungeon carries no meat for a Casual party (MODS-ONLINE-4's
+leak, older than the tiers; open for Mac, below) - an Off player's camps stand
 for everyone else, and an Off host relays its peers' camps; an Off
 player sees them and uses none (SURV-OFFSIGHT). A party rest's
 mirror (PARTY-REST4b) takes the leader's PLACE - every tier broadcasts it -
@@ -1137,7 +1154,7 @@ second, #32).
 | 7 | An interior's hearth made no camp's rest - HEARTH1 warmed the room and the interior's `restKind` knew only a bed or the boards | both | `fireNear` in the interior's `restKind` |
 | 8 | The minute law threw on `null` rules - `survivalRules()` answers null for Off | latent | every law takes null as no rules |
 | 9 | Off stamped every rest a BED, and the party pose broadcasts it - a follower mirroring an Off leader slept a bed's night in a field | Off | the place and the price are two answers (`_place`, `_kind`) |
-| 10 | Off refused to restore or relay a camp - a save made Off lost them all; an Off host dropped its peers' from the room it passes on | Off | the pool keeps the data and hides it (`shown`); placing one is refused in words |
+| 10 | Off refused to restore or relay a camp - a save loaded Off lost them all; an Off host dropped its peers' from the room it passes on | Off | the pool keeps the data and hides it (`shown`); placing one is refused in words |
 | 11 | A leftover meal under Off was Hard's sickness roll | Off | Casual's rules |
 | 12 | Off stored as a new `'off'` string - a build from before the tiers reads it as ON; and junk on the key read one way in the bar and another in the laws | Off | Off is `false`, as it always was; the load drops junk |
 | 13 | The barkeep was asked before the purse - a player who could not pay heard the barkeep's verdict | Casual | the gold first, then the house, then the coin |
@@ -1276,7 +1293,7 @@ characters regardless of mode should start with supplies"* - had been read
 as every tier, Off's included, and shipped that way (SURV-KIT, `23ee51b8`).
 It is reverted whole (`4dffc8ef`), but for six line cites in the kit's
 fallback seam that had rotted before it and named moved lines (`equip.js`'s
-`startingGear.js:70`, `:221` and `world.js:2460`, `startingGear.js`'s
+`startingGear.js:70`, `chargenSession.js:221` and `world.js:2460`, `startingGear.js`'s
 `equip.js:307` and `world.js:2460`, `exterior.js`'s `equip.js:306`): each
 names its line again. Casual and Hard characters set out with the kit on
 every creation path there is - the wizard and `?class=` in each of the three
@@ -1296,6 +1313,13 @@ no camp's rest. This player's own camps, stood while the arc was on, stay
 out of sight with the rest of the arc. Alone there is nobody else, so
 single-player Off sees no camp, as before; the world's own braziers are
 DFU's scenery in every tier, unchanged.
+
+*Revised by the third pass (below):* the ray, the name and a look are
+sight too - a tent the ray passed through had handed the click to the
+door behind it - so Off's ray stops at a peer's camp, names it and says
+what it is, and the click opens nothing. And "this player's" is the
+pool's own word (a camp it stood, or restored as its own), not the
+record's owner id, which is minted per tab (#35).
 
 **The pins.** `test/survtiers.test.js` 29 -> 30: one pool holding this
 player's own tent camp and a peer's, each SEEN (the flame, its light, the
@@ -1322,3 +1346,128 @@ nothing about a test file that does not pass unmutated.
 **Not driven in the container:** no ARENA2 and no second player, so an Off
 player has not watched a peer's fire in a live room; the pool is driven
 through its own doors, which are all a host calls.
+
+## AUDIT SURV-TIERS - THE THIRD PASS (2026-09-23)
+
+> Mac: *"Just do one more comprehensive audit and ensure everything is
+> perfect and makes sense"*.
+
+`origin/main` had moved again (DISC6, DISC7, AUDIT DISC6/7) and was merged
+in first (`ef979d48`); that tree, SURV-OFFSIGHT on it, is what was audited.
+Five lenses, each fresh and each on its own worktree of that commit: **the
+newest slices and the merge** (SURV-OFFSIGHT, the SURV-KIT revert and the
+merge's resolutions, attacked), **sense** (does each tier make sense to a
+player - scripted sessions through the real laws and compositions),
+**the laws fuzzed** (seeded walks of the minute law, the loan, the replay,
+the pause, the house and the hunt, and Hard against the pre-tier tree -
+10.5 million Casual minutes and 2.46 million composed ticks), **records and
+pins** (every claim, count and cite, and whether each pin bites) and
+**online and saves** (the wire, the relay's clock, the load, the teleport,
+the hosts). Every finding was reproduced on the working tree before it
+was fixed and re-run after; each fix is pinned in
+`test/survtiers3.test.js` and recorded in `tools/mutants/survtiers3.json`.
+
+Most of what this pass found is older than the tiers - the camp pool's
+ownership, its loads and its teleports go back to SURV3 and AUDIT SURV B -
+and was found now because SURV-OFFSIGHT made what Off sees depend on it.
+
+| # | Finding | Tier | Fix |
+|---|---|---|---|
+| 35 | A CAMP'S OWNER WAS THE PER-TAB ONLINE ID. A camp pitched online was stamped with the tab's id and judged "mine" by it, so in any later tab, or offline, the player's own camp was a stranger's: no Pack row, counted to the cap for ever, drawn in Off (SURV-OFFSIGHT's "never its own" failed), and stood twice when a room's memory handed it back | all (older, SURV3) | "this player's" is the pool's own word - a camp it stood, or restored as its own (`scenes/camps.js` `mine`); a peer's word naming an id that stands as this player's is not stood again (`applyOwner`) |
+| 36 | A LOAD NEVER CLEARED THE POOL. F5 with a tent in the pack, pitch it, F9: the pack came back with the tent and the camp stood too - pack it and there were two; another character's camps became this one's | Casual, Hard (older, AUDIT SURV B's merge by id) | every load drops this player's camps before it stands the save's (`dropOwn`: `world.js`'s quickload, the dungeon's truncating restore); a peer's stay, on their owner's word |
+| 37 | A TELEPORT RE-ANCHORS THE SCENE FRAME, AND THE CAMPS KEPT THEIR SCENE COORDINATES: a tent pitched by one town stood beside the traveller in the next, and was wired to the peers there | all (older) | the camps go through natives across `state.init` - snapshot, destroy, restore, with the save's own converters; a peer's come back on their owner's word |
+| 38 | The camps' lights took every point-light slot at any distance - four peers' fires 850 m off put out a town's lamps; SURV-OFFSIGHT carried it to Off | all | the nearest four lit camps within 64 m (`CAMP_LIGHTS_MAX`, `CAMP_LIGHT_REACH`) |
+| 39 | Camp ids repeated after a reload (the counter began at nought): a camp pitched in the saved one's minute took its id, and the next load stood only one - a tent lost | all | a restore moves the counter past the ids it stands |
+| 40 | "REST HERE" WAS PRICED WHERE THE PLAYER STOOD. The camp menu opens up to seven metres from the fire and the fire warms at four: the rest from its far side was the rough one, and Hard's gate refused a lit camp's own sleeper. And SURV3's "a tent's fire can be stoked (a rest will)" - nothing did: a tent pitched at dusk went cold under its sleeper | both | refused in words beyond the fire's reach ("Move closer to the fire to rest here."); a cold tent of your own is stoked for the rest; a camp's rest at your own tent keeps its fire lit |
+| 41 | Off: a peer's camp took no click - the ray went through it to the door behind | Off | the ray, the name and a look are sight (`seen`); the click opens nothing |
+| 42 | `campAt` had no caller, and the "camp's rest" pin and two mutants guarded it; the world-fire arm of `fireNear` (#7's interior hearth, the place an Off leader broadcasts) and Hard's free rest beside a fire had no behavioural pin | - | `campAt` is gone; the pins drive `fireNear` over a bare hearth list in every tier, and a Hard night by a fire in a blizzard |
+| 43 | Beside a lit fire in Casual the strip said Deadly cold in red and the page "You feel deadly cold." - nothing was charged and the pool refilled | Casual | the cold a lit fire answers (`s.warmed`) is an amber chip, the same word, and the page says "The fire keeps the cold at bay." |
+| 44 | Stage lines were said as a need IMPROVED - a sleep paying off Exhausted, a drink from Dehydrated and a warming morning each said the milder stage's line; and a jump read its whole replay out (thirty lines for three days on the road) | both | a stage line is said only when its need worsens (`stageNote`, by severity; a new side of the temperature counts); a replay's lines are said once, as it lands |
+| 45 | A short Off span froze the drink and the soaking: twenty hours Off in an inn came back Very drunk and Drenched | both | the pause wears the drink, the wet and the exposure off over the span; the needs still stand |
+| 46 | Hard's warm band (felt 20 to 30) charged six a minute under an empty strip | Hard | a Warm chip, amber - the Cold's twin |
+| 47 | The words: "Find a fountain, a well or a stream" (no stream fills a skin), "water skin" beside "waterskin", and Rations worth 250 minutes against the Peckish line's 240 - the page said "You could eat." and the sack refused for ten minutes. And the 250 wrote the meal's marker ten minutes AHEAD of the clock, which an online load reads as a fresh start: thirst, sleep debt, the wet and the drink wiped (the fuzz lens's exploit, older than the tiers) | both | "a fountain, a well or a trough"; one "waterskin"; Rations 240; no meal writes a marker past now (`eatLaw`) |
+| 48 | Casual's rough night sleeps at a third of a bed's rate and said nothing: eight hours on the ground woke Drowsy with no word for why | Casual | "You slept poorly on the bare ground." when a rough night leaves the sleeper short |
+| 49 | A Hard blackout's morning said nothing: the player woke on the floor without a word | Hard | the blackout hands its waking line and both tavern windows say it |
+| 50 | A relay clock correction aged the needs by the whole correction: three hours behind the relay, a player fed a minute ago read Starving (and in Hard lost two from every attribute) | both | the correction moves the markers by its own delta (`shiftSurvival`) |
+| 51 | An Off player's short online absence counted against the needs: the load's re-anchoring kept the markers for a gap under a day, and the arc had not been on for it | Off | the online load pauses the gap while Off (`pauseSurvival`), as the world tick does |
+| 52 | THE LOAN WAS CUT BY A FALLING CEILING. A Drain on endurance, a ring of strength taken off or a Fortify's end shrank the pool's shortfall, #24's settle cut the loan to it, and when the ceiling came back the stamina the need took did not | Casual | the settle runs only on a REFILL - when the pool has risen since the last minute left it (`loanPool`, the fed hour's refund counted as the rise it is); the repayment still never fills past the ceiling |
+| 53 | A vampire's thirst chip stayed red for ever and never cost (the law freezes the thirst); and in Hard the frozen hunger, thirst and sleep drained up to twenty from every attribute (older than the tiers) | both | no thirst chip for a vampire; `survivalStatMods` skips the three drains for one |
+| 54 | A long Off left `offFor: 0` on the record for ever | - | deleted |
+| 55 | Records: the table's Casual heat cell and Hard's "(away from a fire)"; the `feet` loan no tier can take; "no camps" and "Off hides every camp" (it sees a peer's), "off, every seam is DFU's", and "a save made Off" (it was the load), across this page, the Ledger, the arcs index, two Testing rows, a test and the camps' comments; Home's loan backwards; the six kit cites SURV-OFFSIGHT re-aimed, and the rest window's `input.js` half, unpinned (all had rotted once); three thirst anchors no longer unique; #31's fourth mirror mutant never recorded; pins weaker than their names (the Hard ticker's attributes, Drenched's red, an Info click standing in for the menu, a flame the stub never mounted); a flake from main (`auditdisc7` B3/B4, one run in 38); a stale Ledger cite; the kit gates silent on why Off has none | - | each said as it is; every half of the kit's cites and the rest window's pinned in `citedrift`; the anchors carry the unique line above them; the `tickVitals` mirror mutant recorded; the pins assert what they name; the flake's draw is pinned (its mutant's run, below); the gates cite Mac's decision |
+
+**Where Hard moved, this pass.** The camps' laws (#35-#41), each an older
+bug in every tier; the stage lines (#44); the pause's decays (#45); the
+Warm chip (#46, words); the rations (#47 - ten minutes less, and never a
+marker ahead); the blackout's line (#49); the relay's correction (#50);
+and one charge, the vampire's (#53), which the arc's own page and strip
+said was not there. No number of Hard's own charges moved.
+
+**Accepted in the third pass:**
+
+- **The loan across tier switches.** Hard drops it at its first minute
+  (Hard keeps what it takes, and so keeps what was taken), so a round trip
+  through Hard forfeits it; Off leaves it standing, returned by a rest -
+  repaying on the switch would be a free refill.
+- **Between two minutes** a minute's charge, or the fed hour's refund, can
+  stand the loan a little over the pool's shortfall; the next minute's
+  settle takes it back before any repayment (no double payment in the fuzz
+  lens's 10.5 million minutes).
+- **An online load gives a record to a player who never had one** -
+  harmless; it is what their first minute would do.
+- **The provisions shelf** (the second pass's "the shelf sells it"): a
+  general store stocked earlier the same game day while the arc was Off
+  shows no provisions until the next day's restock.
+
+**Open, for Mac** (the first pass's six stand):
+
+7. **Corpse food online is the tier of whoever raises the death** - the
+   foe's owner in a cell, the host in a dungeon - so an Off host's dungeon
+   carries no meat for a Casual or Hard party, and a joiner who opens a
+   corpse first replaces the host's list for the room (MODS-ONLINE-4's
+   accepted leak, older than the tiers; the Online section above said "the
+   killer's word" and is corrected). Recommend: online, mint whatever the
+   tier, and let each client roll its own copy (WORLD4's rule).
+
+**The pins.** `test/survtiers3.test.js`, 19 tests, one per finding or
+group; older pins moved where a law did - survtiers (the composed ticker's
+attributes, the pause's decays, the loan's pool kept beside the world's
+keys, SURV-OFFSIGHT's sight), auditsurv (Off's ray and look), hearth1 (the
+pool's records in place of `campAt`), surv1, surv2, surv3, surv5 and surv7
+(the words and the stage lines), world5 and auditworld5 (the correction's
+shift), citedrift (eight more halves), and two source windows over the teleport
+widened for the camps' passage through natives (audit26's F212, travelArrival's
+TL3 - the latter's needle had sat nine characters inside its bound). Suite
+10521 -> 10540 tests over 1057 files. `tools/citeShift.mjs --apply --struck` moved the 175 cites this
+pass's edits shifted; it misread one - `restlodging.test.js`'s `rest.js` is
+`systems/rest.js`, not the survival one - and that one was put back.
+
+**Mutants.** `tools/mutants/survtiers3.json`, 58 records - each fix undone
+one at a time, the kit's and the rest window's cites rotted back, the
+mirror's `tickVitals`, a flavour line said every minute - 57 dead and one
+recorded equivalent (the meal's clamp: no food is worth more than a full
+stomach's 240 minutes now, so none could write a marker past the clock).
+One survived its first run (the fed hour's refund as the settle's refill;
+no pin had driven it) and a pin now kills it. Re-aimed where a fix moved their line: blood1, surv2, surv7,
+surv_thirst1 (the unique anchors), auditsurv and survtiers (four
+SURV-OFFSIGHT records at the revised sight - the ray, the name, the
+click); `hearth1`'s `campAt` record went with the function. The run by the
+second pass's stated rule - every record in the survival lists (twelve now,
+with survtiers3), every record in another list whose tests are a file this
+pass changed, and every record whose target lies within six lines of a
+line it changed - is 431 records over 31 lists: 430 dead and the clamp's
+recorded equivalent. Two had survived the first run, both answered: main's
+`B4-first-sight-neighs-a-mount`, whose pin read a random draw - the mount's
+1-4 s and the ordinary 2-39 s overlap, so it killed the mutant about half
+the time, and this pass's widening of its flaky bound (#55) to a quarter;
+the first sight's draw is pinned now, at the top of both ranges. And
+`SURV1-the-stage-line-repeats-every-minute`: the stage lines moved to
+`stageNote`, and surv1's pin is a jump, which says its lines once as it
+lands - blind to a line said every live minute. The pin runs ten live
+minutes now and the record is re-aimed at the new law; the flavour lines'
+`once`, which it had been left guarding, has its own record. Every record
+the two edited tests judge (52) was run again: all dead.
+
+**Not driven in the container:** no ARENA2, no second player and no relay,
+so the online findings (#35's tabs, #37's peers, #50, #51) are driven
+through the real pool, `restorePlayer` and `StreamingWorldState`, not a
+live room.

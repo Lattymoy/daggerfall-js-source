@@ -38,7 +38,7 @@
   {
     "name": "SURV2-the-drink-does-not-relieve-thirst",
     "file": "src/systems/survival/items.js",
-    "old": "      s.thirst = Math.max(0, s.thirst - DRINK_RELIEF);\n      for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('thirst:')) delete s.notes[k];\n    }\n    return { kind: 'drank'",
+    "old": "      s.thirst = Math.max(0, s.thirst - DRINK_RELIEF);\n    }\n    return { kind: 'drank'",
     "new": "    }\n    return { kind: 'drank'",
     "tests": [
       "test/surv2_items.test.js"

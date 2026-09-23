@@ -237,13 +237,14 @@ function pickSurvival(row, now) {
   const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });
   h.advanceMinutes?.(r.minutes);
   h.entity.lastTimePlayerAteOrDrankAtTavern = now;
+  let b = null;
   if (r.blackout) {
-    const b = blackout(s, now + r.minutes, { endurance });
+    b = blackout(s, now + r.minutes, { endurance });
     stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules);
     h.advanceMinutes?.(b.minutes);
   }
   menu = null;
-  say(line(r.text));
+  say(b ? [...line(r.text), ...line(b.text)] : line(r.text));   // AUDIT SURV-TIERS (the third pass): and the waking, as the classic window says it
 }
 
 // ── RENDER ────────────────────────────────────────────────────────

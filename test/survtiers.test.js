@@ -202,7 +202,7 @@ test('SURV-TIERS: Hard is the arc as it stood - the rough rest, the drains, the 
   assert.equal(restCost('bed', CASUAL), REST_COST.bed); assert.equal(restCost('camp', CASUAL), REST_COST.camp, 'a bed and a camp cost the same in every tier');
   const needs = read('src/systems/survival/needs.js');
   assert.match(needs, /const rules = deps\.rules \?\? HARD_RULES;/);
-  assert.match(needs, /export function survivalStatMods\(s, temp, now, \{ endurance = 50, rules = HARD_RULES \} = \{\}\)/);
+  assert.match(needs, /export function survivalStatMods\(s, temp, now, \{ endurance = 50, rules = HARD_RULES, vampire = false \} = \{\}\)/);
 });
 
 test('SURV-TIERS: Casual is five rules written out - stamina only, red stages only, borrowed down to half the pool and repaid, nothing refused, rolled against you or wasted', () => {
@@ -305,7 +305,7 @@ test('SURV-TIERS: SAME WORLD - two players on the two tiers, the same night: eve
     return e;
   };
   const c = run(CASUAL), h = run(HARD);
-  const { borrowed, ...world } = c.survival;
+  const { borrowed, loanPool, ...world } = c.survival;   // AUDIT SURV-TIERS (the third pass): the loan and the pool it last left - both the body's
   assert.deepEqual(world, h.survival, 'hunger, thirst, wet, sleep, exposure, the felt reading, the notes said - one world');
   assert.ok(borrowed && Object.values(borrowed).every((v) => v > 0), 'the loan is what Casual\'s body is owed');
   assert.notEqual(c.health, h.health, 'what it cost is the tier\'s');
@@ -693,6 +693,7 @@ test('SURV-TIERS: composed - the feed hands the live tier\'s rules, and a Casual
   assert.equal(c.activeEffects.some((a) => a.kind === 'survival'), false);
   const h = run('hard');
   assert.ok(h.health < 40, 'Hard: it did');
+  assert.ok(Object.values(h.activeEffects.find((a) => a.kind === 'survival')?.statMods ?? {}).some((v) => v < 0), 'Hard: and the cold cost attributes');   // AUDIT SURV-TIERS (the third pass): the title's half the pin had not asserted
   assert.equal(survivalFeed(tickerPlayer(), BLIZZARD).deps.rules, HARD);
   _resetForTests(); setPref(SURVIVAL_PREF, false);
   assert.equal(survivalFeed(tickerPlayer(), BLIZZARD), null, 'Off feeds nothing');
@@ -766,9 +767,13 @@ test('AUDIT SURV-TIERS: Off\'s minutes are nobody\'s needs - a short Off span is
   const { worldMinutes, setSharedClock } = await import('../src/systems/worldTick.js');
   const { snapshotPlayer, restorePlayer } = await import('../src/systems/save.js');
   // the law: both timestamps and the last paid minute carried by the span; no record, no record made
-  const s = { ...newSurvival(1000), lastAte: 900, awakeSince: 940, lastMinute: 1000, thirst: 70, wet: 150, drunk: 30 };
-  assert.equal(pauseSurvival({ survival: s }, 1000, 1600), true);
-  assert.deepEqual([s.lastAte, s.awakeSince, s.lastMinute, s.thirst, s.wet, s.drunk], [1500, 1540, 1600, 70, 150, 30], 'ten hours Off: the needs stand where they were');
+  const s = { ...newSurvival(1000), lastAte: 900, awakeSince: 940, lastMinute: 1000, thirst: 70, wet: 150, drunk: 30, exposure: 200 };
+  assert.equal(pauseSurvival({ survival: s }, 1000, 1060), true);
+  // AUDIT SURV-TIERS (the third pass): the NEEDS stand; the world's own decays run - the drink one off every ten
+  // minutes, the wet a minute, the exposure cooling at two - as they had not (twenty hours Off came back Very drunk)
+  assert.deepEqual([s.lastAte, s.awakeSince, s.lastMinute, s.thirst, s.wet, s.drunk, s.exposure], [960, 1000, 1060, 70, 90, 24, 80], 'an hour Off: the needs stand where they were, the drink and the wet wear off');
+  assert.equal(pauseSurvival({ survival: s }, 1060, 1600), true);
+  assert.deepEqual([s.lastAte, s.awakeSince, s.lastMinute, s.thirst, s.wet, s.drunk, s.exposure], [1500, 1540, 1600, 70, 0, 0, 0], 'ten hours Off: the needs stand where they were, and the body is sober and dry');
   assert.equal(pauseSurvival({ survival: s }, 1600, 1600), false, 'no span, no move');
   const long = { survival: s };
   pauseSurvival(long, 1600, 1600 + ALIGN_GRACE_MINUTES);
@@ -984,38 +989,49 @@ test('AUDIT SURV-TIERS (the second pass): before six the enhanced tavern says th
 // see another player's now - the flame, its light, the tent - and nothing
 // of any camp is its to use. Its own, stood while the arc was on, stay out
 // of sight with the rest of the arc.
-test('SURV-OFFSIGHT: Off sees another player\'s camp - the flame, its light, the tent - and uses none of it; its own stay out of sight; on, every camp is seen and used', async () => {
+test('SURV-OFFSIGHT: Off sees another player\'s camp - the flame, its light, the tent, and (the third pass) the ray, its name and a look - and uses none of it; its own stay out of sight; on, every camp is seen and used', async () => {
   const { createCamps, FIRE_LIGHT_UP } = await import('../src/scenes/camps.js');
-  const { TENT_MODEL, FIRE_LIGHT_RANGE } = await import('../src/systems/survival/camp.js');
+  const { TENT_MODEL, FIRE_LIGHT_RANGE, CAMP_TEXT } = await import('../src/systems/survival/camp.js');
   setWorldMinutes(100);
   const renderer = { createBillboardBatch: (archive, record, size, positions) => ({ pos: positions[0] }), destroyBillboardBatch: () => {} };
+  const said = [], menus = [];
   const pool = createCamps({
     renderer, getTexture: async () => ({ getFrameCount: () => 3, getSize: () => ({ width: 40, height: 40 }) }), uploadRecordFrame: () => {},
     meshes: { getGpuMesh: async () => ({ gpu: true }), cpuModels: new Map([[TENT_MODEL, { positions: [-1, 0, -1, 1, 2, 1] }]]) },
-    entity: body(), camera: () => ({ feet: [0, 0, 0], yaw: 0 }), selfId: () => 'me',
+    entity: body(), camera: () => ({ feet: [0, 0, 0], yaw: 0 }), selfId: () => 'me', say: (l) => said.push(l), showOverlay: (w) => menus.push(w),
   });
-  pool.restore([{ id: 'me:1', owner: 'me', kind: 'tent', pos: [1, 0, 1], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }]);   // mine, from a time the arc was on
+  // mine, from a time the arc was on - pitched online under another tab's id (AUDIT SURV-TIERS, the third pass: mine is
+  // the pool's word, so it is still mine here)
+  pool.restore([{ id: 'pOLD:1:90', owner: 'pOLD', kind: 'tent', pos: [1, 0, 1], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }]);
   pool.applyOwner('peer', [{ i: 'p:1', k: 0, p: [20, 0, 20], y: 0, u: 500, w: 0 }]);   // a peer's tent and its fire
   await new Promise((r) => setTimeout(r, 0));   // the flame's frames and the tent's mesh are up
   const sight = () => ({
     flames: pool.batches().map((b) => b.pos),
     lights: pool.lights().map((l) => [l.x, l.y, l.z, l.range]),
     tents: (() => { let n = 0; pool.draw({ drawMesh: () => { n++; } }); return n; })(),
-  });
-  const use = () => ({
     targets: pool.targets().map((t) => t.key),
-    names: [pool.hoverName('camp:me:1'), pool.hoverName('camp:p:1')],
-    warm: [pool.byFire([1, 0, 1]), pool.byFire([20, 0, 20])],
-    at: [pool.campAt([1, 0, 1])?.id ?? null, pool.campAt([20, 0, 20])?.id ?? null],
+    names: [pool.hoverName('camp:pOLD:1:90'), pool.hoverName('camp:p:1')],
   });
+  const use = () => {
+    const before = menus.length;
+    const clicked = [pool.activate('camp:pOLD:1:90', 'grab'), pool.activate('camp:p:1', 'grab')];
+    return { warm: [pool.byFire([1, 0, 1]), pool.byFire([20, 0, 20])], clicked, menus: menus.length - before };
+  };
   for (const tier of ['casual', 'hard']) {
     setPref(SURVIVAL_PREF, tier);
-    assert.deepEqual(sight(), { flames: [[1, 0, 1], [20, 0, 20]], lights: [[1, FIRE_LIGHT_UP, 1, FIRE_LIGHT_RANGE], [20, FIRE_LIGHT_UP, 20, FIRE_LIGHT_RANGE]], tents: 2 }, `${tier}: every camp seen`);
-    assert.deepEqual(use(), { targets: ['camp:me:1', 'camp:me:1', 'camp:p:1', 'camp:p:1'], names: [{ title: 'Camp' }, { title: 'Camp' }], warm: [true, true], at: ['me:1', 'p:1'] }, `${tier}: and used`);
+    assert.deepEqual(sight(), {
+      flames: [[1, 0, 1], [20, 0, 20]], lights: [[1, FIRE_LIGHT_UP, 1, FIRE_LIGHT_RANGE], [20, FIRE_LIGHT_UP, 20, FIRE_LIGHT_RANGE]], tents: 2,
+      targets: ['camp:pOLD:1:90', 'camp:pOLD:1:90', 'camp:p:1', 'camp:p:1'], names: [{ title: 'Camp' }, { title: 'Camp' }],
+    }, `${tier}: every camp seen`);
+    assert.deepEqual(use(), { warm: [true, true], clicked: [true, true], menus: 2 }, `${tier}: and used - warmth, and a menu on each`);
   }
   setPref(SURVIVAL_PREF, SURVIVAL_STORED[SURVIVAL_OFF]);
-  assert.deepEqual(sight(), { flames: [[20, 0, 20]], lights: [[20, FIRE_LIGHT_UP, 20, FIRE_LIGHT_RANGE]], tents: 1 }, 'Off: the peer\'s flame, its light and its tent - and none of this player\'s own');
-  assert.deepEqual(use(), { targets: [], names: [null, null], warm: [false, false], at: [null, null] }, 'Off: no ray, no name, no warmth, no camp\'s rest - seen, not used');
-  assert.deepEqual([pool.activate('camp:p:1', 'dialogue'), pool.activate('camp:p:1', 'grab')], [false, false], 'no word and no menu from it');
+  assert.deepEqual(sight(), {
+    flames: [[20, 0, 20]], lights: [[20, FIRE_LIGHT_UP, 20, FIRE_LIGHT_RANGE]], tents: 1,
+    targets: ['camp:p:1', 'camp:p:1'], names: [null, { title: 'Camp' }],
+  }, 'Off: the peer\'s flame, its light, its tent, the ray on it and its name - and none of this player\'s own');
+  assert.deepEqual(use(), { warm: [false, false], clicked: [false, true], menus: 0 }, 'Off: no warmth, and the click the peer\'s camp takes opens nothing - seen, not used');
+  said.length = 0;
+  assert.deepEqual([pool.activate('camp:p:1', 'dialogue'), said], [true, [CAMP_TEXT.seeCamp]], 'a look says what it is');
   assert.equal(pool.fireNear([20, 0, 20]), true, 'the world still has the fire - the rest\'s place reads it (AUDIT SURV-TIERS)');
 });

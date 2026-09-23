@@ -532,7 +532,10 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // PIN MOVED AGAIN (BLOOD1 AUDIT 2), 2800 -> 3700: the sweep now
   // clears the splash pool and its ring beside the missiles and the
   // arrows, with its own note, above the needles.
-  const core = WORLD.slice(t, t + 3700);
+  // PIN MOVED AGAIN (AUDIT SURV-TIERS, the third pass), 3700 -> 4300: the
+  // camps now go through natives across the re-anchored frame, their
+  // snapshot and teardown with their own note above the needles.
+  const core = WORLD.slice(t, t + 4300);
   assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
   assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),

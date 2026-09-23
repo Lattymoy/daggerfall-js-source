@@ -126,9 +126,9 @@ export const SURVIVAL_USE_TEXT = Object.freeze({
   rations: 'You eat some rations.',
   emptySack: 'You empty your sack of rations.',
   drank: 'You drink from your waterskin.',
-  drankLow: 'Your water skin is nearly empty.',
+  drankLow: 'Your waterskin is nearly empty.',   // AUDIT SURV-TIERS (the third pass): one spelling - the automatic drink's (needs.js) had it
   drained: 'You drain your waterskin.',
-  emptySkin: 'Your waterskin is empty. Find a fountain, a well or a stream.',
+  emptySkin: 'Your waterskin is empty. Find a fountain, a well or a trough.',   // AUDIT SURV-TIERS (the third pass): the sources that fill one - no stream ever did
   skillet: 'Cooking at a campfire goes twice as fast with a skillet.',
   fullSkin: 'Your waterskin is already full.',
   campingIndoors: 'You cannot set up camp in here.',
@@ -161,7 +161,6 @@ export function useSurvivalItem(item, collection, { entity = null, now = 0, roll
     if (!r.ok) return { kind: 'notEaten', text: r.reason === 'putrid' ? SURVIVAL_USE_TEXT.putrid(name) : r.reason === 'not hungry' ? SURVIVAL_USE_TEXT.notHungry(name) : 'Nothing happens.' };
     s.lastAte = r.lastAte;
     s.thirst = Math.max(0, (s.thirst ?? 0) - (r.thirstRelief ?? 0));
-    for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('hunger:')) delete s.notes[k];
     takeOne();
     if (entity && r.sick) sickenFromMeal(entity, r.sick, { inflict, rolls, currentDay, onContract });
     const rations = item.templateIndex === TEMPLATE.Rations;
@@ -175,7 +174,6 @@ export function useSurvivalItem(item, collection, { entity = null, now = 0, roll
     if (entity) {
       const s = survivalOf(entity, now);
       s.thirst = Math.max(0, s.thirst - DRINK_RELIEF);
-      for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('thirst:')) delete s.notes[k];
     }
     return { kind: 'drank', text: r.empty ? SURVIVAL_USE_TEXT.drained : r.low ? SURVIVAL_USE_TEXT.drankLow : SURVIVAL_USE_TEXT.drank, left: r.left };
   }
@@ -192,7 +190,7 @@ export function drinkAtSource(entity, now, { kg = Infinity } = {}) {
   const r = refillSkins(items, kg);
   for (const i of items) if (isWaterskin(i)) i.name = waterskinName(i);
   const lines = [];
-  if (s.thirst > 0) { s.thirst = 0; for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('thirst:')) delete s.notes[k]; lines.push(SURVIVAL_USE_TEXT.quenched); }
+  if (s.thirst > 0) { s.thirst = 0; lines.push(SURVIVAL_USE_TEXT.quenched); }
   if (r.skins === 0) lines.push(SURVIVAL_USE_TEXT.noSkins);
   else if (r.filled === 0) lines.push(SURVIVAL_USE_TEXT.fullSkin);
   else lines.push(SURVIVAL_USE_TEXT.refilled);

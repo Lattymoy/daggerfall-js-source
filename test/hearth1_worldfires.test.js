@@ -147,9 +147,9 @@ test('HEARTH1: a world fire is nobody’s - it opens the cooking list and nothin
   assert.match(c, /if \(c && !fireLit\(c\.rec, now\(\)\)\) \{ say\(CAMP_TEXT\.cold\); return null; \}/, 'the embers test is the CAMP’s');
   // byFire asks both pools
   assert.match(c, /const byFire = \(pos\) => !!nearestFire\(shown\(\)\.map\(\(c\) => c\.rec\), pos, now\(\)\)\n\s*\|\| hearthNear\(worldFires\(\), pos, BY_FIRE_REACH\);/, 'both pools, the cheap question of the big one (AUDIT F2) - the camps this player is SHOWN (AUDIT SURV-TIERS)');
-  // ...and campAt does NOT - a hearth is not a camp, and the menu,
-  // the pack and the online record all key on a camp record.
-  assert.match(c, /const campAt = \(pos\) => nearestFire\(shown\(\)\.map\(\(c\) => c\.rec\), pos, now\(\)\);/, 'campAt stays the camps’ own');
+  // ...and a hearth is NOT a camp: the menu, the pack and the online record all key on the pool's own camp records,
+  // and a brazier has none (AUDIT SURV-TIERS, the third pass: `campAt`, which this pinned, had no caller and is gone)
+  assert.match(c, /const own = \(\) => camps\.filter\(mine\)\.map\(\(c\) => c\.rec\);/, 'the pack and the wire read the pool’s records alone');
   // a host that passes no door has no world fires, which is every
   // caller's behaviour before this shipped
   assert.match(c, /const worldFires = \(\) => \(survivalOn\(\) && hearths \? hearths\(\) : null\);/, 'and a host that passes no door has no world fires - as every caller did before this shipped');
@@ -163,7 +163,7 @@ test('HEARTH1: the pool really does answer byFire and cook off a bare hearth lis
   assert.equal(pool.byFire([10, 0, 10]), true, 'standing in it');
   assert.equal(pool.byFire([10, 0, 10 + BY_FIRE_REACH - 0.01]), true, 'within the reach');
   assert.equal(pool.byFire([10, 0, 10 + BY_FIRE_REACH + 1]), false, 'and out of it');
-  assert.equal(pool.campAt([10, 0, 10]), null, 'but it is not a CAMP - nothing to pack, stoke or publish');
+  assert.deepEqual([pool.own(), pool.wireRecords(), pool.camps.length], [[], [], 0], 'but it is not a CAMP - nothing to pack, stoke or publish');
   // the ray sees it, at a camp's own reach
   const t = pool.targets();
   assert.equal(t.length, 1, 'one target for one fire');

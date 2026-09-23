@@ -51,6 +51,9 @@ export const STIFF_HOURS = 4;
 export const STIFF_PENALTY = 5;
 export const REST_TEXT_SURVIVAL = Object.freeze({
   stiff: 'You rise stiff and sore from the hard ground.',
+  // AUDIT SURV-TIERS (the third pass): the rough night's lesser sleep said in a tier with no stiff morning - a Casual
+  // sleeper woke Drowsy from eight hours on the ground with no word for why
+  sleptPoorly: 'You slept poorly on the bare ground.',
   tooCold: 'It is too cold to sleep here. Find a fire or shelter.',
   tooHot: 'It is too hot to sleep here.',
 });

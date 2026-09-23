@@ -32,7 +32,7 @@ export const SURVIVAL_GROUP = 'UselessItems2';   // the port's home for its own 
  *  stage, so bread lasts and raw fish does not. raw: eaten as is, it
  *  turns the stomach. thirst: what it takes off the thirst. */
 export const FOOD = Object.freeze({
-  [TEMPLATE.Rations]: Object.freeze({ name: 'Rations', satiety: 250, keeps: null, raw: false, thirst: 0, stack: true }),
+  [TEMPLATE.Rations]: Object.freeze({ name: 'Rations', satiety: 240, keeps: null, raw: false, thirst: 0, stack: true }),   // AUDIT SURV-TIERS (the third pass): the Peckish line's own four hours - at 250 the page said "You could eat." and the sack refused for ten minutes
   [TEMPLATE.Apple]: Object.freeze({ name: 'Apple', satiety: 60, keeps: 90, raw: false, thirst: 10, stale: 'Soft' }),
   [TEMPLATE.Orange]: Object.freeze({ name: 'Orange', satiety: 60, keeps: 90, raw: false, thirst: 10, stale: 'Soft' }),
   [TEMPLATE.Bread]: Object.freeze({ name: 'Bread', satiety: 180, keeps: 95, raw: false, thirst: 0, stale: 'Stale' }),
@@ -131,7 +131,7 @@ export function eatLaw(item, { lastAte, now, luck = 50, rolls = Math.random, rul
   if (hunger < satiety) return { ok: false, reason: 'not hungry' };
   let base = lastAte ?? now;
   if (hunger > satiety + FULL_AHEAD_MINUTES) base = now - FULL_AHEAD_MINUTES;
-  const newLastAte = base + satiety;
+  const newLastAte = Math.min(now, base + satiety);   // AUDIT SURV-TIERS (the third pass): never a meal in the future - a marker ahead of the clock is a fresh start to the load (alignSurvival), and rations at 250 wrote one ten minutes ahead
   let sick = null;
   // SURV-TIERS: a tier without sickness makes no roll at all - every raw or spoiled meal there is Hard's lucky one
   if ((f.raw || stage > 0) && (rules ?? HARD_RULES).sickness) {

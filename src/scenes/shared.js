@@ -39,6 +39,7 @@ import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
 import { REST_KIND, REST_TEXT_SURVIVAL, restCost, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
 import { survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: the rest's price is the tier's, read at the open
+import { sleepStage } from '../systems/survival/needs.js';   // AUDIT SURV-TIERS (the third pass): the rough night's lesser sleep, said
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
@@ -2072,6 +2073,10 @@ export function createRestDeps(entity, opts = {}) {
       // night too, since the hours were slept - said once; the hours are spent
       // SURV-TIERS: under the tier the rest opened with - a Casual morning costs nothing, so nothing is said
       if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough, _rules)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
+      // AUDIT SURV-TIERS (the third pass): a tier with no stiff morning (Casual) still sleeps the rough night at a third
+      // of a bed's rate, and a sleeper woke Drowsy from eight hours on the ground with no word for why - said when it
+      // left them short
+      else if (!b && _roughHours > 0 && _rules && sleepStage(entity.survival?.sleepDebt ?? 0) !== 'rested') { say(REST_TEXT_SURVIVAL.sleptPoorly); _roughHours = 0; }
       entity.restKind = b ? _place : null;
       entity.restAsks = b ? restCost(_kind, _rules).encounters : null;   // SURV-TIERS: the resting encounter roll's asks a minute - Hard's rough night two, every Casual or Off night one
       // PARTY-REST4b: an override is good for exactly one session - the moment THIS session's resting flag drops,

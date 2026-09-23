@@ -346,7 +346,9 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   }
   // world: the pixel sweep, the scene cache, the save envelope, the recenter, the cell's frames
   assert.doesNotMatch(world, /camps\.collectPixel\(key\)/, 'AUDIT SURV B: the streaming sweep spares a placed camp');
-  assert.equal((world.match(/camps: camps\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\)/g) ?? []).length, 1, 'the save envelope alone carries the camps (AUDIT SURV B: the scene cache no longer does)');
+  // AUDIT SURV-TIERS (the third pass): the save's two converters are named once, for the save, the load and the teleport
+  assert.match(world, /const campToNatives = \(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \};/);
+  assert.equal((world.match(/camps: camps\.snapshot\(campToNatives\)/g) ?? []).length, 1, 'the save envelope alone carries the camps (AUDIT SURV B: the scene cache no longer does)');
   assert.doesNotMatch(world, /camps\.restore\(arrived\.camps,/); assert.match(world, /camps\.restore\(w\.camps,/);
   assert.match(world, /camps\.offsetAll\(r\.offset\);/);
   assert.match(world, /if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);/, 'my camps ride my full foes frame (AUDIT SURV B: an empty list too)');
@@ -360,7 +362,7 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   assert.match(dc, /onChanged: \(\) => \{ const c = camps\.wireRecords\(\); opts\.onActions\?\.\(\{ k: _locationKey, c: c\.length \? c : \[\] \}\); \}/, 'a placed fire goes out as an act');
   assert.match(dc, /if \(Array\.isArray\(data\.c\)\) camps\.applyOwner\(id, data\.c\);/, 'another\'s lands through applyActions');
   assert.match(dc, /w\.camps = campMemory\(\);/); assert.match(dc, /applyCampMemory\(shared\.world\.camps\);/);
-  assert.match(dc, /camps: camps\.snapshot\(\),/); assert.match(dc, /if \(truncate\) camps\.restore\(w\.camps\);/);
+  assert.match(dc, /camps: camps\.snapshot\(\),/); assert.match(dc, /if \(truncate\) \{ camps\.dropOwn\(\); camps\.restore\(w\.camps\); \}/);
   assert.match(dc, /camps, campBatches: \(\) => camps\.batches\(\), campLights: \(\) => camps\.lights\(\),/);
   assert.match(modes, /\.\.\.dungeonCtx\.campLights\(\), \.\.\.dungeonCtx\.torchLights\(\)\)/); assert.match(modes, /\.\.\.dungeonCtx\.campBatches\(\), \.\.\.dungeonCtx\.torchBatches\(\)/);
   // AUDIT-WH2 L2-F1: ...and `hearth:` beside it. HEARTH1 says all FOUR

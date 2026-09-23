@@ -81,15 +81,6 @@
   ]
  },
  {
-  "name": "HEARTH1-campAt-answers-with-a-hearth-so-a-brazier-becomes-a-camp-to-pack-and-publish",
-  "file": "src/scenes/camps.js",
-  "old": "  const campAt = (pos) => nearestFire(shown().map((c) => c.rec), pos, now());",
-  "new": "  const campAt = (pos) => nearestFire(shown().map((c) => c.rec), pos, now()) ?? hearthAt(pos);",
-  "tests": [
-   "test/hearth1_worldfires.test.js"
-  ]
- },
- {
   "name": "HEARTH1-the-ray-never-sees-a-world-fire-so-there-is-nothing-to-cook-on",
   "file": "src/scenes/camps.js",
   "old": "    const wf = worldFires();\n    if (wf) for (let i = 0; i < wf.length; i++) {",

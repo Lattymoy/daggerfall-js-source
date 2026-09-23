@@ -131,6 +131,9 @@ export const TAVERN_MENU_TEXT = Object.freeze({
   gettingDrunk: 'You are getting drunk...',
   veryDrunk: 'You are very drunk...',
   blackout: 'The room spins. You black out.',
+  // AUDIT SURV-TIERS (the third pass): and the morning after, said - the window had gone from the blackout's line to
+  // six o'clock and a Stiff chip with no word for the waking (Hard alone: the other tiers' barkeep never pours it)
+  woke: 'You wake on the tavern floor at dawn, stiff and sore.',
   // SURV-TIERS: the tier without the blackout. AUDIT SURV-TIERS: the
   // line said "another", and a first spirit on a low endurance is
   // refused too - it names the reason instead, which also tells the
@@ -164,7 +167,6 @@ export function tavernEat(s, now, worth) {
   if (hunger < worth) return { ok: false, text: TAVERN_MENU_TEXT.tooFull, minutes: MEAL_MINUTES };
   if (hunger > worth + NEED.PECKISH_AT) s.lastAte = now - NEED.PECKISH_AT;
   s.lastAte += worth;
-  for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('hunger:')) delete s.notes[k];
   return { ok: true, text: TAVERN_MENU_TEXT.invigorated, minutes: MEAL_MINUTES };
 }
 /** SURV-TIERS: whether the barkeep pours at all - asked before the coin changes hands. A tier with the blackout
@@ -189,7 +191,6 @@ export function tavernOrder(s, now, row, { endurance = 50, rules = HARD_RULES } 
  *  blackout - in a tier that has one (`rules.blackout`; Hard's when no rules). */
 export function tavernDrink(s, strength, { endurance = 50, rules = HARD_RULES } = {}) {
   s.thirst = Math.max(0, (s.thirst ?? 0) - DRINK_THIRST_RELIEF);
-  for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('thirst:')) delete s.notes[k];
   s.drunk = (s.drunk ?? 0) + (strength | 0);
   if (s.drunk > endurance && (rules ?? HARD_RULES).blackout) return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };
   if (s.drunk > endurance / 2) return { text: s.drunk > endurance - 10 ? TAVERN_MENU_TEXT.veryDrunk : TAVERN_MENU_TEXT.gettingDrunk, blackout: false, minutes: DRINK_MINUTES };
@@ -201,5 +202,5 @@ export function blackout(s, now, { endurance = 50 } = {}) {
   s.drunk = Math.trunc(endurance / 4);
   const dayStart = now - (now % 1440);
   const wake = dayStart + BLACKOUT_WAKE_HOUR * 60 + (now % 1440 >= BLACKOUT_WAKE_HOUR * 60 ? 1440 : 0);
-  return { minutes: wake - now };
+  return { minutes: wake - now, text: TAVERN_MENU_TEXT.woke };
 }

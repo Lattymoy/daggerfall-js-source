@@ -39,8 +39,8 @@
   {
     "name": "AUDITSURV-the-fed-tally-banks-minutes-by-the-hundred",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (hungerNow === 'fed' && !vampire) { s.fed += 1; if (s.fed >= WELL_FED_MINUTES) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); } }",
-    "new": "  if (hungerNow === 'fed') { s.fed += NEED.PECKISH_AT - hunger; if (s.fed >= 500) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); } }",
+    "old": "  if (hungerNow === 'fed' && !vampire) { s.fed += 1; if (s.fed >= WELL_FED_MINUTES) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); refunded = DRAIN.wellFed; } }",
+    "new": "  if (hungerNow === 'fed') { s.fed += NEED.PECKISH_AT - hunger; if (s.fed >= 500) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); refunded = DRAIN.wellFed; } }",
     "tests": [
       "test/auditsurv.test.js"
     ]
