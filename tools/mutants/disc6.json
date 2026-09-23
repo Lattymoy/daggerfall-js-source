@@ -54,19 +54,10 @@
     ]
   },
   {
-    "name": "DISC6-crickets-full-indoors",
+    "name": "DISC8A-crickets-through-the-walls",
     "file": "src/systems/ambientEffects.js",
-    "old": "this._updateCrickets(dt, building ? INDOOR_CRICKETS_GAIN : 1);",
-    "new": "this._updateCrickets(dt, 1);",
-    "tests": [
-      "test/disc6.test.js"
-    ]
-  },
-  {
-    "name": "DISC6-crickets-gain-ignored",
-    "file": "src/systems/ambientEffects.js",
-    "old": "volume * gain * Math.max(0, swell)",
-    "new": "volume * Math.max(0, swell)",
+    "old": "if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP))",
+    "new": "if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP))",
     "tests": [
       "test/disc6.test.js"
     ]

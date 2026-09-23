@@ -69,7 +69,9 @@ and no log step. The scratch harness showed it: live killCount 0, orphan
   - The rain plays at `INDOOR_RAIN_GAIN` (0.35) of the street's own
     gain, or at 0 while Better Ambience's indoor rain
     (`indoorRainPlaying()`) is the rain you hear.
-  - The night's cricket chorus plays at `INDOOR_CRICKETS_GAIN` (0.35).
+  - The night's cricket chorus played at `INDOOR_CRICKETS_GAIN` (0.35).
+    Superseded by DISC8-A (Mac: "no crickets indoors please"): the chorus
+    stops at a building's door as it does underground, its clock held.
   - The one-shots (birds, thunder, the cemetery) stay outdoor things.
 - Underground, the rain loop carries on at the street's gain (DFU's
   verbatim carry-over), and the crickets stop.
@@ -408,3 +410,152 @@ RELAY_VERSION stays world100. Its law row was re-hashed, because world100
 has never been deployed and `hs`'s door changed under it. Not verified in
 a browser or online.
 
+
+---
+
+# DISC8 - the second round from Discord
+
+Mac, with five Discord screenshots: *"Yeah, no crickets indoors please..
+also here's some bugs"*.
+
+1. *"water momentum is also brual. If there are stairs and you weigh too
+   heavy to swim then you cant get out and slopes are super slow."*
+2. *"I think dungeon maps also have that strange village issue"* / *"The
+   arrow is pointing in the right direction but when I go south on the
+   map I go north"*
+3. *"I also get stuck on the use magic item window"*
+4. *"Went into building prohibiting weapon, now weapon cannot be
+   equipped"*
+5. *"when shooting arrows with the sprite bow it shoots sprite arrows and
+   3d arrows at the same time, should be sprite arrows only"*
+6. *"When I die from fall damage, for some reason I spawn in the air, and
+   fall down and die"* / *"it resolved after crashing out of the game and
+   reloading"*
+
+Each was investigated to its cause in node before it was touched. The pins
+are `test/disc8.test.js` (5, by execution), with re-aimed pins in
+`test/disc6.test.js`, `test/friendlyspells.test.js`,
+`test/jan1_field.test.js`, `test/automapsheet.test.js` and
+`test/ui1_usemagicitem.test.js`. The mutants are `tools/mutants/disc8.json`
+(10); the cricket records in disc6, cricketdungeon, cricketquiet and
+friendlyspells were re-aimed. All die.
+
+## DISC8-A: no crickets indoors
+
+DISC6 took "ensure cricket noises can be heard in interiors" literally and
+sang the chorus through a building's walls at 0.35. Mac: *"no crickets
+indoors please"*. The chorus now stops at a building's door exactly as it
+does underground (CRICKET-DUNGEON), with its clock held, so the street
+takes the night up where it stood. `INDOOR_CRICKETS_GAIN` is gone. Port-Ledger
+A's row says so.
+
+## DISC8-B: the swimmer who could not climb out
+
+**Cause.** Not a water law. The motor's swim laws are DFU's: an
+over-encumbered swimmer sinks (`LevitateMotor.cs:81-84`, AUDIT 26 F027),
+so the motor hands the collider a downward move every step, even standing
+on the bottom. The collider's vertical phase resolved that move by
+pushing the capsule out along the contact normal. On a slope that normal
+leans, so each step's sink became a shove downhill (net progress
+`cos²θ − sinθ·cosθ`: 40% at 26.6°, nothing at 45°). On a tread's edge it
+shoved the capsule straight back off the step it had just climbed, so the
+swimmer bounced at the first riser forever. A walker never shows it,
+because a grounded walker moves with dy = 0.
+
+**What DFU does.** PhysX's CharacterController (Unity's) sweeps the down
+component alone with `maxIterDown = 1`: a descending controller that
+meets the ground stops on it and never slides.
+
+**Fix.** `collider.move`'s down pass is collide-and-stop. When a downward
+move lands grounded and the resolve pushed it sideways, the capsule comes
+down only as far as it goes unpushed (bisected), x and z untouched. Moves
+with dy = 0 are bit-identical. An 80 kg swimmer now climbs a pool's stairs
+in about 3.5 s, and keeps pace with a light one up a 26.6° slope.
+
+**Recorded, not changed.** Every capsule still loses about cos²θ of its
+speed walking up a slope (3.54 m/s against 4.43 flat at 26.6°); Unity's
+side pass runs at the lifted height and does not. It is general, not
+water's, and a separate slice. DFU's "cannotFloat" message is still
+missing (Port-Status-2026-09.md:43).
+
+## DISC8-C: the dungeon map drawn upside down
+
+**Cause.** EM-BUG3's "village issue" was the enhanced town sheet laying
++Z down the paper, so the plan was the north-south mirror of the world.
+The enhanced DUNGEON and interior sheet (`src/ui/automapSheet.js`) never
+got that fix. Its `toPlan` measured y with +Z and the paper's y grows
+down, so north was down the sheet, while the caret's heading
+(`inkMap.js` `paintCaret`) is north-up. The arrow pointed right; the
+position ran the other way. A second fault shared the seam: the
+walked-this-run wash was left in world units, a level's origin away from
+its own walls. The classic 3D automap is not affected.
+
+**Fix.** The plan's y is measured south from the level's north edge (the
+town sheet's `sheetY` law), and the occupancy grids cross the same seam
+(rows reversed). The caret, the beacon, the notes and the teleporters all
+went through `toPlan` already. The pins had restated the code (a player
+at the level's exact z-centre passes either way); the home-view pin now
+stands off-centre.
+
+## DISC8-D: stuck in the Use Magic Item window
+
+**Cause.** DFU's `AllowCancel = false` (:34-35) only switches off the
+base class's Escape ("Prevent duplicate close calls"), because the
+window's own Update (:68-80) closes it: the UseMagicItem key or the back
+button arms on the press and closes on the release. The port read it as
+"Escape does not close this one" and left the toggle to a host that never
+had one. Nothing closed the window except using an item: not Escape, not
+U, not the touch X, not the pad Back.
+
+**Fix.** The window carries DFU's Update: a U or Escape press arms, the
+matching release closes, using nothing. The release of the press that
+opened it finds nothing armed. The backdrop is clear (:33).
+
+**Recorded, not changed.** With nothing usable DFU says "You have no
+usable magic item" (`DaggerfallUI.cs:584-585`); the port says nothing.
+
+## DISC8-E: the weapon lost at a building's door
+
+**Cause.** No building forbids weapons, in DFU or the port. The port has
+four weapon rigs against DFU's one WeaponManager, and JAN1 (2026-09-18)
+gave the doors `host.weaponPose` / `host.applyWeaponPose` to hand the
+sheathe and the hand across. It put them in the INVENTORY window's deps,
+which never read them. `worldModes` asks the `createWorldModes` bag,
+which had neither, so no door ever handed the pose. A drawn weapon
+vanished indoors (the building rig starts sheathed), and a rig left on an
+empty left hand showed a fist with a sword equipped. JAN1's pin was a
+text match anywhere in the file.
+
+**Fix.** Both hosts hand the pair in the `createWorldModes` bag. The pin
+now reads that bag's own braces and refuses the inventory's.
+
+## DISC8-F: two arrows from the sprite bow - not reproduced
+
+One loose draws one shaft, model 99800, in every host (the open world,
+interiors, the dungeon), exactly as DFU's DaggerfallMissile does; there is
+no arrow billboard for a bow in DFU or the port (the only flat lane is the
+Thunderlock's). A real weapon rig with a Long Bow gives one hit and one
+bow sound per click; a peer's echo of your own shot is refused by id.
+Candidates the report could be describing: the flying arrow's own shadow
+with Enhanced Lighting on, or another player's shaft online. Waiting on a
+clip and the reporter's settings (online or not, Morrowind arms,
+Enhanced Lighting, first or third person). Nothing changed.
+
+## DISC8-G: the fall that killed you twice
+
+**Cause.** The motor's landing report (`landedFallDistance`, and `jumped`)
+is a per-frame flag that only `update()` cleared. The open-world host
+held the motor under any pausing window but billed the landing on every
+frame regardless (only the season screen was gated). The death screen
+pauses, so the fatal fall was charged again every frame under it. Online,
+the respawn revived the player, the respawn box paused the game, and the
+next frame's charge killed them again at the respawn point, forever. A
+reload built a fresh motor, which is why it "resolved after crashing out".
+
+**What DFU does.** CheckFallingDamage bills a landing once, from
+FixedUpdate, which does not run under PauseGame's timeScale 0.
+
+**Fix.** A held frame reports nothing: `PlayerMotor.holdFrame()` clears
+the report, and both open-world hosts call it on every frame they hold
+the motor. `spawn()` clears it too (a teleport or load). The modal hosts
+already gated their readers.

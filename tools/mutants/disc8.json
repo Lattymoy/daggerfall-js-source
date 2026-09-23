@@ -1,0 +1,92 @@
+[
+  {
+    "name": "DISC8G-held-frame-keeps-the-report",
+    "file": "src/player/motor.js",
+    "old": "  holdFrame() {\n    this.jumped = false;\n    this.landedFallDistance = 0;\n  }",
+    "new": "  holdFrame() {\n  }",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC8G-world-never-holds",
+    "file": "src/scenes/world.js",
+    "old": "        if (_overlayHeld || _seasonHeld) player.holdFrame();",
+    "new": "",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC8G-exterior-never-holds",
+    "file": "src/scenes/exterior.js",
+    "old": "      if (_overlayHeld) player.holdFrame();",
+    "new": "",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC8G-spawn-keeps-the-report",
+    "file": "src/player/motor.js",
+    "old": "    this.holdFrame();   // DISC8-G: a landing reported before the warp is not the arrival's\n",
+    "new": "",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC8D-no-keyup-close",
+    "file": "src/ui/useMagicItemWindow.js",
+    "old": "    isCloseWindowDeferred = false;\n    win.done = true;   // CloseWindow",
+    "new": "    isCloseWindowDeferred = false;",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC8D-opening-release-closes",
+    "file": "src/ui/useMagicItemWindow.js",
+    "old": "    if (!isCloseWindowDeferred || !closesIt(code, e)) return;",
+    "new": "    if (!closesIt(code, e)) return;",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC8D-escape-ignored",
+    "file": "src/ui/useMagicItemWindow.js",
+    "old": "    return c === 'Escape' || (c != null",
+    "new": "    return (c != null",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC8C-plan-y-with-z",
+    "file": "src/ui/automapSheet.js",
+    "old": "(frame?.origin[1] ?? 0) - z];",
+    "new": "z - (frame?.origin[1] ?? 0)];",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC8C-wash-in-world-units",
+    "file": "src/ui/automapSheet.js",
+    "old": "    if (tint) tint.occupancy = occToPlan(tint.occupancy, f.bounds);\n",
+    "new": "",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC8B-down-pass-slides",
+    "file": "src/player/collider.js",
+    "old": "    if (dy < 0 && out.grounded && ((feet[0] - vx0) ** 2",
+    "new": "    if (false && dy < 0 && out.grounded && ((feet[0] - vx0) ** 2",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  }
+]

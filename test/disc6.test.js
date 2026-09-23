@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
 import { mintQuestFoeWave, bindQuestFoeHost } from '../src/scenes/questFoeHost.js';
-import { AmbientEffects, AMBIENT_RAIN_LOOP, AMBIENT_CRICKETS_LOOP, INDOOR_RAIN_GAIN, INDOOR_CRICKETS_GAIN, CRICKET_CHORUS } from '../src/systems/ambientEffects.js';
+import { AmbientEffects, AMBIENT_RAIN_LOOP, AMBIENT_CRICKETS_LOOP, INDOOR_RAIN_GAIN, CRICKET_CHORUS } from '../src/systems/ambientEffects.js';
 import { createHandheldTorches, readTorchSettings, HANDHELD_TORCHES_VENDOR, CLIPS } from '../src/systems/handheldTorches.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
 import { TEMPLATES } from '../src/systems/useItem.js';
@@ -96,14 +96,19 @@ test('DISC6 ambience: in a BUILDING the street\'s rain is heard through the wall
   assert.equal(rain.volumes.at(-1), 1, 'underground: DFU\'s verbatim loop');
 });
 
-test('DISC6 ambience: the night\'s crickets are heard in a building - the chorus runs on at INDOOR_CRICKETS_GAIN - and stop underground (CRICKET-DUNGEON); the birds and the thunder stay outdoor things (mutants: crickets frozen indoors; the one-shots played inside)', () => {
+test('DISC8-A ambience: no crickets indoors (Mac: "no crickets indoors please") - a chorus sounding in the street stops at a building\'s door, its clock holds, none opens inside, and the street takes the night up where it stood; none underground (CRICKET-DUNGEON); the birds and the thunder stay outdoor things (mutants: crickets through the walls; the one-shots played inside)', () => {
   const { engine, loops } = stub();
   const a = new AmbientEffects({ minWait: 5, maxWait: 25 }, engine, () => 0);
   a.setPreset('clearNight');
-  for (let t = 0; t < CRICKET_CHORUS.fade * 1.5; t += 0.1) a.update(0.1, { inside: true });
+  for (let t = 0; t < CRICKET_CHORUS.fade * 1.5; t += 0.1) a.update(0.1, { inside: false });
   const cr = live(loops, AMBIENT_CRICKETS_LOOP)[0];
-  assert.ok(cr, 'a chorus sounds indoors');
-  assert.ok(Math.abs(cr.volumes.at(-1) - CRICKET_CHORUS.volume * INDOOR_CRICKETS_GAIN) < 1e-9, `through the walls: ${cr.volumes.at(-1)}`);
+  assert.ok(cr && Math.abs(cr.volumes.at(-1) - CRICKET_CHORUS.volume) < 1e-9, 'the street\'s chorus at its own volume');
+  const clock = a._cricketT;
+  for (let t = 0; t < 120; t += 0.5) a.update(0.5, { inside: true });
+  assert.equal(live(loops, AMBIENT_CRICKETS_LOOP).length, 0, 'a building: no crickets, however long the night inside');
+  assert.equal(a._cricketT, clock, 'the chorus clock holds indoors');
+  a.update(0.1, { inside: false });
+  assert.equal(live(loops, AMBIENT_CRICKETS_LOOP).length, 1, 'back in the street, the chorus takes up where it stood');
   a.update(0.1, { inside: true, underground: true });
   assert.equal(live(loops, AMBIENT_CRICKETS_LOOP).length, 0, 'underground: no crickets');
   const b = stub();
