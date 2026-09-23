@@ -48,7 +48,7 @@ import {
   chooseTable, deathTable, ORIENTATIONS, orientationFor, facingFor, frameTime, speedMod, frameCount, isFootstepFrame,
   stateFor, STATE_TABLES, STRING, meleeAnimTickTime, RANGED_TICK, SPELL_TICK, LYCAN_TICK, DEATH_TICK,
   usesPingPong, pingPongFrames, forwardFrames, holdDrawFrames, pingPongTickFrames, mirrorFlips, mirrorRevertTime,
-  DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY,
+  DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY, tableMoveSpeed,
 } from './eotbBillboard.js';
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors } from './eotbSprite.js';
 import { decodePng } from '../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
@@ -119,7 +119,6 @@ export function bodyState(s = {}) {
   const moving = !!((m.forward || 0) || (m.strafe || 0));
   const standing = m.standing != null ? !!m.standing : !moving;
   const stopped = s.stopped ?? (standing || (m.freeze || 0) > 0);
-  const diagonal = (m.forward || 0) && (m.strafe || 0);
   return {
     died: !!s.died,
     transformed: !!s.transformed,
@@ -139,7 +138,7 @@ export function bodyState(s = {}) {
     strafe: m.strafe || 0,
     // |PlayerMotor.MoveDirection.xz|: the applied speed, times the
     // diagonal's .7071 (PlayerMotor's limitDiagonalSpeed), zero at rest
-    moveSpeed: moving ? (m.speed || 0) * (diagonal ? Math.SQRT1_2 : 1) : 0,
+    moveSpeed: tableMoveSpeed(m.forward || 0, m.strafe || 0, m.speed),
     grounded: m.grounded !== false,
     running: !!m.running,
     crouching: !!m.crouching,

@@ -398,6 +398,8 @@ export class NativeInventoryWindow {
     // closing WITHOUT taking claims nothing.
     this.chooseOne = open.chooseOne;
     this.allowDungeonWagonAccess = open.allowDungeonWagonAccess;
+    this.dungeonExitAccessGranted = !!open.dungeonExitAccessGranted;   // HCC: ApplyOpeningAccess's `dungeonExitAccessGranted` - the wagon button asks the exit's door again while it holds
+    if (open.refusal) this.boxes = [{ rows: [{ text: open.refusal.text, center: true }] }];   // HCC: ApplyOpeningAccess [IL_ad0c-IL_ad14] - a dungeon-exit request the runtime refuses says why, over the window
     // G5: OnPush's drop-icon seed (:593-631) - the archive the remote
     // panel shows and the INDEX into that archive's dropIconIdxs list,
     // -1 when nothing has been picked.

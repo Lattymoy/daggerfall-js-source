@@ -271,6 +271,7 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'handheld-torches',            // an item in my save with a light on my screen
   'oblivion-remaster-leveling',  // written into a character at creation and kept by that character
   'travel-options',              // my own journey; OL2 already spends no world time online
+  'horse-cart-and-cargo',   // HCC: whose horse and wagon stand where is the player's own; the others only SEE them (the online half rides the pose and the cell's frame, never a switch of the room's ground)
 ];
 
 /** The forced value of a mod's switch on an online page, else undefined -

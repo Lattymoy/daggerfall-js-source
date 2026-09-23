@@ -18,6 +18,7 @@ import {
   _setNoticeClockForTests, ENHANCED_NOTICE_ID, NOTICE_SLIDE_MS, NOTICE_WATCHDOG_MS, NOTICE_HINT,
 } from '../src/ui/enhancedNotice.js';
 import { ActionTextBox, ActionInputBox } from '../src/ui/actionText.js';
+import { enhancedInputBoxOwner } from '../src/ui/enhancedInputBox.js';   // AUDIT HCC U5
 import { StatusReadout } from '../src/ui/statusBox.js';   // STATUS-LIVE: the one box whose caption is not ClickAnywhereToClose
 import { ChoiceWindow } from '../src/ui/talkWindow.js';
 import { ENHANCED_CSS, ENHANCED_STYLE_ID } from '../src/ui/enhancedStyle.js';
@@ -259,8 +260,12 @@ test('ENH-NOTICE1: the input box is a decision, not a notice - it keeps its own 
     const box = new ActionInputBox(['Name?'], () => {});
     const r = recorder();
     box.draw(r, CANVAS, FONT, 2);
-    assert.ok(r.quads.length > 0);
     assert.equal(stackOf(doc), null, 'mutants: the input box handed to the panel');
+    // AUDIT HCC U5: its own window is the skin's face now (ui/enhancedInputBox.js), not the parchment's quads
+    assert.equal(r.quads.length, 0, 'mutants: the parchment painted under the enhanced window');
+    assert.equal(enhancedInputBoxOwner(), box._faceKey, 'the field stands in its own window');
+    box.input('Escape');
+    assert.equal(enhancedInputBoxOwner(), null, 'and leaves with the box');
   });
 });
 

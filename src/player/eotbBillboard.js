@@ -322,6 +322,10 @@ export const isFootstepFrame = (frame, riding = false) => frame % (riding ? 4 : 
  * units, 10.8 m/s at SPD 50) and a cart never does.
  */
 export const GALLOP_SPEED = 10;
+/** |PlayerMotor.MoveDirection.xz| as the table reads it: the applied speed, times the diagonal's .7071 (PlayerMotor's
+ *  limitDiagonalSpeed), zero at rest. One home for the rider's own sprite (eotbBody bodyState) and the gallop bit the
+ *  others are sent (world.js's pose - AUDIT RIDE), so the two can never disagree about a gallop. */
+export const tableMoveSpeed = (forward, strafe, speed) => ((forward || strafe) ? (speed || 0) * ((forward && strafe) ? Math.SQRT1_2 : 1) : 0);
 export function chooseTable(s = {}) {
   const {
     transformed = false, riding = false, stopped = true,

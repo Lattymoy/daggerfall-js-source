@@ -63,6 +63,7 @@
  * @property {RayPick|null} drop
  * @property {boolean} torchWins
  * @property {boolean} wagonWins      the cart beat the body, the pile, the torch AND the door (EOTB-IL)
+ * @property {boolean} horseCartWins  Horse Cart and Cargo's parked wagon, following team or standing horse beat everything above (HCC)
  * @property {boolean} campWins       a camp's fire or tent beat everything above (SURV3)
  * @property {boolean} waterWins      a fountain, well or trough beat everything above (SURV3)
  * @property {number} nonPersonRival
@@ -83,6 +84,7 @@
  * @param {RayPick|null} [opts.pile]    the nearest dropped pile
  * @param {RayPick|null} [opts.torch]   the nearest dropped light
  * @param {RayPick|null} [opts.wagon]   Eye Of The Beholder's cart (EOTB-IL: RegisterCustomActivation(41239, 3.2)), when the lane has one
+ * @param {RayPick|null} [opts.horseCart]  Horse Cart and Cargo's nearest activator (HCC: the parked wagon's box, the following team's, the standing horse's - the same 3.2)
  * @param {RayPick|null} [opts.camp]    the nearest camp (SURV3: a tent or a fire, RegisterCustomActivation's 3.2)
  * @param {RayPick|null} [opts.water]   the nearest water source (SURV3: the mod's fountains, wells and troughs)
  * @param {number} [opts.doorDistance]  the door / board / static-NPC set's nearest, or Infinity
@@ -90,7 +92,7 @@
  * @returns {RaceResult}
  */
 export function raceActivation({
-  corpse = null, pile = null, torch = null, wagon = null, camp = null, water = null, doorDistance = Infinity, personDistances = [],
+  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, doorDistance = Infinity, personDistances = [],
 } = {}) {
   // the body and the pile, by distance, the tie to the body
   const pileNearer = !!pile && !(corpse && corpse.distance <= pile.distance);
@@ -101,11 +103,12 @@ export function raceActivation({
   const dropD = heap?.distance ?? Infinity;
   const torchD = torch?.distance ?? Infinity;
   const wagonD = wagon?.distance ?? Infinity;
+  const horseCartD = horseCart?.distance ?? Infinity;
   const campD = camp?.distance ?? Infinity;
   const waterD = water?.distance ?? Infinity;
 
   // what the ground must beat: everything that is not a person
-  const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, campD, waterD, doorDistance);
+  const nonPersonRival = Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, doorDistance);
   const rival = Math.min(nonPersonRival, ...personDistances);
 
   // ── ONE PRECEDENCE, AND IT IS `raceWinner`'S ─────────────────────
@@ -129,7 +132,7 @@ export function raceActivation({
   // the hosts' own arm order - and this function is now its first
   // reader. The plaque is its second.
   const ground = Number.isFinite(doorDistance) ? { key: GROUND_KEY, distance: doorDistance } : null;
-  const won = raceWinner({ camp, water, wagon, torch, corpse: body, pile: heap, ground });
+  const won = raceWinner({ camp, water, wagon, horseCart, torch, corpse: body, pile: heap, ground });
   const is = (p) => !!won && !!p && won === p;
 
   return {
@@ -137,6 +140,7 @@ export function raceActivation({
     drop: is(heap) ? heap : null,
     torchWins: is(torch),
     wagonWins: is(wagon),
+    horseCartWins: is(horseCart),
     campWins: is(camp),
     waterWins: is(water),
     nonPersonRival,
@@ -205,7 +209,7 @@ export const GROUND_KEY = '__ground__';
  * @returns {RayPick|null} the winning pick, with its own key and reach
  */
 export function raceWinner({
-  corpse = null, pile = null, torch = null, wagon = null, camp = null, water = null, ground = null,
+  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, ground = null,
   person = null, peer = null, foe = null,
 } = {}) {
   let best = null;
@@ -213,7 +217,9 @@ export function raceWinner({
   // PEER-PLAQUE1: another player (`peer`, player/socialPick.js peerRayPick) stands between the townsperson and
   // the foe - a body like the person's, measured through the same cylinder (rayPersonDistance), and the press
   // has no arm for it at all (the F key is its own gesture, SOC5), so the plaque is the only thing that races it.
-  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {
+  // HCC: the mod's three activators stand with the other custom activations (RegisterCustomActivation's 3.2), right
+  // after Eye Of The Beholder's cart - the two carts are the same family, and the hosts test them in this order.
+  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {
     if (!p) continue;
     if (best === null || p.distance < best.distance) best = p;
   }
