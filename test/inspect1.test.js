@@ -21,7 +21,7 @@ import { sheetModel } from '../src/ui/enhancedCharSheet.js';
 import { STAT_KEYS_ORDER } from '../src/systems/chargen.js';
 import { MAX_STAT_VALUE } from '../src/systems/statMods.js';
 import { profileView, profileNote, gearRows, GEAR_ROWS, ATTR_SHORT, VITAL_LABELS, PROFILE_CSS, createProfileWindow } from '../src/ui/profileWindow.js';
-import { socialMenuRows } from '../src/ui/socialMenu.js';
+import { socialMenuRows, socialPlaqueRows, plaqueRowFor } from '../src/ui/socialMenu.js';
 import { glyphSvgNode, glyphBadges, GLYPH_STROKE } from '../src/ui/playerBadge.js';
 import { EQUIP_SLOTS } from '../src/characters/paperdoll.js';
 import { itemLongName } from '../src/systems/itemInfo.js';
@@ -41,7 +41,7 @@ const CARD = { level: 12, attrs: [55, 60, 45, 70, 50, 40, 65, 50], vitals: [118,
 
 // ─── THE WIRE ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('INSPECT1 wire: a card frame is an ASK or an ANSWER, never both; the card whole or nothing - the level, eight attributes and three vitals each an integer inside its bound, the look through the room\'s own law; world99 the first relay that routes it (mutants: an ask carrying a card admitted; a bound off by one; a short card admitted; the look unprojected)', () => {
+test('INSPECT1 wire: a card frame is an ASK or an ANSWER, never both; the card whole or nothing - the level, eight attributes and three vitals each an integer inside its bound, the look through the room\'s own law; world101 the first relay that routes it (world99 before the merge: main\'s world99 and world100 route no card) (mutants: an ask carrying a card admitted; a bound off by one; a short card admitted; the look unprojected)', () => {
   assert.deepEqual(validCardData({ to: 'peer-0002', ask: true }), { to: 'peer-0002', ask: true });
   assert.deepEqual(validCardData({ to: 'peer-0002', card: CARD }), { to: 'peer-0002', card: { ...CARD, look: { ...LOOK } } });
   for (const bad of [
@@ -70,10 +70,10 @@ test('INSPECT1 wire: a card frame is an ASK or an ANSWER, never both; the card w
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002', ask: true } })), { error: 'card before hello' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002' } }), { hasHello: true }), { error: 'bad card' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002', card: CARD, pad: 'x'.repeat(CARD_FRAME_MAX) } }), { hasHello: true }), { error: 'frame too large' });
-  assert.equal(RELAY_VERSION, 'world99');
-  assert.equal(CARD_RELAY_MIN, 99);
-  assert.equal(relaySupportsCard('world99'), true);
-  assert.equal(relaySupportsCard('world98'), false);
+  assert.equal(RELAY_VERSION, 'world101');
+  assert.equal(CARD_RELAY_MIN, 101);
+  assert.equal(relaySupportsCard('world101'), true);
+  assert.equal(relaySupportsCard('world100'), false);
   assert.equal(relaySupportsCard(null), false);
   // a full card of 27 worn items of the widest fields fits the frame
   const wide = { templateIndex: 65535, group: 'WomensClothing', material: 4095, dye: 4095, variant: 4095 };
@@ -167,7 +167,7 @@ function linkRig(relayV = RELAY_VERSION) {
 }
 
 test('INSPECT1 session: a card frame goes only to a relay that routes it (an older one would close the socket), through the wire\'s projection, to a peer some socket reports, CARD_HZ_MAX a second; one in is delivered only when a peer\'s, addressed to ME and whole, CARD_IN_HZ_MAX a second per sender (mutants: the version door dropped; the gate dropped; a frame at someone else delivered)', () => {
-  const old = linkRig('world98');
+  const old = linkRig('world100');
   assert.equal(old.s.cardOk, false);
   assert.equal(old.s.sendCard({ to: 'peer-0002', ask: true }), false);
   assert.equal(old.out().length, 0, 'nothing on the wire of a relay that would close the socket for it');
@@ -371,11 +371,13 @@ test('INSPECT1 the window: it stands the badge, the name, the line, the sheet an
   assert.match(PROFILE_CSS, /@container \(max-width: 400px\) \{ \.dfprofile-body \{ grid-template-columns: minmax\(0, 1fr\); \} \.dfprofile-name \{ font-size: 16px; \} \}/, 'a narrow box stacks the columns and takes the name a size down');
 });
 
-test('INSPECT1 the F-menu\'s Inspect row: first, when the host offers it, acting `profile.inspect` on that peer; a host that says nothing gets the menu it always had; and the one glyph drawing every DOM face uses (mutants: the row missing; the row always present; a stroke glyph filled)', () => {
+test('INSPECT1 the F-menu\'s Inspect row: first, when the host offers it, acting `profile.inspect` on that peer; a host that says nothing gets the menu it always had; the World Tooltips plaque lists it as its first verb and presses it through the same act (the merge with main\'s ACT-MENU: one source of rows for both surfaces); and the one glyph drawing every DOM face uses (mutants: the row missing; the row always present; a stroke glyph filled)', () => {
   const rows = socialMenuRows({ peerId: 'peer-0002', canFriend: true, canInvite: true, canInspect: true });
   assert.deepEqual(rows.map((r) => r.key), ['inspect', 'friend', 'invite', 'cancel']);
   assert.deepEqual(rows[0], { key: 'inspect', label: 'Inspect', enabled: true, why: null, act: { k: 'profile.inspect', peer: 'peer-0002' } });
   assert.deepEqual(socialMenuRows({ peerId: 'peer-0002' }).map((r) => r.key), ['friend', 'invite', 'cancel'], 'unoffered, unchanged');
+  assert.deepEqual(socialPlaqueRows('peer-0002', { canFriend: true, canInvite: true, canInspect: true })[0], { id: 'inspect', label: 'Inspect' }, 'the plaque\'s first verb');
+  assert.deepEqual(plaqueRowFor('inspect', 'peer-0002', { canInspect: true }), { act: { k: 'profile.inspect', peer: 'peer-0002' }, refusal: null }, 'and its press, the card\'s own act');
   const doc = fakeDoc();
   const [sprout] = glyphBadges({ glyphs: ['sprout'] });
   const svg = glyphSvgNode(doc, sprout, 'x-glyph', 1.6);
@@ -396,7 +398,10 @@ test('INSPECT1 the F-menu\'s Inspect row: first, when the host offers it, acting
 
 test('INSPECT1 host by source: the Inspect row is offered on every body the F key finds; its act opens the profile at once from the room\'s half and asks for the card only of a relay that routes it, retried by the frame and timed at CARD_WAIT_MS; an ask is answered through the gate with my own card, an answer drawn only on the card that asked; F again closes the profile; the other surfaces yield their Escape to it (mutants: an ask sent to an old relay; the answer drawn for anyone; the wait never said)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /actions: \{ \.\.\.social\.actionsFor\(hit\.peer\.id\), \.\.\.tradeActionsFor\(hit\.peer\.id\), canInspect: true \}/);
+  assert.match(w, /const peerActsFor = \(peerId\) => \(\{ \.\.\.social\.actionsFor\(peerId\), \.\.\.tradeActionsFor\(peerId\), canInspect: true \}\);/, 'one bag: the hub\'s acts, the trade\'s, and the look');
+  assert.match(w, /peerId: hit\.peer\.id, actions: peerActsFor\(hit\.peer\.id\) \}\) === true;/, 'the F-card reads it');
+  assert.match(w, /const acts = social \? peerActsFor\(id\) : null;/, 'the plaque\'s rows read it (ACT-MENU)');
+  assert.match(w, /const row = plaqueRowFor\(sel\.id, id, peerActsFor\(id\)\);/, 'and the plaque\'s press');
   assert.match(w, /if \(act\.k === 'profile\.inspect'\) \{ inspectPeer\(act\.peer\); return; \}/);
   const inspect = w.slice(w.indexOf('const inspectPeer = (peerId) => {'), w.indexOf('const socialInteract = () => {'));
   assert.match(inspect, /const can = !!online\?\.cardOk;\s*\n\s*_profileAsk = can \? \{ peerId, at: performance\.now\(\), sent: false \} : null;\s*\n\s*if \(_profileAsk\) _profileAsk\.sent = online\.sendCard\(\{ to: peerId, ask: true \}\) === true;/);

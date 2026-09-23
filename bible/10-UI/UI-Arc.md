@@ -869,14 +869,14 @@ does the pack's USE arm.
                         worldModes.js:2147 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1057, world.js:2132,
-                        exterior.js:2377. It is the only window TWO
+                        dungeonContext.js:1057, world.js:2144,
+                        exterior.js:2466. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6609, dungeonContext.js:6728. A seam
+    / NOTEBOOK          world.js:6743, dungeonContext.js:6733. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -911,7 +911,7 @@ None of these blocks anything; all are real.
                         makes it worth fixing: the overworld is the
                         first map a thumb could actually drive.
 
-    THE SPLIT POPUP     systems/itemTransfer.js:247. TransferItem
+    THE SPLIT POPUP     systems/itemTransfer.js:248. TransferItem
                         opens a numeric field DEFAULTED to maxAmount
                         when a stack will not fit whole (:1515);
                         BOTH skins take exactly what fits and never
@@ -4767,7 +4767,7 @@ literal with no duplicates; all 71 display labels match DFU's recovered
 FALL.EXE text exactly; every secondary list matches its DFU array in
 order; the builder is reconstructed on re-entry on both sides, so the
 pick lists reset; a career's flags survive the save round trip (the
-career is spread as plain CFG data, save.js:266,529 - worth checking
+career is spread as plain CFG data, save.js:271,529 - worth checking
 because AUDIT 17h caught exactly this shape dropping player
 reputation); and parseCareerData leaves every numeric field finite and
 unsigned under the maximal fourteen-pick set.
@@ -8688,7 +8688,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2517 and
+questJournal.js from charSheetNav:53, world.js:2530 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9315,7 +9315,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:6577` and `dungeonContext.js:1612` answer the same
+`worldModes.js:6600` and `dungeonContext.js:1613` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:6976`,
+the other half went stale unnoticed. (The rest cite named `world.js:7110`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:6982` now.)
+deleted the second and the cite is `world.js:7116` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -15349,9 +15349,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:5015` named a line that is 8950, `:823` one that is
+read: `world.js:5131` named a line that is 8950, `:835` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4783-4815` and `dungeonContext.js:1429` were
+that is 8907. `world.js:4899-4931` and `dungeonContext.js:1429` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -15652,7 +15652,7 @@ that through `InputManager` (:1084-1108, one poll a frame in
 `GetKeyDown` at all, so every consumer wrote its own out of the only
 read there was.
 
-`motor.js:1020` had already named this bug's twin from the other side:
+`motor.js:1037` had already named this bug's twin from the other side:
 "a render frame that accumulates less than one physics step swallowed
 the press" - the fix there moved `_heightAction` out of the fixed-step
 loop. The half that remained was the host's.
@@ -16893,7 +16893,7 @@ says in its own header that a second `--apply` against the same base
 moves every cite AGAIN. Recovering this slice's line shifts by
 reverting the tree except the files it had edited re-created exactly
 that: the kept files still carried the first pass's moves, and the
-second pass moved them a second time - `dungeonContext.js:2429` became
+second pass moved them a second time - `dungeonContext.js:2430` became
 2221 where the line had gone to 2215. The repair is a pairing walk:
 read HEAD's number at the same position in the same file, resolve it
 BY CONTENT in the working tree, and write that. Forty-seven cites came
@@ -18034,3 +18034,52 @@ Five players, five root causes, one commit. The torch's two are recorded in `06-
 **HOTSLOT (!Simple: "Cant change Hotslot spell").** The spell slot had ONE writer a player could reach: a 350 ms HOLD of the quick-spell key, said nowhere - the pane row read "Ready quickslot spell", the chip wore the bare key. A press readies the book's first spell and a second press unreadies it, so from the chair the key was a toggle stuck on spell one. On a phone it was a dead end: the chip that takes the hold was `display: none` until the slot was filled, and only the hold fills it. Four changes: the enhanced spellbook slots a spell - a Quickslot / Unslot button beside Ready, the pair the pack gives a consumable (`quickslotActs`); the empty chip is a SOCKET (drawn dim as "No spell", wearing its key, so the key is seen and a finger has a chip to fill - departure 4's law for the diamond's cells); the pane row says "(hold to cycle the book)"; and `spellCandidates` answers one entry per index - a bought stock spell, a classic import and the vampire/lycanthrope gifts each push a record without asking, and `findIndex` on a doubled book always landed on the first copy, the cycle stuck on one spell. The classic skin keeps the hold. Pins: `test/discord5.test.js` mounts the enhanced book over a DOM fake and slots, re-slots and unslots; the doubled book walks every spell; the socket and the label by source. `test/qs2_inputs.test.js` re-aimed to the label.
 
 Not verified in a browser: none of the five is reproducible headless. `tools/mutants/discord5.json`: 20 records, 20 dead.
+
+## AUDIT HCC - THE FIELD'S OWN WINDOW AND THE HORSE'S NAME (2026-09-23, Mac: "any new notifications or UI elements are enhancified")
+
+Horse Cart and Cargo brought three UI surfaces; the audit found two of them classic under the enhanced skin and
+one missing from the classic skin (the full audit: `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC).
+
+- **The naming prompt (U5).** "Name your horse:" is DFU's DaggerfallInputMessageBox, and `ui/inputMessageBox.js`
+  drew its SPOP parchment in the bitmap font on both skins. ENH-NOTICE1's law stands - a field is a DECISION, not
+  a click-anywhere notice, so it never joins the right-edge stack - and under the enhanced skin the box is now its
+  own window in the skin's face (`ui/enhancedInputBox.js`): centred (the top, for showAtTopOfScreen), the notice's
+  panel and brass rule, the text tokens, the label and the live entry with a caret on a field line, and a caption
+  that says what closes a field ("Enter to accept · Escape to cancel", never the notice's "click or press a key").
+  The model does not move: the host routes every key to `input`, the box stays modal. Every raiser of the one box
+  wears it - ActionInputBox, the makers' names, the rename, the find - which is FONT2's input-box line paid.
+- **The horse's name (U6).** HorseNameTooltipController adds a TextLabel to the HUD at native (0, 112), centred,
+  default font. The port had routed it through the world plaque alone, which is the enhanced desktop's; on the
+  classic skin and on a phone the name was gone. `ui/horseNameTooltip.js` is the label: DFU's line on the classic
+  skin, the mid-screen label's DOM face (`enhancedHudText.drawEnhancedHudLabel`, one node per label id) on the
+  enhanced one; drawn by `drawHud` beside the mid-screen label and hidden by the same door. The host sets it where
+  the plaque is not already naming the horse.
+- **The refusals (I2).** The enhanced pack dropped the runtime's opening refusal ("Your wagon is too far from the
+  entrance.") and the granted exit flag; the refusal is its notice now, as the classic window's box over itself.
+- **The keys (K1, K4).** The Mods pane's key capture gained the controls pane's clear (✕ writes `None`); the notes
+  say the port's control rather than the mod's "Enter a Unity KeyCode name".
+
+## HCC-TIP - WHOSE HORSE, WHOSE WAGON (2026-09-23, Mac: "I think we should build that. And if not already, ensure this is compatible with our tooltip implementation and ensure it shows owned if another players. Also need to ensure over people see others riding on horses")
+
+The World Tooltips plaque named a peer's team as one run-on line ("Bess (Ann's horse)"). It now speaks the plaque's
+own shape: the title is the mod's word for the thing (the horse's name, else "Horse"; "Wagon"), and a sub-row says
+"Owned by Ann". The owner is the session's name, or the name the relay stamped on the cell's memory when the owner
+is away (HCC-PARK), so a parked team is never nobody's. A press says "Bess - owned by Ann." and opens nothing. The
+full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-TIP and RIDE.
+
+## ACT-MENU - THE VERBS ON THE LOOT PLAQUE (2026-09-23, Mac: "for player interaction and horse interaction, instead of using a keybind toggle, let's reuse the loot scroll menu to select options")
+
+The World Tooltips plaque had one list, a pile's items, with QUICK-LOOT's wheel and highlight. It has a second kind of
+frame now: `'actions'`, a namer's verbs as rows - `resolveHover` makes one from a namer that answers `actions`, the same
+`nextSelection` fold lights a row, the same wheel moves it (whatever the loot switch says: the switch is about taking),
+and the paint draws them in the loot list's rows. P and J never arm on a verb, a verb has no stats, and a plaque that
+stands down (a window, the skin) folds nothing, so no highlight outlives what it lit. The press reads the lit verb by key
+(`plaqueActionFor`, `plaqueActionSelection`): a player's acts (the F-menu's own, through its own door) and my horse's
+and wagon's (the mod's interaction mode per row). Record: `01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins:
+`test/disc7.test.js`; mutants `tools/mutants/disc7.json`.
+
+AUDIT DISC7 (2026-09-23, Mac: "Do an audit before we merge"): a player's list starts UNLIT (`actionsUnlit` ->
+`startUnlit`; a plain click on a player is not a request sent, and passes to the ladder), F lights its first row
+(`plaqueLightFirst`), the lit verb follows its row by id when the list changes, the card's refused acts are listed in
+italics with their reason (`.wplaque-row.off`) and a press on one says it, a single lit verb leaves the wheel to the
+camera, and every door that takes the plaque down folds its highlight away. Pins: `test/auditdisc7.test.js`.

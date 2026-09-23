@@ -185,7 +185,7 @@ test('HARD2: both exterior hosts ask the ONE race and hand-roll none of it, and 
     const src = read(host);
     assert.match(src, /import \{ raceActivation \} from '\.\.\/player\/activationRace\.js';/, `${host}: imports the law`);
     // SURV3: two more families under the same ray - a camp and a water source (each row may carry its slice's comment)
-    assert.match(src, /const _race = raceActivation\(\{\s*\n\s*corpse: _corpsePick,\s*\n\s*pile: _pilePick,\s*\n\s*torch: _torchPick,\s*\n\s*wagon: _wagonPick,\s*\n\s*camp: _campPick,[^\n]*\n\s*water: _springPick,[^\n]*\n\s*doorDistance: modes\.exteriorActivationDistance\(cam\.pos, useFwd\),\s*\n\s*personDistances: _livePersons\.map\(\(p\) => rayPersonDistance\(cam\.pos, useFwd, p\.pos\)\),\s*\n\s*\}\);/, `${host}: and feeds it every family the ray can strike`);
+    assert.match(src, /const _race = raceActivation\(\{\s*\n\s*corpse: _corpsePick,\s*\n\s*pile: _pilePick,\s*\n\s*torch: _torchPick,\s*\n\s*wagon: _wagonPick,\s*\n\s*horseCart: _hccPick,[^\n]*\n\s*camp: _campPick,[^\n]*\n\s*water: _springPick,[^\n]*\n\s*doorDistance: modes\.exteriorActivationDistance\(cam\.pos, useFwd\),\s*\n\s*personDistances: _livePersons\.map\(\(p\) => rayPersonDistance\(cam\.pos, useFwd, p\.pos\)\),\s*\n\s*\}\);/, `${host}: and feeds it every family the ray can strike`);
     for (const [name, re] of [['the body and the pile', /const _lootPick = _race\.loot, _dropPick = _race\.drop;/],
       ['the person arm\'s rival', /const _nonPersonRival = _race\.nonPersonRival;/],
       ['the foe arm\'s rival', /const _rivalDist = _race\.rival;/],

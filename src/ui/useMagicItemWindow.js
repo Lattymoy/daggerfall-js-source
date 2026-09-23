@@ -13,12 +13,20 @@
 //
 // The window IS DaggerfallListPickerWindow (`: base(uiManager,
 // previous)`), so the port's ListPickerWindow is the whole of it:
-//   - AllowCancel = false (:18) - the toggle key closes it, not Escape.
+//   - AllowCancel = false (:34-35) switches off only the BASE class's
+//     Escape ("Prevent duplicate close calls with base class's exitKey"):
+//     the window closes ITSELF in Update (:68-80) - the UseMagicItem key
+//     or the back button (Escape) arms on the press and closes on the
+//     release. DISC8-D (Discord: "I also get stuck on the use magic item
+//     window"): the port read AllowCancel as "Escape does not close it"
+//     and left the toggle to a host that never had one, so nothing but
+//     USING an item closed it - no key, no touch X, no pad Back.
+//   - ParentPanel.BackgroundColor = Color.clear (:33): no backdrop.
 //   - Refresh() lists LongName per item (:50-57).
 //   - DaggerfallUI :581-583 pushes the window ONLY when
 //     UpdateUsableMagicItems() > 0: with nothing usable, no window
 //     opens at all rather than an empty list.
-//   - MagicItemPicker_OnItemPicked (:86-98) closes FIRST, then uses:
+//   - MagicItemPicker_OnItemPicked (:123-136) closes FIRST, then uses:
 //     a potion is drunk and one removed, an enchanted item runs its
 //     Used payload. Both of those arms are systems/useItem.js already
 //     (the inventory's own use path), so the pick hands the item to
@@ -30,6 +38,9 @@ import { isPotion } from '../systems/useItem.js';
 import { isEnchanted as defaultIsEnchanted } from '../systems/inventory.js';
 import { audio } from '../systems/audio.js';   // AUDIT 64 F43: MagicItemPicker_OnItemPicked's ButtonClick
 import { SOUND } from '../systems/soundClips.js';
+import { bindings } from './input.js';
+import { actionForCode } from '../systems/inputActions.js';
+import { normalizeCode } from '../systems/dialogShortcuts.js';
 
 /**
  * UpdateUsableMagicItems (:58-81), verbatim: walk the pack in order;
@@ -65,8 +76,9 @@ export function createUseMagicItemWindow({ items = [], onUse = null, onClose = n
   if (usable.length === 0) return null;
   const win = new ListPickerWindow({
     items: usable.map(nameOf),
-    // AllowCancel = false (:18): Escape does not close this one - the
-    // UseMagicItem key does, which is the host's toggle.
+    backdrop: 'none',   // :33 ParentPanel.BackgroundColor = Color.clear
+    // AllowCancel = false (:34-35): the base class's Escape is off
+    // because Update below closes the window itself.
     allowCancel: false,
     onPick: (index) => {
       // AUDIT 64 F43: MagicItemPicker_OnItemPicked (:123-125) HEADS
@@ -85,5 +97,25 @@ export function createUseMagicItemWindow({ items = [], onUse = null, onClose = n
       onUse?.(usable[index], index);
     },
   });
+  // DISC8-D: Update (:68-80), verbatim - GetKeyDown(UseMagicItem) ||
+  // GetBackButtonDown() ARMS (isCloseWindowDeferred), and the matching
+  // release closes. The release of the press that OPENED the window
+  // finds nothing armed, so it cannot close what it opened.
+  const closesIt = (code, e) => {
+    const c = normalizeCode(code, e);   // 'back' is Escape, 'char:u' is KeyU
+    return c === 'Escape' || (c != null && actionForCode(bindings(), c) === 'UseMagicItem');
+  };
+  let isCloseWindowDeferred = false;
+  const pick = win.input.bind(win);
+  win.input = (code, e = null) => {
+    if (closesIt(code, e)) isCloseWindowDeferred = true;
+    pick(code, e);   // base.Update runs first in DFU: the list still sees the press
+  };
+  win.keyup = (code, e = null) => {
+    if (!isCloseWindowDeferred || !closesIt(code, e)) return;
+    isCloseWindowDeferred = false;
+    win.done = true;   // CloseWindow
+    onClose?.();
+  };
   return win;
 }

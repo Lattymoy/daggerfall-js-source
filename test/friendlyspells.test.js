@@ -170,14 +170,14 @@ test('SPELLFX1/2: a peer\'s ranged cast is DRAWN as a missile that stops on a bo
 });
 
 test('SPELLFX1 wire (world98): the pose carries the cast\'s element (`ce`, 0..4) and the arrows loosed (`ar`); a pose from before them reads Magic and none (mutants: the fields dropped by the projection; an element past the table)', () => {
-  assert.equal(RELAY_VERSION, 'world99'); assert.equal(POSE_CAST_ELEMENTS, 5);
+  assert.equal(RELAY_VERSION, 'world101'); assert.equal(POSE_CAST_ELEMENTS, 5);   // world98 carried these fields; HCC-PARK + RIDE moved the version on (world99) with the park frame and the pose's mount, DISC7 (world100) with its half-speed bit, and the chat's frames, the card and AUDIT ATTACH's meters (world101)
   const base = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 };
   assert.equal(validPose({ ...base, ce: 0, ar: 7 }).ce, 0); assert.equal(validPose({ ...base, ce: 0, ar: 7 }).ar, 7);
   assert.equal(validPose(base).ce, 4, 'an older pose: Magic'); assert.equal(validPose(base).ar, 0);
   assert.equal(validPose({ ...base, ce: 9 }).ce, 4, 'past the table: Magic');
   const w = rd('src/scenes/world.js');
   assert.match(w, /cn: rig\.cast\.n, cr: rig\.cast\.rangeType \| 0, ce: rig\.cast\.element \?\? 4,[^\n]*\n\s*ar: rig\.shot\?\.n \?\? 0,/, 'the sender fills them');
-  assert.match(w, /peerCastVisuals\(drawable\);[^\n]*\n\s*peerBodies\.sync\(drawable, onlineToScene, dt, player\.pos, \{ priority: \(id\) => !!social\?\.isPartyPeer\(id\) \}\);/, 'drawn beside AUDIT PARTY8\'s party-first body sync, which stands');
+  assert.match(w, /peerCastVisuals\(drawable\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*peerRiders\.sync\(drawable,[^\n]*\n\s*const afoot = [^\n]*\n\s*peerBodies\.sync\(afoot, onlineToScene, dt, player\.pos, \{ priority: \(id\) => !!social\?\.isPartyPeer\(id\) \}\);/, 'drawn beside AUDIT PARTY8\'s party-first body sync, which stands (RIDE: over the peers afoot, the riders synced between)');
 });
 
 // ─── SNDREP1: THE SOUND PACK AND THE NIGHT SOUNDS ──────────────────────────────────────────────────────────────
@@ -200,7 +200,7 @@ test('SNDREP1: a pack\'s loose WAVs answer for the two classic clips by DFU\'s n
   assert.equal(soundSilenced(7), false, 'a clip with no switch');
   assert.match(rd('src/systems/audio.js'), /if \(soundSilenced\(index\)\) return null;[^\n]*\n\s*const r = this\._replacement\?\.\(index\); if \(r\) return r;/, 'the engine\'s buffer door');
   // CRICKET-DUNGEON's own stop still stands underground; the switch is the same stop above ground
-  assert.match(rd('src/systems/ambientEffects.js'), /if \(deps\.underground \|\| soundSilenced\(AMBIENT_CRICKETS_LOOP\)\) \{ if \(this\._cricketsLoop\) \{ this\._cricketsLoop\.stop\(\); this\._cricketsLoop = null; \} \}/, 'one stop, two reasons');
+  assert.match(rd('src/systems/ambientEffects.js'), /if \(deps\.inside \|\| deps\.underground \|\| soundSilenced\(AMBIENT_CRICKETS_LOOP\)\) \{ if \(this\._cricketsLoop\) \{ this\._cricketsLoop\.stop\(\); this\._cricketsLoop = null; \} \}/, 'one stop, three reasons (DISC8-A: indoors)');
 });
 
 test('SNDREP1 x CRICKET-DUNGEON: switching the crickets OFF mid-chorus stops the sounding loop at once and holds the chorus clock; back ON, the night takes up where it stood - and underground stays silent with the switch on (mutants: the arm leaving a sounding loop to its bout; the underground stop lost)', () => {

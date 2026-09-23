@@ -1205,13 +1205,13 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:847) and this one did not, so dragging a
+  // (nativeInventory.js:849) and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
   // MAC-O6: the same cue this window's `take()` gained - storing (selling,
   // banking, dropping into a wagon or a pile) is a transfer too, and
-  // planStore already hands back the sound (itemTransfer.js:220), unread
+  // planStore already hands back the sound (itemTransfer.js:221), unread
   // until now.
   if (enhancedSoundsOn()) audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // ES1: the row's switch
   // PX24 (Mac: an action taken closes the tooltip): the transfer
@@ -1220,7 +1220,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:807). Without them
+  // the classic window's own call (nativeInventory.js:809). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1248,13 +1248,13 @@ function take(item) {
   });
   if (!plan.ok) return refuse(plan.refusal);
   // AUDIT INV2 B-F2: the map is an interception in EITHER direction
-  // (itemTransfer.js:242, "F156: either direction") - taking one off a
+  // (itemTransfer.js:243, "F156: either direction") - taking one off a
   // pile reveals and consumes it, exactly as stowing one does. The
   // classic window routes both; this one routed neither.
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:873) and this one never did - the ONLY
+  // window plays (nativeInventory.js:875) and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -2498,9 +2498,15 @@ export function mountEnhancedInventory(hostEl, d = {}) {
     usingWagon: open.usingWagon,
     allowDungeonWagonAccess: open.allowDungeonWagonAccess,
     chooseOne: open.chooseOne,
+    // AUDIT HCC I2: Horse Cart and Cargo's granted exit request - the wagon button's later click asks the dungeon-exit
+    // context with it (planWagonToggle), not the ordinary one that refuses what the player just did
+    dungeonExitAccessGranted: !!open.dungeonExitAccessGranted,
   };
   dropped = [];
   wagonLocal = [];
+  // AUDIT HCC I2: the opening refusal (ApplyOpeningAccess's MessageBox [IL_ad14] - "Your wagon is too far from the
+  // entrance.") is this window's own notice, as the classic window's box over itself is (nativeInventory.js)
+  if (open.refusal?.text) notice = open.refusal.text;
   refresh();
   render();
   // The classic window composes on construction; so does this. Without

@@ -54,5 +54,13 @@
     "new": "    this._meters = (globalThis.__roomMeters ??= new WeakMap());   // ws -> its meters (_meterOf)",
     "tests": ["test/auditattach.test.js"],
     "note": "Meters kept across a wake: the design says a wake forgets them, and the pin says so."
+  },
+  {
+    "name": "AT-park-strikes-on-the-party-meter",
+    "file": "server/src/index.js",
+    "old": "'parkBucket', 'parkDrops', 'too many park frames'",
+    "new": "'parkBucket', 'pdrops', 'too many park frames'",
+    "tests": ["test/auditattach.test.js"],
+    "note": "Main's HCC-PARK meter as it merged: the park frame's strikes on the party pose meter's `pdrops`, so either meter's pass forgave the other's flood."
   }
 ]

@@ -375,7 +375,7 @@ test('SOC5: a name the room has not said yet still makes a sentence, and the car
 test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation site reads it, the reach law by the one pure helper, the menu built beside the picture and taken away by a window (mutants: a second cylinder written out in the host; the menu built without the picture so F acts on a page with no account; hudCtx.socialInteract missing so the route has no door)', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /import \{ pickPeerInFront, SOCIAL_REACH(?:, [^}]*)? \} from '\.\.\/player\/socialPick\.js';/);   // PEER-PLAQUE1: the plaque's half rides the same import
-  assert.match(w, /import \{ createSocialMenu \} from '\.\.\/ui\/socialMenu\.js';/);
+  assert.match(w, /import \{ createSocialMenu(?:, [^}]*)? \} from '\.\.\/ui\/socialMenu\.js';/);
   assert.match(w, /hudCtx\.socialInteract = socialInteract;/, 'the door routeAction reaches');
   // the door sits AFTER peersNear, because peersNear is the list it measures
   assert.ok(w.indexOf('const peersNear = () =>') < w.indexOf('const socialInteract = () =>'), 'the door is written below the peers it reads');
@@ -387,7 +387,9 @@ test('SOC5: scenes/world.js - the door on hudCtx, the ray read as the activation
   assert.match(w, /SOC3/, 'and SOC3 is named where its slot is used');
   // the ray is the ACTIVATION ray's own reading, and the cylinder is the port's one test
   assert.match(w, /const fwd = \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\), Math\.sin\(cam\.pitch\), Math\.cos\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)\];/, 'the same forward the activation site composes');
-  assert.match(w, /pickPeerInFront\(cam\.pos, socialFwd\(\), near, SOCIAL_REACH, rayPersonDistance\)/, 'one law, one cylinder, the host\'s own camera');   // AUDIT DROPS E3: the forward is a named function now, shared with the plaque's modal pick
+  // AUDIT DISC7 A6: through `peerInSight` - the same one law and cylinder, and a wall in front of the player blocks it
+  assert.match(w, /const peerInSight = \(eye, dir\) => \{\s*\n\s*const hit = pickPeerInFront\(eye, dir, peersNear\(\), SOCIAL_REACH, rayPersonDistance\);/, 'one law, one cylinder');
+  assert.match(w, /const hit = peerInSight\(cam\.pos, socialFwd\(\)\);/, 'the host\'s own camera');   // AUDIT DROPS E3: the forward is a named function now, shared with the plaque's modal pick
   assert.match(w, /const socialFwd = \(\) => \[Math\.sin\(cam\.yaw\) \* Math\.cos\(cam\.pitch\), Math\.sin\(cam\.pitch\), Math\.cos\(cam\.yaw\) \* Math\.cos\(cam\.pitch\)\];/, 'the ray read as the activation site reads it');
   assert.equal((w.match(/rayPersonDistance\(/g) ?? []).length, 1, 'the host still calls the cylinder in exactly one place - the other site hands it to raceActivation as a list');
   // the menu is built beside the picture, over the LIVE link, and its acts write a line

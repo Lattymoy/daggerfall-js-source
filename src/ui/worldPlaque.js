@@ -181,7 +181,7 @@ export function plaqueAnchor(canvas) {
 
 function paint(n, f, sel = -1, stats = []) {
   n.textContent = '';
-  n.classList.toggle('has-list', f.kind === 'items');
+  n.classList.toggle('has-list', f.kind === 'items' || f.kind === 'actions');
   const title = document.createElement('div');
   title.className = 'wplaque-title';
   // The mod joins a door's label with `\r` - "To\rPrivateer's Hold" -
@@ -200,6 +200,21 @@ function paint(n, f, sel = -1, stats = []) {
     sub.className = 'wplaque-sub';
     sub.textContent = s;
     n.append(sub);
+  }
+  if (f.kind === 'actions') {
+    // ACT-MENU: the verbs, in the loot list's own rows - one is lit, the wheel moves it, the activate key presses it
+    const list = document.createElement('div');
+    list.className = 'wplaque-list wplaque-acts';
+    n.append(list);
+    for (let i = 0; i < f.rows.length; i++) {
+      const row = document.createElement('div');
+      row.className = 'wplaque-row wplaque-act';
+      if (i === sel) row.classList.add('sel');
+      if (f.rows[i].disabled) row.classList.add('off');   // AUDIT DISC7 A4: a refused verb, its reason in its name
+      row.textContent = f.rows[i].name;
+      list.append(row);
+    }
+    return;
   }
   if (f.kind !== 'items') return;
   const list = document.createElement('div');
@@ -313,6 +328,7 @@ export function hideWorldPlaque() {
   // this is a no-op on that path.
   _cancel(_watchdog);
   _watchdog = null;
+  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it
   if (!node) return;
   shownSig = null;
   blank(node);
@@ -439,6 +455,10 @@ export function worldHoverFrame({
   // here on both skins: a classic player turns a pile too, and DFU's
   // mid-screen line is the plaque they have. With no turn armed, the
   // plaque's gates below run exactly as they always did.
+  //
+  // ACT-MENU: a plaque that stands down folds NOTHING - the highlight goes with it, so a verb lit before a window
+  // opened (or the skin changed) cannot be pressed later by a click that never saw it. (The hide folds the highlight
+  // away too: AUDIT DISC7 A8; and a turn spent below returns before the fold.)
   const on = worldPlaqueOn();
   if (!on) hideWorldPlaque();
   // `cursorActive` is the crosshair's OWN first statement (there is no
@@ -447,7 +467,7 @@ export function worldHoverFrame({
   // driver only ran with no overlay up - and an accident is not a law.
   // LOOT-STACK: and a turn armed before a window came up is dropped, not
   // kept to land on whatever the reticle meets after it.
-  if (cursorActive || !eye || !dir || !collider) { dropBodyTurns(); if (on) showWorldPlaque(null); return null; }
+  if (cursorActive || !eye || !dir || !collider) { dropBodyTurns(); foldQuickLoot(null); if (on) showWorldPlaque(null); return null; }
   if (!on && !bodyTurnArmed()) return null;
   // CONTAINED, COUNTED AND SAID - ONCRASH1's law, and a READOUT is a
   // stronger case for it than the wire frame that law was written for:
@@ -492,6 +512,7 @@ export function worldHoverFrame({
       _faultSaid = true;
       console.warn(`[world-hover] the plaque could not resolve and is standing down for this frame: ${e?.message ?? e}`);
     }
+    foldQuickLoot(null);   // AUDIT DISC7 A8: a contained fault lights nothing - a click must not press the last good frame's verb
     try { showWorldPlaque(null); } catch { /* the draw itself is gone; nothing left to hide */ }
     return null;
   }

@@ -1381,3 +1381,18 @@ frame, the eye and the bloom reading the glow, the guarded build, the
 bounce gone). Campaigns: `tools/mutants/auditreach.json` 8, `vol1.json`
 18, `shadowreach.json` 19 - all dead; fifteen records across nine lists
 re-aimed by content.
+
+## DISC6-E - THE CEILING LAMPS THAT FLASHED (2026-09-23, Discord through Mac: "in shops and taverns the point lights in ceilings make everything flash/flickering")
+
+The nearest-`SHADOW_POINT_CASTERS` pick swapped near-ties on every step and head-bob, and the lamp that lost its
+cube map lit through the ceiling for a frame. `render/shadowPass.js` `CASTER_KEEP_RATIO` (0.8): last frame's
+casters (`holdCasters`, matched by position) are measured at 0.8 of their distance, so a newcomer must be clearly
+nearer to take a map. Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in `test/disc6.test.js`; `tools/mutants/disc6.json`.
+
+## DISC7 - THE CONTACT MARCH READS THROUGH ITS RECT (2026-09-23, Mac: "fix the known gaps")
+
+EL8's contact block sampled the previous frame's depth at the clip-space UV as if the world viewport were the whole
+canvas; under a docked large HUD every sample came from the wrong row and near the bottom from the bar's cleared
+strip. `holdPrevRect` keeps the rect the depth was written under (with the view-projection, in `prepare`) and
+`prevDepthUV` maps through it, as DEPTH_GLSL's `depthAt` does for every other screen pass. Record:
+`01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/disc7.test.js`.

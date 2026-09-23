@@ -305,8 +305,8 @@ test('TS1: the stick-half tap LOCKS and opens nothing - the flag from touch.js t
   const d = read('src/scenes/dungeon.js');
   assert.match(d, /if \(_lockFoe\) \{ lockOn\.toggle\(_lockFoe\); return null; \}\n\s*if \(_tapLockOnly\) return null;/, 'dungeon: the ladder ends at the lock');
   const wm = read('src/scenes/worldModes.js');
-  const exit = wm.slice(wm.indexOf('function tryExit() {'), wm.indexOf('function tryExitDungeon() {'));
-  const dexit = wm.slice(wm.indexOf('function tryExitDungeon() {'), wm.indexOf('function exitDungeonNow() {'));
+  const exit = wm.slice(wm.indexOf('function tryExit('), wm.indexOf('function tryExitDungeon('));
+  const dexit = wm.slice(wm.indexOf('function tryExitDungeon('), wm.indexOf('function exitDungeonNow() {'));
   for (const [name, fn] of [['tryExit', exit], ['tryExitDungeon', dexit]]) {
     assert.match(fn, /!host\.activateLockOnly\?\.\(\)\) \{/, `${name}: the quest-click arm is gated`);
     assert.match(fn, /if \(f\) \{ host\.lockToggle\?\.\(f\); return true; \}[\s\S]{0,700}?if \(host\.activateLockOnly\?\.\(\)\) return false;/, `${name}: the ladder ends at the lock`);

@@ -194,8 +194,8 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2836), townTalk.say
- *                     (exterior.js:1946, world.js:3426) and
+ *                     (dungeonContext.js:2837), townTalk.say
+ *                     (exterior.js:2036, world.js:3544) and
  *                     worldModes' own interior sink (worldModes.js:418,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
@@ -1190,7 +1190,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:290), so a flag flipped to
+     *             LIVE (handheldTorches.js:302), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z
@@ -1524,6 +1524,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     /** AUDIT 66 F8: the host's teardown - every long-lived thing this
      *  rig owns is freed here, as the hosts free their pools. */
     dispose() { handheld.dispose(); _handheldWasOn = false; },
+    /** DISC6: the rig's frame is handed to another mode's rig - its torch loop falls silent (handheldTorches silence). */
+    silenceTorch() { handheld.silence(); },
   };
   function drawInner({ paralyzed = false } = {}) {
     {

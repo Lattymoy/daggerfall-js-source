@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6024` read, on one physical line:
+`src/scenes/worldModes.js:6041` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4230`). With the property missing that call is a
+(`dungeonContext.js:4231`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3479` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3597` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:227`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:864`, `src/net/online.js:1500`):**
+**Now (`src/net/wire.js:864`, `src/net/online.js:1548`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7490,7 +7490,7 @@ recorded).
 
 **Three additions, per the same request.**
 
-*PEER-PLAQUE1 - "Using the world tooltip implementation for other players and interaction prompt."* Another player under the crosshair is one more racer in `raceWinner`'s one precedence (`peer`, between the townsperson and the foe - a body measured through the same cylinder, and the press has no arm for it: the F key is its own gesture). `player/socialPick.js` grew the pure half: `peerRayPick` dresses SOC5's own `pickPeerInFront` hit (SOCIAL_REACH, `rayPersonDistance`) as `{ key: 'peer:<id>', distance, reach }`, `peerIdOfKey`, and `peerPromptText` - the ENABLED acts alone, in the menu's own order and labels (`PEER_ACT_LABELS`, pinned equal to `socialMenuRows`), behind the LIVE interact binding (`getBinding(bindings(), 'SocialInteract')`, 'KeyF' -> 'F', no bracket when unbound - AUDIT SOC D10/C19), the trade row's own live label, and with nothing to offer the relation ('In your party' before 'Friend', else the name alone). world.js names it in the PORT's own `_hoverNamers` (ungated - DFU has no other players, so it sits with the cart and the camps above the mod's switch) as `<name> <glyph marks>` (`ui/playerBadge.js glyphMarks`, the classic face's plain-text glyphs); the building and the dungeon race and name it through two new host doors, `peerHoverPick(eye, dir)` and `peerHoverName(key)`, over the mode's own eye - `worldModes.js` interior pick/namer, `buildDungeonContext` opts, `ctx.addActivationNamer`, `dungeonContext.js` pick.
+*PEER-PLAQUE1 - "Using the world tooltip implementation for other players and interaction prompt."* (The prompt line behind the interact key is gone since DISC7 ACT-MENU: the card's acts are the plaque's rows - see DISC7 and AUDIT DISC7 below.) Another player under the crosshair is one more racer in `raceWinner`'s one precedence (`peer`, between the townsperson and the foe - a body measured through the same cylinder, and the press has no arm for it: the F key is its own gesture). `player/socialPick.js` grew the pure half: `peerRayPick` dresses SOC5's own `pickPeerInFront` hit (SOCIAL_REACH, `rayPersonDistance`) as `{ key: 'peer:<id>', distance, reach }`, `peerIdOfKey`, and `peerPromptText` - the ENABLED acts alone, in the menu's own order and labels (`PEER_ACT_LABELS`, pinned equal to `socialMenuRows`), behind the LIVE interact binding (`getBinding(bindings(), 'SocialInteract')`, 'KeyF' -> 'F', no bracket when unbound - AUDIT SOC D10/C19), the trade row's own live label, and with nothing to offer the relation ('In your party' before 'Friend', else the name alone). world.js names it in the PORT's own `_hoverNamers` (ungated - DFU has no other players, so it sits with the cart and the camps above the mod's switch) as `<name> <glyph marks>` (`ui/playerBadge.js glyphMarks`, the classic face's plain-text glyphs); the building and the dungeon race and name it through two new host doors, `peerHoverPick(eye, dir)` and `peerHoverName(key)`, over the mode's own eye - `worldModes.js` interior pick/namer, `buildDungeonContext` opts, `ctx.addActivationNamer`, `dungeonContext.js` pick.
 
 *PARTY-REST4 - "Notification when youre not near the party leader for resting."* `partyRestFarNotice(leaderRest, near, leaderRow)` in world.js, called from `partyRestFollowTick` on the SAME `near` the mirror reads and before the mirror acts on it: the leader's pose carries a rest and I am not near enough - said ONCE on `setMidScreenText` ("<leader> is resting - come within 15 m of them to rest with the party.", the radius the one law's own number), the latch re-armed only when that rest has ended or I have come near (then the mirror opens instead), stood down with the party. A follower who walks out mid-nap is told the frame their mirror ends. Lifted out and driven in `test/restfar.test.js` (sixty far frames say it once).
 
@@ -7887,8 +7887,146 @@ the relay version mutant, the player-capsule census (AUDIT 62 F21, AUDIT 65 CV-2
 the player's own radius), the pose's field list, and ALLY-CAST's three meter pins (a whole blast deep). Not verified in a browser with two players: no online
 session exists in this container.
 
+## HCC-ONLINE (2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also enhance its online integration functionality") - a peer's horse and wagon stand in the cell
 
-## AUDIT ATTACH (2026-09-23, found by INSPECT1's measurement of the attachment its card meter would ride) - a socket's meters leave its attachment, world99
+Horse Cart and Cargo (`06-Systems/Horse-Cart-And-Cargo.md`) is single-player: its parked wagon, waiting horse,
+following horse and trailing team are objects in one Unity scene. Online they stand in a shared cell, so the port
+carries them to everyone near, under the camps' law (SURV3) and no new one:
+
+- **The record** (`systems/horseCartWire.js`): what the pool SHOWS, not the save - the wagon's kind (trailing /
+  parked / following), base, rotation as Unity spells it, cargo tier and wheel angle; the horse's base, horizontal
+  forward, walk frame and walking; the horse's name. Positions in the wire frame (natives, the compensation-free
+  height), rounded to the centimetre. It rides as `hv` on the cell's foes frame beside `c`: on every full frame
+  (`null` when none stand), and between them whenever the word moved - the foe pool's `foesFrame(full, force)`
+  sends a frame with no foe in it for the rider, so a walking horse is heard every FOES_MS and not every two
+  seconds.
+- **The door** (`validHccRecord`): shape, POSE_BOUND / POSE_Y_BOUND, a quaternion within 0.5..2 renormalised, a
+  known kind and a known tier, a frame the walk set has, walking a bit, the name at the mod's 31. A junk word drops
+  the owner's whole team; a frame without the field leaves the last word standing.
+- **The owner law** (`horseCartPool applyOwner / sweepOwners / clearPeers`): an owner's word replaces that owner's
+  alone and never mine; an owner gone from the room or quiet past FOES_STALE_MS is swept beside their puppets and
+  camps; a room change and a leave clear every peer's team.
+- **The landing**: a peer's team is drawn with the same five pieces, cargo and horse billboard as mine, EASED
+  between words (12 per second; a step past 20 m - a summon, a pixel crossing, a fast travel - snaps), the horse's
+  orientation the reader's own camera's. Their wagon and horse are targets under the one ray so the plaque names
+  whose they are ("<Name> (<Peer>'s horse)", "<Peer>'s wagon"); the press says so and opens nothing.
+- **Nothing of the storage rides**: a player's items are their own client's (the port's law since the first
+  inventory), and a peer's wagon is a thing to see and walk around.
+- **No relay change**: the relay reads nothing inside a foes frame (AUDIT WORLD2), so `hv` needs no version and no
+  law row; the pose already carries the transport mode a peer rides.
+
+Pinned: `test/hcc_pool.test.js` (the record, the door, the ease, the owner law by execution), `test/hcc_hosts.test.js`
+(the stream, the setOnHcc landing, the sweep, the clears, the relay untouched). Not verified in a browser: no
+online session exists in this container.
+
+### AUDIT HCC-ONLINE (2026-09-23, Mac: "Let's do an audit on this, ensure online is handled properly")
+
+One lens over the lane above, read whole; nine findings paid, one recorded (the full list with the other two lenses
+is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.js`, mutants in
+`tools/mutants/hcc.json`).
+
+- **The word lives in the wire frame (O1, O2).** A peer's team was converted to scene coordinates once, when it
+  landed, and `offsetAll` shifted only what was SHOWN - so my next recentre put their wagon, horse, plaque and box
+  819 m away until their next word (up to a full frame's 2 s for a parked team), and a fast travel's teardown
+  (`clearLive`, which re-anchors the origin with no offset to ride) kept them at old-frame points. The pool keeps
+  the validated record and the host's `campToScene`, and converts every frame (horseCartWire's own header law:
+  "a reader converts at landing and every frame after"); the foe pool's `destroy` takes the teams as
+  `clearPuppets` does.
+- **The parked wagon is a box (O3).** A peer's Deployed wagon stands `hccWagon:<owner>` in my collider, re-stood
+  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it takes the ray's
+  surface pardon.
+- **The door cleans the name (O4).** `n` rides `sanitizeLabel` at the mod's 31 on both ends - printable ASCII and
+  the name filter, the door a player's name and a party's place already go through.
+- **A standing horse is silent (O5).** The walk frame rode `h`, so the idle flicker (frames 5/6 at 2 fps) changed
+  the word twice a second for as long as a horse stood, forcing a foes frame to everyone in range. `h` carries
+  the walking bit (six words, not seven); the reader strides its own HorseWalkAnimationState over the pace it
+  shows. The change key is taken through `campToWire`, so my own recentre is not a word.
+- **Reach, switch, art (O6-O9).** A press on a peer's team past the mod's 3.2 is DFU's "too far"; my switch turned
+  off is a word at once; a viewer with the mod off lands nothing and loads nothing; a horse whose art is not up is
+  not named or pressed.
+- **O10, built as HCC-PARK below.** A team stood for the others only while its owner was in the cell room to say
+  it, so a parked wagon vanished when its owner went indoors, travelled or logged off.
+
+## HCC-PARK + HCC-TIP + RIDE (2026-09-23, Mac: "I think we should build that. And if not already, ensure this is compatible with our tooltip implementation and ensure it shows owned if another players. Also need to ensure over people see others riding on horses") - world98
+
+The full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-TIP and RIDE. Pins in
+`test/hcc_park.test.js` (11), mutants in `tools/mutants/hccpark.json` (22, every one dead).
+
+- **A cell keeps a parked team (HCC-PARK).** A new client frame, `{t:'park', data}`, says MY parked wagon or
+  waiting horse: its anchor in wire units and, while it is shown, the record the foes frame's `hv` already carries.
+  The cell room stores `park:<owner>` only when the anchor lies in that room's own cell (`cellRoomOfWire`), fans it
+  as `{t:'park'}` and hands a joiner the whole list after the welcome as `{t:'parks'}` with each owner's verified
+  name. It is bounded by `PARK_HZ_MAX` a socket, `PARK_CELL_MAX` a cell (stalest out) and `PARK_TTL_MS` (72 hours
+  since the owner last said it). An owner registry (one durable object per owner, `parkRegistryRoom`) drops the
+  old cell's record when the team moves or is taken up, over internal paths the public worker never forwards; the
+  cell also drops its own superseded record, so a dev worker with no registry binding keeps no ghost.
+- **The client's two words.** `hccParkTick` sends the word off the SAVE record when it changes (at most once a
+  second), again on a room change and once the cell's socket opens; `sendPark` routes it to the primary socket or
+  the halo holding that cell, else the anchor alone through the room I am in. The pool keeps the live word and the
+  kept one apart, draws the live one first per part, and the sweep takes only the live one; a kept team stays while
+  I hold its cell's socket.
+- **The owned line (HCC-TIP).** A peer's horse or wagon hovers as the mod's own word for it with "Owned by <name>"
+  under it, the owner's session name or the relay's stamp when they are away.
+- **The mount on the pose (RIDE).** `rd` (1 horse, 2 cart) and `rv` (the rider's Eye Of The Beholder mounted
+  sprite set) ride the pose, omitted on foot; a mount change is a pose change. `net/peerRiders.js` draws a riding
+  peer with EOTB's mounted sprites, before the Morrowind bodies and the dolls, which stand nothing for a rider.
+- **The deploy.** RELAY_VERSION world99 with its law row (world98 was FRIENDLY-SPELLS', merged first). An older
+  relay closes the socket on an unknown frame, so the client sends `park` only to world99 or later (`relaySupportsPark`, set on the primary welcome). The relay
+  deploys itself on the merge to main, which drops every connected player once. Not verified in a browser: no
+  online session exists in this container.
+
+### AUDIT BRANCH - the parked team's owner, the reader, the rider (2026-09-23, Mac: "Let's do an audit on everything before we merge. This needs to be perfect")
+
+The full list is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT BRANCH. Main had shipped FRIENDLY-SPELLS as world98 first,
+so the branch merged main and moved its relay law to world99; the client's park door opens at world99.
+
+- **The owner is the account and the character, never the peer id (D1, D2).** A record keyed by the id a client
+  chooses could be dropped or overwritten by anyone who said that id, and a new tab left the old record standing
+  beside the new one. The relay keys a record by `parkKeyOf(sub, c)`: the subject the identity token verified and the
+  character id the frame names (`systems/characterId.js`). The others are told only that opaque key. An account is
+  never handed or fanned its own records, so its client draws its own team off its save alone.
+- **Bounded per account, ordered, announced (D3-D5).** `PARK_ACCOUNT_MAX` records of one account a cell; the registry
+  stores when the owner spoke and ignores an older word, and a cell drops a record only if it is no newer than the
+  drop; an expired record is said gone; the same word again refreshes its time and is fanned to nobody; the horse's
+  facing is a unit vector at the door.
+- **The reader keeps each cell's word apart (C2-C4).** Kept words are stored per room and owner key, so one cell's
+  "gone" never removes another's fresh record; every cell welcome carries the list, an empty one included; the park
+  word is said again after any welcome, so a word lost with a dying socket is repeated. A kept part stands down only
+  where its owner's live word shows that same part.
+- **The rider (RIDE).** Drawn off the smoothed pose, with the gallop bit the rider's own sprite shows, only once its
+  sprite is up (failed art retried), with no human footsteps, the name at the sprite's top, gone over the death
+  screen, and its casts from the saddle's eye height.
+
+Pins: `test/hcc_park.test.js` (13); mutants `tools/mutants/hccpark.json` (35, all dead). RELAY_VERSION world99 with
+its law row (never deployed, so its row was still this branch's to write). The relay deploys itself on the merge to
+main and drops every connected player once. Not verified in a browser: no online session exists in this container.
+
+## RIDE-SOUND + 3D-AUDIO (2026-09-23, DISC6, Mac: "Can we tackle the known limit along with the following bug reports") - the peers' hooves, and every peer sound at the peer
+
+The known limit on the HCC page is gone: a riding peer is heard. Each one runs `RidingAnimator` (TransportManager's
+riding half) off the pose's `rd` and `mv`, and its loop plays at them through `audio.setLoop3d`, a named positional
+retrigger loop (DFU's ridingAudioSource shape). The loop moves every frame and stops 0.2 s after they stand, on a
+dismount, a departure, or the dead's empty sync. The neigh plays at them. Peer footsteps and swings play at the peer
+too (`peerSound` through `play3d`), where PEER-FS1 faked the falloff on a flat one-shot; all three share
+`PEER_SOUND_PROFILE` (full inside 6 m, silent past 30, linear). The hooves follow the peers' footsteps switch.
+
+The panning itself was mirrored for every positional sound in the port (the scene is left-handed, WebAudio
+right-handed) and equal-power, so nothing behind could be told from in front. Both are fixed at the audio door;
+the record is `01-Overview/Field-Bugs-2026-09-23.md` (DISC6-D). No wire or relay change: RELAY_VERSION stays.
+
+Pins: `test/audio3d.test.js` (4); mutants `tools/mutants/audio3d.json` (17, all dead). ~~The pose carries no speed,
+so a peer's horse keeps the fast clop (DFU's opening clip).~~ DISC7 put the rider's half-speed flag on the pose (`hs`,
+world100) and the clop swaps on it. Not verified in a browser.
+
+## DISC7 (2026-09-23, Mac: "fix the known gaps" and "reuse the loot scroll menu to select options") - the peers' verbs on the plaque, the clop's half speed, world100
+
+A player under the crosshair lists the F-menu's enabled acts as the World Tooltips plaque's rows - the loot list's own
+wheel and highlight - and the activate key (or F) presses the lit one through the card's own door, re-read at the press.
+The card stays where the plaque cannot (touch, the classic skin). AUDIT DISC7: a player's list starts unlit (a plain click sends nothing; the wheel or F lights a row), every act the card offers is listed with a refused one's reason, the press re-picks the player on its own ray with walls blocking and never fires on a touch cast; the riders' loop stands on a stale pose, is made within earshot only and moves with the floating origin, and `hs` is latched off a moving frame - `01-Overview/Field-Bugs-2026-09-23.md` (AUDIT DISC7). The pose carries `hs`, the rider's half-speed flag, mounted and moving
+only and omitted at 0; the receiving riding loop swaps the clop on it. RELAY_VERSION world100 with its law row. Record:
+`01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/disc7.test.js`.
+
+## AUDIT ATTACH (2026-09-23, found by INSPECT1's measurement of the attachment its card meter would ride) - a socket's meters leave its attachment, world101
 
 INSPECT1 gives a place socket a new arm, and a new arm is a new meter. Before adding one, its test measured the
 attachment the meter would ride - the widest a place socket can carry, over the real Room - and found it already
@@ -7923,7 +8061,8 @@ act share's borrowed debt (SLAM13), which a wake forgives early: that share keep
 room's act budget against the others, and a room that went quiet had no others acting. The attachment keeps only
 what a wake must recompute: the key, who the socket is (its id, name, badge, account and mute), where it stands
 (the pose, its fan counter and keepalive stamp), the hello's stamp and the room's two marks (`worldSeen`,
-`finalUsed`); in the hub, its account, party and party pose. The widest place attachment is 545 bytes now.
+`finalUsed`); in the hub, its account, party and party pose. The widest place attachment is 545 bytes now (566 since
+the merge below put main's mount fields on the pose).
 
 The class the move removes: a meter written back over a stale copy of the attachment. CHAT-CHAN's party-line junk
 refunded the chat token that way (its strike wrote back the attachment read before the chat gate spent); the strike
@@ -7945,4 +8084,15 @@ CHAT-CHAN's stale-attachment claim, and fourteen mutant records - `allycast`, `a
 tool mutates the first occurrence). Every mutant list whose targets or tests the move touched - twenty-six of them -
 was rerun against a green baseline and is dead but for three survivors older than it: `soc1` S23, `font1`
 AUDIT-FONT-F2, and `chatchan` CC-parser-before-unstuck, which EMOTE1's re-aim of CHAT-CHAN's order pin let live (paid
-in the next commit). No version of its own: the arc's world99 is not yet deployed, and its LAW hash is restated.
+in the next commit). No version of its own: the arc's deploy is not yet made (world99 when this was written, world101
+since the merge below), and its LAW hash is restated.
+
+**The merge with main (2026-09-23).** Main's HCC-PARK brought a new place arm, the park frame, with a meter written
+the old way: onto the attachment, its strikes on `pdrops` - the PARTY pose meter's field, so a pass of either meter
+forgave the other's flood and a miss of either counted toward the other's bound (the class CHAT-CHAN's `cdrops` /
+`castDrops` finding named). It merged as a `_spend` one-liner among the others, its strikes its own (`parkDrops`), and
+joined this section's pins: the flood table (its row, struck in its own words), the wake's refill table, and the widest
+place socket's frames. Main's RIDE and DISC7 put the mount on the pose (`rd`, `rv`, `hs`), so the widest pose carries
+them at their bounds and the widest place attachment measures 566 bytes. `tools/mutants/auditattach.json`: 8, 8 dead
+(the new one puts the park strikes back on `pdrops`). Main's HCC-PARK tests refilled the park bucket by writing the
+attachment, which no longer holds it; they refill the instance's meter (`_meterOf`), as every other re-aimed pin does.

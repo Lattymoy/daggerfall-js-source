@@ -2,8 +2,8 @@
   {
     "name": "PEER-PLAQUE1-peer-before-the-townsperson",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, peer, person, foe]) {",
+    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, peer, person, foe]) {",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PEER-PLAQUE1-foe-before-the-peer",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, foe, peer]) {",
+    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe, peer]) {",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PEER-PLAQUE1-peer-not-raced",
     "file": "src/player/activationRace.js",
-    "old": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, peer, foe]) {",
-    "new": "  for (const p of [camp, water, wagon, torch, corpse, pile, ground, person, foe]) {",
+    "old": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, peer, foe]) {",
+    "new": "  for (const p of [camp, water, wagon, horseCart, torch, corpse, pile, ground, person, foe]) {",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -65,28 +65,19 @@
     "why": "String(17) is '17' and String(null) is 'null' - neither starts with 'peer:', so the coerced form answers null for every non-string exactly as the typeof guard does; the guard is kept for AUDIT-WH2 L2-F5's stated law (no startsWith on a non-string), not for a behaviour a pin can see."
   },
   {
-    "name": "PEER-PLAQUE1-disabled-acts-listed",
-    "file": "src/player/socialPick.js",
-    "old": "  if (acts.canFriend) offers.push(PEER_ACT_LABELS.friend);",
-    "new": "  offers.push(PEER_ACT_LABELS.friend);",
+    "name": "PEER-PLAQUE1-refused-acts-dropped",
+    "file": "src/ui/socialMenu.js",
+    "old": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act)\n",
+    "new": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act && r.enabled)\n",
     "tests": [
       "test/peerplaque.test.js"
     ]
   },
   {
     "name": "PEER-PLAQUE1-trade-label-ignored",
-    "file": "src/player/socialPick.js",
-    "old": "  if (acts.canTrade) offers.push(acts.tradeLabel || PEER_ACT_LABELS.trade);",
-    "new": "  if (acts.canTrade) offers.push(PEER_ACT_LABELS.trade);",
-    "tests": [
-      "test/peerplaque.test.js"
-    ]
-  },
-  {
-    "name": "PEER-PLAQUE1-empty-bracket-when-unbound",
-    "file": "src/player/socialPick.js",
-    "old": "  if (offers.length) return `${keyLabel ? `[${keyLabel}] ` : ''}${offers.join(' \\u00b7 ')}`;",
-    "new": "  if (offers.length) return `[${keyLabel}] ${offers.join(' \\u00b7 ')}`;",
+    "file": "src/ui/socialMenu.js",
+    "old": "label: tradeLabel || 'Trade'",
+    "new": "label: 'Trade'",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -130,17 +121,8 @@
   {
     "name": "PEER-PLAQUE1-pick-with-a-reach-of-its-own",
     "file": "src/scenes/world.js",
-    "old": "  const _hoverPeerPick = (eye, dir) => peerRayPick(pickPeerInFront(eye, dir, peersNear(), SOCIAL_REACH, rayPersonDistance), SOCIAL_REACH);",
-    "new": "  const _hoverPeerPick = (eye, dir) => peerRayPick(pickPeerInFront(eye, dir, peersNear(), 40, rayPersonDistance), 40);",
-    "tests": [
-      "test/peerplaque.test.js"
-    ]
-  },
-  {
-    "name": "PEER-PLAQUE1-key-assumed-F",
-    "file": "src/scenes/world.js",
-    "old": "  const interactKeyLabel = () => String(getBinding(bindings(), 'SocialInteract') ?? '').replace(/^Key/, '');",
-    "new": "  const interactKeyLabel = () => 'F';",
+    "old": "    const hit = pickPeerInFront(eye, dir, peersNear(), SOCIAL_REACH, rayPersonDistance);\n    if (!hit) return null;",
+    "new": "    const hit = pickPeerInFront(eye, dir, peersNear(), 40, rayPersonDistance);\n    if (!hit) return null;",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -148,8 +130,8 @@
   {
     "name": "PEER-PLAQUE1-title-without-the-marks",
     "file": "src/scenes/world.js",
-    "old": "    return { title: marks ? `${name} ${marks}` : name, subs: [cast, prompt].filter(Boolean) };",
-    "new": "    return { title: name, subs: [cast, prompt].filter(Boolean) };",
+    "old": "    return { title: marks ? `${name} ${marks}` : name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
+    "new": "    return { title: name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: acts ? socialPlaqueRows(id, acts) : [], actionsUnlit: true };",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -157,8 +139,8 @@
   {
     "name": "PEER-PLAQUE1-trade-half-of-the-bag-dropped",
     "file": "src/scenes/world.js",
-    "old": "    const prompt = social ? peerPromptText({ ...social.actionsFor(id), ...tradeActionsFor(id) }, interactKeyLabel()) : null;",
-    "new": "    const prompt = social ? peerPromptText(social.actionsFor(id), interactKeyLabel()) : null;",
+    "old": "({ ...social.actionsFor(peerId), ...tradeActionsFor(peerId), canInspect: true });",
+    "new": "({ ...social.actionsFor(peerId), canInspect: true });",
     "tests": [
       "test/peerplaque.test.js"
     ]

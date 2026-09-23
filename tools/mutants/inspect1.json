@@ -50,10 +50,10 @@
   {
     "name": "INS-relay-min-lowered",
     "file": "src/net/wire.js",
-    "old": "export const CARD_RELAY_MIN = 99;",
-    "new": "export const CARD_RELAY_MIN = 98;",
+    "old": "export const CARD_RELAY_MIN = 101;",
+    "new": "export const CARD_RELAY_MIN = 100;",
     "tests": ["test/inspect1.test.js"],
-    "note": "A card asked of world98, which closes the socket for a frame it does not know."
+    "note": "A card asked of world100 (main's DISC7 relay, the last before the arc), which closes the socket for a frame it does not know."
   },
   {
     "name": "INS-frame-cap-dropped",
@@ -379,9 +379,9 @@
   {
     "name": "INS-host-row-not-offered",
     "file": "src/scenes/world.js",
-    "old": ", canInspect: true } }) === true;",
-    "new": " } }) === true;",
+    "old": "...tradeActionsFor(peerId), canInspect: true });",
+    "new": "...tradeActionsFor(peerId) });",
     "tests": ["test/inspect1.test.js"],
-    "note": "The host never offers the row."
+    "note": "The host never offers the row - on the card or on the plaque (the merge's one bag, peerActsFor)."
   }
 ]

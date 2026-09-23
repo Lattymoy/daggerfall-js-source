@@ -52,13 +52,13 @@ test('EMOTE1 the joiner: kept between two pictographs - a family, a profession, 
 
 // ─── THE ACTION LINE ────────────────────────────────────────────────────────────────────────────────────────────
 
-test('EMOTE1 the action on the wire: `me: true` and nothing else - a truthy junk value refused, never read as an action; world99 the first relay that carries it (mutants: any truthy `me` admitted; the flag dropped at the relay; the version door one high)', async () => {
+test('EMOTE1 the action on the wire: `me: true` and nothing else - a truthy junk value refused, never read as an action; world101 the first relay that carries it (world99 before the merge: main\'s world99 and world100 carry no action) (mutants: any truthy `me` admitted; the flag dropped at the relay; the version door one high)', async () => {
   const h = { hasHello: true };
   assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: 'waves.', me: true }), h), { t: 'chat', text: 'waves.', me: true });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: 'waves.', me: true, ch: 'party' }), h), { t: 'chat', text: 'waves.', ch: 'party', me: true });
   for (const me of [1, 'true', false, null, {}]) assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: 'x', me }), h), { error: 'bad chat' }, JSON.stringify(me));
-  assert.equal(EMOTE_RELAY_MIN, 99);
-  assert.equal(relaySupportsEmote('world98'), false); assert.equal(relaySupportsEmote('world99'), true); assert.ok(relaySupportsEmote(RELAY_VERSION));
+  assert.equal(EMOTE_RELAY_MIN, 101);
+  assert.equal(relaySupportsEmote('world100'), false); assert.equal(relaySupportsEmote('world101'), true); assert.ok(relaySupportsEmote(RELAY_VERSION));
   // the real Room: the flag rides the fanned line, the asker's echo included; a plain line carries none
   const r = fakeRoom(CHAT_WORLD_ROOM);
   const realNow = Date.now; let clock = 1e12; Date.now = () => clock;
@@ -83,8 +83,8 @@ test('EMOTE1 the action at the client: asked only of a relay that carries it, th
     quiet(() => sockets[0].receive({ t: 'welcome', id: 'aaaa-0001', peers: [], host: null, world: null, v }));
     return { s, ws: sockets[0], heard, out: () => sockets[0].sent.map((x) => JSON.parse(x)).filter((m) => m.t === 'chat') };
   };
-  const old = rig('world98');
-  assert.equal(old.s.sendChat('waves.', { me: true }), false, 'world98 would say "waves." bare');
+  const old = rig('world100');
+  assert.equal(old.s.sendChat('waves.', { me: true }), false, 'world100 (DISC7\'s, the last before the arc) would say "waves." bare');
   assert.equal(old.out().length, 0);
   const { s, ws, heard, out } = rig(RELAY_VERSION);
   assert.equal(s.sendChat('  waves.  ', { me: true }), true);

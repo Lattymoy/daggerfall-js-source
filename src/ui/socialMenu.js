@@ -118,6 +118,32 @@ export function socialMenuRows({ peerId, canFriend = false, canInvite = false, w
  * host's pause door included - ever sees that press. This card is the topmost of the three, so world.js hands it
  * `() => false`.
  */
+/**
+ * ACT-MENU (DISC7, 2026-09-23, Mac: "reuse the loot scroll menu to select options"): THE CARD'S ROWS, AS THE WORLD
+ * TOOLTIPS PLAQUE LISTS THEM - one source for both surfaces, so the words, the order and the reasons cannot drift. Every
+ * act the card offers is a row (`id` its key); a refused one carries its reason (AUDIT DISC7 A4: the card said why, and
+ * the plaque must too - worldHover.js puts it in the row's name). The Cancel row is the card's own and has no act.
+ * @returns {{ id: string, label: string, disabled?: true, why?: string|null }[]}
+ */
+export function socialPlaqueRows(peerId, acts) {
+  if (!peerId || !acts) return [];
+  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act)
+    .map((r) => (r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null }));
+}
+
+/**
+ * ACT-MENU: the row a plaque press lands on, RE-READ at the press from the same bag the card would open with - its act
+ * when it is offered now, the card's refusal in a line when it is not (a request sent since the paint, the party
+ * filled), null when the row is gone. `refusal` is null on an enabled row.
+ * @returns {{ act: object|null, refusal: string|null }|null}
+ */
+export function plaqueRowFor(id, peerId, acts) {
+  if (!peerId || !acts) return null;
+  const r = socialMenuRows({ peerId, ...acts }).find((x) => x.key === id && x.act);
+  if (!r) return null;
+  return r.enabled ? { act: r.act, refusal: null } : { act: null, refusal: `${r.label}: ${r.why || 'not now'}.` };
+}
+
 export function createSocialMenu({ onAct = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, doc = document, win = globalThis } = {}) {
   injectSocialMenuStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };

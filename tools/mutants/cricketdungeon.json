@@ -2,8 +2,8 @@
   {
     "name": "CD-underground-ignored",
     "file": "src/systems/ambientEffects.js",
-    "old": "      if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }\n      else this._updateCrickets(dt);",
-    "new": "      if (soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }\n      else this._updateCrickets(dt);",
+    "old": "if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP))",
+    "new": "if (deps.inside || soundSilenced(AMBIENT_CRICKETS_LOOP))",
     "tests": [
       "test/cricketquiet.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CD-clock-runs-underground",
     "file": "src/systems/ambientEffects.js",
-    "old": "      if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }",
-    "new": "      if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { this._cricketT += dt; if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }",
+    "old": "if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) {",
+    "new": "if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { this._cricketT += dt; if (this._cricketsLoop) {",
     "tests": [
       "test/cricketquiet.test.js"
     ]

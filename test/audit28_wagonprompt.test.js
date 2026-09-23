@@ -48,7 +48,7 @@ test('AUDIT 28 W2c: Escape on a box that names onEscape is a CANCEL - neither Ye
 
 test('AUDIT 28 W2c: the exit door asks first - cart + setting, TEXT.RSC 38, No exits, Yes opens the wagon inventory, Escape does nothing', () => {
   const modesSrc = read('src/scenes/worldModes.js');
-  const fn = modesSrc.slice(modesSrc.indexOf('function tryExitDungeon()'), modesSrc.indexOf('function exitDungeonNow()'));
+  const fn = modesSrc.slice(modesSrc.indexOf('function tryExitDungeon('), modesSrc.indexOf('function exitDungeonNow()'));
   assert.match(fn, /if \(hasCart\(playerEntity\.items \?\? \[\]\) && getBool\('GUI', 'DungeonExitWagonPrompt'\)\) \{/, 'the gate is the cart AND the setting');
   assert.match(fn, /rscLines\?\.\(38\)/, 'record 38');
   assert.match(fn, /onYes: \(\) => \{ dungeonCtx\.openInventoryWithWagon\(\); return null; \}/);

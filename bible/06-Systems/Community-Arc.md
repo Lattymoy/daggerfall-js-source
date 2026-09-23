@@ -160,7 +160,7 @@ field to be mended. `/help`'s answer is lines to read, so it clears the field an
 third answer, `'read'`). `/red` goes down the World link from any tab: the server speaks to the whole game.
 
 **Each tab's strip and roster.** The strip under the chat says why the ACTIVE tab cannot talk: its socket's own line
-(labelled with the tab), "You are not in a party.", or - against a relay from before world99 - that the channel needs
+(labelled with the tab), "You are not in a party.", or - against a relay from before world101 - that the channel needs
 the server's next update (an older relay projects `{t:'chat', text}` and would fan a party's line to everyone online,
 so the client says none to it and opens no region room before the welcome says it may). The roster is the tab's own:
 the channel's members (Online, or the region's name), the party's seats online, or Nearby - those in earshot.
@@ -202,7 +202,9 @@ the roster pins (ACC3c's key, CHAT-R1's rows, ROSTER-G's and CHAT-FIT's wiring -
 and the row); SOC3's tab count; SRV-N's and RED1's host pins; BUBBLE1's law (every tab, and the aside refused). The
 mutant records the move touched were re-aimed by content (`chatfit`, `name1`, `red1`, `soc1`); `name1.json`'s
 BUBBLE1-any-tab-speaks is retired with the law it held, which `chatchan.json`'s CC-aside-bubbles replaces. The relay
-is world99 (a new LAW row); the arc's later slices ride the same deploy and restate that row until the merge.
+is world101 (a new LAW row - world99 when this was written: main's HCC-PARK and DISC7 took world99 and world100 while
+the arc was in review, so the merge moved its frames' RELAY_MIN gates to 101 with it); the arc's later slices ride the same
+deploy and restate that row until the merge.
 
 ## DICE1 - the relay rolls
 
@@ -232,9 +234,9 @@ over a head is what the character said, and a roll is the table's.
 **Pins.** `test/dice1.test.js` (10): the grammar and its bounds, the unbiased draw over a scripted source (three draws
 thrown back, two kept), the client's check; over the real Room, one roll the same numbers to everyone with the asker
 included and all six faces of a d6 reached over the relay's real CSPRNG, the gate and its strikes, the mute, a party's
-roll heard by the party alone; the session's door (the world99 welcome, one a second, a channel only where the channels
+roll heard by the party alone; the session's door (the world101 welcome, one a second, a channel only where the channels
 are) and a forged total refused; the log's roll line and its fail-closed refusal; the bubble; the host by source.
-`tools/mutants/dice1.json`: 29, 29 dead. `tools/chatChanProbe.mjs` looks at a roll line in Chromium. Relay world99 -
+`tools/mutants/dice1.json`: 29, 29 dead. `tools/chatChanProbe.mjs` looks at a roll line in Chromium. Relay world101 -
 the same deploy as CHAT-CHAN, its LAW row restated.
 
 ## EMOTE1 - an action, a gesture, and an emoji that stays whole
@@ -246,7 +248,7 @@ anything else on the field refused whole ('bad chat'), never read as an action -
 on through the chat's one fan (`_sayLine`: the same channels, the same budget - an action costs a line). The log draws
 it "Bran looks around": the name, the tag, then the words leaning, in the name's own warmth. Its kind, 'me', is the
 RELAY's word from the frame and never read off the text, and it is never a system line and never bubbled - what stands
-over a head is what the character SAID. An action goes only to a relay that carries one (world99, relaySupportsEmote):
+over a head is what the character SAID. An action goes only to a relay that carries one (world101, relaySupportsEmote):
 an older one projects the frame to its text, and "looks around" would be said as a line of plain words - so the host
 refuses it in words (EMOTE_OLD_RELAY_TEXT) and keeps the line in the field.
 
@@ -284,14 +286,14 @@ the box's border, so the rule takes the border off (one constant draws the borde
 hid the button at the smallest box a drag makes.
 
 **Pins.** `test/emote1.test.js` (8): the joiner law and its fuzz; the action on the wire, over the real Room and a
-session on a fake socket (asked only of a world99 relay, believed only as `true`); the log's kind; the grammar (/me;
+session on a fake socket (asked only of a world101 relay, believed only as `true`); the log's kind; the grammar (/me;
 every gesture parsed, each with its form AT a name; /emotes; every shortcode whole over the wire, a clock no code); the
 bubble's cut and its refusal of an action; the picker over a fake document (its order, the caret, Escape, the close, a
 group of buttons); the picker's sheet (the touch skin's rule, the narrow box's asked inside the border); the host by
 source. `tools/mutants/emote1.json`: 31, 31 dead. `tools/chatChanProbe.mjs` in Chromium: the form row at 440, 352 and
 292 on both skins (the field never under the narrowest the chat had before the button, the touch skin's 115px at 320),
 the picker's round trip, the edge (the smallest box a drag makes keeps the button, a pixel under it does not), an
-action's face, and a joined family drawn as ONE glyph after the wire - 75 checks. Relay world99 - the same deploy, its
+action's face, and a joined family drawn as ONE glyph after the wire - 75 checks. Relay world101 - the same deploy, its
 LAW row restated.
 
 ## LOOT-STACK - a key turns which body the reticle means
@@ -406,7 +408,7 @@ the wire's bound to it, since the relay imports no game module), three vitals, t
 The relay reads none of it. It meters asks and answers together on the card's own bucket (CARD_HZ_MAX, the cast's
 strikes), and funnels them onto the destination through the cast arm's per-sender funnel (AUDIT ALLY-CAST B2): one
 sender reaches one destination at CAST_HZ_MAX a second, whatever the directed frame. A client asks only a relay that
-routes the frame (world99, CARD_RELAY_MIN - an older relay closes the socket for a frame it does not know); with an
+routes the frame (world101, CARD_RELAY_MIN - an older relay closes the socket for a frame it does not know); with an
 older one the profile opens from the room's half and says the server cannot carry a card yet.
 
 **The answering law.** An ask is answered with my card through a gate (`createCardAnswerGate`): one asker once in
@@ -446,7 +448,7 @@ freezing a meter open. That was paid first, at the root, as AUDIT ATTACH (`06-Sy
 the Room instance's now, and the card's meter was measured with every other arm's there (`test/placeWidest.mjs`).
 
 **Pins.** `test/inspect1.test.js` (10): the wire (an ask or an answer, never both; the card whole or nothing at every
-bound, the attribute ceiling held to the sheet's live clamp; the widest card inside its frame; world99 the first relay
+bound, the attribute ceiling held to the sheet's live clamp; the widest card inside its frame; world101 the first relay
 that routes it); the relay over the real Room (to the one socket named, stamped; a channel or the hub nowhere; a frame
 at myself junk, a peer gone nothing; the cast arm's funnel shared - a card waits on the casts its sender spent,
 another sender's slot its own - and the sender's own meter holding it to CARD_HZ_MAX a second across every destination
@@ -459,4 +461,35 @@ window over a fake document; the F-menu's row and the one glyph drawing; the hos
 socket of mine ever reports me, so `_socketFor` refuses it first). `tools/profileProbe.mjs` in Chromium: 127 checks,
 12 photographs. Re-aimed: the chat panel's and the name layer's glyph pins (CHAT-FIT's), AUDIT WORLD2's parseClient
 doc pin (DERIVED from the parser's arms now - it had fallen seven frames behind), ALLY-CAST's funnel pins and records,
-and AUDIT ATTACH's measurement, which the card's arm joins. The relay is world99's (restated).
+and AUDIT ATTACH's measurement, which the card's arm joins. The relay is world101's (restated).
+
+## THE MERGE with main (2026-09-23) - DISC6 to DISC9 and Horse Cart and Cargo, into the arc
+
+Main moved while the arc was in review: HCC-PARK + RIDE (world99), DISC7 (world100), DISC6/DISC8/DISC9. Merged, not
+rebased. Where the two touched the same thing, both are kept and each change below is pinned.
+
+- **The relay is world101.** Main's world99 and world100 are deployed rows of the LAW and stay as recorded. The arc's
+  frames (the party and region channels, the roll, the action line, the card) move their RELAY_MIN gates to 101,
+  because a world99 or world100 relay closes the socket on each of them. The arc's tests pin the new boundary: world100
+  refused, world101 routed.
+- **The player's verbs are one bag.** Main's ACT-MENU lists the F-card's enabled acts as the World Tooltips plaque's
+  rows and presses the lit one through the card's own door. INSPECT1 added an act to the card. The host builds the bag
+  once (`peerActsFor`: the hub's acts, the trade's, and the look) for the card, the plaque's rows and the plaque's
+  press, so Inspect is the plaque's first verb too and the two surfaces cannot offer different rows.
+- **The plaque's seam carries both.** LOOT-STACK spends an armed turn on the reticle's own pick on both skins, before
+  the plaque's skin gate. ACT-MENU folds the highlight whenever the plaque stands down (AUDIT DISC7 A8). Merged: the
+  stand-down still hides (and so folds), and a turn spent on the classic skin returns before the fold. The window
+  branch drops the turn and folds the highlight. The lit row's band keeps LOOT-STACK's measured margin beside main's
+  refused-verb style.
+- **Main's park meter joined the instance meters** with strikes of its own (Online-Arc, AUDIT ATTACH: the merge), and
+  parseClient's doc names the park arm. AUDIT WORLD2's derived pin caught that omission on its first run after the
+  merge.
+- **Counted again:** Ledger section A has 176 rows (main's three and LOOT-STACK's). UI.md counts 189 modules (main's
+  two and the profile). Port-Status section 2's row identifiers were re-resolved by content, because LOOT-STACK's row
+  moved every row below it by one.
+
+Pins re-aimed by content: `test/disc7.test.js` (the window branch, the press's bag), `test/peerplaque.test.js` (the
+namer's bag), `test/inspect1.test.js` (the three reads of the one bag, plus the plaque's Inspect row and its press by
+execution), `test/hcc_park.test.js` (the park bucket refilled on the instance), the RELAY_VERSION pins, and seven
+mutant records (inspect1 x2, peerplaque, soc1, lootstack, worldhover x2). Every mutant list whose target or tests the
+merge touched was rerun against a green baseline.

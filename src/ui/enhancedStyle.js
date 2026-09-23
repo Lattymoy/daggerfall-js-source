@@ -3762,6 +3762,8 @@ ${badgeCss()}
    shadow and takes no room). */
 .wplaque-row.sel { background: rgba(125,116,96,0.28); box-shadow: inset 2px 0 0 var(--brass);
   margin: 0 calc(-1 * var(--wp-pad-x)); padding: 0 var(--wp-pad-x); }
+/* AUDIT DISC7 A4: a refused verb (the F-card's disabled row): its reason in its name, italic in the card's own lighter bone (SOC C12's 4.9:1), never dimmed by opacity */
+.wplaque-row.off { font-style: italic; color: #c8c2b4; }
 /* ...and the line that says what the keys do, under the list. */
 .wplaque-keys { margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(125,116,96,0.35);
   color: #7d7460; font-size: 11px; text-align: center; }
@@ -4277,6 +4279,30 @@ button.lv-note.lv-clickable:hover, button.lv-note.lv-clickable:focus-visible {
   background: rgba(10,12,17,0.82);
 }
 .notice.notice-toast .notice-row { font-size: 14px; color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); text-align: center; }
+/* AUDIT HCC U5: THE FIELD'S OWN WINDOW (ui/enhancedInputBox.js) - DaggerfallInputMessageBox in the skin's face.
+   ENH-NOTICE1's law: a field is a decision, not a notice, so it is not in the right-edge stack; it stands where the
+   player looks while typing - centred, or at the top for showAtTopOfScreen - in the box's own panel and rule. It
+   takes no pointer (the keys are the host's, routed to the box), and sits on the notice stack's rung. */
+.inputbox {
+  position: fixed; left: 50%; top: 46%; transform: translate(-50%, -50%); z-index: 31; pointer-events: none;
+  box-sizing: border-box; min-width: min(340px, 88vw); max-width: min(520px, 88vw);
+  padding: 14px 20px 10px 18px;
+  background: rgba(10,12,17,0.92); border: 2px solid rgba(125,116,96,0.6); border-left: 4px solid var(--brass);
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none;
+  font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
+  color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.85);
+}
+.inputbox.top { top: 8px; transform: translateX(-50%); }
+.inputbox-rows { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.inputbox-field {
+  font-size: 15px; line-height: 1.35; white-space: pre; overflow: hidden;
+  padding: 4px 8px; border: 1px solid rgba(125,116,96,0.6); background: rgba(0,0,0,0.35);
+}
+.inputbox-label { color: #a89c7a; }
+.inputbox-caret { display: inline-block; width: 0.55em; height: 1.1em; vertical-align: text-bottom;
+  border-bottom: 2px solid var(--brass); animation: inputbox-caret 1s steps(1) infinite; }
+@keyframes inputbox-caret { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .inputbox-caret { animation: none; } }
 @media (max-width: 720px) {
   .notice-stack { max-width: 88vw; gap: 6px; }
   .notice { max-width: 88vw; padding: 10px 14px 8px 12px; }   /* NOTICE-FIT: the phone's cap, still a cap */

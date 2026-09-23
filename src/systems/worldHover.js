@@ -184,7 +184,10 @@ export function composeContents(readers) {
  * THE FRAME. One record, and the draw paints exactly what is in it.
  *
  *   key    - the winning pick's key; the identity the guard compares
- *   kind   - 'name' (a title and up to two sub-lines) or 'items'
+ *   kind   - 'name' (a title and up to two sub-lines), 'items', or
+ *            'actions' (ACT-MENU: the verbs a player or my horse and
+ *            wagon take, as rows `{name, id}` the wheel lights and the
+ *            activate key presses - the loot list's own selection)
  *   title  - the line under the reticle
  *   subs   - the mod's own extra rows. It carries them as `\r`-joined
  *            text (a lock level, a closed-shop sentence); the port
@@ -243,6 +246,20 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
   // it is also what keeps an unported family from labelling itself with
   // its own key string.
   if (!named?.title) return null;
+  // ACT-MENU: a namer that answers verbs gets them listed - the same rows, the same fold and the same highlight as a
+  // pile's items (nextSelection reads `rows` whatever they hold), so the wheel moves through a player's or a horse's
+  // options exactly as it moves through a chest
+  // AUDIT DISC7: a REFUSED verb is listed too, its reason in its own words (the F-card's rows), so what the card said
+  // is still said - and `name` carries the reason, so the painted text and the repaint guard see the same thing.
+  // `actionsUnlit` (a player's list) starts with nothing lit: a plain click on a player is not a request sent.
+  const acts = Array.isArray(named.actions) ? named.actions.filter((a) => a?.id != null && a.label) : [];
+  if (acts.length) {
+    const f = frame(key, 'actions', named.title, named.subs ?? [], acts.map((a) => ({
+      name: a.disabled ? `${a.label} (${a.why || 'not now'})` : a.label, id: a.id, disabled: !!a.disabled, stack: 0, rarity: null, item: null,
+    })));
+    if (named.actionsUnlit) f.startUnlit = true;
+    return f;
+  }
   return frame(key, 'name', named.title, named.subs ?? []);
 }
 
@@ -291,8 +308,17 @@ export function nextSelection(prev, frame, delta = 0) {
   const rows = frame?.rows?.length ?? 0;
   if (!frame || !rows) return null;
   const d = Number.isFinite(delta) ? Math.trunc(delta) : 0;
-  const row = prev && prev.key === frame.key ? prev.row + d : 0;
-  return { key: frame.key, row: Math.max(0, Math.min(rows - 1, row)) };
+  // AUDIT DISC7 A2: a list that starts UNLIT (a player's verbs) opens at -1 and the wheel steps onto it
+  const floor = frame.startUnlit ? -1 : 0;
+  // AUDIT DISC7 A3: a row with an id keeps ITS row when the list changes under it (a request sent drops a verb and
+  // the one below slid into the lit slot - the next click pressed a verb nobody chose); a row gone clamps as before
+  let row = floor;   // a new key starts at the top (or unlit) whatever the nudge
+  if (prev && prev.key === frame.key) {
+    const at = prev.id != null ? frame.rows.findIndex((r) => r.id === prev.id) : -1;
+    row = Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));
+  }
+  const id = row >= 0 ? frame.rows[row]?.id : undefined;
+  return id != null ? { key: frame.key, row, id } : { key: frame.key, row };
 }
 
 /** The selected row, or -1 when this frame is not the selection's.

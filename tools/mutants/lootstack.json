@@ -138,8 +138,8 @@
   {
     "name": "LS-turn-landing-under-a-window",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (cursorActive || !eye || !dir || !collider) { dropBodyTurns(); if (on) showWorldPlaque(null); return null; }",
-    "new": "  if (cursorActive || !eye || !dir || !collider) { if (on) showWorldPlaque(null); return null; }",
+    "old": "  if (cursorActive || !eye || !dir || !collider) { dropBodyTurns(); foldQuickLoot(null); if (on) showWorldPlaque(null); return null; }",
+    "new": "  if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); if (on) showWorldPlaque(null); return null; }",
     "tests": ["test/lootstack.test.js"],
     "note": "A turn pressed as a window opened lands on whatever the reticle meets when it closes."
   },
