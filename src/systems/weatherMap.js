@@ -585,7 +585,8 @@ export function approachAt(systems, x, z) {
 /**
  * THE FORECAST: the weather at the place every `step` minutes for the
  * next `hours`, and the first minute it becomes something else.
- * Answers { now, steps: [{ at, word, intensity }], next: { at, word } | null }.
+ * Answers { at, now, steps: [{ at, word, intensity }], next: { at, word } | null } - `at` the
+ * minute it was read from.
  */
 export function forecastAt(x, z, minutes, climateAt, { hours = 12, step = 15, ground = null } = {}) {
   const now = weatherAt(x, z, minutes, climateAt, { ground });
@@ -596,7 +597,7 @@ export function forecastAt(x, z, minutes, climateAt, { hours = 12, step = 15, gr
     steps.push({ at, word: w.word, intensity: w.intensity });
     if (!next && w.word !== now.word) next = { at, word: w.word };
   }
-  return { now, steps, next };
+  return { at: minutes, now, steps, next };
 }
 
 /** Test seam: forget the solved weights and ceilings. */

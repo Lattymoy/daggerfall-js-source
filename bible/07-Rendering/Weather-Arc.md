@@ -568,3 +568,37 @@ cells are cut in their own order on the worn word's row, as before.
   others strike here. A jump (a load, a landing) plays no backlog and
   forgets the thunder still on its way. Enhanced only, never under a
   `?weather` pin, and nothing off the map's lane.
+
+### Slice E shipped - the weather on the map (2026-09-22)
+
+The enhanced travel map shows the picture Mac drew: sunny here, cloud
+there, a rainstorm over the hills. The law is `ui/weatherLayer.js`, and
+it is drawn on `ui/heldMap.js`'s world sheet. Pinned by
+`test/weather3e_maplayer.test.js` (`tools/mutants/weather3e.json` 15/15
+dead).
+
+- **The wash**: every system over the bay is a soft-rimmed radial wash
+  per band, laid lowest priority first so a storm's heart is inked last.
+  Its pigment is mixed a third of the way to the pen's brown, so it sits
+  in the sheet's one hand, and it is heavier with the storm's strength.
+  A grown storm with room on the paper is signed with a pen glyph: slant
+  strokes for rain, a bolt, a star for snow, level lines for fog, a
+  drift for sand. The first render drew hard discs, which read as polka
+  dots; seen in Chromium and softened. The far view carried a page of
+  glyphs; they now wait for GLYPH_MIN_ENV and GLYPH_MIN_PX.
+- **Cost**: the whole bay is about 2,700 systems, read once every
+  WEATHER_LAYER_REFRESH_MINUTES (10 game minutes, about a quarter of a
+  pixel of drift) - 125 ms the first time, 37 ms after. The wash lives
+  on the sheet's KEPT static layer, keyed on that refresh, so a frame
+  that only breathes costs nothing.
+- **The hover** carries the weather at the pixel and its forecast off
+  the same law, 12 hours ahead: "Daggerfall : Daggerfall · Rain, heavy
+  - clearing in about 3 hours". It is read once per pixel per refresh.
+- **A bug the tests caught**: the layer centred its read on the sheet's
+  height in field metres. The field's y runs up from the real bay's
+  south edge, so any sheet not 500 rows tall read the wrong stretch of
+  land. It was right on the real map only by coincidence. The centre now
+  goes through the field law (`fieldOfMapPixel`).
+- `world.js` hands the map `weather: { on, minutes }`: on the map's lane
+  and never under a pin, at the host's own clock. The classic travel map
+  is DFU's and draws none.
