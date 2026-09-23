@@ -672,7 +672,7 @@ regenerated onto the new sites: ~~`exterior.js:1437` -> `:1208`~~
 (**CLOSED at TP2**: the Recall interim narrowed to the one arm this host
 cannot take, `exterior.js:1779`), ~~`exterior.js:1829` -> `:1517`~~
 (**CLOSED at QX1**: this host took the quest bridge, so the pause window's
-Quests tab has a machine to read), ~~`world.js:3689` -> `:3682`~~
+Quests tab has a machine to read), ~~`world.js:3691` -> `:3684`~~
 (**CLOSED at the ship landing**), ~~`worldModes.js:1902` -> `:1782`~~
 (**CLOSED at ROAD-F GS1**, below), `pauseWindow.js:58` -> `:65`. The
 entries in the two lists above still quote the line numbers of the
