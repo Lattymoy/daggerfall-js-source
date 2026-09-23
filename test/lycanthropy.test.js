@@ -288,7 +288,9 @@ test('V2a: the curse survives the save whole, marker rebuilt from the entry', as
 // ── THE SEAMS, SWEPT ─────────────────────────────────────────────
 
 test('V2a: the round pump runs the curse beside the infection, in worldTick\'s one home', () => {
-  const src = read('src/systems/worldTick.js');
+  // DISC10-D V2 re-aim: the ROUND is read, not the file - worldTick now also registers the deploy's own curse mint
+  // (setRacialCurseDeployer) above it, which names the consumers first; the order this pins is the round's.
+  const src = read('src/systems/worldTick.js').slice(read('src/systems/worldTick.js').indexOf('export function runMagicRoundsFor('));
   const i = src.indexOf('runInfections(entity');
   const j = src.indexOf('consumeRacialOverridePending(entity');
   const k = src.indexOf('lycanthropyMagicRound(entity');

@@ -44,7 +44,7 @@ import { rand } from '../formats/dfRandom.js';
 import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
-import { MINUTES_PER_DAY } from '../systems/worldTick.js';
+import { MINUTES_PER_DAY, playerWeaponHitEntity, playerWeaponKillReported } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher
 import { FOES_MS } from '../net/online.js';   // AUDIT ALL B2: the watchman moved since the frame the striker swung at
 import { validFoeRecord, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, HIT_ARROWS_MAX } from '../net/wire.js';
 import { CORPSE_ACTIVATION_DISTANCE, liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
@@ -85,6 +85,8 @@ const TAKES_PER_S = 3;
 /** AUDIT WORLD6b-iii(c) B1/C1: how long an ask stands at the taker - a grant lands only for a body I asked for inside
  *  it, once; an unasked grant is refused whole (a peer wrote into my pack at will until now). */
 const TAKE_WINDOW_MS = 3000;
+// DISC10-E: how long after my blow on a puppet its owner's `slain` report is mine - the take's round trip, the same bound
+const SLAIN_WINDOW_MS = TAKE_WINDOW_MS;
 const PUPPET_LEAP = 3;
 const PUPPET_LEAP_SLACK = 2;   // the stream's x bit, decoded (no roll - the owner's word; WORLD3's spelling)
 /** AUDIT WORLD6b-iii(c) A1/C7: how far a peer may stand from my foe's body and take from it - the taker's own reach
@@ -95,6 +97,7 @@ export const ENCOUNTER_CULL_DISTANCE = 120;
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
   playerSinks = null,   // AUDIT 24 (wave 30): the player's damage/drain doors - the nymph and lamia riders need drainFatigue
+  regionIndex = () => -1,   // DISC10-D V3: PlayerGPS.CurrentRegionIndex - the infection a vampire's bite starts records it (VampirismInfection.cs:91)
   onArrow = null,   // X2-slice: the host's arrow seam - (from, dir, foe) at the shoot frame
   spellsByIndex = null,   // X3-slice: () => the SPELLS.STD map (null until loaded) - casters need it
   hitEffects = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool
@@ -571,6 +574,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // AUDIT WORLD6b-iii(e) A5: read inside the provenance gate - a fall's or a foe's door on this puppet leaves it
         const _pt = f._divertPt ?? null; f._divertPt = null;
         f._divertFrame = _peerFrame;
+        f._struckAt = _now();   // DISC10-E: the owner's `slain` answers THIS blow, inside SLAIN_WINDOW_MS, or nothing
         _net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, dmg: Math.max(0, Math.round(Number(damage) || 0)), kind,   // WORLD6b-iii(b): keyed to the OWNER's cell (its frame's k) - across the seam that is not mine
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
@@ -786,6 +790,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // arm, never for a weapon hit or an EnemyClass attacker.)
         onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
           currentDay: Math.floor(currentMinute() / MINUTES_PER_DAY), sinks: playerSinks, rolls,
+          regionIndex: regionIndex(),   // DISC10-D V3: the clan is the region's, read at the turn from where the bite was taken
           castParalyze: () => {   // S19: the spider/scorpion free-cast of classic spell 66
             const sp = spellsByIndex?.()?.get(SPIDER_TOUCH_SPELL_INDEX);
             if (sp) castSpellFrom(f, sp, playerFeet, true);
@@ -1126,14 +1131,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // cone and distance, so the body centre (DFU's own formula at
         // its no-raycast site, EnemyAttack.cs:326-328) stands in.
         hitEffects?.showBloodSplash(ENEMY_BASICS[foe.mobileType]?.bloodIndex ?? 0,
-          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
+          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.strikingWeapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
         // C2-slice (combat-17): the struck class foe cries out 40%
         const pain = enemyPainVoice(foe, damage);
         if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
         damageFoe(foe, damage, playerFeet, lookDir);
       } else {
         const snd = zeroDamageHitSound({
-          weapon: playerWeapon.weapon, arrowHit: false,
+          weapon: playerWeapon.strikingWeapon, arrowHit: false,   // DISC10-E: :611's strikingWeapon - the hand's item, null for the beast's claws
           parrySounds: !!ENEMY_BASICS[foe.mobileType]?.parrySounds, roll: rolls(),
         });
         if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
@@ -1147,6 +1152,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // is a blow, the owner's foe turns) - the local wake is a stream-driven body's
         attackFromPlayer(foe, playerFeet);
       }
+      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });   // DISC10-D H1: OnWeaponHitEntity, after DecreaseHealth and HandleAttackFromSource (WeaponManager.cs:627-635) - every connect, the zero-damage one too
     }
     return any;
   }
@@ -1866,6 +1872,19 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (n === 0) { f.corpseDisabled = true; f._closedN = Number.isInteger(data.n) ? data.n : (_owners.get(from)?.n ?? -1); }   // A7: closed as of the owner's frame counter
       return true;
     }
+    if (data.slain !== undefined) {
+      // DISC10-E: THE OWNER SAYS MY BLOW KILLED ITS FOE. OnWeaponHitEntity reads the target dead after DecreaseHealth
+      // (WeaponManager.cs:627-635) - a peer's watchman dies at its owner, so my own call read a live puppet and a
+      // werewolf's KilledInnocent never saw the city watch fall online. The report lands for a puppet of THIS owner's
+      // that I STRUCK, inside the window, once (the grant's law above: any socket in the cell could otherwise feed the
+      // urge at will); the pool's puppet says what it was, never the frame.
+      if (data.slain !== 1) return false;
+      const f = _pupIndex.get(pupKey(from, data.i | 0)) ?? null;
+      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;
+      f._struckAt = null;
+      playerWeaponKillReported(playerEntity, { mobileType: f.mobileType });
+      return true;
+    }
     // WATCH1: the number names one of my foes or one of my watchmen (one counter, so never both); a watchman's blow
     // lands through the watch's own door below, with the ring, the blood, the pain and the dose landed here alike
     const f = foes.find((x) => !x.puppet && x.seq === (data.i | 0)) ?? watchOf(data.i | 0);
@@ -1919,6 +1938,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // AUDIT WORLD6b-iii(e) A1: BOUNDED - HIT_ARROWS_MAX Arrows a body from peers' shafts, past it the blow lands and no
     // Arrow (a crafted stream minted a stack the projection refused whole, and the grant dropped the pile with it)
     if (data.ar === 1 && kind === 'arrow' && !(onWatch && f.dead) && arrowsIn(f.entity.items ??= []) < HIT_ARROWS_MAX) addItem(f.entity.items, bowDamageArrow());   // MAC-N1: minted, not a bare literal; AUDIT ALL A4: not into a watch body a peer's shaft just felled - that body carries nothing (AUDIT WATCH1 A3), and the shaft landed after the kill emptied it
+    // DISC10-E: and if that blow killed it (it was alive at the door above), the striker is told - its OnWeaponHitEntity
+    // asks whether the target died, and the death happened HERE. The grant's own path back (to, the cell, the number);
+    // an older client's applyHit reads no `dmg` in it and refuses it whole.
+    if (f.dead) _net?.onPeerHit?.({ to: from, k: data.k ?? _net?.room?.() ?? null, i: data.i | 0, slain: 1 });
     return true;
   }
   /** The owners gone from the cell (the session's peer map no longer holds them) or gone quiet (no frame in staleMs,

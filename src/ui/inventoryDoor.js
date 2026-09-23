@@ -41,6 +41,8 @@ import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it 
 import { NativeInventoryWindow, inventoryArtLoaded } from './nativeInventory.js';
 import { closeSession } from '../systems/inventorySession.js';
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // AUDIT-IF F5: the enhanced skin's close refreshes the mod's armour slots too
+import { racialSuppressInventory } from '../systems/lycanthropy.js';   // DISC10-E L3: GetSuppressInventory, in the window itself
+import { messageBox } from '../systems/notify.js';   // DISC10-E L3: DaggerfallUI.MessageBox, the refusal's voice
 
 export { inventoryArtLoaded };
 
@@ -58,6 +60,17 @@ export function inventoryDoorReady() {
  * window that adds up to.
  */
 export function createInventoryWindow(deps = {}) {
+  // DISC10-E L3: THE BEAST'S REFUSAL LIVES IN THE WINDOW, as DFU's does.
+  // DaggerfallInventoryWindow.OnPush asks the racial override
+  // (GetSuppressInventory, :583-587) and its Update closes the window with
+  // `DaggerfallUI.MessageBox(suppressInventoryMessage)` (:355-362) - every
+  // way into the pack, loot and wagon and sheet alike, and the trade window
+  // inherits it (DaggerfallTradeWindow.cs:355-376). The port had copied the
+  // refusal onto a few of its doors and missed the rest (a building's pack,
+  // every corpse and pile, the sheet's Items button). Here it is ONE door:
+  // the line is said and no window is built - the caller mounts nothing.
+  const sup = racialSuppressInventory(deps.entity);
+  if (sup) { messageBox(sup.text); return null; }
   // `document` for the reason every fork before this one gives: node
   // drives these hosts headless and keeps the canvas window rather
   // than getting a special case written for it.

@@ -368,8 +368,8 @@ test('the key handler has an owner - it is removed on unmount', () => {
 test('a real text field keeps its own keys', () => {
   const src = readFileSync(new URL('../src/ui/enhancedChargen.js', import.meta.url), 'utf8');
   const fn = src.slice(src.indexOf('function onKey'), src.indexOf('\n}', src.indexOf('function onKey')));
-  assert.match(fn, /if \(isTextEntryTarget\(e\.target\)\) return;/,
-    'the name boxes feed the flow themselves - a stolen key is a doubled letter (CG2: the one shared rule, and the host\'s ladder leaves the field\'s key alone too)');
+  assert.match(fn, /if \(isTextEntryTarget\(e\.target\) && action !== 'back'\) return;/,
+    'the name boxes feed the flow themselves - every key but Escape, which no field types (DISC10-B) - a stolen key is a doubled letter (CG2: the one shared rule, and the host\'s ladder leaves the field\'s key alone too)');
   // and it must not swallow keys it did not use, or Tab stops working
   assert.ok(fn.indexOf('if (!action) return;') < fn.indexOf('preventDefault'),
     'preventDefault must come AFTER the table has claimed the key');

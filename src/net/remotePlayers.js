@@ -34,6 +34,7 @@ import { LOOK_ITEM_FIELDS, LOOK_GROUPS } from './wire.js';   // the look's vocab
 // builds a foe's OWN mobile unit from (MobileUnit.update takes the same flags EnemyMotor's AI would set).
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { ENEMY_BASICS, ENEMY_NAMES } from '../characters/enemyBasics.js';
+import { MOBILE_TYPES } from '../characters/mobileTypes.js';   // DISC12: the beast a peer in beast form stands as
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { getPref } from '../systems/uiPrefs.js';   // 2026-09-17: the 'peerClassSprites' on/off, read once a sync (Other players, enhancedMenu.js peerSpritesCard)
 import { CLASS_CAREERS } from '../systems/chargen.js';   // 2026-09-17 (bugfix): a stock class's CFG-loaded career carries no `.name` of its own - chargenSession.js's own class list already falls back to this array by careerIndex (`cf.career.name || CLASS_CAREERS[i]`), and composeLook needs the same fallback or every stock-class peer sends class:null
@@ -640,8 +641,12 @@ export class RemotePlayers {
       // is, just puppeted by the wire instead of AI. Anyone else - no class yet, a custom class this build has no
       // sprite for, a mobile build still composing/waiting out a retry, or the player having turned the 'Other
       // players' card off (spritesOn false) - keeps the paperdoll, exactly as before this whole feature existed.
-      const mobileType = spritesOn ? classMobileType(peer.look?.class) : null;
-      if (spritesOn && mobileType == null && peer.look && !peer.look.class) {
+      // DISC12 (Mac: werewolves "not wired correctly"): A PEER IN BEAST FORM IS THE BEAST. The pose's `wb` says which
+      // (LycanthropyTypes 1 werewolf, 2 wereboar); the sprite is the enemy's own (MobileTypes 9 / 14), puppeted off the
+      // pose like any class sprite - whatever the 'Other players' card says, since a person drawn there is a lie.
+      const beast = peer.shown.wb | 0;
+      const mobileType = beast ? (beast === 2 ? MOBILE_TYPES.Wereboar : MOBILE_TYPES.Werewolf) : spritesOn ? classMobileType(peer.look?.class) : null;
+      if (spritesOn && !beast && mobileType == null && peer.look && !peer.look.class) {
         // Same "just fix it" logging as _buildMobile: if this fires, the
         // problem is UPSTREAM of the sprite build entirely - the peer's
         // `class` never arrived over the wire at all, so classMobileType
@@ -728,7 +733,9 @@ export class RemotePlayers {
     if (!peerInEarshot(f, eye)) return;
     // AUDIT DROPS E6: the weapon IN HAND (the look's right-hand slot), and none at all while the pose says sheathed
     // (`wd` 0 - a fist swings as a fist), not the first weapon anywhere in the look
-    const weapon = peer.shown.wd ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === EQUIP_SLOTS.RightHand) ?? null) : null;
+    // DISC12: the hand the peer USES (`lh`), and a beast's claws are no weapon (fists' swing, WeaponManager :909)
+    const hand = peer.shown.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand;
+    const weapon = peer.shown.wd && !peer.shown.wb ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === hand) ?? null) : null;
     peerSound(this.deps.audio, swingSoundFor(weapon), f, 1.1);
   }
 

@@ -438,7 +438,9 @@ test('DR1 dungeon host: Identify opens the REAL trade window there, not a refusa
   assert.ok(b.includes('hudText.add(identifiedTallyText(pass.successCount, pass.total))'), 'the "N of M" tally is gone');
   // 4. ...and the SEAM the cast engine dispatches into actually mounts it.
   const arm = s.slice(s.indexOf('onIdentify: ({ chance, refund } = {}) => {'), s.indexOf('onDispelMagic:'));
-  assert.ok(arm.includes('mountSpellWindow(openIdentifySpellWindow({ chance: chance ?? 0, cost: refund ?? 0 }))'),
+  // DISC10-E L3 re-aim: built first - the trade door answers null for a transformed lycanthrope (it has said so) -
+  // and a built window is still the one the seam mounts
+  assert.ok(arm.includes('openIdentifySpellWindow({ chance: chance ?? 0, cost: refund ?? 0 })') && arm.includes('!mountSpellWindow(w))'),
     'the dungeon Identify seam no longer mounts the window');
   assert.ok(arm.includes('!tradeDoorReady()'), 'the seam no longer guards its art (X11b: a dead seam)');
   // 5. and the art is warmed at BOOT, or tradeArtLoaded() is false for

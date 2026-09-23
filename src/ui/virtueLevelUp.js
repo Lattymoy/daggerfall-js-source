@@ -62,7 +62,7 @@ export const REMAINING_POINTS_LABEL = 'Virtues left';
 
 /** The mod prints Morrowind's `sAttributeStrength` GMSTs; Daggerfall's
  *  own attribute names are the port's stat keys, and the sheet already
- *  prints them as three-letter heads (charsheet.js:180). This screen
+ *  prints them as three-letter heads (charsheet.js:181). This screen
  *  has the room for the whole word. */
 const label = (k) => k.charAt(0).toUpperCase() + k.slice(1);
 
@@ -155,7 +155,7 @@ export class VirtueLevelUpScreen {
     return ok;
   }
 
-  // The same action vocabulary LevelUpScreen answers (charsheet.js:128),
+  // The same action vocabulary LevelUpScreen answers (charsheet.js:129),
   // so every host's existing overlay route drives this screen unchanged
   // - including 'char:-', which is the only hyphen a typed-character
   // branch can produce (ui/input.js:436 - the typed-character branch,

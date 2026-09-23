@@ -378,7 +378,7 @@ test('HCC-PARK / RIDE hosts: the owner\'s word names the character, is ticked wi
   assert.match(w, /online\.onPark = \(room, e\) => hcc\.applyKept\(room, e, campToScene, performance\.now\(\)\);/);
   assert.match(w, /online\.onParks = \(room, list\) => hcc\.replaceKept\(room, list, campToScene, performance\.now\(\)\);/);
   assert.match(w, /hcc\.pruneKept\(isCellRoom\(online\.room\) \? \[online\.room, \.\.\.online\.haloRooms\(\)\] : \[\], now\);/);
-  assert.match(w, /peerRiders\.sync\(drawable, onlineToScene,[^\n]*\n\s+const afoot = drawable\.filter\(\(d\) => !peerRiders\.isRiding\(d\.id\)\);\n\s+peerBodies\.sync\(afoot,/);
+  assert.match(w, /peerRiders\.sync\(drawable, onlineToScene,[^\n]*\n\s+const afoot = drawable\.filter\(\(d\) => !peerRiders\.isRiding\(d\.id\)[^;]*\);[^\n]*\n\s+peerBodies\.sync\(afoot,/);
   assert.match(w, /bodyHeight: \(id\) => peerRiders\.heightOf\(id\) \|\| peerBodies\.heightOf\(id\)/);
   assert.match(w, /const riding = \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && isRiding\(player\.transportMode\);/);
   assert.match(w, /rd: !riding \? 0 : player\.transportMode === TRANSPORT_MODES\.Cart \? 2 : 1,/);

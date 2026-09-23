@@ -52,8 +52,9 @@
 // module switches LIVE and declines (returns undefined) when its
 // module is off - so the Mods pane's switches apply without a restart,
 // where DFU's need one. The port's tail of calculateAttackDamage
-// (concealment, the Strikes payload, the racial hit hook, the Ring of
-// Namira's struck hook, the HUD report) is DFU's CALLERS' work and
+// (concealment, the Strikes payload, the Ring of Namira's struck
+// hook, the HUD report - DISC10-D: the racial hit hook left for the
+// strike sites) is DFU's CALLERS' work and
 // runs after either core, as it does after either FormulaHelper.
 //
 // ── WHAT IS KEPT BUG FOR BUG ────────────────────────────────────

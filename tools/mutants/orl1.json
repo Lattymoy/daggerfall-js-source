@@ -271,8 +271,8 @@
   {
     "name": "commit-skips-the-health-roll",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
-    "new": "  entity.maxHealth += 0;",
+    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
+    "new": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + 0;",
     "tests": [
       "test/orl1_leveling.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "the-health-roll-reads-the-wrong-stat",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
-    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.strength, rolls);",
+    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
+    "new": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.strength, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
     "tests": [
       "test/orl1_leveling.test.js"
     ]
@@ -636,8 +636,8 @@
   {
     "name": "health-rolls-on-the-endurance-just-bought",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);\n  entity.health = Math.min(entity.health, entity.maxHealth);\n  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }",
-    "new": "  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }\n  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);\n  entity.health = Math.min(entity.health, entity.maxHealth);",
+    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter\n  entity.health = Math.min(entity.health, entity.maxHealth);\n  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }",
+    "new": "  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }\n  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter\n  entity.health = Math.min(entity.health, entity.maxHealth);",
     "tests": [
       "test/orl1_leveling.test.js"
     ]

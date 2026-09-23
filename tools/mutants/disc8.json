@@ -110,7 +110,7 @@
   {
     "name": "DISC9-world-never-writes-the-ear",
     "file": "src/scenes/world.js",
-    "old": "    setHeardWeather(ambientWord);   // DISC9",
+    "old": "    setHeardWeather(ambientWord, enhancedFront ? fx.intensity : 1);   // DISC9",
     "new": "    // DISC9",
     "tests": [
       "test/disc8.test.js"
@@ -119,7 +119,7 @@
   {
     "name": "DISC9-exterior-never-writes-the-ear",
     "file": "src/scenes/exterior.js",
-    "old": "    setHeardWeather(ambientWord);   // DISC9",
+    "old": "    setHeardWeather(ambientWord, enhancedFront ? fx.intensity : 1);   // DISC9",
     "new": "    // DISC9",
     "tests": [
       "test/disc8.test.js"

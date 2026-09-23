@@ -83,7 +83,10 @@ test('AUDIT BRANCH H1: the parked wagon\'s box stands again only when its matrix
 test('AUDIT BRANCH H2/H3/H4 by source: the wagon\'s inventory goes through the host\'s own door (a transformed lycanthrope refused, the selection taken with the refusal); a journey that threw still runs OnPostFastTravel; the switch and the rider\'s set read as one key each, not the mod\'s whole settings every frame', () => {
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = rd(f);
-    assert.match(s, /openInventoryWithWagon: \(\) => \{\s*const sup = racialSuppressInventory\(playerEntity\);\s*if \(sup\) \{ hccRuntime\.consumeWagonSelectionRequest\(\); townTalk\.say\(sup\.text\); return; \}\s*if \(inventoryDoorReady\(\)\) townTalk\.showOverlay\(makeInventoryWindow\(\)\);[^\n]*\n\s*else hccRuntime\.consumeWagonSelectionRequest\(\);/, f);
+    // DISC10-E L3 re-aim: the lycanthrope's refusal moved INTO the inventory door (ui/inventoryDoor.js, where DFU's
+    // window says it - DaggerfallInventoryWindow.cs:583-587), which answers null; the host still takes the wagon
+    // selection with any open that mounted nothing, refused or art-less
+    assert.match(s, /openInventoryWithWagon: \(\) => \{\s*const w = inventoryDoorReady\(\) \? makeInventoryWindow\(\) : null;[^\n]*\n\s*if \(w\) townTalk\.showOverlay\(w\);\s*else hccRuntime\.consumeWagonSelectionRequest\(\);/, f);
     assert.match(s, /const hccOn = \(\) => \{ try \{ return modSetting\(HCC_VENDOR, 'Enabled'\) !== false; \} catch \{ return false; \} \};/, f);
   }
   const w = rd('src/scenes/world.js');

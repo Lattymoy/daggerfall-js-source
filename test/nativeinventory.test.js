@@ -205,7 +205,9 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
       assert.ok(reachable, `${f}'s builder is missing ${hook}`);
     }
     // ...and the loot arm goes THROUGH it, carrying only what differs
-    assert.match(src, /townTalk\.showOverlay\(makeInventoryWindow\(\{/,
+    // DISC10-E L3 re-aim: the builder may answer null now (the door refuses a transformed lycanthrope), so the arms
+    // build first and mount only a window - through the same one builder
+    assert.match(src, /const w = makeInventoryWindow\(\{\n/,
       `${f}: the loot pile must reach the same builder`);
     // MAC-E added a SECOND site to this law - the corpse, which used to
     // empty itself into the pack instead of opening at all - so the
@@ -233,7 +235,7 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // identity still comes from the POOL (corpseLootHooks) and still
     // reaches the same builder behind the same art gate; quick loot is
     // handed that very object and answers null when it is not wanted.
-    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\);\n\s*\} : null\)/,
+    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*const w = makeInventoryWindow\(\{ loot \}\);\n\s*if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n\s*\} : null\)/,   // DISC10-E L3 re-aim: a refused pack is null and mounts nothing
       `${f}: the corpse must reach the same builder, behind the same art gate`);
   }
   // the dungeon host has one too, and it is the door's
@@ -376,7 +378,7 @@ test('U26: the dungeon host wires the four things the swap needed', () => {
 
   // 3. takeLoot OPENS THE WINDOW rather than vacuuming the pile - the
   //    old body transferred every item on one keypress.
-  assert.ok(ctx.includes('activeOverlay = openInventory(source'), 'a loot target opens the window');
+  assert.ok(ctx.includes('const _w = openInventory(source') && ctx.includes('if (_w) activeOverlay = _w;'), 'a loot target opens the window');   // DISC10-E L3 re-aim: and a refused one (the door's null) is not written over the slot
   assert.equal(/for \(const item of source\) \{ addItem\(playerEntity/.test(ctx), false, 'the vacuum is gone');
 
   // 4. A native overlay draws against the REAL canvas with no screen

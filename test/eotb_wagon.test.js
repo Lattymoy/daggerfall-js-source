@@ -260,7 +260,7 @@ test('EOTB-IL wagon: BOTH exterior hosts carry the three doors, and the interior
     assert.match(s, /mwViewDrawWagon\(renderer/, `${host}: drawn in the world pass`);
     assert.match(s, /const _wagonPick = pickActivatableHit\(cam\.pos, useFwd, mwViewWagonTargets\(RAY_DISTANCE\), collider\)/, `${host}: picked by the one ray`);
     assert.match(s, /wagon: _wagonPick,/, `${host}: raced`);
-    assert.match(s, /if \(_race\.wagonWins\) \{ if \(_wagonPick\.distance > _wagonPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else mwViewWagonActivate\(getInteractionMode\(\), \{ say: [^}]+, openInventoryWithWagon: \(\) => townTalk\.showOverlay\(makeInventoryWindow\(EOTB_WAGON_PACK\)\) \}\); \}/,
+    assert.match(s, /if \(_race\.wagonWins\) \{ if \(_wagonPick\.distance > _wagonPick\.reach\) setMidScreenText\(TOO_FAR_AWAY_TEXT\); else mwViewWagonActivate\(getInteractionMode\(\), \{ say: [^}]+, openInventoryWithWagon: \(\) => \{ const w = makeInventoryWindow\(EOTB_WAGON_PACK\); if \(w\) townTalk\.showOverlay\(w\); \} \}\); \}/,   // DISC10-E L3 re-aim: a pack the door refused (a transformed lycanthrope) is null and mounts nothing
       `${host}: CheckWagon's two arms, refusing out of reach as every family does`);
     assert.match(s, /const EOTB_WAGON_PACK = Object\.freeze\(\{ dungeon: Object\.freeze\(\{ wagonPrompt: true \}\) \}\);/, `${host}: AllowDungeonWagonAccess, as the dungeon's own door spells it`);
   }

@@ -321,8 +321,10 @@ test('ENH-NOTICE3 B: every migrated host seam names the KIND and mints no window
   // the infection factory no longer TAKES a per-host window either -
   // that dependency is what let four hosts drift apart (V5's
   // `TypeError: text is not iterable` was the last time).
+  // DISC10-D V8 re-aim: the factory takes the host's REST slot now (cancelRest - DeployFullBlownVampirism closes the
+  // rest window first, VampirismInfection.cs:152-154) - a host's slot, never a window it builds for the popup.
   assert.match(src('src/scenes/shared.js'),
-    /export function wireInfectionVideos\(renderer, \{ textAt = null, factionDict = null, transferToCemetery = null \} = \{\}\)/);
+    /export function wireInfectionVideos\(renderer, \{ textAt = null, factionDict = null, transferToCemetery = null, cancelRest = null \} = \{\}\)/);
   // Immersive Footsteps' compatibility warning is the same box, at
   // both of DFU's own raises (OnStartGame and OnLoad).
   const w = src('src/scenes/world.js');

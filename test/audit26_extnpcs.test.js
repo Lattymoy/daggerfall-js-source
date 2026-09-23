@@ -392,6 +392,9 @@ test('ROAD-F GS1: the whole guild chain goes through the door, not the interior 
   const repair = wm.slice(wm.indexOf("if (destination === 'guildServiceRepair')"), wm.indexOf("if (destination === 'guildServicePotionMaker'"));
   assert.ok(/return openRepairService\(/.test(repair), 'the repair service still re-reads a slot to answer the popup');
   const opener = wm.slice(wm.indexOf('function openRepairService(ctx = {})'), wm.indexOf('function showRepairList('));
-  assert.ok(/return mountServiceWindow\(openTradeWindow\(/.test(opener) && /return showRepairList\(0, ctx\);/.test(opener),
+  // DISC10-E L3 re-aim: the counter may be REFUSED at the trade door (a transformed lycanthrope) - then there is no
+  // window to hand back, and the refusal marker goes up instead so the popup does not print "not available yet" over
+  // the door's own line; a window that was built is still the one handed back
+  assert.ok(/const w = openTradeWindow\([^\n]*\n\s*return w \? mountServiceWindow\(w\) : DOOR_REFUSED;/.test(opener) && /return showRepairList\(0, ctx\);/.test(opener),
     'openRepairService does not hand back the window it mounted');
 });

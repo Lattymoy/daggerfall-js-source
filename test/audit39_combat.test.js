@@ -18,7 +18,9 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { calculateAttackDamage, adrenalineRushToHit, setRacialHitHook, ADRENALINE_RUSH_MODIFIER, IMPROVED_ADRENALINE_RUSH_MODIFIER } from '../src/combat/formulas.js';
+import { calculateAttackDamage, adrenalineRushToHit, ADRENALINE_RUSH_MODIFIER, IMPROVED_ADRENALINE_RUSH_MODIFIER } from '../src/combat/formulas.js';
+import { playerWeaponHitEntity, setWorldMinutes } from '../src/systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher (the hook left the formula)
+import { createVampirismCurse, liveVampirism } from '../src/systems/vampirism.js';
 import { playerAttackGrunt, playerPainVoice, suppressOptionalCombatVoices } from '../src/scenes/hostCombat.js';
 import { acuteHearingMultiplier } from '../src/characters/enemySounds.js';
 import { createWeaponRig } from '../src/combat/weaponRig.js';
@@ -153,26 +155,30 @@ test('AUDIT 39 #68: the foe-vs-foe seam hands the formula the player\'s value', 
 // #83 - the satiation stamp is the LIVE minute
 // ---------------------------------------------------------------
 
-test('AUDIT 39 #83: the racial-override hit hook is stamped with the live classic minute', () => {
-  const seen = [];
-  try {
-    setRacialHitHook((a, t, ctx) => seen.push(ctx));
-    const attacker = {
-      isPlayer: true, racialOverride: { racial: 'vampirism' }, level: 3, skills: 40,
-      stats: { strength: 50, agility: 50, luck: 50 },
-      lastGameMinutes: 523530 + 4000,   // the classic start plus a few days
-    };
-    calculateAttackDamage(attacker, foeTarget, { rolls: seq(0, 0.99, 0, 0) });
-    assert.equal(seen.length, 1);
-    assert.equal(seen[0].nowMinutes, 527530,
-      'UpdateSatiation stamps the clock, and 0 makes a fed vampire read unfed forever');
-    // an explicit ctx still wins - the host is the authority when it has one
-    seen.length = 0;
-    calculateAttackDamage(attacker, foeTarget, { rolls: seq(0, 0.99, 0, 0), enchantCtx: { nowMinutes: 99 } });
-    assert.equal(seen[0].nowMinutes, 99);
-  } finally {
-    setRacialHitHook(null);
-  }
+// DISC10-D H1 RE-AIM: the law is unchanged - the satiation stamp is the
+// LIVE classic minute, never 0 - but its home moved. The hook this pinned
+// sat inside calculateAttackDamage, before any door took the health (so
+// KilledInnocent never saw a dead innocent) and past the ineffective-
+// material return (so an iron blade on a ghost never fed); DFU calls
+// OnWeaponHitEntity from the strike after DecreaseHealth
+// (WeaponManager.cs:627-635). The dispatcher now reads the world clock
+// itself, as UpdateSatiation does (ToClassicDaggerfallTime), and the
+// formula carries no hook at all.
+test('AUDIT 39 #83: the racial-override hit dispatch is stamped with the live classic minute', () => {
+  const attacker = {
+    isPlayer: true, level: 3, skills: 40, activeEffects: [], spells: [],
+    stats: { strength: 50, agility: 50, luck: 50 },
+  };
+  createVampirismCurse(attacker, 153, { now: 0 });
+  setWorldMinutes(523530 + 4000);   // the classic start plus a few days
+  calculateAttackDamage(attacker, foeTarget, { rolls: seq(0, 0.99, 0, 0) });
+  assert.equal(liveVampirism(attacker).lastTimeFed, 0, 'the FORMULA feeds no one - it is not the strike');
+  playerWeaponHitEntity(attacker, foeTarget);
+  assert.equal(liveVampirism(attacker).lastTimeFed, 527530,
+    'UpdateSatiation stamps the clock, and 0 makes a fed vampire read unfed forever');
+  // an explicit minute still wins - the host is the authority when it has one
+  playerWeaponHitEntity(attacker, foeTarget, { nowMinutes: 99 });
+  assert.equal(liveVampirism(attacker).lastTimeFed, 99);
 });
 
 // ---------------------------------------------------------------

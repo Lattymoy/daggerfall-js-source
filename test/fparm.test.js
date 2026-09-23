@@ -3118,7 +3118,7 @@ test('PX26 F1/F2/F3: the menu figure carries the hand, instantly, and a mid-buil
   assert.match(fig, /else if \(r\.slot === 'arrow'\) r\.hidden = !arrowShown;/, 'the arrow still follows its shoot keys');
   // F2: the pack hands the rig the hand as well as the worn table
   const pack = readFileSync('src/ui/enhancedInventory.js', 'utf8');
-  assert.match(pack, /arm\.setWeapon\?\.\(slots\?\.\[EQUIP_SLOTS\.RightHand\] \?\? null,/, 'the pack must hand over the hand while a window is up');
+  assert.match(pack, /arm\.setWeapon\?\.\(slots\?\.\[deps\.usingRightHand\?\.\(\) === false \? EQUIP_SLOTS\.LeftHand : EQUIP_SLOTS\.RightHand\] \?\? null,/, 'the pack must hand over the hand while a window is up - the hand IN USE (DISC12: the left hand\'s weapon when the player swapped to it)');
   assert.match(pack, /hasAmmo: hasDaggerfallArrows\(deps\.entity\.items\)/, 'and the port\u2019s own arrow test, not a second one');
   // F3: a swap during a build waits, exactly as the worn table does.
   // MAC-S1 moved the flush itself into flushPending() - ONE home, called

@@ -89,7 +89,7 @@ test('AUDIT PARTY-REST wire (world95, then world96 under ALLY-CAST, world97 unde
   assert.equal(validPartyPose({ ...P, readyAt: -5 }).readyAt, 0);
   assert.equal(validPartyPose({ ...P }).readyAt, null, 'a world94 client sends none');
   assert.equal(validPartyPose({ ...P, readyAt: 'now' }).readyAt, null, '...and a bad one lands as none, never refusing the pose');
-  assert.equal(RELAY_VERSION, 'world100', 'ALLY-CAST moved it again, AUDIT ALLY-CAST once more, SPELLFX1\'s pose fields a third time, and HCC-PARK + RIDE (the park frame, the pose\'s riding fields) a fourth');
+  assert.equal(RELAY_VERSION, 'world101', 'ALLY-CAST moved it again, AUDIT ALLY-CAST once more, SPELLFX1\'s pose fields a third time, HCC-PARK + RIDE (the park frame, the pose\'s riding fields) a fourth, DISC7\'s hs and DISC12\'s lh/wb after');
   assert.equal(QUEST_ROOM_BYTES_PER_S, 4 * 1024 * 1024);
   // the quest fan's byte budget, as the hub charges it: a share times the tabs it reaches, borrowing, so one
   // full party's largest share lands whole and the flood behind it waits
@@ -348,6 +348,15 @@ test('AUDIT PARTY8 hub: the lead passes to the longest-standing seat that is ONL
   assert.equal(r.store.get('party:' + pid).leader, 'acct-c', 'c leads, not the away b');
   assert.deepEqual(r.store.get('party:' + pid).members, ['acct-b', 'acct-c'], 'b keeps the seat for the grace period');
   assert.equal(lastOf(socks[2], 'note')?.code, 'party.leader'); assert.equal(lastOf(socks[2], 'note')?.acct, 'acct-c');
+}));
+
+test('AUDIT PARTY8 hub: with EVERY remaining seat away, the lead still falls to the longest-standing, not the newest (S23 survived: no pin held the all-away arm)', () => withHub(async ({ r, act, party, tick }) => {
+  const { socks, pid } = await party(['a', 'b', 'c']);
+  await r.drop(socks[1]); tick();   // b away
+  await r.drop(socks[2]); tick();   // c away
+  await act(socks[0], { k: 'party.leave' }); tick();
+  assert.deepEqual(r.store.get('party:' + pid).members, ['acct-b', 'acct-c']);
+  assert.equal(r.store.get('party:' + pid).leader, 'acct-b', 'nobody online: b, the longest-standing, leads - not c');
 }));
 
 test('AUDIT PARTY8 hub: the ninth seat is refused on the ACCEPT path too - seven seated, two invited, the first yes seats the eighth and the second is told the party is full (lens A found this arm unpinned)', () => withHub(async ({ r, act, join, party, tick }) => {

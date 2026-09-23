@@ -29,8 +29,9 @@
 // Roleplay & Realism's shipPorts asks where the player stands: on the ship, yes; in a loaded location, a port and an
 // owned ship; anywhere else, no. world.js answered `{ loaded, portTown, onShip }` and the delegate reads
 // `locationLoaded`, so every port read as the wilderness and the Ship row stayed dark unless you were already aboard.
-// And the switch a player would reach for was on no tile: Travel Options' OnlyFromPorts (which they turned off) rules
-// the travel map's sea passage, never boarding your own ship.
+// Travel Options' OnlyFromPorts (which they turned off) rules the travel map's sea passage, never boarding your own
+// ship. SHIP-PORTS (main, the same day, the same report) ships the rule off and put its switch on the tile; this is
+// the other half - with the rule on, a port now answers as a port.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -354,6 +355,7 @@ const boardable = (where) => isShipAvailable({ canSail: true, ownsShip: true, ..
 
 test('DISC13-D: with shipPorts on, a port town boards your ship - world.js\'s answer is the one the delegate reads (mutants: the key back to `loaded` in either branch)', () => {
   _resetModSettings();
+  setModSetting('roleplay-realism', 'shipPorts', true);   // SHIP-PORTS ships it off; a player who asks for the port rule gets it
   assert.equal(boardable(shipLocationOf({ loc: port })), true, 'in a port with a ship: board it (it read false - the port was the wilderness)');
   assert.equal(boardable(shipLocationOf({ loc: inland })), false, 'inland: the mod\'s own no');
   assert.equal(boardable(shipLocationOf({ loc: null })), false, 'the wilderness: no');
@@ -366,10 +368,10 @@ test('DISC13-D: with shipPorts on, a port town boards your ship - world.js\'s an
   }
 });
 
-test('DISC13-D: shipPorts has a row on Roleplay & Realism\'s tile, and turning it off hands the question back to HasShip', () => {
+test('DISC13-D: shipPorts has a row on Roleplay & Realism\'s tile and ships off (SHIP-PORTS), and off hands the question back to HasShip', () => {
   _resetModSettings();
   assert.ok(modDials('roleplay-realism').includes('shipPorts'), 'the tile\'s drawer carries the switch');
-  setModSetting('roleplay-realism', 'shipPorts', false);
+  assert.equal(modSettingsOf('roleplay-realism').shipPorts, false, 'off until a player asks for the port rule');
   assert.equal(boardable(shipLocationOf({ loc: inland })), true, 'off: an owned ship boards anywhere, as DFU\'s HasShip');
   assert.equal(isShipAvailable({ canSail: true, ownsShip: false, ...shipLocationOf({ loc: port }) }), false, 'and no ship is still no ship');
   _resetModSettings();

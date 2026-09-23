@@ -959,8 +959,8 @@
   {
     "name": "SURVTIERS-the-potion-cite-falls-short",
     "file": "src/systems/potions.js",
-    "old": "exterior.js:2477) and useItem.js:316",
-    "new": "exterior.js:2477) and useItem.js:306",
+    "old": "exterior.js:2481) and useItem.js:316",
+    "new": "exterior.js:2481) and useItem.js:306",
     "tests": [
       "test/citedrift.test.js"
     ]

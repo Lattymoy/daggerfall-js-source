@@ -121,9 +121,11 @@ export function endOldLifeEffects(entity) {
   }
 }
 
-/** The live curse entry, or null. */
+/** The live curse entry, or null. DISC10-E V9: a hole in the list is
+ *  not a curse - liveVampirism's AUDIT WORLD5 guard, which the online
+ *  shift now reaches this reader through too. */
 export const liveLycanthropy = (entity) =>
-  (entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride'
+  (entity?.activeEffects ?? []).find((a) => a?.kind === 'racialOverride'
     && a.racial === 'lycanthropy' && !a.ended) ?? null;
 
 /** IsWearingHircineRing (:585-597): either ring slot, an artifact
@@ -221,9 +223,13 @@ export function consumeRacialOverridePending(entity, { now = 0 } = {}) {
  * the HUD line seam; `refreshHead` the portrait's (both optional -
  * the headless charter).
  */
-export function lycanthropyMagicRound(entity, { nowMinutes = 0, say = null, refreshHead = null } = {}) {
+export function lycanthropyMagicRound(entity, { nowMinutes = 0, clockMinutes = nowMinutes, say = null, refreshHead = null } = {}) {
   const entry = liveLycanthropy(entity);
   if (!entry) return;
+  // DISC10-E V1: `clockMinutes` is WorldTime.Now, the clock every catch-up
+  // round of one broker Update reads (EntityEffectBroker.cs:210-232): the
+  // moon (:565-575) and the kill clock (TimeSinceLastInnocentKilled) are
+  // its. `nowMinutes`, the round's number, keeps the nag's real-time fold.
   entry.wearingHircineRing = isWearingHircineRing(entity);
 
   // ApplyLycanthropeAdvantages (:520-537) - re-applied every round,
@@ -239,9 +245,9 @@ export function lycanthropyMagicRound(entity, { nowMinutes = 0, say = null, refr
   // a forced change already reads the beast; the port's fold is
   // per-round, so the order inside the round is what keeps silver
   // from lagging the change by a round.
-  if (!entry.wearingHircineRing && isFullMoonFromMinutes(nowMinutes) && !entry.isTransformed) {
+  if (!entry.wearingHircineRing && isFullMoonFromMinutes(clockMinutes) && !entry.isTransformed) {
     say?.(YOU_DREAM_OF_THE_MOON);
-    morphSelf(entity, { force: true, nowMinutes, refreshHead });
+    morphSelf(entity, { force: true, nowMinutes: clockMinutes, refreshHead });
   }
 
   // ConstantEffect (:139-144): transformed needs silver to be hit,
@@ -253,7 +259,7 @@ export function lycanthropyMagicRound(entity, { nowMinutes = 0, say = null, refr
   // GetNeedToKill (:577-580) + the urge arm of ConstantEffect
   // (:146-160): a month without an innocent's blood shrinks the
   // health ceiling by 24/day down to the floor of 4
-  const sinceKill = nowMinutes - (entry.lastKilledInnocent ?? 0);
+  const sinceKill = clockMinutes - (entry.lastKilledInnocent ?? 0);
   entry.urgeToKillRising = !entry.wearingHircineRing && sinceKill > NEED_TO_KILL_PERIOD;
   if (entry.urgeToKillRising) {
     if (nowMinutes - (entry.lastUrgeNotify ?? 0) >= NEED_TO_KILL_NOTIFY_ROUNDS) {
@@ -261,7 +267,10 @@ export function lycanthropyMagicRound(entity, { nowMinutes = 0, say = null, refr
       say?.(YOU_NEED_TO_HUNT);
     }
     const urgeMinutes = sinceKill - NEED_TO_KILL_PERIOD;
-    let limit = (entity.maxHealth ?? 0) - Math.round(urgeMinutes * NEED_TO_KILL_HEALTH_LOSS_PER_MINUTE);
+    // DISC10-E L4: `PlayerEntity.RawMaxHealth - reduction` (:234) - off the
+    // RAW maximum. MaxHealth is the LIMITED value now (chargen.js
+    // defineLiveMaxHealth), and a limit computed off itself would ratchet.
+    let limit = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) - Math.round(urgeMinutes * NEED_TO_KILL_HEALTH_LOSS_PER_MINUTE);
     if (limit < NEED_TO_KILL_HEALTH_LIMIT_MINIMUM) limit = NEED_TO_KILL_HEALTH_LIMIT_MINIMUM;
     entity.maxHealthLimiter = limit;
     // DFU clamps through the CurrentMaxHealth property continuously;
@@ -273,7 +282,9 @@ export function lycanthropyMagicRound(entity, { nowMinutes = 0, say = null, refr
 }
 
 /** SetMaxHealthLimiter's read side: the ceiling every full heal
- *  should respect while the urge is rising. */
+ *  should respect while the urge is rising. DISC10-E L4: on an entity
+ *  with the live accessor this IS `maxHealth` (DaggerfallEntity.MaxHealth
+ *  applies the limiter itself); the min stays for a plain entity. */
 export const currentMaxHealth = (entity) =>
   Math.min(entity?.maxHealth ?? 0, entity?.maxHealthLimiter ?? Infinity);
 
@@ -449,7 +460,7 @@ export function cureLycanthropy(entity, { nowMinutes = 0, advanceMinutes = null,
   entity.isInBeastForm = false;
   entity.maxHealthLimiter = null;
   entity.minMetalToHit = undefined;
-  entity.health = entity.maxHealth ?? entity.health;
+  entity.health = entity.rawMaxHealth ?? entity.maxHealth ?? entity.health;   // `CurrentHealth = RawMaxHealth` (:482)
   // RaiseTime(60) is SIXTY SECONDS - one classic minute, not an hour;
   // a port that read the 60 as minutes would jump the clock 60x
   advanceMinutes?.(1);

@@ -61,6 +61,7 @@ test('RR1 the record: the manifest, the switches (27 keys, the mod\'s words and 
       assert.ok(keys[name], `${name} is on the pane`);
       assert.equal(keys[name].description, k.Description, `${name}: the mod's own words`);
       const expected = typeof k.Value === 'string' ? (k.Value === 'True' ? true : k.Value === 'False' ? false : Number(k.Value)) : k.Value;
+      if (name === 'shipPorts') { assert.equal(expected, true); assert.equal(keys[name].default, false, 'SHIP-PORTS: the ONE recorded departure from the mod\'s defaults - the boat stays reachable from anywhere until a player asks for the port rule'); n++; continue; }
       assert.equal(keys[name].default, expected, `${name}: the mod's own default`);
       n++;
     }
@@ -193,7 +194,7 @@ test('RR1 loanAmountPerLevel / shipPorts: Level x loanVals[choice] (:98, :309-31
   setModSetting(V, 'Enabled', false);
   assert.equal(rrMaxBankLoan(7), null);
   assert.equal(calculateMaxBankLoan(7), 7 * LOAN_MAX_PER_LEVEL, 'the mod off: DFU\'s own');
-  reset();
+  reset(); on('shipPorts');   // SHIP-PORTS: off by default now - the law under test is the module's
   assert.equal(rrShipAvailable({ onShip: true }), true, 'IsOnShip: yes');
   assert.equal(rrShipAvailable({ onShip: false, locationLoaded: true, portTown: true, ownsShip: true }), true);
   assert.equal(rrShipAvailable({ onShip: false, locationLoaded: true, portTown: false, ownsShip: true }), false, 'not a port');
