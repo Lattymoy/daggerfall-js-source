@@ -1197,6 +1197,7 @@ ${badgeCss()}
    rather than where you may go, and an action bar sits under the
    stage because Back must be a control you can see (AUDIT 17j found
    the wizard's back arms wrong on every screen it checked). */
+.wizard .railbtn { cursor: default; pointer-events: none; }   /* DISC10-B: the walk's rail is a readout - no pointer, no hover */
 .wizard .railbtn.done .rk { color: var(--dim); }
 .wizard .railbtn.done { border-left-color: #3a3226; }
 .wizard .railbtn.todo .rk { color: #4a4740; }

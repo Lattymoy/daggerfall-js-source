@@ -598,3 +598,41 @@ sim's word by design.
 Pinned by execution in `test/disc8.test.js` (DISC9, with the real front,
 the real sim and the mod as shipped); mutants in `tools/mutants/disc8.json`
 (4 more).
+
+---
+
+# DISC10 - the third round from Discord
+
+Mac, with three Discord reports: *"Also vampries and werewolf. I think
+these systems are completely broken and not wired correctly"*.
+
+1. *"Weapons when swapped into left hand dont work showing fists"*
+2. *"during character creation, once you reach name selection you can't go
+   back to any previous step, forcing you to either finish creating the
+   character, or restart the game."*
+3. *"Maps Can't Be Looted/Potion Recipe's can't be read."*
+4. Mac: vampirism and lycanthropy, end to end.
+
+## DISC10-B: no way back from the name page
+
+**Cause.** Driven through the real wizard, the on-screen BACK does leave
+Name (to the biography method, DFU's own arm). What the player reached
+for did not:
+- **Escape was dead on Name, and only there.** `nameStage` focuses its box
+  on every paint, and the wizard's key handler returned on any key aimed
+  at a text field before mapping Escape to back (CG2's rule, which let
+  the player type in the box). No field types Escape, and DFU cancels the
+  name window with its TextBox focused
+  (`DaggerfallPopupWindow.Update` -> `CancelWindow`).
+- **The step rail looked pressable and was not.** Its finished steps were
+  enabled buttons with the menu's pointer and hover, and no handler. The
+  wizard's own design says the rail is a walk, not a menu.
+- **Escape on the first stage did nothing in this view.** The flow raised
+  `cancelled` and the view only read `done` (the classic window reads
+  both).
+
+**Fix.** A text field owns every key it can type, and never Escape. The
+view follows `cancelled` to the Cancel button's own exit. The rail is a
+readout: out of the tab order, `aria-disabled`, no pointer, no hover.
+Pinned by execution in `test/disc10.test.js` over a small DOM
+(`test/chargenDom.mjs`).
