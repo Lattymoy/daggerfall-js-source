@@ -169,7 +169,7 @@ test('VC7d: THE ICE\'S OWN SUN - three degrees past the ground\'s horizon, in th
 
 test('VC7d: BEHIND THE SLAB - the march lays it under what it found, and uploads what it reads', () => {
   const main = MARCH_FS.slice(MARCH_FS.indexOf('void main() {', MARCH_FS.indexOf('vec4 cirrus(')));
-  const fade = main.indexOf('col = mix(col, uHorizonColor * (1.0 - T), fade);');
+  const fade = main.indexOf('  if (!veiled) { col += T * mix(back.rgb, uHorizonColor * (1.0 - back.a), fade); T *= back.a; }');   // SLAB-SPAN: the slab's last word, each span in its own aerial perspective
   const ice = main.indexOf('vec4 ice = cirrus(cam, dir);'), add = main.indexOf('col += T * ice.rgb;'), thru = main.indexOf('T *= ice.a;');
   const out = main.lastIndexOf('outColor = vec4(front.rgb + front.a * col, T * front.a);');
   assert.ok(fade > 0 && fade < ice && ice < add && add < thru && thru < out, 'after the slab, weighted by what the slab let through, before the curtains in front of it');

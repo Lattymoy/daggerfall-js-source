@@ -243,10 +243,10 @@ test('VC7c: THE SLAB\'S START CUTS THE VEIL - before it in front of everything, 
   // the march: the back goes in before the first LIT sample past it, or behind everything; the front last of all
   const main = MARCH_FS.slice(MARCH_FS.indexOf('void main() {', MARCH_FS.indexOf('vec4 cirrus(')));
   assert.ok(main.includes('curtains(cam, dir, t0, front, back, tBack);') && main.includes('bool veiled = back.a >= 1.0;'), 'cut where the slab begins');
-  const lit0 = main.indexOf('    if (!veiled && tBack <= t) { col += T * back.rgb; T *= back.a; veiled = true; }');
+  const lit0 = main.indexOf('    if (!veiled && tBack <= t) { col += T * mix(back.rgb, uHorizonColor * (1.0 - back.a), fade); T *= back.a; veiled = true; }');   // SLAB-SPAN: in its span's aerial perspective
   assert.ok(lit0 > main.indexOf('if (strode) { t -= coarse;') && lit0 < main.indexOf('float tau = lightDepth(p);'), 'at a lit sample, after a stride is backed out - only a lit sample has an order to keep');
-  const after = main.indexOf('  if (!veiled) { col += T * back.rgb; T *= back.a; }');
-  assert.ok(after > lit0 && after < main.indexOf('float fade = 1.0 - exp(-t0 / 14000.0);'), 'behind every lit sample, and under the slab\'s own aerial perspective');
+  const after = main.indexOf('  if (!veiled) { col += T * mix(back.rgb, uHorizonColor * (1.0 - back.a), fade); T *= back.a; }');
+  assert.ok(after > lit0 && after < main.indexOf('vec4 ice = cirrus(cam, dir);'), 'behind every lit sample, and under the slab\'s own aerial perspective (SLAB-SPAN: the last span\'s)');
   const exits = main.match(/outColor = [^;]*;/g);
   assert.deepEqual(exits, ['outColor = underCurtains(uHorizonColor, 0.0, cam, dir);', 'outColor = underCurtains(uHorizonColor, 0.0, cam, dir);', 'outColor = vec4(front.rgb + front.a * col, T * front.a);'], 'the rows with no slab to cut take all of it in front; the march\'s end lays the front over everything');
   const under = fnBody(MARCH_FS, 'vec4 underCurtains(vec3 col, float T, vec3 cam, vec3 dir)');

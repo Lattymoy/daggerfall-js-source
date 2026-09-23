@@ -116,7 +116,8 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
     const declared = [...fs.matchAll(/uniform\s+\w+\s+(\w+)/g)].map((m) => m[1]);
     assert.deepEqual(declared.sort(), [...names].sort(), 'every uniform the shader declares has its location fetched, and none is fetched that it lacks');
   }
-  assert.match(MARCH_FS, /float t = t0 \+ ds \* hash12\(gl_FragCoord\.xy\);/, 'the jitter is a hash of the texel, never the clock - no flicker');
+  assert.match(MARCH_FS, /float jit = hash12\(gl_FragCoord\.xy\);\s*\n\s*float t = t0 \+ ds \* jit;/, 'the jitter is a hash of the texel, never the clock - no flicker (SLAB-SPAN: kept, and taken again at each span the ray jumps to)');
+  assert.match(MARCH_FS, /if \(t < spanA\[span\]\) \{ t = spanA\[span\] \+ ds \* jit;/);
   assert.match(MARCH_FS, /sum \+= density\(p, 0\.0\) \* step;/, 'the light march reads the field itself, not a blurred level');
   assert.ok(MARCH_FS.includes('outColor = vec4(front.rgb + front.a * col, T * front.a);'), 'colour and transmittance - VC7c: with the curtains in front (vc7c_curtains runs them)');
   const src = read('src/render/volumetricClouds.js');
@@ -172,7 +173,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   }
   const before = shadowOrigin(3 * p - 1, 0), after = shadowOrigin(3 * p + 1, 0);
   assert.ok(Math.abs(after[0] - before[0] - p) < 1e-6 && after[1] === before[1], 'a crossing moves the square by exactly one pixel, on that axis only');
-  assert.match(SHADOW_FS, /int steps = min\(24, max\(uSteps, int\(ceil\(\(t1 - t0\) \/ 150\.0\)\)\)\);/, 'a low sun\'s long slant is sampled no coarser than 150 m');
+  assert.match(SHADOW_FS, /int steps = min\(24, max\(uSteps, int\(ceil\(len \/ 150\.0\)\)\)\);/, 'a low sun\'s long slant is sampled no coarser than 150 m (SLAB-SPAN: over the length of its own spans)');
   for (const q of Object.values(QUALITY)) assert.ok(q.shadowSteps >= 8 && q.shadowSteps <= 24, 'the tier\'s count is the floor under the ceiling');
   // the far ring stands outside the square: a cover-derived dim on the slab's own law
   assert.match(shared, /farSunFactor\(\) \{\s*\n\s*if \(!clouds\) return this\.sunFactor\(\);\s*\n\s*return 1 - 0\.7 \* Math\.pow\(weatherRowNow\?\.cover \?\? 0, 1\.6\);/);

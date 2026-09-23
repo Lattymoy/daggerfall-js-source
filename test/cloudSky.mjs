@@ -23,7 +23,7 @@ export function cellUniforms(cells) {
 /** A zone's own terms (a sunny row's), the sky map's size and the colours, over which `over` is laid. */
 export const ZONE = Object.freeze({
   uBase: 1400, uTop: 3200, uCover: 0.32, uDensity: 0.6, uFlat: 0.1, uShear: 0, uDark: 0, uVary: 0.5, uSoft: 0.5,
-  uSlabBase: 500, uSlabTop: 4200, uShift: [0, 0], uDrift: [0, 0], uEvolve: [0, 0, 0], uCoverDrift: [0, 0], uCamXZ: [0, 0],
+  uShift: [0, 0], uDrift: [0, 0], uEvolve: [0, 0, 0], uCoverDrift: [0, 0], uCamXZ: [0, 0],
   uMapSize: [2048, 512], uCloudShade: [0.3, 0.3, 0.35], uCloudLit: [0.9, 0.9, 0.9], uHorizonColor: [0.6, 0.7, 0.8],
   uLightDir: [0, 0.6, 0.8], uLightColor: [1, 1, 1], uSkyTint: [0.4, 0.5, 0.8], uDusk: 0, uSteps: 48, uLightSteps: 6,
   uCirrus: [0, 0, 0, 0], uCirrusLight: [1, 1, 1], uCirrusDir: [0, 1, 0],

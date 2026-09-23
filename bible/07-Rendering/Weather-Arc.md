@@ -112,7 +112,10 @@ cells stand (a grazing sky ray crosses 24 km; a cell 6 km out with a
 3 km radius is missed by any single resolution), and the light march
 reads what its step resolved. The slab both marches walk is the UNION
 of the zone's and the cells' (`slabOf`), so a thunderhead's tops are
-reached under a sunny zone's lower lid. A cell's `dark` and `grey`
+reached under a sunny zone's lower lid. (SLAB-SPAN, 2026-09-23: the
+union was every ray's, so one low cell anywhere started every ray under
+the zone's deck and left bare dome round the horizon; each ray now walks
+its own spans - `raySpans`, the Volumetric Clouds arc.) A cell's `dark` and `grey`
 reach the lighting: the dark moved into the field block (a cell has
 its own), and the grey pulls the lit colour toward the shade's, so a
 storm under a sunny zone is a storm's colour and not a bright cumulus

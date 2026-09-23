@@ -185,7 +185,7 @@ inside a backed-out stride is the one thing to look at first.
    `?clouds=off` is the kill switch.
 6. **Cells (WEATHER2c).** The one field takes cells - a place, a
    radius, a rim and a profile of their own, blended over the zone's
-   terms at every sample both marches take under a union slab - so a
+   terms at every sample both marches take under a union slab (each ray's own spans since SLAB-SPAN) - so a
    thunderhead stands over the hills under a sunny zone and its shadow
    falls where it stands. The Weather arc's C
    (`07-Rendering/Weather-Arc.md`); `?cloudcell=` the door.
@@ -590,3 +590,46 @@ draws 19 wisps (not "a couple of dozen", nor "~52"); a wisp is a 40-segment ribb
 stripes leaves the beams between all and none (not "half" - unmeasured); the boil is the game clock's and the same
 for every player, but the cover's drift rides the session's own wind integral (WIND2), so "every player sees one
 sky" is true of the boil and the ice, not of the cover.
+
+**In the game (2026-09-23).** The last of "the not done yet": the sky run in the real game, Daggerfall city, with
+the player's own ARENA2 (SwiftShader, so pictures and relative cost only). Noon sunny, a storm at 16:00, rain at
+11:00, golden hour at 17:20, dusk at 18:10 and an overcast at 13:00, each looking four ways. Three things came out of
+it; the first two were bugs of this branch and are paid, the third is older and recorded.
+- **The `?cloudcell=` door never stood in the game.** setState took the door's cell only in place of the host's list,
+  and the game hosts always hand one (the map's, empty in clear air), so every curtain scene showed clear sky. The
+  door's cell now joins the host's list (a behaviour test on the class; the old form a mutant in `auditvc7.json`).
+  With it, the storm and its curtain stand where the door puts them.
+- **SLAB-SPAN: a cell anywhere lowered every ray's slab.** Both marches walked the UNION of the zone's slab and every
+  cell's (WEATHER2c). One low cell - a rain cell 14 km east, under a cloudy zone - started EVERY ray at its base, and
+  at a grazing angle the sky march's 24 km ran out in the air under the zone's deck: a strip of bare dome round the
+  whole horizon, saturated blue in every direction, where the cell was nowhere. WEATHER3 puts cells in most skies, so
+  this was the common case, not a corner. The shadow march paid the same way, in coarser steps under a storm's
+  union. Now each ray finds its OWN slab (`raySpans`, in the field both marches share): the zone's slab along the ray,
+  and each cell's column where the ray is inside the disc its outline can reach, between the lowest base and the
+  highest top its weight can blend a column to; sorted, merged, disjoint. The sky march walks the spans' first 24 km
+  and jumps the air between them (no step spent); the shadow march lays the spans end to end under the midpoint rule.
+  The aerial perspective followed: it was keyed to the ray's one entry, and a ray through a cell's empty outer disc
+  entered near and faded the deck 80 km behind it as if it were near - a pale block the shape of the disc. Each
+  span is now faded by where it begins, so a storm near and the deck far behind it on one ray each take their own
+  distance's haze. **With no cells both marches are the old ones** (the sky within 1e-9 on 28 rays, the shadow
+  exactly: the old shader run beside the new in node); with cells, the rows that read T = 1 read opaque, and toward
+  a rain cell 9 km north the old sky had been 39% see-through at the horizon (the deck behind it never reached).
+  `slabOf` and the two slab uniforms are retired. Laws on the shader's own functions (weather2c): no cloud can stand
+  outside a span (the resolved profile over 120 rays through shaped, clipped cells of four kinds, and a lobe past its
+  circle); a cell a ray never passes changes nothing in the sky or the shadow; the grazing rows opaque toward a storm
+  and behind a thin low cell; an empty cell in front leaves the deck behind it its own colour; the horizon's share of
+  a cloud is fade(entry) (1 - T); the shadow is the midpoint rule over the spans. `slabspan.json` 15/15 dead.
+- **Recorded, not changed: the horizon's notched band.** Far cumulus at the horizon read as a dark scalloped band with
+  bright dome between the clouds (16:00 sunny, clearest looking north). It is on main too (the same scene run from a
+  main worktree), so it is not VC7's; the high tier (80 steps, a 2048x512 map) draws the same pattern finer, so it
+  is not the march's sampling; and the sky lab, which has the dome and the clouds but not the game's own passes,
+  draws that band light. So it sits in how the game's passes treat the cloud layer against the dome at the horizon -
+  its own slice, with the pictures.
+
+What the game showed right: the storm's anvil and its curtain from base to horizon; the rain and the deck around it;
+the overcast's lid with the haze's shafts under it; the golden hour's gold on the cloud toward the sun; dusk's purple
+lid with stars through its thin places; the cirrus at noon. **The cost, relative only** (SwiftShader has no GPU timer):
+a cloudy 15:00 in the city, twelve seconds each way, 1815 ms a frame with the clouds, the haze and the wisps against
+1203 ms with all three off (`?clouds=off&haze=off&wisps=off`) - the three together half again the frame on a software
+rasterizer; the main thread's script 19.0 ms against 16.7. A real GPU's per-pass numbers are `?perf=zones` on Mac's
+machine.

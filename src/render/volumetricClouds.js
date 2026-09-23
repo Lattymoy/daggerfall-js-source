@@ -443,14 +443,6 @@ export function cellOfField(c, toHost) {
   return out;
 }
 
-/** The slab both marches walk: the zone's, widened to hold every
- *  cell's. Pure. */
-export function slabOf(profile, cells) {
-  let base = profile.base, top = profile.top;
-  for (const c of cells ?? []) { if (c.base < base) base = c.base; if (c.top > top) top = c.top; }
-  return { base, top };
-}
-
 /** AUDIT-VC7 (R4): HOW FAST A SHAPE'S OUTLINE TURNS - the most its reach m(theta) = n (1 + sum a_k cos k(theta -
  *  phi_k)) can change a radian of bearing: n sum k a_k, the bound of |m'| (each harmonic's slope at most k a_k). The
  *  sky march asks it whether a stride's disc can meet a rim (resolveAt's rimReach). 0 for a circle. Pure. */
@@ -635,8 +627,6 @@ uniform float uFlat;
 uniform float uShear;
 uniform float uDark;
 uniform float uVary;      // VC6a: how much the cloud's TYPE changes across the zone
-uniform float uSlabBase;  // WEATHER2c: the union of the zone's slab and every cell's - where both marches start and stop
-uniform float uSlabTop;
 uniform int uCellCount;   // WEATHER2c: the cells, in the host's world metres
 uniform vec4 uCell[8];    // x, z, radius, the rim's width
 uniform vec4 uCellA[8];   // base, top, density, flat
@@ -679,6 +669,54 @@ vec2 rimReach(vec2 v, vec4 a, vec4 b, float inner, float outer, float reach) {
   float turn = l > reach ? asin(reach / l) * b.w : spread;
   float lo = max(m - turn, a.x - spread), hi = min(m + turn, a.x + spread);
   return vec2(l + reach < inner * lo ? 1.0 : 0.0, l - reach > outer * hi ? 1.0 : 0.0);
+}
+// SLAB-SPAN: WHERE A RAY CAN MEET CLOUD - the parts of o + d t (d.y > 0) inside the zone's slab, or inside a cell's
+// column: the disc its outline can reach (shapeF is never past n + spread), between the lowest base and the highest
+// top its weight can blend a column to. Sorted by entry and merged, so spanA/spanB hold disjoint spans in order;
+// the return is their length. Both marches walk these and nothing else: the union slab they walked before
+// (WEATHER2c) took every cell's reach for every ray, so a low cell anywhere in the sky started every ray under the
+// zone's deck, and at a grazing angle the sky march's 24 km ran out in the air beneath it - a strip of bare dome
+// round the whole horizon.
+const int SPANS = 9;
+float spanA[SPANS];
+float spanB[SPANS];
+int spanN;
+void addSpan(float a, float b) {
+  if (b <= a) return;
+  int i = spanN;
+  for (int j = 0; j < SPANS; j++) {
+    if (i == 0 || spanA[i - 1] <= a) break;
+    spanA[i] = spanA[i - 1]; spanB[i] = spanB[i - 1]; i--;
+  }
+  spanA[i] = a; spanB[i] = b; spanN++;
+}
+float raySpans(vec3 o, vec3 d) {
+  spanN = 0;
+  addSpan((uBase - o.y) / d.y, (uTop - o.y) / d.y);
+  float a2 = dot(d.xz, d.xz);
+  for (int i = 0; i < 8; i++) {
+    if (i >= uCellCount) break;
+    vec4 c = uCell[i], s = uCellS[i], u = uCellU[i], a = uCellA[i];
+    float reach = c.z * s.x * (1.0 + length(s.yz) + length(vec2(s.w, u.x)) + length(u.yz));
+    float lo = (min(uBase, a.x) - o.y) / d.y, hi = (max(uTop, a.y) - o.y) / d.y;
+    vec2 q = o.xz - c.xy;
+    float qq = dot(q, q) - reach * reach;
+    if (a2 < 1e-12) { if (qq <= 0.0) addSpan(lo, hi); continue; }   // straight up: in the disc or not
+    float b = dot(q, d.xz) / a2, disc = b * b - qq / a2;
+    if (disc <= 0.0) continue;
+    float r = sqrt(disc);
+    addSpan(max(lo, -b - r), min(hi, -b + r));
+  }
+  int n = 0;
+  for (int i = 0; i < SPANS; i++) {
+    if (i >= spanN) break;
+    if (n > 0 && spanA[i] <= spanB[n - 1]) spanB[n - 1] = max(spanB[n - 1], spanB[i]);
+    else { spanA[n] = spanA[i]; spanB[n] = spanB[i]; n++; }
+  }
+  spanN = n;
+  float len = 0.0;
+  for (int i = 0; i < SPANS; i++) { if (i >= spanN) break; len += spanB[i] - spanA[i]; }
+  return len;
 }
 // VC7c: THE STRIDE'S EVIDENCE - density() sets it with every answer: 1 when its zero is one that holds for a stride
 // (outside the band, whose ends move only at a cell's rim; above or below every height a deck's lane and its core
@@ -1076,13 +1114,29 @@ void main() {
   if (dir.y <= 0.004) { outColor = underCurtains(uHorizonColor, 0.0, cam, dir); return; }
   // the march covers the slab, or the first 24 km of it at a grazing
   // angle - the aerial fade takes the rest, so the deck reaches the
-  // horizon instead of stopping short of it in a rim of bare dome
-  float t0 = uSlabBase / dir.y, t1 = min(uSlabTop / dir.y, t0 + 24000.0);   // WEATHER2c: the union slab
+  // horizon instead of stopping short of it in a rim of bare dome.
+  // SLAB-SPAN: the slab is THIS RAY's - its spans (raySpans), their first 24 km walked and the air between them jumped
+  float len = raySpans(cam, dir);
+  float t0 = spanA[0];
   if (t0 > 120000.0) { outColor = underCurtains(uHorizonColor, 0.0, cam, dir); return; }
-  float ds = (t1 - t0) / float(uSteps);
+  float walk = min(len, 24000.0);
+  float t1 = t0, left = walk;   // where the spans' first walk metres end
+  for (int k = 0; k < SPANS; k++) {
+    if (k >= spanN) break;
+    float l = spanB[k] - spanA[k];
+    if (l >= left) { t1 = spanA[k] + left; break; }
+    left -= l; t1 = spanB[k];
+  }
+  float ds = walk / float(uSteps);
   float coarse = ds * 3.0;   // VC6d: the stride over empty air
   fReach = coarse;   // VC7c: how near a cell's rim must be to count
-  float t = t0 + ds * hash12(gl_FragCoord.xy);
+  float jit = hash12(gl_FragCoord.xy);
+  float t = t0 + ds * jit;
+  int span = 0;
+  // aerial perspective: a far bank takes the horizon's colour - by the distance its span begins at (SLAB-SPAN: a
+  // span's own, so a storm near and the deck far behind it on one ray are each faded by their own distance; with one
+  // span, the ray's entry for all of it, as it was)
+  float fade = 1.0 - exp(-t0 / 14000.0);
   float cosTheta = dot(dir, uLightDir);
   float phase = min(mix(hg(cosTheta, 0.55), hg(cosTheta, -0.1), 0.4) * 4.0 * PI, 2.5);   // the average over the sphere is 1; the forward peak capped
   // ═══ VC6b: THE LOW SUN ══════════════════════════════════════════════
@@ -1124,6 +1178,10 @@ void main() {
     // backs out of costs one). The slack is what buys back the second
     // case - without it a ray that crosses several banks could stop
     // short of t1 and lose the far one.
+    // SLAB-SPAN: past a span's end, on to the next - the air between holds no cloud, so it costs no step
+    while (span < spanN && t > spanB[span]) { span++; if (span < spanN) fade = 1.0 - exp(-spanA[span] / 14000.0); }
+    if (span >= spanN) break;
+    if (t < spanA[span]) { t = spanA[span] + ds * jit; strode = false; empty = 0; }
     if (i >= uSteps + ${MARCH_SLACK} || t > t1) break;
     vec3 p = cam + dir * t;
     if (uCellCount > 0) resolveAt(p.xz);   // WEATHER2c: the profile where this step is
@@ -1142,7 +1200,7 @@ void main() {
     empty = 0;
     // VC7c: the veil past the slab's start goes in before the first cloud behind it - only a lit sample can stand in
     // front of it or behind it, so the empty air between needs no order
-    if (!veiled && tBack <= t) { col += T * back.rgb; T *= back.a; veiled = true; }
+    if (!veiled && tBack <= t) { col += T * mix(back.rgb, uHorizonColor * (1.0 - back.a), fade); T *= back.a; veiled = true; }
     {
       float h = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);
       float tau = lightDepth(p);
@@ -1161,16 +1219,13 @@ void main() {
       float light = lightOctaves(tau, phase, deckHere);   // VC7e: the octaves - a deck's
       vec3 S = uLightColor * light * gain * (1.0 - 0.8 * fDark) * (1.0 - 0.5 * fGrey) * fTint + ambient;
       float Ti = exp(-rho * EXT * ds);
-      col += T * S * (1.0 - Ti);
+      col += T * mix(S, uHorizonColor, fade) * (1.0 - Ti);
       T *= Ti;
       if (T < 0.01) break;
     }
     t += ds;
   }
-  if (!veiled) { col += T * back.rgb; T *= back.a; }   // VC7c: behind every cloud the march lit
-  // aerial perspective: a far bank takes the horizon's colour
-  float fade = 1.0 - exp(-t0 / 14000.0);
-  col = mix(col, uHorizonColor * (1.0 - T), fade);
+  if (!veiled) { col += T * mix(back.rgb, uHorizonColor * (1.0 - back.a), fade); T *= back.a; }   // VC7c: behind every cloud the march lit
   vec4 ice = cirrus(cam, dir);   // VC7d: far above the slab - behind it along the ray
   col += T * ice.rgb;
   T *= ice.a;
@@ -1192,16 +1247,20 @@ ${CLOUD_FIELD_GLSL}
 void main() {
   if (uLightDir.y <= 0.05) { outColor = vec4(1.0); return; }   // no sun to shadow: the moon casts none
   vec2 g = uOrigin + gl_FragCoord.xy / uMapSize * uExtent;
-  float t0 = uSlabBase / uLightDir.y, t1 = uSlabTop / uLightDir.y;   // WEATHER2c: the union slab
+  float len = raySpans(vec3(g.x, 0.0, g.y), uLightDir);   // SLAB-SPAN: this ground point's own spans toward the sun
   // the steps follow the path: a low sun's long slant is sampled no
   // coarser than 150 m, the tier's count the floor, 24 the ceiling
-  int steps = min(24, max(uSteps, int(ceil((t1 - t0) / 150.0))));
-  float ds = (t1 - t0) / float(steps);
-  float t = t0 + ds * 0.5;
+  int steps = min(24, max(uSteps, int(ceil(len / 150.0))));
+  float ds = len / float(steps);
+  float t = spanA[0] + ds * 0.5;
+  int span = 0;
   float sum = 0.0;
   resolveAt(g);   // WEATHER2c: the zone's terms, and the cell over this ground
   for (int i = 0; i < 24; i++) {
     if (i >= steps) break;
+    // SLAB-SPAN: the steps are the spans' length laid end to end - a step past one span's end goes on in the next
+    while (span < spanN && t > spanB[span]) { float over = t - spanB[span]; span++; if (span < spanN) t = spanA[span] + over; }
+    if (span >= spanN) break;
     vec3 p = vec3(g.x, 0.0, g.y) + uLightDir * t;
     if (uCellCount > 0) resolveAt(p.xz);   // WEATHER2c: a slanted sun's ray may leave the cell
     sum += density(p, 0.5) * ds;
@@ -1285,7 +1344,7 @@ function link(gl, vs, fs) {
 }
 
 /** The field's uniforms, shared by both marches. */
-export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
+export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF', 'uCirrus', 'uCirrusLight', 'uCirrusDir'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos'];   // WEATHER3d: the distant strike
@@ -1364,7 +1423,10 @@ export class VolumetricClouds {
     if (this.testCellSpec && !this.testCell && pos) this.testCell = parseCloudCellDoor(this.testCellSpec, pos);
     // VC7a: the day's convection at the sky's own minute, on the fair cells and the fair zone
     this.conv = convection(state.minuteOfDay ?? ((((state.minutes ?? 0) % 1440) + 1440) % 1440));
-    this.cells = pickCells(cells ?? (this.testCell ? [this.testCell] : []), this.q.cells ?? MAX_CELLS).map((c) => convectCell(c, this.conv));   // WEATHER3c: the map's cells by importance, drawn by rank
+    // WEATHER3c: the map's cells by importance, drawn by rank. AUDIT-VC7: the door's cell joins them - the hosts always
+    // hand a list (the map's, empty in clear air), so a cell taken only in its place never stood in the game
+    const host = cells ?? [];
+    this.cells = pickCells(this.testCell ? [...host, this.testCell] : host, this.q.cells ?? MAX_CELLS).map((c) => convectCell(c, this.conv));
     const target = VC_PROFILE[weather] ?? VC_PROFILE.sunny;
     this.profile = easeProfile(this.profile, target, easeDt);
     this.weather = weather;
@@ -1446,9 +1508,7 @@ export class VolumetricClouds {
     gl.uniform1f(u.uBase, p.base); gl.uniform1f(u.uTop, zone.top); gl.uniform1f(u.uDensity, p.density);
     gl.uniform1f(u.uFlat, p.flat); gl.uniform1f(u.uShear, p.shear);
     gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uVary, p.vary ?? 0);   // VC6a
-    // WEATHER2c: the union slab and the cells
-    const slab = slabOf(p, this.cells);
-    gl.uniform1f(u.uSlabBase, slab.base); gl.uniform1f(u.uSlabTop, slab.top);
+    // WEATHER2c: the cells (SLAB-SPAN: each ray finds its own slab among them)
     const k = packCells(this.cells, this.q.cells ?? MAX_CELLS, this._packed);
     gl.uniform1i(u.uCellCount, k.count);
     if (k.count > 0) { gl.uniform4fv(u.uCell, k.c); gl.uniform4fv(u.uCellA, k.a); gl.uniform4fv(u.uCellB, k.b); gl.uniform4fv(u.uCellC, k.t); gl.uniform4fv(u.uCellK, k.k); gl.uniform4fv(u.uCellS, k.s); gl.uniform4fv(u.uCellU, k.u); gl.uniform4fv(u.uCellKS, k.ks); gl.uniform4fv(u.uCellKU, k.ku); }
