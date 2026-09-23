@@ -72,19 +72,10 @@
   ]
  },
  {
-  "name": "caster-takes-eye",
-  "file": "src/render/shadowPass.js",
-  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
-  "new": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
-  "tests": [
-   "test/el2_shadows.test.js"
-  ]
- },
- {
   "name": "caster-takes-rangeless",
   "file": "src/render/shadowPass.js",
-  "old": "    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
-  "new": "    if (d < minDist || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "old": "    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
+  "new": "    if (lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;",
   "tests": [
    "test/el2_shadows.test.js"
   ]

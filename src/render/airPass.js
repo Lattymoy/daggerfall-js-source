@@ -124,8 +124,6 @@ export const AIR_GLARE_SIZE = 0.25;   // EL7: a glare the size of a flame, not a
  *  candle, a lantern placed above its flat) drew a bright ball "not
  *  connected to the source". */
 export const AIR_GLARE_SLACK = 0.25;   // F4 (2026-09-17, Mac: "bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for "a flame" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else
-/** EL7: no glare for a light this close to the eye - the carried torch and the candle. */
-export const AIR_GLARE_MIN_DISTANCE = 1.5;
 /** EL8: SCREEN-SPACE CONTACT SHADOWS - for every lantern that has no caster
  *  slot (the forty-two past the six), a march from the fragment toward the
  *  light through the PREVIOUS frame's depth, reprojected by the previous
@@ -1108,11 +1106,9 @@ export class AirPass {
     gl.uniformMatrix4fv(P.uView, false, f.view);
     depthOn(P);   // EL5/EL6: the depth's reconstruction, off the frame's own
     gl.bindVertexArray(this.glareVao);
-    const eye = f.eye;
     for (let i = 0; i < n; i++) {
       const range = L[i * 4 + 3];
       if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern
-      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < AIR_GLARE_MIN_DISTANCE) continue;   // EL7: the torch in the hand, the candle
       if (f.carried && f.carried[i]) continue;   // MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat
       gl.uniform3f(P.uCenter, L[i * 4], L[i * 4 + 1], L[i * 4 + 2]);
       gl.uniform1f(P.uSize, glareSize(range));

@@ -68,7 +68,7 @@ test('EL8: the constants, the door, the contact block and the table in the shade
   assert.match(AIR_CONTACT_GLSL, /if \(behind > 0\.02 && behind < uContactParams\.y\) return uContactParams\.z;/, 'an occluder within the thickness: the floor, not black');
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(AIR_CONTACT_GLSL), `${name} carries the contact block`);
-    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7 \|\| length\(uPointLights\[i\]\.xyz - uCamPos\) < 1\.5\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: the table, then the map or the march - never for the hand's light, never past seven tenths of the range (F3, F5)`);
+    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: the table, then the map or the march - never for the hand's light, never past seven tenths of the range (F3, F5)`);
   }
   assert.ok(EL_BB_FS.includes('elPointFlat(vBBWorld, base)') && (EL_BB_FS.match(/elPointLit\(/g) || []).length === 1, 'a flat lights by elPointFlat, which marches nowhere (its own flat would occlude it); elPointLit is defined and never called there');
   assert.match(SHADOW_GLSL, /uniform int uCasterOf\[48\];/);

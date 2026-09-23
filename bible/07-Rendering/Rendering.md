@@ -63,7 +63,7 @@ directory by `test/audit18_bible_docs.test.js`:
   programs are the renderer's own vertex shaders (EL7: three cascades, the
   rigs recorded too, the water surface a receiver; EL8: the caster table
   `uCasterOf`, the far cascade and the far casters on a cadence; BUGS-5:
-  the light in the hand never casts (`SHADOW_CASTER_MIN_DISTANCE` 1.5), a
+  the light in the hand never casts (by its `carried` flag - MAC-T1; LIGHT-NEAR1 removed the 1.5 camera-distance proxy that dropped the lamp overhead too), a
   thing on the ground is no standing card (`noShadow`, archive 216, flats
   under half a unit), a cascade skips casters under two of its texels).
   See `07-Rendering/Enhanced-Lighting-Arc.md`.

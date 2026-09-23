@@ -45,7 +45,8 @@
 import { getPref } from './uiPrefs.js';
 import { itemNameParts, itemStatRows } from './itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
 import { nextSelection, selectedRow, hoverItemAt } from './worldHover.js';   // the fold's LAW and the row -> item walk, both driven there
-import { takeOneInto } from './inventory.js';   // ...and the move, with the gold door in it
+import { planTake, applyTransfer } from './itemTransfer.js';   // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
+import { isMap } from './useItem.js';   // the map the window USES rather than takes (F156) - left for the window here
 
 /** The player's own switch (features.js, `quick-loot`). Off is
  *  Daggerfall's loot exactly: the activate key opens the window it has
@@ -56,6 +57,43 @@ export const quickLootOn = () => !!getPref('quickLoot');
  *  row's own word, so the line and the row the player was looking at
  *  cannot say different things about one item. */
 export const tookItemText = (item) => `You take the ${itemNameParts(item).name || 'item'}.`;
+
+/**
+ * QL-WEIGHT1 (2026-09-23, Satranath on Discord: "The quick loot system
+ * lets you pick up items even if you are overencumbered. Applies only to
+ * quick loot - vanilla loot interaction still gives the appropriate error
+ * that you are carrying too much"): THE TAKE IS THE WINDOW'S TAKE.
+ *
+ * Quick loot used to move a row with `takeOneInto` - DoTransferItem's
+ * first statement and nothing before it - so it had no CanCarryAmount
+ * (DaggerfallInventoryWindow.cs:1414-1422), no summoned guard, no quest
+ * arm and no split. The window plans every take through `planTake`
+ * (systems/itemTransfer.js) and performs it with `applyTransfer`, and
+ * so does this now: ONE plan for a row whichever door it leaves by, so
+ * the two cannot disagree about what the player can carry. A refusal
+ * is SAID where the window would box it (the mid-screen line the take
+ * already speaks through), and the press is HANDLED - `QUICK_LOOT_REFUSED`
+ * is truthy and not an item, so a host does not open the window over a
+ * pack that just refused the row. A partial fit takes what fits (the
+ * window's Enter on the split box) and leaves the rest on the pile.
+ *
+ * A map is the one row the window does not TAKE but USES (F156: reading
+ * it marks the place); quick loot has no reader, so a map is left for
+ * the window - null, "open the window", as for every row it cannot serve.
+ */
+export const QUICK_LOOT_REFUSED = Object.freeze({ refused: true });
+
+/** One row through the window's plan. Answers the record that arrived
+ *  (the split half on a partial fit, the row itself for gold - which
+ *  `applyTransfer` spends into the counter and answers null for),
+ *  `{ refusal }` when the plan says no, or null for a row the plan
+ *  would USE rather than take. */
+function takeThrough(playerEntity, items, item, hooks) {
+  if (isMap(item)) return null;
+  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest: hooks.getQuest ?? null });
+  if (!plan.ok) return { refusal: plan.refusal };
+  return applyTransfer(item, plan, items, (playerEntity.items ??= []), { entity: playerEntity, toPlayer: true }) ?? item;
+}
 
 /**
  * IS THIS CONTAINER EMPTY NOW - asked after a take, by the caller that
@@ -203,21 +241,30 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}) {
   const items = hooks.items?.();
   if (!Array.isArray(items)) return null;
   if (how === 'all') {
-    // P: the lot, through the same one-item door - so the gold rule is
-    // the one in `takeOneInto` here too, and a caller cannot get a bulk
-    // take that spells it differently. `[...items]` because the door
-    // splices the source, so iterating it live would skip every second
-    // row - the same reason `takeCorpseLoot`'s loop copies first.
-    let n = 0;
-    for (const it of [...items]) { if (takeOneInto(playerEntity, items, it)) n += 1; }
+    // P: the lot, through the same one-item door - so the carry gate and
+    // the gold rule are the window's here too, and a caller cannot get a
+    // bulk take that spells them differently. `[...items]` because the
+    // door splices the source, so iterating it live would skip every
+    // second row - the same reason `takeCorpseLoot`'s loop copies first.
+    // QL-WEIGHT1: what fits is taken and counted; the first row that does
+    // not is the line said when nothing fitted at all, and the rows left
+    // stay on the pile for the window or the next press.
+    let n = 0, refusal = null;
+    for (const it of [...items]) {
+      const got = takeThrough(playerEntity, items, it, hooks);
+      if (got?.refusal) { refusal ??= got.refusal; continue; }
+      if (got) n += 1;
+    }
     if (n) say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);
+    else if (refusal) { say(refusal.text); return QUICK_LOOT_REFUSED; }
     return n ? items : null;
   }
   const item = quickLootItemAt(key, items);
   if (!item) return null;
-  const moved = takeOneInto(playerEntity, items, item);
-  if (moved) say(tookItemText(moved));
-  return moved;
+  const got = takeThrough(playerEntity, items, item, hooks);
+  if (got?.refusal) { say(got.refusal.text); return QUICK_LOOT_REFUSED; }
+  if (got) say(tookItemText(got));
+  return got;
 }
 
 /**
