@@ -180,7 +180,7 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, PARTY_CHAT_ROOM_HZ_MAX } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -254,6 +254,7 @@ export class Room {
     this._orders = new Map();
     this._idx = null;   // ws -> attachment, read once (A7); rebuilt when the socket set changes
     this._roomChat = null;   // AUDIT CHAT A2: the room's own chat budget - on the instance, since a sleeping room fans nothing
+    this._partyChat = null;   // CHAT-CHAN: the hub's budget for party lines (PARTY_CHAT_ROOM_HZ_MAX), apart from the room's
     this._roomFoes = null;   // AUDIT WORLD2 A5: the room's foes byte budget (the frame times its listeners)
     this._roomFoesIn = null;   // AUDIT WORLD6b A3: a cell's foes INGRESS budget, spent at the door before the parse
     // AUDIT WORLD6b A1/A2: the hit funnel (AUDIT WORLD2 A6) is the DESTINATION socket's own bucket (`hbucket` on its attachment), not the room's
@@ -489,12 +490,15 @@ export class Room {
     return next;
   }
   /** ALLY-CAST: the cast frames' own bucket (CAST_HZ_MAX), the trade meter's shape. */
+  /** CHAT-CHAN: the strikes are the cast's OWN (`castDrops`) - they were `cdrops`, the chat gate's own field, so once a
+   *  place room carried Local chat a pass on either reset the other's strikes, and twenty dropped casts followed by one
+   *  over-rate line closed the socket as 'too many lines'. */
   _meterCast(ws, a, now) {
     const gate = castGate(a.castBucket, now);
-    const cdrops = gate.pass ? 0 : (a.cdrops ?? 0) + 1;
-    const next = { ...a, castBucket: gate.bucket, cdrops };
+    const castDrops = gate.pass ? 0 : (a.castDrops ?? 0) + 1;
+    const next = { ...a, castBucket: gate.bucket, castDrops };
     this._setAttach(ws, next);
-    if (!gate.pass) { if (cdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many cast frames'); return null; }
+    if (!gate.pass) { if (castDrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many cast frames'); return null; }
     return next;
   }
   /** WORLD3: the action frames' own bucket (ACT_HZ_MAX), the same strikes - a door beside the poses, never starving them. */
@@ -1229,6 +1233,25 @@ export class Room {
       // the key is struck out exactly as anyone else would be, and a
       // refusal is never a free way to make the room answer.
       if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }
+      // CHAT-CHAN (2026-09-23, kurkku: "party chat"): A PARTY'S LINE is said on the hub link and heard by the party's
+      // members alone - every tab of each (the sender's own tabs too: the echo is the receipt). The hub is the one room
+      // that knows the seats; anywhere else a party line has no party to reach, and it is junk rather than a line for
+      // the room (struck off the attachment as it stands NOW - the gate above wrote it). A seat gone since the client
+      // last looked says nothing to anyone. Its budget is the parties' own (PARTY_CHAT_ROOM_HZ_MAX), never the room's:
+      // AUDIT CHAT A2 priced that one for a fan of everyone online, and a party's is its seats.
+      if (m.ch === 'party') {
+        if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, this._attach(ws)); return; }
+        if (!a.party) return;
+        const budget = tokenGate(this._partyChat, now, PARTY_CHAT_ROOM_HZ_MAX);
+        this._partyChat = budget.bucket;
+        if (!budget.pass) return;
+        let party = null;
+        try { party = await this._livingParty(a.party, now); } catch (e) { console.warn('[hub] party line failed', e?.message ?? e); return; }   // AUDIT SOC A2: contained
+        if (!party || !party.members.includes(a.acct)) { this._markParty(a.acct, null); return; }
+        const line = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub, ch: 'party' });
+        for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);
+        return;
+      }
       // AUDIT CHAT A2: the room's own budget, over which a line is dropped and nobody is struck - the fan is everyone
       const room = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);
       this._roomChat = room.bucket;

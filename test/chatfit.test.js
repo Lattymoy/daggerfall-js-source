@@ -163,8 +163,11 @@ test('CHAT-FIT: OnlineSession.badgeOf - mine as adopted, a peer in the room, a p
 
 test('CHAT-FIT: by source - the host hands the panel a `badgeOf` read off the ACTIVE CHANNEL\'s session, the one the roster reads, and the badge pass runs inside the name pass so every caller of one runs the other', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /badgeOf: \(id\) => \(chatLinks\?\.get\(chatLog\?\.active\) \?\? online\)\?\.badgeOf\?\.\(id\) \?\? null,/);
-  assert.match(w, /roster: \(\) => chatLinks\?\.get\(chatLog\?\.active\) \?\? online \?\? null,/, 'the same session the roster reads');
+  // CHAT-CHAN: both through the ACTIVE TAB's session (chatSessionOf) - the roster's composed lists (the Party's, the
+  // Local's) are built over that same session, so one session still answers the badge and the row
+  assert.match(w, /badgeOf: \(id\) => chatSessionOf\(chatLog\?\.active\)\?\.badgeOf\?\.\(id\) \?\? null,/);
+  assert.match(w, /roster: \(\) => chatRosterOf\(chatLog\?\.active\),/, 'the same session the roster reads');
+  assert.match(w, /const chatRosterOf = \(tabId\) => \{\s*const s = chatSessionOf\(tabId\);[^\n]*\n\s*if \(tabId === 'party'\) return partyRosterSource\(social\?\.party, s, [^\n]*\n\s*if \(tabId === 'local'\) return localRosterSource\(s, /, 'every roster over the one session');
   const p = rd('src/ui/chatPanel.js');
   assert.match(p, /const paintNames = \(\) => \{\s*if \(nameColor\) \{[\s\S]*?\}\s*paintBadges\(\);\s*\};/);
   assert.match(p, /if \(r\.badgeKey === key\) continue;/, 'a line is re-laid only on a change');

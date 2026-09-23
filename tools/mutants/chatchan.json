@@ -1,0 +1,394 @@
+[
+  {
+    "name": "CC-region-key-past-the-map",
+    "file": "src/net/wire.js",
+    "old": "index >= 0 && index < CHAT_REGION_COUNT ? `${CHAT_REGION_PREFIX}${index}` : null",
+    "new": "index >= 0 && index <= CHAT_REGION_COUNT ? `${CHAT_REGION_PREFIX}${index}` : null",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-unknown-channel-falls-to-the-room",
+    "file": "src/net/wire.js",
+    "old": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch } : { error: 'bad chat' };",
+    "new": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch } : { t: 'chat', text };",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-version-gate-one-high",
+    "file": "src/net/wire.js",
+    "old": "return !!m && Number(m[1]) >= CHAN_RELAY_MIN; };",
+    "new": "return !!m && Number(m[1]) > CHAN_RELAY_MIN; };",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-party-line-to-the-room",
+    "file": "server/src/index.js",
+    "old": "        for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);",
+    "new": "        for (const [other, b] of [...this._all()]) if (b.id) this._send(other, line);",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-party-fan-skips-the-sender",
+    "file": "server/src/index.js",
+    "old": "        for (const member of party.members) for (const other of this._socketsOf(member)) this._send(other, line);",
+    "new": "        for (const member of party.members) for (const other of this._socketsOf(member)) if (other !== ws) this._send(other, line);",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-junk-writes-the-stale-attachment",
+    "file": "server/src/index.js",
+    "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, this._attach(ws)); return; }",
+    "new": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-junk-not-struck",
+    "file": "server/src/index.js",
+    "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, this._attach(ws)); return; }",
+    "new": "if (!isSocialRoom(a.key) || !a.acct) return;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-stranger-line-to-the-room",
+    "file": "server/src/index.js",
+    "old": "      if (m.ch === 'party') {\n        if (!isSocialRoom(a.key)",
+    "new": "      if (m.ch === 'party' && a.party) {\n        if (!isSocialRoom(a.key)",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-party-line-charged-to-the-room",
+    "file": "server/src/index.js",
+    "old": "        const budget = tokenGate(this._partyChat, now, PARTY_CHAT_ROOM_HZ_MAX);\n        this._partyChat = budget.bucket;",
+    "new": "        const budget = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);\n        this._roomChat = budget.bucket;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-party-line-before-the-welcome",
+    "file": "src/net/online.js",
+    "old": "    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;",
+    "new": "    if (ch != null && !CHAT_LINE_CHANNELS.includes(ch)) return false;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-unknown-channel-sent",
+    "file": "src/net/online.js",
+    "old": "    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;",
+    "new": "    if (ch != null && !this.chanOk) return false;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-forged-channel-believed",
+    "file": "src/net/online.js",
+    "old": "      const ch = CHAT_LINE_CHANNELS.includes(m.ch) ? m.ch : null;\n      const g =",
+    "new": "      const ch = typeof m.ch === 'string' ? m.ch : null;\n      const g =",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-party-lines-on-the-room-bucket",
+    "file": "src/net/online.js",
+    "old": "      const g = ch === 'party' ? partyChatInGate(this._inPartyChat, now) : chatInGate(this._inChat.get(room), now);",
+    "new": "      const g = chatInGate(this._inChat.get(room), now);",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-cast-spends-chat",
+    "file": "src/net/online.js",
+    "old": "    const gate = castGate(this._castBucket, this._now());",
+    "new": "    const gate = castGate(this._cbucket, this._now());",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-notice-unread-on-every-tab",
+    "file": "src/net/chat.js",
+    "old": "    const active = this.tab(this.active);\n    if (active && !this.open) active.unread++;",
+    "new": "    for (const tab of this.tabs) if (!this.open) tab.unread++;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-notice-one-line-per-tab",
+    "file": "src/net/chat.js",
+    "old": "    for (const tab of this.tabs) this._keepOn(tab, line);",
+    "new": "    for (const tab of this.tabs) this._keepOn(tab, { ...line });",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-peek-not-deduplicated",
+    "file": "src/net/chat.js",
+    "old": "    const heard = new Set();\n    for (const tab of this.tabs) for (let i = Math.max(0, tab.messages.length - count); i < tab.messages.length; i++) heard.add(tab.messages[i]);\n    const lines = [...heard]",
+    "new": "    const heard = [];\n    for (const tab of this.tabs) for (let i = Math.max(0, tab.messages.length - count); i < tab.messages.length; i++) heard.push(tab.messages[i]);\n    const lines = [...heard]",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-peek-active-tab-alone",
+    "file": "src/net/chat.js",
+    "old": "    for (const tab of this.tabs) for (let i = Math.max(0, tab.messages.length - count); i < tab.messages.length; i++) heard.add(tab.messages[i]);",
+    "new": "    for (const tab of this.tabs.filter((t) => t.id === this.active)) for (let i = Math.max(0, tab.messages.length - count); i < tab.messages.length; i++) heard.add(tab.messages[i]);",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-aside-on-a-notice",
+    "file": "src/net/chat.js",
+    "old": "kind: !sys && isOocText(text) ? 'ooc' : ''",
+    "new": "kind: isOocText(text) ? 'ooc' : ''",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-aside-mark-anywhere",
+    "file": "src/net/chat.js",
+    "old": "export const isOocText = (text) => /^\\(\\(/.test(String(text ?? '').trim());",
+    "new": "export const isOocText = (text) => /\\(\\(/.test(String(text ?? '').trim());",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-setroom-overwrites-label",
+    "file": "src/net/chat.js",
+    "old": "    tab.room = room; tab.place = place;",
+    "new": "    tab.room = room; tab.place = place; tab.label = place ?? tab.label;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-earshot-counts-height",
+    "file": "src/net/chat.js",
+    "old": "  const dx = speaker[0] - listener[0], dz = speaker[2] - listener[2];\n  return Number.isFinite(dx) && Number.isFinite(dz) && dx * dx + dz * dz <= range * range;",
+    "new": "  const dx = speaker[0] - listener[0], dz = speaker[2] - listener[2], dy = speaker[1] - listener[1];\n  return Number.isFinite(dx) && Number.isFinite(dz) && dx * dx + dy * dy + dz * dz <= range * range;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-unplaced-speaker-heard",
+    "file": "src/net/chat.js",
+    "old": "  return !!who && inEarshot(here, who.feet, range);",
+    "new": "  return !who || inEarshot(here, who.feet, range);",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-own-line-filtered",
+    "file": "src/net/chat.js",
+    "old": "  if (line?.mine) return true;\n  const who",
+    "new": "  const who",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-no-region-hold",
+    "file": "src/net/chat.js",
+    "old": "  if (current && now - hold.since < holdMs) return null;",
+    "new": "",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-first-region-held",
+    "file": "src/net/chat.js",
+    "old": "  if (current && now - hold.since < holdMs) return null;",
+    "new": "  if (now - hold.since < holdMs) return null;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-flap-keeps-the-wait",
+    "file": "src/net/chat.js",
+    "old": "  if (!want || want === current) { hold.room = null; return null; }",
+    "new": "  if (!want || want === current) return null;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-slash-slash-not-escaped",
+    "file": "src/net/chatCommands.js",
+    "old": "  if (t.startsWith('//')) return { kind: 'say', text: t.slice(1) };",
+    "new": "",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-ooc-wrap-lost",
+    "file": "src/net/chatCommands.js",
+    "old": "{ kind: 'channel', tab: chan.tab, text: rest, wrap: chan.wrap }",
+    "new": "{ kind: 'channel', tab: chan.tab, text: rest, wrap: null }",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-command-case-sensitive",
+    "file": "src/net/chatCommands.js",
+    "old": "  const name = m[1].toLowerCase();",
+    "new": "  const name = m[1];",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-local-roster-everyone",
+    "file": "src/net/roster.js",
+    "old": "    if (!p || !inEarshot(here, p.feet)) continue;",
+    "new": "    if (!p) continue;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-roster-label-lost",
+    "file": "src/net/roster.js",
+    "old": "  const label = typeof session?.label === 'string' && session.label ? session.label : 'Online';",
+    "new": "  const label = 'Online';",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-aside-bubbles",
+    "file": "src/ui/nameLayer.js",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc') return false;",
+    "new": "  if (line.system || line.mine) return false;",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "CC-bubbles-world-alone",
+    "file": "src/ui/nameLayer.js",
+    "old": "    for (const tab of log?.tabs ?? []) {\n      const msgs",
+    "new": "    for (const tab of (log?.tabs ?? []).filter((t) => t.id === 'world')) {\n      const msgs",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "CC-bubbles-by-tab-order",
+    "file": "src/ui/nameLayer.js",
+    "old": "    for (const line of [...fresh].sort((a, b) => a.seq - b.seq)) {",
+    "new": "    for (const line of [...fresh]) {",
+    "tests": ["test/name1_bubbles.test.js"]
+  },
+  {
+    "name": "CC-every-peek-line-marked",
+    "file": "src/ui/chatPanel.js",
+    "old": "    const tab = line.tab === log.active ? null : log.tab(line.tab);",
+    "new": "    const tab = log.tab(line.tab);",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-read-answer-closes",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (!keep && went !== 'read') closePanel();",
+    "new": "    if (!keep) closePanel();",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-aside-class-lost",
+    "file": "src/ui/chatPanel.js",
+    "old": "${line.kind === 'ooc' ? ' ooc' : ''}",
+    "new": "",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-placeholder-fixed",
+    "file": "src/ui/chatPanel.js",
+    "old": "    const ph = on ? `Say something - ${on.place ?? on.label}` : 'Say something';",
+    "new": "    const ph = 'Say something';",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-red-on-the-active-tab",
+    "file": "src/scenes/world.js",
+    "old": "        if (red) return chatLinks.get('world')?.sendRed(red[1]) ?? false;",
+    "new": "        if (red) return chatLinks.get(tabId)?.sendRed(red[1]) ?? false;",
+    "tests": ["test/chatchan.test.js", "test/red1_server_say.test.js"]
+  },
+  {
+    "name": "CC-region-before-the-welcome",
+    "file": "src/scenes/world.js",
+    "old": "    if (!link || !chatLinks.get('world')?.chanOk) return;",
+    "new": "    if (!link) return;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-party-notes-on-world",
+    "file": "src/scenes/world.js",
+    "old": "if (text) chatLog.push(String(note?.code ?? '').startsWith('party.') ? 'party' : tab.id, { text, system: true }); };",
+    "new": "if (text) chatLog.push(tab.id, { text, system: true }); };",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-parser-before-unstuck",
+    "file": "src/scenes/world.js",
+    "old": "      onSend: (tabId, text) => {\n        if (/^\\/unstuck$/i.test(text.trim())) {",
+    "new": "      onSend: (tabId, text) => {\n        if (parseChatLine(text).kind === 'host') return false;\n        if (/^\\/unstuck$/i.test(text.trim())) {",
+    "tests": ["test/chatchan.test.js", "test/chat1.test.js"]
+  },
+  {
+    "name": "CC-whitelist-a-prefix",
+    "file": "src/net/wire.js",
+    "old": "export const isChatRoom = (key) => CHAT_ROOMS.has(String(key ?? ''));",
+    "new": "export const isChatRoom = (key) => String(key ?? '').startsWith('chat:');",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-channel-word-dropped",
+    "file": "server/src/index.js",
+    "old": "        const line = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub, ch: 'party' });",
+    "new": "        const line = JSON.stringify({ t: 'chat', id: a.id, name: a.name, text: m.text, at: now, sub: a.sub });",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-party-budget-unchecked",
+    "file": "server/src/index.js",
+    "old": "        this._partyChat = budget.bucket;\n        if (!budget.pass) return;",
+    "new": "        this._partyChat = budget.bucket;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-ch-on-a-plain-line",
+    "file": "src/net/online.js",
+    "old": "    if (!this._send(ch != null ? { t: 'chat', text: line, ch } : { t: 'chat', text: line })) return false;",
+    "new": "    if (!this._send({ t: 'chat', text: line, ch })) return false;",
+    "tests": ["test/chatchan.test.js", "test/chat1.test.js"]
+  },
+  {
+    "name": "CC-peek-sorted-by-tab",
+    "file": "src/net/chat.js",
+    "old": "    const lines = [...heard].sort((a, b) => a.seq - b.seq);",
+    "new": "    const lines = [...heard];",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-peek-count-per-tab",
+    "file": "src/net/chat.js",
+    "old": "    for (const line of lines.slice(-count)) {",
+    "new": "    for (const line of lines) {",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-setroom-clears-history",
+    "file": "src/net/chat.js",
+    "old": "    tab.room = room; tab.place = place;",
+    "new": "    tab.room = room; tab.place = place; tab.messages = [];",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-setroom-noop-bumps",
+    "file": "src/net/chat.js",
+    "old": "    if (tab.room === room && tab.place === place) return false;\n",
+    "new": "",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-say-range-off-the-name",
+    "file": "src/net/chat.js",
+    "old": "export const CHAT_SAY_RANGE = 60;",
+    "new": "export const CHAT_SAY_RANGE = 80;",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-unknown-said-as-a-line",
+    "file": "src/scenes/world.js",
+    "old": "        if (cmd.kind === 'unknown') { note(unknownCommandText(cmd.name)); return false; }",
+    "new": "        if (cmd.kind === 'unknown') return chatSend(tabId, text, tabId);",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-alias-missing",
+    "file": "src/net/chatCommands.js",
+    "old": "names: Object.freeze(['local', 'l', 'say', 's'])",
+    "new": "names: Object.freeze(['local', 'l', 'say'])",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-party-line-with-no-party-sent",
+    "file": "src/scenes/world.js",
+    "old": "      if (!social?.party) return why(NO_PARTY_TEXT);\n",
+    "new": "",
+    "tests": ["test/chatchan.test.js"]
+  },
+  {
+    "name": "CC-unread-not-spoken",
+    "file": "src/ui/chatPanel.js",
+    "old": "      const name = tab.unread ? `${tab.label}, ${tab.unread} unread` : tab.label;",
+    "new": "      const name = tab.label;",
+    "tests": ["test/chatchan.test.js"]
+  }
+]

@@ -379,8 +379,30 @@ export function byteGate(bucket, nowMs, cost, rate, borrow = false) {
   if (borrow ? bytes < 0 : bytes < cost) return { bucket: { bytes, at: nowMs }, pass: false };
   return { bucket: { bytes: bytes - cost, at: nowMs }, pass: true };
 }
-/** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a channel). */
-export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM]));
+/** CHAT-CHAN (2026-09-23, kurkku: "regional chat that everyone in the region can see (so players in Wayrest see
+ *  messages from other players in Wayrest and so on)"): A REGION IS A CHANNEL of its own, one room per Daggerfall region
+ *  - the politic map's 62 (formats/mapsFile.js REGION_NAMES; the region a pixel belongs to is the POLITIC map's word,
+ *  PlayerGPS.CurrentRegionIndex's). The client joins the room of the region it stands in and moves with it. A room per
+ *  region rather than a region field on the hub's lines: the relay's whole machinery for a channel - the roster (who is
+ *  in Wayrest), the badges, the mute, the rate, the room's budget - is a room's, and a region room is that machinery
+ *  with nothing new in it. */
+export const CHAT_REGION_PREFIX = 'chat:region.';
+export const CHAT_REGION_COUNT = 62;
+/** The region's channel key, or null for an index the politic map does not have. */
+export const chatRegionRoom = (index) => (Number.isInteger(index) && index >= 0 && index < CHAT_REGION_COUNT ? `${CHAT_REGION_PREFIX}${index}` : null);
+/** Every channel the relay will open (AUDIT CHAT A1: a whitelist - a later tab is a later entry, and nothing else is a
+ *  channel). CHAT-CHAN: the world channel and the 62 region channels, enumerated, so the whitelist stays a list. */
+export const CHAT_ROOMS = Object.freeze(new Set([CHAT_WORLD_ROOM, ...Array.from({ length: CHAT_REGION_COUNT }, (_, i) => chatRegionRoom(i))]));
+/** CHAT-CHAN: the channels a LINE may name inside a room (`{t:'chat', text, ch}`). A party's line is said on the hub
+ *  link and heard by the party's members alone; a line naming anything else is refused whole - it is never allowed to
+ *  fall through to the room's own fan, where a party line said to an old or a confused relay would reach everyone. */
+export const CHAT_LINE_CHANNELS = Object.freeze(['party']);
+/** CHAT-CHAN: the hub's budget for PARTY lines, lines a second across every party - apart from CHAT_ROOM_HZ_MAX,
+ *  which AUDIT CHAT A2 priced for a line whose fan is EVERYONE online. A party line's fan is its party (PARTY_MAX seats,
+ *  their tabs), so priced out of the World's budget one talkative party would silence the World channel, and a busy
+ *  World channel every party. The sender's own gate (chatGate) bounds each party line's socket as it bounds any line.
+ *  The client gates party lines coming in on this number too (partyChatInGate): an honest hub never delivers more. */
+export const PARTY_CHAT_ROOM_HZ_MAX = 40;
 
 // SOC1 (2026-09-16, Mac: "A social button next to the chat UI ... friend other users, see if they are online/last
 // online + be able to invite friends or other individuals to the new 4 person party system"): THE HUB'S LAW.
@@ -846,7 +868,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world98';   // SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world99';   // CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1146,7 +1168,11 @@ export function parseClient(text, { hasHello = false } = {}) {
   if (m.t === 'chat') {
     if (!hasHello) return { error: 'chat before hello' };
     const text = typeof m.text === 'string' ? sanitizeChat(m.text) : '';
-    return text ? { t: 'chat', text } : { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
+    if (!text) return { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
+    // CHAT-CHAN: a channel named on the line must be one the relay routes - anything else is refused whole, never
+    // quietly dropped into the room's own fan
+    if (m.ch === undefined) return { t: 'chat', text };
+    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch } : { error: 'bad chat' };
   }
   if (m.t === 'say') {
     // RED1: THE SERVER'S LINE, ASKED FOR. This checks the SHAPE and
@@ -1309,6 +1335,8 @@ export const questShareGate = (at, nowMs) => (at != null && nowMs - at < QUEST_H
  *  CHAT_ROOM_HZ_MAX from each of them, and one bucket across all of them
  *  would have made a busy neighbour silence the room you are standing in. */
 export const chatInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CHAT_ROOM_HZ_MAX);
+/** CHAT-CHAN: the gate on PARTY lines coming in - the hub's own party budget, apart from the room's (PARTY_CHAT_ROOM_HZ_MAX). */
+export const partyChatInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, PARTY_CHAT_ROOM_HZ_MAX);
 
 /** The longest a relay may name its deploy, in UTF-16 units (SRV-N).
  *
@@ -1768,6 +1796,11 @@ export const CAST_NAME_MAX = 32;
  *  The link refuses to send until the welcome says the relay can take it, as TRADE1's relaySupportsTrade does. */
 export const CAST_RELAY_MIN = 97;
 export const relaySupportsCast = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CAST_RELAY_MIN; };
+/** CHAT-CHAN: the relay that first routes a party's line and opens the region channels. An older one would take a
+ *  `ch` it does not know as... nothing: its parse projects `{t:'chat', text}` and the party's line would be fanned to
+ *  EVERYONE online - so the client says a party line only to a relay that routes it, and opens no region room before. */
+export const CHAN_RELAY_MIN = 99;
+export const relaySupportsChannels = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CHAN_RELAY_MIN; };
 /** FRIENDLY-SPELLS: THE SENDER'S METER HOLDS ONE WHOLE BLAST. The meter was sized when one cast was one frame; a
  *  beneficial blast is ONE cast and one frame for each party mate inside it, so a bucket CAST_HZ_MAX deep gave a
  *  full party's blast to four mates and silently none to the rest. The depth is a party's mates, the refill stays

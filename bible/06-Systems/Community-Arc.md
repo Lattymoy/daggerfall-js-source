@@ -94,3 +94,106 @@ record (the line's size is the scale's now); two CSS pins moved to the new forms
 at 1440x900 and 900x900: 660px and 19.5px after a 220px drag, the list taller by exactly the travel, Send still 14px,
 the grip clear of the Close button, the friends panel beside the box at 1440 and under it at 900 and over it at
 neither, the size back after a reload, and the sheet's own size after a double click - 24 checks.
+
+## CHAT-CHAN - four channels: World, Region, Party, Local, and the aside out of character
+
+kurkku on Discord, 2026-09-23: "Global chat that everyone everywhere sees / regional chat that everyone in the region
+can see (so players in Wayrest see messages from other players in Wayrest and so on) / party chat". Addison Knox, the
+same day: "Roleplay chat channels (IC/OOC) keeps immersion intact by separating in-character dialogue from coordination
+chatter".
+
+**The four tabs, and the session each rides** (`net/chat.js` CHAT_TABS; the host is `scenes/world.js` chatStart):
+
+| Tab | Who hears a line | What carries it |
+|---|---|---|
+| World | everyone online | the World channel's own link - the hub, `chat:world`, as before |
+| Region | everyone in the region the player stands in | a link of its own on `chat:region.<i>`, one room per politic region (62) |
+| Party | the party's members, every tab of each | the hub's link, the line naming `ch: 'party'`; the hub fans it to the seats |
+| Local | those near enough to hear - within CHAT_SAY_RANGE | the presence session's own room (the cell, the building, the dungeon) |
+
+**World** is the channel it always was. **Region** follows the player: the channel is PlayerGPS.CurrentRegionIndex's
+(the politic map's word - `_questRegionIndex`, which the quests read), joined at once the first time and after a new
+region has held for CHAT_REGION_HOLD_MS (5 s) - a walk along a border is not a churn of sockets - and a line on the tab
+says where its channel is now. The tab keeps its short label; the region's NAME is its hover, its roster's heading
+("Wayrest - 7") and the field's placeholder, because "Wrothgarian Mountains" does not fit a four-tab bar in a box that
+can be 352px wide. A region room is the whole machinery of a channel (the roster, the badges, the mute, the rate, the
+room's budget) with nothing new in it - which is why a region is a room and not a field on the hub's lines.
+**Party** lines are said on the hub's link and fanned by the hub, which is the one room that knows the seats, to every
+socket of every member - the sender's own included, which is the receipt. A party line said anywhere else is junk; a
+stranger's, or one from a seat left since, says nothing. It is budgeted apart from the room's (PARTY_CHAT_ROOM_HZ_MAX):
+AUDIT CHAT A2 priced the room's budget for a line whose fan is everyone online, and priced out of it one talkative party
+would silence the World channel, and a busy World channel every party. The client gates party lines coming in on the
+same number. A party's own news (joined, left, the lead passed) lands on the Party tab, beside its conversation.
+**Local** is the presence session's room: the relay already fans a line said there to the peers in range, and a
+hearer's cell and its halo are one socket each in the speaker's room, so a line is heard once across a cell edge. What
+the client keeps is its own line and a line from a body it can place within CHAT_SAY_RANGE - which IS the name's range
+(net/remotePlayers.js NAME_RANGE, pinned equal): whoever you can read over a head can hear you, and nobody further,
+measured in the ground's plane between the two BODIES (the listener's is `player.feetAt()`, never a third-person
+camera). Local is not a private channel: the relay's reach is the room's and the earshot is each hearer's own filter.
+
+**In character, out of character.** Local is where a character SPEAKS - heard by the bodies near enough to hear it - so
+it is the tab dialogue in character is said on; the other three reach people wherever they stand, which is
+coordination. On any tab a line wrapped in double parentheses is an aside out of character - the tabletop's own mark,
+`((brb))` - read off the speaker's own text (never a field: the mark is theirs to make), drawn dimmed and leaning, and
+`/ooc text` says one on Local. The panel keeps the tabs apart while it is open; that separation is the reading.
+
+**Bubbles.** BUBBLE1 bubbled the World tab alone because the World tab was the chat, and left the next tab "saying
+nothing over a head until somebody decides it should". Mac's own words decide it - "chat bubbles above the player when
+they chat" - so a line on any tab from a peer the name pass draws stands over their head (a bubble is drawn on the
+hearer's screen alone, so a party's line stands only where the party heard it), the newest heard across the tabs
+winning. The one line that stands over no head is an aside out of character: what is said over a head is what the
+character said.
+
+**The peek** (the lines over the world while the panel is closed) is every tab's now, in the order heard - a party
+member's "help" is exactly the line that cannot wait on a badge - and a line from a tab other than the one the chat
+opens on wears that tab's mark (`PARTY`, in the party's green). **A line the game says** - a restart notice, a new
+build, the party's rest vote, the server's red line - is ONE line kept on every tab (ChatLog.pushAll): a player reading
+any tab reads it where they are (SRV-N's law), the peek draws it once and the Chat button counts it once (unread on the
+active tab alone), where one line per tab would have said a notice four times over the world and counted it four.
+
+**Commands** (`net/chatCommands.js`, pure). `/world` `/g`, `/region` `/r`, `/party` `/p`, `/local` `/l` `/say` `/s`,
+`/ooc`, `/help` `/?`, and `//text` for a line that starts with a slash. The host's own commands (`/unstuck`, `/red`,
+`/mute`, `/unmute`, `/ready`) are tested first by the regexes their slices pin; the parser answers the rest. Before this
+slice every line that was not one of those went to the room - a mistyped `/pary hi` was said to everyone online, slash
+and all; now a line that starts with a slash is a command or it is refused in words, and a refusal keeps the line in the
+field to be mended. `/help`'s answer is lines to read, so it clears the field and keeps the chat open (the panel's
+third answer, `'read'`). `/red` goes down the World link from any tab: the server speaks to the whole game.
+
+**Each tab's strip and roster.** The strip under the chat says why the ACTIVE tab cannot talk: its socket's own line
+(labelled with the tab), "You are not in a party.", or - against a relay from before world99 - that the channel needs
+the server's next update (an older relay projects `{t:'chat', text}` and would fan a party's line to everyone online,
+so the client says none to it and opens no region room before the welcome says it may). The roster is the tab's own:
+the channel's members (Online, or the region's name), the party's seats online, or Nearby - those in earshot.
+
+**Found on the way, and fixed at the root.**
+- The presence session's cast bucket and chat bucket were ONE field (`_cbucket`), and the relay's cast strikes and chat
+  strikes one field (`cdrops`). Latent while chat rode only channel links and casts only the presence session; Local
+  chat on the presence session would have made a heal cast spend a chat line, and at the relay twenty dropped casts
+  (DROP_STRIKES_MAX is 200) plus one over-rate line would have closed the socket as 'too many lines' (CHAT_STRIKES_MAX
+  is 20), while any passing line wiped the casts' strikes. Each is its own now (`_castBucket`, `castDrops`).
+- The first cut of the relay's party arm struck a junk line off the attachment READ BEFORE the chat gate wrote it,
+  refunding the line's token; the strike is written off the attachment as it stands. The test pins the exact bucket.
+- RED1-12 (the server line's inbound gate removed) SURVIVED on the commit before this one: its pin matched `chatInGate`
+  over a slice that also held the next arm. The gate is driven now (`test/red1_server_say.test.js`: a flood in one instant reaches the log at the room's rate).
+
+**The bar.** Four tabs and the Social button asked 373px of the 350px bar in the narrowest box (tools/chatChanProbe.mjs,
+its first run), pushing Social past the box's edge - and with unread counts on three tabs they asked 468px of the
+sheet's own 440, where the first fix (tabs that shrink to an ellipsis) read "PARTY..." beside a clipped smear of a
+badge: the probe's numbers said it fitted and its screenshot said otherwise. So: the tabs stand in a strip of their own
+with the Social button beside it, OUTSIDE it, always in the box; a tab never shrinks; an UNREAD tab wears a dot, and the
+count is the tab's spoken name ("Party, 3 unread" - the Chat button still counts every line while the chat is closed);
+in a box under 400px (a CONTAINER query, because CHAT-SIZE lets the box be that narrow on a wide screen too) the labels
+drop the capitals' spacing and the Social count becomes a dot as well (its own label still says it, AUDIT SOC C21); and
+only on a phone under about 380px wide does the strip scroll sideways - a swipe, never a squeeze.
+
+**Pins.** `test/chatchan.test.js` (16), over the real Room, the wire, a session on a fake socket, the log, the panel on a
+fake document, and the host by source. `tools/mutants/chatchan.json`: 56, 56 dead. `tools/chatChanProbe.mjs` reads the
+real panel in Chromium - the bar on both skins at 440, 352 and a 320px phone's 292, bare and with three tabs unread
+(no tab squeezed below its own name, judged off the text's own box; every dot whole inside its button), the hovers,
+the placeholders, the aside's face, the peek's marks, `/help` keeping the chat open - 59 checks. Re-aimed, each to the same claim on
+the new shape: CHAT1's tabs, whitelist, line shape, link loop, rejoin, send and strip pins; the roster pins (ACC3c's key,
+CHAT-R1's rows, ROSTER-G's and CHAT-FIT's wiring - one session still answers the badge and the row); SOC3's tab count;
+SRV-N's and RED1's host pins; BUBBLE1's law (every tab, and the aside refused). The mutant records the move touched
+were re-aimed by content (`chatfit`, `name1`, `red1`, `soc1`); `name1.json`'s BUBBLE1-any-tab-speaks is retired with the
+law it held, which `chatchan.json`'s CC-aside-bubbles replaces. The relay is world99 (a new LAW row); the arc's later
+slices ride the same deploy and restate that row until the merge.

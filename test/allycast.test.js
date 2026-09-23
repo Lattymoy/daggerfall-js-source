@@ -94,7 +94,7 @@ const GOOD = { to: 'peer-0002', level: 5, spell: { name: 'Heal', element: 4, ran
 const GOOD_OUT = { ...GOOD, spell: { ...GOOD.spell, icon: 0 } };
 
 test('ALLY-CAST wire (world97): validCastData projects a bounded spell record and refuses the whole frame otherwise; parseClient carries the `cast` frame after a hello and inside the cap', () => {
-  assert.equal(RELAY_VERSION, 'world98');   // SPELLFX1's pose fields moved it once more; the cast frame is world97's
+  assert.equal(RELAY_VERSION, 'world99');   // SPELLFX1's pose fields moved it once more; the cast frame is world97's
   const d = validCastData(GOOD);
   assert.deepEqual(d, GOOD_OUT, 'a whole frame, every component an integer in bounds, the icon defaulted');
   assert.equal(validCastData({ ...GOOD, to: 'x' }), null, 'an id is an id');
@@ -159,7 +159,8 @@ test('ALLY-CAST relay: the cast arm routes a frame to the one socket `to` names,
   // still takes only CAST_HZ_MAX of them, its per-sender funnel
   for (let i = 0; i < CAST_BURST_MAX + 2; i++) await r.raw(c, JSON.stringify({ t: 'cast', data: GOOD }));
   assert.equal(sentTo(b).filter((m) => m.id === 'peer-0003').length, CAST_HZ_MAX, 'c\'s frames onto b, through b\'s funnel');
-  assert.ok((c.att.cdrops ?? 0) >= 2, '...its drops on c, never on b');
+  assert.ok((c.att.castDrops ?? 0) >= 2, '...its drops on c, never on b');
+  assert.equal(c.att.cdrops, undefined, 'CHAT-CHAN: a cast\'s strikes are its own - never the chat gate\'s field');
   // outside a place room the arm is closed
   const hub = fakeRoom('chat:world');
   const h1 = hub.connect(), h2 = hub.connect();

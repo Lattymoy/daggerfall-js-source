@@ -12,7 +12,7 @@
  { "name": "CHATFIT-the-inner-is-not-in-the-column", "file": "src/ui/chatPanel.js",
    "old": "  whoInner.append(whoHead, whoList, whoMore);\n  who.append(whoInner);", "new": "  who.append(whoHead, whoList, whoMore);", "tests": ["test/chatfit.test.js"] },
  { "name": "CHATFIT-the-line-wears-the-glyphs-before-the-name", "file": "src/ui/chatPanel.js",
-   "old": "  const layLine = (r) => { r.node.replaceChildren(...[r.time, ...r.before, r.nameEl, ...r.after, r.tag, r.text].filter(Boolean)); };", "new": "  const layLine = (r) => { r.node.replaceChildren(...[r.time, ...r.after, r.nameEl, ...r.before, r.tag, r.text].filter(Boolean)); };", "tests": ["test/chatfit.test.js"] },
+   "old": "  const layLine = (r) => { r.node.replaceChildren(...[r.chan, r.time, ...r.before, r.nameEl, ...r.after, r.tag, r.text].filter(Boolean)); };", "new": "  const layLine = (r) => { r.node.replaceChildren(...[r.chan, r.time, ...r.after, r.nameEl, ...r.before, r.tag, r.text].filter(Boolean)); };", "tests": ["test/chatfit.test.js"] },
  { "name": "CHATFIT-the-badge-pass-re-lays-every-line-every-frame", "file": "src/ui/chatPanel.js",
    "old": "        if (r.badgeKey === key) continue;\n", "new": "", "tests": ["test/chatfit.test.js"] },
  { "name": "CHATFIT-the-badge-pass-skips-the-peek", "file": "src/ui/chatPanel.js",
@@ -26,5 +26,5 @@
  { "name": "CHATFIT-my-own-line-wears-no-badge", "file": "src/net/online.js",
    "old": "    if (id === this.id) return { title: this.title ?? null, glyphs: Array.isArray(this.glyphs) ? this.glyphs : [] };\n", "new": "", "tests": ["test/chatfit.test.js"] },
  { "name": "CHATFIT-the-host-reads-the-presence-session-not-the-channel", "file": "src/scenes/world.js",
-   "old": "      badgeOf: (id) => (chatLinks?.get(chatLog?.active) ?? online)?.badgeOf?.(id) ?? null,", "new": "      badgeOf: (id) => online?.badgeOf?.(id) ?? null,", "tests": ["test/chatfit.test.js"] }
+   "old": "      badgeOf: (id) => chatSessionOf(chatLog?.active)?.badgeOf?.(id) ?? null,", "new": "      badgeOf: (id) => online?.badgeOf?.(id) ?? null,", "tests": ["test/chatfit.test.js"] }
 ]

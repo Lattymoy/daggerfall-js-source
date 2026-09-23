@@ -118,7 +118,7 @@ test('SOC3: the Social button stands in BOTH chat states with one badge law, is 
   assert.deepEqual(both.map((b) => b.textContent), ['Social', 'Social']);
   assert.equal(find(root, 'dfchat-social-out').length, 1);
   assert.equal(one(one(root, 'dfchat-box'), 'dfchat-social-tab')?.parent?.className, 'dfchat-tabs', 'the open state\'s sits IN the tab bar');
-  assert.equal(find(root, 'dfchat-tab').length, 1, 'and it is not a tab: the World tab is still the only row of the log');
+  assert.equal(find(root, 'dfchat-tab').length, log.tabs.length, 'and it is not a tab: every tab button is a row of the log');   // CHAT-CHAN: four rows now
   // AUDIT SOC C21: NO aria-label on the button. One overrode the whole of its content, so the badge - the only part
   // that ever changes - was never read out. The words are a title for the mouse, and the badge labels ITSELF.
   assert.equal(both[0].attrs['aria-label'], undefined, 'no label that swallows the badge');
@@ -638,7 +638,7 @@ test('SOC3: a roster row is a DOOR - the menu is the host\'s answers, a refused 
 test('SOC3: the host by source - world.js makes the panel in socialStart over the picture the hub filled, hands the chat the button, the colours and the roster\'s doors as LAZY closures, puts the panel on hudCtx for SOC5, and renders it on the chat frame under the chat\'s own covering rule (mutants: the panel made before the picture; the closures captured eagerly; the render outside the chat frame; the pointer doors dropped)', () => {
   const w = rd('src/scenes/world.js');
   const bare = w.replace(/^\s*\/\/.*$/gm, '');
-  assert.match(w, /import \{ createSocialPanel, TRY_AGAIN_TEXT \} from '\.\.\/ui\/socialPanel\.js';/, 'AUDIT SOC B17: the panel\'s own "try again" is the F-menu\'s too');
+  assert.match(w, /import \{ createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT \} from '\.\.\/ui\/socialPanel\.js';/, 'AUDIT SOC B17: the panel\'s own "try again" is the F-menu\'s too (CHAT-CHAN: and its "not in a party" the Party tab\'s)');
   assert.match(w, /import \{ SocialState, accountId, accountSecret \} from '\.\.\/net\/social\.js';/,
     'the host imports no colour at all - the one module that knows what a party is answers cssColorOf (SOC7 integration: SOC4 holds world.js to naming no green)');
   assert.match(w, /\n  let socialPanel = null;/, 'beside `social`, in the host\'s own scope');

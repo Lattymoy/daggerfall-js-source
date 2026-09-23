@@ -287,13 +287,16 @@ import { enhancedHudScale } from '../ui/enhancedHud.js';   // AUDIT NAME1 F3: th
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
+import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
+import { parseChatLine, HELP_LINES, unknownCommandText, emptyCommandText, hostMisuseText } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS
+import { partyRosterSource, localRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
-import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';
+import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom } from '../net/wire.js';   // CHAT-CHAN: a region's channel
 import { PARTY_READY_TIMEOUT_MS, memberPresent, latestStamp, voteStands, snapshotCancels, cancelRequestFor, mirrorKey, cooldownStamp, stampOf } from '../systems/partyRestLaw.js';   // AUDIT PARTY-REST: the pure half of the party-rest mechanic, pinned by execution   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
-import { createSocialPanel, TRY_AGAIN_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
+import { createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { glyphMarks } from '../ui/playerBadge.js';   // PEER-PLAQUE1: a badge's plain-text marks, for the plaque's title
 import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerPromptText } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
 import { allyCastSpell, allyCastable, allyReachFor, allyCastTargetLine, allyCastPlaqueLine } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at a party mate
@@ -9064,18 +9067,26 @@ export async function bootWorld(canvas, renderer, params, status) {
       chatLog.push(chatLog.active, { text: mutedText(until, Math.floor(Date.now() / 1000)), system: true });
     };
     online.onMuted = onMuted;   // a place room's local chat is refused the same way
+    // CHAT-CHAN: THE LOCAL TAB IS THE PRESENCE SESSION'S ROOM. The relay fans a line said there to the peers in range
+    // (a cell's RANGE_PIXELS, a building's or a dungeon's whole room - net/wire.js inRange), and a hearer's cell and
+    // its halo are one socket each in the speaker's room, so a line is heard ONCE across a cell edge; what this client
+    // keeps is what it can hear - its own line, and a line from a body within earshot (net/chat.js localLineHeard).
+    // Local is not a private channel: the relay's reach is the room's, and the earshot is each hearer's own.
+    online.onChat = (line) => { if (localLineHeard(line, peersNear(), player.feetAt())) chatLog.push('local', line); };
     for (const tab of chatLog.tabs) {
+      if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
-      link.onChat = (line) => chatLog.push(tab.id, line);
+      link.onChat = (line) => chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);   // CHAT-CHAN: the hub's party lines to the Party tab - by the relay's own routing word, heard only on the hub
       // RED1: the SERVER's own line, and it lands on the log with the
       // flag set HERE - from the frame type the relay used, never from
       // anything on the frame. It rides the ordinary log, so ChatLog's
       // own peek draws it over the world for a player who never opens
       // the panel: a broadcast nobody sees is not one.
-      link.onRed = (line) => chatLog.push(tab.id, { text: line.text, at: line.at, red: true });
+      // CHAT-CHAN: on EVERY tab, as one line (ChatLog.pushAll) - the server speaks to the whole game, not to a channel
+      link.onRed = (line) => chatLog.pushAll({ text: line.text, at: line.at, red: true });
       link.onMuted = onMuted;
       link.onRelay = onRelayVersion;
-      link.join(tab.room);
+      if (tab.room) link.join(tab.room);   // CHAT-CHAN: the Region tab's room waits for the region and the relay (chatRegionFrame)
       chatLinks.set(tab.id, link);
       // ACC1d: the channel link mints too, and it is the link that most
       // needs to - the hub is where a name is READ, so an unsigned name
@@ -9125,7 +9136,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // it did not sign for, and nothing is echoed back, so a player
         // who tries learns nothing from the silence.
         const red = /^\/red\s+([\s\S]+)$/i.exec(text.trim());
-        if (red) return chatLinks.get(tabId)?.sendRed(red[1]) ?? false;
+        if (red) return chatLinks.get('world')?.sendRed(red[1]) ?? false;   // CHAT-CHAN: from any tab, on the World channel - the one room every player online is in
         // MOD1 (Mac: "moderator chat commands"): /mute and /unmute. NOT
         // GUARDED HERE either, for /red's reason: whether this player may
         // is the account service's question, and its refusal comes back
@@ -9174,14 +9185,24 @@ export async function bootWorld(canvas, renderer, params, status) {
           // AUDIT PARTY-REST (2026-09-23): the chat's vote keeps the Rest key's own law (PARTY-REST26) - a member
           // answers the leader's round and never opens one - and is stamped on the SHARED clock: `readyAt` rides
           // the pose (world95) so every reader judges the vote's freshness alike. Un-readying is always allowed.
-          if (!social?.party) { chatLog.push(tabId, { text: 'You are not in a party.', system: true }); return true; }
+          if (!social?.party) { chatLog.push(tabId, { text: NO_PARTY_TEXT, system: true }); return true; }
           if (!_partyRestReady && !social.leads() && !partyRoundActive()) { chatLog.push(tabId, { text: 'Only the leader can start a resting vote.', system: true }); return true; }
           _partyRestReady = !_partyRestReady;
           _partyRestReadyAt = social.now();
           chatLog.push(tabId, { text: _partyRestReady ? 'You are ready to rest.' : 'You are no longer marked ready.', system: true });
           return true;
         }
-        return chatLinks.get(tabId)?.sendChat(text) ?? false;   // false keeps the line in the field (B2)
+        // CHAT-CHAN: EVERY OTHER SLASH IS A CHANNEL'S COMMAND, THE LIST, OR REFUSED IN WORDS (net/chatCommands.js) - a
+        // mistyped `/pary hi` was said to everyone online, slash and all. A refusal keeps the line in the field to be
+        // mended (B2's false); the list is lines to READ, so the field clears and the chat stays open ('read').
+        const cmd = parseChatLine(text);
+        const note = (line) => chatLog.push(tabId, { text: line, system: true });
+        if (cmd.kind === 'help') { for (const line of HELP_LINES) note(line); return 'read'; }
+        if (cmd.kind === 'unknown') { note(unknownCommandText(cmd.name)); return false; }
+        if (cmd.kind === 'empty') { note(emptyCommandText(cmd.name)); return false; }
+        if (cmd.kind === 'host') { note(hostMisuseText(cmd.name)); return false; }
+        if (cmd.kind === 'channel') return chatSend(cmd.tab, cmd.wrap === 'ooc' ? oocText(cmd.text) : cmd.text, tabId);
+        return chatSend(tabId, cmd.text, tabId);   // false keeps the line in the field (B2)
       },
       // CHAT-R1 (Mac: "a sidepanel on the chat ui showing all currently
       // online players in alphabetical order"). ROSTER-G (Mac: "Players
@@ -9192,7 +9213,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // online. The channel is the one room every player is in, and the
       // relay names its members now (ROSTER-G). The presence session
       // stands in only while the tab's link is not yet made.
-      roster: () => chatLinks?.get(chatLog?.active) ?? online ?? null,
+      roster: () => chatRosterOf(chatLog?.active),   // CHAT-CHAN: each tab's own list - the channel's members, the party, those in earshot
       canOpen: () => {
         const paused = gamePaused();
         const covered = townTalk.hudCovered || (modes?.hudCovered ?? false);
@@ -9209,7 +9230,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // wears the friend colour, which is the list's own mark carried into the conversation
       nameColor: (id) => social?.cssColorOf(id) ?? null,   // SOC7 integration: the picture answers (net/social.js cssColorOf - party green, friend blue, a stranger none); the host names no colour, which SOC4's pin holds it to
       rowActions: (peerId) => socialRowActions(peerId),
-      badgeOf: (id) => (chatLinks?.get(chatLog?.active) ?? online)?.badgeOf?.(id) ?? null,   // CHAT-FIT: a chat line's author wears the badge the roster shows - the same session answers both, or the one name would say two things on one screen
+      badgeOf: (id) => chatSessionOf(chatLog?.active)?.badgeOf?.(id) ?? null,   // CHAT-FIT: a chat line's author wears the badge the roster shows - the same session answers both, or the one name would say two things on one screen
     });
     socialStart();   // SOC2: the picture over the hub's link, once the panel it lands beside exists
   };
@@ -9255,7 +9276,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const why = SHARE_REFUSAL_TEXT[result.reason];
       setMidScreenText(why ? `${who} tried to share "${label}", but you ${why}` : `Could not receive the quest "${label}" from ${who}.`);
     };
-    social.onNote = (note, text) => { if (text) chatLog.push(tab.id, { text, system: true }); };
+    social.onNote = (note, text) => { if (text) chatLog.push(String(note?.code ?? '').startsWith('party.') ? 'party' : tab.id, { text, system: true }); };   // CHAT-CHAN: a party's own news on the Party tab, beside its conversation
     social.onError = (text) => { chatLog.push(tab.id, { text: `Social: ${text}`, system: true }); };
     // SOC3: the social button and the friends + party panel are made here, over `social`, `link` and `chatPanel`
     // (Mac: "A social button next to the chat UI, that when tapped opens the new friends list + party interface").
@@ -10216,7 +10237,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the red crash overlay. The relay's arm is contained by
     // `_deliver`; this one is not, so it carries its own door.
     if (!chatLog) return;
-    for (const tab of chatLog.tabs) chatLog.push(tab.id, { text, system: true });
+    chatLog.pushAll({ text });   // CHAT-CHAN: ONE line kept on every tab - peeked once, counted once (net/chat.js pushAll)
   };
   // PARTY-REST15 (2026-09-22): `broadcastPartyRestVote` (Updates 11-14) used to live here, sending the tally
   // over `link.sendChat` - removed after confirmed live testing showed this made the message play as a real
@@ -10253,21 +10274,85 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (buildUpdateSeen(tag, BUILD_TAG) === 'changed') chatNotice(BUILD_UPDATE_TEXT);
     }, () => {});   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
   };
+  // ═══ CHAT-CHAN — THE FOUR CHANNELS, AT THE HOST ═══════════════════
+  //
+  // kurkku: "Global chat that everyone everywhere sees / regional chat
+  // that everyone in the region can see ... / party chat"; Addison Knox:
+  // "Roleplay chat channels (IC/OOC)". The law is net/chat.js's (the tabs,
+  // earshot, the region's step, the aside's mark), net/chatCommands.js's
+  // (what a typed line is) and the relay's (the region rooms, the party's
+  // line); what stands here is which SESSION each tab rides.
+  /** CHAT-CHAN: the session a tab's lines, badges and strip come from - the World and Region tabs their own links, the
+   *  Party tab the hub's (the World tab's link: the hub names everyone online), the Local tab the presence session. */
+  const chatSessionOf = (tabId) => (tabId === 'local' ? online : tabId === 'party' ? chatLinks?.get('world') : chatLinks?.get(tabId)) ?? online ?? null;
+  /** CHAT-CHAN: the roster a tab shows - its channel's members (ROSTER-G) for the World tab, and for the Region tab under
+   *  the region's name; the party's seats online; those in earshot. */
+  const chatRosterOf = (tabId) => {
+    const s = chatSessionOf(tabId);   // CHAT-FIT: the session the lines' badges are read off - one session answers both
+    if (tabId === 'party') return partyRosterSource(social?.party, s, social?.acct ?? null);
+    if (tabId === 'local') return localRosterSource(s, peersNear(), player.feetAt());
+    const place = chatLog?.tab(tabId)?.place ?? null;
+    return place && s ? { id: s.id, name: s.name, title: s.title, glyphs: s.glyphs, peers: s.peers, roomCount: s.roomCount, label: place } : s;
+  };
+  /** CHAT-CHAN: the Party and Region tabs on a relay from before the channels - the World link's welcome said so. */
+  const chanOld = () => { const world = chatLinks?.get('world'); return world?.status === 'open' && !world.chanOk; };
+  /** CHAT-CHAN: the strip under the chat - why the ACTIVE tab cannot talk, when it cannot: the tab's own reason (a relay
+   *  from before the channels, no party), else the socket it rides (connecting, reconnecting, refused: the session's
+   *  own line, labelled with the tab - AUDIT CHAT B5). The Region tab before its first region reads the World link's,
+   *  whose welcome is what it waits on. */
+  const chatStatus = (tabId) => {
+    const tab = chatLog?.tab(tabId);
+    if ((tabId === 'party' || tabId === 'region') && chanOld()) return CHAN_OLD_RELAY_TEXT;
+    if (tabId === 'party' && !social?.party) return NO_PARTY_TEXT;
+    const s = tabId === 'region' && !tab?.room ? chatLinks?.get('world') : chatSessionOf(tabId);
+    return s?.statusLine(tab?.label ?? 'chat') ?? null;
+  };
+  /** CHAT-CHAN: a typed line said on `tabId` - each tab's own door. False keeps the line in the field (AUDIT CHAT B2):
+   *  nothing went. A reason is said as a line on the tab the line was typed on (`from`): the strip speaks for the
+   *  active tab alone, and `/p` is typed on another. */
+  const chatSend = (tabId, text, from = tabId) => {
+    const why = (line) => { chatLog.push(from, { text: line, system: true }); return false; };
+    if ((tabId === 'party' || tabId === 'region') && chanOld()) return why(CHAN_OLD_RELAY_TEXT);
+    if (tabId === 'local') return online?.sendChat(text) ?? false;
+    if (tabId === 'party') {
+      if (!social?.party) return why(NO_PARTY_TEXT);
+      return socialLink()?.sendChat(text, { ch: 'party' }) ?? false;   // the relay fans it to the party's members alone - my own tabs too: the echo is the receipt
+    }
+    return chatLinks.get(tabId)?.sendChat(text) ?? false;
+  };
+  /** CHAT-CHAN (kurkku: "players in Wayrest see messages from other players in Wayrest and so on"): THE REGION TAB
+   *  FOLLOWS THE PLAYER - into the channel of the region they stand in (PlayerGPS.CurrentRegionIndex: the POLITIC map's
+   *  word, _questRegionIndex), once a new region has held CHAT_REGION_HOLD_MS (net/chat.js nextRegionRoom), and never
+   *  before the World link's welcome says the relay opens region rooms (an older one refuses the key). The region's
+   *  name rides the tab (setRoom's `place`) and a line says where the channel is now. */
+  const _regionHold = { room: null, since: 0 };
+  const chatRegionFrame = (now) => {
+    const link = chatLinks?.get('region');
+    if (!link || !chatLinks.get('world')?.chanOk) return;
+    const index = _questRegionIndex();
+    const room = nextRegionRoom(_regionHold, chatRegionRoom(index), chatLog.tab('region').room, now);
+    if (!room) return;
+    const place = maps.getRegionName(index) || 'this region';
+    chatLog.setRoom('region', room, place);
+    link.join(room);
+    chatLog.push('region', { text: regionJoinedText(place), system: true });
+  };
   const chatFrame = () => {
     if (!chatLinks) return;
     buildPoll(performance.now());
+    chatRegionFrame(performance.now());   // CHAT-CHAN: before the rejoin - a region crossed moves the link, a rejoin takes it back to where it is
     for (const [tabId, link] of chatLinks) {
-      link.rejoin(chatLog.tab(tabId).room, CHAT_REJOIN_MS);   // AUDIT CHAT A6/B4/B6: the page's goodbye and a terminal close both get a way back
+      const room = chatLog.tab(tabId).room;   // CHAT-CHAN: a tab whose channel is not known yet (the Region tab, before its first region) has nothing to rejoin
+      if (room) link.rejoin(room, CHAT_REJOIN_MS);   // AUDIT CHAT A6/B4/B6: the page's goodbye and a terminal close both get a way back
       link.tick();   // the retry and the heartbeat, on the session's own clock
     }
-    const link = chatLinks.get(chatLog.active);
     chatPanel.render({
       // AUDIT-CHATR F1: `covered` is the HOST's word - a window over the
       // HUD - and never the player's `hidden` (the Hide button). While
       // the two shared a name the panel's frame wrote this one into the
       // player's slot and undid the button on the next tick.
       covered: townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused(),   // a window over the HUD covers the chat too, and closes it
-      status: link?.statusLine('chat') ?? null,   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5)
+      status: chatStatus(chatLog.active),   // connecting, reconnecting, refused - the session's own line (D12; AUDIT CHAT B5); CHAT-CHAN: or the tab's own reason
     });
     partyRestFollowTick();   // PARTY-REST1: every frame, not throttled to the send cadence - a few property reads, and a follower's own countdown should start and end as promptly as the leader's does
     partyFrame(performance.now());   // SOC2: my party pose rides the chat frame - before the dead return with it, so a dead member's card says so as their vitals read zero

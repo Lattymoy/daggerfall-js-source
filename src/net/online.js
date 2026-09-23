@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -282,13 +282,15 @@ export class OnlineSession {
     this.onMuted = null;          // MOD1: ({until}) => void - the relay says I am muted until then (epoch seconds), or 0: lifted
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
     this.tradeOk = false;         // TRADE1: the relay that welcomed this socket routes trade frames (relaySupportsTrade) - an older one CLOSES the socket on the frame, so nothing is sent to it
+    this.chanOk = false;          // CHAT-CHAN: the relay that welcomed this socket routes a party's line and opens the region channels (relaySupportsChannels)
     this.castOk = false;          // AUDIT ALLY-CAST B1: the relay that welcomed this socket routes cast frames (relaySupportsCast) - an older one CLOSES the socket on one
     this._inCastSaid = false;
     this.onTrade = null;          // TRADE1: (id, data) => void - a trade frame from a peer, projected by the wire's validTradeData, addressed to ME
     this.onCast = null;           // ALLY-CAST: (id, data) => void - a party mate's spell at ME, projected by the wire's validCastData; the host decides what lands
     this._tbucket = null;         // TRADE1: the trade frames' own gate at home (TRADE_HZ_MAX)
     this._inCastBuckets = new Map();   // ALLY-CAST: the gate on cast frames coming in, per sender - the trade gate's shape
-    this._cbucket = null;   // ALLY-CAST: my own casts out, CAST_HZ_MAX a second
+    this._castBucket = null;   // ALLY-CAST: my own casts out, castGate's law. CHAT-CHAN: its OWN field - this was `_cbucket`, the chat gate's own
+    // name (below), so once Local chat went down this session a heal cast at a mate spent a chat line and a chat line a cast
     this._inTradeBuckets = new Map();   // TRADE1: and the gate on trade frames coming IN, per sender (AUDIT DROPS B3) - a peer is chosen by the sender, so a flood is a peer's, never the relay's
     this._inTradeSaid = false;
     this._inAidSaid = false;
@@ -334,6 +336,7 @@ export class OnlineSession {
     // that is the unit the relay spends by. Room -> bucket; a room let go
     // drops its bucket with the rest of what that room meant (_forgetRoom).
     this._inChat = new Map();
+    this._inPartyChat = null;  // CHAT-CHAN: the party lines' own gate coming in (partyChatInGate) - the hub's, one room
     this._inChatSaid = false;  // the console says it ONCE - a flood must not become its own flood
     // AUDIT SOC B3: the same law for the hub's frames - the picture's (state, presence, party, invite) on one bucket per
     // room, the LINES (a note, an error - each a chat line nobody sent) on a tighter one, the other members' poses on a
@@ -680,12 +683,12 @@ export class OnlineSession {
     if (!d || d.to === this.id || !this.castOk) return false;   // AUDIT ALLY-CAST B1: never at a relay that would close the socket for it
     const ws = this._socketFor(d.to);
     if (!ws) return false;
-    const gate = castGate(this._cbucket, this._now());
+    const gate = castGate(this._castBucket, this._now());
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'cast', data: d });
     if (s.length > CAST_FRAME_MAX) return false;
     try { ws.send(s); } catch { return false; }
-    this._cbucket = gate.bucket; this.stats.sent++; this.stats.casts = (this.stats.casts ?? 0) + 1;
+    this._castBucket = gate.bucket; this.stats.sent++; this.stats.casts = (this.stats.casts ?? 0) + 1;
     return true;
   }
 
@@ -880,12 +883,15 @@ export class OnlineSession {
   /** A chat line out (CHAT1): sanitized here as the relay sanitizes it, and gated here as the relay gates it
    *  (AUDIT CHAT A8: the relay drops an over-rate line without a word, so the client refuses it first and the
    *  caller keeps the text); false when nothing went - nothing to say, over the rate, or no open socket. */
-  sendChat(text) {
+  sendChat(text, { ch = null } = {}) {
     const line = sanitizeChat(text);
     if (!line) return false;
+    // CHAT-CHAN: a line for a channel inside the room (the party's, on the hub link) goes only to a relay that routes
+    // it - an older one projects `{t:'chat', text}` and would fan the party's line to everyone online
+    if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;
     const gate = chatGate(this._cbucket, this._now());
     if (!gate.pass) return false;
-    if (!this._send({ t: 'chat', text: line })) return false;
+    if (!this._send(ch != null ? { t: 'chat', text: line, ch } : { t: 'chat', text: line })) return false;
     this._cbucket = gate.bucket;   // the token is spent only on a line that left
     this.stats.chats++;
     return true;
@@ -1126,6 +1132,7 @@ export class OnlineSession {
       if (relayV) this._deliver('relay', () => this.onRelay?.(relayV));
       if (primary) this.tradeOk = relaySupportsTrade(relayV);   // TRADE1
       if (primary) this.castOk = relaySupportsCast(relayV);   // AUDIT ALLY-CAST B1
+      if (primary) this.chanOk = relaySupportsChannels(relayV);   // CHAT-CHAN
       // merged, not wiped: a peer already known keeps where it is drawn
       const keep = new Set();
       for (const p of Array.isArray(m.peers) ? m.peers : []) {
@@ -1260,13 +1267,16 @@ export class OnlineSession {
       // rate is the relay's OWN per-room spend, so an honest room at full
       // tilt passes whole and the first frame refused is one no honest
       // relay would have sent.
-      const g = chatInGate(this._inChat.get(room), now);
-      this._inChat.set(room, g.bucket);
+      // CHAT-CHAN: a party's line on its OWN bucket - the hub budgets party lines apart from the room's
+      // (PARTY_CHAT_ROOM_HZ_MAX), so an honest hub at both budgets' full tilt passes whole here too
+      const ch = CHAT_LINE_CHANNELS.includes(m.ch) ? m.ch : null;
+      const g = ch === 'party' ? partyChatInGate(this._inPartyChat, now) : chatInGate(this._inChat.get(room), now);
+      if (ch === 'party') this._inPartyChat = g.bucket; else this._inChat.set(room, g.bucket);
       if (!g.pass) {
         this.stats.chatsDropped++;
         if (!this._inChatSaid) {
           this._inChatSaid = true;
-          console.warn(`[online] chat from ${room} is arriving faster than ${CHAT_ROOM_HZ_MAX}/s - lines are being dropped. An honest relay does not do this.`);
+          console.warn(`[online] ${ch === 'party' ? 'party chat' : 'chat'} from ${room} is arriving faster than ${ch === 'party' ? PARTY_CHAT_ROOM_HZ_MAX : CHAT_ROOM_HZ_MAX}/s - lines are being dropped. An honest relay does not do this.`);
         }
         return;
       }
@@ -1274,7 +1284,9 @@ export class OnlineSession {
       // because a chat log is where a name is read and an impersonation
       // is worth doing. A hard boolean for the same reason `_peer` keeps
       // one: never a "maybe".
-      this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id, sub: subOf(m) }));
+      // CHAT-CHAN: `ch` is the channel the relay says the line was said in (a party's, on the hub link) - a word the
+      // relay composed from its own routing, one of the wire's own, or none
+      this._deliver('chat', () => this.onChat?.({ id: m.id, name: sanitizeName(m.name), text, at: Number.isFinite(m.at) ? m.at : now, mine: m.id === this.id, sub: subOf(m), ch }));
     } else if (m.t === 'red') {
       // RED1: THE SERVER SPEAKING, and the client knows it by the FRAME
       // TYPE rather than by anything on the frame. net/chat.js's own

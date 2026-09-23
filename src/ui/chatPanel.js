@@ -156,6 +156,7 @@ import { CHAT_MAX } from '../net/wire.js';
 import { tagOf } from '../net/chat.js';
 import { titleBadge, glyphBadges, GLYPH_STROKE, cssRgba } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
+import { PARTY_GREEN_CSS } from '../net/social.js';   // CHAT-CHAN: the Party tab's mark wears the party's one green
 import { getPref, setPref } from '../systems/uiPrefs.js';   // CHAT-R2: the hidden state outlives the session
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 
@@ -218,6 +219,14 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-tag { color: var(--dim, #8b8578); font-size: calc(10px * var(--dfchat-scale, 1)); margin: 0 6px 0 2px; }
 .dfchat-line.mine .dfchat-name { color: #dcc27c; }
 .dfchat-line.system .dfchat-text { color: #8fb8d8; font-style: italic; }
+/* CHAT-CHAN: an aside out of character - (( )) - is drawn as one: dimmed and leaning, the words kept readable */
+.dfchat-line.ooc .dfchat-text { color: #b3ab9c; font-style: italic; }
+/* CHAT-CHAN: the channel a peek line came from, when it is not the tab the chat opens on */
+.dfchat-chan { font-size: calc(10px * var(--dfchat-scale, 1)); letter-spacing: .05em; text-transform: uppercase; margin-right: 6px; color: var(--dim, #8b8578); }
+.dfchat-chan[data-tab="world"] { color: #d9c089; }
+.dfchat-chan[data-tab="region"] { color: #e0a45a; }
+.dfchat-chan[data-tab="party"] { color: ${PARTY_GREEN_CSS}; }
+.dfchat-chan[data-tab="local"] { color: #e9e4d9; }
 /* RED1 - THE SERVER SPEAKING. Every red line is a system line too
    (nobody is speaking it), so this rule follows that one and wins on
    specificity rather than fighting it. Not italic: the system's own
@@ -238,7 +247,30 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat[data-state="open"] .dfchat-peek, .dfchat[data-state="open"] .dfchat-hint, .dfchat[data-state="open"] .dfchat-open { display: none; }
 .dfchat-tabs { display: flex; gap: 2px; padding: 4px 4px 0; border-bottom: 1px solid var(--iron, #2b323b); }
 .dfchat-tab { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--dim, #8b8578); font: inherit; font-size: 13px;
-  letter-spacing: .05em; text-transform: uppercase; padding: 6px 10px; cursor: pointer; }
+  letter-spacing: .05em; text-transform: uppercase; padding: 6px 10px; cursor: pointer; flex: none; white-space: nowrap; }
+/* CHAT-CHAN: FOUR TABS AND THE SOCIAL BUTTON IN ONE BAR - measured in Chromium, and looked at (tools/chatChanProbe.mjs).
+   The tabs stand in a strip of their own and the Social button beside it, OUTSIDE it, so Social is always in the box.
+   A tab never shrinks (a label cut by its own badge read "PARTY..." and a smear), and an UNREAD tab wears a DOT, not a
+   count: four count pills asked 468px of the sheet's own 440 box, and the count is the button's spoken name instead
+   (panel: aria-label) - the Chat button still counts every line while the chat is closed. In a box narrower than 400
+   (a phone's, or one dragged down to CHAT_WIDTH_MIN - which is why this asks the BOX, a container query, and not the
+   screen) the labels drop the capitals' spacing; and only where even that cannot fit (a phone under 380px wide) does
+   the strip scroll sideways, a finger's swipe. The strip scrolls rather than hides, so it is no box CHAT2's law is
+   about: it is a row, and nothing in it is squeezed across the column. (Measured at 352px with three tabs unread: the
+   tabs asked 254px of a 241px strip until the labels closed up and the Social count became a dot too.) */
+.dfchat-box { container-type: inline-size; }
+.dfchat-tablist { display: flex; gap: 2px; min-width: 0; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+.dfchat-tablist::-webkit-scrollbar { display: none; }
+.dfchat-tab .dfchat-badge:not(:empty) { display: inline-block; width: 7px; height: 7px; padding: 0; margin-left: 5px; border-radius: 50%;
+  font-size: 0; line-height: 0; vertical-align: middle; }
+@container (max-width: 400px) {
+  .dfchat-tab { padding: 6px 5px; letter-spacing: 0; text-transform: none; }
+  .dfchat-tab .dfchat-badge:not(:empty) { margin-left: 3px; }
+  .dfchat-tabs .dfchat-social-tab { padding: 6px 8px; }
+  /* the Social count a dot as well - its own label still says it ("2 waiting", AUDIT SOC C21) */
+  .dfchat-tabs .dfchat-social-tab .dfchat-badge:not(:empty) { display: inline-block; width: 7px; height: 7px; padding: 0; margin-left: 4px;
+    border-radius: 50%; font-size: 0; line-height: 0; vertical-align: middle; }
+}
 .dfchat-tab.active { color: var(--bone, #e9e4d9); border-bottom-color: var(--brass, #c08a3e); }
 .dfchat-badge { margin-left: 6px; background: var(--brass, #c08a3e); color: var(--ink, #0e1013); border-radius: 8px; padding: 0 6px; font-size: 11px; }
 .dfchat-badge:empty { display: none; }
@@ -398,7 +430,9 @@ export function isOpenKey(e, { canOpen = () => true, overlay = overlayOpen, acti
 /**
  * The panel over `log` (net/chat.js). `onSend(tabId, text)` takes a
  * typed line and answers false when it did not go (the field keeps
- * it); `canOpen()` is the host's word on whether the game can take a
+ * it), or - CHAT-CHAN - 'read' when what it did is lines to READ (the
+ * command list): the field clears and the chat stays open, where any
+ * other answer closes it; `canOpen()` is the host's word on whether the game can take a
  * chat right now; `onOpen`/`onClose` are the host's pointer-lock door
  * (release on open, take back on close - inside the gesture). Handed
  * the document and the window so the tests drive it headless.
@@ -467,15 +501,18 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   whoInner.append(whoHead, whoList, whoMore);
   who.append(whoInner);
   const tabButtons = new Map();
+  const tabList = el('div', 'dfchat-tablist');   // CHAT-CHAN: the tabs' own strip - the Social button stands beside it, in the bar
   for (const tab of log.tabs) {
     const b = el('button', 'dfchat-tab', tab.label);
     b.type = 'button'; b.dataset.tab = tab.id;
     const badge = el('span', 'dfchat-badge');
+    badge.setAttribute('aria-hidden', 'true');   // CHAT-CHAN: a dot to the eye - the count is the button's name (paint)
     b.append(badge);
     b.addEventListener('click', () => { log.select(tab.id); paint(); input.focus?.(); });
-    tabs.append(b);
-    tabButtons.set(tab.id, { b, badge });
+    tabList.append(b);
+    tabButtons.set(tab.id, { b, badge, name: null });
   }
+  tabs.append(tabList);
   // SOC3: the two Social buttons - one for each state of the panel, built only when the host asked for them. The
   // badge is a SPAN of the chat's own badge class, so a request waiting on the player counts the way an unread line
   // does; its colour in the sheet is what keeps the two from reading as one number.
@@ -609,9 +646,21 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const badgeKeyOf = (b) => (b ? `${b.title ?? ''}|${(Array.isArray(b.glyphs) ? b.glyphs : []).join('+')}` : '');
   /** CHAT-FIT: a line is laid from its PARTS - time, the badge's title, the name, the badge's glyphs, the tag, the
    *  text - so the badge pass can re-lay one line when its author's badge changes, without rebuilding the list. */
-  const layLine = (r) => { r.node.replaceChildren(...[r.time, ...r.before, r.nameEl, ...r.after, r.tag, r.text].filter(Boolean)); };
-  const lineNode = (line, withTime) => {
-    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}`);
+  const layLine = (r) => { r.node.replaceChildren(...[r.chan, r.time, ...r.before, r.nameEl, ...r.after, r.tag, r.text].filter(Boolean)); };
+  /** CHAT-CHAN: the mark a PEEK line wears when it was said on a tab other than the one the chat opens on - the
+   *  peek is every tab's (net/chat.js peek), and a line with no mark is the open tab's own. A line the game said on
+   *  every tab (`tab` null) is everybody's and wears none. */
+  const chanOf = (line) => {
+    const tab = line.tab === log.active ? null : log.tab(line.tab);   // the game's line has no tab of its own (`tab` null): none
+    if (!tab) return null;
+    const c = el('span', 'dfchat-chan', tab.label);
+    c.dataset.tab = tab.id;
+    return c;
+  };
+  const lineNode = (line, withTime, withChan = false) => {
+    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}${line.kind === 'ooc' ? ' ooc' : ''}`);
+    const chan = withChan ? chanOf(line) : null;
+    if (chan) n.append(chan);
     const time = withTime ? el('span', 'dfchat-time', clockOf(line.at)) : null;
     if (time) n.append(time);
     // SRV-N: a notice is NOT ATTRIBUTED. No name and no `#tag`, because
@@ -621,16 +670,16 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     // hash off an empty id, identical on every notice and therefore
     // exactly the thing a player could be fooled by. Its own colour
     // instead, which is a mark no player's line can wear.
-    if (line.system) { const text = el('span', 'dfchat-text', line.text); n.append(text); return { node: n, time, nameEl: null, tag: null, text }; }
+    if (line.system) { const text = el('span', 'dfchat-text', line.text); n.append(text); return { node: n, chan, time, nameEl: null, tag: null, text }; }
     const nameEl = el('span', 'dfchat-name', line.name || '?'), tag = el('span', 'dfchat-tag', `#${tagOf(line.id)}`), text = el('span', 'dfchat-text', line.text);
     n.append(nameEl, tag, text);
-    return { node: n, time, nameEl, tag, text };
+    return { node: n, chan, time, nameEl, tag, text };
   };
   /** One drawn row of the two line lists: the node, its parts, and the record the colour and badge passes walk.
    *  `badgeKey` starts null so the first pass lays the badge the author wears NOW (or none), and after that only a
    *  change touches the line. */
-  const lineRow = (line, withTime, extra) => {
-    const parts = lineNode(line, withTime);
+  const lineRow = (line, withTime, extra, withChan = false) => {
+    const parts = lineNode(line, withTime, withChan);
     return { ...parts, id: line.id, css: null, badgeKey: null, before: [], after: [], ...extra };
   };
 
@@ -767,17 +816,18 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
    */
   const paintWho = () => {
     if (!roster) { who.style.display = 'none'; return; }
-    const { rows, total, shown } = rosterRows(roster());
+    const { rows, total, shown, label } = rosterRows(roster());
     // SOC3: the open menu is part of what is DRAWN, so it joins the key - a roster that did not change still has to
     // repaint when a row is opened or closed, and nothing else about this law moved.
     // ACC3c: THE BADGE JOINS THE KEY. This list repaints only when the
     // key moves, so a title equipped or a sprout that aged out would
     // otherwise sit on screen, stale, until somebody else joined the
     // room - the same reason SOC3 put the open menu in here.
-    const key = total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0) + ':' + (r.title ?? '') + ':' + (r.glyphs ?? []).join('+')).join(',');
+    // CHAT-CHAN: and the list's own word - a tab change can bring the same people under another heading
+    const key = label + '|' + total + '|' + (menuFor ?? '') + '|' + rows.map((r) => r.id + ':' + r.name + ':' + (r.me ? 1 : 0) + ':' + (r.title ?? '') + ':' + (r.glyphs ?? []).join('+')).join(',');
     if (key === whoKey) return;
     whoKey = key;
-    whoHead.textContent = rosterTitle(total);
+    whoHead.textContent = rosterTitle(total, label);
     // ROSTER-G (Mac: "the roster naming itself seems hardcoded"): the #tag is the tie-breaker for two players with ONE
     // name (net/roster.js's second sort clause, the chat line's own suffix), and it read as a fixed code stuck to every
     // name. It is drawn only where it does that work - beside a name another row shares.
@@ -831,7 +881,17 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       const t = tabButtons.get(tab.id);
       t.b.className = `dfchat-tab${tab.id === log.active ? ' active' : ''}`;
       t.badge.textContent = tab.unread ? String(tab.unread) : '';
+      // CHAT-CHAN: who a tab reaches, a hover away - and the place a moving channel is (the Region tab's region)
+      const title = tab.place ? `${tab.place} - ${tab.hint ?? ''}` : (tab.hint ?? '');
+      if (t.b.title !== title) t.b.title = title;
+      // CHAT-CHAN: and the unread count is the tab's spoken NAME - the eye gets a dot (the sheet), a reader the number
+      const name = tab.unread ? `${tab.label}, ${tab.unread} unread` : tab.label;
+      if (t.name !== name) { t.name = name; t.b.setAttribute('aria-label', name); }
     }
+    // CHAT-CHAN: the field says where a line typed into it goes
+    const on = log.tab(log.active);
+    const ph = on ? `Say something - ${on.place ?? on.label}` : 'Say something';
+    if (input.placeholder !== ph) input.placeholder = ph;
     const unread = log.unreadTotal();
     badgeOut.textContent = unread ? String(unread) : '';
     let follow = false;
@@ -849,7 +909,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const paintPeek = () => {
     const shown = log.open ? [] : log.peek();
     if (shown.length !== peekNodes.length || shown.some((p, i) => peekNodes[i].line !== p.line)) {
-      peekNodes = shown.map((p) => lineRow(p.line, false, { line: p.line, alpha: -1 }));
+      peekNodes = shown.map((p) => lineRow(p.line, false, { line: p.line, alpha: -1 }, true));
       peek.replaceChildren(...peekNodes.map((p) => p.node));
     }
     for (let i = 0; i < shown.length; i++) {
@@ -877,9 +937,10 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   /** The field's line out; a line the host could not send (no socket, over the rate) stays in the field and the panel stays up (B2). */
   const submit = ({ keep = false } = {}) => {
     const text = String(input.value ?? '');
-    if (text.trim() && onSend?.(log.active, text) === false) return;
+    const went = text.trim() ? onSend?.(log.active, text) : true;
+    if (went === false) return;
     input.value = '';
-    if (!keep) closePanel();
+    if (!keep && went !== 'read') closePanel();
   };
 
   const onKey = (e) => {
