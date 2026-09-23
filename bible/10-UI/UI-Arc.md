@@ -869,14 +869,14 @@ does the pack's USE arm.
                         worldModes.js:2147 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1057, world.js:2134,
+                        dungeonContext.js:1057, world.js:2136,
                         exterior.js:2457. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:6711, dungeonContext.js:6719. A seam
+    / NOTEBOOK          world.js:6713, dungeonContext.js:6719. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8688,7 +8688,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:2520 and
+questJournal.js from charSheetNav:53, world.js:2522 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -10559,9 +10559,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:7071`,
+the other half went stale unnoticed. (The rest cite named `world.js:7073`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:7077` now.)
+deleted the second and the cite is `world.js:7079` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -15349,9 +15349,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:5101` named a line that is 8950, `:825` one that is
+read: `world.js:5103` named a line that is 8950, `:827` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:4869-4901` and `dungeonContext.js:1429` were
+that is 8907. `world.js:4871-4903` and `dungeonContext.js:1429` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -18058,3 +18058,11 @@ one missing from the classic skin (the full audit: `06-Systems/Horse-Cart-And-Ca
   entrance.") and the granted exit flag; the refusal is its notice now, as the classic window's box over itself.
 - **The keys (K1, K4).** The Mods pane's key capture gained the controls pane's clear (✕ writes `None`); the notes
   say the port's control rather than the mod's "Enter a Unity KeyCode name".
+
+## HCC-TIP - WHOSE HORSE, WHOSE WAGON (2026-09-23, Mac: "I think we should build that. And if not already, ensure this is compatible with our tooltip implementation and ensure it shows owned if another players. Also need to ensure over people see others riding on horses")
+
+The World Tooltips plaque named a peer's team as one run-on line ("Bess (Ann's horse)"). It now speaks the plaque's
+own shape: the title is the mod's word for the thing (the horse's name, else "Horse"; "Wagon"), and a sub-row says
+"Owned by Ann". The owner is the session's name, or the name the relay stamped on the cell's memory when the owner
+is away (HCC-PARK), so a parked team is never nobody's. A press says "Bess - owned by Ann." and opens nothing. The
+full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-TIP and RIDE.

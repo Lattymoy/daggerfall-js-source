@@ -180,7 +180,7 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_TTL_MS } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -280,6 +280,10 @@ export class Room {
   }
 
   async fetch(request) {
+    // HCC-PARK: the two doors between objects - the owner's registry and a cell's drop. The public worker forwards
+    // /room/<key> alone (the default export above), so no socket and no browser ever reaches these paths.
+    const path = new URL(request.url).pathname;
+    if (path === PARK_INTERNAL_REG || path === PARK_INTERNAL_DROP) return this._parkInternal(path, request);
     const key = roomOf(new URL(request.url).pathname);
     if (this.state.getWebSockets().length >= (isChatRoom(key) ? CHAT_SOCKETS_MAX : SOCKETS_MAX)) return json({ error: 'room full' }, 503);
     const pair = new WebSocketPair();
@@ -496,6 +500,71 @@ export class Room {
     this._setAttach(ws, next);
     if (!gate.pass) { if (cdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many cast frames'); return null; }
     return next;
+  }
+  /** HCC-PARK: the park frames' own bucket (PARK_HZ_MAX), the same strikes. */
+  _meterPark(ws, a, now) {
+    const gate = parkGate(a.parkBucket, now);
+    const pdrops = gate.pass ? 0 : (a.pdrops ?? 0) + 1;
+    const next = { ...a, parkBucket: gate.bucket, pdrops };
+    this._setAttach(ws, next);
+    if (!gate.pass) { if (pdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many park frames'); return null; }
+    return next;
+  }
+  /** HCC-PARK: this cell's parked teams, the expired swept on the way (PARK_TTL_MS since their owner last said so). */
+  async _parkList(now) {
+    const m = await this.state.storage.list({ prefix: 'park:' });
+    const out = [], dead = [];
+    for (const [k, v] of m) { if (!v || now - (v.at ?? 0) > PARK_TTL_MS) dead.push(k); else out.push({ id: v.id, name: v.name ?? '', r: v.r, at: v.at }); }
+    for (let i = 0; i < dead.length; i += 128) await this.state.storage.delete(dead.slice(i, i + 128));
+    return out;
+  }
+  /** Fan a park word to every hello'd socket but `skip`. */
+  _parkFan(s, skip = null) { for (const [other, b] of [...this._all()]) if (other !== skip && b.id) this._send(other, s); }
+  /** HCC-PARK: the owner's record stands in THIS cell. PARK_CELL_MAX a cell - over it the stalest other owner's goes. */
+  async _parkStore(owner, name, r, now) {
+    const list = await this._parkList(now);
+    const others = list.filter((e) => e.id !== owner);
+    if (others.length >= PARK_CELL_MAX) {
+      others.sort((x, y) => (x.at ?? 0) - (y.at ?? 0));
+      for (const e of others.slice(0, others.length - PARK_CELL_MAX + 1)) await this._parkDrop(e.id);
+    }
+    await this.state.storage.put(parkKey(owner), { id: owner, name, r, at: now });
+    this._parkFan(JSON.stringify({ t: 'park', id: owner, name, data: r }));
+  }
+  /** HCC-PARK: the owner's record in THIS cell goes (a no-op when there is none), and everyone here is told. */
+  async _parkDrop(owner) {
+    const had = await this.state.storage.get(parkKey(owner));
+    if (!had) return;
+    await this.state.storage.delete(parkKey(owner));
+    this._parkFan(JSON.stringify({ t: 'park', id: owner, data: null }));
+  }
+  /** HCC-PARK: the owner's registry learns the cell their team stands in (null: nowhere). A relay built without the
+   *  binding (a harness, a local dev worker) keeps the cell's own law and skips the cross-cell drop. */
+  async _parkRegister(owner, cell) {
+    const rooms = this.env?.ROOMS;
+    if (!rooms?.idFromName || !rooms?.get) return;
+    try {
+      await rooms.get(rooms.idFromName(parkRegistryRoom(owner))).fetch(new Request(`https://relay.internal${PARK_INTERNAL_REG}`, { method: 'POST', body: JSON.stringify({ owner, cell }) }));
+    } catch (e) { console.warn('[park] registry', e?.message ?? e); }
+  }
+  /** HCC-PARK: the doors between objects. REG: this object is an owner's registry - a new cell (or none) drops the
+   *  record the old cell holds. DROP: this object is a cell - the owner's record here goes. */
+  async _parkInternal(path, request) {
+    let body = null;
+    try { body = await request.json(); } catch { /* refused below */ }
+    const owner = typeof body?.owner === 'string' && /^[A-Za-z0-9_-]{4,40}$/.test(body.owner) ? body.owner : null;
+    if (!owner) return json({ ok: false }, 400);
+    if (path === PARK_INTERNAL_DROP) { await this._parkDrop(owner); return json({ ok: true }); }
+    const cell = body.cell == null ? null : (isCellRoom(body.cell) ? body.cell : undefined);
+    if (cell === undefined) return json({ ok: false }, 400);
+    const prev = (await this.state.storage.get('reg')) ?? null;
+    if (prev && prev !== cell) {
+      const rooms = this.env?.ROOMS;
+      try { await rooms?.get(rooms.idFromName(prev)).fetch(new Request(`https://relay.internal${PARK_INTERNAL_DROP}`, { method: 'POST', body: JSON.stringify({ owner }) })); }
+      catch (e) { console.warn('[park] drop', e?.message ?? e); }
+    }
+    if (cell) await this.state.storage.put('reg', cell); else await this.state.storage.delete('reg');
+    return json({ ok: true });
   }
   /** WORLD3: the action frames' own bucket (ACT_HZ_MAX), the same strikes - a door beside the poses, never starving them. */
   _meterActs(ws, a, now) {
@@ -832,6 +901,8 @@ export class Room {
       // SRV-N / SLAM13 (AUDIT SLAM A5): the relay's VERSION rides it (`v`, last), so a client can tell a restarted relay from the one it was talking to, and one built against another law can say so
       const welcome = `{"t":"welcome","id":${JSON.stringify(m.id)},"peers":${JSON.stringify(roster)},"host":${JSON.stringify(host)},"world":${world ?? 'null'},"now":${Date.now()},"v":${JSON.stringify(RELAY_VERSION)}}`;
       if (!this._send(ws, welcome)) return;
+      // HCC-PARK: the cell's parked teams, after the welcome that resets the joiner's session (a halo's hello included)
+      if (isCellRoom(a.key)) { const parks = await this._parkList(Date.now()); if (parks.length && !this._send(ws, JSON.stringify({ t: 'parks', data: parks }))) return; }
       const join = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, look: m.look, pose: m.pose }, who));
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id) this._send(other, join);
       return;
@@ -1013,6 +1084,21 @@ export class Room {
       this._setAttach(tws, { ...tb, cin });
       if (!funnel.pass) return;
       this._send(tws, JSON.stringify({ t: 'cast', id: a.id, data: m.data }));
+      return;
+    }
+    if (m.t === 'park') {
+      // HCC-PARK: my parked team's word (wire.js's header: the cell keeps its own, the registry drops the old cell's).
+      // From a hello'd socket in a PLACE room, on the park bucket; the name that rides the record is the socket's own
+      // verified one, never the frame's.
+      const now = Date.now();
+      a = this._meterPark(ws, a, now); if (!a) return;
+      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;
+      const owner = a.id;
+      const here = isCellRoom(a.key) ? a.key : null;
+      const cell = m.data ? cellRoomOfWire(m.data.a[0], m.data.a[1]) : null;
+      if (m.data?.r && cell === here) await this._parkStore(owner, a.name ?? '', m.data.r, now);
+      else if (here && (!m.data || cell !== here)) await this._parkDrop(owner);   // mine here is superseded: nothing parked, or it stands elsewhere
+      await this._parkRegister(owner, cell);
       return;
     }
     if (m.t === 'act') {

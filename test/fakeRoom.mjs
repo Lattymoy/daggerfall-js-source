@@ -101,7 +101,7 @@ export function roomSigner(env, now = () => Date.now()) {
   return { token, signer };
 }
 
-export function fakeRoom(key, { now = () => Date.now() } = {}) {
+export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
   const sockets = [];
   const store = new Map();
   const alarm = { at: null };
@@ -130,7 +130,7 @@ export function fakeRoom(key, { now = () => Date.now() } = {}) {
   // ACC1g: the room's config, filled in by `signer()` before the first
   // hello reaches it. The object identity is what matters - the Room
   // captures it at construction and reads the key lazily.
-  const env = {};
+  const env = ROOMS ? { ROOMS } : {};   // HCC-PARK: a shared binding, so one object can reach another (fakeRooms below)
   let room = new Room(state, env);
   const wake = () => { room = new Room(state, env); };
   const { token, signer } = roomSigner(env, now);
@@ -173,4 +173,23 @@ export function fakeRoom(key, { now = () => Date.now() } = {}) {
   const drop = (ws) => { const i = sockets.indexOf(ws); if (i >= 0) sockets.splice(i, 1); return room.webSocketClose(ws, 1005, ''); };
   const fire = () => room.alarm();
   return { get room() { return room; }, state, store, sockets, alarm, connect, hello, token, signer, env, pose, chat, ping, world, raw, drop, wake, fire, now, look };
+}
+
+/**
+ * HCC-PARK: A WORLD OF ROOMS - the worker's `ROOMS` binding over fake objects, so a Room that calls another (the
+ * park registry, a cell's drop) reaches a real Room over its own fake state. Each named object is made on its first
+ * use and kept, as the runtime keeps a Durable Object's storage; `room(name)` is the harness of that one.
+ */
+export function fakeRooms({ now = () => Date.now() } = {}) {
+  const made = new Map();
+  const ROOMS = {
+    idFromName: (name) => name,
+    get: (id) => ({ fetch: (request) => room(id).room.fetch(request) }),
+  };
+  function room(name) {
+    let r = made.get(name);
+    if (!r) { r = fakeRoom(name, { now, ROOMS }); made.set(name, r); }
+    return r;
+  }
+  return { room, ROOMS, made };
 }

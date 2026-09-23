@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3565` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3567` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:193`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:815`, `src/net/online.js:1406`):**
+**Now (`src/net/wire.js:815`, `src/net/online.js:1448`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7871,7 +7871,33 @@ is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.j
 - **Reach, switch, art (O6-O9).** A press on a peer's team past the mod's 3.2 is DFU's "too far"; my switch turned
   off is a word at once; a viewer with the mod off lands nothing and loads nothing; a horse whose art is not up is
   not named or pressed.
-- **O10, recorded.** An owner's word needs its owner: a team stands for the others while its owner is in the cell
-  room to say it, and goes with them indoors, away, dead or gone - the camps' and the foes' law. A parked wagon
-  that outlives its owner's presence would be a cell's own memory on the relay, which cell rooms do not keep; that
-  is a relay feature and Mac's to call. The Enabled note says what this law shows.
+- **O10, built as HCC-PARK below.** A team stood for the others only while its owner was in the cell room to say
+  it, so a parked wagon vanished when its owner went indoors, travelled or logged off.
+
+## HCC-PARK + HCC-TIP + RIDE (2026-09-23, Mac: "I think we should build that. And if not already, ensure this is compatible with our tooltip implementation and ensure it shows owned if another players. Also need to ensure over people see others riding on horses") - world98
+
+The full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-TIP and RIDE. Pins in
+`test/hcc_park.test.js` (11), mutants in `tools/mutants/hccpark.json` (22, every one dead).
+
+- **A cell keeps a parked team (HCC-PARK).** A new client frame, `{t:'park', data}`, says MY parked wagon or
+  waiting horse: its anchor in wire units and, while it is shown, the record the foes frame's `hv` already carries.
+  The cell room stores `park:<owner>` only when the anchor lies in that room's own cell (`cellRoomOfWire`), fans it
+  as `{t:'park'}` and hands a joiner the whole list after the welcome as `{t:'parks'}` with each owner's verified
+  name. It is bounded by `PARK_HZ_MAX` a socket, `PARK_CELL_MAX` a cell (stalest out) and `PARK_TTL_MS` (72 hours
+  since the owner last said it). An owner registry (one durable object per owner, `parkRegistryRoom`) drops the
+  old cell's record when the team moves or is taken up, over internal paths the public worker never forwards; the
+  cell also drops its own superseded record, so a dev worker with no registry binding keeps no ghost.
+- **The client's two words.** `hccParkTick` sends the word off the SAVE record when it changes (at most once a
+  second), again on a room change and once the cell's socket opens; `sendPark` routes it to the primary socket or
+  the halo holding that cell, else the anchor alone through the room I am in. The pool keeps the live word and the
+  kept one apart, draws the live one first per part, and the sweep takes only the live one; a kept team stays while
+  I hold its cell's socket.
+- **The owned line (HCC-TIP).** A peer's horse or wagon hovers as the mod's own word for it with "Owned by <name>"
+  under it, the owner's session name or the relay's stamp when they are away.
+- **The mount on the pose (RIDE).** `rd` (1 horse, 2 cart) and `rv` (the rider's Eye Of The Beholder mounted
+  sprite set) ride the pose, omitted on foot; a mount change is a pose change. `net/peerRiders.js` draws a riding
+  peer with EOTB's mounted sprites, before the Morrowind bodies and the dolls, which stand nothing for a rider.
+- **The deploy.** RELAY_VERSION world98 with its law row. An older relay closes the socket on an unknown frame, so
+  the client sends `park` only to world98 or later (`relaySupportsPark`, set on the primary welcome). The relay
+  deploys itself on the merge to main, which drops every connected player once. Not verified in a browser: no
+  online session exists in this container.

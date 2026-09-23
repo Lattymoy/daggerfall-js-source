@@ -8,11 +8,10 @@
 // STORAGE rides: a player's items are their own client's, and a peer's wagon is a thing to see and walk around,
 // not to open.
 //
-// AN OWNER'S WORD NEEDS ITS OWNER (AUDIT HCC O10, recorded, not a defect of this record): the word rides the
-// owner's own foes frame, so a team stands for the others while its owner is in the cell room to say it. An owner
-// who goes indoors (every door is a room of its own - WORLD6a), travels, dies or leaves takes it with them, as their
-// camps and their foes go (the sweep, clearPuppets). A parked wagon that outlived its owner's presence would be a
-// cell's own MEMORY on the relay, which cell rooms do not keep; the Enabled note says what this law shows.
+// THE LIVE WORD AND THE KEPT ONE (HCC-PARK). This record rides the owner's own foes frame, so it stands while its
+// owner is in the cell room to say it. What is PARKED outlives them: the cell keeps it on the relay (net/wire.js's
+// park law, the `park` frame), and a reader shows the live word's part where there is one and the cell's where there
+// is not (scenes/horseCartPool.js syncPeer) - a wagon left at a shop door stays standing while its owner is inside.
 //
 // The record is what the presentation shows, not the save: the WAGON shown (kind, base position, rotation as
 // Unity spells it, cargo tier, wheel angle) and the HORSE shown (base position, horizontal forward, walking), plus

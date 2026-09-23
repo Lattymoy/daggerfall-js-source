@@ -94,7 +94,7 @@ const GOOD = { to: 'peer-0002', level: 5, spell: { name: 'Heal', element: 4, ran
 const GOOD_OUT = { ...GOOD, spell: { ...GOOD.spell, icon: 0 } };
 
 test('ALLY-CAST wire (world97): validCastData projects a bounded spell record and refuses the whole frame otherwise; parseClient carries the `cast` frame after a hello and inside the cap', () => {
-  assert.equal(RELAY_VERSION, 'world97');
+  assert.ok(/^world(9[7-9]|\d{3,})$/.test(RELAY_VERSION), 'world97 carried this law; HCC-PARK moved the version on (world98) without touching the cast frame');
   const d = validCastData(GOOD);
   assert.deepEqual(d, GOOD_OUT, 'a whole frame, every component an integer in bounds, the icon defaulted');
   assert.equal(validCastData({ ...GOOD, to: 'x' }), null, 'an id is an id');

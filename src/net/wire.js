@@ -841,7 +841,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world97';   // AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world98';   // HCC-PARK + RIDE (2026-09-23): the `park` frame (a cell keeps a parked team past its owner's presence; the owner's registry drops the old cell's record), and the pose's mount (`rd`/`rv`, omitted on foot) - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -916,13 +916,14 @@ export function poseChanged(a, b, eps = 0.01) {
   return Math.abs(a.x - b.x) > eps || Math.abs(a.y - b.y) > eps || Math.abs(a.z - b.z) > eps
     || Math.abs(wrapAngle(a.yaw - b.yaw)) > eps || Math.abs(a.pitch - b.pitch) > eps || (a.mv | 0) !== (b.mv | 0)   // SLAM13: the yaw difference is WRAPPED - the relay keeps the pose the door wrapped into (-PI, PI], and a player standing at the seam drifts across it by 2PI, which the bare difference called a move
     || (a.wd | 0) !== (b.wd | 0) || (a.an | 0) !== (b.an | 0)   // MAC7 #1: a draw and a swing go out at once, as a step does
-    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0);   // MAC7 #2: and the arrow, the spell stance, the cast
+    || (a.am | 0) !== (b.am | 0) || (a.sr | 0) !== (b.sr | 0) || (a.cn | 0) !== (b.cn | 0)   // MAC7 #2: and the arrow, the spell stance, the cast
+    || (a.rd | 0) !== (b.rd | 0) || (a.rv | 0) !== (b.rv | 0);   // RIDE: a mount or a dismount goes out at once, as a step does
 }
 
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
-  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, fk } = p;
+  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, fk, rd, rv } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
   // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
@@ -949,8 +950,21 @@ export function validPose(p) {
     wd: wd === 2 ? 2 : wd ? 1 : 0, an: uint(an, 65535) ?? 0, as: uint(as, POSE_STRIKES.length - 1) ?? 0,
     am: am ? 1 : 0, sr: sr ? 1 : 0, cn: uint(cn, 65535) ?? 0, cr: uint(cr, POSE_CAST_RANGES - 1) ?? 0,
     fk: uint(fk, 5) ?? 0,   // PEER-FS1: the footstep-sound kind (systems/footsteps.js FOOTSTEP_KIND), 0-5
+    // RIDE (2026-09-23, Mac: "need to ensure other people see others riding on horses"): THE MOUNT. `rd` is the
+    // transport the player is riding - POSE_RIDE's 1 the horse, 2 the cart - and `rv` which of Eye Of The Beholder's
+    // five mounted sprite sets they chose (Graphics.OnHorse, 0-4). OMITTED on foot, not written as zeros: a pose on
+    // foot serializes to the bytes it always did (validLook's `class` law), so every older pose pin and every deployed
+    // client that compares poses sees the shape it has always seen.
+    ...rideOf(rd, rv),
   };
 }
+/** RIDE: the pose's mount - `rd` 1 the horse, 2 the cart (DFU's TransportModes riding), `rv` the mounted sprite set. */
+export const POSE_RIDE = Object.freeze({ Foot: 0, Horse: 1, Cart: 2 });
+export const POSE_RIDE_SPRITES = 5;
+const rideOf = (rd, rv) => {
+  const r = uint(rd, POSE_RIDE.Cart) ?? 0;
+  return r ? { rd: r, rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0 } : {};
+};
 
 /** One equipped item as the look carries it - the six fields, clamped - or null. */
 export function validLookItem(it) {
@@ -1083,6 +1097,12 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (text.length > CAST_FRAME_MAX) return { error: 'frame too large' };
     const data = validCastData(m.data);
     return data ? { t: 'cast', data } : { error: 'bad cast' };
+  }
+  if (m.t === 'park') {   // HCC-PARK: my parked team's word - null (nothing of mine parked), or its anchor and, when shown, its record
+    if (!hasHello) return { error: 'park before hello' };
+    if (m.data === null) return { t: 'park', data: null };
+    const data = validParkData(m.data);
+    return data ? { t: 'park', data } : { error: 'bad park' };
   }
   if (m.t === 'ping') return { t: 'ping' };
   if (m.t === 'hello') {
@@ -1758,6 +1778,9 @@ export const CAST_NAME_MAX = 32;
  *  and CLOSES the socket (the relay refuses what it cannot parse) - the caster was kicked offline by their own heal.
  *  The link refuses to send until the welcome says the relay can take it, as TRADE1's relaySupportsTrade does. */
 export const CAST_RELAY_MIN = 97;
+/** HCC-PARK: the first relay that knows the `park` frame (an older one CLOSES the socket on it - the cast arm's law). */
+export const PARK_RELAY_MIN = 98;
+export const relaySupportsPark = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= PARK_RELAY_MIN; };
 export const relaySupportsCast = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CAST_RELAY_MIN; };
 export const castGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_HZ_MAX);
 export const castInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_IN_HZ_MAX);
@@ -1862,3 +1885,86 @@ export const mintTradeSid = (rand = Math.random) => {
 export const TRADE_RELAY_MIN = 91;   // the drop said 84; the deploy that first carries it is world91 (QUEST1 + TRADE1 + PEER-FS1 in one)
 /** Does the relay that named itself `v` in its welcome route trade frames? A name that is not `world<N>` is not a relay this can vouch for. */
 export const relaySupportsTrade = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= TRADE_RELAY_MIN; };
+
+
+// ═══ HCC-PARK (2026-09-23, Mac: "I think we should build that") - A PARKED TEAM OUTLIVES ITS OWNER'S PRESENCE ═══
+//
+// HCC-ONLINE's word (`hv`, systems/horseCartWire.js) rides the owner's own foes frame, so a team stood for the others
+// only while its owner was in the cell room to say it: a wagon parked at a shop door vanished the moment its owner
+// walked in. A PARKED team is a thing left in the world, so the CELL keeps it: each cell room holds one record per
+// owner - the Deployed wagon and the horse standing loose or hitched to it, nothing that moves - in its storage,
+// handed to every joiner and fanned on every change, until the owner's word replaces it.
+//
+// THE OWNER SPEAKS FROM ANYWHERE, THE CELL KEEPS ONLY ITS OWN. A `park` frame names the team's ANCHOR (its natives)
+// and, when the owner's client is showing the team, its record. The room the frame lands in STORES it only when the
+// anchor stands in that room's own cell (a record cannot be planted in a cell its owner is not in - the camps' and
+// the foes' law: a peer speaks only for itself and only where it is); anywhere else the frame is the owner's word
+// about WHERE their team is, and nothing is stored. Either way the owner's REGISTRY (one object per owner,
+// `parkreg:<id>`) learns the cell, and when that cell changed - or the word is null - it tells the old cell to drop
+// the record. So a team summoned away, ridden off, re-parked across the map or loaded from an older save leaves no
+// ghost, whichever room its owner is standing in when it happens.
+//
+// Bounded three ways: PARK_CELL_MAX records a cell (the stalest evicted), PARK_TTL_MS since the owner last said it
+// (an owner who never returns takes theirs with them in the end), PARK_HZ_MAX frames a second a socket.
+
+/** A cell room's record key in its own storage. */
+export const parkKey = (owner) => `park:${owner}`;
+/** The owner's registry object's name (a Room instance the worker never routes a socket to). */
+export const parkRegistryRoom = (owner) => `parkreg:${owner}`;
+/** The two internal doors between objects - paths the public worker never forwards (it forwards /room/<key> alone). */
+export const PARK_INTERNAL_REG = '/internal/park/registry';
+export const PARK_INTERNAL_DROP = '/internal/park/drop';
+export const PARK_CELL_MAX = 32;
+export const PARK_TTL_MS = 72 * 3600 * 1000;
+export const PARK_HZ_MAX = 2;
+/** How far (natives, either axis) a record's wagon and horse may stand from its anchor - a hitched horse stands 3.1 m
+ *  ahead of its wagon; a quarter of a native pixel is room for any team and no room for a second place. */
+export const PARK_REACH = 8192;
+/** A world-frame point's cell room - the map pixel off the natives (MapsFile.WorldCoordToMapPixel: x / 32768,
+ *  499 - z / 32768) and the cell off the pixel (worldRoom). */
+export const cellRoomOfWire = (x, z) => worldRoom(Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS));
+const PARK_TIERS = new Set([0, 25, 50, 75, 90]);
+const PARK_KIND_DEPLOYED = 2;
+/** The per-socket park gate. */
+export const parkGate = (bucket, now) => tokenGate(bucket, now, PARK_HZ_MAX);
+
+/**
+ * A `park` frame's data through the door: `{ a: [x, z], r?: { w?, h?, n? } }`. `a` the anchor in natives, inside
+ * the world. `r` the team as shown: `w` a DEPLOYED wagon only ([2, x, y, z, qx, qy, qz, qw, tier, 0] - a unit
+ * quaternion, a known tier), `h` a horse standing ([x, y, z, fx, fz, 0] - never walking: a walking horse is not
+ * parked), `n` the horse's name through the label door; every part within PARK_REACH of the anchor. Anything else is
+ * null - the frame is refused.
+ */
+export function validParkData(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+  const a = d.a;
+  if (!Array.isArray(a) || a.length !== 2 || !a.every(finite) || a.some((v) => v < 0 || v > POSE_BOUND)) return null;
+  const out = { a: [a[0], a[1]] };
+  if (d.r === undefined || d.r === null) return out;
+  const r = d.r;
+  if (!r || typeof r !== 'object' || Array.isArray(r)) return null;
+  const near = (x, z) => Math.abs(x - a[0]) <= PARK_REACH && Math.abs(z - a[1]) <= PARK_REACH;
+  const rec = {};
+  if (r.w !== undefined) {
+    const w = r.w;
+    if (!Array.isArray(w) || w.length !== 10 || !w.every(finite) || w[0] !== PARK_KIND_DEPLOYED) return null;
+    if (!near(w[1], w[3]) || Math.abs(w[2]) > POSE_Y_BOUND) return null;
+    const len = Math.hypot(w[4], w[5], w[6], w[7]);
+    if (!(len > 0.5 && len < 2) || !PARK_TIERS.has(w[8])) return null;
+    rec.w = [PARK_KIND_DEPLOYED, w[1], w[2], w[3], w[4] / len, w[5] / len, w[6] / len, w[7] / len, w[8], 0];
+  }
+  if (r.h !== undefined) {
+    const h = r.h;
+    if (!Array.isArray(h) || h.length !== 6 || !h.every(finite) || h[5] !== 0) return null;
+    if (!near(h[0], h[2]) || Math.abs(h[1]) > POSE_Y_BOUND || !(Math.hypot(h[3], h[4]) > 1e-6)) return null;
+    rec.h = [h[0], h[1], h[2], h[3], h[4], 0];
+  }
+  if (r.n !== undefined) {
+    if (typeof r.n !== 'string' || r.n.length > 124) return null;
+    const n = sanitizeLabel(r.n, 31);
+    if (n && rec.h) rec.n = n;
+  }
+  if (!rec.w && !rec.h) return null;
+  out.r = rec;
+  return out;
+}

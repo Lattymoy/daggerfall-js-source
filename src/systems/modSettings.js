@@ -807,7 +807,7 @@ export const MOD_SETTINGS = Object.freeze({
         default: true,
         description: 'demifiend000\u2019s Horse Cart and Cargo 1.0.0-rc12, 1:1: your horse and wagon stand in the world - '
           + 'left where you dismount, following or waiting on command, hitched and mounted by walking up to them. '
-          + 'Online, others see them while you are nearby.',
+          + 'Online, the others see them where you left them.',
       }),
       'Persistence.PhysicalPersistence': Object.freeze({ default: true, description: 'Physical Horse & Wagon Persistence. On: horse and wagon positions persist when left behind. Off: remote positions are forgotten and owned transport is recalled for vanilla-style transport and wagon access; the moving trailing wagon remains. Re-enabling starts fresh with owned transport at the player.' }),
       'Presentation.ShowTrailingWagon': Object.freeze({ default: true, description: 'Trailing Wagon While Riding. When disabled, hides only the wagon that trails behind you in Cart mode. Deployed and following wagons, cargo storage, physical persistence, and wagon gameplay remain enabled.' }),

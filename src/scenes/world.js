@@ -233,7 +233,8 @@ import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUD
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
-import { createHorseCartPool } from './horseCartPool.js';   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
+import { createHorseCartPool } from './horseCartPool.js';
+import { createPeerRiders } from '../net/peerRiders.js';   // RIDE: another player in the saddle   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
 import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { domCodeForKeyCode } from '../systems/keyCodes.js';   // HCC: the mod's KeyCode hotkeys against this host's held-key set
@@ -297,6 +298,7 @@ import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in t
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS } from '../net/wire.js';
+import { cellRoomOfWire } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in
 import { PARTY_READY_TIMEOUT_MS, memberPresent, latestStamp, voteStands, snapshotCancels, cancelRequestFor, mirrorKey } from '../systems/partyRestLaw.js';   // AUDIT PARTY-REST: the pure half of the party-rest mechanic, pinned by execution   // SOC2: the hub's room and the party pose's floor (a second wire import: AUDIT WORLD4 A1 pins the first as it stands)
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
@@ -8822,6 +8824,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // host's file dict - never the player's store, which quests move) once the file is read; a modded file desyncs the
   // shared economy (recorded). Offline nothing is installed and the player's own tilted walk runs.
   if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});
+  let peerRiders = null;   // RIDE: another player in the saddle, drawn as Eye Of The Beholder's mounted sprite (net/peerRiders.js)
   let online = null, remotePlayers = null, peerBodies = null, nameLayer = null, nameSight = null, _onlineLast = null, _onlineKey = null, _onlineKeySince = 0, _onlineMovingUntil = 0;
   // D-ONLINE1 (2026-09-17, a player: "still see you have died then main menu"): `onlineFrame` LEAVES the room the
   // instant the death screen goes up (AUDIT ONLINE D12: the dead broadcast nothing and see no one), every frame,
@@ -8897,6 +8900,27 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _foesRoom = null;   // WORLD6b: the room the puppets belong to
   const campToWire = (p) => { const wc = state.worldCoords(p); return [wc.x, p[1] - state.compensation[1], wc.z]; };   // SURV3: the pose's own law for the world frame
   const campToScene = (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; };
+  // HCC-PARK (2026-09-23, Mac: "I think we should build that"): MY PARKED TEAM, SAID TO ITS CELL. The word is the
+  // pool's (off the save record - a wagon at a shop door is parked whether or not I stand where it is drawn), sent
+  // when it CHANGED, at most once a second (the latest waits), and said again on every room I join (a re-assertion
+  // refreshes the cell's time-to-live and lets my registry drop a ghost an older save left elsewhere). A word that
+  // only lost its record (I walked out of sight of my own wagon) is not news: the cell keeps what it has.
+  let _parkSent = null, _parkSentAt = -Infinity, _parkRoom = null;
+  const hccParkTick = (now) => {
+    if (!online || online.status !== 'open' || !online.parkOk) return;
+    const word = hcc.parkWord(campToWire);
+    const key = JSON.stringify(word);
+    const rejoin = online.room !== _parkRoom;
+    const cell = word ? cellRoomOfWire(word.a[0], word.a[1]) : null;
+    // a record that went out as the anchor alone (the cell's socket was not open yet) goes again once it is
+    const owed = !!word?.r && _parkSent?.via === 'room' && online.inRoom(cell);
+    if (!rejoin && !owed && key === _parkSent?.key) return;
+    if (!rejoin && word && !word.r && _parkSent?.word?.r && _parkSent.word.a[0] === word.a[0] && _parkSent.word.a[1] === word.a[1]) return;
+    if (!rejoin && now - _parkSentAt < 1000) return;
+    const via = online.sendPark(word, cell);
+    if (!via) return;
+    _parkSent = { key, word, via }; _parkSentAt = now; _parkRoom = online.room;
+  };
   const foesStream = (now) => {
     if (!online || online.status !== 'open') return false;
     // WORLD6b: in a CELL everyone streams their own foes; in a world room the host alone
@@ -9082,7 +9106,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       toScene: (p) => { const l = state.localFromWorld(p[0], p[2]); return [l[0], p[1] + state.compensation[1], l[1]]; },
     });
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
-    exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());   // HCC-ONLINE: a peer's horse and wagon, the same frame, the same room test, through validHccRecord; and the peers' teams go wherever the pool's puppets go (a room change, a leave)
+    exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
+    online.onPark = (room, id, name, r) => hcc.applyKept(room, id, name, r, campToScene);   // HCC-PARK: a cell's word about a parked team (mine or a halo's cell), its owner here or not
+    online.onParks = (room, list) => hcc.replaceKept(room, list, campToScene);   // HCC-PARK: and a cell's whole memory, after its welcome   // HCC-ONLINE: a peer's horse and wagon, the same frame, the same room test, through validHccRecord; and the peers' teams go wherever the pool's puppets go (a room change, a leave)
     online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };   // TRADE1: a peer's trade frame, already projected and addressed to me (net/online.js)
     // ALLY-CAST: a party mate's spell at ME. THE RECEIVER DECIDES: a cast from anyone outside my party is dropped
     // unread (the sender chose the peer; a party is invite-only), so is one at a dead player, and of what arrived only
@@ -9121,6 +9147,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
     peerBodies = new PeerBodies({ renderer, enabled: () => enhanced && !!getPref('mwArms') && morrowindDataCount() > 0, generation: morrowindDataGeneration });
+    peerRiders = createPeerRiders({ renderer });   // RIDE: the others in the saddle
     // NAME1 + BUBBLE1: the names are the enhanced skin's DOM now (ui/nameLayer.js) - online forces that skin
     // (OL1), so this is normally the face a player sees. Made ONCE, here, beside the peers it labels.
     // AUDIT NAME1 F7: gated on the SKIN as well as the document, exactly as the chat below is. Online's forcing of
@@ -9149,6 +9176,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const link of chatLinks?.values() ?? []) link.leave();
       peerBodies?.destroy();
       remotePlayers?.destroy();
+      peerRiders?.destroy();   // RIDE
     });
   };
   // CHAT1 (Mac: "the live chat in enhanced format ... one world tab with
@@ -10524,6 +10552,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       an: rig.swing.n, as: Math.max(0, POSE_STRIKES.indexOf(rig.swing.strike)),
       am: hasDaggerfallArrows(playerEntity.items) ? 1 : 0, sr: (live ? live.armed : magic.spellArmed()) ? 1 : 0,
       cn: rig.cast.n, cr: rig.cast.rangeType | 0,
+      // RIDE: the mount - the horse or the cart, outdoors (a door dismounts), and which of Eye Of The Beholder's five
+      // mounted sprite sets this player chose, so the others draw the rider they drew themselves
+      rd: (modes?.mode ?? 'exterior') !== 'exterior' ? 0 : player.transportMode === TRANSPORT_MODES.Horse ? 1 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 0,
+      rv: Math.max(0, Math.min(4, (() => { try { return modSettingsOf('eye-of-the-beholder')['Graphics.OnHorse'] | 0; } catch { return 0; } })())),
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
@@ -10563,11 +10595,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     actFlush();        // AUDIT WORLD3 A3: an act the wire refused, re-read and re-sent
     hitFlush(now);     // AUDIT FOES FOE2: and a BLOW the wire refused - a joiner applies none locally, so a lost frame is a lost blow
     modes?.setDungeonAuthority?.(dungeonAuthority(now));   // AUDIT WORLD2 C2: the seat re-read every frame - a dead socket, a terminal close or a silent host hands the foes back
+    hccParkTick(now);   // HCC-PARK: my parked team's word to the cell it stands in, when it changed
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) camps.sweepOwners(ids, now, FOES_STALE_MS); }   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
     if (isCellRoom(online.room)) { const ids = ownerIds(); if (ids) hcc.sweepOwners(ids, now, FOES_STALE_MS); }   // HCC-ONLINE: a peer's team goes as their puppets and camps do - the same memoised list, the same liveness   // PERF11: the same list   // SURV3: a peer's camps go as their puppets do - the same liveness, the same answer-gate   // AUDIT WORLD6b-iii(b) C3/B5: no answer (the socket not open) is not "nobody" - it pruned every owner while the halos kept feeding frames, a spawn-and-discard loop per frame   // AUDIT WORLD6b-ii C2: ONE liveness for the owner - the peers the hunt reads (visible: a pose, in range, inside the timeout) are the peers whose puppets stand
+    hcc.pruneKept(isCellRoom(online.room) ? [online.room, ...online.haloRooms()] : []);   // HCC-PARK: a kept team is its CELL's - it stands while I hold that cell's socket (mine or a halo's), and its welcome brings it back
     const drawable = online.drawable();
-    peerBodies.sync(drawable, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
-    remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerBodies.heightOf(id), dt, eye: player.pos });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
+    // RIDE (2026-09-23, Mac: "ensure over people see others riding on horses"): a peer in the saddle is drawn as the
+    // rider FIRST, so the body and the doll below stand nothing for them and their name rides over the rider
+    peerRiders.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt });
+    const afoot = drawable.filter((d) => !peerRiders.isRiding(d.id));
+    peerBodies.sync(afoot, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
+    remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id), dt, eye: player.pos });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
   };
   const drawPeerBodies = (proj, view, eye) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye }); };
   /** FONT1 (2026-09-16, Mac: "Especially the new online interfaces font use our enhanced font"): THE SOCKET'S OWN
@@ -12162,6 +12200,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (_lastPlayerPos) { _lastPlayerPos[0] += r.offset[0]; _lastPlayerPos[1] += r.offset[1]; _lastPlayerPos[2] += r.offset[2]; }
       // ONLINE1 (AUDIT ONLINE D5): the others' billboards were placed before this step from the old origin - they follow it, or every peer jumps a tile for one frame at each crossing
       if (remotePlayers) for (const b of remotePlayers.batches()) { b.origin[0] += r.offset[0]; b.origin[1] += r.offset[1]; b.origin[2] += r.offset[2]; }
+      peerRiders?.offsetAll(r.offset);   // RIDE: the riders' sprites follow the origin as the dolls do
       if (_onlineLast) { _onlineLast[0] += r.offset[0]; _onlineLast[1] += r.offset[1]; _onlineLast[2] += r.offset[2]; }
       if (peerBodies) peerBodies.offsetAll(r.offset);   // MWBODY1 (AUDIT MWBODY B2): the bodies' feet follow the origin as the dolls do
     }
@@ -12477,6 +12516,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (cullOn && billboardOutside(b)) continue;
       allBatches.push(b);
     }
+    if (peerRiders) for (const b of peerRiders.batches()) { if (!(cullOn && billboardOutside(b))) allBatches.push(b); }   // RIDE: the others in the saddle
     // NEAR-FIRST (2026-09-21): THE PIXELS ARE WALKED NEAREST FIRST. The
     // map's insertion order is the order the pixels streamed in, which
     // is nothing to do with where the eye is - so a far town's walls

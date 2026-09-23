@@ -1,0 +1,200 @@
+[
+  {
+    "name": "PARK-store-from-anywhere",
+    "file": "server/src/index.js",
+    "old": "      if (m.data?.r && cell === here) await this._parkStore(owner, a.name ?? '', m.data.r, now);",
+    "new": "      if (m.data?.r) await this._parkStore(owner, a.name ?? '', m.data.r, now);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-registry-skipped",
+    "file": "server/src/index.js",
+    "old": "      await this._parkRegister(owner, cell);\n",
+    "new": "      void cell;\n",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-superseded-kept",
+    "file": "server/src/index.js",
+    "old": "      else if (here && (!m.data || cell !== here)) await this._parkDrop(owner);",
+    "new": "      else if (false) await this._parkDrop(owner);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-welcome-silent",
+    "file": "server/src/index.js",
+    "old": "      if (isCellRoom(a.key)) { const parks = await this._parkList(Date.now());",
+    "new": "      if (false) { const parks = await this._parkList(Date.now());",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-never-expires",
+    "file": "server/src/index.js",
+    "old": "if (!v || now - (v.at ?? 0) > PARK_TTL_MS) dead.push(k);",
+    "new": "if (!v) dead.push(k);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-cell-unbounded",
+    "file": "server/src/index.js",
+    "old": "    if (others.length >= PARK_CELL_MAX) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-unmetered",
+    "file": "server/src/index.js",
+    "old": "      a = this._meterPark(ws, a, now); if (!a) return;\n      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;\n      const owner = a.id;",
+    "new": "      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;\n      const owner = a.id;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-walking-horse-kept",
+    "file": "src/net/wire.js",
+    "old": "    if (!Array.isArray(h) || h.length !== 6 || !h.every(finite) || h[5] !== 0) return null;",
+    "new": "    if (!Array.isArray(h) || h.length !== 6 || !h.every(finite)) return null;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-far-part-kept",
+    "file": "src/net/wire.js",
+    "old": "    if (!near(w[1], w[3]) || Math.abs(w[2]) > POSE_Y_BOUND) return null;",
+    "new": "    if (Math.abs(w[2]) > POSE_Y_BOUND) return null;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-zeros-on-foot",
+    "file": "src/net/wire.js",
+    "old": "  return r ? { rd: r, rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0 } : {};",
+    "new": "  return { rd: r, rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0 };",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-mount-not-a-change",
+    "file": "src/net/wire.js",
+    "old": "    || (a.rd | 0) !== (b.rd | 0) || (a.rv | 0) !== (b.rv | 0);",
+    "new": "    || false;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-lerp-drops-mount",
+    "file": "src/net/online.js",
+    "old": "    ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0 } : {}),   // RIDE: the mount, discrete, omitted on foot as the wire omits it\n",
+    "new": "",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-live-wins-whole",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const w = l?.w ?? k?.w ?? null, h = l?.h ?? k?.h ?? null;",
+    "new": "    const w = l ? l.w : k?.w ?? null, h = l ? l.h : k?.h ?? null;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-kept-my-own",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "  function applyKept(room, owner, name, r, toScene = (p) => p) {\n    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
+    "new": "  function applyKept(room, owner, name, r, toScene = (p) => p) {\n    if (typeof owner !== 'string' || !owner) return false;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-prune-nothing",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    for (const [owner, k] of [..._kept]) if (!held.has(k.room)) { _kept.delete(owner); syncPeer(owner); }",
+    "new": "    void held;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-unshown-is-nothing",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    return r.w || r.h ? { a, r } : { a };",
+    "new": "    return r.w || r.h ? { a, r } : null;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "PARK-kept-not-named",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const who = peerName(pk.owner) ?? (p.ownerName || null);",
+    "new": "    const who = peerName(pk.owner);",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "TIP-no-owner-row",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (pk.what === 'w') return { title: WAGON_HOVER_TEXT, subs: [owned] };",
+    "new": "    if (pk.what === 'w') return { title: WAGON_HOVER_TEXT, subs: [] };",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-no-height-handoff",
+    "file": "src/net/peerRiders.js",
+    "old": "    heightOf: (id) => (riders.has(id) ? RIDER_NAME_HEIGHT : 0),",
+    "new": "    heightOf: () => 0,",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-no-gallop",
+    "file": "src/net/peerRiders.js",
+    "old": "export const rideTable = (mv) => (mv === 2 ? 'GallopHorse' : mv === 1 ? 'MoveHorse' : 'IdleHorse');",
+    "new": "export const rideTable = (mv) => (mv ? 'MoveHorse' : 'IdleHorse');",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-wrong-sprite-set",
+    "file": "src/net/peerRiders.js",
+    "old": "      const s = spriteFor(table, orientationFor(facing, toCam), r.frame, { onHorse: pose.rv | 0 });",
+    "new": "      const s = spriteFor(table, orientationFor(facing, toCam), r.frame, { onHorse: 0 });",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-dismount-keeps-batch",
+    "file": "src/net/peerRiders.js",
+    "old": "    for (const id of [...riders.keys()]) if (!seen.has(id)) drop(id);",
+    "new": "    void seen;",
+    "tests": [
+      "test/hcc_park.test.js"
+    ]
+  }
+]

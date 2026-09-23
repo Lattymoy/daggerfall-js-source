@@ -309,7 +309,7 @@
   {
     "name": "HCC-sweep-ignores-stale",
     "file": "src/scenes/horseCartPool.js",
-    "old": "      if (alive?.has?.(owner) && !(staleMs > 0 && nowMs - p.at > staleMs)) continue;",
+    "old": "      if (alive?.has?.(owner) && !(staleMs > 0 && nowMs - l.at > staleMs)) continue;",
     "new": "      if (alive?.has?.(owner)) continue;",
     "tests": [
       "test/hcc_pool.test.js"

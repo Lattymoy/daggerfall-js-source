@@ -289,17 +289,18 @@ test('HCC-ONLINE wire: the ease - a step under twenty metres eases, a longer one
   assert.equal(pool.draw(renderer), 1, 'and the peer\'s wagon is drawn');
   const t = pool.targets();
   assert.deepEqual(t.map((x) => x.key), ['hccPeer:p1:w', 'hccPeer:p1:h']);
-  assert.deepEqual(pool.hoverName('hccPeer:p1:w'), { title: "Ann's wagon" });
-  assert.deepEqual(pool.hoverName('hccPeer:p1:h'), { title: "Bess (Ann's horse)" });
+  // HCC-TIP: the plaque names the thing as the mod does, and its second row says whose it is
+  assert.deepEqual(pool.hoverName('hccPeer:p1:w'), { title: 'Wagon', subs: ['Owned by Ann'] });
+  assert.deepEqual(pool.hoverName('hccPeer:p1:h'), { title: 'Bess', subs: ['Owned by Ann'] });
   const said = [];
-  assert.equal(pool.activate('hccPeer:p1:h', 1, (l) => said.push(l)), true); assert.equal(said[0], "That is Bess (Ann's horse).");
+  assert.equal(pool.activate('hccPeer:p1:h', 1, (l) => said.push(l)), true); assert.equal(said[0], 'Bess - owned by Ann.');
   let far = 0;
   assert.equal(pool.activate('hccPeer:p1:h', ACTIVATION_REACH + 1, (l) => said.push(l), () => far++), true, 'AUDIT HCC O6: a far press is still the press');
   assert.equal(far, 1); assert.equal(said.length, 1, 'past the mod\'s reach: DFU\'s "too far", not the name');
   assert.equal(pool.activate('hccPeer:zz:h', 1, (l) => said.push(l)), false);
   assert.equal(pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 1] }, toScene, 2), true);
   assert.equal(pool.peers.get('p1').wagon, null, 'the wagon left the word: gone');
-  assert.deepEqual(pool.hoverName('hccPeer:p1:h'), { title: "Ann's horse" }, 'and the name with it');
+  assert.deepEqual(pool.hoverName('hccPeer:p1:h'), { title: 'Horse', subs: ['Owned by Ann'] }, 'and the name with it (HorseTargetLabel\'s "Horse")');
   assert.equal(pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 99] }, toScene, 3), false, 'a junk word drops theirs');
   assert.equal(pool.peers.size, 0);
   pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 1] }, toScene, 4);

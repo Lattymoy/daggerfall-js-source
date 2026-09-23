@@ -161,19 +161,17 @@ following horse and trailing team stand in a shared cell, so:
   snaps) and draws it with the same pieces, cargo and billboard - the
   horse's orientation and its stride are the reader's own, as a sprite's
   must be. A peer's PARKED wagon stands a collider of its own.
-- **The plaque names whose.** A peer's horse reads "<Name> (<Peer>'s
-  horse)" or "<Peer>'s horse", their wagon "<Peer>'s wagon"; the press on
-  one says so and opens nothing.
+- **The plaque names whose (HCC-TIP).** A peer's horse hovers as the mod
+  names it (its name, else "Horse"), their wagon as "Wagon", and the World
+  Tooltips plaque's second row says "Owned by <Peer>" - the session's name,
+  or the relay's stamp when the owner is away. The press says "Bess - owned
+  by Ann." and opens nothing.
 - **Nothing of the storage rides.** A player's items are their own
   client's; a peer's wagon is a thing to see and walk around.
-- **No relay change.** The relay reads nothing inside a foes frame, so
-  `hv` needs no version; the pose already carries the transport mode.
-- **An owner's word needs its owner.** A team stands for the others while
-  its owner is in the cell room to say it; indoors (every door is a room of
-  its own), away, dead or gone, it goes with them, as their camps and foes
-  do. A parked wagon that outlives its owner's presence would be a cell's
-  own memory on the relay, which cell rooms do not keep - recorded as the
-  open question below, and the Enabled note says what this law shows.
+- **The live word needs no relay change.** The relay reads nothing inside
+  a foes frame, so `hv` needs no version.
+- **The kept word does (HCC-PARK, world98).** A PARKED team outlives its
+  owner's presence: the cell room keeps it. See the section below.
 
 ## AUDIT HCC (2026-09-23)
 
@@ -208,7 +206,9 @@ killed by a mutant in `tools/mutants/hcc.json`.
   is a word now. O8: a viewer with the mod off still fetched and built a
   peer's art; it lands nothing. O9: a peer's horse was named and pressed
   while its art was not drawn; it is not.
-- O10, recorded not changed: the owner's-presence law above.
+- O10: a parked team went with its owner's presence - indoors, away or
+  logged off, the others saw nothing where it stood. HCC-PARK below builds
+  the cell's memory of it.
 
 **Notifications and UI.**
 - K1: `F10` is DFU's LargeHUDToggle and `Shift-F10` its HUDToggle (world
@@ -260,6 +260,65 @@ killed by a mutant in `tools/mutants/hcc.json`.
 - Checked and not changed: the pre-transition call before the `try` - its
   two neighbours are a region read and a mode set, and cannot throw.
 
+## HCC-PARK, HCC-TIP and RIDE (2026-09-23)
+
+Mac: "I think we should build that. And if not already, ensure this is
+compatible with our tooltip implementation and ensure it shows owned if
+another players. Also need to ensure over people see others riding on
+horses."
+
+**HCC-PARK - the cell keeps a parked team.** Pinned in
+`test/hcc_park.test.js`, mutants in `tools/mutants/hccpark.json`.
+- The word. `parkWord` reads MY team off the SAVE record, not off what is
+  drawn: a deployed wagon, or a horse standing loose or hitched to a
+  deployed wagon. It carries the anchor `a` (the wagon's, else the horse's,
+  in wire units) and the record `r` only while the team is shown. The host
+  (`hccParkTick`, after the frame's out-words) sends it when it changes, at
+  most once a second, again on a room change and when the cell's socket
+  opens. It goes to the anchor's own cell room (`cellRoomOfWire`, through
+  MapsFile's pixel); through any other room it goes as the anchor alone,
+  which asks the registry to clean up and stores nothing.
+- The relay. A cell room stores `park:<owner>` only from a socket in that
+  same cell, so a player can park only where they stand. It fans the word
+  as `{t:'park'}` and gives a joiner the whole list after the welcome as
+  `{t:'parks'}`, with the owner's verified name. Bounds: `PARK_HZ_MAX`
+  words a second per socket, `PARK_CELL_MAX` teams a cell with the stalest
+  out, `PARK_TTL_MS` (72 hours) since the owner last said it.
+- The registry. One durable object per owner (`parkRegistryRoom`) knows
+  the cell holding their team. When the team moves or is taken up, it tells
+  the old cell to drop it, over internal paths the public worker never
+  forwards. The cell also drops its own superseded record, so a dev worker
+  with no registry binding keeps no ghost.
+- The reader. The pool keeps the live word (`hv`) and the kept one apart
+  and draws, per part, the live one first. The sweep takes only the live
+  word, so a team stays after its owner leaves. A kept team belongs to its
+  cell: it stays while I hold that cell's socket, mine or a halo's, and
+  the next welcome brings it back.
+- Compatibility. An older relay closes the socket on an unknown frame, so
+  the client sends `park` only to world98 or later (`relaySupportsPark`).
+  The deploy drops every connected player once.
+
+**HCC-TIP - the owned line.** The HCC-ONLINE bullet above describes it.
+The plaque's title is the mod's own word for the thing, and the owner rides
+as a sub-row, which is the shape the World Tooltips plaque already draws
+for its other entities.
+
+**RIDE - the others see a rider.** The pose never said how a player
+travelled, so a peer on a horse or a cart walked on foot at a gallop's pace
+on everyone else's screen.
+- The pose carries `rd` (1 the horse, 2 the cart, outdoors only) and `rv`
+  (which Eye Of The Beholder mounted sprite set the rider chose). Both are
+  omitted on foot, so a pose on foot is the bytes it was. A mount change is
+  a pose change.
+- `net/peerRiders.js` draws a riding peer with EOTB's mounted sprites: the
+  same eight views, idle, walk and gallop tables, size and offsets as the
+  player's own third-person billboard. The move bit picks the table (2 is
+  the gallop). The rider layer runs first, the Morrowind body and the doll
+  stand nothing for a rider, and the name tag rides at `RIDER_NAME_HEIGHT`.
+- The art is drawn whether or not the viewer has EOTB switched on. It is
+  the only art the port has of a person on a horse, and seeing a peer ride
+  is the port's own online feature, not the mod's.
+
 ## What is and is not ported
 
 The assembly's dump carries 444 method bodies; 46 are compiler-generated
@@ -299,11 +358,13 @@ no other:
   follow, wait, name, the windows' questions, the doors, the save, fast
   travel, Travel Options, the persistence setting, the origin),
   `test/hcc_pool.test.js` (13, the presentation, the wire and the audit's
-  online rows), `test/audit_hcc.test.js` (9, AUDIT HCC),
+  online rows), `test/hcc_park.test.js` (11, HCC-PARK, HCC-TIP, RIDE), `test/audit_hcc.test.js` (9, AUDIT HCC),
   `test/hcc_hosts.test.js` (10, the hosts' seams by execution and by
   source), `test/hcc_scope.test.js` (4, the table), `test/hcc_assets.test.js`
   (3, the vendored files are the assembly's).
-- `tools/mutants/hcc.json`: the mutation list, every one dead.
+- `tools/mutants/hcc.json` and `tools/mutants/hccpark.json`: the mutation
+  lists, every one dead.
 - Not verified in a browser: no session exists in this container. The
   first thing to look at in one is the trailing wagon behind the cart and
-  the horse standing where you dismounted.
+  the horse standing where you dismounted; online, a second client seeing a
+  rider, the owned line, and a parked wagon after its owner goes indoors.

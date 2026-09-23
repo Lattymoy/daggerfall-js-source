@@ -64,6 +64,7 @@ const LAW = {
   world95: '4c705e967ac2f039cb79517a3ad64e89404d2a15c0500f917e0b336f66e5a0a7',   // AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp every reader judges for freshness), the hub's quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once, the lead passes to an online seat
   world96: 'cdbfcb6e2533c9e26a51157d1304564ff34ed5767f45586387faec285fea0bb4',   // ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame (validCastData, the relay's cast arm, its own meter and funnel); the receiver decides what lands
   world97: '1dca6ab13b44079c0ece4b6030f01b8712ee200b094f7d5b43c8459733dd581e',   // AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged single target alone, the icon), the funnel onto a destination PER SENDER (CAST_DEST_SENDERS_MAX slots), the dead length check gone
+  world98: '23fb8b369a89295fcd89f106991b09bd3d67a96eb30ba0f76ba57f38e3b69ee2',   // HCC-PARK + RIDE (2026-09-23): the {t:'park'} frame (a parked wagon or waiting horse the cell room keeps per owner, validParkData, parkGate, the owner registry's internal paths, TTL and cap) and the pose's rd/rv riding fields. An older relay closes on the unknown frame, so the clients send park only to world98 or later (PARK_RELAY_MIN)
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));
