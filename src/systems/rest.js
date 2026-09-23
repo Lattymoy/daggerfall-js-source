@@ -15,6 +15,7 @@ import { liveStat, maxFatigue } from './statMods.js';
 import { skillValue, SKILLS } from './skills.js';
 import { healingRateModifier } from '../combat/formulas.js';   // U10
 import { sharedClockOn, worldMinutes } from './worldTick.js';   // AUDIT WORLD5 C6: the collapse's hour, paid once a world hour online
+import { isOnlinePage } from './onlineLane.js';   // REST-MANA1: online, every career's magicka comes back with rest
 
 // ---- DFCareer.SpecialAbilityFlags (the low byte of
 // AbilityFlagsAndSpellPointsBitfield) + RapidHealingFlags ----
@@ -62,8 +63,16 @@ export const fatigueRecoveryRate = (maxFat) => Math.max(Math.floor(maxFat / 8), 
 
 /** CalculateSpellPointRecoveryRate: 0 for NoRegenSpellPoints careers,
  *  else max(floor(maxMagicka / 8), 1). */
+/** REST-MANA1 (2026-09-23, per-request: "change it so that resting heals mana anyway only for online mode"):
+ *  ONLINE, NO CAREER SITS OUT THE REST. Daggerfall's "Inability to regenerate spell points" (the Sorcerer's,
+ *  and any custom class that takes it) keeps a rested hour from paying any magicka - right for a solo game built
+ *  around Spell Absorption, and a party's caster stuck empty while everyone else wakes up full online. Online the
+ *  disadvantage no longer stops REST (the rate below, and restFullyHealed's clause in scenes/shared.js); offline it
+ *  is Daggerfall's, unchanged. */
+export const restIgnoresNoRegen = () => isOnlinePage();
+
 export function spellPointRecoveryRate(entity) {
-  if (hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints)) return 0;
+  if (hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen()) return 0;
   return Math.max(Math.floor((entity.maxMagicka ?? 0) / 8), 1);
 }
 

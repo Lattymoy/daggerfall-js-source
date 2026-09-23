@@ -44,7 +44,7 @@ import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
-import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate } from '../systems/rest.js';
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, restIgnoresNoRegen } from '../systems/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
 import { getPreventedRestMessage } from '../systems/restSession.js';
 import { registerPreventRestCondition } from '../systems/restSession.js';   // SURV7: the survival rest gate's seam
@@ -63,6 +63,7 @@ import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the p
 import { setPaintFile } from '../systems/itemInfo.js';
 import { music } from '../systems/music.js';
 import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EXT: SoundReplacement's registry
+import { setSoundReplacements } from '../systems/soundReplacer.js';   // SNDREP1: the player's sound pack, on the same seam
 import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
 import { setSeasonsSources } from '../systems/seasonsIliacBayAssets.js';   // SIB1: Seasons of the Iliac Bay's texture door
 import { setWeaponWidgetSources } from '../combat/weaponWidgetAssets.js';   // WW1: Weapon Widget's double-scale textures, from the player's own bundle
@@ -1170,7 +1171,7 @@ export function ensureAudio(fetch = fetchBytes) {
   // songs play and the player is never told about a subsystem they did
   // not ask for.
   const replacements = storedMusicNames()
-    .then((names) => setMusicReplacements(names, loadMusicFile))
+    .then((names) => { if (setSoundReplacements(names, loadMusicFile)) audio.preloadReplacements?.(); return setMusicReplacements(names, loadMusicFile); })   // SNDREP1: a sound pack rides the music store
     .catch(() => 0);
   // M-TEX: textures register on the SAME seam, for the same reason.
   // Registration is a name list and a loader - no PNG is read until an
@@ -2008,7 +2009,7 @@ export const restFullyHealed = (entity) =>
   entity.health === entity.maxHealth
   && (entity.fatigue ?? 0) === maxFatigue(entity)
   && ((entity.magicka ?? 0) === (entity.maxMagicka ?? 0)
-    || hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints));
+    || (hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen()));   // REST-MANA1: online a no-regen career rests until its magicka is full too
 
 /**
  * The RestWindow deps every host shares, so a host adds rest with one

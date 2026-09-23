@@ -268,11 +268,15 @@ test('AUDIT 65 CV-2: EVERY player-side capsule call carries the player body, at 
       sites.push([f.slice(root.length), line.trim()]);
     }
   }
+  // SPELLFX1 added three DRAWN arms (a peer's shaft in ArrowFlight and in
+  // the dungeon loop, a peer's missile in hostMagic): each stops a shot
+  // another player loosed on my body and applies nothing - still a
+  // player capsule, so still measured at the player's own radius.
   assert.deepEqual(sites.map(([f]) => f).sort(), [
-    'src/combat/arrowFlight.js',
-    'src/scenes/dungeonContext.js', 'src/scenes/dungeonContext.js',
-    'src/scenes/hostMagic.js', 'src/scenes/hostMagic.js',
-  ], 'five player-side capsule calls, and these are the files that own them');
+    'src/combat/arrowFlight.js', 'src/combat/arrowFlight.js',
+    'src/scenes/dungeonContext.js', 'src/scenes/dungeonContext.js', 'src/scenes/dungeonContext.js',
+    'src/scenes/hostMagic.js', 'src/scenes/hostMagic.js', 'src/scenes/hostMagic.js',
+  ], 'five player-side capsule calls plus the three SPELLFX1 drawn arms, and these are the files that own them');
   for (const [f, line] of sites) {
     assert.ok(line.includes('PLAYER_BODY_RADIUS'), `${f}: a player capsule measured without the player's body - ${line}`);
   }

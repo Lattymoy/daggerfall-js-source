@@ -99,3 +99,21 @@ export function mirrorKey(row) {
   const at = row?.p?.restStartedAt;
   return Number.isFinite(at) && at > 0 ? `${row.acct}:${at}` : null;
 }
+/** PARTY-REST29 (2026-09-23, the party-rest fixes of the friendly-spells drop, on this law): THE STAMP THE START
+ *  COOLDOWN READS - the latest `restStartedAt` among the members standing here and `mine`, with two stamps that no
+ *  longer mean "a rest just happened":
+ *  - a MEMBER's stamp their own newer `voteAt` supersedes: a leader whose rest window closed with no rest chosen and
+ *    who pressed Rest again has opened a new round, and the old grant must not hold everyone's tally quiet;
+ *  - MINE, when the caller passes it as none (-Infinity): my own window closed unrested (world.js
+ *    cancelPartyRestStart), so my grant cools nothing down.
+ *  The COOLDOWN alone reads this. Whether a vote STANDS still reads latestStamp - every grant, waived or not - so a
+ *  vote cast for the round the unrested grant spent never approves the next one. */
+export function cooldownStamp(members, mine, now) {
+  let latest = Number.isFinite(mine) ? mine : 0;
+  for (const m of members) {
+    const t = stampOf(m?.p?.restStartedAt, now);
+    if (stampOf(m?.p?.voteAt, now) > t) continue;
+    latest = Math.max(latest, t);
+  }
+  return latest;
+}

@@ -64,6 +64,7 @@ const LAW = {
   world95: '4c705e967ac2f039cb79517a3ad64e89404d2a15c0500f917e0b336f66e5a0a7',   // AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp every reader judges for freshness), the hub's quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once, the lead passes to an online seat
   world96: 'cdbfcb6e2533c9e26a51157d1304564ff34ed5767f45586387faec285fea0bb4',   // ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame (validCastData, the relay's cast arm, its own meter and funnel); the receiver decides what lands
   world97: '1dca6ab13b44079c0ece4b6030f01b8712ee200b094f7d5b43c8459733dd581e',   // AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged single target alone, the icon), the funnel onto a destination PER SENDER (CAST_DEST_SENDERS_MAX slots), the dead length check gone
+  world98: '4c21e4ee8da1c7d5ab746460fb1af03b2effad202715510695213429b2da06e0',   // SPELLFX1 (2026-09-23, the friendly-spells drop): the pose's `ce` and `ar` - a cast's element and the arrows loosed, so peers DRAW each other's missiles and shafts; visual only. The drop's own `aid` frame is NOT here: its friendly spells ride ALLY-CAST's `cast` frame (world97), whose sender's meter is a whole blast deep here (CAST_BURST_MAX, one frame per mate)
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));
