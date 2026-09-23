@@ -637,6 +637,52 @@ readout: out of the tab order, `aria-disabled`, no pointer, no hover.
 Pinned by execution in `test/disc10.test.js` over a small DOM
 (`test/chargenDom.mjs`).
 
+## DISC10-A: a weapon swapped into the left hand showed fists
+
+**Cause.** The rigs and the doors are right: a weapon in the left hand
+draws and swings, through every door (DISC8-E). The quickslot SWAP was
+not: `swapQuickslot` readied into the RIGHT slot whatever hand the player
+was using, and no host told it the hand. DFU draws only the hand in use
+(`WeaponManager.ApplyWeapon` :741-755), so on the left hand "You ready
+your Dagger." stood over bare fists, every press, in every host and both
+skins.
+
+**Fix.** The swap takes the live rig's hand door
+(`weaponRig.handDoor()`: the hand in use after this frame's UpdateHands,
+and ToggleHand through the rig's own SwitchHand) and readies into the
+hand in use; a two-hander is the right hand's, and when the table's own
+law places the weapon in the other hand, the hand follows it through
+ToggleHand, DFU's one door. The building's host hands its own rig.
+
+**Recorded, not changed.**
+- The enhanced pack's Morrowind figure shows the right hand's weapon while
+  the pack is open (`enhancedInventory.js` setWeapon); the first frame
+  after the close corrects it.
+- Online, a peer fighting left-handed is drawn with the right hand's
+  weapon: the pose carries no hand bit yet.
+
+## DISC10-C: maps could not be looted, recipes could not be read
+
+**Maps.** A map taken off a body runs its use arm (DFU's `TransferItem`
+map arm, :1471-1478): read, spent, a location discovered. The DUNGEON
+host had no reveal hook (`revealMap: null`, "no region index here"), so
+underground - where bodies drop maps - the use fell to "You study the
+map." and the map stayed on the body. worldModes never forwarded the
+outer host's `revealLocation`, which already answers underground. It
+does now; the standalone `?dungeon` page keeps its null.
+
+**Recipes.** DFU reads a recipe through Info (`ShowInfoPopup` :1602-1609:
+"Recipe for Potion of %po" and the chained ingredient list); its Use arm
+refuses it. The classic window had that; the ENHANCED skin (the default,
+and the only one online) has no Info mode - its item card is the info -
+and the card had no recipe rows, so a recipe said nothing anywhere. The
+card now reads "Recipe for" and "Ingredients" from one shared
+`potionRecipeIngredientNames` (MCP's PotionRecipeIngredients). The
+Potion Maker already saw carried recipes.
+
+Pinned: `test/lh1.test.js` (3) and `test/maploot1.test.js` (3), by
+execution.
+
 ---
 
 # DISC11 - rain louder inside than outside, at last at its root

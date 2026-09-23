@@ -1510,8 +1510,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // page mounts no bridge and answers null, which is the same
     // fall-through DFU takes with nothing watching.
     getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
-    // U44: no reveal seam - this context has no region index to walk
-    revealMap: null,
+    // U44 / MAPLOOT1: no region index here - the OUTER host's reveal (world.js revealLocation via worldModes), null on ?dungeon
+    revealMap: opts.revealMap ?? null,
     nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
   };
   /** QS2: the diamond's presses - see scenes/world.js's twin for the whole of
@@ -1524,7 +1524,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return true;
   };
   const quickSwap = () => {
-    swapQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), rows: useHooks.rows });
+    swapQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), rows: useHooks.rows, hand: weaponRig.handDoor() });   // LH1: the used hand
     weaponRig.refreshWorn();
     return true;
   };

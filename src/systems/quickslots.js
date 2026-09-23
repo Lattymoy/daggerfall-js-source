@@ -321,8 +321,14 @@ export function useQuickslot(slot, { entity = null, items = null, hooks = {}, sa
  *
  * `rows` resolves the window's two refusal ids (broken, forbidden) to
  * their text; without it the refusal is silent but still a refusal.
+ *
+ * `hand` is the LIVE rig's hand door - `{ usingRightHand, switchHand }`
+ * (weaponRig.handDoor()). LH1: the swap readies the weapon into the hand
+ * IN USE, because that is the only hand the screen shows
+ * (WeaponManager.ApplyWeapon :741-755). Without it the swap is the
+ * right hand's, as it always was.
  */
-export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
+export function swapQuickslot({ entity = null, say = null, rows = null, hand = null } = {}) {
   const r = resolveSwap(entity);
   if (!r) { say?.(QUICKSLOT_TEXT.noSwap); return { kind: 'none' }; }
   const table = equipTableOf(entity);
@@ -353,9 +359,19 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
   // THE HAND THE SWAP IS FOR. A left-only weapon (a bow under
   // Enhancements.BowLeftHandWithSwitching) lives in the left; everything
   // else the swap puts in the RIGHT, and what was there is the leaver.
-  const leftOnly = getItemHands(r.item) === ITEM_HANDS.LeftOnly;
-  const hand = leftOnly ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand;
-  const previous = table[hand] ?? null;
+  //
+  // LH1 (Discord: "Weapons when swapped into left hand dont work showing
+  // fists"): AND THE HAND IN USE. WeaponManager.ApplyWeapon (:741-755)
+  // draws `usingRightHand ? currentRightHandWeapon : currentLeftHandWeapon`,
+  // so a swap into the right hand while the player fights left-handed
+  // readied a weapon the screen never shows: "You ready your Dagger." over
+  // bare fists, every press. The swap now replaces the USED hand's weapon;
+  // a two-hander is the right hand's whatever is in use.
+  const hands = getItemHands(r.item);
+  const leftOnly = hands === ITEM_HANDS.LeftOnly;
+  const inUse = hand?.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand;
+  const target = leftOnly ? EQUIP_SLOTS.LeftHand : hands === ITEM_HANDS.Both ? EQUIP_SLOTS.RightHand : inUse;
+  const previous = table[target] ?? null;
   // QS2 - A SWAP REPLACES WHAT IS IN THE HAND, and `equipItem` alone does not.
   // GetEquipSlot's weapon arm is `getFirstSlot(RightHand, LeftHand)` for an
   // EITHER-handed weapon (ItemEquipTable.cs, characters/equipTable.js) - the
@@ -368,20 +384,28 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
   // nothing to swap to. So the main hand is emptied first when the swap weapon
   // would otherwise land beside it rather than in it; a left-only weapon keeps
   // its own hand, and `equipItem` evicts that hand's occupant itself.
-  const bumped = previous && !leftOnly ? unequipSlot(entity, EQUIP_SLOTS.RightHand) : null;
+  const bumped = previous && !leftOnly ? unequipSlot(entity, target) : null;
   const un = equipItem(entity, r.item);
   if (un === null) {
     if (bumped) equipItem(entity, bumped);   // the refusal changes nothing: the hand goes back as it was
     return { kind: 'refused', name: r.name };
   }
   billEquipDelayOnClose(entity, snap);
+  // LH1: the table's own law still places the item (GetEquipSlot: an
+  // Either weapon takes the FIRST OPEN of right, left), so a left-handed
+  // swap with the right hand empty, a two-hander, or a left-only bow
+  // readied from the right can land in the hand NOT in use. The hand
+  // follows the weapon through ToggleHand, the one door DFU has for it
+  // (:702-729) - its line, its shield refusal, its switch delay.
+  const landed = r.item.equipSlot ?? null;
+  if (hand && landed != null && landed !== inUse) hand.switchHand?.();
   // THE NEXT SWAP is what left the hand: the weapon that was there, or
   // bare hands when nothing was (AUDIT QS F2). A leaver that is not a
   // weapon - a shield a left-only bow bumped - is not a swap, and the
   // slot clears.
   const leaver = previous && !isEquipped(previous) ? previous : null;
   if (leaver && canSwapTo(leaver)) state.swap = { key: quickslotKey(leaver), name: itemLongName(leaver) };
-  else if (!previous) state.swap = { key: leftOnly ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };
+  else if (!previous) state.swap = { key: r.item.equipSlot === EQUIP_SLOTS.LeftHand ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };   // LH1: the hand it LANDED in
   else state.swap = null;
   say?.(QUICKSLOT_TEXT.swapped(r.name));
   return { kind: 'swapped', name: r.name, item: r.item, previous: leaver };

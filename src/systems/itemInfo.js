@@ -477,6 +477,16 @@ export function potionMacroName(item) {
   return isPotionRecipe(item) ? name : `Potion of ${name}`;
 }
 
+/** MacroHelper's PotionRecipeIngredients (DaggerfallUnityItemMCP.cs:245-260) - the second box
+ *  ShowInfoPopup chains behind a recipe's panel (DaggerfallInventoryWindow.cs:1602-1609): one
+ *  ingredient TEMPLATE name per ingredient, in the recipe's own order. An unknown key answers [] (the
+ *  C#'s empty token array); anything that is not a recipe answers null. MAPLOOT1: lifted out of the
+ *  classic window so the enhanced card reads the same list. */
+export function potionRecipeIngredientNames(item) {
+  if (!isPotionRecipe(item)) return null;
+  return (potionRecipeByKey(item?.potionRecipeKey ?? 0)?.ingredients ?? []).map((id) => templateByIndex(id)?.name ?? '');
+}
+
 /** ResolveItemName (ItemHelper.cs:263-291). The item's own shortName
  *  with %it filled from the TEMPLATE name - except that an
  *  UNIDENTIFIED item gives up its short name entirely and reads as the

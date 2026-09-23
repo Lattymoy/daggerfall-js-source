@@ -2406,8 +2406,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     });
     return true;
   };
-  const quickSwap = () => {
-    swapQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), rows: (id, pick) => townTalk.lines(id, pick) });
+  const quickSwap = (rig = weaponRig) => {   // LH1: the rig in the player's hands - worldModes hands its own indoors
+    swapQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), rows: (id, pick) => townTalk.lines(id, pick), hand: rig.handDoor() });
     weaponRig.refreshWorn();
     return true;
   };
@@ -2666,7 +2666,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // QS2: the diamond's three presses, on the ctx beside the sheath panel's
     // door - one object is this host's whole routeAction contract.
     quickUse: (n) => quickUse(n),
-    quickSwap: () => quickSwap(),
+    quickSwap: (rig) => quickSwap(rig),   // LH1: the mode's own rig, when it hands one
     quickOffHand: () => quickOffHand(),
     quickSpell: () => quickSpell(),   // QS6
     // QX1/U43: the two journal keys, which this host had never
@@ -3676,7 +3676,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // second one. (Its own weapon rig takes the swap's refresh; see
     // worldModes' interiorKeyCtx.)
     quickUse: (n) => quickUse(n),
-    quickSwap: () => quickSwap(),
+    quickSwap: (rig) => quickSwap(rig),   // LH1: the mode's own rig, when it hands one
     quickOffHand: () => quickOffHand(),
     quickSpell: () => quickSpell(),   // QS6
     // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window

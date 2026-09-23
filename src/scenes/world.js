@@ -4113,8 +4113,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     return true;
   };
-  const quickSwap = () => {
-    swapQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), rows: (id, pick) => townTalk.lines(id, pick) });
+  const quickSwap = (rig = weaponRig) => {   // LH1: the rig in the player's hands - worldModes hands its own indoors
+    swapQuickslot({ entity: playerEntity, say: (l) => townTalk.say(l), rows: (id, pick) => townTalk.lines(id, pick), hand: rig.handDoor() });
     weaponRig.refreshWorn();
     return true;
   };
@@ -6849,7 +6849,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the same reason - one object is this host's whole routeAction contract,
     // and a door that is not on it is a key that does nothing.
     quickUse: (n) => quickUse(n),
-    quickSwap: () => quickSwap(),
+    quickSwap: (rig) => quickSwap(rig),   // LH1: the mode's own rig, when it hands one
     quickOffHand: () => quickOffHand(),
     quickSpell: () => quickSpell(),   // QS6
     // UI1: DaggerfallUI :581-583 - the U key's window opens only when
@@ -11042,7 +11042,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // second one. (Its own weapon rig takes the swap's refresh; see
     // worldModes' interiorKeyCtx.)
     quickUse: (n) => quickUse(n),
-    quickSwap: () => quickSwap(),
+    quickSwap: (rig) => quickSwap(rig),   // LH1: the mode's own rig, when it hands one
     quickOffHand: () => quickOffHand(),
     quickSpell: () => quickSpell(),   // QS6
     // S40: AbortRestForEnemySpawn (:301-304) reaches the rest window

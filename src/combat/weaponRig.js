@@ -1103,6 +1103,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       return muzzleRay(_tlDrawn, fovRad, forward);
     },
     refreshWorn() { syncWorn(); },
+    /** LH1: the hand door a swap needs - WeaponManager.UsingRightHand as it
+     *  stands after this frame's UpdateHands (the shield rule applied), and
+     *  ToggleHand through this rig's own SwitchHand leg. */
+    handDoor() {
+      syncWorn();
+      return { usingRightHand: playerWeapon.usingRightHand, switchHand: () => this.switchHand() };
+    },
     /** QS4 - THE OFF-HAND KEY'S LIGHT ARM. The quickslot diamond's
      *  off-hand cell presses the same thing Handheld Torches' own toggle
      *  key presses (its `toggleLightPress`, the free-hand guard and all),

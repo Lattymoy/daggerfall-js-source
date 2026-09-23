@@ -5909,7 +5909,7 @@ export function createWorldModes(host) {
           horseCart: () => host.horseCart?.() ?? null,   // HCC: the wagon's storage access at a dungeon exit is the runtime's word
           horseCartSave: () => host.horseCartSave?.() ?? null,   // AUDIT HCC H3: the mod's record, for the dungeon's own save
           horseCartLoad: (rec) => host.horseCartLoad?.(rec),   // AUDIT HCC H3: and its own load
-          useMagicItem: (item) => host.useMagicItem?.(item),
+          useMagicItem: (item) => host.useMagicItem?.(item), revealMap: host.revealLocation ? () => host.revealLocation('readMap') : null,   // MAPLOOT1: RecordLocationFromMap's reveal underground (DaggerfallInventoryWindow.cs:1819-1846) - a corpse's map was studied and left on the body
           // QUEST1: the SAME two Share-button hooks, delegated straight
           // through - the dungeon has no online layer of its own, only
           // whatever the outer host (world.js) answers, exactly as
@@ -8421,7 +8421,7 @@ export function createWorldModes(host) {
     // mode, and each mode answers with the parts it actually owns.
     quickUse(n) { return host.quickUse?.(n) === true; },
     quickSwap() {
-      const ok = host.quickSwap?.() === true;
+      const ok = host.quickSwap?.(interiorWeapon) === true;   // LH1: the swap readies into THIS rig's used hand
       if (ok) interiorWeapon.refreshWorn();
       return ok;
     },
