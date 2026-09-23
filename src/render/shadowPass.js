@@ -158,11 +158,18 @@ export const SHADOW_SUN_DEPTH = 600;
 /** Below this sun height the sun map is not drawn (a horizontal sun's
  *  shadows are a smear the map cannot hold) and no shadow is cast. */
 export const SHADOW_MIN_SUN_Y = 0.05;
-/** The cube map's near plane, and the distance under which a light is
- *  the eye's own (the Light effect's candle at the camera) and never the
- *  caster - its shadows would be hidden by their own occluders anyway. */
+/** The cube map's near plane. */
 export const SHADOW_POINT_NEAR = 0.1;
-export const SHADOW_CASTER_MIN_DISTANCE = 1.5;   // F3 (2026-09-17, Mac: "when you peak around corners, a large shadow moves around ... when the torch is equipped"): THE LIGHT IN THE HAND CASTS NOTHING - Handheld Torches puts the flame 0.34 left, 0.7 below and 0.25 ahead of the eye (0.8 away), and at 0.25 it was the NEAREST caster every frame: a 512^2 cube map from a light a hand's width from the wall, its edges a metre wide and swimming with the bob. DFU's PlayerTorch is a Unity light that casts no shadows at all. A unit and a half is the glare's own hand distance (AIR_GLARE_MIN_DISTANCE); the same law skips the contact march for such a light (enhancedLighting.js)
+// LIGHT-NEAR1 (2026-09-23, kurkku on Discord, with video: "shadows disappear seemingly when you're too close to the
+// light source" - a tavern lamp at head height, the shadows gone as the player walks under it): THERE IS NO
+// CAMERA-DISTANCE RULE ANY MORE. F3 (2026-09-17) kept the light in the hand out of the caster slots by the proxy
+// "within 1.5 of the eye" (SHADOW_CASTER_MIN_DISTANCE), and MAC-T1 replaced that proxy with the fact BY NAME - the
+// torch and candle records say `carried`, every host composes them through withPlayerLights, and the pick, the
+// contact march (-2 in the caster table) and the glare skip a carried light in any camera. The proxy stayed
+// beside the flag, and it was never the hand's alone: a hanging lantern is 2.6-3.2 up and the eye is 1.7, so
+// the moment the player stood within a unit of it the nearest, brightest light in the room lost its map AND its
+// contact march (enhancedLighting.js read the same number) and its glare (airPass.js) in the same step. A scene
+// light's distance to the eye is not a reason to drop its shadow; the hand's light is excluded by its flag.
 /** AUDIT-EL F11: a light with a range past this is the storm's flash (Dynamic
  *  Skies: 500..1000 over the player, for a fifth of a second), never the
  *  caster - six 512^2 replays of the whole town to a far plane of a
@@ -316,20 +323,21 @@ export function faceBasis(f) {
 /** The lantern the cube map belongs to: the nearest to the eye of the
  *  frame's point lights (vec4s: xyz, range) that is at least `minDist`
  *  away and has a range; -1 for none. */
-export function pickShadowCaster(lights, eye, minDist = SHADOW_CASTER_MIN_DISTANCE, carried = null) {
-  return pickShadowCasters(lights, eye, 1, minDist, carried)[0] ?? -1;
+export function pickShadowCaster(lights, eye, carried = null) {
+  return pickShadowCasters(lights, eye, 1, carried)[0] ?? -1;
 }
 
 /** EL5: up to `max` casters - the lights nearest the eye that are a
- *  lantern (F11's range cap) and not the eye's own candle, nearest first. */
-export function pickShadowCasters(lights, eye, max = SHADOW_POINT_CASTERS, minDist = SHADOW_CASTER_MIN_DISTANCE, carried = null) {
+ *  lantern (F11's range cap) and not carried in the player's hand (MAC-T1's
+ *  mask; LIGHT-NEAR1: and nothing about their distance to the eye), nearest first. */
+export function pickShadowCasters(lights, eye, max = SHADOW_POINT_CASTERS, carried = null) {
   const n = lights.length >> 2;
   const picked = [];   // [index, distance], kept sorted, at most `max`
   for (let i = 0; i < n; i++) {
-    if (carried && carried[i]) continue;   // MAC-T1: the light in the player's hand takes no caster slot in ANY camera (F3's law by name; the distance below lapses in third person)
+    if (carried && carried[i]) continue;   // MAC-T1: the light in the player's hand takes no caster slot in ANY camera (F3's law by name)
     const dx = lights[i * 4] - eye[0], dy = lights[i * 4 + 1] - eye[1], dz = lights[i * 4 + 2] - eye[2];
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    if (d < minDist || !(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11
+    if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11; LIGHT-NEAR1: no lower bound on `d` - the lamp overhead casts
     if (picked.length === max && d >= picked[max - 1][1]) continue;
     let at = picked.length;
     while (at > 0 && picked[at - 1][1] > d) at--;
@@ -643,7 +651,7 @@ export class ShadowPass {
     // EL5: THE LANTERNS CAST TOO, sun or no sun - the nearest SHADOW_POINT_CASTERS
     // of them, each into its six layers; the replays are culled to the
     // lantern's range and the face's frustum, so a caster costs what it lights
-    const casters = pickShadowCasters(f.pointLights, f.eye, SHADOW_POINT_CASTERS, SHADOW_CASTER_MIN_DISTANCE, f.carried);   // MAC-T1
+    const casters = pickShadowCasters(f.pointLights, f.eye, SHADOW_POINT_CASTERS, f.carried);   // MAC-T1; LIGHT-NEAR1
     const L = f.pointLights;
     // MAC-T1: the hand's light is -2 in the caster table - no slot, and no contact march either (enhancedLighting reads
     // the same table): F3's "never for the light in the hand", said by name rather than by distance from the camera

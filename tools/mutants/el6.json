@@ -171,15 +171,6 @@
     ]
   },
   {
-    "name": "glare-texel-old",
-    "file": "src/render/airPass.js",
-    "old": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < AIR_GLARE_MIN_DISTANCE) continue;",
-    "new": "      if (false) continue;",
-    "tests": [
-      "test/el7_polish.test.js"
-    ]
-  },
-  {
     "name": "lane-ao-back",
     "file": "src/render/enhancedLighting.js",
     "old": "  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)",
