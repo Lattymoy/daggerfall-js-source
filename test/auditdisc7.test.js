@@ -212,10 +212,14 @@ test('AUDIT DISC7 B3/B4: a rider whose poses stopped stands (no frozen gallop), 
   const rp = new RemotePlayers({ renderer: {}, deps: { fetchBytes: async () => null, palette: null, audio: e }, compose: async () => null });
   let age = 0;
   const sync = (p, eye = [0, 1.7, 0], dt = 1 / 30) => rp.sync([p], toScene, { bodyHeight: () => 2, eye, dt, poseAgeMs: () => age });
-  sync(rider(1));
+  // the rolls at their floor, so the two cadences cannot overlap: the mount's is 1 s there, the ordinary one 2 s, less the frame's dt (a
+  // live Math.random let a mount's 2-4 s pass for the ordinary cadence - the pin was a coin toss)
+  const random = Math.random;
+  Math.random = () => 0;
+  try { sync(rider(1)); } finally { Math.random = random; }
   assert.ok(e._loops3d.has(ridingLoopName('bob-0001')), 'riding and heard');
   const r = rp._riding.get('bob-0001');
-  assert.ok(r.anim.neighTime - r.anim.now >= 2, 'first seen in the saddle: the ordinary neigh cadence, not the mount\'s 1-4 s');
+  assert.ok(r.anim.neighTime - r.anim.now > 1.5, 'first seen in the saddle: the ordinary neigh cadence, not the mount\'s 1-4 s');
   age = PEER_RIDE_STALE_MS + 1;
   sync(rider(1), undefined, 0.1); sync(rider(1), undefined, 0.3);   // the stop arms, then DFU's 0.2 s runs out
   assert.equal(e._loops3d.has(ridingLoopName('bob-0001')), false, 'a stale pose stands the horse (after DFU\'s 0.2 s stop)');

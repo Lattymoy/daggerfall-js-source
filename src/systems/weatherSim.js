@@ -362,9 +362,14 @@ function applyFromArray(climateIndex, nowMinutes) {
  *  it holds (the front does not tick there, as DFU's WeatherManager does not). A JUMP - a load, a travel landing, a
  *  respawn - lands the player under the sim's sky whole, so a word heard before it no longer stands. */
 let _heard = null;
+let _heardGain = 1;
 let _heardAtJump = -1;
-export function setHeardWeather(word) { _heard = word ?? null; _heardAtJump = _jumps; }
+export function setHeardWeather(word, rainGain = 1) { _heard = word ?? null; _heardGain = Number.isFinite(rainGain) ? Math.max(0, Math.min(1, rainGain)) : 1; _heardAtJump = _jumps; }
 export const heardWeather = () => (_heard != null && _heardAtJump === _jumps ? _heard : currentWeather());
+/** DISC11 (Mac: "ITS LOUDER ON THE INSIDE COMPARED TO THE OUTSIDE"): the street's rain LEVEL, beside its word - the
+ *  front's intensity on the enhanced lane (a light shower is 0.15), 1 on the classic one. Every rain the player hears
+ *  indoors is scaled from THIS, so no indoor rain can outplay the street's. After a jump the classic level stands. */
+export const heardRainGain = () => (_heard != null && _heardAtJump === _jumps ? _heardGain : 1);
 
 /** WX2a: the count of weather changes that were jumps. A host keeps the
  *  last value it saw; a new one means the change on this frame (if any)
@@ -571,7 +576,7 @@ export function resetWeatherSim() {
   _updateFromClimateArray = false;
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
   _jumps = 0;
-  _heard = null; _heardAtJump = -1;   // DISC9
+  _heard = null; _heardGain = 1; _heardAtJump = -1;   // DISC9 / DISC11
   _crossings = 0; _fieldCells = []; _fieldInside = null; _fieldOverride = null; _fieldUrlDoor = null;   // WEATHER2b
   _rolledAtMinutes = null;
   _zoneChangedAtMinutes = new Array(6).fill(null);

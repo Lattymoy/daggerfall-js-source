@@ -48,7 +48,8 @@ import { modSettingsOf } from './modSettings.js';
 import { audio as defaultAudio } from './audio.js';
 import { FOOTSTEP } from './footsteps.js';
 import { multiply, trs } from '../world/mat4.js';
-import { heardWeather } from './weatherSim.js';   // DISC9: the weather the player HEARS outdoors, not the sim's word
+import { heardWeather, heardRainGain } from './weatherSim.js';   // DISC9: the weather the player HEARS outdoors, not the sim's word; DISC11: and its level
+import { INDOOR_RAIN_GAIN, AMBIENT_RAIN_LOOP } from './ambientEffects.js';   // DISC11: the street's rain and its through-the-walls law
 import { immersiveFootsteps } from './immersiveFootsteps.js';
 import { isSnowFreeClimate } from '../world/weather.js';
 import { perlinNoise } from '../world/perlin.js';   // Mathf.PerlinNoise's one home   // WeatherManager.IsSnowFreeClimate
@@ -518,7 +519,7 @@ export const reverbPresetFor = (level) => REVERB_PRESETS[level] ?? null;
  */
 export const TRANSITION_WAIT_FRAMES = 4;   // "Wait some frames XD" - four yields in UpdateDungeonFog and UpdateAmbientSoundSources
 
-export function createBetterAmbience({ audio = defaultAudio, settings = readBetterAmbienceSettings, random = Math.random, fetchClip = defaultFetchClip, weather = heardWeather, snowFree = isSnowFreeClimate } = {}) {
+export function createBetterAmbience({ audio = defaultAudio, settings = readBetterAmbienceSettings, random = Math.random, fetchClip = defaultFetchClip, weather = heardWeather, rainLevel = heardRainGain, snowFree = isSnowFreeClimate } = {}) {
   let s = null;
   const footsteps = createBetterFootsteps({ audio, random, snowFree });
   const shaker = new CameraShaker(random);
@@ -563,6 +564,22 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
   }
   // InteriorAmbientSoundSource: Start adds the source (2D in a building, 3D at the exit), Update follows the weather
   function stopRain() { if (rainLoop) { rainLoop.stop?.(); rainLoop = null; } rainWeather = null; }
+  // DISC11 (Mac: "ITS LOUDER ON THE INSIDE COMPARED TO THE OUTSIDE"): THE MOD'S RAIN IS THE STREET'S RAIN, HEARD
+  // FROM INSIDE. InteriorAmbientSoundSource plays AmbientRaining.wav at the AudioSource's own volume, 1 - whatever
+  // falls outside. The street's loop plays DAGGER.SND's rain at the front's level (a light shower 0.15), so a tavern
+  // under a drizzle played a full downpour through its walls, in a louder recording. The mod's source now takes the
+  // street's level (`rainLevel`, the heard seam), matched to the street's recording by measured RMS (`clipLevel`),
+  // and in a building the street's own through-the-walls factor on top (INDOOR_RAIN_GAIN), the mod's low-pass after
+  // it: indoors it is never louder than the street it comes from. At a dungeon's exit it is the street at the door.
+  // Set when the source is made: indoors the street's level cannot move (the front does not tick there), and every
+  // door, load and weather change remakes the source at the level of that moment.
+  function rainTarget() {
+    const street = audio.clipLevel?.(AMBIENT_RAIN_LOOP);
+    const mine = audio.clipLevel?.(baSoundKey(AMBIENT_RAIN_CLIP));
+    const match = street > 0 && mine > 0 ? street / mine : 1;
+    return rainLevel() * match * (rainKind === 'interior' ? INDOOR_RAIN_GAIN : 1);
+  }
+
   function updateAmbientSoundSources() {
     stopRain();
     if (!s.Enabled) { rainKind = null; return; }
@@ -579,8 +596,8 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
         // the place - so `place.dungeon.exitPos` is there whenever this branch runs; a guard here would only hide the
         // next stale kind instead of crashing on it)
         rainLoop = rainKind === 'interior'
-          ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), 1, { lowpass: AMBIENT_RAIN_LOWPASS_HZ })
-          : audio.loop3d(baSoundKey(AMBIENT_RAIN_CLIP), place.dungeon.exitPos, 1, { refDistance: 1, maxDistance: 500, distanceModel: 'inverse', lowpass: AMBIENT_RAIN_LOWPASS_HZ });
+          ? audio.loop(baSoundKey(AMBIENT_RAIN_CLIP), rainTarget(), { lowpass: AMBIENT_RAIN_LOWPASS_HZ })   // DISC11: the street's level, not 1
+          : audio.loop3d(baSoundKey(AMBIENT_RAIN_CLIP), place.dungeon.exitPos, rainTarget(), { refDistance: 1, maxDistance: 500, distanceModel: 'inverse', lowpass: AMBIENT_RAIN_LOWPASS_HZ });
       }
     } else stopRain();
   }
@@ -646,6 +663,9 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
     /** DISC6: whether the mod's muffled indoor rain is what the player hears in a building - the street's own loop
      *  then stands down (systems/ambientEffects.js INDOOR_RAIN_GAIN). Read every indoor frame: no object built. */
     indoorRainPlaying() { return !!rainLoop && rainKind === 'interior'; },
+    /** DISC11: whether the mod's rain - in a building OR at a dungeon's exit - is what the player hears inside; the
+     *  street's carried loop stands down for either, so the two never stack. */
+    rainPlaying() { return !!rainLoop; },
     status() {
       return { enabled: !!s?.Enabled, footstepsOn: !!s?.footstepsEnable, clipsLoaded, present: [...present], place, fog: fogState, reverb: reverbOn, rain: rainLoop ? rainKind : null, rainWeather, shake: { pos: shaker.posAddShake, rot: shaker.rotAddShake, instances: shaker.instances.length } };
     },

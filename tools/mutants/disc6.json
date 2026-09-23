@@ -74,7 +74,7 @@
   {
     "name": "DISC6-world-ambience-frozen",
     "file": "src/scenes/world.js",
-    "old": "      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });\n",
+    "old": "      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });\n",
     "new": "",
     "tests": [
       "test/disc6.test.js"
@@ -83,7 +83,7 @@
   {
     "name": "DISC6-exterior-ambience-frozen",
     "file": "src/scenes/exterior.js",
-    "old": "      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });\n",
+    "old": "      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });\n",
     "new": "",
     "tests": [
       "test/disc6.test.js"

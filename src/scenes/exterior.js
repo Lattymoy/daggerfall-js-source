@@ -4345,7 +4345,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // than the street, and underground at the street's own gain. Forcing gain 1 here made a light shower (the
       // front's 0.15) louder in a tavern than in the street - the Discord report itself - and a dungeon 6.7x.
       ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
-      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });
+      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -4833,7 +4833,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
     // WX2: the ear follows what is falling under the front; the word, verbatim, on classic
     ambientWord = enhancedFront ? soundWeather(fx, weather) : weather;
-    setHeardWeather(ambientWord);   // DISC9: what the street hears is what every indoor ear hears through the walls
+    setHeardWeather(ambientWord, enhancedFront ? fx.intensity : 1);   // DISC9/DISC11: what the street hears - word AND level - is what every indoor ear hears through the walls
     ambience.setPreset(presetForExterior(ambientWord, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors

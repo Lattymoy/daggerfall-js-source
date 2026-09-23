@@ -636,3 +636,49 @@ view follows `cancelled` to the Cancel button's own exit. The rail is a
 readout: out of the tab order, `aria-disabled`, no pointer, no hover.
 Pinned by execution in `test/disc10.test.js` over a small DOM
 (`test/chargenDom.mjs`).
+
+---
+
+# DISC11 - rain louder inside than outside, at last at its root
+
+Mac: *"YOU ALSO KEEP FUCKING UP ITS LOUDER ON THE INSIDE COMPARED TO THE
+OUTSIDE. YOUR DIRECTIONS ARE WRONG"*.
+
+**Cause.** What the ear hears is gain times the recording's own level, and
+the three fixes before this one (DISC6-C, AUDIT DISC7 B1, DISC9) each
+balanced gains without ever comparing what is heard:
+- The street plays DAGGER.SND's rain loop (389) at the front's level: a
+  light shower is 0.15, a downpour 1.
+- Better Ambience's indoor rain (InteriorAmbientSoundSource) plays its own
+  AmbientRaining.wav at the AudioSource's volume, a flat 1, whatever falls
+  outside. A tavern under a drizzle played a full downpour through its
+  walls, in a different and louder recording. DISC6 only silenced the
+  street's loop while it played.
+- Underground, DFU's carried loop and the mod's source at the exit both
+  played, stacked.
+
+**Fix.** Every rain the player hears inside is derived from the street's:
+- The heard seam carries the street's rain LEVEL beside its word
+  (`weatherSim.heardRainGain`, written by both open-world hosts' outdoor
+  frames; the classic level after a jump).
+- The mod's source takes that level, matched to the street's recording by
+  measured RMS (`AudioEngine.clipLevel`, once per decoded buffer), and in
+  a building the street's through-the-walls factor (`INDOOR_RAIN_GAIN`),
+  with the mod's low-pass after it. It is made at the level of that
+  moment; indoors the level cannot move (the front does not tick there),
+  and every door, load and weather change remakes it.
+- Underground the carried loop stands down while the mod's source plays at
+  the exit, which is the street heard at the door. Without the mod, DFU's
+  carried loop at the street's level stands, never above it.
+
+**The 3D directions, checked again in a real browser.** The same session
+measured left and right in Chromium's own WebAudio HRTF through the
+port's own `audio.js` (the listener and panner code as shipped): with the
+game's camera at yaw 0 and at yaw 90, a source on the screen's right
+plays in the right ear and one on the left in the left (L 0.024 / R 0.086
+and mirrored). The renderer's projection puts those same points on the
+same sides. Nothing was changed there.
+
+Pinned by execution in `test/disc11.test.js` (gain times level, with the
+mod's recording louder than the street's, at 0.15, 0.5 and 1; the dungeon's
+exit; the jump). Mutants: `tools/mutants/disc11.json` (5).

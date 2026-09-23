@@ -382,7 +382,9 @@ export class AmbientEffects {
     // WX2: the gain follows the front. Written only when it moves, and
     // only to a handle that carries the setter (a stub engine's may not).
     const building = !!deps.inside && !deps.underground;
-    const rainGain = this.rainGain * (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : 1);   // DISC6: through the walls
+    // DISC6: through the walls. DISC11: underground too, the carried loop stands down while the mod's rain at the
+    // exit plays (it IS the street, heard at the door) - two rains stacked were louder than the street itself.
+    const rainGain = this.rainGain * (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : (deps.underground && deps.indoorRainSource ? 0 : 1));
     if (this._rainLoop && this._rainGainSet !== rainGain) {
       this._rainLoop.setVolume?.(rainGain);
       this._rainGainSet = rainGain;
