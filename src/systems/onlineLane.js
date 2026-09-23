@@ -254,7 +254,23 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   // - and rewrites the host's foes' behaviour (enemyAppearance: a
   // Sorcerer that casts); every other switch is the player's own run.
   'roleplay-realism-items': Object.freeze({ Enabled: true, newWeapons: true, newArmor: true, lootRebalance: true, realisticEnemyEquipment: true }),
-  'roleplay-realism': Object.freeze({ Enabled: true, enemyAppearance: true }),
+  // MODS-ONLINE-5 (2026-09-23, Mac, asked which of RR's switches to
+  // force "especially when it comes to balance", then: "Yeah its the
+  // reason we forced PCAAO"): ONE RULESET PER ROOM. PCAAO was forced
+  // whole - its player-side formulas with its foe-side ones - and RR's
+  // six combat overrides are the same kind of thing (FormulaHelper
+  // overrides on the striker's own blow, the wearer's own armor, the
+  // walker's own load), so they take the same answer for the same
+  // reason, forced to the mod's own shipped defaults. And ONE that is
+  // an exploit rather than a preference: intensive training spends four
+  // days of world time for its +4, and the shared clock refuses the
+  // days (CLOCK-REFUSAL) - online it would be four points for nothing.
+  // Forced OFF, which is what the mod ships anyway.
+  'roleplay-realism': Object.freeze({
+    Enabled: true, enemyAppearance: true,
+    advancedArchery: true, weaponSpeed: true, weaponMaterials: true, classicStrengthDamageBonus: false, equipDamage: true, encumbranceEffects: true,
+    'RefinedTraining.intensiveTraining': false,
+  }),
 });
 
 /**
