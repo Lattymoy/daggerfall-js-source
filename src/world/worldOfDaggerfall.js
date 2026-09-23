@@ -143,9 +143,10 @@ export class WodWorld {
 
   /**
    * PlayerGPS.OnRegionIndexChanged -> LocationLoader.OnRegionChanged.
-   * The host calls this with the region under the player whenever it is
-   * about to build (the only moment the list is read), so the event
-   * fires exactly when CurrentRegionIndex differs from the last one.
+   * The host calls this with the region under the player on every map
+   * pixel crossing (the only moment the region can change) and before
+   * every build, so the event fires exactly when CurrentRegionIndex
+   * differs from the last one.
    */
   noteRegion(region) {
     if (region === this._lastRegion) return;

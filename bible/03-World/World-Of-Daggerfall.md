@@ -113,7 +113,10 @@ stand on the flattened ground.
   in. The port loads the folder first. Everywhere else - the border
   pixels of a region the player has not yet entered, the 177 pixels
   named from two different regions' folders - the port keeps the
-  reference's path-dependence exactly.
+  reference's path-dependence exactly. The event is heard on the
+  crossing itself, as PlayerGPS raises it, and again before each build
+  (WOD5). Before that fix a visit shorter than one build went unheard,
+  and the list's order with it.
 - **A region is appended once.** The C# appends a revisited region's
   folder again; a duplicate can never win a pixel its first copy did
   not, so the second copy changes nothing but the scan's length.
@@ -122,6 +125,18 @@ stand on the flattened ground.
   and `PlayerGPS` only advances `lastRegionIndex` after raising the
   event, so it throws again each frame the player stays - starving every
   later subscriber. The port loads nothing and throws nothing.
+- **A marker's load handler outlives the marker.** `LocationEnemySpawner`
+  subscribes to `SaveLoadManager.OnLoad` in Start and never unsubscribes.
+  Once any marker's terrain has been recycled, every later load throws
+  `MissingReferenceException` out of the dead marker's handler. The
+  event is raised last in a load, so the throw stops its remaining
+  subscribers: the surviving markers' 300 test, and any mod's handler
+  that subscribed later. The port rebuilds the world on every load and
+  throws nothing, the folderless region's reading again.
+- **A flat whose record its archive lacks is skipped.** DFU's
+  `SetMaterial` may instead throw out of AddLocation and stop the tile's
+  remaining objects. The shipped layouts' flat records have not been
+  checked against ARENA2 here.
 - **The C# culture is the author's.** Every number in the files is
   read with .NET `TryParse` under the invariant/en-US shape (a
   comma-decimal Windows locale fails every float in them, a
@@ -139,7 +154,11 @@ flat, by its ARCHIVE STRING:
   static door is `RMBLayout`'s alone), so a WoD house is a shell you walk
   around. 952 of the rocks are scaled unevenly and Unity lights them
   through the inverse transpose; the static batch takes a normal matrix
-  for them (`render/staticBatch.js`, `R * S^-1`).
+  for them (`render/staticBatch.js`, `R * S^-1`). One wall is MIRRORED
+  (`WOD_BanditCamp_09`'s 58055, `scaleX -1.573463`, in 565 camps).
+  Unity reverses the culling of a transform with a negative
+  determinant, so the batch reverses that model's winding (WOD5).
+  Before that fix the port drew the wall inside out.
 - **a flat** is a billboard, base-anchored where `AlignToBase` and the
   scale fix (`LocationLoader.cs:243-248`) leave it; the four records the
   layouts scale are batches at their own size.
@@ -223,7 +242,10 @@ player's distance, and is ported as one (`world/wodSpawner.js`):
   `clearLive`), and `SerializableEnemy` saves every one, so the save
   carries these foes with their flag. They outlive their marker's
   pixel, as a StreamingTarget child outlives its terrain. The pile is
-  the terrain's child and dies with its pixel.
+  the terrain's child and dies with its pixel. It is also a LoadID-0
+  container: the C# comments its LoadID out, and
+  `SerializableLootContainer.Start` registers only a non-zero one. So no
+  save and no scene cache carries it (WOD5).
 - **Only while outside.** Inside, DFU's streamed world is inactive and
   no marker updates; the port ticks the markers on exterior frames
   only.
@@ -293,9 +315,34 @@ Three port teardowns rebuild a pixel where DFU unloads nothing: the
 season re-skin, the roads sweep and the roads retry (`destroyPixel`'s
 `collectLoose: false`). DFU's components live through all three, so
 the port carries them across. Each marker keeps its state, matched by
-where it stands. The camp keeps its roll and its foes. A real unload (a
-pixel leaving range) drops the carry, and so does a sweep (a teleport,
-a travel, a load), which is an unload of everything.
+where it stands, and a spent kidnap marker keeps the captive it stood,
+which the rebuilt pixel stands again (WOD5). The camp keeps its roll
+and its foes. A real unload (a pixel leaving range) drops the carry, and
+so does a sweep (a teleport, a travel, a load), which is an unload of
+everything.
+
+## The audit (WOD5)
+
+A second, independent pass read the port against the eight sources.
+It found four behaviours the port did not yet share, and all four are
+fixed and pinned (`test/wod5_audit.test.js`):
+
+- the mirrored wall drawn inside out;
+- a region visited between two builds going unheard;
+- a captive vanishing on a port-only rebuild;
+- the marker's pile riding a save DFU never writes.
+
+It also found one C# throw that the port does not reproduce, recorded
+above with the other readings. Everything else it checked matched:
+- the pick loop and every guard in it;
+- the flatten (its inclusive bounds, the float lerp, the distance);
+- the object positions, AlignToBase and the scale fix;
+- AddLight's thirty arms and its default;
+- the archive-string arms and each Add*Spawn's fields;
+- every spawner arm and roll;
+- both ground aligns;
+- the Hold, value by value;
+- the TryParse and ValidateValue ports.
 
 ## THE FOUR HOSTS
 

@@ -146,11 +146,15 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
    *  and the marker's own coordinates (DaggerfallInterior.cs:885-889)
    *  so a restore applies to the right container and an emptied one,
    *  absent from the cache, is simply rebuilt. */
-  function seedPile(items, feet, icon, key = null, pixelKey = null) {   // WOD3: a pixelKey, for a scene container parented to a TERRAIN (dies with its pixel)
+  // WOD5: `unsaved` - a container minted with LoadID 0 (World of
+  // Daggerfall's CreateLootContainer comments its LoadID out), which
+  // SerializableLootContainer.Start never registers: no save and no
+  // scene cache carries it.
+  function seedPile(items, feet, icon, key = null, pixelKey = null, { unsaved = false } = {}) {   // WOD3: a pixelKey, for a scene container parented to a TERRAIN (dies with its pixel)
     const pile = {
       id: ++_nextId, items: items ?? [], pos: [feet[0], feet[1], feet[2]],
       archive: icon.archive, record: icon.record, batch: null, pixelKey,
-      container: true, containerKey: key,
+      container: true, containerKey: key, unsaved,
     };
     piles.push(pile);
     mount(pile);
@@ -178,7 +182,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
    *  so a pile survives every floating-origin recenter - the same
    *  law the player half of the envelope rides. */
   function snapshotWorld(toNative) {
-    return piles.filter((p) => p.items.length).map((p) => {
+    return piles.filter((p) => p.items.length && !p.unsaved).map((p) => {   // WOD5: a LoadID-0 container is never registered
       const wc = toNative(p.pos);
       // G5: `archive` rides beside `record` because DFU's
       // LootContainerData_v1 carries BOTH (textureArchive/textureRecord,

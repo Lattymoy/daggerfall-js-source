@@ -115,13 +115,13 @@ test('WOD3: the ground aligns move the CENTRE - a pile to hit + 0.52 whatever it
 test('WOD3: the host stands what a marker answers - placed foes out of the cap, passive ones not hostile, piles dying with their pixel', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /tickWodSpawners\(\);   \/\/ WOD3: LocationEnemySpawner\.Update, every exterior frame\n\s*tickCityGates\(minute\);/);
-  assert.match(w, /const centre = \[s\.base\[0\], s\.base\[1\] \+ \(h \* s\.scaleY\) \/ 2, s\.base\[2\]\];\n\s*wodSpawners\.push\(\{ spawner: carried\?\.spawners\.get\(centre\.join\(','\)\)\?\.shift\(\) \?\? new WodSpawner\(s\), centre \}\);/, 'the marker\'s centre, as AlignToBase leaves it - and its state across a rebuild the reference never makes (WOD4\'s carry)');
+  assert.match(w, /const centre = \[s\.base\[0\], s\.base\[1\] \+ \(h \* s\.scaleY\) \/ 2, s\.base\[2\]\];\n\s*const kept = carried\?\.spawners\.get\(centre\.join\(','\)\)\?\.shift\(\);[^\n]*\n\s*wodSpawners\.push\(\{ spawner: kept\?\.spawner \?\? new WodSpawner\(s\), centre, flat: kept\?\.flat \?\? null, restand: !!kept\?\.flat \}\);/, 'the marker\'s centre, as AlignToBase leaves it - and its state across a rebuild the reference never makes (WOD4\'s carry, WOD5\'s captive)');
   assert.match(w, /const cx = feet\[0\], cy = feet\[1\] \+ \(standing \? player\.height \/ 2 : 0\), cz = feet\[2\];/, 'PlayerMotor\'s transform is the capsule\'s centre');
   assert.match(w, /const hit = collider\.surfaceHit\(\[x, y \+ 0\.2, z\], _DOWN, 3\);[^\n]*\n\s*exteriorFoes\.spawnFoe\(act\.mobileType, \[x, y, z\], \{ yaw: act\.yawDeg \* Math\.PI \/ 180, gender: act\.gender, allied: act\.allied, placed: true, groundAlign: \{ hitDist: hitDistance\(hit\) \} \}\)/, 'made at the marker\'s centre, the ray cast that frame');
   assert.match(w, /if \(f && !act\.hostile && f\.ai\) f\.ai\.isHostile = false;/, 'MobileReactions.Passive');
   assert.match(w, /const hit = collider\.surfaceHit\(\[x, y \+ 0\.2, z\], _DOWN, WOD_LOOT_ALIGN\.distance\);\n\s*const centreY = alignBillboardToGround\(y, hitDistance\(hit\), WOD_LOOT_ALIGN\.sizeY, WOD_LOOT_ALIGN\.distance\);/);
   assert.match(w, /addPileLootExtras\(items, lootKey\);\n\s*rollLootRarity\(items, pileSource\(dungeonRarityTier\(WOD_LOOT_LOCATION_INDEX\)\), \{ luck: liveStat\(playerEntity, 'luck'\) \}\);/, 'LR1: every list a host mints');
-  assert.match(w, /droppedLoot\.seedPile\(items, \[x, centreY - h \/ 2, z\], \{ archive: 216, record: act\.record \}, null, key\);/);
+  assert.match(w, /droppedLoot\.seedPile\(items, \[x, centreY - h \/ 2, z\], \{ archive: 216, record: act\.record \}, null, key, \{ unsaved: true \}\);/, 'WOD5: LoadID 0, never saved');
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /const activeCount = \(\) => foes\.filter\(\(f\) => !f\.dead && !f\.puppet && !f\.placed\)\.length;/);
   assert.match(x, /if \(!questBehaviour && !replacing && !puppet && !placed && activeCount\(\) >= MAX_ACTIVE_ENCOUNTER_FOES\) return null;/);
@@ -129,5 +129,5 @@ test('WOD3: the host stands what a marker answers - placed foes out of the cap, 
   assert.match(x, /const centreY = behaviour === 'Flying' \? pos\[1\] : alignControllerToGround\(pos\[1\], groundAlign\.hitDist, enemyControllerHeight\(idleH, behaviour\)\);\n\s*pending\.feet\[1\] \+= centreY - idleH \/ 2 - pos\[1\];/, 'the drop on the capsule the sprite sized, as a delta');
   assert.match(x, /if \(!f\.placed && _playerDist > ENCOUNTER_CULL_DISTANCE && /, 'never culled: DFU\'s loose foes stand until a load or a teleport sweeps them');
   assert.match(x, /placed: !!f\.placed,/, 'and across a save');
-  assert.match(rd('src/scenes/droppedLoot.js'), /function seedPile\(items, feet, icon, key = null, pixelKey = null\)/);
+  assert.match(rd('src/scenes/droppedLoot.js'), /function seedPile\(items, feet, icon, key = null, pixelKey = null, \{ unsaved = false \} = \{\}\)/);
 });

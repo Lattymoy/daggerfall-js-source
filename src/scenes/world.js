@@ -1048,6 +1048,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!p.wodSpawners) continue;
       const t = state.pixelTranslation(p.px, p.py, _wodT);
       for (const w of p.wodSpawners) {
+        if (w.restand) { w.restand = false; standWodAction(p, w, w.flat); }   // WOD5: the captive stands again on the rebuilt pixel
         if (!w.spawner.active) continue;
         const x = w.centre[0] + t[0], y = w.centre[1] + t[1], z = w.centre[2] + t[2];
         const act = w.spawner.tick(Math.hypot(x - cx, y - cy, z - cz));
@@ -1075,13 +1076,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       getTexture(216).then((t) => {
         if (built.get(key) !== p) return;   // the pixel went while the art loaded, and its terrain's children with it
         const h = act.record < t.recordCount ? billboardSize(t, act.record).h : 0;
-        droppedLoot.seedPile(items, [x, centreY - h / 2, z], { archive: 216, record: act.record }, null, key);
+        droppedLoot.seedPile(items, [x, centreY - h / 2, z], { archive: 216, record: act.record }, null, key, { unsaved: true });   // WOD5: LoadID 0 - never saved
       }).catch(() => {});
       return;
     }
     // the captive, the merchant or the prisoner, CENTRED where the marker
     // stood (CreateDaggerfallBillboardGameObject, no AlignToBase), a plain
-    // flat of the pixel's own from here on
+    // flat of the pixel's own from here on - and remembered, so a rebuild
+    // the reference never makes stands it again (WOD5)
+    w.flat = { kind: 'billboard', archive: act.archive, record: act.record };
     getTexture(act.archive).then((t) => {
       if (built.get(key) !== p || act.record >= t.recordCount) return;
       uploadRecord(act.archive, act.record);
@@ -1289,9 +1292,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WOD2: LocationLoader.AddLocation's DECISION (LocationLoader.cs:101-172),
     // taken here because it reads only the map data and the kernel needs
     // its rects. The region under the player is announced first
-    // (PlayerGPS.OnRegionIndexChanged - the list is only ever READ at a
-    // build, so a build is where the event is polled), every announced
-    // folder lands, and the first valid instance naming this pixel takes it.
+    // (PlayerGPS.OnRegionIndexChanged - polled on every crossing, WOD5,
+    // and again here, where the list is read), every announced folder
+    // lands, and the first valid instance naming this pixel takes it.
     let wodPicks = null;
     if (wod && await wodOpened) {
       const here = state.current ?? { x: px, y: py };
@@ -1759,7 +1762,8 @@ export async function bootWorld(canvas, renderer, params, status) {
           const t = await getTexture(s.archive);
           const h = s.record < t.recordCount ? billboardSize(t, s.record).h : 0;
           const centre = [s.base[0], s.base[1] + (h * s.scaleY) / 2, s.base[2]];
-          wodSpawners.push({ spawner: carried?.spawners.get(centre.join(','))?.shift() ?? new WodSpawner(s), centre });
+          const kept = carried?.spawners.get(centre.join(','))?.shift();   // WOD5: the marker, and the captive it stood
+          wodSpawners.push({ spawner: kept?.spawner ?? new WodSpawner(s), centre, flat: kept?.flat ?? null, restand: !!kept?.flat });
         }
       }
       const site = [...wodPicks].reverse().find((p) => p.flatten);
@@ -2176,7 +2180,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (p.privateersHold) { p.privateersHold.state.gone = true; for (const f of p.privateersHold.state.foes) exteriorFoes.removeFoe(f); }
     } else if (p.wodSpawners || p.privateersHold) {
       const spawners = new Map();
-      for (const w of p.wodSpawners ?? []) { const k = w.centre.join(','); if (!spawners.has(k)) spawners.set(k, []); spawners.get(k).push(w.spawner); }
+      for (const w of p.wodSpawners ?? []) { const k = w.centre.join(','); if (!spawners.has(k)) spawners.set(k, []); spawners.get(k).push({ spawner: w.spawner, flat: w.flat ?? null }); }
       wodCarry.set(key, { spawners, hold: p.privateersHold?.state ?? null });
     }
     built.delete(key);
@@ -12378,6 +12382,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
       queue.push(...r.load);
       announceNearbySpawns(r.current.x, r.current.y);   // SPAWNED-DUNGEONS2: said on ENTERING the pixel, not when it is rolled (that is three pixels ahead)
+      // WOD5: PlayerGPS raises OnRegionIndexChanged on the frame the
+      // region changes, and it changes only on a crossing - so the loader
+      // hears it here as well as at a build: a visit shorter than a build
+      // would otherwise go unheard, and the list's order with it. After
+      // Awake, so region 17 stays first.
+      if (wod) { const region = maps.getRegionIndexAt(r.current.x, r.current.y); wodOpened.then((ok) => { if (ok) wod.noteRegion(region); }); }
       for (const u of r.unload) {
         destroyPixel(u.px, u.py);
         state.release(u.px, u.py);
