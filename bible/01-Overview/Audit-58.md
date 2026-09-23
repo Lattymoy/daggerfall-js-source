@@ -143,7 +143,7 @@ confirmed, 21 refuted.**
 
 **The road height smoother wrote the transposed heightmap index.** The
 port's heightmap is x-major with z fastest - `data[x * hDim + y]`
-(`src/world/terrainSampler.js:144`, DFU's `JobA.Idx(y, x, hDim)` at
+(`src/world/terrainSampler.js:155`, DFU's `JobA.Idx(y, x, hDim)` at
 `TerrainSampler.cs:123`) - and every consumer in the tree obeys it.
 `smoothRoadHeights` read its tile correctly at `tilemap[y * tDim + x]` and
 then wrote the four corner samples from `y * hDim + x`, the mirror. A
@@ -168,7 +168,7 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:1009-1077`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:1010-1078`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at

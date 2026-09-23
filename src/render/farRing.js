@@ -46,7 +46,7 @@
 // the pass tests nothing and writes nothing, like the sky it extends.
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, DEFAULT_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrainSampler.js';
 import { overworldTint, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
 
@@ -61,7 +61,7 @@ export const RING_HAZE_HOLD = 0.85;
 
 /** The streamed law's own macro height for one map-pixel byte. */
 export const ringHeight = (byte) =>
-  Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * DEFAULT_TERRAIN_SCALE;
+  Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE;
 
 /**
  * The ring's vertex grid: (2R+1)^2 vertices at map-pixel centres,

@@ -85,11 +85,12 @@ test('P1: only loot, doors and the player\'s own piles are cached - enemies are 
   const back = restoreCachedScene(c, s);
   // SURV3: two more of the port's own loose objects ride the hand-off - HT1's dropped torches (handed to this door
   // since HT1 and DROPPED here, because the store kept three keys) and the camps
-  assert.deepEqual(Object.keys(back).sort(), ['actionDoors', 'camps', 'droppedPiles', 'droppedTorches', 'lootContainers']);
+  // TERRAIN-SCALE1: and the entry names what its positions are measured from, and the ground they stood on
+  assert.deepEqual(Object.keys(back).sort(), ['actionDoors', 'camps', 'droppedPiles', 'droppedTorches', 'frame', 'lootContainers', 'terrainScale']);
   assert.equal(back.enemies, undefined, 'an enemy list handed in is not carried');
   // an empty cache call is legal and stores empty arrays
   cacheScene(c, s);
-  assert.deepEqual(restoreCachedScene(c, s), { lootContainers: [], actionDoors: [], droppedPiles: [], droppedTorches: [], camps: [] });   // SURV3: five arrays now
+  assert.deepEqual(restoreCachedScene(c, s), { frame: null, terrainScale: null, lootContainers: [], actionDoors: [], droppedPiles: [], droppedTorches: [], camps: [] });   // SURV3: five arrays now; TERRAIN-SCALE1: no frame or scale named
 });
 
 test('AUDIT 58 (ID1): the player\'s DROPPED PILES ride the store, the save and the world move', () => {

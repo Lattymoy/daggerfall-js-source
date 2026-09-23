@@ -57,7 +57,7 @@ instance list, in list order, and for each instance:
    against 128 and once against 127) - skip;
 8. otherwise PLACE it: types 0 and 2 set `hasLocation`, name the tile
    and set `locationRect`, then flatten (below); the prefab's objects
-   stand at `(terrainX * 6.4 + x, averageHeight * 2308.5 + y,
+   stand at `(terrainX * 6.4 + x, averageHeight * 1923.75 + y,
    terrainY * 6.4 + z)`.
 
 Step 8's `hasLocation` is what makes the FIRST valid instance naming a
@@ -142,16 +142,6 @@ stand on the flattened ground.
   read with .NET `TryParse` under the invariant/en-US shape (a
   comma-decimal Windows locale fails every float in them, a
   machine-dependent DFU hazard nobody would want reproduced).
-- **The height a site levels to is the port's terrain's.** The loader
-  reads `MaxTerrainHeight * StreamingWorld.TerrainScale` (:15-17): 2308.5
-  here, the port's scale (`TerrainHelper.defaultTerrainScale`, 1.5).
-  DFU's game scene overrides the StreamingWorld's `TerrainScale` to 1.25
-  (`DaggerfallUnityGame.unity`, at v0.11.0-beta, v1.0.0, v1.1.1 and
-  master), which makes it 1923.75 - the number the author's own
-  commented-out constant names (:18). The whole port draws its terrain
-  at 1.5, so a site sits on the ground either way. That port-wide
-  difference - every hill a fifth taller than DFU's - is outside this
-  mod; the AUDIT BRANCH that found it left it open for its own slice.
 - **A treasure marker is a saved chest in DFU; the port saves none.**
   The 216 container is a RandomTreasure `DaggerfallLoot` with `LoadID =
   locationID * 10000 + objectID` (LocationHelper.cs:1534), never 0 (every
@@ -170,18 +160,6 @@ stand on the flattened ground.
   calling a GameObject's components in the order they were added -
   what Unity does, though it does not document it. Were it the other
   way, every treasure marker would run the quest arm instead.
-- **Start runs before the player lands, in DFU; the port waits.**
-  `InitWorld` stands the player at the scene origin (StreamingWorld.cs
-  :576-578) and repositions it only when every tile round it has
-  promoted (:258-295), so the markers those promotions make meet Start
-  with the player at the arrival pixel's south-west corner. After a
-  travel DFU spends the markers near that corner, and a camp at the
-  arrival springs on the first frame the player stands; after a load
-  `OnLoad` spends those within 300 of the player as well. The port runs
-  no marker's Start until the player stands (AUDIT BRANCH m3), so it
-  judges Start where the player is - the author's evident intent, a camp
-  that streams in round you never springs - rather than the init
-  order's accident.
 
 ## What stands, and how (WOD2)
 
@@ -235,10 +213,22 @@ player's distance, and is ported as one (`world/wodSpawner.js`):
   around you never springs. Otherwise it springs once, the first frame
   the player comes within 100. The distance runs from PlayerMotor's
   transform (the capsule's centre) to the marker's centre, where
-  `AlignToBase` and the scale fix leave it. `OnLoad` repeats Start's
-  test after a load; the port rebuilds the world on every load, so
-  every marker meets that test in its own Start - once the player
-  stands, and never before (AUDIT BRANCH m3, and the reading above).
+  `AlignToBase` and the scale fix leave it.
+- **An arrival's markers meet Start from the scene origin (WOD6).**
+  `InitWorld` stands the player at the scene origin (StreamingWorld.cs
+  :576-578) and moves it only once every tile round it has promoted
+  (:258-295), so every marker of the arrival's first grid runs Start -
+  and every Update until the player lands - measured from there, the
+  arrival pixel's south-west corner. A camp at the arrival is still
+  live when the player lands and springs on the first steps; a pixel
+  promoted later measures from the player. The port keeps the
+  arrival's grid (`_wodArrival`), and a pixel that leaves range and
+  returns is promoted afresh.
+- **A load raises OnLoad last (WOD6).** Every marker whose Start has
+  run deactivates within 300 of the loaded player
+  (`CheckPlayerDistance_OnLoad`, `WodSpawner.onLoad`); one whose Start
+  comes later hears it as its Start runs, never before. The quickload
+  raises it after the pools are back, and so does the classic import.
 - **The rolls are Unity's.** `Random.Range` on ints EXCLUDES its
   maximum, and the rolls run in the C#'s order. The exclusion is
   load-bearing three times: `Range(1, 3)` never answers 3, so the
@@ -453,8 +443,9 @@ mutants are in `tools/mutants/auditwod.json`, and every one dies.
   then forbid. A rebuild of a pixel that had a site re-reads its grass.
 - **m3: a marker's Start against a stale position.** During an arrival
   the pump builds on, and the player still stood where it left, in a
-  frame the sweep had re-anchored. No marker meets Start now until the
-  player stands (the reading above says how DFU differs).
+  frame the sweep had re-anchored. The fix first held Start until the
+  player stood; WOD6 replaced that with DFU's own order - from the scene
+  origin (WOD3, above).
 - **m4: a sweep during a rebuild** published the old carry - a spent
   camp, the Hold's rolled flag with foes already cleared - into the new
   world. The carry is adopted at publish.
@@ -469,10 +460,61 @@ mutants are in `tools/mutants/auditwod.json`, and every one dies.
   own bytes (it wrote decoded text, which drops a byte-order mark), and a
   re-run reproduces all 119 vendored files byte for byte.
 
-Found, and left for their own slices: the terrain's height scale (a
-reading above; port-wide); a pixel build that throws leaves its collider
-bucket behind (any pixel, before this branch); the treasure marker's
-save (a reading above).
+Found, and taken care of in the next section: the terrain's height
+scale, port-wide; a pixel build that throws leaving its collider bucket
+behind (any pixel, before this branch); a region pack that fails every
+try. The treasure marker's save stays a reading above.
+
+## AFTER THE AUDIT: TERRAIN-SCALE1, BUILD-FAIL1, WOD6 (2026-09-23)
+
+Mac: "Make the best decisions and take care of the found properly".
+Pinned in `test/terrainscale1.test.js` and `test/audit_wod_branch.test.js`;
+the mutants are `tools/mutants/terrainscale1.json` and `auditwod.json`,
+and every one dies.
+
+- **TERRAIN-SCALE1: the game's terrain scale is 1.25.**
+  `DaggerfallUnityGame.unity` overrides the StreamingWorld prefab's
+  `TerrainScale` to 1.25, and no script writes it at run time
+  (v0.11.0-beta, v1.0.0, v1.1.1 and master). The prefab's 1.5
+  (`TerrainHelper.defaultTerrainScale`) is only its default, and the
+  port had read it: every hill stood a fifth taller than DFU's. Every
+  height the streamed world draws, collides with or stands things on
+  now reads `STREAMING_TERRAIN_SCALE` (`world/terrainSampler.js`): the
+  terrain, the nature layout, the far ring, the grass, the overworld
+  model and this mod's sites (1923.75, the author's own constant).
+- **Saves written on 1.5 still land.** `SAVE_VERSION` does not move.
+  A save, a scene cache entry and a Recall anchor now carry the scale
+  their heights stood on (`terrainScale`); one without it was written on
+  1.5. As it lands, each height is stood again on today's ground:
+  `y' = y - ground(x, z) * (was / now - 1)` - the same height above the
+  ground wherever the ground is built, and `y * now / was` where it is
+  not. That covers the player, the piles, torches, camps, foes, guards,
+  the inside pools, the exterior scene cache and the anchor.
+- **The interior cache measures from the building.** Its piles and
+  torches were kept as raw scene positions, so a house's floor came back
+  819.2 off after a walk across a pixel edge. They are kept relative to
+  the building's own origin now, as DFU restores an interior container
+  by its `localPosition`; an entry written before (raw positions) lands
+  as written, its heights stood again on today's ground. The save also
+  dropped the torches and camps a scene cache held; it keeps them now.
+- **BUILD-FAIL1: a build that throws frees what it made.** A pixel build
+  hands its GPU surfaces, batches, collider bucket and doors to its
+  entry only at publish, so a build that threw first left all of them:
+  invisible walls where no pixel stood, a rebuild that filed every
+  triangle twice, doors still E-targets, leaked GPU memory. Each build
+  keeps a ledger, and the failure frees it with destroyPixel's own
+  calls; an entry already published is destroyPixel's.
+- **WOD6: a region pack that fails every try is not lost.** It is tried
+  again in the background - 5 s after, doubling to a minute, 12 more
+  tries - and never holds a build. The list's order is the law, so a
+  late region is not appended where it lands: the list is built again
+  with every region in the order it was announced, and the pixels the
+  region names that already stand are built again on it (a pixel still
+  building waits until it stands). Online, the room's order holds again
+  for that player. A pick carries its instance's identity, so a build
+  that picked before the swap still places its own sites.
+- **WOD6: the arrival runs in DFU's order** (WOD3, above), where the
+  AUDIT BRANCH had held every Start until the player stood.
 
 ## THE FOUR HOSTS
 

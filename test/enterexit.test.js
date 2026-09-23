@@ -168,11 +168,12 @@ test('the exits and the arrivals stand the player, they do not drop them', () =>
   assert.match(w, /const stand = floorLanding\(collider, \[0, heightAt\(0, 0\) \+ 2, 0\]\);/, 'the first drop-in - FIX-C: DFU\'s Origin reposition, the terrain\'s corner (StreamingWorld.cs:290-292, :1330-1349)');
   // And a saved position is restored as saved - a load or an anchor
   // recall keeps its own y (DFU restores the transform verbatim).
-  assert.match(w, /const ly = \(w\.y \?\? 2\) \+ state\.compensation\[1\];/);
+  // TERRAIN-SCALE1: as saved - on the ground it was saved over; only a save from before the stamp is stood again
+  assert.match(w, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was\) \+ state\.compensation\[1\];/);
   // ROAD A10 MOVED THIS PIN: the anchor arrival folded into ONE helper
   // (anchorLanding) shared by the exterior, dungeon and interior recall
   // arms - the compensated-y law lives on its return now.
-  assert.match(w, /return \[lx, \(a\.y \?\? 2\) \+ state\.compensation\[1\], lz\];/);
+  assert.match(w, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/);
 });
 
 // ── TL1: THE ARRIVAL LOOKS FURTHER FOR ITS FLOOR ──────────────────

@@ -171,9 +171,9 @@ test('WOD2: applyPicks - each pick stands on its own mean, an unsmoothed one on 
   assert.equal(applyPicks(ramp(), [{ flatten: false, rect: r1 }], 0).locationRect, null);
 });
 
-test('WOD2: the object loop - (terrainX * 6.4 + x, average * 2308.5 + y, terrainY * 6.4 + z), invalid objects skipped', () => {
+test('WOD2: the object loop - (terrainX * 6.4 + x, average * 1923.75 + y, terrainY * 6.4 + z), invalid objects skipped', () => {
   assert.equal(WOD_TERRAIN_SIZE_MULTI, f32(6.4));
-  assert.equal(WOD_TERRAIN_HEIGHT_MAX, 2308.5);
+  assert.equal(WOD_TERRAIN_HEIGHT_MAX, 1923.75, 'MaxTerrainHeight * StreamingWorld.TerrainScale - 1539 * 1.25, the game scene\'s (TERRAIN-SCALE1), the author\'s own commented constant');
   const pick = {
     rect: { x: 2, y: 12, width: 3, height: 3 },
     prefab: { obj: [
@@ -184,7 +184,7 @@ test('WOD2: the object loop - (terrainX * 6.4 + x, average * 2308.5 + y, terrain
   };
   const out = placeObjects(pick, 0.1, validateValue);
   assert.equal(out.length, 2, 'ValidateValue drops the bad name');
-  const bx = f32(2 * f32(6.4)), by = f32(0.1 * 2308.5), bz = f32(12 * f32(6.4));
+  const bx = f32(2 * f32(6.4)), by = f32(0.1 * 1923.75), bz = f32(12 * f32(6.4));
   assert.deepEqual(out[0].pos, [f32(bx + f32(3.29)), f32(by + f32(0.598)), f32(bz + f32(10.41))]);
   assert.deepEqual(out[1].pos, [f32(bx + 1), f32(by + 2), f32(bz + 3)]);
 });

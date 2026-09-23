@@ -2,8 +2,8 @@
   {
     "name": "start-spares-a-marker-at-300",
     "file": "src/world/wodSpawner.js",
-    "old": "if (dist <= WOD_STAND_DOWN_RADIUS)",
-    "new": "if (dist < WOD_STAND_DOWN_RADIUS)",
+    "old": "      if (dist <= WOD_STAND_DOWN_RADIUS) { this.active = false; return null; }   // Start, :53-56",
+    "new": "      if (dist < WOD_STAND_DOWN_RADIUS) { this.active = false; return null; }   // Start, :53-56",
     "tests": [
       "test/wod3_spawner.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "the-host-measures-from-the-feet",
     "file": "src/scenes/world.js",
-    "old": "const cx = feet[0], cy = feet[1] + (standing ? player.height / 2 : 0), cz = feet[2];",
-    "new": "const cx = feet[0], cy = feet[1], cz = feet[2];",
+    "old": "cy = arriving ? o[1] : feet[1] + (standing ? player.height / 2 : 0),",
+    "new": "cy = arriving ? o[1] : feet[1],",
     "tests": [
       "test/wod3_spawner.test.js"
     ]

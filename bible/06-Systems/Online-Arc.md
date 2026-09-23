@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6037` read, on one physical line:
+`src/scenes/worldModes.js:6061` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3942` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4068` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:227`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8016,7 +8016,15 @@ The full list is `03-World/World-Of-Daggerfall.md` AUDIT BRANCH; this is its onl
   exceed is by quest foes, which never ride") is left as it stands: its bytes are the deployed relay law
   (`relayversion.test.js`), and what rides still keeps within it. The pool's comment names the placed foes.
 - **M2/m5: a region pack that fails for good.** A pack fetch stalls out after 15 s with no byte and is tried three
-  times. Online the list is every folder in one order; a player whose pack for a region fails every try is warned and
-  plays with that region skipped, so its contested pixels can stand different ground from the room's for the page.
+  times. Online the list is every folder in one order; a player whose pack for a region failed every try played with
+  that region skipped, so its contested pixels could stand different ground from the room's for the page. WOD6 (the
+  same day) tries it again in the background - 5 s after, doubling to a minute, 12 more tries - and lands it in its
+  own place: the list is built again in the room's order, and the pixels it names that already stand are built again,
+  so the player's ground rejoins the room's.
+- **TERRAIN-SCALE1 moves every exterior height** (the game scene's TerrainScale, 1.25, where the port drew 1.5). A peer
+  is drawn at the height it sends, so a tab still on a build from before it shows peers on the new build off its
+  slopes until it reloads - the update notice's case. The one exterior height the relay keeps is a parked team's
+  (`park`, HCC): a record written before it stands at the old height until its owner's client sends it again or it
+  expires (`PARK_TTL_MS`, 72 h). The room's memory (WORLD1) holds keys, not heights. No relay change.
 
 Pins: `test/audit_wod_branch.test.js` (two pools, the world6b rig). No relay change.

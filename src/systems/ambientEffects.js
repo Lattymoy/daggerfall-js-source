@@ -95,7 +95,7 @@ export function presetForExterior(weather, night) {
  *  subscribed per instance at AmbientEffectsPlayer.cs:92-93. The port
  *  has no static events, and the video player can reach none of the
  *  three hosts that own an instance privately (dungeonContext.js:4619,
- *  exterior.js:4155, world.js:11700), so the registry IS that event:
+ *  exterior.js:4157, world.js:11848), so the registry IS that event:
  *  every instance joins on construction and leaves on dispose(). A
  *  mute wired into one host only would leave the rain audible over a
  *  video raised from another. */

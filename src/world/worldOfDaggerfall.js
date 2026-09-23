@@ -134,13 +134,18 @@ export const browserWodSources = Object.freeze({
   },
 });
 
+/** WOD6: a region whose pack failed every try the chain gave it is tried again in the background - 5 s after, then
+ *  doubling to a minute between tries - and given up after this many more. */
+export const WOD_RETRY_MAX = 12;
+const FAILED = Symbol('failed');   // a fetch that failed, as against `null`: a region the mod ships no folder for
+
 export class WodWorld {
   /**
    * @param {{regions:() => number[], pack:(r:number) => Promise<?Uint8Array>,
    *   prefabs:() => Promise<Map<string,?string>>}} sources
-   * @param {{online?:boolean, warn?:(m:string) => void}} [opts]
+   * @param {{online?:boolean, warn?:(m:string) => void, schedule?:(fn:() => void, ms:number) => void}} [opts]
    */
-  constructor(sources, { online = false, warn = (m) => console.warn(m) } = {}) {
+  constructor(sources, { online = false, warn = (m) => console.warn(m), schedule = (fn, ms) => { setTimeout(fn, ms); } } = {}) {
     this.sources = sources;
     this.online = online;
     this.warn = warn;
@@ -153,6 +158,14 @@ export class WodWorld {
     this._opened = null;
     this._awake = false;   // AUDIT BRANCH (WoD) M2: Awake's folder announced - a region heard before it waits
     this._early = [];
+    // WOD6: A REGION THAT FAILED IS NOT LOST. The list's ORDER is the law (the first valid instance naming a pixel
+    // takes it), so a region that lands late is not appended where it lands: the list is built again with every
+    // region in the order it was announced, and the host is told which pixels the region names, to build them again.
+    this._order = [];          // every region announced, in the list's order (the events'; online, 17 then ascending)
+    this._bytes = new Map();   // region -> its pack, once read - what a list rebuilt around a late region is made of
+    this._schedule = schedule;
+    /** @type {?(region:number, pixelKeys:Set<string>) => void} */
+    this.onLate = null;
   }
 
   /** Awake: the prefabs, then region 17 (online: every folder). */
@@ -186,23 +199,63 @@ export class WodWorld {
   _announce(region) {
     if (this._announced.has(region)) return;
     this._announced.add(region);
+    this._order.push(region);   // WOD6
     // Fetch now, append in order: a later region's bytes may land first.
     const bytes = this.sources.pack(region).catch((e) => {
       this.warn(`[wod] region ${region} did not load: ${e?.message ?? e}`);
-      return null;
+      return FAILED;
     });
     this._chain = this._chain.then(async () => {
       const b = await bytes;
+      if (b === FAILED) { this._retryLater(region, 0); return; }   // WOD6: tried again, off the chain
       if (!b) return;
       // AUDIT BRANCH (WoD) n: one decode a task - an online page's 44 packs landed back to back in one block of up
       // to 88 ms; each is at most ~15 ms alone
       await new Promise((r) => setTimeout(r, 0));
       // AUDIT BRANCH (WoD) M2: a pack that will not decode is that region lost, never the chain - a throw here left
       // `_chain` rejected for good, so every later settle() rejected and every pixel build after it failed
-      try { this.session.appendRegion(region, decodeRegionPack(b)); } catch (e) {
+      try { this.session.appendRegion(region, decodeRegionPack(b)); this._bytes.set(region, b); } catch (e) {
         this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);
+        this._retryLater(region, 0);   // WOD6: a body that would not read may be a proxy's page, not the pack
       }
     });
+  }
+
+  /** WOD6: the next background try for a region that failed - the fetch runs OFF the chain, so no build waits on it,
+   *  and only the landing joins it, ordered after every append already announced. */
+  _retryLater(region, tries) {
+    if (tries >= WOD_RETRY_MAX) {
+      this.warn(`[wod] region ${region} gave up after ${tries} more tries - its sites stay unstood for this page`);
+      return;
+    }
+    this._schedule(() => {
+      this.sources.pack(region).then(
+        (b) => { if (b) this._chain = this._chain.then(() => this._landLate(region, b, tries + 1)); },
+        () => this._retryLater(region, tries + 1));
+    }, Math.min(60000, 5000 * 2 ** tries));
+  }
+
+  /** WOD6: a late region lands - the list built again in its order, the host told what the region names. */
+  async _landLate(region, b, tries) {
+    let pack;
+    try { pack = decodeRegionPack(b); } catch (e) {
+      this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);
+      this._retryLater(region, tries);
+      return;
+    }
+    this._bytes.set(region, b);
+    const session = new LocationSession();
+    for (const r of this._order) {
+      const rb = this._bytes.get(r);
+      if (!rb) continue;
+      await new Promise((res) => setTimeout(res, 0));   // one decode a task, as the first landing
+      session.appendRegion(r, r === region ? pack : decodeRegionPack(rb));
+    }
+    this.session = session;   // swapped whole: a pick reads one list or the other, never half of one
+    const keys = new Set();
+    for (let i = 0; i < pack.count; i++) keys.add(`${pack.worldX[i]},${pack.worldY[i]}`);
+    this.warn(`[wod] region ${region} landed late - the list is in its order again (${keys.size} pixel(s) named)`);
+    this.onLate?.(region, keys);
   }
 
   /**
@@ -231,7 +284,11 @@ export class WodWorld {
    * @param {?(x:number, y:number) => number} pathsPoint
    */
   picksFor(tile, pathsPoint = null) {
-    return pickLocations(tile, this.session, (name) => this.prefabs.get(name) ?? null, pathsPoint);
+    // WOD6: a late landing swaps the list whole, and a build awaits between its pick and its placements - the
+    // instance's identity is read here, from the list the pick came from, never through its index into a newer one
+    const session = this.session;
+    return pickLocations(tile, session, (name) => this.prefabs.get(name) ?? null, pathsPoint)
+      .map((pick) => ({ ...pick, locationID: session.locationID[pick.index] }));
   }
 
   /**
@@ -263,7 +320,7 @@ export class WodWorld {
         for (const s of c.spawners) {
           out.spawners.push({
             ...s, archive: c.archive, record: c.record, base: pos, scaleY: obj.scale.y, treasure: c.treasure,
-            locationID: this.session.locationID[pick.index], objectID: obj.objectID,
+            locationID: pick.locationID, objectID: obj.objectID,
           });
         }
       }

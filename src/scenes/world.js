@@ -248,7 +248,7 @@ import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.Wa
 import { WAGON_KG_LIMIT } from '../systems/itemTransfer.js';   // HCC: ItemHelper.WagonKgLimit
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
+import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, ghostSampler } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water   // EV4: ghost rows for chunk-edge normals (the restride's own)
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
 // law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
@@ -608,6 +608,31 @@ export async function bootWorld(canvas, renderer, params, status) {
   const wodOpened = wod
     ? wod.open().then(() => true, (e) => { console.warn(`[wod] World of Daggerfall did not open: ${e?.message ?? e}`); return false; })
     : Promise.resolve(false);
+  // WOD6: a region whose pack landed late (worldOfDaggerfall.js _landLate) - the list is in its order again, and the
+  // pixels it names that already stand are built again on it, between builds (sweepWodLate, the roads sweep's shape).
+  // A pixel still building took its picks from the old list, so it waits here until it stands.
+  const _wodLate = new Set();
+  if (wod) wod.onLate = (region, keys) => { for (const k of keys) _wodLate.add(k); };
+  function sweepWodLate() {
+    const again = [];
+    for (const k of _wodLate) {
+      const p = built.get(k);
+      if (p) { again.push({ px: p.px, py: p.py }); _wodLate.delete(k); }
+      else if (!inFlight.has(k)) _wodLate.delete(k);   // not standing: it builds on the list as it is now
+    }
+    if (!again.length) return;
+    const under = `${state.current.x},${state.current.y}`;
+    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
+    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });   // a rebuild the reference never makes: the carry keeps the markers
+    queue.push(...again.sort((p, q) => {
+      const ca = Math.max(Math.abs(p.px - state.current.x), Math.abs(p.py - state.current.y));
+      const cb = Math.max(Math.abs(q.px - state.current.x), Math.abs(q.py - state.current.y));
+      if (ca !== cb) return ca - cb;
+      return ((p.px - state.current.x) ** 2 + (p.py - state.current.y) ** 2)
+        - ((q.px - state.current.x) ** 2 + (q.py - state.current.y) ** 2);
+    }));
+    console.log(`[wod] ${again.length} pixel(s) named by a region that landed late - built again on the list in its order`);
+  }
   // LocationLoader.cs:146-151 asks the Basic Roads MOD for the pixel's
   // road|track mask - so only Hazelnut's own arrays answer; the port's
   // generated fallback is not his mod, and with it the static stays 0.
@@ -951,7 +976,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     (_personTexLoad ??= Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a)))));
 
   // --- Per-pixel build --------------------------------------------------
-  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // TERRAIN-SCALE1: the game scene's
   const tileSide = TERRAIN_SIZE / 128;
   const built = new Map(); // key -> pixel entry
 
@@ -1065,6 +1090,32 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _wodSiteWas = new Set();   // AUDIT BRANCH (WoD) m2: pixels torn down for a rebuild while a site levelled them
   const _wodT = [0, 0, 0];
   const _DOWN = [0, -1, 0];
+  // WOD6: THE ARRIVAL'S OWN ORDER, AS DFU RUNS IT. InitWorld stands the
+  // player at the scene origin (StreamingWorld.cs:576-578) and moves it
+  // only once every tile round it has promoted (:258-295); the markers
+  // those promotions make meet Start the next frame, so every marker of
+  // an arrival's first grid measures its Start - and every Update until
+  // the player lands - from Vector3.zero. A travel raises nothing more,
+  // so a camp at the arrival is still live when the player lands and
+  // springs on the first steps. A load raises SaveLoadManager.OnLoad
+  // last: every marker whose Start has run deactivates within 300 of the
+  // loaded player (CheckPlayerDistance_OnLoad, LocationEnemySpawner.cs
+  // :69-82), and one whose Start comes later hears it as its Start runs.
+  // `origin` and `loadAt` ride the floating origin like any world point.
+  let _wodArrival = { keys: new Set(), origin: [0, 0, 0], loadAt: null };
+  const wodArrivalOf = (list) => ({ keys: new Set(list.map((p) => `${p.px},${p.py}`)), origin: [0, 0, 0], loadAt: null });
+  /** WOD6: SaveLoadManager.OnLoad, heard by every standing marker that has run Start. */
+  function wodOnLoad(centre) {
+    if (!wod) return;
+    _wodArrival.loadAt = [centre[0], centre[1], centre[2]];
+    for (const p of built.values()) {
+      if (!p.wodSpawners) continue;
+      const t = state.pixelTranslation(p.px, p.py, _wodT);
+      for (const w of p.wodSpawners) {
+        if (w.spawner.started) w.spawner.onLoad(Math.hypot(w.centre[0] + t[0] - centre[0], w.centre[1] + t[1] - centre[1], w.centre[2] + t[2] - centre[2]));
+      }
+    }
+  }
   /** L1-3: the pixel's site, as the pooled terrain keeps it. */
   function carryWodSite(p, key, { hold = null, piles = [] } = {}) {
     const spawners = new Map();
@@ -1099,26 +1150,34 @@ export async function bootWorld(canvas, renderer, params, status) {
     return { life: carried.life, piles: carried.piles };
   }
   const tickWodSpawners = () => {
-    // AUDIT BRANCH (WoD) m3: no marker meets its Start while an arrival is
-    // under way - the player still stands where it left, in a frame the
-    // sweep has just re-anchored. The season's straightening latch is up
-    // from an arrival's first statement until its destination has built
-    // (a `finally`, so a throw drops it too), and nothing is awaited
-    // between that and the player standing; a load or a recall lands it last
-    if (!wod || _seasonStraightening || _loading || _recalling) return;
+    if (!wod) return;
+    // AUDIT BRANCH (WoD) m3 / WOD6: while an arrival is under way the port's
+    // player still stands where it left, in a frame the sweep has just
+    // re-anchored - and DFU's stands at the scene origin (above). The
+    // season's straightening latch is up from an arrival's first statement
+    // until its destination has built (a `finally`, so a throw drops it
+    // too), nothing is awaited between that and the player standing, and a
+    // load or a recall lands the player last.
+    const arriving = _seasonStraightening || _loading || _recalling;
+    const o = _wodArrival.origin;
     const standing = walkMode && playerSpawned;
     const feet = standing ? player.pos : cam.pos;
-    const cx = feet[0], cy = feet[1] + (standing ? player.height / 2 : 0), cz = feet[2];
+    const cx = arriving ? o[0] : feet[0], cy = arriving ? o[1] : feet[1] + (standing ? player.height / 2 : 0), cz = arriving ? o[2] : feet[2];
     for (const p of built.values()) {
       if (p.privateersHold && !p.privateersHold.state.rolled) standHold(p);   // WOD4: DungeonExterior.Update finds the block; PrivateersHold.Start runs
       if (!p.wodSpawners) continue;
       const t = state.pixelTranslation(p.px, p.py, _wodT);
+      const init = _wodArrival.keys.has(`${p.px},${p.py}`);
       for (const w of p.wodSpawners) {
         if (w.restand) { w.restand = false; standWodAction(p, w, w.flat); }   // WOD5: the captive stands again on the rebuilt pixel
         if (!w.spawner.active) continue;
         const x = w.centre[0] + t[0], y = w.centre[1] + t[1], z = w.centre[2] + t[2];
-        const act = w.spawner.tick(Math.hypot(x - cx, y - cy, z - cz));
+        // WOD6: a marker of the arrival's first grid meets Start from the origin, then the load's OnLoad
+        const first = init && !w.spawner.started;
+        const act = w.spawner.tick(first ? Math.hypot(x - o[0], y - o[1], z - o[2]) : Math.hypot(x - cx, y - cy, z - cz));
         if (act) standWodAction(p, w, act, x, y, z);
+        const l = _wodArrival.loadAt;
+        if (first && l) w.spawner.onLoad(Math.hypot(x - l[0], y - l[1], z - l[2]));
       }
     }
   };
@@ -1264,6 +1323,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     return surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1) + t[1];
   };
   const collider = new Collider(heightAt, surfaceAt);
+  // TERRAIN-SCALE1: A HEIGHT WRITTEN UNDER ANOTHER TERRAIN SCALE, STOOD
+  // AGAIN ON TODAY'S GROUND. Every exterior height a save (or a scene
+  // cache, or an anchor) carries is compensation-free and stood on
+  // ground drawn at the scale it was written under - the prefab's 1.5
+  // for anything written before the game scene's 1.25 was found. The
+  // terrain is linear in the scale (sample * 1539 * scale, a location's
+  // levelled ground included), so a point `off` above the ground it was
+  // measured on keeps its `off`:
+  //     y' = y - ground'(x, z) * (was / now - 1)
+  // exact for a body on a hillside, a pile on a floor, a player on a
+  // roof or up a tower's stair, wherever the ground under (x, z) is
+  // built. Where it is not yet, the ratio stands in (y * now / was),
+  // exact for anything that stood ON its ground and a sixth of any
+  // height above it off. (x, z) are scene coordinates; `was` absent or
+  // equal to today's scale is today's ground, untouched.
+  const restandHeight = (y, x, z, was) => {
+    if (!(was > 0) || was === STREAMING_TERRAIN_SCALE || !Number.isFinite(y)) return y;
+    const h = heightAt(x, z);
+    if (Number.isFinite(h)) return y - (h - state.compensation[1]) * (was / STREAMING_TERRAIN_SCALE - 1);
+    return y * (STREAMING_TERRAIN_SCALE / was);
+  };
+  /** TERRAIN-SCALE1: the scale a record without its own stamp was written on - the prefab's, before the stamp. */
+  const scaleOf = (stamp) => (stamp > 0 ? stamp : DEFAULT_TERRAIN_SCALE);
   // Building doors (P3): registered pixel-local at build, activated
   // against the live translation; each carries what the transition
   // needs (its block + building record + sibling exterior doors).
@@ -1339,15 +1421,50 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (built.has(key)) return built.get(key);
     let flying = inFlight.get(key);
     if (flying) return flying;
-    flying = buildPixelNow(px, py).finally(() => inFlight.delete(key));
+    flying = buildPixelNow(px, py)
+      .catch((e) => { releaseFailedBuild(key); throw e; })   // BUILD-FAIL1
+      .finally(() => inFlight.delete(key));
     inFlight.set(key, flying);
     return flying;
+  }
+  // BUILD-FAIL1: WHAT A BUILD THAT THROWS LEAVES BEHIND. A build makes
+  // things that outlive it - GPU surfaces and batches, its collider
+  // bucket and its gates', its doors in the E-target list - and it hands
+  // them to its `built` entry only at publish, so destroyPixel (which
+  // reads that entry) never met a build that threw first. The collider
+  // kept the half-filled bucket: invisible walls where no pixel stood,
+  // and a rebuild APPENDED to it, every triangle twice. Each build keeps
+  // a ledger of what it has made (`_building`), and the catch above
+  // frees it with destroyPixel's own calls, unless the entry was
+  // already published (then it is destroyPixel's to free).
+  const _building = new Map();   // pixel key -> { terrain, water, tilemapTex, staticBatch, batches, personBatches, windmills, cityGates }
+  function releaseFailedBuild(key) {
+    const m = _building.get(key);
+    _building.delete(key);
+    if (built.has(key)) return;
+    if (m) {
+      if (m.water) renderer.destroyWaterSurface(m.water);
+      if (m.terrain) renderer.destroyMesh(m.terrain);
+      if (m.staticBatch) renderer.destroyMesh(m.staticBatch);
+      if (m.tilemapTex) renderer.gl.deleteTexture(m.tilemapTex);
+      for (const b of m.batches ?? []) renderer.destroyBatch(b);
+      for (const w of m.windmills ?? []) { w.hum?.stop(); w.hum = null; }
+      if (m.personBatches) for (const b of m.personBatches.values()) renderer.destroyBatch(b);
+      // a gate's bucket goes in a step before its record does, so the one past the last record goes too
+      for (let i = 0; i <= (m.cityGates?.length ?? 0); i++) collider.removeBucket(`${key}:gate:${i}`);
+    }
+    collider.removeBucket(key);
+    for (let i = buildingDoors.length - 1; i >= 0; i--) {
+      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }
+    }
   }
 
   const breather = createBreather();   // PERF7: one slice clock for the stream; each build resets it
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
     breather.reset();   // PERF7
     const key = `${px},${py}`;
+    const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry
+    _building.set(key, made);
     const dfLocation = locationIndex.get(key) || spawnedDungeonAt(px, py) || null;   // SPAWNED-DUNGEONS1: an empty pixel may stand one
     // EV7: the LOCATION half stays here - setLocationTiles reads
     // BlocksFile + MapsFile, file objects that do not cross a
@@ -1440,6 +1557,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // vertices - null for a pixel without water, which never enters the pass
     const waterIndices = waterOn ? buildWaterIndices(tilemapBytes, stride) : null;
     const water = waterIndices ? renderer.createWaterSurface(terrain, waterIndices) : null;
+    made.terrain = terrain; made.water = water;   // BUILD-FAIL1
     // EV3: the pixel's presentation bounds, pixel-local - seeded by the
     // terrain's own vertices, grown by every model and flat batch below.
     // EV4: dropped by the skirt depth so a future restride to the far
@@ -1453,6 +1571,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     };
     const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
+    made.tilemapTex = tilemapTex;   // BUILD-FAIL1
 
     // Flat groups: pixel-local base positions.
     const groups = new Map();
@@ -1492,10 +1611,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     const staticBuilder = new StaticBatchBuilder();
     const resolveTexKey = keyResolver(texRemap);
     const pixelGates = [];   // AUDIT 64 F14: {gate, entry, local, bucketKey} - this pixel's DaggerfallCityGates
+    made.cityGates = pixelGates;   // BUILD-FAIL1
     // AUDIT 64 F11: this pixel's StaticBuildings (RMBLayout.cs:864-882),
     // pixel-local like its doors, boards and street NPCs.
     const pixelBuildings = [];
     const windmills = []; // WM2b: { local, state } - mills whose rotor turns each frame
+    made.windmills = windmills;   // BUILD-FAIL1
     const holdBlocks = [];   // WOD4: the origin matrix of each block DungeonExterior would find by name
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
@@ -1739,6 +1860,7 @@ export async function bootWorld(canvas, renderer, params, status) {
             (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
         }
         personBatches = new Map();   // person -> batch (destroyed with the pixel)
+        made.personBatches = personBatches;   // BUILD-FAIL1
         const personCollider = {
           // location-frame raycast through the live world collider
           raycast: (from, dir, l) => {
@@ -1895,6 +2017,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const seasonsGen = seasons?.generation ?? 0;   // AUDIT 61: the install the lookups below read - not the one standing at publish
     const flatAnims = new FlatAnimator();   // FA1
     const batches = [];
+    made.batches = batches;   // BUILD-FAIL1
     for (const [k, centers] of groups) {
       const [archive, record] = k.split('_').map(Number);
       const t = await getTexture(archive);
@@ -1970,6 +2093,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     models.sort((a, b) => a._order - b._order);
     const staticMerged = staticBuilder.finish();   // PERF4
     const staticBatch = staticMerged ? renderer.createMesh(staticMerged) : null;
+    made.staticBatch = staticBatch;   // BUILD-FAIL1
 
     // AUDIT-TO1 B3: StreamingWorld.OnUpdateLocationGameObject
     // (TravelOptionsMod.cs:384, handler :438-445) - the mod re-reads the
@@ -1981,6 +2105,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // cleared it, so a stale roll never stands in the new world.
     const wodKept = adoptWodCarry(key, wodSpawners, privateersHold);
     const wodLife = wodKept.life ?? {};   // L1-3: this terrain's identity - kept across a rebuild or a pool, new on a promote
+    if (_building.get(key) === made) _building.delete(key);   // BUILD-FAIL1: the entry owns them from here
     built.set(key, {
       staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
       // AUDIT-TO1 B2: DaggerfallTerrain.MapData.locationRect - the tile
@@ -2290,6 +2415,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const state = new StreamingWorldState(fogDistance);   // LV1: the one read above - DFU's setting on the 1:1 lane, the Enhanced pane's Land view distance on the enhanced
   const queue = state.init(startPixel.x, startPixel.y);
   if (wod) wodSlots.step(startPixel.x, startPixel.y, state.terrainDistance, StreamingWorldState.onMap);   // AUDIT BRANCH (WoD) L1-3: the first UpdateWorld
+  _wodArrival = wodArrivalOf(queue);   // WOD6: the first world is an InitWorld too
   let building = false;
 
   // A1: THE SEASON TURNS UNDER A STANDING WORLD.
@@ -4045,7 +4171,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2430 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5551
+  // that context through modes.dungeonCtx - so worldModes.js:5575
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4949,7 +5075,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  exterior origin slides the pixel a step west on any negative local
    *  x and a step south on any negative local z - one block off the
    *  start of Privateer's Hold is enough. That is what made Recall's
-   *  IsSameInterior dungeon arm (teleportAnchor.js:161-164) unable to
+   *  IsSameInterior dungeon arm (teleportAnchor.js:163-166) unable to
    *  answer true against an anchor set in the room the player is
    *  standing in: setRecallAnchor already took the streamer's pixel
    *  (:2777) and this read did not. The streamer is frozen while a mode
@@ -5170,6 +5296,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.length = 0;
     queue.push(...state.init(px, py));
     if (wod) wodSlots.step(px, py, state.terrainDistance, StreamingWorldState.onMap);   // AUDIT BRANCH (WoD) L1-3: InitWorld's first UpdateWorld
+    _wodArrival = wodArrivalOf(queue);   // WOD6: this arrival's first grid, its player at the new frame's origin
     // AUDIT-WH P9: THE CACHE'S INVALIDATION, STATED. `state.init`
     // re-anchors the floating origin by up to 32,768 units and returns
     // no offset, so the recenter bump at the frame's end cannot see
@@ -5367,6 +5494,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       lootContainers: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))
         .map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: sp.y - state.compensation[1] })),
       droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),
+      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground these heights stand on
     });
   }
   /** A scene never cached answers null and the arrival stands as the
@@ -5374,9 +5502,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   function restoreExteriorScene(pixel) {
     const arrived = restoreCachedScene(_sceneCache(), worldSceneName(pixel.x, pixel.y));
     if (!arrived) return false;
-    droppedLoot.restoreWorld(arrived.lootContainers,
+    // TERRAIN-SCALE1: an entry a save carried from before the stamp stood on the prefab's 1.5 - stood again on today's
+    // ground, which the arrival has just built
+    const was = scaleOf(arrived.terrainScale);
+    const restand = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };
+    droppedLoot.restoreWorld(arrived.lootContainers.map((c) => ({ ...c, y: restand(c.nativeX, c.nativeZ, c.y) })),
       (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
-    droppedTorches.restore(arrived.droppedTorches, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
+    droppedTorches.restore(arrived.droppedTorches.map((t) => { const p = t.position; return { ...t, position: [p[0], restand(p[0], p[2], p[1]), p[2]] }; }), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
     // AUDIT SURV B: no camps here - the pool never lost them (the sweep spares a placed camp), and a cache entry
     // written before a tent was packed would have stood it again
     return true;
@@ -5490,6 +5622,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // So there is no restore call here and no compensation on the
       // anchor - see makeAnchor's note, which is where the law lives.
       y: pf[1] - state.compensation[1],
+      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on
       local: inside.local,
       yaw: cam.yaw, pitch: cam.pitch,
       buildingKey: inside.buildingKey,
@@ -5512,7 +5645,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const anchorLanding = (a) => {
     if (a.insideDungeon && a.local) return [...a.local];
     const [lx, lz] = state.localFromWorld(a.nativeX, a.nativeZ);
-    return [lx, (a.y ?? 2) + state.compensation[1], lz];
+    return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];   // TERRAIN-SCALE1: an anchor set before the stamp stood on the prefab's 1.5
   };
 
   let _recalling = false;
@@ -6235,8 +6368,18 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (extras.locationKey === 'world' && extras.world?.pixel) {
         const w = extras.world;
         await _teleportToPixel(w.pixel.x, w.pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
+        // TERRAIN-SCALE1: every height below stood on ground drawn at the
+        // save's own scale; each is stood again on today's (restandHeight -
+        // exact over the arrival pixel, which is built by now, and over the
+        // building an inside save re-enters)
+        const was = scaleOf(extras.terrainScale);
+        const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };
+        // a list the envelope does not carry passes through as it came, and a record without its position is the restore's to refuse
+        const restandRows = (rows) => (was === STREAMING_TERRAIN_SCALE || !Array.isArray(rows) ? rows : rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r)));
+        const restandAt = (key) => (rows) => (was === STREAMING_TERRAIN_SCALE || !Array.isArray(rows) ? rows : rows.map((r) => { const p = r?.[key]; return Array.isArray(p) ? { ...r, [key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]] } : r; }));
+        if (extras.interior) { extras.interior.foes = restandRows(extras.interior.foes); extras.interior.guards = restandRows(extras.interior.guards); }
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
-        const ly = (w.y ?? 2) + state.compensation[1];
+        const ly = restandHeight(w.y ?? 2, lx, lz, was) + state.compensation[1];
         // IS1: an inside save re-enters its building BEFORE the player
         // lands - the Respawner's building arm (PlayerEnterExit
         // .cs:559-567) with RestorePosition landing the saved
@@ -6266,9 +6409,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         // P2-slice (items-2): the teleport's teardown collected every
         // live pile (the reference's sweep); the envelope re-mints the
         // saved ones at their native spots.
-        droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
-        droppedTorches.restore(w.droppedTorches, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
-        camps.restore(w.camps, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // SURV3
+        droppedLoot.restoreWorld(restandRows(w.piles), (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        droppedTorches.restore(restandAt('position')(w.droppedTorches), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
+        camps.restore(restandAt('pos')(w.camps), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // SURV3
         // F216/F217: the pools re-mint through their one spawn chain,
         // then overlay the saved truth (SerializableEnemy's own
         // rebuild-then-set shape). Async behind the art; the teleport
@@ -6280,9 +6423,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // while its task ticked forever. SerializableEnemy.cs:206-217
         // is one law for every context: re-add the behaviour, restore
         // it, and drop it again when the record names no quest.
-        exteriorFoes.restoreWorld(w.foes, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1],
+        exteriorFoes.restoreWorld(restandRows(w.foes), (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1],
           { reviveQuestBehaviour: _reviveQuestBehaviour });
-        cityGuards.restoreWorld(w.guards, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        cityGuards.restoreWorld(restandRows(w.guards), (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
+        // WOD6: SaveLoadManager.OnLoad, raised last - the markers hear it at the loaded player's centre
+        { const s = walkMode && playerSpawned; const f = s ? player.pos : cam.pos; wodOnLoad([f[0], f[1] + (s ? player.height / 2 : 0), f[2]]); }
       } else if (String(extras.locationKey ?? '').startsWith('dungeon:')) {
         // MAC6 #1 (Mac, 2026-09-12: "When playing online it doesnt place
         // you where you last saved"): a save taken INSIDE a dungeon - the
@@ -6477,6 +6622,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const ly = walkMode ? floorLanding(collider, raw)[1] : raw[1];
       if (walkMode) { player.spawn(lx, ly, lz); playerSpawned = true; }
       cam.pos = [lx, ly + (walkMode ? 0 : 40), lz];
+      wodOnLoad(walkMode ? [lx, ly + player.height / 2, lz] : cam.pos);   // WOD6: StartFromClassicSave raises OnLoad too
     }
     applyPose(bundle.snap.pose);
     _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // no spawn catch-up across a load
@@ -8018,7 +8164,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8660-8724 -
+  // worldModes answers it in BOTH modes (worldModes.js:8684-8748 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -11130,6 +11276,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
+    // TERRAIN-SCALE1: a raw scene height - the interior cache's legacy frame - stood again on today's ground
+    restandSceneHeight: (y, x, z, was) => restandHeight(y - state.compensation[1], x, z, was) + state.compensation[1],
     // PARTY-REST2: shared with this host's own outdoor toggleRest and dungeonContext.js's - see partyRestGate's doc comment.
     partyRestGate: () => partyRestGate(),
     // PARTY-REST28: shared with this host's own outdoor toggleRest and dungeonContext.js's, forwarded the same
@@ -12695,6 +12843,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       camps.offsetAll(r.offset);   // SURV3: and the camps
       hcc.offsetAll(r.offset);   // HCC: FloatingOrigin.OnPositionUpdate - every scene point the runtime holds, the peers' teams, the parked wagon's collider
       hitEffects.offsetAll(r.offset);   // AUDIT 24 (wave 39): a splash mid-animation follows the origin too
+      for (const q of [_wodArrival.origin, _wodArrival.loadAt]) if (q) { q[0] += r.offset[0]; q[1] += r.offset[1]; q[2] += r.offset[2]; }   // WOD6
       // AUDIT 18: this line used to be an optional call to a method
       // ArrowFlight has never had, so it was swallowed every time and
       // every in-flight arrow was stranded 819.2 units behind.
@@ -12752,6 +12901,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       for (const u of r.unload) {
         destroyPixel(u.px, u.py);
         state.release(u.px, u.py);
+        _wodArrival.keys.delete(`${u.px},${u.py}`);   // WOD6: promoted again, it is no longer the arrival's
       }
       // EV4: surviving pixels whose ring class changed with the walk
       // swap their terrain surface (full-res core <-> strided far ring).
@@ -12828,6 +12978,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the location's own Update, which is the same place.
     tickSeason();
     if (roadsSweepDue && !building) { roadsSweepDue = false; sweepRoadless(); }   // FIX-C: the roads sweep, on the frame, between builds
+    if (_wodLate.size && !building) sweepWodLate();   // WOD6: a late region's pixels, the same way
     if (seasonsActive) seasons.tick();   // SIB1: RefreshSeasonAfterLoad's second half, the frame after a load
     // W1/S41: the DRAIN ticks on the exterior frame, which is
     // WeatherManager.Update's own shape - it returns while the player
@@ -13497,8 +13648,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // keep()/ground() closures below only capture the near pieces and
       // cost nothing to rebuild; the cells they answer for are the ones
       // being filled this frame.
-      const sea = SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE + 0.5;
-      const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+      const sea = SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE + 0.5;
+      const scale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
       // PERF10 (2026-09-19, Mac: "further out in the wilderniss it loaded
       // many chunks and grass the performance still degrades"): THE
       // INDEX IS BUILT ONLY WHEN A CELL IS ACTUALLY FILLED. `near` spread

@@ -65,6 +65,16 @@ export class WodSpawner {
   }
 
   /**
+   * WOD6: CheckPlayerDistance_OnLoad (:69-82) - SaveLoadManager.OnLoad, which Start subscribed this marker to, raised
+   * last in a load: within Start's own 300 of the loaded player the marker deactivates. Nothing else - it neither
+   * springs nor finishes, and an inactive marker hears it too (the handler is a plain C# event, not an Update).
+   * @param {number} dist
+   */
+  onLoad(dist) {
+    if (dist <= WOD_STAND_DOWN_RADIUS) this.active = false;
+  }
+
+  /**
    * One frame for the marker, at `dist` from the player (Vector3.Distance
    * of PlayerMotor's transform and the marker's). Answers null, or one
    * action: `{ kind: 'foe', mobileType, hostile, allied, gender, yawDeg }`,

@@ -25,7 +25,7 @@
 //                      seam against the neighbour stays closed) is lerped
 //                      toward it by 1 / (distance-from-rect + 1).
 //   placeObjects     - the object loop (:232-252): each valid object at
-//                      (terrainX * 6.4 + pos.x, avg * 2308.5 + pos.y,
+//                      (terrainX * 6.4 + pos.x, avg * 1923.75 + pos.y,
 //                      terrainY * 6.4 + pos.z), tile-local.
 //
 // Two readings are taken on purpose and recorded in
@@ -41,7 +41,7 @@
 // import it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE } from './terrainSampler.js';
+import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from './terrainSampler.js';
 
 /** LocationLoader.cs:14 - the tile's heightmap span in samples. */
 export const WOD_TERRAIN_SIZE = 128;
@@ -49,11 +49,10 @@ export const WOD_TERRAIN_SIZE = 128;
 export const WOD_TERRAIN_PIXEL_SIZE = Math.fround(819.2);
 /** :21 - TERRAIN_SIZE_MULTI = TERRAINPIXELSIZE / TERRAIN_SIZE, a C# float. */
 export const WOD_TERRAIN_SIZE_MULTI = Math.fround(WOD_TERRAIN_PIXEL_SIZE / WOD_TERRAIN_SIZE);
-/** :15-17 - MaxTerrainHeight * StreamingWorld.TerrainScale: the port's terrain scale (1539 * 1.5, TerrainHelper
- *  .defaultTerrainScale), so a site levels to the ground the port draws. AUDIT BRANCH (WoD) L1-1: DFU's game scene
- *  sets the StreamingWorld's TerrainScale to 1.25 (DaggerfallUnityGame.unity) - 1923.75 here, the value the
- *  author's own commented-out constant (:18) names - a port-wide difference the World-Of-Daggerfall page records. */
-export const WOD_TERRAIN_HEIGHT_MAX = Math.fround(MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE);
+/** :15-17 - MaxTerrainHeight * StreamingWorld.TerrainScale, read at run time: 1539 * 1.25 = 1923.75 in the game
+ *  scene (terrainSampler.js STREAMING_TERRAIN_SCALE, TERRAIN-SCALE1) - the value the author's own commented-out
+ *  constant (:18) names. */
+export const WOD_TERRAIN_HEIGHT_MAX = Math.fround(MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);
 /** :53 - the folder Awake loads before any region event: the title
  *  screen stands in the Daggerfall region, and PlayerGPS.Start seeds its
  *  lastRegionIndex with it, so no event would ever name 17 first. */

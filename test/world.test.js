@@ -387,7 +387,7 @@ test('world: R9 tilemap conversion - verbatim UpdateTileMapDataJob', async () =>
   assert.deepEqual([...convertTilemap(new Uint8Array([254]))], [251]);
   // Grid shape + corner-height law match the retired quad path: corner
   // (x, z) samples data[x * hDim + z] * MAX_TERRAIN_HEIGHT * scale.
-  const { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE } =
+  const { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } =
     await import('../src/world/terrainSampler.js');
   const hDim = HEIGHTMAP_DIMENSION;
   const samples = new Float32Array(hDim * hDim);
@@ -396,7 +396,7 @@ test('world: R9 tilemap conversion - verbatim UpdateTileMapDataJob', async () =>
   assert.equal(grid.positions.length, hDim * hDim * 3);
   const vi = (7 * hDim + 5) * 3; // vertex (x=5, z=7), rows are z
   approx(grid.positions[vi], 5 * 6.4);
-  approx(grid.positions[vi + 1], 0.25 * MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE);
+  approx(grid.positions[vi + 1], 0.25 * MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);
   approx(grid.positions[vi + 2], 7 * 6.4);
   // Shared indices: two triangles per cell on the (x,z)->(x+1,z+1)
   // diagonal, matching the retired tessellation.

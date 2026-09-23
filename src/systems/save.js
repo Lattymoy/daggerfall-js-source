@@ -38,6 +38,7 @@ import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership bo
 import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from './characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
+import { STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
 import { respawnHealth, reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
@@ -246,7 +247,11 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // loaded mod beside the game's own), keyed by the mod's vendor name and opaque here like `world`. It rides EVERY
   // save wherever it is taken: Horse Cart and Cargo's record rode the world half alone, so a dungeon save - the
   // online page's close-the-tab save included - carried no horse, no name and no parked wagon.
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData };
+  // TERRAIN-SCALE1: every exterior height in this envelope - the player's, the piles', the pools', the anchor's -
+  // stands on ground drawn at this terrain scale. A save without the stamp was written on the prefab's 1.5, and the
+  // world host re-stands its heights on today's ground as it lands them (world.js restandHeight). Additive: SAVE_VERSION
+  // does not move, and an older build ignores the field.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -832,7 +837,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   if (sharedClockOn()) alignSurvival(entity, Math.floor(worldMinutes()), Math.floor(snap.classicMinutes ?? 0));   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)
   // AUDIT 39: the three extras above ride back out too - a save from
   // before they were carried reads the same null/0 they used to.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null };
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5
 }
 
 /** CASTLE1 (2026-09-22, the same report's "(different dungeon - world

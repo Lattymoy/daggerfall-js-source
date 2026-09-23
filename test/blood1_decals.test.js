@@ -3012,7 +3012,7 @@ import { Collider } from '../src/player/collider.js';
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 
 test('MAC-BUG W5: the ground outside is heightAt, and surfaceHit is the ray that knows it', () => {
-  // exterior.js:544 - `new Collider(() => GROUND_OFFSET * 0.025)`,
+  // exterior.js:545 - `new Collider(() => GROUND_OFFSET * 0.025)`,
   // and not one triangle under the player's feet.
   const outside = new Collider(() => 0);
   assert.equal(outside.raycastHit([0, 2, 0], [0, -1, 0], 8).dist, Infinity,
