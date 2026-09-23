@@ -8,14 +8,23 @@
 // STORAGE rides: a player's items are their own client's, and a peer's wagon is a thing to see and walk around,
 // not to open.
 //
+// AN OWNER'S WORD NEEDS ITS OWNER (AUDIT HCC O10, recorded, not a defect of this record): the word rides the
+// owner's own foes frame, so a team stands for the others while its owner is in the cell room to say it. An owner
+// who goes indoors (every door is a room of its own - WORLD6a), travels, dies or leaves takes it with them, as their
+// camps and their foes go (the sweep, clearPuppets). A parked wagon that outlived its owner's presence would be a
+// cell's own MEMORY on the relay, which cell rooms do not keep; the Enabled note says what this law shows.
+//
 // The record is what the presentation shows, not the save: the WAGON shown (kind, base position, rotation as
-// Unity spells it, cargo tier, wheel angle) and the HORSE shown (base position, horizontal forward, walk frame,
-// walking), plus the horse's name. Positions are in the wire frame (natives, the compensation-free height) as
+// Unity spells it, cargo tier, wheel angle) and the HORSE shown (base position, horizontal forward, walking), plus
+// the horse's name. The walk FRAME does not ride (AUDIT HCC O5): the stride is the reader's own
+// HorseWalkAnimationState over the pace it shows - a frame on the wire turned a standing horse's idle flicker into
+// a word twice a second, forever, to everyone in range. The NAME rides through the wire's label door
+// (sanitizeLabel: printable ASCII, the name filter - AUDIT HCC O4), as a player's name and a party's place do. Positions are in the wire frame (natives, the compensation-free height) as
 // every cell object's are; a reader converts at landing and every frame after (the floating origin, AUDIT
 // ONLINE D5). The orientation the horse billboard shows is the READER's camera's, computed there
 // (horseCartLaw calculateHorseOrientation) - a sprite faces whoever looks at it.
-import { POSE_BOUND, POSE_Y_BOUND } from '../net/wire.js';
-import { normalizeHorseName, HORSE_WALK_FRAMES, HORSE_NAME_MAX, CARGO_TIERS } from './horseCartLaw.js';
+import { POSE_BOUND, POSE_Y_BOUND, sanitizeLabel } from '../net/wire.js';
+import { HORSE_NAME_MAX, CARGO_TIERS } from './horseCartLaw.js';
 
 /** What the wagon shown is: the team's trailing wagon behind the cart, the parked wagon, the following team's. */
 export const HCC_WIRE_KIND = Object.freeze({ Trailing: 1, Deployed: 2, Following: 3 });
@@ -28,8 +37,8 @@ const inBounds = (p) => Math.abs(p[0]) <= POSE_BOUND && Math.abs(p[2]) <= POSE_B
 
 /**
  * My word: the pool's view of the runtime as the wire says it. `view` is scenes/horseCartPool.js's
- * `shown()` - `{ wagon: { kind, position, rotation, tier, angle } | null, horse: { position, forward, frame,
- * walking } | null, name }` in scene units; `toWire` converts a scene point to the wire frame.
+ * `shown()` - `{ wagon: { kind, position, rotation, tier, angle } | null, horse: { position, forward, walking } | null,
+ * name }` in scene units; `toWire` converts a scene point to the wire frame.
  * @returns {{ w?: number[], h?: number[], n?: string } | null} null when nothing stands (the reader drops mine)
  */
 export function hccWireRecord(view, toWire = (p) => p) {
@@ -43,15 +52,20 @@ export function hccWireRecord(view, toWire = (p) => p) {
   const h = view.horse;
   if (h && finite3(h.position) && finite3(h.forward)) {
     const p = toWire(h.position);
-    out.h = [r2(p[0]), r2(p[1]), r2(p[2]), r4(h.forward[0]), r4(h.forward[2]), h.frame | 0, h.walking ? 1 : 0];
+    out.h = [r2(p[0]), r2(p[1]), r2(p[2]), r4(h.forward[0]), r4(h.forward[2]), h.walking ? 1 : 0];
   }
-  const n = normalizeHorseName(view.name);
+  const n = hccHorseNameOnWire(view.name);
   if (n && out.h) out.n = n;
   return out.w || out.h ? out : null;
 }
 
-/** A peer's word through the door: shape, bounds, a unit quaternion, a known kind, a known tier, a frame
- *  the walk set has, a name at most the mod's 31. Anything else is null - the record is dropped whole. */
+/** The horse's name as the wire carries it: the label door at the mod's 31 (NormalizeHorseName's bound); '' when
+ *  nothing printable is left or the filter refuses it - the horse is then named by the mod's own "Horse". */
+export const hccHorseNameOnWire = (name) => (typeof name === 'string' ? sanitizeLabel(name, HORSE_NAME_MAX) : '');
+
+/** A peer's word through the door: shape, bounds, a unit quaternion, a known kind, a known tier, a walking bit.
+ *  Anything else is null - the record is dropped whole. The name alone is cleaned rather than refused: a name
+ *  the label door will not carry leaves the horse unnamed, not unseen. */
 export function validHccRecord(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const out = {};
@@ -69,18 +83,17 @@ export function validHccRecord(raw) {
   }
   if (raw.h !== undefined) {
     const h = raw.h;
-    if (!Array.isArray(h) || h.length !== 7 || !h.every(Number.isFinite)) return null;
+    if (!Array.isArray(h) || h.length !== 6 || !h.every(Number.isFinite)) return null;
     const p = [h[0], h[1], h[2]];
     if (!inBounds(p)) return null;
     const fl = Math.hypot(h[3], h[4]);
     if (!(fl > 1e-6)) return null;
-    if (!Number.isInteger(h[5]) || h[5] < 0 || h[5] >= HORSE_WALK_FRAMES) return null;
-    if (h[6] !== 0 && h[6] !== 1) return null;
-    out.h = { position: p, forward: [h[3] / fl, 0, h[4] / fl], frame: h[5], walking: h[6] === 1 };
+    if (h[5] !== 0 && h[5] !== 1) return null;
+    out.h = { position: p, forward: [h[3] / fl, 0, h[4] / fl], walking: h[5] === 1 };
   }
   if (raw.n !== undefined) {
     if (typeof raw.n !== 'string' || raw.n.length > HORSE_NAME_MAX * 4) return null;
-    out.n = normalizeHorseName(raw.n);
+    out.n = hccHorseNameOnWire(raw.n);
   }
   if (!out.w && !out.h) return null;
   return out;

@@ -135,7 +135,7 @@ import { playerEntity } from '../characters/playerEntity.js';
 import { SKILLS, SKILL_NAMES } from '../systems/skills.js';
 import { overlayAction } from './input.js';   // U51: Escape, through the shared table
 import { MOD_SETTINGS, modSetting, setModSetting, isIntKey, isFloatKey, isChoiceKey, isTextKey, isTupleKey } from '../systems/modSettings.js';
-import { keyCodeForDomCode } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
+import { keyCodeForDomCode, KEYCODE_NONE } from '../systems/keyCodes.js';   // HT1: a TextKey's capture spells the key as Unity would
 import { isOnlinePage, onlineForcedPref, onlineForcedModSetting } from '../systems/onlineLane.js';   // OL1: online is the enhanced lane, whole - a forced switch is shown locked   // ROADS 24; DS1: the integer keys; UL1: the choice keys
 import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // FIX-F (Mac: "changing keybinds in classic/enhanced do not work"): the
@@ -2130,7 +2130,13 @@ function modRow(vendor, key, def, { name = null, note = null, home = false } = {
       };
       addEventListener('keydown', onKey, true);
     };
-    ctl.append(b);
+    // AUDIT HCC K4: the clear - every TextKey's reader takes `None` as "no key" (systems/keyCodes.js KEYCODE_NONE),
+    // and the capture alone could never write it (Escape cancels). The controls pane's own clear, its own class.
+    const clear = el('button', 'act ctl-clear', '\u2715');
+    clear.setAttribute('type', 'button');
+    clear.title = 'Clear this key';
+    clear.onclick = () => { b.textContent = setModSetting(vendor, key, KEYCODE_NONE); };
+    ctl.append(b, clear);
   } else if (isTupleKey(def)) {
     // HT1: a TupleIntKey / TupleFloatKey - two steppers, one a half
     const pair = () => modSetting(vendor, key);

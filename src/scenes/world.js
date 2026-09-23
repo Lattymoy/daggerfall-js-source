@@ -176,7 +176,7 @@ import { createCityGuards } from './cityGuards.js';   // G1
 import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
-import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
+import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
 import { quickLootWheel, quickLootTake, quickLootArm } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
@@ -232,6 +232,7 @@ import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from 
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
 import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio
+import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool } from './horseCartPool.js';   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
 import { createHorseCartRuntime } from '../systems/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
@@ -2890,8 +2891,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   let _hccDirty = false;   // HCC-ONLINE: my horse or wagon moved - the next foes frame carries the word (the full frame always does)
   let _hccSettingsKey = null, _hccSettingsAt = -Infinity;
-  const _hccKeysPrev = new Set();   // InputManager.GetKeyDown: held this frame and not the last
-  const hccKeyDown = (name) => { const c = domCodeForKeyCode(name); return !!c && keys.has(c) && !_hccKeysPrev.has(c); };
+  // AUDIT HCC K2/K3: HandleConfiguredHotkeys [IL_67c0] reads InputManager.GetKeyDown behind its own gate -
+  // IsPlayingGame (no pausing window; a DOM surface holding the keys - the friends panel, the F-menu - is one here,
+  // AUDIT SOC B6's law) and no load in progress. GetKeyDown is the frame's EDGE RING (MWCROUCH): the derivation this
+  // replaced (held now, not held at the last sample) dropped a tap shorter than a frame and banked a key held
+  // through a door.
+  const hccKeyDown = (name) => { const c = domCodeForKeyCode(name); return !!c && !gamePaused() && !pointerSurfaces.size && !_loading && pressedCode(latch.edge, c); };
   const hccPlayerCentre = () => [player.pos[0], player.pos[1] + (Number.isFinite(player.height) ? player.height : 1.8) / 2, player.pos[2]];   // the player transform (the controller's centre)
   const hccForward = () => [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)];
   const hccRuntimeOn = () => (hccOn() ? hccRuntime : null);
@@ -2900,7 +2905,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const hcc = createHorseCartPool({
     renderer, meshes: { getGpuMesh, cpuModels }, collider: () => collider, now: () => performance.now() / 1000,
     threats: hccThreats, selfId: () => online?.id ?? null, peerName: (id) => peerName(id),
-    onChanged: () => { _hccDirty = true; }, log: console,
+    onChanged: () => { _hccDirty = true; }, toWire: (p) => campToWire(p), log: console,   // AUDIT HCC O5: the change key in the wire frame (campToWire is the pose's law, declared with the stream below; read only once frames run)
   });
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode && playerSpawned && !_teleporting && !_traveling,   // TryGetGameManager: a game in progress, the player standing, the world up
@@ -2935,6 +2940,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     phys: hcc.phys, presentation: hcc.presentation, log: console,
   });
   hcc.attach(hccRuntime);
+  /** AUDIT HCC H1: TrailingWagonRuntime.LateUpdate, ONCE a frame and in EVERY mode (the machine gates its own
+   *  presentation on PlayerEnterExit.IsPlayerInside, and its hotkeys answer indoors with the mod's "outdoors only").
+   *  Called from the modal branch (a building, a dungeon) and from the exterior frame after the motor and the
+   *  recentre and BEFORE the world pass draws the wagon, so the mesh and the horse billboard show the same frame. */
+  const hccTick = (dt, nowMs) => {
+    hcc.setEnabled(hccOn()); if (hcc.enabled) hccPollSettings(nowMs); hcc.frame(dt, cam.pos);
+    // AUDIT HCC U6: HorseNameTooltipController, set right after the LateUpdate that stood the horse - outdoors, walking,
+    // IsPlayingGame (no window, no surface holding the mouse), and only where the enhanced plaque is not already naming it
+    const tipOn = hcc.enabled && walkMode && _mode() === 'exterior' && !worldPlaqueOn() && !gamePaused() && !pointerSurfaces.size;
+    horseNameTooltip.set(tipOn ? hcc.tooltipText(cam.pos, [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)], collider) : '');
+  };
   /** The mod's ModSettingsChanged: the shelf has no event, so the eight keys are re-read once a second. */
   const hccPollSettings = (nowMs) => {
     if (nowMs - _hccSettingsAt < 1000) return;
@@ -5439,9 +5455,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // RandomStartMarker, as TeleportAway names it (AUDIT 64 F19): a
       // location's start marker - a town's gate, a cemetery's, a
       // dungeon's door - not the terrain tile's dead centre.
-      hccRuntimeOn()?.handlePreFastTravel();   // HCC: OnPreFastTravel [IL_a1d8] - the following team's pose is cached, or it waits at the departure with the setting off
+      // HCC (AUDIT HCC H2): the online respawn is the port's own teleport - DFU raises no event for it (a death there
+      // is a load) - and a following team left on its old pixel's coordinates stands nowhere. It is handled as the
+      // journey it most resembles: the travel map's (fastTravelTo below), the FollowFastTravel setting deciding.
+      hccRuntimeOn()?.handlePreFastTravel();
       await _teleportToPixel(land.x, land.y, null, { reposition: REPOSITION.RandomStartMarker });
-      hccRuntimeOn()?.handlePostFastTravel();   // HCC: OnPostFastTravel [IL_a2b4] - the relocation is pending; the horse re-stands behind the player once the world is up
+      hccRuntimeOn()?.handlePostFastTravel();
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);   // PreventEnemySpawns parity, the cemetery transfer's own line
       // MAC-D3: the heal is at the TOP now, before anything is torn
       // down or awaited. Re-asserted here only because a teleport can
@@ -5454,6 +5473,10 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   async function fastTravelTo(pick, opts, computed) {
     if (_traveling) return;
+    // HCC (AUDIT HCC H2): DaggerfallTravelPopUp.OnPreFastTravel [IL_a1d8] - the mod's ONE subscription for a
+    // journey: the following team's pose is cached to ride along, or it waits at the departure with
+    // FollowFastTravel off. Before `_traveling` rises (the runtime's ready() reads it) and before the gold goes.
+    hccRuntimeOn()?.handlePreFastTravel();
     _traveling = true;
     try {
       // DeductFastTravelGold (:469-473): the inn nights come out of
@@ -5506,6 +5529,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         { arriveMinutes: sharedClockOn() ? worldMinutes() : worldMinutes() + computed.minutes,   // WORLD5: online the trip takes no world time - the arrival is now
           reposition: REPOSITION.DirectionFromStartMarker,
           travelStart, modEvent: 'travel' });
+      hccRuntimeOn()?.handlePostFastTravel();   // HCC (AUDIT HCC H2): OnPostFastTravel [IL_a2b4] - the relocation is pending; the team re-stands behind the player once the world is up
       // cautious arrival heals in full; magicka honors NoRegenSpellPoints
       // AUDIT WORLD5 C14: the heal is the trip's NIGHTS - DFU's cautious traveller arrives rested because the days
       // passed - and online the trip takes no world time, so it heals nothing: with it, a cautious trip with camping
@@ -5696,6 +5720,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // port stores the POSITIVE sense because PlayerWeapon holds
       // `usingRightHand`; it is the same bit.
       pose: { yaw: cam.yaw, pitch: cam.pitch, crouching: !!player.crouching, ...mergeWeaponPose(wp, weaponPoseOf(weaponRig.playerWeapon)), camera: mwCamera.state(), transport: player.transportMode },   // SL-2: the pair off the LIVE rig (the mode seam above), else this host's own - PER FIELD, which is mergeWeaponPose's whole job
+      modData: { [HCC_VENDOR]: hccRuntime.getSaveData() },   // AUDIT HCC H3: the mod's own record (WagonSaveData, GetSaveData [IL_9354]) in DFU's per-mod slot - written whatever the switch says, so a save taken with the mod off keeps the horse's name and the parked wagon for when it comes back on
       locationKey: 'world',
       world: {
         pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
@@ -5705,7 +5730,6 @@ export async function bootWorld(canvas, renderer, params, status) {
         piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
         droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),
         camps: camps.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),   // SURV3: my camps, in natives   // HT1: the mod's own save data rides the envelope
-        horseCart: hccOn() ? hccRuntime.getSaveData() : null,   // HCC: WagonSaveData (GetSaveData [IL_9354]) - natives already, the mod's own record
         // AUDIT 26 F216/F217: LIVE ENEMIES ride the envelope - DFU's
         // SaveData_v1 carries enemyData wherever the player stands
         // (:865, restored :1006). Saved nowhere, a quickload during a
@@ -5799,6 +5823,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { townTalk.say('Save version mismatch.'); return; }
       autoBuildArms(playerEntity);   // MWA1: the loaded character's arms (a boot into ?load has no chargenDone until here)
+      hccRuntime.handleStartLoad();   // AUDIT HCC H3: SaveLoadManager.OnStartLoad [IL_a714] - the old character's horse, name and parked wagon end HERE, before any await, on every branch below
       // CameraRecoiler's SaveLoadManager_OnStartLoad (:185-191): the
       // incoming character does not inherit the old one's reel.
       cameraRecoiler.reset();
@@ -5861,7 +5886,6 @@ export async function bootWorld(canvas, renderer, params, status) {
         droppedLoot.restoreWorld(w.piles, (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
         droppedTorches.restore(w.droppedTorches, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
         camps.restore(w.camps, (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // SURV3
-        if (w.horseCart) hccRuntime.restoreSaveData(w.horseCart); else hccRuntime.handleStartLoad();   // HCC: RestoreSaveData [IL_93ac] - a save without the record is a fresh start (OnStartLoad)
         // F216/F217: the pools re-mint through their one spawn chain,
         // then overlay the saved truth (SerializableEnemy's own
         // rebuild-then-set shape). Async behind the art; the teleport
@@ -5908,6 +5932,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       } else if (extras.locationKey && extras.locationKey !== 'world') {
         townTalk.say('(saved elsewhere - character restored; travel there yourself)');
       }
+      // AUDIT HCC H3: RestoreSaveData [IL_93ac] once the save's place stands - a world save, a dungeon save, a wake
+      // at a temple alike; a save without the record stays the fresh start OnStartLoad made above
+      const hccRecord = extras.modData?.[HCC_VENDOR] ?? null;
+      if (hccRecord) hccRuntime.restoreSaveData(hccRecord);
       // AUDIT 26 F222/F223/F101: the pose lands with the position -
       // RestorePosition sets yaw/pitch/isCrouching and
       // Sheathed = !weaponDrawn (:420-421). Presence-gated: an old
@@ -7607,7 +7635,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8655-8719 -
+  // worldModes answers it in BOTH modes (worldModes.js:8657-8721 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -10842,6 +10870,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // owns the motor, the animator and the mount's art together.
     setTransportMode: (mode) => setTransportModeHere(mode),
     horseCart: hccRuntimeOn,   // HCC: the runtime's transition handlers and storage-access word, when the mod is on
+    horseCartSave: () => hccRuntime.getSaveData(),   // AUDIT HCC H3: the record a dungeon save carries (DFU's per-mod slot, whatever the switch says)
+    horseCartLoad: (rec) => { hccRuntime.handleStartLoad(); if (rec) hccRuntime.restoreSaveData(rec); },   // AUDIT HCC H3: a same-dungeon load's OnStartLoad and RestoreSaveData
     // PX17c: the pause window's journal seams ride into the interior
     // arm - the SAME expressions the world's own pause hands over
     // (PX3/PX4/PX5), so a pause inside a tavern shows the same rail,
@@ -11456,6 +11486,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
       // townTalk always draws.
+      hccTick(dt, now);   // AUDIT HCC H1: the runtime's LateUpdate indoors too - the hotkeys' "outdoors only", the settings, the switch
       townTalk.frame(dt);
       capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot
       frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
@@ -11997,7 +12028,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }
             else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else drinkAtSpring(_springPick.key); }
             else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => townTalk.showOverlay(makeInventoryWindow(EOTB_WAGON_PACK)) }); }
-            else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l)); }   // HCC: DeployedWagonActivator / FollowingWagonActivator / StationaryHorseActivator - the runtime's own reach test and refusals
+            else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(TOO_FAR_AWAY_TEXT)); }   // HCC: DeployedWagonActivator / FollowingWagonActivator / StationaryHorseActivator - the runtime's own reach test and refusals
             else if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
             else {
             // AUDIT 65 MC-2: the corpse's own refusal
@@ -12383,6 +12414,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       renderer.setPointLights(withPlayerLights(new Float32Array(0),
         magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()), CITY_LIGHT_COLOR_F32);   // HT1; FIELD-GUN13 the muzzle flash
     }
+    hccTick(dt, now);   // AUDIT HCC H1: LateUpdate - after the motor and the recentre, before the world pass draws the wagon
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
     renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
@@ -12758,11 +12790,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     livePersonBatches.push(...hitEffects.batches());
     // HT1: the dropped torches burn, the thrown one flies, a burning foe's flame follows it (the transition sweep is at the mode branch above, AUDIT 66 F11)
     if (_mode() === 'exterior') { droppedTorches.tick(dt); livePersonBatches.push(...droppedTorches.batches()); camps.tick(dt); livePersonBatches.push(...camps.batches()); }   // SURV3: the fires burn on the same axis
-    // HCC: TrailingWagonRuntime.LateUpdate every frame in every mode (the machine gates its own presentation on
-    // PlayerEnterExit.IsPlayerInside), the horse billboards on the flats' axis, the hotkeys' edge read after
-    hcc.setEnabled(hccOn());
-    if (hcc.enabled) { hccPollSettings(now); hcc.frame(dt, cam.pos); if (_mode() === 'exterior') livePersonBatches.push(...hcc.batches()); } else hcc.frame(dt, cam.pos);
-    _hccKeysPrev.clear(); for (const k of keys) _hccKeysPrev.add(k);
+    // HCC: the horse billboards on the flats' axis (the runtime ticked above, hccTick - AUDIT HCC H1)
+    if (hcc.enabled && _mode() === 'exterior') livePersonBatches.push(...hcc.batches());
     // TO-FIELD3 (Mac, 2026-09-18): "hunting rolls fire during travel
     // again". TO-FIELD held SURV6's roll while an accelerated journey
     // ran; the gate is REMOVED on Mac's word, with the `resting` flag
@@ -13142,7 +13171,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:415-443) because neither reads ARENA2 - "a player whose
+    // (hud.js:416-444) because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

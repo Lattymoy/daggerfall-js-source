@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6033` read, on one physical line:
+`src/scenes/worldModes.js:6035` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3549` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3565` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:193`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7845,3 +7845,33 @@ carries them to everyone near, under the camps' law (SURV3) and no new one:
 Pinned: `test/hcc_pool.test.js` (the record, the door, the ease, the owner law by execution), `test/hcc_hosts.test.js`
 (the stream, the setOnHcc landing, the sweep, the clears, the relay untouched). Not verified in a browser: no
 online session exists in this container.
+
+### AUDIT HCC-ONLINE (2026-09-23, Mac: "Let's do an audit on this, ensure online is handled properly")
+
+One lens over the lane above, read whole; nine findings paid, one recorded (the full list with the other two lenses
+is `06-Systems/Horse-Cart-And-Cargo.md` AUDIT HCC; pins in `test/hcc_pool.test.js`, mutants in
+`tools/mutants/hcc.json`).
+
+- **The word lives in the wire frame (O1, O2).** A peer's team was converted to scene coordinates once, when it
+  landed, and `offsetAll` shifted only what was SHOWN - so my next recentre put their wagon, horse, plaque and box
+  819 m away until their next word (up to a full frame's 2 s for a parked team), and a fast travel's teardown
+  (`clearLive`, which re-anchors the origin with no offset to ride) kept them at old-frame points. The pool keeps
+  the validated record and the host's `campToScene`, and converts every frame (horseCartWire's own header law:
+  "a reader converts at landing and every frame after"); the foe pool's `destroy` takes the teams as
+  `clearPuppets` does.
+- **The parked wagon is a box (O3).** A peer's Deployed wagon stands `hccWagon:<owner>` in my collider, re-stood
+  when its converted pose moves, gone with the owner, the sweep or a change of kind; with a box it takes the ray's
+  surface pardon.
+- **The door cleans the name (O4).** `n` rides `sanitizeLabel` at the mod's 31 on both ends - printable ASCII and
+  the name filter, the door a player's name and a party's place already go through.
+- **A standing horse is silent (O5).** The walk frame rode `h`, so the idle flicker (frames 5/6 at 2 fps) changed
+  the word twice a second for as long as a horse stood, forcing a foes frame to everyone in range. `h` carries
+  the walking bit (six words, not seven); the reader strides its own HorseWalkAnimationState over the pace it
+  shows. The change key is taken through `campToWire`, so my own recentre is not a word.
+- **Reach, switch, art (O6-O9).** A press on a peer's team past the mod's 3.2 is DFU's "too far"; my switch turned
+  off is a word at once; a viewer with the mod off lands nothing and loads nothing; a horse whose art is not up is
+  not named or pressed.
+- **O10, recorded.** An owner's word needs its owner: a team stands for the others while its owner is in the cell
+  room to say it, and goes with them indoors, away, dead or gone - the camps' and the foes' law. A parked wagon
+  that outlives its owner's presence would be a cell's own memory on the relay, which cell rooms do not keep; that
+  is a relay feature and Mac's to call. The Enabled note says what this law shows.

@@ -1354,6 +1354,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     corpseBatches.length = 0;
     foes.length = 0;
     _owners.clear(); _pupPending.clear(); _pupIndex.clear();   // AUDIT WORLD6b C10: the teardown ends the owners' records too
+    _onHccClear?.();   // AUDIT HCC O2: and the peers' teams with them - a fast travel's clearLive re-anchors the origin with no offset to ride
   }
 
   /** AUDIT 17e F23: the floating-origin recenter shifts everything. */

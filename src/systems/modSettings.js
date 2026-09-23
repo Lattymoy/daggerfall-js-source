@@ -785,13 +785,20 @@ export const MOD_SETTINGS = Object.freeze({
   // enhance its online integration functionality"): HORSE CART AND CARGO -
   // demifiend000's persistent horse and wagon, 1.0.0-rc12, its five
   // sections restated verbatim (vendor/horse-cart-and-cargo/modsettings.json).
-  // The two TextKeys are Unity KeyCode names. THE PORT SHIPS THEM ON F7 AND
-  // F10, NOT THE MOD'S K AND G (HCC-KEYS, a recorded departure on HT4's own
-  // law): K is Travel Options' FollowPathsKey and G is Handheld Torches'
-  // ManualDropInput here, both vendored before this mod, and every letter
-  // is spent - DFU's bindings, the port's own, the other mods'. F7 and F10
-  // are free on all three counts, and F10 is one of the mod's own suggested
-  // alternatives ("such as K, F10, or Keypad5"). `None` disables one.
+  // The two TextKeys are Unity KeyCode names. THE PORT SHIPS THEM ON 5 AND 6
+  // (Alpha5 / Alpha6), NOT THE MOD'S K AND G (HCC-KEYS, a recorded departure
+  // on HT4's own law): K is Travel Options' FollowPathsKey and G is Handheld
+  // Torches' ManualDropInput here, both vendored before this mod, and every
+  // letter is spent - DFU's bindings, the port's own, the other mods'.
+  // AUDIT HCC K1: the first departure shipped F7 and F10 and neither was
+  // free. F10 is DFU's own LargeHUDToggle and Shift-F10 its HUDToggle
+  // (DialogShortcuts.txt, systems/dialogShortcuts.js) - the HUD shortcuts
+  // are world keys, not a window's, so one press flipped the HUD AND
+  // summoned the team - and F7 is the browser's caret-browsing prompt.
+  // The digits past the four quick slots are free on every count: DFU's
+  // bindings, its world shortcuts, every vendored mod, and the browser.
+  // The notes say the port's control, not the mod's text box: the Mods
+  // pane captures a key, and its clear writes `None`, which disables one.
   'horse-cart-and-cargo': Object.freeze({
     title: 'Horse Cart and Cargo',
     author: 'demifiend000',
@@ -800,7 +807,7 @@ export const MOD_SETTINGS = Object.freeze({
         default: true,
         description: 'demifiend000\u2019s Horse Cart and Cargo 1.0.0-rc12, 1:1: your horse and wagon stand in the world - '
           + 'left where you dismount, following or waiting on command, hitched and mounted by walking up to them. '
-          + 'Online, the others see them where you left them.',
+          + 'Online, others see them while you are nearby.',
       }),
       'Persistence.PhysicalPersistence': Object.freeze({ default: true, description: 'Physical Horse & Wagon Persistence. On: horse and wagon positions persist when left behind. Off: remote positions are forgotten and owned transport is recalled for vanilla-style transport and wagon access; the moving trailing wagon remains. Re-enabling starts fresh with owned transport at the player.' }),
       'Presentation.ShowTrailingWagon': Object.freeze({ default: true, description: 'Trailing Wagon While Riding. When disabled, hides only the wagon that trails behind you in Cart mode. Deployed and following wagons, cargo storage, physical persistence, and wagon gameplay remain enabled.' }),
@@ -808,8 +815,8 @@ export const MOD_SETTINGS = Object.freeze({
       'Following.AvoidCombat': Object.freeze({ default: true, description: 'Following Horse Avoids Combat. When enabled, a following horse or horse-and-wagon team will try to keep away from hostile enemies during combat.' }),
       'Following.FollowFastTravel': Object.freeze({ default: true, description: 'Following Transport Fast Travels With You. When disabled, transport currently commanded to Follow waits where it was when fast travel begins.' }),
       'WagonAccess.InteriorAccessDistance': Object.freeze({ default: 50, min: 10, max: 100, description: 'Interior Wagon Access Distance. Sets how close your wagon must be parked to a building or dungeon entrance to access it from inside.' }),
-      'Hotkeys.QuickMountDismount': Object.freeze({ default: 'F7', text: true, description: 'Quick Mount / Dismount. Mounts your last-used horse or wagon using the same range and ownership rules as the Transport menu. Pressing it while riding dismounts immediately. Enter a Unity KeyCode name such as K, F10, or Keypad5; use None to disable.' }),
-      'Hotkeys.SummonTransport': Object.freeze({ default: 'F10', text: true, description: 'Summon Horse & Wagon. Teleports owned transport to a nearby layout while outdoors. Enter a Unity KeyCode name such as G, F10, or Keypad5; use None to disable.' }),
+      'Hotkeys.QuickMountDismount': Object.freeze({ default: 'Alpha5', text: true, description: 'Quick Mount / Dismount. Mounts your last-used horse or wagon using the same range and ownership rules as the Transport menu. Pressing it while riding dismounts immediately. Click it and press a key to rebind; \u2715 clears it (None).' }),
+      'Hotkeys.SummonTransport': Object.freeze({ default: 'Alpha6', text: true, description: 'Summon Horse & Wagon. Teleports owned transport to a nearby layout while outdoors. Click it and press a key to rebind; \u2715 clears it (None).' }),
     }),
   }),
 });
@@ -829,11 +836,22 @@ let memory = null;
  *  it, and a player who deliberately chose F... also loses it, which is the trade - there is nothing in the file
  *  that tells the two apart, and a torch on the social key is the worse of the two wrongs. */
 const HT_LIGHT_KEY = Object.freeze({ vendor: 'handheld-torches', key: 'Handling.ToggleLightInput', was: 'F' });
+/** AUDIT HCC K1: the same law, twice more - Horse Cart and Cargo shipped its keys on F7 and F10 (HUD shortcuts and
+ *  the browser's), and a player who opened the Mods pane holds them SAVED. Exactly those values go, once. */
+export const KEY_MIGRATIONS = Object.freeze([
+  HT_LIGHT_KEY,
+  Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.QuickMountDismount', was: 'F7' }),
+  Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),
+]);
 function migrate(m) {
-  const held = m?.[HT_LIGHT_KEY.vendor];
-  if (!held || held[HT_LIGHT_KEY.key] !== HT_LIGHT_KEY.was) return false;
-  delete held[HT_LIGHT_KEY.key];
-  return true;
+  let changed = false;
+  for (const { vendor, key, was } of KEY_MIGRATIONS) {
+    const held = m?.[vendor];
+    if (!held || held[key] !== was) continue;
+    delete held[key];
+    changed = true;
+  }
+  return changed;
 }
 
 function load() {

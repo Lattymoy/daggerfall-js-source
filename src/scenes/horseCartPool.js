@@ -11,8 +11,9 @@
 //
 // deps = { renderer, meshes: { getGpuMesh, cpuModels }, collider() -> the host's, now() -> unscaled seconds,
 //          threats() -> [[x,y,z]] (the qualifying foes' positions, CollectThreats), fetchFn, selfId(),
-//          peerName(id) -> string | null, onChanged() (the host's online publish), log }
-import { GLOBAL_SCALE, RAY_DISTANCE } from '../player/activate.js';
+//          peerName(id) -> string | null, onChanged() (the host's online publish), toWire(p) (the scene-to-wire law, so
+//          the change key is the WIRE's and a floating-origin rebase of mine is not a word), log }
+import { GLOBAL_SCALE, RAY_DISTANCE, pickActivatableHit } from '../player/activate.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';
 import { multiply } from '../world/mat4.js';
 import { mat4FromQuatPos, mat4FromQuatPosScale, quatAngleAxis, quatLookRotation, quatSlerp, UNITY_QUAT_IDENTITY } from '../world/quat.js';
@@ -20,6 +21,7 @@ import { buildWagonParts, usableBounds, CARGO_DEFINITIONS, cargoPiecesShown } fr
 import {
   WAGON_MODEL_ID, HORSE_VIEWS, HORSE_WALK_FRAMES, HORSE_SPRITE_WIDTH, HORSE_SPRITE_HEIGHT, HORSE_WALK_SPRITE_HEIGHT,
   calculateHorseOrientation, horseViewFor, horseTargetLabel, ACTIVATION_REACH, HORSE_BOX_CENTER, HORSE_BOX_SIZE,
+  stepHorseWalk, freshHorseWalk, START_WALKING_SPEED,
 } from '../systems/horseCartLaw.js';
 import { WAGON_HOVER_TEXT } from '../player/eotbWagon.js';   // the hover word for a wagon - the noun of Eye Of The Beholder's Info line, so both carts read alike
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
@@ -37,6 +39,9 @@ export const HORSE_BILLBOARD_HEIGHT = HORSE_SPRITE_HEIGHT * GLOBAL_SCALE;
 export const HORSE_WALK_BILLBOARD_HEIGHT = HORSE_WALK_SPRITE_HEIGHT * GLOBAL_SCALE;
 /** The parked wagon's collider bucket on the host's collider - skipped by the runtime's own ground probes. */
 export const WAGON_BUCKET = 'hccWagon';
+/** AUDIT HCC O3: a peer's parked wagon stands a collider of its own - a physical thing to walk around, as mine is to
+ *  them. Not in the runtime's skip list: the mod ignores its OWN wagon's colliders, and a peer's is any other box. */
+export const peerWagonBucket = (owner) => `${WAGON_BUCKET}:${owner}`;
 /** The activation keys the hosts race. */
 export const KEY_WAGON = 'hccWagon', KEY_FOLLOWING_WAGON = 'hccFollowingWagon', KEY_HORSE = 'hccHorse';
 export { WAGON_HOVER_TEXT, HORSE_BOX_CENTER, HORSE_BOX_SIZE };   // the pool's callers read them here (the pins do)
@@ -91,7 +96,8 @@ export function raycastAllOver(col, origin, dir, maxDist, skip = [WAGON_BUCKET])
 
 export function createHorseCartPool({
   renderer = null, meshes = null, collider = () => null, now = () => performance.now() / 1000, threats = () => [],
-  fetchFn = null, decode = decodePng, selfId = () => null, peerName = (/** @type {string} */ _id) => null, onChanged = null, log = console,
+  fetchFn = null, decode = decodePng, selfId = () => null, peerName = (/** @type {string} */ _id) => null, onChanged = null,
+  toWire = (/** @type {number[]} */ p) => p, log = console,
 } = {}) {
   /** @type {any} */ let runtime = null;
   let enabled = true;   // the mod's Enabled switch: off, nothing of the mod stands, draws, answers the ray or rides the wire
@@ -107,7 +113,8 @@ export function createHorseCartPool({
   let _walkLoading = null, _walkReady = false;
   // the billboards: mine and the peers'
   const _horseBatches = new Map();   // owner ('' mine) -> batch
-  // the peers: owner -> { wagon, horse, name, at, shownWagon, shownHorse, walk }
+  // the peers: owner -> { wire: { w, h } (the validated record, WIRE frame), toScene, wagon, horse (this frame's targets,
+  // SCENE frame), name, at, shownWagon, shownRotation, shownHorse, walk (the reader's own stride), bucketKey }
   const _peers = new Map();
   let _lastKey = '';
 
@@ -165,17 +172,25 @@ export function createHorseCartPool({
   };
 
   // ── the parked wagon's collider (the root's non-trigger BoxCollider over the source mesh's bounds)
-  function standWagonCollider(m) {
+  /** Stand (or take down) one wagon's box under `bucket` at matrix `m`; answers the pose key it now stands at
+   *  (null: nothing stands, so the next call tries again). */
+  function standBox(bucket, m, prevKey) {
     const col = collider();
-    if (!col?.addMesh || !_parts) return;
+    if (!col?.addMesh || !_parts) return prevKey;
     const key = m ? Array.from(m, (v) => v.toFixed(3)).join(',') : null;
-    if (key === _bucketKey) return;
-    col.removeBucket?.(WAGON_BUCKET);
-    _bucketKey = key;
-    if (!m) return;
+    if (key === prevKey) return prevKey;
+    col.removeBucket?.(bucket);
+    if (!m) return null;
     const b = usableBounds(_parts.bounds);   // EnsureUsableBoundsSize [IL_10f1]
     const tri = boxTriangles(b.min, b.max);
-    col.addMesh(WAGON_BUCKET, tri.positions, tri.indices, m);
+    col.addMesh(bucket, tri.positions, tri.indices, m);
+    return key;
+  }
+  function standWagonCollider(m) { _bucketKey = standBox(WAGON_BUCKET, m, _bucketKey); }
+  /** AUDIT HCC O3: a peer's PARKED wagon is a box to walk around, as mine is to them; any other kind takes it down. */
+  function standPeerCollider(owner, p) {
+    const m = p.wagon?.kind === HCC_WIRE_KIND.Deployed && _parts ? wagonMatrix(p.wagon.position, p.wagon.rotation) : null;
+    p.bucketKey = standBox(peerWagonBucket(owner), m, p.bucketKey);
   }
 
   // ── matrices
@@ -239,14 +254,22 @@ export function createHorseCartPool({
     if (s?.deployed && _parts && s.wagon) standWagonCollider(wagonMatrix(s.wagon.position, s.wagon.rotation)); else standWagonCollider(null);
     if (s?.horse && _stillReady) { const b = horseBatch(''); if (b) poseHorseBatch(b, cameraPos, s.horse); } else dropHorseBatch('');
     for (const [owner, p] of _peers) {
+      retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs
       if (p.horse) {
+        const was = p.shownHorse;
         p.shownHorse = easeToward(p.shownHorse, p.horse.position, dt);
-        if (_stillReady) { const b = horseBatch(owner); if (b) poseHorseBatch(b, cameraPos, { ...p.horse, position: p.shownHorse }); }
-      } else dropHorseBatch(owner);
+        // AUDIT HCC O5: the stride is the READER's (HorseWalkAnimationState over the shown pace), the owner says only
+        // whether it walks - a frame on the wire changed the word twice a second while the horse merely stood
+        const pace = was && dt > 0 ? Math.hypot(p.shownHorse[0] - was[0], p.shownHorse[2] - was[2]) / dt : 0;
+        p.walk = stepHorseWalk(p.walk, p.horse.walking ? Math.max(pace, 2 * START_WALKING_SPEED) : 0, dt, _walkReady);
+        if (_stillReady) { const b = horseBatch(owner); if (b) poseHorseBatch(b, cameraPos, { ...p.horse, position: p.shownHorse, frame: p.walk.animationFrame }); }
+      } else { dropHorseBatch(owner); p.walk = freshHorseWalk(); }
       if (p.wagon) { p.shownWagon = easeToward(p.shownWagon, p.wagon.position, dt); p.shownRotation = p.shownRotation ? quatSlerp(p.shownRotation, p.wagon.rotation, 1 - Math.exp(-12 * dt)) : [...p.wagon.rotation]; }
+      standPeerCollider(owner, p);
     }
-    // HCC-ONLINE: a moved word asks for a frame (the host's stream reads `dirty`); a full frame carries it regardless
-    const key = hccRecordKey(hccWireRecord(s));
+    // HCC-ONLINE: a moved word asks for a frame (the host's stream reads `dirty`); a full frame carries it regardless.
+    // AUDIT HCC O5: keyed in the WIRE frame, so my own rebase is not a word
+    const key = hccRecordKey(hccWireRecord(s, toWire));
     if (key !== _lastKey) { _lastKey = key; onChanged?.(); }
   }
   const batches = () => [..._horseBatches.values()];
@@ -270,8 +293,10 @@ export function createHorseCartPool({
     }
     if (s?.horse) out.push({ key: KEY_HORSE, aabb: aabbOf(horseBox(s.horse)), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
     for (const [owner, p] of _peers) {
-      if (p.wagon && p.shownWagon && _parts) out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(_parts.box, wagonMatrix(p.shownWagon, p.shownRotation ?? p.wagon.rotation))), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
-      if (p.horse && p.shownHorse) out.push({ key: peerKey(owner, 'h'), aabb: aabbOf(horseBox({ ...p.horse, position: p.shownHorse })), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
+      // AUDIT HCC O3: a parked peer wagon with its box standing HAS a surface (the wall pardon applies, as mine)
+      if (p.wagon && p.shownWagon && _parts) out.push({ key: peerKey(owner, 'w'), aabb: aabbOf(transformedAabb(_parts.box, wagonMatrix(p.shownWagon, p.shownRotation ?? p.wagon.rotation))), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: !p.bucketKey });
+      // AUDIT HCC O9: a horse not drawn (its art still loading, or failed) is not named or pressed
+      if (p.horse && p.shownHorse && _stillReady) out.push({ key: peerKey(owner, 'h'), aabb: aabbOf(horseBox({ ...p.horse, position: p.shownHorse })), distance: RAY_DISTANCE, reach: ACTIVATION_REACH, noSurface: true });
     }
     return out;
   }
@@ -289,14 +314,24 @@ export function createHorseCartPool({
     if (pk.what === 'w') return { title: `${who}'s ${WAGON_HOVER_TEXT.toLowerCase()}` };
     return { title: p.name ? `${p.name} (${who}'s horse)` : `${who}'s horse` };
   }
-  /** The press: the runtime's three activators; a peer's answers with whose it is (nothing of theirs opens here). */
-  function activate(key, distance, say = null) {
+  /** AUDIT HCC U6: HorseNameTooltipController.Update [IL_2e16-IL_2ea9] - the activation ray at the mod's 3.2 meets MY
+   *  standing horse (OwnsStationaryHorseActivator: never a peer's, never the wagon): the runtime's HorseTargetLabel,
+   *  else '' (Hide). The host gates IsPlayingGame and hands the ray. */
+  function tooltipText(eye, dir, col) {
+    if (!runtime || !enabled) return '';
+    const pick = pickActivatableHit(eye, dir, targets(), col);
+    return pick?.key === KEY_HORSE && pick.distance <= ACTIVATION_REACH ? String(runtime.horseTargetLabel ?? '') : '';
+  }
+  /** The press: the runtime's three activators; a peer's answers with whose it is (nothing of theirs opens here) -
+   *  inside the mod's own reach, else DFU's "too far" (AUDIT HCC O6, the dropped torch's arm). */
+  function activate(key, distance, say = null, tooFar = null) {
     if (!runtime) return false;
     if (key === KEY_WAGON) return runtime.handleDeployedWagonActivation(distance);
     if (key === KEY_FOLLOWING_WAGON) return runtime.handleFollowingWagonActivation(distance);
     if (key === KEY_HORSE) return runtime.handleStationaryHorseActivation(distance);
     const pk = peerOfKey(key);
     if (!pk || !_peers.has(pk.owner)) return false;
+    if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }
     const n = hoverName(key);
     if (n) say?.(`That is ${n.title}.`);
     return true;
@@ -312,23 +347,37 @@ export function createHorseCartPool({
   }
   /** Every transition and every load: the peers' art goes; the runtime keeps its own record (the mod's handlers). */
   function clearPeers() { for (const owner of [..._peers.keys()]) dropPeer(owner); }
-  function dropPeer(owner) { dropHorseBatch(owner); _peers.delete(owner); }
+  function dropPeer(owner) {
+    const p = _peers.get(owner);
+    if (p?.bucketKey) collider()?.removeBucket?.(peerWagonBucket(owner));
+    dropHorseBatch(owner); _peers.delete(owner);
+  }
   function destroyAll() { clearPeers(); dropHorseBatch(''); standWagonCollider(null); }
 
   // ── ONLINE (HCC-ONLINE)
   /** My word, or null when nothing of mine stands. */
   const wireRecord = (toWire = (p) => p) => hccWireRecord(shown(), toWire);
-  /** Another's word through validHccRecord, in this scene's frame; `null` (or an invalid record) drops theirs. */
+  /** AUDIT HCC O1: the targets out of the WIRE record through the host's conversion, every frame - the camps shift
+   *  their scene points in offsetAll, but a fast travel re-anchors the origin with no offset to ride, and only a
+   *  conversion at the time of use is right after both (horseCartWire's header: "a reader converts at landing and
+   *  every frame after"). */
+  function retarget(p) {
+    p.wagon = p.wire.w ? { ...p.wire.w, position: p.toScene(p.wire.w.position) } : null;
+    p.horse = p.wire.h ? { ...p.wire.h, position: p.toScene(p.wire.h.position) } : null;
+  }
+  /** Another's word through validHccRecord, kept in the WIRE frame; `null` (or an invalid record) drops theirs. */
   function applyOwner(owner, raw, toScene = (p) => p, nowMs = 0) {
+    if (!enabled) return false;   // AUDIT HCC O8: a disabled mod is one DFU never loaded - nothing of a peer's stands or loads
     if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;
     const r = raw == null ? null : validHccRecord(raw);
     if (!r) { if (_peers.has(owner)) dropPeer(owner); return raw == null; }
     let p = _peers.get(owner);
-    if (!p) { p = { wagon: null, horse: null, name: '', at: nowMs, shownWagon: null, shownHorse: null, shownRotation: null }; _peers.set(owner, p); }
+    if (!p) { p = { wire: null, toScene, wagon: null, horse: null, name: '', at: nowMs, shownWagon: null, shownHorse: null, shownRotation: null, walk: freshHorseWalk(), bucketKey: null }; _peers.set(owner, p); }
     p.at = nowMs;
-    p.wagon = r.w ? { ...r.w, position: toScene(r.w.position) } : null;
+    p.wire = { w: r.w ?? null, h: r.h ?? null };
+    p.toScene = toScene;
+    retarget(p);
     if (!p.wagon) { p.shownWagon = null; p.shownRotation = null; }
-    p.horse = r.h ? { ...r.h, position: toScene(r.h.position) } : null;
     if (!p.horse) p.shownHorse = null;
     p.name = r.n ?? '';
     if (p.horse) { ensureStationary(); ensureWalk(); }
@@ -346,12 +395,20 @@ export function createHorseCartPool({
   return {
     attach(rt) { runtime = rt; return this; },
     /** The mod's own switch (modSettings Enabled): a disabled mod is one DFU never loaded. */
-    setEnabled(on) { enabled = !!on; if (!enabled) destroyAll(); },
+    setEnabled(on) {
+      const was = enabled;
+      enabled = !!on;
+      if (!was || enabled) return;
+      runtime?.suspend?.();   // AUDIT HCC H4: the machine lets go of what it was observing
+      destroyAll();
+      // AUDIT HCC O7: the switch turned off is a moved word - the peers drop mine now, not at my next full frame
+      if (_lastKey !== '') { _lastKey = ''; onChanged?.(); }
+    },
     get enabled() { return enabled; },
     get runtime() { return runtime; },
     presentation: { wagonParts, horseArt, onChanged: () => onChanged?.() },
     phys,
-    frame, batches, draw, targets, hoverName, activate, offsetAll, destroyAll, clearPeers, shown,
+    frame, batches, draw, targets, hoverName, tooltipText, activate, offsetAll, destroyAll, clearPeers, shown,
     wireRecord, applyOwner, sweepOwners,
     get peers() { return _peers; }, get parts() { return _parts; },
   };

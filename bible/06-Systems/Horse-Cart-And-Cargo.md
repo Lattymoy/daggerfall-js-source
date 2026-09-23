@@ -110,11 +110,16 @@ WithPlayer, None, FollowingPlayer):
 - `src/world/quat.js` - the quaternion as Unity spells it: `LookRotation`,
   `AngleAxis`, `Slerp`, the basis ladder `CreateRotationFromBasis` is.
 - The hosts: `world.js` and `exterior.js` build the pool and the runtime,
-  tick `hcc.frame` every frame (the hotkeys read on the held-key set's
-  edge), draw after the camps, shift on the floating origin, race the
+  tick the runtime ONCE a frame in every mode (`hccTick` - the modal branch
+  indoors, and the exterior frame after the motor and the recentre, before
+  the world pass draws the wagon; the hotkeys read the frame's edge ring
+  behind `HandleConfiguredHotkeys`' own gate), draw after the camps, shift on the floating origin, race the
   targets with the other custom activations (after Eye Of The Beholder's
   cart, before the torch - `player/activationRace.js`), name through the
-  plaque's ladder, save and restore, hand the runtime to the modes machine
+  plaque's ladder and, where the plaque is not up, the mod's own HUD label
+  (`ui/horseNameTooltip.js`, native y 112, both skins), save the record in
+  DFU's per-mod slot on every save (`modData`, world and dungeon alike) and
+  reset it at the head of every load, hand the runtime to the modes machine
   (`worldModes.js` fires `handlePreTransition` before the dismount,
   `handleSuccessfulInteriorTransition` after the mode change,
   `handleFailedTransition` in the finally, `handleExteriorTransition` on
@@ -126,11 +131,14 @@ WithPlayer, None, FollowingPlayer):
   decides, a refusal is a message box over the window).
 - `src/systems/modSettings.js` `horse-cart-and-cargo` - the eight keys
   plus `Enabled`; a disabled mod is one DFU never loaded (nothing stands,
-  nothing rides the wire, the windows fall back). ONE DEPARTURE, recorded
-  (HCC-KEYS): the hotkeys ship on `F7` / `F10`, because the mod's `K` and
-  `G` are Travel Options' follow key and Handheld Torches' drop key in
-  this tree and no letter is free; the mod's own fallbacks for an
-  unparseable entry stay `K` / `G`, as its IL has them.
+  nothing rides the wire, the windows fall back, and the machine drops
+  what it was observing - `suspend`). ONE DEPARTURE, recorded (HCC-KEYS):
+  the hotkeys ship on `5` / `6` (`Alpha5` / `Alpha6`), because the mod's
+  `K` and `G` are Travel Options' follow key and Handheld Torches' drop
+  key in this tree and no letter is free; the mod's own fallbacks for an
+  unparseable entry stay `K` / `G`, as its IL has them. The first cut
+  shipped `F7` / `F10` and neither was free (AUDIT HCC K1, below); a file
+  that saved them loses exactly those, once.
 
 ## HCC-ONLINE - the enhancement
 
@@ -139,19 +147,20 @@ following horse and trailing team stand in a shared cell, so:
 
 - **Everyone near sees them.** The pool's `wireRecord` says what the
   runtime SHOWS (the wagon's kind, base, rotation, cargo tier and wheel
-  angle; the horse's base, forward, walk frame and walking) in the wire
+  angle; the horse's base, forward and whether it walks) in the wire
   frame, as `hv` on the cell's foes frame beside the camps' `c` - on every
   full frame, and between them whenever the word moved (the foe pool's
   `foesFrame(full, force)` sends a frame with no foe in it for the
   rider). A reader lands it through `validHccRecord` (shape, bounds, a
-  unit quaternion, a known kind and tier, a frame the walk set has, the
-  name at the mod's 31) under the camps' owner law: an owner's word
+  unit quaternion, a known kind and tier, the walking bit, the name
+  through the wire's label door at the mod's 31) under the camps' owner law: an owner's word
   replaces that owner's alone, `null` says none stand, an owner gone from
   the room or quiet past `FOES_STALE_MS` is swept, a room change clears.
-  The reader EASES a peer's team between words (12 per second, a step
-  past 20 m snaps) and draws it with the same pieces, cargo and billboard
-  - the horse's orientation is the reader's camera's, as a sprite's must
-  be.
+  The reader keeps the word in the WIRE frame and converts it every frame,
+  EASES a peer's team between words (12 per second, a step past 20 m
+  snaps) and draws it with the same pieces, cargo and billboard - the
+  horse's orientation and its stride are the reader's own, as a sprite's
+  must be. A peer's PARKED wagon stands a collider of its own.
 - **The plaque names whose.** A peer's horse reads "<Name> (<Peer>'s
   horse)" or "<Peer>'s horse", their wagon "<Peer>'s wagon"; the press on
   one says so and opens nothing.
@@ -159,6 +168,97 @@ following horse and trailing team stand in a shared cell, so:
   client's; a peer's wagon is a thing to see and walk around.
 - **No relay change.** The relay reads nothing inside a foes frame, so
   `hv` needs no version; the pose already carries the transport mode.
+- **An owner's word needs its owner.** A team stands for the others while
+  its owner is in the cell room to say it; indoors (every door is a room of
+  its own), away, dead or gone, it goes with them, as their camps and foes
+  do. A parked wagon that outlives its owner's presence would be a cell's
+  own memory on the relay, which cell rooms do not keep - recorded as the
+  open question below, and the Enabled note says what this law shows.
+
+## AUDIT HCC (2026-09-23)
+
+Mac: "Let's do an audit on this, ensure online is handled properly and any
+new notifications or UI elements are enhancified." Three lenses - the
+online lane, the notifications and UI, the hosts' lifecycle - read the
+port whole; every finding is paid below, pinned by execution
+(`test/audit_hcc.test.js`, the O-rows in `test/hcc_pool.test.js`) and
+killed by a mutant in `tools/mutants/hcc.json`.
+
+**Online.**
+- O1: a peer's team kept its targets in the scene frame of the moment it
+  landed, so every recentre of mine snapped it 819 m away until its next
+  word. The pool keeps the WIRE record and converts it every frame.
+- O2: a fast travel's teardown (`clearLive`, which re-anchors the origin
+  with no offset) kept the peers' teams; it clears them as `clearPuppets`
+  does.
+- O3: a peer's parked wagon had no collider. It stands `hccWagon:<owner>`,
+  gone with the owner, the sweep or a change of kind, and the ray gives it
+  the surface pardon.
+- O4: a peer's horse name passed control characters, bidi overrides and
+  names the filter refuses. It rides the wire's label door
+  (`sanitizeLabel`: printable ASCII, the name filter).
+- O5: the walk frame rode the word, so a STANDING horse's idle flicker
+  (frames 5 and 6 at 2 fps) was a new word twice a second, forever, to the
+  whole cell. The walking bit rides; the reader strides its own
+  `HorseWalkAnimationState`. The change key is taken in the wire frame, so
+  my own rebase is not a word.
+- O6: a press on a peer's team answered from any distance. Past the mod's
+  3.2 it says DFU's "too far", as the dropped torch's arm does.
+- O7: my switch turned off reached the peers only at my next full frame; it
+  is a word now. O8: a viewer with the mod off still fetched and built a
+  peer's art; it lands nothing. O9: a peer's horse was named and pressed
+  while its art was not drawn; it is not.
+- O10, recorded not changed: the owner's-presence law above.
+
+**Notifications and UI.**
+- K1: `F10` is DFU's LargeHUDToggle and `Shift-F10` its HUDToggle (world
+  shortcuts, answered with the key already in the ring), and `F7` is the
+  browser's caret browsing. The keys moved to `5` / `6`; the gate now walks
+  every vendored mod's shipped keys against DFU's bindings, its world
+  shortcuts, the browser's keys and each other.
+- K2 / K3: the hotkeys were a derivation over the held-key set (a tap
+  shorter than a frame lost; no gate under a DOM surface). They read the
+  frame's edge ring behind the IL's own `IsPlayingGame` / `LoadInProgress`
+  gate.
+- K4: a captured key could never be cleared to `None`; the capture has the
+  controls pane's clear, and the notes say the port's control.
+- U4 / H1: the runtime was ticked only outdoors and after the draw - the
+  mod's "only outdoors" lines were dead indoors and the wagon lagged its
+  horse by a frame. `hccTick` runs once a frame in every mode, before the
+  world pass.
+- U5: the naming prompt (and every DaggerfallInputMessageBox) drew DFU's
+  parchment in the bitmap font under the enhanced skin. Under the enhanced
+  skin it is its own window in the skin's face (`ui/enhancedInputBox.js`):
+  centred, the notice's panel and rule, the label and the live entry with a
+  caret, and a caption that says Enter accepts and Escape cancels -
+  ENH-NOTICE1's law kept, a field is a decision and never a notice.
+- U6: the horse's name tooltip existed only as the enhanced desktop plaque.
+  `HorseNameTooltipController`'s label is ported (`ui/horseNameTooltip.js`):
+  DFU's line at native y 112 on the classic skin, the mid-screen label's DOM
+  face on the enhanced one, where the plaque is not up.
+- I1 / I2: the inventory read Eye Of The Beholder's outdoor cart as a
+  dungeon-exit request ("Your wagon is too far from the entrance." on open
+  ground); the exit request is `IsPlayerInsideDungeon && the flag`
+  [IL_abb8]. The enhanced pack now shows the opening refusal as its notice
+  and carries the granted flag to its wagon button.
+
+**Lifecycle.**
+- H2: the travel map's journey never called `OnPreFastTravel` /
+  `OnPostFastTravel` (they sat on the online respawn alone), so a following
+  team was left on the old pixel's coordinates, standing nowhere. The pair
+  wraps `fastTravelTo`; the online respawn keeps it as the journey it most
+  resembles.
+- H3: a dungeon save carried no record (the online close-the-tab save
+  included) and a dungeon or "elsewhere" load neither reset nor restored
+  the runtime - one character's horse and wagon rode into the next. The
+  record is DFU's per-mod save data (`modData`, every save), `OnStartLoad`
+  runs at the head of every load and `RestoreSaveData` once the place
+  stands; the same-dungeon load does both.
+- H4: the live switch off left the machine observing; it suspends
+  (`clearAllTransientState`), and a save taken with the mod off keeps the
+  record.
+- Checked and not changed: the pre-transition call before the `try` - its
+  two neighbours are a region read and a mode set, and cannot throw.
 
 ## What is and is not ported
 
@@ -167,7 +267,7 @@ and struck (constructors, the `<Start>d__161` coroutine's five, the
 `<>c` lambda bodies, the event accessors). That leaves
 **398 authored methods**, each a row of `test/hcc_scope.test.js` with the
 symbol and module that carries it or a sentence saying why the port has
-no twin. **338 are ported**; **60 have no twin**, in these families and
+no twin. **341 are ported**; **57 have no twin**, in these families and
 no other:
 
 - `DeployedWagonFollowerCollisionFilter` (11): `Physics.IgnoreCollision`
@@ -185,7 +285,8 @@ no other:
 - Unity transform / hierarchy / lifetime plumbing (`OwnsTransform`,
   `get_Parent`, `ResetVisualLocalTransform`, the cargo tier roots, the
   mesh destroys, `OnDestroy`), DFU's event bus and `UIWindowFactory`
-  registration, the HUD `TextLabel` the name tooltip binds, the
+  registration, the HUD `TextLabel`'s removal from a replaced HUD (the
+  label itself is ported - AUDIT HCC U6), the
   session-long texture release, the legacy save-file migration, the
   `SaveDataInterface` type token, DFU's `Button` unbinding.
 
@@ -197,7 +298,8 @@ no other:
   runtime driven over a fake flat world: mount, trail, park, activate,
   follow, wait, name, the windows' questions, the doors, the save, fast
   travel, Travel Options, the persistence setting, the origin),
-  `test/hcc_pool.test.js` (10, the presentation and the wire),
+  `test/hcc_pool.test.js` (13, the presentation, the wire and the audit's
+  online rows), `test/audit_hcc.test.js` (9, AUDIT HCC),
   `test/hcc_hosts.test.js` (10, the hosts' seams by execution and by
   source), `test/hcc_scope.test.js` (4, the table), `test/hcc_assets.test.js`
   (3, the vendored files are the assembly's).

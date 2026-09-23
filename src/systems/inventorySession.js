@@ -109,21 +109,23 @@ export function openState(deps = {}) {
   // the runtime decides whether the wagon may show: a dungeon-exit request asks CanAccessWagonFromDungeonExit and a
   // refusal is a message box over the window; a selection request (a physical activation of the wagon) or a plain
   // open asks CanAccessWagonInventory; DFU's own dungeon-wagon path is closed (`allowDungeonWagonAccess = false`).
+  // AUDIT HCC I1: OnPush [IL_abb8-IL_abcf] reads the exit request as `IsPlayerInsideDungeon && allowDungeonWagonAccess`
+  // - the flag alone is not one. Eye Of The Beholder's cart raises the same flag OUTDOORS (EOTB_WAGON_PACK), and
+  // read as an exit request it asked CanAccessWagonFromDungeonExit on open ground: "Your wagon is too far from the
+  // entrance." and no wagon. DFU's own OnPush runs FIRST (base.OnPush, CheckWagonAccess) and shows the wagon when
+  // the flag is set; ApplyOpeningAccess [IL_ac9c] then keeps it only if the runtime allows, selects it for a
+  // selection or an exit request with no loot open, and boxes the refusal of an exit request alone.
   const rt = deps.horseCart?.() ?? null;
   const selectWagon = !!rt?.consumeWagonSelectionRequest?.();
-  if (deps.dungeon?.wagonPrompt) {
-    if (rt) {
-      const d = rt.canAccessWagonStorage(STORAGE_CONTEXT.DungeonExitSelection);
-      if (!d.allowed) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };
-      return { mode: deps.loot ? mode : 'remove', usingWagon: !deps.loot, allowDungeonWagonAccess: false, dungeonExitAccessGranted: true, chooseOne };
-    }
-    return { mode: 'remove', usingWagon: true, allowDungeonWagonAccess: true, chooseOne };
-  }
   if (rt) {
-    const d = rt.canAccessWagonStorage(STORAGE_CONTEXT.NormalInventory);
-    const usingWagon = selectWagon && d.allowed && !deps.loot;
-    return { mode: usingWagon ? 'remove' : mode, usingWagon, allowDungeonWagonAccess: false, chooseOne };
+    const exitRequest = !!(deps.dungeon?.wagonPrompt && deps.dungeon?.inside);
+    const d = rt.canAccessWagonStorage(exitRequest ? STORAGE_CONTEXT.DungeonExitSelection : STORAGE_CONTEXT.NormalInventory);
+    if (exitRequest && !d.allowed) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };
+    const baseShown = !!deps.dungeon?.wagonPrompt;   // CheckWagonAccess's show, before the mod's pass
+    const usingWagon = d.allowed && (baseShown || ((selectWagon || exitRequest) && !deps.loot));
+    return { mode: usingWagon ? 'remove' : mode, usingWagon, allowDungeonWagonAccess: false, dungeonExitAccessGranted: exitRequest && d.allowed, chooseOne };
   }
+  if (deps.dungeon?.wagonPrompt) return { mode: 'remove', usingWagon: true, allowDungeonWagonAccess: true, chooseOne };
   const allowDungeonWagonAccess = !!(
     deps.dungeon?.inside && hasCart(deps.items?.() ?? []) && deps.dungeon?.nearExit?.()
   );

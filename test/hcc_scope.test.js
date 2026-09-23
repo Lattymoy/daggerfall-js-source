@@ -9,7 +9,7 @@
 // Unity transform, no Harmony, no ModManager message bus, no session-scoped texture release. There is no NOT DONE
 // row. The dump is READ here: a row's method must be in it, and no authored method may be missing from the table.
 //
-// 338 of 398 are ported; 60 have no twin. The bible page (06-Systems/Horse-Cart-And-Cargo.md) states
+// 341 of 398 are ported; 57 have no twin (AUDIT HCC U6 ported the horse-name label's three). The bible page (06-Systems/Horse-Cart-And-Cargo.md) states
 // these numbers and the no-twin families, and a pin below holds it to them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -34,6 +34,7 @@ const MOD = {
   'inventorySession.js': 'src/systems/inventorySession.js',
   'nativeInventory.js': 'src/ui/nativeInventory.js',
   'dotnetResources.js': 'src/formats/dotnetResources.js',
+  'horseNameTooltip.js': 'src/ui/horseNameTooltip.js',   // AUDIT HCC U6
 };
 
 /** THE 398. An overload shares its name with a `#2` suffix (HorseFollowPath::Seed twice). */
@@ -150,11 +151,12 @@ const IL = {
   'HorseFollowPath::NormalizeHorizontal': { port: 'normalizeHorizontal', mod: 'horseFollow.js' },
   'HorseFollowPath::HorizontalDistance': { port: 'horizontalDistance', mod: 'horseCartLaw.js' },
   // ── HorseNameTooltipController (5)
-  'HorseNameTooltipController::Update': { port: 'hoverName', mod: 'horseCartPool.js' },
-  'HorseNameTooltipController::TryGetActivationRay': { port: null, why: 'no twin here: the mod\'s HUD TextLabel; the port\'s plaque is ui/worldPlaque.js\'s, fed by horseCartPool hoverName through the host\'s namer ladder' },
-  'HorseNameTooltipController::EnsureBound': { port: null, why: 'no twin here: the mod\'s HUD TextLabel; the port\'s plaque is ui/worldPlaque.js\'s, fed by horseCartPool hoverName through the host\'s namer ladder' },
-  'HorseNameTooltipController::Hide': { port: null, why: 'no twin here: the mod\'s HUD TextLabel; the port\'s plaque is ui/worldPlaque.js\'s, fed by horseCartPool hoverName through the host\'s namer ladder' },
-  'HorseNameTooltipController::Release': { port: null, why: 'no twin here: the mod\'s HUD TextLabel; the port\'s plaque is ui/worldPlaque.js\'s, fed by horseCartPool hoverName through the host\'s namer ladder' },
+  // AUDIT HCC U6: the label is the port's now (ui/horseNameTooltip.js) - it was the plaque alone, the enhanced desktop's
+  'HorseNameTooltipController::Update': { port: 'tooltipText', mod: 'horseCartPool.js' },
+  'HorseNameTooltipController::TryGetActivationRay': { port: 'pickActivatableHit', mod: 'horseCartPool.js' },
+  'HorseNameTooltipController::EnsureBound': { port: 'HorseNameTooltip', mod: 'horseNameTooltip.js' },
+  'HorseNameTooltipController::Hide': { port: 'hide', mod: 'horseNameTooltip.js' },
+  'HorseNameTooltipController::Release': { port: null, why: 'no twin here: the HUD TextLabel\'s removal from a HUD being replaced - the port\'s label is one per game, drawn by the one HUD for the session (ui/horseNameTooltip.js), so there is no bound panel to leave' },
   // ── HorseTextureSet (5)
   'HorseTextureSet::TryLoad': { port: 'ensureStationary', mod: 'horseCartPool.js' },
   'HorseTextureSet::GetTexture': { port: 'horseStillRecord', mod: 'horseCartPool.js' },
@@ -515,7 +517,7 @@ test('HCC scope: every ported row names a symbol that exists in the module it na
     assert.ok(v.why.length > 60, `${k}: a reason, not a shrug`);
     assert.doesNotMatch(v.why, /NOT DONE|todo|later/i);
   }
-  assert.equal(PORTED.length, 338); assert.equal(NOT.length, 60);
+  assert.equal(PORTED.length, 341); assert.equal(NOT.length, 57);
 });
 
 test('HCC scope: the no-twin rows fall into the families the port cannot have, and no runtime arithmetic is among them', () => {
@@ -531,8 +533,8 @@ test('HCC scope: the no-twin rows fall into the families the port cannot have, a
 test('HCC scope: the bible page states THIS table, and a 1:1 claim for this mod stands beside its check', () => {
   const page = rd('bible/06-Systems/Horse-Cart-And-Cargo.md');
   assert.match(page, /\*\*398 authored methods\*\*/);
-  assert.match(page, /\*\*338 are ported\*\*/);
-  assert.match(page, /\*\*60 have no twin\*\*/);
+  assert.match(page, /\*\*341 are ported\*\*/);
+  assert.match(page, /\*\*57 have no twin\*\*/);
   assert.match(page, /test\/hcc_scope\.test\.js/);
   const notNames = new Set(NOT.map(([k]) => k.split('::')[0]));
   for (const t of ['DeployedWagonFollowerCollisionFilter', 'HorseCartUiCompatibilityCoordinator', 'TrailingWagonTradeWindow']) assert.ok(notNames.has(t) && page.includes(t), `the page names ${t} among the no-twins`);

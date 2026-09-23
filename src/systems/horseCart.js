@@ -1234,10 +1234,16 @@ export function createHorseCartRuntime(deps) {
     return copySaveData(wagonState);
   }
   function restoreSaveData(data) { clearAllTransientState(); wagonState = normalizeSaveData(data, ratio()); pendingPersistenceNormalization = !physicalPersistenceEnabled; changed(); }
+  /** AUDIT HCC H4: the port's LIVE switch turned off (no IL twin - DFU loads a mod or does not). A mod not loaded
+   *  observes nothing, so the machine drops every transient it holds - the presentations, the transport mode it last
+   *  saw, the pending work - and keeps its record (the save still carries it). Turned back on, it starts observing
+   *  afresh, as a mod loaded into a running game would: what the classic transport window did meanwhile is the
+   *  state it finds, not a change it rejects. */
+  function suspend() { clearAllTransientState(); }
 
   return {
     lateUpdate, rebase, handleSettingsChanged,
-    handleStartLoad, handleNewGame, getSaveData, restoreSaveData, newSaveData,
+    handleStartLoad, handleNewGame, getSaveData, restoreSaveData, newSaveData, suspend,
     handlePreTransition, handleSuccessfulInteriorTransition, handleFailedTransition, handleExteriorTransition,
     handlePreFastTravel, handlePostFastTravel,
     canUseTransport, tryUseTransport, canMountHorseFromTransportWindow, canUseCartFromTransportWindow,

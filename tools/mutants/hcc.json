@@ -253,9 +253,9 @@
     ]
   },
   {
-    "name": "HCC-door-any-frame",
+    "name": "HCC-door-walking-any-number",
     "file": "src/systems/horseCartWire.js",
-    "old": "    if (!Number.isInteger(h[5]) || h[5] < 0 || h[5] >= HORSE_WALK_FRAMES) return null;",
+    "old": "    if (h[5] !== 0 && h[5] !== 1) return null;",
     "new": "    if (false) return null;",
     "tests": [
       "test/hcc_pool.test.js"
@@ -318,7 +318,7 @@
   {
     "name": "HCC-wagon-box-never-stood",
     "file": "src/scenes/horseCartPool.js",
-    "old": "    col.addMesh(WAGON_BUCKET, tri.positions, tri.indices, m);",
+    "old": "    col.addMesh(bucket, tri.positions, tri.indices, m);",
     "new": "    void tri;",
     "tests": [
       "test/hcc_pool.test.js"
@@ -491,8 +491,8 @@
   {
     "name": "HCC-inventory-ignores-runtime-refusal",
     "file": "src/systems/inventorySession.js",
-    "old": "      if (!d.allowed) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };",
-    "new": "      if (false) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };",
+    "old": "    if (exitRequest && !d.allowed) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };",
+    "new": "    if (false) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };",
     "tests": [
       "test/hcc_hosts.test.js"
     ]
@@ -513,6 +513,150 @@
     "new": "    if (!out.length && !full) return null;",
     "tests": [
       "test/hcc_hosts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O1-targets-landed-once",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs\n",
+    "new": "",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O3-peer-wagon-no-box",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      standPeerCollider(owner, p);\n",
+    "new": "",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O3-swept-box-stands",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (p?.bucketKey) collider()?.removeBucket?.(peerWagonBucket(owner));\n",
+    "new": "",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O4-name-raw",
+    "file": "src/systems/horseCartWire.js",
+    "old": "export const hccHorseNameOnWire = (name) => (typeof name === 'string' ? sanitizeLabel(name, HORSE_NAME_MAX) : '');",
+    "new": "export const hccHorseNameOnWire = (name) => (typeof name === 'string' ? name.trim().slice(0, HORSE_NAME_MAX) : '');",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O5-key-in-scene-frame",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    const key = hccRecordKey(hccWireRecord(s, toWire));",
+    "new": "    const key = hccRecordKey(hccWireRecord(s));",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O6-peer-press-any-reach",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (!(distance <= ACTIVATION_REACH)) { tooFar?.(); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O7-switch-off-silent",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      if (_lastKey !== '') { _lastKey = ''; onChanged?.(); }\n",
+    "new": "",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O8-disabled-loads-peers",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (!enabled) return false;   // AUDIT HCC O8: a disabled mod is one DFU never loaded - nothing of a peer's stands or loads\n",
+    "new": "",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O9-unseen-horse-named",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      if (p.horse && p.shownHorse && _stillReady) out.push(",
+    "new": "      if (p.horse && p.shownHorse) out.push(",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-O2-teardown-keeps-teams",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    _onHccClear?.();   // AUDIT HCC O2: and the peers' teams with them - a fast travel's clearLive re-anchors the origin with no offset to ride\n",
+    "new": "",
+    "tests": [
+      "test/hcc_pool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-H4-switch-off-keeps-observing",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      runtime?.suspend?.();   // AUDIT HCC H4: the machine lets go of what it was observing\n",
+    "new": "",
+    "tests": [
+      "test/audit_hcc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-I1-flag-alone-is-exit",
+    "file": "src/systems/inventorySession.js",
+    "old": "    const exitRequest = !!(deps.dungeon?.wagonPrompt && deps.dungeon?.inside);",
+    "new": "    const exitRequest = !!deps.dungeon?.wagonPrompt;",
+    "tests": [
+      "test/audit_hcc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-K1-no-migration",
+    "file": "src/systems/modSettings.js",
+    "old": "  Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),\n",
+    "new": "",
+    "tests": [
+      "test/audit_hcc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-K1-summon-back-on-f10",
+    "file": "src/systems/modSettings.js",
+    "old": "default: 'Alpha6', text: true,",
+    "new": "default: 'F10', text: true,",
+    "tests": [
+      "test/audit_hcc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-H3-modData-dropped",
+    "file": "src/systems/save.js",
+    "old": "smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null };",
+    "new": "smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: null };",
+    "tests": [
+      "test/audit_hcc.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-HCC-U6-tooltip-any-reach",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    return pick?.key === KEY_HORSE && pick.distance <= ACTIVATION_REACH ? String(runtime.horseTargetLabel ?? '') : '';",
+    "new": "    return pick?.key === KEY_HORSE ? String(runtime.horseTargetLabel ?? '') : '';",
+    "tests": [
+      "test/audit_hcc.test.js"
     ]
   }
 ]

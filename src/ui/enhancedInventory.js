@@ -2498,9 +2498,15 @@ export function mountEnhancedInventory(hostEl, d = {}) {
     usingWagon: open.usingWagon,
     allowDungeonWagonAccess: open.allowDungeonWagonAccess,
     chooseOne: open.chooseOne,
+    // AUDIT HCC I2: Horse Cart and Cargo's granted exit request - the wagon button's later click asks the dungeon-exit
+    // context with it (planWagonToggle), not the ordinary one that refuses what the player just did
+    dungeonExitAccessGranted: !!open.dungeonExitAccessGranted,
   };
   dropped = [];
   wagonLocal = [];
+  // AUDIT HCC I2: the opening refusal (ApplyOpeningAccess's MessageBox [IL_ad14] - "Your wagon is too far from the
+  // entrance.") is this window's own notice, as the classic window's box over itself is (nativeInventory.js)
+  if (open.refusal?.text) notice = open.refusal.text;
   refresh();
   render();
   // The classic window composes on construction; so does this. Without

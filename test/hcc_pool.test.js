@@ -231,15 +231,18 @@ test('HCC-ONLINE wire: my word says the wagon shown and the horse shown, rounded
   const toWire = (p) => [p[0] * 40 + 100000, p[1] - 3, p[2] * 40 + 200000];
   const r = hccWireRecord({ wagon: { kind: HCC_WIRE_KIND.Deployed, position: [1.2345, 1.001, 2], rotation: [0, 0.70710678, 0, 0.70710678], tier: 50, angle: 12.345 }, horse: { position: [5, 0, 6], forward: [0.6, 0, 0.8], frame: 3, walking: true }, name: '  Bess ' }, toWire);
   assert.deepEqual(r.w, [2, 100049.38, -2, 200080, 0, 0.7071, 0, 0.7071, 50, 12.35]);
-  assert.deepEqual(r.h, [100200, -3, 200240, 0.6, 0.8, 3, 1]);
+  assert.deepEqual(r.h, [100200, -3, 200240, 0.6, 0.8, 1], 'AUDIT HCC O5: the walk frame does not ride - only whether it walks');
   assert.equal(r.n, 'Bess');
   assert.equal(hccWireRecord({ wagon: null, horse: { position: [0, 0, 0], forward: [0, 0, 1], frame: 0, walking: false } }).n, undefined);
-  assert.notEqual(hccRecordKey(r), hccRecordKey({ ...r, h: [...r.h.slice(0, 5), 4, 1] }), 'a frame changed is a changed word');
+  assert.notEqual(hccRecordKey(r), hccRecordKey({ ...r, h: [...r.h.slice(0, 5), 0] }), 'the walking bit changed is a changed word');
+  const idle = (frame) => hccRecordKey(hccWireRecord({ wagon: null, horse: { position: [1, 0, 1], forward: [0, 0, 1], frame, walking: false } }));
+  assert.equal(idle(5), idle(6), 'AUDIT HCC O5: a standing horse\'s idle flicker (frames 5 and 6 at 2 fps) is not a word');
+  assert.equal(hccWireRecord({ wagon: null, horse: { position: [0, 0, 0], forward: [0, 0, 1], walking: false }, name: 'Be\u202Ess\nie' }).n, 'Bessie', 'AUDIT HCC O4: the label door - printable ASCII only');
   assert.equal(hccRecordKey(null), '');
 });
 
 test('HCC-ONLINE wire: a peer\'s word through the door - shape, bounds, a unit quaternion, a known kind and tier, a frame the walk has, a bounded name', () => {
-  const good = { w: [2, 100, 1, 200, 0, 0, 0, 1, 50, 30], h: [5, 0, 6, 3, 4, 3, 1], n: 'Bess' };
+  const good = { w: [2, 100, 1, 200, 0, 0, 0, 1, 50, 30], h: [5, 0, 6, 3, 4, 1], n: 'Bess' };
   const v = validHccRecord(good);
   assert.deepEqual(v.w.position, [100, 1, 200]); assert.equal(v.w.kind, 2); assert.equal(v.w.tier, 50); assert.equal(v.w.angle, 30);
   assert.deepEqual(v.h.forward, [0.6, 0, 0.8], 'the forward is normalised'); assert.equal(v.h.walking, true); assert.equal(v.n, 'Bess');
@@ -249,12 +252,15 @@ test('HCC-ONLINE wire: a peer\'s word through the door - shape, bounds, a unit q
   assert.equal(validHccRecord({ w: [2, 100, 1, 200, 0, 0, 0, 0, 50, 30] }), null, 'a zero quaternion');
   assert.equal(validHccRecord({ w: [2, 1e9, 1, 200, 0, 0, 0, 1, 50, 30] }), null, 'out of the world');
   assert.equal(validHccRecord({ w: [2, 100, 1, 200, 0, 0, 0, 1, 50] }), null, 'too short');
-  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 0, 3, 1] }), null, 'no forward');
-  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 8, 1] }), null, 'a frame the walk set has not');
-  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 3, 2] }), null, 'walking is a bit');
-  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 3, 1], n: 'x'.repeat(200) }), null, 'a name past any bound');
-  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 3, 1], n: 42 }), null);
-  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 3, 1], n: 'x'.repeat(40) }).n.length, 31, 'a long one is the mod\'s 31');
+  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 0, 1] }), null, 'no forward');
+  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 3, 1] }), null, 'AUDIT HCC O5: the old seven-word horse (a frame riding) is not the word');
+  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 2] }), null, 'walking is a bit');
+  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 1], n: 'x'.repeat(200) }), null, 'a name past any bound');
+  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 1], n: 42 }), null);
+  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 1], n: 'x'.repeat(40) }).n.length, 31, 'a long one is the mod\'s 31');
+  // AUDIT HCC O4: a crafted name is cleaned, never shown raw - no bidi override, no second plaque line, no zero-width
+  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 1], n: '\u202Eevil\nline\u200B' }).n, 'evilline');
+  assert.equal(validHccRecord({ h: [5, 0, 6, 0, 1, 1], n: '\u0000\u0007' }).n, '', 'nothing printable: the horse goes unnamed, not unseen');
   const q = validHccRecord({ w: [1, 0, 0, 0, 0, 1.5, 0, 0, 0, 725] });
   assert.deepEqual(q.w.rotation, [0, 1, 0, 0], 'renormalised'); assert.equal(q.w.angle, 5, 'the angle wrapped');
   assert.equal(validHccRecord({ w: [1, 0, 0, 0, 0, 3, 0, 0, 0, 0] }), null, 'a quaternion twice too long is junk, not a rounding');
@@ -272,8 +278,8 @@ test('HCC-ONLINE wire: the ease - a step under twenty metres eases, a longer one
   await flush();
   pool.attach(fakeRuntime());
   const toScene = (p) => [(p[0] - 100000) / 40, p[1] + 3, (p[2] - 200000) / 40];
-  assert.equal(pool.applyOwner('me', { h: [100200, -3, 200240, 0, 1, 3, 1] }, toScene, 1), false, 'my own word is not a peer\'s');
-  assert.equal(pool.applyOwner('p1', { w: [2, 100400, -3, 200400, 0, 0, 0, 1, 25, 0], h: [100200, -3, 200240, 0, 1, 3, 1], n: 'Bess' }, toScene, 1), true);
+  assert.equal(pool.applyOwner('me', { h: [100200, -3, 200240, 0, 1, 1] }, toScene, 1), false, 'my own word is not a peer\'s');
+  assert.equal(pool.applyOwner('p1', { w: [2, 100400, -3, 200400, 0, 0, 0, 1, 25, 0], h: [100200, -3, 200240, 0, 1, 1], n: 'Bess' }, toScene, 1), true);
   assert.equal(pool.peers.size, 1);
   const p = pool.peers.get('p1');
   assert.deepEqual(p.horse.position, [5, 0, 6]); assert.deepEqual(p.wagon.position, [10, 0, 10]); assert.equal(p.name, 'Bess');
@@ -287,21 +293,98 @@ test('HCC-ONLINE wire: the ease - a step under twenty metres eases, a longer one
   assert.deepEqual(pool.hoverName('hccPeer:p1:h'), { title: "Bess (Ann's horse)" });
   const said = [];
   assert.equal(pool.activate('hccPeer:p1:h', 1, (l) => said.push(l)), true); assert.equal(said[0], "That is Bess (Ann's horse).");
+  let far = 0;
+  assert.equal(pool.activate('hccPeer:p1:h', ACTIVATION_REACH + 1, (l) => said.push(l), () => far++), true, 'AUDIT HCC O6: a far press is still the press');
+  assert.equal(far, 1); assert.equal(said.length, 1, 'past the mod\'s reach: DFU\'s "too far", not the name');
   assert.equal(pool.activate('hccPeer:zz:h', 1, (l) => said.push(l)), false);
-  assert.equal(pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 3, 1] }, toScene, 2), true);
+  assert.equal(pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 1] }, toScene, 2), true);
   assert.equal(pool.peers.get('p1').wagon, null, 'the wagon left the word: gone');
   assert.deepEqual(pool.hoverName('hccPeer:p1:h'), { title: "Ann's horse" }, 'and the name with it');
-  assert.equal(pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 99, 1] }, toScene, 3), false, 'a junk word drops theirs');
+  assert.equal(pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 99] }, toScene, 3), false, 'a junk word drops theirs');
   assert.equal(pool.peers.size, 0);
-  pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 3, 1] }, toScene, 4);
+  pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 1] }, toScene, 4);
   assert.equal(pool.applyOwner('p1', null, toScene, 5), true, 'null: none stand');
   assert.equal(pool.peers.size, 0);
-  pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 3, 1] }, toScene, 6);
-  pool.applyOwner('p2', { h: [100200, -3, 200240, 0, 1, 3, 1] }, toScene, 6);
+  pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 1] }, toScene, 6);
+  pool.applyOwner('p2', { h: [100200, -3, 200240, 0, 1, 1] }, toScene, 6);
   pool.sweepOwners(new Set(['p1']), 7, 100);
   assert.deepEqual([...pool.peers.keys()], ['p1'], 'an owner gone from the room is swept');
   pool.sweepOwners(new Set(['p1']), 1000, 100);
   assert.equal(pool.peers.size, 0, 'and one quiet past the stale time');
-  pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 3, 1] }, toScene, 6);
+  pool.applyOwner('p1', { h: [100200, -3, 200240, 0, 1, 1] }, toScene, 6);
   pool.clearPeers(); assert.equal(pool.peers.size, 0);
+});
+
+test('AUDIT HCC O1/O3/O7/O8/O9: a peer\'s team is converted every frame, parks a box, goes when my switch goes, never loads for a disabled viewer, and is not named unseen', async () => {
+  const renderer = fakeRenderer();
+  const col = fakeCollider();
+  let ox = 100000;   // the host's origin: the conversion reads it LIVE, as campToScene does
+  const toScene = (p) => [(p[0] - ox) / 40, p[1] + 3, (p[2] - 200000) / 40];
+  let changed = 0;
+  const pool = createHorseCartPool({ renderer, meshes: fakeMeshes(), collider: () => col, now: () => 0, fetchFn: fetchOk, decode, selfId: () => 'me', peerName: () => 'Ann', onChanged: () => changed++ });
+  pool.attach(fakeRuntime({ horse: horse([1, 0, 1], [0, 0, 1], 5, false) }));
+  // O9: the word lands before the art: the horse is neither drawn nor named nor pressed
+  pool.applyOwner('p1', { w: [HCC_WIRE_KIND.Deployed, 100400, -3, 200400, 0, 0, 0, 1, 25, 0], h: [100200, -3, 200240, 0, 1, 0] }, toScene, 1);
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.ok(!pool.targets().some((t) => t.key === 'hccPeer:p1:h'), 'O9: a horse not drawn is not a target');
+  await flush(12);
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.ok(pool.targets().some((t) => t.key === 'hccPeer:p1:h'), 'and it is, once its art stands');
+  // O3: the parked wagon stands a box of its own, and has a surface for the ray
+  assert.ok(col.buckets.has('hccWagon:p1'), 'O3: a peer\'s parked wagon is a box to walk around');
+  assert.equal(pool.targets().find((t) => t.key === 'hccPeer:p1:w').noSurface, false);
+  // O1: my floating origin moves (the pool shifts what it shows; the host's conversion now answers the new frame) -
+  // the team stays where it stands in the WORLD, with no snap back to a stale scene point
+  const before = [...pool.peers.get('p1').shownHorse];
+  ox += 819.2 * 40;
+  pool.offsetAll([-819.2, 0, 0]);
+  pool.frame(1 / 30, [0, 1, 0]);
+  const after = pool.peers.get('p1').shownHorse;
+  assert.ok(Math.abs(after[0] - (before[0] - 819.2)) < 1e-6 && after[2] === before[2], `O1: shifted with the world, not snapped: ${after}`);
+  assert.deepEqual(pool.peers.get('p1').horse.position, toScene([100200, -3, 200240]));
+  // and a re-anchor with NO offset (a fast travel's state.init) is answered by the same conversion
+  ox += 5000 * 40;
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.deepEqual(pool.peers.get('p1').shownHorse, toScene([100200, -3, 200240]), 'O1: past the snap, the new frame\'s point');
+  // O3: the wagon rolls on (Following) - the box goes; the owner leaves - nothing of theirs stands
+  pool.applyOwner('p1', { w: [HCC_WIRE_KIND.Following, 100400, -3, 200400, 0, 0, 0, 1, 25, 0] }, toScene, 2);
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.ok(!col.buckets.has('hccWagon:p1'), 'O3: only a PARKED wagon is a box');
+  pool.applyOwner('p1', { w: [HCC_WIRE_KIND.Deployed, 100400, -3, 200400, 0, 0, 0, 1, 25, 0] }, toScene, 3);
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.ok(col.buckets.has('hccWagon:p1'));
+  pool.sweepOwners(new Set(), 4);
+  assert.ok(!col.buckets.has('hccWagon:p1'), 'O3: a swept owner takes the box');
+  // O7: my switch turned off is a word now, not at my next full frame
+  const n = changed;
+  pool.setEnabled(false);
+  assert.equal(changed, n + 1, 'O7: the peers are told');
+  pool.setEnabled(false);
+  assert.equal(changed, n + 1, 'once');
+  // O8: a disabled viewer stands and loads nothing of a peer's
+  assert.equal(pool.applyOwner('p2', { h: [100200, -3, 200240, 0, 1, 0] }, toScene, 5), false);
+  assert.equal(pool.peers.size, 0);
+});
+
+test('AUDIT HCC O2: the foes pool\'s teardown (a fast travel\'s clearLive) takes the peers\' teams, as clearPuppets does', async () => {
+  const src = (await import('node:fs')).readFileSync(new URL('../src/scenes/exteriorFoes.js', import.meta.url), 'utf8');
+  const body = src.slice(src.indexOf('  function destroy() {'), src.indexOf('  /** AUDIT 17e F23'));
+  assert.match(body, /_owners\.clear\(\); _pupPending\.clear\(\); _pupIndex\.clear\(\);[^\n]*\n\s*_onHccClear\?\.\(\);/);
+});
+
+test('AUDIT HCC O5: the change key is the WIRE\'s - my own floating-origin rebase moves every scene point and is not a word; a real move is', () => {
+  let ox = 0;   // the host's origin, as campToWire reads it live
+  let changed = 0;
+  const pool = createHorseCartPool({ renderer: null, meshes: null, collider: () => null, now: () => 0, onChanged: () => changed++, toWire: (p) => [p[0] + ox, p[1], p[2]] });
+  const h = horse([5, 0, 5], [0, 0, 1], 5, false);
+  pool.attach(fakeRuntime({ horse: h }));
+  pool.frame(1 / 30, [0, 1, 0]);
+  const n = changed;
+  // the recentre: every scene point shifts by -819.2 and the origin by +819.2 - the WIRE point stands still
+  h.position = [h.position[0] - 819.2, 0, 5]; ox += 819.2;
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.equal(changed, n, 'mutant: the key in the scene frame - every recentre a word to the whole cell');
+  h.position = [h.position[0] + 1, 0, 5];
+  pool.frame(1 / 30, [0, 1, 0]);
+  assert.equal(changed, n + 1, 'the horse stepping is');
 });
