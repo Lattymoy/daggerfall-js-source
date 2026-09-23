@@ -529,7 +529,7 @@ text match anywhere in the file.
 **Fix.** Both hosts hand the pair in the `createWorldModes` bag. The pin
 now reads that bag's own braces and refuses the inventory's.
 
-## DISC8-F: two arrows from the sprite bow - not reproduced
+## DISC8-F: two arrows from the sprite bow - not reproduced (FOUND AND FIXED: ARROW2, below)
 
 One loose draws one shaft, model 99800, in every host (the open world,
 interiors, the dungeon), exactly as DFU's DaggerfallMissile does; there is
@@ -777,3 +777,49 @@ The version's own mutant run turned up one survivor on HEAD, soc1 S23 (the
 lead handed to the newest seat when nobody is online): no pin held the
 all-away arm. `test/auditparty8.test.js` now holds it (every remaining seat
 away - the longest-standing leads), and S23 names that suite.
+
+# ARROW2 - the double arrows (DISC8-F), found
+
+DISC8-F counted shafts and found one. The second arrow was never a shaft:
+it was the SPRITE's nocked arrow, drawn while the loosed shaft flew. A
+per-tick drive of the real rig, the real Weapon Widget and the real
+`drawFpsWeapon` (a synthetic WEAPON09.CIF, every quad recorded) showed it
+on every shot with the widget off (80 frames of the nocked idle at 60 fps)
+and at many frame rates with it on. Three DFU laws the port had not carried:
+
+1. **The bow hides itself at the end of its release.** FPSWeapon.
+   AnimateWeapon sets `ShowWeapon = false` as a bow's one-shot runs off its
+   last frame (FPSWeapon.cs:529-531, "so its idle frame doesn't show before
+   it is hidden for its cooldown"), and WeaponManager's cooldown early
+   return (:229-233) leaves it hidden. The port's F024 latch froze the TRUE
+   of the shot, so the idle frame 0 - an arrow on the string - stood on
+   screen for the whole 1.3 s cooldown, and the widget's clone was never
+   told to stay off-screen. `spriteShown()` now carries FPSWeapon's own
+   hide to the classic sprite and the widget; an un-draw (no one-shot end)
+   keeps the bow shown as DFU does, and the Morrowind arm keeps `shown()`.
+2. **With BowDrawback off (the default) the bow idles DRAWN.** The idle
+   loop lands on frame 3 (FPSWeapon.cs:533-534) and a bow keeps its frame
+   into the strike (:261-262), so the instant shot twangs at +1 tick and
+   looses at +2. The port idled at 0 and played the whole draw first,
+   loosing at +5 - while the widget's clone, which starts at 3 as the IL
+   does, let its sprite arrow go ~170 ms before the 3D shaft existed.
+3. **One step per resume.** AnimateWeapon steps once and waits
+   `WaitForSeconds(animTickTime)` (:545); a coroutine never resumes twice in
+   a frame and drops the overshoot. The machine carried the remainder and
+   could take several ticks in one frame, running ahead of the clone (which
+   then missed the hit frame and never clocked its cooldown), and one long
+   frame on the release ran StrikeDown to Idle at once. The port's own gun
+   (FIELD-GUN7's lab clock) is no FPSWeapon and keeps its carry.
+
+Pinned by execution in `test/arrow2_bowhide.test.js`: one shot at 60 and
+50 fps, drawback on and off, widget on and off - no nocked frame on screen
+from the first frame the shaft can be drawn until the cooldown ends, and the
+bow back after it; the un-draw keeps the bow; the drawn idle and the +2 tick
+loose; the one-step clock and the long frame; the gun's carry. Mutants:
+`tools/mutants/arrow2.json` (9, all dead). `machijp.json` MAC-I re-aimed by
+content.
+
+Not changed, recorded: the flying shaft is not opted out of the Enhanced
+Lighting shadow pass (`render/shadowPass.js`), so it can throw a shaft's
+shadow outdoors - unverified by eye.
+

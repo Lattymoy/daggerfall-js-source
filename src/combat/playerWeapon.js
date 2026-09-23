@@ -497,6 +497,8 @@ export class PlayerWeapon {
     // was shipped but nothing ever set isBow - bows swung on the melee
     // clock. Read per step, exactly like the unarmed gate above.
     this.machine.isBow = t === WEAPON_TYPES.Bow;
+    // ARROW2: the bow's idle frame is the setting's (FPSWeapon.cs:533-534) - read per step, as DFU reads Settings there
+    this.machine.bowIdleDrawn = this.machine.isBow && !getBool('Controls', 'BowDrawback');
     // THE PORT'S OWN WEAPON is RANGED but not a BOW, and the
     // difference is the whole of why it is worth saying: a bow DRAWS -
     // StrikeUp winds up, the string holds at frame 3, StrikeDown

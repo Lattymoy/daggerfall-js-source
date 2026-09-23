@@ -123,8 +123,8 @@
   {
     "name": "MAC-I-the-weapon-sprite-drops-the-tint",
     "file": "src/combat/weaponRig.js",
-    "old": "      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });",
-    "new": "      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);",
+    "old": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });",
+    "new": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame);",
     "tests": [
       "test/machij_sprites_and_chat.test.js"
     ]
