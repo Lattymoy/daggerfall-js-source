@@ -14,6 +14,7 @@
 // hooks are not ported (Unity AssetInjection, no equivalent in this runtime).
 
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
+import { worldDataDoor } from './worldDataDoor.js';   // RR3b: WorldDataReplacement's four asks (BlocksFile.cs:214, :273, :385, :850)
 
 export const BLOCK_TYPES = Object.freeze({
   Unknown: 0,
@@ -126,7 +127,8 @@ export class BlocksFile {
 
   /** Name of specified block. Does not change the currently loaded block. */
   getBlockName(block) {
-    return this._bsa.getRecordName(block);
+    // BlocksFile.cs:214 - a block the world-data door added has its name there, past the BSA's count (RR3b)
+    return worldDataDoor()?.getNewDFBlockName(block) ?? (block < this.count ? this._bsa.getRecordName(block) : null);
   }
 
   /** Type of specified block from its name extension. */
@@ -154,6 +156,9 @@ export class BlocksFile {
   /** Index of block with specified name, or -1. Cached after first search. */
   getBlockIndex(name) {
     if (this._blockNameLookup.has(name)) return this._blockNameLookup.get(name);
+    // BlocksFile.cs:272-275 - a new block's assigned index, before the BSA scan (RR3b)
+    const assigned = worldDataDoor()?.getNewDFBlockIndex(name) ?? -1;
+    if (assigned !== -1) return assigned;
     for (let i = 0; i < this.count; i++) {
       if (this.getBlockName(i) === name) {
         this._blockNameLookup.set(name, i);
@@ -211,6 +216,12 @@ export class BlocksFile {
 
   /** DFBlock representation of a record (null on failure, matching empty DFBlock). */
   getBlock(block) {
+    // Check for replacement block data and use it if found (BlocksFile.cs:383-390 - RR3b: the world-data door); a BSA-range index keeps the record in its slot
+    const replacement = block >= 0 ? worldDataDoor()?.getDFBlockReplacementData(block, this.getBlockName(block)) : null;
+    if (replacement) {
+      if (this._blocks && this._blocks.length > block) this._blocks[block] = { name: replacement.name, bytes: null, view: null, dfBlock: replacement };
+      return replacement;
+    }
     if (!this.loadBlock(block)) return null;
     return this._blocks[block].dfBlock;
   }
@@ -446,15 +457,27 @@ export class BlocksFile {
     const recordCount = h.numBlockDataRecords;
     const subRecords = new Array(recordCount);
     let position = r.pos;
+    const door = worldDataDoor();
     for (let i = 0; i < recordCount; i++) {
-      subRecords[i] = {
-        // XZ position and Y rotation copied in for convenience.
-        xPos: h.blockPositions[i].xPos,
-        zPos: h.blockPositions[i].zPos,
-        yRotation: h.blockPositions[i].yRotation,
-        exterior: this._readRmbBlockSubRecord(r, rec),
-        interior: this._readRmbBlockSubRecord(r, rec),
-      };
+      // Check for replacement building data and use it, if found (BlocksFile.cs:848-861 - RR3b: the world-data door)
+      const replacement = door?.getBuildingReplacementData(rec.name, rec.dfBlock.index, i);
+      if (replacement) {
+        subRecords[i] = { ...replacement.rmbSubRecord };
+        if (replacement.factionId > 0) h.buildingDataList[i].factionId = replacement.factionId;
+        h.buildingDataList[i].buildingType = replacement.buildingType;
+        if (replacement.quality > 0) h.buildingDataList[i].quality = replacement.quality;
+        if (replacement.nameSeed > 0) h.buildingDataList[i].nameSeed = replacement.nameSeed;
+        door.applyBuildingReplacementAutoMapData(replacement, h.autoMapData);
+      } else {
+        subRecords[i] = {
+          // XZ position and Y rotation copied in for convenience.
+          xPos: h.blockPositions[i].xPos,
+          zPos: h.blockPositions[i].zPos,
+          yRotation: h.blockPositions[i].yRotation,
+          exterior: this._readRmbBlockSubRecord(r, rec),
+          interior: this._readRmbBlockSubRecord(r, rec),
+        };
+      }
       // Offset to next position (ignores padding and keeps stepping correct).
       position += h.blockDataSizes[i];
       r.pos = position;

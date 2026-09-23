@@ -15,6 +15,8 @@ import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActi
 import { attachTouch } from '../ui/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { BlocksFile } from '../formats/blocksFile.js';
+import { bindWorldDataBlocks } from '../formats/worldDataReplacement.js';   // RR3b
+import { loadModWorldData } from './modWorldData.js';   // RR3b
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { settlementsOf, loadModRoads } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22
@@ -449,6 +451,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   palette.load(palBytes, 'ART_PAL.COL');
   const blocks = new BlocksFile();
   blocks.load(blocksBytes);
+  bindWorldDataBlocks(blocks);   // RR3b: WorldDataReplacement's ContentReader.BlockFileReader - the new block indices start past this BSA's count
+  await loadModWorldData();   // RR3b: ModManager's world-data assets on the door before the first region or block loads
   const arch = new Arch3dFile();
   arch.load(archBytes);
   const maps = new MapsFile();
@@ -6101,7 +6105,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // is a microtask and the player must not be re-read after it.
     const locationId = `${dfLoc.regionIndex}:${dfLoc.name}`;
     const buildings = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
-      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex) });
+      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex), locationIndex: dfLoc.locationIndex ?? 0 });
     // AUDIT 63 F9 (review round): THE NAME IS A FILE READ, so the
     // reveal WAITS on it - the same gate the fixed-city host already
     // carries (exterior.js). GetGuildName -> GetAffiliation
@@ -6143,7 +6147,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // HALF B: the plates now come off the Position-bearing subrecord
     // walk over ALL buildings, not off the discovered doors.
     const summaries = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
-      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex) });
+      { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex), locationIndex: dfLoc.locationIndex ?? 0 });
     // ROAD-D D5: CreateBuildingNameplates' residence arm (:682-709).
     // DFU resolves the quest name for every discovered residence AS IT
     // BUILDS THE NAMEPLATES - once per open (:273), never per frame -
@@ -6849,7 +6853,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:227, "a right-click on a window is the window's...
+  // (dungeon.js:231, "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -9095,7 +9099,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // so the house you were given was never yours.
       const px = built.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
       return {
-        buildings: px?.locBlocks ? locationBuildings(loc.exterior?.buildings ?? [], px.locBlocks) : [],
+        buildings: px?.locBlocks ? locationBuildings(loc.exterior?.buildings ?? [], px.locBlocks, { locationIndex: loc.locationIndex ?? 0 }) : [],
         mapId: loc.mapTableData?.mapId ?? 0,
         regionIndex: loc.regionIndex ?? 0,
         locationName: loc.name ?? '',
@@ -9360,7 +9364,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const d = buildingDataForDoor(dfLoc.exterior.buildings, p.locBlocks, {
         dfBlock: hit.dfBlock, recordIndex: hit.recordIndex,
         position: [m[12] - p.locOrigin[0], m[13] - p.locOrigin[1], m[14] - p.locOrigin[2]],
-      });
+      }, { locationIndex: dfLoc.locationIndex ?? 0 });
       if (!d) return null;
       return { ...d, regionIndex: dfLoc.regionIndex, name: townTalk.directory.find((e) => e.buildingKey === d.buildingKey)?.name ?? '' };
     },
@@ -9405,7 +9409,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:108, so the
+  // only reader of `load` in the whole tree is dungeon.js:112, so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a

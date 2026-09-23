@@ -57,13 +57,21 @@ Mod-Registry row records. Both are what the mod's manifest names.
 verbatim from the source tree (MIT, the mod's own header). The pack
 loader globs them beside DFU's own (`src/scenes/questData.js`).
 
-## Not vendored yet
+## The world data (RR3b)
 
-The two world-data files and the building variant (the Northrock Fort
-and the master armorer's shop, RR3b).
+`WorldData/locationnew-RRfort01-16.json`, `WorldData/RRFORT01.RMB.json`
+and `WorldData/ARMRAM03.RMB-765-building14_master.json`, verbatim from
+the source tree - DFU's WorldDataReplacement JSON (a new location, its
+block, a building variant), read by `src/formats/worldDataReplacement.js`
+through `src/scenes/modWorldData.js`'s glob. Everything the mod ships is
+vendored now.
 
 ## What is ported, and where
 
+- **RR3b** (2026-09-23): the Master Armorer quest line's world data -
+  WorldDataReplacement.cs ported whole (`src/formats/worldDataReplacement.js`
+  + `worldDataDoor.js`), MapsFile and BlocksFile asking it, RMBLayout's
+  replacement arm in the building merge, the variants on the save.
 - **RR3a** (2026-09-23): the Master Armorer quest line's registrations -
   `src/systems/rrQuestLine.js` (the tables, the factions, the fort's
   tracks, the shop's discovery, the custom armor service) over four DFU

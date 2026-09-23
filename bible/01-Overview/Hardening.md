@@ -170,7 +170,7 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:5459` and
+`worldModes.js` that pointed between them cited `world.js:5463` and
 `dungeonContext.js:5805` - lines that had moved to `:4680` and `:5788`.
 *Three copies of a rule, and the signpost between them stale as well.*
 
@@ -232,7 +232,7 @@ has and `exterior.js` lacks is the streaming host's own (terrain pixels,
 riding, online peers). Everything `exterior.js` has and `world.js` lacks
 is a `?rig`/`?rigNear`/`?shot` probe rig, its own `refreshSeason` - whose
 streaming twin `tickSeason` is documented AND cites `refreshSeason` by
-name at `world.js:421` - and two math helpers in the shot path. **No
+name at `world.js:423` - and two math helpers in the shot path. **No
 drift.**
 
 **S2 - the mode-transition teardown order. Three candidate findings, all
@@ -249,7 +249,7 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:4455`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:4459`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
@@ -543,7 +543,7 @@ The door list derived; the four arm names did not. It demanded `close`,
 which no host has ever called on a slot - the hosts free a window with
 `dispose?.()` - so that requirement was invented, and it passed only
 because the one door lacking `close` was also the one being skipped. And
-it omitted `tick`, which `interior.js:366` calls unguarded **every
+it omitted `tick`, which `interior.js:370` calls unguarded **every
 frame**.
 
 **F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve

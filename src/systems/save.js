@@ -20,6 +20,7 @@ import { restartHeldEnchantments } from './enchantments.js';   // E2: the held b
 import { snapshotWeather, restoreWeather, rollClimateWeathersForDay } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host; AUDIT WORLD5 C4: the shared day's sky over a loaded one
 import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';   // S42: the CONDITION half of RegionDataRecord
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
+import { getWorldVariationSaveData, restoreWorldVariationData, clearWorldDataVariants } from './worldDataVariants.js';   // RR3b: the world-data variants ride the save
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
@@ -403,6 +404,8 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // DFU serialises it in SaveData_v1). Module-level world state, so
   // the snapshot reads the store, not the entity.
   snap.discovery = snapshotDiscovery();
+  // RR3b: WorldDataVariants.GetWorldVariationSaveData (SaveLoadManager.cs:1125) - the variants a quest set
+  snap.worldVariation = getWorldVariationSaveData();
   // A1: the automap dungeon-discovery dictionary (Automap.GetState -
   // DFU serialises it in SaveData_v1's sceneCache). Module-level
   // world state beside the discovery store; the snapshot itself runs
@@ -765,6 +768,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);
+  // RR3b: WorldDataVariants.RestoreWorldVariationData (SaveLoadManager.cs:1465-1466); a save without the field restores nothing, as the C#'s null does
+  clearWorldDataVariants();
+  restoreWorldVariationData(snap.worldVariation ?? null);
   // A1: a load replaces the automap store too; a pre-A1 save carries
   // no field and restores an empty one (nothing was revealed then).
   // A dungeon context re-fetches its live record after this runs.

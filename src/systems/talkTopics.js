@@ -28,6 +28,7 @@
 //   NPCsKnowEverything debug) don't apply to street mobiles.
 
 import { generateBuildingName, isNamedBuildingType, BUILDING_TYPES } from '../world/buildingNames.js';
+import { worldDataDoor } from '../formats/worldDataDoor.js';   // RR3b: RMBLayout.cs:662-672's replacement arm
 import { randomRangeInclusive, srand } from '../formats/dfRandom.js';
 import { RMB_SIDE } from '../world/locationLayout.js';
 import { directionHintString } from './talk.js';   // wave 27: one compass law
@@ -135,13 +136,13 @@ export function blockBuildingCount(dfBlock) {
  *  @param exteriorBuildings dfLocation.exterior.buildings
  *  @param blocks layoutLocation().blocks (y->x order preserved)
  *  @returns per-block arrays of merged buildingDataList copies */
-export function mergeNamedBuildings(exteriorBuildings, blocks) {
+export function mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex = 0 } = {}) {
   const pool = exteriorBuildings
     .filter((b) => isNamedBuildingType(b.buildingType))
     .map((b) => ({ data: b, used: false }));
   const next = (type) => {
     for (const it of pool) {
-      if (!it.used && it.data.buildingType === type) { it.used = true; return it.data; }
+      if (!it.used && it.data.buildingType === type) { it.used = true; return it; }
     }
     return null;
   };
@@ -154,20 +155,38 @@ export function mergeNamedBuildings(exteriorBuildings, blocks) {
     const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
     for (let i = 0; i < count; i++) {
       if (!isNamedBuildingType(list[i].buildingType)) continue;
-      const item = next(list[i].buildingType);
+      const drawn = next(list[i].buildingType);
+      const item = drawn?.data ?? null;
       // AUDIT 17e F40: this comment claimed DFU "keeps block data" on
       // pool exhaustion; DFU actually copies a ZEROED pool item. The
       // branch is unreachable on classic data (the pool balances
       // exactly - 39256 draws against 39256 entries across all 15251
-      // locations), and DFU only reaches it via WorldDataReplacement,
-      // which this port deliberately omits. Doc-corrected, not
-      // implemented - implementing it would be untestable dead code.
+      // locations), and DFU only reaches it via WorldDataReplacement -
+      // which RR3b took up (the arm below); a mod's block can still
+      // exhaust the pool, and the zeroed copy is what DFU hands it.
+      // Doc-corrected, not implemented - the port keeps the block's
+      // own entry where DFU would zero it (recorded).
       if (item) {
         list[i].nameSeed = item.nameSeed;
         list[i].factionId = item.factionId;
         list[i].sector = item.sector;
         list[i].locationId = item.locationId;
         list[i].quality = item.quality;
+      }
+      // RMBLayout.cs:662-672 (RR3b): a building the world-data door
+      // replaces takes the replacement's values - and hands its pool
+      // draw back when the replacement names a faction (the item is not
+      // used up), the seed varied by the location; the type is always
+      // the replacement's.
+      const replacement = worldDataDoor()?.getBuildingReplacementData(b.dfBlock.name, b.dfBlock.index, i);
+      if (replacement) {
+        if (replacement.factionId !== 0) {
+          if (drawn) drawn.used = false;
+          list[i].factionId = replacement.factionId;
+          list[i].quality = replacement.quality;
+          list[i].nameSeed = (replacement.nameSeed + locationIndex) & 0xffff;
+        }
+        list[i].buildingType = replacement.buildingType;
       }
       // RMBLayout.cs:677-683, "Matched to classic: special handling for
       // some Order of the Raven buildings" - still inside the
@@ -206,8 +225,8 @@ function blockInstanceOf(blocks, d) {
 
 /** E2: one exterior door -> its MERGED building data + buildingKey
  *  (the interior host's shop identity: type/quality/seed/faction). */
-export function buildingDataForDoor(exteriorBuildings, blocks, door) {
-  const merged = mergeNamedBuildings(exteriorBuildings, blocks);
+export function buildingDataForDoor(exteriorBuildings, blocks, door, { locationIndex = 0 } = {}) {
+  const merged = mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex });
   const inst = blockInstanceOf(blocks, door);
   const data = inst ? merged.get(inst)?.[door.recordIndex] : null;
   if (!data) return null;
@@ -237,8 +256,8 @@ export function buildingDataForDoor(exteriorBuildings, blocks, door) {
  * subRecords.length bound - a garbage entry past the subrecord count
  * is not a building.
  */
-export function locationBuildings(exteriorBuildings, blocks) {
-  const merged = mergeNamedBuildings(exteriorBuildings, blocks);
+export function locationBuildings(exteriorBuildings, blocks, { locationIndex = 0 } = {}) {
+  const merged = mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex });
   const out = [];
   for (const b of blocks) {
     const list = merged.get(b) ?? [];
@@ -289,7 +308,7 @@ export function locationBuildings(exteriorBuildings, blocks) {
 export function questorCandidateBuildings(exteriorBuildings, blocks, {
   locationIndex = 0, mapId = 0, nameOpts = {}, getFaction = null, raceOfCurrentRegion = null,
 } = {}) {
-  const merged = mergeNamedBuildings(exteriorBuildings, blocks);
+  const merged = mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex });
   const out = [];
   for (const b of blocks) {
     const list = merged.get(b) ?? [];

@@ -248,17 +248,88 @@ adds InitMod's four calls to `rrInstall.js`.
   Enabled stands in - the list and the service read it at the load and
   the click, the factions are registered while it is on at boot.
 
-Not yet (RR3b): `locationnew-RRfort01-16.json` (Northrock Fort, a new
-location in the Wrothgarian Mountains at 938,51), `RRFORT01.RMB.json`
-(its block) and `ARMRAM03.RMB-765-building14_master.json` (the
-armorer's shop as the quest rebuilds it) through a WorldDataReplacement
-door - until then `RRMSTARM1`'s two fort places have no location to
-stand on.
+## RR3b - the Master Armorer quest line: the world data
+
+The three files under `vendor/roleplay-realism/WorldData/` (verbatim):
+`locationnew-RRfort01-16.json` - Northrock Fort, a new ReligionCult
+location in the Wrothgarian Mountains at map pixel 938,51 (the tracks'
+centre), one block, one House6 building (0x73A1, the quest's
+`Northrock_Fort`; the exterior 0x73A0 is `Northrock_Fort_Ext`);
+`RRFORT01.RMB.json` - that block (18 exterior models, an interior of 73
+models, 40 flats, 2 people, 6 doors, 4 misc flats, its ground and
+automap); `ARMRAM03.RMB-765-building14_master.json` - the armorer's
+shop in block ARMRAM03 (BSA index 765), record 14, as `worldupdate
+building ... variant _master` rebuilds it (faction 1022, an Armorer of
+quality 20, seed 632, a 33-model interior).
+
+They come through **WorldDataReplacement.cs, ported whole** as
+`formats/worldDataReplacement.js`:
+
+- **The door.** `formats/worldDataDoor.js` is a leaf both readers
+  import; the replacement module installs itself there (a cycle would
+  otherwise run readers -> door -> readers' enums). MapsFile asks it at
+  LoadRegion's tail (:984, the region's additional locations), at
+  ReadLocation's head (:998-1000, a replaced or new location) and in
+  ReadLocationIdFast (:1027-1028, the map table's own id); BlocksFile
+  at GetBlockName (:214, a new block's name past the BSA's count),
+  GetBlockIndex (:273, its assigned index), GetBlock (:383-390, the
+  JSON block, cached into a BSA-range slot) and ReadRmbBlockData
+  (:848-861, a building record replaced in a classic block, the list
+  entry and the automap updated). The hosts bind their BlocksFile
+  (`bindWorldDataBlocks` - ContentReader.BlockFileReader, where
+  AssignBlockIndices reads BsaFile.Count) and await the mod assets
+  (`scenes/modWorldData.js`, a glob over `vendor/*/WorldData/*.json`,
+  gated on that mod's Enabled - the ModManager arm; the loose-file
+  arm has no StreamingAssets folder to read) before the first region
+  loads. `Settings.AssetInjection` gates every ask.
+- **The laws.** GetDFRegionAdditionalLocationData (:127-203) with
+  AddLocationToRegion (:510-530: the id copied onto the map table for
+  ReadLocationIdFast, the next index, Unknown2 = index, the lookups)
+  and AssignBlockIndices (:531-573: a block name the BSA lacks gets
+  `Count, Count+1, ...`); GetDFLocationReplacementData (:204-262) with
+  LoadNewDFLocationVariant (:263-310); GetDFBlockReplacementData
+  (:342-398) with ReplaceRmbBlockBuildingData (:400-433, exterior and
+  interior halves only); GetBuildingReplacementData (:435-482, asked
+  with NoVariant and answered by the last location's variant, else
+  any's); ApplyBuildingReplacementAutoMapData (:494-508, 30 means
+  leave it); MakeLocationKey. Every `#if !UNITY_EDITOR` cache is taken
+  (a region, location, block or building with no file is remembered
+  as none - non-variant only, as the C#).
+- **The converters.** DFU deserialises straight into its structs; the
+  port's readers spell the same structs in camelCase, so the JSON is
+  converted field for field: the enums spelled ("ReligionCult",
+  "NoDungeon", "House6") to the port's numbers, the climate by the
+  JSON's WorldClimate through the port's own table (the seven inline
+  fields agree), the FLD header's positions and counts from the
+  subrecords and arrays (the JSON carries them there), the 32-slot
+  building list padded, the ground tiles un-flattened y-outer x-inner
+  (DFBlock.RmbGroundDataConverter, DFBlock.cs:1124-1185), the flat
+  records' bitfield rebuilt, the automap as bytes, the fields the JSON
+  does not carry zeroed. A subrecord header keeps the count the JSON
+  wrote (the fort's exterior says 1 over 18 records); DFU walks the
+  arrays and gates the interior on the header's zero, and so does the
+  port.
+- **RMBLayout's arm** (:662-672) in `talkTopics.mergeNamedBuildings`:
+  a replaced building takes the replacement's faction, quality and
+  `NameSeed + LocationIndex` and hands its pool draw back when the
+  replacement names a faction; the type is always the replacement's.
+  The merge takes `{ locationIndex }` now, and every host site passes
+  the location's.
+- **The save** carries WorldDataVariants' data (SaveLoadManager.cs
+  :1125, :1465-1466); a save from before RR3b restores nothing.
+
+With RR3b, `RRMSTARM1`'s `Northrock_Fort_Ext` / `Northrock_Fort` places
+resolve (ReadLocationIdFast finds 0x73A0 on the added map-table row;
+the interior is 0x73A0's building), the fort stands at 938,51 through
+the ordinary location index, and the three `worldupdate building` lines
+put Dharjen's rebuilt shop in Pjiga, Penmore or Paponirea - which is
+what the discovery on the location rect (RR3a) then names.
 
 ## Record
 
 `vendor/roleplay-realism/`. Suites `test/rr1_realism.test.js` (11),
-`test/rr2_realism.test.js` (12), `test/rr3_questline.test.js` (11).
-Campaigns `tools/mutants/rr1.json` (19: 18 dead, 1 equivalent),
-`tools/mutants/rr2.json` (28 dead), `tools/mutants/rr3.json` (33: 31
-dead, 2 equivalent).
+`test/rr2_realism.test.js` (12), `test/rr3_questline.test.js` (11),
+`test/rr3b_worlddata.test.js` (9). Campaigns `tools/mutants/rr1.json`
+(19: 18 dead, 1 equivalent), `tools/mutants/rr2.json` (28 dead),
+`tools/mutants/rr3.json` (33: 31 dead, 2 equivalent),
+`tools/mutants/rr3b.json` (24 dead).

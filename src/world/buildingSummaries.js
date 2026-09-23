@@ -68,7 +68,7 @@ export const buildingRotationY = (sub) => -(sub?.yRotation ?? 0) / ROTATION_DIVI
  *   BuildingNames.GetName for at :712-719.
  */
 export function buildingSummaries(exteriorBuildings, blocks, nameOpts = {}) {
-  const merged = mergeNamedBuildings(exteriorBuildings ?? [], blocks ?? []);
+  const merged = mergeNamedBuildings(exteriorBuildings ?? [], blocks ?? [], { locationIndex: nameOpts.locationIndex ?? 0 });   // RR3b: the replacement seed varies by location
   const out = [];
   for (const b of blocks ?? []) {
     const list = merged.get(b) ?? [];

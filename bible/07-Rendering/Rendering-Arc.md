@@ -2255,9 +2255,9 @@ beside them. Then the same shape turned up everywhere else:
 | `worldModes.js:6204` | the dungeon's flats, camps, torches and peers |
 | `worldModes.js:6382` | the interior's flats and peers |
 | `worldModes.js:6388-6422` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:4798`, `world.js:10839` | the spell missiles |
-| `exterior.js:4860` | the fixed city's townspeople |
-| `interior.js:352`, `dungeon.js:1007` | the flats, the camps, the torches |
+| `exterior.js:4802`, `world.js:10843` | the spell missiles |
+| `exterior.js:4864` | the fixed city's townspeople |
+| `interior.js:356`, `dungeon.js:1011` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing
 them one at a time is how this bug got to be in eight places.** The test
