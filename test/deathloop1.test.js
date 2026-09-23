@@ -296,7 +296,9 @@ test('DEATHLOOP2: survival exposure is left LETHAL - the design is not what was 
   // undoing the system rather than the bug, so the intent is pinned
   // where they will see it.
   const needs = readFileSync(new URL('../src/systems/survival/needs.js', import.meta.url), 'utf8');
-  assert.match(needs, /if \(abs > NEED\.DAMAGE_AT && !sleeping && harmTick\) sinks\.hurt\?\.\(/,
+  // SURV-TIERS: in the tier that wounds (Hard) - Casual's cold costs stamina alone, BY ITS TIER (survival/difficulty.js),
+  // never by making Hard's cold survivable
+  assert.match(needs, /if \(rules\.health && abs > NEED\.DAMAGE_AT && !sleeping && harmTick\) sinks\.hurt\?\.\(/,
     'the temperature harm reaches sinks.hurt unfloored, as designed');
   assert.match(needs, /they are not meant to kill, and this one is/,
     'and the departure is stated where it is taken');

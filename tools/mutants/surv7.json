@@ -2,7 +2,7 @@
  {
   "name": "SURV7-the-feed-ignores-the-switch",
   "file": "src/systems/survival/env.js",
-  "old": "  if (!survivalOn() || !entity || !env) return null;",
+  "old": "  if (!rules || !entity || !env) return null;",
   "new": "  if (!entity || !env) return null;",
   "tests": [
    "test/surv7_feed.test.js"
@@ -11,8 +11,8 @@
  {
   "name": "SURV7-nothing-is-worn",
   "file": "src/systems/survival/env.js",
-  "old": "  const deps = { worn: entity.equip?.slots ?? null, ctx: survivalCtx(entity, full) };",
-  "new": "  const deps = { worn: null, ctx: survivalCtx(entity, full) };",
+  "old": "  const deps = { worn: entity.equip?.slots ?? null, ctx: survivalCtx(entity, full), rules };",
+  "new": "  const deps = { worn: null, ctx: survivalCtx(entity, full), rules };",
   "tests": [
    "test/surv7_feed.test.js"
   ]
@@ -120,8 +120,8 @@
  {
   "name": "AUDIT-FIELD-resting-pays-the-starving-fatigue-anyway",
   "file": "src/systems/survival/needs.js",
-  "old": "  if (hungerAfter === 'starving' && !resting) sinks.drainFatigue?.(DRAIN.starving);",
-  "new": "  if (hungerAfter === 'starving') sinks.drainFatigue?.(DRAIN.starving);",
+  "old": "  if (hungerAfter === 'starving' && !resting) tire(DRAIN.starving);",
+  "new": "  if (hungerAfter === 'starving') tire(DRAIN.starving);",
   "tests": [
    "test/surv7_feed.test.js"
   ]
@@ -129,8 +129,8 @@
  {
   "name": "AUDIT-FIELD-resting-pays-the-exhausted-fatigue-anyway",
   "file": "src/systems/survival/needs.js",
-  "old": "    if (sleepNow === 'exhausted' && !resting) sinks.drainFatigue?.(DRAIN.exhausted);",
-  "new": "    if (sleepNow === 'exhausted') sinks.drainFatigue?.(DRAIN.exhausted);",
+  "old": "    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted);",
+  "new": "    if (sleepNow === 'exhausted') tire(DRAIN.exhausted);",
   "tests": [
    "test/surv7_feed.test.js"
   ]

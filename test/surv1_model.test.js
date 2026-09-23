@@ -414,7 +414,7 @@ test('SURV-THIRST1: the harm follows AUDIT SURV E’s shape - the harm TICK, esc
   // and it may KILL: no HEALTH_FLOOR, because the bare-skin harms leave the
   // last five points BECAUSE they are not meant to kill, and this one is
   const src = readFileSync(new URL('../src/systems/survival/needs.js', import.meta.url), 'utf8');
-  const line = src.slice(src.indexOf('if (s.thirst >= NEED.THIRST_HARM'));
+  const line = src.slice(src.indexOf('if (rules.health && s.thirst >= NEED.THIRST_HARM'));   // SURV-TIERS: the wound is Hard's (`rules.health`)
   assert.match(line.slice(0, line.indexOf('\n    }')), /sinks\.hurt\?\.\(/, 'the raw sink, not hurtFloored');
   assert.doesNotMatch(line.slice(0, line.indexOf('\n    }')), /hurtFloored/);
   // THE DEPARTURE ITSELF: no climate term anywhere in the condition
@@ -467,5 +467,5 @@ test('SURV-THIRST1 AUDIT: the replay flag is the WALK’s, and only the last min
     'the walk marks every minute but the last as a replay, from one object');
   // a bare survivalMinute - the live per-minute call every host makes -
   // is NOT a replay, or nothing would ever die of thirst
-  assert.match(src, /replay = false \} = deps;/, 'a caller that says nothing is live');
+  assert.match(src, /replay = false, rules = HARD_RULES \} = deps;/, 'a caller that says nothing is live (and, SURV-TIERS, runs Hard)');
 });

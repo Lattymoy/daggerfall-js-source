@@ -1,0 +1,391 @@
+[
+  {
+    "name": "SURVTIERS-casual-has-no-floor",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false },",
+    "new": "    stamina: { floor: 0, hotFrom: 51, coldFrom: -31, bareFeet: false },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-charges-amber-heat",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 31, coldFrom: -31, bareFeet: false },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-charges-amber-cold",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -11, bareFeet: false },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-taxes-bare-feet",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: false },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 51, coldFrom: -31, bareFeet: true },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-drains-attributes",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    attributes: false,   // starving",
+    "new": "    attributes: true,   // starving",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-wounds",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    health: false,       // dehydration",
+    "new": "    health: true,       // dehydration",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rusts",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    rust: false,         // wet metal",
+    "new": "    rust: true,         // wet metal",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-sickens",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    sickness: false,     // raw or spoiled",
+    "new": "    sickness: true,     // raw or spoiled",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-hunt-harms",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    huntHarms: false,    // a hunt may",
+    "new": "    huntHarms: true,    // a hunt may",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rough-hour-halved",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },",
+    "new": "    roughRest: { recovery: 0.5, encounters: 1, stiffHours: 0 },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rough-asks-twice",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },",
+    "new": "    roughRest: { recovery: 1, encounters: 2, stiffHours: 0 },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-stiff-morning",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughRest: { recovery: 1, encounters: 1, stiffHours: 0 },",
+    "new": "    roughRest: { recovery: 1, encounters: 1, stiffHours: 4 },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-sleep-floor",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughSleepFloor: null,",
+    "new": "    roughSleepFloor: 'tired',",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-rest-gate",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    restGate: false,     // too cold",
+    "new": "    restGate: true,     // too cold",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-blackout",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    blackout: false,     // drinking",
+    "new": "    blackout: true,     // drinking",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hard-grows-a-floor",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    stamina: { floor: 0, hotFrom: 20, coldFrom: -20, bareFeet: true },",
+    "new": "    stamina: { floor: 0.5, hotFrom: 20, coldFrom: -20, bareFeet: true },",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-default-is-hard",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "export const SURVIVAL_DEFAULT = 'casual';",
+    "new": "export const SURVIVAL_DEFAULT = 'hard';",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-a-non-tier-reads-as-itself",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "export const normalizeTier = (v) => (typeof v === 'string' && SURVIVAL_TIER_IDS.includes(v) ? v : SURVIVAL_DEFAULT);",
+    "new": "export const normalizeTier = (v) => (v === false ? 'off' : typeof v === 'string' && SURVIVAL_TIER_IDS.includes(v) ? v : SURVIVAL_DEFAULT);",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-switch-reads-the-old-boolean",
+    "file": "src/systems/survival/switch.js",
+    "old": "export const survivalOn = () => survivalTier() !== SURVIVAL_OFF;",
+    "new": "export const survivalOn = () => getPref(SURVIVAL_PREF) !== false;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-migration-dropped",
+    "file": "src/systems/uiPrefs.js",
+    "old": "        if (p.survival === false) _prefs.survival = SURVIVAL_OFF;",
+    "new": "        if (p.survival === 'never') _prefs.survival = SURVIVAL_OFF;",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-row-default-true",
+    "file": "src/systems/features.js",
+    "old": "store: 'prefs', key: 'survival', initial: 'casual', online: 'player',",
+    "new": "store: 'prefs', key: 'survival', initial: 'hard', online: 'player',",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-row-forced-online",
+    "file": "src/systems/features.js",
+    "old": "store: 'prefs', key: 'survival', initial: 'casual', online: 'player',",
+    "new": "store: 'prefs', key: 'survival', initial: 'casual', online: true,",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-tire-ignores-the-floor",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (!(floorShare > 0)) { sinks.drainFatigue?.(n); return; }",
+    "new": "    { sinks.drainFatigue?.(n); return; }",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-budget-read-per-charge",
+    "file": "src/systems/survival/needs.js",
+    "old": "    budget ??= Math.max(0, (entity.fatigue ?? 0) - Math.floor(maxFatigue(entity) * floorShare));",
+    "new": "    budget = Math.max(0, (entity.fatigue ?? 0) - Math.floor(maxFatigue(entity) * floorShare));",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-stiffness-survives-casual",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (!rules.attributes && s.stiffUntil) s.stiffUntil = 0;",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-heat-band-ignored",
+    "file": "src/systems/survival/needs.js",
+    "old": "    if (temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom) tire(",
+    "new": "    if (abs >= 20) tire(",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-rough-sleep-floor-fixed",
+    "file": "src/systems/survival/needs.js",
+    "old": "SLEEP_FLOOR_AT[rules.roughSleepFloor] ?? 0",
+    "new": "NEED.SLEEP_TIRED",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-stat-mods-ignore-the-tier",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (rules.attributes) {\n    const starve",
+    "new": "  if (true) {\n    const starve",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-restcost-ignores-the-tier",
+    "file": "src/systems/survival/rest.js",
+    "old": " : (rules ?? HARD_RULES).roughRest);",
+    "new": " : HARD_RULES.roughRest);",
+    "tests": [
+      "test/survtiers.test.js",
+      "test/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-asks-ignore-the-tier",
+    "file": "src/scenes/shared.js",
+    "old": "      entity.restAsks = b ? restCost(_kind, _rules).encounters : null;",
+    "new": "      entity.restAsks = b ? restCost(_kind).encounters : null;",
+    "tests": [
+      "test/survtiers.test.js",
+      "test/surv4_rest.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-feed-drops-the-rules",
+    "file": "src/systems/survival/env.js",
+    "old": "ctx: survivalCtx(entity, full), rules };",
+    "new": "ctx: survivalCtx(entity, full) };",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-gate-on-with-the-arc",
+    "file": "src/systems/survival/env.js",
+    "old": "export const survivalGateOn = () => !!survivalRules()?.restGate;",
+    "new": "export const survivalGateOn = () => !!survivalRules();",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-rest-deps-stiffen-at-hard",
+    "file": "src/scenes/shared.js",
+    "old": "stiffen(entity, worldMinutes(), REST_KIND.Rough, _rules)",
+    "new": "stiffen(entity, worldMinutes(), REST_KIND.Rough)",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-rest-deps-hour-at-hard",
+    "file": "src/scenes/shared.js",
+    "old": "_roughCarry, _rules);",
+    "new": "_roughCarry);",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-meal-rolls-anyway",
+    "file": "src/systems/survival/food.js",
+    "old": "  if ((f.raw || stage > 0) && (rules ?? HARD_RULES).sickness) {",
+    "new": "  if (f.raw || stage > 0) {",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hunt-keeps-its-harms",
+    "file": "src/systems/survival/hunting.js",
+    "old": "  if (twin) result = outcome(twin, { meat: result.meat, fruit: result.fruit, skills: result.skills });",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-twin-drops-the-catch",
+    "file": "src/systems/survival/hunting.js",
+    "old": "  if (twin) result = outcome(twin, { meat: result.meat, fruit: result.fruit, skills: result.skills });",
+    "new": "  if (twin) result = outcome(twin, { skills: result.skills });",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-barkeep-always-pours",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if ((s?.drunk ?? 0) + (strength | 0) > endurance) return { ok: false, text: TAVERN_MENU_TEXT.cutOff };",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-barkeep-refuses-milk",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if ((rules ?? HARD_RULES).blackout || !((strength | 0) > 0)) return { ok: true };",
+    "new": "  if ((rules ?? HARD_RULES).blackout) return { ok: true };",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-casual-drink-blacks-out",
+    "file": "src/systems/survival/tavernMenu.js",
+    "old": "  if (s.drunk > endurance && (rules ?? HARD_RULES).blackout) return",
+    "new": "  if (s.drunk > endurance) return",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-window-pours-after-the-coin",
+    "file": "src/ui/tavernWindow.js",
+    "old": "        if (pour && !pour.ok) return [{ rows: line(pour.text) }];",
+    "new": "",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-hunt-scene-drops-the-tier",
+    "file": "src/scenes/hunting.js",
+    "old": "rolls, rules: survivalRules() ?? undefined });",
+    "new": "rolls });",
+    "tests": [
+      "test/survtiers.test.js"
+    ]
+  },
+  {
+    "name": "SURVTIERS-the-host-drops-the-asks",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      restAsks: playerEntity.restAsks,",
+    "new": "      restAsks: 1,",
+    "tests": [
+      "test/surv4_rest.test.js"
+    ]
+  }
+]

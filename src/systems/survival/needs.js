@@ -24,9 +24,17 @@
 // a player away longer than a day comes back fed, watered and rested
 // rather than dead of the time they were not playing. The tick itself
 // owes at most MAX_CATCHUP_MINUTES per reading.
+//
+// SURV-TIERS (2026-09-23): THE COUNTERS ARE THE WORLD'S, THE COSTS ARE
+// THE TIER'S. Everything above moves the same way in Casual and Hard;
+// what a minute CHARGES - the stamina, the attributes, the health, the
+// rust - is read off the tier's rules (survival/difficulty.js), handed in
+// as `deps.rules` by the host's feed (env.js survivalFeed). No rules is
+// Hard, the law at full strength.
 import { feltTemperature, temperatureWord } from './temperature.js';
 import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, foodStage, FOOD_STAGE, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
-import { STAT_KEYS_ORDER } from '../statMods.js';
+import { STAT_KEYS_ORDER, maxFatigue } from '../statMods.js';
+import { HARD_RULES } from './difficulty.js';
 /** SURV4: speed and agility down by this while stiff (survival/rest.js's STIFF_PENALTY, restated here so rest.js may import this module). */
 const STIFF_PENALTY = 5;
 import { MINUTES_PER_DAY } from '../gameDate.js';
@@ -45,7 +53,9 @@ export const NEED = Object.freeze({
  *  six hours), scaled by the heat: felt 40 is four times as fast. */
 export const THIRST_PER_MINUTE = 100 / 360;
 /** The fatigue units (x64 is one classic point) the needs charge per
- *  minute. DFU's own walking drain is 11 a minute for scale. */
+ *  minute. DFU's own walking drain is 11 a minute for scale. The rates
+ *  are the body's and the same in every tier; WHICH of them a tier
+ *  charges, and how far down the pool, are its rules' `stamina`. */
 export const DRAIN = Object.freeze({ heatPer20: 6, starving: 4, parched: 6, dehydrated: 12, exhausted: 8, wellFed: 64, bareFeet: 4 });
 /** AUDIT SURV E: the harms that can kill come once every ten minutes,
  *  not every minute, and the bare-skin harms leave the last five
@@ -57,9 +67,16 @@ export const HARM_EVERY_MINUTES = 10;
 export const HEALTH_FLOOR = 5;
 /** AUDIT SURV A: the well-fed hour - a point of fatigue back for every hour spent fed (the mod's 500-tally was minutes and paid twenty). */
 export const WELL_FED_MINUTES = 60;
-/** Rough drains cannot take the last of a pool by themselves. */
-export const FLOOR_FATIGUE = 64;
+// SURV-TIERS: `FLOOR_FATIGUE = 64` stood here under "rough drains cannot
+// take the last of a pool by themselves", and nothing read it. Hard's
+// drains DO take the last point - the collapse that follows is the cost
+// AUDIT-DEATH1 recorded as intended ("dehydration does kill; it kills
+// through the collapse"). The floor is real now, as a tier's rule:
+// `stamina.floor`, the share of the pool the needs may not take - none
+// in Hard, half in Casual.
 export const MAX_CATCHUP_MINUTES = 2 * MINUTES_PER_DAY;
+/** The sleep-debt stage a tier's rough night cannot pay below (difficulty.js `roughSleepFloor`), as hours of debt. */
+const SLEEP_FLOOR_AT = Object.freeze({ tired: NEED.SLEEP_TIRED, drowsy: NEED.SLEEP_DROWSY, exhausted: NEED.SLEEP_EXHAUSTED });
 export const NOTE_EVERY_MINUTES = 5;
 
 export const SURVIVAL_TEXT = Object.freeze({
@@ -142,18 +159,22 @@ export const awakeHours = (s, now) => Math.max(0, now - (s.awakeSince ?? now)) /
 
 /** The stat drains the needs impose, as one map the 'survival' entry
  *  carries. Each is capped so a drain can never pull a stat under 5
- *  (the caller clamps against the permanent stat). */
-export function survivalStatMods(s, temp, now, { endurance = 50 } = {}) {
+ *  (the caller clamps against the permanent stat). SURV-TIERS: the
+ *  needs' drains are the tier's `attributes`; the drink's swing is
+ *  every tier's - it is chosen at a bar, not a need left unmet. */
+export function survivalStatMods(s, temp, now, { endurance = 50, rules = HARD_RULES } = {}) {
   const mods = {};
   const sub = (keys, n) => { if (n > 0) for (const k of keys) mods[k] = (mods[k] ?? 0) - n; };
   const ALL = ['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed'];
-  const starve = starvingDays(hungerMinutes(s, now));
-  if (starve > 0) sub(ALL, Math.min(20, starve * 2));
-  if (temp && temp.abs > NEED.EXPOSURE_AT) sub(ALL, Math.trunc(Math.min(s.exposure, temp.abs - NEED.EXPOSURE_AT) / 4));
-  if (s.thirst >= NEED.DEHYDRATED) sub(ALL, Math.trunc((s.thirst - 90) / 10));
-  const sleep = sleepStage(s.sleepDebt);
-  if (sleep === 'tired') sub(ALL, 2); else if (sleep === 'drowsy') sub(ALL, 5); else if (sleep === 'exhausted') sub(ALL, 10);
-  if (Number.isFinite(s.stiffUntil) && now < s.stiffUntil) sub(['speed', 'agility'], STIFF_PENALTY);   // SURV4: the rough night's morning
+  if (rules.attributes) {
+    const starve = starvingDays(hungerMinutes(s, now));
+    if (starve > 0) sub(ALL, Math.min(20, starve * 2));
+    if (temp && temp.abs > NEED.EXPOSURE_AT) sub(ALL, Math.trunc(Math.min(s.exposure, temp.abs - NEED.EXPOSURE_AT) / 4));
+    if (s.thirst >= NEED.DEHYDRATED) sub(ALL, Math.trunc((s.thirst - 90) / 10));
+    const sleep = sleepStage(s.sleepDebt);
+    if (sleep === 'tired') sub(ALL, 2); else if (sleep === 'drowsy') sub(ALL, 5); else if (sleep === 'exhausted') sub(ALL, 10);
+    if (Number.isFinite(s.stiffUntil) && now < s.stiffUntil) sub(['speed', 'agility'], STIFF_PENALTY);   // SURV4: the rough night's morning
+  }
   if (s.drunk > endurance / 2) {
     const d = Math.trunc((s.drunk - endurance / 2) / 10);
     sub(['agility', 'intelligence', 'willpower', 'speed'], d);
@@ -201,12 +222,13 @@ const clearNote = (s, key) => { if (s.notes[key] === 'on') delete s.notes[key]; 
  * @param {number} now      the classic minute this step lands on
  * @param {object} env      the host's environment (see feltTemperature) plus:
  *                          resting, sleeping ('bed'|'camp'|'rough'|null), swimming, transport
- * @param {object} deps     { worn, ctx, sinks: { drainFatigue, restoreFatigue, hurt, say }, rolls, autoDrink, autoEat, collections }
+ * @param {object} deps     { worn, ctx, sinks: { drainFatigue, restoreFatigue, hurt, say }, rolls, autoDrink, autoEat, collections,
+ *                          rules (the tier's - survival/difficulty.js; Hard when absent) }
  * @returns the felt temperature record for the HUD and the status page
  */
 export function survivalMinute(entity, now, env = {}, deps = {}) {
   const s = survivalOf(entity, now);
-  const { worn = null, sinks = {}, rolls = Math.random, autoDrink = true, autoEat = true, replay = false } = deps;
+  const { worn = null, sinks = {}, rolls = Math.random, autoDrink = true, autoEat = true, replay = false, rules = HARD_RULES } = deps;
   const say = sinks.say ?? deps.say ?? null;
   const items = entity.items ?? [];
   const ctx = { ...(deps.ctx ?? {}), wet: s.wet, hasWater: !!findDrink(items) };
@@ -215,6 +237,25 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   const sleeping = env.sleeping ?? null;
   const vampire = !!ctx.vampire;
   const endurance = entity.stats?.endurance ?? 50;
+  // SURV-TIERS: THE ONE DOOR THE NEEDS' STAMINA LEAVES BY. A tier with no
+  // floor (Hard) hands every charge to the sink as it always did; a tier
+  // with one (Casual, half the pool) spends only what lies above it, read
+  // at the minute's first charge - after the well-fed hour's refund - and
+  // counted down here, so two needs in one minute share one budget
+  // whatever the sink does with them.
+  const floorShare = rules.stamina.floor;
+  let budget = null;
+  const tire = (n) => {
+    if (!(n > 0)) return;
+    if (!(floorShare > 0)) { sinks.drainFatigue?.(n); return; }
+    budget ??= Math.max(0, (entity.fatigue ?? 0) - Math.floor(maxFatigue(entity) * floorShare));
+    const d = Math.min(n, budget);
+    if (d > 0) { budget -= d; sinks.drainFatigue?.(d); }
+  };
+  // A tier without the attribute costs carries no stiff morning either: a
+  // Hard night's stiffness lifts the minute the player turns to Casual, so
+  // the HUD's Stiff chip never names a cost the tier does not charge.
+  if (!rules.attributes && s.stiffUntil) s.stiffUntil = 0;
 
   // WET: rain and water raise it; warmth dries it, a fire dries it fast.
   s.wet = Math.min(NEED.WET_MAX, s.wet + temp.wetGain);
@@ -238,7 +279,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   const hungerAfter = vampire ? 'fed' : hungerStage(hungerMinutes(s, now));
   if (hungerAfter !== 'fed') note(s, `hunger:${hungerAfter}`, now, say, SURVIVAL_TEXT[hungerAfter], { once: true });
   for (const k of ['peckish', 'hungry', 'starving']) if (k !== hungerAfter) clearNote(s, `hunger:${k}`);
-  if (hungerAfter === 'starving' && !resting) sinks.drainFatigue?.(DRAIN.starving);
+  if (hungerAfter === 'starving' && !resting) tire(DRAIN.starving);
 
   // THIRST: the heat drives it; a skin in the pack answers it.
   if (!vampire) {
@@ -249,8 +290,8 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     if (thirstNow !== 'fine') note(s, `thirst:${thirstNow}`, now, say, SURVIVAL_TEXT[thirstNow], { once: true });
     for (const k of ['thirsty', 'parched', 'dehydrated']) if (k !== thirstNow) clearNote(s, `thirst:${k}`);
     if (!resting) {
-      if (thirstNow === 'parched') sinks.drainFatigue?.(DRAIN.parched);
-      else if (thirstNow === 'dehydrated') sinks.drainFatigue?.(DRAIN.dehydrated);
+      if (thirstNow === 'parched') tire(DRAIN.parched);
+      else if (thirstNow === 'dehydrated') tire(DRAIN.dehydrated);
     }
     // SURV-THIRST1 (2026-09-19, Mac: "You should also should die on
     // dehydration"). THE DEPARTURE, and the only one in this block.
@@ -291,7 +332,10 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     // still lands you at death's door, and the next minute you do not
     // drink is the one that kills - which is the behaviour asked for,
     // without the arrival being a coin flip.
-    if (s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {
+    //
+    // SURV-TIERS: and only in a tier that wounds (Hard). Casual's
+    // dehydration is the stamina above and nothing more.
+    if (rules.health && s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {
       const bite = Math.max(1, Math.trunc((s.thirst - NEED.THIRST_HARM + 10) / 10));
       if (!replay) sinks.hurt?.(bite);
       else if ((entity.health ?? 0) > HEALTH_FLOOR) sinks.hurt?.(Math.min(bite, (entity.health ?? 0) - HEALTH_FLOOR));
@@ -302,7 +346,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   if (!vampire) {
     if (sleeping) {
       const rate = sleeping === 'rough' ? 0.5 : 1.5;   // hours of debt per hour asleep
-      const floor = sleeping === 'rough' ? NEED.SLEEP_TIRED : 0;
+      const floor = sleeping === 'rough' ? SLEEP_FLOOR_AT[rules.roughSleepFloor] ?? 0 : 0;   // SURV-TIERS: Hard's rough night never pays below tired; Casual's pays down to nothing
       const next = s.sleepDebt - rate / 60;
       s.sleepDebt = s.sleepDebt >= floor ? Math.max(floor, next) : Math.max(0, next);   // AUDIT SURV A: the floor holds from above and never lifts a rested sleeper up to it
       s.awakeSince = now;
@@ -312,17 +356,19 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
     const sleepNow = sleepStage(s.sleepDebt);
     if (sleepNow !== 'rested') note(s, `sleep:${sleepNow}`, now, say, SURVIVAL_TEXT[sleepNow], { once: true });
     for (const k of ['tired', 'drowsy', 'exhausted']) if (k !== sleepNow) clearNote(s, `sleep:${k}`);
-    if (sleepNow === 'exhausted' && !resting) sinks.drainFatigue?.(DRAIN.exhausted);
+    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted);
   }
 
   // TEMPERATURE: the body pays for the heat and the cold.
+  // SURV-TIERS: from the tier's band (Hard: twenty either way; Casual: the red words only), and it wounds only in a
+  // tier that wounds.
   const abs = temp.abs;
   if (abs > NEED.EXPOSURE_AT) s.exposure = Math.min(s.exposure + 1, 600); else s.exposure = Math.max(0, s.exposure - 2);
   const harmTick = now % HARM_EVERY_MINUTES === 0;
   const hurtFloored = (n) => { if ((entity.health ?? 0) > HEALTH_FLOOR) sinks.hurt?.(n); };
   if (!resting || !env.byFire) {
-    if (abs >= 20) sinks.drainFatigue?.(DRAIN.heatPer20 * Math.trunc(abs / 20));
-    if (abs > NEED.DAMAGE_AT && !sleeping && harmTick) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));
+    if (temp.felt >= rules.stamina.hotFrom || temp.felt <= rules.stamina.coldFrom) tire(DRAIN.heatPer20 * Math.trunc(abs / 20));
+    if (rules.health && abs > NEED.DAMAGE_AT && !sleeping && harmTick) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));
   }
   // AUDIT SURV A/E: the strip's own words (temperature.js temperatureWord), one note a word said once - an escalation
   // speaks at once and a held reading never repeats (a cold afternoon said three lines every five minutes)
@@ -335,19 +381,21 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // BARE SKIN: naked in the cold, bare feet, the sun on uncovered skin.
   // AUDIT SURV E: never asleep or sat resting (the bedroll and the fire), once every ten minutes, never the last five points;
   // bare feet cost fatigue, not blood. Each line is said once and again only after it lifted.
+  // SURV-TIERS: the lines are the world's and said in every tier; the wound and the barefoot tax are the tier's. In
+  // Casual the cold and the sun on bare skin are already in the felt temperature the band above charges.
   let naked = false, sun = false, feet0 = false;
   if (!env.insideBuilding && !vampire && !ctx.beastForm && !sleeping && !resting) {
     const chest = worn?.[17] ?? null, chestArmor = worn?.[18] ?? null, legs = worn?.[24] ?? null, legsArmor = worn?.[23] ?? null, feet = worn?.[26] ?? null;
     const bareTop = !chest && !chestArmor && !temp.cloak, bareLegs = !legs && !legsArmor && !temp.cloak;
-    if ((bareTop || bareLegs) && temp.natTemp < -10) { naked = true; if (harmTick) hurtFloored(1); note(s, 'naked', now, say, SURVIVAL_TEXT.nakedCold, { once: true }); }
+    if ((bareTop || bareLegs) && temp.natTemp < -10) { naked = true; if (harmTick && rules.health) hurtFloored(1); note(s, 'naked', now, say, SURVIVAL_TEXT.nakedCold, { once: true }); }
     if ((bareTop || bareLegs) && env.inSunlight && temp.natTemp > 10 && env.weather !== 'overcast' && ctx.raceId !== 8 && ctx.raceId !== 4) {
       sun = true;
-      if (harmTick) hurtFloored(1);
+      if (harmTick && rules.health) hurtFloored(1);
       note(s, 'sun', now, say, SURVIVAL_TEXT.sunburn, { once: true });
     }
     if (!feet && !env.transport && abs > endurance / 2 && !env.swimming) {
       feet0 = true;
-      sinks.drainFatigue?.(DRAIN.bareFeet);
+      if (rules.stamina.bareFeet) tire(DRAIN.bareFeet);
       note(s, 'feet', now, say, temp.felt > 0 ? SURVIVAL_TEXT.bareFeetHot : SURVIVAL_TEXT.bareFeetCold, { once: true });
     }
   }
@@ -355,8 +403,8 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   if (temp.metal > 5) note(s, 'armor:hot', now, say, SURVIVAL_TEXT.armorHot, { once: true }); else clearNote(s, 'armor:hot');
   if (temp.metal < -5) note(s, 'armor:cold', now, say, SURVIVAL_TEXT.armorCold, { once: true }); else clearNote(s, 'armor:cold');
 
-  // RUST: a wet metal piece loses a point on a 5% minute.
-  if (s.wet > NEED.WET_DAMP && worn && rolls() < 0.05) {
+  // RUST: a wet metal piece loses a point on a 5% minute - in a tier that rusts (Hard; Casual takes no item's condition).
+  if (rules.rust && s.wet > NEED.WET_DAMP && worn && rolls() < 0.05) {
     const metal = [18, 23, 12, 13, 15, 26, 20].map((k) => worn[k]).filter((i) => i && i.group === 'Armor' && ((i.material ?? 0) & 0x0f00) !== 0);
     if (metal.length) {
       const piece = metal[Math.floor(rolls() * metal.length)];
@@ -378,7 +426,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   // DRUNK: one off every ten minutes.
   if (s.drunk > 0 && now % 10 === 0) s.drunk = Math.max(0, s.drunk - 1);
 
-  applySurvivalMods(entity, survivalStatMods(s, temp, now, { endurance }));
+  applySurvivalMods(entity, survivalStatMods(s, temp, now, { endurance, rules }));
   s.lastMinute = now;   // AUDIT SURV B: the last minute paid - a span run under a rest is not run again by the frame
   s.felt = temp.felt;   // SURV5: the last felt reading rides the record - the HUD strip and the status page read it without the env
   return temp;

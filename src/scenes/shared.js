@@ -37,8 +37,8 @@ import { announceSkillRaise, announceMastery } from '../ui/levelNotice.js';
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
-import { REST_KIND, REST_TEXT_SURVIVAL, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
-import { survivalOn } from '../systems/survival/switch.js';
+import { REST_KIND, REST_TEXT_SURVIVAL, restCost, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
+import { survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: the rest's price is the tier's, read at the open
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
@@ -2022,6 +2022,7 @@ export function createRestDeps(entity, opts = {}) {
     restKind = () => REST_KIND.Rough, ...rest
   } = opts;
   let _kind = REST_KIND.Rough;   // the running rest's kind, read at the open
+  let _rules = null;             // SURV-TIERS: the running rest's tier rules (survival/difficulty.js), read at the open - null with the arc off
   let _roughHours = 0;           // rested hours paid at the rough rate - the stiff morning follows them
   // PARTY-REST10 (2026-09-21, per-request: confirmed by testing - health frozen for 10 straight simulated
   // hours under Rough, not merely "sometimes rounds down"): see systems/survival/rest.js's own `restHour` doc
@@ -2056,13 +2057,16 @@ export function createRestDeps(entity, opts = {}) {
       // PARTY-REST4b: `_restKindOverride`, when one is set, wins over the inherited `restKind()` position check -
       // see the doc comment above `_restKindOverride`'s declaration for the closure bug this replaces.
       if (b) {
-        _kind = survivalOn() ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;
+        _rules = survivalRules();   // SURV-TIERS: the kind is WHERE the sleep is; the tier read beside it prices it (restHour, stiffen, the asks)
+        _kind = _rules ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;
         _roughCarry = { health: 0, fatigue: 0, magicka: 0 };   // PARTY-REST10: a fresh sleep owes nothing to whatever the last one banked
       }
       // SURV4: rough hours rested are a stiff morning (STIFF_HOURS of speed and agility) on the way out - an interrupted
       // night too, since the hours were slept - said once; the hours are spent
-      if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
+      // SURV-TIERS: under the tier the rest opened with - a Casual morning costs nothing, so nothing is said
+      if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough, _rules)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
       entity.restKind = b ? _kind : null;
+      entity.restAsks = b ? restCost(_kind, _rules).encounters : null;   // SURV-TIERS: the resting encounter roll's asks a minute - Hard's rough night two, every Casual night one
       // PARTY-REST4b: an override is good for exactly one session - the moment THIS session's resting flag drops,
       // forget it, so a later real rest (this same entity choosing to actually rest for themselves) never
       // silently inherits a stale kind broadcast by whoever they last mirrored.
@@ -2101,7 +2105,7 @@ export function createRestDeps(entity, opts = {}) {
     // SURV4: the hour by its kind - DFU's whole hour in a bed or by a fire, half of it rough (survival/rest.js restHour)
     tickVitals: () => {
       if (_kind === REST_KIND.Rough) _roughHours++;
-      const healed = restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() }), _roughCarry);
+      const healed = restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() }), _roughCarry, _rules);   // SURV-TIERS: the tier's rough price
       return healed;
     },
     fullyHealed: () => restFullyHealed(entity),

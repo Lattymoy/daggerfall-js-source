@@ -104,15 +104,16 @@ test('SURV4: the roll - a rough rest asks the minute\'s decision twice and takes
   const seq = (vals) => { let i = 0; return () => vals[i++ % vals.length]; };
   const once = intermittentEnemySpawn(ctx, seq([0.9, 0.0, 0.5]));
   assert.equal(once, null, 'one ask, a miss');
-  const twice = intermittentEnemySpawn({ ...ctx, roughRest: true }, seq([0.9, 0.0, 0.5]));
+  // SURV-TIERS: the host hands the rest's ASKS (stamped at the open by scenes/shared.js createRestDeps - Hard's rough night two)
+  const twice = intermittentEnemySpawn({ ...ctx, restAsks: 2 }, seq([0.9, 0.0, 0.5]));
   assert.ok(twice && Number.isInteger(twice.mobileType), 'the second ask lands');
-  assert.equal(intermittentEnemySpawn({ ...ctx, roughRest: true }, seq([0.9, 0.9, 0.9])), null, 'two misses are a miss');
-  const first = intermittentEnemySpawn({ ...ctx, roughRest: true }, seq([0.0, 0.5, 0.0, 0.5]));
+  assert.equal(intermittentEnemySpawn({ ...ctx, restAsks: 2 }, seq([0.9, 0.9, 0.9])), null, 'two misses are a miss');
+  const first = intermittentEnemySpawn({ ...ctx, restAsks: 2 }, seq([0.0, 0.5, 0.0, 0.5]));
   assert.ok(first, 'a first-ask hit is taken as it is');
 });
 
 test('SURV4: the composed deps - the kind is read at the open and rides the entity; a rough hour pays half; the morning is stiff and said once; the switch off is DFU\'s hour', () => {
-  _resetForTests(); setPref('survival', true); setWorldMinutes(6000);
+  _resetForTests(); setPref('survival', 'hard'); setWorldMinutes(6000);   // SURV-TIERS: the half hour and the stiff morning are Hard's rough price
   const said = [];
   const e = player();
   let kind = 'rough';
@@ -135,7 +136,7 @@ test('SURV4: the composed deps - the kind is read at the open and rides the enti
   assert.equal(c.survival, undefined, 'and no stiff morning');
   const dn = createRestDeps(player(), { advanceMinutes: () => {} });
   dn.setResting(true); assert.equal(dn.tickVitals !== undefined, true);
-  setPref('survival', false);
+  setPref('survival', 'off');
   const off = player();
   const doff = createRestDeps(off, { advanceMinutes: () => {}, restKind: () => 'rough', day: () => false, inside: () => true });
   doff.setResting(true); assert.equal(off.restKind, 'bed', 'the mod off, every rest is DFU\'s bed');
@@ -143,19 +144,21 @@ test('SURV4: the composed deps - the kind is read at the open and rides the enti
   _resetForTests(); setWorldMinutes(0);
 });
 
-test('SURV4: by source - the four hosts name their kind, the three rolls carry the rough flag, the law is pure', () => {
+test('SURV4: by source - the four hosts name their kind, the three rolls carry the rest\'s asks, the law is pure', () => {
   const w = read('src/scenes/world.js'), x = read('src/scenes/exterior.js'), dc = read('src/scenes/dungeonContext.js'), wm = read('src/scenes/worldModes.js');
   assert.match(w, /restKind: \(\) => \(camps\.byFire\(walkMode && playerSpawned \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);
   assert.match(x, /restKind: \(\) => \(camps\.byFire\(walkMode \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);
   assert.match(dc, /restKind: \(\) => \(_fpFeet && camps\.byFire\(_fpFeet\) \? 'camp' : 'rough'\),/);
   assert.match(wm, /restKind: \(\) => \{ const p = interiorRestPlaceHere\(\); return p\.houseOwned \|\| p\.isShip \|\| !!p\.room \? 'bed' : 'rough'; \},/);
-  assert.match(w, /roughRest: !!playerEntity\.isResting && playerEntity\.restKind === 'rough',/);
-  assert.match(x, /roughRest: !!playerEntity\.isResting && playerEntity\.restKind === 'rough',/);
-  assert.match(dc, /isResting: true,\s*\n\s*roughRest: playerEntity\.restKind === 'rough',/);
+  // SURV-TIERS: the three rolls hand the rest's asks, its kind priced by the player's tier at the open (scenes/shared.js)
+  assert.match(w, /restAsks: playerEntity\.isResting \? playerEntity\.restAsks : 1,/);
+  assert.match(x, /restAsks: playerEntity\.isResting \? playerEntity\.restAsks : 1,/);
+  assert.match(dc, /isResting: true,\s*\n\s*restAsks: playerEntity\.restAsks,/);
   const sh = read('src/scenes/shared.js');
   assert.match(sh, /restKind = \(\) => REST_KIND\.Rough, \.\.\.rest/, 'a host that says nothing sleeps rough');
   // PARTY-REST4b/10 (the party-rest drop): the override slot and the rough-carry reset both live inside this same `if (b)` arm now - narrowed to the one invariant this test holds
-  assert.match(sh, /_kind = survivalOn\(\) \? \(_restKindOverride \?\? restKind\)\(\) : REST_KIND\.Bed; _roughHours = 0;/, 'read at the open, DFU\'s bed with the mod off');
+  // SURV-TIERS: the tier is read at the open beside the kind - null (the mod off) is DFU's bed
+  assert.match(sh, /_rules = survivalRules\(\);[^\n]*\n\s*_kind = _rules \? \(_restKindOverride \?\? restKind\)\(\) : REST_KIND\.Bed; _roughHours = 0;/, 'read at the open, DFU\'s bed with the mod off');
   const law = read('src/systems/survival/rest.js');
   assert.doesNotMatch(law, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/effects|from '\.\.\/worldTick|document\.|window\./);
 });

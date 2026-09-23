@@ -1653,7 +1653,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       const _m = _mode();
       const hit = player.isPlayerSwimming ? null : intermittentEnemySpawn({   // XL-1: :489 reads PlayerEnterExit.IsPlayerSwimming, the host flag
         gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
-        roughRest: !!playerEntity.isResting && playerEntity.restKind === 'rough',   // SURV4: a rough rest asks twice
+        restAsks: playerEntity.isResting ? playerEntity.restAsks : 1,   // SURV4 + SURV-TIERS: the rest's asks, its kind priced by the tier at the open (scenes/shared.js) - a rough rest asks twice in Hard, once in Casual
         inLocationRect: _musicInLocationRect(),   // F061: the WIDENED TOWN RECT - this host lives inside it
         climateIndex: locClimateIndex,
         playerLevel: playerEntity.level,

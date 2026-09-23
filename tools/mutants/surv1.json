@@ -65,8 +65,8 @@
   {
     "name": "SURV1-cooked-food-turns-the-stomach",
     "file": "src/systems/survival/food.js",
-    "old": "  if (f.raw || stage > 0) {",
-    "new": "  if (true) {",
+    "old": "  if ((f.raw || stage > 0) && (rules ?? HARD_RULES).sickness) {",
+    "new": "  if ((true) && (rules ?? HARD_RULES).sickness) {",
     "tests": [
       "test/surv1_model.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "SURV1-a-rough-rest-clears-the-whole-debt",
     "file": "src/systems/survival/needs.js",
-    "old": "      const floor = sleeping === 'rough' ? NEED.SLEEP_TIRED : 0;",
+    "old": "      const floor = sleeping === 'rough' ? SLEEP_FLOOR_AT[rules.roughSleepFloor] ?? 0 : 0;",
     "new": "      const floor = 0;",
     "tests": [
       "test/surv1_model.test.js"

@@ -21,7 +21,15 @@
 // morning is a rough one (survival/rest.js), and the counter comes
 // down to a hangover's worth. The counter sobers one a ten minutes
 // (needs.js).
+//
+// SURV-TIERS (2026-09-23): the blackout is the tier's (`blackout`,
+// survival/difficulty.js - Hard's alone). A tier without it never takes
+// the night: the barkeep will not pour the drink that would carry the
+// counter past the endurance (`tavernPour`, asked BEFORE the coin
+// changes hands), so a Casual evening ends very drunk at worst, and a
+// soft drink always pours.
 import { NEED } from './needs.js';
+import { HARD_RULES } from './difficulty.js';
 
 /** The mod's six keys, by the port's climate (temperature.js's indices 224-233). */
 export const MENU_KEY_BY_CLIMATE = Object.freeze({
@@ -120,6 +128,7 @@ export const TAVERN_MENU_TEXT = Object.freeze({
   gettingDrunk: 'You are getting drunk...',
   veryDrunk: 'You are very drunk...',
   blackout: 'The room spins. You black out.',
+  cutOff: 'The barkeep takes one look at you and will not pour you another.',   // SURV-TIERS: the tier without the blackout
   noGold: 'You do not have enough gold.',
   drinksHeader: '--- Drinks ---',
 });
@@ -150,12 +159,21 @@ export function tavernEat(s, now, worth) {
   for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('hunger:')) delete s.notes[k];
   return { ok: true, text: TAVERN_MENU_TEXT.invigorated, minutes: MEAL_MINUTES };
 }
-/** TavernDrink: the thirst quenched, the counter up by the strength; the word by the endurance bands; past it, the blackout. */
-export function tavernDrink(s, strength, { endurance = 50 } = {}) {
+/** SURV-TIERS: whether the barkeep pours at all - asked before the coin changes hands. A tier with the blackout
+ *  (Hard) always pours: the blackout is its answer. One without (Casual) refuses the drink that would carry the
+ *  counter past the endurance. A soft drink always pours. Never touches the record. */
+export function tavernPour(s, strength, { endurance = 50, rules = HARD_RULES } = {}) {
+  if ((rules ?? HARD_RULES).blackout || !((strength | 0) > 0)) return { ok: true };
+  if ((s?.drunk ?? 0) + (strength | 0) > endurance) return { ok: false, text: TAVERN_MENU_TEXT.cutOff };
+  return { ok: true };
+}
+/** TavernDrink: the thirst quenched, the counter up by the strength; the word by the endurance bands; past it, the
+ *  blackout - in a tier that has one (`rules.blackout`; Hard's when no rules). */
+export function tavernDrink(s, strength, { endurance = 50, rules = HARD_RULES } = {}) {
   s.thirst = Math.max(0, (s.thirst ?? 0) - DRINK_THIRST_RELIEF);
   for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('thirst:')) delete s.notes[k];
   s.drunk = (s.drunk ?? 0) + (strength | 0);
-  if (s.drunk > endurance) return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };
+  if (s.drunk > endurance && (rules ?? HARD_RULES).blackout) return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };
   if (s.drunk > endurance / 2) return { text: s.drunk > endurance - 10 ? TAVERN_MENU_TEXT.veryDrunk : TAVERN_MENU_TEXT.gettingDrunk, blackout: false, minutes: DRINK_MINUTES };
   return { text: TAVERN_MENU_TEXT.fortified, blackout: false, minutes: DRINK_MINUTES };
 }

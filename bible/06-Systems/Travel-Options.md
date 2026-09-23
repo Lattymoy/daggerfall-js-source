@@ -626,7 +626,7 @@ third was a thing the port never said out loud.
 > not a fatigue knob, it is the needs' one word for "sat still", and
 > FOUR laws read it - the two fatigue drains it was aimed at, the two
 > health arms F12 later disclosed, and SURV6's hunting roll, which
-> refuses outright on `resting` (`hunting.js:105`). One flag reached
+> refuses outright on `resting` (`hunting.js:114`). One flag reached
 > three laws nobody had asked it to reach. That is the lesson worth
 > keeping out of this whole exchange.
 
@@ -665,8 +665,8 @@ third was a thing the port never said out loud.
 
   **And `resting` holds two HEALTH arms with the fatigue ones** (F12),
   which the first cut did not disclose: the bare-skin block's naked-cold
-  and sunburn ticks (`needs.js:293`), and, for a traveller who is also
-  `byFire`, the exposure damage at `:277`. Harm you cannot answer while
+  and sunburn ticks (`needs.js:387`), and, for a traveller who is also
+  `byFire`, the exposure damage at `:369`. Harm you cannot answer while
   the autopilot holds the controls is not a loss worth keeping. The law
   is executed now, not matched: `test/surv7_feed.test.js` runs ten game
   hours with the knob both ways and asserts fatigue held at zero while

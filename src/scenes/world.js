@@ -2204,9 +2204,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Mac's word, and the whole of it: `resting` is not a fatigue knob,
     // it is the needs' one word for "sat still", and three other laws
     // read it. It held the bare-skin block's naked-cold and sunburn
-    // ticks and the byFire exposure damage (needs.js:277, :293) - the
+    // ticks and the byFire exposure damage (needs.js:387, :369) - the
     // health Mac wants ticking - and, the one TO-FIELD never counted,
-    // it shut the HUNTING roll off entirely (hunting.js:105 refuses on
+    // it shut the HUNTING roll off entirely (hunting.js:114 refuses on
     // `resting`), so a traveller could not hunt on the road at all.
     // One flag, four laws; the journey takes the world as it finds it.
     //
@@ -3156,7 +3156,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const _m = modes?.mode ?? 'exterior';
       const hit = (walkMode && playerSpawned && player.isPlayerSwimming) ? null : intermittentEnemySpawn({   // XL-1: :489 reads PlayerEnterExit.IsPlayerSwimming, the host flag
         gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
-        roughRest: !!playerEntity.isResting && playerEntity.restKind === 'rough',   // SURV4: a rough rest asks twice
+        restAsks: playerEntity.isResting ? playerEntity.restAsks : 1,   // SURV4 + SURV-TIERS: the rest's asks, its kind priced by the tier at the open (scenes/shared.js) - a rough rest asks twice in Hard, once in Casual
         // F061: IsPlayerInLocationRect is the WIDENED TOWN RECT
         // (PlayerGPS.cs:687-699), not "this pixel has a location" -
         // in the wilderness ring of a town's pixel the wilderness
@@ -12698,7 +12698,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // again". TO-FIELD held SURV6's roll while an accelerated journey
     // ran; the gate is REMOVED on Mac's word, with the `resting` flag
     // above that was holding the roll a second time from inside
-    // (hunting.js:105).
+    // (hunting.js:114).
     //
     // WHAT IT MEANS, said plainly so it is not rediscovered as a bug:
     // the roll fires once a GAME minute, and a journey spends those at

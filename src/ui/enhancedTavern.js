@@ -41,10 +41,10 @@ import {
   TAVERN_MENU, TAVERN_PRICES, removeExpiredRooms, findRentedRoom, roomRemainingHours,
   rentalDecision, rentRoom, canEat, eatOrDrink,
 } from '../systems/tavern.js';
-import { survivalOn } from '../systems/survival/switch.js';
-import { tavernMenu, tavernEat, tavernDrink, blackout } from '../systems/survival/tavernMenu.js';
+import { survivalOn, survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: the tier prices the drink
+import { tavernMenu, tavernEat, tavernDrink, tavernPour, blackout } from '../systems/survival/tavernMenu.js';
 import { survivalOf } from '../systems/survival/needs.js';
-import { stiffen } from '../systems/survival/rest.js';
+import { stiffen, REST_KIND } from '../systems/survival/rest.js';
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -223,16 +223,20 @@ function pickSurvival(row, now) {
   if (!row || row.kind === 'header') return;
   audio.playOneShot(SOUND.ButtonClick, 1);
   const h = deps;
-  if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }
-  deductGold(h.entity, row.price);
   const s = survivalOf(h.entity, now);
   const endurance = h.endurance?.() ?? 50;
-  const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance });
+  const rules = survivalRules();
+  // SURV-TIERS: a tier without the blackout refuses the drink that would take the night - before the coin changes hands
+  const pour = row.kind === 'drink' ? tavernPour(s, row.strength, { endurance, rules }) : null;
+  if (pour && !pour.ok) { say(line(pour.text)); return; }   // the menu stays up, as it does for the gold: a soft drink or a meal still serves
+  if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }
+  deductGold(h.entity, row.price);
+  const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });
   h.advanceMinutes?.(r.minutes);
   h.entity.lastTimePlayerAteOrDrankAtTavern = now;
   if (r.blackout) {
     const b = blackout(s, now + r.minutes, { endurance });
-    stiffen(h.entity, now + r.minutes + b.minutes);
+    stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules);
     h.advanceMinutes?.(b.minutes);
   }
   menu = null;

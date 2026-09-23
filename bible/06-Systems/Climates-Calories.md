@@ -16,6 +16,15 @@ SURV) and rebuilt as the port's own laws. The vendored folder
 (`vendor/climates-calories/`, its README carrying the permission) holds
 the manifest, the mod's item templates and sixteen of its item icons.
 
+> **SURV-TIERS (2026-09-23): THE ARC IS PLAYED AT ONE OF THREE TIERS -
+> OFF, CASUAL (the default) and HARD.** Everything from here to
+> SURV-TENT describes HARD, the arc at full strength and unchanged to the
+> number. CASUAL is the same world - every clock, stage, item, camp,
+> menu, hunt and word below - with five rules on what it COSTS: stamina
+> only, only at the stages the HUD paints red, never below half the pool,
+> nothing refused and nothing rolled against the player. The design, the
+> table and the migration are in **SURV-TIERS** at the end of this page.
+
 ## What the mod was (read off the DLL)
 
 Six systems on DFU's magic round (one game minute): a **temperature**
@@ -43,6 +52,7 @@ carry, and everything static.
 | SURV5 | what the player is told: the HUD's needs strip, the status page's third box, the survival items' info box; the mod's regional tavern menus with the meal, the drink and the blackout | `survival/status.js`, `survival/tavernMenu.js`; `ui/enhancedHud.js` + `enhancedStyle.js`; `itemInfo.js`; `ui/tavernWindow.js` + the interior host's hooks; the four hosts' status chain |
 | SURV6 | hunting, foraging and the water search as real-time events: the wilderness roll, the Yes/No box, the busy page, the finds and the harms, the hunted | `survival/hunting.js` (the law), `ui/huntWindow.js` (the three pages), `scenes/hunting.js` (composed), the overworld host's `createHunting` bag and its minute tick |
 | SURV7 | the feed: the four hosts say where the player stands and the minute law runs in every mode; the rest gate on DFU's seam; the needs aligned at a load and an arrival; fast travel charged; the records | `survival/env.js` (the feed, the gate); `scenes/shared.js` createPlayerTicker's `survivalEnv`; the four hosts' readers; `save.js`'s load arm; `worldTick.js` tickPlayerMinutes' `survival` |
+| SURV-TIERS | Off, Casual (the default) and Hard on the one key: the tiers as data, every charging law reading its tier's rules, the old boolean converted at the load | `survival/difficulty.js` (the table), `survival/switch.js` (`survivalTier`, `survivalRules`), the laws (`needs.js`, `rest.js`, `food.js`, `hunting.js`, `tavernMenu.js`), the compositions (`env.js`, `scenes/shared.js`, `scenes/hunting.js`, `useItem.js`, both tavern windows), `encounters.js` (the asks), `uiPrefs.js` (the conversion), the Features row |
 
 ### The temperature (SURV1)
 
@@ -130,7 +140,8 @@ two lights left. An animal's corpse carries raw meat by its kind (a rat
 one, a bear six to ten and luck, half of it turning), the slaughterfish
 raw fish, and a humanoid a meal on a high roll. All of it behind the
 one switch (`survival/switch.js`, the `mod-climates-calories` feature
-row, on by default).
+row) - on in both Casual (the default) and Hard, gone in Off
+(SURV-TIERS).
 
 ### The camps (SURV3)
 
@@ -762,3 +773,215 @@ art registered AS a stand-in, and the tent art not registered at all -
 **Still not imported**, and with nowhere to go: the two tavern menu
 backgrounds (`RALZARTAVERN`, `BLANKMENU_TAVERN`). The port draws its
 tavern menu in its own panel.
+
+## SURV-TIERS - OFF, CASUAL, HARD (2026-09-23)
+
+> Mac: *"So I want to talk about adding a new tab to climates and
+> calories thats on by default. Something that introduces mechanics,
+> leaves some out and is overall not a punished experience for
+> players"*; then, of the tiers' names, *"Off, Casual, Hard"*; of the
+> players already on it, *"Yes, but still let it be able to be turned
+> off for online"*; of spoilage and the stamina cost, *"Your choice"*;
+> and of the whole, *"I want this to be a smart and thorough difficulty
+> design. No band aids"*.
+
+**One key, three answers.** The `survival` pref was a boolean; it is a
+tier: **Off** (the classic game - no needs, no items, no camps), **Casual**
+(the new default) and **Hard** (everything above this section, unchanged).
+The Features tile's bar reads `Off | Casual | Hard`.
+
+### The design: the same world, different stakes
+
+Casual is not Hard with the numbers turned down. It is five rules, and
+`src/systems/survival/difficulty.js` is those rules written out as data:
+
+1. **Same world, different stakes.** The clocks, the thresholds, the felt
+   temperature, the food and its spoiling, the water, the camps, the
+   tavern menus and the hunt's events are the world's and identical in
+   both tiers - so the HUD strip, the status page and every notice say the
+   same things, and two players on different tiers stand in one world
+   online. Only what the body PAYS differs.
+2. **Stamina is the only price of neglect.** Casual never takes an
+   attribute, a point of health, an item's condition, a disease or an
+   hour. The drink's attribute swing stays in every tier - it is chosen at
+   a bar, with an upside, not a need left unmet.
+3. **Red means it costs.** A need charges only at the stages the HUD
+   already paints red (`status.js` `HUD_NEED_WORDS`): Starving; Parched and
+   Dehydrated; Exhausted; Freezing, Deadly cold and Scorching. Amber is
+   information. The rates are Hard's own (`needs.js` `DRAIN`) - once the
+   body is in trouble it tires as fast in both tiers. Wetness is no need:
+   it works through the felt temperature, in both.
+4. **Bounded.** The needs may take stamina down to half the pool and no
+   further - so on their own they can never raise DFU's exhaustion
+   collapse, which kills a player with a foe near
+   (`systems/rest.js` `exhaustionOutcome`), and a neglected player still
+   has half a pool to fight and run with.
+5. **Nothing refused, nothing rolled against you.** No rest gate, no second
+   encounter ask, no stiff morning, no sickness roll, no bite, fall or
+   beast from a hunt, no blackout. Where Hard has a harmful outcome,
+   Casual has a DECLARED safe one in its place - never a harm rolled and
+   then cancelled.
+
+What Casual keeps as the reason to engage is everything that was never a
+penalty: a bed or a fire pays sleep debt three times faster than the rest
+window; a cooked meal feeds more than a raw one and a fresh one more than a
+spoiled one; a fed hour gives a point of stamina back; the items, the
+kit, the shelves, the corpse's meat, the camps, the cooking, the water
+sources, the tavern's menus and the hunt's finds are all there.
+
+### The table
+
+| | Hard (the arc as it stood) | Casual |
+|---|---|---|
+| Hunger | Starving: 4 fatigue a minute; -2 to every attribute a starving day, to -20 | Starving: 4 a minute, to half the pool |
+| Thirst | Parched 6, Dehydrated 12 a minute; attributes past 100; health from 120 on the harm tick - it can kill (SURV-THIRST1) | Parched 6, Dehydrated 12 a minute, to half the pool |
+| Sleep | Exhausted: 8 a minute; -2 / -5 / -10 to every attribute at tired / drowsy / exhausted | Exhausted: 8 a minute, to half the pool |
+| Heat and cold | from 20 felt either way, 6 per 20 degrees; exposure lowers attributes past 30; wounds past 50 - it can kill | only at the red words (Scorching past 50; Freezing and Deadly cold past -30), the same 6 per 20, to half the pool |
+| Bare skin | naked in the cold and the sun on bare skin wound (never the last five points); bare feet 4 a minute | the lines alone - the cold and the sun are already in the felt temperature |
+| Wet armour | rusts, a point on a 5% minute | never |
+| Food | raw, stale or worse risks a disease on a failed luck roll | no roll - Hard's lucky branch, every time; spoiled still feeds less, putrid still will not go down |
+| The rest window | half DFU's hour; two encounter asks a minute; stiff four hours (-5 speed and agility); the debt never paid below tired; too cold or too hot refuses the sleep | DFU's whole hour; one ask; no morning; the debt paid down to nothing at 0.5 an hour (a bed or a fire pays 1.5); never refused |
+| The hunt | bites that poison, a foul pool that sickens, a fall, a boar, the beast | each harm's safe twin - the same search on the same rolls, the same catch, no harm |
+| The tavern | past the endurance you black out: the night passes and the morning is a rough one | the barkeep will not pour the drink that would cross the endurance, and says so before the coin changes hands; a soft drink always pours |
+| The stamina floor | none: the needs can empty the pool, and the collapse is the cost (AUDIT-DEATH1) | half the pool |
+
+Spoilage and the stamina cost were Mac's to hand over ("Your choice").
+**Spoilage stays**, at the world's pace, because it is what makes the food
+choices mean something - bread keeps, raw fish does not - and it was never
+the punishment; the sickness was, and Casual has none. **The stamina cost
+stays**, bounded, because it is the one price that makes a need a need
+without ever endangering the player: it is legible (the fatigue bar), it
+reverses completely with a meal, a drink, a sleep or a fire, and the floor
+means it can never be what kills.
+
+### How it is built - rules as data, read at the compositions
+
+- **The table** (`survival/difficulty.js`, an import-free leaf): a field
+  exists only where the tiers DIFFER - the stamina floor and heat band and
+  the barefoot tax, whether the attributes, the health, the rust, the
+  sickness, the hunt's harms, the gate and the blackout apply, and the
+  rough rest's price with the sleep-debt stage a rough night cannot pay
+  below. The world's numbers (the stages, the drain rates, the sleep a bed
+  pays) stay with their laws.
+- **The switch** (`survival/switch.js`): `survivalTier()` is the stored
+  tier, or the default for any value that is not one - the SAME rule the
+  Features bar draws by (`tileStates`, BLOOD AUDIT 5), so the bar and the
+  laws can never disagree; `survivalOn()` is "not Off" for everything the
+  arc merely switches on; `survivalRules()` is what a law that CHARGES reads.
+- **The laws take the rules as an argument** and run Hard when handed none,
+  so every pin written before the tiers still pins Hard: `survivalMinute` /
+  `survivalStatMods` (`deps.rules`), `restCost` / `restHour` / `stiffen`,
+  `eatLaw`, `huntOutcome`, `tavernPour` / `tavernDrink`. Each reads the
+  tier's field at the point the cost is charged; nothing is charged and
+  then refunded, and nothing is rolled and then cancelled.
+- **The needs' stamina leaves by one door** (`tire` inside
+  `survivalMinute`): a tier with no floor hands each charge to the sink as
+  before; one with a floor spends only the budget above it, read at the
+  minute's first charge (after the well-fed hour's refund) and counted
+  down in the law, so two needs in one minute share one budget whatever
+  the host's sink does with them.
+- **The hunt's safe twins** (`hunting.js` `HUNT_SAFE_TWIN`): every key
+  whose outcome can carry a poison, a disease, a wound, the boar's
+  fatigue or a beast names the outcome Casual takes instead, and the twin
+  keeps what the search FOUND (its meat, fruit and skills). The twin is
+  taken before the catch is scaled, so both tiers walk one stream of
+  rolls: on the same rolls a Casual hunt IS the Hard hunt with its harms
+  swapped out. The port adds one line to the mod's text - `trailCold`, the
+  roar's twin, for a hunter with or without a bow.
+- **The barkeep** (`tavernMenu.js` `tavernPour`): asked by both tavern
+  windows BEFORE the coin changes hands; the enhanced window keeps its menu
+  up after a refusal, as it does for a purse too light, so a soft drink or
+  a meal still serves.
+- **The compositions read the live tier once, where they already read the
+  switch**: the feed (`env.js` `survivalFeed` puts `rules` in the minute
+  law's deps), the rest (`scenes/shared.js` `createRestDeps` reads the tier
+  at the open beside the kind - the kind stays WHERE the sleep is, the tier
+  prices it: the hour, the morning and the encounter asks, all at the tier
+  the rest opened with), the gate (`env.js` `survivalGateOn` - Hard's
+  alone), a meal (`useItem.js`), a hunt (`scenes/hunting.js`), a drink
+  (both windows).
+- **The resting encounter roll takes a COUNT** now (`encounters.js`
+  `intermittentEnemySpawn`'s `restAsks`, one when absent, as DFU has it).
+  `createRestDeps` stamps it on the resting player at the open
+  (`entity.restAsks`, beside `entity.restKind`, both cleared when the rest
+  ends): Hard's rough night two, every Casual night and every bed or camp
+  one. **The four hosts rule (17e):** `world.js` (the overworld, and the
+  interiors - `worldModes.js` has no roll of its own; its interior rest
+  rings `world.js`'s) and `exterior.js` hand
+  `restAsks: playerEntity.isResting ? playerEntity.restAsks : 1` where they
+  handed the rough flag, `dungeonContext.js`'s own rest roll hands the
+  stamp; `worldModes.js` is named and needs nothing. Every host's rest runs
+  through the one `createRestDeps` and every host's minute through the one
+  `survivalFeed`, so the tier reaches all four through those two doors -
+  and the three hosts change in place, a line each, no import.
+
+### A dead constant, found on the way
+
+`needs.js` exported `FLOOR_FATIGUE = 64` under *"rough drains cannot take
+the last of a pool by themselves"*, and nothing in the tree read it: Hard's
+drains always could empty the pool, and AUDIT-DEATH1 recorded the collapse
+that follows as the intended cost. A constant that looks wired and is not
+is worse than none (AUDIT VC6), so it is gone; the floor it described is
+real now, as a tier's rule - `stamina.floor`, none in Hard, half in Casual.
+
+### Moving the players already on it
+
+The key is unchanged. Since PREF1 the shelf stores only choices that
+differ from the default, and `true` was the default - so an old shelf
+carries at most `survival: false`, a player who turned the arc off. The
+load (`uiPrefs.js` `loadPrefs`) reads it as **Off** and the next save writes
+the tier. Every other player - everyone who was on it, since PREF1 cannot
+tell a pressed On from the default - moves to **Casual**, as Mac asked. A
+hand-written `true` names no tier and reads as the default.
+
+### Online
+
+Every tier, Off included, is the player's online (`online: 'player'`,
+unchanged) - Mac's "still let it be able to be turned off for online".
+MODS-ONLINE-3's reading holds tier by tier: a tier decides only what THIS
+player's body pays; the counters, the camps and a corpse's food (the
+killer's word) are the world's in every tier. A party rest's mirror
+(PARTY-REST4b) takes the leader's KIND and prices it by the member's own
+tier.
+
+### The pins
+
+`test/survtiers.test.js`, 16 tests: the row, the table and the shelf agree;
+the switch's reads; the conversion at the load (through a real shelf);
+Hard's table is the arc as it stood; Casual's five rules; RED MEANS IT
+COSTS, degree by degree against `temperatureWord` and the HUD's own
+levels, and stage by stage for hunger, thirst and sleep, and swept through
+the law across every climate, month, hour and weather, shod and barefoot;
+THE WORST DAY (starving, dehydrated, exhausted, half naked and barefoot in
+a mountain blizzard in wet plate - Casual ends it at exactly half the pool,
+every word still said, and nothing else touched); SAME WORLD (two players,
+two tiers, one night - the records identical); the floor's budget; a Hard
+morning lifting under Casual; the rest, the asks, the gate; the meal; the
+hunt (over twelve thousand seeded searches, Casual equal to Hard with the
+twins swapped, and every harmful key covered); the barkeep, through the
+classic window; and the composed ticker in a blizzard.
+
+The pre-tier pins moved only where their vocabulary or the source shape
+did: a test that set the switch `true` or `false` sets `'hard'` or `'off'`;
+a test that pinned a Hard-only cost under the defaults sets `'hard'`
+first; the source pins follow the reshaped lines. The FT15 notes budget
+rose by exactly the row's growth (77 characters: a row whose one control
+became three).
+
+Mutants: `tools/mutants/survtiers.json`, 43 records - every Casual rule
+broken one at a time, the default, the conversion, the row, the floor's
+door and budget, the band, the sleep floor, the twins, the barkeep, the
+compositions, the asks' stamp and the host that hands it - 43 dead. Twenty-one records in nine older lists
+(`surv1`, `surv2`, `surv4`, `surv5`, `surv7`, `surv_thirst1`, `auditsurv`,
+`deathloop1`, `modsonline1`) targeted lines this slice reshaped and were
+re-aimed with their intent unchanged. Then every record in every list that
+lands on the survival paths - the laws, the rest composition, the row, the
+shelf's conversion, the encounter roll, the tavern windows - was run
+again, the new list with them: 193 records over twenty lists, all dead,
+none stale (the one whose pin was itself red during that run, DEATHLOOP2's,
+re-run once its pin was re-aimed - dead).
+
+**Not driven in the container:** no ARENA2, so the game itself was not
+played at either tier; the Features tile's three segments were checked in
+a browser against the dev server (the rail probe needs no game data), the
+enhanced tavern window's refusal by source.

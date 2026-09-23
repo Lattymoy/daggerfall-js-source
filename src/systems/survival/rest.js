@@ -26,14 +26,25 @@
 // mod's own "You are too cold to sleep" reborn on DFU's own seam
 // (restSession.js) - installed by the host that knows the felt
 // temperature (SURV7's env feed), never here.
+//
+// SURV-TIERS (2026-09-23): THE KIND IS WHERE YOU SLEEP, THE COST IS THE
+// TIER'S. A bed and a camp cost nothing in any tier. The rough night's
+// price is the tier's rules' `roughRest` (survival/difficulty.js): Hard's
+// is the half hour, the second ask and the stiff morning above; Casual's
+// is DFU's own hour, one ask, no morning - the window stays the lesser
+// sleep only in the debt it pays (needs.js), which is the reason to
+// light a fire rather than a penalty for not. The gate is the tier's too
+// (`restGate`: Hard's alone), read by the host's install (env.js).
 import { survivalOf } from './needs.js';
+import { HARD_RULES } from './difficulty.js';
 
 export const REST_KIND = Object.freeze({ Bed: 'bed', Camp: 'camp', Rough: 'rough' });
-/** What each kind costs: the hour's recovery (of DFU's), the resting encounter rolls a minute, the stiff hours after. */
+/** What each kind costs: the hour's recovery (of DFU's), the resting encounter rolls a minute, the stiff hours after.
+ *  `rough` is Hard's (the arc at full strength); a tier's own is its rules' `roughRest` (restCost). */
 export const REST_COST = Object.freeze({
   bed: Object.freeze({ recovery: 1, encounters: 1, stiffHours: 0 }),
   camp: Object.freeze({ recovery: 1, encounters: 1, stiffHours: 0 }),
-  rough: Object.freeze({ recovery: 0.5, encounters: 2, stiffHours: 4 }),
+  rough: HARD_RULES.roughRest,
 });
 export const STIFF_HOURS = 4;
 /** Speed and agility down by this while stiff (needs.js's survival entry carries it). */
@@ -50,7 +61,10 @@ export function restKind({ bed = false, houseOwned = false, ship = false, byFire
   if (byFire) return REST_KIND.Camp;
   return REST_KIND.Rough;
 }
-export const restCost = (kind) => REST_COST[kind] ?? REST_COST.rough;
+/** A kind's cost under a tier's rules (Hard's when none): a bed and a camp are the same in every tier; anything
+ *  else - the rough kind, or a kind this law does not know - is the tier's rough price. */
+export const restCost = (kind, rules = HARD_RULES) =>
+  (kind === REST_KIND.Bed || kind === REST_KIND.Camp ? REST_COST[kind] : (rules ?? HARD_RULES).roughRest);
 
 /**
  * The rested hour, by kind: `tick()` is the host's DFU hour
@@ -71,9 +85,11 @@ export const restCost = (kind) => REST_COST[kind] ?? REST_COST.rough;
  * become one whole point over two hours, rather than two zeros forever. Optional and defaults to a fresh,
  * per-call {0,0,0}: a caller that does not keep `carry` across hours (this function's only caller before this
  * change, and every existing single-hour test) gets EXACTLY the old one-hour-at-a-time truncation, unchanged.
+ *
+ * SURV-TIERS: `rules` is the resting player's tier (Hard's when none) - a Casual rough hour keeps the whole hour.
  */
-export function restHour(entity, kind, tick, carry = { health: 0, fatigue: 0, magicka: 0 }) {
-  const c = restCost(kind);
+export function restHour(entity, kind, tick, carry = { health: 0, fatigue: 0, magicka: 0 }, rules = HARD_RULES) {
+  const c = restCost(kind, rules);
   const h0 = entity.health ?? 0, f0 = entity.fatigue ?? 0, m0 = entity.magicka ?? 0;
   const healed = !!tick();
   if (c.recovery >= 1) return healed;
@@ -89,9 +105,10 @@ export function restHour(entity, kind, tick, carry = { health: 0, fatigue: 0, ma
   return healed && entity.health === h1 && entity.fatigue === f1 && entity.magicka === m1;
 }
 
-/** Rising from a rough night: stiff until `now` + the kind's hours. False when the kind costs none. */
-export function stiffen(entity, now, kind = REST_KIND.Rough) {
-  const hours = restCost(kind).stiffHours;
+/** Rising from a rough night: stiff until `now` + the kind's hours under the tier's rules (Hard's when none).
+ *  False when the kind costs none - every kind, in Casual. */
+export function stiffen(entity, now, kind = REST_KIND.Rough, rules = HARD_RULES) {
+  const hours = restCost(kind, rules).stiffHours;
   if (!(hours > 0)) return false;
   const s = survivalOf(entity, now);
   s.stiffUntil = Math.max(s.stiffUntil ?? 0, now + hours * 60);

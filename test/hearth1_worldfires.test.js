@@ -210,20 +210,22 @@ test('HEARTH1: warmth and drying follow, because they are the same reader', asyn
 test('AUDIT HEARTH1 F1: the world\u2019s fires are behind the mod\u2019s own switch', async () => {
   const { createCamps } = await import('../src/scenes/camps.js');
   const { setPref } = await import('../src/systems/uiPrefs.js');
-  const { SURVIVAL_PREF, survivalOn } = await import('../src/systems/survival/switch.js');
+  const { SURVIVAL_PREF, survivalTier } = await import('../src/systems/survival/switch.js');
   // The camps never needed a gate here: nothing can be PLACED with the
   // mod off, so the pool is empty and answers no by itself. A brazier is
   // in the world either way - without the gate a fire bowl answered the
   // activation ray with a cooking list and reported byFire to a law
   // nobody had turned on. "Off, every seam is DFU's" is the arc's own
   // sentence, and this is where it was about to stop being true.
-  const before = survivalOn();
+  const before = survivalTier();
   const pool = createCamps({ hearths: () => [{ x: 0, y: 0, z: 0, foot: -1, w: 1, h: 1 }], entity: { items: [] }, say: () => {} });
   try {
-    setPref(SURVIVAL_PREF, true);
+    setPref(SURVIVAL_PREF, 'casual');   // SURV-TIERS: ON is either tier - a fire is the world's
     assert.equal(pool.byFire([0, 0, 0]), true, 'with the mod ON, a fire is a fire');
     assert.equal(pool.targets().length, 1, '...and the ray sees it');
-    setPref(SURVIVAL_PREF, false);
+    setPref(SURVIVAL_PREF, 'hard');
+    assert.equal(pool.byFire([0, 0, 0]), true, '...in Hard as in Casual');
+    setPref(SURVIVAL_PREF, 'off');
     assert.equal(pool.byFire([0, 0, 0]), false, 'with the mod OFF, there is no such law to answer');
     assert.deepEqual(pool.targets(), [], '...and nothing to activate');
   } finally { setPref(SURVIVAL_PREF, before); }

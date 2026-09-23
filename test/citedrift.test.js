@@ -623,7 +623,7 @@ const SOURCE_CITES = [
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
   ['src/systems/loot.js', /world\.js:\d+ and exterior\.js:(\d+)/,
     EX, /loadMagicRegistries\(fetchBytes\)\.then/],
-  ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:294/,
+  ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:297/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
   ['src/systems/startingGear.js', /world\.js:\d+ and exterior\.js:(\d+) seed it/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],

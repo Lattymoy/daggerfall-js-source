@@ -31,9 +31,18 @@
 // box closes, not under it - a foe keeps its clock under a window
 // (WINFOE1) and would have had the first blow free.
 //
+// SURV-TIERS (2026-09-23): THE HUNT IS THE WORLD'S, ITS HARMS ARE THE
+// TIER'S. The events, their odds and the catch are the same in every
+// tier. A tier without hunt harms (Casual - survival/difficulty.js
+// `huntHarms`) takes each harmful outcome's SAFE TWIN below: the same
+// search on the same rolls with the harm gone - the clean shot without
+// the bite, the pool you smelled and left, the prey that got away
+// instead of the thing that was hunting you.
+//
 // PURE: no scene, ui, combat or effect import (the leaf rule).
 import { survivalOf } from './needs.js';
 import { TEMPLATE, refillSkins, FOUL_MEAL_DISEASES } from './food.js';
+import { HARD_RULES } from './difficulty.js';
 import { createSurvivalItem, SURVIVAL_USE_TEXT } from './items.js';
 import { MOBILE_TYPES } from '../../characters/mobileTypes.js';
 
@@ -175,6 +184,9 @@ export const HUNT_TEXT = Object.freeze({
   rabbitMiss: ['You find traces of rabbits in the area.', 'You spot movement in the underbrush and stay perfectly still.', 'Your arrow goes wide of the mark, the rabbit scampers off.'],
   rabbitStrike: ['You find traces of rabbits in the area.', 'You spot movement in the underbrush and attempt to get closer.', 'After some time, you have the animal within range and you lunge!', 'You kill the rabbit in a single strike.'],
   rabbitGone: ['You find traces of rabbits in the area.', 'You spot movement in the underbrush and attempt to get closer.', 'After some time, you have the animal within range and you lunge!', 'The rabbit is too quick and scampers away.'],
+  // SURV-TIERS: the one line the port adds - the roar's safe twin, for a hunter with or without a bow (the mod's
+  // own misses each name the weapon)
+  trailCold: ['You track your prey for some time.', 'The trail goes cold, and you give up the hunt.'],
   boar: ['You find traces of rabbits in the area.', 'You spot movement in the underbrush and attempt to get closer.', 'Suddenly, a wild boar charges at you!', 'After a furious struggle you manage to chase it off.'],
   fall: ['You find traces of rabbits in the area.', 'You spot movement in the underbrush and attempt to get closer.', 'Suddenly the rocks beneath your foot give way and you take a hard fall.', 'The rabbit scampers off and you are left nursing your bruises.'],
   gained: (n, what) => `You gain ${n} ${what}.`,
@@ -194,9 +206,22 @@ const outcome = (key, extra = {}) => ({
 // hunts instead of always rounding back up to 1 every time. Applied
 // once, over whatever huntOutcome's switch settled on, so every branch
 // above is cut without having to touch each one. Unconditional ("all
-// modes"): there is no separate difficulty knob on the hunt, only the
-// one survivalOn() switch that gates whether a hunt happens at all.
+// modes"): the catch is the world's, the same in every tier - the tiers
+// (SURV-TIERS) differ only in the HARMS, through HUNT_SAFE_TWIN below.
 export const HUNT_LOOT_SCALE = 0.5;
+
+/** SURV-TIERS: each harmful outcome's safe twin - every key whose outcome
+ *  can carry a poison, a disease, a wound, the boar's fatigue or a beast.
+ *  The twin keeps what the search FOUND (its meat, fruit and the skills it
+ *  used) and nothing that harms; a foul pool's water is its harm's vehicle
+ *  and goes with it. test/survtiers.test.js walks every event, weapon and
+ *  roll to hold that no harm survives a Casual hunt. */
+export const HUNT_SAFE_TWIN = Object.freeze({
+  snakeShotBite: 'snakeShot', snakeMissBite: 'snakeMiss', snakeGrabBite: 'snakeGrab', snakeBite: 'snakeGone',
+  lizardBite: 'lizardGone', fruitStrange: 'fruitNone', foul: 'unsafe',
+  fall: 'rabbitGone', boar: 'rabbitGone',
+  hunted: 'dust', birdsRoar: 'birdsSpooked', lizardHunted: 'lizardGone', roar: 'trailCold',
+});
 function scaledYield(n, rolls) {
   if (n <= 0) return n;
   const scaled = n * HUNT_LOOT_SCALE;
@@ -210,10 +235,13 @@ function scaledYield(n, rolls) {
  * Stealth, Critical Strike, Climbing); `hasBow` the weapon in hand.
  * Returns { key, lines, meat, fruit, waterKg, poison, disease, beast,
  * hurt, tired, skills } - `skills` the ids the search used, for the
- * host's tally.
+ * host's tally. `rules` is the hunter's tier (Hard's when none).
  */
-export function huntOutcome({ climate, kind }, { hasBow = false, skills = {}, luck = 50, rolls = Math.random } = {}) {
-  const result = huntOutcomeRaw({ climate, kind }, { hasBow, skills, luck, rolls });
+export function huntOutcome({ climate, kind }, { hasBow = false, skills = {}, luck = 50, rolls = Math.random, rules = HARD_RULES } = {}) {
+  let result = huntOutcomeRaw({ climate, kind }, { hasBow, skills, luck, rolls });
+  // SURV-TIERS: the twin is taken BEFORE the scale below, so both tiers scale the same catch on the same rolls
+  const twin = !(rules ?? HARD_RULES).huntHarms ? HUNT_SAFE_TWIN[result.key] : null;
+  if (twin) result = outcome(twin, { meat: result.meat, fruit: result.fruit, skills: result.skills });
   // MOD: the one scale point every branch above shares - see HUNT_LOOT_SCALE.
   result.meat = scaledYield(result.meat, rolls);
   result.fruit = scaledYield(result.fruit, rolls);

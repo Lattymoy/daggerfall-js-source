@@ -10,9 +10,9 @@
   },
   {
     "name": "SURV4-a-rough-hour-is-a-whole-hour",
-    "file": "src/systems/survival/rest.js",
-    "old": "  rough: Object.freeze({ recovery: 0.5, encounters: 2, stiffHours: 4 }),",
-    "new": "  rough: Object.freeze({ recovery: 1, encounters: 2, stiffHours: 4 }),",
+    "file": "src/systems/survival/difficulty.js",
+    "old": "    roughRest: { recovery: 0.5, encounters: 2, stiffHours: 4 },",
+    "new": "    roughRest: { recovery: 1, encounters: 2, stiffHours: 4 },",
     "tests": [
       "test/surv4_rest.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SURV4-a-rough-rest-asks-once",
     "file": "src/systems/encounters.js",
-    "old": "  if (r || !ctx.roughRest) return r;\n  return intermittentEnemySpawnOnce(ctx, rolls);",
-    "new": "  return r;",
+    "old": "  for (let i = 0; i < asks && !r; i++) r = intermittentEnemySpawnOnce(ctx, rolls);",
+    "new": "  r = intermittentEnemySpawnOnce(ctx, rolls);",
     "tests": [
       "test/surv4_rest.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SURV4-every-rest-asks-twice",
     "file": "src/systems/encounters.js",
-    "old": "  if (r || !ctx.roughRest) return r;",
-    "new": "  if (r) return r;",
+    "old": "  const asks = Math.max(1, Math.trunc(ctx.restAsks ?? 1));",
+    "new": "  const asks = 2;",
     "tests": [
       "test/surv4_rest.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "SURV4-the-kind-is-read-every-hour",
     "file": "src/scenes/shared.js",
-    "old": "        _kind = survivalOn() ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;",
+    "old": "        _kind = _rules ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;",
     "new": "        _kind = REST_KIND.Rough; _roughHours = 0;",
     "tests": [
       "test/surv4_rest.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "SURV4-the-mod-off-still-costs",
     "file": "src/scenes/shared.js",
-    "old": "_kind = survivalOn() ? (_restKindOverride ?? restKind)() : REST_KIND.Bed;",
+    "old": "_kind = _rules ? (_restKindOverride ?? restKind)() : REST_KIND.Bed;",
     "new": "_kind = (_restKindOverride ?? restKind)();",
     "tests": [
       "test/surv4_rest.test.js"

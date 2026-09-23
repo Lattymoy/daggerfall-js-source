@@ -122,7 +122,7 @@ test('SURV5: the info box - a survival item\'s built tokens: the name, the weigh
 });
 
 test('SURV5: the tavern window - the survival menu in the one picker: a meal charges and banks, a drink counts, the minutes pass, the kitchen closes at five, the blackout takes the night; the mod off is DFU\'s chain', () => {
-  _resetForTests(); setPref('survival', true);
+  _resetForTests(); setPref('survival', 'hard');   // SURV-TIERS: the blackout below is Hard's (Casual's barkeep stops pouring - survtiers.test.js)
   const mk = ({ now = 1440 * 10 + 12 * 60, gold = 100, climate = 232, quality = 15 } = {}) => {
     const entity = { name: 'Mac', goldPieces: gold, health: 20, maxHealth: 40, stats: { endurance: 50 }, rentedRooms: [], items: [], activeEffects: [], lastTimePlayerAteOrDrankAtTavern: 0, survival: { ...newSurvival(now), lastAte: now - 600 } };   // ten hours since a meal
     const passed = [];
@@ -162,7 +162,7 @@ test('SURV5: the tavern window - the survival menu in the one picker: a meal cha
   assert.equal(out[0].rows[0].text, TAVERN_MENU_TEXT.blackout);
   assert.deepEqual(b.passed, [DRINK_MINUTES, 7 * 60 - DRINK_MINUTES], 'the night passes to six');
   assert.equal(b.entity.survival.drunk, 12); assert.equal(b.entity.survival.stiffUntil, b.now + 7 * 60 + STIFF_HOURS * 60, 'a rough morning');
-  setPref('survival', false);
+  setPref('survival', 'off');
   const off = mk();
   off.w._food();
   assert.equal(off.w.flow.top.picker.length, 11, 'DFU\'s eleven-line menu with the mod off');

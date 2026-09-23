@@ -1950,7 +1950,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (let l = 0; l < n; l++) {
     const hit = intermittentEnemySpawn({
       gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
-      roughRest: playerEntity.restKind === 'rough',   // SURV4: the bare floor asks twice; a fire on it, once
+      restAsks: playerEntity.restAsks,   // SURV4 + SURV-TIERS: priced at the open (scenes/shared.js) - the bare floor asks twice in Hard; a fire on it, or any Casual floor, once
       enemyAlertActive: !!playerEntity.enemyAlertActive,
       dungeonType: dfLocation.mapTableData.dungeonType,
       playerLevel: playerEntity.level,

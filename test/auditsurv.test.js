@@ -144,7 +144,7 @@ test('AUDIT SURV A/B: the minute marker - a span run under a rest is not run aga
   clearSurvivalMods(p);
   assert.equal(p.activeEffects.some((a) => a.kind === 'survival'), false);
   applySurvivalMods(p, { strength: -12 });
-  setPref('survival', false);
+  setPref('survival', 'off');
   setWorldMinutes(3 * 1440);
   createPlayerTicker(p, { say: () => {}, isInside: () => false, survivalEnv: () => NOON }).advance(10);
   assert.equal(p.activeEffects.some((a) => a.kind === 'survival'), false, 'the tick with no feed drops the drains the mod left');
@@ -153,6 +153,7 @@ test('AUDIT SURV A/B: the minute marker - a span run under a rest is not run aga
 
 test('AUDIT SURV B/C: the rest gate - a host that does not own the mode answers nothing, a torn-down host leaves the seam, the dungeon unregisters its pair and the interior reader is the interior\'s', () => {
   clearPreventRestConditions();
+  _resetForTests(); setPref('survival', 'hard');   // SURV-TIERS: the gate is Hard's
   const p = player(); p.survival = newSurvival(0); p.survival.felt = -100;
   let env = null;
   const pair = installSurvivalGate(registerPreventRestCondition, () => p, () => env);
@@ -166,7 +167,7 @@ test('AUDIT SURV B/C: the rest gate - a host that does not own the mode answers 
   assert.match(dc, /uninstallSurvivalGate\(_survivalGate, unregisterPreventRestCondition\);/, 'the teardown takes the pair off the seam');
   assert.match(modes, /survivalEnv: \(\) => \(mode === 'interior' && host\.survivalEnv \? \{ \.\.\.host\.survivalEnv\(\), insideBuilding: true/, 'the interior reader answers in the interior alone');
   assert.match(rest, /const e = readEnv\?\.\(\);\n\s+if \(!e \|\| !enabled\(\)\) return null;/, 'the gate reads null as silence');
-  clearPreventRestConditions();
+  clearPreventRestConditions(); _resetForTests();
 });
 
 test('AUDIT SURV C: the hunt window - dropped from under, it closes without a search; Escape abandons the busy page; the result page is a click-anywhere box; the last dot is drawn; the beast stands only after a search', () => {
@@ -307,7 +308,7 @@ test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carrie
   assert.equal(pool.camps.length, 2, 'a second restore of the same records stands no twins');
   pool.restore([{ id: 'me:3', kind: 'fire', pos: [9, 0, 1], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }]);
   assert.equal(pool.camps.length, 3, 'and a new record joins the standing ones');
-  _resetForTests(); setPref('survival', false);
+  _resetForTests(); setPref('survival', 'off');
   pool.restore([{ id: 'me:4', kind: 'fire', pos: [9, 0, 9], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }]);
   assert.equal(pool.camps.length, 3, 'the mod off: nothing stands');
   _resetForTests();
@@ -329,7 +330,7 @@ test('AUDIT SURV D: the save carries the record - the markers and the cooldown r
   assignStartingGear(born, { classIndex: 0, rolls: () => 0.5 });
   assert.ok(born.items.some((i) => isSurvivalItem(i) && i.templateIndex === TEMPLATE.Waterskin), 'a waterskin in the chargen kit');
   assert.ok(born.items.some((i) => i.templateIndex === TEMPLATE.Rations) && born.items.some((i) => i.templateIndex === TEMPLATE.Campfire), 'rations and a fire kit');
-  setPref('survival', false);
+  setPref('survival', 'off');
   const bare = { items: [], gender: 'male', stats: { ...STATS }, career: {}, activeEffects: [] };
   assignStartingGear(bare, { classIndex: 0, rolls: () => 0.5 });
   assert.equal(bare.items.some((i) => isSurvivalItem(i)), false, 'the mod off: DFU\'s kit alone');

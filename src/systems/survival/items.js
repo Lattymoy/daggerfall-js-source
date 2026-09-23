@@ -145,7 +145,7 @@ export const SURVIVAL_USE_TEXT = Object.freeze({
  * placeables ('pitchCamp', 'placeFire') hands the item to the host,
  * which owns the ground.
  */
-export function useSurvivalItem(item, collection, { entity = null, now = 0, rolls = Math.random, currentDay = 0, onContract = null, inflict = null } = {}) {
+export function useSurvivalItem(item, collection, { entity = null, now = 0, rolls = Math.random, currentDay = 0, onContract = null, inflict = null, rules = undefined } = {}) {
   if (!isSurvivalItem(item)) return null;
   const list = Array.isArray(collection) ? collection : null;
   const takeOne = () => {
@@ -156,7 +156,7 @@ export function useSurvivalItem(item, collection, { entity = null, now = 0, roll
   if (isFood(item)) {
     const s = entity ? survivalOf(entity, now) : { lastAte: now - 10000, thirst: 0, notes: {} };
     const luck = entity?.stats?.luck ?? 50;
-    const r = eatLaw(item, { lastAte: s.lastAte, now, luck, rolls });
+    const r = eatLaw(item, { lastAte: s.lastAte, now, luck, rolls, rules });   // SURV-TIERS: the tier's sickness (Hard's when none)
     const name = foodName(item);
     if (!r.ok) return { kind: 'notEaten', text: r.reason === 'putrid' ? SURVIVAL_USE_TEXT.putrid(name) : r.reason === 'not hungry' ? SURVIVAL_USE_TEXT.notHungry(name) : 'Nothing happens.' };
     s.lastAte = r.lastAte;

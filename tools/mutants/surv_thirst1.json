@@ -2,8 +2,8 @@
   {
     "name": "THIRST1-the-heat-gate-comes-back",
     "file": "src/systems/survival/needs.js",
-    "old": "    if (s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {",
-    "new": "    if (s.thirst >= NEED.THIRST_HARM && temp.felt > NEED.EXPOSURE_AT && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {",
+    "old": "    if (rules.health && s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {",
+    "new": "    if (rules.health && s.thirst >= NEED.THIRST_HARM && temp.felt > NEED.EXPOSURE_AT && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {",
     "tests": [
       "test/surv1_model.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "THIRST1-every-minute-instead-of-the-harm-tick",
     "file": "src/systems/survival/needs.js",
-    "old": "    if (s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {",
-    "new": "    if (s.thirst >= NEED.THIRST_HARM && !sleeping && !resting) {",
+    "old": "    if (rules.health && s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {",
+    "new": "    if (rules.health && s.thirst >= NEED.THIRST_HARM && !sleeping && !resting) {",
     "tests": [
       "test/surv1_model.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "THIRST1-it-kills-you-in-your-sleep",
     "file": "src/systems/survival/needs.js",
-    "old": "    if (s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {",
-    "new": "    if (s.thirst >= NEED.THIRST_HARM && now % HARM_EVERY_MINUTES === 0) {",
+    "old": "    if (rules.health && s.thirst >= NEED.THIRST_HARM && !sleeping && !resting && now % HARM_EVERY_MINUTES === 0) {",
+    "new": "    if (rules.health && s.thirst >= NEED.THIRST_HARM && now % HARM_EVERY_MINUTES === 0) {",
     "tests": [
       "test/surv1_model.test.js"
     ]

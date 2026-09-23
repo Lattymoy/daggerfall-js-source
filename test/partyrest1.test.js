@@ -331,7 +331,7 @@ test('REST-VITALS1 confirmed by code, not just by test: a follower\'s mirror hea
   const sh = rd('src/scenes/shared.js');
   assert.match(sh, /tickVitals: \(\) => \{[\s\S]{0,900}?return healed;\s*\n\s*\},\s*\n\s*fullyHealed: \(\) => restFullyHealed\(entity\),/,
     'both close over THIS createRestDeps call\'s own `entity` param - always the caller\'s own playerEntity, never anyone else\'s');
-  assert.match(sh, /restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\), _roughCarry\)/,
+  assert.match(sh, /restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\), _roughCarry, _rules\)/,
     'PARTY-REST10: the per-session rough-rest carry rides along on every call - the same entity\'s own banked remainder, never a fresh/shared one');
   const w = rd('src/scenes/world.js');
   const mirrorDeps = w.slice(w.indexOf('const partyRestMirrorDeps = (restKind) => {'), w.indexOf('/** PARTY-REST1 (2026-09-20'));

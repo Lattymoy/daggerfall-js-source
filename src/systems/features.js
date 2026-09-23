@@ -879,8 +879,9 @@ export const FEATURES = Object.freeze([
     group: 'character',
     title: 'Climates & Calories by Ralzar',   // AUDIT SURV E: the author's name, as every mod row carries it
     note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
-      + 'campfire or a bed. Off is the classic game, with no needs at all.',
-    effect: 'Takes effect at once, online too.',
+      + 'campfire or a bed. Casual costs only stamina, never below half; Hard costs attributes and health and brings '
+      + 'sickness. Off is the classic game.',
+    effect: 'Takes effect at once, online too - each player picks their own.',
     kinds: Object.freeze(['mod', 'enhanced', 'classic']),   // AUDIT SURV E: a mod row, under the MOD AUTHORED filter
     // MODS-ONLINE-3 (2026-09-22, Mac): THIS IS A MOD ROW AND IT IS THE
     // PLAYER'S. The lane forced it because the system is the PORT's code
@@ -901,7 +902,19 @@ export const FEATURES = Object.freeze([
     // Unleveled Loot, which is the player's: whoever swings rolls what
     // falls. A room where one player's kills carry meat and another's do
     // not is two players playing their own game, not two worlds.
-    control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: 'player' }),
+    //
+    // SURV-TIERS (2026-09-23, Mac: "Off, Casual, Hard" - Casual on by
+    // default, "but still let it be able to be turned off for online"):
+    // THREE TIERS ON THE ONE KEY, and the same reading holds for each -
+    // a tier decides only what MY body pays (survival/difficulty.js), so
+    // every tier, Off included, stays the player's online. The ids are
+    // difficulty.js SURVIVAL_TIER_IDS and the default its SURVIVAL_DEFAULT
+    // (test/survtiers.test.js holds the row to them, as the Gore row is
+    // held to GORE_TIERS).
+    control: Object.freeze({
+      store: 'prefs', key: 'survival', initial: 'casual', online: 'player',
+      tiers: Object.freeze([['off', 'Off'], ['casual', 'Casual'], ['hard', 'Hard']]),
+    }),
   }),
 ]);
 
