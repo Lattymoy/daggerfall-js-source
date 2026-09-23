@@ -51,7 +51,7 @@ export class StaticBatchBuilder {
    * @param {(archive:number, record:number) => string} resolveKey the pixel's texture remap, as drawMesh applies it
    * @param {?Float32Array} [normalMatrix] WOD2: the matrix the NORMALS take when `local` scales
    *   non-uniformly - its upper 3x3 the inverse transpose of local's (World of Daggerfall stands
-   *   952 rocks scaled unevenly, which Unity lights through the inverse transpose). Absent,
+   *   952 models scaled unevenly, most of them rocks, which Unity lights through the inverse transpose). Absent,
    *   the normals take `local` itself, exact for every rotation-and-translation block model.
    */
   add(cpu, local, resolveKey, normalMatrix = null) {

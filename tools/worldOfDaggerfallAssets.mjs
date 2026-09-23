@@ -11,7 +11,7 @@
 //     LocationPrefab/ and 2,413 instance lists in 44 region folders.
 //
 // The prefabs are copied byte for byte. The instance lists are not
-// carried as XML (63 MB); each region folder becomes ONE pack of the
+// carried as XML (61.0 MB); each region folder becomes ONE pack of the
 // ported reader's output (src/world/wodLocationPack.js explains the
 // layout and why it is a cache of the author's files rather than a
 // re-authoring of them), and locations.json records every source file
@@ -45,13 +45,14 @@ export const WOD_BUNDLE_ASSETS = Object.freeze({
 
 const sha256 = (b) => createHash('sha256').update(b).digest('hex');
 
-/** The bundle's text assets as { name, path, body } - pure. */
+/** The bundle's text assets as { name, path, body } - pure. `body` is the TextAsset's own BYTES (AUDIT BRANCH
+ *  (WoD) n: the decoded text drops a UTF-8 byte-order mark, so a file that carried one was not written byte for byte). */
 export function readWorldOfDaggerfallBundle(bytes) {
   const bundle = readUnityBundle(bytes);
   return bundle.textAssets.map((t) => ({
     name: t.name,
     path: WOD_BUNDLE_ASSETS[t.name] ?? null,
-    body: typeof t.text === 'string' ? t.text : Buffer.from(t.bytes ?? []).toString('utf8'),
+    body: t.bytes ? Buffer.from(t.bytes) : Buffer.from(t.text ?? '', 'utf8'),
   }));
 }
 
@@ -88,9 +89,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const dfmod = readFileSync(`${root}/Mods/world_of_daggerfall.dfmod`);
   console.log(`world_of_daggerfall.dfmod  ${dfmod.length} bytes  ${sha256(dfmod)}`);
   for (const a of readWorldOfDaggerfallBundle(dfmod)) {
-    if (!a.path) { console.log(`  (unmapped) ${a.name}  ${a.body.length} chars  ${sha256(a.body)}`); continue; }
+    if (!a.path) { console.log(`  (unmapped) ${a.name}  ${a.body.length} bytes  ${sha256(a.body)}`); continue; }
     write(a.path, a.body);
-    console.log(`  ${a.path}  ${a.body.length} chars  ${sha256(a.body)}`);
+    console.log(`  ${a.path}  ${a.body.length} bytes  ${sha256(a.body)}`);
   }
 
   // 2. The prefabs, byte for byte - and read once through the ported

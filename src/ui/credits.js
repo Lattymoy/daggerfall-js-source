@@ -160,7 +160,7 @@ export const CREDITS = Object.freeze({
       title: 'World of Daggerfall',
       version: '2.0',
       author: 'Kamer',
-      what: 'The wilderness: his 65 layouts - bandit camps and forts, ruins, shrines, mountains and rock fields - stood at 227,938 places across the Iliac Bay, on ground levelled under each as his loader levels it, with the bandits, bears, warriors and treasure they hold, and the camp he pitched outside Privateer’s Hold. Ported 1:1 from the source his own bundle ships.',
+      what: 'The wilderness: his 65 layouts - bandit camps and forts, ruins, shrines, mountains and rock fields - named at 227,938 places across the Iliac Bay and stood where his loader stands them, one to a map pixel, on ground levelled under each as his loader levels it, with the bandits, bears, warriors and treasure they hold, and the camp he pitched outside Privateer’s Hold. Ported 1:1 from the source his own bundle ships.',
       terms: 'Vendored with the author’s permission, confirmed by Mac (2026-09-23); see vendor/world-of-daggerfall/README.md.',
       contact: 'DFU forums',
       vendor: Object.freeze(['world-of-daggerfall']),

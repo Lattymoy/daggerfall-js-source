@@ -237,7 +237,7 @@ import { buildingDataForDoor, locationBuildings, BUILDING_KEY_0 } from '../syste
 import { hitSoundFor, swingSoundFor, ENEMY_HIT_VOLUME, PLAYER_HIT_VOLUME } from '../systems/soundClips.js';   // AUDIT 58: DFU's two hit volumes
 import { isInvisible, entityIsParalyzed } from '../systems/effects.js';   // AUDIT 39: the S19 gate is host-agnostic in DFU
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD } from '../systems/soundClips.js';
-import { StreamingWorldState, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio
+import { StreamingWorldState, TerrainSlots, worldCoordToMapPixel, locationWorldRect, isInLocationRect, mapPixelToWorldCoords, SCENE_MAP_RATIO } from '../world/streamingWorld.js';   // HCC: StreamingWorld.SceneMapRatio; AUDIT BRANCH (WoD) L1-3: DFU's terrain array
 import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6: the mod's HUD label, both skins
 import { createHorseCartPool } from './horseCartPool.js';
 import { createPeerRiders } from '../net/peerRiders.js';   // RIDE: another player in the saddle   // HCC: Horse Cart and Cargo's presentation - the wagon's five pieces, the horse's eight views, the peers' teams
@@ -1046,12 +1046,66 @@ export async function bootWorld(canvas, renderer, params, status) {
   // where the reference unloads nothing - a season's re-skin, a road
   // repaint (destroyPixel's collectLoose: false) - so what the mod's
   // components hold rides across: each marker's state, keyed by where it
-  // stands, and the Hold's roll with its foes. A real unload drops it.
-  const wodCarry = new Map();   // pixel key -> { spawners: Map(centre -> WodSpawner[]), hold }
+  // stands, and the Hold's roll with its foes.
+  // AUDIT BRANCH (WoD) L1-3: AN UNLOAD IS A POOL. DFU does not destroy a
+  // terrain that leaves range: it deactivates it, children and all, and
+  // hands its slot to a new tile only when one needs it (TerrainSlots,
+  // world/streamingWorld.js), so one step back finds the site as it was
+  // left - spent markers spent, the pile and the captive standing. The
+  // site's state rides the carry for exactly as long as `wodSlots` keeps
+  // the pixel's slot; the Hold does not (its block is the LOCATION's, a
+  // loose object CollectLooseObjects destroys at the same crossing).
+  // `life` is the terrain's identity across both: a pile whose art lands
+  // late finds the pixel that stood it, built or carried (m1).
+  // AUDIT BRANCH (WoD) m4: a build ADOPTS its carry at publish, in the
+  // same synchronous run as built.set, so a sweep that cleared it while
+  // the build was in flight is heard.
+  const wodCarry = new Map();   // pixel key -> { spawners: Map(centre -> [{spawner, flat}]), hold, piles, life }
+  const wodSlots = new TerrainSlots();   // AUDIT BRANCH (WoD) L1-3
+  const _wodSiteWas = new Set();   // AUDIT BRANCH (WoD) m2: pixels torn down for a rebuild while a site levelled them
   const _wodT = [0, 0, 0];
   const _DOWN = [0, -1, 0];
+  /** L1-3: the pixel's site, as the pooled terrain keeps it. */
+  function carryWodSite(p, key, { hold = null, piles = [] } = {}) {
+    const spawners = new Map();
+    for (const w of p.wodSpawners ?? []) { const k = w.centre.join(','); if (!spawners.has(k)) spawners.set(k, []); spawners.get(k).push({ spawner: w.spawner, flat: w.flat ?? null }); }
+    wodCarry.set(key, { spawners, hold, piles, life: p.wodLife });
+  }
+  /** m1/L1-3: a WoD pile, pixel-local, stood on its pixel's live build - or kept by its carry while the terrain is
+   *  pooled or rebuilding; a terrain that is gone takes it with it. */
+  function standWodPile(key, life, pile) {
+    const b = built.get(key);
+    if (b?.wodLife === life) {
+      const t = state.pixelTranslation(b.px, b.py, _wodT);
+      droppedLoot.seedPile(pile.items, [pile.local[0] + t[0], pile.local[1] + t[1], pile.local[2] + t[2]], { archive: pile.archive, record: pile.record }, null, key, { unsaved: true });   // WOD5: LoadID 0 - never saved
+      return;
+    }
+    const c = wodCarry.get(key);
+    if (c?.life === life) c.piles.push(pile);
+  }
+  /** m4: the carry, adopted into a build about to publish - markers by where they stand, the Hold, the piles. */
+  function adoptWodCarry(key, wodSpawners, privateersHold) {
+    const carried = wodCarry.get(key) ?? null;
+    wodCarry.delete(key);
+    if (!carried) return {};
+    for (const w of wodSpawners ?? []) {
+      const kept = carried.spawners.get(w.centre.join(','))?.shift();   // WOD5: the marker, and the captive it stood
+      if (!kept) continue;
+      w.spawner = kept.spawner;
+      w.flat = kept.flat;
+      w.restand = !!kept.flat;
+    }
+    if (privateersHold && carried.hold) privateersHold.state = carried.hold;
+    return { life: carried.life, piles: carried.piles };
+  }
   const tickWodSpawners = () => {
-    if (!wod) return;
+    // AUDIT BRANCH (WoD) m3: no marker meets its Start while an arrival is
+    // under way - the player still stands where it left, in a frame the
+    // sweep has just re-anchored. The season's straightening latch is up
+    // from an arrival's first statement until its destination has built
+    // (a `finally`, so a throw drops it too), and nothing is awaited
+    // between that and the player standing; a load or a recall lands it last
+    if (!wod || _seasonStraightening || _loading || _recalling) return;
     const standing = walkMode && playerSpawned;
     const feet = standing ? player.pos : cam.pos;
     const cx = feet[0], cy = feet[1] + (standing ? player.height / 2 : 0), cz = feet[2];
@@ -1085,10 +1139,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       const items = generateLootItems(lootKey, { level: playerEntity.level, gender: playerEntity.gender });
       addPileLootExtras(items, lootKey);
       rollLootRarity(items, pileSource(dungeonRarityTier(WOD_LOOT_LOCATION_INDEX)), { luck: liveStat(playerEntity, 'luck') });   // LR1: every list a host mints, at its source - GenerateLoot's dungeon type
+      // AUDIT BRANCH (WoD) m1: PIXEL-LOCAL until the art lands. The world
+      // frame moves under a recentre, and a season or road rebuild swaps
+      // the build object while the terrain lives on - the pile was left
+      // 819.2 off after the one, and dropped after the other.
+      const t0 = state.pixelTranslation(p.px, p.py, [0, 0, 0]);
+      const local = [x - t0[0], centreY - t0[1], z - t0[2]];
+      const life = p.wodLife;
       getTexture(216).then((t) => {
-        if (built.get(key) !== p) return;   // the pixel went while the art loaded, and its terrain's children with it
         const h = act.record < t.recordCount ? billboardSize(t, act.record).h : 0;
-        droppedLoot.seedPile(items, [x, centreY - h / 2, z], { archive: 216, record: act.record }, null, key, { unsaved: true });   // WOD5: LoadID 0 - never saved
+        standWodPile(key, life, { items, local: [local[0], local[1] - h / 2, local[2]], archive: 216, record: act.record });
       }).catch(() => {});
       return;
     }
@@ -1309,17 +1369,24 @@ export async function bootWorld(canvas, renderer, params, status) {
     // lands, and the first valid instance naming this pixel takes it.
     let wodPicks = null;
     if (wod && await wodOpened) {
-      const here = state.current ?? { x: px, y: py };
-      wod.noteRegion(maps.getRegionIndexAt(here.x, here.y));
-      await wod.settle();
-      const picks = wod.picksFor({
-        mapPixelX: px, mapPixelY: py, hasLocation: !!dfLocation,
-        // TerrainHelper.GetMapPixelData fills mapRegionIndex from the
-        // location alone: -1 on a pixel without one.
-        mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,
-        worldHeight: woods.getHeightMapValue(px, py),
-      }, wodPathsPoint);
-      if (picks.length) wodPicks = picks;
+      // AUDIT BRANCH (WoD) M2: the mod's decision can cost this pixel its site, never the pixel - a throw out of the
+      // loader failed the whole build, terrain and all, on every pixel after it
+      try {
+        const here = state.current ?? { x: px, y: py };
+        wod.noteRegion(maps.getRegionIndexAt(here.x, here.y));
+        await wod.settle();
+        const picks = wod.picksFor({
+          mapPixelX: px, mapPixelY: py, hasLocation: !!dfLocation,
+          // TerrainHelper.GetMapPixelData fills mapRegionIndex from the
+          // location alone: -1 on a pixel without one.
+          mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,
+          worldHeight: woods.getHeightMapValue(px, py),
+        }, wodPathsPoint);
+        if (picks.length) wodPicks = picks;
+      } catch (e) {
+        console.warn(`[wod] pixel ${key}: the loader failed here, and the pixel stands without its site: ${e?.message ?? e}`);
+        wodPicks = null;
+      }
     }
     const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
     const climateBase = climate.climateType;
@@ -1726,8 +1793,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pixelWodLights = [];
     let wodSite = null;
     let wodSpawners = null;
-    const carried = wodCarry.get(key) ?? null;   // WOD3/WOD4: what a rebuild the reference never makes keeps
-    wodCarry.delete(key);
     if (wodPicks && wodAverages) {
       const place = wod.placements(wodPicks, wodAverages);
       if (place.stopped) console.warn(`[wod] pixel ${key}: a negative model name stopped the loader here, as uint.Parse throws in the C#`);
@@ -1774,8 +1839,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           const t = await getTexture(s.archive);
           const h = s.record < t.recordCount ? billboardSize(t, s.record).h : 0;
           const centre = [s.base[0], s.base[1] + (h * s.scaleY) / 2, s.base[2]];
-          const kept = carried?.spawners.get(centre.join(','))?.shift();   // WOD5: the marker, and the captive it stood
-          wodSpawners.push({ spawner: kept?.spawner ?? new WodSpawner(s), centre, flat: kept?.flat ?? null, restand: !!kept?.flat });
+          wodSpawners.push({ spawner: new WodSpawner(s), centre, flat: null, restand: false });   // a carried one replaces it at publish (m4)
         }
       }
       const site = [...wodPicks].reverse().find((p) => p.flatten);
@@ -1821,7 +1885,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         }
         for (const l of holdFireLights()) pixelWodLights.push({ x: origin[12] + l.pos[0], y: origin[13] + l.pos[1], z: origin[14] + l.pos[2], range: l.range, color: l.color });
       }
-      privateersHold = { origins: holdBlocks.map((o) => [o[12], o[13], o[14]]), state: carried?.hold ?? { rolled: false, foes: [], gone: false } };
+      privateersHold = { origins: holdBlocks.map((o) => [o[12], o[13], o[14]]), state: { rolled: false, foes: [], gone: false } };   // a carried roll replaces it at publish (m4)
     }
 
     // SIB1: DaggerfallTerrain.OnInstantiateTerrain - ApplyCurrentSeason
@@ -1912,6 +1976,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // location rects when the terrain under the player LANDS, because
     // OnMapPixelChanged may have fired before it was built. The record
     // below is what locationTileRect reads, so this runs after it lands.
+    // AUDIT BRANCH (WoD) m4: the carry is adopted HERE, with nothing
+    // awaited between it and built.set - a sweep during the build has
+    // cleared it, so a stale roll never stands in the new world.
+    const wodKept = adoptWodCarry(key, wodSpawners, privateersHold);
+    const wodLife = wodKept.life ?? {};   // L1-3: this terrain's identity - kept across a rebuild or a pool, new on a promote
     built.set(key, {
       staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
       // AUDIT-TO1 B2: DaggerfallTerrain.MapData.locationRect - the tile
@@ -1937,11 +2006,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       wodSite,     // WOD2: the levelled rect in tile space (grass keeps off it), null on a pixel with no site
       wodSpawners, // WOD2: LoadObject's spawn markers, for WOD3
       privateersHold,   // WOD4: the camp's block origins and its Start's state, null off the Hold
+      wodLife,     // AUDIT BRANCH (WoD) L1-3/m1: the terrain's identity, which a late pile and the carry name
 
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
+    for (const pile of wodKept.piles ?? []) standWodPile(key, wodLife, pile);   // AUDIT BRANCH (WoD) L1-3: the pooled terrain's piles, where they lay
     // GRASS-STALE1 (2026-09-19, Discord: "grass is flying and not on the
     // ground" around graveyards and other POIs): this pixel's own
     // samples may have just been flattened toward its location's avgY
@@ -1953,7 +2024,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the blend never reaches past the pixel that carries the location -
     // so the next grass update() re-reads `keep`/`ground` fresh here and
     // only here.
-    if ((dfLocation || wodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way
+    const hadWodSite = _wodSiteWas.delete(key);   // AUDIT BRANCH (WoD) m2: a rebuild that lost its site moved the ground back
+    if ((dfLocation || wodSite || hadWodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way
       const t = state.pixelTranslation(px, py);
       labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
     }
@@ -2170,6 +2242,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (let i = buildingDoors.length - 1; i >= 0; i--) {
       if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }   // WORLD-HOVER: ...and leaving
     }
+    // WOD3/WOD4: an unload takes the Hold's foes with the block; a
+    // rebuild the reference never makes carries the markers and the Hold.
+    // AUDIT BRANCH (WoD) L1-3: an unload POOLS the site - its markers, the
+    // captive it stood and its piles (lifted out of the pool of piles, as
+    // the inactive terrain's children are out of the world) - for as long
+    // as DFU's array keeps the slot; the next placement that takes the
+    // slot drops it (the crossing's step, below).
+    if (collectLoose) {
+      if (p.wodSpawners && wodSlots.has(key)) {
+        const t = state.pixelTranslation(px, py, _wodT);
+        const piles = droppedLoot.takePixel(key, (pile) => pile.unsaved).map((pile) => ({ items: pile.items, local: [pile.pos[0] - t[0], pile.pos[1] - t[1], pile.pos[2] - t[2]], archive: pile.archive, record: pile.record }));
+        carryWodSite(p, key, { piles });
+      }
+    } else {
+      if (p.wodSite) _wodSiteWas.add(key);   // m2
+      if (p.wodSpawners || p.privateersHold) carryWodSite(p, key, { hold: p.privateersHold?.state ?? null });
+    }
     // P2-slice (items-2): a loose pile dies WITH its pixel - the
     // reference's mid-session collection sweep (CollectLooseObjects);
     // only the F9 envelope brings one back.
@@ -2186,15 +2275,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this function, which is exactly ClearStreamingWorld's
     // CollectLooseObjects(true).
     if (collectLoose) { cityGuards.collectPixel(key); exteriorFoes.collectPixel(key); }
-    // WOD3/WOD4: an unload takes the Hold's foes with the block; a
-    // rebuild the reference never makes carries the markers and the Hold.
-    if (collectLoose) {
-      if (p.privateersHold) { p.privateersHold.state.gone = true; for (const f of p.privateersHold.state.foes) exteriorFoes.removeFoe(f); }
-    } else if (p.wodSpawners || p.privateersHold) {
-      const spawners = new Map();
-      for (const w of p.wodSpawners ?? []) { const k = w.centre.join(','); if (!spawners.has(k)) spawners.set(k, []); spawners.get(k).push({ spawner: w.spawner, flat: w.flat ?? null }); }
-      wodCarry.set(key, { spawners, hold: p.privateersHold?.state ?? null });
-    }
+    if (collectLoose && p.privateersHold) { p.privateersHold.state.gone = true; for (const f of p.privateersHold.state.foes) exteriorFoes.removeFoe(f); }   // WOD4: the Hold's foes go with the block
     built.delete(key);
   }
 
@@ -2208,6 +2289,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // live world mid-session.
   const state = new StreamingWorldState(fogDistance);   // LV1: the one read above - DFU's setting on the 1:1 lane, the Enhanced pane's Land view distance on the enhanced
   const queue = state.init(startPixel.x, startPixel.y);
+  if (wod) wodSlots.step(startPixel.x, startPixel.y, state.terrainDistance, StreamingWorldState.onMap);   // AUDIT BRANCH (WoD) L1-3: the first UpdateWorld
   let building = false;
 
   // A1: THE SEASON TURNS UNDER A STANDING WORLD.
@@ -5062,6 +5144,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // that has detected you, so nothing else was going to.
     exteriorFoes.clearLive();
     wodCarry.clear();   // WOD3/WOD4: a sweep is an unload - nothing carries past it
+    wodSlots.clear();   // AUDIT BRANCH (WoD) L1-3: ClearStreamingWorld - every slot pooled out of range, so the teardown below pools nothing
     cityGuards.clearLive();
     lockOn.unlock();   // AUDIT 62 F16: destroy()/removeFoe empties the pool WITHOUT flagging `dead`, so lockOn's death break never fires on the orphan the lock still holds
     magic.clearMissiles();
@@ -5086,6 +5169,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     queue.length = 0;
     queue.push(...state.init(px, py));
+    if (wod) wodSlots.step(px, py, state.terrainDistance, StreamingWorldState.onMap);   // AUDIT BRANCH (WoD) L1-3: InitWorld's first UpdateWorld
     // AUDIT-WH P9: THE CACHE'S INVALIDATION, STATED. `state.init`
     // re-anchors the floating origin by up to 32,768 units and returns
     // no offset, so the recenter bump at the frame's end cannot see
@@ -12661,6 +12745,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // would otherwise go unheard, and the list's order with it. After
       // Awake, so region 17 stays first.
       if (wod) { const region = maps.getRegionIndexAt(r.current.x, r.current.y); wodOpened.then((ok) => { if (ok) wod.noteRegion(region); }); }
+      // AUDIT BRANCH (WoD) L1-3: DFU's UpdateWorld then CollectTerrains - a
+      // pooled site whose slot a new tile takes is gone for good; the ones
+      // leaving range now are pooled by the teardown below
+      if (wod) for (const k of wodSlots.step(r.current.x, r.current.y, state.terrainDistance, StreamingWorldState.onMap).recycled) wodCarry.delete(k);
       for (const u of r.unload) {
         destroyPixel(u.px, u.py);
         state.release(u.px, u.py);
@@ -12859,11 +12947,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
     // placed under the current compensation, nearest 16 to the camera.
     // WOD2: the mod's lights burn at every hour and each carries its own
-    // colour, so a frame with one in range takes the per-light colour
+    // colour, so a frame while any built pixel holds one takes the per-light colour
     // channel: the lanterns and the player's own lights keep the shared
-    // colour they always had, the mod's take theirs. With none in range
+    // colour they always had, the mod's take theirs. With none built
     // both branches below make the calls they always made.
-    const wodLit = _wodLitCount();
+    const wodLit = wod ? _wodLitCount() : 0;   // AUDIT BRANCH (WoD) n: with the mod off, no walk of the built pixels at all
     if (lightsOnAt(minute)) {
       worldLightAnimator.tick(dt);
       // PERF-LIGHTS (2026-09-19): THE LANTERNS ARE A POOL, NOT A FRESH

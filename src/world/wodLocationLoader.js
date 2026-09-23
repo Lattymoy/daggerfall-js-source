@@ -5,7 +5,7 @@
 // the MonoBehaviour that hangs off DaggerfallTerrain.OnPromoteTerrainData
 // and decides, every time a terrain tile is promoted, which of the mod's
 // ~228,000 location instances stands on it, flattens the ground under
-// it and places the prefab's objects. Three pieces, each pure:
+// it and places the prefab's objects. Four pieces, each pure:
 //
 //   LocationSession  - the instance LIST and how it grows: region 17's
 //                      folder at Awake (:47-59), then the folder of every
@@ -49,7 +49,10 @@ export const WOD_TERRAIN_SIZE = 128;
 export const WOD_TERRAIN_PIXEL_SIZE = Math.fround(819.2);
 /** :21 - TERRAIN_SIZE_MULTI = TERRAINPIXELSIZE / TERRAIN_SIZE, a C# float. */
 export const WOD_TERRAIN_SIZE_MULTI = Math.fround(WOD_TERRAIN_PIXEL_SIZE / WOD_TERRAIN_SIZE);
-/** :15-17 - MaxTerrainHeight * StreamingWorld.TerrainScale (1539 * 1.5). */
+/** :15-17 - MaxTerrainHeight * StreamingWorld.TerrainScale: the port's terrain scale (1539 * 1.5, TerrainHelper
+ *  .defaultTerrainScale), so a site levels to the ground the port draws. AUDIT BRANCH (WoD) L1-1: DFU's game scene
+ *  sets the StreamingWorld's TerrainScale to 1.25 (DaggerfallUnityGame.unity) - 1923.75 here, the value the
+ *  author's own commented-out constant (:18) names - a port-wide difference the World-Of-Daggerfall page records. */
 export const WOD_TERRAIN_HEIGHT_MAX = Math.fround(MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE);
 /** :53 - the folder Awake loads before any region event: the title
  *  screen stands in the Daggerfall region, and PlayerGPS.Start seeds its

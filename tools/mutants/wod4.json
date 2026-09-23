@@ -146,8 +146,8 @@
   {
     "name": "the-unload-leaves-the-foes",
     "file": "src/scenes/world.js",
-    "old": "if (p.privateersHold) { p.privateersHold.state.gone = true; for (const f of p.privateersHold.state.foes) exteriorFoes.removeFoe(f); }",
-    "new": "if (p.privateersHold) { p.privateersHold.state.gone = true; }",
+    "old": "if (collectLoose && p.privateersHold) { p.privateersHold.state.gone = true; for (const f of p.privateersHold.state.foes) exteriorFoes.removeFoe(f); }",
+    "new": "if (collectLoose && p.privateersHold) { p.privateersHold.state.gone = true; }",
     "tests": [
       "test/wod4_privateershold.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "the-camp-rerolls-on-a-rebuild",
     "file": "src/scenes/world.js",
-    "old": "state: carried?.hold ?? { rolled: false, foes: [], gone: false }",
-    "new": "state: { rolled: false, foes: [], gone: false }",
+    "old": "    if (privateersHold && carried.hold) privateersHold.state = carried.hold;",
+    "new": "",
     "tests": [
       "test/wod4_privateershold.test.js"
     ]

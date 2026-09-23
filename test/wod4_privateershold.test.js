@@ -137,10 +137,12 @@ test('WOD4: the streaming host stands the camp on the block, climate and collide
 
 test('WOD4: an unload takes the camp\'s foes; a rebuild the reference never makes carries the markers and the camp; a sweep drops the carry', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /if \(collectLoose\) \{\n\s*if \(p\.privateersHold\) \{ p\.privateersHold\.state\.gone = true; for \(const f of p\.privateersHold\.state\.foes\) exteriorFoes\.removeFoe\(f\); \}\n\s*\} else if \(p\.wodSpawners \|\| p\.privateersHold\) \{/);
-  assert.match(w, /wodCarry\.set\(key, \{ spawners, hold: p\.privateersHold\?\.state \?\? null \}\);/);
+  assert.match(w, /if \(collectLoose && p\.privateersHold\) \{ p\.privateersHold\.state\.gone = true; for \(const f of p\.privateersHold\.state\.foes\) exteriorFoes\.removeFoe\(f\); \}/, 'an unload takes the camp\'s foes');
+  assert.match(w, /\} else \{\n\s*if \(p\.wodSite\) _wodSiteWas\.add\(key\);[^\n]*\n\s*if \(p\.wodSpawners \|\| p\.privateersHold\) carryWodSite\(p, key, \{ hold: p\.privateersHold\?\.state \?\? null \}\);/, 'a rebuild carries the markers and the camp');
+  assert.match(w, /wodCarry\.set\(key, \{ spawners, hold, piles, life: p\.wodLife \}\);/);
   assert.match(w, /const carried = wodCarry\.get\(key\) \?\? null;[^\n]*\n\s*wodCarry\.delete\(key\);/);
-  assert.match(w, /state: carried\?\.hold \?\? \{ rolled: false, foes: \[\], gone: false \}/);
+  assert.match(w, /state: \{ rolled: false, foes: \[\], gone: false \} \};[^\n]*\n/, 'a fresh roll...');
+  assert.match(w, /if \(privateersHold && carried\.hold\) privateersHold\.state = carried\.hold;/, '...which a carried one replaces at publish (AUDIT BRANCH (WoD) m4)');
   const tp = w.slice(w.indexOf('async function _teleportToPixel('), w.indexOf('queue.length = 0;', w.indexOf('async function _teleportToPixel(')));
   assert.match(tp, /exteriorFoes\.clearLive\(\);\n\s*wodCarry\.clear\(\);/, 'the sweep is an unload');
 });

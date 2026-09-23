@@ -176,6 +176,22 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     }
   }
 
+  /** AUDIT BRANCH (WoD) L1-3: the piles of a pixel that `keep` names, LIFTED out of the world and handed back - a
+   *  container parented to a TERRAIN goes inactive with it when DFU pools the tile, and comes back when the tile
+   *  does; the host holds what this returns for exactly that long. */
+  function takePixel(pixelKey, keep) {
+    const out = [];
+    for (let i = piles.length - 1; i >= 0; i--) {
+      const p = piles[i];
+      if (p.pixelKey !== pixelKey || !keep(p)) continue;
+      p.dead = true;   // AUDIT 24: an in-flight mount must not publish onto this
+      if (p.batch) { flatAnims.remove(p.batch); renderer.destroyBillboardBatch(p.batch); }
+      piles.splice(i, 1);
+      out.unshift({ items: p.items, pos: [...p.pos], archive: p.archive, record: p.record });
+    }
+    return out;
+  }
+
   /** P2-slice (items-2): the world-save halves. The reference
    *  serialises loose containers everywhere (LootContainerData_v1:
    *  position, icon, items); the world host stores NATIVE coordinates
@@ -364,5 +380,5 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   /** PX21c: what a pile HOLDS, by the same key lootTargets emits -
    *  read-only, for the hover plaque. */
   const contents = (key) => piles.find((p) => `droppedLoot:${p.id}` === key && !p.dead)?.items ?? null;
-  return { contents, dropPile, seedPile, restorePiles, collectPixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, _piles: piles };
+  return { contents, dropPile, seedPile, restorePiles, collectPixel, takePixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, _piles: piles };
 }

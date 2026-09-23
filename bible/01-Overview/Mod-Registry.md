@@ -4,9 +4,11 @@
 > left as it wrote them.** They were true of the fifteen rows that
 > existed on 2026-09-15 and they are the record of what putting those
 > rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 26 directories and 13 of their READMEs still carry an
+> `vendor/` holds 27 directories and 14 of their READMEs still carry an
 > unfilled permission line, each shown as `RECORD OPEN` in the table
-> (WOD1, 2026-09-23, counted them again when it added the twenty-sixth;
+> (AUDIT BRANCH (WoD), 2026-09-23, counted them again after the merge
+> brought `horse-cart-and-cargo`, the twenty-seventh; WOD1 had counted 26
+> and 13 when it added the twenty-sixth;
 > the sentence had read 19 and 11 since ORL1 and nothing checks it, so
 > re-count rather than trust it). ORL1 (2026-09-17) added the nineteenth, and the first vendored MOD
 > that is not a Daggerfall Unity one - an OpenMW Lua mod for Morrowind.
@@ -109,7 +111,7 @@ full account; this is the index to it.
   author's changelog heading and the Lua's own defaults. The archive
   names no author and states no licence, so the author cell is the Nexus
   id and the permission line is still a prompt.
-- **`world-of-daggerfall`** - the mod's 2,413 instance files (63 MB of
+- **`world-of-daggerfall`** - the mod's 2,413 instance files (61.0 MB of
   XML) are NOT carried as files. Each region folder is one pack of the
   ported reader's output, in the mod's own load order, and
   `locations.json` lists every source file with its sha256 and instance

@@ -280,7 +280,7 @@ export function validateValue(type, name) {
  * played on: NTFS returns a directory's names collated by the volume's
  * upcase table - an ordinal compare of the UPPERCASED UTF-16 names. The
  * order is load-bearing: the loader places the FIRST valid instance
- * that names a map pixel, and 51,356 pixels are named by more than one
+ * that names a map pixel, and 51,355 pixels are named by more than one
  * (a bandit camp and a rock field, say - "Bandits" sorts before "Rocks").
  * The mod's file names are all ASCII (the packer asserts it).
  */

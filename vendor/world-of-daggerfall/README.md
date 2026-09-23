@@ -47,9 +47,9 @@ Windmills of Daggerfall into this tree - confirmed by Mac 2026-09-23.**
 
 ## What is NOT here, and why
 
-- **The 2,413 instance files themselves.** They are 63 MB of XML - the
-  size of this whole vendor tree again - for 227,938 instances of eight
-  numbers and two short strings each. The packs carry exactly what the
+- **The 2,413 instance files themselves.** They are 61.0 MB of XML -
+  more than this whole vendor tree (37.5 MB) - for 227,938 instances of
+  six integers and two strings each. The packs carry exactly what the
   mod's own reader takes out of them, in the order it takes it
   (`src/world/wodLocationPack.js`), and `locations.json` names every
   file with its hash, so anyone holding the archive can run the tool

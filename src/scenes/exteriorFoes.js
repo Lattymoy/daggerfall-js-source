@@ -677,7 +677,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // (which refuses a rest with a seen foe in it) already assumes. A lone wanderer carries no campId and
         // is untouched - it is still the classic rest interruption.
         const campAsleep = f.campId != null && !!senses.playerEntity?.isResting && !isLocalPlayerTarget(ai.target);
-        const result = runTargetMachine(f, [...senses.candidates(), PLAYER_TARGET, ...peerCandidates()], pf, cdt, {
+        // AUDIT BRANCH (WoD) M1: a PLACED foe hunts no peer - it never rides, so no peer holds its puppet, and a blow at
+        // a peer lands only through the puppet the peer stands; its site is the peer's own, with its own foes
+        const result = runTargetMachine(f, [...senses.candidates(), PLAYER_TARGET, ...(f.placed ? [] : peerCandidates())], pf, cdt, {
           noTargetMode: campAsleep,   // WORLD6b-ii: the peers are MY foes' candidates; AUDIT WORLD6b-ii A5: after ME (a peer never beats me on a tie), A9: a puppet never steps here
           playerEntity: senses.playerEntity ?? null,
           playerHeight: senses.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
@@ -1552,7 +1554,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   const _now = () => (_net?.now ? _net.now() : Date.now());
   /** My foes out, and my watch behind them (WATCH1) - every one of MINE whose streamed state changed since its last
    *  frame (every one when full, so a dropped frame heals and a foe I culled is missed from the roll and so removed
-   *  at the peers). A quest's foe is the quest owner's alone (Multiplayer.md's first lock) and never rides. The record is WORLD2's: i my number for
+   *  at the peers). A quest's foe is the quest owner's alone (Multiplayer.md's first lock) and never rides; nor does a foe a mod
+   *  PLACED (AUDIT BRANCH (WoD) M1: every client stands its own copy of a World of Daggerfall site, so a placed foe that rode
+   *  stood its site TWICE at a peer - and, never culled and outside the encounter cap, eight of them took every one of a
+   *  reader's CELL_PUPPETS_MAX slots for the owner, and the owner's next real encounter never stood there). The record is WORLD2's: i my number for
    *  it, t the species, x the gender bit, f the feet in the world frame, y the yaw, h the health, d dead, a the attack
    *  count with the ranged bit low, m moving. */
   function foesFrame(full = false, force = false) {
@@ -1564,7 +1569,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // cityGuards' `basics.maleTexture`). No relay change: a record is a record to the wire and to the Room.
     const src = new Map();   // record -> its foe, for the trim below
     for (const [f, onWatch] of [...foes.map((f) => [f, false]), ...watchList().map((g) => [g, true])]) {
-      if (f.puppet || f.isQuestFoe || (f.dead && !f.corpse)) continue;   // (a removed watchman - dead, no body - rides no more, as a culled foe does)
+      if (f.puppet || f.isQuestFoe || f.placed || (f.dead && !f.corpse)) continue;   // (a removed watchman - dead, no body - rides no more, as a culled foe does; AUDIT BRANCH (WoD) M1: a placed foe never rides)
       if (f.seq == null) f.seq = _nextSeq++;   // WATCH1: a watchman is numbered the first time he rides, off the foes' own counter
       if (f.dead && f.corpse && f._diedAt == null) f._diedAt = _now();   // AUDIT WATCH1 A6: a watch body is stamped when it first rides, on this pool's own clock, so the trim below keeps the newest bodies of BOTH pools
       const w = _net.toWire(f.ai.feet);

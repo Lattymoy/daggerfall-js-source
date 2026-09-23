@@ -4,9 +4,9 @@
 // The mod reads StreamingAssets/Locations/<region>/*.txt at runtime,
 // every file of a folder the moment the player enters that region
 // (LocationLoader.cs:82-88). Those folders are 2,413 XML files and
-// 63 MB - the size of the port's whole vendor tree again - for 227,938
-// instances whose information is eight small numbers and two short
-// strings each. So the vendored tree carries one file per folder
+// 61.0 MB - more than the port's whole vendor tree - for 227,938
+// instances whose information is six integers and two strings each
+// (LocationHelper.cs:990-997). So the vendored tree carries one file per folder
 // instead: LocationHelper.LoadLocationInstance's OUTPUT (the ported
 // reader, wodLocationData.js), in the folder's load order, as columns.
 //

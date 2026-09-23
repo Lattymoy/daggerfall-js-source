@@ -1,0 +1,191 @@
+[
+  {
+    "name": "AUDIT-WOD-B1-no-coarse-for-points",
+    "file": "src/player/collider.js",
+    "old": "  if (bucket.coarse.size) {\n    const cx = Math.floor(lx / COARSE);",
+    "new": "  if (false) {\n    const cx = Math.floor(lx / COARSE);",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-B1-no-short-list-for-points",
+    "file": "src/player/collider.js",
+    "old": "  if (bucket.huge.length) NEAR.push(bucket.huge);",
+    "new": "",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-B1-rays-skip-wide",
+    "file": "src/player/collider.js",
+    "old": "      if (bucket.coarse.size || bucket.huge.length) {\n        for (const cell of wideCellsOnRay(",
+    "new": "      if (false) {\n        for (const cell of wideCellsOnRay(",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-B1-wide-ray-no-reach",
+    "file": "src/player/collider.js",
+    "old": "wideCellsOnRay(bucket, ox, oz, dir, Math.min(maxDist, best))",
+    "new": "wideCellsOnRay(bucket, ox, oz, dir, 0)",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-B1-everything-wide",
+    "file": "src/player/collider.js",
+    "old": "const FINE_CELLS_MAX = 64;",
+    "new": "const FINE_CELLS_MAX = 0;",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-B1-everything-short-list",
+    "file": "src/player/collider.js",
+    "old": "const COARSE_CELLS_MAX = 1024;",
+    "new": "const COARSE_CELLS_MAX = 0;",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-M1-placed-rides",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (f.puppet || f.isQuestFoe || f.placed || (f.dead && !f.corpse)) continue;",
+    "new": "if (f.puppet || f.isQuestFoe || (f.dead && !f.corpse)) continue;",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-M1-placed-hunts-peers",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(f.placed ? [] : peerCandidates())",
+    "new": "...peerCandidates()",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-M2-chain-uncaught",
+    "file": "src/world/worldOfDaggerfall.js",
+    "old": "      try { this.session.appendRegion(region, decodeRegionPack(b)); } catch (e) {\n        this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);\n      }",
+    "new": "      this.session.appendRegion(region, decodeRegionPack(b));",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-M2-early-region-first",
+    "file": "src/world/worldOfDaggerfall.js",
+    "old": "    if (!this._awake) { this._early.push(region); return; }",
+    "new": "",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-M2-stall-is-total-time",
+    "file": "src/world/worldOfDaggerfall.js",
+    "old": "      for (;;) {\n        poke();",
+    "new": "      for (;;) {",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-M2-one-try",
+    "file": "src/world/worldOfDaggerfall.js",
+    "old": "  for (let a = 0; a < attempts; a++) {",
+    "new": "  for (let a = 0; a < 1; a++) {",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-L1-3-collect-before-place",
+    "file": "src/world/streamingWorld.js",
+    "old": "    const out = { reactivated: [], recycled: [], pooled: [] };\n    for (let y = cy - distance; y <= cy + distance; y++) {",
+    "new": "    const out = { reactivated: [], recycled: [], pooled: [] };\n    for (const s of this.slots) { if (s.active && !inRange(s.px, s.py)) { s.active = false; out.pooled.push(`${s.px},${s.py}`); } }\n    for (let y = cy - distance; y <= cy + distance; y++) {",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-L1-3-unload-drops",
+    "file": "src/scenes/world.js",
+    "old": "      if (p.wodSpawners && wodSlots.has(key)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-L1-3-loose-piles-ride",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "      if (p.pixelKey !== pixelKey || !keep(p)) continue;",
+    "new": "      if (p.pixelKey !== pixelKey) continue;",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-L1-3-carry-not-spent",
+    "file": "src/scenes/world.js",
+    "old": "    const carried = wodCarry.get(key) ?? null;\n    wodCarry.delete(key);\n    if (!carried) return {};",
+    "new": "    const carried = wodCarry.get(key) ?? null;\n    if (!carried) return {};",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-m1-world-frame-pile",
+    "file": "src/scenes/world.js",
+    "old": "      const local = [x - t0[0], centreY - t0[1], z - t0[2]];",
+    "new": "      const local = [x - 0 * t0[0], centreY - t0[1], z - t0[2]];",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-m1-any-build-takes-it",
+    "file": "src/scenes/world.js",
+    "old": "    if (b?.wodLife === life) {",
+    "new": "    if (b) {",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-m1-pool-drops-it",
+    "file": "src/scenes/world.js",
+    "old": "    if (c?.life === life) c.piles.push(pile);",
+    "new": "",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-m3-no-arrival-gate",
+    "file": "src/scenes/world.js",
+    "old": "    if (!wod || _seasonStraightening || _loading || _recalling) return;",
+    "new": "    if (!wod) return;",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WOD-m2-site-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "      if (p.wodSite) _wodSiteWas.add(key);   // m2",
+    "new": "",
+    "tests": [
+      "test/audit_wod_branch.test.js"
+    ]
+  }
+]

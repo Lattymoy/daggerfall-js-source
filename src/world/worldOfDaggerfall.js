@@ -21,15 +21,15 @@
 // player builds depends on where that player has travelled: region 17,
 // then every region in the order entered. Two players who stand on the
 // same pixel with different travels can pick different instances on
-// the 177 pixels named from two folders, and on the border pixels of a
+// the 176 pixels named from two folders, and on the border pixels of a
 // region only one of them has entered - and this mod LEVELS THE GROUND,
 // which is exactly what the room has to agree on (onlineLane.js, the
 // roads' reason). So on an online page the list is every folder at
 // once, in one order: 17 (Awake's), then ascending. Offline it is the
 // reference's, path and all.
 //
-// A region with NO folder (18 of the 62 have none): the C#'s
-// Directory.GetFiles throws DirectoryNotFoundException out of the event
+// A region with NO folder (18 of the 62 have none; 31 is refused before
+// the read, so 17): the C#'s Directory.GetFiles throws DirectoryNotFoundException out of the event
 // handler, and because PlayerGPS only advances lastRegionIndex AFTER
 // raising the event, it throws again every frame the player stays
 // there. That storm changes nothing in this mod's own world (there is
@@ -64,21 +64,71 @@ const PREFAB_TEXT = IN_BROWSER
 
 const baseName = (p) => p.split('/').pop();
 
+/** AUDIT BRANCH (WoD) M2: how long a pack download may go without a byte before it is abandoned, and how many
+ *  times it is tried. Every build waits on the folders announced before it (settle), so a fetch that never
+ *  answered stalled the whole stream for good; a stall is now bounded, and a region that fails every attempt is
+ *  warned and skipped - the camps it would have stood are lost, the world streams on. */
+export const WOD_PACK_STALL_MS = 15000;
+export const WOD_PACK_ATTEMPTS = 3;
+
+/**
+ * One pack's bytes: each attempt aborted after `stallMs` with no byte arriving (a slow line is not a dead one),
+ * a failed attempt retried after 1 s, then 2 s.
+ * @param {string} url
+ * @param {{fetchFn?:typeof fetch, stallMs?:number, attempts?:number, sleep?:(ms:number) => Promise<void>}} [opts]
+ * @returns {Promise<Uint8Array>}
+ */
+export async function fetchPackBytes(url, { fetchFn = globalThis.fetch, stallMs = WOD_PACK_STALL_MS, attempts = WOD_PACK_ATTEMPTS, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
+  let last = null;
+  for (let a = 0; a < attempts; a++) {
+    if (a) await sleep(1000 * a);
+    const ctl = new globalThis.AbortController();
+    let timer = null;
+    const poke = () => { clearTimeout(timer); timer = setTimeout(() => ctl.abort(new Error(`no byte in ${stallMs} ms`)), stallMs); };
+    try {
+      poke();
+      const r = await fetchFn(url, { signal: ctl.signal });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const reader = r.body?.getReader?.();
+      if (!reader) return new Uint8Array(await r.arrayBuffer());
+      const parts = [];
+      let n = 0;
+      for (;;) {
+        poke();
+        const { done, value } = await reader.read();
+        if (done) break;
+        parts.push(value);
+        n += value.length;
+      }
+      const out = new Uint8Array(n);
+      let o = 0;
+      for (const part of parts) { out.set(part, o); o += part.length; }
+      return out;
+    } catch (e) {
+      last = e;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw last ?? new Error('no attempt made');
+}
+
 /** The browser's sources: a region's pack bytes (null for a folder the
- *  mod does not ship) and every prefab's text by name. */
+ *  mod does not ship) and every prefab's text by name (null for one
+ *  whose chunk did not load - AUDIT BRANCH (WoD) M2). */
 export const browserWodSources = Object.freeze({
   regions: () => Object.keys(PACK_URLS).map((p) => Number(baseName(p).replace(/\.bin$/, ''))).sort((a, b) => a - b),
   pack: async (region) => {
     const url = Object.entries(PACK_URLS).find(([p]) => baseName(p) === `${region}.bin`)?.[1];
     if (!url) return null;
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`World of Daggerfall: region ${region} pack ${r.status}`);
-    return new Uint8Array(await r.arrayBuffer());
+    try { return await fetchPackBytes(url); } catch (e) {
+      throw new Error(`World of Daggerfall: region ${region} pack: ${e?.message ?? e}`);
+    }
   },
   prefabs: async () => {
     const out = new Map();
     await Promise.all(Object.entries(PREFAB_TEXT).map(async ([p, load]) => {
-      out.set(baseName(p).replace(/\.txt$/, ''), await load());
+      out.set(baseName(p).replace(/\.txt$/, ''), await load().catch(() => null));
     }));
     return out;
   },
@@ -87,7 +137,7 @@ export const browserWodSources = Object.freeze({
 export class WodWorld {
   /**
    * @param {{regions:() => number[], pack:(r:number) => Promise<?Uint8Array>,
-   *   prefabs:() => Promise<Map<string,string>>}} sources
+   *   prefabs:() => Promise<Map<string,?string>>}} sources
    * @param {{online?:boolean, warn?:(m:string) => void}} [opts]
    */
   constructor(sources, { online = false, warn = (m) => console.warn(m) } = {}) {
@@ -101,6 +151,8 @@ export class WodWorld {
     this._announced = new Set();
     this._lastRegion = WOD_AWAKE_REGION;   // PlayerGPS.Start's seed: the title screen's region
     this._opened = null;
+    this._awake = false;   // AUDIT BRANCH (WoD) M2: Awake's folder announced - a region heard before it waits
+    this._early = [];
   }
 
   /** Awake: the prefabs, then region 17 (online: every folder). */
@@ -108,6 +160,7 @@ export class WodWorld {
     this._opened ??= (async () => {
       const texts = await this.sources.prefabs();
       for (const [name, text] of texts) {
+        if (text == null) { this.warn(`[wod] prefab ${name} did not load`); this.prefabs.set(name, null); continue; }   // AUDIT BRANCH (WoD) M2
         try { this.prefabs.set(name, loadLocationPrefab(text)); } catch (e) {
           // LoadLocationPrefab throws on a broken file; AddLocation would
           // throw with it at every pixel naming it. The shipped 65 all read.
@@ -121,6 +174,10 @@ export class WodWorld {
       } else {
         this._announce(WOD_AWAKE_REGION);
       }
+      // AUDIT BRANCH (WoD) M2: a region heard while the prefabs loaded is announced now, after Awake's - the C#'s
+      // event cannot fire before its Awake, so region 17 is first whoever asks early
+      this._awake = true;
+      for (const r of this._early.splice(0)) this._announce(r);
       await this._chain;
     })();
     return this._opened;
@@ -137,7 +194,14 @@ export class WodWorld {
     this._chain = this._chain.then(async () => {
       const b = await bytes;
       if (!b) return;
-      this.session.appendRegion(region, decodeRegionPack(b));
+      // AUDIT BRANCH (WoD) n: one decode a task - an online page's 44 packs landed back to back in one block of up
+      // to 88 ms; each is at most ~15 ms alone
+      await new Promise((r) => setTimeout(r, 0));
+      // AUDIT BRANCH (WoD) M2: a pack that will not decode is that region lost, never the chain - a throw here left
+      // `_chain` rejected for good, so every later settle() rejected and every pixel build after it failed
+      try { this.session.appendRegion(region, decodeRegionPack(b)); } catch (e) {
+        this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);
+      }
     });
   }
 
@@ -153,6 +217,7 @@ export class WodWorld {
     this._lastRegion = region;
     if (region === WOD_REFUSED_REGION) return;   // :76-80
     if (this.online) return;                     // the room's list holds every folder already
+    if (!this._awake) { this._early.push(region); return; }   // AUDIT BRANCH (WoD) M2: after Awake's folder
     this._announce(region);
   }
 
