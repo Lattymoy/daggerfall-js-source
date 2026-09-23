@@ -165,10 +165,29 @@ export function elAttenuation(d, range) {
 }
 
 /** Extended Reinhard: x (1 + x / W^2) / (1 + x). Identity-like below
- *  ~0.05, W maps to 1.0, above W clips. Per channel. */
+ *  ~0.05, W maps to 1.0, above W clips. The CURVE - one channel, or a
+ *  luminance. */
 export function elTonemap(x, white = EL_WHITE) {
   if (!(x > 0)) return 0;
   return x * (1 + x / (white * white)) / (1 + x);
+}
+/** HQ1 (2026-09-23, Mac: "make some insane improvements to our lighting system"): THE COLOUR THROUGH THE CURVE.
+ *  Per-channel Reinhard bends HUE as it compresses: a torch's warm light (r > g > b) has its red channel on the
+ *  shoulder while its blue is still on the slope, so the brighter the flame the more it went yellow-white and
+ *  then flat white, and a sunlit red wall lost its red before it lost its light. This is the luminance-preserving
+ *  blend ("Reinhard-Jodie"): the curve applied to the LUMINANCE keeps the colour's ratios (the flame stays orange
+ *  as it brightens); the curve applied PER CHANNEL is what the eye expects at the very top (light desaturates
+ *  toward white); the two are mixed by the per-channel result itself, so the dark and the mid-tones take the first
+ *  and only the highlights the second. Every law of the curve holds: 0 to 0, identity in the dark end, the white
+ *  point to display white, monotone, a grey unchanged (both terms agree on a grey). */
+export function elTonemapRGB(c, white = EL_WHITE) {
+  const r = Math.max(c[0], 0), g = Math.max(c[1], 0), b = Math.max(c[2], 0);
+  const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const tl = elTonemap(l, white);
+  const tr = elTonemap(r, white), tg = elTonemap(g, white), tb = elTonemap(b, white);
+  const k = l > 0 ? tl / l : 0;
+  const w = (t) => Math.min(Math.max(t, 0), 1);
+  return [r * k + (tr - r * k) * w(tr), g * k + (tg - g * k) * w(tg), b * k + (tb - b * k) * w(tb)];
 }
 
 /** The single-scattering integral of a point light along a view ray:
@@ -227,6 +246,16 @@ float elAttenuation(float d, float range) {
 }
 vec3 elTonemap(vec3 x) {
   return x * (1.0 + x / ${EL_WHITE}.0 / ${EL_WHITE}.0) / (1.0 + x);
+}
+// HQ1: the colour through the curve - the luminance's curve keeps the hue, the per-channel curve desaturates the
+// highlights, mixed by the per-channel result (elTonemapRGB in enhancedLighting.js, term for term)
+vec3 elTonemapRGB(vec3 c) {
+  c = max(c, vec3(0.0));
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  float tl = (l * (1.0 + l / ${EL_WHITE}.0 / ${EL_WHITE}.0) / (1.0 + l));
+  vec3 tc = elTonemap(c);
+  vec3 hue = l > 0.0 ? c * (tl / l) : vec3(0.0);
+  return mix(hue, tc, clamp(tc, 0.0, 1.0));
 }
 // the single-scattering integral (elScatter in enhancedLighting.js), for
 // one light at L (relative to the eye) along the unit ray dir to dist
@@ -381,7 +410,7 @@ vec3 elInScatter(vec3 wp) {
 // colour in linear, add the tonemapped glow, encode
 vec3 elFinish(vec3 lit, vec3 wp) {
   float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure
-  vec3 tm = elTonemap(lit * ex);
+  vec3 tm = elTonemapRGB(lit * ex);   // HQ1: the colour through the curve
   // PERF-FOG (2026-09-19): THE FOG COLOUR ARRIVES DECODED. This line read
   // elDecode(uFogColor) - three pow() calls, per fragment, on a UNIFORM.
   // The value is the same for every pixel of the frame and it was being
@@ -393,7 +422,7 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   // renderer reaches through the lane it was handed - so this needs no
   // second copy of the law, only a place to keep the answer.
   vec3 col = mix(uFogColorLin, tm, fogFactorAt(wp));
-  col += elTonemap(elInScatter(wp) * ex);
+  col += elTonemapRGB(elInScatter(wp) * ex);   // HQ1
   return elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it
 }
 `;
@@ -967,7 +996,7 @@ void main() {
   vec3 lit = elDecode(vColor) * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   float base = uHazeHold * clamp((vDist - uFogStart) / max(uFogEnd - uFogStart, 1.0), 0.0, 1.0);
   float rim = (1.0 - uHazeHold) * smoothstep(uRimStart, uRimEnd, vDist);
-  vec3 col = mix(elTonemap(lit * ex), elDecode(uFogColor), min(base + rim, 1.0));
+  vec3 col = mix(elTonemapRGB(lit * ex), elDecode(uFogColor), min(base + rim, 1.0));   // HQ1
   outColor = vec4(elEncode(col) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0, 1.0);   // EL6: the ring's sky gradient, dithered at the byte
 }`;
 

@@ -100,9 +100,22 @@ export const AIR_AO_SCALE = 0.5;
 export const AIR_BLOOM_SCALE = 0.25;
 /** The hemisphere's radius in world units (a door is ~2 tall), the sample
  *  count, the strength (1 = a fully occluded crevice loses all ambient),
- *  and the depth bias against self-occlusion. */
+ *  and the depth bias against self-occlusion.
+ *
+ *  HQ1 (2026-09-23, Mac: "make some insane improvements to our lighting system"): HORIZON-BASED. EL3's occlusion
+ *  scattered twelve points through a hemisphere and counted the ones the depth image put behind a surface - a
+ *  coin toss per sample, so a crevice's darkness was a speckle the blur then smeared, and a flat floor beside a
+ *  wall took as much as the corner itself. This is the ground-truth form (GTAO, Jimenez 2016): in each of
+ *  AIR_AO_DIRECTIONS screen-space slices through the pixel, march AIR_AO_SAMPLES steps out each way along the
+ *  slice to the radius, keep the HIGHEST horizon angle either side (the steepest thing that could shade this
+ *  point), and integrate the cosine-weighted visibility of the arc between the two horizons - which is exactly
+ *  the ambient light a hemisphere of that shape lets in. The slices turn with the ordered rotation (EL6's Bayer:
+ *  the 4x4 box blur averages exactly one tile of it), and a step's distance falls off its weight so a wall
+ *  beyond the radius shades nothing. The result is smooth where the surface is flat, dark where two surfaces
+ *  meet, and reads the depth image no more times than EL3 did. */
 export const AIR_AO_RADIUS = 0.8;
-export const AIR_AO_SAMPLES = 12;
+export const AIR_AO_SAMPLES = 6;       // HQ1: steps per side of a slice
+export const AIR_AO_DIRECTIONS = 2;    // HQ1: slices per pixel (the blur's tile completes the turn)
 export const AIR_AO_STRENGTH = 1.0;
 export const AIR_AO_BIAS = 0.02;
 /** EL6: how much of the AO the resolve applies to the whole frame (the
@@ -228,23 +241,6 @@ export function sunScreenUV(proj, view, lightDir) {
   return [cx / cw * 0.5 + 0.5, cy / cw * 0.5 + 0.5];
 }
 
-/** The hemisphere kernel: n samples in the +z hemisphere, more of them
- *  near the origin (scale = lerp(0.1, 1, (i/n)^2)), from a fixed
- *  linear-congruential stream so every page draws the same noise. */
-export function aoKernel(n = AIR_AO_SAMPLES) {
-  const out = new Float32Array(n * 3);
-  let seed = 0x2545F491;
-  const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
-  for (let i = 0; i < n; i++) {
-    let x = rnd() * 2 - 1, y = rnd() * 2 - 1, z = rnd();
-    const l = Math.hypot(x, y, z) || 1;
-    x /= l; y /= l; z /= l;
-    const t = i / n;
-    const scale = (0.1 + 0.9 * t * t) * rnd();
-    out[i * 3] = x * scale; out[i * 3 + 1] = y * scale; out[i * 3 + 2] = z * scale;
-  }
-  return out;
-}
 
 /** A lantern's glare sprite size, world units, from its range. */
 export function glareSize(range) {
@@ -452,8 +448,7 @@ precision highp float;
 in vec2 vUV;
 ${DEPTH_GLSL}
 ${BAYER_GLSL}
-uniform vec3 uKernel[${AIR_AO_SAMPLES}];
-uniform vec4 uAOParams;     // radius, strength, bias, unused
+uniform vec4 uAOParams;     // radius, strength, bias, the AO image's width in pixels
 out vec4 outColor;
 vec3 posAt(vec2 uv) {
   float z = depthAt(uv) * 2.0 - 1.0;
@@ -461,32 +456,61 @@ vec3 posAt(vec2 uv) {
   vec2 ndc = uv * 2.0 - 1.0;
   return vec3(ndc.x * (-vz) / uProjInfo.x, ndc.y * (-vz) / uProjInfo.y, vz);
 }
+// HQ1: the horizon along one side of a slice - the highest angle (as a cosine against the view vector) any step
+// reaches, each step's claim weighted down by its distance so the radius is a soft edge and not a cliff
+float horizonAt(vec3 p, vec3 v, vec2 uv, vec2 dir, float radiusPx, float bias) {
+  float h = -1.0;
+  for (int i = 1; i <= ${AIR_AO_SAMPLES}; i++) {
+    float t = (float(i) - 0.5) / ${AIR_AO_SAMPLES}.0;
+    vec2 suv = uv + dir * t * radiusPx;
+    if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) break;
+    vec3 s = posAt(suv) - p;
+    float d = length(s);
+    float c = dot(s, v) / max(d, 1e-5);
+    float w = clamp(1.0 - d / uAOParams.x, 0.0, 1.0);   // beyond the radius a step says nothing
+    c = mix(-1.0, c, w);
+    if (d > bias) h = max(h, c);
+  }
+  return h;
+}
 void main() {
   float d0 = depthAt(vUV);
   if (d0 >= 0.99999) { outColor = vec4(1.0); return; }
   vec3 p = posAt(vUV);
   vec3 n = normalize(cross(dFdx(p), dFdy(p)));
   if (dot(n, -p) < 0.0) n = -n;   // a normal faces the eye whatever the projection's handedness did to the derivatives
-  // EL6: the kernel's rotation is a 4x4 ORDERED pattern, not a hash - the 4x4
+  vec3 v = normalize(-p);
+  // the radius on screen, in the AO image's uv: the world radius over the view distance, through the focal term
+  float radiusPx = uAOParams.x * uProjInfo.x / max(-p.z, 1e-3) * 0.5;
+  // EL6: the slices' rotation is a 4x4 ORDERED pattern, not a hash - the 4x4
   // box blur after it averages exactly one tile, so the pattern cancels; a
   // hash was grain that never cancelled, and in the dark the grain was all
   // a texture had ("textures in the dark look weird")
   float ang = bayer4(gl_FragCoord.xy) * 6.2831853;
-  vec3 rnd = vec3(cos(ang), sin(ang), 0.0);
-  vec3 t = normalize(rnd - n * dot(rnd, n));
-  vec3 b = cross(n, t);
-  mat3 tbn = mat3(t, b, n);
-  float radius = uAOParams.x;
-  float occ = 0.0;
-  for (int i = 0; i < ${AIR_AO_SAMPLES}; i++) {
-    vec3 s = p + tbn * uKernel[i] * radius;
-    vec2 suv = vec2(s.x * uProjInfo.x, s.y * uProjInfo.y) / (-s.z) * 0.5 + 0.5;
-    if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) continue;
-    float sz = posAt(suv).z;
-    float range = smoothstep(0.0, 1.0, radius / abs(p.z - sz));
-    occ += (sz >= s.z + uAOParams.z ? 1.0 : 0.0) * range;
+  float vis = 0.0;
+  for (int k = 0; k < ${AIR_AO_DIRECTIONS}; k++) {
+    float a = ang + float(k) * ${(Math.PI / 2).toFixed(7)};   // HQ1: the slices a quarter turn apart
+    vec2 dir = vec2(cos(a), sin(a)) * vec2(1.0, uProjInfo.x / uProjInfo.y);   // a circle on screen, whatever the aspect
+    // the slice's plane: the view vector and the direction; the normal projected into it
+    vec3 sliceDir = normalize(vec3(dir.x, dir.y, 0.0));
+    vec3 axis = normalize(cross(sliceDir, v));
+    vec3 np = n - axis * dot(n, axis);
+    float npl = length(np);
+    if (npl < 1e-4) { vis += 1.0; continue; }
+    np /= npl;
+    float gamma = sign(dot(np, sliceDir)) * acos(clamp(dot(np, v), -1.0, 1.0));   // the projected normal's angle off the view vector, signed toward the slice
+    float h1 = acos(clamp(horizonAt(p, v, vUV, dir, radiusPx, uAOParams.z), -1.0, 1.0));    // the horizon angles either side, from the view vector
+    float h2 = acos(clamp(horizonAt(p, v, vUV, -dir, radiusPx, uAOParams.z), -1.0, 1.0));
+    // the arc the projected normal lets in: clamp each horizon to the hemisphere about it
+    h1 = gamma + max(-h1 - gamma, -1.5707963);
+    h2 = gamma + min(h2 - gamma, 1.5707963);
+    // the cosine-weighted visibility of the arc [h1, h2] about gamma (GTAO's inner integral, closed form)
+    float a1 = 0.25 * (-cos(2.0 * h1 - gamma) + cos(gamma) + 2.0 * h1 * sin(gamma));
+    float a2 = 0.25 * (-cos(2.0 * h2 - gamma) + cos(gamma) + 2.0 * h2 * sin(gamma));
+    vis += npl * (a1 + a2);
   }
-  float ao = 1.0 - occ / ${AIR_AO_SAMPLES}.0 * uAOParams.y;
+  float ao = clamp(vis / ${AIR_AO_DIRECTIONS}.0, 0.0, 1.0);
+  ao = 1.0 - (1.0 - ao) * uAOParams.y;
   outColor = vec4(vec3(ao), 1.0);
 }`;
 
@@ -703,7 +727,7 @@ export class AirPass {
     const u = (p, n) => gl.getUniformLocation(p, n);
     const P = (vs, fs, names) => { const p = opts.build(vs, fs); const o = { p }; for (const n of names) o[n] = u(p, n); return o; };
     this.programs = {
-      ao: P(QUAD_VS, AO_FS, ['uDepth', 'uProjInfo', 'uKernel', 'uAOParams', 'uRect', 'uCanvas']),
+      ao: P(QUAD_VS, AO_FS, ['uDepth', 'uProjInfo', 'uAOParams', 'uRect', 'uCanvas']),   // HQ1: no kernel - the horizons march the slices
       box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel', 'uBlurRange', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),
       gauss: P(QUAD_VS, GAUSS_FS, ['uSrc', 'uDir']),
       shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect']),   // VC6c: the cloud in front of the sun
@@ -732,7 +756,6 @@ export class AirPass {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
-    this.kernel = aoKernel();
     this.projInfo = new Float32Array(4);
     this.aoParams = new Float32Array([AIR_AO_RADIUS, AIR_AO_STRENGTH, AIR_AO_BIAS, 0]);
     this.shaftParams = new Float32Array([AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, 1]);
@@ -967,7 +990,6 @@ export class AirPass {
     // 1. the ambient occlusion, then its box blur (exactly one tile of the ordered rotation)
     quad(this.programs.ao, T.ao);
     depthOn(this.programs.ao);
-    gl.uniform3fv(this.programs.ao.uKernel, this.kernel);
     gl.uniform4fv(this.programs.ao.uAOParams, this.aoParams);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     quad(this.programs.box, T.aoBlur);

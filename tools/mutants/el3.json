@@ -63,28 +63,28 @@
     ]
   },
   {
-    "name": "kernel-full-sphere",
+    "name": "ao-horizon-unclamped",
     "file": "src/render/airPass.js",
-    "old": "    let x = rnd() * 2 - 1, y = rnd() * 2 - 1, z = rnd();",
-    "new": "    let x = rnd() * 2 - 1, y = rnd() * 2 - 1, z = rnd() * 2 - 1;",
+    "old": "    h1 = gamma + max(-h1 - gamma, -1.5707963);\n    h2 = gamma + min(h2 - gamma, 1.5707963);\n",
+    "new": "    h1 = gamma - h1;\n    h2 = gamma + h2;\n",
     "tests": [
       "test/el3_air.test.js"
     ]
   },
   {
-    "name": "kernel-flat-scale",
+    "name": "ao-no-distance-weight",
     "file": "src/render/airPass.js",
-    "old": "    const scale = (0.1 + 0.9 * t * t) * rnd();",
-    "new": "    const scale = rnd();",
+    "old": "    float w = clamp(1.0 - d / uAOParams.x, 0.0, 1.0);   // beyond the radius a step says nothing\n    c = mix(-1.0, c, w);",
+    "new": "    float w = 1.0;\n    c = mix(-1.0, c, w);",
     "tests": [
       "test/el3_air.test.js"
     ]
   },
   {
-    "name": "kernel-unseeded",
+    "name": "ao-one-slice",
     "file": "src/render/airPass.js",
-    "old": "  let seed = 0x2545F491;",
-    "new": "  let seed = (Date.now() & 0xffff) | 1;",
+    "old": "  for (int k = 0; k < ${AIR_AO_DIRECTIONS}; k++) {\n    float a = ang + float(k) * ${(Math.PI / 2).toFixed(7)};",
+    "new": "  for (int k = 0; k < 1; k++) {\n    float a = ang + float(k) * ${(Math.PI / 2).toFixed(7)};",
     "tests": [
       "test/el3_air.test.js"
     ]
