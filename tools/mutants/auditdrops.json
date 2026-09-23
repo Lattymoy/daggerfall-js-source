@@ -165,7 +165,7 @@
   {
     "name": "AD-B3-room-wide-trade-bytes",
     "file": "server/src/index.js",
-    "old": "      const bytes = byteGate(a.tbytes ?? null, now, out.length, TRADE_ROOM_BYTES_PER_S);\n      this._setAttach(ws, { ...a, tbytes: bytes.bucket });",
+    "old": "      const bytes = byteGate(mine.tbytes ?? null, now, out.length, TRADE_ROOM_BYTES_PER_S);\n      mine.tbytes = bytes.bucket;",
     "new": "      const bytes = byteGate(this._roomTrade, now, out.length, TRADE_ROOM_BYTES_PER_S);\n      this._roomTrade = bytes.bucket;",
     "tests": [
       "test/auditdrops.test.js"

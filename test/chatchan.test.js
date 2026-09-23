@@ -95,7 +95,7 @@ test('CHAT-CHAN relay: a party\'s line is heard by the party alone - every tab o
   assert.equal(chats(c).at(-1).ch, undefined, 'and says no channel');
 }));
 
-test('CHAT-CHAN relay: a party line with no party to reach says nothing - from a stranger, from a seat gone since - and on any room but the hub it is junk, struck off the attachment as it stands (mutants: a stranger\'s party line fanned to the room; the junk strike writing back the stale attachment, which refunded the chat token)', () => withHub(async (h) => {
+test('CHAT-CHAN relay: a party line with no party to reach says nothing - from a stranger, from a seat gone since - and on any room but the hub it is junk, struck, the chat token it spent staying spent (mutants: a stranger\'s party line fanned to the room; the junk unstruck)', () => withHub(async (h) => {
   const { a, b, c } = await partyOfTwo(h);
   for (const ws of [a, b, c]) ws.sent.length = 0;
   await h.say(c, 'am I in a party?', 'party'); h.tick();
@@ -105,7 +105,9 @@ test('CHAT-CHAN relay: a party line with no party to reach says nothing - from a
   await h.say(b, 'still here?', 'party'); h.tick();
   assert.equal(chats(a).length, 0, 'a seat left says nothing to the party it left');
 
-  // a place room: the party line is junk, and the strike lands on the attachment the chat gate just wrote
+  // a place room: the party line is junk - struck, and the chat token it spent stays spent. AUDIT ATTACH: the strike and
+  // the chat bucket are two meters of one record, so neither write can undo the other (a stale attachment written back
+  // over the chat gate's once refunded the token - CHAT-CHAN's own fix, a class that cannot recur)
   const r = fakeRoom('dungeon:m187');
   const realNow = Date.now; let clock = 2e12; Date.now = () => clock;
   try {
@@ -114,11 +116,11 @@ test('CHAT-CHAN relay: a party line with no party to reach says nothing - from a
     other.sent.length = 0;
     await r.raw(ws, JSON.stringify({ t: 'chat', text: 'party?', ch: 'party' }));
     assert.equal(chats(other).length, 0, 'a place has no party to reach, and the room does not hear it either');
-    assert.equal(ws.att.junk, 1, 'struck');
-    assert.deepEqual(ws.att.cbucket, { tokens: CHAT_HZ_MAX - 1, at: clock }, 'and the chat gate\'s spend stands - the strike wrote the attachment as it is now, not the one read before the gate (which had no bucket: the token refunded)');
+    assert.equal(ws.meters.junk, 1, 'struck');
+    assert.deepEqual(ws.meters.cbucket, { tokens: CHAT_HZ_MAX - 1, at: clock }, 'and the chat gate\'s spend stands - the strike is a count beside the bucket, never a copy written back over it');
     await r.raw(ws, JSON.stringify({ t: 'chat', text: 'party?', ch: 'party' }));
-    assert.equal(ws.att.junk, 2);
-    assert.deepEqual(ws.att.cbucket, { tokens: CHAT_HZ_MAX - 2, at: clock }, 'every junk line pays its token');
+    assert.equal(ws.meters.junk, 2);
+    assert.deepEqual(ws.meters.cbucket, { tokens: CHAT_HZ_MAX - 2, at: clock }, 'every junk line pays its token');
     for (let i = 0; i < DROP_STRIKES_MAX + 2 && !ws.closed; i++) { clock += 1000; await r.raw(ws, JSON.stringify({ t: 'chat', text: 'party?', ch: 'party' })); }
     assert.ok(ws.closed, 'a stream of junk closes the socket, as any junk does');
   } finally { Date.now = realNow; }
@@ -157,7 +159,7 @@ test('CHAT-CHAN relay: the parties\' own budget HOLDS - eight seats at three tab
   for (const ws of tabs) for (let i = 0; i < CHAT_HZ_MAX; i++) await h.say(ws, `line ${i}`, 'party');
   assert.ok(tabs.length * CHAT_HZ_MAX > PARTY_CHAT_ROOM_HZ_MAX, 'more said than the budget');
   for (const ws of [tabs[0], tabs.at(-1)]) assert.equal(chats(ws).length, PARTY_CHAT_ROOM_HZ_MAX, 'the budget, fanned whole to every tab');
-  assert.ok(tabs.every((ws) => !ws.closed && (ws.att.cdrops ?? 0) === 0), 'a line over the budget is dropped, and nobody is struck for it');
+  assert.ok(tabs.every((ws) => !ws.closed && (ws.meters.cdrops ?? 0) === 0), 'a line over the budget is dropped, and nobody is struck for it');
 }));
 
 // ─── THE SESSION ────────────────────────────────────────────────────────────────────────────────────────────────

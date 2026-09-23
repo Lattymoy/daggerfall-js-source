@@ -114,15 +114,15 @@
   {
     "name": "DC-roll-gate-removed",
     "file": "server/src/index.js",
-    "old": "      if (!gate.pass) { if (rollDrops > CHAT_STRIKES_MAX) this._refuse(ws, 'too many rolls'); return; }\n",
+    "old": "      if (!this._spend(ws, now, rollGate, 'rollBucket', 'rollDrops', 'too many rolls', CHAT_STRIKES_MAX)) return;\n",
     "new": "",
     "tests": ["test/dice1.test.js"]
   },
   {
     "name": "DC-muted-rolls",
     "file": "server/src/index.js",
-    "old": "this._refuse(ws, 'too many rolls'); return; }\n      if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }",
-    "new": "this._refuse(ws, 'too many rolls'); return; }",
+    "old": "'too many rolls', CHAT_STRIKES_MAX)) return;\n      if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }",
+    "new": "'too many rolls', CHAT_STRIKES_MAX)) return;",
     "tests": ["test/dice1.test.js"]
   },
   {

@@ -131,7 +131,7 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   await r.pose(a, at(1, 1));
   assert.equal(ofType(b, 'pose').length, 0, 'a pose in a channel reaches no one');
   assert.equal(a.att.pose, null, 'and is kept by no one');
-  assert.ok(a.att.bucket, 'AUDIT CHAT A3: but it spent a token - gated and counted before it was declined');
+  assert.ok(a.meters.bucket, 'AUDIT CHAT A3: but it spent a token - gated and counted before it was declined');
   for (let i = 0; i < DROP_STRIKES_MAX + 30; i++) await r.pose(a, at(1, 1));
   assert.equal(a.closed?.code, 1008, 'a pose storm into a channel closes the socket as it does in a place');
   assert.deepEqual(a.sent.at(-1), { t: 'error', m: 'too many poses' });
@@ -210,17 +210,17 @@ test('CHAT1 / AUDIT CHAT: the Room - a line in a PLACE room reaches as far as a 
   assert.equal(chats(far).length, 0, 'past it: not heard'); assert.equal(chats(mute).length, 0, 'no pose: no range to measure, not heard');
   // the gate's own bucket, proved where the pose gate runs (AUDIT CHAT D1)
   for (let i = 0; i < 40; i++) await r.pose(a, at(2, 2));
-  assert.ok(a.att.drops > 0, 'the mover is over the pose rate');
+  assert.ok(a.meters.drops > 0, 'the mover is over the pose rate');
   await r.chat(a, 'can you hear me');
   assert.equal(chats(near).length, 2, 'a mover may still talk: the chat gate has its own bucket');
-  assert.equal(a.att.cdrops, 0, 'and its own strikes');
+  assert.equal(a.meters.cdrops, 0, 'and its own strikes');
   // the gate's strikes
   const fresh = fakeRoom(CHAT_WORLD_ROOM);
   const t = fresh.connect(), l = fresh.connect();
   await fresh.hello(t, 'talk-0001'); await fresh.hello(l, 'list-0002');
   for (let i = 0; i < CHAT_HZ_MAX + 3; i++) await fresh.chat(t, `line ${i}`);
   assert.equal(chats(l).length, CHAT_HZ_MAX, 'the burst is relayed, the rest dropped');
-  assert.equal(t.att.cdrops, 3, 'three strikes'); assert.equal(t.closed, null, 'not yet an offence');
+  assert.equal(t.meters.cdrops, 3, 'three strikes'); assert.equal(t.closed, null, 'not yet an offence');
   for (let i = 0; i < CHAT_STRIKES_MAX; i++) await fresh.chat(t, 'spam');
   assert.equal(t.closed?.code, 1008, 'past CHAT_STRIKES_MAX dropped in a row the socket is closed');
   assert.deepEqual(t.sent.at(-1), { t: 'error', m: 'too many lines' });
@@ -232,7 +232,7 @@ test('CHAT1 / AUDIT CHAT: the Room - a line in a PLACE room reaches as far as a 
   for (let i = 0; i < talkers.length; i++) await crowd.hello(talkers[i], `talk-${String(i).padStart(4, '0')}`);
   for (let i = 0; i < talkers.length; i++) await crowd.chat(talkers[i], `line from ${i}`);
   assert.equal(chats(ear).length, CHAT_ROOM_HZ_MAX, 'CHAT_ROOM_HZ_MAX lines in one instant reach the room');
-  assert.ok(talkers.every((ws) => (ws.att.cdrops ?? 0) === 0 && !ws.closed), 'the ten dropped were nobody\'s offence: no strike, no close');
+  assert.ok(talkers.every((ws) => (ws.meters.cdrops ?? 0) === 0 && !ws.closed), 'the ten dropped were nobody\'s offence: no strike, no close');
   assert.equal(chats(talkers.at(-1)).filter((m) => m.id === `talk-${String(talkers.length - 1).padStart(4, '0')}`).length, 0, 'the sender over the room\'s budget hears no echo - the only word of it');
   assert.equal(chats(talkers.at(-1)).length, CHAT_ROOM_HZ_MAX, 'though it hears everyone else');
 });

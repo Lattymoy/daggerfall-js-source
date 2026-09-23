@@ -83,8 +83,8 @@
   {
     "name": "AC-relay-fans-to-the-room",
     "file": "server/src/index.js",
-    "old": "      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;\n      if (!target) return;\n      const [tws, tb] = target;\n      // AUDIT ALLY-CAST B2",
-    "new": "      const target = [...this._all()].find(([other, b]) => other !== ws) ?? null;\n      if (!target) return;\n      const [tws, tb] = target;\n      // AUDIT ALLY-CAST B2",
+    "old": "      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;\n      if (!target) return;\n      const [tws] = target;\n      // AUDIT ALLY-CAST B2",
+    "new": "      const target = [...this._all()].find(([other, b]) => other !== ws) ?? null;\n      if (!target) return;\n      const [tws] = target;\n      // AUDIT ALLY-CAST B2",
     "tests": [
       "test/allycast.test.js"
     ]

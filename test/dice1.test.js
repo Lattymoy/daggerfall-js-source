@@ -128,7 +128,7 @@ test('DICE1 relay: one roll a second a socket, the rest dropped and struck like 
     await r.raw(a, JSON.stringify({ t: 'roll', n: 1, m: 20, k: 0 }));
     await r.raw(a, JSON.stringify({ t: 'roll', n: 1, m: 20, k: 0 }));
     assert.equal(rolls(b).length, 1, 'the second roll in the same second goes nowhere');
-    assert.equal(a.att.rollDrops, 1, 'and is a strike');
+    assert.equal(a.meters.rollDrops, 1, 'and is a strike');
     for (let i = 0; i < CHAT_STRIKES_MAX + 1 && !a.closed; i++) await r.raw(a, JSON.stringify({ t: 'roll', n: 1, m: 20, k: 0 }));
     assert.ok(a.closed, 'a flood of rolls closes the socket, as a flood of lines does');
   });

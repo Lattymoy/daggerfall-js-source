@@ -528,7 +528,7 @@ test('SOC1 hub: the gates - SOCIAL_HZ_MAX a socket (over it dropped, a strike co
   const a = await join('a'), b = await join('b');
   for (let i = 0; i < SOCIAL_HZ_MAX + 3; i++) await act(a, { k: 'party.leave' });
   assert.equal(errors(a).length, SOCIAL_HZ_MAX, 'a burst is the rate; the rest are dropped without a word');
-  assert.equal(a.att.sdrops, 3); assert.equal(a.closed, null);
+  assert.equal(a.meters.sdrops, 3); assert.equal(a.closed, null);
   for (let i = 0; i < DROP_STRIKES_MAX; i++) await act(a, { k: 'party.leave' });
   assert.deepEqual(a.closed, { code: CLOSE_POLICY, reason: 'too many social acts' }, 'a socket that keeps sending is closed');
   // the room's budget: every socket together, a fresh bucket's worth after the clock has run
@@ -542,14 +542,14 @@ test('SOC1 hub: the gates - SOCIAL_HZ_MAX a socket (over it dropped, a strike co
   // party poses: their own gate
   tick(2000);
   for (let i = 0; i < PARTY_HZ_MAX + 2; i++) await pose(b);
-  assert.equal(b.att.pdrops, 2); assert.equal(b.closed, null);
+  assert.equal(b.meters.pdrops, 2); assert.equal(b.closed, null);
   // outside the hub: junk, counted, closed past the strikes
   await withHub(async (cell) => {
     const w = cell.r.connect(); await cell.r.hello(w, 'peer-w', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 }, { acct: 'acct-w', asecret: 'secret-of-acct-w' }); cell.tick();
     assert.deepEqual(w.sent.map((m) => m.t), ['welcome'], 'a cell keeps no account and says no social word');
     assert.equal(w.att.acct, undefined);
     await cell.act(w, { k: 'party.leave' }); cell.tick(); await cell.pose(w); cell.tick();
-    assert.equal(w.att.junk, 2, 'junk, counted'); assert.equal(errors(w).length, 0);
+    assert.equal(w.meters.junk, 2, 'junk, counted'); assert.equal(errors(w).length, 0);
     for (let i = 0; i < DROP_STRIKES_MAX; i++) { await cell.pose(w); cell.tick(); }
     assert.deepEqual(w.closed, { code: CLOSE_POLICY, reason: 'too many frames' });
   }, 'world:1,1');
@@ -621,9 +621,9 @@ test('SOC1 hub: the source - the account is handled after the channel\'s welcome
   const drain = s.slice(s.indexOf('async _sweep() {'), s.indexOf('async _keysOf('));
   assert.match(drain, /for \(const prefix of \['look:', 'secret:'\]\)/, 'the drain\'s prefixes'); assert.doesNotMatch(drain, /acctKey|acctSecretKey|'acct:'|'asecret:'/, 'the drain never sweeps an account or its secret (AUDIT SOC A3: the hub\'s alarm does, one page of the idle and unlisted at a time)');
   assert.match(drain, /_keysOf\('party:'\)/, 'party: goes with the drain, in pages');
-  assert.match(s, /if \(!isSocialRoom\(a\.key\)\) \{ this\._junk\(ws, a\); return; \}/, 'a social act outside the hub is junk');
+  assert.match(s, /if \(!isSocialRoom\(a\.key\)\) \{ this\._junk\(ws\); return; \}/, 'a social act outside the hub is junk');
   const partyArm = s.slice(s.indexOf("if (m.t === 'party') {"), s.indexOf("if (m.t === 'quest') {", s.indexOf("if (m.t === 'party') {")));   // AUDIT DROPS: the PARTY arm's own line - QUEST1's arm carries the same law, and a whole-file match let a mutant on this one hide behind it
-  assert.match(partyArm, /if \(!isSocialRoom\(a\.key\) \|\| !a\.acct\) \{ this\._junk\(ws, a\); return; \}/, 'a party pose outside the hub, or without an account, is junk');
+  assert.match(partyArm, /if \(!isSocialRoom\(a\.key\) \|\| !a\.acct\) \{ this\._junk\(ws\); return; \}/, 'a party pose outside the hub, or without an account, is junk');
   const w = rd('src/net/wire.js');
   assert.match(w, /export const SOCIAL_ROOM = CHAT_WORLD_ROOM;/);
   assert.match(w, /export const RELAY_VERSION = 'world99';/, 'AUDIT SOC moved it, RESPAWN1 moved it again, AUDIT WATCH1 again, the main merge again, RELAY-H1 again, ACC1d again, the three drops again (world91), AUDIT DROPS again (world92), the party-rest drop again (world96), ALLY-CAST and its audit (world97), SPELLFX1 pose fields (world98)');

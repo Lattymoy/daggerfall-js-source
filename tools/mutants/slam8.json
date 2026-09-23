@@ -58,8 +58,8 @@
   {
     "name": "K6-passpatch-applied-always",
     "file": "server/src/index.js",
-    "old": "...(gate.pass ? passPatch : {})",
-    "new": "...passPatch",
+    "old": "const write = pass ? { ...patch, ...passPatch } : patch;",
+    "new": "const write = { ...patch, ...passPatch };",
     "tests": [
       "test/slam8.test.js",
       "test/slam6.test.js",

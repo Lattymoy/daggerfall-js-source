@@ -274,8 +274,8 @@
   {
     "name": "S31-social-act-ungated",
     "file": "server/src/index.js",
-    "old": "a = this._meterSocial(ws, a, now); if (!a) return;\n      if (!isSocialRoom(a.key)) { this._junk(ws, a); return; }",
-    "new": "if (!isSocialRoom(a.key)) { this._junk(ws, a); return; }",
+    "old": "a = this._meterSocial(ws, a, now); if (!a) return;\n      if (!isSocialRoom(a.key)) { this._junk(ws); return; }",
+    "new": "if (!isSocialRoom(a.key)) { this._junk(ws); return; }",
     "tests": [
       "test/soc1_hub.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "S33-cell-takes-party-poses",
     "file": "server/src/index.js",
-    "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }",
-    "new": "if (!a.acct) { this._junk(ws, a); return; }",
+    "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws); return; }\n      this._setAttach(ws, { ...a, pm: { ...m.p, at: now } });",
+    "new": "if (!a.acct) { this._junk(ws); return; }\n      this._setAttach(ws, { ...a, pm: { ...m.p, at: now } });",
     "tests": [
       "test/soc1_hub.test.js"
     ]

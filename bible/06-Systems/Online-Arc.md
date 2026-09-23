@@ -7887,3 +7887,62 @@ the relay version mutant, the player-capsule census (AUDIT 62 F21, AUDIT 65 CV-2
 the player's own radius), the pose's field list, and ALLY-CAST's three meter pins (a whole blast deep). Not verified in a browser with two players: no online
 session exists in this container.
 
+
+## AUDIT ATTACH (2026-09-23, found by INSPECT1's measurement of the attachment its card meter would ride) - a socket's meters leave its attachment, world99
+
+INSPECT1 gives a place socket a new arm, and a new arm is a new meter. Before adding one, its test measured the
+attachment the meter would ride - the widest a place socket can carry, over the real Room - and found it already
+full. Two findings, paid in one commit and pinned by execution in `test/auditattach.test.js`.
+
+- A1 THE WIDEST PLACE ATTACHMENT WAS PAST THE RUNTIME'S 2 KiB. The runtime caps a hibernatable socket's attachment
+  at 2 KiB and refuses a write past it WHOLE (`_setAttach` answers false). Every per-socket meter rode it: twenty
+  arms' buckets and strike counts, the junk count, and three funnels onto the socket as a destination (`hbucket`,
+  `tinbucket`, and `cin` - eight sender ids of up to forty characters that the destination never chose). AUDIT SOC
+  measured the hub's attachment; nothing measured a place socket's. Built with the widest world-room key, an id and
+  an account at ID_RE's bound, the name at NAME_MAX, the longest title and every glyph, a mute, a pose at its
+  bounds, every arm it can send spent once and its funnel full, it passed 2 KiB with two arms still to write - on
+  buckets whose tokens happened to be whole; a real bucket's float is wider.
+- A2 A REFUSED WRITE FAILED OPEN. The meters wrote their spend back through `_setAttach` and never read its answer,
+  so a meter whose write was refused never advanced: its gate passed every frame on the bucket it last stored, and
+  its strikes never counted. Driven over the relay as it was, a socket whose writes the runtime refused sent a
+  thousand chat lines and a thousand acts at one instant and was never struck; only the ROOM's budgets stopped
+  them, and it spent all of both - twenty lines and thirty doors, every other player's share for that second. A
+  socket can grow its own attachment toward the cap (its id, its pose, a few friends casting at it to fill its
+  funnel), so this was reachable on purpose.
+
+**The fix is where the meters live, not how many bytes they take.** Shaving bytes (rounding the floats, a shorter
+key) would have moved the cliff, not removed it, and every later arm would walk toward it again. Every per-socket
+meter is the Room INSTANCE's now - a WeakMap by socket (`_meterOf`), spent through one body (`_spend`: the bucket
+through its gate, a strike on a drop and forgiven on a pass, the socket closed past its bound in its arm's own
+words) - and the funnels are the destination's meters. The meter functions keep their names, fields and answers
+(the attachment, or null), so the arms read as they did. That is where the room's own budgets and AUDIT SOC's
+`_cool` have always lived, for the reason that holds here: a flood keeps the object awake, and it sleeps only after
+a quiet spell. Every bucket refills whole within two seconds of quiet (the cast meter, a whole blast deep, is the
+slowest) and the quest floor within five, so a wake forgets nothing the quiet had not already refilled - except the
+act share's borrowed debt (SLAM13), which a wake forgives early: that share keeps one sender from holding the
+room's act budget against the others, and a room that went quiet had no others acting. The attachment keeps only
+what a wake must recompute: the key, who the socket is (its id, name, badge, account and mute), where it stands
+(the pose, its fan counter and keepalive stamp), the hello's stamp and the room's two marks (`worldSeen`,
+`finalUsed`); in the hub, its account, party and party pose. The widest place attachment is 545 bytes now.
+
+The class the move removes: a meter written back over a stale copy of the attachment. CHAT-CHAN's party-line junk
+refunded the chat token that way (its strike wrote back the attachment read before the chat gate spent); the strike
+and the bucket are two meters of one record now, and neither write can undo the other.
+
+**Pins.** `test/auditattach.test.js` (3): the widest place attachment built over the real Room, its field list closed
+both ways - a field added to it fails until it is measured here or kept among the meters - and measured at half the
+runtime's cap at most (`test/placeWidest.mjs` builds it; a slice that gives a place socket a new arm adds its frame
+and its meter there); every arm's flood with every attachment write after the hello refused, passing its bucket and no
+more, three strikes forgiven by a pass, and struck out on exactly the frame past its strikes in its own words (the old
+relay fails it); and a wake forgetting the meters and nothing else, the woken room working, every bucket whole in two
+seconds. `tools/mutants/auditattach.json`: 7, 7 dead. The fake socket reads its meters through `ws.meters` (the Room
+awake now; a `wake()` forgets them). Re-aimed by content: every pin that read a meter off `att` (sixty-seven lines in
+seventeen files), the five that wrote one through `_setAttach` and the four that read one through `_attach`, the
+source pins on `_junk(ws, a)` and the cast funnel, AUDIT SOC's hub measurement (its buckets are off it now, pinned),
+CHAT-CHAN's stale-attachment claim, and fourteen mutant records - `allycast`, `auditdrops`, `chatchan`
+(`CC-junk-writes-the-stale-attachment` renamed `CC-junk-rewrites-the-meters`, for the regression it guards now),
+`dice1`, `red1`, `slam13`, `slam8`, `soc1` - each made unique where `_junk(ws)` now reads alike in three arms (the
+tool mutates the first occurrence). Every mutant list whose targets or tests the move touched - twenty-six of them -
+was rerun against a green baseline and is dead but for three survivors older than it: `soc1` S23, `font1`
+AUDIT-FONT-F2, and `chatchan` CC-parser-before-unstuck, which EMOTE1's re-aim of CHAT-CHAN's order pin let live (paid
+in the next commit). No version of its own: the arc's world99 is not yet deployed, and its LAW hash is restated.

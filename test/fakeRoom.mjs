@@ -135,7 +135,10 @@ export function fakeRoom(key, { now = () => Date.now() } = {}) {
   const wake = () => { room = new Room(state, env); };
   const { token, signer } = roomSigner(env, now);
   const connect = () => {
-    const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null, bucket: null, drops: 0 },
+    const ws = { sent: [], closed: null, att: { key, id: null, name: null, pose: null },
+      // AUDIT ATTACH: the socket's meters are the Room INSTANCE's, not its attachment's - read off the object awake now,
+      // so a wake() forgets them as a hibernation does
+      get meters() { return room._meters.get(ws) ?? {}; },
       send(s) { if (this.closed) throw new Error('closed'); this.sent.push(JSON.parse(s)); },
       // the runtime drops a socket the object closed from getWebSockets() and calls no webSocketClose for it
       close(code, reason) { this.closed = { code, reason }; const i = sockets.indexOf(ws); if (i >= 0) sockets.splice(i, 1); },

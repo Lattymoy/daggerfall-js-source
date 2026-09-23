@@ -67,13 +67,13 @@ test('WORLD4: the wire and the Room - the loot rides WORLD3\'s act frame, so the
   const r = fakeRoom('dungeon:m187');
   const h = r.connect(), j1 = r.connect(), j2 = r.connect();
   await r.hello(h, 'host-0001', at(1, 1)); await r.hello(j1, 'join-0002', at(1, 1)); await r.hello(j2, 'join-0003', at(1, 1));
-  const pose0 = JSON.stringify(j1.att.bucket ?? null);
+  const pose0 = JSON.stringify(j1.meters.bucket ?? null);
   await r.raw(j1, JSON.stringify({ t: 'act', data: loot }));
   assert.deepEqual(ofType(h, 'act'), [{ t: 'act', id: 'join-0002', data: loot }], 'the host hears the joiner empty a chest');
   assert.deepEqual(ofType(j2, 'act'), [{ t: 'act', id: 'join-0002', data: loot }]);
   assert.equal(ofType(j1, 'act').length, 0, 'never its author');
-  assert.equal(JSON.stringify(j1.att.bucket ?? null), pose0, 'and it spends the ACT bucket, not the poses\'');
-  assert.ok(j1.att.abucket, 'which is the one it spends');
+  assert.equal(JSON.stringify(j1.meters.bucket ?? null), pose0, 'and it spends the ACT bucket, not the poses\'');
+  assert.ok(j1.meters.abucket, 'which is the one it spends');
   assert.ok(r.room._roomActBytes, 'under the room\'s act byte budget (AUDIT WORLD3 A1), which already covers it');
   const town = fakeRoom('town:m9');
   const t1 = town.connect(), t2 = town.connect();

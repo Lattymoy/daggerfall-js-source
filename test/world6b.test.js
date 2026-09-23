@@ -56,7 +56,7 @@ test('WORLD6b: the Room - in a cell ANYONE hello\'d streams foes (prefixed or no
   const big = { n: 2, f: [], pad: 'p'.repeat(MAX_FRAME_BYTES * 2) };   // AUDIT WORLD6b B3: a cell's frame carries its roll (bounded) or it is junk
   await r.raw(b, JSON.stringify({ t: 'foes', data: big }));
   assert.deepEqual(ofType(a, 'foes').at(-1).data, big, 'a frame past the small cap goes by its prefix, from anyone');
-  assert.equal(b.att.junk ?? 0, 0, 'no strike counted against a cell\'s spawner'); assert.equal(b.closed, null); assert.equal(ofType(b, 'error').length, 0);
+  assert.equal(b.meters.junk ?? 0, 0, 'no strike counted against a cell\'s spawner'); assert.equal(b.closed, null); assert.equal(ofType(b, 'error').length, 0);
   // the hit: to its owner alone
   const hit = { to: 'cccc-0003', i: 1, dmg: 4, kind: 'melee' };
   await r.raw(a, JSON.stringify({ t: 'hit', data: hit }));
@@ -79,7 +79,7 @@ test('WORLD6b: the Room - in a cell ANYONE hello\'d streams foes (prefixed or no
   await d.hello(h, 'host-0001', at(1, 1)); await d.hello(j, 'join-0002', at(1, 1)); await d.hello(k, 'join-0003', at(1, 1));
   await d.raw(j, JSON.stringify({ t: 'foes', data: foesB })); await d.raw(j, FOES_PREFIX + 'x'.repeat(MAX_FRAME_BYTES * 2));
   assert.equal(ofType(h, 'foes').length + ofType(k, 'foes').length, 0, 'a joiner\'s stream reaches no one in a dungeon');
-  assert.equal(j.att.junk, 2, 'and is counted (AUDIT WORLD2 A4)');
+  assert.equal(j.meters.junk, 2, 'and is counted (AUDIT WORLD2 A4)');
   await d.raw(j, JSON.stringify({ t: 'hit', data: { to: 'join-0003', i: 1, dmg: 4, kind: 'melee' } }));
   assert.deepEqual(ofType(h, 'hit').map((m) => m.id), ['join-0002'], 'a dungeon\'s hit goes to the host, whatever `to` says'); assert.equal(ofType(k, 'hit').length, 0);
 });

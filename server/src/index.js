@@ -220,6 +220,8 @@ const newAcct = (name, now) => ({ name, seen: now, friends: [], in: [], out: [],
 /** A list of ids or of {acct} entries without one account. */
 const without = (list, acct) => (Array.isArray(list) ? list : []).filter((e) => (typeof e === 'string' ? e : e?.acct) !== acct);
 const hasEntry = (list, acct) => (Array.isArray(list) ? list : []).some((e) => (typeof e === 'string' ? e : e?.acct) === acct);
+/** AUDIT ATTACH: the quest share's interval gate in a meter's shape - its stamp is what `_spend` keeps as the bucket. */
+const questMeter = (at, now) => { const g = questShareGate(at, now); return { bucket: g.at, pass: g.pass }; };
 /** AUDIT SOC A5: the most account records an awake object keeps; over it the cache is emptied (storage is the truth). */
 const RECS_MAX = 4096;
 /** AUDIT SOC A1/A8: the most (kind, from, to) cooldown stamps an awake object keeps; over it they are emptied. */
@@ -260,7 +262,7 @@ export class Room {
     this._partyChat = null;   // CHAT-CHAN: the hub's budget for party lines (PARTY_CHAT_ROOM_HZ_MAX), apart from the room's
     this._roomFoes = null;   // AUDIT WORLD2 A5: the room's foes byte budget (the frame times its listeners)
     this._roomFoesIn = null;   // AUDIT WORLD6b A3: a cell's foes INGRESS budget, spent at the door before the parse
-    // AUDIT WORLD6b A1/A2: the hit funnel (AUDIT WORLD2 A6) is the DESTINATION socket's own bucket (`hbucket` on its attachment), not the room's
+    // AUDIT WORLD6b A1/A2: the hit funnel (AUDIT WORLD2 A6) is the DESTINATION socket's own bucket (`hbucket` among its meters), not the room's
     this._roomActs = null;   // WORLD3: the room's action-frame budget (a door, a lever, a platform moved)
     this._roomHits = null;   // AUDIT WORLD6b-iii(c) C3: the room's hit BYTES budget (a grant is a frame's worth of items)
     this._roomTrade = null;   // TRADE1: the room's trade BYTES budget (a commit is a pack's worth of items)
@@ -277,6 +279,19 @@ export class Room {
     this._cool = new Map();      // AUDIT SOC A1/A8: "kind from to" -> when a directed act last went through, on the instance (a flood keeps the object awake; a hibernation is a quiet hub); bounded at COOL_MAX
     this._dead = new Set();      // AUDIT WORLD34 D1: the sockets this object closed itself, whose leave the runtime will not deliver - reaped on the way out of every door
     this._gone = new WeakSet();  // AUDIT WORLD34 D1: and the ones whose leave has been said, so a runtime that does deliver a close says it once
+    // AUDIT ATTACH (2026-09-23): EVERY PER-SOCKET METER LIVES HERE, not on the socket's attachment - each arm's bucket
+    // and strike count, the junk count, and the funnels onto a destination (`hbucket`, `tinbucket`, `cin`). They rode
+    // the attachment, which the runtime caps at 2 KiB and refuses a write past WHOLE, and the widest place socket's
+    // (an id and an account at ID_RE's bound, a pose at its bounds, twenty arms' meters, a full funnel) was past it:
+    // a meter whose write was refused never advanced, so the arm it gated let everything through. A meter is rate
+    // state - the room's own budgets and _cool have always lived here, for the reason that holds for these: a flood
+    // keeps the object awake, and it sleeps only after a quiet spell. Every bucket refills whole in two seconds of it
+    // (the cast meter, a whole blast deep, is the slowest; the quest floor takes five), so a wake forgets nothing the
+    // quiet had not already refilled - but the act share's
+    // borrowed debt (SLAM13), which a wake forgives early: that share keeps one sender from holding the room's act
+    // budget against the others, and a room that went quiet had no others acting. The attachment keeps what a wake
+    // must recompute: the key, who the socket is, where it stands, the hello's stamp and the room's marks.
+    this._meters = new WeakMap();   // ws -> its meters (_meterOf)
     try {
       // the runtime answers the client's ping while the object sleeps
       if (state.setWebSocketAutoResponse && typeof WebSocketRequestResponsePair === 'function') state.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'));
@@ -290,9 +305,10 @@ export class Room {
     const [client, server] = Object.values(pair);
     // hibernation API: the object may sleep between messages; every
     // socket carries its own state in the attachment - the room's key
-    // included - and the look sits in storage under the id
+    // included - and the look sits in storage under the id (its meters
+    // are the instance's: AUDIT ATTACH)
     this.state.acceptWebSocket(server);
-    server.serializeAttachment({ key, id: null, name: null, pose: null, bucket: null, drops: 0 });
+    server.serializeAttachment({ key, id: null, name: null, pose: null });
     this._idx = null;
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -431,104 +447,77 @@ export class Room {
       if (page.size < SWEEP_PAGE) return out;
     }
   }
+  /** AUDIT ATTACH: one socket's meters - its arms' buckets and strike counts, its junk, the funnels onto it - made on
+   *  first use and gone with the socket (a WeakMap) or with a wake (the constructor's note says why that is safe). */
+  _meterOf(ws) { let m = this._meters.get(ws); if (!m) this._meters.set(ws, m = {}); return m; }
+  /** AUDIT ATTACH: ONE ARM'S METER, SPENT - its bucket (`bucketKey`) through `gate`; over the rate the frame is dropped
+   *  and a strike counted (`strikesKey`), a pass forgives them, and past `max` the socket is closed with `why`. True
+   *  when the frame is taken. Every meter below is this one with its own gate, fields and words. */
+  _spend(ws, now, gate, bucketKey, strikesKey, why, max = DROP_STRIKES_MAX) {
+    const m = this._meterOf(ws);
+    const g = gate(m[bucketKey], now);
+    m[bucketKey] = g.bucket;
+    m[strikesKey] = g.pass ? 0 : (m[strikesKey] ?? 0) + 1;
+    if (!g.pass && m[strikesKey] > max) this._refuse(ws, why);
+    return g.pass;
+  }
   /** The frame gate (A8): the socket's pose bucket - a pose, a ping and (AUDIT WORLD A1) a world frame spend it; over
    *  the rate the frame is dropped and a strike counted, past DROP_STRIKES_MAX the socket is closed. Returns the
    *  attachment as written back, or null when the frame is not to be taken. */
   /** SLAM8 (AUDIT SLAM): `patch` is applied whatever the gate says (the latest pose is kept even when it is not
    *  relayed); `passPatch` ONLY when the frame is really let through. Anything that counts what the room DID - the
-   *  pose fan's `turn` - belongs in the second, or it counts what the room was merely told. */
+   *  pose fan's `turn` - belongs in the second, or it counts what the room was merely told. AUDIT ATTACH: the bucket
+   *  and its strikes are the socket's meters; the attachment is written only when one of its own fields moved. */
   _meter(ws, a, now, patch = {}, passPatch = {}) {
-    const gate = poseGate(a.bucket, now);
-    const drops = gate.pass ? 0 : (a.drops ?? 0) + 1;
-    const next = { ...a, ...patch, ...(gate.pass ? passPatch : {}), bucket: gate.bucket, drops };
-    this._setAttach(ws, next);
-    if (!gate.pass) { if (drops > DROP_STRIKES_MAX) this._refuse(ws, 'too many poses'); return null; }
-    return next;
+    const pass = this._spend(ws, now, poseGate, 'bucket', 'drops', 'too many poses');
+    const write = pass ? { ...patch, ...passPatch } : patch;
+    const next = Object.keys(write).length ? { ...a, ...write } : a;
+    if (next !== a) this._setAttach(ws, next);
+    return pass ? next : null;
   }
-  /** WORLD6b-iii(e): the asks' own bucket (WHO_HZ_MAX), the same strikes - a question beside the poses, never starving them. */
-  _meterWho(ws, a, now) {
-    const gate = whoGate(a.wbucket, now);
-    const wdrops = gate.pass ? 0 : (a.wdrops ?? 0) + 1;
-    const next = { ...a, wbucket: gate.bucket, wdrops };
-    this._setAttach(ws, next);
-    if (!gate.pass) { if (wdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many asks'); return null; }
-    return next;
-  }
+  /** WORLD6b-iii(e): the asks' own bucket (WHO_HZ_MAX), the same strikes - a question beside the poses, never starving
+   *  them. Each meter below answers as `_meter` does: the attachment, or null when the frame is not to be taken. */
+  _meterWho(ws, a, now) { return this._spend(ws, now, whoGate, 'wbucket', 'wdrops', 'too many asks') ? a : null; }
   /** SOC1: the social acts' own bucket (SOCIAL_HZ_MAX), the same strikes. */
-  _meterSocial(ws, a, now) {
-    const gate = socialGate(a.sbucket, now);
-    const sdrops = gate.pass ? 0 : (a.sdrops ?? 0) + 1;
-    const next = { ...a, sbucket: gate.bucket, sdrops };
-    this._setAttach(ws, next);
-    if (!gate.pass) { if (sdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many social acts'); return null; }
-    return next;
-  }
+  _meterSocial(ws, a, now) { return this._spend(ws, now, socialGate, 'sbucket', 'sdrops', 'too many social acts') ? a : null; }
   /** SOC1: the party poses' own bucket (PARTY_HZ_MAX), the same strikes. */
-  _meterParty(ws, a, now) {
-    const gate = partyGate(a.pbucket, now);
-    const pdrops = gate.pass ? 0 : (a.pdrops ?? 0) + 1;
-    const next = { ...a, pbucket: gate.bucket, pdrops };
-    this._setAttach(ws, next);
-    if (!gate.pass) { if (pdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many party poses'); return null; }
-    return next;
-  }
+  _meterParty(ws, a, now) { return this._spend(ws, now, partyGate, 'pbucket', 'pdrops', 'too many party poses') ? a : null; }
   /** QUEST1: a quest share's own cooldown (questShareGate - a plain interval, not a token bucket; see its own note
    *  in wire.js for why), the same strikes - a rare, deliberate act, so this drops far sooner in practice than the
    *  poses ever would, and a flood off it is a bug or an abusive client either way. */
-  _meterQuest(ws, a, now) {
-    const gate = questShareGate(a.qgateAt, now);
-    const qdrops = gate.pass ? 0 : (a.qdrops ?? 0) + 1;
-    const next = { ...a, qgateAt: gate.at, qdrops };
-    this._setAttach(ws, next);
-    if (!gate.pass) { if (qdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many quest shares'); return null; }
-    return next;
-  }
+  _meterQuest(ws, a, now) { return this._spend(ws, now, questMeter, 'qgateAt', 'qdrops', 'too many quest shares') ? a : null; }
   /** TRADE1: the trade frames' own bucket (TRADE_HZ_MAX), the same strikes - an offer beside the poses, never starving them. */
-  _meterTrade(ws, a, now) {
-    const gate = tradeGate(a.tradeBucket, now);
-    const tdrops = gate.pass ? 0 : (a.tdrops ?? 0) + 1;
-    const next = { ...a, tradeBucket: gate.bucket, tdrops };
-    this._setAttach(ws, next);
-    if (!gate.pass) { if (tdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many trade frames'); return null; }
-    return next;
-  }
-  /** ALLY-CAST: the cast frames' own bucket (CAST_HZ_MAX), the trade meter's shape. */
-  /** CHAT-CHAN: the strikes are the cast's OWN (`castDrops`) - they were `cdrops`, the chat gate's own field, so once a
-   *  place room carried Local chat a pass on either reset the other's strikes, and twenty dropped casts followed by one
-   *  over-rate line closed the socket as 'too many lines'. */
-  _meterCast(ws, a, now) {
-    const gate = castGate(a.castBucket, now);
-    const castDrops = gate.pass ? 0 : (a.castDrops ?? 0) + 1;
-    const next = { ...a, castBucket: gate.bucket, castDrops };
-    this._setAttach(ws, next);
-    if (!gate.pass) { if (castDrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many cast frames'); return null; }
-    return next;
-  }
+  _meterTrade(ws, a, now) { return this._spend(ws, now, tradeGate, 'tradeBucket', 'tdrops', 'too many trade frames') ? a : null; }
+  /** ALLY-CAST: the cast frames' own bucket (CAST_HZ_MAX), the trade meter's shape. CHAT-CHAN: the strikes are the
+   *  cast's OWN (`castDrops`) - they were `cdrops`, the chat gate's own field, so once a place room carried Local chat
+   *  a pass on either reset the other's strikes, and twenty dropped casts followed by one over-rate line closed the
+   *  socket as 'too many lines'. */
+  _meterCast(ws, a, now) { return this._spend(ws, now, castGate, 'castBucket', 'castDrops', 'too many cast frames') ? a : null; }
   /** WORLD3: the action frames' own bucket (ACT_HZ_MAX), the same strikes - a door beside the poses, never starving them. */
-  _meterActs(ws, a, now) {
-    const gate = actGate(a.abucket, now);
-    const adrops = gate.pass ? 0 : (a.adrops ?? 0) + 1;
-    const next = { ...a, abucket: gate.bucket, adrops };
-    this._setAttach(ws, next);
-    if (!gate.pass) { if (adrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many acts'); return null; }
-    return next;
-  }
+  _meterActs(ws, a, now) { return this._spend(ws, now, actGate, 'abucket', 'adrops', 'too many acts') ? a : null; }
   /** WORLD2: the foes stream's own bucket (FOES_HZ_MAX), the same strikes - a stream beside the poses, never starving them. */
+  _meterFoes(ws, a, now) { return this._spend(ws, now, foesGate, 'fbucket', 'fdrops', 'too many foes') ? a : null; }
   /** AUDIT WORLD2 A4's instrument, one home (AUDIT WORLD6b A1/B3): a frame that should not have been sent is counted
-   *  against its socket, and a stream of them is struck out. */
+   *  against its socket, and a stream of them is struck out. AUDIT ATTACH: a count among its meters, so no caller can
+   *  write it back over a stale attachment (CHAT-CHAN's party line did, and refunded the chat token its gate spent). */
+  _junk(ws) {
+    const m = this._meterOf(ws);
+    m.junk = (m.junk ?? 0) + 1;
+    if (m.junk > DROP_STRIKES_MAX) this._refuse(ws, 'too many frames');
+  }
   /** CHAT-CHAN + DICE1: A LINE OUT, on the channel it was said on - the chat's and the roll's one fan. `frame` is the
    *  relay's own record of the line; the sender hears it back (the receipt).
    *
    *  A PARTY'S LINE (kurkku: "party chat") is said on the hub link and heard by the party's members alone - every tab
    *  of each. The hub is the one room that knows the seats; anywhere else a party line has no party to reach, and it
-   *  is junk rather than a line for the room (struck off the attachment as it stands NOW - the caller's gate wrote it).
+   *  is junk rather than a line for the room.
    *  A seat gone since the client last looked says nothing to anyone. Its budget is the parties' own
    *  (PARTY_CHAT_ROOM_HZ_MAX), never the room's: AUDIT CHAT A2 priced that one for a fan of everyone online, and a
    *  party's is its seats. EVERY OTHER LINE is the room's: its budget, over which a line is dropped and nobody is
    *  struck, and its fan - everyone in a channel, those in range in a place. */
   async _sayLine(ws, a, ch, frame, now) {
     if (ch === 'party') {
-      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, this._attach(ws)); return; }
+      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws); return; }
       if (!a.party) return;
       const budget = tokenGate(this._partyChat, now, PARTY_CHAT_ROOM_HZ_MAX);
       this._partyChat = budget.bucket;
@@ -549,19 +538,6 @@ export class Room {
       if (!b.id) continue;
       if (other === ws || chat || inRange(a.key ?? '', a.pose, b.pose)) this._send(other, out);   // the sender hears its own line back: that is the receipt
     }
-  }
-  _junk(ws, a) {
-    const junk = (a.junk ?? 0) + 1;
-    this._setAttach(ws, { ...a, junk });
-    if (junk > DROP_STRIKES_MAX) this._refuse(ws, 'too many frames');
-  }
-  _meterFoes(ws, a, now) {
-    const gate = foesGate(a.fbucket, now);
-    const fdrops = gate.pass ? 0 : (a.fdrops ?? 0) + 1;
-    const next = { ...a, fbucket: gate.bucket, fdrops };
-    this._setAttach(ws, next);
-    if (!gate.pass) { if (fdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many foes'); return null; }
-    return next;
   }
 
   /** AUDIT WORLD A3: a world room's memory is forgotten WORLD_TTL_MS after the room last drained - armed on the
@@ -775,9 +751,7 @@ export class Room {
       if (foesLike && isCellRoom(a.key)) { const ingress = byteGate(this._roomFoesIn, Date.now(), message.length, FOES_ROOM_BYTES_PER_S); this._roomFoesIn = ingress.bucket; if (!ingress.pass) return; }
       if (!(foesLike && isCellRoom(a.key)) && (!isWorldRoom(a.key) || a.id !== this._hostOf())) {   // WORLD6b: a cell's foes frame is anyone's
         // anyone but the host: ignored unparsed (a handover races) - and counted, so a stream of them is struck out (A4)
-        const junk = (a.junk ?? 0) + 1;
-        this._setAttach(ws, { ...a, junk });
-        if (junk > DROP_STRIKES_MAX) this._refuse(ws, 'too many frames');
+        this._junk(ws);
         return;
       }
       doored = foesLike ? 'foes' : 'world';
@@ -950,7 +924,7 @@ export class Room {
       // AUDIT WORLD6b B3: a cell's frame carries at most CELL_FRAME_RECORDS_MAX records - each one MINTS a foe at every
       // reader, and a dungeon's bound (`i >= _layoutFoes`, a layout every client built) has no cell equivalent; over
       // it the frame is junk, counted (the relay still reads nothing inside a record)
-      if (cell && (!Array.isArray(m.data.f) || m.data.f.length > CELL_FRAME_RECORDS_MAX)) { this._junk(ws, a); return; }
+      if (cell && (!Array.isArray(m.data.f) || m.data.f.length > CELL_FRAME_RECORDS_MAX)) { this._junk(ws); return; }
       // AUDIT WORLD6b A4: a cell's fan is RANGED as the pose's is (RANGE_PIXELS inside a sixteen-pixel cell) - a foe
       // nobody near me can see stands nowhere on my screen; a dungeon's reaches every socket in the place
       const listeners = [...this._all()].filter(([other, b]) => other !== ws && b.id && (!cell || inRange(a.key, a.pose, b.pose)));
@@ -980,14 +954,15 @@ export class Room {
       // peer gone, or a name a hostile client made up) delivers nothing, buys nothing, and is counted as junk (AUDIT
       // WORLD2 A4's instrument), so a stream of them is struck out; a world room's host is always a socket
       const target = [...this._all()].find(([other, b]) => other !== ws && b.id === host) ?? null;
-      if (!target) { if (cell) this._junk(ws, a); return; }
+      if (!target) { if (cell) this._junk(ws); return; }
       // A6: the funnel onto the destination's ONE socket - all strikers together, HIT_ROOM_HZ_MAX a second; over it
-      // the blow is dropped and nobody struck. AUDIT WORLD6b A1/A2: the budget is the DESTINATION's (its attachment's
-      // own bucket), not the room's - in a cell the blows go to many owners, and one room-wide bucket let six honest
-      // fights, or one stream of unroutable blows, silence every other blow in the country
-      const [tws, tb] = target;
-      const funnel = tokenGate(tb.hbucket ?? null, now, HIT_ROOM_HZ_MAX);
-      this._setAttach(tws, { ...tb, hbucket: funnel.bucket });
+      // the blow is dropped and nobody struck. AUDIT WORLD6b A1/A2: the budget is the DESTINATION's (its own bucket,
+      // among its meters), not the room's - in a cell the blows go to many owners, and one room-wide bucket let six
+      // honest fights, or one stream of unroutable blows, silence every other blow in the country
+      const [tws] = target;
+      const tm = this._meterOf(tws);
+      const funnel = tokenGate(tm.hbucket ?? null, now, HIT_ROOM_HZ_MAX);
+      tm.hbucket = funnel.bucket;
       if (!funnel.pass) return;
       const out = JSON.stringify({ t: 'hit', id: a.id, data: m.data });
       // AUDIT WORLD6b-iii(c) C3: the room's hit bytes - a grant carries a corpse's pile, so the arm counts bytes as the
@@ -1009,20 +984,22 @@ export class Room {
       a = this._meterTrade(ws, a, now); if (!a) return;
       if (isChatRoom(a.key) || isSocialRoom(a.key)) return;
       const to = m.data.to;
-      if (to === a.id) { this._junk(ws, a); return; }
+      if (to === a.id) { this._junk(ws); return; }
       const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;
       if (!target) return;
       // the funnel onto the destination's ONE socket - every sender together (the hit arm's A6 law, its own bucket)
-      const [tws, tb] = target;
-      const funnel = tokenGate(tb.tinbucket ?? null, now, TRADE_ROOM_HZ_MAX);
-      this._setAttach(tws, { ...tb, tinbucket: funnel.bucket });
+      const [tws] = target;
+      const tm = this._meterOf(tws);
+      const funnel = tokenGate(tm.tinbucket ?? null, now, TRADE_ROOM_HZ_MAX);
+      tm.tinbucket = funnel.bucket;
       if (!funnel.pass) return;
       const out = JSON.stringify({ t: 'trade', id: a.id, data: m.data });
       // AUDIT DROPS B3: the byte budget is the SENDER's, not the room's - a room-wide bucket let two sockets at
       // TRADE_HZ_MAX x TRADE_FRAME_MAX spend the whole room and drop an honest commit that had already cost its
       // sender their goods (LOOT-DUP: sent means gone). Per sender, a flood only starves the flooder.
-      const bytes = byteGate(a.tbytes ?? null, now, out.length, TRADE_ROOM_BYTES_PER_S);
-      this._setAttach(ws, { ...a, tbytes: bytes.bucket });
+      const mine = this._meterOf(ws);
+      const bytes = byteGate(mine.tbytes ?? null, now, out.length, TRADE_ROOM_BYTES_PER_S);
+      mine.tbytes = bytes.bucket;
       if (!bytes.pass) return;
       this._send(tws, out);
       return;
@@ -1036,14 +1013,14 @@ export class Room {
       a = this._meterCast(ws, a, now); if (!a) return;
       if (isChatRoom(a.key) || isSocialRoom(a.key)) return;
       const to = m.data.to;
-      if (to === a.id) { this._junk(ws, a); return; }
+      if (to === a.id) { this._junk(ws); return; }
       const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;
       if (!target) return;
-      const [tws, tb] = target;
+      const [tws] = target;
       // AUDIT ALLY-CAST B2: the funnel onto the destination is PER SENDER (wire.js CAST_DEST_SENDERS_MAX) - one bucket
       // for everyone let five strangers starve a mate's heals, and this relay cannot tell a mate from a stranger.
       // The stalest sender's slot goes to a newcomer, so a mate always finds a fresh bucket unless they spam it.
-      const cin = Array.isArray(tb.cin) ? tb.cin.map((c) => ({ ...c })) : [];
+      const cin = this._meterOf(tws).cin ??= [];
       let slot = cin.find((c) => c.id === a.id) ?? null;
       if (!slot) {
         if (cin.length >= CAST_DEST_SENDERS_MAX) { cin.sort((x, y) => (x.b?.at ?? 0) - (y.b?.at ?? 0)); cin.shift(); }
@@ -1051,7 +1028,6 @@ export class Room {
       }
       const funnel = tokenGate(slot.b, now, CAST_HZ_MAX);
       slot.b = funnel.bucket;
-      this._setAttach(tws, { ...tb, cin });
       if (!funnel.pass) return;
       this._send(tws, JSON.stringify({ t: 'cast', id: a.id, data: m.data }));
       return;
@@ -1077,16 +1053,17 @@ export class Room {
       // SLAM13 (AUDIT SLAM A1): THE SENDER'S OWN SHARE FIRST. A borrowing room bucket is one that ONE sender can hold
       // in debt on purpose - the largest act into a full room is four seconds of the room's rate per frame, at
       // ACT_HZ_MAX - and every other door in the room was refused while it did. So the fan is charged to the sender's
-      // own borrowing bucket (`abytes`, ACT_SENDER_BYTES_PER_S, on the attachment) before the room's, and a frame the
+      // own borrowing bucket (`abytes`, ACT_SENDER_BYTES_PER_S, among its meters) before the room's, and a frame the
       // sender's bucket refuses charges the room nothing; a frame the room refuses charges the sender nothing either,
       // so an honest sender behind a flooder is not left paying for a door that never opened.
       const cost = out.length * listeners.length;
-      const mine = byteGate(a.abytes, now, cost, ACT_SENDER_BYTES_PER_S, true);
-      if (!mine.pass) { this._setAttach(ws, { ...a, abytes: mine.bucket }); return; }
+      const meters = this._meterOf(ws);
+      const mine = byteGate(meters.abytes, now, cost, ACT_SENDER_BYTES_PER_S, true);
+      if (!mine.pass) { meters.abytes = mine.bucket; return; }
       const bytes = byteGate(this._roomActBytes, now, cost, ACT_ROOM_BYTES_PER_S, true);
       this._roomActBytes = bytes.bucket;
-      if (!bytes.pass) { this._setAttach(ws, { ...a, abytes: { bytes: mine.bucket.bytes + cost, at: now } }); return; }   // refilled, not charged
-      this._setAttach(ws, { ...a, abytes: mine.bucket });
+      if (!bytes.pass) { meters.abytes = { bytes: mine.bucket.bytes + cost, at: now }; return; }   // refilled, not charged
+      meters.abytes = mine.bucket;
       for (const [other] of listeners) this._send(other, out);
       return;
     }
@@ -1096,7 +1073,7 @@ export class Room {
       // (over it 'busy', nobody struck); what it did or why not is the hub's answer, never a close
       const now = Date.now();
       a = this._meterSocial(ws, a, now); if (!a) return;
-      if (!isSocialRoom(a.key)) { this._junk(ws, a); return; }
+      if (!isSocialRoom(a.key)) { this._junk(ws); return; }
       const budget = tokenGate(this._roomSocial, now, SOCIAL_ROOM_HZ_MAX);
       this._roomSocial = budget.bucket;
       if (!budget.pass) { this._sayError(ws, 'busy'); return; }
@@ -1112,7 +1089,7 @@ export class Room {
       // door's projection
       const now = Date.now();
       a = this._meterParty(ws, a, now); if (!a) return;
-      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }
+      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws); return; }
       this._setAttach(ws, { ...a, pm: { ...m.p, at: now } });
       if (!a.party) return;
       if (this._speaker(a.acct) !== ws) return;   // AUDIT SOC B9: another tab of mine speaks for the seat - this pose is kept, fanned to nobody
@@ -1135,7 +1112,7 @@ export class Room {
       // - meter again only if it did not, so a big quest-share never spends
       // two tokens for one message.
       if (doored !== 'quest') { a = this._meterQuest(ws, a, now); if (!a) return; }
-      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }   // the hub alone, an account alone - the party arm's own law
+      if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws); return; }   // the hub alone, an account alone - the party arm's own law
       // AUDIT DROPS C3: a share with nobody to reach (no party; another tab of mine speaks for the seat - AUDIT SOC
       // B9) spends nothing of the room's budget
       if (!a.party) return;
@@ -1171,7 +1148,7 @@ export class Room {
       const id = whoIdOf(m);
       // AUDIT WORLD6b-iii(e) B3: junk is what a CORRECT client never sends - one's own name (the parser refused a bad
       // one); a name that left between the frame that asked and the ask is the honest race, and answers nothing
-      if (!id || id === a.id) { this._junk(ws, a); return; }
+      if (!id || id === a.id) { this._junk(ws); return; }
       // B1: the room's own budget, every asker together - a room-wide bound is what every other arm carries.
       // SLAM9: spent BEFORE the scan for the target, not after it. The scan is a fresh SOCKETS_MAX-entry array and a
       // linear search, and it ran for every ask the budget was about to refuse - so the "room budget" bounded the
@@ -1261,10 +1238,7 @@ export class Room {
     if (m.t === 'chat') {
       // CHAT1: the chat gate, its own bucket and strikes (a talker is not a mover)
       const now = Date.now();
-      const gate = chatGate(a.cbucket, now);
-      const cdrops = gate.pass ? 0 : (a.cdrops ?? 0) + 1;
-      this._setAttach(ws, { ...a, cbucket: gate.bucket, cdrops });
-      if (!gate.pass) { if (cdrops > CHAT_STRIKES_MAX) this._refuse(ws, 'too many lines'); return; }   // over the rate: dropped, never queued
+      if (!this._spend(ws, now, chatGate, 'cbucket', 'cdrops', 'too many lines', CHAT_STRIKES_MAX)) return;   // over the rate: dropped, never queued
       // MOD1: A MUTED PLAYER'S LINE GOES NOWHERE, and they are told why
       // and until when - after the rate gate, so a muted player hammering
       // the key is struck out exactly as anyone else would be, and a
@@ -1288,10 +1262,7 @@ export class Room {
       // talk past the chat gate, nor talking a way to roll past this one.
       // A muted player's roll goes nowhere, as their line does.
       const now = Date.now();
-      const gate = rollGate(a.rollBucket, now);
-      const rollDrops = gate.pass ? 0 : (a.rollDrops ?? 0) + 1;
-      this._setAttach(ws, { ...a, rollBucket: gate.bucket, rollDrops });
-      if (!gate.pass) { if (rollDrops > CHAT_STRIKES_MAX) this._refuse(ws, 'too many rolls'); return; }
+      if (!this._spend(ws, now, rollGate, 'rollBucket', 'rollDrops', 'too many rolls', CHAT_STRIKES_MAX)) return;
       if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }
       const r = rollDice({ n: m.n, m: m.m, k: m.k }, rand32);
       if (!r) return;
@@ -1321,8 +1292,9 @@ export class Room {
       const now = Date.now();
       // ITS OWN BUCKET, well under chat's. A player's line reaches a
       // room; this reaches every player in the game.
-      const gate = redGate(a.rbucket, now);
-      this._setAttach(ws, { ...a, rbucket: gate.bucket });
+      const meters = this._meterOf(ws);
+      const gate = redGate(meters.rbucket, now);
+      meters.rbucket = gate.bucket;
       if (!gate.pass) return;
       // A LINE NOBODY IS SPEAKING: no id, no name. Its own frame type
       // rather than a flag on a chat line, because a flag on a chat
@@ -1344,8 +1316,9 @@ export class Room {
       // name and the badge - one grant list in the service's config,
       // one signature - and this arm adds no second way to be trusted.
       const now = Date.now();
-      const gate = muteGate(a.mbucket, now);
-      this._setAttach(ws, { ...a, mbucket: gate.bucket });
+      const meters = this._meterOf(ws);
+      const gate = muteGate(meters.mbucket, now);
+      meters.mbucket = gate.bucket;
       if (!gate.pass) return;
       await this._loadKey();
       if (!this._verifyKey) return;

@@ -44,30 +44,30 @@ test('AUDIT WORLD6b A1/A2: the Room - a cell\'s blow to a `to` nobody carries de
   const hitTo = (to) => JSON.stringify({ t: 'hit', data: { to, i: 1, dmg: 1, kind: 'melee' } });
   // A1: unroutable - junk, no token spent
   for (let i = 0; i < 5; i++) await r.raw(a, hitTo('zzzz-0009'));
-  assert.equal(a.att.junk, 5, 'A1: five blows to nobody, five junk'); assert.equal(a.closed, null);
-  assert.equal(r.room._attach(b).hbucket ?? null, null, 'and no bucket of anyone\'s was touched'); assert.equal(r.room._attach(c).hbucket ?? null, null);
+  assert.equal(a.meters.junk, 5, 'A1: five blows to nobody, five junk'); assert.equal(a.closed, null);
+  assert.equal(b.meters.hbucket ?? null, null, 'and no bucket of anyone\'s was touched'); assert.equal(c.meters.hbucket ?? null, null);
   await r.raw(a, hitTo('cccc-0003'));
   assert.equal(ofType(c, 'hit').length, 1, 'an honest blow after them lands: nothing was spent');
   // A2: per destination - c's bucket spent, b still hears
-  r.room._setAttach(c, { ...r.room._attach(c), hbucket: { tokens: 0, at: Date.now() + 1000 } });   // stamped a second ahead: no refill under load
+  r.room._meterOf(c).hbucket = { tokens: 0, at: Date.now() + 1000 };   // its own meter (AUDIT ATTACH), stamped a second ahead: no refill under load
   await r.raw(a, hitTo('cccc-0003')); await r.raw(a, hitTo('bbbb-0002'));
   assert.equal(ofType(c, 'hit').length, 1, 'A2: over C\'s budget - dropped'); assert.equal(ofType(b, 'hit').length, 1, 'B\'s own budget is untouched: the blow lands');
   assert.equal(a.closed, null, 'and no strike for a dropped honest blow');
-  r.room._setAttach(c, { ...r.room._attach(c), hbucket: { tokens: 0, at: Date.now() - 1000 } });
+  r.room._meterOf(c).hbucket = { tokens: 0, at: Date.now() - 1000 };
   await r.raw(a, hitTo('cccc-0003')); assert.equal(ofType(c, 'hit').length, 2, 'refilled: forwarded');
   assert.equal(HIT_ROOM_HZ_MAX, 60);
   // A1: a stream of unroutable blows is struck out
   const z = r.connect(); await r.hello(z, 'zzzz-0001', at(1, 1));
   for (let i = 0; i < 30; i++) await r.raw(z, hitTo('nobody-0000'));
-  assert.ok(z.att.junk >= 10 && z.att.junk <= 30, `every unroutable blow the pose bucket lets through is junk (${z.att.junk}; the rest are rate-dropped, POSE_HZ_MAX a second)`);
-  r.room._setAttach(z, { ...r.room._attach(z), junk: DROP_STRIKES_MAX, bucket: null });
+  assert.ok(z.meters.junk >= 10 && z.meters.junk <= 30, `every unroutable blow the pose bucket lets through is junk (${z.meters.junk}; the rest are rate-dropped, POSE_HZ_MAX a second)`);
+  Object.assign(r.room._meterOf(z), { junk: DROP_STRIKES_MAX, bucket: null });   // its meters (AUDIT ATTACH): the count at the bound, the pose bucket full
   await r.raw(z, hitTo('nobody-0000'));
   assert.equal(z.closed?.reason, 'too many frames', 'struck out past DROP_STRIKES_MAX (AUDIT WORLD2 A4\'s instrument)');
   // the dungeon host's funnel is the host socket's own
   const d = fakeRoom('dungeon:m187'); const h = d.connect(), j = d.connect();
   await d.hello(h, 'host-0001', at(1, 1)); await d.hello(j, 'join-0002', at(1, 1));
   await d.raw(j, JSON.stringify({ t: 'hit', data: { i: 0, dmg: 1, kind: 'melee' } })); assert.equal(ofType(h, 'hit').length, 1);
-  assert.ok(d.room._attach(h).hbucket, 'the host\'s own bucket'); assert.equal(d.room._attach(j).hbucket ?? null, null, 'the striker\'s untouched');
+  assert.ok(h.meters.hbucket, 'the host\'s own bucket'); assert.equal(j.meters.hbucket ?? null, null, 'the striker\'s untouched');
 });
 
 test('AUDIT WORLD6b A3/A4/B3: the Room - a cell\'s frame past CELL_FRAME_RECORDS_MAX, or without its roll, is junk (counted); the fan is RANGED as the pose\'s is (a socket ten pixels off hears no foes and no poses); the ingress budget drops a frame unread with no strike; a dungeon\'s fan reaches everyone', async () => {
@@ -76,17 +76,17 @@ test('AUDIT WORLD6b A3/A4/B3: the Room - a cell\'s frame past CELL_FRAME_RECORDS
   await r.hello(a, 'aaaa-0001', at(1, 1)); await r.hello(b, 'bbbb-0002', at(2, 1)); await r.hello(far, 'ffff-0003', at(1 + RANGE_PIXELS + 7, 1));
   const frame = (n, f) => JSON.stringify({ t: 'foes', data: { n, k: 'world:3,12', full: 1, f } });
   await r.raw(a, frame(1, new Array(CELL_FRAME_RECORDS_MAX + 1).fill({ i: 1 })));
-  assert.equal(a.att.junk, 1, 'B3: sixty-five records is junk'); assert.equal(ofType(b, 'foes').length, 0, 'and reaches nobody');
+  assert.equal(a.meters.junk, 1, 'B3: sixty-five records is junk'); assert.equal(ofType(b, 'foes').length, 0, 'and reaches nobody');
   await r.raw(a, JSON.stringify({ t: 'foes', data: { n: 2, k: 'world:3,12' } }));
-  assert.equal(a.att.junk, 2, 'no roll at all is junk');
+  assert.equal(a.meters.junk, 2, 'no roll at all is junk');
   await r.raw(a, frame(3, new Array(CELL_FRAME_RECORDS_MAX).fill({ i: 1 })));
-  assert.equal(a.att.junk, 2, 'sixty-four is the law'); assert.equal(ofType(b, 'foes').length, 1, 'A4: the neighbour hears it'); assert.equal(ofType(far, 'foes').length, 0, 'A4: ten pixels off hears nothing');
+  assert.equal(a.meters.junk, 2, 'sixty-four is the law'); assert.equal(ofType(b, 'foes').length, 1, 'A4: the neighbour hears it'); assert.equal(ofType(far, 'foes').length, 0, 'A4: ten pixels off hears nothing');
   await r.pose(a, at(1, 1)); assert.equal(ofType(b, 'pose').length, 1); assert.equal(ofType(far, 'pose').length, 0, 'as the pose fan already had it');
   // A3: the ingress budget, spent at the door before the parse
   r.room._roomFoesIn = { bytes: 0, at: Date.now() + 1000 };   // stamped a second ahead: no refill under load
   const big = JSON.stringify({ t: 'foes', data: { n: 4, k: 'world:3,12', full: 1, f: [], pad: 'p'.repeat(MAX_FRAME_BYTES * 2) } });
   await r.raw(a, big);
-  assert.equal(ofType(b, 'foes').length, 1, 'A3: over the ingress budget - dropped unread'); assert.equal(a.att.junk, 2, 'no junk counted'); assert.equal(a.closed, null, 'no strike');
+  assert.equal(ofType(b, 'foes').length, 1, 'A3: over the ingress budget - dropped unread'); assert.equal(a.meters.junk, 2, 'no junk counted'); assert.equal(a.closed, null, 'no strike');
   r.room._roomFoesIn = { bytes: 0, at: Date.now() - 1000 };
   await r.raw(a, big); assert.equal(ofType(b, 'foes').length, 2, 'refilled: through');
   assert.equal(FOES_ROOM_BYTES_PER_S, 4 * 1024 * 1024);
@@ -94,7 +94,7 @@ test('AUDIT WORLD6b A3/A4/B3: the Room - a cell\'s frame past CELL_FRAME_RECORDS
   const d = fakeRoom('dungeon:m187'); const h = d.connect(), j = d.connect();
   await d.hello(h, 'host-0001', at(1, 1)); await d.hello(j, 'join-0002', at(40, 40));
   await d.raw(h, JSON.stringify({ t: 'foes', data: { seq: 1, f: new Array(CELL_FRAME_RECORDS_MAX + 1).fill({ i: 1 }) } }));
-  assert.equal(ofType(j, 'foes').length, 1, 'a dungeon\'s frame is neither ranged nor bounded by the cell\'s law'); assert.equal(h.att.junk ?? 0, 0);
+  assert.equal(ofType(j, 'foes').length, 1, 'a dungeon\'s frame is neither ranged nor bounded by the cell\'s law'); assert.equal(h.meters.junk ?? 0, 0);
 });
 
 test('AUDIT WORLD6b A6/A7/A8: the session - a blow to an owner the roster does not hold goes nowhere; a stranger\'s frame is not the world; the pool\'s blow carries the cell key and the owner refuses another cell\'s', () => {

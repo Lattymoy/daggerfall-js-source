@@ -35,17 +35,17 @@
     "tests": ["test/chatchan.test.js"]
   },
   {
-    "name": "CC-junk-writes-the-stale-attachment",
+    "name": "CC-junk-rewrites-the-meters",
     "file": "server/src/index.js",
-    "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, this._attach(ws)); return; }",
-    "new": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, a); return; }",
+    "old": "    const m = this._meterOf(ws);\n    m.junk = (m.junk ?? 0) + 1;",
+    "new": "    const m = { junk: this._meterOf(ws).junk };\n    this._meters.set(ws, m);\n    m.junk = (m.junk ?? 0) + 1;",
     "tests": ["test/chatchan.test.js"]
   },
   {
     "name": "CC-junk-not-struck",
     "file": "server/src/index.js",
-    "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws, this._attach(ws)); return; }",
-    "new": "if (!isSocialRoom(a.key) || !a.acct) return;",
+    "old": "if (!isSocialRoom(a.key) || !a.acct) { this._junk(ws); return; }\n      if (!a.party) return;",
+    "new": "if (!isSocialRoom(a.key) || !a.acct) return;\n      if (!a.party) return;",
     "tests": ["test/chatchan.test.js"]
   },
   {
