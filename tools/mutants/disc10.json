@@ -547,5 +547,86 @@
     "tests": [
       "test/disc10_lycan.test.js"
     ]
+  },
+  {
+    "name": "DISC10-E-dungeon-hit-sound-reads-the-claws",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "audio.play3d(hitSoundFor(playerWeapon.strikingWeapon), foe.ai.feet,",
+    "new": "audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet,",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-street-hit-sound-reads-the-claws",
+    "file": "src/scenes/world.js",
+    "old": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.strikingWeapon),",
+    "new": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon),",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-exterior-hit-sound-reads-the-claws",
+    "file": "src/scenes/exterior.js",
+    "old": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.strikingWeapon),",
+    "new": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon),",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-interior-hit-sound-reads-the-claws",
+    "file": "src/scenes/worldModes.js",
+    "old": "const interiorHitSound = (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.strikingWeapon),",
+    "new": "const interiorHitSound = (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.weapon),",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-interior-foe-pool-reads-the-foe-as-a-weapon",
+    "file": "src/scenes/worldModes.js",
+    "old": "        makeInView(proj, view, multiply), interiorHitSound)) {\n        tallySwingSkills(",
+    "new": "        makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), ENEMY_HIT_VOLUME))) {\n        tallySwingSkills(",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-pool-zero-damage-reads-the-claws",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          weapon: playerWeapon.strikingWeapon, arrowHit: false,",
+    "new": "          weapon: playerWeapon.weapon, arrowHit: false,",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-guard-zero-damage-reads-the-claws",
+    "file": "src/scenes/cityGuards.js",
+    "old": "          weapon: playerWeapon.strikingWeapon, arrowHit: false,",
+    "new": "          weapon: playerWeapon.weapon, arrowHit: false,",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-dungeon-zero-damage-reads-the-claws",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          weapon: playerWeapon.strikingWeapon, arrowHit: false,",
+    "new": "          weapon: playerWeapon.weapon, arrowHit: false,",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-smith-refusal-says-not-available",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (!win) return inventoryDoorReady() ? DOOR_REFUSED : null;",
+    "new": "if (!win) return null;",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
   }
 ]

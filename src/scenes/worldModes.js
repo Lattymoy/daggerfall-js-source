@@ -105,6 +105,7 @@ import { areEnemiesNearby, setEnemyAlert } from '../systems/encounters.js';   //
 import { weaponTypeForItem, WEAPON_TYPES } from '../combat/fpsWeapon.js';
 import { audio } from '../systems/audio.js';
 import { lycanthropeMoveSound } from '../systems/lycanthropy.js';   // LM1: the 4-20s transformed move-sound loop
+import { inventoryDoorReady } from '../ui/inventoryDoor.js';   // DISC10-E: the door's own readiness gate - a ready door that built nothing REFUSED
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in), and the guilds' BUY mode
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
@@ -422,7 +423,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:3614 hands
+   * record these hosts mint spells it `name` (exterior.js:3618 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -1081,8 +1082,8 @@ export function createWorldModes(host) {
    *
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
-   *  (worldTick.js:317-318), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:864-868 and
+   *  (worldTick.js:369-370), and no killIfAnyLiveStatZero. Both pools
+   *  READ the effect list every frame (exteriorFoes.js:866-870 and
    *  cityGuards.js:831-837 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -1411,10 +1412,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1807 states), so the same visual
+   *  the C11 law dungeonContext.js:1813 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1692, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1698, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -3883,7 +3884,14 @@ export function createWorldModes(host) {
           onChoose: () => { claimArmor(membership, decision.mask); surfacePlayer(); },
         },
       });
-      if (!win) return null;
+      // DISC10-E: the smith's gift opens the PACK, so a transformed beast is
+      // refused by the inventory door itself (its MessageBox, ui/inventoryDoor.js)
+      // - that is a dispatch, like every trade counter's DOOR_REFUSED above, not
+      // "That service is not available yet." on top of the refusal. The door has
+      // two nulls and says which by its own gate: not ready (the classic art
+      // still loading) is still "not there"; ready and nothing built is the
+      // door's refusal, already spoken. The host never asks the curse itself.
+      if (!win) return inventoryDoorReady() ? DOOR_REFUSED : null;
       return mountServiceWindow(win);
     }
     if (destination === 'guildServiceDaedraSummoning') {
@@ -6068,7 +6076,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6242), so the OUTER host's one rides in.
+          // (dungeonContext.js:6255), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:744 -> the
@@ -7139,7 +7147,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:8503's own wave-46 note); the interior
+          // a blow (world.js:8520's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7151,7 +7159,7 @@ export function createWorldModes(host) {
       // AUDIT 58 (review): BOTH pools, through the one join. This read
       // `interiorFoes.foes` alone, so a shaft loosed at a watchman
       // `spawnCityGuardsInside` had stood in the room met nothing and
-      // died on geometry (arrowFlight.js:180-194 is a shaft's ONLY
+      // died on geometry (arrowFlight.js:181-195 is a shaft's ONLY
       // foe-contact path) - after the loose had already spent the
       // Arrow and tallied Archery, and while this host's MELEE ray hit
       // the same watchman. DFU makes no pool distinction: DoCollision
@@ -7306,13 +7314,19 @@ export function createWorldModes(host) {
       // (world.js runs cityGuards.resolvePlayerHit ahead of the
       // encounter pool) - killing a watchman indoors is the same
       // Murder it is in the street, and only its own pool knows that.
+      // DISC10-E: ONE hit sound for both pools, as the street's guardHitSound is. The pool hands its callback the
+      // struck FOE (exteriorFoes/cityGuards `onHitSound?.(foe)`); the foe pool's arm here read that foe as a WEAPON, so
+      // a bare fist indoors always rolled the weapon family, and it rang at the ear instead of at the foe. The sound
+      // is EnemySounds.PlayHitSound ON the struck enemy with the HAND's item (WeaponManager.cs:563-566) - null for a
+      // bare hand and for the beast's claws.
+      const interiorHitSound = (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.strikingWeapon), g.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });
       if (interiorGuards?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
-        makeInView(proj, view, multiply), (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.weapon), g.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 }))) {
+        makeInView(proj, view, multiply), interiorHitSound)) {
         continue;   // resolvePlayerHit runs DFU's tally arm itself (AUDIT 23 combat-4)
       }
       if (interiorFoes?.resolvePlayerHit(interiorWeapon.playerWeapon, cam.pos, eyeDir(), player.pos,
         // AUDIT 58: the PLAYER's blow landing on a foe - EnemySounds.cs:125's 1.1, not PlayerFootsteps' 1
-        makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), ENEMY_HIT_VOLUME))) {
+        makeInView(proj, view, multiply), interiorHitSound)) {
         tallySwingSkills(playerEntity, interiorWeapon.playerWeapon.weapon);
         continue;
       }
@@ -8030,7 +8044,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3676`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3680`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -9627,9 +9641,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3262-3284), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3266-3288), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5711). So an F9 pressed in a shop
+     *  unconditionally (world.js:5728). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9663,7 +9677,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5804)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5821)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9673,8 +9687,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5950`
-     *  and `dungeonContext.js:6251` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5967`
+     *  and `dungeonContext.js:6264` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

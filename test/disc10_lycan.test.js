@@ -410,3 +410,44 @@ test('DISC10-D H1: every player strike site calls the one dispatcher AFTER its d
   assert.match(d, /damageFoe\(foe, damage, playerFeet, lookDir\);[^\n]*\n\s*playerWeaponHitEntity\(playerEntity, foe\.entity, \{ mobileType: foe\.mobileType \}\);/, 'the dungeon\'s damaging connect');
   assert.match(rd('src/combat/arrowFlight.js'), /playerWeaponHitEntity\(playerEntity, foe\.entity, \{ mobileType: foe\.mobileType \?\? null \}\);\n\s*return dmg;/, 'the arrow, last');
 });
+
+// ── THE BEAST'S BLOW SOUNDS AS THE HAND'S, AND THE SMITH'S GIFT IS A DISPATCH ────────────────────────────────────
+
+import { zeroDamageHitSound } from '../src/scenes/hostCombat.js';
+import { hitSoundFor, SOUND } from '../src/systems/soundClips.js';
+
+test('DISC10-E: the beast\'s blow SOUNDS as the empty hand\'s - PlayHitSound(currentRightHandWeapon) and :611\'s strikingWeapon, never the claws marker; the interior pool\'s hit sound reads the hand, at the foe', () => {
+  setWorldMinutes(NOW + 30);
+  const p = werewolf();
+  morphSelf(p, { force: true, nowMinutes: NOW + 30 });
+  const beast = swing(p);
+  const lo = () => 0.99;
+  assert.equal(hitSoundFor(beast.strikingWeapon, lo), hitSoundFor(null, lo), 'the landed blow: the weaponless family (Hit3/Hit4)');
+  assert.ok(hitSoundFor(beast.strikingWeapon, lo) <= SOUND.Hit1 + 3, 'not the weapon family\'s top clip');
+  const z = zeroDamageHitSound({ weapon: beast.strikingWeapon, arrowHit: false, parrySounds: true, roll: 0.5 });
+  assert.deepEqual(z, zeroDamageHitSound({ weapon: null, arrowHit: false, parrySounds: true, roll: 0.5 }), 'the zero-damage arm: the swing, as a bare hand has (strikingWeapon == null)');
+  // every player-strike site reads the hand (source: the hosts cannot run in node)
+  const src = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+  for (const f of ['src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js']) {
+    assert.match(src(f), /weapon: playerWeapon\.strikingWeapon, arrowHit: false,/, `${f}: the zero-damage arm reads the hand`);
+    assert.doesNotMatch(src(f), /weapon: playerWeapon\.weapon, arrowHit: false,/, `${f}: and not the screen`);
+  }
+  assert.match(src('src/scenes/dungeonContext.js'), /audio\.play3d\(hitSoundFor\(playerWeapon\.strikingWeapon\), foe\.ai\.feet,/);
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    assert.match(src(f), /const guardHitSound = \(g\) => audio\.play3d\(hitSoundFor\(weaponRig\.playerWeapon\.strikingWeapon\), g\.ai\.feet,/, `${f}: the street's hit sound`);
+  }
+  const wm = src('src/scenes/worldModes.js');
+  assert.match(wm, /const interiorHitSound = \(g\) => audio\.play3d\(hitSoundFor\(interiorWeapon\.playerWeapon\.strikingWeapon\), g\.ai\.feet, ENEMY_HIT_VOLUME,/, 'indoors: one hit sound, on the struck foe, with the hand');
+  assert.doesNotMatch(wm, /\(wpn\) => audio\.playOneShot\(hitSoundFor\(wpn\)/, 'the foe pool\'s callback no longer reads the struck FOE as a weapon');
+  assert.equal((wm.match(/makeInView\(proj, view, multiply\), interiorHitSound\)\)/g) ?? []).length, 2, 'both interior pools');
+});
+
+test('DISC10-E: the knightly smith\'s gift, refused to a beast by the pack\'s own door, is a DISPATCH - not "That service is not available yet." on top of the refusal', () => {
+  const wm = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
+  assert.match(wm, /if \(!win\) return inventoryDoorReady\(\) \? DOOR_REFUSED : null;/, 'a READY door that built nothing refused - by the door\'s own gate, never the curse asked at the host (L3\'s law)');
+  assert.match(wm, /import \{ inventoryDoorReady \} from '\.\.\/ui\/inventoryDoor\.js';/);
+  // and the door's two nulls are the two the host tells apart: its refusal, and nothing else once ready
+  const door = readFileSync(new URL('../src/ui/inventoryDoor.js', import.meta.url), 'utf8');
+  const body = door.slice(door.indexOf('export function createInventoryWindow'));
+  assert.deepEqual(body.slice(0, body.indexOf('\n}\n')).match(/return null/g), ['return null'], 'the only null a ready door answers is the refusal');
+});

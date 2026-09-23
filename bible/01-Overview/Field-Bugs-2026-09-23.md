@@ -825,3 +825,70 @@ Lighting (`render/shadowPass.js`). DFU's shaft is
 plain MeshRenderer that nothing turns off, so it casts in DFU too - a
 shadow on the ground, not a second arrow.
 
+# DISC10-D/E - the vampire and the werewolf, wired at the root
+
+Mac: *"I think these systems are completely broken and not wired
+correctly"*. They were: every finding below was confirmed in the code
+before it was changed, and each is pinned by execution in
+`test/disc10_vampire.test.js` (V) and `test/disc10_lycan.test.js` (L).
+
+- **H1 - the hit hook ran before the blow landed.** RacialOverrideEffect.
+  OnWeaponHitEntity sat at the tail of the damage FORMULA, before any door
+  subtracted health and past the ineffective-material early return: the
+  werewolf's KilledInnocent never saw a dead innocent, and a vampire's iron
+  blade on a ghost never fed. It is one dispatcher now
+  (`worldTick.playerWeaponHitEntity`), called at the strike sites after
+  the damage, where DFU calls it (WeaponManager.cs:627-635, :514-521):
+  the three pools' swings (damage and zero-damage arms), the civilian
+  murder, and every host's arrow. A peer's hit never reaches it.
+- **V1 - sun damage by the wrong clock.** Catch-up magic rounds read each
+  PAST round's hour; they read the live clock now (the `% N` cadences
+  still count rounds). A two-day trip that lands at night burns nothing.
+- **V2 - the curse deployed late.** `deployInfection` now makes the curse
+  itself through a deployer worldTick registers, on the host's live clock
+  after the time raise; a restored pending marker lands at the live clock.
+- **V3 - every vampire was of one clan.** Both bite sites carry the region
+  (the exterior pool learns `regionIndex` from all three hosts; the dungeon
+  reads its location's), and `clanOf` reads the player's own faction dict.
+- **V4 - the cemetery transfer from inside a building or dungeon.** The
+  world arm leaves to the exterior first, and the dungeon context carries
+  `transferToCemetery`.
+- **V5 - the sheet showed the birth race.** `liveRaceTemplate` gives DFU's
+  compound race name and flags to both character sheets.
+- **V8 - resting through the change.** The deploy cancels the rest first.
+- **V9 - online clocks.** Going online shifts the infection's
+  `startingDay` and the werewolf's kill/morph/urge stamps with the shared
+  clock (and `liveLycanthropy` survives a null effect entry).
+- **V11 - the dream lost on reload.** An unplayed dream is re-scheduled on
+  restore, for both infections.
+- **L2 - the beast struck with a marker item.** `strikingWeapon` is the
+  hand's item (WeaponManager.cs:909), so claws are hand-to-hand: the bare
+  hand's damage, and no material gate.
+- **L3 - the pack was refused at a few doors only.** The refusal lives in
+  the inventory and trade windows themselves (DFU's MessageBox), so every
+  way in - loot, wagon, sheet, counters, quickslots, quick loot - refuses.
+- **L4 - the urge's health limiter ratcheted.** `maxHealth` is the limited
+  view of a raw value that level-ups and the save keep.
+
+Paid in the same round, found in the fix's own report:
+
+- **The beast's blow sounded like a weapon.** Every player-strike hit
+  sound, zero-damage arm and blood now read the striking hand's item, as
+  `PlayHitSound(currentRightHandWeapon)` and :611's `strikingWeapon == null`
+  do. And indoors, the encounter pool's hit-sound callback had been reading
+  the struck FOE as a weapon - a bare fist always rolled the weapon family,
+  at the ear; one `interiorHitSound`, on the foe with the hand's item, now
+  serves both interior pools as `guardHitSound` does on the street.
+- **The knightly smith's gift told a beast twice.** The pack door's own
+  refusal box, then "That service is not available yet.": a ready door
+  that built nothing refused, and that is now a dispatch.
+
+Mutants: `tools/mutants/disc10.json` (69, all dead). Across the 109 mutant
+lists naming a changed file, five survivors also survive on the base and
+are not this round's (enhnotice3 AUDIT4-A8, font1 F2, macro4 MACRO-4,
+qs1 QS4, red1 RED1-12).
+
+Open, recorded: an innocent owned by another client (online) dies at its
+owner, so the werewolf's kill there does not satisfy the urge - that needs
+the owner to report the death back over the wire.
+
