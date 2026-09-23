@@ -111,7 +111,7 @@ test('EL5: the casters - the nearest lanterns first, at most SHADOW_POINT_CASTER
   assert.equal(pickShadowCaster(L, [0, 0, 0], C), 2, 'the old pick is the nearest');
   assert.deepEqual(pickShadowCasters(L, [0, 0, 0]), [0, 2, 5, 7, 6, 1], 'LIGHT-NEAR1: unflagged, the light at the eye is the nearest caster of all');
   assert.deepEqual(pickShadowCasters(new Float32Array(0), [0, 0, 0]), []);
-  assert.equal(SHADOW_POINT_CASTERS, 6);
+  assert.equal(SHADOW_POINT_CASTERS, 8);   // HQ1: eight, on SC1's cache
 });
 
 test('EL5: the face basis the shader selects by is pointFaceMatrices\' own - a point projects to the same uv both ways, on every face', () => {
@@ -171,7 +171,7 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
   r.setLightingLane(EL_LANE);
   const sp = r.shadows;
   assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[6] === 6 * SHADOW_POINT_CASTERS), 'six layers per caster');
-  assert.equal(calls.filter((c) => c[0] === 'framebufferTextureLayer').length, 3 + 6 * SHADOW_POINT_CASTERS);   // EL7: three cascades
+  assert.equal(calls.filter((c) => c[0] === 'framebufferTextureLayer').length, 3 + 6 * SHADOW_POINT_CASTERS * 2);   // EL7: three cascades; SC1: the live layers and the cache's
   r.textures.set('1_1', { id: 't' }); r.textures.set('201_1', { id: 'b' }); r.textures.set('210_1', { id: 'flame' });
   // a mesh of two sub-meshes: one at the origin (in the lantern's range), one 100 units out
   const positions = new Float32Array([0, 0, 0, 1, 0, 0, 1, 1, 0, 100, 0, 0, 101, 0, 0, 101, 1, 0]);
@@ -193,7 +193,7 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
   assert.deepEqual([...sp.records[0].subSpheres.slice(4, 8)].map((v) => +v.toFixed(3)), [100.5, 0.5, 0, +Math.hypot(0.5, 0.5).toFixed(3)], 'the far sub-mesh\'s world sphere');
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0, 1, 0]), WORLD_FRAME);
-  assert.equal(sp.kind, 'point'); assert.equal(sp.casters, 2, 'both lanterns cast'); assert.deepEqual([...sp.shadowIndex], [0, 1, -1, -1, -1, -1], 'nearest first');
+  assert.equal(sp.kind, 'point'); assert.equal(sp.casters, 2, 'both lanterns cast'); assert.deepEqual([...sp.shadowIndex], [0, 1, ...new Array(SHADOW_POINT_CASTERS - 2).fill(-1)], 'nearest first');
   // PERF-FLICKER: the w is the CUBE MAP's own far plane - the lantern's
   // range rounded UP to SHADOW_FAR_QUANTUM, so the animated flicker cannot
   // read as "this light changed" and rebuild six faces a frame. 10 -> 12;
@@ -240,6 +240,6 @@ test('EL5: the glare hides in world units at five taps, the resolve grades in di
   assert.match(probe, /if \(r\.air\) r\.air\._now = \(\) => 1000;/, 'EL6: the eye frozen for the comparisons');
   assert.match(probe, /if \(!\(shadowLane - shadowNoA < 0\.01\)\) failures\.push/, 'the shadow check (EL7: A\'s own contribution behind the wall, none)');
   assert.match(probe, /if \(!\(openLane - openNoA > 0\.02\)\) failures\.push/, 'and beside it, some');
-  assert.match(probe, /sh\.culled === 0\) failures\.push\('the replays culled nothing/, 'the cull check');
+  assert.match(probe, /sh\.culledTotal === 0\) failures\.push\('the replays culled nothing/, 'the cull check (SC1: summed over the frames - a still room replays nothing on its last)');
   assert.match(probe, /'--use-angle=swiftshader'/, 'a real GL, software');
 });

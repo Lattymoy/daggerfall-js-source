@@ -15,7 +15,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SHADOW_SUN_SIZE, SHADOW_POINT_SIZE, SHADOW_CASCADES, SHADOW_SUN_DEPTH, SHADOW_MIN_SUN_Y, SHADOW_POINT_NEAR,
-  SHADOW_SUN_UNIT, SHADOW_POINT_UNIT, SHADOW_RECORD_MAX,
+  SHADOW_SUN_UNIT, SHADOW_POINT_UNIT, SHADOW_RECORD_MAX, SHADOW_POINT_CASTERS,
   sunCascadeMatrices, sunTexelWorld, pointFaceMatrices, cubeDepthRef, pickShadowCaster, shadowKind,
   SHADOW_GLSL, DEPTH_FS, DEPTH_BB_FS, ShadowPass, shadowFarFor } from '../src/render/shadowPass.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS } from '../src/render/enhancedLighting.js';
@@ -168,7 +168,7 @@ test('EL2: the caster and the kind - the nearest lantern that is not the eye\'s 
 });
 
 test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic mat4 index, PCF, the cutout; the five lane shaders carry the block and shadow the sun term', () => {
-  for (const u of ['uniform sampler2DArrayShadow uSunShadow;', 'uniform mat4 uSunVP[3];', 'uniform vec4 uSunShadowParams;', 'uniform vec4 uSunTexel;', 'uniform sampler2DArrayShadow uPointShadow;', 'uniform vec4 uPointShadowParams[6];', 'uniform int uShadowIndex[6];']) {   // EL5: the casters' layers in one array, a vec4 and an index per caster
+  for (const u of ['uniform sampler2DArrayShadow uSunShadow;', 'uniform mat4 uSunVP[3];', 'uniform vec4 uSunShadowParams;', 'uniform vec4 uSunTexel;', 'uniform sampler2DArrayShadow uPointShadow;', `uniform vec4 uPointShadowParams[${SHADOW_POINT_CASTERS}];`, `uniform int uShadowIndex[${SHADOW_POINT_CASTERS}];`]) {   // EL5: the casters' layers in one array, a vec4 and an index per caster
     assert.ok(SHADOW_GLSL.includes(u), u);
   }
   assert.match(SHADOW_GLSL, /precision highp sampler2DArrayShadow;/, 'the shadow sampler has no default precision in ES 3.00');
@@ -212,10 +212,10 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   r.setLightingLane(EL_LANE);
   const sp = r.shadows;
   assert.ok(sp instanceof ShadowPass);
-  assert.equal(count(calls, 'framebufferTextureLayer'), 3 + 6 * 6, 'three cascade framebuffers (EL7), then six layers per caster (EL5; EL6: six casters)');
+  assert.equal(count(calls, 'framebufferTextureLayer'), 3 + 6 * SHADOW_POINT_CASTERS * 2, 'three cascade framebuffers (EL7), then six layers per caster (EL5; EL6: six casters), then the same six per caster for SC1\'s static cache');
   assert.equal(calls.filter((c) => c[0] === 'framebufferTexture2D' && c[3] >= 100 && c[3] < 106).length, 0, 'EL5: no cube faces - the faces are layers');
-  assert.equal(calls.filter((c) => c[0] === 'texStorage3D').length, 2, 'the sun array and the casters\' array'); assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 0);
-  assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[4] === 512 && c[5] === 512 && c[6] === 36), 'six casters of six 512^2 layers');
+  assert.equal(calls.filter((c) => c[0] === 'texStorage3D').length, 3, 'the sun array, the casters\' array, and SC1\'s static cache (the casters\' shape again)'); assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 0);
+  assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[4] === 512 && c[5] === 512 && c[6] === 6 * SHADOW_POINT_CASTERS), 'the casters\' six 512^2 layers each (HQ1: eight casters)');
   assert.ok(calls.some((c) => c[0] === 'texParameteri' && c[2] === 1 && c[3] === 1), 'compare mode set');
   // the kept pass across swaps
   r.setLightingLane(null); assert.equal(r.shadows, null);
@@ -236,7 +236,7 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   assert.equal(depthClears.length, 3, 'three cascades cleared before the frame\'s own clear (EL7)');
   assert.equal(sp.kind, 'sun'); assert.equal(sp.stats.records, 3); assert.equal(sp.stats.sunDraws, 3 * (2 + 1 + 1), 'two sub-meshes, the terrain, the flat - per cascade');
   assert.equal(sp.count, 0, 'the records are spent'); assert.equal(sp.records[0].mesh, null, 'and released');
-  assert.equal(sp.sunParams[3], 1); assert.deepEqual([...sp.shadowIndex], [-1, -1, -1, -1, -1, -1]); assert.ok([...sp.pointParams].every((v) => v === 0)); assert.equal(sp.casters, 0, 'no lantern: no caster, sun or not');
+  assert.equal(sp.sunParams[3], 1); assert.deepEqual([...sp.shadowIndex], new Array(SHADOW_POINT_CASTERS).fill(-1)); assert.ok([...sp.pointParams].every((v) => v === 0)); assert.equal(sp.casters, 0, 'no lantern: no caster, sun or not');
   assert.ok(calls.some((c) => c[0] === 'colorMask' && c[1] === false), 'depth only'); assert.ok(calls.some((c) => c[0] === 'disable' && c[1] === 1), 'no culling under the light\'s projection');
   const bindNull = calls.findIndex((c) => c[0] === 'bindFramebuffer' && c[2] === null);
   assert.ok(bindNull > 0 && bindNull < firstClear, 'the canvas is back before the frame clears');
@@ -252,7 +252,7 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   r.setPointLights(lit, new Float32Array([1, 1, 1]));
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
-  assert.equal(sp.kind, 'point'); assert.deepEqual([...sp.shadowIndex], [1, -1, -1, -1, -1, -1], 'the eye\'s own light (carried) is skipped');
+  assert.equal(sp.kind, 'point'); assert.deepEqual([...sp.shadowIndex], [1, ...new Array(SHADOW_POINT_CASTERS - 1).fill(-1)], 'the eye\'s own light (carried) is skipped');
   // PERF-FLICKER (2026-09-19): the w is the CUBE MAP's far plane, not the
   // lantern's live range - the light's range is animated (CityLightAnimator
   // wanders it inside a one-unit band, fourteen steps a second) and the
@@ -263,11 +263,11 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   // agree, because the fragment stage reconstructs depth from P.w - and
   // rounding UP means the far plane is never inside the lantern's reach,
   // so no shadow is clipped short. 14 -> 16.
-  assert.deepEqual([...sp.pointParams], [6, 2, 1, shadowFarFor(14), ...new Array(20).fill(0)]); assert.equal(sp.casters, 1);
+  assert.deepEqual([...sp.pointParams], [6, 2, 1, shadowFarFor(14), ...new Array(4 * SHADOW_POINT_CASTERS - 4).fill(0)]); assert.equal(sp.casters, 1);
   assert.equal(shadowFarFor(14), 16, 'the quantum, by name and by value');
   assert.equal(sp.stats.pointDraws, 6 * 3, 'six faces of the two sub-meshes and the terrain (the fake bundles carry no bounds: nothing is culled); EL6: the flat is a light flat (archive 210) and never casts from a lantern');
   assert.equal(calls.filter((c) => c[0] === 'clear' && c[1] === 256).length, 6);
-  assert.ok(calls.some((c) => c[0] === 'uniform1iv' && c[1] === 'uShadowIndex' && c[2][0] === 1 && c[2].length === 6), 'EL5: the indices go up as one int array');
+  assert.ok(calls.some((c) => c[0] === 'uniform1iv' && c[1] === 'uShadowIndex' && c[2][0] === 1 && c[2].length === SHADOW_POINT_CASTERS), 'EL5: the indices go up as one int array');
   assert.ok(calls.some((c) => c[0] === 'uniform4fv' && c[1] === 'uSunShadowParams' && c[2][3] === 0), 'and the sun map is off');
   // frame 4: a destroyed mesh in last frame's records is skipped, a spectral flat and a concealed one cast nothing
   const w = drawWorld(r);
@@ -314,7 +314,7 @@ test('EL2: the renderer\'s wiring - the three draw paths record behind one gate,
   assert.match(r, /if \(this\._casting && this\._spriteDepth === 0 && this\._studioDepth === 0\) this\._shadows\.recordCharacter\(mesh, modelMatrix\);/, 'EL7: the rigs, never from the sprite target or the studio');
   assert.match(r, /if \(!wire && this\._casting\) this\._shadows\.recordMesh\(mesh, modelMatrix, texRemap\);/, 'a wireframe draw (the automap) is not a caster');
   assert.match(r, /get _casting\(\) \{ return !!this\._shadows && !this\._panelSaved; \}/);
-  const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir, opts = null) {'), r.indexOf('beginFrame(proj, view, lightDir, opts = null) {') + 2600);   // AUDIT-EL F5
+  const bf = r.slice(r.indexOf('beginFrame(proj, view, lightDir, opts = null) {'), r.indexOf('beginFrame(proj, view, lightDir, opts = null) {') + 3200);   // AUDIT-EL F5; LC1: the grid's build sits between the passes and the clear, so the window grew
   const passes = bf.indexOf('this._beginLane(proj, view, lightDir, opts?.world === true)');
   assert.ok(passes > 0 && passes < bf.indexOf('gl.clear('), 'the maps before the clear (EL3: with the air\'s images; AUDIT-EL F5: one call, for a WORLD frame)');
   assert.match(r, /if \(this\._shadows && world\) this\._renderPasses\(proj, view, lightDir\);/);

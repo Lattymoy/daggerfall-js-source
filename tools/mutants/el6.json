@@ -200,8 +200,8 @@
   {
     "name": "casters-five",
     "file": "src/render/shadowPass.js",
-    "old": "export const SHADOW_POINT_CASTERS = 6;   // EL6: six - a gate passage has that many lanterns in reach",
-    "new": "export const SHADOW_POINT_CASTERS = 5;   // EL6: six - a gate passage has that many lanterns in reach",
+    "old": "export const SHADOW_POINT_CASTERS = 8;   // EL6: six - a gate passage has that many lanterns in reach; HQ1: eight - SC1's cache made a still caster nearly free, so a tavern's every lamp throws its shadow",
+    "new": "export const SHADOW_POINT_CASTERS = 5;   // EL6",
     "tests": [
       "test/el2_shadows.test.js"
     ]

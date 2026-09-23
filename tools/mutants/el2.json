@@ -310,8 +310,8 @@
  {
   "name": "renderer-maps-after-clear",
   "file": "src/render/renderer.js",
-  "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n",
-  "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);\n",
+  "old": "    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n",
+  "new": "    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);\n    this._beginLane(proj, view, lightDir, opts?.world === true);   // EL2/EL3/EL4: the maps, the images and the frame, before the clear\n",
   "tests": [
    "test/el2_shadows.test.js"
   ]

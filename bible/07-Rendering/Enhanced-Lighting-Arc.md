@@ -907,3 +907,157 @@ torch beside it does not; the shader and the glare loop by text; every
 host that composes a player light does it through `withPlayerLights`.
 `bugs5_field`, `el2_shadows`, `mact_bugs`, `el5_field` and `el7_polish`
 re-aimed where they pinned the number.
+
+## LC1 - CLUSTERED LIGHTS (2026-09-23, Mac: "We need to take a chance and also make some insane improvements to our lighting system. Its already really good, but it could be much better while also improving performance")
+
+The first step of the second arc, and the foundation the rest stand on.
+
+**The cost it removes.** Every lit fragment of the lane walked ALL of the
+frame's lights - up to `EL_MAX_LIGHTS` (48) - and asked each one "am I in
+your range" before doing any work. On a 1080p frame that is two million
+fragments times forty-eight lengths and compares, for a question whose
+answer is "no" for nearly all of them: a tavern's fragment is in range of
+three lanterns, a street's of one or two. And the cap was the loop's, so
+the world could never carry more lights than a fragment could afford to
+ask.
+
+**The shape.** `render/lightClusters.js`. The view frustum is cut into
+16 x 9 x 24 cells - a tile of the screen by a slice of depth, the slices
+exponential over [0.25, 256] so a cell is roughly a cube in world units
+at every distance. Once a frame, on the CPU, every light's view-space
+bounding box (its eight corners, clamped to the near plane, put through
+the frame's own projection - the mirrored one the hosts pass) is written
+into the cells it touches. The lists go up as two small integer
+textures on units 9 and 10: the GRID (RG16UI, 144 x 24: an offset and a
+count per cell) and the LIST (R8UI, 256 wide: the light indices in cell
+order). The shader (`EL_CLUSTER_GLSL`, at the head of the lantern loop
+in all five lane programs) reads its cell off `gl_FragCoord` and the
+view depth (`uCamFwd`: the view's third row negated, so a dot and an add
+is the depth) and walks that cell's list alone - the same loop body,
+over two or three lights instead of forty-eight. The in-scatter loop is
+untouched: a glow along the whole view ray is no one cell's.
+
+**An acceleration, not a law.** Conservative: a fragment inside a light's
+sphere is inside its box, so its cell lists the light; a fragment inside
+the box but outside the sphere still runs the range test, which says no
+as it always did. Nothing lights that did not, nothing that lit goes
+dark. And OFF - every light, exactly as before LC1 - inside the
+character-sprite pass, the studio bake and a panel bracket (other views,
+other viewports: `uClusterOn` 0 under the contact block's own gate), on a
+frame whose lists would overflow `CLUSTER_LIST_CAP` (forty-eight lights each
+covering the whole screen), and behind `?clusters=off`. There is no third
+behaviour.
+
+**Seen on a GPU.** `tools/lightClusterProbe.mjs` draws
+enhancedLightingProbe's room and a night street of forty lanterns through
+the real renderer on SwiftShader, the grid on and off, and reads both
+back: the room pixel-identical (3 lights; a fragment walks 1.46 of them
+on average), the street within the dither's byte (max |diff| 2, no
+channel over; 12.9 of 40 walked). The build is a few hundred microseconds
+of JS for forty lights.
+
+**What it opens.** The loop's cost is now the lights IN RANGE of a
+fragment, not the frame's count - so the cap can rise (every candle a
+light) without the fragment paying for the ones across the room. That is
+the next step's door; this one changes no picture.
+
+Pinned: `test/lc1_clusters.test.js` (7). `el2_shadows`' wiring window
+grew for the build line.
+
+## SC1 - THE STATIC CASTERS ARE DRAWN ONCE (2026-09-23, Mac: "make some insane improvements to our lighting system ... while also improving performance")
+
+The second step, and the one the shadow draws were waiting for.
+
+**The cost it removes.** A lantern's cube map was replayed - six faces
+of everything in its range - every frame for the two nearest slots and
+every third for the rest (EL8's cadence), whether or not anything in
+that range had moved. Performance-Town.md's readout was about 1,700
+shadow draws a frame, most of them lanterns. In a tavern nothing has
+moved: the walls, the tables and the beams stand where they stood, and
+the only things that ever change a lantern's shadow are the light
+itself, a door on its swing, a rig walking through, a foe.
+
+**The shape.** `render/shadowPass.js`. Every record is CLASSIFIED as it
+is recorded: a mesh at the matrix it was drawn with last frame is
+static, one that moved is dynamic - and stays dynamic for
+`SHADOW_DYNAMIC_HOLD` (60) recorded frames after it stops, so a door that
+swings and stops or a walker who pauses does not redraw every cache in
+reach at each step; a rig is always dynamic; a flat is dynamic while its
+origin moves, per batch, remembered on the batch. Each caster slot keeps
+a CACHE of its static casters - a second depth array of the same shape,
+six layers per slot - drawn only when the light itself or the SET of
+static casters in its reach changes: `_staticSignature`, an order-free
+fold over the identities and positions of the still records whose
+spheres touch the light's (the hosts' draw order is the culling's and
+must not count). The live layers are then the cache BLITTED
+(`_blitSlot`: six depth blits, no rasterisation) with the dynamics
+drawn on top at EL8's cadence - and nothing at all when no dynamic is
+near. A still room costs zero shadow draws a frame.
+
+**Sticky slots.** A light keeps the slot it had while it stays among the
+picked, matched by its POSITION and not its index (the hosts re-sort
+their lights by distance every frame, so an index is no name); a walk
+past a lamp does not throw its cache away. The cadence's "nearest two"
+reads the light's rank by distance, whatever slot it holds.
+
+**The door.** `?shadowcache=off` (`renderer.setShadowCache`) is the old
+path whole: every caster in range into the live layers at the cadence,
+no cache, no blit.
+
+**Seen on a GPU.** `tools/shadowCacheProbe.mjs` draws
+enhancedLightingProbe's room with a walker crossing it through the real
+renderer on SwiftShader, the cache on and off, eight frames, and reads
+both back frame by frame: pixel-identical; the cache's point draws fall
+to the walker alone while it crosses, and to zero when it is gone,
+while the old path draws the room every frame.
+
+**Memory.** The cache doubles the casters' depth storage: two arrays of
+6 x 6 x 512^2 x 24-bit, about 75 MB together. The lane is the enhanced
+skin's, on the desktop GPU it was built for.
+
+Pinned: `test/sc1_shadowcache.test.js` (7). `el8_contact`'s cadence pin
+drives a walking mesh now; `el2_shadows`/`el5_field` count the cache's
+layers and storage; `weeds1_flatcasters`' replay signature carries the
+filter.
+
+## HQ1 - THE COLOUR THROUGH THE CURVE, THE HORIZONS, EIGHT CASTERS (2026-09-23, Mac: "Go" - the visible step of the second arc)
+
+**The colour through the curve** (`elTonemapRGB`, enhancedLighting.js).
+Per-channel Reinhard bends HUE as it compresses: a torch's warm light
+(r > g > b) has its red on the shoulder while its blue is still on the
+slope, so the brighter the flame the more it went yellow-white and then
+flat white, and a sunlit red wall lost its red before it lost its light.
+The lane's finish, the in-scatter glow and the far ring take the
+luminance-preserving blend now ("Reinhard-Jodie"): the curve on the
+LUMINANCE keeps a colour's ratios, the curve PER CHANNEL is what the eye
+expects at the very top (light desaturates toward white), mixed by the
+per-channel result itself - so the dark and the mid-tones take the
+first and only the highlights the second. Every law of the curve holds
+(`elTonemap` is the same function): 0 to 0, identity in the dark end,
+the white point to display white, monotone, a grey unchanged. A flame at
+three times white reads (0.91, 0.77, 0.54) now against (0.89, 0.78, 0.60)
+before: orange, not straw.
+
+**The horizons** (`AO_FS`, airPass.js). EL3's occlusion scattered twelve
+points through a hemisphere and counted the ones the depth image put
+behind a surface - a coin toss per sample, so a crevice's darkness was a
+speckle the blur then smeared, and a flat floor beside a wall took as
+much as the corner itself. The ground-truth form now (GTAO, Jimenez
+2016): in each of `AIR_AO_DIRECTIONS` (2) screen-space slices through the
+pixel, a quarter turn apart and turned by EL6's ordered rotation, march
+`AIR_AO_SAMPLES` (6) steps out each way to the radius, keep the highest
+horizon either side (each step's claim weighted down by its distance, so
+the radius is a soft edge), clamp the two to the hemisphere about the
+projected normal, and integrate the cosine-weighted visibility of the arc
+in closed form. Smooth where the surface is flat, dark where two
+surfaces meet, no more depth reads than before. The depth-aware blur
+(EL7) stands.
+
+**Eight casters.** SC1 made a still caster nearly free, so
+`SHADOW_POINT_CASTERS` is 8: a tavern's every lamp throws its shadow.
+The two depth arrays are 100 MB together at 512^2.
+
+Pinned: el1/el4 (the finish through `elTonemapRGB`), el3 (the horizon
+shader by text, the constants), el2/el5/el6/el8 (eight slots). Seen on
+SwiftShader by `tools/enhancedLightingProbe.mjs` - every assertion
+standing - and the scenes' PNGs beside EL5's for the eye.
