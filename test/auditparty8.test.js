@@ -84,12 +84,12 @@ test('AUDIT PARTY-REST: one mirror per nap - the mirror key is the rester and th
 
 // ─── THE WIRE ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('AUDIT PARTY-REST wire (world95): `readyAt` rides the party pose under voteAt\'s own bounds - rounded, floored at zero, absent as null; the version moved with it', () => {
+test('AUDIT PARTY-REST wire (world95, then world96 under ALLY-CAST): `readyAt` rides the party pose under voteAt\'s own bounds - rounded, floored at zero, absent as null; the version moved with it', () => {
   assert.equal(validPartyPose({ ...P, readyAt: 1758000000000.4 }).readyAt, 1758000000000);
   assert.equal(validPartyPose({ ...P, readyAt: -5 }).readyAt, 0);
   assert.equal(validPartyPose({ ...P }).readyAt, null, 'a world94 client sends none');
   assert.equal(validPartyPose({ ...P, readyAt: 'now' }).readyAt, null, '...and a bad one lands as none, never refusing the pose');
-  assert.equal(RELAY_VERSION, 'world95');
+  assert.equal(RELAY_VERSION, 'world96', 'ALLY-CAST moved it again');
   assert.equal(QUEST_ROOM_BYTES_PER_S, 4 * 1024 * 1024);
   // the quest fan's byte budget, as the hub charges it: a share times the tabs it reaches, borrowing, so one
   // full party's largest share lands whole and the flood behind it waits

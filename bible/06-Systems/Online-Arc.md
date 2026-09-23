@@ -4831,9 +4831,9 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3468` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3469` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
-  provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
+  provenance argument `applySpellToFoe` hands them (`hostMagic.js:193`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
   Threading it touches four hosts.
 - **A building interior streams no foes at all.** `makeInteriorFoes`
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:815`, `src/net/online.js:1370`):**
+**Now (`src/net/wire.js:815`, `src/net/online.js:1403`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7663,4 +7663,52 @@ re-aimed. RELAY_VERSION world95 (the wire's `readyAt`, the hub's quest bytes, th
 relay deploys itself on the merge to main. Not verified in a browser: no online session exists in this
 container; lens B measured the flare, the landscape overflow and the squashed plate in Chromium on the HEAD
 before the fixes.
+
+## ALLY-CAST (2026-09-23, Mac: "Can we implement the use of spells on players? For example healing and other buffs? ... some sort of ally targeting system" - "Do it") - a spell cast on a party mate, world96
+
+DFU has no other players, so its five target types only ever land on the caster, a foe or nothing. The port's law
+online is that a player's vitals and live effects are their own client's, so a cast on an ally is a FRAME and the
+target applies it.
+
+**The frame.** `{t:'cast', data:{to, level, spell}}` - directed like a trade frame (`net/wire.js validCastData`: the
+target's id, the caster's level 1..60, a spell record of name, element, range type and one to three classic
+effect entries with their eleven integer components bounded; anything else refuses the whole frame). The relay's
+cast arm (`server/src/index.js`) is the trade arm's shape: its own meter (CAST_HZ_MAX 4 a second per sender, the
+strikes), a place room alone, routed to the one socket `to` names with the sender's id stamped on, a funnel per
+destination (CAST_ROOM_HZ_MAX), junk at one's own id. The client link (`net/online.js`) sends through its own
+projection first (`sendCast`) and delivers only a frame addressed to me, per-sender gated coming in (`onCast`).
+
+**The targeting (the port's own rule - a recorded departure).** Nobody aims a slow missile at a moving friend. On
+the release frame (`scenes/hostMagic.js releaseFrame`, before the four range arms) a beneficial spell looks for a
+PARTY MATE under the crosshair - the F key's own pick (`player/socialPick.js pickPeerInFront` over `peersNear()`,
+`townTalk.rayPersonDistance`), a party member (`social.isPartyPeer`), one some socket of mine reaches - within
+touch reach (SOCIAL_REACH) for a CasterOnly or ByTouch spell and within ALLY_RANGE_REACH (24 units) for a
+SingleTargetAtRange one; the two area types are never redirected. Found, the cast leaves as the frame (a
+CasterOnly leaves as a TOUCH, range type 1 - it is one, on the ally), the magicka is spent and the skills tallied
+as for any cast, and the caster reads "You cast Heal on Bran." Not found, or the link refusing, the spell does
+what it always did. CastReadySpell's touch gate admits the mate as it admits a foe. The departure is the
+CasterOnly conversion: DFU's spellbook is almost all CasterOnly, and kept 1:1 healing a friend would mean buying a
+ByTouch copy first - so a Heal readied with the crosshair on a party mate is theirs, not yours. The plaque says so
+while a castable spell is armed ("Cast Heal on Bran").
+
+**The trust: the receiver decides** (`scenes/world.js online.onCast`). A cast from anyone outside my party is
+dropped unread (a party is invite-only, and that is the whole trust); so is one at a dead player. Of what arrived
+only the BENEFICIAL families are kept (`systems/allyCast.js ALLY_CAST_TYPES`: Cure, Elemental Resistance, Fortify,
+Heal, Invisibility, Levitate, Light, Regenerate, Spell Absorption/Reflection/Resistance, Chameleon, Shadow,
+Slowfall, Free Action, Jumping, Climbing, Water Breathing/Walking, Shield, Detect, Comprehend Languages - never
+Paralyze, Damage, Continuous Damage, Drain, Transfer, Disintegrate, Soul Trap, Silence, Lock/Open, Pacify/Charm,
+Dispel, Create Item, Identify, Teleport, Morph Self), and on the caster's side a spell is castable on an ally only
+when EVERY real effect is one of them - a Heal beside a Damage Health goes the ordinary way. What is kept goes
+through the one player door a foe's cast at me already takes (`hostMagic applySpellToPlayer`: my own saving
+throw, absorption, reflection, at the caster's level; the range type carried as sent, so a touch is save-scaled
+as DFU scales any external bundle), with "Bran casts Heal on you." and the healed line said. Friendly fire is off
+by construction and the relay never judges a spell.
+
+**Pins and mutants.** `test/allycast.test.js` (9): the law on a table (castable, the receiver's subset, the
+reach, the frame, the lines), the wire's projection and parse, the relay's arm over the fake room (to the one
+socket, junk at self, nothing in the hub), the magic host driven as itself (a CasterOnly Heal read off a friend
+leaves as a touch and the caster is not healed; nobody there or a refused door and it heals as before; ByTouch
+and ranged buffs at their reaches; a damage spell and an area spell never ask), the world.js/link/relay seams by
+source. `tools/mutants/allycast.json`: 15, 15 dead. RELAY_VERSION world96 with its law row; the relay deploys
+itself on the merge to main. Not verified in a browser: no online session exists in this container.
 

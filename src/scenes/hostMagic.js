@@ -50,6 +50,7 @@ import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bu
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';
 import { tallySkill } from '../systems/skills.js';
 import { morphSelf } from '../systems/lycanthropy.js';   // V2a: the MorphSelf arm the ONE cast engine wires
+import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, ALLY_TOUCH_REACH } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
 import { createMagicCandle, CANDLE } from './magicCandle.js';   // X11: the Light effect's candle
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // PlayerController.height, the candle's y term
@@ -93,6 +94,11 @@ export function createPlayerMagic({
   // both resolve inline, without ever touching FPSSpellCasting).
   // @type {?(sp:object, onRelease:Function) => boolean}
   startCastAnim = null,
+  // ALLY-CAST (2026-09-23): the party mate under the crosshair within `reach`, as {id, name} or null - the host's own
+  // pick (player/socialPick.js pickPeerInFront over its peers, party membership and the link's reach); and the door
+  // the cast leaves through (online.sendCast), answering whether it went. A host with neither casts as before.
+  allyTarget = null,
+  castAtAlly = null,
 }) {
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
   // Classic click-to-cast: DFU's armed state IS the readied spell -
@@ -371,6 +377,20 @@ export function createPlayerMagic({
     const dir = lastAim ? lastAim.dir : p.dir;
     // :2141 - readySpellDoesNotCostSpellPoints clears with the ready.
     const done = (v) => { lastSpell = sp; onCastReadySpell?.(sp); readiedSpell = null; readiedFree = false; readiedCost = 0; return v; };   // :2136-2141 (lastSpell = readySpell, the raise, then the clear)
+    // ALLY-CAST: THE PARTY MATE UNDER THE CROSSHAIR takes a beneficial CasterOnly, ByTouch or SingleTargetAtRange
+    // cast - the port's own targeting (systems/allyCast.js, a recorded departure): a CasterOnly Heal read off a
+    // friend is a touch on them, not on me. The spell is spent as any cast is (the magicka went at the cast, the
+    // tally is the same), and the ally's own client applies it. A frame that cannot leave (nobody reachable) falls
+    // through to the ordinary arm: the spell still does what it always did.
+    const allyReach = allyReachFor(sp.rangeType);
+    const ally = allyReach !== null && allyCastable(sp) ? allyTarget?.(eye, dir, allyReach) ?? null : null;
+    if (ally && castAtAlly?.(ally.id, allyCastFrame(sp, playerEntity.level, ally.id))) {
+      lastCastCost = cost;
+      tallyCastSkills(sp);
+      surfacePlayer();
+      say(allyCastCasterLine(sp.name, ally.name));
+      return done(true);
+    }
     if (sp.rangeType === 0) {
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; AssignBundle at :2117.
@@ -457,7 +477,9 @@ export function createPlayerMagic({
       // ByTouch: CastReadySpell aborts BEFORE spending when no target
       // sits in touch range (verbatim - the S9 'spends on a whiff'
       // rule was wrong and died at its audit).
-      if (!pickTouch(eye, dir)) return false;
+      // ALLY-CAST: the touch probe admits a party mate in touch reach as it admits a foe - the release frame (the
+      // ally arm there) is where the cast is aimed, but CastReadySpell's own gate runs first
+      if (!pickTouch(eye, dir) && !(allyCastable(sp) && allyTarget?.(eye, dir, ALLY_TOUCH_REACH))) return false;
     }
     // :423-425 DecreaseMagicka - the spend is at the CAST, before a
     // single frame of hand motion has run.

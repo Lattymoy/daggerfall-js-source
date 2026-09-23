@@ -295,7 +295,8 @@ import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { createSocialPanel, TRY_AGAIN_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { glyphMarks } from '../ui/playerBadge.js';   // PEER-PLAQUE1: a badge's plain-text marks, for the plaque's title
-import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerPromptText } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
+import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerPromptText } from '../player/socialPick.js';
+import { allyCastSpell, allyCastable, allyCastTargetLine, allyCastPlaqueLine } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at a party mate   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
 import { createTradeManager, TRADE_RANGE_M, inTradeRange } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
@@ -3473,6 +3474,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     // whichever rig owns the frame is the one that steps them to the
     // release.
     startCastAnim: (sp, onRelease) => !!weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
+    // ALLY-CAST (2026-09-23, Mac: "the use of spells on players ... some sort of ally targeting system"): THE PARTY
+    // MATE UNDER THE CROSSHAIR - the F key's own pick (player/socialPick.js pickPeerInFront over peersNear(), the
+    // ray the social menu casts) at the reach the spell's range type asks (systems/allyCast.js), a party member
+    // alone (social.isPartyPeer - a party is invite-only, and that is the whole trust), and one some socket of mine
+    // can reach (online.reachesPeer). Null in every other case, and the cast goes the ordinary way.
+    allyTarget: (eye, dir, reach) => {
+      if (!social?.party || !online) return null;
+      const hit = pickPeerInFront(eye ?? cam.pos, dir ?? socialFwd(), peersNear(), reach, rayPersonDistance);
+      if (!hit || !social.isPartyPeer(hit.peer.id) || !online.reachesPeer?.(hit.peer.id)) return null;
+      return { id: hit.peer.id, name: peerName(hit.peer.id) ?? 'a party member' };
+    },
+    // ...and the door the cast leaves through: the link's own directed frame (net/online.js sendCast), which answers
+    // whether it went - a refusal (the gate, the socket gone) lets the release fall through to the ordinary arm.
+    castAtAlly: (id, frame) => !!online?.sendCast?.(frame),
     surfacePlayer,
     // X-slice: encounter foes are spell targets too.
     //
@@ -8965,6 +8980,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     exteriorFoes.setOnCamps((from, c, at) => camps.applyOwner(from, c, campToScene, at));   // SURV3: a peer's camps, off their foes frame past the pool's own room test, through validCampRecord
     online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };   // TRADE1: a peer's trade frame, already projected and addressed to me (net/online.js)
+    // ALLY-CAST: a party mate's spell at ME. THE RECEIVER DECIDES: a cast from anyone outside my party is dropped
+    // unread (the sender chose the peer; a party is invite-only), so is one at a dead player, and of what arrived only
+    // the beneficial families are kept (systems/allyCast.js allyCastSpell - a crafted Damage Health lands nothing).
+    // The rest is the ordinary player door a foe's cast at me already takes (hostMagic applySpellToPlayer: my own
+    // saving throw, absorption, reflection, the caster's level), with the caster's name said.
+    online.onCast = (id, d) => {
+      if (!social?.isPartyPeer(id)) return;
+      if (playerEntity.health <= 0 || modes?.deathUp?.()) return;
+      const spell = allyCastSpell(d?.spell);
+      if (!spell) return;
+      const who = peerName(id) ?? 'A party member';
+      const r = magic.applySpellToPlayer(spell, d.level, null);
+      townTalk.say(allyCastTargetLine(who, spell.name));
+      if (r?.healed > 0) townTalk.say(`You are healed ${r.healed} points.`);
+      surfacePlayer();
+    };
     online.onAct = (id, data) => { modes?.applyPlaceActions?.(id, data); };   // WORLD3: another's door, lever or platform; WORLD6a: in a building too
     // WORLD5: this save's time markers are set to the WORLD's time - a save a month behind catches up no loans and no
     // diseases on its first frame, one a year ahead reads no negative day - and the day's weather is rolled from the
@@ -10266,7 +10297,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const badge = online?.badgeOf?.(id) ?? null;
     const marks = badge ? glyphMarks(badge) : '';
     const prompt = social ? peerPromptText({ ...social.actionsFor(id), ...tradeActionsFor(id) }, interactKeyLabel()) : null;
-    return { title: marks ? `${name} ${marks}` : name, subs: prompt ? [prompt] : [] };
+    // ALLY-CAST: a castable spell readied and a party mate under the crosshair - the plaque says where it will land
+    const sp = magic?.readied?.();
+    const cast = sp && social?.isPartyPeer(id) && allyCastable(sp) ? allyCastPlaqueLine(sp.name, name) : null;
+    return { title: marks ? `${name} ${marks}` : name, subs: [cast, prompt].filter(Boolean) };
   };
   /** SOC5's own forward - the camera's yaw and pitch, the ray the F key casts; PEER-PLAQUE1's modal pick casts the same one (AUDIT DROPS E3). */
   const socialFwd = () => [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];

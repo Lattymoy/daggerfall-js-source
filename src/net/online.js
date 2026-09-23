@@ -72,7 +72,7 @@
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
-import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, sanitizeChat, chatGate, redGate, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questShareGate, questInGate, validQuestFrame, QUEST_SEND_MS, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -281,7 +281,10 @@ export class OnlineSession {
     this.onFoes = null;           // WORLD2: (id, data) => void - the host's live foes in (a non-host's, from the room's host alone)
     this.tradeOk = false;         // TRADE1: the relay that welcomed this socket routes trade frames (relaySupportsTrade) - an older one CLOSES the socket on the frame, so nothing is sent to it
     this.onTrade = null;          // TRADE1: (id, data) => void - a trade frame from a peer, projected by the wire's validTradeData, addressed to ME
+    this.onCast = null;           // ALLY-CAST: (id, data) => void - a party mate's spell at ME, projected by the wire's validCastData; the host decides what lands
     this._tbucket = null;         // TRADE1: the trade frames' own gate at home (TRADE_HZ_MAX)
+    this._inCastBuckets = new Map();   // ALLY-CAST: the gate on cast frames coming in, per sender - the trade gate's shape
+    this._cbucket = null;   // ALLY-CAST: my own casts out, CAST_HZ_MAX a second
     this._inTradeBuckets = new Map();   // TRADE1: and the gate on trade frames coming IN, per sender (AUDIT DROPS B3) - a peer is chosen by the sender, so a flood is a peer's, never the relay's
     this._inTradeSaid = false;
     this.onHit = null;            // WORLD2: (id, data) => void - a blow on my foe in (the host's, from anyone)
@@ -662,6 +665,22 @@ export class OnlineSession {
     if (s.length > TRADE_FRAME_MAX) return false;   // AUDIT DROPS B4: the relay's own door on a trade frame, not the general cap - over it the relay closes the socket
     try { ws.send(s); } catch { return false; }
     this._tbucket = gate.bucket; this.stats.sent++; this.stats.trades = (this.stats.trades ?? 0) + 1;
+    return true;
+  }
+
+  /** ALLY-CAST: one cast frame out - to a party mate through the socket that reports them (`_socketFor`), through the
+   *  wire's own projection first, CAST_HZ_MAX a second; false when it cannot go, which the caster reads as "nobody there". */
+  sendCast(data) {
+    const d = validCastData(data);
+    if (!d || d.to === this.id) return false;
+    const ws = this._socketFor(d.to);
+    if (!ws) return false;
+    const gate = castGate(this._cbucket, this._now());
+    if (!gate.pass) return false;
+    const s = JSON.stringify({ t: 'cast', data: d });
+    if (s.length > CAST_FRAME_MAX) return false;
+    try { ws.send(s); } catch { return false; }
+    this._cbucket = gate.bucket; this.stats.sent++; this.stats.casts = (this.stats.casts ?? 0) + 1;
     return true;
   }
 
@@ -1172,6 +1191,20 @@ export class OnlineSession {
         } else {
           const d = validTradeData(m.data);
           if (d && d.to === this.id) this._deliver('trade', () => this.onTrade?.(m.id, d));
+        }
+      }
+    } else if (m.t === 'cast') {
+      // ALLY-CAST: a cast frame the relay routed to me - on any socket I hold, never my own back, gated coming in per
+      // sender (the trade arm's law), projected by the wire, addressed to ME. The host applies what it trusts of it.
+      if (typeof m.id === 'string' && m.id !== this.id) {
+        if (this._inCastBuckets.size > TRADE_IN_SENDERS_MAX) this._inCastBuckets.clear();
+        const g = castInGate(this._inCastBuckets.get(m.id) ?? null, now);
+        this._inCastBuckets.set(m.id, g.bucket);
+        if (!g.pass) {
+          if (!this._inCastSaid) { this._inCastSaid = true; console.warn(`[online] cast frames are arriving faster than ${CAST_IN_HZ_MAX}/s - frames are being dropped.`); }
+        } else {
+          const d = validCastData(m.data);
+          if (d && d.to === this.id) this._deliver('cast', () => this.onCast?.(m.id, d));
         }
       }
     } else if (m.t === 'act') {

@@ -62,6 +62,7 @@ const LAW = {
   world93: 'ff1fac557b7368668303860530b55780673c8fb33c8627b1b3a9fc1c39b98562',   // PARTY-REST DROP (2026-09-22): the party pose grew rest.kind, voteAt, restEnemyAt, restCancelFor/At, restStartedAt; bk a full 32-bit key
   world94: '6f482bb81f3a49306cfe3b936e44f8b7bec72d0b09286d687b2b9e58cb9e16da',   // PARTY8 (2026-09-22, Mac: "increase the party limit to 8"): PARTY_MAX 4 -> 8 in wire.js - a party frame's member bound, so the hub and the client move together
   world95: '4c705e967ac2f039cb79517a3ad64e89404d2a15c0500f917e0b336f66e5a0a7',   // AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp every reader judges for freshness), the hub's quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once, the lead passes to an online seat
+  world96: 'cdbfcb6e2533c9e26a51157d1304564ff34ed5767f45586387faec285fea0bb4',   // ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame (validCastData, the relay's cast arm, its own meter and funnel); the receiver decides what lands
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));

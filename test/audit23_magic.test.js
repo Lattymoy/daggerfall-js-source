@@ -76,9 +76,10 @@ test('AUDIT 23 magic-4: every spending cast arm tallies the effect schools', () 
   // at 0 (DaggerfallEntity.cs:374-381) rather than refusing the cast.
   assert.equal((src.match(/playerEntity\.magicka = Math\.max\(0, \(playerEntity\.magicka \?\? 0\) - cost\);/g) ?? []).length, 1,
     'the spend is CastReadySpell\'s single DecreaseMagicka, five frames before the release');
-  assert.equal((src.match(/tallyCastSkills\(sp\);/g) ?? []).length, 4,
-    'CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
-  assert.equal((src.match(/lastCastCost = cost;/g) ?? []).length, 4, 'and all four still record the cost');
+  // ALLY-CAST (2026-09-23): a fifth arm before the four - the cast on a party mate - spends, tallies and records alike
+  assert.equal((src.match(/tallyCastSkills\(sp\);/g) ?? []).length, 5,
+    'the ally arm, CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
+  assert.equal((src.match(/lastCastCost = cost;/g) ?? []).length, 5, 'and all five still record the cost');
   // the tally gates on the cost table (DFU's effect != null), not the
   // priced-as-Destruction default
   assert.ok(/function tallyCastSkills\(sp\) \{[\s\S]*?EFFECT_COST_TABLE\[`\$\{e\.type\},\$\{e\.subType & 0xff\}`\]/.test(src));

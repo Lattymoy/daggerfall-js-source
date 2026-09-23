@@ -180,7 +180,7 @@ const SPENT_MAX = 4096;
 /** MOD1: the most accounts whose latest mute order one room remembers. */
 const ORDERS_MAX = 1024;
 
-import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S } from './relay.js';
+import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_ROOM_HZ_MAX, CAST_FRAME_MAX } from './relay.js';
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -486,6 +486,15 @@ export class Room {
     const next = { ...a, tradeBucket: gate.bucket, tdrops };
     this._setAttach(ws, next);
     if (!gate.pass) { if (tdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many trade frames'); return null; }
+    return next;
+  }
+  /** ALLY-CAST: the cast frames' own bucket (CAST_HZ_MAX), the trade meter's shape. */
+  _meterCast(ws, a, now) {
+    const gate = castGate(a.castBucket, now);
+    const cdrops = gate.pass ? 0 : (a.cdrops ?? 0) + 1;
+    const next = { ...a, castBucket: gate.bucket, cdrops };
+    this._setAttach(ws, next);
+    if (!gate.pass) { if (cdrops > DROP_STRIKES_MAX) this._refuse(ws, 'too many cast frames'); return null; }
     return next;
   }
   /** WORLD3: the action frames' own bucket (ACT_HZ_MAX), the same strikes - a door beside the poses, never starving them. */
@@ -974,6 +983,27 @@ export class Room {
       const bytes = byteGate(a.tbytes ?? null, now, out.length, TRADE_ROOM_BYTES_PER_S);
       this._setAttach(ws, { ...a, tbytes: bytes.bucket });
       if (!bytes.pass) return;
+      this._send(tws, out);
+      return;
+    }
+    if (m.t === 'cast') {
+      // ALLY-CAST: ONE DIRECTED FRAME, the trade arm's own routing - from a hello'd socket in a PLACE room, on the cast
+      // bucket, to the socket `to` names in this room and to it alone, the sender's id stamped on it. The relay reads
+      // none of the spell (wire.js validCastData checked the shape and bounds; the receiver keeps the beneficial
+      // families of it alone and applies them itself). A frame at my own id is junk; a peer that is gone is not.
+      const now = Date.now();
+      a = this._meterCast(ws, a, now); if (!a) return;
+      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;
+      const to = m.data.to;
+      if (to === a.id) { this._junk(ws, a); return; }
+      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;
+      if (!target) return;
+      const [tws, tb] = target;
+      const funnel = tokenGate(tb.cinbucket ?? null, now, CAST_ROOM_HZ_MAX);
+      this._setAttach(tws, { ...tb, cinbucket: funnel.bucket });
+      if (!funnel.pass) return;
+      const out = JSON.stringify({ t: 'cast', id: a.id, data: m.data });
+      if (out.length > CAST_FRAME_MAX + 64) return;
       this._send(tws, out);
       return;
     }
