@@ -112,7 +112,7 @@ export const CONTINUATION = /(`:|\/ *:|\/|, *:|\(:|against +:)(\d+)(?:-(\d+))?(?
  *  - in a table row, each cell's edge. The Ledger's DFU column is a cell
  *    of its own ("| TalkManager reaction seed (:744-748) |").
  *  Without them, a JS cite earlier in the row took all of those for its own
- *  lines, and 22 of the Ledger's DFU ranges moved at every shift
+ *  lines, and 42 of the Ledger's DFU ranges moved at every shift
  *  (TalkManager.GetReactionToPlayer_0_1_2 went from :689 to :874). Both
  *  rules were run against the whole tree before they were written, and
  *  everything they exclude is C#. */

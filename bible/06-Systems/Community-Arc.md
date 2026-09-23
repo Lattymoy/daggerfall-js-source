@@ -711,3 +711,21 @@ The struck row above it still reads "8076/8077", and DFU's TalkManager.cs answer
 - `test/ledger.test.js` and Testing.md: "the ROADS 3/22 comment block". The two copies already disagreed (3/24 and
   3/43) in the history's first commit, so neither is a person's number. The block holds the ROADS 3 and ROADS 22
   comments, and ROADS 22 is the arc that wired Basic Roads' network there.
+
+**The Ledger's DFU ranges, restored against DFU's source.** 42 ranges in the Ledger's DFU column and prose had moved
+with a JS cite. Git cannot give their originals, because its first commit is a squash that already carried moved
+values. Each was re-derived by reading DFU master 2343305, the port's reference (tools/parity clones master). Where a
+row cites the same code with its `.cs` file, that cite never moved, and it anchors the range. Four read-only passes
+worked a batch each, and every span was checked here against the source before it was written.
+- 30 are restored in this pass. For example, GetReactionToPlayer_0_1_2's reaction sum is TalkManager.cs:663-667 (it
+  read :874-878), and StockHouseContainer is DaggerfallLoot.cs:291-375 (it read :319-403). The remaining 12 follow in
+  their own commit.
+- Nine prose ranges no stop can tell apart are written with their file now, so RF3's `.cs:N` stop protects them:
+  - `ResetNPCKnowledge (TalkManager.cs:546-553)`;
+  - WeaponManager.cs:230-233 and :275-281;
+  - PlayerGPS.cs:747 and :766-776;
+  - DaggerfallTalkWindow.cs:1465-1499;
+  - three JS continuations that RF3 had given to the cite before them: `guildServiceFlow.js:269`/`:270` and
+    `useItem.js:311-335`/`:232-268`.
+- Found by the passes and left for a person: row 735's `DaggerfallCourtWindow.cs:191` names the Dark Brotherhood
+  rescue's refill, not the acquittal's (:425).
