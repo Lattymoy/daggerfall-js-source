@@ -197,7 +197,7 @@ import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js'; 
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
-import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJumpStamp, sampleWeatherField, weatherCrossingStamp, currentFieldCells } from '../systems/weatherSim.js';   // W1: the live weather state; WEATHER2b: the field
+import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJumpStamp, sampleWeatherField, weatherCrossingStamp, currentFieldCells } from '../systems/weatherSim.js';   // W1: the live weather state; WEATHER2b: the field
 import { fieldOfPixelLocal, pixelLocalOfField } from '../systems/weatherField.js';   // WEATHER2b: this host's pixel-local frame to the field's metres, and back
 import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells
 import { SEASON } from '../world/climateSwaps.js';
@@ -4344,7 +4344,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // street's own rain is what you hear through the walls: a building at INDOOR_RAIN_GAIN of it, never louder
       // than the street, and underground at the street's own gain. Forcing gain 1 here made a light shower (the
       // front's 0.15) louder in a tavern than in the street - the Discord report itself - and a dungeon 6.7x.
-      ambience.setPreset(presetForExterior(ambientWord, isNight(minuteNow())));
+      ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
       ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
@@ -4833,6 +4833,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
     // WX2: the ear follows what is falling under the front; the word, verbatim, on classic
     ambientWord = enhancedFront ? soundWeather(fx, weather) : weather;
+    setHeardWeather(ambientWord);   // DISC9: what the street hears is what every indoor ear hears through the walls
     ambience.setPreset(presetForExterior(ambientWord, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
@@ -5033,7 +5034,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:12590-12819 is the shape.
+    // through the player for ever. world.js:12591-12820 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -5286,7 +5287,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:12929's order, and the order
+          // BEFORE civilians - world.js:12930's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

@@ -88,5 +88,41 @@
     "tests": [
       "test/disc8.test.js"
     ]
+  },
+  {
+    "name": "DISC9-the-ear-reads-the-sim",
+    "file": "src/systems/weatherSim.js",
+    "old": "export const heardWeather = () => (_heard != null && _heardAtJump === _jumps ? _heard : currentWeather());",
+    "new": "export const heardWeather = () => currentWeather();",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC9-heard-outlives-a-jump",
+    "file": "src/systems/weatherSim.js",
+    "old": "(_heard != null && _heardAtJump === _jumps ? _heard",
+    "new": "(_heard != null ? _heard",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC9-world-never-writes-the-ear",
+    "file": "src/scenes/world.js",
+    "old": "    setHeardWeather(ambientWord);   // DISC9",
+    "new": "    // DISC9",
+    "tests": [
+      "test/disc8.test.js"
+    ]
+  },
+  {
+    "name": "DISC9-exterior-never-writes-the-ear",
+    "file": "src/scenes/exterior.js",
+    "old": "    setHeardWeather(ambientWord);   // DISC9",
+    "new": "    // DISC9",
+    "tests": [
+      "test/disc8.test.js"
+    ]
   }
 ]

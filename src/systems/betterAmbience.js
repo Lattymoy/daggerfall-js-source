@@ -48,7 +48,7 @@ import { modSettingsOf } from './modSettings.js';
 import { audio as defaultAudio } from './audio.js';
 import { FOOTSTEP } from './footsteps.js';
 import { multiply, trs } from '../world/mat4.js';
-import { currentWeather } from './weatherSim.js';
+import { heardWeather } from './weatherSim.js';   // DISC9: the weather the player HEARS outdoors, not the sim's word
 import { immersiveFootsteps } from './immersiveFootsteps.js';
 import { isSnowFreeClimate } from '../world/weather.js';
 import { perlinNoise } from '../world/perlin.js';   // Mathf.PerlinNoise's one home   // WeatherManager.IsSnowFreeClimate
@@ -518,7 +518,7 @@ export const reverbPresetFor = (level) => REVERB_PRESETS[level] ?? null;
  */
 export const TRANSITION_WAIT_FRAMES = 4;   // "Wait some frames XD" - four yields in UpdateDungeonFog and UpdateAmbientSoundSources
 
-export function createBetterAmbience({ audio = defaultAudio, settings = readBetterAmbienceSettings, random = Math.random, fetchClip = defaultFetchClip, weather = currentWeather, snowFree = isSnowFreeClimate } = {}) {
+export function createBetterAmbience({ audio = defaultAudio, settings = readBetterAmbienceSettings, random = Math.random, fetchClip = defaultFetchClip, weather = heardWeather, snowFree = isSnowFreeClimate } = {}) {
   let s = null;
   const footsteps = createBetterFootsteps({ audio, random, snowFree });
   const shaker = new CameraShaker(random);
