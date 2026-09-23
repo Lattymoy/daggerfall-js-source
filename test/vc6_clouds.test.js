@@ -190,12 +190,13 @@ test('VC6c: a sun behind a bank throws no shafts - the gate is the cloud shadow 
   // near the sun's screen position was a light source, cloud or no cloud.
   assert.match(air, /float sky = depthAt\(uv\) >= 0\.99999 \? 1\.0 : 0\.0;/, 'the mask still finds the sky');
   assert.match(air, /float through = cloudShadowAt\(uEye\);/, 'and now asks how much sun reaches the player at all');
-  assert.match(air, /uShaftParams\.y \* through \* through\), 1\.0\);/, 'squared: a shaft needs a BEAM, so half the sun is a quarter of the rays');
+  assert.match(air, /return uSunColor \* \(acc \/ \$\{AIR_SHAFT_TAPS\}\.0 \* uShaftParams\.y \* through \* through\);/, 'squared: a shaft needs a BEAM, so half the sun is a quarter of the rays (VC7b: the beams\' own function, the gate unchanged)');
   assert.match(air, /\$\{CLOUD_SHADOW_GLSL\}/, 'the same block the ground reads - one field, three consumers');
   assert.match(air, /uniform vec3 uEye;/);
-  assert.match(air, /shaft: P\(QUAD_VS, SHAFT_FS, \['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect'\]\)/, 'every uniform it declares has its location fetched');
-  assert.match(air, /gl\.uniform3fv\(this\.programs\.shaft\.uEye, f\.eye\);/);
-  assert.match(air, /gl\.uniform4fv\(this\.programs\.shaft\.uCloudShadowRect, deck\?\.rect \?\? this\._noDeck\);/);
+  assert.match(air, /shaft: P\(QUAD_VS, SHAFT_FS, \['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect', 'uSunOn', 'uViewRot', 'uCloudSky', 'uCloudSkyOn', 'uLightDir', 'uHaze'\]\)/, 'every uniform it declares has its location fetched (VC7b: the sky map and the haze)');
+  assert.match(air, /gl\.uniform3fv\(S\.uEye, f\.eye\);/);   // VC7b: S is this.programs.shaft
+  assert.match(air, /gl\.uniform4fv\(S\.uCloudShadowRect, deck\?\.rect \?\? this\._noDeck\);/);
+  assert.match(air, /const S = this\.programs\.shaft;/, 'S is the shaft program');
   // ═══ THE DECK IS READ AT THE RESOLVE, NEVER AT PREPARE ═════════════
   // beginFrame CLEARS the deck (a deck is a frame's, so an interior never
   // inherits the last exterior's map) and `prepare` runs inside

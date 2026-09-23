@@ -993,7 +993,9 @@ export class VolumetricClouds {
    *  deck the controller hands the renderer. */
   get shadow() {
     if (!this.mapOrigin || !this.shadowMarched) return null;
-    return { map: this.shadowMap.tex, rect: [this.mapOrigin[0], this.mapOrigin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT] };
+    // VC7b: and the SKY map, once a sweep has filled it - its alpha is the slab's transmittance by direction, which
+    // is what cuts the sun's beams into spokes (airPass.js SHAFT_FS); null before, and the mask is the sky's alone
+    return { map: this.shadowMap.tex, rect: [this.mapOrigin[0], this.mapOrigin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT], sky: this.sweeps > 0 ? this.map.tex : null };
   }
 
   _fieldUniforms(u) {

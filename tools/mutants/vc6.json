@@ -201,8 +201,8 @@
   {
     "name": "VC6c-a-covered-sun-throws-shafts-again",
     "file": "src/render/airPass.js",
-    "old": "  outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through), 1.0);",
-    "new": "  outColor = vec4(uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y), 1.0);",
+    "old": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through);",
+    "new": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y);",
     "tests": [
       "test/vc6_clouds.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "VC6c-thin-cloud-dims-the-shafts-politely-instead-of-taking-them",
     "file": "src/render/airPass.js",
-    "old": "uShaftParams.y * through * through), 1.0);",
-    "new": "uShaftParams.y * through), 1.0);",
+    "old": "uShaftParams.y * through * through);",
+    "new": "uShaftParams.y * through);",
     "tests": [
       "test/vc6_clouds.test.js"
     ]

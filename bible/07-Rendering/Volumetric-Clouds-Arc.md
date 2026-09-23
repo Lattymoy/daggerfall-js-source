@@ -276,6 +276,49 @@ leaves.
   reaches the air it glows; where the bank shades it, it does not. It
   scales with the air's haze (humid weather, low sun) and is off indoors.
 
+**VC7b shipped (2026-09-23).** Pinned by `test/vc7b_shafts.test.js`
+(`tools/mutants/vc7b.json` 33/33 dead), and drawn on a real GPU by
+`tools/vc7bHazeProbe.mjs` (12/12), which is where the look is judged -
+the pins run on a fake GL that draws nothing.
+- **The beams through the gaps.** The deck the ground reads now carries
+  the sky map too (`VolumetricClouds.shadow` `sky`, once a sweep has
+  filled it), and EL3's mask reads its alpha - the slab's transmittance -
+  in each tap's world direction, by the composite's own parametrisation.
+  With the player in full sun, a sky map that is all gap leaves the beams
+  exactly as they were, all cloud takes them away, and a half-cloudy one
+  leaves half. VC6c's gate is untouched: Mac's "when the sun is covered by
+  clouds, there shouldnt be sky rays" still decides first.
+- **The sun in the haze.** `airPass.js` walks each shaft pixel's view ray
+  AIR_HAZE_STEPS (12) jittered steps out to AIR_HAZE_REACH (3000 m); each
+  step's sun is the cloud shadow map read where its sun ray meets the
+  ground (the map's own ray), dimmed by the fog's own extinction (the
+  lane's `scatterDensity`, handed over as `haze`) and weighted by a
+  Henyey-Greenstein phase (g 0.6, a 0.3 isotropic share). VOL1's
+  depth-aware tile averages the jitter into the shafts' image the resolve
+  already adds. It runs only with a deck, the sun above the shadow map's
+  own floor (0.05) and a fog with an extinction - so never indoors, never
+  on the classic skin - and `?haze=off` shuts it.
+- **Measured on the probe**, under the clear day's own fog (linear to
+  2400): a solid deck leaves no haze; lanes of cloud shadow swing the air
+  48% against a lit deck's image, pixel for pixel (0.0% for the lit deck
+  against itself); toward a low sun the same air is fourteen times as
+  bright as away from it. AIR_HAZE_GAIN (1) was chosen against 0.5 (the
+  lanes all but invisible), 1.5 (over-bright toward the sun, where the
+  dome's glow and the beams already are) and 3 (the sky toward the sun
+  white). The term is additive, so the lit-against-shaded contrast can
+  never exceed what a fully lit day adds - a forward glow about the sun.
+  Near ground takes little of it by construction (a short ray through thin
+  haze scatters little), as the world fog leaves near ground clear.
+- **Found on the way: VC6c's probe never drew its scene.** It described
+  its mesh's sub-mesh as `{ archive, record, start, count }`; the renderer
+  reads `{ textureArchive, textureRecord, startIndex, primitiveCount }`
+  (tools/aoProbe.mjs has it right), so its ground and its pillar were
+  never drawn. Its "the ground moves with the rays" check was reading the
+  clear colour (177 / 174 / 174), moved only by the eye's adaptation. With
+  the fields named, the scene draws and the check measures what it says
+  (115.7 > 90.3 > 49.6); the other five checks held either way. VC6c's
+  probe now sets `?haze=off`'s door, so it measures the beams alone.
+
 ### VC7c - rain shafts
 
 - A raining or storming cell hangs a curtain from its base to the ground:
