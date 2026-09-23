@@ -2,8 +2,8 @@
   {
     "name": "S1-party-five-seats",
     "file": "src/net/wire.js",
-    "old": "export const PARTY_MAX = 4;",
-    "new": "export const PARTY_MAX = 5;",
+    "old": "export const PARTY_MAX = 8;",
+    "new": "export const PARTY_MAX = 9;",
     "tests": [
       "test/soc1_hub.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "S38-version-not-bumped",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world93';",
-    "new": "export const RELAY_VERSION = 'world92';",
+    "old": "export const RELAY_VERSION = 'world94';",
+    "new": "export const RELAY_VERSION = 'world93';",
     "tests": [
       "test/soc1_hub.test.js",
       "test/relayversion.test.js"

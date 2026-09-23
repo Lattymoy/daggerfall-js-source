@@ -528,6 +528,20 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced', 'classic']),
     control: Object.freeze({ store: 'prefs', key: 'firstPersonLighting', initial: true, online: 'player' }),   // MAC-I: combat/weaponRig.js fpLightingOn
   }),
+  // MAP-TOGGLE (2026-09-22, Mac: "is the enhanced map a toggle?" - "Yes
+  // needs to be a toggle"): the held sheet was the enhanced skin's alone,
+  // with no way to keep the skin and take DFU's own maps back. The three
+  // map doors read this beside the skin now (ui/mapSkin.js heldMapWorn).
+  Object.freeze({
+    id: 'enhanced-map',
+    group: 'sight',
+    title: 'Enhanced map',
+    note: 'The map is a parchment in your own hands: the world, the town and the dungeon on one sheet, panned and '
+      + 'zoomed under the pen. Off is Daggerfall\u2019s own three map windows, as the classic skin draws them.',
+    effect: 'Takes effect the next time a map is opened.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: true, online: 'player' }),   // the player's own: what THEIR map looks like
+  }),
   Object.freeze({
     id: 'flora-sway',
     group: 'sight',

@@ -104,10 +104,12 @@ test('EL5: the casters - the nearest lanterns first, at most SHADOW_POINT_CASTER
     20, 0, 0, 14,
     12, 0, 0, 12,
   ]);
-  assert.deepEqual(pickShadowCasters(L, [0, 0, 0]), [2, 5, 7, 6, 1], 'by distance: 5, 10, 12, 20, 30 - the five lanterns, all within six');
-  assert.deepEqual(pickShadowCasters(L, [0, 0, 0], 4), [2, 5, 7, 6], 'at four: the one at 30 left out');
-  assert.deepEqual(pickShadowCasters(L, [0, 0, 0], 2), [2, 5]);
-  assert.equal(pickShadowCaster(L, [0, 0, 0]), 2, 'the old pick is the nearest');
+  const C = new Uint8Array([1, 0, 0, 0, 0, 0, 0, 0]);   // LIGHT-NEAR1: the candle is the eye's own BY ITS FLAG, not by its distance
+  assert.deepEqual(pickShadowCasters(L, [0, 0, 0], 6, C), [2, 5, 7, 6, 1], 'by distance: 5, 10, 12, 20, 30 - the five lanterns, all within six');
+  assert.deepEqual(pickShadowCasters(L, [0, 0, 0], 4, C), [2, 5, 7, 6], 'at four: the one at 30 left out');
+  assert.deepEqual(pickShadowCasters(L, [0, 0, 0], 2, C), [2, 5]);
+  assert.equal(pickShadowCaster(L, [0, 0, 0], C), 2, 'the old pick is the nearest');
+  assert.deepEqual(pickShadowCasters(L, [0, 0, 0]), [0, 2, 5, 7, 6, 1], 'LIGHT-NEAR1: unflagged, the light at the eye is the nearest caster of all');
   assert.deepEqual(pickShadowCasters(new Float32Array(0), [0, 0, 0]), []);
   assert.equal(SHADOW_POINT_CASTERS, 6);
 });
@@ -140,7 +142,7 @@ test('EL5: the face basis the shader selects by is pointFaceMatrices\' own - a p
 
 test('EL5: every lane shader takes any caster\'s shadow through shadowOfLight, after the range early-out; the flat too', () => {
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
-    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7 \|\| length\(uPointLights\[i\]\.xyz - uCamPos\) < 1\.5\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL8 - a caster's map, else a contact shadow`);
+    assert.match(fs, /float d = length\(L\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL8 - a caster's map, else a contact shadow`);
     assert.ok(!/uShadowIndex \?/.test(fs), `${name}: no single-index compare left`);
   }
   assert.match(EL_BB_FS, /float d = length\(uPointLights\[i\]\.xyz - wp\);\n    if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    float sh = shadowOfLight\(i, base, vec3\(0\.0, 1\.0, 0\.0\)\);/);
@@ -224,7 +226,7 @@ test('EL5: the glare hides in world units at five taps, the resolve grades in di
   assert.match(a, /float viewDist\(float d01\) \{\n  float z = d01 \* 2\.0 - 1\.0;\n  return uProjInfo\.w \/ \(z \+ uProjInfo\.z\);/, 'the depth image linearised the way the AO does');
   assert.match(a, /float lantern = -vc\.z;/);
   assert.ok(!/<= d \+ 0\.002/.test(a), 'no hyperbolic constant left');
-  assert.match(a, /depthOn\(P\);   \/\/ EL5\/EL6/); assert.match(a, /< AIR_GLARE_MIN_DISTANCE\) continue;   \/\/ EL7: the torch in the hand, the candle/);
+  assert.match(a, /depthOn\(P\);   \/\/ EL5\/EL6/); assert.match(a, /if \(f\.carried && f\.carried\[i\]\) continue;   \/\/ MAC-T1/, 'the hand\'s light skipped by its flag (LIGHT-NEAR1: the camera-distance skip is gone)');
   assert.match(a, /vec3 e = airEncode\(max\(c, vec3\(0\.0\)\)\);\n  e = \(e - 0\.5\) \* uGrade\.w \+ 0\.5;\n  e \+= \(bayer4\(gl_FragCoord\.xy\) - \$\{BAYER_MEAN\}\) \/ 255\.0;/, 'the contrast after the encode, about mid-grey; EL6: dithered at the byte, zero-mean');
   assert.ok(!/c = \(c - 0\.18\) \* uGrade\.w \+ 0\.18;/.test(a), 'the linear pivot is gone');
   assert.match(a, /import \{ spherePlanes, recordVisible, subMeshVisible, batchVisible \} from '\.\/bounds\.js';/, 'the leaf imports a leaf');

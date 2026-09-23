@@ -60,6 +60,7 @@ const LAW = {
   world91: '0a4606f6b2d934132adaf12ec9bb3eb28190c5b080c2946445c395a2c315bd10',
   world92: '4dbadc7abb0751cc241a86991bbc8c45df9379416fd5cd9b91ab3ef0524a9c79',   // AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only with a party to reach (C3)   // QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops from Mac's contributors in one deploy): the {t:'quest'} hub frame (a party member's quest shared, validQuestFrame, its own cooldown and QUEST_FRAME_MAX), the {t:'trade'} directed frame (a courier between two peers - validTradeData, tradeGate, the room's trade byte budget), and the pose's footstep byte for the peers' footsteps. An older relay closes on the unknown frames, so the clients offer Trade only to world91 or later (TRADE_RELAY_MIN).
   world93: 'ff1fac557b7368668303860530b55780673c8fb33c8627b1b3a9fc1c39b98562',   // PARTY-REST DROP (2026-09-22): the party pose grew rest.kind, voteAt, restEnemyAt, restCancelFor/At, restStartedAt; bk a full 32-bit key
+  world94: '6f482bb81f3a49306cfe3b936e44f8b7bec72d0b09286d687b2b9e58cb9e16da',   // PARTY8 (2026-09-22, Mac: "increase the party limit to 8"): PARTY_MAX 4 -> 8 in wire.js - a party frame's member bound, so the hub and the client move together
 };
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url));

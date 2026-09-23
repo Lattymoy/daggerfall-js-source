@@ -18,28 +18,10 @@
   ]
  },
  {
-  "name": "glare-min-distance-zero",
-  "file": "src/render/airPass.js",
-  "old": "export const AIR_GLARE_MIN_DISTANCE = 1.5;",
-  "new": "export const AIR_GLARE_MIN_DISTANCE = 0;",
-  "tests": [
-   "test/el7_polish.test.js"
-  ]
- },
- {
   "name": "glare-presence-one-sided",
   "file": "src/render/airPass.js",
   "old": "  return abs(viewDist(depthAt(uv)) - lantern) <= ${glslFloat(AIR_GLARE_SLACK)} ? 1.0 : 0.0;",
   "new": "  return viewDist(depthAt(uv)) + ${glslFloat(AIR_GLARE_SLACK)} >= lantern ? 1.0 : 0.0;",
-  "tests": [
-   "test/el7_polish.test.js"
-  ]
- },
- {
-  "name": "glare-no-hand-rule",
-  "file": "src/render/airPass.js",
-  "old": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < AIR_GLARE_MIN_DISTANCE) continue;   // EL7: the torch in the hand, the candle\n",
-  "new": "",
   "tests": [
    "test/el7_polish.test.js"
   ]

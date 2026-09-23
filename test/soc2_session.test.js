@@ -190,7 +190,7 @@ test('SOC2: actionsFor a peer in the world - a stranger can be friended and invi
   st.apply({ t: 'social', k: 'party', party: view([row('me', { acct: 'acct-me', name: 'Mac' }), row('b')]) });
   assert.deepEqual(st.actionsFor('peer-b').canInvite, false); assert.equal(st.actionsFor('peer-b').whyNotInvite, 'in your party');
   assert.equal(st.actionsFor('peer-zz').canInvite, true, 'two seats free');
-  st.apply({ t: 'social', k: 'party', party: view([row('me', { acct: 'acct-me', name: 'Mac' }), row('b'), row('c'), row('f')]) });
+  st.apply({ t: 'social', k: 'party', party: view([row('me', { acct: 'acct-me', name: 'Mac' }), row('b'), ...Array.from({ length: PARTY_MAX - 2 }, (_, i) => row(`s${i}`))]) });   // PARTY8: every seat the bound allows
   assert.equal(st.actionsFor('peer-zz').whyNotInvite, 'the party is full');
   assert.deepEqual(st.actionsFor('peer-me'), { acct: 'acct-me', relation: 'me', canFriend: false, canInvite: false, whyNotFriend: 'that is you', whyNotInvite: 'that is you' });
 });

@@ -15,7 +15,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   SHADOW_SUN_SIZE, SHADOW_POINT_SIZE, SHADOW_CASCADES, SHADOW_SUN_DEPTH, SHADOW_MIN_SUN_Y, SHADOW_POINT_NEAR,
-  SHADOW_CASTER_MIN_DISTANCE, SHADOW_SUN_UNIT, SHADOW_POINT_UNIT, SHADOW_RECORD_MAX,
+  SHADOW_SUN_UNIT, SHADOW_POINT_UNIT, SHADOW_RECORD_MAX,
   sunCascadeMatrices, sunTexelWorld, pointFaceMatrices, cubeDepthRef, pickShadowCaster, shadowKind,
   SHADOW_GLSL, DEPTH_FS, DEPTH_BB_FS, ShadowPass, shadowFarFor } from '../src/render/shadowPass.js';
 import { EL_LANE, EL_MESH_FS, EL_BB_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_FAR_RING_FS } from '../src/render/enhancedLighting.js';
@@ -67,7 +67,7 @@ function drawWorld(r) {
 test('EL2: the constants - three cascades (EL7), the sizes, the reserved units above every foreign pass and beside the cloud shadow', () => {
   assert.deepEqual([...SHADOW_CASCADES], [12, 48, 240], 'EL7: the room, the street, the town');
   assert.equal(SHADOW_SUN_SIZE, 2048); assert.equal(SHADOW_POINT_SIZE, 512); assert.equal(SHADOW_SUN_DEPTH, 600);
-  assert.equal(SHADOW_MIN_SUN_Y, 0.05); assert.equal(SHADOW_POINT_NEAR, 0.1); assert.equal(SHADOW_CASTER_MIN_DISTANCE, 1.5);   // F3: the light in the hand casts nothing
+  assert.equal(SHADOW_MIN_SUN_Y, 0.05); assert.equal(SHADOW_POINT_NEAR, 0.1);   // LIGHT-NEAR1: no caster minimum distance any more - the hand's light is excluded by name
   assert.equal(SHADOW_SUN_UNIT, 13); assert.equal(SHADOW_POINT_UNIT, 14); assert.equal(CLOUD_SHADOW_UNIT, 15);
   assert.equal(SHADOW_RECORD_MAX, 6000);
   assert.ok(near(sunTexelWorld(0), 24 / 2048) && near(sunTexelWorld(1), 96 / 2048) && near(sunTexelWorld(2), 480 / 2048), 'EL7: 1.2 cm, 4.7 cm, 23 cm');
@@ -148,18 +148,19 @@ test('EL2: the cube faces - a point on each axis lands on its face at the centre
   assert.ok(near(cubeDepthRef(0.01, 0, 0, far), 0, 1e-9), 'inside the near plane clamps to it');
 });
 
-test('EL2: the caster and the kind - the nearest lantern that is not the eye\'s own, and a sun with height or the cube', () => {
+test('EL2: the caster and the kind - the nearest lantern that is not the eye\'s own (by its flag: LIGHT-NEAR1), and a sun with height or the cube', () => {
   const eye = [0, 1.5, 0];
   const lights = new Float32Array([
-    0, 1.5, 0.1, 10,     // the candle at the eye - never the caster
+    0, 1.5, 0.1, 10,     // the candle at the eye - carried, never the caster
     8, 2, 0, 12,         // a wall torch
     3, 2, 0, 0,          // a light with no range - never
     -4, 2, 0, 9,         // the nearest with a range
   ]);
-  assert.equal(pickShadowCaster(lights, eye), 3);
-  assert.equal(pickShadowCaster(lights, eye, 5), 1, 'a wider exclusion picks the torch');
+  const carried = new Uint8Array([1, 0, 0, 0]);
+  assert.equal(pickShadowCaster(lights, eye, carried), 3);
+  assert.equal(pickShadowCaster(lights, eye), 0, 'LIGHT-NEAR1: unflagged, a light at the eye is a light like any other - the nearest caster');
   assert.equal(pickShadowCaster(new Float32Array(0), eye), -1);
-  assert.equal(pickShadowCaster(new Float32Array([0, 1.5, 0, 10]), eye), -1, 'the eye\'s own alone is none');
+  assert.equal(pickShadowCaster(new Float32Array([0, 1.5, 0, 10]), eye, new Uint8Array([1])), -1, 'the eye\'s own alone is none');
   assert.equal(shadowKind(0.55, [0.3, 0.8, 0.2]), 'sun');
   assert.equal(shadowKind(0.55, [0.9, 0.04, 0.2]), 'point', 'a sun at the horizon is no sun');
   assert.equal(shadowKind(0, [0.45, 0.8, 0.35]), 'point', 'indoors: the interior\'s fake key light has scale 0');
@@ -185,7 +186,7 @@ test('EL2: the receiver block and the depth shaders - six uniforms, no dynamic m
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(SHADOW_GLSL), `${name} carries the block`);
     assert.match(fs, /cloudShadowAt\(vWorldPos\) \* sunShadowAt\(vWorldPos, n\)/, `${name}: the sun term wears both shadows`);
-    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7 \|\| length\(uPointLights\[i\]\.xyz - uCamPos\) < 1\.5\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL5 - out of the window nothing is computed; EL8: a caster's map by the table, else a contact shadow`);
+    assert.match(fs, /if \(d >= uPointLights\[i\]\.w\) continue;[^\n]*\n    vec3 Ln = L \/ max\(d, 1e-4\);\n    int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: EL5 - out of the window nothing is computed; EL8: a caster's map by the table, else a contact shadow`);
   }
   assert.ok(EL_BB_FS.includes(SHADOW_GLSL));
   assert.match(EL_BB_FS, /in vec3 vBBBase;/);
@@ -246,10 +247,12 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   // frame 3 indoors: the cube from the nearest lantern that is not the eye's
   drawWorld(r);
   r.setLighting(new Float32Array([0.12, 0.12, 0.12]), 0);
-  r.setPointLights(new Float32Array([0, 0, 0, 10, 6, 2, 1, 14]), new Float32Array([1, 1, 1]));
+  const lit = new Float32Array([0, 0, 0, 10, 6, 2, 1, 14]);
+  lit.carried = new Uint8Array([1, 0]);   // LIGHT-NEAR1: the eye's own light is the eye's own BY ITS FLAG (withPlayerLights' mask, lifted by setPointLights) - not by sitting at the origin
+  r.setPointLights(lit, new Float32Array([1, 1, 1]));
   calls.length = 0;
   r.beginFrame(I, I, new Float32Array([0.45, 0.8, 0.35]), WORLD_FRAME);
-  assert.equal(sp.kind, 'point'); assert.deepEqual([...sp.shadowIndex], [1, -1, -1, -1, -1, -1], 'the eye\'s own light (at the origin, where the identity view puts the eye) is skipped');
+  assert.equal(sp.kind, 'point'); assert.deepEqual([...sp.shadowIndex], [1, -1, -1, -1, -1, -1], 'the eye\'s own light (carried) is skipped');
   // PERF-FLICKER (2026-09-19): the w is the CUBE MAP's far plane, not the
   // lantern's live range - the light's range is animated (CityLightAnimator
   // wanders it inside a one-unit band, fourteen steps a second) and the

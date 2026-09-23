@@ -2182,7 +2182,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1162,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1163,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2692,7 +2692,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6909 against :6933).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6915 against :6939).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3256,8 +3256,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:12789,
-              // exterior.js:4963 and worldModes.js:7109 already ran;
+              // playerArrowHitFoe is the one copy world.js:12795,
+              // exterior.js:4953 and worldModes.js:7115 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6273,6 +6273,30 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (opts.dungeonOnline?.()) { hudText.add('Loading is disabled during online play.'); return; }
       const snap = key != null ? loadSlot(key) : quickLoadSlot(playerEntity.name, undefined, playerEntity.characterId ?? null);   // CHARID1
       if (!snap) { hudText.add('No saved game.'); return; }
+      // CASTLE1 (DragynDance, 2026-09-22: "can't even load the game
+      // anymore to escape, it pops this up: (different dungeon - world
+      // state left as built)"): A SAVE FROM ANOTHER PLACE IS THE WORLD
+      // HOST'S LOAD. F12 and the pause menu's Load reach THIS door
+      // underground (ui/input.js routeKey, the pause door's loadKey),
+      // and it restored the character, said the line below and left
+      // the player standing where they were - which in a castle whose
+      // start marker ate every click was no way out at all. DFU's
+      // LoadGame is RespawnPlayer first (PlayerEnterExit.cs:453-459,
+      // :534-537): the standing scene is destroyed and the save's own
+      // place re-entered before the position lands. The world host's
+      // load is that member (world.js worldQuickLoad: force-exit,
+      // teleport to the save's pixel, StartDungeonInterior); handed the
+      // slot's key it goes there. A microtask on, not inline: this door
+      // is reached from inside the context's own overlay dispatch, and a
+      // context must not tear itself down from there (worldModes' F-A5
+      // deferral is the same law). The standalone ?dungeon scene has no
+      // world to hand to and keeps the line (recorded: cross-location
+      // travel-on-load pends there alone).
+      if (opts.worldLoad && snap.locationKey != null && snap.locationKey !== _locationKey) {
+        const k = key;
+        Promise.resolve().then(() => opts.worldLoad(k));
+        return;
+      }
       const extras = restorePlayer(playerEntity, snap, spellsByIndex);
       if (!extras) { hudText.add('Save version mismatch.'); return; }
       this.restoreSaved(extras, setPlayerPos);
@@ -6314,7 +6338,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // composer, so this host runs it too (SaveLoadManager.cs:1518).
       if (session && restoreSessionState(extras, { questBridge: opts.questBridge, talk: opts.talkSave, entity: playerEntity, spawnLedger: opts.spawnLedger?.() ?? null })) opts.onQuestRestored?.();
       if (extras.world && extras.locationKey === _locationKey) applyWorld(extras.world);
-      else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends
+      else if (extras.world) hudText.add('(different dungeon - world state left as built)');   // cross-location travel-on-load pends in the STANDALONE scene alone - a world-hosted dungeon hands such a save up before this (quickLoad, CASTLE1)
       // A1: restorePlayer replaced the automap store, so the live
       // record reference is stale. Re-fetch on the LOAD arm
       // (initFromLoadingSave, Automap.cs:2492-2493): a bare
@@ -6470,6 +6494,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // painted. ROAD-tail: that is what the stack's own pause LATCH
     // answers, so the question is asked once, in `dungeonPaused`.
     get uiOverlayActive() { return dungeonPaused(); },
+    hudLines() { return hudText.lines.map((l) => l.text); },   // CASTLE1 probe surface (tools/castleProbe.mjs reads the load's lines)
     /** STATUS-LIVE: ...AND THE OTHER HALF OF THAT QUESTION, which the
      *  two hosts that DRAW this context's slot need and could not ask.
      *  A window the game is NOT stopped for (the status readout,

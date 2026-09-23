@@ -874,3 +874,36 @@ off / 0.0924 on, B's glare 446 / 0 bare / 446 carried / 0 panelled.
 the no-cast rules on the fake GL, the far cascade's radius rule),
 test/ww1_weaponwidget.test.js's F1 pin; the el2/el3/el5/el7/el8 pins
 re-aimed at the new numbers and the self check. tools/mutants/bugs5.json (20, all dead).
+
+## LIGHT-NEAR1 - THE LAMP OVERHEAD (2026-09-23, kurkku on Discord, with video: "shadows disappear seemingly when you're too close to the light source")
+
+A tavern: the player walks toward the hanging lamp and the shadows it
+casts vanish. The cause was F3's proxy, still standing beside the flag
+that replaced it. F3 kept the light in the hand out of the caster slots
+by "within 1.5 of the eye" (`SHADOW_CASTER_MIN_DISTANCE`), the lit
+block's contact march read the same number, and the glare had its own
+copy (`AIR_GLARE_MIN_DISTANCE`, EL7). MAC-T1 then wrote the fact BY
+NAME - the torch and candle records say `carried`, every host with a
+player light composes through `withPlayerLights`, the renderer lifts the
+mask off the array, and the pick, the march (-2 in the caster table) and
+the glare skip a carried light in any camera - and left the proxy in
+place. It was never the hand's alone: a hanging lantern sits 2.6-3.2 up
+and the eye at 1.7, so within about a unit of it the nearest, brightest
+light in the room lost its cube map, its contact march and its glare in
+the same step.
+
+**The rule is gone, in all three places.** `pickShadowCasters(lights,
+eye, max, carried)` and `pickShadowCaster(lights, eye, carried)` have no
+minimum-distance argument; the lit block's fallback reads the caster
+table and the range share alone; the glare loop reads the flag alone.
+A scene light's distance to the eye is not a reason to drop its shadow;
+the hand's light is excluded by its flag. The two constants are deleted
+rather than zeroed, so no pin can read a dead knob.
+
+Pinned: `test/lightnear1.test.js` (4) - the lamp overhead is the nearest
+caster and the hand's light is passed over by its flag alone; on the fake
+GL a lantern a hand's width from the eye draws its glare and the carried
+torch beside it does not; the shader and the glare loop by text; every
+host that composes a player light does it through `withPlayerLights`.
+`bugs5_field`, `el2_shadows`, `mact_bugs`, `el5_field` and `el7_polish`
+re-aimed where they pinned the number.

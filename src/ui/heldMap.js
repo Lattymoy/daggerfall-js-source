@@ -9,7 +9,8 @@
 // their destination." The arc is bible/10-UI/Held-Map-Arc.md.
 //
 // THE SPRITE IS THE WINDOW. public/art/held-map.png - Mac's own
-// painting of two gauntleted hands holding a blank sheet - fills the
+// painting of two gauntleted hands holding a blank sheet (the FOURTH,
+// MAP-FIELD8, 2026-09-22: "replace the current paperdoll") - fills the
 // screen (a 4:3 stage, letterboxed into its own black), and the Iliac
 // Bay is inked onto the sheet at runtime by ui/inkMap.js: a 2D canvas
 // laid exactly over the parchment's rectangle. The hands and the paper
@@ -137,7 +138,7 @@ import { TERRAIN_SIZE } from '../world/terrainSampler.js';
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
-export const SPRITE = Object.freeze({ w: 1448, h: 1086 });
+export const SPRITE = Object.freeze({ w: 1648, h: 1086 });   // MAP-FIELD8: the FOURTH painting - wider (1648, not 1448), the same height
 /** MAP-FIELD4 (2026-09-19, Mac: "Try this instead"): THE SECOND
  *  PAINTING, and it changes the rules this module was built on.
  *
@@ -171,7 +172,7 @@ export const SPRITE = Object.freeze({ w: 1448, h: 1086 });
  *  and bottom down the middle columns, then shrinks until no row or
  *  column overhangs. The sheet measures x 270-1189, y 210-766; these
  *  are inset a few thousandths inside that for the ragged border. */
-export const PAPER = Object.freeze({ x0: 0.192, x1: 0.818, y0: 0.198, y1: 0.703 });
+export const PAPER = Object.freeze({ x0: 0.226, x1: 0.775, y0: 0.196, y1: 0.704 });   // MAP-FIELD8: the fourth painting's sheet measures x 364-1285, y 206-772 (tools/heldMapArtProbe.mjs); inset for the ragged border
 /** Where the thumbs rest ON the sheet, as fractions of the sprite. In
  *  each zone the sprite's own thumb is found and keyed back OVER the
  *  ink (keyThumbPixels); the rest of the zone is paper and lets the ink
@@ -185,8 +186,9 @@ export const PAPER = Object.freeze({ x0: 0.192, x1: 0.818, y0: 0.198, y1: 0.703 
  *  dark it is, so the only cost of a wide zone is the work, and the
  *  only cost of a narrow one is a clipped thumb. */
 export const THUMB_ZONES = Object.freeze([
-  Object.freeze({ x0: 0.165, x1: 0.295, y0: 0.410, y1: 0.725, side: 'left' }),
-  Object.freeze({ x0: 0.710, x1: 0.845, y0: 0.410, y1: 0.725, side: 'right' }),
+  // MAP-FIELD8: the fourth painting's thumbs rest a little higher on the sheet (0.43-0.50 of the file) and reach less far in
+  Object.freeze({ x0: 0.190, x1: 0.300, y0: 0.400, y1: 0.725, side: 'left' }),
+  Object.freeze({ x0: 0.700, x1: 0.810, y0: 0.400, y1: 0.725, side: 'right' }),
 ]);
 /** What a pixel's RED minus its BLUE must be under to SEED the thumb's
  *  blob. NOT a brightness - MAP-FIELD4's measurement is that brightness
@@ -343,7 +345,7 @@ export const HELD_MAP_BITE = 0.11;
  *  MAP-FIELD4: measured off the alpha channel now (the lowest row with
  *  an opaque pixel is 971 of 1086), where on the matted paintings it
  *  had to be read off the brightness. */
-export const SPRITE_ART_FOOT = 0.895;
+export const SPRITE_ART_FOOT = 0.872;   // MAP-FIELD8: the fourth painting's lowest opaque row is 946 of 1086
 /** Where the CUFF BAND begins, as a fraction of the sprite's height:
  *  the line above which a column's art ends because it was DRAWN to end
  *  there, and below which it ends because the frame cut it. It is what
@@ -354,7 +356,7 @@ export const SPRITE_ART_FOOT = 0.895;
  *  the cut cuffs begin at 0.8656, so the gap this sits in is 23 rows
  *  and this line has about six rows of headroom. See extendCuffs for
  *  why that margin is smaller than it first looks. */
-export const CUFF_BAND = 0.85;
+export const CUFF_BAND = 0.827;   // MAP-FIELD8: the fourth painting's silhouette columns end by 0.8158 and its cut cuffs begin at 0.8379 (tools/heldMapArtProbe.mjs) - a 24-row gap, the band in its middle with eleven rows either side
 
 // ── THE CLOCKS (skin) ────────────────────────────────────────────
 /** MAP-FIELD7 (2026-09-19, Mac: "when you open or close your map, I
@@ -377,6 +379,19 @@ const FOCUS_SCALE = 6;
 /** How often the breathing rings repaint the sheet while one is up. */
 const PULSE_HZ = 10;
 const HANDS_LOST_TICKS = 45;   // AUDIT-MAP2: ticks without corners before the hands lane gives the sheet back to the sprite
+/** MAP-FIT1: how far past the screen's edges the arm's sheet may hang, as
+ *  a fraction of each dimension, before the window gives it back to the
+ *  painting. A torn edge a few pixels over is a held thing; a sheet whose
+ *  foot is a fifth of the screen under the edge is not readable. */
+export const HANDS_FIT_MARGIN = 0.06;
+/** MAP-FIT1: whether a placed sheet's corners all lie on the screen (to
+ *  the margin). Null corners are "not placed", which is a different answer
+ *  (AUDIT-MAP2's lost count) and not this one's. */
+export function sheetFits(corners, vw, vh, margin = HANDS_FIT_MARGIN) {
+  if (!Array.isArray(corners) || corners.length !== 4) return false;
+  const mx = vw * margin, my = vh * margin;
+  return corners.every((p) => p[0] >= -mx && p[0] <= vw + mx && p[1] >= -my && p[1] <= vh + my);
+}
 const OFF_SHEET = Object.freeze([-1e9, -1e9]);   // a pointer that is not over the sheet at all
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -500,6 +515,7 @@ export class HeldMapWindow {
     this._cornersKey = null;   // the last corners placed ('' = none); null forces a re-place
     this._handsTries = 0;
     this._handsLost = 0;       // AUDIT-MAP2: ticks in the hands lane without corners
+    this._handsMisfit = null;  // MAP-FIT1: the corners that did not fit the screen, when the hands lane was left for that
     this._model = null;     // the ink model, minted on the first layout
     this._marksDirty = true;
     this._marksVersion = 0;
@@ -557,6 +573,7 @@ export class HeldMapWindow {
       band: zoomBand(this._view.scale),
       paper: { w: Math.round(this._paper.w), h: Math.round(this._paper.h) },
       lane: this._lane, placed: !!this._placement,   // MAP3
+      misfit: this._handsMisfit,   // MAP-FIT1: why the painting stands, when the arm's sheet did not fit the screen
       marks: this._model?.marks.length ?? 0,
       party: this._party.map((m) => `${m.name}@${m.px},${m.py}${m.in ? `/${m.in}` : ''}${m.online ? '' : '-off'}`),
       selected: this._selected?.name ?? null,
@@ -1167,6 +1184,34 @@ export class HeldMapWindow {
     const key = c ? c.map((p) => `${Math.round(p[0] * 10) / 10},${Math.round(p[1] * 10) / 10}`).join(';') : '';
     if (key === this._cornersKey) return;
     this._cornersKey = key;
+    // MAP-FIT1 (icebreyker and Hog Goblin on Discord, 2026-09-22: "Map
+    // gets cut at the bottom"; Mac: "the morrowind arms dont show holding
+    // the map and it sits too low on the screen"): A SHEET THE SCREEN
+    // CANNOT HOLD GOES BACK TO THE PAINTING. The arm places the sheet in
+    // ITS space - a fixed reach and drop off the eye, at the arm pass's
+    // own field of view - and the ink follows the corners wherever they
+    // project. On a screen that cannot frame that sheet (a tall phone, a
+    // narrow window, a pose the rig answered from the wrong eye) the
+    // corners land below the bottom edge and past the sides: the ink is
+    // laid full-width and cut off, and the hands that hold it are out of
+    // the frame. The window used to keep that lane for the whole open,
+    // because the corners WERE there. It reads them now: a sheet that
+    // does not fit the screen to HANDS_FIT_MARGIN gives the sheet back to
+    // the painted sprite this open (AUDIT-MAP2's own way back, which
+    // fits every size - MAP-FIELD2's narrow-viewport law), and says why
+    // on the probe surface. The fit is judged, not the geometry tuned:
+    // the hands are posed to the reach the sheet has, and a sheet pushed
+    // away to fit would leave them holding air.
+    if (c) {
+      const root = this._chrome?.root;
+      const vw = root?.clientWidth || globalThis.innerWidth || 1024;
+      const vh = root?.clientHeight || globalThis.innerHeight || 768;
+      if (!sheetFits(c, vw, vh)) {
+        this._handsMisfit = c.map((p) => p.map((v) => Math.round(v)));
+        this._leaveHands();
+        return;
+      }
+    }
     const q = c ? quadPlacement(this._paper.w, this._paper.h, c) : null;
     this._placement = q;
     const ink = this._chrome.ink;

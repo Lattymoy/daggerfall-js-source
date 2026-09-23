@@ -831,6 +831,33 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0 };
 }
 
+/** CASTLE1 (2026-09-22, the same report's "(different dungeon - world
+ *  state left as built)"): WHICH DOOR StartDungeonInterior takes. DFU's
+ *  member builds the LOCATION it is handed (PlayerEnterExit.cs:968-997)
+ *  - the save's own, RespawnPlayer's GetLocation at the save's pixel
+ *  (:534-537). The port's arm took the FIRST dungeon-entrance door in
+ *  the loaded exterior, and the streaming world loads the neighbours
+ *  too: a load at Daggerfall carries the castle's twenty doors, a
+ *  nearby dungeon's and a keep's, and whichever pixel built first won
+ *  - the player re-entered a neighbour and the dungeon host said the
+ *  save was for a different dungeon. The saved dungeon's own door
+ *  first (by `dungeon:<locationId>`), then a door on the player's own
+ *  pixel (the `site`'s group, DFU's GetLocation), then the doorless
+ *  site itself, and only for a pixel with no dungeon at all the first
+ *  door there is (a site with no dungeon of its own is the fallback the
+ *  respawn keeps). Null when there is nothing to enter.
+ *  @param {Array<{door:{doorType:number}, group?:string, dfLocation?:any}>} doors  the DUNGEON_ENTRANCE doors alone
+ *  @param {{group?:string}|null} site  host.dungeonStartSite()'s answer
+ *  @param {string|null} locationKey  the save's `dungeon:<id>` */
+export function dungeonStartDoorFor(doors, site, locationKey = null) {
+  const id = /^dungeon:(\d+)$/.exec(String(locationKey ?? ''))?.[1] ?? null;
+  const list = doors ?? [];
+  const own = id != null ? list.find((e) => String(e?.dfLocation?.dungeon?.recordElement?.header?.locationId ?? '') === id) : null;
+  if (own) return own;
+  const here = site?.group != null ? list.find((e) => e?.group === site.group) : null;
+  return here ?? site ?? list[0] ?? null;
+}
+
 /** MAC6 #1: the dungeon a save was taken in, found by its id across
  *  the world's locations - for an envelope from before `dungeon`
  *  carried the pixel. `locationKey` is the dungeon host's

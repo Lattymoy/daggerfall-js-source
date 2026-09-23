@@ -34,6 +34,8 @@ contact march's "never for the light in the hand"
 light and took the first caster slot: F3's "large shadow when you peek
 round a corner" was back, unreported.
 
+LIGHT-NEAR1 (2026-09-23): the proxy is gone from all three (the constants deleted) - it was dropping the lamp overhead as well as the hand (`07-Rendering/Enhanced-Lighting-Arc.md`, LIGHT-NEAR1).
+
 **DFU's PlayerTorch is a bare point light. It has no flare in any
 camera.** Morrowind's third-person torch is the mesh in the hand with
 its own particle fire, and the port's third-person body is a 2D sprite

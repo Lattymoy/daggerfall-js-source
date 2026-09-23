@@ -115,7 +115,7 @@ test('SOC4: the panel - one card per OTHER member in SEAT ORDER and never my own
   // in the skin's pixel face now, which measures about 1.29x the width of the launcher face it wore before
   // (tools/font1Probe.mjs), and at 14px only 18 of a 24-character name fitted the 138px name box. At 13 it is 20,
   // which is what the size is doing here - the GREEN is the half of this line the pin is about, and it is unchanged.
-  assert.ok(PARTY_CSS.includes(`.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 13px; line-height: 1.2;\n  color: ${PARTY_GREEN_CSS};`), 'the name carries PARTY_GREEN_CSS from net/social.js, never a second green');
+  assert.ok(PARTY_CSS.includes(`.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px; line-height: 1.2;\n  color: ${PARTY_GREEN_CSS};`), 'the name carries PARTY_GREEN_CSS from net/social.js, never a second green');
   assert.equal(PARTY_GREEN_CSS, '#73ff73');
   // alone in a party, and out of one
   social.apply(stateFrame({ party: party([member('me', { acct: 'acct-me', name: 'Mac' })]) }));
@@ -142,7 +142,8 @@ test('SOC4: a card says the three vitals as the pose carries them - health, stam
   assert.deepEqual(card.vitals.map((v) => v.fill.style.width), ['50%', '25%', '15%'], 'and the bars in the same proportion');
   assert.deepEqual(PARTY_VITALS.map((v) => [v.key, v.now, v.max]), [['health', 'h', 'hm'], ['fatigue', 'f', 'fm'], ['magicka', 'm', 'mm']], 'health, stamina, magicka - the HUD\'s own order and the wire\'s own field pairs');
   assert.deepEqual(card.vitals.map((v) => v.row.className), ['dfparty-vital health', 'dfparty-vital fatigue', 'dfparty-vital magicka']);
-  for (const [k, css] of [['health', '#e2554c'], ['fatigue', '#62d26a'], ['magicka', '#7089f2']]) {
+  // PARTY8-B: the skin's own hues - the blood red, a moss green, a dusk blue - not the web's primaries
+  for (const [k, css] of [['health', '#d9463c'], ['fatigue', '#4faa58'], ['magicka', '#5d74d8']]) {
     assert.ok(PARTY_CSS.includes(`.dfparty-vital.${k} .dfparty-fill { background: linear-gradient(180deg, ${css},`), `${k} carries its own colour`);
   }
   assert.equal(card.where.textContent, 'Daggerfall', 'out in a town: the place');
@@ -193,7 +194,9 @@ test('SOC4: a repaint is a WRITE, not a REBUILD - a pose moves one card\'s bars 
   assert.equal(doc.built, 0, 'no element was made');
   assert.equal(doc.structure, 0, 'and nothing was re-parented: the seat order did not move');
   assert.equal(cylHealth.writes, cylWritesBefore, 'the other seat was not written to - only what changed changes');
-  assert.ok(doc.writes > 0 && doc.writes <= 4, `only the moved parts were written (${doc.writes})`);
+  // PARTY8-B: a health that DROPS under half writes five parts - the bar, its digits, the head's digits, the
+  // digits' class (drawn now) and the fill's flare class; the two seats' other nodes are not touched
+  assert.ok(doc.writes > 0 && doc.writes <= 5, `only the moved parts were written (${doc.writes})`);
   // COVERED is the host's word, per frame, and it is not a latch
   doc.zero();
   panel.render({ covered: true });
@@ -245,7 +248,7 @@ test('SOC4: the portrait - loaded off the frame and drawn the moment it lands, C
   assert.equal(cyl.facebox.className, 'dfparty-face has', 'on both seats, from the one load');
   assert.equal(bran.pix.puts.length, 1);
   assert.deepEqual([bran.pix.width, bran.pix.height], [4, 5], 'the backing store is the record\'s own pixels');
-  assert.deepEqual([bran.pix.style.width, bran.pix.style.height], ['64px', '80px'], 'scaled by a WHOLE number - 1996 pixels drawn as pixels');
+  assert.deepEqual([bran.pix.style.width, bran.pix.style.height], ['24px', '30px'], 'scaled by a WHOLE number - 1996 pixels drawn as pixels (PARTY8-B: the 32x34 plate takes a 4x5 record at 6x, the height\'s floor)');
   assert.deepEqual([...bran.pix.puts[0].data.slice(0, 4)], [0x30, 0x20, 0x10, 0xff], 'the RGBA bytes bitmapToColor32 hands back, in order');
   // a repaint that changes nothing repaints no portrait
   const puts = bran.pix.puts.length;
@@ -383,7 +386,7 @@ test('SOC4: the wiring in scenes/world.js - the panel is made in socialStart ove
   const bare = w.replace(/\/\/[^\n]*/g, ' ');
   assert.match(w, /import \{ createPartyPanel \} from '\.\.\/ui\/partyPanel\.js';/);
   assert.match(bare, /let partyPanel = null;/, 'one handle beside `social`, held for the session');
-  assert.match(bare, /partyPanel = createPartyPanel\(\{ social, art: \{ fetchBytes, palette \} \}\);/, 'made ONCE, in socialStart, over the picture');
+  assert.match(bare, /partyPanel = createPartyPanel\(\{ social, art: \{ fetchBytes, palette \}, here: \(\) => _partyPose \}\);/, 'made ONCE, in socialStart, over the picture (PARTY8-B: and over the pose partyFrame last sent, for "where am I")');
   assert.match(w, /initEscortFaces\(\{\s*fetchBytes, palette, renderer,/, 'and the pair is the escort faces\' own - one fetch door, one palette');
   assert.equal((w.match(/createPartyPanel\(/g) ?? []).length, 1, 'made in exactly one place - never per frame');
   assert.match(bare, /partyFrame\(performance\.now\(\)\);(?:\s*\w+\?\.render\([^\n]*\);)*\s*partyPanel\?\.render\(\{ covered: townTalk\.hudCovered \|\| \(modes\?\.hudCovered \?\? false\) \|\| gamePaused\(\) \}\);\s*\};/,   // SOC7 integration: SOC3's panel renders on the same line-run, between the pose and this - the tail of the frame is still ours
@@ -508,7 +511,9 @@ test('FONT1: the party HUD is set in the enhanced face beside the HUD it stands 
     'mutant: the old `0 1px 2px #000` blur kept');
   // MEASURED, not guessed: the pixel face runs about 1.29x wider, so at
   // the old 14px only 18 characters of a 24-character name (NAME_MAX)
-  // fitted the card's 138px name box; at 13px it is 20
-  // (tools/font1Probe.mjs). The size is doing that work and nothing else.
-  assert.match(PARTY_CSS, /\.dfparty-name \{[^}]*font-size: 13px;/, 'mutant: back to 14px, which eats two more characters of every long name');
+  // fitted SOC4's 138px name box; at 13px it was 20 (tools/font1Probe.mjs).
+  // PARTY8: the compact card's name box is 146px beside a 40px plate and
+  // the name is 12px - about 19 characters - so the smaller card costs
+  // the name nothing the old one gave it. The size is doing that work.
+  assert.match(PARTY_CSS, /\.dfparty-name \{[^}]*font-size: 12px;/, 'mutant: back to 14px, which eats two more characters of every long name');
 });

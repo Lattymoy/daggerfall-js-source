@@ -333,10 +333,19 @@ test('U61: the classic skin still gets the canvas map - or its honest null witho
   });
 });
 
-test('U61: the fork asks the SKIN, not only the document', () => {
-  assert.match(read('src/ui/travelMapDoor.js'),
-    /if \(isEnhanced\(\) && typeof document !== 'undefined'\) \{/,
-    'both clauses, in that order');
+test('U61 + MAP-TOGGLE: the fork asks the SKIN and the player\'s SWITCH, not only the document - one gate, ui/mapSkin.js, for all three doors', () => {
+  const gate = read('src/ui/mapSkin.js');
+  assert.match(gate, /export const enhancedMapOn = \(\) => !!getPref\('heldMap'\);/);
+  assert.match(gate, /export const heldMapChosen = \(\) => isEnhanced\(\) && enhancedMapOn\(\);/);
+  assert.match(gate, /export const heldMapWorn = \(\) => heldMapChosen\(\) && typeof document !== 'undefined';/, 'the skin, the switch, the document - in that order');
+  for (const door of ['src/ui/travelMapDoor.js', 'src/ui/automapDoor.js', 'src/ui/townMapDoor.js']) {
+    const d = read(door);
+    assert.match(d, /if \(heldMapWorn\(\)\) \{/, `${door} opens the held sheet through the gate`);
+    assert.doesNotMatch(d, /isEnhanced\(\)/, `${door} asks no skin of its own`);
+  }
+  assert.match(read('src/ui/travelMapDoor.js'), /return heldMapChosen\(\) \|\| travelMapArtLoaded\(\);/);
+  assert.match(read('src/ui/automapDoor.js'), /return heldMapWorn\(\) \|\| automapArtLoaded\(\);/);
+  assert.match(read('src/ui/townMapDoor.js'), /return heldMapWorn\(\) \|\| exteriorAutomapArtLoaded\(\);/);
 });
 
 test('U61: a host with no document keeps the classic arm, on either skin', () => {
@@ -1387,7 +1396,7 @@ test('MAP1: the sprite is the port\'s own under the doctrine row, the paper and 
     'https://daggerfalljs.dev/art/held-map.png', 'and the sprite lands at the site root, whatever page asked');
   assert.ok(existsSync(new URL('../public/art/held-map.png', import.meta.url)), 'the file ships');
   assert.match(read('test/doctrine.test.js'), /\['public\/art\/held-map\.png', "OURS - Mac's own painting/, 'under the OURS row');
-  assert.deepEqual(SPRITE, { w: 1448, h: 1086 });
+  assert.deepEqual(SPRITE, { w: 1648, h: 1086 }, 'MAP-FIELD8: the fourth painting');
   assert.ok(PAPER.x0 < THUMB_ZONES[0].x1 && THUMB_ZONES[1].x0 < PAPER.x1, 'the thumb zones reach INTO the paper - that is why they exist');
   assert.ok(THUMB_ZONES[0].y0 > PAPER.y0 && THUMB_ZONES[0].y1 >= PAPER.y1, 'and only its lower half, where the thumbs rest');
   // ...and each STARTS on its own hand, outside the sheet, because that
@@ -3141,4 +3150,52 @@ test('EM-BUG2: the key that opens the sheet shuts it - the AutoMap binding as we
   // the binding the sheet answers to is the PLAYER's, read live off the
   // store - a rebound map key still closes the map it opened
   assert.match(held, /import \{[^}]*actionForCode[^}]*\} from/);
+});
+
+// ═══ MAP-FIT1 (2026-09-22) ══════════════════════════════════════════
+// icebreyker and Hog Goblin, Discord bug-reports: "Map gets cut at the
+// bottom"; Mac: "the morrowind arms dont show holding the map and it sits
+// too low on the screen". The arm's sheet is placed in the ARM's space
+// and the ink follows its corners wherever they project - on a screen
+// that cannot frame it (a tall phone, a narrow window, a pose off the
+// wrong eye) the corners land past the bottom and the sides, the ink is
+// laid full-width and cut, and the hands are out of the frame. A sheet
+// that does not fit the screen goes back to the painting this open.
+test('MAP-FIT1: a sheet whose corners fall off the screen goes back to the painting on the spot, with the corners on the probe; one that fits stays in the hands (mutants: fit-never-judged, misfit-keeps-hands, margin-zero)', async () => {
+  const { sheetFits, HANDS_FIT_MARGIN } = await import('../src/ui/heldMap.js');
+  // the law on its own
+  assert.ok(sheetFits(TRAPEZIUM, 1600, 900));
+  assert.ok(!sheetFits([[150, 300], [650, 300], [730, 1100], [70, 1100]], 1600, 900), 'a foot a fifth under the edge');
+  assert.ok(!sheetFits([[-300, 300], [1900, 300], [1900, 700], [-300, 700]], 1600, 900), 'wider than the screen');
+  assert.ok(sheetFits([[-40, 300], [1640, 300], [1640, 940], [-40, 940]], 1600, 900), 'a torn edge just over the margin is a held thing');
+  assert.ok(!sheetFits(null, 1600, 900));
+  assert.ok(HANDS_FIT_MARGIN > 0 && HANDS_FIT_MARGIN < 0.2, 'a margin, not a licence');
+  withDocument(() => {
+    globalThis.innerWidth = 1600; globalThis.innerHeight = 900;
+    try {
+      // fits: the hands keep the sheet
+      const ok = holderStub({ corners: () => TRAPEZIUM });
+      const w1 = open(mkWin({ ...bayDeps(), holder: ok }));
+      assert.equal(w1._lane, 'hands');
+      assert.equal(JSON.parse(globalThis.__heldMap()).misfit, null);
+      w1.dispose();
+      // does not fit: the reports' sheet - low, wide, its foot under the edge
+      const LOW = [[-120, 520], [1720, 520], [1780, 1080], [-180, 1080]];
+      const bad = holderStub({ corners: () => LOW });
+      const w2 = mkWin({ ...bayDeps(), holder: bad });
+      w2.tick(0.05);
+      assert.equal(w2._lane, 'sprite', 'the painting stands the moment the corners are read');
+      assert.equal(bad.calls.filter((c) => c[0] === 'release').length, 1, 'the arm let the sheet go');
+      const c = w2._chrome;
+      assert.equal(c.sheet.style.display, '', 'the painting is back');
+      assert.notEqual(c.stage.style.width, '100%', 'the stage is the 4:3 fit again');
+      const probe = JSON.parse(globalThis.__heldMap());
+      assert.equal(probe.lane, 'sprite');
+      assert.deepEqual(probe.misfit, LOW, 'the corners that did not fit, for a report');
+      for (let i = 0; i < 40; i++) w2.tick(0.05);
+      assert.equal(w2._lane, 'sprite', 'and it is not asked again this open');
+      assert.equal(bad.calls.filter((c) => c[0] === 'hold').length, 1);
+      w2.dispose();
+    } finally { delete globalThis.innerWidth; delete globalThis.innerHeight; }
+  });
 });

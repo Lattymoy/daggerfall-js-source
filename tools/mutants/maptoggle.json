@@ -1,0 +1,85 @@
+[
+  {
+    "name": "MT-switch-ignored",
+    "file": "src/ui/mapSkin.js",
+    "old": "export const enhancedMapOn = () => !!getPref('heldMap');",
+    "new": "export const enhancedMapOn = () => true;",
+    "tests": [
+      "test/maptoggle.test.js"
+    ]
+  },
+  {
+    "name": "MT-skin-ignored",
+    "file": "src/ui/mapSkin.js",
+    "old": "export const heldMapChosen = () => isEnhanced() && enhancedMapOn();",
+    "new": "export const heldMapChosen = () => enhancedMapOn();",
+    "tests": [
+      "test/maptoggle.test.js"
+    ]
+  },
+  {
+    "name": "MT-worn-without-a-document",
+    "file": "src/ui/mapSkin.js",
+    "old": "export const heldMapWorn = () => heldMapChosen() && typeof document !== 'undefined';",
+    "new": "export const heldMapWorn = () => heldMapChosen();",
+    "tests": [
+      "test/maptoggle.test.js",
+      "test/heldmap.test.js"
+    ]
+  },
+  {
+    "name": "MT-travel-door-asks-the-skin-alone",
+    "file": "src/ui/travelMapDoor.js",
+    "old": "  return heldMapChosen() || travelMapArtLoaded();",
+    "new": "  return isEnhancedSkinOnly() || travelMapArtLoaded();\n}\nfunction isEnhancedSkinOnly() { return (globalThis.location?.search ?? '').includes('skin=enhanced');",
+    "tests": [
+      "test/maptoggle.test.js"
+    ]
+  },
+  {
+    "name": "MT-automap-door-off-still-held",
+    "file": "src/ui/automapDoor.js",
+    "old": "  if (heldMapWorn()) {",
+    "new": "  if (typeof document !== 'undefined') {",
+    "tests": [
+      "test/maptoggle.test.js"
+    ]
+  },
+  {
+    "name": "MT-town-door-off-still-held",
+    "file": "src/ui/townMapDoor.js",
+    "old": "  if (heldMapWorn()) {",
+    "new": "  if (typeof document !== 'undefined') {",
+    "tests": [
+      "test/maptoggle.test.js"
+    ]
+  },
+  {
+    "name": "MT-row-ships-off",
+    "file": "src/systems/features.js",
+    "old": "    control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: true, online: 'player' }),",
+    "new": "    control: Object.freeze({ store: 'prefs', key: 'heldMap', initial: false, online: 'player' }),",
+    "tests": [
+      "test/maptoggle.test.js"
+    ]
+  },
+  {
+    "name": "MF8-band-under-the-silhouette",
+    "file": "src/ui/heldMap.js",
+    "old": "export const CUFF_BAND = 0.827;",
+    "new": "export const CUFF_BAND = 0.80;",
+    "tests": [
+      "test/maptoggle.test.js"
+    ]
+  },
+  {
+    "name": "MF8-third-paintings-width",
+    "file": "src/ui/heldMap.js",
+    "old": "export const SPRITE = Object.freeze({ w: 1648, h: 1086 });",
+    "new": "export const SPRITE = Object.freeze({ w: 1448, h: 1086 });",
+    "tests": [
+      "test/maptoggle.test.js",
+      "test/heldmap.test.js"
+    ]
+  }
+]

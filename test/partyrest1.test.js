@@ -176,7 +176,7 @@ test('PARTY-REST2/28: the SAME gate reaches all three hosts - world.js\'s own ou
   const w = rd('src/scenes/world.js');
   assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;[^\n]*\n\s*if \(partyRefusal\) \{ townTalk\.showOverlay\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*if \(modes\) markPartyRestSpent\(\);[^\n]*\n\s*townTalk\.showOverlay\(createRestWindow\(outdoorRestDeps\)\);/,
     'the outdoor host: gated, then spent (through the shared function, not its own inline copy), then the real window - in that order');
-  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n\s*_partyRestReady = false;/, 'the reset itself - a real function, not an inline block only world.js\'s own toggleRest could reach');
+  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;/, 'the reset itself (REST-OFFLINE1: a no-op with no social clock) - a real function, not an inline block only world.js\'s own toggleRest could reach');
   assert.match(w, /partyRestGate: \(\) => partyRestGate\(\),/, 'handed into createWorldModes as one more host dep, the same door onDungeonLeave and the rest already ride');
   assert.match(w, /markPartyRestSpent: \(\) => markPartyRestSpent\(\),/, 'the reset itself is handed into createWorldModes too, the same way partyRestGate already is');
 
@@ -276,7 +276,7 @@ test('PARTY-REST2f (2026-09-20, per-request: "it also seems it cant initiate a n
   const w = rd('src/scenes/world.js');
   assert.match(w, /const partyRefusal = modes \? partyRestGate\(\) : null;[^\n]*\n\s*if \(partyRefusal\) \{ townTalk\.showOverlay\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*if \(modes\) markPartyRestSpent\(\);[^\n]*\n\s*townTalk\.showOverlay\(createRestWindow\(outdoorRestDeps\)\);/,
     'the leader/gated-follower\'s own toggleRest: spent (through the shared function - PARTY-REST28) happens AFTER the gate has already cleared, right before the real window opens');
-  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n\s*_partyRestReady = false;   \/\/ PARTY-REST2: spent the moment it is acted on - next nap asks again\s*\n\s*\/\/ PARTY-REST2f[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*_partyRestGateRefusedAt = -Infinity;/,
+  assert.match(w, /const markPartyRestSpent = \(\) => \{\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!social\) return;\s*\n\s*_partyRestReady = false;   \/\/ PARTY-REST2: spent the moment it is acted on - next nap asks again\s*\n\s*\/\/ PARTY-REST2f[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*_partyRestGateRefusedAt = -Infinity;/,
     'the shared reset itself: ready cleared, then (PARTY-REST2f) the cooldown clock cleared too, in that order');
   assert.match(w, /win\._start\(partyRestModeFromCode\(restingRow\.p\.rest\.mode\), restingRow\.p\.rest\.hoursRemaining\);\s*\n\s*_partyRestReady = false;[^\n]*\n\s*_partyRestGateRefusedAt = -Infinity;/,
     'a follower\'s mirror start ALSO clears it - this round is resolved from their own side too, not only the initiator\'s');
