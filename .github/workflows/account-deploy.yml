@@ -45,6 +45,7 @@ on:
       - "server-account/**"
       - "src/net/identityToken.js"
       - "src/net/handleShape.js"
+      - "src/net/letterLaw.js"
       - "src/net/nameFilter.js"
       - "src/net/moderation.js"
       - "src/net/playClock.js"

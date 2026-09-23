@@ -44,6 +44,10 @@ import { isTouchDevice } from './touch.js';
 import { PARTY_MAX } from '../net/wire.js';
 import { lastOnlineText, PARTY_GREEN_CSS, FRIEND_CSS } from '../net/social.js';
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
+import { accountRefusalText, handleShapeOk, HANDLE_MAX_LEN } from '../net/accountClient.js';   // MAIL1: the service's sentences, and a handle's shape
+import { letterAgeText, replySubject } from '../net/mail.js';   // MAIL1: the box the Letters tab draws
+import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, cleanBody } from '../net/letterLaw.js';   // MAIL1: the form's caps are the service's
+import { glyphBadges, glyphSvgNode } from './playerBadge.js';   // MAIL1: a sender's glyphs, in the one drawing every DOM face uses
 
 export const SOCIAL_STYLE_ID = 'dagger-social-style';
 
@@ -68,6 +72,12 @@ export const NO_PARTY_TEXT = 'You are not in a party.';
  *  had two different answers for one event. The world tab's wording wins (it is the one a player reads without
  *  opening anything) and the host imports THIS constant rather than keeping a second copy of the words. */
 export const TRY_AGAIN_TEXT = 'Try again in a moment';
+/** MAIL1: the Letters tab's own sentences - the states the box can be in before there is anything to list. */
+export const NO_LETTERS_TEXT = 'No letters yet. A letter waits here for you while you are away.';
+export const LETTERS_SIGNED_OUT_TEXT = 'Sign in to an account to send and read letters.';
+export const LETTERS_LOOKING_TEXT = 'Looking for letters...';
+/** How recent a look the Letters tab trusts when it opens; older, and opening it looks again. */
+export const LETTERS_FRESH_MS = 30_000;
 
 /** The panel's sheet: the enhanced tokens (enhancedStyle.js) where they exist, a fallback where the skin's sheet is
  *  not loaded - the same bargain ui/chatPanel.js strikes.
@@ -142,6 +152,37 @@ ${PIXELIFY_FIVE_FACE}
    hover, and half the machines this panel runs on have none. The F-menu's own shape (ui/socialMenu.js .dfpeer-why). */
 .dfsocial-why { flex: none; font-size: 10px; font-style: italic; color: var(--dim, #8b8578); margin-left: 4px; }
 .dfsocial-empty { flex: none; font-size: 13px; color: var(--dim, #8b8578); padding: 6px 0; overflow-wrap: anywhere; }
+/* MAIL1 (tools/mailProbe.mjs photographed it): A FRIEND'S ACTS ARE ONE GROUP THAT WRAPS. Letter made them three - Invite,
+   Letter, Remove - and at the touch skin's 44px buttons, each with its reason beside its label, three are wider than a
+   phone's panel: the name beside them was squeezed to one letter a line. The row wraps its acts BELOW the name when it
+   cannot hold both at a readable width, and the group wraps within itself when even it is wider than the panel; on a
+   desktop the three still stand beside the name. */
+.dfsocial-row.wrap { flex-wrap: wrap; }
+.dfsocial-row.wrap .dfsocial-who { flex: 1 1 140px; }
+.dfsocial-rowacts { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-left: auto; max-width: 100%; }
+/* MAIL1: THE LETTERS TAB. A letter's row is a BUTTON (the keyboard reaches it, Enter opens it), drawn as a row: the
+   brass dot for one not yet opened, who and what about, how long ago. The letter itself keeps its lines (pre-wrap)
+   and breaks a word too long for the panel rather than widening it. The form's fields are the panel's own dress. */
+.dfsocial-letter { flex: none; display: flex; align-items: flex-start; gap: 6px; padding: 4px 2px; width: 100%; box-sizing: border-box;
+  background: none; border: 0; border-radius: 3px; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.dfsocial-letter:hover, .dfsocial-letter:focus-visible { background: rgba(125, 116, 96, .18); outline: none; }
+.dfsocial-letter .dfsocial-dot { margin-top: 5px; background: transparent; }
+.dfsocial-letter .dfsocial-dot.unread { background: var(--brass, #c08a3e); }
+.dfsocial-letter.read .dfsocial-name { font-weight: 400; color: var(--dim, #8b8578); }
+.dfsocial-glyph { width: 12px; height: 12px; margin-left: 4px; vertical-align: -1px; }
+.dfsocial-age { flex: none; font-size: 11px; color: var(--dim, #8b8578); padding-top: 2px; }
+.dfsocial-letterhead { flex: none; display: flex; flex-direction: column; gap: 2px; padding: 6px 0; border-bottom: 1px solid var(--iron, #2b323b); }
+.dfsocial-subject { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.dfsocial-lettertext { flex: none; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.45; padding: 8px 0; }
+.dfsocial-acts { flex: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; }
+.dfsocial-form { flex: none; display: flex; flex-direction: column; gap: 4px; padding: 6px 0; }
+.dfsocial-label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim, #8b8578); margin-top: 4px; }
+.dfsocial-field { box-sizing: border-box; width: 100%; background: rgba(0, 0, 0, .35); color: var(--bone, #e9e4d9); border: 1px solid var(--iron, #2b323b);
+  border-radius: 3px; font: inherit; font-size: 13px; padding: 5px 6px; }
+.dfsocial-field:focus { outline: none; border-color: var(--brass, #c08a3e); }
+textarea.dfsocial-field { resize: vertical; min-height: 120px; line-height: 1.4; }
+.dfsocial-count { font-size: 11px; color: var(--dim, #8b8578); text-align: right; }
+.dfsocial-count.over { color: #e0704a; }
 
 /* AUDIT SOC C8: THE FINGER'S OWN SIZES. Every control this panel draws was built at the mouse's scale - the tabs 29
    tall, Close 27x19, Invite and Remove 22 - and online forces the enhanced lane on a phone as readily as on a
@@ -150,6 +191,9 @@ ${PIXELIFY_FIVE_FACE}
 .dfsocial.touch .dfsocial-tab { min-height: 44px; padding: 10px 12px; }
 .dfsocial.touch .dfsocial-close { min-height: 44px; min-width: 44px; padding: 4px 12px; }
 .dfsocial.touch .dfsocial-btn, .dfsocial-toast.touch .dfsocial-btn { min-height: 44px; padding: 8px 12px; font-size: 13px; }
+/* MAIL1: a letter's row is a finger's target too, and a field under 16px makes a phone zoom the page into it */
+.dfsocial.touch .dfsocial-letter { min-height: 44px; }
+.dfsocial.touch .dfsocial-field { min-height: 44px; font-size: 16px; }
 
 /* THE TOAST stands in ITS OWN STRIP, centred at the top of the screen, because an invitation that lapses in two
    minutes is worth reading first - and because it must work with the panel closed, which is where a player who has
@@ -229,7 +273,7 @@ export function friendOrder(friends) {
  * a panel with something above it IGNORES the key (does not close, does not stop it), and the one that handles it
  * calls `stopImmediatePropagation` so no other window listener - the host's pause door included - sees that press.
  */
-export function createSocialPanel({ social, send = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
+export function createSocialPanel({ social, send = null, mail = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice() } = {}) {
   injectSocialStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
 
@@ -251,14 +295,15 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
   const body = el('div', 'dfsocial-body');
   const tabBtns = new Map();
   tabs.setAttribute('role', 'tablist');
-  for (const [id, label] of [['friends', 'Friends'], ['party', 'Party']]) {
+  // MAIL1: the third tab, where the host has a letterbox to hand (net/mail.js) - a panel without one is the two it was
+  for (const [id, label] of [['friends', 'Friends'], ['party', 'Party'], ...(mail ? [['letters', 'Letters']] : [])]) {
     const b = el('button', 'dfsocial-tab', label);
     b.type = 'button'; b.dataset.tab = id;
     b.setAttribute('role', 'tab');                    // AUDIT SOC C21: a tab that says it is one...
     b.setAttribute('aria-selected', id === 'friends' ? 'true' : 'false');   // ...and which one is up (Friends opens)
     const badge = el('span', 'dfsocial-badge');
     b.append(badge);
-    b.addEventListener('click', () => { if (tab === id) return; tab = id; confirm = null; ui++; if (open) repaint(); });
+    b.addEventListener('click', () => { if (tab === id) return; tab = id; confirm = null; ui++; if (id === 'letters') lookAtLetters(); if (open) repaint(); });
     tabs.append(b);
     tabBtns.set(id, { b, badge });
   }
@@ -282,10 +327,18 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
   let confirm = null, confirmAt = -Infinity;   // the account whose Remove is armed, and when it was armed
   let noteMsg = '', noteAt = -Infinity;
   let ui = 0;                                  // the panel's OWN version - a tab, a confirm, an act just sent
-  let painted = -1, paintedUi = -1;
+  let painted = -1, paintedUi = -1, paintedMail = -1;
   let ticking = [];                            // [{ el, expires }] - the countdowns drawn right now
   let liveSubs = [];                           // [{ el, of() }] - the sub-texts that go stale on the CLOCK alone (B8)
   let toasted = null;                          // the invitation the toast is showing, or null
+  // MAIL1: the Letters tab's own state. `mode` is the view (the box, one letter, the form); `draft` is the form's words,
+  // kept HERE and written on every keystroke, so a repaint - or a close and a reopen - never loses a letter half
+  // written; `sending` holds the Send button down while one is out; `del` is the letter whose Delete is armed.
+  const letters = { mode: 'list', id: null, draft: { to: '', subject: '', body: '' }, sending: false, del: null, delAt: -Infinity, word: '' };
+  /** A look at the box when the tab opens - unless one landed a moment ago (the host's poll, or the last opening). The
+   *  box's own clock, not the relay's (`social.now()`): `at` is stamped by it. What the look finds repaints on the
+   *  next frame, off `mail.version`, like everything else here. */
+  const lookAtLetters = () => { if (mail && (!mail.at || mail.now() - mail.at > LETTERS_FRESH_MS)) mail.refresh(); };
 
   /** One act out. A refusal that is the RATE GATE's (`send` answered false) is not the player's fault and not the
    *  row's: the button stays as it was and the note says so, because the act was right and the moment was not. */
@@ -374,12 +427,22 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
       // picture changing - so it is re-read on the live pass, written only where the words actually differ.
       if (n.subNode) liveSubs.push({ el: n.subNode, of: () => lastOnlineText(r.online, r.seen, social.now()) });
       const inv = inviteState(r);
+      // MAIL1: the row's acts are one group (.dfsocial-rowacts), which wraps below the name where the row cannot hold both
+      n.className += ' wrap';
+      const acts = el('div', 'dfsocial-rowacts');
+      n.append(acts);
       // a friend is invited by ACCOUNT - the person, not whichever tab they happen to have open (net/wire.js
       // SOCIAL_ACTS: party.invite takes either, and the hub resolves a peer to the account behind it anyway)
-      n.append(btn('Invite', { enabled: inv.can, why: inv.why, run: () => act({ k: 'party.invite', acct: r.acct }) }));
+      acts.append(btn('Invite', { enabled: inv.can, why: inv.why, run: () => act({ k: 'party.invite', acct: r.acct }) }));
+      // MAIL1: a letter, online or not - which is the point of one. A friend who is still a guest has no username a
+      // letter can find (their name is generated, and carries the one space a handle never does: net/handleShape.js)
+      if (mail) {
+        const named = handleShapeOk(r.name);
+        acts.append(btn('Letter', { enabled: named, why: named ? null : 'no username', run: () => { tab = 'letters'; writeTo(r.name); } }));
+      }
       // ONE CLICK ARMS, THE SECOND SENDS. No `window.confirm`: it is a modal the game cannot dismiss, it steals the
       // pointer this panel just freed, and on a touch device it is a different surface entirely.
-      n.append(confirm === r.acct
+      acts.append(confirm === r.acct
         ? btn('Sure?', { warn: true, run: () => { confirm = null; act({ k: 'friend.remove', acct: r.acct }); } })
         : btn('Remove', { run: () => { confirm = r.acct; confirmAt = social.now(); ui++; if (open) repaint(); } }));
       out.push(n);
@@ -440,23 +503,179 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
     return out;
   };
 
-  /** What a tab's badge should say right now: requests waiting on Friends, invitations standing on Party. ONE
-   *  reading, because the live pass and the repaint must never disagree about the number (AUDIT SOC C5). */
+  // ── MAIL1: THE LETTERS TAB ────────────────────────────────────────────────────────────────────────────────────
+  // The box (net/mail.js MailBox) decides everything about the letters; this draws it. Three views: the LIST (the
+  // box, newest first), ONE LETTER, and the FORM. Every word on them came from another player's keyboard and is
+  // written with textContent, like everything else on this panel.
+
+  /** The sentence for a letter's refusal: the service's own table, and the one state the box names itself. */
+  const letterWordText = (error) => (error === 'signed-out' ? LETTERS_SIGNED_OUT_TEXT : accountRefusalText(error));
+  /** A sender's name with their glyphs after it, in the one drawing (ui/playerBadge.js glyphSvgNode). */
+  const senderNode = (cls, text, l) => {
+    const n = el('div', cls, text);
+    for (const g of glyphBadges(l)) { const svg = glyphSvgNode(doc, g, 'dfsocial-glyph', 1.6); if (svg) n.append(svg); }
+    return n;
+  };
+  /** Into one of the tab's views. */
+  const lettersTo = (mode, id = null) => { letters.mode = mode; letters.id = id; letters.del = null; ui++; if (open) repaint(); };
+  /** THE FORM, on a draft: a fresh one to `to` (a friend's row, a reply), or - named nothing - the words already there. */
+  const writeTo = (to = null, subject = '') => {
+    if (to != null) letters.draft = { to: String(to), subject: String(subject ?? ''), body: '' };
+    letters.word = '';
+    lettersTo('write');
+  };
+  /** OPEN ONE: the view first, the letter when it comes (from this sitting's copy, or the service, which marks it read). */
+  const openLetter = (id) => {
+    letters.word = '';
+    lettersTo('read', id);
+    mail.open(id).then((r) => {
+      if (r.ok) return;
+      letters.word = letterWordText(r.error);
+      if (r.error === 'no-letter') letters.mode = 'list';
+      ui++;
+    });
+  };
+
+  const listBody = () => {
+    if (mail.state === 'signed-out') return [el('div', 'dfsocial-empty', LETTERS_SIGNED_OUT_TEXT)];
+    if (mail.state === 'guest') return [el('div', 'dfsocial-empty', accountRefusalText('mail-needs-account'))];
+    const out = [];
+    const acts = el('div', 'dfsocial-acts');
+    acts.append(btn('Write a letter', { run: () => writeTo('') }));
+    out.push(acts);
+    if (letters.word) out.push(el('div', 'dfsocial-empty', letters.word));
+    if (mail.state === 'error') out.push(el('div', 'dfsocial-err', letterWordText(mail.error)));
+    if (mail.state === 'unknown') { out.push(el('div', 'dfsocial-empty', LETTERS_LOOKING_TEXT)); return out; }
+    // the box's fill beside its name: a reader should see a full box coming, because at the bound a sender is refused
+    out.push(el('div', 'dfsocial-sec', `Letters (${mail.letters.length}/${mail.max})`));
+    if (!mail.letters.length) out.push(el('div', 'dfsocial-empty', NO_LETTERS_TEXT));
+    for (const l of mail.letters) {
+      const row = el('button', `dfsocial-letter${l.read ? ' read' : ''}`);
+      row.type = 'button';
+      row.setAttribute('aria-label', `${l.read ? '' : 'Unread. '}From ${l.from}: ${l.subject}`);
+      row.append(el('div', `dfsocial-dot${l.read ? '' : ' unread'}`));
+      const who = el('div', 'dfsocial-who');
+      who.append(senderNode('dfsocial-name', l.from, l), el('div', 'dfsocial-sub', l.subject));
+      const age = el('span', 'dfsocial-age', letterAgeText(l.sentAt, mail.now()));
+      liveSubs.push({ el: age, of: () => letterAgeText(l.sentAt, mail.now()) });   // "5 min ago" moves on the clock alone
+      row.append(who, age);
+      row.addEventListener('click', () => openLetter(l.id));
+      out.push(row);
+    }
+    return out;
+  };
+
+  const readBody = () => {
+    const out = [];
+    const top = el('div', 'dfsocial-acts');
+    top.append(btn('Back', { run: () => { letters.word = ''; lettersTo('list'); } }));
+    out.push(top);
+    const l = mail.opened.get(letters.id);
+    if (!l) { out.push(el('div', letters.word ? 'dfsocial-err' : 'dfsocial-empty', letters.word || LETTERS_LOOKING_TEXT)); return out; }
+    const head = el('div', 'dfsocial-letterhead');
+    const age = el('div', 'dfsocial-sub', `Sent ${letterAgeText(l.sentAt, mail.now())}`);
+    liveSubs.push({ el: age, of: () => `Sent ${letterAgeText(l.sentAt, mail.now())}` });
+    head.append(el('div', 'dfsocial-subject', l.subject), senderNode('dfsocial-sub', `From ${l.from}${l.title ? ` - ${l.title}` : ''}`, l), age);
+    out.push(head, el('div', 'dfsocial-lettertext', l.body));
+    if (letters.word) out.push(el('div', 'dfsocial-err', letters.word));
+    const acts = el('div', 'dfsocial-acts');
+    // a reply goes to whoever wrote - their name as the letter carries it is the handle it came from
+    acts.append(btn('Reply', { enabled: handleShapeOk(l.from), why: 'no username', run: () => writeTo(l.from, replySubject(l.subject)) }));
+    // ONE CLICK ARMS, THE SECOND THROWS IT AWAY - the friends list's Remove, for the same reasons
+    acts.append(letters.del === l.id
+      ? btn('Sure?', { warn: true, run: () => {
+        letters.del = null;
+        mail.remove(l.id).then((r) => { letters.word = r.ok ? 'Letter thrown away.' : letterWordText(r.error); if (r.ok) letters.mode = 'list'; ui++; });
+      } })
+      : btn('Delete', { run: () => { letters.del = l.id; letters.delAt = social.now(); ui++; if (open) repaint(); } }));
+    out.push(acts);
+    return out;
+  };
+
+  const writeBody = () => {
+    const d = letters.draft;
+    const form = el('div', 'dfsocial-form');
+    const field = (tag, label, value, max) => {
+      const f = doc.createElement(tag);
+      f.className = 'dfsocial-field';
+      if (tag === 'input') f.type = 'text';
+      f.maxLength = max;
+      f.value = value;
+      f.setAttribute('aria-label', label);
+      f.setAttribute('autocomplete', 'off');
+      form.append(el('div', 'dfsocial-label', label), f);
+      return f;
+    };
+    const to = field('input', 'To', d.to, HANDLE_MAX_LEN);
+    to.setAttribute('spellcheck', 'false');
+    const subject = field('input', 'Subject', d.subject, LETTER_SUBJECT_MAX);
+    const body = field('textarea', 'Letter', d.body, LETTER_BODY_MAX);
+    body.rows = 8;
+    const count = el('div', 'dfsocial-count', '');
+    form.append(count);
+    // THE COUNT IS WHAT THE SERVICE WILL COUNT: the characters as typed (the field's own cap is the bound) and, past
+    // LETTER_LINES_MAX, the lines as they will be kept - cleanBody's, blank runs folded - so the number that turns red
+    // is the number the refusal would name.
+    const paintCount = () => {
+      const lines = cleanBody(body.value).split('\n').length;
+      const over = lines > LETTER_LINES_MAX;
+      const t = `${body.value.length}/${LETTER_BODY_MAX}${over ? ` - ${lines}/${LETTER_LINES_MAX} lines` : ''}`;
+      if (count.textContent !== t) count.textContent = t;
+      count.className = `dfsocial-count${over ? ' over' : ''}`;
+    };
+    paintCount();
+    // THE DRAFT IS WRITTEN ON EVERY KEYSTROKE and the form is NOT rebuilt by one - only a view change or a send
+    // rebuilds it - so the caret stays where the player put it and nothing typed is ever lost to a repaint.
+    to.addEventListener('input', () => { d.to = to.value; });
+    subject.addEventListener('input', () => { d.subject = subject.value; });
+    body.addEventListener('input', () => { d.body = body.value; paintCount(); });
+    const out = [form];
+    if (letters.word) out.push(el('div', 'dfsocial-err', letters.word));
+    const send = () => {
+      if (letters.sending) return;
+      letters.sending = true; letters.word = ''; ui++; if (open) repaint();
+      mail.send({ to: d.to, subject: d.subject, body: d.body }).then((r) => {
+        letters.sending = false;
+        if (r.ok) {
+          letters.draft = { to: '', subject: '', body: '' };
+          letters.word = `Your letter to ${r.to} is on its way.`;
+          letters.mode = 'list';
+        } else letters.word = letterWordText(r.error);
+        ui++;
+      });
+    };
+    // Ctrl or Cmd with Enter sends from the letter itself - the one field where a plain Enter is a new line
+    body.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); } });
+    const acts = el('div', 'dfsocial-acts');
+    acts.append(
+      btn(letters.sending ? 'Sending...' : 'Send', { enabled: !letters.sending, run: send }),
+      btn('Cancel', { enabled: !letters.sending, run: () => { letters.draft = { to: '', subject: '', body: '' }; letters.word = ''; lettersTo('list'); } }));
+    out.push(acts);
+    // the first empty field takes the keyboard: the name on a fresh letter, the words on a reply
+    Promise.resolve().then(() => { if (letters.mode === 'write' && open) (d.to ? (d.subject ? body : subject) : to).focus?.(); });
+    return out;
+  };
+
+  const lettersBody = () => (letters.mode === 'write' ? writeBody() : letters.mode === 'read' ? readBody() : listBody());
+
+  /** What a tab's badge should say right now: requests waiting on Friends, invitations standing on Party, letters
+   *  unopened on Letters (MAIL1). ONE reading, because the live pass and the repaint must never disagree about the
+   *  number (AUDIT SOC C5). */
   const badgeText = (id) => {
-    const n = id === 'friends' ? (social.in?.length ?? 0) : social.liveInvites().length;
+    const n = id === 'friends' ? (social.in?.length ?? 0) : id === 'letters' ? (mail?.unread ?? 0) : social.liveInvites().length;
     return n > 0 ? String(n) : '';
   };
 
   /** The whole body, and the tab badges over it. */
   const repaint = () => {
-    painted = social.version; paintedUi = ui;
+    painted = social.version; paintedUi = ui; paintedMail = mail?.version ?? 0;
     ticking = []; liveSubs = [];
     for (const [id, t] of tabBtns) {
       t.b.className = `dfsocial-tab${id === tab ? ' active' : ''}`;
       t.b.setAttribute('aria-selected', id === tab ? 'true' : 'false');   // C21
       t.badge.textContent = badgeText(id);
     }
-    body.replaceChildren(...(tab === 'party' ? partyBody() : friendsBody()));
+    body.replaceChildren(...(tab === 'party' ? partyBody() : tab === 'letters' ? lettersBody() : friendsBody()));
     paintLive();
   };
 
@@ -472,6 +691,7 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
   const paintLive = () => {
     const now = social.now();
     if (confirm && now - confirmAt > SOCIAL_CONFIRM_MS) { confirm = null; ui++; }
+    if (letters.del && now - letters.delAt > SOCIAL_CONFIRM_MS) { letters.del = null; ui++; }   // MAIL1: Delete disarms as Remove does
     if (noteMsg && now - noteAt > SOCIAL_NOTE_MS) noteMsg = '';
     const e = social.lastError ? String(social.lastError) : '';
     if (err.textContent !== e) err.textContent = e;
@@ -565,6 +785,18 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
     isOpen: () => open,
     /** Which tab is up - for the host and for the pins. */
     tab: () => tab,
+    /** MAIL1: open on the Letters tab - on the form to `to` when a name is given, on the box otherwise. False where the
+     *  host handed no letterbox, or the panel cannot open now. */
+    openLetters({ to = null } = {}) {
+      if (!mail) return false;
+      tab = 'letters'; confirm = null;
+      if (to != null) writeTo(to); else { letters.mode = 'list'; letters.id = null; ui++; }
+      lookAtLetters();
+      if (open) { repaint(); return true; }
+      return openPanel();
+    },
+    /** MAIL1: which view the Letters tab is on - for the pins. */
+    lettersView: () => letters.mode,
     /**
      * Once a frame, from the host's chat frame.
      *
@@ -583,7 +815,10 @@ export function createSocialPanel({ social, send = null, canOpen = () => true, o
       if (root.style.display !== '') root.style.display = '';
       if (toast.style.display !== '') toast.style.display = '';
       if (open) {
-        if (social.version !== painted || ui !== paintedUi) repaint();
+        // MAIL1: the Letters tab is drawn from the BOX, not the social picture - and the form from neither, so a presence
+        // frame or a poll landing while a player types rebuilds nothing under their caret
+        const moved = tab !== 'letters' ? social.version !== painted : letters.mode !== 'write' && (mail?.version ?? 0) !== paintedMail;
+        if (moved || ui !== paintedUi) repaint();
         // a countdown that just hit zero raises the panel's version from inside `paintLive`, and the row it belongs
         // to has to go on THIS pass rather than the next one - `liveInvites` has already shed it by now
         else { paintLive(); if (ui !== paintedUi) repaint(); }

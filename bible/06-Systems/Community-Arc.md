@@ -493,3 +493,62 @@ namer's bag), `test/inspect1.test.js` (the three reads of the one bag, plus the 
 execution), `test/hcc_park.test.js` (the park bucket refilled on the instance), the RELAY_VERSION pins, and seven
 mutant records (inspect1 x2, peerplaque, soc1, lootstack, worldhover x2). Every mutant list whose target or tests the
 merge touched was rerun against a green baseline.
+
+## MAIL1 - letters to a player who is away (2026-09-23, Addison Knox)
+
+Addison Knox, on Discord: "An in-game mail system where players can send messages to offline players (e.g. notes,
+contracts, invitations)."
+
+- **Where.** The friends panel has a third tab, Letters: the box, one letter, and the form that writes one. A friend's
+  row has a Letter button, and a letter has Reply. When a look finds letters, the world tab says so, in a line nobody
+  spoke: "A letter from Ann: "Terms". Open Social, then Letters." On the first look of a sitting it says "You have 2
+  unread letters" instead.
+- **Who keeps them: the ACCOUNT SERVICE, not the relay.** A letter is for someone who is not online, and the service
+  is the one thing in this port that outlives a session. It already knows every registered player by a handle nobody
+  else can hold. Letters live in `server-account/src/letters.js` over migration 0007 (`letters`), until their reader
+  throws them away.
+- **Who writes to whom.** A registered player writes to another, by handle, in any case. A guest can do neither
+  (`mail-needs-account`): a guest is a device, with no name that stays theirs and none a mute can reach. Nobody
+  writes to themselves (`to-self`), and a muted player writes to nobody (`muted`): the moderator's mute stops a letter
+  as it stops a chat line.
+- **The law, one home for both ends (`src/net/letterLaw.js`).** A letter carries the chat's characters. Its per-character
+  loop left `sanitizeChat` as `wire.js` `visibleText`, one law rather than a copy, and a chat line comes out of it
+  unchanged. A letter keeps its lines, because a contract is laid out. The bounds are 60 characters for a subject, 800
+  for the body and 40 lines, and a letter past them is refused, never cut: a cut contract would be words its sender did
+  not send. The widest letter the form can type fits the service's 4 KiB body, and a pin does the arithmetic.
+- **How much.** 20 letters an hour to anyone, and 5 to one reader. Past either the answer is `mail-rate`, a word of its
+  own because the routes' `rate` sentence says "a few minutes". The rate is spent BEFORE the reader is looked up, so a
+  handle cannot be probed for free. A reader keeps 50 letters, and a full box refuses the SENDER: the reader's oldest
+  letter is never thrown away for a stranger's newest. The bound is in the INSERT itself, so two letters racing for
+  the last place land one.
+- **A reader's letters are theirs alone.** They are listed newest first, as heads with no body, each wearing the
+  sender's badge as the service would sign it now. A letter is opened once (its first opening's time is kept) and
+  thrown away by its reader alone. `no-letter` is one word for another's letter and for no letter. A reader who is
+  gone takes their box; a sender who is gone does not take their letters.
+- **The client (`src/net/mail.js`, MailBox): found, not pushed.** The box is looked at when the tab opens (a look is
+  trusted for 30 s), when the host starts, and every 3 minutes from `onlineFrame`. The box's rules:
+  - it announces a letter once;
+  - it opens a letter once and keeps that copy;
+  - it refuses what the law refuses before touching the network;
+  - it forgets a session the service answers `auth`;
+  - it stamps a look even with no session, so no frame reads the store twice.
+- **The tab.** The draft lives in the panel's state and is written on every keystroke. No repaint rebuilds the form,
+  so a presence frame or a poll landing never moves the caret. Ctrl or Cmd with Enter sends. A refusal is said in the
+  service's words and the draft stays.
+- **The probe found one fault.** The Letter button made a friend's row three acts wide. On a phone's touch skin, with
+  each button 44px tall and its reason beside its label, the name was squeezed to one letter a line. A friend's acts
+  are now one group, which wraps below the name when the row cannot hold both.
+- **Recorded, not built.**
+  - No block list: a moderator's mute and the per-reader rate are the walls.
+  - A letter carries words only, never an item or gold. A player's things are their own client's, and the trade
+    window is where things change hands.
+  - No push: a letter is found at the next look.
+  - No sent box: the sender keeps nothing.
+- **The deploy.** The account worker moves to `acct6`, and the deploy applies migration 0007 through the ledger.
+  `src/net/letterLaw.js` joins the worker's deploy paths (test/accountdeploy.test.js caught it missing). The relay
+  sends no new frame, but `visibleText` moved within its bundle, so world101's LAW row is restated.
+
+Pins: `test/mail1.test.js` (17); `tools/mutants/mail1.json` (51, all dead); `tools/mailProbe.mjs` (36 checks, 12
+photographs at a desktop, a narrow window and a phone). Re-aimed: ACC1b's table list, ACC1e's refusal walk (which reads
+letterLaw's words, since the service returns them verbatim), CHAT1's and AUDIT DROPS F's online-frame order, and
+SOC3's host pin.

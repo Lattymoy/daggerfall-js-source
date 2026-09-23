@@ -315,6 +315,7 @@ import { PARTY_READY_TIMEOUT_MS, memberPresent, latestStamp, voteStands, snapsho
 import { createChatPanel } from '../ui/chatPanel.js';   // CHAT1: the enhanced skin's chat over the world
 import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the quest videos in turn
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
+import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letterbox the Letters tab draws and the frame polls
 import { createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { glyphMarks } from '../ui/playerBadge.js';   // PEER-PLAQUE1: a badge's plain-text marks, for the plaque's title
 import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerRelationText } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
@@ -9438,6 +9439,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // POINTER SURFACE like the chat, so the host's own three (canOpen, onOpen, onClose) are what it is handed, and
   // SOC5's key reaches it through `hudCtx.openSocial` rather than a second copy of this reference.
   let socialPanel = null;
+  let mail = null;   // MAIL1: the letterbox (net/mail.js MailBox), made with the panel that draws it
   const socialLink = () => { const tab = chatLog?.tabs.find((t) => t.room === SOCIAL_ROOM); return tab ? (chatLinks?.get(tab.id) ?? null) : null; };
   /** SOC3 (Mac: "invite friends or other individuals"): what a click on a chat ROSTER ROW offers for that peer. The
    *  roster is the one place a stranger has a name, so it is the one place "other individuals" can be acted on -
@@ -10038,8 +10040,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     // below's `socialPanel` - so there is one control and no second floating widget to keep out of the HUD's way.
     // The panel is a POINTER SURFACE and takes the chat's own three doors, word for word: no opening under a
     // window or the pause door, the cursor freed inside the opening gesture and taken back inside the closing one.
+    // MAIL1 (Addison Knox: "An in-game mail system where players can send messages to offline players (e.g. notes,
+    // contracts, invitations)"): THE LETTERBOX, over the ACCOUNT SERVICE and not the hub - a letter is for someone
+    // who is not here, and the service is what outlives a session. Its io is read from the store at EACH call, so a
+    // sign-in or sign-out between two looks is simply the box's next answer. A look that finds letters says so on the
+    // world tab, a line nobody spoke; the panel's Letters tab draws the box, and onlineFrame polls it.
+    mail = new MailBox({
+      ioOf: () => {
+        const st = appStorage();
+        const s = storedSession(st);
+        return s ? { fetch: (u, i) => globalThis.fetch(u, i), base: serviceBase(st), secret: s.secret, storage: st } : null;
+      },
+      onLetter: (event) => { chatLog.push(tab.id, { text: mailNoticeText(event), system: true }); },
+    });
     socialPanel = createSocialPanel({
       social,
+      mail,
       send: (act) => socialLink()?.sendSocial(act) ?? false,   // false is the rate gate's answer: the panel keeps the button and says "try again"
       canOpen: () => !gamePaused() && !(townTalk.hudCovered || (modes?.hudCovered ?? false)),
       onOpen: () => surfaceOpen('social'),   // AUDIT SOC B6: counted with the chat's and the F-menu's - the first up frees the mouse, the last down takes it back
@@ -11318,6 +11334,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     tradeFrame();   // TRADE1: retries, timeouts, a peer gone or out of reach - before the dead return, as the chat's is
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
+    mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
