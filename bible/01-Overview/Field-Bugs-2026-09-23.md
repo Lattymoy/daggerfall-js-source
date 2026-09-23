@@ -69,7 +69,9 @@ and no log step. The scratch harness showed it: live killCount 0, orphan
   - The rain plays at `INDOOR_RAIN_GAIN` (0.35) of the street's own
     gain, or at 0 while Better Ambience's indoor rain
     (`indoorRainPlaying()`) is the rain you hear.
-  - The night's cricket chorus plays at `INDOOR_CRICKETS_GAIN` (0.35).
+  - The night's cricket chorus played at `INDOOR_CRICKETS_GAIN` (0.35).
+    Superseded by DISC8-A (Mac: "no crickets indoors please"): the chorus
+    stops at a building's door as it does underground, its clock held.
   - The one-shots (birds, thunder, the cemetery) stay outdoor things.
 - Underground, the rain loop carries on at the street's gain (DFU's
   verbatim carry-over), and the crickets stop.

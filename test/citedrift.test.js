@@ -743,7 +743,7 @@ const SOURCE_CITES = [
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:156-183`/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:155-182`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
   // AUDIT ENH-NOTICE3 (second pass, B18): six cites the shifter carried
   // along already WRONG - stale before the slice, moved by the right
