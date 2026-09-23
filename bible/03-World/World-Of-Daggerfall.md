@@ -228,6 +228,75 @@ player's distance, and is ported as one (`world/wodSpawner.js`):
   no marker updates; the port ticks the markers on exterior frames
   only.
 
+## The camp at Privateer's Hold (WOD4)
+
+`MainQuestLocationOverhaul.Init` makes one GameObject carrying
+`DungeonExterior`. Every frame its Update runs
+`GameObject.Find("DaggerfallBlock [CUSTAA30.RMB]")`: the first ACTIVE
+block of that name, and CUSTAA30 is the Hold's own 1x1 exterior block.
+It gives that block a `PrivateersHold` component, once. (The same check
+on `OnTransitionExterior` changes nothing. The rest of Update is
+commented-out HUD text. The fast-travel cleanup is never subscribed, and
+the crashed ship and the labyrinth blocks are commented out.) The
+component's Start is the whole camp, built in the block's frame under
+an "Extra_Detail" child at its origin, and ported as data
+(`world/wodPrivateersHold.js`, pinned line for line against the
+vendored C#):
+
+- **33 models**, each `CreateDaggerfallMeshGameObject` (the mesh and its
+  collider) at a local position, turned by `Rotate(0, deg, 0)`. One
+  Rotate is commented out and that ruin stands unturned.
+- **17 flats**, `CreateDaggerfallBillboardGameObject`, CENTRED on their
+  local position: nothing calls `AlignToBase`. The horses are silent,
+  because `AddAnimalAudioSource` is RMBLayout's and nothing here calls
+  it.
+- **Five FireLights**, one child of each 210 flat, one unit above the
+  fire's centre: a point light with range 20, intensity 1 and colour
+  (0.95, 0.91, 0.63). They burn at every hour, on the per-light
+  channel with the mod's other lights.
+- **Seven foes** (Thief, Assassin, Thief, Thief, Rogue, Thief, Rogue),
+  each on its own `Range(0, 30) > 20`, which is 9 chances in 30.
+  `CreateFoeGameObjects` makes each foe at the block's origin (its gender
+  roll first), and the caller's `Rotate(0, Range(0, 180), 0)` turns it.
+  The re-parent to Extra_Detail at (x, 1, z) overwrites the ground align
+  made at the origin, so the transform (the sprite's centre) stands one
+  unit over the block's floor, and the foe settles from there.
+- The loot containers are commented out; `KamerCreateLootContainer` has
+  no caller.
+
+The readings:
+
+- **The foes are the block's.** They are placed foes, outside the
+  encounter cap and never distance-culled, but they are the block's
+  children. The location is a loose object, and `CollectLooseObjects`
+  destroys it with all it holds when its pixel leaves range, so the
+  port removes them with the pixel. A foe whose spawn lands after its
+  block went goes too. `SerializableEnemy` saves them; a load restores
+  them as loose foes and the rebuilt block rolls seven more. That is
+  DFU's arithmetic, and the port's.
+- **Once per block.** A trip into the dungeon and out again finds the
+  camp as it was: DFU disables the exterior, it does not destroy it, and
+  the port's dungeon exit keeps the built world.
+- **The climate.** `CreateDaggerfallMeshGameObject` gives a mesh its
+  default textures, and the DaggerfallLocation re-skins every mesh
+  under it only when its season or city-lights flag changes
+  (`ApplyTimeAndSpace`). Whether the camp stands before the location's
+  first check is a matter of Unity's Start and Update order. After the
+  next dusk, dawn or season change the camp wears the location's
+  climate either way. The port stands it re-skinned from the start.
+  The Hold is temperate, so the two can differ only in winter, and then
+  only until the next dusk or dawn.
+
+## A rebuild the reference never makes (WOD3, WOD4)
+
+Three port teardowns rebuild a pixel where DFU unloads nothing: the
+season re-skin, the roads sweep and the roads retry (`destroyPixel`'s
+`collectLoose: false`). DFU's components live through all three, so
+the port carries them across. Each marker keeps its state, matched by
+where it stands. The camp keeps its roll and its foes. A real unload (a
+pixel leaving range) drops the carry, and so does a sweep (a teleport,
+a travel, a load), which is an unload of everything.
+
 ## THE FOUR HOSTS
 
 - `scenes/world.js` - WIRED. It is the one host that streams terrain.
@@ -242,11 +311,17 @@ player's distance, and is ported as one (`world/wodSpawner.js`):
   pixel as the C# destroys the terrain's children at every promote. The
   markers ride the built pixel too, and are ticked every exterior frame
   (WOD3).
-- `scenes/exterior.js` - FLAGGED: one fixed location on a flat ground
-  quad, no streamer, no heightmap - there is no wilderness pixel to stand
-  a site on.
+  The camp at Privateer's Hold stands on the block's origin, and its
+  rolls come on the first exterior frame the block stands in (WOD4).
+- `scenes/exterior.js` - the loader is FLAGGED: one fixed location on a
+  flat ground quad, no streamer, no heightmap, so there is no wilderness
+  pixel to stand a site on. The camp at Privateer's Hold is WIRED
+  (WOD4): this probe host lays out RMB blocks, so a `?loc=` at the Hold
+  stands the camp in its fixed frame, lights the fires at every hour
+  beside the lanterns, and rolls the foes on its first frame. It never
+  unloads, so the camp lasts as long as the scene.
 - `scenes/worldModes.js`, `scenes/dungeonContext.js` - FLAGGED:
-  interiors and dungeons, no terrain.
+  interiors and dungeons, no terrain and no exterior block.
 
 The grass (the enhanced lane's own) keeps off a site's rect as DFU's
 nature keeps off the loader's `locationRect`, and is re-read over a
@@ -270,6 +345,8 @@ stands is its maker's pool's and reaches the others as every exterior
 foe does, a puppet on their screens. A pile is its maker's alone. Two
 players who walk into one camp therefore spring its markers twice, and
 the room sees both sets.
+The camp at Privateer's Hold is the same: each client rolls its own
+seven.
 
 ## What the data says, measured
 
@@ -302,6 +379,8 @@ the room sees both sets.
 - `src/world/wodSpawner.js` - `LocationEnemySpawner.cs`: Start, Update
   and the five arms as one machine.
 - `src/world/groundAlign.js` - GameObjectHelper's two ground aligns.
+- `src/world/wodPrivateersHold.js` - `DungeonExterior.cs` and
+  `PrivateersHold.cs`: the block's name, Start's camp as data, its rolls.
 - `src/world/roadsProducer.js` `basicRoadsPathsPoint` - the question the
   loader asks Basic Roads.
 - `tools/worldOfDaggerfallAssets.mjs` - the archive to `vendor/`.

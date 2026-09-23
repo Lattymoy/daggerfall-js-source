@@ -115,7 +115,7 @@ test('WOD3: the ground aligns move the CENTRE - a pile to hit + 0.52 whatever it
 test('WOD3: the host stands what a marker answers - placed foes out of the cap, passive ones not hostile, piles dying with their pixel', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /tickWodSpawners\(\);   \/\/ WOD3: LocationEnemySpawner\.Update, every exterior frame\n\s*tickCityGates\(minute\);/);
-  assert.match(w, /wodSpawners\.push\(\{ spawner: new WodSpawner\(s\), centre: \[s\.base\[0\], s\.base\[1\] \+ \(h \* s\.scaleY\) \/ 2, s\.base\[2\]\] \}\);/, 'the marker\'s centre, as AlignToBase leaves it');
+  assert.match(w, /const centre = \[s\.base\[0\], s\.base\[1\] \+ \(h \* s\.scaleY\) \/ 2, s\.base\[2\]\];\n\s*wodSpawners\.push\(\{ spawner: carried\?\.spawners\.get\(centre\.join\(','\)\)\?\.shift\(\) \?\? new WodSpawner\(s\), centre \}\);/, 'the marker\'s centre, as AlignToBase leaves it - and its state across a rebuild the reference never makes (WOD4\'s carry)');
   assert.match(w, /const cx = feet\[0\], cy = feet\[1\] \+ \(standing \? player\.height \/ 2 : 0\), cz = feet\[2\];/, 'PlayerMotor\'s transform is the capsule\'s centre');
   assert.match(w, /const hit = collider\.surfaceHit\(\[x, y \+ 0\.2, z\], _DOWN, 3\);[^\n]*\n\s*exteriorFoes\.spawnFoe\(act\.mobileType, \[x, y, z\], \{ yaw: act\.yawDeg \* Math\.PI \/ 180, gender: act\.gender, allied: act\.allied, placed: true, groundAlign: \{ hitDist: hitDistance\(hit\) \} \}\)/, 'made at the marker\'s centre, the ray cast that frame');
   assert.match(w, /if \(f && !act\.hostile && f\.ai\) f\.ai\.isHostile = false;/, 'MobileReactions.Passive');

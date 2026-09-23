@@ -13,6 +13,7 @@ import { openWodWorld, wodOn, wodLightColors } from '../world/worldOfDaggerfall.
 import { wodLightPosition, wodLightProperties } from '../world/wodLocationObjects.js';   // WOD2: the mod's own AddLight
 import { WodSpawner, WOD_LOOT_LOCATION_INDEX, WOD_LOOT_ALIGN } from '../world/wodSpawner.js';   // WOD3: LocationEnemySpawner
 import { alignBillboardToGround } from '../world/groundAlign.js';   // WOD3: SpawnLoot's drop
+import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFireLights, rollHoldFoes } from '../world/wodPrivateersHold.js';   // WOD4: the camp at Privateer's Hold
 import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
@@ -42,7 +43,7 @@ import { spherePlanes, batchVisible } from '../render/bounds.js';   // PERF-CROW
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
 import { FarRingRenderer, ringDisabled } from '../render/farRing.js';   // EV8: the province's mountains on the horizon
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
-import { collectBlockFlats, billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
+import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase } from '../world/rmbFlats.js';
 import { SeasonHelper } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
 import { createSeasonReskin } from '../world/seasonReskin.js';
@@ -1029,6 +1030,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the pile dropped to the ground within 2), or the captive's flat in
   // the marker's place. Distances are PlayerMotor's (the capsule's
   // centre) to the marker's centre.
+  // WOD3/WOD4: THE CARRY. The port tears a pixel down and builds it again
+  // where the reference unloads nothing - a season's re-skin, a road
+  // repaint (destroyPixel's collectLoose: false) - so what the mod's
+  // components hold rides across: each marker's state, keyed by where it
+  // stands, and the Hold's roll with its foes. A real unload drops it.
+  const wodCarry = new Map();   // pixel key -> { spawners: Map(centre -> WodSpawner[]), hold }
   const _wodT = [0, 0, 0];
   const _DOWN = [0, -1, 0];
   const tickWodSpawners = () => {
@@ -1037,6 +1044,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const feet = standing ? player.pos : cam.pos;
     const cx = feet[0], cy = feet[1] + (standing ? player.height / 2 : 0), cz = feet[2];
     for (const p of built.values()) {
+      if (p.privateersHold && !p.privateersHold.state.rolled) standHold(p);   // WOD4: DungeonExterior.Update finds the block; PrivateersHold.Start runs
       if (!p.wodSpawners) continue;
       const t = state.pixelTranslation(p.px, p.py, _wodT);
       for (const w of p.wodSpawners) {
@@ -1078,13 +1086,31 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (built.get(key) !== p || act.record >= t.recordCount) return;
       uploadRecord(act.archive, act.record);
       const size = billboardSize(t, act.record);
-      const base = [w.centre[0], w.centre[1] - size.h / 2, w.centre[2]];
+      const base = centredBase(w.centre, size);
       const batch = renderer.createBillboardBatch(act.archive, act.record, size, [base]);
       batch._box = flatBatchAabb([base], size);
       for (let i = 0; i < 3; i++) { p._box[i] = Math.min(p._box[i], batch._box[i]); p._box[3 + i] = Math.max(p._box[3 + i], batch._box[3 + i]); }
       armFlatAnim(batch, t, act.archive, act.record, p.flatAnims, uploadRecordFrame);
       p.batches.push(batch);
     }).catch(() => {});
+  }
+  // WOD4: PrivateersHold.Start's seven rolls (rollHoldFoes). Each foe is
+  // made at its local transform - the re-parent overwrites the ground
+  // align CreateFoeGameObjects ran at the block's origin, so the spawn
+  // takes it as a miss - and is the BLOCK's child: placed (no cap, no
+  // distance cull), it dies with the pixel, as CollectLooseObjects
+  // destroys the location and all it holds.
+  function standHold(p) {
+    const st = p.privateersHold.state;
+    st.rolled = true;
+    const t = state.pixelTranslation(p.px, p.py, _wodT);
+    for (const o of p.privateersHold.origins) {
+      for (const r of rollHoldFoes()) {
+        exteriorFoes.spawnFoe(r.mobileType, [o[0] + r.pos[0] + t[0], o[1] + r.pos[1] + t[1], o[2] + r.pos[2] + t[2]], { yaw: r.yawDeg * Math.PI / 180, gender: r.gender, placed: true, groundAlign: { hitDist: null } })
+          .then((f) => { if (!f) return; if (st.gone) exteriorFoes.removeFoe(f); else st.foes.push(f); })
+          .catch(() => {});
+      }
+    }
   }
   const tickCityGates = (minute) => {
     const night = isNight(minute);
@@ -1388,6 +1414,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // pixel-local like its doors, boards and street NPCs.
     const pixelBuildings = [];
     const windmills = []; // WM2b: { local, state } - mills whose rotor turns each frame
+    const holdBlocks = [];   // WOD4: the origin matrix of each block DungeonExterior would find by name
     let population = null;   // T2 towns: this pixel's wandering pool
     let locOrigin = null;    // the location origin, pixel-local
     let personBatches = null;
@@ -1407,6 +1434,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       for (const b of loc.blocks) {
         const originMatrix = trs(
           locLocal[0] + b.originX, locLocal[1], locLocal[2] + b.originZ, 0, 0, 0);
+        if (wod && b.blockName === PRIVATEERS_HOLD_BLOCK) holdBlocks.push(originMatrix);   // WOD4
         // AUDIT 64 F11: DFU's `firstModel` is a LOCAL, reset once per
         // subrecord inside AddModels (RMBLayout.cs:824-832), and
         // AddModels runs once per PLACED block with a fresh
@@ -1683,6 +1711,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pixelWodLights = [];
     let wodSite = null;
     let wodSpawners = null;
+    const carried = wodCarry.get(key) ?? null;   // WOD3/WOD4: what a rebuild the reference never makes keeps
+    wodCarry.delete(key);
     if (wodPicks && wodAverages) {
       const place = wod.placements(wodPicks, wodAverages);
       if (place.stopped) console.warn(`[wod] pixel ${key}: a negative model name stopped the loader here, as uint.Parse throws in the C#`);
@@ -1728,7 +1758,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         for (const s of place.spawners) {
           const t = await getTexture(s.archive);
           const h = s.record < t.recordCount ? billboardSize(t, s.record).h : 0;
-          wodSpawners.push({ spawner: new WodSpawner(s), centre: [s.base[0], s.base[1] + (h * s.scaleY) / 2, s.base[2]] });
+          const centre = [s.base[0], s.base[1] + (h * s.scaleY) / 2, s.base[2]];
+          wodSpawners.push({ spawner: carried?.spawners.get(centre.join(','))?.shift() ?? new WodSpawner(s), centre });
         }
       }
       const site = [...wodPicks].reverse().find((p) => p.flatten);
@@ -1739,6 +1770,43 @@ export async function bootWorld(canvas, renderer, params, status) {
     // out over the same blended samples and finished tilemap, consumed
     // at the same point in the sequence it was always computed at.
     for (const f of nature) addFlat(natureArchive, f.record, f.x, f.y, f.z);
+    // WOD4: THE CAMP AT PRIVATEER'S HOLD (world/wodPrivateersHold.js).
+    // DungeonExterior finds the block by name and PrivateersHold.Start
+    // builds the camp in the block's frame: the models with their
+    // colliders, the flats CENTRED where Start sets them, a FireLight over
+    // each fire on the per-light channel with the mod's other lights. The
+    // meshes take the location's climate: they hang off the block, and
+    // DaggerfallLocation.ApplyClimateSettings re-skins every mesh under
+    // it (at its next season or city-lights change; the port stands them
+    // re-skinned). The foes roll on the first exterior frame the block
+    // stands in, as Start runs (standHold).
+    let privateersHold = null;
+    if (holdBlocks.length) {
+      const holdBucket = ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]);   // BLOOD1 AUDIT 3: one array a bucket
+      for (const origin of holdBlocks) {
+        for (const hm of HOLD_MODELS) {
+          const gpu = await getGpuMesh(hm.modelId);
+          if (!gpu) continue;
+          await remapSubMeshes(gpu.subMeshes, texRemap, climateArchive, pipeline);
+          const local = multiply(origin, holdModelMatrix(hm));
+          const cpu = cpuModels.get(hm.modelId);
+          const box = transformedAabb(archAabb(hm.modelId, cpu.positions), local);
+          unionBox(box);
+          const entry = { gpu, local, _box: box, _order: hm.modelId };
+          models.push(entry);
+          if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, local, resolveTexKey); entry._batched = true; }
+          collider.addMesh(key, cpu.positions, cpu.indices, local, holdBucket);   // CreateDaggerfallMeshGameObject's MeshCollider
+          await breather.breathe();
+        }
+        for (const hf of HOLD_FLATS) {
+          const t = await getTexture(hf.archive);
+          if (hf.record >= t.recordCount) continue;
+          addFlat(hf.archive, hf.record, ...centredBase([origin[12] + hf.pos[0], origin[13] + hf.pos[1], origin[14] + hf.pos[2]], billboardSize(t, hf.record)));   // FIELD-GUN20's conversion: the batch is base-anchored
+        }
+        for (const l of holdFireLights()) pixelWodLights.push({ x: origin[12] + l.pos[0], y: origin[13] + l.pos[1], z: origin[14] + l.pos[2], range: l.range, color: l.color });
+      }
+      privateersHold = { origins: holdBlocks.map((o) => [o[12], o[13], o[14]]), state: carried?.hold ?? { rolled: false, foes: [], gone: false } };
+    }
 
     // SIB1: DaggerfallTerrain.OnInstantiateTerrain - ApplyCurrentSeason
     // (false) before this terrain's batches take their material, so the
@@ -1852,6 +1920,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       wodLights: pixelWodLights,   // WOD2: the mod's AddLight lights, pixel-local, lit at every hour
       wodSite,     // WOD2: the levelled rect in tile space (grass keeps off it), null on a pixel with no site
       wodSpawners, // WOD2: LoadObject's spawn markers, for WOD3
+      privateersHold,   // WOD4: the camp's block origins and its Start's state, null off the Hold
 
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
@@ -2101,6 +2170,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this function, which is exactly ClearStreamingWorld's
     // CollectLooseObjects(true).
     if (collectLoose) { cityGuards.collectPixel(key); exteriorFoes.collectPixel(key); }
+    // WOD3/WOD4: an unload takes the Hold's foes with the block; a
+    // rebuild the reference never makes carries the markers and the Hold.
+    if (collectLoose) {
+      if (p.privateersHold) { p.privateersHold.state.gone = true; for (const f of p.privateersHold.state.foes) exteriorFoes.removeFoe(f); }
+    } else if (p.wodSpawners || p.privateersHold) {
+      const spawners = new Map();
+      for (const w of p.wodSpawners ?? []) { const k = w.centre.join(','); if (!spawners.has(k)) spawners.set(k, []); spawners.get(k).push(w.spawner); }
+      wodCarry.set(key, { spawners, hold: p.privateersHold?.state ?? null });
+    }
     built.delete(key);
   }
 
@@ -4865,6 +4943,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // save's copies on top of it. The distance cull spares anything
     // that has detected you, so nothing else was going to.
     exteriorFoes.clearLive();
+    wodCarry.clear();   // WOD3/WOD4: a sweep is an unload - nothing carries past it
     cityGuards.clearLive();
     lockOn.unlock();   // AUDIT 62 F16: destroy()/removeFoe empties the pool WITHOUT flagging `dead`, so lockOn's death break never fires on the orphan the lock still holds
     magic.clearMissiles();

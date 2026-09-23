@@ -92,8 +92,8 @@
   {
     "name": "the-facing-rolls-before-the-gender",
     "file": "src/world/wodSpawner.js",
-    "old": "    const gender = rolls() < FOE_MALE_CHANCE ? 'male' : 'female';\n    const yawDeg = rangeInt(0, 180, rolls);",
-    "new": "    const yawDeg = rangeInt(0, 180, rolls);\n    const gender = rolls() < FOE_MALE_CHANCE ? 'male' : 'female';",
+    "old": "    const gender = createFoeGender(rolls);\n    const yawDeg = rangeInt(0, 180, rolls);",
+    "new": "    const yawDeg = rangeInt(0, 180, rolls);\n    const gender = createFoeGender(rolls);",
     "tests": [
       "test/wod3_spawner.test.js"
     ]

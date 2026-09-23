@@ -1627,7 +1627,13 @@ test('FIELD-GUN20: a missile or effect sprite is CENTRED on its position - the b
   // THE OTHER HALF OF THE LAW: a block's flats keep AlignToBase - they sit ON their base, and never take this
   assert.doesNotMatch(readFileSync('src/world/rmbFlats.js', 'utf8').slice(readFileSync('src/world/rmbFlats.js', 'utf8').indexOf('export function collectBlockFlats')), /centredBase\(/, 'collectBlockFlats places at the base');
   for (const f of ['src/world/rdbLayout.js', 'src/world/interiorLayout.js', 'src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.doesNotMatch(readFileSync(f, 'utf8'), /centredBase\(/, `${f}: a flat that DFU AlignToBase-s is not centred`);
+    // WOD3/WOD4: World of Daggerfall's own flats - the captive a kidnap marker stands and the camp at
+    // Privateer's Hold - are CreateDaggerfallBillboardGameObject with NO AlignToBase, so they are centred;
+    // those lines, and nothing else a world host stands
+    const centred = readFileSync(f, 'utf8').split('\n').filter((l) => /centredBase\(/.test(l));
+    const wod = { 'src/scenes/world.js': [/const base = centredBase\(w\.centre, size\);/, /\.\.\.centredBase\(\[origin\[12\] \+ hf\.pos\[0\]/], 'src/scenes/exterior.js': [/centredBase\(\[origin\[12\] \+ hf\.pos\[0\]/] }[f] ?? [];
+    assert.equal(centred.length, wod.length, `${f}: a flat that DFU AlignToBase-s is not centred`);
+    wod.forEach((re, i) => assert.match(centred[i], re, `${f}: only World of Daggerfall's own flats are centred`));
   }
 });
 

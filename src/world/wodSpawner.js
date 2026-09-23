@@ -40,6 +40,8 @@ export const WOD_SPAWN_RADIUS = 100;
 export const WOD_STAND_DOWN_RADIUS = 300;
 /** CreateFoeGameObjects' gender roll (GameObjectHelper.cs): male under 0.55. */
 export const FOE_MALE_CHANCE = 0.55;
+/** That roll, one draw off the stream (WOD4's Hold makes its foes the same way). */
+export const createFoeGender = (rolls) => (rolls() < FOE_MALE_CHANCE ? 'male' : 'female');
 
 /** SpawnThieves / SpawnGoodThieves' three arms (:253-276), by EnemyType. */
 const THIEF_ARMS = Object.freeze([MOBILE_TYPES.Thief, MOBILE_TYPES.Rogue, MOBILE_TYPES.Barbarian]);
@@ -99,7 +101,7 @@ export class WodSpawner {
 
   /** CreateFoeGameObjects' own gender roll, then the caller's Rotate. */
   _foe(mobileType, hostile, rolls) {
-    const gender = rolls() < FOE_MALE_CHANCE ? 'male' : 'female';
+    const gender = createFoeGender(rolls);
     const yawDeg = rangeInt(0, 180, rolls);   // transform.Rotate(0, Random.Range(0, 180), 0)
     return { kind: 'foe', mobileType, hostile, allied: !hostile, gender, yawDeg };
   }
