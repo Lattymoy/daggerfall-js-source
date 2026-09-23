@@ -129,9 +129,9 @@ test('WOD4: the streaming host stands the camp on the block, climate and collide
   assert.match(block, /for \(const l of holdFireLights\(\)\) pixelWodLights\.push\(/, 'at every hour, on the per-light channel');
   assert.ok(w.indexOf('    let privateersHold = null;') < w.indexOf('const staticMerged = staticBuilder.finish();'), 'into the batch before it is merged');
   assert.match(w, /privateersHold,   \/\/ WOD4/);
-  assert.match(w, /if \(p\.privateersHold && !p\.privateersHold\.state\.rolled\) standHold\(p\);/);
-  assert.match(w, /function standHold\(p\) \{\n\s*const st = p\.privateersHold\.state;\n\s*st\.rolled = true;/, 'Start runs once');
-  assert.match(w, /exteriorFoes\.spawnFoe\(r\.mobileType, \[o\[0\] \+ r\.pos\[0\] \+ t\[0\], o\[1\] \+ r\.pos\[1\] \+ t\[1\], o\[2\] \+ r\.pos\[2\] \+ t\[2\]\], \{ yaw: r\.yawDeg \* Math\.PI \/ 180, gender: r\.gender, placed: true, groundAlign: \{ hitDist: null \} \}\)/, 'the local transform, placed');
+  assert.match(w, /if \(p\.privateersHold && !p\.privateersHold\.state\.rolled\) \{[^\n]*\n[^\n]*\n[^\n]*\n\s*else \{ standHold\(p, hs\); wodSprang\(hs\); \}/);   // WOD7: unless a peer rolled it
+  assert.match(w, /function standHold\(p, site = null\) \{\n\s*const st = p\.privateersHold\.state;\n\s*st\.rolled = true;/, 'Start runs once');
+  assert.match(w, /exteriorFoes\.spawnFoe\(r\.mobileType, \[o\[0\] \+ r\.pos\[0\] \+ t\[0\], o\[1\] \+ r\.pos\[1\] \+ t\[1\], o\[2\] \+ r\.pos\[2\] \+ t\[2\]\], \{ yaw: r\.yawDeg \* Math\.PI \/ 180, gender: r\.gender, placed: true, groundAlign: \{ hitDist: null \}, site \}\)/, 'the local transform, placed');
   assert.match(w, /\.then\(\(f\) => \{ if \(!f\) return; if \(st\.gone\) exteriorFoes\.removeFoe\(f\); else st\.foes\.push\(f\); \}\)/, 'a foe that lands after its block went goes with it');
 });
 

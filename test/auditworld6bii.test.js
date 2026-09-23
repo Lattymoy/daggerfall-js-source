@@ -121,7 +121,7 @@ test('AUDIT WORLD6b-ii A5/A8: the player\'s slot is named in the target walk (fo
   assert.deepEqual(pool.foesFrame(true).f.map((r) => r.g), [''], 'A8: not stepped yet - none, not \'.\' (which latched the puppet hostile)');
   const t = rd('src/characters/enemyTargets.js');
   assert.match(t, /const walk = \(candidates \?\? \[\]\)\.includes\(PLAYER_TARGET\) \? \[\.\.\.candidates\] : \[\.\.\.\(candidates \?\? \[\]\), PLAYER_TARGET\];/, 'A5: the caller names my slot');
-  assert.match(rd('src/scenes/exteriorFoes.js'), /runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.\(f\.placed \? \[\] : peerCandidates\(\)\)\], pf, cdt, \{/, 'and the pool puts the peers after me');
+  assert.match(rd('src/scenes/exteriorFoes.js'), /runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.\(f\.placed && !f\.site \? \[\] : peerCandidates\(\)\)\], pf, cdt, \{/, 'and the pool puts the peers after me');
   void rat;
 });
 
