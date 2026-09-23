@@ -911,7 +911,7 @@ None of these blocks anything; all are real.
                         makes it worth fixing: the overworld is the
                         first map a thumb could actually drive.
 
-    THE SPLIT POPUP     systems/itemTransfer.js:247. TransferItem
+    THE SPLIT POPUP     systems/itemTransfer.js:248. TransferItem
                         opens a numeric field DEFAULTED to maxAmount
                         when a stack will not fit whole (:1515);
                         BOTH skins take exactly what fits and never
@@ -4767,7 +4767,7 @@ literal with no duplicates; all 71 display labels match DFU's recovered
 FALL.EXE text exactly; every secondary list matches its DFU array in
 order; the builder is reconstructed on re-entry on both sides, so the
 pick lists reset; a career's flags survive the save round trip (the
-career is spread as plain CFG data, save.js:270,529 - worth checking
+career is spread as plain CFG data, save.js:271,529 - worth checking
 because AUDIT 17h caught exactly this shape dropping player
 reputation); and parseCareerData leaves every numeric field finite and
 unsigned under the maximal fourteen-pick set.
@@ -18066,3 +18066,14 @@ own shape: the title is the mod's word for the thing (the horse's name, else "Ho
 "Owned by Ann". The owner is the session's name, or the name the relay stamped on the cell's memory when the owner
 is away (HCC-PARK), so a parked team is never nobody's. A press says "Bess - owned by Ann." and opens nothing. The
 full record is `06-Systems/Horse-Cart-And-Cargo.md`, section HCC-PARK, HCC-TIP and RIDE.
+
+## ACT-MENU - THE VERBS ON THE LOOT PLAQUE (2026-09-23, Mac: "for player interaction and horse interaction, instead of using a keybind toggle, let's reuse the loot scroll menu to select options")
+
+The World Tooltips plaque had one list, a pile's items, with QUICK-LOOT's wheel and highlight. It has a second kind of
+frame now: `'actions'`, a namer's verbs as rows - `resolveHover` makes one from a namer that answers `actions`, the same
+`nextSelection` fold lights a row, the same wheel moves it (whatever the loot switch says: the switch is about taking),
+and the paint draws them in the loot list's rows. P and J never arm on a verb, a verb has no stats, and a plaque that
+stands down (a window, the skin) folds nothing, so no highlight outlives what it lit. The press reads the lit verb by key
+(`plaqueActionFor`, `plaqueActionSelection`): a player's acts (the F-menu's own, through its own door) and my horse's
+and wagon's (the mod's interaction mode per row). Record: `01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins:
+`test/disc7.test.js`; mutants `tools/mutants/disc7.json`.

@@ -113,7 +113,7 @@
   {
     "name": "QUICK-LOOT-the-wheel-is-eaten-with-nothing-listed",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!_sel || !clicks || !quickLootOn()) return false;",
+    "old": "  if (!_sel || !clicks || !(_actionIds || quickLootOn())) return false;",
     "new": "  if (!clicks) return false;",
     "tests": [
       "test/quickloot.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "QUICK-LOOT-the-nudge-is-never-spent",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;\n  _nudge = 0;",
-    "new": "  _sel = quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _actionIds = verbs && _sel ? frame.rows.map((r) => r.id) : null;\n  _nudge = 0;",
+    "new": "  _actionIds = verbs && _sel ? frame.rows.map((r) => r.id) : null;",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -131,7 +131,7 @@
   {
     "name": "QUICK-LOOT-the-switch-off-leaves-a-highlight-standing",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
     "new": "  _sel = nextSelection(_sel, frame, _nudge);",
     "tests": [
       "test/quickloot.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "QUICK-LOOT-a-key-arms-with-nothing-highlighted",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!quickLootOn() || !_sel) return false;",
-    "new": "  if (!quickLootOn()) return false;",
+    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false;",
+    "new": "  if (!quickLootOn() || _actionIds) return false;",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "QUICK-LOOT-the-take-reads-the-highlight-of-another-container",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!_sel || _sel.key !== key) return null;",
-    "new": "  if (!_sel) return null;",
+    "old": "  if (!_sel || _actionIds || _sel.key !== key) return null;",
+    "new": "  if (!_sel || _actionIds) return null;",
     "tests": [
       "test/quickloot.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "QUICK-LOOT-the-draw-lights-no-row",
     "file": "src/ui/worldPlaque.js",
-    "old": "    if (i === sel) row.classList.add('sel');",
-    "new": "    ;",
+    "old": "    if (i === sel) row.classList.add('sel');\n    if (r.rarity)",
+    "new": "    ;\n    if (r.rarity)",
     "tests": [
       "test/worldhover.test.js"
     ]

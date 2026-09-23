@@ -308,6 +308,41 @@ export function resolveHorseActivation(wagonMode, horseMode, ownsCart, talkMode)
   }
   return isDirectHitchedTeamMount(wagonMode, horseMode, ownsCart) ? HORSE_ACTIVATION.MountHitchedTeam : HORSE_ACTIVATION.Ride;
 }
+/**
+ * ACT-MENU (2026-09-23, Mac: "for player interaction and horse interaction, instead of using a keybind toggle, let's
+ * reuse the loot scroll menu to select options"): WHAT THE PLAQUE LISTS OVER MY HORSE OR WAGON. The mod picks the verb
+ * from DFU's interaction mode (Steal opens the wagon, Info names the horse, Talk commands it, anything else rides) -
+ * four keys the player had to set BEFORE the click. On the World Tooltips plaque the verbs are rows instead, the wheel
+ * lights one and the activate key presses it: each row carries the MODE the mod reads, so the press runs the mod's
+ * own handler in that mode and every refusal, reach test and line stays the mod's. The labels come from the same
+ * decision the press makes (ResolveHorseActivation), so a row never names a verb its click would not do; a command
+ * the horse cannot take here (ResolveHorseActivation's None) is not listed.
+ *
+ * `target` is 'horse', 'deployedWagon' or 'followingWagon'.
+ * @param {string} target
+ * @param {{wagonMode?: number, horseMode?: number, ownsCart?: boolean}} [state]
+ * @returns {{id: string, label: string}[]}
+ */
+export function hccActionRows(target, { wagonMode, horseMode, ownsCart } = {}) {
+  if (target === 'deployedWagon') return [{ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.hitch }, { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];
+  if (target === 'followingWagon') return [{ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.drive }, { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];
+  if (target !== 'horse') return [];
+  const rows = [];
+  const ride = resolveHorseActivation(wagonMode, horseMode, ownsCart, false);
+  rows.push({ id: ACTIVATE_MODE.Grab, label: ride === HORSE_ACTIVATION.MountHitchedTeam ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.ride });
+  const cmd = resolveHorseActivation(wagonMode, horseMode, ownsCart, true);
+  const cmdLabel = cmd === HORSE_ACTIVATION.Follow ? HCC_ACTION_TEXT.follow
+    : cmd === HORSE_ACTIVATION.FollowHitchedTeam ? HCC_ACTION_TEXT.followTeam
+      : cmd === HORSE_ACTIVATION.Wait ? HCC_ACTION_TEXT.wait : null;
+  if (cmdLabel) rows.push({ id: ACTIVATE_MODE.Talk, label: cmdLabel });
+  rows.push({ id: ACTIVATE_MODE.Info, label: HCC_ACTION_TEXT.name });
+  return rows;
+}
+/** ACT-MENU: the rows' words - the port's, in the mod's own vocabulary ("follows you", "waits here", the wagon). */
+export const HCC_ACTION_TEXT = Object.freeze({
+  ride: 'Ride', drive: 'Drive the wagon', hitch: 'Hitch up', openWagon: 'Open the wagon',
+  follow: 'Follow me', followTeam: 'Follow me with the wagon', wait: 'Wait here', name: 'Name',
+});
 /** IsHorseCommandMode [IL_907d] / IsHorseNamingMode [IL_9083]. */
 export const isHorseCommandMode = (m) => m === ACTIVATE_MODE.Talk;
 export const isHorseNamingMode = (m) => m === ACTIVATE_MODE.Info;

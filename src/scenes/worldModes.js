@@ -6891,7 +6891,7 @@ export function createWorldModes(host) {
       isHeld: (a) => held(keys, a), blocked: overlayHeld, entity: playerEntity,
       onTap: (slot) => (slot === 'spell' ? interiorKeyCtx.quickSpell() : interiorKeyCtx.quickUse(slot === 'c1' ? 1 : 2)),
     });
-    if ((_act.activate || useEdge) && !overlayHeld) (mode === 'dungeon' ? tryExitDungeon : tryExit)();
+    if ((_act.activate || useEdge) && !overlayHeld && !host.plaquePeerAct?.()) (mode === 'dungeon' ? tryExitDungeon : tryExit)();   // ACT-MENU: a player the plaque lit takes the press first
     // A successful exit destroyed the modal context and flipped the
     // mode - the render below must NOT run against it. This frame is
     // the transition's; the host resumes next frame. (Root cause of

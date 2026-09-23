@@ -106,31 +106,43 @@ export function peerRayPick(hit, reach = SOCIAL_REACH) {
 /** The menu's own three labels, in the menu's own order (ui/socialMenu.js socialMenuRows) - one home. */
 export const PEER_ACT_LABELS = Object.freeze({ friend: 'Add friend', invite: 'Invite to party', trade: 'Trade' });
 
+/** ACT-MENU: what each row does - the F-menu's own act kinds (ui/socialMenu.js socialMenuRows), one home for the plaque. */
+export const PEER_ACT_KINDS = Object.freeze({ friend: 'friend.request', invite: 'party.invite', trade: 'trade.request' });
+
 /**
- * WHAT THE PLAQUE SAYS UNDER A PLAYER'S NAME. `acts` is `{ ...social.actionsFor(id), ...tradeActionsFor(id) }` -
- * exactly the bag the F-menu is opened with - and `keyLabel` the interact key as the host spells it ('' when the
- * action is unbound: AUDIT SOC D10/C19, F is rebindable and a phone has no F, so the key is never assumed).
+ * ACT-MENU (2026-09-23, Mac: "for player interaction and horse interaction, instead of using a keybind toggle, let's
+ * reuse the loot scroll menu to select options"): WHAT THE PLAQUE LISTS UNDER A PLAYER'S NAME. `acts` is
+ * `{ ...social.actionsFor(id), ...tradeActionsFor(id) }` - exactly the bag the F-menu is opened with. PEER-PLAQUE1
+ * read it into a one-line prompt behind the F key, and F opened a card to choose from; the choice is the plaque's
+ * own rows now, lit by the wheel as a pile's items are and pressed by the activate key (or F).
  *
- *   - The ENABLED acts, and only those, behind the key: `[F] Add friend · Invite to party · Trade`. A disabled
- *     act is not listed with its reason - the plaque is a readout the eye takes in at a glance, and the menu is
- *     one press away with every reason on its rows.
+ *   - The ENABLED acts, and only those, in the menu's order: a refused act is a row the press could not honour.
  *   - The trade row's own live label when the peer already asked ('Accept trade' - `tradeLabel`).
- *   - With nothing to offer, the RELATION instead and no key: 'In your party' beats 'Friend' (a party member is
- *     usually a friend too, and the seat is the more useful word), else 'Friend', else null - the name alone.
- *   - Unbound key: the acts alone, no bracket, so the line never reads `[] ...`.
  *
- * @param {{ canFriend?: boolean, canInvite?: boolean, canTrade?: boolean, tradeLabel?: string|null,
- *           relation?: string|null, whyNotInvite?: string|null }|null} acts
- * @param {string} [keyLabel]
+ * @param {{ canFriend?: boolean, canInvite?: boolean, canTrade?: boolean, tradeLabel?: string|null }|null} acts
+ * @returns {{ id: 'friend'|'invite'|'trade', label: string }[]}
+ */
+export function peerActionRows(acts) {
+  if (!acts) return [];
+  /** @type {{ id: 'friend'|'invite'|'trade', label: string }[]} */
+  const rows = [];
+  if (acts.canFriend) rows.push({ id: 'friend', label: PEER_ACT_LABELS.friend });
+  if (acts.canInvite) rows.push({ id: 'invite', label: PEER_ACT_LABELS.invite });
+  if (acts.canTrade) rows.push({ id: 'trade', label: acts.tradeLabel || PEER_ACT_LABELS.trade });
+  return rows;
+}
+
+/** ACT-MENU: the act a row presses, in the F-menu's own shape (`{ k, peer }`), or null for an id that is no act. */
+export const peerActOf = (id, peerId) => (PEER_ACT_KINDS[id] && peerId ? { k: PEER_ACT_KINDS[id], peer: peerId } : null);
+
+/**
+ * THE RELATION, under the name: 'In your party' beats 'Friend' (a party member is usually a friend too, and the seat
+ * is the more useful word), else 'Friend', else null - the name alone. PEER-PLAQUE1's tail, said beside the rows now.
+ * @param {{ relation?: string|null, whyNotInvite?: string|null }|null} acts
  * @returns {string|null}
  */
-export function peerPromptText(acts, keyLabel = '') {
+export function peerRelationText(acts) {
   if (!acts) return null;
-  const offers = [];
-  if (acts.canFriend) offers.push(PEER_ACT_LABELS.friend);
-  if (acts.canInvite) offers.push(PEER_ACT_LABELS.invite);
-  if (acts.canTrade) offers.push(acts.tradeLabel || PEER_ACT_LABELS.trade);
-  if (offers.length) return `${keyLabel ? `[${keyLabel}] ` : ''}${offers.join(' \u00b7 ')}`;
   if (acts.whyNotInvite === WHY_IN_PARTY) return 'In your party';
   if (acts.relation === 'friend') return 'Friend';
   return null;

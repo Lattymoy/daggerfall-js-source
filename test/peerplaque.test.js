@@ -4,7 +4,9 @@
 // key would open under the name. The pick is SOC5's own (pickPeerInFront
 // over peersNear, SOCIAL_REACH, rayPersonDistance), dressed for the
 // race (peerRayPick); the words are the F-menu's own bag (actionsFor +
-// tradeActionsFor) through peerPromptText; the racer stands between
+// tradeActionsFor) - ACT-MENU (2026-09-23): its enabled acts are the
+// plaque's rows (peerActionRows, pinned in test/disc7.test.js) and the
+// relation its sub line (peerRelationText); the racer stands between
 // the townsperson and the foe in raceWinner's one precedence; and all
 // three hosts (street, building, dungeon) race it and name it.
 import { test } from 'node:test';
@@ -12,7 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { raceWinner } from '../src/player/activationRace.js';
 import { resolveHover } from '../src/systems/worldHover.js';
-import { SOCIAL_REACH, PEER_KEY_PREFIX, peerIdOfKey, peerRayPick, peerPromptText, PEER_ACT_LABELS } from '../src/player/socialPick.js';
+import { SOCIAL_REACH, PEER_KEY_PREFIX, peerIdOfKey, peerRayPick, peerActionRows, peerRelationText, PEER_ACT_LABELS } from '../src/player/socialPick.js';
 import { socialMenuRows } from '../src/ui/socialMenu.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
@@ -42,49 +44,46 @@ test('PEER-PLAQUE1 pick: peerRayPick dresses the F key\'s own hit for the race -
   assert.equal(peerIdOfKey(null), null);
 });
 
-test('PEER-PLAQUE1 words: the prompt lists the ENABLED acts alone behind the interact key, in the menu\'s own order and with the menu\'s own labels; the trade row\'s live label; no key, no bracket; nothing to offer says the relation; a stranger with nothing says nothing', () => {
+test('PEER-PLAQUE1 words (ACT-MENU): the rows are the ENABLED acts alone, in the menu\'s own order and with the menu\'s own labels; the trade row\'s live label; the relation under the name - the seat beats the friendship, a stranger says nothing', () => {
   const all = { canFriend: true, canInvite: true, canTrade: true, relation: null, whyNotInvite: null };
-  assert.equal(peerPromptText(all, 'F'), '[F] Add friend · Invite to party · Trade');
-  assert.equal(peerPromptText(all, ''), 'Add friend · Invite to party · Trade', 'unbound: the acts alone');
-  assert.equal(peerPromptText(all), 'Add friend · Invite to party · Trade');
-  assert.equal(peerPromptText({ ...all, canFriend: false }, 'F'), '[F] Invite to party · Trade', 'a disabled act is not listed');
-  assert.equal(peerPromptText({ ...all, canFriend: false, canInvite: false, tradeLabel: 'Accept trade' }, 'F'), '[F] Accept trade', 'the trade row\'s own live label');
-  assert.equal(peerPromptText({ canFriend: false, canInvite: false, canTrade: false, relation: 'friend', whyNotInvite: 'in your party' }, 'F'), 'In your party', 'the seat beats the friendship');
-  assert.equal(peerPromptText({ canFriend: false, canInvite: false, relation: 'friend', whyNotInvite: 'the party is full' }, 'F'), 'Friend');
-  assert.equal(peerPromptText({ canFriend: false, canInvite: false, relation: 'none', whyNotInvite: 'the party is full' }, 'F'), null, 'nothing to say: the name alone');
-  assert.equal(peerPromptText(null, 'F'), null);
-  assert.equal(peerPromptText({}, 'F'), null, 'offline (tradeActionsFor answers {}): nothing offered, nothing said');
+  assert.deepEqual(peerActionRows(all).map((r) => r.label), ['Add friend', 'Invite to party', 'Trade']);
+  assert.deepEqual(peerActionRows({ ...all, canFriend: false }).map((r) => r.label), ['Invite to party', 'Trade'], 'a disabled act is not listed');
+  assert.deepEqual(peerActionRows({ ...all, canFriend: false, canInvite: false, tradeLabel: 'Accept trade' }).map((r) => r.label), ['Accept trade'], 'the trade row\'s own live label');
+  assert.equal(peerRelationText({ relation: 'friend', whyNotInvite: 'in your party' }), 'In your party', 'the seat beats the friendship');
+  assert.equal(peerRelationText({ relation: 'friend', whyNotInvite: 'the party is full' }), 'Friend');
+  assert.equal(peerRelationText({ relation: 'none', whyNotInvite: 'the party is full' }), null, 'nothing to say: the name alone');
+  assert.equal(peerRelationText(null), null);
+  assert.deepEqual(peerActionRows({}), [], 'offline (tradeActionsFor answers {}): nothing offered');
   // ONE HOME for the labels: the menu's rows, in the menu's order
   const rows = socialMenuRows({ peerId: 'p', canFriend: true, canInvite: true, canTrade: true }).filter((r) => r.key !== 'cancel');
   assert.deepEqual(rows.map((r) => r.label), [PEER_ACT_LABELS.friend, PEER_ACT_LABELS.invite, PEER_ACT_LABELS.trade]);
-  assert.equal(peerPromptText(all, 'F').slice(4), rows.map((r) => r.label).join(' · '));
+  assert.deepEqual(peerActionRows(all).map((r) => r.label), rows.map((r) => r.label));
 });
 
-test('PEER-PLAQUE1 frame: resolveHover over a peer pick is a name frame with the prompt as its sub line, gated by the pick\'s own reach, and a key the host has no word for (the peer left) draws nothing', () => {
-  const name = (key) => (peerIdOfKey(key) === 'abc' ? { title: 'Mac ✦', subs: ['[F] Add friend · Trade'] } : null);
+test('PEER-PLAQUE1 frame: resolveHover over a peer pick is an ACTIONS frame (ACT-MENU) with the relation as its sub line, gated by the pick\'s own reach, and a key the host has no word for (the peer left) draws nothing', () => {
+  const name = (key) => (peerIdOfKey(key) === 'abc' ? { title: 'Mac ✦', subs: ['Friend'], actions: peerActionRows({ canInvite: true, canTrade: true }) } : null);
   const f = resolveHover(peerRayPick({ peer: { id: 'abc' }, distance: 3 }), { name });
-  assert.equal(f.kind, 'name'); assert.equal(f.key, 'peer:abc'); assert.equal(f.title, 'Mac ✦');
-  assert.deepEqual(f.subs, ['[F] Add friend · Trade']);
+  assert.equal(f.kind, 'actions'); assert.equal(f.key, 'peer:abc'); assert.equal(f.title, 'Mac ✦');
+  assert.deepEqual(f.subs, ['Friend']); assert.deepEqual(f.rows.map((r) => r.id), ['invite', 'trade']);
   assert.equal(resolveHover(peerRayPick({ peer: { id: 'abc' }, distance: SOCIAL_REACH + 0.01 }), { name }), null, 'past the reach the F key refuses at: nothing');
   assert.equal(resolveHover(peerRayPick({ peer: { id: 'gone' }, distance: 3 }), { name }), null, 'a peer the session no longer names: nothing');
 });
 
 test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and names it in the PORT\'s own (ungated) namers, with the badge marks and the live binding; the building and the dungeon race and name it through the outer host\'s two doors', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /import \{ pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerPromptText \} from '\.\.\/player\/socialPick\.js';/);
+  assert.match(w, /import \{ pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerActionRows, peerActOf, peerRelationText \} from '\.\.\/player\/socialPick\.js';/);
   assert.match(w, /import \{ glyphMarks \} from '\.\.\/ui\/playerBadge\.js';/, 'the badge\'s plain-text marks, for a text plaque');
   assert.match(w, /const _hoverPeerPick = \(eye, dir\) => peerRayPick\(pickPeerInFront\(eye, dir, peersNear\(\), SOCIAL_REACH, rayPersonDistance\), SOCIAL_REACH\);/,
     'SOC5\'s one pick, the same reach and the same cylinder, dressed for the race');
   assert.match(w, /person: _hoverPersonPick\(cam\.pos, _hd\),\s*\n\s*peer: _hoverPeerPick\(cam\.pos, _hd\),/, 'raced beside the townsperson in the street\'s pick');
   const namers = w.slice(w.indexOf('const _hoverNamers = ['), w.indexOf('const _hoverModNamers = ['));
   assert.match(namers, /\(key\) => peerHoverName\(key\),\s*\n\s*\];/, 'named in the port\'s own array, which speaks whether World Tooltips is on or off');
-  assert.match(w, /const interactKeyLabel = \(\) => String\(getBinding\(bindings\(\), 'SocialInteract'\) \?\? ''\)\.replace\(\/\^Key\/, ''\);/, 'AUDIT SOC D10/C19: the key is READ, never assumed');
   const namer = w.slice(w.indexOf('const peerHoverName = (key) => {'), w.indexOf('const socialInteract = () => {'));
   assert.match(namer, /const id = peerIdOfKey\(key\);\s*if \(!id\) return null;/);
   assert.match(namer, /const name = peerName\(id\);\s*if \(!name\) return null;/, 'a peer the session no longer names draws nothing');
   assert.match(namer, /const marks = badge \? glyphMarks\(badge\) : '';/);
-  assert.match(namer, /peerPromptText\(\{ \.\.\.social\.actionsFor\(id\), \.\.\.tradeActionsFor\(id\) \}, interactKeyLabel\(\)\)/, 'the F-menu\'s own bag, both halves');
-  assert.match(namer, /return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, subs: \[cast, prompt\]\.filter\(Boolean\) \};/);   // ALLY-CAST: the cast line above the prompt
+  assert.match(namer, /const acts = social \? \{ \.\.\.social\.actionsFor\(id\), \.\.\.tradeActionsFor\(id\) \} : null;/, 'the F-menu\'s own bag, both halves');
+  assert.match(namer, /return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, subs: \[cast, peerRelationText\(acts\)\]\.filter\(Boolean\), actions: peerActionRows\(acts\) \};/);   // ALLY-CAST: the cast line above the relation; ACT-MENU: the acts as rows
   assert.match(w, /peerHoverPick: \(\) => _hoverPeerPick\(cam\.pos, socialFwd\(\)\),\s*\n\s*peerHoverName: \(key\) => peerHoverName\(key\),/, 'the two doors the modal hosts reach - the pick off the F key\'s OWN ray (AUDIT DROPS E3), never the mode\'s eye');
   assert.match(w, /const hit = pickPeerInFront\(cam\.pos, socialFwd\(\), near, SOCIAL_REACH, rayPersonDistance\);/, 'the same ray the key casts');
   const m = rd('src/scenes/worldModes.js');

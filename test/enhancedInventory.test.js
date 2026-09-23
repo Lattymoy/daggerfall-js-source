@@ -1167,7 +1167,7 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   // under a painted plaque stranded it. The `[\s\S]` window admits the
   // comment that says so and nothing else: a statement between the
   // brace and the gate would have to contain `{` or `;`.
-  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  if \(!worldPlaqueOn\(\)\) \{ hideWorldPlaque\(\); return null; \}/,
+  assert.match(hov, /export function worldHoverFrame\(\{[\s\S]{0,200}\}\) \{\n(?:\s*\/\/[^\n]*\n)*  if \(!worldPlaqueOn\(\)\) \{ foldQuickLoot\(null\); hideWorldPlaque\(\); return null; \}/,
     'the seam asks the skin as its first act - before the ray, before the list - and takes the plaque down when the answer is no');
   const show = hov.slice(hov.indexOf('export function showWorldPlaque'));
   assert.ok(show.indexOf('if (!worldPlaqueOn()) return;') < show.indexOf('const n = ensure();'),
@@ -2334,7 +2334,7 @@ test('ENH-NOTICE3 (AUDIT B/F5): a refusal raised over a LOOT PILE with the pack 
       const host = dom.mk('div');
       dom.body.append(host);
       const e = hero();
-      e.goldPieces = 2000000;   // CanCarryAmount's own gate: the coin weight alone fills the load (itemTransfer.js:270)
+      e.goldPieces = 2000000;   // CanCarryAmount's own gate: the coin weight alone fills the load (itemTransfer.js:271)
       const pile = [mk('Claymore')];
       const view = mountEnhancedInventory(host, {
         entity: e, items: () => e.items, loot: { items: () => pile }, onExit: () => {},

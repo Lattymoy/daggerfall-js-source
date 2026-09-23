@@ -154,10 +154,93 @@ The pose carries no speed, so a peer's horse keeps the fast clop, which
 is DFU's opening clip. The local rider's half-speed swap to HorseClop is
 not reproduced for peers.
 
-## Not fixed here, seen on the way
+## Not fixed here, seen on the way - FIXED BY DISC7, below
 
-- The contact shadow ignores the world viewport rect when the large HUD
-  is docked.
-- A torch stowed from inside an open inventory keeps its sound until the
-  window closes. The rig's frame is held while a window is open, and the
-  loop stops on the next rig update.
+- ~~The contact shadow ignores the world viewport rect when the large HUD
+  is docked.~~ Fixed (DISC7).
+- ~~A torch stowed from inside an open inventory keeps its sound until the
+  window closes.~~ Fixed (DISC7).
+- ~~The pose carries no speed, so a peer's horse keeps the fast clop.~~
+  Fixed (DISC7).
+
+---
+
+# DISC7 - the three gaps, and the verbs on the plaque
+
+Mac: *"1. fix the known gaps 2. for player interaction and horse
+interaction, instead of using a keybind toggle, let's reuse the loot
+scroll menu to select options"*. Pins: `test/disc7.test.js` (11). Mutants:
+`tools/mutants/disc7.json` (38, all dead), plus fourteen older records
+re-aimed by content and two retired with the prompt they covered.
+
+## ACT-MENU: the verbs, on the loot plaque
+
+**Before.**
+- A player: F opened a card over the world (Add friend / Invite to party /
+  Trade / Cancel), a pointer surface, clicked and closed by F again.
+- My horse and wagon: the verb was DFU's interaction mode, set beforehand
+  with F1-F4. Steal opened the wagon, Info named the horse, Talk
+  commanded it, and anything else rode.
+
+**Now, where the World Tooltips plaque stands (the enhanced skin, not on
+touch).**
+- The plaque lists the verbs as rows, exactly as it lists a pile's items.
+  It is the same frame (`kind: 'actions'`), the same fold, the same wheel
+  and the same highlight (`systems/quickLoot.js`).
+- The activate key presses the lit row. On a player, F does too.
+- A player's rows are the F-menu's enabled acts, in its order and words
+  (`peerActionRows`). They press through the card's own door (`peerAct`),
+  re-read at the press. The relation ("In your party", "Friend") stands
+  under the name.
+- My horse's rows are the mod's own decision
+  (`horseCartLaw.js hccActionRows`):
+  - Ride, or Drive the wagon for a hitched team.
+  - The command the horse can take now: Follow me, Wait here, or Follow
+    me with the wagon.
+  - Name.
+- My wagon's rows are Hitch up, or Drive the wagon when it is following,
+  and Open the wagon.
+- Each row carries the MODE the mod reads, and the runtime's own handler
+  runs in that mode. Every refusal, reach test and line is the mod's.
+- Another player's horse or wagon lists nothing. It is theirs, and a press
+  still says whose it is.
+- Where the plaque cannot stand (the classic skin, a touch device), the
+  card and the interaction modes are as they were. The press on a
+  touchscreen goes through the finger's own ray, which the plaque cannot
+  name.
+- A plaque that stands down (a window, a skin switch) forgets its
+  highlight, so a click can never press a verb it did not show.
+
+## The peers' clop (GAP-1)
+
+The pose carries the rider's half-speed flag: `hs`, PlayerMotor's own
+IsMovingLessThanHalfSpeed. It is sent mounted and moving only, and
+omitted at 0, so every other pose keeps its bytes. Its edge goes out at
+once. The receiving RidingAnimator swaps HorseClop and HorseClop2 and
+halves the volume on it, as TransportManager does for the rider.
+RELAY_VERSION is world100. The relay deploys itself on the merge and drops
+every connected player once.
+
+## The torch in the pack (GAP-3)
+
+`systems/lightSource.js setLightSource` is the one door for the light in
+hand. The six writers go through it:
+- Use: light, douse, swap
+- the transfer out of the pack
+- the burn-out
+- the load
+- the mod's hand law
+
+A listener in the Handheld Torches component stops its loop on the
+change. Before this, the loop stopped on the rig's next tick, which a host
+holds while a window is open.
+
+## The contact shadow's rect (GAP-2)
+
+The contact march read last frame's depth as if the world viewport were
+the whole canvas. Under a docked large HUD every sample came from the
+wrong row, and near the bottom from the bar's cleared strip. It maps
+through the rect the depth was written under now (`holdPrevRect`,
+`prevDepthUV`), as every other screen pass maps through its rect.
+
+Not verified in a browser or online.

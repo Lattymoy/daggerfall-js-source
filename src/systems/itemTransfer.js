@@ -49,6 +49,7 @@ import { CANNOT_REMOVE_ITEM_TEXT } from './createItem.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
 import { makeItemPermanent } from './quest/item.js';   // TransferItem's MakePermanent arm (:1502-1504)
 import { getBool } from './settings.js';   // GUI/CanDropQuestItems
+import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
 /** ItemHelper.WagonKgLimit (:56). */
 export const WAGON_KG_LIMIT = 750;
@@ -301,7 +302,7 @@ export function planTake(item, {
  *  (and its condition burn) from an item in a pile or a shop. One
  *  home, because the trade window's staging arms need it too. */
 export function clearLightSourceOnLeave(item, entity, fromLocal) {
-  if (fromLocal && entity && isLightSource(item) && entity.lightSource === item) entity.lightSource = null;
+  if (fromLocal && entity && isLightSource(item) && entity.lightSource === item) setLightSource(entity, null);   // DISC7: the one door
 }
 
 /**

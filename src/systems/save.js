@@ -39,6 +39,7 @@ import { appStorage } from './appStorage.js';   // DA1: localStorage in a browse
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from './characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
 import { respawnHealth, reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
+import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
 /** One membership book, rows copied (GuildMembership_v1's shape). */
 const copyMembershipBook = (book) => Object.fromEntries(
@@ -607,7 +608,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // into an items array that was just replaced. A snapshot older than
   // this field carries none, which reads as "nothing lit".
   const li = snap.lightSourceIndex ?? -1;
-  entity.lightSource = li >= 0 ? (entity.items[li] ?? null) : null;
+  setLightSource(entity, li >= 0 ? (entity.items[li] ?? null) : null);   // DISC7: the one door
   // E4 - THE PRE-E4 MIGRATION, and two things about it are load-bearing.
   //
   // WHAT: a save written before gold became a counter carries the

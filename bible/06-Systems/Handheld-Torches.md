@@ -702,3 +702,10 @@ swing, the punching left hand, both-free-only-sheathed; the fourth departure in 
 `test/audit66_handheldtorches.test.js` (the punching hand), `test/ww1_weaponwidget.test.js` (a claymore mirrors
 under its switch), `test/discord5.test.js` (both compares by source, the relaxed default, every read TextKey in its
 tile). `tools/mutants/discord5.json`: 20 records, 20 dead. Not verified in a browser.
+
+## DISC7 - THE LOOP FOLLOWS THE LIGHT (2026-09-23, Mac: "fix the known gaps")
+
+A torch stowed from inside an open inventory kept crackling until the window closed: the component starts and stops
+its loop in its update, and a host holds the rig's frame under a window. The light in hand has one door now
+(`systems/lightSource.js setLightSource`, every writer through it) and the component listens: a light that stops being
+a torch stops the loop on the change. Record: `01-Overview/Field-Bugs-2026-09-23.md` (DISC7).

@@ -8014,5 +8014,14 @@ The panning itself was mirrored for every positional sound in the port (the scen
 right-handed) and equal-power, so nothing behind could be told from in front. Both are fixed at the audio door;
 the record is `01-Overview/Field-Bugs-2026-09-23.md` (DISC6-D). No wire or relay change: RELAY_VERSION stays.
 
-Pins: `test/audio3d.test.js` (4); mutants `tools/mutants/audio3d.json` (17, all dead). The pose carries no speed,
-so a peer's horse keeps the fast clop (DFU's opening clip). Not verified in a browser.
+Pins: `test/audio3d.test.js` (4); mutants `tools/mutants/audio3d.json` (17, all dead). ~~The pose carries no speed,
+so a peer's horse keeps the fast clop (DFU's opening clip).~~ DISC7 put the rider's half-speed flag on the pose (`hs`,
+world100) and the clop swaps on it. Not verified in a browser.
+
+## DISC7 (2026-09-23, Mac: "fix the known gaps" and "reuse the loot scroll menu to select options") - the peers' verbs on the plaque, the clop's half speed, world100
+
+A player under the crosshair lists the F-menu's enabled acts as the World Tooltips plaque's rows - the loot list's own
+wheel and highlight - and the activate key (or F) presses the lit one through the card's own door, re-read at the press.
+The card stays where the plaque cannot (touch). The pose carries `hs`, the rider's half-speed flag, mounted and moving
+only and omitted at 0; the receiving riding loop swaps the clop on it. RELAY_VERSION world100 with its law row. Record:
+`01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/disc7.test.js`.

@@ -67,8 +67,8 @@
   {
     "name": "PEER-PLAQUE1-disabled-acts-listed",
     "file": "src/player/socialPick.js",
-    "old": "  if (acts.canFriend) offers.push(PEER_ACT_LABELS.friend);",
-    "new": "  offers.push(PEER_ACT_LABELS.friend);",
+    "old": "  if (acts.canFriend) rows.push({ id: 'friend', label: PEER_ACT_LABELS.friend });",
+    "new": "  rows.push({ id: 'friend', label: PEER_ACT_LABELS.friend });",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -76,17 +76,8 @@
   {
     "name": "PEER-PLAQUE1-trade-label-ignored",
     "file": "src/player/socialPick.js",
-    "old": "  if (acts.canTrade) offers.push(acts.tradeLabel || PEER_ACT_LABELS.trade);",
-    "new": "  if (acts.canTrade) offers.push(PEER_ACT_LABELS.trade);",
-    "tests": [
-      "test/peerplaque.test.js"
-    ]
-  },
-  {
-    "name": "PEER-PLAQUE1-empty-bracket-when-unbound",
-    "file": "src/player/socialPick.js",
-    "old": "  if (offers.length) return `${keyLabel ? `[${keyLabel}] ` : ''}${offers.join(' \\u00b7 ')}`;",
-    "new": "  if (offers.length) return `[${keyLabel}] ${offers.join(' \\u00b7 ')}`;",
+    "old": "  if (acts.canTrade) rows.push({ id: 'trade', label: acts.tradeLabel || PEER_ACT_LABELS.trade });",
+    "new": "  if (acts.canTrade) rows.push({ id: 'trade', label: PEER_ACT_LABELS.trade });",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -137,19 +128,10 @@
     ]
   },
   {
-    "name": "PEER-PLAQUE1-key-assumed-F",
-    "file": "src/scenes/world.js",
-    "old": "  const interactKeyLabel = () => String(getBinding(bindings(), 'SocialInteract') ?? '').replace(/^Key/, '');",
-    "new": "  const interactKeyLabel = () => 'F';",
-    "tests": [
-      "test/peerplaque.test.js"
-    ]
-  },
-  {
     "name": "PEER-PLAQUE1-title-without-the-marks",
     "file": "src/scenes/world.js",
-    "old": "    return { title: marks ? `${name} ${marks}` : name, subs: [cast, prompt].filter(Boolean) };",
-    "new": "    return { title: name, subs: [cast, prompt].filter(Boolean) };",
+    "old": "    return { title: marks ? `${name} ${marks}` : name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: peerActionRows(acts) };",
+    "new": "    return { title: name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: peerActionRows(acts) };",
     "tests": [
       "test/peerplaque.test.js"
     ]
@@ -157,8 +139,8 @@
   {
     "name": "PEER-PLAQUE1-trade-half-of-the-bag-dropped",
     "file": "src/scenes/world.js",
-    "old": "    const prompt = social ? peerPromptText({ ...social.actionsFor(id), ...tradeActionsFor(id) }, interactKeyLabel()) : null;",
-    "new": "    const prompt = social ? peerPromptText(social.actionsFor(id), interactKeyLabel()) : null;",
+    "old": "    const acts = social ? { ...social.actionsFor(id), ...tradeActionsFor(id) } : null;",
+    "new": "    const acts = social ? social.actionsFor(id) : null;",
     "tests": [
       "test/peerplaque.test.js"
     ]

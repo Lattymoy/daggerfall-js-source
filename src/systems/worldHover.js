@@ -184,7 +184,10 @@ export function composeContents(readers) {
  * THE FRAME. One record, and the draw paints exactly what is in it.
  *
  *   key    - the winning pick's key; the identity the guard compares
- *   kind   - 'name' (a title and up to two sub-lines) or 'items'
+ *   kind   - 'name' (a title and up to two sub-lines), 'items', or
+ *            'actions' (ACT-MENU: the verbs a player or my horse and
+ *            wagon take, as rows `{name, id}` the wheel lights and the
+ *            activate key presses - the loot list's own selection)
  *   title  - the line under the reticle
  *   subs   - the mod's own extra rows. It carries them as `\r`-joined
  *            text (a lock level, a closed-shop sentence); the port
@@ -243,6 +246,11 @@ export function resolveHover(hit, { name = null, contents = null } = {}) {
   // it is also what keeps an unported family from labelling itself with
   // its own key string.
   if (!named?.title) return null;
+  // ACT-MENU: a namer that answers verbs gets them listed - the same rows, the same fold and the same highlight as a
+  // pile's items (nextSelection reads `rows` whatever they hold), so the wheel moves through a player's or a horse's
+  // options exactly as it moves through a chest
+  const acts = Array.isArray(named.actions) ? named.actions.filter((a) => a?.id != null && a.label) : [];
+  if (acts.length) return frame(key, 'actions', named.title, named.subs ?? [], acts.map((a) => ({ name: a.label, id: a.id, stack: 0, rarity: null, item: null })));
   return frame(key, 'name', named.title, named.subs ?? []);
 }
 

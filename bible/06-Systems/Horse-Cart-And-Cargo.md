@@ -414,6 +414,15 @@ DISC6, 2026-09-23).** A riding peer's hooves play at them - TransportManager's
 riding half run off their pose, through a positional loop. Record:
 `01-Overview/Field-Bugs-2026-09-23.md` and `06-Systems/Online-Arc.md`.
 
+**ACT-MENU (DISC7, 2026-09-23).** On the enhanced plaque the mod's verbs
+are rows - Ride / Drive the wagon, Follow me / Wait here, Name over my
+horse; Hitch up or Drive the wagon, and Open the wagon, over my wagon -
+lit by the wheel and pressed by the activate key. Each row carries the
+interaction MODE the mod reads (`horseCartLaw.js hccActionRows`), and
+the handler runs in it, so the mod's refusals and lines are unchanged;
+F1-F4 decide as before where the plaque does not stand. A recorded
+departure: Port-Ledger A, THE HORSE'S VERBS ON THE PLAQUE.
+
 ## What is and is not ported
 
 The assembly's dump carries 444 method bodies; 46 are compiler-generated

@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:797)". Section A carried no widget row at all -
+//     (Port-Ledger.md:798)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -623,7 +623,7 @@ const SOURCE_CITES = [
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
   ['src/systems/loot.js', /world\.js:\d+ and exterior\.js:(\d+)/,
     EX, /loadMagicRegistries\(fetchBytes\)\.then/],
-  ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:294/,
+  ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:295/,
     EX, /drinkPotion: \(key\) => magic\.drinkPotion\(key\)/],
   ['src/systems/startingGear.js', /world\.js:\d+ and exterior\.js:(\d+) seed it/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
@@ -664,7 +664,7 @@ const SOURCE_CITES = [
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
   // four of the five had been stale for waves (`worldModes.js:6722` for a line
-  // that is 5921, `world.js:11368` for 8836, `interior.js:315` for 329,
+  // that is 5921, `world.js:11388` for 8836, `interior.js:315` for 329,
   // `dungeon.js:935` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\),$/],

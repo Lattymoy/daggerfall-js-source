@@ -35,6 +35,7 @@ import { inflictPoison } from './poisons.js';
 import { inflictDisease } from './diseases.js';   // SURV2: a bad meal's sickness, handed to the food law
 import { getItem, isEnchanted as hasEnchantments } from './inventory.js';   // D9: ItemCollection.GetItem - the oil arm's lantern lookup (:1791); the card's usable predicate
 import { isSurvivalItem, useSurvivalItem } from './survival/items.js';   // SURV2: food, water, camp gear
+import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
  *  SAYS something rather than eating itself. Keyed by this module's own result
@@ -345,10 +346,10 @@ export function useItem(item, collection, {
     // PlayerEntity.LightSource is a single slot: using the one already
     // lit DOUSES it, using another one SWAPS.
     else if (entity?.lightSource === item) {
-      entity.lightSource = null;
+      setLightSource(entity, null);   // DISC7: the one door, which says so
       out = { kind: 'doused', text: named('lightDouse') };
     } else {
-      if (entity) entity.lightSource = item;
+      setLightSource(entity, item);   // DISC7
       out = { kind: 'lit', text: named('lightLight') };
     }
   }

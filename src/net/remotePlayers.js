@@ -739,7 +739,8 @@ export class RemotePlayers {
     const mode = rd === 2 ? TRANSPORT_MODES.Cart : TRANSPORT_MODES.Horse;
     let r = this._riding.get(peer.id);
     if (!r || r.rd !== rd) { if (r) this._stopRidingSound(peer.id); r = { anim: new RidingAnimator(), rd }; r.anim.mount(mode); this._riding.set(peer.id, r); }
-    const out = r.anim.update(Math.max(0, dt), { mode, standingStill: !peer.shown.mv, movingLessThanHalfSpeed: false });
+    // DISC7: the rider's own half-speed flag off the pose (`hs`) - standing reads true, as the motor's own does
+    const out = r.anim.update(Math.max(0, dt), { mode, standingStill: !peer.shown.mv, movingLessThanHalfSpeed: !peer.shown.mv || !!peer.shown.hs });
     const at = toScene(peer.shown);
     audio.setLoop3d(ridingLoopName(peer.id), out.playing ? SOUND[out.clip] : null, at, { volume: out.volume, pitch: out.pitch, ...PEER_SOUND_PROFILE });
     if (out.neigh && audio.play3d) audio.play3d(SOUND.AnimalHorse, at, RIDING_VOLUME_SCALE, PEER_SOUND_PROFILE);

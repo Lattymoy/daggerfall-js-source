@@ -1190,7 +1190,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:290), so a flag flipped to
+     *             LIVE (handheldTorches.js:298), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z

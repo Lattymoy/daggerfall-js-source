@@ -57,6 +57,7 @@ import { moveTowards, moveTowards2, snap, BOB_SHAPE, STEP_CONDITION } from '../c
 import { setPlayerTorchOffsetOverride } from './playerTorch.js';
 import { toScreenOrder } from '../formats/color32Order.js';   // HT3: a SCREEN sprite keeps its rows - see the note there   // TEX1: the SHAPE the upload path reads - `{ colors }`, never a decoded PNG's `{ data }`
 import { decodePng } from './textureReplacement.js';
+import { setLightSource, addLightSourceListener } from './lightSource.js';   // DISC7: the light in hand's one door
 
 export const HANDHELD_TORCHES_VENDOR = 'handheld-torches';
 export const HANDHELD_TORCHES_MOD = Object.freeze({
@@ -203,6 +204,13 @@ export function createHandheldTorches({
   };
   let ctx = null;
   let lightOffsetSet = null;   // the PlayerTorch position the mod last wrote (its transform keeps it)
+  // DISC7: THE LOOP ANSWERS THE TORCH, NOT THE RIG'S CLOCK. The update below still starts it (a lit torch in the rig
+  // that ticks), but a light that goes out - doused, stowed, dropped or burnt out from inside an open window, where the
+  // host holds this rig's frame - stops it on the change itself (systems/lightSource.js), not on the next tick.
+  const offLight = addLightSourceListener((entity, now) => {
+    if (!w.loop || !ctx?.entity || entity !== ctx.entity || (now && isTorch(now))) return;
+    w.loop.stop?.(); w.loop = null;
+  });
 
   const light = () => ctx?.entity?.lightSource ?? null;
   const items = () => ctx?.entity?.items ?? [];
@@ -214,7 +222,7 @@ export function createHandheldTorches({
   const firstOf = (group, template) => getItem(items(), group, template, { allowEnchantedItem: true, allowQuestItem: true, priorityToConjured: false });
   const removeFromPack = (item) => { const l = items(); const i = l.indexOf(item); if (i >= 0) l.splice(i, 1); };
   const oneShot = (clip, volume = 1, pitch = 1) => audio?.playOneShot?.(clip, volume, pitch);
-  const setLight = (it) => { if (ctx?.entity) ctx.entity.lightSource = it; };
+  const setLight = (it) => { if (ctx?.entity) setLightSource(ctx.entity, it); };   // DISC7: the one door
 
   // ---- InitializeTextures (IL 0x1034): 112359 records 0 (torch) and 1 (lantern), frames until one is missing ----
   const loadTextures = (renderer) => {
@@ -750,7 +758,7 @@ export function createHandheldTorches({
    *  frame starts the loop again on its next update if the torch still burns. Only the sound: the torch is the
    *  entity's, not the rig's. */
   function silence() { w.loop?.stop?.(); w.loop = null; }
-  function dispose() { w.loop?.stop?.(); w.loop = null; if (lightOffsetSet) { setPlayerTorchOffsetOverride(null); lightOffsetSet = null; } if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change
+  function dispose() { offLight(); w.loop?.stop?.(); w.loop = null; if (lightOffsetSet) { setPlayerTorchOffsetOverride(null); lightOffsetSet = null; } if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change
 
   return {
     update, lateUpdate, draw, dispose, silence, receivePickedUp,

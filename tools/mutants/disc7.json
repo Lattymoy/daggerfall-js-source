@@ -1,0 +1,344 @@
+[
+  {
+    "name": "ACT-MENU-verbs-drawn-as-a-name",
+    "file": "src/systems/worldHover.js",
+    "old": "  if (acts.length) return frame(key, 'actions',",
+    "new": "  if (false) return frame(key, 'actions',",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-loot-switch-gates-the-verbs",
+    "file": "src/systems/quickLoot.js",
+    "old": "  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
+    "new": "  _sel = quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-wheel-gated-by-the-loot-switch",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!_sel || !clicks || !(_actionIds || quickLootOn())) return false;",
+    "new": "  if (!_sel || !clicks || !quickLootOn()) return false;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-press-reads-any-key",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!_actionIds || !_sel || key == null || _sel.key !== key) return null;",
+    "new": "  if (!_actionIds || !_sel || key == null) return null;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-P-arms-on-verbs",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false;",
+    "new": "  if (!quickLootOn() || !_sel) return false;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-hidden-plaque-keeps-the-highlight",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (!worldPlaqueOn()) { foldQuickLoot(null); hideWorldPlaque(); return null; }",
+    "new": "  if (!worldPlaqueOn()) { hideWorldPlaque(); return null; }",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-verbs-not-drawn",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  if (f.kind === 'actions') {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-horse-command-it-cannot-take-listed",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  if (cmdLabel) rows.push({ id: ACTIVATE_MODE.Talk, label: cmdLabel });",
+    "new": "  rows.push({ id: ACTIVATE_MODE.Talk, label: cmdLabel ?? HCC_ACTION_TEXT.follow });",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-drive-called-a-ride",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "label: ride === HORSE_ACTIVATION.MountHitchedTeam ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.ride });",
+    "new": "label: HCC_ACTION_TEXT.ride });",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-wait-called-follow",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "      : cmd === HORSE_ACTIVATION.Wait ? HCC_ACTION_TEXT.wait : null;",
+    "new": "      : cmd === HORSE_ACTIVATION.Wait ? HCC_ACTION_TEXT.follow : null;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-wagon-pack-not-listed",
+    "file": "src/systems/horseCartLaw.js",
+    "old": "  if (target === 'deployedWagon') return [{ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.hitch }, { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];",
+    "new": "  if (target === 'deployedWagon') return [{ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.hitch }];",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-horse-verb-ignored",
+    "file": "src/systems/horseCart.js",
+    "old": "    const mode = modeOverride ?? deps.activateMode();",
+    "new": "    const mode = deps.activateMode();",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-wagon-verb-ignored",
+    "file": "src/systems/horseCart.js",
+    "old": "    if ((mode ?? deps.activateMode()) === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }\n    if (!tm().hasHorse())",
+    "new": "    if (deps.activateMode() === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }\n    if (!tm().hasHorse())",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-pool-drops-the-verb",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (key === KEY_HORSE) return runtime.handleStationaryHorseActivation(distance, mode);",
+    "new": "    if (key === KEY_HORSE) return runtime.handleStationaryHorseActivation(distance);",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-pool-lists-no-verbs",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    if (key === KEY_HORSE) return withActions({ title: runtime ? runtime.horseTargetLabel : horseTargetLabel('') }, 'horse');",
+    "new": "    if (key === KEY_HORSE) return { title: runtime ? runtime.horseTargetLabel : horseTargetLabel('') };",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-refused-invite-listed",
+    "file": "src/player/socialPick.js",
+    "old": "  if (acts.canInvite) rows.push({ id: 'invite', label: PEER_ACT_LABELS.invite });",
+    "new": "  rows.push({ id: 'invite', label: PEER_ACT_LABELS.invite });",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-invite-presses-a-friend-request",
+    "file": "src/player/socialPick.js",
+    "old": "export const PEER_ACT_KINDS = Object.freeze({ friend: 'friend.request', invite: 'party.invite', trade: 'trade.request' });",
+    "new": "export const PEER_ACT_KINDS = Object.freeze({ friend: 'friend.request', invite: 'friend.request', trade: 'trade.request' });",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-street-press-skips-the-player",
+    "file": "src/scenes/world.js",
+    "old": "          else if (plaquePeerAct()) { /* ACT-MENU: a player the plaque named nearest, and the verb it lit */ }\n",
+    "new": "",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-F-opens-the-card-over-the-plaque",
+    "file": "src/scenes/world.js",
+    "old": "    if (worldPlaqueOn()) { if (plaquePeerAct()) return true; }\n",
+    "new": "",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-modal-press-skips-the-player",
+    "file": "src/scenes/worldModes.js",
+    "old": "&& !overlayHeld && !host.plaquePeerAct?.()) (mode",
+    "new": "&& !overlayHeld) (mode",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-street-horse-press-without-the-verb",
+    "file": "src/scenes/world.js",
+    "old": "() => setMidScreenText(TOO_FAR_AWAY_TEXT), plaqueActionFor(_hccPick.key)); }",
+    "new": "() => setMidScreenText(TOO_FAR_AWAY_TEXT)); }",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-hs-dropped-at-the-door",
+    "file": "src/net/wire.js",
+    "old": "rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(hs ? { hs: 1 } : {}) } : {};",
+    "new": "rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0 } : {};",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-hs-written-at-zero",
+    "file": "src/net/wire.js",
+    "old": "...(hs ? { hs: 1 } : {}) } : {};",
+    "new": "hs: hs ? 1 : 0 } : {};",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-hs-edge-waits-for-a-heartbeat",
+    "file": "src/net/wire.js",
+    "old": "    || (a.hs | 0) !== (b.hs | 0);",
+    "new": "    || false;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-hs-lost-in-the-ease",
+    "file": "src/net/online.js",
+    "old": "rv: to.rv ?? 0, ...(to.hs ? { hs: 1 } : {}) } : {}),",
+    "new": "rv: to.rv ?? 0 } : {}),",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-peer-clop-ignores-the-bit",
+    "file": "src/net/remotePlayers.js",
+    "old": "movingLessThanHalfSpeed: !peer.shown.mv || !!peer.shown.hs });",
+    "new": "movingLessThanHalfSpeed: !peer.shown.mv });",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-sender-never-slow",
+    "file": "src/scenes/world.js",
+    "old": "      hs: riding && moved && player.movingLessThanHalfSpeed ? 1 : 0,",
+    "new": "      hs: 0,",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-torch-listener-never-stops",
+    "file": "src/systems/handheldTorches.js",
+    "old": "    w.loop.stop?.(); w.loop = null;\n  });",
+    "new": "  });",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-torch-listener-leaks",
+    "file": "src/systems/handheldTorches.js",
+    "old": "  function dispose() { offLight(); w.loop",
+    "new": "  function dispose() { w.loop",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-door-says-nothing",
+    "file": "src/systems/lightSource.js",
+    "old": "  if (was === now) return;\n  for",
+    "new": "  return;\n  for",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-door-says-every-write",
+    "file": "src/systems/lightSource.js",
+    "old": "  if (was === now) return;\n",
+    "new": "",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-door-stops-at-a-throw",
+    "file": "src/systems/lightSource.js",
+    "old": "    try { f(entity, now, was); } catch (e) {",
+    "new": "    { f(entity, now, was); } if (0) { const e = null;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-douse-bypasses-the-door",
+    "file": "src/systems/useItem.js",
+    "old": "      setLightSource(entity, null);   // DISC7: the one door, which says so",
+    "new": "      entity.lightSource = null;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-contact-rect-ignored",
+    "file": "src/render/airPass.js",
+    "old": "vec2 prevDepthUV(vec2 wuv) { return uPrevRect.xy + wuv * uPrevRect.zw; }",
+    "new": "vec2 prevDepthUV(vec2 wuv) { return wuv; }",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-contact-rect-y-from-x",
+    "file": "src/render/airPass.js",
+    "old": "out[1] = rect[1] / H;",
+    "new": "out[1] = rect[1] / W;",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-contact-rect-never-held",
+    "file": "src/render/airPass.js",
+    "old": "this.prevValid = !!this.frame; holdPrevRect(this.prevRect, this.rect, this.canvas); }",
+    "new": "this.prevValid = !!this.frame; }",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "DISC7-contact-rect-never-uploaded",
+    "file": "src/render/airPass.js",
+    "old": "    gl.uniform4fv(loc.prevRect, this.prevRect);   // DISC7\n",
+    "new": "",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  },
+  {
+    "name": "ACT-MENU-verbs-drawn-unlit",
+    "file": "src/ui/worldPlaque.js",
+    "old": "      row.className = 'wplaque-row wplaque-act';\n      if (i === sel) row.classList.add('sel');",
+    "new": "      row.className = 'wplaque-row wplaque-act';",
+    "tests": [
+      "test/disc7.test.js"
+    ]
+  }
+]

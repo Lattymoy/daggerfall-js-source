@@ -177,7 +177,7 @@ import { createArrestFlow } from './arrestFlow.js';
 import { clearCrimeOnLocationExit, addGold, goldAmount, deductGold, totalGoldAmount, deductGoldPieces } from '../systems/court.js';   // AUDIT 17e F6   // G2   // F-slice: travel gold; U41: GetGoldAmount + the pieces half of DeductFastTravelGold
 import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
-import { quickLootWheel, quickLootTake, quickLootArm } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means
+import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor, plaqueActionSelection } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
 import { wagonHoverName } from '../player/eotbWagon.js';   // WORLD-HOVER M6: the cart's word, beside its producer
@@ -307,7 +307,7 @@ import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { createSocialPanel, TRY_AGAIN_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { glyphMarks } from '../ui/playerBadge.js';   // PEER-PLAQUE1: a badge's plain-text marks, for the plaque's title
-import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerPromptText } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
+import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerActionRows, peerActOf, peerRelationText } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
 import { allyCastSpell, allyCastable, allyReachFor, allyCastTargetLine, allyCastPlaqueLine } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at a party mate
 import { createTradeManager, TRADE_RANGE_M, inTradeRange } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
@@ -8895,6 +8895,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // no-peer arm reaches it through optional calls - F with nobody in front of you
   // opens the list, which is the same gesture one step out.
   let socialMenu = null;
+  let peerAct = null;   // ACT-MENU: the chosen act's door (set with the menu, over the same link and chat tab)
   let _worldPublishedAt = -Infinity;   // WORLD1: when this host last published the room's memory (the frame clock)
   // WORLD1 (Mac: "The world is the server ... True persistence"): the room's memory out - this player's, when the
   // relay says they are the room's host and a dungeon stands: every WORLD_PUBLISH_MS, and at once on the way out
@@ -9451,22 +9452,24 @@ export async function bootWorld(canvas, renderer, params, status) {
       canOpen: socialMenuCanOpen,
       onOpen: () => surfaceOpen('menu'),   // AUDIT CHAT C2's law: the card is a pointer surface - the mouse is freed inside the gesture that opened it (AUDIT SOC B6: counted with the chat's and the panel's)
       onClose: () => surfaceClose('menu'),   // and taken back inside the one that closed (MAC1's rule, ui/pauseDoor.js) - by the last surface down
-      onAct: (act) => {
-        if (act.k === 'trade.request') {   // TRADE1: not a hub act - two players in one room, so the host routes it to the trade manager (or, if they had asked first, accepts)
-          const r = tradeMgr.request(act.peer);
-          if (!r.ok) tradeSay(r.why === 'try again' ? TRY_AGAIN_TEXT : `You cannot trade with them: ${r.why}.`);
-          return;
-        }
-        const who = peerName(act.peer) ?? social?.friends.get(act.acct)?.name ?? 'them';
-        // false is the session's honest answer - no socket, or over SOCIAL_HZ_MAX (net/online.js sendSocial). A player
-        // who pressed a button is owed a word either way - AUDIT SOC B17: the RIGHT word: "try again" when the gate
-        // refused (the panel's own sentence, so the two surfaces agree), and "not connected" when there is no link open
-        // to try again on, which "try again" would have lied about
-        const hub = socialLink();
-        const went = hub?.sendSocial(act) === true;
-        chatLog.push(tab.id, { text: went ? socialActText(act.k, who) : (hub?.status === 'open' ? TRY_AGAIN_TEXT : NOT_CONNECTED_TEXT), system: true });
-      },
+      onAct: (act) => peerAct(act),
     });
+    // ACT-MENU: the one door a chosen act leaves by - the F-card's rows and the plaque's (plaquePeerAct) alike
+    peerAct = (act) => {
+      if (act.k === 'trade.request') {   // TRADE1: not a hub act - two players in one room, so the host routes it to the trade manager (or, if they had asked first, accepts)
+        const r = tradeMgr.request(act.peer);
+        if (!r.ok) tradeSay(r.why === 'try again' ? TRY_AGAIN_TEXT : `You cannot trade with them: ${r.why}.`);
+        return;
+      }
+      const who = peerName(act.peer) ?? social?.friends.get(act.acct)?.name ?? 'them';
+      // false is the session's honest answer - no socket, or over SOCIAL_HZ_MAX (net/online.js sendSocial). A player
+      // who pressed a button is owed a word either way - AUDIT SOC B17: the RIGHT word: "try again" when the gate
+      // refused (the panel's own sentence, so the two surfaces agree), and "not connected" when there is no link open
+      // to try again on, which "try again" would have lied about
+      const hub = socialLink();
+      const went = hub?.sendSocial(act) === true;
+      chatLog.push(tab.id, { text: went ? socialActText(act.k, who) : (hub?.status === 'open' ? TRY_AGAIN_TEXT : NOT_CONNECTED_TEXT), system: true });
+    };
   };
   let _noAccountSaid = false;   // AUDIT SOC B10: the no-account line goes on the tab once
   /** SOC5: the host's word on whether a menu may stand - the chat's own gate (chatStart's `canOpen`), because the two
@@ -10480,15 +10483,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    * The card open is itself an answer: a second F closes it, which is why this arm runs FIRST - a menu standing over
    * a peer who has since walked out of reach must still close on the key that opened it.
    */
-  /** PEER-PLAQUE1: the interact key as the plaque spells it - the LIVE binding (AUDIT SOC D10/C19: F is rebindable
-   *  and a phone has no F, so it is read, never assumed), 'KeyF' -> 'F' exactly as the travel-options help reads its
-   *  own two bindings (`binding` above); '' when the action is unbound, and then the prompt carries no bracket. */
-  const interactKeyLabel = () => String(getBinding(bindings(), 'SocialInteract') ?? '').replace(/^Key/, '');
   /** PEER-PLAQUE1: the plaque's word for `peer:<id>` - the session's own name for them (peerName: the chat's and
    *  the name layer's), the badge's text marks after it (ui/playerBadge.js glyphMarks - the classic face's own
-   *  plain-text glyphs, since the plaque is text), and under it the prompt: the acts the F-menu would open with
-   *  THIS moment (net/social.js actionsFor + tradeActionsFor, the same two the menu reads), through
-   *  player/socialPick.js peerPromptText. Null for a key that is not a peer's, and for a peer the session no
+   *  plain-text glyphs, since the plaque is text), and under it the relation and - ACT-MENU - the acts the F-menu
+   *  would open with THIS moment as the plaque's rows (net/social.js actionsFor + tradeActionsFor, the same two the
+   *  menu reads, through player/socialPick.js peerActionRows). Null for a key that is not a peer's, and for a peer the session no
    *  longer names (they left between the pick and the paint): a key with no word draws nothing (resolveHover). */
   const peerHoverName = (key) => {
     const id = peerIdOfKey(key);
@@ -10497,7 +10496,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!name) return null;
     const badge = online?.badgeOf?.(id) ?? null;
     const marks = badge ? glyphMarks(badge) : '';
-    const prompt = social ? peerPromptText({ ...social.actionsFor(id), ...tradeActionsFor(id) }, interactKeyLabel()) : null;
+    // ACT-MENU: the F-menu's own bag, both halves - its enabled acts are the plaque's ROWS (the wheel lights one, the
+    // activate key or F presses it: plaquePeerAct) and the relation stands under the name
+    const acts = social ? { ...social.actionsFor(id), ...tradeActionsFor(id) } : null;
     // ALLY-CAST: a castable spell readied and a party mate under the crosshair - the plaque says where it will land.
     // AUDIT ALLY-CAST A3/A5: the spell is the LIVE engine's (the dungeon runs its own createPlayerMagic; the surface
     // one's ready is stale there) and the line is said only when that engine's own allyInReach - the reach the
@@ -10508,7 +10509,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const reach = sp && social?.isPartyPeer(id) && allyCastable(sp) ? allyReachFor(sp.rangeType) : null;
     const pick = reach !== null ? (underground ? modes?.dungeonCtx?.allyInReach?.(cam.pos, socialFwd(), reach) : magic?.allyInReach?.(cam.pos, socialFwd(), reach)) ?? null : null;
     const cast = pick?.id === id ? allyCastPlaqueLine(sp.name, name) : null;
-    return { title: marks ? `${name} ${marks}` : name, subs: [cast, prompt].filter(Boolean) };
+    return { title: marks ? `${name} ${marks}` : name, subs: [cast, peerRelationText(acts)].filter(Boolean), actions: peerActionRows(acts) };
   };
   /** ALLY-CAST: THE PARTY MATE UNDER THE CROSSHAIR - the F key's own pick (player/socialPick.js pickPeerInFront over
    *  peersNear(), the ray the social menu casts) at the reach the spell's range type asks (systems/allyCast.js), a
@@ -10538,13 +10539,30 @@ export async function bootWorld(canvas, renderer, params, status) {
   const castAtAllyDoor = (id, frame) => !!online?.sendCast?.(frame);
   /** SOC5's own forward - the camera's yaw and pitch, the ray the F key casts; PEER-PLAQUE1's modal pick casts the same one (AUDIT DROPS E3). */
   const socialFwd = () => [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
+  /** ACT-MENU: THE PRESS ON A PLAYER. The plaque's race named them (the nearest thing under the ray - WORLD-HOVER H2)
+   *  and the wheel lit a verb; this presses it through the F-menu's own door (`peerAct`), re-read from the bag at the
+   *  press so a verb that stopped applying since the paint (the request already sent, the party filled) is refused
+   *  in the menu's words rather than sent. True when the press was the player's, so no door behind them takes it. */
+  const plaquePeerAct = () => {
+    const sel = plaqueActionSelection();
+    const id = sel ? peerIdOfKey(sel.key) : null;
+    if (!id || !social) return false;
+    const acts = { ...social.actionsFor(id), ...tradeActionsFor(id) };
+    const act = peerActionRows(acts).some((r) => r.id === sel.id) ? peerActOf(sel.id, id) : null;
+    if (act) peerAct?.(act);
+    return true;
+  };
   const socialInteract = () => {
     if (!social) return false;
     if (socialMenu?.isOpen()) { socialMenu.hide(); return true; }
+    // ACT-MENU: where the plaque stands, the choosing is ITS - F presses the lit verb as the activate key does, and the
+    // card (a toggle over the world) is left to the surfaces the plaque cannot serve (a phone: the tap's own ray)
+    if (worldPlaqueOn()) { if (plaquePeerAct()) return true; }
     const near = peersNear();
     // TI1's reading, minus the tap: the F-menu is a keyboard gesture and has no touch ray of its own.
     const hit = pickPeerInFront(cam.pos, socialFwd(), near, SOCIAL_REACH, rayPersonDistance);
     if (!hit) { socialPanel?.toggle?.(); return true; }   // SOC3 owns `socialPanel`; until it lands this is a no-op that still consumes the key
+    if (worldPlaqueOn()) return true;   // ACT-MENU: a player in front whom the plaque lists nothing for (or does not name - a nearer thing won its race): no card; the press is spent
     return socialMenu?.show({ name: peerName(hit.peer.id) ?? 'Someone', peerId: hit.peer.id, actions: { ...social.actionsFor(hit.peer.id), ...tradeActionsFor(hit.peer.id) } }) === true;
   };
   hudCtx.socialInteract = socialInteract;   // SOC5: the door ui/input.js routeAction's 'SocialInteract' arm reaches - assigned here because the function is defined beside the peers it reads, and hudCtx is built with the windows
@@ -10634,6 +10652,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // mounted sprite sets this player chose, so the others draw the rider they drew themselves
       rd: !riding ? 0 : player.transportMode === TRANSPORT_MODES.Cart ? 2 : 1,
       rv: Math.max(0, Math.min(4, (() => { try { return modSetting('eye-of-the-beholder', 'Graphics.OnHorse') | 0; } catch { return 0; } })())),   // AUDIT RIDE: the one key, not the mod's whole settings object every frame
+      hs: riding && moved && player.movingLessThanHalfSpeed ? 1 : 0,   // DISC7: the motor's half-speed flag, the one fact the peers' clop swaps on (wire.js rideOf)
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
@@ -10793,6 +10812,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerHoverName: (key) => peerHoverName(key),
     allyTarget: allyTargetPick,   // AUDIT ALLY-CAST A3: the dungeon's own cast engine asks the same pick, and leaves through the same door
     castAtAlly: castAtAllyDoor,
+    plaquePeerAct: () => plaquePeerAct(),   // ACT-MENU: the building's and the dungeon's press on a player the plaque lit
     pointerSurfaceUp: () => pointerSurfaces.size > 0,   // AUDIT DROPS E1: the plaque comes down under the F-menu, the chat and the friends panel indoors and underground too (AUDIT-WH2 L3-F3's law, the street's own term)
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
     onInteriorLeave: () => worldPublish(performance.now(), true),   // WORLD6a: and a building's while the building still stands
@@ -12156,6 +12176,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           const _rivalDist = _race.rival;
           if (_lockFoe) lockOn.toggle(_lockFoe);
           else if (_tapLockOnly) { /* TS1: the stick-half tap found no foe - it opens nothing */ }
+          else if (plaquePeerAct()) { /* ACT-MENU: a player the plaque named nearest, and the verb it lit */ }
           // AUDIT 65 MC-2: ONE enemy arm, at the RAY's reach, still
           // decided against every rival above - DFU's one raycast
           // (:314) reaches MobileEnemyCheck (:419) only for the thing
@@ -12184,7 +12205,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }
             else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else drinkAtSpring(_springPick.key); }
             else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => townTalk.showOverlay(makeInventoryWindow(EOTB_WAGON_PACK)) }); }
-            else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(TOO_FAR_AWAY_TEXT)); }   // HCC: DeployedWagonActivator / FollowingWagonActivator / StationaryHorseActivator - the runtime's own reach test and refusals
+            else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(TOO_FAR_AWAY_TEXT), plaqueActionFor(_hccPick.key)); }   // ACT-MENU: the verb the plaque lit, where it stands   // HCC: DeployedWagonActivator / FollowingWagonActivator / StationaryHorseActivator - the runtime's own reach test and refusals
             else if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
             else {
             // AUDIT 65 MC-2: the corpse's own refusal

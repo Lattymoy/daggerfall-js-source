@@ -196,7 +196,7 @@ export function lerpPose(from, to, t) {
     ce: to.ce ?? 4,   // SPELLFX1: the cast's element, whole
     ar: to.ar ?? 0,   // SPELLFX1: and the arrows loosed
     fk: to.fk ?? 0,   // PEER-FS1: the footstep-sound kind - discrete, rides the drawn pose whole like the rest
-    ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0 } : {}),   // RIDE: the mount, discrete, omitted on foot as the wire omits it
+    ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0, ...(to.hs ? { hs: 1 } : {}) } : {}),   // RIDE: the mount, discrete, omitted on foot as the wire omits it; DISC7: the half-speed bit with it
   };
 }
 
