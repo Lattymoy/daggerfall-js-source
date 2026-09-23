@@ -1,0 +1,155 @@
+[
+  {
+    "name": "3D-AUDIO-handedness-unturned",
+    "file": "src/systems/audio.js",
+    "old": "export const audioFrame = (p) => [p[0], p[1], -p[2]];",
+    "new": "export const audioFrame = (p) => [p[0], p[1], p[2]];",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "3D-AUDIO-equalpower-back",
+    "file": "src/systems/audio.js",
+    "old": "export const PANNING_MODEL = 'HRTF';",
+    "new": "export const PANNING_MODEL = 'equalpower';",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "3D-AUDIO-panner-model-unset",
+    "file": "src/systems/audio.js",
+    "old": "    pan.panningModel = PANNING_MODEL;\n",
+    "new": "",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "3D-AUDIO-listener-forward-unturned",
+    "file": "src/systems/audio.js",
+    "old": "[fx, fy, fz] = audioFrame(forward);",
+    "new": "[fx, fy, fz] = forward;",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "3D-AUDIO-loop-move-unturned",
+    "file": "src/systems/audio.js",
+    "old": "      move(p) { placeAudio(pan, p); },",
+    "new": "      move(p) { pan.positionX.value = p[0]; pan.positionY.value = p[1]; pan.positionZ.value = p[2]; },",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-setLoop3d-no-swap",
+    "file": "src/systems/audio.js",
+    "old": "if (ch) { ch.want = clip; ch.setVolume(volume);",
+    "new": "if (ch) { ch.setVolume(volume);",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-setLoop3d-no-move",
+    "file": "src/systems/audio.js",
+    "old": "ch.move(pos); return ch; }",
+    "new": "return ch; }",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-setLoop3d-null-keeps-playing",
+    "file": "src/systems/audio.js",
+    "old": "      if (ch) { ch.stop(); this._loops3d.delete(name); }\n      return null;",
+    "new": "      return null;",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-standing-never-stops",
+    "file": "src/net/remotePlayers.js",
+    "old": "standingStill: !peer.shown.mv",
+    "new": "standingStill: false",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-cart-is-a-horse",
+    "file": "src/net/remotePlayers.js",
+    "old": "const mode = rd === 2 ? TRANSPORT_MODES.Cart : TRANSPORT_MODES.Horse;",
+    "new": "const mode = TRANSPORT_MODES.Horse;",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-mount-change-kept",
+    "file": "src/net/remotePlayers.js",
+    "old": "if (!r || r.rd !== rd) {",
+    "new": "if (!r) {",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-departure-kept",
+    "file": "src/net/remotePlayers.js",
+    "old": "    for (const id of [...this._riding.keys()]) if (!seen.has(id)) this._stopRidingSound(id);",
+    "new": "",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-stop-leaves-loop",
+    "file": "src/net/remotePlayers.js",
+    "old": "    this.deps?.audio?.setLoop3d?.(ridingLoopName(id), null);\n",
+    "new": "",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-pref-ignored",
+    "file": "src/net/remotePlayers.js",
+    "old": " || getPref('peerFootsteps') === false) { this._stopRidingSound(peer.id); return; }",
+    "new": ") { this._stopRidingSound(peer.id); return; }",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "RIDE-SOUND-flat-profile",
+    "file": "src/net/remotePlayers.js",
+    "old": "{ volume: out.volume, pitch: out.pitch, ...PEER_SOUND_PROFILE }",
+    "new": "{ volume: out.volume, pitch: out.pitch }",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "PEER-SOUND-steps-flat",
+    "file": "src/net/remotePlayers.js",
+    "old": "  if (audio.play3d) audio.play3d(clip, at, volume, PEER_SOUND_PROFILE);",
+    "new": "  if (audio.play3d) audio.play3d(clip, at, volume);",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  },
+  {
+    "name": "PEER-SOUND-earshot-unbounded",
+    "file": "src/net/remotePlayers.js",
+    "old": "< PEER_SOUND_PROFILE.maxDistance;",
+    "new": "< Infinity;",
+    "tests": [
+      "test/audio3d.test.js"
+    ]
+  }
+]

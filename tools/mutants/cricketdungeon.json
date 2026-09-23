@@ -2,8 +2,8 @@
   {
     "name": "CD-underground-ignored",
     "file": "src/systems/ambientEffects.js",
-    "old": "      if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }\n      else this._updateCrickets(dt);",
-    "new": "      if (soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }\n      else this._updateCrickets(dt);",
+    "old": "      if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }\n      else this._updateCrickets(dt, building ? INDOOR_CRICKETS_GAIN : 1);   // DISC6: heard indoors, through the walls",
+    "new": "      if (soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }\n      else this._updateCrickets(dt, building ? INDOOR_CRICKETS_GAIN : 1);   // DISC6: heard indoors, through the walls",
     "tests": [
       "test/cricketquiet.test.js"
     ]

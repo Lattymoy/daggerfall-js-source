@@ -11611,7 +11611,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // the whole indoor visit, swept only on the first frame back
     // outside. DestroyLightSources_OnTransition is an EVENT in the mod
     // (0x7d1), not a frame-tail chore.
-    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); _torchesMode = _mode(); }   // HT1
+    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); weaponRig.silenceTorch();   /* DISC6: the street's rig leaves (or retakes) the frame - its torch loop falls silent, and the rig that ticks starts its own */ _torchesMode = _mode(); }   // HT1
     if (modes.frame(dt, now)) {
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: the exterior parent is inactive indoors in DFU and its
@@ -11619,6 +11619,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // per-frame retry restarts them on the way out.
       for (const p of built.values()) for (const w of p.windmills) { w.hum?.stop(); w.hum = null; }
       windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
+      // DISC6: the street's ambience keeps its clock indoors - the word and the hour (a shower or a night that begins
+      // while you are inside reaches you), the rain and the crickets heard through the walls, underground the crickets
+      // stopped (CRICKET-DUNGEON, which only ever ran here). The word is the weather's own: the front's ease is an
+      // outdoor thing, and indoors the loop is at its through-the-walls gain whatever fell last in the street.
+      ambientWord = weather;
+      ambience.setPreset(presetForExterior(ambientWord, isNight(minuteNow())));
+      ambience.rainGain = 1;
+      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts

@@ -39,6 +39,24 @@ export function pcm8ToFloat32(bytes) {
   return out;
 }
 
+/**
+ * 3D-AUDIO (Discord, 2026-09-23: "it always sounds like the opposite or directly in front of you while the mob is
+ * behind"): THE HANDEDNESS LAW, AT THE AUDIO DOOR. The scene is Daggerfall Unity's LEFT-handed frame - x east, y up,
+ * z north, so facing +Z the right hand is +X. The renderer turns it once (world/mat4.js mirrorProjectionX); the
+ * audio never did, and WebAudio is RIGHT-handed - its listener's right is forward x up, which facing +Z is -X. Every
+ * positional sound in the port played on the mirrored side. The turn is here, once, for the listener and every
+ * source alike (negating z: a reflection, so directions, distances and the listener's up are kept), and every caller
+ * keeps speaking scene coordinates.
+ */
+export const audioFrame = (p) => [p[0], p[1], -p[2]];
+/** Place a PannerNode at a scene point. */
+export function placeAudio(pan, p) {
+  const [x, y, z] = audioFrame(p);
+  pan.positionX.value = x; pan.positionY.value = y; pan.positionZ.value = z;
+}
+/** The panning model every positional source takes (see AudioEngine._panner). */
+export const PANNING_MODEL = 'HRTF';
+
 export class AudioEngine {
   constructor() {
     this.ctx = null;
@@ -395,11 +413,11 @@ export class AudioEngine {
 
   /** DFU's shape: a NON-looping source re-armed when it ends, which is
    *  what `if (!isPlaying) Play()` on a `loop = false` source does. */
-  _makeRetriggerLoop(index, volume, pitch) {
+  _makeRetriggerLoop(index, volume, pitch, out = null) {
     if (!this._ready()) return null;
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
-    gain.connect(this._out());
+    gain.connect(out ?? this._out());
     const ch = { want: index, playing: null, rate: pitch, stopped: false,
       setVolume: (v) => { gain.gain.value = v; },
       setPitch: (p) => { ch.rate = p; if (ch.playing) ch.playing.playbackRate.value = p; },
@@ -446,12 +464,7 @@ export class AudioEngine {
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = pitch;
-    const pan = this.ctx.createPanner();
-    pan.panningModel = 'equalpower';
-    pan.distanceModel = distanceModel;
-    pan.refDistance = refDistance;
-    pan.maxDistance = maxDistance;
-    pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];
+    const pan = this._panner(pos, { refDistance, maxDistance, distanceModel });
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(pan).connect(this._out());
@@ -479,21 +492,14 @@ export class AudioEngine {
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.loop = true;
-    const pan = this.ctx.createPanner();
-    pan.panningModel = 'equalpower';
-    pan.distanceModel = distanceModel;
-    pan.refDistance = refDistance;
-    pan.maxDistance = maxDistance;
-    pan.positionX.value = pos[0]; pan.positionY.value = pos[1]; pan.positionZ.value = pos[2];
+    const pan = this._panner(pos, { refDistance, maxDistance, distanceModel });
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
     const tail = lowpass > 0 ? this._lowpass(lowpass) : null;   // BA1: AudioLowPassFilter, as loop() has it
     if (tail) src.connect(gain).connect(pan).connect(tail).connect(this._out()); else src.connect(gain).connect(pan).connect(this._out());
     src.start();
     return {
-      move(p) {
-        pan.positionX.value = p[0]; pan.positionY.value = p[1]; pan.positionZ.value = p[2];
-      },
+      move(p) { placeAudio(pan, p); },
       stop() {
         try { src.stop(); } catch { /* already stopped */ }
         src.disconnect();
@@ -501,20 +507,62 @@ export class AudioEngine {
     };
   }
 
-  /** Per-frame listener sync from the camera (position + forward). */
+  /** Per-frame listener sync from the camera (position + forward), in SCENE coordinates - `_listener` keeps them so;
+   *  the handedness is turned at the one door into WebAudio (audioFrame). */
   setListener(pos, forward) {
     const L = this._listener;
     [L.x, L.y, L.z] = pos; [L.fx, L.fy, L.fz] = forward;
     if (!this._ready()) return;
     const l = this.ctx.listener;
+    const [x, y, z] = audioFrame(pos), [fx, fy, fz] = audioFrame(forward);
     if (l.positionX) {
-      l.positionX.value = L.x; l.positionY.value = L.y; l.positionZ.value = L.z;
-      l.forwardX.value = L.fx; l.forwardY.value = L.fy; l.forwardZ.value = L.fz;
+      l.positionX.value = x; l.positionY.value = y; l.positionZ.value = z;
+      l.forwardX.value = fx; l.forwardY.value = fy; l.forwardZ.value = fz;
       l.upX.value = 0; l.upY.value = 1; l.upZ.value = 0;
     } else {
-      l.setPosition(L.x, L.y, L.z);                    // Safari fallback
-      l.setOrientation(L.fx, L.fy, L.fz, 0, 1, 0);
+      l.setPosition(x, y, z);                    // Safari fallback
+      l.setOrientation(fx, fy, fz, 0, 1, 0);
     }
+  }
+
+  /** 3D-AUDIO (Discord, 2026-09-23: "it doesnt matter where enemies are it always sounds like the opposite or
+   *  directly in front of you while the mob is behind"): THE ONE PANNER every positional source is born with.
+   *  HRTF, not equal-power: equal-power folds every azimuth past 90 degrees onto the front, so a foe behind sounded
+   *  exactly like one ahead. Unity's own stereo panner has no front/back cue either - this is the port going past
+   *  DFU on purpose, at the player's ask; the left/right law is DFU's (a source on the right plays on the right). */
+  _panner(pos, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse' } = {}) {
+    const pan = this.ctx.createPanner();
+    pan.panningModel = PANNING_MODEL;
+    pan.distanceModel = distanceModel;
+    pan.refDistance = refDistance;
+    pan.maxDistance = maxDistance;
+    placeAudio(pan, pos);
+    return pan;
+  }
+
+  /**
+   * RIDE-SOUND: a NAMED positional loop with live volume, pitch and place - `setLoop`'s retriggered clip (DFU's
+   * ridingAudioSource shape: the clip swapped when the current one ends, never restarted) through a panner. For
+   * another player's riding loop, which moves with them. `clip` null stops it.
+   */
+  setLoop3d(name, clip, pos, { volume = 1, pitch = 1, refDistance = 1, maxDistance = 500, distanceModel = 'inverse' } = {}) {
+    this._loops3d ??= new Map();
+    const ch = this._loops3d.get(name);
+    if (clip == null) {
+      if (ch) { ch.stop(); this._loops3d.delete(name); }
+      return null;
+    }
+    if (ch) { ch.want = clip; ch.setVolume(volume); ch.setPitch(pitch); ch.move(pos); return ch; }
+    if (!this._ready()) return null;
+    const pan = this._panner(pos, { refDistance, maxDistance, distanceModel });
+    pan.connect(this._out());
+    const made = this._makeRetriggerLoop(clip, volume, pitch, pan);
+    if (!made) { pan.disconnect(); return null; }
+    made.move = (p) => placeAudio(pan, p);
+    const stop = made.stop;
+    made.stop = () => { stop(); pan.disconnect(); };
+    this._loops3d.set(name, made);
+    return made;
   }
 }
 

@@ -1118,7 +1118,21 @@ export class QuestMachine {
     const uid = quest.uid;
     try { scratch.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest resync refused: ${e?.message ?? e}`); return null; }
     const before = this._snapshotActionCompletion(quest);
+    // DISC6: a Foe's counters are THIS world's - the foes this player killed, hurt or saw restrained stand in their
+    // own world, and the partner's copy counts the partner's. The resync kept its copy (a kill made before it was
+    // wiped back to the partner's number, and the `killed N` trigger never saw the last of them); each kept Foe keeps
+    // the most either copy has seen, as action completion is kept monotonic below.
+    const foesBefore = new Map();
+    for (const r of quest.resources.values()) if (r.isFoe) foesBefore.set(r.symbol?.name ?? String(r.symbol), { killCount: r.killCount | 0, injured: !!r.injuredTrigger, restrained: !!r.isRestrained, dying: !!r.deathTrigger });
     quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());
+    for (const r of quest.resources.values()) {
+      const was = r.isFoe ? foesBefore.get(r.symbol?.name ?? String(r.symbol)) : null;
+      if (!was) continue;
+      r.killCount = Math.max(r.killCount | 0, was.killCount);
+      if (was.injured) r.injuredTrigger = true;
+      if (was.restrained) r.isRestrained = true;
+      if (was.dying) r.deathTrigger = true;
+    }
     // AUDIT DROPS A2: completion is MONOTONIC - an action this player already saw complete never reads false
     // again off a partner's older copy (it would run a second time, reward and all, when its task next ticked)
     let t = 0;

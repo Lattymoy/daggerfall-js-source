@@ -8000,3 +8000,19 @@ so the branch merged main and moved its relay law to world99; the client's park 
 Pins: `test/hcc_park.test.js` (13); mutants `tools/mutants/hccpark.json` (35, all dead). RELAY_VERSION world99 with
 its law row (never deployed, so its row was still this branch's to write). The relay deploys itself on the merge to
 main and drops every connected player once. Not verified in a browser: no online session exists in this container.
+
+## RIDE-SOUND + 3D-AUDIO (2026-09-23, DISC6, Mac: "Can we tackle the known limit along with the following bug reports") - the peers' hooves, and every peer sound at the peer
+
+The known limit on the HCC page is gone: a riding peer is heard. Each one runs `RidingAnimator` (TransportManager's
+riding half) off the pose's `rd` and `mv`, and its loop plays at them through `audio.setLoop3d`, a named positional
+retrigger loop (DFU's ridingAudioSource shape). The loop moves every frame and stops 0.2 s after they stand, on a
+dismount, a departure, or the dead's empty sync. The neigh plays at them. Peer footsteps and swings play at the peer
+too (`peerSound` through `play3d`), where PEER-FS1 faked the falloff on a flat one-shot; all three share
+`PEER_SOUND_PROFILE` (full inside 6 m, silent past 30, linear). The hooves follow the peers' footsteps switch.
+
+The panning itself was mirrored for every positional sound in the port (the scene is left-handed, WebAudio
+right-handed) and equal-power, so nothing behind could be told from in front. Both are fixed at the audio door;
+the record is `01-Overview/Field-Bugs-2026-09-23.md` (DISC6-D). No wire or relay change: RELAY_VERSION stays.
+
+Pins: `test/audio3d.test.js` (4); mutants `tools/mutants/audio3d.json` (17, all dead). The pose carries no speed,
+so a peer's horse keeps the fast clop (DFU's opening clip). Not verified in a browser.

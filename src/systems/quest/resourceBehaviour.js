@@ -92,6 +92,16 @@ export class QuestResourceBehaviour {
   /** Update (:132-203), the order verbatim. */
   update() {
     if (this.isComponentDestroyed) return;   // AUDIT 63 F2: a destroyed component does not Update
+    // DISC6 (Discord, 2026-09-23: "Theres no quest notification when you killed all monsters and no quest update in
+    // the log"): THE TARGET IS WHATEVER THE QUEST HOLDS NOW. CacheTarget resolves the quest and the resource once and
+    // keeps them - and a party's shared-quest resync (machine.updateSharedQuest, every change to a partner's log)
+    // REBUILDS the live quest's resources. Every foe already standing went on counting its death into the orphaned
+    // Foe while the `killed N _x_` trigger read the new one, so the last kill never fired its task - no popup, no
+    // log. A target the quest no longer holds is let go and resolved again, the enemy re-read with it.
+    if (this.targetQuest != null && (this.machine.getQuest(this.questUID) !== this.targetQuest || this.targetQuest.getResource(this.targetSymbol) !== this.targetResource)) {
+      this.targetQuest = null; this.targetResource = null;
+      this.cacheTarget();
+    }
     // Ensure target resource has this behaviour assigned - coupling
     // is otherwise lost when reloading a game
     if (this.targetResource != null) {

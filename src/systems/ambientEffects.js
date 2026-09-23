@@ -115,6 +115,19 @@ export function unmuteAmbientForVideo() {
   for (const a of liveAmbients) a.setMuted(false);
 }
 
+/** DISC6 (Discord, 2026-09-23: "the rain sound in Taverns is louder than outside"; Mac: "ensure cricket noises can be
+ *  heard in interiors"): THE STREET'S AMBIENCE, INDOORS. The host used to FREEZE it at the door (the modal frame
+ *  returned before the street's tick), so the loops held their last street gain, their clocks stopped, and a night or a
+ *  shower that began while you were inside never reached you; and Better Ambience's muffled indoor rain (its
+ *  InteriorAmbientSoundSource) played ON TOP of the street's full-volume loop - two copies of one rain, louder
+ *  than the street. The ambience ticks indoors now, and inside a BUILDING its loops are the street heard through
+ *  walls: the rain at INDOOR_RAIN_GAIN - or not at all while Better Ambience's indoor source is the rain you hear -
+ *  and the night's crickets at INDOOR_CRICKETS_GAIN. Underground the rain stays DFU's (the verbatim quirk below) and
+ *  the crickets stop (CRICKET-DUNGEON). The one-shots (birds, thunder, the cemetery) stay outdoor things. A recorded
+ *  departure from the quirk, for buildings (Port-Ledger A). */
+export const INDOOR_RAIN_GAIN = 0.35;
+export const INDOOR_CRICKETS_GAIN = 0.35;
+
 export class AmbientEffects {
   constructor({ minWait, maxWait }, engine = defaultAudio, rng = Math.random, classicRand = rand) {
     this.minWait = minWait;
@@ -224,7 +237,12 @@ export class AmbientEffects {
    *
    *  So a setPreset('none') on the interior transition would be a
    *  DEPARTURE, not a fix, and this port is bug-for-bug. Recorded in
-   *  Port-Ledger B, and F088 struck REFUTED with this reasoning. */
+   *  Port-Ledger B, and F088 struck REFUTED with this reasoning.
+   *
+   *  DISC6 (2026-09-23): in a BUILDING the port now departs on purpose -
+   *  the loops are the street heard through the walls (INDOOR_RAIN_GAIN,
+   *  INDOOR_CRICKETS_GAIN, the header above `update`), Port-Ledger A.
+   *  Underground this quirk stands as written. */
   setPreset(preset) {
     if (preset === this.preset) return;
     this.preset = preset;
@@ -249,7 +267,7 @@ export class AmbientEffects {
    *  loop silent, swells over `fade`, holds at `volume` and dies away
    *  over the last `fade`; then the loop is STOPPED for the quiet spell
    *  - nothing sounds between choruses. */
-  _updateCrickets(dt) {
+  _updateCrickets(dt, gain = 1) {
     this._cricketT += dt;
     if (this._cricketPhase === 'quiet') {
       if (this._cricketT >= this._cricketLen) this._cricketPhaseTo('bout');
@@ -263,7 +281,7 @@ export class AmbientEffects {
     if (!this._cricketsLoop) this._cricketsLoop = this.engine.loop(AMBIENT_CRICKETS_LOOP, 0);
     const { volume, fade } = CRICKET_CHORUS;
     const swell = Math.min(1, this._cricketT / fade, (this._cricketLen - this._cricketT) / fade);
-    this._cricketsLoop?.setVolume?.(volume * Math.max(0, swell));
+    this._cricketsLoop?.setVolume?.(volume * gain * Math.max(0, swell));
   }
 
   /** AmbientEffectsPlayer_OnVideoStart (:536-548) / _OnVideoEnd
@@ -361,9 +379,11 @@ export class AmbientEffects {
     }
     // WX2: the gain follows the front. Written only when it moves, and
     // only to a handle that carries the setter (a stub engine's may not).
-    if (this._rainLoop && this._rainGainSet !== this.rainGain) {
-      this._rainLoop.setVolume?.(this.rainGain);
-      this._rainGainSet = this.rainGain;
+    const building = !!deps.inside && !deps.underground;
+    const rainGain = this.rainGain * (building ? (deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN) : 1);   // DISC6: through the walls
+    if (this._rainLoop && this._rainGainSet !== rainGain) {
+      this._rainLoop.setVolume?.(rainGain);
+      this._rainGainSet = rainGain;
     }
     // CRICKET-QUIET: choruses, not DFU's all-night loop (see CRICKET_CHORUS)
     // CRICKET-DUNGEON (2026-09-23, Mac: "turn off cricket noises in
@@ -380,13 +400,13 @@ export class AmbientEffects {
     // the arm stops it here and holds the clock, as it does underground.
     if (this.preset === 'clearNight') {
       if (deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }
-      else this._updateCrickets(dt);
+      else this._updateCrickets(dt, building ? INDOOR_CRICKETS_GAIN : 1);   // DISC6: heard indoors, through the walls
     }
     this._busy = Math.max(0, this._busy - dt);
     this._counter += dt;
     this._waterCounter += dt;
     if (this._counter > this._wait) {
-      this._playEffects(deps);
+      if (!deps.inside) this._playEffects(deps);   // DISC6: the birds and the thunder are outdoor things - indoors the clock runs, nothing plays
       this._startWaiting();
     }
     // F089: `if (IsCemeteryNearby && !playerEnterExit.IsPlayerInside)`

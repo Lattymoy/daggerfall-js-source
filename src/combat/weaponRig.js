@@ -1524,6 +1524,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     /** AUDIT 66 F8: the host's teardown - every long-lived thing this
      *  rig owns is freed here, as the hosts free their pools. */
     dispose() { handheld.dispose(); _handheldWasOn = false; },
+    /** DISC6: the rig's frame is handed to another mode's rig - its torch loop falls silent (handheldTorches silence). */
+    silenceTorch() { handheld.silence(); },
   };
   function drawInner({ paralyzed = false } = {}) {
     {

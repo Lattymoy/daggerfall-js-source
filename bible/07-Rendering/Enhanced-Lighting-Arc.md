@@ -1381,3 +1381,10 @@ frame, the eye and the bloom reading the glow, the guarded build, the
 bounce gone). Campaigns: `tools/mutants/auditreach.json` 8, `vol1.json`
 18, `shadowreach.json` 19 - all dead; fifteen records across nine lists
 re-aimed by content.
+
+## DISC6-E - THE CEILING LAMPS THAT FLASHED (2026-09-23, Discord through Mac: "in shops and taverns the point lights in ceilings make everything flash/flickering")
+
+The nearest-`SHADOW_POINT_CASTERS` pick swapped near-ties on every step and head-bob, and the lamp that lost its
+cube map lit through the ceiling for a frame. `render/shadowPass.js` `CASTER_KEEP_RATIO` (0.8): last frame's
+casters (`holdCasters`, matched by position) are measured at 0.8 of their distance, so a newcomer must be clearly
+nearer to take a map. Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in `test/disc6.test.js`; `tools/mutants/disc6.json`.

@@ -742,10 +742,18 @@ export function createHandheldTorches({
     return true;
   }
 
+  /** DISC6 (Discord, 2026-09-23: "sometimes even when putting it away it still makes the torch sound"): THE LOOP GOES
+   *  WITH THE RIG THAT LEAVES. Every host mode has its own rig (the street's, the building's, the dungeon's) and each
+   *  rig's component starts and stops its own burning loop in its own update - so a torch lit in the street kept the
+   *  street rig's loop sounding through a door (that rig no longer ticks), the building's rig started a second, and
+   *  stowing the torch indoors stopped only that one. A host calls this for the rig it leaves; the rig that takes the
+   *  frame starts the loop again on its next update if the torch still burns. Only the sound: the torch is the
+   *  entity's, not the rig's. */
+  function silence() { w.loop?.stop?.(); w.loop = null; }
   function dispose() { w.loop?.stop?.(); w.loop = null; if (lightOffsetSet) { setPlayerTorchOffsetOverride(null); lightOffsetSet = null; } if (_liveHandLaw === applyHandLaw) _liveHandLaw = null; }   // HT6: a torn-down component stops answering the equip change
 
   return {
-    update, lateUpdate, draw, dispose, receivePickedUp,
+    update, lateUpdate, draw, dispose, silence, receivePickedUp,
     toggleLightSourceAction, dropLightSourceAction, throwLightSourceAction, toggleLightPress,
     get hasFreeHand() { return hasFreeHand(); },
     get freeHand() { return getFreeHand(); },

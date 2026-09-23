@@ -106,7 +106,7 @@ test('LIGHT-NEAR1: by source - the two constants are gone, the shader\'s contact
   assert.doesNotMatch(air, /export const AIR_GLARE_MIN_DISTANCE/);
   assert.doesNotMatch(el, /SHADOW_CASTER_MIN_DISTANCE|uCamPos\) < /, 'the lit block reads no camera distance for a shadow');
   assert.match(EL_MESH_FS, /float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n\s*: \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0/, 'the fallback: the hand by name, the range share, nothing else');
-  assert.match(sp, /const casters = pickShadowCasters\(f\.pointLights, f\.eye, SHADOW_POINT_CASTERS, f\.carried\);/);
+  assert.match(sp, /const casters = pickShadowCasters\(f\.pointLights, f\.eye, SHADOW_POINT_CASTERS, f\.carried, this\._heldCasters, this\._heldCasterN\);/);   // DISC6: and last frame's casters (the keep margin) - no distance clause
   assert.doesNotMatch(sp, /d < minDist/);
   assert.doesNotMatch(air, /Math\.hypot\(L\[i \* 4\] - eye\[0\]/, 'no glare skip by distance to the eye');
   assert.match(air, /if \(f\.carried && f\.carried\[i\]\) continue;   \/\/ MAC-T1/);

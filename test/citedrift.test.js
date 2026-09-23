@@ -8,7 +8,7 @@
 //
 //   - `ui/spellMakerWindow.js` declared "RECORDED DEPARTURES" and closed
 //     the first with "Ledger A carries the widget row already
-//     (Port-Ledger.md:795)". Section A carried no widget row at all -
+//     (Port-Ledger.md:797)". Section A carried no widget row at all -
 //     the AUDIT 17m / F7 shape, a claim of approval standing in for one -
 //     and :686 was the stat-colour NIT row by then. The row exists now
 //     (Ledger A, TB1) and the sites cite it BY NAME.
@@ -743,7 +743,7 @@ const SOURCE_CITES = [
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` return on modal frames/,
     EX, /^ {4}\}$/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:141-168`/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:154-181`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
   // AUDIT ENH-NOTICE3 (second pass, B18): six cites the shifter carried
   // along already WRONG - stale before the slice, moved by the right

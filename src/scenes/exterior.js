@@ -4328,7 +4328,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the whole indoor visit, swept only on the first frame back
     // outside. DestroyLightSources_OnTransition is an EVENT in the mod
     // (0x7d1), not a frame-tail chore.
-    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); _torchesMode = _mode(); }   // HT1
+    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); weaponRig.silenceTorch();   /* DISC6: the street's rig leaves (or retakes) the frame - its torch loop falls silent, and the rig that ticks starts its own */ _torchesMode = _mode(); }   // HT1
     if (modes.frame(dt, now)) {
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: inside a building or a dungeon the exterior parent is
@@ -4337,6 +4337,14 @@ export async function bootExterior(canvas, renderer, params, status) {
       // again on the way out, through the same retry that started them.
       for (const w of windmills) { w.hum?.stop(); w.hum = null; }
       windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
+      // DISC6: the street's ambience keeps its clock indoors - the word and the hour (a shower or a night that begins
+      // while you are inside reaches you), the rain and the crickets heard through the walls, underground the crickets
+      // stopped (CRICKET-DUNGEON, which only ever ran here). The word is the weather's own: the front's ease is an
+      // outdoor thing, and indoors the loop is at its through-the-walls gain whatever fell last in the street.
+      ambientWord = weather;
+      ambience.setPreset(presetForExterior(ambientWord, isNight(minuteNow())));
+      ambience.rainGain = 1;
+      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -5023,7 +5031,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:12524-12753 is the shape.
+    // through the player for ever. world.js:12532-12761 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -5276,7 +5284,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:12863's order, and the order
+          // BEFORE civilians - world.js:12871's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

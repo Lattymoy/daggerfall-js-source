@@ -408,8 +408,11 @@ every one dies.
   settings object every frame, and the wagon's collider built a string key
   every frame. Each now reads one key or compares numbers.
 
-**Not built.** Riding peers make no hoof sound. The local rider hears the
-riding loop; hearing a peer's would be a new feature.
+~~**Not built.** Riding peers make no hoof sound. The local rider hears the
+riding loop; hearing a peer's would be a new feature.~~ **BUILT (RIDE-SOUND,
+DISC6, 2026-09-23).** A riding peer's hooves play at them - TransportManager's
+riding half run off their pose, through a positional loop. Record:
+`01-Overview/Field-Bugs-2026-09-23.md` and `06-Systems/Online-Arc.md`.
 
 ## What is and is not ported
 

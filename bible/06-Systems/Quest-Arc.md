@@ -6275,3 +6275,11 @@ throws leaves the parent alive and its good child starting, logged in
 ParseQuest's words; the queue plays in turn and a failure releases the
 next; every seam by source. `tools/mutants/crux1.json`: 8, 8 dead.
 
+## DISC6-B - THE KILL THAT NEVER COUNTED (2026-09-23, Discord through Mac: "Theres no quest notification when you killed all monsters and no quest update in the log")
+
+A party's shared-quest resync (`machine.updateSharedQuest` -> `restoreSaveData`) rebuilt the live quest's resources
+under the foes already standing, and each foe's `QuestResourceBehaviour` kept the Foe it cached on its first frame -
+every death went to the orphan, the `killed N` trigger read the new one, and the last kill fired nothing. The
+behaviour now lets go of a target the quest no longer holds (by UID and by symbol) and resolves it again, and the
+resync keeps this world's Foe counters (the larger kill count, the flags ORed). Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in
+`test/disc6.test.js`; `tools/mutants/disc6.json`.

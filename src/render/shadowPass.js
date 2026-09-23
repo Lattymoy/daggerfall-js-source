@@ -381,16 +381,40 @@ export function pickShadowCaster(lights, eye, carried = null) {
   return pickShadowCasters(lights, eye, 1, carried)[0] ?? -1;
 }
 
+/**
+ * DISC6 (Discord, 2026-09-23: "in shops and taverns the point lights in ceilings make everything flash/flickering",
+ * "the light flashes when I move around, similar thing inside mages' guild"): A CASTER KEEPS ITS MAP. Only the
+ * SHADOW_POINT_CASTERS lamps nearest the eye get a shadow map, and a lamp without one lights THROUGH walls and floors
+ * (only the short contact march is left to it). The pick was a bare nearest-N sort, so two lamps at nearly the same
+ * distance - an interior has a dozen in reach (lanterns of range 15-20 through a whole tavern, the rooms upstairs
+ * included) - swapped places on every step and every bob of the head: the one that lost its map flashed through the
+ * ceiling for a frame and was gone. A lamp that cast LAST frame is measured at CASTER_KEEP_RATIO of its distance, so a
+ * newcomer must be clearly nearer to take its place; the set changes when the player really moves, never on a tie.
+ */
+export const CASTER_KEEP_RATIO = 0.8;
+/** Was the light at `lights[i]` a caster last frame? `held` is the flat [x, y, z, _] list the pass kept, by
+ *  POSITION (the hosts re-sort their lights every frame, so an index is no name - SC1's own matching). */
+function heldAt(held, heldN, lights, i) {
+  for (let k = 0; k < heldN; k++) if (held[k * 4] === lights[i * 4] && held[k * 4 + 1] === lights[i * 4 + 1] && held[k * 4 + 2] === lights[i * 4 + 2]) return true;
+  return false;
+}
+/** DISC6: remember this frame's casters for the next pick - their positions into `held`, the count returned. */
+export function holdCasters(held, lights, casters) {
+  for (let r = 0; r < casters.length; r++) { const i = casters[r]; held[r * 4] = lights[i * 4]; held[r * 4 + 1] = lights[i * 4 + 1]; held[r * 4 + 2] = lights[i * 4 + 2]; }
+  return casters.length;
+}
+
 /** EL5: up to `max` casters - the lights nearest the eye that are a
  *  lantern (F11's range cap) and not carried in the player's hand (MAC-T1's
- *  mask; LIGHT-NEAR1: and nothing about their distance to the eye), nearest first. */
-export function pickShadowCasters(lights, eye, max = SHADOW_POINT_CASTERS, carried = null) {
+ *  mask; LIGHT-NEAR1: and nothing about their distance to the eye), nearest first
+ *  (DISC6: last frame's casters at CASTER_KEEP_RATIO of their distance). */
+export function pickShadowCasters(lights, eye, max = SHADOW_POINT_CASTERS, carried = null, held = null, heldN = 0) {
   const n = lights.length >> 2;
   const picked = [];   // [index, distance], kept sorted, at most `max`
   for (let i = 0; i < n; i++) {
     if (carried && carried[i]) continue;   // MAC-T1: the light in the player's hand takes no caster slot in ANY camera (F3's law by name)
     const dx = lights[i * 4] - eye[0], dy = lights[i * 4 + 1] - eye[1], dz = lights[i * 4 + 2] - eye[2];
-    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const d = Math.sqrt(dx * dx + dy * dy + dz * dz) * (held && heldAt(held, heldN, lights, i) ? CASTER_KEEP_RATIO : 1);
     if (!(lights[i * 4 + 3] > 0) || lights[i * 4 + 3] > SHADOW_CASTER_MAX_RANGE) continue;   // AUDIT-EL F11; LIGHT-NEAR1: no lower bound on `d` - the lamp overhead casts
     if (picked.length === max && d >= picked[max - 1][1]) continue;
     let at = picked.length;
@@ -642,6 +666,8 @@ export class ShadowPass {
     this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0, staticFaces: 0, dynFaces: 0, blits: 0, cachedSlots: 0 };   // SC1: the faces split, the blits, the slots served from the cache
     this._planes = new Float32Array(24);   // EL5: the replay's frustum
     this._slotOfScratch = new Int32Array(SHADOW_POINT_CASTERS);   // SC1: rank -> slot
+    this._heldCasters = new Float64Array(4 * SHADOW_POINT_CASTERS);   // DISC6: last frame's casters, by position (Float64: an exact copy of whatever the host sent, so the match by position holds)
+    this._heldCasterN = 0;
     this._slotTakenScratch = new Uint8Array(SHADOW_POINT_CASTERS);
     this._sig = { hash: 0, count: 0 };
     this._sunPlanes = SHADOW_CASCADES.map(() => new Float32Array(24));   // SHADOW-REACH: the cascades' frusta, for the hosts' reach test
@@ -910,7 +936,8 @@ export class ShadowPass {
     // EL5: THE LANTERNS CAST TOO, sun or no sun - the nearest SHADOW_POINT_CASTERS
     // of them, each into its six layers; the replays are culled to the
     // lantern's range and the face's frustum, so a caster costs what it lights
-    const casters = pickShadowCasters(f.pointLights, f.eye, SHADOW_POINT_CASTERS, f.carried);   // MAC-T1; LIGHT-NEAR1
+    const casters = pickShadowCasters(f.pointLights, f.eye, SHADOW_POINT_CASTERS, f.carried, this._heldCasters, this._heldCasterN);   // MAC-T1; LIGHT-NEAR1; DISC6: last frame's casters keep their maps on a tie
+    this._heldCasterN = holdCasters(this._heldCasters, f.pointLights, casters);
     if (this.cacheOn && casters.length) this._ensureCache();   // AUDIT SC1
     const L = f.pointLights;
     // MAC-T1: the hand's light is -2 in the caster table - no slot, and no contact march either (enhancedLighting reads

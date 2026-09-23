@@ -1,0 +1,182 @@
+[
+  {
+    "name": "DISC6-quest-target-never-relinked",
+    "file": "src/systems/quest/resourceBehaviour.js",
+    "old": "    if (this.targetQuest != null && (this.machine",
+    "new": "    if (false && this.targetQuest != null && (this.machine",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-quest-relink-on-quest-only",
+    "file": "src/systems/quest/resourceBehaviour.js",
+    "old": " || this.targetQuest.getResource(this.targetSymbol) !== this.targetResource)) {",
+    "new": ")) {",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-quest-resync-wipes-kills",
+    "file": "src/systems/quest/machine.js",
+    "old": "      r.killCount = Math.max(r.killCount | 0, was.killCount);\n",
+    "new": "",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-rain-full-in-building",
+    "file": "src/systems/ambientEffects.js",
+    "old": "(deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN)",
+    "new": "(deps.indoorRainSource ? 0 : 1)",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-rain-doubled-with-BA",
+    "file": "src/systems/ambientEffects.js",
+    "old": "(deps.indoorRainSource ? 0 : INDOOR_RAIN_GAIN)",
+    "new": "INDOOR_RAIN_GAIN",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-underground-is-a-building",
+    "file": "src/systems/ambientEffects.js",
+    "old": "const building = !!deps.inside && !deps.underground;",
+    "new": "const building = !!deps.inside;",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-crickets-full-indoors",
+    "file": "src/systems/ambientEffects.js",
+    "old": "this._updateCrickets(dt, building ? INDOOR_CRICKETS_GAIN : 1);",
+    "new": "this._updateCrickets(dt, 1);",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-crickets-gain-ignored",
+    "file": "src/systems/ambientEffects.js",
+    "old": "volume * gain * Math.max(0, swell)",
+    "new": "volume * Math.max(0, swell)",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-birds-indoors",
+    "file": "src/systems/ambientEffects.js",
+    "old": "      if (!deps.inside) this._playEffects(deps);",
+    "new": "      this._playEffects(deps);",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-world-ambience-frozen",
+    "file": "src/scenes/world.js",
+    "old": "      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });\n",
+    "new": "",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-exterior-ambience-frozen",
+    "file": "src/scenes/exterior.js",
+    "old": "      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });\n",
+    "new": "",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-torch-silence-noop",
+    "file": "src/systems/handheldTorches.js",
+    "old": "  function silence() { w.loop?.stop?.(); w.loop = null; }",
+    "new": "  function silence() { }",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-torch-silence-keeps-handle",
+    "file": "src/systems/handheldTorches.js",
+    "old": "  function silence() { w.loop?.stop?.(); w.loop = null; }",
+    "new": "  function silence() { w.loop?.stop?.(); }",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-world-rig-not-silenced",
+    "file": "src/scenes/world.js",
+    "old": "droppedTorches.destroyAll(); weaponRig.silenceTorch();",
+    "new": "droppedTorches.destroyAll();",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-exterior-rig-not-silenced",
+    "file": "src/scenes/exterior.js",
+    "old": "droppedTorches.destroyAll(); weaponRig.silenceTorch();",
+    "new": "droppedTorches.destroyAll();",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-building-rig-not-silenced",
+    "file": "src/scenes/worldModes.js",
+    "old": " if (next !== mode) interiorWeapon.silenceTorch();",
+    "new": "",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-casters-no-margin",
+    "file": "src/render/shadowPass.js",
+    "old": "export const CASTER_KEEP_RATIO = 0.8;",
+    "new": "export const CASTER_KEEP_RATIO = 1;",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-casters-margin-never-released",
+    "file": "src/render/shadowPass.js",
+    "old": "export const CASTER_KEEP_RATIO = 0.8;",
+    "new": "export const CASTER_KEEP_RATIO = 0;",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-casters-memory-unused",
+    "file": "src/render/shadowPass.js",
+    "old": "(held && heldAt(held, heldN, lights, i) ? CASTER_KEEP_RATIO : 1)",
+    "new": "1",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  },
+  {
+    "name": "DISC6-casters-memory-never-kept",
+    "file": "src/render/shadowPass.js",
+    "old": "  return casters.length;\n}",
+    "new": "  return 0;\n}",
+    "tests": [
+      "test/disc6.test.js"
+    ]
+  }
+]

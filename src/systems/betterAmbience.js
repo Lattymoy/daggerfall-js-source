@@ -643,6 +643,9 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
     classicClipKept(clip) { return CLASSIC_CLIPS_KEPT.has(clip); },
     settle,
     footsteps, shaker,
+    /** DISC6: whether the mod's muffled indoor rain is what the player hears in a building - the street's own loop
+     *  then stands down (systems/ambientEffects.js INDOOR_RAIN_GAIN). Read every indoor frame: no object built. */
+    indoorRainPlaying() { return !!rainLoop && rainKind === 'interior'; },
     status() {
       return { enabled: !!s?.Enabled, footstepsOn: !!s?.footstepsEnable, clipsLoaded, present: [...present], place, fog: fogState, reverb: reverbOn, rain: rainLoop ? rainKind : null, rainWeather, shake: { pos: shaker.posAddShake, rot: shaker.rotAddShake, instances: shaker.instances.length } };
     },

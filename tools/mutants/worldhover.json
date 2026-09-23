@@ -675,8 +675,8 @@
   {
     "name": "WORLD-HOVER-the-street-s-doors-outlive-the-street",
     "file": "src/scenes/worldModes.js",
-    "old": "  const setMode = (next) => { dropDoorCache(); mode = next; };",
-    "new": "  const setMode = (next) => { mode = next; };",
+    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
+    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
     "tests": [
       "test/worldhover.test.js"
     ]
@@ -1011,8 +1011,8 @@
   {
     "name": "AUDIT-WH2-the-mode-flip-forgets-the-door-cache",
     "file": "src/scenes/worldModes.js",
-    "old": "  const setMode = (next) => { dropDoorCache(); mode = next; };",
-    "new": "  const setMode = (next) => { mode = next; };",
+    "old": "  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
+    "new": "  const setMode = (next) => { if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; };",
     "tests": [
       "test/worldhover.test.js"
     ]
