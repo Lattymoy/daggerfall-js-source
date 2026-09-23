@@ -672,3 +672,10 @@ HOUSE.
 driven with a stand-in box for model 41239, and the map through the
 real chain with the vendored text records.
 
+## DISC10-C: stuck in a tree - not taken
+
+Mac: *"Seems like a rare case where they got stuck in geometry"*, and
+then *"Lets just merge what we have"*. The investigation was stopped
+before it reached a reproduction, so no cause is claimed here. If it
+comes back, the save and where it happened are what to ask for.
+
