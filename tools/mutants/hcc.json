@@ -644,8 +644,8 @@
   {
     "name": "AUDIT-HCC-H3-modData-dropped",
     "file": "src/systems/save.js",
-    "old": "smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null };",
-    "new": "smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: null };",
+    "old": "smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null };",
+    "new": "smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: null, terrainScale: snap.terrainScale ?? null };",
     "tests": [
       "test/audit_hcc.test.js"
     ]

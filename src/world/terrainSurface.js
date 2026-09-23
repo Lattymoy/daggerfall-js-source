@@ -15,10 +15,10 @@
 //     rotate+flip as 270 degrees; kept as-written.
 // Heights and normals mirror the retired per-tile-quad path exactly:
 // corner (x, z) samples heightmapData[x * hDim + z] * MAX_TERRAIN_HEIGHT
-// * DEFAULT_TERRAIN_SCALE, normals by clamped central differences.
+// * STREAMING_TERRAIN_SCALE, normals by clamped central differences.
 
 import {
-  HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE, TERRAIN_SIZE,
+  HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE,
 } from './terrainSampler.js';
 import { WORLD_MAP_TILE_DIM } from './terrainTiles.js';
 
@@ -120,11 +120,11 @@ export const TERRAIN_SKIRT_DEPTH = 40;
  * @param {number} lx pixel-local x, 0..TERRAIN_SIZE
  * @param {number} lz pixel-local z, 0..TERRAIN_SIZE
  * @param {number} [stride] the ring class this pixel is drawn at
- * @returns {number} world height, MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE applied
+ * @returns {number} world height, MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE applied
  */
 export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {
   const hDim = HEIGHTMAP_DIMENSION;
-  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const quad = (TERRAIN_SIZE / (hDim - 1)) * stride;
   const last = (hDim - 1) / stride - 1;        // the last quad's index
   const at = (x, z) => heightmapData[Math.max(0, Math.min(hDim - 1, x)) * hDim
@@ -163,7 +163,7 @@ export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {
 export function buildTerrainGrid(heightmapData, stride = 1, ghost = null) {
   const hDim = HEIGHTMAP_DIMENSION;
   const cell = TERRAIN_SIZE / (hDim - 1);
-  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const at = (x, z) => {
     if (ghost && (x < 0 || x >= hDim || z < 0 || z >= hDim)) return ghost(x, z) * worldHeight;
     return heightmapData[Math.max(0, Math.min(hDim - 1, x)) * hDim

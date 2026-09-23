@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6041` read, on one physical line:
+`src/scenes/worldModes.js:6065` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3597` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4096` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:227`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -8000,6 +8000,35 @@ so the branch merged main and moved its relay law to world99; the client's park 
 Pins: `test/hcc_park.test.js` (13); mutants `tools/mutants/hccpark.json` (35, all dead). RELAY_VERSION world99 with
 its law row (never deployed, so its row was still this branch's to write). The relay deploys itself on the merge to
 main and drops every connected player once. Not verified in a browser: no online session exists in this container.
+
+### AUDIT BRANCH (WoD) - a mod's placed foes never ride (2026-09-23, Mac: "Lets do a comprehensive audit before we decide to merge. This needs to be a perfect integration and hopefully bug free")
+
+The full list is `03-World/World-Of-Daggerfall.md` AUDIT BRANCH; this is its online half.
+
+- **M1: placed foes took a peer's puppet slots.** World of Daggerfall's markers stand PLACED foes - outside the
+  encounter cap and never distance-culled, as DFU's `CreateFoeGameObjects` leaves them - and the cell's frame streamed
+  them like any exterior foe. A reader stands at most `CELL_PUPPETS_MAX` (8) live puppets per owner, first come, so
+  eight left behind at two camps took every slot, and the owner's next real encounter never stood at the peer: the
+  peer could not see it, hit it, or be hit by it. Every client stands its own copy of each site, so the frame now skips
+  a placed foe as it skips a quest foe (`foesFrame`), and a placed foe takes no peer as a target (`_armed`) - no peer
+  holds its puppet, and a blow at a peer lands only through one. A camp no longer stands twice at a peer; two players
+  in one camp each fight their own camp's foes. `wire.js`'s comment on the cap ("the only number a legitimate owner can
+  exceed is by quest foes, which never ride") is left as it stands: its bytes are the deployed relay law
+  (`relayversion.test.js`), and what rides still keeps within it. The pool's comment names the placed foes.
+- **M2/m5: a region pack that fails for good.** A pack fetch stalls out after 15 s with no byte and is tried three
+  times. Online the list is every folder in one order; a player whose pack for a region failed every try played with
+  that region skipped, so its contested pixels could stand different ground from the room's for the page. WOD6 (the
+  same day) tries it again in the background - 5 s after, doubling to a minute, 12 more tries - and lands it in its
+  own place: the list is built again in the room's order, and the pixels it names that already stand are built again,
+  so the player's ground rejoins the room's.
+- **TERRAIN-SCALE1 moves every exterior height** (the game scene's TerrainScale, 1.25, where the port drew 1.5). A peer
+  is drawn at the height it sends, so a tab still on a build from before it shows peers on the new build off its
+  slopes until it reloads - the update notice's case. The one exterior height the relay keeps is a parked team's
+  (`park`, HCC): a record written before it stands at the old height until its owner's client sends it again or it
+  expires (`PARK_TTL_MS`, 72 h). The room's memory (WORLD1) holds keys, not heights. No relay change.
+
+Pins: `test/audit_wod_branch.test.js` (two pools, the world6b rig). No relay change.
+
 
 ## RIDE-SOUND + 3D-AUDIO (2026-09-23, DISC6, Mac: "Can we tackle the known limit along with the following bug reports") - the peers' hooves, and every peer sound at the peer
 

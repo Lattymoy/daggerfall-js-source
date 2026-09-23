@@ -1,0 +1,218 @@
+[
+  {
+    "name": "the-first-pick-does-not-latch-the-pixel",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "    if (flatten) hasLocation = true;\n",
+    "new": "",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-bounds-lose-their-transpose",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "    if ((tx + prefab.height > 127 || ty + prefab.width > 127)) continue;",
+    "new": "    if ((tx + prefab.width > 127 || ty + prefab.height > 127)) continue;",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "terrainX-zero-is-let-in",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "if (tx <= 0 || ty <= 0 || (tx > 128 || ty > 128)) continue;",
+    "new": "if (tx < 0 || ty <= 0 || (tx > 128 || ty > 128)) continue;",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "a-type-0-no-longer-ends-the-call",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "    if (hasLocation) {\n      if (t === 0) return out;",
+    "new": "    if (hasLocation) {\n      if (t === 0) continue;",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-mean-drops-its-inclusive-bound",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "  for (let x = rect.x; x <= rect.x + rect.width; x++) {",
+    "new": "  for (let x = rect.x; x < rect.x + rect.width; x++) {",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-lerp-forgets-the-plus-one",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "      let t = f32(1 / f32(distanceFromRect(rect, x, y) + 1));",
+    "new": "      let t = f32(1 / f32(distanceFromRect(rect, x, y) + 2));",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-flatten-touches-the-border",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "  for (let x = 1; x <= 127; x++) {\n    for (let y = 1; y <= 127; y++) {",
+    "new": "  for (let x = 0; x <= 128; x++) {\n    for (let y = 1; y <= 127; y++) {",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "an-unsmoothed-pick-forgets-the-tiles-own-average",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "  let average = initialAverage;",
+    "new": "  let average = 0;",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-kidnap-marker-is-any-357",
+    "file": "src/world/wodLocationObjects.js",
+    "old": "  if (arg[0] === '357' && arg[1] === '6') spawners",
+    "new": "  if (arg[0] === '357') spawners",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-markers-are-drawn",
+    "file": "src/world/wodLocationObjects.js",
+    "old": "    visible: spawners.length === 0 && archive !== WOD_EDITOR_ARCHIVE,",
+    "new": "    visible: archive !== WOD_EDITOR_ARCHIVE,",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-bowl-of-fire-is-dfus",
+    "file": "src/world/wodLocationObjects.js",
+    "old": "  [0, L(15, 1.2, c32(255, 147, 41))],",
+    "new": "  [0, L(20.0, 1.1, [0.95, 0.91, 0.63])],",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-street-lantern-is-not-lifted",
+    "file": "src/world/wodLocationObjects.js",
+    "old": "[27, -0.02], [29, 'half'],",
+    "new": "[27, -0.02],",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-default-arm-is-the-prefab",
+    "file": "src/world/wodLocationObjects.js",
+    "old": "  return record >= 0 && record <= 29 ? L(PREFAB.range, PREFAB.intensity, null) : DEFAULT_ARM;",
+    "new": "  return L(PREFAB.range, PREFAB.intensity, null);",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-quaternion-is-not-normalized",
+    "file": "src/world/wodLocationObjects.js",
+    "old": "  if (n > 0) { x /= n; y /= n; z /= n; w /= n; } else { x = 0; y = 0; z = 0; w = 1; }\n  const xx",
+    "new": "  const xx",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-rooms-list-starts-anywhere",
+    "file": "src/world/worldOfDaggerfall.js",
+    "old": "        const order = [WOD_AWAKE_REGION, ...this.sources.regions().filter((r) => r !== WOD_AWAKE_REGION)];",
+    "new": "        const order = this.sources.regions();",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "regions-append-in-landing-order",
+    "file": "src/world/worldOfDaggerfall.js",
+    "old": "    this._chain = this._chain.then(async () => {\n      const b = await bytes;\n      if (b === FAILED) { this._retryLater(region, 0); return; }   // WOD6: tried again, off the chain\n      if (!b) return;\n      // AUDIT BRANCH (WoD) n: one decode a task - an online page's 44 packs landed back to back in one block of up\n      // to 88 ms; each is at most ~15 ms alone\n      await new Promise((r) => setTimeout(r, 0));\n      // AUDIT BRANCH (WoD) M2: a pack that will not decode is that region lost, never the chain - a throw here left\n      // `_chain` rejected for good, so every later settle() rejected and every pixel build after it failed\n      try { this.session.appendRegion(region, decodeRegionPack(b)); this._bytes.set(region, b); } catch (e) {\n        this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);\n        this._retryLater(region, 0);   // WOD6: a body that would not read may be a proxy's page, not the pack\n      }\n    });",
+    "new": "    const landed = bytes.then((b) => { if (b) this.session.appendRegion(region, decodeRegionPack(b)); });\n    this._chain = Promise.all([this._chain, landed]);",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "paths-point-reads-the-transpose",
+    "file": "src/world/roadsProducer.js",
+    "old": "  const i = x + y * MAP_WIDTH;",
+    "new": "  const i = y + x * MAP_WIDTH;",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "paths-point-asks-the-rivers",
+    "file": "src/world/roadsProducer.js",
+    "old": "  return (net.roads[i] | net.tracks[i]) & 0xff;",
+    "new": "  return (net.roads[i] | net.tracks[i] | (net.rivers?.[i] ?? 0)) & 0xff;",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-trees-ignore-the-site",
+    "file": "src/world/terrainGen.js",
+    "old": "    locationRect: wodResult?.locationRect ?? locationRect,",
+    "new": "    locationRect,",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-flatten-runs-before-the-tiles",
+    "file": "src/world/terrainGen.js",
+    "old": "  const tileData = generateTileData(samples, px, py);",
+    "new": "  if (wod && wod.picks.length) applyPicks(samples, wod.picks, 0);\n  const tileData = generateTileData(samples, px, py);",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-batch-ignores-the-normal-matrix",
+    "file": "src/render/staticBatch.js",
+    "old": "    const nm = normalMatrix ?? local;",
+    "new": "    const nm = local;",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-host-reads-a-location-region-for-every-pixel",
+    "file": "src/scenes/world.js",
+    "old": "        mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,",
+    "new": "        mapRegionIndex: maps.getRegionIndexAt(px, py),",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-grass-grows-through-the-site",
+    "file": "src/scenes/world.js",
+    "old": "        if (p.wodSite && tx >= p.wodSite.xMin && tx < p.wodSite.xMax && tz >= p.wodSite.yMin && tz < p.wodSite.yMax) return null;\n",
+    "new": "",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  },
+  {
+    "name": "the-lights-go-out-by-day",
+    "file": "src/scenes/world.js",
+    "old": "      const wodSel = wodLit ? _wodSelect(0, _wodFill(0)) : null;",
+    "new": "      const wodSel = null;",
+    "tests": [
+      "test/wod2_loader.test.js"
+    ]
+  }
+]

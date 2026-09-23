@@ -11,7 +11,7 @@ import { SHORTCUT_TEXT } from '../src/systems/dialogShortcuts.js';
 import { PlayerWeapon, weaponPoseOf, applyWeaponPose } from '../src/combat/playerWeapon.js';
 import { weaponTypeForItem, WEAPON_TYPES } from '../src/combat/fpsWeapon.js';
 import { blendLocationTerrain } from '../src/world/terrainTiles.js';
-import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
+import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
 import { tileWeight } from '../src/world/cityNavigation.js';
 import { AIR_GLARE_SLACK } from '../src/render/airPass.js';
 
@@ -114,7 +114,7 @@ test('JAN1 (fist): THE POSE IS THE PLAYER\'S, NOT THE RIG\'S - the port has four
 test('JAN1 (sky): the streaming host grounds a walker on the TERRAIN, not the location\'s average - the navgrid is the block rect, the flattened rect is the stamped tiles plus a clearance and is smaller, and blendLocationTerrain only eases the band between toward the average: a walker there stood metres in the air', () => {
   // Daggerfall city\'s own numbers (terrain.test.js pins the rect at {11,116} over a navgrid of tiles 0..128)
   const rect = { xMin: 11, xMax: 116, yMin: 11, yMax: 116 };
-  const hDim = HEIGHTMAP_DIMENSION, worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+  const hDim = HEIGHTMAP_DIMENSION, worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const avg = 0.166147;
   const s = new Float32Array(hDim * hDim).fill(avg);
   for (let x = 0; x < hDim; x++) for (let y = 0; y < hDim; y++) s[x * hDim + y] = avg - 0.004443 * Math.max(0, (14 - x) / 14);   // the pixel's edge falls away, as the real one does

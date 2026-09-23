@@ -172,7 +172,7 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
   assert.match(chunk, /if \(chunkCampHit\) _standCampEncounter\(chunkCampHit, player\.feetAt\(\)\);/);
   // the shout across the camp
   const ef = read('src/scenes/exteriorFoes.js');
-  assert.match(ef, /targeting: \(ai, pf, cdt\) => \{\s*\n\s*const hadTarget = !!ai\.target;[\s\S]*?const result = runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.peerCandidates\(\)\], pf, cdt, \{/, 'the machine runs as it did, with the before-state remembered');
+  assert.match(ef, /targeting: \(ai, pf, cdt\) => \{\s*\n\s*const hadTarget = !!ai\.target;[\s\S]*?const result = runTargetMachine\(f, \[\.\.\.senses\.candidates\(\), PLAYER_TARGET, \.\.\.\(f\.placed \? \[\] : peerCandidates\(\)\)\], pf, cdt, \{/, 'the machine runs as it did, with the before-state remembered');
   assert.match(ef, /if \(!hadTarget && ai\.target && f\.campId != null\) wakeCampmates\(f\);\s*\n\s*return result;/, 'a member that JUST noticed someone, and only a group member, wakes the rest');
   const wi = ef.indexOf('function wakeCampmates(f) {');
   const wake = ef.slice(wi, ef.indexOf('\n  }\n', wi));

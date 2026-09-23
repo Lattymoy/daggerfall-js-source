@@ -146,10 +146,10 @@ test('U61: walkTravelPath is exactly the calculator\'s pixel sequence', () => {
 test('U61: the height law is byte*8 floored at the ocean, through one documented relief', () => {
   // The formula, held against terrainSampler's own constant - not a
   // copied 27.2.
-  assert.equal(overworldHeight(0), (SCALED_OCEAN_ELEVATION * 1.5 / 819.2) * OVERWORLD_RELIEF);
+  assert.equal(overworldHeight(0), (SCALED_OCEAN_ELEVATION * 1.25 / 819.2) * OVERWORLD_RELIEF);   // TERRAIN-SCALE1: the game scene's 1.25
   assert.equal(overworldHeight(3), overworldHeight(0), 'byte 3 still floors (3*8=24 <= 27.2)');
   assert.ok(overworldHeight(4) > overworldHeight(0), 'byte 4 clears the floor (32 > 27.2)');
-  assert.equal(overworldHeight(100), (100 * 8 * 1.5 / 819.2) * OVERWORLD_RELIEF);
+  assert.equal(overworldHeight(100), (100 * 8 * 1.25 / 819.2) * OVERWORLD_RELIEF);
   assert.equal(OVERWORLD_SEA_LEVEL, overworldHeight(0));
 });
 

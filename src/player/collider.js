@@ -29,6 +29,17 @@ import {
 // faster. Pure spatial-index change: same triangles found, all
 // P14/P16 movement laws untouched.
 const CELL = 2;
+/** AUDIT BRANCH (WoD) B1: WIDE TRIANGLES. Filing a triangle under every 2-unit cell its XZ box covers is right for
+ *  a building's walls and wrong for a MOUNTAIN: World of Daggerfall stands rocks scaled by thousands, whose faces
+ *  span hundreds of cells each, and one Mountains layout carries a rock scaled by a MILLION (its object 2, 83 km
+ *  under the site - inert in DFU, a collider PhysX never reaches), one face of which filed two million cells and
+ *  half a gigabyte before the Map ran out. A triangle over FINE_CELLS_MAX fine cells is filed on a COARSE grid
+ *  instead, and one over COARSE_CELLS_MAX coarse cells on the bucket's short `huge` list, which every query takes
+ *  whole once the bucket's own box admits it. The fine walks are untouched: a bucket with no wide triangle pays
+ *  nothing, and the same triangles are found either way. */
+const COARSE = 64;
+const FINE_CELLS_MAX = 64;
+const COARSE_CELLS_MAX = 1024;
 /** AUDIT ONCRASH1 B5a: the most sweep steps one move() may be split into - a motion larger than this is taken
  *  whole rather than swept, because a loop whose length a caller's arithmetic chooses is a frozen tab waiting. */
 const SUBSTEPS_MAX = 256;
@@ -62,6 +73,80 @@ export function sphereTouchesBox(lx, ly, lz, r, min, max) {
  *  bucket per sample, which at nine samples a capsule and up to five capsules a step was hundreds of Sets a frame
  *  per body, most of them for buckets nowhere near it. */
 const VISITED = new Set();
+
+/** AUDIT BRANCH (WoD) B1: file a WIDE triangle - over FINE_CELLS_MAX fine cells - on the coarse grid, or on the
+ *  short list when it spans more than COARSE_CELLS_MAX coarse cells too. A vertex that is not finite files nothing,
+ *  as the fine loop's own bounds never did. */
+function fileWide(bucket, a, b, c, idx) {
+  const minX = Math.floor(Math.min(a[0], b[0], c[0]) / COARSE);
+  const maxX = Math.floor(Math.max(a[0], b[0], c[0]) / COARSE);
+  const minZ = Math.floor(Math.min(a[2], b[2], c[2]) / COARSE);
+  const maxZ = Math.floor(Math.max(a[2], b[2], c[2]) / COARSE);
+  if (!(Number.isFinite(minX) && Number.isFinite(maxX) && Number.isFinite(minZ) && Number.isFinite(maxZ))) return;
+  if ((maxX - minX + 1) * (maxZ - minZ + 1) > COARSE_CELLS_MAX) { bucket.huge.push(idx); return; }
+  for (let gx = minX; gx <= maxX; gx++) {
+    for (let gz = minZ; gz <= maxZ; gz++) {
+      const k = `${gx},${gz}`;
+      let cell = bucket.coarse.get(k);
+      if (!cell) { cell = []; bucket.coarse.set(k, cell); }
+      cell.push(idx);
+    }
+  }
+}
+
+const NEAR = [];   // AUDIT BRANCH (WoD) B1: the cell lists a point query takes, one scratch
+/** The triangle lists within a point query's reach of (lx, lz) in `bucket`: the fine 3x3 (CELL exceeds every
+ *  query radius), then - only where the bucket holds wide triangles - the coarse 3x3 and the short list. */
+function nearCells(bucket, lx, lz) {
+  NEAR.length = 0;
+  const gx = Math.floor(lx / CELL);
+  const gz = Math.floor(lz / CELL);
+  for (let ox = -1; ox <= 1; ox++) {
+    for (let oz = -1; oz <= 1; oz++) {
+      const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);
+      if (cell) NEAR.push(cell);
+    }
+  }
+  if (bucket.coarse.size) {
+    const cx = Math.floor(lx / COARSE);
+    const cz = Math.floor(lz / COARSE);
+    for (let ox = -1; ox <= 1; ox++) {
+      for (let oz = -1; oz <= 1; oz++) {
+        const cell = bucket.coarse.get(`${cx + ox},${cz + oz}`);
+        if (cell) NEAR.push(cell);
+      }
+    }
+  }
+  if (bucket.huge.length) NEAR.push(bucket.huge);
+  return NEAR;
+}
+
+/** The wide triangles' cell lists along a ray out to `reach`: a 2-D DDA over the coarse grid, the fine walk's own
+ *  shape at COARSE, and the short list. */
+function wideCellsOnRay(bucket, ox, oz, dir, reach) {
+  const out = [];
+  if (bucket.coarse.size) {
+    let cx = Math.floor(ox / COARSE);
+    let cz = Math.floor(oz / COARSE);
+    const stepX = dir[0] > 0 ? 1 : -1;
+    const stepZ = dir[2] > 0 ? 1 : -1;
+    const invX = dir[0] !== 0 ? 1 / dir[0] : Infinity;
+    const invZ = dir[2] !== 0 ? 1 / dir[2] : Infinity;
+    let tMaxX = dir[0] !== 0 ? ((cx + (stepX > 0 ? 1 : 0)) * COARSE - ox) * invX : Infinity;
+    let tMaxZ = dir[2] !== 0 ? ((cz + (stepZ > 0 ? 1 : 0)) * COARSE - oz) * invZ : Infinity;
+    const tDeltaX = Math.abs(COARSE * invX);
+    const tDeltaZ = Math.abs(COARSE * invZ);
+    let walked = 0;
+    while (walked <= reach) {
+      const cell = bucket.coarse.get(`${cx},${cz}`);
+      if (cell) out.push(cell);
+      if (tMaxX < tMaxZ) { walked = tMaxX; tMaxX += tDeltaX; cx += stepX; }
+      else { walked = tMaxZ; tMaxZ += tDeltaZ; cz += stepZ; }
+    }
+  }
+  if (bucket.huge.length) out.push(bucket.huge);
+  return out;
+}
 
 export function segmentHitsBox(ox, oy, oz, dir, min, max, limit) {
   if (!(limit >= 0)) return false;
@@ -160,7 +245,7 @@ export class Collider {
       // OWN space (the translation is applied to the RAY, as the DDA
       // already does), kept as the triangles go in - one compare per
       // vertex, paid once at load, against a walk paid per ray.
-      bucket = { tris: [], grid: new Map(), t: translation || (() => ZERO3), min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
+      bucket = { tris: [], grid: new Map(), coarse: new Map(), huge: [], t: translation || (() => ZERO3), min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1: the wide triangles' two homes
       this._buckets.set(bucketKey, bucket);
     }
     const m = matrix;
@@ -190,6 +275,7 @@ export class Collider {
       const maxX = Math.floor(Math.max(a[0], b[0], c[0]) / CELL);
       const minZ = Math.floor(Math.min(a[2], b[2], c[2]) / CELL);
       const maxZ = Math.floor(Math.max(a[2], b[2], c[2]) / CELL);
+      if ((maxX - minX + 1) * (maxZ - minZ + 1) > FINE_CELLS_MAX) { fileWide(bucket, a, b, c, idx); continue; }   // AUDIT BRANCH (WoD) B1
       for (let gx = minX; gx <= maxX; gx++) {
         for (let gz = minZ; gz <= maxZ; gz++) {
           const k = `${gx},${gz}`;
@@ -282,6 +368,18 @@ export class Collider {
         }
         if (tMaxX < tMaxZ) { walked = tMaxX; tMaxX += tDeltaX; cx += stepX; }
         else { walked = tMaxZ; tMaxZ += tDeltaZ; cz += stepZ; }
+      }
+      // AUDIT BRANCH (WoD) B1: the wide triangles, where this bucket holds any
+      if (bucket.coarse.size || bucket.huge.length) {
+        for (const cell of wideCellsOnRay(bucket, ox, oz, dir, Math.min(maxDist, best))) {
+          for (const ti of cell) {
+            if (visited.has(ti)) continue;
+            visited.add(ti);
+            const tri = bucket.tris[ti];
+            const hit = rayTriangle(ox, oy, oz, dir, tri[0], tri[1], tri[2]);
+            if (hit !== null && hit < best && hit <= maxDist) { best = hit; bestKey = bkey; bestTri = tri; }
+          }
+        }
       }
     }
     // M3 climbing (GetClimbedWallInfo :608 needs -hit.normal): the
@@ -377,24 +475,18 @@ export class Collider {
       const ly = center[1] - t[1];
       const lz = center[2] - t[2];
       if (!sphereTouchesBox(lx, ly, lz, radius, bucket.min, bucket.max)) continue;   // PERF-COL1: the same broad phase (the test below is `< r2`, no skin)
-      const gx = Math.floor(lx / CELL);
-      const gz = Math.floor(lz / CELL);
       const visited = VISITED;
       visited.clear();
-      for (let ox = -1; ox <= 1; ox++) {
-        for (let oz = -1; oz <= 1; oz++) {
-          const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);
-          if (!cell) continue;
-          for (const ti of cell) {
-            if (visited.has(ti)) continue;
-            visited.add(ti);
-            const tri = bucket.tris[ti];
-            closestPointOnTriangle([lx, ly, lz], tri[0], tri[1], tri[2], TMP);
-            const dx = lx - TMP[0];
-            const dy = ly - TMP[1];
-            const dz = lz - TMP[2];
-            if (dx * dx + dy * dy + dz * dz < r2) return true;
-          }
+      for (const cell of nearCells(bucket, lx, lz)) {   // AUDIT BRANCH (WoD) B1: the fine 3x3, then any wide triangles
+        for (const ti of cell) {
+          if (visited.has(ti)) continue;
+          visited.add(ti);
+          const tri = bucket.tris[ti];
+          closestPointOnTriangle([lx, ly, lz], tri[0], tri[1], tri[2], TMP);
+          const dx = lx - TMP[0];
+          const dy = ly - TMP[1];
+          const dz = lz - TMP[2];
+          if (dx * dx + dy * dy + dz * dz < r2) return true;
         }
       }
     }
@@ -529,139 +621,133 @@ export class Collider {
     for (const [bkey, bucket] of this._buckets) {
       const t = bucket.t();
       if (!sphereTouchesBox(center[0] - t[0], center[1] - t[1], center[2] - t[2], radius + SKIN, bucket.min, bucket.max)) continue;
-      const gx = Math.floor((center[0] - t[0]) / CELL);
-      const gz = Math.floor((center[2] - t[2]) / CELL);
       const visited = VISITED;
       visited.clear();
-      for (let ox = -1; ox <= 1; ox++) {
-        for (let oz = -1; oz <= 1; oz++) {
-          const cell = bucket.grid.get(`${gx + ox},${gz + oz}`);
-          if (!cell) continue;
-          for (const ti of cell) {
-            if (visited.has(ti)) continue;
-            visited.add(ti);
-            const tri = bucket.tris[ti];
-            // Live local point: pushes from earlier triangles must be
-            // seen by later ones (a stale snapshot compounded pushes).
-            const lx = center[0] - t[0];
-            const ly = center[1] - t[1];
-            const lz = center[2] - t[2];
-            closestPointOnTriangle([lx, ly, lz], tri[0], tri[1], tri[2], TMP);
-            const dx = lx - TMP[0];
-            const dy = ly - TMP[1];
-            const dz = lz - TMP[2];
-            const d2 = dx * dx + dy * dy + dz * dz;
-            // Ground/contact is detected out to radius + SKIN, but the
-            // sphere is only PUSHED OUT to the true radius. A floor at
-            // exactly d == radius (feet placed dead on the surface by
-            // floorLanding, then velY clamped to 0 so dy == 0 at rest)
-            // sat on the knife-edge of the old `d2 >= radius*radius`
-            // reject and FLICKERED grounded off frame-to-frame - Mac's
-            // F8 caught g:0 while standing perfectly still. The skin
-            // makes a resting contact stable without sinking the body.
-            const contactR = radius + SKIN;
-            if (d2 >= contactR * contactR || d2 === 0) continue;
-            const d = Math.sqrt(d2);
-            // SH1: the contact point's world y is center - dy (dy is
-            // center minus closest); above the stand ceiling with an
-            // upward-leaning normal it is a wall, not a tread.
-            // AUDIT COL1 F8: A MID-BODY CONTACT IS A WALL - IN THE CODE,
-            // NOT ONLY IN THE COMMENT. COL1 gave the middle spheres "the
-            // plain push, because a contact at mid-body is something you
-            // walked into, never a floor you stand on" - but the plain
-            // push is along centre-minus-closest, and out of a TABLE TOP
-            // that direction is straight UP. _resolveCapsule copies the
-            // middle's y back into the whole capsule, so the body was
-            // LIFTED onto the thing it walked into. Measured on the ride
-            // stance (h 2.6, the widest band of middles): before COL1 a
-            // 0.70-1.30 top was walked through and only <=0.69 could be
-            // mounted; with the middles added, tops to 0.85 were mounted
-            // by a 0.65 m single-frame rise - past STEP_OFFSET, with
-            // `grounded` true the whole way. That is SH1's bug wearing
-            // COL1's clothes. The law is enforced where the push is
-            // chosen: an upward-leaning face met by a MIDDLE sphere
-            // pushes SIDEWAYS by its whole penetration and never grounds
-            // - the same branch SH1 wrote for the step ladder's tabletop
-            // edges. Legal ground is out of the middles' reach by
-            // construction: past the lower sphere's own resolve a slope
-            // at the slope limit clears a middle centre by 0.59 > radius,
-            // so this fires only on geometry the body is truly inside.
-            const wallAbove = (dy > 0 && center[1] - dy > standCeil)
-              || (midBody && dy > 0 && dy / d >= GROUND_NY);
-            // PH1 (2026-09-14, Mac: "it's possible to randomly walk into
-            // the floor in dungeons and get stuck in the ground"): A FLOOR
-            // IS ONE-WAY FOR THE LOWER SPHERE. The push-out is along
-            // centre-minus-closest, so once the lower sphere's centre had
-            // crossed a floor's plane (a mover's mesh advancing past it in
-            // one slow frame, the ceiling clamp's sink band, a thin slab's
-            // cancelling pushes) the floor pushed it DOWN, and kept pushing
-            // until the head sphere caught the same floor from beneath:
-            // measured, feet 0.36 below a floor become feet 1.10 below it,
-            // "grounded", forever - the dungeon has no heightAt floor to
-            // catch it and nothing called findClearFloor. Unity's sweep
-            // never crosses a plane, so it never meets this; the port's
-            // resolve can, so the law is written where the sign flips: a
-            // near-horizontal surface just ABOVE the lower sphere's centre,
-            // within its radius, is a floor the body is under, and the
-            // sphere is set ON it. Nothing legal stands there - a surface
-            // 0.35-0.7 above the feet is inside the crouched capsule too.
-            // The head sphere keeps the plain push: a ceiling is a ceiling.
-            const floorAbove = oneWayFloor && d < radius && !wallAbove && dy / d <= -GROUND_NY;
-            if (floorAbove) {
-              const dh2 = dx * dx + dz * dz;
-              const cy = t[1] + (ly - dy);   // the closest point's world y
-              center[1] = cy + Math.sqrt(Math.max(0, radius * radius - dh2));   // the sphere ON the surface
-              grounded = true;
-              if (cy > groundY) groundY = cy;
-              if (groundKey == null || bkey !== 'dungeon') groundKey = bkey;
-              continue;
-            }
-            if (d < radius) {
-              if (wallAbove) {
-                const dh = Math.sqrt(dx * dx + dz * dz);
-                if (dh > 1e-6) {
-                  const pushH = (radius - d) / dh;   // the whole penetration, sideways
-                  center[0] += dx * pushH;
-                  center[2] += dz * pushH;
-                } else {
-                  const push = (radius - d) / d;   // dead under a face: the plain push is the only way out
-                  center[1] += dy * push;
-                }
-              } else {
-                const push = (radius - d) / d;   // only push out of true penetration
-                center[0] += dx * push;
-                center[1] += dy * push;
-                center[2] += dz * push;
-              }
-            }
-            const ny = dy / d;
-            if (globalThis.__logContacts) {
-              globalThis.__contacts = globalThis.__contacts || [];
-              globalThis.__contacts.push({ tri: tri.map((v) => v.map((n) => Number(n.toFixed(2)))), ny: Number(ny.toFixed(2)) });
-            }
-            // GROUNDING may extend into the SKIN shell (radius..radius+SKIN)
-            // so a resting floor a hair away still holds the player up -
-            // that was the g:0 fix. But CEILING and PUSHED-DOWN are
-            // movement-gate flags (the step-up and ground-snap reject a
-            // retry/probe when pushedDown is set): a NON-TOUCHING triangle
-            // in the shell must NOT raise them, or it phantom-blocks the
-            // step-up on stairs and the player walks into the riser and
-            // drops through. So ceiling/pushedDown fire ONLY on real
-            // contact (d < radius), never from the shell. (Regression
-            // from the g:0 SKIN change - Mac's stairs fell through.)
-            const touching = d < radius;
-            if (ny >= GROUND_NY && !wallAbove) {
-              grounded = true;
-              const cy = center[1] - dy;   // the contact's world y
-              if (cy > groundY) groundY = cy;
-              // Platform riding (Ledger C row, 2026-08-14): the KEY of
-              // the grounding bucket - a non-static bucket (mover)
-              // wins over the static floor within the skin shell.
-              if (groundKey == null || bkey !== 'dungeon') groundKey = bkey;
-            }
-            if (touching && ny <= -0.5) ceiling = true;
-            if (touching && ny <= -GROUND_NY) pushedDown = true;
+      for (const cell of nearCells(bucket, center[0] - t[0], center[2] - t[2])) {   // AUDIT BRANCH (WoD) B1: the fine 3x3, then any wide triangles
+        for (const ti of cell) {
+          if (visited.has(ti)) continue;
+          visited.add(ti);
+          const tri = bucket.tris[ti];
+          // Live local point: pushes from earlier triangles must be
+          // seen by later ones (a stale snapshot compounded pushes).
+          const lx = center[0] - t[0];
+          const ly = center[1] - t[1];
+          const lz = center[2] - t[2];
+          closestPointOnTriangle([lx, ly, lz], tri[0], tri[1], tri[2], TMP);
+          const dx = lx - TMP[0];
+          const dy = ly - TMP[1];
+          const dz = lz - TMP[2];
+          const d2 = dx * dx + dy * dy + dz * dz;
+          // Ground/contact is detected out to radius + SKIN, but the
+          // sphere is only PUSHED OUT to the true radius. A floor at
+          // exactly d == radius (feet placed dead on the surface by
+          // floorLanding, then velY clamped to 0 so dy == 0 at rest)
+          // sat on the knife-edge of the old `d2 >= radius*radius`
+          // reject and FLICKERED grounded off frame-to-frame - Mac's
+          // F8 caught g:0 while standing perfectly still. The skin
+          // makes a resting contact stable without sinking the body.
+          const contactR = radius + SKIN;
+          if (d2 >= contactR * contactR || d2 === 0) continue;
+          const d = Math.sqrt(d2);
+          // SH1: the contact point's world y is center - dy (dy is
+          // center minus closest); above the stand ceiling with an
+          // upward-leaning normal it is a wall, not a tread.
+          // AUDIT COL1 F8: A MID-BODY CONTACT IS A WALL - IN THE CODE,
+          // NOT ONLY IN THE COMMENT. COL1 gave the middle spheres "the
+          // plain push, because a contact at mid-body is something you
+          // walked into, never a floor you stand on" - but the plain
+          // push is along centre-minus-closest, and out of a TABLE TOP
+          // that direction is straight UP. _resolveCapsule copies the
+          // middle's y back into the whole capsule, so the body was
+          // LIFTED onto the thing it walked into. Measured on the ride
+          // stance (h 2.6, the widest band of middles): before COL1 a
+          // 0.70-1.30 top was walked through and only <=0.69 could be
+          // mounted; with the middles added, tops to 0.85 were mounted
+          // by a 0.65 m single-frame rise - past STEP_OFFSET, with
+          // `grounded` true the whole way. That is SH1's bug wearing
+          // COL1's clothes. The law is enforced where the push is
+          // chosen: an upward-leaning face met by a MIDDLE sphere
+          // pushes SIDEWAYS by its whole penetration and never grounds
+          // - the same branch SH1 wrote for the step ladder's tabletop
+          // edges. Legal ground is out of the middles' reach by
+          // construction: past the lower sphere's own resolve a slope
+          // at the slope limit clears a middle centre by 0.59 > radius,
+          // so this fires only on geometry the body is truly inside.
+          const wallAbove = (dy > 0 && center[1] - dy > standCeil)
+            || (midBody && dy > 0 && dy / d >= GROUND_NY);
+          // PH1 (2026-09-14, Mac: "it's possible to randomly walk into
+          // the floor in dungeons and get stuck in the ground"): A FLOOR
+          // IS ONE-WAY FOR THE LOWER SPHERE. The push-out is along
+          // centre-minus-closest, so once the lower sphere's centre had
+          // crossed a floor's plane (a mover's mesh advancing past it in
+          // one slow frame, the ceiling clamp's sink band, a thin slab's
+          // cancelling pushes) the floor pushed it DOWN, and kept pushing
+          // until the head sphere caught the same floor from beneath:
+          // measured, feet 0.36 below a floor become feet 1.10 below it,
+          // "grounded", forever - the dungeon has no heightAt floor to
+          // catch it and nothing called findClearFloor. Unity's sweep
+          // never crosses a plane, so it never meets this; the port's
+          // resolve can, so the law is written where the sign flips: a
+          // near-horizontal surface just ABOVE the lower sphere's centre,
+          // within its radius, is a floor the body is under, and the
+          // sphere is set ON it. Nothing legal stands there - a surface
+          // 0.35-0.7 above the feet is inside the crouched capsule too.
+          // The head sphere keeps the plain push: a ceiling is a ceiling.
+          const floorAbove = oneWayFloor && d < radius && !wallAbove && dy / d <= -GROUND_NY;
+          if (floorAbove) {
+            const dh2 = dx * dx + dz * dz;
+            const cy = t[1] + (ly - dy);   // the closest point's world y
+            center[1] = cy + Math.sqrt(Math.max(0, radius * radius - dh2));   // the sphere ON the surface
+            grounded = true;
+            if (cy > groundY) groundY = cy;
+            if (groundKey == null || bkey !== 'dungeon') groundKey = bkey;
+            continue;
           }
+          if (d < radius) {
+            if (wallAbove) {
+              const dh = Math.sqrt(dx * dx + dz * dz);
+              if (dh > 1e-6) {
+                const pushH = (radius - d) / dh;   // the whole penetration, sideways
+                center[0] += dx * pushH;
+                center[2] += dz * pushH;
+              } else {
+                const push = (radius - d) / d;   // dead under a face: the plain push is the only way out
+                center[1] += dy * push;
+              }
+            } else {
+              const push = (radius - d) / d;   // only push out of true penetration
+              center[0] += dx * push;
+              center[1] += dy * push;
+              center[2] += dz * push;
+            }
+          }
+          const ny = dy / d;
+          if (globalThis.__logContacts) {
+            globalThis.__contacts = globalThis.__contacts || [];
+            globalThis.__contacts.push({ tri: tri.map((v) => v.map((n) => Number(n.toFixed(2)))), ny: Number(ny.toFixed(2)) });
+          }
+          // GROUNDING may extend into the SKIN shell (radius..radius+SKIN)
+          // so a resting floor a hair away still holds the player up -
+          // that was the g:0 fix. But CEILING and PUSHED-DOWN are
+          // movement-gate flags (the step-up and ground-snap reject a
+          // retry/probe when pushedDown is set): a NON-TOUCHING triangle
+          // in the shell must NOT raise them, or it phantom-blocks the
+          // step-up on stairs and the player walks into the riser and
+          // drops through. So ceiling/pushedDown fire ONLY on real
+          // contact (d < radius), never from the shell. (Regression
+          // from the g:0 SKIN change - Mac's stairs fell through.)
+          const touching = d < radius;
+          if (ny >= GROUND_NY && !wallAbove) {
+            grounded = true;
+            const cy = center[1] - dy;   // the contact's world y
+            if (cy > groundY) groundY = cy;
+            // Platform riding (Ledger C row, 2026-08-14): the KEY of
+            // the grounding bucket - a non-static bucket (mover)
+            // wins over the static floor within the skin shell.
+            if (groundKey == null || bkey !== 'dungeon') groundKey = bkey;
+          }
+          if (touching && ny <= -0.5) ceiling = true;
+          if (touching && ny <= -GROUND_NY) pushedDown = true;
         }
       }
     }

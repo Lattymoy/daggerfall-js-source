@@ -45,7 +45,7 @@ it is protectable:
 - the painter runs at DFU's own terrain seam - after the ground is
   classified, before the marching squares - so a road tile lands over
   a known ground and the squares blend around it. Hazelnut restructured
-  his mod to run exactly there; the port's `terrainGen.js:58` is that
+  his mod to run exactly there; the port's `terrainGen.js:62` is that
   seam, which is why this is a recreation and not a rewrite.
 - a road is two tiles wide down the centre of the 128-grid, one tile
   wide on the diagonal, with an edge tile either side; it stops at a
