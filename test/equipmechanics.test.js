@@ -6,7 +6,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { EQUIP_SLOTS, getEquipSlot, equipItem, unequipSlot, isEquipped, armorValuesOf, BODY_PARTS, seedStartingEquipment } from '../src/systems/equip.js';
-import { startingProvisions } from '../src/systems/survival/items.js';   // SURV-KIT: the seed packs the kit in every tier
 import { filterByTab, armorLabelValue } from '../src/ui/nativeInventory.js';
 import { preloadPaperDollArt, drawPaperDoll, paperDollArtLoaded, refreshPaperDoll, slotAtPaperDoll, paperdollItemImage, clampArmorVariant, _debugPaperDoll, paperDollPixels, PAPERDOLL_W, PAPERDOLL_H, WAIST_HEIGHT, PAPERDOLL_ORIGIN, ARMOR_LABEL_POS } from '../src/ui/paperDoll.js';
 import { getTemplate } from '../src/characters/paperdoll.js';
@@ -198,11 +197,9 @@ test('equipMechanics: U8h the starting seed + the worn-weapon binding shape', ()
   assert.equal(worn.templateIndex, 113);
   assert.equal(worn.material, 0);
   assert.ok(e.items.includes(worn), 'the dagger lives IN the bag, worn');
-  // the dagger, then the survival kit (SURV-KIT: in every tier, the
-  // mods-off tier too); idempotent: a second seed adds nothing
-  assert.equal(e.items.length, 1 + startingProvisions().length);
+  // idempotent: a second seed adds nothing
   seedStartingEquipment(e);
-  assert.equal(e.items.length, 1 + startingProvisions().length);
+  assert.equal(e.items.length, 1);
   // a bag-carrying entity never seeds (probe bags stay untouched)
   const e2 = { items: [{ group: 'Books', templateIndex: 277 }] };
   seedStartingEquipment(e2);

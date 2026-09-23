@@ -15,9 +15,8 @@ import { temperatureWord, hourTemperature, WEATHER_TEMP } from '../src/systems/s
 import { HUD_NEED_WORDS, survivalHudChips } from '../src/systems/survival/status.js';
 import { REST_COST, REST_TEXT_SURVIVAL, STIFF_HOURS, restCost, restHour, stiffen } from '../src/systems/survival/rest.js';
 import { survivalFeed, installSurvivalGate, survivalGateOn } from '../src/systems/survival/env.js';
-import { TEMPLATE, FOOD, FOOD_STAGE, eatLaw, waterIn } from '../src/systems/survival/food.js';
-import { createSurvivalItem, useSurvivalItem, startingProvisions, isSurvivalItem } from '../src/systems/survival/items.js';
-import { CAMP_TEXT } from '../src/systems/survival/camp.js';
+import { TEMPLATE, FOOD, FOOD_STAGE, eatLaw } from '../src/systems/survival/food.js';
+import { createSurvivalItem, useSurvivalItem } from '../src/systems/survival/items.js';
 import { huntOutcome, HUNT_EVENTS, HUNT_SAFE_TWIN, HUNT_TEXT } from '../src/systems/survival/hunting.js';
 import { tavernMenu, tavernOrder, tavernPour, tavernEat, tavernDrink, TAVERN_MENU_TEXT, DRINK_MINUTES, MEAL_MINUTES } from '../src/systems/survival/tavernMenu.js';
 import { intermittentEnemySpawn } from '../src/systems/encounters.js';
@@ -32,11 +31,8 @@ import { onlineForcedPref, ONLINE_PLAYERS_OWN_PREFS } from '../src/systems/onlin
 import { setPref, loadPrefs, _resetForTests } from '../src/systems/uiPrefs.js';
 import { createRestDeps, createPlayerTicker, restVitals } from '../src/scenes/shared.js';
 import { registerPreventRestCondition, getPreventedRestMessage, clearPreventRestConditions } from '../src/systems/restSession.js';
-import { setWorldMinutes, worldMinutes } from '../src/systems/worldTick.js';
-import { SKILLS, SKILL_COUNT } from '../src/systems/skills.js';
-import { finishChargen } from '../src/systems/chargenSession.js';
-import { seedStartingEquipment } from '../src/systems/equip.js';
-import { itemWeight } from '../src/systems/inventory.js';
+import { setWorldMinutes } from '../src/systems/worldTick.js';
+import { SKILLS } from '../src/systems/skills.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { EQUIP_SLOTS } from '../src/characters/paperdoll.js';
 import { RACES } from '../src/systems/races.js';
@@ -65,8 +61,7 @@ import { withDom } from './invdrag.mjs';
 // The second pass ("One more audit before we merge") added the tests
 // marked "the second pass" and replaced the first pass's Off-gap shift
 // with the pause (bible/06-Systems/Climates-Calories.md, AUDIT
-// SURV-TIERS, both passes). SURV-KIT (Mac: "C&C characters regardless
-// of mode should start with supplies") added the last two.
+// SURV-TIERS, both passes).
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -978,74 +973,4 @@ test('AUDIT SURV-TIERS (the second pass): before six the enhanced tavern says th
       view?.unmount?.();
     });
   } finally { if (hadLoc) globalThis.location = loc; else delete globalThis.location; }
-});
-
-// ═══ SURV-KIT (2026-09-23): THE KIT IS EVERY TIER'S ══════════════════
-//
-// Mac: "C&C characters regardless of mode should start with supplies".
-// The kit was packed only with the arc on, so a character made Off who
-// turned the arc on later set out with nothing (the second pass had
-// accepted that). The tier is a setting the player moves at any hour;
-// the kit is the character's, packed once, at the start.
-const KIT_CAREER = Object.freeze({
-  name: 'Pin', hitPointsPerLevel: 10, advancementMultiplier: 0.3, abilityFlagsAndSpellPointsBitfield: 0x1000,
-  primarySkills: [SKILLS.LongBlade, SKILLS.CriticalStrike, SKILLS.Dodging], majorSkills: [SKILLS.Archery, SKILLS.Climbing, SKILLS.Running],
-  minorSkills: [SKILLS.Swimming, SKILLS.Jumping, SKILLS.Medical, SKILLS.Stealth, SKILLS.Backstabbing, SKILLS.Mercantile],
-});
-/** The wizard's result as chargen hands it to finishChargen (audit18's synthetic shape). */
-const kitResult = () => ({ name: 'Pin', gender: 'male', race: 'Breton', raceId: RACES.Breton, faceIndex: 0, careerIndex: 0, career: KIT_CAREER, stats: { ...STATS }, skills: new Array(SKILL_COUNT).fill(30), reflexes: 2 });
-const newborn = () => ({ isPlayer: true, level: 1, health: 50, maxHealth: 50, magicka: 10, maxMagicka: 20, fatigue: 6400, items: [], activeEffects: [], sGroupReputations: [0, 0, 0, 0, 0], stats: { ...STATS } });
-/** What a kit IS, item by item: the template, the name, the stack, the uses and the water. */
-const kitRows = (items) => items.map((i) => [i.templateIndex, i.name, i.stackCount ?? 1, i.currentCondition, waterIn(i)]);
-
-test('SURV-KIT: every tier\'s new character sets out with the kit - after DFU\'s bag, the same in each tier, through the wizard\'s finish and the fallback', () => {
-  const want = kitRows(startingProvisions());
-  assert.deepEqual(want.map((r) => r[1]), ['Rations', 'Waterskin', 'Camping Equipment', 'Campfire Kit']);
-  const born = {};
-  for (const tier of SURVIVAL_TIER_IDS) {   // Off first: a tier gate come back fails here before anywhere else
-    _resetForTests(); setPref(SURVIVAL_PREF, SURVIVAL_STORED[tier]);
-    assert.equal(survivalTier(), tier);
-    const e = newborn();
-    finishChargen(e, kitResult(), null, { rolls: () => 0.5 });   // the wizard's finish - startingGear.js assignStartingGear
-    const n = want.length;
-    assert.deepEqual(kitRows(e.items.slice(-n)), want, `${tier}: the kit, last in the bag`);
-    assert.equal(e.items.slice(0, -n).some((i) => isSurvivalItem(i)), false, `${tier}: DFU's bag before it, none of it the arc's`);
-    assert.equal(e.items.filter((i) => isSurvivalItem(i)).reduce((kg, i) => kg + itemWeight(i), 0), 12.5, `${tier}: 12.5 kg - the rations 2, the skin 0.5 and its water 2, the gear 5, the fire kit 3`);
-    born[tier] = { bag: e.items.map((i) => [i.templateIndex, i.name, i.stackCount ?? 1]), gold: e.goldPieces };
-    const f = { items: [] };
-    seedStartingEquipment(f);   // equip.js, the pre-chargen fallback
-    assert.deepEqual(kitRows(f.items.filter((i) => isSurvivalItem(i))), want, `${tier}: the fallback packs it too`);
-  }
-  assert.deepEqual(born[SURVIVAL_OFF], born.casual, 'an Off character is born with Casual\'s bag and purse, item for item');
-  assert.deepEqual(born.hard, born.casual, 'and so is a Hard one');
-});
-
-test('SURV-KIT: born Off, the kit waits - three days Off leave it whole, a meal is refused rather than eaten, the camp kits say how to use them, the skin pours; turned on, the same rations feed a Casual player', async () => {
-  const { createCamps } = await import('../src/scenes/camps.js');
-  setPref(SURVIVAL_PREF, SURVIVAL_STORED[SURVIVAL_OFF]); setWorldMinutes(50 * 1440 + 12 * 60);
-  const now = () => Math.floor(worldMinutes());
-  const e = newborn();
-  finishChargen(e, kitResult(), null, { rolls: () => 0.5 });
-  e.chargenDone = true;
-  const t = createPlayerTicker(e, { say: () => {}, isInside: () => true, survivalEnv: () => INDOORS });
-  t.tick(25); t.advance(3 * 1440);
-  assert.deepEqual(kitRows(e.items.filter((i) => isSurvivalItem(i))), kitRows(startingProvisions()), 'three days Off: the kit as it was packed');
-  assert.equal(FOOD[TEMPLATE.Rations].keeps, null, 'rations never spoil, in any tier');
-  const [rations, skin, gear, fire] = e.items.filter((i) => isSurvivalItem(i));
-  const use = (item) => useItem(item, e.items, { entity: e, nowMinute: now(), rolls: () => 0.5 });
-  const meal = use(rations);
-  assert.deepEqual([meal.kind, meal.text, rations.stackCount], ['notEaten', 'You are not hungry enough to eat the Rations right now.', 2], 'Off pauses the hunger, so the meal is refused, not eaten');
-  const said = [];
-  const pool = createCamps({ entity: e, camera: () => ({ feet: [0, 0, 0], yaw: 0 }), say: (l) => said.push(l) });
-  for (const [kit, kind] of [[gear, 'pitchCamp'], [fire, 'placeFire']]) {
-    const r = use(kit);
-    assert.equal(r.kind, kind, `${kit.name}: the host's to place`);
-    assert.equal(pool.placeItem(r.item, e.items), false, `${kit.name}: Off stands no camp`);
-  }
-  assert.deepEqual([said, pool.camps.length, e.items.includes(gear) && e.items.includes(fire)], [[CAMP_TEXT.arcOff, CAMP_TEXT.arcOff], 0, true], 'refused in words (CAMP-SILENT), and both kits kept');
-  const drink = use(skin);
-  assert.deepEqual([drink.kind, waterIn(skin)], ['drank', 1.9], 'the skin pours, as in every tier');
-  setPref(SURVIVAL_PREF, 'casual'); t.tick(5); t.advance(6 * 60);
-  const fed = use(rations);
-  assert.deepEqual([fed.kind, rations.stackCount], ['ate', 1], 'turned on, six hours later, the same rations feed a Casual player');
 });

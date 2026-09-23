@@ -6,6 +6,7 @@
 // This file replaces the pins written when the Ledger row still said
 // "there isn't one". The row and these pins moved together.
 import { test } from 'node:test';
+import { setPref } from '../src/systems/uiPrefs.js';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -96,17 +97,15 @@ test('settings: the LIVE tier does not lie - each consumer really reads the stor
   assert.equal(loiterLimitHours(), 8);
   assert.ok(cannotLoiterLines()[1].includes('8'), 'the refusal line quotes the live cap');
   // PlayerTorchFromItems - the kit seam
-  // the lights by their templates (torch 247, candle 253), not their group:
-  // the survival kit is UselessItems2 too, and packed in every tier (SURV-KIT)
-  const lights = (bag) => bag.filter((it) => it.group === 'UselessItems2' && (it.templateIndex === 247 || it.templateIndex === 253)).length;
+  setPref('survival', false);   // AUDIT SURV E: the survival kit rides after DFU's bag; this pin is DFU's bag alone
   setValue('Enhancements', 'PlayerTorchFromItems', true);
   const e = { items: [], stats: {}, skills: [] };
   assignStartingGear(e, { classIndex: 0, rolls: () => 0 });
-  assert.equal(lights(e.items), 7, 'five torches and two candles arrive with the setting on');
+  assert.ok(e.items.some((it) => it.group === 'UselessItems2'), 'torches arrive with the setting on');
   setValue('Enhancements', 'PlayerTorchFromItems', false);
   const e2 = { items: [], stats: {}, skills: [] };
   assignStartingGear(e2, { classIndex: 0, rolls: () => 0 });
-  assert.equal(lights(e2.items), 0, 'and not with it off');
+  assert.equal(e2.items.filter((it) => it.group === 'UselessItems2').length, 0, 'and not with it off');
   // MouseLookSensitivity + InvertMouseVertical
   setValue('Controls', 'MouseLookSensitivity', 1.0);
   assert.equal(lookScale(), LOOK_BASE, 'sensitivity 1.0 IS the port feel constant');

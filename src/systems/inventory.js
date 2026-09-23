@@ -301,7 +301,7 @@ export function addItem(list, item, position = 'back') {
  * are called by name rather than respelled.
  *
  * ROAD-Ar R5 - THE REMAINDER, RESTATED. A2 recorded two surviving
- * inline re-spellings of this member (equip.js:243 and
+ * inline re-spellings of this member (equip.js:244 and
  * potionMakerWindow.js:168, both on paths where nothing stackable is
  * equippable) and missed a THIRD, which was the one on the main path:
  * itemTransfer._applyTransfer's partial arm, reached by every

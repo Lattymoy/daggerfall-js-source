@@ -56,7 +56,6 @@ carry, and everything static.
 | SURV6 | hunting, foraging and the water search as real-time events: the wilderness roll, the Yes/No box, the busy page, the finds and the harms, the hunted | `survival/hunting.js` (the law), `ui/huntWindow.js` (the three pages), `scenes/hunting.js` (composed), the overworld host's `createHunting` bag and its minute tick |
 | SURV7 | the feed: the four hosts say where the player stands and the minute law runs in every mode; the rest gate on DFU's seam; the needs aligned at a load and an arrival; fast travel charged; the records | `survival/env.js` (the feed, the gate); `scenes/shared.js` createPlayerTicker's `survivalEnv`; the four hosts' readers; `save.js`'s load arm; `worldTick.js` tickPlayerMinutes' `survival` |
 | SURV-TIERS | Off, Casual (the default) and Hard on the one key: the tiers as data, every charging law reading its tier's rules, Off stored as the old switch's own `false`; AUDIT SURV-TIERS: the loan, a rest is a rest, the house's order, Off keeping the camps and the place, four laws Hard shares | `survival/difficulty.js` (the table, the stored values), `survival/switch.js` (`survivalTier`, `survivalRules`), the laws (`needs.js`, `rest.js`, `food.js`, `hunting.js`, `tavernMenu.js`, `temperature.js`), the compositions (`env.js`, `scenes/shared.js`, `scenes/hunting.js`, `scenes/camps.js`, `useItem.js`, both tavern windows), `encounters.js` (the asks), `uiPrefs.js` (the load), the four hosts' `restKind`, the Features row |
-| SURV-KIT | the new character's kit in every tier, Off's included: both mints stop asking the switch | `startingGear.js` `assignStartingGear` (chargen's two paths), `equip.js` `seedStartingEquipment` (the pre-chargen fallback) |
 
 ### The temperature (SURV1)
 
@@ -145,8 +144,7 @@ one, a bear six to ten and luck, half of it turning), the slaughterfish
 raw fish, and a humanoid a meal on a high roll. All of it behind the
 one switch (`survival/switch.js`, the `mod-climates-calories` feature
 row) - on in both Casual (the default) and Hard, gone in Off
-(SURV-TIERS) - but the new character's kit, which every tier packs
-(SURV-KIT).
+(SURV-TIERS).
 
 ### The camps (SURV3)
 
@@ -908,10 +906,6 @@ SURV-TIERS closed the ways it had been one:
   the party pose broadcasts (below).
 - **It is stored as the old switch's own `false`**, so a build from before
   the tiers reading the same shelf still reads Off.
-- **The kit is packed anyway** (SURV-KIT, at the end of this page): a
-  character made Off sets out with the same kit as a Casual one, after
-  DFU's bag - the one seam where Off's bag is not DFU's - and there it
-  waits.
 
 ### How it is built - rules as data, read at the compositions
 
@@ -1056,7 +1050,7 @@ world and fights whoever is near it.
 
 ### The pins
 
-`test/survtiers.test.js`, 31 tests: the row, the table and the shelf agree
+`test/survtiers.test.js`, 29 tests: the row, the table and the shelf agree
 (the segments write the table's stored values); the switch's reads; the
 shelf, through a real one (an old Off kept as `false`, the default stored
 as nothing, five junk values dropped at the load); Hard's table is the arc
@@ -1086,9 +1080,8 @@ five live at the minute and at the read, null rules, Off paused as it
 passes and a long Off a fresh start - with a gap the arc was ON for still
 counting); and the second pass's own: the loan settled by whatever else
 refills the pool, the lit fire, the replay floor on exposure, the
-mirrored dungeon night and the wagon's tent; and SURV-KIT's two (at the
-end of this page). An `afterEach` resets the tier, the clock and the gate
-after every test.
+mirrored dungeon night and the wagon's tent. An `afterEach` resets the
+tier, the clock and the gate after every test.
 
 The pre-tier pins moved only where their vocabulary or the source shape
 did: a test that set the switch `true` sets `'hard'` (or `'casual'`); one
@@ -1251,9 +1244,8 @@ crash in the tiers' own plumbing, never Hard's.
   bring DFU's collapse forward (about a third, on the play lens's
   snowy night) - which with a foe near kills. That is what a stamina
   cost is; the needs alone still never collapse anyone.
-- ~~**A player who starts Off and turns Casual on later has no kit** - the
-  kit is chargen's, and the provisions shelf sells it.~~ SUPERSEDED the
-  same day by SURV-KIT (below): chargen packs it in every tier.
+- **A player who starts Off and turns Casual on later has no kit** - the
+  kit is chargen's, and the provisions shelf sells it.
 - **A new Hard character dies of exposure on their first snowy
   evening**, and a Hard blackout night is replayed as waking hours - both
   as they were before the tiers (the play lens ran the same sessions on
@@ -1265,77 +1257,3 @@ crash in the tiers' own plumbing, never Hard's.
 cautious or inns journey still replays its minutes awake - it now
 arrives at death's door in a Hard desert rather than dead, and Exhausted
 in either tier.
-
-## SURV-KIT - EVERY CHARACTER SETS OUT WITH THE KIT (2026-09-23)
-
-> Mac: *"Oh some changes for C&C. 1. C&C characters regardless of mode
-> should start with supplies"*.
-
-The kit - two sacks of rations, a full waterskin, worn camping gear and a
-fire kit with two lights left (`survival/items.js` `startingProvisions`) -
-was packed only while the arc was on. Both of its mints asked
-`survivalOn()`: `startingGear.js` `assignStartingGear`, which both of
-chargen's paths run, and `equip.js` `seedStartingEquipment`, the
-pre-chargen fallback. So a character made Off who turned the arc on later
-set out with nothing but the shelf, which the second pass had accepted
-(above). Neither mint asks now. The tier is a setting the player moves at
-any hour; the kit is the character's, packed once, at the start.
-
-**Every tier's new character is the same character.** Off, Casual and
-Hard are born with one bag and one purse, item for item: DFU's own bag
-first (the spellbook, the clothes, the class kit, the torches - 17f's
-order holds), the four survival items after it, the gold in the purse.
-Off's bag is DFU's with the kit after it - the one seam where Off is no
-longer DFU's own. There the kit waits:
-
-- the rations keep - they never spoil, in any tier (`food.js` `FOOD`,
-  `keeps: null`);
-- a meal finds no hunger to answer (Off pauses the markers) and is
-  refused, not eaten: "You are not hungry enough to eat the Rations right
-  now.";
-- the camping gear and the fire kit are refused in words - "Turn Climates
-  & Calories on to make camp." (CAMP-SILENT) - and stay in the pack;
-- the skin pours, as it does in every tier;
-- it weighs what it weighs in every tier: 12.5 kg (the rations 2, the skin
-  0.5 and its water 2, the camping gear 5, the fire kit 3).
-
-Turned on, the same rations feed the player the first time they are
-hungry. The provisions shelf and the corpse's meat stay the arc's - Off's
-general store and Off's kills are DFU's - and the Features note still
-calls Off "the classic game": its rules are, and the kit is only carried.
-
-**Not done:** a character made before this change - Off, or on a save
-from before SURV2 - is given nothing now. The kit is chargen's; handing it
-to a character already in play is a different change, and Mac's to ask
-for.
-
-**The pins.** `test/survtiers.test.js` 29 -> 31: every tier's new
-character, through the wizard's own finish (`chargenSession.js`
-`finishChargen`) and the fallback, carries the kit last with DFU's bag
-untouched before it, weighs 12.5 kg of it, and the three tiers' bags and
-purses are identical (Off is walked first, so a tier gate come back fails
-there before anywhere); and born Off, three days through the real ticker
-leave the kit as packed, the meal is refused and not eaten, both camp
-kits are refused in words through the real camp pool and kept, the skin
-pours, and turned on, six hours later, the same rations feed a Casual
-player. The older pins that read Off as DFU's bag alone read the kit after
-it now: AUDIT SURV D (`auditsurv.test.js`: the Off kit equals Casual's),
-17f F12 (the names, the kit's included), U8h (`equipmechanics.test.js`:
-the seed is the dagger and the kit, and a second seed adds nothing), the
-settings torches (`settings.test.js`: counted by their templates, since
-the kit shares their `UselessItems2` group) and SURV2's source pin (the
-shelf asks the switch; neither kit mint asks any tier). Against the old
-gate, five of them fail.
-
-Mutants: `tools/mutants/survtiers.json` 107 -> 111 - the wizard's kit
-gone, packed before DFU's bag, packed twice, and the fallback's gone - and
-`auditsurv.json`'s chargen-kit record re-aimed by content. The run:
-every record in any list whose tests are a file this change edited, and
-every record whose target is a source it changed (`startingGear.js`,
-`equip.js`, `survival/switch.js`) - 161 records over 7 lists, all dead.
-
-On the way: the fallback's seam had rotted in its own words. Six line
-cites named lines that had moved - `equip.js`'s `startingGear.js:70`,
-`:221` and `world.js:2460`, `startingGear.js`'s `equip.js:307` and
-`world.js:2460`, and `exterior.js`'s `equip.js:306` - and each names its
-line again.

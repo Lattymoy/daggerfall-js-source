@@ -267,7 +267,7 @@
   {
     "name": "AUDITSURV-the-chargen-kit-carries-no-provisions",
     "file": "src/systems/startingGear.js",
-    "old": "  for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }\n",
+    "old": "  if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }\n",
     "new": "",
     "tests": [
       "test/auditsurv.test.js"
