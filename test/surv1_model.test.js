@@ -275,8 +275,16 @@ test('SURV1: hunger, thirst and sleep move on the clock, say their stage once, a
   assert.equal(log.filter((l) => l[1] === 'You have not eaten in a long while...').length, 1);
   assert.equal(e.survival.sleepDebt > 0 && e.survival.sleepDebt < 1.1, true, 'seventeen hours awake: an hour of debt');
   assert.equal(log.filter((l) => l[1] === 'You stifle a yawn...').length, 0, 'not yet tired');
-  assert.ok(log.some((l) => l[1] === 'You are getting thirsty...'), 'the skin ran dry and thirst rose');
+  // AUDIT SURV-TIERS (the third pass): a walk's replayed minutes say the net change once, at the minute it lands in -
+  // the skin ran dry and the thirst rose past every stage it passed through
+  assert.ok(log.some((l) => l[1] === 'You are dehydrated...'), 'the skin ran dry and thirst rose');
+  assert.equal(log.filter((l) => l[1] === 'You are getting thirsty...' || l[1] === 'Your throat is parched...').length, 0, 'not the stages it passed through');
+  assert.equal(log.filter((l) => l[1] === 'You drain your waterskin.').length, 1, 'and the replay\'s own line once');
   assert.ok(log.some((l) => l[0] === 'fatigue' && l[1] === DRAIN.parched), 'parched: the fatigue tax');
+  // ...and a stage HELD says nothing more, live minute by live minute (AUDIT SURV-TIERS, the third pass: the walks
+  // above gather their lines and say them once as they land, so they cannot see a stage said every minute; these can)
+  for (let m = start + 17 * 60 + 1; m <= start + 17 * 60 + 10; m++) survivalMinute(e, m, env, { worn: worn({}), sinks, ctx: { raceId: RACES.Breton } });
+  assert.equal(log.filter((l) => l[1] === 'You have not eaten in a long while...').length, 1, 'ten live minutes held at Hungry: said once, not ten times');
 });
 
 test('SURV1: sleep pays the debt by its quality - a bed clears it, a rough rest only to tired; rations feed a starving player by themselves', () => {
@@ -327,7 +335,9 @@ test('SURV1: a jump owes at most two days, and a player arriving from longer awa
 });
 
 test('SURV1: by source - liveStat reads the survival entry, and the model is three modules that import no host', () => {
-  assert.match(read('src/systems/statMods.js'), /if \(a\.kind === 'survival'\) \{ mod \+= a\.statMods\?\.\[statName\] \?\? 0; continue; \}/);
+  // AUDIT SURV-TIERS (the second pass): read, and capped at the read - five above the stat as it stands without it
+  assert.match(read('src/systems/statMods.js'), /if \(a\.kind === 'survival'\) \{ survival \+= a\.statMods\?\.\[statName\] \?\? 0; continue; \}/);
+  assert.match(read('src/systems/statMods.js'), /if \(survival < 0\) survival = -Math\.min\(-survival, Math\.max\(0, Math\.min\(base, Math\.min\(Math\.max\(base \+ mod, 0\), MAX_STAT_VALUE\)\) - 5\)\);\n\s*mod \+= survival;/);
   for (const f of ['temperature', 'food', 'needs']) {
     const src = read(`src/systems/survival/${f}.js`);
     assert.doesNotMatch(src, /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/effects|document\.|window\./, `${f}.js is pure - and off the formulas -> equip cycle`);
@@ -414,7 +424,7 @@ test('SURV-THIRST1: the harm follows AUDIT SURV E’s shape - the harm TICK, esc
   // and it may KILL: no HEALTH_FLOOR, because the bare-skin harms leave the
   // last five points BECAUSE they are not meant to kill, and this one is
   const src = readFileSync(new URL('../src/systems/survival/needs.js', import.meta.url), 'utf8');
-  const line = src.slice(src.indexOf('if (s.thirst >= NEED.THIRST_HARM'));
+  const line = src.slice(src.indexOf('if (rules.health && s.thirst >= NEED.THIRST_HARM'));   // SURV-TIERS: the wound is Hard's (`rules.health`)
   assert.match(line.slice(0, line.indexOf('\n    }')), /sinks\.hurt\?\.\(/, 'the raw sink, not hurtFloored');
   assert.doesNotMatch(line.slice(0, line.indexOf('\n    }')), /hurtFloored/);
   // THE DEPARTURE ITSELF: no climate term anywhere in the condition
@@ -463,9 +473,9 @@ test('SURV-THIRST1 AUDIT: the replay flag is the WALK’s, and only the last min
   const src = readFileSync(new URL('../src/systems/survival/needs.js', import.meta.url), 'utf8');
   // one object for the whole walk, not one per minute (EV2: this loop
   // runs up to MAX_CATCHUP_MINUTES times)
-  assert.match(src, /const walk = \{ \.\.\.deps, replay: true \};\s*\n\s*for \(let m = start \+ 1; m <= end; m\+\+\) \{ walk\.replay = m < end;/,
-    'the walk marks every minute but the last as a replay, from one object');
+  assert.match(src, /const walk = \{ \.\.\.deps, replay: true, sinks: \{ \.\.\.sinks, say: [^\n]+ \} \};\s*\n\s*for \(let m = start \+ 1; m <= end; m\+\+\) \{\n\s*walk\.replay = m < end;/,
+    'the walk marks every minute but the last as a replay, from one object (AUDIT SURV-TIERS, the third pass: its lines gathered)');
   // a bare survivalMinute - the live per-minute call every host makes -
   // is NOT a replay, or nothing would ever die of thirst
-  assert.match(src, /replay = false \} = deps;/, 'a caller that says nothing is live');
+  assert.match(src, /autoEat = true, replay = false \} = deps;\n\s+const rules = deps\.rules \?\? HARD_RULES;/, 'a caller that says nothing is live (and, SURV-TIERS, runs Hard - AUDIT SURV-TIERS: a null too)');
 });

@@ -72,6 +72,11 @@ export const CAMP_TEXT = Object.freeze({
   // (a player reported camping kits that "don't work", and a refusal
   // with no words is indistinguishable from a broken item).
   noSpot: 'You cannot find anywhere to make camp.',
+  // AUDIT SURV-TIERS: with the arc Off a player's own camp could be
+  // neither seen nor used (scenes/camps.js `seen`, `shown`), so none is
+  // stood - and the refusal names the one thing that would change it,
+  // CAMP-SILENT's law.
+  arcOff: 'Turn Climates & Calories on to make camp.',
   pitched: 'You pitch your tent and light a fire.',
   lit: 'You light a campfire.',
   kitSpent: 'That was the last of your campfire kit.',
@@ -90,6 +95,8 @@ export const CAMP_TEXT = Object.freeze({
   seeEmbers: 'You see the embers of a fire.',
   seeHearth: 'You see a fire burning.',   // HEARTH1: the world's own, which is nobody's to pack
   menuRest: 'Rest here',
+  // AUDIT SURV-TIERS (the third pass): the menu reaches further than the fire warms - the rest is the fire's
+  restCloser: 'Move closer to the fire to rest here.',
   menuCook: 'Cook food',
   menuStoke: 'Stoke the fire',
   menuPack: 'Pack up the camp',

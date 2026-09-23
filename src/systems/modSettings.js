@@ -227,7 +227,7 @@ export const MOD_SETTINGS = Object.freeze({
           + 'sprite. The sprites ship with the port; a newer version\u2019s .dfmod attached through the textures pick wins over them.',
       }),
       WeaponWidgetPreset: Object.freeze({
-        default: false,
+        default: true,   // DW-CLIP (2026-09-23, Mac: "mod should be defaulted on"): the look the readme asks for, without the hunt for the switch
         description: 'Use the mod\u2019s own Weapon Widget preset while this is on - double-scale idles, true texture size, inertia, '
           + 'recoil and its bob - the settings its readme asks Weapon Widget users to select. Your own Weapon Widget '
           + 'settings are kept underneath and come back when this is off.',
@@ -276,7 +276,7 @@ export const MOD_SETTINGS = Object.freeze({
       advancedArchery: Object.freeze({ default: true, description: 'Alters to-hit and damage done by arrows depending on the length of draw.' }),
       encumbranceEffects: Object.freeze({ default: true, description: 'Provides speed and fatigue penalties when carrying too much weight.' }),
       bandaging: Object.freeze({ default: true, description: 'Allows bandages to be used for healing based on medical skill.' }),
-      shipPorts: Object.freeze({ default: true, description: 'Player can only board their ship when in a port town.' }),
+      shipPorts: Object.freeze({ default: false, description: 'Player can only board their ship when in a port town.' }),   // SHIP-PORTS (2026-09-23, Sir McMobdon on Discord: "cant access my boat anymore"): the mod ships this ON, the port ships it OFF - a restriction nobody chose took the boat away from every owner the day the mod landed, and the switch was nowhere a player could reach; recorded on the RR page
       underworldExpulsion: Object.freeze({ default: true, description: 'Enables underworld guilds to expel members for poor performance.. with prejudice.' }),
       climbingRestriction: Object.freeze({ default: true, description: 'Prevents climbing with a weapon drawn.' }),
       weaponSpeed: Object.freeze({ default: true, description: 'Moderates DPS of weapons for characters with high speed attributes.' }),

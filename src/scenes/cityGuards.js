@@ -47,7 +47,7 @@
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V4: the beast's attack voice   // GUARD1: EnemyEntity.cs:188's FOURTH despawn term
-import { sharedClockOn } from '../systems/worldTick.js';   // MOD: the "waiting for freedom" despawn is online-only, same door as arrestFlow's guard-hit fix
+import { sharedClockOn, playerWeaponHitEntity } from '../systems/worldTick.js';   // MOD: the "waiting for freedom" despawn is online-only, same door as arrestFlow's guard-hit fix; DISC10-D H1: OnWeaponHitEntity's one dispatcher
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
 import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
@@ -152,7 +152,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:121).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:124).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -578,10 +578,10 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  and ALL THREE of this pool's arms reach the door: the melee swing
    *  and the spell through `damageGuard`'s `fromPlayer` gate below, and
    *  the player's ARROW through the hosts' `onAttackFromPlayer` seam,
-   *  which arrowFlight.js calls unconditionally (arrowFlight.js:314)
+   *  which arrowFlight.js calls unconditionally (arrowFlight.js:315)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:1941). */
+   *  encounter pool's is (exteriorFoes.js:1964). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     if (!g.ai.isHostile) makeAreaHostile?.();
@@ -1052,7 +1052,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // in exteriorFoes: no raycast impact point here, so the body
         // centre stands in - DFU's own no-raycast formula).
         hitEffects?.showBloodSplash(ENEMY_BASICS[GUARD_MOBILE_TYPE]?.bloodIndex ?? 0,
-          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
+          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.strikingWeapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
         // C2-slice (combat-17): the struck watchman cries out 40%
         const pain = enemyPainVoice(foe, damage);
         if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
@@ -1062,7 +1062,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // nothing still makes a noise. The exterior hosts played
         // nothing at all.
         const snd = zeroDamageHitSound({
-          weapon: playerWeapon.weapon, arrowHit: false,
+          weapon: playerWeapon.strikingWeapon, arrowHit: false,   // DISC10-E: :611's strikingWeapon - the hand's item, null for the beast's claws
           parrySounds: !!ENEMY_BASICS[GUARD_MOBILE_TYPE]?.parrySounds, roll: rand(),
         });
         if (snd?.at === 'enemy') audio?.play3d?.(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
@@ -1082,6 +1082,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // `damage > 0` fork.
         damageGuard(foe, 0, playerFeet, null);
       }
+      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: GUARD_MOBILE_TYPE });   // DISC10-D H1: OnWeaponHitEntity, after DecreaseHealth and HandleAttackFromSource (WeaponManager.cs:627-635) - every connect, the zero-damage one too
     }
     // WeaponManager.cs:419-436: a connecting swing tallies the weapon
     // skill AND CriticalStrike.
@@ -1133,6 +1134,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // invitation where it takes fifteen dead watchmen.
       tallyCrimeGuildRequirements(playerEntity, false, 5);
       onMurder();       // SpawnCityGuards(true)
+      // DISC10-D H1: `entityBehaviour.Entity.SetHealth(0)` then
+      // OnWeaponHitEntity (WeaponManager.cs:514-521) - the vampire feeds and
+      // the werewolf's KilledInnocent reads a dead CivilianNPC. The port's
+      // wandering townsperson carries no entity, so the one DFU zeroes is
+      // stood in by its only read field, the health, at 0.
+      playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });
       return { crime: 'murder' };
     }
     setCrimeCommitted(playerEntity, CRIME_ASSAULT);   // V4: through the one setter (SuppressCrime)

@@ -213,7 +213,9 @@ test('D7: the host opens the native Repair screen when the art is up, keyed when
   // re-read the interior slot, which above ground is always null) -
   // and the native arm's `b` gate is what makes the keyed list the
   // outdoor answer, there being no building record in the street.
-  assert.match(body, /return mountServiceWindow\(openTradeWindow\(/, 'the native arm swallows its window');
+  // DISC10-E L3 re-aim: the counter the trade door REFUSED (a transformed lycanthrope) is no window - the arm hands
+  // back the refusal marker instead, which the popup reads as a dispatch; a built window is still handed back
+  assert.match(body, /const w = openTradeWindow\(shelf, b, 'Repair'[^\n]*\n\s*return w \? mountServiceWindow\(w\) : DOOR_REFUSED;/, 'the native arm swallows its window');
   assert.match(body, /return showRepairList\(0, ctx\);/, 'the keyed arm swallows its window');
   // and the window is handed the two collections the mode needs
   assert.match(wm, /otherItems: \(\) => \(playerEntity\.otherItems \?\?= \[\]\),/);

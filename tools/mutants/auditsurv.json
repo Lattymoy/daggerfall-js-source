@@ -39,8 +39,8 @@
   {
     "name": "AUDITSURV-the-fed-tally-banks-minutes-by-the-hundred",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (hungerNow === 'fed' && !vampire) { s.fed += 1; if (s.fed >= WELL_FED_MINUTES) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); } }",
-    "new": "  if (hungerNow === 'fed') { s.fed += NEED.PECKISH_AT - hunger; if (s.fed >= 500) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); } }",
+    "old": "  if (hungerNow === 'fed' && !vampire) { s.fed += 1; if (s.fed >= WELL_FED_MINUTES) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); refunded = DRAIN.wellFed; } }",
+    "new": "  if (hungerNow === 'fed') { s.fed += NEED.PECKISH_AT - hunger; if (s.fed >= 500) { s.fed = 0; sinks.restoreFatigue?.(DRAIN.wellFed); refunded = DRAIN.wellFed; } }",
     "tests": [
       "test/auditsurv.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "AUDITSURV-the-mod-off-keeps-the-drains",
     "file": "src/systems/worldTick.js",
-    "old": "  } else if (!survival) clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind",
-    "new": "  }",
+    "old": "    clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind\n",
+    "new": "",
     "tests": [
       "test/auditsurv.test.js"
     ]
@@ -238,10 +238,10 @@
     ]
   },
   {
-    "name": "AUDITSURV-the-pool-stands-camps-with-the-mod-off",
+    "name": "AUDITSURV-off-refuses-the-saves-camps-again",
     "file": "src/scenes/camps.js",
-    "old": "  function restore(list, fromWorld = (p) => p) {\n    if (!survivalOn()) return null;",
-    "new": "  function restore(list, fromWorld = (p) => p) {",
+    "old": "  function restore(list, fromWorld = (p) => p) {\n    // AUDIT SURV B: a MERGE by id",
+    "new": "  function restore(list, fromWorld = (p) => p) {\n    if (!survivalOn()) return null;\n    // AUDIT SURV B: a MERGE by id",
     "tests": [
       "test/auditsurv.test.js"
     ]
@@ -276,7 +276,7 @@
   {
     "name": "AUDITSURV-bare-feet-cost-blood-every-minute",
     "file": "src/systems/survival/needs.js",
-    "old": "      sinks.drainFatigue?.(DRAIN.bareFeet);\n",
+    "old": "      if (rules.stamina.bareFeet) tire(DRAIN.bareFeet, 'feet');\n",
     "new": "      sinks.hurt?.(1);\n",
     "tests": [
       "test/auditsurv.test.js"
@@ -285,8 +285,8 @@
   {
     "name": "AUDITSURV-exposure-hurts-every-minute-and-in-your-sleep",
     "file": "src/systems/survival/needs.js",
-    "old": "    if (abs > NEED.DAMAGE_AT && !sleeping && harmTick) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));",
-    "new": "    if (abs > NEED.DAMAGE_AT) sinks.hurt?.(Math.max(1, Math.trunc((abs - 40) / 10)));",
+    "old": "    if (rules.health && abs > NEED.DAMAGE_AT && !sleeping && harmTick) {",
+    "new": "    if (rules.health && abs > NEED.DAMAGE_AT) {",
     "tests": [
       "test/auditsurv.test.js"
     ]

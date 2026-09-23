@@ -13,7 +13,7 @@
 // travel-on-load. Versioned envelope; a mismatch refuses loudly.
 
 import { clampLegalReputations } from './court.js';   // AUDIT 23 (C4)
-import { defineLiveMaxMagicka } from './chargen.js';   // AUDIT 39: the live MaxMagicka accessor, on the LOAD arm too
+import { defineLiveMaxMagicka, defineLiveMaxHealth } from './chargen.js';   // AUDIT 39: the live MaxMagicka accessor, on the LOAD arm too; DISC10-E L4: and MaxHealth's
 import { rebuildEquipState, isEquipped, unequipSlot } from './equip.js';   // AUDIT 17e C1   // AUDIT 63 F28: RemoveItem takes an EQUIPPED item off the doll on its way out
 import { templateByIndex } from './itemTemplates.js';   // AUDIT 63r F28: `shortName` is SetItem's template read, not an optional override
 import { restartHeldEnchantments } from './enchantments.js';   // E2: the held bundles' restore half
@@ -30,7 +30,8 @@ import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
 import { quickslotSaveData, restoreQuickslotSaveData } from './quickslots.js';   // QS1: the quickslot diamond rides the one composer
 import { resetMagicRoundMarker, sharedClockOn, worldMinutes, alignEntityClocks } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233); AUDIT WORLD5 C4: a load online is an arrival
-import { alignSurvival } from './survival/needs.js';   // SURV7: the needs' markers on the load arm
+import { alignSurvival, pauseSurvival } from './survival/needs.js';   // SURV7: the needs' markers on the load arm
+import { survivalOn } from './survival/switch.js';   // AUDIT SURV-TIERS (the third pass): an Off player's absence is Off's
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
 import { createBankAccounts, createHouses } from './banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
 import { setItemFields } from './itemTemplates.js';   // JAN1: an item saved before MAC-N1 (no value) is set on the way in, so the trade strip never sums NaN
@@ -164,7 +165,7 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  enchantmentMagicRound clears the player's array at the head of
  *  every magic round (enchantments.js:842, DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
- *  pass, off worldTick.js:332 - so a load lands DFU's own shape, the
+ *  pass, off worldTick.js:397 - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives
  *  them eleven wide. An older snapshot's key is simply ignored (the
  *  restore loop skips what REP_ARRAYS does not name), so the envelope
@@ -261,6 +262,11 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.weather = snapshotWeather();
   characterIdOf(entity);   // CHARID1: a character that reached a save without an id (born before this) gets one here, before the copy
   for (const k of ENTITY_FIELDS) snap[k] = entity[k];
+  // DISC10-E L4: `data.playerEntity.maxHealth = entity.RawMaxHealth`
+  // (SerializablePlayer.cs:118) - the LIMITED MaxHealth is a lycanthrope's
+  // unsated urge, rebuilt by the next magic round; saving it would make the
+  // ceiling permanent.
+  if ('rawMaxHealth' in entity) snap.maxHealth = entity.rawMaxHealth;
   snap.stats = { ...entity.stats };
   // SURV1: the needs record (survival/needs.js) - its markers are classic
   // minutes and its counters plain numbers; the note throttles are not
@@ -550,6 +556,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // (which never walks chargen) freezes the ceiling at the saved
   // number, orphaning every maxMagickaModifier producer. Idempotent.
   defineLiveMaxMagicka(entity);
+  defineLiveMaxHealth(entity);   // DISC10-E L4: the same law for MaxHealth - the setter below writes the RAW value
   for (const k of ENTITY_FIELDS) entity[k] = snap[k];
   // CHARID1: A LEGACY SAVE IS ADOPTED HERE. An envelope written before
   // the id existed carries none; its character gets one now, and every
@@ -651,6 +658,15 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     }
   }
   entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312)
+  // DISC10-D/E V11: THE DREAM'S PUSH IS NOT SAVED. CustomSaveData_v1 keeps
+  // the two PLAYED flags and the day (VampirismInfection.cs:221-251,
+  // LycanthropyInfection.cs:143-149); warningDreamVideoScheduled restores
+  // at its default, false. The port saved the push flag too, so a save
+  // taken while the dream was up - its close never to come in the loaded
+  // game - held the infection at `!dreamScheduled` for ever: no dream, so
+  // no turn. `deathScheduled` IS fakeDeathVideoPlayed, which DFU saves, and
+  // stays.
+  for (const a of entity.activeEffects) if (a.infection && !a.dreamPlayed) a.dreamScheduled = false;
   // V2a: the racial override MARKER is a live reference into the list
   // just restored - rebuilt here, never serialized on its own, so the
   // marker and the entry can never disagree (the gates - a second
@@ -841,7 +857,14 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // after it: a quick load, a boot ?load or a dungeon's own load restored the save's own clock into every marker,
   // and the next tick caught up the distance to the world (or read it negative).
   if (sharedClockOn()) { alignEntityClocks(entity, worldMinutes()); rollClimateWeathersForDay(worldMinutes()); }
-  if (sharedClockOn()) alignSurvival(entity, Math.floor(worldMinutes()), Math.floor(snap.classicMinutes ?? 0));   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)
+  if (sharedClockOn()) {
+    const at = Math.floor(worldMinutes()), saved = Math.floor(snap.classicMinutes ?? 0);
+    // AUDIT SURV-TIERS (the third pass): WORLD5's short absence keeps its hunger because the arc was ON for it. An Off
+    // player's is Off's, and pauses the needs as the world tick pauses every span it walks with the arc Off: an hour
+    // and a half logged off came back hungry and nineteen hours awake, in the tier that promises no needs at all.
+    if (!survivalOn() && at > saved) pauseSurvival(entity, saved, at);
+    alignSurvival(entity, at, saved);   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)
+  }
   // AUDIT 39: the three extras above ride back out too - a save from
   // before they were carried reads the same null/0 they used to.
   return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5

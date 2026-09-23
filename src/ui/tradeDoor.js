@@ -12,6 +12,8 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhancedOverlays.js';
 import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from './nativeTrade.js';
+import { racialSuppressInventory } from '../systems/lycanthropy.js';   // DISC10-E L3: the trade window's inherited refusal
+import { messageBox } from '../systems/notify.js';   // DISC10-E L3: DaggerfallUI.MessageBox
 
 export { preloadTradeArt };
 
@@ -30,6 +32,13 @@ export function tradeDoorReady() {
  * for the pack.
  */
 export function createTradeWindow(hooks = {}) {
+  // DISC10-E L3: DaggerfallTradeWindow.OnPush/Update (:369-376, :355-366) -
+  // the inventory window's own suppression, inherited: a transformed
+  // lycanthrope opens no counter of any mode (Identify, Repair, the guild
+  // stores). The line is said and nothing is built; the caller mounts
+  // nothing (ui/inventoryDoor.js has the full note).
+  const sup = racialSuppressInventory(hooks.entity);
+  if (sup) { messageBox(sup.text); return null; }
   if (isEnhanced() && typeof document !== 'undefined') {
     return enhancedTradeOverlay(hooks);
   }

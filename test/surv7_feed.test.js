@@ -56,7 +56,7 @@ test('SURV7: the feed - null with the mod off or no env; the env over the defaul
 });
 
 test('SURV7: the gate - the record\'s felt word, the host\'s fire and roof, on DFU\'s prevent-rest seam; too cold without either, too hot anywhere, nothing off the switch', () => {
-  _resetForTests();
+  _resetForTests(); setPref('survival', 'hard');   // SURV-TIERS: the gate is Hard's (Casual refuses no sleep - survtiers.test.js)
   clearPreventRestConditions();
   const p = player();
   let env = { byFire: false, insideBuilding: false };
@@ -84,7 +84,7 @@ test('SURV7: the gate - the record\'s felt word, the host\'s fire and roof, on D
 });
 
 test('SURV7: composed - the ticker feeds the minute law from the host\'s env (the felt reading lands on the record, the thirst moves), puts the gate on the seam, and feeds nothing with the mod off; the alignment law', () => {
-  _resetForTests();
+  _resetForTests(); setPref('survival', 'hard');   // SURV-TIERS: the gate below is Hard's
   clearPreventRestConditions();
   setWorldMinutes(3 * 1440 + 12 * 60);
   const p = player();
@@ -138,7 +138,7 @@ test('SURV7: by source - the four hosts feed their env (the roof, the floor, the
     // journey as `resting`; Mac took it off ("journeys no longer sit as
     // resting"), and the two readers are one sentence again - which is
     // what a FOUR HOSTS reader should be.
-    assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null : survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground`);
+    assert.match(src, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? \(playerEntity\.isResting \? modes\?\.dungeonCtx\?\.survivalEnvNow\?\.\(\) \?\? null : null\) : survivalEnvNow\(\)\),/, `${name}: the ticker's reader, silent underground - but for a mirrored rest, which runs here (AUDIT SURV-TIERS)`);
     assert.doesNotMatch(src, /resting: true \}\n?\s*: survivalEnvNow/, `${name}: and no arm sits the traveller down`);
     assert.match(src, /survivalEnv: \(\) => survivalEnvNow\(\),/, `${name}: the host bag's reader`);
   }
@@ -157,7 +157,7 @@ test('SURV7: by source - the four hosts feed their env (the roof, the floor, the
   assert.match(dc, /byFire: !!\(_fpFeet && camps\.byFire\(_fpFeet\)\),/, 'dungeon: its own fire');
   assert.match(dc, /survival: survivalFeed\(playerEntity, survivalEnvNow\(\), \{ say: \(msg\) => hudText\.add\(msg\) \}\),/, 'dungeon: its own tick feeds');
   assert.match(dc, /installSurvivalGate\(registerPreventRestCondition, \(\) => playerEntity, survivalEnvNow\);/, 'dungeon: its own gate');
-  assert.match(save, /if \(sharedClockOn\(\)\) alignSurvival\(entity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(snap\.classicMinutes \?\? 0\)\);/, 'the load arm');
+  assert.match(save, /if \(sharedClockOn\(\)\) \{\n\s+const at = Math\.floor\(worldMinutes\(\)\), saved = Math\.floor\(snap\.classicMinutes \?\? 0\);[\s\S]{0,600}?if \(!survivalOn\(\) && at > saved\) pauseSurvival\(entity, saved, at\);\n\s+alignSurvival\(entity, at, saved\);/, 'the load arm (AUDIT SURV-TIERS, the third pass: an Off player\'s absence pauses first)');
   assert.match(read('src/systems/worldTick.js'), /felt = runSurvivalMinutes\(entity, lastMinutes, nowMinutes, survival\.env \?\? \{\}, /, 'the tick runs the minutes');
   assert.doesNotMatch(read('src/systems/survival/env.js'), /from '\.\.\/\.\.\/scenes\/|from '\.\.\/\.\.\/ui\/|from '\.\.\/\.\.\/combat\/|from '\.\.\/spellcast|from '\.\.\/diseases|from '\.\.\/effects|from '\.\.\/lycanthropy|document\.|window\./);
 });

@@ -144,8 +144,11 @@ DFU's preset picker **overwrites** the player's values. The port lays
 the preset over them while the mod's `WeaponWidgetPreset` switch is on
 (`withDiverseWeaponsPreset`, at `readWidgetSettings`) and leaves their
 own underneath, so turning it off gives them back; Weapon Widget's
-`Enabled` is never in it. **Off by default** - a preset nobody selected
-is not selected. `flattenModPreset` is the general reader for DFU's
+`Enabled` is never in it. **On by default** since DW-CLIP (2026-09-23,
+Mac, off a Discord report that the mod needed "a setting turned on":
+"mod should be defaulted on") - it was off at DW1 because a preset
+nobody selected is not selected, and the first player to meet it had
+to go looking for the switch. `flattenModPreset` is the general reader for DFU's
 `{ Values: { Section: { Key: "string" } } }` shape, coercing by the
 declared key's kind ("False" is `false`, not a non-empty string).
 
@@ -271,6 +274,33 @@ arm's one exception (Silver is Unchanged), the item's dye at the doll
 Suite `test/auditdw.test.js` (5). Mutants: the archive preload taking
 lazy entries, a frame awaited alone, the doubled flag ignored, the
 per-record ask dropped - all dead.
+
+## DW-CLIP (2026-09-23) - the preset's idles were half off the screen
+
+A player on Discord, with the preset on: *"you dont see some weapons
+all the time when idling only a small snippet of them ... dont know if
+its even possible to fix this cut off effect."*
+
+The clone's DoubleScaleTextures arm (IL 0x2248-0x22b1) adds half the
+rect to the Offset channel on an idle - the doubled `w_` repaint, drawn
+into a box UpdateWeapon made twice the classic frame, lands where the
+classic one stood. The port applied that shift whenever the module was
+on. The preset turns DoubleScaleTextures on **and** TrueTextureSize on
+at factor 1, and under TrueTextureSize the box is the painting's own
+size, not doubled: the mod's `w_` idles are full-canvas paintings (the
+war axe's is 317x200 - the whole screen; the longsword's 120x172), so
+half a screen's shift right and down left the top-left corner showing.
+The weapons whose `w_` idle is near the screen's size lost most of the
+sprite; the 2x ones lost three quarters. The shift rides the doubling
+now: DoubleScaleTextures without TrueTextureSize, and a `w_` hit - the
+only case UpdateWeapon doubles the box. A plain hit through the
+fall-through and the classic frame were never doubled and are not
+shifted either. Pinned on the clone's bench: the three cases' offsets,
+and the war axe's full painting drawn whole under the preset.
+
+The preset itself defaults **on** now (above). Weapon Widget's own
+`DoubleScaleTextures` default is off, so a player without the preset
+sees no change.
 
 ## Record
 

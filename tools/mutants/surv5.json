@@ -47,7 +47,7 @@
   {
     "name": "SURV5-the-blackout-band-is-the-drunk-band",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  if (s.drunk > endurance) return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };",
+    "old": "  if (s.drunk > endurance && (rules ?? HARD_RULES).blackout) return { text: TAVERN_MENU_TEXT.blackout, blackout: true, minutes: DRINK_MINUTES };",
     "new": "",
     "tests": [
       "test/surv5_ui.test.js"
@@ -128,7 +128,7 @@
   {
     "name": "SURV5-the-blackout-leaves-you-limber",
     "file": "src/ui/tavernWindow.js",
-    "old": "          stiffen(h.entity, now + r.minutes + b.minutes);   // the night on the boards is a rough one (SURV4)\n",
+    "old": "          stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules);   // the night on the boards is a rough one (SURV4), at the tier's price\n",
     "new": "",
     "tests": [
       "test/surv5_ui.test.js"

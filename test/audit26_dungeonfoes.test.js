@@ -535,7 +535,11 @@ test('F212: the world host collects both pools with the pixel, which is also wha
   // PIN MOVED AGAIN (AUDIT BRANCH (WoD)), 3700 -> 3900: the sweep now also
   // clears DFU's terrain array and raises the markers' arrival gate, two
   // statements beside the carry's, above the needles.
-  const core = WORLD.slice(t, t + 3900);
+  // PIN MOVED AGAIN (AUDIT SURV-TIERS, the third pass, at the merge of
+  // main), 3900 -> 4600: the camps now go through natives across the
+  // re-anchored frame, their snapshot and teardown with their own note
+  // above the needles.
+  const core = WORLD.slice(t, t + 4600);
   assert.ok(core.includes('destroyPixel(bx, by);'),
     'so a fast travel or a teleport takes every corpse with it');
   assert.ok(core.includes('exteriorFoes.clearLive();') && core.includes('cityGuards.clearLive();'),

@@ -1,0 +1,812 @@
+[
+  {
+    "name": "DISC10-the-cart-never-yields",
+    "file": "src/player/mwView.js",
+    "old": "cart: !!frame.cart && !eotbCartYields(),",
+    "new": "cart: !!frame.cart,",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-world-host-registers-no-yield",
+    "file": "src/scenes/world.js",
+    "old": "  setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);   // DISC10: one cart - EOTB's gives way while HCC's trails (mwView.js)\n",
+    "new": "",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-exterior-host-registers-no-yield",
+    "file": "src/scenes/exterior.js",
+    "old": "  setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);   // DISC10: one cart - EOTB's gives way while HCC's trails (mwView.js)\n",
+    "new": "",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-yield-ignores-the-trailing-setting",
+    "file": "src/scenes/world.js",
+    "old": "setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);",
+    "new": "setEotbCartYields(() => hccOn());",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-pick-ignores-the-turned-box",
+    "file": "src/player/activate.js",
+    "old": "    let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb);",
+    "new": "    let d = rayAabb(eye, dir, target.aabb);",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-turned-box-read-unrotated",
+    "file": "src/player/activate.js",
+    "old": "  const o = [rx * m[0] + ry * m[1] + rz * m[2], rx * m[4] + ry * m[5] + rz * m[6], rx * m[8] + ry * m[9] + rz * m[10]];",
+    "new": "  const o = [rx, ry, rz];",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-cart-offers-no-turned-box",
+    "file": "src/player/eotbWagon.js",
+    "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
+    "new": "noSurface: true,",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-cart-names-the-ground-inside-it",
+    "file": "src/player/eotbWagon.js",
+    "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
+    "new": "obb: localBox ? { m, box: localBox } : null,",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-person-marks-only-the-person",
+    "file": "src/systems/answerPipeline.js",
+    "old": "      if (item.questionType === QUESTION_TYPE.Person) {\n        const placeKey",
+    "new": "      if (false) {\n        const placeKey",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-place-marked-with-directions-only",
+    "file": "src/systems/answerPipeline.js",
+    "old": "        if (placeInfo) placeInfo.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.LocationWasMarkedOnMap;",
+    "new": "        if (placeInfo) placeInfo.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.ReceivedDirectionalHints;",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-H1-the-vampire-never-feeds",
+    "file": "src/systems/worldTick.js",
+    "old": "  onVampireHit(player, nowMinutes);\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-H1-the-werewolf-never-sees-the-kill",
+    "file": "src/systems/worldTick.js",
+    "old": "  onLycanthropeHit(player, target, { nowMinutes, isCivilian, mobileType: mobileType ?? target?.mobileType ?? null });\n",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-H1-the-stamp-is-not-the-clock",
+    "file": "src/systems/worldTick.js",
+    "old": "nowMinutes = Math.floor(worldMinutes()), isCivilian = false",
+    "new": "nowMinutes = 0, isCivilian = false",
+    "tests": [
+      "test/disc10_vampire.test.js",
+      "test/disc10_lycan.test.js",
+      "test/audit39_combat.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-H1-the-watch-pool-strike-dispatches-nothing",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: GUARD_MOBILE_TYPE });",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-H1-the-murdered-civilian-dispatches-nothing",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });\n",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js",
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-H1-the-civilian-is-not-innocent",
+    "file": "src/scenes/cityGuards.js",
+    "old": "playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });",
+    "new": "playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: false });",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-H1-the-civilian-is-not-dead",
+    "file": "src/scenes/cityGuards.js",
+    "old": "playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });",
+    "new": "playerWeaponHitEntity(playerEntity, { health: 1 }, { isCivilian: true });",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-H1-the-encounter-pool-strike-dispatches-nothing",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-H1-the-dungeon-zero-connect-dispatches-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });   // DISC10-D H1: OnWeaponHitEntity, after DecreaseHealth and HandleAttackFromSource (WeaponManager.cs:627-635) - every connect, the zero-damage one too\n        continue;",
+    "new": "        continue;",
+    "tests": [
+      "test/disc10_lycan.test.js",
+      "test/audit58_combat.test.js",
+      "test/auditworld6biiie.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-H1-the-dungeon-damaging-connect-dispatches-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)\n      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });",
+    "new": "      damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-H1-the-arrow-dispatches-nothing",
+    "file": "src/combat/arrowFlight.js",
+    "old": "  playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType ?? null });\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js",
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V1-the-clock-is-the-first-past-round",
+    "file": "src/systems/worldTick.js",
+    "old": "  const clockMinutes = to;",
+    "new": "  const clockMinutes = from + 1;",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V1-the-sun-reads-the-past-round",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "    && playerInSunlight(clockMinutes)) {\n    sinks?.hurt?.(SUN_DAMAGE_AMOUNT);",
+    "new": "    && playerInSunlight(nowMinutes)) {\n    sinks?.hurt?.(SUN_DAMAGE_AMOUNT);",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V1-the-round-hands-no-clock-to-the-sun",
+    "file": "src/systems/worldTick.js",
+    "old": "passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, clockMinutes, sinks });",
+    "new": "passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, sinks });",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-V1-the-moon-reads-the-past-round",
+    "file": "src/systems/lycanthropy.js",
+    "old": "isFullMoonFromMinutes(clockMinutes) && !entry.isTransformed",
+    "new": "isFullMoonFromMinutes(nowMinutes) && !entry.isTransformed",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V2-a-restored-marker-is-minted-in-the-past",
+    "file": "src/systems/worldTick.js",
+    "old": "    consumeVampirismPending(entity, { now: clockMinutes });",
+    "new": "    consumeVampirismPending(entity, { now: r + 1 });",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V2-the-deploy-mints-nothing",
+    "file": "src/systems/infection.js",
+    "old": "  if (entity && _curseDeployer && Number.isFinite(now)) _curseDeployer(entity, { now: Math.floor(now) });\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V2-no-vampire-deployer-registered",
+    "file": "src/systems/worldTick.js",
+    "old": "  consumeVampirismPending(entity, { now });\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V2-the-host-hands-no-clock",
+    "file": "src/scenes/shared.js",
+    "old": "    nowMinutes: () => Math.floor(worldMinutes()),\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-V2-the-round-turn-mints-at-the-hosts-clock",
+    "file": "src/systems/infection.js",
+    "old": "      deployInfection(entry, entity, syncOpts);",
+    "new": "      deployInfection(entry, entity, o);",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V2-the-popup-before-the-curse",
+    "file": "src/systems/infection.js",
+    "old": "  if (key === INFECTION.Vampirism) messageBox?.(DEATH_IS_NOT_ETERNAL_TEXT_ID);\n  endDisease(entry);",
+    "new": "  endDisease(entry);",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V3-the-clan-ignores-the-players-store",
+    "file": "src/scenes/shared.js",
+    "old": "const dict = entity?.factionRep?.dict ?? (typeof factionDict",
+    "new": "const dict = (typeof factionDict",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V3-region-minus-one-is-any-province",
+    "file": "src/scenes/shared.js",
+    "old": "const province = dict && regionIndex >= 0 ? findFactions",
+    "new": "const province = dict ? findFactions",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V3-the-deploy-hands-no-player",
+    "file": "src/systems/infection.js",
+    "old": "pending.clan = clanOf ? clanOf(entry.regionIndex, entity) : VAMPIRE_CLANS.Lyrezi;",
+    "new": "pending.clan = clanOf ? clanOf(entry.regionIndex) : VAMPIRE_CLANS.Lyrezi;",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V3-the-bite-above-ground-forgets-the-region",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          regionIndex: regionIndex(),   // DISC10-D V3: the clan is the region's, read at the turn from where the bite was taken\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V3-the-bite-underground-forgets-the-region",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        regionIndex: dfLocation?.regionIndex ?? -1,   // DISC10-D V3: PlayerGPS.CurrentRegionIndex underground is the dungeon's own region (VampirismInfection.cs:91)\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V4-the-transfer-refuses-inside",
+    "file": "src/scenes/world.js",
+    "old": "  function transferToCemeteryArm() {\n    const mapTable",
+    "new": "  function transferToCemeteryArm() {\n    if ((modes?.mode ?? 'exterior') !== 'exterior') {\n      console.warn('[infection] the cemetery transfer needs the exterior mode - the vampire wakes where they fell');\n      return;\n    }\n    const mapTable",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V4-the-transfer-never-leaves-the-interior",
+    "file": "src/scenes/world.js",
+    "old": "    const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);\n    modes?.forceExitToExterior();\n",
+    "new": "    const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);\n",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V4-the-dungeon-is-handed-no-arm",
+    "file": "src/scenes/worldModes.js",
+    "old": "          transferToCemetery: () => host.transferToCemetery?.(),\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V4-the-dungeon-registers-no-arm",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    transferToCemetery: opts.transferToCemetery ?? null,\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V5-the-vampire-keeps-the-birth-name",
+    "file": "src/systems/vampirism.js",
+    "old": "      name: vamp.raceNameOverride ?? 'Vampire',",
+    "new": "      name: base.name,",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V5-the-compound-race-is-not-paralysis-immune",
+    "file": "src/systems/vampirism.js",
+    "old": "immunityFlags: (base.immunityFlags ?? 0) | EFFECT_BITS.toParalysis | EFFECT_BITS.toDisease,",
+    "new": "immunityFlags: (base.immunityFlags ?? 0) | EFFECT_BITS.toDisease,",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V5-the-enhanced-sheet-reads-the-birth-race",
+    "file": "src/ui/enhancedCharSheet.js",
+    "old": "    race: raceTemplateOf(e)?.name ?? e.race ?? 'Breton',",
+    "new": "    race: e.race ?? 'Breton',",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V5-the-classic-sheet-reads-the-birth-race",
+    "file": "src/ui/charsheet.js",
+    "old": "    label(liveRaceTemplate(e)?.name ?? e.race ?? 'Breton', 41, 14);",
+    "new": "    label(e.race ?? 'Breton', 41, 14);",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V8-the-turn-leaves-the-rest-window-up",
+    "file": "src/systems/infection.js",
+    "old": "    cancelRest?.();\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V8-the-street-hands-no-cancel",
+    "file": "src/scenes/world.js",
+    "old": "    cancelRest: cancelRestArm,   // DISC10-D V8: the street's rest window, closed at the turn (hoisted, beside the cemetery arm)\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V8-the-mode-machine-bag-carries-no-cancel",
+    "file": "src/scenes/world.js",
+    "old": "    cancelRest: cancelRestArm,   // DISC10-D V8: and the rest window the street holds, for the same registration\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V8-the-mode-machine-drops-the-street-cancel",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorOverlay.dispose?.(); host.cancelRest?.(); },",
+    "new": "interiorOverlay.dispose?.(); },",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V8-the-dungeon-hands-no-cancel",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    cancelRest: () => { if (activeOverlay?.isRestWindow) activeOverlay.dispose?.(); },\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V9-the-infection-day-stays-the-saves",
+    "file": "src/systems/worldTick.js",
+    "old": "    if (a.infection && Number.isFinite(a.startingDay)) a.startingDay = pastDay(a.startingDay);\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js",
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-V9-the-werewolf-clocks-stay-the-saves",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (lyc) for (const k of ['lastKilledInnocent', 'lastCastMorphSelf', 'lastUrgeNotify']) if (Number.isFinite(lyc[k])) lyc[k] = past(lyc[k]);\n",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-V9-a-hole-is-read-as-a-curse",
+    "file": "src/systems/lycanthropy.js",
+    "old": "(entity?.activeEffects ?? []).find((a) => a?.kind === 'racialOverride'\n    && a.racial === 'lycanthropy'",
+    "new": "(entity?.activeEffects ?? []).find((a) => a.kind === 'racialOverride'\n    && a.racial === 'lycanthropy'",
+    "tests": [
+      "test/auditworld5.test.js",
+      "test/world5.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-D-V11-the-restored-dream-stays-scheduled",
+    "file": "src/systems/save.js",
+    "old": "  for (const a of entity.activeEffects) if (a.infection && !a.dreamPlayed) a.dreamScheduled = false;\n",
+    "new": "",
+    "tests": [
+      "test/disc10_vampire.test.js",
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L2-the-claws-strike-as-a-weapon",
+    "file": "src/combat/playerWeapon.js",
+    "old": "...playerAttackOptions(this.strikingWeapon, this.machine.state",
+    "new": "...playerAttackOptions(this.weapon, this.machine.state",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L2-the-striking-weapon-is-the-screens",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    return (this.usingRightHand ? this.currentRightHandWeapon : this.currentLeftHandWeapon) ?? null;\n  }\n",
+    "new": "    return this.weapon;\n  }\n",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L3-the-pack-opens-for-the-beast",
+    "file": "src/ui/inventoryDoor.js",
+    "old": "  if (sup) { messageBox(sup.text); return null; }\n",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L3-the-counter-opens-for-the-beast",
+    "file": "src/ui/tradeDoor.js",
+    "old": "  if (sup) { messageBox(sup.text); return null; }\n",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L3-the-quickslot-potion-for-the-beast",
+    "file": "src/systems/quickslots.js",
+    "old": "  // :583-587). The window's own line, and nothing is consumed.\n  const sup = racialSuppressInventory(entity);\n  if (sup) { say?.(sup.text); return { kind: 'refused' }; }\n",
+    "new": "  // :583-587). The window's own line, and nothing is consumed.\n",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L3-the-quickslot-swap-for-the-beast",
+    "file": "src/systems/quickslots.js",
+    "old": "  // sword into the claws MorphSelf had just emptied (:463-467).\n  const sup = racialSuppressInventory(entity);\n  if (sup) { say?.(sup.text); return { kind: 'refused' }; }\n",
+    "new": "  // sword into the claws MorphSelf had just emptied (:463-467).\n",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L3-quick-loot-takes-for-the-beast",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (racialSuppressInventory(playerEntity)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L3-the-street-pack-mounts-a-null",
+    "file": "src/scenes/world.js",
+    "old": "        openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); },   // DISC10-E L3: a refused pack is null\n",
+    "new": "        openPack: () => townTalk.showOverlay(makeInventoryWindow()),\n",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L3-the-dungeon-writes-the-null-over-the-box",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const w = openInventory(null);\n      if (w) activeOverlay = w;   // DISC10-E L3: a refused pack is null - and its box already holds the slot\n",
+    "new": "      activeOverlay = openInventory(null);\n",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L3-the-service-door-mounts-the-refusal",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!win || win.refusedByDoor) return null;",
+    "new": "    if (!win) return null;",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L4-maxhealth-ignores-the-limiter",
+    "file": "src/systems/chargen.js",
+    "old": "      if (!(limiter >= 1)) return stored;   // \"Limiter must be 1 or greater\"\n      return limiter < stored ? limiter : stored;",
+    "new": "      return stored;",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L4-the-limit-ratchets-off-itself",
+    "file": "src/systems/lycanthropy.js",
+    "old": "let limit = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) -",
+    "new": "let limit = (entity.maxHealth ?? 0) -",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L4-the-save-keeps-the-limited-ceiling",
+    "file": "src/systems/save.js",
+    "old": "  if ('rawMaxHealth' in entity) snap.maxHealth = entity.rawMaxHealth;\n",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L4-the-load-leaves-a-plain-field",
+    "file": "src/systems/save.js",
+    "old": "  defineLiveMaxHealth(entity);   // DISC10-E L4: the same law for MaxHealth - the setter below writes the RAW value\n",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L4-chargen-installs-no-accessor",
+    "file": "src/systems/chargen.js",
+    "old": "  defineLiveMaxHealth(playerEntity);   // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied\n",
+    "new": "",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L4-the-level-adds-through-the-limiter",
+    "file": "src/systems/advancement.js",
+    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT",
+    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-L4-the-virtue-level-adds-through-the-limiter",
+    "file": "src/systems/oblivionLeveling.js",
+    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
+    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-dungeon-hit-sound-reads-the-claws",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "audio.play3d(hitSoundFor(playerWeapon.strikingWeapon), foe.ai.feet,",
+    "new": "audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet,",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-street-hit-sound-reads-the-claws",
+    "file": "src/scenes/world.js",
+    "old": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.strikingWeapon),",
+    "new": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon),",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-exterior-hit-sound-reads-the-claws",
+    "file": "src/scenes/exterior.js",
+    "old": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.strikingWeapon),",
+    "new": "const guardHitSound = (g) => audio.play3d(hitSoundFor(weaponRig.playerWeapon.weapon),",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-interior-hit-sound-reads-the-claws",
+    "file": "src/scenes/worldModes.js",
+    "old": "const interiorHitSound = (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.strikingWeapon),",
+    "new": "const interiorHitSound = (g) => audio.play3d(hitSoundFor(interiorWeapon.playerWeapon.weapon),",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-interior-foe-pool-reads-the-foe-as-a-weapon",
+    "file": "src/scenes/worldModes.js",
+    "old": "        makeInView(proj, view, multiply), interiorHitSound)) {\n        tallySwingSkills(",
+    "new": "        makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), ENEMY_HIT_VOLUME))) {\n        tallySwingSkills(",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-pool-zero-damage-reads-the-claws",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "          weapon: playerWeapon.strikingWeapon, arrowHit: false,",
+    "new": "          weapon: playerWeapon.weapon, arrowHit: false,",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-guard-zero-damage-reads-the-claws",
+    "file": "src/scenes/cityGuards.js",
+    "old": "          weapon: playerWeapon.strikingWeapon, arrowHit: false,",
+    "new": "          weapon: playerWeapon.weapon, arrowHit: false,",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-dungeon-zero-damage-reads-the-claws",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          weapon: playerWeapon.strikingWeapon, arrowHit: false,",
+    "new": "          weapon: playerWeapon.weapon, arrowHit: false,",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-smith-refusal-says-not-available",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (!win) return inventoryDoorReady() ? DOOR_REFUSED : null;",
+    "new": "if (!win) return null;",
+    "tests": [
+      "test/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-owner-never-reports",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f.dead) _net?.onPeerHit?.({ to: from, k: data.k ?? _net?.room?.() ?? null, i: data.i | 0, slain: 1 });\n",
+    "new": "\n",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-owner-reports-every-blow",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (f.dead) _net?.onPeerHit?.({ to: from, k:",
+    "new": "    if (true) _net?.onPeerHit?.({ to: from, k:",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-striker-never-stamps",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        f._struckAt = _now();   // DISC10-E",
+    "new": "        // DISC10-E",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-unwindowed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "new": "if (!f || f._struckAt == null) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-lands-unstruck",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "new": "if (!f) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-lands-twice",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      f._struckAt = null;\n      playerWeaponKillReported",
+    "new": "      playerWeaponKillReported",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-shape-unchecked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (data.slain !== 1) return false;\n",
+    "new": "\n",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-trusts-any-owner",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const f = _pupIndex.get(pupKey(from, data.i | 0)) ?? null;\n      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS)",
+    "new": "      const f = foes.find((x) => x.puppet && x.seq === (data.i | 0)) ?? null;\n      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS)",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-feeds-the-vampire",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (!player?.racialOverride) return;\n  onLycanthropeHit(player, { health: 0 }, { nowMinutes, isCivilian, mobileType });",
+    "new": "  if (!player?.racialOverride) return;\n  onVampireHit(player, nowMinutes);\n  onLycanthropeHit(player, { health: 0 }, { nowMinutes, isCivilian, mobileType });",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-E-online-report-reads-no-type",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      playerWeaponKillReported(playerEntity, { mobileType: f.mobileType });",
+    "new": "      playerWeaponKillReported(playerEntity, { mobileType: 146 });",
+    "tests": [
+      "test/disc10_online_kill.test.js"
+    ]
+  }
+]

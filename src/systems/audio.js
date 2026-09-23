@@ -248,6 +248,23 @@ export class AudioEngine {
     for (const i of Object.keys(SOUND_REPLACEMENTS)) this._replacement(Number(i));
   }
 
+  /** DISC11: a clip's RMS level over its whole buffer, measured once. Two recordings of one sound (DAGGER.SND's rain
+   *  and Better Ambience's AmbientRaining.wav) are not equally loud at equal gain; this is how a caller matches them.
+   *  Null while the clip is not decoded. */
+  clipLevel(index) {
+    const buf = this._buffer(index);
+    if (!buf) return null;
+    const cache = (this._levels ??= new WeakMap());
+    let rms = cache.get(buf);
+    if (rms === undefined) {
+      let sum = 0, n = 0;
+      for (let c = 0; c < buf.numberOfChannels; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) sum += d[i] * d[i]; n += d.length; }
+      rms = n ? Math.sqrt(sum / n) : 0;
+      cache.set(buf, rms);
+    }
+    return rms;
+  }
+
   _buffer(index) {
     if (typeof index === 'number') {
       if (soundSilenced(index)) return null;   // SNDREP1: the player switched this sound off - it plays as a missing clip does: not at all

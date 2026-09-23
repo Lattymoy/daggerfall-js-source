@@ -102,8 +102,10 @@ test('AUDIT WORLD4 A2/B2/D1 + C4: the mint is the ONE HOME of what may be said -
 test('AUDIT WORLD4 C1/C2/C6 + D5: a container YOU have open is yours until you close it (the pack binds each loot row to the item OBJECT and never repaints, so landing the room\'s word under an open window orphaned every row and the next click took the item AND left it in the chest); a CLAIM speaks only where the room has not spoken; the claim follows the MOUNT; and the room\'s memory falls due the moment one lands', () => {
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /let _lootOpenKey = null;/, 'the container this player has open');
-  assert.match(d, /const _k = lootHolder\(key\) \? lootKeyOf\(key\) : null;\s*activeOverlay = openInventory\(source, onEmptied, \{ lootHooks, lootKey: _k \}\);\s*if \(activeOverlay && _k\) \{ _lootOpenKey = _k; publishLoot\(_k, \{ claim: true \}\); \}/,
-    'C6: openInventory REFUSES a transformed lycanthrope and returns null - no window, no claim');
+  // DISC10-E L3 re-aim: the refusal is the inventory DOOR's now (ui/inventoryDoor.js), and the null it answers must
+  // not be written over the slot its refusal box already holds - the claim still follows the MOUNT alone
+  assert.match(d, /const _k = lootHolder\(key\) \? lootKeyOf\(key\) : null;\s*const _w = openInventory\(source, onEmptied, \{ lootHooks, lootKey: _k \}\);\s*if \(_w\) activeOverlay = _w;[^\n]*\n\s*if \(_w && _k\) \{ _lootOpenKey = _k; publishLoot\(_k, \{ claim: true \}\); \}/,
+    'C6: the inventory door REFUSES a transformed lycanthrope and answers null - no window, no claim');
   assert.match(d, /onClose: \(\) => \{ onEmptied\?\.\(\); if \(lootKey\) \{ _lootOpenKey = null; publishLoot\(lootKey\); \}/, 'and the window is closed before its last word goes, so the room\'s next word may land');
   assert.match(d, /if \(claim && _lootSeen\.has\(canon\)\) return false;/, 'C2: a claim never overwrites the room\'s newer word - a joiner inside the memory\'s window used to un-empty a chest for everyone');
   assert.match(d, /const first = !_lootSeen\.has\(canon\);\s*_lootSeen\.add\(canon\);\s*(?:const _t = _wallNow\(\); if \(_t != null\) _lootAt\.set\(canon, _t\);[^\n]*\n\s*)?if \(first\) opts\.onLootClaimed\?\.\(\);/, 'D5: and the first word about a container makes the memory due');

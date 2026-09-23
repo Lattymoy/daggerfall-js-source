@@ -14,6 +14,7 @@ import {
   SFX_CANDIDATES, createSfxPlayer,
 } from '../src/tools/gunLab.js';
 import { ALIGN as FPS_ALIGN } from '../src/combat/fpsWeapon.js';
+import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';   // DW-CLIP: the Diverse Weapons preset defaults on; the lab's subject is Weapon Widget's own numbers
 import { bobStep, offsetStep, inertiaStep } from '../src/combat/weaponWidgetMotion.js';
 
 test('the lab is a lab: nothing the game runs imports it, and it changes no weapon law', () => {
@@ -39,6 +40,7 @@ test('the mod\u2019s movement is RUN, not copied - the lab imports the modules t
 });
 
 test('the lab reads the mod\u2019s own settings, with the mod\u2019s own multipliers', () => {
+  _resetModSettings(); setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);
   const d = widgetDefaults();
   assert.equal(d['Bob.Length'], 100, 'the declared default, not a number the lab made up');
   assert.equal(d['Modules.Inertia'], false, 'the MOD ships Inertia off');
@@ -67,7 +69,7 @@ test('Weapon Widget\u2019s Bob sways the gun while walking and barely breathes w
   const standing = span(labMotion({ walking: false }));
   assert.ok(walking > 10, `the walk sways the sprite (${walking.toFixed(1)}px)`);
   assert.ok(standing > 0 && standing < walking / 3, `BobWhileIdle is a tenth of a stride, not a stride (${standing.toFixed(1)}px)`);
-  // the motor's frame is the rig's own shape (weaponRig.js:1357-1364)
+  // the motor's frame is the rig's own shape (weaponRig.js:1380-1387)
   const m = labMotion({ walking: true, running: true });
   assert.ok(m.speedRatio > 1 && m.baseSpeed > 0 && m.localVel[2] > 0, 'running is faster than the walk base, and it is forward motion');
   assert.equal(labMotion({ walking: false }).standing, true);

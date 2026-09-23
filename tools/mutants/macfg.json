@@ -176,9 +176,9 @@
   },
   {
     "name": "MAC-G-the-race-is-only-ever-found-by-key",
-    "file": "src/ui/enhancedCharSheet.js",
-    "old": "  return RACE_TEMPLATES.find((r) => r.key === e.race || r.name === e.race)\n    ?? raceById(e.raceId)\n    ?? null;",
-    "new": "  return RACE_TEMPLATES.find((r) => r.key === e.race) ?? null;",
+    "file": "src/systems/vampirism.js",
+    "old": "  return RACE_TEMPLATES.find((r) => r.key === entity.race || r.name === entity.race)\n    ?? raceById(entity.raceId)\n    ?? null;",
+    "new": "  return RACE_TEMPLATES.find((r) => r.key === entity.race) ?? null;",
     "tests": [
       "test/macfg_fold_and_specials.test.js"
     ]

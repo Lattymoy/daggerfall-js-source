@@ -142,7 +142,7 @@ test('WORLD6a: the hosts by source - the interior mode keys and stamps its room 
   assert.match(m, /if \(win\) \{ interiorOverlay = win; if \(!owned\) interiorLootOpened\(key, win, \{ fresh \}\); \}/, 'a stranger\'s cupboard claimed on the open, an owner\'s never');
   assert.match(m, /const fresh = needsRestock\(shelf, today\);/, 'a shelf\'s restock is the open\'s word');
   assert.match(m, /if \(win\) \{ interiorOverlay = win; interiorLootOpened\(`shelf:\$\{i\}`, win, \{ fresh \}\); \}/, 'the closed shop\'s shelf, on the open');
-  assert.match(m, /interiorOverlay = openTradeWindow\(shelf, b, 'Buy'\);\s*interiorLootOpened\(`shelf:\$\{i\}`, interiorOverlay, \{ fresh \}\);/, 'the trade window\'s shelf, on the open');
+  assert.match(m, /const w = openTradeWindow\(shelf, b, 'Buy'\);\s*if \(!w\) return;[^\n]*\n\s*interiorOverlay = w;\s*interiorLootOpened\(`shelf:\$\{i\}`, interiorOverlay, \{ fresh \}\);/, 'the trade window\'s shelf, on the open');   // DISC10-E L3 re-aim: a counter the door refused (null) claims nothing
   assert.match(m, /showShelfList\(shelf, 0, fresh\);/, 'the keyed fallback too (AUDIT WORLD6a A4)');
   assert.match(m, /if \(si >= 0\) interiorLootOpened\(`shelf:\$\{si\}`, interiorOverlay, \{ fresh \}\);/, 'every page of it an open');
   assert.match(m, /const at = shelf\.items\.indexOf\(it\);\s*if \(at < 0\) return undefined;/, 'a row the shelf no longer holds buys nothing');

@@ -100,7 +100,7 @@ import {
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../systems/statMods.js';
 import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../systems/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
-import { survivalInfoTokens } from '../systems/itemInfo.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
+import { survivalInfoTokens, potionMacroName, potionRecipeIngredientNames } from '../systems/itemInfo.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
 import { isSurvivalItem } from '../systems/survival/items.js';
 import { rarityAttr, rarityLines } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -370,6 +370,13 @@ export function itemLine(item, identity = undefined) {
     // AUDIT SURV C: a food's worth and stage, a skin's water, the gear's uses - the classic popup's tokens (systems/itemInfo.js
     // survivalInfoTokens, less the name and the weight this card already carries), so a Waterskin says its water here too
     survival: isSurvivalItem(item) ? survivalInfoTokens(item).slice(2).map((r) => r.text) : null,
+    // MAPLOOT1 (Discord: "Potion recipe's can't be read at all"): a recipe is READ, not used - DFU's use arm
+    // is cannotUseThis (DaggerfallInventoryWindow.cs:1732-1740) and the knowledge is ShowInfoPopup's
+    // (:1602-1609): "Recipe for Potion of %po" and the chained PotionRecipeIngredients box. This skin has no
+    // Info mode - the card IS the info - so without these two the recipe said nothing anywhere.
+    recipe: potionRecipeIngredientNames(item)
+      ? { potion: `Potion of ${potionMacroName(item)}`, ingredients: potionRecipeIngredientNames(item) }
+      : null,
     stack: (item.stackCount ?? 1) > 1 ? item.stackCount : null,
     equipped: isEquipped(item),
     // HT2: the LIT light source, by REFERENCE, exactly as
@@ -598,7 +605,9 @@ const refresh = () => {
     // Same read, same door, same key-compare fast path.
     try {
       const slots = equipTableOf(deps.entity);
-      arm.setWeapon?.(slots?.[EQUIP_SLOTS.RightHand] ?? null,
+      // DISC12: the hand in USE (WeaponManager.ApplyWeapon :741-755) - the right hand's weapon over a left-handed
+      // fighter was the figure holding what the screen does not
+      arm.setWeapon?.(slots?.[deps.usingRightHand?.() === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null,
         { hasAmmo: hasDaggerfallArrows(deps.entity.items) });
     } catch { /* see above */ }
   }
@@ -1139,7 +1148,7 @@ function use(item, collection = deps.items?.() ?? []) {
   if (act.kind === 'placeCamp') {
     const place = deps.placeCamp;
     onExit();   // SURV3: the same law - the host's HUD line says where the camp stands, or why not
-    place(act.item);
+    place(act.item, collection);   // AUDIT SURV-TIERS: the list it came from (a wagon's tent leaves the wagon)
     return;
   }
   if (act.textId && deps.rows) {
@@ -1220,7 +1229,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:820). Without them
+  // the classic window's own call (nativeInventory.js:866). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -2068,6 +2077,10 @@ function detailCol() {
     const i = t.indexOf(': ');
     if (i > 0) pair(t.slice(0, i), t.slice(i + 2));
     else pair(/^Nourishes/.test(t) ? 'Food' : /^Raw/.test(t) ? 'Raw' : /uses left/.test(t) ? 'Uses' : /skillet/i.test(t) ? 'Cooking' : 'Note', t);
+  }
+  if (line.recipe) {   // MAPLOOT1: the recipe's own two boxes, as rows
+    pair('Recipe for', line.recipe.potion);
+    pair('Ingredients', line.recipe.ingredients.join(', ') || '(none)');
   }
   pair('Weight', `${line.weight.toFixed(2)} kg`);
   pair('Condition', line.condition != null ? `${line.word} · ${line.condition}%` : null);

@@ -342,7 +342,7 @@ test('U44: every host that opens an inventory can DRINK from it', () => {
   const world = readFileSync(join(root, 'src/scenes/world.js'), 'utf8');
   assert.equal((world.match(/drinkPotion: \(key\)/g) ?? []).length, 1,
     'exactly one drink hook, in the one builder');
-  assert.match(world, /townTalk\.showOverlay\(makeInventoryWindow\(\{/,
+  assert.match(world, /const w = makeInventoryWindow\(\{\n/,   // DISC10-E L3 re-aim: built first (the door may refuse, null), mounted only when it is a window
     'and the loot-pile window is built BY that builder, so it drinks too');
   // and the engine's own half is DFU's AssignBundle flags
   const hm = readFileSync(join(root, 'src/scenes/hostMagic.js'), 'utf8');

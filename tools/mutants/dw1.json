@@ -337,5 +337,25 @@
     "tests": [
       "test/auditdw.test.js"
     ]
+  },
+  {
+    "name": "DW-CLIP-the-shift-ignores-true-texture-size",
+    "file": "src/combat/weaponWidget.js",
+    "old": "    if (w.s.doubleScale && !w.s.trueSize && (w.weaponState === S.Idle",
+    "new": "    if (w.s.doubleScale && (w.weaponState === S.Idle",
+    "tests": [
+      "test/auditdw.test.js",
+      "test/ww1_weaponwidget.test.js"
+    ]
+  },
+  {
+    "name": "DW-CLIP-the-shift-moves-an-undoubled-box",
+    "file": "src/combat/weaponWidget.js",
+    "old": "      if (custom?.doubled) w.offset = ",
+    "new": "      w.offset = ",
+    "tests": [
+      "test/auditdw.test.js",
+      "test/ww1_weaponwidget.test.js"
+    ]
   }
 ]
