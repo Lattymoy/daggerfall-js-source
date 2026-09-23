@@ -103,6 +103,31 @@
 // A host that passes none of the three gets the chat it had, byte for
 // byte: no button is built, no colour is asked for, no row is a door.
 //
+// CHAT-SCROLL (2026-09-23, Starempire42 on Discord: "Make it so when you
+// open the chat it automatically scrolls to the newest message ...
+// Currently when you open the chat it just stays idle so you have to
+// manually scroll down to the newest message every single time"): AN
+// OPEN LANDS ON THE NEWEST LINE, and the list stays there while it is
+// read at the bottom. Two causes, one law. (1) The follow rule asked the
+// LIST where the reader was - "at the bottom, within 8px" - on the first
+// paint after an open, which is a box that was `display: none` a moment
+// ago. What a hidden scroller remembers is the engine's to decide: Chromium
+// keeps the offset, other engines drop it to the top, and a top that is
+// taller than the box reads as "the reader scrolled up" - so the list was
+// left on the oldest line. And a reader who HAD scrolled up before closing
+// found the old place again on every open, which is AUDIT CHAT C8's rule
+// (keep a reader's scroll) applied to a moment it was never written for:
+// C8 is about lines arriving under a reader, not about coming back. So an
+// open, and a tab change, land on the newest line whatever the box says.
+// (2) The badge pass lays a title and glyphs into a line AFTER the list
+// scrolled to its bottom, and a line that wraps under its badge pushed the
+// newest out of view by its own growth - so the scroll to the newest is
+// the paint's LAST act, after every pass that can change a line's height,
+// and a later badge that re-lays a line keeps a reader at the bottom there.
+// While the panel is open C8 stands: a reader who scrolled up is left
+// where they are, and the lines that arrive under them are counted on a
+// bar under the list (`N new - jump to newest`) that takes them there.
+//
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
 import { isTextEntryTarget, swallowBrowserKey, bindings } from './input.js';
 import { actionForCode } from '../systems/inputActions.js';
@@ -174,6 +199,10 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-badge:empty { display: none; }
 .dfchat-list { height: min(220px, 34vh); overflow-y: auto; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
 .dfchat-list .dfchat-line { text-shadow: none; }
+/* CHAT-SCROLL: the lines that arrived under a reader who scrolled up, and the way back down to them */
+.dfchat-jump { display: none; flex: none; background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); border: 0; border-top: 1px solid var(--iron, #2b323b);
+  font: inherit; font-size: 11px; padding: 3px 8px; cursor: pointer; text-align: center; }
+.dfchat-jump.on { display: block; }
 .dfchat-form { display: flex; gap: 4px; padding: 6px; border-top: 1px solid var(--iron, #2b323b); }
 .dfchat-input { flex: 1; min-width: 0; background: var(--ink, #0e1013); color: var(--bone, #e9e4d9); border: 1px solid var(--iron, #2b323b); border-radius: 3px; padding: 6px 8px; font: inherit; font-size: 14px; }
 .dfchat-input:focus { outline: 1px solid var(--brass, #c08a3e); }
@@ -351,6 +380,8 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   box.setAttribute('role', 'log');
   const tabs = el('div', 'dfchat-tabs');
   const list = el('div', 'dfchat-list');
+  const jump = el('button', 'dfchat-jump');   // CHAT-SCROLL: `N new - jump to newest`, under a reader who scrolled up
+  jump.type = 'button';
   const form = el('form', 'dfchat-form');
   const input = el('input', 'dfchat-input');
   input.type = 'text'; input.maxLength = CHAT_MAX; input.placeholder = 'Say something'; input.autocomplete = 'off'; input.spellcheck = false;
@@ -404,7 +435,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   };
   const socialOut = social ? socialButton('dfchat-social-out') : null;
   if (social) tabs.append(socialButton('dfchat-social-tab'));
-  main.append(list, form);
+  main.append(list, jump, form);
   cols.append(main, who);
   box.append(tabs, cols);
   // the Social button follows the Chat button (they share a line when both are drawn); `show` and the box keep their places
@@ -424,6 +455,21 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   let whoKey = '';
   let whoNames = [];       // SOC3: [{ id, nameEl, css }] - the roster's name spans, for the colour pass
   let menuFor = null;      // SOC3: the roster row whose action menu is open (a peer id), or null
+  let unseen = 0;          // CHAT-SCROLL: lines that arrived below a reader who had scrolled up
+
+  /** CHAT-SCROLL: is the open list read at its bottom - measured only while the list is SHOWN (an open's first paint
+   *  never asks it: see the header), within the 8px a wrapped line's rounding leaves. */
+  const atNewest = () => (list.scrollHeight - list.scrollTop - (list.clientHeight ?? 0)) <= 8;
+  /** CHAT-SCROLL: the bar under the list - drawn only while there is something below the reader. */
+  const paintJump = () => {
+    const on = log.open && unseen > 0;
+    const text = on ? `${unseen} new - jump to newest` : '';
+    if (jump.textContent !== text) jump.textContent = text;
+    const cls = on ? 'dfchat-jump on' : 'dfchat-jump';
+    if (jump.className !== cls) jump.className = cls;
+  };
+  /** CHAT-SCROLL: to the newest line, and nothing is left unseen below it. */
+  const toNewest = () => { list.scrollTop = list.scrollHeight ?? 0; unseen = 0; paintJump(); };
 
   /** A drawn line, and the span its AUTHOR's name is in - SOC3 colours that span from the host's `nameColor` without
    *  rebuilding the row, so a party formed while the chat is open turns the names green where they already stand. */
@@ -518,17 +564,23 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (!badgeOf) return;
     const asked = new Map();
     const of = (id) => { if (!asked.has(id)) asked.set(id, badgeOf(id) ?? null); return asked.get(id); };
-    const pass = (rows) => {
+    // CHAT-SCROLL: a badge laid into an OPEN list's line can wrap it, and the growth pushes the newest line out of
+    // view under a reader who was reading it - so the reader's place is measured before the first such re-lay and
+    // the bottom is kept after the pass. Measured once, and only when a list line is actually re-laid.
+    let keep = null;
+    const pass = (rows, inList) => {
       for (const r of rows) {
         if (!r.nameEl) continue;
         const b = of(r.id), key = badgeKeyOf(b);
         if (r.badgeKey === key) continue;
+        if (inList && keep === null) keep = log.open && unseen === 0 && atNewest();
         r.badgeKey = key;
         ({ before: r.before, after: r.after } = badgeNodes(b ?? {}, 'dfchat-line'));
         layLine(r);
       }
     };
-    pass(listNodes); pass(peekNodes);
+    pass(listNodes, true); pass(peekNodes, false);
+    if (keep) list.scrollTop = list.scrollHeight ?? 0;
   };
 
   /** SOC3: the badge on both Social buttons - what is waiting on the player (requests to me + live invites). */
@@ -549,22 +601,29 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
 
   /** The open list: the rows that left the cap dropped from the front, the rows that arrived appended at the
    *  back, and the scroll kept where the reader had it unless it sat at the bottom (AUDIT CHAT C8: every line
-   *  rebuilt two hundred rows and yanked a reader who had scrolled up). A tab change rebuilds. */
-  const paintList = () => {
+   *  rebuilt two hundred rows and yanked a reader who had scrolled up). A tab change rebuilds.
+   *
+   *  CHAT-SCROLL: answers whether the list FOLLOWS - lands on its newest line once the paint is done (the paint's
+   *  last act, after the passes that can grow a line). `newest` is an open's: the list was hidden until this paint,
+   *  and what it remembers of the reader's place is the engine's, not the reader's. A tab change is another
+   *  conversation and starts at its newest too. Otherwise the reader's place is measured BEFORE the new rows go in. */
+  const paintList = (newest = false) => {
     const tab = log.tab(log.active);
     const msgs = tab ? tab.messages : [];
-    const atBottom = !listNodes.length || (list.scrollHeight - list.scrollTop - (list.clientHeight ?? 0)) <= 8;
+    const follow = newest || listTab !== log.active || !listNodes.length || atNewest();
     const contiguous = listTab === log.active && listNodes.length && msgs.length && msgs.some((m) => m.seq === listNodes[listNodes.length - 1].seq);
+    let arrived = 0;
     if (!contiguous) {
       listNodes = msgs.map((line) => lineRow(line, true, { seq: line.seq }));
       list.replaceChildren(...listNodes.map((r) => r.node));
     } else {
       while (listNodes.length && listNodes[0].seq < msgs[0].seq) listNodes.shift().node.remove();
       const lastSeq = listNodes.length ? listNodes[listNodes.length - 1].seq : -1;
-      for (const line of msgs) if (line.seq > lastSeq) { const row = lineRow(line, true, { seq: line.seq }); listNodes.push(row); list.append(row.node); }
+      for (const line of msgs) if (line.seq > lastSeq) { const row = lineRow(line, true, { seq: line.seq }); listNodes.push(row); list.append(row.node); arrived++; }
     }
     listTab = log.active;
-    if (atBottom) list.scrollTop = list.scrollHeight ?? 0;
+    if (!follow) unseen += arrived;   // C8 stands: the reader keeps their place, and the bar counts what came in under it
+    return follow;
   };
 
   /**
@@ -661,7 +720,8 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     paintNames();   // SOC3: the spans are new, so the colours they wear are asked for once, here
   };
 
-  const paint = () => {
+  /** `newest` (CHAT-SCROLL): an open's paint - the list lands on its newest line whatever the hidden box kept. */
+  const paint = (newest = false) => {
     painted = log.version;
     root.dataset.state = log.open ? 'open' : 'closed';
     root.dataset.hidden = hidden ? '1' : '0';
@@ -672,11 +732,15 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     }
     const unread = log.unreadTotal();
     badgeOut.textContent = unread ? String(unread) : '';
-    if (log.open) { paintList(); paintWho(); }
+    let follow = false;
+    if (log.open) { follow = paintList(newest); paintWho(); }
     peekNodes = [];
     peek.replaceChildren();
     paintSocial();   // SOC3
     paintNames();
+    // CHAT-SCROLL: LAST, after the badge pass - a title laid into a new line can wrap it, and a scroll taken before
+    // that growth left the newest line under the fold
+    if (follow) toNewest(); else paintJump();
   };
 
   /** The closed state's lines: rebuilt when the set changes, their alpha stepped every frame. */
@@ -695,7 +759,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const open = () => {
     if (!alive || log.open || !canOpen()) return false;
     log.setOpen(true);
-    paint();
+    paint(true);   // CHAT-SCROLL: an open lands on the newest line
     input.focus?.();
     onOpen?.();   // the host frees the pointer (C2) - inside the gesture that opened
     return true;
@@ -740,6 +804,10 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   form.addEventListener('submit', (e) => { e.preventDefault(); submit({ keep: touch }); });
   close.addEventListener('click', () => closePanel());
   openBtn.addEventListener('click', () => open());
+  // CHAT-SCROLL: the bar takes the reader down; a reader who scrolls down on their own clears it the same way. Both
+  // are the ELEMENTS' listeners - the panel's one window listener stays the key's (AUDIT CHAT D5).
+  jump.addEventListener('click', () => { toNewest(); input.focus?.(); });
+  list.addEventListener('scroll', () => { if (unseen && log.open && atNewest()) { unseen = 0; paintJump(); } });
 
   /**
    * CHAT-R2: PUT IT AWAY, and bring it back.

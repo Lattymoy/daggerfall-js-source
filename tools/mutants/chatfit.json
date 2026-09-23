@@ -16,7 +16,7 @@
  { "name": "CHATFIT-the-badge-pass-re-lays-every-line-every-frame", "file": "src/ui/chatPanel.js",
    "old": "        if (r.badgeKey === key) continue;\n", "new": "", "tests": ["test/chatfit.test.js"] },
  { "name": "CHATFIT-the-badge-pass-skips-the-peek", "file": "src/ui/chatPanel.js",
-   "old": "    pass(listNodes); pass(peekNodes);\n  };\n\n  /** SOC3: the badge on both Social buttons", "new": "    pass(listNodes);\n  };\n\n  /** SOC3: the badge on both Social buttons", "tests": ["test/chatfit.test.js"] },
+   "old": "    pass(listNodes, true); pass(peekNodes, false);\n    if (keep) list.scrollTop = list.scrollHeight ?? 0;\n  };\n\n  /** SOC3: the badge on both Social buttons", "new": "    pass(listNodes, true);\n    if (keep) list.scrollTop = list.scrollHeight ?? 0;\n  };\n\n  /** SOC3: the badge on both Social buttons", "tests": ["test/chatfit.test.js"] },
  { "name": "CHATFIT-the-badge-pass-never-runs", "file": "src/ui/chatPanel.js",
    "old": "    paintBadges();\n  };", "new": "  };", "tests": ["test/chatfit.test.js"] },
  { "name": "CHATFIT-a-line-glyph-is-drawn-through-its-own-door", "file": "src/ui/chatPanel.js",
