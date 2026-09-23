@@ -1,4 +1,5 @@
 // AUDIT 24 (the full-codebase parity sweep), the second systems wave.
+import './modsOff.js';   // RRI1: CreateRandomWeapon/Armor roll over the registered custom items too - these pins are DFU's own rolls, the mods off
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';

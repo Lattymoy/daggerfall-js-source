@@ -99,7 +99,7 @@ installMeanerMonsters();   // MM1: before the overhaul, as DFU Awakes the depend
 installPcaao();
 installUnleveledLoot();   // UL1: after everything it would override (its manifest orders it after Roleplay Realism)
 installSurvivalIcons();   // SURV2: the mod's spoiled-food and waterskin icons ride the texture pipeline as the port's own art
-installSurvivalLoot({ enabled: survivalOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch
+installSurvivalLoot({ enabled: corpseFoodOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch - offline (CORPSE-FOOD: online the body's food is the room's)
 // AUDIT-THUNDERLOCK F1: the port's own weapon was DEAD. Its module
 // registers everything it is at import - the two custom templates, the
 // pellet as ammunition, the unique find, its legendary - and NOTHING
@@ -113,11 +113,11 @@ installThunderlockIcons();   // THUNDERLOCK: the templates, the find and the leg
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
-import { runSurvivalMinutes, clearSurvivalMods } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops
+import { runSurvivalMinutes, clearSurvivalMods, pauseSurvival } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops; AUDIT SURV-TIERS: and paused while Off
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
 import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
-import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
+import { survivalOn, corpseFoodOn } from './survival/switch.js';   // SURV2: the one switch; CORPSE-FOOD: and the body's food, the room's online
 /** :462 - `% 10080`, seven days of game minutes. */
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
 /** :469 - `% 54720`, thirty-eight days. */
@@ -338,6 +338,13 @@ export function claimMagicRounds(fromMinute, toMinute) {
  *
  * @returns {number} rounds run
  */
+/** RR1: `EntityEffectBroker.OnNewMagicRound += ...` for a law that is not
+ *  an effect - Roleplay & Realism's encumbrance penalty subscribes so.
+ *  Registered by name; `fn(entity, { nowMinutes, sinks, say })` runs after
+ *  the entity's own round, for every entity the ticker fans out to. */
+const _roundHooks = new Map();
+export function registerMagicRoundHook(name, fn) { if (typeof fn === 'function') _roundHooks.set(name, fn); else _roundHooks.delete(name); }
+
 export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random, say = () => {} , enchantCtx = null } = {}) {
   if (!entity || !(to > from)) return 0;
   let rounds = 0;
@@ -399,6 +406,7 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
     // fold - its magery arm SUMS the two producers into the one
     // maxMagickaModifier the accessor reads. Player-gated inside.
     passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, clockMinutes, sinks });   // DISC10-D V1: the cadence off the round, the sky off the clock
+    for (const fn of _roundHooks.values()) fn(entity, { nowMinutes: r + 1, sinks, say });   // RR1: EntityEffectBroker.OnNewMagicRound's other subscribers (a mod's, by name)
     rounds++;
   }
   return rounds;
@@ -877,7 +885,10 @@ export function tickPlayerMinutes({
   let felt = null;
   if (survival && nowMinutes > lastMinutes) {
     felt = runSurvivalMinutes(entity, lastMinutes, nowMinutes, survival.env ?? {}, { ...(survival.deps ?? {}), sinks: survival.deps?.sinks ?? sinks, rolls });
-  } else if (!survival) clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
+  } else if (!survival) {
+    clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
+    if (!survivalOn() && nowMinutes > lastMinutes) pauseSurvival(entity, lastMinutes, nowMinutes);   // AUDIT SURV-TIERS: Off's minutes are nobody's needs (needs.js pauseSurvival) - a host with no reader while the arc is ON keeps WORLD5's clocks
+  }
 
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
   // 0.2s real-time cadence: a live stat at zero kills the host. It sits

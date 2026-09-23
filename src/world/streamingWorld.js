@@ -238,3 +238,81 @@ export class StreamingWorldState {
     return { offset: moved ? offset : null, load, unload, pixelChanged, current: this.current };
   }
 }
+
+/** StreamingWorld.cs:44 - "Maximum terrains in memory at any time". */
+export const MAX_TERRAIN_ARRAY = 256;
+
+/**
+ * AUDIT BRANCH (WoD) L1-3: DFU'S TERRAIN ARRAY, AS SLOTS. The port frees a pixel the moment it leaves range; DFU
+ * only POOLS it - the terrain GameObject goes inactive with every child it holds and stays keyed - and reuses the
+ * slot when a new tile needs one. A pooled tile placed again is reactivated WITHOUT a promote (PlaceTerrain,
+ * :866-885), so a mod's objects parented to the terrain come back as they were left. This models the array alone -
+ * which pixel holds a slot, active or pooled - so a host can keep what DFU keeps for exactly as long:
+ *   - UpdateWorld (:602-614) places the (2d+1)^2 grid in row order: a keyed pixel is reactivated; a new one takes
+ *     the FIRST slot that was never instantiated or is pooled out of range (FindNextAvailableTerrain, :937-985),
+ *     and a pooled slot so taken is RECYCLED - its pixel unkeyed;
+ *   - then UpdateTerrains' CollectTerrains (:654, :1007-1034) pools every active slot out of range;
+ *   - ClearStreamingWorld (:993-998) pools everything out of range (mapPixel = int.MinValue) and clears the keys.
+ * Placement runs before collection, so a tile that has just left range is never the one a new tile takes on the
+ * same crossing: it survives until the next placement that needs its slot, and one step back finds it.
+ */
+export class TerrainSlots {
+  constructor(size = MAX_TERRAIN_ARRAY) {
+    this.size = size;
+    /** @type {Array<{px:number, py:number, active:boolean}>} */
+    this.slots = [];
+    /** @type {Map<string, number>} pixel key -> slot */
+    this.keys = new Map();
+  }
+
+  /** The pixel holds a slot, active or pooled. */
+  has(key) { return this.keys.has(key); }
+
+  /** ClearStreamingWorld: CollectTerrains(true) and terrainIndexDict.Clear(). */
+  clear() {
+    for (const s of this.slots) { s.active = false; s.px = -2147483648; s.py = -2147483648; }
+    this.keys.clear();
+  }
+
+  /**
+   * One crossing (or the first frame after a clear): UpdateWorld's placements around (cx, cy), then CollectTerrains.
+   * @param {number} cx
+   * @param {number} cy
+   * @param {number} distance - TerrainDistance
+   * @param {(px:number, py:number) => boolean} [onMap] - PlaceTerrain's first test
+   * @returns {{reactivated:string[], recycled:string[], pooled:string[]}}
+   */
+  step(cx, cy, distance, onMap = () => true) {
+    const inRange = (x, y) => Math.abs(x - cx) <= distance && Math.abs(y - cy) <= distance;
+    const out = { reactivated: [], recycled: [], pooled: [] };
+    for (let y = cy - distance; y <= cy + distance; y++) {
+      for (let x = cx - distance; x <= cx + distance; x++) {
+        if (!onMap(x, y)) continue;
+        const key = `${x},${y}`;
+        const at = this.keys.get(key);
+        if (at !== undefined) {
+          const s = this.slots[at];
+          if (!s.active) { s.active = true; out.reactivated.push(key); }
+          continue;
+        }
+        let found = -1;
+        for (let i = 0; i < this.size; i++) {
+          const s = this.slots[i];
+          if (!s || (!s.active && !inRange(s.px, s.py))) { found = i; break; }
+        }
+        if (found === -1) continue;   // "Unable to find free terrain" - DFU quits the game; 256 slots never run out at distance <= 4
+        const old = this.slots[found];
+        if (old) {
+          const k = `${old.px},${old.py}`;
+          if (this.keys.get(k) === found) { this.keys.delete(k); out.recycled.push(k); }
+        }
+        this.slots[found] = { px: x, py: y, active: true };
+        this.keys.set(key, found);
+      }
+    }
+    for (const s of this.slots) {
+      if (s.active && !inRange(s.px, s.py)) { s.active = false; out.pooled.push(`${s.px},${s.py}`); }
+    }
+    return out;
+  }
+}

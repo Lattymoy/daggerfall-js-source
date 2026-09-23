@@ -168,7 +168,7 @@ test('B5: the KEY-DISPATCH gates stay refusals - they are DFU\'s own', () => {
   // while the game is being played (IsPlayingGame is false the moment
   // a pausing window is on the stack, GameManager.cs:926-942). Pressing
   // R inside the inventory must not open a rest window BEHIND it.
-  assert.match(src('src/scenes/worldModes.js'), /toggleRest\(\) \{\n\s*if \(interiorOverlay\) return;/);
+  assert.match(src('src/scenes/worldModes.js'), /toggleRest\(\{ ignoreAllocatedBed = false \} = \{\}\) \{[^\n]*\n\s*if \(interiorOverlay\) return;/);   // AUDIT-RR F6
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(src(f), /if \(townTalk\.overlayActive\) return;/, `${f}: the outdoor dispatch gate`);
   }

@@ -4,6 +4,7 @@
 // (ItemBuilder.cs / LootTables.cs / DaggerfallLoot.cs /
 // DaggerfallUnityItem.cs / ItemCollection.cs / FormulaHelper.cs), not
 // a spot check of what the port happens to do.
+import './modsOff.js';   // RRI1: CreateRandomWeapon/Armor roll over the registered custom items too - these pins are DFU's own rolls, the mods off
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -164,8 +165,9 @@ test('audit18 items: the female weapon archive-1 rule reaches the item art', () 
   // the archive is race-blind for weapons (SetRace only offsets clothing/armor)
   assert.equal(playerArchiveFor(longsword, ITEM_TEMPLATES[120], { gender: 'female', race: 'Argonian' }), 233);
   // and it reaches the inventory list / native trade window icon
-  assert.deepEqual(inventoryItemImage(longsword, { gender: 'female', race: 'Breton' }), { archive: 233, record: 12 });
-  assert.deepEqual(inventoryItemImage(longsword, { gender: 'male', race: 'Breton' }), { archive: 234, record: 12 });
+  const archiveRecord = ({ archive, record }) => ({ archive, record });   // DW3: the image carries the dye too
+  assert.deepEqual(archiveRecord(inventoryItemImage(longsword, { gender: 'female', race: 'Breton' })), { archive: 233, record: 12 });
+  assert.deepEqual(archiveRecord(inventoryItemImage(longsword, { gender: 'male', race: 'Breton' })), { archive: 234, record: 12 });
   // arrows are untouched - they draw the world texture either way
   const arrow = { group: 'Weapons', templateIndex: ARROW_TEMPLATE };
   assert.equal(playerArchiveFor(arrow, ITEM_TEMPLATES[ARROW_TEMPLATE], { gender: 'female' }), ITEM_TEMPLATES[ARROW_TEMPLATE].playerTextureArchive);
@@ -314,8 +316,11 @@ test('audit18 items: book variant is Range(0, TotalVariants) = Range(0, 2)', () 
   // shop: the same draw, five rows off a quality-20 Bookseller
   const shelf = stockShopShelf({ buildingType: BUILDING_TYPES.Bookseller, quality: 20 }, { level: 5, gender: 'male' }, { rolls: () => 0.75 });
   const books = shelf.filter((i) => i.group === 'Books');
-  assert.equal(books.length, 5);
-  assert.deepEqual(books.map((b) => b.variant), [1, 1, 1, 1, 1]);
+  // AUDIT-RR2 G10: `items.AddItem(item)` (DaggerfallLoot.cs:250) merges a stackable into its stack, and Books stack
+  // (FormulaHelper.cs:2103) by message (ItemCollection.cs:710) - the same roll is the same book five times: ONE row of 5
+  assert.equal(books.length, 1);
+  assert.equal(books[0].stackCount, 5);
+  assert.deepEqual(books.map((b) => b.variant), [1]);
   // no producer can emit an out-of-range variant any more
   const rnd = lcg(7);
   const sweep = [];

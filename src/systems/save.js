@@ -20,6 +20,7 @@ import { restartHeldEnchantments } from './enchantments.js';   // E2: the held b
 import { snapshotWeather, restoreWeather, rollClimateWeathersForDay } from './weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host; AUDIT WORLD5 C4: the shared day's sky over a loaded one
 import { snapshotRegionConditions, restoreRegionConditions } from './regionConditions.js';   // S42: the CONDITION half of RegionDataRecord
 import { snapshotDiscovery, restoreDiscovery } from './discovery.js';   // T4
+import { getWorldVariationSaveData, restoreWorldVariationData, clearWorldDataVariants } from './worldDataVariants.js';   // RR3b: the world-data variants ride the save
 import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAutomapDungeonsDiscoveryState rides SaveData_v1
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
@@ -29,7 +30,8 @@ import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
 import { quickslotSaveData, restoreQuickslotSaveData } from './quickslots.js';   // QS1: the quickslot diamond rides the one composer
 import { resetMagicRoundMarker, sharedClockOn, worldMinutes, alignEntityClocks } from './worldTick.js';   // EntityEffectBroker.InitMagicRoundTimer, on the LOAD arm (:230-233); AUDIT WORLD5 C4: a load online is an arrival
-import { alignSurvival } from './survival/needs.js';   // SURV7: the needs' markers on the load arm
+import { alignSurvival, pauseSurvival } from './survival/needs.js';   // SURV7: the needs' markers on the load arm
+import { survivalOn } from './survival/switch.js';   // AUDIT SURV-TIERS (the third pass): an Off player's absence is Off's
 import { isMembershipStore } from './guilds.js';   // V2e: the two-book membership store rides the save whole
 import { createBankAccounts, createHouses } from './banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
 import { setItemFields } from './itemTemplates.js';   // JAN1: an item saved before MAC-N1 (no value) is set on the way in, so the trade strip never sums NaN
@@ -38,6 +40,7 @@ import { GUILD_GROUPS } from '../formats/factionFile.js';   // the membership bo
 import { appStorage } from './appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from './characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from './onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
+import { STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
 import { respawnHealth, reviveForPlay } from './deathRespawn.js';   // ONLINE-DEATH-FIX: the SAME half-health an online respawn leaves
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
@@ -160,9 +163,9 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  Masque of Clavicus buffed five social groups instead of eleven for
  *  the life of that character. Dropping the member costs nothing:
  *  enchantmentMagicRound clears the player's array at the head of
- *  every magic round (enchantments.js:841, DFU's ClearReactionMods at
+ *  every magic round (enchantments.js:842, DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
- *  pass, off worldTick.js:390 - so a load lands DFU's own shape, the
+ *  pass, off worldTick.js:397 - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives
  *  them eleven wide. An older snapshot's key is simply ignored (the
  *  restore loop skips what REP_ARRAYS does not name), so the envelope
@@ -247,7 +250,11 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // loaded mod beside the game's own), keyed by the mod's vendor name and opaque here like `world`. It rides EVERY
   // save wherever it is taken: Horse Cart and Cargo's record rode the world half alone, so a dungeon save - the
   // online page's close-the-tab save included - carried no horse, no name and no parked wagon.
-  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData };
+  // TERRAIN-SCALE1: every exterior height in this envelope - the player's, the piles', the pools', the anchor's -
+  // stands on ground drawn at this terrain scale. A save without the stamp was written on the prefab's 1.5, and the
+  // world host re-stands its heights on today's ground as it lands them (world.js restandHeight). Additive: SAVE_VERSION
+  // does not move, and an older build ignores the field.
+  const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE };
   // W1: DFU persists exactly ONE weather value (playerPosition.weather)
   // and re-rolls the six-zone array on the next date change - the sim
   // is a module singleton, so the envelope reads it here and every
@@ -325,7 +332,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // back out UNCHANGED beside them. Without this the holding in
   // `restorePlayer` would only postpone the loss by one save.
   snap.spells = [
-    ...(entity.spells ?? []).map((sp) => (sp?.custom ? JSON.parse(JSON.stringify(sp)) : sp.index)),
+    ...(entity.spells ?? []).map((sp) => ((sp?.custom || sp?.rri) ? JSON.parse(JSON.stringify(sp)) : sp.index)),   // AUDIT-RR F9: a mod's spell (RRI's nine, past SPELLS.STD) is serialised whole, as DFU serialises every EffectBundleSettings - an index no file answers would be held forever
     ...(entity.spellsPending ?? []),
   ];
   // E2: ITEM-PINNED entries (held enchantments) are NOT serialized -
@@ -417,6 +424,8 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // DFU serialises it in SaveData_v1). Module-level world state, so
   // the snapshot reads the store, not the entity.
   snap.discovery = snapshotDiscovery();
+  // RR3b: WorldDataVariants.GetWorldVariationSaveData (SaveLoadManager.cs:1125) - the variants a quest set
+  snap.worldVariation = getWorldVariationSaveData();
   // A1: the automap dungeon-discovery dictionary (Automap.GetState -
   // DFU serialises it in SaveData_v1's sceneCache). Module-level
   // world state beside the discovery store; the snapshot itself runs
@@ -802,6 +811,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);
+  // RR3b: WorldDataVariants.RestoreWorldVariationData (SaveLoadManager.cs:1465-1466); a save without the field restores nothing, as the C#'s null does
+  clearWorldDataVariants();
+  restoreWorldVariationData(snap.worldVariation ?? null);
   // A1: a load replaces the automap store too; a pre-A1 save carries
   // no field and the store is LEFT ALONE (restoreAutomap's null arm,
   // SaveLoadManager.cs:1508-1509 - AUDIT-AMAP F10 fixed this comment).
@@ -845,10 +857,17 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // after it: a quick load, a boot ?load or a dungeon's own load restored the save's own clock into every marker,
   // and the next tick caught up the distance to the world (or read it negative).
   if (sharedClockOn()) { alignEntityClocks(entity, worldMinutes()); rollClimateWeathersForDay(worldMinutes()); }
-  if (sharedClockOn()) alignSurvival(entity, Math.floor(worldMinutes()), Math.floor(snap.classicMinutes ?? 0));   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)
+  if (sharedClockOn()) {
+    const at = Math.floor(worldMinutes()), saved = Math.floor(snap.classicMinutes ?? 0);
+    // AUDIT SURV-TIERS (the third pass): WORLD5's short absence keeps its hunger because the arc was ON for it. An Off
+    // player's is Off's, and pauses the needs as the world tick pauses every span it walks with the arc Off: an hour
+    // and a half logged off came back hungry and nineteen hours awake, in the tier that promises no needs at all.
+    if (!survivalOn() && at > saved) pauseSurvival(entity, saved, at);
+    alignSurvival(entity, at, saved);   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)
+  }
   // AUDIT 39: the three extras above ride back out too - a save from
   // before they were carried reads the same null/0 they used to.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null };
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: snap.quest ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5
 }
 
 /** CASTLE1 (2026-09-22, the same report's "(different dungeon - world

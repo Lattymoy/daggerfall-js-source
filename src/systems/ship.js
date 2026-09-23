@@ -47,6 +47,20 @@ export const REPOSITION = Object.freeze({
  * IsOnShip (:79-84): a remembered boarding AND the player standing on
  * the ship's own map pixel.
  */
+// RR1: `TransportManager.ShipAvailiable` (TransportManager.cs:52-ish, a
+// `Func<bool>` defaulted to HasShip) - a mod assigns its own (Roleplay &
+// Realism's IsShipAvailiable, under shipPorts). The port's question
+// carries what the C# reads: on the ship, the location's loaded/port
+// state, the owned ship - and `canSail`, the host's own "there is
+// somewhere to sail to", which gates the row either way.
+let _shipAvailable = null;
+export function setShipAvailable(fn) { _shipAvailable = typeof fn === 'function' ? fn : null; }
+export function isShipAvailable({ canSail = false, ownsShip = false, onShip = false, locationLoaded = false, portTown = null } = {}) {
+  if (!canSail) return false;
+  const o = _shipAvailable?.({ onShip, locationLoaded, portTown, ownsShip });
+  return o ?? ownsShip;   // HasShip()
+}
+
 export function isOnShip(player, boardShipPosition, mapPixel) {
   const coords = shipCoords(player);
   return !!boardShipPosition && !!coords && !!mapPixel

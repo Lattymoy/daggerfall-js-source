@@ -13,9 +13,19 @@ export const WEAPON_STATES = ['Idle', 'StrikeDown', 'StrikeDownLeft', 'StrikeLef
 // FormulaHelper.cs verbatim
 export const CLASSIC_FRAME_UPDATE = 980;           // const int classicFrameUpdate
 export const CLASSIC_UPDATE_INTERVAL = 0.0625;     // GameManager.classicUpdateInterval (classic 16Hz); bow anim tick
-export function getMeleeWeaponAnimTime(liveSpeed) {
+export function getMeleeWeaponAnimTime(liveSpeed, ctx = null) {
+  const o = _animTimeOverride?.(liveSpeed, ctx, CLASSIC_FRAME_UPDATE);   // TryGetOverride("GetMeleeWeaponAnimTime") - RRI2's weaponBalance registers one
+  if (o != null) return o;
   return (3 * (115 - liveSpeed)) / CLASSIC_FRAME_UPDATE;   // seconds per anim frame
 }
+/** FormulaHelper.RegisterOverride("GetMeleeWeaponAnimTime"): the C# takes
+ *  (player, weaponType, weaponHands); the port's callers pass the live
+ *  speed and, where they have one, `ctx` = { entity, weaponType,
+ *  usingRightHand } so an override can read the strength and the held
+ *  weapon. Answers seconds per frame, or null for DFU's line. This
+ *  module is a leaf, so the override is registered. */
+let _animTimeOverride = null;
+export function registerMeleeWeaponAnimTime(fn) { _animTimeOverride = typeof fn === 'function' ? fn : null; }
 export function getBowCooldownTime(liveSpeed) {
   return (10 * (100 - liveSpeed) + 800) / CLASSIC_FRAME_UPDATE;
 }
@@ -135,7 +145,7 @@ export function machineCancelBowDraw(m, liveSpeed = 50) {
   return false;
 }
 
-export function machineStep(m, dt, liveSpeed) {
+export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1: the rig's { entity, weaponType, usingRightHand } for a registered GetMeleeWeaponAnimTime override
   m.now += dt;
   const events = [];
   if (m.state === 'Idle') {
@@ -176,7 +186,7 @@ export function machineStep(m, dt, liveSpeed) {
   // A gun's mechanism does not care how agile you are. Drawing a
   // bowstring does, and swinging a blade does, so both classic
   // formulas stay exactly where they were for everything else.
-  const tick = m.tick ?? (m.isBow ? CLASSIC_UPDATE_INTERVAL : getMeleeWeaponAnimTime(liveSpeed));
+  const tick = m.tick ?? (m.isBow ? CLASSIC_UPDATE_INTERVAL : getMeleeWeaponAnimTime(liveSpeed, animCtx));   // AUDIT-RR F1: FPSWeapon's own animTickTime asks FormulaHelper's override (FormulaHelper.cs:830-838); without the ctx the two mods' arms were inert on the swing that lands
   m.acc += dt;
   while (m.acc >= tick) {
     // ARROW2: ONE step per resume, the remainder dropped - FPSWeapon.

@@ -152,7 +152,7 @@ bicubic base (4x4 small window at mx-2,my-2, rows Y-inverted, x8) +
 bicubic feature noise (9x9 large window at mx-1,my, x4) + Perlin ground
 detail (x10), ocean floor 27.2, clamp01(h / 1539); sample(x,y) at
 data[x*dim+y] matching DFU's job indexing. World scale verbatim: 819.2
-units per pixel, height x1539x1.5, pixel (X,Y) at (xdif, 0, -ydif) * size.
+units per pixel, height x1539x1.25 (the game scene's TerrainScale; 1.5, the prefab's, until TERRAIN-SCALE1), pixel (X,Y) at (xdif, 0, -ydif) * size.
 DEPARTURE pending Mac review (Port-Ledger A): DFU's noise source is
 Unity's engine-internal Mathf.PerlinNoise; `src/world/perlin.js` stands in
 with Ken Perlin's reference improved noise remapped to [0,1] - same role,
@@ -2503,7 +2503,7 @@ a local reset once per subrecord INSIDE `AddModels`
 a fresh `buildingsOut` (`:819-820`) — so every grid cell gets its own
 full `StaticBuilding` array. The port kept ONE location-wide `Set`, keyed
 `${b.dfBlock.index}:${placed.recordIndex}`. `dfBlock.index` is the
-BLOCKS.BSA record index (`src/formats/blocksFile.js:180-181` stamps it,
+BLOCKS.BSA record index (`src/formats/blocksFile.js:185-186` stamps it,
 and `locationLayout.js` resolves every cell through
 `getBlockByName` -> `getBlock(index)`, so two cells holding the same block
 name share the object outright) — and RMB blocks repeat constantly in a

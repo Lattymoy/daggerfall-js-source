@@ -119,7 +119,7 @@ test('AUDIT SURV A: the laws - a rough nap never raises the debt, wet armour rus
   const word = temperatureWord(e.survival.felt);
   assert.ok(['hot', 'scorching'].includes(word), `a naked desert noon reads ${word}`);
   assert.ok(log.some((l) => l[1] === SURVIVAL_TEXT[word]), 'the note is the word\'s');
-  assert.ok(Object.keys(e.survival.notes).some((k) => k === `temp:${word}`), 'keyed by the word, so an escalation speaks at once');
+  assert.equal(e.survival.notes.temp, word, 'the stage the strip reads, so an escalation speaks at once (AUDIT SURV-TIERS, the third pass: one record a family - the way back says nothing)');
 });
 
 test('AUDIT SURV A/B: the minute marker - a span run under a rest is not run again by the frame; an alignment resets it; the mod off clears the stat entry', () => {
@@ -153,6 +153,7 @@ test('AUDIT SURV A/B: the minute marker - a span run under a rest is not run aga
 
 test('AUDIT SURV B/C: the rest gate - a host that does not own the mode answers nothing, a torn-down host leaves the seam, the dungeon unregisters its pair and the interior reader is the interior\'s', () => {
   clearPreventRestConditions();
+  _resetForTests(); setPref('survival', 'hard');   // SURV-TIERS: the gate is Hard's
   const p = player(); p.survival = newSurvival(0); p.survival.felt = -100;
   let env = null;
   const pair = installSurvivalGate(registerPreventRestCondition, () => p, () => env);
@@ -166,7 +167,7 @@ test('AUDIT SURV B/C: the rest gate - a host that does not own the mode answers 
   assert.match(dc, /uninstallSurvivalGate\(_survivalGate, unregisterPreventRestCondition\);/, 'the teardown takes the pair off the seam');
   assert.match(modes, /survivalEnv: \(\) => \(mode === 'interior' && host\.survivalEnv \? \{ \.\.\.host\.survivalEnv\(\), insideBuilding: true/, 'the interior reader answers in the interior alone');
   assert.match(rest, /const e = readEnv\?\.\(\);\n\s+if \(!e \|\| !enabled\(\)\) return null;/, 'the gate reads null as silence');
-  clearPreventRestConditions();
+  clearPreventRestConditions(); _resetForTests();
 });
 
 test('AUDIT SURV C: the hunt window - dropped from under, it closes without a search; Escape abandons the busy page; the result page is a click-anywhere box; the last dot is drawn; the beast stands only after a search', () => {
@@ -248,7 +249,8 @@ test('AUDIT SURV C: what the player is told - a vampire\'s strip has no hunger o
   const plain = survivalHudChips(e, now).map((c) => c.key);
   assert.ok(plain.includes('hunger') && plain.includes('sleep') && plain.includes('thirst'));
   const vamp = survivalHudChips(e, now, { vampire: true }).map((c) => c.key);
-  assert.ok(!vamp.includes('hunger') && !vamp.includes('sleep'), 'no need for food or sleep'); assert.ok(vamp.includes('thirst'));
+  assert.ok(!vamp.includes('hunger') && !vamp.includes('sleep'), 'no need for food or sleep');
+  assert.ok(!vamp.includes('thirst'), 'nor drink - the minute law freezes it, and its red chip never cost (AUDIT SURV-TIERS, the third pass)');
   e.survival.drunk = 10;
   assert.equal(survivalHudChips(e, now, { endurance: 50 }).find((c) => c.key === 'drunk'), undefined, 'one ale at endurance 50 is no chip - the page says nothing either');
   e.survival.drunk = 30;
@@ -285,32 +287,63 @@ test('AUDIT SURV C: what the player is told - a vampire\'s strip has no hunger o
   assert.match(invSrc, /if \(usableItem\(picked\)\) \{\n\s+u\.onclick/, 'Use only where the law has an arm');
 });
 
-test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carries none, an empty word reaches the cell, a restore merges by id, the mod off stands nothing; the dungeon rest pays its night asleep; the clock correction re-aligns', async () => {
+test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carries none, an empty word reaches the cell, a restore merges by id, Off keeps them, sees only another player\'s and uses none; the dungeon rest pays its night asleep; the clock correction re-aligns', async () => {
   const world = read('src/scenes/world.js'), dc = read('src/scenes/dungeonContext.js'), campsSrc = read('src/scenes/camps.js');
   assert.doesNotMatch(world, /camps\.collectPixel\(key\)/, 'a placed camp is not a dropped pile: the streaming sweep leaves it');
   assert.doesNotMatch(world, /camps: camps\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\),   \/\/ SURV3: my camps, in natives\n\s+\}\);\n\s+\}\n\s+function restoreExteriorScene|camps\.restore\(arrived\.camps/, 'the scene cache carries no camps - the pool is the truth');
   assert.match(world, /if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);/, 'an empty list says "none stand"');
-  assert.match(world, /if \(Math\.abs\(offsetMs - was\) > 1000\) \{ onlineArrival\(\); alignSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(worldMinutes\(\)\)\); \}/, 'a clock correction re-aligns the needs');
+  assert.match(world, /if \(Math\.abs\(offsetMs - was\) > 1000\) \{ const before = playerEntity\.lastGameMinutes; onlineArrival\(\); if \(Number\.isFinite\(before\)\) shiftSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\) - Math\.floor\(before\)\); alignSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(worldMinutes\(\)\)\); \}/, 'a clock correction re-aligns the needs - by the delta every other marker rode, first (AUDIT SURV-TIERS, the third pass)');
   assert.match(dc, /const feed = survivalFeed\(playerEntity, survivalEnvNow\(\), \{ say: \(msg\) => hudText\.add\(msg\) \}\);\n\s+if \(feed\) runSurvivalMinutes\(playerEntity, start, Math\.floor\(end\), feed\.env, \{ \.\.\.feed\.deps, sinks: playerSinks, rolls: Math\.random \}\);/, 'the dungeon rest pays its night asleep, under the window');
-  assert.match(campsSrc, /if \(!survivalOn\(\)\) return null;/, 'the pool stands nothing with the mod off');
+  // AUDIT SURV-TIERS: the pool REFUSED a restore and a peer's word with the arc off, so a save loaded Off lost every
+  // camp and an Off host dropped its peers' camps from the room it passes on. Off hides; it does not burn.
+  assert.doesNotMatch(campsSrc, /if \(!survivalOn\(\)\) return null;/, 'Off refuses no record');
   // the merge
-  const { createCamps } = await import('../src/scenes/camps.js');
-  const { TENT_MODEL } = await import('../src/systems/survival/camp.js');
-  const entity = player(); const renderer = { gl: null };
+  const { createCamps, FIRE_LIGHT_UP } = await import('../src/scenes/camps.js');
+  const { TENT_MODEL, FIRE_LIGHT_RANGE } = await import('../src/systems/survival/camp.js');
+  // AUDIT SURV-TIERS (the third pass): a renderer that mounts the flame (the pin on it was vacuous), and a window and
+  // a voice to hear what a click opens and says
+  const entity = player(); const renderer = { createBillboardBatch: (a, r, size, at) => ({ at: at[0] }), destroyBillboardBatch: () => {} };
+  const menus = [], lines = [];
   const pool = createCamps({
     renderer, getTexture: async () => ({ getFrameCount: () => 3, getSize: () => ({ width: 40, height: 40 }) }), uploadRecordFrame: () => {},
     meshes: { getGpuMesh: async () => ({ gpu: true }), cpuModels: new Map([[TENT_MODEL, { positions: [-1, 0, -1, 1, 2, 1] }]]) }, entity,
-    camera: () => ({ feet: [0, 0, 0], yaw: 0 }), collider: () => null, place: () => ({}), pixelKeyAt: () => 'px', say: () => {}, selfId: () => 'me',
+    camera: () => ({ feet: [0, 0, 0], yaw: 0 }), collider: () => null, place: () => ({}), pixelKeyAt: () => 'px', say: (l) => lines.push(l), selfId: () => 'me',
+    showOverlay: (w) => menus.push(w),
   });
   const list = [{ id: 'me:1', kind: 'fire', pos: [1, 0, 1], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }, { id: 'me:2', kind: 'tent', pos: [5, 0, 1], yaw: 0, litUntil: 500, wear: 3, placedAt: 0 }];
   pool.restore(list); pool.restore(list);
   assert.equal(pool.camps.length, 2, 'a second restore of the same records stands no twins');
   pool.restore([{ id: 'me:3', kind: 'fire', pos: [9, 0, 1], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }]);
   assert.equal(pool.camps.length, 3, 'and a new record joins the standing ones');
+  setWorldMinutes(100);
+  await new Promise((r) => setTimeout(r, 0));   // the tent's mesh is up
+  const tents = () => pool.draw({ drawMesh: () => {} });
+  assert.deepEqual([pool.byFire([1, 0, 1]), tents()], [true, 1], 'on, the fire warms and the tent stands');
   _resetForTests(); setPref('survival', false);
   pool.restore([{ id: 'me:4', kind: 'fire', pos: [9, 0, 9], yaw: 0, litUntil: 500, wear: 0, placedAt: 0 }]);
-  assert.equal(pool.camps.length, 3, 'the mod off: nothing stands');
+  assert.equal(pool.camps.length, 4, 'Off: the save\'s camp is kept');
+  assert.equal(pool.snapshot().length, 4, '...and the next save still carries it');
+  assert.equal(pool.applyOwner('peer', [{ i: 'p:1', k: 1, p: [20, 0, 20], y: 0, u: 500, w: 0 }]), true, 'a peer\'s word lands too');
+  assert.equal(pool.camps.length, 5);
+  // SURV-OFFSIGHT (Mac: "really only being able to see other people's campfires makes sense"): Off SEES another
+  // player's camp and uses none of any; its own stay out of sight. AUDIT SURV-TIERS (the third pass): sight is the
+  // ray, the name and the look too - the ray stops at what is seen and names it; the click opens nothing
+  assert.deepEqual([pool.targets().map((t) => t.key), pool.lights(), pool.batches().map((b) => b.at), tents()],
+    [['camp:p:1'], [{ x: 20, y: FIRE_LIGHT_UP, z: 20, range: FIRE_LIGHT_RANGE }], [[20, 0, 20]], 0],
+    'of the ray, the lights and the flames, the peer\'s fire\'s alone - its own fires and its own tent are out of sight');
+  assert.deepEqual([pool.byFire([1, 0, 1]), pool.byFire([20, 0, 20])], [false, false], 'no warmth and no camp\'s rest for this player, by its own fire or the peer\'s');
+  assert.deepEqual([pool.hoverName('camp:me:1'), pool.hoverName('camp:p:1')], [null, { title: 'Campfire' }], 'the seen one is named; its own is not there to name');
+  lines.length = 0;
+  assert.deepEqual([pool.activate('camp:me:1', 'grab'), pool.activate('camp:p:1', 'info'), pool.activate('camp:p:1', 'grab')], [false, true, true], 'the click lands on what is seen');
+  assert.deepEqual([lines, menus.length], [[CAMP_TEXT.seeFire], 0], 'a look says what it is; nothing opens a menu');
+  assert.equal(pool.fireNear([1, 0, 1]), true, 'the world still has the fire - the rest\'s PLACE reads it (shared.js createRestDeps)');
+  const said = [];
+  const off = createCamps({ entity, camera: () => ({ feet: [0, 0, 0], yaw: 0 }), say: (l) => said.push(l) });
+  assert.equal(off.placeItem(createSurvivalItem(TEMPLATE.Campfire), [createSurvivalItem(TEMPLATE.Campfire)]), false, 'Off stands no new camp');
+  assert.deepEqual([said, off.camps.length], [[CAMP_TEXT.arcOff], 0], '...and says what would change that (CAMP-SILENT)');
   _resetForTests();
+  assert.deepEqual([pool.byFire([1, 0, 1]), pool.byFire([20, 0, 20]), tents()], [true, true, 1], 'on again, every kept camp is back where it was');
+  setWorldMinutes(0);
 });
 
 test('AUDIT SURV D: the save carries the record - the markers and the cooldown round-trip, the notes do not', () => {

@@ -39,11 +39,11 @@
 //
 // The three clauses that stood here are all closed (D1):
 // - the TALK button routes to TalkManager.TalkToStaticNPC (:263):
-//   worldModes.js:2906 supplies `onTalk: () => openStaticNpc(pn,
+//   worldModes.js:2936 supplies `onTalk: () => openStaticNpc(pn,
 //   { forceTalk: true })`, which this file consumes at :256 and :265.
 // - AddPermanentScene (:246) shipped at P1 - systems/tavern.js:143
 //   addPermanentScene / :93 removePermanentScene, with this window
-//   handing rentRoom its sceneCache at :223. A rented room's CONTENTS
+//   handing rentRoom its sceneCache at :261. A rented room's CONTENTS
 //   survive now, not just the rental.
 // - the HOTKEYS: DaggerfallShortcut is indeed a SECOND binding table
 //   next to I1's input registry, but it is a text database and not a
@@ -63,10 +63,10 @@ import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 import { audio } from '../systems/audio.js';   // F145: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
-import { survivalOn } from '../systems/survival/switch.js';   // SURV5: the mod's menu stands in for DFU's while the arc is on
-import { tavernMenu, tavernEat, tavernDrink, blackout, TAVERN_MENU_TEXT } from '../systems/survival/tavernMenu.js';
+import { survivalOn, survivalRules } from '../systems/survival/switch.js';   // SURV5: the mod's menu stands in for DFU's while the arc is on; SURV-TIERS: the tier prices the drink
+import { tavernMenu, tavernEat, tavernDrink, tavernOrder, blackout, TAVERN_MENU_TEXT } from '../systems/survival/tavernMenu.js';
 import { survivalOf } from '../systems/survival/needs.js';
-import { stiffen } from '../systems/survival/rest.js';
+import { stiffen, REST_KIND } from '../systems/survival/rest.js';
 import {
   TOO_MANY_DAYS_ID, OFFER_PRICE_ID, NOT_ENOUGH_GOLD_ID,
   HOW_MANY_DAYS_ID, HOW_MANY_ADDITIONAL_DAYS_ID,
@@ -279,19 +279,24 @@ export class TavernWindow {
         const row = menu.rows[i];
         if (!row || row.kind === 'header') return [box];
         audio.playOneShot(SOUND.ButtonClick, 1);
-        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
-        deductGold(h.entity, row.price);
         const s = survivalOf(h.entity, now);
         const endurance = h.endurance?.() ?? 50;
-        const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance });
+        const rules = survivalRules();
+        if (totalGoldAmount(h.entity) < row.price) return [{ rows: this._rows(NOT_ENOUGH_GOLD_ID) }];
+        // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste
+        const order = tavernOrder(s, now, row, { endurance, rules });
+        if (!order.ok) return [{ rows: line(order.text) }];
+        deductGold(h.entity, row.price);
+        const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });
         h.advanceMinutes?.(r.minutes);
         h.entity.lastTimePlayerAteOrDrankAtTavern = now;
+        let b = null;
         if (r.blackout) {
-          const b = blackout(s, now + r.minutes, { endurance });
-          stiffen(h.entity, now + r.minutes + b.minutes);   // the night on the boards is a rough one (SURV4)
+          b = blackout(s, now + r.minutes, { endurance });
+          stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules);   // the night on the boards is a rough one (SURV4), at the tier's price
           h.advanceMinutes?.(b.minutes);
         }
-        return [{ rows: line(r.text) }];
+        return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }];   // AUDIT SURV-TIERS (the third pass): and the waking
       },
       onCancel: () => null,
     };

@@ -337,13 +337,26 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:5034-5044) given a
+ * bulletin board's idiom (scenes/worldModes.js:5095-5105) given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.
  *
  * @returns {{key:string, distance:number, reach:number}|null}
  */
+/**
+ * DISC10: the slab test in a RIGID box's own frame - `m` a column-major rotation and translation with no scale (the
+ * cart's trs), `box` its local [minX..maxZ]; a rigid map keeps lengths, so `t` is the world distance. An axis-aligned
+ * box drawn around a turned body bulges past it at every diagonal: EOTB's cart, trailing a rider at 45 degrees, took
+ * a forward look over empty road and named "Wagon", flickering through every turn.
+ */
+export function rayObb(origin, dir, m, box) {
+  const rx = origin[0] - m[12], ry = origin[1] - m[13], rz = origin[2] - m[14];
+  const o = [rx * m[0] + ry * m[1] + rz * m[2], rx * m[4] + ry * m[5] + rz * m[6], rx * m[8] + ry * m[9] + rz * m[10]];
+  const d = [dir[0] * m[0] + dir[1] * m[1] + dir[2] * m[2], dir[0] * m[4] + dir[1] * m[5] + dir[2] * m[6], dir[0] * m[8] + dir[1] * m[9] + dir[2] * m[10]];
+  return rayAabb(o, d, { min: [box[0], box[1], box[2]], max: [box[3], box[4], box[5]] });
+}
+
 export function pickActivatableHit(eye, dir, targets, collider) {
   let bestKey = null;
   let bestDist = Infinity;
@@ -352,7 +365,7 @@ export function pickActivatableHit(eye, dir, targets, collider) {
   let bestNoSurface = false;
   let targetKeys = null;   // CASTLE1: the keys, minted only when a box holds the eye
   for (const target of targets) {
-    let d = rayAabb(eye, dir, target.aabb);
+    let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb);   // DISC10: a turned body's own box where it has one
     if (d === null) continue;
     // CASTLE1 (DragynDance, 2026-09-22: "Entering castle daggerfall
     // removes your ability to interact with anything, so you are unable

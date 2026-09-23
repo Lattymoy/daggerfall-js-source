@@ -24,7 +24,7 @@
 import { unitWeightInKg } from './inventory.js';   // AUDIT 23 (items-8)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // X5: %hs, the trapped soul's name
 import { itemIsIdentified } from './tradeModes.js';   // X7: the DERIVED identified state
-import { templateByIndex, itemBaseValue } from './itemTemplates.js';
+import { templateByIndex, itemBaseValue, conditionPercentage } from './itemTemplates.js';
 import { isPotion, isPotionRecipe, isParchment, TEMPLATES } from './useItem.js';
 import { expandLetterSignoff } from './quest/questMacros.js';   // ResolveItemLongName's quest-letter arm (ItemHelper.cs:335-348)
 import { itemArmorValue, isShieldTemplate } from './armorMaterials.js';
@@ -87,7 +87,7 @@ export const potionRecipeTokens = () => [
  *  W3: this read the constant 0 with a "the port has no settings
  *  layer" note that U29 made stale - it reads the setting now, at the
  *  point of use as DFU does. `item.material` IS DFU's raw
- *  nativeMaterialValue (equip.js:140), so the `>=` compares hold. */
+ *  nativeMaterialValue (equip.js:145), so the `>=` compares hold. */
 export function armorShouldShowMaterial(item, setting = getInt('GUI', 'HelmAndShieldMaterialDisplay', 0, 3)) {
   // `artifact` is the classic FLAGS word's artifact bit: minted by
   // loot.js's createArtifact (SetArtifact's :617) and read straight
@@ -158,9 +158,10 @@ export const CONDITION_THRESHOLDS = Object.freeze([1, 5, 15, 40, 60, 75, 91, 101
 
 /** ConditionPercentage (:460-463): `100 * current / max`, C# integer
  *  division, and 100 when the item has no maximum at all. */
-export const conditionPercentage = (item) => ((item?.maxCondition ?? 0) > 0
-  ? Math.trunc(100 * (item.currentCondition ?? 0) / item.maxCondition)
-  : 100);
+// RRI2 / ONE DFU MEMBER, ONE EXPORT: DaggerfallUnityItem.ConditionPercentage
+// lives in itemTemplates.js now (the trade window's Sell arm reads it too);
+// re-exported under the name this module's readers already use.
+export { conditionPercentage };
 
 export function conditionWord(item) {
   const max = item?.maxCondition ?? 0;

@@ -165,7 +165,7 @@ const DFU_REGISTRY_ORDER = [
   'LegalRepute',
   'MuteNpc',
   'DestroyNpc',
-  'PendingTrigger',   // DFU WorldUpdate
+  'WorldUpdate',   // DFU WorldUpdate - RR3a ported WorldUpdate.cs whole; the PendingTrigger guard that held the slot is retired
   'EnemiesAction',   // DFU Enemies
   'ClickedFoe',
   'KillFoeAction',   // DFU KillFoe
@@ -196,7 +196,7 @@ test('AUDIT QUESTS 1: the action registry mirrors DFU slot for slot, in order', 
   // here rather than in a player's quest log.
   const src = readFileSync(join(ROOT, 'src/systems/quest/actions.js'), 'utf8');
   const defined = [...src.matchAll(/^(?:export )?class (\w+)/gm)].map((m) => m[1]);
-  const missing = defined.filter((d) => d !== 'ActionTemplate' && !registered.includes(d));
+  const missing = defined.filter((d) => d !== 'ActionTemplate' && d !== 'PendingTrigger' && !registered.includes(d));   // RR3a retired the last guard; the class stays as the shape a future guard takes (GUARD_PATTERNS is empty)
   assert.deepEqual(missing, [], 'an action class ported and never registered matches no quest line');
   assert.ok(!registered.includes('ActionTemplate'), 'the BASE is not registered - it would match everything');
 

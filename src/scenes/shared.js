@@ -37,8 +37,9 @@ import { announceSkillRaise, announceMastery } from '../ui/levelNotice.js';
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
-import { REST_KIND, REST_TEXT_SURVIVAL, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
-import { survivalOn } from '../systems/survival/switch.js';
+import { REST_KIND, REST_TEXT_SURVIVAL, restCost, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
+import { survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: the rest's price is the tier's, read at the open
+import { sleepStage } from '../systems/survival/needs.js';   // AUDIT SURV-TIERS (the third pass): the rough night's lesser sleep, said
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
@@ -67,6 +68,10 @@ import { setSoundReplacements } from '../systems/soundReplacer.js';   // SNDREP1
 import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
 import { setSeasonsSources } from '../systems/seasonsIliacBayAssets.js';   // SIB1: Seasons of the Iliac Bay's texture door
 import { setWeaponWidgetSources } from '../combat/weaponWidgetAssets.js';   // WW1: Weapon Widget's double-scale textures, from the player's own bundle
+import { setDiverseWeaponsSources } from '../combat/diverseWeaponsAssets.js';   // DW1: Diverse Weapons' per-weapon sprites, from the player's own bundle
+import { installDiverseWeaponsIcons } from '../combat/diverseWeaponsIcons.js';
+import { installRoleplayRealismItems } from '../systems/rriInstall.js';
+import { installRoleplayRealism } from '../systems/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
 import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -1153,10 +1158,14 @@ export function ensureAudio(fetch = fetchBytes) {
   // M-TEX: textures register on the SAME seam, for the same reason.
   // Registration is a name list and a loader - no PNG is read until an
   // archive that has replacements is actually loaded.
+  installDiverseWeaponsIcons();   // DW3: before the archives load, so 233/234's preload carries the mod's icons
+  installRoleplayRealismItems();
+  installRoleplayRealism();   // RR1: the formula overrides, the guild classes, the hooks - once, in InitMod's order   // RRI1: the fourteen rows and the twenty patches before anything mints, the 280 sprites on the door
   const textures = storedTextureNames()
     .then((names) => {
       setSeasonsSources(names, loadTextureFile);   // SIB1: Seasons of the Iliac Bay's bundle or folders, from the same pick
       setWeaponWidgetSources(names, loadTextureFile);   // WW1: Weapon Widget's bundle, from the same pick
+      setDiverseWeaponsSources(names, loadTextureFile);   // DW1: Diverse Weapons' bundle, from the same pick
       return setTextureReplacements(names, loadTextureFile);
     })
     .catch(() => 0);
@@ -1361,7 +1370,7 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
   // add a line to its frame body.
   const subscribers = [];
   // SURV7: the rest gate on DFU's RegisterPreventRestCondition seam, with this host's readers - too cold without a
-  // fire or a roof, too hot anywhere (survival/rest.js restBlock); inert with the mod off
+  // fire or a roof, too hot anywhere (survival/rest.js restBlock); inert but in Hard (SURV-TIERS: env.js survivalGateOn)
   if (survivalEnv) installSurvivalGate(registerPreventRestCondition, () => entity, survivalEnv);
 
   return {
@@ -1950,7 +1959,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:263`, the standalone host, has always had the right
+ *  `dungeon.js:267`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *
@@ -2041,7 +2050,9 @@ export function createRestDeps(entity, opts = {}) {
     // host that says nothing sleeps rough, which is what the window alone has always been
     restKind = () => REST_KIND.Rough, ...rest
   } = opts;
-  let _kind = REST_KIND.Rough;   // the running rest's kind, read at the open
+  let _kind = REST_KIND.Rough;   // the running rest's kind as the laws PRICE it, read at the open - DFU's bed with the arc off
+  let _place = REST_KIND.Rough;  // AUDIT SURV-TIERS: WHERE the running rest is, read at the open in every tier (see setResting)
+  let _rules = null;             // SURV-TIERS: the running rest's tier rules (survival/difficulty.js), read at the open - null with the arc off
   let _roughHours = 0;           // rested hours paid at the rough rate - the stiff morning follows them
   // PARTY-REST10 (2026-09-21, per-request: confirmed by testing - health frozen for 10 straight simulated
   // hours under Rough, not merely "sometimes rounds down"): see systems/survival/rest.js's own `restHour` doc
@@ -2072,17 +2083,29 @@ export function createRestDeps(entity, opts = {}) {
     setResting: (b) => {
       entity.isResting = !!b;
       // SURV4: the kind is read at the OPEN (the fire may die under a long night - it was lit when you lay down);
-      // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the encounter roll's `roughRest`
+      // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the kind the party pose broadcasts
       // PARTY-REST4b: `_restKindOverride`, when one is set, wins over the inherited `restKind()` position check -
       // see the doc comment above `_restKindOverride`'s declaration for the closure bug this replaces.
+      // AUDIT SURV-TIERS: WHERE and WHAT IT COSTS are two answers. The place is the world's, read in every tier and
+      // stamped on the entity - a party follower mirrors it (world.js partyRestMirrorDeps), and an Off leader had
+      // been broadcasting every field as a bed, so a Casual or Hard follower beside them slept a bed's night. The
+      // price is the tier's: with the arc off every rest is DFU's whole hour (a bed's), in any place.
       if (b) {
-        _kind = survivalOn() ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;
+        _rules = survivalRules();   // SURV-TIERS: the tier read beside the place prices it (restHour, stiffen, the asks)
+        _place = (_restKindOverride ?? restKind)();
+        _kind = _rules ? _place : REST_KIND.Bed; _roughHours = 0;
         _roughCarry = { health: 0, fatigue: 0, magicka: 0 };   // PARTY-REST10: a fresh sleep owes nothing to whatever the last one banked
       }
       // SURV4: rough hours rested are a stiff morning (STIFF_HOURS of speed and agility) on the way out - an interrupted
       // night too, since the hours were slept - said once; the hours are spent
-      if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
-      entity.restKind = b ? _kind : null;
+      // SURV-TIERS: under the tier the rest opened with - a Casual morning costs nothing, so nothing is said
+      if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough, _rules)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
+      // AUDIT SURV-TIERS (the third pass): a tier with no stiff morning (Casual) still sleeps the rough night at a third
+      // of a bed's rate, and a sleeper woke Drowsy from eight hours on the ground with no word for why - said when it
+      // left them short
+      else if (!b && _roughHours > 0 && _rules && sleepStage(entity.survival?.sleepDebt ?? 0) !== 'rested') { say(REST_TEXT_SURVIVAL.sleptPoorly); _roughHours = 0; }
+      entity.restKind = b ? _place : null;
+      entity.restAsks = b ? restCost(_kind, _rules).encounters : null;   // SURV-TIERS: the resting encounter roll's asks a minute - Hard's rough night two, every Casual or Off night one
       // PARTY-REST4b: an override is good for exactly one session - the moment THIS session's resting flag drops,
       // forget it, so a later real rest (this same entity choosing to actually rest for themselves) never
       // silently inherits a stale kind broadcast by whoever they last mirrored.
@@ -2121,7 +2144,7 @@ export function createRestDeps(entity, opts = {}) {
     // SURV4: the hour by its kind - DFU's whole hour in a bed or by a fire, half of it rough (survival/rest.js restHour)
     tickVitals: () => {
       if (_kind === REST_KIND.Rough) _roughHours++;
-      const healed = restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() }), _roughCarry);
+      const healed = restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() }), _roughCarry, _rules);   // SURV-TIERS: the tier's rough price
       return healed;
     },
     fullyHealed: () => restFullyHealed(entity),

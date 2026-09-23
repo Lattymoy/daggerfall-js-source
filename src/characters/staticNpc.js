@@ -18,6 +18,15 @@ import { RACES } from '../systems/races.js';
 // enum the parser already mints. Individual is 4; 3 is Subgroup.
 import { FACTION_TYPES } from '../formats/factionFile.js';
 
+// RR2: `flatsDict[flatId] = new FlatsFile.FlatData { faceIndex }`
+// (RoleplayRealism.cs:1017-1023) - a mod rewrites FLATS.CFG's face for a
+// flat it re-drew, keyed by the flat the person was born as, the last
+// writer winning. The pipeline's flatFaceIndex asks here first.
+const _faceOverrides = new Map();
+export function setFlatFaceOverride(archive, record, faceIndex) { if (faceIndex == null) _faceOverrides.delete(`${archive}:${record}`); else _faceOverrides.set(`${archive}:${record}`, faceIndex | 0); }
+export const flatFaceOverride = (archive, record) => _faceOverrides.get(`${archive}:${record}`) ?? null;
+export function _resetFlatFaceOverrides() { _faceOverrides.clear(); }
+
 /** StaticNPC.Context (:113-118). */
 export const NPC_CONTEXT = Object.freeze({ Custom: 0, Dungeon: 1, Building: 2 });
 

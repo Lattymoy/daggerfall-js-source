@@ -62,17 +62,18 @@ test('shopStock: the stock law - rarity gate, chance, gender swap, horse+cart', 
   // general stores ALWAYS shelve the horse + small cart - and books
   // ride the quality ladder with NO Dice100 gate (q5 -> 3 books)
   const gs = stockShopShelf({ buildingType: BUILDING_TYPES.GeneralStore, quality: 5 }, { level: 1 }, { rolls: () => 0.999 });
-  assert.deepEqual(gs.map((it) => it.templateIndex), [TRANSPORT_HORSE, TRANSPORT_SMALL_CART, 277, 277, 277]);
+  assert.deepEqual(gs.map((it) => it.templateIndex), [TRANSPORT_HORSE, TRANSPORT_SMALL_CART, 277]);   // AUDIT-RR2 G10: AddItem merges the three same-message books into one stack (ItemCollection.cs:224-228, :710)
+  assert.equal(gs[2].stackCount, 3);
   // the gender swap: a female player sees WomensClothing at the clothier
   const cs = stockShopShelf({ buildingType: BUILDING_TYPES.ClothingStore, quality: 21 }, { level: 1, gender: 'female' }, { rolls: () => 0 });
   assert.ok(cs.some((it) => it.group === 'WomensClothing'));
   assert.ok(!cs.some((it) => it.group === 'MensClothing'));
   // the bookseller quality ladder: q7 -> (7+3)/5 = 2 -> +1 -> j 0..3 = 4 books
   const books = stockShopShelf({ buildingType: BUILDING_TYPES.Bookseller, quality: 7 }, { level: 1 }, { rolls: () => 0.999 });
-  assert.equal(books.filter((it) => it.group === 'Books').length, 4);
+  assert.equal(books.filter((it) => it.group === 'Books').reduce((n, it) => n + (it.stackCount ?? 1), 0), 4);   // AUDIT-RR2 G10: the same book four times is one stack of 4
   // the >= 4 step-down: q20 -> (20+3)/5 = 4 -> 3 -> +1 -> 5 books (not 6)
   const books20 = stockShopShelf({ buildingType: BUILDING_TYPES.Bookseller, quality: 20 }, { level: 1 }, { rolls: () => 0.999 });
-  assert.equal(books20.filter((it) => it.group === 'Books').length, 5);
+  assert.equal(books20.filter((it) => it.group === 'Books').reduce((n, it) => n + (it.stackCount ?? 1), 0), 5);
   // SHOP_ITEM_GROUPS carries the verbatim pair tables
   assert.deepEqual([...SHOP_ITEM_GROUPS[BUILDING_TYPES.WeaponSmith]], [0x02, 0x1E, 0x03, 0x46]);
 });

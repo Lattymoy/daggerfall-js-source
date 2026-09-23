@@ -1177,8 +1177,8 @@
   {
     "name": "AUDIT2-a-teleport-leaves-the-blood-where-it-was",
     "file": "src/scenes/world.js",
-    "old": "    hitEffects.clear();\n    for (const key of [...built.keys()]) {",
-    "new": "    for (const key of [...built.keys()]) {",
+    "old": "    hitEffects.clear();\n    // AUDIT SURV-TIERS (the third pass): AND THE CAMPS, the same frame's.",
+    "new": "    // AUDIT SURV-TIERS (the third pass): AND THE CAMPS, the same frame's.",
     "tests": [
       "test/blood1_decals.test.js"
     ]
@@ -1186,8 +1186,8 @@
   {
     "name": "AUDIT2-a-teleport-clears-the-blood-after-the-new-frame-begins",
     "file": "src/scenes/world.js",
-    "old": "    hitEffects.clear();\n    for (const key of [...built.keys()]) {\n      const [bx, by] = key.split(',').map(Number);\n      destroyPixel(bx, by);\n      state.release(bx, by);\n    }\n    queue.length = 0;\n    queue.push(...state.init(px, py));",
-    "new": "    for (const key of [...built.keys()]) {\n      const [bx, by] = key.split(',').map(Number);\n      destroyPixel(bx, by);\n      state.release(bx, by);\n    }\n    queue.length = 0;\n    queue.push(...state.init(px, py));\n    hitEffects.clear();",
+    "old": "    hitEffects.clear();\n    // AUDIT SURV-TIERS (the third pass): AND THE CAMPS, the same frame's. A camp stands in scene space too, spared by\n    // the pixel sweep (AUDIT SURV B: the pool outlives the streaming), and `state.init` below moved the origin under it\n    // with no offset to ride: a tent pitched by Daggerfall stood beside the traveller in Wayrest, and the next save\n    // and the wire said so. The player's own go through natives across the new frame and stand where they were\n    // pitched; a peer's come back on their owner's next word.\n    const campsHeld = camps.snapshot(campToNatives);\n    camps.destroyAll();\n    for (const key of [...built.keys()]) {\n      const [bx, by] = key.split(',').map(Number);\n      destroyPixel(bx, by);\n      state.release(bx, by);\n    }\n    queue.length = 0;\n    queue.push(...state.init(px, py));\n",
+    "new": "    // AUDIT SURV-TIERS (the third pass): AND THE CAMPS, the same frame's. A camp stands in scene space too, spared by\n    // the pixel sweep (AUDIT SURV B: the pool outlives the streaming), and `state.init` below moved the origin under it\n    // with no offset to ride: a tent pitched by Daggerfall stood beside the traveller in Wayrest, and the next save\n    // and the wire said so. The player's own go through natives across the new frame and stand where they were\n    // pitched; a peer's come back on their owner's next word.\n    const campsHeld = camps.snapshot(campToNatives);\n    camps.destroyAll();\n    for (const key of [...built.keys()]) {\n      const [bx, by] = key.split(',').map(Number);\n      destroyPixel(bx, by);\n      state.release(bx, by);\n    }\n    queue.length = 0;\n    queue.push(...state.init(px, py));\n    hitEffects.clear();\n",
     "tests": [
       "test/blood1_decals.test.js"
     ]

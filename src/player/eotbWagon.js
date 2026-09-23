@@ -226,7 +226,9 @@ export function createEotbWagon() {
       const m = wagonMatrix(w);
       if (!m) return [];
       const box = localBox ? transformedAabb(localBox, m) : [w.pos[0] - 1, w.pos[1] - 1, w.pos[2] - 1, w.pos[0] + 1, w.pos[1] + 1, w.pos[2] + 1];
-      return [{ key: 'eotbWagon', aabb: { min: [box[0], box[1], box[2]], max: [box[3], box[4], box[5]] }, distance: rayDistance, reach: WAGON_REACH }];
+      // DISC10: the ray meets the cart's OWN turned box (`obb`), not the axis-aligned one around it, and a box that
+      // holds the eye names nothing by the ground or a wall inside it - the cart has no collider (`noSurface`)
+      return [{ key: 'eotbWagon', aabb: { min: [box[0], box[1], box[2]], max: [box[3], box[4], box[5]] }, obb: localBox ? { m, box: localBox } : null, noSurface: true, distance: rayDistance, reach: WAGON_REACH }];
     },
     /** CheckWagon, with the host's two doors. */
     activate(mode, { say = null, openInventoryWithWagon = null } = {}) {

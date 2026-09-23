@@ -17,11 +17,16 @@
 // is a registry; a second host in one boot is the dev scenes' case and
 // registers its own).
 //
+// SURV-TIERS (2026-09-23): THE TIER RIDES THE SAME SEAM. The feed hands
+// the minute law the live tier's rules (`deps.rules`, survival/
+// difficulty.js), and the gate is installed on every host but answers
+// only in a tier that refuses a sleep (`restGate` - Hard's alone).
+//
 // PURE: a leaf - racialLive.js is import-free, races.js a data leaf.
 import { survivalOf } from './needs.js';
 import { temperatureWord } from './temperature.js';
 import { installSurvivalRestGate } from './rest.js';
-import { survivalOn } from './switch.js';
+import { survivalRules } from './switch.js';
 import { liveVampirism } from '../racialLive.js';
 import { raceById } from '../races.js';
 
@@ -46,12 +51,14 @@ export function survivalCtx(entity, env = {}) {
 /**
  * tickPlayerMinutes' `survival` argument: { env, deps } - or null when
  * the mod is off or the host gave no env. `worn` is the equip table's
- * slot array (an item a slot, the shape temperature.js reads).
+ * slot array (an item a slot, the shape temperature.js reads); `rules`
+ * the live tier's (SURV-TIERS).
  */
 export function survivalFeed(entity, env = null, { rolls = null, say = null } = {}) {
-  if (!survivalOn() || !entity || !env) return null;
+  const rules = survivalRules();
+  if (!rules || !entity || !env) return null;
   const full = { ...ENV_DEFAULTS, ...env };
-  const deps = { worn: entity.equip?.slots ?? null, ctx: survivalCtx(entity, full) };
+  const deps = { worn: entity.equip?.slots ?? null, ctx: survivalCtx(entity, full), rules };
   if (rolls) deps.rolls = rolls;
   if (say) deps.say = say;
   return { env: full, deps };
@@ -74,8 +81,11 @@ export function restGateEnv(entity, env = null) {
  * readers. Returns the two handlers (for a teardown's unregister).
  */
 export function installSurvivalGate(register, entity, env) {
-  return installSurvivalRestGate(() => { const e = env?.(); return e ? restGateEnv(entity?.(), e) : null; }, register, { enabled: survivalOn });
+  return installSurvivalRestGate(() => { const e = env?.(); return e ? restGateEnv(entity?.(), e) : null; }, register, { enabled: survivalGateOn });
 }
+/** SURV-TIERS: the gate stands only in a tier that refuses a sleep - Off has no arc and Casual refuses nothing. */
+export const survivalGateOn = () => !!survivalRules()?.restGate;
+
 /** AUDIT SURV B/C: a torn-down host takes its pair off the seam (a dead dungeon's handler was refusing the outdoor fire). */
 export function uninstallSurvivalGate(pair, unregister) {
   for (const h of pair ?? []) unregister?.(h);

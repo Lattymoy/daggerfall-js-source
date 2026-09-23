@@ -15,6 +15,10 @@ import { loadQuestTables } from '../systems/quest/tables.js';
 
 const tableFiles = import.meta.glob('../../vendor/dfu-quests/Tables/*.txt', { query: '?raw', import: 'default' });
 const questFiles = import.meta.glob('../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });
+// RR3: a vendored mod's Quests/ folder - its QuestList-<name>.txt lands
+// with the tables (the registered list's seam) and its quest sources
+// with the pack's (GetQuest checks the mod's folder the same way)
+const modQuestFiles = import.meta.glob('../../vendor/roleplay-realism/Quests/*.txt', { query: '?raw', import: 'default' });
 
 const stripBom = (s) => s.replace(/^﻿/, '');
 const baseName = (path) => path.split('/').pop().replace(/\.txt$/, '');
@@ -33,6 +37,11 @@ export async function loadQuestPack() {
     const quests = new Map();
     await Promise.all(Object.entries(questFiles).map(async ([path, load]) => {
       quests.set(baseName(path), stripBom(await load()).split(/\r?\n/));
+    }));
+    await Promise.all(Object.entries(modQuestFiles).map(async ([path, load]) => {
+      const name = baseName(path);
+      if (name.startsWith('QuestList-')) tables.set(name, stripBom(await load()));
+      else quests.set(name, stripBom(await load()).split(/\r?\n/));
     }));
     loadQuestTables(Object.fromEntries(tables));
     return {

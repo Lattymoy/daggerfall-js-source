@@ -77,7 +77,7 @@ test('MODS-ONLINE-2: every vendored mod is classified, and the only keys the lan
   }
 });
 
-test('MODS-ONLINE-4: every mod switch is the player\'s online, except the five the room owns', () => {
+test('MODS-ONLINE-4: every mod switch is the player\'s online, except the twenty the room owns', () => {
   for (const [vendor, def] of Object.entries(MOD_SETTINGS)) {
     for (const key of Object.keys(def.keys)) {
       const room = ONLINE_ROOM_MOD_KEYS[vendor] && Object.hasOwn(ONLINE_ROOM_MOD_KEYS[vendor], key);
@@ -90,14 +90,16 @@ test('MODS-ONLINE-4: every mod switch is the player\'s online, except the five t
   // The whole shelf, counted, so a mod quietly re-forced shows up as a
   // number rather than as a player's complaint.
   const forced = Object.values(ONLINE_ROOM_MOD_KEYS).reduce((n, keys) => n + Object.keys(keys).length, 0);
-  assert.equal(forced, 5, 'the lane forces five mod switches in the whole shelf');
+  assert.equal(forced, 20, 'the lane forces twenty mod switches in the whole shelf');   // MODS-ONLINE-5: one ruleset per room - RR's six combat overrides and its intensive training   // RRI1/RR1 (merged 2026-09-23): five of Roleplay & Realism: Items' (the items that change hands) and two of Roleplay & Realism's (the location, the host's foes)   // WOD1: World of Daggerfall's Enabled, the second floor
   // MODS-ONLINE-4 (Mac: "What about player balance?"): the two GROUND
   // switches, and the three that spend somebody else's evening - the
   // host's dungeon foes (meaner monsters, the overhaul) and a roll that
-  // leaves the roller's hands (unleveled loot).
+  // leaves the roller's hands (unleveled loot). WOD1: and a third ground
+  // switch, World of Daggerfall's, which levels camp sites into the same
+  // terrain the road beds are smoothed into.
   assert.deepEqual(Object.keys(ONLINE_ROOM_MOD_KEYS).sort(),
-    ['meanerMonsters', 'pcaao', 'roads-hazelnut', 'unleveledLoot']);
-  assert.equal(ONLINE_PLAYERS_OWN_MODS.length, Object.keys(MOD_SETTINGS).length - 4);
+    ['meanerMonsters', 'pcaao', 'roads-hazelnut', 'roleplay-realism', 'roleplay-realism-items', 'unleveledLoot', 'world-of-daggerfall']);
+  assert.equal(ONLINE_PLAYERS_OWN_MODS.length, Object.keys(MOD_SETTINGS).length - 7);
 });
 
 test('MODS-ONLINE-2: a declared key is an OWN key - the lane and the store both refuse a name off Object.prototype', () => {
@@ -185,13 +187,18 @@ test('MODS-ONLINE-2: the lock, the pane and the door all say the same true thing
   // MODS-ONLINE-4: the three balance switches are not locked for the
   // GROUND's reason, so they do not wear the ground's words.
   assert.match(menu, /const ONLINE_SHARED_NOTE = '[^']*belong to whoever is hosting it[^']*';/, 'the shared lock has its own words');
-  assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: vendor === 'roads-hazelnut' \? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE, value: ground \}\);/);
+  assert.match(menu, /if \(ground !== undefined\) lockOnline\(b, null, \{ note: onlineLockNote\(vendor, key\), value: ground \}\);/);
+  // WOD1: the ground's words go to the two vendors that write terrain heights, and only them.
+  assert.match(menu, /const ONLINE_GROUND_VENDORS = Object\.freeze\(\['roads-hazelnut', 'world-of-daggerfall'\]\);/);
+  // MODS-ONLINE-5: the ruleset's reason is its own words, and only RR's seven wear them
+  assert.match(menu, /const ONLINE_RULESET_NOTE = '[^']*one ruleset[^']*';/, 'the ruleset lock has its own words');
+  assert.match(menu, /const onlineLockNote = \(vendor, key\) => \(ONLINE_GROUND_VENDORS\.includes\(vendor\) \? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS\[vendor\]\?\.includes\(key\) \? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE\);/);
   assert.match(menu, /if \(isOnlinePage\(\)\) body\.append\(el\('p', 'meta', ONLINE_MODS_NOTE\)\);/, 'the Mods pane says what is true of MODS');
   // The Online pane's own sentence claimed every mod was on for
   // everyone. A player reading that and then toggling one would be
   // reading a lie the port no longer tells.
   assert.ok(!/every enhancement and every mod is on for everyone/.test(menu), 'the old claim is gone');
-  assert.match(menu, /Most of your mods stay yours - turn them on or off online as you like\. Five switches are the room/, 'the door says what is true');
+  assert.match(menu, /Most of your mods stay yours - turn them on or off online as you like\. Six switches are the room/, 'the door says what is true');
 });
 
 test('MODS-ONLINE-2: a mod the player owns reaches no wire, no save and no roll', () => {
@@ -280,4 +287,15 @@ test('MODS-ONLINE-3 by execution: the survival system writes only its own entity
   runSurvivalMinutes(mine, 0, 600, env, { rolls: () => 0.5, autoDrink: false, autoEat: false });
   assert.equal(JSON.stringify(theirs), before, 'my needs never touched the other player\'s entity');
   assert.notEqual(JSON.stringify(mine), JSON.stringify(body()), 'and they really did land on mine');
+});
+
+test('MODS-ONLINE-5: one ruleset per room - the reason PCAAO is forced whole forces RR\'s six combat overrides the same way, and intensive training is forced OFF because the shared clock would hand its +4 out for free', () => {
+  const rr = ONLINE_ROOM_MOD_KEYS['roleplay-realism'];
+  for (const k of ['advancedArchery', 'weaponSpeed', 'weaponMaterials', 'equipDamage', 'encumbranceEffects']) assert.equal(onlineForcedModSetting('roleplay-realism', k, '?online=1'), true, `${k} is the room's, at the mod's own default`);
+  assert.equal(onlineForcedModSetting('roleplay-realism', 'classicStrengthDamageBonus', '?online=1'), false, 'the classic bonus ships off and stays off');
+  assert.equal(onlineForcedModSetting('roleplay-realism', 'RefinedTraining.intensiveTraining', '?online=1'), false, 'CLOCK-REFUSAL: the four days would not pass');
+  for (const k of ['bandaging', 'climbingRestriction', 'loanAmountPerLevel', 'shipPorts', 'bedSleeping', 'underworldExpulsion', 'EnhancedRiding.TrampleCivilians', 'RefinedTraining.variableTrainingPrice']) assert.equal(onlineForcedModSetting('roleplay-realism', k, '?online=1'), undefined, `${k} stays the player's - it reaches nobody`);
+  assert.equal(Object.keys(rr).length, 9);
+  assert.equal(Object.keys(ONLINE_ROOM_MOD_KEYS.pcaao).length, 1, 'PCAAO is forced whole through its one switch - the precedent');
+  assert.match(rd('src/systems/onlineLane.js'), /ONE RULESET PER ROOM\. PCAAO was forced\s+\/\/ whole/);
 });

@@ -23,7 +23,7 @@
 //      the refusal into the code instead. In the street the arm handed
 //      a struck watchman to the ENCOUNTER pool's `removeFoe` - which
 //      was not a leak: that remover never looks the record up in
-//      `foes` (exteriorFoes.js:393-398) and both pools share the host's
+//      `foes` (exteriorFoes.js:414-419) and both pools share the host's
 //      one renderer, so the watchman got exactly what `removeGuard`
 //      gives it. Routing by POOL MEMBERSHIP is an OWNERSHIP law: each
 //      pool owns the teardown of its own records, and `removeFoe`'s
@@ -200,7 +200,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   const w = watchman({ hostile: false, team: 'PlayerAlly' });
   // FormulaHelper.cs:576-583: a weapon material the target refuses
   // returns 0 - a shaft that CONNECTED and dealt nothing, DFU's way
-  // (formulas.js:578-586).
+  // (formulas.js:580-588).
   w.entity.minMetalToHit = 1;
   g.guards.push(w);
   const hits = [];
@@ -225,7 +225,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
 
 test('ROAD-G G1(a): all three arrow hosts ROUTE the hostility seam by pool', () => {
   // The door is PUBLIC now, as the encounter pool's has always been
-  // (exteriorFoes.js:1886), so every host can reach it.
+  // (exteriorFoes.js:1954), so every host can reach it.
   const cg = read('src/scenes/cityGuards.js');
   assert.match(cg, /restoreWorld, removeGuard, handleAttackFromPlayer,/,
     'the watch exports its hostility pair on the returned surface');
@@ -311,7 +311,7 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
 
   // ROAD-G G1 (review): the RATIONALE this lane first wrote was FALSE
   // and is struck in all seven places it reached. `removeFoe`
-  // (exteriorFoes.js:393-398) never looks a record up in `foes` and
+  // (exteriorFoes.js:414-419) never looks a record up in `foes` and
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
   // `dead = true`, no corpse, skipped by cityGuards.js:823 and spliced

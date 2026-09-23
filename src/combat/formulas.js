@@ -532,6 +532,8 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   if (o && o(attacker, target, damage, weapon, struckBodyPart, { rolls, say }) !== undefined) return;
   if (!weapon || damage <= 0) return;
   const hit = (item, owner) => {
+    // RR1: ApplyConditionDamageThroughPhysicalHit's own override slot (FormulaHelper.cs:1123-1128) - "Only return if override returns true"
+    if (_overrides.get('applyConditionDamageThroughPhysicalHit')?.(item, owner, damage, { say }) === true) return;
     let amount = Math.trunc((10 * damage + 50) / 100);
     if (amount === 0 && dice100(20, rolls())) amount = 1;
     lowerCondition(item, amount, owner, say);
@@ -612,7 +614,8 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   chanceToHitMod += backstabChance;
   // CalculateWeaponToHit: material modifier x 10 rides the WEAPON
   // branch only, verbatim (audit F3).
-  if (weapon) chanceToHitMod += (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;
+  // RR1: `if (TryGetOverride("CalculateWeaponToHit", out del)) return del(weapon);` (FormulaHelper.cs:1140-1146) - Roleplay & Realism's weaponMaterials registers x3
+  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;
   if (weapon) chanceToHitMod = adjustWeaponHitChanceMod(attacker, target, chanceToHitMod, weaponAnimTime, weapon);   // AUDIT PCO1: the stock's mod hook, right after CalculateWeaponToHit
   const struck = calculateStruckBodyPart(rolls());
   struckPart = struck;   // SW1: carried out to the tail's hook, which sits past this block
@@ -869,7 +872,7 @@ export const KB_UNIT = CLASSIC_TO_UNITY_RATIO / 10;   // 3.95
  *  at 350 instead of ~570 takes roughly 60% more knockback speed.
  *
  *  `items` is the foe's own list; totalWeight IS ItemCollection
- *  .GetWeight (inventory.js:330), so the kg->classic multiply and the
+ *  .GetWeight (inventory.js:332), so the kg->classic multiply and the
  *  C# (int) truncation are the only arithmetic added here. A caller
  *  with no list passes nothing and gets the old base-only answer,
  *  which is the honest value for a foe the port gives no inventory. */

@@ -87,7 +87,7 @@ test('AUDIT HCC H3: DFU\'s per-mod save data rides EVERY save - the envelope nam
   assert.equal(restorePlayer({}, JSON.parse(JSON.stringify(snapshotPlayer(entity, {})))).modData, null, 'a save without it restores null - OnStartLoad\'s fresh start');
   const save = rd('src/systems/save.js');
   assert.match(save, /smallerDungeonsState = 0, modData = null \} = \{\}\) \{/);
-  assert.match(save, /modData: snap\.modData \?\? null \};/);
+  assert.match(save, /modData: snap\.modData \?\? null, terrainScale: snap\.terrainScale \?\? null \};/);   // TERRAIN-SCALE1 rides after it
   assert.match(rd('src/scenes/dungeonContext.js'), /modData: opts\.horseCartSave \? \{ 'horse-cart-and-cargo': opts\.horseCartSave\(\) \} : null,/);
   assert.match(rd('src/scenes/dungeonContext.js'), /opts\.horseCartLoad\?\.\(extras\.modData\?\.\['horse-cart-and-cargo'\] \?\? null\);[^\n]*\n\s+this\.restoreSaved\(extras, setPlayerPos\);/);
 });

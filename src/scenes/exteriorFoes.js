@@ -39,6 +39,7 @@ import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
 import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
 import { enemyControllerHeight, idleSpriteHeight, spriteOriginY } from '../characters/enemyAnchor.js';   // INCIDENT 2026-09-04 (ceiling bats)
+import { alignControllerToGround } from '../world/groundAlign.js';   // WOD3: CreateFoeGameObjects' drop
 import { rand } from '../formats/dfRandom.js';
 import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
@@ -58,6 +59,7 @@ import { addItem } from '../systems/inventory.js';   // AR1: BowDamage's recover
 import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage   // AUDIT 24 (wave 38): EnemyDeath's one home
 import { bindQuestFoeHost } from './questFoeHost.js';   // B1: quest foes ride this pool
+import { validSites, validSiteTags, WOD_CAMP_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
 import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVisuals.js';   // ECV1: what the enhanced skin draws for a concealed foe
 
 // The port's allocation-owner guards (classic self-limits through the
@@ -168,6 +170,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // puppet goes to its owner as a hit. The world host installs the net (setNet) with the two frames' converters.
   let _nextSeq = 1, _nextUid = 1;
   let _net = null;              // { room, onPeerHit, toWire, toScene, now, staleMs }
+  let _onSites = null;          // WOD7: (from, sites) - the World of Daggerfall markers a peer sprang, off their foes frame
+  let _sprungOf = null;         // WOD7: () => the markers MY host sprang, [[site, ageMs]] newest first, for my full frames
+  const _lostSites = new Set();  // AUDIT WOD7: the sites a race gave a peer - a foe of one still building ends as it lands
   let _onCamps = null;          // SURV3: (from, records, nowMs) - a peer's camps off their foes frame, once the frame has passed the room test
   let _onHcc = null;            // HCC-ONLINE: (from, record | null, nowMs) - a peer's horse and wagon off the same frame (systems/horseCartWire.js)
   let _onHccClear = null;       // HCC-ONLINE: called wherever clearPuppets runs - the peers' teams go with the puppets
@@ -192,7 +197,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   const _peerCands = new Map();   // id -> { isPlayer, isPeer, id, feet, height, health }
   let _peerFrame = 0, _peerRead = -1;
 
-  const activeCount = () => foes.filter((f) => !f.dead && !f.puppet).length;   // WORLD6b: a puppet is its owner's, not this cap's
+  const activeCount = () => foes.filter((f) => !f.dead && !f.puppet && !f.placed).length;   // WORLD6b: a puppet is its owner's, not this cap's; WOD3: nor is a foe a mod PLACED
 
   /** One encounter foe at a world position - the dungeon load chain's
    *  shape, host-owned. B1 opts: a QUEST foe rides the same chain -
@@ -214,11 +219,19 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  guard pool and none here, so without the exemption a Wabbajack
    *  strike on a full street simply erased him and stood nothing -
    *  worse than either the reference or the refusal it replaced. */
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null } = {}) {
-    if (!questBehaviour && !replacing && !puppet && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;   // WORLD6b: a puppet is not this cap's
+  // WOD3: `placed` - a foe a mod stood at a spot of its own (World of
+  // Daggerfall's camp markers, CreateFoeGameObjects straight): it is not
+  // an encounter, so the encounter cap neither refuses it nor counts it -
+  // DFU caps none of them, and a fort's garrison must not starve the road.
+  // `groundAlign` - `pos` is CreateFoeGameObjects' position, the sprite's
+  // CENTRE, and `hitDist` what AlignControllerToGround's ray found below
+  // it (null: nothing within 3); the drop needs the capsule the sprite
+  // sizes, so it lands once the sprite has.
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null } = {}) {
+    if (!questBehaviour && !replacing && !puppet && !placed && activeCount() >= MAX_ACTIVE_ENCOUNTER_FOES) return null;   // WORLD6b: a puppet is not this cap's
     const basics = ENEMY_BASICS[mobileType];
     if (!basics || !basics.maleTexture) return null;
-    const pending = { feet: [pos[0], pos[1] + (feetGiven ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
+    const pending = { feet: [pos[0], pos[1] + (feetGiven || groundAlign ? 0 : 0.1), pos[2]] };   // AUDIT 39: shifted by offsetAll until the record lands. REVIEW 2026-09-05: a restore hands back the exact saved feet (SerializableEnemy.cs:196) - a flyer never grounds, so the walker's lift would climb 0.1 per load
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this foe is being built for
     try {
@@ -267,7 +280,14 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // lift back with it; `feetGiven` is the restore's word that `pos`
       // already IS feet (SerializableEnemy restores the position it
       // wrote - no FinalizeFoe, no drop).
-      if (behaviour === 'Flying' && !feetGiven) pending.feet[1] -= idleH / 2 + 0.1;
+      if (groundAlign) {
+        // WOD3: CreateFoeGameObjects (GameObjectHelper.cs:1243-1296) -
+        // ApplyEnemySettings sizes the capsule, a walker is dropped
+        // (:1270-1272), and the feet are the sprite's bottom under the
+        // transform the drop left.
+        const centreY = behaviour === 'Flying' ? pos[1] : alignControllerToGround(pos[1], groundAlign.hitDist, enemyControllerHeight(idleH, behaviour));
+        pending.feet[1] += centreY - idleH / 2 - pos[1];
+      } else if (behaviour === 'Flying' && !feetGiven) pending.feet[1] -= idleH / 2 + 0.1;
       const ai = new EnemyAI(collider, pending.feet, yaw ?? rolls() * Math.PI * 2, {
         liveSpeed: () => liveStat(entity, 'speed'),   // AUDIT 39: EnemyMotor.cs:432 re-reads LiveSpeed per FixedUpdate
         seesThroughInvisibility: basics.seesThroughInvisibility ?? false,
@@ -300,7 +320,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const caster = entity.spells?.length && !puppet ? new EnemyCaster(entity, rolls) : null;   // a puppet decides nothing (its owner's foe does)
       const mobile = new MobileUnit(mobileType, basics, (rec) => tex.getFrameCount(rec), Math.random, gender);
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, idleH, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null,
+      const f = { mobile, ai, attack, entity, caster, batch, tex, archive, mobileType, gender, idleH, dead: false, _encounter: true, _prevMState: 'Idle', _mout: null, placed, site,   // WOD3; WOD7: the World of Daggerfall marker it stood for (shared online)
         sounds: new EnemySoundSource(mobileType, rolls) };   // AUDIT 24 (wave 41): this pool made no sound at all
       // MT-ii: THE RECORD IS THE CANDIDATE. getTargets reads `ai` and
       // `entity` off it, and its identity IS the target handle (the
@@ -352,6 +372,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // the record that is actually standing.
       if (f.puppet) _pupIndex.set(`${f.puppet}:${f.seq}`, f);
       foes.push(f);
+      if (site && !f.puppet && _lostSites.has(site)) { questPoolOps.removeFoe(f); return null; }   // AUDIT WOD7: its site went to a peer while it built
       // B1: the quest resource behaviour couples at the stand - the
       // activation moment, where Unity runs the deferred Start.
       if (questBehaviour) bindQuestFoeHost(f, questBehaviour, questPoolOps);
@@ -665,7 +686,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // (which refuses a rest with a seen foe in it) already assumes. A lone wanderer carries no campId and
         // is untouched - it is still the classic rest interruption.
         const campAsleep = f.campId != null && !!senses.playerEntity?.isResting && !isLocalPlayerTarget(ai.target);
-        const result = runTargetMachine(f, [...senses.candidates(), PLAYER_TARGET, ...peerCandidates()], pf, cdt, {
+        // AUDIT BRANCH (WoD) M1: a PLACED foe hunts no peer - it never rides, so no peer holds its puppet, and a blow at
+        // a peer lands only through the puppet the peer stands; its site is the peer's own, with its own foes
+        const result = runTargetMachine(f, [...senses.candidates(), PLAYER_TARGET, ...(f.placed && !f.site ? [] : peerCandidates())], pf, cdt, {
           noTargetMode: campAsleep,   // WORLD6b-ii: the peers are MY foes' candidates; AUDIT WORLD6b-ii A5: after ME (a peer never beats me on a tie), A9: a puppet never steps here
           playerEntity: senses.playerEntity ?? null,
           playerHeight: senses.playerHeight,   // AUDIT 62 F23: GetTargets measures the player at its LIVE capsule too
@@ -914,7 +937,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const _playerDist = Math.hypot(playerFeet[0] - f.ai.feet[0], playerFeet[1] - f.ai.feet[1], playerFeet[2] - f.ai.feet[2]);
       // AUDIT WORLD6b-ii A2: `detected` is of ITS target since the hunt - a foe that walked off with a peer is culled by MY
       // relevance (AUDIT WORLD3 C3's own latch), or eight of them held the pool full for the session
-      if (_playerDist > ENCOUNTER_CULL_DISTANCE && !(f.ai.detected && f.ai.targetIsLocalPlayer !== false)) {
+      // WOD3: a PLACED foe is never culled - DFU's loose enemies stand
+      // until a load or a teleport sweeps them (clearLive, below), and
+      // SerializableEnemy saves every one; a camp's bandits are still
+      // there when you come back.
+      if (!f.placed && _playerDist > ENCOUNTER_CULL_DISTANCE && !(f.ai.detected && f.ai.targetIsLocalPlayer !== false)) {
         releaseFoeBatch(f);
         f.dead = true;
         f.questBehaviour?.notifyDestroyed();   // B1: Destroy(gameObject) - the resource uncouples
@@ -1436,6 +1463,8 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // suppress the marker walk (GameObjectHelper.cs:1073-1076)
         // once the link travels. Null for an ordinary foe.
         questResource: f.questBehaviour?.getSaveData?.() ?? null,
+        placed: !!f.placed,   // WOD3: a mod-placed foe stays out of the encounter cap across a load
+        site: f.site ?? null,   // WOD7: and a shared camp's foe keeps riding for its site
       };
     });
   }
@@ -1454,8 +1483,9 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // owns one hands it in; a host without one restores plain foes.
       const questBehaviour = (sf.questResource && reviveQuestBehaviour)
         ? (reviveQuestBehaviour(sf.questResource) ?? null) : null;
-      spawnFoe(sf.mobileType, [lx, sf.y + yOffset, lz], { gender: sf.gender, feetGiven: true, questBehaviour }).then((f) => {   // REVIEW 2026-09-05: the snapshot holds FEET - a flyer must not take the centre drop twice
+      spawnFoe(sf.mobileType, [lx, sf.y + yOffset, lz], { gender: sf.gender, feetGiven: true, questBehaviour, placed: !!sf.placed }).then((f) => {   // REVIEW 2026-09-05: the snapshot holds FEET - a flyer must not take the centre drop twice
         if (!f) return;
+        if (typeof sf.site === 'string') f.site = sf.site;   // WOD7: a shared camp's foe keeps riding for its site
         f.ai.yaw = sf.yaw ?? f.ai.yaw;
         f.entity.maxHealth = sf.maxHealth ?? f.entity.maxHealth;
         f.entity.health = Math.min(sf.health ?? f.entity.health, f.entity.maxHealth);
@@ -1532,12 +1562,24 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** WATCH1: the watchman a peer's blow names - by the number he rode under (applyHit's own dead gate refuses a body). */
   const watchOf = (i) => watchList().find((g) => g.seq === i) ?? null;
   /** SURV3: the host's door for a peer's camps (scenes/camps.js applyOwner) - beside the net, not in its bag. */
+  /** WOD7: the host's door for the markers a peer sprang (world.js wodPeerSites). */
+  function setOnSites(fn, sprungOf = null) { _onSites = typeof fn === 'function' ? fn : null; _sprungOf = typeof sprungOf === 'function' ? sprungOf : null; }
+  /** WOD7: my own foes a site stood - taken down whole when a race gives the site to a peer. */
+  function removeSiteFoes(site) {
+    _lostSites.add(site);   // AUDIT WOD7: and one still building ends as it lands
+    for (const f of [...foes]) if (f.site === site && !f.puppet) questPoolOps.removeFoe(f);
+  }
   function setOnCamps(fn) { _onCamps = typeof fn === 'function' ? fn : null; }
   function setOnHcc(fn, onClear = null) { _onHcc = typeof fn === 'function' ? fn : null; _onHccClear = typeof onClear === 'function' ? onClear : null; }   // HCC-ONLINE
   const _now = () => (_net?.now ? _net.now() : Date.now());
   /** My foes out, and my watch behind them (WATCH1) - every one of MINE whose streamed state changed since its last
    *  frame (every one when full, so a dropped frame heals and a foe I culled is missed from the roll and so removed
-   *  at the peers). A quest's foe is the quest owner's alone (Multiplayer.md's first lock) and never rides. The record is WORLD2's: i my number for
+   *  at the peers). A quest's foe is the quest owner's alone (Multiplayer.md's first lock) and never rides; nor does a foe a mod
+   *  PLACED (AUDIT BRANCH (WoD) M1: every client stands its own copy of a World of Daggerfall site, so a placed foe that rode
+   *  stood its site TWICE at a peer - and, never culled and outside the encounter cap, eight of them took every one of a
+   *  reader's CELL_PUPPETS_MAX slots for the owner, and the owner's next real encounter never stood there) - unless it has a SITE (WOD7:
+   *  a World of Daggerfall marker's foe, which rides tagged with it; the first player to spring a marker owns its camp, a
+   *  reader stands it under WOD_CAMP_PUPPETS_MAX and spends its own copy of the marker). The record is WORLD2's: i my number for
    *  it, t the species, x the gender bit, f the feet in the world frame, y the yaw, h the health, d dead, a the attack
    *  count with the ranged bit low, m moving. */
   function foesFrame(full = false, force = false) {
@@ -1549,7 +1591,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // cityGuards' `basics.maleTexture`). No relay change: a record is a record to the wire and to the Room.
     const src = new Map();   // record -> its foe, for the trim below
     for (const [f, onWatch] of [...foes.map((f) => [f, false]), ...watchList().map((g) => [g, true])]) {
-      if (f.puppet || f.isQuestFoe || (f.dead && !f.corpse)) continue;   // (a removed watchman - dead, no body - rides no more, as a culled foe does)
+      if (f.puppet || f.isQuestFoe || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;   // WOD7: a placed foe with a SITE is a shared camp's, and rides   // (a removed watchman - dead, no body - rides no more, as a culled foe does; AUDIT BRANCH (WoD) M1: a placed foe never rides)
       if (f.seq == null) f.seq = _nextSeq++;   // WATCH1: a watchman is numbered the first time he rides, off the foes' own counter
       if (f.dead && f.corpse && f._diedAt == null) f._diedAt = _now();   // AUDIT WATCH1 A6: a watch body is stamped when it first rides, on this pool's own clock, so the trim below keeps the newest bodies of BOTH pools
       const w = _net.toWire(f.ai.feet);
@@ -1581,16 +1623,29 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       out.length = 0; out.push(...live, ...dead.slice(0, Math.max(0, CELL_FRAME_RECORDS_MAX - live.length)));
       for (const r of before) if (!out.includes(r)) { const f = src.get(r); if (f) f._sentKey = null; }   // AUDIT WATCH1 B6: a record the trim dropped is UNSENT - its key was latched above, and it rode nothing until the next full frame
     }
-    return { n: ++_foesSeq, k: _net.room?.() ?? null, full: full ? 1 : 0, f: out };
+    // WOD7: the camp tags for the records in THIS frame (a reader stands a record's puppet under the camp allowance
+    // and spends its own marker), and on a full frame every marker I have sprung - my host's list and my live camp
+    // foes' sites - so a reader arriving late spends them too
+    const st = out.filter((r) => src.get(r)?.site).slice(0, WOD_SITES_MAX).map((r) => [r.i, src.get(r).site]);
+    let sp = [];
+    if (full) {   // AUDIT WOD7: newest first, so the cap drops the oldest; a live camp my host no longer lists (a loaded save) as old
+      sp = [...(_sprungOf?.() ?? [])];
+      const listed = new Set(sp.map(([s]) => s));
+      for (const f of foes) if (f.site && !f.puppet && !f.dead && !listed.has(f.site)) { listed.add(f.site); sp.push([f.site, WOD_AGE_MAX]); }
+      sp = sp.slice(0, WOD_SITES_MAX);
+    }
+    return { n: ++_foesSeq, k: _net.room?.() ?? null, full: full ? 1 : 0, f: out, ...(st.length ? { st } : {}), ...(sp.length ? { sp } : {}) };
   }
   /** The owner's record (AUDIT WORLD6b B4/C3), minted on its first frame. */
   function ownerOf(from) { let o = _owners.get(from); if (!o) { o = { n: -1, at: _now(), gen: ++_ownerGen, k: null }; _owners.set(from, o); } return o; }   // WORLD6b-iii(b): k the cell the owner's frames are keyed to - its own
   const pupKey = (from, i) => `${from}:${i}`;
   /** The puppets standing or building for an owner - the cap's count (B3). */
-  function livePuppetsOf(from, watch = false) {   // AUDIT WATCH1 A1: the watch counted apart from the foes
+  function livePuppetsOf(from, watch = false, camp = false) {   // AUDIT WATCH1 A1: the watch counted apart from the foes; WOD7: and a shared camp's
+    const kind = (t, site) => (site ? 'camp' : t === KNIGHT_CITYWATCH_ID ? 'watch' : 'foe');
+    const want = camp ? 'camp' : watch ? 'watch' : 'foe';
     let n = 0;
-    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead && (f.mobileType === KNIGHT_CITYWATCH_ID) === watch) n++;
-    for (const [k, r] of _pupPending) if (k.startsWith(from + ':') && ((r.t === KNIGHT_CITYWATCH_ID) === watch)) n++;
+    for (const f of _pupIndex.values()) if (f.puppet === from && !f.dead && kind(f.mobileType, f.site) === want) n++;
+    for (const [k, r] of _pupPending) if (k.startsWith(from + ':') && kind(r.t, r._site) === want) n++;
     return n;
   }
   /** A peer's foes in - each record PROJECTED (validFoeRecord, AUDIT WORLD6b C2: refused whole otherwise) onto its
@@ -1608,24 +1663,30 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     o.at = _now();
     if (typeof data.k === 'string') o.k = data.k;
     const seen = new Set();
+    const tags = validSiteTags(data.st);   // WOD7: which of these records stood for a World of Daggerfall marker
+    const stood = new Set(), refused = new Set();   // AUDIT WOD7: a site whose every record the allowance refused is not spent here
     for (const raw of data.f) {
       const r = validFoeRecord(raw);
       if (!r) continue;
       seen.add(r.i);
+      const site = tags.get(r.i) ?? null;
       const key = pupKey(from, r.i);
       const f = _pupIndex.get(key) ?? null;
+      if (site && (f || _pupPending.has(key))) stood.add(site);   // AUDIT WOD7: standing or building here
       if (f) {
         if ((r.t !== undefined && r.t !== f.mobileType) || (r.d === 0 && f.dead) || (r.l !== undefined && f.mobileType >= 128 && r.l !== (f.builtLevel | 0))) removePuppet(f);   // AUDIT WORLD6b-ii B2: a CLASS foe's level is its owner's word (its skills and health are built from it) - a monster's is its species' (makeEnemyEntity), whatever the record says; AUDIT FOES FOE8: against the level it was BUILT at, which a City Watch's constructor re-rolls
         else { applyPuppetRecord(f, r); continue; }
       }
-      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t }); continue; }   // AUDIT ALL A1: a pending build's SPECIES is fixed at the build - a later word without `t` (or with another) neither moves it out of its class's count (an unbounded stand: a peer re-worded a pending watch as no species and stood ten more) nor lands a record of the wrong species on the build
+      if (_pupPending.has(key)) { _pupPending.set(key, { ...r, t: _pupPending.get(key).t, _site: _pupPending.get(key)._site }); continue; }   // AUDIT ALL A1: a pending build's SPECIES is fixed at the build - a later word without `t` (or with another) neither moves it out of its class's count (an unbounded stand: a peer re-worded a pending watch as no species and stood ten more) nor lands a record of the wrong species on the build
       if (r.d === 1 || r.t === undefined || !ENEMY_BASICS[r.t] || !r.f) continue;
-      if (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX) continue;   // AUDIT WATCH1 A1: the watch has its own allowance - under one cap the foes spent it first and no watchman ever stood
+      if (site && livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX) { refused.add(site); continue; }   // WOD7: a shared camp's foes under their own allowance
+      if (!site && (r.t === KNIGHT_CITYWATCH_ID ? livePuppetsOf(from, true) >= CELL_WATCH_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) continue;   // AUDIT WATCH1 A1: the watch has its own allowance - under one cap the foes spent it first and no watchman ever stood; WOD7: a camp's, its own
       const feet = _net.toScene(r.f);
       if (!feet) continue;
-      _pupPending.set(key, r);
+      _pupPending.set(key, { ...r, _site: site });
+      if (site) stood.add(site);
       const gen = o.gen;
-      spawnFoe(r.t, feet, { puppet: from, seq: r.i, gender: GENDER_BIT[r.x === 1 ? 1 : 0], feetGiven: true, yaw: r.y ?? null, level: r.l ?? null })
+      spawnFoe(r.t, feet, { puppet: from, seq: r.i, gender: GENDER_BIT[r.x === 1 ? 1 : 0], feetGiven: true, yaw: r.y ?? null, level: r.l ?? null, site })
         .then((nf) => {
           if (!nf) return;
           const owner = _owners.get(from);
@@ -1636,6 +1697,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         .finally(() => _pupPending.delete(key));
     }
     if (data.full === 1) for (const f of [..._pupIndex.values()]) if (f.puppet === from && !seen.has(f.seq)) removePuppet(f);
+    // WOD7: the markers this owner sprang - the full frame's list with its ages, and the tags of what stands here (an
+    // age not yet heard). AUDIT WOD7: a site whose every record the camp allowance refused is NOT spent here - its
+    // marker stays mine to spring, rather than a camp I can neither see nor fight
+    const spent = new Map();
+    for (const [s, age] of validSites(data.sp)) if (!refused.has(s) || stood.has(s)) spent.set(s, age);
+    for (const s of tags.values()) if (!spent.has(s) && (!refused.has(s) || stood.has(s))) spent.set(s, null);
+    if (spent.size) _onSites?.(from, [...spent]);
     if (data.hv !== undefined) _onHcc?.(from, data.hv, _now());   // HCC-ONLINE: the owner's horse and wagon (null: none stand) - a frame without the field leaves the last word standing; past the same room test the camps pass
     if (Array.isArray(data.c)) _onCamps?.(from, data.c, _now());   // SURV3: the owner's camps ride the same frame, past the same room test - the host's pool lands them
     return true;
@@ -1906,5 +1974,6 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     collectPixel, arrowHitFoe, removeFoe: questPoolOps.removeFoe,
     // WORLD6b: the cell's stream - the net installed, my foes out, a peer's in, a peer's blow in, the puppets pruned
     setNet, foesFrame, applyFoes, applyHit, pruneOwners, clearPuppets,
+    setOnSites, removeSiteFoes,   // WOD7
     setOnCamps, setOnHcc };   // SURV3; HCC-ONLINE
 }

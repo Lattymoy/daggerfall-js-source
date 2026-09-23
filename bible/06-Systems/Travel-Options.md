@@ -626,7 +626,7 @@ third was a thing the port never said out loud.
 > not a fatigue knob, it is the needs' one word for "sat still", and
 > FOUR laws read it - the two fatigue drains it was aimed at, the two
 > health arms F12 later disclosed, and SURV6's hunting roll, which
-> refuses outright on `resting` (`hunting.js:105`). One flag reached
+> refuses outright on `resting` (`hunting.js:114`). One flag reached
 > three laws nobody had asked it to reach. That is the lesson worth
 > keeping out of this whole exchange.
 
@@ -665,8 +665,8 @@ third was a thing the port never said out loud.
 
   **And `resting` holds two HEALTH arms with the fatigue ones** (F12),
   which the first cut did not disclose: the bare-skin block's naked-cold
-  and sunburn ticks (`needs.js:293`), and, for a traveller who is also
-  `byFire`, the exposure damage at `:277`. Harm you cannot answer while
+  and sunburn ticks (`needs.js:480`), and, for a traveller who is also
+  `byFire`, the exposure damage at `:422`. Harm you cannot answer while
   the autopilot holds the controls is not a loss worth keeping. The law
   is executed now, not matched: `test/surv7_feed.test.js` runs ten game
   hours with the knob both ways and asserts fatigue held at zero while
@@ -739,7 +739,7 @@ which `InitLocationRects` keeps refreshing the rects MID-journey
 (`:606-612`, `autopilot == null || destinationName != null`;
 `travelOptions.js:458-461`). A town's ring reaches into its neighbour
 pixels; the crossing fired `OnMapPixelChanged`, the host's
-`locationTileRect` answered null for the neighbour (world.js:6353 -
+`locationTileRect` answered null for the neighbour (world.js:6993 -
 null both for a pixel not yet built and for one with no location),
 `SetLocationRects` nulled both rects (`:602-604`), and the walk's own
 `OnArrival` (`circumnavigateLocation`, `:753-797`) read

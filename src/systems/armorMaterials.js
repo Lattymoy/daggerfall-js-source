@@ -85,7 +85,13 @@ export const isShieldTemplate = (templateIndex) => SHIELD_VALUES.has(templateInd
  *  nativeMaterialValue is a plain int field: an item minted without
  *  one carries 0, which IS ArmorMaterialTypes.Leather. ArmorMaterialTypes
  *  .None (-1) is never the implicit default. */
+/** RRI1: GetMaterialArmorValue is a virtual; a custom class's answer is
+ *  registered here by its installer (this file is a leaf and stays one). */
+let _customArmorValue = null;
+export function registerCustomArmorValue(fn) { _customArmorValue = typeof fn === 'function' ? fn : null; }
 export function itemArmorValue(item) {
+  const custom = _customArmorValue?.(item);
+  if (custom != null) return custom;
   if (item?.group === 'Armor' && isShieldTemplate(item?.templateIndex)) {
     return SHIELD_VALUES.get(item.templateIndex) ?? 0;   // :1049-1052
   }

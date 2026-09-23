@@ -1,0 +1,560 @@
+[
+  {
+    "name": "TS1-constant-is-the-prefab",
+    "file": "src/world/terrainSampler.js",
+    "old": "export const STREAMING_TERRAIN_SCALE = 1.25;",
+    "new": "export const STREAMING_TERRAIN_SCALE = 1.5;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-placed-on-the-prefab",
+    "file": "src/world/terrainSurface.js",
+    "old": "export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {\n  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
+    "new": "export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {\n  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-drawn-on-the-prefab",
+    "file": "src/world/terrainSurface.js",
+    "old": "  const cell = TERRAIN_SIZE / (hDim - 1);\n  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
+    "new": "  const cell = TERRAIN_SIZE / (hDim - 1);\n  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-nature-on-the-prefab",
+    "file": "src/world/terrainNature.js",
+    "old": "  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
+    "new": "  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-far-ring-on-the-prefab",
+    "file": "src/render/farRing.js",
+    "old": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE;",
+    "new": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * 1.5;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-overworld-on-the-prefab",
+    "file": "src/ui/overworldModel.js",
+    "old": "const TRUE_VERTICAL = STREAMING_TERRAIN_SCALE;",
+    "new": "const TRUE_VERTICAL = 1.5;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-wod-sites-on-the-prefab",
+    "file": "src/world/wodLocationLoader.js",
+    "old": "Math.fround(MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE)",
+    "new": "Math.fround(MAX_TERRAIN_HEIGHT * 1.5)",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-host-worldHeight-on-the-prefab",
+    "file": "src/scenes/world.js",
+    "old": "  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // TERRAIN-SCALE1",
+    "new": "  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;   // TERRAIN-SCALE1",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-grass-ground-on-the-prefab",
+    "file": "src/scenes/world.js",
+    "old": "      const scale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
+    "new": "      const scale = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-restand-inverted",
+    "file": "src/scenes/world.js",
+    "old": "(was / STREAMING_TERRAIN_SCALE - 1)",
+    "new": "(STREAMING_TERRAIN_SCALE / was - 1)",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-restand-keeps-compensation",
+    "file": "src/scenes/world.js",
+    "old": "return y - (h - state.compensation[1]) * (was",
+    "new": "return y - h * (was",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-restand-unbuilt-untouched",
+    "file": "src/scenes/world.js",
+    "old": "    return y * (STREAMING_TERRAIN_SCALE / was);",
+    "new": "    return y;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-no-stamp-is-today",
+    "file": "src/scenes/world.js",
+    "old": "const scaleOf = (stamp) => (stamp > 0 ? stamp : DEFAULT_TERRAIN_SCALE);",
+    "new": "const scaleOf = (stamp) => (stamp > 0 ? stamp : STREAMING_TERRAIN_SCALE);",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-quickload-reads-today",
+    "file": "src/scenes/world.js",
+    "old": "        const was = scaleOf(extras.terrainScale);",
+    "new": "        const was = STREAMING_TERRAIN_SCALE;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-quickload-row-in-scene-frame",
+    "file": "src/scenes/world.js",
+    "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };",
+    "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was);",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-quickload-rows-untouched",
+    "file": "src/scenes/world.js",
+    "old": "rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r))",
+    "new": "rows",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-quickload-position-axes",
+    "file": "src/scenes/world.js",
+    "old": "[key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]]",
+    "new": "[key]: [p[0], restandNative(p[0], p[1], p[2]), p[2]]",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-quickload-player-raw",
+    "file": "src/scenes/world.js",
+    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was) + state.compensation[1];",
+    "new": "const ly = (w.y ?? 2) + state.compensation[1];",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-quickload-inside-pools-raw",
+    "file": "src/scenes/world.js",
+    "old": "        if (extras.interior) { extras.interior.foes = restandRows(extras.interior.foes); extras.interior.guards = restandRows(extras.interior.guards); }\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-quickload-camps-raw",
+    "file": "src/scenes/world.js",
+    "old": "camps.restore(restandAt('pos')(w.camps),",
+    "new": "camps.restore(w.camps,",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-exterior-cache-unstamped",
+    "file": "src/scenes/world.js",
+    "old": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground these heights stand on\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-exterior-cache-reads-today",
+    "file": "src/scenes/world.js",
+    "old": "    const was = scaleOf(arrived.terrainScale);",
+    "new": "    const was = STREAMING_TERRAIN_SCALE;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-exterior-cache-torch-raw",
+    "file": "src/scenes/world.js",
+    "old": "arrived.droppedTorches.map((t) => { const p = t.position; return { ...t, position: [p[0], restand(p[0], p[2], p[1]), p[2]] }; })",
+    "new": "arrived.droppedTorches",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-anchor-unstamped",
+    "file": "src/scenes/world.js",
+    "old": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-anchor-landing-raw",
+    "file": "src/scenes/world.js",
+    "old": "return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];",
+    "new": "return [lx, (a.y ?? 2) + state.compensation[1], lz];",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-scene-height-compensation",
+    "file": "src/scenes/world.js",
+    "old": "restandSceneHeight: (y, x, z, was) => restandHeight(y - state.compensation[1], x, z, was) + state.compensation[1],",
+    "new": "restandSceneHeight: (y, x, z, was) => restandHeight(y, x, z, was),",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-save-unstamped",
+    "file": "src/systems/save.js",
+    "old": "modData, terrainScale: STREAMING_TERRAIN_SCALE };",
+    "new": "modData };",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-restore-drops-stamp",
+    "file": "src/systems/save.js",
+    "old": "terrainScale: snap.terrainScale ?? null };",
+    "new": "terrainScale: null };",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-cache-drops-frame",
+    "file": "src/systems/sceneCache.js",
+    "old": "    frame, terrainScale,\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-cache-save-drops-torches",
+    "file": "src/systems/sceneCache.js",
+    "old": "      droppedTorches: (d.droppedTorches ?? []).map((t) => ({ ...t, position: [...(t.position ?? [])] })),\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-cache-save-drops-camps",
+    "file": "src/systems/sceneCache.js",
+    "old": "      camps: (d.camps ?? []).map((c) => ({ ...c, pos: [...(c.pos ?? [])] })),\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-cache-save-drops-frame",
+    "file": "src/systems/sceneCache.js",
+    "old": "      frame: d.frame ?? null, terrainScale: d.terrainScale ?? null,\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-cache-load-drops-frame",
+    "file": "src/systems/sceneCache.js",
+    "old": "    frame: e.frame ?? null, terrainScale: e.terrainScale ?? null,\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-cache-load-drops-torches",
+    "file": "src/systems/sceneCache.js",
+    "old": "    droppedTorches: (e.droppedTorches ?? []).map((t) => ({ ...t, position: [...(t.position ?? [])] })),   // TERRAIN-SCALE1\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-anchor-drops-stamp",
+    "file": "src/systems/teleportAnchor.js",
+    "old": "    terrainScale: terrainScale > 0 ? terrainScale : null,",
+    "new": "    terrainScale: null,",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-exterior-host-anchor-unstamped",
+    "file": "src/scenes/exterior.js",
+    "old": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: stamped current",
+    "new": "      // unstamped",
+    "tests": [
+      "test/qx1_exterior_host.test.js"
+    ]
+  },
+  {
+    "name": "TS1-interior-raw-frame",
+    "file": "src/scenes/worldModes.js",
+    "old": "pos: [p.pos[0] - o[0], p.pos[1] - o[1], p.pos[2] - o[2]]",
+    "new": "pos: [p.pos[0], p.pos[1], p.pos[2]]",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-interior-torch-raw-frame",
+    "file": "src/scenes/worldModes.js",
+    "old": "interiorTorches.snapshot((p) => [p[0] - o[0], p[1] - o[1], p[2] - o[2]])",
+    "new": "interiorTorches.snapshot()",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-interior-unframed",
+    "file": "src/scenes/worldModes.js",
+    "old": "droppedTorches, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE };",
+    "new": "droppedTorches };",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-building-origin-zero",
+    "file": "src/scenes/worldModes.js",
+    "old": "    return m ? [m[12], m[13], m[14]] : [0, 0, 0];",
+    "new": "    return [0, 0, 0];",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-interior-legacy-today",
+    "file": "src/scenes/worldModes.js",
+    "old": "const was = data.terrainScale > 0 ? data.terrainScale : DEFAULT_TERRAIN_SCALE;",
+    "new": "const was = STREAMING_TERRAIN_SCALE;",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-interior-placed-raw",
+    "file": "src/scenes/worldModes.js",
+    "old": "      ? (p) => [p[0] + o[0], p[1] + o[1], p[2] + o[2]]",
+    "new": "      ? (p) => [p[0], p[1], p[2]]",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-throw-frees-nothing",
+    "file": "src/scenes/world.js",
+    "old": "      .catch((e) => { releaseFailedBuild(key); throw e; })   // BUILD-FAIL1\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-published-freed-twice",
+    "file": "src/scenes/world.js",
+    "old": "    if (built.has(key)) return;\n    if (m) {",
+    "new": "    if (m) {",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-last-gate-kept",
+    "file": "src/scenes/world.js",
+    "old": "for (let i = 0; i <= (m.cityGates?.length ?? 0); i++)",
+    "new": "for (let i = 0; i < (m.cityGates?.length ?? 0); i++)",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-bucket-kept",
+    "file": "src/scenes/world.js",
+    "old": "    collider.removeBucket(key);\n    for (let i = buildingDoors.length - 1; i >= 0; i--) {\n      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  const breather",
+    "new": "    for (let i = buildingDoors.length - 1; i >= 0; i--) {\n      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  const breather",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-doors-kept",
+    "file": "src/scenes/world.js",
+    "old": "      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  const breather",
+    "new": "    }\n  }\n\n  const breather",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-water-leaks",
+    "file": "src/scenes/world.js",
+    "old": "      if (m.water) renderer.destroyWaterSurface(m.water);\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-terrain-leaks",
+    "file": "src/scenes/world.js",
+    "old": "      if (m.terrain) renderer.destroyMesh(m.terrain);\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-static-leaks",
+    "file": "src/scenes/world.js",
+    "old": "      if (m.staticBatch) renderer.destroyMesh(m.staticBatch);\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-texture-leaks",
+    "file": "src/scenes/world.js",
+    "old": "      if (m.tilemapTex) renderer.gl.deleteTexture(m.tilemapTex);\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-batches-leak",
+    "file": "src/scenes/world.js",
+    "old": "      for (const b of m.batches ?? []) renderer.destroyBatch(b);\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-hums-play-on",
+    "file": "src/scenes/world.js",
+    "old": "      for (const w of m.windmills ?? []) { w.hum?.stop(); w.hum = null; }\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-person-batches-leak",
+    "file": "src/scenes/world.js",
+    "old": "      if (m.personBatches) for (const b of m.personBatches.values()) renderer.destroyBatch(b);\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-ledger-never-opened",
+    "file": "src/scenes/world.js",
+    "old": "    const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry\n    _building.set(key, made);\n",
+    "new": "    const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry\n",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-ledger-never-closed",
+    "file": "src/scenes/world.js",
+    "old": "    if (_building.get(key) === made) _building.delete(key);   // BUILD-FAIL1: the entry owns them from here\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-terrain-unledgered",
+    "file": "src/scenes/world.js",
+    "old": "    made.terrain = terrain; made.water = water;   // BUILD-FAIL1\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-batches-unledgered",
+    "file": "src/scenes/world.js",
+    "old": "    made.batches = batches;   // BUILD-FAIL1\n",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-ship-unstamped",
+    "file": "src/scenes/world.js",
+    "old": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE },",
+    "new": "yaw: cam.yaw },",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "TS1-ship-deck-raw",
+    "file": "src/scenes/world.js",
+    "old": "      if (walkMode) player.spawn(localPos[0], y, localPos[2]);",
+    "new": "      if (walkMode) player.spawn(localPos[0], localPos[1], localPos[2]);",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-published-throw-orphaned",
+    "file": "src/scenes/world.js",
+    "old": "      destroyPixel(next.px, next.py, { collectLoose: false });\n      _wodArrival",
+    "new": "      _wodArrival",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  },
+  {
+    "name": "BF1-npc-batch-on-dead-entry",
+    "file": "src/scenes/world.js",
+    "old": "      if (built.get(`${entry.px},${entry.py}`) !== entry) return;",
+    "new": "",
+    "tests": [
+      "test/terrainscale1.test.js"
+    ]
+  }
+]

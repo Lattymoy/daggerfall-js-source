@@ -41,7 +41,7 @@ test('HM1: the DOM icon strips the mask (GetInventoryImage), and so do the class
   assert.match(src('src/ui/textureCanvas.js'), /const bmp = changeMask\(got\.file\.getDFBitmap\(record, 0\)\);/,
     'requestIcon rasterizes the mask-stripped clone');
   for (const f of ['src/ui/nativeInventory.js', 'src/ui/itemScroller.js']) {
-    assert.match(src(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true \}\);/,
+    assert.match(src(f), /icons\.uploadRecord\(img\.archive, img\.record, \{ mips: false, removeMask: true, dye: img\.dye \}\);/,
       `${f} asks the pipeline for the mask-stripped UI variant`);
   }
 });

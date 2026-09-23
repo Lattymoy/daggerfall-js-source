@@ -322,7 +322,7 @@ test('AUDIT 58: ApplyRegionalPriceAdjustment has its OWN floor of 1 (FormulaHelp
   assert.equal(calculateCost(1, 12, 250), 2, 'PRICE_ADJUSTMENT_MIN, the worst case');
   // and the live wire that reaches it: CalculateItemRepairCost hands
   // CalculateCost a base of exactly 1 for any item worth <= 10 gold
-  // (repairService.js:44-46), so without the floor a cheap repair in a
+  // (repairService.js:46-51), so without the floor a cheap repair in a
   // cheap province is FREE.
   assert.equal(calculateItemRepairCost(5, 10, 0, 100, { priceAdjustment: 750 }), 2);
 });
@@ -353,7 +353,7 @@ test('AUDIT 58: the 112-day faction drift does NOT fan out (PlayerEntity.cs:2239
   // hierarchy: a propagating walk over it has nowhere to go. This one is
   // a root with two children, which is exactly what a walk would move -
   // propagateReputationChange gives a `parent === 0` root the FULL
-  // amount (factionRep.js:165-174).
+  // amount (factionRep.js:183-192).
   const rec = (id, o) => Object.assign({
     id, parent: 0, type: 0, name: 'f' + id, rep: 0, ally1: 0, ally2: 0, ally3: 0,
     enemy1: 0, enemy2: 0, enemy3: 0, sgroup: 0, ggroup: 0, children: null,

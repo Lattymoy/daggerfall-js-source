@@ -38,7 +38,7 @@
   {
     "name": "SURV2-the-drink-does-not-relieve-thirst",
     "file": "src/systems/survival/items.js",
-    "old": "      s.thirst = Math.max(0, s.thirst - DRINK_RELIEF);\n      for (const k of Object.keys(s.notes ?? {})) if (k.startsWith('thirst:')) delete s.notes[k];\n    }\n    return { kind: 'drank'",
+    "old": "      s.thirst = Math.max(0, s.thirst - DRINK_RELIEF);\n    }\n    return { kind: 'drank'",
     "new": "    }\n    return { kind: 'drank'",
     "tests": [
       "test/surv2_items.test.js"
@@ -83,7 +83,7 @@
   {
     "name": "SURV2-a-vendor-archive-is-gated-like-a-pick",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (_vendor.has(key)) return true;\n  if (!textureReplacementEnabled()) return false;\n  return _index.has(key);",
+    "old": "  const v = _vendor.get(key);\n  if (v) return !v.gate || v.gate() === true;   // DW3: a gated entry answers only while its switch is on\n  if (!textureReplacementEnabled()) return false;\n  return _index.has(key);",
     "new": "  if (!textureReplacementEnabled()) return false;\n  return _index.has(key) || _vendor.has(key);",
     "tests": [
       "test/surv2_items.test.js"
@@ -101,7 +101,7 @@
   {
     "name": "SURV2-the-ladder-reaches-the-book-arm-for-our-items",
     "file": "src/systems/useItem.js",
-    "old": "  if (isSurvivalItem(item)) out = useSurvivalItem(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease });",
+    "old": "  if (isSurvivalItem(item)) out = useSurvivalItem(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease, rules: survivalRules() ?? SURVIVAL_RULES.casual });",
     "new": "  if (false) out = null;",
     "tests": [
       "test/surv2_items.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "AUDITVC6-the-handler-ignores-the-luck-it-is-handed",
     "file": "src/systems/survival/loot.js",
-    "old": "    const luck = opts.luck ?? 50;   // AUDIT VC6: the raiser's own player, or the floor",
-    "new": "    const luck = 50;   // AUDIT VC6: the raiser's own player, or the floor",
+    "old": "  const luck = opts.luck ?? 50;   // AUDIT VC6: the raiser's own player, or the floor",
+    "new": "  const luck = 50;   // AUDIT VC6: the raiser's own player, or the floor",
     "tests": [
       "test/surv2_items.test.js"
     ]

@@ -38,7 +38,8 @@ import { bitmapCanvas, color32Canvas } from './bitmapCanvas.js';
 // (scenes/dataPipeline.js getTexture). A vendored archive has no
 // TEXTURE.### to fetch, so `getArchive` below cached it as a miss and
 // every DOM screen drew initials where the mod's art should be.
-import { isVendorArchive, preloadTextureArchive, decodedTexture, vendorRecordCount } from '../systems/textureReplacement.js';
+import { isVendorArchive, preloadTextureArchive, decodedTexture, vendorRecordCount, hasTextureReplacement, preloadTextureRecord } from '../systems/textureReplacement.js';
+import { dyeToken } from '../characters/dyes.js';   // DW3: the dye is part of the ask, so it is part of the key
 // The name rule lives with the READER (U54 moved it there): both this
 // module and scenes/shared.js need it, and neither can import the
 // other without dragging in what the other is for.
@@ -101,9 +102,10 @@ function getArchive(archive) {
  * when a cold record lands so the screen can repaint itself. A record
  * that is already cached fires nothing, so a repaint cannot loop.
  */
-export function requestIcon(archive, record, { scale = 2, onReady = null } = {}) {
+export function requestIcon(archive, record, { scale = 2, onReady = null, dye = null } = {}) {
   if (!Number.isInteger(archive) || !Number.isInteger(record) || record < 0) return null;
-  const key = `${archive}_${record}_${scale}`;
+  const token = dyeToken(dye);
+  const key = `${archive}_${record}_${scale}${token ? `_${token}` : ''}`;
   if (icons.has(key)) return icons.get(key);
   // IN FLIGHT. Without this the next repaint finds nothing cached and
   // starts a SECOND decode of the same record, and the one after that
@@ -134,7 +136,26 @@ export function requestIcon(archive, record, { scale = 2, onReady = null } = {})
     }).catch((e) => console.warn(`[icons] vendored ${archive}_${record}-0 would not load`, e));
     return null;
   }
-  getArchive(archive).then((got) => {
+  // DW3: A REPLACEMENT OF A REAL ARCHIVE'S RECORD, BY THE ITEM'S DYE -
+  // GetItemImage's first arm (ItemHelper.cs:458: TryImportTexture by
+  // item.dyeColor, the imported texture drawn as it is, no mask strip,
+  // no ChangeDye). Diverse Weapons' icons (233/234 in every metal)
+  // enter here; so does a pack's `233_5-0_Iron`. The archive's
+  // replacements decode where the GL door decodes them (getTexture ->
+  // preloadTextureArchive), and a name that will not decode falls to
+  // the classic arm below, as DFU's failed import does.
+  const swap = hasTextureReplacement(archive, record, 0, 'Albedo', dye)
+    ? preloadTextureRecord(archive, record, 0, 'Albedo', dye).catch(() => null)   // AUDIT-DW F1: this record alone, when it is drawn
+    : Promise.resolve(null);
+  swap.then((img) => {
+    if (img) {
+      const canvas = color32Canvas(img, { scale });
+      if (!canvas) return;
+      icons.set(key, canvas.toDataURL('image/png'));
+      onReady?.();
+      return;
+    }
+    return getArchive(archive).then((got) => {
     if (!got) return;
     try {
       if (record >= got.file.recordCount) {
@@ -150,19 +171,22 @@ export function requestIcon(archive, record, { scale = 2, onReady = null } = {})
     } catch (e) {
       console.warn(`[icons] ${texName(archive)} record ${record} would not draw`, e);
     }
+    });
   });
   return null;
 }
 
 /** Test seam, and the door a host would use to warm a list up front.
  *  Resolves to the data URL or null - never throws. */
-export async function loadIcon(archive, record, { scale = 2 } = {}) {
-  const already = requestIcon(archive, record, { scale });
+export async function loadIcon(archive, record, { scale = 2, dye = null } = {}) {
+  const already = requestIcon(archive, record, { scale, dye });
   if (already) return already;
   await getArchive(archive);
-  // one turn for the .then above to have run
-  await Promise.resolve();
-  return icons.get(`${archive}_${record}_${scale}`) ?? null;
+  // DW3: the replacement arm awaits the record's decode before the
+  // classic arm runs, so give it those turns too
+  for (let i = 0; i < 4; i++) await Promise.resolve();
+  const token = dyeToken(dye);
+  return icons.get(`${archive}_${record}_${scale}${token ? `_${token}` : ''}`) ?? null;
 }
 
 // ── U59: THE PAPERDOLL, FOR A SCREEN MADE OF NODES ───────────────

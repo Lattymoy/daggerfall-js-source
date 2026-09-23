@@ -66,6 +66,16 @@ let eotbPlayerState = () => ({});
 export function setEotbPlayerState(fn) { eotbPlayerState = typeof fn === 'function' ? fn : () => ({}); }
 /** EOTB5's door: the host tells the seam its body can draw. */
 export function setEotbBodyReady(fn) { eotbBodyReady = typeof fn === 'function' ? fn : () => false; }
+/**
+ * DISC10 (kurkku on Discord, 2026-09-23: "two wagons appear whenever you hitch it up, visual only"). TWO MODS,
+ * ONE CART. EOTB's ShowCart stands its cart (41239) for the Cart transport, and Horse Cart and Cargo trails its
+ * wagon (41214) for the same transport - both ship on, neither mod's code knows the other, and a rider without the
+ * Morrowind body got both: two carts behind the horse, the looser one ahead of it after a turn, its box naming
+ * "Wagon" over an empty road. HCC's wagon is the one with a team, a store and a place in the world, so while its
+ * trailing wagon is shown EOTB's cart gives way - the host says when (world.js, exterior.js).
+ */
+let eotbCartYields = () => false;
+export function setEotbCartYields(fn) { eotbCartYields = typeof fn === 'function' ? fn : () => false; }
 export function eotbLane() {
   if (fpArm.canThirdPerson()) return false;          // the Morrowind body wins where it exists
   try {
@@ -126,7 +136,7 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
     // every frame before its own `offset` gate (IL_1c74-IL_1c7f), so
     // it follows in first person too. `cart` and `onExteriorPath` are
     // the host's (TransportMode == Cart, PlayerMotor.OnExteriorPath).
-    eotbWagon.tick(frame.dt ?? 0, { feet, yaw, height: frame.motion?.height, cart: !!frame.cart, onExteriorPath: !!frame.onExteriorPath, raycast });
+    eotbWagon.tick(frame.dt ?? 0, { feet, yaw, height: frame.motion?.height, cart: !!frame.cart && !eotbCartYields(), onExteriorPath: !!frame.onExteriorPath, raycast });   // DISC10: HCC's wagon, when it trails, is the one cart
     return out;
   }
   // RIDE-POV: the saddle first, before any queued notch can cross out of the head

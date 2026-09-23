@@ -151,6 +151,11 @@ export const MOD_CURATED = Object.freeze({
   // SW1: the three a player reaches for first - how big the shield sits,
   // where it sits, and what it does when the weapon comes out.
   'shield-widget': Object.freeze(['Shield.Scale', 'Shield.OffsetHorizontal', 'Shield.WhenAttacking']),
+  // DW1: the one key besides the switch - the mod's own Weapon Widget preset, which its readme asks players to select.
+  'diverse-weapons': Object.freeze(['WeaponWidgetPreset']),
+  // RRI1: the three a player reaches for first - the new items, and what loot is.
+  'roleplay-realism-items': Object.freeze(['newWeapons', 'newArmor', 'lootRebalance']),
+  'roleplay-realism': Object.freeze(['advancedArchery', 'climbingRestriction', 'underworldExpulsion', 'shipPorts']),   // SHIP-PORTS: the boat's own switch, where a player can find it
   // TORCH-BIND (2026-09-22, a player on Discord: "No option to rebind
   // Handheld Torches actions"): the three TextKeys are the mod's own key
   // store, read raw by the hosts, and the Mods pane that once captured
@@ -611,11 +616,18 @@ export const FEATURES = Object.freeze([
   // its roads integration and its junction map), so a switch flipped
   // mid-session reaches the NEXT world.
   modFeature('travel-options', 'Takes effect when the world next loads.', 'world'),
+  // WOD1 (2026-09-23): WORLD OF DAGGERFALL - `world`, because it is the
+  // wilderness itself. Read at the world's mount, like the roads it
+  // consults: the loader's list is built once per world.
+  modFeature('world-of-daggerfall', 'Takes effect when the world next loads.', 'world'),
   modFeature('meanerMonsters', 'Takes effect on monsters spawned after the switch.', 'combat'),
   modFeature('pcaao', 'Takes effect at once.', 'combat'),
   modFeature('unleveledLoot', 'Takes effect on the next roll.', 'loot'),
   modFeature('weapon-widget', 'Takes effect at once.', 'combat'),   // WW1: the widget reads its switches every frame
   modFeature('shield-widget', 'Takes effect at once.', 'combat'),   // SW1: the same - every switch is read on the frame
+  modFeature('diverse-weapons', 'Takes effect when a weapon is next drawn.', 'combat'),
+  modFeature('roleplay-realism-items', 'Takes effect when the game next loads.', 'loot'),   // RRI1: the template patches are merged at load (ItemHelper.LoadItemTemplates); the classes read their switches live; RRI2: the nine modules read theirs at each roll (a corpse, a shelf, a price), the starting kit and spellbook at the next character   // DW1: the atlas name is chosen at the weapon's load (FPSWeapon.cs:637-644), and the rig's cache key carries it
+  modFeature('roleplay-realism', 'Takes effect when the game next loads.', 'loot'),   // RR1: the class enemies' appearance is written into the basics at load (RoleplayRealism.cs:186-189); every other arm reads its switch at the roll
   modFeature('handheld-torches', 'Takes effect at once.', 'loot'),   // HT1: the component reads its switches every frame
   // AT0 (2026-09-15): AMBIENT TEXT - `world`, because what it talks
   // about is where you are. Its effect line is the mod's own pacing:
@@ -809,6 +821,10 @@ export const FEATURES = Object.freeze([
   // the food, water and camping items the store shelves and a new
   // character carries, camps and campfires, the costed rest, hunting.
   // Off is the classic game: no needs, no provisions minted.
+  // SURV-TIERS (2026-09-23): the one switch is three tiers now - Off,
+  // Casual (the default: the needs only borrow stamina, and a rest,
+  // a meal or a drink never costs more than it gives) and Hard (the arc
+  // as above, the costed rest with it); survival/difficulty.js.
   // BLOOD1 (2026-09-19, Mac: "I really want to try and build our own
   // version as close to 1:1 as possible" / "read in how their module
   // works so we can achieve our own type of parity") - THE PORT'S OWN
@@ -888,8 +904,9 @@ export const FEATURES = Object.freeze([
     group: 'character',
     title: 'Climates & Calories by Ralzar',   // AUDIT SURV E: the author's name, as every mod row carries it
     note: 'Heat, cold, rain and the road wear you down - eat, drink, sleep and dress for the weather, and rest at a '
-      + 'campfire or a bed. Off is the classic game, with no needs at all.',
-    effect: 'Takes effect at once, online too.',
+      + 'campfire or a bed. Casual\u2019s needs only borrow stamina, never past half the bar, and repay it when met; '
+      + 'Hard costs attributes and health and brings sickness; Off is the classic game.',
+    effect: 'Takes effect at once, online too - each player picks their own.',
     kinds: Object.freeze(['mod', 'enhanced', 'classic']),   // AUDIT SURV E: a mod row, under the MOD AUTHORED filter
     // MODS-ONLINE-3 (2026-09-22, Mac): THIS IS A MOD ROW AND IT IS THE
     // PLAYER'S. The lane forced it because the system is the PORT's code
@@ -910,7 +927,21 @@ export const FEATURES = Object.freeze([
     // Unleveled Loot, which is the player's: whoever swings rolls what
     // falls. A room where one player's kills carry meat and another's do
     // not is two players playing their own game, not two worlds.
-    control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: 'player' }),
+    //
+    // SURV-TIERS (2026-09-23, Mac: "Off, Casual, Hard" - Casual on by
+    // default, "but still let it be able to be turned off for online"):
+    // THREE TIERS ON THE ONE KEY, and the same reading holds for each -
+    // a tier decides only what MY body pays (survival/difficulty.js), so
+    // every tier, Off included, stays the player's online. The segments
+    // write difficulty.js SURVIVAL_STORED - Off as the old switch's own
+    // `false` (AUDIT SURV-TIERS: an older build reading the same shelf
+    // still sees Off as off), Casual and Hard by name - and the default
+    // is its SURVIVAL_DEFAULT (test/survtiers.test.js holds the row to
+    // them, as the Gore row is held to GORE_TIERS).
+    control: Object.freeze({
+      store: 'prefs', key: 'survival', initial: 'casual', online: 'player',
+      tiers: Object.freeze([[false, 'Off'], ['casual', 'Casual'], ['hard', 'Hard']]),
+    }),
   }),
 ]);
 

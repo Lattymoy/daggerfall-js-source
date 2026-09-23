@@ -496,7 +496,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   }
   // ...and createRestDeps CALLS them rather than closing over a value.
   assert.match(src('src/scenes/shared.js'),
-    /tickVitals: \(\) => \{[\s\S]{0,900}?restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\), _roughCarry\);/);   // SURV4: the hour by its kind, restVitals still the one home; PARTY-REST10: with the rough carry
+    /tickVitals: \(\) => \{[\s\S]{0,900}?restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\), _roughCarry, _rules\);/);   // SURV4: the hour by its kind, restVitals still the one home; PARTY-REST10: with the rough carry
 
   // Each of the three must be at max INDEPENDENTLY: fill two and the
   // completion must still be false, or FullRest ends early.
@@ -530,7 +530,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
 test('S40 hosts: all four can now rest, and each supplies its own place', () => {
   // The interior host: the key arm, the place bag, and the deps.
   const wm = src('src/scenes/worldModes.js');
-  assert.match(wm, /mountInterior\(createRestWindow\(interiorRestDeps\)\);/);   // RESTDOOR1: through the door
+  assert.match(wm, /mountInterior\(createRestWindow\(interiorRestDeps, ignoreAllocatedBed\)\);/);   // RESTDOOR1: through the door; AUDIT-RR F6: BedActivation's `true` rides through
   // The bag is a LAW now, so this RUNS it. It used to be pinned by
   // regexes over its own source inside the host closure, and a review
   // round proved that hollow: flipping `insideBuilding` to false there

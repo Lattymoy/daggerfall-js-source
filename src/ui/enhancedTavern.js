@@ -41,10 +41,10 @@ import {
   TAVERN_MENU, TAVERN_PRICES, removeExpiredRooms, findRentedRoom, roomRemainingHours,
   rentalDecision, rentRoom, canEat, eatOrDrink,
 } from '../systems/tavern.js';
-import { survivalOn } from '../systems/survival/switch.js';
-import { tavernMenu, tavernEat, tavernDrink, blackout } from '../systems/survival/tavernMenu.js';
+import { survivalOn, survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: the tier prices the drink
+import { tavernMenu, tavernEat, tavernDrink, tavernOrder, blackout } from '../systems/survival/tavernMenu.js';
 import { survivalOf } from '../systems/survival/needs.js';
-import { stiffen } from '../systems/survival/rest.js';
+import { stiffen, REST_KIND } from '../systems/survival/rest.js';
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -214,8 +214,11 @@ function openSurvivalMenu() {
   const h = deps;
   const now = h.now();
   const m = tavernMenu({ climateIndex: h.climateIndex(), quality: h.quality?.() ?? 5, hour: Math.trunc((now % 1440) / 60) });
-  if (m.closed) { say(line(m.closedText)); return; }
   menu = { rows: m.rows, pick: (i) => pickSurvival(m.rows[i], now) };
+  // AUDIT SURV-TIERS (the second pass): before six the kitchen refuses in the mod's two words and the DRINKS STILL
+  // POUR - the classic window's picker follows its refusal (AUDIT SURV C/D), and this one returned on the words and
+  // served nothing. The list is the drinks alone then (tavernMenu stands no food row while the kitchen is shut).
+  if (m.closed) { say(line(m.closedText)); return; }
   render();
 }
 
@@ -223,20 +226,25 @@ function pickSurvival(row, now) {
   if (!row || row.kind === 'header') return;
   audio.playOneShot(SOUND.ButtonClick, 1);
   const h = deps;
-  if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }
-  deductGold(h.entity, row.price);
   const s = survivalOf(h.entity, now);
   const endurance = h.endurance?.() ?? 50;
-  const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance });
+  const rules = survivalRules();
+  if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }
+  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste
+  const order = tavernOrder(s, now, row, { endurance, rules });
+  if (!order.ok) { say(line(order.text)); return; }   // the menu stays up, as it does for the gold: a lighter drink still serves
+  deductGold(h.entity, row.price);
+  const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : tavernDrink(s, row.strength, { endurance, rules });
   h.advanceMinutes?.(r.minutes);
   h.entity.lastTimePlayerAteOrDrankAtTavern = now;
+  let b = null;
   if (r.blackout) {
-    const b = blackout(s, now + r.minutes, { endurance });
-    stiffen(h.entity, now + r.minutes + b.minutes);
+    b = blackout(s, now + r.minutes, { endurance });
+    stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules);
     h.advanceMinutes?.(b.minutes);
   }
   menu = null;
-  say(line(r.text));
+  say(b ? [...line(r.text), ...line(b.text)] : line(r.text));   // AUDIT SURV-TIERS (the third pass): and the waking, as the classic window says it
 }
 
 // ── RENDER ────────────────────────────────────────────────────────

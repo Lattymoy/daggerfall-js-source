@@ -69,7 +69,7 @@
   {
     "name": "the-menu-lock-gives-the-lanes-reason-for-a-ground-switch",
     "file": "src/ui/enhancedMenu.js",
-    "old": "    if (ground !== undefined) lockOnline(b, null, { note: vendor === 'roads-hazelnut' ? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE, value: ground });",
+    "old": "    if (ground !== undefined) lockOnline(b, null, { note: onlineLockNote(vendor, key), value: ground });",
     "new": "    if (ground !== undefined) lockOnline(b, null);",
     "tests": [
       "test/modsonline.test.js",
@@ -116,8 +116,8 @@
   {
     "name": "climates-and-calories-forced-online-again",
     "file": "src/systems/features.js",
-    "old": "control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: 'player' }),",
-    "new": "control: Object.freeze({ store: 'prefs', key: 'survival', initial: true, online: true }),",
+    "old": "store: 'prefs', key: 'survival', initial: 'casual', online: 'player',",
+    "new": "store: 'prefs', key: 'survival', initial: 'casual', online: true,",
     "tests": [
       "test/modsonline.test.js",
       "test/surv2_items.test.js"
@@ -145,11 +145,29 @@
   {
     "name": "every-locked-row-wears-the-grounds-reason-again",
     "file": "src/ui/enhancedMenu.js",
-    "old": "vendor === 'roads-hazelnut' ? ONLINE_GROUND_NOTE : ONLINE_SHARED_NOTE",
+    "old": "ONLINE_GROUND_VENDORS.includes(vendor) ? ONLINE_GROUND_NOTE : ONLINE_RULESET_KEYS[vendor]?.includes(key) ? ONLINE_RULESET_NOTE : ONLINE_SHARED_NOTE",
     "new": "ONLINE_GROUND_NOTE",
     "tests": [
       "test/modsonline.test.js",
       "test/onlinelane.test.js"
+    ]
+  },
+  {
+    "name": "the-ruleset-frees-intensive-training",
+    "file": "src/systems/onlineLane.js",
+    "old": "    'RefinedTraining.intensiveTraining': false,\n",
+    "new": "",
+    "tests": [
+      "test/modsonline.test.js"
+    ]
+  },
+  {
+    "name": "the-ruleset-frees-weapon-speed",
+    "file": "src/systems/onlineLane.js",
+    "old": "advancedArchery: true, weaponSpeed: true, weaponMaterials: true,",
+    "new": "advancedArchery: true, weaponMaterials: true,",
+    "tests": [
+      "test/modsonline.test.js"
     ]
   }
 ]

@@ -15,7 +15,7 @@ import {
   ringHeight, buildFarRingGrid, buildFarRingIndices, ringDisabled,
   FarRingRenderer, RING_RADIUS, RING_REBUILD_DRIFT,
 } from '../src/render/farRing.js';
-import { SCALED_OCEAN_ELEVATION, DEFAULT_TERRAIN_SCALE, TERRAIN_SIZE } from '../src/world/terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../src/world/terrainSampler.js';
 import { overworldTint, overworldHeight, BASE_HEIGHT_SCALE } from '../src/ui/overworldModel.js';
 
 const flatWorld = (byte) => ({
@@ -25,8 +25,8 @@ const flatWorld = (byte) => ({
 });
 
 test('EV8: the height law is the streamed terrain\'s own, not the travel map\'s skin', () => {
-  assert.equal(ringHeight(0), SCALED_OCEAN_ELEVATION * DEFAULT_TERRAIN_SCALE, 'the flat sea at 40.8');
-  assert.equal(ringHeight(100), 100 * BASE_HEIGHT_SCALE * DEFAULT_TERRAIN_SCALE, 'land is byte*8*1.5 world units');
+  assert.equal(ringHeight(0), SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE, 'the flat sea at 34.0');
+  assert.equal(ringHeight(100), 100 * BASE_HEIGHT_SCALE * STREAMING_TERRAIN_SCALE, 'land is byte*8*1.25 world units - the game scene\'s TerrainScale (TERRAIN-SCALE1)');
   assert.equal(ringHeight(2), ringHeight(0), 'the ocean floor clamps like the sampler');
   // the travel map's overworldHeight carries a documented x24 relief
   // exaggeration in map-pixel units - deliberately NOT this law

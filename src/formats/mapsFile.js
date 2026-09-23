@@ -66,6 +66,7 @@
 // rebuild.
 
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
+import { worldDataDoor } from './worldDataDoor.js';   // RR3b: WorldDataReplacement's three asks (MapsFile.cs:984, :999, :1027)
 import { PakFile } from './pakFile.js';
 
 // World metrics.
@@ -408,6 +409,9 @@ export class MapsFile {
       return false;
     }
 
+    // Add any additional replacement location data to the region, assigning locationIndex (MapsFile.cs:984 - RR3b: the world-data door)
+    worldDataDoor()?.getDFRegionAdditionalLocationData(region, rec.dfRegion);
+
     this._lastRegion = region;
     return true;
   }
@@ -545,6 +549,9 @@ export class MapsFile {
    *  locations in MAPS.BSA. */
   readLocationIdFast(region, location) {
     const rec = this._regions[region];
+    // MapsFile.cs:1027-1028 - a location the world-data door added carries its id on the map table (RR3b), so the BSA is not peeked
+    const entry = rec.dfRegion?.mapTable?.[location];
+    if (entry?.locationId) return entry.locationId;
     const v = new DataView(rec.mapPItem.buffer, rec.mapPItem.byteOffset, rec.mapPItem.byteLength);
     const locationCount = this._readLocationCount(region);
     let pos = v.getUint32(location * 4, true) + locationCount * 4;
@@ -657,6 +664,9 @@ export class MapsFile {
   }
 
   _readLocation(region, location) {
+    // Check for replacement location data and use it if found (MapsFile.cs:998-1000 - RR3b: the world-data door)
+    const replacement = worldDataDoor()?.getDFLocationReplacementData(region, location);
+    if (replacement) return replacement;
     try {
       const rec = this._regions[region];
       const dfLocation = {

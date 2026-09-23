@@ -27,6 +27,7 @@ import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData }
 import { layoutNature } from './terrainNature.js';
 import { paintRoads, smoothRoadHeights, pathCorners } from './roadPainter.js';
 import { MAP_W } from './roadNetwork.js';
+import { applyPicks } from './wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
 
 /**
  * The whole CPU side of one streamed pixel, in buildPixel's own order:
@@ -45,12 +46,15 @@ import { MAP_W } from './roadNetwork.js';
  * @param {?object} job.locationRect - setLocationTiles' answer.
  * @param {boolean} job.hasLocation
  * @param {number} job.climateType - the pixel's climate, for nature.
+ * @param {?{picks:Array<{flatten:boolean, rect:object}>}} [job.wod] -
+ *   WOD2: the World of Daggerfall instances the main thread's
+ *   pickLocations placed on this pixel, in order; null with the mod off.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>}}
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null }) {
   const samples = generateSamples(woods, px, py);
   let avg = 0;
   if (hasLocation) {
@@ -83,6 +87,17 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
   }
   assignTiles(tileData, tilemap, true);
+  // WOD2: World of Daggerfall's "Smooth the terrain" arms
+  // (LocationLoader.cs:174-230). The mod runs on
+  // DaggerfallTerrain.OnPromoteTerrainData, which DFU raises AFTER the
+  // tiles are assigned (CompleteMapPixelDataUpdate) and the heights are
+  // pushed, and BEFORE the streamer lays the nature out - so here: the
+  // tiles keep the unflattened slope's pattern, and the grid, the
+  // collision floor and the nature below all read the levelled ground.
+  // The averages ride back for the objects' height (:238); a pixel with
+  // a real location starts from its own mean (MapData.averageHeight is
+  // only ever computed there), every other from 0.
+  const wodResult = wod && wod.picks.length ? applyPicks(samples, wod.picks, hasLocation ? avg : 0) : null;
   const grid = buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));
   const tilemapBytes = convertTilemap(tilemap);
   const nature = layoutNature(samples, tilemap, {
@@ -90,7 +105,10 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     mapPixelY: py,
     rawWorldHeight: woods.getHeightMapValue(px, py),
     climateType,
-    locationRect,
+    // WOD2: the loader SETS MapData.locationRect to its site (:179/:208),
+    // and the nature layout reads that field - so the trees keep their
+    // clearance off a camp exactly as they keep it off a town.
+    locationRect: wodResult?.locationRect ?? locationRect,
   });
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says
@@ -99,5 +117,6 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // once, so the first pixels can be painted with none - and were then
     // kept, roadless, while the map (rebuilt on arrival) showed the roads.
     withRoads: !!roads,
+    wodAverages: wodResult ? wodResult.averages : null,   // WOD2: per pick, the normalized average its objects stand on
   };
 }

@@ -65,11 +65,11 @@ const trig = (q, name) => q.getTask({ name }).getTriggerValue();
 
 // ── the registry ─────────────────────────────────────────────────
 
-test('QG1: ONE guard stands - WorldUpdate - and the three retired slots hold their classes', () => {
+test('QG1: NO guard stands - RR3 took WorldUpdate - and the three retired slots hold their classes', () => {
   const templates = defaultActionTemplates();
   const guards = templates.filter((t) => t.constructor.name === 'PendingTrigger');
-  assert.equal(guards.length, 1, 'only WorldUpdate still pends');
-  assert.match(guards[0].pattern.source, /^worldupdate /);
+  assert.equal(guards.length, 0, 'RR3 (2026-09-23) retired the last guard: WorldUpdate is a real template now');
+  assert.ok(templates.some((t) => t.constructor.name === 'WorldUpdate'), 'in its C#-order slot');
   // the retired three sit in the registry as real templates, in the
   // C# registration order (CastSpellDo then CastEffectDo, verbatim)
   const names = templates.map((t) => t.constructor.name);
@@ -382,7 +382,7 @@ test('QG1 seams: the ready-spell doors are raised by the cast engine and routed 
 test('QG1 seams: the two world reads stand on questWorld, byte-folded like MakeClassicKey', () => {
   // ROAD-G G2 (review): both hosts that mount a machine over a real
   // city answer them. Absent, CastSpellDo self-completes at PARSE
-  // (actions.js:2756/:2763) and the task can never fire, whatever the
+  // (actions.js:2757/:2764) and the task can never fire, whatever the
   // ready-spell doors raise.
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const world = readSrc(f);
@@ -441,8 +441,8 @@ test('QG1 seams: the foe-click arm runs FIRST, skips Info mode, and does not con
 
 test('QG1 seams: the PromptMulti box contract - click-only, no cancel, records by value', () => {
   const sfw = readSrc('src/ui/guildServiceWindows.js');
-  assert.match(sfw, /if \(t\.buttonsMulti\) return;/,
-    'the multi box takes NO keys - AllowCancel false, PromptMulti.cs:87-88');
+  assert.match(sfw, /if \(t\.buttonsMulti\) \{\s+if \(code === 'KeyY' && t\.buttonsMulti\.includes\(MB_BUTTONS\.Yes\)\)[^\n]*\n\s+else if \(code === 'KeyN' && t\.buttonsMulti\.includes\(MB_BUTTONS\.No\)\)[^\n]*\n\s+return;\s+\}/,
+    'the multi box takes NO keys but an enum button\'s own shortcut (DaggerfallMessageBox.cs:377) - AllowCancel false, PromptMulti.cs:87-88; AUDIT-RR2 G21');
   assert.match(sfw, /t\.buttonsMulti\.includes\(hit\)\) this\._advance\(t\.onButton\?\.\(hit\) \?\? null\);/,
     'only a real button advances, answering its record number');
   assert.match(sfw, /\(t\.buttonsMulti \?\? \[\]\)/, 'the layout draws the declared records');

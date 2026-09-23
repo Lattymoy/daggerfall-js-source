@@ -278,7 +278,7 @@ test('AUDIT 64 F25/F26: the one host that mounts the bank feeds the macro produc
   // AUDIT 64 F26: and the fixed-city host's directory carries its real
   // buildings, or an owned house never resolves even in its own town.
   assert.match(src('src/scenes/exterior.js'),
-    /buildings: locationBuildings\(dfLocation\.exterior\?\.buildings \?\? \[\], loc\.blocks\)/);
+    /buildings: locationBuildings\(dfLocation\.exterior\?\.buildings \?\? \[\], loc\.blocks, \{ locationIndex: dfLocation\.locationIndex \?\? 0 \}\)/);   // RR3b: the merge takes the location index
 });
 
 // ── F28 ──────────────────────────────────────────────────────────────

@@ -56,6 +56,7 @@ import { markerScenePosition } from './sceneMount.js';
 import { isSongFileDefined, songFileToRecordName } from '../songFiles.js';
 import { MOBILE_TEAMS } from '../../characters/enemyTargets.js';   // MT-iii: ChangeFoeTeam's enum door
 import { dfuEffectKeyOf } from '../spellEffects.js';   // QG1: CastEffectDo's key vocabulary, one home
+import { setLocationVariant, setNewLocationVariant, setBlockVariant, setBuildingVariant, makeLocationKey, NO_VARIANT } from '../worldDataVariants.js';   // RR3: WorldUpdate's registry
 
 /** TalkManager.cs:285-291 - the dialog-link resource types. */
 export const QUEST_INFO_RESOURCE_TYPE = Object.freeze({
@@ -3501,19 +3502,69 @@ class PendingTrigger extends ActionTemplate {
 
 const GUARD_PATTERNS = Object.freeze({
   // Q5 (2026-08-27) retired fourteen rows, MT-iii took the two
-  // MobileTeams rows, and QG1 (2026-08-28) took CastEffectDo,
-  // ClickedFoe and PromptMulti with the ready-spell doors and the
-  // foe-click surface. The ONE left is a DECISION, not a queue slot
-  // (RW1 sweep, 2026-08-28):
-  //  - WorldUpdate: the whole body routes into WorldDataVariants -
-  //    the MOD-facing world-data replacement system the Port-Ledger
-  //    holds at "Not planned (mod system)" - and ZERO of the 265
-  //    vendored quests write a worldupdate line. The guard parses
-  //    the verbatim pattern and pends loudly, which is the honest
-  //    floor until the mod system itself is ever taken up.
-  WorldUpdate: /worldupdate (location) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (locationnew) named (.+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (block) ([a-zA-Z0-9_.-]+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (blockAll) ([a-zA-Z0-9_.-]+) variant ([a-zA-Z0-9_.-]+)|worldupdate (building) ([a-zA-Z0-9_.-]+) (\d+) at (\d+) in region (\d+) variant ([a-zA-Z0-9_.-]+)|worldupdate (buildingAll) ([a-zA-Z0-9_.-]+) (\d+) variant ([a-zA-Z0-9_.-]+)/,
+  // MobileTeams rows, QG1 (2026-08-28) took CastEffectDo, ClickedFoe
+  // and PromptMulti with the ready-spell doors and the foe-click
+  // surface, and RR3 (2026-09-23) took the last - WorldUpdate - when
+  // Roleplay & Realism's Master Armorer line wrote the first
+  // `worldupdate building` a quest here has ever had, so the
+  // WorldDataVariants registry it routes into was taken up
+  // (systems/worldDataVariants.js). The registry is empty; the shape
+  // stays so a future guard has its home.
 });
 const guard = (name) => new PendingTrigger(null, GUARD_PATTERNS[name]);
+
+/** WorldUpdate.cs (Hazelnut): a quest sets a world-data variant - a
+ *  location's, a new location's by name, a block's or a building's, at
+ *  one location (`MakeLocationKey`) or everywhere (`*All`). `-` is
+ *  NoVariant (:96-97). C# names the same groups in every alternate;
+ *  JavaScript cannot, so each alternate numbers its own. */
+export class WorldUpdate extends ActionTemplate {
+  static typeName = 'WorldUpdate';
+  get saveShape() { return [['type'], ['regionIndex'], ['locationIndex'], ['locationName'], ['blockName'], ['recordIndex'], ['variant']]; }
+  constructor(parentQuest) {
+    super(parentQuest);
+    this.type = ''; this.regionIndex = 0; this.locationIndex = 0; this.locationName = ''; this.blockName = ''; this.recordIndex = 0; this.variant = '';
+  }
+  get pattern() {
+    return new RegExp(
+      'worldupdate (?<type1>location) at (?<locationIndex1>\\d+) in region (?<regionIndex1>\\d+) variant (?<variant1>[a-zA-Z0-9_.-]+)|'
+      + 'worldupdate (?<type2>locationnew) named (?<locationName2>.+) in region (?<regionIndex2>\\d+) variant (?<variant2>[a-zA-Z0-9_.-]+)|'
+      + 'worldupdate (?<type3>block) (?<blockName3>[a-zA-Z0-9_.-]+) at (?<locationIndex3>\\d+) in region (?<regionIndex3>\\d+) variant (?<variant3>[a-zA-Z0-9_.-]+)|'
+      + 'worldupdate (?<type4>blockAll) (?<blockName4>[a-zA-Z0-9_.-]+) variant (?<variant4>[a-zA-Z0-9_.-]+)|'
+      + 'worldupdate (?<type5>building) (?<blockName5>[a-zA-Z0-9_.-]+) (?<recordIndex5>\\d+) at (?<locationIndex5>\\d+) in region (?<regionIndex5>\\d+) variant (?<variant5>[a-zA-Z0-9_.-]+)|'
+      + 'worldupdate (?<type6>buildingAll) (?<blockName6>[a-zA-Z0-9_.-]+) (?<recordIndex6>\\d+) variant (?<variant6>[a-zA-Z0-9_.-]+)',
+    );
+  }
+  createNew(source, parentQuest) {
+    const match = this.test(source);
+    if (!match) return null;
+    const g = match.groups;
+    const pick = (stem) => { for (let i = 1; i <= 6; i++) if (g[`${stem}${i}`] !== undefined) return g[`${stem}${i}`]; return undefined; };
+    const action = new WorldUpdate(parentQuest);
+    action.type = pick('type');
+    action.variant = pick('variant');
+    const regionIndex = pick('regionIndex'); if (regionIndex !== undefined) action.regionIndex = questParseInt(regionIndex);
+    const locationIndex = pick('locationIndex'); if (locationIndex !== undefined) action.locationIndex = questParseInt(locationIndex);
+    const locationName = pick('locationName'); if (locationName !== undefined) action.locationName = locationName;   // the C# tests locationIndexGroup here (:69) - a slip; the port reads the name it captured
+    const blockName = pick('blockName'); if (blockName !== undefined) action.blockName = blockName;
+    const recordIndex = pick('recordIndex'); if (recordIndex !== undefined) action.recordIndex = questParseInt(recordIndex);
+    return action;
+  }
+  update(caller) {
+    super.update(caller);
+    if (this.variant === '-') this.variant = NO_VARIANT;
+    switch (this.type) {
+      case 'location': setLocationVariant(this.regionIndex, this.locationIndex, this.variant); break;
+      case 'locationnew': setNewLocationVariant(this.regionIndex, this.locationName, this.variant); break;
+      case 'block': setBlockVariant(this.blockName, this.variant, makeLocationKey(this.regionIndex, this.locationIndex)); break;
+      case 'blockAll': setBlockVariant(this.blockName, this.variant); break;
+      case 'building': setBuildingVariant(this.blockName, this.recordIndex, this.variant, makeLocationKey(this.regionIndex, this.locationIndex)); break;
+      case 'buildingAll': setBuildingVariant(this.blockName, this.recordIndex, this.variant); break;
+      default: break;
+    }
+    this.setComplete();
+  }
+}
 
 /** The default registry - DFU's RegisterActionTemplates WHOLE
  *  (QuestMachine.cs:345-428), one slot per registered action in the
@@ -3592,7 +3643,7 @@ export function defaultActionTemplates() {
     new LegalRepute(null),
     new MuteNpc(null),
     new DestroyNpc(null),
-    guard('WorldUpdate'),
+    new WorldUpdate(null),
     new EnemiesAction(null),
     new ClickedFoe(null),
     new KillFoeAction(null),

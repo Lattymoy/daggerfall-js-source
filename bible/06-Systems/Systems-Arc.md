@@ -3196,7 +3196,7 @@ collapse is a bare `RaiseTime(1 * SecondsPerHour)` (`:2429`) that
 returns; `Update` is not re-entered.
 
 The port's hosts implement that same RaiseTime as
-`playerTicker.advance(60)` (`exterior.js:993`, `world.js:1117`), fired
+`playerTicker.advance(60)` (`exterior.js:1054`, `world.js:1438`), fired
 from inside `sinks.drainFatigue` - so it re-enters `tickPlayerMinutes`
 from inside that function's own fatigue band. The nested tick wrote the
 marker an hour ahead, the outer frame's own `setWorldMinutes` then
@@ -4572,7 +4572,7 @@ the true clause along with the false ones is in the campaign, because
 over-retiring is the equal and opposite failure.
 
 **And one delegation pointed at a flag nobody had ever written.**
-`world.js:2091` said the dungeon-mode enchant ctx was "FLAGGED there
+`world.js:2645` said the dungeon-mode enchant ctx was "FLAGGED there
 with the rest of its enchant wiring" in `dungeonContext.js`. It was
 not. `setDefaultEnchantCtx` had exactly **one** caller in the tree, so
 the standalone `?dungeon` host ran every arm that needs a host
@@ -5028,7 +5028,7 @@ predicate read prettier.
 by the same sweep and each verified against the tree before deletion:
 the interior detect claim above; "there is nowhere to cash one yet" on
 the letter of credit, which B2 answered with `DepositAll_LOC`
-(`banking.js:480`, the window's own :377-389); "the BANKING arm stays
+(`banking.js:483`, the window's own :377-389); "the BANKING arm stays
 FLAGGED below", written nine lines above the live banking arm; and
 "every other arm is FLAGGED by name in
 `guildServiceFlow.SERVICE_DESTINATION`" after DR2 closed the last of
@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:5184` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:5801` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -7965,6 +7965,15 @@ formulas in. ONE SWITCH (`survival/switch.js`, the enhanced pane's
 "survival" pref, ON by default - Mac's third point) turns the whole
 mod off, and off it every seam is DFU's own: the bed's hour, the
 eleven-line tavern list, no chips, no gate, no roll.
+**SUPERSEDED IN PART BY SURV-TIERS (2026-09-23, Mac: "Off, Casual,
+Hard")**: the switch is three tiers on the same key - Off (as above,
+the classic game, though it keeps the camps and the rest's place, and
+sees another player's camp - SURV-OFFSIGHT),
+Casual (the default: the same world, costing stamina alone, lent down to
+half the pool at most and repaid when the need is met) and Hard (the arc
+as recorded here). The design, the table, the stored values and the
+audit are in `06-Systems/Climates-Calories.md`, sections SURV-TIERS and
+AUDIT SURV-TIERS.
 
 AUDIT SURV (2026-09-18, Mac: "Let's audit everything so far"): five
 opus lenses over the arc - laws, wiring, surfaces, records, a Chromium
