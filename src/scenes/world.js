@@ -6,6 +6,7 @@
 // locations appear on their pixels, and crossing a pixel boundary
 // recenters the world (streamingWorld.js).
 
+import { RESURRECT_HOLD_MS, RESURRECT_HEALTH_PCT, RESURRECT_TEXT, rezSnapshot, rezFor } from '../systems/resurrect.js';   // RESURRECT1
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pack's switch
@@ -4193,6 +4194,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // mate under the crosshair (allyTargetPick, beside socialFwd) and the door the cast leaves through
     allyTarget: (eye, dir, reach) => allyTargetPick(eye, dir, reach),   // lazily: the pick is declared beside socialFwd, below this engine's build
     castAtAlly: (id, frame) => castAtAllyDoor(id, frame),
+    fallenTarget: (eye, dir, reach) => fallenTargetPick(eye, dir, reach),   // RESURRECT1: lazily, as the ally pick
+    raiseFallen: (f) => raiseFallenDoor(f),
     surfacePlayer,
     // X-slice: encounter foes are spell targets too.
     //
@@ -4284,10 +4287,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2442 mounts the same one, gated on
+  // and dungeonContext.js:2444 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5645
+  // that context through modes.dungeonCtx - so worldModes.js:5647
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -6056,7 +6059,23 @@ export async function bootWorld(canvas, renderer, params, status) {
    * line in the death screen's place, and play continues - no video, no
    * title menu, no save to load.
    */
+  /** RESURRECT1: RISEN WHERE I FELL - a party member's Resurrect. The heal first (MAC-D3's order), then the screen
+   *  closed in place with no exit and no teleport; the next frame rejoins the room from right here. */
+  function resurrectInPlace(rez) {
+    if (_respawning) return;
+    _rezSeen = null;
+    _deadMark = null; _partyComposedAt = -Infinity;   // PCORPSE3: my body is gone - my party pose says so at once
+    reviveForPlay(playerEntity, { force: true });
+    playerEntity.health = Math.max(1, Math.round((playerEntity.maxHealth ?? playerEntity.health) * RESURRECT_HEALTH_PCT / 100));
+    _deathWasOnline = null;
+    const ov = townTalk.overlay;
+    if (ov instanceof DeathScreen) { ov.restoreView(); townTalk.closeOverlay(); }
+    else modes?.clearDeath?.();
+    townTalk.say(RESURRECT_TEXT.raised(rez.name));
+  }
   function respawnOnlinePlayer() {
+    _rezSeen = null;
+    _deadMark = null; _partyComposedAt = -Infinity;   // PCORPSE3   // RESURRECT1: armed fresh for the next death
     // MAC-D3 (Seanobi on Discord, 2026-09-21: "stuck in an infinite
     // deathloop. Instant death after respawning"): THE PLAYER IS
     // BROUGHT BACK TO LIFE FIRST, AND EXACTLY ONCE.
@@ -6349,7 +6368,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6246), so exterior mode and a
+    // composer, dungeonContext.js:6248), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8325,7 +8344,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8779-8843 -
+  // worldModes answers it in BOTH modes (worldModes.js:8786-8850 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -9528,7 +9547,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // friends list and the party HUD), the names over the world (green for my party), the F-menu on a body and the map;
   // an act goes out through `socialLink()` (sendSocial). `partyFrame` sends my own party pose once a second while I
   // sit in a party. Nothing here draws: the seams are the state and the link.
-  let social = null, _partyComposedAt = -Infinity, _partyPose = null;   // PARTY8-B: the last pose composed, for the party HUD's own "where am I"
+  let social = null, _partyComposedAt = -Infinity, _partyPose = null;
+  let _rezOut = null, _rezSeen = null;
+  let _deadMark = null;   // PCORPSE3: where my body lies while I am dead (my party pose says so)
+  const _partyBodies = new Map();   // PCORPSE3: account -> the `at` of the party-told body I stood   // RESURRECT1: my call to a fallen member; and, while I lie dead, what my party's poses said at my death   // PARTY8-B: the last pose composed, for the party HUD's own "where am I"
   let _partyRestReady = false;   // PARTY-REST2: this tab's own /ready vote, broadcast in composePartyPose's own `ready` field
   let _partyRestReadyAt = 0;   // PARTY-REST2b: when it was set - on the shared clock (social.now()), broadcast as `readyAt` (AUDIT PARTY-REST)
   let _partyRestMirrored = null;   // AUDIT PARTY-REST: the mirrorKey of the nap I last mirrored - one mirror per nap, however it ended
@@ -9811,7 +9833,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     exteriorFoes.setOnHcc((from, hv, at) => hcc.applyOwner(from, hv, campToScene, at), () => hcc.clearPeers());
     online.onPark = (room, e) => hcc.applyKept(room, e, campToScene, performance.now());   // HCC-PARK: a cell's word about a parked team (mine or a halo's cell), its owner here or not
     online.onParks = (room, list) => hcc.replaceKept(room, list, campToScene, performance.now());   // HCC-PARK: and a cell's whole memory, after its welcome   // HCC-ONLINE: a peer's horse and wagon, the same frame, the same room test, through validHccRecord; and the peers' teams go wherever the pool's puppets go (a room change, a leave)
-    online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };   // TRADE1: a peer's trade frame, already projected and addressed to me (net/online.js)
+    online.onTrade = (id, data) => { tradeMgr.onFrame(id, data); };
+    online.onPeerDeath = (peer, pose, room) => {
+      remotePlayers?.addCorpse({ ...peer, acct: social?.accountOfPeer?.(peer.id) ?? null }, pose, room);   // PCORPSE3: the account, so the party-told copy never doubles it
+      // PDEATH-FOES: the fallen player's live foes, each to the survivor it stands nearest - me for the ones I am
+      if ((modes?.mode ?? 'exterior') === 'exterior' && isCellRoom(room)) {
+        const others = (peersNear() ?? []).filter((q) => q.id !== peer.id);
+        const d = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
+        const n = exteriorFoes.adoptFrom?.(peer.id, (f) => { const at = f.ai?.feet; if (!at) return false; const mine = d(at, player.pos); return others.every((q) => d(at, q.feet) >= mine); }) ?? 0;
+        console.info(`[foes] took over ${n} foe(s) from a fallen player`);   // PDEATH-FOES2: said, so a failed handover can be told apart
+      }
+    };   // PCORPSE1: another player fell - their class's body for a minute, and their cry   // TRADE1: a peer's trade frame, already projected and addressed to me (net/online.js)
     // ALLY-CAST: a party mate's spell at ME. THE RECEIVER DECIDES: a cast from anyone outside my party is dropped
     // unread (the sender chose the peer; a party is invite-only), so is one at a dead player, and of what arrived only
     // the beneficial families are kept (systems/allyCast.js allyCastSpell - a crafted Damage Health lands nothing).
@@ -10309,6 +10341,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // mirror - see toggleRest's own doc comment (world.js) for the race window this closes. Broadcast
       // unconditionally, like restEnemyAt/restCancelAt above.
       restStartedAt: Number.isFinite(_partyRestJustStartedAt) ? _partyRestJustStartedAt : null,
+      ...(_rezOut && performance.now() < _rezOut.until ? { rz: { to: _rezOut.to, at: _rezOut.at } } : {}),
+      ...(_deadMark ? { dd: _deadMark } : {}),   // PCORPSE3: my body, for a party member who missed the death   // RESURRECT1: my Resurrect's call, held a few sends
     };
   };
   /** PARTY-REST1: the wire's small numbers back to RestWindow's own mode strings - `partyRestModeCode`'s inverse,
@@ -11198,6 +11232,30 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  The distance rides so the cast engine can run its line-of-sight rule over it (hostMagic allyInReach, AUDIT
    *  ALLY-CAST A2). One pick for both engines: the surface one takes it as a dep, the dungeon's through the host
    *  object worldModes hands buildDungeonContext (A3). */
+  /** RESURRECT1: THE FALLEN PARTY MEMBER'S BODY under the crosshair - the corpses remotePlayers keeps (PCORPSE1), a
+   *  party member's alone, through the social pick's own ray. The account is what the call names. */
+  const fallenTargetPick = (eye, dir, reach) => {
+    // RESURRECT2: every fallen party member's body in reach, named - the cast engine picks the one the crosshair
+    // means (systems/resurrect.js pickFallenBody), against its own floor
+    if (!social?.party || !remotePlayers) return null;
+    const at = eye ?? cam.pos;
+    const out = [];
+    for (const c of remotePlayers.corpseMarks(onlineToScene)) {
+      const cAcct = c.acct ?? (c.id ? social.accountOfPeer(c.id) : null);   // PCORPSE3: a party-told body carries its account
+      if (!cAcct || !social.others().some((m) => m.acct === cAcct)) continue;
+      if (Math.hypot(c.feet[0] - at[0], c.feet[1] - at[1], c.feet[2] - at[2]) > reach + 1) continue;
+      const acct = cAcct;
+      out.push({ id: c.id, acct, feet: c.feet, name: (c.id && peerName(c.id)) || social.party.members.find((m) => m.acct === acct)?.name || null });
+    }
+    return out;
+  };
+  /** RESURRECT1: the call out - onto my party pose for RESURRECT_HOLD_MS, sent at once. */
+  const raiseFallenDoor = (f) => {
+    if (!social?.party || !f?.acct) return false;
+    _rezOut = { to: f.acct, at: Date.now(), until: performance.now() + RESURRECT_HOLD_MS };
+    _partyComposedAt = -Infinity;
+    return true;
+  };
   const allyTargetPick = (eye, dir, reach) => {
     if (!social?.party || !online) return null;
     const hit = pickPeerInFront(eye ?? cam.pos, dir ?? socialFwd(), peersNear(), reach, rayPersonDistance);
@@ -11263,7 +11321,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
+      if (online.room) {
+        // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
+        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;
+        _partyComposedAt = -Infinity;
+        online.sendDeath?.();
+        // PDEATH-FOES: my foes are the survivors' now
+        if (isCellRoom(online.room) && (online.peers?.size || peersNear()?.length)) { const n = exteriorFoes.dropOwnLive?.() ?? 0; console.info(`[foes] handed ${n} foe(s) to the survivors`); }
+      }
       if (online.room) { worldPublish(now, true); online.leave(); exteriorFoes.clearPuppets(); _foesRoom = null; }
+      // RESURRECT1: a party member's call, new since I fell - I rise where I lie
+      if (!_rezSeen) _rezSeen = rezSnapshot(social?.others() ?? []);
+      const rez = social?.acct ? rezFor(social.others(), social.acct, _rezSeen) : null;
+      if (rez) { resurrectInPlace(rez); return; }
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); return;   // AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen
     const mode = modes?.mode ?? 'exterior';   // audit24_wave37: guarded on the OBJECT above its own declaration (the frame runs after it)
@@ -11400,6 +11470,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerRiders.sync(drawable, onlineToScene, { eye: cam.pos, right: [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], dt });
     const afoot = drawable.filter((d) => !peerRiders.isRiding(d.id) && !d.shown?.wb);   // DISC12: a beast wears no Morrowind body - it stands as the beast's own sprite (remotePlayers)
     peerBodies.sync(afoot, onlineToScene, dt, player.pos, { priority: (id) => !!social?.isPartyPeer(id) });   // the nearest first, the far ones asleep; AUDIT PARTY8: a party mate before a stranger
+    // PCORPSE1: a body heard in a room this scene has left for another KIND of space (a dungeon's local frame, the
+    // street's world frame) is not this scene's to draw; one heard anywhere in the overworld's cells still is
+    // PCORPSE3: a party member's body their party pose tells of, that the death pose never brought me (I was between
+    // sockets - a resurrection's rejoin - or I came after); and the body of one who got up, taken away
+    if (social?.party) {
+      const others = social.others();
+      for (const m of others) {
+        const dd = m.p?.dd;
+        if (!dd) { if (_partyBodies.has(m.acct)) { _partyBodies.delete(m.acct); remotePlayers.dropCorpseOf(m.acct); } continue; }
+        if (_partyBodies.get(m.acct) === dd.at) continue;
+        _partyBodies.set(m.acct, dd.at);
+        if (!(dd.k === online.room || (isCellRoom(dd.k) && isCellRoom(online.room)))) continue;
+        const id = m.peers?.[0] ?? null;
+        if (remotePlayers.hasCorpseOf(m.acct, id)) continue;
+        remotePlayers.addCorpse({ id, acct: m.acct, look: (id && (online.peers.get(id)?.look ?? online._known?.get?.(id)?.look)) ?? null }, dd, dd.k);
+      }
+      for (const acct of [..._partyBodies.keys()]) if (!others.some((m) => m.acct === acct)) _partyBodies.delete(acct);
+    }
+    if (online.room) remotePlayers.keepCorpses((r) => r === online.room || ((isWorldRoom(r) || isCellRoom(r)) && (isWorldRoom(online.room) || isCellRoom(online.room))));   // PCORPSE2: never judged while between rooms (a cell crossing's gap) - no room is not another space
     remotePlayers.sync(drawable, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id), dt, eye: player.pos, poseAgeMs: (p) => online.poseAgeMs(p) });   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)
   };
   /** SPELLFX1 (the Unity co-op's RpcPlayPlayerSpellCastVisual): EVERY PEER'S CAST, DRAWN. The pose already carries the
@@ -11517,6 +11606,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     peerHoverName: (key) => peerHoverName(key),
     allyTarget: allyTargetPick,   // AUDIT ALLY-CAST A3: the dungeon's own cast engine asks the same pick, and leaves through the same door
     castAtAlly: castAtAllyDoor,
+    fallenTarget: (eye, dir, reach) => fallenTargetPick(eye, dir, reach),   // RESURRECT1: the dungeon's cast engine raises the same bodies
+    raiseFallen: (f) => raiseFallenDoor(f),
     plaquePeerAct: (eye, dir) => plaquePeerAct(eye ?? cam.pos, dir ?? socialFwd()),   // ACT-MENU: the building's and the dungeon's press on a player the plaque lit, on the press's own ray (AUDIT DISC7 A9)
     pointerSurfaceUp: () => pointerSurfaces.size > 0,   // AUDIT DROPS E1: the plaque comes down under the F-menu, the chat and the friends panel indoors and underground too (AUDIT-WH2 L3-F3's law, the street's own term)
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
@@ -12815,6 +12906,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // fresh array from player.eye makes this per-frame, never
         // cumulative). The player does not move; only the camera dies.
         if (townTalk.overlay instanceof DeathScreen) cam.pos[1] -= townTalk.overlay.drop;
+        if (townTalk.overlay instanceof DeathScreen) townTalk.overlay.tiltView(cam);   // DEATH3: the enhanced fall looks up at the sky
         // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
         // DFU's ActivateCenterObject: the readied spell fires on its
         // PRESS (EntityEffectManager.cs:250) and the world activation

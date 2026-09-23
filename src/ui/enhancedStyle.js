@@ -839,7 +839,8 @@ button { font: inherit; background: none; border: 0; color: inherit; cursor: poi
    touchmove, which enhancedInventory's onDragHold takes. These rules
    stay for the gesture that does begin under the class: a SECOND finger
    panning the list out from under a live drag. */
-.itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }   /* MAC-R4: no iOS long-press callout over a hold */
+.itemrow { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.pack-shell img { -webkit-user-drag: none; }   /* HB1b: an icon is never the browser's to drag - the pane's drag starts on it at once */   /* MAC-R4: no iOS long-press callout over a hold */
 body.draglock .itemrow, body.draglock .packlists { touch-action: none; }
 /* MAC-M2 (Mac: "hold to drag ... doesn't work when trying to take items
    off your character"): THE BODY'S PANELS TAKE THE SAME GESTURE, so
@@ -4553,6 +4554,10 @@ export function injectEnhancedStyle(doc = document) {
   el.id = STYLE_ID;
   el.textContent = ENHANCED_CSS;
   doc.head.append(el);
+  // SND1: every enhanced surface is styled through here once, so the UI's
+  // click sound is installed with it. Loaded late, so this sheet (which
+  // node tests import for its CSS alone) never pulls the audio engine in.
+  import('./uiClickSound.js').then((m) => m.installUiClickSound(doc)).catch(() => {});
 }
 
 /** The web fonts.

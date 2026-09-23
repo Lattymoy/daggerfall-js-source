@@ -89,7 +89,7 @@ test('AUDIT PARTY-REST wire (world95, then world96 under ALLY-CAST, world97 unde
   assert.equal(validPartyPose({ ...P, readyAt: -5 }).readyAt, 0);
   assert.equal(validPartyPose({ ...P }).readyAt, null, 'a world94 client sends none');
   assert.equal(validPartyPose({ ...P, readyAt: 'now' }).readyAt, null, '...and a bad one lands as none, never refusing the pose');
-  assert.equal(RELAY_VERSION, 'world101', 'ALLY-CAST moved it again, AUDIT ALLY-CAST once more, SPELLFX1\'s pose fields a third time, HCC-PARK + RIDE (the park frame, the pose\'s riding fields) a fourth, DISC7\'s hs and DISC12\'s lh/wb after');
+  assert.equal(RELAY_VERSION, 'world102', 'ALLY-CAST moved it again, AUDIT ALLY-CAST once more, SPELLFX1\'s pose fields a third time, HCC-PARK + RIDE (the park frame, the pose\'s riding fields) a fourth, DISC7\'s hs and DISC12\'s lh/wb after, and the contributor\'s death pose, Resurrect call and fallen body (world102)');
   assert.equal(QUEST_ROOM_BYTES_PER_S, 4 * 1024 * 1024);
   // the quest fan's byte budget, as the hub charges it: a share times the tabs it reaches, borrowing, so one
   // full party's largest share lands whole and the flood behind it waits

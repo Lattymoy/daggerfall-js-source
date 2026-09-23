@@ -20,8 +20,8 @@
   {
     "name": "DISC12-edges-not-sent",
     "file": "src/net/wire.js",
-    "old": "    || (a.lh | 0) !== (b.lh | 0) || (a.wb | 0) !== (b.wb | 0);",
-    "new": "    || false;",
+    "old": "    || (a.lh | 0) !== (b.lh | 0) || (a.wb | 0) !== (b.wb | 0)   // DISC12",
+    "new": "    || false   // DISC12",
     "tests": [
       "test/disc12.test.js"
     ]

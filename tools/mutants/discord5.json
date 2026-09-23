@@ -154,8 +154,8 @@
   {
     "name": "D5-HOTSLOT-book-button-does-not-rerender",
     "file": "src/ui/enhancedSpellbook.js",
-    "old": "    notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';\n    render();",
-    "new": "    notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';",
+    "old": "      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';\n      render();",
+    "new": "      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';",
     "tests": [
       "test/discord5.test.js"
     ]

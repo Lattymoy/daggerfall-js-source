@@ -21,6 +21,8 @@
 //      stay valid for the exit landing math.
 //   baseCollider() - the collider to restore on exit.
 
+import { resurrectionSpell } from '../systems/resurrect.js';   // RESURRECT1
+import { isOnlinePage } from '../systems/onlineLane.js';   // RESURRECT1: the shelf's online arm
 import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
@@ -4236,7 +4238,7 @@ export function createWorldModes(host) {
         spells: () => (playerEntity.spells ??= []),
         entity: playerEntity,
         castCost: (sp) => calculateCastCost(sp, playerEntity).sp,
-        offered: () => [...sbi.values()],
+        offered: () => [...sbi.values(), ...(isOnlinePage() ? [resurrectionSpell()] : [])],   // RESURRECT1: online, the ready-made Resurrection is on the shelf
         buildingQuality: () => b?.quality ?? 0,
         shopName: () => b?.name ?? '',
         skills: () => ({
@@ -6021,6 +6023,8 @@ export function createWorldModes(host) {
           peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye
           allyTarget: (eye, dir, reach) => host.allyTarget?.(eye, dir, reach) ?? null,   // AUDIT ALLY-CAST A3: the dungeon's own cast engine asks the outer host's pick
           castAtAlly: (id, frame) => !!host.castAtAlly?.(id, frame),
+          fallenTarget: (eye, dir, reach) => host.fallenTarget?.(eye, dir, reach) ?? null,   // RESURRECT1: and its fallen bodies, and the door the call leaves through
+          raiseFallen: (f) => !!host.raiseFallen?.(f),
           partyRestGate: () => host.partyRestGate?.(),   // PARTY-REST2 (AUDIT DROPS D1): the dungeon's rest asks the party too - ONE copy (main carried two; eslint no-dupe-keys)
           pointerSurfaceUp: () => !!host.pointerSurfaceUp?.(),   // AUDIT DROPS E1: the plaque comes down under a pointer surface
           // D-ONLINE1: the dungeon death screen's own door - see
@@ -6147,7 +6151,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6266), so the OUTER host's one rides in.
+          // (dungeonContext.js:6268), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:744 -> the
@@ -6931,6 +6935,9 @@ export function createWorldModes(host) {
     // slot and the one write below never saw it.
     if (interiorOverlay instanceof DeathScreen) cam.pos[1] -= interiorOverlay.drop;
     if (mode === 'dungeon') cam.pos[1] -= dungeonCtx?.deathDrop ?? 0;
+    // DEATH3: and the enhanced fall's pitch, from whichever slot holds the death
+    if (interiorOverlay instanceof DeathScreen) interiorOverlay.tiltView(cam);
+    if (mode === 'dungeon') dungeonCtx?.deathTilt?.(cam);
     // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
     // DFU's ActivateCenterObject: the readied spell fires on its
     // PRESS (EntityEffectManager.cs:250) and the world activation
@@ -7222,7 +7229,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9165's own wave-46 note); the interior
+          // a blow (world.js:9184's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9718,7 +9725,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3353-3375), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6349). So an F9 pressed in a shop
+     *  unconditionally (world.js:6368). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9751,8 +9758,13 @@ export function createWorldModes(host) {
     /** AUDIT WORLD B6: is the death screen up in the mode's own slot - the dungeon context's (it borrows the
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
+    /** RESURRECT1: the mode's death screen closed IN PLACE - the fallen player rises where they fell, no exit. */
+    clearDeath() {
+      if (mode === 'dungeon') { dungeonCtx?.clearDeathOverlay?.(); return; }
+      if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
+    },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6442)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6461)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9762,8 +9774,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6603`
-     *  and `dungeonContext.js:6275` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:6622`
+     *  and `dungeonContext.js:6277` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

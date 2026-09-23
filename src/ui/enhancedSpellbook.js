@@ -38,7 +38,13 @@ import {
 } from './spellbookWindow.js';
 import { effectByKey } from '../systems/spellEffects.js';   // the classic book's own source (spellbookWindow.js:120)
 import { spellQuickslot, setSpellQuickslot, clearSpellQuickslot } from '../systems/quickslots.js';   // HOTSLOT: the book is where a spell is slotted
-import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from './spellIcons.js';   // PX23b: the classic's OWN words for the two icons
+import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from './spellIcons.js';
+// HB1: the hotbar. With it chosen over the diamond, the book is where a
+// spell goes onto it - dragged off the rail, or by the button that stood
+// for the diamond's spell slot.
+import { hotbarSlotOf } from '../systems/quickslots.js';
+import { setHotbarDropMode, hotbarAcceptsDrops, beginHotbarDrag, takeHotbarDragClick, hotbarMode, toggleHotbarSpell,
+  hotbarKeyOf, spellSigil } from './enhancedHotbar.js';   // PX23b: the classic's OWN words for the two icons
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -174,7 +180,16 @@ function render() {
     const b = el('button', `px-qrow sb-row${r.i === picked ? ' on' : ''}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(r.name));
     b.append(el('span', 'sb-cost', String(r.cost)));
-    b.onclick = () => { picked = r.i; notice = null; deleting = null; render(); };
+    // HB1: a rail row DRAGS onto the hotbar under the window. A mouse
+    // crosses at 4px, a finger on a hold, so a click is still a pick.
+    b.onpointerdown = (e) => {
+      if (!hotbarAcceptsDrops() || deleting !== null) return;
+      beginHotbarDrag(e, { kind: 'spell', spell: r.spell }, { sigil: spellSigil(r.name), element: r.spell?.element ?? null });
+    };
+    b.onclick = () => {
+      if (takeHotbarDragClick()) return;   // the release of a drag is not a pick
+      picked = r.i; notice = null; deleting = null; render();
+    };
     rail.append(b);
   }
   wrap.append(rail);
@@ -237,14 +252,23 @@ function render() {
   // the chip that takes the hold was hidden until the slot was filled.
   // The book is where a spell is chosen, so the book slots it: the
   // same Slot/Unslot pair the pack gives a consumable (quickslotActs).
-  const inSlot = Number.isFinite(sel.spell?.index) && spellQuickslot()?.index === sel.spell.index;
-  const slot = el('button', `act sb-slot${inSlot ? ' on' : ''}`, inSlot ? 'Unslot' : 'Quickslot');
-  slot.onclick = () => {
-    if (inSlot) clearSpellQuickslot(); else setSpellQuickslot(sel.spell);
-    notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';
-    render();
-  };
-  acts.append(slot);
+  if (hotbarMode()) {
+    // HB1: the hotbar's button in the diamond's place - on the bar comes
+    // off, else it goes on the first free slot. Dragging picks the slot.
+    const at = hotbarSlotOf(sel.spell, { spell: true });
+    const hb = el('button', `act sb-slot${at >= 0 ? ' on' : ''}`, at >= 0 ? `Off hotbar ${hotbarKeyOf(at)}` : 'Add to hotbar');
+    hb.onclick = () => { notice = toggleHotbarSpell(sel.spell); render(); };
+    acts.append(hb);
+  } else {
+    const inSlot = Number.isFinite(sel.spell?.index) && spellQuickslot()?.index === sel.spell.index;
+    const slot = el('button', `act sb-slot${inSlot ? ' on' : ''}`, inSlot ? 'Unslot' : 'Quickslot');
+    slot.onclick = () => {
+      if (inSlot) clearSpellQuickslot(); else setSpellQuickslot(sel.spell);
+      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';
+      render();
+    };
+    acts.append(slot);
+  }
   // RENAME. The classic asks "Enter spell name : " (ENTER_SPELL_NAME,
   // :934) and the first draft dropped it - a prettier window that can
   // do less, which is the chronicle's lesson one window over.
@@ -401,10 +425,12 @@ export function mountEnhancedSpellbook(hostEl, d = {}) {
   deleting = null;
   render();
   window.addEventListener('keydown', onKey, true);
+  setHotbarDropMode('book', true, d.entity ?? null);   // HB1: the bar comes up under the book as a drop target
   return {
     render,
     destroy() {
       window.removeEventListener('keydown', onKey, true);
+      setHotbarDropMode('book', false);   // HB1
       host = null; deps = {}; picked = 0; notice = null; renaming = null; deleting = null;
     },
   };

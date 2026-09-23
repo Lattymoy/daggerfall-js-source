@@ -25,7 +25,9 @@ test('PX23 door: four hosts collapse to ONE seam, and the BUY window is not it',
   // ...and that one is the BUY window, with its own deps. It looks like
   // a duplicate from a distance and is a different question.
   const wm = read('src/scenes/worldModes.js');
-  const buy = wm.slice(wm.indexOf('new SpellbookWindow('), wm.indexOf('new SpellbookWindow(') + 700);
+  // the WHOLE call, to its `{ buyMode: true })` - a fixed character window lost a dep the day a line above it grew
+  // (RESURRECT1's shelf entry)
+  const buy = wm.slice(wm.indexOf('new SpellbookWindow('), wm.indexOf('{ buyMode: true });', wm.indexOf('new SpellbookWindow(')) + 19);
   assert.match(buy, /buyMode: true/);
   for (const dep of ['offered:', 'buildingQuality:', 'shopName:', 'skills:']) assert.ok(buy.includes(dep), dep);
   // Every host now hands the door only what THAT host knows - and the

@@ -161,8 +161,8 @@
   {
     "name": "QS2-the-chip-drawn-on-remote-rows-too",
     "file": "src/ui/enhancedInventory.js",
-    "old": "  if (from === 'local') {\n    const slot = quickslotOf(item);",
-    "new": "  if (from === 'local' || from === 'remote') {\n    const slot = quickslotOf(item);",
+    "old": "  if (from === 'local') {\n    if (hotbarMode()) {",
+    "new": "  if (from === 'local' || from === 'remote') {\n    if (hotbarMode()) {",
     "tests": [
       "test/qs2_tooltip.test.js"
     ]

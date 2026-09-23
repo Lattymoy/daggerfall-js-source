@@ -7,7 +7,7 @@
 // the exact mis-attribution the first integration run made.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mapLine, provenance } from '../tools/citeMerge.mjs';
+import { mapLine, provenance, mapSides } from '../tools/citeMerge.mjs';
 
 const T = 'src/scenes/world.js';
 // the target gained one line at the top: every old line N is new line N+1
@@ -48,13 +48,35 @@ test('citeMerge: a path before the basename must be the target\'s own, and the L
   assert.equal(r.moved, 2);
 });
 
-test('citeMerge: provenance is theirs first, then ours, else the merge\'s own (mutant: ours first, or a new line claimed)', () => {
+test('citeMerge: provenance names the side that carries the line - both, theirs, ours - else the merge\'s own (mutant: one side first, or a new line claimed)', () => {
   const theirs = new Set(['shared', 'only theirs']), ours = new Set(['shared', 'only ours']);
-  assert.equal(provenance('shared', theirs, ours), 'theirs');
+  assert.equal(provenance('shared', theirs, ours), 'both');
   assert.equal(provenance('only theirs', theirs, ours), 'theirs');
   assert.equal(provenance('only ours', theirs, ours), 'ours');
   assert.equal(provenance('written by the merge', theirs, ours), null);
   assert.equal(provenance('only ours', null, ours), 'ours', 'a file new on our side');
+});
+
+// THE SHARED LINE (the contributor drop's merge, 2026-09-23): a comment
+// both sides carry verbatim, citing a target the two sides moved
+// differently. 'theirs' first walked nine such cites through the drop's
+// diff (`spellcost.js:182` -> :181). Its number was read off ONE side's
+// target and the line cannot say which - so it moves only where both
+// maps land it on the same line, and is held otherwise.
+test('citeMerge: a line both sides carry moves only where both maps agree, else it is AMBIGUOUS and untouched (mutant: theirs taken, or ours)', () => {
+  const l = '// the floor (world.js:3)';
+  const same = mapSides(l, 'both', () => [[T, shifted]]);
+  assert.equal(same.ambiguous, undefined);
+  assert.equal(same.out, '// the floor (world.js:4)', 'two maps that agree move the cite');
+  // ours' target never moved at that line: its map keeps :3, theirs' says :4
+  const still = { map: (n) => n, oldLines: newLines, newLines };
+  const parted = mapSides(l, 'both', (side) => [[T, side === 'theirs' ? shifted : still]]);
+  assert.deepEqual(parted.ambiguous, { theirs: '// the floor (world.js:4)', ours: l });
+  assert.equal(parted.out, l, 'a line the two sides read differently is left for a person');
+  assert.equal(parted.n, 0);
+  // a one-sided line is that side's alone, as before
+  assert.equal(mapSides(l, 'theirs', (side) => [[T, side === 'theirs' ? shifted : still]]).out, '// the floor (world.js:4)');
+  assert.equal(mapSides(l, 'ours', (side) => [[T, side === 'theirs' ? shifted : still]]).out, l);
 });
 
 // ── THE STRUCK LAW, 2026-09-15 ────────────────────────────────────────

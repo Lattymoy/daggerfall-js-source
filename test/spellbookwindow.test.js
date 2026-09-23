@@ -30,7 +30,7 @@ import { LETTER_OF_CREDIT_TEMPLATE } from '../src/systems/inventory.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { cureOfferMessageOffset } from '../src/systems/guildServiceActions.js';
 import { TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS } from '../src/ui/spellIcons.js';
-import { SPELLBOOK_DESCRIPTION_IDS, spellBookDescriptionId, SPELL_MAKER_EFFECTS } from '../src/systems/spellEffects.js';
+import { SPELLBOOK_DESCRIPTION_IDS, spellBookDescriptionId, SPELL_MAKER_EFFECTS, portEffectDescription } from '../src/systems/spellEffects.js';
 import { audio } from '../src/systems/audio.js';
 import { SOUND } from '../src/systems/soundClips.js';
 import { FNT_ASCII_START } from '../src/formats/fntFile.js';
@@ -820,7 +820,7 @@ test('U42 clicks: a list row selects, and a second click inside the double-click
   //
   // AUDIT 65 UI-1: driven through the HOST'S CALL SHAPE. Every host
   // that owns an overlay slot dispatches `click(vx, vy, right, middle)`
-  // - townTalk.js:1236, worldModes.js:8855, dungeonContext.js:6586 -
+  // - townTalk.js:1236, worldModes.js:8862, dungeonContext.js:6589 -
   // so the clock is stubbed on the window's OWN `_now()` seam, not
   // handed to a positional the hosts already fill with a button.
   // MUTANT: `click(vx, vy, now)` with `const t = now ?? Date.now()`
@@ -1207,7 +1207,7 @@ test('U42: BuySpells and BuySpellsMages are no longer FLAGGED nulls', () => {
   const modes = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
   assert.ok(modes.includes("destination === 'guildServiceSpellbook'"), 'the interior host runs the arm');
   assert.ok(/\{ buyMode: true \}/.test(modes), '...in BUY mode');
-  assert.ok(/offered: \(\) => \[\.\.\.sbi\.values\(\)\]/.test(modes), 'over the whole of SPELLS.STD');
+  assert.ok(/offered: \(\) => \[\.\.\.sbi\.values\(\), \.\.\.\(isOnlinePage\(\) \? \[resurrectionSpell\(\)\] : \[\]\)\]/.test(modes), 'over the whole of SPELLS.STD - and, online, RESURRECT1\'s ready-made Resurrection');
   // The popup's onService reads what openServiceFlow RETURNS and
   // answers "not available yet" on a null, so this arm hands the
   // window back as the repair arm does rather than mounting silently.
@@ -1269,9 +1269,11 @@ test('D10: SpellBookDescription ids are the effect classes own, and every catalo
   assert.equal(spellBookDescriptionId('99,255'), null);
   // and every registry row the spellbook can print an effect panel
   // for has an id, so the popup is never empty on real data
+  // (RESURRECT1: the port's OWN effect has no TEXT.RSC record, so its box reads the port's own words instead)
   for (const e of SPELL_MAKER_EFFECTS) {
-    assert.ok(SPELLBOOK_DESCRIPTION_IDS.has(e.key), `${e.key} (${e.group}) has a SpellBookDescription`);
+    assert.ok(SPELLBOOK_DESCRIPTION_IDS.has(e.key) || portEffectDescription(e.key)?.length > 0, `${e.key} (${e.group}) has a SpellBookDescription`);
   }
+  assert.equal(SPELLBOOK_DESCRIPTION_IDS.has('45,255'), false, 'Resurrect claims no classic record');
 });
 
 test('D10: clicking an effect panel pops that effect SpellBookDescription record', () => {

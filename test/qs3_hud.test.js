@@ -562,7 +562,7 @@ test('QS the switch: the features row hides the DIAMOND alone - the caption and 
   // The read is the prefs shelf's, each frame, guarded on change like every other write here.
   assert.match(HUD, /const off = getPref\('quickslots'\) === false;/);
   assert.match(HUD, /parts\.quick\.classList\.toggle\('nodiamond', off\);/);
-  assert.match(HUD, /if \(off\) return;/, 'off skips the cells and the tags, nothing else');
+  assert.match(HUD, /if \(off \|\| hb\) return;/, 'off skips the cells and the tags, nothing else - and so does HB1\'s hotbar, which puts the diamond away');
   // ...and the rule hides the diamond, not the block: the mode word lives in the caption.
   assert.match(CSS, /\.hud-quick\.nodiamond \.hud-qdiamond \{ display: none; \}/);
   assert.doesNotMatch(CSS, /\.hud-quick\.nodiamond \{ display: none/);

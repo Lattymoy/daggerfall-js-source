@@ -494,3 +494,36 @@ test('AUDIT QL-WEIGHT1: every host hands the take the resolver it hands the wind
     assert.equal(withQuest.length, n, `${f}: each with the host's resolver`);
   }
 });
+
+// ── SND1: THE TAKE SOUNDS ────────────────────────────────────────
+import { audio } from '../src/systems/audio.js';
+import { SOUND } from '../src/systems/soundClips.js';
+
+test('SND1: a quick-loot take CLICKS, gold plays the gold sound, a take-all makes ONE sound, a refusal none', () => withQuickLoot(() => {
+  const heard = [];
+  const real = audio.playOneShot;
+  audio.playOneShot = (i) => { heard.push(i === SOUND.GoldPieces ? 'gold' : i === SOUND.ButtonClick ? 'click' : i); };
+  try {
+    const p = player();
+    let items = [gold(9), item('Longsword')];
+    let f = frameOf('pile:1', items);
+    foldQuickLoot(f);
+    quickLootTake('pile:1', hooks(items), p);   // the gold, lit first
+    assert.deepEqual(heard, ['gold']);
+    f = frameOf('pile:1', items);
+    foldQuickLoot(f);
+    quickLootTake('pile:1', hooks(items), p);   // the sword
+    assert.deepEqual(heard, ['gold', 'click']);
+    heard.length = 0;
+    items = [item('Axe'), gold(3), item('Mace')];
+    foldQuickLoot(frameOf('pile:2', items));
+    quickLootArm('QuickLootAll');
+    quickLootTake('pile:2', hooks(items), p);
+    assert.deepEqual(heard, ['gold'], 'the lot, one sound - and gold, since gold came');
+    heard.length = 0;
+    items = [item('Anvil', { weightInKg: 9999 })];
+    foldQuickLoot(frameOf('pile:3', items));
+    assert.equal(quickLootTake('pile:3', hooks(items), player(1)), QUICK_LOOT_REFUSED);
+    assert.deepEqual(heard, [], 'nothing moved, nothing sounds');
+  } finally { audio.playOneShot = real; }
+}));

@@ -321,6 +321,11 @@ export class AudioEngine {
    *  -319, PlayerFootsteps.cs:359-362); a WebAudio source is born per
    *  shot and dies with it, so setting it here IS the save/restore. */
   playOneShot(index, volume = 1, pitch = 1) {
+    // SND1: the stamp the UI's generic click reads, so a press whose own
+    // handler already sounded (an equip, a drink, the gold) does not ALSO
+    // click. Stamped on the REQUEST, ready or not - it is "someone chose a
+    // sound for this", not "a sound played".
+    this.lastOneShotAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
     if (!buf) return undefined;

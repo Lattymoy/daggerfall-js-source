@@ -138,8 +138,8 @@
   {
     "name": "QS6-clearQuickslots-leaves-the-spell-slot-standing",
     "file": "src/systems/quickslots.js",
-    "old": "export function clearQuickslots() { for (const s of QUICKSLOTS) state[s] = null; spellState = null; }",
-    "new": "export function clearQuickslots() { for (const s of QUICKSLOTS) state[s] = null; }",
+    "old": "state[s] = null; spellState = null; hotbar.fill(null);",
+    "new": "state[s] = null; hotbar.fill(null);",
     "tests": [
       "test/qs6_spellslot.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "QS6-F3-the-fingers-timers-outlive-the-HUD",
     "file": "src/ui/enhancedHud.js",
-    "old": "  for (const h of holds) h.off();   // AUDIT QS6 F3: a finger mid-cycle does not outlive the HUD\n  holds.length = 0;",
-    "new": "  holds.length = 0;",
+    "old": "  for (const h of holds) h.off();   // AUDIT QS6 F3: a finger mid-cycle does not outlive the HUD\n  detachHotbarDock();",
+    "new": "  detachHotbarDock();",
     "tests": [
       "test/qs3_hud.test.js"
     ]

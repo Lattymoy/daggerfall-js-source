@@ -77,9 +77,10 @@ test('AUDIT 23 magic-4: every spending cast arm tallies the effect schools', () 
   assert.equal((src.match(/playerEntity\.magicka = Math\.max\(0, \(playerEntity\.magicka \?\? 0\) - cost\);/g) ?? []).length, 1,
     'the spend is CastReadySpell\'s single DecreaseMagicka, five frames before the release');
   // ALLY-CAST (2026-09-23): a fifth arm before the four - the cast on a party mate - spends, tallies and records alike
-  assert.equal((src.match(/tallyCastSkills\(sp\);/g) ?? []).length, 5,
-    'the ally arm, CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
-  assert.equal((src.match(/lastCastCost = cost;/g) ?? []).length, 5, 'and all five still record the cost');
+  // RESURRECT1: and a sixth, the Resurrect at a fallen party member's body, spends, tallies and records alike
+  assert.equal((src.match(/tallyCastSkills\(sp\);/g) ?? []).length, 6,
+    'the ally arm, the Resurrect arm, CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
+  assert.equal((src.match(/lastCastCost = cost;/g) ?? []).length, 6, 'and all six still record the cost');
   // the tally gates on the cost table (DFU's effect != null), not the
   // priced-as-Destruction default
   assert.ok(/function tallyCastSkills\(sp\) \{[\s\S]*?EFFECT_COST_TABLE\[`\$\{e\.type\},\$\{e\.subType & 0xff\}`\]/.test(src));
@@ -107,7 +108,10 @@ test('AUDIT 23 magic-14: readying enforces the cost and CasterOnly casts instant
   assert.ok(arm.includes("say(\"You don't have the spell points.\")"), 'the classic refusal line at ready');
   // AUDIT ALLY-CAST A1: the instant arm ARMS instead when a party mate is in touch reach (the port's own targeting,
   // a recorded departure); with nobody there it fires on the ready as :350-351 does, and a free ready always does.
-  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }\n      castInput(null, null); return;'), 'CasterOnly fires on ready, no click latch - unless a party mate is under the crosshair');
+  // RESURRECT1: and a Resurrect ARMS too - its target is a fallen party member's body, which the instant arm would
+  // never aim at (the port's own effect; DFU has no raise-dead to depart from)
+  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }\n      if (!free && hasResurrect(sp)) { say(fallenInReach(lastAim?.eye ?? null, lastAim?.dir ?? null) ? PRESS_BUTTON_TO_FIRE_SPELL : RESURRECT_TEXT.aim); return; }'), 'CasterOnly fires on ready, no click latch - unless a party mate is under the crosshair, or the spell raises the dead');
+  assert.ok(arm.includes('RESURRECT_TEXT.aim); return; }   // RESURRECT1: a caster-only Resurrect waits for the click, aimed at the body\n      castInput(null, null); return;'), 'and otherwise the instant cast, as ever');
   assert.ok(arm.indexOf('calculateCastCost') < arm.indexOf('readiedSpell = sp;'), 'the cost gate sits before the assignment');
 });
 

@@ -133,7 +133,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // below, after this context; null falls to standing defaults.
       motorState: () => (_motorRef ? { eyeLevel: _motorRef.eye[1] - _motorRef.pos[1], capsule: _motorRef.height } : null),
       // MAC1 J: this host's canvas, for the pause door's relock. The
-      // context owns none of its own (dungeonContext.js:6266), so each
+      // context owns none of its own (dungeonContext.js:6268), so each
       // dungeon host hands its own in and the resume gesture carries
       // the pointer back with it (ui/pauseDoor.js:270-287).
       relock: () => requestLook(canvas) });
@@ -1005,6 +1005,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       const _eye = player.eyeAt();   // EV1: a camera path, so the interpolated eye
       cam.pos = [_eye[0], _eye[1] - ctx.deathDrop, _eye[2]];
     }
+    if (walkMode && (ctx.deathDrop ?? 0) > 0) ctx.deathTilt?.(cam);   // DEATH3: the enhanced fall looks up, off the same gate
 
     // ROAD-E E5: the DOCKED large HUD shrinks the world pass rather
     // than covering it (ViewportChanger.cs:56-62), and Unity derives a

@@ -170,7 +170,7 @@ test('SPELLFX1/2: a peer\'s ranged cast is DRAWN as a missile that stops on a bo
 });
 
 test('SPELLFX1 wire (world98): the pose carries the cast\'s element (`ce`, 0..4) and the arrows loosed (`ar`); a pose from before them reads Magic and none (mutants: the fields dropped by the projection; an element past the table)', () => {
-  assert.equal(RELAY_VERSION, 'world101'); assert.equal(POSE_CAST_ELEMENTS, 5);   // world98 carried these fields; HCC-PARK + RIDE moved the version on (world99) with the park frame and the pose's mount
+  assert.equal(RELAY_VERSION, 'world102'); assert.equal(POSE_CAST_ELEMENTS, 5);   // world98 carried these fields; HCC-PARK + RIDE moved the version on (world99) with the park frame and the pose's mount
   const base = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 };
   assert.equal(validPose({ ...base, ce: 0, ar: 7 }).ce, 0); assert.equal(validPose({ ...base, ce: 0, ar: 7 }).ar, 7);
   assert.equal(validPose(base).ce, 4, 'an older pose: Magic'); assert.equal(validPose(base).ar, 0);
@@ -282,7 +282,7 @@ test('SPELLFX1 test room: the sorceress gets a Fireball and a Healing Bolt, once
   assert.equal(allyCastable(bolt), true); assert.equal(allyCastable(fireball), false);
   const e = { spells: [] };
   addTestMissileSpells(e); addTestMissileSpells(e);
-  assert.equal(e.spells.length, 2);
+  assert.equal(e.spells.length, 3); assert.equal(e.spells[2].name, 'Resurrection');   // RESURRECT1: and a Resurrection, to raise a fallen mate
 });
 
 test('REST-MANA1: online a no-regen career\'s rested hour pays magicka; offline it is Daggerfall\'s, none (mutant: the online arm dropped)', () => {

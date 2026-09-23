@@ -136,7 +136,7 @@ import {
   preloadSpellIcons, drawSpellIcon, drawTargetIcon, drawElementIcon,
   TARGET_DESCRIPTIONS, ELEMENT_DESCRIPTIONS,
 } from './spellIcons.js';
-import { effectByKey, spellBookDescriptionId, effectMacroSource } from '../systems/spellEffects.js';
+import { effectByKey, spellBookDescriptionId, effectMacroSource, portEffectDescription } from '../systems/spellEffects.js';
 import { expandRowValues, sourceValues } from '../systems/quest/questMacros.js';   // MACRO-5: the effect popup's source
 import { calculateTradePrice } from '../systems/shopStock.js';
 import { ROW_SPACING, SELECTED_TEXT_COLOR } from './listPicker.js';   // ListBox.cs:36-37 and DaggerfallUI.cs:62 - one home each
@@ -516,7 +516,7 @@ export class SpellbookWindow {
    *  spellings of "no subtype": a SPELLS.STD record reads it as a
    *  SIGNED byte and stores -1, while a spell built in the maker
    *  copies the catalog's 255. Every other consumer normalizes the
-   *  same way (systems/effects.js:158's classicSub, spellcost.js:128)
+   *  same way (systems/effects.js:158's classicSub, spellcost.js:129)
    *  and the effect table is keyed on 255, so a Free Action off the
    *  file would otherwise print "Effect not found" in the book. */
   effectLabels(slot) {
@@ -800,7 +800,7 @@ export class SpellbookWindow {
   /** AUDIT 65 UI-1: THE HOSTS OWN THE THIRD AND FOURTH SLOTS. Every
    *  host that holds an overlay slot dispatches
    *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1236`,
-   *  `scenes/worldModes.js:8855`, `scenes/dungeonContext.js:6586` - so
+   *  `scenes/worldModes.js:8862`, `scenes/dungeonContext.js:6589` - so
    *  a clock threaded positionally here arrived as `e.button === 2`, a
    *  BOOLEAN. `false ?? Date.now()` keeps the `false`, `false != null`
    *  is true and `false - false === 0 < 300`, which made EVERY second
@@ -918,8 +918,9 @@ export class SpellbookWindow {
   _effectDescription(slot) {
     const e = spellEffects(this.selected)[slot];
     if (!e) return null;
-    const id = spellBookDescriptionId(`${e.type},${e.subType & 0xff}`);
-    if (id == null) return null;
+    const key = `${e.type},${e.subType & 0xff}`;
+    const id = spellBookDescriptionId(key);
+    if (id == null) { const own = portEffectDescription(key); return own ? [...own] : null; }   // RESURRECT1: the port's own effect's own words
     // MACRO-5: SetTextTokens(effect.SpellBookDescription, EFFECT) - the
     // box's source is the effect itself (EntityEffectMCP), not the
     // book's trade source, so %bdr..%clm are its own settings.
