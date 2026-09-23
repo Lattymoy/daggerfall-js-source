@@ -10,7 +10,7 @@ import { isExteriorWindow } from '../world/climateSwaps.js';
 import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js';
 import { fetchBytes, texName } from './shared.js';
-import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones
+import { decodedTexture, preloadTextureArchive, preloadTextureRecord, isVendorArchive, vendorTextureStandIn } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT-DW F1: an icon's replacement is decoded when it is drawn
 import { dyeToken } from '../characters/dyes.js';   // DW3: the per-dye UI variant
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
 import { skinnedBody } from '../world/windmills.js';   // WM2e: its walls and roof follow the climate
@@ -282,6 +282,8 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   }
 
   loadFlats();   // warm it with the scene; the getters answer null until it lands
-  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, getGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
+  /** AUDIT-DW F1: the icon doors' per-record ask - decode THIS record's replacement (by the item's dye) before it is uploaded. Resolves once it is decoded or known absent; never throws. */
+  const preloadRecord = (archive, record, dye = null) => preloadTextureRecord(archive, record, 0, 'Albedo', dye).catch(() => null);
+  return { textureFiles, getTexture, getTextureSize, uploadRecord, uploadRecordFrame, preloadRecord, getGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
     loadFlats, flatCaption, flatFaceIndex, flatsFile: () => flats };
 }

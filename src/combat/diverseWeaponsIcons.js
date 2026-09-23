@@ -12,8 +12,9 @@
 // the icon doors (the GL lists, the DOM screens, the paper doll) ask
 // it by the item's dye. So this is a registration and nothing else:
 // which names, from the shipped index (combat/diverseWeaponsIndex.js),
-// each loaded from public/art/diverse-weapons/ when its archive is
-// first drawn, and answering only while the mod is on (`gate`).
+// each loaded from public/art/diverse-weapons/ when an item wearing it
+// is first drawn (`lazy`), and answering only while the mod is on
+// (`gate`).
 import { addVendorTextures, vendorTextureCount } from '../systems/textureReplacement.js';
 import { DYE_COLORS, dyeToken } from '../characters/dyes.js';
 import { moddedWeaponHUDAnimsEnabled } from './diverseWeapons.js';
@@ -63,7 +64,10 @@ export function installDiverseWeaponsIcons({ fetchBytes = null } = {}) {
   if (_installed && vendorTextureCount() > 0) return 0;   // once - unless the registry was cleared under it (a test's reset)
   _installed = true;
   const load = fetchBytes ?? (async (name) => { const r = await fetch(diverseWeaponsSpriteUrl(name)); if (!r.ok) throw new Error(`${name}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
-  return addVendorTextures(diverseWeaponsIconEntries().map((e) => ({ ...e, load, gate: moddedWeaponHUDAnimsEnabled })));
+  // AUDIT-DW F1: `lazy` - an icon is fetched when an item that wears it
+  // is drawn (systems/textureReplacement.js preloadTextureRecord), never
+  // 280 at once ahead of the first classic icon
+  return addVendorTextures(diverseWeaponsIconEntries().map((e) => ({ ...e, load, gate: moddedWeaponHUDAnimsEnabled, lazy: true })));
 }
 
 /** Test seam. */

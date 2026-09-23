@@ -304,8 +304,9 @@ function makeAccessoryIconDrawer(icons, identityOf = null) {
     const key = `${img.archive}_${img.record}${token ? `_${token}` : ''}`;
     if (!warm.has(key)) {
       warm.add(key);
-      icons.getTexture(img.archive).then((tex) => {
+      icons.getTexture(img.archive).then(async (tex) => {
         if (img.record < tex.recordCount) {
+          await icons.preloadRecord?.(img.archive, img.record, img.dye);   // AUDIT-DW F1: this record's replacement, decoded when it is drawn - not the archive's 280 before the first classic icon
           const variant = icons.uploadRecord(img.archive, img.record, { mips: false, removeMask: true, dye: img.dye });   // REVIEW 2026-09-05: item art is UI art - ImageReader.cs:59, no mip chain; HM1: GetInventoryImage strips the 0xFF mask (the helm's halo)
           glKeys.set(key, `${img.archive}_${img.record}${variant ?? '#ui'}`);
           sizes.set(key, tex.getSize(img.record));

@@ -116,8 +116,10 @@ test('DW1: the atlas asks by the per-template name under the flag, and by the cl
   // widget clone asks through the same door
   const fp = src('src/combat/fpsWeapon.js');
   assert.match(fp, /const askName = atlasFileName\(item, fileName\);/);
-  assert.match(fp, /const name = `\$\{askName\}_\$\{r\}-\$\{f\}\$\{metal \? `_\$\{metal\}` : ''\}`;/, 'GetNameCifRci’s spelling');
-  assert.match(fp, /const custom = await customWeaponImage\(name\);/);
+  assert.match(fp, /export const frameName = \(askName, record, frame, metal\) => `\$\{askName\}_\$\{record\}-\$\{frame\}\$\{metal \? `_\$\{metal\}` : ''\}`;/, 'GetNameCifRci’s spelling, one home (AUDIT-DW)');
+  assert.match(fp, /const name = frameName\(askName, r, f, metal\);/);
+  assert.match(fp, /const customs = await customFrames\(askName, metal, cif, customImage\);/, 'AUDIT-DW F2: every frame asked together');
+  assert.match(fp, /const custom = customs\[r\]\[f\];/);
   assert.match(fp, /records\.push\(\{ width: size\.width, height: size\.height, frames \}\);/, 'the record keeps the classic box');
   const ww = src('src/combat/weaponWidget.js');
   assert.match(ww, /const file = atlasFileName\(w\.specificWeapon, classic\);/);

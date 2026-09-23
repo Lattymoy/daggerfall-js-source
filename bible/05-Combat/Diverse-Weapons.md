@@ -212,12 +212,72 @@ reader parses 25,868 objects, half of them Sprites the port never
 reads; a reader that skips the Sprite class, or an index cached across
 sessions, would shorten it and is left for a follow-up.
 
+## AUDIT-DW (2026-09-23) - the audit of DW1, DW2 and DW3
+
+Mac: *"a proper audit of your previous work."* Three lenses over the
+three slices: DFU's law re-read (`FPSWeapon.cs` whole around the atlas,
+`WeaponBasics.GetModdedWeaponFilename`, `ItemHelper.GetItemImage`,
+`TextureReplacement.GetName`/`GetNameCifRci`), the port's own seams (the
+rig's cache, the widget clone's draw, the three icon doors, the pipeline's
+icon upload, the boot order of the icon install against the archives),
+and the player's view on a site where every sprite is a fetch. Checked
+and standing: the filename tables (44 cases regenerated against the C#,
+with `DFU_PATH`), the atlas name choice and its `SpecificWeapon != null`
+gate, the per-frame ask's spelling and `MetalTypes.None`, the classic
+box an imported frame is drawn into, the attached-then-shipped-then-miss
+order of the door, the index against the manifest both ways, the dye
+arm's one exception (Silver is Unchanged), the item's dye at the doll
+(the artifact's Unchanged), the install's site. Four findings:
+
+- **F1 - the icon door decoded the whole archive before the first
+  classic icon.** `getTexture(233)` awaits `preloadTextureArchive` before
+  it publishes the archive, and DW3 had registered 280 icons on it, so
+  the first inventory drew nothing - not even the classic icons - until
+  all 280 had come down (measured at eight lanes: seconds on a phone).
+  DFU imports an icon when `GetItemImage` asks and never earlier. A vendor
+  entry may be `lazy` now: the archive preload skips it, and
+  `preloadTextureRecord(archive, record, frame, map, dye)` decodes ONE
+  record on demand (idempotent, the asks in flight share a fetch, a
+  gated-off icon costs none). The three doors make that ask per record:
+  the GL lists through the pipeline's `preloadRecord` before the upload,
+  the DOM door in its replacement arm, the doll before its blit. A pack's
+  entries (not lazy) preload with the archive as before. Pinned by
+  execution on the list drawer (the order of the three calls) and on the
+  door (three records, three fetches, nothing else).
+- **F2 - a weapon's custom frames were fetched one after the other.**
+  `loadFpsWeaponArt` awaited each frame's ask inside the loop - a
+  longsword's 26 frames were 26 round trips in a row, and the rig has no
+  art to draw until the loader returns, so the weapon was invisible for
+  the whole run. `customFrames` asks every frame together and answers
+  `[record][frame]`; a rejected ask is that frame's miss. Pinned by
+  execution: six asks out before the first answers.
+- **F3 - a plain name through the `w_` fall-through drew doubled.** The
+  clone doubles a custom idle's box under DoubleScaleTextures because a
+  `w_` texture IS double size; DW1's fall-through can answer the plain
+  name where a `w_` is missing (a metal the mod skipped), and that
+  texture then drew at twice its size. A hit carries which name answered
+  (`doubled`), and only a `w_` texture takes the doubled box. Pinned on
+  the clone's bench, both ways.
+- **F4 - named, not changed: DFU keeps the first template's custom frames
+  within a class and metal.** `FPSWeapon` reloads its atlas only when
+  `WeaponType` or `MetalType` change (`FPSWeapon.cs:138`) and caches the
+  custom animation by the CLASSIC file name and metal (`:743-750`, two
+  slots), so in DFU a steel broadsword drawn after a steel longsword
+  wears the longsword's Diverse Weapons set until the class or metal
+  changes. The port keys the rig's cache by the name the atlas is asked
+  by (`weaponRig.js`), so each template draws its own - the mod's
+  purpose over DFU's cache slot. Recorded at the key, and here.
+
+Suite `test/auditdw.test.js` (5). Mutants: the archive preload taking
+lazy entries, a frame awaited alone, the doubled flag ignored, the
+per-record ask dropped - all dead.
+
 ## Record
 
 `vendor/diverse-weapons/` - the script verbatim, the manifest verbatim
 (12,937 files), the preset verbatim, the zip's readme. Campaign
 `tools/mutants/dw1.json` (21: 20 dead, 1 equivalent as recorded). Suites
 `test/dw1_diverseweapons.test.js`, `test/unitybundleworker.test.js`,
-`test/dw2_shipped.test.js`, `test/dw3_icons.test.js`. The shipped set: `public/art/diverse-weapons/`
+`test/dw2_shipped.test.js`, `test/dw3_icons.test.js`, `test/auditdw.test.js`. The shipped set: `public/art/diverse-weapons/`
 (12,624 PNGs), `src/combat/diverseWeaponsIndex.js` (generated), the two
 tools.

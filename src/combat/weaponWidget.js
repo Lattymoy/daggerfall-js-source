@@ -244,7 +244,11 @@ export function createWeaponWidget({
         customWeaponImage(name).then((img) => {
           if (!img) { misses.add(name); return; }
           const tex = ctx.renderer.uploadTexture('img', `ww:${name}`, img);
-          cache.set(name, { tex, width: img.width, height: img.height });
+          // AUDIT-DW F3: WHICH name answered rides the hit. The clone doubles
+          // a custom idle's box under DoubleScaleTextures because a `w_`
+          // texture IS double size; a plain name that answered through the
+          // DW1 fall-through is not, and doubled it drew at twice its size
+          cache.set(name, { tex, width: img.width, height: img.height, doubled: name.startsWith('w_') });
         }).catch((e) => { misses.add(name); console.warn('[weapon widget] texture load failed', name, e); });   // WW3: the rig's neighbours say so too (weaponRig.js art/spell loads) - a bare `catch (() => {})` here is how a shape fault reaches a player instead of a console line
       }
       return cache.get(name);   // a hit, or null while this name is still landing - the classic frame until then
@@ -271,7 +275,7 @@ export function createWeaponWidget({
     let width = rec.width, height = rec.height;
     if (custom) {
       if (w.s.trueSize) { width = custom.width / w.s.textureScaleFactor; height = custom.height / w.s.textureScaleFactor; }
-      else if (w.s.doubleScale) {
+      else if (w.s.doubleScale && custom.doubled !== false) {   // AUDIT-DW F3: only a `w_` texture is drawn into the doubled box
         if (w.currentWeaponType === T.Bow) { if (w.currentFrame === 0) { width *= 2; height *= 2; } }
         else if (w.weaponState === S.Idle) { width *= 2; height *= 2; }
       }

@@ -264,7 +264,7 @@ export function frameToColor32(bmp, palette, dye) {
  *   { weaponType, anims, records: [{ width, height, frames: [tex] }] }
  * Cache by `${weaponType}:${material}` at the call site.
  */
-export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, material = WEAPON_MATERIALS.Iron, item = null) {
+export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, material = WEAPON_MATERIALS.Iron, item = null, { customImage = customWeaponImage } = {}) {
   const fileName = WEAPON_FILE[weaponType];
   if (!fileName) return null;
   const cif = new CifRciFile();
@@ -281,25 +281,57 @@ export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, 
   // _<Metal>` (TextureReplacement.cs:795-801; None has no suffix).
   const askName = atlasFileName(item, fileName);
   const metal = material != null && material !== WEAPON_MATERIALS.None ? MATERIAL_NAMES[material] : null;
+  // AUDIT-DW F2: every frame's ask leaves TOGETHER. Asked one after the
+  // other, a longsword's 26 frames were 26 round trips in a row before
+  // the rig had any art to draw - the weapon invisible for the whole
+  // run. DFU's files are local and cost nothing; the port's are a fetch
+  // each, so they go out as one batch.
+  const customs = await customFrames(askName, metal, cif, customImage);
   const records = [];
   for (let r = 0; r < cif.recordCount; r++) {
     const size = cif.getSize(r);
     const frames = [];
     for (let f = 0; f < cif.getFrameCount(r); f++) {
-      const name = `${askName}_${r}-${f}${metal ? `_${metal}` : ''}`;
+      const name = frameName(askName, r, f, metal);
       // a hit replaces THIS FRAME in the atlas and nothing else: the
       // record keeps the classic width and height (FPSWeapon.cs:398-399
       // read them off the atlas's own index), so an imported frame is
       // drawn into the classic frame's box. Weapon Widget's
       // TrueTextureSize is the module that draws it at its own size,
       // and that is the other lane.
-      const custom = await customWeaponImage(name);
+      const custom = customs[r][f];
       const c32 = custom ?? frameToColor32(cif.getDFBitmap(r, f), palette, dye);
       frames.push(renderer.uploadTexture('img', custom ? `fpw:${name}` : `fpw:${fileName}:${material}:${r}:${f}`, c32));
     }
     records.push({ width: size.width, height: size.height, frames });
   }
   return { weaponType, anims: getWeaponAnims(weaponType), records };
+}
+
+/** TryImportCifRci's spelling for one frame - GetNameCifRci
+ *  (TextureReplacement.cs:795-801): `<FILE>_<record>-<frame>[_<Metal>]`,
+ *  nothing for MetalTypes.None. One home for the loader and the batch. */
+export const frameName = (askName, record, frame, metal) => `${askName}_${record}-${frame}${metal ? `_${metal}` : ''}`;
+
+/** AUDIT-DW F2: the atlas's custom frames by TryImportCifRci's spelling,
+ *  `<FILE>_<record>-<frame>[_<Metal>]`, asked all at once - answers
+ *  `customs[record][frame]` (an image, or null). `shape` is the CIF's
+ *  `recordCount` and `getFrameCount(record)`; `ask` the door
+ *  (customWeaponImage). Pure, for the pin. */
+export async function customFrames(askName, metal, shape, ask = customWeaponImage) {
+  const asks = [];
+  const customs = [];
+  for (let r = 0; r < shape.recordCount; r++) {
+    const row = [];
+    for (let f = 0; f < shape.getFrameCount(r); f++) {
+      const name = frameName(askName, r, f, metal);
+      row.push(null);
+      asks.push(Promise.resolve(ask(name)).then((img) => { row[f] = img ?? null; }, () => { row[f] = null; }));
+    }
+    customs.push(row);
+  }
+  await Promise.all(asks);
+  return customs;
 }
 
 /**

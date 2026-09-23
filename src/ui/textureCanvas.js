@@ -38,7 +38,7 @@ import { bitmapCanvas, color32Canvas } from './bitmapCanvas.js';
 // (scenes/dataPipeline.js getTexture). A vendored archive has no
 // TEXTURE.### to fetch, so `getArchive` below cached it as a miss and
 // every DOM screen drew initials where the mod's art should be.
-import { isVendorArchive, preloadTextureArchive, decodedTexture, vendorRecordCount, hasTextureReplacement } from '../systems/textureReplacement.js';
+import { isVendorArchive, preloadTextureArchive, decodedTexture, vendorRecordCount, hasTextureReplacement, preloadTextureRecord } from '../systems/textureReplacement.js';
 import { dyeToken } from '../characters/dyes.js';   // DW3: the dye is part of the ask, so it is part of the key
 // The name rule lives with the READER (U54 moved it there): both this
 // module and scenes/shared.js need it, and neither can import the
@@ -145,7 +145,7 @@ export function requestIcon(archive, record, { scale = 2, onReady = null, dye = 
   // preloadTextureArchive), and a name that will not decode falls to
   // the classic arm below, as DFU's failed import does.
   const swap = hasTextureReplacement(archive, record, 0, 'Albedo', dye)
-    ? preloadTextureArchive(archive).then(() => decodedTexture(archive, record, 0, 'Albedo', dye)).catch(() => null)
+    ? preloadTextureRecord(archive, record, 0, 'Albedo', dye).catch(() => null)   // AUDIT-DW F1: this record alone, when it is drawn
     : Promise.resolve(null);
   swap.then((img) => {
     if (img) {
@@ -182,7 +182,7 @@ export async function loadIcon(archive, record, { scale = 2, dye = null } = {}) 
   const already = requestIcon(archive, record, { scale, dye });
   if (already) return already;
   await getArchive(archive);
-  // DW3: the replacement arm awaits the archive's preload before the
+  // DW3: the replacement arm awaits the record's decode before the
   // classic arm runs, so give it those turns too
   for (let i = 0; i < 4; i++) await Promise.resolve();
   const token = dyeToken(dye);

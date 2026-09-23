@@ -44,7 +44,7 @@ import { getBool } from '../systems/settings.js';   // UI3: EnableGeographicBack
 import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
 import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
-import { decodedTextureTopDown } from '../systems/textureReplacement.js';   // DW3: GetItemImage's import arm, by the item's dye
+import { decodedTextureTopDown, preloadTextureRecord } from '../systems/textureReplacement.js';   // DW3: GetItemImage's import arm, by the item's dye; AUDIT-DW F1: decoded when the doll asks
 import { itemDyeColor } from '../systems/itemDye.js';   // DW3: DaggerfallUnityItem.dyeColor, as the port's items carry it
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { raceArt, FACES_PER_RACE, raceByKey } from '../systems/races.js';   // S3c/U9: all eight races
@@ -529,6 +529,7 @@ async function loadRecord(archive, record, getTexture, dye = null) {
     // as it is: no ChangeDye (:466-476 is the else branch), and the
     // classic record's offset. It comes back in the RGBA shape the
     // vendor arm already blits (FIELD-GUN4), because it has no index.
+    await preloadTextureRecord(archive, record, 0, 'Albedo', dye);   // AUDIT-DW F1: this record's, on demand
     const swap = decodedTextureTopDown(archive, record, 0, 'Albedo', dye);
     if (swap) return { bmp: { width: swap.width, height: swap.height, data: null, rgba: swap.rgba }, off };
     return { bmp: tex.getDFBitmap(record, 0), off };

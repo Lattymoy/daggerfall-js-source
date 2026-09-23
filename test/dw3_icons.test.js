@@ -25,7 +25,7 @@ import { WEAPON_MATERIALS } from '../src/characters/weapons.js';
 import { inventoryItemImage } from '../src/systems/itemTemplates.js';
 import {
   textureKey, textureEntry, setTextureReplacements, clearTextureReplacements, hasTextureReplacement, decodedTexture, decodedTextureTopDown,
-  addVendorTextures, clearVendorTextures, vendorTextureCount, preloadTextureArchive, PRELOAD_CONCURRENCY,
+  addVendorTextures, clearVendorTextures, vendorTextureCount, preloadTextureArchive, preloadTextureRecord, PRELOAD_CONCURRENCY,
 } from '../src/systems/textureReplacement.js';
 import { setValue } from '../src/systems/settings.js';
 import { diverseWeaponsIconEntries, installDiverseWeaponsIcons, _resetDiverseWeaponsIcons, ICON_ARCHIVES } from '../src/combat/diverseWeaponsIcons.js';
@@ -143,18 +143,34 @@ test('DW3 registration: every icon the shipped index names, as a vendor entry by
     setModSetting('diverse-weapons', 'Enabled', false);
     assert.equal(hasTextureReplacement(233, 5, 0, 'Albedo', DYE_COLORS.Iron), false, 'the gate, read at lookup');
     setModSetting('diverse-weapons', 'Enabled', true);
-    // the preload: this archive's entries only, in lanes
-    assert.equal(await preloadTextureArchive(233, { decode: async () => topDown() }), 280);
-    assert.equal(loads.length, 280); assert.ok(loads.every((n) => n.startsWith('233_')), 'archive 234 waits for its own first draw');
-    assert.ok(most > 1 && most <= PRELOAD_CONCURRENCY, `${most} in flight: lanes, bounded`);
+    // AUDIT-DW F1: the icons are LAZY - the archive's preload fetches none
+    // of them (it used to fetch all 280 before the first classic icon could
+    // draw); a record decodes when an item wearing it is drawn
+    assert.equal(await preloadTextureArchive(233, { decode: async () => topDown() }), 0, 'the archive preload skips lazy entries');
+    assert.equal(loads.length, 0);
+    assert.equal(decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Iron), null, 'nothing decoded yet');
+    const decode = async () => topDown();
+    const [a, b] = await Promise.all([preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Iron, { decode }), preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Iron, { decode })]);
+    assert.ok(a?.colors && a === b, 'one record, one fetch shared by the asks in flight');
+    assert.deepEqual(loads, ['233_5-0_Iron'], 'the one file');
     const iron = decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Iron);
-    assert.ok(iron?.colors, 'decoded, in color32 order');
-    assert.equal(decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Silver)?.width, 2, 'the bare one too');
+    assert.equal(iron, a, 'decoded, in color32 order');
+    assert.equal(await preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Iron, { decode }), iron, 'idempotent');
+    assert.equal((await preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Silver, { decode }))?.width, 2, 'the bare one too');
+    assert.equal(await preloadTextureRecord(233, 5, 0, 'Albedo', 'Glass', { decode }), null, 'nothing registered: null, no fetch');
+    assert.equal(loads.length, 2);
     setModSetting('diverse-weapons', 'Enabled', false);
     assert.equal(decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Iron), null, 'off: the classic draws, the decode is kept');
+    assert.equal(await preloadTextureRecord(233, 5, 0, 'Albedo', DYE_COLORS.Daedric, { decode }), null, 'off: a gated-off icon costs no fetch');
+    assert.equal(loads.length, 2);
     setModSetting('diverse-weapons', 'Enabled', true);
     assert.equal(decodedTexture(233, 5, 0, 'Albedo', DYE_COLORS.Iron), iron, 'on again: the same texture, no second fetch');
-    assert.equal(loads.length, 280);
+    // a pack's (non-lazy) entries still preload with the archive, in lanes
+    on(); clearTextureReplacements();
+    setTextureReplacements(['233_7-0_Iron.png', '233_7-0_Steel.png', '233_7-0_Elven.png'], async (n) => { loads.push(n); inFlight++; most = Math.max(most, inFlight); await Promise.resolve(); inFlight--; return new Uint8Array([1]); });
+    assert.equal(await preloadTextureArchive(233, { decode }), 3);
+    assert.ok(most > 1 && most <= PRELOAD_CONCURRENCY, `${most} in flight: lanes, bounded`);
+    clearTextureReplacements();
   } finally { _resetModSettings(); clearVendorTextures(); _resetDiverseWeaponsIcons(); }
 });
 
@@ -174,8 +190,15 @@ test('DW3 DOM door: requestIcon by dye - the replacement drawn as it is, keyed a
   const hadDocument = globalThis.document;
   globalThis.document = { createElement: canvasStub };
   try {
-    installDiverseWeaponsIcons({ fetchBytes: async () => new Uint8Array([1]) });
-    await preloadTextureArchive(233, { decode: async () => topDown() });
+    const loads = [];
+    installDiverseWeaponsIcons({ fetchBytes: async (n) => { loads.push(n); return new Uint8Array([1]); } });
+    // AUDIT-DW F1: the door decodes the record it draws (preloadTextureRecord);
+    // node has no PNG decoder, so the records this pin draws are decoded
+    // here with one, and the door finds them - the archive's preload
+    // fetches none (lazy)
+    const decode = async () => topDown();
+    for (const dye of [DYE_COLORS.Iron, DYE_COLORS.Daedric, DYE_COLORS.Silver]) await preloadTextureRecord(233, 5, 0, 'Albedo', dye, { decode });
+    assert.deepEqual(loads, ['233_5-0_Iron', '233_5-0_Daedric', '233_5-0'], 'three records, three fetches, nothing else');
     assert.equal(requestIcon(233, 5, { scale: 1, dye: DYE_COLORS.Iron }), null, 'cold, as every requestIcon is');
     const iron = await loadIcon(233, 5, { scale: 1, dye: DYE_COLORS.Iron });
     assert.match(iron ?? '', /^data:image\/png;base64,STUB/, 'the replacement, drawn');
@@ -186,6 +209,7 @@ test('DW3 DOM door: requestIcon by dye - the replacement drawn as it is, keyed a
     const silver = await loadIcon(233, 5, { scale: 1, dye: DYE_COLORS.Silver });
     assert.ok(silver && silver !== daedric, 'the bare stem answers the silver ask');
     assert.equal(await loadIcon(233, 5, { scale: 1, dye: 'Glass' }), null, 'no such file: the classic arm, which has no ARENA2 here');
+    assert.equal(loads.length, 3, 'the door fetched nothing the pin had not: a record decodes once');
   } finally { globalThis.document = hadDocument; _resetModSettings(); clearVendorTextures(); _resetDiverseWeaponsIcons(); }
 });
 

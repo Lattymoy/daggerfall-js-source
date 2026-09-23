@@ -163,7 +163,7 @@ export function addVendorTextures(entries) {
   for (const e of entries ?? []) {
     if (!Number.isFinite(e?.archive) || !Number.isFinite(e?.record) || typeof e.load !== 'function') continue;
     const key = textureKey(e.archive, e.record, e.frame ?? 0, 'Albedo', e.dye ?? null);
-    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true, offset: e.offset ?? null });   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows
+    _vendor.set(key, { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map: 'Albedo', dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load, standIn: e.standIn === true, offset: e.offset ?? null });   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
     n++;
   }
   return n;
@@ -360,17 +360,22 @@ export async function decodePng(bytes) {
  * Idempotent, and never throws: one unreadable PNG costs that texture
  * and leaves the rest of the pack working.
  */
-/** DW3: how many of an archive's replacements load at once. Diverse
- *  Weapons registers 280 icons on archive 233 alone, each its own
- *  fetch; one at a time was 280 round trips in a row before the first
- *  inventory could draw a mod icon. A gated entry is decoded whether
- *  or not its switch is on, so flipping the switch takes effect at
- *  once - the gate is read at lookup, not here. */
+/** DW3: how many of an archive's replacements load at once. A gated
+ *  entry is decoded whether or not its switch is on, so flipping the
+ *  switch takes effect at once - the gate is read at lookup, not here.
+ *
+ *  AUDIT-DW F1: a LAZY entry is not preloaded here at all. Diverse
+ *  Weapons registers 280 icons on archive 233; `getTexture(233)` awaits
+ *  this preload before it publishes the archive, so the first inventory
+ *  drew NOTHING - not even the classic icons - until all 280 had come
+ *  down. DFU imports an icon when GetItemImage asks for it and never
+ *  earlier; `preloadTextureRecord` below is that ask, and the icon doors
+ *  make it per record. */
 export const PRELOAD_CONCURRENCY = 8;
 export async function preloadTextureArchive(archive, { decode = decodePng, concurrency = PRELOAD_CONCURRENCY } = {}) {
   let done = 0;
   const sources = [..._vendor.entries(), ...(textureReplacementEnabled() && _load ? _index.entries() : [])];   // SURV2: the port's own art first, ungated
-  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !_decoded.has(key));
+  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !entry.lazy && !_decoded.has(key));
   const one = async ([key, entry]) => {
     try {
       const bytes = await (entry.load ?? _load)(entry.fileName);
@@ -385,6 +390,34 @@ export async function preloadTextureArchive(archive, { decode = decodePng, concu
   const lane = async () => { while (next < todo.length) await one(todo[next++]); };
   await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, todo.length)) }, lane));
   return done;
+}
+
+const _decoding = new Map();   // textureKey -> Promise<color32 | null>, the asks in flight
+/** AUDIT-DW F1: ONE record's replacement, decoded on demand - the ask
+ *  GetItemImage makes (ItemHelper.cs:458) when an icon is drawn. Any
+ *  entry, lazy or not; idempotent; the asks in flight for a key share
+ *  one fetch; never throws. Answers the color32, or null when nothing
+ *  is registered for the key, it is gated off, or it would not decode.
+ *  The gate is read here too, so a gated-off icon costs no fetch. */
+export function preloadTextureRecord(archive, record, frame = 0, map = 'Albedo', dye = null, { decode = decodePng } = {}) {
+  const key = textureKey(archive, record, frame, map, dye);
+  if (_decoded.has(key)) return Promise.resolve(decodedTexture(archive, record, frame, map, dye));
+  if (!hasTextureReplacement(archive, record, frame, map, dye)) return Promise.resolve(null);
+  if (!_decoding.has(key)) {
+    const entry = entryFor(key);
+    _decoding.set(key, (async () => {
+      try {
+        const bytes = await (entry.load ?? _load)(entry.fileName);
+        if (!bytes || !bytes.byteLength) return null;
+        _decoded.set(key, toColor32(await decode(bytes)));
+        return decodedTexture(archive, record, frame, map, dye);
+      } catch (e) {
+        console.warn(`[texture] ${entry.fileName} would not decode:`, e?.message ?? e);
+        return null;
+      } finally { _decoding.delete(key); }
+    })());
+  }
+  return _decoding.get(key);
 }
 
 /** The SYNC read the upload path uses, as a COLOR32 (`{ colors, width,

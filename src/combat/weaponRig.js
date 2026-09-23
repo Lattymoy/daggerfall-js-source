@@ -524,7 +524,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // different sprite sets, and an enchanted one a third - and the flag
     // going off mid-game is a fourth answer for the same type and metal.
     // `${type}:${material}` alone handed the first weapon's frames to
-    // every later one of its class.
+    // every later one of its class - WHICH IS WHAT DFU DOES (AUDIT-DW
+    // F4, a named departure): FPSWeapon reloads its atlas only when
+    // WeaponType or MetalType change (FPSWeapon.cs:138) and caches the
+    // custom frames by the CLASSIC file name and metal (:743-750), so a
+    // steel broadsword drawn after a steel longsword wears the
+    // longsword's set there until the metal or class changes. The port
+    // keys by the name the atlas is asked by: the mod's per-template art
+    // is what the mod is for, and its author's tables are honoured over
+    // DFU's cache slot.
     const key = `${type}:${item?.material ?? 0}:${thunderlock ? '' : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;
     if (!cache.has(key)) {
       cache.set(key, null);

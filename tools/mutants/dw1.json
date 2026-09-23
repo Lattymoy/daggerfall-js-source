@@ -149,9 +149,10 @@
   {
     "name": "DW1-17-the-base-lane-drops-the-metal-suffix",
     "file": "src/combat/fpsWeapon.js",
-    "old": "      const name = `${askName}_${r}-${f}${metal ? `_${metal}` : ''}`;",
-    "new": "      const name = `${askName}_${r}-${f}`;",
+    "old": "export const frameName = (askName, record, frame, metal) => `${askName}_${record}-${frame}${metal ? `_${metal}` : ''}`;",
+    "new": "export const frameName = (askName, record, frame) => `${askName}_${record}-${frame}`;",
     "tests": [
+      "test/auditdw.test.js",
       "test/dw1_diverseweapons.test.js"
     ]
   },
@@ -289,6 +290,52 @@
     "new": "  const swap = false",
     "tests": [
       "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F1-the-archive-preload-takes-the-lazy-entries",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !entry.lazy && !_decoded.has(key));",
+    "new": "  const todo = sources.filter(([key, entry]) => entry.archive === Number(archive) && !_decoded.has(key));",
+    "tests": [
+      "test/dw3_icons.test.js",
+      "test/auditdw.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F1-the-list-drawer-uploads-before-the-record-is-decoded",
+    "file": "src/ui/itemScroller.js",
+    "old": "          await icons.preloadRecord?.(img.archive, img.record, img.dye);   // AUDIT-DW F1: this record's replacement, decoded when it is drawn - not the archive's 280 before the first classic icon",
+    "new": "",
+    "tests": [
+      "test/auditdw.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F1-a-gated-off-icon-is-fetched",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (!hasTextureReplacement(archive, record, frame, map, dye)) return Promise.resolve(null);\n  if (!_decoding.has(key)) {\n    const entry = entryFor(key);",
+    "new": "  if (!_decoding.has(key)) {\n    const entry = entryFor(key);\n    if (!entry) return Promise.resolve(null);",
+    "tests": [
+      "test/dw3_icons.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F2-a-frame-is-awaited-alone",
+    "file": "src/combat/fpsWeapon.js",
+    "old": "      asks.push(Promise.resolve(ask(name)).then((img) => { row[f] = img ?? null; }, () => { row[f] = null; }));",
+    "new": "      row[f] = (await Promise.resolve(ask(name)).catch(() => null)) ?? null;",
+    "tests": [
+      "test/auditdw.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDW-F3-the-plain-fall-through-draws-doubled",
+    "file": "src/combat/weaponWidget.js",
+    "old": "      else if (w.s.doubleScale && custom.doubled !== false) {   // AUDIT-DW F3: only a `w_` texture is drawn into the doubled box",
+    "new": "      else if (w.s.doubleScale) {",
+    "tests": [
+      "test/auditdw.test.js"
     ]
   }
 ]
