@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-BRANCH-H2-lycan-opens",
     "file": "src/scenes/world.js",
-    "old": "      if (sup) { hccRuntime.consumeWagonSelectionRequest(); townTalk.say(sup.text); return; }\n",
-    "new": "      void sup;\n",
+    "old": "      if (w) townTalk.showOverlay(w);\n      else hccRuntime.consumeWagonSelectionRequest();\n",
+    "new": "      if (w) townTalk.showOverlay(w);\n",
     "tests": [
       "test/audit_hcc_branch.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-BRANCH-H2-lycan-opens-exterior",
     "file": "src/scenes/exterior.js",
-    "old": "      if (sup) { hccRuntime.consumeWagonSelectionRequest(); townTalk.say(sup.text); return; }\n",
-    "new": "      void sup;\n",
+    "old": "      if (w) townTalk.showOverlay(w);\n      else hccRuntime.consumeWagonSelectionRequest();\n",
+    "new": "      if (w) townTalk.showOverlay(w);\n",
     "tests": [
       "test/audit_hcc_branch.test.js"
     ]

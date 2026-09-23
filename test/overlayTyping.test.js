@@ -59,7 +59,7 @@ test('CG2: a DOM text field owns its key - the dungeon route neither routes nor 
   assert.match(read('src/ui/input.js'), /if \(ctx\.uiOverlayActive\) \{\s*\n\s*if \(isTextEntryTarget\(e\.target\)\) return false;/);
   // the wizard's own capture listener uses the one definition and lets the field's key bubble
   const wiz = read('src/ui/enhancedChargen.js');
-  assert.match(wiz, /if \(isTextEntryTarget\(e\.target\)\) return;/, 'steps aside for a field');
+  assert.match(wiz, /if \(isTextEntryTarget\(e\.target\) && action !== 'back'\) return;/, 'steps aside for a field - for every key it can type (DISC10-B: Escape is the wizard\'s)');
   assert.doesNotMatch(wiz, /t\.tagName === 'INPUT'/, 'no second copy of the rule');
   // the hosts' ladders still put townTalk first, so the fix sits where the swallow was
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(h), /if \(townTalk\.keydown\(e\)\) return;/, `${h}: the rung`);

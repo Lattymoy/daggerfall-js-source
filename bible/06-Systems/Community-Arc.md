@@ -160,7 +160,7 @@ field to be mended. `/help`'s answer is lines to read, so it clears the field an
 third answer, `'read'`). `/red` goes down the World link from any tab: the server speaks to the whole game.
 
 **Each tab's strip and roster.** The strip under the chat says why the ACTIVE tab cannot talk: its socket's own line
-(labelled with the tab), "You are not in a party.", or - against a relay from before world101 - that the channel needs
+(labelled with the tab), "You are not in a party.", or - against a relay from before world102 - that the channel needs
 the server's next update (an older relay projects `{t:'chat', text}` and would fan a party's line to everyone online,
 so the client says none to it and opens no region room before the welcome says it may). The roster is the tab's own:
 the channel's members (Online, or the region's name), the party's seats online, or Nearby - those in earshot.
@@ -202,8 +202,9 @@ the roster pins (ACC3c's key, CHAT-R1's rows, ROSTER-G's and CHAT-FIT's wiring -
 and the row); SOC3's tab count; SRV-N's and RED1's host pins; BUBBLE1's law (every tab, and the aside refused). The
 mutant records the move touched were re-aimed by content (`chatfit`, `name1`, `red1`, `soc1`); `name1.json`'s
 BUBBLE1-any-tab-speaks is retired with the law it held, which `chatchan.json`'s CC-aside-bubbles replaces. The relay
-is world101 (a new LAW row - world99 when this was written: main's HCC-PARK and DISC7 took world99 and world100 while
-the arc was in review, so the merge moved its frames' RELAY_MIN gates to 101 with it); the arc's later slices ride the same
+is world102 (a new LAW row - world99 when this was written: main's HCC-PARK and DISC7 took world99 and world100 while
+the arc was in review, so the merge moved its frames' RELAY_MIN gates to 101 with it, and main's DISC12 took world101 before
+the sixth merge, which moved them to 102); the arc's later slices ride the same
 deploy and restate that row until the merge.
 
 ## DICE1 - the relay rolls
@@ -234,9 +235,9 @@ over a head is what the character said, and a roll is the table's.
 **Pins.** `test/dice1.test.js` (10): the grammar and its bounds, the unbiased draw over a scripted source (three draws
 thrown back, two kept), the client's check; over the real Room, one roll the same numbers to everyone with the asker
 included and all six faces of a d6 reached over the relay's real CSPRNG, the gate and its strikes, the mute, a party's
-roll heard by the party alone; the session's door (the world101 welcome, one a second, a channel only where the channels
+roll heard by the party alone; the session's door (the world102 welcome, one a second, a channel only where the channels
 are) and a forged total refused; the log's roll line and its fail-closed refusal; the bubble; the host by source.
-`tools/mutants/dice1.json`: 29, 29 dead. `tools/chatChanProbe.mjs` looks at a roll line in Chromium. Relay world101 -
+`tools/mutants/dice1.json`: 29, 29 dead. `tools/chatChanProbe.mjs` looks at a roll line in Chromium. Relay world102 -
 the same deploy as CHAT-CHAN, its LAW row restated.
 
 ## EMOTE1 - an action, a gesture, and an emoji that stays whole
@@ -248,7 +249,7 @@ anything else on the field refused whole ('bad chat'), never read as an action -
 on through the chat's one fan (`_sayLine`: the same channels, the same budget - an action costs a line). The log draws
 it "Bran looks around": the name, the tag, then the words leaning, in the name's own warmth. Its kind, 'me', is the
 RELAY's word from the frame and never read off the text, and it is never a system line and never bubbled - what stands
-over a head is what the character SAID. An action goes only to a relay that carries one (world101, relaySupportsEmote):
+over a head is what the character SAID. An action goes only to a relay that carries one (world102, relaySupportsEmote):
 an older one projects the frame to its text, and "looks around" would be said as a line of plain words - so the host
 refuses it in words (EMOTE_OLD_RELAY_TEXT) and keeps the line in the field.
 
@@ -286,14 +287,14 @@ the box's border, so the rule takes the border off (one constant draws the borde
 hid the button at the smallest box a drag makes.
 
 **Pins.** `test/emote1.test.js` (8): the joiner law and its fuzz; the action on the wire, over the real Room and a
-session on a fake socket (asked only of a world101 relay, believed only as `true`); the log's kind; the grammar (/me;
+session on a fake socket (asked only of a world102 relay, believed only as `true`); the log's kind; the grammar (/me;
 every gesture parsed, each with its form AT a name; /emotes; every shortcode whole over the wire, a clock no code); the
 bubble's cut and its refusal of an action; the picker over a fake document (its order, the caret, Escape, the close, a
 group of buttons); the picker's sheet (the touch skin's rule, the narrow box's asked inside the border); the host by
 source. `tools/mutants/emote1.json`: 31, 31 dead. `tools/chatChanProbe.mjs` in Chromium: the form row at 440, 352 and
 292 on both skins (the field never under the narrowest the chat had before the button, the touch skin's 115px at 320),
 the picker's round trip, the edge (the smallest box a drag makes keeps the button, a pixel under it does not), an
-action's face, and a joined family drawn as ONE glyph after the wire - 75 checks. Relay world101 - the same deploy, its
+action's face, and a joined family drawn as ONE glyph after the wire - 75 checks. Relay world102 - the same deploy, its
 LAW row restated.
 
 ## LOOT-STACK - a key turns which body the reticle means
@@ -408,7 +409,7 @@ the wire's bound to it, since the relay imports no game module), three vitals, t
 The relay reads none of it. It meters asks and answers together on the card's own bucket (CARD_HZ_MAX, the cast's
 strikes), and funnels them onto the destination through the cast arm's per-sender funnel (AUDIT ALLY-CAST B2): one
 sender reaches one destination at CAST_HZ_MAX a second, whatever the directed frame. A client asks only a relay that
-routes the frame (world101, CARD_RELAY_MIN - an older relay closes the socket for a frame it does not know); with an
+routes the frame (world102, CARD_RELAY_MIN - an older relay closes the socket for a frame it does not know); with an
 older one the profile opens from the room's half and says the server cannot carry a card yet.
 
 **The answering law.** An ask is answered with my card through a gate (`createCardAnswerGate`): one asker once in
@@ -448,7 +449,7 @@ freezing a meter open. That was paid first, at the root, as AUDIT ATTACH (`06-Sy
 the Room instance's now, and the card's meter was measured with every other arm's there (`test/placeWidest.mjs`).
 
 **Pins.** `test/inspect1.test.js` (10): the wire (an ask or an answer, never both; the card whole or nothing at every
-bound, the attribute ceiling held to the sheet's live clamp; the widest card inside its frame; world101 the first relay
+bound, the attribute ceiling held to the sheet's live clamp; the widest card inside its frame; world102 the first relay
 that routes it); the relay over the real Room (to the one socket named, stamped; a channel or the hub nowhere; a frame
 at myself junk, a peer gone nothing; the cast arm's funnel shared - a card waits on the casts its sender spent,
 another sender's slot its own - and the sender's own meter holding it to CARD_HZ_MAX a second across every destination
@@ -461,7 +462,7 @@ window over a fake document; the F-menu's row and the one glyph drawing; the hos
 socket of mine ever reports me, so `_socketFor` refuses it first). `tools/profileProbe.mjs` in Chromium: 127 checks,
 12 photographs. Re-aimed: the chat panel's and the name layer's glyph pins (CHAT-FIT's), AUDIT WORLD2's parseClient
 doc pin (DERIVED from the parser's arms now - it had fallen seven frames behind), ALLY-CAST's funnel pins and records,
-and AUDIT ATTACH's measurement, which the card's arm joins. The relay is world101's (restated).
+and AUDIT ATTACH's measurement, which the card's arm joins. The relay is world102's (restated).
 
 ## THE MERGE with main (2026-09-23) - DISC6 to DISC9 and Horse Cart and Cargo, into the arc
 
@@ -546,7 +547,7 @@ contracts, invitations)."
   - No sent box: the sender keeps nothing.
 - **The deploy.** The account worker moves to `acct6`, and the deploy applies migration 0007 through the ledger.
   `src/net/letterLaw.js` joins the worker's deploy paths (test/accountdeploy.test.js caught it missing). The relay
-  sends no new frame, but `visibleText` moved within its bundle, so world101's LAW row is restated.
+  sends no new frame, but `visibleText` moved within its bundle, so world102's LAW row is restated.
 
 Pins: `test/mail1.test.js` (17); `tools/mutants/mail1.json` (51, all dead); `tools/mailProbe.mjs` (36 checks, 12
 photographs at a desktop, a narrow window and a phone). Re-aimed: ACC1b's table list, ACC1e's refusal walk (which reads
@@ -595,7 +596,7 @@ Addison Knox, on Discord: "Player journals ... shared in-world for storytelling.
   line is 70, and an entry its split law files runs to about fifty lines). A page past a bound is refused whole, never
   cut, and the chronicle says why before anything is sent. The widest page the law takes, with every character one
   JSON escapes, is a frame under the relay's door, and a pin builds it.
-- **The relay (world101).** The `page` frame takes the card's routing: from a hello'd socket in a PLACE room to the one
+- **The relay (world102).** The `page` frame takes the card's routing: from a hello'd socket in a PLACE room to the one
   socket `to` names, with the writer's id stamped on it and the cast arm's per-sender funnel onto the reader
   (`_senderFunnel`, one helper for the spell, the card and the page). It has a meter of its own (a page a second, its
   strikes its own `pageDrops`), and the chat's MOD1 wall: a muted player's page goes nowhere, and they are told until
@@ -627,7 +628,7 @@ Addison Knox, on Discord: "Player journals ... shared in-world for storytelling.
     reader turns to the writer.
   - A page is words. A quest is shared through QUEST1's own door, and things change hands in the trade window.
   - The classic skin's logbook shares nothing; online is the enhanced lane.
-- **The deploy.** world101's LAW row is restated, the relay's one deploy carrying the page frame. The account worker's
+- **The deploy.** world102's LAW row is restated, the relay's one deploy carrying the page frame. The account worker's
   behaviour does not change - its line law moved into wire.js, which it already bundled - so `acct6` stands.
 
 Pins: `test/journal1.test.js` (14); `tools/mutants/journal1.json` (69, all dead); `tools/journalProbe.mjs` (35 checks,
@@ -692,8 +693,8 @@ The sixth merge's conflicts showed a Ledger row whose DFU message ids read "8076
 The struck row above it still reads "8076/8077", and DFU's TalkManager.cs answers with records 8075, 8076 and 8077
 (:2029-2035). `tools/citeShift.mjs` and `tools/citeMerge.mjs` had been moving it for as far back as the history goes.
 - **CITE-SLASH.** RF3's grammar read a bare `/N` after a cite, anywhere up to the next cite, as that cite's line. So
-  "8076/8077", a sentence after `world.js:3714`, was world.js:8077 to both tools, and it moved whenever that line did.
-  A bare `/N` now continues only the chain it touches: `world.js:6548/6549`, `:12/14`. The colon forms keep RF3's
+  "8076/8077", a sentence after `world.js:3720`, was world.js:8110 to both tools, and it moved whenever that line did.
+  A bare `/N` now continues only the chain it touches: `world.js:6580/6581`, `:12/14`. The colon forms keep RF3's
   reach, because the colon says what they are.
 - **CITE-CS.** RF3 ends a cite's region at a `.cs:N` cite, but DFU's members are mostly written without their file:
   "| TalkManager.GetReactionToPlayer_0_1_2 (:689-693) |" in the Ledger's DFU column, and
@@ -728,6 +729,33 @@ worked a batch each, and every span was checked here against the source before i
   - PlayerGPS.cs:747 and :766-776;
   - DaggerfallTalkWindow.cs:1465-1499;
   - three JS continuations that RF3 had given to the cite before them: `guildServiceFlow.js:269`/`:270` and
-    `useItem.js:311-335`/`:232-268`.
+    `useItem.js:317-341`/`:234-270`.
 - Found by the passes and left for a person: row 735's `DaggerfallCourtWindow.cs:191` names the Dark Brotherhood
   rescue's refill, not the acquittal's (:425).
+
+## THE SIXTH MERGE with main (2026-09-23) - Climates & Calories' tiers, DISC10 to DISC12, SHIP-PORTS, ARROW2
+
+Main moved thirty commits while the arc was in review. Merged, not rebased; 106 files conflicted.
+- **The relay is world102.** Main's DISC12 (the pose's hand-in-use and beast-form bits) took world101, and its LAW row
+  stands as main recorded it. The arc's frames move their RELAY_MIN gates to 102, and the arc's pins name the new
+  boundary: world101 refused, world102 routed. The arc's world101 row was never deployed; the merged bundle is
+  recorded as world102.
+- **The resolution, number by number.** 230 hunks changed numbers only, and a three-way rule took each number.
+  - A line cite or one of its continuations follows main, and `tools/citeMerge.mjs` then maps it (386 cites).
+  - Any other number keeps whichever side changed it. So CITE-SLASH's and CITE-CS's repairs stand over main's copies,
+    which were still drifting: TalkManager.GetReactionToPlayer_0_1_2 read :889-893 on main.
+  - Where only one side rewrote a line, the line is that side's whole, so citeMerge knew where it came from.
+- **Both sides fixed AUDIT DISC7's neigh pin.** Main's AUDIT SURV-TIERS third pass pins the one draw that matters at
+  0.999; the arc had fixed every draw at 0.5. Main's fix is the narrower one, and the test is main's, so it stands and
+  the arc's retires.
+- **Six of main's mutant records, re-aimed by content.** Each is aimed at the site its name gives, and each dies
+  against a green baseline.
+  - Four SURV-TIERS records mutate line cites in source comments, and the merge had moved those cites
+    (`world.js:3052` is `:3063` now).
+  - MUT-AIM found two that name two sites each:
+    - DISC10-D-H1's stamp, which the hit's defaults and the kill's share;
+    - DISC9's heard word, which DISC11's rain gain repeats below it.
+- **Counted again.** Section A has 179 rows, with main's DISC10-B and DISC10-A. Port-Status section 2's fourteen
+  identifiers were re-resolved by content (CD3), and the wrapped `(:6759)` in chargenSession.js by hand (CD4, CD8).
+- **No new drift.** Run over the merged tree with both histories, the loose-slash and DFU-range scanners find only
+  this arc's own repairs.

@@ -23,6 +23,7 @@ const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity']);
 import { appStorage } from './appStorage.js';   // DA1: the storage seam
 import { onlineForcedPref } from './onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
 import { FEATURE_PREF_DEFAULTS } from './features.js';   // RF4: the port's own switches, declared once on their rows
+import { isStoredTier } from './survival/difficulty.js';   // SURV-TIERS: what the survival key may hold (an import-free leaf)
 
 export const PREF_DEFAULTS = Object.freeze({
   // PX30c: the enhanced HUD's scale. It lives HERE and not in DFU's
@@ -150,6 +151,18 @@ export function loadPrefs() {
         if (p.enhancedEnvironments === undefined && p.proceduralSky !== undefined) {
           _prefs.enhancedEnvironments = !!p.proceduralSky;
         }
+        // SURV-TIERS (2026-09-23): THE SURVIVAL SWITCH BECAME THREE TIERS
+        // ON THE SAME KEY (survival/difficulty.js SURVIVAL_STORED). Off is
+        // stored as the old switch's own `false`, so a shelf written before
+        // needs nothing - and it can only hold `false`, since `true` was
+        // the default and PREF1's shelf writes no default: a player who
+        // turned the arc off stays Off, and one who never touched it
+        // stored nothing and moves to Casual with the default, as Mac
+        // asked. AUDIT SURV-TIERS: anything else on the key (a hand-edited
+        // `true`, a corrupted value) names no tier and is dropped HERE, so
+        // the Features bar - which matches a stored value by its string -
+        // and the laws read the one default rather than two answers.
+        if (p.survival !== undefined && !isStoredTier(p.survival)) _prefs.survival = PREF_DEFAULTS.survival;
       }
     }
   } catch (e) {

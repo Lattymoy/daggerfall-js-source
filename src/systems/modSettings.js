@@ -276,7 +276,7 @@ export const MOD_SETTINGS = Object.freeze({
       advancedArchery: Object.freeze({ default: true, description: 'Alters to-hit and damage done by arrows depending on the length of draw.' }),
       encumbranceEffects: Object.freeze({ default: true, description: 'Provides speed and fatigue penalties when carrying too much weight.' }),
       bandaging: Object.freeze({ default: true, description: 'Allows bandages to be used for healing based on medical skill.' }),
-      shipPorts: Object.freeze({ default: true, description: 'Player can only board their ship when in a port town.' }),
+      shipPorts: Object.freeze({ default: false, description: 'Player can only board their ship when in a port town.' }),   // SHIP-PORTS (2026-09-23, Sir McMobdon on Discord: "cant access my boat anymore"): the mod ships this ON, the port ships it OFF - a restriction nobody chose took the boat away from every owner the day the mod landed, and the switch was nowhere a player could reach; recorded on the RR page
       underworldExpulsion: Object.freeze({ default: true, description: 'Enables underworld guilds to expel members for poor performance.. with prejudice.' }),
       climbingRestriction: Object.freeze({ default: true, description: 'Prevents climbing with a weapon drawn.' }),
       weaponSpeed: Object.freeze({ default: true, description: 'Moderates DPS of weapons for characters with high speed attributes.' }),

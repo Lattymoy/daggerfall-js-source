@@ -118,7 +118,8 @@ test('AUDIT WORLD6b-iii(e) A1: the owner - HIT_ARROWS_MAX Arrows a body from pee
 test('AUDIT WORLD6b-iii(e) C2/C3: by source - the dungeon twin has the one attack door (a zero blow at a puppet goes to the host with its kind, a damaging shaft sends no second frame, no layout of mine wakes), the melee zero arm and the shaft go through it, the flight says what landed; the disease rider is the monster\'s alone in the PCAAO core too', () => {
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /function attackFromPlayer\(foe, playerFeet = null, kind = 'melee', landed = 0\) \{\s*\n\s*if \(!foe\) return;\s*\n\s*const pi = foes\.indexOf\(foe\);\s*\n\s*if \(!_authority && pi >= 0 && pi < _layoutFoes\) \{ if \(!\(landed > 0\)\) damageFoe\(foe, 0, playerFeet, null, \{ kind \}\); else foe\._divertPt = null; return; \}\s*\n\s*handleAttackFromPlayer\(foe, playerFeet\);\s*\n\s*\}/, 'the door');
-  assert.match(d, /attackFromPlayer\(foe, playerFeet\);\s+\/\/ AUDIT WORLD6b-iii\(e\) C2[^\n]*\n\s*continue;/, 'the melee zero arm');
+  // DISC10-D H1 re-aim: OnWeaponHitEntity rides between the door and the continue (WeaponManager.cs:630 then :632-634)
+  assert.match(d, /attackFromPlayer\(foe, playerFeet\);\s+\/\/ AUDIT WORLD6b-iii\(e\) C2[^\n]*\n\s*playerWeaponHitEntity\(playerEntity, foe\.entity[^\n]*\n\s*continue;/, 'the melee zero arm');
   assert.match(d, /onAttackFromPlayer: \(t, landed\) => attackFromPlayer\(t, lastPlayerFeet, 'arrow', landed\),/, 'the shaft');
   assert.match(rd('src/combat/arrowFlight.js'), /onAttackFromPlayer\?\.\(foe, dmg\);/, 'the flight says what landed');
   const x = rd('src/scenes/exteriorFoes.js');

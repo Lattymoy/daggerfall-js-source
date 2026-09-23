@@ -258,21 +258,42 @@ export const markDreamPlayed = (entry) => { if (entry) entry.dreamPlayed = true;
 
 /**
  * DeployFullBlownVampirism (:148-192) and DeployFullBlownLycanthropy
- * (:120-126), reduced to what this slice owns: the marker V2 reads,
- * the vampirism clock raise, the popup, and EndDisease.
+ * (:120-126): the rest window closed, the clan read, the vampirism clock
+ * raise and cemetery transfer, THE CURSE ASSIGNED, the popup, and
+ * EndDisease.
  *
  * EndDisease IS THE LAST LINE in both, and it matters: the moment the
  * player turns, the disease stops being curable and stops being
  * counted by the temple. Cure Disease bought one minute earlier still
  * works; one minute later there is nothing left to cure.
+ *
+ * DISC10-D V2: THE CURSE IS ASSIGNED HERE, not in some later round.
+ * DFU's deploy calls CreateVampirismCurse + AssignBundle after the
+ * RaiseTime and the RespawnPlayer and before the popup (:176-184), and
+ * VampirismEffect.Start's UpdateSatiation (:95-96) stamps the clock as it
+ * stands AFTER the fortnight. The port left a marker for the next magic
+ * window to consume, and that window's first round is 2879 minutes in the
+ * past (the catch-up cap), so every new vampire woke unfed and the rest
+ * was refused (TEXT.RSC 36). The curses import this module, so the mint
+ * is a REGISTERED deployer (worldTick.js registers it, the loot.js
+ * spell-registry shape) and the host's `nowMinutes` is the live clock;
+ * without either - a headless caller with no host - the marker stands and
+ * the round consumes it at its own clock, which is also the path of a
+ * save restored between the turn and the curse.
  */
-export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = null, messageBox = null, clanOf = null, transferToCemetery = null } = {}) {
+export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = null, messageBox = null, clanOf = null, transferToCemetery = null, cancelRest = null, nowMinutes = null } = {}) {
   if (!entry || entry.deployed) return null;
   entry.deployed = true;
   const key = entry.infection;
   const pending = { key, lycanthropy: LYCANTHROPY_OF[key] ?? LYCANTHROPY_TYPES.None, clan: VAMPIRE_CLANS.None };
   if (key === INFECTION.Vampirism) {
-    pending.clan = clanOf ? clanOf(entry.regionIndex) : VAMPIRE_CLANS.Lyrezi;
+    // DISC10-D V8: "Cancel rest window if sleeping" (:152-154) - the
+    // deploy's FIRST line. The host that holds a rest window closes it;
+    // the turn is not a rest the player can wake from into the old life.
+    cancelRest?.();
+    // DISC10-D V3: GetVampireClan reads the PLAYER's own faction data
+    // (FormulaHelper.cs:400-427), so the entity rides to the host's read.
+    pending.clan = clanOf ? clanOf(entry.regionIndex, entity) : VAMPIRE_CLANS.Lyrezi;
     // Raise game time to an evening two weeks later (:159-161),
     // BEFORE the popup, because the popup is what the player reads on
     // the far side of the fortnight.
@@ -284,17 +305,30 @@ export function deployInfection(entry, entity, { hourNow = () => 0, raiseTime = 
     if (entity) entity.preventEnemySpawns = true;
     raiseTime?.(vampireTurnRaiseSeconds(hourNow()));
     // Transfer player to a random cemetery (:164-175), between the
-    // raise and the popup - DFU's own order. The arm is the HOST's
-    // (V2e): only the world host can arrive at another location, so
-    // everywhere else the member is absent and the player wakes where
-    // they fell (recorded in wireInfectionVideos).
+    // raise and the popup - DFU's own order. The arm is the WORLD
+    // host's (V2e) and runs from any context (DISC10-D V4: it forces
+    // the exterior first, as RespawnPlayer tears down whatever the
+    // player stood in); a host that cannot arrive at another location
+    // (exterior.js's single town) passes none and the vampire wakes
+    // where they fell.
     transferToCemetery?.();
-    messageBox?.(DEATH_IS_NOT_ETERNAL_TEXT_ID);
   }
   if (entity) entity.racialOverridePending = pending;
+  // DISC10-D V2: CreateVampirismCurse / the lycanthrope's AssignBundle,
+  // inside the deploy, at the live clock (see the header).
+  const now = nowMinutes?.();
+  if (entity && _curseDeployer && Number.isFinite(now)) _curseDeployer(entity, { now: Math.floor(now) });
+  if (key === INFECTION.Vampirism) messageBox?.(DEATH_IS_NOT_ETERNAL_TEXT_ID);
   endDisease(entry);
   return pending;
 }
+
+/** DISC10-D V2: the curse mint the deploy runs - (entity, { now }) =>
+ *  consume the pending marker into the curse. REGISTERED, because the
+ *  two curse modules import this one; worldTick.js, which already
+ *  imports both consumers, registers it once for every host. */
+let _curseDeployer = null;
+export function setRacialCurseDeployer(fn) { const prev = _curseDeployer; _curseDeployer = typeof fn === 'function' ? fn : null; return prev; }
 
 /**
  * THE ONE CONSTRUCTION SEAM for the three videos and the clock. The
@@ -333,6 +367,13 @@ export function runInfections(entity, currentDay, opts = {}) {
   if (!entries.length) return { kind: 'idle' };
   const o = { ..._host, ...opts };
   const playVideo = o.playVideo ?? ((name, onClose) => onClose());
+  // DISC10-E V2: the lycanthrope turns HERE, inside the magic round, so
+  // its curse is minted at the round's clock - WorldTime.Now, which the
+  // caller hands in as `clockMinutes` (worldTick's round: the clock
+  // stands at the window's end, not yet written back to the world clock).
+  // The vampire's deploy hangs off a video's close and reads the host's
+  // LIVE clock then, after its own raise.
+  const syncOpts = Number.isFinite(opts.clockMinutes) ? { ...o, nowMinutes: () => opts.clockMinutes } : o;
   let first = null;
   for (const entry of entries) {
     const step = infectionStep(entry, currentDay);
@@ -343,7 +384,7 @@ export function runInfections(entity, currentDay, opts = {}) {
       entry.deathScheduled = true;                   // fakeDeathVideoPlayed (:139), also at PUSH
       playVideo(step.video, () => deployInfection(entry, entity, o));
     } else if (step.kind === 'deploy') {
-      deployInfection(entry, entity, o);
+      deployInfection(entry, entity, syncOpts);
     }
     if (step.kind !== 'idle' && !first) first = step;
   }

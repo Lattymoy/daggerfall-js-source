@@ -529,7 +529,7 @@ text match anywhere in the file.
 **Fix.** Both hosts hand the pair in the `createWorldModes` bag. The pin
 now reads that bag's own braces and refuses the inventory's.
 
-## DISC8-F: two arrows from the sprite bow - not reproduced
+## DISC8-F: two arrows from the sprite bow - not reproduced (FOUND AND FIXED: ARROW2, below)
 
 One loose draws one shaft, model 99800, in every host (the open world,
 interiors, the dungeon), exactly as DFU's DaggerfallMissile does; there is
@@ -598,3 +598,395 @@ sim's word by design.
 Pinned by execution in `test/disc8.test.js` (DISC9, with the real front,
 the real sim and the mod as shipped); mutants in `tools/mutants/disc8.json`
 (4 more).
+
+---
+
+# DISC10 - the third round from Discord
+
+(Not the survival-tiers branch's DISC10 further down, which fixed the
+cart and the map mark from a different set of reports the same day; that
+round's pins are `test/disc10.test.js`, this one's are named below.)
+
+Mac, with three Discord reports: *"Also vampries and werewolf. I think
+these systems are completely broken and not wired correctly"*.
+
+1. *"Weapons when swapped into left hand dont work showing fists"*
+2. *"during character creation, once you reach name selection you can't go
+   back to any previous step, forcing you to either finish creating the
+   character, or restart the game."*
+3. *"Maps Can't Be Looted/Potion Recipe's can't be read."*
+4. Mac: vampirism and lycanthropy, end to end.
+
+## DISC10-B: no way back from the name page
+
+**Cause.** Driven through the real wizard, the on-screen BACK does leave
+Name (to the biography method, DFU's own arm). What the player reached
+for did not:
+- **Escape was dead on Name, and only there.** `nameStage` focuses its box
+  on every paint, and the wizard's key handler returned on any key aimed
+  at a text field before mapping Escape to back (CG2's rule, which let
+  the player type in the box). No field types Escape, and DFU cancels the
+  name window with its TextBox focused
+  (`DaggerfallPopupWindow.Update` -> `CancelWindow`).
+- **The step rail looked pressable and was not.** Its finished steps were
+  enabled buttons with the menu's pointer and hover, and no handler. The
+  wizard's own design says the rail is a walk, not a menu.
+- **Escape on the first stage did nothing in this view.** The flow raised
+  `cancelled` and the view only read `done` (the classic window reads
+  both).
+
+**Fix.** A text field owns every key it can type, and never Escape. The
+view follows `cancelled` to the Cancel button's own exit. The rail is a
+readout: out of the tab order, `aria-disabled`, no pointer, no hover.
+Pinned by execution in `test/disc10_hand_chargen_maps.test.js` over a small DOM
+(`test/chargenDom.mjs`).
+
+## DISC10-A: a weapon swapped into the left hand showed fists
+
+**Cause.** The rigs and the doors are right: a weapon in the left hand
+draws and swings, through every door (DISC8-E). The quickslot SWAP was
+not: `swapQuickslot` readied into the RIGHT slot whatever hand the player
+was using, and no host told it the hand. DFU draws only the hand in use
+(`WeaponManager.ApplyWeapon` :741-755), so on the left hand "You ready
+your Dagger." stood over bare fists, every press, in every host and both
+skins.
+
+**Fix.** The swap takes the live rig's hand door
+(`weaponRig.handDoor()`: the hand in use after this frame's UpdateHands,
+and ToggleHand through the rig's own SwitchHand) and readies into the
+hand in use; a two-hander is the right hand's, and when the table's own
+law places the weapon in the other hand, the hand follows it through
+ToggleHand, DFU's one door. The building's host hands its own rig.
+
+**Recorded, not changed.**
+- The enhanced pack's Morrowind figure shows the right hand's weapon while
+  the pack is open (`enhancedInventory.js` setWeapon); the first frame
+  after the close corrects it.
+- Online, a peer fighting left-handed is drawn with the right hand's
+  weapon: the pose carries no hand bit yet.
+
+## DISC10-C: maps could not be looted, recipes could not be read
+
+**Maps.** A map taken off a body runs its use arm (DFU's `TransferItem`
+map arm, :1471-1478): read, spent, a location discovered. The DUNGEON
+host had no reveal hook (`revealMap: null`, "no region index here"), so
+underground - where bodies drop maps - the use fell to "You study the
+map." and the map stayed on the body. worldModes never forwarded the
+outer host's `revealLocation`, which already answers underground. It
+does now; the standalone `?dungeon` page keeps its null.
+
+**Recipes.** DFU reads a recipe through Info (`ShowInfoPopup` :1602-1609:
+"Recipe for Potion of %po" and the chained ingredient list); its Use arm
+refuses it. The classic window had that; the ENHANCED skin (the default,
+and the only one online) has no Info mode - its item card is the info -
+and the card had no recipe rows, so a recipe said nothing anywhere. The
+card now reads "Recipe for" and "Ingredients" from one shared
+`potionRecipeIngredientNames` (MCP's PotionRecipeIngredients). The
+Potion Maker already saw carried recipes.
+
+Pinned: `test/lh1.test.js` (3) and `test/maploot1.test.js` (3), by
+execution.
+
+---
+
+# DISC11 - rain louder inside than outside, at last at its root
+
+Mac: *"YOU ALSO KEEP FUCKING UP ITS LOUDER ON THE INSIDE COMPARED TO THE
+OUTSIDE. YOUR DIRECTIONS ARE WRONG"*.
+
+**Cause.** What the ear hears is gain times the recording's own level, and
+the three fixes before this one (DISC6-C, AUDIT DISC7 B1, DISC9) each
+balanced gains without ever comparing what is heard:
+- The street plays DAGGER.SND's rain loop (389) at the front's level: a
+  light shower is 0.15, a downpour 1.
+- Better Ambience's indoor rain (InteriorAmbientSoundSource) plays its own
+  AmbientRaining.wav at the AudioSource's volume, a flat 1, whatever falls
+  outside. A tavern under a drizzle played a full downpour through its
+  walls, in a different and louder recording. DISC6 only silenced the
+  street's loop while it played.
+- Underground, DFU's carried loop and the mod's source at the exit both
+  played, stacked.
+
+**Fix.** Every rain the player hears inside is derived from the street's:
+- The heard seam carries the street's rain LEVEL beside its word
+  (`weatherSim.heardRainGain`, written by both open-world hosts' outdoor
+  frames; the classic level after a jump).
+- The mod's source takes that level, matched to the street's recording by
+  measured RMS (`AudioEngine.clipLevel`, once per decoded buffer), and in
+  a building the street's through-the-walls factor (`INDOOR_RAIN_GAIN`),
+  with the mod's low-pass after it. It is made at the level of that
+  moment; indoors the level cannot move (the front does not tick there),
+  and every door, load and weather change remakes it.
+- Underground the carried loop stands down while the mod's source plays at
+  the exit, which is the street heard at the door. Without the mod, DFU's
+  carried loop at the street's level stands, never above it.
+
+**The 3D directions, checked again in a real browser.** The same session
+measured left and right in Chromium's own WebAudio HRTF through the
+port's own `audio.js` (the listener and panner code as shipped): with the
+game's camera at yaw 0 and at yaw 90, a source on the screen's right
+plays in the right ear and one on the left in the left (L 0.024 / R 0.086
+and mirrored). The renderer's projection puts those same points on the
+same sides. Nothing was changed there.
+
+Pinned by execution in `test/disc11.test.js` (gain times level, with the
+mod's recording louder than the street's, at 0.15, 0.5 and 1; the dungeon's
+exit; the jump). Mutants: `tools/mutants/disc11.json` (5).
+
+---
+
+# DISC12 - the gaps DISC10 left open, closed
+
+Mac: *"THose open tasks? I need you stop stop being lazy and tackle it,
+including the god damn double arrows"*.
+
+## A peer's weapon hand, online
+
+The look carries both hands' weapons; every receiver read the RIGHT hand
+(`peerBodies.peerBuildOpts`, `remotePlayers._syncAttackSound`), so a player
+fighting left-handed was drawn and heard with the right hand's weapon, or a
+fist. The pose carries the hand in use now (`lh`, the LEFT hand, omitted on
+the right), sent off the live rig; the Morrowind body's weapon follows it
+through setWeapon when the arm is quiet (`peerWeaponOf`), and the swing's
+sound reads the same hand.
+
+## A peer in beast form, online
+
+Nothing on the wire said a player was transformed, so the others saw the
+person. The pose carries the form (`wb`, 1 werewolf 2 wereboar - the
+curse's own infectionType - omitted in human form); a peer in beast form
+stands as the enemy's own sprite (MobileTypes 9 / 14), puppeted off the
+pose like a class sprite whatever the class-sprite card says, and takes no
+Morrowind body. The relay moves to **world101** (validPose, poseChanged:
+each edge goes out at once; lerpPose carries both). The merge deploys it and
+drops connected players once.
+
+## The pack's figure, the hand in use
+
+The enhanced pack handed the Morrowind figure the right hand's weapon
+while it was open. Each host hands the pack the live rig's hand
+(`usingRightHand`, the pose's own read indoors and underground).
+
+## U with nothing usable
+
+DFU says "You have no usable magic item" (DaggerfallUI.cs:584-585,
+Internal_Strings.csv:959); the port opened nothing and said nothing. All
+three hosts say it now.
+
+Pinned by execution in `test/disc12.test.js` (the wire's laws, the eased
+pose, the body following the hand, the beast drawn as the beast, the pack's
+figure, the HUD line). Mutants: `tools/mutants/disc12.json` (9).
+
+The version's own mutant run turned up one survivor on HEAD, soc1 S23 (the
+lead handed to the newest seat when nobody is online): no pin held the
+all-away arm. `test/auditparty8.test.js` now holds it (every remaining seat
+away - the longest-standing leads), and S23 names that suite.
+
+# ARROW2 - the double arrows (DISC8-F), found
+
+DISC8-F counted shafts and found one. The second arrow was never a shaft:
+it was the SPRITE's nocked arrow, drawn while the loosed shaft flew. A
+per-tick drive of the real rig, the real Weapon Widget and the real
+`drawFpsWeapon` (a synthetic WEAPON09.CIF, every quad recorded) showed it
+on every shot with the widget off (80 frames of the nocked idle at 60 fps)
+and at many frame rates with it on. Three DFU laws the port had not carried:
+
+1. **The bow hides itself at the end of its release.** FPSWeapon.
+   AnimateWeapon sets `ShowWeapon = false` as a bow's one-shot runs off its
+   last frame (FPSWeapon.cs:529-531, "so its idle frame doesn't show before
+   it is hidden for its cooldown"), and WeaponManager's cooldown early
+   return (:229-233) leaves it hidden. The port's F024 latch froze the TRUE
+   of the shot, so the idle frame 0 - an arrow on the string - stood on
+   screen for the whole 1.3 s cooldown, and the widget's clone was never
+   told to stay off-screen. `spriteShown()` now carries FPSWeapon's own
+   hide to the classic sprite and the widget; an un-draw (no one-shot end)
+   keeps the bow shown as DFU does, and the Morrowind arm keeps `shown()`.
+2. **With BowDrawback off (the default) the bow idles DRAWN.** The idle
+   loop lands on frame 3 (FPSWeapon.cs:533-534) and a bow keeps its frame
+   into the strike (:261-262), so the instant shot twangs at +1 tick and
+   looses at +2. The port idled at 0 and played the whole draw first,
+   loosing at +5 - while the widget's clone, which starts at 3 as the IL
+   does, let its sprite arrow go ~170 ms before the 3D shaft existed.
+3. **One step per resume.** AnimateWeapon steps once and waits
+   `WaitForSeconds(animTickTime)` (:545); a coroutine never resumes twice in
+   a frame and drops the overshoot. The machine carried the remainder and
+   could take several ticks in one frame, running ahead of the clone (which
+   then missed the hit frame and never clocked its cooldown), and one long
+   frame on the release ran StrikeDown to Idle at once. The port's own gun
+   (FIELD-GUN7's lab clock) is no FPSWeapon and keeps its carry.
+
+Pinned by execution in `test/arrow2_bowhide.test.js`: one shot at 60 and
+50 fps, drawback on and off, widget on and off - no nocked frame on screen
+from the first frame the shaft can be drawn until the cooldown ends, and the
+bow back after it; the un-draw keeps the bow; the drawn idle and the +2 tick
+loose; the one-step clock and the long frame; the gun's carry. Mutants:
+`tools/mutants/arrow2.json` (9, all dead). `machijp.json` MAC-I re-aimed by
+content.
+
+Not changed, and rightly: the flying shaft casts a shadow under Enhanced
+Lighting (`render/shadowPass.js`). DFU's shaft is
+`CreateDaggerfallMeshGameObject(99800, ...)` (DaggerfallMissile.cs:238), a
+plain MeshRenderer that nothing turns off, so it casts in DFU too - a
+shadow on the ground, not a second arrow.
+
+# DISC10-D/E - the vampire and the werewolf, wired at the root
+
+Mac: *"I think these systems are completely broken and not wired
+correctly"*. They were: every finding below was confirmed in the code
+before it was changed, and each is pinned by execution in
+`test/disc10_vampire.test.js` (V) and `test/disc10_lycan.test.js` (L).
+
+- **H1 - the hit hook ran before the blow landed.** RacialOverrideEffect.
+  OnWeaponHitEntity sat at the tail of the damage FORMULA, before any door
+  subtracted health and past the ineffective-material early return: the
+  werewolf's KilledInnocent never saw a dead innocent, and a vampire's iron
+  blade on a ghost never fed. It is one dispatcher now
+  (`worldTick.playerWeaponHitEntity`), called at the strike sites after
+  the damage, where DFU calls it (WeaponManager.cs:627-635, :514-521):
+  the three pools' swings (damage and zero-damage arms), the civilian
+  murder, and every host's arrow. A peer's hit never reaches it.
+- **V1 - sun damage by the wrong clock.** Catch-up magic rounds read each
+  PAST round's hour; they read the live clock now (the `% N` cadences
+  still count rounds). A two-day trip that lands at night burns nothing.
+- **V2 - the curse deployed late.** `deployInfection` now makes the curse
+  itself through a deployer worldTick registers, on the host's live clock
+  after the time raise; a restored pending marker lands at the live clock.
+- **V3 - every vampire was of one clan.** Both bite sites carry the region
+  (the exterior pool learns `regionIndex` from all three hosts; the dungeon
+  reads its location's), and `clanOf` reads the player's own faction dict.
+- **V4 - the cemetery transfer from inside a building or dungeon.** The
+  world arm leaves to the exterior first, and the dungeon context carries
+  `transferToCemetery`.
+- **V5 - the sheet showed the birth race.** `liveRaceTemplate` gives DFU's
+  compound race name and flags to both character sheets.
+- **V8 - resting through the change.** The deploy cancels the rest first.
+- **V9 - online clocks.** Going online shifts the infection's
+  `startingDay` and the werewolf's kill/morph/urge stamps with the shared
+  clock (and `liveLycanthropy` survives a null effect entry).
+- **V11 - the dream lost on reload.** An unplayed dream is re-scheduled on
+  restore, for both infections.
+- **L2 - the beast struck with a marker item.** `strikingWeapon` is the
+  hand's item (WeaponManager.cs:909), so claws are hand-to-hand: the bare
+  hand's damage, and no material gate.
+- **L3 - the pack was refused at a few doors only.** The refusal lives in
+  the inventory and trade windows themselves (DFU's MessageBox), so every
+  way in - loot, wagon, sheet, counters, quickslots, quick loot - refuses.
+- **L4 - the urge's health limiter ratcheted.** `maxHealth` is the limited
+  view of a raw value that level-ups and the save keep.
+
+Paid in the same round, found in the fix's own report:
+
+- **The beast's blow sounded like a weapon.** Every player-strike hit
+  sound, zero-damage arm and blood now read the striking hand's item, as
+  `PlayHitSound(currentRightHandWeapon)` and :611's `strikingWeapon == null`
+  do. And indoors, the encounter pool's hit-sound callback had been reading
+  the struck FOE as a weapon - a bare fist always rolled the weapon family,
+  at the ear; one `interiorHitSound`, on the foe with the hand's item, now
+  serves both interior pools as `guardHitSound` does on the street.
+- **The knightly smith's gift told a beast twice.** The pack door's own
+  refusal box, then "That service is not available yet.": a ready door
+  that built nothing refused, and that is now a dispatch.
+
+Mutants: `tools/mutants/disc10.json` (69, all dead). Across the 109 mutant
+lists naming a changed file, five survivors also survive on the base and
+are not this round's (enhnotice3 AUDIT4-A8, font1 F2, macro4 MACRO-4,
+qs1 QS4, red1 RED1-12).
+
+**Online, the other player's watchman (closed the same day, Mac: "Do the
+still open stuff").** A peer's watchman is a puppet in the striker's
+encounter pool; the blow goes to its owner and he dies THERE, so the
+striker's OnWeaponHitEntity read a live puppet and the urge was never
+satisfied by the city watch online. The owner now answers a lethal blow
+with `slain` down the loot grant's own path back (`hit`, to the striker, by
+the watchman's number, keyed to the cell - no wire or relay change: the
+relay routes a cell `hit` by `to`, and an older client's `applyHit` reads no
+`dmg` in it and refuses it whole). The striker's pool lands it only for a
+puppet of THAT owner's it struck, inside the take's window, once, and runs
+KilledInnocent alone on the live minute
+(`worldTick.playerWeaponKillReported`) - the vampire fed on the blow and is
+not fed twice. Civilians and building interiors were always local to each
+client (their kills were seen dead at the striker), and no dungeon holds
+the city watch. Pinned by execution in `test/disc10_online_kill.test.js`
+(two clients, the blow out, the death at the owner, the report back);
+mutants in `disc10.json` (79, all dead).
+
+
+---
+
+# DISC10 - three reports before the survival-tiers branch merged
+
+Mac, with three Discord screenshots: *"Before we push this can you fix
+these"*.
+
+1. kurkku: *"two wagons appear whenever you hitch it up, visual only"* /
+   *"also the Wagon tooltip can appear when it's trailing behind you and
+   you're looking forward. it'll flash quickly as the wagon goes in and out
+   of range"*
+2. Starempire42: *"Npcs marking things on the map doesn't seem to be
+   working. Npc was supposed to mark it on the map. It is not on the map
+   when I look."*
+3. Triage: *"im stuck in a tree?"*
+
+Each was investigated to its cause in node, against the real modules,
+before it was touched. The pins are `test/disc10.test.js`; the mutants are
+`tools/mutants/disc10.json`. All die.
+
+## DISC10-A: two carts for one Cart transport
+
+**Cause.** Not a stale or parked copy of the wagon, and not my own team
+echoed back online (both were ruled out by probes and by the relay's own
+exclusions). Two vendored mods each stand a cart for the Cart transport:
+Eye Of The Beholder's ShowCart (model 41239, `player/eotbWagon.js`, through
+the view seam) and Horse Cart and Cargo's trailing wagon (41214). Both ship
+on, EOTB's lane is open for every rider without the Morrowind body, and
+neither mod's code knows the other - DFU with both installed would stand
+both too. The second wagon in the reporter's first screenshot is EOTB's;
+the one ahead of the horse in the second is EOTB's after a turn (it only
+moves once it is 2.5 m from the rider). The plaque's "Wagon" was EOTB's
+too: HCC's trailing wagon takes no activation at all, and EOTB's box was
+an axis-aligned box drawn around the cart's rotated bounds, re-drawn every
+frame as it turned and swayed - at a diagonal it bulged forward past the
+rider, and a forward look over empty road entered it, flickering through
+every turn (10-14 times a quarter turn in the probe).
+
+**Fix.** While HCC's trailing wagon is on, EOTB's cart gives way
+(`mwView.js` `setEotbCartYields`, registered by both hosts beside the
+runtime it reads); with HCC off, or its wagon hidden, EOTB's cart stands
+as its IL says. EOTB's activation target is the cart's OWN turned box -
+`activate.js` `rayObb`, the slab test in the box's rigid frame - and it
+takes no surface inside it (`noSurface`: the cart has no collider, so a
+box that holds the eye names nothing by the ground or a wall). Ledger A
+carries it as ONE CART FOR THE CART TRANSPORT.
+
+## DISC10-B: "I'll mark it on your map", and the map did not
+
+**Cause.** The port marks the building and the building lands in the
+discovery store; the town map then hides it on purpose. The screenshot's
+wrapped line is "The Woodfield Residence", and the town map names a
+discovered RESIDENCE only by a quest Place carrying the NPC's
+marked-on-map stamp, or by the quest name it learned at discovery
+(ExteriorAutomap.cs:677, :693-707; PlayerGPS.cs:927, :945-959). Asked where
+a PERSON is, MarkKeySubjectLocationOnMap stamps the Person's own resource
+(TalkManager.cs:1283-1296), which the map never reads - so the house stayed
+unnamed whenever the Place was still dialog-hidden, or the house had been
+discovered as a plain residence before the quest named it (World Tooltips
+discovers a door the player looks at, which makes the second case common
+here). DFU has the same gap.
+
+**Fix.** A Person's map answer marks the person's assigned Place with
+them (`answerPipeline.js` `markKeySubjectLocationOnMap`). Everything else
+- the knowledge roll, the 7332/7333 draw, the compass stamp - is DFU's.
+Ledger A carries it as A PERSON'S "I'LL MARK IT ON YOUR MAP" MARKS THEIR
+HOUSE.
+
+**Not driven in a browser:** no game data here, so the two carts were
+driven with a stand-in box for model 41239, and the map through the
+real chain with the vendored text records.
+
+## DISC10-C: stuck in a tree - not taken
+
+Mac: *"Seems like a rare case where they got stuck in geometry"*, and
+then *"Lets just merge what we have"*. The investigation was stopped
+before it reached a reproduction, so no cause is claimed here. If it
+comes back, the save and where it happened are what to ask for.
+

@@ -205,7 +205,8 @@
     "old": "const leader = party.leader === acct ? (members.find((id) => this._socketsOf(id).length) ?? members[0]) : party.leader;",
     "new": "const leader = party.leader === acct ? (members.find((id) => this._socketsOf(id).length) ?? members[members.length - 1]) : party.leader;",
     "tests": [
-      "test/soc1_hub.test.js"
+      "test/soc1_hub.test.js",
+      "test/auditparty8.test.js"
     ]
   },
   {
@@ -337,8 +338,8 @@
   {
     "name": "S38-version-not-bumped",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world101';",
-    "new": "export const RELAY_VERSION = 'world100';",
+    "old": "export const RELAY_VERSION = 'world102';",
+    "new": "export const RELAY_VERSION = 'world101';",
     "tests": [
       "test/soc1_hub.test.js",
       "test/relayversion.test.js"

@@ -200,7 +200,10 @@ test('AUDIT 58: every player-attack resolver reaches the door on a zero-damage c
   // returns the 15/ratio floor).
   // MUTANT: delete any one of these three lines and this pin is red.
   const dg = src('scenes/dungeonContext.js');
-  assert.match(dg, /else if \(snd\) audio\.playOneShot\(snd\.sound, 1\.1\);[\s\S]{0,600}attackFromPlayer\(foe, playerFeet\);[^\n]*\n\s*continue;/,
+  // DISC10-D H1 re-aim: the arm now runs OnWeaponHitEntity between the
+  // aggro and the continue - DFU's own order (WeaponManager.cs:630 then
+  // :632-634), both on every connect whatever the damage.
+  assert.match(dg, /else if \(snd\) audio\.playOneShot\(snd\.sound, 1\.1\);[\s\S]{0,600}attackFromPlayer\(foe, playerFeet\);[^\n]*\n\s*playerWeaponHitEntity\(playerEntity, foe\.entity[^\n]*\n\s*continue;/,
     'dungeonContext: the zero-damage arm enrages before it continues');
   assert.match(src('scenes/exteriorFoes.js'),
     /parrySounds: !!ENEMY_BASICS\[foe\.mobileType\]\?\.parrySounds[\s\S]{0,900}attackFromPlayer\(foe, playerFeet\);/,   // AUDIT WORLD6b B10 / AUDIT WORLD6b-ii B4: the one door (a foe of mine wakes through handleAttackFromPlayer, a puppet's owner hears the zero blow)

@@ -4320,7 +4320,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1148`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1149`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6113` read, on one physical line:
+`src/scenes/worldModes.js:6143` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4233`). With the property missing that call is a
+(`dungeonContext.js:4256`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,7 +4831,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:4188` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:4195` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:227`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:889`, `src/net/online.js:1586`):**
+**Now (`src/net/wire.js:889`, `src/net/online.js:1588`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -8067,7 +8067,7 @@ its owner; the relay remembers no marker. No wire or relay change: the tags ride
 checked at the reader (`world/wodShared.js`). The full record is `03-World/World-Of-Daggerfall.md` WOD7. Pins:
 `test/wod7_sharedcamps.test.js`; mutants `tools/mutants/wod7.json`.
 
-## AUDIT ATTACH (2026-09-23, found by INSPECT1's measurement of the attachment its card meter would ride) - a socket's meters leave its attachment, world101
+## AUDIT ATTACH (2026-09-23, found by INSPECT1's measurement of the attachment its card meter would ride) - a socket's meters leave its attachment, world102
 
 INSPECT1 gives a place socket a new arm, and a new arm is a new meter. Before adding one, its test measured the
 attachment the meter would ride - the widest a place socket can carry, over the real Room - and found it already
@@ -8126,7 +8126,7 @@ tool mutates the first occurrence). Every mutant list whose targets or tests the
 was rerun against a green baseline and is dead but for three survivors older than it: `soc1` S23, `font1`
 AUDIT-FONT-F2, and `chatchan` CC-parser-before-unstuck, which EMOTE1's re-aim of CHAT-CHAN's order pin let live (paid
 in the next commit). No version of its own: the arc's deploy is not yet made (world99 when this was written, world101
-since the merge below), and its LAW hash is restated.
+since the merge below, world102 since the sixth), and its LAW hash is restated.
 
 **The merge with main (2026-09-23).** Main's HCC-PARK brought a new place arm, the park frame, with a meter written
 the old way: onto the attachment, its strikes on `pdrops` - the PARTY pose meter's field, so a pass of either meter

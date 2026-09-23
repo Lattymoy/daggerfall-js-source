@@ -11,6 +11,13 @@
 // luck roll is Dice100's own line and the disease ids are DFU's
 // (diseases.js DISEASES: StomachRot 3, SwampRot 6, YellowFever 2 -
 // pinned in the test); the infliction is handed in by the caller.
+//
+// SURV-TIERS (2026-09-23): spoiling is the world's and runs the same in
+// every tier - a spoiled meal still feeds less, a putrid one still will
+// not go down. The SICKNESS is the tier's (`sickness`, survival/
+// difficulty.js - Hard's alone): in Casual a raw or spoiled meal is
+// simply a poorer one, and no roll is made against the eater.
+import { HARD_RULES } from './difficulty.js';
 const dice100 = (chance, roll01) => Math.floor(roll01 * 100) < chance;
 export const DISEASE_STOMACH_ROT = 3, DISEASE_SWAMP_ROT = 6, DISEASE_YELLOW_FEVER = 2;
 
@@ -25,7 +32,7 @@ export const SURVIVAL_GROUP = 'UselessItems2';   // the port's home for its own 
  *  stage, so bread lasts and raw fish does not. raw: eaten as is, it
  *  turns the stomach. thirst: what it takes off the thirst. */
 export const FOOD = Object.freeze({
-  [TEMPLATE.Rations]: Object.freeze({ name: 'Rations', satiety: 250, keeps: null, raw: false, thirst: 0, stack: true }),
+  [TEMPLATE.Rations]: Object.freeze({ name: 'Rations', satiety: 240, keeps: null, raw: false, thirst: 0, stack: true }),   // AUDIT SURV-TIERS (the third pass): the Peckish line's own four hours - at 250 the page said "You could eat." and the sack refused for ten minutes
   [TEMPLATE.Apple]: Object.freeze({ name: 'Apple', satiety: 60, keeps: 90, raw: false, thirst: 10, stale: 'Soft' }),
   [TEMPLATE.Orange]: Object.freeze({ name: 'Orange', satiety: 60, keeps: 90, raw: false, thirst: 10, stale: 'Soft' }),
   [TEMPLATE.Bread]: Object.freeze({ name: 'Bread', satiety: 180, keeps: 95, raw: false, thirst: 0, stale: 'Stale' }),
@@ -110,10 +117,11 @@ export function rotWeight(natural) {
  *    full stomach fuller), but a meal may be banked FULL_AHEAD_MINUTES
  *    past hunger;
  *  - raw and spoiled food turns the stomach on a failed luck roll:
- *    stale or raw risks the mild disease, mouldy and worse the foul ones.
- *  Returns { ok, reason, lastAte, thirstRelief, sick } and never touches
- *  the entity: the caller applies it. */
-export function eatLaw(item, { lastAte, now, luck = 50, rolls = Math.random } = {}) {
+ *    stale or raw risks the mild disease, mouldy and worse the foul ones -
+ *    in a tier that sickens (`rules.sickness`; Hard's when no rules).
+ *  Returns { ok, reason, lastAte, thirstRelief, sick, feel } and never
+ *  touches the entity: the caller applies it. */
+export function eatLaw(item, { lastAte, now, luck = 50, rolls = Math.random, rules = HARD_RULES } = {}) {
   const f = foodOf(item);
   if (!f) return { ok: false, reason: 'not food' };
   const stage = foodStage(item);
@@ -123,9 +131,10 @@ export function eatLaw(item, { lastAte, now, luck = 50, rolls = Math.random } = 
   if (hunger < satiety) return { ok: false, reason: 'not hungry' };
   let base = lastAte ?? now;
   if (hunger > satiety + FULL_AHEAD_MINUTES) base = now - FULL_AHEAD_MINUTES;
-  const newLastAte = base + satiety;
+  const newLastAte = Math.min(now, base + satiety);   // AUDIT SURV-TIERS (the third pass): never a meal in the future - a marker ahead of the clock is a fresh start to the load (alignSurvival), and rations at 250 wrote one ten minutes ahead
   let sick = null;
-  if (f.raw || stage > 0) {
+  // SURV-TIERS: a tier without sickness makes no roll at all - every raw or spoiled meal there is Hard's lucky one
+  if ((f.raw || stage > 0) && (rules ?? HARD_RULES).sickness) {
     const lucky = dice100(luck, rolls());
     if (!lucky) sick = stage >= FOOD_STAGE.Mouldy ? 'foul' : 'mild';
   }

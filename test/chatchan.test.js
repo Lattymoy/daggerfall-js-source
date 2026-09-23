@@ -32,7 +32,7 @@ const quiet = (fn) => { const info = console.info, warn = console.warn; console.
 
 // ─── THE WIRE ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('CHAT-CHAN wire: one channel per politic region, whitelisted by enumeration; a line may name the party channel and nothing else; world101 is the first relay that routes either (world99 before the merge: main\'s world99 and world100 route neither) (mutants: a region key off the end of the map; the whitelist a prefix test; an unknown channel falling through to the room; the version gate one high)', () => {
+test('CHAT-CHAN wire: one channel per politic region, whitelisted by enumeration; a line may name the party channel and nothing else; world102 is the first relay that routes either (world99 before the first merge, world101 before the sixth: main\'s world99, world100 and world101 route neither) (mutants: a region key off the end of the map; the whitelist a prefix test; an unknown channel falling through to the room; the version gate one high)', () => {
   assert.equal(CHAT_REGION_COUNT, REGION_NAMES.length, 'the politic map\'s regions, all of them - the channel a player joins is PlayerGPS.CurrentRegionIndex\'s');
   assert.equal(CHAT_REGION_COUNT, 62);
   assert.equal(chatRegionRoom(0), `${CHAT_REGION_PREFIX}0`);
@@ -49,11 +49,11 @@ test('CHAT-CHAN wire: one channel per politic region, whitelisted by enumeration
   assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: ' hi party ', ch: 'party' }), hello), { t: 'chat', text: 'hi party', ch: 'party' });
   for (const ch of ['guild', 'world', '', null, 7, ['party']]) assert.deepEqual(parseClient(JSON.stringify({ t: 'chat', text: 'hi', ch }), hello), { error: 'bad chat' }, `ch ${JSON.stringify(ch)}: refused whole - never quietly the room's line`);
 
-  assert.equal(CHAN_RELAY_MIN, 101);
-  assert.equal(relaySupportsChannels('world100'), false, 'DISC7\'s relay (the last before the arc) projects `{t:\'chat\', text}` and would fan a party line to everyone');
-  assert.equal(relaySupportsChannels('world101'), true);
+  assert.equal(CHAN_RELAY_MIN, 102);
+  assert.equal(relaySupportsChannels('world101'), false, 'DISC12\'s relay (the last before the arc) projects `{t:\'chat\', text}` and would fan a party line to everyone');
+  assert.equal(relaySupportsChannels('world102'), true);
   assert.equal(relaySupportsChannels('world120'), true);
-  for (const bad of [null, undefined, '', 'world', 'World101', 'world101x', 101]) assert.equal(relaySupportsChannels(bad), false);
+  for (const bad of [null, undefined, '', 'world', 'World102', 'world102x', 102]) assert.equal(relaySupportsChannels(bad), false);
   assert.ok(relaySupportsChannels(RELAY_VERSION), 'this build\'s own relay routes them');
   assert.ok(PARTY_CHAT_ROOM_HZ_MAX >= CHAT_ROOM_HZ_MAX, 'the parties\' budget is at least the room\'s: many small fans, not one of everyone');
   assert.match(CHAN_OLD_RELAY_TEXT, /server's next update/, 'a tab the relay cannot carry says why, in the player\'s words');

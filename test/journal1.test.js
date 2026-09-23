@@ -92,7 +92,7 @@ test('JOURNAL1 the cut falls between the characters a reader counts - EMOTE1\'s 
 
 // ─── THE PAGE ON THE WIRE ───────────────────────────────────────────────────────────────────────────────────────
 
-test('JOURNAL1 wire: a page is a player\'s words with their lines - the letter\'s line law, one home in wire.js now (controls, overrides and zero widths gone, tabs and runs of space one space, a line separator a space, blank runs one, none at the ends) - and a page past a bound is REFUSED, never cut; the widest page the law takes fits the relay\'s door; world101 the first relay that routes one (mutants: a bound off by one; the blank runs kept; a page cut to fit; the head uncleaned)', () => {
+test('JOURNAL1 wire: a page is a player\'s words with their lines - the letter\'s line law, one home in wire.js now (controls, overrides and zero widths gone, tabs and runs of space one space, a line separator a space, blank runs one, none at the ends) - and a page past a bound is REFUSED, never cut; the widest page the law takes fits the relay\'s door; world102 the first relay that routes one (mutants: a bound off by one; the blank runs kept; a page cut to fit; the head uncleaned)', () => {
   const r = pageLaw({ head: `  Morndas${ZWSP} in  Daggerfall: `, lines: ['', `  ${RLO}I owe${BEL} you\t20 gold. `, '', ' ', '', `Signed${LSEP}Ann`, '', ''] });
   assert.deepEqual(r, { page: { head: 'Morndas in Daggerfall:', lines: ['I owe you 20 gold.', '', 'Signed Ann'] } });
   assert.deepEqual(validPage(r.page), r.page, 'idempotent: what the relay forwards is what the law takes again');
@@ -130,10 +130,10 @@ test('JOURNAL1 wire: a page is a player\'s words with their lines - the letter\'
   assert.ok(widest.length <= PAGE_FRAME_MAX, `and its frame fits: ${widest.length} of ${PAGE_FRAME_MAX}`);
   assert.ok(PAGE_FRAME_MAX < MAX_FRAME_BYTES);
   assert.ok(PAGE_LINE_MAX >= MAX_LINE_LENGTH + 1, 'a notebook line, with DFU\'s leading space, is a page line - the relay imports no game module, so this pin holds the two apart');
-  assert.equal(RELAY_VERSION, 'world101');
-  assert.equal(PAGE_RELAY_MIN, 101);
-  assert.equal(relaySupportsPage('world101'), true);
-  assert.equal(relaySupportsPage('world100'), false);
+  assert.equal(RELAY_VERSION, 'world102');
+  assert.equal(PAGE_RELAY_MIN, 102);
+  assert.equal(relaySupportsPage('world102'), true);
+  assert.equal(relaySupportsPage('world101'), false);
   assert.equal(relaySupportsPage(undefined), false);
 });
 

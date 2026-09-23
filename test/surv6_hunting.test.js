@@ -234,7 +234,7 @@ test('SURV6: the window - the Yes/No box, No closes; Yes commits to the busy pag
 });
 
 test('SURV6: composed - once a game minute the roll; the window in the slot, none under one; Yes and the wait apply the outcome, tally the skills, pass the minutes; the beast stands at the close; off with the switch', () => {
-  _resetForTests();
+  _resetForTests(); setPref('survival', 'hard');   // SURV-TIERS: the beast below is a Hard hunt's (a Casual one takes the safe twin - survtiers.test.js)
   const p = player();
   const shown = [], spawned = [], tallied = [], advanced = [];
   const e = { ...WILD, hasBow: true, skills: { archery: 100, stealth: 100, criticalStrike: 100, climbing: 100 } };

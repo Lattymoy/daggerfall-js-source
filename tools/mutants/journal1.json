@@ -162,10 +162,10 @@
   {
     "name": "JRN-relay-min-a-deploy-early",
     "file": "src/net/wire.js",
-    "old": "export const PAGE_RELAY_MIN = 101;",
-    "new": "export const PAGE_RELAY_MIN = 100;",
+    "old": "export const PAGE_RELAY_MIN = 102;",
+    "new": "export const PAGE_RELAY_MIN = 101;",
     "tests": ["test/journal1.test.js"],
-    "note": "A page is sent to world100, which closes the socket on a frame it does not know."
+    "note": "A page is sent to world101 (main's DISC12 relay), which closes the socket on a frame it does not know."
   },
   {
     "name": "JRN-the-door-under-the-widest",

@@ -65,8 +65,8 @@
   {
     "name": "SURV1-cooked-food-turns-the-stomach",
     "file": "src/systems/survival/food.js",
-    "old": "  if (f.raw || stage > 0) {",
-    "new": "  if (true) {",
+    "old": "  if ((f.raw || stage > 0) && (rules ?? HARD_RULES).sickness) {",
+    "new": "  if ((true) && (rules ?? HARD_RULES).sickness) {",
     "tests": [
       "test/surv1_model.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "SURV1-a-drain-can-empty-a-stat",
     "file": "src/systems/survival/needs.js",
-    "old": "    capped[k] = m < 0 ? -Math.min(-m, Math.max(0, perm - 5)) : m;",
+    "old": "    capped[k] = m < 0 ? -Math.min(-m, Math.max(0, floorAt - 5)) : m;",
     "new": "    capped[k] = m;",
     "tests": [
       "test/surv1_model.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "SURV1-a-rough-rest-clears-the-whole-debt",
     "file": "src/systems/survival/needs.js",
-    "old": "      const floor = sleeping === 'rough' ? NEED.SLEEP_TIRED : 0;",
+    "old": "      const floor = sleeping === 'rough' ? SLEEP_FLOOR_AT[rules.roughSleepFloor] ?? 0 : 0;",
     "new": "      const floor = 0;",
     "tests": [
       "test/surv1_model.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "SURV1-the-stage-line-repeats-every-minute",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (once) { if (n[key] === 'on') return; n[key] = 'on'; say?.(text); return; }",
-    "new": "  if (once) { say?.(text); return; }",
+    "old": "  if (stage === was) return;\n  const sev = STAGE_SEVERITY[family], now = sev[stage] ?? 0, before = was ? sev[was] ?? 0 : 0;\n  if (Math.sign(now) !== Math.sign(before) || Math.abs(now) > Math.abs(before)) say?.(text);",
+    "new": "  say?.(text);",
     "tests": [
       "test/surv1_model.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "SURV1-liveStat-ignores-the-survival-entry",
     "file": "src/systems/statMods.js",
-    "old": "      if (a.kind === 'survival') { mod += a.statMods?.[statName] ?? 0; continue; }",
+    "old": "      if (a.kind === 'survival') { survival += a.statMods?.[statName] ?? 0; continue; }",
     "new": "      if (a.kind === 'survival') { continue; }",
     "tests": [
       "test/surv1_model.test.js"

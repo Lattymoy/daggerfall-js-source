@@ -5550,7 +5550,7 @@ to that cite and moves under the same content check; citeMerge had
 done this since CS2 and citeShift only reported them, so the two
 regexes are one law now, exported from citeShift (`ANY_CITE`,
 `CONTINUATION`) and imported by citeMerge. (2) A TEST'S ESCAPED
-LITERAL FOLLOWS THE ROW IT PINS: `world\.js:5798` in citedrift.test.js
+LITERAL FOLLOWS THE ROW IT PINS: `world\.js:5814` in citedrift.test.js
 is a quote of a Ledger row's text; the row is STRUCK and its number
 held, and the literal used to move anyway, parting the pin from its
 row at every shift. The CLI plans every doc first, learns which
@@ -7965,6 +7965,15 @@ formulas in. ONE SWITCH (`survival/switch.js`, the enhanced pane's
 "survival" pref, ON by default - Mac's third point) turns the whole
 mod off, and off it every seam is DFU's own: the bed's hour, the
 eleven-line tavern list, no chips, no gate, no roll.
+**SUPERSEDED IN PART BY SURV-TIERS (2026-09-23, Mac: "Off, Casual,
+Hard")**: the switch is three tiers on the same key - Off (as above,
+the classic game, though it keeps the camps and the rest's place, and
+sees another player's camp - SURV-OFFSIGHT),
+Casual (the default: the same world, costing stamina alone, lent down to
+half the pool at most and repaid when the need is met) and Hard (the arc
+as recorded here). The design, the table, the stored values and the
+audit are in `06-Systems/Climates-Calories.md`, sections SURV-TIERS and
+AUDIT SURV-TIERS.
 
 AUDIT SURV (2026-09-18, Mac: "Let's audit everything so far"): five
 opus lenses over the arc - laws, wiring, surfaces, records, a Chromium

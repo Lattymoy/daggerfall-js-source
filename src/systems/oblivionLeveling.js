@@ -491,7 +491,7 @@ export function commitVirtueLevelUp(entity, deltas, purse, s, rolls = Math.rando
   // Endurance * fLevelUpHealthEndMult - the header's point 2 - and so
   // in Daggerfall's position, BEFORE the attributes land, reading the
   // endurance the character came in with.
-  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);
+  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter
   entity.health = Math.min(entity.health, entity.maxHealth);
   for (const key of STAT_KEYS_ORDER) {
     const d = deltas[key] ?? 0;

@@ -107,7 +107,7 @@
   {
     "name": "QS2-the-off-hand-used-as-overflow-so-a-swap-dual-wields",
     "file": "src/systems/quickslots.js",
-    "old": "  const bumped = previous && !leftOnly ? unequipSlot(entity, EQUIP_SLOTS.RightHand) : null;",
+    "old": "  const bumped = previous && !leftOnly ? unequipSlot(entity, target) : null;",
     "new": "  const bumped = null;",
     "tests": [
       "test/quickslots.test.js"

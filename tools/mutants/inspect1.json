@@ -50,10 +50,10 @@
   {
     "name": "INS-relay-min-lowered",
     "file": "src/net/wire.js",
-    "old": "export const CARD_RELAY_MIN = 101;",
-    "new": "export const CARD_RELAY_MIN = 100;",
+    "old": "export const CARD_RELAY_MIN = 102;",
+    "new": "export const CARD_RELAY_MIN = 101;",
     "tests": ["test/inspect1.test.js"],
-    "note": "A card asked of world100 (main's DISC7 relay, the last before the arc), which closes the socket for a frame it does not know."
+    "note": "A card asked of world101 (main's DISC12 relay, the last before the arc), which closes the socket for a frame it does not know."
   },
   {
     "name": "INS-frame-cap-dropped",

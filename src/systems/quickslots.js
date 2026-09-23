@@ -50,6 +50,7 @@ import { isShieldTemplate } from './armorMaterials.js';
 import { itemLongName, conditionPercentage } from './itemInfo.js';
 
 import { expandRowValues } from './quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
+import { racialSuppressInventory } from './lycanthropy.js';   // DISC10-E L3: the pack's refusal, at the two doors that reach into it
 /** The slots a player fills. The two consumables are what the diamond's
  *  top and bottom cells show; `swap` is the second weapon the off-hand
  *  cell offers when the off hand is empty. */
@@ -98,7 +99,7 @@ const state = { c1: null, c2: null, swap: null };
  *  INDEX - a SPELLS.STD record number, or the negative one a made spell
  *  mints (systems/spellMaker.js:212-230) - and that index is already
  *  this port's name for "which spell": it is what the save writes
- *  (systems/save.js:313), what a restore reads back, and what
+ *  (systems/save.js:319), what a restore reads back, and what
  *  `setReadiedByIndex` resolves a readied spell by. So the slot keeps
  *  the same key the rest of the port keeps, and a book that changed
  *  under it (a spell sold, a made spell deleted) leaves a GHOST that
@@ -285,6 +286,12 @@ export const offHandOffersSwap = (entity) => quickslotView(entity).off.kind === 
  */
 export function useQuickslot(slot, { entity = null, items = null, hooks = {}, say = null } = {}) {
   if (!CONSUMABLE_SLOTS.includes(slot)) throw new Error(`quickslots: ${slot} is not a consumable slot`);
+  // DISC10-E L3: a quickslot USE is the inventory window's Use arm
+  // without the window - and a transformed lycanthrope has no pack to
+  // reach into (GetSuppressInventory, DaggerfallInventoryWindow.cs
+  // :583-587). The window's own line, and nothing is consumed.
+  const sup = racialSuppressInventory(entity);
+  if (sup) { say?.(sup.text); return { kind: 'refused' }; }
   const r = resolveConsumable(entity, slot);
   if (!r) { say?.(QUICKSLOT_TEXT.emptySlot); return { kind: 'empty' }; }
   if (!r.item) { say?.(QUICKSLOT_TEXT.noneLeft(r.name)); return { kind: 'none', name: r.name }; }
@@ -321,8 +328,20 @@ export function useQuickslot(slot, { entity = null, items = null, hooks = {}, sa
  *
  * `rows` resolves the window's two refusal ids (broken, forbidden) to
  * their text; without it the refusal is silent but still a refusal.
+ *
+ * `hand` is the LIVE rig's hand door - `{ usingRightHand, switchHand }`
+ * (weaponRig.handDoor()). LH1: the swap readies the weapon into the hand
+ * IN USE, because that is the only hand the screen shows
+ * (WeaponManager.ApplyWeapon :741-755). Without it the swap is the
+ * right hand's, as it always was.
  */
-export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
+export function swapQuickslot({ entity = null, say = null, rows = null, hand = null } = {}) {
+  // DISC10-E L3: the swap is an EQUIP from the pack - the inventory
+  // window's own act - and the beast's pack is refused
+  // (DaggerfallInventoryWindow.cs:583-587). Without this a werewolf put a
+  // sword into the claws MorphSelf had just emptied (:463-467).
+  const sup = racialSuppressInventory(entity);
+  if (sup) { say?.(sup.text); return { kind: 'refused' }; }
   const r = resolveSwap(entity);
   if (!r) { say?.(QUICKSLOT_TEXT.noSwap); return { kind: 'none' }; }
   const table = equipTableOf(entity);
@@ -353,9 +372,19 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
   // THE HAND THE SWAP IS FOR. A left-only weapon (a bow under
   // Enhancements.BowLeftHandWithSwitching) lives in the left; everything
   // else the swap puts in the RIGHT, and what was there is the leaver.
-  const leftOnly = getItemHands(r.item) === ITEM_HANDS.LeftOnly;
-  const hand = leftOnly ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand;
-  const previous = table[hand] ?? null;
+  //
+  // LH1 (Discord: "Weapons when swapped into left hand dont work showing
+  // fists"): AND THE HAND IN USE. WeaponManager.ApplyWeapon (:741-755)
+  // draws `usingRightHand ? currentRightHandWeapon : currentLeftHandWeapon`,
+  // so a swap into the right hand while the player fights left-handed
+  // readied a weapon the screen never shows: "You ready your Dagger." over
+  // bare fists, every press. The swap now replaces the USED hand's weapon;
+  // a two-hander is the right hand's whatever is in use.
+  const hands = getItemHands(r.item);
+  const leftOnly = hands === ITEM_HANDS.LeftOnly;
+  const inUse = hand?.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand;
+  const target = leftOnly ? EQUIP_SLOTS.LeftHand : hands === ITEM_HANDS.Both ? EQUIP_SLOTS.RightHand : inUse;
+  const previous = table[target] ?? null;
   // QS2 - A SWAP REPLACES WHAT IS IN THE HAND, and `equipItem` alone does not.
   // GetEquipSlot's weapon arm is `getFirstSlot(RightHand, LeftHand)` for an
   // EITHER-handed weapon (ItemEquipTable.cs, characters/equipTable.js) - the
@@ -368,20 +397,28 @@ export function swapQuickslot({ entity = null, say = null, rows = null } = {}) {
   // nothing to swap to. So the main hand is emptied first when the swap weapon
   // would otherwise land beside it rather than in it; a left-only weapon keeps
   // its own hand, and `equipItem` evicts that hand's occupant itself.
-  const bumped = previous && !leftOnly ? unequipSlot(entity, EQUIP_SLOTS.RightHand) : null;
+  const bumped = previous && !leftOnly ? unequipSlot(entity, target) : null;
   const un = equipItem(entity, r.item);
   if (un === null) {
     if (bumped) equipItem(entity, bumped);   // the refusal changes nothing: the hand goes back as it was
     return { kind: 'refused', name: r.name };
   }
   billEquipDelayOnClose(entity, snap);
+  // LH1: the table's own law still places the item (GetEquipSlot: an
+  // Either weapon takes the FIRST OPEN of right, left), so a left-handed
+  // swap with the right hand empty, a two-hander, or a left-only bow
+  // readied from the right can land in the hand NOT in use. The hand
+  // follows the weapon through ToggleHand, the one door DFU has for it
+  // (:702-729) - its line, its shield refusal, its switch delay.
+  const landed = r.item.equipSlot ?? null;
+  if (hand && landed != null && landed !== inUse) hand.switchHand?.();
   // THE NEXT SWAP is what left the hand: the weapon that was there, or
   // bare hands when nothing was (AUDIT QS F2). A leaver that is not a
   // weapon - a shield a left-only bow bumped - is not a swap, and the
   // slot clears.
   const leaver = previous && !isEquipped(previous) ? previous : null;
   if (leaver && canSwapTo(leaver)) state.swap = { key: quickslotKey(leaver), name: itemLongName(leaver) };
-  else if (!previous) state.swap = { key: leftOnly ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };
+  else if (!previous) state.swap = { key: r.item.equipSlot === EQUIP_SLOTS.LeftHand ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };   // LH1: the hand it LANDED in
   else state.swap = null;
   say?.(QUICKSLOT_TEXT.swapped(r.name));
   return { kind: 'swapped', name: r.name, item: r.item, previous: leaver };
@@ -736,7 +773,7 @@ export function quickslotSaveData() {
   const out = {};
   for (const s of QUICKSLOTS) out[s] = state[s] ? { key: state[s].key, name: state[s].name } : null;
   // QS6: the spell slot rides the same block, keyed the way save.js
-  // already keys a spell - by index (systems/save.js:313).
+  // already keys a spell - by index (systems/save.js:319).
   out.spell = spellState ? { index: spellState.index, name: spellState.name } : null;
   return out;
 }

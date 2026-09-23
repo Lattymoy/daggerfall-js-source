@@ -104,9 +104,9 @@ export { getSkillRecentlyIncreased as skillRecentlyIncreased, setSkillRecentlyIn
  * NOT A GAP (closeout): `onLevelUp` IS DFU's char-sheet route.
  * RaiseSkills' tail is `if (CheckForLevelUp()) DaggerfallUI.PostMessage(
  * dfuiOpenCharacterSheetWindow)` (PlayerEntity.cs:1413-1414), and every
- * live host supplies that message as the hook - world.js:2833/:5055,
- * exterior.js:1106/:2030, worldModes.js:460/:8372,
- * dungeonContext.js:1824. The immediate arm below is taken only when
+ * live host supplies that message as the hook - world.js:2833/:5063,
+ * exterior.js:1106/:2035, worldModes.js:461/:8408,
+ * dungeonContext.js:1832. The immediate arm below is taken only when
  * onLevelUp is null: a headless/test path (and the ?class= skip) that
  * DFU has no counterpart for, so there is nothing to diverge from.
  *
@@ -261,7 +261,8 @@ export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledP
     return true;
   }
   entity.level += 1;   // L-slice (entity-9): Level++, never a jump to the calculated level
-  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)
+  // DISC10-E L4: onto the RAW maximum - MaxHealth reads the lycanthrope's limiter now, and `+=` through it would bake the urge's ceiling into the level
+  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)
   entity.health = Math.min(entity.health, entity.maxHealth);
   // AUDIT 23 (ui-native-1): DFU rolls BonusPool() exactly ONCE, at the
   // level-up screen's setup - the UI hands its shown pool back here so

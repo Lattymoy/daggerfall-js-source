@@ -10,7 +10,7 @@
 
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
-import { lycanthropeAttackVoice, racialSuppressInventory, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice + inventory refusal; LM1: the 4-20s move-sound loop
+import { lycanthropeAttackVoice, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the beast's attack voice; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { layoutDungeon } from '../world/dungeonLayout.js';
 import { expandMacros } from '../systems/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
@@ -21,7 +21,7 @@ import { signalAutomapReset } from '../ui/automapWindow.js';   // A1: the M wind
 // enhanced one gets the held sheet with the dungeon's plan inked on it.
 import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automapDoor.js';
 import { applyTextureTable } from '../world/dungeonTextures.js';
-import { createUseMagicItemWindow } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
+import { createUseMagicItemWindow, NO_ITEM_TO_ACTIVATE_TEXT } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
 import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the indoors refusal
 import { smallerDungeonsStamp, needsStartWarp } from '../world/smallerDungeons.js';   // AUDIT 28 W4 / FT1: the save-time stamp and the load-time warp, one home
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
@@ -51,6 +51,7 @@ import { survivalOn } from '../systems/survival/switch.js';
 import { survivalFeed, installSurvivalGate, uninstallSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the rest gate; AUDIT SURV B/C: and off the seam at the teardown
 import { registerPreventRestCondition, unregisterPreventRestCondition } from '../systems/restSession.js';   // SURV7: the gate's seam
 import { runSurvivalMinutes } from '../systems/survival/needs.js';   // AUDIT SURV B: the dungeon's rest pays its night asleep
+import { addCorpseFood } from '../systems/survival/loot.js';   // CORPSE-FOOD: a joiner's copy of a body rolls its own food
 import { dateFromClassicMinutes } from '../systems/gameDate.js';   // SURV7: the env's month
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendAmmoFor, isEnchanted } from '../systems/inventory.js';
@@ -116,7 +117,7 @@ import { tallySkill, skillValue, SKILLS, SKILL_NAMES } from '../systems/skills.j
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, EYE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
 import { initVirtueLeveling, LEVELING_CLASSIC } from '../systems/oblivionLeveling.js';   // ORL1: the font-less creation path answers the question it could not ask
-import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares
+import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor, playerWeaponHitEntity } from '../systems/worldTick.js';   // AUDIT 18: the player tick every host shares; DISC10-D H1: OnWeaponHitEntity's one dispatcher
 import { mintSharedStamp, hitPoisonOf, HIT_ARROWS_MAX, respawnDue, wallMsForClassicMinutes, validFoeRecord, validSharedFoe, FOE_HEALTH_MAX } from '../net/wire.js';   // AUDIT ONCRASH1 B4a/A3: the stream's door and the memory's, which this host had neither of   // WORLD8: the hour's respawn   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
@@ -236,7 +237,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1931); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:1954); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** AUDIT WORLD3 E3: can the ONE build chain actually stand this species? Both of buildFoeAt's branches need a truthy
@@ -1354,12 +1355,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return true;
   }
   // V1: the infection's host seam - the dream/death videos, the
-  // fortnight clock raise and the popup (THE FOUR HOSTS RULE). The
-  // dungeon has no FACTION.TXT of its own, so a player turned
-  // underground reads the clan off GetVampireClan's own default,
-  // which is Lyrezi and not a missing value. AUDIT 39 (#37): borrowed,
-  // and handed back in destroy() - this set has no clan lookup and no
-  // cemetery transfer, and a turn above ground needs both.
+  // fortnight clock raise and the popup (THE FOUR HOSTS RULE). AUDIT 39
+  // (#37): borrowed, and handed back in destroy().
+  // DISC10-D V3: the dungeon has no FACTION.TXT of its own, and needs
+  // none - the clan is read off the PLAYER's own faction store
+  // (FormulaHelper.cs:403), which a turn underground carries like any
+  // other. DISC10-D V4: and the cemetery transfer rides in from the
+  // host that mounted this context (worldModes hands world.js's arm
+  // down); a standalone dungeon cannot arrive anywhere and passes none.
   const _prevInfectionHost = wireInfectionVideos(renderer, {
     textAt: (id) => textRsc?.plainText(id) ?? null,
     // ENH-NOTICE3: THE `showText` THIS HOST USED TO PASS IS GONE. The
@@ -1372,6 +1375,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // messageBox.Show()` (DaggerfallUI.cs:1346-1353) - a PushWindow
     // that has never asked what is open. What the four hosts each
     // wired by hand, the presenter registered above now answers for.
+    transferToCemetery: opts.transferToCemetery ?? null,
+    // DISC10-D V8: "Cancel rest window if sleeping" (VampirismInfection.cs
+    // :152-154) - the dungeon's one slot; dispose is CloseWindow's plain pop.
+    cancelRest: () => { if (activeOverlay?.isRestWindow) activeOverlay.dispose?.(); },
   });
 
   // ── U26: THE NATIVE INVENTORY IN THE DUNGEON ─────────────────────
@@ -1512,8 +1519,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // page mounts no bridge and answers null, which is the same
     // fall-through DFU takes with nothing watching.
     getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
-    // U44: no reveal seam - this context has no region index to walk
-    revealMap: null,
+    // U44 / MAPLOOT1: no region index here - the OUTER host's reveal (world.js revealLocation via worldModes), null on ?dungeon
+    revealMap: opts.revealMap ?? null,
     nowMinute: () => Math.floor(worldMinutes()),   // AUDIT 21 F2: the one clock
   };
   /** QS2: the diamond's presses - see scenes/world.js's twin for the whole of
@@ -1526,7 +1533,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return true;
   };
   const quickSwap = () => {
-    swapQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), rows: useHooks.rows });
+    swapQuickslot({ entity: playerEntity, say: (l) => hudText.add(l), rows: useHooks.rows, hand: weaponRig.handDoor() });   // LH1: the used hand
     weaponRig.refreshWorn();
     return true;
   };
@@ -1560,13 +1567,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
 
   function openInventory(lootItems, onEmptied = null, { wagonPrompt = false, lootHooks = null, lootKey = null } = {}) {
     // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - a
-    // transformed lycanthrope opens NO inventory, loot included; the
-    // caller assigns the null and no overlay mounts.
-    const sup = racialSuppressInventory(playerEntity);
-    if (sup) { hudText.add(sup.text); return null; }
+    // transformed lycanthrope opens NO inventory, loot included.
+    // DISC10-E L3: said by the DOOR now (ui/inventoryDoor.js, where DFU's
+    // window says it), which answers null; every caller below mounts only
+    // a window - the refusal's box is already on this host's stack.
     return createInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm
-      placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3: a fire on the floor
+      usingRightHand: () => weaponRig.playerWeapon.usingRightHand,   // DISC12: the pack's figure holds the hand in USE
+      placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3: a fire on the floor - AUDIT SURV-TIERS: off the list it was used from
       say: (l) => hudText.add(l),   // FX1 (F128): the "Equipping %s" cue on close
       items: () => (playerEntity.items ??= []),
       wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice
@@ -1654,7 +1662,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9358 / exterior.js:3633), set
+  // host's own townTalk sink (world.js:9391 / exterior.js:3639), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1953,7 +1961,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (let l = 0; l < n; l++) {
     const hit = intermittentEnemySpawn({
       gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
-      roughRest: playerEntity.restKind === 'rough',   // SURV4: the bare floor asks twice; a fire on it, once
+      restAsks: playerEntity.restAsks,   // SURV4 + SURV-TIERS: priced at the open (scenes/shared.js) - the bare floor asks twice in Hard; a fire on it, or any Casual floor, once
       enemyAlertActive: !!playerEntity.enemyAlertActive,
       dungeonType: dfLocation.mapTableData.dungeonType,
       playerLevel: playerEntity.level,
@@ -2016,7 +2024,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // on to something else (the death screen, above all).
     onClose: () => { if (activeOverlay?.isRestWindow) activeOverlay = null; },
     day: () => false, inside: () => true,
-    restKind: () => (_fpFeet && camps.byFire(_fpFeet) ? 'camp' : 'rough'),   // SURV4: a fire on the floor is the sleep; the bare floor is rough
+    restKind: () => (_fpFeet && camps.fireNear(_fpFeet) ? 'camp' : 'rough'),   // SURV4: a fire on the floor is the sleep; the bare floor is rough (AUDIT SURV-TIERS: the world's fire, in every tier)
   });
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
@@ -2186,7 +2194,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1170,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1177,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2409,8 +2417,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // INVE00I0/SHOP00I0 (or no PICK00I0) means no window, and a seam
     // that cannot mount says so rather than swallowing the cast.
     onIdentify: ({ chance, refund } = {}) => {
-      if (!tradeDoorReady()
-        || !mountSpellWindow(openIdentifySpellWindow({ chance: chance ?? 0, cost: refund ?? 0 }))) {
+      const w = tradeDoorReady() ? openIdentifySpellWindow({ chance: chance ?? 0, cost: refund ?? 0 }) : undefined;
+      // DISC10-E L3: a transformed lycanthrope's counter is refused AT the
+      // trade door, which says so and answers null - nothing to mount and
+      // nothing more to say
+      if (w === null) return;
+      if (!tradeDoorReady() || !mountSpellWindow(w)) {
         hudText.add('You cannot concentrate on that right now.');
       }
     },
@@ -2705,7 +2717,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1072 against :1101; worldModes.js:7018 against :7042).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1072 against :1101; worldModes.js:7048 against :7072).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3078,7 +3090,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // played :483's WALL pair (Hit2/Parry6), a branch DFU's own
         // comment marks "not in classic".
         const snd = zeroDamageHitSound({
-          weapon: playerWeapon.weapon, arrowHit: false,
+          weapon: playerWeapon.strikingWeapon, arrowHit: false,   // DISC10-E: :611's strikingWeapon - the hand's item, null for the beast's claws
           parrySounds: !!ENEMY_BASICS[foe.mobileType]?.parrySounds, roll: Math.random(),
         });
         if (snd?.at === 'enemy') audio.play3d(snd.sound, foe.ai.feet, 1.1, { maxDistance: 16 });
@@ -3091,22 +3103,24 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // changes nothing, and the knockback/hurt the damage door also
         // carries lives INSIDE WeaponManager's `damage > 0` arm.
         attackFromPlayer(foe, playerFeet);   // AUDIT WORLD6b-iii(e) C2: through the one door - a puppet's zero blow goes to the host (WORLD2 B13), and no layout of mine wakes for it
+        playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });   // DISC10-D H1: OnWeaponHitEntity, after DecreaseHealth and HandleAttackFromSource (WeaponManager.cs:627-635) - every connect, the zero-damage one too
         continue;
       }
       // EnemySounds.PlayHitSound at the struck foe, weapon-aware
-      audio.play3d(hitSoundFor(playerWeapon.weapon), foe.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });   // rides the foe's source shape
+      audio.play3d(hitSoundFor(playerWeapon.strikingWeapon), foe.ai.feet, ENEMY_HIT_VOLUME, { maxDistance: 16 });   // rides the foe's source shape; DISC10-E: PlayHitSound(currentRightHandWeapon) (WeaponManager.cs:563-566) - the HAND's item, so the beast's claws strike with the bare hand's sound
       // WeaponManager.cs:569-573 - the splash sits right beside the hit
       // sound and takes the struck foe's OWN BloodIndex. DFU has a
       // raycast impactPosition here; the port resolves melee by yaw
       // cone and distance, so the body centre (DFU's own no-raycast
       // formula, EnemyAttack.cs:326-328) stands in.
       hitEffects?.showBloodSplash(ENEMY_BASICS[foe.mobileType]?.bloodIndex ?? 0,
-        bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
+        bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.strikingWeapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch
       // C2-slice (combat-17): a damaged CLASS foe cries out 40% of
       // the time (heavyDamage = a quarter of max health in one hit).
       const pain = enemyPainVoice(foe, damage);
       if (pain && pain.clip >= 0) audio.play3d(pain.clip, [foe.ai.feet[0], foe.ai.feet[1] + 0.9, foe.ai.feet[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
       damageFoe(foe, damage, playerFeet, lookDir);   // C15: the attack ray knocks back; rigs also stagger (HurtFront/Back)
+      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });   // DISC10-D H1: OnWeaponHitEntity, after DecreaseHealth and HandleAttackFromSource (WeaponManager.cs:627-635) - every connect, the zero-damage one too
     }
     // combat-14: the no-entity fallback - only a swing that connected
     // with NO foe may bash the environment.
@@ -3274,8 +3288,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:14341,
-              // exterior.js:5177 and worldModes.js:7218 already ran;
+              // playerArrowHitFoe is the one copy world.js:14383,
+              // exterior.js:5185 and worldModes.js:7248 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3608,6 +3622,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     p.moving = !!r.m;
     if (Number.isFinite(r.h)) { if (r.h < f.entity.health) p.hurt = true; f.entity.health = r.h; }
     if (r.a != null) { const a = r.a | 0; if (p.a != null && a !== p.a) p.strike = (a & 1) ? 'ranged' : 'melee'; p.a = a; }
+    // CORPSE-FOOD (Mac: "It needs to be accessible with people with it on"): this copy's own roll of the body's food.
+    // The host's kill fed the host's copy alone - a death is raised where it happens - and a joiner who opened the
+    // body first handed the room a list with none (WORLD4: the first reader's list is the room's). Each copy rolls its
+    // own, as a chest does.
+    if (r.d === 1 && !f.dead) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });
     if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to
     else if (r.d === 0 && f.dead) {   // AUDIT WORLD7/8 B3: the stream's un-death is a REBUILD - the host minted a fresh entity (the hour's respawn), and the old body stood up looted, still cursed (a frozen drain killed it again at once and sent the host the blow) and with the dead foe's counts (phantom edges); WORLD3 E2's own arm
       const idx = foes.indexOf(f);
@@ -3647,7 +3666,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!_authority || !data || typeof data !== 'object') return false;
     const i = data.i | 0, dmg = Number(data.dmg);
     const f = foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1931). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:1954). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || i >= _layoutFoes || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -4107,6 +4126,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.mobile.clearSpecialTransformationCompleted();
       if (f.seducer) f.seducer = new SeducerTransformBehaviour(f.mobile, f.entity);   // SetupDemoEnemy.cs:191-195' fresh component
     }
+    // CORPSE-FOOD: and a body the room's memory hands an arrival without its list (the memory writes none since AUDIT
+    // WORLD4 D4) is this copy's own roll too - food and all, as the stream's death above. A save off disk carries its
+    // own list, and a room's list is the room's.
+    if (wire && sf.dead && !f.dead && sf.items == null) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });
     if (sf.dead && Number.isFinite(sf.died)) { const _n = _wallNow(); f._diedAt = _n == null ? sf.died : Math.min(sf.died, _n); }   // WORLD8: the room's stamp, not this client's arrival; AUDIT WORLD7/8 B4: never AHEAD of now (a far-future stamp revoked the hour for thirty days)
     if (sf.dead && !f.dead) setFoeDead(f, true);
     // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
@@ -4126,7 +4149,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:1530's restoreWorld goes through
+    // construction (exteriorFoes.js:1536's restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
@@ -4203,7 +4226,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // clearing restore would delete this player's floor stash and mint the host's under their feet
     if (truncate) droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
     if (truncate) droppedTorches.restore(w.droppedTorches);   // HT1: the same law
-    if (truncate) camps.restore(w.camps);   // SURV3
+    if (truncate) { camps.dropOwn(); camps.restore(w.camps); }   // SURV3; AUDIT SURV-TIERS (the third pass): the save says which fires are mine - a kit fire lit after it goes with the rewind
     // P10 + AUDIT 23 (save-load-11): state, lock and BOTH tweens
     // restore, then each object settles its matrix and collider bucket
     // (an open door no longer restores solid-and-closed, and a door
@@ -4495,6 +4518,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       weapon: wpn,   // AUDIT 18: target group derived from the entity (isPlayer -> Humanoid)
       onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
         currentDay: Math.floor(classicMinutesRef.value / MINUTES_PER_DAY), sinks: playerSinks,
+        regionIndex: dfLocation?.regionIndex ?? -1,   // DISC10-D V3: PlayerGPS.CurrentRegionIndex underground is the dungeon's own region (VampirismInfection.cs:91)
         castParalyze: () => {   // S19: spider/scorpion free-cast Spider Touch (66)
           const sp = spellsByIndex?.get(SPIDER_TOUCH_SPELL_INDEX);
           if (sp) castEnemySpell(f, sp, true);
@@ -5729,6 +5753,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // window stack any other way). Null while not resting and null for
     // a mirrored session, same law.
     restEnemiesNearby: () => _restDeps.enemiesNearby(),   // AUDIT PARTY-REST: the mirror's own foe question, this host's scan
+    survivalEnvNow,   // AUDIT SURV-TIERS (the second pass): and the mirror's needs - world.js's ticker runs a mirrored night here with this host's reader
     get restState() {
       const w = activeOverlay;
       // PARTY-REST6: see worldModes.js's own restState getter for the bug this `state === 'resting'` guard
@@ -6902,7 +6927,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     toggleInventory() {
       if (activeOverlay) return;
-      activeOverlay = openInventory(null);
+      const w = openInventory(null);
+      if (w) activeOverlay = w;   // DISC10-E L3: a refused pack is null - and its box already holds the slot
     },
     /** AUDIT 28 F-C2: PlayerMouseLook's swing gate excludes a bow
      *  (:248, WeaponType != Bow) - the standalone host asks here. */
@@ -6913,8 +6939,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  in Remove mode, wherever the player stands. */
     openInventoryWithWagon() {
       if (activeOverlay) return false;
-      activeOverlay = openInventory(null, null, { wagonPrompt: true });
-      return !!activeOverlay;
+      const w = openInventory(null, null, { wagonPrompt: true });
+      if (w) activeOverlay = w;   // DISC10-E L3: a refused pack is null - and its box already holds the slot
+      return !!w;
     },
     /** The TEXT.RSC rows the exit prompt reads (record 38). */
     rscLines,
@@ -6949,6 +6976,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         onUse: (item) => opts.useMagicItem?.(item),
       });
       if (win) activeOverlay = win;
+      else hudText.add(NO_ITEM_TO_ACTIVATE_TEXT);   // DISC12: DaggerfallUI.cs:584-585
     },
     /** AUDIT 64 F13: this dungeon's static NPCs, for the two dungeon
      *  rays. The ShowText / ShowTextWithInput exclusion is
@@ -7145,8 +7173,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         return source.length;
       }
       const _k = lootHolder(key) ? lootKeyOf(key) : null;
-      activeOverlay = openInventory(source, onEmptied, { lootHooks, lootKey: _k });
-      if (activeOverlay && _k) { _lootOpenKey = _k; publishLoot(_k, { claim: true }); }
+      const _w = openInventory(source, onEmptied, { lootHooks, lootKey: _k });
+      if (_w) activeOverlay = _w;   // DISC10-E L3: a refused pack is null - and its box already holds the slot
+      if (_w && _k) { _lootOpenKey = _k; publishLoot(_k, { claim: true }); }
       return source.length;
     },
     /** RW1: GivePc's reward container (GivePc.cs:167-171) - a dropped

@@ -100,16 +100,23 @@ export function humanoidFood(rolls = Math.random) {
 }
 
 let _installed = false;
-/** Once per boot: the death handler adds the corpse's food to the
- *  entity's items, which the corpse container is. */
+let _enabled = () => false;
+/** The corpse's food into the entity's items, which the corpse container is - when the installed switch says so.
+ *  The death handler's roll, and CORPSE-FOOD's for a copy of a body whose death this machine did not raise (a
+ *  dungeon joiner's: dungeonContext.js). Answers how many items it added. */
+export function addCorpseFood(entity, opts = {}) {
+  if (!_enabled() || !entity || !Array.isArray(entity.items)) return 0;
+  const luck = opts.luck ?? 50;   // AUDIT VC6: the raiser's own player, or the floor
+  const before = entity.items.length;
+  for (const item of corpseFood(entity, { luck, rolls: opts.rolls ?? Math.random })) entity.items.push(item);
+  return entity.items.length - before;
+}
+/** Once per boot: the death handler adds the corpse's food. */
 export function installSurvivalLoot({ enabled = () => true } = {}) {
   if (_installed) return false;
   _installed = true;
-  registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, (entity, opts = {}) => {
-    if (!enabled() || !entity || !Array.isArray(entity.items)) return;
-    const luck = opts.luck ?? 50;   // AUDIT VC6: the raiser's own player, or the floor
-    for (const item of corpseFood(entity, { luck, rolls: opts.rolls ?? Math.random })) entity.items.push(item);
-  });
+  _enabled = enabled;
+  registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, (entity, opts = {}) => { addCorpseFood(entity, opts); });
   return true;
 }
-export function uninstallSurvivalLoot() { registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, null); _installed = false; }
+export function uninstallSurvivalLoot() { registerEnemyDeathHandler(SURVIVAL_LOOT_HANDLER, null); _installed = false; _enabled = () => false; }

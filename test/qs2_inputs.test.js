@@ -302,7 +302,7 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap 
   // rig - the one place the two halves differ, and the reason it is written out.
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /quickUse\(n\) \{ return host\.quickUse\?\.\(n\) === true; \},/);
-  assert.match(wm, /const ok = host\.quickSwap\?\.\(\) === true;\s*\n\s*if \(ok\) interiorWeapon\.refreshWorn\(\);/,
+  assert.match(wm, /const ok = host\.quickSwap\?\.\(interiorWeapon\) === true;[^\n]*\n\s*if \(ok\) interiorWeapon\.refreshWorn\(\);/,
     'the interior rig is the one this mode draws, so it is the one told');
   // QS4: and its light is that rig's too - the outer host's door would toggle
   // the wrong one, which is the same B4/D1 lesson one hand over.
@@ -318,7 +318,7 @@ test('QS2: every host ctx that carries toggleSheath carries quickUse, quickSwap 
   assert.match(rd('src/scenes/dungeon.js'), /ctx\.tickQuickHold\?\.\(dt, \{ isHeld: \(a\) => held\(keys, a\), blocked: overlayHeld \|\| !walkMode \}\);/,
     'the standalone ?dungeon page drives the same machine with its own keys');
   for (const path of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(rd(path), /quickUse: \(n\) => quickUse\(n\),\s*\n\s*quickSwap: \(\) => quickSwap\(\),/g,
+    assert.match(rd(path), /quickUse: \(n\) => quickUse\(n\),\s*\n\s*quickSwap: \(rig\) => quickSwap\(rig\),/g,
       `${path} hands the performers down to the mode machine as well as onto its own ctx`);
     assert.match(rd(path), /quickSpell: \(\) => quickSpell\(\),/, `${path} hands the spell door down too`);
     assert.equal((rd(path).match(/quickUse: \(n\) => quickUse\(n\),/g) ?? []).length, 3,

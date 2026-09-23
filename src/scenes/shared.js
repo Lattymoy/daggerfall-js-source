@@ -37,8 +37,9 @@ import { announceSkillRaise, announceMastery } from '../ui/levelNotice.js';
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, setWorldMinutes, advanceWorldMinutes, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
-import { REST_KIND, REST_TEXT_SURVIVAL, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
-import { survivalOn } from '../systems/survival/switch.js';
+import { REST_KIND, REST_TEXT_SURVIVAL, restCost, restHour, stiffen } from '../systems/survival/rest.js';   // SURV4: the rest law - a bed and a fire sleep, the window alone is rough
+import { survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: the rest's price is the tier's, read at the open
+import { sleepStage } from '../systems/survival/needs.js';   // AUDIT SURV-TIERS (the third pass): the rough night's lesser sleep, said
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
 import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
@@ -1369,7 +1370,7 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
   // add a line to its frame body.
   const subscribers = [];
   // SURV7: the rest gate on DFU's RegisterPreventRestCondition seam, with this host's readers - too cold without a
-  // fire or a roof, too hot anywhere (survival/rest.js restBlock); inert with the mod off
+  // fire or a roof, too hot anywhere (survival/rest.js restBlock); inert but in Hard (SURV-TIERS: env.js survivalGateOn)
   if (survivalEnv) installSurvivalGate(registerPreventRestCondition, () => entity, survivalEnv);
 
   return {
@@ -1698,7 +1699,7 @@ export async function endRunToTitleMenu(renderer, { play = playDeathVideo, watch
  * close callback is what carries the lifecycle forward and it runs on
  * every path out.
  */
-export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null } = {}) {
+export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null, cancelRest = null } = {}) {
   // AUDIT 39 (#37): answers the host it replaced. A context that mounts
   // over an outer one (the dungeon over worldModes) hands this back on
   // teardown - the leaner set it registers has no FACTION.TXT and no
@@ -1709,7 +1710,16 @@ export function wireInfectionVideos(renderer, { textAt = null, factionDict = nul
     // single-location reality that makes travel's V world-host only),
     // so everywhere else this stays null and the new vampire wakes
     // where they fell - recorded, not silent: the deploy still runs.
+    // DISC10-D V4: world.js's arm runs from ANY mode (it forces the
+    // exterior first) and worldModes hands it to the dungeon it mounts.
     transferToCemetery,
+    // DISC10-D V8: "Cancel rest window if sleeping" (:152-154) - the
+    // host's own rest slot, closed at the head of the deploy.
+    cancelRest,
+    // DISC10-D V2: WorldTime.Now for the curse the deploy mints - read
+    // AFTER the raise, which is the clock VampirismEffect.Start's
+    // UpdateSatiation stamps (:95-96).
+    nowMinutes: () => Math.floor(worldMinutes()),
     playVideo(name, onClose) {
       // Off the tick's own frame: playVideo OWNS the frame loop for
       // its lifetime, and pushing it from inside a frame body is the
@@ -1793,13 +1803,23 @@ export function wireInfectionVideos(renderer, { textAt = null, factionDict = nul
       const lines = plainLines(textAt?.(id));
       if (lines?.length) messageBox(lines);
     },
-    // GetVampireClan's region read (:400-427), assembled from the
-    // host's FACTION.TXT: the Province faction of the region the
-    // infection was CAUGHT in, not the one the player turns in. A
-    // getter because FACTION.TXT loads after boot.
-    clanOf: (regionIndex) => {
-      const dict = typeof factionDict === 'function' ? factionDict() : factionDict;
-      const province = dict ? findFactions(dict, { type: FACTION_TYPES.Province, region: regionIndex })[0] : null;
+    // GetVampireClan's region read (:400-427): the Province faction of
+    // the region the infection was CAUGHT in, not the one the player
+    // turns in.
+    // DISC10-D V3: off the PLAYER's own faction data, as DFU reads it
+    // (`GameManager.Instance.PlayerEntity.FactionData.GetRegionFaction`,
+    // FormulaHelper.cs:403) - every host has that store, where only the
+    // town hosts had FACTION.TXT (the dungeon's registration passes none,
+    // so every vampire turned underground was a Lyrezi). The host's
+    // dictionary is the fallback for an entity with no store yet (a getter
+    // because FACTION.TXT loads after boot). And -1 is NOT a region:
+    // FindFactions reads it as "any", which made the first Province in the
+    // file every vampire's - DFU never asks without a region
+    // (VampirismInfection.cs:91), so an unknown one takes GetVampireClan's
+    // own default rather than a stranger's clan.
+    clanOf: (regionIndex, entity = null) => {
+      const dict = entity?.factionRep?.dict ?? (typeof factionDict === 'function' ? factionDict() : factionDict);
+      const province = dict && regionIndex >= 0 ? findFactions(dict, { type: FACTION_TYPES.Province, region: regionIndex })[0] : null;
       return vampireClanForFaction(province);
     },
     hourNow: () => Math.floor((worldMinutes() % MINUTES_PER_DAY) / 60),
@@ -2030,7 +2050,9 @@ export function createRestDeps(entity, opts = {}) {
     // host that says nothing sleeps rough, which is what the window alone has always been
     restKind = () => REST_KIND.Rough, ...rest
   } = opts;
-  let _kind = REST_KIND.Rough;   // the running rest's kind, read at the open
+  let _kind = REST_KIND.Rough;   // the running rest's kind as the laws PRICE it, read at the open - DFU's bed with the arc off
+  let _place = REST_KIND.Rough;  // AUDIT SURV-TIERS: WHERE the running rest is, read at the open in every tier (see setResting)
+  let _rules = null;             // SURV-TIERS: the running rest's tier rules (survival/difficulty.js), read at the open - null with the arc off
   let _roughHours = 0;           // rested hours paid at the rough rate - the stiff morning follows them
   // PARTY-REST10 (2026-09-21, per-request: confirmed by testing - health frozen for 10 straight simulated
   // hours under Rough, not merely "sometimes rounds down"): see systems/survival/rest.js's own `restHour` doc
@@ -2061,17 +2083,29 @@ export function createRestDeps(entity, opts = {}) {
     setResting: (b) => {
       entity.isResting = !!b;
       // SURV4: the kind is read at the OPEN (the fire may die under a long night - it was lit when you lay down);
-      // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the encounter roll's `roughRest`
+      // `entity.restKind` is the needs law's `sleeping` for the hosts' env feed and the kind the party pose broadcasts
       // PARTY-REST4b: `_restKindOverride`, when one is set, wins over the inherited `restKind()` position check -
       // see the doc comment above `_restKindOverride`'s declaration for the closure bug this replaces.
+      // AUDIT SURV-TIERS: WHERE and WHAT IT COSTS are two answers. The place is the world's, read in every tier and
+      // stamped on the entity - a party follower mirrors it (world.js partyRestMirrorDeps), and an Off leader had
+      // been broadcasting every field as a bed, so a Casual or Hard follower beside them slept a bed's night. The
+      // price is the tier's: with the arc off every rest is DFU's whole hour (a bed's), in any place.
       if (b) {
-        _kind = survivalOn() ? (_restKindOverride ?? restKind)() : REST_KIND.Bed; _roughHours = 0;
+        _rules = survivalRules();   // SURV-TIERS: the tier read beside the place prices it (restHour, stiffen, the asks)
+        _place = (_restKindOverride ?? restKind)();
+        _kind = _rules ? _place : REST_KIND.Bed; _roughHours = 0;
         _roughCarry = { health: 0, fatigue: 0, magicka: 0 };   // PARTY-REST10: a fresh sleep owes nothing to whatever the last one banked
       }
       // SURV4: rough hours rested are a stiff morning (STIFF_HOURS of speed and agility) on the way out - an interrupted
       // night too, since the hours were slept - said once; the hours are spent
-      if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
-      entity.restKind = b ? _kind : null;
+      // SURV-TIERS: under the tier the rest opened with - a Casual morning costs nothing, so nothing is said
+      if (!b && _roughHours > 0 && stiffen(entity, worldMinutes(), REST_KIND.Rough, _rules)) { say(REST_TEXT_SURVIVAL.stiff); _roughHours = 0; }
+      // AUDIT SURV-TIERS (the third pass): a tier with no stiff morning (Casual) still sleeps the rough night at a third
+      // of a bed's rate, and a sleeper woke Drowsy from eight hours on the ground with no word for why - said when it
+      // left them short
+      else if (!b && _roughHours > 0 && _rules && sleepStage(entity.survival?.sleepDebt ?? 0) !== 'rested') { say(REST_TEXT_SURVIVAL.sleptPoorly); _roughHours = 0; }
+      entity.restKind = b ? _place : null;
+      entity.restAsks = b ? restCost(_kind, _rules).encounters : null;   // SURV-TIERS: the resting encounter roll's asks a minute - Hard's rough night two, every Casual or Off night one
       // PARTY-REST4b: an override is good for exactly one session - the moment THIS session's resting flag drops,
       // forget it, so a later real rest (this same entity choosing to actually rest for themselves) never
       // silently inherits a stale kind broadcast by whoever they last mirrored.
@@ -2110,7 +2144,7 @@ export function createRestDeps(entity, opts = {}) {
     // SURV4: the hour by its kind - DFU's whole hour in a bed or by a fire, half of it rough (survival/rest.js restHour)
     tickVitals: () => {
       if (_kind === REST_KIND.Rough) _roughHours++;
-      const healed = restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() }), _roughCarry);
+      const healed = restHour(entity, _kind, () => restVitals(entity, { day: day(), inside: inside() }), _roughCarry, _rules);   // SURV-TIERS: the tier's rough price
       return healed;
     },
     fullyHealed: () => restFullyHealed(entity),

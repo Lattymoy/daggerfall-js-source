@@ -41,7 +41,7 @@ const CARD = { level: 12, attrs: [55, 60, 45, 70, 50, 40, 65, 50], vitals: [118,
 
 // ─── THE WIRE ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('INSPECT1 wire: a card frame is an ASK or an ANSWER, never both; the card whole or nothing - the level, eight attributes and three vitals each an integer inside its bound, the look through the room\'s own law; world101 the first relay that routes it (world99 before the merge: main\'s world99 and world100 route no card) (mutants: an ask carrying a card admitted; a bound off by one; a short card admitted; the look unprojected)', () => {
+test('INSPECT1 wire: a card frame is an ASK or an ANSWER, never both; the card whole or nothing - the level, eight attributes and three vitals each an integer inside its bound, the look through the room\'s own law; world102 the first relay that routes it (world99 before the first merge, world101 before the sixth: main\'s world99, world100 and world101 route no card) (mutants: an ask carrying a card admitted; a bound off by one; a short card admitted; the look unprojected)', () => {
   assert.deepEqual(validCardData({ to: 'peer-0002', ask: true }), { to: 'peer-0002', ask: true });
   assert.deepEqual(validCardData({ to: 'peer-0002', card: CARD }), { to: 'peer-0002', card: { ...CARD, look: { ...LOOK } } });
   for (const bad of [
@@ -70,10 +70,10 @@ test('INSPECT1 wire: a card frame is an ASK or an ANSWER, never both; the card w
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002', ask: true } })), { error: 'card before hello' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002' } }), { hasHello: true }), { error: 'bad card' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'card', data: { to: 'peer-0002', card: CARD, pad: 'x'.repeat(CARD_FRAME_MAX) } }), { hasHello: true }), { error: 'frame too large' });
-  assert.equal(RELAY_VERSION, 'world101');
-  assert.equal(CARD_RELAY_MIN, 101);
-  assert.equal(relaySupportsCard('world101'), true);
-  assert.equal(relaySupportsCard('world100'), false);
+  assert.equal(RELAY_VERSION, 'world102');
+  assert.equal(CARD_RELAY_MIN, 102);
+  assert.equal(relaySupportsCard('world102'), true);
+  assert.equal(relaySupportsCard('world101'), false);
   assert.equal(relaySupportsCard(null), false);
   // a full card of 27 worn items of the widest fields fits the frame
   const wide = { templateIndex: 65535, group: 'WomensClothing', material: 4095, dye: 4095, variant: 4095 };

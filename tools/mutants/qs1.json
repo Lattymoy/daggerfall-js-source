@@ -110,8 +110,8 @@
   {
     "name": "QS1-the-swap-bills-no-pause",
     "file": "src/systems/quickslots.js",
-    "old": "  billEquipDelayOnClose(entity, snap);\n  // THE NEXT SWAP is what left the hand",
-    "new": "  // THE NEXT SWAP is what left the hand",
+    "old": "  billEquipDelayOnClose(entity, snap);\n  // LH1: the table's own law",
+    "new": "  // LH1: the table's own law",
     "tests": [
       "test/quickslots.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "AUDITQS-F2-empty-hands-clear-the-slot-again",
     "file": "src/systems/quickslots.js",
-    "old": "  else if (!previous) state.swap = { key: leftOnly ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };",
+    "old": "  else if (!previous) state.swap = { key: r.item.equipSlot === EQUIP_SLOTS.LeftHand ? BARE_KEYS.L : BARE_KEYS.R, name: BARE_NAME };",
     "new": "",
     "tests": [
       "test/quickslots.test.js"

@@ -71,7 +71,7 @@ test('DICE1 the client\'s check: a roll it is told is n dice each 1..m and a tot
 
 // ─── THE WIRE ───────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('DICE1 wire: the ask is a spec and nothing else - the dice\'s bounds, after hello, a channel only the chat\'s law allows; world101 the first relay that rolls (world99 before the merge: main\'s world99 and world100 roll nothing); one roll a second (mutants: the ask carrying a result; the bounds unchecked at the relay; an unknown channel admitted; the version gate one high)', () => {
+test('DICE1 wire: the ask is a spec and nothing else - the dice\'s bounds, after hello, a channel only the chat\'s law allows; world102 the first relay that rolls (world99 before the first merge, world101 before the sixth: main\'s world99, world100 and world101 roll nothing); one roll a second (mutants: the ask carrying a result; the bounds unchecked at the relay; an unknown channel admitted; the version gate one high)', () => {
   const h = { hasHello: true };
   assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', n: 2, m: 6, k: 3 }), h), { t: 'roll', n: 2, m: 6, k: 3 });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', n: 2, m: 6, k: 3, dice: [6, 6], total: 15 }), h), { t: 'roll', n: 2, m: 6, k: 3 }, 'a result on the ask is read by nobody - the relay rolls');
@@ -80,9 +80,9 @@ test('DICE1 wire: the ask is a spec and nothing else - the dice\'s bounds, after
     assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', ...bad }), h), { error: 'bad roll' }, JSON.stringify(bad));
   assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', n: 1, m: 6, k: 0, ch: 'guild' }), h), { error: 'bad roll' });
   assert.deepEqual(parseClient(JSON.stringify({ t: 'roll', n: 1, m: 6, k: 0 })), { error: 'roll before hello' });
-  assert.equal(ROLL_RELAY_MIN, 101);
-  assert.equal(relaySupportsRoll('world100'), false, 'DISC7\'s relay (the last before the arc) answers a roll with "unknown message" and closes the socket');
-  assert.equal(relaySupportsRoll('world101'), true);
+  assert.equal(ROLL_RELAY_MIN, 102);
+  assert.equal(relaySupportsRoll('world101'), false, 'DISC12\'s relay (the last before the arc) answers a roll with "unknown message" and closes the socket');
+  assert.equal(relaySupportsRoll('world102'), true);
   assert.ok(relaySupportsRoll(RELAY_VERSION));
   assert.equal(ROLL_HZ_MAX, 1);
   const a = rollGate(null, 0); assert.equal(a.pass, true);

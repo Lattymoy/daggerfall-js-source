@@ -209,8 +209,8 @@
   {
     "name": "DISC7-hs-edge-waits-for-a-heartbeat",
     "file": "src/net/wire.js",
-    "old": "    || (a.hs | 0) !== (b.hs | 0);",
-    "new": "    || false;",
+    "old": "    || (a.hs | 0) !== (b.hs | 0)   // DISC7: and the clop's swap, as the rider's own swaps on its edge",
+    "new": "    || false   // DISC7: and the clop's swap, as the rider's own swaps on its edge",
     "tests": [
       "test/disc7.test.js"
     ]

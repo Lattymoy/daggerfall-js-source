@@ -19,7 +19,7 @@
 // list, and no other host has one.
 
 import { updateDiseases } from './diseases.js';
-import { runInfections } from './infection.js';   // V1: UpdateDisease's override, which the base walk skips
+import { runInfections, setRacialCurseDeployer } from './infection.js';   // V1: UpdateDisease's override, which the base walk skips; DISC10-D V2: the deploy's curse mint
 import { consumeRacialOverridePending, lycanthropyMagicRound } from './lycanthropy.js';   // V2a: the curse the deploy mints
 import { consumeVampirismPending, vampirismMagicRound, liveVampirism } from './vampirism.js';   // V2b: the other curse; AUDIT WORLD5 C3: its feeding clock, aligned with the rest
 import { updatePoisons } from './poisons.js';
@@ -27,20 +27,68 @@ import { tickActiveEffects } from './effects.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
 import { FATIGUE_LOSS, killIfAnyLiveStatZero } from './statMods.js';
 import { decayEnemyAlert } from './encounters.js';   // PlayerEntity.Update:380-384, the 8-hour alert decay
-import { dice100, setRacialHitHook, setPlayerStruckHook } from '../combat/formulas.js';
+import { dice100, setPlayerStruckHook } from '../combat/formulas.js';
 import { installPcaao } from '../combat/pcaao.js';   // PCO1: the mod's RegisterOverride, once, for every host
 import { installMeanerMonsters } from '../characters/meanerMonsters.js';   // MM1: its xml billboard scales join the registry, once
 import { installUnleveledLoot } from './unleveledLoot.js';   // UL1: its two material overrides and its death handler, once
-import { onLycanthropeHit } from './lycanthropy.js';
+import { onLycanthropeHit, liveLycanthropy } from './lycanthropy.js';   // DISC10-E V9: the werewolf's clocks ride the online shift
 import { onVampireHit } from './vampirism.js';
 import { onPlayerStruckByEnemy } from './artifactEffects.js';   // V3: the Ring of Namira's reflection
 
-// V2a/V2b: OnWeaponHitEntity's registration - formulas.js cannot
-// import the curses (the dice100 cycle), and every host loads THIS
-// module, so the hook rides here.
-setRacialHitHook((attacker, target, { nowMinutes = 0, mobileType = null, isCivilian = false } = {}) => {
-  onVampireHit(attacker, nowMinutes);
-  onLycanthropeHit(attacker, target, { nowMinutes, mobileType, isCivilian });
+/**
+ * DISC10-D H1: RacialOverrideEffect.OnWeaponHitEntity - THE ONE DISPATCHER,
+ * called by the player's strike resolution AFTER the target's health moved,
+ * for every weapon connect whatever the damage: WeaponManager.WeaponDamage
+ * runs DecreaseHealth, HandleAttackFromSource and then this
+ * (WeaponManager.cs:627-635), and a murdered civilian gets it straight after
+ * SetHealth(0) (:514-521). A player's ARROW is the same call - BowDamage
+ * routes the shaft back through WeaponDamage (DaggerfallMissile.cs:680-687).
+ * Spells never reach it, and neither does a PEER's blow applied here: it is
+ * the local player's own weapon, and nothing else, that feeds or kills.
+ *
+ * The vampire's body is UpdateSatiation (VampirismEffect.cs:189-193); the
+ * werewolf's is KilledInnocent -> UpdateSatiation (LycanthropyEffect.cs
+ * :347-354, :383-407). Both read the clock themselves
+ * (ToClassicDaggerfallTime), so the stamp is the LIVE minute.
+ *
+ * It used to be a hook registered into the damage FORMULA's tail - before
+ * any door had subtracted anything, and after an early return for an
+ * ineffective material. The strike sites call it now: cityGuards'
+ * resolvePlayerHit and resolveCivilianHit, exteriorFoes' and
+ * dungeonContext's resolvePlayerHit, and arrowFlight's playerArrowHitFoe.
+ *
+ * @param {object} player   the player entity (GetRacialOverrideEffect's owner)
+ * @param {object} target   the struck entity, AFTER its health was taken
+ * @param {object} [o]
+ * @param {number} [o.nowMinutes]  the live classic minute
+ * @param {boolean} [o.isCivilian] EntityTypes.CivilianNPC
+ * @param {number|null} [o.mobileType] MobileEnemy.ID - the city watch is an innocent
+ */
+export function playerWeaponHitEntity(player, target, { nowMinutes = Math.floor(worldMinutes()), isCivilian = false, mobileType = null } = {}) {
+  if (!player?.racialOverride) return;   // `if (racialOverride != null)` (WeaponManager.cs:632-634)
+  onVampireHit(player, nowMinutes);
+  onLycanthropeHit(player, target, { nowMinutes, isCivilian, mobileType: mobileType ?? target?.mobileType ?? null });
+}
+/**
+ * DISC10-E online: OnWeaponHitEntity's DEATH, reported. DFU reads the
+ * target's health after DecreaseHealth, in the same call; online a peer's
+ * watchman dies at its OWNER, so the striker's call above read a live
+ * puppet and the owner's "your blow killed it" arrives a round trip later
+ * (exteriorFoes' `slain` arm). Only the half that asks about the death
+ * runs - KilledInnocent - on the live minute: the vampire already fed on
+ * the blow itself, and feeding twice for one blow is no law of DFU's.
+ */
+export function playerWeaponKillReported(player, { nowMinutes = Math.floor(worldMinutes()), isCivilian = false, mobileType = null } = {}) {
+  if (!player?.racialOverride) return;
+  onLycanthropeHit(player, { health: 0 }, { nowMinutes, isCivilian, mobileType });
+}
+// DISC10-D V2: the deploy's own curse mint (DeployFullBlownVampirism
+// :176-184 assigns the curse inside the deploy, after the RaiseTime). The
+// curses import infection.js, so infection.js cannot import them; this
+// module imports both consumers already, and every host loads it.
+setRacialCurseDeployer((entity, { now }) => {
+  consumeRacialOverridePending(entity, { now });
+  consumeVampirismPending(entity, { now });
 });
 // V3: the other tail - an enemy damaging the player runs the Ring of
 // Namira's reflection (registered here for the same cycle reason).
@@ -51,7 +99,7 @@ installMeanerMonsters();   // MM1: before the overhaul, as DFU Awakes the depend
 installPcaao();
 installUnleveledLoot();   // UL1: after everything it would override (its manifest orders it after Roleplay Realism)
 installSurvivalIcons();   // SURV2: the mod's spoiled-food and waterskin icons ride the texture pipeline as the port's own art
-installSurvivalLoot({ enabled: survivalOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch
+installSurvivalLoot({ enabled: corpseFoodOn });   // SURV2: an animal's corpse carries meat, a humanoid's sometimes a meal (after UL1, which walks the gold); off with the one switch - offline (CORPSE-FOOD: online the body's food is the room's)
 // AUDIT-THUNDERLOCK F1: the port's own weapon was DEAD. Its module
 // registers everything it is at import - the two custom templates, the
 // pellet as ammunition, the unique find, its legendary - and NOTHING
@@ -65,11 +113,11 @@ installThunderlockIcons();   // THUNDERLOCK: the templates, the find and the leg
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4)
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
 import { regionPowerUpdate } from './regionPower.js';
-import { runSurvivalMinutes, clearSurvivalMods } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops
+import { runSurvivalMinutes, clearSurvivalMods, pauseSurvival } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops; AUDIT SURV-TIERS: and paused while Off
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
 import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
-import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
+import { survivalOn, corpseFoodOn } from './survival/switch.js';   // SURV2: the one switch; CORPSE-FOOD: and the body's food, the room's online
 /** :462 - `% 10080`, seven days of game minutes. */
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
 /** :469 - `% 54720`, thirty-eight days. */
@@ -300,6 +348,18 @@ export function registerMagicRoundHook(name, fn) { if (typeof fn === 'function')
 export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random, say = () => {} , enchantCtx = null } = {}) {
   if (!entity || !(to > from)) return 0;
   let rounds = 0;
+  // DISC10-D V1: THE CLOCK EVERY CATCH-UP ROUND READS IS TODAY'S.
+  // EntityEffectBroker.Update raises the whole catch-up loop inside ONE
+  // frame (:210-232), so every round of a fast travel or of the turn's
+  // fortnight reads WorldTime.Now - the CURRENT minute, the window's end -
+  // wherever the curse laws ask what time it is: DamageFromSunlight's IsDay
+  // (PassiveSpecialsEffect.cs:149-172), the curses' satiation and moon
+  // reads, the infection's day (VampirismInfection.cs:117). `r + 1` stays
+  // the ROUND's number, the port's MagicRoundsSinceStartup stand-in for the
+  // `% N` cadences. Read off each past round's minute instead, a vampire who
+  // arrived at night burned for every daylight hour of the road behind him
+  // (~4320 over the 2880-round cap).
+  const clockMinutes = to;
   // S7/S18/S19b, verbatim order: diseases update FIRST so an ending
   // disease's final day lands and the same round's tick removes the
   // expired entry (DFU removes at the end of the same DoMagicRound).
@@ -311,16 +371,21 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
     // over the same instancedBundles. One home means every host that
     // feeds the tick gets the dream and the turn; the video and the
     // clock arrive through infection.js's registered host.
-    runInfections(entity, Math.floor((r + 1) / MINUTES_PER_DAY));
+    runInfections(entity, Math.floor(clockMinutes / MINUTES_PER_DAY), { clockMinutes });   // DISC10-D V1: the day of WorldTime.Now; DISC10-E V2: and the clock a turn in this round is minted at
     // V2a: the infection's deploy mints racialOverridePending in the
     // SAME round; the curse consumes it here so the turn is complete
     // before the next round's laws read the entity. The lycanthropy
     // fold then rides every round, exactly as RacialOverrideEffect's
-    // constant pass does (a vampirism pending stands - V2b).
-    consumeRacialOverridePending(entity, { now: r + 1 });
-    consumeVampirismPending(entity, { now: r + 1 });
-    lycanthropyMagicRound(entity, { nowMinutes: r + 1, say });
-    vampirismMagicRound(entity, { nowMinutes: r + 1 });
+    // constant pass does.
+    // DISC10-D V2: the deploy now mints the curse ITSELF, at the live
+    // clock (infection.js's registered deployer, registered below) - so a
+    // marker still standing here is a save restored between the turn and
+    // the curse, consumed at the clock the curse's Start reads
+    // (UpdateSatiation, LycanthropyEffect.cs:159 / VampirismEffect.cs:95-96).
+    consumeRacialOverridePending(entity, { now: clockMinutes });
+    consumeVampirismPending(entity, { now: clockMinutes });
+    lycanthropyMagicRound(entity, { nowMinutes: r + 1, clockMinutes, say });   // DISC10-E V1: the round for the nag's cadence, the clock for the moon and the kill
+    vampirismMagicRound(entity, { nowMinutes: clockMinutes });   // DISC10-D V1: IsSatiated reads the clock (VampirismEffect.cs:238-241)
     updatePoisons(entity, r + 1, sinks, rolls, say);
     tickActiveEffects(entity, sinks);
     // E1: the enchantment pump rides the SAME round (DoMagicRound's
@@ -340,7 +405,7 @@ export function runMagicRoundsFor(entity, from, to, { sinks, rolls = Math.random
     // V2c: PassiveSpecials rides the same round, AFTER the enchant
     // fold - its magery arm SUMS the two producers into the one
     // maxMagickaModifier the accessor reads. Player-gated inside.
-    passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, sinks });
+    passiveSpecialsMagicRound(entity, { nowMinutes: r + 1, clockMinutes, sinks });   // DISC10-D V1: the cadence off the round, the sky off the clock
     for (const fn of _roundHooks.values()) fn(entity, { nowMinutes: r + 1, sinks, say });   // RR1: EntityEffectBroker.OnNewMagicRound's other subscribers (a mod's, by name)
     rounds++;
   }
@@ -820,7 +885,10 @@ export function tickPlayerMinutes({
   let felt = null;
   if (survival && nowMinutes > lastMinutes) {
     felt = runSurvivalMinutes(entity, lastMinutes, nowMinutes, survival.env ?? {}, { ...(survival.deps ?? {}), sinks: survival.deps?.sinks ?? sinks, rolls });
-  } else if (!survival) clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
+  } else if (!survival) {
+    clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
+    if (!survivalOn() && nowMinutes > lastMinutes) pauseSurvival(entity, lastMinutes, nowMinutes);   // AUDIT SURV-TIERS: Off's minutes are nobody's needs (needs.js pauseSurvival) - a host with no reader while the arc is ON keeps WORLD5's clocks
+  }
 
   // EntityEffectManager.UpdateEntityMods' tail (:1855-1866), on its own
   // 0.2s real-time cadence: a live stat at zero kills the host. It sits
@@ -986,9 +1054,22 @@ export function alignEntityClocks(entity, nowMinutes) {
     if (!a || typeof a !== 'object') continue;
     if (Number.isFinite(a.lastDay)) a.lastDay = pastDay(a.lastDay);
     if (Number.isFinite(a.lastMinute)) a.lastMinute = past(a.lastMinute);
+    // DISC10-D V9: an infection counts its days from its OWN marker
+    // (VampirismInfection/LycanthropyInfection `startingDay`, :86-87) - a
+    // save's day, which the shift above never moved: a world ahead of the
+    // save turned the player on the first online frame, one behind froze
+    // the incubation for as long as the gap.
+    if (a.infection && Number.isFinite(a.startingDay)) a.startingDay = pastDay(a.startingDay);
   }
   const vamp = liveVampirism(entity);
   if (vamp && Number.isFinite(vamp.lastTimeFed)) vamp.lastTimeFed = past(vamp.lastTimeFed);
+  // DISC10-E V9: the werewolf's two classic-minute clocks, the vampire's
+  // feeding clock's twins - the kill that holds the urge off
+  // (lastKilledInnocent) and the once-a-day change (lastCastMorphSelf) -
+  // and the urge nag's fold, which a save ahead of the world would
+  // otherwise silence until the world caught up.
+  const lyc = liveLycanthropy(entity);
+  if (lyc) for (const k of ['lastKilledInnocent', 'lastCastMorphSelf', 'lastUrgeNotify']) if (Number.isFinite(lyc[k])) lyc[k] = past(lyc[k]);
   for (const acct of entity.bankAccounts ?? []) if (acct && acct.loanTotal > 0) acct.loanDueDate = due(acct.loanDueDate);
   for (const room of entity.rentedRooms ?? []) if (room) room.expiryMinutes = due(room.expiryMinutes);
   // MAC-BUG3 (2026-09-20, Mac: "repairing items doesn't work. he just

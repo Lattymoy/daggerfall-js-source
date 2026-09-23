@@ -229,8 +229,8 @@
   {
     "name": "ENH-NOTICE3-P4-infection-factory-takes-a-per-host-window-again",
     "file": "src/scenes/shared.js",
-    "old": "export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null } = {}) {",
-    "new": "export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null, transferToCemetery = null } = {}) {",
+    "old": "export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null, cancelRest = null } = {}) {",
+    "new": "export function wireInfectionVideos(renderer, { textAt = null, showText = null, factionDict = null, transferToCemetery = null, cancelRest = null } = {}) {",
     "tests": [
       "test/notify.test.js",
       "test/roadb_push_doors.test.js"
