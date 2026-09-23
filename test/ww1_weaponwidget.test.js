@@ -649,11 +649,22 @@ test('WW1: the bundle door - TryImportCifRci\'s spelling with the w_ prefix and 
   assert.equal(await weaponWidgetImage('w_WEAPON04.CIF_0-0_Elven'), null);
   assert.equal(setWeaponWidgetSources(null, null), 0);
   assert.match(rd('src/combat/weaponWidgetAssets.js'), /import \{ DFMOD_KEY_PREFIX \} from '\.\.\/systems\/seasonsIliacBayAssets\.js';/);
-  // the atlas asks the door by that name and, until it lands, draws the classic frame at the classic size
+  // the atlas asks the door by that name and, until it lands, draws the classic frame at the classic size.
+  // DW1: WHICH file is FPSWeapon.cs:637-644's choice - Diverse Weapons is on
+  // by default (MO1), so a longsword asks LONGSWORD.CIF (WeaponBasics.cs
+  // GetModdedWeaponFilename); with the mod off it is WEAPON04.CIF as before.
   const b = bench({ over: { 'Modules.DoubleScaleTextures': true } }); b.frame();
   assert.equal(b.draws.at(-1).tex, 'tex:0:0:0');
-  assert.ok(b.widget._w.customCache.has('w_WEAPON04.CIF_0-0_Steel'), 'asked by TryImportCifRci\'s spelling');
-  assert.equal(b.widget._w.customCache.get('w_WEAPON04.CIF_0-0_Steel'), null);
+  assert.ok(b.widget._w.customCache.has('w_LONGSWORD.CIF_0-0_Steel'), 'asked by TryImportCifRci\'s spelling, the per-template file under Diverse Weapons');
+  assert.equal(b.widget._w.customCache.get('w_LONGSWORD.CIF_0-0_Steel'), null);
+  assert.ok(!b.widget._w.customCache.has('w_WEAPON04.CIF_0-0_Steel'), 'the classic file is not asked while the per-template one is');
+  const off = bench({ over: { 'Modules.DoubleScaleTextures': true } });   // (bench resets the store: flip after)
+  setModSetting('diverse-weapons', 'Enabled', false);
+  try {
+    off.frame();
+    assert.ok(off.widget._w.customCache.has('w_WEAPON04.CIF_0-0_Steel'), 'the mod off: the classic atlas name, as 1.6 asked it');
+    assert.ok(!off.widget._w.customCache.has('w_LONGSWORD.CIF_0-0_Steel'));
+  } finally { _resetModSettings(); }
 });
 
 test('WW4 (Mac\'s curated fix): a clone that chooses silence OWNS the draw seam - frame -1, hideWeapon and third person answer true and draw nothing, so the classic sprite never falls in behind a Hide wind-up or recovery', () => {

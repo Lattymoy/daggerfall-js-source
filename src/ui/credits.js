@@ -96,6 +96,16 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/860',
     }),
     Object.freeze({
+      title: 'Diverse Weapons',
+      version: '1.7.3',
+      author: 'RealAKP',
+      what: 'A first-person sprite set for every weapon, in every metal, plain and enchanted (DW1) - eighteen weapons where the classic art has one sprite per weapon class - with Weapon Widget\u2019s double-scale idles and the inventory icons to match. The mod\u2019s art is read off the player\u2019s own .dfmod, attached through the textures pick; the port carries the one line of script it ships and the law in Daggerfall Unity that line switches on.',
+      terms: 'The script is MIT by its own header and carried verbatim; the sprites are the author\u2019s and never in the repository - read off the player\u2019s own copy. See vendor/diverse-weapons/README.md for the permission record.',
+      contact: 'RealAKP, through the Nexus page (daggerfallunity mod 242)',
+      vendor: Object.freeze(['diverse-weapons']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/242',
+    }),
+    Object.freeze({
       title: 'Shield Widget',
       version: '1.6',
       author: 'RedRoryOTheGlen',

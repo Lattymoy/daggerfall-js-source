@@ -166,6 +166,35 @@ export const MOD_SETTINGS = Object.freeze({
   // the bundle's own order with the bundle's own defaults, ranges and
   // descriptions. The six keys the mod ships with no description carry
   // the port's words instead. Plus the port's `Enabled` (MO1: on).
+  // DW1: Diverse Weapons 1.7.3 (RealAKP) ships no settings of its own -
+  // its one script sets FPSWeapon.moddedWeaponHUDAnimsEnabled and stops
+  // (vendor/diverse-weapons/DiverseWeaponsMain.cs:37). `Enabled` IS that
+  // flag. The second key is the port's rendering of the mod's readme -
+  // "For Weapon Widget users, select Diverse Weapons settings preset in
+  // Weapon Widget mod options": the preset the bundle carries
+  // (vendor/diverse-weapons/weapon-widget-preset.json) is laid over the
+  // player's Weapon Widget settings while this is on, and their own
+  // values are untouched underneath, where DFU's preset picker would
+  // have overwritten them. Off by default, as a preset nobody has
+  // selected is; the readme says select it, so the switch says so too.
+  'diverse-weapons': Object.freeze({
+    title: 'Diverse Weapons',
+    author: 'RealAKP',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'RealAKP\u2019s Diverse Weapons 1.7.3: a first-person sprite set for every weapon, in every metal, plain and '
+          + 'enchanted, where the classic art has one per weapon class - a longsword no longer swings the broadsword\u2019s '
+          + 'sprite. Attach the mod\u2019s .dfmod through the textures pick; without it the classic frames draw.',
+      }),
+      WeaponWidgetPreset: Object.freeze({
+        default: false,
+        description: 'Use the mod\u2019s own Weapon Widget preset while this is on - double-scale idles, true texture size, inertia, '
+          + 'recoil and its bob - the settings its readme asks Weapon Widget users to select. Your own Weapon Widget '
+          + 'settings are kept underneath and come back when this is off.',
+      }),
+    }),
+  }),
   'shield-widget': Object.freeze({
     title: 'Shield Widget',
     author: 'RedRoryOTheGlen',
@@ -906,6 +935,37 @@ export function setModSetting(vendor, key, value) {
   (m[vendor] ??= {})[key] = v;
   save();
   return v;
+}
+
+/**
+ * DW1: A DFU ModSettings PRESET, flattened to this store's keys.
+ *
+ * A mod's presets ship as `{ Values: { Section: { Key: "string" } } }`
+ * (ModSettingsData.cs's Preset, every value a string - "True", "142",
+ * "1"), and a preset one mod ships FOR ANOTHER mod's settings is the
+ * same shape under the other mod's sections. This turns one into the
+ * `Section.Key` map this store speaks, each value coerced by the
+ * DECLARED key's kind, and drops any key the vendor does not declare
+ * rather than inventing a switch. `presetKeys` the other way round, for
+ * a caller that wants to know what a preset would touch.
+ */
+export function flattenModPreset(vendor, values) {
+  const keys = MOD_SETTINGS[vendor]?.keys;
+  if (!keys || !values || typeof values !== 'object') return Object.freeze({});
+  const out = {};
+  for (const [section, entries] of Object.entries(values)) {
+    if (!entries || typeof entries !== 'object') continue;
+    for (const [key, raw] of Object.entries(entries)) {
+      const name = `${section}.${key}`;
+      const def = keys[name];
+      if (!def) continue;
+      // DFU writes booleans as "True"/"False"; `coerce`'s boolean arm is
+      // `!!v`, which would read the string "False" as on.
+      const v = (typeof raw === 'string' && /^(true|false)$/i.test(raw.trim())) ? /^true$/i.test(raw.trim()) : raw;
+      out[name] = coerce(def, v);
+    }
+  }
+  return Object.freeze(out);
 }
 
 /** For tests: forget everything. */

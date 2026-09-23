@@ -27,6 +27,9 @@ import { getInt } from '../systems/settings.js';   // AUDIT 28 W13: Controls/Han
 import { getPref } from '../systems/uiPrefs.js';   // MAC-I: the first-person lighting switch
 import { isEnchanted } from '../systems/inventory.js';   // AUDIT 17e C2
 import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons.js';
+import { atlasFileName } from './diverseWeapons.js';   // DW1: FPSWeapon.cs:637-644 - the per-template name under Diverse Weapons' flag
+import { customWeaponImage } from './diverseWeaponsAssets.js';   // DW1: TryImportCifRci's answer, off the player's own bundles
+import { MATERIAL_NAMES } from '../systems/itemInfo.js';   // MetalTypes' names, for GetNameCifRci's suffix
 import { THUNDERLOCK_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
@@ -261,7 +264,7 @@ export function frameToColor32(bmp, palette, dye) {
  *   { weaponType, anims, records: [{ width, height, frames: [tex] }] }
  * Cache by `${weaponType}:${material}` at the call site.
  */
-export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, material = WEAPON_MATERIALS.Iron) {
+export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, material = WEAPON_MATERIALS.Iron, item = null) {
   const fileName = WEAPON_FILE[weaponType];
   if (!fileName) return null;
   const cif = new CifRciFile();
@@ -271,13 +274,28 @@ export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, 
   // else dyes - including Silver through the aliased 18 (see
   // frameToColor32).
   const dye = material === WEAPON_MATERIALS.Steel ? null : weaponDyeColor(material);
+  // DW1: GetWeaponTextureAtlas's custom arm (FPSWeapon.cs:635-653). The
+  // name every frame is ASKED by is the per-template one when Diverse
+  // Weapons' flag is on and a weapon is in hand, else this file's own -
+  // and the ask is TryImportCifRci's spelling, `<FILE>_<record>-<frame>
+  // _<Metal>` (TextureReplacement.cs:795-801; None has no suffix).
+  const askName = atlasFileName(item, fileName);
+  const metal = material != null && material !== WEAPON_MATERIALS.None ? MATERIAL_NAMES[material] : null;
   const records = [];
   for (let r = 0; r < cif.recordCount; r++) {
     const size = cif.getSize(r);
     const frames = [];
     for (let f = 0; f < cif.getFrameCount(r); f++) {
-      const c32 = frameToColor32(cif.getDFBitmap(r, f), palette, dye);
-      frames.push(renderer.uploadTexture('img', `fpw:${fileName}:${material}:${r}:${f}`, c32));
+      const name = `${askName}_${r}-${f}${metal ? `_${metal}` : ''}`;
+      // a hit replaces THIS FRAME in the atlas and nothing else: the
+      // record keeps the classic width and height (FPSWeapon.cs:398-399
+      // read them off the atlas's own index), so an imported frame is
+      // drawn into the classic frame's box. Weapon Widget's
+      // TrueTextureSize is the module that draws it at its own size,
+      // and that is the other lane.
+      const custom = await customWeaponImage(name);
+      const c32 = custom ?? frameToColor32(cif.getDFBitmap(r, f), palette, dye);
+      frames.push(renderer.uploadTexture('img', custom ? `fpw:${name}` : `fpw:${fileName}:${material}:${r}:${f}`, c32));
     }
     records.push({ width: size.width, height: size.height, frames });
   }

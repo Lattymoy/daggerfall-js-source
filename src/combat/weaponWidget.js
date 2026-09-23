@@ -68,9 +68,12 @@ import { WEAPON_TYPES, STATE_INDEX, ALIGN, NATIVE_W, NATIVE_H, WEAPON_FILE, weap
 import { weaponOffsetHeight } from '../ui/hudLarge.js';
 import { swingSoundFor, SOUND } from '../systems/soundClips.js';
 import { isEnchanted } from '../systems/inventory.js';
+import { atlasFileName, customTextureNames } from './diverseWeapons.js';   // DW1
+import { customWeaponImage } from './diverseWeaponsAssets.js';   // DW1: both bundles, this mod's first
+import { MATERIAL_NAMES } from '../systems/itemInfo.js';
+import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { getItemHands } from '../systems/equip.js';
 import { ITEM_HANDS } from '../characters/equipTable.js';
-import { widgetTextureName, weaponWidgetImage } from './weaponWidgetAssets.js';
 
 import { WINDUP, RECOVERY, RECOIL_CONDITION, MISS_VFX_AT } from './weaponWidgetMotion.js';
 
@@ -217,25 +220,36 @@ export function createWeaponWidget({
     w.currentTemplateIndex = w.specificWeapon?.templateIndex ?? -1;
     w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing);
     w.customCache = new Map();
+    w.customMisses = new Set();   // DW1: the names that answered nothing, per atlas
   }
   /** GetWeaponTextureAtlas's custom arm (IL 0x2d72-0x2e12): with
    *  DoubleScaleTextures the `w_` set, else the plain name - the
    *  player's own textures by TryImportCifRci's spelling. Asked once per
    *  name; null until it lands, null for good when nothing carries it. */
   function customTexture(record, frame) {
-    const file = weaponFileName(w.currentWeaponType);
-    if (!file || !ctx?.renderer) return null;
-    const name = widgetTextureName(file, record, frame, w.currentMetalType, w.s.doubleScale ? 'w_' : '');
+    const classic = weaponFileName(w.currentWeaponType);
+    if (!classic || !ctx?.renderer) return null;
+    // DW1: the name is the per-template one under Diverse Weapons' flag
+    // (FPSWeapon.cs:637-644 - the clone reads the same static), and
+    // under DoubleScaleTextures the `w_` ask falls through to the plain
+    // one (combat/diverseWeapons.js customTextureNames says why).
+    const file = atlasFileName(w.specificWeapon, classic);
+    const metal = w.currentMetalType != null && w.currentMetalType !== WEAPON_MATERIALS.None ? MATERIAL_NAMES[w.currentMetalType] : null;
     const cache = (w.customCache ??= new Map());
-    if (!cache.has(name)) {
-      cache.set(name, null);
-      weaponWidgetImage(name).then((img) => {
-        if (!img) return;
-        const tex = ctx.renderer.uploadTexture('img', `ww:${name}`, img);
-        cache.set(name, { tex, width: img.width, height: img.height });
-      }).catch((e) => console.warn('[weapon widget] texture load failed', name, e));   // WW3: the rig's neighbours say so too (weaponRig.js art/spell loads) - a bare `catch (() => {})` here is how a shape fault reaches a player instead of a console line
+    const misses = (w.customMisses ??= new Set());
+    for (const name of customTextureNames(file, record, frame, metal, w.s.doubleScale)) {
+      if (misses.has(name)) continue;   // answered "nothing carries it": the next name's turn
+      if (!cache.has(name)) {
+        cache.set(name, null);
+        customWeaponImage(name).then((img) => {
+          if (!img) { misses.add(name); return; }
+          const tex = ctx.renderer.uploadTexture('img', `ww:${name}`, img);
+          cache.set(name, { tex, width: img.width, height: img.height });
+        }).catch((e) => { misses.add(name); console.warn('[weapon widget] texture load failed', name, e); });   // WW3: the rig's neighbours say so too (weaponRig.js art/spell loads) - a bare `catch (() => {})` here is how a shape fault reaches a player instead of a console line
+      }
+      return cache.get(name);   // a hit, or null while this name is still landing - the classic frame until then
     }
-    return cache.get(name);
+    return null;
   }
 
   // ---- UpdateWeapon (IL 0x2328) and the three alignments ----

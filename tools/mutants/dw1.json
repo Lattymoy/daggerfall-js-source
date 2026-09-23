@@ -1,0 +1,193 @@
+[
+  {
+    "name": "DW1-1-the-flag-reads-true-with-the-switch-off",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "export const moddedWeaponHUDAnimsEnabled = () => modSetting('diverse-weapons', 'Enabled') === true;",
+    "new": "export const moddedWeaponHUDAnimsEnabled = () => true;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-2-the-artifact-table-is-asked-after-the-magic-one",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "    if (isArtifact(weapon)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-3-the-staff-loop-stops-walking-in-order",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "            } else {\n              return 'STAFFOFMAGNUS.CIF';\n            }",
+    "new": "            }",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-4-a-custom-template-invents-a-name",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "    case W.Arrow: return 'ARROW.CIF';\n    default: return '';\n  }\n}",
+    "new": "    case W.Arrow: return 'ARROW.CIF';\n    default: return 'WEAPON04.CIF';\n  }\n}",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-5-the-flag-off-still-asks-by-the-modded-name",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  if (!enabled || !item) return classic;",
+    "new": "  if (!item) return classic;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-6-an-empty-modded-name-is-asked-for-literally",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  return moddedWeaponFilename(item) || classic;",
+    "new": "  return moddedWeaponFilename(item);",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-7-the-w-ask-no-longer-falls-through-to-the-plain-name",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  return doubleScale ? [`w_${plain}`, plain] : [plain];",
+    "new": "  return doubleScale ? [`w_${plain}`] : [plain];",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-8-None-grows-a-metal-suffix",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  const plain = `${file}_${record}-${frame}${metalName ? `_${metalName}` : ''}`;",
+    "new": "  const plain = `${file}_${record}-${frame}_${metalName}`;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-9-the-preset-is-laid-over-the-settings-even-when-off",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  if (!on) return settings;",
+    "new": "  if (false) return settings;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-10-the-preset-rides-its-own-switch-alone-not-the-mods",
+    "file": "src/combat/diverseWeapons.js",
+    "old": "  moddedWeaponHUDAnimsEnabled() && modSetting('diverse-weapons', 'WeaponWidgetPreset') === true;",
+    "new": "  modSetting('diverse-weapons', 'WeaponWidgetPreset') === true;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-11-a-DFU-False-string-reads-as-on",
+    "file": "src/systems/modSettings.js",
+    "old": "      const v = (typeof raw === 'string' && /^(true|false)$/i.test(raw.trim())) ? /^true$/i.test(raw.trim()) : raw;",
+    "new": "      const v = raw;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-12-an-undeclared-preset-key-becomes-a-switch",
+    "file": "src/systems/modSettings.js",
+    "old": "      if (!def) continue;\n      // DFU writes booleans",
+    "new": "      if (!def) { out[name] = raw; continue; }\n      // DFU writes booleans",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-13-the-door-takes-every-dfmod-in-the-pick",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "  const names = (fileNames ?? []).filter((n) => (n.startsWith(DFMOD_KEY_PREFIX) && isDiverseDfmod(n)) || (isPng(n) && isDiversePng(n)));",
+    "new": "  const names = (fileNames ?? []).filter((n) => n.startsWith(DFMOD_KEY_PREFIX) || (isPng(n) && isDiversePng(n)));",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-14-nothing-attached-still-opens-a-loader",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "      if (!_names.length) return null;   // nothing attached: the fast miss, so a weapon load with the flag on costs no work",
+    "new": "",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ],
+    "equivalent": true,
+    "why": "the guard is cost, not answer: with no names registered the bundle walk finds nothing and the PNG find finds nothing, so every ask answers null without calling the loader either way; what the guard saves is a promise and a bundle-walk per ask on a weapon load with the flag on and nothing attached"
+  },
+  {
+    "name": "DW1-15-the-loose-PNG-is-flipped-like-a-bundle-texel",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "        return toScreenOrder(await decode(bytes));",
+    "new": "        return toColor32(await decode(bytes));",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-16-the-widget-door-is-asked-first",
+    "file": "src/combat/diverseWeaponsAssets.js",
+    "old": "  return (await diverseWeaponsImage(name)) ?? (await weaponWidgetImage(name)) ?? null;",
+    "new": "  return (await weaponWidgetImage(name)) ?? (await diverseWeaponsImage(name)) ?? null;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-17-the-base-lane-drops-the-metal-suffix",
+    "file": "src/combat/fpsWeapon.js",
+    "old": "      const name = `${askName}_${r}-${f}${metal ? `_${metal}` : ''}`;",
+    "new": "      const name = `${askName}_${r}-${f}`;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-18-the-rig-cache-forgets-the-atlas-name",
+    "file": "src/combat/weaponRig.js",
+    "old": "    const key = `${type}:${item?.material ?? 0}:${thunderlock ? '' : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;",
+    "new": "    const key = `${type}:${item?.material ?? 0}`;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-19-the-clone-asks-by-the-classic-name",
+    "file": "src/combat/weaponWidget.js",
+    "old": "    const file = atlasFileName(w.specificWeapon, classic);",
+    "new": "    const file = classic;",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-20-a-miss-blocks-the-next-name-for-ever",
+    "file": "src/combat/weaponWidget.js",
+    "old": "      if (misses.has(name)) continue;   // answered \"nothing carries it\": the next name's turn",
+    "new": "",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  },
+  {
+    "name": "DW1-21-one-pick-site-forgets-the-door",
+    "file": "src/scenes/shared.js",
+    "old": "      setDiverseWeaponsSources(names, loadTextureFile);   // DW1: Diverse Weapons' bundle, from the same pick\n",
+    "new": "",
+    "tests": [
+      "test/dw1_diverseweapons.test.js"
+    ]
+  }
+]

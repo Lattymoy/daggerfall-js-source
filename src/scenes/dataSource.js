@@ -1010,6 +1010,7 @@ export async function pickTextureFolder() {
   const { setTextureReplacements } = await import('../systems/textureReplacement.js');
   const { setSeasonsSources } = await import('../systems/seasonsIliacBayAssets.js');
   const { setWeaponWidgetSources } = await import('../combat/weaponWidgetAssets.js');   // WW1
+  const { setDiverseWeaponsSources } = await import('../combat/diverseWeaponsAssets.js');   // DW1
   return pickAssetFolder({
     title: 'Your own textures',
     blurb: `<p>Pick a folder of PNGs to draw instead of Daggerfall's
@@ -1024,12 +1025,16 @@ export async function pickTextureFolder() {
       and winter.</p>
       <p style="color:#999"><b>Weapon Widget</b> too: a folder holding
       its <b>.dfmod</b> gives its DoubleScaleTextures module the mod's
-      own double-size weapon art.</p>`,
+      own double-size weapon art.</p>
+      <p style="color:#999">And <b>Diverse Weapons</b>: a folder holding
+      its <b>.dfmod</b> gives every weapon its own first-person sprite
+      set, in its own metal.</p>`,
     store: storeTextureFiles,
     register: async () => {
       const names = await storedTextureNames();
       const n = setTextureReplacements(names, loadTextureFile);
       setWeaponWidgetSources(names, loadTextureFile);   // WW1: Weapon Widget's bundle, its double-scale textures
+      setDiverseWeaponsSources(names, loadTextureFile);   // DW1: Diverse Weapons' bundle, a sprite set per weapon
       return n + setSeasonsSources(names, loadTextureFile);   // SIB1: the mod's own files (its bundle counts one)
     },
   });

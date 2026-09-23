@@ -23,6 +23,7 @@
 // Nothing here knows about the lab; the arrow points one way.
 
 import { modSettingsOf } from '../systems/modSettings.js';
+import { withDiverseWeaponsPreset } from './diverseWeapons.js';   // DW1
 
 export const WEAPON_WIDGET_VENDOR = 'weapon-widget';
 
@@ -40,7 +41,7 @@ export const MISS_VFX_AT = Object.freeze({ Target: 0, Crosshair: 1 });
  *  SpeedMove x4, SpeedState x500, Shape x0.5, Inertia.Scale/Speed x500,
  *  ForwardDepth/ForwardSpeed x0.2, Recoil.Chance /100). */
 export function readWidgetSettings(read = () => modSettingsOf(WEAPON_WIDGET_VENDOR)) {
-  const s = read();
+  const s = withDiverseWeaponsPreset(read());   // DW1: the mod's preset over the player's values while its switch is on
   return {
     enabled: !!s.Enabled,
     swing: !!s['Modules.Swings'], ambidexterity: !!s['Modules.Ambidexterity'], bob: !!s['Modules.Bob'], offset: !!s['Modules.Offset'],

@@ -65,6 +65,7 @@ import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EX
 import { setTextureReplacements } from '../systems/textureReplacement.js';   // M-TEX: TextureReplacement's registry
 import { setSeasonsSources } from '../systems/seasonsIliacBayAssets.js';   // SIB1: Seasons of the Iliac Bay's texture door
 import { setWeaponWidgetSources } from '../combat/weaponWidgetAssets.js';   // WW1: Weapon Widget's double-scale textures, from the player's own bundle
+import { setDiverseWeaponsSources } from '../combat/diverseWeaponsAssets.js';   // DW1: Diverse Weapons' per-weapon sprites, from the player's own bundle
 import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
 import { audio } from '../systems/audio.js';
@@ -1154,6 +1155,7 @@ export function ensureAudio(fetch = fetchBytes) {
     .then((names) => {
       setSeasonsSources(names, loadTextureFile);   // SIB1: Seasons of the Iliac Bay's bundle or folders, from the same pick
       setWeaponWidgetSources(names, loadTextureFile);   // WW1: Weapon Widget's bundle, from the same pick
+      setDiverseWeaponsSources(names, loadTextureFile);   // DW1: Diverse Weapons' bundle, from the same pick
       return setTextureReplacements(names, loadTextureFile);
     })
     .catch(() => 0);

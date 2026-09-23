@@ -295,7 +295,7 @@ order is getColor32, pointing at the seasons door that converts, the
 way the door's own header already points back at the reader; the
 door's closing line drops "for their other consumers" with it, and so
 does F26's paragraph above. The BEHAVIOUR is untouched: the reader's
-row-order pin (`test/seasonsIliacBay.test.js:539-543`, which asserts
+row-order pin (`test/seasonsIliacBay.test.js:385-389`, which asserts
 the top row of the image is the LAST row Unity stored) still holds and
 was rightly left alone by F26, and the end-to-end
 `texImage2D`-vs-`getColor32` pin is what fixes the order that reaches

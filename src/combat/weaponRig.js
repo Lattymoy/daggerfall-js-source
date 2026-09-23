@@ -30,7 +30,7 @@ import { racialFpsWeapon } from '../systems/lycanthropy.js';   // V4: the transf
 import { EQUIP_SLOTS, equipTableOf } from '../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read
 import { dfWornEquipment } from '../formats/mwItemMap.js';   // MW-D32
 import { ARMOR_ENUM } from './enemyEquipment.js';   // MW-D32
-import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn } from './fpsWeapon.js';
+import { loadFpsWeaponArt, drawFpsWeapon, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE } from './fpsWeapon.js';
 import { loadThunderlockArt } from './thunderlockArt.js';
 import { createRecoil, createScreenShake, GUN_FEEL, gunPitch, muzzleGlow } from './gunFeel.js';
 import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from './gunViewmodel.js';   // FIELD-GUN12: the PROTOTYPE's frame, run rather than resembled
@@ -59,6 +59,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
 import { createWeaponWidget } from './weaponWidget.js';
+import { atlasFileName } from './diverseWeapons.js';   // DW1: the art cache's third key
 // SW1: SHIELD WIDGET. The sibling, beside the weapon's clone and driven
 // on the same frame - the shield the game never drew, in the hand the
 // weapon is not in.
@@ -518,12 +519,18 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // classic weapon still cannot.
     const thunderlock = type === WEAPON_TYPES.Thunderlock || type === WEAPON_TYPES.Thunderlock_Magic;
     if (!thunderlock && !palette) return null;
-    const key = `${type}:${item?.material ?? 0}`;
+    // DW1: the key carries the name the atlas is ASKED by. Under Diverse
+    // Weapons a longsword and a broadsword are the same WEAPON_TYPE with
+    // different sprite sets, and an enchanted one a third - and the flag
+    // going off mid-game is a fourth answer for the same type and metal.
+    // `${type}:${material}` alone handed the first weapon's frames to
+    // every later one of its class.
+    const key = `${type}:${item?.material ?? 0}:${thunderlock ? '' : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;
     if (!cache.has(key)) {
       cache.set(key, null);
       (thunderlock
         ? loadThunderlockArt(renderer, { magic: type === WEAPON_TYPES.Thunderlock_Magic })
-        : loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0))
+        : loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0, item))
         .then((art) => cache.set(key, art))
         .catch((e) => console.warn('[weaponRig] art load failed', key, e));
     }
