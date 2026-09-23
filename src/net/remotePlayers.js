@@ -670,9 +670,14 @@ export class RemotePlayers {
     const shown = peer.shown;
     const f = toScene(shown);
     const set = FOOTSTEP_CLIP_SETS[shown.fk ?? 0] ?? FOOTSTEP_CLIP_SETS[0];
-    // AUDIT DROPS E5: the stride is measured in the WIRE's frame (the pose's own x/z), which never recentres - fed
-    // the scene point, a floating-origin shift (819.2 units) counted as a stride and fired one step at full volume
-    const step = fm.update([shown.x, shown.y, shown.z], { grounded: true, swimming: false, levitating: false, onFoot: true, standingStill: !shown.mv, halfSpeed: false }, set);
+    // PEER-BUZZ (2026-09-22, Discord: "footstep sounds are broken" - a recording of a continuous buzz while a peer
+    // walked): AUDIT DROPS E5 measured the stride in the WIRE's frame to dodge the floating-origin shift, and in
+    // the OVERWORLD the wire's frame is world coordinates - 32768 per map pixel against the scene's 819.2, forty
+    // scene units to one. A peer walking at 3 u/s moved 120 wire units a second, and the machine fired a step every
+    // 2.5 of them: forty-eight a second, the buzz. The stride is measured in SCENE units, as the local one is, and
+    // the recentre is handled the way EV1 handles it for the local machine - world.js calls `rebaseFootsteps` in
+    // the same block that calls `footsteps.rebase()`, so the anchor re-seeds and the 819.2-unit jump is no stride.
+    const step = fm.update(f, { grounded: true, swimming: false, levitating: false, onFoot: true, standingStill: !shown.mv, halfSpeed: false }, set);
     if (!step) return;
     const hasEye = eye && eye.length === 3;
     const dist = hasEye ? Math.hypot(f[0] - eye[0], f[1] - eye[1], f[2] - eye[2]) : 0;
@@ -680,6 +685,12 @@ export class RemotePlayers {
     const falloff = dist <= FALLOFF_START ? 1 : dist >= FALLOFF_END ? 0 : 1 - (dist - FALLOFF_START) / (FALLOFF_END - FALLOFF_START);
     if (falloff <= 0) return;
     this.deps.audio.playOneShot(step.clip, step.volume * falloff);
+  }
+
+  /** PEER-BUZZ: the floating origin moved - every peer's stride anchor re-seeds on its next frame, as the local
+   *  machine's does (EV1 `footsteps.rebase()`), so the 819.2-unit shift of every scene point is not a step. */
+  rebaseFootsteps() {
+    for (const fm of this._footsteps.values()) fm.rebase();
   }
 
   /** PEER-FS2 (Mac: "attacking sounds are not in"): every SWING - not just
@@ -840,7 +851,7 @@ export class RemotePlayers {
   /**
    * SOC4 (2026-09-16, Mac: "Upon joining a party, the players name who are in a party together should turn green"):
    * `colorOf` is an APPENDED optional parameter (it was the last one until NAME1 appended `blocked` behind it - the
-   * rule is the same, nothing ahead of it moved), because a name's colour is not this module's business to know. A peer is a tab in a room; whether that tab belongs to somebody in my four-seat party is the social
+   * rule is the same, nothing ahead of it moved), because a name's colour is not this module's business to know. A peer is a tab in a room; whether that tab belongs to somebody in my party (PARTY_MAX seats) is the social
    * picture's question (net/social.js colorOf -> PARTY_GREEN or null), and the host asks it. Nothing is passed on
    * the probe hosts and on every caller written before the party existed, so the default path stays exactly what it
    * was: white, byte for byte (test/online.test.js pins it).

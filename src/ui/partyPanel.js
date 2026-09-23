@@ -28,10 +28,10 @@
 // pins read them) - what moved is which of them the sheet draws.
 //
 // WHY A SECOND SURFACE AND NOT A ROW IN THE FRIENDS PANEL. A friends list is a thing you OPEN; a party is a thing you
-// are IN while you play. The four-seat party is the formation you fight in, so the one question it must answer
+// are IN while you play. The party (eight seats since PARTY8) is the formation you fight in, so the one question it must answer
 // without a click is "is my healer about to die" - which is a portrait, three bars and a place, drawn over the world
-// and never in the way. That is why this panel is fixed, small, pointer-events: none, and why the cards carry the
-// numbers as text beside the bars: a bar says the shape of a vital at a glance and the digits say the rest.
+// and never in the way. That is why this panel is fixed, small, pointer-events: none, and why a card carries the
+// health in digits only while it is low (PARTY8-B): a bar says the shape of a vital at a glance and the digits say the rest.
 //
 // MY OWN CARD IS NOT HERE, and that is deliberate rather than an omission. The HUD already draws my health, my
 // fatigue and my magicka (ui/hudVitals.js) and my own face is on my paper doll; a fourth copy of my own vitals in the
@@ -42,8 +42,8 @@
 // (systems/races.js raceArt -> FACE##I0.CIF -> CifRciFile.getDFBitmap -> ui/hud.js bitmapToColor32), picked by the
 // race, gender and face index the member's own pose carries (net/wire.js validPartyPose bounds all three). Nothing
 // here invents a stand-in face: a party member who looks like a Redguard woman with face 4 in her own chargen looks
-// like exactly that here. The decode is cached per race|gender|face, because four seats over a long session are at
-// most four distinct faces and a re-decode per repaint would be work for nothing.
+// like exactly that here. The decode is cached per race|gender|face, because eight seats over a long session are at
+// most eight distinct faces and a re-decode per repaint would be work for nothing.
 //
 // ART LANDS ASYNC (Ledger A's rule, the seams lane): the card is built at once with a neutral plate where the face
 // will go, the CIF is fetched off the frame, and the portrait appears the moment it lands. A member whose pose has
@@ -108,6 +108,12 @@ ${PIXELIFY_FIVE_FACE}
 @media (max-width: 560px) {
   .dfparty, .dfparty.touch { width: 180px; top: auto; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 }
+/* AUDIT PARTY8: A PHONE HELD SIDEWAYS is wider than 560 and shorter than the stack - seven rows from top 76 ran to
+   438 on a 430-tall screen, over the touch layer's jump and sheathe row (bottom 16, 48 tall). Capped so the bottom
+   clears that row by the same 76 the portrait rule keeps; what does not fit is cut, never drawn over the buttons. */
+@media (max-height: 560px) and (min-width: 561px) {
+  .dfparty.touch { max-height: calc(100dvh - 152px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: hidden; }
+}
 .dfparty-title { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; text-align: right;
   color: var(--dim, #8b8578); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .dfparty-count { margin-left: 6px; letter-spacing: 0; color: var(--bone, #e9e4d9); font-variant-numeric: tabular-nums; }
@@ -117,7 +123,7 @@ ${PIXELIFY_FIVE_FACE}
 .dfparty-card { display: flex; gap: 6px; padding: 3px 0; }
 /* away: the whole card goes quiet - the portrait too, so a grey face is never mistaken for a live one */
 .dfparty-card.away { opacity: .46; filter: grayscale(1); }
-.dfparty-face { flex: none; width: ${FACE_BOX_W}px; height: ${FACE_BOX_H}px; overflow: hidden;
+.dfparty-face { flex: none; box-sizing: content-box; width: ${FACE_BOX_W}px; height: ${FACE_BOX_H}px; overflow: hidden;   /* AUDIT PARTY8: the sheet's border-box took the 1px border out of the plate and squashed a 31-wide head */
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(180deg, #232830, #14171b); border: 1px solid var(--iron, #2b323b);
   box-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
@@ -135,6 +141,7 @@ ${PIXELIFY_FIVE_FACE}
    health's own red - a healthy party is names and bars and nothing else. The node is written for every pose. */
 .dfparty-hp { margin-left: auto; flex: none; font-size: 10px; line-height: 1.2; color: #e2554c; font-variant-numeric: tabular-nums; }
 .dfparty-hp.off { display: none; }
+.dfparty-hp.blank { color: var(--dim, #8b8578); }   /* AUDIT PARTY8: a seat with no pose yet - dashes, dim */
 /* the health is the one real bar; stamina and magicka are two hairlines under it, side by side - their shape, not
    their weight. The tracks are square-cornered and black, the enhanced HUD's own. */
 .dfparty-bars { display: flex; flex-direction: column; gap: 3px; }
@@ -206,10 +213,17 @@ export function barPercent(v, max) {
 /** PARTY8-B: the health digits are drawn only under this fill - "is my healer about to die" is a question about
  *  the bottom half of the bar, and a number beside a full one is clutter. */
 export const HP_DIGITS_BELOW = 50;
-/** PARTY8-B: is this seat where I am? Two places are the same place when their words are (placeText's, which
- *  fold the name AND the kind - a companion outside the shop I am in is somewhere else). No word for my own
- *  place (the host has not composed a pose yet) means nothing can be said to be with me: the line is drawn. */
-export const withMe = (p, hereText) => hereText !== '' && placeText(p) === hereText;
+/** PARTY8-B: is this seat where I am? AUDIT PARTY8 (2026-09-23): two places are the same place when their
+ *  COORDINATES are - the map pixel, the kind (`in`) and, inside a building, the building key - the rule
+ *  scenes/world.js's samePlace keeps for the party rest. This compared placeText's WORDS, and two wilderness
+ *  pixels 800 apart both read "the wilderness", two shops in one town both "Daggerfall - inside", two nameless
+ *  dungeons both "dungeon": a healer three regions away drew no line, which says "with me". `here` is the pose
+ *  the host last composed; none yet means nothing can be said to be with me, and the line is drawn. */
+export const withMe = (p, here) => !!p && !!here
+  && p.px === here.px && p.py === here.py && (p.in ?? 0) === (here.in ?? 0)
+  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));
+/** The one string a frame compares to know whether my place moved (paintLive) - the coordinates withMe reads. */
+export const hereKeyOf = (h) => (h ? `${h.px},${h.py},${h.in ?? 0},${h.bk ?? ''}` : '');
 
 /** The digits beside a bar: "50 / 60". */
 export function vitalsText(v, max) {
@@ -261,7 +275,8 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   injectPartyStyle(doc);
   // PARTY8-B: my own place, as the host last composed it (scenes/world.js partyFrame's pose) - read, never composed
   // here (AUDIT SOC B18: composing a pose reads the travel pixel and the location index, and this runs per frame)
-  const hereText = () => placeText(here?.() ?? null);
+  const herePose = () => here?.() ?? null;
+  const hereKey = () => hereKeyOf(herePose());
   const loader = faceLoader ?? createFaceLoader(art ?? {});
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const setText = (n, t) => { if (n.textContent !== t) n.textContent = t; };
@@ -285,6 +300,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   const faces = new Map();     // race|gender|face -> the decoded image, or null when the art could not be read
   const pending = new Map();   // the same key -> the load in flight, so two seats with one face load it once
   let painted = -1;            // the `social.version` the cards were written from
+  let paintedPose = -1;        // AUDIT PARTY8: ...and the `social.poseVersion` - a pose alone moves this one, never the version
   let hereWas = '';            // PARTY8-B: my place's words at the last pass, so the place lines follow ME as well as them
   let covered = false;         // the host's word: a window over the HUD
   let showing = false;         // is there a party with somebody else in it
@@ -375,7 +391,11 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     bars.append(vitals[0].row, thin);
     body.append(head, bars, where);
     node.append(facebox, body);
-    return { node, facebox, pix, name, lead, where, hp, vitals, faceKey: null, drawn: null, away: null, hpPct: null, hitFlip: false };
+    // AUDIT PARTY8: the flare's class comes OFF when the animation ends - a class left on the fill replays it whenever the
+    // root comes back from display:none (a window closing) or the row is re-inserted (a seat joining): every seat that
+    // took any hit this session flashed at once
+    for (const slot of vitals) slot.fill.addEventListener?.('animationend', () => setCls(slot.fill, 'dfparty-fill'));
+    return { node, facebox, pix, name, lead, where, hp, vitals, faceKey: null, drawn: null, away: null, hpPct: null, hpH: null, hitFlip: false };
   };
 
   /** One member onto one card - written PART BY PART, and only where the part differs. */
@@ -391,7 +411,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     card.away = m.online ? null : { seen: m.seen };   // AUDIT SOC B8: the live pass re-reads this one sentence
     setText(card.where, m.online ? placeText(p) : lastOnlineText(false, m.seen, social.now()));
     // PARTY8-B: the place line is drawn for an away seat (its "last online") and for a live seat somewhere else
-    setCls(card.where, `dfparty-where${!m.online || (p && !withMe(p, hereText())) ? '' : ' off'}`);
+    setCls(card.where, `dfparty-where${!m.online || (p && !withMe(p, herePose())) ? '' : ' off'}`);
     for (let i = 0; i < PARTY_VITALS.length; i++) {
       const v = PARTY_VITALS[i], slot = card.vitals[i];
       setWidth(slot.fill, `${p ? barPercent(p[v.now], p[v.max]) : 0}%`);
@@ -401,11 +421,17 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     // PARTY8-B: ...and DRAWN only while the health is low; a DROP flares the fill (a heal, a first pose and an
     // away seat's stale pose do not - the flare says "took a hit", nothing else)
     const pct = p ? barPercent(p.h, p.hm) : null;
-    setCls(card.hp, `dfparty-hp${pct != null && pct < HP_DIGITS_BELOW && m.online ? '' : ' off'}`);
-    if (pct != null && card.hpPct != null && pct < card.hpPct && m.online) {
+    // AUDIT PARTY8: a seat with no pose yet shows its dashes (the header's own promise), dimmed - never a zeroed bar
+    // that reads as dying and nothing beside it to say why
+    setCls(card.hp, `dfparty-hp${pct == null && m.online ? ' blank' : pct != null && pct < HP_DIGITS_BELOW && m.online ? '' : ' off'}`);
+    // AUDIT PARTY8: the flare is keyed on the HEALTH, not its percent - a max that rose dropped the percent with no
+    // wound and flared, and a one-point hit on a large pool rounded to the same percent and did not
+    const h = p && Number.isFinite(Number(p.h)) ? Number(p.h) : null;
+    if (h != null && card.hpH != null && h < card.hpH && m.online) {
       card.hitFlip = !card.hitFlip;
       setCls(card.vitals[0].fill, `dfparty-fill ${card.hitFlip ? 'hit' : 'hit2'}`);
     }
+    card.hpH = h;
     card.hpPct = pct;
     const key = p ? faceKeyOf(p) : null;
     if (key !== card.faceKey) {
@@ -429,13 +455,14 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     // PARTY8-B: the place lines follow MY place too - I walk into a dungeon and the party outside is now
     // "somewhere else". One string compare a frame; the classes are re-read only when my words moved, and
     // written only where they differ (a seat whose line was already right costs nothing).
-    const ht = hereText();
-    if (ht !== hereWas) {
-      hereWas = ht;
+    const hk = hereKey();
+    if (hk !== hereWas) {
+      hereWas = hk;
+      const hp = herePose();
       for (const [acct, card] of cards) {
         if (card.away) continue;
         const p = social.party?.members?.find((x) => x.acct === acct)?.p ?? null;
-        setCls(card.where, `dfparty-where${p && !withMe(p, ht) ? '' : ' off'}`);
+        setCls(card.where, `dfparty-where${p && !withMe(p, hp) ? '' : ' off'}`);
       }
     }
     for (const card of cards.values()) {
@@ -445,7 +472,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   };
 
   const paint = () => {
-    hereWas = hereText();   // PARTY8-B: paintCard reads my place as it writes each line; the live pass starts from there
+    hereWas = hereKey();   // PARTY8-B: paintCard reads my place as it writes each line; the live pass starts from there
     const rows = social?.others?.() ?? [];
     const leader = social?.party?.leader ?? null;
     showing = rows.length > 0;
@@ -482,8 +509,8 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       // stays owed - so the frame the window closes draws everything that arrived while it was up.
       if (covered) return;
       if (!social) return;
-      if (social.version === painted) { paintLive(); return; }   // AUDIT SOC B8: the clock moves where the version does not
-      painted = social.version;
+      if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) { paintLive(); return; }   // AUDIT SOC B8: the clock moves where the version does not
+      painted = social.version; paintedPose = social.poseVersion ?? 0;
       paint();
     },
     /** What the panel currently draws, for a host or a pin that wants it without walking the DOM. */

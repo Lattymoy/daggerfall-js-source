@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  airOn, AIR_AO_SCALE, AIR_BLOOM_SCALE, AIR_AO_RADIUS, AIR_AO_SAMPLES, AIR_AO_DIRECTIONS, AIR_AO_STRENGTH, AIR_AO_BIAS, AIR_BLOOM_STRENGTH,
+  airOn, AIR_AO_SCALE, AIR_BLOOM_SCALE, AIR_AO_RADIUS, AIR_AO_SAMPLES, AIR_AO_FALLOFF, AIR_AO_STORE, AIR_AO_DIRECTIONS, AIR_AO_STRENGTH, AIR_AO_BIAS, AIR_BLOOM_STRENGTH,
   AIR_GLARE_SIZE, AIR_SHAFT_TAPS, AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, AIR_AO_RESOLVE,
   projInfo, viewDepth, sunScreenUV, glareSize, EMIT_MESH_FS, EMIT_BB_FS, AirPass,
 } from '../src/render/airPass.js';
@@ -123,21 +123,37 @@ test('EL3: the sun\'s screen position - the centre when looked at, off-centre th
   assert.ok(uv && near(uv[0], 0.5, 1e-6) && uv[1] > 0.5);
 });
 
-test('EL3/HQ1: the ambient occlusion is HORIZON-BASED now - no kernel; two slices a quarter turn apart through the ordered rotation, six steps a side to the radius, the highest horizon either side clamped to the projected normal\'s hemisphere, the cosine-weighted arc in closed form, the strength on the occlusion (mutants: the kernel back; the horizon unclamped; the distance weight dropped, so a wall past the radius shades)', () => {
-  assert.equal(AIR_AO_SAMPLES, 6); assert.equal(AIR_AO_DIRECTIONS, 2);
+test('EL3/HQ1: the ambient occlusion is HORIZON-BASED now - no kernel; two slices a quarter turn apart through the ordered rotation, six steps a side to the radius, the highest horizon either side clamped to the projected normal\'s hemisphere, the cosine-weighted arc in closed form, the strength on the occlusion (mutants: the kernel back; the horizon unclamped; the distance weight dropped, so a wall past the radius shades). AUDIT HQ1: the sample point is the depth texel\'s own; a step is a horizon only ABOVE the surface\'s plane; the march is a circle in view space (the aspect on the y step, its magnitude only); the slice\'s plane is exactly the marched step\'s; a slice the normal has no part in adds nothing; the rotation a quarter turn; the falloff the reference\'s share of the radius; the pixel\'s share stored unclamped and the clamp and the strength after the blur - a slice\'s unoccluded visibility is one only averaged over the tile\'s rotations (mutants: the point at the sample\'s own uv; the plane guard a distance guard; the aspect upside down; the slice by the screen\'s signs; the empty slice counted whole; a whole turn; a cliff at the radius; the pixel clamped before the blur; the strength unapplied)', () => {
+  assert.equal(AIR_AO_SAMPLES, 6); assert.equal(AIR_AO_DIRECTIONS, 2); assert.equal(AIR_AO_FALLOFF, 0.6);
   const a = read('src/render/airPass.js');
   assert.ok(!/aoKernel|uKernel/.test(a), 'no kernel anywhere');
   const fs = a.slice(a.indexOf('const AO_FS = `'), a.indexOf('// EL7: THE BLUR IS DEPTH-AWARE.'));
-  assert.match(fs, /float horizonAt\(vec3 p, vec3 v, vec2 uv, vec2 dir, float radiusPx, float bias\) \{/);
+  assert.match(fs, /vec2 texelUV\(vec2 wuv\) \{\n  vec2 px = floor\(uRect\.xy \+ wuv \* uRect\.zw\) \+ 0\.5;\n  return \(px - uRect\.xy\) \/ uRect\.zw;\n\}/, 'AUDIT HQ1: the point is the texel\'s - snapped to the canvas pixel the depth read lands on');
+  assert.match(fs, /vec3 posAt\(vec2 uvIn\) \{\n  vec2 uv = texelUV\(uvIn\);/);
+  assert.match(fs, /float horizonAt\(vec3 p, vec3 n, vec3 v, vec2 uv, vec2 dir, float radiusPx, float bias\) \{/, 'the normal rides in, for the plane guard');
   assert.match(fs, /for \(int i = 1; i <= \$\{AIR_AO_SAMPLES\}; i\+\+\) \{/, 'the steps a side, by the constant');
-  assert.match(fs, /float w = clamp\(1\.0 - d \/ uAOParams\.x, 0\.0, 1\.0\);   \/\/ beyond the radius a step says nothing\n    c = mix\(-1\.0, c, w\);/, 'the distance weight');
-  assert.match(fs, /if \(d > bias\) h = max\(h, c\);/, 'the highest horizon, past the bias');
-  assert.match(fs, /float ang = bayer4\(gl_FragCoord\.xy\) \* 6\.2831853;/, 'EL6: the ordered rotation still');
+  assert.match(fs, /float w = clamp\(\(uAOParams\.x - d\) \/ \(uAOParams\.x \* \$\{AIR_AO_FALLOFF\}\), 0\.0, 1\.0\);/, 'the distance weight: whole to 1 - AIR_AO_FALLOFF of the radius, then eased to nothing at it');
+  assert.match(fs, /\n    c = mix\(-1\.0, c, w\);/, 'a step past the radius says nothing');
+  assert.match(fs, /if \(dot\(s, n\) > bias\) h = max\(h, c\);/, 'AUDIT HQ1: the highest horizon, of the steps that RISE above the surface\'s plane by the bias');
+  assert.match(fs, /vec3 n = normalize\(cross\(dFdx\(p\), dFdy\(p\)\)\);/, 'the quad\'s derivative (AUDIT HQ1: a nearer-neighbour normal was tried and read worse on the probe)');
+  assert.match(fs, /float radiusPx = uAOParams\.x \* abs\(uProjInfo\.x\) \/ max\(-p\.z, 1e-3\) \* 0\.5;/, 'AUDIT HQ1: the radius by the focal term\'s MAGNITUDE (the hosts\' projection is x-mirrored)');
+  assert.match(fs, /float ang = bayer4\(gl_FragCoord\.xy\) \* 1\.5707963;/, 'EL6: the ordered rotation still; AUDIT HQ1: a quarter turn - a slice is a line, and the second is the first\'s perpendicular');
+  assert.match(fs, /vec2 dir = vec2\(cos\(a\), sin\(a\) \* abs\(uProjInfo\.y \/ uProjInfo\.x\)\);/, 'AUDIT HQ1: the uv ellipse of a view-space circle - the aspect |proj[5] / proj[0]| on the y step');
+  assert.match(fs, /vec3 sliceDir = normalize\(vec3\(dir\.x \/ uProjInfo\.x, dir\.y \/ uProjInfo\.y, 0\.0\)\);/, 'AUDIT HQ1: the slice\'s plane is the marched step\'s own (the view step a uv step is, through the same terms posAt divides by)');
+  assert.match(fs, /if \(npl < 1e-4\) continue;/, 'AUDIT HQ1: a slice the normal has no part in adds nothing (the first cut added a whole unoccluded slice)');
+  assert.match(fs, /float h1 = acos\(clamp\(horizonAt\(p, n, v, vUV, -dir, radiusPx, uAOParams\.z\), -1\.0, 1\.0\)\);/, 'h1 is the -dir side...');
+  assert.match(fs, /float h2 = acos\(clamp\(horizonAt\(p, n, v, vUV, dir, radiusPx, uAOParams\.z\), -1\.0, 1\.0\)\);/, '...h2 the +dir side, the side gamma is signed toward');
   assert.match(fs, /for \(int k = 0; k < \$\{AIR_AO_DIRECTIONS\}; k\+\+\) \{\n    float a = ang \+ float\(k\) \* \$\{\(Math\.PI \/ 2\)\.toFixed\(7\)\};/, 'the slices a quarter turn apart');
   assert.match(fs, /h1 = gamma \+ max\(-h1 - gamma, -1\.5707963\);\n    h2 = gamma \+ min\(h2 - gamma, 1\.5707963\);/, 'the horizons clamped to the hemisphere about the projected normal');
   assert.match(fs, /float a1 = 0\.25 \* \(-cos\(2\.0 \* h1 - gamma\) \+ cos\(gamma\) \+ 2\.0 \* h1 \* sin\(gamma\)\);/, 'the closed-form arc');
   assert.match(fs, /vis \+= npl \* \(a1 \+ a2\);/, 'weighted by the projected normal\'s length');
-  assert.match(fs, /ao = 1\.0 - \(1\.0 - ao\) \* uAOParams\.y;/, 'the strength on the occlusion');
+  assert.equal(AIR_AO_STORE, 0.5);
+  assert.match(fs, /outColor = vec4\(vec3\(vis \/ \$\{AIR_AO_DIRECTIONS\}\.0 \* \$\{AIR_AO_STORE\}\), 1\.0\);\n\}`;/, 'AUDIT HQ1: the pixel\'s share stored UNCLAMPED at half scale - two slices of one pixel read 0.87 to 1.09 by its rotation, and one is one only over the tile');
+  assert.ok(!/clamp\(vis/.test(fs) && !/uAOParams\.y/.test(fs), 'no clamp and no strength in the AO pass');
+  const box = a.slice(a.indexOf('const BOX_FS = `'), a.indexOf('const GAUSS_FS = `'));
+  assert.match(box, /float ao = clamp\(wsum > 0\.0 \? acc \/ wsum \/ \$\{AIR_AO_STORE\} : 1\.0, 0\.0, 1\.0\);/, 'the blur unscales the tile\'s average and clamps THERE');
+  assert.match(box, /ao = 1\.0 - \(1\.0 - ao\) \* uStrength;/, 'the strength on the occlusion, after the average');
+  assert.match(a, /gl\.uniform1f\(this\.programs\.box\.uStrength, this\.aoParams\[1\]\);/, 'the strength handed to the blur');
   assert.match(a, /ao: P\(QUAD_VS, AO_FS, \['uDepth', 'uProjInfo', 'uAOParams', 'uRect', 'uCanvas'\]\),/, 'the program\'s uniforms, no kernel');
 });
 
@@ -168,7 +184,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   r.setAir(true);
   const ap = r.air;
   assert.ok(ap instanceof AirPass);
-  assert.equal(count(calls, 'compileShader') - beforeAir, 22, 'eleven programs: ao, box, gauss, shaft, two emitters, the glare; EL4: the luminance, the adaptation, the bright pass, the resolve');
+  assert.equal(count(calls, 'compileShader') - beforeAir, 26, 'thirteen programs: ao, box, gauss, shaft, two emitters, the glare; EL4: the luminance, the adaptation, the bright pass, the resolve; VOL1: the glow and its tile blur');
   r.setAir(false); assert.equal(r.air, null);
   r.setAir(true); assert.equal(r.air, ap, 'kept');
   r.setLightingLane(null); assert.equal(r.air, null, 'no lane, no air');
@@ -212,7 +228,7 @@ test('EL3: the renderer builds the pass with the lane behind the door, sizes the
   const vpCalls = calls.filter((c) => c[0] === 'viewport');
   assert.ok(vpCalls.some((c) => c[1] === 0 && c[3] === 160 && c[4] === 100), 'the AO at half');
   assert.ok(vpCalls.some((c) => c[3] === 80 && c[4] === 50), 'the bloom at a quarter');
-  assert.ok(calls.some((c) => c[0] === 'clearColor' && c[1] === 0 && c[2] === 0), 'the bloom target cleared black...');
+  assert.equal(calls.filter((c) => c[0] === 'clearColor' && c[1] === 0 && c[2] === 0 && c[3] === 0).length, 2, 'the bloom target cleared black, and the glow\'s image (no lantern here; VOL1) its own - the sun is up, so the shafts draw instead of clearing...');
   assert.ok(near(calls.filter((c) => c[0] === 'clearColor').at(-1)[1], 0.53, 1e-3), '...and the frame\'s clear colour restored');
   const depthBinds = calls.filter((c) => c[0] === 'bindTexture' && c[2] === ap.frame.depth).length;
   assert.ok(depthBinds >= 5, `the frame's depth bound for the AO, the emitters, the glare and the shaft (${depthBinds})`);

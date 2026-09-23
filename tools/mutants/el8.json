@@ -110,8 +110,8 @@
   {
     "name": "prepare-prev-is-current",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }\n    this.f = f;\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
-    "new": "    this.f = f;\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame;",
+    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }\n    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
+    "new": "    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame;",
     "tests": [
       "test/el8_contact.test.js"
     ]

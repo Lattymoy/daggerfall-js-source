@@ -422,7 +422,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:3531 hands
+   * record these hosts mint spells it `name` (exterior.js:3532 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -5660,7 +5660,7 @@ export function createWorldModes(host) {
         // QUICK-LOOT B4: through the window's own door - `loot` is the
         // container's hooks, the object this arm would hand the window.
         pool?.takeLoot(key, (l) => say(l), (loot) => {
-          if (quickLootTake(key, loot, playerEntity, (l) => say(l))) return;
+          if (quickLootTake(key, loot, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
           mountInterior(interiorInventory({ loot }));
         });
         return true;
@@ -5686,7 +5686,7 @@ export function createWorldModes(host) {
         if (pile) {
           const _hooks = droppedLootHooks(pile);   // G5
           // QUICK-LOOT B4: the same door, on the player's own pile.
-          if (!quickLootTake(key, _hooks, playerEntity, (l) => say(l))) mountInterior(interiorInventory({ loot: _hooks }));
+          if (!quickLootTake(key, _hooks, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) mountInterior(interiorInventory({ loot: _hooks }));   // AUDIT QL-WEIGHT1
         }
         return true;
       }
@@ -5900,6 +5900,8 @@ export function createWorldModes(host) {
           shareQuest: (uid, questName, displayName) => host.shareQuest?.(uid, questName, displayName),
           // PEER-PLAQUE1: the plaque's peer pick, delegated the same way - the dungeon's own eye, the outer host's peers
           peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye
+          allyTarget: (eye, dir, reach) => host.allyTarget?.(eye, dir, reach) ?? null,   // AUDIT ALLY-CAST A3: the dungeon's own cast engine asks the outer host's pick
+          castAtAlly: (id, frame) => !!host.castAtAlly?.(id, frame),
           partyRestGate: () => host.partyRestGate?.(),   // PARTY-REST2 (AUDIT DROPS D1): the dungeon's rest asks the party too - ONE copy (main carried two; eslint no-dupe-keys)
           pointerSurfaceUp: () => !!host.pointerSurfaceUp?.(),   // AUDIT DROPS E1: the plaque comes down under a pointer surface
           // D-ONLINE1: the dungeon death screen's own door - see
@@ -6025,7 +6027,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6220), so the OUTER host's one rides in.
+          // (dungeonContext.js:6226), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:744 -> the
@@ -7093,7 +7095,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:8356's own wave-46 note); the interior
+          // a blow (world.js:8369's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7984,7 +7986,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3592`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3593`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -8914,7 +8916,7 @@ export function createWorldModes(host) {
             const r = dispelBundle(playerEntity, b.bundleId, {
               // The one asymmetry: the player's OWN casts always come
               // off; only something cast AT them gets a roll.
-              selfCast: b.bundleType === 'Spell' && b.selfCast !== false,
+              selfCast: b.bundleType === 'Spell' && (b.selfCast !== false || b.ally === true),   // AUDIT ALLY-CAST C4: a mate's gift comes off at will
               roll01: Math.random(), chance,
             });
             if (r.alert) townTalk?.say?.(DISPEL_MAGIC_TEXT[r.alert]);
@@ -9452,6 +9454,7 @@ export function createWorldModes(host) {
     // see world.js's own follower-side mount) so a follower who is
     // watching someone else's countdown never reads back as ITS OWN
     // leader, which would chain the mirror through a third member.
+    restEnemiesNearby: () => interiorEnemiesNearby({ resting: true }),   // AUDIT PARTY-REST: the mirror's own foe question, this host's scan
     get restState() {
       const w = interiorOverlay;
       // PARTY-REST6 (2026-09-21, per-request: "the non initiator gets back to the rest screen which
@@ -9576,9 +9579,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3176-3198), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3177-3199), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5568). So an F9 pressed in a shop
+     *  unconditionally (world.js:5581). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9605,7 +9608,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5660)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5673)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9615,8 +9618,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5805`
-     *  and `dungeonContext.js:6229` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:5818`
+     *  and `dungeonContext.js:6235` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

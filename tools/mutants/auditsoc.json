@@ -470,8 +470,8 @@
   {
     "name": "B8-hud-clock-never-ticks",
     "file": "src/ui/partyPanel.js",
-    "old": "if (social.version === painted) { paintLive(); return; }",
-    "new": "if (social.version === painted) { return; }",
+    "old": "if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) { paintLive(); return; }",
+    "new": "if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) { return; }",
     "tests": [
       "test/soc4_partyhud.test.js"
     ]

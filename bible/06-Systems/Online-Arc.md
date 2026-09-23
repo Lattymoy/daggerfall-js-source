@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6020` read, on one physical line:
+`src/scenes/worldModes.js:6022` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4215`). With the property missing that call is a
+(`dungeonContext.js:4219`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4831,9 +4831,9 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:3471` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:3473` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
-  provenance argument `applySpellToFoe` hands them (`hostMagic.js:187`)
+  provenance argument `applySpellToFoe` hands them (`hostMagic.js:193`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
   Threading it touches four hosts.
 - **A building interior streams no foes at all.** `makeInteriorFoes`
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:811`, `src/net/online.js:1370`):**
+**Now (`src/net/wire.js:815`, `src/net/online.js:1406`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7512,7 +7512,7 @@ Three opus lenses, one each over the merge and the wire, the additions and the h
 
 **D - party rest was outdoors only (both lenses, HIGH).** The Trading drop shipped only world.js, which read `modes.restState` and `modes.dungeonCtx.restState` off hosts that never had them and handed `partyRestGate` to a mode machine that never read it: a leader resting in a tavern or a dungeon broadcast `rest: null` (no mirror, no PARTY-REST4 notice) and skipped the `/ready` vote. Now both modal hosts expose `get restState()` (RESTING, never a mirror, never the wake box) and run `partyRestGate` before their rest window (the dungeon through `opts.partyRestGate`); the gate itself spends the `/ready` vote, for all three. *D2:* the outdoor `restWin` broadcast a rest while the leader's WAKE BOX was up (`state !== 'resting'`), so a follower whose mirror had ended reopened it every frame with 0 h left until the leader closed their box - `state === 'resting'` at all three, and a mirror the follower closed while the leader still rests is DECLINED for that nap. *D3:* a leader who went offline mid-nap left `rest` on their seat row (an offline leader rests nobody); the notice is not spent while the HUD is down for a death; a loiter is said as one; the label stays 4 s. *D5:* `toggleRest` read `_partyRestReady` and `partyRestGate` before their declarations during the boot awaits (a TDZ throw on R - audit24 wave37's class); `modes ? partyRestGate() : null`.
 
-**E - the additions and the peer sounds.** *E1 (MEDIUM):* indoors and underground the plaque painted over the F-menu the player had just opened on the very peer under the crosshair - the street's `pointerSurfaces` term never reached the two modal hosts; `pointerSurfaceUp` does now. *E2 (MEDIUM):* `fk` was cached on the street stride only, so a peer in a tavern crunched snow: the modal stride caches its kind off the very ctx its clip pair is picked from (`footstepKind`), and the pose reads the mode's. *E3 (LOW):* the modal plaque raced from the mode's eye while the F key races from `cam.pos` - in third person the two disagree; the plaque's pick is the key's own ray in every mode (`socialFwd`). *E4 (MEDIUM):* a BODY peer's stride machine and swing edge were never swept (the sweep walked `_batches`, which a body peer never joins - SLAM4's class), and a stale `an` played a phantom swing when they came back; swept against every peer seen. *E5:* the peer stride was fed the SCENE point, so a floating-origin recentre (819.2 units) was a step - the wire frame now. *E6:* a swing sounded as the first weapon anywhere in the look, sheathed or not - the right-hand slot, and a fist while `wd` is 0. *F1:* the trade window's stack-quantity field had no `font: inherit` - every input in the window now.
+**E - the additions and the peer sounds.** *E1 (MEDIUM):* indoors and underground the plaque painted over the F-menu the player had just opened on the very peer under the crosshair - the street's `pointerSurfaces` term never reached the two modal hosts; `pointerSurfaceUp` does now. *E2 (MEDIUM):* `fk` was cached on the street stride only, so a peer in a tavern crunched snow: the modal stride caches its kind off the very ctx its clip pair is picked from (`footstepKind`), and the pose reads the mode's. *E3 (LOW):* the modal plaque raced from the mode's eye while the F key races from `cam.pos` - in third person the two disagree; the plaque's pick is the key's own ray in every mode (`socialFwd`). *E4 (MEDIUM):* a BODY peer's stride machine and swing edge were never swept (the sweep walked `_batches`, which a body peer never joins - SLAM4's class), and a stale `an` played a phantom swing when they came back; swept against every peer seen. *E5:* the peer stride was fed the SCENE point, so a floating-origin recentre (819.2 units) was a step - the wire frame now ~~~~ (PEER-BUZZ, below: WRONG - the overworld's wire frame is forty scene units to one, and the fix was the buzz every player then reported; the stride is in scene units again, rebased at the recentre). *E6:* a swing sounded as the first weapon anywhere in the look, sheathed or not - the right-hand slot, and a fist while `wd` is 0. *F1:* the trade window's stack-quantity field had no `font: inherit` - every input in the window now.
 
 **The records (lens 3).** No re-aimed pin was weakened and every count and constant was true; the record named the wrong audit for the relay-deploy precedent (RELAY-H1's F1, not ONLINE-DUNGEON-FOES'), the Ledger said "a tenth-a-second cooldown" for one share per ten seconds, and 'in your party' lived in two files (one home now: `net/social.js WHY_IN_PARTY`). Re-aims the DROPS record left unsaid: `test/world2.test.js` moved its pin from `applyFoes` to `applyFoesFrame` (SEAT-HEAL's real change of law - the public door no longer refuses frames while it holds authority; seatheal pins the new behaviour); `watch1`, `econ1`, `auditworld2` (`'quest'` in the doc regex); mutants `slam15` Z6/Z7, `soc1` S38, `macfg` MAC-F. The drop laws no pin had held are held now (`test/auditdrops.test.js` F): the pose's `fk` clamp, the quest frame's own cap at the door, `relaySupportsTrade`, the real `tradePack` reserve/restore over a real entity, `tradeFrame` after `chatFrame` before the dead return. Left as found, on purpose: a modified client can offer gold or items it does not own (WORLD4's peer-loot trust - the receiver sees the offer before locking); peers' footsteps assume a grounded peer (the pose carries no swim/levitate bit); a shared TeleportPc lands the receiver at the sender's Place (party trust).
 
@@ -7537,3 +7537,279 @@ Not verified in a browser: no online session exists in this container.
 ## LOOT-REGEN (2026-09-22, Satranath on Discord, online: "I get killed and go back into the dungeon, and all the guys I killed before have loot again") - a quick-loot take is the room's word
 
 WORLD8 says taken loot comes back one real hour after it fell, and the relay keeps a dungeon's memory thirty days; neither failed. The death is remembered (the corpse stands on re-entry) and the corpse's loot is NOT: `_lootSeen` gains a `corpse:<i>` only when the room is told about it, and the QUICK-LOOT door (B4, 2026-09-22) told it nothing - it read the WORLD4 claim as a WINDOW's act and made none for a take that opened nothing, returning before the claim. The memory strips every foe's `items` (AUDIT WORLD4 D4) and carries only the seen containers' records, so a quick-looted corpse had no record; `patchFoe` on re-entry stood the remembered death over the fresh build's OWN roll. Quick Loot is on by default and every ordinary press on a highlighted corpse row takes one item through that door (the window opens only on J), so it hit everyone; death is just how Satranath left. `dungeonContext.js`: a take says what is left the moment it lands - `publishLoot(key)`, the stamp (WORLD8), the record, the seen-set, the first-word memory push (D5) - and settles an emptied pile's flat as the window's `onEmptied` would; C6's window order stands untouched behind it (the window's claim follows its mount). Buildings need nothing: a building's memory keys are `shelf:`/`container:` alone, and a cell's corpses are nobody's memory. Pin: `test/discord5.test.js` (the door by source, the word's four parts); mutants in `tools/mutants/discord5.json` (the word removed, the flat unsettled). Not verified in a browser: no online session exists in this container.
+
+## PEER-BUZZ (2026-09-22, Discord through Mac: "footstep sounds are broken", with a recording) - the peer stride was measured in world coordinates
+
+The recording is 52 seconds of a continuous buzz that rises while somebody walks and falls when they stop: not a
+wrong clip, not doubled steps - a footstep clip fired so often the copies merge (measured: a flat envelope, hits
+0.1-0.2 s apart where a walk is 0.8 s, a 6 Hz beat under it). One seam fires a footstep from a position delta, and
+AUDIT DROPS E5 had just moved it: `net/remotePlayers.js _syncFootsteps` fed each peer's FootstepMachine the
+WIRE's own x/z "which never recentres", to stop the floating-origin shift of the scene point counting as a stride.
+In a town, a building or a dungeon the wire's frame is the scene's. In the OVERWORLD it is world coordinates
+(world.js composes the pose from `wc`): 32768 units per map pixel against the scene's 819.2 - forty scene units
+to one. A peer walking at 3 u/s moved 120 wire units a second, the machine fired a step every 2.5 of them, and
+every player within thirty metres of a walker heard forty-eight footsteps a second. E5 shipped in the audit merge
+(#324) and the reports followed it.
+
+The stride is measured in SCENE units, as the local machine's is, and the floating origin is handled the way EV1
+handles it for the local machine: world.js's recentre block calls `remotePlayers.rebaseFootsteps()` beside
+`footsteps.rebase()`, every peer machine drops its anchor, and the 819.2-unit jump re-seeds instead of walking.
+E5's own pin is re-aimed to that shape (a recentre with the rebase is no step), its mutant inverted (the wire frame
+back is the buzz), and `test/peerstride.test.js` drives the real seam at the real scale: a peer at 3 u/s for five
+seconds in the overworld makes a walker's six steps, not two hundred and forty; a standing peer none; a recentre
+rebased none, and the same jump unrebased one - the negative control that shows the rebase is what matters.
+`tools/mutants/peerstride.json`: 3, 3 dead. Not verified in a browser; the recording is the measurement.
+
+## AUDIT PARTY8 (2026-09-23, Mac: "audit the 8 party integration we just pushed") - six lenses over the eight seats, the HUD and the party rest under them, world95
+
+PARTY8 (PR #330, main `07efc0999`) doubled the party to eight seats and redrew the HUD twice; it landed with no
+record here (the Ledger's SOC row said "four-seat", `Social-Party-Arc.md` said `PARTY_MAX 4`) and beneath it the
+PARTY-REST DROP, whose pins the third lens ran fourteen mutants through with thirteen surviving. Six lenses (three
+over PARTY8: the bound and the hub, the HUD, every mechanic at eight; three over the party rest: the session and
+gate, the four hosts, the wire/UI/relay/records), every finding traced to a line and run where it could be run.
+The offline crash the first lens found first (`markPartyRestSpent` reading `social.now()` with no social clock -
+every offline Rest press a red box) had already reached main as REST-OFFLINE1 from a Discord crash report while
+the lens was running; the rest is paid here.
+
+**The party rest (four real bugs, five risks).**
+- *A mirror opened again every frame.* Nothing remembered which nap a follower had already mirrored, so a mirror
+  that ended before the rester's - the follower already healed under "Rest Until Healed", a quest's prevent-rest
+  line, a Stop the rester had not honoured yet - reopened on the next frame and after every OK until the rester
+  woke. `mirrorKey` (the rester and their `restStartedAt`) is remembered; one mirror per nap. And a mirror opens
+  only where the follower could rest themselves: the rest gate's own `restDecision` (the host's foe scan through
+  a new `restEnemiesNearby` on the interior and dungeon APIs, swimming, the ground, a prevent-rest message, the
+  vampire block) and the interior window stack (`modes.overlayHeld`, which townTalk's own flag never covered).
+- *A follower's Stop was ignored, or replayed.* `restCancelAt` was each follower's own `performance.now()`
+  compared against ONE high-water mark for every sender: a Stop from a tab younger than the last canceller's did
+  nothing (and that follower was pulled straight back in), and a reload of the rester's tab replayed an old
+  request on the next rest's first tick. `systems/partyRestLaw.js`: the marker is compared per sender against a
+  snapshot taken as my rest begins (`snapshotCancels` in `markPartyRestSpent`, `cancelRequestFor` each tick), a
+  mirror is nobody's target (`canceledByFollower: () => false` in its deps), and a follower's request is dropped
+  when their next mirror starts.
+- *A disconnected seat blocked the party for five minutes.* The hub keeps a dropped member's seat with `online:
+  false` and no pose, and `net/social.js` carried the LAST pose over a view that has none; the gate counted that
+  ghost among the online ("gather the party", unsatisfiable until the seat lapsed), and indoors, where nearness is
+  the building key alone, its stale `rest` was mirrored after every OK. The picture keeps a carried pose only for
+  a seat the hub says is online, and every reader - the gate's count, `nearPartyMembers`, the mirror's search and
+  its continue check - asks `memberPresent`.
+- *A vote outlived the rest it approved.* `ready` was a bare boolean whose sixty-second expiry ran only on the
+  voter's own frame, so a voter whose window was open when the rest started (no mirror spent the vote) or whose
+  tab sat in the background approved the leader's NEXT rest with it. The pose carries `readyAt` on the shared
+  clock (world95); a reader (`voteStands`) counts a vote younger than the timeout and cast after the last rest
+  that started here. `/ready` keeps the Rest key's law too: a member answers the leader's round and never opens
+  one.
+- The risks paid: a wire stamp from the future (`voteAt: 1e300`, run against the real gate: "Resting vote
+  ongoing" for ever) is no stamp (`stampOf`, `latestStamp` at the four reduce sites); a classic-skin rest is
+  nobody's to mirror and stamps no `restStartedAt` (ONLINE-REST1, both ends); a follower's "gather the party" is
+  measured around the LEADER (`nearPartyMembers(feetOfPartyAccount(leader))`), not the follower - eight within
+  fifteen metres of the leader can stand twenty-eight apart; PARTY-REST16's vote origin follows the floating
+  origin (a recentre read as an 819-unit walk and cancelled the vote); the mirror's deps say where the follower
+  stands (`inside` by mode, RapidHealing's rate); the cancel scan tests the name before the nearness.
+- *The enhanced rest window against the classic one, arm by arm.* Three interior hooks the classic window calls
+  and this one never did (`moveToBed` after a timed or full start, `onRentExpired` as the end's first arm,
+  `updateNpcPresence` on close - a rented room's sleeper rested standing, an expired room was announced and never
+  removed, hidden shopkeepers stayed hidden); `ignoreAllocatedBed` reaches it through the door; the hours prompt
+  keeps classic's arms (an empty field back to selection, a loiter over `loiterLimitHours()` and a rest over 99
+  refused on their own page, a zero a zero-hour rest - this skin clamped 1..99 and started); Escape and the Rest
+  key do what classic's keyup arms do (Stop mid-rest, OK on the ended page, close a page), and the PX28 stack's
+  Tab close goes through the same one body - it disposed the window, ending a rest with no wake box, no raise,
+  and no cancel request, so a follower was pulled straight back in; a rest until healed shows the hours passed
+  and a meter that is the health; the four choices stand as a column.
+
+**PARTY8 (two real bugs, six risks).**
+- *The HUD's "with me" compared words, not places.* `withMe` matched placeText's strings, so two wilderness
+  pixels 800 apart, two shops of one town and two nameless dungeons all read as "with me" and drew no place
+  line - a healer three regions away looked beside me. It compares coordinates now (the pixel, the kind, the
+  building key - samePlace's own rule) against the pose the host last composed; `hereKeyOf` is the one string
+  the live pass compares.
+- *The open social panel rebuilt every button under the pointer.* A member's pose raised the picture's
+  `version`, a repaint replaces the body, and a click that straddled a companion's pose (up to seven a second at
+  eight seats - lens C watched seven Kick buttons replaced under one pose) landed on a node that was gone. A pose
+  that replaces one moves `poseVersion` alone; the panel writes the row's line in place on its live pass, and the
+  party HUD watches the pose version.
+- *The hub's lapse burst overran the client's note gate.* Seven founding seats lapsing at once (a late joiner
+  idle, sending no pose to prompt an earlier sweep) said `party.lapsed` and `party.leader` alternately - fourteen
+  notes against NOTE_IN_HZ_MAX ten, and the one dropped was "You lead the party now". The lapses each say their
+  note; the lead is said once, for whoever holds it at the end. And the lead passes to the longest-standing seat
+  that is ONLINE - handed to an away seat, nobody could kick for five minutes.
+- The risks paid: the quest fan pays in bytes (`QUEST_ROOM_BYTES_PER_S`, a 64 KiB share to seven members' eight
+  tabs is 3.5 MiB for one press and the rate gate alone let eight through); a receiver no longer echoes a resync
+  back to the party (`_questSyncSeen` learns what it received - one log line was eight hub acts and fifty-six
+  deliveries); a party mate takes a body before a stranger (`peerBodies.sync`'s `priority`: a mate seated first,
+  may take a stranger's slot outright, never loses hers to one); the flare comes off on `animationend` (a class
+  left on the fill replayed it whenever a window closed or a seat joined) and is keyed on the health, not its
+  percent; a seat with no pose shows its dashes, dimmed; the portrait plate is content-box (the sheet's
+  border-box squashed a 31-wide head); a phone held sideways caps the stack above the touch buttons.
+- Not paid, said plainly: a world93 client in a party of five drops its whole social picture silently (the hello
+  carries no client version and SKEW1 removed the client's own check) - the web build updates itself and the
+  relay is live at world95, so this is the desktop shells' release-day window and a version gate is its own
+  slice; the hub cannot vouch that `restCancelFor` came from a member that was mirroring the target (a party is
+  invite-only); a pose's staleness is invisible on the HUD (an honest client sends only on change, so a stamp
+  would mark the still as stale); the notice stack and the junction map overlap the party rows (older than
+  PARTY8); the bar hues are literals where the sheet has tokens.
+
+**Pins and mutants.** `test/auditparty8.test.js` (18) drives the law on a table (`stampOf`/`latestStamp`,
+`memberPresent`, `voteStands`, the cancel markers, `mirrorKey`), the wire's `readyAt` and the byte budget's
+arithmetic, the picture (the offline seat's pose dropped, a pose a quiet change), the enhanced rest window under
+a fake document (the bed through canRest's guild arm - bed ZERO, which classic's truthiness skips - the expired
+room, the presence re-roll, the hours prompt's four arms, Escape and the stack, the until-healed meter), the body
+allocator (a mate seated first, a stranger never takes hers, a mate takes a stranger's), and the hub over the
+fake room (seven lapses say the lead once, the lead to an online seat, the ninth seat refused at the ACCEPT
+path); the world.js seams by source at the foot. `test/party8b.test.js` re-aimed to coordinates and extended
+(the flare on a max that rose, on a one-point hit); nineteen pins in `partyrest1`/`auditdrops`/`restfar`/
+`restlodging`/`mwbody1` re-aimed to the fixed text; `partyrest1`'s dead slice (`(restKind) =>`, lens 3) stands
+as it was pinned by its own signature test. `tools/mutants/auditparty8.json`: 23, 23 dead. Five older records
+re-aimed. RELAY_VERSION world95 (the wire's `readyAt`, the hub's quest bytes, the lapse and lead changes) - the
+relay deploys itself on the merge to main. Not verified in a browser: no online session exists in this
+container; lens B measured the flare, the landscape overflow and the squashed plate in Chromium on the HEAD
+before the fixes.
+
+## ALLY-CAST (2026-09-23, Mac: "Can we implement the use of spells on players? For example healing and other buffs? ... some sort of ally targeting system" - "Do it") - a spell cast on a party mate, world96
+
+DFU has no other players, so its five target types only ever land on the caster, a foe or nothing. The port's law
+online is that a player's vitals and live effects are their own client's, so a cast on an ally is a FRAME and the
+target applies it.
+
+**The frame.** `{t:'cast', data:{to, level, spell}}` - directed like a trade frame (`net/wire.js validCastData`: the
+target's id, the caster's level 1..30, a spell record of name, element, range type (a touch or a ranged single
+target), icon and one to three classic effect entries with their eleven byte components; anything else refuses
+the whole frame - the bounds as the audit below left them). The relay's cast arm (`server/src/index.js`) is the
+trade arm's shape: its own meter (CAST_HZ_MAX 4 a second per sender, the strikes), a place room alone, routed to
+the one socket `to` names with the sender's id stamped on, a funnel onto the destination per sender
+(CAST_DEST_SENDERS_MAX slots), junk at one's own id. The client link (`net/online.js`) sends through its own
+projection first (`sendCast`) and delivers only a frame addressed to me, per-sender gated coming in (`onCast`).
+
+**The targeting (the port's own rule - a recorded departure).** Nobody aims a slow missile at a moving friend. On
+the release frame (`scenes/hostMagic.js releaseFrame`, before the four range arms) a beneficial spell looks for a
+PARTY MATE under the crosshair - the F key's own pick (`player/socialPick.js pickPeerInFront` over `peersNear()`,
+`townTalk.rayPersonDistance`), a party member (`social.isPartyPeer`), one some socket of mine reaches, behind the
+cast engine's own line of sight (`allyInReach`) - within touch reach (ALLY_TOUCH_REACH, the foe's own touch
+reach) for a CasterOnly or ByTouch spell and within ALLY_RANGE_REACH (24 m) for a SingleTargetAtRange one; the
+two area types are never redirected, nor is a free ready (a trap's). Found, the cast leaves as the frame (a
+CasterOnly leaves as a TOUCH, range type 1 - it is one, on the ally), the magicka is spent and the skills tallied
+as for any cast, and the caster reads "You cast Heal on Bran." Not found, or the link refusing, the spell does
+what it always did. CastReadySpell's touch gate admits the mate as it admits a foe. The departure is the
+CasterOnly conversion: DFU's spellbook is almost all CasterOnly, and kept 1:1 healing a friend would mean buying a
+ByTouch copy first - so a Heal readied with the crosshair on a party mate ARMS for them instead of firing on the
+spot, and the next click sends it (or heals you, if they stepped away). The plaque says so while a castable spell
+is armed and the mate is in reach ("Cast Heal on Bran").
+
+**The trust: the receiver decides** (`scenes/world.js online.onCast`). A cast from anyone outside my party is
+dropped unread (a party is invite-only, and that is the whole trust); so is one at a dead player. Of what arrived
+only the BENEFICIAL families are kept (`systems/allyCast.js ALLY_CAST_TYPES`: Cure, Elemental Resistance, Fortify,
+Heal, Invisibility, Levitate, Light, Regenerate, Spell Absorption/Reflection/Resistance, Chameleon, Shadow,
+Slowfall, Free Action, Jumping, Climbing, Water Breathing/Walking, Shield, Detect, Comprehend Languages - never
+Paralyze, Damage, Continuous Damage, Drain, Transfer, Disintegrate, Soul Trap, Silence, Lock/Open, Pacify/Charm,
+Dispel, Create Item, Identify, Teleport, Morph Self), and on the caster's side a spell is castable on an ally only
+when EVERY real effect is one of them - a Heal beside a Damage Health goes the ordinary way. What is kept goes
+through the one player door (`hostMagic applySpellToPlayer`) at the caster's level, AS A SELF-CAST (range type 0,
+whatever was sent: no saving throw against a gift - see the audit's C1) and tagged a mate's (never merged with my
+own bundle of the same kind, dispelled as my own), with "Bran casts Heal on you." said first and the healed line
+after it, as the health that actually moved. Friendly fire is off by construction and the relay never judges a
+spell.
+
+**Pins and mutants.** `test/allycast.test.js` (9): the law on a table (castable, the receiver's subset, the
+reach, the frame, the lines), the wire's projection and parse, the relay's arm over the fake room (to the one
+socket, junk at self, nothing in the hub), the magic host driven as itself (a CasterOnly Heal read off a friend
+leaves as a touch and the caster is not healed; nobody there or a refused door and it heals as before; ByTouch
+and ranged buffs at their reaches; a damage spell and an area spell never ask), the world.js/link/relay seams by
+source. `tools/mutants/allycast.json`: 15, 15 dead. RELAY_VERSION world96 with its law row; the relay deploys
+itself on the merge to main. Not verified in a browser: no online session exists in this container.
+
+## AUDIT ALLY-CAST (2026-09-23, Mac: "Lets audit this") - three lenses over the cast on a party mate, the findings paid, world97
+
+Three lenses over ALLY-CAST as shipped: the CASTER'S (the release frame, the ready, the pick, the plaque), the
+WIRE'S and the RELAY'S (the frame's bounds, the funnel, the version), and the RECEIVER'S (the door the gift goes
+through, the bundle it becomes). Every finding below is paid in the same commit and pinned by execution in
+`test/allycast.test.js`; nothing was deferred.
+
+**The caster's lens.**
+- A1 THE CONVERSION WAS INVISIBLE UNTIL IT FIRED. SetReadySpell's instant arm (:350-351) cast a CasterOnly spell
+  the moment it was readied, so the ally pick ran with no sign to the player: a Heal readied while a friend
+  happened to cross the crosshair went to them; one readied FOR a friend who stepped aside a frame earlier healed
+  me. Now a CasterOnly spell with a party mate in touch reach ARMS ("Press button to fire spell."), the plaque
+  under the mate says "Cast Heal on Bran", and the click resolves through the release frame's ally arm - or the
+  CasterOnly arm as ever if they moved. With nobody there, and for a free ready, the instant arm fires as DFU's.
+- A2 NO LINE OF SIGHT. A touch on a foe runs pickTouch's collider ray; the ally pick ran none, so a Heal landed
+  through a closed door or a dungeon wall. `hostMagic.js allyInReach` casts the collider's ray to the pick's
+  distance (the pick returns it now) and a wall short of the mate is nobody. Both engines run it, and the plaque
+  asks it, so the plaque never promises a cast the click would not make (A5).
+- A3 THE DUNGEON WAS UNWIRED. The dungeon runs its OWN createPlayerMagic (`dungeonContext.js`) and its deps
+  carried no `allyTarget`/`castAtAlly`, so underground the feature did not exist - while the plaque read the
+  SURFACE engine's stale ready and said "Cast Heal on Bran" over a mate the dungeon engine would never cast at.
+  The pair rides world.js's host object through worldModes' opts, and the plaque reads the live engine
+  (`modes.dungeonCtx.readiedSpell`/`allyInReach` underground).
+- A4 A "TOUCH" AT 6.4 m. ALLY_TOUCH_REACH was SOCIAL_REACH, the F key's 6.4 m - more than double what a touch on a
+  foe reaches (DaggerfallMissile's 0.25 sphere pushed 3.0 along the aim). It is the foe's own touch reach plus the
+  person's radius now (3.7 m, `systems/allyCast.js`).
+- A6 A PICK THAT THROWS. `allyTarget` is a host seam over peersNear() and the session; a throw there aborted the
+  release frame with the magicka spent and the ready cleared. `allyInReach` catches it and the spell goes the
+  ordinary way.
+- A7 A FREE READY REDIRECTED. A trap's CasterOnly payload readied `free` on the player who sprang it, and with a
+  mate under the crosshair went to THEM. Never redirected now: the release arm and the touch gate both read
+  `!readiedFree`.
+- A8 "You cast Heal on Bran." is said when the frame LEFT, and a frame can still be dropped downstream (the
+  relay's funnel, the receiver's inbound gate, a dead receiver, a subset that leaves nothing). Recorded as the
+  law, not paid: "sent" is not "landed", the receiver's own line is the landing, and the caster's line names the
+  act they performed - the same as a missile that flies and misses.
+
+**The wire's and the relay's lens.**
+- B1 AN OLDER RELAY CLOSED THE SOCKET. The link sent a `cast` frame to whatever relay welcomed it; a relay before
+  the frame's parse refuses an unknown frame by closing the socket, so a client ahead of its relay lost its room
+  on the first friendly Heal. `online.js castOk` reads the welcome's version (`relaySupportsCast`, CAST_RELAY_MIN
+  97 - world96 parsed a shape this client no longer sends) and `sendCast` refuses at home; the release then
+  falls through to the ordinary arm.
+- B2 ONE FUNNEL FOR EVERYONE. The destination's inbound funnel was one bucket (CAST_ROOM_HZ_MAX) shared by every
+  sender, and the relay cannot tell a mate from a stranger: five strangers casting at you starved your own
+  party's heals. The funnel is per sender now (`cin`, CAST_DEST_SENDERS_MAX 8 slots on the destination's
+  attachment, the stalest evicted for a newcomer, each slot at CAST_HZ_MAX), and the attachment stays under the
+  runtime's 2 KiB.
+- B3 THE BOUNDS WERE NOT THE GAME'S. Level admitted 1..60 (a level-60 Fortify scaled past anything a player can
+  reach), a component admitted any non-negative integer up to a large cap. CAST_LEVEL_MAX 30, CAST_SETTING_MAX
+  255 (the classic byte), CAST_ICON_MAX 68.
+- B4 A CRAFTED SELF-CAST SKIPPED THE SAVE. The wire admitted rangeType 0..4, and the receiver applied the type as
+  sent - so an honest frame took the target's saving throw while a crafted rangeType 0 did not. The wire admits
+  1 and 2 alone; the receiver decides the type (C1), so the sender's word about it is nothing.
+- B5 THE PINS. The relay pin read `a.att.drops` (the pose meter's strikes, never touched) for "junk"; it reads
+  `a.att.junk` now, and the meter, the per-sender funnel, the slot bound and the link's door are pinned by
+  execution (the fake room, `fakeSocketClass` + an `OnlineSession` fed a welcome).
+- B6 The relay's dead length check on the parsed frame (parseClient had already refused it) is gone; the link's
+  `_inCastSaid` is declared with its siblings; this record no longer claims the receiver rolls "absorption and
+  reflection" over a gift (they are self-cast law now, C1).
+
+**The receiver's lens.**
+- C1 THE SAVE ZEROED A THIRD OF HEALS. DFU save-scales every bundle that is not CasterOnly (EntityEffect
+  GetMagnitude) because in DFU only a foe ever receives an external bundle; carried as the touch it was sent as,
+  a friend's Heal landed ZERO on a full save (a third of casts at willpower 50, two thirds for a Breton, more
+  under Resist Magic), a Levitate was "Save versus spell made.", and the caster had paid. `allyCastSpell`
+  returns rangeType 0: THE GIFT LANDS AS A SELF-CAST, the port's own rule and a recorded departure - there is no
+  DFU law for a friend's spell, and a saving throw is a defence against an attack.
+- C2 INCUMBENTS MERGED. F12's incumbent law (a like-kind recast adds rounds and keeps the incumbent's magnitude)
+  was harmless while no outside source ever buffed a player; a level-1 mate's 1-point Shield capped the target's
+  own 60-point Shield at one for forty rounds. A mate's bundle is tagged (`bundleAlly`, `ctx.allyCast` through
+  applySpellToPlayer) and `findInc` merges only within a tag: theirs beside mine, never over it.
+- C3 The bounds (B3) at the receiver: the level the door is handed is the wire's 1..30.
+- C4 A MATE'S BUFF WAS HARD TO DISPEL AND WORE ICON 0. The dispel picker treated a gift as an external bundle (a
+  roll against the caster's chance), and the frame carried no icon. The picker reads `ally` and dispels a gift as
+  the target's own; the icon rides the frame and the bundle.
+- C5 THE LINES. "Bran casts Heal on you." was said AFTER the spell's own lines, and "You are healed N points."
+  reported the magnitude rolled, not the health that moved (a full-health player was "healed 20 points"). The
+  caster's line is first, the heal is the actual delta, and none when nothing moved.
+- C6 This record, corrected as above.
+- C7 Noted, not paid: a party of eight casting Light on one player can say eight lines in a second; the inbound
+  gate bounds it at CAST_IN_HZ_MAX, and the HUD's own text queue already coalesces.
+
+**Departures recorded.** The gift lands as a self-cast (C1); a CasterOnly ready arms for a mate in reach (A1);
+"sent" is not "landed" (A8); a client ahead of its relay keeps its spells to itself (B1).
+
+**Pins and mutants.** `test/allycast.test.js` (14, from 9): the reach's arithmetic, the receiver's self-cast and
+icon, the wire's new bounds and refusals (rangeType 0/3/4, level 31, byte 256, icon 69) and `relaySupportsCast`,
+the relay's junk counter, meter and per-sender funnel with the slot bound under 2 KiB, the link's door (a world96
+welcome, the gate, self, an unreported peer) and its inbound arm (own id, another's, a failed projection, the
+per-sender gate), the host (a CasterOnly ARMS then sends on the click; armed for a mate who steps away it heals
+me; a wall short of the mate, a pick that throws, a free ready, no aim fed; the touch gate refuses a mate behind a
+wall without spending), the receiver's door driven (a Heal whole as a self-cast where the same roll as a touch
+was zero; a gift beside my own Fortify; the mate's recast merging with the mate's; dispelled as my own), and every
+seam by source. `tools/mutants/allycast.json`: 37, 37 dead. RELAY_VERSION world97 with its law row; the relay
+deploys itself on the merge to main. Not verified in a browser: no online session exists in this container.
+

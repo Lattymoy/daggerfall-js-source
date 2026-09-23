@@ -76,9 +76,10 @@ test('AUDIT 23 magic-4: every spending cast arm tallies the effect schools', () 
   // at 0 (DaggerfallEntity.cs:374-381) rather than refusing the cast.
   assert.equal((src.match(/playerEntity\.magicka = Math\.max\(0, \(playerEntity\.magicka \?\? 0\) - cost\);/g) ?? []).length, 1,
     'the spend is CastReadySpell\'s single DecreaseMagicka, five frames before the release');
-  assert.equal((src.match(/tallyCastSkills\(sp\);/g) ?? []).length, 4,
-    'CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
-  assert.equal((src.match(/lastCastCost = cost;/g) ?? []).length, 4, 'and all four still record the cost');
+  // ALLY-CAST (2026-09-23): a fifth arm before the four - the cast on a party mate - spends, tallies and records alike
+  assert.equal((src.match(/tallyCastSkills\(sp\);/g) ?? []).length, 5,
+    'the ally arm, CasterOnly, ByTouch, AreaAroundCaster and the missile arm all tally');
+  assert.equal((src.match(/lastCastCost = cost;/g) ?? []).length, 5, 'and all five still record the cost');
   // the tally gates on the cost table (DFU's effect != null), not the
   // priced-as-Destruction default
   assert.ok(/function tallyCastSkills\(sp\) \{[\s\S]*?EFFECT_COST_TABLE\[`\$\{e\.type\},\$\{e\.subType & 0xff\}`\]/.test(src));
@@ -104,7 +105,9 @@ test('AUDIT 23 magic-14: readying enforces the cost and CasterOnly casts instant
   const i = src.indexOf('function readySpell(sp');
   const arm = src.slice(i, src.indexOf('\n  }\n', i));
   assert.ok(arm.includes("say(\"You don't have the spell points.\")"), 'the classic refusal line at ready');
-  assert.ok(arm.includes('if (sp.rangeType === 0) { castInput(null, null); return; }'), 'CasterOnly fires on ready, no click latch');
+  // AUDIT ALLY-CAST A1: the instant arm ARMS instead when a party mate is in touch reach (the port's own targeting,
+  // a recorded departure); with nobody there it fires on the ready as :350-351 does, and a free ready always does.
+  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }\n      castInput(null, null); return;'), 'CasterOnly fires on ready, no click latch - unless a party mate is under the crosshair');
   assert.ok(arm.indexOf('calculateCastCost') < arm.indexOf('readiedSpell = sp;'), 'the cost gate sits before the assignment');
 });
 

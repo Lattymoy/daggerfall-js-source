@@ -74,8 +74,8 @@
   {
     "name": "ao-no-distance-weight",
     "file": "src/render/airPass.js",
-    "old": "    float w = clamp(1.0 - d / uAOParams.x, 0.0, 1.0);   // beyond the radius a step says nothing\n    c = mix(-1.0, c, w);",
-    "new": "    float w = 1.0;\n    c = mix(-1.0, c, w);",
+    "old": "    float w = clamp((uAOParams.x - d) / (uAOParams.x * ${AIR_AO_FALLOFF}), 0.0, 1.0);",
+    "new": "    float w = 1.0;",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "render-clear-not-restored",
     "file": "src/render/airPass.js",
-    "old": "    gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);\n  }\n\n  _replayEmission",
-    "new": "  }\n\n  _replayEmission",
+    "old": "    gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);\n  }\n\n  /** AUDIT VOL1: the images a frame",
+    "new": "  }\n\n  /** AUDIT VOL1: the images a frame",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "renderer-air-rebuilt",
     "file": "src/render/renderer.js",
-    "old": "    if (want) this._air = this._airPass ??= new AirPass(",
-    "new": "    if (want) this._air = this._airPass = new AirPass(",
+    "old": "      this._air = this._airPass ??= new AirPass(",
+    "new": "      this._air = this._airPass = new AirPass(",
     "tests": [
       "test/el3_air.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "sync-no-air",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's",
-    "new": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(true); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); }",
+    "old": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); }",
+    "new": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(true); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); }",
     "tests": [
       "test/el1_enhancedlighting.test.js"
     ]

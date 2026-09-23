@@ -77,7 +77,7 @@ test('PARTY8-B: the health digits are DRAWN only under half - written for every 
   panel.render({});
   const bran = panel.cardFor('acct-Bran');
   assert.equal(HP_DIGITS_BELOW, 50, 'half: "is my healer about to die" is a question about the bottom half of the bar');
-  assert.equal(bran.hp.className, 'dfparty-hp off', 'no pose: nothing to say, and nothing drawn');
+  assert.equal(bran.hp.className, 'dfparty-hp blank', 'AUDIT PARTY8: no pose yet - the dashes, dimmed (never a zeroed bar with nothing beside it)');
   assert.equal(bran.hp.textContent, VITALS_BLANK);
   social.applyParty('acct-Bran', { ...POSE, h: 50 });
   panel.render({});
@@ -107,11 +107,15 @@ test('PARTY8-B: the health digits are DRAWN only under half - written for every 
 });
 
 test('PARTY8-B: the place line is DRAWN only for a seat that is not where I am - `withMe` over placeText\'s words (the name AND the kind), no word for my own place drawing every line, the line following MY place on the live pass with no version moved and written only where it differs (mutants: the place always drawn; the kind ignored, so a companion outside my shop reads as with me; `here` read once at build; the live pass rewriting every seat\'s class per frame)', () => {
-  assert.equal(withMe({ ...POSE }, 'Daggerfall'), true);
-  assert.equal(withMe({ ...POSE, in: 2 }, 'Daggerfall'), false, 'inside a building in the town I am walking: somewhere else');
-  assert.equal(withMe({ ...POSE, loc: 'Wayrest' }, 'Daggerfall'), false);
-  assert.equal(withMe({ ...POSE }, ''), false, 'no word for my place: nothing can be said to be with me, so the line is drawn');
-  assert.equal(withMe(null, 'Daggerfall'), false);
+  // AUDIT PARTY8: the same place is the same COORDINATES (pixel, kind, building key), never the same words
+  assert.equal(withMe({ ...POSE }, { ...POSE }), true);
+  assert.equal(withMe({ ...POSE, in: 2, bk: 7 }, { ...POSE }), false, 'inside a building in the town I am walking: somewhere else');
+  assert.equal(withMe({ ...POSE, in: 2, bk: 7 }, { ...POSE, in: 2, bk: 9 }), false, 'another building of the same town: the words matched ("Daggerfall - inside"), the keys do not');
+  assert.equal(withMe({ ...POSE, in: 2, bk: 7 }, { ...POSE, in: 2, bk: 7 }), true, 'the same building');
+  assert.equal(withMe({ ...POSE, px: 101 }, { ...POSE }), false, 'the next pixel of the same wilderness: somewhere else (both read "the wilderness")');
+  assert.equal(withMe({ ...POSE, loc: 'Wayrest', px: 300 }, { ...POSE }), false);
+  assert.equal(withMe({ ...POSE }, null), false, 'no pose of my own: nothing can be said to be with me, so the line is drawn');
+  assert.equal(withMe(null, { ...POSE }), false);
   assert.equal(placeText({ ...POSE, in: 2 }), 'Daggerfall - inside', 'the words `withMe` compares are the line\'s own');
   const here = { p: null };
   const { social, panel, doc } = stand({ here });
@@ -178,6 +182,13 @@ test('PARTY8-B: a DROP in health flares the fill - the class flips between two n
   social.applyParty('acct-Bran', { ...POSE, h: 10 });
   panel.render({});
   assert.equal(fill.className, 'dfparty-fill hit');
+  // AUDIT PARTY8: the flare is keyed on the HEALTH, not its percent
+  social.applyParty('acct-Bran', { ...POSE, h: 10, hm: 1000 });
+  panel.render({});
+  assert.equal(fill.className, 'dfparty-fill hit', 'a max that ROSE (the percent fell from 17 to 1) is no wound: no flare');
+  social.applyParty('acct-Bran', { ...POSE, h: 9, hm: 1000 });
+  panel.render({});
+  assert.equal(fill.className, 'dfparty-fill hit2', 'one point off a large pool (the percent unchanged at 1) IS a hit');
   assert.match(PARTY_CSS, /@keyframes dfparty-hit \{ 0% \{ filter: brightness\(2\.6\); \} 100% \{ filter: brightness\(1\); \} \}/);
   assert.match(PARTY_CSS, /\.dfparty-fill\.hit \{ animation: dfparty-hit \.6s ease-out; \}\s*\.dfparty-fill\.hit2 \{ animation: dfparty-hit2 \.6s ease-out; \}/);
 });
@@ -197,7 +208,7 @@ test('PARTY8-B: the sheet - no plate behind a card (no border, fill, blur or rad
   const bran = panel.cardFor('acct-Bran');
   const body = bran.node.children[1];
   assert.deepEqual(body.children.map((c) => c.className), ['dfparty-head', 'dfparty-bars', 'dfparty-where off']);
-  assert.deepEqual(body.children[0].children.map((c) => c.className), ['dfparty-name', 'dfparty-lead off', 'dfparty-hp off']);
+  assert.deepEqual(body.children[0].children.map((c) => c.className), ['dfparty-name', 'dfparty-lead off', 'dfparty-hp blank']);
   assert.deepEqual(body.children[1].children.map((c) => c.className), ['dfparty-vital health', 'dfparty-thin']);
   assert.deepEqual(body.children[1].children[1].children.map((c) => c.className), ['dfparty-vital fatigue', 'dfparty-vital magicka']);
   assert.equal(find(bran.node, 'dfparty-foot').length, 0, 'PARTY8\'s foot line is gone');

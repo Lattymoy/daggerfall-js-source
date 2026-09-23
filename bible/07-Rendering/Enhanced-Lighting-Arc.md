@@ -1061,3 +1061,323 @@ Pinned: el1/el4 (the finish through `elTonemapRGB`), el3 (the horizon
 shader by text, the constants), el2/el5/el6/el8 (eight slots). Seen on
 SwiftShader by `tools/enhancedLightingProbe.mjs` - every assertion
 standing - and the scenes' PNGs beside EL5's for the eye.
+
+## AUDIT LIGHTING - THREE LENSES OVER THE DAY'S FIVE (2026-09-23, Mac: "Before we do that can we audit everything so far")
+
+Three read-only lenses over LIGHT-NEAR1, QL-WEIGHT1, LC1, SC1 and HQ1
+before the second arc's last step, and what they found paid in one
+commit. Ranked as found.
+
+**QL-WEIGHT1 refused every quest item (HIGH).** The take goes through
+`planTake`, and the plan's quest arm refuses a quest item it cannot
+resolve (DFU's :1489, `getQuest: null`) - and no loot hooks carry a
+resolver, so a "kill X and bring back Y" corpse said "You cannot remove
+this item." through the quick door and, the refusal being truthy,
+never opened the window either. `quickLootTake` takes the host's own
+resolver beside the hooks now (`{ getQuest }`, the same closure each host
+hands the inventory window), seven calls in four hosts. And QuickLootAll
+says WHY the rest stayed on the one line with the count.
+
+**HQ1's horizons, four ways wrong (HIGH).** The committed shader's
+horizon sides were assigned against the projected normal's sign for the
+horizontal slice (right on floors, where gamma is 0; a corridor wall
+seen obliquely read 0.17 where 0.9 was due); the aspect on the y step
+was upside down (a vertical slice reached a third of the radius); a
+depth read landed on a whole texel while the point was reconstructed at
+the sample's own coordinate, so a flat floor stood a hair above and
+below its own plane and shaded itself (0.73 far off); the bias was a
+distance guard, not a plane guard; a slice the normal had no part in
+added a whole unoccluded slice. Now: the point is the texel's (`texelUV`
+snaps to the canvas pixel), the plane guard is `dot(s, n) > bias`, the
+march is a circle in view space (`dir.y` carries |proj[5] / proj[0]|),
+the slice's plane is exactly the marched step's (`sliceDir` = the view
+step a uv step is, through the terms `posAt` divides by - the sign and
+the aspect fall out), an empty slice adds nothing, the falloff is the
+reference's share of the radius (`AIR_AO_FALLOFF` 0.6), the rotation is
+a quarter turn (a slice is a line; sixteen levels over a whole turn were
+four orientations said four times, which paired rows on the probe). And
+the last of them, found by the probe's flat floor still reading 0.97: a
+slice's unoccluded visibility is |np| (cos gamma + gamma sin gamma),
+which is one only AVERAGED over every slice direction (0.2 to 1.55 for
+one slice of a floor seen at a grazing angle), so two slices of one
+pixel read 0.87 to 1.09 by the pixel's rotation - and clamping each
+pixel to one before the blur averaged the losses and kept none of the
+gains. The pixel stores its share unclamped at half scale
+(`AIR_AO_STORE`) and the blur, which averages exactly one tile of
+rotations, is where one is one again and where the strength and the
+clamp are applied. A normal from the nearer neighbour each way (the
+silhouette mitigation the lens asked for) was tried and read worse on
+SwiftShader (the flanks 0.71 / 0.95), so the quad's derivative stands
+with the depth-aware blur guarding its edges. `tools/aoProbe.mjs` (new)
+reads the picture back on SwiftShader: the open floor 1.000 at every
+depth, the crate top 0.996, its two flanks symmetric (0.960 / 0.971
+where the old kernel read 0.910 / 0.959) and a little darker than the
+open floor (seen edge-on, the march barely meets them), its front - the
+wall that faces the eye - darker by a sixth (0.843).
+
+**LC1's near band (MEDIUM).** A light whose sphere reached in front of
+the near slice (depth - r < 0.25) was written to no cell a fragment
+nearer than 0.25 could land in - a hole an arm's length from the eye.
+`cellsOfSphere` flags `nearFull` and the build writes such a light to
+every tile of slice 0.
+
+**SC1's classifier (MEDIUM, perf).** The motion memory was one matrix
+PER MESH, and the hosts draw one GPU mesh at many matrices - a dungeon's
+action doors share a model, the windmills, the city gates - so two doors
+of one model read as moved on every draw and every lantern near them
+paid the blit and the dynamic replay forever; the "still room costs
+zero" claim failed in any dungeon with two doors of one model near a
+lamp. The memory is per PLACEMENT now (`_shInst`: a draw matched to the
+remembered placement nearest its translation within
+`SHADOW_INSTANCE_REACH` 2, up to `SHADOW_INSTANCE_MAX` 64, and past that
+dynamic - never a wrong shadow). Four more in the same pass: a batch
+built dynamic (`_dyn`, the gibs) is dynamic from its first sight; a
+flat's FRAME is in the memory (an animated flat froze in the cache); the
+floating origin's crossing is TOLD to the pass (`shadowOriginShift` from
+world.js's recentre block; a generation and cumulative offsets rebase
+each remembered placement on its next draw) where before every still
+caster read as moved for `SHADOW_DYNAMIC_HOLD` frames - a near-empty
+cache per slot, the whole town replayed as dynamic for a second, then
+rebuilt again; `_dynamicNear` skips what the replay skips (a moving
+flame, a no-cast archive, a short flat, a ghost); the cache's fifty
+megabytes are made on the first frame that wants them, not under
+`?shadowcache=off`. Two were kept as known at first - the wind's sway not
+in the signature, and the hosts' culling of casters to the view frustum -
+and are paid in SHADOW-REACH below.
+
+**LIGHT-NEAR1's snapshot (LOW, latent).** The panel-frame snapshot
+stored the lights without their carried mask and restored them through
+`setPointLights`, which cleared it - and with the distance rule gone the
+mask is the ONLY thing keeping the hand's torch out of the caster slots.
+Every host sets its lights right before `beginFrame`, so it never bit;
+the snapshot carries `pointCarried` now.
+
+Checked and clean: the tonemap's JS and GLSL twins term for term, every
+caster-sized array following `SHADOW_POINT_CASTERS`, the carried mask
+through every host that composes a player light, the shadow cache's GL
+state (READ/DRAW bindings reset, blit legality, no sampler on the cache),
+the hold, the signature's order-freedom, slot refills, the door both
+ways.
+
+Pinned: `test/audit_lighting.test.js` (the two doors, the crossing, the
+gib and the frame, the flame that is no reason, the lazy cache, the
+mask through a panel, the curve's laws), quickloot (the ring through the
+door, the seven calls), lc1 (the near band), el3 (the shader by text).
+Campaign: `tools/mutants/auditlight.json`, 22 mutants, 22 dead.
+
+## SHADOW-REACH - THE CASTERS THE VIEW CULL REJECTS, AND THE SWAY (2026-09-23, Mac: "Can you tackle the 2 limitations")
+
+The audit's two known limitations, paid.
+
+**The reach.** The exterior hosts cull what they draw to the view
+frustum (EV3: the pixel, then each model and flat batch of a visible
+pixel; PERF-CROWD: the townsfolk), and the shadow maps are replayed from
+what they drew. So a tree behind the camera cast no sun shadow into the
+view although the sun stood behind it too; a wall just off screen cast
+none from the lantern beside it; and SC1's caches churned as the camera
+turned, because the still set in a lantern's reach changed with the view
+- a rebuild per affected lantern per frame of rotation, which is the
+churn the audit wrote down. The pass answers a new question now,
+`reaches(box)` (and `reachesSphere`): would a caster here cast into THIS
+frame's maps - inside a sun cascade's frustum (the cascade is an
+orthographic box about the eye reaching `SHADOW_SUN_DEPTH` 600 toward
+the light, so what stands between the sun and the view is inside it) or
+within a point caster's range - against the casters `render()` picked
+from this frame's lights. The records are a frame old by design (EL2),
+and so is the reach. The renderer exposes it (`shadowReach`,
+`shadowReachBatch` on the sphere `batchVisible` builds) beside three
+RECORD-ONLY seams - `recordShadowMesh`, `recordShadowTerrain`,
+`recordShadowBillboards`: the record `drawMesh`, `drawTerrain` and
+`drawBillboards` make, with none of their draw - and both exterior hosts
+ask at every cull gate: world.js's pixel gate (an off-screen pixel in
+reach records its ground, its merged statics and its odd models), its
+model, sail, flat-batch and crowd gates, and exterior.js's draw list,
+sails and flat batches. The flats the gates reject collect and are
+recorded after the crowd's draw, on the frame's wind. What the cull
+rejects and no shadow reaches costs what it did: one box test more,
+against at most eight spheres and three frusta. Interiors and dungeons
+cull nothing and needed nothing.
+
+**The sway.** A flora batch leans with the wind (WIND3: the crown moves
+by the wind's rate times the batch's `sway`, on a clock that runs every
+frame), so while a wind blows its silhouette is never twice the same -
+a lantern's cached shadow of it held one phase. `recordBillboards`
+reads the record's wind: a batch with `sway` under a wind with any rate
+is a DYNAMIC for as long as the wind lasts (drawn over the cache at
+EL8's cadence, the cache holding no lean) and still the moment it
+drops, with no hold - it did not move, it was moving. A batch without
+sway stands in the cache under any wind.
+
+Pinned: `test/shadowreach.test.js` - the reach against a lantern's
+quantised far (the corner nearest the light), a translated box, the sun's
+cascades (behind the eye toward the light within the depth, across the
+light within the far radius, and past both), the classic set; the
+record-only seams (five records, not one GL call, replayed into the
+cube; silent in a panel); the sway (a tree dynamic while the wind blows,
+still the frame it drops, a post never); both hosts' gates by source.
+Campaign: `tools/mutants/shadowreach.json`, 11 mutants, 11 dead.
+`tools/shadowCacheProbe.mjs` and `tools/enhancedLightingProbe.mjs` still
+green on SwiftShader.
+
+## VOL1 - THE LANTERNS' GLOW THROUGH THEIR SHADOWS (2026-09-23, Mac: "Continue" - the second arc's last step; BOUNCE1 shipped beside it and was withdrawn by its audit)
+
+**The glow, marched.** EL1's glow (`elInScatter`) was one closed-form
+integral per lantern per FRAGMENT, in every world shader, walked over
+every light of the frame (LC1 left that loop unclustered) - and it knew
+nothing of what stood between a lantern and the air: a lamp behind a
+pillar glowed through it, a lantern in the next room lit this room's
+air. The glow is the air pass's now (`volFs`, airPass.js), at the
+bloom's size: per pixel, the view ray is cast through `posAt`'s own
+terms into the world, and each lantern's overlap with it is walked in
+`AIR_VOL_STEPS` (8) steps jittered by EL6's ordered pattern, each step's
+share of the same integrand the closed form integrates (1 / (h^2 +
+s^2), `elScatter`'s) let through by the lantern's own cube map - one
+tap, `pointShadowOne` in the shadow block, no normal (the air has no
+surface to bias against); a lantern with no map (the hand's light, one
+past the eight) keeps the closed form. The sum is tonemapped as
+`elFinish` tonemaps the glow it adds - the lane's curve, the exposure
+and the eye - blurred once over the jitter's tile BY DEPTH (a plain
+blur put the bright air past a near wall's edge onto the wall that
+hides the lantern; the lighting probe read that wall a third brighter),
+and added to the display-linear frame at the resolve. The lane's own
+glow is 0 on a world frame the air pass glows for and stands where the
+pass draws nothing - a panel, a sprite pass, a bake, `?volumetrics=off`
+- the gate the contact block and the grid already take. The air pass
+is a leaf still: the lane hands it its curve and its integral
+(`EL_TONEMAP_GLSL`, `EL_SCATTER_GLSL` - one law, now shared and not
+copied) and the renderer the shadow block. Fewer pixels walk the lights
+(a sixteenth), and a wall throws its shadow into the air.
+
+**The bounce, withdrawn.** BOUNCE1 shipped with VOL1 as a share of a
+lantern's attenuated colour weighted by facing the ground, read through
+the lantern's shadow a reach off the surface, and the audit the same
+day (AUDIT REACH, below) found the model unsound rather than mistuned:
+a bounce with no visibility from the bounce source (the lit floor)
+either leaks through walls - unshadowed, and every lantern past the
+eight casters has no map to shadow it by, so walls popped as lanterns
+took and lost their slots - or fills nothing it was meant to fill (a
+pillar's flat back is deeper in the umbra a reach off; a wall between
+rooms is dark either way) and adds only where the light already lands.
+The term is gone, the reason stands in enhancedLighting.js where it
+stood, and real bounce is its own step: a reflective shadow map, a
+colour and a normal beside the depth in the cube pass.
+
+Pinned: `test/vol1_glow.test.js` - the march by source (the leaf, the
+three blocks handed in, the ray, the early-out, the closed form for a
+lantern with no map, the integrand and the jitter, the tonemap, the
+depth-aware tile blur, the resolve's add, the renderer's gate and the
+gain in `prepare`); on the fake GL (the shader built with the three
+blocks in its source, marched and blurred on a world frame with a
+lantern in a fogged air, the lane's own glow 0 there and a panel
+gated, the door shut clearing the image and handing the glow back);
+the bounce withdrawn (no term, no door, the reason in place). Campaign:
+`tools/mutants/vol1.json`, 18 mutants, 18 dead. `tools/volumetricProbe.mjs`
+(new) on SwiftShader: a crate between the eye and a lantern - the
+crate's front, its air in the crate's own shadow, reads a sixth darker
+through the march than under the closed form, and the floor whose air
+is lit reads the same either way within a third of a percent (the march
+sums the closed form's own integrand).
+
+## AUDIT REACH - THREE LENSES OVER SHADOW-REACH, VOL1 AND BOUNCE1, AND THE AUDIT BEFORE THEM (2026-09-23, Mac: "let's do an audit")
+
+Three read-only lenses, each on Opus 5.5, over the day's last three
+commits; the findings paid in one.
+
+**SHADOW-REACH (HIGH): the sway rule handed SC1's saving back.** The
+wind outdoors is never zero under the enhanced sky (the deck's drift
+drives it, a sunny day at 70 on the lab's slider of 200), a flora batch
+spans its whole pixel, and `_dynamicNear` counted one, so every lantern
+in a pixel with a tree paid the blit and six dynamic faces at EL8's
+cadence - about the pre-SC1 draw count, for a lean of a few texels at
+the crown. The lean is real (a sunny day moves an eight-unit crown four
+texels at a lantern's range), so it is not dropped: a batch leaning
+under `SHADOW_SWAY_STILL` (0.02, half a texel) at its crown is still
+(`swayLean`, the shader's own push at the gust's peak), and one leaning
+more is a dynamic on ITS OWN cadence - `SHADOW_SWAY_EVERY` (4) frames,
+the sway being slow - while a mover near the same lantern keeps the
+mover's. `_dynamicNear` answers three ways now (nothing, sway alone, a
+mover). **(MEDIUM) The reach and the signature measured different
+volumes**: the reach tested a lantern against the caster's box, the
+cache's signature counts it by its bounding sphere, so a caster in by
+the sphere and out by the box was recorded on screen and dropped off it
+- the churn the reach exists to end. The lantern part of the reach
+tests the box's enclosing sphere, a superset. **(LOW)** a pixel neither
+seen nor reached walks no batch (the far-flat rule ran for every batch
+of every pixel); online peers take the reach as every other flat does.
+Accepted and written down: a lantern newly among the eight builds its
+cache once more a frame later (the reach reads this frame's casters,
+the replay is a frame old); the far cascade's planes can be a frame
+stale on the first exterior frame after an interior; a frame with
+nothing on screen reaches nothing for one frame.
+
+**The audit commit (MEDIUM, three): the placement memory and the flat
+memory.** `_moved` matched a draw to the NEAREST remembered placement
+within the reach, so two still placements of one mesh closer than two
+units - double doors, an arrow beside another - overwrote each other
+every draw and read as moved for ever: the placement itself is matched
+first (within the epsilon), a placement already claimed by a draw this
+frame is never another draw's, and only a draw at no placement takes
+the nearest as its own last step. The memory capped at 64 and never
+evicted, on a mesh cache that is never destroyed - a session's dungeons
+filled a door model's memory and every door after was dynamic: 128, and
+a placement not drawn for a hold is evicted for a new one (with every
+placement live the new one is dynamic, never wrong). The flat memory
+watched `frame`, and a townsman's idle and a foe's swing rewrite
+`record` (the texture key is record#frame) and turn by the sign of
+`size.w` - the cache kept a stale silhouette: the record and the flip
+are in the memory. **(LOW)** the records in hand at a recentre were
+replayed against the moved lights and eye, so the crossing's frame had
+no shadow and every cache was built twice: `shiftOrigin` moves the
+matrices and spheres the pass copied (a batch's origin is the host's
+own, already moved). And quick loot's count line guards a refusal with
+no text.
+
+**VOL1 (HIGH, the probe): the glow was too small a share of what the
+probe read.** On a lit floor the glow is a two-hundredth of the pixel,
+and the probe's checks passed with the glow dead (uScatter 0) and with
+the ray wrong (the view's rotation untransposed). `tools/volumetricProbe.mjs`
+reads three frames of one scene - BASE with no glow anywhere, the march,
+the closed form - and checks the DIFFERENCES: the sky above the lantern
+glows through the march by more than a byte (the closed form, with no
+fragment on the sky, never did), a dark far floor's glow within a fifth
+of the closed form's, the crate's shadowed front under a third. **(MEDIUM)
+A stale world's images over a frame that is not the world's**: a menu's
+or a video's frame binds the frame target too, and its resolve painted
+the last world frame's glares, shafts and glow over it (the glow was the
+first to show, a full-screen halo over a menu). The pass marks the frame
+it was PREPARED for (`fresh`), draws its images for that frame alone,
+blanks them and skips the measure otherwise, and the lane's own glow
+gate reads it. **(MEDIUM) Tonemapping each pixel before the blur dimmed
+the halo's core** by a quarter at a lantern's range of 14 (Jensen: the
+mean of a concave curve's values is under the curve of the mean), and a
+lantern's core changed brightness as it took or lost a caster slot: with
+a float target (`EXT_color_buffer_float` or `_half_float`, RGBA16F) the
+march stores LINEAR light, the tile's blur averages light, and a tone
+pass curves the average once; without one the old path stands, said so.
+**(MEDIUM) The eye and the bloom were blind to the glow** - it was added
+after the luminance and the bright pass read the frame, so a foggy
+lantern-lit street adapted to a darker frame than it showed and no halo
+bloomed; both read the glow's image now. **(MEDIUM) The march walked a
+slab** - the closed form's range either side of the closest point - so a
+ray that missed a lantern's sphere glowed a little from air the light
+never reaches, and paid eight taps for it; the march and the closed form
+walk the ray's CHORD through the sphere (`elScatter` too, one law). A
+shader the GL refuses costs the glow alone (`vol: null`), not the air
+pass. Noted: the glow reaches the sky now, which is right, and runs to a
+water's bed (water writes no depth), which is not - a water depth is its
+own step. The march's cost is the quarter-res pixels times the casters
+whose sphere the ray crosses, times eight taps.
+
+**BOUNCE1 (HIGH): withdrawn** - see VOL1 above.
+
+Pinned: `test/audit_reach.test.js` (the double door, the eviction, the
+record and the flip, the crossing's records), `test/shadowreach.test.js`
+(the sway's cadence and floor, a wind along z, the enclosing sphere, a
+box above the lantern, a translated box against the sun, a sphere's
+radius, a flat's lift, the no-caster guard, the seam's wind, the
+off-screen pixel's models, the peers), `test/vol1_glow.test.js` (the
+chord, the linear path and the tone pass, the fresh gate and the blank
+frame, the eye and the bloom reading the glow, the guarded build, the
+bounce gone). Campaigns: `tools/mutants/auditreach.json` 8, `vol1.json`
+18, `shadowreach.json` 19 - all dead; fifteen records across nine lists
+re-aimed by content.
