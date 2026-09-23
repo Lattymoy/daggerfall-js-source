@@ -759,3 +759,13 @@ Main moved thirty commits while the arc was in review. Merged, not rebased; 106 
   identifiers were re-resolved by content (CD3), and the wrapped `(:6759)` in chargenSession.js by hand (CD4, CD8).
 - **No new drift.** Run over the merged tree with both histories, the loose-slash and DFU-range scanners find only
   this arc's own repairs.
+
+## CHAT-HELP - the chat says where its commands are (2026-09-23, Mac)
+
+Mac: "a non-intrusive greeting message that says something along the lines of (use /help for commands)". The chat has
+had `/help` (and `/emotes`) since CHAT-CHAN, and nothing told a player so. Each time the player goes online the chat
+greets them with one line, "Welcome! Type /help for chat commands.", on its first tab. It is theirs alone (a system
+line, never sent) and it is never counted unread (`net/chat.js` push's `quiet`), so it is there to read when they open
+the chat and no badge asks them to. The chat box's own hint is unchanged. `test/chathelp.test.js` (3),
+`tools/mutants/chathelp.json` 4 of 4 dead.
+

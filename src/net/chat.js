@@ -146,13 +146,16 @@ export class ChatLog {
    *  guards the words, not the impersonation), so a notice recognised by
    *  the string 'Server' would be one `/name Server` away from a player
    *  announcing a fake restart. A flag never travels on the wire - it is
-   *  set here, by us, on a line nobody sent. */
-  push(tabId, fields = {}) {
+   *  set here, by us, on a line nobody sent.
+   *
+   *  `quiet`: kept like any line but never counted unread - the join's greeting (CHAT-HELP) is there to be read when
+   *  the player opens the chat, not a badge asking them to. */
+  push(tabId, fields = {}, { quiet = false } = {}) {
     const tab = this.tab(tabId);
     const line = tab ? this._line(fields, tab.id) : null;
     if (!line) return null;
     this._keepOn(tab, line);
-    if (!(this.open && tab.id === this.active)) tab.unread++;
+    if (!quiet && !(this.open && tab.id === this.active)) tab.unread++;
     this.version++;
     return line;
   }
