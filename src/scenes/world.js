@@ -9,6 +9,8 @@
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pack's switch
+import { openWodWorld, wodOn, wodLightColors } from '../world/worldOfDaggerfall.js';   // WOD2: World of Daggerfall's loader, one per page
+import { wodLightPosition, wodLightProperties } from '../world/wodLocationObjects.js';   // WOD2: the mod's own AddLight
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive } from '../player/pointerLock.js';   // AUDIT-TO1 I2: the strip's click router wants the FREED cursor   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2)
@@ -17,7 +19,7 @@ import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks 
 import { BlocksFile } from '../formats/blocksFile.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
-import { settlementsOf, loadModRoads } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22
+import { settlementsOf, loadModRoads, basicRoadsPathsPoint } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
 import { modSetting } from '../systems/modSettings.js';   // ROADS 24
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainGrid, buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt } from '../world/terrainSurface.js';
@@ -580,6 +582,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
     rebuildRoadless();
   });
+  // WOD2: WORLD OF DAGGERFALL (Kamer, vendor/world-of-daggerfall/) - the
+  // page's one LocationLoader, opened as the world mounts:
+  // LocationModLoader.Init stands it at the Start state, and its Awake
+  // reads region 17's folder before anything streams. An online page
+  // loads the room's list instead (worldOfDaggerfall.js says why). A
+  // failure here costs the world its camps, never the stream.
+  const wod = wodOn() ? openWodWorld({ online: params.has('online') }) : null;
+  const wodOpened = wod
+    ? wod.open().then(() => true, (e) => { console.warn(`[wod] World of Daggerfall did not open: ${e?.message ?? e}`); return false; })
+    : Promise.resolve(false);
+  // LocationLoader.cs:146-151 asks the Basic Roads MOD for the pixel's
+  // road|track mask - so only Hazelnut's own arrays answer; the port's
+  // generated fallback is not his mod, and with it the static stays 0.
+  const wodPathsPoint = (x, y) => {
+    const net = terrainGen.roads();
+    return net?.source === 'basic-roads' ? basicRoadsPathsPoint(net, x, y) : 0;
+  };
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
   // fog horizon DFU draws), ?ring=off the escape hatch. Built lazily
   // in the frame loop, where the live player pixel exists.
@@ -1172,13 +1191,34 @@ export async function bootWorld(canvas, renderer, params, status) {
     const seedTilemap = new Uint8Array(128 * 128);
     let locationRect = null;
     if (dfLocation) locationRect = setLocationTiles(dfLocation, maps, blocks, seedTilemap);
+    // WOD2: LocationLoader.AddLocation's DECISION (LocationLoader.cs:101-172),
+    // taken here because it reads only the map data and the kernel needs
+    // its rects. The region under the player is announced first
+    // (PlayerGPS.OnRegionIndexChanged - the list is only ever READ at a
+    // build, so a build is where the event is polled), every announced
+    // folder lands, and the first valid instance naming this pixel takes it.
+    let wodPicks = null;
+    if (wod && await wodOpened) {
+      const here = state.current ?? { x: px, y: py };
+      wod.noteRegion(maps.getRegionIndexAt(here.x, here.y));
+      await wod.settle();
+      const picks = wod.picksFor({
+        mapPixelX: px, mapPixelY: py, hasLocation: !!dfLocation,
+        // TerrainHelper.GetMapPixelData fills mapRegionIndex from the
+        // location alone: -1 on a pixel without one.
+        mapRegionIndex: dfLocation ? dfLocation.regionIndex : -1,
+        worldHeight: woods.getHeightMapValue(px, py),
+      }, wodPathsPoint);
+      if (picks.length) wodPicks = picks;
+    }
     const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
     const climateBase = climate.climateType;
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths, wodAverages } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
+      wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect })) } : null,   // WOD2: the smoothing arms run in the kernel
     });
     // WM3: this pixel's climate law, bound once - the one argument the
     // shared remap seam takes that differs between the climate hosts
@@ -1252,6 +1292,15 @@ export async function bootWorld(canvas, renderer, params, status) {
       const k = `${archive}_${record}`;
       if (!groups.has(k)) groups.set(k, []);
       groups.get(k).push([x, y, z]);
+    };
+    // WOD2: a flat the mod SCALES (LoadObject's `localScale *= scale`,
+    // LocationHelper.cs:1243) is a batch of its own at its own size; the
+    // shipped layouts scale four records, always uniformly.
+    const scaledGroups = new Map();
+    const addScaledFlat = (archive, record, scale, x, y, z) => {
+      const k = `${archive}_${record}_${scale.x}_${scale.y}`;
+      if (!scaledGroups.has(k)) scaledGroups.set(k, { archive, record, scale, centers: [] });
+      scaledGroups.get(k).centers.push([x, y, z]);
     };
 
     // Per-pixel climate swap table: pixels from the swapped archive, UVs
@@ -1554,6 +1603,59 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     }
 
+    // WOD2: AddLocation's OBJECT loop (LocationLoader.cs:232-252) through
+    // LoadObject (world/wodLocationObjects.js): the models with their
+    // colliders, the visible flats base-anchored where AlignToBase leaves
+    // them, the mod's own lights, the animals' calls - pixel-local like
+    // everything here, so destroyPixel takes them with the pixel (the C#
+    // destroys the terrain's children at every promote, :93-99). No
+    // climate swap and no doors: these hang off the terrain, not a
+    // DaggerfallLocation, and a static door is RMBLayout's alone.
+    const pixelWodLights = [];
+    let wodSite = null;
+    let wodSpawners = null;
+    if (wodPicks && wodAverages) {
+      const place = wod.placements(wodPicks, wodAverages);
+      if (place.stopped) console.warn(`[wod] pixel ${key}: a negative model name stopped the loader here, as uint.Parse throws in the C#`);
+      const wodBucket = ((o) => () => state.pixelTranslation(px, py, o))([0, 0, 0]);   // BLOOD1 AUDIT 3: one array a bucket
+      for (const m of place.models) {
+        const gpu = await getGpuMesh(m.modelId);
+        if (!gpu) continue;   // a model ARCH3D does not carry stands empty in DFU (no mesh, no collider)
+        const cpu = cpuModels.get(m.modelId);
+        const box = transformedAabb(archAabb(m.modelId, cpu.positions), m.matrix);
+        unionBox(box);
+        const entry = { gpu, local: m.matrix, _box: box, _order: m.modelId };
+        models.push(entry);
+        if (cpu.normals && cpu.uvs) { staticBuilder.add(cpu, m.matrix, resolveTexKey, m.normalMatrix); entry._batched = true; }
+        collider.addMesh(key, cpu.positions, cpu.indices, m.matrix, wodBucket);   // CreateDaggerfallMeshGameObject's MeshCollider
+        await breather.breathe();
+      }
+      for (const f of place.flats) {
+        if (f.scale.x === 1 && f.scale.y === 1) addFlat(f.archive, f.record, f.base[0], f.base[1], f.base[2]);
+        else addScaledFlat(f.archive, f.record, f.scale, f.base[0], f.base[1], f.base[2]);
+      }
+      // AddLight: DaggerfallUnity's interior light prefab under the flat,
+      // lifted and coloured by the mod's own two switches. A Unity Light
+      // burns at every hour, so these are not the lanterns' night list.
+      for (const f of place.lights) {
+        const pos = wodLightPosition(f.base, f.record, lightSize(f.record), f.scale.y);
+        const light = wodLightProperties(f.record);
+        pixelWodLights.push({
+          x: pos[0], y: pos[1], z: pos[2], range: light.range,
+          color: [light.color[0] * light.intensity, light.color[1] * light.intensity, light.color[2] * light.intensity],
+        });
+      }
+      // AddAnimalAudioSource: RMBLayout's table (LocationHelper.cs:1481-1515),
+      // so the town animals' own list carries them.
+      for (const f of place.animals) {
+        const sound = ANIMAL_SOUND_BY_RECORD[f.record];
+        if (sound != null) pixelAnimals.push({ pos: [f.base[0], f.base[1], f.base[2]], sound });
+      }
+      wodSpawners = place.spawners;   // WOD3 stands the LocationEnemySpawners
+      const site = [...wodPicks].reverse().find((p) => p.flatten);
+      if (site) wodSite = { xMin: site.rect.x, xMax: site.rect.x + site.rect.width, yMin: site.rect.y, yMax: site.rect.y + site.rect.height };
+    }
+
     // EV7: the nature layout arrived with the kernel's reply - laid
     // out over the same blended samples and finished tilemap, consumed
     // at the same point in the sequence it was always computed at.
@@ -1592,6 +1694,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
       batch.sway = floraSwayOf(archive, natureArchive, size.h);   // WIND3: the flora lean with the wind, nothing else does
+      unionBox(batch._box);
+      armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
+      batches.push(batch);
+    }
+    // WOD2: the scaled flats - billboardSize times the object's own scale.
+    for (const { archive, record, scale, centers } of scaledGroups.values()) {
+      const t = await getTexture(archive);
+      if (record >= t.recordCount) continue;
+      uploadRecord(archive, record);
+      const base = billboardSize(t, record);
+      const size = { w: base.w * scale.x, h: base.h * scale.y };
+      const batch = renderer.createBillboardBatch(archive, record, size, centers);
+      batch._box = flatBatchAabb(centers, size);
       unionBox(batch._box);
       armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
       batches.push(batch);
@@ -1655,6 +1770,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       cityGates: pixelGates,   // AUDIT 64 F14: DaggerfallCityGate's placements (446/447), ticked each frame
       buildings: pixelBuildings,   // AUDIT 64 F11: RMBLayout's StaticBuildings, pixel-local boxes
       locBlocks,   // T3d: the Where-is directory's block scan
+      wodLights: pixelWodLights,   // WOD2: the mod's AddLight lights, pixel-local, lit at every hour
+      wodSite,     // WOD2: the levelled rect in tile space (grass keeps off it), null on a pixel with no site
+      wodSpawners, // WOD2: LoadObject's spawn markers, for WOD3
 
       location: dfLocation ? dfLocation.name : null,
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
@@ -1671,7 +1789,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the blend never reaches past the pixel that carries the location -
     // so the next grass update() re-reads `keep`/`ground` fresh here and
     // only here.
-    if (dfLocation && labGrassField) {
+    if ((dfLocation || wodSite) && labGrassField) {   // WOD2: a levelled camp moved the ground the same way
       const t = state.pixelTranslation(px, py);
       labGrassField.invalidate(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
     }
@@ -11148,6 +11266,46 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  it reads through - refilled every frame, never re-minted. */
   const _sceneLights = [];
   const _lightT = [0, 0, 0];
+  // WOD2: the frame's World of Daggerfall lights ride the same pool,
+  // after the lanterns, with a range array of their own beside the
+  // animator's (theirs never flicker - the interior light prefab is not
+  // animated).
+  let _litRanges = new Float32Array(64);
+  const _wodLitCount = () => {
+    let m = 0;
+    for (const p of built.values()) m += p.wodLights?.length ?? 0;
+    return m;
+  };
+  /** Refill the pool from `from` with the mod's lights under the live
+   *  translation; answers the new live length. */
+  const _wodFill = (from) => {
+    let n = from;
+    for (const p of built.values()) {
+      if (!p.wodLights?.length) continue;
+      const t = state.pixelTranslation(p.px, p.py, _lightT);
+      for (const l of p.wodLights) {
+        const e = _sceneLights[n] ?? (_sceneLights[n] = { x: 0, y: 0, z: 0 });
+        e.x = l.x + t[0]; e.y = l.y + t[1]; e.z = l.z + t[2]; e.wodRange = l.range; e.wodColor = l.color;
+        n++;
+      }
+    }
+    return n;
+  };
+  /** The lanterns (pool [0, lanterns), the animator's ranges and the
+   *  shared colour) and the mod's lights (after them, their own ranges and
+   *  colours) through the one nearest-N selection, with its colour arm. */
+  const _wodSelect = (lanterns, total) => {
+    if (_litRanges.length < total) _litRanges = new Float32Array(Math.max(total, _litRanges.length * 2));
+    const animated = Math.min(lanterns, worldLightAnimator.ranges.length);
+    _litRanges.set(worldLightAnimator.ranges.subarray(0, animated), 0);
+    _litRanges.fill(CITY_LIGHT_RANGE, animated, lanterns);   // nearestLights' own fallback past the animator
+    for (let i = lanterns; i < total; i++) _litRanges[i] = _sceneLights[i].wodRange;
+    return nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, _litRanges, (l, i) => (i < lanterns ? CITY_LIGHT_COLOR_F32 : l.wodColor), 0, total);
+  };
+  /** The composed set onto the per-light colour channel: whatever
+   *  withPlayerLights prepended wears the shared colour, the selection its own. */
+  const _wodSetLights = (data, sel) => renderer.setPointLights(data, CITY_LIGHT_COLOR_F32,
+    wodLightColors(data.length / 4, data.length / 4 - sel.data.length / 4, sel.colors, CITY_LIGHT_COLOR_F32));
   /**
    * PERF-ON2 / PERF-CROWD: is this billboard batch outside the frame?
    *
@@ -12258,6 +12416,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
 
     // Lanterns on 17:00-08:00, flickering verbatim; pixel-local lights
     // placed under the current compensation, nearest 16 to the camera.
+    // WOD2: the mod's lights burn at every hour and each carries its own
+    // colour, so a frame with one in range takes the per-light colour
+    // channel: the lanterns and the player's own lights keep the shared
+    // colour they always had, the mod's take theirs. With none in range
+    // both branches below make the calls they always made.
+    const wodLit = _wodLitCount();
     if (lightsOnAt(minute)) {
       worldLightAnimator.tick(dt);
       // PERF-LIGHTS (2026-09-19): THE LANTERNS ARE A POOL, NOT A FRESH
@@ -12278,18 +12442,22 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           n++;
         }
       }
-      renderer.setPointLights(
-        withPlayerLights(nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
-          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()),   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash
-        CITY_LIGHT_COLOR_F32
-      );
+      const wodSel = wodLit ? _wodSelect(n, _wodFill(n)) : null;   // WOD2: the lanterns and the mod's lights, one selection
+      const lit = withPlayerLights(wodSel ? wodSel.data : nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
+        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash
+      if (wodSel) _wodSetLights(lit, wodSel);
+      else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     } else {
       // X11: the candle burns by day too - StartLight has no time gate
       // (the lantern one is DaggerfallLight's, not the effect's), and
       // this branch used to send the renderer an empty array, so a
       // daylight Light cast would have lit nothing at all.
-      renderer.setPointLights(withPlayerLights(new Float32Array(0),
-        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights()), CITY_LIGHT_COLOR_F32);   // HT1; FIELD-GUN13 the muzzle flash
+      // WOD2: ...and the mod's lights, which burn at every hour.
+      const wodSel = wodLit ? _wodSelect(0, _wodFill(0)) : null;
+      const lit = withPlayerLights(wodSel ? wodSel.data : new Float32Array(0),
+        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash
+      if (wodSel) _wodSetLights(lit, wodSel);
+      else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
     renderer.setClearColor(SKY_CLEAR);   // INCIDENT 2026-09-04 / REVIEW 2026-09-05: this frame is the EXTERIOR's (the mode frames returned above and clear black in worldModes) - CameraClearManager.cs:51-57
     renderer.setFlashLight(sky.lightningLight());   // DS1: Dynamic Skies' LightningFlash, composed first on the point-light channel just stored
@@ -12839,6 +13007,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // a field's edge and the placer grew a lawn straight down every
         // track. The painter knows, and now says (world/roadPainter.js).
         if (p.paths?.[ti]) return null;
+        // WOD2: and not across a World of Daggerfall site - DFU keeps its
+        // nature off the loader's locationRect, and the grass is this
+        // lane's nature underfoot; a camp's floor or a rock field's
+        // stones would otherwise stand in a lawn.
+        if (p.wodSite && tx >= p.wodSite.xMin && tx < p.wodSite.xMax && tz >= p.wodSite.yMin && tz < p.wodSite.yMax) return null;
         // GRASS-WET1 (2026-09-19, Mac: "some textures not taking the
         // water tile"): NOT A CORNER OF IT IN WATER. `rec === 0` above
         // rejects only tiles that are water WHOLE; the water-grass shore

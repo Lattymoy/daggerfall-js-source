@@ -44,8 +44,13 @@ export class StaticBatchBuilder {
    * @param {{positions:Float32Array, normals:Float32Array, uvs:Float32Array, indices:Uint32Array, subMeshes:Array}} cpu
    * @param {Float32Array} local the model's pixel-local matrix
    * @param {(archive:number, record:number) => string} resolveKey the pixel's texture remap, as drawMesh applies it
+   * @param {?Float32Array} [normalMatrix] WOD2: the matrix the NORMALS take when `local` scales
+   *   non-uniformly - its upper 3x3 the inverse transpose of local's (World of Daggerfall stands
+   *   952 rocks scaled unevenly, which Unity lights through the inverse transpose). Absent,
+   *   the normals take `local` itself, exact for every rotation-and-translation block model.
    */
-  add(cpu, local, resolveKey) {
+  add(cpu, local, resolveKey, normalMatrix = null) {
+    const nm = normalMatrix ?? local;
     const n = cpu.positions.length / 3;
     if (!n || !cpu.subMeshes?.length) return;
     const base = this.vertexCount;
@@ -55,7 +60,7 @@ export class StaticBatchBuilder {
       positions[i * 3] = local[0] * x + local[4] * y + local[8] * z + local[12];
       positions[i * 3 + 1] = local[1] * x + local[5] * y + local[9] * z + local[13];
       positions[i * 3 + 2] = local[2] * x + local[6] * y + local[10] * z + local[14];
-      rotateNormal(local, cpu.normals[i * 3], cpu.normals[i * 3 + 1], cpu.normals[i * 3 + 2], normals, i * 3);
+      rotateNormal(nm, cpu.normals[i * 3], cpu.normals[i * 3 + 1], cpu.normals[i * 3 + 2], normals, i * 3);
     }
     this.chunks.push({ positions, normals, uvs: cpu.uvs });
     for (const sm of cpu.subMeshes) {

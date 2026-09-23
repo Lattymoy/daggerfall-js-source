@@ -117,10 +117,84 @@ stand on the flattened ground.
 - **A region is appended once.** The C# appends a revisited region's
   folder again; a duplicate can never win a pixel its first copy did
   not, so the second copy changes nothing but the scan's length.
+- **A region with no folder throws in DFU, every frame.** 18 of the 62
+  regions have none; `Directory.GetFiles` throws out of the event handler,
+  and `PlayerGPS` only advances `lastRegionIndex` after raising the
+  event, so it throws again each frame the player stays - starving every
+  later subscriber. The port loads nothing and throws nothing.
 - **The C# culture is the author's.** Every number in the files is
   read with .NET `TryParse` under the invariant/en-US shape (a
   comma-decimal Windows locale fails every float in them, a
   machine-dependent DFU hazard nobody would want reproduced).
+
+## What stands, and how (WOD2)
+
+`LocationHelper.LoadObject` decides every object by its type and, for a
+flat, by its ARCHIVE STRING:
+
+- **a model** (type 0) is `CreateDaggerfallMeshGameObject`: the classic
+  mesh WITH its mesh collider, at `T * R(q) * S` in the tile's frame. It
+  takes NO climate swap (only a `DaggerfallLocation` re-skins its
+  children, and these hang off the terrain) and registers NO door (a
+  static door is `RMBLayout`'s alone), so a WoD house is a shell you walk
+  around. 952 of the rocks are scaled unevenly and Unity lights them
+  through the inverse transpose; the static batch takes a normal matrix
+  for them (`render/staticBatch.js`, `R * S^-1`).
+- **a flat** is a billboard, base-anchored where `AlignToBase` and the
+  scale fix (`LocationLoader.cs:243-248`) leave it; the four records the
+  layouts scale are batches at their own size.
+- **the markers are invisible.** Every `Add*Spawn` sets the flat's
+  material colour to alpha 0.1, and DFU's billboard shader multiplies the
+  texel by `_Color` and alpha-tests at 0.5 - so a bandit marker, the
+  kidnap marker and the treasure container under `AddLootSpawn` draw
+  nothing. They are spawn points (WOD3). An editor flat (archive 199) is
+  hidden by its own billboard, as in a town.
+- **210 is a light**: the interior light prefab under the flat, lifted
+  and coloured by the MOD'S OWN copy of `DaggerfallInterior.AddLight`,
+  which differs from DFU's in two arms (record 0, the bowl of fire, is
+  orange at 1.2 where DFU's is pale yellow at 1.1; and a default arm
+  catches any record past 29) and one lift (record 29, the street
+  lantern, by half its height). A Unity `Light` burns at every hour, so
+  these are lit by day as well as by night; each carries its own colour
+  and range, and a frame with one in range takes the renderer's
+  per-light colour channel (the lanterns and the player's own lights keep
+  the shared colour). Not animated - the prefab's flicker is off.
+- **201 calls**: `AddAnimalAudioSource` is RMBLayout's table verbatim,
+  so the town animals' list carries the camps' horses.
+
+## THE FOUR HOSTS
+
+- `scenes/world.js` - WIRED. It is the one host that streams terrain.
+  The DECISION runs before the kernel (it reads only the map data): the
+  region under the player is announced (the list is only ever read at a
+  build, so a build is where `OnRegionIndexChanged` is polled), every
+  announced folder lands, the pick is taken. The smoothing arms run IN
+  the kernel (`world/terrainGen.js`), after the tiles are assigned and
+  before the grid and the nature - the order `OnPromoteTerrainData`
+  holds in DFU - and the averages ride back. The objects stand after the
+  location block, pixel-local, so `destroyPixel` takes them with the
+  pixel as the C# destroys the terrain's children at every promote.
+- `scenes/exterior.js` - FLAGGED: one fixed location on a flat ground
+  quad, no streamer, no heightmap - there is no wilderness pixel to stand
+  a site on.
+- `scenes/worldModes.js`, `scenes/dungeonContext.js` - FLAGGED:
+  interiors and dungeons, no terrain.
+
+The grass (the enhanced lane's own) keeps off a site's rect as DFU's
+nature keeps off the loader's `locationRect`, and is re-read over a
+pixel whose ground a site moved (GRASS-STALE1's rule, which a location
+already had).
+
+## Online: the room's list
+
+DFU has no room, and the list one player builds depends on where that
+player has travelled. Two players standing on one pixel can pick
+different instances on the 177 pixels named from two folders, and on
+the border pixels of a region only one of them has entered - and this
+mod levels the ground, which is what a room must agree on. So the mod's
+one switch is ROOM-OWNED (`systems/onlineLane.js`, beside the roads),
+and an online page loads every folder at once in one order: 17 first,
+then ascending. Offline the list is the reference's, path and all.
 
 ## What the data says, measured
 
@@ -146,4 +220,10 @@ stand on the flattened ground.
 - `src/world/wodLocationPack.js` - one region folder as one pack.
 - `src/world/wodLocationLoader.js` - `LocationLoader.cs`: the session
   list, the pick, the flatten, the object positions.
+- `src/world/wodLocationObjects.js` - `LoadObject` and its helpers as
+  data: the archive-string arms, the mod's `AddLight`, the transform.
+- `src/world/worldOfDaggerfall.js` - the page's one loader: Awake, the
+  region events in order, the room's list, the placements.
+- `src/world/roadsProducer.js` `basicRoadsPathsPoint` - the question the
+  loader asks Basic Roads.
 - `tools/worldOfDaggerfallAssets.mjs` - the archive to `vendor/`.
