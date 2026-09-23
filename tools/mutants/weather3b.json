@@ -23,12 +23,14 @@
   "old": "  if (minute !== _mapNearMinute || climateAt", "new": "  if (climateAt", "tests": ["test/weather3b_simseam.test.js"]},
  {"name": "WEATHER3b-no-intensity", "file": "src/systems/weatherSim.js",
   "old": "  _mapIntensity = worn.intensity;", "new": "  _mapIntensity = 1;", "tests": ["test/weather3b_simseam.test.js"]},
- {"name": "WEATHER3b-cells-all-types", "file": "src/systems/weatherSim.js",
-  "old": "    if (!CELL_WORDS[sys.type]) continue;\n", "new": "", "tests": ["test/weather3b_simseam.test.js"]},
+ {"name": "WEATHER3b-cells-unranked", "file": "src/systems/weatherSim.js",
+  "old": "  _fieldCells = skyCells(_mapNear, at[0], at[1], ground).filter((c) => c.d - c.r <= FIELD_RANGE_M).sort((a, b) => b.imp - a.imp);", "new": "  _fieldCells = skyCells(_mapNear, at[0], at[1], ground).filter((c) => c.d - c.r <= FIELD_RANGE_M);", "tests": ["test/weather3b_simseam.test.js"]},
  {"name": "WEATHER3b-front-ignores-the-place", "file": "src/systems/weatherFront.js",
   "old": "      if (episode && peak != null) episode.peak = rollPeak(episode.mode, peak);\n", "new": "", "tests": ["test/weather3b_simseam.test.js"]},
  {"name": "WEATHER3b-world-front-no-peak", "file": "src/scenes/world.js",
   "old": "jump, peak: weatherOverride ? null : currentWeatherIntensity() });", "new": "jump });", "tests": ["test/weather3b_simseam.test.js"]},
  {"name": "WEATHER3b-indoor-host-unwired", "file": "src/scenes/worldModes.js",
-  "old": "        sampleWeatherIndoors(Math.floor(interiorTicker.classicMinutes));\n", "new": "", "tests": ["test/weather3b_simseam.test.js"]}
+  "old": "        sampleWeatherIndoors(Math.floor(interiorTicker.classicMinutes));\n", "new": "", "tests": ["test/weather3b_simseam.test.js"]},
+ {"name": "WEATHER3b-overhead-any-word", "file": "src/systems/weatherSim.js",
+  "old": "  _fieldInside = _fieldCells.find((c) => c.d < c.r && c.word === worn.word) ?? null;", "new": "  _fieldInside = _fieldCells.find((c) => c.d < c.r) ?? null;", "tests": ["test/weather3b_simseam.test.js"]}
 ]

@@ -242,6 +242,21 @@ export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4)
   return out;
 }
 
+/** WEATHER3c: THE CELLS THE SLOTS HOLD, IN THE ORDER THEY ARE DRAWN.
+ *  Cells that carry an `imp` (the world weather map's) are chosen by it
+ *  - the `cap` that matter most to the eye - and then ordered by their
+ *  word's `rank` from the lowest priority to the highest (a larger disc
+ *  first within a word), because the blend is last-over-first and the
+ *  storm's heart must win its own skirt. Cells without one (WEATHER2b's
+ *  field, the test door) keep their order and are cut at the cap, as
+ *  before. Pure. */
+export function pickCells(cells, cap) {
+  const list = cells ?? [];
+  if (!list.some((c) => c.imp != null)) return list.slice(0, cap);
+  return [...list].sort((a, b) => (b.imp ?? 0) - (a.imp ?? 0)).slice(0, cap)
+    .sort((a, b) => (b.rank ?? 0) - (a.rank ?? 0) || b.r - a.r);
+}
+
 /** The test door: `thunder`, `thunder,6000`, `thunder,6000,3000` - a
  *  cell of that weather `ahead` metres east (+x) of `pos`, radius `r`.
  *  Null for no door or an unknown weather. Pure. */
@@ -765,7 +780,7 @@ export class VolumetricClouds {
     this.state = state; this.row = row;
     // WEATHER2c: the field's cells for this frame - the controller's, else the test door's one
     if (this.testCellSpec && !this.testCell && pos) this.testCell = parseCloudCellDoor(this.testCellSpec, pos);
-    this.cells = (cells ?? (this.testCell ? [this.testCell] : [])).slice(0, this.q.cells ?? MAX_CELLS);
+    this.cells = pickCells(cells ?? (this.testCell ? [this.testCell] : []), this.q.cells ?? MAX_CELLS);   // WEATHER3c: the map's cells by importance, drawn by rank
     const target = VC_PROFILE[weather] ?? VC_PROFILE.sunny;
     this.profile = easeProfile(this.profile, target, easeDt);
     this.weather = weather;

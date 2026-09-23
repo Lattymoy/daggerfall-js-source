@@ -142,6 +142,17 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
  *  a probe can still nail winter in Second Seed, and a real session
  *  gets winter when Evening Star arrives and not before.
  *  @returns {number|null} a SEASON value, or null for "ask the clock". */
+
+/** WEATHER3c: the word and the row the volumetric clouds stand on. The
+ *  host's `cloudBase` - clear air on the world weather map's lane - with
+ *  its own row whole but for the live wind (the base never eases: the
+ *  weather over it is the cells'), else the worn word and the eased row,
+ *  as WEATHER2c has it. Pure. */
+export function cloudBaseOf(extra, weatherName, rowNow) {
+  const base = extra?.cloudBase ?? null;
+  if (!base) return { word: weatherName, row: rowNow };
+  return { word: base, row: { ...weatherRow(base), wind: rowNow?.wind ? [...rowNow.wind] : weatherRow(base).wind } };
+}
 export function seasonOverride(params) {
   const s = (params.get('season') || '').toLowerCase();
   if (s === 'winter') return SEASON.Winter;
@@ -511,7 +522,7 @@ export function createSkyController(gl, params) {
         // gets up first and the sky darkens behind it - the storm
         // rolling in. `dt` is stretched or shrunk to make the ease's
         // own walk land on the front's clock.
-        windModel.tick(extra?.classicMinutes ?? 0, weatherName, extra?.violence ?? weatherName);   // WEATHER2a: the violence word rides beside the worn one
+        windModel.tick(extra?.classicMinutes ?? 0, weatherName, extra?.violence ?? weatherName, extra?.approach ?? 0);   // WEATHER2a: the violence word rides beside the worn one; WEATHER3c: the storms drawing near
         // WIND2 (AUDIT 56): the ease stretches for the WHOLE lead, from
         // the change itself. WIND1 stretched it only while the front's
         // factor was strictly between 0 and 1 - and at the change the
@@ -557,8 +568,9 @@ export function createSkyController(gl, params) {
           // on the eased row, lit by the MOD's sun and moons, fading to
           // the MOD's horizon; and the ground's deck takes their shadow.
           if (clouds) {
-            clouds.setState(cloudsStateUnderMod(st, dynamicMoons, { minuteOfDay, weather: weatherName, classicMinutes: nowMinutes, seconds, drift: driftXZ, row: weatherRowNow }),
-              weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
+            const cb = cloudBaseOf(extra, weatherName, weatherRowNow);   // WEATHER3c
+            clouds.setState(cloudsStateUnderMod(st, dynamicMoons, { minuteOfDay, weather: cb.word, classicMinutes: nowMinutes, seconds, drift: driftXZ, row: cb.row }),
+              cb.row, cb.word, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
             if (clouds.shadow) Object.assign(dynamicDeck, clouds.shadow);
           }
           return;
@@ -574,7 +586,15 @@ export function createSkyController(gl, params) {
         // VC3: the clouds take the dome's state, the SAME eased row and
         // the SAME front-stretched ease dt (their profile eases on it),
         // the one drift integral, and the host's lightning flash.
-        clouds?.setState(enhancedSky.state, weatherRowNow, weatherName, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
+        if (clouds) {
+          // WEATHER3c: on the world weather map's lane the clouds stand on CLEAR AIR - its cover and its colours - and
+          // every system is a cell over it, the player's own included, so the blue shows past a deck's edge and a
+          // far cumulus is lit white while the storm overhead is dark by its own grey. The dome, the fog and the sun
+          // keep the worn word, eased on the front. Off the lane the clouds take the dome's own state, as before.
+          const cb = cloudBaseOf(extra, weatherName, weatherRowNow);
+          const cloudSky = cb.row === weatherRowNow ? enhancedSky.state : skyState({ minuteOfDay, weather: cb.word, classicMinutes: extra?.classicMinutes ?? 0, seconds, drift: driftXZ, row: cb.row });
+          clouds.setState(cloudSky, cb.row, cb.word, easeDt, driftXZ, extra?.flash ?? 0, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells
+        }
         // VC4: the ground's deck carries the slab's own shadow map and its square
         if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow);
         return;

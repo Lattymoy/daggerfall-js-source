@@ -56,7 +56,7 @@ import { CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsFile.
 import { SEASONS, seasonValue, dateFromClassicMinutes } from './gameDate.js';
 import { WEATHER_TABLE, weatherTableFor } from './weatherTable.js';
 import { pixelOfField } from './weatherField.js';
-import { seededRng } from './wind.js';
+import { seededRng, VIOLENCE } from './wind.js';
 
 /** The lattice births are keyed on: a node is NODE_M on a side and
  *  NODE_MINUTES long (8 game hours). */
@@ -527,6 +527,59 @@ export function wornAmong(systems, x, z, ground = null) {
  */
 export function weatherAt(x, z, minutes, climateAt, { ground = null } = {}) {
   return wornAmong(systemsNear(x, z, minutes, climateAt, 0), x, z, ground && ((w, gx, gz) => ground(w, gx, gz, minutes)));
+}
+
+// ---- the sky (WEATHER3c) ---------------------------------------------
+
+/** How much each word's cloud matters to the eye, for the few slots the
+ *  sky has: a storm's tower first, a fog bank's low smear last but one,
+ *  a fair-weather field last. */
+export const SKY_WEIGHT = Object.freeze({ thunder: 1, sandstorm: 0.95, rain: 0.9, snow: 0.85, overcast: 0.7, fog: 0.6, cloudy: 0.5 });
+
+/**
+ * THE SKY'S CELLS: every system's bands as nested discs - the skirt's
+ * disc, the ring's inside it, the core's inside that - each
+ * `{ x, z, r, word, imp, rank, id }` in field metres. `imp` is how much
+ * it matters from (x, z): its word's weight times the angle it fills (a
+ * disc the point is inside counts double, so the sky overhead is never
+ * the one dropped); `rank` its word's priority, so the renderer draws
+ * the lowest first and the storm's heart last - the overlap blend then
+ * agrees with the worn word. `ground(word, cx, cz)` (optional) is the
+ * ground law at the CELL (WEATHER2a: a storm over snow ground is a snow
+ * cloud there as well as at the player).
+ */
+export function skyCells(systems, x, z, ground = null) {
+  const out = [];
+  for (const s of systems) {
+    const d = Math.hypot(s.x - x, s.z - z);
+    for (const [r, raw] of s.bands) {
+      const word = ground ? ground(raw, s.x, s.z) : raw;
+      const imp = (SKY_WEIGHT[word] ?? 0.5) * (d <= r ? 2 : r / d);
+      out.push({ x: s.x, z: s.z, r, word, imp, rank: RANK[word] ?? PRIORITY.length, id: `${s.id}:${raw}`, d });
+    }
+  }
+  return out;
+}
+
+/** How far out a storm's wind is felt ahead of its edge (field metres). */
+export const APPROACH_M = 15000;
+/**
+ * THE WIND OF WHAT IS COMING: the strongest violence (wind.js VIOLENCE,
+ * the front's own scale) any system near (x, z) brings - its core
+ * type's, at its envelope - falling from its disc's edge to nothing
+ * APPROACH_M beyond it. The wind rises as a storm draws near, before a
+ * drop falls, and dies as it passes: a continuous term under the fronts,
+ * whose rolls stay theirs.
+ */
+export function approachAt(systems, x, z) {
+  let best = 0;
+  for (const s of systems) {
+    const gap = Math.max(0, Math.hypot(s.x - x, s.z - z) - s.r);
+    if (gap >= APPROACH_M) continue;
+    const v = (VIOLENCE[s.type] ?? 0) * s.env * (1 - gap / APPROACH_M);
+    if (v > best) best = v;
+  }
+  return best;
 }
 
 /**

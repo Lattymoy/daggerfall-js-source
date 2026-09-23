@@ -187,7 +187,7 @@ import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js'; 
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
-import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJumpStamp, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity } from '../systems/weatherSim.js';   // W1: the live weather state; WEATHER2b: the field; WEATHER3b: the map's intensity
+import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJumpStamp, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach } from '../systems/weatherSim.js';   // W1: the live weather state; WEATHER2b: the field; WEATHER3b: the map's intensity; WEATHER3c: its sky and wind
 import { fieldOfPixelLocal, pixelLocalOfField } from '../systems/weatherField.js';   // WEATHER2b: this host's pixel-local frame to the field's metres, and back
 import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells
 import { SEASON } from '../world/climateSwaps.js';
@@ -438,7 +438,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   let seenJump = weatherJumpStamp();   // WX2a: the sim's jump stamp as this host last saw it
   let seenCrossing = weatherCrossingStamp();   // WEATHER2b: the sim's crossing stamp as this host last saw it
   const climateAt = (px, py) => maps.getClimateIndex(px, py);   // WEATHER2b: the map's climate lookup for the field
-  const fieldCellsHere = () => currentFieldCells().map((c) => { const h = pixelLocalOfField(_locPixel.x, _locPixel.y, c.x, c.z); return cellOf(c.word, h[0], h[1], c.r); });   // WEATHER2b/c
+  const fieldCellsHere = () => currentFieldCells().map((c) => { const h = pixelLocalOfField(_locPixel.x, _locPixel.y, c.x, c.z); const cell = cellOf(c.word, h[0], h[1], c.r); return cell && c.imp != null ? { ...cell, imp: c.imp, rank: c.rank } : cell; }).filter(Boolean);   // WEATHER2b/c; WEATHER3c: the map's cells carry their importance and rank
   function applyWeather(w) {
     weather = w;
     weatherFog = fogForWeather(w, sky.fogSettings);   // DS1
@@ -4786,7 +4786,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (skyInside) { skyInside = false; sky.setInside(false); }   // DS1: ExteriorTransitionEvent
     sky.use(dfLocation.climate.skyBase + (weatherSkyOffset === 0
       ? seasonValue(dateFromClassicMinutes(playerTicker.classicMinutes)) : weatherSkyOffset), minute, weatherSkyOffset === 0,
-    { weather, violence: weatherOverride ?? currentWeatherRaw(), classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1, pos: eye, cells: fieldCellsHere() });   // WEATHER2a: the wind blows by the table's word; WEATHER2b/c: the field's cells are the clouds' cells   // ES1: the sky's clock and weather; VC4: the camera's world position, the clouds' and their shadow's origin; the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
+    { weather, violence: weatherOverride ?? currentWeatherRaw(), classicMinutes: playerTicker.classicMinutes, sun: wxNow.sun, flash: flash - 1, pos: eye, cells: fieldCellsHere(), cloudBase: weatherOverride ? null : currentCloudBase(), approach: weatherOverride ? 0 : currentWindApproach() });   // WEATHER2a: the wind blows by the table's word; WEATHER2b/c: the field's cells are the clouds' cells   // ES1: the sky's clock and weather; VC4: the camera's world position, the clouds' and their shadow's origin; the enhanced sky's clouds and moons; VC3: the strobe lights the clouds; DS1 (AUDIT 61): the ONE sunlight scale the ground takes (the front's blend of the host's SetSunlightScale - pin and latch included; the raw row under ?front=off)
     // Weather fog, colored by the live sky horizon fill (fills DFU's
     // fogColor TODO); heavy fog also swallows the sky.
     // Verbatim: fog is never disabled (SetFog keeps RenderSettings.fog on);

@@ -120,8 +120,9 @@ export function gustEnvelope(strength, tsec) {
 }
 
 /**
- * The model. `tick(nowMinutes, weather)` once a frame; the weather is
- * the sim's CURRENT word ('sunny'...'thunder'). Every read is pure over
+ * The model. `tick(nowMinutes, weather, violenceWord, approach)` once a
+ * frame; the weather is the sim's CURRENT word ('sunny'...'thunder'),
+ * `approach` the world weather map's storms drawing near (WEATHER3c). Every read is pure over
  * the state the last tick left.
  */
 export function createWindModel({ seed = 7 } = {}) {
@@ -136,6 +137,7 @@ export function createWindModel({ seed = 7 } = {}) {
   let nowMin = 0;
   let jumpPending = false;   // WX2a: the next change of word is a jump, not a front
   let arrivePending = false; // WEATHER2b: the next change of word is a crossing - a front on the short lead
+  let approach = 0;          // WEATHER3c: the world weather map's storms drawing near (VIOLENCE's scale, 0..1)
 
   const rollDay = (d) => {
     const r = seededRng(seed * 1000003 + d);
@@ -146,8 +148,9 @@ export function createWindModel({ seed = 7 } = {}) {
   };
 
   return {
-    tick(nowMinutes, weather, violenceWord = weather) {
+    tick(nowMinutes, weather, violenceWord = weather, approachNow = 0) {
       nowMin = nowMinutes;
+      approach = Math.max(0, Math.min(1, approachNow || 0));   // WEATHER3c: the storms drawing near, this frame
       const d = Math.floor(nowMinutes / 1440);
       if (d !== day) rollDay(d);
       if (weather !== last) {
@@ -208,7 +211,9 @@ export function createWindModel({ seed = 7 } = {}) {
       const u = Math.min(1, into / CALM_BLEND_MIN);
       const c = prevCalm + (calm - prevCalm) * u * u * (3 - 2 * u);
       const f = front ? frontFactor(nowMin - front.at, front.lead) * front.strength : 0;
-      return Math.min(1, c * drift + f);
+      // WEATHER3c: the approach is a floor under the front, not a second one on top - a storm's own
+      // arrival rolls its front's strength, and the wind that rose ahead of it is the same wind
+      return Math.min(1, c * drift + Math.max(f, approach));
     },
 
     /** Where the front is: 0 before and after, 1 at its height. */

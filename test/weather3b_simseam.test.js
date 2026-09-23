@@ -15,7 +15,7 @@ import {
   weatherForClimate, WEATHER_ENUM, MAP_JUMP_M, STALE_DRAIN_MINUTES,
 } from '../src/systems/weatherSim.js';
 import { weatherAt, systemsNear, wornAmong } from '../src/systems/weatherMap.js';
-import { CELL_WORDS, FIELD_RANGE_M } from '../src/systems/weatherField.js';
+import { FIELD_RANGE_M } from '../src/systems/weatherField.js';
 import { createWeatherFront, PRECIP_PEAK } from '../src/systems/weatherFront.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 
@@ -180,20 +180,30 @@ test('WEATHER3b: INDOORS the weather goes on - the map read at the door, each ch
   assert.equal(sampleWeatherIndoors(m + 600), false, 'off the lane, nothing');
 });
 
-test('WEATHER3b: the clouds get the precipitating systems\' cores, as WEATHER2b\'s cells were', () => {
+test('WEATHER3b/c: the clouds get every system near, most important first, and the one overhead is the worn word\'s', () => {
   lane();
   const p = find('rain');
   sampleWeatherField(p.m, WOODS, [p.x, p.z], woods, 'live');
   const cells = currentFieldCells();
   assert.ok(cells.length > 0);
-  for (const c of cells) {
-    assert.ok(CELL_WORDS[c.word], `${c.word} is a word the clouds can draw`);
-    assert.ok(c.d - c.r <= FIELD_RANGE_M);
+  for (const c of cells) assert.ok(c.d - c.r <= FIELD_RANGE_M, 'within the sky\'s reach');
+  for (let i = 1; i < cells.length; i++) assert.ok(cells[i].imp <= cells[i - 1].imp, 'most important first');
+  assert.equal(currentFieldCell()?.word, 'rain', 'the cell overhead is the rain the player wears');
+  // and where a weightier cloud covers a higher-priority word - a fog bank under an overcast deck - the cell
+  // overhead is still the word worn, not the one that matters most to the sky
+  const swamp = () => CLIMATES.Swamp;
+  let q = null;
+  for (let i = 0; i < 20000 && !q; i++) {
+    const x = 60000 + (i % 100) * 4000, z = 60000 + Math.floor(i / 100) * 4000, m = YEAR + 250 * 1440 + 5 * 60 + (i % 7) * 60;
+    if (weatherAt(x, z, m, swamp).word !== 'fog') continue;
+    const over = systemsNear(x, z, m, swamp, 0).some((sy) => sy.type === 'overcast' && Math.hypot(sy.x - x, sy.z - z) < sy.bands[0][0]);
+    if (over) q = { x, z, m };
   }
-  for (let i = 1; i < cells.length; i++) assert.ok(cells[i].d >= cells[i - 1].d, 'nearest first');
-  const inside = currentFieldCell();
-  const core = systemsNear(p.x, p.z, p.m, woods, 0).find((s) => s.type === 'rain' && Math.hypot(s.x - p.x, s.z - p.z) < s.bands[0][0]);
-  if (core) assert.equal(inside?.word, 'rain', 'standing in a rain core is standing in its cell');
+  assert.ok(q, 'a fog bank under a deck');
+  lane();
+  sampleWeatherField(q.m, CLIMATES.Swamp, [q.x, q.z], swamp, 'live');
+  assert.equal(currentWeather(), 'fog');
+  assert.equal(currentFieldCell()?.word, 'fog', 'the fog, not the deck above it');
 });
 
 test('WEATHER3b: ONLINE IS OFFLINE - two clients, one shared and one not, at one place and minute wear one sky', () => {

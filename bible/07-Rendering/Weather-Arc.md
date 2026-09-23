@@ -501,3 +501,39 @@ dead), and approved by THE WORLD WEATHER MAP row in Ledger A.
 The day-roll machine's own pins (W1, S41, CLK2/CLK4, WORLD5 C4/C5,
 SAV3, WEATHER2a/b/d, AUDIT 57 F3) were written for the one lane that
 existed. Each now declares the non-map lane it tests, beside its reset.
+
+### Slice C shipped - the sky (2026-09-22)
+
+The clouds read the map whole. `test/weather3c_sky.test.js` pins it
+(`tools/mutants/weather3c.json` 15/15 dead), and THE WORLD WEATHER MAP
+row now names it.
+
+- **Every system near is a cloud, as nested discs** (`skyCells`): the
+  skirt's disc, the ring's inside it, the core's inside that. Each word
+  goes through WEATHER2a's ground law at the cell's own place, so a
+  winter storm is a snow cloud where it stands. A fair-weather field, a
+  deck, a fog bank on the low ground, a storm on the ridge: all stand in
+  the sky, not only the wet ones.
+- **The slots** (`pickCells`, in the renderer): the tier's 8 (3 on Low)
+  go to the cells that fill the most sky from here. Importance is the
+  word's weight times the angle the disc fills, and a disc overhead
+  counts double, so the sky above is never the one dropped. They are
+  drawn lowest priority first, so the storm's heart is blended last
+  over its own skirt. The test runs the shader's resolve in JS over
+  hundreds of places: the cloud fully overhead is always the worn word.
+- **Clear air under it all** (`cloudBaseOf`). On the map's lane the
+  clouds stand on clear air's row and state (cover, softness, colours),
+  and the player's own system is a cell like any other. The blue shows
+  past a deck's edge, a far cumulus is lit white, and the storm overhead
+  is dark by its own grey. That is WEATHER2c's thunderhead-over-a-sunny-
+  zone case, now the whole sky's. The dome, the fog and the sun keep the
+  worn word, eased on the WX2 front.
+- **The wind of what is coming** (`approachAt`, `wind.js` tick's
+  `approach`): the strongest storm near brings its VIOLENCE at its
+  envelope, falling from its disc's edge to nothing 15 km beyond. It is
+  a floor under the fronts, never summed with one, so the wind gets up
+  before the first drop and dies as the storm passes.
+
+Measured: the whole sample - the word, the sky's cells and the wind -
+costs about 0.02 ms a frame. Off the lane, nothing changes: WEATHER2b's
+cells are cut in their own order on the worn word's row, as before.

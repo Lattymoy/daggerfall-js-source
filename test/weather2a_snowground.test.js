@@ -125,7 +125,7 @@ test('WEATHER2a the wind blows by the table\'s word: a storm turned to snow buil
   assert.ok(Math.abs(fb.strength / fa.strength - VIOLENCE.thunder / VIOLENCE.snow) < 1e-9, 'the same roll, the storm\'s violence');
   const c = createWindModel({ seed: 3 }); c.tick(0, 'sunny'); c.tick(600, 'snow', 'nonsense');
   assert.ok(Math.abs(c.state().front.strength - fa.strength) < 1e-12, 'an unknown violence word falls back to the worn one');
-  assert.match(rd('src/scenes/shared.js'), /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName, extra\?\.violence \?\? weatherName\);/);
+  assert.match(rd('src/scenes/shared.js'), /windModel\.tick\(extra\?\.classicMinutes \?\? 0, weatherName, extra\?\.violence \?\? weatherName, extra\?\.approach \?\? 0\);/);
 });
 
 test('WEATHER2a the hosts: the arrival hands the sim its minute, the sky is handed the violence word, and the sim has one write of the worn word', () => {

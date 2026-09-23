@@ -208,15 +208,15 @@ test('WEATHER2b the controller and the hosts: the sky eases on the front\'s own 
     assert.match(s, /sampleWeatherField\(Math\.floor\(playerTicker\.classicMinutes\), [^,]+, [^;]+, climateAt, drained \? 'drain' : 'live'\);/, `${name}: the field after the drain`);
     assert.match(s, /let seenCrossing = weatherCrossingStamp\(\);/, `${name}: the boot's stamp is the baseline`);
     assert.match(s, /const crossing = weatherCrossingStamp\(\) !== seenCrossing;\s*\n\s*seenCrossing = weatherCrossingStamp\(\);\s*\n\s*if \(crossing && !jump\) sky\.weatherArrive\(\);/, `${name}: a crossing tells the sky, a jump wins`);
-    assert.match(s, /cells: fieldCellsHere\(\) \}\);/, `${name}: the clouds' cells are the field's`);
+    assert.match(s, /cells: fieldCellsHere\(\), cloudBase: /, `${name}: the clouds' cells are the field's (WEATHER3c: the base they stand on beside them)`);
     assert.match(s, /const climateAt = \(px, py\) => maps\.getClimateIndex\(px, py\);/, `${name}: the map's lookup`);
   }
   assert.match(w, /const fieldXZ = \(\) => \{ const wc = state\.worldCoords\(walkMode \? player\.pos : cam\.pos\); return fieldFromNative\(wc\.x, wc\.z\); \};/, 'world: the player\'s place in the field');
-  assert.match(w, /const h = state\.localFromWorld\(n\[0\], n\[1\]\); return cellOf\(c\.word, h\[0\], h\[1\], c\.r\);/, 'world: the cells back into the floating host space');
+  assert.match(w, /const h = state\.localFromWorld\(n\[0\], n\[1\]\); const cell = cellOf\(c\.word, h\[0\], h\[1\], c\.r\);/, 'world: the cells back into the floating host space');
   assert.match(w, /weatherRespawn\(Math\.floor\(playerTicker\.classicMinutes\), maps\.getClimateIndex\(px\.x, px\.y\), Math\.random, fieldXZ\(\), climateAt\)/, 'world: the respawn samples the destination');
   assert.equal((w.match(/applyClimateWeather\([^;]*fieldXZ\(\), climateAt\);/g) || []).length, 2, 'world: both travel arrivals sample the destination');
   assert.match(e, /fieldOfPixelLocal\(_locPixel\.x, _locPixel\.y, eye\[0\], eye\[2\]\)/, 'exterior: the eye in the location\'s pixel');
-  assert.match(e, /const h = pixelLocalOfField\(_locPixel\.x, _locPixel\.y, c\.x, c\.z\); return cellOf\(c\.word, h\[0\], h\[1\], c\.r\);/);
+  assert.match(e, /const h = pixelLocalOfField\(_locPixel\.x, _locPixel\.y, c\.x, c\.z\); const cell = cellOf\(c\.word, h\[0\], h\[1\], c\.r\);/);
 });
 
 test('WEATHER2b records: the arc page\'s B, the ledger row, the features arc, Home\'s index and the testing row', () => {

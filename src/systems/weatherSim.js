@@ -44,8 +44,8 @@ import { seededRng } from './wind.js';   // CLK2: the evolution's own generator 
 import { isEnhanced } from './uiSkin.js';   // CLK2: the evolution is the enhanced lane's
 import { getPref } from './uiPrefs.js';
 import { groundIsSnowy, climateSeasonFromMinutes } from '../world/climateSwaps.js';   // WEATHER2a: the terrain's own snow law
-import { fieldAt, FIELD_RANGE_M, CELL_WORDS } from './weatherField.js';   // WEATHER2b: the day's words as places
-import { systemsNear, wornAmong } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land
+import { fieldAt, FIELD_RANGE_M, pixelOfField } from './weatherField.js';   // WEATHER2b: the day's words as places
+import { systemsNear, wornAmong, skyCells, approachAt } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land; WEATHER3c: its sky and its wind
 
 export { WEATHER_TYPES };
 
@@ -139,7 +139,9 @@ export function weatherFieldOn() {
  *  a new one means the change on this frame is a crossing - a short front. */
 export const weatherCrossingStamp = () => _crossings;
 /** WEATHER2b: the cells near the player at the last sample - { x, z, r, word, d }
- *  in field metres, nearest first - for the clouds; and the one the player stands in. */
+ *  in field metres, nearest first - for the clouds; and the one the player stands in.
+ *  WEATHER3c: on the map's lane, every system's bands, most important first, each
+ *  with its `imp` and its word's `rank` (the renderer's pick and draw order). */
 export const currentFieldCells = () => _fieldCells;
 export const currentFieldCell = () => _fieldInside;
 /**
@@ -203,6 +205,12 @@ let _mapSampledAt = null;   // its minute
 let _mapFresh = true;       // no sample since the boot or a load: the next change is a jump
 let _mapNear = [], _mapNearAt = null, _mapNearMinute = null, _mapNearLookup = null;
 let _mapIntensity = 0;
+let _mapApproach = 0;
+/** WEATHER3c: the wind of the storms drawing near (wind.js VIOLENCE's scale), 0 off the map's lane. */
+export const currentWindApproach = () => (weatherMapOn() ? _mapApproach : 0);
+/** WEATHER3c: the sky the clouds' cells stand on - clear air on the map's lane (the player's own system is a cell
+ *  like any other, so the blue shows past a deck's edge), null off it (the worn word's, as WEATHER2c has it). */
+export const currentCloudBase = () => (weatherMapOn() ? 'sunny' : null);
 /** WEATHER3b: the intensity of the worn word at the player, 0..1 (the
  *  system's envelope, falling from its centre out) - the WX2 front's peak
  *  on the map's lane; null off it (the front rolls its own). */
@@ -215,18 +223,18 @@ function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
   }
   const worn = wornAmong(_mapNear, at[0], at[1]);
   _mapIntensity = worn.intensity;
-  // the clouds (WEATHER2c) draw the precipitating systems' cores as WEATHER2b drew its cells, until the sky reads the map whole (slice C)
-  _fieldCells = [];
-  _fieldInside = null;
-  for (const sys of _mapNear) {
-    if (!CELL_WORDS[sys.type]) continue;
-    const d = Math.hypot(sys.x - at[0], sys.z - at[1]), r = sys.bands[0][0];
-    if (d - r > FIELD_RANGE_M) continue;
-    const cell = { x: sys.x, z: sys.z, r, word: sys.type, d };
-    _fieldCells.push(cell);
-    if (d < r && (!_fieldInside || d < _fieldInside.d)) _fieldInside = cell;
-  }
-  _fieldCells.sort((a, b) => a.d - b.d);
+  // WEATHER3c: THE SKY IS THE MAP'S. Every system within the sky's reach gives the clouds its bands as nested discs -
+  // a fair-weather field, a deck's edge, a fog bank on the low ground, a storm's skirt, rain and tower - each word
+  // through the ground law at ITS OWN place (a winter storm is a snow cloud where it stands), ranked by how much of
+  // the sky it fills from here; the renderer keeps what its slots hold and draws the lowest priority first
+  const ground = (word, cx, cz) => {
+    if (word !== 'rain' && word !== 'thunder') return word;
+    const px = pixelOfField(cx, cz);
+    return WEATHER_TYPES[overGround(WEATHER_ENUM[word], climateAt(px.x, px.y), nowMinutes)];
+  };
+  _fieldCells = skyCells(_mapNear, at[0], at[1], ground).filter((c) => c.d - c.r <= FIELD_RANGE_M).sort((a, b) => b.imp - a.imp);
+  _fieldInside = _fieldCells.find((c) => c.d < c.r && c.word === worn.word) ?? null;
+  _mapApproach = approachAt(_mapNear, at[0], at[1]);
   const away = _mapSampledAt === null || _mapFresh || minute < _mapSampledAt || minute - _mapSampledAt > STALE_DRAIN_MINUTES
     || !_mapAt || Math.hypot(at[0] - _mapAt[0], at[1] - _mapAt[1]) > MAP_JUMP_M;
   _mapAt = [at[0], at[1]]; _mapClimate = climateIndex; _mapClimateAt = climateAt; _mapSampledAt = minute; _mapFresh = false;
@@ -562,7 +570,7 @@ export function resetWeatherSim() {
   _jumps = 0;
   _crossings = 0; _fieldCells = []; _fieldInside = null; _fieldOverride = null; _fieldUrlDoor = null;   // WEATHER2b
   _mapOverride = null; _mapUrlDoor = null; _mapAt = null; _mapClimate = null; _mapClimateAt = null; _mapSampledAt = null; _mapFresh = true;   // WEATHER3b
-  _mapNear = []; _mapNearAt = null; _mapNearMinute = null; _mapNearLookup = null; _mapIntensity = 0;
+  _mapNear = []; _mapNearAt = null; _mapNearMinute = null; _mapNearLookup = null; _mapIntensity = 0; _mapApproach = 0;
   _rolledAtMinutes = null;
   _zoneChangedAtMinutes = new Array(6).fill(null);
   _climateWeathersValid = false;

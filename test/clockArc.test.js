@@ -50,7 +50,7 @@ test('CLK1: the controller - the presentation differences the host\'s classicMin
   assert.doesNotMatch(use, /60 \/ 12|\* 12\b/, 'no time scale hard-coded in the presentation');
   assert.match(use, /weatherRowNow = easeWeather\(weatherRowNow, want, easeDt\);/);
   assert.match(use, /driftXZ\[0\] \+= weatherRowNow\.wind\[0\] \* dt \* WIND_SECONDS_PER_MINUTE;\s*\n\s*driftXZ\[1\] \+= weatherRowNow\.wind\[1\] \* dt \* WIND_SECONDS_PER_MINUTE;/);
-  assert.match(use, /clouds\?\.setState\(enhancedSky\.state, weatherRowNow, weatherName, easeDt, driftXZ,/, 'the clouds take the same minutes');
+  assert.match(use, /clouds\.setState\(cloudSky, cb\.row, cb\.word, easeDt, driftXZ,/, 'the clouds take the same minutes (WEATHER3c: on the row and word they stand on)');
   assert.match(shared, /let lastMin = null;/);
   // the lab keeps the same shape: a game-minute clock, its own integral, ?still stopping both
   const lab = read('src/tools/skyLab.js');
