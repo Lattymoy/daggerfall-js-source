@@ -798,6 +798,42 @@ See `Seasons-Iliac-Bay.md` for SIB1: RosyTheRascal's Seasons of the Iliac Bay mo
 
 `EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.
 
+## WIND5 - THE WIND'S FLOURISHES (2026-09-23)
+
+Mac, with a sheet of calligraphic wind flourishes: "lets reduce the
+amount of wind streaks and change their design to be more swirly like
+the image".
+
+- **Fewer.** WISP_MAX 240 at a gale (WIND4's 650), the floor the same
+  share - a couple of dozen in a calm. A flourish is a bigger, more
+  deliberate mark than a streak, and a few read as wind where the
+  streaks needed numbers.
+- **The flourish.** `render/windWisps.js`: a wisp is a RIBBON of
+  WISP_SEGMENTS (40) segments along a path - an arched or S stroke down
+  the wind (`sin²`, so it leaves level and meets its curl level) for the
+  first WISP_STROKE (0.55) of it, then a spiral from the stroke's end,
+  heading down the wind, WISP_CURL_TURNS (1.6) turns, closing to
+  WISP_CURL_TIGHT (0.3) of its radius. The tightening is eased in (k²):
+  a linear one kinked the join by four degrees, which the path pin
+  measured. Each swirl leans its curl's plane off the vertical about the
+  wind by up to WISP_LEAN (1.05 rad) and curls up or down, so the air
+  holds a varied hand, not one stamp.
+- **The pen and the ink.** The ribbon faces the eye across the path's own
+  tangent, swells in from its tail and thins into the curl, is soft
+  across its width, and is DRAWN ON - the head runs the path over the
+  first WISP_DRAW_HEAD of the wisp's life, the tail follows it off from
+  WISP_DRAW_TAIL - riding the same wind integral, wrap and wobble as
+  before. Its alpha is the look's own, never more than a breath.
+- **The sand keeps its streak.** A look carries `curl`; the sandstorm's
+  is 0, so its 7000 grains are one straight quad each, as they were.
+- Pinned by `test/wind5_swirls.test.js` (the path mirrored term for term:
+  continuous and level at the join, heading down the wind on both sides,
+  the curl's turns and tightening measured; `tools/mutants/wind5.json`
+  19/19 dead), and drawn on a real GPU by `tools/wind5SwirlProbe.mjs`
+  (6/6: compiles and links, the ribbon's vertex count drawn, a gale's
+  ink, a calm's lighter, the sand's one quad, the flourishes moving;
+  `--bold` for a picture of the shape).
+
 ## WIND4 - THE WISPS' COUNT, THE SKY'S DIRECTION, THE GRASS AT NIGHT (2026-09-15)
 
 Mac, three in one message, on the wind and weather work: *"1. The wind
