@@ -508,6 +508,23 @@ export function createTravelOptions(deps = {}) {
     }
     // :658-664 - in the border ring of a town: walk around it
     if (!inLoc && st.locationBorderRect && rectContains(st.locationBorderRect, p.x, p.z)) {
+      // ROAD-CRASH (2026-09-23, Discord through Mac: "crashes while
+      // traveling on roads with travel options"): THE RING WALK IS A
+      // FOLLOWED PATH, and forgets the named destination as the two path
+      // arms above do. The mod's arm does not - and an interrupt "leaves
+      // current destination active" (:1273), so a ring walked after one
+      // ran with that name still set, which is the ONE condition under
+      // which InitLocationRects keeps refreshing the rects mid-journey
+      // (:606-612, `destinationName != null`). The next pixel crossed - a
+      // town's ring reaches into its neighbours - answered no location
+      // (not built yet, or none there), both rects went null, and the
+      // walk's own OnArrival read `.zMax` off null. Unity logs that and
+      // runs the next frame; this host's frame loop dies on it. With the
+      // name gone the rects hold for the whole walk, as they do for
+      // every path leg, and the follow key, the avoid-encounter resume
+      // and the LocationPause arm all read the walk as the followed
+      // path it is. Recorded departure 16.
+      st.destinationName = null;
       st.corners = locBorderCornerRects(st.locationRect, st.locationBorderRect);
       circumnavigateLocation();
       return true;
@@ -565,10 +582,21 @@ export function createTravelOptions(deps = {}) {
       if (countSetBits(pathsDataPt) === 2) {
         // :727-1050 - exactly two ways out: carry straight on.
         const dir = nextPathDirection(pathsDataPt, directionOfYaw(yawDeg()), directionOfYaw(yawDeg(true)));
-        const roadDataPt = roadsDataPoint(net, mp.x, mp.y);
-        st.road = (roadDataPt & dir) !== 0;
-        beginPathTravel(targetPixel(dir, mp.x, mp.y), false);
-        return;
+        // ROAD-CRASH: the recovery walk's give-up. nextPathDirection
+        // hands back the mod's RAW leftover when its nine tries narrow
+        // nothing (travelPaths.js; the mod's own ":1036 - should work
+        // 99% of the time"), and GetTargetPixel's default arm makes THAT
+        // a leg to the pixel the player stands in - arrived before it
+        // starts, OnArrival again next frame, and so on for ever with
+        // the panel up and the clock racing. A pick that is not one edge
+        // is a junction here: the journey stops and the map goes up, as
+        // at every other pixel the mod cannot read. Recorded departure 17.
+        if (countSetBits(dir) === 1) {
+          const roadDataPt = roadsDataPoint(net, mp.x, mp.y);
+          st.road = (roadDataPt & dir) !== 0;
+          beginPathTravel(targetPixel(dir, mp.x, mp.y), false);
+          return;
+        }
       }
       // :1057-1063 - a junction: stop, and put the mini-map up.
       say(T.MsgArrivedJunc);
@@ -586,6 +614,18 @@ export function createTravelOptions(deps = {}) {
 
   /** :753-797, CircumnavigateLocation. */
   function circumnavigateLocation() {
+    // ROAD-CRASH: the seam's own guard. A walk whose rects are gone has
+    // nothing to walk round, and the mod's NullReferenceException here
+    // is a logged frame in Unity and a dead frame loop in this host. The
+    // walk ends where it stands, as a junction's does (:1063,
+    // CloseWindow - the host's onClose is InterruptTravel); a host whose
+    // panel does not interrupt is stopped outright. The follow key asked
+    // again answers "no path" through followPath's own rect test.
+    if (!st.locationRect || !st.locationBorderRect) {
+      ui?.closeWindow();
+      if (st.autopilot) interruptTravel();
+      return;
+    }
     const p = pos(), mp = pixel();
     if (st.circumnavigatePathsDataPt === 0) st.circumnavigatePathsDataPt = pathsDataPoint(roads(), mp.x, mp.y);
     const yaw = Math.trunc(yawDeg());   // :758 - `(int)GetNormalisedPlayerYaw()`

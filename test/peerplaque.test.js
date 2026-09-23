@@ -84,7 +84,7 @@ test('PEER-PLAQUE1 hosts by source: the street races the F key\'s own pick and n
   assert.match(namer, /const name = peerName\(id\);\s*if \(!name\) return null;/, 'a peer the session no longer names draws nothing');
   assert.match(namer, /const marks = badge \? glyphMarks\(badge\) : '';/);
   assert.match(namer, /peerPromptText\(\{ \.\.\.social\.actionsFor\(id\), \.\.\.tradeActionsFor\(id\) \}, interactKeyLabel\(\)\)/, 'the F-menu\'s own bag, both halves');
-  assert.match(namer, /return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, subs: prompt \? \[prompt\] : \[\] \};/);
+  assert.match(namer, /return \{ title: marks \? `\$\{name\} \$\{marks\}` : name, subs: \[cast, prompt\]\.filter\(Boolean\) \};/);   // ALLY-CAST: the cast line above the prompt
   assert.match(w, /peerHoverPick: \(\) => _hoverPeerPick\(cam\.pos, socialFwd\(\)\),\s*\n\s*peerHoverName: \(key\) => peerHoverName\(key\),/, 'the two doors the modal hosts reach - the pick off the F key\'s OWN ray (AUDIT DROPS E3), never the mode\'s eye');
   assert.match(w, /const hit = pickPeerInFront\(cam\.pos, socialFwd\(\), near, SOCIAL_REACH, rayPersonDistance\);/, 'the same ray the key casts');
   const m = rd('src/scenes/worldModes.js');

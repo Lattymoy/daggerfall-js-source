@@ -100,7 +100,8 @@ nothing). A row's list is cut at its bound; a bad row refuses the frame; a
 party view whose leader is no member is no party; a note with a code the
 client has no words for is nothing. `{t:'party', acct, p}` a member's
 pose. The bounds: FRIENDS_MAX 64, PENDING_MAX 32 each way (and invites
-held), PARTY_MAX 4 ("the new 4 person party system"), PARTY_INVITES_MAX
+held), PARTY_MAX 8 (PARTY8, 2026-09-22: "increase the party limit to 8", over
+SOC1's "the new 4 person party system"), PARTY_INVITES_MAX
 8 outstanding from one party, INVITE_TTL_MS two minutes, PARTY_OFFLINE_MS
 five minutes for a seat whose member dropped, ACCOUNT_TABS_MAX 8 peer ids
 named per account. The gates: SOCIAL_HZ_MAX 2 a socket (the same strikes

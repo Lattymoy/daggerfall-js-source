@@ -148,8 +148,8 @@
   {
     "name": "PEER-PLAQUE1-title-without-the-marks",
     "file": "src/scenes/world.js",
-    "old": "    return { title: marks ? `${name} ${marks}` : name, subs: prompt ? [prompt] : [] };",
-    "new": "    return { title: name, subs: prompt ? [prompt] : [] };",
+    "old": "    return { title: marks ? `${name} ${marks}` : name, subs: [cast, prompt].filter(Boolean) };",
+    "new": "    return { title: name, subs: [cast, prompt].filter(Boolean) };",
     "tests": [
       "test/peerplaque.test.js"
     ]

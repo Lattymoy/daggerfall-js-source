@@ -764,7 +764,13 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // are always ticked").
   const heldItem = ctx.heldItem ?? null;
   const pinStart = target.activeEffects?.length ?? 0;
-  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && pred(a)));
+  // AUDIT ALLY-CAST C2: a party mate's cast (ctx.allyCast, tagged bundleAlly below) and the target's own never
+  // merge into one another. F12's incumbent law - a like-kind recast adds rounds and keeps the incumbent's
+  // magnitude/chance - was harmless while no outside source ever buffed a player; a level-1 mate's 1-point
+  // Shield capped the target's own 60-point Shield at one for forty rounds, and a mate's Regenerate kept its
+  // caster level over the target's own stronger cast. An ally's bundle stands beside mine, never over it.
+  const allyCast = ctx.allyCast === true;
+  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && !!a.bundleAlly === allyCast && pred(a)));
   // S24: absorption is tested PER EFFECT, before any of them lands
   // (EntityEffectManager :507-518), and an absorbed effect is skipped
   // entirely - `continue`, not a reduced magnitude.
@@ -1692,6 +1698,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         list[i].bundleType = type;
         list[i].bundleIcon = icon;
         list[i].bundleSelfCast = selfCast;
+        list[i].bundleAlly = allyCast;   // AUDIT ALLY-CAST C2/C4: a party mate's gift - never merged with my own, and mine to dispel without a roll
       }
     }
   }
