@@ -2999,7 +2999,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     ridingVolumeScale: () => (_travelSoundsOff ? 0 : 1),   // AUDIT-TO1 J1: TransportManager.RidingVolumeScale = 0 for the journey
     // RR1: IsShipAvailiable's reads - the location under the player (loaded, a port) and whether they stand on the ship
     // AUDIT-RR2 G22: `travelOptionsEnabled` asks TO's "hasPort" (RoleplayRealism.cs:635-644; TravelOptionsMapWindow.cs:870-873 - the hand-written port list), else the flag
-    shipLocation: () => { const loc = _questLoc(); return loc ? { loaded: true, portTown: (modSetting('travel-options', 'Enabled') === true ? hasPort(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { loaded: false, onShip: false }; },
+    shipLocation: () => { const loc = _questLoc(); return loc ? { locationLoaded: true, portTown: (modSetting('travel-options', 'Enabled') === true ? hasPort(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { locationLoaded: false, onShip: false }; },   // DISC13-D: `locationLoaded`, the key isShipAvailable reads - `loaded` left shipPorts answering every port as the wilderness
     // RR2: EnhancedRiding's reads - the look, the ground, the module's settings
     lookPitch: () => cam.pitch, lookYaw: () => cam.yaw, groundHeightAt: (x, z) => heightAt(x, z),
     enhancedRiding: () => (rrRidingOn() ? { terrainFollowing: rrRidingSetting('followTerrainEnabled') === true, softenFollow: rrRidingSetting('followTerrainSoftenFactor') ?? 8 } : null),
@@ -13386,7 +13386,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
       const wodSel = wodLit ? _wodSelect(n, _wodFill(n)) : null;   // WOD2: the lanterns and the mod's lights, one selection
       const lit = withPlayerLights(wodSel ? wodSel.data : nearestLights(_sceneLights, cam.pos, renderer.maxPointLights, worldLightAnimator.ranges, null, 0, n),   // EL1: the installed set's cap (16 classic, 48 on the lane); PERF-LIGHTS: `n` is how much of the pool is live
-        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash
+        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     } else {
@@ -13397,7 +13397,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // WOD2: ...and the mod's lights, which burn at every hour.
       const wodSel = wodLit ? _wodSelect(0, _wodFill(0)) : null;
       const lit = withPlayerLights(wodSel ? wodSel.data : new Float32Array(0),
-        magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash
+        magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...camps.lights(), ...droppedTorches.lights());   // HT1; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
       if (wodSel) _wodSetLights(lit, wodSel);
       else renderer.setPointLights(lit, CITY_LIGHT_COLOR_F32);
     }
@@ -14129,7 +14129,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if ((modes?.mode ?? 'exterior') === 'exterior') {
         const _mfwd = [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
         magic.firePending([...cam.pos], _mfwd);
-        magic.update(dt, player.pos, _mfwd, player.height);   // X11: the candle hangs off the look direction
+        magic.update(dt, player.pos, _mfwd, player.height, player.feetAt());   // X11: the candle hangs off the look direction; DISC13-A off the render feet
         { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }   // LM1: the beast's own noise while transformed (real time)
       }
       // U8h/AUDIT 17e F17: the worn-weapon bind moved INTO createWeaponRig
@@ -14185,7 +14185,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           }).catch((e) => console.error('[civil]', e));
         }
       }
-      weaponRig.draw({ paralyzed });
     }
     // AUDIT 21 (hosts lane, F7): THE HUD, which this host did not have.
     //
@@ -14233,6 +14232,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // charges down the foe in the way, once each
         if (rrRidingOn() && player.riding && player.isRunning) rrRidingContacts();
       }
+      // DISC14 (Starempire42 on Discord: "is there a way to make it so I can see my weapon above my horse?"): the
+      // weapons draw OVER the mount. OnGUI puts the horse at GUI.depth 2, "behind other HUD elements & weapons"
+      // (TransportManager's own comment, and EnhancedRiding.cs:234-235's), and the rig drew first, so the horse's
+      // head covered the hand and the blade's root. Drawn here, after the mount and before drawHud.
+      if (walkMode && playerSpawned) weaponRig.draw({ paralyzed });
       drawPeerNames(proj, view, mwv.eye);   // ONLINE1: the names over the heads
       // WORLD-HOVER: the plaque, where this host already draws its HUD.
       // It races EXACTLY what the press races - the same six live picks

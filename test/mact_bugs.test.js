@@ -243,7 +243,7 @@ test('MAC-T1 (d): the caster pick skips a carried light in any camera; by source
     const s = rd(h);
     const n = (s.match(/withPlayerLights\(/g) ?? []).length;
     assert.ok(n >= 1, `${h} composes through withPlayerLights`);
-    assert.equal((s.match(/playerTorchLight\(playerEntity, player\.pos, cam\.yaw\)/g) ?? []).length, n, `${h}: every composition carries the torch`);
+    assert.equal((s.match(/playerTorchLight\(playerEntity, player\.feetAt\(\), cam\.yaw\)/g) ?? []).length, n, `${h}: every composition carries the torch`);   // DISC13-A: off the render feet now
     sites += n;
   }
   assert.equal(sites, 6, 'six call sites, no host edit');

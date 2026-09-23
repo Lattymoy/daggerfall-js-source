@@ -6745,6 +6745,72 @@ needs the widget's shift over a raised blade. The lens law is pinned
 numerically (`test/macr_fixes.test.js`) and the draw by source; MW-D10
 and MW-D23's projection pins re-aimed. Mutants in
 `tools/mutants/macr.json`.
+
+**Superseded by DISC13-C (2026-09-23).** The pad above is retired. The
+next section says why and what replaced it.
+
+## DISC13-C (2026-09-23): the sides were cut too, so the frame is what the screen shows
+
+Ilvi, on Discord: *"When I'm walking with torch it looks torn down. Half
+of it just dissapeared."* This is MAC-R1's cut on the sides. The bob
+always pushes the widget's rect right (`bobStep`'s x runs from 0 to
+twice its size). So the frame's LEFT edge came into the screen on every
+stride, and the torch in the left hand ended in a straight vertical cut
+there. Under the widget's own settings that was up to 77 px of a 1920
+screen walking and 126 running. With Diverse Weapons' preset (on since
+DW-CLIP) the inertia opens either side: 84 px on the left and 170 on the
+right when backing up, and 152 when strafing. MAC-R1 had padded only the
+top.
+
+**The fix renders exactly the frame pixels the screen needs.** The
+composite still lays the frame on the widget's rect at the rect's own
+pitch, `rect.w / pw` screen pixels a frame pixel. So the arm slides at
+the widget's sub-pixel pace and scales with the rect, as it always did.
+What changed is which pixels are rendered. `fpFrameWindow(rect, W, H,
+pw, ph)` answers the columns `k0 .. k0 + nx - 1` and rows
+`r0 .. r0 + ny - 1` of the symmetric lens's own pixel grid that the
+moved rect shows on the screen, and where the composite lays them. The
+grid is extended past the lens's edges wherever the rect left the screen
+bare, and cut short wherever it hangs off. The pass renders them through
+the matching window of the same lens (`frustum`), so no frame edge is
+ever inside the screen.
+
+- A rect at rest is the screen's own frame through the symmetric lens,
+  exactly.
+- A moved frame is at most one column and one row bigger than the
+  screen's. The target keeps that one column and row spare while a
+  transform is set, so a 4K screen is covered too. A side pad would have
+  cost the 1024 target a third of its columns on a 2560 screen.
+- MAP3's `lastFrame` takes the frame's own lens and the rect the
+  composite lays it on, so the held sheet's corners stay where the arm
+  is drawn.
+- A rect with no area draws nothing, as its composite did.
+- A frame the target cannot hold (a rect scaled far down on a 4K screen)
+  is cut at the target's size, about what the old frame left uncovered
+  there.
+
+MAC-R1's top pad was the one-edge case of this, so `FP_TOP_PAD` is
+retired.
+
+**Rejected: moving the lens.** A lens window the screen's size, composited
+fullscreen, also closes the cut, and was built and checked. But the arm
+draws at a third of the screen's resolution (`MW_ARM_PIXEL`), so a lens
+that moves re-rasterises it on that coarse grid. The bob would then step
+the arm three pixels at a time where the paste slides it.
+
+Not seen in a browser: there is no Morrowind data here.
+
+- `test/disc13.test.js` pins it through the real arm on the MW fixtures:
+  - the four screen edges under synthetic shifts, a scale, a drop
+    (MAC-R1's case) and a rise;
+  - the real widget walking, running, backing up and strafing, with and
+    without Diverse Weapons' preset;
+  - a half-pixel shift that moves the composite half a pixel and renders
+    the same frame;
+  - the frame's size, and 4K coverage.
+- `test/macr_fixes.test.js` pins the rows above the top and the rest case.
+- Mutants are in `tools/mutants/disc13.json`. MAC-R1's three pad records
+  are re-aimed by content in `tools/mutants/macr.json`.
 ## MAP3 (2026-09-18): the held sheet - the first hand-authored pose
 
 Mac (the Held Map arc, `bible/10-UI/Held-Map-Arc.md`): "Morrowind will

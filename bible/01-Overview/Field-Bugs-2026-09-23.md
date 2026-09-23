@@ -990,3 +990,289 @@ then *"Lets just merge what we have"*. The investigation was stopped
 before it reached a reproduction, so no cause is claimed here. If it
 comes back, the save and where it happened are what to ask for.
 
+
+---
+
+# DISC13 - four reports after the survival-tiers merge
+
+Mac, with four Discord screenshots: *"Got some bugs for you"*.
+
+1. icebreyker, "Lights/shadows are bugged": *"The shadows seem to flicker
+   when i move"* (a dungeon corridor, a torch in hand).
+2. icebreyker, "Cant heal with bandages": the pack's card for ten
+   bandages showed DROP and nothing else.
+3. Ilvi: *"When I'm walking with torch it looks torn down. Half of it just
+   dissapeared."*
+4. Sir McMobdon, "cant access my boat": they turned Travel Options' ship
+   option off (*"It's off / Still dont work"*), and then *"Nether has
+   options for the boat"*.
+
+Each was traced to its cause in node, against the real modules, before it
+was touched. The pins are `test/disc13.test.js`, and every one but A's
+first fails on the code before the fix. The mutants are
+`tools/mutants/disc13.json` (22). The run by the rule took 209 records:
+this list, every record whose tests this change edited, and every record
+within six lines of a changed line. One survived: MAC-R1's re-aimed
+"a window with no transform", which no pin read. It is pinned now, and
+all of them die.
+
+## DISC13-A: the light in the hand slid against the view
+
+**Cause.** This is not the shadow maps. The light in the hand casts
+none by design (`casterOf = -2`, shadowPass.js), so in a torch-lit
+dungeon the "shadows" are the torch's own falloff, and that is what
+pulsed.
+
+The motor steps at a fixed 60 Hz, and the camera draws from its
+interpolated eye (`motor.js` `eyeAt`, EV1). Every host built the
+lights in the hand off the raw stepped feet (`player.pos`):
+
+- the torch (`playerTorchLight`), in all six light arrays across the
+  four hosts;
+- the Thunderlock's flash (`thunderlockMuzzleLight`), in the same
+  arrays;
+- the Light spell's candle (`magic.update`'s feet).
+
+On a screen faster than 60 Hz, or a 60 Hz frame that jitters, the light
+slid back and forth against the view on every frame while walking.
+Standing still, it did not. Measured with the real motor and the real
+torch law, the lit wall beside the torch changed frame to frame by:
+
+- 9% at 120 Hz, alternating every frame;
+- 8.5% on average at 144 Hz;
+- up to 18.6% at 60 Hz with a millisecond of jitter.
+
+The cube-shadow selection was checked walking, running and bobbing, and
+is stable: DISC6's hold works. A build from before DISC6 would add that
+tie-swap flicker on top.
+
+**Fix.** The hand lights are built off the render feet (`motor.js`
+`feetAt`), the positional half of the camera's own eye, at all six
+sites. The candle takes the render feet as a fifth argument to
+`magic.update`, and the dungeon context carries them through
+`drawFoes`. The feet passed for gameplay are unchanged: missiles, blasts
+and collision still meet the simulated capsule. `feetAt` carries no head
+bob, as DFU's PlayerTorch is a child of the player and not of the
+camera.
+
+## DISC13-B: a bandage with no Use
+
+**Cause.** The heal works. Roleplay & Realism: Items registers UseBandage
+for the template (ItemHelper.RegisterItemUseHandler,
+`rriInstall.js`), and `useItem` asks that handler ahead of its ladder
+(DaggerfallInventoryWindow.cs:1703-1709). But the pack's card draws Use
+only where `usableItem` says the ladder has an arm (Mac, 2026-09-18:
+"hide Use for non-usables"), and that predicate was never told about
+registered handlers. So the card offered Drop alone. The classic
+window's Use mode still healed.
+
+**Fix.** `usableItem` asks the registered handler first. A handler that
+answers only under a switch says so with `usable`: the bandage's is RRI's
+`bandaging`, so with bandaging off the card offers no Use, and the
+ladder, which has no arm for a bandage, would have said nothing. The heal
+is silent, as the mod's is (it only logs).
+
+## DISC13-C: the torch cut in half at the screen's edge
+
+**Cause.** This is the Morrowind arm's lane. The classic Handheld
+Torches sprite is always drawn whole, and its resting place is the mod's
+own.
+
+The arm was rendered into a frame exactly the screen's size, and that
+picture was pasted into the rect the Weapon Widget's bob, inertia and
+step had moved. The bob always pushes right, so the frame's left edge
+came into the screen on every stride and the torch in the left hand
+ended in a straight vertical cut there. At 1920 wide that was up to
+77 px walking and 126 running. With Diverse Weapons' preset (on by
+default since DW-CLIP) the inertia opens either side: 170 px on the
+right when backing up, and 152 when strafing. MAC-R1 had padded the top
+of the frame for a raised blade. The sides never were.
+
+**Fix.** The pass renders the pixels of the lens's own grid that the
+moved rect shows on the screen (`fpArm.js` `fpFrameWindow`), and lays
+them where the rect puts them. No frame edge is ever inside the screen,
+the arm still slides at the widget's sub-pixel pace, and the frame is at
+most a column and a row bigger than before. The top pad is retired with
+it.
+
+Two other fixes were built and checked, and both closed the gap:
+
+- A side pad would have cost the arm a third of its resolution on a
+  2560 screen.
+- Moving the lens would have re-rasterised the arm, which draws at a
+  third of the screen's resolution, so the bob would step it three
+  pixels at a time.
+
+Morrowind-Rules, DISC13-C, carries the law.
+
+**Guess, not verified:** that Ilvi plays with Morrowind assets. Their
+question in the same thread, about changing the models to Morrowind
+ones, suggests so. The fixtures here have no torch bone and there is no
+retail data.
+
+## DISC13-D: the ship stayed dark in port
+
+**Cause.** Roleplay & Realism's shipPorts replaces
+TransportManager.ShipAvailiable (RoleplayRealism.cs:610-631): on the
+ship, yes; in a loaded location, a port town and an owned ship; anywhere
+else, no. The world host answered `{ loaded, portTown, onShip }` and the
+delegate reads `locationLoaded`. So every port read as the wilderness,
+and the Ship row was dark unless you were already aboard. This dates
+from RR2 (06bdf5d6). Travel Options' OnlyFromPorts, the one they turned
+off, rules the travel map's sea passage and never boarding your own
+ship, so it could not help.
+
+**Fix.** The world host answers `locationLoaded` (`world.js`
+`shipLocation`). The standalone exterior host passes no shipLocation and
+never did, so it answers HasShip as before.
+
+**Main's SHIP-PORTS, the same day, from the same report.** It made the
+rule ship OFF and put shipPorts on Roleplay & Realism's tile, so the
+boat came back for everyone who does not ask for the port rule. This
+fix is the other half: with the rule on, a port answers as a port. The
+two met at the merge on the same tile line, and main's stands.
+
+---
+
+# DISC14 - the weapon under the horse, and Diverse Weapons' idles
+
+Mac, with a Discord screenshot: *"Weapon shows below the horse while on
+horseback. Also audit diverse weapon and ensure their idle positions are
+correct."*
+
+1. Starempire42: *"is there a way to make it so I can see my weapon above
+   my horse?"* (riding, the horse's head over the hand and the root of a
+   curved blade).
+2. Mac: an audit of Diverse Weapons' idle positions. While it was
+   running, Mac sent a screenshot of Weapon Widget's tile instead:
+   *"Sorry but these need to be the default values ingame for diverse
+   weapons. The current defaults are wrong on the screen"*, and stopped
+   the audit.
+3. Mac, after B: *"I also notice littering on the morrowind model. I feel
+   like some of the diverse weapon settings arent needed because we have
+   other integrations that handle them"*.
+
+The pins are `test/disc14.test.js`; the mutants are
+`tools/mutants/disc14.json`, and all thirteen die.
+
+## DISC14-A: the horse drawn over the weapon
+
+**Cause.** DFU draws the mount in OnGUI at `GUI.depth = 2`, "behind other
+HUD elements & weapons". That is TransportManager's own comment, and
+Roleplay & Realism's EnhancedRiding carries it word for word
+(EnhancedRiding.cs:234-235). Both hosts that ride (`world.js`,
+`exterior.js`) drew the weapon rig at the end of the walk block and the
+mount later, in the HUD block, just before `drawHud`. So the horse's
+head landed on the hand and the root of the blade, and on the shield,
+the torch and the casting hands with them. The HUD's own order was
+right: the mount went in before `drawHud`, as the comment above it
+says. The weapon was the half the comment did not name.
+
+**Fix.** The rig draws after the mount and before `drawHud`, under the
+walk block's own gate. The mount stays where it was. Nothing draws
+between the rig's old place and its new one (the Detect feed's tick
+only reads), so no other layer changes order. Only these two hosts
+build a mount rig.
+
+**Named, not changed:** EnhancedRiding tints the mount with
+`TransportManager.Tint`, "the current tint from FPS lighting". The port
+lights the weapon, the shield and the torch with MAC-I's flat light
+(`fpTint`) but draws the horse untinted, so at night the horse is
+brighter than the hand on it.
+
+## DISC14-B: Diverse Weapons' defaults are Mac's
+
+**What Mac asked for** (the tile's chips and dials in the screenshot):
+Swings, Ambidexterity, Offset, Bob and DoubleScaleTextures on; Inertia,
+Step, TrueTextureSize and Recoil off; Swings.Speed 1, Bob.Length 100,
+Inertia.Scale 0.
+
+**What drew before.** Diverse Weapons' preset, on by default since
+DW-CLIP, laid the mod's recommended Weapon Widget settings OVER the
+player's: TrueTextureSize on, Inertia on at scale 1, Step and Recoil on,
+a 142 bob. Weapon Widget's tile reads the player's own settings, so it
+went on showing values the preset was overriding. Pressing a chip there
+changed nothing that drew.
+
+**Fix.** The preset ships off again. Weapon Widget ships its own
+defaults except two, which are now Mac's: DoubleScaleTextures on (off in
+the mod) and Inertia.Scale 0 (1.0 in the mod). Those twelve values are
+what a fresh game draws, and the tile shows them. A press on any chip or
+dial reaches the weapon, and a player can still ask for the mod's
+preset.
+
+**Three things checked on the way:**
+
+- The Thunderlock turns Inertia on as its own departure. It keeps the
+  mod's shipped scale while the player's module is off
+  (`gunViewmodel.js` `GUN_INERTIA_SCALE`); otherwise the new 0 would
+  have taken its sway away.
+- WW1's shipped-defaults pin names the two departures, and the clone's
+  benches put the shipped values back, so the clone's own laws are still
+  tested against the mod.
+- ARROW2's pin (the nocked bow hidden through the loose's cooldown) went
+  red under the new default. One frame before the bow slides back, the
+  doubled-idle bob lifted the hidden bow 0.82 rows of a 200-line screen:
+  about four pixels at 1080, for 16 ms, 1.4 s after the shaft left. That
+  was the first sign of DISC14-C below, and C removed it. ARROW2's law is
+  pinned on the mod's shipped settings, and a fourth case holds the same
+  law under the new default.
+
+**Not verified here:** the placement itself. The values are Mac's,
+chosen against what the old defaults drew. The idle audit that was
+running when the screenshot came was stopped, so no claim is made here
+about any screen shape or either hand.
+
+## DISC14-C: the Morrowind model's jitter
+
+**Cause, measured.** Walking at 1920x1080 and 60 Hz, over 120 settled
+frames of the arms' composite (`armsTransform`). The worst jerk is the
+largest second difference of the rect's y, in pixels.
+
+- **Main as shipped.** Diverse Weapons' preset was on by default
+  (DW-CLIP), and it turns Step and DoubleScaleTextures on. The arms were
+  pinned at the top on 25 frames, with a worst jerk of 16.9. Most of that
+  is Step's snap on each footfall: with Step off it is 1 frame and 1.47.
+  B turned the preset off, and Step with it.
+- **B's defaults.** B kept DoubleScaleTextures on, as Mac's values have
+  it. Weapon Widget's bob has a second shape for a doubled idle
+  (bobStep's `xMin` and `yMax` at 0): centred on the rest, so it swings
+  above it as well as below. The port gave that shape to every idle once
+  the module was on. But only a `w_` texture drawn into the doubled box
+  sits half its size in, low enough to swing above its rest; DW-CLIP had
+  already made the half-size shift ride that doubling. Everything else
+  rests on `transformRect`'s floor, which pinned the upper half of every
+  sway:
+
+| What was drawn, under B's defaults | Frames pinned at the top, of 120 | Worst jerk |
+|---|---|---|
+| The Morrowind arms' composite (`armsTransform`) | 53 | 3.37 (0.73 with the module off) |
+| A classic sprite, or a plain hit through the fall-through | 63 | 1.26 (0.22 with the module off) |
+| A Diverse Weapons idle with its doubled `w_` | 1 | 0.22 |
+
+So the arm stopped dead at the top of each stride and snapped back into
+motion.
+
+**Fix.** The doubled idle's bob now rides the doubled hit, through one
+helper (`doubledIdleNow`) shared with the half-size shift. The Morrowind
+arms keep their own bob integrator on the plain shape, always, plus the
+same inertia the sprite takes. With the fix, all three cases above pin
+on one frame (the bob's own peak). Under the shipped defaults the arm
+now moves as it does with the module off: 1 frame, 0.73. ARROW2's sliver
+went with it. DW-CLIP's two mutant records named the old gate and are
+re-aimed by content at the shared helper.
+
+**Turning the preset back on** brings its Step back: 5 frames and a
+worst jerk of 33.75, the same as main with DoubleScaleTextures off. That
+is Weapon Widget's own Step reaching the arms, and part of the open
+question below.
+
+**What Weapon Widget does to the Morrowind model at all** (checked in
+`weaponRig.js`). Only `armsTransform` reaches it: Bob, Inertia and Step
+move the arms' whole picture. Swings, Ambidexterity, Offset,
+DoubleScaleTextures, TrueTextureSize and Recoil drive the 2D sprite
+alone. The arms swing, sheathe and change hands with their own
+Morrowind clips. Whether the arms should take Weapon Widget's movement
+at all is Mac's call (WW1 added it at Mac's asking), and is left open
+here.
+

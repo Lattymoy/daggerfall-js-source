@@ -406,27 +406,61 @@ export const NIF_TO_PASS = trs(0, 0, 0, -90, 0, 0);
 /** files/settings-default.cfg: `first person field of view = 60.0`. */
 export const FP_FIELD_OF_VIEW = Math.PI / 3;
 /** MAC-R1 (2026-09-17, Mac: "Morrowind weapons that go above the screen
- *  show their blade clipped off"): how much of the frame is rendered
- *  ABOVE the screen's top edge, as a fraction of the screen's height,
- *  while a screen transform (the Weapon Widget's bob, inertia and step,
- *  weaponRig.js's `setScreenTransform`) is set. The arm's frame was
- *  exactly the screen, and the widget's channels move the COMPOSITE -
- *  a rect the same size as the screen, shifted down by the bob - so
- *  the frame's top edge sat a few dozen pixels below the screen's, and
- *  a blade raised through it ended in a straight cut with nothing
- *  above. The widget clamps the rect to the screen's height minus its
- *  own `weaponOffsetHeight` (transformRect), so half a screen of extra
- *  rows covers every shift it can make; the composite rect is extended
- *  upward by the same fraction, so the padding lands above the screen
- *  and only the shift reveals it. Without a transform the frame IS the
- *  screen and nothing is padded - the fullscreen overlay path is
- *  untouched. */
-export const FP_TOP_PAD = 0.5;
+ *  show their blade clipped off") and DISC13-C (2026-09-23, Ilvi: "When
+ *  I'm walking with torch it looks torn down. Half of it just
+ *  dissapeared"): THE FRAME IS WHAT THE SCREEN SHOWS OF THE LENS'S GRID.
+ *
+ *  The Weapon Widget's channels (its bob, inertia and step - weaponRig.js's
+ *  `setScreenTransform`) move the arm as they move the classic sprite. The
+ *  pass used to render a frame exactly the screen's size and paste that
+ *  picture into the widget's shifted rect, so whichever edge the shift
+ *  pulled into the screen showed nothing past it: a straight cut. MAC-R1
+ *  padded the frame ABOVE the screen for a raised blade (FP_TOP_PAD, 0.5);
+ *  the sides were never padded, and the bob always pushes right (its x runs
+ *  0 to twice its size), so a torch in the left hand was cut at the
+ *  screen's left edge on every stride - up to 77 px of a 1920 screen
+ *  walking and 126 running, and Diverse Weapons' preset (on since DW-CLIP)
+ *  adds inertia that opens either side.
+ *
+ *  Now the pass renders exactly the frame pixels the SCREEN needs. The
+ *  composite still lays the frame on the widget's rect at the rect's own
+ *  pixel pitch (`rect.w / pw` screen pixels a frame pixel, so the arm
+ *  slides as smoothly as it always did and scales with the rect), but the
+ *  frame's pixel grid is extended past the lens's edges wherever the rect
+ *  left the screen uncovered and cut short wherever it hangs off the
+ *  screen: columns k0 .. k0 + nx - 1 and rows r0 .. r0 + ny - 1 of the
+ *  symmetric lens's own grid, through the matching window of that lens.
+ *  So no edge of the frame can come into the screen, whatever the widget
+ *  does, and the target holds at most one column and one row more than
+ *  the screen's own frame - not a pad (a side pad would have cost the 1024
+ *  target a third of its columns on a 2560 screen). MAC-R1's top pad was
+ *  the one-edge case of this and goes with it. A frame the target cannot
+ *  hold (a rect scaled far down on a 4K screen) is cut at the target's
+ *  size - about what the old frame left uncovered there.
+ *
+ *  Moving the LENS instead (a window the screen's size, composited
+ *  fullscreen) also closes the cut, and was built and rejected: the arm
+ *  draws at a third of the screen's resolution (MW_ARM_PIXEL), so a lens
+ *  that moves re-rasterises it on that coarse grid and the bob steps it
+ *  three pixels at a time where the paste slides it.
+ *
+ *  `fpFrameWindow` answers the grid's first column and row, its size, and
+ *  where the composite lays it; the lens window is those pixels times the
+ *  pixel's own extent on the near plane. A rect at rest is the screen's
+ *  frame and the symmetric lens, exactly. */
+export function fpFrameWindow(rect, W, H, pw, ph, cap = CHAR_SPRITE_RT_SIZE) {
+  const cw = rect.w / pw, ch = rect.h / ph;   // screen pixels a frame pixel, as the composite lays it
+  const k0 = Math.floor(-rect.x / cw + 1e-9), r0 = Math.floor(-rect.y / ch + 1e-9);   // the first column and row the screen shows (negative: past the lens's own edge)
+  const nx = Math.min(cap, Math.ceil((W - rect.x) / cw - 1e-9) - k0);
+  const ny = Math.min(cap, Math.ceil((H - rect.y) / ch - 1e-9) - r0);
+  return { k0, r0, nx, ny, dst: { x: rect.x + k0 * cw, y: rect.y + r0 * ch, w: nx * cw, h: ny * ch } };
+}
 /** MAC-R1: the general GL frustum (glFrustum's matrix) - `perspective`
  *  (world/mat4.js) is its symmetric case (l = -r, b = -t). An OFF-CENTRE
  *  frame is the one thing perspective cannot say, and this pass is its
- *  one reader: the padded frame's top edge is further from the axis than
- *  its bottom. It lives HERE and not in world/mat4.js because the relay
+ *  one reader: DISC13-C's frame window (fpFrameWindow) sits off the axis
+ *  whenever the widget has moved the arm. It lives HERE and not in
+ *  world/mat4.js because the relay
  *  bundles that module (net/wire.js imports its wrapAngle) and every byte
  *  of the bundle is under RELAY_VERSION's hash law - a client-only lens
  *  must not bump the relay. */
@@ -4060,13 +4094,11 @@ export function createFpArm() {
       // MW-D43: the ARM's dial, not the sprite pass's. See MW_ARM_PIXEL.
       const wantW = canvas.clientWidth / MW_ARM_PIXEL;
       const wantH = canvas.clientHeight / MW_ARM_PIXEL;
-      // MAC-R1: the rows above the screen, only under a transform (FP_TOP_PAD's note).
-      const padFrac = screenTransform ? FP_TOP_PAD : 0;
-      const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / (wantH * (1 + padFrac)));
+      // DISC13-C: no pad to fit in the target - a moved frame needs one column and one row more at most (fpFrameWindow's note).
+      const spare = screenTransform ? 1 : 0;
+      const s = Math.min(1, (CHAR_SPRITE_RT_SIZE - spare) / wantW, (CHAR_SPRITE_RT_SIZE - spare) / wantH);
       const pw = Math.max(2, Math.round(wantW * s));
       const ph = Math.max(2, Math.round(wantH * s));
-      const pad = Math.round(ph * padFrac);   // extra rows on top of the screen's ph
-      const phFull = ph + pad;
 
       // RULE 54: THE WHOLE PASS LIVES IN THE RIG'S OWN SPACE.
       //
@@ -4128,49 +4160,44 @@ export function createFpArm() {
       // AUDIT 37 F1: the near plane off the IDLE reach, the far off the
       // swept one - see the build's note.
       const near = Math.max((built.idleReach ?? built.reach) / 200, 1e-4);
-      // MAC-R1: the SCREEN's frame is the symmetric perspective it always
-      // was (FP_FIELD_OF_VIEW vertical, pw/ph); the padded frame keeps
-      // that frame's bottom, its sides and its near plane and raises the
-      // top edge by 2 x padFrac half-heights, so the screen still occupies
-      // the bottom ph of the phFull rows at exactly the same pixel scale
-      // and the extra rows see what is above it. With no pad the two
-      // matrices are the same matrix.
+      // DISC13-C: the SCREEN's lens is the symmetric perspective it always
+      // was (FP_FIELD_OF_VIEW vertical, pw/ph). Under a transform the pass
+      // renders the pixels of that lens's grid the moved rect shows on the
+      // screen (fpFrameWindow) - columns past the lens's edges where the
+      // rect left the screen bare, none where it hangs off - through the
+      // matching window of the same lens, so no frame edge is inside the
+      // screen to cut the arm. A rect with no area shows nothing, as its
+      // composite did.
       const far = built.reach * 4;
       const hh = near * Math.tan(FP_FIELD_OF_VIEW / 2);
       const hw = hh * (pw / ph);
-      const proj = pad > 0 ? frustum(-hw, hw, -hh, hh * (1 + 2 * padFrac), near, far) : perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);
+      const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
+      const rect = screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : null;
+      if (rect && !(rect.w > 0 && rect.h > 0)) return false;
+      const win = rect ? fpFrameWindow(rect, W, H, pw, ph) : null;
+      const fw = win ? win.nx : pw, fh = win ? win.ny : ph;   // the frame the pass renders
+      const px = (2 * hw) / pw, py = (2 * hh) / ph;   // one frame pixel on the near plane
+      const proj = win ? frustum(-hw + win.k0 * px, -hw + (win.k0 + fw) * px, hh - (win.r0 + fh) * py, hh - win.r0 * py, near, far) : perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);
       // MAC-P: the room's own light on the arm (render/renderer.js's
       // viewmodel borrow), off the SAME `flatLightAt` the classic sprites
       // take under MAC-I - one answer, both lanes. Null keeps the frame's
       // light exactly as it was, which is what the switch off means.
       const vmLight = fpLightingOn() ? (renderer.flatLightAt?.() ?? null) : null;
       // MAP3: what this frame composed with, so paperCorners() can put the
-      // sheet's corners where the composite puts them. MAC-R1: the pad's
-      // frustum raises the top edge; the SCREEN shows the symmetric frame's
-      // rows at the same pixel scale, so the corners project through the
-      // symmetric matrix into the screen's rect.
-      {
-        const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
-        const projScreen = pad > 0 ? perspective(FP_FIELD_OF_VIEW, pw / ph, near, far) : proj;
-        lastFrame = { model: NIF_TO_PASS, view, proj: projScreen, rect: screenTransform ? screenTransform({ x: 0, y: 0, w: W, h: H }) : { x: 0, y: 0, w: W, h: H } };
-        drewLast = true;
-      }
-      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, pw, phFull, { lensLocal: true, viewmodelLight: vmLight });   // VC5 review: lens-local - no cloud deck on the arm   // MAC-R1: phFull - the screen's rows and the pad above them
+      // sheet's corners where the composite puts them. DISC13-C: through
+      // the frame's own window, into the rect the composite lays it on.
+      lastFrame = { model: NIF_TO_PASS, view, proj, rect: win ? win.dst : { x: 0, y: 0, w: W, h: H } };
+      drewLast = true;
+      const tex = renderer.renderCharacterSprite(mesh, NIF_TO_PASS, proj, view, fw, fh, { lensLocal: true, viewmodelLight: vmLight });   // VC5 review: lens-local - no cloud deck on the arm   // DISC13-C: fw x fh - the grid the screen shows
       // WW1: Weapon Widget's channels move the composite as they move the
       // classic sprite - a screen-space rect in place of the fullscreen
       // overlay when a transform is set, the same alpha cut either way
       // (the overlay samples v from 0 at the bottom; drawScreenQuad's dst
-      // is top-left, so its v runs from the top: 1 - ph/RT down to 1).
-      if (screenTransform) {
-        const W = canvas.clientWidth || canvas.width, H = canvas.clientHeight || canvas.height;
-        const rect = screenTransform({ x: 0, y: 0, w: W, h: H });
-        // MAC-R1: the composite is the SCREEN's rect extended upward by the
-        // pad's share of its height - the padded rows land above the
-        // screen's top when the rect sits at 0, and a rect the widget has
-        // shifted down shows them instead of a cut. The sampled corner is
-        // the whole phFull-tall sub-rect.
-        const up = rect.h * padFrac;
-        renderer.drawScreenQuad(tex, { x: rect.x, y: rect.y - up, w: rect.w, h: rect.h + up }, { u0: 0, v0: phFull / CHAR_SPRITE_RT_SIZE, u1: pw / CHAR_SPRITE_RT_SIZE, v1: 0 });
+      // is top-left, so its v runs from the top: 1 - fh/RT down to 1).
+      // DISC13-C: the rect is the frame window's, which covers the screen
+      // and slides with the widget's own sub-pixel position.
+      if (win) {
+        renderer.drawScreenQuad(tex, win.dst, { u0: 0, v0: fh / CHAR_SPRITE_RT_SIZE, u1: fw / CHAR_SPRITE_RT_SIZE, v1: 0 });
         return true;
       }
       renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);

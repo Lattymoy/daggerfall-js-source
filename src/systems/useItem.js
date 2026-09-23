@@ -138,6 +138,11 @@ export const VARIANT_CHANGEABLE = Object.freeze(new Set([
 export function usableItem(item) {
   if (!item) return false;
   if (item.questItem) return true;
+  // DISC13-B (icebreyker: "Cant heal with bandages" - the card offered Drop alone): the ladder's first arm is a
+  // mod's registered handler (useItem's delegate arm below), and this predicate had never been told. A handler
+  // that answers only under a switch says so with `usable` (the bandage: RRI's bandaging).
+  const handler = itemUseHandler(item.templateIndex);
+  if (handler && (handler.usable?.(item) ?? true)) return true;
   if (isSurvivalItem(item) || isBook(item) || isPotion(item) || isMap(item) || isSpellbook(item) || isDrug(item) || isLightSource(item)) return true;
   if (item.group === 'UselessItems2' && item.templateIndex === TEMPLATES.Oil) return true;
   if (hasEnchantments(item)) return true;
