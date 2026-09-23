@@ -1852,6 +1852,21 @@ export class Renderer {
   setShadowCache(on) { this._shadowCacheWanted = !!on; if (this._shadowPass) this._shadowPass.cacheOn = this._shadowCacheWanted; }
   /** AUDIT SC1: the host's floating origin moved by `offset` - every remembered placement follows it (ShadowPass.shiftOrigin). */
   shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); }
+  /** SHADOW-REACH: would a caster whose world box is `box` (+ the translation) cast into this frame's shadow maps - a
+   *  host asks for what its VIEW cull rejected, and records it (below) rather than drawing it. False with no pass. */
+  shadowReach(box, ox = 0, oy = 0, oz = 0) { return this._casting && this._shadows.reaches(box, ox, oy, oz); }
+  /** SHADOW-REACH: the same for a flat batch, on the sphere the replays cull it by (batchVisible's). */
+  shadowReachBatch(b) {
+    if (!this._casting) return false;
+    const s = b.bounds; if (!s) return true;
+    const o = b.origin;
+    return this._shadows.reachesSphere(s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, s[2] + (o ? o[2] : 0), s[3]);
+  }
+  /** SHADOW-REACH: record a caster for the maps WITHOUT drawing it - the seams drawMesh, drawTerrain and drawBillboards
+   *  record through, with none of their draw. The billboards take the frame's wind as drawBillboards does. */
+  recordShadowMesh(mesh, modelMatrix, texRemap = null) { if (this._casting && mesh?.vao) this._shadows.recordMesh(mesh, modelMatrix, texRemap); }
+  recordShadowTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize) { if (this._casting && surface?.vao) this._shadows.recordTerrain(surface, modelMatrix, arrayTex, tilemapTex, tileSize); }
+  recordShadowBillboards(batches, camRight, camUp) { if (this._casting && batches?.length) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp); }
   /** LC1: the grid's two integer textures - the GRID (RG16UI: offset, count per cell) and the LIST (R8UI: light
    *  indices) - NEAREST, unfiltered, made once with the lane. Uploaded by texSubImage2D per world frame. */
   _ensureClusters() {

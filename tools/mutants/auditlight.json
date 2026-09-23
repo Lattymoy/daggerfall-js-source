@@ -66,8 +66,8 @@
   {
     "name": "sc1-dyn-ignored",
     "file": "src/render/shadowPass.js",
-    "old": "      const dyn = b._dyn === true || (b._shMovedAt != null",
-    "new": "      const dyn = (b._shMovedAt != null",
+    "old": "      const dyn = b._dyn === true || (windy && b.sway > 0) || (b._shMovedAt != null",
+    "new": "      const dyn = (windy && b.sway > 0) || (b._shMovedAt != null",
     "tests": [
       "test/audit_lighting.test.js"
     ]

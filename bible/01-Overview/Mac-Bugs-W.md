@@ -268,7 +268,7 @@ Outside it is not.
 |---|---|---|
 | `dungeonContext.js:288` | `new Collider(() => -Infinity)` | floor meshes |
 | `interiorContext.js:320` | `new Collider(() => -Infinity)` | floor meshes |
-| `exterior.js:519` | `new Collider(() => GROUND_OFFSET * 0.025)` | **`heightAt`** |
+| `exterior.js:520` | `new Collider(() => GROUND_OFFSET * 0.025)` | **`heightAt`** |
 | `world.js:1007` | `new Collider(heightAt)` | **`heightAt`** |
 
 `heightAt` is applied to the **capsule**, in `_resolveSphere`, and

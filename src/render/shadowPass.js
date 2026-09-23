@@ -56,7 +56,8 @@
 //     the culling above is what makes 24 face replays cheap.
 
 import { lookAt, multiply, ortho, perspective } from '../world/mat4.js';
-import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible } from './bounds.js';   // EL5: the cull
+import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible, sphereInPlanes } from './bounds.js';   // EL5: the cull
+import { aabbOutside } from './frustum.js';   // SHADOW-REACH: a host's box against the cascades
 
 /** The sun map: two cascades of this size, as a depth texture array. */
 export const SHADOW_SUN_SIZE = 2048;
@@ -619,6 +620,8 @@ export class ShadowPass {
     this._slotOfScratch = new Int32Array(SHADOW_POINT_CASTERS);   // SC1: rank -> slot
     this._slotTakenScratch = new Uint8Array(SHADOW_POINT_CASTERS);
     this._sig = { hash: 0, count: 0 };
+    this._sunPlanes = SHADOW_CASCADES.map(() => new Float32Array(24));   // SHADOW-REACH: the cascades' frusta, for the hosts' reach test
+    this._sunPlanesFrame = -1;
     this._shiftGen = 0;                 // AUDIT SC1: the floating origin's generation (shiftOrigin)
     this._shiftAcc = [[0, 0, 0]];       // ...and the origin's cumulative offset at each generation
     this._shiftD = [0, 0, 0];
@@ -659,6 +662,46 @@ export class ShadowPass {
     }
     this.count++;
     return r;
+  }
+  /** SHADOW-REACH (2026-09-23, Mac: "Can you tackle the 2 limitations"): WOULD A CASTER HERE CAST INTO THIS FRAME'S
+   *  MAPS. The hosts cull what they draw to the VIEW frustum, and the maps are replayed from what they drew - so a
+   *  tree behind the camera cast no sun shadow into the view, a wall just off screen cast none from the lantern
+   *  beside it, and SC1's caches churned as the camera turned (the still set in a lantern's reach changed with the
+   *  view). A host asks this for a box its view cull rejected and records the caster (recordShadow* on the renderer)
+   *  when it is inside a sun cascade's frustum (the cascade is an orthographic box about the eye reaching
+   *  SHADOW_SUN_DEPTH toward the light) or within a point caster's range - THIS frame's casters, picked by render()
+   *  from this frame's lights: the records are a frame old by design (EL2), and so is the reach. */
+  reaches(box, ox = 0, oy = 0, oz = 0) {
+    const pp = this.pointParams;
+    for (let k = 0; k < SHADOW_POINT_CASTERS; k++) {
+      const far = pp[k * 4 + 3];
+      if (!(far > 0)) continue;
+      // the nearest point of the box to the light, against the range
+      const cx = Math.min(Math.max(pp[k * 4], box[0] + ox), box[3] + ox) - pp[k * 4];
+      const cy = Math.min(Math.max(pp[k * 4 + 1], box[1] + oy), box[4] + oy) - pp[k * 4 + 1];
+      const cz = Math.min(Math.max(pp[k * 4 + 2], box[2] + oz), box[5] + oz) - pp[k * 4 + 2];
+      if (cx * cx + cy * cy + cz * cz <= far * far) return true;
+    }
+    if (this.sunParams[3] > 0) {
+      this._ensureSunPlanes();
+      for (let c = 0; c < SHADOW_CASCADES.length; c++) if (!aabbOutside(this._sunPlanes[c], box, ox, oy, oz)) return true;
+    }
+    return false;
+  }
+  /** SHADOW-REACH: the same question for a sphere (a flat batch's, as batchVisible builds it). */
+  reachesSphere(x, y, z, r) {
+    const pp = this.pointParams;
+    for (let k = 0; k < SHADOW_POINT_CASTERS; k++) if (pp[k * 4 + 3] > 0 && spheresTouch(x, y, z, r, pp[k * 4], pp[k * 4 + 1], pp[k * 4 + 2], pp[k * 4 + 3])) return true;
+    if (this.sunParams[3] > 0) {
+      this._ensureSunPlanes();
+      for (let c = 0; c < SHADOW_CASCADES.length; c++) if (sphereInPlanes(this._sunPlanes[c], x, y, z, r)) return true;
+    }
+    return false;
+  }
+  _ensureSunPlanes() {
+    if (this._sunPlanesFrame === this.frameNo) return;
+    for (let c = 0; c < SHADOW_CASCADES.length; c++) spherePlanes(this.sunVP[c], this._sunPlanes[c]);
+    this._sunPlanesFrame = this.frameNo;
   }
   /** AUDIT SC1: THE HOST'S FLOATING ORIGIN MOVED by `offset` (world.js recentres every 819 units). Every placement the
    *  pass remembers was seen from the old origin; rather than walk objects it holds no list of, the pass counts a
@@ -748,6 +791,11 @@ export class ShadowPass {
     r.right.set(camRight); r.up.set(camUp);   // EL3: the basis the batch was drawn with, for the emission replay
     r.bounded = false;   // a batch list is culled batch by batch (each has its own bounds about its origin)
     // SC1: a flat is dynamic while its origin moves (a walker, a missile, a thrown torch) - per batch, remembered on the batch
+    // SHADOW-REACH (the sway): a flora batch LEANS with the wind (WIND3: the crown moves by the wind's rate times the
+    // batch's `sway`, on a clock that runs every frame), so while a wind blows its silhouette is never twice the
+    // same - a dynamic for as long as the wind lasts, and still the moment it drops. The audit had left this as
+    // "a lantern's shadow of a swaying tree holds one phase".
+    const fw = r.flatWind, windy = fw[0] !== 0 || fw[1] !== 0;
     // AUDIT SC1: ...and while its FRAME changes (an animated flat's silhouette is the frame's - a townsman's idle,
     // a 211 prop - and the cache would have held the build frame's until an unrelated rebuild), and always for a
     // batch built dynamic (`_dyn`: moveBillboardBatch rewrites its vertices with the origin left null, so the
@@ -759,7 +807,7 @@ export class ShadowPass {
       if (b._shSeen === true && b._shGen !== this._shiftGen) { const d = this._shiftDelta(b._shGen ?? 0); b._shOx += d[0]; b._shOy += d[1]; b._shOz += d[2]; }
       b._shGen = this._shiftGen;
       if (b._shSeen === true && !(Math.abs(b._shOx - ox) <= SHADOW_STILL_EPS && Math.abs(b._shOy - oy) <= SHADOW_STILL_EPS && Math.abs(b._shOz - oz) <= SHADOW_STILL_EPS && b._shFrame === fr)) b._shMovedAt = this.frameNo;
-      const dyn = b._dyn === true || (b._shMovedAt != null && this.frameNo - b._shMovedAt < SHADOW_DYNAMIC_HOLD);   // built dynamic, moved now, or within the hold
+      const dyn = b._dyn === true || (windy && b.sway > 0) || (b._shMovedAt != null && this.frameNo - b._shMovedAt < SHADOW_DYNAMIC_HOLD);   // built dynamic, leaning in the wind, moved now, or within the hold
       b._shSeen = true; b._shOx = ox; b._shOy = oy; b._shOz = oz; b._shFrame = fr; b._shDyn = dyn;
       if (dyn) anyDyn = true;
     }

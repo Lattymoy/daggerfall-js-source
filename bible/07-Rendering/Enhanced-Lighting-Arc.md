@@ -1141,13 +1141,9 @@ cache per slot, the whole town replayed as dynamic for a second, then
 rebuilt again; `_dynamicNear` skips what the replay skips (a moving
 flame, a no-cast archive, a short flat, a ghost); the cache's fifty
 megabytes are made on the first frame that wants them, not under
-`?shadowcache=off`. Two kept as known and written down: the wind's sway
-is not in the signature (a lantern's shadow of a swaying tree holds one
-phase - the sun's, uncached, sways as before), and outdoors the hosts
-cull casters to the VIEW frustum, so turning the camera changes the
-still set in a lantern's reach and rebuilds its cache (a caster off
-screen but in reach was missing from the map before SC1 too; the fix is
-the hosts' - shadow-range culling - and not this pass's).
+`?shadowcache=off`. Two were kept as known at first - the wind's sway not
+in the signature, and the hosts' culling of casters to the view frustum -
+and are paid in SHADOW-REACH below.
 
 **LIGHT-NEAR1's snapshot (LOW, latent).** The panel-frame snapshot
 stored the lights without their carried mask and restored them through
@@ -1168,3 +1164,57 @@ gib and the frame, the flame that is no reason, the lazy cache, the
 mask through a panel, the curve's laws), quickloot (the ring through the
 door, the seven calls), lc1 (the near band), el3 (the shader by text).
 Campaign: `tools/mutants/auditlight.json`, 22 mutants, 22 dead.
+
+## SHADOW-REACH - THE CASTERS THE VIEW CULL REJECTS, AND THE SWAY (2026-09-23, Mac: "Can you tackle the 2 limitations")
+
+The audit's two known limitations, paid.
+
+**The reach.** The exterior hosts cull what they draw to the view
+frustum (EV3: the pixel, then each model and flat batch of a visible
+pixel; PERF-CROWD: the townsfolk), and the shadow maps are replayed from
+what they drew. So a tree behind the camera cast no sun shadow into the
+view although the sun stood behind it too; a wall just off screen cast
+none from the lantern beside it; and SC1's caches churned as the camera
+turned, because the still set in a lantern's reach changed with the view
+- a rebuild per affected lantern per frame of rotation, which is the
+churn the audit wrote down. The pass answers a new question now,
+`reaches(box)` (and `reachesSphere`): would a caster here cast into THIS
+frame's maps - inside a sun cascade's frustum (the cascade is an
+orthographic box about the eye reaching `SHADOW_SUN_DEPTH` 600 toward
+the light, so what stands between the sun and the view is inside it) or
+within a point caster's range - against the casters `render()` picked
+from this frame's lights. The records are a frame old by design (EL2),
+and so is the reach. The renderer exposes it (`shadowReach`,
+`shadowReachBatch` on the sphere `batchVisible` builds) beside three
+RECORD-ONLY seams - `recordShadowMesh`, `recordShadowTerrain`,
+`recordShadowBillboards`: the record `drawMesh`, `drawTerrain` and
+`drawBillboards` make, with none of their draw - and both exterior hosts
+ask at every cull gate: world.js's pixel gate (an off-screen pixel in
+reach records its ground, its merged statics and its odd models), its
+model, sail, flat-batch and crowd gates, and exterior.js's draw list,
+sails and flat batches. The flats the gates reject collect and are
+recorded after the crowd's draw, on the frame's wind. What the cull
+rejects and no shadow reaches costs what it did: one box test more,
+against at most eight spheres and three frusta. Interiors and dungeons
+cull nothing and needed nothing.
+
+**The sway.** A flora batch leans with the wind (WIND3: the crown moves
+by the wind's rate times the batch's `sway`, on a clock that runs every
+frame), so while a wind blows its silhouette is never twice the same -
+a lantern's cached shadow of it held one phase. `recordBillboards`
+reads the record's wind: a batch with `sway` under a wind with any rate
+is a DYNAMIC for as long as the wind lasts (drawn over the cache at
+EL8's cadence, the cache holding no lean) and still the moment it
+drops, with no hold - it did not move, it was moving. A batch without
+sway stands in the cache under any wind.
+
+Pinned: `test/shadowreach.test.js` - the reach against a lantern's
+quantised far (the corner nearest the light), a translated box, the sun's
+cascades (behind the eye toward the light within the depth, across the
+light within the far radius, and past both), the classic set; the
+record-only seams (five records, not one GL call, replayed into the
+cube; silent in a panel); the sway (a tree dynamic while the wind blows,
+still the frame it drops, a post never); both hosts' gates by source.
+Campaign: `tools/mutants/shadowreach.json`, 11 mutants, 11 dead.
+`tools/shadowCacheProbe.mjs` and `tools/enhancedLightingProbe.mjs` still
+green on SwiftShader.
