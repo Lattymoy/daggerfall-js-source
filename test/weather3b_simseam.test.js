@@ -163,21 +163,25 @@ test('WEATHER3b: EVERY ARRIVAL LANDS UNDER THE MAP - travel and respawn (in the 
   assert.equal(weatherJumpStamp(), j2 + 1);
 });
 
-test('WEATHER3b: INDOORS the weather goes on - the map read at the door, each change a jump; nothing before the first outdoor sample', () => {
+test('WEATHER3b: INDOORS the weather goes on - the map read over the place the player is in, each change a jump; nothing without a place or off the lane', () => {
   lane();
-  assert.equal(sampleWeatherIndoors(SPRING), false, 'no door yet');
   const p = find('rain');
-  sampleWeatherField(p.m, WOODS, [p.x, p.z], woods, 'live');
+  assert.equal(sampleWeatherIndoors(p.m, WOODS, null, woods), false, 'no place named, nothing read');
+  // straight in, no outdoor frame first (a load into a dungeon, a recall): the place's own sky
+  const j0 = weatherJumpStamp();
+  assert.equal(sampleWeatherIndoors(p.m, WOODS, [p.x, p.z], woods), true);
+  assert.equal(currentWeather(), 'rain', 'the rain over the place the player went in at');
+  assert.equal(weatherJumpStamp(), j0 + 1, 'no one inside saw it come');
   let m = p.m, changed = false;
   for (let i = 1; i < 72 * 6 && !changed; i++) {
     m = p.m + i * 10;
     const j = weatherJumpStamp();
-    if (sampleWeatherIndoors(m)) { changed = true; assert.equal(weatherJumpStamp(), j + 1, 'no one inside saw it come'); }
+    if (sampleWeatherIndoors(m, WOODS, [p.x, p.z], woods)) { changed = true; assert.equal(weatherJumpStamp(), j + 1); }
   }
   assert.ok(changed, 'the rain outside stopped while the player sat inside');
-  assert.equal(currentWeather(), weatherAt(p.x, p.z, m, woods).word, 'the word is the door\'s');
+  assert.equal(currentWeather(), weatherAt(p.x, p.z, m, woods).word);
   setWeatherMapLaw(false);
-  assert.equal(sampleWeatherIndoors(m + 600), false, 'off the lane, nothing');
+  assert.equal(sampleWeatherIndoors(m + 600, WOODS, [p.x, p.z], woods), false, 'off the lane, nothing');
 });
 
 test('WEATHER3b/c: the clouds get every system near, most important first, and the one overhead is the worn word\'s', () => {
@@ -232,5 +236,7 @@ test('WEATHER3b: THE FRONT\'S PEAK IS THE PLACE\'S - the map\'s intensity placed
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(rd(host), /weatherFront\.tick\(\{ dt, weather, arrival: enhancedFront \? sky\.frontArrival\(\) : 1, nowMinutes: playerTicker\.classicMinutes, tsec: now \/ 1000, jump, peak: weatherOverride \? null : currentWeatherIntensity\(\) \}\);/, host);
   }
-  assert.match(rd('src/scenes/worldModes.js'), /sampleWeatherIndoors\(Math\.floor\(interiorTicker\.classicMinutes\)\);\n(?:\s*\/\/[^\n]*\n)*\s*betterAmbience\.frame\(dt, \{\n\s*entity: playerEntity, inside: true,/);
+  assert.match(rd('src/scenes/worldModes.js'), /host\.weatherIndoors\?\.\(\);\n(?:\s*\/\/[^\n]*\n)*\s*betterAmbience\.frame\(dt, \{\n\s*entity: playerEntity, inside: true,/, 'the indoor frame asks the host, before the rain source reads the word');
+  assert.match(rd('src/scenes/world.js'), /weatherIndoors: \(\) => \{\s*\n\s*if \(weatherOverride\) return;\s*\n\s*const p = playerTravelPixel\(\);\s*\n\s*sampleWeatherIndoors\(Math\.floor\(playerTicker\.classicMinutes\), maps\.getClimateIndex\(p\.x, p\.y\), fieldOfPixelLocal\(p\.x, p\.y, TERRAIN_SIZE \/ 2, TERRAIN_SIZE \/ 2\), climateAt\);/, 'world: the place the player is inside, the building\'s pixel or the dungeon\'s');
+  assert.match(rd('src/scenes/exterior.js'), /weatherIndoors: \(\) => \{\s*\n\s*if \(weatherOverride\) return;\s*\n\s*sampleWeatherIndoors\(Math\.floor\(playerTicker\.classicMinutes\), locClimateIndex, fieldOfPixelLocal\(_locPixel\.x, _locPixel\.y, TERRAIN_SIZE \/ 2, TERRAIN_SIZE \/ 2\), climateAt\);/, 'exterior: the location\'s own pixel');
 });

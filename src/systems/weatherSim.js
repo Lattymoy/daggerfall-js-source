@@ -174,9 +174,10 @@ export function sampleWeatherField(nowMinutes, climateIndex, at, climateAt, how 
 //   - every exterior frame, through the same `_set` (the ground law, the
 //     raw word kept for the wind's violence);
 //   - every arrival (a travel landing, a respawn, a teleport) as a JUMP;
-//   - INDOORS, at the door the player went in by (`sampleWeatherIndoors`),
-//     so the rain heard through the walls starts and stops with the sky
-//     outside - each change a jump, since no one inside saw it come.
+//   - INDOORS, over the place the player is inside (`sampleWeatherIndoors`,
+//     the host naming it), so the rain heard through the walls starts and
+//     stops with the sky outside - each change a jump, since no one inside
+//     saw it come.
 // A change is a CROSSING - the storm's edge walked into, or drifting over
 // - only on a live frame that follows the last sample closely in time and
 // place; across a clock jump (a rest, a load, a sentence, an online join)
@@ -200,12 +201,18 @@ export const MAP_JUMP_M = 2000;
  *  moved this far since; within it the found set still holds every system
  *  over the player (they are gathered this much wider than the sky's reach). */
 const MAP_REFIND_M = 250;
-let _mapAt = null, _mapClimate = null, _mapClimateAt = null;   // the last sample's place: the door, once the player is inside
+let _mapAt = null;   // the last sample's place, for the crossing-or-arrival test
 let _mapSampledAt = null;   // its minute
-let _mapFresh = true;       // no sample since the boot or a load: the next change is a jump
 let _mapNear = [], _mapNearAt = null, _mapNearMinute = null, _mapNearLookup = null;
 let _mapIntensity = 0;
 let _mapApproach = 0;
+let _arrivals = 0;
+/** AUDIT WEATHER3 R5: the count of map samples that were ARRIVALS - a jump,
+ *  a clock jump, a teleport's distance, every indoor frame - whether or not
+ *  the word changed. The jump stamp moves only with the word, and a landing
+ *  under the same sky is still a landing: the distant storms' thunder on its
+ *  way belongs to the place left behind. */
+export const weatherArrivalStamp = () => _arrivals;
 /** WEATHER3d: the map's systems near the player this minute (field metres, standing where they are), [] off the
  *  map's lane - the distant storms' strikes are read off them. */
 export const currentMapSystems = () => (weatherMapOn() ? _mapNear : []);
@@ -230,29 +237,42 @@ function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
   // a fair-weather field, a deck's edge, a fog bank on the low ground, a storm's skirt, rain and tower - each word
   // through the ground law at ITS OWN place (a winter storm is a snow cloud where it stands), ranked by how much of
   // the sky it fills from here; the renderer keeps what its slots hold and draws the lowest priority first
-  const ground = (word, cx, cz) => {
-    if (word !== 'rain' && word !== 'thunder') return word;
-    const px = pixelOfField(cx, cz);
-    return WEATHER_TYPES[overGround(WEATHER_ENUM[word], climateAt(px.x, px.y), nowMinutes)];
-  };
-  _fieldCells = skyCells(_mapNear, at[0], at[1], ground).filter((c) => c.d - c.r <= FIELD_RANGE_M).sort((a, b) => b.imp - a.imp);
+  const ground = mapGround(climateAt);
+  _fieldCells = skyCells(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes)).filter((c) => c.d - c.r <= FIELD_RANGE_M).sort((a, b) => b.imp - a.imp);
   _fieldInside = _fieldCells.find((c) => c.d < c.r && c.word === worn.word) ?? null;
   _mapApproach = approachAt(_mapNear, at[0], at[1]);
-  const away = _mapSampledAt === null || _mapFresh || minute < _mapSampledAt || minute - _mapSampledAt > STALE_DRAIN_MINUTES
+  const away = _mapSampledAt === null || minute < _mapSampledAt || minute - _mapSampledAt > STALE_DRAIN_MINUTES
     || !_mapAt || Math.hypot(at[0] - _mapAt[0], at[1] - _mapAt[1]) > MAP_JUMP_M;
-  _mapAt = [at[0], at[1]]; _mapClimate = climateIndex; _mapClimateAt = climateAt; _mapSampledAt = minute; _mapFresh = false;
+  _mapAt = [at[0], at[1]]; _mapSampledAt = minute;
   const changed = _set(WEATHER_ENUM[worn.word], climateIndex, nowMinutes);
+  if (how === 'jump' || away) _arrivals++;   // AUDIT WEATHER3 R5: an arrival whether or not the word moved
   if (changed && (how === 'jump' || away)) _jumps++;
   else if (changed) _crossings++;
   return changed;
 }
-/** WEATHER3b: the indoor tick's sample - the map at the door the player
- *  went in by, so the weather outside goes on while they are inside. A
- *  change is a jump: no one inside saw it come. Nothing off the lane, or
- *  before the first outdoor sample. */
-export function sampleWeatherIndoors(nowMinutes) {
-  if (!weatherMapOn() || !_mapAt || !_mapClimateAt) return false;
-  return sampleWeatherMap(nowMinutes, _mapClimate, _mapAt, _mapClimateAt, 'jump');
+/** WEATHER3c / AUDIT WEATHER3 R1: THE GROUND LAW AT A PLACE, for every reader of the map's words - the sky's cells,
+ *  the travel map's washes and forecast, the distant storms: `(word, x, z, minutes)` answers the word as it falls at
+ *  field (x, z) at that minute (WEATHER2a: rain or a storm over a ground that wears snow is snow). One law, so the
+ *  map never says "Rain" where the player standing there gets snow. */
+export function mapGround(climateAt) {
+  return (word, x, z, minutes) => {
+    if (word !== 'rain' && word !== 'thunder') return word;
+    const px = pixelOfField(x, z);
+    return WEATHER_TYPES[overGround(WEATHER_ENUM[word], climateAt(px.x, px.y), minutes)];
+  };
+}
+
+/** WEATHER3b: the indoor tick's sample - the map over the place the
+ *  player is inside (`at` the field position the host answers for it: the
+ *  building's or the dungeon's own pixel), so the weather outside goes on
+ *  while they are in. A change is a jump: no one inside saw it come.
+ *  AUDIT WEATHER3 R3: it used to read the last OUTDOOR sample's place, and
+ *  an arrival that went straight in - a load into a dungeon, a recall, a
+ *  boot underground - read the old place's sky or none at all. The place
+ *  is the host's to say, every indoor frame. Nothing off the lane. */
+export function sampleWeatherIndoors(nowMinutes, climateIndex, at, climateAt) {
+  if (!weatherMapOn() || !at || !climateAt) return false;
+  return sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, 'jump');
 }
 
 // ---- WEATHER2a (2026-09-14): NO RAIN OVER SNOW -----------------------
@@ -419,8 +439,11 @@ export function tickWeather(nowMinutes, climateIndex, rolls = Math.random) {
     _rolledAtMinutes = stampRoll(nowMinutes);   // AUDIT WORLD5 C5: the day's own minute online
   }
   if (!_updateFromClimateArray) return false;
+  // WEATHER3b: the day still rolls (the classic lane and the save read it), but on the map's lane nothing applies it.
+  // AUDIT WEATHER3 R4: asked BEFORE the flag is spent - the pending apply waits, so a lane switched off mid-session
+  // (the skin, Enhanced Environments) drains the zone's slot on its next frame instead of wearing the map's last word
+  if (weatherMapOn()) return false;
   _updateFromClimateArray = false;
-  if (weatherMapOn()) return false;   // WEATHER3b: the day still rolls (the classic lane and the save read it), but on the map's lane nothing applies it
   const changed = applyFromArray(climateIndex, nowMinutes);
   // WX2a: a LIVE drain - the day turned while the player stood under the
   // sky - is a front. A STALE one - the roll happened while they were
@@ -470,7 +493,7 @@ export function restoreWeather(weather) {
   _climateWeathersRolled = true;
   _updateFromClimateArray = false;
   _jumps++;   // WX2a: a load lands the player under the saved sky, whole
-  _mapFresh = true;   // WEATHER3b: and the map's first word after it is a jump too
+  _mapAt = null;   // WEATHER3b: and the map's first word after it is a jump too, wherever the load landed (no place to have come from)
   _evolveHour = null;   // CLK2: the evolution re-anchors on the loaded clock, rolling nothing
   _climateWeathersValid = false;   // CLK2 (AUDIT 65 SL-1): a loaded save's array is not THIS session's - an in-session load leaves the outgoing session's roll standing, and the evolution stays dormant until the next day roll re-rolls it
 }
@@ -572,8 +595,8 @@ export function resetWeatherSim() {
   _lastClimateBase = CLIMATE_BASE_TYPES.None;
   _jumps = 0;
   _crossings = 0; _fieldCells = []; _fieldInside = null; _fieldOverride = null; _fieldUrlDoor = null;   // WEATHER2b
-  _mapOverride = null; _mapUrlDoor = null; _mapAt = null; _mapClimate = null; _mapClimateAt = null; _mapSampledAt = null; _mapFresh = true;   // WEATHER3b
-  _mapNear = []; _mapNearAt = null; _mapNearMinute = null; _mapNearLookup = null; _mapIntensity = 0; _mapApproach = 0;
+  _mapOverride = null; _mapUrlDoor = null; _mapAt = null; _mapSampledAt = null;   // WEATHER3b
+  _mapNear = []; _mapNearAt = null; _mapNearMinute = null; _mapNearLookup = null; _mapIntensity = 0; _mapApproach = 0; _arrivals = 0;
   _rolledAtMinutes = null;
   _zoneChangedAtMinutes = new Array(6).fill(null);
   _climateWeathersValid = false;

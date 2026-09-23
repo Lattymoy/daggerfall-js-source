@@ -353,9 +353,9 @@ import { warmPrograms } from '../render/warmPrograms.js';
 import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundPosition } from '../world/windmills.js';   // WM2b: the sails; WM4c: the hum
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
-import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach, currentMapSystems, weatherMapOn } from '../systems/weatherSim.js';
+import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherRespawn, applyClimateWeather, importClimateWeathers, weatherJumpStamp, setSharedWeather, rollClimateWeathersForDay, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach, currentMapSystems, weatherMapOn, sampleWeatherIndoors, weatherArrivalStamp, mapGround } from '../systems/weatherSim.js';
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
-import { fieldFromNative, nativeFromField } from '../systems/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
+import { fieldFromNative, nativeFromField, fieldOfPixelLocal } from '../systems/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
 import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
 import { classicSaveToSnapshot, takePendingClassicSave, peekPendingClassicSave } from '../systems/classicSave.js';   // SAV3: the classic-save import arm
 import { readTokens as readRscTokens, RSC } from '../formats/textRsc.js';   // SAV3: the classic rumors' token payloads
@@ -819,6 +819,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
   const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance - their strikes and their thunder on its way
+  let seenArrival = 0;   // AUDIT WEATHER3 R5: the sim's arrival stamp at the last frame
   let lightning = weather === 'thunder'
     ? new LightningPlayer(Number(params.get('wseed')) || 1) : null;
   // WX2: THE FRONT REACHES THE GROUND (systems/weatherFront.js). The sim's
@@ -837,6 +838,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WEATHER2b: the player's place in the field's metres, the map's climate lookup, and the field's cells in this host's space for the clouds. */
   const fieldXZ = () => { const wc = state.worldCoords(walkMode ? player.pos : cam.pos); return fieldFromNative(wc.x, wc.z); };
   const climateAt = (px, py) => maps.getClimateIndex(px, py);
+  const mapGroundHere = mapGround(climateAt);   // AUDIT WEATHER3 R1: the ground law the map's words go through, here
   const fieldCellsHere = () => currentFieldCells().map((c) => { const n = nativeFromField(c.x, c.z); const h = state.localFromWorld(n[0], n[1]); const cell = cellOf(c.word, h[0], h[1], c.r); return cell && c.imp != null ? { ...cell, imp: c.imp, rank: c.rank } : cell; }).filter(Boolean);   // WEATHER3c: the map's cells carry their importance and rank to the renderer's pick
   function applyWeather(w) {
     weather = w;
@@ -6309,7 +6311,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // (:1611) and the journey itself, and aboard a ship all three
       // answer the boarding point.
       getPlayerPixel: playerTravelOrigin,
-      getClimateIndex: (x, yy) => maps.getClimateIndex(x, yy),
+      getClimateIndex: climateAt,   // AUDIT WEATHER3 R2b: the host's one lookup - the weather map's births are cached per lookup, and the sim's is warm
       // TP1: the popup's GuildManager.FastTravel fold reads the
       // player's guild memberships off the entity.
       playerEntity: () => playerEntity,
@@ -10384,6 +10386,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
+    // WEATHER3b / AUDIT WEATHER3 R3: the world weather map over the place the player is inside - the building's pixel,
+    // or the dungeon's own (playerTravelPixel answers both) - every indoor frame; nothing under a ?weather pin
+    weatherIndoors: () => {
+      if (weatherOverride) return;
+      const p = playerTravelPixel();
+      sampleWeatherIndoors(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(p.x, p.y), fieldOfPixelLocal(p.x, p.y, TERRAIN_SIZE / 2, TERRAIN_SIZE / 2), climateAt);
+    },
     // PARTY-REST2: shared with this host's own outdoor toggleRest and dungeonContext.js's - see partyRestGate's doc comment.
     partyRestGate: () => partyRestGate(),
     // PARTY-REST28: shared with this host's own outdoor toggleRest and dungeonContext.js's, forwarded the same
@@ -12089,9 +12098,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // seeded schedule: its own cloud lights (the clouds' composite, in its direction) and its thunder arrives its
     // distance over the speed of sound later, quieter the further, from its side. The storm overhead stays DFU's
     // strobe and ambience above. Enhanced only; nothing off the map's lane (no systems); a jump forgets the old place.
-    if (jump) distantStorms.reset();
+    if (jump || weatherArrivalStamp() !== seenArrival) distantStorms.reset();   // AUDIT WEATHER3 R5: any landing, the word moved or not
+    seenArrival = weatherArrivalStamp();
     if (isEnhanced() && !weatherOverride) {
-      const ds = distantStorms.tick({ systems: currentMapSystems(), at: fieldXZ(), minutes: playerTicker.classicMinutes, seconds: now / 1000 });
+      const ds = distantStorms.tick({ systems: currentMapSystems(), at: fieldXZ(), minutes: playerTicker.classicMinutes, seconds: now / 1000, ground: mapGroundHere });
       const hostOf = (x, z) => { const n = nativeFromField(x, z); return state.localFromWorld(n[0], n[1]); };
       const bh = ds.bolt && hostOf(ds.bolt.x, ds.bolt.z);
       sky.distantBolt?.(bh ? { x: bh[0], z: bh[1], r: ds.bolt.r, strength: ds.bolt.strength } : null);

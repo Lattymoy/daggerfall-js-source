@@ -24,9 +24,9 @@
  {"name": "WEATHER3e-layer-not-in-the-key", "file": "src/ui/heldMap.js",
   "old": "        this._weatherLayer()?.key ?? 'noweather',   // WEATHER3e: the weather's picture, read again every WEATHER_LAYER_REFRESH_MINUTES\n", "new": "", "tests": ["test/weather3e_maplayer.test.js"]},
  {"name": "WEATHER3e-sheet-unpainted", "file": "src/ui/heldMap.js",
-  "old": "        if (wx) paintWeatherLayer(ctx, env.view, wx.marks, { paperW: env.paperW, paperH: env.paperH, dpr: env.dpr });\n", "new": "", "tests": ["test/weather3e_maplayer.test.js"]},
+  "old": "        if (wx) this._paintWeather(ctx, env, wx);\n", "new": "", "tests": ["test/weather3e_maplayer.test.js"]},
  {"name": "WEATHER3e-lane-ignored", "file": "src/ui/heldMap.js",
-  "old": "    if (!wx?.on?.() || !this.deps.getClimateIndex) return null;", "new": "    if (!wx || !this.deps.getClimateIndex) return null;", "tests": ["test/weather3e_maplayer.test.js"]},
+  "old": "    if (!wx?.on?.() || !climateAt) return null;", "new": "    if (!wx || !climateAt) return null;", "tests": ["test/weather3e_maplayer.test.js"]},
  {"name": "WEATHER3e-hover-no-weather", "file": "src/ui/heldMap.js",
   "old": "      label: this._withWeather((region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '', px, py),", "new": "      label: (region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '',", "tests": ["test/weather3e_maplayer.test.js"]}
 ]

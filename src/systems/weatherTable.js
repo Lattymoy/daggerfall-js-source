@@ -4,7 +4,8 @@
 // (MIT, Daggerfall Workshop) - moved whole out of weatherSim.js so the
 // sim (the one sky's state) and the world weather map
 // (systems/weatherMap.js, the enhanced lane's systems over the land)
-// read the SAME table without importing each other. weatherSim.js
+// read the SAME table without an import cycle (the sim imports the
+// map, so the map cannot import the sim). weatherSim.js
 // re-exports every name here; nothing about the table, the roll or its
 // order changed in the move.
 

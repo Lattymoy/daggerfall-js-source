@@ -125,7 +125,7 @@ test('WEATHER3d: the hosts - the scheduler on the map\'s systems, reset on a jum
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = rd(host);
     assert.match(h, /const distantStorms = createDistantStorms\(\);/, host);
-    assert.match(h, /if \(jump\) distantStorms\.reset\(\);\s*\n\s*if \(isEnhanced\(\) && !weatherOverride\) \{\s*\n\s*const ds = distantStorms\.tick\(\{ systems: currentMapSystems\(\), at: [^\n]*, minutes: playerTicker\.classicMinutes, seconds: now \/ 1000 \}\);/, `${host}: enhanced only, never under a pin`);
+    assert.match(h, /if \(jump \|\| weatherArrivalStamp\(\) !== seenArrival\) distantStorms\.reset\(\);[^\n]*\n\s*seenArrival = weatherArrivalStamp\(\);\s*\n\s*if \(isEnhanced\(\) && !weatherOverride\) \{\s*\n\s*const ds = distantStorms\.tick\(\{ systems: currentMapSystems\(\), at: [^\n]*, minutes: playerTicker\.classicMinutes, seconds: now \/ 1000, ground: mapGroundHere \}\);/, `${host}: enhanced only, never under a pin, reset on any landing, the ground law passed`);
     assert.match(h, /sky\.distantBolt\?\.\(bh \? \{ x: bh\[0\], z: bh\[1\], r: ds\.bolt\.r, strength: ds\.bolt\.strength \} : null\);/, `${host}: the bolt, in the host's metres`);
     assert.match(h, /audio\.play3d\(s\.clip, thunderSourceAt\([^)]*\), s\.volume, \{ refDistance: THUNDER_SOURCE_M, maxDistance: THUNDER_SOURCE_M \* 8 \}\);/, `${host}: the thunder at its own volume, from its side`);
   }

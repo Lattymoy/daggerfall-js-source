@@ -84,7 +84,7 @@ const RANK = Object.freeze(Object.fromEntries(PRIORITY.map((w, i) => [w, i])));
  *
  * The ring shares are each type's shape AT MOST: a climate whose table
  * leaves too little of a word for every storm's ring of it (the swamp's
- * spring: a quarter rain and a sixth thunder, a tenth cloudy) births its
+ * spring: a quarter rain and 15% thunder, a tenth cloudy) births its
  * storms with that ring THINNED to fit (`birthLaw`), so the table stays
  * reachable in every climate and season by construction.
  */
@@ -336,8 +336,8 @@ export const WIND_SCALE_M = 240000;
 const WIND_TERMS = Object.freeze([
   // [share of the speed, the heading's base (radians), its swing over the land, its turn (radians per game minute)]
   [0.5, 0, 1.2, 0],                                 // the prevailing westerly, bent by the land
-  [0.3, 0, Math.PI * 2, (Math.PI * 2) / 7200],      // a veering term, a turn every five days
-  [0.2, 0, Math.PI * 2, -(Math.PI * 2) / 3312],     // a backing term, a turn every 2.3 days
+  [0.3, 0, Math.PI * 2, (Math.PI * 2) / 7200],      // a backing term (x east, z north: a positive turn is anticlockwise), round every five days
+  [0.2, 0, Math.PI * 2, -(Math.PI * 2) / 3312],     // a veering term, round every 2.3 days
 ]);
 
 /** Smooth value noise over the plane, in [0, 1). */
@@ -404,14 +404,17 @@ export function birthsIn(type, gx, gz, gt, climateAt) {
   const key = `${type}:${gx}:${gz}:${gt}`;
   let out = memo.get(key);
   if (out) return out;
-  if (memo.size >= BIRTHS_MEMO) memo.clear();   // a node's births are a pure function of it: dropping them costs only the redraw
+  // a node's births are a pure function of it, so dropping them costs only the redraw - and the OLDEST quarter goes
+  // (insertion order: the nodes the clock has left behind), never the whole cache at once (AUDIT WEATHER3 R2c: a
+  // whole-bay read is ~12,500 keys, and a wholesale clear under it cost the next read the bay again, cold)
+  if (memo.size >= BIRTHS_MEMO) { let drop = BIRTHS_MEMO >> 2; for (const k of memo.keys()) { memo.delete(k); if (--drop <= 0) break; } }
   memo.set(key, out = Object.freeze(drawBirths(type, gx, gz, gt, climateAt)));
   return out;
 }
 /** The births cache, per climate lookup (a host's lookup is one function
  *  for the session; a test's each its own). */
 let _births = new WeakMap();
-const BIRTHS_MEMO = 20000;
+export const BIRTHS_MEMO = 40000;
 
 function drawBirths(type, gx, gz, gt, climateAt) {
   const ceiling = ceilings()[type];

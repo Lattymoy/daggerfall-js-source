@@ -39,6 +39,8 @@ export const THUNDER_CRACK_M = 4000;
 export const STRIKES_PER_MINUTE = 0.15;
 /** Real seconds a strike's light stays on the cloud, falling away. */
 export const BOLT_SECONDS = 0.35;
+/** Thunder due longer ago than this when a frame next runs was not heard. */
+export const THUNDER_LATE_SECONDS = 1;
 /** A jump in the game clock longer than this plays no backlog of strikes. */
 export const STRIKE_BACKLOG_MINUTES = 5;
 const [, CLIP_THUNDER, CLIP_ROLL] = AMBIENT_SOUNDS.storm;   // LightningThunder, ThunderRoll (SoundClips)
@@ -98,7 +100,9 @@ export function thunderSourceAt(cam, x, z) {
  * The hosts' scheduler. `tick({ systems, at, minutes, seconds })` once an
  * exterior frame: `systems` the map's systems near the player this minute
  * (weatherSim currentMapSystems), `at` the player in field metres,
- * `minutes` the fractional game clock, `seconds` real seconds. Answers
+ * `minutes` the fractional game clock, `seconds` real seconds, `ground`
+ * the map's ground law (weatherSim mapGround) - a storm over snow ground
+ * is a snow squall and strikes nothing. Answers
  * `{ bolt, sounds }`: the strike lighting a cloud now (`{ x, z, r,
  * strength }` in field metres, or null) and the thunder due this frame
  * (`[{ clip, volume, x, z }]`, the strike's place). A thunderstorm the
@@ -110,10 +114,11 @@ export function createDistantStorms() {
   let bolt = null;       // { x, z, r, strength, at } - the latest strike's light
   const heard = [];      // thunder on its way: { due, clip, volume, x, z }
   return {
-    tick({ systems = [], at, minutes, seconds }) {
+    tick({ systems = [], at, minutes, seconds, ground = null }) {
       if (last === null || minutes < last || minutes - last > STRIKE_BACKLOG_MINUTES) last = minutes;   // a boot, a load, a rest: no backlog
       for (const s of systems) {
         if (s.type !== 'thunder') continue;
+        if (ground && ground('thunder', s.x, s.z, minutes) !== 'thunder') continue;   // AUDIT WEATHER3 R1: over a snow ground the storm is a snow squall (the sky's cell says so) - no lightning, no thunder
         const d = Math.hypot(s.x - at[0], s.z - at[1]);
         if (d < s.bands[0][0]) continue;   // under its heart: DFU's own storm
         const envAt = (m) => envelope(SYSTEM_TYPES.thunder, (m - s.bornAt) / s.life);   // weatherMap's own envelope, at the strike's minute
@@ -125,7 +130,13 @@ export function createDistantStorms() {
       }
       last = minutes;
       const sounds = [];
-      for (let i = heard.length - 1; i >= 0; i--) if (heard[i].due <= seconds) sounds.push(...heard.splice(i, 1));
+      // due now is heard; due long ago was not - the frames stopped (a building, a window, a pause) and the thunder
+      // passed unheard, so it is dropped rather than played in one burst on the first frame back (AUDIT WEATHER3 R5)
+      for (let i = heard.length - 1; i >= 0; i--) {
+        if (heard[i].due > seconds) continue;
+        const [h] = heard.splice(i, 1);
+        if (seconds - h.due <= THUNDER_LATE_SECONDS) sounds.push(h);
+      }
       sounds.reverse();
       const age = bolt ? seconds - bolt.at : Infinity;
       const lit = age >= 0 && age < BOLT_SECONDS ? { x: bolt.x, z: bolt.z, r: bolt.r, strength: bolt.strength * (1 - age / BOLT_SECONDS) } : null;

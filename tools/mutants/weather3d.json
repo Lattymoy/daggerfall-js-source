@@ -26,7 +26,7 @@
  {"name": "WEATHER3d-bolt-whole-sky", "file": "src/render/volumetricClouds.js",
   "old": "  outColor = vec4(c.rgb * (1.0 + uFlash * 2.0 + bolt * 3.0), c.a);", "new": "  outColor = vec4(c.rgb * (1.0 + uFlash * 2.0) + vec3(bolt), c.a);", "tests": ["test/weather3d_distantstorms.test.js"]},
  {"name": "WEATHER3d-host-no-reset", "file": "src/scenes/world.js",
-  "old": "    if (jump) distantStorms.reset();\n", "new": "", "tests": ["test/weather3d_distantstorms.test.js"]},
+  "old": "    if (jump || weatherArrivalStamp() !== seenArrival) distantStorms.reset();   // AUDIT WEATHER3 R5: any landing", "new": "    // AUDIT WEATHER3 R5: any landing", "tests": ["test/weather3d_distantstorms.test.js"]},
  {"name": "WEATHER3d-thunder-at-the-ear", "file": "src/scenes/exterior.js",
   "old": "audio.play3d(s.clip, thunderSourceAt(eye, h[0], h[1]), s.volume,", "new": "audio.play3d(s.clip, eye, s.volume,", "tests": ["test/weather3d_distantstorms.test.js"]}
 ]

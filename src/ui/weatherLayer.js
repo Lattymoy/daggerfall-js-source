@@ -6,7 +6,9 @@
 // a soft wash in its weather's pigment, its bands the rings a storm is
 // seen coming by, a small pen glyph at the heart of the wet ones - so the
 // map IS the picture Mac drew: sunny here, cloud there, a rainstorm over
-// the hills. The hover names the weather at the place under the pointer
+// the hills - each word through the ground law where it stands, so a
+// winter storm is inked as the snow it falls as. The hover names the
+// weather at the place under the pointer
 // and its FORECAST, read off the same pure law a few hours on ("Rain,
 // heavy - clearing in about 3 hours").
 //
@@ -25,6 +27,10 @@ import { PRIORITY } from '../systems/weatherMap.js';
  *  again, in game minutes - a system drifts a quarter of a map pixel in
  *  that time, so a finer refresh changes nothing the eye can see. */
 export const WEATHER_LAYER_REFRESH_MINUTES = 10;
+/** The washes' own layer: map pixels are inked at this many layer pixels
+ *  each, once a refresh (the bay is 2000 x 1000), and the sheet draws it
+ *  under its view - soft washes lose nothing to the scale. */
+export const WASH_LAYER_SCALE = 2;
 /** How far ahead the hover's forecast reads. */
 export const WEATHER_FORECAST_HOURS = 12;
 
@@ -61,17 +67,21 @@ export const fieldOfMapPixel = (px, py) => [(px + 0.5) * TERRAIN_SIZE, (MAX_MAP_
  * The map's marks for the systems standing now: each `{ id, type, x, y,
  * env, bands: [[r, word], ...] }` in map pixels, its bands core out -
  * sorted so the wash is laid lowest priority first and the storm's heart
- * is inked last, as the sky blends them (WEATHER3c).
+ * is inked last, as the sky blends them (WEATHER3c). `ground(word, x, z)`
+ * (optional) is the ground law at the system (weatherSim mapGround): the
+ * map inks what falls there, as the sky and the player get it.
  */
-export function weatherMarks(systems) {
+export function weatherMarks(systems, ground = null) {
+  const g = (w, s) => (ground ? ground(w, s.x, s.z) : w);
   return systems.map((s) => {
     const [x, y] = mapOfField(s.x, s.z);
-    return { id: s.id, type: s.type, x, y, env: s.env, bands: s.bands.map(([r, word]) => [r / TERRAIN_SIZE, word]) };
+    return { id: s.id, type: g(s.type, s), x, y, env: s.env, bands: s.bands.map(([r, word]) => [r / TERRAIN_SIZE, g(word, s)]) };
   }).sort((a, b) => PRIORITY.indexOf(b.type) - PRIORITY.indexOf(a.type));
 }
 
-/** The glyph at a wet system's heart, in the pen: rain's slant strokes,
- *  the storm's bolt, snow's star, the sand's drift. `s` its size. */
+/** The glyph at a wet or fogbound system's heart, in the pen: rain's slant
+ *  strokes, the storm's bolt, snow's star, the sand's drift, fog's level
+ *  lines. `s` its size. */
 function glyph(ctx, type, x, y, s) {
   ctx.strokeStyle = PEN.soft; ctx.lineWidth = Math.max(1, s / 7);
   ctx.beginPath();
@@ -92,10 +102,12 @@ function glyph(ctx, type, x, y, s) {
 /**
  * Ink the marks over the sheet: each band a thin wash in its word's
  * pigment, heavier toward the heart and with the system's strength, a
- * wet system's heart signed with its glyph once it is big enough on the
- * paper to hold one. Only what the paper shows is drawn.
+ * wet or fogbound system's heart signed with its glyph once it is big
+ * enough on the paper to hold one. Only what the paper shows is drawn.
+ * `washes` and `glyphs` choose the halves: the sheet inks the washes once
+ * a refresh onto a map-sized layer and the glyphs, a handful, as it goes.
  */
-export function paintWeatherLayer(ctx, view, marks, { paperW, paperH, dpr = 1 }) {
+export function paintWeatherLayer(ctx, view, marks, { paperW, paperH, dpr = 1, washes = true, glyphs = true }) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const s = view.scale;
   for (const m of marks) {
@@ -103,7 +115,7 @@ export function paintWeatherLayer(ctx, view, marks, { paperW, paperH, dpr = 1 })
     const [cx, cy] = toPaper(view, m.x, m.y);
     const rp = outer * s;
     if (cx + rp < 0 || cy + rp < 0 || cx - rp > paperW || cy - rp > paperH || rp < 0.75) continue;
-    for (let i = m.bands.length - 1; i >= 0; i--) {
+    for (let i = washes ? m.bands.length - 1 : -1; i >= 0; i--) {
       const [r, word] = m.bands[i];
       const ink = WEATHER_INK[word];
       if (!ink) continue;
@@ -118,7 +130,7 @@ export function paintWeatherLayer(ctx, view, marks, { paperW, paperH, dpr = 1 })
     // the pen signs a wet system's heart only when the storm has come into its own and its heart is big enough on
     // the paper to hold a mark - the far view is not a page of glyphs
     const core = m.bands[0][0] * s;
-    if ((PRECIPITATING.has(m.type) || m.type === 'fog') && m.env >= GLYPH_MIN_ENV && core >= GLYPH_MIN_PX) glyph(ctx, m.type, cx, cy, Math.min(18, core * 0.8));
+    if (glyphs && (PRECIPITATING.has(m.type) || m.type === 'fog') && m.env >= GLYPH_MIN_ENV && core >= GLYPH_MIN_PX) glyph(ctx, m.type, cx, cy, Math.min(18, core * 0.8));
   }
 }
 

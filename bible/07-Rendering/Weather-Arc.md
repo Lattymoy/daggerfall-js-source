@@ -328,13 +328,17 @@ the thunder at its heart - and the intensity falls from the core out
 (a drizzle at the edge, the downpour inside).
 
 **Motion.** A prevailing wind that is itself a slow field over the map
-and the days (large-scale noise in space and time, not one heading for
-the world): systems ride it, storms faster than decks, fog barely. A
+and the days (as built: a westerly bent by large-scale noise over the
+land, plus two terms that turn at fixed rates - a backing one round
+every five days, a veering one every 2.3 - not one heading for the
+world): systems ride it, storms faster than decks, fog barely. A
 system's position is its birthplace plus the wind's path since birth -
 closed form, no state.
 
 **The land and the clock.**
-- Diurnal: fog is born in the night and burns off by late morning;
+- Diurnal: fog is born in the small hours, stands thickest after dawn
+  and thins through the afternoon (as built: born around 04:00, a bank
+  living four to ten hours);
   summer thunder is born in the afternoon; clear nights stay clear
   more often than days.
 - The ground: a cell's word goes through WEATHER2a's law at ITS OWN
@@ -409,7 +413,8 @@ lifetimes that drifts the climate's weather fails the build.
 
 **Lane and doors.** The enhanced skin, Enhanced Environments and the
 `weather-events` row (forced on online, as it is); `?wxmap=off` falls
-back to WEATHER2b's field; every slice its own kill door. The classic
+back to WEATHER2b's field. As built, that is the ONE door: the slices
+share the lane, and no slice has a switch of its own. The classic
 lane is DFU's, 1:1, throughout.
 
 **Not DFU, and why.** DFU's weather is a zone's word rolled once a day;
@@ -439,7 +444,7 @@ taught, each a change from the design above:
   stays homogeneous to the eye and to the gate.
 - **A ring is an AREA in core areas, and a tight row THINS it.** The
   first build had fixed ring radii, and no fixed shape reaches all 24
-  rows. The swamp's spring is a quarter rain and a sixth thunder but only
+  rows. The swamp's spring is a quarter rain and 15% thunder but only
   a tenth cloudy, so every storm's cloud skirt alone painted more cloud
   than the table allows. The rings painting a word are now thinned
   together to exactly its share where they would overshoot. A storm born
@@ -465,13 +470,14 @@ about 0.3 ms.
 ### Slice B shipped - the sim seam (2026-09-22)
 
 The map is the sky on its lane: `weatherSim.js` WEATHER3b, pinned by
-`test/weather3b_simseam.test.js` (`tools/mutants/weather3b.json` 16/16
+`test/weather3b_simseam.test.js` (`tools/mutants/weather3b.json` 17/17
 dead), and approved by THE WORLD WEATHER MAP row in Ledger A.
 
 - **The lane** is the field's own (the enhanced skin, Enhanced
   Environments, the weather-events row, forced on online). `?wxmap=off`
   hands it back to WEATHER2b's field. `sampleWeatherField` routes to
-  the map there, so neither host's exterior frame changed.
+  the map there, so the hosts' sampling calls are unchanged (their frame
+  gained the front's `peak`, below, and slice F the indoor place).
 - **The word** is `wornAmong` over the systems within the sky's reach.
   They are found once per game minute, or whenever the player has moved
   250 m, and resolved every frame. It goes through the same `_set`, so
@@ -487,8 +493,9 @@ dead), and approved by THE WORLD WEATHER MAP row in Ledger A.
   the save read the array), but the drain applies nothing and CLK2's
   evolution rests.
 - **Indoors**, the indoor frame (`worldModes.js`, before Better
-  Ambience's rain source reads the word) re-reads the map at the door
-  the player went in by. Each change is a jump, so the sky outside is
+  Ambience's rain source reads the word) re-reads the map over the
+  place the player is in (as shipped, the last outdoor sample's place;
+  slice F made the host name it). Each change is a jump, so the sky outside is
   simply there on the way out.
 - **The front's peak is the place's.** `currentWeatherIntensity()`
   (the system's envelope, falling from its heart out) is placed in the
@@ -566,7 +573,8 @@ cells are cut in their own order on the worn word's row, as before.
 - **Whose storm**: under a thunderstorm's heart, DFU's LightningPlayer
   and the ambience own the lightning and thunder, as before. Only the
   others strike here. A jump (a load, a landing) plays no backlog and
-  forgets the thunder still on its way. Enhanced only, never under a
+  forgets the thunder still on its way (as shipped, only when the word
+  changed; slice F made every landing count). Enhanced only, never under a
   `?weather` pin, and nothing off the map's lane.
 
 ### Slice E shipped - the weather on the map (2026-09-22)
@@ -588,9 +596,12 @@ dead).
   glyphs; they now wait for GLYPH_MIN_ENV and GLYPH_MIN_PX.
 - **Cost**: the whole bay is about 2,700 systems, read once every
   WEATHER_LAYER_REFRESH_MINUTES (10 game minutes, about a quarter of a
-  pixel of drift) - 125 ms the first time, 37 ms after. The wash lives
-  on the sheet's KEPT static layer, keyed on that refresh, so a frame
-  that only breathes costs nothing.
+  pixel of drift). The "37 ms after" first recorded here was never
+  measured. Slice F measured it over a patchwork of every climate:
+  about 2,500 systems, 130 ms for the first read (60 ms once the code
+  is warm), then 12-27 ms a refresh. The wash lives on the sheet's KEPT
+  static layer, keyed on that refresh, so a frame that only breathes
+  costs nothing. A pan or a zoom redrew it, until slice F.
 - **The hover** carries the weather at the pixel and its forecast off
   the same law, 12 hours ahead: "Daggerfall : Daggerfall · Rain, heavy
   - clearing in about 3 hours". It is read once per pixel per refresh.
@@ -602,3 +613,67 @@ dead).
 - `world.js` hands the map `weather: { on, minutes }`: on the map's lane
   and never under a pin, at the host's own clock. The classic travel map
   is DFU's and draws none.
+
+### Slice F shipped - the audit (2026-09-23)
+
+Two independent reads of slices A-E. One read the runtime: does it run,
+and what did it break. The other read the records: do they say true
+things. Pinned by `test/weather3f_audit.test.js`
+(`tools/mutants/weather3f.json` 15/15 dead). The slices' own mutant
+records were re-aimed wherever F moved their source, and all six files
+are 0 survived, 0 stale.
+
+The runtime read:
+
+- **R1 - one ground law for every reader.** The sky's cells went through
+  WEATHER2a's ground law, but the travel map's washes, its hover
+  forecast and the distant storms did not. They said "Rain" and struck
+  lightning where the player standing there got snow. `mapGround`
+  (weatherSim) is now the one law, `(word, x, z, minutes)` at the
+  place's own climate. The sky, the map's marks, the forecast and the
+  storms' strikes all read it, and a thunderstorm over snow ground is a
+  squall that strikes nothing.
+- **R2 - the map's cost.** The travel map made a lookup per window, and
+  the births cache is per lookup, so every open read the whole bay cold.
+  It now reads with the host's own lookup, which is the sim's and warm.
+  A full births cache (BIRTHS_MEMO, 40,000 nodes) sheds its OLDEST
+  quarter, not the whole. **R2a:** a pan or a zoom inked every wash's
+  gradient again, a few thousand a frame. The washes are now inked once
+  a refresh onto their own map-sized layer (WASH_LAYER_SCALE, 2 layer
+  pixels a map pixel), and the view draws it as one image. The glyphs,
+  a handful, are still inked at the paper's resolution.
+- **R3 - indoors reads the place the host names.** The indoor sample
+  read the last OUTDOOR sample's place. An arrival straight indoors (a
+  load into a dungeon, a recall) read the old place's sky, or none.
+  Each host now names the place every indoor frame (`weatherIndoors`:
+  the building's or dungeon's own pixel), and a load clears the last
+  place, so its first word is a jump wherever it landed. The
+  `_mapFresh` flag this replaced was redundant with that.
+- **R4 - a lane switched off mid-session.** The drain spent the day's
+  pending apply on the map's lane, so switching the skin or Enhanced
+  Environments off wore the map's last word until the next day. The map
+  check now comes before the flag is spent, so the next frame off the
+  lane wears the zone's slot.
+- **R5 - every landing is an arrival.** The distant storms reset on the
+  jump stamp, which moves only when the word changes. A landing under
+  the same sky kept the old place's thunder on its way. The sim now
+  counts arrivals (`weatherArrivalStamp`), word or no word, and the
+  hosts reset on it. Thunder that fell due while the frames stopped (a
+  building, a window, a pause) is dropped once it is more than
+  THUNDER_LATE_SECONDS (1 s) late, not played in one burst.
+- **R6 - left as built.** The sky's state is computed twice on a frame
+  where the clouds' base row differs from the dome's (the map's lane
+  under weather). That is one extra `skyState` call, the cost of the
+  clouds standing on clear air. It was not measured, and is left as
+  built.
+
+The records read: this arc said slice B's mutants were 16/16 (they were
+17/17); that the hosts' frame did not change (it gained the front's
+peak); that the swamp spring is "a sixth" thunder (15%); that the table
+moved out so the sim and the map would not import each other (they
+must not form a cycle - the sim does import the map); that fog burns
+off by late morning (it peaks after dawn and thins through the
+afternoon); that every slice has its own kill door (`?wxmap=off` is the
+only one); that the wind is noise in space and time (it is noise over
+the land plus two fixed turns); and a "37 ms" refresh nobody measured.
+Each is corrected where it stood, with the build's own numbers.

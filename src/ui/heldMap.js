@@ -133,7 +133,8 @@ import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easin
 export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 import { systemsNear, forecastAt } from '../systems/weatherMap.js';   // WEATHER3e: the world weather map, read over the bay
-import { weatherMarks, paintWeatherLayer, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS } from './weatherLayer.js';
+import { weatherMarks, paintWeatherLayer, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS, WASH_LAYER_SCALE } from './weatherLayer.js';
+import { mapGround } from '../systems/weatherSim.js';   // AUDIT WEATHER3 R1: the ground law the player's own sky goes through
 import { TERRAIN_SIZE } from '../world/terrainSampler.js';
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
@@ -1032,7 +1033,7 @@ export class HeldMapWindow {
         });
         // WEATHER3e: the world weather map's systems, washed over the bay in the sheet's own hand
         const wx = this._weatherLayer();
-        if (wx) paintWeatherLayer(ctx, env.view, wx.marks, { paperW: env.paperW, paperH: env.paperH, dpr: env.dpr });
+        if (wx) this._paintWeather(ctx, env, wx);
       },
       paintOverlay: (ctx, env) => {
         paintInkOverlay(ctx, env.view, {
@@ -2371,7 +2372,8 @@ export class HeldMapWindow {
    *  whole bay is read, because the whole bay is on the paper at rest. */
   _weatherLayer() {
     const wx = this.deps.weather;
-    if (!wx?.on?.() || !this.deps.getClimateIndex) return null;
+    const climateAt = this.deps.getClimateIndex;
+    if (!wx?.on?.() || !climateAt) return null;
     const bucket = Math.floor(wx.minutes() / WEATHER_LAYER_REFRESH_MINUTES);
     if (this._wx?.bucket !== bucket) {
       // the sheet's middle through the field's own frame (its y runs up from the bay's south edge, whatever this
@@ -2379,10 +2381,37 @@ export class HeldMapWindow {
       const [cx, cz] = fieldOfMapPixel(this._size.width / 2 - 0.5, this._size.height / 2 - 0.5);
       const reach = Math.hypot(this._size.width, this._size.height) * TERRAIN_SIZE / 2;
       const minutes = bucket * WEATHER_LAYER_REFRESH_MINUTES;
-      const systems = systemsNear(cx, cz, minutes, this._climateAt ??= (x, y) => this.deps.getClimateIndex(x, y), reach);
-      this._wx = { bucket, key: `wx${bucket}`, minutes, marks: weatherMarks(systems), forecasts: new Map() };
+      // the host's own lookup, not a wrapper made here: the map's births are cached per lookup, and a window built at
+      // every open would read the whole bay cold each time (AUDIT WEATHER3 R2b) - the host's is the sim's, warm
+      const systems = systemsNear(cx, cz, minutes, climateAt, reach);
+      const ground = mapGround(climateAt);
+      this._wx = { bucket, key: `wx${bucket}`, minutes, ground, marks: weatherMarks(systems, (w, x, z) => ground(w, x, z, minutes)), forecasts: new Map(), washes: null };
     }
     return this._wx;
+  }
+
+  /** The weather on the sheet: the WASHES inked once a refresh onto their
+   *  own map-sized layer and drawn under the view - a pan or a zoom is one
+   *  image, not a few thousand gradients (AUDIT WEATHER3 R2a) - and the
+   *  glyphs, a handful, inked at the paper's own resolution. With no canvas
+   *  to keep (a headless host) the washes are inked straight on. */
+  _paintWeather(ctx, env, wx) {
+    const opts = { paperW: env.paperW, paperH: env.paperH, dpr: env.dpr };
+    if (wx.washes === null) {
+      const k = WASH_LAYER_SCALE, c = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+      const lctx = c?.getContext?.('2d');
+      if (lctx) {
+        c.width = this._size.width * k; c.height = this._size.height * k;
+        paintWeatherLayer(lctx, { ox: 0, oy: 0, scale: k }, wx.marks, { paperW: c.width, paperH: c.height, dpr: 1, glyphs: false });
+        wx.washes = c;
+      } else wx.washes = false;
+    }
+    if (wx.washes) {
+      const v = env.view, s = v.scale;
+      ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
+      ctx.drawImage(wx.washes, -v.ox * s, -v.oy * s, this._size.width * s, this._size.height * s);
+      paintWeatherLayer(ctx, v, wx.marks, { ...opts, washes: false });
+    } else paintWeatherLayer(ctx, env.view, wx.marks, opts);
   }
 
   /** A hover's label with the weather at its pixel and the forecast -
@@ -2396,7 +2425,7 @@ export class HeldMapWindow {
     let text = wx.forecasts.get(key);
     if (text == null) {
       const [fx, fz] = fieldOfMapPixel(px, py);
-      text = forecastText(forecastAt(fx, fz, this.deps.weather.minutes(), this._climateAt, { hours: WEATHER_FORECAST_HOURS, step: 30 }), WEATHER_FORECAST_HOURS);
+      text = forecastText(forecastAt(fx, fz, this.deps.weather.minutes(), this.deps.getClimateIndex, { hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx.ground }), WEATHER_FORECAST_HOURS);
       wx.forecasts.set(key, text);
     }
     return label ? `${label} \u00b7 ${text}` : text;
