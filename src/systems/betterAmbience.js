@@ -48,7 +48,7 @@ import { modSettingsOf } from './modSettings.js';
 import { audio as defaultAudio } from './audio.js';
 import { FOOTSTEP } from './footsteps.js';
 import { multiply, trs } from '../world/mat4.js';
-import { currentWeather } from './weatherSim.js';
+import { heardWeather } from './weatherSim.js';   // DISC9: the weather the player HEARS outdoors, not the sim's word
 import { immersiveFootsteps } from './immersiveFootsteps.js';
 import { isSnowFreeClimate } from '../world/weather.js';
 import { perlinNoise } from '../world/perlin.js';   // Mathf.PerlinNoise's one home   // WeatherManager.IsSnowFreeClimate
@@ -518,7 +518,7 @@ export const reverbPresetFor = (level) => REVERB_PRESETS[level] ?? null;
  */
 export const TRANSITION_WAIT_FRAMES = 4;   // "Wait some frames XD" - four yields in UpdateDungeonFog and UpdateAmbientSoundSources
 
-export function createBetterAmbience({ audio = defaultAudio, settings = readBetterAmbienceSettings, random = Math.random, fetchClip = defaultFetchClip, weather = currentWeather, snowFree = isSnowFreeClimate } = {}) {
+export function createBetterAmbience({ audio = defaultAudio, settings = readBetterAmbienceSettings, random = Math.random, fetchClip = defaultFetchClip, weather = heardWeather, snowFree = isSnowFreeClimate } = {}) {
   let s = null;
   const footsteps = createBetterFootsteps({ audio, random, snowFree });
   const shaker = new CameraShaker(random);
@@ -643,6 +643,9 @@ export function createBetterAmbience({ audio = defaultAudio, settings = readBett
     classicClipKept(clip) { return CLASSIC_CLIPS_KEPT.has(clip); },
     settle,
     footsteps, shaker,
+    /** DISC6: whether the mod's muffled indoor rain is what the player hears in a building - the street's own loop
+     *  then stands down (systems/ambientEffects.js INDOOR_RAIN_GAIN). Read every indoor frame: no object built. */
+    indoorRainPlaying() { return !!rainLoop && rainKind === 'interior'; },
     status() {
       return { enabled: !!s?.Enabled, footstepsOn: !!s?.footstepsEnable, clipsLoaded, present: [...present], place, fog: fogState, reverb: reverbOn, rain: rainLoop ? rainKind : null, rainWeather, shake: { pos: shaker.posAddShake, rot: shaker.rotAddShake, instances: shaker.instances.length } };
     },

@@ -196,7 +196,7 @@ export function lerpPose(from, to, t) {
     ce: to.ce ?? 4,   // SPELLFX1: the cast's element, whole
     ar: to.ar ?? 0,   // SPELLFX1: and the arrows loosed
     fk: to.fk ?? 0,   // PEER-FS1: the footstep-sound kind - discrete, rides the drawn pose whole like the rest
-    ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0 } : {}),   // RIDE: the mount, discrete, omitted on foot as the wire omits it
+    ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0, ...(to.hs ? { hs: 1 } : {}) } : {}),   // RIDE: the mount, discrete, omitted on foot as the wire omits it; DISC7: the half-speed bit with it
   };
 }
 
@@ -1494,6 +1494,9 @@ export class OnlineSession {
   }
 
   /** The peers to draw, as an array. */
+  /** AUDIT DISC7 B3: how long ago this peer's newest pose arrived (the session's own clock), 0 before any. */
+  poseAgeMs(p) { return p?.at != null ? this._now() - p.at : 0; }
+
   drawable() {
     const now = this._now();
     const out = [];

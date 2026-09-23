@@ -21,7 +21,7 @@ import { EQUIP_SLOTS } from '../src/characters/paperdoll.js';
 import { swingSoundFor, SOUND } from '../src/systems/soundClips.js';
 import { fakeRoom } from './fakeRoom.mjs';
 import { WHY_IN_PARTY, SocialState } from '../src/net/social.js';
-import { peerPromptText } from '../src/player/socialPick.js';
+import { peerRelationText } from '../src/player/socialPick.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -354,7 +354,7 @@ test('AUDIT DROPS F: the pose\'s fk is clamped 0-5, the quest frame has its own 
   // the seat's reason: one home, read by the plaque through the real actionsFor
   const st = new SocialState({ acct: 'me' });
   assert.equal(WHY_IN_PARTY, 'in your party');
-  assert.equal(peerPromptText({ canFriend: false, canInvite: false, canTrade: false, whyNotInvite: WHY_IN_PARTY, relation: 'friend' }, 'F'), 'In your party');
+  assert.equal(peerRelationText({ whyNotInvite: WHY_IN_PARTY, relation: 'friend' }), 'In your party');
   assert.match(rd('src/net/social.js'), /if \(seated\) whyNotInvite = WHY_IN_PARTY;/);
   assert.equal(typeof st.actionsFor, 'function');
   // tradeFrame after chatFrame, before the dead return (lens 3 #5)

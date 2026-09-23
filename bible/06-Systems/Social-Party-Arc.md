@@ -361,6 +361,12 @@ so, and a player who rebound it keeps their own. Mac named F for the
 social key, so the port's action keeps it. `test/soc5_interact.test.js` -
 9 pins at SOC5, 16 since AUDIT SOC; 16 mutants driven, 16 dead.
 
+
+**ACT-MENU (DISC7 + AUDIT DISC7, 2026-09-23).** Where the enhanced World Tooltips plaque stands, the card's rows are
+the plaque's own (`ui/socialMenu.js socialPlaqueRows`): a player's list starts unlit, the wheel or F lights a row,
+the activate key or F presses it through the card's door, and a refused row shows and says its reason. F opens the
+card only where the plaque cannot serve - touch, the classic skin, a player a nearer thing hid from its race.
+Record: `01-Overview/Field-Bugs-2026-09-23.md`.
 ## SOC6 - the party on the map
 
 **One seam, two drawings.** The travel map's one dep bag (`world.js`

@@ -170,7 +170,7 @@ test('SPELLFX1/2: a peer\'s ranged cast is DRAWN as a missile that stops on a bo
 });
 
 test('SPELLFX1 wire (world98): the pose carries the cast\'s element (`ce`, 0..4) and the arrows loosed (`ar`); a pose from before them reads Magic and none (mutants: the fields dropped by the projection; an element past the table)', () => {
-  assert.equal(RELAY_VERSION, 'world99'); assert.equal(POSE_CAST_ELEMENTS, 5);   // world98 carried these fields; HCC-PARK + RIDE moved the version on (world99) with the park frame and the pose's mount
+  assert.equal(RELAY_VERSION, 'world100'); assert.equal(POSE_CAST_ELEMENTS, 5);   // world98 carried these fields; HCC-PARK + RIDE moved the version on (world99) with the park frame and the pose's mount
   const base = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 };
   assert.equal(validPose({ ...base, ce: 0, ar: 7 }).ce, 0); assert.equal(validPose({ ...base, ce: 0, ar: 7 }).ar, 7);
   assert.equal(validPose(base).ce, 4, 'an older pose: Magic'); assert.equal(validPose(base).ar, 0);
@@ -200,7 +200,7 @@ test('SNDREP1: a pack\'s loose WAVs answer for the two classic clips by DFU\'s n
   assert.equal(soundSilenced(7), false, 'a clip with no switch');
   assert.match(rd('src/systems/audio.js'), /if \(soundSilenced\(index\)\) return null;[^\n]*\n\s*const r = this\._replacement\?\.\(index\); if \(r\) return r;/, 'the engine\'s buffer door');
   // CRICKET-DUNGEON's own stop still stands underground; the switch is the same stop above ground
-  assert.match(rd('src/systems/ambientEffects.js'), /if \(deps\.underground \|\| soundSilenced\(AMBIENT_CRICKETS_LOOP\)\) \{ if \(this\._cricketsLoop\) \{ this\._cricketsLoop\.stop\(\); this\._cricketsLoop = null; \} \}/, 'one stop, two reasons');
+  assert.match(rd('src/systems/ambientEffects.js'), /if \(deps\.inside \|\| deps\.underground \|\| soundSilenced\(AMBIENT_CRICKETS_LOOP\)\) \{ if \(this\._cricketsLoop\) \{ this\._cricketsLoop\.stop\(\); this\._cricketsLoop = null; \} \}/, 'one stop, three reasons (DISC8-A: indoors)');
 });
 
 test('SNDREP1 x CRICKET-DUNGEON: switching the crickets OFF mid-chorus stops the sounding loop at once and holds the chorus clock; back ON, the night takes up where it stood - and underground stays silent with the switch on (mutants: the arm leaving a sounding loop to its bout; the underground stop lost)', () => {

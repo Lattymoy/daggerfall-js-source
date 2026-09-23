@@ -45,7 +45,7 @@ import { playerEntity, surfacePlayer, hurtPlayer, setDeathPresenter, setAvoidDea
 import { SOUND } from '../systems/soundClips.js';
 import { Collider } from '../player/collider.js';
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
-import { quickLootWheel, quickLootTake, quickLootArm } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means
+import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
 import { wagonHoverName } from '../player/eotbWagon.js';   // WORLD-HOVER M6: the cart's word, beside its producer
@@ -199,7 +199,7 @@ import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js'; 
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { PrecipitationRenderer } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
-import { setWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJumpStamp, sampleWeatherField, weatherCrossingStamp, currentFieldCells } from '../systems/weatherSim.js';   // W1: the live weather state; WEATHER2b: the field
+import { setWeather, setHeardWeather, heardWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJumpStamp, sampleWeatherField, weatherCrossingStamp, currentFieldCells } from '../systems/weatherSim.js';   // W1: the live weather state; WEATHER2b: the field
 import { fieldOfPixelLocal, pixelLocalOfField } from '../systems/weatherField.js';   // WEATHER2b: this host's pixel-local frame to the field's metres, and back
 import { cellOf } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells
 import { SEASON } from '../world/climateSwaps.js';
@@ -1670,7 +1670,7 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  here that the per-minute INTERMITTENT
    *  SPAWN roll (:486-492) still has no caller on this route - that
    *  loop carries the passive-guard and NPC-guard-conversion arms with
-   *  it (world.js:3490-3683) and is its own slice; this pool does not
+   *  it (world.js:3490-3693) and is its own slice; this pool does not
    *  wait on it. */
   const exteriorFoes = createExteriorFoes({
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
@@ -1959,7 +1959,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     topWindow: () => townTalk.overlay,
     // The MASTERY box (RaiseSkills :1390-1401) - TEXT.RSC 4020.
     box: (rows) => townTalk.showOverlay(new ActionTextBox(rows)),
-    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos, sharedEnd, true); },   // CAMP1-REST: every tick this drives IS a rest   // ROAD-G TAIL: the catch-up loop rides the rest's minutes, as world.js:4836 has it   // RESTX2: sharedEnd is the session's local sim-minutes online, so the roll still gets a fresh `now` while the real clock stands
+    advanceMinutes: (n, sharedEnd) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos, sharedEnd, true); },   // CAMP1-REST: every tick this drives IS a rest   // ROAD-G TAIL: the catch-up loop rides the rest's minutes, as world.js:4843 has it   // RESTX2: sharedEnd is the session's local sim-minutes online, so the roll still gets a fresh `now` while the real clock stands
     // QX1: TickRest's per-hour QuestMachine.Instance.Tick (:379),
     // through THIS host's own bridge. It used to be `null` with a note
     // saying "grep questBridge in this file returns nothing" - true
@@ -2280,7 +2280,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   /** AUDIT 58 (f2/hosts): HOISTED, because the enchant ctx below needs
    *  the same object. A caster reaches applySpell as `{ entity, sinks }`
    *  and the sinks are what a Transfer effect heals the caster through
-   *  (effects.js:887/:901) - world.js:4014 hoisted its copy for exactly
+   *  (effects.js:887/:901) - world.js:4024 hoisted its copy for exactly
    *  that reason when reflection was wired, and this host's stayed
    *  inline only because nothing else had asked for it. */
   const playerSpellSinks = {
@@ -2326,12 +2326,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     surfacePlayer,
     // QG1: the ready-spell doors - EntityEffectManager's two events
     // (hostMagic.js:77-78), which are the ONLY route into the quest
-    // machine's CastSpellDo / CastEffectDo latches (machine.js:844/:850;
+    // machine's CastSpellDo / CastEffectDo latches (machine.js:847/:853;
     // actions.js:2702). This host owns its own cast engine and passed
     // neither key, so on this route - and, because worldModes takes THIS
     // instance indoors, in every shop entered from it - `cast X spell do`
     // and `cast X effect do` could never latch and never fire. The other
-    // two engine-owning hosts wire the identical pair (world.js:3962-3963,
+    // two engine-owning hosts wire the identical pair (world.js:3972-3973,
     // dungeonContext.js:2222-2223); `questBridge` is assigned below this
     // mount, so the chain is optional both ways.
     onNewReadySpell: (sp) => questBridge?.machine?.notifyNewReadySpell?.(sp),
@@ -2496,8 +2496,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
-    weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),   // JAN1: the pose is the player's - a door in or out hands the pair through these
-    applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),
     openCharSheet: () => { if (charSheetDoorReady()) townTalk.showOverlay(makeCharSheetWindow()); },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
     ...useHooks,   // U53: the one bag
     // U8e: OnPop mints the world pile. G5: with the drop icon the
@@ -3361,14 +3359,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // below) has always been the clone, so a read off the file was a
     // read of a different Map: `change repute with _npc_ by 30` landed
     // on one and `when repute with _npc_ is at least N` asked the
-    // other. world.js:8401 is the same line.
+    // other. world.js:8408 is the same line.
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     /** PersistentFactionData.FindFactions by type - Person.cs's
      *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:8300-8313. */
+     *  %rn/%rt's producer - world.js:8307-8320. */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -3407,7 +3405,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     currentWeatherKey: () => currentWeather() ?? null,   // Q5: the Weather trigger's read
     isPlayerInLocationRect: () => _musicInLocationRect(),
     playerPixel: () => _locPixel,   // F114: the quest clock's travel arm
-    // QG1: CastSpellDo's two world reads, world.js:8216-8219's pair.
+    // QG1: CastSpellDo's two world reads, world.js:8223-8226's pair.
     // Without them the action self-completes at parse (actions.js:2756/:2763)
     // and a `cast X spell do` on this route could never be armed, whatever
     // the ready-spell doors above raise.
@@ -3438,7 +3436,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     /** Place.AssignQuestResource's hot-place tail (Place.cs:508-527) -
      *  AddQuestResourceObjects over whatever site the player already
      *  stands in. The mode machine owns the mount and is already
-     *  mode-aware (worldModes:1258), so this is world.js:8189's line
+     *  mode-aware (worldModes:1258), so this is world.js:8196's line
      *  over this host's own modes bag. */
     mountCurrentSiteQuestResources: () => modes?.mountQuestResources?.(),
     /** AUDIT 63 F1: the same static-NPC behaviour cache
@@ -3451,7 +3449,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // meets a Foe could complete on this route.
     /** GameObjectHelper.CreateFoeGameObjects (:1243-1305), data side:
      *  `count` inactive handles, activation deferred to placement.
-     *  Bridge-only, no host state - world.js:8197's call verbatim. */
+     *  Bridge-only, no host state - world.js:8204's call verbatim. */
     createFoeGameObjects: (foe, count) => mintQuestFoeWave(questBridge.machine, foe, count),
     /** CreateFoe.TryPlacement (:183-211), ALL THREE ARMS. The INSIDE
      *  two are the mode machine's - worldModes.tryPlaceQuestFoe places
@@ -3466,7 +3464,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  city's rect for its whole life (`_musicInLocationRect` is
      *  `() => true`), so the wilderness arm (:252-257) has no reachable
      *  branch here at all and the ring is the default one, unqualified.
-     *  Everything else is world.js:8301's arm term for term: the cast
+     *  Everything else is world.js:8308's arm term for term: the cast
      *  origin is the controller CENTRE (DFU rays from
      *  PlayerObject.transform.position, not the feet), the FOV is
      *  handed over in DEGREES (`fieldOfView()` answers radians), the
@@ -3569,7 +3567,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // to the pending pile rather than straight into the pack. The
     // flagless form is a different question and has its own caller
     // below (`inTownLocation`, CanRest's second arm). This is the
-    // closure S40 gave this host, and world.js:8960's line.
+    // closure S40 gave this host, and world.js:8967's line.
     isPlayerInTown: () => _isPlayerInTownStrict(),
     // Q5: the un-pended quest actions' doors, all of them this host's
     // own arms - the crime setter (V4's SuppressCrime gate), the gold
@@ -3595,7 +3593,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // which is the one seam that really does ask the narrower question.
     makeEnemiesHostile: _makeEnemiesHostile,
     // GameManager.ClearEnemies destroys every active enemy object; the
-    // encounter half is world.js:9051's line and the watch half is this
+    // encounter half is world.js:9058's line and the watch half is this
     // host's own (cityGuards owns its live list).
     clearEnemies: () => { cityGuards.clearLive?.(); for (const f of [...exteriorFoes.foes]) { if (!f.dead) exteriorFoes.removeFoe(f); } lockOn.unlock(); },   // AUDIT 62 F16: a removed foe is never flagged dead, so the lock must be let go here
     // MT-iii/MT-iv: ChangeFoeInfighting / ChangeFoeTeam's instance walk
@@ -3620,13 +3618,13 @@ export async function bootExterior(canvas, renderer, params, status) {
   // (:6459) alone, so on ?exterior every HUD line this host and its
   // interior arm spoke was dropped from the journal's Messages page -
   // a page exterior.js:1102 wires up and can reach. Same moment and
-  // same order as world.js:9266/:9271, for the same reason: the
+  // same order as world.js:9273/:9278, for the same reason: the
   // notebook only exists once the bridge above is built.
   townTalk.hudMessageSink = (t) => questBridge?.notebook?.addMessage(t);
   // AUDIT 63 F5: DaggerfallTalkWindow.OnPop's notebook filing
   // (DaggerfallTalkWindow.cs:319). townTalk holds the one talk-window
   // door and no notebook; the bridge holds the notebook and is built
-  // here, so the sink is handed down at this moment - world.js:9250's
+  // here, so the sink is handed down at this moment - world.js:9257's
   // line for this host.
   townTalk.notebookSink = (tokens) => questBridge?.notebook?.addNoteTokens(tokens);
   questBridge.onInitWorld();   // QuestMachine's OnInitWorld - this route's ONE city is its world
@@ -3643,6 +3641,8 @@ export async function bootExterior(canvas, renderer, params, status) {
   // V2c: createWorldModes also registers setPassiveSpecialsHost (the
   // sunlight/holy-place seam) for THIS page - THE FOUR HOSTS RULE.
   var modes = createWorldModes({
+    weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),   // JAN1: the pose is the player's - a door in or out hands the pair through these; DISC8-E: in THIS bag, which worldModes reads
+    applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
     currentRegionIndex: () => dfLocation?.regionIndex ?? -1,   // UL1: PlayerGPS.CurrentRegionIndex - the fixed city's
@@ -3844,7 +3844,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // search; an empty list means an owned house never resolves even
       // in its OWN town, so this host sold every deed for nothing
       // before F26's guard and would refuse every sale after it. Same
-      // two inputs the world host uses (world.js:11380).
+      // two inputs the world host uses (world.js:11431).
       buildings: locationBuildings(dfLocation.exterior?.buildings ?? [], loc.blocks),
       mapId: dfLocation?.mapTableData?.mapId ?? 0,
       regionIndex: dfLocation.regionIndex ?? 0,
@@ -3950,7 +3950,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  host's only pool is the WATCH, which mints watchmen and exposes
      *  no free spawn pair", so a soul released or a Rose used in the
      *  street released nothing at all. That premise died with the
-     *  encounter mount above, and world.js:4204-4220 is the shape.
+     *  encounter mount above, and world.js:4214-4230 is the shape.
      *  INTERIOR still refuses - worldModes' interior pool exposes no
      *  loose-spawn door - which is EC1's answer and world.js's own for
      *  the same mode. */
@@ -3985,7 +3985,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  been another host's. The encounter pool mounted above owns both,
      *  so an encounter or quest foe struck in the street is removed and
      *  re-stood by the pool that owns its billboard, exactly as
-     *  world.js:4134-4135 does it. ROAD-G TAIL: a WATCHMAN transforms
+     *  world.js:4144-4145 does it. ROAD-G TAIL: a WATCHMAN transforms
      *  too, through removeGuard. (The sentence that stood here:) it was left standing:
      *  the street pool cannot remove a record it does not own, which is
      *  the same departure worldModes records for the indoor watch. */
@@ -4392,7 +4392,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the whole indoor visit, swept only on the first frame back
     // outside. DestroyLightSources_OnTransition is an EVENT in the mod
     // (0x7d1), not a frame-tail chore.
-    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); _torchesMode = _mode(); }   // HT1
+    if (_mode() !== _torchesMode) { droppedTorches.destroyAll(); weaponRig.silenceTorch();   /* DISC6: the street's rig leaves (or retakes) the frame - its torch loop falls silent, and the rig that ticks starts its own */ _torchesMode = _mode(); }   // HT1
     if (modes.frame(dt, now)) {
       if (!skyInside) { skyInside = true; sky.setInside(true); }   // DS1: InteriorTransitionEvent
       // WM4c: inside a building or a dungeon the exterior parent is
@@ -4401,6 +4401,15 @@ export async function bootExterior(canvas, renderer, params, status) {
       // again on the way out, through the same retry that started them.
       for (const w of windmills) { w.hum?.stop(); w.hum = null; }
       windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
+      // DISC6: the street's ambience keeps its clock indoors - the HOUR is live (a night that falls while you are
+      // inside brings its crickets), the rain and the crickets are heard through the walls, and underground the
+      // crickets stop (CRICKET-DUNGEON, which only ever ran here). AUDIT DISC7 B1: the WORD and the rain's GAIN stay
+      // the street's last - the weather front does not tick indoors (applyWeather is the outdoor frame's), so the
+      // street's own rain is what you hear through the walls: a building at INDOOR_RAIN_GAIN of it, never louder
+      // than the street, and underground at the street's own gain. Forcing gain 1 here made a light shower (the
+      // front's 0.15) louder in a tavern than in the street - the Discord report itself - and a dungeon 6.7x.
+      ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
+      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });
       // AUDIT F2-I1: the modal frame RETURNS, so an overlay held in the
       // townTalk slot got neither its clock nor its draw while the
       // player was inside a building or a dungeon - chargen mounts
@@ -4513,6 +4522,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // and nothing else. Dropping run/sneak/autoRun/back from this bag read
       // as a RELEASE to the motor's press-edge latches, so a key held
       // through the paralysis fired a synthetic press on the frame it lifted.
+      if (_overlayHeld) player.holdFrame();   // DISC8-G: a held motor reports no landing and no jump
       if (!_overlayHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchPress } : {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,
@@ -4730,7 +4740,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }   // SURV3: the camp's menu, or its name
           else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else drinkAtSpring(_springPick.key); }   // SURV3: the skins filled
           else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => townTalk.showOverlay(makeInventoryWindow(EOTB_WAGON_PACK)) }); }
-          else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(TOO_FAR_AWAY_TEXT)); }   // HCC: the runtime's own reach test and refusals
+          else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(TOO_FAR_AWAY_TEXT), plaqueActionFor(_hccPick.key)); }   // ACT-MENU: the verb the plaque lit, where it stands   // HCC: the runtime's own reach test and refusals
           else if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
           else {
           if (lootKey && _lootPick.distance > _lootPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);   // MC-2: the corpse's own refusal (:936-941)
@@ -4887,6 +4897,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     audio.setListener(eye, [target[0] - eye[0], target[1] - eye[1], target[2] - eye[2]]);
     // WX2: the ear follows what is falling under the front; the word, verbatim, on classic
     ambientWord = enhancedFront ? soundWeather(fx, weather) : weather;
+    setHeardWeather(ambientWord);   // DISC9: what the street hears is what every indoor ear hears through the walls
     ambience.setPreset(presetForExterior(ambientWord, isNight(minute)));
     ambience.rainGain = enhancedFront ? fx.intensity : 1;
     ambience.update(dt, { playerPos: eye, inside: false });   // AUDIT 58: `!playerEnterExit.IsPlayerInside` (:154-162) - modes.frame consumed the frame already if the player is not outdoors
@@ -5089,7 +5100,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:13125-13364 is the shape.
+    // through the player for ever. world.js:13192-13431 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -5342,7 +5353,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:13474's order, and the order
+          // BEFORE civilians - world.js:13541's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

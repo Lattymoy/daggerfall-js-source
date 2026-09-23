@@ -31,10 +31,13 @@
 //
 // THE SPACE. The held window's pan and zoom clamp a map that starts at
 // (0,0), and a dungeon does not - it sits wherever its blocks were laid.
-// So the sheet's own space is PLAN UNITS: world minus the level's
-// bottom-left corner. Everything crossing the seam converts in one
-// place (`toPlan`), and the chains, the caret, the beacons and the
-// notes all land in it, so nothing needs a second transform.
+// So the sheet's own space is PLAN UNITS, measured from the level's
+// north-west corner: x east from the west edge, y SOUTH from the north
+// edge, because the paper's y grows down and north is up the sheet -
+// the town sheet's law (EM-BUG3 `sheetY`) and the classic top view's
+// (+Z up the panel). Everything crossing the seam converts in one place
+// (`toPlan`), and the chains, the walked wash, the caret, the beacons
+// and the notes all land in it, so nothing needs a second transform.
 // ═══════════════════════════════════════════════════════════════════
 
 import {
@@ -82,8 +85,25 @@ export function createAutomapSheet(deps = {}) {
   const rec = () => deps.record?.() ?? null;
   const idx = () => deps.model?.() ?? null;
 
-  /** World (x, z) into the sheet's own space. ONE home for the seam. */
-  const toPlan = (x, z) => [x - (frame?.origin[0] ?? 0), z - (frame?.origin[1] ?? 0)];
+  /** World (x, z) into the sheet's own space. ONE home for the seam.
+   *  DISC8-C (Discord: "The arrow is pointing in the right direction but
+   *  when I go south on the map I go north"): the plan's y ran WITH +Z, so
+   *  on paper (y down) north was down - the level drawn north-south
+   *  mirrored under a caret whose heading (inkMap paintCaret) is north-up.
+   *  The plan's y is now measured from the NORTH edge (`origin[1]` is
+   *  bounds.z1). */
+  const toPlan = (x, z) => [x - (frame?.origin[0] ?? 0), (frame?.origin[1] ?? 0) - z];
+
+  /** DISC8-C: a floorOccupancy grid (rows run with +Z, world units)
+   *  re-seated in plan space - the same cells, the rows reversed - so the
+   *  walked wash lands under the walls it was cut with (it was left in
+   *  WORLD units, a level's origin away from its own walls). */
+  const occToPlan = (o, b) => (o ? {
+    ...o,
+    x0: o.x0 - b.x0,
+    z0: (b.z1 - o.z0) - o.h * o.cell,
+    at: (x, y) => o.at(x, o.h - 1 - y),
+  } : o);
 
   /** The level's frame and storey list, over EVERY row (the header's
    *  first law). Rebuilt only when the index itself changes.
@@ -107,7 +127,7 @@ export function createAutomapSheet(deps = {}) {
       rows,
       bounds,
       floors: deriveFloors(tris),
-      origin: bounds ? [bounds.x0, bounds.z0] : [0, 0],
+      origin: bounds ? [bounds.x0, bounds.z1] : [0, 0],   // the west and NORTH edges: see toPlan
     };
     cut = null;
     index = Math.max(0, Math.min(frame.floors.length - 1, index));
@@ -157,8 +177,11 @@ export function createAutomapSheet(deps = {}) {
         segments: boundarySegments, link: linkSegments, floors: f.floors, bounds: f.bounds,
       })
       : null;
-    // the chains arrive in WORLD units; the sheet's space is plan units
-    for (const chain of plan.chains) for (const p of chain) { p.x -= f.origin[0]; p.y -= f.origin[1]; }
+    // the chains and both grids arrive in WORLD units; the sheet's space
+    // is plan units, north up - through the one seam
+    for (const chain of plan.chains) for (const p of chain) [p.x, p.y] = toPlan(p.x, p.y);
+    plan.occupancy = occToPlan(plan.occupancy, f.bounds);
+    if (tint) tint.occupancy = occToPlan(tint.occupancy, f.bounds);
     cut = { key, plan, walked: tint };
     return cut;
   }

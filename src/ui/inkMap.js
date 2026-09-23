@@ -580,8 +580,9 @@ export const FIT_MARGIN = 0.92;
 
 /**
  * THE CARET, pointing where the player LOOKS. `yaw` is the motor's own,
- * measured from -Z and growing clockwise looking down, and a plan lays
- * z straight down the paper, so the heading is (sin yaw, -cos yaw).
+ * measured from +Z (north) and growing clockwise looking down (forward
+ * is [sin yaw, 0, cos yaw]), and every sheet lays +Z UP the paper
+ * (DISC8-C), so the heading is (sin yaw, -cos yaw).
  * Haloed then filled, as every mark on every sheet is.
  *
  * @param {*} ctx @param {number} x @param {number} y paper pixels

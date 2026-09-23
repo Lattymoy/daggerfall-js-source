@@ -278,6 +278,14 @@ float depthAt(vec2 wuv) {
 
 
 
+/** DISC7: the rect the previous frame's depth was written under, as the contact block samples it - the world
+ *  viewport in pixels (GL's bottom-left origin, `rect`) over the canvas it sits in (`canvas`, [W, H]). */
+export function holdPrevRect(out, rect, canvas) {
+  const W = canvas[0] > 0 ? canvas[0] : 1, H = canvas[1] > 0 ? canvas[1] : 1;
+  out[0] = rect[0] / W; out[1] = rect[1] / H; out[2] = rect[2] / W; out[3] = rect[3] / H;
+  return out;
+}
+
 /** EL8: THE CONTACT BLOCK, for the lit lane shaders (a solid's, the terrain's,
  *  a rig's - not a flat's): light i without a caster slot takes a contact
  *  shadow off the previous frame's depth. `toLight` is the unit direction,
@@ -287,6 +295,13 @@ uniform sampler2D uPrevDepth;
 uniform mat4 uPrevVP;
 uniform vec4 uPrevProjInfo;   // the previous frame's projection terms (viewDist)
 uniform vec4 uContactParams;  // x length, y thickness, z floor, w 1 = on
+// DISC7: the previous frame's WORLD RECT in the canvas, normalised (x, y, w, h). uPrevVP's clip space covers the
+// world viewport, and the depth it was written under is the whole canvas - a docked large HUD takes the bottom of it.
+// Every other screen pass maps through its rect (DEPTH_GLSL's depthAt); this block read the canvas as if the rect
+// were all of it, so under the docked bar every sample came from the wrong row and near the bottom from the bar's
+// cleared strip. The bounds tests stay in the rect's own [0,1].
+uniform vec4 uPrevRect;
+vec2 prevDepthUV(vec2 wuv) { return uPrevRect.xy + wuv * uPrevRect.zw; }
 float contactShadow(vec3 wp, vec3 n, vec3 toLight, float dist) {
   if (uContactParams.w <= 0.0) return 1.0;
   float len = min(dist, uContactParams.x);
@@ -301,7 +316,7 @@ float contactShadow(vec3 wp, vec3 n, vec3 toLight, float dist) {
   if (c0.w <= 0.0) return 1.0;
   vec2 uv0 = c0.xy / c0.w * 0.5 + 0.5;
   if (uv0.x < 0.0 || uv0.x > 1.0 || uv0.y < 0.0 || uv0.y > 1.0) return 1.0;
-  float z0 = texture(uPrevDepth, uv0).r * 2.0 - 1.0;
+  float z0 = texture(uPrevDepth, prevDepthUV(uv0)).r * 2.0 - 1.0;
   if (abs(c0.w - uPrevProjInfo.w / (z0 + uPrevProjInfo.z)) > uContactParams.y) return 1.0;
   for (int i = 1; i <= ${AIR_CONTACT_STEPS}; i++) {
     vec3 p = start + toLight * (len * float(i) / ${glslFloat(AIR_CONTACT_STEPS)});
@@ -309,7 +324,7 @@ float contactShadow(vec3 wp, vec3 n, vec3 toLight, float dist) {
     if (c.w <= 0.0) break;
     vec2 uv = c.xy / c.w * 0.5 + 0.5;
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) break;
-    float z = texture(uPrevDepth, uv).r * 2.0 - 1.0;
+    float z = texture(uPrevDepth, prevDepthUV(uv)).r * 2.0 - 1.0;
     float sceneDist = uPrevProjInfo.w / (z + uPrevProjInfo.z);
     float behind = c.w - sceneDist;   // c.w is the point's view distance under that projection
     if (behind > 0.02 && behind < uContactParams.y) return uContactParams.z;
@@ -948,6 +963,7 @@ export class AirPass {
     this.f = null;   // EL6: the frame's inputs, from prepare() to composite()
     // EL8: the previous frame's view-projection and projection terms, for the contact march; valid once a frame has been prepared
     this.prevVP = new Float32Array(16); this.prevProjInfo = new Float32Array(4); this.prevValid = false;
+    this.prevRect = new Float32Array([0, 0, 1, 1]);   // DISC7: the previous frame's world rect in the canvas, normalised
     this.contactParams = new Float32Array([AIR_CONTACT_LENGTH, AIR_CONTACT_THICKNESS, AIR_CONTACT_FLOOR, 0]);
     this.pending = false;   // a resolve is owed to the frame
     this.width = 0; this.height = 0;
@@ -1129,10 +1145,10 @@ export class AirPass {
    */
   prepare(f) {
     const [, , w, h] = f.viewport;
-    if (!(w > 0 && h > 0)) { this.f = null; return; }   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0)
+    if (!(w > 0 && h > 0)) { this.f = null; this.prevValid = false; return; }   // AUDIT-EL F18: a hidden canvas has no images to draw (texStorage2D refuses 0); AUDIT DISC7 C7: and the next frame has no previous one - its held matrices and rect would be two frames old against last frame's depth
     this.resize(w, h);
     // EL8: the frame just resolved becomes the previous - its view-projection and terms, for the contact march
-    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; }
+    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame; holdPrevRect(this.prevRect, this.rect, this.canvas); }
     this.f = f;
     this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone
     this.rect.set(f.viewport);
@@ -1348,6 +1364,7 @@ export class AirPass {
     gl.uniform1i(loc.prevDepth, AIR_CONTACT_UNIT);
     gl.uniformMatrix4fv(loc.prevVP, false, this.prevVP);
     gl.uniform4fv(loc.prevProjInfo, this.prevProjInfo);
+    gl.uniform4fv(loc.prevRect, this.prevRect);   // DISC7
     this.contactParams[3] = live ? 1 : 0;
     gl.uniform4fv(loc.contactParams, this.contactParams);
   }

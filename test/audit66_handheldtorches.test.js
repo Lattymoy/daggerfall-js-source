@@ -206,7 +206,7 @@ test('AUDIT 66 F4/F6/F5/F11: the four host lifetimes - the interior sweep runs w
   assert.ok(dc.indexOf('droppedTorches.destroyAll();') < dc.indexOf('sceneAmbience.dispose();'), 'F5: inside destroy(), not somewhere later');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const src = rd(host);
-    assert.match(src, /if \(_mode\(\) !== _torchesMode\) \{ droppedTorches\.destroyAll\(\); _torchesMode = _mode\(\); \}[^\n]*\n\s*if \(modes\.frame\(dt, now\)\) \{/, `F11 ${host}: the sweep is a transition EVENT, above the modal return - not a chore at the foot of a frame that indoor modes never reach`);
+    assert.match(src, /if \(_mode\(\) !== _torchesMode\) \{ droppedTorches\.destroyAll\(\); weaponRig\.silenceTorch\(\);[^\n]*? _torchesMode = _mode\(\); \}[^\n]*\n\s*if \(modes\.frame\(dt, now\)\) \{/, `F11 ${host}: the sweep is a transition EVENT, above the modal return - not a chore at the foot of a frame that indoor modes never reach`);
     assert.ok(src.indexOf('_torchesMode = _mode(); }') < src.indexOf('droppedTorches.tick(dt)'), `F11 ${host}: and it stands above the tick it used to share a line with`);
   }
 });

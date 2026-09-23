@@ -64,9 +64,13 @@ test('WM4c: loop3d takes a distance model, defaults LINEAR so the torches do not
   const src = read('src/systems/audio.js');
   const fn = src.slice(src.indexOf('  loop3d('), src.indexOf('  /** Per-frame listener sync'));
   assert.match(fn, /distanceModel = 'linear'/, 'the torches\' default changed');
-  assert.match(fn, /pan\.distanceModel = distanceModel;/, 'the parameter is not applied');
-  assert.match(fn, /move\(p\) \{\s*\n\s*pan\.positionX\.value = p\[0\]; pan\.positionY\.value = p\[1\]; pan\.positionZ\.value = p\[2\];/,
-    'the handle cannot follow a floating origin');
+  // DISC6 (3D-AUDIO): the panner is made in ONE place, `_panner`, and
+  // every position crosses the frame door `placeAudio` - so the pins
+  // follow the parameter and the move there.
+  assert.match(fn, /const pan = this\._panner\(pos, \{ refDistance, maxDistance, distanceModel \}\);/, 'the parameter is not passed');
+  const mk = src.slice(src.indexOf('  _panner(pos'), src.indexOf('  setLoop3d('));
+  assert.match(mk, /pan\.distanceModel = distanceModel;/, 'the parameter is not applied');
+  assert.match(fn, /move\(p\) \{ placeAudio\(pan, p\); \}/, 'the handle cannot follow a floating origin');
   // Before the context exists the engine answers null and nothing
   // throws - which is what lets the hosts retry every frame.
   const engine = new AudioEngine();

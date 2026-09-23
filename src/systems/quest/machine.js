@@ -307,6 +307,9 @@ export class QuestMachine {
   constructor(deps = {}) {
     this.deps = deps;
     this.quests = new Map();          // uid -> Quest
+    // AUDIT DISC7 C2: every QuestResourceBehaviour made over this machine, WEAKLY (a host dropped without a destroy
+    // must not be kept alive here) - a shared-quest resync relinks the ones standing on the quest it rebuilds
+    this._behaviourRefs = new Set();
     this.questsToInvoke = [];
     // QUEST1: quest names currently kept in LIVE sync with a party -
     // set on both a fresh receive AND on a manual share (bidirectional:
@@ -1089,6 +1092,19 @@ export class QuestMachine {
    *  someone else under the same name) is untouched. */
   markQuestShared(questName) { this.sharedQuestNames.add(questName); }
 
+
+  /** AUDIT DISC7 C2: a behaviour made over this machine (resourceBehaviour.js's constructor). */
+  _registerBehaviour(b) { if (typeof WeakRef === 'function') this._behaviourRefs.add(new WeakRef(b)); }
+  /** AUDIT DISC7 C2: the live behaviours standing on quest `uid` - the collected and the destroyed pruned as met. */
+  _liveBehaviours(uid) {
+    const out = [];
+    for (const ref of this._behaviourRefs) {
+      const b = ref.deref();
+      if (!b || b.isComponentDestroyed) { this._behaviourRefs.delete(ref); continue; }
+      if (b.questUID === uid) out.push(b);
+    }
+    return out;
+  }
   /** RECEIVER side, the RESYNC arm: the SAME quest (by name, already in
    *  sharedQuestNames) getting a fresher copy of someone else's progress -
    *  updates the EXISTING local Quest object in place, keeping THIS
@@ -1118,7 +1134,33 @@ export class QuestMachine {
     const uid = quest.uid;
     try { scratch.restoreSaveData({ ...questData, uid }, this._saveResolvers()); } catch (e) { console.warn(`[quest] shared quest resync refused: ${e?.message ?? e}`); return null; }
     const before = this._snapshotActionCompletion(quest);
+    // DISC6: a Foe's counters are THIS world's - the foes this player killed or hurt stand in their
+    // own world, and the partner's copy counts the partner's. The resync kept its copy (a kill made before it was
+    // wiped back to the partner's number, and the `killed N` trigger never saw the last of them); each kept Foe keeps
+    // the most either copy has seen, as action completion is kept monotonic below.
+    const foesBefore = new Map();
+    // AUDIT DISC7 C3: and its QUEUES - a standing foe's behaviour keeps a cursor into the spells and items queued on
+    // it (castSpellQueue / addItemQueue), and a partner's shorter queue under that cursor re-added the whole item
+    // queue to the foe (or its corpse) and re-cast the spells past it. The longer queue is this world's superset.
+    for (const r of quest.resources.values()) if (r.isFoe) foesBefore.set(r.symbol?.name ?? String(r.symbol), { killCount: r.killCount | 0, injured: !!r.injuredTrigger, dying: !!r.deathTrigger, spellQueue: r.spellQueue ?? null, itemQueue: r.itemQueue ?? null });
+    // AUDIT DISC7 C2: the behaviours standing on this quest - relinked below, at once, not on their next update
+    // (a person's or an item's never ticks, and a Place mount may come first)
+    const standing = this._liveBehaviours(uid);
     quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());
+    for (const r of quest.resources.values()) {
+      const was = r.isFoe ? foesBefore.get(r.symbol?.name ?? String(r.symbol)) : null;
+      if (!was) continue;
+      r.killCount = Math.max(r.killCount | 0, was.killCount);
+      // AUDIT DISC7 D7: the two flags THIS world's events set - an injury here (the behaviour's own check; the wave's
+      // mount re-arms it, here too) and a `kill` pending on a foe standing here (deathTrigger is no save state, so the
+      // partner's copy never carries it) - are kept. `restrained` is NOT: `restrain foe` / `clear restraint` are quest
+      // actions, so the copy the partner sends is as much the quest's word as ours, and ORing it back brought a
+      // restraint the partner's `clear` had lifted.
+      if (was.injured) r.injuredTrigger = true;
+      if (was.dying) r.deathTrigger = true;
+      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;
+      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;
+    }
     // AUDIT DROPS A2: completion is MONOTONIC - an action this player already saw complete never reads false
     // again off a partner's older copy (it would run a second time, reward and all, when its task next ticked)
     let t = 0;
@@ -1130,6 +1172,7 @@ export class QuestMachine {
     for (const resource of quest.resources.values()) {
       if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
     }
+    for (const b of standing) b.relinkToLiveQuest?.();   // AUDIT DISC7 C2: not on their next update - a Place mount may come first
     this._rearmNewlyCompletedEffects(quest, before);
     return quest;
   }

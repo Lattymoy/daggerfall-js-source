@@ -683,6 +683,23 @@ export class PlayerMotor {
     this._airVelZ = 0;
     this._acc = 0;   // the fixed-step accumulator restarts clean
     this._heightReset();   // a pending height action does not ride a teleport/load
+    this.holdFrame();   // DISC8-G: a landing reported before the warp is not the arrival's
+  }
+
+  /** DISC8-G: a render frame the host HOLDS the motor on (a pausing
+   *  window - the death screen, the respawn box, the court - or the
+   *  season screen) steps nothing, so it reports nothing. The report
+   *  flags are per-frame and only update() cleared them, so a host that
+   *  read them on a held frame billed the frame BEFORE the hold again,
+   *  once per held frame: a fatal fall charged through the death screen
+   *  killed the respawned player at the respawn point, again and again
+   *  until a reload built a fresh motor (Discord: "When I die from fall
+   *  damage ... I spawn in the air, and fall down and die"). DFU cannot
+   *  do this: its FixedUpdate does not run under PauseGame's timeScale
+   *  0, and CheckFallingDamage bills a landing once. */
+  holdFrame() {
+    this.jumped = false;
+    this.landedFallDistance = 0;
   }
 
   /**
