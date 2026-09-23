@@ -14,11 +14,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   birthsIn, cellsOf, systemAt, wornAmong, insideClip, birthLaw, coreVolume, exposure, weatherAt, resetWeatherMap,
-  SYSTEM_TYPES, CELL_OF,
+  radialOf, shapeBound, shapeMax, shapeFactor, SYSTEM_TYPES, CELL_OF,
 } from '../src/systems/weatherMap.js';
 import { cellOfField, packCells, FIELD_UNIFORMS } from '../src/render/volumetricClouds.js';
 import {
-  weatherMarks, paintWeatherLayer, paintWeatherLegend, WEATHER_NAMES, LEGEND_ROWS, LEGEND_INSET, WASH_RIM, CELL_RIM,
+  weatherMarks, paintWeatherGlyphs, paintWeatherLegend, WEATHER_NAMES, LEGEND_ROWS, LEGEND_INSET, CELL_GLYPH_MIN_PX,
 } from '../src/ui/weatherLayer.js';
 import { HeldMapWindow } from '../src/ui/heldMap.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
@@ -54,19 +54,38 @@ test('WEATHER3g: A CELL IS ITS FRONT\'S - born in the front\'s frame, riding it 
   let checked = 0;
   for (const c of cells) {
     assert.ok(c.id.startsWith(`${f.id}/`) && c.front === f && c.type === 'thunder');
-    assert.ok(Math.hypot(c.ox, c.oz) < f.core + SYSTEM_TYPES.thunder.core[1], 'born within the front\'s grown core, widened by a cell');
+    assert.ok(Math.hypot(c.ox, c.oz) < f.core * shapeBound(f.shape) + SYSTEM_TYPES.thunder.core[1] * shapeMax('thunder'), 'born within the front\'s grown core at its furthest (WEATHER3h), widened by a cell');
     assert.ok(c.bornAt >= f.bornAt - SYSTEM_TYPES.thunder.life[1] && c.bornAt < f.bornAt + f.life);
     for (const m of [c.bornAt + 1, c.bornAt + c.life / 2]) {
       const s = systemAt(c, m), fs = systemAt(f, m);
       if (!fs) { assert.equal(s, null, 'no front, no cell'); continue; }
       if (!s) continue;
       assert.ok(Math.abs(s.x - fs.x - c.ox) < 1e-6 && Math.abs(s.z - fs.z - c.oz) < 1e-6, 'it stands where it was born in the front\'s frame');
-      assert.deepEqual(s.clip, [fs.x, fs.z, fs.bands[0][0]], 'it paints within the front\'s core as the core is now');
+      assert.deepEqual(s.clip, [fs.x, fs.z, fs.bands[0][0], f.shape], 'it paints within the front\'s core as the core is now, in the front\'s own shape');
       checked++;
     }
     assert.equal(systemAt(c, f.bornAt + f.life + 1), null, 'it dies with its front');
   }
   assert.ok(checked > 10, `${checked} cell positions checked`);
+  // WEATHER3h: the draw covers the front's STRETCHED core, not its round one - cells are born out in the stretch
+  let beyondRound = 0;
+  for (const fr of fronts(60)) {
+    if (shapeBound(fr.shape) < 1.25) continue;
+    beyondRound += cellsOf(fr, subtropics).filter((c) => Math.hypot(c.ox, c.oz) > fr.core + SYSTEM_TYPES.thunder.core[1] * shapeMax('thunder')).length;
+  }
+  assert.ok(beyondRound > 20, `${beyondRound} cells born in the fronts' stretch, past the round core`);
+  // and past the stretched core itself, by up to a cell's own reach: a cell whose heart is outside the front but
+  // whose disc reaches in is drawn, or the front's outline would be short of storms where it stretches furthest
+  let pastCore = 0;
+  for (const fr of fronts(60)) {
+    const edge = fr.core * shapeBound(fr.shape), cellMax = SYSTEM_TYPES.thunder.core[1] * shapeMax('thunder');
+    for (const c of cellsOf(fr, subtropics)) {
+      const at = Math.hypot(c.ox, c.oz);
+      if (at > edge) pastCore++;
+      assert.ok(at <= edge + cellMax + 1e-6, 'never past where its disc could reach the front');
+    }
+  }
+  assert.ok(pastCore > 5, `${pastCore} cells born past the stretched core, reaching into it`);
   // the clip is the law's: inside the cell's disc but outside its front's core is not the cell's weather
   const cell = { type: 'thunder', x: 0, z: 0, r: 10000, env: 1, bands: [[10000, 'thunder']], clip: [20000, 0, 15000] };
   assert.equal(wornAmong([cell], -5000, 0).word, 'sunny', 'outside the front, nothing');
@@ -94,9 +113,10 @@ test('WEATHER3g: THE COX LAW HOLDS EVERYWHERE IN A FRONT - its rim as its heart,
       const m = young ? f.bornAt + 20 + r() * (SYSTEM_TYPES.thunder.life[1] - 40) : f.bornAt + f.life * (SYSTEM_TYPES.rain.grow + 0.02 + r() * 0.3);   // grown: full size
       const fs = systemAt(f, m);
       if (!fs) continue;
-      const u = k % 4 < 2 ? r() * 0.5 : 0.8 + r() * 0.2, a = r() * Math.PI * 2, R = fs.bands[0][0];
+      const u = k % 4 < 2 ? r() * 0.5 : 0.8 + r() * 0.2, a = r() * Math.PI * 2;
+      const R = fs.bands[0][0] * shapeFactor(f.shape, Math.cos(a), Math.sin(a));   // the core's outline that way (WEATHER3h)
       const x = fs.x + Math.cos(a) * u * R, z = fs.z + Math.sin(a) * u * R;
-      const hit = cells.some((cell) => { const s = systemAt(cell, m); return s && insideClip(s, x, z) && Math.hypot(s.x - x, s.z - z) < s.bands[0][0]; });
+      const hit = cells.some((cell) => { const s = systemAt(cell, m); return s && insideClip(s, x, z) && radialOf(s, x, z) < s.bands[0][0]; });
       const hour = (((m % 1440) + 1440) % 1440) / 60;
       const expect = 1 - Math.exp(-c * exposure('thunder', seasonValue(dateFromClassicMinutes(m)))[Math.floor(hour * 2) % 48]);
       const key = `${u < 0.5 ? 'heart' : 'rim'} ${young ? 'young' : 'grown'}`;
@@ -138,14 +158,14 @@ test('WEATHER3g: THE SKY\'S CLIP - a storm cell\'s cloud stands only over its fr
   const c = { x: 1000, z: 2000, r: 9000, word: 'thunder', imp: 1, rank: 0, clip: [3000, 4000, 30000] };
   const cell = cellOfField(c, shift);
   assert.deepEqual([cell.x, cell.z, cell.r], [900, 2050, 9000]);
-  assert.deepEqual(cell.clip, [2900, 4050, 30000], 'the clip moved by the host\'s own frame change');
+  assert.deepEqual(cell.clip, [2900, 4050, 30000, null], 'the clip moved by the host\'s own frame change (no shape: a circle)');
   assert.equal(cellOfField({ ...c, clip: null }, shift).clip, undefined, 'a front, a deck, a bank: no clip');
   const packed = packCells([cell, cellOfField({ ...c, clip: null }, shift)], 8);
   assert.deepEqual([...packed.k.slice(0, 4)], [2900, 4050, 30000, packed.c[3]], 'the clip, with the cell\'s own rim');
   assert.equal(packed.k[6], -1, 'none');
   const vc = rd('src/render/volumetricClouds.js');
   assert.match(vc, /uniform vec4 uCellK\[8\];/);
-  assert.match(vc, /vec4 k = uCellK\[i\];\s*\n\s*if \(k\.z > 0\.0\) w \*= 1\.0 - smoothstep\(k\.z - k\.w, k\.z, length\(xz - k\.xy\)\);/, 'the cell\'s weight fades at its front\'s rim');
+  assert.match(vc, /vec4 k = uCellK\[i\];\s*\n\s*if \(k\.z > 0\.0\) w \*= 1\.0 - smoothstep\(k\.z - k\.w, k\.z, shapedDist\(xz - k\.xy, uCellKS\[i\], uCellKU\[i\]\)\);/, 'the cell\'s weight fades at its front\'s rim, in the front\'s own shape (WEATHER3h)');
   assert.ok(FIELD_UNIFORMS.includes('uCellK'));
   assert.match(vc, /gl\.uniform4fv\(u\.uCellK, k\.k\);/);
 });
@@ -166,21 +186,19 @@ function recordingCtx() {
   });
 }
 
-test('WEATHER3g: THE MAP - a cell washed only inside its front, run together at its rim; glyphs kept to the map; the washes under the pen; the legend', () => {
-  // the marks carry the clip in map pixels
-  const [mark] = weatherMarks([{ id: 'c', type: 'thunder', x: TERRAIN * 10, z: TERRAIN * 400, env: 1, bands: [[TERRAIN * 3, 'thunder']], clip: [TERRAIN * 20, TERRAIN * 400, TERRAIN * 12] }]);
-  assert.deepEqual(mark.clip.map((v) => Math.round(v * 1e6) / 1e6), [20, 100, 12]);
+test('WEATHER3g: THE MAP - a cell signed only where it paints and when wide; glyphs kept to the map; the legend', () => {
+  // the marks carry the clip in map pixels, with the front's shape
+  const shape = Object.freeze([1, 0, 0, 0, 0, 0, 0]);
+  const [mark] = weatherMarks([{ id: 'c', type: 'thunder', x: TERRAIN * 10, z: TERRAIN * 400, env: 1, bands: [[TERRAIN * 3, 'thunder']], clip: [TERRAIN * 20, TERRAIN * 400, TERRAIN * 12, shape] }]);
+  assert.deepEqual(mark.clip.slice(0, 3).map((v) => Math.round(v * 1e6) / 1e6), [20, 100, 12]);
+  assert.equal(mark.clip[3], shape);
   const view = { ox: 0, oy: 0, scale: 4 }, opts = { paperW: 800, paperH: 600 };
-  const paint = (marks, extra = {}) => { const ctx = recordingCtx(); paintWeatherLayer(ctx, view, marks, { ...opts, ...extra }); return ctx.calls; };
-  const calls = paint([{ ...mark, env: 1, bands: [[8, 'thunder']], x: 50, y: 50, clip: [60, 50, 5] }]);
-  const clipAt = calls.findIndex((c) => c.fn === 'clip'), gradAt = calls.findIndex((c) => c.fn === 'createRadialGradient');
-  assert.ok(clipAt >= 0 && clipAt < gradAt, 'clipped to the front before the wash');
-  assert.equal(calls.filter((c) => c.fn === 'save').length, calls.filter((c) => c.fn === 'restore').length, 'the clip given back');
-  const g = calls[gradAt].args;
-  assert.ok(Math.abs(g[2] - g[5] * (1 - CELL_RIM)) < 1e-9 && CELL_RIM > WASH_RIM, 'a cell\'s wash thins across most of it, so a front\'s cells run together');
-  assert.ok(!calls.some((c) => c.fn === 'stroke'), 'its heart is outside its front: no glyph where it does not paint');
-  assert.ok(paint([{ ...mark, bands: [[8, 'thunder']], x: 50, y: 50, clip: [50, 50, 20] }]).some((c) => c.fn === 'stroke'), 'inside, it is signed');
-  // a system off the map's edge washes over it but is not signed on the margin
+  const paint = (marks, extra = {}) => { const ctx = recordingCtx(); paintWeatherGlyphs(ctx, view, marks, { ...opts, ...extra }); return ctx.calls; };
+  const wide = (CELL_GLYPH_MIN_PX + 1) / 4;
+  assert.ok(!paint([{ ...mark, bands: [[wide, 'thunder']], x: 50, y: 50, clip: [60, 50, 5, shape] }]).some((c) => c.fn === 'stroke'), 'its heart is outside its front: no glyph where it does not paint');
+  assert.ok(paint([{ ...mark, bands: [[wide, 'thunder']], x: 50, y: 50, clip: [50, 50, 20, shape] }]).some((c) => c.fn === 'stroke'), 'inside, it is signed');
+  assert.ok(!paint([{ ...mark, bands: [[(CELL_GLYPH_MIN_PX - 1) / 4, 'thunder']], x: 50, y: 50, clip: [50, 50, 20, shape] }]).some((c) => c.fn === 'stroke'), 'a narrow cell is not: a front is signed, not peppered');
+  // a system off the map's edge is not signed on the margin
   const rain = { id: 'r', type: 'rain', x: 30, y: 58, env: 1, bands: [[8, 'rain']], clip: null };
   assert.ok(paint([rain], { bounds: [100, 60] }).some((c) => c.fn === 'stroke'));
   assert.ok(!paint([{ ...rain, y: 61 }], { bounds: [100, 60] }).some((c) => c.fn === 'stroke'), 'off the map, no glyph');
@@ -189,27 +207,24 @@ test('WEATHER3g: THE MAP - a cell washed only inside its front, run together at 
   const [x, y, w, h] = paintWeatherLegend(lg, { paperW: 800 });
   assert.deepEqual(lg.calls.filter((c) => c.fn === 'fillText').map((c) => c.args[0]), LEGEND_ROWS.map((wd) => WEATHER_NAMES[wd]));
   assert.ok(Math.abs(x + w - (800 - LEGEND_INSET)) < 1e-9 && y === LEGEND_INSET && h > LEGEND_ROWS.length * 10);
-  assert.deepEqual([...LEGEND_ROWS].sort(), [...Object.keys(WEATHER_NAMES)].sort(), 'no weather the map can wash is left out of the key');
+  assert.deepEqual([...LEGEND_ROWS].sort(), [...Object.keys(WEATHER_NAMES)].sort(), 'no weather the map can draw is left out of the key');
 });
 
-test('WEATHER3g: THE SHEET - the washes go UNDER the pen already on it, and the legend is drawn over', () => {
+test('WEATHER3g: THE SHEET - the weather goes UNDER the pen already on it, and the legend is drawn over', () => {
   _resetForTests(); globalThis.location = { search: '?skin=enhanced' };
-  const layerCtx = recordingCtx();
   const node = () => { const n = { children: [], style: {}, dataset: {}, classList: { toggle() {}, add() {}, remove() {} }, append(...k) { n.children.push(...k); }, remove() {}, addEventListener() {}, removeEventListener() {}, setPointerCapture() {}, querySelectorAll: () => [] }; return n; };
   const woods = () => CLIMATES.Woodlands;
-  for (const headless of [false, true]) {
-    globalThis.document = { createElement: (tag) => (tag === 'canvas' ? { ...node(), getContext: () => (headless ? null : layerCtx) } : node()), getElementById: () => null, head: node(), body: node(), addEventListener() {}, removeEventListener() {} };
-    try {
-      const win = new HeldMapWindow({ getPlayerPixel: () => ({ x: 5, y: 5 }), getClimateIndex: woods, woods: { heightMapBuffer: new Uint8Array(6000).fill(10) }, mapSize: { width: 100, height: 60 }, weather: { on: () => true, minutes: () => YEAR + 290 * 1440 + 10 * 60 } });
-      const wx = win._weatherLayer();
-      const ctx = recordingCtx();
-      win._paintWeather(ctx, { view: { ox: 0, oy: 0, scale: 8 }, paperW: 800, paperH: 480, dpr: 1 }, wx);
-      const washes = ctx.calls.filter((c) => (headless ? c.fn === 'fill' && c.op === 'destination-over' : c.fn === 'drawImage'));
-      assert.ok(washes.length > 0 && washes.every((c) => c.op === 'destination-over'), `${headless ? 'headless' : 'kept layer'}: the washes are laid under the ink`);
-      assert.equal(ctx.globalCompositeOperation, 'source-over', 'and the pen is given back');
-      const legend = ctx.calls.filter((c) => c.fn === 'fillText');
-      assert.equal(legend.length, LEGEND_ROWS.length, 'the legend');
-      assert.ok(legend.every((c) => c.op === 'source-over'), 'drawn over, not under');
-    } finally { delete globalThis.document; }
-  }
+  globalThis.document = { createElement: () => node(), getElementById: () => null, head: node(), body: node(), addEventListener() {}, removeEventListener() {} };
+  try {
+    const win = new HeldMapWindow({ getPlayerPixel: () => ({ x: 5, y: 5 }), getClimateIndex: woods, woods: { heightMapBuffer: new Uint8Array(6000).fill(10) }, mapSize: { width: 100, height: 60 }, weather: { on: () => true, minutes: () => YEAR + 290 * 1440 + 10 * 60 } });
+    const wx = win._weatherLayer();
+    const ctx = recordingCtx();
+    win._paintWeather(ctx, { view: { ox: 0, oy: 0, scale: 8 }, paperW: 800, paperH: 480, dpr: 1 }, wx);
+    const fills = ctx.calls.filter((c) => c.fn === 'fill' && c.args[0] === 'nonzero');
+    assert.ok(fills.length > 0 && fills.every((c) => c.op === 'destination-over'), 'the regions are laid under the ink');
+    assert.equal(ctx.globalCompositeOperation, 'source-over', 'and the pen is given back');
+    const legend = ctx.calls.filter((c) => c.fn === 'fillText');
+    assert.equal(legend.length, LEGEND_ROWS.length, 'the legend');
+    assert.ok(legend.every((c) => c.op === 'source-over'), 'drawn over, not under');
+  } finally { delete globalThis.document; }
 });

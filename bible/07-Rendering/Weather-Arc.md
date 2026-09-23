@@ -776,3 +776,84 @@ one dark heart. Fog is signed only on a wide bank. No glyph is drawn on
 the margin past the map's edge. A legend in the sheet's top-right corner
 (the hands hold its lower edge) names every weather, with the pen's sign
 on the four that would otherwise read as the same pale.
+
+### Slice H shipped - shapes, and the map drawn, not blotted (2026-09-23)
+
+Mac, on slice G's render: "I just feel like they look too much like blobs
+and blots". Then, choosing the direction: "make them irregular", and on
+the drawn prototype: "I like it, but the goal is not being overbearing on
+the map. It needs to be more subtle". Pinned by
+`test/weather3h_shapes.test.js` (`tools/mutants/weather3h.json` 20/20
+dead). The pins of slices A-G that read a system as a disc, or the map
+as washes, were re-aimed at the shapes and the regions.
+
+**Verification.** All of slices A-G's mutants were re-run against the
+shaped law. None survived, but 22 records named source the slice had
+rewritten. Each was re-aimed at the same behaviour in the new code, and
+8 of those then survived the pins. 2 were already caught by pins in
+another file, and each record now names that file. The other 6 were
+real gaps, each now pinned:
+- The fog-under-a-deck case (3b) had stopped biting. Its search measured
+  the deck as a disc, so the spot it found lay under the deck's outer
+  ring, where the fog ranks first anyway. It now uses the law's shaped
+  measure, and asserts that the deck is the weightier cloud overhead.
+- The map (3e): each word is filled with its own hatch, the weaker
+  first, and nothing is traced of a region a pan puts off the paper on
+  any side.
+- The sheet (3f): the glyphs and the legend are drawn over the pen.
+- The law (3g): cells are born past the stretched core by up to a
+  cell's own reach, never further.
+
+One source fix came with it: `hatchPattern` kept a null when there was
+no canvas yet, which would have pinned the bare tint for good. It now
+keeps only a pattern it made.
+
+**The shapes (the law).**
+- A system's outline at bearing theta is its radius times m(theta) =
+  n (1 + sum a_k cos k(theta - phi_k)), for k = 2 (the stretch that makes
+  a front a band), 3 and 4 (its lobes). The amplitudes are drawn per
+  system up to its type's `SHAPE_AMPS`, and n makes the mean of m^2 round
+  the bearing exactly 1. So the outline encloses exactly the disc's area,
+  and every band is the same shape scaled.
+- The calibration is Campbell's theorem over AREAS, so it holds unchanged:
+  over all 24 rows and the whole map across 20 years, a mean miss of 0.36
+  points.
+- The multiple-angle identities give cos and sin of k theta from the unit
+  direction, so `shapeFactor` needs no trigonometry. The cloud shader runs
+  the identical polynomial (`shapeF`, with `uCellS/U` for the cell and
+  `uCellKS/KU` for its front's clip). A circle's shape reduces to
+  `length()` exactly.
+- Every reader of a system's size reads the shape: the worn word
+  (`radialOf`), a storm cell's clip, the search (`reach`, and the
+  exported `searchReach` bound), the wind of an approaching storm (the gap
+  to the outline that way), the distant storms' "under its heart", and
+  the map's glyphs. Cells are drawn over the front's STRETCHED core.
+- About a third of systems or more are visibly irregular: their outline
+  more than 1.4x further one way than another.
+- The search bound now carries the shape's stretch. Over ~2,000 real
+  systems no outline rode past that bound on its drift alone, so the ride
+  term is pinned by the formula, not by a probe.
+
+**The map (drawn in regions).**
+- The travel map no longer lays a soft radial wash per system. That was
+  an ink blot, whatever its colour.
+- It reads the worn word off the law at every 1.6 km cell of the bay,
+  once a refresh (`weatherField`). Each word's cells are traced into
+  closed loops (`traceLoops`, a directed boundary walk, so holes wind the
+  other way and a nonzero fill is the region). The staircase is rounded
+  three times in the coast's own hand (inkMap `roundCorners`) and thinned
+  to one point per third of a cell.
+- The regions are drawn under the pen: a faint tint (at most 0.3), a
+  sparse hatch only where something falls or lies (rain's single diagonal,
+  a storm's cross-hatch, snow's and sand's dots, fog's dashes), and a thin
+  outline (0.9 px) only where it helps. Cloud and the overcast deck are a
+  tint and nothing more, and cloud is never outlined.
+- The legend's swatches are the same hatch. The glyphs sign a front, not
+  every cell: a storm cell's needs a 24 px heart.
+- The map is the law: every cell's word is `weatherAt` at its centre.
+- Cost: 30-70 ms for the field and 20-50 ms for the regions, once per
+  refresh (10 game minutes). A pan redraws the kept loops (25-50k
+  points) and never reads the weather again. On the law's side: a
+  player's query 0.4 ms, the sky's read 0.6 ms, a hover's 12-hour
+  forecast 8-10 ms (once per pixel per refresh), and a warm whole-bay read
+  9-30 ms.

@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { skyCells, approachAt, systemsNear, weatherAt, SKY_WEIGHT, APPROACH_M, PRIORITY } from '../src/systems/weatherMap.js';
+import { skyCells, approachAt, systemsNear, weatherAt, radialOf, shapeFactor, SKY_WEIGHT, APPROACH_M, PRIORITY } from '../src/systems/weatherMap.js';
 import { pickCells, cellOf, cellOfField, CELL_EDGE, MAX_CELLS, VC_PROFILE } from '../src/render/volumetricClouds.js';
 import { cloudBaseOf } from '../src/scenes/shared.js';
 import { weatherRow } from '../src/render/enhancedSky.js';
@@ -59,8 +59,9 @@ function overhead(cells, x, z) {
   let word = 'sunny';
   for (const c of cells) {
     const edge = Math.max(1, c.edge ?? c.r * CELL_EDGE);
-    let w = 1 - smooth(c.r - edge, c.r, Math.hypot(c.x - x, c.z - z));
-    if (c.clip) w *= 1 - smooth(c.clip[2] - edge, c.clip[2], Math.hypot(c.clip[0] - x, c.clip[1] - z));   // WEATHER3g: uCellK
+    const sd = (cx, cz, shape) => Math.hypot(x - cx, z - cz) / shapeFactor(shape, x - cx, z - cz);   // WEATHER3h: the shader's shapedDist
+    let w = 1 - smooth(c.r - edge, c.r, sd(c.x, c.z, c.shape));
+    if (c.clip) w *= 1 - smooth(c.clip[2] - edge, c.clip[2], sd(c.clip[0], c.clip[1], c.clip[3]));   // WEATHER3g: uCellK
     if (w >= 1) word = c.word;
   }
   return word;
@@ -74,9 +75,9 @@ test('WEATHER3c: THE BLEND AGREES WITH THE WORD - over hundreds of places, the c
     const cells = pickCells(skyCells(near, x, z).map((c) => ({ ...cellOfField(c, (cx, cz) => [cx, cz]), word: c.word })), MAX_CELLS);
     // only places deep inside their band (the rims blend by design) or in clear air - a storm cell's rims include
     // its front's core, where it is clipped
-    const bandHere = near.map((s) => ({ s, d: Math.hypot(s.x - x, s.z - z) })).filter(({ s, d }) => d < s.r);
+    const bandHere = near.map((s) => ({ s, d: radialOf(s, x, z) })).filter(({ s, d }) => d < s.r);
     const inRim = bandHere.some(({ s, d }) => s.bands.some(([r]) => Math.abs(d - r) < r * CELL_EDGE + 1
-      || (s.clip && Math.abs(Math.hypot(s.clip[0] - x, s.clip[1] - z) - s.clip[2]) < r * CELL_EDGE + 1)));
+      || (s.clip && Math.abs(Math.hypot(s.clip[0] - x, s.clip[1] - z) / shapeFactor(s.clip[3], x - s.clip[0], z - s.clip[1]) - s.clip[2]) < r * CELL_EDGE + 1)));
     if (inRim) continue;
     assert.equal(overhead(cells, x, z), worn, `at ${x},${z} minute ${m}`);
     checked++; if (worn === 'sunny') clear++;

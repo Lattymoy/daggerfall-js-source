@@ -6,8 +6,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  weatherMarks, paintWeatherLayer, forecastText, weatherPhrase, mapOfField, fieldOfMapPixel, WEATHER_INK, WASH_ALPHA, INK_LEAN,
-  WASH_RIM, GLYPH_MIN_ENV, GLYPH_MIN_PX, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS, WEATHER_NAMES,
+  weatherMarks, paintWeatherGlyphs, paintWeatherRegions, HATCH, forecastText, weatherPhrase, mapOfField, fieldOfMapPixel, WEATHER_INK, INK_LEAN,
+  GLYPH_MIN_ENV, GLYPH_MIN_PX, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS, WEATHER_NAMES,
 } from '../src/ui/weatherLayer.js';
 import { forecastAt, PRIORITY } from '../src/systems/weatherMap.js';
 import { pixelOfField } from '../src/systems/weatherField.js';
@@ -57,21 +57,14 @@ test('WEATHER3e: THE MARKS - in map pixels, laid lowest priority first so the st
   for (let i = 1; i < marks.length; i++) assert.ok(PRIORITY.indexOf(marks[i].type) <= PRIORITY.indexOf(marks[i - 1].type));
 });
 
-test('WEATHER3e: THE WASH - a soft-rimmed disc per band in its weather\'s pigment, heavier with the storm\'s strength, the pen\'s glyph only on a grown storm with room for it', () => {
+test('WEATHER3e: THE PEN\'S SIGNS - a glyph only on a grown wet storm with room for it; the pigments each their own, leaning toward the pen', () => {
+  // WEATHER3h: the weather's body is its REGIONS (weather3h); the marks only sign it, and nothing else of them is inked
   const view = { ox: 0, oy: 0, scale: 2 };
-  const paint = (marks) => { const ctx = recordingCtx(); paintWeatherLayer(ctx, view, marks, { paperW: 400, paperH: 300 }); return ctx.calls; };
-  const storm = { id: 's', type: 'thunder', x: 50, y: 50, env: 1, bands: [[8, 'thunder'], [14, 'rain'], [22, 'cloudy']] };
+  const paint = (marks) => { const ctx = recordingCtx(); paintWeatherGlyphs(ctx, view, marks, { paperW: 400, paperH: 300 }); return ctx.calls; };
+  const storm = { id: 's', type: 'rain', x: 50, y: 50, env: 1, bands: [[8, 'rain'], [14, 'overcast'], [22, 'cloudy']] };
   const calls = paint([storm]);
-  const grads = calls.filter((c) => c.fn === 'createRadialGradient');
-  assert.equal(grads.length, 3, 'one wash a band');
-  assert.deepEqual(grads.map((c) => c.args[5]), [44, 28, 16], 'outer band first, the heart last');
-  grads.forEach((c, i) => {
-    const rr = c.args[5];
-    assert.ok(Math.abs(c.args[2] - rr * (1 - WASH_RIM)) < 1e-9, 'full over the inner part, thinning at the rim');
-    const word = storm.bands[2 - i][1];
-    assert.match(c.g.stops[0][1], new RegExp(`rgba\\(${WEATHER_INK[word].map(Math.round).join(', ')}, ${WASH_ALPHA[word]}\\)`), `${word}: its pigment at its full strength`);
-    assert.match(c.g.stops[1][1], /, 0\)$/, 'nothing at the edge');
-  });
+  assert.ok(calls.some((c) => c.fn === 'stroke'), 'the grown storm is signed');
+  assert.ok(!calls.some((c) => c.fn === 'createRadialGradient' || c.fn === 'fill'), 'and nothing else of it inked - no wash, no blot');
   // WEATHER3g: every pigment leans INK_LEAN toward the pen (no channel brighter than white leaned that far), and each is
   // its own colour - no two weathers within a visible distance of each other
   for (const rgb of Object.values(WEATHER_INK)) for (let k = 0; k < 3; k++) assert.ok(rgb[k] <= 255 - (255 - INK_RGB[k]) * INK_LEAN + 1e-9, 'every pigment leans toward the pen');
@@ -80,19 +73,10 @@ test('WEATHER3e: THE WASH - a soft-rimmed disc per band in its weather\'s pigmen
     const d = Math.hypot(...inks[i][1].map((v, k) => v - inks[j][1][k]));
     assert.ok(d > 30, `${inks[i][0]} and ${inks[j][0]} are told apart (${d.toFixed(0)})`);
   }
-  assert.ok(calls.some((c) => c.fn === 'stroke'), 'the grown storm is signed');
-  // a young storm: a lighter wash, no glyph
-  const young = paint([{ ...storm, env: GLYPH_MIN_ENV - 0.1 }]);
-  const a = (cs) => Number(/, ([\d.]+)\)$/.exec(cs.find((c) => c.fn === 'createRadialGradient').g.stops[0][1])[1]);
-  assert.ok(a(young) < a(calls));
-  assert.ok(!young.some((c) => c.fn === 'stroke'), 'a storm being born carries no mark yet');
-  // too small on the paper for a glyph
-  const tiny = paint([{ ...storm, bands: [[(GLYPH_MIN_PX - 1) / 2, 'thunder'], [14, 'rain']] }]);
-  assert.ok(!tiny.some((c) => c.fn === 'stroke'));
-  // off the paper: nothing
-  assert.deepEqual(paint([{ ...storm, x: 1000, y: 50 }]), [{ fn: 'setTransform', args: [1, 0, 0, 1, 0, 0], strokeStyle: undefined, fillStyle: undefined, lineWidth: undefined }]);
-  // a cloud field is washed, never signed
-  assert.ok(!paint([{ id: 'c', type: 'cloudy', x: 50, y: 50, env: 1, bands: [[30, 'cloudy']] }]).some((c) => c.fn === 'stroke'));
+  assert.ok(!paint([{ ...storm, env: GLYPH_MIN_ENV - 0.1 }]).some((c) => c.fn === 'stroke'), 'a storm being born carries no mark yet');
+  assert.ok(!paint([{ ...storm, bands: [[(GLYPH_MIN_PX - 1) / 2, 'rain'], [14, 'overcast']] }]).some((c) => c.fn === 'stroke'), 'too small on the paper for a glyph');
+  assert.deepEqual(paint([{ ...storm, x: 1000, y: 50 }]).filter((c) => c.fn !== 'setTransform'), [], 'off the paper: nothing');
+  assert.ok(!paint([{ id: 'c', type: 'cloudy', x: 50, y: 50, env: 1, bands: [[30, 'cloudy']] }]).some((c) => c.fn === 'stroke'), 'a cloud field is never signed');
 });
 
 test('WEATHER3e: THE FORECAST IN WORDS - the weather now, and when it next changes and to what', () => {
@@ -138,14 +122,14 @@ const winDeps = (extra = {}) => ({
   ...extra,
 });
 
-test('WEATHER3e: THE SHEET reads the whole bay once a refresh, keys its kept layer on it, and inks it under the marks', () => {
+test('WEATHER3e: THE SHEET reads the whole bay once a refresh, keys its kept layer on it, and draws it under the marks', () => {
   _resetForTests(); globalThis.location = { search: '?skin=enhanced' };
   withDocument(() => {
     const win = new HeldMapWindow(winDeps());
     const wx = win._weatherLayer();
     assert.ok(wx && wx.marks.length > 0, 'the systems over a 100 x 60 bay');
     const reach = Math.hypot(100, 60) / 2;
-    for (const m of wx.marks) assert.ok(Math.hypot(m.x - 50, m.y - 30) <= reach + m.bands.at(-1)[0] + 1e-6, `${m.id} stands over THIS sheet, whatever its height (the field's y runs from the bay's south edge)`);
+    for (const m of wx.marks) assert.ok(Math.hypot(m.x - 50, m.y - 30) <= reach + m.reach + 1e-6 && m.reach >= m.bands.at(-1)[0], `${m.id} stands over THIS sheet, whatever its height (the field's y runs from the bay's south edge)`);
     assert.equal(win._weatherLayer(), wx, 'read once a refresh, not once a frame');
     const sheet = win._worldSheet();
     const key0 = sheet.staticKey();
@@ -156,14 +140,15 @@ test('WEATHER3e: THE SHEET reads the whole bay once a refresh, keys its kept lay
     // painted with the static ink
     const ctx = recordingCtx();
     sheet.paintStatic(ctx, { model: win._ensureWorldModel(), view: { ox: 0, oy: 0, scale: 8 }, paperW: 800, paperH: 480, dpr: 1, band: 'near' });
-    assert.ok(ctx.calls.some((c) => c.fn === 'createRadialGradient'), 'the weather washed over the bay');
+    assert.ok(ctx.calls.some((c) => c.fn === 'fill' && c.args[0] === 'nonzero'), 'the weather drawn over the bay, as its regions (WEATHER3h)');
+    assert.ok(win._weatherLayer().regions && Object.keys(win._weatherLayer().regions).length > 0, 'traced once, and kept with the refresh');
     // no weather to read: the bay alone
     const off = new HeldMapWindow(winDeps({ weather: { on: () => false, minutes: () => clock.m } }));
     assert.equal(off._weatherLayer(), null);
     assert.match(off._worldSheet().staticKey(), /noweather$/);
     const ctx2 = recordingCtx();
     off._worldSheet().paintStatic(ctx2, { model: off._ensureWorldModel(), view: { ox: 0, oy: 0, scale: 8 }, paperW: 800, paperH: 480, dpr: 1, band: 'near' });
-    assert.ok(!ctx2.calls.some((c) => c.fn === 'createRadialGradient'));
+    assert.ok(!ctx2.calls.some((c) => c.fn === 'fill' && c.args[0] === 'nonzero'));
     assert.equal(new HeldMapWindow(winDeps({ weather: undefined }))._weatherLayer(), null, 'a host that hands no weather');
   });
 });
@@ -188,4 +173,48 @@ test('WEATHER3e: THE HOVER - the place\'s label and the weather there with its f
 
 test('WEATHER3e: the host hands the map its weather - on the map\'s lane and never under a pin, at its own clock', () => {
   assert.match(rd('src/scenes/world.js'), /weather: \{ on: \(\) => !weatherOverride && weatherMapOn\(\), minutes: \(\) => playerTicker\.classicMinutes \},/);
+});
+
+test('WEATHER3h: THE REGIONS\' HAND - each word filled with its own hatch, the weaker first so the stronger reads over it, and nothing traced the paper cannot show', () => {
+  // a canvas to cut the hatch on, and a context whose patterns say whose they are
+  const tile = { getContext: () => new Proxy({}, { get: () => () => {}, set: () => true }) };
+  globalThis.document = { createElement: () => tile };
+  try {
+    let made = null;
+    const calls = [];
+    const state = {};
+    const ctx = new Proxy({}, {
+      get: (_, k) => {
+        if (k === 'createPattern') return () => { made = { pattern: calls.length }; return made; };
+        if (k in state) return state[k];
+        return (...args) => calls.push({ fn: k, args, fillStyle: state.fillStyle });
+      },
+      set: (_, k, v) => { state[k] = v; return true; },
+    });
+    const loop = { pts: [{ x: 1, y: 1 }, { x: 5, y: 1 }, { x: 5, y: 5 }, { x: 1, y: 1 }], box: [1, 1, 5, 5] };
+    const words = ['thunder', 'cloudy', 'rain', 'snow'];
+    const patterns = {};
+    for (const w of words) { made = null; paintWeatherRegions(ctx, { ox: 0, oy: 0, scale: 10 }, { [w]: [loop] }, { paperW: 400, paperH: 300 }); patterns[w] = made ?? calls.filter((c) => c.fn === 'fill').at(-1).fillStyle; }
+    for (const w of ['rain', 'snow', 'thunder']) assert.ok(HATCH[w].lines?.length || HATCH[w].dots?.length, `${w} is hatched`);
+    for (const w of words) {
+      calls.length = 0;
+      paintWeatherRegions(ctx, { ox: 0, oy: 0, scale: 10 }, { [w]: [loop] }, { paperW: 400, paperH: 300 });
+      assert.equal(calls.find((c) => c.fn === 'fill').fillStyle, patterns[w], `${w}: its own hatch`);
+      assert.equal(typeof patterns[w], 'object', `${w}: a pattern where there is a canvas to cut it on, not the bare tint`);
+    }
+    // the weaker first: one sheet with every word, the fills in rising priority
+    calls.length = 0;
+    paintWeatherRegions(ctx, { ox: 0, oy: 0, scale: 10 }, Object.fromEntries(words.map((w) => [w, [loop]])), { paperW: 400, paperH: 300 });
+    const order = calls.filter((c) => c.fn === 'fill').map((c) => words.find((w) => patterns[w] === c.fillStyle));
+    assert.deepEqual(order, [...PRIORITY].reverse().filter((w) => words.includes(w)), 'the storm filled last, over the rain and the cloud');
+    // panned east past a region: it is left of the paper, and nothing of it is traced
+    for (const [ox, oy] of [[100, 0], [0, 100], [-100, 0], [0, -100]]) {
+      calls.length = 0;
+      paintWeatherRegions(ctx, { ox, oy, scale: 10 }, { rain: [loop] }, { paperW: 400, paperH: 300 });
+      assert.ok(!calls.some((c) => c.fn === 'lineTo' || c.fn === 'moveTo'), `panned to ${ox},${oy}: off the paper, not traced`);
+    }
+    calls.length = 0;
+    paintWeatherRegions(ctx, { ox: 3, oy: 3, scale: 10 }, { rain: [loop] }, { paperW: 400, paperH: 300 });
+    assert.ok(calls.some((c) => c.fn === 'lineTo'), 'and one still on it is');
+  } finally { delete globalThis.document; }
 });

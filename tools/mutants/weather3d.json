@@ -12,7 +12,7 @@
  {"name": "WEATHER3d-one-clip", "file": "src/systems/distantStorms.js",
   "old": "clip: d < THUNDER_CRACK_M ? CLIP_THUNDER : CLIP_ROLL };", "new": "clip: CLIP_ROLL };", "tests": ["test/weather3d_distantstorms.test.js"]},
  {"name": "WEATHER3d-overhead-doubled", "file": "src/systems/distantStorms.js",
-  "old": "        if (d < s.bands[0][0]) continue;   // under its heart: DFU's own storm\n", "new": "", "tests": ["test/weather3d_distantstorms.test.js"]},
+  "old": "        if (radialOf(s, at[0], at[1]) < s.bands[0][0] && insideClip(s, at[0], at[1])) continue;   // under its heart (its own shape, inside its front): DFU's own storm\n", "new": "", "tests": ["test/weather3d_distantstorms.test.js"]},
  {"name": "WEATHER3d-rain-strikes", "file": "src/systems/distantStorms.js",
   "old": "        if (s.type !== 'thunder') continue;\n", "new": "", "tests": ["test/weather3d_distantstorms.test.js"]},
  {"name": "WEATHER3d-backlog-burst", "file": "src/systems/distantStorms.js",

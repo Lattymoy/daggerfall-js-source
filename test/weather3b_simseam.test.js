@@ -14,7 +14,7 @@ import {
   weatherRespawn, restoreWeather, currentFieldCells, currentFieldCell, setSharedWeather, setSnowGroundLaw,
   weatherForClimate, WEATHER_ENUM, MAP_JUMP_M, STALE_DRAIN_MINUTES,
 } from '../src/systems/weatherSim.js';
-import { weatherAt, systemsNear, wornAmong, bandAt } from '../src/systems/weatherMap.js';
+import { weatherAt, systemsNear, wornAmong, bandAt, radialOf } from '../src/systems/weatherMap.js';
 import { FIELD_RANGE_M } from '../src/systems/weatherField.js';
 import { createWeatherFront, PRECIP_PEAK } from '../src/systems/weatherFront.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
@@ -200,13 +200,16 @@ test('WEATHER3b/c: the clouds get every system near, most important first, and t
   for (let i = 0; i < 20000 && !q; i++) {
     const x = 60000 + (i % 100) * 4000, z = 60000 + Math.floor(i / 100) * 4000, m = YEAR + 250 * 1440 + 5 * 60 + (i % 7) * 60;
     if (weatherAt(x, z, m, swamp).word !== 'fog') continue;
-    const over = systemsNear(x, z, m, swamp, 0).some((sy) => bandAt(sy, Math.hypot(sy.x - x, sy.z - z))?.word === 'overcast');   // a deck, or a front's own deck
+    // a deck, or a front's own deck - in the law's own measure, the system's shaped reach that way (WEATHER3h)
+    const over = systemsNear(x, z, m, swamp, 0).some((sy) => bandAt(sy, radialOf(sy, x, z))?.word === 'overcast');
     if (over) q = { x, z, m };
   }
   assert.ok(q, 'a fog bank under a deck');
   lane();
   sampleWeatherField(q.m, CLIMATES.Swamp, [q.x, q.z], swamp, 'live');
   assert.equal(currentWeather(), 'fog');
+  // the case bites: a cell the player is under outranks the fog in the sky's order
+  assert.notEqual(currentFieldCells().find((c) => c.d < c.r)?.word, 'fog', 'the deck is the weightier cloud overhead');
   assert.equal(currentFieldCell()?.word, 'fog', 'the fog, not the deck above it');
 });
 

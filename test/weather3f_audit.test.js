@@ -45,19 +45,21 @@ test('AUDIT WEATHER3 R1: ONE GROUND LAW for every reader - the travel map inks a
   assert.equal(ground('thunder', 100000, 100000, WINTER), 'snow');
   assert.equal(ground('rain', 100000, 100000, SPRING), 'rain', 'and rain in spring');
   assert.equal(ground('fog', 100000, 100000, WINTER), 'fog', 'only what falls is turned');
-  // the map's washes: never a rain wash over winter snow ground
+  // the map's marks: never a rain mark over winter snow ground
   const sys = systemsNear(400000, 200000, WINTER, woods, 200000);
   assert.ok(sys.some((s) => s.type === 'rain' || s.type === 'thunder'), 'the winter woods still have rain in the table');
   const marks = weatherMarks(sys, (w, x, z) => ground(w, x, z, WINTER));
   for (const m of marks) { assert.ok(m.type !== 'rain' && m.type !== 'thunder'); for (const [, w] of m.bands) assert.ok(w !== 'rain' && w !== 'thunder'); }
   // the hover's forecast says what the player standing there gets
   let checked = 0;
-  for (let i = 0; i < 300 && checked < 5; i++) {
-    const x = 120000 + i * 2711, z = 90000 + (i % 23) * 7001;
-    if (!['rain', 'thunder'].includes(weatherAt(x, z, WINTER, woods).word)) continue;
-    const f = forecastAt(x, z, WINTER, woods, { hours: 2, step: 30, ground });
+  for (let i = 0; i < 600 && checked < 5; i++) {
+    // across the winter's days as well as the land: a front is a day and 100 km wide (WEATHER3g), one minute's line
+    // may cross none
+    const x = 120000 + i * 2711, z = 90000 + (i % 23) * 7001, m = WINTER + (i % 29) * 1440;
+    if (!['rain', 'thunder'].includes(weatherAt(x, z, m, woods).word)) continue;
+    const f = forecastAt(x, z, m, woods, { hours: 2, step: 30, ground });
     assert.equal(f.now.word, 'snow', 'the forecast of a winter storm is snow');
-    sampleWeatherField(WINTER, WOODS, [x, z], woods, 'jump');
+    sampleWeatherField(m, WOODS, [x, z], woods, 'jump');
     assert.equal(currentWeather(), 'snow', 'as the player there gets');
     checked++;
   }
@@ -70,7 +72,8 @@ test('AUDIT WEATHER3 R1: ONE GROUND LAW for every reader - the travel map inks a
   assert.equal(lit, 0);
   // the travel map passes it
   const src = rd('src/ui/heldMap.js');
-  assert.match(src, /const ground = mapGround\(climateAt\);\s*\n\s*this\._wx = \{ bucket, key: `wx\$\{bucket\}`, minutes, ground, marks: weatherMarks\(systems, \(w, x, z\) => ground\(w, x, z, minutes\)\)/);
+  assert.match(src, /const ground = mapGround\(climateAt\);\s*\n\s*this\._wx = \{ bucket, key: `wx\$\{bucket\}`, minutes, ground, systems, marks: weatherMarks\(systems, \(w, x, z\) => ground\(w, x, z, minutes\)\)/);
+  assert.match(src, /weatherField\(wx\.systems, \{ width: this\._size\.width, height: this\._size\.height, ground: \(w, x, z\) => wx\.ground\(w, x, z, wx\.minutes\) \}\)/, 'WEATHER3h: the regions read through it too');
   assert.match(src, /forecastAt\(fx, fz, this\.deps\.weather\.minutes\(\), this\.deps\.getClimateIndex, \{ hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx\.ground \}\)/);
 });
 
@@ -100,28 +103,43 @@ function recordingCtx() {
     set: (_, k, v) => { state[k] = v; return true; },
   });
 }
-test('AUDIT WEATHER3 R2a: the washes are inked ONCE a refresh on their own layer - a pan is one image, not the bay\'s gradients again', () => {
+test('AUDIT WEATHER3 R2a: the weather is READ once a refresh - a pan or a zoom redraws the kept regions, never the bay\'s weather again', () => {
+  // WEATHER3h: the soft washes (and the layer that kept them) are gone; the weather is the law read over the bay into
+  // regions once a refresh. What R2a held stands: a pan costs the drawing, not the reading.
   _resetForTests(); globalThis.location = { search: '?skin=enhanced' };
-  const layerCtx = recordingCtx();
   const node = () => { const n = { children: [], style: {}, dataset: {}, classList: { toggle() {}, add() {}, remove() {} }, append(...k) { n.children.push(...k); }, remove() {}, addEventListener() {}, removeEventListener() {}, setPointerCapture() {}, querySelectorAll: () => [] }; return n; };
-  globalThis.document = { createElement: (tag) => (tag === 'canvas' ? { ...node(), getContext: () => layerCtx } : node()), getElementById: () => null, head: node(), body: node(), addEventListener() {}, removeEventListener() {} };
+  globalThis.document = { createElement: () => node(), getElementById: () => null, head: node(), body: node(), addEventListener() {}, removeEventListener() {} };
   try {
     const clock = { m: SPRING + 8 * 60 };
     const win = new HeldMapWindow({ getPlayerPixel: () => ({ x: 5, y: 5 }), getClimateIndex: woods, woods: { heightMapBuffer: new Uint8Array(6000).fill(10) }, mapSize: { width: 100, height: 60 }, weather: { on: () => true, minutes: () => clock.m } });
     const wx = win._weatherLayer();
     const env = (ox) => ({ view: { ox, oy: 0, scale: 8 }, paperW: 800, paperH: 480, dpr: 1 });
-    const first = recordingCtx();
-    win._paintWeather(first, env(0), wx);
-    const washes = layerCtx.calls.filter((c) => c.fn === 'createRadialGradient').length;
-    assert.ok(washes > 0, 'the washes inked onto their layer');
+    win._paintWeather(recordingCtx(), env(0), wx);
+    const regions = wx.regions;
+    assert.ok(regions && Object.keys(regions).length > 0, 'the regions traced on the first paint');
     for (const ox of [3, 7, 12]) {
       const pan = recordingCtx();
       win._paintWeather(pan, env(ox), wx);
-      assert.equal(pan.calls.filter((c) => c.fn === 'createRadialGradient').length, 0, 'a pan frame inks no wash');
-      const img = pan.calls.find((c) => c.fn === 'drawImage');
-      assert.deepEqual(img.args.slice(1).map((v) => v + 0), [-ox * 8, 0, 800, 480], 'the layer drawn under the view');
+      assert.equal(wx.regions, regions, 'a pan frame reads no weather: the same regions');
+      assert.ok(pan.calls.some((c) => c.fn === 'fill'), 'and draws them');
     }
-    assert.equal(layerCtx.calls.filter((c) => c.fn === 'createRadialGradient').length, washes, 'and the layer was not inked again');
+    clock.m += 10;
+    const next = win._weatherLayer();
+    win._paintWeather(recordingCtx(), env(0), next);
+    assert.notEqual(next.regions, regions, 'the next refresh reads the bay again');
+    // the regions go UNDER the pen; the glyphs and the legend over it. With no region to lay, every stroke on the
+    // sheet is made over the pen - a glyph under the parchment is a glyph no one sees
+    const over = [];
+    const state = { globalCompositeOperation: 'source-over' };
+    const ink = new Proxy({}, {
+      get: (_, k) => (k in state ? state[k] : k === 'measureText' ? (t) => ({ width: t.length * 6 }) : (...a) => over.push({ fn: k, op: state.globalCompositeOperation })),
+      set: (_, k, v) => { state[k] = v; return true; },
+    });
+    const rain = { id: 'r', type: 'rain', x: 50, y: 30, env: 1, bands: [[20, 'rain']], reach: 20, clip: null };
+    win._paintWeather(ink, env(0), { ...next, regions: {}, marks: [rain] });
+    const drawn = over.filter((c) => ['stroke', 'fill', 'fillRect', 'strokeRect', 'fillText'].includes(c.fn));
+    assert.ok(drawn.some((c) => c.fn === 'stroke'), 'the rain\'s glyph is drawn');
+    for (const c of drawn) assert.equal(c.op, 'source-over', `${c.fn} over the pen`);
   } finally { delete globalThis.document; }
 });
 

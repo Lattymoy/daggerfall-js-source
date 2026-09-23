@@ -45,7 +45,7 @@ import { isEnhanced } from './uiSkin.js';   // CLK2: the evolution is the enhanc
 import { getPref } from './uiPrefs.js';
 import { groundIsSnowy, climateSeasonFromMinutes } from '../world/climateSwaps.js';   // WEATHER2a: the terrain's own snow law
 import { fieldAt, FIELD_RANGE_M, pixelOfField } from './weatherField.js';   // WEATHER2b: the day's words as places
-import { systemsNear, wornAmong, skyCells, approachAt } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land; WEATHER3c: its sky and its wind
+import { systemsNear, wornAmong, skyCells, approachAt, insideClip } from './weatherMap.js';   // WEATHER3b: the world weather map - systems on the land; WEATHER3c: its sky and its wind
 
 export { WEATHER_TYPES };
 
@@ -239,7 +239,7 @@ function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
   // the sky it fills from here; the renderer keeps what its slots hold and draws the lowest priority first
   const ground = mapGround(climateAt);
   _fieldCells = skyCells(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes)).filter((c) => c.d - c.r <= FIELD_RANGE_M).sort((a, b) => b.imp - a.imp);
-  _fieldInside = _fieldCells.find((c) => c.d < c.r && c.word === worn.word) ?? null;
+  _fieldInside = _fieldCells.find((c) => c.d < c.r && insideClip(c, at[0], at[1]) && c.word === worn.word) ?? null;   // c.d in the system's own measure (WEATHER3h); a storm cell only inside its front
   _mapApproach = approachAt(_mapNear, at[0], at[1]);
   const away = _mapSampledAt === null || minute < _mapSampledAt || minute - _mapSampledAt > STALE_DRAIN_MINUTES
     || !_mapAt || Math.hypot(at[0] - _mapAt[0], at[1] - _mapAt[1]) > MAP_JUMP_M;

@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import {
   weatherAt, systemsNear, forecastAt, birthLaw, dayShares, exposure, targetShares, coverMeans,
   birthsIn, systemAt, bandAt, windAt, windPath, envelope, maxRadius, coreVolume, resetWeatherMap,
-  SYSTEM_TYPES, PRIORITY, SAND_SHARE_OF_CLOUDY, CELL_OF, cellsOf, insideClip,
+  SYSTEM_TYPES, PRIORITY, SAND_SHARE_OF_CLOUDY, CELL_OF, cellsOf, insideClip, radialOf, shapeFactor, searchReach,
 } from '../src/systems/weatherMap.js';
 import { WEATHER_TABLE, weatherTableFor, rollWeather, WEATHER_ENUM } from '../src/systems/weatherTable.js';
 import * as sim from '../src/systems/weatherSim.js';
@@ -201,7 +201,7 @@ test('WEATHER3a: THE SEARCH MISSES NOTHING - every system over a point, against 
   const at = everywhere(CLIMATES.Swamp);
   const brute = (x, z, m) => {
     const want = new Set();
-    const over = (b) => { const s = systemAt(b, m); if (s && Math.hypot(s.x - x, s.z - z) < s.r) want.add(s.id); };
+    const over = (b) => { const s = systemAt(b, m); if (s && radialOf(s, x, z) < s.r) want.add(s.id); };   // WEATHER3h: in its own shape's measure
     for (const type of LATTICE_TYPES) {
       const spec = SYSTEM_TYPES[type], [nm, nt] = spec.node;
       const gx = Math.floor(x / nm), gz = Math.floor(z / nm), gt = Math.floor(m / nt);
@@ -211,7 +211,7 @@ test('WEATHER3a: THE SEARCH MISSES NOTHING - every system over a point, against 
     }
     return [...want].sort();
   };
-  const found = (x, z, m) => systemsNear(x, z, m, at, 0).filter((s) => s.d < s.r).map((s) => s.id).sort();
+  const found = (x, z, m) => systemsNear(x, z, m, at, 0).filter((s) => radialOf(s, x, z) < s.r).map((s) => s.id).sort();
   // the hard places: the DOWNWIND edge of a system at the end of its full growth - as wide as it gets, and as
   // far from its birth as it gets while that wide
   let probes = 0;
@@ -220,7 +220,8 @@ test('WEATHER3a: THE SEARCH MISSES NOTHING - every system over a point, against 
       for (const b of birthsIn(type, 5 + (g % 8), 4 + (g >> 3), Math.floor((YEAR + 250 * 1440) / nodeOf(type)[1]) + g, at)) {
         const m = b.bornAt + b.life * (1 - SYSTEM_TYPES[type].decay) - 1, s = systemAt(b, m);
         const dx = s.x - b.bornX, dz = s.z - b.bornZ, len = Math.hypot(dx, dz) || 1;
-        const x = s.x + (dx / len) * s.r * 0.97, z = s.z + (dz / len) * s.r * 0.97;
+        const edge = s.r * shapeFactor(s.shape, dx, dz) * 0.97;   // WEATHER3h: its shaped outline, that way
+        const x = s.x + (dx / len) * edge, z = s.z + (dz / len) * edge;
         const got = found(x, z, m);
         assert.ok(got.includes(s.id), `${s.id}: its own downwind edge finds it`);
         assert.deepEqual(got, brute(x, z, m));
@@ -229,24 +230,14 @@ test('WEATHER3a: THE SEARCH MISSES NOTHING - every system over a point, against 
     }
   }
   assert.ok(probes > 30, `${probes} edges probed`);
-  // and the edges only the DRIFT reaches: the system rode so far that its birth node lies outside a box of its
-  // size alone - found only because the search allows for the whole ride
-  let beyond = 0;
-  for (const type of ['sandstorm', 'rain', 'cloudy']) {
-    for (let g = 0; g < 400 && beyond < 3; g++) {
-      for (const b of birthsIn(type, 5 + (g % 20), 4 + ((g / 20) | 0), Math.floor((YEAR + 250 * 1440) / nodeOf(type)[1]) + g, at)) {
-        const m = b.bornAt + b.life * (1 - SYSTEM_TYPES[type].decay) - 1, s = systemAt(b, m);
-        const dx = s.x - b.bornX, dz = s.z - b.bornZ, len = Math.hypot(dx, dz) || 1;
-        const x = s.x + (dx / len) * s.r * 0.97, z = s.z + (dz / len) * s.r * 0.97;
-        const node = (v) => Math.floor(v / nodeOf(type)[0]), R = maxRadius(type);
-        const outside = (v, born) => node(born) < node(v - R) || node(born) > node(v + R);
-        if (!outside(x, b.bornX) && !outside(z, b.bornZ)) continue;
-        assert.ok(found(x, z, m).includes(s.id), `${s.id}: found ${Math.round(Math.hypot(x - b.bornX, z - b.bornZ))} m from its birth`);
-        beyond++;
-      }
-    }
+  // and the bound the walk covers: a system's furthest outline at full growth plus its longest ride (WEATHER3h: with
+  // the shapes' stretch in the outline, no real draw rides past the outline's own bound any more - the ride is held
+  // by the formula, the part of the bound only a system at every extreme at once would reach)
+  for (const type of LATTICE_TYPES) {
+    const spec = SYSTEM_TYPES[type];
+    assert.ok(searchReach(type, 0) >= maxRadius(type) + spec.speed * spec.life[1], `${type}: the walk allows the whole ride`);
+    assert.equal(searchReach(type, 5000) - searchReach(type, 0), 5000, 'and the range');
   }
-  assert.ok(beyond >= 3, `${beyond} systems ridden past their own size were probed`);
   for (let i = 0; i < 8; i++) {
     const x = 200000 + i * 9973, z = 150000 + i * 7919, m = YEAR + 250 * 1440 + i * 211;
     assert.deepEqual(found(x, z, m), brute(x, z, m));

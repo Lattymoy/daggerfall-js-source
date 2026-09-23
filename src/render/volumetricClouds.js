@@ -225,7 +225,8 @@ export function cellOfField(c, toHost) {
   const cell = cellOf(c.word, x, z, c.r);
   if (!cell || c.imp == null) return cell;
   const out = { ...cell, imp: c.imp, rank: c.rank };
-  if (c.clip) out.clip = [...toHost(c.clip[0], c.clip[1]), c.clip[2]];
+  if (c.shape) out.shape = c.shape;   // WEATHER3h: its outline; a frame change is a translation, the shape rides it
+  if (c.clip) out.clip = [...toHost(c.clip[0], c.clip[1]), c.clip[2], c.clip[3] ?? null];
   return out;
 }
 
@@ -237,16 +238,22 @@ export function slabOf(profile, cells) {
   return { base, top };
 }
 
-/** The cells packed for the shader's five arrays (x, z, r, edge |
+/** The cells packed for the shader's nine arrays (x, z, r, edge |
  *  base, top, density, flat | dark, shear, cover, grey | tint, vary |
- *  WEATHER3g the clip disc: x, z, r, its rim - r -1 for none),
- *  capped at `cap`;
+ *  WEATHER3g the clip disc: x, z, r, its rim - r -1 for none | WEATHER3h
+ *  the cell's shape and its clip's, each two vec4s: n, c2, s2, c3 | s3,
+ *  c4, s4, 0 - a circle is 1, 0, 0, 0 | 0, 0, 0, 0), capped at `cap`;
  *  the rim never narrower than a metre (smoothstep's edges must be
  *  ordered). Pure over the arrays it is handed. */
 export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4), k: new Float32Array(MAX_CELLS * 4) }) {
   const n = Math.min(cells?.length ?? 0, cap, MAX_CELLS);
   out.t ??= new Float32Array(MAX_CELLS * 4);   // WEATHER2d: the tints
   out.k ??= new Float32Array(MAX_CELLS * 4);   // WEATHER3g: the clips
+  for (const key of ['s', 'u', 'ks', 'ku']) out[key] ??= new Float32Array(MAX_CELLS * 4);   // WEATHER3h: the shapes
+  const shape = (sh, a, b, o) => {
+    a[o] = sh ? sh[0] : 1; a[o + 1] = sh ? sh[1] : 0; a[o + 2] = sh ? sh[2] : 0; a[o + 3] = sh ? sh[3] : 0;
+    b[o] = sh ? sh[4] : 0; b[o + 1] = sh ? sh[5] : 0; b[o + 2] = sh ? sh[6] : 0; b[o + 3] = 0;
+  };
   for (let i = 0; i < n; i++) {
     const c = cells[i], o = i * 4;
     out.c[o] = c.x; out.c[o + 1] = c.z; out.c[o + 2] = c.r; out.c[o + 3] = Math.max(1, c.edge ?? c.r * CELL_EDGE);
@@ -256,6 +263,8 @@ export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4)
     out.t[o] = t[0]; out.t[o + 1] = t[1]; out.t[o + 2] = t[2]; out.t[o + 3] = c.vary ?? 0;   // VC6a: the spare w is the cell's own type variation
     // WEATHER3g: a storm cell's clip - its front's core - with the cell's own rim, so the cloud stands where the word is
     if (c.clip) { out.k[o] = c.clip[0]; out.k[o + 1] = c.clip[1]; out.k[o + 2] = c.clip[2]; out.k[o + 3] = out.c[o + 3]; } else { out.k[o] = 0; out.k[o + 1] = 0; out.k[o + 2] = -1; out.k[o + 3] = 1; }
+    shape(c.shape, out.s, out.u, o);
+    shape(c.clip?.[3], out.ks, out.ku, o);
   }
   out.count = n;
   return out;
@@ -394,6 +403,10 @@ uniform vec4 uCellA[8];   // base, top, density, flat
 uniform vec4 uCellB[8];   // dark, shear, cover, grey
 uniform vec4 uCellC[8];   // WEATHER2d: the tint on the zone's cloud colours (rgb); VC6a: w the cell's own vary
 uniform vec4 uCellK[8];   // WEATHER3g: the disc a storm cell paints within (its front's core): x, z, radius (-1 none), rim
+uniform vec4 uCellS[8];   // WEATHER3h: a cell's shape, n c2 s2 c3 | s3 c4 s4 - weatherMap.js shapeFactor's polynomial
+uniform vec4 uCellU[8];
+uniform vec4 uCellKS[8];  // WEATHER3h: its clip's shape (its front's)
+uniform vec4 uCellKU[8];
 uniform vec2 uDrift;      // world metres
 uniform vec2 uShift;      // the floating origin's recenters, accumulated - added to every position so the field is sampled where it ABSOLUTELY is
 uniform vec2 uCamXZ;      // the camera's world position, the sky map's own origin
@@ -404,6 +417,15 @@ const float VARIATION_M = ${VARIATION_METRES.toFixed(1)};
 const float MOTTLE_M = ${MOTTLE_METRES.toFixed(1)};
 const float WARP_M = ${WARP_METRES.toFixed(1)};
 float remap(float v, float lo, float hi, float nlo, float nhi) { return nlo + (v - lo) / (hi - lo) * (nhi - nlo); }
+// WEATHER3h: m(theta) of a shape along the unit direction u - cos and sin of 2, 3 and 4 theta by the multiple-angle
+// identities, as weatherMap.js shapeFactor reads them; a point's distance in the shape's own measure is its distance
+// over this
+float shapeF(vec4 a, vec4 b, vec2 u) {
+  float c = u.x, s = u.y;
+  float c2 = c * c - s * s, s2 = 2.0 * c * s, c3 = c * (4.0 * c * c - 3.0), s3 = s * (3.0 - 4.0 * s * s), c4 = 2.0 * c2 * c2 - 1.0, s4 = 2.0 * s2 * c2;
+  return a.x * (1.0 + a.y * c2 + a.z * s2 + a.w * c3 + b.x * s3 + b.y * c4 + b.z * s4);
+}
+float shapedDist(vec2 v, vec4 a, vec4 b) { float l = length(v); return l / shapeF(a, b, v / max(l, 1e-3)); }
 // WEATHER2c: THE PROFILE AT A PLACE. The zone's terms, with every cell
 // whose rim reaches this ground point blended over them by its weight -
 // resolved before a march and again at every step while cells stand,
@@ -416,9 +438,9 @@ void resolveAt(vec2 xz) {
   for (int i = 0; i < 8; i++) {
     if (i >= uCellCount) break;
     vec4 c = uCell[i];
-    float w = 1.0 - smoothstep(c.z - c.w, c.z, length(xz - c.xy));
+    float w = 1.0 - smoothstep(c.z - c.w, c.z, shapedDist(xz - c.xy, uCellS[i], uCellU[i]));   // WEATHER3h: its own outline
     vec4 k = uCellK[i];
-    if (k.z > 0.0) w *= 1.0 - smoothstep(k.z - k.w, k.z, length(xz - k.xy));   // WEATHER3g
+    if (k.z > 0.0) w *= 1.0 - smoothstep(k.z - k.w, k.z, shapedDist(xz - k.xy, uCellKS[i], uCellKU[i]));   // WEATHER3g: only inside its front
     if (w <= 0.0) continue;
     vec4 a = uCellA[i], b = uCellB[i];
     fBase = mix(fBase, a.x, w); fTop = mix(fTop, a.y, w); fDensity = mix(fDensity, a.z, w); fFlat = mix(fFlat, a.w, w);
@@ -745,7 +767,7 @@ function link(gl, vs, fs) {
 }
 
 /** The field's uniforms, shared by both marches. */
-export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uDrift', 'uShift', 'uCamXZ'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
+export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uSlabBase', 'uSlabTop', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps'];   // VC6b: uSkyTint, uDusk
 export const SHADOW_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uOrigin', 'uExtent', 'uLightDir', 'uSteps'];
 export const COMPOSITE_UNIFORMS = ['uMap', 'uYaw', 'uPitch', 'uTanHalfFov', 'uAspect', 'uFlash', 'uBolt', 'uBoltCos'];   // WEATHER3d: the distant strike
@@ -792,7 +814,7 @@ export class VolumetricClouds {
     this.cells = [];          // WEATHER2c: this frame's cells, in the host's world metres, capped at the tier's count
     this.testCellSpec = null; // WEATHER2c: `?cloudcell=` as handed by the controller; resolved against the first camera position seen
     this.testCell = null;
-    this._packed = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4), k: new Float32Array(MAX_CELLS * 4), count: 0 };
+    this._packed = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4), k: new Float32Array(MAX_CELLS * 4), s: new Float32Array(MAX_CELLS * 4), u: new Float32Array(MAX_CELLS * 4), ks: new Float32Array(MAX_CELLS * 4), ku: new Float32Array(MAX_CELLS * 4), count: 0 };
     this.stripe = 0;
     this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
     this.origin = null;       // the shadow square's corner the camera asks for
@@ -898,7 +920,7 @@ export class VolumetricClouds {
     gl.uniform1f(u.uSlabBase, slab.base); gl.uniform1f(u.uSlabTop, slab.top);
     const k = packCells(this.cells, this.q.cells ?? MAX_CELLS, this._packed);
     gl.uniform1i(u.uCellCount, k.count);
-    if (k.count > 0) { gl.uniform4fv(u.uCell, k.c); gl.uniform4fv(u.uCellA, k.a); gl.uniform4fv(u.uCellB, k.b); gl.uniform4fv(u.uCellC, k.t); gl.uniform4fv(u.uCellK, k.k); }
+    if (k.count > 0) { gl.uniform4fv(u.uCell, k.c); gl.uniform4fv(u.uCellA, k.a); gl.uniform4fv(u.uCellB, k.b); gl.uniform4fv(u.uCellC, k.t); gl.uniform4fv(u.uCellK, k.k); gl.uniform4fv(u.uCellS, k.s); gl.uniform4fv(u.uCellU, k.u); gl.uniform4fv(u.uCellKS, k.ks); gl.uniform4fv(u.uCellKU, k.ku); }
     gl.uniform2f(u.uDrift, this.drift[0], this.drift[1]);
     gl.uniform2f(u.uShift, wrapField(this.shift[0]), wrapField(this.shift[1]));   // CLK1: wrapped to the field's period
     gl.uniform2f(u.uCamXZ, this.cam[0], this.cam[1]);

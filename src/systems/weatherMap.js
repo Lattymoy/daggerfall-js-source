@@ -137,6 +137,49 @@ for (const [front, cell] of Object.entries(CELL_OF)) {
 }
 const TYPE_SALT = Object.freeze({ thunder: 1, rain: 2, snow: 3, sandstorm: 4, fog: 5, overcast: 6, cloudy: 7 });
 
+/**
+ * THE SHAPE (WEATHER3h, Mac: "they look too much like blobs and blots" -
+ * "make them irregular"). A system is not a disc: its outline at bearing
+ * theta is its radius times m(theta) = n (1 + sum a_k cos k(theta - phi_k)),
+ * k = 2 (the stretch that makes a front a BAND), 3 and 4 (its lobes), the
+ * amplitudes drawn per system up to SHAPE_AMPS[type] and n chosen so the
+ * mean of m^2 round the bearing is exactly 1: the outline encloses exactly
+ * the disc's area. Every band of a system is the same shape scaled, so a
+ * ring is still its share of core areas - and the calibration, which is
+ * Campbell's theorem over AREAS, holds unchanged. `shape` is [n, c2, s2,
+ * c3, s3, c4, s4] (c_k = a_k cos k phi_k, s_k = a_k sin k phi_k), read by
+ * `shapeFactor` as plain arithmetic on the unit direction - the cloud
+ * shader runs the identical polynomial.
+ */
+export const SHAPE_AMPS = Object.freeze({
+  thunder: [0.25, 0.15, 0.1], rain: [0.45, 0.2, 0.12], snow: [0.45, 0.2, 0.12], sandstorm: [0.35, 0.15, 0.1],
+  fog: [0.3, 0.2, 0.15], overcast: [0.4, 0.2, 0.12], cloudy: [0.35, 0.2, 0.15],
+});
+/** The largest m(theta) a type's shape can reach: a search's reach. */
+export const shapeMax = (type) => 1 + SHAPE_AMPS[type].reduce((a, b) => a + b, 0);
+/** A system's shape, from six draws of its generator (taken whatever its fate). */
+function drawShape(type, r) {
+  const [A2, A3, A4] = SHAPE_AMPS[type];
+  const a2 = A2 * r(), p2 = r() * Math.PI * 2, a3 = A3 * r(), p3 = r() * Math.PI * 2, a4 = A4 * r(), p4 = r() * Math.PI * 2;
+  const n = 1 / Math.sqrt(1 + (a2 * a2 + a3 * a3 + a4 * a4) / 2);
+  return Object.freeze([n, a2 * Math.cos(2 * p2), a2 * Math.sin(2 * p2), a3 * Math.cos(3 * p3), a3 * Math.sin(3 * p3), a4 * Math.cos(4 * p4), a4 * Math.sin(4 * p4)]);
+}
+/** m(theta) for the bearing of (dx, dz) - cos k theta and sin k theta from the unit direction by the multiple-angle
+ *  identities, no trigonometry. 1 for no shape, or at the centre. */
+export function shapeFactor(shape, dx, dz) {
+  const d = Math.hypot(dx, dz);
+  if (!shape) return 1;
+  if (!(d > 0)) return shape[0];
+  const c = dx / d, s = dz / d;
+  const c2 = c * c - s * s, s2 = 2 * c * s, c3 = c * (4 * c * c - 3), s3 = s * (3 - 4 * s * s), c4 = 2 * c2 * c2 - 1, s4 = 2 * s2 * c2;
+  return shape[0] * (1 + shape[1] * c2 + shape[2] * s2 + shape[3] * c3 + shape[4] * s3 + shape[5] * c4 + shape[6] * s4);
+}
+/** The largest m(theta) this shape reaches (its disc's bound). */
+export const shapeBound = (shape) => (shape ? shape[0] * (1 + Math.hypot(shape[1], shape[2]) + Math.hypot(shape[3], shape[4]) + Math.hypot(shape[5], shape[6])) : 1);
+/** A point's distance from a system in the system's own measure: its distance over the outline's reach that way, so
+ *  a band of outer radius r holds the point exactly when this is under r. */
+export const radialOf = (s, x, z) => Math.hypot(x - s.x, z - s.z) / shapeFactor(s.shape, x - s.x, z - s.z);
+
 /** A newborn system's size as a share of its full size: it swells from
  *  this to 1 as its envelope rises, and shrinks back as it dies. */
 export const BIRTH_RADIUS = 0.35;
@@ -372,8 +415,8 @@ function ceilings() {
   for (const t of PRIORITY) c[t] *= maxDiurnal(t);
   return (_ceilings = Object.freeze(c));
 }
-/** The widest a type's disc can be at full growth (its rings unthinned). */
-export const maxRadius = (type) => SYSTEM_TYPES[type].core[1] * Math.sqrt(1 + SYSTEM_TYPES[type].rings.reduce((s, [, share]) => s + share, 0));
+/** The widest a type's disc can reach at full growth (its rings unthinned, its shape at its most stretched). */
+export const maxRadius = (type) => SYSTEM_TYPES[type].core[1] * Math.sqrt(1 + SYSTEM_TYPES[type].rings.reduce((s, [, share]) => s + share, 0)) * shapeMax(type);
 
 // ---- the wind ------------------------------------------------------
 
@@ -491,13 +534,13 @@ function drawBirths(type, gx, gz, gt, climateAt) {
     // every draw is taken whether or not the candidate is kept, so one
     // candidate's fate never moves another's
     const bornX = (gx + r()) * nodeM, bornZ = (gz + r()) * nodeM, bornAt = (gt + r()) * nodeMinutes;
-    const keep = r(), rc = r(), rl = r();
+    const keep = r(), rc = r(), rl = r(), shape = drawShape(type, r);
     const season = seasonValue(dateFromClassicMinutes(bornAt));
     const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);
     const hour = (((bornAt % 1440) + 1440) % 1440) / 60;
     if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
     out.push(Object.freeze({
-      type, id: `${type}:${gx}:${gz}:${gt}:${i}`, bornX, bornZ, bornAt,
+      type, id: `${type}:${gx}:${gz}:${gt}:${i}`, bornX, bornZ, bornAt, shape,
       core: spec.core[0] + rc * (spec.core[1] - spec.core[0]),
       life: spec.life[0] + rl * (spec.life[1] - spec.life[0]),
       rings: law.rings[type],
@@ -526,12 +569,12 @@ function drawCells(front, climateAt) {
   let h = 0x811c9dc5;
   for (let i = 0; i < front.id.length; i++) h = Math.imul(h ^ front.id.charCodeAt(i), 0x01000193);
   const r = seededRng((h ^ Math.imul(TYPE_SALT[type], 2971215073) ^ WORLD_SEED) >>> 0);
-  const reach = front.core + spec.core[1], lead = spec.life[1];
+  const reach = front.core * shapeBound(front.shape) + spec.core[1] * shapeMax(type), lead = spec.life[1];
   const n = poisson(ceiling * Math.PI * reach * reach * (lead + front.life), r);
   const out = [];
   for (let i = 0; i < n; i++) {
     const bornAt = front.bornAt - lead + r() * (lead + front.life), rad = reach * Math.sqrt(r()), ang = r() * Math.PI * 2;
-    const keep = r(), rc = r(), rl = r();
+    const keep = r(), rc = r(), rl = r(), shape = drawShape(type, r);
     const ox = rad * Math.cos(ang), oz = rad * Math.sin(ang);
     const [px, pz] = windPath(front.bornX, front.bornZ, front.bornAt, bornAt);
     const bornX = front.bornX + px * fspec.speed + ox, bornZ = front.bornZ + pz * fspec.speed + oz;
@@ -540,7 +583,7 @@ function drawCells(front, climateAt) {
     const hour = (((bornAt % 1440) + 1440) % 1440) / 60;
     if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
     out.push(Object.freeze({
-      type, id: `${front.id}/${i}`, front, ox, oz, bornX, bornZ, bornAt,
+      type, id: `${front.id}/${i}`, front, ox, oz, bornX, bornZ, bornAt, shape,
       core: spec.core[0] + rc * (spec.core[1] - spec.core[0]),
       life: spec.life[0] + rl * (spec.life[1] - spec.life[0]),
       rings: law.rings[type],
@@ -559,8 +602,10 @@ function placeAt(b, minutes) {
 
 /** A born system at `minutes`: null before its birth or after its death,
  * else where it stands, its envelope, and its BANDS now - [outer radius,
- * word], core out - with `r` the whole disc's radius, and `clip` (a cell's)
- * the disc [x, z, r] it paints within, else null. */
+ * word], core out, each the system's `shape` scaled - with `r` the whole
+ * system's radius, `reach` the furthest its outline goes (r times its
+ * shape's bound), and `clip` (a cell's) the shaped disc [x, z, r, shape]
+ * it paints within, else null. */
 export function systemAt(b, minutes) {
   const age = minutes - b.bornAt;
   if (age < 0 || age >= b.life) return null;
@@ -574,8 +619,8 @@ export function systemAt(b, minutes) {
     const fAge = minutes - b.front.bornAt;
     if (fAge < 0 || fAge >= b.front.life) return null;
     const [fx, fz] = placeAt(b.front, minutes);
-    clip = [fx, fz, b.front.core * radiusShare(envelope(SYSTEM_TYPES[b.front.type], fAge / b.front.life))];
-    if (Math.hypot(x - fx, z - fz) >= clip[2] + core) return null;   // wholly outside it: nowhere to paint
+    clip = [fx, fz, b.front.core * radiusShare(envelope(SYSTEM_TYPES[b.front.type], fAge / b.front.life)), b.front.shape];
+    if (Math.hypot(x - fx, z - fz) >= clip[2] * shapeBound(clip[3]) + core * shapeBound(b.shape)) return null;   // wholly outside it: nowhere to paint
   }
   const bands = [[core, b.type]];
   let area = 1;
@@ -584,26 +629,40 @@ export function systemAt(b, minutes) {
     area += share;
     bands.push([core * Math.sqrt(area), word]);
   }
-  return { ...b, age, env, bands, x, z, r: bands[bands.length - 1][0], clip };
+  const r = bands[bands.length - 1][0];
+  return { ...b, age, env, bands, x, z, r, reach: r * shapeBound(b.shape), clip };
 }
 
-/** Every system alive at `minutes` whose disc comes within `range` of
- *  (x, z), nearest centre first, each with its distance `d`. */
+/**
+ * THE FURTHEST A BIRTH OF `type` CAN SIT from a system of it (or one of
+ * its cells) that touches a disc of `range`: its most-stretched outline at
+ * full growth - a front's cells within its core widened by theirs - plus
+ * its longest ride on the wind. The lattice walk covers exactly this; it
+ * is a bound, reached only by a system at every extreme at once.
+ */
+export function searchReach(type, range = 0) {
+  const spec = SYSTEM_TYPES[type], cell = CELL_OF[type];
+  const cells = cell ? spec.core[1] * shapeMax(type) + 2 * SYSTEM_TYPES[cell].core[1] * shapeMax(cell) : 0;
+  return Math.max(maxRadius(type), cells) + spec.speed * spec.life[1] + range;
+}
+
+/** Every system alive at `minutes` whose shaped disc may come within
+ *  `range` of (x, z) (its shape's bound), nearest centre first, each with
+ *  its centre's distance `d`. */
 export function systemsNear(x, z, minutes, climateAt, range = 0) {
   const out = [];
   const take = (b) => {
     const s = systemAt(b, minutes);
     if (!s) return;
     const d = Math.hypot(s.x - x, s.z - z);
-    if (d - s.r <= range) out.push({ ...s, d });
+    if (d - s.reach <= range) out.push({ ...s, d });
   };
   for (const type of PRIORITY) {
     const spec = SYSTEM_TYPES[type];
     if (spec.parent) continue;   // cells are found through their fronts
     const cell = CELL_OF[type] && SYSTEM_TYPES[CELL_OF[type]];
-    // a cell lives only while its front does, within the front's core at full growth widened by its own radius
-    const lives = spec.life[1];
-    const reach = Math.max(maxRadius(type), cell ? spec.core[1] + 2 * cell.core[1] : 0) + spec.speed * lives + range;   // the furthest a birth can sit from a disc that touches the range
+    const lives = spec.life[1];   // a cell lives only while its front does
+    const reach = searchReach(type, range);
     const [nodeM, nodeMinutes] = spec.node;
     const gx0 = Math.floor((x - reach) / nodeM), gx1 = Math.floor((x + reach) / nodeM);
     const gz0 = Math.floor((z - reach) / nodeM), gz1 = Math.floor((z + reach) / nodeM);
@@ -615,7 +674,7 @@ export function systemsNear(x, z, minutes, climateAt, range = 0) {
             take(b);
             if (!cell || minutes < b.bornAt || minutes >= b.bornAt + b.life) continue;
             const [fx, fz] = placeAt(b, minutes);
-            if (Math.hypot(fx - x, fz - z) - (b.core + 2 * cell.core[1]) > range) continue;
+            if (Math.hypot(fx - x, fz - z) - (b.core * shapeBound(b.shape) + 2 * cell.core[1] * shapeMax(CELL_OF[type])) > range) continue;
             for (const c of cellsOf(b, climateAt)) take(c);
           }
         }
@@ -625,9 +684,9 @@ export function systemsNear(x, z, minutes, climateAt, range = 0) {
   return out.sort((a, b) => a.d - b.d);
 }
 
-/** The band of a system over a point `d` from its centre: its word and
- *  its intensity (the envelope, falling from the centre to the disc's
- *  edge), or null outside the disc. */
+/** The band of a system over a point `d` from its centre in the system's
+ *  own measure (`radialOf`): its word and its intensity (the envelope,
+ *  falling from the centre to the outline), or null outside it. */
 export function bandAt(s, d) {
   if (!(d < s.r)) return null;
   const band = s.bands.find(([outer]) => d < outer);
@@ -637,7 +696,7 @@ export function bandAt(s, d) {
 
 /** Whether (x, z) is within a system's `clip` (a cell's front core now);
  *  always, for a system with none. */
-export const insideClip = (s, x, z) => !s.clip || Math.hypot(s.clip[0] - x, s.clip[1] - z) < s.clip[2];
+export const insideClip = (s, x, z) => !s.clip || Math.hypot(s.clip[0] - x, s.clip[1] - z) / shapeFactor(s.clip[3], x - s.clip[0], z - s.clip[1]) < s.clip[2];
 
 /**
  * THE WORN WORD AMONG SYSTEMS already found (each standing where it is
@@ -652,8 +711,9 @@ export const insideClip = (s, x, z) => !s.clip || Math.hypot(s.clip[0] - x, s.cl
 export function wornAmong(systems, x, z, ground = null) {
   let best = null;
   for (const s of systems) {
-    if (!insideClip(s, x, z)) continue;
-    const band = bandAt(s, Math.hypot(s.x - x, s.z - z));
+    const dx = x - s.x, dz = z - s.z, reach = s.reach ?? s.r;
+    if (dx * dx + dz * dz >= reach * reach || !insideClip(s, x, z)) continue;   // beyond its outline's furthest: the cheap test first
+    const band = bandAt(s, radialOf(s, x, z));
     if (!band) continue;
     const word = ground ? ground(band.word, x, z) : band.word;
     if (!best || RANK[word] < RANK[best.word] || (word === best.word && band.intensity > best.intensity)) best = { word, intensity: band.intensity, system: s };
@@ -691,11 +751,11 @@ export const SKY_WEIGHT = Object.freeze({ thunder: 1, sandstorm: 0.95, rain: 0.9
 export function skyCells(systems, x, z, ground = null) {
   const out = [];
   for (const s of systems) {
-    const d = Math.hypot(s.x - x, s.z - z);
+    const d = radialOf(s, x, z);   // WEATHER3h: in the system's own measure, its shape's reach that way
     for (const [r, raw] of s.bands) {
       const word = ground ? ground(raw, s.x, s.z) : raw;
       const imp = (SKY_WEIGHT[word] ?? 0.5) * (d <= r ? 2 : r / d);
-      out.push({ x: s.x, z: s.z, r, word, imp, rank: RANK[word] ?? PRIORITY.length, id: `${s.id}:${raw}`, d, clip: s.clip ?? null });
+      out.push({ x: s.x, z: s.z, r, word, imp, rank: RANK[word] ?? PRIORITY.length, id: `${s.id}:${raw}`, d, shape: s.shape ?? null, clip: s.clip ?? null });
     }
   }
   return out;
@@ -714,7 +774,7 @@ export const APPROACH_M = 15000;
 export function approachAt(systems, x, z) {
   let best = 0;
   for (const s of systems) {
-    const gap = Math.max(0, Math.hypot(s.x - x, s.z - z) - s.r);
+    const gap = Math.max(0, Math.hypot(s.x - x, s.z - z) - s.r * shapeFactor(s.shape, x - s.x, z - s.z));   // to its outline that way
     if (gap >= APPROACH_M) continue;
     const v = (VIOLENCE[s.type] ?? 0) * s.env * (1 - gap / APPROACH_M);
     if (v > best) best = v;

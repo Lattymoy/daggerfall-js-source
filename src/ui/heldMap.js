@@ -133,7 +133,7 @@ import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easin
 export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 import { systemsNear, forecastAt } from '../systems/weatherMap.js';   // WEATHER3e: the world weather map, read over the bay
-import { weatherMarks, paintWeatherLayer, paintWeatherLegend, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS, WASH_LAYER_SCALE } from './weatherLayer.js';
+import { weatherMarks, paintWeatherGlyphs, paintWeatherLegend, paintWeatherRegions, weatherField, fieldRegions, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS } from './weatherLayer.js';
 import { mapGround } from '../systems/weatherSim.js';   // AUDIT WEATHER3 R1: the ground law the player's own sky goes through
 import { TERRAIN_SIZE } from '../world/terrainSampler.js';
 
@@ -2385,40 +2385,26 @@ export class HeldMapWindow {
       // every open would read the whole bay cold each time (AUDIT WEATHER3 R2b) - the host's is the sim's, warm
       const systems = systemsNear(cx, cz, minutes, climateAt, reach);
       const ground = mapGround(climateAt);
-      this._wx = { bucket, key: `wx${bucket}`, minutes, ground, marks: weatherMarks(systems, (w, x, z) => ground(w, x, z, minutes)), forecasts: new Map(), washes: null };
+      this._wx = { bucket, key: `wx${bucket}`, minutes, ground, systems, marks: weatherMarks(systems, (w, x, z) => ground(w, x, z, minutes)), forecasts: new Map(), regions: null };
     }
     return this._wx;
   }
 
-  /** The weather on the sheet: the WASHES inked once a refresh onto their
-   *  own map-sized layer and drawn under the view - a pan or a zoom is one
-   *  image, not a few thousand gradients (AUDIT WEATHER3 R2a) - and the
-   *  glyphs, a handful, inked at the paper's own resolution. With no canvas
-   *  to keep (a headless host) the washes are inked straight on. WEATHER3g:
-   *  the washes go UNDER the ink already on the sheet (destination-over),
-   *  so the coast and the borders stay the pen's over the weather, and
-   *  the legend names the colours. */
+  /** The weather on the sheet (WEATHER3h): the REGIONS - the worn word
+   *  read off the law over the whole bay once a refresh, traced into
+   *  loops and kept (a pan or a zoom redraws the loops, it never reads the
+   *  weather again - AUDIT WEATHER3 R2a's law) - filled with each word's
+   *  hatch and outlined in its ink, UNDER the pen already on the sheet
+   *  (destination-over, so the coast and the borders stay the pen's);
+   *  then the glyphs, a handful, and the legend over. */
   _paintWeather(ctx, env, wx) {
     const opts = { paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, bounds: [this._size.width, this._size.height] };
-    const under = (paint) => { const op = ctx.globalCompositeOperation; ctx.globalCompositeOperation = 'destination-over'; paint(); ctx.globalCompositeOperation = op ?? 'source-over'; };
-    if (wx.washes === null) {
-      const k = WASH_LAYER_SCALE, c = typeof document !== 'undefined' ? document.createElement('canvas') : null;
-      const lctx = c?.getContext?.('2d');
-      if (lctx) {
-        c.width = this._size.width * k; c.height = this._size.height * k;
-        paintWeatherLayer(lctx, { ox: 0, oy: 0, scale: k }, wx.marks, { paperW: c.width, paperH: c.height, dpr: 1, glyphs: false });
-        wx.washes = c;
-      } else wx.washes = false;
-    }
-    if (wx.washes) {
-      const v = env.view, s = v.scale;
-      ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
-      under(() => ctx.drawImage(wx.washes, -v.ox * s, -v.oy * s, this._size.width * s, this._size.height * s));
-      paintWeatherLayer(ctx, v, wx.marks, { ...opts, washes: false });
-    } else {
-      under(() => paintWeatherLayer(ctx, env.view, wx.marks, { ...opts, glyphs: false }));
-      paintWeatherLayer(ctx, env.view, wx.marks, { ...opts, washes: false });
-    }
+    wx.regions ??= fieldRegions(weatherField(wx.systems, { width: this._size.width, height: this._size.height, ground: (w, x, z) => wx.ground(w, x, z, wx.minutes) }));
+    const op = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = 'destination-over';
+    paintWeatherRegions(ctx, env.view, wx.regions, opts);
+    ctx.globalCompositeOperation = op ?? 'source-over';
+    paintWeatherGlyphs(ctx, env.view, wx.marks, opts);
     paintWeatherLegend(ctx, opts);
   }
 

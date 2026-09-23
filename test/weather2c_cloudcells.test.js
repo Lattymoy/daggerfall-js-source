@@ -76,7 +76,8 @@ test('WEATHER2c the field: the cells and the slab declared once for both marches
   assert.match(CLOUD_FIELD_GLSL, /fBase = uBase; fTop = uTop; fDensity = uDensity; fFlat = uFlat; fShear = uShear; fCover = uCover; fDark = uDark; fGrey = 0\.0; fTint = vec3\(1\.0\); fVary = uVary;/, 'the zone\'s terms first');
   assert.match(CLOUD_FIELD_GLSL, /fVary = mix\(fVary, uCellC\[i\]\.w, w\);/, 'VC6a: a cell brings its own type variation, on the tint array\'s spare lane');
   assert.match(CLOUD_FIELD_GLSL, /for \(int i = 0; i < 8; i\+\+\) \{\s*\n\s*if \(i >= uCellCount\) break;/, 'a fixed loop under a uniform count');
-  assert.match(CLOUD_FIELD_GLSL, /float w = 1\.0 - smoothstep\(c\.z - c\.w, c\.z, length\(xz - c\.xy\)\);/, 'the rim\'s weight');
+  // WEATHER3h: in the cell's own shape's measure - a circle's shape (1, 0, 0, 0 | 0, 0, 0, 0) is length() exactly
+  assert.match(CLOUD_FIELD_GLSL, /float w = 1\.0 - smoothstep\(c\.z - c\.w, c\.z, shapedDist\(xz - c\.xy, uCellS\[i\], uCellU\[i\]\)\);/, 'the rim\'s weight');
   assert.match(CLOUD_FIELD_GLSL, /fBase = mix\(fBase, a\.x, w\); fTop = mix\(fTop, a\.y, w\); fDensity = mix\(fDensity, a\.z, w\); fFlat = mix\(fFlat, a\.w, w\);/);
   assert.match(CLOUD_FIELD_GLSL, /fDark = mix\(fDark, b\.x, w\); fShear = mix\(fShear, b\.y, w\); fCover = mix\(fCover, b\.z, w\); fGrey = mix\(fGrey, b\.w, w\);/);
   const dens = CLOUD_FIELD_GLSL.slice(CLOUD_FIELD_GLSL.indexOf('float density(vec3 p, float mip) {'));
@@ -112,7 +113,7 @@ test('WEATHER2c the class and the controller: setState takes the cells (the cont
   assert.match(vc, /if \(this\.testCellSpec && !this\.testCell && pos\) this\.testCell = parseCloudCellDoor\(this\.testCellSpec, pos\);/);
   assert.match(vc, /this\.cells = pickCells\(cells \?\? \(this\.testCell \? \[this\.testCell\] : \[\]\), this\.q\.cells \?\? MAX_CELLS\);/, 'capped by the tier (WEATHER3c: through pickCells - a list with no importance is cut in its own order, as before)');
   assert.match(vc, /gl\.uniform1f\(u\.uDark, p\.dark\); gl\.uniform1f\(u\.uVary, p\.vary \?\? 0\);[^\n]*\n[^\n]*\n\s*const slab = slabOf\(p, this\.cells\);\s*\n\s*gl\.uniform1f\(u\.uSlabBase, slab\.base\); gl\.uniform1f\(u\.uSlabTop, slab\.top\);/, 'uploaded with the field, for both marches (VC6a: the zone\'s type variation beside the dark)');
-  assert.match(vc, /const k = packCells\(this\.cells, this\.q\.cells \?\? MAX_CELLS, this\._packed\);\s*\n\s*gl\.uniform1i\(u\.uCellCount, k\.count\);\s*\n\s*if \(k\.count > 0\) \{ gl\.uniform4fv\(u\.uCell, k\.c\); gl\.uniform4fv\(u\.uCellA, k\.a\); gl\.uniform4fv\(u\.uCellB, k\.b\); gl\.uniform4fv\(u\.uCellC, k\.t\); gl\.uniform4fv\(u\.uCellK, k\.k\); \}/, 'the arrays only when there are cells');
+  assert.match(vc, /const k = packCells\(this\.cells, this\.q\.cells \?\? MAX_CELLS, this\._packed\);\s*\n\s*gl\.uniform1i\(u\.uCellCount, k\.count\);\s*\n\s*if \(k\.count > 0\) \{ gl\.uniform4fv\(u\.uCell, k\.c\); gl\.uniform4fv\(u\.uCellA, k\.a\); gl\.uniform4fv\(u\.uCellB, k\.b\); gl\.uniform4fv\(u\.uCellC, k\.t\); gl\.uniform4fv\(u\.uCellK, k\.k\); gl\.uniform4fv\(u\.uCellS, k\.s\); gl\.uniform4fv\(u\.uCellU, k\.u\); gl\.uniform4fv\(u\.uCellKS, k\.ks\); gl\.uniform4fv\(u\.uCellKU, k\.ku\); \}/, 'the arrays only when there are cells');
   assert.match(vc, /if \(this\.testCell\) \{ this\.testCell\.x \+= offset\[0\]; this\.testCell\.z \+= offset\[2\]; \}/, 'the recenter');
   assert.equal((vc.match(/gl\.uniform1f\(u\.uDark, p\.dark\);/g) || []).length, 1, 'the dark is uploaded once, by the field');
   assert.equal((vc.match(/gl\.uniform1f\(u\.uVary, p\.vary \?\? 0\);/g) || []).length, 1, 'VC6a: and the variation once, beside it');

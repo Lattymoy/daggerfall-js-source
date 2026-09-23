@@ -8,7 +8,7 @@
  {"name": "WEATHER3a-no-decay", "file": "src/systems/weatherMap.js",
   "old": "  if (u > 1 - spec.decay) return (1 - u) / spec.decay;\n", "new": "", "tests": ["test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3a-search-forgets-the-drift", "file": "src/systems/weatherMap.js",
-  "old": "+ spec.speed * lives + range;   // the furthest", "new": "+ range;   // the furthest", "tests": ["test/weather3a_weathermap.test.js"]},
+  "old": "+ spec.speed * spec.life[1] + range;\n", "new": "+ range;\n", "tests": ["test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3a-births-ignore-the-hour", "file": "src/systems/weatherMap.js",
   "old": "    if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;", "new": "    if (!law || keep * ceiling >= law.weight[type]) continue;", "tests": ["test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3a-lowest-word-wins", "file": "src/systems/weatherMap.js",
@@ -24,7 +24,7 @@
  {"name": "WEATHER3a-storms-do-not-move", "file": "src/systems/weatherMap.js",
   "old": "  return [host.bornX + px * speed + (b.ox ?? 0), host.bornZ + pz * speed + (b.oz ?? 0)];", "new": "  return [host.bornX + (b.ox ?? 0), host.bornZ + (b.oz ?? 0)];", "tests": ["test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3a-a-candidate-moves-its-neighbours", "file": "src/systems/weatherMap.js",
-  "old": "    const keep = r(), rc = r(), rl = r();\n    const season = seasonValue(dateFromClassicMinutes(bornAt));\n    const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);\n    const hour = (((bornAt % 1440) + 1440) % 1440) / 60;\n    if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;\n", "new": "    const keep = r();\n    const season = seasonValue(dateFromClassicMinutes(bornAt));\n    const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);\n    const hour = (((bornAt % 1440) + 1440) % 1440) / 60;\n    if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;\n    const rc = r(), rl = r();\n", "tests": ["test/weather3a_weathermap.test.js"]},
+  "old": "    const keep = r(), rc = r(), rl = r(), shape = drawShape(type, r);\n    const season = seasonValue(dateFromClassicMinutes(bornAt));\n    const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);\n    const hour = (((bornAt % 1440) + 1440) % 1440) / 60;\n    if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;\n", "new": "    const keep = r();\n    const season = seasonValue(dateFromClassicMinutes(bornAt));\n    const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season);\n    const hour = (((bornAt % 1440) + 1440) % 1440) / 60;\n    if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;\n    const rc = r(), rl = r(), shape = drawShape(type, r);\n", "tests": ["test/weather3a_weathermap.test.js"]},
  {"name": "WEATHER3a-rings-widen-the-core", "file": "src/systems/weatherMap.js",
   "old": "    bands.push([core * Math.sqrt(area), word]);", "new": "    bands.push([core * area, word]);", "tests": ["test/weather3a_weathermap.test.js"]}
 ]

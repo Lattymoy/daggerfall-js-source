@@ -24,7 +24,7 @@
 
 import { seededRng } from './wind.js';
 import { AMBIENT_SOUNDS } from './ambientEffects.js';
-import { envelope, SYSTEM_TYPES } from './weatherMap.js';
+import { envelope, SYSTEM_TYPES, radialOf, insideClip } from './weatherMap.js';
 
 /** Metres a second - thunder's pace through the air. */
 export const SPEED_OF_SOUND = 343;
@@ -120,7 +120,7 @@ export function createDistantStorms() {
         if (s.type !== 'thunder') continue;
         if (ground && ground('thunder', s.x, s.z, minutes) !== 'thunder') continue;   // AUDIT WEATHER3 R1: over a snow ground the storm is a snow squall (the sky's cell says so) - no lightning, no thunder
         const d = Math.hypot(s.x - at[0], s.z - at[1]);
-        if (d < s.bands[0][0]) continue;   // under its heart: DFU's own storm
+        if (radialOf(s, at[0], at[1]) < s.bands[0][0] && insideClip(s, at[0], at[1])) continue;   // under its heart (its own shape, inside its front): DFU's own storm
         const envAt = (m) => envelope(SYSTEM_TYPES.thunder, (m - s.bornAt) / s.life);   // weatherMap's own envelope, at the strike's minute
         for (const t of strikesIn(s.id, last, minutes, envAt)) {
           bolt = { x: s.x, z: s.z, r: s.bands[0][0], strength: envAt(t), at: seconds };

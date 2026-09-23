@@ -32,5 +32,5 @@
  {"name": "WEATHER3b-indoor-host-unwired", "file": "src/scenes/worldModes.js",
   "old": "        host.weatherIndoors?.();\n", "new": "", "tests": ["test/weather3b_simseam.test.js", "test/weather3f_audit.test.js"]},
  {"name": "WEATHER3b-overhead-any-word", "file": "src/systems/weatherSim.js",
-  "old": "  _fieldInside = _fieldCells.find((c) => c.d < c.r && c.word === worn.word) ?? null;", "new": "  _fieldInside = _fieldCells.find((c) => c.d < c.r) ?? null;", "tests": ["test/weather3b_simseam.test.js"]}
+  "old": "c.d < c.r && insideClip(c, at[0], at[1]) && c.word === worn.word) ?? null;", "new": "c.d < c.r && insideClip(c, at[0], at[1])) ?? null;", "tests": ["test/weather3b_simseam.test.js"]}
 ]
