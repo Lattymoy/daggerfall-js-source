@@ -208,8 +208,8 @@ test('DISC9: indoors you hear the rain the street heard - the sim\'s word says r
 test('DISC9 by source: both open-world hosts write the heard word where the street computes it, and read it indoors', () => {
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = rd(f);
-    assert.match(s, /ambientWord = enhancedFront \? soundWeather\(fx, weather\) : weather;\n\s*setHeardWeather\(ambientWord\);/, f);
+    assert.match(s, /ambientWord = enhancedFront \? soundWeather\(fx, weather\) : weather;\n\s*setHeardWeather\(ambientWord, enhancedFront \? fx\.intensity : 1\);/, f);
     assert.match(s, /ambience\.setPreset\(presetForExterior\(heardWeather\(\), isNight\(minuteNow\(\)\)\)\);/, f);
   }
-  assert.match(rd('src/systems/betterAmbience.js'), /weather = heardWeather, snowFree/);
+  assert.match(rd('src/systems/betterAmbience.js'), /weather = heardWeather, rainLevel = heardRainGain, snowFree/);
 });

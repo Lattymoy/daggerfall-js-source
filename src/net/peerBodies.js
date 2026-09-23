@@ -86,14 +86,21 @@ export function poseCadenceFor(d2) {
  *  is false at the BUILD: the look carries the equip table alone; the
  *  arrow arrives later off the pose's `am` bit through `_arm`'s
  *  setWeapon (MAC7 #2). */
-export function peerBuildOpts(look) {
+/** DISC12: the weapon in the hand the peer USES - the look carries both hands, the pose's `lh` says which one is
+ *  drawn (WeaponManager.ApplyWeapon :741-755: the other hand is never on screen). */
+export function peerWeaponOf(look, shown = null) {
+  const slots = peerStubEntity(look).equip.slots;
+  return slots[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;
+}
+
+export function peerBuildOpts(look, shown = null) {
   const stub = peerStubEntity(look);
   return {
     race: mwRaceId(stub.race),
     female: stub.gender === 'female',
     faceIndex: stub.faceIndex | 0,
     armor: dfWornEquipment(stub.equip.slots, EQUIP_SLOTS, ARMOR_ENUM),
-    weapon: stub.equip.slots[EQUIP_SLOTS.RightHand] ?? null,
+    weapon: stub.equip.slots[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null,   // DISC12: the hand in use
     hasAmmo: false,
   };
 }
@@ -265,7 +272,7 @@ export class PeerBodies {
     if (b.state === 'ok' && !b.far && dt > 0) {
       // AUDIT MWBODY A1: a throw from one peer's rig is that peer's doll, never the frame's end
       try {
-        this._arm(b, peer.shown);
+        this._arm(b, peer.shown, peer.look);
         // PEER-CADENCE: the skin on its cadence, the clocks every frame. A body with NO SKIN TO KEEP always poses:
         // its first step (the third-person mesh is minted by the first upload, and `thirdActive` waits on it - a
         // body that skipped its first frame would stand as the doll for a frame), its first step back from far or
@@ -295,9 +302,17 @@ export class PeerBodies {
    *  spell stance (readySpell, a boolean compare on the rig's side), a cast once per count with the wire's range,
    *  and the bow's hold - a swing that arrives with wd 2 is the draw (attack with hold), and release() waits while
    *  wd stays 2, exactly as weaponRig withholds it while the machine sits in StrikeUp. */
-  _arm(b, shown) {
+  _arm(b, shown, look = null) {
     const drawn = !!shown.wd;
     b.rig.setSheathed?.(!drawn);
+    // DISC12 (Discord: "Weapons when swapped into left hand dont work showing fists"): THE HAND IN USE. The body was
+    // built holding the look's RIGHT hand, always, so a peer fighting left-handed stood with the wrong weapon or a fist.
+    // The pose says the hand (`lh`); the weapon follows it through setWeapon, the arm's own door, when the arm is quiet.
+    if (look) {
+      const want = peerWeaponOf(look, shown);
+      if (want !== b.weapon && (want?.templateIndex !== b.weapon?.templateIndex || want?.equipSlot !== b.weapon?.equipSlot)
+        && (b.rig.upperBodyReady?.() ?? true) && b.rig.setWeapon?.(want, { hasAmmo: !!shown.am }) !== false) { b.weapon = want; b.ammo = shown.am ? 1 : 0; }
+    }
     // AUDIT WORLD C5/C6: the arrow lands only when the arm is quiet (setWeapon clears the action in flight, so the
     // last arrow's loose - am 1 to 0 in the same pose as the count - was cut every time) and is committed only
     // when the rig took it (a swap refused mid-swap was never retried, and the wrong nock stood until a rebuild)

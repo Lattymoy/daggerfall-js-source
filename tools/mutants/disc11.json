@@ -1,0 +1,47 @@
+[
+  {
+    "name": "DISC11-the-mod-at-its-flat-1",
+    "file": "src/systems/betterAmbience.js",
+    "old": "    return rainLevel() * match * (rainKind === 'interior' ? INDOOR_RAIN_GAIN : 1);",
+    "new": "    return 1;",
+    "tests": [
+      "test/disc11.test.js"
+    ]
+  },
+  {
+    "name": "DISC11-recordings-not-matched",
+    "file": "src/systems/betterAmbience.js",
+    "old": "    const match = street > 0 && mine > 0 ? street / mine : 1;",
+    "new": "    const match = 1;",
+    "tests": [
+      "test/disc11.test.js"
+    ]
+  },
+  {
+    "name": "DISC11-no-through-the-walls",
+    "file": "src/systems/betterAmbience.js",
+    "old": "    return rainLevel() * match * (rainKind === 'interior' ? INDOOR_RAIN_GAIN : 1);",
+    "new": "    return rainLevel() * match;",
+    "tests": [
+      "test/disc11.test.js"
+    ]
+  },
+  {
+    "name": "DISC11-carried-loop-stacks",
+    "file": "src/systems/ambientEffects.js",
+    "old": "(deps.underground && deps.indoorRainSource ? 0 : 1)",
+    "new": "1",
+    "tests": [
+      "test/disc11.test.js"
+    ]
+  },
+  {
+    "name": "DISC11-level-outlives-a-jump",
+    "file": "src/systems/weatherSim.js",
+    "old": "export const heardRainGain = () => (_heard != null && _heardAtJump === _jumps ? _heardGain : 1);",
+    "new": "export const heardRainGain = () => (_heard != null ? _heardGain : 1);",
+    "tests": [
+      "test/disc11.test.js"
+    ]
+  }
+]

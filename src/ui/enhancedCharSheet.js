@@ -78,22 +78,18 @@ import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '
 import { carriedWeight } from './charsheet.js';
 import { totalGoldAmount } from '../systems/court.js';   // PlayerEntity.GetGoldAmount, the figure the classic sheet draws
 import { classSpecials } from '../systems/specialAdvantages.js';   // MAC-G: GetClassSpecials, read back off the career's own flags
-import { RACE_TEMPLATES, raceById } from '../systems/races.js';     // MAC-G: the blood half of that list
+import { liveRaceTemplate } from '../systems/vampirism.js';     // MAC-G: the blood half of that list; DISC10-D V5: PlayerEntity.RaceTemplate, the LIVE (compound) race
 
 /** The three career groups, in DFU's own order, plus the remainder.
  *  `_drawSkillPage`'s `names` array, which is what keys 1-4 page. */
 export const SKILL_GROUPS = Object.freeze(['Primary', 'Major', 'Minor', 'Miscellaneous']);
 
-/** MAC-G: the entity's RaceTemplate, however the character was made.
- *  Chargen writes the race KEY (ui/chargen.js:2159 - `this.race.key`)
- *  and a classic save may only carry the id, so both roads are taken
- *  and the display NAME is accepted too rather than trusting one
- *  writer. No template means no racial rows, not a crash. */
-function raceTemplateOf(e) {
-  return RACE_TEMPLATES.find((r) => r.key === e.race || r.name === e.race)
-    ?? raceById(e.raceId)
-    ?? null;
-}
+/** MAC-G: the entity's RaceTemplate, however the character was made -
+ *  and DISC10-D V5: the LIVE one, PlayerEntity.RaceTemplate (:151), so a
+ *  vampire's sheet reads the compound race DFU's does (the birth reader
+ *  moved beside it, systems/vampirism.js birthRaceTemplate). No template
+ *  means no racial rows, not a crash. */
+const raceTemplateOf = (e) => liveRaceTemplate(e);
 
 /**
  * THE SHEET, as data. Pure: no DOM, no entity mutation, every figure
@@ -117,7 +113,8 @@ export function sheetModel(entity) {
   return {
     name: e.name ?? '',
     // The classic sheet's own default when an entity carries none.
-    race: e.race ?? 'Breton',
+    // DISC10-D V5: RaceTemplate.Name (DaggerfallCharacterSheetWindow.cs:398)
+    race: raceTemplateOf(e)?.name ?? e.race ?? 'Breton',
     career: e.career?.name ?? '',
     level: e.level ?? 1,
     // The classic sheet's own read: GetGoldAmount, coins plus every

@@ -227,8 +227,8 @@
   {
     "name": "B1-world-rain-forced-full",
     "file": "src/scenes/world.js",
-    "old": "      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });",
-    "new": "      ambience.rainGain = 1;\n      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.indoorRainPlaying() });",
+    "old": "      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });",
+    "new": "      ambience.rainGain = 1;\n      ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });",
     "tests": [
       "test/disc6.test.js"
     ]

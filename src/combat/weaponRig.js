@@ -195,9 +195,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2838), townTalk.say
- *                     (exterior.js:2121, world.js:4129) and
- *                     worldModes' own interior sink (worldModes.js:424,
+ *                     (dungeonContext.js:2849), townTalk.say
+ *                     (exterior.js:2125, world.js:4131) and
+ *                     worldModes' own interior sink (worldModes.js:425,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -625,9 +625,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   /** WeaponManager.Update's ShowWeapons legs, verbatim order.
    *  FX1 (F024/F025) rebuilt both clocks:
    *  - the bow COOLDOWN is an EARLY RETURN (:230-233), leaving
-   *    ShowWeapon at its prior value - the bow stays DRAWN through
-   *    the ~1.3s cooldown instead of blinking out and popping back.
-   *    The latch below is that "prior value".
+   *    ShowWeapon at its prior value. The latch below is that "prior
+   *    value" for the WEAPON MANAGER's write; ARROW2: the SPRITE's prior
+   *    value after a loose is FALSE - FPSWeapon hides the bow itself as
+   *    its release runs off the last frame (FPSWeapon.cs:529-531), so
+   *    spriteShown() carries that hide. An un-draw is no one-shot end
+   *    and keeps the bow drawn through its cooldown, as in DFU.
    *  - a running EQUIP countdown shows EMPTY HANDS (:275-281) - the
    *    port drew the new weapon while silently refusing attacks,
    *    which was the block half without its cue. */
@@ -641,9 +644,20 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   let _heldSound = false;
   let _heldHitAge = 0;
   let _lastShown = false;
+  // ARROW2: FPSWeapon.AnimateWeapon's own hide (FPSWeapon.cs:527-531) -
+  // a bow's one-shot that runs off its last frame goes Idle AND sets
+  // `ShowWeapon = false`, "so its idle frame doesn't show before it is
+  // hidden for its cooldown". WeaponManager's cooldown early return
+  // (:229-233) then leaves that FALSE in place until the next
+  // ShowWeapons, so the latch below freezes false, not the true of the
+  // shot. Only the SPRITE's ShowWeapon: an un-draw (:355-357) is no
+  // one-shot end and keeps the bow shown, as in DFU; the Morrowind arm
+  // is not FPSWeapon and keeps shown().
+  let _bowReleaseHidden = false;
   function shown() {
     const m = playerWeapon.machine;
     if (m.isBow && m.now < m.cooldownUntil) return _lastShown;   // F024: the early return freezes the state
+    _bowReleaseHidden = false;   // ARROW2: the first Update past the cooldown writes ShowWeapons again
     let v = true;
     // WeaponManager.cs:247 is `HasReadySpell || PlayerSpellCasting
     // .IsPlayingAnim` - BOTH legs. The second half had nothing to
@@ -658,6 +672,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     _lastShown = v;
     return v;
   }
+  /** ARROW2: FPSWeapon.ShowWeapon - shown(), less the bow's own hide at the end of its release. */
+  function spriteShown() { return shown() && !_bowReleaseHidden; }
 
   /**
    * MW-D12: the swing reaches the Morrowind arm.
@@ -1120,6 +1136,13 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       return muzzleRay(_tlDrawn, fovRad, forward);
     },
     refreshWorn() { syncWorn(); },
+    /** LH1: the hand door a swap needs - WeaponManager.UsingRightHand as it
+     *  stands after this frame's UpdateHands (the shield rule applied), and
+     *  ToggleHand through this rig's own SwitchHand leg. */
+    handDoor() {
+      syncWorn();
+      return { usingRightHand: playerWeapon.usingRightHand, switchHand: () => this.switchHand() };
+    },
     /** QS4 - THE OFF-HAND KEY'S LIGHT ARM. The quickslot diamond's
      *  off-hand cell presses the same thing Handheld Torches' own toggle
      *  key presses (its `toggleLightPress`, the free-hand guard and all),
@@ -1382,6 +1405,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // The rule's own reason was the hit frame - it never argued the
       // arrow should leave before the string does.
       const evs = playerWeapon.update(dt);
+      if (playerWeapon.machine.isBow && evs.includes('done')) _bowReleaseHidden = true;   // ARROW2: FPSWeapon.cs:529-531
       // AUDIT-THUNDERLOCK F8: THE WEAPON'S OWN VOICE, in the one place
       // all four hosts share. The machine emits `bowSound` for a bow
       // and nothing for anything else, so the port's own weapon fired
@@ -1494,7 +1518,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
           renderer, canvas: c, entity, art: c ? artFor(playerWeapon.weapon) : null, weapon: playerWeapon.weapon,
           weaponType: weaponTypeForItem(playerWeapon.weapon), material: playerWeapon.weapon?.material ?? -1,
           machine: playerWeapon.machine, sheathed: playerWeapon.sheathed, usingRightHand: playerWeapon.usingRightHand,
-          equipCountdown: entity?.equipCountdown ?? 0, shown: shown(), castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(),
+          equipCountdown: entity?.equipCountdown ?? 0, shown: spriteShown(), castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(),
           thirdPerson: fpArm.thirdActive() || eotbHidesWeapon(), reach: WEAPON_REACH,   // AUDIT-EOTB2: the widget's third-person gate asked the Morrowind arm alone
           motion: { grounded: mv.grounded !== false, crouching: !!mv.crouching, riding: !!mv.riding, standing: !!mv.standing,
             speedRatio: ratio, baseSpeed: base, localVel },
@@ -1779,7 +1803,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       if (gunSliding && !shown()) return;
       if (widgetOn() && c && widget.draw(renderer, c, fpTint)) return;
       const art = c && artFor(playerWeapon.weapon);
-      if (art) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });
+      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint });
     }
   }
 }

@@ -391,7 +391,7 @@ test('BA1: the component - a dungeon transition owes the four-frame wait, then t
   // a building: the 2D source
   r.w.word = 'rain';
   r.c.onTransition({ building: true }); r.c.settleTransition(); r.c.frame(0.016, r.building());
-  assert.equal(r.loops.length, 1); assert.equal(r.loops[0].o.lowpass, 4236); assert.equal(r.loops[0].v, 1);
+  assert.equal(r.loops.length, 1); assert.equal(r.loops[0].o.lowpass, 4236); assert.equal(r.loops[0].v, 0.35, 'DISC11: the street\'s level (1, classic) through the walls - never the AudioSource\'s flat 1');
   assert.deepEqual(r.reverbs, ['Stoneroom', null], 'off the dungeon: the zone off');
   // outside: no source at all, whatever the weather
   r.c.onTransition(null); r.c.settleTransition(); r.c.frame(0.016, r.outdoors());

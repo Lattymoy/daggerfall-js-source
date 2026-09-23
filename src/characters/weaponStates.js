@@ -114,7 +114,7 @@ export function createWeaponMachine(isBow, isUnarmed = false) {
   // `frames` as the port's own fields. Null in every one of them is
   // "ask the classic formula", which is what a machine that never
   // sets them has always done.
-  return { isBow, isUnarmed, ranged: isBow, frames: null, tick: null, cooldown: null, hitFrame: null, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, animIndex: 0, damageDone: false };
+  return { isBow, isUnarmed, ranged: isBow, frames: null, tick: null, cooldown: null, hitFrame: null, state: 'Idle', frame: 0, ticks: 0, acc: 0, cooldownUntil: 0, now: 0, bowIdleDrawn: false, animIndex: 0, damageDone: false };
 }
 
 export function machineAttack(m, strikeState) {
@@ -148,7 +148,25 @@ export function machineCancelBowDraw(m, liveSpeed = 50) {
 export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1: the rig's { entity, weaponType, usingRightHand } for a registered GetMeleeWeaponAnimTime override
   m.now += dt;
   const events = [];
-  if (m.state === 'Idle') return events;
+  if (m.state === 'Idle') {
+    // ARROW2: FPSWeapon.AnimateWeapon's idle arm for a bow (FPSWeapon.cs:
+    // 527-537): the one-frame Idle runs off its end every tick and lands
+    // on frame 3 with BowDrawback off - the drawn, nocked bow the instant
+    // shot looses FROM (ChangeWeaponState keeps a bow's frame, :261-262,
+    // so StrikeDown steps 4 the twang, 5 the shaft) - and on frame 0 with
+    // it on. The port's idle sat at 0 whatever the setting, so the
+    // default instant shot played the whole draw first and loosed at +5
+    // ticks where DFU looses at +2: the widget's clone, which starts at
+    // 3 as the IL does, let its sprite arrow go ~170 ms before the 3D
+    // shaft existed. Not while cooling: AnimateWeapon does not step a
+    // bow it has hidden (:497, `ShowWeapon`).
+    const rest = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0;
+    if (m.isBow && m.frame !== rest && m.now >= m.cooldownUntil) {
+      m.acc += dt;
+      if (m.acc >= CLASSIC_UPDATE_INTERVAL) { m.acc = 0; m.frame = rest; }
+    }
+    return events;
+  }
   // `m.frames` is the ONE departure this file carries: a weapon whose
   // animation is not five melee frames or the bow's draw-and-loose.
   // The Dwarven Thunderlock's fire cycle is six (combat/thunderlockArt.js
@@ -171,7 +189,17 @@ export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1
   const tick = m.tick ?? (m.isBow ? CLASSIC_UPDATE_INTERVAL : getMeleeWeaponAnimTime(liveSpeed, animCtx));   // AUDIT-RR F1: FPSWeapon's own animTickTime asks FormulaHelper's override (FormulaHelper.cs:830-838); without the ctx the two mods' arms were inert on the swing that lands
   m.acc += dt;
   while (m.acc >= tick) {
-    m.acc -= tick;
+    // ARROW2: ONE step per resume, the remainder dropped - FPSWeapon.
+    // AnimateWeapon steps once and then `yield return new WaitForSeconds
+    // (animTickTime)` (:545), and a coroutine resumes on the first frame
+    // past its wait, never twice in one. Carrying the remainder let the
+    // machine take several ticks in a frame and run ahead of the weapon
+    // widget's clone (the IL's own coroutine, weaponWidget.js), which
+    // then missed the bow's hit frame and never set its cooldown; and a
+    // single long frame on the release ran StrikeDown to Idle at once.
+    // The port's own gun (`m.tick`, FIELD-GUN7's lab clock) is no
+    // FPSWeapon and keeps its clock.
+    m.acc = m.tick == null ? 0 : m.acc - tick;
     if (m.isUnarmed && m.state === 'StrikeLeft') {
       // FPSWeapon.AnimateWeapon's FIRST arm: the frame comes from
       // leftUnarmedAnims, never from an increment, and the swing ends

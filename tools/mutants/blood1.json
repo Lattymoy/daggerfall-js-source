@@ -293,7 +293,7 @@
   {
     "name": "BLOOD1b-a-splash-site-forgets-its-blow",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.weapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch",
+    "old": "          bloodCentre(foe.ai.feet, foe.ai.height), null, bloodHit(damage, foe.entity, { fromPlayer: true, weapon: playerWeapon.strikingWeapon, swing: playerWeapon.machine?.state, forward: lookDir }));   // BLOOD1b: the blow drives the ladder, and only a PLAYER'S warhammer takes the heavy branch",
     "new": "          bloodCentre(foe.ai.feet, foe.ai.height));",
     "tests": [
       "test/blood1_decals.test.js"

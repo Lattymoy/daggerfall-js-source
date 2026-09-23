@@ -122,12 +122,19 @@ test('V4: the attack voice - 10% attack ELSE 20% bark, strain-keyed, transformed
 });
 
 test('V4: the inventory and talk doors refuse the beast - every opener, one gate each', () => {
-  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    const s = read(f);
-    assert.ok(s.includes('racialSuppressInventory(playerEntity)'), `${f} gates toggleInventory`);
+  // DISC10-E L3 re-aim: ONE gate now, in the WINDOW's own door, as DFU has it (DaggerfallInventoryWindow.cs:583-587,
+  // inherited by DaggerfallTradeWindow.cs:369-376) - the per-host copies this pinned covered toggleInventory and the
+  // dungeon's opener and missed a building's pack, every corpse and pile above ground, the sheet's Items button and
+  // every counter. test/disc10_lycan.test.js executes every door.
+  const inv = read('src/ui/inventoryDoor.js');
+  assert.ok(inv.indexOf('racialSuppressInventory(deps.entity)') > 0
+    && inv.indexOf('racialSuppressInventory(deps.entity)') < inv.indexOf('new NativeInventoryWindow(deps)'), 'the pack\'s door refuses before it builds');
+  const trade = read('src/ui/tradeDoor.js');
+  assert.ok(trade.indexOf('racialSuppressInventory(hooks.entity)') > 0
+    && trade.indexOf('racialSuppressInventory(hooks.entity)') < trade.indexOf('new NativeTradeWindow(hooks)'), 'and so does every counter\'s');
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
+    assert.ok(!read(f).includes('racialSuppressInventory('), `${f} keeps no copy of the gate`);
   }
-  const dc = read('src/scenes/dungeonContext.js');
-  assert.ok(dc.includes('racialSuppressInventory(playerEntity)'), 'the dungeon gates INSIDE openInventory - loot included');
   const tt = read('src/scenes/townTalk.js');
   assert.ok(tt.includes('racialSuppressTalk(playerEntity)'), 'townTalk gates at B7\'s ONE window-opener');
   assert.ok(tt.indexOf('racialSuppressTalk(playerEntity)') < tt.indexOf('mount(createTalkWindow('),   // ET1: the door builds the window

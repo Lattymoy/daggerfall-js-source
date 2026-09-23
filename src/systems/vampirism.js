@@ -51,7 +51,8 @@ import { spellRecordOfIndex } from './loot.js';
 import { SKILLS } from './skills.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { VAMPIRE_SPELL_TAG, endOldLifeEffects, liveLycanthropy } from './lycanthropy.js';
-import { RACES } from './races.js';        // V5: the BIRTH race id keys the VAMP00I0 head
+import { RACES, RACE_TEMPLATES, raceById } from './races.js';        // V5: the BIRTH race id keys the VAMP00I0 head; DISC10-D V5: and the birth template the compound race clones
+import { EFFECT_BITS, SPECIAL_ABILITY_BITS } from './specialAdvantages.js';   // DISC10-D V5: DFCareer.EffectFlags / SpecialAbilityFlags, for CreateCompoundRace
 import { SOUND } from './soundClips.js';   // V5: the gendered attack voices
 import { endVampireQuests } from './racialQuests.js';   // V2d: the cure's P0* tombstone sweep
 
@@ -275,6 +276,56 @@ export function vampireAttackVoice(entity, rolls = Math.random) {
   return entity?.gender === 'female'
     ? (bark ? SOUND.EnemyFemaleVampireBark : SOUND.EnemyFemaleVampireAttack)
     : (bark ? SOUND.EnemyVampireBark : SOUND.EnemyVampireAttack);
+}
+
+// ── DISC10-D V5 - THE LIVE RACE TEMPLATE ─────────────────────────
+
+/** PlayerEntity.BirthRaceTemplate: the race the character was MADE as.
+ *  Chargen writes the race KEY and a classic save may carry only the id,
+ *  so both roads are taken and the display name is accepted too (the
+ *  enhanced sheet's MAC-G reader, homed here with its one consumer). */
+export function birthRaceTemplate(entity) {
+  if (!entity) return null;
+  return RACE_TEMPLATES.find((r) => r.key === entity.race || r.name === entity.race)
+    ?? raceById(entity.raceId)
+    ?? null;
+}
+
+/**
+ * PlayerEntity.RaceTemplate (:151) = GetLiveRaceTemplate (:233-241): the
+ * racial override's CustomRace when one is live, else the birth race.
+ * Both curses CLONE the birth race (VampirismEffect.cs:326-338,
+ * LycanthropyEffect.cs:547-555) and change what they change:
+ *  - the vampire: the name "Vampire", immunity to Paralysis and Disease,
+ *    SunDamage and HolyDamage;
+ *  - the lycanthrope: immunity to Disease, and the name swapped to
+ *    "Werewolf"/"Wereboar" while transformed and back on the way out
+ *    (MorphSelf, :510-528) - `raceNameOverride` on the curse entry.
+ * The character sheet reads this, as DFU's reads RaceTemplate.Name
+ * (DaggerfallCharacterSheetWindow.cs:398) and its specials list reads the
+ * template's flags (:463). The port wrote the override name on both
+ * curses and nothing read it: every vampire's sheet said "Breton".
+ * Answers a frozen template, or null when there is no race at all.
+ */
+export function liveRaceTemplate(entity) {
+  const birth = birthRaceTemplate(entity);
+  const vamp = liveVampirism(entity);
+  const lyc = vamp ? null : liveLycanthropy(entity);
+  if (!vamp && !lyc) return birth;
+  const base = birth ?? { name: entity?.race ?? 'Breton', resistanceFlags: 0, immunityFlags: 0, lowToleranceFlags: 0, criticalWeaknessFlags: 0, specialAbilities: 0 };
+  if (vamp) {
+    return Object.freeze({
+      ...base,
+      name: vamp.raceNameOverride ?? 'Vampire',
+      immunityFlags: (base.immunityFlags ?? 0) | EFFECT_BITS.toParalysis | EFFECT_BITS.toDisease,
+      specialAbilities: (base.specialAbilities ?? 0) | SPECIAL_ABILITY_BITS.sunDamage | SPECIAL_ABILITY_BITS.holyDamage,
+    });
+  }
+  return Object.freeze({
+    ...base,
+    name: lyc.raceNameOverride ?? base.name,
+    immunityFlags: (base.immunityFlags ?? 0) | EFFECT_BITS.toDisease,
+  });
 }
 
 // isDayFromMinutes moved HOME to gameDate.js (V2c) - it is date law,

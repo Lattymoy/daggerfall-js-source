@@ -31,6 +31,7 @@ import { isBackFacing } from '../characters/enemyMotor.js';
 import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { addItem } from '../systems/inventory.js';
 import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand   // FIELD-GUN18: ...and how big it is drawn
+import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher (worldTick never reaches this module - no cycle)
 
 export const ARROW_MODEL_ID = 99800;
 
@@ -234,7 +235,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:2817), so the copy that survived
+ * now calls it (dungeonContext.js:2828), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into
@@ -322,5 +323,10 @@ export function playerArrowHitFoe(m, foe, {
   if (foe.entity?.items && !orbArchiveFor(m.weapon)) {
     addItem(foe.entity.items, bowDamageArrow());   // MAC-N1: one minter, not a bare literal with no value
   }
+  // DISC10-D H1: the shaft is a WeaponDamage like the swing
+  // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:627-635), so its last
+  // line is OnWeaponHitEntity - after the door took the health, whatever the
+  // damage. The one dispatcher, for every host's arrow.
+  playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType ?? null });
   return dmg;
 }

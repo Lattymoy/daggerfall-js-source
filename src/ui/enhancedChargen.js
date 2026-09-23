@@ -1315,7 +1315,12 @@ function paintInto() {
     const state = i === here ? ' on' : (i < here ? ' done' : ' todo');
     const b = el('button', `railbtn${state}`);
     b.append(el('span', 'rk', stage.label));
-    b.disabled = i > here;   // the wizard is a walk, not a menu
+    // the wizard is a walk, not a menu: nothing here is pressed (DISC10-B - the finished steps were left enabled and
+    // styled as the menu's pressable rail, so a player clicked back through them and nothing happened; Back is the way)
+    b.disabled = i > here;
+    b.tabIndex = -1;
+    b.setAttribute('aria-disabled', 'true');
+    if (i === here) b.setAttribute('aria-current', 'step');
     rail.append(b);
   });
   side.append(rail);
@@ -1445,8 +1450,13 @@ export function attachChargenText(f, textRsc) {
  */
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (isTextEntryTarget(e.target)) return;   // the field's key: it bubbles to the host, whose ladder (CG2) leaves it to the field
   const action = overlayAction(e);
+  // CG2: a field owns every key it can TYPE - and no field types Escape. DISC10-B (Discord: "once you reach name
+  // selection you can't go back to any previous step"): nameStage focuses its box on every paint, so this line used to
+  // return on EVERY key there and Name was the one stage the keyboard could not leave. DFU cancels the name window with
+  // its TextBox focused (DaggerfallPopupWindow.Update -> GetBackButtonUp -> CancelWindow), and so do the custom-class
+  // and summary name boxes.
+  if (isTextEntryTarget(e.target) && action !== 'back') return;   // the field's key: it bubbles to the host, whose ladder (CG2) leaves it to the field
   if (!action) return;
   e.preventDefault();
   // A MODAL OVERLAY OWNS ITS INPUT. Mac, playing the deployed build:
@@ -1459,6 +1469,7 @@ function onKey(e) {
   e.stopPropagation();
   flow.input(action);
   if (flow.done) { onExit('done'); return; }
+  if (flow.cancelled) { onExit('cancel'); return; }   // DISC10-B: Escape off the FIRST stage is RaceSelectWindow_OnClose's Cancelled - the Cancel button's own arm; the classic window reads it (chargenSession), this view did not
   paint();
 }
 

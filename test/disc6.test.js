@@ -125,8 +125,8 @@ test('DISC8-A ambience: no crickets indoors (Mac: "no crickets indoors please") 
 test('DISC6 ambience by source: both hosts tick the street\'s ambience in the modal frame - the hour, inside, underground, Better Ambience\'s indoor rain; AUDIT DISC7 B1: the word and the rain\'s gain stay the street\'s last - DISC9: the word is the one the street HEARD (mutant: the gain forced to 1 indoors)', () => {
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = rd(f);
-    assert.match(s, /windAudio\.stop\(\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*ambience\.setPreset\(presetForExterior\(heardWeather\(\), isNight\(minuteNow\(\)\)\)\);[^\n]*\n\s*ambience\.update\(dt, \{ inside: true, underground: modes\.mode === 'dungeon', indoorRainSource: betterAmbience\.indoorRainPlaying\(\) \}\);/, f);
-    const modal = s.slice(s.indexOf('windAudio.stop();'), s.indexOf("indoorRainSource: betterAmbience.indoorRainPlaying() });"));
+    assert.match(s, /windAudio\.stop\(\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*ambience\.setPreset\(presetForExterior\(heardWeather\(\), isNight\(minuteNow\(\)\)\)\);[^\n]*\n\s*ambience\.update\(dt, \{ inside: true, underground: modes\.mode === 'dungeon', indoorRainSource: betterAmbience\.rainPlaying\(\) \}\);/, f);
+    const modal = s.slice(s.indexOf('windAudio.stop();'), s.indexOf("indoorRainSource: betterAmbience.rainPlaying() });"));
     assert.doesNotMatch(modal, /ambience\.rainGain = |ambientWord = /, `${f}: the street's word and gain are not replaced indoors`);
   }
 });

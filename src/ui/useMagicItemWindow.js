@@ -65,6 +65,10 @@ export function usableMagicItems(items = [], { isEnchanted = defaultIsEnchanted 
   return out;
 }
 
+/** DISC12: DaggerfallUI.cs:584-585 - with nothing usable, `AddHUDText(GetLocalizedText("noItemToActivate"))`,
+ *  Internal_Strings.csv:959 verbatim. The port opened nothing and said nothing: a U press that looked dead. */
+export const NO_ITEM_TO_ACTIVATE_TEXT = 'You have no usable magic item';
+
 /**
  * DaggerfallUI's `dfuiOpenUseMagicItemWindow` arm (:581-583): the
  * window opens only when something is usable.

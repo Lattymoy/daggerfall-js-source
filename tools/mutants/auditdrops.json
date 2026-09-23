@@ -342,7 +342,7 @@
   {
     "name": "AD-E6-first-weapon-in-the-look",
     "file": "src/net/remotePlayers.js",
-    "old": "    const weapon = peer.shown.wd ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === EQUIP_SLOTS.RightHand) ?? null) : null;",
+    "old": "    const weapon = peer.shown.wd && !peer.shown.wb ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === hand) ?? null) : null;",
     "new": "    const weapon = (peer.look?.items ?? []).find((it) => it?.group === 'Weapons') ?? null;",
     "tests": [
       "test/auditdrops.test.js"
@@ -351,8 +351,8 @@
   {
     "name": "AD-E6-sheathed-swings-the-weapon",
     "file": "src/net/remotePlayers.js",
-    "old": "    const weapon = peer.shown.wd ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === EQUIP_SLOTS.RightHand) ?? null) : null;",
-    "new": "    const weapon = (peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === EQUIP_SLOTS.RightHand) ?? null;",
+    "old": "    const weapon = peer.shown.wd && !peer.shown.wb ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === hand) ?? null) : null;",
+    "new": "    const weapon = !peer.shown.wb ? ((peer.look?.items ?? []).find((it) => it?.group === 'Weapons' && it.equipSlot === hand) ?? null) : null;",
     "tests": [
       "test/auditdrops.test.js"
     ]
