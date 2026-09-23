@@ -50,6 +50,7 @@ import {
 // AUDIT 64 F36/F37: DaggerfallHUD.Update's own shortcut arms. A leaf
 // on systems/ alone, so this module can take it without a cycle.
 import { hudShortcutKey } from './hudShortcuts.js';
+import { hotbarInForce } from '../systems/uiSkin.js';   // AUDIT CONTRIB H1: the diamond's actions stand down while the hotbar is in force
 import { statusReadoutTakesAction, setStatusBindings } from '../systems/statusReadout.js';   // STATUS-LIVE: the readout yields to whatever wants the slot, and the panel names the live Status key. A LEAF - this module is in ui/actionText.js's own import ring (through ui/inputMessageBox.js), so reaching for the BOX from here put its class body in a temporal dead zone
 import { getInt, getFloat } from '../systems/settings.js';   // SWING-SAY: the swing mode and its threshold, for the boot readout
 
@@ -863,17 +864,19 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // it. The performer itself is systems/quickslots.js - the window's own use
     // ladder and the one equipItem - so a hotkey is not a way round the
     // window's law.
-    case 'QuickUse1': return ctx.quickUse?.(1) === true;
-    case 'QuickUse2': return ctx.quickUse?.(2) === true;
-    case 'QuickSwap': return ctx.quickSwap?.() === true;
+    // AUDIT CONTRIB H1: with the hotbar in force the diamond is put AWAY - none of its five actions reaches a slot
+    // the player cannot see (a pad's d-pad, a key rebound onto one); the hotbar's own keys are its own reader's
+    case 'QuickUse1': return !hotbarInForce() && ctx.quickUse?.(1) === true;
+    case 'QuickUse2': return !hotbarInForce() && ctx.quickUse?.(2) === true;
+    case 'QuickSwap': return !hotbarInForce() && ctx.quickSwap?.() === true;
     // QS4: the off-hand cell's own press - light or douse, through the mod's
     // own guard. Same door law: a host without one answers false.
-    case 'QuickOffHand': return ctx.quickOffHand?.() === true;
+    case 'QuickOffHand': return !hotbarInForce() && ctx.quickOffHand?.() === true;
     // QS6: the spell slot's press - ready the slot's spell, or put it away
     // when it is the one already in hand. The performer is the model's
     // (spellQuickslotPress) over the host's ONE cast engine, so every law
     // about readying stays where DFU's are ported.
-    case 'QuickSpell': return ctx.quickSpell?.() === true;
+    case 'QuickSpell': return !hotbarInForce() && ctx.quickSpell?.() === true;
     default: return false;
   }
 }

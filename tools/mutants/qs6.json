@@ -20,8 +20,8 @@
   {
     "name": "QS6-a-blocked-frame-reads-as-a-release-and-fires-the-slot",
     "file": "src/systems/quickslots.js",
-    "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function') {",
-    "new": "  if (gap > QUICK_GAP_MS || typeof isHeld !== 'function') {",
+    "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function' || hotbarInForce()) {",
+    "new": "  if (gap > QUICK_GAP_MS || typeof isHeld !== 'function' || hotbarInForce()) {",
     "tests": [
       "test/qs6_spellslot.test.js"
     ]
@@ -203,7 +203,7 @@
   {
     "name": "QS6-the-spell-key-reaches-no-door",
     "file": "src/ui/input.js",
-    "old": "    case 'QuickSpell': return ctx.quickSpell?.() === true;",
+    "old": "    case 'QuickSpell': return !hotbarInForce() && ctx.quickSpell?.() === true;",
     "new": "    case 'QuickSpell': return false;",
     "tests": [
       "test/qs2_inputs.test.js"
@@ -349,8 +349,8 @@
   {
     "name": "QS6-F6-a-gap-in-the-frames-is-not-noticed",
     "file": "src/systems/quickslots.js",
-    "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function') {",
-    "new": "  if (blocked || typeof isHeld !== 'function') {",
+    "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function' || hotbarInForce()) {",
+    "new": "  if (blocked || typeof isHeld !== 'function' || hotbarInForce()) {",
     "tests": [
       "test/qs6_spellslot.test.js"
     ]

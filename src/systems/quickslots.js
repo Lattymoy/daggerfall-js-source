@@ -51,6 +51,7 @@ import { itemLongName, conditionPercentage } from './itemInfo.js';
 
 import { expandRowValues } from './quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { racialSuppressInventory } from './lycanthropy.js';   // DISC10-E L3: the pack's refusal, at the two doors that reach into it
+import { hotbarInForce } from './uiSkin.js';   // AUDIT CONTRIB H1: the diamond put away while the hotbar is
 /** The slots a player fills. The two consumables are what the diamond's
  *  top and bottom cells show; `swap` is the second weapon the off-hand
  *  cell offers when the off hand is empty. */
@@ -198,6 +199,10 @@ export function resolveConsumable(entity, slot) {
     if (!item) item = it;
     count += Math.max(0, it.stackCount ?? 1);
   }
+  // AUDIT CONTRIB H2: the LIT one of the kind first - using a light is lighting that record, and pressing the kind
+  // that is burning means "put it out", not "light the other torch of the same kind"
+  const lit = entity?.lightSource ?? null;
+  if (lit && quickslotKey(lit) === e.key) { item = lit; count = Math.max(count, 1); }
   return { key: e.key, name: e.name, item, count };
 }
 
@@ -278,13 +283,25 @@ export function quickslotView(entity, { weapon = null, sheathed = false, readied
  *  stand in lives in one place. */
 export const offHandOffersSwap = (entity) => quickslotView(entity).off.kind === 'swap';
 
+/** AUDIT CONTRIB H3: THE LAST PERFORMER'S ANSWER. A host's quickslot doors answer `true` to the route (a key the
+ *  ladder should stop at) whatever the performer decided, so a refused press - a suppressed pack, a broken weapon,
+ *  the weapon already in hand, silence, no spell points - read to the hotbar as done, and it flashed gold. The four
+ *  performers leave their own answer here; hotbarPress reads it back after its door. */
+let _performed = null;
+/** The answers that did nothing the player asked for. */
+const REFUSED = new Set(['refused', 'empty', 'none', 'gone', 'held']);
+const performedOk = (r) => !!r && !REFUSED.has(r.kind) && r.result?.kind !== 'empty';
+
+export { hotbarInForce };
+
 /**
  * THE USE. `hooks` are the host's own use hooks - the same object the
  * inventory window is handed (drinkPotion, revealMap, getQuest,
  * nowMinute, rows) - and `say` its popup channel. Answers what
  * happened; the HUD's count says the rest.
  */
-export function useQuickslot(slot, { entity = null, items = null, hooks = {}, say = null } = {}) {
+export function useQuickslot(slot, opts = {}) { return (_performed = useQuickslotNow(slot, opts)); }   // AUDIT CONTRIB H3: what the press did, for the hotbar's flash
+function useQuickslotNow(slot, { entity = null, items = null, hooks = {}, say = null } = {}) {
   if (!CONSUMABLE_SLOTS.includes(slot)) throw new Error(`quickslots: ${slot} is not a consumable slot`);
   // DISC10-E L3: a quickslot USE is the inventory window's Use arm
   // without the window - and a transformed lycanthrope has no pack to
@@ -335,7 +352,8 @@ export function useQuickslot(slot, { entity = null, items = null, hooks = {}, sa
  * (WeaponManager.ApplyWeapon :741-755). Without it the swap is the
  * right hand's, as it always was.
  */
-export function swapQuickslot({ entity = null, say = null, rows = null, hand = null } = {}) {
+export function swapQuickslot(opts = {}) { return (_performed = swapQuickslotNow(opts)); }   // AUDIT CONTRIB H3: what the press did, for the hotbar's flash
+function swapQuickslotNow({ entity = null, say = null, rows = null, hand = null } = {}) {
   // DISC10-E L3: the swap is an EQUIP from the pack - the inventory
   // window's own act - and the beast's pack is refused
   // (DaggerfallInventoryWindow.cs:583-587). Without this a werewolf put a
@@ -445,7 +463,8 @@ export function swapQuickslot({ entity = null, say = null, rows = null, hand = n
  * The one thing said here is the case the mod says nothing about: a
  * player carrying no light at all pressing a key that is about light.
  */
-export function offHandQuickslot({ entity = null, say = null, toggleLight = null, switchHand = null } = {}) {
+export function offHandQuickslot(opts = {}) { return (_performed = offHandQuickslotNow(opts)); }   // AUDIT CONTRIB H3: what the press did, for the hotbar's flash
+function offHandQuickslotNow({ entity = null, say = null, toggleLight = null, switchHand = null } = {}) {
   // MAC-R3 (2026-09-17, Mac: "Tapping the equip hand in the quickbar
   // doesn't switch to your other weapon in hand (still bound to H). Even
   // if a torch isn't equipped a message still shows up that you can't
@@ -554,7 +573,8 @@ export function resolveSpellQuickslot(entity) {
  * says "nothing is here" while the book is full is a key that teaches
  * nothing. The hold is how you choose; the first press is how you start.
  */
-export function spellQuickslotPress({ entity = null, magic = null, say = null } = {}) {
+export function spellQuickslotPress(opts = {}) { return (_performed = spellQuickslotPressNow(opts)); }   // AUDIT CONTRIB H3: what the press did, for the hotbar's flash
+function spellQuickslotPressNow({ entity = null, magic = null, say = null } = {}) {
   let r = resolveSpellQuickslot(entity);
   if (!r) {
     const first = bookOf(entity).find(keyedSpell) ?? null;
@@ -573,10 +593,12 @@ export function spellQuickslotPress({ entity = null, magic = null, say = null } 
   // door (interceptAttack -> firePending), with the live aim and every
   // law the click has. A CasterOnly spell has already cast at the ready.
   if (hotbarCasting) {
-    if (magic?.readiedIndex?.() !== r.index) magic?.readySpell?.(r.spell);
+    // AUDIT CONTRIB H3: a ready the engine REFUSED (silence, no spell points, the hands mid-cast) is a refusal - the
+    // hotbar flashed it as a cast
+    const took = magic?.readiedIndex?.() === r.index ? true : magic?.readySpell?.(r.spell);
     const armed = magic?.readiedIndex?.() === r.index;
     const fired = armed && magic?.interceptAttack?.(true) === true;
-    return { kind: fired ? 'cast' : 'pressed', name: r.name, readied: armed };
+    return { kind: fired ? 'cast' : took === false ? 'refused' : 'pressed', name: r.name, readied: armed };
   }
   if (magic?.readiedIndex?.() === r.index) {
     const put = magic.abortReadySpell?.() === true;
@@ -748,7 +770,7 @@ export function tickQuickslotHold(dt, { isHeld = null, entity = null, onTap = nu
   const at = Date.now();
   const gap = lastTickAt ? at - lastTickAt : 0;
   lastTickAt = at;
-  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function') {
+  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function' || hotbarInForce()) {   // AUDIT CONTRIB H1: the diamond put away
     for (const slot of CYCLE_SLOTS) holds.set(slot, disarm());
     return;
   }
@@ -933,6 +955,23 @@ export function hotbarView(entity, { readiedIndex = null } = {}) {
   const pack = packOf(entity);
   const book = bookOf(entity);
   const lit = entity?.lightSource ?? null;
+  // AUDIT CONTRIB H4: ONE PASS over the pack. This ran every frame the bar is up and walked the whole pack once per
+  // filled item slot, keying every record each time (quickslotKey is uncached for an enchanted or affixed item, three
+  // JSON.stringify calls) - ten slots over a late-game pack was hundreds of keyings a frame. Each record is keyed
+  // once now, into the kinds the bar holds.
+  const want = new Set();
+  for (const e of hotbar) if (e && e.type !== 'spell') want.add(e.key);
+  const byKey = new Map();
+  if (want.size) {
+    for (const it of pack) {
+      const k = quickslotKey(it);
+      if (!want.has(k)) continue;
+      let b = byKey.get(k);
+      if (!b) byKey.set(k, b = { item: it, count: 0, held: null });
+      b.count += Math.max(0, it.stackCount ?? 1);
+      if (!b.held && (isEquipped(it) || it === lit)) b.held = it;
+    }
+  }
   return hotbar.map((e, i) => {
     if (!e) return { slot: i, empty: true };
     if (e.type === 'spell') {
@@ -941,13 +980,8 @@ export function hotbarView(entity, { readiedIndex = null } = {}) {
         element: spell?.element ?? null, rangeType: spell?.rangeType ?? null,
         ghost: !spell, active: readiedIndex != null && readiedIndex === e.index };
     }
-    let item = null; let count = 0; let held = null;
-    for (const it of pack) {
-      if (quickslotKey(it) !== e.key) continue;
-      count += Math.max(0, it.stackCount ?? 1);
-      if (!item) item = it;
-      if (!held && (isEquipped(it) || it === lit)) held = it;
-    }
+    const b = byKey.get(e.key);
+    let item = b?.item ?? null; let count = b?.count ?? 0; let held = b?.held ?? null;
     // A lit light need not be in the pack array (the mod may hold it on
     // the entity alone); it is still this slot's kind in hand.
     if (!held && lit && quickslotKey(lit) === e.key) { held = lit; item ??= lit; count = Math.max(count, 1); }
@@ -993,8 +1027,8 @@ export function hotbarReady(entity, i) {
  *   consumable  quickUse(1) with c1 pointed at the kind: drink or use it
  *   weapon      quickSwap() with swap pointed at the kind: equip it into
  *               the hand (the swap's own bump, pause and refusals)
- *   light       quickOffHand() with the swap stood down: light it, or
- *               douse the lit one - the mod's own toggle and guard
+ *   light       quickUse(1) with c1 pointed at the kind: the pack's own
+ *               Use on that light - lit, or doused when it is the lit one
  *   spell       quickSpell() with the spell slot pointed at it, in CAST
  *               mode: ready it and fire it on the next frame with the
  *               live aim (a CasterOnly spell casts at the ready, as ever)
@@ -1003,34 +1037,38 @@ export function hotbarPress(i, { entity = null, doors = {}, say = null } = {}) {
   assertHot(i);
   const e = hotbar[i];
   if (!e) { say?.(HOTBAR_TEXT.emptySlot); return { kind: 'empty' }; }
+  // AUDIT CONTRIB H3: each arm answers what its PERFORMER did, not that the door was reached - the doors answer
+  // `true` to the route whatever happened, and a refused press flashed gold with the item's name
+  const through = (slot, entry, door, done) => {
+    _performed = null;
+    withQuickslotOverride(slot, entry, door);
+    const r = _performed; _performed = null;
+    return r && !performedOk(r) ? { kind: 'refused', name: e.name, by: r.kind } : { kind: done, name: e.name };
+  };
   if (e.type === 'spell') {
     if (typeof doors.quickSpell !== 'function') return { kind: 'none' };
     hotbarCasting = true;
-    try { withQuickslotOverride('spell', { index: e.index, name: e.name }, () => doors.quickSpell()); }
+    try { return through('spell', { index: e.index, name: e.name }, () => doors.quickSpell(), 'spell'); }
     finally { hotbarCasting = false; }
-    return { kind: 'spell', name: e.name };
   }
   if (e.kind === 'consumable') {
     if (typeof doors.quickUse !== 'function') return { kind: 'none' };
-    withQuickslotOverride('c1', { key: e.key, name: e.name }, () => doors.quickUse(1));
-    return { kind: 'used', name: e.name };
+    return through('c1', { key: e.key, name: e.name }, () => doors.quickUse(1), 'used');
   }
   if (e.kind === 'weapon') {
     if (typeof doors.quickSwap !== 'function') return { kind: 'none' };
-    withQuickslotOverride('swap', { key: e.key, name: e.name }, () => doors.quickSwap());
-    return { kind: 'equipped', name: e.name };
+    return through('swap', { key: e.key, name: e.name }, () => doors.quickSwap(), 'equipped');
   }
-  // THE LIGHT. The off hand's door lights whatever light the mod picks
-  // and douses the lit one - but it answers what the CELL shows, so the
-  // swap is stood down for the call (a free hand offering a swap would
-  // otherwise swap), and a hand holding a shield or a bow is refused in
-  // words here rather than switched by a key that said "torch".
-  if (typeof doors.quickOffHand !== 'function') return { kind: 'none' };
+  // THE LIGHT THE SLOT NAMES. AUDIT CONTRIB H2: this went to the off hand's toggle, which lights whatever the MOD
+  // picks (the last light used, else a lantern, a torch, a candle) and douses whatever burns - so a Candle slot lit
+  // the Lantern, a Lantern slot put out a lit candle, and a slot whose light was gone lit another. It is the pack's
+  // own Use on THIS kind now (useItem's light arm, through the consumable door: the lit one of the kind doused,
+  // another of it lit in its place, a spent one refused), and a slot with none of its kind left refuses before any
+  // door. A hand holding a shield or a weapon is refused in words, as ever.
+  if (typeof doors.quickUse !== 'function') return { kind: 'none' };
   const view = quickslotView(entity);
   if (view.off.kind === 'shield' || view.off.kind === 'weapon') { say?.(HOTBAR_TEXT.offHandFull); return { kind: 'refused' }; }
-  if (!entity?.lightSource && !packOf(entity).some(isLightSource)) { say?.(QUICKSLOT_TEXT.noLight); return { kind: 'none' }; }
-  withQuickslotOverride('swap', null, () => doors.quickOffHand());
-  return { kind: 'light', name: e.name };
+  return through('c1', { key: e.key, name: e.name }, () => doors.quickUse(1), 'light');
 }
 
 /** HB1: the spell slot's press in the hotbar's CAST mode - see

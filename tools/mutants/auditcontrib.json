@@ -115,5 +115,77 @@
     "tests": [
       "test/auditcontrib.test.js"
     ]
+  },
+  {
+    "name": "H1-the-diamond-routes-under-the-hotbar",
+    "file": "src/ui/input.js",
+    "old": "    case 'QuickUse1': return !hotbarInForce() && ctx.quickUse?.(1) === true;",
+    "new": "    case 'QuickUse1': return ctx.quickUse?.(1) === true;",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H1-the-diamond-holds-tap-under-the-hotbar",
+    "file": "src/systems/quickslots.js",
+    "old": " || hotbarInForce()) {   // AUDIT CONTRIB H1",
+    "new": ") {   // AUDIT CONTRIB H1",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H1-a-switched-off-mod-holds-its-keys",
+    "file": "src/systems/modSettings.js",
+    "old": "    if (Object.hasOwn(keys, 'Enabled') && modSetting(vendor, 'Enabled') === false) continue;\n",
+    "new": "",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H1-the-bar-eats-a-mods-hotkey",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "  if (modHotkeyCodes().has(e.code)) return;\n",
+    "new": "",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H1-the-bar-eats-a-bound-digit",
+    "file": "src/ui/enhancedHotbar.js",
+    "old": "  if (act && !QUICKSLOT_ACTIONS.has(act)) return;\n",
+    "new": "",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H2-the-other-light-of-the-kind",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (lit && quickslotKey(lit) === e.key) { item = lit; count = Math.max(count, 1); }\n",
+    "new": "",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H3-every-press-is-done",
+    "file": "src/systems/quickslots.js",
+    "old": "    return r && !performedOk(r) ? { kind: 'refused', name: e.name, by: r.kind } : { kind: done, name: e.name };",
+    "new": "    return { kind: done, name: e.name };",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
+  },
+  {
+    "name": "H3-a-refused-ready-is-a-press",
+    "file": "src/systems/quickslots.js",
+    "old": "took === false ? 'refused' : 'pressed'",
+    "new": "'pressed'",
+    "tests": [
+      "test/auditcontrib.test.js"
+    ]
   }
 ]

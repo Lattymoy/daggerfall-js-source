@@ -2753,7 +2753,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // is a WeaponManager singleton call with no scene gate, so the
     // eleventh panel answers here too. The law is at world.js's twin
     // (THE FOUR HOSTS RULE); routeKey still declines the key
-    // (ui/input.js:573), so the frame poll stays its only keyboard door.
+    // (ui/input.js:574), so the frame poll stays its only keyboard door.
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, on the ctx beside the sheath panel's
     // door - one object is this host's whole routeAction contract.
@@ -2954,7 +2954,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     noteKeyDown(latch.edge, e.code, e.repeat);   // MWCROUCH: the press event, buffered for the frame that reads it
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:249-270), and no host passed one - so
+    // held-keys Set (ui/input.js:250-271), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -3096,7 +3096,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       //
       // WEAPON-VIS2: except POLLED_ACTIONS - this ladder never calls
       // routeKey (the comment above says so directly), so routeKey's
-      // own `POLLED_ACTIONS.has(act)` decline (ui/input.js:675) never
+      // own `POLLED_ACTIONS.has(act)` decline (ui/input.js:676) never
       // touched this door either. hudCtx carries toggleSheath (AUDIT
       // 58, for the large HUD's sheath panel), so 'ReadyWeapon' - Z -
       // reached routeAction from BOTH here AND the frame's own poll

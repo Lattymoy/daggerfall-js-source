@@ -9,6 +9,7 @@
 // defaults without a DOM.
 
 import { appStorage } from './appStorage.js';   // the one storage seam - localStorage lives there alone
+import { domCodeForKeyCode } from './keyCodes.js';   // AUDIT CONTRIB H1: a mod hotkey's KeyCode name, as the key it holds
 import { onlineForcedModSetting } from './onlineLane.js';   // MODS-ONLINE-2: online, the room's ground is forced and every other switch is the player's
 
 const STORE_KEY = 'dfjs-mod-settings';
@@ -1100,6 +1101,24 @@ export function modSettingsOf(vendor) {
   if (!keys) throw new Error(`modSettingsOf: ${vendor} is not a vendored mod with switches`);
   const out = {};
   for (const k of Object.keys(keys)) out[k] = modSetting(vendor, k);
+  return out;
+}
+
+/** AUDIT CONTRIB H1: THE KEYS THE MODS HOLD NOW - the DOM code of every declared TextKey that names a key (an axis
+ *  is not one), of every vendored mod its own `Enabled` switch has not turned off. A port-side key reader that takes
+ *  keys the controls registry does not know of (the hotbar's digits) steps aside for these, so a mod's hotkey - Horse
+ *  Cart and Cargo ships on 5 and 6 - is never eaten by it. */
+export function modHotkeyCodes() {
+  const out = new Set();
+  for (const vendor of Object.keys(MOD_SETTINGS)) {
+    const keys = MOD_SETTINGS[vendor].keys;
+    if (Object.hasOwn(keys, 'Enabled') && modSetting(vendor, 'Enabled') === false) continue;
+    for (const [k, def] of Object.entries(keys)) {
+      if (!isTextKey(def) || def.axis) continue;
+      const code = domCodeForKeyCode(modSetting(vendor, k));
+      if (code) out.add(code);
+    }
+  }
   return out;
 }
 

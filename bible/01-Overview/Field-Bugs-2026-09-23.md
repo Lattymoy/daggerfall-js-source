@@ -854,8 +854,39 @@ else prints it AMBIGUOUS for a person (`test/citemerge.test.js`).
 Also: `OnlineSession` declares `onPeerDeath` (the type check), and the
 drop's trailing comments moved back onto the lines they describe.
 
+## The hotbar (the third lens)
+
+- **H1 - the digits were taken from everyone.** The bar read 1-0 at the
+  window's capture phase and swallowed them, so a digit the player bound
+  to an action in the controls pane, and Horse Cart and Cargo's mount and
+  summon (shipped on 5 and 6), never reached the host. And the diamond it
+  replaces was only hidden: a pad's d-pad and a rebound key still drank,
+  readied and lit from slots nobody could see, and with the HUD toggled
+  off the digits fell through to them. Now the diamond is put away while
+  the hotbar is in force (`hotbarInForce`: its five actions route nothing,
+  its hold machine taps nothing), the bar steps aside for any digit bound
+  to another action and for every enabled mod's hotkey
+  (`modHotkeyCodes`), and its keys follow the game's pause, not the HUD's
+  visibility. **Decision for Mac:** HCC's defaults (5, 6) and the hotbar's
+  slots 5 and 6 still share keys - HCC wins, as a binding should; moving
+  HCC's defaults is a KEY_MIGRATIONS row if the hotbar should have them.
+- **H2 - the light slot lit whatever the mod picked.** It went to the off
+  hand's toggle (the last light used, else a lantern, a torch, a candle):
+  a Candle slot lit the Lantern, a Lantern slot put out a lit candle, a
+  slot whose light was gone lit another. It is the pack's own Use on the
+  slot's kind now - that light lit, the lit one of the kind doused, none
+  left refused.
+- **H3 - a refused press flashed gold.** The doors answer the route
+  `true` whatever the performer decided. The four performers leave their
+  own answer for the bar, and `readySpell` answers as DFU's SetReadySpell
+  does (false on silence, no spell points, the hands mid-cast).
+- **H4 - the bar keyed the whole pack once per slot every frame.** One
+  pass now.
+- **H5 - the bar's icons skipped DW3's dye.** Asked with it, as the
+  diamond and the pack do.
+
 Pinned by execution in `test/auditcontrib.test.js`; mutants:
-`tools/mutants/auditcontrib.json`.
+`tools/mutants/auditcontrib.json` (21, all killed).
 
 # ARROW2 - the double arrows (DISC8-F), found
 

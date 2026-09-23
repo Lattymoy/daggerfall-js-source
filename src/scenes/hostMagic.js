@@ -601,14 +601,16 @@ export function createPlayerMagic({
    *  CasterOnly cast (:350-351). L2-slice (AUDIT 23 magic-8): `free`
    *  is SetReadySpell's noSpellPointCost - a trap's CasterOnly spell
    *  readies ON THE PLAYER for free, BYPASSING the silence gate
-   *  (:315 gates SilenceCheck on !noSpellPointCost) and the cost. */
+   *  (:315 gates SilenceCheck on !noSpellPointCost) and the cost.
+   *  Answers as SetReadySpell does (AUDIT CONTRIB H3): true when the spell
+   *  is in hand or cast, false when a gate refused it. */
   function readySpell(sp, { free = false } = {}) {
-    if (!free && silenceBlocksCast(playerEntity)) { readiedSpell = null; readiedCost = 0; say(SILENCED_TEXT); return; }
+    if (!free && silenceBlocksCast(playerEntity)) { readiedSpell = null; readiedCost = 0; say(SILENCED_TEXT); return false; }
     // ROAD-E6: :315's second term - "Do nothing if silenced OR CAST
     // ALREADY IN PROGRESS". Nothing can be readied while the hands are
     // in motion, and unlike the silence arm this one does NOT clear the
     // spell already readied: DFU returns false before touching a field.
-    if (castInProgress) return;
+    if (castInProgress) return false;
     // :326-328 - CalculateTotalEffectCosts runs ONCE, here, and the
     // number is STORED in readySpellCastingCost. Every later reader
     // (the :337 gate, the :423-425 spend) reads the stored number.
@@ -617,7 +619,7 @@ export function createPlayerMagic({
       readiedSpell = null;
       readiedCost = 0;   // :341-342
       say("You don't have the spell points.");   // youDontHaveTheSpellPoints
-      return;
+      return false;
     }
     readiedSpell = sp;
     readiedFree = free;
@@ -631,14 +633,15 @@ export function createPlayerMagic({
       // the mate says "Cast Heal on Bran", and the next click resolves through releaseFrame's ally arm, or through
       // the CasterOnly arm as ever if they moved. A free ready (A7) fires on the spot as DFU's does; so does one
       // with nobody there.
-      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }
-      if (!free && hasResurrect(sp)) { say(fallenInReach(lastAim?.eye ?? null, lastAim?.dir ?? null) ? PRESS_BUTTON_TO_FIRE_SPELL : RESURRECT_TEXT.aim); return; }   // RESURRECT1: a caster-only Resurrect waits for the click, aimed at the body
-      castInput(null, null); return;
+      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return true; }
+      if (!free && hasResurrect(sp)) { say(fallenInReach(lastAim?.eye ?? null, lastAim?.dir ?? null) ? PRESS_BUTTON_TO_FIRE_SPELL : RESURRECT_TEXT.aim); return true; }   // RESURRECT1: a caster-only Resurrect waits for the click, aimed at the body
+      return castInput(null, null) !== false;
     }
     // AUDIT 24 scenes: SetReadySpell's own line, verbatim -
     // GetLocalizedText("pressButtonToFireSpell") = "Press button to
     // fire spell." (Internal_Strings_en, EntityEffectManager.cs:355).
     say(PRESS_BUTTON_TO_FIRE_SPELL);   // classic: the next attack-click CASTS
+    return true;
   }
 
   async function ensureMissileBatch(m) {

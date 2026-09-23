@@ -14,6 +14,12 @@ import { DeathScreen, ONLINE_RESPAWN_SECONDS } from '../src/ui/deathScreen.js';
 import { validFoeRecord } from '../src/net/wire.js';
 import { createExteriorFoes } from '../src/scenes/exteriorFoes.js';
 import { audio } from '../src/systems/audio.js';
+import { setUiSkin, hotbarInForce } from '../src/systems/uiSkin.js';
+import { setPref } from '../src/systems/uiPrefs.js';
+import { routeAction } from '../src/ui/input.js';
+import { modHotkeyCodes, setModSetting } from '../src/systems/modSettings.js';
+import * as HB from '../src/systems/quickslots.js';
+import { TEMPLATES } from '../src/systems/useItem.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const settle = () => new Promise((r) => setTimeout(r, 0));
@@ -221,4 +227,97 @@ test('AUDIT CONTRIB U1/U2: only a sound chosen inside an input event stamps the 
   assert.match(u, /win\.addEventListener\('pointerdown', \(\) => \{ pressAt = nowMs\(\); \}, true\);/);
   assert.match(u, /const at = e\.detail > 0 && now - pressAt < GESTURE_MS \? pressAt : now;/);
   assert.doesNotMatch(u, /LEAD_MS/);
+});
+
+// ── H1-H5: THE HOTBAR ───────────────────────────────────────────────────────────────────────────────────────────
+
+const withHotbar = (fn) => {
+  setUiSkin('enhanced'); setPref('quickbarStyle', 'hotbar');
+  try { return fn(); } finally { setPref('quickbarStyle', 'quickbar'); setUiSkin('classic'); }
+};
+
+test('AUDIT CONTRIB H1: with the hotbar in force the diamond is put AWAY - none of its five actions routes (a pad\'s d-pad, a rebound key) and its hold machine taps nothing; on the classic skin the pref is inert', () => {
+  let used = 0;
+  const ctx = { quickUse: () => { used++; return true; }, quickSwap: () => true, quickOffHand: () => true, quickSpell: () => true };
+  withHotbar(() => {
+    assert.equal(hotbarInForce(), true);
+    for (const a of ['QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell']) assert.equal(routeAction(a, ctx), false, `${a} reaches a slot nobody can see`);
+    assert.equal(used, 0);
+    const taps = [];
+    HB.tickQuickslotHold(0.016, { isHeld: () => true, onTap: (s) => taps.push(s) });
+    HB.tickQuickslotHold(0.016, { isHeld: () => false, onTap: (s) => taps.push(s) });
+    assert.deepEqual(taps, [], 'the diamond\'s held keys tap nothing');
+  });
+  setPref('quickbarStyle', 'hotbar');
+  try { assert.equal(hotbarInForce(), false, 'classic skin: the diamond is the quickbar whatever the pref'); assert.equal(routeAction('QuickUse1', ctx), true); }
+  finally { setPref('quickbarStyle', 'quickbar'); }
+  assert.equal(used, 1);
+});
+
+test('AUDIT CONTRIB H1: a mod\'s hotkey is the mod\'s - Horse Cart and Cargo\'s 5 and 6 are held while it is on, released while it is off; and the bar steps aside for them and for any digit bound to another action', () => {
+  setModSetting('horse-cart-and-cargo', 'Enabled', true);
+  try { assert.ok(modHotkeyCodes().has('Digit5') && modHotkeyCodes().has('Digit6')); }
+  finally { setModSetting('horse-cart-and-cargo', 'Enabled', false); }
+  assert.equal(modHotkeyCodes().has('Digit5'), false, 'a mod switched off holds nothing');
+  const b = rd('src/ui/enhancedHotbar.js');
+  assert.match(b, /const act = actionForCode\(bindings\(\), e\.code\);\n\s*if \(act && !QUICKSLOT_ACTIONS\.has\(act\)\) return;\n\s*if \(modHotkeyCodes\(\)\.has\(e\.code\)\) return;/);
+  assert.match(b, /if \(!bar \|\| !hotbarMode\(\) \|\| dropOwners\.size \|\| lastPaused\) return;/, 'gated on the game\'s pause, not the HUD\'s visibility');
+  assert.match(rd('src/ui/hud.js'), /paused: !!cursorActive,/);
+});
+
+const lightOf = (templateIndex, name) => ({ group: 'UselessItems2', templateIndex, name, currentCondition: 40, maxCondition: 100 });
+const lightDoors = (me) => ({ quickUse: () => { HB.useQuickslot('c1', { entity: me, items: me.items }); return true; } });
+
+test('AUDIT CONTRIB H2: the light slot lights THE LIGHT IT NAMES - a Candle slot lights the candle with a lantern carried, the lit one\'s slot douses it, and a slot whose light is gone refuses before any door', () => {
+  HB.clearQuickslots();
+  const candle = lightOf(TEMPLATES.Candle, 'Candle'), lantern = lightOf(TEMPLATES.Lantern, 'Lantern');
+  const me = { isPlayer: true, level: 5, career: {}, activeEffects: [], spells: [], stats: {}, items: [lantern, candle], lightSource: null };
+  HB.setHotbarSlot(0, HB.hotbarEntryForItem(candle));
+  HB.setHotbarSlot(1, HB.hotbarEntryForItem(lantern));
+  assert.equal(HB.hotbarPress(0, { entity: me, doors: lightDoors(me) }).kind, 'light');
+  assert.equal(me.lightSource, candle, 'the candle - the mod\'s toggle would have picked the lantern');
+  HB.hotbarPress(1, { entity: me, doors: lightDoors(me) });
+  assert.equal(me.lightSource, lantern, 'the lantern slot swaps to the lantern, not douses the candle');
+  HB.hotbarPress(1, { entity: me, doors: lightDoors(me) });
+  assert.equal(me.lightSource, null, 'and pressing the lit one\'s slot puts it out');
+  const t1 = lightOf(TEMPLATES.Torch, 'Torch'), t2 = lightOf(TEMPLATES.Torch, 'Torch');
+  me.items = [lantern, t1, t2]; me.lightSource = t2;
+  HB.setHotbarSlot(2, HB.hotbarEntryForItem(t1));
+  HB.hotbarPress(2, { entity: me, doors: lightDoors(me) });
+  assert.equal(me.lightSource, null, 'two torches, the SECOND lit: the slot puts it out, not lights the first in its place');
+  me.items = [lantern];
+  assert.equal(HB.hotbarPress(0, { entity: me, doors: lightDoors(me) }).kind, 'refused', 'no candle left: refused');
+  assert.equal(me.lightSource, null, 'and nothing else was lit in its place');
+  HB.clearQuickslots();
+});
+
+test('AUDIT CONTRIB H3: a refused press is a refusal - the performers\' own answer reaches the hotbar (the doors answer true to the route whatever happened); readySpell answers as SetReadySpell does', () => {
+  HB.clearQuickslots();
+  const dg = { group: 'Weapons', templateIndex: 113, material: 3, name: 'Dagger', currentCondition: 50, maxCondition: 100 };
+  const me = { isPlayer: true, level: 5, career: {}, activeEffects: [], spells: [{ index: 7, name: 'Heal', element: 4, rangeType: 2 }], stats: {}, items: [] };
+  HB.setHotbarSlot(0, HB.hotbarEntryForItem(dg));
+  HB.setHotbarSlot(1, HB.hotbarEntryForSpell(me.spells[0]));
+  const doors = { quickSwap: () => { HB.swapQuickslot({ entity: me }); return true; },
+    quickSpell: () => { HB.spellQuickslotPress({ entity: me, magic: { readiedIndex: () => null, readySpell: () => false, interceptAttack: () => false } }); return true; } };
+  assert.equal(HB.hotbarPress(0, { entity: me, doors }).kind, 'refused', 'no dagger in the pack: the swap said none');
+  assert.equal(HB.hotbarPress(1, { entity: me, doors }).kind, 'refused', 'the engine refused the ready (silence, no spell points)');
+  const h = rd('src/scenes/hostMagic.js');
+  assert.match(h, /say\(SILENCED_TEXT\); return false; \}/);
+  assert.match(h, /say\(PRESS_BUTTON_TO_FIRE_SPELL\);   \/\/ classic: the next attack-click CASTS\n\s*return true;/);
+  HB.clearQuickslots();
+});
+
+test('AUDIT CONTRIB H4/H5: the bar\'s view keys each pack record ONCE a frame, not once per slot; its icons ask with the dye', () => {
+  HB.clearQuickslots();
+  const pots = Array.from({ length: 40 }, (_, i) => ({ group: 'Weapons', templateIndex: 113, material: i % 7, name: 'Dagger', currentCondition: 50, maxCondition: 100 }));
+  const me = { isPlayer: true, level: 5, career: {}, activeEffects: [], spells: [], stats: {}, items: pots };
+  for (let i = 0; i < 7; i++) HB.setHotbarSlot(i, HB.hotbarEntryForItem(pots[i]));
+  let reads = 0;
+  const counted = pots.map((p) => new Proxy(p, { get: (t, k) => { if (k === 'material') reads++; return t[k]; } }));
+  me.items = counted;
+  const v = HB.hotbarView(me);
+  assert.equal(v.filter((s) => !s.empty && !s.ghost).length, 7);
+  assert.ok(reads <= counted.length * 3, `the pack was keyed ${reads / counted.length}x per record - once per slot again`);
+  assert.match(rd('src/ui/enhancedHotbar.js'), /requestIcon\(image\.archive, image\.record, \{ scale: 2, dye: image\.dye,/);
+  HB.clearQuickslots();
 });

@@ -51,8 +51,8 @@
   {
     "name": "QS2-the-second-slot-key-drinks-the-first-slot",
     "file": "src/ui/input.js",
-    "old": "    case 'QuickUse2': return ctx.quickUse?.(2) === true;",
-    "new": "    case 'QuickUse2': return ctx.quickUse?.(1) === true;",
+    "old": "    case 'QuickUse2': return !hotbarInForce() && ctx.quickUse?.(2) === true;",
+    "new": "    case 'QuickUse2': return !hotbarInForce() && ctx.quickUse?.(1) === true;",
     "tests": [
       "test/qs2_inputs.test.js"
     ]
@@ -60,7 +60,7 @@
   {
     "name": "QS2-the-swap-key-eaten-on-a-host-with-no-door",
     "file": "src/ui/input.js",
-    "old": "    case 'QuickSwap': return ctx.quickSwap?.() === true;",
+    "old": "    case 'QuickSwap': return !hotbarInForce() && ctx.quickSwap?.() === true;",
     "new": "    case 'QuickSwap': { ctx.quickSwap?.(); return true; }",
     "tests": [
       "test/qs2_inputs.test.js"

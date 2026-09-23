@@ -514,7 +514,7 @@ test('E1: the retired DEPARTURES are gone from both automap windows, and the Led
 // Window.cs:183-188 can read a bare `GetKeyUp` and be safe.
 //
 // THIS PORT OPENS ON THE PRESS in all four hosts (world.js:7446/:7448,
-// exterior.js:3057/:3065, ui/input.js:519/:525) and then routes that
+// exterior.js:3057/:3065, ui/input.js:520/:526) and then routes that
 // same key's release into the window it just mounted (world.js:7482 ->
 // townTalk.keyup). The bare `GetKeyUp` therefore is NOT safe here, and
 // the shape DFU uses for exactly this case - a window whose open edge

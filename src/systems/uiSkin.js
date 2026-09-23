@@ -56,6 +56,13 @@ export function uiSkin(search) {
 /** The predicate every mount site should call. */
 export const isEnhanced = (search) => uiSkin(search) === 'enhanced';
 
+/** AUDIT CONTRIB H1: THE HOTBAR IS IN FORCE - the enhanced skin with the hotbar chosen (systems/features.js
+ *  'quickbar-style') - and the quickslot diamond is put AWAY, not hidden: its actions (a pad's d-pad, a rebound key)
+ *  and its hold machine stand down, so nothing reaches slots the player cannot see. On the classic skin the pref is
+ *  inert and the diamond is the quickbar, as ever. Here, beside the skin, so the input ladder can read it without
+ *  the quickslot model's import ring. */
+export const hotbarInForce = () => isEnhanced() && getPref('quickbarStyle') === 'hotbar';
+
 /** Store a choice. Ignores anything not a skin, for the same reason
  *  the override does: a bad value is a typo. Returns what is now
  *  stored, which is NOT necessarily what uiSkin will report while a

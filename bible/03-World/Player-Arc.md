@@ -1697,7 +1697,7 @@ at the shipped `Mouse2` default, and handed it to the input lane.
 and both of whose WINDOW-level handlers (`world.js:7999-8000`,
 `exterior.js:3224-3225`) call `mouseCode(e.button)` and add/delete
 unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
-maps button 2 to `Mouse2` (`input.js:446`), which is the shipped
+maps button 2 to `Mouse2` (`input.js:447`), which is the shipped
 binding (`InputManager.cs:995`). The latch is live in that host; there
 was no gap to hand on and none is queued.
 

@@ -28,7 +28,9 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { PIXEL_STACK } from './pixelifyFive.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { isTextEntryTarget } from './input.js';
+import { isTextEntryTarget, bindings, QUICKSLOT_ACTIONS } from './input.js';
+import { actionForCode } from '../systems/inputActions.js';
+import { modHotkeyCodes } from '../systems/modSettings.js';   // AUDIT CONTRIB H1: a mod's hotkey is the mod's
 import {
   HOTBAR_SIZE, HOTBAR_KEYS, HOTBAR_CODES, HOTBAR_TEXT, hotbarView, hotbarRevision, hotbarPress, hotbarReady,
   hotbarEntryForItem, hotbarEntryForSpell, setHotbarSlot, clearHotbarSlot, swapHotbarSlots, hotbarEntry,
@@ -70,6 +72,7 @@ let dropEntity = null;
 let liveOpts = {};
 let liveEntity = null;
 let lastHidden = true;
+let lastPaused = true;   // AUDIT CONTRIB H1: a window or the freed cursor - the keys are not the player's
 let lastSig = null;
 let keysBound = false;
 let captionTimer = null;
@@ -171,7 +174,8 @@ function bindKeys() {
 export function drawEnhancedHotbar(entity, opts = {}) {
   if (!bar) return;
   lastHidden = !!opts.hidden;
-  if (!opts.hidden) { liveOpts = opts; liveEntity = entity ?? null; }
+  lastPaused = opts.paused ?? !!opts.hidden;   // an older caller that says only `hidden` keeps its old gate
+  if (!lastPaused) { liveOpts = opts; liveEntity = entity ?? null; }
   paint();
 }
 
@@ -265,7 +269,7 @@ function iconFor(s, i, item, entity) {
     src = modelIconUrl(item, 96, fpArm);
     if (!src) {
       const image = inventoryItemImage(item, entity ?? undefined);
-      src = image ? requestIcon(image.archive, image.record, { scale: 2, onReady: () => { iconKeys[i] = null; lastSig = null; paint(); } }) : null;
+      src = image ? requestIcon(image.archive, image.record, { scale: 2, dye: image.dye, onReady: () => { iconKeys[i] = null; lastSig = null; paint(); } }) : null;   // AUDIT CONTRIB H5: DW3's dye, as the diamond and the pack ask
     }
   }
   if (src) { s.icon.src = src; s.icon.style.display = ''; }
@@ -284,7 +288,7 @@ export function pressHotbar(i) {
   const ok = hotbarReady(entity, i);
   let said = null;
   const res = hotbarPress(i, { entity, doors: liveOpts, say: (l) => { said = l; } });
-  const good = ok && res.kind !== 'none' && res.kind !== 'refused';
+  const good = ok && res.kind !== 'none' && res.kind !== 'refused' && res.kind !== 'empty';   // AUDIT CONTRIB H3: the performer's own answer (hotbarPress)
   strike(i, good);
   const e = hotbarEntry(i);
   showCaption(said ?? (e ? e.name : HOTBAR_TEXT.emptySlot), !good);
@@ -321,11 +325,19 @@ function showCaption(text, bad = false) {
 }
 
 function onKey(e) {
-  if (!bar || !hotbarMode() || dropOwners.size || lastHidden) return;
+  // AUDIT CONTRIB H1: gated on the GAME's pause, not the HUD's visibility - with the HUD toggled off the keys fell
+  // through to the diamond the hotbar replaces (1 drank the diamond's potion), and 5-0 did nothing
+  if (!bar || !hotbarMode() || dropOwners.size || lastPaused) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const i = HOTBAR_CODES.indexOf(e.code);
   if (i < 0) return;
   if (isTextEntryTarget(e.target)) return;
+  // AUDIT CONTRIB H1: A DIGIT THAT IS SOMEONE ELSE'S STAYS THEIRS. The bar took every digit at the capture phase, so a
+  // key the player bound to an action in the controls pane, and a mod's hotkey (Horse Cart and Cargo's mount and
+  // summon ship on 5 and 6), never reached the host. The diamond's own five are the hotbar's to take - it replaces them.
+  const act = actionForCode(bindings(), e.code);
+  if (act && !QUICKSLOT_ACTIONS.has(act)) return;
+  if (modHotkeyCodes().has(e.code)) return;
   // The hotbar owns the digit: no host ladder below may read it too
   // (keys 1-4 are the diamond's by default, and the diamond is put away).
   e.preventDefault();

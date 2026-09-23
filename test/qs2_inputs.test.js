@@ -234,11 +234,12 @@ test('QS2: routeAction sends each action to its ctx door with the slot number, a
   for (const a of HOLD) assert.ok(POLLED_ACTIONS.has(a), `${a} holds, so the frame owns it`);
   for (const a of QS) if (!HOLD.includes(a)) assert.ok(!POLLED_ACTIONS.has(a), `${a} does not hold, so it is an edge action`);
   const src = rd('src/ui/input.js');
-  assert.match(src, /case 'QuickUse1': return ctx\.quickUse\?\.\(1\) === true;/);
-  assert.match(src, /case 'QuickUse2': return ctx\.quickUse\?\.\(2\) === true;/);
-  assert.match(src, /case 'QuickSwap': return ctx\.quickSwap\?\.\(\) === true;/);
-  assert.match(src, /case 'QuickOffHand': return ctx\.quickOffHand\?\.\(\) === true;/);
-  assert.match(src, /case 'QuickSpell': return ctx\.quickSpell\?\.\(\) === true;/);
+  // AUDIT CONTRIB H1: each arm stands down first while the hotbar is in force (the diamond put away)
+  assert.match(src, /case 'QuickUse1': return !hotbarInForce\(\) && ctx\.quickUse\?\.\(1\) === true;/);
+  assert.match(src, /case 'QuickUse2': return !hotbarInForce\(\) && ctx\.quickUse\?\.\(2\) === true;/);
+  assert.match(src, /case 'QuickSwap': return !hotbarInForce\(\) && ctx\.quickSwap\?\.\(\) === true;/);
+  assert.match(src, /case 'QuickOffHand': return !hotbarInForce\(\) && ctx\.quickOffHand\?\.\(\) === true;/);
+  assert.match(src, /case 'QuickSpell': return !hotbarInForce\(\) && ctx\.quickSpell\?\.\(\) === true;/);
   assert.deepEqual([...QUICKSLOT_ACTIONS].sort(), [...QS].sort(), 'and the set the self-routing hosts read is the same five');
 });
 
