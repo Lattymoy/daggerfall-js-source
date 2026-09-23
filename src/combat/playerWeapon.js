@@ -314,6 +314,25 @@ export class PlayerWeapon {
   }
 
   /**
+   * DISC10-E L2: THE STRIKING WEAPON, which is not the screen weapon.
+   * MeleeDamage hands the formula `strikingWeapon = usingRightHand ?
+   * currentRightHandWeapon : currentLeftHandWeapon` (WeaponManager.cs:909)
+   * - the HAND's item - while ApplyWeapon's racial arm (:735-739) changes
+   * only what the SCREEN draws. A transformed lycanthrope's hands were
+   * emptied by MorphSelf (:463-467) and the pack is refused to the beast,
+   * so DFU's claws strike as the bare hand: hand-to-hand, no material
+   * gate. The port handed the wereclaws marker item to the formula as a
+   * weapon - the material gate (0 damage on anything silver-to-hit) and a
+   * 0-0 weapon range, ~9 a swing where the beast's +30 HandToHand fist
+   * does ~21. Everything else `weapon` carries (the draw, the swing sound,
+   * the art) is the screen's and stays.
+   */
+  get strikingWeapon() {
+    if (!this.weapon?.werecreatureClaws) return this.weapon;
+    return (this.usingRightHand ? this.currentRightHandWeapon : this.currentLeftHandWeapon) ?? null;
+  }
+
+  /**
    * WeaponManager.ToggleHand (:702-729), verbatim.
    *
    * Refuses outright while the right hand is used and a shield is worn
@@ -564,7 +583,7 @@ export class PlayerWeapon {
     const protectedInReach = [];
     const strike = (foe) => {
       const damage = calculateAttackDamage(playerCombat, foe.entity, {
-        ...playerAttackOptions(this.weapon, this.machine.state, backstabOf(foe), rolls), say,
+        ...playerAttackOptions(this.strikingWeapon, this.machine.state, backstabOf(foe), rolls), say,   // DISC10-E L2: the hand's item, never the claws marker
         // C2-slice (AUDIT 23 combat-11): the PLAYER's poisoned blade
         // infects ITS victim - the formulas clear the weapon's poison
         // either way, so without this hook the dose vanished unspent.

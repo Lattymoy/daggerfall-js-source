@@ -512,6 +512,11 @@ export function createWorldModes(host) {
     // re-registration would silently drop it (world.js passes it;
     // exterior.js cannot arrive at another location and passes none).
     transferToCemetery: host.transferToCemetery ?? null,
+    // DISC10-D V8: "Cancel rest window if sleeping" (VampirismInfection.cs
+    // :152-154). This registration stands for the whole session, so it
+    // closes whichever rest window is up: a building's (this host's slot)
+    // or the street's (the outer host's arm).
+    cancelRest: () => { if (interiorOverlay?.isRestWindow) interiorOverlay.dispose?.(); host.cancelRest?.(); },
   });
 
   // X4: the interior arm's Detect scan (see the frame body).
@@ -968,6 +973,7 @@ export function createWorldModes(host) {
       // through the ceiling.
       playerInside: true,
       playerSinks: interiorTicker.sinks,
+      regionIndex: () => host.currentRegionIndex?.() ?? -1,   // DISC10-D V3: PlayerGPS.CurrentRegionIndex, for the vampire's bite indoors
       // ROAD-B: DaggerfallEntityBehaviour.cs:255-258 - striking a
       // non-hostile foe turns the whole area. Inside a building the
       // area is this host's TWO pools (the street's are a different
@@ -1317,7 +1323,7 @@ export function createWorldModes(host) {
    *  (the popup's onService reads the return value and answers "not
    *  available yet" on a null) is one statement. */
   function mountServiceWindow(win) {
-    if (!win) return null;
+    if (!win || win.refusedByDoor) return null;   // DISC10-E L3: a counter the trade door refused (DOOR_REFUSED) is no window
     if (mode === 'dungeon') { dungeonCtx?.showOverlay?.(win); return win; }
     if (mode === 'interior') { interiorOverlay = win; return win; }
     townTalk?.showOverlay?.(win);
@@ -2061,7 +2067,9 @@ export function createWorldModes(host) {
     // enhanced mode reads no ARENA2 at all, so its own gate is
     // ui/tradeDoor.js's `tradeDoorReady`, not the classic art flag.
     if (tradeDoorReady()) {
-      interiorOverlay = openTradeWindow(shelf, b, 'Buy');
+      const w = openTradeWindow(shelf, b, 'Buy');
+      if (!w) return;   // DISC10-E L3: the counter refused the beast at its door (and said so) - nothing to mount, nothing claimed
+      interiorOverlay = w;
       interiorLootOpened(`shelf:${i}`, interiorOverlay, { fresh });   // WORLD6a: and so from the trade window - its close is the frame's settle
       return;
     }
@@ -2095,6 +2103,7 @@ export function createWorldModes(host) {
     }
     let win = null;
     win = openTradeWindow(target, b, 'Sell');
+    if (!win) return true;   // DISC10-E L3: refused at the trade door, which said so - handled, never the keyed fallback
     if (shelf) interiorLootOpened('shelf:0', win, { fresh });   // WORLD6a: what is sold lands on the room's shelf
     // NOTE (found wiring X6): this assignment is INERT. NativeTradeWindow
     // never calls hooks.onClose - it sets `done` on Escape/E and the
@@ -2120,6 +2129,10 @@ export function createWorldModes(host) {
    *  lane's routed half. The commit closure below is already built per
    *  window, so the latch simply lives in it: its lifetime IS the
    *  window's, by construction, and no drain has to remember it. */
+  /** DISC10-E L3: what a service arm answers when the TRADE DOOR refused
+   *  its counter (ui/tradeDoor.js - a transformed lycanthrope). The door
+   *  has already said the line; the popup reads this as a dispatch. */
+  const DOOR_REFUSED = Object.freeze({ refusedByDoor: true });
   function openTradeWindow(shelf, b, mode, { guildFactionId = null, reducedRepairCost: repairDiscount = null, identifySpell = null } = {}) {
     // AUDIT 63 F11: CalculateTradePrice's player reads are BOTH live on
     // BOTH branches - FormulaHelper.cs:1993 (selling) and :1999 (buying)
@@ -3691,6 +3704,11 @@ export function createWorldModes(host) {
         // land in the overlay slot and the next frame would ask a
         // plain object to draw itself.
         if (flow.rows) return flow;
+        // DISC10-E L3: a counter the trade door refused (a transformed
+        // lycanthrope, DOOR_REFUSED) has said so itself and the door below
+        // mounts nothing - but it is still a DISPATCH: DFU's popup closes
+        // before it pushes the trade window (every arm calls CloseWindow
+        // first), and the trade window closes over its own MessageBox.
         mountServiceWindow(flow);
         return { dispatched: true };
       },
@@ -3756,7 +3774,7 @@ export function createWorldModes(host) {
       // G4: ...and the guild's OWN faction id, which is what a guild
       // store has to price with.
       flow = openTradeWindow({ items: [] }, b ?? {}, 'Identify', { guildFactionId: guild?.factionId ?? null });
-      return flow;
+      return flow ?? DOOR_REFUSED;   // DISC10-E L3
     }
     // X6: BUY SOULGEMS. DFU's own service window is the trade window in
     // Buy mode over GetMerchantMagicItems(onlySoulGems: true)
@@ -3783,7 +3801,7 @@ export function createWorldModes(host) {
       // assigns hooks.onClose for this and it is inert; see the note
       // there.) closeSelf is the keyed-flow idiom and does not apply.
       flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
-      return flow;
+      return flow ?? DOOR_REFUSED;   // DISC10-E L3
     }
     // G4: the remaining trade-mode services. U40 built every mode and
     // X6 proved the shelf pattern; these were destination strings and
@@ -3796,12 +3814,12 @@ export function createWorldModes(host) {
       // guild and nothing else (:409-411). X7 took the Identify arm
       // above on the same shape.)
       flow = openTradeWindow({ items: [] }, b ?? {}, 'SellMagic', { guildFactionId: guild?.factionId ?? null });
-      return flow;
+      return flow ?? DOOR_REFUSED;   // DISC10-E L3
     }
     if (destination === 'guildServiceBuyPotions' && tradeDoorReady()) {
       const shelf = { items: stockGuildPotions({ quality: b?.quality ?? 0, gameMinutes: Math.floor(worldMinutes()) }) };
       flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
-      return flow;
+      return flow ?? DOOR_REFUSED;   // DISC10-E L3
     }
     if (destination === 'guildServiceBuyMagicItems' && tradeDoorReady()) {
       // The soul-gem arm rides ALONG when this guild also sells them
@@ -3819,7 +3837,7 @@ export function createWorldModes(host) {
         soulPointsOf: (t) => ENEMY_BASICS[t]?.soulPts ?? 0,
       }) };
       flow = openTradeWindow(shelf, b ?? {}, 'Buy', { guildFactionId: guild?.factionId ?? null });
-      return flow;
+      return flow ?? DOOR_REFUSED;   // DISC10-E L3
     }
     // G5: TELEPORT. DFU arms the travel map and pushes it
     // (DaggerfallGuildServicePopupWindow:449-453); the map's own
@@ -4323,7 +4341,8 @@ export function createWorldModes(host) {
     const b = interiorBuilding;
     if (b && tradeDoorReady() && (isEnhanced() || _shopFont)) {
       const shelf = (interiorCtx?.shelves ?? [])[0] ?? { items: [] };
-      return mountServiceWindow(openTradeWindow(shelf, b, 'Repair', { reducedRepairCost: ctx.reducedRepairCost ?? null }));
+      const w = openTradeWindow(shelf, b, 'Repair', { reducedRepairCost: ctx.reducedRepairCost ?? null });
+      return w ? mountServiceWindow(w) : DOOR_REFUSED;   // DISC10-E L3: a refused counter already spoke
     }
     // The native screen is the SHOP's (it stages against the building's
     // shelf and its remote list is the queue at this buildingKey); a
@@ -5897,6 +5916,9 @@ export function createWorldModes(host) {
           // function), the same way partyRestGate itself already is - see its doc comment for the bug this closes.
           markPartyRestSpent: () => host.markPartyRestSpent?.(),
           cancelPartyRestStart: () => host.cancelPartyRestStart?.(),   // PARTY-REST29: a dungeon rest window closed unrested
+          // DISC10-D V4: DeployFullBlownVampirism's RespawnPlayer runs from ANY context (VampirismInfection.cs:164-174);
+          // the dungeon re-registers the infection host while mounted, so the outer host's cemetery arm rides in here
+          transferToCemetery: () => host.transferToCemetery?.(),
           // STRANGER-REST1: forwarded straight from THIS host's own host.strangerRestGate (world.js's own gate) - see its doc comment.
           strangerRestGate: () => host.strangerRestGate?.(),
           // PARTY-REST5: forwarded straight from THIS host's own host.onEnemyBreak (world.js's own hook) - see
@@ -9021,6 +9043,7 @@ export function createWorldModes(host) {
       // free when the player closes the window without identifying.
       const win = openTradeWindow({ items: [] }, interiorBuilding ?? {}, 'Identify',
         { identifySpell: { chance: chance ?? 0, cost: refund ?? 0 } });
+      if (!win) return true;   // DISC10-E L3: refused at the trade door, which said so - the cast is answered, not "cannot concentrate"
       win.hooks.usingIdentifySpell = true;
       return mountSpellWindow(win);
     },

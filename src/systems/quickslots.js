@@ -50,6 +50,7 @@ import { isShieldTemplate } from './armorMaterials.js';
 import { itemLongName, conditionPercentage } from './itemInfo.js';
 
 import { expandRowValues } from './quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
+import { racialSuppressInventory } from './lycanthropy.js';   // DISC10-E L3: the pack's refusal, at the two doors that reach into it
 /** The slots a player fills. The two consumables are what the diamond's
  *  top and bottom cells show; `swap` is the second weapon the off-hand
  *  cell offers when the off hand is empty. */
@@ -285,6 +286,12 @@ export const offHandOffersSwap = (entity) => quickslotView(entity).off.kind === 
  */
 export function useQuickslot(slot, { entity = null, items = null, hooks = {}, say = null } = {}) {
   if (!CONSUMABLE_SLOTS.includes(slot)) throw new Error(`quickslots: ${slot} is not a consumable slot`);
+  // DISC10-E L3: a quickslot USE is the inventory window's Use arm
+  // without the window - and a transformed lycanthrope has no pack to
+  // reach into (GetSuppressInventory, DaggerfallInventoryWindow.cs
+  // :583-587). The window's own line, and nothing is consumed.
+  const sup = racialSuppressInventory(entity);
+  if (sup) { say?.(sup.text); return { kind: 'refused' }; }
   const r = resolveConsumable(entity, slot);
   if (!r) { say?.(QUICKSLOT_TEXT.emptySlot); return { kind: 'empty' }; }
   if (!r.item) { say?.(QUICKSLOT_TEXT.noneLeft(r.name)); return { kind: 'none', name: r.name }; }
@@ -329,6 +336,12 @@ export function useQuickslot(slot, { entity = null, items = null, hooks = {}, sa
  * right hand's, as it always was.
  */
 export function swapQuickslot({ entity = null, say = null, rows = null, hand = null } = {}) {
+  // DISC10-E L3: the swap is an EQUIP from the pack - the inventory
+  // window's own act - and the beast's pack is refused
+  // (DaggerfallInventoryWindow.cs:583-587). Without this a werewolf put a
+  // sword into the claws MorphSelf had just emptied (:463-467).
+  const sup = racialSuppressInventory(entity);
+  if (sup) { say?.(sup.text); return { kind: 'refused' }; }
   const r = resolveSwap(entity);
   if (!r) { say?.(QUICKSLOT_TEXT.noSwap); return { kind: 'none' }; }
   const table = equipTableOf(entity);

@@ -274,7 +274,50 @@ export function applyCharacter(playerEntity, career, careerIndex, { name = caree
   playerEntity.startingLevelUpSkillSum = sum - lowMaj + hiMin;
   playerEntity.currentLevelUpSkillSum = playerEntity.startingLevelUpSkillSum;
   defineLiveMaxMagicka(playerEntity);
+  defineLiveMaxHealth(playerEntity);   // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied
   return playerEntity;
+}
+
+/** DISC10-E L4: DaggerfallEntity.MaxHealth (:258) is a GETTER over
+ *  GetMaxHealth (:463-472):
+ *
+ *      if (MaxHealthLimiter < 1) return maxHealth;
+ *      return (MaxHealthLimiter < maxHealth) ? MaxHealthLimiter : maxHealth;
+ *
+ *  and RawMaxHealth (:261, :495-498) is the stored value with no limiter.
+ *  The lycanthrope's unsated urge sets the limiter (LycanthropyEffect.cs
+ *  :230-237, computed off RawMaxHealth) and DFU clamps through this getter
+ *  everywhere a heal or a full-heal reads MaxHealth. The port wrote
+ *  `maxHealthLimiter` and nothing read it: every heal, rest and potion
+ *  went straight past the ceiling the urge is there to lower.
+ *
+ *  The same installed accessor as defineLiveMaxMagicka below, on the same
+ *  two paths (chargen, and save.js's load arm) - a property because every
+ *  host reads `entity.maxHealth` as one, exactly as C#'s do. The SETTER is
+ *  MaxHealth's own (`set { maxHealth = value; }`): it writes the RAW value.
+ *  `rawMaxHealth` reads it back - what the limiter is computed from, what
+ *  a level-up adds to, and what the save keeps (SerializablePlayer.cs:118). */
+export function defineLiveMaxHealth(entity) {
+  const desc = Object.getOwnPropertyDescriptor(entity, 'maxHealth');
+  if (desc && desc.get) return entity;   // already live
+  let stored = desc ? desc.value : 0;
+  Object.defineProperty(entity, 'maxHealth', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      const limiter = this.maxHealthLimiter;
+      if (!(limiter >= 1)) return stored;   // "Limiter must be 1 or greater"
+      return limiter < stored ? limiter : stored;
+    },
+    set(v) { stored = v; },
+  });
+  Object.defineProperty(entity, 'rawMaxHealth', {
+    configurable: true,
+    enumerable: false,   // a view on the stored value, not a second field to serialize
+    get() { return stored; },
+    set(v) { stored = v; },
+  });
+  return entity;
 }
 
 /** DaggerfallEntity.MaxMagicka (:264) is a GETTER over GetMaxMagicka

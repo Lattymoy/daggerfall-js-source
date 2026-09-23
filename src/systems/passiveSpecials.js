@@ -89,14 +89,21 @@ export const careerDarknessMagery = (career) => (bitfield(career) >> 8) & 3;
  * read the player's own override - DFU's enemy entities never carry
  * either (ConstantEffect's race arm is explicitly IsPlayerEntity).
  */
-export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, sinks = null } = {}) {
+export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes = nowMinutes, sinks = null } = {}) {
   if (!entity?.isPlayer) return;
+  // DISC10-D V1: TWO CLOCKS, AS DFU HAS THEM. `nowMinutes` is the ROUND,
+  // the MagicRoundsSinceStartup stand-in the `% N` gates count;
+  // `clockMinutes` is WorldTime.Now, which every catch-up round of one
+  // broker Update reads alike (EntityEffectBroker.cs:210-232). Every
+  // day/night read below is the clock's: DamageFromSunlight's
+  // IsPlayerInSunlight (:149-172), RegenerateHealth's and the magery's IsDay.
+  const isDay = isDayFromMinutes(clockMinutes);
   const career = entity.career ?? null;
   const override = (entity.racialOverride && !entity.racialOverride.ended) ? entity.racialOverride : null;
 
   // RegenerateHealth (:81-105): the career's own flag, every 4th round
   if (nowMinutes % REGENERATE_PER_ROUNDS === 0 && career?.regeneration) {
-    const day = isDayFromMinutes(nowMinutes);
+    const day = isDay;
     const dungeon = !!(_host?.inDungeon?.() ?? false);
     let regenerate = false;
     if (career.regeneration === REGENERATION_FLAGS.general) regenerate = true;
@@ -111,7 +118,7 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, sinks = null
   // sunlight
   if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0
     && (careerSunDamage(career) || override?.sunDamage)
-    && playerInSunlight(nowMinutes)) {
+    && playerInSunlight(clockMinutes)) {
     sinks?.hurt?.(SUN_DAMAGE_AMOUNT);
   }
 
@@ -133,13 +140,13 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, sinks = null
   entity.maxMagickaModifier = 0;
   const raw = entity.maxMagicka ?? 0;
   entity.maxMagickaModifier = _mod;
-  const dark = !isDayFromMinutes(nowMinutes) || (_host?.isInside?.() ?? false);
+  const dark = !isDay || (_host?.isInside?.() ?? false);
   if (dark) {
     const light = careerLightMagery(career);
     if (light === 2) magery += Math.trunc(raw * MAGERY_REDUCED_FRACTION);
     else if (light === 1) magery += MAGERY_UNABLE;
   }
-  if (playerInSunlight(nowMinutes)) {
+  if (playerInSunlight(clockMinutes)) {
     const darkness = careerDarknessMagery(career);
     if (darkness === 2) magery += Math.trunc(raw * MAGERY_REDUCED_FRACTION);
     else if (darkness === 1) magery += MAGERY_UNABLE;

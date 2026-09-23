@@ -112,7 +112,7 @@ import { drawEnhancedTravelControl, hideEnhancedTravelControl } from '../ui/enha
 import { setTimeScale as setWorldTimeScale, timeScale as worldTimeScale, resetTimeScale } from '../systems/timeScale.js';   // W1's classic art window + U61's overworld, one door
 import { racialRestBlock, racialFastTravelBlock, cureVampirism, SUNLIGHT_TRAVEL_TEXT } from '../systems/vampirism.js';   // AUDIT 64 F21: the career rung and the racial one show the SAME sunlightDamageFastTravelDay box (DaggerfallUI.cs:619, VampirismEffect.cs:202)
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of BOTH the rest and the fast-travel press   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
-import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop
+import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { setCrimeGuildQuestHost, setCrimeGuildClock } from '../systems/crimeGuilds.js';   // CG2
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
@@ -2545,6 +2545,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // wired by hand, the presenter registered above now answers for.
     factionDict: () => townTalk.factionDict ?? null,
     transferToCemetery: transferToCemeteryArm,   // V2e: the world host's arm (hoisted; defined by fastTravelTo)
+    cancelRest: cancelRestArm,   // DISC10-D V8: the street's rest window, closed at the turn (hoisted, beside the cemetery arm)
   });
   // Q4-v: InitAtGameStart runs ONCE when a NEW character finishes
   // chargen (DFU's OnStartGame path into QuestListsManager). Chargen
@@ -2938,10 +2939,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT HCC (branch audit): dfuiOpenInventoryWindow goes through the host's own inventory door - a transformed
     // lycanthrope's GetSuppressInventory refusal and the window's art - as the dungeon's openInventory does; a
     // refused open takes the wagon selection with it, so the next ordinary open does not pre-select the wagon
+    // DISC10-E L3: the refusal is the DOOR's now (ui/inventoryDoor.js) - a refused pack comes back null
     openInventoryWithWagon: () => {
-      const sup = racialSuppressInventory(playerEntity);
-      if (sup) { hccRuntime.consumeWagonSelectionRequest(); townTalk.say(sup.text); return; }
-      if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow());   // the selection request the window consumes on open (inventorySession openState)
+      const w = inventoryDoorReady() ? makeInventoryWindow() : null;   // the selection request the window consumes on open (inventorySession openState)
+      if (w) townTalk.showOverlay(w);
       else hccRuntime.consumeWagonSelectionRequest();
     },
     openNamePrompt: ({ label, value, maxCharacters, onSubmit }) => {
@@ -3190,6 +3191,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     currentMinute: () => Math.floor(playerTicker.classicMinutes),
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp
     playerSinks: playerTicker.sinks,   // AUDIT 24 (wave 30): OnMonsterHit's fatigue rider drains through the host's one set of doors
+    regionIndex: () => _questRegionIndex(),   // DISC10-D V3: PlayerGPS.CurrentRegionIndex, for the vampire's bite
     makeAreaHostile: _makeEnemiesHostile,   // ROAD-B: DaggerfallEntityBehaviour.cs:255-258
     say: (l) => townTalk.say(l),
     onPlayerHurt: (dmg, wpn) => {
@@ -5371,13 +5373,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // door-less dungeon start (StartDungeonInterior(location), through
   // modes.startInDungeon's dungeonStartSite arm), so the vampire wakes
   // in the crypt now, as recorded before as a divergence. Off the
-  // tick's frame like the videos; interior/dungeon modes skip loudly
-  // (DFU tears the interior down in RespawnPlayer - host work).
+  // tick's frame like the videos.
+  // DISC10-D V4: FROM ANY CONTEXT. RespawnPlayer destroys whatever the
+  // player stands in before it moves the world (PlayerEnterExit.cs
+  // :430-556), so a vampire who turns in a shop, a tavern bed or a
+  // dungeon still wakes in the crypt. This arm used to refuse every mode
+  // but the exterior - and the turn most often comes in a rented bed. The
+  // port's own composer is _respawnAtSite's (above): force the exterior,
+  // then arrive. The region is read FIRST, where the player stood
+  // (GetRandomCemetery's CurrentRegionIndex, :196), and the dungeon this
+  // host mounts carries this same arm (worldModes' buildDungeonContext
+  // opts), so a dungeon's registration no longer drops it.
   function transferToCemeteryArm() {
-    if ((modes?.mode ?? 'exterior') !== 'exterior') {
-      console.warn('[infection] the cemetery transfer needs the exterior mode - the vampire wakes where they fell');
-      return;
-    }
     const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
     const idx = randomCemeteryLocationIndex(mapTable);
     if (idx == null) {
@@ -5385,12 +5392,22 @@ export async function bootWorld(canvas, renderer, params, status) {
       return;
     }
     const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);
+    modes?.forceExitToExterior();
     Promise.resolve().then(async () => {
       await _teleportToPixel(pos.x, pos.y);
       _lastEncMinutes = Math.floor(playerTicker.classicMinutes);
       const entered = await (modes?.startInDungeon?.() ?? false);   // CRUX1: insideDungeon true - the crypt, not its door
       if (!entered) console.warn('[infection] the cemetery has no dungeon to wake in - the vampire wakes at its exterior');
     });
+  }
+  /** DISC10-D V8: "Cancel rest window if sleeping" (VampirismInfection.cs
+   *  :152-154) - `(TopWindow as DaggerfallRestWindow).CloseWindow()`, this
+   *  host's slot. CloseWindow is the plain pop: no wake box, no skill raise
+   *  - the window's dispose is exactly that (restWindow.js's _close /
+   *  enhancedRest.js's close, both clearing IsResting on the way out). */
+  function cancelRestArm() {
+    const w = townTalk.overlay;
+    if (w?.isRestWindow) w.dispose?.();
   }
 
   /**
@@ -6821,10 +6838,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleLogbook: () => townTalk.showOverlay(makeJournalWindow('activeQuests')),
     toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('notebook')),
     toggleInventory: () => {
-      // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421)
-      const sup = racialSuppressInventory(playerEntity);
-      if (sup) { townTalk.say(sup.text); return; }
-      if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow());
+      // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - DISC10-E L3: said by the door itself, which answers
+      // null for a refused pack (DaggerfallInventoryWindow.cs:583-587)
+      const w = inventoryDoorReady() ? makeInventoryWindow() : null;
+      if (w) townTalk.showOverlay(w);
     },
     toggleSpellbook: () => toggleSpellbook(),
     toggleAutomap: () => toggleExteriorAutomap(),
@@ -6931,7 +6948,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       openPauseFlow((w) => townTalk.showOverlay(w), {
         at: pauseAt,   // PX26: the page the door was pressed for
         // PX25: the sheet's own doors, through this host's own arms.
-        openPack: () => townTalk.showOverlay(makeInventoryWindow()),
+        openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); },   // DISC10-E L3: a refused pack is null
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
         openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
         quickSave: worldQuickSave,
@@ -8731,10 +8748,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         open = () => {
           const pile = droppedLoot.dropPile([dfItem], dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`);
           if (!pile) return;
-          townTalk.showOverlay(makeInventoryWindow({
+          const w = makeInventoryWindow({
             onClose: () => droppedLoot.releaseEmptied(),
             loot: droppedLootHooks(pile),   // G5: DaggerfallLoot's own identity
-          }));
+          });
+          if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null - the pile stays on the ground
         };
       }
       if (open && _questBoxWin && !_questBoxWin.done && _liveQuestOverlay(_questBoxWin)) _onQuestBoxClosed = open;
@@ -10932,6 +10950,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // V2e: worldModes re-registers the infection host on entry, so the
     // cemetery arm rides the bag or it dies at that re-registration.
     transferToCemetery: transferToCemeteryArm,
+    cancelRest: cancelRestArm,   // DISC10-D V8: and the rest window the street holds, for the same registration
     // A10: the Recall prompt, handed DOWN so the dungeon context this
     // host mounts raises the same 4000 box (Teleport.cs:81-98) rather
     // than its standalone refusal. The cast engine in THIS host
@@ -12247,7 +12266,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
             // SURV3: a camp under the ray - Info and Talk name it, any other mode opens its menu; a water source fills the skins
             if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }
             else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else drinkAtSpring(_springPick.key); }
-            else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => townTalk.showOverlay(makeInventoryWindow(EOTB_WAGON_PACK)) }); }
+            else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => { const w = makeInventoryWindow(EOTB_WAGON_PACK); if (w) townTalk.showOverlay(w); } }); }   // DISC10-E L3: a refused pack is null
             else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(TOO_FAR_AWAY_TEXT), plaqueActionFor(_hccPick.key)); }   // ACT-MENU: the verb the plaque lit, where it stands   // HCC: DeployedWagonActivator / FollowingWagonActivator / StationaryHorseActivator - the runtime's own reach test and refusals
             else if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
             else {
@@ -12283,7 +12302,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               pool.takeLoot(lootKey, (l) => townTalk.say(l),
                 inventoryDoorReady() ? (loot) => {
                   if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
-                  townTalk.showOverlay(makeInventoryWindow({ loot }));
+                  const w = makeInventoryWindow({ loot });
+                  if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
                 } : null);
               surfacePlayer();
             }
@@ -12303,14 +12323,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // QUICK-LOOT B4: the same door, on the player's own pile -
               // the hooks this arm was already building for the window.
               if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
-              townTalk.showOverlay(makeInventoryWindow({
+              const w = makeInventoryWindow({
                 // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
                 // This arm hand-rolled the window with the SAME eleven hooks
                 // makeInventoryWindow already passes, plus the two below -
                 // which is precisely what its `extra` parameter is for.
                 onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
                 loot: _hooks,   // G5: DaggerfallLoot's own identity
-              }));
+              });
+              if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
             }
             else modes.tryEnter().then((opened) => {
               // GRAVE1: an activation that hit NOTHING - no door either -

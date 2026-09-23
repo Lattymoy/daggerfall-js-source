@@ -167,21 +167,30 @@ test('V2b: the curse survives the save, marker rebuilt', async () => {
 
 // ── THE SEAMS, SWEPT ─────────────────────────────────────────────
 
-test('V2b: one round runs both curses; the hit hook is REGISTERED, not imported', () => {
+// DISC10-D H1 re-aim: the round order is unchanged (read inside the round - worldTick also registers the deploy's
+// curse mint above it now); the HIT HOOK is not. It was registered into the damage formula's tail, which ran before
+// any door took the health and past the ineffective-material return, so KilledInnocent never saw a dead innocent and
+// an iron blade on a ghost never fed. DFU calls OnWeaponHitEntity from the STRIKE (WeaponManager.cs:627-635): one
+// dispatcher, exported from worldTick, called by the strike sites; the formula names the curses nowhere.
+test('V2b: one round runs both curses; OnWeaponHitEntity is ONE dispatcher the strikes call, not a formula hook', () => {
   const tick = read('src/systems/worldTick.js');
+  const round = tick.slice(tick.indexOf('export function runMagicRoundsFor('));
   const order = ['runInfections(entity', 'consumeRacialOverridePending(entity',
     'consumeVampirismPending(entity', 'lycanthropyMagicRound(entity', 'vampirismMagicRound(entity'];
   let at = -1;
   for (const needle of order) {
-    const i = tick.indexOf(needle);
+    const i = round.indexOf(needle);
     assert.ok(i > at, `round order: ${needle}`);
     at = i;
   }
-  assert.match(tick, /setRacialHitHook\(/, 'worldTick registers OnWeaponHitEntity');
+  assert.match(tick, /export function playerWeaponHitEntity\(player, target,/, 'worldTick exports OnWeaponHitEntity');
   const formulas = read('src/combat/formulas.js');
-  assert.match(formulas, /_racialHitHook\?\.\(attacker, target/, 'the tail calls the hook');
+  assert.doesNotMatch(formulas, /HitHook\?\.\(attacker, target/, 'the formula calls no racial hook');
   assert.doesNotMatch(formulas, /from '..\/systems\/lycanthropy|from '..\/systems\/vampirism/,
     'formulas must not import the curses - the dice100 cycle');
+  for (const f of ['src/scenes/cityGuards.js', 'src/scenes/exteriorFoes.js', 'src/scenes/dungeonContext.js', 'src/combat/arrowFlight.js']) {
+    assert.match(read(f), /playerWeaponHitEntity\(playerEntity, /, `${f}: the strike calls the dispatcher`);
+  }
 });
 
 test('V2b: THE FOUR HOSTS wire the vampire\'s rest gate, and only the world hosts travel\'s', () => {

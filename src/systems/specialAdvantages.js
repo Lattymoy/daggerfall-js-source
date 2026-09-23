@@ -447,13 +447,13 @@ export function classSpecials(career, race = null) {
 
   // ---- the blood (:687-760) ----
   //
-  // THE RACE TEMPLATE, not the curse. A vampire or a werewolf in DFU
-  // wears an OVERRIDE template whose flags feed this same block; the
-  // port's systems/races.js has no override templates, and the curses
-  // carry their powers as live effects instead. Writing them in from
-  // here would mean inventing a table, so the blood shows what the
-  // port actually stores and the transformed powers stay with the
-  // curse that grants them. Recorded, not hidden.
+  // THE RACE TEMPLATE the caller hands in. A vampire or a werewolf in
+  // DFU wears an OVERRIDE template (GetLiveRaceTemplate) whose flags
+  // feed this same block. DISC10-D V5: the port has one now -
+  // systems/vampirism.js liveRaceTemplate clones the birth race with
+  // CreateCompoundRace's flags, and the enhanced sheet passes it, so a
+  // vampire's blood reads its immunities and its sun and holy damage
+  // exactly as DFU's sheet prints them (:463).
   if (race) {
     for (const effect of EFFECT_ORDER) {
       const bit = EFFECT_BITS[effect];

@@ -1690,7 +1690,7 @@ export async function endRunToTitleMenu(renderer, { play = playDeathVideo, watch
  * close callback is what carries the lifecycle forward and it runs on
  * every path out.
  */
-export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null } = {}) {
+export function wireInfectionVideos(renderer, { textAt = null, factionDict = null, transferToCemetery = null, cancelRest = null } = {}) {
   // AUDIT 39 (#37): answers the host it replaced. A context that mounts
   // over an outer one (the dungeon over worldModes) hands this back on
   // teardown - the leaner set it registers has no FACTION.TXT and no
@@ -1701,7 +1701,16 @@ export function wireInfectionVideos(renderer, { textAt = null, factionDict = nul
     // single-location reality that makes travel's V world-host only),
     // so everywhere else this stays null and the new vampire wakes
     // where they fell - recorded, not silent: the deploy still runs.
+    // DISC10-D V4: world.js's arm runs from ANY mode (it forces the
+    // exterior first) and worldModes hands it to the dungeon it mounts.
     transferToCemetery,
+    // DISC10-D V8: "Cancel rest window if sleeping" (:152-154) - the
+    // host's own rest slot, closed at the head of the deploy.
+    cancelRest,
+    // DISC10-D V2: WorldTime.Now for the curse the deploy mints - read
+    // AFTER the raise, which is the clock VampirismEffect.Start's
+    // UpdateSatiation stamps (:95-96).
+    nowMinutes: () => Math.floor(worldMinutes()),
     playVideo(name, onClose) {
       // Off the tick's own frame: playVideo OWNS the frame loop for
       // its lifetime, and pushing it from inside a frame body is the
@@ -1785,13 +1794,23 @@ export function wireInfectionVideos(renderer, { textAt = null, factionDict = nul
       const lines = plainLines(textAt?.(id));
       if (lines?.length) messageBox(lines);
     },
-    // GetVampireClan's region read (:400-427), assembled from the
-    // host's FACTION.TXT: the Province faction of the region the
-    // infection was CAUGHT in, not the one the player turns in. A
-    // getter because FACTION.TXT loads after boot.
-    clanOf: (regionIndex) => {
-      const dict = typeof factionDict === 'function' ? factionDict() : factionDict;
-      const province = dict ? findFactions(dict, { type: FACTION_TYPES.Province, region: regionIndex })[0] : null;
+    // GetVampireClan's region read (:400-427): the Province faction of
+    // the region the infection was CAUGHT in, not the one the player
+    // turns in.
+    // DISC10-D V3: off the PLAYER's own faction data, as DFU reads it
+    // (`GameManager.Instance.PlayerEntity.FactionData.GetRegionFaction`,
+    // FormulaHelper.cs:403) - every host has that store, where only the
+    // town hosts had FACTION.TXT (the dungeon's registration passes none,
+    // so every vampire turned underground was a Lyrezi). The host's
+    // dictionary is the fallback for an entity with no store yet (a getter
+    // because FACTION.TXT loads after boot). And -1 is NOT a region:
+    // FindFactions reads it as "any", which made the first Province in the
+    // file every vampire's - DFU never asks without a region
+    // (VampirismInfection.cs:91), so an unknown one takes GetVampireClan's
+    // own default rather than a stranger's clan.
+    clanOf: (regionIndex, entity = null) => {
+      const dict = entity?.factionRep?.dict ?? (typeof factionDict === 'function' ? factionDict() : factionDict);
+      const province = dict && regionIndex >= 0 ? findFactions(dict, { type: FACTION_TYPES.Province, region: regionIndex })[0] : null;
       return vampireClanForFaction(province);
     },
     hourNow: () => Math.floor((worldMinutes() % MINUTES_PER_DAY) / 60),

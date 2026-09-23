@@ -152,7 +152,7 @@ test('MAC-E: both exterior pools take the host’s inventory door, and both host
     // handed the same `loot` hooks the window would get, and a null
     // answer (switch off, no highlight, the crosshair moved) falls
     // through to exactly the call that was here before.
-    assert.match(arm, /inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*townTalk\.showOverlay\(makeInventoryWindow\(\{ loot \}\)\);\n\s*\} : null/,
+    assert.match(arm, /inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*const w = makeInventoryWindow\(\{ loot \}\);\n\s*if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n\s*\} : null/,   // DISC10-E L3 re-aim: the door answers null for a refused pack, which mounts nothing
       `${f}: ...and the host's OWN inventory factory is the door, behind the same art gate every pack arm takes`);
   }
 });

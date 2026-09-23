@@ -261,7 +261,8 @@ export function applyLevelUp(entity, distribute, rolls = Math.random, prerolledP
     return true;
   }
   entity.level += 1;   // L-slice (entity-9): Level++, never a jump to the calculated level
-  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)
+  // DISC10-E L4: onto the RAW maximum - MaxHealth reads the lycanthrope's limiter now, and `+=` through it would bake the urge's ceiling into the level
+  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // PERMANENT endurance, verbatim (audit F8 - DFU reads Stats.PermanentEndurance here, not the live value)
   entity.health = Math.min(entity.health, entity.maxHealth);
   // AUDIT 23 (ui-native-1): DFU rolls BonusPool() exactly ONCE, at the
   // level-up screen's setup - the UI hands its shown pool back here so

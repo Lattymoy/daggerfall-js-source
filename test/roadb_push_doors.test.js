@@ -100,7 +100,8 @@ test('B5/ENH-NOTICE3: the INFECTION popup pushes, and the four hosts no longer e
   // moves with the law - the push is still pinned, it is just pinned
   // where the push now lives.
   const sh = src('src/scenes/shared.js');
-  assert.match(sh, /export function wireInfectionVideos\(renderer, \{ textAt = null, factionDict = null, transferToCemetery = null \} = \{\}\)/,
+  // DISC10-D V8 re-aim: + cancelRest, the host's rest slot the turn closes (VampirismInfection.cs:152-154) - no window
+  assert.match(sh, /export function wireInfectionVideos\(renderer, \{ textAt = null, factionDict = null, transferToCemetery = null, cancelRest = null \} = \{\}\)/,
     'the per-host showText dependency is gone from the factory');
   assert.match(sh, /const lines = plainLines\(textAt\?\.\(id\)\);\n\s*if \(lines\?\.length\) messageBox\(lines\);/,
     'the box is raised through the one door, on the rows the factory already flattened (V5)');

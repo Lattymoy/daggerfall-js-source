@@ -10,7 +10,7 @@ import { windmillsOn } from '../world/windmills.js';   // WM3: the Windmills pac
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
-import { racialSuppressPopulationSpawns, racialSuppressInventory, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the transformed gates; LM1: the 4-20s move-sound loop
+import { racialSuppressPopulationSpawns, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the transformed gates; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { Arch3dFile } from '../formats/arch3dFile.js';
 import { requestLook, makeLookGate, bindCursorToggle } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive
 import { attachTouch } from '../ui/touch.js';
@@ -1232,6 +1232,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // that has never asked what is open. What the four hosts each
     // wired by hand, the presenter registered above now answers for.
     factionDict: () => townTalk.factionDict ?? null,
+    // DISC10-D V8: "Cancel rest window if sleeping" (VampirismInfection.cs
+    // :152-154) - this host's one slot; dispose is CloseWindow's plain pop.
+    cancelRest: () => { const w = townTalk.overlay; if (w?.isRestWindow) w.dispose?.(); },
   });
   // QX1: InitAtGameStart runs ONCE when a NEW character finishes
   // chargen (StartGameBehaviour's OnStartGame path), world.js's own
@@ -1422,10 +1425,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     // AUDIT HCC (branch audit): dfuiOpenInventoryWindow goes through the host's own inventory door - a transformed
     // lycanthrope's GetSuppressInventory refusal and the window's art - as the dungeon's openInventory does; a
     // refused open takes the wagon selection with it, so the next ordinary open does not pre-select the wagon
+    // DISC10-E L3: the refusal is the DOOR's now (ui/inventoryDoor.js) - a refused pack comes back null
     openInventoryWithWagon: () => {
-      const sup = racialSuppressInventory(playerEntity);
-      if (sup) { hccRuntime.consumeWagonSelectionRequest(); townTalk.say(sup.text); return; }
-      if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow());   // the selection request the window consumes on open (inventorySession openState)
+      const w = inventoryDoorReady() ? makeInventoryWindow() : null;   // the selection request the window consumes on open (inventorySession openState)
+      if (w) townTalk.showOverlay(w);
       else hccRuntime.consumeWagonSelectionRequest();
     },
     openNamePrompt: ({ label, value, maxCharacters, onSubmit }) => {
@@ -1634,6 +1637,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // interior arm passes the same nothing for the same reason.
     currentPixelKey: () => null,
     playerSinks: playerTicker.sinks,   // AUDIT 24 (wave 30): OnMonsterHit's fatigue rider through the host's one set of doors
+    regionIndex: () => dfLocation?.regionIndex ?? -1,   // DISC10-D V3: PlayerGPS.CurrentRegionIndex - the fixed city's - for the vampire's bite
     makeAreaHostile: _makeEnemiesHostile,   // ROAD-B: DaggerfallEntityBehaviour.cs:255-258
     say: (l) => townTalk.say(l),
     onPlayerHurt: (dmg, wpn) => {
@@ -2652,10 +2656,10 @@ export async function bootExterior(canvas, renderer, params, status) {
       });
     },
     toggleInventory: () => {
-      // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421)
-      const sup = racialSuppressInventory(playerEntity);
-      if (sup) { townTalk.say(sup.text); return; }
-      if (inventoryDoorReady()) townTalk.showOverlay(makeInventoryWindow());
+      // V4: GetSuppressInventory (LycanthropyEffect.cs:409-421) - DISC10-E L3: said by the door itself, which answers
+      // null for a refused pack (DaggerfallInventoryWindow.cs:583-587)
+      const w = inventoryDoorReady() ? makeInventoryWindow() : null;
+      if (w) townTalk.showOverlay(w);
     },
     toggleSpellbook: () => toggleSpellbook(),
     // AUDIT 58 (f2/hosts): the sheath panel's door - HUDLarge.cs:477-484
@@ -2724,7 +2728,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // maker exists now. The filter still does its job: no bridge or
         // no art and makeJournalWindow answers null, so the button opens
         // nothing rather than an empty book.
-        openPack: () => townTalk.showOverlay(makeInventoryWindow()),
+        openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); },   // DISC10-E L3: a refused pack is null
         openSpellbook: () => { const w = makeSpellbookWindow(); if (w) townTalk.showOverlay(w); },
         openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },
         savingPrevented: () => true,
@@ -4676,7 +4680,7 @@ export async function bootExterior(canvas, renderer, params, status) {
           // EOTB-IL: the mod's cart under the same ray (RegisterCustomActivation(41239, CheckWagon, 3.2)) - Info names it, any other mode opens the pack with the wagon
           if (_race.campWins) { if (_campPick.distance > _campPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else camps.activate(_campPick.key, getInteractionMode()); }   // SURV3: the camp's menu, or its name
           else if (_race.waterWins) { if (_springPick.distance > _springPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else drinkAtSpring(_springPick.key); }   // SURV3: the skins filled
-          else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => townTalk.showOverlay(makeInventoryWindow(EOTB_WAGON_PACK)) }); }
+          else if (_race.wagonWins) { if (_wagonPick.distance > _wagonPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else mwViewWagonActivate(getInteractionMode(), { say: (l) => townTalk.say(l), openInventoryWithWagon: () => { const w = makeInventoryWindow(EOTB_WAGON_PACK); if (w) townTalk.showOverlay(w); } }); }   // DISC10-E L3: a refused pack is null
           else if (_race.horseCartWins) { hcc.activate(_hccPick.key, _hccPick.distance, (l) => townTalk.say(l), () => setMidScreenText(TOO_FAR_AWAY_TEXT), plaqueActionFor(_hccPick.key)); }   // ACT-MENU: the verb the plaque lit, where it stands   // HCC: the runtime's own reach test and refusals
           else if (_torchNearest) { if (_torchPick.distance > _torchPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT); else droppedTorches.activate(_torchPick.key, getInteractionMode()); }   // the mod's own activation, ahead of DFU's ladder
           else {
@@ -4698,7 +4702,8 @@ export async function bootExterior(canvas, renderer, params, status) {
             (lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards).takeLoot(lootKey, (l) => townTalk.say(l),
               inventoryDoorReady() ? (loot) => {
                 if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
-                townTalk.showOverlay(makeInventoryWindow({ loot }));
+                const w = makeInventoryWindow({ loot });
+                if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
               } : null);
             surfacePlayer();
           }
@@ -4716,14 +4721,15 @@ export async function bootExterior(canvas, renderer, params, status) {
             const _hooks = droppedLootHooks(pile);
             // QUICK-LOOT B4: the same door, on the player's own pile.
             if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
-            townTalk.showOverlay(makeInventoryWindow({
+            const w = makeInventoryWindow({
               // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
               // This arm hand-rolled the window with the SAME eleven hooks
               // makeInventoryWindow already passes, plus the two below -
               // which is precisely what its `extra` parameter is for.
               onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
               loot: _hooks,   // G5: DaggerfallLoot's own identity
-            }));
+            });
+            if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
           }
           else modes.tryEnter().then((opened) => {
             // GRAVE1: same law as world.js's twin - an activation that

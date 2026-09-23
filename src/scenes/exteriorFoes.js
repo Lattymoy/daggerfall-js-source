@@ -43,7 +43,7 @@ import { rand } from '../formats/dfRandom.js';
 import { setEnemyAlert } from '../systems/encounters.js';
 import { inflictPoison } from '../systems/poisons.js';
 import { onMonsterHit, SPIDER_TOUCH_SPELL_INDEX } from '../systems/diseases.js';   // AUDIT 24 (wave 30): the monster special-attack rider, above ground
-import { MINUTES_PER_DAY } from '../systems/worldTick.js';
+import { MINUTES_PER_DAY, playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher
 import { FOES_MS } from '../net/online.js';   // AUDIT ALL B2: the watchman moved since the frame the striker swung at
 import { validFoeRecord, CELL_PUPPETS_MAX, CELL_WATCH_PUPPETS_MAX, CELL_FRAME_RECORDS_MAX, POSE_BOUND, POSE_Y_BOUND, tokenGate, FOE_HEALTH_MAX, hitPoisonOf, HIT_ARROWS_MAX } from '../net/wire.js';
 import { CORPSE_ACTIVATION_DISTANCE, liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
@@ -93,6 +93,7 @@ export const ENCOUNTER_CULL_DISTANCE = 120;
 export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture, uploadRecordFrame,
   playerEntity, audio, onPlayerHurt, currentMinute, say = null, rolls = Math.random,
   playerSinks = null,   // AUDIT 24 (wave 30): the player's damage/drain doors - the nymph and lamia riders need drainFatigue
+  regionIndex = () => -1,   // DISC10-D V3: PlayerGPS.CurrentRegionIndex - the infection a vampire's bite starts records it (VampirismInfection.cs:91)
   onArrow = null,   // X2-slice: the host's arrow seam - (from, dir, foe) at the shoot frame
   spellsByIndex = null,   // X3-slice: () => the SPELLS.STD map (null until loaded) - casters need it
   hitEffects = null,   // AUDIT 24 (wave 39): the host's one blood/effect pool
@@ -763,6 +764,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // arm, never for a weapon hit or an EnemyClass attacker.)
         onMonsterHit: (att, tgt, hit) => onMonsterHit(att, tgt, hit, {
           currentDay: Math.floor(currentMinute() / MINUTES_PER_DAY), sinks: playerSinks, rolls,
+          regionIndex: regionIndex(),   // DISC10-D V3: the clan is the region's, read at the turn from where the bite was taken
           castParalyze: () => {   // S19: the spider/scorpion free-cast of classic spell 66
             const sp = spellsByIndex?.()?.get(SPIDER_TOUCH_SPELL_INDEX);
             if (sp) castSpellFrom(f, sp, playerFeet, true);
@@ -1120,6 +1122,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // is a blow, the owner's foe turns) - the local wake is a stream-driven body's
         attackFromPlayer(foe, playerFeet);
       }
+      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType });   // DISC10-D H1: OnWeaponHitEntity, after DecreaseHealth and HandleAttackFromSource (WeaponManager.cs:627-635) - every connect, the zero-damage one too
     }
     return any;
   }

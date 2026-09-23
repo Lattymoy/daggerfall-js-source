@@ -569,9 +569,9 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   };
   // PCO1: THE REGISTERED CORE. FormulaHelper.CalculateAttackDamage is
   // one of the members a mod replaces whole; the port's tail below
-  // (concealment, the Strikes payload, the racial hit hook, the struck
-  // hook, the HUD report) is DFU's CALLERS' work and runs after either
-  // core. The override gets the whole option bag plus the notes.
+  // (concealment, the Strikes payload, the struck hook, the HUD report)
+  // is DFU's CALLERS' work and runs after either core. The override gets
+  // the whole option bag plus the notes.
   const core = _overrides.get('calculateAttackDamage');
   const overridden = core ? core(attacker, target, { weapon, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes }) : undefined;
   let damage = 0;
@@ -736,31 +736,17 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       nowMinutes: enchantCtx?.nowMinutes ?? null, ctx: enchantCtx,
     });
   }
-  // V2a/V2b: RacialOverrideEffect.OnWeaponHitEntity, at the same tail
-  // for the same one-home reason - DFU calls it from the player's
-  // strike resolution (WeaponManager.cs:616-618). The vampire FEEDS on
-  // any landed hit; the werewolf's satiation asks whether the dead
-  // target was an INNOCENT (a civilian, or the city watch by
-  // mobileType - carried by every foe entity this formula ever sees).
-  // A REGISTERED hook, not an import: the curses import effects.js,
-  // which imports this file's dice100 - a direct import here closes
-  // that cycle. worldTick registers it, and every host loads worldTick.
-  if (attacker.isPlayer && attacker.racialOverride) {
-    _racialHitHook?.(attacker, target, {
-      // AUDIT 39: THE LIVE MINUTE, never 0. DFU's UpdateSatiation reads
-      // the clock itself (ToClassicDaggerfallTime()), so the stamp is
-      // always the current classic minute - and no strike site passes an
-      // enchantCtx, so the old `?? 0` inverted both mechanics: the
-      // satiation tests compare that stamp against the ABSOLUTE minute
-      // (523530 at the classic start), so a fed vampire read unfed
-      // forever and the werewolf's kill clock never reset. The player's
-      // own per-minute marker is the clock every host already writes
-      // (worldTick's PlayerEntity.Update:521 leg).
-      nowMinutes: enchantCtx?.nowMinutes ?? attacker.lastGameMinutes ?? 0,
-      mobileType: target?.mobileType ?? null,
-      isCivilian: !!enchantCtx?.targetIsCivilian,
-    });
-  }
+  // DISC10-D H1: RacialOverrideEffect.OnWeaponHitEntity is NOT here any
+  // more. It sat at this tail for the one-home reason the two blocks above
+  // give, and that reason does not hold for it: DFU calls it from the
+  // player's STRIKE RESOLUTION after the target's health is taken
+  // (WeaponManager.cs:627-635 - DecreaseHealth, HandleAttackFromSource,
+  // then OnWeaponHitEntity) and after a civilian's SetHealth(0) (:514-521),
+  // for every connect whatever the damage. Here it ran BEFORE any door
+  // subtracted anything, so the werewolf's KilledInnocent could never see a
+  // dead innocent, and it sat past the ineffective-material early return, so
+  // a vampire's iron blade on a ghost never fed. worldTick.js's
+  // playerWeaponHitEntity is the one dispatcher; the strike sites call it.
   // V3: the Ring of Namira, at DFU's own dispatch site - the tail of
   // CalculateAttackDamage when an ENEMY damages the PLAYER
   // (FormulaHelper.cs:702-719). The same registered-hook shape as
@@ -781,9 +767,6 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   return report(damage);
 }
 
-let _racialHitHook = null;
-/** worldTick's registration seam for the racial-override hit hook. */
-export function setRacialHitHook(fn) { _racialHitHook = fn ?? null; }
 let _playerAttackHook = null;
 /** HN1: the enhanced HUD's registration seam for the PLAYER'S attack
  *  resolutions (miss / ineffective / hit with damage, critical strike,

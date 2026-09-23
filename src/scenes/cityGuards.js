@@ -47,7 +47,7 @@
 import { liveStat } from '../systems/statMods.js';   // AUDIT 23 (characters-11)
 import { damageShieldPool } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's (DaggerfallEntity.cs:313-328)
 import { lycanthropeAttackVoice, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V4: the beast's attack voice   // GUARD1: EnemyEntity.cs:188's FOURTH despawn term
-import { sharedClockOn } from '../systems/worldTick.js';   // MOD: the "waiting for freedom" despawn is online-only, same door as arrestFlow's guard-hit fix
+import { sharedClockOn, playerWeaponHitEntity } from '../systems/worldTick.js';   // MOD: the "waiting for freedom" despawn is online-only, same door as arrestFlow's guard-hit fix; DISC10-D H1: OnWeaponHitEntity's one dispatcher
 import { setCrimeCommitted } from '../systems/court.js';   // V4: the one crime setter (SuppressCrime)
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the TG/DB tally
 import { entityIsParalyzed, applyEnemyMotorEffectFlags, concealmentFlags } from '../systems/effects.js';   // AUDIT 24 (wave 32): the watch is paralysable too   // A5: the enemy Levitate arm, the foe-target concealment closure + EntityConcealmentBehaviour's visual
@@ -1082,6 +1082,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         // `damage > 0` fork.
         damageGuard(foe, 0, playerFeet, null);
       }
+      playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: GUARD_MOBILE_TYPE });   // DISC10-D H1: OnWeaponHitEntity, after DecreaseHealth and HandleAttackFromSource (WeaponManager.cs:627-635) - every connect, the zero-damage one too
     }
     // WeaponManager.cs:419-436: a connecting swing tallies the weapon
     // skill AND CriticalStrike.
@@ -1133,6 +1134,12 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // invitation where it takes fifteen dead watchmen.
       tallyCrimeGuildRequirements(playerEntity, false, 5);
       onMurder();       // SpawnCityGuards(true)
+      // DISC10-D H1: `entityBehaviour.Entity.SetHealth(0)` then
+      // OnWeaponHitEntity (WeaponManager.cs:514-521) - the vampire feeds and
+      // the werewolf's KilledInnocent reads a dead CivilianNPC. The port's
+      // wandering townsperson carries no entity, so the one DFU zeroes is
+      // stood in by its only read field, the health, at 0.
+      playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });
       return { crime: 'murder' };
     }
     setCrimeCommitted(playerEntity, CRIME_ASSAULT);   // V4: through the one setter (SuppressCrime)
