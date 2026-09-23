@@ -31,7 +31,7 @@ import { MOBILE_NPC_ACTIVATION_DISTANCE } from '../src/player/activate.js';
 import { createSocialMenu, socialMenuRows, SOCIAL_MENU_STYLE_ID, SOCIAL_MENU_CSS } from '../src/ui/socialMenu.js';
 import { SOCIAL_CSS } from '../src/ui/socialPanel.js';   // AUDIT SOC C1: the two sheets must share no selector
 import { SocialState } from '../src/net/social.js';
-import { SOCIAL_ACTS } from '../src/net/wire.js';
+import { SOCIAL_ACTS, PARTY_MAX } from '../src/net/wire.js';
 import { PORT_ACTIONS } from '../src/systems/inputActions.js';   // AUDIT SOC D3
 import { createUnsavedKeybinds, setUnsavedBinding, checkDuplicates, applyUnsavedKeybinds, currentDict } from '../src/systems/controlsConfig.js';
 import { modSetting, _resetModSettings } from '../src/systems/modSettings.js';   // AUDIT SOC D4
@@ -359,10 +359,10 @@ test('SOC5: a name the room has not said yet still makes a sentence, and the car
   const st = new SocialState({ now: () => 1e12 });
   const seat = (n) => ({ acct: `acct-${n}`, name: n, online: true, seen: 1e12, peers: [`peer-${n}`], p: null });
   st.apply({ t: 'social', k: 'state', acct: 'acct-me', name: 'Me', friends: [], in: [], out: [], party: null, invites: [] });
-  st.apply({ t: 'social', k: 'party', party: { id: 'q-1', leader: 'acct-me', members: [{ ...seat('me'), acct: 'acct-me', peers: ['peer-me'] }, seat('b'), seat('c'), seat('d')] } });
+  st.apply({ t: 'social', k: 'party', party: { id: 'q-1', leader: 'acct-me', members: [{ ...seat('me'), acct: 'acct-me', peers: ['peer-me'] }, ...Array.from({ length: PARTY_MAX - 1 }, (_, i) => seat(`s${i}`))] } });   // PARTY8: every seat the bound allows
   menu.show({ name: 'Zed', peerId: 'peer-z', actions: st.actionsFor('peer-z') });
   assert.equal(rowBtn(root, 'invite').disabled, true);
-  assert.equal(rowBtn(root, 'invite').title, 'the party is full', 'the hub\'s own four seats, said in the picture\'s words');
+  assert.equal(rowBtn(root, 'invite').title, 'the party is full', 'the hub\'s own seats, said in the picture\'s words');
   menu.show({ name: 'Me', peerId: 'peer-me', actions: st.actionsFor('peer-me') });
   assert.equal(rowBtn(root, 'friend').title, 'that is you');
   assert.equal(rowBtn(root, 'invite').title, 'that is you');
