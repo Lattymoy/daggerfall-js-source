@@ -62,7 +62,8 @@ import { BLOOD_ABSORB, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI, INK
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern
 import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AIR_CONTACT_RANGE_FRACTION, airOn, contactOn, glslFloat } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
-import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the dither at the encode - the port's one Bayer
+import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';
+import { CLUSTER_X, CLUSTER_Y, CLUSTER_Z, CLUSTER_LIST_W, clustersOn } from './lightClusters.js';   // LC1: the grid the lantern loop walks, and its door   // EL6: the dither at the encode - the port's one Bayer
 import { SHADE_DARK } from '../systems/concealDraw.js';   // AUDIT-EL F14: the shade's pull toward black, interpolated as the classic BB_FS does   // EL3: the ambient occlusion image by screen position, and its kill door; EL4: the adapted exposure
 
 /** The lane's light cap - the classic lane's sixteen, tripled. Forty-eight
@@ -250,10 +251,39 @@ float fogFactorAt(vec3 worldPos) {
 }
 `;
 
+/** LC1: THE CLUSTER BLOCK - the grid and the list (render/lightClusters.js), read once per fragment. With the
+ *  grid off (`uClusterOn` 0: a sprite pass, a panel, an overflowed frame, `?clusters=off`) a cell is "every
+ *  light", so the loop below has ONE body and two ways to count. Interpolated at the head of the lantern loop. */
+export const EL_CLUSTER_GLSL = `
+uniform highp usampler2D uClusterGrid;   // LC1: (offset, count) per cell, texel (x + y * CLUSTER_X, z)
+uniform highp usampler2D uClusterList;   // LC1: the light indices, ${CLUSTER_LIST_W} to a row
+uniform vec4 uClusterRect;               // LC1: the world viewport's x, y, and CLUSTER_X / w, CLUSTER_Y / h
+uniform vec2 uClusterZ;                  // LC1: 1 / CLUSTER_NEAR, CLUSTER_Z / log(FAR / NEAR)
+uniform vec4 uCamFwd;                    // LC1: the view's third row negated - dot(xyz, wp) + w is a point's view depth
+uniform int uClusterOn;                  // LC1: 1 on a world frame with a grid built; 0 walks every light
+// the fragment's cell as (offset, count) into the list - or (0, uPointCount) with the grid off
+uvec2 elCluster(vec3 wp) {
+  if (uClusterOn == 0) return uvec2(0u, uint(uPointCount));
+  ivec2 t = clamp(ivec2((gl_FragCoord.xy - uClusterRect.xy) * uClusterRect.zw), ivec2(0), ivec2(${CLUSTER_X - 1}, ${CLUSTER_Y - 1}));
+  float depth = dot(uCamFwd.xyz, wp) + uCamFwd.w;
+  int z = clamp(int(log(max(depth * uClusterZ.x, 1.0)) * uClusterZ.y), 0, ${CLUSTER_Z - 1});
+  return texelFetch(uClusterGrid, ivec2(t.x + t.y * ${CLUSTER_X}, z), 0).rg;
+}
+// the j-th light of a cell - the list's byte, or j itself with the grid off
+int elClusterLight(uvec2 cell, int j) {
+  if (uClusterOn == 0) return j;
+  int at = int(cell.x) + j;
+  return int(texelFetch(uClusterList, ivec2(at & ${CLUSTER_LIST_W - 1}, at >> ${Math.log2(CLUSTER_LIST_W)}), 0).r);
+}
+`;
+
 // The lantern loop and the in-scatter loop, shared by the three lit
 // programs. `n` is the surface normal (the billboard passes none and
 // takes the attenuation alone - it has no normal, as in the classic lane).
+// LC1: the loop walks the fragment's CELL (elCluster) - two or three
+// lights where it walked forty-eight - and every light with the grid off.
 const EL_POINT_LIT_GLSL = `
+${EL_CLUSTER_GLSL}
 // BLOOD2f / BLOOD AUDIT 5: the lantern loop with a WET surface's glint
 // beside the diffuse - ONE loop, ONE shadow answer for both (a mark in a
 // contact shadow is glint-shadowed as it is diffuse-shadowed), the
@@ -273,8 +303,11 @@ float wetFresnel(float vdoth) {
 vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
   vec3 acc = vec3(0.0);
   glint = vec3(0.0);
-  for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
-    if (i >= uPointCount) break;
+  uvec2 cell = elCluster(wp);   // LC1
+  int cellCount = int(cell.y);
+  for (int j = 0; j < ${EL_MAX_LIGHTS}; j++) {
+    if (j >= cellCount) break;
+    int i = elClusterLight(cell, j);
     vec3 L = uPointLights[i].xyz - wp;
     float d = length(L);
     if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it
@@ -306,8 +339,11 @@ vec3 elPointLit(vec3 wp, vec3 n) { vec3 g; return elPointLitWet(wp, n, 0.0, g); 
 // would shadow itself)
 vec3 elPointFlat(vec3 wp, vec3 base) {
   vec3 acc = vec3(0.0);
-  for (int i = 0; i < ${EL_MAX_LIGHTS}; i++) {
-    if (i >= uPointCount) break;
+  uvec2 cell = elCluster(wp);   // LC1
+  int cellCount = int(cell.y);
+  for (int j = 0; j < ${EL_MAX_LIGHTS}; j++) {
+    if (j >= cellCount) break;
+    int i = elClusterLight(cell, j);
     float d = length(uPointLights[i].xyz - wp);
     if (d >= uPointLights[i].w) continue;   // EL5
     float sh = shadowOfLight(i, base, vec3(0.0, 1.0, 0.0));   // EL2; EL5: any caster's
@@ -963,7 +999,7 @@ export const EL_LANE = Object.freeze({
 export function syncLightingLane(renderer, search = globalThis.location?.search ?? '') {
   const on = enhancedLightingOn(search);
   renderer.setLightingLane(on ? EL_LANE : null);
-  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too
+  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's
   return on;
 }
 

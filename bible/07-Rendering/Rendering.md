@@ -68,6 +68,14 @@ directory by `test/audit18_bible_docs.test.js`:
   under half a unit), a cascade skips casters under two of its texels).
   See `07-Rendering/Enhanced-Lighting-Arc.md`.
 - `skyRenderer.js` - painted skies (R4) + the night sky.
+- `lightClusters.js` - LC1 CLUSTERED LIGHTS (2026-09-23): the frustum cut into
+  16 x 9 x 24 cells once a frame on the CPU, each light written into the cells
+  its view-space box touches, uploaded as two integer textures (the grid's
+  offset and count per cell, the list of indices) that the lane's lantern loop
+  reads to walk the fragment's own cell's lights instead of the frame's
+  forty-eight. Conservative, and off (every light) in the sprite pass, the
+  studio bake, a panel bracket, an overflowed frame and behind `?clusters=off`
+  (`Enhanced-Lighting-Arc.md`, LC1).
 - `labGrass.js` - GR1 the LAB'S GRASS: grass-proto.html's blade shaders
   verbatim, its placer law, and a renderer of its own beside the world's,
   drawn on grass records of the near ring outside winter. GR2 darkened
