@@ -51,6 +51,7 @@ import { survivalOn } from '../systems/survival/switch.js';
 import { survivalFeed, installSurvivalGate, uninstallSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the rest gate; AUDIT SURV B/C: and off the seam at the teardown
 import { registerPreventRestCondition, unregisterPreventRestCondition } from '../systems/restSession.js';   // SURV7: the gate's seam
 import { runSurvivalMinutes } from '../systems/survival/needs.js';   // AUDIT SURV B: the dungeon's rest pays its night asleep
+import { addCorpseFood } from '../systems/survival/loot.js';   // CORPSE-FOOD: a joiner's copy of a body rolls its own food
 import { dateFromClassicMinutes } from '../systems/gameDate.js';   // SURV7: the env's month
 import { playerEntity, surfacePlayer, hurtPlayer as hurtEntity, damageShieldPool, setDeathPresenter, setAvoidDeathHook } from '../characters/playerEntity.js';   // AUDIT 58: DecreaseHealth's shield hook is the BASE class's, so every entity's door owes it
 import { addItem, spendAmmoFor, isEnchanted } from '../systems/inventory.js';
@@ -1564,7 +1565,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (sup) { hudText.add(sup.text); return null; }
     return createInventoryWindow({
       openBook: openBookHook,   // B1: the use-mode book arm
-      placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3: a fire on the floor
+      placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3: a fire on the floor - AUDIT SURV-TIERS: off the list it was used from
       say: (l) => hudText.add(l),   // FX1 (F128): the "Equipping %s" cue on close
       items: () => (playerEntity.items ??= []),
       wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice
@@ -1652,7 +1653,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9338 / exterior.js:3628), set
+  // host's own townTalk sink (world.js:9352 / exterior.js:3629), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -1951,7 +1952,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     for (let l = 0; l < n; l++) {
     const hit = intermittentEnemySpawn({
       gameMinutes: start + l + 1, inside: true, inDungeon: true, isResting: true,
-      roughRest: playerEntity.restKind === 'rough',   // SURV4: the bare floor asks twice; a fire on it, once
+      restAsks: playerEntity.restAsks,   // SURV4 + SURV-TIERS: priced at the open (scenes/shared.js) - the bare floor asks twice in Hard; a fire on it, or any Casual floor, once
       enemyAlertActive: !!playerEntity.enemyAlertActive,
       dungeonType: dfLocation.mapTableData.dungeonType,
       playerLevel: playerEntity.level,
@@ -2014,7 +2015,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // on to something else (the death screen, above all).
     onClose: () => { if (activeOverlay?.isRestWindow) activeOverlay = null; },
     day: () => false, inside: () => true,
-    restKind: () => (_fpFeet && camps.byFire(_fpFeet) ? 'camp' : 'rough'),   // SURV4: a fire on the floor is the sleep; the bare floor is rough
+    restKind: () => (_fpFeet && camps.fireNear(_fpFeet) ? 'camp' : 'rough'),   // SURV4: a fire on the floor is the sleep; the bare floor is rough (AUDIT SURV-TIERS: the world's fire, in every tier)
   });
   // U4: the ONE player-damage door - every source (traps, melee,
   // arrows, spell missiles) lands here; death opens the overlay.
@@ -3272,8 +3273,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:14014,
-              // exterior.js:5172 and worldModes.js:7217 already ran;
+              // playerArrowHitFoe is the one copy world.js:14028,
+              // exterior.js:5173 and worldModes.js:7217 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -3606,6 +3607,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     p.moving = !!r.m;
     if (Number.isFinite(r.h)) { if (r.h < f.entity.health) p.hurt = true; f.entity.health = r.h; }
     if (r.a != null) { const a = r.a | 0; if (p.a != null && a !== p.a) p.strike = (a & 1) ? 'ranged' : 'melee'; p.a = a; }
+    // CORPSE-FOOD (Mac: "It needs to be accessible with people with it on"): this copy's own roll of the body's food.
+    // The host's kill fed the host's copy alone - a death is raised where it happens - and a joiner who opened the
+    // body first handed the room a list with none (WORLD4: the first reader's list is the room's). Each copy rolls its
+    // own, as a chest does.
+    if (r.d === 1 && !f.dead) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });
     if (r.d === 1) { if (!f.dead) { f.ai.feet[0] = p.feet[0]; f.ai.feet[1] = p.feet[1]; f.ai.feet[2] = p.feet[2]; } setFoeDead(f, true); }   // B10: the corpse where the host's foe fell, not where the ease had got to
     else if (r.d === 0 && f.dead) {   // AUDIT WORLD7/8 B3: the stream's un-death is a REBUILD - the host minted a fresh entity (the hour's respawn), and the old body stood up looted, still cursed (a frozen drain killed it again at once and sent the host the blow) and with the dead foe's counts (phantom edges); WORLD3 E2's own arm
       const idx = foes.indexOf(f);
@@ -4105,6 +4111,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f.mobile.clearSpecialTransformationCompleted();
       if (f.seducer) f.seducer = new SeducerTransformBehaviour(f.mobile, f.entity);   // SetupDemoEnemy.cs:191-195' fresh component
     }
+    // CORPSE-FOOD: and a body the room's memory hands an arrival without its list (the memory writes none since AUDIT
+    // WORLD4 D4) is this copy's own roll too - food and all, as the stream's death above. A save off disk carries its
+    // own list, and a room's list is the room's.
+    if (wire && sf.dead && !f.dead && sf.items == null) addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') });
     if (sf.dead && Number.isFinite(sf.died)) { const _n = _wallNow(); f._diedAt = _n == null ? sf.died : Math.min(sf.died, _n); }   // WORLD8: the room's stamp, not this client's arrival; AUDIT WORLD7/8 B4: never AHEAD of now (a far-future stamp revoked the hour for thirty days)
     if (sf.dead && !f.dead) setFoeDead(f, true);
     // SL2 (AUDIT 23 save-load-2): the BACKWARD rewind. DFU's load
@@ -4201,7 +4211,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // clearing restore would delete this player's floor stash and mint the host's under their feet
     if (truncate) droppedLoot.restorePiles(w.droppedLoot);   // AUDIT 23: absent list clears, per rebuild-from-save
     if (truncate) droppedTorches.restore(w.droppedTorches);   // HT1: the same law
-    if (truncate) camps.restore(w.camps);   // SURV3
+    if (truncate) { camps.dropOwn(); camps.restore(w.camps); }   // SURV3; AUDIT SURV-TIERS (the third pass): the save says which fires are mine - a kit fire lit after it goes with the rewind
     // P10 + AUDIT 23 (save-load-11): state, lock and BOTH tweens
     // restore, then each object settles its matrix and collider bucket
     // (an open door no longer restores solid-and-closed, and a door
@@ -5727,6 +5737,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // window stack any other way). Null while not resting and null for
     // a mirrored session, same law.
     restEnemiesNearby: () => _restDeps.enemiesNearby(),   // AUDIT PARTY-REST: the mirror's own foe question, this host's scan
+    survivalEnvNow,   // AUDIT SURV-TIERS (the second pass): and the mirror's needs - world.js's ticker runs a mirrored night here with this host's reader
     get restState() {
       const w = activeOverlay;
       // PARTY-REST6: see worldModes.js's own restState getter for the bug this `state === 'resting'` guard

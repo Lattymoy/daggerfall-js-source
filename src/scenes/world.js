@@ -160,7 +160,7 @@ import { SPAWNER_ARMS } from '../systems/encounters.js';   // SURV6: the hunt's 
 import { skillValue } from '../systems/skills.js';   // SURV6: the hunter's four skills
 import { inflictDisease } from '../systems/diseases.js';   // SURV6: a foul pool's water
 import { createHunting } from './hunting.js';   // SURV6: hunting, foraging and the water search as real-time events
-import { alignSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival
+import { alignSurvival, shiftSurvival } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival; AUDIT SURV-TIERS (the third pass): and across a clock correction
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
 import { rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
@@ -192,7 +192,7 @@ import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: th
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
 import { wagonHoverName } from '../player/eotbWagon.js';   // WORLD-HOVER M6: the cart's word, beside its producer
 import { waterSourceHoverName } from '../systems/survival/items.js';   // WORLD-HOVER M6: a water source's word, beside its producer
-import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
+import { mwViewFirstPerson, mwViewFrame, mwViewWheel, mwViewDrawBody, mwViewFootstep, mwViewLoadPose, mwViewNewGame, mwViewRebase, mwViewAttachWagon, mwViewDrawWagon, mwViewWagonTargets, setEotbCartYields, mwViewWagonActivate } from '../player/mwView.js';   // MW-D25: the Morrowind camera; AUDIT-EOTB2: the sprite's stride and the load's POV
 import { mwCamera, PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: persistence + the reference pitch clamp
 import { pickActivatableHit, pickQuestFoe, pickFoe } from '../player/activate.js';   // G3: corpse loot; QG1: the foe-click door; TI1: the lock-on pick
 import { raceActivation } from '../player/activationRace.js';   // HARD2: one home for "the nearest thing under the one ray takes the click"
@@ -2770,9 +2770,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Mac's word, and the whole of it: `resting` is not a fatigue knob,
     // it is the needs' one word for "sat still", and three other laws
     // read it. It held the bare-skin block's naked-cold and sunburn
-    // ticks and the byFire exposure damage (needs.js:277, :293) - the
+    // ticks and the byFire exposure damage (needs.js:480, :456) - the
     // health Mac wants ticking - and, the one TO-FIELD never counted,
-    // it shut the HUNTING roll off entirely (hunting.js:105 refuses on
+    // it shut the HUNTING roll off entirely (hunting.js:114 refuses on
     // `resting`), so a traveller could not hunt on the road at all.
     // One flag, four laws; the journey takes the world as it finds it.
     //
@@ -2786,7 +2786,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Mac wants it played - camp out, stop at inns, or travel
     // cautiously - and the survival mod's own switch turns all of it
     // off for anyone who would rather it did not.
-    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),
+    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null) : survivalEnvNow()),   // AUDIT SURV-TIERS (the second pass): a party rest MIRRORED in a dungeon runs on this ticker (partyRestMirrorDeps' advanceMinutes) while its window holds the dungeon's frame - underground the dungeon's own reader, or the night paid no sleep
     // AUDIT 64 F27: the ticker's lines are HUD POPUPS, not a log.
     // LoanChecker.CheckOverdueLoans posts its two 6/3/1-month reminders
     // with DaggerfallUI.AddHUDText (LoanChecker.cs:42-45) - the only
@@ -3444,6 +3444,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode && playerSpawned ? player.pos : cam.pos, null, true); },   // offline the cook's minutes pass; online the clock is nobody's (WORLD5) and advance() stands   // CAMP-REST: spent through the tick as a skip, never replayed as walking time (no group roll)
     selfId: () => online?.id ?? null, onChanged: () => { _foesFullAt = -Infinity; },   // a change asks for a full frame, which carries the camps
   });
+  // SURV3 / AUDIT SURV-TIERS (the third pass): a camp's scene position in natives and back - the save's two converters,
+  // named once for the three that need them: the save, the load, and the teleport that re-anchors the frame under the pool
+  const campToNatives = (pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; };
+  const campFromNatives = (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; };
   // HCC (2026-09-23, Mac: "Next mod I want to implement 1 to 1 and also enhance its online integration
   // functionality") - HORSE CART AND CARGO. The machine is systems/horseCart.js (TrailingWagonRuntime, off the IL);
   // this host hands it its seams below and the pool (scenes/horseCartPool.js) draws what it says, answers its physics
@@ -3518,6 +3522,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     phys: hcc.phys, presentation: hcc.presentation, log: console,
   });
   hcc.attach(hccRuntime);
+  setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);   // DISC10: one cart - EOTB's gives way while HCC's trails (mwView.js)
   /** AUDIT HCC H1: TrailingWagonRuntime.LateUpdate, ONCE a frame and in EVERY mode (the machine gates its own
    *  presentation on PlayerEnterExit.IsPlayerInside, and its hotkeys answer indoors with the mod's "outdoors only").
    *  Called from the modal branch (a building, a dungeon) and from the exterior frame after the motor and the
@@ -3840,7 +3845,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const _m = modes?.mode ?? 'exterior';
       const hit = (walkMode && playerSpawned && player.isPlayerSwimming) ? null : intermittentEnemySpawn({   // XL-1: :489 reads PlayerEnterExit.IsPlayerSwimming, the host flag
         gameMinutes: _lastEncMinutes + l + 1, inside: _m !== 'exterior', inDungeon: _m === 'dungeon', isResting: false,   // the dungeon's rest roll is dungeonContext's own
-        roughRest: !!playerEntity.isResting && playerEntity.restKind === 'rough',   // SURV4: a rough rest asks twice
+        restAsks: playerEntity.isResting ? playerEntity.restAsks : 1,   // SURV4 + SURV-TIERS: the rest's asks, its kind priced by the tier at the open (scenes/shared.js) - a rough rest asks twice in Hard, once in Casual
         // F061: IsPlayerInLocationRect is the WIDENED TOWN RECT
         // (PlayerGPS.cs:687-699), not "this pixel has a location" -
         // in the wilderness ring of a town's pixel the wilderness
@@ -4277,7 +4282,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2430 mounts the same one, gated on
+  // and dungeonContext.js:2431 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5618
@@ -4758,7 +4763,7 @@ export async function bootWorld(canvas, renderer, params, status) {
 
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     openBook: openBookHook,   // B1: the use-mode book arm
-    placeCamp: (item) => camps.placeItem(item, playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground
+    placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground - AUDIT SURV-TIERS: off the list they were used from (the pack or the wagon)
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -5072,7 +5077,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT PARTY-REST: where the sleeper stands, not where this bag was built - a follower's mirror inherits this
     // bag in a dungeon or a building too (partyRestMirrorDeps), and RapidHealing's InLight/InDarkness rate reads it.
     inside: () => (modes?.mode ?? 'exterior') !== 'exterior',
-    restKind: () => (camps.byFire(walkMode && playerSpawned ? player.pos : cam.pos) ? 'camp' : 'rough'),   // SURV4: a lit fire near is the sleep; the window alone is rough
+    restKind: () => (camps.fireNear(walkMode && playerSpawned ? player.pos : cam.pos) ? 'camp' : 'rough'),   // SURV4: a lit fire near is the sleep; the window alone is rough (AUDIT SURV-TIERS: the world's fire, in every tier)
   });
   const toggleRest = () => {
     if (townTalk.overlayActive) return;
@@ -5394,6 +5399,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // this pool is built with no `onSpawn`, so it owns its splash
     // batches and this is the one place they are freed.
     hitEffects.clear();
+    // AUDIT SURV-TIERS (the third pass): AND THE CAMPS, the same frame's. A camp stands in scene space too, spared by
+    // the pixel sweep (AUDIT SURV B: the pool outlives the streaming), and `state.init` below moved the origin under it
+    // with no offset to ride: a tent pitched by Daggerfall stood beside the traveller in Wayrest, and the next save
+    // and the wire said so. The player's own go through natives across the new frame and stand where they were
+    // pitched; a peer's come back on their owner's next word.
+    const campsHeld = camps.snapshot(campToNatives);
+    camps.destroyAll();
     for (const key of [...built.keys()]) {
       const [bx, by] = key.split(',').map(Number);
       destroyPixel(bx, by);
@@ -5403,6 +5415,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.push(...state.init(px, py));
     if (wod) wodSlots.step(px, py, state.terrainDistance, StreamingWorldState.onMap);   // AUDIT BRANCH (WoD) L1-3: InitWorld's first UpdateWorld
     _wodArrival = wodArrivalOf(queue);   // WOD6: this arrival's first grid, its player at the new frame's origin
+    camps.restore(campsHeld, campFromNatives);   // AUDIT SURV-TIERS (the third pass): the camps, in the new frame
     // AUDIT-WH P9: THE CACHE'S INVALIDATION, STATED. `state.init`
     // re-anchors the floating origin by up to 32,768 units and returns
     // no offset, so the recenter bump at the frame's end cannot see
@@ -6318,7 +6331,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6221), so exterior mode and a
+    // composer, dungeonContext.js:6232), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -6363,7 +6376,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // half's exact law.
         piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
         droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),
-        camps: camps.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),   // SURV3: my camps, in natives   // HT1: the mod's own save data rides the envelope
+        camps: camps.snapshot(campToNatives),   // SURV3: my camps, in natives   // HT1: the mod's own save data rides the envelope
         // AUDIT 26 F216/F217: LIVE ENEMIES ride the envelope - DFU's
         // SaveData_v1 carries enemyData wherever the player stands
         // (:865, restored :1006). Saved nowhere, a quickload during a
@@ -6531,7 +6544,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // saved ones at their native spots.
         droppedLoot.restoreWorld(restandRows(w.piles), (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
         droppedTorches.restore(restandAt('position')(w.droppedTorches), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
-        camps.restore(restandAt('pos')(w.camps), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // SURV3
+        camps.dropOwn();   // AUDIT SURV-TIERS (the third pass): the save says which camps are mine - the pitch after it is undone, not kept beside the gear it gave back
+        camps.restore(restandAt('pos')(w.camps), campFromNatives);   // SURV3
         // F216/F217: the pools re-mint through their one spawn chain,
         // then overlay the saved truth (SerializableEnemy's own
         // rebuild-then-set shape). Async behind the art; the teleport
@@ -9810,7 +9824,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const onlineArrival = () => { alignEntityClocks(playerEntity, worldMinutes()); rollClimateWeathersForDay(worldMinutes()); refreshSeason(worldMinutes()); };
     onlineArrival();
     alignSurvival(playerEntity, Math.floor(worldMinutes()), Math.floor(worldMinutes()));   // SURV7: a record ahead of the world's clock starts fresh; the gap itself is save.js's load arm
-    online.onClock = (offsetMs) => { const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if (Math.abs(offsetMs - was) > 1000) { onlineArrival(); alignSurvival(playerEntity, Math.floor(worldMinutes()), Math.floor(worldMinutes())); } };   // AUDIT SURV B: the correction re-aligns the needs too   // WORLD5: the relay's clock corrects this machine's
+    online.onClock = (offsetMs) => { const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if (Math.abs(offsetMs - was) > 1000) { const before = playerEntity.lastGameMinutes; onlineArrival(); if (Number.isFinite(before)) shiftSurvival(playerEntity, Math.floor(worldMinutes()) - Math.floor(before)); alignSurvival(playerEntity, Math.floor(worldMinutes()), Math.floor(worldMinutes())); } };   // AUDIT SURV B: the correction re-aligns the needs too; AUDIT SURV-TIERS (the third pass): by the delta every other marker rode, first   // WORLD5: the relay's clock corrects this machine's
     remotePlayers = new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame, audio } });   // 2026-09-17: uploadRecordFrame added for the class-enemy billboard path (net/remotePlayers.js _buildMobile/_syncMobilePeer) - the doll path never touches it
     // MWBODY1: the enhanced skin with Morrowind data attached puts every peer in a body of its own; otherwise the doll
     const enhanced = isEnhanced();   // the skin cannot change without a reload (switchSkin), so it is read once, not per frame
@@ -10296,8 +10310,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  hourly recovery, floored (systems/survival/rest.js's own restHour) - while the person they were mirroring
    *  slept in the real bed at the real rate. A follower now shares the exact quality of rest the person they are
    *  mirroring is actually getting, since that is what mirroring a rest is supposed to mean. Falls back to the
-   *  inherited position-based check only if the broadcast carried no kind at all (an older peer, or survival mode
-   *  off) - never silently to Rough specifically. */
+   *  inherited position-based check only if the broadcast carried no kind at all (an older peer; AUDIT SURV-TIERS:
+   *  every tier sends its place now) - never silently to Rough specifically. */
   /** AUDIT PARTY-REST: the rest gate's own questions, asked of the FOLLOWER before a mirror opens - the outdoor
    *  toggleRest's restDecision inputs, with the foe scan taken from whichever host I stand in (the hosts answer
    *  `restEnemiesNearby`), plus the interior/dungeon window stack (`modes.overlayHeld`, which townTalk's own
@@ -10327,7 +10341,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // itself the moment resting turns off - so this call must run before the mirror's window-construction call
     // fires `setResting(true)` at construction (world.js's own call site does exactly that: this factory runs to
     // completion, THEN the window is built). Falls back to the inherited position-based check when the broadcast
-    // carried no kind at all (an older peer, or survival mode off) - never silently to Rough specifically.
+    // carried no kind at all (an older peer - every tier sends its place) - never silently to Rough specifically.
     outdoorRestDeps.overrideRestKind(restKind ? () => restKind : null);
     return {
     ...outdoorRestDeps,
@@ -13750,7 +13764,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // again". TO-FIELD held SURV6's roll while an accelerated journey
     // ran; the gate is REMOVED on Mac's word, with the `resting` flag
     // above that was holding the roll a second time from inside
-    // (hunting.js:105).
+    // (hunting.js:114).
     //
     // WHAT IT MEANS, said plainly so it is not rediscovered as a bug:
     // the roll fires once a GAME minute, and a journey spends those at

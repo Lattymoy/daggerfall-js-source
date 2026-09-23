@@ -35,6 +35,8 @@ import { inflictPoison } from './poisons.js';
 import { inflictDisease } from './diseases.js';   // SURV2: a bad meal's sickness, handed to the food law
 import { getItem, isEnchanted as hasEnchantments } from './inventory.js';   // D9: ItemCollection.GetItem - the oil arm's lantern lookup (:1791); the card's usable predicate
 import { isSurvivalItem, useSurvivalItem } from './survival/items.js';   // SURV2: food, water, camp gear
+import { survivalRules } from './survival/switch.js';   // SURV-TIERS: a meal's sickness is the tier's
+import { SURVIVAL_RULES } from './survival/difficulty.js';   // AUDIT SURV-TIERS: and with the arc off, Casual's - none
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
@@ -281,7 +283,11 @@ export function useItem(item, collection, {
   // campfire kit, the skillet) answer from their own module - their
   // templates are the port's, above DFU's 288, and their use is eating,
   // drinking and placing, none of which the ladder below knows.
-  if (isSurvivalItem(item)) out = useSurvivalItem(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease });
+  // SURV-TIERS: the live tier's rules decide whether a raw or spoiled meal may sicken. AUDIT SURV-TIERS: with
+  // the arc off it was Hard's roll (the law's default for no rules), so a meal carried over from a session with
+  // the arc on could give a disease in the classic game - the one tier that promises no survival cost at all.
+  // Off eats as Casual does: fed, never sickened.
+  if (isSurvivalItem(item)) out = useSurvivalItem(item, collection, { entity, now: nowMinute, rolls, currentDay: Math.trunc(nowMinute / 1440), inflict: inflictDisease, rules: survivalRules() ?? SURVIVAL_RULES.casual });
   // B1: the book arm hands the ITEM to the window's openBook hook
   // (DaggerfallInventoryWindow pushes the reader; a failed open shows
   // the ruined-book box - failText - which the WINDOW shows on the

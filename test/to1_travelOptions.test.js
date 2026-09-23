@@ -1773,8 +1773,8 @@ test('TO-FIELD: the accelerated journey waits for the ground; TO-FIELD3 took the
   // fatigue drains it was aimed at, the bare-skin block's naked-cold
   // and sunburn ticks and the byFire exposure damage (the health), and
   // - never counted by the change that set it - SURV6's hunting roll,
-  // which refuses outright on `resting` (hunting.js:105).
-  assert.match(w, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? null : survivalEnvNow\(\)\),/,
+  // which refuses outright on `resting` (hunting.js:114).
+  assert.match(w, /survivalEnv: \(\) => \(_mode\(\) === 'dungeon' \? \(playerEntity\.isResting \? modes\?\.dungeonCtx\?\.survivalEnvNow\?\.\(\) \?\? null : null\) : survivalEnvNow\(\)\),/,
     'the journey feeds the needs the world it is actually in');
   assert.doesNotMatch(w, /resting: true \}\n?\s*: survivalEnvNow/, 'and no travel arm sits the traveller down');
   assert.doesNotMatch(w, /worldTimeScale\(\) > 1 \? \{ \.\.\.survivalEnvNow\(\)/, 'the mod\'s clock does not reach the needs at all');
@@ -1782,8 +1782,9 @@ test('TO-FIELD: the accelerated journey waits for the ground; TO-FIELD3 took the
   // in the leaf - which is WHY one flag could never have been the right
   // shape for a fatigue surcharge
   const n = read('src/systems/survival/needs.js');
-  assert.match(n, /if \(hungerAfter === 'starving' && !resting\) sinks\.drainFatigue\?\.\(DRAIN\.starving\);/, 'the starving drain');
-  assert.match(n, /if \(sleepNow === 'exhausted' && !resting\) sinks\.drainFatigue\?\.\(DRAIN\.exhausted\);/, 'the exhausted drain');
+  // (SURV-TIERS: through the tier's one stamina door, `tire`)
+  assert.match(n, /if \(hungerAfter === 'starving' && !resting\) tire\(DRAIN\.starving, 'hunger'\);/, 'the starving drain');
+  assert.match(n, /if \(sleepNow === 'exhausted' && !resting\) tire\(DRAIN\.exhausted, 'sleep'\);/, 'the exhausted drain');
   assert.match(n, /if \(!env\.insideBuilding && !vampire && !ctx\.beastForm && !sleeping && !resting\) \{/, 'the bare-skin health ticks');
   assert.match(read('src/systems/survival/hunting.js'), /if \(!climate \|\| !outdoors \|\| inLocationRect \|\| night \|\| enemiesNear \|\| resting\) return null;/,
     'and the hunting roll, which is the one the flag took without saying so');

@@ -73,7 +73,7 @@ test('AUDIT WORLD5 C2: a source that steps BACKWARDS re-anchors the tick\'s read
   } finally { offline(); }
   assert.match(rd('src/systems/worldTick.js'), /if \(_sharedClock\(\) < classicMinutes\) classicMinutes = _sharedClock\(\);/, 'the re-anchor');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if \(Math\.abs\(offsetMs - was\) > 1000\) \{ onlineArrival\(\); alignSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(worldMinutes\(\)\)\); \} \};/, 'a correction over a second is an arrival');
+  assert.match(w, /online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs; _sharedOffsetMs = offsetMs; if \(Math\.abs\(offsetMs - was\) > 1000\) \{ const before = playerEntity\.lastGameMinutes; onlineArrival\(\); if \(Number\.isFinite\(before\)\) shiftSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\) - Math\.floor\(before\)\); alignSurvival\(playerEntity, Math\.floor\(worldMinutes\(\)\), Math\.floor\(worldMinutes\(\)\)\); \} \};/, 'a correction over a second is an arrival');
   assert.match(w, /const onlineArrival = \(\) => \{ alignEntityClocks\(playerEntity, worldMinutes\(\)\); rollClimateWeathersForDay\(worldMinutes\(\)\); refreshSeason\(worldMinutes\(\)\); \};\s*onlineArrival\(\);/, 'the same arrival the session\'s start runs');
 });
 

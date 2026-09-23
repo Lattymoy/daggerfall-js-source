@@ -698,8 +698,20 @@ export class AnswerPipeline {
     const tree = this.deps.tree;
     const buildingInfo = (tree?.listBuildings ?? []).find((x) => x.buildingKey === this.currentKeySubjectBuildingKey);
     if (buildingInfo && buildingInfo.buildingKey !== 0) {
-      const info = this._resourceInfo(this.currentQuestionListItem ?? { questID: 0, key: '' });
+      const item = this.currentQuestionListItem ?? { questID: 0, key: '' };
+      const info = this._resourceInfo(item);
       if (info) info.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.LocationWasMarkedOnMap;
+      // DISC10 (Discord, 2026-09-23: "Npc was supposed to mark it on the map. It is not on the map when I look").
+      // A PERSON's hint marks the person's building, and the flag the town map's residence arm reads is the
+      // PLACE's (IsBuildingQuestResource :2376-2421 -> ExteriorAutomap.cs:693-704) - C# stamps only the Person's
+      // own info, so a quest residence whose Place was still dialog-hidden, or that had already been discovered
+      // as a plain residence (a door looked at through World Tooltips discovers it), stayed an unnamed house
+      // after "You can see ... on your map". The person's assigned Place is marked with it (Ledger A).
+      if (item.questionType === QUESTION_TYPE.Person) {
+        const placeKey = this.deps.tree.getPersonResource(item.questID, item.key)?.getAssignedPlaceSymbol?.()?.name ?? null;
+        const placeInfo = placeKey ? this._resourceInfo({ questID: item.questID, key: placeKey }) : null;
+        if (placeInfo) placeInfo.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.LocationWasMarkedOnMap;
+      }
       this.deps.discoverBuilding?.(buildingInfo.buildingKey);
     }
   }

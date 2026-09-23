@@ -1,0 +1,92 @@
+[
+  {
+    "name": "DISC10-the-cart-never-yields",
+    "file": "src/player/mwView.js",
+    "old": "cart: !!frame.cart && !eotbCartYields(),",
+    "new": "cart: !!frame.cart,",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-world-host-registers-no-yield",
+    "file": "src/scenes/world.js",
+    "old": "  setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);   // DISC10: one cart - EOTB's gives way while HCC's trails (mwView.js)\n",
+    "new": "",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-exterior-host-registers-no-yield",
+    "file": "src/scenes/exterior.js",
+    "old": "  setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);   // DISC10: one cart - EOTB's gives way while HCC's trails (mwView.js)\n",
+    "new": "",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-yield-ignores-the-trailing-setting",
+    "file": "src/scenes/world.js",
+    "old": "setEotbCartYields(() => hccOn() && hccRuntime.showTrailingWagon);",
+    "new": "setEotbCartYields(() => hccOn());",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-pick-ignores-the-turned-box",
+    "file": "src/player/activate.js",
+    "old": "    let d = target.obb ? rayObb(eye, dir, target.obb.m, target.obb.box) : rayAabb(eye, dir, target.aabb);",
+    "new": "    let d = rayAabb(eye, dir, target.aabb);",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-turned-box-read-unrotated",
+    "file": "src/player/activate.js",
+    "old": "  const o = [rx * m[0] + ry * m[1] + rz * m[2], rx * m[4] + ry * m[5] + rz * m[6], rx * m[8] + ry * m[9] + rz * m[10]];",
+    "new": "  const o = [rx, ry, rz];",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-cart-offers-no-turned-box",
+    "file": "src/player/eotbWagon.js",
+    "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
+    "new": "noSurface: true,",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-cart-names-the-ground-inside-it",
+    "file": "src/player/eotbWagon.js",
+    "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
+    "new": "obb: localBox ? { m, box: localBox } : null,",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-person-marks-only-the-person",
+    "file": "src/systems/answerPipeline.js",
+    "old": "      if (item.questionType === QUESTION_TYPE.Person) {\n        const placeKey",
+    "new": "      if (false) {\n        const placeKey",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  },
+  {
+    "name": "DISC10-the-place-marked-with-directions-only",
+    "file": "src/systems/answerPipeline.js",
+    "old": "        if (placeInfo) placeInfo.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.LocationWasMarkedOnMap;",
+    "new": "        if (placeInfo) placeInfo.questPlaceResourceHintTypeReceived = BUILDING_HINT_TYPE.ReceivedDirectionalHints;",
+    "tests": [
+      "test/disc10.test.js"
+    ]
+  }
+]

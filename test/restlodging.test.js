@@ -496,7 +496,7 @@ test('S40 restVitals: one home for the rested hour, and the dungeon host uses it
   }
   // ...and createRestDeps CALLS them rather than closing over a value.
   assert.match(src('src/scenes/shared.js'),
-    /tickVitals: \(\) => \{[\s\S]{0,900}?restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\), _roughCarry\);/);   // SURV4: the hour by its kind, restVitals still the one home; PARTY-REST10: with the rough carry
+    /tickVitals: \(\) => \{[\s\S]{0,900}?restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\), _roughCarry, _rules\);/);   // SURV4: the hour by its kind, restVitals still the one home; PARTY-REST10: with the rough carry
 
   // Each of the three must be at max INDEPENDENTLY: fill two and the
   // completion must still be false, or FullRest ends early.

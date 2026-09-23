@@ -331,12 +331,19 @@ test('REST-VITALS1 confirmed by code, not just by test: a follower\'s mirror hea
   const sh = rd('src/scenes/shared.js');
   assert.match(sh, /tickVitals: \(\) => \{[\s\S]{0,900}?return healed;\s*\n\s*\},\s*\n\s*fullyHealed: \(\) => restFullyHealed\(entity\),/,
     'both close over THIS createRestDeps call\'s own `entity` param - always the caller\'s own playerEntity, never anyone else\'s');
-  assert.match(sh, /restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\), _roughCarry\)/,
+  assert.match(sh, /restHour\(entity, _kind, \(\) => restVitals\(entity, \{ day: day\(\), inside: inside\(\) \}\), _roughCarry, _rules\)/,
     'PARTY-REST10: the per-session rough-rest carry rides along on every call - the same entity\'s own banked remainder, never a fresh/shared one');
   const w = rd('src/scenes/world.js');
-  const mirrorDeps = w.slice(w.indexOf('const partyRestMirrorDeps = (restKind) => {'), w.indexOf('/** PARTY-REST1 (2026-09-20'));
-  for (const untouched of ['tickVitals', 'fullyHealed', 'dead:', 'vitals:']) {
-    assert.doesNotMatch(mirrorDeps, new RegExp(`${untouched.replace(':', '\\s*:')}\\s*:`), `partyRestMirrorDeps never overrides ${untouched} - inherited unchanged from outdoorRestDeps via the spread`);
+  // AUDIT SURV-TIERS: the start marker had lost PARTY-REST19's second parameter, so indexOf answered -1, the slice
+  // was EMPTY, and the four doesNotMatch below passed against nothing. The marker is the declaration as it stands,
+  // and the slice is held to be a real one.
+  const at = w.indexOf('const partyRestMirrorDeps = (restKind, targetAcct) => {');
+  const mirrorDeps = w.slice(at, w.indexOf('/** PARTY-REST1 (2026-09-20', at));
+  assert.ok(at > 0 && mirrorDeps.includes('...outdoorRestDeps,'), 'the slice is the mirror\'s own deps');
+  // AUDIT SURV-TIERS (the second pass): 'dead:' and 'vitals:' built `dead\s*:\s*:` - two colons, which no key has - so
+  // those two could never fail. One key, one colon, on a word boundary.
+  for (const untouched of ['tickVitals', 'fullyHealed', 'dead', 'vitals']) {
+    assert.doesNotMatch(mirrorDeps, new RegExp(`\\b${untouched}\\s*:`), `partyRestMirrorDeps never overrides ${untouched} - inherited unchanged from outdoorRestDeps via the spread`);
   }
 });
 

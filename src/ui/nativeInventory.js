@@ -682,7 +682,7 @@ export class NativeInventoryWindow {
 
   /** UseItem's outcome as a box, or nothing when the arm is silent
    *  (NextVariant on a garment repaints the doll and says nothing). */
-  _useResult(r) {
+  _useResult(r, collection = null) {
     // DaggerfallUI.PopToHUD() + return (:1687-1688): a watched quest
     // item that is neither parchment nor clothing closes the window
     // stack so the quest system gets first shot at the click in the
@@ -725,7 +725,7 @@ export class NativeInventoryWindow {
     // the camp stands and says so on the HUD. A host with no ground
     // keeps the window and says so.
     if (r.kind === 'pitchCamp' || r.kind === 'placeFire') {
-      if (this.hooks.placeCamp) { this._closeSilently(); this.hooks.placeCamp(r.item); }
+      if (this.hooks.placeCamp) { this._closeSilently(); this.hooks.placeCamp(r.item, collection); }   // AUDIT SURV-TIERS: the list it came from - a wagon's tent left the wagon never, and packed back into the pack
       else this.boxes = [{ rows: [{ text: USE_PENDING[r.kind], center: true }] }];
       return;
     }
@@ -817,7 +817,7 @@ export class NativeInventoryWindow {
       // QuestMachine.GetQuest (:1673) - the use-click block's reach.
       // The same seam the info panel's long name reads.
       getQuest: this.hooks.getQuest ?? null,
-    }));
+    }), collection);
   }
 
   /** AUDIT 64 F47: GetActionModeRightClick (DaggerfallInventoryWindow

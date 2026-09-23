@@ -2,7 +2,7 @@
  {
   "name": "SURV7-the-feed-ignores-the-switch",
   "file": "src/systems/survival/env.js",
-  "old": "  if (!survivalOn() || !entity || !env) return null;",
+  "old": "  if (!rules || !entity || !env) return null;",
   "new": "  if (!entity || !env) return null;",
   "tests": [
    "test/surv7_feed.test.js"
@@ -11,8 +11,8 @@
  {
   "name": "SURV7-nothing-is-worn",
   "file": "src/systems/survival/env.js",
-  "old": "  const deps = { worn: entity.equip?.slots ?? null, ctx: survivalCtx(entity, full) };",
-  "new": "  const deps = { worn: null, ctx: survivalCtx(entity, full) };",
+  "old": "  const deps = { worn: entity.equip?.slots ?? null, ctx: survivalCtx(entity, full), rules };",
+  "new": "  const deps = { worn: null, ctx: survivalCtx(entity, full), rules };",
   "tests": [
    "test/surv7_feed.test.js"
   ]
@@ -74,8 +74,8 @@
  {
   "name": "SURV7-the-world-feeds-the-dungeon-too",
   "file": "src/scenes/world.js",
-  "old": "    survivalEnv: () => (_mode() === 'dungeon' ? null : survivalEnvNow()),\n",
-  "new": "    survivalEnv: () => survivalEnvNow(),   // SURV7\n",
+  "old": "    survivalEnv: () => (_mode() === 'dungeon' ? (playerEntity.isResting ? modes?.dungeonCtx?.survivalEnvNow?.() ?? null : null) : survivalEnvNow()),",
+  "new": "    survivalEnv: () => survivalEnvNow(),",
   "tests": [
    "test/surv7_feed.test.js"
   ],
@@ -102,7 +102,7 @@
  {
   "name": "SURV7-the-load-aligns-nothing",
   "file": "src/systems/save.js",
-  "old": "  if (sharedClockOn()) alignSurvival(entity, Math.floor(worldMinutes()), Math.floor(snap.classicMinutes ?? 0));   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)\n",
+  "old": "    alignSurvival(entity, at, saved);   // SURV7: the needs' markers - a save from more than a day ago starts fed, watered and rested (WORLD5's law for these)\n",
   "new": "",
   "tests": [
    "test/surv7_feed.test.js"
@@ -120,8 +120,8 @@
  {
   "name": "AUDIT-FIELD-resting-pays-the-starving-fatigue-anyway",
   "file": "src/systems/survival/needs.js",
-  "old": "  if (hungerAfter === 'starving' && !resting) sinks.drainFatigue?.(DRAIN.starving);",
-  "new": "  if (hungerAfter === 'starving') sinks.drainFatigue?.(DRAIN.starving);",
+  "old": "  if (hungerAfter === 'starving' && !resting) tire(DRAIN.starving, 'hunger');",
+  "new": "  if (hungerAfter === 'starving') tire(DRAIN.starving, 'hunger');",
   "tests": [
    "test/surv7_feed.test.js"
   ]
@@ -129,8 +129,8 @@
  {
   "name": "AUDIT-FIELD-resting-pays-the-exhausted-fatigue-anyway",
   "file": "src/systems/survival/needs.js",
-  "old": "    if (sleepNow === 'exhausted' && !resting) sinks.drainFatigue?.(DRAIN.exhausted);",
-  "new": "    if (sleepNow === 'exhausted') sinks.drainFatigue?.(DRAIN.exhausted);",
+  "old": "    if (sleepNow === 'exhausted' && !resting) tire(DRAIN.exhausted, 'sleep');",
+  "new": "    if (sleepNow === 'exhausted') tire(DRAIN.exhausted, 'sleep');",
   "tests": [
    "test/surv7_feed.test.js"
   ]

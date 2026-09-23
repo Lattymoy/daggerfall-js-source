@@ -58,10 +58,10 @@ test('SURV5: the menus - the mod\'s keys by climate (five of its six carried), t
 });
 
 test('SURV5: the meal and the drink - the mod\'s marker law (too full under the worth, four hours back past it, the worth banked); the counter by strength and the endurance bands; the blackout\'s morning', () => {
-  const s = { ...newSurvival(1000), lastAte: 700, thirst: 60, notes: { 'hunger:peckish': 1 } };
+  const s = { ...newSurvival(1000), lastAte: 700, thirst: 60, notes: { hunger: 'peckish' } };
   const r = tavernEat(s, 1000, 120);
   assert.deepEqual(r, { ok: true, text: TAVERN_MENU_TEXT.invigorated, minutes: MEAL_MINUTES }); assert.equal(MEAL_MINUTES, 30);
-  assert.equal(s.lastAte, 820, 'the worth banks'); assert.deepEqual(Object.keys(s.notes), [], 'the hunger notes clear');
+  assert.equal(s.lastAte, 820, 'the worth banks'); assert.deepEqual(s.notes, { hunger: 'peckish' }, 'AUDIT SURV-TIERS (the third pass): the meal leaves the stage record to the minute law - its wipe re-announced the milder stage it left');
   assert.equal(tavernEat({ lastAte: 990 }, 1000, 120).ok, false);
   assert.equal(tavernEat({ lastAte: 990 }, 1000, 120).text, TAVERN_MENU_TEXT.tooFull);
   const far = { lastAte: 0, notes: {} };
@@ -122,7 +122,7 @@ test('SURV5: the info box - a survival item\'s built tokens: the name, the weigh
 });
 
 test('SURV5: the tavern window - the survival menu in the one picker: a meal charges and banks, a drink counts, the minutes pass, the kitchen closes at five, the blackout takes the night; the mod off is DFU\'s chain', () => {
-  _resetForTests(); setPref('survival', true);
+  _resetForTests(); setPref('survival', 'hard');   // SURV-TIERS: the blackout below is Hard's (Casual's barkeep stops pouring - survtiers.test.js)
   const mk = ({ now = 1440 * 10 + 12 * 60, gold = 100, climate = 232, quality = 15 } = {}) => {
     const entity = { name: 'Mac', goldPieces: gold, health: 20, maxHealth: 40, stats: { endurance: 50 }, rentedRooms: [], items: [], activeEffects: [], lastTimePlayerAteOrDrankAtTavern: 0, survival: { ...newSurvival(now), lastAte: now - 600 } };   // ten hours since a meal
     const passed = [];

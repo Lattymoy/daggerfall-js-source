@@ -1139,7 +1139,7 @@ function use(item, collection = deps.items?.() ?? []) {
   if (act.kind === 'placeCamp') {
     const place = deps.placeCamp;
     onExit();   // SURV3: the same law - the host's HUD line says where the camp stands, or why not
-    place(act.item);
+    place(act.item, collection);   // AUDIT SURV-TIERS: the list it came from (a wagon's tent leaves the wagon)
     return;
   }
   if (act.textId && deps.rows) {
@@ -1220,7 +1220,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:820). Without them
+  // the classic window's own call (nativeInventory.js:866). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a

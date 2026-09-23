@@ -37,7 +37,7 @@
 // port's seam shape, not a remainder.
 // BANISHMENT'S CONSEQUENCES SHIPPED: `SeverePunishmentFlags |= 1` is
 // written at scenes/arrestFlow.js:510-513 (severePunishment, off
-// OnPop) and read every catch-up minute by encounters.js:237
+// OnPop) and read every catch-up minute by encounters.js:241
 // passiveGuardSpawns - PlayerEntity.cs:507's 10% banished-player
 // guard roll - fed at scenes/world.js:3072-3074. (The guild rescues -
 // Thieves/Dark Brotherhood - landed at CR1, guildRescue below.)
