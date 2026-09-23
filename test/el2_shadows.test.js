@@ -212,9 +212,9 @@ test('EL2: the renderer builds the pass with the lane, records the three draw ki
   r.setLightingLane(EL_LANE);
   const sp = r.shadows;
   assert.ok(sp instanceof ShadowPass);
-  assert.equal(count(calls, 'framebufferTextureLayer'), 3 + 6 * 6, 'three cascade framebuffers (EL7), then six layers per caster (EL5; EL6: six casters)');
+  assert.equal(count(calls, 'framebufferTextureLayer'), 3 + 6 * 6 * 2, 'three cascade framebuffers (EL7), then six layers per caster (EL5; EL6: six casters), then the same six per caster for SC1\'s static cache');
   assert.equal(calls.filter((c) => c[0] === 'framebufferTexture2D' && c[3] >= 100 && c[3] < 106).length, 0, 'EL5: no cube faces - the faces are layers');
-  assert.equal(calls.filter((c) => c[0] === 'texStorage3D').length, 2, 'the sun array and the casters\' array'); assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 0);
+  assert.equal(calls.filter((c) => c[0] === 'texStorage3D').length, 3, 'the sun array, the casters\' array, and SC1\'s static cache (the casters\' shape again)'); assert.equal(calls.filter((c) => c[0] === 'texStorage2D').length, 0);
   assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[4] === 512 && c[5] === 512 && c[6] === 36), 'six casters of six 512^2 layers');
   assert.ok(calls.some((c) => c[0] === 'texParameteri' && c[2] === 1 && c[3] === 1), 'compare mode set');
   // the kept pass across swaps

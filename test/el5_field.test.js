@@ -171,7 +171,7 @@ test('EL5: the replays cull - a record outside a face\'s frustum is not drawn, a
   r.setLightingLane(EL_LANE);
   const sp = r.shadows;
   assert.ok(calls.some((c) => c[0] === 'texStorage3D' && c[6] === 6 * SHADOW_POINT_CASTERS), 'six layers per caster');
-  assert.equal(calls.filter((c) => c[0] === 'framebufferTextureLayer').length, 3 + 6 * SHADOW_POINT_CASTERS);   // EL7: three cascades
+  assert.equal(calls.filter((c) => c[0] === 'framebufferTextureLayer').length, 3 + 6 * SHADOW_POINT_CASTERS * 2);   // EL7: three cascades; SC1: the live layers and the cache's
   r.textures.set('1_1', { id: 't' }); r.textures.set('201_1', { id: 'b' }); r.textures.set('210_1', { id: 'flame' });
   // a mesh of two sub-meshes: one at the origin (in the lantern's range), one 100 units out
   const positions = new Float32Array([0, 0, 0, 1, 0, 0, 1, 1, 0, 100, 0, 0, 101, 0, 0, 101, 1, 0]);
