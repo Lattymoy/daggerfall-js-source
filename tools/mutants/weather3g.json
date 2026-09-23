@@ -24,7 +24,7 @@
  {"name": "WEATHER3g-sky-drops-clip", "file": "src/render/volumetricClouds.js",
   "old": "  if (c.clip) out.clip = [...toHost(c.clip[0], c.clip[1]), c.clip[2], c.clip[3] ?? null];\n", "new": "", "tests": ["test/weather3g_fronts.test.js"]},
  {"name": "WEATHER3g-shader-unclipped", "file": "src/render/volumetricClouds.js",
-  "old": "    if (k.z > 0.0) w *= 1.0 - smoothstep(k.z - k.w, k.z, shapedDist(xz - k.xy, uCellKS[i], uCellKU[i]));   // WEATHER3g: only inside its front\n", "new": "", "tests": ["test/weather3g_fronts.test.js"]},
+  "old": "    if (k.z > 0.0) w *= 1.0 - smoothstep(k.z - k.w, k.z, dk);   // WEATHER3g: only inside its front\n", "new": "", "tests": ["test/weather3g_fronts.test.js"]},
  {"name": "WEATHER3g-pack-no-clip", "file": "src/render/volumetricClouds.js",
   "old": "    if (c.clip) { out.k[o] = c.clip[0];", "new": "    if (false) { out.k[o] = c.clip[0];", "tests": ["test/weather3g_fronts.test.js"]},
  {"name": "WEATHER3g-marks-drop-clip", "file": "src/ui/weatherLayer.js",

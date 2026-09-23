@@ -30,7 +30,7 @@
  {"name": "VC7a-convection-moves-cover", "file": "src/render/volumetricClouds.js",
   "old": "  return { ...cell, top: cell.base + (cell.top - cell.base) * conv.depth };", "new": "  return { ...cell, cover: Math.min(1, cell.cover * (0.8 + 0.4 * conv.depth)), top: cell.base + (cell.top - cell.base) * conv.depth };", "tests": ["test/vc7a_living.test.js"]},
  {"name": "VC7a-zone-never-convects", "file": "src/render/volumetricClouds.js",
-  "old": "    const zone = convectCell({ word: this.weather, base: p.base, top: p.top }, this.conv);", "new": "    const zone = { base: p.base, top: p.top };", "tests": ["test/vc7a_living.test.js"]},
+  "old": "    const zone = convectZone(p, this.conv, this.fair ?? 0);", "new": "    const zone = { base: p.base, top: p.top };", "tests": ["test/vc7a_living.test.js"]},
  {"name": "VC7a-cells-never-convect", "file": "src/render/volumetricClouds.js",
   "old": ".map((c) => convectCell(c, this.conv));", "new": ";", "tests": ["test/vc7a_living.test.js"]},
  {"name": "VC7a-never-grows", "file": "src/render/volumetricClouds.js",

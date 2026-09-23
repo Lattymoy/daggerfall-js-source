@@ -118,7 +118,7 @@ test('VC3: the shaders - the composite\'s ray is the dome\'s line for line, ever
   }
   assert.match(MARCH_FS, /float t = t0 \+ ds \* hash12\(gl_FragCoord\.xy\);/, 'the jitter is a hash of the texel, never the clock - no flicker');
   assert.match(MARCH_FS, /sum \+= density\(p, 0\.0\) \* step;/, 'the light march reads the field itself, not a blurred level');
-  assert.match(MARCH_FS, /outColor = underCurtains\(col, T, cam, dir\);/, 'colour and transmittance - VC7c: with the curtains in front (vc7c_curtains pins the helper)');
+  assert.ok(MARCH_FS.includes('outColor = vec4(front.rgb + front.a * col, T * front.a);'), 'colour and transmittance - VC7c: with the curtains in front (vc7c_curtains runs them)');
   const src = read('src/render/volumetricClouds.js');
   assert.match(src, /gl\.blendFuncSeparate\(gl\.ONE, gl\.SRC_ALPHA, gl\.ZERO, gl\.ONE\);   \/\/ sky \* T \+ cloud/, 'the colour blends sky * T + cloud; the buffer\'s alpha is left alone (ONE, SRC_ALPHA on alpha too would leave it 2T)');
   // VC4d: the flash lights the WHOLE sky on the composite, never one stripe of the map
@@ -137,7 +137,7 @@ test('VC3: the seam - the clouds ride the dome only, behind the one switch, on t
   assert.match(shared, /if \(clouds && dynamicSky\) dynamicSky\.cloudsExternal = true;/, 'and the mod\'s own sheets (DS2)');
   assert.match(shared, /weatherJump\(\) \{[\s\S]{0,300}?clouds\?\.jump\(\);/, 'a jump drops the profile with the row');
   const vc = read('src/render/volumetricClouds.js');
-  assert.match(vc, /jump\(\) \{ this\.profile = null; this\.cirrusCover = null; this\.stripe = 0; this\.shadowFull = true; \}/);
+  assert.match(vc, /jump\(\) \{ this\.profile = null; this\.cirrusCover = null; this\.fair = null; this\.stripe = 0; this\.shadowFull = true; \}/);
   // VC4 review: the floating origin - the field is sampled at the ABSOLUTE position
   // WIND4: ...and the drift is SUBTRACTED from it. The recenter is a
   // position (added, so q is absolute); the drift is how far the AIR

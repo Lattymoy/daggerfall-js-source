@@ -188,8 +188,10 @@ export const AIR_SHAFT_REACH = 0.35;
  *  out to AIR_HAZE_REACH metres; each step's sunlight is the cloud shadow map read where its sun ray meets the ground
  *  (the map holds the slab's transmittance up the sun's ray from y = 0, and a point below the slab lies on that ray),
  *  weighted by the fog's own extinction and a forward-scattering phase (Henyey-Greenstein, AIR_HAZE_G, mixed with
- *  AIR_HAZE_ISO of isotropic so the anti-sun side is not black). AIR_HAZE_GAIN is the share of the sun the haze
- *  gives back. Tuned on tools/vc7bHazeProbe.mjs under the clear day's own fog (linear to 2400): 0.5 left lanes of
+ *  AIR_HAZE_ISO of isotropic so the anti-sun side is not black). AIR_HAZE_GAIN is the share of the KEY light (the
+ *  sun's colour at the frame's sunScale - AUDIT-VC7 B6: it was the colour alone, so the haze kept the tune's key at
+ *  dawn and under a storm, 10x the ground's at 06:30) the haze gives back. Tuned on tools/vc7bHazeProbe.mjs, under
+ *  a key of AIR_HAZE_PROBE_KEY and the clear day's own fog (linear to 2400), as a share of the colour: 0.5 left lanes of
  *  shade across the view all but invisible; 3 blew the sky toward a low sun to white; 1.5 read the lanes and
  *  over-brightened toward the sun, where the dome's own glow and EL3's beams already are. It is additive, so the
  *  contrast between lit and shaded air can never exceed what a fully lit day adds - a forward glow about the sun,
@@ -199,7 +201,9 @@ export const AIR_HAZE_STEPS = 12;
 export const AIR_HAZE_REACH = 3000;
 export const AIR_HAZE_G = 0.6;
 export const AIR_HAZE_ISO = 0.3;
-export const AIR_HAZE_GAIN = 1;
+/** AUDIT-VC7 (B6): the key light's scale the haze was tuned under - the probe's own; the gain holds the tuned look there. */
+export const AIR_HAZE_PROBE_KEY = 0.9;
+export const AIR_HAZE_GAIN = 1 / AIR_HAZE_PROBE_KEY;
 /** EL4: the adapted-exposure image's unit, below the AO's. */
 export const AIR_ADAPT_UNIT = 11;
 /** EL4: the luminance image's side (its mip chain's top is the mean). */
@@ -281,7 +285,7 @@ export function glareSize(range) {
  *  texel's view distance and the sample at a world-rect uv (the frame is
  *  canvas-sized; the images are the world rect's). */
 const DEPTH_GLSL = `
-uniform sampler2D uDepth;
+uniform highp sampler2D uDepth;   // AUDIT-VC7 (G2): a fragment shader's samplers are lowp unless told - a depth read at lowp is not a depth
 uniform vec4 uProjInfo;   // proj[0], proj[5], proj[10], proj[14]
 uniform vec4 uRect;       // the world rect in canvas pixels
 uniform vec2 uCanvas;
@@ -289,8 +293,8 @@ float viewDist(float d01) {
   float z = d01 * 2.0 - 1.0;
   return uProjInfo.w / (z + uProjInfo.z);   // -viewZ: positive, along the eye's -z
 }
-float depthAt(vec2 wuv) {
-  return texture(uDepth, (uRect.xy + wuv * uRect.zw) / uCanvas).r;
+float depthAt(vec2 wuv) {   // AUDIT-VC7 (G3): level 0 by name - a depth image has no others, and a loop's branch has no derivatives to choose one by
+  return textureLod(uDepth, (uRect.xy + wuv * uRect.zw) / uCanvas, 0.0).r;
 }
 `;
 
@@ -309,7 +313,7 @@ export function holdPrevRect(out, rect, canvas) {
  *  shadow off the previous frame's depth. `toLight` is the unit direction,
  *  `dist` the distance; the march covers min(dist, AIR_CONTACT_LENGTH). */
 export const AIR_CONTACT_GLSL = `
-uniform sampler2D uPrevDepth;
+uniform highp sampler2D uPrevDepth;   // AUDIT-VC7 (G2): a depth, at a depth's precision
 uniform mat4 uPrevVP;
 uniform vec4 uPrevProjInfo;   // the previous frame's projection terms (viewDist)
 uniform vec4 uContactParams;  // x length, y thickness, z floor, w 1 = on
@@ -777,7 +781,7 @@ void main() {
 // shades, seen in every direction. Both need a deck; with none (the
 // classic skin, every interior, `?clouds=off`) uCloudSkyOn and the
 // haze's density are 0 and the image is EL3's shafts, as before.
-const SHAFT_FS = `#version 300 es
+export const SHAFT_FS = `#version 300 es
 precision highp float;
 in vec2 vUV;
 ${DEPTH_GLSL}
@@ -789,10 +793,10 @@ uniform vec3 uSunColor;
 uniform vec3 uEye;          // VC6c: the camera's world position - where the cloud shadow is read
 uniform float uSunOn;       // VC7b: 1 when the sun is up and in front of the camera - the screen-space beams
 uniform mat3 uViewRot;      // VC7b: world from view - a pixel's direction, for the sky map and the haze
-uniform sampler2D uCloudSky;   // VC7b: the sky map - alpha the slab's transmittance along each world direction
+uniform sampler2D uCloudSky;   // VC7b: the sky map - alpha the transmittance of the slab, the curtains and the ice (VC7c, VC7d) along each world direction
 uniform float uCloudSkyOn;     // VC7b: 0 with no deck - the mask is sky or not sky, as before
 uniform vec3 uLightDir;     // VC7b: toward the sun, world
-uniform vec4 uHaze;         // VC7b: the fog's extinction per metre, the gain, the reach, 0
+uniform vec4 uHaze;         // VC7b: the fog's extinction per metre, the gain, the reach, AUDIT-VC7 (B6) the key light's scale
 out vec4 outColor;
 const float PI = 3.14159265;
 vec3 worldDir(vec2 uv) {   // the view ray through this uv, in world space (VOL1's terms)
@@ -804,7 +808,7 @@ float skyThrough(vec2 uv) {
   if (uCloudSkyOn <= 0.0) return 1.0;
   vec3 d = worldDir(uv);
   float el = asin(clamp(d.y, -1.0, 1.0));
-  return texture(uCloudSky, vec2(atan(d.x, d.z) / (2.0 * PI), max(el, 0.0) / (0.5 * PI))).a;
+  return textureLod(uCloudSky, vec2(atan(d.x, d.z) / (2.0 * PI), max(el, 0.0) / (0.5 * PI)), 0.0).a;   // AUDIT-VC7 (G3): read in the mask's loop
 }
 float mask(vec2 uv) {
   float sky = depthAt(uv) >= 0.99999 ? 1.0 : 0.0;
@@ -824,6 +828,13 @@ vec3 beams() {
   }
   return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through);
 }
+// VC7b: the haze's phase at the cosine c between the view ray and the sun - Henyey-Greenstein, a share of it
+// isotropic, over the whole sphere one
+float hazePhase(float c) {
+  float g2 = ${glslFloat(AIR_HAZE_G)} * ${glslFloat(AIR_HAZE_G)};
+  float hg = (1.0 - g2) / pow(1.0 + g2 - 2.0 * ${glslFloat(AIR_HAZE_G)} * c, 1.5);
+  return mix(hg, 1.0, ${glslFloat(AIR_HAZE_ISO)}) / (4.0 * PI);
+}
 // VC7b: the sun in the haze, walked through the cloud shadow
 vec3 haze() {
   float sigma = uHaze.x;
@@ -836,16 +847,23 @@ vec3 haze() {
   float dt = reach / ${AIR_HAZE_STEPS}.0;
   float t = dt * bayer4(gl_FragCoord.xy);
   float lit = 0.0;
+  // the square the shadow map holds
+  vec2 lo = uCloudShadowRect.xy, hi = uCloudShadowRect.xy + vec2(1.0 / uCloudShadowRect.z);
   for (int i = 0; i < ${AIR_HAZE_STEPS}; i++) {
     vec3 p = uEye + dir * t;
-    vec2 g = p.xz - uLightDir.xz * (p.y / uLightDir.y);   // where this point's sun ray meets y = 0: the map's own ray
+    // where this point's sun ray meets the map's ground: the maps are drawn with the eye at their y = 0 (the sky map's
+    // camera, the shadow map's ground) - AUDIT-VC7 (R2): so the height is above the eye, not the world's own y, which
+    // moves the lanes with the eye's height and jumps at a vertical recenter
+    float h = max(p.y - uEye.y, 0.0);
+    vec2 g = p.xz - uLightDir.xz * (h / uLightDir.y);
+    // AUDIT-VC7 (B7): a low sun's ray meets the ground kilometres off, past the square; there the map knows nothing,
+    // and nothing is not full sun - the nearest the map does know is its edge
+    g = clamp(g, lo, hi);
     lit += cloudShadowAt(vec3(g.x, 0.0, g.y)) * exp(-sigma * t);
     t += dt;
   }
-  float c = dot(dir, uLightDir), g2 = ${glslFloat(AIR_HAZE_G)} * ${glslFloat(AIR_HAZE_G)};
-  float hg = (1.0 - g2) / pow(1.0 + g2 - 2.0 * ${glslFloat(AIR_HAZE_G)} * c, 1.5);
-  float phase = mix(hg, 1.0, ${glslFloat(AIR_HAZE_ISO)}) / (4.0 * PI);
-  return uSunColor * (lit * sigma * dt * phase * uHaze.y);
+  float phase = hazePhase(dot(dir, uLightDir));
+  return uSunColor * (lit * sigma * dt * phase * uHaze.y * uHaze.w);   // AUDIT-VC7 (B6): the KEY light - the sun's colour at its scale, a storm's dimming in it
 }
 void main() {
   vec3 c = haze();
@@ -1036,7 +1054,7 @@ export class AirPass {
     this._ones = new Float32Array(3 * (opts.maxLights ?? 48)).fill(1);
     this.shaftParams = new Float32Array([AIR_SHAFT_DECAY, AIR_SHAFT_STRENGTH, AIR_SHAFT_REACH, 1]);
     this._noDeck = new Float32Array([0, 0, 0, 0]);   // VC6c: no cloud field - amount 0, full sun
-    this._haze = new Float32Array([0, AIR_HAZE_GAIN, AIR_HAZE_REACH, 0]);   // VC7b: the fog's extinction is the frame's
+    this._haze = new Float32Array([0, AIR_HAZE_GAIN, AIR_HAZE_REACH, 0]);   // AUDIT-VC7 (B6): w the key light's scale, the frame's   // VC7b: the fog's extinction is the frame's
     this.cloudShadow = null;   // VC6c: the frame's deck, set at the resolve
     this.f = null;   // EL6: the frame's inputs, from prepare() to composite()
     // EL8: the previous frame's view-projection and projection terms, for the contact march; valid once a frame has been prepared
@@ -1318,7 +1336,7 @@ export class AirPass {
       gl.uniform1i(S.uCloudShadowMap, 1);
       gl.uniform4fv(S.uCloudShadowRect, deck?.rect ?? this._noDeck);
       gl.uniform3fv(S.uEye, f.eye);
-      // VC7b: the sky map (its alpha the slab's transmittance by direction), the view's rotation, the sun, the haze
+      // VC7b: the sky map (its alpha the slab's, the curtains' and the ice's transmittance by direction), the view's rotation, the sun, the haze
       gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D, deck?.sky ?? f.blackTex ?? null);
       gl.uniform1i(S.uCloudSky, 2);
@@ -1328,6 +1346,7 @@ export class AirPass {
       gl.uniformMatrix3fv(S.uViewRot, false, R);
       gl.uniform3fv(S.uLightDir, f.lightDir ?? this._noDeck.subarray(0, 3));
       this._haze[0] = haze ? f.haze : 0;
+      this._haze[3] = f.sunScale ?? 0;
       gl.uniform4fv(S.uHaze, this._haze);
       gl.activeTexture(gl.TEXTURE0);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);

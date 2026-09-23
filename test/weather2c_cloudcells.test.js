@@ -77,7 +77,7 @@ test('WEATHER2c the field: the cells and the slab declared once for both marches
   assert.match(CLOUD_FIELD_GLSL, /fVary = mix\(fVary, uCellC\[i\]\.w, w\);/, 'VC6a: a cell brings its own type variation, on the tint array\'s spare lane');
   assert.match(CLOUD_FIELD_GLSL, /for \(int i = 0; i < 8; i\+\+\) \{\s*\n\s*if \(i >= uCellCount\) break;/, 'a fixed loop under a uniform count');
   // WEATHER3h: in the cell's own shape's measure - a circle's shape (1, 0, 0, 0 | 0, 0, 0, 0) is length() exactly
-  assert.match(CLOUD_FIELD_GLSL, /float dc = shapedDist\(xz - c\.xy, uCellS\[i\], uCellU\[i\]\);[^\n]*\n[^\n]*\n    float w = 1\.0 - smoothstep\(c\.z - c\.w, c\.z, dc\);/, 'the rim\'s weight, on its own outline (VC7c: the distance read once, the stride\'s reach asks it too)');
+  assert.match(CLOUD_FIELD_GLSL, /float dc = shapedDist\(xz - c\.xy, uCellS\[i\], uCellU\[i\]\);\n    float w = 1\.0 - smoothstep\(c\.z - c\.w, c\.z, dc\);/, 'the rim\'s weight, on its own outline (VC7c: the stride\'s reach asks the outline itself - rimReach)');
   assert.match(CLOUD_FIELD_GLSL, /fBase = mix\(fBase, a\.x, w\); fTop = mix\(fTop, a\.y, w\); fDensity = mix\(fDensity, a\.z, w\); fFlat = mix\(fFlat, a\.w, w\);/);
   assert.match(CLOUD_FIELD_GLSL, /fDark = mix\(fDark, b\.x, w\); fShear = mix\(fShear, b\.y, w\); fCover = mix\(fCover, b\.z, w\); fGrey = mix\(fGrey, b\.w, w\);/);
   const dens = CLOUD_FIELD_GLSL.slice(CLOUD_FIELD_GLSL.indexOf('float density(vec3 p, float mip) {'));

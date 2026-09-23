@@ -246,8 +246,8 @@
   {
     "name": "VC6d-the-band-gate-is-taken-on-the-clamped-height-so-it-never-fires",
     "file": "src/render/volumetricClouds.js",
-    "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);\n  if (hr <= 0.0 || hr >= 1.0) return 0.0;",
-    "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);\n  if (hr < 0.0 || hr > 1.0) return 0.0;",
+    "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);\n",
+    "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);\n",
     "tests": [
       "test/vc6_clouds.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "VC6d-the-light-march-walks-a-lid-it-cannot-see-through",
     "file": "src/render/volumetricClouds.js",
-    "old": "    if (sum * EXT * ${glslF(MS_B ** (MS_OCTAVES - 1))} > 6.0) break;   // VC6d:",
-    "new": "    if (sum * EXT * ${glslF(MS_B ** (MS_OCTAVES - 1))} > 6000.0) break;   // VC6d:",
+    "old": "    if (sum * EXT * sees > 6.0) break;",
+    "new": "    if (sum * EXT * sees > 6000.0) break;",
     "tests": [
       "test/vc6_clouds.test.js"
     ]

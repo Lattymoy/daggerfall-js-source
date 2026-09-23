@@ -16,7 +16,8 @@ import {
   birthsIn, cellsOf, systemAt, wornAmong, insideClip, birthLaw, coreVolume, exposure, weatherAt, resetWeatherMap,
   radialOf, shapeBound, shapeMax, shapeFactor, SYSTEM_TYPES, CELL_OF,
 } from '../src/systems/weatherMap.js';
-import { cellOfField, packCells, FIELD_UNIFORMS } from '../src/render/volumetricClouds.js';
+import { cellOfField, cellOf, packCells, FIELD_UNIFORMS, VC_PROFILE } from '../src/render/volumetricClouds.js';
+import { fieldFns, ZONE } from './cloudSky.mjs';
 import {
   weatherMarks, paintWeatherGlyphs, paintWeatherLegend, WEATHER_NAMES, LEGEND_ROWS, LEGEND_STRENGTH_TEXT, LEGEND_INSET, CELL_GLYPH_MIN_PX,
 } from '../src/ui/weatherLayer.js';
@@ -165,7 +166,13 @@ test('WEATHER3g: THE SKY\'S CLIP - a storm cell\'s cloud stands only over its fr
   assert.equal(packed.k[6], -1, 'none');
   const vc = rd('src/render/volumetricClouds.js');
   assert.match(vc, /uniform vec4 uCellK\[8\];/);
-  assert.match(vc, /vec4 k = uCellK\[i\];\s*\n\s*if \(k\.z > 0\.0\) w \*= 1\.0 - smoothstep\(k\.z - k\.w, k\.z, shapedDist\(xz - k\.xy, uCellKS\[i\], uCellKU\[i\]\)\);/, 'the cell\'s weight fades at its front\'s rim, in the front\'s own shape (WEATHER3h)');
+  // on the shader's own resolveAt: the storm's base where its front's core is, the zone's past it, eased over the rim
+  const f = fieldFns([{ ...cellOf('thunder', 0, 0, 9000), clip: [6000, 0, 8000, null] }]);   // the clip's rim is the cell's own (3150 m)
+  const baseAt = (x) => { f.resolveAt([x, 0]); return f.globals.fBase; };
+  assert.equal(baseAt(3000), VC_PROFILE.thunder.base, 'inside the core and the cell: the storm\'s own');
+  assert.equal(baseAt(-3000), ZONE.uBase, 'inside the cell, outside its front\'s core: the zone\'s - the cloud stands only where the word is');
+  const mid = baseAt(6000 - 6400);
+  assert.ok(mid > VC_PROFILE.thunder.base && mid < ZONE.uBase, 'eased over the clip\'s rim');
   assert.ok(FIELD_UNIFORMS.includes('uCellK'));
   assert.match(vc, /gl\.uniform4fv\(u\.uCellK, k\.k\);/);
 });

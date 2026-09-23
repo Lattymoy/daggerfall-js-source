@@ -148,8 +148,9 @@ export const wrapField = (v) => v - Math.floor(v / FIELD_PERIOD_METRES) * FIELD_
 /** Extinction per metre at density 1. */
 export const EXTINCTION = 0.006;
 /** VC7e (2026-09-23, Mac: "Whatever is the most visually detailed and immersive"): THE LIGHT THROUGH A THICK DECK.
- *  Beer's law alone is single scattering: a storm deck's optical depth runs 2 to 6 along the sun, and exp(-2) and
- *  exp(-6) are both black, so every point under an overcast or a storm got the same nothing and the deck was one
+ *  Beer's law alone is single scattering: a storm deck's optical depth ran 5.1 to 6.3 along the sun (the arc's
+ *  measurement; an overcast's 0.56 to 0.80), and exp(-5.1) and exp(-6.3) are both black, so every point under a
+ *  storm got the same nothing, and the overcast's narrow range the same grey - the deck was one
  *  flat lid whatever its thickness above. A real cloud passes light on by scattering it many times, which falls off
  *  far more slowly - thin places in a deck glow and thick cores go dark, and THAT is its structure. The octave
  *  approximation (Wrenninge, "Production Volume Rendering", 2013): octave i carries MS_A^i of the light,
@@ -190,7 +191,8 @@ export const CURTAIN_STREAKS = 40;
 /** VC7c: the fibres - a second, finer octave of streaks (three to each), and the share of a streak's weight it takes. */
 export const CURTAIN_FIBRE = 0.4;
 /** VC7c: THE RAGGED FOOT - toward its rim a curtain's streaks stop short of the ground (the rain evaporates on the
- *  way down: virga), each by its own amount, up to this share of the base at the rim; the core reaches the ground. */
+ *  way down: virga), each by its own amount - at the rim this share of the base on the average, half as much again
+ *  at the most (0.9); the core reaches the ground. */
 export const CURTAIN_VIRGA = 0.6;
 /** VC7c: how many sky-map texels a streak must span before it is drawn at full contrast - under it, a far curtain's
  *  streaks would alias to shimmer as they cross the map's texels, so they fade to the curtain's mean. */
@@ -204,15 +206,16 @@ export const CURTAIN_INTO = 0.12;
 export const CURTAIN_FADE_M = 40000;
 export const CURTAIN_FALL = Object.freeze({ rain: Object.freeze([1, 0]), thunder: Object.freeze([1.3, 0]), snow: Object.freeze([0.7, 1]) });
 /** VC7c: how far under the coverage cut the shape must read before the sky march may stride past it, where the
- *  column's profile can move within a stride - the smallest margin that measured the same picture as no stride at
- *  all (the arc's table: 0.01 left 95 pixels off, this 85, which is the dither's own jitter at a cloud's edge). */
+ *  column's profile can move within a stride - the margin that measured the same picture as no stride at all (the
+ *  arc's AUDIT-VC7 table: under a rain cell 50 pixels off by more than 8 levels and none by 24, the dither's own
+ *  jitter at a cloud's edge; every other sky none). */
 export const SKIP_ROOM = 0.02;
 /** VC7d (2026-09-23, Mac: "improve the volumetric cloud system to be more immersive" - the high cirrus, the last of
  *  the four chosen): THE ICE LAYER. A thin shell of ice cloud at CIRRUS_ALT_M, far above the slab, read ONCE per ray
  *  where the ray meets it over a round earth (so it runs out to its own horizon, 339 km off, instead of to infinity).
  *  Its streaks lie along the upper wind - at these latitudes the westerly jet, whatever the surface wind is doing, so
  *  they ride east on the game's clock at CIRRUS_JET_M_PER_MINUTE (five times a fair day's surface drift, the ratio
- *  of a jet to the wind under it) and every player sees one sky. The tiles are CIRRUS_ALONG shape tiles down the jet
+ *  of a jet to the wind under it) and every player sees one ice sky. The tiles are CIRRUS_ALONG shape tiles down the jet
  *  and CIRRUS_ACROSS across it (the streaks), and the fibres CIRRUS_FIBRE_ALONG/ACROSS detail tiles - each dividing
  *  the field's period, so neither a recenter nor the jet's own wrap moves a streak. Its peak optical depth is
  *  CIRRUS_TAU (real cirrus runs 0.03 to 3; a veil you can see the blue through), fading into the horizon's haze over
@@ -296,6 +299,10 @@ export const VC_PROFILE = Object.freeze({
   thunder:  Object.freeze({ base: 500,  top: 4200, density: 1.00, dark: 0.70, flat: 0.50, shear: 0.50, vary: 0.40 }),
   sandstorm: Object.freeze({ base: 0,   top: 900,  density: 1.00, dark: 0.35, flat: 0.95, shear: 0.05, vary: 0.00 }),   // WEATHER2d: a wall on the ground, a lid 900 m up
 });
+/** AUDIT-VC7 (B3): the type variation at which a sky is wholly a deck's - the least any varying row takes, so every
+ *  row that varies at all is (overcast's 0.15), and fog and a sandstorm (0: one thing everywhere) are not, with a
+ *  cell's rim easing between them instead of snapping. */
+export const DECK_VARY_FULL = Math.min(...Object.values(VC_PROFILE).map((r) => r.vary).filter((v) => v > 0));
 /** WEATHER2d: a cell's TINT on the zone's cloud colours - the sandstorm's
  *  tan; every other word takes the row's colours unchanged. */
 export const CELL_TINT = Object.freeze({ sandstorm: Object.freeze([0.88, 0.72, 0.46]) });
@@ -306,7 +313,8 @@ const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary']
 // field was a fixed noise volume slid across the land by the wind: a bank
 // was the same bank from the horizon to the horizon. Three clocks now
 // give it a life, every one of them read from the GAME's minutes (the
-// sky state's `minutes`), so every player online sees the same sky:
+// sky state's `minutes`), so every player online sees the same boil (the cover's drift rides the session's own wind
+// integral, WIND2's, as the whole field always has):
 //   - THE BOIL: the shape volume is read through its own height as the
 //     minutes pass (EVOLVE_M_PER_MINUTE), the detail faster, so the
 //     towers' structure rises through the cloud and its edges churn;
@@ -315,8 +323,10 @@ const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary']
 //     day, so a place's cover changes under the air passing through it -
 //     banks build on one side and dissolve on the other as they travel;
 //   - THE DAY'S CONVECTION: fair-weather cloud (FAIR_WEATHERS) builds
-//     through the day and settles at dusk (`convection`): its TOPS rise
-//     from flat morning cumulus to the afternoon's towers and sink again.
+//     through the day (`convection`): its TOPS hold the night's floor
+//     until mid-morning (8:30), rise to the towers two and a half hours
+//     after the sun is highest (14:30), and sink through the evening to
+//     the floor again by 20:30.
 //     Its cover stays DFU's row: the lab showed this slab's scattered
 //     cumulus sits right at its coverage threshold - a fair row's cover
 //     raised by a tenth turned the afternoon into a smeared haze - so the
@@ -357,6 +367,12 @@ export function convection(minuteOfDay) {
 export function convectCell(cell, conv) {
   if (!cell || !conv || !FAIR_WEATHERS.includes(cell.word)) return cell;
   return { ...cell, top: cell.base + (cell.top - cell.base) * conv.depth };
+}
+/** AUDIT-VC7 (R3): the zone's slab under the day's convection `conv`, weighed in by `fair` - how much of a fair
+ *  weather's the zone is by now (1 all, 0 none: a deck, a front, fog and a sandstorm keep their own tops). Pure. */
+export function convectZone(profile, conv, fair) {
+  if (!conv) return { base: profile.base, top: profile.top };
+  return { base: profile.base, top: profile.base + (profile.top - profile.base) * (1 - fair * (1 - conv.depth)) };
 }
 /** How thin a cell's cloud is at its system's birth: the share of its
  *  cover, its depth and its density at an envelope of 0 (1 at full
@@ -435,11 +451,19 @@ export function slabOf(profile, cells) {
   return { base, top };
 }
 
+/** AUDIT-VC7 (R4): HOW FAST A SHAPE'S OUTLINE TURNS - the most its reach m(theta) = n (1 + sum a_k cos k(theta -
+ *  phi_k)) can change a radian of bearing: n sum k a_k, the bound of |m'| (each harmonic's slope at most k a_k). The
+ *  sky march asks it whether a stride's disc can meet a rim (resolveAt's rimReach). 0 for a circle. Pure. */
+export function shapeTurn(sh) {
+  if (!sh) return 0;
+  return sh[0] * (2 * Math.hypot(sh[1], sh[2]) + 3 * Math.hypot(sh[3], sh[4]) + 4 * Math.hypot(sh[5], sh[6]));
+}
+
 /** The cells packed for the shader's nine arrays (x, z, r, edge |
  *  base, top, density, flat | dark, shear, cover, grey | tint, vary |
  *  WEATHER3g the clip disc: x, z, r, its rim - r -1 for none | WEATHER3h
  *  the cell's shape and its clip's, each two vec4s: n, c2, s2, c3 | s3,
- *  c4, s4, 0 - a circle is 1, 0, 0, 0 | 0, 0, 0, 0), capped at `cap`;
+ *  c4, s4, AUDIT-VC7 how fast it turns (shapeTurn) - a circle is 1, 0, 0, 0 | 0, 0, 0, 0), capped at `cap`;
  *  the rim never narrower than a metre (smoothstep's edges must be
  *  ordered). Pure over the arrays it is handed. */
 export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4), a: new Float32Array(MAX_CELLS * 4), b: new Float32Array(MAX_CELLS * 4), t: new Float32Array(MAX_CELLS * 4), k: new Float32Array(MAX_CELLS * 4) }) {
@@ -450,7 +474,7 @@ export function packCells(cells, cap, out = { c: new Float32Array(MAX_CELLS * 4)
   out.f ??= new Float32Array(MAX_CELLS * 4);   // VC7c: the fall under each
   const shape = (sh, a, b, o) => {
     a[o] = sh ? sh[0] : 1; a[o + 1] = sh ? sh[1] : 0; a[o + 2] = sh ? sh[2] : 0; a[o + 3] = sh ? sh[3] : 0;
-    b[o] = sh ? sh[4] : 0; b[o + 1] = sh ? sh[5] : 0; b[o + 2] = sh ? sh[6] : 0; b[o + 3] = 0;
+    b[o] = sh ? sh[4] : 0; b[o + 1] = sh ? sh[5] : 0; b[o + 2] = sh ? sh[6] : 0; b[o + 3] = shapeTurn(sh);   // AUDIT-VC7 (R4): the spare w
   };
   for (let i = 0; i < n; i++) {
     const c = cells[i], o = i * 4;
@@ -509,6 +533,11 @@ export function parseCloudCellDoor(spec, pos) {
   return cellOf(weather, pos[0] + d, pos[2], rad);
 }
 
+/** One eased value, the profile's own exponential over `dt` game minutes: none yet, the target whole. Pure. */
+export function easeOnWeatherSpan(from, to, dt, span = WEATHER_EASE_MINUTES) {
+  if (from == null) return to;
+  return from + (to - from) * (span <= 0 ? 1 : 1 - Math.exp(-Math.max(0, dt) / span));
+}
 /** The profile's ease - the SAME exponential the weather row takes
  *  (enhancedSky.js easeWeather), on the same `dt` (game minutes, CLK1)
  *  the controller stretches across a front, so the slab rises and
@@ -615,7 +644,7 @@ uniform vec4 uCellB[8];   // dark, shear, cover, grey
 uniform vec4 uCellC[8];   // WEATHER2d: the tint on the zone's cloud colours (rgb); VC6a: w the cell's own vary
 uniform vec4 uCellK[8];   // WEATHER3g: the disc a storm cell paints within (its front's core): x, z, radius (-1 none), rim
 uniform vec4 uCellS[8];   // WEATHER3h: a cell's shape, n c2 s2 c3 | s3 c4 s4 - weatherMap.js shapeFactor's polynomial
-uniform vec4 uCellU[8];
+uniform vec4 uCellU[8];   // ...w (AUDIT-VC7) how fast its outline turns: the most its reach changes a radian
 uniform vec4 uCellKS[8];  // WEATHER3h: its clip's shape (its front's)
 uniform vec4 uCellKU[8];
 uniform vec2 uDrift;      // world metres
@@ -639,13 +668,27 @@ float shapeF(vec4 a, vec4 b, vec2 u) {
   return a.x * (1.0 + a.y * c2 + a.z * s2 + a.w * c3 + b.x * s3 + b.y * c4 + b.z * s4);
 }
 float shapedDist(vec2 v, vec4 a, vec4 b) { float l = length(v); return l / shapeF(a, b, v / max(l, 1e-3)); }
+// VC7c / AUDIT-VC7 (R4): WHETHER A STRIDE'S DISC - reach metres about v - lies wholly inside an outline's band
+// (x: every point under inner in the shape's measure) or wholly outside it (y: every point past outer). The disc spans
+// bearings within asin(reach / |v|) of v's, and over them the outline's reach moves at most its turn a radian (b.w,
+// packCells), never past its bounds whatever the bearing - so the answer is the shape's own, not a circle's.
+vec2 rimReach(vec2 v, vec4 a, vec4 b, float inner, float outer, float reach) {
+  float l = length(v);
+  float m = shapeF(a, b, v / max(l, 1e-3));
+  float spread = a.x * (length(a.yz) + length(vec2(a.w, b.x)) + length(b.yz));
+  float turn = l > reach ? asin(reach / l) * b.w : spread;
+  float lo = max(m - turn, a.x - spread), hi = min(m + turn, a.x + spread);
+  return vec2(l + reach < inner * lo ? 1.0 : 0.0, l - reach > outer * hi ? 1.0 : 0.0);
+}
 // VC7c: THE STRIDE'S EVIDENCE - density() sets it with every answer: 1 when its zero is one that holds for a stride
-// (outside the band, whose ends move only at a cell's rim; under the coverage cut, whose field is kilometres across),
-// 0 when it does not. VC7e's deck cells lift a lane's base and lower its ceiling every two kilometres, and a ray that
-// read "nothing here" above a lane strode clean over the core beside it - specks of sky in a cloud's crown.
+// (outside the band, whose ends move only at a cell's rim; above or below every height a deck's lane and its core
+// can put the cloud; under the coverage cut, whose field is kilometres across), 0 when it does not. VC7e's deck cells
+// lift a lane's base and lower its ceiling every two kilometres, and a ray that read "nothing here" above a lane
+// strode clean over the core beside it - specks of sky in a cloud's crown.
 float fSkip;
-// VC7c: whether a cell is within a stride of here (resolveAt), so the column's base, top and type can change before
-// the next sample; fReach is how far a stride reaches, set by the sky march (0 for the shadow march, which never strides)
+// VC7c: whether a cell's rim - its own outline's, or its clip's - is within a stride of here (resolveAt), so the
+// column's base, top and type can change before the next sample; fReach is how far a stride reaches, set by the sky
+// march (0 for the shadow march, which never strides)
 float fNear;
 float fReach = 0.0;
 // WEATHER2c: THE PROFILE AT A PLACE. The zone's terms, with every cell
@@ -662,10 +705,15 @@ void resolveAt(vec2 xz) {
     if (i >= uCellCount) break;
     vec4 c = uCell[i];
     float dc = shapedDist(xz - c.xy, uCellS[i], uCellU[i]);
-    if (dc < c.z + fReach) fNear = 1.0;   // VC7c: its rim is within a stride
     float w = 1.0 - smoothstep(c.z - c.w, c.z, dc);   // WEATHER3h: its own outline
     vec4 k = uCellK[i];
-    if (k.z > 0.0) w *= 1.0 - smoothstep(k.z - k.w, k.z, shapedDist(xz - k.xy, uCellKS[i], uCellKU[i]));   // WEATHER3g: only inside its front
+    float dk = k.z > 0.0 ? shapedDist(xz - k.xy, uCellKS[i], uCellKU[i]) : 0.0;
+    if (k.z > 0.0) w *= 1.0 - smoothstep(k.z - k.w, k.z, dk);   // WEATHER3g: only inside its front
+    // VC7c: whether its weight can change within a stride - it cannot where either term stays 0 for a stride's reach,
+    // or where both stay 1: a cell's inside is its own terms all through, and only its rims move the profile
+    vec2 rc = rimReach(xz - c.xy, uCellS[i], uCellU[i], c.z - c.w, c.z, fReach);
+    vec2 rk = k.z > 0.0 ? rimReach(xz - k.xy, uCellKS[i], uCellKU[i], k.z - k.w, k.z, fReach) : vec2(1.0, 0.0);
+    if (rc.y < 0.5 && rk.y < 0.5 && (rc.x < 0.5 || rk.x < 0.5)) fNear = 1.0;
     if (w <= 0.0) continue;
     vec4 a = uCellA[i], b = uCellB[i];
     fBase = mix(fBase, a.x, w); fTop = mix(fTop, a.y, w); fDensity = mix(fDensity, a.z, w); fFlat = mix(fFlat, a.w, w);
@@ -673,6 +721,12 @@ void resolveAt(vec2 xz) {
     fTint = mix(fTint, uCellC[i].rgb, w);   // WEATHER2d
     fVary = mix(fVary, uCellC[i].w, w);     // VC6a: the cell's own type variation
   }
+}
+// AUDIT-VC7 (B3): HOW MUCH OF A DECK THE SKY IS HERE - the cover's band, and only where the cloud's type varies at all
+// (fog and a sandstorm are one thing everywhere: no lanes and no cores, no octaves). ONE function, so the column's
+// lanes, the stride's evidence and the light's octaves can never disagree about it.
+float deckWeight() {
+  return smoothstep(${glslF(DECK_COVER_LO)}, ${glslF(DECK_COVER_HI)}, fCover) * smoothstep(0.0, ${glslF(DECK_VARY_FULL)}, fVary);
 }
 // the towers' profile against a stratus lid's, by the flatness AT THIS
 // PLACE (VC6a: the zone's, moved by the variation field; it was fFlat
@@ -685,9 +739,11 @@ float heightGradient(float h, float lidness) {   // not 'flat': GLSL ES 3.00 res
 // VC7e: THE COLUMN over a ground point - everything density() knows before it reads the shape volume, and all of
 // it the same at every height: the variation sample, the cloud's type here, its ceiling, and the deck's cells.
 // Returns (the point's height in the band after its lane's lift, the ceiling, the local lidness, the variation);
-// v is the variation sample itself (its gb warp the shape read). ONE function, so the density and the sky's
-// light through the column above (columnAbove) can never disagree about where the cloud is.
-vec4 columnAt(vec3 p, out vec4 v) {
+// v is the variation sample itself (its gb warp the shape read); span (AUDIT-VC7) the least and the most the point's
+// height under its ceiling can be anywhere from a lane's middle to a core's, the range a stride can carry it through.
+// ONE function, so the density and the sky's light through the column above (columnAbove) can never disagree about
+// where the cloud is.
+vec4 columnAt(vec3 p, out vec4 v, out vec2 span) {
   // VC6a: ONE SAMPLE, FOUR JOBS. The weather's variation over the land
   // was already read here for the coverage alone, and only its R was
   // used. The volume is RGBA: R and A are two frequencies of the same
@@ -714,14 +770,20 @@ vec4 columnAt(vec3 p, out vec4 v) {
   float flatHere = clamp(fFlat + (variation - 0.5) * fVary, 0.0, 1.0);
   float ceiling = 1.0 - fVary * (1.0 - variation) * 0.8;
   // VC7e: THE DECK'S CELLS. A deck's column was the same thickness everywhere (its optical depth along the sun
-  // varied by a tenth), so no lighting could draw structure into it. The 32-cell Worley of the sample above - two
+  // ran 0.56 to 0.80 across a whole overcast view), so no lighting could draw structure into it. The 32-cell Worley of the sample above - two
   // kilometres a cell, a stratocumulus's own size, and the same at every height, so it shapes whole COLUMNS - thins
   // the lanes between cells: a lower ceiling and a higher base there, so the underside hangs in lumps. It scales in
   // with the cover, so a fair sky's towers are what they were.
   float cells = smoothstep(${glslF(CELL_EDGE_LO)}, ${glslF(CELL_EDGE_HI)}, v.a);
-  float deck = smoothstep(${glslF(DECK_COVER_LO)}, ${glslF(DECK_COVER_HI)}, fCover);
-  float h = (p.y - fBase) / max(fTop - fBase, 1.0) - deck * ${glslF(CELL_BASE_LIFT)} * (1.0 - cells);
-  ceiling *= 1.0 - deck * ${glslF(CELL_THIN)} * (1.0 - cells);
+  float deck = deckWeight();   // AUDIT-VC7 (B3): not a fog's or a sandstorm's
+  float lift = deck * ${glslF(CELL_BASE_LIFT)}, thin = deck * ${glslF(CELL_THIN)};
+  float h0 = (p.y - fBase) / max(fTop - fBase, 1.0);
+  float h = h0 - lift * (1.0 - cells);
+  // AUDIT-VC7 (G1): a lane's middle (cells 0) and a core (cells 1) bound every column between them - the height under
+  // the ceiling is monotone in the cells' weight from one to the other
+  float atLane = (h0 - lift) / max(ceiling * (1.0 - thin), 0.05), atCore = h0 / max(ceiling, 0.05);
+  span = vec2(min(atLane, atCore), max(atLane, atCore));
+  ceiling *= 1.0 - thin * (1.0 - cells);
   return vec4(h, ceiling, flatHere, variation);
 }
 float density(vec3 p, float mip) {
@@ -735,9 +797,11 @@ float density(vec3 p, float mip) {
   // nothing. It must stay on the UNCLAMPED height and on the band's
   // own ends, never on the gradient: the local flatness below can
   // reopen a height the zone's would have closed.
-  fSkip = 1.0 - fNear;   // VC7c: outside the band - whose ends move only at a cell's rim
+  fSkip = 0.0;   // AUDIT-VC7: no stride unless a branch below vouches for one - a zero is never a stride by default
   float hr = (p.y - fBase) / max(fTop - fBase, 1.0);
-  if (hr <= 0.0 || hr >= 1.0) return 0.0;
+  // VC7c: outside the band - whose ends move only at a cell's rim - a stride holds; AUDIT-VC7: under it, only where
+  // the stride cannot climb into it (it rises at most its own length), and over it always (the sky march looks up)
+  if (hr <= 0.0 || hr >= 1.0) { fSkip = hr >= 1.0 || fBase - p.y > fReach ? 1.0 - fNear : 0.0; return 0.0; }
   // WIND4 (2026-09-15, Mac: "clouds dont follow on the world timer with
   // the direction of the wind"): the drift is SUBTRACTED. uShift is the
   // floating origin's recenter and is ADDED, because q must be the
@@ -751,17 +815,21 @@ float density(vec3 p, float mip) {
   // POSITION by the offset) and the sky went the other.
   vec3 q = vec3(p.x + uShift.x - uDrift.x + fShear * (p.y - fBase), p.y, p.z + uShift.y - uDrift.y);
   vec4 v;
-  vec4 col = columnAt(p, v);   // VC7e: the column's own terms - its lane's lift, its ceiling, its type
+  vec2 span;
+  vec4 col = columnAt(p, v, span);   // VC7e: the column's own terms - its lane's lift, its ceiling, its type
   float variation = col.w;
   float h = col.x;
-  float deckCells = smoothstep(${glslF(DECK_COVER_LO)}, ${glslF(DECK_COVER_HI)}, fCover);   // VC7c: whether the cells shape this column
-  if (h <= 0.0) { fSkip = 0.0; return 0.0; }   // VC7c: under a lane's lifted base - the core beside it comes lower
+  if (h <= 0.0) return 0.0;   // VC7c: under a lane's lifted base - no stride: the core beside it comes lower
   float hn = clamp(h / max(col.y, 0.05), 0.0, 1.0);
   float grad = heightGradient(hn, col.z);
-  // VC7c: the ramp can grow within a stride - sideways in a lane's lift and ceiling or a cell's rim, and UP the ramp's
-  // foot (heightGradient peaks at 0.08 for a tower and 0.12 for a lid), which every ray of the sky map climbs
-  bool moves = deckCells > 0.0 || fNear > 0.5 || hn < mix(0.08, 0.12, col.z);
-  if (grad <= 0.0) { fSkip = moves ? 0.0 : 1.0; return 0.0; }   // VC7c: over a lane's lowered ceiling the core beside it stands taller
+  // VC7c: over the profile's end (a tower's at 1, a lid's at 0.5) a stride holds only if no column a stride can reach
+  // brings the cloud this high - AUDIT-VC7 (G1): the span's foot, the lowest a lane or a core puts this point, is over
+  // it too; and no cell's rim is near
+  float end = col.z < 1.0 ? 1.0 : 0.5;
+  if (grad <= 0.0) { fSkip = fNear < 0.5 && span.x >= end ? 1.0 : 0.0; return 0.0; }
+  // VC7c: the ramp can grow within a stride - sideways between a lane and a core (a span at all) or at a cell's rim,
+  // and UP the ramp's foot (heightGradient peaks at 0.08 for a tower and 0.12 for a lid), which every ray climbs
+  bool moves = span.y > span.x || fNear > 0.5 || hn < mix(0.08, 0.12, col.z);
   q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp
   vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass
   float lowFbm = s.g * 0.625 + s.b * 0.25 + s.a * 0.125;
@@ -775,7 +843,6 @@ float density(vec3 p, float mip) {
   float room = (1.0 - coverage) - (moves ? raw : base);
   base = remap(base, 1.0 - coverage, 1.0, 0.0, 1.0);
   if (base <= 0.0) { fSkip = room > ${glslF(SKIP_ROOM)} ? 1.0 : 0.0; return 0.0; }
-  fSkip = 0.0;   // VC7c: inside the shape - only the detail's erosion stands between here and cloud
   vec4 d = textureLod(uDetail, (q + vec3(0.0, uEvolve.y, 0.0)) / DETAIL_M, mip);   // VC7a: the edges churn faster
   float dfbm = d.r * 0.625 + d.g * 0.25 + d.b * 0.125;
   float erode = mix(dfbm, 1.0 - dfbm, clamp(h * 10.0, 0.0, 1.0));
@@ -787,7 +854,8 @@ float density(vec3 p, float mip) {
 // two profiles end at 1 (the towers) and 0.5 (the lid); the column is COLUMN_FILL full on the average.
 float columnAbove(vec3 p) {
   vec4 v;
-  vec4 col = columnAt(p, v);
+  vec2 span;
+  vec4 col = columnAt(p, v, span);
   float top = col.y * mix(1.0, 0.5, col.z);
   return EXT * fDensity * ${glslF(COLUMN_FILL)} * (fTop - fBase) * max(top - max(col.x, 0.0), 0.0);
 }
@@ -814,21 +882,55 @@ uniform vec3 uCirrusDir;     // ...and where that light comes from
 out vec4 outColor;
 const float PI = 3.14159265;
 ${CLOUD_FIELD_GLSL}
-// VC7c: a smooth 1D noise, periodic in its period - the streaks around a curtain's axis close on themselves
+// VC7c: a smooth 1D noise, periodic in its period - the streaks around a curtain's axis close on themselves.
+// AUDIT-VC7 (G4): the lattice's values are an integer hash, which GLSL ES 3.00 defines exactly (unsigned arithmetic
+// wraps); a sine hash's is whatever each GPU's sine does with a large argument.
+float latticeHash(uint n) {
+  n = (n << 13u) ^ n;
+  n = n * (n * n * 15731u + 789221u) + 1376312589u;
+  return float(n & 0x7fffffffu) / 2147483647.0;
+}
 float streakNoise(float x, float period) {
   float i = floor(x), f = fract(x);
-  float a = fract(sin(mod(i, period) * 127.1) * 43758.5453);
-  float b = fract(sin(mod(i + 1.0, period) * 127.1) * 43758.5453);
+  float a = latticeHash(uint(mod(i, period)));
+  float b = latticeHash(uint(mod(i + 1.0, period)));
   return mix(a, b, f * f * (3.0 - 2.0 * f));
 }
-// VC7c: THE CURTAINS - the veils under the falling cells a ray crosses before the slab, analytic (no texture read):
-// each cell's cylinder from its foot to its base, the ray's chord through it, thinning toward the rim, streaked
-// around its axis in two octaves (the shafts and their fibres, each faded to its mean where the map's texels could
-// not hold it), the rim's streaks stopping short of the ground each by its own amount, gone as the eye comes under
-// it. Returns the veil's premultiplied colour and its transmittance.
-vec4 curtains(vec3 cam, vec3 dir) {
-  float tau = 0.0, tNear = 1e9;
-  vec3 tint = vec3(0.0);
+// VC7c: a curtain's weight across the ground at xz, 0 outside: its core's, thinning to its rim in the cell's own
+// shape (AUDIT-VC7 R1: WEATHER3h's outline, the cell's shape at CURTAIN_SHARE of its size), inside its clip (WEATHER3g:
+// a storm falls only where its front's core is, as its cloud stands only there)
+float veilAcross(int i, vec2 xz, float rad) {
+  float r = shapedDist(xz - uCell[i].xy, uCellS[i], uCellU[i]) / rad;
+  float w = max(1.0 - r * r, 0.0);
+  vec4 k = uCellK[i];
+  if (k.z > 0.0) w *= 1.0 - smoothstep(k.z - k.w, k.z, shapedDist(xz - k.xy, uCellKS[i], uCellKU[i]));
+  return w;
+}
+// VC7c: THE VEIL'S DEPTH along the ray from t = a to b, over its weight a metre: across the ground (veilAcross) times
+// up the column (whole below the base yb, thinning linearly to nothing at yt) - by Simpson's rule, on a piece the
+// caller has cut at the base, so the vertical term is smooth within it
+const int VEIL_PANELS = 16;   // Simpson's panels a piece: 2.4% of the depth at worst over lobed outlines and clips (vc7c_curtains), exact on a circle
+float veilPiece(int i, vec3 cam, vec3 dir, float a, float b, float rad, float yb, float yt) {
+  if (b <= a) return 0.0;
+  float h = (b - a) / float(VEIL_PANELS), sum = 0.0;
+  for (int k = 0; k <= VEIL_PANELS; k++) {
+    float t = a + h * float(k);
+    float y = cam.y + dir.y * t;
+    float up = y <= yb ? 1.0 : clamp((yt - y) / max(yt - yb, 1.0), 0.0, 1.0);
+    sum += (k == 0 || k == VEIL_PANELS ? 1.0 : (k % 2 == 1 ? 4.0 : 2.0)) * veilAcross(i, cam.xz + dir.xz * t, rad) * up;
+  }
+  return sum * h / 3.0;
+}
+// VC7c: THE CURTAINS - the veils under the falling cells, analytic (no texture read): each cell's column from its
+// foot to a little inside its base, in its own outline and clip, thinning toward the rim, streaked around its axis in
+// two octaves (the shafts and their fibres, each faded to its mean where the map's texels could not hold it), the
+// rim's streaks stopping short of the ground each by its own amount, gone as the eye comes under it.
+// AUDIT-VC7 (B4): the ray is cut at tSplit, where the slab begins - front is the veil before it (premultiplied
+// colour and transmittance, in its own aerial perspective), back the veil past it, which hangs among the slab's
+// cloud and is composited in the march at tBack, its depth-weighted distance, under the slab's own perspective.
+void curtains(vec3 cam, vec3 dir, float tSplit, out vec4 front, out vec4 back, out float tBack) {
+  float tauF = 0.0, tauB = 0.0, tNear = 1e9, tSum = 0.0;
+  vec3 tintF = vec3(0.0), tintB = vec3(0.0);
   for (int i = 0; i < 8; i++) {
     if (i >= uCellCount) break;
     vec4 F = uCellF[i];
@@ -837,10 +939,17 @@ vec4 curtains(vec3 cam, vec3 dir) {
     vec2 o = cam.xz - uCell[i].xy, d = dir.xz;
     float dd = dot(d, d);
     if (dd < 1e-8) continue;
+    // gone as the eye comes under it - the falling rain takes over there; first, so the bearing below is never
+    // taken at the axis (AUDIT-VC7 G5: atan(0, 0) is undefined)
+    float near = smoothstep(0.5 * rad, 1.5 * rad, shapedDist(o, uCellS[i], uCellU[i]));
+    if (near <= 0.0) continue;
+    // the ray against the outline's bounding circle (its shape's reach at its widest), analytic
+    vec4 S = uCellS[i], U = uCellU[i];
+    float reach = rad * S.x * (1.0 + length(S.yz) + length(vec2(S.w, U.x)) + length(U.yz));
     float b = dot(o, d) / dd;
     float h2 = dot(o, o) - b * b * dd;   // the ray's closest approach to the axis, squared
-    if (h2 >= rad * rad) continue;
-    float hw = sqrt((rad * rad - h2) / dd);   // not 'half': GLSL ES 3.00 reserves it
+    if (h2 >= reach * reach) continue;
+    float hw = sqrt((reach * reach - h2) / dd);   // not 'half': GLSL ES 3.00 reserves it
     float yb = uCellA[i].x, yt = yb + ${glslF(CURTAIN_INTO)} * (uCellA[i].y - yb);   // the base, and the top it thins to inside the cell
     float up = max(dir.y, 1e-4);
     float ta = max(-b - hw, 0.0), tb = min(-b + hw, yt / up);
@@ -852,31 +961,39 @@ vec4 curtains(vec3 cam, vec3 dir) {
     float s = 0.5 + ${glslF(1 - CURTAIN_FIBRE)} * smoothstep(1.0, ${glslF(CURTAIN_STREAK_TEXELS)}, span) * (streakNoise(around * ${glslF(CURTAIN_STREAKS)}, ${glslF(CURTAIN_STREAKS)}) - 0.5)
                   + ${glslF(CURTAIN_FIBRE)} * smoothstep(1.0, ${glslF(CURTAIN_STREAK_TEXELS)}, span / 3.0) * (streakNoise(around * ${glslF(3 * CURTAIN_STREAKS)}, ${glslF(3 * CURTAIN_STREAKS)}) - 0.5);
     float streak = 0.35 + 0.65 * s;
-    float core = 1.0 - h2 / (rad * rad);
-    // the ragged foot: the core's streaks reach the ground, the rim's stop short, each its own way
+    // the ragged foot: the core's streaks reach the ground, the rim's stop short, each its own way - by how near the
+    // core the ray passes (its closest approach)
+    float core = veilAcross(i, cam.xz + d * clamp(-b, ta, tb), rad);
     float foot = min(yb * ${glslF(CURTAIN_VIRGA)} * (1.0 - core) * (0.5 + s), 0.95 * yb);
     ta = max(ta, foot / up);
     if (tb <= ta) continue;
-    // the chord's length at full weight below the base, and linearly thinning from the base to the top above it
-    float tB = yb / up, t1 = max(ta, tB);
-    float len = max(min(tb, tB) - ta, 0.0) + (tb > t1 ? (tb - t1) * (yt - 0.5 * dir.y * (tb + t1)) / max(yt - yb, 1.0) : 0.0);
-    float near = smoothstep(0.5 * rad, 1.5 * rad, length(o));
-    float ti = ${glslF(CURTAIN_EXT)} * F.x * len * core * streak * near;
-    tau += ti;
-    tint += mix(mix(uCloudShade * (1.0 - 0.6 * uCellB[i].x), uHorizonColor, 0.3), mix(uCloudLit, uHorizonColor, 0.4), F.y) * ti;   // rain the cell's own dark grey, snow pale
-    tNear = min(tNear, ta);
+    float w = ${glslF(CURTAIN_EXT)} * F.x * streak * near;
+    // the chord's pieces: below the base and above it, each side of the slab's start
+    float tB = yb / up;
+    float c0 = ta, c3 = tb, c1 = clamp(min(tB, tSplit), c0, c3), c2 = clamp(max(tB, tSplit), c1, c3);
+    float lo = veilPiece(i, cam, dir, c0, c1, rad, yb, yt), mid = veilPiece(i, cam, dir, c1, c2, rad, yb, yt), hi = veilPiece(i, cam, dir, c2, c3, rad, yb, yt);
+    float inF = w * (lo + (c2 <= tSplit ? mid : 0.0)), inB = w * (hi + (c2 <= tSplit ? 0.0 : mid));
+    vec3 tint = mix(mix(uCloudShade * (1.0 - 0.6 * uCellB[i].x), uHorizonColor, 0.3), mix(uCloudLit, uHorizonColor, 0.4), F.y);   // rain the cell's own dark grey, snow pale
+    tauF += inF; tintF += tint * inF;
+    tauB += inB; tintB += tint * inB; tSum += inB * 0.5 * (max(ta, tSplit) + tb);
+    if (inF > 0.0) tNear = min(tNear, ta);
   }
-  float Tv = exp(-tau);
-  if (tau <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
-  vec3 veil = tint / tau * (1.0 - Tv);
-  veil = mix(veil, uHorizonColor * (1.0 - Tv), 1.0 - exp(-tNear / ${glslF(CURTAIN_FADE_M)}));   // their own aerial perspective
-  return vec4(veil, Tv);
+  front = vec4(0.0, 0.0, 0.0, 1.0);
+  back = vec4(0.0, 0.0, 0.0, 1.0);
+  tBack = tauB > 0.0 ? tSum / tauB : 1e9;
+  if (tauF > 0.0) {
+    float Tv = exp(-tauF);
+    vec3 veil = tintF / tauF * (1.0 - Tv);
+    front = vec4(mix(veil, uHorizonColor * (1.0 - Tv), 1.0 - exp(-tNear / ${glslF(CURTAIN_FADE_M)})), Tv);   // their own aerial perspective
+  }
+  if (tauB > 0.0) { float Tv = exp(-tauB); back = vec4(tintB / tauB * (1.0 - Tv), Tv); }
 }
-// VC7c: what a ray answers, with the curtains nearer than whatever is behind them - every exit of the march takes it,
-// so the horizon's own rows (where the rain meets the ground) carry the veil too
+// VC7c: a ray with no slab to cut at - the horizon's own rows (where the rain meets the ground) carry the veil too
 vec4 underCurtains(vec3 col, float T, vec3 cam, vec3 dir) {
-  vec4 veil = curtains(cam, dir);
-  return vec4(veil.rgb + veil.a * col, T * veil.a);
+  vec4 front, back;
+  float tBack;
+  curtains(cam, dir, 1e9, front, back, tBack);
+  return vec4(front.rgb + front.a * col, T * front.a);
 }
 float hg(float c, float g) { float g2 = g * g; return (1.0 - g2) / (4.0 * PI * pow(1.0 + g2 - 2.0 * g * c, 1.5)); }
 float hash12(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
@@ -888,24 +1005,30 @@ vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e
 float lightDepth(vec3 p) {
   float sum = 0.0;
   float ds = (fTop - fBase) / float(uLightSteps) * 0.5;
+  // VC6d: past exp(-6) no step can be seen - VC7e: of the furthest-seeing term the light takes here, the LAST octave
+  // where the sky is a deck (lightOctaves), the single scattering where it is not (AUDIT-VC7 B1)
+  float sees = deckWeight() > 0.0 ? ${glslF(MS_B ** (MS_OCTAVES - 1))} : 1.0;
   for (int i = 0; i < 8; i++) {
     if (i >= uLightSteps) break;
     float step = ds * (1.0 + float(i) * 0.6);
     p += uLightDir * step;
     sum += density(p, 0.0) * step;   // the field itself, not a blurred level - a blurred one never occludes
-    if (sum * EXT * ${glslF(MS_B ** (MS_OCTAVES - 1))} > 6.0) break;   // VC6d: past exp(-6) no step can be seen - VC7e: of the LAST octave, which sees furthest
+    if (sum * EXT * sees > 6.0) break;
   }
   return sum * EXT;
 }
-// VC7e: the light a point takes from the sun through depth tau - octave 0 is Beer's law with the powder term (the
-// single scattering it always was), each further octave a share of the light carried on by scattering again: less
-// of it, reaching deeper, its phase flatter
-vec3 lightOctaves(float tau) {
+// VC7e: the light a point takes from the sun through depth tau, at the phase for its angle - octave 0 is Beer's law
+// with the powder term (the single scattering it always was), each further octave i a share of the light carried on
+// by scattering again: MS_A^i of it, reaching MS_B^i as deep, its phase flattened MS_C^i of the way toward
+// isotropic (Wrenninge), the whole divided by the octaves' total share so no depth takes more than an unshadowed
+// path. AUDIT-VC7 (B1): the octaves are a DECK's - deck weighs them in, and a fair sky (0) takes exactly the
+// single scattering it was tuned with, the way the ambient's column is weighed in.
+float lightOctaves(float tau, float phase, float deck) {
   float powder = 1.0 - exp(-tau * 2.0);
-  float single = exp(-tau) * mix(1.0, powder, 0.4);
-  float multi = 0.0, a = ${glslF(MS_A)}, b = ${glslF(MS_B)};
-  for (int o = 1; o < ${MS_OCTAVES}; o++) { multi += a * exp(-b * tau); a *= ${glslF(MS_A)}; b *= ${glslF(MS_B)}; }
-  return vec3(single, multi, 0.0);
+  float single = exp(-tau) * mix(1.0, powder, 0.4) * phase;
+  float multi = 0.0, a = ${glslF(MS_A)}, b = ${glslF(MS_B)}, c = ${glslF(MS_C)};
+  for (int o = 1; o < ${MS_OCTAVES}; o++) { multi += a * exp(-b * tau) * mix(1.0, phase, c); a *= ${glslF(MS_A)}; b *= ${glslF(MS_B)}; c *= ${glslF(MS_C)}; }
+  return mix(single, (single + multi) / ${glslF(msSum())}, deck);
 }
 // VC7d: THE ICE LAYER - where the ray meets the shell CIRRUS_ALT_M up over a round earth (the stable root: no
 // cancellation at the zenith, finite at the horizon), read once from the shape volume stretched down the westerly jet
@@ -989,6 +1112,11 @@ void main() {
   float T = 1.0;
   int empty = 0;   // VC6d: how many steps in a row have found nothing
   bool strode = false;   // VC7c: whether the last step was a stride - only a stride is backed out
+  // VC7c: the curtains, cut where the slab begins (AUDIT-VC7 B4) - the veil past it hangs among the slab's cloud
+  vec4 front, back;
+  float tBack;
+  curtains(cam, dir, t0, front, back, tBack);
+  bool veiled = back.a >= 1.0;
   resolveAt((cam + dir * t0).xz);   // WEATHER2c: the zone's terms, and the cell at the slab's foot
   for (int i = 0; i < 96; i++) {
     // VC6d: the ray may now finish BEFORE its step budget (it strides
@@ -1012,10 +1140,13 @@ void main() {
     if (rho <= 0.0) { empty++; strode = empty > 4 && fSkip > 0.5; t += strode ? coarse : ds; continue; }   // VC7c: a stride only on a zero that holds for one
     if (strode) { t -= coarse; strode = false; empty = 0; continue; }
     empty = 0;
+    // VC7c: the veil past the slab's start goes in before the first cloud behind it - only a lit sample can stand in
+    // front of it or behind it, so the empty air between needs no order
+    if (!veiled && tBack <= t) { col += T * back.rgb; T *= back.a; veiled = true; }
     {
       float h = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);
       float tau = lightDepth(p);
-      vec3 oct = lightOctaves(tau);   // VC7e: x the single scattering, y the octaves beyond it
+      float deckHere = deckWeight();   // VC7e: how much of a deck the sky is here (AUDIT-VC7 B3: never a fog's)
       // the ambient carries the field's own low-frequency structure, so a
       // lid is mottled and an underside is not one flat grey
       float mottle = textureLod(uShape, vec3(p.x + uShift.x - uDrift.x, p.y, p.z + uShift.y - uDrift.y) / MOTTLE_M, 1.0).g;   // WIND4: the same sign as the density above - the mottle rides the same air
@@ -1026,9 +1157,8 @@ void main() {
       // VC7e: the sky's light comes DOWN through a deck - a thick core's underside darker than a thin place's. Weighted
       // by how much of a deck the sky is (the cells' own weight): a fair or cloudy sky's looks were tuned with the
       // ambient whole, and a low sun's gold rides it (VC6b), so they keep it
-      float deckHere = smoothstep(${glslF(DECK_COVER_LO)}, ${glslF(DECK_COVER_HI)}, fCover);
       ambient *= mix(1.0, max(${glslF(AMBIENT_FLOOR)}, exp(-columnAbove(p) * ${glslF(AMBIENT_THROUGH_K)})), deckHere);
-      float light = (oct.x * phase + oct.y * mix(phase, 1.0, ${glslF(1 - MS_C)})) / ${glslF(msSum())};   // VC7e: the octaves' phase flattened toward isotropic; divided by their total share, so no depth takes more than an unshadowed path
+      float light = lightOctaves(tau, phase, deckHere);   // VC7e: the octaves - a deck's
       vec3 S = uLightColor * light * gain * (1.0 - 0.8 * fDark) * (1.0 - 0.5 * fGrey) * fTint + ambient;
       float Ti = exp(-rho * EXT * ds);
       col += T * S * (1.0 - Ti);
@@ -1037,13 +1167,14 @@ void main() {
     }
     t += ds;
   }
+  if (!veiled) { col += T * back.rgb; T *= back.a; }   // VC7c: behind every cloud the march lit
   // aerial perspective: a far bank takes the horizon's colour
   float fade = 1.0 - exp(-t0 / 14000.0);
   col = mix(col, uHorizonColor * (1.0 - T), fade);
   vec4 ice = cirrus(cam, dir);   // VC7d: far above the slab - behind it along the ray
   col += T * ice.rgb;
   T *= ice.a;
-  outColor = underCurtains(col, T, cam, dir);   // VC7c: the curtains hang BELOW the slab, so they stand in front of it along the ray
+  outColor = vec4(front.rgb + front.a * col, T * front.a);   // VC7c: the veil before the slab's start stands in front of all of it
 }`;
 
 /** VC4: the shadow map - one ground texel per fragment, the
@@ -1238,8 +1369,10 @@ export class VolumetricClouds {
     this.profile = easeProfile(this.profile, target, easeDt);
     this.weather = weather;
     // VC7d: the ice layer's cover eases with the weather, on the profile's own span
-    const iceWant = CIRRUS_COVER[weather] ?? CIRRUS_COVER.sunny;
-    this.cirrusCover = this.cirrusCover == null ? iceWant : this.cirrusCover + (iceWant - this.cirrusCover) * (1 - Math.exp(-Math.max(0, easeDt) / WEATHER_EASE_MINUTES));
+    this.cirrusCover = easeOnWeatherSpan(this.cirrusCover, CIRRUS_COVER[weather] ?? CIRRUS_COVER.sunny, easeDt);
+    // AUDIT-VC7 (R3): and so does how FAIR the zone is - the day's convection takes the eased profile's tops, so it
+    // is weighed in as the profile turns, not all at once when the word does (a kilometre's jump at a front)
+    this.fair = easeOnWeatherSpan(this.fair, FAIR_WEATHERS.includes(weather) ? 1 : 0, easeDt);
     this.drift = [wrapField(drift[0] * WORLD_PER_DRIFT), wrapField(drift[1] * WORLD_PER_DRIFT)];   // CLK1: wrapped to the field's period
     this.clocks = cloudClocks(state.minutes ?? 0, [drift[0] * WORLD_PER_DRIFT, drift[1] * WORLD_PER_DRIFT]);   // VC7a: the boil and the cover's own wind
     this.flash = flash;
@@ -1285,7 +1418,7 @@ export class VolumetricClouds {
    *  so the next setState takes the new weather whole, as the row does,
    *  and both maps are marched whole again - the old sky is not eased
    *  into the new one. */
-  jump() { this.profile = null; this.cirrusCover = null; this.stripe = 0; this.shadowFull = true; }
+  jump() { this.profile = null; this.cirrusCover = null; this.fair = null; this.stripe = 0; this.shadowFull = true; }
 
   /** WEATHER3d: a distant storm's strike this frame - `{ x, z, r,
    *  strength }` in the host's world metres, or null. Its cloud is lit
@@ -1297,7 +1430,8 @@ export class VolumetricClouds {
    *  deck the controller hands the renderer. */
   get shadow() {
     if (!this.mapOrigin || !this.shadowMarched) return null;
-    // VC7b: and the SKY map, once a sweep has filled it - its alpha is the slab's transmittance by direction, which
+    // VC7b: and the SKY map, once a sweep has filled it - its alpha is the transmittance by direction (the slab's, the
+    // curtains' and the ice's, AUDIT-VC7), which
     // is what cuts the sun's beams into spokes (airPass.js SHAFT_FS); null before, and the mask is the sky's alone
     return { map: this.shadowMap.tex, rect: [this.mapOrigin[0], this.mapOrigin[1], 1 / SHADOW_EXTENT, SHADOW_AMOUNT], sky: this.sweeps > 0 ? this.map.tex : null };
   }
@@ -1306,8 +1440,8 @@ export class VolumetricClouds {
     const gl = this.gl, r = this.row, p = this.profile;
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D, this.noise.shape.tex); gl.uniform1i(u.uShape, 0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_3D, this.noise.detail.tex); gl.uniform1i(u.uDetail, 1);
-    // VC7a: the zone convects as a fair cell does
-    const zone = convectCell({ word: this.weather, base: p.base, top: p.top }, this.conv);
+    // VC7a: the zone convects as a fair cell does, by how fair it is by now (AUDIT-VC7 R3)
+    const zone = convectZone(p, this.conv, this.fair ?? 0);
     gl.uniform1f(u.uCover, r.cover); gl.uniform1f(u.uSoft, r.soft);
     gl.uniform1f(u.uBase, p.base); gl.uniform1f(u.uTop, zone.top); gl.uniform1f(u.uDensity, p.density);
     gl.uniform1f(u.uFlat, p.flat); gl.uniform1f(u.uShear, p.shear);

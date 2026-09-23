@@ -171,8 +171,8 @@ test('VC7d: BEHIND THE SLAB - the march lays it under what it found, and uploads
   const main = MARCH_FS.slice(MARCH_FS.indexOf('void main() {', MARCH_FS.indexOf('vec4 cirrus(')));
   const fade = main.indexOf('col = mix(col, uHorizonColor * (1.0 - T), fade);');
   const ice = main.indexOf('vec4 ice = cirrus(cam, dir);'), add = main.indexOf('col += T * ice.rgb;'), thru = main.indexOf('T *= ice.a;');
-  const out = main.lastIndexOf('outColor = underCurtains(col, T, cam, dir);');
-  assert.ok(fade > 0 && fade < ice && ice < add && add < thru && thru < out, 'after the slab, weighted by what the slab let through, before the curtains');
+  const out = main.lastIndexOf('outColor = vec4(front.rgb + front.a * col, T * front.a);');
+  assert.ok(fade > 0 && fade < ice && ice < add && add < thru && thru < out, 'after the slab, weighted by what the slab let through, before the curtains in front of it');
   assert.ok(!SHADOW_FS.includes('cirrus('), 'no ground shadow: a veil that thin casts none worth a march');
   for (const n of ['uCirrus', 'uCirrusLight', 'uCirrusDir']) { assert.ok(MARCH_UNIFORMS.includes(n)); assert.ok(MARCH_FS.includes(`uniform ${n === 'uCirrus' ? 'vec4' : 'vec3'} ${n};`)); }
   const upd = fnBody(VolumetricClouds.toString(), 'update(viewport)');

@@ -11,8 +11,9 @@ import {
   VolumetricClouds, cloudClocks, convection, convectCell, grownCell, cellOf, cellOfField, FIELD_UNIFORMS, CLOUD_FIELD_GLSL, MARCH_FS, SHADOW_FS,
   EVOLVE_M_PER_MINUTE, DETAIL_EVOLVE_M_PER_MINUTE, COVER_DRIFT_SHARE, COVER_EVOLVE_PER_MINUTE, FAIR_WEATHERS, CONVECTION_LAG_MINUTES,
   CONVECTION_DEPTH_FLOOR, GROWTH_FLOOR, SHAPE_METRES, DETAIL_METRES, FIELD_PERIOD_METRES, VC_PROFILE, QUALITY, WORLD_PER_DRIFT, wrapField,
+  convectZone,
 } from '../src/render/volumetricClouds.js';
-import { skyState, WEATHER_SKY, sunSkyDirection } from '../src/render/enhancedSky.js';
+import { skyState, WEATHER_SKY, WEATHER_EASE_MINUTES, sunSkyDirection } from '../src/render/enhancedSky.js';
 import { skyCells } from '../src/systems/weatherMap.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -32,7 +33,8 @@ test('VC7a: THE CLOCKS - the boil and the cover\'s turn run on the game\'s minut
   // an updraft's order: 1 to 5 m/s of game time rises 60 to 300 m a game minute
   assert.ok(EVOLVE_M_PER_MINUTE >= 60 && EVOLVE_M_PER_MINUTE <= 300, `the towers rise ${EVOLVE_M_PER_MINUTE} m a minute`);
   assert.ok(DETAIL_EVOLVE_M_PER_MINUTE > EVOLVE_M_PER_MINUTE, 'the edges churn faster than the towers rise');
-  assert.equal(at(0).evolve[2], at(1 / COVER_EVOLVE_PER_MINUTE).evolve[2], 'a whole turn a day');
+  assert.ok(Math.abs(at(0).evolve[2] - at(1440).evolve[2]) < 1e-9, 'a whole turn a day');
+  assert.ok(Math.abs(at(720).evolve[2] - at(0).evolve[2] - 0.5) < 1e-9, '...and half of one by the evening - no sooner round');
   // the cover's own wind: a share of the air's, wrapped to the field's period
   const drift = [123456.7, -98765.4];
   const c = at(0, drift).coverDrift;
@@ -98,6 +100,7 @@ test('VC7a: THE DAY\'S CONVECTION - fair towers low through the night and the mo
   // the ground heats behind the sun: the towers peak CONVECTION_LAG_MINUTES after the sun is highest
   let noon = 0; for (let m = 0; m < 1440; m++) if (sunSkyDirection(m)[1] > sunSkyDirection(noon)[1]) noon = m;
   assert.ok(Math.abs(peakAt - (noon + CONVECTION_LAG_MINUTES)) <= 2, `towers tallest at ${(peakAt / 60).toFixed(1)}h, the sun highest at ${(noon / 60).toFixed(1)}h`);
+  assert.ok(peakAt >= 13.5 * 60 && peakAt <= 15.5 * 60, `mid-afternoon, two to three hours after the sun is highest, as fair-weather cumulus peaks (${(peakAt / 60).toFixed(2)}h)`);
   assert.equal(depth(2), CONVECTION_DEPTH_FLOOR, 'the night\'s flat cumulus');
   for (let h = 8; h < 14; h++) assert.ok(depth(h + 1) >= depth(h), 'rising through the morning');
   for (let h = 16; h < 21; h++) assert.ok(depth(h + 1) <= depth(h), 'settling toward dusk');
@@ -118,6 +121,27 @@ test('VC7a: THE DAY\'S CONVECTION - fair towers low through the night and the mo
     const p = VC_PROFILE[w];
     assert.ok(Math.abs(got.uTop - (FAIR_WEATHERS.includes(w) ? p.base + (p.top - p.base) * convection(h * 60).depth : p.top)) < 1e-6, `${w} at ${h}h`);
   }
+  // THE SUN'S MINUTE, not the long clock's: a state whose day minute and whose minutes disagree (the lab's ?t=, a
+  // host handing classicMinutes of 0) convects by the minute of the day the sun is at
+  const off = clouds();
+  off.setState(skyState({ minuteOfDay: 15 * 60, weather: 'sunny', classicMinutes: YEAR + 9 * 60 }), WEATHER_SKY.sunny, 'sunny', 1e9, [0, 0]);
+  const ps = VC_PROFILE.sunny;
+  assert.ok(Math.abs(uploads(off).uTop - (ps.base + (ps.top - ps.base) * convection(15 * 60).depth)) < 1e-6, 'three in the afternoon\'s towers, not nine in the morning\'s');
+  // AUDIT-VC7 (R3): A FRONT PASSING TURNS THE ZONE FAIR AT THE PROFILE'S PACE - the convection weighed in as the profile
+  // eases, never the whole of it the minute the word changes (a kilometre's jump in the tops)
+  const turn = clouds();
+  turn.setState(skyState({ minuteOfDay: 9 * 60, weather: 'overcast', classicMinutes: YEAR + 9 * 60 }), WEATHER_SKY.overcast, 'overcast', 1e9, [0, 0]);
+  const before = uploads(turn).uTop;
+  turn.setState(skyState({ minuteOfDay: 9 * 60 + 1, weather: 'sunny', classicMinutes: YEAR + 9 * 60 + 1 }), WEATHER_SKY.sunny, 'sunny', 1, [0, 0]);
+  const k = 1 - Math.exp(-1 / WEATHER_EASE_MINUTES), pr = turn.profile, fair = k;
+  assert.ok(Math.abs(turn.fair - fair) < 1e-12, 'the fair weight eases on the profile\'s own span');
+  const after = uploads(turn).uTop;
+  assert.ok(Math.abs(after - (pr.base + (pr.top - pr.base) * (1 - fair * (1 - convection(9 * 60 + 1).depth)))) < 1e-6, 'the eased profile\'s tops, convected by how fair it is');
+  const whole = pr.base + (pr.top - pr.base) * convection(9 * 60 + 1).depth;   // the word's convection taken whole
+  assert.ok(Math.abs((after - pr.top) - fair * (whole - pr.top)) < 1e-6 && fair < 0.5, `a minute after the word turned, the tops sit ${Math.abs(after - pr.top).toFixed(0)} m off the easing profile's: ${(100 * fair).toFixed(0)}% of the way to the word's whole convection (${Math.abs(whole - pr.top).toFixed(0)} m), as the profile is of the way to its row`);
+  assert.deepEqual(convectZone(VC_PROFILE.overcast, convection(540), 0), { base: VC_PROFILE.overcast.base, top: VC_PROFILE.overcast.top }, 'not fair at all: its own tops');
+  turn.jump();
+  assert.equal(turn.fair, null, 'a jump takes the weight whole with the profile');
   // a fair cell the controller hands over convects too
   const c = clouds();
   c.setState(skyState({ minuteOfDay: 540, weather: 'sunny', classicMinutes: YEAR + 540 }), WEATHER_SKY.sunny, 'sunny', 1e9, [0, 0], 0, null, [cellOf('cloudy', 0, 0, 5000), cellOf('thunder', 9000, 0, 5000)]);
@@ -129,6 +153,8 @@ test('VC7a: A FRONT GROWS - a weather-map cell\'s cloud as grown as its system: 
   const cell = cellOf('rain', 0, 0, 40000);
   assert.equal(grownCell(cell, 1), cell);
   assert.equal(grownCell(cell, undefined), cell, 'no envelope, the whole profile');
+  assert.equal(grownCell(cell, 1.5), cell, 'past full growth, full growth');
+  assert.deepEqual(grownCell(cell, -1), grownCell(cell, 0), 'before birth, a newborn');
   const born = grownCell(cell, 0);
   assert.ok(Math.abs(born.cover - cell.cover * GROWTH_FLOOR.cover) < 1e-12);
   assert.ok(Math.abs(born.top - (cell.base + (cell.top - cell.base) * GROWTH_FLOOR.depth)) < 1e-9);

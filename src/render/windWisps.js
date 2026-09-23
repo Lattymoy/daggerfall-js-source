@@ -2,8 +2,9 @@
 // WIND3 (2026-09-14, Mac: "World space wisps that indicate the direction
 // of wind") - THE WISPS: the wind, seen.
 //
-// A wisp is a faint streak of air riding the wind: a thin quad stretched
-// along the wind's own velocity, born and gone over a couple of seconds
+// A wisp is a faint streak of air riding the wind: a quad stretched
+// along the wind's own velocity (WIND5: a flourish is a ribbon of
+// WISP_SEGMENTS segments along a stroke and a curl; the sand's is still the quad), born and gone over a couple of seconds
 // (a fade in and out on its own phase, so the field is never a rigid
 // sheet), wobbling a little as it goes. They live in a box that follows
 // the eye and WRAPS (the lab's law from the rain: `p = mod(p - uEye +
@@ -43,6 +44,17 @@ export const WISP_CURL_TIGHT = 0.3;
 export const WISP_LEAN = 1.05;
 export const WISP_DRAW_HEAD = 0.55;
 export const WISP_DRAW_TAIL = 0.45;
+/** AUDIT-VC7 (G6): THE WISPS' CLOCK. uTime is a 32-bit float, and the hosts hand it the page's seconds: ten hours in
+ *  its step is 1/256 s, and a life's phase, fract(uTime * rate), moves in steps a quarter of a frame's advance - the
+ *  draw-on stutters, and it only gets worse. So every rate the shader runs is a whole number of cycles over
+ *  WISP_CLOCK_PERIOD seconds - the wobble's three at 2 pi WISP_WOBBLE_CYCLES over it (0.895, 0.707 and 0.597
+ *  radians a second, the 0.9, 0.7 and 0.6 they were), a life's from 0.35 to 0.6 a second in WISP_RATE_STEPS steps
+ *  (140 to 240 lives over it) - and the clock is handed wrapped to that period (wispClock, in double precision):
+ *  every phase runs on across the wrap unbroken, and uTime is never past 400. */
+export const WISP_CLOCK_PERIOD = 400;
+export const WISP_WOBBLE_CYCLES = Object.freeze([57, 45, 38]);
+export const WISP_RATE_STEPS = 100;
+export const wispClock = (seconds) => ((seconds % WISP_CLOCK_PERIOD) + WISP_CLOCK_PERIOD) % WISP_CLOCK_PERIOD;
 
 const HEAD = `#version 300 es
 precision highp float;
@@ -88,11 +100,11 @@ void main(){
   float gust = 0.80 + fract(seed*3.7)*0.4;
   p += vec3(uWindOff.x, 0.0, uWindOff.y) * gust;
   // a slow wobble across and along, phased per wisp
-  p.y += sin(uTime*0.9 + seed*31.0) * 0.35;
-  p.xz += vec2(cos(uTime*0.7 + seed*17.0), sin(uTime*0.6 + seed*23.0)) * 0.25;
+  p.y += sin(uTime*${glslF(2 * Math.PI * WISP_WOBBLE_CYCLES[0] / WISP_CLOCK_PERIOD)} + seed*31.0) * 0.35;   // AUDIT-VC7 (G6): whole cycles over the clock's period
+  p.xz += vec2(cos(uTime*${glslF(2 * Math.PI * WISP_WOBBLE_CYCLES[1] / WISP_CLOCK_PERIOD)} + seed*17.0), sin(uTime*${glslF(2 * Math.PI * WISP_WOBBLE_CYCLES[2] / WISP_CLOCK_PERIOD)} + seed*23.0)) * 0.25;
   p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5;
   // born, brightest at half life, gone: a fade on the wisp's own clock
-  float rate = 0.35 + fract(seed*5.3)*0.25;
+  float rate = 0.35 + floor(fract(seed*5.3) * ${glslF(WISP_RATE_STEPS)}) * ${glslF(0.25 / WISP_RATE_STEPS)};   // AUDIT-VC7 (G6): in steps, each a whole number of lives over the clock's period
   float ph = fract(uTime*rate + seed*7.0);
   vLife = sin(ph * 3.14159);
   // WIND5: drawn on - the head runs the path over the first part of the life, the tail follows it off
@@ -134,7 +146,7 @@ void main(){
   // WIND5: a flourish is drawn on and off along its path, soft across its width like ink
   float drawn = smoothstep(vDraw.y, vDraw.y + 0.06, vT) * (1.0 - smoothstep(vDraw.x - 0.06, vDraw.x, vT));
   float ink = 1.0 - pow(abs(vAcross * 2.0 - 1.0), 3.0);
-  a = mix(a, drawn * ink * 1.6, uCurl);
+  a = mix(a, drawn * ink * 1.6, uCurl);   // AUDIT-VC7: 1.6 times the look's own alpha at the ink's heart - a flourish's line is thinner than a streak
   a *= vLife * (uAlpha.x + uAlpha.y * uStrength);
   o = vec4(uColor, a);
 }`;
@@ -154,11 +166,11 @@ export const WISP_BOX = 90;
  *
  *  WIND5 (2026-09-23, Mac: "lets reduce the amount of wind streaks"): 240. A flourish is a bigger, more deliberate
  *  mark than a streak - a stroke and a curl, drawn on and off - and a few of them read as wind where the streaks
- *  needed numbers; a calm keeps a couple of dozen (the floor). */
+ *  needed numbers; a calm keeps 19 (the floor). */
 export const WISP_MAX = 240;
 /** The share of WISP_MAX drawn in a dead calm - the floor that keeps
- *  the direction readable. WIND4: 0.08 of the new maximum is ~52
- *  wisps, where 0.12 of the old was 288 - a still day should be still. */
+ *  the direction readable. 0.08 of WIND5's maximum is 19 wisps (of
+ *  WIND4's 650, 52), where 0.12 of the old was 288 - a still day should be still. */
 export const WISP_FLOOR = 0.08;
 
 /** WEATHER2d: A LOOK - the program in a dress. The wisps' own, and the
@@ -275,7 +287,7 @@ export class WindWispsRenderer {
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
     gl.uniform3fv(U.uEye, eye);
-    gl.uniform1f(U.uTime, timeSeconds);
+    gl.uniform1f(U.uTime, wispClock(timeSeconds));   // AUDIT-VC7 (G6): wrapped here, in double precision
     gl.uniform1f(U.uBox, look.box);
     gl.uniform1f(U.uStrength, wd.strength01);
     gl.uniform2f(U.uLen, look.len[0], look.len[1]); gl.uniform3fv(U.uColor, look.color); gl.uniform2f(U.uAlpha, look.alpha[0], look.alpha[1]);   // WEATHER2d: the look

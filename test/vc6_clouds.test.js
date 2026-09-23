@@ -29,7 +29,7 @@ const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 // VC7e: the column's terms moved into columnAt, which density calls first - the two are the density, and
 // columnAbove (the sky's light through the column) follows them
 const densityBody = () => {
-  const i = CLOUD_FIELD_GLSL.indexOf('vec4 columnAt(vec3 p, out vec4 v) {');
+  const i = CLOUD_FIELD_GLSL.indexOf('vec4 columnAt(vec3 p, out vec4 v, out vec2 span) {');
   const j = CLOUD_FIELD_GLSL.indexOf('float columnAbove(vec3 p) {');
   assert.ok(i > 0 && j > i && CLOUD_FIELD_GLSL.indexOf('float density(vec3 p, float mip) {') > i, 'the field declares the column, then density');
   return CLOUD_FIELD_GLSL.slice(i, j);
@@ -241,11 +241,11 @@ test('VC6d: no sample is taken outside the band, and the gate is the band\'s own
   // every ray walked 500-4200 m while the zone's cloud lives 1400-3200.
   // heightGradient already answered 0 outside the band - after two 3D
   // texture reads had been paid for.
-  assert.match(d, /float hr = \(p\.y - fBase\) \/ max\(fTop - fBase, 1\.0\);\s*\n\s*if \(hr <= 0\.0 \|\| hr >= 1\.0\) return 0\.0;/, 'the UNCLAMPED height, and the band\'s own ends');
+  assert.match(d, /float hr = \(p\.y - fBase\) \/ max\(fTop - fBase, 1\.0\);\s*\n(\s*\/\/[^\n]*\n)*\s*if \(hr <= 0\.0 \|\| hr >= 1\.0\) \{ fSkip = [^\n]*; return 0\.0; \}/, 'the UNCLAMPED height, and the band\'s own ends');
   // VC7e: density's own body - its first texture read is the column's (columnAt reads the variation sample)
   const own = d.slice(d.indexOf('float density(vec3 p, float mip) {'));
-  const gate = own.indexOf('if (hr <= 0.0 || hr >= 1.0) return 0.0;');
-  const firstRead = Math.min(...['textureLod(', 'columnAt(p, v)'].map((t) => own.indexOf(t)).filter((i) => i >= 0));
+  const gate = own.indexOf('if (hr <= 0.0 || hr >= 1.0) {');
+  const firstRead = Math.min(...['textureLod(', 'columnAt(p, v, span)'].map((t) => own.indexOf(t)).filter((i) => i >= 0));
   assert.ok(gate > 0 && gate < firstRead, 'and it returns before the first texture read');
   // it must NOT be a gradient test: the local flatness computed below can
   // reopen a height the zone's flatness would have closed (a lid's
@@ -259,13 +259,13 @@ test('VC6d: the march strides over empty air and walks the cloud\'s EDGE fine, a
   assert.match(MARCH_FS, /float coarse = ds \* 3\.0;/);
   assert.match(MARCH_FS, /if \(rho <= 0\.0\) \{ empty\+\+; strode = empty > 4 && fSkip > 0\.5; t \+= strode \? coarse : ds; continue; \}/, 'four empty steps, then stride - VC7c: only over a zero that holds for one (vc7c_curtains pins the evidence)');
   assert.match(MARCH_FS, /if \(strode\) \{ t -= coarse; strode = false; empty = 0; continue; \}/, 'and the step that finds cloud BACKS THE STRIDE OUT - the edge is never resolved coarsely, which is what a plain bigger step would have shown');
-  assert.match(MARCH_FS, /if \(i >= uSteps \+ 12 \|\| t > t1\) break;/, 'the ray may finish early, or need a few steps more than its budget');
+  assert.ok(MARCH_FS.includes(`if (i >= uSteps + ${MARCH_SLACK} || t > t1) break;`), 'the ray may finish early, or need a few steps more than its budget');
   assert.equal(MARCH_SLACK, 12);
   for (const [name, q] of Object.entries(QUALITY)) {
     assert.ok(q.steps + MARCH_SLACK <= 96, `${name}: the slack stays inside the loop's own hard cap`);
   }
   // the light march stops once no later step could be seen
-  assert.ok(MARCH_FS.includes(`if (sum * EXT * ${MS_B ** (MS_OCTAVES - 1)} > 6.0) break;`), 'exp(-6) is two parts in a thousand - VC7e: of the LAST octave, which sees furthest');
+  assert.ok(MARCH_FS.includes('if (sum * EXT * sees > 6.0) break;'), 'exp(-6) is two parts in a thousand - VC7e: of the furthest-seeing term the light takes there (vc7e_detail runs it)');
   // the SHADOW march takes NONE of it: it is 24 steps over a slab it
   // already sizes to the path, and its whole answer is one exponential
   // of the sum - there is no edge to resolve and nothing to stride past.

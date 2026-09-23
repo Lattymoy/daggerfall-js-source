@@ -69,6 +69,7 @@ const W = 640, H = 400;
 const out = await page.evaluate(async ({ W, H, keep }) => {
   const { Renderer, WORLD_FRAME } = await import('/src/render/renderer.js');
   const { EL_LANE } = await import('/src/render/enhancedLighting.js');
+  const { AIR_HAZE_PROBE_KEY } = await import('/src/render/airPass.js');   // AUDIT-VC7 (B6): the key the haze's gain was tuned under
   const { perspective, lookAt, identity } = await import('/src/world/mat4.js');
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -135,7 +136,7 @@ const out = await page.evaluate(async ({ W, H, keep }) => {
     r.setHaze(haze);
     if (r.air) r.air._now = () => 1000;
     r.setClearColor([0.55, 0.7, 0.9, 1]);
-    r.setLighting(new Float32Array([0.35, 0.35, 0.4]), 0.9, new Float32Array([1, 0.95, 0.85]));
+    r.setLighting(new Float32Array([0.35, 0.35, 0.4]), AIR_HAZE_PROBE_KEY, new Float32Array([1, 0.95, 0.85]));
     r.setFog('linear', 0, 0, 2400, new Float32Array([0.62, 0.68, 0.78]));   // the clear day's own: Sunny/Overcast are linear fog to 2400
     r.setPointLights(new Float32Array([]), null);
     let stats = null, img = null, frame = null;

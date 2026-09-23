@@ -209,7 +209,8 @@ leaves.
 ### VC7a - living clouds
 
 - **They change as they pass.** Two clocks, both read from the game's
-  minutes so every player online sees the same sky:
+  minutes (AUDIT-VC7: so every player online sees the same boil; the cover's
+  drift, like the whole field's, rides the session's own wind integral):
   - the shape volume is read through its own height as time passes, so
     the towers' structure rises through the cloud and the edges billow
     rather than slide;
@@ -220,7 +221,7 @@ leaves.
   year of game time never outgrows a float.
 - **The day's convection.** Fair-weather cloud (the sunny and cloudy
   rows) builds through the day: flat cumulus in the morning, towering by
-  mid-afternoon, settling at dusk. It lives in the towers' HEIGHT; the
+  mid-afternoon, sinking through the evening to the night's floor. It lives in the towers' HEIGHT; the
   cover stays DFU's row. The first cut also redistributed the cover over
   the day (its daily mean kept), and the lab showed why not: this slab's
   scattered cumulus sits right at its coverage threshold, and a fair
@@ -246,8 +247,9 @@ leaves.
   before.
 - The day's convection is in the towers' HEIGHT only: `convection`'s
   depth runs from 0.4 of the row's through the night and the morning to
-  the whole row CONVECTION_LAG_MINUTES (150) after the sun is highest,
-  and settles toward dusk. The first cut also moved the cover (its daily
+  the whole row CONVECTION_LAG_MINUTES (150) after the sun is highest
+  (14:30), and sinks through the evening to the floor again by 20:30
+  (AUDIT-VC7: it holds the floor until 8:30). The first cut also moved the cover (its daily
   mean kept); the lab showed a fair row's cover raised by a tenth smeared
   the afternoon into haze, and a cut with the boil off pinned the smear
   on the cover, not the boil. So the cover is DFU's row at every hour.
@@ -285,8 +287,9 @@ the pins run on a fake GL that draws nothing.
   filled it), and EL3's mask reads its alpha - the slab's transmittance -
   in each tap's world direction, by the composite's own parametrisation.
   With the player in full sun, a sky map that is all gap leaves the beams
-  exactly as they were, all cloud takes them away, and a half-cloudy one
-  leaves half. VC6c's gate is untouched: Mac's "when the sun is covered by
+  exactly as they were, all cloud takes them away, and one half cloud in
+  stripes leaves beams between the two (AUDIT-VC7: "half" was never
+  measured). The alpha is the slab's, the curtains' and the ice's. VC6c's gate is untouched: Mac's "when the sun is covered by
   clouds, there shouldnt be sky rays" still decides first.
 - **The sun in the haze.** `airPass.js` walks each shaft pixel's view ray
   AIR_HAZE_STEPS (12) jittered steps out to AIR_HAZE_REACH (3000 m); each
@@ -302,7 +305,8 @@ the pins run on a fake GL that draws nothing.
   2400): a solid deck leaves no haze; lanes of cloud shadow swing the air
   48% against a lit deck's image, pixel for pixel (0.0% for the lit deck
   against itself); toward a low sun the same air is fourteen times as
-  bright as away from it. AIR_HAZE_GAIN (1) was chosen against 0.5 (the
+  bright as away from it. AIR_HAZE_GAIN (1 of the colour at the probe's key
+  of 0.9; AUDIT-VC7 made it a share of the key, 1/0.9) was chosen against 0.5 (the
   lanes all but invisible), 1.5 (over-bright toward the sun, where the
   dome's glow and the beams already are) and 3 (the sky toward the sun
   white). The term is additive, so the lit-against-shaded contrast can
@@ -347,7 +351,8 @@ proved it: the whole sky brightened and no structure appeared.
 - **The octaves.** The sun's light through the deck is Wrenninge's
   multiple-scattering octaves: octave 0 the single scattering it always
   was, two more carrying half and a quarter of the light at 0.35 and
-  0.1225 of the depth, their phase flattened halfway to isotropic, the
+  0.1225 of the depth, their phase flattened halfway to isotropic
+  (AUDIT-VC7: octave i by MS_C^i, the law the docstring named), the
   sum divided by 1.75 so no depth outshines an unshadowed path. At a
   storm's depth the single term is under 0.003; the octaves carry over
   twenty times that, and a thin place stays visibly lighter than a thick
@@ -358,7 +363,8 @@ proved it: the whole sky brightened and no structure appeared.
   depth, and at dusk that path runs sideways through kilometres of deck
   and blackened the gold VC6b gave it. It is weighted by the same deck
   amount, so a fair sky (none of it) and a cloudy one (under a fifth)
-  keep the looks they were tuned with; its floor (0.15) sits under a
+  keep the looks they were tuned with (AUDIT-VC7: the octaves were not
+  weighted so, and brightened every fair cloud - they are now); its floor (0.15) sits under a
   storm core's light, where 0.35 had erased the contrast.
 - **In the lab**: rain rolls dark and heavy with lighter gaps between; a
   storm has darker cores in the lid; an overcast has bands; a fair sky
@@ -386,9 +392,11 @@ it hangs below it.
   radius from the ground to its base. Its extinction is rain's own:
   Koschmieder's 3.0 over moderate rain's five-kilometre visibility, 0.0006
   a metre. The first cut took a fifth of that, and a storm's curtain was a
-  smear on the horizon; at the real value a thunder core's chord passes
-  under a twentieth, which is why a real shaft reads from thirty kilometres
-  off. It thins to its rim, fades as the eye comes under it (the falling
+  smear on the horizon; at the real value a thunder core's chord passed
+  under a twentieth (AUDIT-VC7: a tenth, once the chord is the integral of
+  the declared profile, not the core's weight at its closest approach for
+  its whole length), which is why a real shaft reads from thirty
+  kilometres off. It thins to its rim, fades as the eye comes under it (the falling
   rain takes over there), and takes its own aerial perspective (40 km; the
   slab's 14 km handed three quarters of a far storm's curtain to the
   horizon). A system's rain is as grown as its cloud (`grownCell`).
@@ -396,8 +404,8 @@ it hangs below it.
   three fibres to each, every octave faded to its mean where the sky map's
   texels could not hold it (so a far curtain on the low tier keeps its
   shafts and loses only its fibres, never shimmering). The rim's streaks
-  stop short of the ground, each by its own amount, up to 0.6 of the base
-  (virga); the core's reach it. The curtain rises CURTAIN_INTO (0.12) of
+  stop short of the ground, each by its own amount - 0.6 of the base on
+  the average at the rim, 0.9 at the most (virga); the core's reach it. The curtain rises CURTAIN_INTO (0.12) of
   its cell's depth into the cloud and thins to nothing there: a cloud's
   visible underside sits above its nominal base, and a curtain cut at the
   base left a strip of sky between the rain and the cloud it fell from.
@@ -493,3 +501,92 @@ merge").** Pinned by `test/vc7d_cirrus.test.js` (5 tests;
   cloudy deck they show only where it is thin, and at night there is
   nothing but stars.
 
+### AUDIT-VC7 - five lenses over VC7a/b/c/e and WIND5, every finding paid (2026-09-23)
+
+Mac asked "Is this ready?"; it was not - VC7d unbuilt, VC7 unaudited, never run in the game - and Mac: "Let's do the
+not done yet before we merge". Five lenses read VC7a, b, c, e and WIND5: what a change reaches, what it broke, the
+shaders' cost and portability, whether the pins derive, and whether the record says true things. Every finding below
+was verified, paid at its root, pinned, and killed as a mutant (`tools/mutants/auditvc7.json`).
+
+**The pins were the biggest finding.** Every old mutant died (230 of 230) because each record replaced the very line
+a pin quoted; of 41 new mutants written against the lines AROUND the quotes, 35 survived, 31 of them real - a curtain
+with Beer's law halved, a haze looking backwards, a wisp's curl dividing by zero for the sand. The fix is a tool, not
+more quotes: `test/glsl.mjs` evaluates GLSL ES 3.00 in JS (types, swizzles, uint wrap, out parameters, fp32 on
+request), and `test/cloudSky.mjs` hands it the march with cells packed by the source's own `packCells`. The laws now
+run on the shader's OWN functions:
+- the curtain's transmittance is exp(-tau) of a brute-force integral of its declared density (exact on a circle; on
+  lobed outlines and clips within the quadrature's measured 2.4%), the veil's colour its tint over what it absorbs,
+  its fade taken at the near entry, the chord toward the cell and still met at twenty kilometres;
+- the octaves are Wrenninge's definition written out independently, at every depth, phase and deck weight;
+- a stride's zero holds for every column a stride can reach (lanes and cores at one variation, 50 m apart over the
+  stride), and a rim is flagged wherever the profile moves within one;
+- the haze's phase integrates to one and peaks at the sun, its march covers the ray to the surface, its ray is the
+  pixel's own, the key scales it, the eye's height moves nothing, the map's edge holds;
+- the wisp's path is the shader's `swirl`, its ribbon square to the eye ray and the path, its pen and its ink read
+  through both main()s, and its clock wraps whole.
+
+**What the shaders got wrong, and what changed.**
+- **(B1) The octaves brightened every fair cloud** - VC7e's claim "a fair sky unchanged" was false (+29% at depth
+  0, a golden hour's chroma down 29%). The octaves are a DECK's: `lightOctaves(tau, phase, deck)` weighs them in by the
+  deck weight, and a fair sky takes exactly the single scattering it was tuned with. Each octave now takes its own
+  flattening (MS_C^i, the documented law - the code had one shared halfway flattening). The light march stops at
+  exp(-6) of whichever term sees furthest there.
+- **(B3) Fog and a sandstorm got lanes.** The deck weight ignored the type variation, which is 0 exactly for the two
+  weathers that are one thing everywhere. `deckWeight()` - one function for the lanes, the stride's evidence and the
+  octaves - eases in over DECK_VARY_FULL, the least vary any varying row takes (0.15, derived).
+- **(G1, R4) The stride's evidence was a blanket.** Any cover over 0.4 held every step to the fine walk (+36 to 65%
+  steps, no picture change), and every point inside a cell was "near a rim". `columnAt` now returns the SPAN a
+  column's height can take between a lane's middle and a core (monotone in the cells' weight between them): over the
+  profile's end a stride holds only if the span's foot is over it too. `resolveAt` flags a cell only where its weight
+  can change within a stride - its own rim or its clip's - asking the outline itself (`rimReach`: the bearings a
+  stride's disc spans, the outline's reach moving at most `shapeTurn` a radian, a rigorous bound from the shape's
+  harmonics). **Found by the new law, not by any lens:** under the band a stride could climb into it and skip the
+  band's lowest cloud; a stride there now holds only more than a stride below it. And density() starts every call
+  at "no stride": only a branch that proves its zero vouches.
+  **Measured, against the sky marched with no stride at all** (the lab, 960x540; the march's steps as a share of the
+  no-stride count):
+
+  | sky | pixels off by more than 8 levels (by more than 24) | steps |
+  |---|---|---|
+  | a rain cell under a fair sky, low | 50 (0) | 0.82 |
+  | a fair sky | 0 | 0.62 |
+  | cloudy | 0 | 0.96 |
+  | overcast | 0 | 0.98 |
+  | a storm cell under a cloudy sky | 0 | 0.90 |
+
+  The picture is the no-stride sky's. The lens's "+36 to 65% steps" was measured against a stride that skipped cloud;
+  a deck's lanes really do move within a stride, so what a deck can safely skip is small (2 to 4%), and the rain
+  view gives back some of VC7c's saving (0.50 then) to the band the stride may no longer climb into blind.
+- **(R1, B4, G4, G5) The curtains.** They ignored the cell's outline and its clip - 70.7% of a thunder curtain's area
+  hung outside its front's rain core. The veil is now an integral along the ray of its density across the ground (the
+  cell's own shape, inside its clip) times its weight up the column, by Simpson's rule over VEIL_PANELS (16) panels a
+  piece, cut at the base. The old chord took the core's weight at its closest approach for its whole length - 3/2 of
+  the declared profile's integral; the integral is the declared one now, so a thunder core's axis passes a tenth,
+  not a twentieth. The ray is cut where the slab begins: the veil before it is laid over everything, the veil past it
+  goes in at its depth among the slab's lit samples (it had been composited over a nearer low deck). The streaks'
+  lattice is an integer hash (GLSL ES 3.00 defines unsigned wrap; a sine's large arguments are each GPU's own), and
+  the bearing is taken only where the eye is off the axis (atan(0, 0) is undefined).
+- **(B6, B7, R2, G2, G3) The haze.** It took the sun's COLOUR, never the key's scale - 10x the ground's light at 06:30,
+  full under a storm's dimmed sun; it takes the key now, the gain retuned to the probe's own key (1/0.9). A low sun's
+  ray meeting the ground past the shadow map read full sun; it reads the map's edge. Its height was the world's y; it
+  is the height above the eye the maps are drawn from (no jump at a vertical recenter). The depth sampler was lowp by
+  default (fp16 depth on mobile) - highp now, for every pass that reads it - and the depth and sky-map reads in the
+  mask's loop take level 0 by name (no implicit derivatives under a branch).
+- **(R3) A front passing jumped the tops a kilometre**: the convection was chosen by the target word and applied to the
+  eased profile. How fair the zone is now eases on the profile's own span.
+- **(G6) The wisps' clock** was the page's seconds in a float32 - a day in, a life's phase stepped by half a frame's
+  advance. Every rate is now whole cycles over WISP_CLOCK_PERIOD (400 s) and the host hands the clock wrapped.
+
+**Decided, not changed: (B2) the lanes shadow the ground.** The deck's lanes are cloud structure, and the one field
+the sky and the ground's shadow read is this renderer's law (the sky you see is the cloud you stand under). Measured:
+under a rain deck the direct sun reaching the ground rose from 3.7% to 12% on the average, an overcast's by 37% - the
+light patches under a broken deck. Recorded here for Mac; a rain deck darker underfoot is a tuning of the rain row,
+not a second field.
+
+**The record, corrected.** Virga reaches up to 0.9 of the base at the rim (0.6 on the average), not "up to 0.6";
+VC7e's depths were 5.1 to 6.3 along the sun (not "2 to 6"), and an overcast's 0.56 to 0.80 (not "a tenth"); a calm
+draws 19 wisps (not "a couple of dozen", nor "~52"); a wisp is a 40-segment ribbon (not "a thin quad") and its alpha
+1.6 times the look's; the sky map's alpha is the slab's, the curtains' and the ice's transmittance; a sky map half cloud in
+stripes leaves the beams between all and none (not "half" - unmeasured); the boil is the game clock's and the same
+for every player, but the cover's drift rides the session's own wind integral (WIND2), so "every player sees one
+sky" is true of the boil and the ice, not of the cover.
