@@ -1141,12 +1141,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1006),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1023),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:1547) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:1564) so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -4185,9 +4185,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // the slot, so this bypasses toggleSpellbook's already-open guard
     // - the inventory has just run its own close law.
     openSpellbook: () => { const b = makeSpellbookWindow(); if (b) townTalk.showOverlay(b); },
-    // JAN1: the pose is the player's - a door in or out hands the pair through these (HARD2c's one home)
-    weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),
-    applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),
     openCharSheet: () => { if (charSheetDoorReady()) townTalk.showOverlay(makeCharSheetWindow()); },   // MAC-C: the pack's other window key crosses over rather than doing nothing - the same door the sheet's own Items button takes back the other way
     ...useHooks,   // U53: the one bag (revealMap, drinkPotion, getQuest)
     nowMinute: () => Math.floor(playerTicker.classicMinutes),
@@ -10813,6 +10810,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
+    // JAN1: the pose is the player's - a door in or out hands the pair through these (HARD2c's one home).
+    // DISC8-E: HERE, in the mode machine's own bag - worldModes reads host.weaponPose / host.applyWeaponPose at
+    // every door; JAN1 had put them in the inventory window's deps, which never read them, so no door handed the
+    // pose and each rig kept its own (a drawn weapon vanished indoors; a left hand came back as a fist).
+    weaponPose: () => weaponPoseOf(weaponRig.playerWeapon),
+    applyWeaponPose: (p) => applyWeaponPose(weaponRig.playerWeapon, p),
     // PARTY-REST2: shared with this host's own outdoor toggleRest and dungeonContext.js's - see partyRestGate's doc comment.
     partyRestGate: () => partyRestGate(),
     // PARTY-REST28: shared with this host's own outdoor toggleRest and dungeonContext.js's, forwarded the same
@@ -11948,6 +11951,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // through the paralysis fired a synthetic press on the frame it lifted.
         // ROAD-Ar (R0): ...and the season hold stops the motor dead,
         // because there is no floor under it while the re-skin runs.
+        if (_overlayHeld || _seasonHeld) player.holdFrame();   // DISC8-G: a held motor reports no landing and no jump
         if (!_overlayHeld && !_seasonHeld) player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak'), jump: false, up: false, down: false, crouch: crouchPress } : {
           forward: axes.forward,   // TO1: the autopilot's force while a journey runs, else the player's own   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
           strafe: axes.strafe,
@@ -11990,6 +11994,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // ROAD-Ar (R0): a held motor reports no landing - landedFallDistance
         // is only cleared by update(), so billing it on a frame the motor
         // never ran would charge the same fall once per held frame.
+        // DISC8-G: the season gate alone missed the pausing windows (the
+        // death screen above all); holdFrame() above now clears the report
+        // on EVERY held frame, whatever held it.
         if (!_seasonHeld) applyFallLanding(playerEntity, player.landedFallDistance, {
           sound: immersiveFootsteps.fallSoundSink((id, vol) => audio.playOneShot(id, vol)),   // AUDIT 58: the caller's FootstepVolumeScale rides through; IF1: the mod's own landing when it owns the stride
           inOutdoorWater: isOutdoorWaterTile(playerGroundTile()),

@@ -265,13 +265,14 @@ test('EM3: a note under the pointer answers its own words', () => {
 });
 
 test('EM3: at rest the storey is on the sheet, centred on the player where they are on it', () => {
-  const s = sheet();
+  const s = sheet({ player: () => ({ feet: [105, 0, 207], yaw: 0 }) });   // DISC8-C: off the level's z-centre, so a mirrored plan cannot pass
   const limits = { mapW: s.size().width, mapH: s.size().height, paperW: 400, paperH: 300 };
   const home = s.homeView(limits);
   assert.ok(home.scale > scaleMinOf(limits), 'a little in from the fit, so the wall is off the torn edge');
   assert.equal(home.scale, scaleMinOf(limits) / FIT_MARGIN);
-  // the player is at world (105, 205) on floor 0, so the view centres there
-  const planX = 105 - (100 - 1), planZ = 205 - (200 - 1);
+  // the player is at world (105, 207) on floor 0, so the view centres
+  // there - the plan's y measured SOUTH from the north edge (z1 = 211)
+  const planX = 105 - (100 - 1), planZ = (210 + 1) - 207;
   assert.ok(Math.abs((home.ox + limits.paperW / (2 * home.scale)) - planX) < 1e-6);
   assert.ok(Math.abs((home.oy + limits.paperH / (2 * home.scale)) - planZ) < 1e-6);
   // ...and on the whole storey where they are NOT on it (upstairs)

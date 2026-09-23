@@ -962,8 +962,34 @@ export class Collider {
     }
 
     // Vertical - the frame's TRUTH for grounded/ceiling.
+    const vx0 = feet[0], vy0 = feet[1], vz0 = feet[2];
     feet[1] += dy;
     this._resolveCapsule(feet, out, height);
+    // THE DOWN PASS IS COLLIDE-AND-STOP. PhysX's CCT (Unity's
+    // CharacterController) sweeps the downward component alone with
+    // maxIterDown = 1 (CctCharacterController.cpp moveCharacter, under
+    // Unity's ePREVENT_CLIMBING): a descending controller that meets the
+    // ground STOPS on it. The penetration resolve above pushes along the
+    // contact normal instead, which on a slope or a tread's edge turns
+    // the descent into a sideways shove - downhill, back off the step.
+    // A walker never shows it (velY is 0 while grounded, so dy is 0);
+    // LevitateMotor's over-encumbered sink (a constant Vector3.down while
+    // swimming) is the one caller that drives a grounded capsule down
+    // every step. So: when the down pass slid, come down only as far as
+    // the capsule goes without being pushed (bisected), x/z untouched.
+    if (dy < 0 && out.grounded && ((feet[0] - vx0) ** 2 + (feet[2] - vz0) ** 2) > 1e-12) {
+      let lo = 0, hi = -dy;   // lo: a descent known clear; hi: one known to penetrate
+      for (let i = 0; i < 10; i++) {
+        const mid = (lo + hi) / 2;
+        const probe = [vx0, vy0 - mid, vz0];
+        const pOut = { grounded: false, hitCeiling: false, pushedDown: false };
+        this._resolveCapsule(probe, pOut, height);
+        if ((probe[0] - vx0) ** 2 + (probe[1] - (vy0 - mid)) ** 2 + (probe[2] - vz0) ** 2 < 1e-12) lo = mid; else hi = mid;
+      }
+      feet[0] = vx0; feet[1] = vy0 - lo; feet[2] = vz0;
+      out.grounded = false; out.hitCeiling = false; out.pushedDown = false; out.groundKey = undefined; out.groundY = undefined;
+      this._resolveCapsule(feet, out, height);   // at rest in the skin shell: the flags, no push
+    }
 
     // Ground snap when moving down: pulls onto steps/slopes. The
     // caller withholds it mid-JUMP (`snap = false`): the probe's
