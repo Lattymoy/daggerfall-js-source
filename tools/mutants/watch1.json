@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-WATCH1-G1-a-removed-watchman-still-rides",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (f.puppet || f.isQuestFoe || (f.dead && !f.corpse)) continue;   // (a removed watchman - dead, no body - rides no more, as a culled foe does)",
-    "new": "      if (f.puppet || f.isQuestFoe) continue;",
+    "old": "      if (f.puppet || f.isQuestFoe || f.placed || (f.dead && !f.corpse)) continue;",
+    "new": "      if (f.puppet || f.isQuestFoe || f.placed) continue;",
     "tests": [
       "test/watch1.test.js"
     ]

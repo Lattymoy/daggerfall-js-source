@@ -17,11 +17,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildTerrainGrid, buildTerrainIndices, surfaceHeightAt } from '../src/world/terrainSurface.js';
-import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, DEFAULT_TERRAIN_SCALE, TERRAIN_SIZE } from '../src/world/terrainSampler.js';
+import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../src/world/terrainSampler.js';
 
 const hDim = HEIGHTMAP_DIMENSION;
 const CELL = TERRAIN_SIZE / (hDim - 1);
-const WORLD_H = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;
+const WORLD_H = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
 
 /** A heightmap with real saddles in it - a smooth field alone would let
  *  bilinear and the triangles agree by accident. */

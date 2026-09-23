@@ -93,6 +93,21 @@ export const MOD_ROADS = Object.freeze({
   streams: new URL('../../vendor/roads-hazelnut/streamData.bytes', import.meta.url).href,
 });
 
+/**
+ * WOD2: Basic Roads' `getPathsPoint` message (BasicRoadsMod.cs, the
+ * GET_PATHS_POINT arm): the ROAD mask OR the TRACK mask at a map pixel,
+ * read through BasicRoadsTexturing.GetPathDataPoint's own index
+ * (`x + y * MapsFile.MaxMapPixelX`). Rivers and streams are not asked -
+ * the message ORs the two path kinds and nothing else. It is how World of
+ * Daggerfall keeps its camps off the roads (LocationLoader.cs:146-151).
+ * @param {{roads:Uint8Array, tracks:Uint8Array}} net - his arrays
+ * @returns {number} a byte; 0 when no road or track crosses the pixel
+ */
+export function basicRoadsPathsPoint(net, x, y) {
+  const i = x + y * MAP_WIDTH;
+  return (net.roads[i] | net.tracks[i]) & 0xff;
+}
+
 export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS) {
   if (!fetchFn) return null;
   try {

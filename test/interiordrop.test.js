@@ -158,10 +158,10 @@ test('ID1: the piles are picked up, drawn, cached, restored and freed', () => {
   // the cache's two halves cannot disagree about which piles exist -
   // GetSaveData has no empty guard (SerializableLootContainer.cs:55-77)
   // and an emptied scene-built container must ride it.
-  assert.match(m, /const droppedPiles = interiorDropped\.snapshotScene\(\);/, 'CacheScene builds them');
-  assert.match(m, /return \{ lootContainers, actionDoors, droppedPiles, droppedTorches \};/,
+  assert.match(m, /const droppedPiles = interiorDropped\.snapshotScene\(\)\.map\(/, 'CacheScene builds them');   // TERRAIN-SCALE1: in the building's own frame
+  assert.match(m, /return \{ lootContainers, actionDoors, droppedPiles, droppedTorches, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE \};/,
     'and RETURNS them - a built list the state does not carry is not cached at all');
-  assert.match(m, /interiorDropped\.restorePiles\(data\.droppedPiles\);/, 'RestoreCachedScene brings them back');
+  assert.match(m, /interiorDropped\.restorePiles\(data\.droppedPiles \? data\.droppedPiles\.map\(\(p\) => \(\{ \.\.\.p, pos: place\(p\.pos\) \}\)\) : data\.droppedPiles\);/, 'RestoreCachedScene brings them back');   // TERRAIN-SCALE1: placed in this visit's frame; none is still a clear
   // BOTH teardowns free them - the door exit and the quest-teleport /
   // load arm. One of the two is exactly the kind of site the port has
   // leaked batches from before.

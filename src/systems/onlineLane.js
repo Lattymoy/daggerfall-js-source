@@ -231,6 +231,13 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
     Enabled: true,        // which network is painted, and so which beds are smoothed
     SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away
   }),
+  // WOD1 (2026-09-23): the second floor. World of Daggerfall levels the
+  // ground under every camp and rock field it stands (LocationLoader.cs
+  // lerps the heightmap toward the site's mean) and stands collidable
+  // rock in it, so two players who disagree walk two terrains and pass
+  // through each other's boulders - the roads' own reason, word for
+  // word. Its one switch is the room's.
+  'world-of-daggerfall': Object.freeze({ Enabled: true }),
   // MODS-ONLINE-4: the host's foes are the party's foes.
   meanerMonsters: Object.freeze({ Enabled: true }),
   pcaao: Object.freeze({ Enabled: true }),

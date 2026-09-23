@@ -146,11 +146,15 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
    *  and the marker's own coordinates (DaggerfallInterior.cs:885-889)
    *  so a restore applies to the right container and an emptied one,
    *  absent from the cache, is simply rebuilt. */
-  function seedPile(items, feet, icon, key = null) {
+  // WOD5: `unsaved` - a container minted with LoadID 0 (World of
+  // Daggerfall's CreateLootContainer comments its LoadID out), which
+  // SerializableLootContainer.Start never registers: no save and no
+  // scene cache carries it.
+  function seedPile(items, feet, icon, key = null, pixelKey = null, { unsaved = false } = {}) {   // WOD3: a pixelKey, for a scene container parented to a TERRAIN (dies with its pixel)
     const pile = {
       id: ++_nextId, items: items ?? [], pos: [feet[0], feet[1], feet[2]],
-      archive: icon.archive, record: icon.record, batch: null, pixelKey: null,
-      container: true, containerKey: key,
+      archive: icon.archive, record: icon.record, batch: null, pixelKey,
+      container: true, containerKey: key, unsaved,
     };
     piles.push(pile);
     mount(pile);
@@ -172,13 +176,29 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     }
   }
 
+  /** AUDIT BRANCH (WoD) L1-3: the piles of a pixel that `keep` names, LIFTED out of the world and handed back - a
+   *  container parented to a TERRAIN goes inactive with it when DFU pools the tile, and comes back when the tile
+   *  does; the host holds what this returns for exactly that long. */
+  function takePixel(pixelKey, keep) {
+    const out = [];
+    for (let i = piles.length - 1; i >= 0; i--) {
+      const p = piles[i];
+      if (p.pixelKey !== pixelKey || !keep(p)) continue;
+      p.dead = true;   // AUDIT 24: an in-flight mount must not publish onto this
+      if (p.batch) { flatAnims.remove(p.batch); renderer.destroyBillboardBatch(p.batch); }
+      piles.splice(i, 1);
+      out.unshift({ items: p.items, pos: [...p.pos], archive: p.archive, record: p.record });
+    }
+    return out;
+  }
+
   /** P2-slice (items-2): the world-save halves. The reference
    *  serialises loose containers everywhere (LootContainerData_v1:
    *  position, icon, items); the world host stores NATIVE coordinates
    *  so a pile survives every floating-origin recenter - the same
    *  law the player half of the envelope rides. */
   function snapshotWorld(toNative) {
-    return piles.filter((p) => p.items.length).map((p) => {
+    return piles.filter((p) => p.items.length && !p.unsaved).map((p) => {   // WOD5: a LoadID-0 container is never registered
       const wc = toNative(p.pos);
       // G5: `archive` rides beside `record` because DFU's
       // LootContainerData_v1 carries BOTH (textureArchive/textureRecord,
@@ -360,5 +380,5 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   /** PX21c: what a pile HOLDS, by the same key lootTargets emits -
    *  read-only, for the hover plaque. */
   const contents = (key) => piles.find((p) => `droppedLoot:${p.id}` === key && !p.dead)?.items ?? null;
-  return { contents, dropPile, seedPile, restorePiles, collectPixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, _piles: piles };
+  return { contents, dropPile, seedPile, restorePiles, collectPixel, takePixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, _piles: piles };
 }

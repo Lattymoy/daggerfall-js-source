@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { snapshotPlayer, restorePlayer, SAVE_VERSION, writeQuicksave, readQuicksave } from '../src/systems/save.js';
 import { routeKey } from '../src/ui/input.js';
+import { STREAMING_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
 
 const mkEntity = () => ({
   name: 'Mac', gender: 'female', careerIndex: 4, level: 3, reflexes: 2,
@@ -28,7 +29,7 @@ test('save: round-trip restores everything; extras carried; deep copies', () => 
   // smallerDungeonsState joined the extras (both hosts already passed
   // them and snapshotPlayer dropped them in silence), so the exact
   // shape grew three keys - null/null/0 when the caller passes none.
-  assert.deepEqual(extras, { position: [1, 2, 3], pose: null, classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null, interior: null, dungeon: null, travelMap: null, escortingFaces: null, quickslots: null, spawns: null, smallerDungeonsState: 0, modData: null });   // TTL1: `spawns` is the spawned-dungeon ledger, and `quickslots` is QS1's block, which this name list had never carried (so every save dropped it)   // S12: the world rides the envelope; Q4-v/TK-i: the quest + talk slots (null when the host passed none); IS1: the interior slot (null outside a building)
+  assert.deepEqual(extras, { position: [1, 2, 3], pose: null, classicMinutes: 77.5, readiedSpellIndex: 97, world, locationKey: 'dungeon:42', quest: null, talk: null, interior: null, dungeon: null, travelMap: null, escortingFaces: null, quickslots: null, spawns: null, smallerDungeonsState: 0, modData: null, terrainScale: STREAMING_TERRAIN_SCALE });   // TERRAIN-SCALE1: the scale its heights stood on   // TTL1: `spawns` is the spawned-dungeon ledger, and `quickslots` is QS1's block, which this name list had never carried (so every save dropped it)   // S12: the world rides the envelope; Q4-v/TK-i: the quest + talk slots (null when the host passed none); IS1: the interior slot (null outside a building)
   assert.equal(dst.name, 'Mac');
   assert.equal(dst.stats.luck, 60);
   assert.equal(dst.items[0].name, 'Short Bow');

@@ -300,8 +300,8 @@ test('ROAD-Ar (R2): the compensation restore is an ENCODING here, not a plan fie
   const world = read('src/scenes/world.js');
   assert.match(world, /y: pf\[1\] - state\.compensation\[1\],/,
     'the anchor height must be stored compensation-free');
-  assert.match(world, /return \[lx, \(a\.y \?\? 2\) \+ state\.compensation\[1\], lz\];/,
-    'and anchorLanding must re-add the LIVE compensation');
+  assert.match(world, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/,
+    'and anchorLanding must re-add the LIVE compensation (TERRAIN-SCALE1: to the height stood again on today\'s ground)');
   assert.equal(world.includes('worldCompensationY'), false,
     'no half-plumbed restore payload survives in the host');
   assert.equal(read('src/systems/teleportAnchor.js').includes('worldCompensationY:'), false,

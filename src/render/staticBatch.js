@@ -30,6 +30,11 @@ function rotateNormal(m, x, y, z, out, o) {
   out[o] = nx / l; out[o + 1] = ny / l; out[o + 2] = nz / l;
 }
 
+/** The determinant of a column-major matrix's upper 3x3. */
+function det3(m) {
+  return m[0] * (m[5] * m[10] - m[9] * m[6]) - m[4] * (m[1] * m[10] - m[9] * m[2]) + m[8] * (m[1] * m[6] - m[5] * m[2]);
+}
+
 export class StaticBatchBuilder {
   constructor() {
     this.chunks = [];        // [{positions, normals, uvs, base}] one per model, already transformed
@@ -44,10 +49,21 @@ export class StaticBatchBuilder {
    * @param {{positions:Float32Array, normals:Float32Array, uvs:Float32Array, indices:Uint32Array, subMeshes:Array}} cpu
    * @param {Float32Array} local the model's pixel-local matrix
    * @param {(archive:number, record:number) => string} resolveKey the pixel's texture remap, as drawMesh applies it
+   * @param {?Float32Array} [normalMatrix] WOD2: the matrix the NORMALS take when `local` scales
+   *   non-uniformly - its upper 3x3 the inverse transpose of local's (World of Daggerfall stands
+   *   952 models scaled unevenly, most of them rocks, which Unity lights through the inverse transpose). Absent,
+   *   the normals take `local` itself, exact for every rotation-and-translation block model.
    */
-  add(cpu, local, resolveKey) {
+  add(cpu, local, resolveKey, normalMatrix = null) {
+    const nm = normalMatrix ?? local;
     const n = cpu.positions.length / 3;
     if (!n || !cpu.subMeshes?.length) return;
+    // WOD5: a MIRRORED model - a negative determinant, World of
+    // Daggerfall's one wall at scaleX -1.57 - turns every triangle's
+    // winding over, and the renderer culls by winding. Unity reverses the
+    // culling of a transform whose scale is negative, so the merge
+    // reverses the winding: each triangle's last two corners swap.
+    const mirrored = det3(local) < 0;
     const base = this.vertexCount;
     const positions = new Float32Array(n * 3), normals = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
@@ -55,7 +71,7 @@ export class StaticBatchBuilder {
       positions[i * 3] = local[0] * x + local[4] * y + local[8] * z + local[12];
       positions[i * 3 + 1] = local[1] * x + local[5] * y + local[9] * z + local[13];
       positions[i * 3 + 2] = local[2] * x + local[6] * y + local[10] * z + local[14];
-      rotateNormal(local, cpu.normals[i * 3], cpu.normals[i * 3 + 1], cpu.normals[i * 3 + 2], normals, i * 3);
+      rotateNormal(nm, cpu.normals[i * 3], cpu.normals[i * 3 + 1], cpu.normals[i * 3 + 2], normals, i * 3);
     }
     this.chunks.push({ positions, normals, uvs: cpu.uvs });
     for (const sm of cpu.subMeshes) {
@@ -63,6 +79,7 @@ export class StaticBatchBuilder {
       if (!count) continue;
       const run = new Uint32Array(count);
       for (let i = 0; i < count; i++) run[i] = cpu.indices[sm.startIndex + i] + base;
+      if (mirrored) for (let i = 0; i + 2 < count; i += 3) { const t = run[i + 1]; run[i + 1] = run[i + 2]; run[i + 2] = t; }
       const key = resolveKey(sm.textureArchive, sm.textureRecord);
       let g = this.groups.get(key);
       if (!g) { g = []; this.groups.set(key, g); }

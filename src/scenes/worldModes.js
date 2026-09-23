@@ -25,6 +25,7 @@ import { bloodDecalDeps } from '../combat/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/bloodMarks.js';   // BLOOD1a
 import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY } from '../player/enterExit.js';
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
+import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE } from '../world/terrainSampler.js';   // TERRAIN-SCALE1: the interior cache's frame and the ground its legacy heights stood on
 import { startRestGroundedCheck, TELEPORT_FREEZE_S, motionBagOf } from '../player/motor.js';   // S40: the rest gate's grounded input; A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag
 import { signalAutomapReset } from '../ui/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automapDoor.js';   // EM3: the skin fork
@@ -422,7 +423,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:3613 hands
+   * record these hosts mint spells it `name` (exterior.js:3663 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -1076,7 +1077,7 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:317-318), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:864-868 and
+   *  READ the effect list every frame (exteriorFoes.js:882-886 and
    *  cityGuards.js:831-837 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -2999,9 +3000,24 @@ export function createWorldModes(host) {
     // an emptied scene container must ride it (GetSaveData has no empty
     // guard, SerializableLootContainer.cs:55-77) or AddFlats' next run
     // mints a fresh roll on its marker.
-    const droppedPiles = interiorDropped.snapshotScene();
-    const droppedTorches = interiorTorches.snapshot();   // HT1: HandheldTorchesSaveData, with the room
-    return { lootContainers, actionDoors, droppedPiles, droppedTorches };
+    // TERRAIN-SCALE1: MEASURED FROM THE BUILDING. P8 stands the interior at
+    // the building's world matrix, so a raw position is only right while
+    // the floating origin, and the ground under the building, stay where
+    // they were: a house's floor came back 819.2 off after a walk across a
+    // pixel edge, and a hundred units in the air after the terrain scale
+    // was put right. DFU restores an interior container by its
+    // localPosition (SerializableLootContainer's interior arm); so does the
+    // port now, relative to the building's own origin.
+    const o = buildingOrigin();
+    const droppedPiles = interiorDropped.snapshotScene().map((p) => ({ ...p, pos: [p.pos[0] - o[0], p.pos[1] - o[1], p.pos[2] - o[2]] }));
+    const droppedTorches = interiorTorches.snapshot((p) => [p[0] - o[0], p[1] - o[1], p[2] - o[2]]);   // HT1: HandheldTorchesSaveData, with the room
+    return { lootContainers, actionDoors, droppedPiles, droppedTorches, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE };
+  }
+  /** TERRAIN-SCALE1: the entered building's origin in this visit's scene frame - the translation of the matrix the
+   *  interior is parented at (P8: every door of a building carries the building's own matrix). */
+  function buildingOrigin() {
+    const m = exteriorDoor?.matrix;
+    return m ? [m[12], m[13], m[14]] : [0, 0, 0];
   }
 
   /** IS1's two fields - SetExteriorDoors' door identity and the
@@ -3061,8 +3077,16 @@ export function createWorldModes(host) {
     // pool was rebuilt empty on the way in, so clearing is a no-op,
     // and a scene that really holds no piles must not keep the last
     // building's.
-    interiorDropped.restorePiles(data.droppedPiles);
-    interiorTorches.restore(data.droppedTorches);   // HT1: a scene cached before this shipped carries none - cleared, as the piles are
+    // TERRAIN-SCALE1: a building-framed scene lands on this visit's origin; a legacy one (raw scene positions, written
+    // before the frame was carried) is taken at its word, its heights stood again on today's ground if a save carried
+    // it from the prefab's 1.5
+    const o = buildingOrigin();
+    const was = data.terrainScale > 0 ? data.terrainScale : DEFAULT_TERRAIN_SCALE;
+    const place = data.frame === 'building'
+      ? (p) => [p[0] + o[0], p[1] + o[1], p[2] + o[2]]
+      : (p) => [p[0], host.restandSceneHeight ? host.restandSceneHeight(p[1], p[0], p[2], was) : p[1], p[2]];
+    interiorDropped.restorePiles(data.droppedPiles ? data.droppedPiles.map((p) => ({ ...p, pos: place(p.pos) })) : data.droppedPiles);
+    interiorTorches.restore(data.droppedTorches, place);   // HT1: a scene cached before this shipped carries none - cleared, as the piles are
   }
 
   /** AUDIT 63 F22: AddFlats' RandomTreasure arm (DaggerfallInterior
@@ -7117,7 +7141,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:8501's own wave-46 note); the interior
+          // a blow (world.js:9045's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -8008,7 +8032,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3675`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3725`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -9603,9 +9627,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3261-3283), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3311-3333), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:5710). So an F9 pressed in a shop
+     *  unconditionally (world.js:6231). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9639,7 +9663,7 @@ export function createWorldModes(host) {
      *  presenter for the whole visit) or the interior's? world.js's gate read townTalk's slot alone. */
     deathUp() { return mode === 'dungeon' ? !!dungeonCtx?.deathUp?.() : interiorOverlay instanceof DeathScreen; },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:5803)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6324)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9649,7 +9673,7 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:5949`
+     *  HARD2c: this used to spell them out, and named `world.js:6484`
      *  and `dungeonContext.js:6250` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
