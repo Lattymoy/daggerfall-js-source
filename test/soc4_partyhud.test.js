@@ -115,7 +115,7 @@ test('SOC4: the panel - one card per OTHER member in SEAT ORDER and never my own
   // in the skin's pixel face now, which measures about 1.29x the width of the launcher face it wore before
   // (tools/font1Probe.mjs), and at 14px only 18 of a 24-character name fitted the 138px name box. At 13 it is 20,
   // which is what the size is doing here - the GREEN is the half of this line the pin is about, and it is unchanged.
-  assert.ok(PARTY_CSS.includes(`.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 13px; line-height: 1.2;\n  color: ${PARTY_GREEN_CSS};`), 'the name carries PARTY_GREEN_CSS from net/social.js, never a second green');
+  assert.ok(PARTY_CSS.includes(`.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px; line-height: 1.2;\n  color: ${PARTY_GREEN_CSS};`), 'the name carries PARTY_GREEN_CSS from net/social.js, never a second green');
   assert.equal(PARTY_GREEN_CSS, '#73ff73');
   // alone in a party, and out of one
   social.apply(stateFrame({ party: party([member('me', { acct: 'acct-me', name: 'Mac' })]) }));
@@ -245,7 +245,7 @@ test('SOC4: the portrait - loaded off the frame and drawn the moment it lands, C
   assert.equal(cyl.facebox.className, 'dfparty-face has', 'on both seats, from the one load');
   assert.equal(bran.pix.puts.length, 1);
   assert.deepEqual([bran.pix.width, bran.pix.height], [4, 5], 'the backing store is the record\'s own pixels');
-  assert.deepEqual([bran.pix.style.width, bran.pix.style.height], ['64px', '80px'], 'scaled by a WHOLE number - 1996 pixels drawn as pixels');
+  assert.deepEqual([bran.pix.style.width, bran.pix.style.height], ['32px', '40px'], 'scaled by a WHOLE number - 1996 pixels drawn as pixels (PARTY8: the 40x44 plate takes a 4x5 record at 8x)');
   assert.deepEqual([...bran.pix.puts[0].data.slice(0, 4)], [0x30, 0x20, 0x10, 0xff], 'the RGBA bytes bitmapToColor32 hands back, in order');
   // a repaint that changes nothing repaints no portrait
   const puts = bran.pix.puts.length;
@@ -508,7 +508,9 @@ test('FONT1: the party HUD is set in the enhanced face beside the HUD it stands 
     'mutant: the old `0 1px 2px #000` blur kept');
   // MEASURED, not guessed: the pixel face runs about 1.29x wider, so at
   // the old 14px only 18 characters of a 24-character name (NAME_MAX)
-  // fitted the card's 138px name box; at 13px it is 20
-  // (tools/font1Probe.mjs). The size is doing that work and nothing else.
-  assert.match(PARTY_CSS, /\.dfparty-name \{[^}]*font-size: 13px;/, 'mutant: back to 14px, which eats two more characters of every long name');
+  // fitted SOC4's 138px name box; at 13px it was 20 (tools/font1Probe.mjs).
+  // PARTY8: the compact card's name box is 146px beside a 40px plate and
+  // the name is 12px - about 19 characters - so the smaller card costs
+  // the name nothing the old one gave it. The size is doing that work.
+  assert.match(PARTY_CSS, /\.dfparty-name \{[^}]*font-size: 12px;/, 'mutant: back to 14px, which eats two more characters of every long name');
 });

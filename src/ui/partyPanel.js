@@ -3,6 +3,16 @@
 // THE PARTY HUD - one card per person I am travelling with, top-right of the screen (bottom right and narrower on
 // a phone, where the top right is the chat's: AUDIT SOC C6/C7).
 //
+// PARTY8 (Mac, 2026-09-22: "increase the party limit to 8, and also redesign the party UI so it doesnt clutter the
+// screen into a better enhanced design"): THE CARD IS COMPACT NOW. SOC4's card was a 72x80 portrait beside three
+// bars with their digits and a place line - a hundred pixels tall, 244 wide - which at three companions was a
+// corner and at seven would have been a column down the whole right edge of a 1080p screen. The card stands 40x44 of
+// portrait beside the name, three 4-pixel bars stacked under it and ONE small line that says the health in digits
+// and the place, at 200 wide and about 54 tall: seven of them are a third of the height, and the eye still reads
+// the one thing it came for - whose health bar is short. The stamina and magicka digits are gone from the card
+// (the bars say their shape; the digits were the clutter), and the seat count sits in the title, because a party of
+// eight is the kind whose count matters.
+//
 // WHY A SECOND SURFACE AND NOT A ROW IN THE FRIENDS PANEL. A friends list is a thing you OPEN; a party is a thing you
 // are IN while you play. The four-seat party is the formation you fight in, so the one question it must answer
 // without a click is "is my healer about to die" - which is a portrait, three bars and a place, drawn over the world
@@ -40,6 +50,7 @@ import { raceArt, FACES_PER_RACE } from '../systems/races.js';
 import { bitmapToColor32 } from '../formats/color32Order.js';   // the same indexed-to-RGBA door every classic screen reads
 import { isTouchDevice } from './touch.js';
 import { PARTY_GREEN_CSS, lastOnlineText } from '../net/social.js';   // one home for the green - "should turn green"
+import { PARTY_MAX } from '../net/wire.js';   // PARTY8: the seat count in the title
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 
 export const PARTY_STYLE_ID = 'dagger-party-style';
@@ -50,11 +61,11 @@ export const LEADER_MARK = '★';
 export const VITALS_BLANK = '- / -';
 /** The plate's mark while there is no portrait - a face-shaped hole, not a fake face. */
 export const FACE_BLANK_MARK = '?';
-/** The portrait plate, in CSS pixels. A racial head record is well under this, so it draws at an integer NEAREST
- *  scale (1996 pixels, and they should look it - ui/bitmapCanvas.js' own rule); anything larger is clamped by the
- *  sheet's max-width rather than overflowing the card. */
-export const FACE_BOX_W = 72;
-export const FACE_BOX_H = 80;
+/** The portrait plate, in CSS pixels. A racial head record fits this at 1x and draws at an integer NEAREST scale
+ *  (1996 pixels, and they should look it - ui/bitmapCanvas.js' own rule); anything larger is clamped by the sheet's
+ *  max-width rather than overflowing the card. PARTY8 halved it from 72x80: the compact card's plate. */
+export const FACE_BOX_W = 40;   // PARTY8: a head record drawn at 1x - the compact card's plate
+export const FACE_BOX_H = 44;
 
 /** The panel's sheet: the enhanced skin's tokens (ui/enhancedStyle.js) where they exist, a fallback where the
  *  skin's sheet is not loaded - the same shape ui/chatPanel.js uses, so the two surfaces agree over the world.
@@ -70,51 +81,56 @@ ${PIXELIFY_FIVE_FACE}
    40 put its first card's portrait straight through the middle of it. 92 clears the read-out with eight pixels to
    spare; the touch value stays 76, which is the number that clears the touch layer's own top-right buttons. */
 .dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + env(safe-area-inset-top, 0px));
-  width: 244px; max-width: calc(100vw - 16px); z-index: 5; pointer-events: none;
-  display: flex; flex-direction: column; gap: 4px;
+  width: 200px; max-width: calc(100vw - 16px); z-index: 5; pointer-events: none;
+  display: flex; flex-direction: column; gap: 3px;
   ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9);
   -webkit-user-select: none; user-select: none; }
 /* below the touch layer's own top-right row of buttons (ui/touch.js: top 16, 44 tall) */
 .dfparty.touch { top: calc(76px + env(safe-area-inset-top, 0px)); }
-/* AUDIT SOC C7: A PHONE HAS NO TOP-RIGHT CORNER TO SPARE. At 430x860 with the touch skin the 244px HUD covered 238
-   of the 402 pixels of every chat peek line - 59% of the conversation, and the open friends panel under it besides.
-   Narrower AND out of that corner: the HUD drops to the bottom right, above the touch layer's own jump and sheathe
-   column (ui/touch.js: bottom 16, 48 tall, so 76 clears them), where nothing is written and the finger never goes
-   (the HUD takes no pointer). The peek lines come back whole. */
+/* AUDIT SOC C7: A PHONE HAS NO TOP-RIGHT CORNER TO SPARE. At 430x860 with the touch skin the HUD covered most of every
+   chat peek line and the open friends panel under it besides. Narrower AND out of that corner: the HUD drops to the
+   bottom right, above the touch layer's own jump and sheathe column (ui/touch.js: bottom 16, 48 tall, so 76 clears
+   them), where nothing is written and the finger never goes (the HUD takes no pointer). */
 @media (max-width: 560px) {
   .dfparty, .dfparty.touch { width: 180px; top: auto; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 }
-.dfparty-title { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; text-align: right;
-  color: var(--dim, #8b8578); text-shadow: ${PIXEL_TEXT_SHADOW}; }
-.dfparty-list { display: flex; flex-direction: column; gap: 4px; }
-.dfparty-card { display: flex; gap: 8px; padding: 6px; border-radius: 6px;
-  background: rgba(14, 16, 19, .78); border: 1px solid var(--iron, #2b323b); backdrop-filter: blur(4px); }
+.dfparty-title { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; text-align: right;
+  color: var(--dim, #8b8578); text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
+.dfparty-count { margin-left: 6px; letter-spacing: 0; color: var(--bone, #e9e4d9); font-variant-numeric: tabular-nums; }
+.dfparty-list { display: flex; flex-direction: column; gap: 3px; }
+/* PARTY8: the compact card - a plate, a name, three thin bars, one small line */
+.dfparty-card { display: flex; gap: 6px; padding: 4px; border-radius: 4px;
+  background: rgba(14, 16, 19, .72); border: 1px solid var(--iron, #2b323b); backdrop-filter: blur(3px); }
 /* away: the whole card goes quiet - the portrait too, so a grey face is never mistaken for a live one */
 .dfparty-card.away { opacity: .46; filter: grayscale(1); }
-.dfparty-face { flex: none; width: ${FACE_BOX_W}px; height: ${FACE_BOX_H}px; overflow: hidden; border-radius: 4px;
+.dfparty-face { flex: none; width: ${FACE_BOX_W}px; height: ${FACE_BOX_H}px; overflow: hidden; border-radius: 3px;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(180deg, #232830, #14171b); border: 1px solid var(--iron, #2b323b); }
 .dfparty-facepix { display: none; max-width: 100%; max-height: 100%; image-rendering: pixelated; }
 .dfparty-face.has .dfparty-facepix { display: block; }
 .dfparty-face.has .dfparty-facemark { display: none; }
-.dfparty-facemark { font-size: 24px; font-weight: 600; color: var(--dim, #8b8578); opacity: .45; }
-.dfparty-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.dfparty-head { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
-.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 13px; line-height: 1.2;
+.dfparty-facemark { font-size: 16px; font-weight: 600; color: var(--dim, #8b8578); opacity: .45; }
+.dfparty-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.dfparty-head { display: flex; align-items: baseline; gap: 4px; min-width: 0; }
+.dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px; line-height: 1.2;
   color: ${PARTY_GREEN_CSS}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dfparty-lead { flex: none; font-size: 11px; line-height: 1; color: var(--brass, #c08a3e); }
+.dfparty-lead { flex: none; font-size: 10px; line-height: 1; color: var(--brass, #c08a3e); }
 .dfparty-lead.off { display: none; }
-.dfparty-where { font-size: 11px; line-height: 1.25; color: var(--dim, #8b8578);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dfparty-vital { display: flex; align-items: center; gap: 5px; }
-.dfparty-track { flex: 1; min-width: 0; height: 7px; border-radius: 2px; overflow: hidden;
+.dfparty-bars { display: flex; flex-direction: column; gap: 2px; }
+.dfparty-vital { display: flex; align-items: center; }
+.dfparty-track { flex: 1; min-width: 0; height: 4px; border-radius: 2px; overflow: hidden;
   background: rgba(0, 0, 0, .55); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .8); }
 .dfparty-fill { height: 100%; width: 0%; }
 .dfparty-vital.health .dfparty-fill { background: linear-gradient(180deg, #e2554c, #8a1d17); }
 .dfparty-vital.fatigue .dfparty-fill { background: linear-gradient(180deg, #62d26a, #1e7a2b); }
 .dfparty-vital.magicka .dfparty-fill { background: linear-gradient(180deg, #7089f2, #222f8e); }
-.dfparty-num { flex: none; width: 70px; text-align: right; font-size: 10px; line-height: 1.2;
-  color: var(--bone, #e9e4d9); font-variant-numeric: tabular-nums; }
+/* the digits beside a bar are kept on the node (a pin reads them) and drawn nowhere: the bar says the shape, and
+   the one number a party reads - the health - is on the foot line */
+.dfparty-num { display: none; }
+.dfparty-foot { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 9px; line-height: 1.2; }
+.dfparty-hp { flex: none; color: var(--bone, #e9e4d9); font-variant-numeric: tabular-nums; }
+.dfparty-where { flex: 1; min-width: 0; color: var(--dim, #8b8578); text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 `;
 
 /** The sheet, once (ui/chatPanel.js injectChatStyle's own shape). */
@@ -214,6 +230,8 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   root.setAttribute('role', 'group');
   root.setAttribute('aria-label', 'Party');
   const title = el('div', 'dfparty-title', 'Party');
+  const count = el('span', 'dfparty-count', '');   // PARTY8: the seats filled, of PARTY_MAX
+  title.append(count);
   const list = el('div', 'dfparty-list');
   root.append(title, list);
   doc.body.append(root);
@@ -292,7 +310,11 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     lead.setAttribute('title', 'Party leader');
     lead.setAttribute('aria-label', 'Party leader');
     head.append(name, lead);
-    const where = el('div', 'dfparty-where');
+    const where = el('span', 'dfparty-where');
+    const hp = el('span', 'dfparty-hp', VITALS_BLANK);   // PARTY8: the one number the card says - the health
+    const foot = el('div', 'dfparty-foot');
+    foot.append(hp, where);
+    const bars = el('div', 'dfparty-bars');
     const vitals = PARTY_VITALS.map((v) => {
       const row = el('div', `dfparty-vital ${v.key}`);
       const track = el('div', 'dfparty-track');
@@ -306,9 +328,10 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       row.setAttribute('aria-label', v.label);
       return { row, fill, num };
     });
-    body.append(head, where, ...vitals.map((v) => v.row));
+    bars.append(...vitals.map((v) => v.row));
+    body.append(head, bars, foot);
     node.append(facebox, body);
-    return { node, facebox, pix, name, lead, where, vitals, faceKey: null, drawn: null, away: null };
+    return { node, facebox, pix, name, lead, where, hp, vitals, faceKey: null, drawn: null, away: null };
   };
 
   /** One member onto one card - written PART BY PART, and only where the part differs. */
@@ -328,6 +351,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
       setWidth(slot.fill, `${p ? barPercent(p[v.now], p[v.max]) : 0}%`);
       setText(slot.num, p ? vitalsText(p[v.now], p[v.max]) : VITALS_BLANK);
     }
+    setText(card.hp, card.vitals[0].num.textContent);   // PARTY8: the health digits, on the foot line
     const key = p ? faceKeyOf(p) : null;
     if (key !== card.faceKey) {
       card.faceKey = key;
@@ -357,6 +381,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     const rows = social?.others?.() ?? [];
     const leader = social?.party?.leader ?? null;
     showing = rows.length > 0;
+    setText(count, `${(social?.party?.members?.length ?? rows.length + 1)}/${PARTY_MAX}`);   // PARTY8: the seats filled, me included
     for (const [acct, card] of cards) if (!rows.some((m) => m.acct === acct)) { card.node.remove?.(); cards.delete(acct); }
     const order = [];
     for (const m of rows) {
