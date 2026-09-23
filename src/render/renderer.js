@@ -1850,6 +1850,8 @@ export class Renderer {
   setClusters(on) { this._clustersWanted = !!on; }
   /** SC1: the static shadow cache's door - `?shadowcache=off` replays every caster at the cadence, as before (syncLightingLane reads it). */
   setShadowCache(on) { this._shadowCacheWanted = !!on; if (this._shadowPass) this._shadowPass.cacheOn = this._shadowCacheWanted; }
+  /** AUDIT SC1: the host's floating origin moved by `offset` - every remembered placement follows it (ShadowPass.shiftOrigin). */
+  shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); }
   /** LC1: the grid's two integer textures - the GRID (RG16UI: offset, count per cell) and the LIST (R8UI: light
    *  indices) - NEAREST, unfiltered, made once with the lane. Uploaded by texSubImage2D per world frame. */
   _ensureClusters() {
@@ -3696,6 +3698,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       light3Color: [...this._light3Color],
       windowEmission: this._windowEmission,
       pointLights: this._pointLights,
+      pointCarried: this._pointCarried,   // AUDIT LIGHT-NEAR1: the hand's mask rides with the lights (a subarray has no `.carried`)
       pointColor: this._pointColor,
       pointColors: this._pointColors,
       indirect: [this._indirect[0], this._indirect[1], this._indirect[2], this._indirect[3]],
@@ -3780,6 +3783,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._light3Color[2] = s.light3Color[2];
     this.setWindowEmission(s.windowEmission);
     this.setPointLights(s.pointLights, s.pointColor, s.pointColors);
+    this._pointCarried = s.pointCarried ?? null;   // AUDIT LIGHT-NEAR1: setPointLights read the mask off the array, and a snapshot's has none
     this.setIndirectLight([s.indirect[0], s.indirect[1], s.indirect[2]], s.indirect[3], s.indirectColor);
     this._proj = s.proj; this._view = s.view; this._lightDir = s.lightDir;
     this._frameStamp++;   // PERF3: a restored state is a new frame to the terrain block

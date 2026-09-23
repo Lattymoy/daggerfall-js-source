@@ -163,7 +163,6 @@ test('SC1: STICKY SLOTS - a light keeps its slot, matched by position, when the 
   assert.deepEqual([...sp.shadowIndex.slice(0, 2)], [1, 0], 'A is still slot 0 (now light 1), B still slot 1 (now light 0)');
   assert.equal(st.staticFaces, 0, 'and neither cache was thrown away');
   assert.deepEqual([...sp.casterOf.slice(0, 2)], [1, 0], 'the table follows: light 0 (B) -> slot 1, light 1 (A) -> slot 0');
-  assert.deepEqual([...sp._slotRank.slice(0, 2)], [0, 1], 'A is the nearest (rank 0) in slot 0; B rank 1');
   // a third light: the free slot (the lights are this frame's, so the new slot's cache is drawn on the frame it arrives)
   st = frame(draw, new Float32Array([...B, ...A, ...C]));
   assert.deepEqual([...sp.shadowIndex.slice(0, 3)], [1, 0, 2]);

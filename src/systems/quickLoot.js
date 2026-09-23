@@ -88,9 +88,9 @@ export const QUICK_LOOT_REFUSED = Object.freeze({ refused: true });
  *  `applyTransfer` spends into the counter and answers null for),
  *  `{ refusal }` when the plan says no, or null for a row the plan
  *  would USE rather than take. */
-function takeThrough(playerEntity, items, item, hooks) {
+function takeThrough(playerEntity, items, item, getQuest) {
   if (isMap(item)) return null;
-  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest: hooks.getQuest ?? null });
+  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });
   if (!plan.ok) return { refusal: plan.refusal };
   return applyTransfer(item, plan, items, (playerEntity.items ??= []), { entity: playerEntity, toPlayer: true }) ?? item;
 }
@@ -232,8 +232,18 @@ export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; }
  * Answers the item moved, or null - and null is the caller's signal to
  * do what it always did and open the window, so a host's loot arm keeps
  * exactly one behaviour when the switch is off.
+ *
+ * AUDIT QL-WEIGHT1: `getQuest` is the host's QUEST RESOLVER - the one it
+ * hands the inventory window (`(uid) => questBridge?.machine.getQuest(uid)`).
+ * The plan's quest arm (`questTransferRefused`) refuses a quest item it
+ * cannot resolve, as DFU does (:1489) - and no loot hooks carry a
+ * resolver, so QL-WEIGHT1's first cut refused EVERY quest item through
+ * this door and swallowed the press: a "bring back the ring" corpse
+ * said "You cannot remove this item." and never opened. The resolver
+ * rides beside the hooks, from the host, so the take and the window
+ * read the same quest.
  */
-export function quickLootTake(key, hooks, playerEntity, say = () => {}) {
+export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQuest = null } = {}) {
   const how = _pending;
   _pending = null;   // spent on the press it was armed for, whatever that press finds
   if (how === 'open') return null;   // J: the player asked for the window
@@ -251,17 +261,19 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}) {
     // stay on the pile for the window or the next press.
     let n = 0, refusal = null;
     for (const it of [...items]) {
-      const got = takeThrough(playerEntity, items, it, hooks);
+      const got = takeThrough(playerEntity, items, it, getQuest);
       if (got?.refusal) { refusal ??= got.refusal; continue; }
       if (got) n += 1;
     }
-    if (n) say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);
+    // AUDIT QL-WEIGHT1: a count with rows LEFT says why they stayed, on the same line - "You take 2 items." over a
+    // pile that still holds three read as a door that stuck, with the reason unsaid
+    if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal ? ` ${refusal.text}` : ''));
     else if (refusal) { say(refusal.text); return QUICK_LOOT_REFUSED; }
     return n ? items : null;
   }
   const item = quickLootItemAt(key, items);
   if (!item) return null;
-  const got = takeThrough(playerEntity, items, item, hooks);
+  const got = takeThrough(playerEntity, items, item, getQuest);
   if (got?.refusal) { say(got.refusal.text); return QUICK_LOOT_REFUSED; }
   if (got) say(tookItemText(got));
   return got;

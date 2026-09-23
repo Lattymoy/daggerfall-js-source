@@ -14,6 +14,7 @@
 // `tools/mutants/quickloot.json`.
 import './modsOff.js';
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 import {
@@ -25,6 +26,7 @@ import {
   quickLootRow, quickLootSelection, resetQuickLoot, quickLootTake, quickLootArm, QUICK_LOOT_REFUSED,
 } from '../src/systems/quickLoot.js';
 import { planTake, CANNOT_CARRY_TEXT } from '../src/systems/itemTransfer.js';   // QL-WEIGHT1: the window's plan, asked the same question
+import { CANNOT_REMOVE_ITEM_TEXT } from '../src/systems/createItem.js';   // AUDIT QL-WEIGHT1: the quest arm's refusal
 import { isMap } from '../src/systems/useItem.js';
 import { PREF_DEFAULTS, setPref } from '../src/systems/uiPrefs.js';
 
@@ -435,7 +437,7 @@ test('QL-WEIGHT1: QuickLootAll takes what fits and leaves the rest - the count l
   assert.ok(quickLootTake('pile:1', hooks(items), p, (l) => said.push(l)));
   assert.equal(p.items.length, 1);
   assert.equal(items.length, 2, 'two stay');
-  assert.deepEqual(said, ['You take 1 item.']);
+  assert.deepEqual(said, [`You take 1 item. ${CANNOT_CARRY_TEXT}`], 'AUDIT QL-WEIGHT1: the count, and WHY the rest stayed, on the one line');
   // full: the lot refused, and the press still handled
   foldQuickLoot(frameOf('pile:1', items));
   quickLootArm('QuickLootAll');
@@ -454,3 +456,41 @@ test('QL-WEIGHT1: a map is left for the window - it is a row the window USES rat
   assert.equal(items.length, 1);
   assert.deepEqual(p.items, []);
 }));
+
+test('AUDIT QL-WEIGHT1: a QUEST ITEM goes through the door with the host\'s own resolver - the plan resolves the quest, the item moves and its resource is marked picked up; with no resolver the plan refuses it (DFU\'s :1489), so the first cut refused every quest item on every corpse and swallowed the press (mutants: the resolver dropped on the way to the plan; the hosts passing none)', () => withQuickLoot(() => {
+  const p = player();
+  const res = { allowDrop: false, playerDropped: true };
+  const quest = { getItem: (sym) => (sym === '_ring_' ? res : null) };
+  const getQuest = (uid) => (uid === 7 ? quest : null);
+  const ring = () => item('Ring of Namira', { group: 'Jewellery', templateIndex: 133, questItem: true, questUID: 7, questSymbol: '_ring_' });
+  // the host's resolver rides beside the hooks: the ring moves
+  let items = [ring()];
+  foldQuickLoot(frameOf('foeCorpse:1', items));
+  const said = [];
+  const got = quickLootTake('foeCorpse:1', hooks(items), p, (l) => said.push(l), { getQuest });
+  assert.equal(got?.name, 'Ring of Namira', 'taken');
+  assert.deepEqual(items, [], 'off the body');
+  assert.equal(p.items[0]?.questItem, true, 'in the pack');
+  assert.equal(res.playerDropped, false, 'the resource knows it is carried again (the window\'s own write)');
+  assert.deepEqual(said, ['You take the Ring of Namira.']);
+  // no resolver: the plan cannot find the quest and refuses, as the window would with `getQuest: null`
+  items = [ring()];
+  foldQuickLoot(frameOf('foeCorpse:2', items));
+  assert.equal(quickLootTake('foeCorpse:2', hooks(items), p, (l) => said.push(l)), QUICK_LOOT_REFUSED, 'refused, the press handled');
+  assert.equal(said[1], CANNOT_REMOVE_ITEM_TEXT);
+  assert.equal(items.length, 1, 'still on the body');
+  // and the plan the window makes says the same, both ways
+  assert.equal(planTake(items[0], { bag: p.items, entity: p, getQuest }).ok, true);
+  assert.equal(planTake(items[0], { bag: p.items, entity: p, getQuest: null }).ok, false);
+}));
+
+test('AUDIT QL-WEIGHT1: every host hands the take the resolver it hands the window - seven calls in four hosts, each with `getQuest` (mutant: a host passing none, so its corpses refuse quest items)', () => {
+  const files = { 'src/scenes/world.js': 2, 'src/scenes/exterior.js': 2, 'src/scenes/worldModes.js': 2, 'src/scenes/dungeonContext.js': 1 };
+  for (const [f, n] of Object.entries(files)) {
+    const src = readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
+    const calls = src.match(/quickLootTake\(/g) ?? [];
+    const withQuest = src.match(/quickLootTake\([^\n]*\{ getQuest: \(uid\) => (opts\.)?questBridge\?\.machine\.?\??\.getQuest\??\.?\(uid\) \?\? null \}/g) ?? [];
+    assert.equal(calls.length, n, `${f}: the calls`);
+    assert.equal(withQuest.length, n, `${f}: each with the host's resolver`);
+  }
+});

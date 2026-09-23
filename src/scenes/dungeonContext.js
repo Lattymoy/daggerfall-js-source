@@ -3256,7 +3256,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:12795,
+              // playerArrowHitFoe is the one copy world.js:12796,
               // exterior.js:4953 and worldModes.js:7115 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
@@ -7111,7 +7111,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // between them), and an emptied pile's flat is settled as the
       // window's onEmptied would settle it. C6's order below stands:
       // the window's claim follows its mount.
-      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText)) {
+      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText, { getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null })) {   // AUDIT QL-WEIGHT1: the window's own resolver (openInventory's, :1512)
         const _q = lootHolder(key) ? lootKeyOf(key) : null;
         if (_q) publishLoot(_q);
         if (!source.length) onEmptied?.();

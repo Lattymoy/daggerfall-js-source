@@ -116,6 +116,8 @@ export const AIR_BLOOM_SCALE = 0.25;
 export const AIR_AO_RADIUS = 0.8;
 export const AIR_AO_SAMPLES = 6;       // HQ1: steps per side of a slice
 export const AIR_AO_DIRECTIONS = 2;    // HQ1: slices per pixel (the blur's tile completes the turn)
+export const AIR_AO_STORE = 0.5;       // AUDIT HQ1: the AO image holds a pixel's UNCLAMPED share at this scale (two slices of a grazing floor reach 1.1; one reaches 1.55)
+export const AIR_AO_FALLOFF = 0.6;     // AUDIT HQ1: the share of the radius over which a step's claim eases to nothing (the reference's 0.615)
 export const AIR_AO_STRENGTH = 1.0;
 export const AIR_AO_BIAS = 0.02;
 /** EL6: how much of the AO the resolve applies to the whole frame (the
@@ -448,9 +450,20 @@ precision highp float;
 in vec2 vUV;
 ${DEPTH_GLSL}
 ${BAYER_GLSL}
-uniform vec4 uAOParams;     // radius, strength, bias, the AO image's width in pixels
+uniform vec4 uAOParams;     // radius, strength, bias, unused
 out vec4 outColor;
-vec3 posAt(vec2 uv) {
+// AUDIT HQ1: THE POINT IS THE TEXEL'S. A depth read lands on a whole texel of the frame's depth image, but the
+// position was reconstructed at the SAMPLE's own screen coordinate - a texel's depth paired with a point up to
+// half a texel away from it - so a flat floor came back a hair above and below its own plane, texel by texel,
+// and more so with distance (the depth slope per texel grows): the far floor of the probe read 0.73 with nothing
+// near it. The uv is snapped to the texel's centre first, in the canvas's own pixels (the depth image is the
+// canvas's; the world rect maps into it), so a surface point IS a point of the surface.
+vec2 texelUV(vec2 wuv) {
+  vec2 px = floor(uRect.xy + wuv * uRect.zw) + 0.5;
+  return (px - uRect.xy) / uRect.zw;
+}
+vec3 posAt(vec2 uvIn) {
+  vec2 uv = texelUV(uvIn);
   float z = depthAt(uv) * 2.0 - 1.0;
   float vz = -uProjInfo.w / (z + uProjInfo.z);
   vec2 ndc = uv * 2.0 - 1.0;
@@ -458,7 +471,7 @@ vec3 posAt(vec2 uv) {
 }
 // HQ1: the horizon along one side of a slice - the highest angle (as a cosine against the view vector) any step
 // reaches, each step's claim weighted down by its distance so the radius is a soft edge and not a cliff
-float horizonAt(vec3 p, vec3 v, vec2 uv, vec2 dir, float radiusPx, float bias) {
+float horizonAt(vec3 p, vec3 n, vec3 v, vec2 uv, vec2 dir, float radiusPx, float bias) {
   float h = -1.0;
   for (int i = 1; i <= ${AIR_AO_SAMPLES}; i++) {
     float t = (float(i) - 0.5) / ${AIR_AO_SAMPLES}.0;
@@ -467,9 +480,12 @@ float horizonAt(vec3 p, vec3 v, vec2 uv, vec2 dir, float radiusPx, float bias) {
     vec3 s = posAt(suv) - p;
     float d = length(s);
     float c = dot(s, v) / max(d, 1e-5);
-    float w = clamp(1.0 - d / uAOParams.x, 0.0, 1.0);   // beyond the radius a step says nothing
+    float w = clamp((uAOParams.x - d) / (uAOParams.x * ${AIR_AO_FALLOFF}), 0.0, 1.0);   // a step's claim is whole to 1 - AIR_AO_FALLOFF of the radius, then eases to nothing at it (the reference's own shape)
     c = mix(-1.0, c, w);
-    if (d > bias) h = max(h, c);
+    // AUDIT HQ1: a step must RISE above the surface's own plane by the bias to be a horizon - a flat floor read off
+    // a half-size depth image lands a hair above and below its own plane texel by texel, and without this every
+    // flat surface shaded itself a fifth (the crate top read 0.81 on the probe)
+    if (dot(s, n) > bias) h = max(h, c);
   }
   return h;
 }
@@ -477,30 +493,44 @@ void main() {
   float d0 = depthAt(vUV);
   if (d0 >= 0.99999) { outColor = vec4(1.0); return; }
   vec3 p = posAt(vUV);
+  // AUDIT HQ1: the quad's derivative stands. A normal from the nearer neighbour each way (the silhouette-edge
+  // mitigation) was tried and read WORSE on SwiftShader (the crate's two flanks 0.71 / 0.95 against 0.95 / 0.96
+  // here); the depth-aware blur keeps an edge quad's normal from smearing past its edge.
   vec3 n = normalize(cross(dFdx(p), dFdy(p)));
   if (dot(n, -p) < 0.0) n = -n;   // a normal faces the eye whatever the projection's handedness did to the derivatives
   vec3 v = normalize(-p);
   // the radius on screen, in the AO image's uv: the world radius over the view distance, through the focal term
-  float radiusPx = uAOParams.x * uProjInfo.x / max(-p.z, 1e-3) * 0.5;
+  // (AUDIT HQ1: its magnitude - the hosts' projection is x-mirrored, so proj[0] is negative)
+  float radiusPx = uAOParams.x * abs(uProjInfo.x) / max(-p.z, 1e-3) * 0.5;
   // EL6: the slices' rotation is a 4x4 ORDERED pattern, not a hash - the 4x4
   // box blur after it averages exactly one tile, so the pattern cancels; a
   // hash was grain that never cancelled, and in the dark the grain was all
   // a texture had ("textures in the dark look weird")
-  float ang = bayer4(gl_FragCoord.xy) * 6.2831853;
+  // AUDIT HQ1: a quarter turn, not a whole one - a slice is a LINE through the pixel and the second slice is the
+  // first's perpendicular, so orientations repeat every quarter turn; sixteen levels over a whole turn were four
+  // orientations said four times, which the 4x4 blur tile could not tell apart (rows paired up on the probe)
+  float ang = bayer4(gl_FragCoord.xy) * 1.5707963;
   float vis = 0.0;
   for (int k = 0; k < ${AIR_AO_DIRECTIONS}; k++) {
     float a = ang + float(k) * ${(Math.PI / 2).toFixed(7)};   // HQ1: the slices a quarter turn apart
-    vec2 dir = vec2(cos(a), sin(a)) * vec2(1.0, uProjInfo.x / uProjInfo.y);   // a circle on screen, whatever the aspect
-    // the slice's plane: the view vector and the direction; the normal projected into it
-    vec3 sliceDir = normalize(vec3(dir.x, dir.y, 0.0));
+    // AUDIT HQ1: the march is a CIRCLE IN VIEW SPACE. A uv step (du, dv) is a view step (du / proj[0], dv / proj[5])
+    // times the depth, so a view-space circle of radius r is the uv ellipse (cos a, sin a * |proj[5] / proj[0]|) *
+    // r * |proj[0]| / (2 depth) - the y term carries the ASPECT, |proj[5] / proj[0]| (1.6 at 16:9). The first cut
+    // had the ratio upside down, so the vertical marches reached a third of the radius and a floor's own plane read
+    // as a horizon where the too-short slice met its neighbour's.
+    vec2 dir = vec2(cos(a), sin(a) * abs(uProjInfo.y / uProjInfo.x));
+    // the slice's plane: the view vector and the marched direction IN VIEW SPACE - the unscaled circle, with screen
+    // +x being view -x under the hosts' mirrored projection (proj[0] < 0) - so the marched side and the projected
+    // normal's side agree, or the horizons' clamps land on the wrong sides
+    vec3 sliceDir = normalize(vec3(dir.x / uProjInfo.x, dir.y / uProjInfo.y, 0.0));   // AUDIT HQ1: exactly the view step a uv step of dir is (posAt divides by the same terms) - the sign and the aspect fall out of it
     vec3 axis = normalize(cross(sliceDir, v));
     vec3 np = n - axis * dot(n, axis);
     float npl = length(np);
-    if (npl < 1e-4) { vis += 1.0; continue; }
+    if (npl < 1e-4) continue;   // AUDIT HQ1: a slice the normal has no part in weighs nothing (the sum is weighted by the projected normal's length, and averages to one over the slices)
     np /= npl;
     float gamma = sign(dot(np, sliceDir)) * acos(clamp(dot(np, v), -1.0, 1.0));   // the projected normal's angle off the view vector, signed toward the slice
-    float h1 = acos(clamp(horizonAt(p, v, vUV, dir, radiusPx, uAOParams.z), -1.0, 1.0));    // the horizon angles either side, from the view vector
-    float h2 = acos(clamp(horizonAt(p, v, vUV, -dir, radiusPx, uAOParams.z), -1.0, 1.0));
+    float h1 = acos(clamp(horizonAt(p, n, v, vUV, -dir, radiusPx, uAOParams.z), -1.0, 1.0));   // the horizon angles either side, from the view vector: h1 the -dir side
+    float h2 = acos(clamp(horizonAt(p, n, v, vUV, dir, radiusPx, uAOParams.z), -1.0, 1.0));    // h2 the +dir side (gamma is signed toward +dir)
     // the arc the projected normal lets in: clamp each horizon to the hemisphere about it
     h1 = gamma + max(-h1 - gamma, -1.5707963);
     h2 = gamma + min(h2 - gamma, 1.5707963);
@@ -509,9 +539,13 @@ void main() {
     float a2 = 0.25 * (-cos(2.0 * h2 - gamma) + cos(gamma) + 2.0 * h2 * sin(gamma));
     vis += npl * (a1 + a2);
   }
-  float ao = clamp(vis / ${AIR_AO_DIRECTIONS}.0, 0.0, 1.0);
-  ao = 1.0 - (1.0 - ao) * uAOParams.y;
-  outColor = vec4(vec3(ao), 1.0);
+  // AUDIT HQ1: NOT CLAMPED HERE. A slice's unoccluded visibility is |np| (cos gamma + gamma sin gamma), which is
+  // one only AVERAGED over every slice direction (0.2 to 1.55 for one slice of a floor seen at a grazing angle) -
+  // so two slices of one pixel read 0.87 to 1.09 by the pixel's rotation, and clamping each pixel to one before
+  // the blur averaged the losses and kept none of the gains: a flat floor read 0.85 at some rotations and 0.97 blurred.
+  // The pixel stores its share at half scale (the byte holds to 2.0) and the blur, which averages exactly one tile
+  // of rotations, is where one is one again - and where the strength and the clamp are applied.
+  outColor = vec4(vec3(vis / ${AIR_AO_DIRECTIONS}.0 * ${AIR_AO_STORE}), 1.0);
 }`;
 
 // EL7: THE BLUR IS DEPTH-AWARE. A plain box averaged a wall's occlusion into
@@ -524,6 +558,7 @@ in vec2 vUV;
 uniform sampler2D uSrc;
 uniform vec2 uTexel;
 uniform float uBlurRange;
+uniform float uStrength;   // AUDIT HQ1: the strength on the occlusion, after the tile's average
 ${DEPTH_GLSL}
 out vec4 outColor;
 void main() {
@@ -537,7 +572,9 @@ void main() {
       wsum += w;
     }
   }
-  outColor = vec4(vec3(wsum > 0.0 ? acc / wsum : 1.0), 1.0);
+  float ao = clamp(wsum > 0.0 ? acc / wsum / ${AIR_AO_STORE} : 1.0, 0.0, 1.0);   // AUDIT HQ1: the tile's average, unscaled, is where the clamp belongs
+  ao = 1.0 - (1.0 - ao) * uStrength;
+  outColor = vec4(vec3(ao), 1.0);
 }`;
 
 const GAUSS_FS = `#version 300 es
@@ -728,7 +765,7 @@ export class AirPass {
     const P = (vs, fs, names) => { const p = opts.build(vs, fs); const o = { p }; for (const n of names) o[n] = u(p, n); return o; };
     this.programs = {
       ao: P(QUAD_VS, AO_FS, ['uDepth', 'uProjInfo', 'uAOParams', 'uRect', 'uCanvas']),   // HQ1: no kernel - the horizons march the slices
-      box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel', 'uBlurRange', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),
+      box: P(QUAD_VS, BOX_FS, ['uSrc', 'uTexel', 'uBlurRange', 'uStrength', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),
       gauss: P(QUAD_VS, GAUSS_FS, ['uSrc', 'uDir']),
       shaft: P(QUAD_VS, SHAFT_FS, ['uDepth', 'uSun', 'uShaftParams', 'uSunColor', 'uProjInfo', 'uRect', 'uCanvas', 'uEye', 'uCloudShadowMap', 'uCloudShadowRect']),   // VC6c: the cloud in front of the sun
       emitMesh: P(opts.vs.mesh, EMIT_MESH_FS, ['uProj', 'uView', 'uModel', 'uEmissionTex', 'uEmissionColor', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas', 'uBloomSize']),
@@ -998,6 +1035,7 @@ export class AirPass {
     gl.activeTexture(gl.TEXTURE0);
     gl.uniform2f(this.programs.box.uTexel, 1 / T.ao.w, 1 / T.ao.h);
     gl.uniform1f(this.programs.box.uBlurRange, AIR_AO_RADIUS);
+    gl.uniform1f(this.programs.box.uStrength, this.aoParams[1]);   // AUDIT HQ1
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     // 2. the bloom source: the emitters (this frame's records, culled, occluded), and a glare per lantern
     gl.bindFramebuffer(gl.FRAMEBUFFER, T.bloom.fbo);

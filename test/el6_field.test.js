@@ -51,7 +51,7 @@ test('EL6: the constants and the shader laws - the lights archive, the emitter s
   assert.equal(SHADOW_POINT_CASTERS, 8);   // HQ1: eight, on SC1's cache
   assert.equal(AIR_EMIT_SLACK, 0.15); assert.equal(AIR_AO_RESOLVE, 0.75);
   const a = read('src/render/airPass.js');
-  assert.match(a, /float ang = bayer4\(gl_FragCoord\.xy\) \* 6\.2831853;/, 'the AO rotation is the 4x4 ordered threshold');
+  assert.match(a, /float ang = bayer4\(gl_FragCoord\.xy\) \* 1\.5707963;/, 'the AO rotation is the 4x4 ordered threshold (AUDIT HQ1: over a quarter turn - a slice is a line)');
   assert.ok(!/hash\(gl_FragCoord/.test(a), 'no hash rotation left');
   assert.match(a, /for \(int y = -2; y < 2; y\+\+\) \{\n    for \(int x = -2; x < 2; x\+\+\) \{/, 'and the blur is one 4x4 tile');
   assert.match(BAYER_GLSL, /float bayer4\(vec2 p\) \{/, 'the port\'s one Bayer (orderedDither.js), the skies\' too');

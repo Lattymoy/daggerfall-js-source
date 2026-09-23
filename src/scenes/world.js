@@ -11811,7 +11811,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // moved) opens the window exactly as before.
               pool.takeLoot(lootKey, (l) => townTalk.say(l),
                 inventoryDoorReady() ? (loot) => {
-                  if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l))) return;
+                  if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
                   townTalk.showOverlay(makeInventoryWindow({ loot }));
                 } : null);
               surfacePlayer();
@@ -11831,7 +11831,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               const _hooks = droppedLootHooks(pile);
               // QUICK-LOOT B4: the same door, on the player's own pile -
               // the hooks this arm was already building for the window.
-              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l))) return;
+              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
               townTalk.showOverlay(makeInventoryWindow({
                 // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
                 // This arm hand-rolled the window with the SAME eleven hooks
@@ -11880,6 +11880,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       cam.pos[0] += r.offset[0]; cam.pos[1] += r.offset[1]; cam.pos[2] += r.offset[2];
       player.offsetOrigin(r.offset);   // EV1: shifts BOTH ends of the interpolation span - no 819-unit lerp frame
       sky.offsetOrigin(r.offset);   // VC4: the clouds and their shadow keep their place over the land
+      renderer.shadowOriginShift?.(r.offset);   // AUDIT SC1: the shadow cache's remembered placements follow the origin too, or every still caster reads as moved for a second
       // AUDIT 17e F23: everything else holding a WORLD position must
       // follow the origin too, or it strands 819.2 units behind.
       doorGeneration += 1;   // WORLD-HOVER: the floating origin moved, so every door's WORLD matrix did

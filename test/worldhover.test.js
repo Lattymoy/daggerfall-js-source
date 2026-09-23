@@ -1274,7 +1274,7 @@ test('INTERIOR-BODIES: a body killed inside a building is stood, named, listed a
   // QUICK-LOOT B4: the window callback gained a DECLINE in front of it -
   // quick loot is handed the same `loot` hooks the window would get, and
   // a null answer falls through to exactly the call that was here.
-  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*const pool = key\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards;\n(?:\s*\/\/[^\n]*\n)*\s*pool\?\.takeLoot\(key, \(l\) => say\(l\), \(loot\) => \{\n\s*if \(quickLootTake\(key, loot, playerEntity, \(l\) => say\(l\)\)\) return;\n\s*mountInterior\(interiorInventory\(\{ loot \}\)\);\n\s*\}\);\n\s*return true;\n\s*\}/,
+  assert.match(wm, /if \(key\.startsWith\('foeCorpse:'\) \|\| key\.startsWith\('guardCorpse:'\)\) \{\n\s*const pool = key\.startsWith\('foeCorpse:'\) \? interiorFoes : interiorGuards;\n(?:\s*\/\/[^\n]*\n)*\s*pool\?\.takeLoot\(key, \(l\) => say\(l\), \(loot\) => \{\n\s*if \(quickLootTake\(key, loot, playerEntity, \(l\) => say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*mountInterior\(interiorInventory\(\{ loot \}\)\);\n\s*\}\);\n\s*return true;\n\s*\}/,
     'the press arm the bodies never had');
 
   // ...and it sits INSIDE the reach refusal, like every other family in

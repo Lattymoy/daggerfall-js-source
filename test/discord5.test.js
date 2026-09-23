@@ -208,7 +208,7 @@ test('HOTSLOT by source: the HUD\'s empty spell chip is a SOCKET (drawn dim, wea
 
 test('LOOT-REGEN by source: the dungeon\'s quick-loot take is the room\'s word - what is left is said and stamped the moment the take lands, an emptied pile\'s flat is settled, and C6\'s window order stands untouched behind it', () => {
   const d = rd('src/scenes/dungeonContext.js');
-  assert.match(d, /if \(quickLootTake\(key, \{ items: \(\) => source \}, playerEntity, setMidScreenText\)\) \{\s*const _q = lootHolder\(key\) \? lootKeyOf\(key\) : null;\s*if \(_q\) publishLoot\(_q\);\s*if \(!source\.length\) onEmptied\?\.\(\);\s*return source\.length;\s*\}\s*const _k = lootHolder\(key\) \? lootKeyOf\(key\) : null;\s*activeOverlay = openInventory\(source, onEmptied, \{ lootHooks, lootKey: _k \}\);/);
+  assert.match(d, /if \(quickLootTake\(key, \{ items: \(\) => source \}, playerEntity, setMidScreenText, \{ getQuest: \(uid\) => opts\.questBridge\?\.machine\?\.getQuest\?\.\(uid\) \?\? null \}\)\) \{[^\n]*\n\s*const _q = lootHolder\(key\) \? lootKeyOf\(key\) : null;\s*if \(_q\) publishLoot\(_q\);\s*if \(!source\.length\) onEmptied\?\.\(\);\s*return source\.length;\s*\}\s*const _k = lootHolder\(key\) \? lootKeyOf\(key\) : null;\s*activeOverlay = openInventory\(source, onEmptied, \{ lootHooks, lootKey: _k \}\);/);
   // publishLoot without `claim` is the whole word: the stamp, the record, the seen-set, the first-word memory push
   assert.match(d, /function publishLoot\(key, \{ claim = false \} = \{\}\) \{\s*const canon = lootKeyOf\(key\);\s*if \(!canon \|\| !lootHolder\(canon\)\) return false;\s*if \(claim && _lootSeen\.has\(canon\)\) return false;/);
 });

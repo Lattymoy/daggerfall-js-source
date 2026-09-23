@@ -5660,7 +5660,7 @@ export function createWorldModes(host) {
         // QUICK-LOOT B4: through the window's own door - `loot` is the
         // container's hooks, the object this arm would hand the window.
         pool?.takeLoot(key, (l) => say(l), (loot) => {
-          if (quickLootTake(key, loot, playerEntity, (l) => say(l))) return;
+          if (quickLootTake(key, loot, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
           mountInterior(interiorInventory({ loot }));
         });
         return true;
@@ -5686,7 +5686,7 @@ export function createWorldModes(host) {
         if (pile) {
           const _hooks = droppedLootHooks(pile);   // G5
           // QUICK-LOOT B4: the same door, on the player's own pile.
-          if (!quickLootTake(key, _hooks, playerEntity, (l) => say(l))) mountInterior(interiorInventory({ loot: _hooks }));
+          if (!quickLootTake(key, _hooks, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) mountInterior(interiorInventory({ loot: _hooks }));   // AUDIT QL-WEIGHT1
         }
         return true;
       }

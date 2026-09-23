@@ -264,6 +264,13 @@ export const SHADOW_RECORD_MAX = 6000;
  *  many frames it rides the cheap path (drawn alone on top) until it has been still for a second, and only
  *  then joins the cache once. */
 export const SHADOW_DYNAMIC_HOLD = 60;
+/** AUDIT SC1: how many placements of ONE mesh the pass remembers (a dungeon's doors share a model), and how far a
+ *  draw may sit from a remembered placement and still be that placement's (a door swings a hand's breadth a frame). */
+export const SHADOW_INSTANCE_MAX = 64;
+export const SHADOW_INSTANCE_REACH = 2;
+/** AUDIT SC1: a remembered placement matches to this - a floating-origin rebase adds the offset in a different order
+ *  than the host did, and the last bit of a float is no motion. */
+export const SHADOW_STILL_EPS = 1e-3;
 /** SC1: the door - `?shadowcache=off` replays every caster at the cadence, as before. */
 export function shadowCacheOn(search = globalThis.location?.search ?? '') {
   return new URLSearchParams(search).get('shadowcache') !== 'off';
@@ -577,27 +584,15 @@ export class ShadowPass {
       gl.readBuffer(gl.NONE);
       this.pointFbos.push(fbo);
     }
-    // SC1: THE STATIC CACHE - the same shape again, one set of six layers per slot, blitted into the live array
-    const cache = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D_ARRAY, cache);
-    gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE, 6 * SHADOW_POINT_CASTERS);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    this.cacheTex = cache;
+    // SC1: THE STATIC CACHE - the same shape again, one set of six layers per slot, blitted into the live array;
+    // AUDIT SC1: made on the first frame that wants it (_ensureCache), not here - fifty megabytes of depth that
+    // `?shadowcache=off` never reads were allocated all the same
+    this.cacheTex = null;
     this.cacheFbos = [];
-    for (let l = 0; l < 6 * SHADOW_POINT_CASTERS; l++) {
-      const fbo = gl.createFramebuffer();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, cache, 0, l);
-      gl.drawBuffers([gl.NONE]);
-      gl.readBuffer(gl.NONE);
-      this.cacheFbos.push(fbo);
-    }
     this.cacheOn = true;                                          // SC1: the door (renderer.setShadowCache)
     this._slotSig = new Int32Array(2 * SHADOW_POINT_CASTERS);     // SC1: per slot, the static signature's (hash, count) the cache was drawn from
     this._slotCached = new Uint8Array(SHADOW_POINT_CASTERS);      // SC1: the cache holds this slot's light's statics
     this._slotLiveDyn = new Uint8Array(SHADOW_POINT_CASTERS);     // SC1: the live layers carry dynamics over the cache
-    this._slotRank = new Int32Array(SHADOW_POINT_CASTERS);        // SC1: the slot's light's rank by distance this frame (the cadence's near two are the nearest, whatever their slot)
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
     // the pool: records are minted once and reused by index
@@ -624,12 +619,36 @@ export class ShadowPass {
     this._slotOfScratch = new Int32Array(SHADOW_POINT_CASTERS);   // SC1: rank -> slot
     this._slotTakenScratch = new Uint8Array(SHADOW_POINT_CASTERS);
     this._sig = { hash: 0, count: 0 };
+    this._shiftGen = 0;                 // AUDIT SC1: the floating origin's generation (shiftOrigin)
+    this._shiftAcc = [[0, 0, 0]];       // ...and the origin's cumulative offset at each generation
+    this._shiftD = [0, 0, 0];
     this._identityView = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
     this._right = new Float32Array(3); this._up = new Float32Array([0, 1, 0]);
     this._zeroWind = new Float32Array(4);
     this._sunVPFlat = new Float32Array(16 * SHADOW_CASCADES.length);
   }
 
+  /** AUDIT SC1: the static cache's array and framebuffers, once, on the first frame the door is open. */
+  _ensureCache() {
+    if (this.cacheTex) return;
+    const gl = this.gl;
+    const cache = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, cache);
+    gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE, 6 * SHADOW_POINT_CASTERS);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    this.cacheTex = cache;
+    for (let l = 0; l < 6 * SHADOW_POINT_CASTERS; l++) {
+      const fbo = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+      gl.framebufferTextureLayer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, cache, 0, l);
+      gl.drawBuffers([gl.NONE]);
+      gl.readBuffer(gl.NONE);
+      this.cacheFbos.push(fbo);
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);
+  }
   _rec() {
     if (this.count >= SHADOW_RECORD_MAX) return null;
     let r = this.records[this.count];
@@ -641,16 +660,56 @@ export class ShadowPass {
     this.count++;
     return r;
   }
+  /** AUDIT SC1: THE HOST'S FLOATING ORIGIN MOVED by `offset` (world.js recentres every 819 units). Every placement the
+   *  pass remembers was seen from the old origin; rather than walk objects it holds no list of, the pass counts a
+   *  generation and each object is rebased on its next draw by the offsets between its generation and this one.
+   *  Without it every still caster read as moved for SHADOW_DYNAMIC_HOLD frames after a crossing - a near-empty
+   *  cache rebuilt per slot, then the whole town replayed as dynamic at the cadence for a second, then rebuilt again. */
+  shiftOrigin(offset) {
+    const a = this._shiftAcc[this._shiftGen];
+    this._shiftAcc.push([a[0] + offset[0], a[1] + offset[1], a[2] + offset[2]]);
+    this._shiftGen++;
+  }
+  /** the offset from generation `gen`'s origin to the current one */
+  _shiftDelta(gen) {
+    const from = this._shiftAcc[gen], to = this._shiftAcc[this._shiftGen], d = this._shiftD;
+    d[0] = to[0] - from[0]; d[1] = to[1] - from[1]; d[2] = to[2] - from[2];
+    return d;
+  }
   /** SC1: is this object's placement the one it had when last recorded - and remember this one. A first sight is
-   *  static (a new caster changes the signature by itself); a mesh drawn at two matrices in one frame reads as
-   *  moved each time, which costs a dynamic replay and never a wrong shadow. */
+   *  static (a new caster changes the signature by itself).
+   *
+   *  AUDIT SC1: the memory is PER PLACEMENT, not per mesh. The hosts draw one GPU mesh at many matrices - a
+   *  dungeon's action doors share a model, the windmills, the city gates, a model too odd to batch - and the first
+   *  cut kept one matrix per mesh, so two doors of one model read as moved on EVERY draw (each saw the other's
+   *  matrix) and every lantern near them paid the dynamic replay forever. A draw is matched to the remembered
+   *  placement nearest its own translation within SHADOW_INSTANCE_REACH (two doors of one model stand rooms apart;
+   *  a swinging door moves a hand's breadth a frame), and a placement past SHADOW_INSTANCE_MAX is dynamic - never a
+   *  wrong shadow, only a dearer one. */
   _moved(o, matrix) {
-    const m = o._shMat;
-    if (!m) { o._shMat = new Float32Array(matrix); return false; }
+    let inst = o._shInst;
+    if (!inst) { inst = o._shInst = []; o._shGen = this._shiftGen; }
+    else if (o._shGen !== this._shiftGen) {
+      const d = this._shiftDelta(o._shGen);
+      for (const s of inst) { s.m[12] += d[0]; s.m[13] += d[1]; s.m[14] += d[2]; }
+      o._shGen = this._shiftGen;
+    }
+    const x = matrix[12], y = matrix[13], z = matrix[14];
+    let best = null, bestD = SHADOW_INSTANCE_REACH * SHADOW_INSTANCE_REACH;
+    for (let i = 0; i < inst.length; i++) {
+      const m = inst[i].m, d = (m[12] - x) * (m[12] - x) + (m[13] - y) * (m[13] - y) + (m[14] - z) * (m[14] - z);
+      if (d < bestD) { bestD = d; best = inst[i]; }
+    }
+    if (!best) {
+      if (inst.length >= SHADOW_INSTANCE_MAX) return true;
+      inst.push({ m: new Float32Array(matrix), at: null });
+      return false;
+    }
+    const m = best.m;
     let same = true;
-    for (let i = 0; i < 16; i++) if (m[i] !== matrix[i]) { same = false; break; }
-    if (!same) { m.set(matrix); o._shMovedAt = this.frameNo; }
-    return o._shMovedAt != null && this.frameNo - o._shMovedAt < SHADOW_DYNAMIC_HOLD;   // moved now, or within the hold
+    for (let i = 0; i < 16; i++) if (Math.abs(m[i] - matrix[i]) > SHADOW_STILL_EPS) { same = false; break; }
+    if (!same) { m.set(matrix); best.at = this.frameNo; }
+    return best.at != null && this.frameNo - best.at < SHADOW_DYNAMIC_HOLD;   // moved now, or within the hold
   }
   recordMesh(mesh, matrix, texRemap) {
     const r = this._rec(); if (!r) return;
@@ -689,13 +748,19 @@ export class ShadowPass {
     r.right.set(camRight); r.up.set(camUp);   // EL3: the basis the batch was drawn with, for the emission replay
     r.bounded = false;   // a batch list is culled batch by batch (each has its own bounds about its origin)
     // SC1: a flat is dynamic while its origin moves (a walker, a missile, a thrown torch) - per batch, remembered on the batch
+    // AUDIT SC1: ...and while its FRAME changes (an animated flat's silhouette is the frame's - a townsman's idle,
+    // a 211 prop - and the cache would have held the build frame's until an unrelated rebuild), and always for a
+    // batch built dynamic (`_dyn`: moveBillboardBatch rewrites its vertices with the origin left null, so the
+    // origin test never saw a gib fly). The origin follows the floating origin as a mesh's placement does.
     let anyDyn = false;
     for (const b of batches) {
       if (!b) continue;
-      const o = b.origin, ox = o ? o[0] : 0, oy = o ? o[1] : 0, oz = o ? o[2] : 0;
-      if (b._shSeen === true && !(b._shOx === ox && b._shOy === oy && b._shOz === oz)) b._shMovedAt = this.frameNo;
-      const dyn = b._shMovedAt != null && this.frameNo - b._shMovedAt < SHADOW_DYNAMIC_HOLD;   // moved now, or within the hold
-      b._shSeen = true; b._shOx = ox; b._shOy = oy; b._shOz = oz; b._shDyn = dyn;
+      const o = b.origin, ox = o ? o[0] : 0, oy = o ? o[1] : 0, oz = o ? o[2] : 0, fr = b.frame ?? -1;
+      if (b._shSeen === true && b._shGen !== this._shiftGen) { const d = this._shiftDelta(b._shGen ?? 0); b._shOx += d[0]; b._shOy += d[1]; b._shOz += d[2]; }
+      b._shGen = this._shiftGen;
+      if (b._shSeen === true && !(Math.abs(b._shOx - ox) <= SHADOW_STILL_EPS && Math.abs(b._shOy - oy) <= SHADOW_STILL_EPS && Math.abs(b._shOz - oz) <= SHADOW_STILL_EPS && b._shFrame === fr)) b._shMovedAt = this.frameNo;
+      const dyn = b._dyn === true || (b._shMovedAt != null && this.frameNo - b._shMovedAt < SHADOW_DYNAMIC_HOLD);   // built dynamic, moved now, or within the hold
+      b._shSeen = true; b._shOx = ox; b._shOy = oy; b._shOz = oz; b._shFrame = fr; b._shDyn = dyn;
       if (dyn) anyDyn = true;
     }
     r.dynamic = anyDyn;   // the record carries a dynamic batch (the replay reads each batch's own word)
@@ -741,6 +806,7 @@ export class ShadowPass {
     // of them, each into its six layers; the replays are culled to the
     // lantern's range and the face's frustum, so a caster costs what it lights
     const casters = pickShadowCasters(f.pointLights, f.eye, SHADOW_POINT_CASTERS, f.carried);   // MAC-T1; LIGHT-NEAR1
+    if (this.cacheOn && casters.length) this._ensureCache();   // AUDIT SC1
     const L = f.pointLights;
     // MAC-T1: the hand's light is -2 in the caster table - no slot, and no contact march either (enhancedLighting reads
     // the same table): F3's "never for the light in the hand", said by name rather than by distance from the camera
@@ -772,7 +838,6 @@ export class ShadowPass {
       const o = k * 4;
       const changed = !(sl[o] === pos[0] && sl[o + 1] === pos[1] && sl[o + 2] === pos[2] && sl[o + 3] === far);
       const due = rank < SHADOW_NEAR_CASTERS || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;   // SC1: by the light's RANK - the nearest two, whatever slot they hold
-      this._slotRank[k] = rank;
       if (!this.cacheOn) {
         // the old path whole: every caster in range, static or not, into the live layers at the cadence
         if (changed || due) {
@@ -803,7 +868,7 @@ export class ShadowPass {
           this._slotCached[k] = 1; this._slotSig[k * 2] = sig.hash; this._slotSig[k * 2 + 1] = sig.count;
         } else this.stats.cachedSlots++;
         // the dynamics on top: the cache blitted into the live layers, then the moving casters alone, at the cadence
-        const dynNear = this._dynamicNear(pos, far);
+        const dynNear = this._dynamicNear(pos, far, f.isSpectral);
         if (dynNear && (due || staticStale || !this._slotLiveDyn[k])) {
           this._blitSlot(k);
           if (!matrices) pointFaceMatrices(pos, far, this.faceVP);
@@ -856,14 +921,18 @@ export class ShadowPass {
     this._sig.hash = h; this._sig.count = n;
     return this._sig;
   }
-  /** SC1: is any dynamic caster in the lantern's reach. */
-  _dynamicNear(pos, far) {
+  /** SC1: is any dynamic caster in the lantern's reach.
+   *  AUDIT SC1: a dynamic the replay would not DRAW is no reason to replay - the first cut counted a moving flame
+   *  (SHADOW_LIGHT_FLATS), a no-cast archive, a flat under SHADOW_FLAT_MIN_HEIGHT and a ghost, and paid the blit and six
+   *  faces at the cadence to draw nothing; the skips are the replay's own (its point-light arm, texel 0). */
+  _dynamicNear(pos, far, isSpectral) {
     for (let i = 0; i < this.count; i++) {
       const r = this.records[i];
       if (r.kind === REC_BB) {
         if (!r.dynamic) continue;
         for (const b of r.batches) {
           if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.conceal) continue;
+          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;
           const o = b.origin;
           if (!b.bounds || spheresTouch(b.bounds[0] + (o ? o[0] : 0), b.bounds[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, b.bounds[2] + (o ? o[2] : 0), b.bounds[3], pos[0], pos[1], pos[2], far)) return true;
         }

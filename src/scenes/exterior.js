@@ -4589,7 +4589,7 @@ export async function bootExterior(canvas, renderer, params, status) {
             // its callback rather than ahead of it.
             (lootKey.startsWith('foeCorpse:') ? exteriorFoes : cityGuards).takeLoot(lootKey, (l) => townTalk.say(l),
               inventoryDoorReady() ? (loot) => {
-                if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l))) return;
+                if (quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
                 townTalk.showOverlay(makeInventoryWindow({ loot }));
               } : null);
             surfacePlayer();
@@ -4607,7 +4607,7 @@ export async function bootExterior(canvas, renderer, params, status) {
             const pile = droppedLoot.pileFor(dropKey);
             const _hooks = droppedLootHooks(pile);
             // QUICK-LOOT B4: the same door, on the player's own pile.
-            if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l))) return;
+            if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
             townTalk.showOverlay(makeInventoryWindow({
               // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
               // This arm hand-rolled the window with the SAME eleven hooks
@@ -4918,7 +4918,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:12120-12320 is the shape.
+    // through the player for ever. world.js:12121-12321 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -5166,7 +5166,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:12427's order, and the order
+          // BEFORE civilians - world.js:12428's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {

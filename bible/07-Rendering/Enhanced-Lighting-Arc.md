@@ -1061,3 +1061,110 @@ Pinned: el1/el4 (the finish through `elTonemapRGB`), el3 (the horizon
 shader by text, the constants), el2/el5/el6/el8 (eight slots). Seen on
 SwiftShader by `tools/enhancedLightingProbe.mjs` - every assertion
 standing - and the scenes' PNGs beside EL5's for the eye.
+
+## AUDIT LIGHTING - THREE LENSES OVER THE DAY'S FIVE (2026-09-23, Mac: "Before we do that can we audit everything so far")
+
+Three read-only lenses over LIGHT-NEAR1, QL-WEIGHT1, LC1, SC1 and HQ1
+before the second arc's last step, and what they found paid in one
+commit. Ranked as found.
+
+**QL-WEIGHT1 refused every quest item (HIGH).** The take goes through
+`planTake`, and the plan's quest arm refuses a quest item it cannot
+resolve (DFU's :1489, `getQuest: null`) - and no loot hooks carry a
+resolver, so a "kill X and bring back Y" corpse said "You cannot remove
+this item." through the quick door and, the refusal being truthy,
+never opened the window either. `quickLootTake` takes the host's own
+resolver beside the hooks now (`{ getQuest }`, the same closure each host
+hands the inventory window), seven calls in four hosts. And QuickLootAll
+says WHY the rest stayed on the one line with the count.
+
+**HQ1's horizons, four ways wrong (HIGH).** The committed shader's
+horizon sides were assigned against the projected normal's sign for the
+horizontal slice (right on floors, where gamma is 0; a corridor wall
+seen obliquely read 0.17 where 0.9 was due); the aspect on the y step
+was upside down (a vertical slice reached a third of the radius); a
+depth read landed on a whole texel while the point was reconstructed at
+the sample's own coordinate, so a flat floor stood a hair above and
+below its own plane and shaded itself (0.73 far off); the bias was a
+distance guard, not a plane guard; a slice the normal had no part in
+added a whole unoccluded slice. Now: the point is the texel's (`texelUV`
+snaps to the canvas pixel), the plane guard is `dot(s, n) > bias`, the
+march is a circle in view space (`dir.y` carries |proj[5] / proj[0]|),
+the slice's plane is exactly the marched step's (`sliceDir` = the view
+step a uv step is, through the terms `posAt` divides by - the sign and
+the aspect fall out), an empty slice adds nothing, the falloff is the
+reference's share of the radius (`AIR_AO_FALLOFF` 0.6), the rotation is
+a quarter turn (a slice is a line; sixteen levels over a whole turn were
+four orientations said four times, which paired rows on the probe). And
+the last of them, found by the probe's flat floor still reading 0.97: a
+slice's unoccluded visibility is |np| (cos gamma + gamma sin gamma),
+which is one only AVERAGED over every slice direction (0.2 to 1.55 for
+one slice of a floor seen at a grazing angle), so two slices of one
+pixel read 0.87 to 1.09 by the pixel's rotation - and clamping each
+pixel to one before the blur averaged the losses and kept none of the
+gains. The pixel stores its share unclamped at half scale
+(`AIR_AO_STORE`) and the blur, which averages exactly one tile of
+rotations, is where one is one again and where the strength and the
+clamp are applied. A normal from the nearer neighbour each way (the
+silhouette mitigation the lens asked for) was tried and read worse on
+SwiftShader (the flanks 0.71 / 0.95), so the quad's derivative stands
+with the depth-aware blur guarding its edges. `tools/aoProbe.mjs` (new)
+reads the picture back on SwiftShader: the open floor 1.000 at every
+depth, the crate top 0.996, its two flanks symmetric (0.960 / 0.971
+where the old kernel read 0.910 / 0.959) and a little darker than the
+open floor (seen edge-on, the march barely meets them), its front - the
+wall that faces the eye - darker by a sixth (0.843).
+
+**LC1's near band (MEDIUM).** A light whose sphere reached in front of
+the near slice (depth - r < 0.25) was written to no cell a fragment
+nearer than 0.25 could land in - a hole an arm's length from the eye.
+`cellsOfSphere` flags `nearFull` and the build writes such a light to
+every tile of slice 0.
+
+**SC1's classifier (MEDIUM, perf).** The motion memory was one matrix
+PER MESH, and the hosts draw one GPU mesh at many matrices - a dungeon's
+action doors share a model, the windmills, the city gates - so two doors
+of one model read as moved on every draw and every lantern near them
+paid the blit and the dynamic replay forever; the "still room costs
+zero" claim failed in any dungeon with two doors of one model near a
+lamp. The memory is per PLACEMENT now (`_shInst`: a draw matched to the
+remembered placement nearest its translation within
+`SHADOW_INSTANCE_REACH` 2, up to `SHADOW_INSTANCE_MAX` 64, and past that
+dynamic - never a wrong shadow). Four more in the same pass: a batch
+built dynamic (`_dyn`, the gibs) is dynamic from its first sight; a
+flat's FRAME is in the memory (an animated flat froze in the cache); the
+floating origin's crossing is TOLD to the pass (`shadowOriginShift` from
+world.js's recentre block; a generation and cumulative offsets rebase
+each remembered placement on its next draw) where before every still
+caster read as moved for `SHADOW_DYNAMIC_HOLD` frames - a near-empty
+cache per slot, the whole town replayed as dynamic for a second, then
+rebuilt again; `_dynamicNear` skips what the replay skips (a moving
+flame, a no-cast archive, a short flat, a ghost); the cache's fifty
+megabytes are made on the first frame that wants them, not under
+`?shadowcache=off`. Two kept as known and written down: the wind's sway
+is not in the signature (a lantern's shadow of a swaying tree holds one
+phase - the sun's, uncached, sways as before), and outdoors the hosts
+cull casters to the VIEW frustum, so turning the camera changes the
+still set in a lantern's reach and rebuilds its cache (a caster off
+screen but in reach was missing from the map before SC1 too; the fix is
+the hosts' - shadow-range culling - and not this pass's).
+
+**LIGHT-NEAR1's snapshot (LOW, latent).** The panel-frame snapshot
+stored the lights without their carried mask and restored them through
+`setPointLights`, which cleared it - and with the distance rule gone the
+mask is the ONLY thing keeping the hand's torch out of the caster slots.
+Every host sets its lights right before `beginFrame`, so it never bit;
+the snapshot carries `pointCarried` now.
+
+Checked and clean: the tonemap's JS and GLSL twins term for term, every
+caster-sized array following `SHADOW_POINT_CASTERS`, the carried mask
+through every host that composes a player light, the shadow cache's GL
+state (READ/DRAW bindings reset, blit legality, no sampler on the cache),
+the hold, the signature's order-freedom, slot refills, the door both
+ways.
+
+Pinned: `test/audit_lighting.test.js` (the two doors, the crossing, the
+gib and the frame, the flame that is no reason, the lazy cache, the
+mask through a panel, the curve's laws), quickloot (the ring through the
+door, the seven calls), lc1 (the near band), el3 (the shader by text).
+Campaign: `tools/mutants/auditlight.json`, 22 mutants, 22 dead.

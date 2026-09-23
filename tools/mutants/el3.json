@@ -74,8 +74,8 @@
   {
     "name": "ao-no-distance-weight",
     "file": "src/render/airPass.js",
-    "old": "    float w = clamp(1.0 - d / uAOParams.x, 0.0, 1.0);   // beyond the radius a step says nothing\n    c = mix(-1.0, c, w);",
-    "new": "    float w = 1.0;\n    c = mix(-1.0, c, w);",
+    "old": "    float w = clamp((uAOParams.x - d) / (uAOParams.x * ${AIR_AO_FALLOFF}), 0.0, 1.0);",
+    "new": "    float w = 1.0;",
     "tests": [
       "test/el3_air.test.js"
     ]
