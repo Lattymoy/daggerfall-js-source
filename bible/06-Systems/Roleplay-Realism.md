@@ -86,6 +86,15 @@ Read against the C#:
 - **The ship gate** in the wilderness is `location.Loaded == false ->
   false`; a host that cannot say where it stands (`portTown` null)
   hands the question back to DFU's HasShip rather than refusing.
+  **SHIP-PORTS (2026-09-23): `shipPorts` ships OFF here, ON in the
+  mod** - the one departure from the mod's defaults. The day the merge
+  landed, Sir McMobdon on Discord: "cant access my boat anymore"; the
+  module restricts the Ship row to a port town (Hazelnut's list with
+  Travel Options on), every boat owner lost the classic
+  board-from-anywhere without choosing to, and the switch was not on
+  the Features home, so the only way back was the whole mod off. It is
+  curated on the home now (`MOD_CURATED`) and off until a player asks
+  for the port rule.
 - **Purification** keeps its eight ingredients (the same recipe key)
   with HealHealth and CurePoison `(3,1)` where DFU's carries HealHealth
   and Invisibility `(13,0)`.
