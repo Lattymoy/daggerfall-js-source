@@ -559,3 +559,42 @@ FixedUpdate, which does not run under PauseGame's timeScale 0.
 the report, and both open-world hosts call it on every frame they hold
 the motor. `spawn()` clears it too (a teleport or load). The modal hosts
 already gated their readers.
+
+---
+
+# DISC9 - rain in the tavern with none in the street
+
+Mac: *"Btw now it's not raining outside and you can hear it raining
+inside? Stop shipping broken fixes"*.
+
+**Cause.** Two readers answered "is it raining here" from two different
+words. On the enhanced lane the street's ear follows what is FALLING (the
+front's `soundWeather`): the front eases an episode in behind the cloud's
+arrival and has dry spells inside it, so a 'rain' word over a dry street is
+a cloudy day to the ear and the eye. Better Ambience's indoor rain
+(InteriorAmbientSoundSource) read the sim's raw word instead. Walk into a
+building while the sim said rain and nothing had fallen yet, and the mod
+played a shower through the walls that the street did not have. Measured:
+with the cloud not yet arrived, 30 s of a 'rain' word were 30 s of nothing
+falling. DISC6-C made the street's rain and the mod's share one slot
+without checking they read the same weather; they did not. The fault is
+older than DISC6 (the mod always read the sim's word), and DISC6 is where
+it should have been caught.
+
+**Fix.** One word for every ear: `weatherSim.heardWeather()`. The outdoor
+frame of both open-world hosts writes the word the street heard
+(`setHeardWeather(ambientWord)`); indoors it holds, as the front does not
+tick there (DFU's WeatherManager does not); a jump (a load, a travel
+landing, a respawn) lands the player under the sim's sky whole and the
+held word falls back to the sim's. Better Ambience's default weather is
+`heardWeather`, and the modal ambience's preset reads it too. The classic
+lane is unchanged (there the ear's word IS the sim's).
+
+**Recorded, not changed.** The music's weather (`_musicLocationType`'s
+state, world.js) still reads the sim's word, so its rain songs can start
+before the front's first drop; the rules (summoning, survival) read the
+sim's word by design.
+
+Pinned by execution in `test/disc8.test.js` (DISC9, with the real front,
+the real sim and the mod as shipped); mutants in `tools/mutants/disc8.json`
+(4 more).

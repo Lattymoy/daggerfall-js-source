@@ -162,3 +162,54 @@ test('DISC8-B: a swimmer too heavy to float climbs the pool\'s stairs and swims 
   const steep = swimOut(pool(3), 80, 3);
   assert.ok(at(3, steep)[1] - at(1.5, steep)[1] > 0.5, `45 degrees: no dead stop (${at(1.5, steep)[1]} -> ${at(3, steep)[1]})`);
 });
+
+test('DISC9: indoors you hear the rain the street heard - the sim\'s word says rain, the front has not brought a drop to the player yet (a cloudy day to the street\'s ear), and Better Ambience\'s tavern rain stays silent; once it falls outside it falls inside; a load (a jump) lands under the sim\'s sky whole (Mac: "now it\'s not raining outside and you can hear it raining inside"; mutants: the mod reads the sim\'s word; the heard word outlives a jump)', async () => {
+  const W = await import('../src/systems/weatherSim.js');
+  const { createWeatherFront, soundWeather } = await import('../src/systems/weatherFront.js');
+  const { createBetterAmbience, readBetterAmbienceSettings, BETTER_AMBIENCE_VENDOR } = await import('../src/systems/betterAmbience.js');
+  const { MOD_SETTINGS } = await import('../src/systems/modSettings.js');
+  W.resetWeatherSim();
+  try {
+    const store = Object.fromEntries(Object.entries(MOD_SETTINGS[BETTER_AMBIENCE_VENDOR].keys).map(([k, d]) => [k, d.default]));
+    const loops = [];
+    const audio = {
+      registerSound: async () => true, playOneShot: () => {}, setReverb: () => true,
+      loop: (k) => { const l = { k, stopped: false, stop() { this.stopped = true; } }; loops.push(l); return l; },
+      loop3d: () => null,
+    };
+    // the mod as shipped: NO weather dep - its default is the ear's word
+    const ba = createBetterAmbience({ audio, settings: () => readBetterAmbienceSettings(() => store), random: () => 0, fetchClip: async () => new Uint8Array([1]), snowFree: () => false });
+    const entity = { items: [], activeEffects: [], maxHealth: 100 };
+    const m = (o) => ({ entity, inside: false, inBuilding: false, inDungeon: false, grounded: true, standingStill: true, isRunning: false, movingLessThanHalfSpeed: true, levitating: false, swimming: false, motorSwimming: false, pos: [0, 0, 0], centreY: 0.9, waterSurfaceY: null, onExteriorWater: false, onExteriorWaterAny: false, onExteriorPath: false, onStaticGeometry: false, onFoot: true, winter: false, climateIndex: 231, loadInProgress: false, ...o });
+    ba.frame(0, m({})); await ba.settle();
+    // the street: the sim turns to rain, the cloud has not arrived - nothing falls, the street hears a cloudy day
+    W.setWeather('rain');
+    const front = createWeatherFront({ seed: 7 });
+    let fx = null;
+    for (let i = 0; i < 60; i++) { fx = front.tick({ dt: 1 / 60, weather: W.currentWeather(), arrival: 0, nowMinutes: 1000, tsec: i / 60, jump: false }); W.setHeardWeather(soundWeather(fx, W.currentWeather())); }
+    assert.equal(W.currentWeather(), 'rain', 'the sim says rain');
+    assert.notEqual(W.heardWeather(), 'rain', 'the street hears no rain - nothing is falling');
+    // into the tavern
+    ba.onTransition({ dungeon: null, building: true }); ba.settleTransition(); ba.frame(0.016, m({ inside: true, inBuilding: true }));
+    assert.equal(loops.filter((l) => !l.stopped).length, 0, 'no rain in the tavern when none fell in the street');
+    // back out, the shower arrives and falls; back in, the tavern hears it through the walls
+    ba.onTransition({ dungeon: null, building: false }); ba.settleTransition(); ba.frame(0.016, m({}));
+    for (let i = 0; i < 60 * 20; i++) { fx = front.tick({ dt: 1 / 60, weather: 'rain', arrival: 1, nowMinutes: 1000, tsec: 1 + i / 60, jump: false }); W.setHeardWeather(soundWeather(fx, 'rain')); }
+    assert.equal(W.heardWeather(), 'rain', 'the rain is falling in the street');
+    ba.onTransition({ dungeon: null, building: true }); ba.settleTransition(); ba.frame(0.016, m({ inside: true, inBuilding: true }));
+    assert.equal(loops.filter((l) => !l.stopped).length, 1, 'and now the tavern hears it');
+    // a load lands the player under the saved sky, whole: the word heard before it no longer stands
+    W.setHeardWeather('cloudy');
+    W.restoreWeather('sunny');
+    assert.equal(W.heardWeather(), 'sunny', 'after a jump the ear takes the sim\'s word');
+  } finally { W.resetWeatherSim(); }
+});
+
+test('DISC9 by source: both open-world hosts write the heard word where the street computes it, and read it indoors', () => {
+  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
+    const s = rd(f);
+    assert.match(s, /ambientWord = enhancedFront \? soundWeather\(fx, weather\) : weather;\n\s*setHeardWeather\(ambientWord\);/, f);
+    assert.match(s, /ambience\.setPreset\(presetForExterior\(heardWeather\(\), isNight\(minuteNow\(\)\)\)\);/, f);
+  }
+  assert.match(rd('src/systems/betterAmbience.js'), /weather = heardWeather, snowFree/);
+});
