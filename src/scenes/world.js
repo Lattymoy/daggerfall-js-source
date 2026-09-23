@@ -295,8 +295,8 @@ import { makeVideoQueue } from '../systems/quest/videoQueue.js';   // CRUX1: the
 import { createPartyPanel } from '../ui/partyPanel.js';   // SOC4: the party HUD - my party's portraits and their health / stamina / magicka
 import { createSocialPanel, TRY_AGAIN_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
 import { glyphMarks } from '../ui/playerBadge.js';   // PEER-PLAQUE1: a badge's plain-text marks, for the plaque's title
-import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerPromptText } from '../player/socialPick.js';
-import { allyCastSpell, allyCastable, allyCastTargetLine, allyCastPlaqueLine } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at a party mate   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
+import { pickPeerInFront, SOCIAL_REACH, peerRayPick, peerIdOfKey, peerPromptText } from '../player/socialPick.js';   // SOC5: which body the ray struck, and how far "on their body" reaches; PEER-PLAQUE1: and the plaque's half of the same pick
+import { allyCastSpell, allyCastable, allyReachFor, allyCastTargetLine, allyCastPlaqueLine } from '../systems/allyCast.js';   // ALLY-CAST: a beneficial spell at a party mate
 import { createTradeManager, TRADE_RANGE_M, inTradeRange } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
 import { createTradePack } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
@@ -3474,20 +3474,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // whichever rig owns the frame is the one that steps them to the
     // release.
     startCastAnim: (sp, onRelease) => !!weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
-    // ALLY-CAST (2026-09-23, Mac: "the use of spells on players ... some sort of ally targeting system"): THE PARTY
-    // MATE UNDER THE CROSSHAIR - the F key's own pick (player/socialPick.js pickPeerInFront over peersNear(), the
-    // ray the social menu casts) at the reach the spell's range type asks (systems/allyCast.js), a party member
-    // alone (social.isPartyPeer - a party is invite-only, and that is the whole trust), and one some socket of mine
-    // can reach (online.reachesPeer). Null in every other case, and the cast goes the ordinary way.
-    allyTarget: (eye, dir, reach) => {
-      if (!social?.party || !online) return null;
-      const hit = pickPeerInFront(eye ?? cam.pos, dir ?? socialFwd(), peersNear(), reach, rayPersonDistance);
-      if (!hit || !social.isPartyPeer(hit.peer.id) || !online.reachesPeer?.(hit.peer.id)) return null;
-      return { id: hit.peer.id, name: peerName(hit.peer.id) ?? 'a party member' };
-    },
-    // ...and the door the cast leaves through: the link's own directed frame (net/online.js sendCast), which answers
-    // whether it went - a refusal (the gate, the socket gone) lets the release fall through to the ordinary arm.
-    castAtAlly: (id, frame) => !!online?.sendCast?.(frame),
+    // ALLY-CAST (2026-09-23, Mac: "the use of spells on players ... some sort of ally targeting system"): the party
+    // mate under the crosshair (allyTargetPick, beside socialFwd) and the door the cast leaves through
+    allyTarget: (eye, dir, reach) => allyTargetPick(eye, dir, reach),   // lazily: the pick is declared beside socialFwd, below this engine's build
+    castAtAlly: (id, frame) => castAtAllyDoor(id, frame),
     surfacePlayer,
     // X-slice: encounter foes are spell targets too.
     //
@@ -3579,7 +3569,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:2419 mounts the same one, gated on
+  // and dungeonContext.js:2423 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
   // that context through modes.dungeonCtx - so worldModes.js:5544
@@ -5587,7 +5577,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6201), so exterior mode and a
+    // composer, dungeonContext.js:6206), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -7532,7 +7522,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8639-8703 -
+  // worldModes answers it in BOTH modes (worldModes.js:8641-8705 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -8983,17 +8973,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     // ALLY-CAST: a party mate's spell at ME. THE RECEIVER DECIDES: a cast from anyone outside my party is dropped
     // unread (the sender chose the peer; a party is invite-only), so is one at a dead player, and of what arrived only
     // the beneficial families are kept (systems/allyCast.js allyCastSpell - a crafted Damage Health lands nothing).
-    // The rest is the ordinary player door a foe's cast at me already takes (hostMagic applySpellToPlayer: my own
-    // saving throw, absorption, reflection, the caster's level), with the caster's name said.
+    // The rest is the ordinary player door (hostMagic applySpellToPlayer) at the caster's level, the record landing
+    // AS A SELF-CAST (allyCastSpell: rangeType 0 - AUDIT ALLY-CAST C1, no saving throw against a gift) and tagged
+    // as a mate's (`allyCast` - C2/C4: never merged with my own bundle of the same effect, dispelled as my own), with
+    // the caster's name said FIRST so the spell's own lines read under it (C5), and the heal reported as the health
+    // that actually moved, not the magnitude rolled (a full-health player is healed 0 points, and hears none).
     online.onCast = (id, d) => {
       if (!social?.isPartyPeer(id)) return;
       if (playerEntity.health <= 0 || modes?.deathUp?.()) return;
       const spell = allyCastSpell(d?.spell);
       if (!spell) return;
       const who = peerName(id) ?? 'A party member';
-      const r = magic.applySpellToPlayer(spell, d.level, null);
       townTalk.say(allyCastTargetLine(who, spell.name));
-      if (r?.healed > 0) townTalk.say(`You are healed ${r.healed} points.`);
+      const before = playerEntity.health;
+      magic.applySpellToPlayer(spell, d.level, null, { allyCast: true });
+      const healed = Math.max(0, Math.trunc(playerEntity.health - before));
+      if (healed > 0) townTalk.say(`You are healed ${healed} points.`);
       surfacePlayer();
     };
     online.onAct = (id, data) => { modes?.applyPlaceActions?.(id, data); };   // WORLD3: another's door, lever or platform; WORLD6a: in a building too
@@ -10297,11 +10292,35 @@ export async function bootWorld(canvas, renderer, params, status) {
     const badge = online?.badgeOf?.(id) ?? null;
     const marks = badge ? glyphMarks(badge) : '';
     const prompt = social ? peerPromptText({ ...social.actionsFor(id), ...tradeActionsFor(id) }, interactKeyLabel()) : null;
-    // ALLY-CAST: a castable spell readied and a party mate under the crosshair - the plaque says where it will land
-    const sp = magic?.readied?.();
-    const cast = sp && social?.isPartyPeer(id) && allyCastable(sp) ? allyCastPlaqueLine(sp.name, name) : null;
+    // ALLY-CAST: a castable spell readied and a party mate under the crosshair - the plaque says where it will land.
+    // AUDIT ALLY-CAST A3/A5: the spell is the LIVE engine's (the dungeon runs its own createPlayerMagic; the surface
+    // one's ready is stale there) and the line is said only when that engine's own allyInReach - the reach the
+    // spell's range type asks, its collider's line of sight, a member some socket reaches - names THIS peer: the
+    // plaque never promises a cast the click would not make.
+    const underground = modes?.mode === 'dungeon';
+    const sp = (underground ? modes?.dungeonCtx?.readiedSpell?.() : magic?.readied?.()) ?? null;
+    const reach = sp && social?.isPartyPeer(id) && allyCastable(sp) ? allyReachFor(sp.rangeType) : null;
+    const pick = reach !== null ? (underground ? modes?.dungeonCtx?.allyInReach?.(cam.pos, socialFwd(), reach) : magic?.allyInReach?.(cam.pos, socialFwd(), reach)) ?? null : null;
+    const cast = pick?.id === id ? allyCastPlaqueLine(sp.name, name) : null;
     return { title: marks ? `${name} ${marks}` : name, subs: [cast, prompt].filter(Boolean) };
   };
+  /** ALLY-CAST: THE PARTY MATE UNDER THE CROSSHAIR - the F key's own pick (player/socialPick.js pickPeerInFront over
+   *  peersNear(), the ray the social menu casts) at the reach the spell's range type asks (systems/allyCast.js), a
+   *  party member alone (social.isPartyPeer - a party is invite-only, and that is the whole trust), and one some
+   *  socket of mine can reach (online.reachesPeer). Null in every other case, and the cast goes the ordinary way.
+   *  The distance rides so the cast engine can run its line-of-sight rule over it (hostMagic allyInReach, AUDIT
+   *  ALLY-CAST A2). One pick for both engines: the surface one takes it as a dep, the dungeon's through the host
+   *  object worldModes hands buildDungeonContext (A3). */
+  const allyTargetPick = (eye, dir, reach) => {
+    if (!social?.party || !online) return null;
+    const hit = pickPeerInFront(eye ?? cam.pos, dir ?? socialFwd(), peersNear(), reach, rayPersonDistance);
+    if (!hit || !social.isPartyPeer(hit.peer.id) || !online.reachesPeer?.(hit.peer.id)) return null;
+    return { id: hit.peer.id, name: peerName(hit.peer.id) ?? 'a party member', distance: hit.distance };
+  };
+  /** ...and the door the cast leaves through: the link's own directed frame (net/online.js sendCast), which answers
+   *  whether it went - a refusal (the gate, the socket gone, a relay too old to route it) lets the release fall
+   *  through to the ordinary arm. */
+  const castAtAllyDoor = (id, frame) => !!online?.sendCast?.(frame);
   /** SOC5's own forward - the camera's yaw and pitch, the ray the F key casts; PEER-PLAQUE1's modal pick casts the same one (AUDIT DROPS E3). */
   const socialFwd = () => [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)];
   const socialInteract = () => {
@@ -10510,6 +10529,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // player the key would not reach"
     peerHoverPick: () => _hoverPeerPick(cam.pos, socialFwd()),
     peerHoverName: (key) => peerHoverName(key),
+    allyTarget: allyTargetPick,   // AUDIT ALLY-CAST A3: the dungeon's own cast engine asks the same pick, and leaves through the same door
+    castAtAlly: castAtAllyDoor,
     pointerSurfaceUp: () => pointerSurfaces.size > 0,   // AUDIT DROPS E1: the plaque comes down under the F-menu, the chat and the friends panel indoors and underground too (AUDIT-WH2 L3-F3's law, the street's own term)
     onDungeonLeave: () => worldPublish(performance.now(), true),   // WORLD1: the room's memory goes out while the dungeon still stands
     onInteriorLeave: () => worldPublish(performance.now(), true),   // WORLD6a: and a building's while the building still stands

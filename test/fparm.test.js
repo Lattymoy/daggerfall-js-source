@@ -3080,7 +3080,9 @@ test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stan
   assert.match(src, /weaponGroup = composeWeaponGroup\(type, hasGroup\)\.group;/);
   // and the instant path exists in the engine exactly as described
   const hm = readFileSync('src/scenes/hostMagic.js', 'utf8');
-  assert.match(hm, /if \(sp\.rangeType === 0\) \{ castInput\(null, null\); return; \}/,
+  // AUDIT ALLY-CAST A1: the instant arm arms instead when a party mate is in touch reach; with nobody there it is
+  // the same synchronous castInput, which is the case F2 exists for.
+  assert.match(hm, /if \(sp\.rangeType === 0\) \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyInReach\([^\n]*\n\s*castInput\(null, null\); return;\n\s*\}/,
     'the CasterOnly instant cast is the case F2 exists for');
   // ROAD-E6 folded the four release arms' identical tail into one
   // `done` closure - RaiseOnCastReadySpell (:2129) still runs BEFORE

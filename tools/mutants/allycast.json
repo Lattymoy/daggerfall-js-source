@@ -4,104 +4,332 @@
     "file": "src/systems/allyCast.js",
     "old": "  return fx.length > 0 && fx.every(allyEffect);",
     "new": "  return fx.length > 0 && fx.some(allyEffect);",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-receiver-keeps-everything",
     "file": "src/systems/allyCast.js",
     "old": "  const effects = d.effects.filter(allyEffect).slice(0, MAX_EFFECTS_PER_SPELL);",
     "new": "  const effects = d.effects.slice(0, MAX_EFFECTS_PER_SPELL);",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-transfer-is-a-gift",
     "file": "src/systems/allyCast.js",
     "old": "export const ALLY_CAST_TYPES = Object.freeze(new Set([3, 8, 9, 10, 13,",
     "new": "export const ALLY_CAST_TYPES = Object.freeze(new Set([3, 8, 9, 10, 11, 13,",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-area-redirected",
     "file": "src/systems/allyCast.js",
     "old": "  if (rangeType === 2) return ALLY_RANGE_REACH;\n  return null;",
     "new": "  return ALLY_RANGE_REACH;",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-selfcast-not-a-touch",
     "file": "src/systems/allyCast.js",
-    "old": "      rangeType: spell?.rangeType === 0 ? 1 : spell?.rangeType ?? 1,",
+    "old": "      rangeType: spell?.rangeType === 2 ? 2 : 1,",
     "new": "      rangeType: spell?.rangeType ?? 1,",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-wire-level-unbounded",
     "file": "src/net/wire.js",
     "old": "  const level = Number.isInteger(d.level) && d.level >= 1 && d.level <= CAST_LEVEL_MAX ? d.level : null;",
     "new": "  const level = Number.isInteger(d.level) && d.level >= 0 ? d.level : null;",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-wire-fourth-effect",
     "file": "src/net/wire.js",
     "old": "  if (!Array.isArray(sp.effects) || sp.effects.length < 1 || sp.effects.length > CAST_EFFECTS_MAX) return null;",
     "new": "  if (!Array.isArray(sp.effects) || sp.effects.length < 1) return null;",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-wire-setting-unbounded",
     "file": "src/net/wire.js",
     "old": "      if (!Number.isInteger(v) || v < 0 || v > CAST_SETTING_MAX) return null;",
     "new": "      if (!Number.isInteger(v) || v < 0) return null;",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-wire-cast-before-hello",
     "file": "src/net/wire.js",
     "old": "    if (!hasHello) return { error: 'cast before hello' };",
     "new": "    if (false) return { error: 'cast before hello' };",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-relay-fans-to-the-room",
     "file": "server/src/index.js",
-    "old": "      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;\n      if (!target) return;\n      const [tws, tb] = target;\n      const funnel = tokenGate(tb.cinbucket ?? null, now, CAST_ROOM_HZ_MAX);",
-    "new": "      const target = [...this._all()].find(([other, b]) => other !== ws) ?? null;\n      if (!target) return;\n      const [tws, tb] = target;\n      const funnel = tokenGate(tb.cinbucket ?? null, now, CAST_ROOM_HZ_MAX);",
-    "tests": ["test/allycast.test.js"]
+    "old": "      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;\n      if (!target) return;\n      const [tws, tb] = target;\n      // AUDIT ALLY-CAST B2",
+    "new": "      const target = [...this._all()].find(([other, b]) => other !== ws) ?? null;\n      if (!target) return;\n      const [tws, tb] = target;\n      // AUDIT ALLY-CAST B2",
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-relay-hub-casts",
     "file": "server/src/index.js",
     "old": "      a = this._meterCast(ws, a, now); if (!a) return;\n      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;",
     "new": "      a = this._meterCast(ws, a, now); if (!a) return;",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-host-heals-self-too",
     "file": "src/scenes/hostMagic.js",
     "old": "      say(allyCastCasterLine(sp.name, ally.name));\n      return done(true);\n    }",
     "new": "      say(allyCastCasterLine(sp.name, ally.name));\n    }",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-host-ignores-castable",
     "file": "src/scenes/hostMagic.js",
-    "old": "    const ally = allyReach !== null && allyCastable(sp) ? allyTarget?.(eye, dir, allyReach) ?? null : null;",
-    "new": "    const ally = allyReach !== null ? allyTarget?.(eye, dir, allyReach) ?? null : null;",
-    "tests": ["test/allycast.test.js"]
+    "old": "    const ally = !readiedFree && allyReach !== null && allyCastable(sp) ? allyInReach(eye, dir, allyReach) : null;",
+    "new": "    const ally = !readiedFree && allyReach !== null ? allyInReach(eye, dir, allyReach) : null;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-host-touch-gate-shut",
     "file": "src/scenes/hostMagic.js",
-    "old": "      if (!pickTouch(eye, dir) && !(allyCastable(sp) && allyTarget?.(eye, dir, ALLY_TOUCH_REACH))) return false;",
+    "old": "      if (!pickTouch(eye, dir) && !(!readiedFree && allyCastable(sp) && allyInReach(eye, dir, ALLY_TOUCH_REACH))) return false;",
     "new": "      if (!pickTouch(eye, dir)) return false;",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
   },
   {
     "name": "AC-receiver-trusts-anyone",
     "file": "src/scenes/world.js",
     "old": "    online.onCast = (id, d) => {\n      if (!social?.isPartyPeer(id)) return;",
     "new": "    online.onCast = (id, d) => {",
-    "tests": ["test/allycast.test.js"]
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-receiver-lands-as-sent",
+    "file": "src/systems/allyCast.js",
+    "old": "rangeType: 0, effects, icon, index: -1, custom: true };",
+    "new": "rangeType: 1, effects, icon, index: -1, custom: true };",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-touch-reach-is-the-f-key",
+    "file": "src/systems/allyCast.js",
+    "old": "export const ALLY_TOUCH_REACH = TOUCH_RANGE + TOUCH_SPHERE_CAST_RADIUS + PERSON_RADIUS;",
+    "new": "export const ALLY_TOUCH_REACH = 6.4;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-icon-dropped",
+    "file": "src/systems/allyCast.js",
+    "old": "  const icon = Number.isInteger(d.icon) && d.icon >= 0 && d.icon < SPELL_ICON_COUNT ? d.icon : 0;",
+    "new": "  const icon = 0;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-wire-selfcast-rides",
+    "file": "src/net/wire.js",
+    "old": "  const rangeType = sp.rangeType === 1 || sp.rangeType === 2 ? sp.rangeType : null;",
+    "new": "  const rangeType = Number.isInteger(sp.rangeType) && sp.rangeType >= 0 && sp.rangeType <= 4 ? sp.rangeType : null;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-wire-icon-unbounded",
+    "file": "src/net/wire.js",
+    "old": "  const icon = sp.icon == null ? 0 : (Number.isInteger(sp.icon) && sp.icon >= 0 && sp.icon <= CAST_ICON_MAX ? sp.icon : null);",
+    "new": "  const icon = sp.icon == null ? 0 : (Number.isInteger(sp.icon) && sp.icon >= 0 ? sp.icon : null);",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-relay-old-enough",
+    "file": "src/net/wire.js",
+    "old": "export const CAST_RELAY_MIN = 97;",
+    "new": "export const CAST_RELAY_MIN = 96;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-link-sends-to-any-relay",
+    "file": "src/net/online.js",
+    "old": "    if (!d || d.to === this.id || !this.castOk) return false;   // AUDIT ALLY-CAST B1",
+    "new": "    if (!d || d.to === this.id) return false;   // AUDIT ALLY-CAST B1",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-link-delivers-anyone's",
+    "file": "src/net/online.js",
+    "old": "          if (d && d.to === this.id) this._deliver('cast', () => this.onCast?.(m.id, d));",
+    "new": "          if (d) this._deliver('cast', () => this.onCast?.(m.id, d));",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-relay-one-funnel",
+    "file": "server/src/index.js",
+    "old": "      let slot = cin.find((c) => c.id === a.id) ?? null;",
+    "new": "      let slot = cin[0] ?? null;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-relay-slots-unbounded",
+    "file": "server/src/index.js",
+    "old": "        if (cin.length >= CAST_DEST_SENDERS_MAX) { cin.sort((x, y) => (x.b?.at ?? 0) - (y.b?.at ?? 0)); cin.shift(); }",
+    "new": "",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-host-no-line-of-sight",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (Number.isFinite(hit) && hit < d - 1e-3) return null;",
+    "new": "",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-host-pick-throws-through",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    try { ally = allyTarget(eye, dir, reach) ?? null; } catch { return null; }",
+    "new": "    ally = allyTarget(eye, dir, reach) ?? null;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-host-free-ready-redirected",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    const ally = !readiedFree && allyReach !== null && allyCastable(sp) ? allyInReach(eye, dir, allyReach) : null;",
+    "new": "    const ally = allyReach !== null && allyCastable(sp) ? allyInReach(eye, dir, allyReach) : null;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-host-casteronly-instant",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }\n",
+    "new": "",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-host-no-aim-redirects",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (!eye || !dir || !allyTarget) return null;\n    let ally = null;",
+    "new": "    if (!allyTarget) return null;\n    let ally = null;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-effects-gift-merges-with-mine",
+    "file": "src/systems/effects.js",
+    "old": "  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && !!a.bundleAlly === allyCast && pred(a)));",
+    "new": "  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && pred(a)));",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-effects-gift-untagged",
+    "file": "src/systems/effects.js",
+    "old": "        list[i].bundleAlly = allyCast;",
+    "new": "        list[i].bundleAlly = false;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-receiver-heals-the-line-last",
+    "file": "src/scenes/world.js",
+    "old": "      townTalk.say(allyCastTargetLine(who, spell.name));\n      const before = playerEntity.health;\n      magic.applySpellToPlayer(spell, d.level, null, { allyCast: true });",
+    "new": "      const before = playerEntity.health;\n      magic.applySpellToPlayer(spell, d.level, null, { allyCast: true });\n      townTalk.say(allyCastTargetLine(who, spell.name));",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-plaque-surface-engine-underground",
+    "file": "src/scenes/world.js",
+    "old": "    const sp = (underground ? modes?.dungeonCtx?.readiedSpell?.() : magic?.readied?.()) ?? null;",
+    "new": "    const sp = magic?.readied?.() ?? null;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-plaque-promises-unreachable",
+    "file": "src/scenes/world.js",
+    "old": "    const cast = pick?.id === id ? allyCastPlaqueLine(sp.name, name) : null;",
+    "new": "    const cast = reach !== null ? allyCastPlaqueLine(sp.name, name) : null;",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-dungeon-engine-blind",
+    "file": "src/scenes/worldModes.js",
+    "old": "          allyTarget: (eye, dir, reach) => host.allyTarget?.(eye, dir, reach) ?? null,",
+    "new": "          allyTarget: () => null,",
+    "tests": [
+      "test/allycast.test.js"
+    ]
+  },
+  {
+    "name": "AAC-dungeon-dispel-rolls-for-a-gift",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "          selfCast: b.bundleType === 'Spell' && (b.selfCast !== false || b.ally === true),",
+    "new": "          selfCast: b.bundleType === 'Spell' && b.selfCast !== false,",
+    "tests": [
+      "test/allycast.test.js"
+    ]
   }
 ]

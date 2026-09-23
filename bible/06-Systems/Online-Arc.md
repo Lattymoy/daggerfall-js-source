@@ -4689,7 +4689,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:6020` read, on one physical line:
+`src/scenes/worldModes.js:6022` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4704,7 +4704,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:4215`). With the property missing that call is a
+(`dungeonContext.js:4219`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -7043,7 +7043,7 @@ answers that exact string in the object's sleep, no event, no wake. Only a
 CHANNEL session (chat, `presence: false`) used it. A presence session's
 liveness rode the pose.
 
-**Now (`src/net/wire.js:815`, `src/net/online.js:1403`):**
+**Now (`src/net/wire.js:815`, `src/net/online.js:1406`):**
 
 - `HEARTBEAT_MS` 5000 -> 20000. The pose goes when it MOVED (at POSE_HZ, as
   before) or every 20 s standing, as the peers' proof of life and the silence
@@ -7671,25 +7671,28 @@ online is that a player's vitals and live effects are their own client's, so a c
 target applies it.
 
 **The frame.** `{t:'cast', data:{to, level, spell}}` - directed like a trade frame (`net/wire.js validCastData`: the
-target's id, the caster's level 1..60, a spell record of name, element, range type and one to three classic
-effect entries with their eleven integer components bounded; anything else refuses the whole frame). The relay's
-cast arm (`server/src/index.js`) is the trade arm's shape: its own meter (CAST_HZ_MAX 4 a second per sender, the
-strikes), a place room alone, routed to the one socket `to` names with the sender's id stamped on, a funnel per
-destination (CAST_ROOM_HZ_MAX), junk at one's own id. The client link (`net/online.js`) sends through its own
+target's id, the caster's level 1..30, a spell record of name, element, range type (a touch or a ranged single
+target), icon and one to three classic effect entries with their eleven byte components; anything else refuses
+the whole frame - the bounds as the audit below left them). The relay's cast arm (`server/src/index.js`) is the
+trade arm's shape: its own meter (CAST_HZ_MAX 4 a second per sender, the strikes), a place room alone, routed to
+the one socket `to` names with the sender's id stamped on, a funnel onto the destination per sender
+(CAST_DEST_SENDERS_MAX slots), junk at one's own id. The client link (`net/online.js`) sends through its own
 projection first (`sendCast`) and delivers only a frame addressed to me, per-sender gated coming in (`onCast`).
 
 **The targeting (the port's own rule - a recorded departure).** Nobody aims a slow missile at a moving friend. On
 the release frame (`scenes/hostMagic.js releaseFrame`, before the four range arms) a beneficial spell looks for a
 PARTY MATE under the crosshair - the F key's own pick (`player/socialPick.js pickPeerInFront` over `peersNear()`,
-`townTalk.rayPersonDistance`), a party member (`social.isPartyPeer`), one some socket of mine reaches - within
-touch reach (SOCIAL_REACH) for a CasterOnly or ByTouch spell and within ALLY_RANGE_REACH (24 units) for a
-SingleTargetAtRange one; the two area types are never redirected. Found, the cast leaves as the frame (a
+`townTalk.rayPersonDistance`), a party member (`social.isPartyPeer`), one some socket of mine reaches, behind the
+cast engine's own line of sight (`allyInReach`) - within touch reach (ALLY_TOUCH_REACH, the foe's own touch
+reach) for a CasterOnly or ByTouch spell and within ALLY_RANGE_REACH (24 m) for a SingleTargetAtRange one; the
+two area types are never redirected, nor is a free ready (a trap's). Found, the cast leaves as the frame (a
 CasterOnly leaves as a TOUCH, range type 1 - it is one, on the ally), the magicka is spent and the skills tallied
 as for any cast, and the caster reads "You cast Heal on Bran." Not found, or the link refusing, the spell does
 what it always did. CastReadySpell's touch gate admits the mate as it admits a foe. The departure is the
 CasterOnly conversion: DFU's spellbook is almost all CasterOnly, and kept 1:1 healing a friend would mean buying a
-ByTouch copy first - so a Heal readied with the crosshair on a party mate is theirs, not yours. The plaque says so
-while a castable spell is armed ("Cast Heal on Bran").
+ByTouch copy first - so a Heal readied with the crosshair on a party mate ARMS for them instead of firing on the
+spot, and the next click sends it (or heals you, if they stepped away). The plaque says so while a castable spell
+is armed and the mate is in reach ("Cast Heal on Bran").
 
 **The trust: the receiver decides** (`scenes/world.js online.onCast`). A cast from anyone outside my party is
 dropped unread (a party is invite-only, and that is the whole trust); so is one at a dead player. Of what arrived
@@ -7699,10 +7702,11 @@ Slowfall, Free Action, Jumping, Climbing, Water Breathing/Walking, Shield, Detec
 Paralyze, Damage, Continuous Damage, Drain, Transfer, Disintegrate, Soul Trap, Silence, Lock/Open, Pacify/Charm,
 Dispel, Create Item, Identify, Teleport, Morph Self), and on the caster's side a spell is castable on an ally only
 when EVERY real effect is one of them - a Heal beside a Damage Health goes the ordinary way. What is kept goes
-through the one player door a foe's cast at me already takes (`hostMagic applySpellToPlayer`: my own saving
-throw, absorption, reflection, at the caster's level; the range type carried as sent, so a touch is save-scaled
-as DFU scales any external bundle), with "Bran casts Heal on you." and the healed line said. Friendly fire is off
-by construction and the relay never judges a spell.
+through the one player door (`hostMagic applySpellToPlayer`) at the caster's level, AS A SELF-CAST (range type 0,
+whatever was sent: no saving throw against a gift - see the audit's C1) and tagged a mate's (never merged with my
+own bundle of the same kind, dispelled as my own), with "Bran casts Heal on you." said first and the healed line
+after it, as the health that actually moved. Friendly fire is off by construction and the relay never judges a
+spell.
 
 **Pins and mutants.** `test/allycast.test.js` (9): the law on a table (castable, the receiver's subset, the
 reach, the frame, the lines), the wire's projection and parse, the relay's arm over the fake room (to the one
@@ -7711,4 +7715,101 @@ leaves as a touch and the caster is not healed; nobody there or a refused door a
 and ranged buffs at their reaches; a damage spell and an area spell never ask), the world.js/link/relay seams by
 source. `tools/mutants/allycast.json`: 15, 15 dead. RELAY_VERSION world96 with its law row; the relay deploys
 itself on the merge to main. Not verified in a browser: no online session exists in this container.
+
+## AUDIT ALLY-CAST (2026-09-23, Mac: "Lets audit this") - three lenses over the cast on a party mate, the findings paid, world97
+
+Three lenses over ALLY-CAST as shipped: the CASTER'S (the release frame, the ready, the pick, the plaque), the
+WIRE'S and the RELAY'S (the frame's bounds, the funnel, the version), and the RECEIVER'S (the door the gift goes
+through, the bundle it becomes). Every finding below is paid in the same commit and pinned by execution in
+`test/allycast.test.js`; nothing was deferred.
+
+**The caster's lens.**
+- A1 THE CONVERSION WAS INVISIBLE UNTIL IT FIRED. SetReadySpell's instant arm (:350-351) cast a CasterOnly spell
+  the moment it was readied, so the ally pick ran with no sign to the player: a Heal readied while a friend
+  happened to cross the crosshair went to them; one readied FOR a friend who stepped aside a frame earlier healed
+  me. Now a CasterOnly spell with a party mate in touch reach ARMS ("Press button to fire spell."), the plaque
+  under the mate says "Cast Heal on Bran", and the click resolves through the release frame's ally arm - or the
+  CasterOnly arm as ever if they moved. With nobody there, and for a free ready, the instant arm fires as DFU's.
+- A2 NO LINE OF SIGHT. A touch on a foe runs pickTouch's collider ray; the ally pick ran none, so a Heal landed
+  through a closed door or a dungeon wall. `hostMagic.js allyInReach` casts the collider's ray to the pick's
+  distance (the pick returns it now) and a wall short of the mate is nobody. Both engines run it, and the plaque
+  asks it, so the plaque never promises a cast the click would not make (A5).
+- A3 THE DUNGEON WAS UNWIRED. The dungeon runs its OWN createPlayerMagic (`dungeonContext.js`) and its deps
+  carried no `allyTarget`/`castAtAlly`, so underground the feature did not exist - while the plaque read the
+  SURFACE engine's stale ready and said "Cast Heal on Bran" over a mate the dungeon engine would never cast at.
+  The pair rides world.js's host object through worldModes' opts, and the plaque reads the live engine
+  (`modes.dungeonCtx.readiedSpell`/`allyInReach` underground).
+- A4 A "TOUCH" AT 6.4 m. ALLY_TOUCH_REACH was SOCIAL_REACH, the F key's 6.4 m - more than double what a touch on a
+  foe reaches (DaggerfallMissile's 0.25 sphere pushed 3.0 along the aim). It is the foe's own touch reach plus the
+  person's radius now (3.7 m, `systems/allyCast.js`).
+- A6 A PICK THAT THROWS. `allyTarget` is a host seam over peersNear() and the session; a throw there aborted the
+  release frame with the magicka spent and the ready cleared. `allyInReach` catches it and the spell goes the
+  ordinary way.
+- A7 A FREE READY REDIRECTED. A trap's CasterOnly payload readied `free` on the player who sprang it, and with a
+  mate under the crosshair went to THEM. Never redirected now: the release arm and the touch gate both read
+  `!readiedFree`.
+- A8 "You cast Heal on Bran." is said when the frame LEFT, and a frame can still be dropped downstream (the
+  relay's funnel, the receiver's inbound gate, a dead receiver, a subset that leaves nothing). Recorded as the
+  law, not paid: "sent" is not "landed", the receiver's own line is the landing, and the caster's line names the
+  act they performed - the same as a missile that flies and misses.
+
+**The wire's and the relay's lens.**
+- B1 AN OLDER RELAY CLOSED THE SOCKET. The link sent a `cast` frame to whatever relay welcomed it; a relay before
+  the frame's parse refuses an unknown frame by closing the socket, so a client ahead of its relay lost its room
+  on the first friendly Heal. `online.js castOk` reads the welcome's version (`relaySupportsCast`, CAST_RELAY_MIN
+  97 - world96 parsed a shape this client no longer sends) and `sendCast` refuses at home; the release then
+  falls through to the ordinary arm.
+- B2 ONE FUNNEL FOR EVERYONE. The destination's inbound funnel was one bucket (CAST_ROOM_HZ_MAX) shared by every
+  sender, and the relay cannot tell a mate from a stranger: five strangers casting at you starved your own
+  party's heals. The funnel is per sender now (`cin`, CAST_DEST_SENDERS_MAX 8 slots on the destination's
+  attachment, the stalest evicted for a newcomer, each slot at CAST_HZ_MAX), and the attachment stays under the
+  runtime's 2 KiB.
+- B3 THE BOUNDS WERE NOT THE GAME'S. Level admitted 1..60 (a level-60 Fortify scaled past anything a player can
+  reach), a component admitted any non-negative integer up to a large cap. CAST_LEVEL_MAX 30, CAST_SETTING_MAX
+  255 (the classic byte), CAST_ICON_MAX 68.
+- B4 A CRAFTED SELF-CAST SKIPPED THE SAVE. The wire admitted rangeType 0..4, and the receiver applied the type as
+  sent - so an honest frame took the target's saving throw while a crafted rangeType 0 did not. The wire admits
+  1 and 2 alone; the receiver decides the type (C1), so the sender's word about it is nothing.
+- B5 THE PINS. The relay pin read `a.att.drops` (the pose meter's strikes, never touched) for "junk"; it reads
+  `a.att.junk` now, and the meter, the per-sender funnel, the slot bound and the link's door are pinned by
+  execution (the fake room, `fakeSocketClass` + an `OnlineSession` fed a welcome).
+- B6 The relay's dead length check on the parsed frame (parseClient had already refused it) is gone; the link's
+  `_inCastSaid` is declared with its siblings; this record no longer claims the receiver rolls "absorption and
+  reflection" over a gift (they are self-cast law now, C1).
+
+**The receiver's lens.**
+- C1 THE SAVE ZEROED A THIRD OF HEALS. DFU save-scales every bundle that is not CasterOnly (EntityEffect
+  GetMagnitude) because in DFU only a foe ever receives an external bundle; carried as the touch it was sent as,
+  a friend's Heal landed ZERO on a full save (a third of casts at willpower 50, two thirds for a Breton, more
+  under Resist Magic), a Levitate was "Save versus spell made.", and the caster had paid. `allyCastSpell`
+  returns rangeType 0: THE GIFT LANDS AS A SELF-CAST, the port's own rule and a recorded departure - there is no
+  DFU law for a friend's spell, and a saving throw is a defence against an attack.
+- C2 INCUMBENTS MERGED. F12's incumbent law (a like-kind recast adds rounds and keeps the incumbent's magnitude)
+  was harmless while no outside source ever buffed a player; a level-1 mate's 1-point Shield capped the target's
+  own 60-point Shield at one for forty rounds. A mate's bundle is tagged (`bundleAlly`, `ctx.allyCast` through
+  applySpellToPlayer) and `findInc` merges only within a tag: theirs beside mine, never over it.
+- C3 The bounds (B3) at the receiver: the level the door is handed is the wire's 1..30.
+- C4 A MATE'S BUFF WAS HARD TO DISPEL AND WORE ICON 0. The dispel picker treated a gift as an external bundle (a
+  roll against the caster's chance), and the frame carried no icon. The picker reads `ally` and dispels a gift as
+  the target's own; the icon rides the frame and the bundle.
+- C5 THE LINES. "Bran casts Heal on you." was said AFTER the spell's own lines, and "You are healed N points."
+  reported the magnitude rolled, not the health that moved (a full-health player was "healed 20 points"). The
+  caster's line is first, the heal is the actual delta, and none when nothing moved.
+- C6 This record, corrected as above.
+- C7 Noted, not paid: a party of eight casting Light on one player can say eight lines in a second; the inbound
+  gate bounds it at CAST_IN_HZ_MAX, and the HUD's own text queue already coalesces.
+
+**Departures recorded.** The gift lands as a self-cast (C1); a CasterOnly ready arms for a mate in reach (A1);
+"sent" is not "landed" (A8); a client ahead of its relay keeps its spells to itself (B1).
+
+**Pins and mutants.** `test/allycast.test.js` (14, from 9): the reach's arithmetic, the receiver's self-cast and
+icon, the wire's new bounds and refusals (rangeType 0/3/4, level 31, byte 256, icon 69) and `relaySupportsCast`,
+the relay's junk counter, meter and per-sender funnel with the slot bound under 2 KiB, the link's door (a world96
+welcome, the gate, self, an unreported peer) and its inbound arm (own id, another's, a failed projection, the
+per-sender gate), the host (a CasterOnly ARMS then sends on the click; armed for a mate who steps away it heals
+me; a wall short of the mate, a pick that throws, a free ready, no aim fed; the touch gate refuses a mate behind a
+wall without spending), the receiver's door driven (a Heal whole as a self-cast where the same roll as a touch
+was zero; a gift beside my own Fortify; the mate's recast merging with the mate's; dispelled as my own), and every
+seam by source. `tools/mutants/allycast.json`: 37, 37 dead. RELAY_VERSION world97 with its law row; the relay
+deploys itself on the merge to main. Not verified in a browser: no online session exists in this container.
 

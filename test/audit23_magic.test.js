@@ -105,7 +105,9 @@ test('AUDIT 23 magic-14: readying enforces the cost and CasterOnly casts instant
   const i = src.indexOf('function readySpell(sp');
   const arm = src.slice(i, src.indexOf('\n  }\n', i));
   assert.ok(arm.includes("say(\"You don't have the spell points.\")"), 'the classic refusal line at ready');
-  assert.ok(arm.includes('if (sp.rangeType === 0) { castInput(null, null); return; }'), 'CasterOnly fires on ready, no click latch');
+  // AUDIT ALLY-CAST A1: the instant arm ARMS instead when a party mate is in touch reach (the port's own targeting,
+  // a recorded departure); with nobody there it fires on the ready as :350-351 does, and a free ready always does.
+  assert.ok(arm.includes('if (!free && allyCastable(sp) && allyInReach(lastAim?.eye ?? null, lastAim?.dir ?? null, ALLY_TOUCH_REACH)) { say(PRESS_BUTTON_TO_FIRE_SPELL); return; }\n      castInput(null, null); return;'), 'CasterOnly fires on ready, no click latch - unless a party mate is under the crosshair');
   assert.ok(arm.indexOf('calculateCastCost') < arm.indexOf('readiedSpell = sp;'), 'the cost gate sits before the assignment');
 });
 

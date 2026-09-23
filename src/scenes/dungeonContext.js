@@ -1651,7 +1651,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:8578 / exterior.js:3452), set
+  // host's own townTalk sink (world.js:8568 / exterior.js:3452), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2296,7 +2296,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         const b = bundles[i];
         if (!b) return;
         const r = dispelBundle(playerEntity, b.bundleId, {
-          selfCast: b.bundleType === 'Spell' && b.selfCast !== false,
+          selfCast: b.bundleType === 'Spell' && (b.selfCast !== false || b.ally === true),   // AUDIT ALLY-CAST C4: a mate's gift comes off at will
           roll01: Math.random(), chance,
         });
         if (r.alert) hudText.add(DISPEL_MAGIC_TEXT[r.alert]);
@@ -2320,6 +2320,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // that refuses (no CIF for the element) answers false and the
     // engine releases on the spot.
     startCastAnim: (sp, onRelease) => weaponRig.castSpellAnim(sp?.rangeType, sp?.element, onRelease),
+    // AUDIT ALLY-CAST A3: the party mate under the crosshair and the door the cast leaves through - the OUTER host's
+    // (world.js through worldModes' opts, the peerHoverPick's own road); the standalone ?dungeon probe passes none
+    allyTarget: (eye, dir, reach) => opts.allyTarget?.(eye, dir, reach) ?? null,
+    castAtAlly: (id, frame) => !!opts.castAtAlly?.(id, frame),
     // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of
     // the machinery, false as a refusal: this context is the one the
@@ -2692,7 +2696,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1063 against :1092; worldModes.js:6915 against :6939).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1063 against :1092; worldModes.js:6917 against :6941).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3256,8 +3260,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:12904,
-              // exterior.js:4953 and worldModes.js:7115 already ran;
+              // playerArrowHitFoe is the one copy world.js:12925,
+              // exterior.js:4953 and worldModes.js:7117 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -6014,6 +6018,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // never calls quickLoad at all.
     clearDeathOverlay: () => { if (activeOverlay instanceof DeathScreen) activeOverlay = null; },
     readiedSpell: () => magic.readied(),   // ROAD-Ar: PlayerEffectManager.ReadySpell - the gate needs its TargetType for the ByTouch exception (PlayerActivate.cs:250-258)
+    allyInReach: (eye, dir, reach) => magic.allyInReach(eye, dir, reach),   // AUDIT ALLY-CAST A5: the plaque asks THIS engine, with its own collider
     toggleSheath: weaponRig.toggleSheath,
     // QS2: the diamond's three presses. This ctx is routeKey's, in BOTH hosts
     // that mount it - the standalone `?dungeon` page and the world's dungeon

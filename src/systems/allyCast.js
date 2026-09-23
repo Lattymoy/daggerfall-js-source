@@ -19,15 +19,19 @@
 // THE TRUST: the RECEIVER decides. It applies a cast from a party member alone (a party is invite-only), and only
 // the beneficial subset of what arrived - a crafted frame carrying Damage Health or Paralyze lands nothing. So
 // friendly fire is off by construction, and the relay never has to judge a spell.
-import { MAX_EFFECTS_PER_SPELL } from './spellMaker.js';
-import { SOCIAL_REACH } from '../player/socialPick.js';
+import { MAX_EFFECTS_PER_SPELL, SPELL_ICON_COUNT } from './spellMaker.js';
+import { TOUCH_RANGE, TOUCH_SPHERE_CAST_RADIUS } from './spellcast.js';
 
-/** How near a party mate must stand for a CasterOnly or ByTouch cast to land on them: the F key's own reach
- *  (player/socialPick.js SOCIAL_REACH, the mobile NPC activation distance) - the distance at which you can already
- *  trade with or invite them, so "close enough to lay hands on" is a distance the player has learned. */
-export const ALLY_TOUCH_REACH = SOCIAL_REACH;
+/** A person's controller radius (scenes/townTalk.js PERSON_HIT_RADIUS, MobilePersonNPC's) - the lateral band the
+ *  ray must pass within to be "on" someone; written here so systems/ does not import a scene. */
+export const PERSON_RADIUS = 0.45;
+/** How near a party mate must stand for a CasterOnly or ByTouch cast to land on them: THE FOE'S OWN TOUCH REACH -
+ *  DaggerfallMissile's 0.25 sphere pushed 3.0 along the aim (spellcast.js TOUCH_RANGE/TOUCH_SPHERE_CAST_RADIUS), plus
+ *  the person's radius, since the ray distance is measured to their axis. AUDIT ALLY-CAST A4: the first cut used
+ *  the F key's 6.4 m, more than double what a touch on a foe reaches, so a "touch" on a friend was a shout. */
+export const ALLY_TOUCH_REACH = TOUCH_RANGE + TOUCH_SPHERE_CAST_RADIUS + PERSON_RADIUS;
 /** ...and for a SingleTargetAtRange cast: the missile would have flown, so the reach is a missile's honest range at
- *  which a player can still tell who they are aiming at - 24 scene units, a little under 20 m. */
+ *  which a player can still tell who they are aiming at - 24 scene units (metres). */
 export const ALLY_RANGE_REACH = 24;
 
 /** The BENEFICIAL effect families, by DFU's classic `type,subType` key (spellEffects.js ROWS/FAMILIES): what a
@@ -52,12 +56,20 @@ export function allyCastable(spell) {
 
 /** The record the RECEIVER applies: the wire's projection of what arrived (net/wire.js validCastData - shape and
  *  bounds), reduced to its beneficial effects. Null when nothing beneficial is left, so a crafted frame applies
- *  nothing. The range type is carried as sent so the target's own saving throw scales it as an external touch. */
+ *  nothing.
+ *
+ *  AUDIT ALLY-CAST C1: THE GIFT LANDS AS A SELF-CAST (rangeType 0), whatever was sent. DFU save-scales every
+ *  bundle that is not CasterOnly (EntityEffect.cs GetMagnitude) and drops a no-magnitude one on a full save,
+ *  because in DFU only a foe ever receives an external bundle; carried as a touch, a friend's Heal landed ZERO on a
+ *  third of casts (two thirds for a Breton, three quarters under Resist Magic), a Levitate was "Save versus spell
+ *  made.", and the caster had paid. And the sender chose it: a crafted rangeType 0 skipped the save the honest
+ *  frame took. Now the receiver decides that too. The icon rides so the HUD's row can show it. */
 export function allyCastSpell(d) {
   if (!d || !Array.isArray(d.effects)) return null;
   const effects = d.effects.filter(allyEffect).slice(0, MAX_EFFECTS_PER_SPELL);
   if (!effects.length) return null;
-  return { name: typeof d.name === 'string' ? d.name : '', element: d.element ?? 4, rangeType: d.rangeType ?? 1, effects, index: -1, custom: true };
+  const icon = Number.isInteger(d.icon) && d.icon >= 0 && d.icon < SPELL_ICON_COUNT ? d.icon : 0;
+  return { name: typeof d.name === 'string' ? d.name : '', element: d.element ?? 4, rangeType: 0, effects, icon, index: -1, custom: true };
 }
 
 /** The reach a cast on an ally is looked for at, by the spell's range type - null for the two area types and any
@@ -77,7 +89,8 @@ export function allyCastFrame(spell, level, to) {
     spell: {
       name: String(spell?.name ?? ''),
       element: spell?.element ?? 4,
-      rangeType: spell?.rangeType === 0 ? 1 : spell?.rangeType ?? 1,
+      rangeType: spell?.rangeType === 2 ? 2 : 1,
+      icon: Number.isInteger(spell?.icon) && spell.icon >= 0 && spell.icon < SPELL_ICON_COUNT ? spell.icon : 0,
       effects: (Array.isArray(spell?.effects) ? spell.effects : []).filter((e) => e && Number.isInteger(e.type) && e.type >= 0).slice(0, MAX_EFFECTS_PER_SPELL),
     },
   };

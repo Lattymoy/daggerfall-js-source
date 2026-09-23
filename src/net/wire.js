@@ -841,7 +841,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world96';   // ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world97';   // AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1739,12 +1739,26 @@ export const tradeInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, TRADE_IN_
 // cast does, so the honest rate is a few a second; the funnel onto one destination is the hit arm's shape.
 export const CAST_FRAME_MAX = 2 * 1024;
 export const CAST_HZ_MAX = 4;
-export const CAST_ROOM_HZ_MAX = 16;
+/** AUDIT ALLY-CAST B2: the destination's funnel is PER SENDER - a bounded list of sender buckets on the target's own
+ *  attachment (PARTY_MAX slots: a full party's seven mates and one more), the stalest evicted for a newcomer. One
+ *  bucket for every sender together let five strangers at their own rate starve a mate's heals (3 of 30 landed),
+ *  and the relay cannot tell a mate from a stranger. A mate's cast now waits only on the mate's own spamming. */
+export const CAST_DEST_SENDERS_MAX = 8;
 export const CAST_IN_HZ_MAX = CAST_HZ_MAX * 2;
-export const CAST_LEVEL_MAX = 60;
+/** AUDIT ALLY-CAST B3/C3: the honest ceilings. A player is level 30 at most (classic's cap), SPELLS.STD's components
+ *  are bytes (formats/spellsStd.js) and the maker's spinners stop under 100 (spellMaker.js SPINNER_RANGES) - the
+ *  first cut's 60 and 1000 let a crafted mate grant a 61,000-point Shield for 42 game days. Nothing on the wire can
+ *  vouch for the level (no pose carries one); the bound is what the receiver can refuse. */
+export const CAST_LEVEL_MAX = 30;
 export const CAST_EFFECTS_MAX = 3;       // spellMaker.js MAX_EFFECTS_PER_SPELL, the classic record's three slots
-export const CAST_SETTING_MAX = 1000;    // a duration/chance/magnitude component - SPELLS.STD's are bytes, the maker's spinners stop at 100
+export const CAST_SETTING_MAX = 255;     // a duration/chance/magnitude component: the classic byte
+export const CAST_ICON_MAX = 68;         // spellMaker.js SPELL_ICON_COUNT - 1
 export const CAST_NAME_MAX = 32;
+/** AUDIT ALLY-CAST B1: the relay that first carries the cast arm. An older one answers a cast with 'unknown message'
+ *  and CLOSES the socket (the relay refuses what it cannot parse) - the caster was kicked offline by their own heal.
+ *  The link refuses to send until the welcome says the relay can take it, as TRADE1's relaySupportsTrade does. */
+export const CAST_RELAY_MIN = 97;
+export const relaySupportsCast = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= CAST_RELAY_MIN; };
 export const castGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_HZ_MAX);
 export const castInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, CAST_IN_HZ_MAX);
 const CAST_SETTINGS = Object.freeze(['durationBase', 'durationMod', 'durationPerLevel', 'chanceBase', 'chanceMod', 'chancePerLevel',
@@ -1762,8 +1776,12 @@ export function validCastData(d) {
   const sp = d.spell;
   if (!sp || typeof sp !== 'object' || Array.isArray(sp)) return null;
   const element = Number.isInteger(sp.element) && sp.element >= 0 && sp.element <= 4 ? sp.element : null;
-  const rangeType = Number.isInteger(sp.rangeType) && sp.rangeType >= 0 && sp.rangeType <= 4 ? sp.rangeType : null;
+  // AUDIT ALLY-CAST B4: a touch or a ranged single target - the two an honest frame carries (an area is never
+  // redirected, a CasterOnly leaves as a touch); the receiver applies the gift as a self-cast whatever this says
+  const rangeType = sp.rangeType === 1 || sp.rangeType === 2 ? sp.rangeType : null;
   if (element === null || rangeType === null) return null;
+  const icon = sp.icon == null ? 0 : (Number.isInteger(sp.icon) && sp.icon >= 0 && sp.icon <= CAST_ICON_MAX ? sp.icon : null);
+  if (icon === null) return null;
   if (!Array.isArray(sp.effects) || sp.effects.length < 1 || sp.effects.length > CAST_EFFECTS_MAX) return null;
   const effects = [];
   for (const e of sp.effects) {
@@ -1780,7 +1798,7 @@ export function validCastData(d) {
     effects.push(out);
   }
   const name = typeof sp.name === 'string' ? sanitizeLabel(sp.name).slice(0, CAST_NAME_MAX) : '';
-  return { to, level, spell: { name, element, rangeType, effects } };
+  return { to, level, spell: { name, element, rangeType, icon, effects } };
 }
 
 /** One trade frame's data, PROJECTED: `{to, k, s, ...exactly what its kind carries}` or null. Items are checked for
