@@ -365,7 +365,17 @@ export class AmbientEffects {
       this._rainGainSet = this.rainGain;
     }
     // CRICKET-QUIET: choruses, not DFU's all-night loop (see CRICKET_CHORUS)
-    if (this.preset === 'clearNight') this._updateCrickets(dt);
+    // CRICKET-DUNGEON (2026-09-23, Mac: "turn off cricket noises in
+    // dungeons"): the exterior ambience follows the player underground
+    // (the verbatim quirk above setPreset), and with it the night's
+    // crickets. The rain stays as DFU has it; the crickets do not sing
+    // under the ground - the loop is stopped while `deps.underground`
+    // and the chorus clock holds, so the surface takes the night up
+    // where it stood. A recorded departure (Port-Ledger A).
+    if (this.preset === 'clearNight') {
+      if (deps.underground) { if (this._cricketsLoop) { this._cricketsLoop.stop(); this._cricketsLoop = null; } }
+      else this._updateCrickets(dt);
+    }
     this._busy = Math.max(0, this._busy - dt);
     this._counter += dt;
     this._waterCounter += dt;

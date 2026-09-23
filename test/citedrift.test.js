@@ -703,7 +703,7 @@ const SOURCE_CITES = [
   ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:\d+`, `exterior\.js:\d+`, `dungeonContext\.js:(\d+)`/,
     DC, /drinkPotion: \(key\) => magic\.drinkPotion\(key\),/],
   ['bible/01-Overview/Port-Ledger.md', /before the ambience update \(`world\.js:(\d+)`, `exterior\.js:\d+`\)/,
-    WO, /^ {4}ambience\.update\(dt, \{ playerPos: cam\.pos, inside: false \}\);/],
+    WO, /^ {4}ambience\.update\(dt, \{ playerPos: cam\.pos, inside: false, underground: modes\?\.mode === 'dungeon' \}\);/],   // CRICKET-DUNGEON: the dep rides the same line
   ['bible/01-Overview/Port-Ledger.md', /before the ambience update \(`world\.js:\d+`, `exterior\.js:(\d+)`\)/,
     EX, /^ {4}ambience\.update\(dt, \{ playerPos: eye, inside: false \}\);/],
   ['bible/01-Overview/Port-Ledger.md', /`world\.js:(\d+)-\d+` and `exterior\.js:\d+-\d+` return on modal frames/,
