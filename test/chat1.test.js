@@ -655,7 +655,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   // every line twice, or one that sent the command to the room.
   // CHAT-CHAN: the typed line goes through the parser to its tab's own door (chatSend), whose last arm is B2's line
   // character for character - the tab's link, the answer back
-  assert.match(w, /return chatLinks\.get\(tabId\)\?\.sendChat\(text\) \?\? false;/, 'a typed line down its tab\'s session, and the answer back (B2)');
+  assert.match(w, /return chatLinks\.get\(tabId\)\?\.sendChat\(text, \{ me \}\) \?\? false;/, 'a typed line down its tab\'s session, and the answer back (B2; EMOTE1: an action said as one)');
   assert.match(w, /return chatSend\(tabId, cmd\.text, tabId\);/, 'a line that is no command is said on the tab it was typed on');
   const onSend = /onSend: \(tabId, text\) => \{([\s\S]*?)\n {6}\},/.exec(w);
   assert.ok(onSend, 'UNSTUCK1: the host no longer carries an onSend block');

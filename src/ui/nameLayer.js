@@ -87,7 +87,21 @@ export function bubbleAlpha(age, life = BUBBLE_MS) {
 export function bubbleText(text) {
   const s = String(text ?? '');
   if (s.length <= BUBBLE_CHARS) return s;
-  return s.slice(0, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;
+  return graphemeCut(s, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;
+}
+
+/** EMOTE1: THE CUT FALLS BETWEEN CHARACTERS AS A READER COUNTS THEM. A bare `slice` counts UTF-16 units, so the cut
+ *  could halve a surrogate pair (a stray replacement box after a face) or a joined emoji (a family cut to a man and
+ *  a joiner). The longest run of whole graphemes within `max` units - Intl.Segmenter where the runtime has one, and
+ *  whole code points where it does not (a pair is never split either way). */
+export function graphemeCut(s, max) {
+  const text = String(s ?? '');
+  if (text.length <= max) return text;
+  let out = '';
+  const Seg = globalThis.Intl?.Segmenter;
+  const parts = Seg ? Array.from(new Seg(undefined, { granularity: 'grapheme' }).segment(text), (g) => g.segment) : Array.from(text);
+  for (const g of parts) { if (out.length + g.length > max) break; out += g; }
+  return out;
 }
 
 /** AUDIT NAME1 F10: and is there anything LEFT? The wire's own law bounds a line and strips what it strips, but a
@@ -100,10 +114,10 @@ export function bubbleSaid(text) {
 }
 
 /** Does this line earn a bubble? From somebody else, in character, with something to say - on any tab (CHAT-CHAN), and
- *  never a roll (DICE1): what stands over a head is what the character SAID. */
+ *  never a roll (DICE1) or an action (EMOTE1): what stands over a head is what the character SAID. */
 export function bubbleLineOk(line) {
   if (!line || typeof line !== 'object') return false;
-  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;   // DICE1: a roll is the table's, not the character's words
+  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;   // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said
   return typeof line.id === 'string' && !!line.id && typeof line.text === 'string' && !!line.text;
 }
 

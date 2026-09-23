@@ -157,6 +157,7 @@ import { tagOf } from '../net/chat.js';
 import { titleBadge, glyphBadges, GLYPH_STROKE, cssRgba } from './playerBadge.js';   // ACC3c: the same table the name over a head reads - a name wears one title everywhere it is drawn; cssRgba comes from HERE and not ui/nameLayer.js, which would pull the whole remote-player pass into this panel
 import { rosterRows, rosterTitle } from '../net/roster.js';   // CHAT-R1: who is online, in order (the cap is the model's own - AUDIT-CHATR F4: this file imported it and never used it, and lint could not see that: no-unused-vars is on for server/src and not for src)
 import { PARTY_GREEN_CSS } from '../net/social.js';   // CHAT-CHAN: the Party tab's mark wears the party's one green
+import { SHORTCODE_LIST } from '../net/chatCommands.js';   // EMOTE1: the picker offers the shortcodes' own emoji, in their order, so a pick and a :code: say the same thing
 import { getPref, setPref } from '../systems/uiPrefs.js';   // CHAT-R2: the hidden state outlives the session
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 
@@ -170,6 +171,9 @@ export const CHAT_SCALE_MIN = 0.8;
 export const CHAT_SCALE_MAX = 1.8;
 export const CHAT_WIDTH_MIN = Math.round(CHAT_WIDTH_BASE * CHAT_SCALE_MIN);
 export const CHAT_WIDTH_MAX = Math.round(CHAT_WIDTH_BASE * CHAT_SCALE_MAX);
+/** EMOTE1: the box's border, one number for the rule that draws it and the query that measures inside it - a container
+ *  query sees the box's CONTENT width, so asking after the width a drag sets takes the border off both sides. */
+const CHAT_BOX_BORDER = 1;
 /** CHAT-SIZE: the list's height - a few lines at the least, never past three quarters of the screen (the sheet says so too). */
 export const CHAT_LIST_MIN = 80;
 export const CHAT_LIST_MAX_VH = 75;
@@ -221,6 +225,23 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-line.system .dfchat-text { color: #8fb8d8; font-style: italic; }
 /* CHAT-CHAN: an aside out of character - (( )) - is drawn as one: dimmed and leaning, the words kept readable */
 .dfchat-line.ooc .dfchat-text { color: #b3ab9c; font-style: italic; }
+/* EMOTE1: THE PICKER - a button in the form, a grid over it */
+.dfchat-emoji { background: none; border: 0; cursor: pointer; font-size: 16px; line-height: 1; padding: 4px 6px; flex: none; }
+.dfchat-emojis { display: none; flex: none; flex-wrap: wrap; gap: 2px; padding: 6px; border-top: 1px solid var(--iron, #2b323b);
+  max-height: 132px; overflow-y: auto; }
+.dfchat-emojis.on { display: flex; }
+.dfchat-emoji-pick { background: none; border: 0; border-radius: 3px; cursor: pointer; font-size: 18px; line-height: 1; width: 32px; height: 32px; padding: 0; }
+.dfchat-emoji-pick:hover, .dfchat-emoji-pick:focus-visible { background: var(--iron, #2b323b); }
+/* ...and it is the DESKTOP's: every phone keyboard carries an emoji key of its own, and on a 320px phone this button
+   took the field down to 67px (tools/chatChanProbe.mjs). The touch skin keeps the field; the shortcodes work on both. */
+.dfchat.touch .dfchat-emoji, .dfchat.touch .dfchat-emojis { display: none; }
+/* ...and in a box the SCREEN narrowed below any width a drag can choose (CHAT_WIDTH_MIN: a phone-wide window on the
+   desktop skin), the button gives its 36px back to the field - there it took the field from 129px to 93px, narrower
+   than any skin's field before it (the touch skin's at 320px, 115px; tools/chatChanProbe.mjs). The grid is not hidden
+   with it: one opened in a wider box stays inside this one, and a pick or Escape still closes it. */
+@container (width < ${CHAT_WIDTH_MIN - 2 * CHAT_BOX_BORDER}px) { .dfchat-emoji { display: none; } }
+/* EMOTE1: an action - "Bran waves at Ann." - the words leaning after the name, in the name's own warmth */
+.dfchat-line.me .dfchat-text { font-style: italic; color: #dccfae; }
 /* DICE1: a roll the relay made - its own colour, which no typed line can wear (the kind is set from the FRAME's type) */
 .dfchat-line.roll .dfchat-text { color: #e7c46a; }
 /* CHAT-CHAN: the channel a peek line came from, when it is not the tab the chat opens on */
@@ -244,7 +265,7 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-open { display: none; pointer-events: auto; margin-top: 4px; align-items: center; gap: 6px; }
 .dfchat.touch .dfchat-open { display: inline-flex; }
 .dfchat.touch .dfchat-hint { display: none; }
-.dfchat-box { display: none; position: relative; pointer-events: auto; background: rgba(14, 16, 19, .84); border: 1px solid var(--iron, #2b323b); border-radius: 6px; backdrop-filter: blur(4px); }
+.dfchat-box { display: none; position: relative; pointer-events: auto; background: rgba(14, 16, 19, .84); border: ${CHAT_BOX_BORDER}px solid var(--iron, #2b323b); border-radius: 6px; backdrop-filter: blur(4px); }
 .dfchat[data-state="open"] .dfchat-box { display: flex; flex-direction: column; }
 .dfchat[data-state="open"] .dfchat-peek, .dfchat[data-state="open"] .dfchat-hint, .dfchat[data-state="open"] .dfchat-open { display: none; }
 .dfchat-tabs { display: flex; gap: 2px; padding: 4px 4px 0; border-bottom: 1px solid var(--iron, #2b323b); }
@@ -489,10 +510,46 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   hide.setAttribute('aria-label', 'Hide chat');
   const show = el('button', 'dfchat-show', 'Chat'); show.type = 'button';
   show.setAttribute('aria-label', 'Show chat');
-  form.append(input, send, hide, close);
+  // EMOTE1 (Addison Knox: "Emotes, be it emojis ..."): THE PICKER - a button in the form and a grid over it. Every
+  // listener is the element's own (the panel keeps its one window listener, AUDIT CHAT D5): a pick lands at the caret
+  // and closes the grid, the button toggles it, and Escape in the field and the panel's close take it down.
+  const emojiBtn = el('button', 'dfchat-emoji', '\u{1F642}'); emojiBtn.type = 'button';
+  emojiBtn.setAttribute('aria-label', 'Emoji'); emojiBtn.title = 'Emoji - or type a shortcode like :smile:';
+  const emojiGrid = el('div', 'dfchat-emojis');
+  emojiGrid.setAttribute('role', 'group'); emojiGrid.setAttribute('aria-label', 'Emoji');   // a set of buttons - a listbox's children would have to be options
+  const picked = new Set();
+  for (const [code, ch] of SHORTCODE_LIST) {   // one button an emoji, named by its FIRST code, in the table's order
+    if (picked.has(ch)) continue;
+    picked.add(ch);
+    const b = el('button', 'dfchat-emoji-pick', ch); b.type = 'button';
+    b.title = `:${code}:`; b.setAttribute('aria-label', code.replace(/_/g, ' '));
+    b.addEventListener('click', () => { insertAtCaret(ch); setEmojiOpen(false); });
+    emojiGrid.append(b);
+  }
+  form.append(input, emojiBtn, send, hide, close);
   // CHAT-R2: the two columns. `main` holds what was there before, so
   // nothing about the list, the tabs or the form moved; `who` is new
   // beside it and scrolls on its own.
+  let emojiOpen = false;
+  const setEmojiOpen = (on) => {
+    emojiOpen = !!on;
+    const cls = emojiOpen ? 'dfchat-emojis on' : 'dfchat-emojis';
+    if (emojiGrid.className !== cls) emojiGrid.className = cls;
+    emojiBtn.setAttribute('aria-expanded', emojiOpen ? 'true' : 'false');
+  };
+  /** EMOTE1: the pick into the field where the caret stands (or at its end), the caret after it, the field bounded. */
+  const insertAtCaret = (ch) => {
+    const v = String(input.value ?? '');
+    const a = Number.isInteger(input.selectionStart) ? input.selectionStart : v.length;
+    const b = Number.isInteger(input.selectionEnd) ? input.selectionEnd : a;
+    const next = v.slice(0, a) + ch + v.slice(b);
+    if (next.length > CHAT_MAX) return;
+    input.value = next;
+    const at = a + ch.length;
+    input.setSelectionRange?.(at, at);
+    input.focus?.();
+  };
+  emojiBtn.addEventListener('click', () => { setEmojiOpen(!emojiOpen); input.focus?.(); });
   const cols = el('div', 'dfchat-cols');
   const main = el('div', 'dfchat-main');
   const who = el('div', 'dfchat-who');
@@ -534,7 +591,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   };
   const socialOut = social ? socialButton('dfchat-social-out') : null;
   if (social) tabs.append(socialButton('dfchat-social-tab'));
-  main.append(list, jump, form);
+  main.append(list, jump, emojiGrid, form);
   cols.append(main, who);
   box.append(tabs, cols, grip);   // CHAT-SIZE: the grip stands at the BOX's corner, over both columns
   // the Social button follows the Chat button (they share a line when both are drawn); `show` and the box keep their places
@@ -660,7 +717,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     return c;
   };
   const lineNode = (line, withTime, withChan = false) => {
-    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}${line.kind === 'ooc' ? ' ooc' : ''}${line.kind === 'roll' ? ' roll' : ''}`);
+    const n = el('div', `dfchat-line${line.mine ? ' mine' : ''}${line.system ? ' system' : ''}${line.red ? ' red' : ''}${line.kind === 'ooc' ? ' ooc' : ''}${line.kind === 'roll' ? ' roll' : ''}${line.kind === 'me' ? ' me' : ''}`);
     const chan = withChan ? chanOf(line) : null;
     if (chan) n.append(chan);
     const time = withTime ? el('span', 'dfchat-time', clockOf(line.at)) : null;
@@ -930,6 +987,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   };
   const closePanel = () => {
     if (!alive || !log.open) return false;
+    setEmojiOpen(false);   // EMOTE1: the picker goes with the panel
     log.setOpen(false);
     input.blur?.();
     paint();
@@ -950,7 +1008,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       // the field's key (CG2): stopped here, so the host's ring never fills from a chat line
       if (e.isComposing || e.keyCode === 229) { e.stopPropagation(); return; }   // C3: the IME's own Enter commits a candidate, not a line
       // AUDIT SOC C2/C14: a surface OVER the chat owns Escape - the key is left whole for it, and the field keeps its line
-      if (e.code === 'Escape') { if (above()) { e.stopPropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); closePanel(); return; }
+      if (e.code === 'Escape') { if (above()) { e.stopPropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); if (emojiOpen) { setEmojiOpen(false); return; } closePanel(); return; }   // EMOTE1: the picker is the innermost surface - its Escape first
       else if (e.code === 'Enter' && !e.shiftKey && !e.repeat) { e.preventDefault(); submit(); }   // C6: a held Enter opened once; its repeats send nothing
       else if (e.code === 'Tab') e.preventDefault();   // C7: focus stays in the field - Tab walked it onto Send and gave the keyboard back to the game
       else swallowBrowserKey(e);

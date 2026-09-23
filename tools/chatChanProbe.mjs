@@ -5,7 +5,10 @@
 // the layout back where a fake cannot: the tab bar's four tabs AND the Social button on ONE row at the sheet's width
 // and at the narrowest box a phone gives (352px) - on the desktop skin and the touch skin, whose tabs are a thumb's -
 // every tab's hover, the field's placeholder following the tab, an aside drawn leaning and dimmed, and the peek's
-// channel mark in the tab's own colour (the Party mark in the party's one green).
+// channel mark in the tab's own colour (the Party mark in the party's one green). DICE1 and EMOTE1 read theirs here
+// too: a roll's colour; the form row with the emoji button at every width (the field never under the narrowest the
+// chat had before it), the picker's round trip, an action's face, and a joined emoji drawn as ONE glyph after the
+// wire's own sanitizer.
 //
 //     node tools/chatChanProbe.mjs
 import { createServer } from 'vite';
@@ -18,6 +21,9 @@ const server = await createServer({ server: { port: 5234, strictPort: true }, lo
 await server.listen();
 const browser = await chromium.launch({ headless: true });
 const pageErrors = [];
+// EMOTE1: the narrowest field the chat shipped before the emoji button - the touch skin's at a 320px phone (114.9px,
+// measured at d7da2279), a skin the button never reaches. No skin at any width may squeeze the field under it.
+const FIELD_FLOOR = 114;
 
 async function mount(page, touch) {
   await page.evaluate(async (touch) => {
@@ -65,6 +71,46 @@ for (const touch of [false, true]) {
     await page.evaluate(() => { globalThis.__chan.panel.open(); globalThis.__chan.panel.render({}); });
     const skin = touch ? 'touch' : 'desktop';
     const b = await bar(page);
+    // EMOTE1: THE FORM ROW with the emoji button - every control inside the box, the field no narrower than the
+    // narrowest the chat shipped before the button (FIELD_FLOOR) - and the picker: open, a pick into the field, closed
+    // by the pick. In a box the screen narrowed below any a drag can choose, the button gives way; a grid opened in a
+    // wider box (the window narrowed under it) must still open inside this one and close on a pick.
+    const form = await page.evaluate(async (touch) => {
+      const { CHAT_WIDTH_MIN } = await import('/src/ui/chatPanel.js');
+      const box = document.querySelector('.dfchat-box').getBoundingClientRect();
+      const btn = document.querySelector('.dfchat-emoji');
+      const shown = getComputedStyle(btn).display !== 'none';
+      const ctrls = ['.dfchat-input', ...(shown ? ['.dfchat-emoji'] : []), '.dfchat-send', '.dfchat-hide', '.dfchat-close'].map((q) => document.querySelector(q).getBoundingClientRect());
+      const inside = ctrls.every((r) => r.left >= box.left - 0.5 && r.right <= box.right + 0.5);
+      const field = ctrls[0].width;
+      const narrow = box.width < CHAT_WIDTH_MIN;
+      if (touch) return { inside, field: Math.round(field), shown, narrow };
+      btn.click();
+      const grid = document.querySelector('.dfchat-emojis');
+      const gr = grid.getBoundingClientRect();
+      const open = getComputedStyle(grid).display !== 'none' && gr.left >= box.left - 0.5 && gr.right <= box.right + 0.5 && gr.height > 0;
+      const input = document.querySelector('.dfchat-input');
+      input.value = 'hi'; input.setSelectionRange(2, 2);
+      grid.querySelector('.dfchat-emoji-pick').click();
+      return { inside, field: Math.round(field), shown, narrow, open, value: input.value, closed: getComputedStyle(grid).display === 'none' };
+    }, touch);
+    check(`${skin} ${W}px: the form row inside the box, the field no narrower than any the chat had before the picker`, form.inside && form.field >= FIELD_FLOOR, `field ${form.field}px, floor ${FIELD_FLOOR}px`);
+    if (touch) check(`${skin} ${W}px: no emoji button - the phone keyboard has its own`, !form.shown);
+    else if (form.narrow) check(`${skin} ${W}px: a box the screen narrowed below any a drag can choose - the button gives way; a grid opened wider still opens inside it, a pick lands and closes it`, !form.shown && form.open && form.value === 'hi\u{1F604}' && form.closed, JSON.stringify(form));
+    else check(`${skin} ${W}px: the picker opens inside the box, a pick lands in the field and closes it`, form.shown && form.open && form.value === 'hi\u{1F604}' && form.closed, JSON.stringify(form));
+    if (!touch && W === 1440) {
+      // THE EDGE: the smallest box a drag can make keeps the button; a pixel under it (only a screen can do that) gives
+      // it way - the query measures inside the box's border, and the rule takes the border off to ask about the box
+      const edge = await page.evaluate(async () => {
+        const { CHAT_WIDTH_MIN } = await import('/src/ui/chatPanel.js');
+        const root = document.querySelector('.dfchat'), btn = document.querySelector('.dfchat-emoji');
+        const at = (w) => { root.style.width = `${w}px`; return { box: document.querySelector('.dfchat-box').getBoundingClientRect().width, shown: getComputedStyle(btn).display !== 'none' }; };
+        const out = { atMin: at(CHAT_WIDTH_MIN), under: at(CHAT_WIDTH_MIN - 1) };
+        root.style.width = '';
+        return out;
+      });
+      check('the smallest box a drag can make keeps the emoji button; a pixel under it gives it way', edge.atMin.shown && !edge.under.shown, JSON.stringify(edge));
+    }
     // THE WORST BAR: the three tabs the player is not reading all unread (the open, active one reads as lines arrive)
     const u = await page.evaluate(async () => {
       const { log, panel } = globalThis.__chan;
@@ -131,6 +177,23 @@ for (const touch of [false, true]) {
         return [read(lines.at(-2)), read(lines.at(-1))];
       });
       check('a roll is drawn in its own colour, in the dice\'s words - and a typed line that reads like one is not', roll[0].roll && roll[0].text === 'rolls 2d6+3: 4 + 5 +3 = 12' && roll[0].color === 'rgb(231, 196, 106)' && !roll[1].roll && roll[1].color !== roll[0].color, JSON.stringify(roll));
+      // EMOTE1: an action leans; a joined family through the wire's own sanitizer is ONE glyph wide, and the same
+      // three people with the joiners gone (as the sanitizer had them) are three
+      const emo = await page.evaluate(async () => {
+        const { log, panel } = globalThis.__chan;
+        const { sanitizeChat } = await import('/src/net/wire.js');
+        const family = '\u{1F468}\u200d\u{1F469}\u200d\u{1F467}';
+        log.push('local', { id: 'plocal000001', name: 'Ysolde', text: 'waves at Bran.', me: true });
+        log.push('local', { id: 'plocal000001', name: 'Ysolde', text: sanitizeChat(family) });
+        log.push('local', { id: 'plocal000001', name: 'Ysolde', text: family.replace(/\u200d/g, '') });
+        panel.render({});
+        await document.fonts.ready;
+        const lines = [...document.querySelectorAll('.dfchat-list .dfchat-line')];
+        const w = (n) => { const r = document.createRange(); r.selectNodeContents(n.querySelector('.dfchat-text')); return r.getBoundingClientRect().width; };
+        return { me: getComputedStyle(lines.at(-3).querySelector('.dfchat-text')).fontStyle, meClass: lines.at(-3).classList.contains('me'), joined: w(lines.at(-2)), apart: w(lines.at(-1)), kept: sanitizeChat(family) === family };
+      });
+      check('an action is drawn leaning', emo.meClass && emo.me === 'italic', JSON.stringify(emo));
+      check('a joined family survives the wire and draws as ONE emoji; the same people unjoined draw as three', emo.kept && emo.joined > 0 && emo.apart > emo.joined * 2.2, `joined ${Math.round(emo.joined)}px, apart ${Math.round(emo.apart)}px`);
       const peek = await page.evaluate(() => {
         const { log, panel } = globalThis.__chan;
         log.select('world'); panel.close?.(); log.setOpen(false);

@@ -69,6 +69,8 @@ export const regionJoinedText = (place) => `Region channel: ${place}.`;
 export const CHAN_OLD_RELAY_TEXT = 'This channel needs the server\'s next update.';
 /** DICE1: a roll asked of a relay from before the dice (ROLL_RELAY_MIN) - it would close the socket on the frame. */
 export const ROLL_OLD_RELAY_TEXT = 'Dice need the server\'s next update.';
+/** EMOTE1: an action said to a relay from before them (EMOTE_RELAY_MIN) - it would say the words bare. */
+export const EMOTE_OLD_RELAY_TEXT = 'Actions need the server\'s next update.';
 /** CHAT-CHAN: how far a Local line carries, scene units - the distance a peer's NAME is drawn at (net/remotePlayers.js
  *  NAME_RANGE; a pin holds them equal): whoever you can read over a head can hear you, and nobody further. */
 export const CHAT_SAY_RANGE = 60;
@@ -172,7 +174,7 @@ export class ChatLog {
   /** The line's record, or null for nothing to say. DICE1: `roll` is a roll the RELAY made (the host hands it from the
    *  frame type, `onRoll`, never from a chat line) - kept only when the dice's law holds, and then the line's words are
    *  the dice's (rollText), its kind 'roll'. */
-  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, roll = null } = {}, tabId) {
+  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, roll = null, me = false } = {}, tabId) {
     const rolled = roll && validRoll(roll) ? { n: roll.n, m: roll.m, k: roll.k, dice: [...roll.dice], total: roll.total } : null;
     if (roll && !rolled) return null;
     if (rolled) text = rollText(rolled);
@@ -191,10 +193,11 @@ export class ChatLog {
     // Every red line is a system line too: nobody is speaking it.
     // CHAT-CHAN: `kind` is how the line is DRAWN - '' a line said, 'ooc' an aside out of character, read off the
     // SPEAKER's own text (the (( )) mark is theirs to make) and never off a field, and never on a line nobody spoke;
-    // DICE1: 'roll', a roll the relay made (`roll` above), which no text can be.
+    // DICE1: 'roll', a roll the relay made (`roll` above), which no text can be; EMOTE1: 'me', an action - what the
+    // speaker DOES, said with `me: true` on the wire (the relay's word) and drawn "Bran waves", never a system line.
     // `tab` is the tab the line was said on, or null for a line the game said on every tab.
     const sys = !!system || !!red;
-    const kind = rolled ? 'roll' : !sys && isOocText(text) ? 'ooc' : '';
+    const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : '';
     return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, kind, tab: tabId, ...(rolled ? { roll: rolled } : {}) };
   }
 

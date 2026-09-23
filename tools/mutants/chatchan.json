@@ -9,8 +9,8 @@
   {
     "name": "CC-unknown-channel-falls-to-the-room",
     "file": "src/net/wire.js",
-    "old": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch } : { error: 'bad chat' };",
-    "new": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch } : { t: 'chat', text };",
+    "old": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { error: 'bad chat' };",
+    "new": "    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { t: 'chat', text, ...me };",
     "tests": ["test/chatchan.test.js"]
   },
   {
@@ -128,8 +128,8 @@
   {
     "name": "CC-aside-on-a-notice",
     "file": "src/net/chat.js",
-    "old": "rolled ? 'roll' : !sys && isOocText(text) ? 'ooc' : ''",
-    "new": "rolled ? 'roll' : isOocText(text) ? 'ooc' : ''",
+    "old": "rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : ''",
+    "new": "rolled ? 'roll' : me === true ? 'me' : isOocText(text) ? 'ooc' : ''",
     "tests": ["test/chatchan.test.js"]
   },
   {
@@ -226,8 +226,8 @@
   {
     "name": "CC-aside-bubbles",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;",
-    "new": "  if (line.system || line.mine || line.kind === 'roll') return false;",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
+    "new": "  if (line.system || line.mine || line.kind === 'roll' || line.kind === 'me') return false;",
     "tests": ["test/name1_bubbles.test.js"]
   },
   {
@@ -324,8 +324,8 @@
   {
     "name": "CC-ch-on-a-plain-line",
     "file": "src/net/online.js",
-    "old": "    if (!this._send(ch != null ? { t: 'chat', text: line, ch } : { t: 'chat', text: line })) return false;",
-    "new": "    if (!this._send({ t: 'chat', text: line, ch })) return false;",
+    "old": "    const frame = { t: 'chat', text: line, ...(ch != null ? { ch } : {}), ...(me ? { me: true } : {}) };",
+    "new": "    const frame = { t: 'chat', text: line, ch, ...(me ? { me: true } : {}) };",
     "tests": ["test/chatchan.test.js", "test/chat1.test.js"]
   },
   {

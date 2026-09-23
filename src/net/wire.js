@@ -590,8 +590,14 @@ export function sanitizeName(name) {
  *  the bidi controls, the zero widths, the joiners, the soft hyphen, the
  *  tag block, the BOM: AUDIT CHAT A4 - five hand-written ranges missed
  *  U+061C and the tags) and the variation selectors bar U+FE0F, which
- *  emoji presentation needs. */
+ *  emoji presentation needs. EMOTE1: bar the one joiner sanitizeChat
+ *  keeps between two pictographs, which is how an emoji is joined. */
 const INVISIBLE = /[\p{Cf}\uFE00-\uFE0E\u{E0100}-\u{E01EF}]/u;
+/** EMOTE1: a pictograph - an emoji's base (Unicode Extended_Pictographic: the faces, the people, the hearts, the
+ *  signs a joiner makes a profession of) - and what may follow one inside an emoji: its presentation selector, a skin
+ *  tone, the keycap's enclosing mark. */
+const EMOJI_PICTO = /\p{Extended_Pictographic}/u;
+const EMOJI_TAIL = /[\uFE0F\u20E3\u{1F3FB}-\u{1F3FF}]/u;
 
 /** A chat line the room will relay: control and format characters
  *  gone (a line cannot rewrite the line before it, or hide in zero
@@ -604,13 +610,27 @@ const INVISIBLE = /[\p{Cf}\uFE00-\uFE0E\u{E0100}-\u{E01EF}]/u;
  *  own (the panel is DOM text: nothing here is markup). */
 export function sanitizeChat(text) {
   let s = '';
-  for (const ch of String(text ?? '')) {
+  const cps = [...String(text ?? '')];
+  let inEmoji = false;   // EMOTE1: the last thing kept was a pictograph, or its selector or skin tone
+  for (let i = 0; i < cps.length; i++) {
+    const ch = cps[i];
     const c = ch.codePointAt(0);
+    // EMOTE1 (2026-09-23, Addison Knox: "Emotes, be it emojis or additional animations"): THE ONE JOINER KEPT. A zero
+    // width joiner BETWEEN TWO PICTOGRAPHS is what makes a family, a profession, a rainbow flag - one emoji, drawn as
+    // one glyph - and it hides nothing there: a pictograph stands on each side of it, in plain sight. Anywhere else it
+    // is the invisible it always was (between letters it splits a word a filter reads), and it goes.
+    if (c === 0x200d) {
+      if (inEmoji && i + 1 < cps.length && EMOJI_PICTO.test(cps[i + 1])) s += ch;
+      continue;
+    }
     if (c < 32 || (c >= 0x7f && c <= 0x9f) || (c >= 0xd800 && c <= 0xdfff) || INVISIBLE.test(ch)) continue;
     s += ch;
+    inEmoji = EMOJI_PICTO.test(ch) || (inEmoji && EMOJI_TAIL.test(ch));
   }
   s = s.replace(/\s+/g, ' ').replace(/(\p{M}{3})\p{M}+/gu, '$1').trim().slice(0, CHAT_MAX);
-  if (/[\uD800-\uDBFF]$/.test(s)) s = s.slice(0, -1);   // the bound fell inside a pair: no half of a character
+  // the bound can fall inside a pair (no half of a character) or just past a joiner, whose pictograph it cut away
+  // (EMOTE1: a joiner with nothing after it joins nothing) - either leaves a tail a second pass would take; it goes now
+  while (/[\uD800-\uDBFF]$/.test(s) || s.endsWith('\u200d')) s = s.slice(0, -1);
   return s.trim();
 }
 
@@ -870,7 +890,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  carries it (`v`), and a client whose wire.js was built against another version says so on the console: the client
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
-export const RELAY_VERSION = 'world99';   // DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
+export const RELAY_VERSION = 'world99';   // EMOTE1 (the same deploy): a chat line may be an ACTION (`me: true`, nothing else admitted), and the sanitizer keeps the one joiner that stands between two pictographs (a family, a profession, a flag - one emoji). DICE1 (2026-09-23, the community arc, the same deploy): the `roll` frame - a roll ASKED of the relay ({n, m, k}, net/dice.js), rolled from the relay's own CSPRNG and said to the channel it was asked on through the chat's own fan (`_sayLine`), one a second a socket. CHAT-CHAN (2026-09-23, the community arc): the region channels (`chat:region.<i>`, one room per politic region) join the whitelist, a chat line may name the `party` channel - fanned by the hub to the party's members alone on a budget of the parties' own (PARTY_CHAT_ROOM_HZ_MAX), and refused whole when it names anything else - and a cast's strikes are its own (`castDrops`, no longer the chat gate's `cdrops`) - world99. Before it: SPELLFX1 (2026-09-23, the friendly-spells drop): the pose carries the cast's element (`ce`) and the arrows loosed (`ar`), so a peer's missile and shaft can be DRAWN - the Unity co-op's RpcPlayPlayerSpellCastVisual; visual only, it lands nothing, and a pose from before it reads Magic and no shafts; and the sender's cast meter a whole blast deep (CAST_BURST_MAX), since a beneficial blast is one cast and one frame per mate - world98. Before it: AUDIT ALLY-CAST (2026-09-23): the cast frame's honest bounds (level 30, byte components, a touch or a ranged target, the icon), the destination's funnel per sender - world97. Before it: ALLY-CAST (2026-09-23): the `cast` frame - a beneficial spell at a party mate, directed like a trade frame, the receiver deciding what lands - world96. Before it: AUDIT PARTY8 + AUDIT PARTY-REST (2026-09-23): the party pose carries `readyAt` (a vote's shared-clock stamp, read for freshness by every party mate), the quest fan pays in bytes (QUEST_ROOM_BYTES_PER_S), a lapse burst says the lead once and the lead passes to a seat that is online - world95. Before it: PARTY8 (2026-09-22): PARTY_MAX 4 -> 8 - a party frame's member bound, so a world93 client and this hub must not meet - world94. Before it: PARTY-REST DROP (2026-09-22): the party pose grew `rest.kind`, `voteAt`, `restEnemyAt`, `restCancelFor`/`restCancelAt`, `restStartedAt`, and `bk` is a full 32-bit key (PARTY-REST9) - world93. Before it: AUDIT DROPS (2026-09-22): the trade bytes budgeted per sender (B3), the hub's quest cooldown at half the client's floor (C1), the quest budget spent only on a share with a party to reach (C3) - world92. Before it: QUEST1 + TRADE1 + PEER-FS1 (2026-09-22, three drops in one deploy): the quest frame (a party member's quest, shared), the trade frame (a courier between two peers) and the pose's footstep byte. Before them: RELAY-H1: KEEPALIVE_FAN_MS follows HEARTBEAT_MS 5000 -> 20000 (the floor is 10 s now)   // ONLINE-CLASS1: a look carries the character's class name, so a peer without a Morrowind body stands as its class-enemy sprite   // ACC1d: the hello carries an identity token and the relay verifies the name out of it   // ACC1g: and the token is REQUIRED - a hello the relay cannot verify is refused, so a name can no longer be typed   // ACC3: the token carries a TITLE and GLYPHS, and `badged` puts them on the welcome's rows, the join and the channel roster - read off the signature, never off the client   // RED1: the server's own red line - `say` in, `red` out, and the authority is the dev glyph the token already carried   // MOD1: the mute order (`{t:'mute', order}` in, `{t:'muted', until}` out), `sub` on chat lines and a channel's roster, the `mu` claim - world90
 
 /** The listeners sorted by distance from `from`, nearest first; one with no pose yet sorts last, because a peer that
  *  has never said where it is cannot be near. The ordering is Euclidean in the POSE'S OWN FRAME, which is a cell's
@@ -1173,8 +1193,12 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (!text) return { error: 'bad chat' };   // the client sanitizes before it sends, so an empty line here is not the port's client
     // CHAT-CHAN: a channel named on the line must be one the relay routes - anything else is refused whole, never
     // quietly dropped into the room's own fan
-    if (m.ch === undefined) return { t: 'chat', text };
-    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch } : { error: 'bad chat' };
+    // EMOTE1: an ACTION - `/me waves` - is a line said as what the speaker DOES ("Bran waves"): `me: true`, and
+    // nothing else is admitted in its place (a truthy junk value is refused, never read as an action)
+    if (m.me !== undefined && m.me !== true) return { error: 'bad chat' };
+    const me = m.me === true ? { me: true } : {};
+    if (m.ch === undefined) return { t: 'chat', text, ...me };
+    return CHAT_LINE_CHANNELS.includes(m.ch) ? { t: 'chat', text, ch: m.ch, ...me } : { error: 'bad chat' };
   }
   if (m.t === 'roll') {
     // DICE1: A ROLL ASKED OF THE RELAY - how many dice, how many sides, what to add, inside the dice's own bounds
@@ -1815,6 +1839,10 @@ export const relaySupportsCast = (v) => { const m = /^world(\d+)$/.exec(typeof v
 /** DICE1: the relay that first rolls (`{t:'roll'}` - an older one answers the frame with 'unknown message' and CLOSES the
  *  socket), the same deploy as the channels (CHAN_RELAY_MIN). A roll is asked only of a relay that says it rolls. */
 export const ROLL_RELAY_MIN = 99;
+/** EMOTE1: the relay that first carries an ACTION line (`me: true`) - an older one projects the line to `{t:'chat',
+ *  text}`, and "waves" would be said as a line nobody could read as a wave. The same deploy as the channels. */
+export const EMOTE_RELAY_MIN = 99;
+export const relaySupportsEmote = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= EMOTE_RELAY_MIN; };
 export const relaySupportsRoll = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= ROLL_RELAY_MIN; };
 /** CHAT-CHAN: the relay that first routes a party's line and opens the region channels. An older one would take a
  *  `ch` it does not know as... nothing: its parse projects `{t:'chat', text}` and the party's line would be fanned to

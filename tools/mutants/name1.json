@@ -237,8 +237,8 @@
   {
     "name": "BUBBLE1-system-lines-speak",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;",
-    "new": "  if (line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
+    "new": "  if (line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
     "tests": [
       "test/name1_bubbles.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "BUBBLE1-my-own-line-speaks",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;",
-    "new": "  if (line.system || line.kind === 'ooc' || line.kind === 'roll') return false;",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
+    "new": "  if (line.system || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
     "tests": [
       "test/name1_bubbles.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "BUBBLE1-cut-unmarked",
     "file": "src/ui/nameLayer.js",
-    "old": "  return s.slice(0, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;",
-    "new": "  return s.slice(0, BUBBLE_CHARS).trimEnd();",
+    "old": "  return graphemeCut(s, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;",
+    "new": "  return graphemeCut(s, BUBBLE_CHARS).trimEnd();",
     "tests": [
       "test/name1_bubbles.test.js"
     ]

@@ -186,17 +186,18 @@ in a box under 400px (a CONTAINER query, because CHAT-SIZE lets the box be that 
 drop the capitals' spacing and the Social count becomes a dot as well (its own label still says it, AUDIT SOC C21); and
 only on a phone under about 380px wide does the strip scroll sideways - a swipe, never a squeeze.
 
-**Pins.** `test/chatchan.test.js` (16), over the real Room, the wire, a session on a fake socket, the log, the panel on a
-fake document, and the host by source. `tools/mutants/chatchan.json`: 56, 56 dead. `tools/chatChanProbe.mjs` reads the
-real panel in Chromium - the bar on both skins at 440, 352 and a 320px phone's 292, bare and with three tabs unread
-(no tab squeezed below its own name, judged off the text's own box; every dot whole inside its button), the hovers,
-the placeholders, the aside's face, the peek's marks, `/help` keeping the chat open - 59 checks (60 since DICE1 added a roll's look). Re-aimed, each to the same claim on
-the new shape: CHAT1's tabs, whitelist, line shape, link loop, rejoin, send and strip pins; the roster pins (ACC3c's key,
-CHAT-R1's rows, ROSTER-G's and CHAT-FIT's wiring - one session still answers the badge and the row); SOC3's tab count;
-SRV-N's and RED1's host pins; BUBBLE1's law (every tab, and the aside refused). The mutant records the move touched
-were re-aimed by content (`chatfit`, `name1`, `red1`, `soc1`); `name1.json`'s BUBBLE1-any-tab-speaks is retired with the
-law it held, which `chatchan.json`'s CC-aside-bubbles replaces. The relay is world99 (a new LAW row); the arc's later
-slices ride the same deploy and restate that row until the merge.
+**Pins.** `test/chatchan.test.js` (16), over the real Room, the wire, a session on a fake socket, the log, the panel on
+a fake document, and the host by source. `tools/mutants/chatchan.json`: 56, 56 dead. `tools/chatChanProbe.mjs` reads the
+real panel in Chromium - the bar on both skins at 440, 352 and a 320px phone's 292, bare and with three tabs unread (no
+tab squeezed below its own name, judged off the text's own box; every dot whole inside its button), the hovers, the
+placeholders, the aside's face, the peek's marks, `/help` keeping the chat open - 59 checks (60 since DICE1 added a
+roll's look, 75 since EMOTE1's form row, picker and emoji). Re-aimed, each to the same claim on the new shape: CHAT1's
+tabs, whitelist, line shape, link loop, rejoin, send and strip pins; the roster pins (ACC3c's key, CHAT-R1's rows,
+ROSTER-G's and CHAT-FIT's wiring - one session still answers the badge and the row); SOC3's tab count; SRV-N's and
+RED1's host pins; BUBBLE1's law (every tab, and the aside refused). The mutant records the move touched were re-aimed by
+content (`chatfit`, `name1`, `red1`, `soc1`); `name1.json`'s BUBBLE1-any-tab-speaks is retired with the law it held,
+which `chatchan.json`'s CC-aside-bubbles replaces. The relay is world99 (a new LAW row); the arc's later slices ride the
+same deploy and restate that row until the merge.
 
 ## DICE1 - the relay rolls
 
@@ -230,3 +231,60 @@ roll heard by the party alone; the session's door (the world99 welcome, one a se
 are) and a forged total refused; the log's roll line and its fail-closed refusal; the bubble; the host by source.
 `tools/mutants/dice1.json`: 29, 29 dead. `tools/chatChanProbe.mjs` looks at a roll line in Chromium. Relay world99 -
 the same deploy as CHAT-CHAN, its LAW row restated.
+
+## EMOTE1 - an action, a gesture, and an emoji that stays whole
+
+Addison Knox on Discord, 2026-09-23: "Emotes, be it emojis or additional animations".
+
+**An action.** `/me looks around` says a line as what the speaker DOES: `{t:'chat', text, me: true}` - only `true`,
+anything else on the field refused whole ('bad chat'), never read as an action - and the relay says it with the flag
+on through the chat's one fan (`_sayLine`: the same channels, the same budget - an action costs a line). The log draws
+it "Bran looks around": the name, the tag, then the words leaning, in the name's own warmth. Its kind, 'me', is the
+RELAY's word from the frame and never read off the text, and it is never a system line and never bubbled - what stands
+over a head is what the character SAID. An action goes only to a relay that carries one (world99, relaySupportsEmote):
+an older one projects the frame to its text, and "looks around" would be said as a line of plain words - so the host
+refuses it in words (EMOTE_OLD_RELAY_TEXT) and keeps the line in the field.
+
+**A gesture.** Twenty (`EMOTES`, net/chatCommands.js): /wave /bow /nod /shrug /laugh /cheer /salute /smile /sigh /cry
+/dance /clap /point /thank /greet /kneel /sit /pray /flex /facepalm, each an action line on the LOCAL tab, whichever
+tab it was typed on - a gesture is the body's, and the bodies near enough to see it are the ones Local reaches. The
+words are the table's own: `/wave` says "waves.", `/wave Ann` "waves at Ann." - a name after the command makes it a
+gesture AT someone, bounded at 24 characters and only ever a name in the table's sentence. `/emotes` lists them, and
+`/help` names `/me`, the gestures and the shortcodes.
+
+**The animations - words only, on purpose.** The others stand in the Morrowind body (MWBODY1), and its base animation
+groups are the idles (idle through idle9 - fidgets, none of them a gesture), the moves, the attacks and the casts, a
+knockdown and the deaths (formats/mwAnim.js). There is no wave, no bow, no dance to play, and a gesture drawn with the
+wrong clip would say something the player did not. So a gesture is a line until the bodies carry the clips; then the
+pose needs one field (the gesture, and when it began) and the relay one deploy.
+
+**An emoji that stays whole.** The one sanitizer both ends run (net/wire.js `sanitizeChat`) stripped every zero width
+joiner - rightly, an invisible that splits a word a filter reads - and so broke every JOINED emoji apart: a family
+arrived as a man, a woman and a girl side by side (48px of glyphs where the family is 16). It keeps the one joiner
+that stands BETWEEN TWO PICTOGRAPHS now (Unicode Extended_Pictographic, across a presentation selector, a skin tone or
+a keycap mark), where it hides nothing - a pictograph on each side, in plain sight - and strips it everywhere else;
+the bound takes a joiner whose pictograph it cut away, and the law is idempotent under a fuzz over the emoji's own
+parts. The bubble's cut (ui/nameLayer.js `graphemeCut`) falls between whole characters as a reader counts them
+(Intl.Segmenter), where `slice` could halve a surrogate pair or cut a family to a man and a joiner.
+
+**Shortcodes and the picker.** `:smile:`, `:sword:`, `:heart:` - 62 codes for 60 emoji (`SHORTCODE_LIST`, a list so the
+picker keeps the written order: an object puts `100` first) - are their emoji in anything said, expanded before the
+parse, so an action and a gesture's name wear them too; a code the table does not know stays as typed. On the desktop
+skin a button beside the field opens a grid of the same emoji, one button an emoji named by its first code; a pick
+lands at the caret and closes the grid, and Escape closes the grid before the chat. The touch skin has no button -
+every phone keyboard has an emoji key, and on a 320px phone the button took the field to 67px - and neither has a
+desktop box the SCREEN narrowed below any width a drag can choose (CHAT_WIDTH_MIN): there it took the field from 129px
+to 93px, narrower than any the chat had before it. That is a container query, and a container query measures inside
+the box's border, so the rule takes the border off (one constant draws the border and sizes the query): the first cut
+hid the button at the smallest box a drag makes.
+
+**Pins.** `test/emote1.test.js` (8): the joiner law and its fuzz; the action on the wire, over the real Room and a
+session on a fake socket (asked only of a world99 relay, believed only as `true`); the log's kind; the grammar (/me;
+every gesture parsed, each with its form AT a name; /emotes; every shortcode whole over the wire, a clock no code); the
+bubble's cut and its refusal of an action; the picker over a fake document (its order, the caret, Escape, the close, a
+group of buttons); the picker's sheet (the touch skin's rule, the narrow box's asked inside the border); the host by
+source. `tools/mutants/emote1.json`: 31, 31 dead. `tools/chatChanProbe.mjs` in Chromium: the form row at 440, 352 and
+292 on both skins (the field never under the narrowest the chat had before the button, the touch skin's 115px at 320),
+the picker's round trip, the edge (the smallest box a drag makes keeps the button, a pixel under it does not), an
+action's face, and a joined family drawn as ONE glyph after the wire - 75 checks. Relay world99 - the same deploy, its
+LAW row restated.

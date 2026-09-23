@@ -106,8 +106,8 @@
   {
     "name": "MOD1-14-the-line-names-no-account",
     "file": "server/src/index.js",
-    "old": "text: m.text, at: now, sub: a.sub }, now);",
-    "new": "text: m.text, at: now }, now);",
+    "old": "text: m.text, at: now, sub: a.sub, ...(m.me === true ? { me: true } : {}) }, now);",
+    "new": "text: m.text, at: now, ...(m.me === true ? { me: true } : {}) }, now);",
     "tests": ["test/mod1.test.js"],
     "note": "A moderator cannot name who said it."
   },

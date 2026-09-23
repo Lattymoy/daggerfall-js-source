@@ -163,15 +163,15 @@
   {
     "name": "DC-roll-kind-lost",
     "file": "src/net/chat.js",
-    "old": "    const kind = rolled ? 'roll' : !sys && isOocText(text) ? 'ooc' : '';",
-    "new": "    const kind = !sys && isOocText(text) ? 'ooc' : '';",
+    "old": "    const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : '';",
+    "new": "    const kind = sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : '';",
     "tests": ["test/dice1.test.js"]
   },
   {
     "name": "DC-roll-bubbled",
     "file": "src/ui/nameLayer.js",
-    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll') return false;",
-    "new": "  if (line.system || line.mine || line.kind === 'ooc') return false;",
+    "old": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;",
+    "new": "  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'me') return false;",
     "tests": ["test/dice1.test.js"]
   },
   {

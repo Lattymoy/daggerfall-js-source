@@ -287,8 +287,8 @@ import { enhancedHudScale } from '../ui/enhancedHud.js';   // AUDIT NAME1 F3: th
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
-import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
-import { parseChatLine, HELP_LINES, unknownCommandText, emptyCommandText, hostMisuseText, badRollText } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll
+import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
+import { parseChatLine, HELP_LINES, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, expandShortcodes, EMOTE_LINES } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
 import { partyRosterSource, localRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom } from '../net/wire.js';   // CHAT-CHAN: a region's channel
@@ -9197,9 +9197,14 @@ export async function bootWorld(canvas, renderer, params, status) {
         // CHAT-CHAN: EVERY OTHER SLASH IS A CHANNEL'S COMMAND, THE LIST, OR REFUSED IN WORDS (net/chatCommands.js) - a
         // mistyped `/pary hi` was said to everyone online, slash and all. A refusal keeps the line in the field to be
         // mended (B2's false); the list is lines to READ, so the field clears and the chat stays open ('read').
-        const cmd = parseChatLine(text);
+        // EMOTE1: a `:shortcode:` is its emoji in anything said - before the parse, so a gesture's name and an action
+        // wear them too
+        const cmd = parseChatLine(expandShortcodes(text));
         const note = (line) => chatLog.push(tabId, { text: line, system: true });
         if (cmd.kind === 'help') { for (const line of HELP_LINES) note(line); return 'read'; }
+        if (cmd.kind === 'emotes') { for (const line of EMOTE_LINES) note(line); return 'read'; }
+        if (cmd.kind === 'me') return chatSend(tabId, cmd.text, tabId, { me: true });   // EMOTE1: an action, on this tab
+        if (cmd.kind === 'emote') return chatSend('local', cmd.text, tabId, { me: true });   // EMOTE1: a gesture - the body's, so those near see it
         if (cmd.kind === 'unknown') { note(unknownCommandText(cmd.name)); return false; }
         if (cmd.kind === 'empty') { note(emptyCommandText(cmd.name)); return false; }
         if (cmd.kind === 'host') { note(hostMisuseText(cmd.name)); return false; }
@@ -10314,15 +10319,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** CHAT-CHAN: a typed line said on `tabId` - each tab's own door. False keeps the line in the field (AUDIT CHAT B2):
    *  nothing went. A reason is said as a line on the tab the line was typed on (`from`): the strip speaks for the
    *  active tab alone, and `/p` is typed on another. */
-  const chatSend = (tabId, text, from = tabId) => {
+  const chatSend = (tabId, text, from = tabId, { me = false } = {}) => {
     const why = (line) => { chatLog.push(from, { text: line, system: true }); return false; };
     if ((tabId === 'party' || tabId === 'region') && chanOld()) return why(CHAN_OLD_RELAY_TEXT);
-    if (tabId === 'local') return online?.sendChat(text) ?? false;
+    // EMOTE1: an action only down a session whose relay carries one - an older one would say the words bare
+    const s = tabId === 'local' ? online : tabId === 'party' ? socialLink() : chatLinks.get(tabId);
+    if (me && s?.status === 'open' && !s.emoteOk) return why(EMOTE_OLD_RELAY_TEXT);
+    if (tabId === 'local') return online?.sendChat(text, { me }) ?? false;
     if (tabId === 'party') {
       if (!social?.party) return why(NO_PARTY_TEXT);
-      return socialLink()?.sendChat(text, { ch: 'party' }) ?? false;   // the relay fans it to the party's members alone - my own tabs too: the echo is the receipt
+      return socialLink()?.sendChat(text, { ch: 'party', me }) ?? false;   // the relay fans it to the party's members alone - my own tabs too: the echo is the receipt
     }
-    return chatLinks.get(tabId)?.sendChat(text) ?? false;
+    return chatLinks.get(tabId)?.sendChat(text, { me }) ?? false;
   };
   /** DICE1 (Addison Knox: "Chat dice-rolling"): a roll ASKED on `tabId`'s channel - the relay rolls it (net/dice.js) and
    *  says it back to the channel, this player included. The tab's own door, chatSend's: the same session, the same
