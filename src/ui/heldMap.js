@@ -133,7 +133,7 @@ import { smoothstep } from '../systems/mathf.js';   // MAP-FIELD7: the ONE easin
 export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 import { systemsNear, forecastAt } from '../systems/weatherMap.js';   // WEATHER3e: the world weather map, read over the bay
-import { weatherMarks, paintWeatherGlyphs, paintWeatherLegend, paintWeatherRegions, weatherField, fieldRegions, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS } from './weatherLayer.js';
+import { weatherMarks, paintWeatherGlyphs, paintWeatherLegend, paintWeatherRegions, weatherField, fieldRegions, fieldStrength, forecastText, fieldOfMapPixel, WEATHER_LAYER_REFRESH_MINUTES, WEATHER_FORECAST_HOURS } from './weatherLayer.js';
 import { mapGround } from '../systems/weatherSim.js';   // AUDIT WEATHER3 R1: the ground law the player's own sky goes through
 import { TERRAIN_SIZE } from '../world/terrainSampler.js';
 
@@ -2385,7 +2385,7 @@ export class HeldMapWindow {
       // every open would read the whole bay cold each time (AUDIT WEATHER3 R2b) - the host's is the sim's, warm
       const systems = systemsNear(cx, cz, minutes, climateAt, reach);
       const ground = mapGround(climateAt);
-      this._wx = { bucket, key: `wx${bucket}`, minutes, ground, systems, marks: weatherMarks(systems, (w, x, z) => ground(w, x, z, minutes)), forecasts: new Map(), regions: null };
+      this._wx = { bucket, key: `wx${bucket}`, minutes, ground, systems, marks: weatherMarks(systems, (w, x, z) => ground(w, x, z, minutes)), forecasts: new Map(), regions: null, strength: null };
     }
     return this._wx;
   }
@@ -2399,10 +2399,15 @@ export class HeldMapWindow {
    *  then the glyphs, a handful, and the legend over. */
   _paintWeather(ctx, env, wx) {
     const opts = { paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, bounds: [this._size.width, this._size.height] };
-    wx.regions ??= fieldRegions(weatherField(wx.systems, { width: this._size.width, height: this._size.height, ground: (w, x, z) => wx.ground(w, x, z, wx.minutes) }));
+    if (!wx.regions) {
+      // one read of the law for the refresh: the words' regions and, where something falls, how hard (WEATHER3i)
+      const field = weatherField(wx.systems, { width: this._size.width, height: this._size.height, ground: (w, x, z) => wx.ground(w, x, z, wx.minutes) });
+      wx.regions = fieldRegions(field);
+      wx.strength = fieldStrength(field);
+    }
     const op = ctx.globalCompositeOperation;
     ctx.globalCompositeOperation = 'destination-over';
-    paintWeatherRegions(ctx, env.view, wx.regions, opts);
+    paintWeatherRegions(ctx, env.view, wx.regions, { ...opts, strength: wx.strength, under: true });
     ctx.globalCompositeOperation = op ?? 'source-over';
     paintWeatherGlyphs(ctx, env.view, wx.marks, opts);
     paintWeatherLegend(ctx, opts);
@@ -2419,7 +2424,9 @@ export class HeldMapWindow {
     let text = wx.forecasts.get(key);
     if (text == null) {
       const [fx, fz] = fieldOfMapPixel(px, py);
-      text = forecastText(forecastAt(fx, fz, this.deps.weather.minutes(), this.deps.getClimateIndex, { hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx.ground }), WEATHER_FORECAST_HOURS);
+      // read at the refresh's minute, the one the sheet's hatch was read at, so the hover names what is drawn under it
+      // (AUDIT-3i: read at the live minute, a hover nine minutes into a refresh named another strength than the hatch)
+      text = forecastText(forecastAt(fx, fz, wx.minutes, this.deps.getClimateIndex, { hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx.ground }), WEATHER_FORECAST_HOURS);
       wx.forecasts.set(key, text);
     }
     return label ? `${label} \u00b7 ${text}` : text;

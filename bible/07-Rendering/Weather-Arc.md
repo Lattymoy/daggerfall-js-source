@@ -857,3 +857,115 @@ keeps only a pattern it made.
   player's query 0.4 ms, the sky's read 0.6 ms, a hover's 12-hour
   forecast 8-10 ms (once per pixel per refresh), and a warm whole-bay read
   9-30 ms.
+
+### Slice I shipped - the strength of what falls, and a lighter hand (2026-09-23)
+
+Mac, on slice H's render: "Let's make this more subtle and push the
+detail further". The detail chosen: strength inside a region, so light
+and heavy rain read differently. Pinned by
+`test/weather3i_strength.test.js` (`tools/mutants/weather3i.json`).
+
+**The root cause was in the law, not the map.**
+- `weatherFront.js` already said what intensity should do: "walking in
+  from the edge thickens a drizzle into the downpour". The law did not
+  do it.
+- `bandAt` let the intensity fall across the system's whole outline,
+  rings included. The rain core only reaches a little over half way out,
+  so inside it the intensity fell from 1 to just 0.73 of the envelope.
+  A grown front was heavy to its very edge: over the bay, 77% of the
+  ground under rain and 64% under snow read "heavy" (at least 0.7), and
+  the step from the overcast ring into the rain was a step into a
+  downpour.
+- The intensity now falls across the CORE, the band where the system's
+  word falls: the whole envelope at the heart, a fifth of it
+  (`EDGE_INTENSITY`) at the core's edge. The rings beyond hold the
+  edge's fifth. A storm cell has no rings, so it is unchanged.
+- Over the core's area the intensity is uniform on [0.2, 1] times the
+  envelope. With the hover's own steps, a grown core is about 19%
+  light, 44% moderate and 37% heavy. Measured over the bay, rain and snow
+  now spread as evenly as the storm cells always did.
+- In the game this is felt, not only seen: walking into a front, the
+  rain starts light and builds to its heart. The word frequencies (the
+  calibration) are untouched, since only the intensity changed.
+
+**The map.**
+- One strength law: `STRENGTH_STEPS` (0.35, 0.7) is what the hover
+  calls light and heavy, and what the map draws (`strengthOf`). Only
+  what falls has a strength.
+- The field keeps each cell's step next to its word. `fieldStrength`
+  traces, for every word that falls, the loops of its cells that are at
+  least moderate and at least heavy. The CELLS nest: every heavy cell is
+  a moderate one of the same word. The rounded loops need not: rounding
+  cuts a corner by its leg's length, so an inner loop with shorter legs
+  can stand up to a map pixel past its outer one. The painter therefore
+  CLIPS each step to its word's region and to the steps below it, so what
+  is drawn nests whatever the rounding does. Cost: 12-39 ms more, once
+  per refresh.
+- A step's pattern is the word's own marks again, set BETWEEN the marks
+  already there, with no tint of its own. Each step doubles the marks:
+  - a line family moves across its own direction, half a tile and then
+    the quarters, so rain's and the storm's lines stand evenly spaced,
+    11.3, 5.7 and 2.8 px apart;
+  - dots move where they leave the most room: snow's stagger fills to an
+    even square lattice and then to the stagger half its size (8, then
+    5.66 px), the most even any arrangement of that many dots can be.
+    The sandstorm's scatter spreads as widely as its three dots allow
+    (5.0, then 3.6 px). The test proves both by trying every shift.
+  - Every mark is drawn in its tile and the eight around it, so the
+    repeat is seamless at the sides and the corners.
+- The sheet lays the weather UNDER the pen already on it, where every
+  stroke goes beneath the last. The painter makes its strokes in reverse
+  order there, so the picture is exactly the one drawn over.
+- The legend's falling words show a moderate fall, the commonest step
+  over a front (42-45% of falling cells over the bay, a plurality). A
+  last row shows the rain's hatch light, moderate and heavy side by
+  side: "Light to heavy". With no canvas for the patterns, each step is
+  a half tint more, as on the map.
+
+**One strength for the player, the map and the hover.**
+- The sim now resolves the player's word through the same ground law as
+  the map and the hover: rain over snow ground is snow before the
+  strongest is chosen. `wornAmong` also answers `raw`, the painting
+  system's own word, which the sky's violence keeps (a winter storm
+  still looks a storm while it snows).
+- The hover reads the refresh's minute, the one the hatch under it was
+  read at.
+
+**A lighter hand.** Every tint, hatch and outline is about two thirds of
+slice H's. The light hatch is sparser (a 16 px tile, not 12), and the
+outline is a 0.7 px hairline.
+
+**AUDIT-3i (before it shipped; Mac: "Definitely want to do one more
+comprehensive audit before we push this").** Three lenses, each proving
+its findings by running code; every finding was reproduced before it was
+paid.
+- Does it reach a player: yes. Walking into a grown front the rain now
+  builds 0.50 -> 0.68 -> 0.82 -> 1.0 of its peak, where it was 0.79 at
+  the edge before. Over the bay the mean rain peak fell from 0.82 to
+  0.65, close to the lane without a map (0.63); thunder is unchanged
+  (0.82), and online and offline read the same intensity at every place
+  and minute. Paid: on winter ground the sim resolved the word BEFORE
+  the ground law, so where a rain front lay under a snow front it wore
+  the rain front's strength while the map drew the snow front's (2.5% of
+  falling ground; the same fault left the cloud overhead unmatched in
+  winter). And the hover read the live minute, not the hatch's.
+- What it broke: nothing a player reads; 704 related tests, lint and
+  types clean. Paid: the strength loops stood past their regions (up to
+  1.1 map px); `strengthOf` made an array for every cell of every
+  refresh; a core of no size gave NaN (unreachable, now all edge). Noted:
+  between two overlapping rings of the same word `wornAmong` now keeps
+  the stronger system rather than the nearer (rings hold the edge's
+  value); nothing reads that system today.
+- Do the pins derive: they did not. 16 of 18 wrong implementations
+  passed every test, among them a host that never handed the strength to
+  the painter, a painter that filled every step with its whole region,
+  hatch marks drawn at the wrong place, and dots set in rows. The tests
+  were rewritten to check the drawn geometry end to end, the paths and
+  clips of every stroke, the host's hand-off, the winter ground, and the
+  legend's fit; each wrong implementation is now a mutant, and all of
+  them die.
+- Noted, not changed: the map's "light" is a grown front's edge, 40-51%
+  of the rain profile in game; the thin end of the profile is a young or
+  dying front's. A hover's pixel and its 2-pixel field cell can differ in
+  step at a region's edge.
+

@@ -74,7 +74,8 @@ test('AUDIT WEATHER3 R1: ONE GROUND LAW for every reader - the travel map inks a
   const src = rd('src/ui/heldMap.js');
   assert.match(src, /const ground = mapGround\(climateAt\);\s*\n\s*this\._wx = \{ bucket, key: `wx\$\{bucket\}`, minutes, ground, systems, marks: weatherMarks\(systems, \(w, x, z\) => ground\(w, x, z, minutes\)\)/);
   assert.match(src, /weatherField\(wx\.systems, \{ width: this\._size\.width, height: this\._size\.height, ground: \(w, x, z\) => wx\.ground\(w, x, z, wx\.minutes\) \}\)/, 'WEATHER3h: the regions read through it too');
-  assert.match(src, /forecastAt\(fx, fz, this\.deps\.weather\.minutes\(\), this\.deps\.getClimateIndex, \{ hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx\.ground \}\)/);
+  // AUDIT-3i: the hover reads the refresh's minute, the one the hatch under it was read at
+  assert.match(src, /forecastAt\(fx, fz, wx\.minutes, this\.deps\.getClimateIndex, \{ hours: WEATHER_FORECAST_HOURS, step: 30, ground: wx\.ground \}\)/);
 });
 
 test('AUDIT WEATHER3 R2: the map\'s cache - the host\'s own lookup, and a full cache sheds its OLDEST quarter, never the whole', () => {

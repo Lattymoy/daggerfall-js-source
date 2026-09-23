@@ -144,31 +144,59 @@ export const LEGEND_ROW_PX = 17;
  * quieted patch of parchment so it reads over any weather. Answers the
  * box it took, [x, y, w, h] in paper pixels.
  */
+/** The legend's last row (WEATHER3i): the rain's hatch at each strength step, light to heavy, and what it says. */
+export const LEGEND_STRENGTH_TEXT = 'Light to heavy';
+export const LEGEND_STRENGTH_WORD = 'rain';
 export function paintWeatherLegend(ctx, { paperW, dpr = 1 }) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.font = `600 12px ${NAME_FACE}`;
-  const sw = 16, gap = 7, pad = 8;
-  const textW = Math.max(...LEGEND_ROWS.map((w) => ctx.measureText?.(WEATHER_NAMES[w])?.width ?? WEATHER_NAMES[w].length * 6.5));
-  const w = pad * 2 + sw + gap + textW, h = pad * 2 + LEGEND_ROWS.length * LEGEND_ROW_PX;
+  const sw = 16, gap = 7, pad = 8, step = 11, levels = STRENGTH_STEPS.length + 1, rampW = step * levels;
+  const width = (t) => ctx.measureText?.(t)?.width ?? t.length * 6.5;
+  const textW = Math.max(...LEGEND_ROWS.map((w) => width(WEATHER_NAMES[w])));
+  const w = pad * 2 + Math.max(sw + gap + textW, rampW + gap + width(LEGEND_STRENGTH_TEXT)), h = pad * 2 + (LEGEND_ROWS.length + 1) * LEGEND_ROW_PX;
   const x = paperW - LEGEND_INSET - w, y = LEGEND_INSET;
   ctx.fillStyle = PEN.halo; ctx.fillRect(x, y, w, h);
   ctx.strokeStyle = PEN.soft; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  // a swatch is the region as the map draws it: the word's hatch - where something falls, falling moderately, the
+  // commonest step over a front - outlined in its ink; with no canvas for the patterns, each step a half tint more,
+  // as the regions' own painter does
+  const swatch = (word, sx, cy, sWidth, upTo) => {
+    ctx.fillStyle = hatchPattern(ctx, word) ?? rgba(WEATHER_INK[word], HATCH[word].tint); ctx.fillRect(sx, cy - 5, sWidth, 10);
+    for (let k = 1; k <= upTo; k++) { ctx.fillStyle = strengthPattern(ctx, word, k) ?? rgba(WEATHER_INK[word], HATCH[word].tint / 2); ctx.fillRect(sx, cy - 5, sWidth, 10); }
+  };
   LEGEND_ROWS.forEach((word, i) => {
-    const ry = y + pad + i * LEGEND_ROW_PX, cy = ry + LEGEND_ROW_PX / 2;
-    // the swatch is the region as the map draws it: the word's hatch, outlined in its ink
-    if (WEATHER_INK[word]) { ctx.fillStyle = hatchPattern(ctx, word) ?? rgba(WEATHER_INK[word], HATCH[word].tint); ctx.fillRect(x + pad, cy - 5, sw, 10); }
+    const cy = y + pad + i * LEGEND_ROW_PX + LEGEND_ROW_PX / 2;
+    if (WEATHER_INK[word]) swatch(word, x + pad, cy, sw, PRECIPITATING.has(word) ? 1 : 0);
     ctx.strokeStyle = WEATHER_INK[word] ? outlineInk(word) : PEN.soft; ctx.lineWidth = 1; ctx.strokeRect(x + pad + 0.5, cy - 4.5, sw - 1, 9);
     ctx.fillStyle = PEN.name; ctx.fillText(WEATHER_NAMES[word], x + pad + sw + gap, cy);
   });
+  // the strength: the rain's hatch at each step, side by side, under one outline
+  const cy = y + pad + LEGEND_ROWS.length * LEGEND_ROW_PX + LEGEND_ROW_PX / 2;
+  for (let k = 0; k < levels; k++) swatch(LEGEND_STRENGTH_WORD, x + pad + k * step, cy, step, k);
+  ctx.strokeStyle = outlineInk(LEGEND_STRENGTH_WORD); ctx.lineWidth = 1; ctx.strokeRect(x + pad + 0.5, cy - 4.5, rampW - 1, 9);
+  ctx.fillStyle = PEN.name; ctx.fillText(LEGEND_STRENGTH_TEXT, x + pad + rampW + gap, cy);
   return [x, y, w, h];
+}
+
+/** How hard what falls is falling (WEATHER3i): below the first step light, from the second heavy - one law for the
+ *  words a hover reads and the hatch the map draws. */
+export const STRENGTH_STEPS = Object.freeze([0.35, 0.7]);
+/** 0 light, 1 moderate, 2 heavy for a word that falls; 0 for any other. Read at every field cell, so it makes
+ *  nothing (AUDIT-3i: a filter's array a cell was 125 thousand arrays a refresh). */
+export function strengthOf(word, intensity = 0) {
+  if (!PRECIPITATING.has(word)) return 0;
+  let k = 0;
+  for (let i = 0; i < STRENGTH_STEPS.length; i++) if (intensity >= STRENGTH_STEPS[i]) k++;
+  return k;
 }
 
 /** The weather in words: the name, and for what falls how hard. */
 export function weatherPhrase(word, intensity = 0) {
   const name = WEATHER_NAMES[word] ?? word;
   if (!PRECIPITATING.has(word)) return name;
-  return intensity >= 0.7 ? `${name}, heavy` : intensity < 0.35 ? `${name}, light` : name;
+  const k = strengthOf(word, intensity);
+  return k === 2 ? `${name}, heavy` : k === 0 ? `${name}, light` : name;
 }
 
 /**
@@ -207,10 +235,11 @@ const BUCKET = 16;   // cells a side of the search buckets
 /**
  * THE FIELD: the worn word at the centre of every FIELD_CELL cell of a
  * `width` x `height` map-pixel sheet, from the systems standing now
- * (field metres, as systemsNear gives them) - `{ cols, rows, cell, words }`,
- * `words` a Uint8Array of FIELD_WORDS indices, row-major from the sheet's
- * top. `ground(word, x, z)` is the ground law (weatherSim mapGround at
- * the minute). Pure.
+ * (field metres, as systemsNear gives them) - `{ cols, rows, cell, words,
+ * strength }`, `words` a Uint8Array of FIELD_WORDS indices and `strength`
+ * one of `strengthOf` steps (WEATHER3i), row-major from the sheet's top.
+ * `ground(word, x, z)` is the ground law (weatherSim mapGround at the
+ * minute). Pure.
  */
 export function weatherField(systems, { width, height, cell = FIELD_CELL, ground = null }) {
   const cols = Math.ceil(width / cell), rows = Math.ceil(height / cell);
@@ -223,17 +252,19 @@ export function weatherField(systems, { width, height, cell = FIELD_CELL, ground
     const y0 = Math.max(0, Math.floor((my - rp) / span)), y1 = Math.min(br - 1, Math.floor((my + rp) / span));
     for (let by = y0; by <= y1; by++) for (let bx = x0; bx <= x1; bx++) buckets[by * bc + bx].push(s);
   }
-  const words = new Uint8Array(cols * rows);
+  const words = new Uint8Array(cols * rows), strength = new Uint8Array(cols * rows);
   for (let gy = 0; gy < rows; gy++) {
     for (let gx = 0; gx < cols; gx++) {
       const list = buckets[Math.floor(gy / BUCKET) * bc + Math.floor(gx / BUCKET)];
       if (!list.length) continue;
       const mx = (gx + 0.5) * cell, my = (gy + 0.5) * cell;
       const x = mx * TERRAIN_SIZE, z = (MAX_MAP_PIXEL_Y - my) * TERRAIN_SIZE;   // mapOfField's inverse, continuous
-      words[gy * cols + gx] = WORD_AT[wornAmong(list, x, z, ground).word] ?? 0;
+      const worn = wornAmong(list, x, z, ground);
+      words[gy * cols + gx] = WORD_AT[worn.word] ?? 0;
+      strength[gy * cols + gx] = strengthOf(worn.word, worn.intensity);
     }
   }
-  return { cols, rows, cell, words };
+  return { cols, rows, cell, words, strength };
 }
 
 /**
@@ -312,75 +343,140 @@ export const REGION_CUT = FIELD_CELL * 1.5;
  * clear air none. Pure.
  */
 export function fieldRegions(field) {
-  const { cols, rows, cell, words } = field;
+  const { words } = field;
   const regions = {};
-  const present = new Set(words);
-  for (const i of present) {
+  for (const i of new Set(words)) {
     if (i === 0) continue;
-    const loops = traceLoops((gx, gy) => words[gy * cols + gx] === i, cols, rows).map((loop) => {
-      let pts = corners(loop).map((p) => ({ x: p.x * cell, y: p.y * cell }));
-      for (let k = 0; k < REGION_ROUNDS; k++) pts = roundCorners(pts, REGION_CUT);
-      pts = decimate(pts);
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      for (const p of pts) { if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y; }
-      return { pts, box: [x0, y0, x1, y1] };
-    });
-    regions[FIELD_WORDS[i]] = loops;
+    regions[FIELD_WORDS[i]] = loopsWhere(field, (c) => words[c] === i);
   }
   return regions;
 }
 
 /**
- * Each weather's hand, in paper pixels, kept LIGHT (Mac: "the goal is not
- * being overbearing on the map. It needs to be more subtle"): a faint
- * tint, a sparse hatch across a HATCH_TILE square only where something
- * falls or lies on the ground, and an outline only where it helps - the
- * wide pale weathers (cloud, the deck) are a tint and nothing more, so
- * the coast, the roads and the marks read through them.
+ * THE STRENGTH INSIDE A REGION (WEATHER3i): for every word that falls,
+ * the loops of its cells at least moderate and at least heavy -
+ * `{ word: [moderate, heavy] }`, each nested in the one before as the
+ * cells are, and both inside the word's own region. Pure.
  */
-export const HATCH_TILE = 12;
+export function fieldStrength(field) {
+  const { words, strength } = field;
+  const out = {};
+  for (const i of new Set(words)) {
+    const word = FIELD_WORDS[i];
+    if (!PRECIPITATING.has(word)) continue;
+    out[word] = [1, 2].map((k) => loopsWhere(field, (c) => words[c] === i && strength[c] >= k));
+  }
+  return out;
+}
+
+/** The loops of the field's cells where `inside(cellIndex)` holds, rounded in the coast's hand, each with its box. */
+function loopsWhere(field, inside) {
+  const { cols, rows, cell } = field;
+  return traceLoops((gx, gy) => inside(gy * cols + gx), cols, rows).map((loop) => {
+    let pts = corners(loop).map((p) => ({ x: p.x * cell, y: p.y * cell }));
+    for (let k = 0; k < REGION_ROUNDS; k++) pts = roundCorners(pts, REGION_CUT);
+    pts = decimate(pts);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of pts) { if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y; }
+    return { pts, box: [x0, y0, x1, y1] };
+  });
+}
+
+/**
+ * Each weather's hand, in paper pixels, kept LIGHT (Mac: "the goal is not
+ * being overbearing on the map. It needs to be more subtle", and again on
+ * WEATHER3h's render, "more subtle"): a faint tint, a sparse hatch across
+ * a HATCH_TILE square only where something falls or lies on the ground,
+ * and a hairline outline only where it helps - the wide pale weathers
+ * (cloud, the deck) are a tint and nothing more, so the coast, the roads
+ * and the marks read through them. Where something falls, the hatch is
+ * the light fall's; a moderate fall doubles its marks and a heavy one
+ * doubles them again - `steps`, per word, the shifts that set the word's
+ * own marks BETWEEN the marks already there:
+ *   - a line family moves across its own direction: half a tile, then
+ *     the quarters, so the lines stand evenly, twice as close each step;
+ *   - dots move where they leave the most room: snow's stagger fills to
+ *     an even square lattice and then to the stagger half its size (8,
+ *     then 5.66 px apart - the most even any arrangement of that many
+ *     dots can be); the sandstorm's scatter to the widest its own three
+ *     dots allow (weather3i proves both by search). Shifting dots across
+ *     only, as lines are, set them in rows and ran the sand's together.
+ */
+export const HATCH_TILE = 16;
 export const HATCH = Object.freeze({
-  cloudy: { tint: 0.08, outline: 0 },
-  overcast: { tint: 0.13, outline: 0.18 },
-  fog: { tint: 0.22, lines: [[2, 4, 6, 4], [8, 10, 11, 10]], alpha: 0.3, outline: 0.22 },
-  rain: { tint: 0.12, lines: [[0, 12, 12, 0]], alpha: 0.38, outline: 0.42 },
-  thunder: { tint: 0.18, lines: [[0, 12, 12, 0], [0, 0, 12, 12]], alpha: 0.42, outline: 0.5 },
-  snow: { tint: 0.26, dots: [[3, 3], [9, 9]], alpha: 0.55, outline: 0.4 },
-  sandstorm: { tint: 0.16, dots: [[2, 3], [8, 5], [5, 10]], alpha: 0.45, outline: 0.42 },
+  cloudy: { tint: 0.055, outline: 0 },
+  overcast: { tint: 0.085, outline: 0.12 },
+  fog: { tint: 0.15, lines: [[2, 5, 8, 5], [10, 13, 15, 13]], alpha: 0.2, outline: 0.15 },
+  rain: { tint: 0.08, lines: [[0, 16, 16, 0]], alpha: 0.25, outline: 0.28, steps: [[[8, 0]], [[4, 0], [12, 0]]] },
+  thunder: { tint: 0.12, lines: [[0, 16, 16, 0], [0, 0, 16, 16]], alpha: 0.28, outline: 0.33, steps: [[[8, 0]], [[4, 0], [12, 0]]] },
+  snow: { tint: 0.17, dots: [[4, 4], [12, 12]], alpha: 0.37, outline: 0.27, steps: [[[0, 8]], [[4, 4], [4, 12]]] },
+  sandstorm: { tint: 0.11, dots: [[3, 4], [11, 7], [7, 13]], alpha: 0.3, outline: 0.28, steps: [[[1, 5]], [[0, 9], [14, 3]]] },
 });
-/** A region's outline: its weather's ink darkened toward the pen, as strong as its hand says, and thin. */
+/**
+ * The strength's hatch (WEATHER3i): a step's pattern is the word's own
+ * marks again at the step's shifts (HATCH `steps`), with no tint of its
+ * own; a step's region holds the light hatch and every step up to it, so
+ * the heart of a storm reads closest-drawn with no new sign to learn.
+ * `[dx, dy]` pairs, tile pixels; none for the light hatch.
+ */
+export const strengthShifts = (word, step) => (step ? HATCH[word]?.steps?.[step - 1] ?? [] : [[0, 0]]);
+/** A region's outline: its weather's ink darkened toward the pen, as strong as its hand says, and a hairline. */
 export const OUTLINE_LEAN = 0.35;
-export const OUTLINE_PX = 0.9;
+export const OUTLINE_PX = 0.7;
 export const outlineInk = (word) => rgba(mixRgb(WEATHER_INK[word], INK_RGB, OUTLINE_LEAN), HATCH[word]?.outline ?? 0.4);
 
 const _patterns = new Map();
+const TILE_AROUND = [-HATCH_TILE, 0, HATCH_TILE];
 /** The word's hatch as a canvas pattern (null with no canvas - a headless host fills the tint alone; only a made
  *  pattern is kept, so a call before there is a canvas never pins the tint for good). */
-export function hatchPattern(ctx, word) {
-  if (_patterns.has(word)) return _patterns.get(word);
+export const hatchPattern = (ctx, word) => tilePattern(ctx, word, 0);
+/** A strength step's overlay (1 moderate, 2 heavy): the word's marks at its step's shifts, no tint. */
+export const strengthPattern = (ctx, word, step) => tilePattern(ctx, word, step);
+
+function tilePattern(ctx, word, step) {
+  const key = `${word}:${step}`;
+  if (_patterns.has(key)) return _patterns.get(key);
   let pat = null;
   const tile = typeof document !== 'undefined' ? document.createElement?.('canvas') : null;
   const t = tile?.getContext?.('2d');
   if (t && ctx.createPattern) {
     tile.width = tile.height = HATCH_TILE;
     const h = HATCH[word], ink = WEATHER_INK[word];
-    t.fillStyle = rgba(ink, h.tint); t.fillRect(0, 0, HATCH_TILE, HATCH_TILE);
+    const shifts = strengthShifts(word, step);
+    if (!step) { t.fillStyle = rgba(ink, h.tint); t.fillRect(0, 0, HATCH_TILE, HATCH_TILE); }
+    // a mark is drawn in the tile and in every tile around it, so what runs off one edge comes back in at the other
+    // and the repeat is seamless at the sides and the corners alike
+    const around = [];
+    for (const [dx, dy] of shifts) for (const ox of TILE_AROUND) for (const oy of TILE_AROUND) around.push([dx + ox, dy + oy]);
     t.strokeStyle = rgba(ink, h.alpha ?? 0.6); t.lineWidth = 0.9; t.lineCap = 'round';
-    t.beginPath(); for (const [a, b, c, d] of h.lines ?? []) { t.moveTo(a, b); t.lineTo(c, d); } t.stroke();
+    t.beginPath();
+    for (const [u, v] of around) for (const [a, b, c, d] of h.lines ?? []) { t.moveTo(a + u, b + v); t.lineTo(c + u, d + v); }
+    t.stroke();
     t.fillStyle = rgba(mixRgb(ink, INK_RGB, OUTLINE_LEAN), h.alpha ?? 0.6);
-    for (const [x, y] of h.dots ?? []) { t.beginPath(); t.arc(x, y, 1.1, 0, Math.PI * 2); t.fill(); }
+    for (const [u, v] of around) for (const [x, y] of h.dots ?? []) { t.beginPath(); t.arc(x + u, y + v, 1.1, 0, Math.PI * 2); t.fill(); }
     pat = ctx.createPattern(tile, 'repeat');
   }
-  if (pat) _patterns.set(word, pat);
+  if (pat) _patterns.set(key, pat);
   return pat;
 }
 
 /**
  * Ink the regions: each word's loops filled with its hatch (the tint
- * alone with no canvas for the pattern), lowest priority first, then
- * outlined in its ink. Only loops the paper shows are drawn.
+ * alone with no canvas for the pattern), lowest priority first - and
+ * where something falls, its `strength` loops (fieldStrength) with the
+ * closer hatch of each step, CLIPPED to the word's region and to the
+ * steps below it, so a step stands inside what holds it however the
+ * rounding cut their corners (AUDIT-3i: rounded apart, a moderate loop
+ * stood up to a map pixel past its region) - then outlined in its ink.
+ * Only loops the paper shows are drawn.
+ *
+ * `under`: the sheet lays the weather UNDER the pen already on it
+ * (destination-over), where every stroke goes beneath the last; the
+ * strokes are then made in the reverse order, so the picture is the one
+ * drawn over, stroke for stroke (AUDIT-3i: drawn forward under the pen,
+ * each step's hatch went beneath its own light hatch's tint).
  */
-export function paintWeatherRegions(ctx, view, regions, { paperW, paperH, dpr = 1 }) {
+export function paintWeatherRegions(ctx, view, regions, { paperW, paperH, dpr = 1, strength = null, under = false }) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const s = view.scale;
   const shown = (box) => !((box[2] - view.ox) * s < 0 || (box[0] - view.ox) * s > paperW || (box[3] - view.oy) * s < 0 || (box[1] - view.oy) * s > paperH);
@@ -392,17 +488,25 @@ export function paintWeatherRegions(ctx, view, regions, { paperW, paperH, dpr = 
       ctx.closePath();
     }
   };
+  // the strokes, each whole in itself (its own clip), in the order the eye reads them drawn over
+  const strokes = [];
   const order = [...PRIORITY].reverse().filter((w) => regions[w]?.length);
   for (const w of order) {
-    trace(regions[w]);
-    ctx.fillStyle = hatchPattern(ctx, w) ?? rgba(WEATHER_INK[w], HATCH[w].tint);
-    ctx.fill('nonzero');
+    strokes.push({ loops: regions[w], fill: () => hatchPattern(ctx, w) ?? rgba(WEATHER_INK[w], HATCH[w].tint) });
+    const steps = strength?.[w] ?? [];
+    steps.forEach((loops, i) => {
+      if (!loops.length) return;
+      // no canvas: each step a half tint more
+      strokes.push({ loops, within: [regions[w], ...steps.slice(0, i)], fill: () => strengthPattern(ctx, w, i + 1) ?? rgba(WEATHER_INK[w], HATCH[w].tint / 2) });
+    });
   }
+  for (const w of order) if (HATCH[w].outline > 0) strokes.push({ loops: regions[w], outline: w });
+  if (under) strokes.reverse();
   ctx.lineWidth = OUTLINE_PX; ctx.lineJoin = 'round';
-  for (const w of order) {
-    if (!(HATCH[w].outline > 0)) continue;
-    trace(regions[w]);
-    ctx.strokeStyle = outlineInk(w);
-    ctx.stroke();
+  for (const st of strokes) {
+    if (st.within) { ctx.save(); for (const outer of st.within) { trace(outer); ctx.clip('nonzero'); } }
+    trace(st.loops);
+    if (st.outline) { ctx.strokeStyle = outlineInk(st.outline); ctx.stroke(); } else { ctx.fillStyle = st.fill(); ctx.fill('nonzero'); }
+    if (st.within) ctx.restore();
   }
 }

@@ -685,13 +685,21 @@ export function systemsNear(x, z, minutes, climateAt, range = 0) {
 }
 
 /** The band of a system over a point `d` from its centre in the system's
- *  own measure (`radialOf`): its word and its intensity (the envelope,
- *  falling from the centre to the outline), or null outside it. */
+ *  own measure (`radialOf`): its word and its intensity, or null outside
+ *  it. The intensity is the envelope falling across the CORE, the band
+ *  where the system's own word falls (WEATHER3i): the whole envelope at
+ *  the heart, a fifth of it at the core's edge, so walking in from the
+ *  edge thickens a drizzle into the downpour; the rings beyond hold the
+ *  edge's fifth. Over the core's area the intensity is uniform on
+ *  [0.2, 1] x env. (Measured over the whole outline instead, a grown
+ *  front's rain never fell below 0.73: heavy to its very edge.) */
+export const EDGE_INTENSITY = 0.2;
 export function bandAt(s, d) {
   if (!(d < s.r)) return null;
   const band = s.bands.find(([outer]) => d < outer);
-  const f = d / s.r;
-  return band ? { word: band[1], intensity: s.env * (1 - 0.8 * f * f) } : null;
+  const core = s.bands[0][0];
+  const f = core > 0 ? Math.min(1, d / core) : 1;   // a core of no size is all edge (never NaN)
+  return band ? { word: band[1], intensity: s.env * (1 - (1 - EDGE_INTENSITY) * f * f) } : null;
 }
 
 /** Whether (x, z) is within a system's `clip` (a cell's front core now);
@@ -702,11 +710,13 @@ export const insideClip = (s, x, z) => !s.clip || Math.hypot(s.clip[0] - x, s.cl
  * THE WORN WORD AMONG SYSTEMS already found (each standing where it is
  * this minute): the highest-priority word any of them paints over (x, z)
  * - 'sunny', clear air, where none does - with the strongest intensity
- * that word has there (0 in clear air) and the system that paints it.
- * `ground(word, x, z)` (optional) is the ground law a word goes through
- * before priority (WEATHER2a: rain over snow ground is snow). One
- * resolution for every reader: `weatherAt` below, and the sim's sample,
- * which finds its systems once a minute and resolves every frame.
+ * that word has there (0 in clear air), the system that paints it, and
+ * `raw`, that system's own word before the ground law (a winter storm's
+ * 'thunder' where the word is 'snow'). `ground(word, x, z)` (optional) is
+ * the ground law a word goes through before priority (WEATHER2a: rain
+ * over snow ground is snow). One resolution for every reader: `weatherAt`
+ * below, the travel map's field, and the sim's sample, which finds its
+ * systems once a minute and resolves every frame.
  */
 export function wornAmong(systems, x, z, ground = null) {
   let best = null;
@@ -716,9 +726,9 @@ export function wornAmong(systems, x, z, ground = null) {
     const band = bandAt(s, radialOf(s, x, z));
     if (!band) continue;
     const word = ground ? ground(band.word, x, z) : band.word;
-    if (!best || RANK[word] < RANK[best.word] || (word === best.word && band.intensity > best.intensity)) best = { word, intensity: band.intensity, system: s };
+    if (!best || RANK[word] < RANK[best.word] || (word === best.word && band.intensity > best.intensity)) best = { word, intensity: band.intensity, system: s, raw: band.word };
   }
-  return best ?? { word: 'sunny', intensity: 0, system: null };
+  return best ?? { word: 'sunny', intensity: 0, system: null, raw: 'sunny' };
 }
 
 /**

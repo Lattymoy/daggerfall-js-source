@@ -18,7 +18,7 @@ import {
 } from '../src/systems/weatherMap.js';
 import { cellOfField, packCells, FIELD_UNIFORMS } from '../src/render/volumetricClouds.js';
 import {
-  weatherMarks, paintWeatherGlyphs, paintWeatherLegend, WEATHER_NAMES, LEGEND_ROWS, LEGEND_INSET, CELL_GLYPH_MIN_PX,
+  weatherMarks, paintWeatherGlyphs, paintWeatherLegend, WEATHER_NAMES, LEGEND_ROWS, LEGEND_STRENGTH_TEXT, LEGEND_INSET, CELL_GLYPH_MIN_PX,
 } from '../src/ui/weatherLayer.js';
 import { HeldMapWindow } from '../src/ui/heldMap.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
@@ -205,7 +205,8 @@ test('WEATHER3g: THE MAP - a cell signed only where it paints and when wide; gly
   // the legend: every weather named, in the sheet's top-right corner
   const lg = recordingCtx();
   const [x, y, w, h] = paintWeatherLegend(lg, { paperW: 800 });
-  assert.deepEqual(lg.calls.filter((c) => c.fn === 'fillText').map((c) => c.args[0]), LEGEND_ROWS.map((wd) => WEATHER_NAMES[wd]));
+  // every weather named, and since WEATHER3i a last row reading the hatch's strength
+  assert.deepEqual(lg.calls.filter((c) => c.fn === 'fillText').map((c) => c.args[0]), [...LEGEND_ROWS.map((wd) => WEATHER_NAMES[wd]), LEGEND_STRENGTH_TEXT]);
   assert.ok(Math.abs(x + w - (800 - LEGEND_INSET)) < 1e-9 && y === LEGEND_INSET && h > LEGEND_ROWS.length * 10);
   assert.deepEqual([...LEGEND_ROWS].sort(), [...Object.keys(WEATHER_NAMES)].sort(), 'no weather the map can draw is left out of the key');
 });
@@ -224,7 +225,7 @@ test('WEATHER3g: THE SHEET - the weather goes UNDER the pen already on it, and t
     assert.ok(fills.length > 0 && fills.every((c) => c.op === 'destination-over'), 'the regions are laid under the ink');
     assert.equal(ctx.globalCompositeOperation, 'source-over', 'and the pen is given back');
     const legend = ctx.calls.filter((c) => c.fn === 'fillText');
-    assert.equal(legend.length, LEGEND_ROWS.length, 'the legend');
+    assert.equal(legend.length, LEGEND_ROWS.length + 1, 'the legend, and its strength row (WEATHER3i)');
     assert.ok(legend.every((c) => c.op === 'source-over'), 'drawn over, not under');
   } finally { delete globalThis.document; }
 });

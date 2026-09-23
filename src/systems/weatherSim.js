@@ -231,20 +231,24 @@ function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
     _mapNear = systemsNear(at[0], at[1], minute, climateAt, FIELD_RANGE_M + MAP_REFIND_M);
     _mapNearAt = [at[0], at[1]]; _mapNearMinute = minute; _mapNearLookup = climateAt;
   }
-  const worn = wornAmong(_mapNear, at[0], at[1]);
+  // AUDIT-3i: the player's word through the SAME ground law as the travel map's and the hover's - rain over snow
+  // ground is snow BEFORE the strongest is chosen, so the strength the player feels is the one the map draws there
+  // (resolved raw first, a rain front's intensity was worn under a stronger snow front's word); `raw` keeps the
+  // painting system's own word for the sky's violence
+  const ground = mapGround(climateAt);
+  const worn = wornAmong(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes));
   _mapIntensity = worn.intensity;
   // WEATHER3c: THE SKY IS THE MAP'S. Every system within the sky's reach gives the clouds its bands as nested discs -
   // a fair-weather field, a deck's edge, a fog bank on the low ground, a storm's skirt, rain and tower - each word
   // through the ground law at ITS OWN place (a winter storm is a snow cloud where it stands), ranked by how much of
   // the sky it fills from here; the renderer keeps what its slots hold and draws the lowest priority first
-  const ground = mapGround(climateAt);
   _fieldCells = skyCells(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes)).filter((c) => c.d - c.r <= FIELD_RANGE_M).sort((a, b) => b.imp - a.imp);
   _fieldInside = _fieldCells.find((c) => c.d < c.r && insideClip(c, at[0], at[1]) && c.word === worn.word) ?? null;   // c.d in the system's own measure (WEATHER3h); a storm cell only inside its front
   _mapApproach = approachAt(_mapNear, at[0], at[1]);
   const away = _mapSampledAt === null || minute < _mapSampledAt || minute - _mapSampledAt > STALE_DRAIN_MINUTES
     || !_mapAt || Math.hypot(at[0] - _mapAt[0], at[1] - _mapAt[1]) > MAP_JUMP_M;
   _mapAt = [at[0], at[1]]; _mapSampledAt = minute;
-  const changed = _set(WEATHER_ENUM[worn.word], climateIndex, nowMinutes);
+  const changed = _set(WEATHER_ENUM[worn.raw], climateIndex, nowMinutes);
   if (how === 'jump' || away) _arrivals++;   // AUDIT WEATHER3 R5: an arrival whether or not the word moved
   if (changed && (how === 'jump' || away)) _jumps++;
   else if (changed) _crossings++;

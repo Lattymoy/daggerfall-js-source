@@ -1,6 +1,6 @@
 [
  {"name": "WEATHER3e-regions-unhatched", "file": "src/ui/weatherLayer.js",
-  "old": "    ctx.fillStyle = hatchPattern(ctx, w) ?? rgba(WEATHER_INK[w], HATCH[w].tint);", "new": "    ctx.fillStyle = rgba(WEATHER_INK[w], HATCH[w].tint);", "tests": ["test/weather3e_maplayer.test.js"]},
+  "old": "fill: () => hatchPattern(ctx, w) ?? rgba(WEATHER_INK[w], HATCH[w].tint) });", "new": "fill: () => rgba(WEATHER_INK[w], HATCH[w].tint) });", "tests": ["test/weather3e_maplayer.test.js"]},
  {"name": "WEATHER3e-weak-over-strong", "file": "src/ui/weatherLayer.js",
   "old": "  const order = [...PRIORITY].reverse().filter(", "new": "  const order = [...PRIORITY].filter(", "tests": ["test/weather3e_maplayer.test.js"]},
  {"name": "WEATHER3e-heart-first", "file": "src/ui/weatherLayer.js",
@@ -16,7 +16,7 @@
  {"name": "WEATHER3e-hours-floored", "file": "src/ui/weatherLayer.js",
   "old": "  const h = Math.round(mins / 60);", "new": "  const h = Math.floor(mins / 60);", "tests": ["test/weather3e_maplayer.test.js"]},
  {"name": "WEATHER3e-no-strength-word", "file": "src/ui/weatherLayer.js",
-  "old": "  return intensity >= 0.7 ? `${name}, heavy` : intensity < 0.35 ? `${name}, light` : name;", "new": "  return name;", "tests": ["test/weather3e_maplayer.test.js"]},
+  "old": "  return k === 2 ? `${name}, heavy` : k === 0 ? `${name}, light` : name;", "new": "  return name;", "tests": ["test/weather3e_maplayer.test.js"]},
  {"name": "WEATHER3e-read-every-frame", "file": "src/ui/heldMap.js",
   "old": "    if (this._wx?.bucket !== bucket) {", "new": "    if (true) {", "tests": ["test/weather3e_maplayer.test.js"]},
  {"name": "WEATHER3e-centre-in-sheet-pixels", "file": "src/ui/heldMap.js",

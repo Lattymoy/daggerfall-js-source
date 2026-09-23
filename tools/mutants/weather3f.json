@@ -14,7 +14,7 @@
  {"name": "WEATHER3f-memo-wiped-whole", "file": "src/systems/weatherMap.js",
   "old": "  if (memo.size >= BIRTHS_MEMO) { let drop = BIRTHS_MEMO >> 2; for (const k of memo.keys()) { memo.delete(k); if (--drop <= 0) break; } }", "new": "  if (memo.size >= BIRTHS_MEMO) memo.clear();", "tests": ["test/weather3f_audit.test.js"]},
  {"name": "WEATHER3f-regions-outlive-refresh", "file": "src/ui/heldMap.js",
-  "old": "forecasts: new Map(), regions: null };", "new": "forecasts: new Map(), regions: this._wx?.regions ?? null };", "tests": ["test/weather3f_audit.test.js"]},
+  "old": "forecasts: new Map(), regions: null, strength: null };", "new": "forecasts: new Map(), regions: this._wx?.regions ?? null, strength: null };", "tests": ["test/weather3f_audit.test.js"]},
  {"name": "WEATHER3f-layer-pans-wrong-way", "file": "src/ui/weatherLayer.js",
   "old": "(box[2] - view.ox) * s < 0", "new": "(box[2] + view.ox) * s < 0", "tests": ["test/weather3e_maplayer.test.js"]},
  {"name": "WEATHER3f-glyphs-under-the-parchment", "file": "src/ui/heldMap.js",
