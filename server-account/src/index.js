@@ -98,6 +98,7 @@ import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, savePathOf, SAVE_
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey } from './signing.js';
 import { titleWorn, glyphsOf } from './titles.js';
+import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -384,6 +385,30 @@ export default {
           ? await closeAllSessions(ctx, who.player.id)
           : await closeSession(ctx, who.session.id);
         return json({ ...r, scope: body.all === true ? 'all' : 'this' }, 200, origin);
+      }
+
+      // ═══ MAIL1: LETTERS ═════════════════════════════════════════
+      //
+      // THE SAME WALL AS THE SAVES', with its own word for the same
+      // reason theirs has one (below): a guest is a device, and neither
+      // a reader a letter can find again nor a writer a mute can reach
+      // (server-account/src/letters.js says both). 403, not 401: the
+      // credential is good.
+      if (path.startsWith('/v1/mail/')) {
+        if (accountKind(who.player) !== 'linked') return no('mail-needs-account', 403, origin);
+        if (path === '/v1/mail/inbox') {
+          if (request.method !== 'GET') return no('method', 405, origin);
+          return json(await inboxOf(ctx, who.player, env), 200, origin);
+        }
+        if (request.method !== 'POST') return no('method', 405, origin);
+        if (path === '/v1/mail/send') {
+          const r = await sendLetter(ctx, who.player, { to: body.to, subject: body.subject, body: body.body });
+          if (!('error' in r)) return json(r, 200, origin);
+          const status = r.error === 'muted' ? 403 : r.error === 'no-reader' ? 404 : r.error === 'mail-rate' ? 429 : r.error === 'inbox-full' ? 409 : 400;
+          return no(r.error, status, origin);
+        }
+        const r = path === '/v1/mail/read' ? await readLetter(ctx, who.player, env, body.id) : await deleteLetter(ctx, who.player, body.id);
+        return 'error' in r ? no(r.error, 404, origin) : json(r, 200, origin);
       }
 
       // ═══ ACC2: THE SAVES ═══════════════════════════════════════

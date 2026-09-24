@@ -747,11 +747,11 @@ export class NativeTalkWindow {
    *  in SORTED index order, with an EMPTY token inserted wherever the
    *  run is broken (`if (idx - prev != 1 && prev > -1)`, :307-308) -
    *  which PlayerNotebook.AddNote turns into a line break
-   *  (notebook.js:93). The port keeps ONE conversation entry per Q or
+   *  (notebook.js:95). The port keeps ONE conversation entry per Q or
    *  A, exactly one ListBox item each, so the indexes map 1:1 and the
    *  text is the entry's own UNWRAPPED text, not the drawn lines.
    *  AddNote's own `texts.Count > 0` guard (PlayerNotebook.cs:89) is
-   *  already in notebook.js:91, so the call is unconditional. */
+   *  already in notebook.js:93, so the call is unconditional. */
   _close() {
     this.done = true;
     const tokens = [];
@@ -920,7 +920,7 @@ export class NativeTalkWindow {
    *  AUDIT 65 UI-1: the third and fourth slots are the HOST's, not
    *  this window's. Every overlay slot dispatches
    *  `click(vx, vy, right, middle)` - townTalk.js:1236,
-   *  worldModes.js:8862, dungeonContext.js:6589 - so the clock that
+   *  worldModes.js:8875, dungeonContext.js:6592 - so the clock that
    *  used to sit in the fourth arrived as `e.button === 1`, a boolean,
    *  and `false ?? Date.now()` kept the `false`: every second click in
    *  the topic list picked. The THIRD slot is really read - it is the

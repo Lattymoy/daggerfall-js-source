@@ -1,227 +1,227 @@
 [
- {
-  "name": "PERF-SUN1-every-cascade-takes-the-3x3-again-so-the-far-ground-pays-nine-taps-a-fragment",
-  "file": "src/render/shadowPass.js",
-  "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
-  "new": "",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN1-the-cheap-tap-reaches-the-NEAR-cascade-and-EL7s-contact-hairline-goes",
-  "file": "src/render/shadowPass.js",
-  "old": "export const SHADOW_PCF_CASCADES = 2;",
-  "new": "export const SHADOW_PCF_CASCADES = 0;",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN1-no-cascade-is-cheap-so-the-change-does-nothing",
-  "file": "src/render/shadowPass.js",
-  "old": "export const SHADOW_PCF_CASCADES = 2;",
-  "new": "export const SHADOW_PCF_CASCADES = 3;",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN1-the-sampler-stops-comparing-so-one-tap-really-is-one-texel",
-  "file": "src/render/shadowPass.js",
-  "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);",
-  "new": "",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN1-the-sun-map-samples-NEAREST-so-a-single-tap-is-no-longer-a-2x2",
-  "file": "src/render/shadowPass.js",
-  "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);",
-  "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN1-the-cheap-tap-returns-AFTER-the-kernel-so-it-saves-nothing",
-  "file": "src/render/shadowPass.js",
-  "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));\n  float lit = 0.0;",
-  "new": "  float lit = 0.0;",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN2-the-gate-drops-the-n-dot-L-half-so-every-wall-facing-away-still-pays",
-  "file": "src/render/enhancedLighting.js",
-  "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-  "new": "  float diff = (uSunScale > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN2-the-gate-drops-the-uniform-half-so-dusk-and-night-still-pay",
-  "file": "src/render/enhancedLighting.js",
-  "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-  "new": "  float diff = (ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN2-the-gated-branch-answers-ONE-instead-of-zero-so-an-unlit-face-is-fully-lit",
-  "file": "src/render/enhancedLighting.js",
-  "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-  "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 1.0;   // EL2: the sun map",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN2-the-flats-gate-goes-so-every-sprite-in-the-world-reads-the-sun-map-at-midnight",
-  "file": "src/render/enhancedLighting.js",
-  "old": "  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
-  "new": "  vec3 sunLit = uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0));",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN2-the-flat-reads-its-shadow-at-its-own-fragment-so-a-sprite-shadows-itself",
-  "file": "src/render/enhancedLighting.js",
-  "old": "sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
-  "new": "sunShadowSoftAt(vBBWorld, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN2-the-water-reads-its-shadow-all-night",
-  "file": "src/render/waterSurface.js",
-  "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;",
-  "new": "  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN-the-sway-door-parses-the-query-string-once-a-frame-again",
-  "file": "src/systems/windDrive.js",
-  "old": "let _swayOff;",
-  "new": "",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN-the-sway-door-caches-too-hard-and-cannot-see-a-changed-search",
-  "file": "src/systems/windDrive.js",
-  "old": "  if (_swayOff === undefined || search !== _swaySearch) {",
-  "new": "  if (_swayOff === undefined) {",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "PERF-SUN-a-tall-flora-flat-stops-leaning",
-  "file": "src/systems/windDrive.js",
-  "old": "  return height >= TALL_FLAT_HEIGHT ? 1 : 0.6;",
-  "new": "  return 0.6;",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "AUDIT-F4-the-billboard-tint-decodes-the-moon-and-the-sun-into-ONE-scratch-again",
-  "file": "src/render/renderer.js",
-  "old": "sc = this._c3(this._sunColor, this._decC);",
-  "new": "sc = this._c3(this._sunColor, this._decB);",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "AUDIT-F4-the-third-scratch-is-an-alias-of-the-second-so-the-fix-is-cosmetic",
-  "file": "src/render/renderer.js",
-  "old": "this._decC = new Float32Array(3);",
-  "new": "this._decC = this._decB;",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "AUDIT-F2-the-note-goes-back-to-claiming-the-opposite-of-what-the-code-does",
-  "file": "src/render/shadowPass.js",
-  "old": " * AUDIT F2: the test is `c >= SHADOW_PCF_CASCADES`, so EVERY cascade from\n * this index outward takes the cheap tap - not just the last. The comment\n * first written here claimed the opposite (\"a cascade count this does not\n * cover keeps the kernel\"), which is false, and a false claim about the\n * safe direction is exactly what this slice's own lesson was about. The\n * behaviour the code actually has is the right one: cascades are ordered\n * by radius, so a further one is always coarser than the one before it and\n * can only want the tap less. A fourth cascade would be cheap, and should be.",
-  "new": " * A cascade count this does not cover keeps the kernel, which is the\n * safe direction if the cascades are ever re-cut.",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "AUDIT-F1-the-sway-doors-state-goes-back-below-its-reader",
-  "file": "src/systems/windDrive.js",
-  "old": "let _swaySearch;   // AUDIT F1: declared ABOVE its reader - a `let` below one is in the temporal dead zone until the module finishes evaluating, and this port has already lost a boot to one end of a module cycle reaching the other too early\nexport function swayDisabled",
-  "new": "export function swayDisabled",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "AUDIT-F3-the-water-pin-counts-diff-again-instead-of-the-variable-that-bears-the-load",
-  "file": "src/render/waterSurface.js",
-  "old": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow;",
-  "new": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * shadow;",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "TREES1-the-flat-goes-back-to-the-cheap-tap-and-a-distant-tree-flips-lit-to-dark",
-  "file": "src/render/enhancedLighting.js",
-  "old": "sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
-  "new": "sunShadowAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "TREES1-the-soft-path-still-falls-through-to-the-cheap-tap-so-the-fix-wears-its-own-bug",
-  "file": "src/render/shadowPass.js",
-  "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
-  "new": "  if (c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "TREES1-the-soft-entry-point-is-not-soft-at-all",
-  "file": "src/render/shadowPass.js",
-  "old": "float sunShadowSoftAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, true); }",
-  "new": "float sunShadowSoftAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, false); }",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "TREES1-the-per-fragment-entry-point-takes-the-kernel-too-so-the-whole-saving-goes",
-  "file": "src/render/shadowPass.js",
-  "old": "float sunShadowAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, false); }",
-  "new": "float sunShadowAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, true); }",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- },
- {
-  "name": "TREES1-the-terrain-pays-for-a-kernel-its-own-neighbours-already-give-it",
-  "file": "src/render/enhancedLighting.js",
-  "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-  "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowSoftAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
-  "tests": [
-   "test/perfsun_fragment.test.js"
-  ]
- }
+  {
+    "name": "PERF-SUN1-every-cascade-takes-the-3x3-again-so-the-far-ground-pays-nine-taps-a-fragment",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
+    "new": "",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN1-the-cheap-tap-reaches-the-NEAR-cascade-and-EL7s-contact-hairline-goes",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_PCF_CASCADES = 2;",
+    "new": "export const SHADOW_PCF_CASCADES = 0;",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN1-no-cascade-is-cheap-so-the-change-does-nothing",
+    "file": "src/render/shadowPass.js",
+    "old": "export const SHADOW_PCF_CASCADES = 2;",
+    "new": "export const SHADOW_PCF_CASCADES = 3;",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN1-the-sampler-stops-comparing-so-one-tap-really-is-one-texel",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);\n    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);\n    this.sunTex = sun;",
+    "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);\n    this.sunTex = sun;",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN1-the-sun-map-samples-NEAREST-so-a-single-tap-is-no-longer-a-2x2",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR);",
+    "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN1-the-cheap-tap-returns-AFTER-the-kernel-so-it-saves-nothing",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));\n  float lit = 0.0;",
+    "new": "  float lit = 0.0;",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN2-the-gate-drops-the-n-dot-L-half-so-every-wall-facing-away-still-pays",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "new": "  float diff = (uSunScale > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN2-the-gate-drops-the-uniform-half-so-dusk-and-night-still-pay",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "new": "  float diff = (ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN2-the-gated-branch-answers-ONE-instead-of-zero-so-an-unlit-face-is-fully-lit",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 1.0;   // EL2: the sun map",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN2-the-flats-gate-goes-so-every-sprite-in-the-world-reads-the-sun-map-at-midnight",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+    "new": "  vec3 sunLit = uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0));",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN2-the-flat-reads-its-shadow-at-its-own-fragment-so-a-sprite-shadows-itself",
+    "file": "src/render/enhancedLighting.js",
+    "old": "sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+    "new": "sunShadowSoftAt(vBBWorld, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN2-the-water-reads-its-shadow-all-night",
+    "file": "src/render/waterSurface.js",
+    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;",
+    "new": "  float shadow = cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''};",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN-the-sway-door-parses-the-query-string-once-a-frame-again",
+    "file": "src/systems/windDrive.js",
+    "old": "let _swayOff;",
+    "new": "",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN-the-sway-door-caches-too-hard-and-cannot-see-a-changed-search",
+    "file": "src/systems/windDrive.js",
+    "old": "  if (_swayOff === undefined || search !== _swaySearch) {",
+    "new": "  if (_swayOff === undefined) {",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SUN-a-tall-flora-flat-stops-leaning",
+    "file": "src/systems/windDrive.js",
+    "old": "  return height >= TALL_FLAT_HEIGHT ? 1 : 0.6;",
+    "new": "  return 0.6;",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F4-the-billboard-tint-decodes-the-moon-and-the-sun-into-ONE-scratch-again",
+    "file": "src/render/renderer.js",
+    "old": "mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);",
+    "new": "mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decB);",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F4-the-third-scratch-is-an-alias-of-the-second-so-the-fix-is-cosmetic",
+    "file": "src/render/renderer.js",
+    "old": "this._decC = new Float32Array(3);",
+    "new": "this._decC = this._decB;",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F2-the-note-goes-back-to-claiming-the-opposite-of-what-the-code-does",
+    "file": "src/render/shadowPass.js",
+    "old": " * AUDIT F2: the test is `c >= SHADOW_PCF_CASCADES`, so EVERY cascade from\n * this index outward takes the cheap tap - not just the last. The comment\n * first written here claimed the opposite (\"a cascade count this does not\n * cover keeps the kernel\"), which is false, and a false claim about the\n * safe direction is exactly what this slice's own lesson was about. The\n * behaviour the code actually has is the right one: cascades are ordered\n * by radius, so a further one is always coarser than the one before it and\n * can only want the tap less. A fourth cascade would be cheap, and should be.",
+    "new": " * A cascade count this does not cover keeps the kernel, which is the\n * safe direction if the cascades are ever re-cut.",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F1-the-sway-doors-state-goes-back-below-its-reader",
+    "file": "src/systems/windDrive.js",
+    "old": "let _swaySearch;   // AUDIT F1: declared ABOVE its reader - a `let` below one is in the temporal dead zone until the module finishes evaluating, and this port has already lost a boot to one end of a module cycle reaching the other too early\nexport function swayDisabled",
+    "new": "export function swayDisabled",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-F3-the-water-pin-counts-diff-again-instead-of-the-variable-that-bears-the-load",
+    "file": "src/render/waterSurface.js",
+    "old": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow;",
+    "new": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * shadow;",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "TREES1-the-flat-goes-back-to-the-cheap-tap-and-a-distant-tree-flips-lit-to-dark",
+    "file": "src/render/enhancedLighting.js",
+    "old": "sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+    "new": "sunShadowAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "TREES1-the-soft-path-still-falls-through-to-the-cheap-tap-so-the-fix-wears-its-own-bug",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (!soft && c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
+    "new": "  if (c >= ${SHADOW_PCF_CASCADES}) return texture(uSunShadow, vec4(p.xy, float(c), ref));",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "TREES1-the-soft-entry-point-is-not-soft-at-all",
+    "file": "src/render/shadowPass.js",
+    "old": "float sunShadowSoftAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, true); }",
+    "new": "float sunShadowSoftAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, false); }",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "TREES1-the-per-fragment-entry-point-takes-the-kernel-too-so-the-whole-saving-goes",
+    "file": "src/render/shadowPass.js",
+    "old": "float sunShadowAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, false); }",
+    "new": "float sunShadowAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, true); }",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  },
+  {
+    "name": "TREES1-the-terrain-pays-for-a-kernel-its-own-neighbours-already-give-it",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowSoftAt(vWorldPos, n) : 0.0;   // EL2: the sun map",
+    "tests": [
+      "test/perfsun_fragment.test.js"
+    ]
+  }
 ]

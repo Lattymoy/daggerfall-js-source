@@ -11,7 +11,7 @@ import {
   WEATHER_TABLE, WEATHER_ENUM, weatherTableFor, rollWeather,
   setClimateWeathers, weatherForClimate, tickWeather, weatherRespawn,
   applyClimateWeather, setWeather, currentWeather, restoreWeather, resetWeatherSim,
-  rollClimateWeathersForDay,
+  rollClimateWeathersForDay, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -55,7 +55,7 @@ test('W1 roll: the cumulative walk with its <= 0 boundary and the compiled Snow-
 });
 
 test('W1/S41 daily tick: the ROLL is the day block\'s and the APPLY is the frame\'s, and the frame drains the flag exactly once', () => {
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   try {
     // S41 split tickWeather in two. The DAY CHANGE rolls the zones and
     // raises WeatherManager's updateWeatherFromClimateArray; the
@@ -85,11 +85,11 @@ test('W1/S41 daily tick: the ROLL is the day block\'s and the APPLY is the frame
     assert.equal(currentWeather(), 'sunny', 'the APPLIED value came from the DAY roll, not this frame');
     // and the flag is down again - one drain per raise (:411-414)
     assert.equal(tickWeather(100 + MINUTES_PER_DAY, CLIMATES.Woodlands, () => 0.99), false);
-  } finally { resetWeatherSim(); }
+  } finally { resetWeatherSim(); setWeatherMapLaw(false); }
 });
 
 test('W1/S41 daily tick: a day crossed UNDERGROUND still rolls, and the sky lands on the way out', () => {
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   try {
     tickWeather(100, CLIMATES.Woodlands, () => 0.99);   // boot: snow
     assert.equal(currentWeather(), 'snow');
@@ -101,7 +101,7 @@ test('W1/S41 daily tick: a day crossed UNDERGROUND still rolls, and the sky land
     // The first frame back outside drains the flag once.
     assert.equal(tickWeather(100 + 10 * MINUTES_PER_DAY, CLIMATES.Woodlands, () => 0.99), true);
     assert.equal(currentWeather(), 'sunny');
-  } finally { resetWeatherSim(); }
+  } finally { resetWeatherSim(); setWeatherMapLaw(false); }
 });
 
 test('W1 zone array: the classic six slots + THE OCEAN QUIRK - the array path reads slot 0 where the roll used the Swamp table', () => {
@@ -165,7 +165,7 @@ test('W1 save: one weather value rides every host\'s envelope; the restore stamp
 });
 
 test('W1 restore law: restoreWeather alone pins the value, and no frame can clobber it until a DAY rolls', () => {
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   try {
     restoreWeather('overcast');
     assert.equal(currentWeather(), 'overcast');
@@ -183,7 +183,7 @@ test('W1 restore law: restoreWeather alone pins the value, and no frame can clob
     rollClimateWeathersForDay(4 * MINUTES_PER_DAY, () => 0.99);
     assert.equal(tickWeather(4 * MINUTES_PER_DAY, CLIMATES.Desert, () => 0.99), true);
     assert.equal(currentWeather(), 'thunder');
-  } finally { resetWeatherSim(); }
+  } finally { resetWeatherSim(); setWeatherMapLaw(false); }
 });
 
 test('W1 review: fast travel applies the ARRAY slot (OnInitWorld), never a fresh roll; backward time never re-rolls', () => {

@@ -2817,7 +2817,12 @@ ${badgeCss()}
    classic's four-lines-and-a-Next-button. */
 .cr-shell .px-win { width: min(920px, 94vw); height: min(620px, 86dvh); }
 .cr-shell .cr-prose p, .cr-shell .cr-entry p { margin: 0 0 10px; font-size: 15px;
-  line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+  line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+  overflow-wrap: anywhere; }
+/* JOURNAL1 (tools/journalProbe.mjs found it): A WORD TOO LONG FOR THE COLUMN BREAKS INSIDE IT. The notebook's lines are
+   seventy columns of DFU's fixed-width page, and one unbroken run of them - a word, an address, a page kept from another
+   player, the pieces breakableNote cuts - is wider than this proportional column; without the break the text ran out of
+   its card and the whole section scrolled sideways (672px in 624 at a desktop, 652 in 315 on a phone). */
 .cr-shell .cr-prose { max-width: 62ch; }
 /* PX24b: AN ENTRY IS A CARD WITH A DATE. The notebook stamps every
    note with the day and the city it was written in; the first draft
@@ -2870,6 +2875,18 @@ ${badgeCss()}
    a small action set off from the prose below it, not another line of
    journal text. */
 .cr-shell .cr-share { min-width: 60px; }
+/* JOURNAL1: A NOTE'S SHARE - the strip under the note's head: who the page can be held out to (the players near
+   enough to talk to, a button each, which wraps as the names do), and the letter. What the last press did is said
+   under it in the journal's dim hand. A name at its widest breaks inside its button rather than out of the card. */
+.cr-shell .cr-sharebox { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; padding: 10px 12px;
+  background: rgba(10,12,17,0.55); border: 2px solid rgba(125,116,96,0.3); }
+.cr-shell .cr-sharerow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.cr-shell .cr-sharelabel { flex: none; color: var(--brass); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.cr-shell .cr-sharewhy, .cr-shell .cr-shareword { color: #b9b094; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+.cr-shell .cr-sharebox .act { max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+@media (pointer: coarse) { .cr-shell .cr-sharebox .act { min-height: 44px; } }
 .cr-shell .sb-frame { margin: 0 0 16px; }
 .cr-shell .cr-compose { display: flex; gap: 10px; margin: 0 0 18px; max-width: 66ch; }
 .cr-shell .cr-compose input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;
@@ -3676,6 +3693,20 @@ ${badgeCss()}
 .loot-win .remotehead { flex: 0 0 auto; }
 .loot-win .remotelist { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
 .loot-win .remotelist::-webkit-scrollbar { display: none; }
+/* LOOT-STACK: the pile's tabs, one per body, over the head - the lit
+   one is the body this window is open on. They wrap rather than scroll,
+   so a pile of five on a phone is two rows and never a hidden tab; each
+   is a finger's height, because a phone has no other way to the pile. */
+.piletabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+  padding: 12px 12px 0; }
+.piletab { font: inherit; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  min-height: 32px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px;
+  color: #7d7460; background: rgba(0,0,0,0.35); border: 1px solid rgba(125,116,96,0.45);
+  cursor: pointer; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); max-width: 100%; }
+.piletab:hover, .piletab:focus-visible { outline: none; color: #d8cfae; border-color: var(--brass); }
+.piletab.on { color: rgb(243,239,44); border-color: var(--brass); cursor: default; }
+.piletabname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.piletabn { color: #d8cfae; font-variant-numeric: tabular-nums; }
 /* NOT MULTICOL. column-count was the obvious answer and it is the
    wrong one: a multicol box that is also a SCROLL container fragments
    in the block direction, so the overflow columns went below the fold
@@ -3722,7 +3753,7 @@ ${badgeCss()}
    it. The percentages are the fallback for a frame not yet drawn. */
 .wplaque { position: fixed; left: var(--wp-x, 50%); top: var(--wp-top, 55%);
   transform: translateX(-50%);
-  z-index: 6; display: none; min-width: 190px; max-width: ${PLAQUE_MAX_W}px; padding: 10px 14px;
+  z-index: 6; display: none; min-width: 190px; max-width: ${PLAQUE_MAX_W}px; --wp-pad-x: 14px; padding: 10px var(--wp-pad-x);
   background: rgba(10,12,17,0.9); border: 2px solid #7d7460; pointer-events: none;
   font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; color: #d8cfae;
   font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'clig' 0;
@@ -3735,9 +3766,16 @@ ${badgeCss()}
    uppercase letterspaced was a KIND label ("LOOT", "REMAINS"), and the
    merged surface names the thing itself ("Wardrobe", "Shop Shelf",
    "Skeletal Warrior (dead)"), which is strictly more. What survives is
-   the divider, and only where there is something to divide. */
-.wplaque.has-list .wplaque-title { padding-bottom: 8px; margin-bottom: 8px;
-  border-bottom: 2px solid rgba(125,116,96,0.3); }
+   the divider, and only where there is something to divide.
+   LOOT-STACK moved it from the TITLE's foot to the LIST's top edge. It
+   divides the LABEL - the title and every sub-line under it - from what
+   the thing holds, and at the title's foot it stood between the title
+   and its own sub-lines: a locked chest's "Lock Level: 12" drew as the
+   first row of its contents, and a pile's "2 of 3" as a heading over
+   the body's list (tools/lootStackProbe.mjs photographed it). The list
+   exists only on an itemised frame (has-list), so the divider still
+   stands only where there is something to divide. */
+.wplaque-list { padding-top: 8px; margin-top: 8px; border-top: 2px solid rgba(125,116,96,0.3); }
 .wplaque-row { display: flex; align-items: baseline; gap: 10px; font-size: 14px;
   line-height: 1.5; }
 .wplaque-count { margin-left: auto; color: var(--brass); font-size: 12px; }
@@ -3747,9 +3785,16 @@ ${badgeCss()}
    name under it each time the wheel turned, which is the one thing a
    readout at the crosshair must not do. The rarity colours above are
    on the row's first span and are untouched by this, so a highlighted
-   artifact still reads as an artifact. */
+   artifact still reads as an artifact.
+   LOOT-STACK (tools/lootStackProbe.mjs measured it): the margin is the
+   PLAQUE's own padding (--wp-pad-x), not a second 14 - the narrow sheet
+   pads 12, and there the band ran 2px into the border on both sides -
+   and the padding MATCHES it on both sides, where the left was 12 and
+   stood the lit name 2px left of every other name in the list, the
+   very shift this rule exists to prevent (the brass bar is an inset
+   shadow and takes no room). */
 .wplaque-row.sel { background: rgba(125,116,96,0.28); box-shadow: inset 2px 0 0 var(--brass);
-  margin: 0 -14px; padding: 0 14px 0 12px; }
+  margin: 0 calc(-1 * var(--wp-pad-x)); padding: 0 var(--wp-pad-x); }
 /* AUDIT DISC7 A4: a refused verb (the F-card's disabled row): its reason in its name, italic in the card's own lighter bone (SOC C12's 4.9:1), never dimmed by opacity */
 .wplaque-row.off { font-style: italic; color: #c8c2b4; }
 /* ...and the line that says what the keys do, under the list. */
@@ -3800,12 +3845,19 @@ ${badgeCss()}
    so the rows are what gives. No scrollbar chrome: a readout is not a
    control (the whole surface is pointer-events: none), so the overflow
    is a CLIP, and the "and N more" tail already tells the truth about
-   what is not shown. */
+   what is not shown.
+   LOOT-STACK: and the clip is DOWNWARD only. The cap is about height -
+   the rows are what gives - and hidden clipped across as well, which
+   cut QUICK-LOOT B3's highlight band off at the list's edges (it reaches
+   out to the plaque's) and the first two pixels of the lit name with it.
+   A clip on the one axis leaves the other visible (hidden cannot: it
+   makes the other axis auto); a browser without clip drops that
+   declaration and keeps hidden, today's clip, whole. */
 .wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);
-  overflow: hidden; }
+  overflow: hidden; overflow-x: visible; overflow-y: clip; }
 /* AUDIT ENH-NOTICE3 A6's lesson: a more-specific base rule outranks a
    media block, so every base selector above is one class. */
-@media (max-width: 720px) { .wplaque { max-width: 88vw; padding: 8px 12px; }
+@media (max-width: 720px) { .wplaque { max-width: 88vw; --wp-pad-x: 12px; padding: 8px var(--wp-pad-x); }
   .wplaque-row, .wplaque-title { font-size: 13px; } .wplaque-sub { font-size: 11px; } }
 
 /* ── PX21a: THE TRANSPORT STRIP ─────────────────────────────────

@@ -101,6 +101,10 @@ export const EL_SCATTER = 0.35;
 export function volumetricsOn(search = globalThis.location?.search ?? '') {
   return new URLSearchParams(search).get('volumetrics') !== 'off';
 }
+/** VC7b: the sun in the haze has its own door - `?haze=off` keeps the beams and drops the march. */
+export function hazeOn(search = globalThis.location?.search ?? '') {
+  return new URLSearchParams(search).get('haze') !== 'off';
+}
 /** The near-field gain and the falloff's knee (elAttenuation). */
 export const EL_LIGHT_GAIN = 2;
 export const EL_LIGHT_KNEE = 16;
@@ -376,7 +380,7 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
     // EL2: the lantern's map; EL8: every other lantern a contact shadow off the previous frame's depth;
     // F3/MAC-T1: never for the light in the hand - by name, -2 in the caster table (LIGHT-NEAR1: and no longer by its distance to the camera, which dropped the lamp overhead too);
     // F5: and only within the share of the range where the light is worth a shadow
-    float sh = k >= 0 ? pointShadowAt(k, wp, n)
+    float sh = k >= 0 ? casterShadowAt(k, uPointLights[i], wp, n)   // DISC15: a 512 slot or a lo one - indoors, every light has one
       : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name
       : contactShadow(wp, n, Ln, d);
     // EL4: a glint - Blinn-Phong, a low gloss for stone and wood, a twelfth of the light: wet stone under a torch
@@ -406,7 +410,7 @@ vec3 elPointFlat(vec3 wp, vec3 base) {
     int i = elClusterLight(cell, j);
     float d = length(uPointLights[i].xyz - wp);
     if (d >= uPointLights[i].w) continue;   // EL5
-    float sh = shadowOfLight(i, base, vec3(0.0, 1.0, 0.0));   // EL2; EL5: any caster's
+    float sh = shadowOfLight(i, uPointLights[i], base, vec3(0.0, 1.0, 0.0));   // EL2; EL5: any caster's; DISC15: either tier
     acc += sh * elAttenuation(d, uPointLights[i].w) * uPointColors[i];
   }
   return acc;
@@ -1060,7 +1064,7 @@ export const EL_LANE = Object.freeze({
 export function syncLightingLane(renderer, search = globalThis.location?.search ?? '') {
   const on = enhancedLightingOn(search);
   renderer.setLightingLane(on ? EL_LANE : null);
-  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's; VOL1: the glow's
+  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); renderer.setHaze?.(hazeOn(search)); }   // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's; VOL1: the glow's
   return on;
 }
 

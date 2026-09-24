@@ -11,8 +11,8 @@
   {
     "name": "ql-host-passes-none",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText, { getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null })) {",
-    "new": "      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText)) {",
+    "old": "      if (!pileKeys && quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText, { getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null })) {",
+    "new": "      if (!pileKeys && quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText)) {",
     "tests": [
       "test/quickloot.test.js"
     ]

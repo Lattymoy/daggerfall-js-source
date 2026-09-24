@@ -274,7 +274,7 @@ test('ACC3c: the roster REPAINTS when a badge changes - it is keyed, and a stale
   // about the row - so without the badge in the key the list is
   // correct and never redrawn.
   const panel = src('src/ui/chatPanel.js');
-  const key = /const key = total \+ '\|' \+ \(menuFor \?\? ''\) \+ '\|' \+ rows\.map\(\(r\) => [^\n]*\)\.join\(','\);/.exec(panel);
+  const key = /const key = label \+ '\|' \+ total \+ '\|' \+ \(menuFor \?\? ''\) \+ '\|' \+ rows\.map\(\(r\) => [^\n]*\)\.join\(','\);/.exec(panel);   // CHAT-CHAN: the list's own word leads the key
   assert.ok(key, 'the roster key moved');
   assert.match(key[0], /r\.title/, 'a title that changes must repaint the row it is on');
   assert.match(key[0], /r\.glyphs/);

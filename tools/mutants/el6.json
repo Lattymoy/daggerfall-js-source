@@ -119,7 +119,7 @@
   {
     "name": "prepare-keeps-stats",
     "file": "src/render/airPass.js",
-    "old": "    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.vol = false;   // this frame's, counted at the resolve\n",
+    "old": "    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.haze = false; this.stats.vol = false;   // this frame's, counted at the resolve\n",
     "new": "",
     "tests": [
       "test/el6_field.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "depth-at-canvas-uv",
     "file": "src/render/airPass.js",
-    "old": "  return texture(uDepth, (uRect.xy + wuv * uRect.zw) / uCanvas).r;",
-    "new": "  return texture(uDepth, wuv).r;",
+    "old": "  return textureLod(uDepth, (uRect.xy + wuv * uRect.zw) / uCanvas, 0.0).r;",
+    "new": "  return textureLod(uDepth, wuv, 0.0).r;",
     "tests": [
       "test/el6_field.test.js"
     ]

@@ -34,10 +34,13 @@ function bowCif() {
 }
 const NOCKED = /:0:[0-3]$/;   // fpw:WEAPON09.CIF:<metal>:<record 0>:<frame 0..3>
 
-async function bowRig({ drawback, widget }) {
+async function bowRig({ drawback, widget, doubleScale = false }) {
   resetToDefaults(); _resetModSettings();
   setValue('Controls', 'BowDrawback', drawback ? 'True' : 'False');
   setModSetting('weapon-widget', 'Enabled', widget);
+  // DISC14-B: the law is pinned on the mod's SHIPPED Weapon Widget settings; the port defaults DoubleScaleTextures on
+  // now, and the case below holds the same law under that default.
+  setModSetting('weapon-widget', 'Modules.DoubleScaleTextures', doubleScale);
   const quads = [];
   const renderer = { uploadTexture: (_k, name) => name, drawScreenQuad: (tex, rect) => quads.push({ tex, rect }) };
   const canvas = { width: 320, height: 200, clientWidth: 320, clientHeight: 200 };
@@ -63,24 +66,24 @@ async function bowRig({ drawback, widget }) {
     quads.length = 0;
     r.draw();
     const q = quads.find((x) => typeof x.tex === 'string' && x.tex.startsWith('fpw:'));
-    return { evs, drawn: q && q.rect.y < canvas.height ? q.tex : null };
+    return { evs, drawn: q && q.rect.y < canvas.height ? q.tex : null, shown: q ? Math.max(0, canvas.height - q.rect.y) : 0 };
   };
   return { r, step, m: r.playerWeapon.machine };
 }
 
 /** Shoots once; answers every frame from the loose to the end of the cooldown and the first frames after. */
-async function shoot({ drawback, widget, fps = 60 }) {
-  const { step, m } = await bowRig({ drawback, widget });
+async function shoot({ drawback, widget, fps = 60, doubleScale = false }) {
+  const { step, m } = await bowRig({ drawback, widget, doubleScale });
   const dt = 1 / fps, rows = [];
   let loosed = false, held = 0, looseAt = -1;
   if (!drawback) assert.equal(m.frame, 3, 'BowDrawback off: the idle bow the player looks at is the drawn frame (FPSWeapon.cs:533-534)');
   for (let i = 0; i < fps * 3; i++) {
     let press = i === 0;
     if (drawback && m.state === 'StrikeUp') press = !(m.frame === 3 && ++held > 10);
-    const { evs, drawn } = step(press, dt);
+    const { evs, drawn, shown } = step(press, dt);
     // from the frame AFTER the loose: the shaft's mesh lands through a promise (arrowFlight.js `m.gpu`), so the
     // frame that creates it cannot draw it - the first frame two arrows could share is the next one
-    if (loosed) rows.push({ drawn, cooling: m.now < m.cooldownUntil, state: m.state });
+    if (loosed) rows.push({ drawn, shown, cooling: m.now < m.cooldownUntil, state: m.state });
     if (evs.includes('hit')) { loosed = true; if (looseAt < 0) looseAt = i; }
   }
   assert.ok(loosed, 'the shot was loosed');
@@ -103,6 +106,15 @@ for (const drawback of [false, true]) {
     }
   }
 }
+
+test('ARROW2 under DISC14-B\'s defaults (DoubleScaleTextures on): the same law - no nocked frame while the loose plays out or through its cooldown (DISC14-C: the doubled idle\'s bob rides a doubled hit, so a classic bow bobs as with the module off; before it, the centred bob lifted the hidden bow 0.82 rows a frame before its return)', async () => {
+  for (const fps of [60, 50]) {
+    const rows = await shoot({ drawback: true, widget: true, fps, doubleScale: true });
+    const during = rows.filter((x) => x.state !== 'Idle' || x.cooling);
+    assert.equal(during.filter((x) => x.drawn && NOCKED.test(x.drawn)).length, 0, `${fps} fps: no nocked frame before the cooldown ends`);
+    assert.ok(rows.some((x) => !x.cooling && x.state === 'Idle' && x.drawn), 'and the bow comes back once the cooldown ends');
+  }
+});
 
 test('ARROW2: an un-draw (ActivateCenterObject at the hold frame) is no one-shot end - the bow stays shown through its cooldown, as DFU keeps it', async () => {
   const { step, m } = await bowRig({ drawback: true, widget: false });

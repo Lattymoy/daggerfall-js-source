@@ -8,7 +8,7 @@
 //
 //   ui/charSheetNav.js:53   the sheet's LOGBOOK button
 //   ui/charSheetNav.js:61   the sheet's HISTORY button
-//   scenes/world.js:3086    the world host's own logbook
+//   scenes/world.js:3106    the world host's own logbook
 //   scenes/dungeonContext.js the dungeon's
 //
 // The seam is the U52/U53/PX23 shape a sixth time. What is new is the
@@ -83,6 +83,18 @@ export const historyDoorReady = () => isEnhanced() || playerHistoryArtLoaded();
  *                         - the Share button's own click, wired to
  *                         net/online.js's shareQuest through
  *                         systems/questShare.js's prepareQuestShare.
+ *   pageShare             JOURNAL1, OURS not DFU's: () => null | {
+ *                         readers, why, show, letter } - a NOTE's Share
+ *                         in the enhanced Notes section. `readers` are
+ *                         the players near enough to talk to, nearest
+ *                         first ({id, name}); `why` says why there are
+ *                         none; `show(id, page)` holds the page out to
+ *                         one and answers the sentence that says what
+ *                         happened; `letter(page)` (null with no
+ *                         letters) answers true when the letters will
+ *                         open on the page once this window is down, or
+ *                         the sentence that says why not. Null - a host
+ *                         with no online layer - draws no Share at all.
  */
 export function createChronicleWindow(deps = {}) {
   const section = deps.section ?? 'notes';

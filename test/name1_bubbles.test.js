@@ -23,7 +23,7 @@ import {
 } from '../src/net/remotePlayers.js';
 import {
   createNameLayer, injectNameStyle, cssRgba, bubbleAlpha, bubbleText, bubbleSaid, bubbleLineOk, nameLayerWanted,
-  NAME_STYLE_ID, NAME_CSS, BUBBLE_TAB, BUBBLE_MS, BUBBLE_HOLD, BUBBLE_MAX, BUBBLE_CHARS, BUBBLE_ELLIPSIS,
+  NAME_STYLE_ID, NAME_CSS, BUBBLE_MS, BUBBLE_HOLD, BUBBLE_MAX, BUBBLE_CHARS, BUBBLE_ELLIPSIS,
 } from '../src/ui/nameLayer.js';
 import { Collider } from '../src/player/collider.js';
 import { ChatLog } from '../src/net/chat.js';
@@ -299,7 +299,7 @@ test('BUBBLE1 (2026-09-16, Mac: "I want to introduce chat bubbles above the play
   assert.equal(layer.bubbleCount(), 0, 'nobody has said anything');
   assert.equal(layer.tagFor('bran').bubble.className, 'dfname-bubble off');
 
-  log.push(BUBBLE_TAB, line({ text: 'hello there' }));
+  log.push('world', line({ text: 'hello there' }));
   assert.equal(layer.render({ points: pts, log }), 1, 'one bubble');
   assert.equal(layer.tagFor('bran').bubble.textContent, 'hello there');
   assert.equal(layer.tagFor('bran').bubble.className, 'dfname-bubble', 'shown');
@@ -308,7 +308,7 @@ test('BUBBLE1 (2026-09-16, Mac: "I want to introduce chat bubbles above the play
 
   // the newest replaces the previous
   clock.t += 1000;
-  log.push(BUBBLE_TAB, line({ text: 'and another thing' }));
+  log.push('world', line({ text: 'and another thing' }));
   layer.render({ points: pts, log });
   assert.equal(layer.bubbleCount(), 1, 'one bubble a peer, never a stack');
   assert.equal(layer.tagFor('bran').bubble.textContent, 'and another thing');
@@ -335,7 +335,7 @@ test('BUBBLE1 (2026-09-16, Mac: "I want to introduce chat bubbles above the play
   assert.ok(bubbleAlpha(BUBBLE_MS * 0.9) < bubbleAlpha(BUBBLE_MS * 0.8), 'and it goes DOWN');
 });
 
-test('BUBBLE1: the refusals and the bound - no bubble for a peer nobody is drawing, none for a system line, none for my own line, none for another tab, and at most BUBBLE_MAX at once with the newest kept (mutants: the refusals dropped; the cap lifted; the oldest kept; a refused line read twice)', () => {
+test('BUBBLE1: the refusals and the bound - no bubble for a peer nobody is drawing, none for a system line, none for my own line, none for an aside out of character (CHAT-CHAN: on any tab - a line on every channel is chatting, Mac\'s "when they chat"), and at most BUBBLE_MAX at once with the newest kept (mutants: the refusals dropped; the cap lifted; the oldest kept; a refused line read twice)', () => {
   const doc = fakeDocument();
   const clock = { t: 10000 };
   const layer = createNameLayer({ doc, now: () => clock.t });
@@ -343,28 +343,44 @@ test('BUBBLE1: the refusals and the bound - no bubble for a peer nobody is drawi
   const pts = pointsOf([{ id: 'bran' }]);
 
   // the law, by itself
-  assert.equal(bubbleLineOk(BUBBLE_TAB, line()), true);
-  assert.equal(bubbleLineOk(BUBBLE_TAB, { ...line(), system: true }), false, 'the hub\'s own notices say nothing over a head');
-  assert.equal(bubbleLineOk(BUBBLE_TAB, { ...line(), mine: true }), false, 'and neither do mine - I have no body in my own view');
-  assert.equal(bubbleLineOk('guild', line()), false, 'a later channel tab inherits the refusal');
-  assert.equal(bubbleLineOk(BUBBLE_TAB, { ...line(), id: '' }), false, 'a line from nobody is over nobody');
-  assert.equal(bubbleLineOk(BUBBLE_TAB, { ...line(), text: '' }), false);
-  assert.equal(bubbleLineOk(BUBBLE_TAB, null), false);
+  assert.equal(bubbleLineOk(line()), true);
+  assert.equal(bubbleLineOk({ ...line(), system: true }), false, 'the hub\'s own notices say nothing over a head');
+  assert.equal(bubbleLineOk({ ...line(), mine: true }), false, 'and neither do mine - I have no body in my own view');
+  assert.equal(bubbleLineOk({ ...line(), kind: 'ooc' }), false, 'CHAT-CHAN: an aside out of character stands over no head - what is over a head is what the character said');
+  for (const tab of ['world', 'region', 'party', 'local']) assert.equal(bubbleLineOk({ ...line(), tab }), true, `CHAT-CHAN: a ${tab} line is chatting too`);
+  assert.equal(bubbleLineOk({ ...line(), id: '' }), false, 'a line from nobody is over nobody');
+  assert.equal(bubbleLineOk({ ...line(), text: '' }), false);
+  assert.equal(bubbleLineOk(null), false);
 
   // through the log
-  log.push(BUBBLE_TAB, { text: 'Server restarted', system: true });
-  log.push(BUBBLE_TAB, line({ id: 'me', mine: true, text: 'my own words' }));
-  log.push(BUBBLE_TAB, line({ id: 'ghost', text: 'from somebody out of sight' }));
+  log.push('world', { text: 'Server restarted', system: true });
+  log.push('world', line({ id: 'me', mine: true, text: 'my own words' }));
+  log.push('world', line({ id: 'ghost', text: 'from somebody out of sight' }));
   assert.equal(layer.render({ points: pts, log }), 0, 'a notice, my own line and a peer nobody is drawing: no bubble');
   assert.equal(layer.tagFor('bran').bubble.className, 'dfname-bubble off');
-  log.push(BUBBLE_TAB, line({ text: 'here I am' }));
+  log.push('world', line({ text: 'here I am' }));
   assert.equal(layer.render({ points: pts, log }), 1);
+  // CHAT-CHAN: every tab's line, in the order heard - the aside is read and refused, and the Party line after it stands
+  clock.t += 1;
+  log.push('local', line({ text: '((brb, doorbell))' }));
+  layer.render({ points: pts, log });
+  assert.equal(layer.tagFor('bran').bubble.textContent, 'here I am', 'an aside out of character replaces nothing over a head');
+  log.push('party', line({ text: 'on my way' }));
+  layer.render({ points: pts, log });
+  assert.equal(layer.tagFor('bran').bubble.textContent, 'on my way', 'a party line stands over the mate who said it (on the hearer\'s screen alone)');
+  log.push('local', line({ text: 'Well met, traveller.' }));
+  log.push('region', line({ text: 'anyone near Wayrest?' }));
+  layer.render({ points: pts, log });
+  assert.equal(layer.tagFor('bran').bubble.textContent, 'anyone near Wayrest?', 'across tabs the NEWEST line heard wins - the log\'s one count, not a tab\'s order');
+  log.pushAll({ text: 'The server is restarting.' });
+  layer.render({ points: pts, log });
+  assert.equal(layer.tagFor('bran').bubble.textContent, 'anyone near Wayrest?', 'a line the game said on every tab is read once and stands over nobody');
 
   // THE CAP: six speakers, all drawn, and only the newest BUBBLE_MAX wear one
   const many = Array.from({ length: BUBBLE_MAX + 2 }, (_, i) => ({ id: `p${i}`, x: 100 + i * 40 }));
   const layer2 = createNameLayer({ doc: fakeDocument(), now: () => clock.t });
   const log2 = new ChatLog({ now: () => clock.t });
-  for (const p of many) log2.push(BUBBLE_TAB, line({ id: p.id, text: `I am ${p.id}` }));
+  for (const p of many) log2.push('world', line({ id: p.id, text: `I am ${p.id}` }));
   assert.equal(layer2.render({ points: pointsOf(many), log: log2 }), BUBBLE_MAX, 'the cap holds whatever a crowd says');
   assert.equal(layer2.storedCount(), BUBBLE_MAX, 'and the STORE is the bound - six speakers, four entries');
   assert.equal(layer2.tagFor('p0').bubble.className, 'dfname-bubble off', 'the OLDEST went');
@@ -418,9 +434,12 @@ test('NAME1 + BUBBLE1: the wiring in scenes/world.js - the layer is made ONCE be
   assert.match(bare, /renderer, font: townTalk\.font, scale, hudScale: enhancedHudScale\(\),/, 'AUDIT NAME1 F3: and the player\'s own HUD scale');
   assert.doesNotMatch(bare, /PARTY_GREEN/, 'the host still never carries the colour itself');
   assert.doesNotMatch(bare, /nameLayer\.render\(/, 'the host does not drive the layer behind the pass\'s back');
-  // the bubbles ride the log the chat panel shows - the chat wiring itself is untouched (CHAT1's pin still holds it)
-  assert.match(w, /link\.onChat = \(line\) => chatLog\.push\(tab\.id, line\);/, 'a PULL from the log, so CHAT1\'s five lines are exactly as they were');
-  assert.equal(BUBBLE_TAB, 'world');
+  // the bubbles ride the log the chat panel shows - a PULL from the log, so the chat wiring owes them nothing (CHAT1's pin
+  // holds it: CHAT-CHAN moved its lines, and nothing here had to follow)
+  assert.match(w, /layer: nameLayer, log: chatLog,/, 'the log itself is handed to the pass');
+  const layerSrc = rd('src/ui/nameLayer.js');
+  assert.match(layerSrc, /for \(const tab of log\?\.tabs \?\? \[\]\) \{/, 'CHAT-CHAN: the pump reads every tab');
+  assert.doesNotMatch(layerSrc, /BUBBLE_TAB/, 'and no tab is the bubbles\' own any more');
 });
 
 // ── THE FIXES (AUDIT NAME1, 2026-09-16: fifteen findings read off the slice, driven here) ──────────
@@ -691,7 +710,7 @@ test('AUDIT NAME1 F1 (in a dungeon any open window FROZE the name layer): a cove
   assert.equal(sight.rays(), rays, 'and it costs no ray - a covered frame projects nothing');
 
   // THE PUMP STILL RUNS: a line said while the window is open is a bubble the moment it closes, at its own age
-  log.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: 'behind you', at: clock.t });
+  log.push('world', { id: 'bran', name: 'Bran', text: 'behind you', at: clock.t });
   assert.equal(frame({ covered: true }), 0, 'still nothing drawn');
   clock.t += 1000;
   assert.equal(frame(), 2, 'the window closes');
@@ -785,19 +804,19 @@ test('AUDIT NAME1 F6 (a bubble was stamped from the PUMP\'S clock, not the line\
   const log = new ChatLog({ now: () => clock.t });
   const pts = pointsOf([{ id: 'bran' }]);
 
-  log.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: 'said five minutes ago' });
+  log.push('world', { id: 'bran', name: 'Bran', text: 'said five minutes ago' });
   clock.t += 5 * 60 * 1000;   // the window stood open for five minutes and the layer was never rendered
   assert.equal(layer.render({ points: pts, log }), 0, 'THE FINDING: a line this old does not arrive as news');
   assert.equal(layer.tagFor('bran').bubble.className, 'dfname-bubble off');
 
   // a line said NOW, through the same door, still speaks
-  log.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: 'said just now' });
+  log.push('world', { id: 'bran', name: 'Bran', text: 'said just now' });
   assert.equal(layer.render({ points: pts, log }), 1);
   assert.equal(layer.tagFor('bran').bubble.textContent, 'said just now');
 
   // the stamp is the LINE's: a line whose local stamp is old fades on that stamp, whatever the relay's `at` says
   const fresh = new ChatLog({ now: () => clock.t });
-  const line = fresh.push(BUBBLE_TAB, { id: 'zed', name: 'Zed', text: 'from a clock of its own', at: clock.t + 999999 });
+  const line = fresh.push('world', { id: 'zed', name: 'Zed', text: 'from a clock of its own', at: clock.t + 999999 });
   assert.equal(line.t, clock.t, 'net/chat.js keeps the local stamp as `t` and the relay\'s as `at`');
   const layer2 = createNameLayer({ doc: fakeDocument(), now: () => clock.t + BUBBLE_MS + 1 });
   assert.equal(layer2.render({ points: pointsOf([{ id: 'zed' }]), log: fresh }), 0, 'the local stamp decides, so a future `at` cannot hold a bubble open');
@@ -811,14 +830,14 @@ test('AUDIT NAME1 F8 (the seq watermark outlived the log): the watermark belongs
   const pts = pointsOf([{ id: 'bran' }]);
 
   const first = new ChatLog({ now: () => clock.t });
-  for (let i = 0; i < 12; i++) first.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: `line ${i}` });
+  for (let i = 0; i < 12; i++) first.push('world', { id: 'bran', name: 'Bran', text: `line ${i}` });
   assert.equal(layer.render({ points: pts, log: first }), 1, 'the newest of the first log');
   assert.equal(layer.tagFor('bran').bubble.textContent, 'line 11');
 
   // the session rejoins and the host builds a NEW log: its line 1 is under the old watermark of 12
   clock.t += BUBBLE_MS + 1;
   const second = new ChatLog({ now: () => clock.t });
-  second.push(BUBBLE_TAB, { id: 'bran', name: 'Bran', text: 'the first line of the new log' });
+  second.push('world', { id: 'bran', name: 'Bran', text: 'the first line of the new log' });
   assert.equal(layer.render({ points: pts, log: second }), 1, 'THE FINDING: it speaks');
   assert.equal(layer.tagFor('bran').bubble.textContent, 'the first line of the new log');
   // and within one log the watermark still holds: nothing is replayed. THE LINE THAT PROVES IT is a line put in

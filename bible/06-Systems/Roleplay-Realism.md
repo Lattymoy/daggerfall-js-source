@@ -46,7 +46,7 @@ after Items'), and the seams they hang on.
 | equipDamage: `ApplyConditionDamageThroughPhysicalHit` (:394-407) | FormulaHelper.cs:1123-1128, "Only return if override returns true" | `formulas.js damageEquipment`'s `hit` |
 | classicStrengthDamageBonus: `DamageModifier_classicDisplay` (:314-317) | FormulaHelper.DamageModifier | `formulas.js damageModifier` (PCO1's slot, chained) |
 | loanAmountPerLevel: `CalculateMaxBankLoan` (:98, :309-312) | FormulaHelper.cs:2008-2010 | `banking.registerMaxBankLoan` |
-| shipPorts: `IsShipAvailiable` (:610-631) | `TransportManager.ShipAvailiable`, the delegate | `ship.setShipAvailable`; `mountRig` asks with `shipLocation()` = `{ loaded, portTown, onShip }` from the host |
+| shipPorts: `IsShipAvailiable` (:610-631) | `TransportManager.ShipAvailiable`, the delegate | `ship.setShipAvailable`; `mountRig` asks with `shipLocation()` = `{ locationLoaded, portTown, onShip }` from the host (DISC13-D: it said `loaded`, which the delegate never read) |
 | encumbranceEffects: `EncumbranceEffects_OnNewMagicRound` (:580-598) | EntityEffectBroker.OnNewMagicRound | `worldTick.registerMagicRoundHook` (the fatigue) + `entityMods.registerEntityFold` (MergeDirectStatMods' channel - the speed) |
 | bandaging: `UseBandage` (:600-608), `if (rrItemsMod == null && bandaging)` | ItemHelper.RegisterItemUseHandler | never registered - the port carries Items always; `rrBandageHeal` ported for the record |
 | autoExtinguishLight (:633-640) | PlayerEnterExit.OnPreTransition ToDungeonExterior | `worldModes` at the dungeon exit, the light's own "You douse the %it." box |
@@ -95,6 +95,14 @@ Read against the C#:
   the Features home, so the only way back was the whole mod off. It is
   curated on the home now (`MOD_CURATED`) and off until a player asks
   for the port rule.
+  **DISC13-D (the same day, the same report), the other half.** With
+  the rule on, no port answered either. `world.js`'s `shipLocation`
+  said `{ loaded, ... }`, and the delegate reads `locationLoaded`
+  (`isShipAvailable`), so every port town read as the wilderness. The
+  Ship row stayed dark everywhere except aboard, which is why turning
+  Travel Options' port rule off changed nothing. The host answers
+  `locationLoaded` now, so a player who switches the rule on gets the
+  mod's port rule and not a ban (`test/disc13.test.js`).
 - **Purification** keeps its eight ingredients (the same recipe key)
   with HealHealth and CurePoison `(3,1)` where DFU's carries HealHealth
   and Invisibility `(13,0)`.

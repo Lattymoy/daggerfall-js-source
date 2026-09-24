@@ -683,7 +683,7 @@ export function createPlayerMagic({
    *  AreaAtRange payload explodes AT THE IMPACT POINT - AUDIT 23
    *  magic-2, DaggerfallMissile.cs:399-402), advance, and the
    *  mid-capsule foe contact (rangeType 4 explodes, 2 applies). */
-  function update(dt, playerFeet, forward = null, playerHeight = CAPSULE_HEIGHT) {
+  function update(dt, playerFeet, forward = null, playerHeight = CAPSULE_HEIGHT, renderFeet = null) {
     // FA1: the missile flats' clock rides the module's OWN update, not
     // each host's frame - hostMagic is shared by three of them and a
     // per-host tick is the four-hosts shape waiting to happen.
@@ -695,7 +695,7 @@ export function createPlayerMagic({
     // quietly wrong.
     candle.update(dt, {
       active: hasActiveEffect(playerEntity, 'light'),
-      feet: playerFeet ?? [0, 0, 0],
+      feet: renderFeet ?? playerFeet ?? [0, 0, 0],   // DISC13-A: the candle hangs off the RENDER feet (motor.js feetAt), as the camera does - the stepped feet slid it against the view every frame on a screen faster than 60 Hz
       height: playerHeight,
       forward,
     });

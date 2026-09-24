@@ -325,6 +325,13 @@ export const inventoryArtLoaded = () => !!_art;
 export function _setInventoryArtForTests(art) { _art = art; }
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
+/** LOOT-STACK: the label under a piled body's picture - where it stands in the pile ("2 of 3"), nothing for a body
+ *  alone. The wagon's weight figure is the only other label that panel draws, so the two never share it. */
+export const pileLabel = (pile) => {
+  if (!pile) return '';
+  const at = pile.bodies.findIndex((b) => b.key === pile.current);
+  return at < 0 ? '' : `${at + 1} of ${pile.bodies.length}`;
+};
 
 /** The accessory buttons' own icon panels (:556-563): ScaleToFit,
  *  MaxAutoScale 1, centered both axes inside the button's 1px margin.
@@ -517,11 +524,11 @@ export class NativeInventoryWindow {
       return { image: dropIconImage(this.dropIcon.archive, chosen), label: '' };
     }
     if (loot && (loot.textureArchive ?? 0) > 0) {
-      return { image: dropIconImage(loot.textureArchive, loot.textureRecord), label: '' };
+      return { image: dropIconImage(loot.textureArchive, loot.textureRecord), label: pileLabel(loot.pile) };
     }
     return {
       container: loot ? (loot.containerImage?.() ?? CONTAINER_IMAGES.Ground) : CONTAINER_IMAGES.Ground,
-      label: '',
+      label: pileLabel(loot?.pile),
     };
   }
 
@@ -535,6 +542,22 @@ export class NativeInventoryWindow {
     if (by !== 0) audio.playOneShot(SOUND.ButtonClick, 1);
     if (!canChangeDropIcon(this.hooks, this)) return;
     this.dropIcon = cycleDropIcon(this.dropIcon, by);
+  }
+  /** LOOT-STACK: THE BODY'S PICTURE IS THE PILE'S TURN on this skin - a
+   *  body's icon never cycles (playerOwned false, :833), so the click
+   *  that would have been refused opens the next body (LEFT) or the one
+   *  before (RIGHT) through the host's corpse door, and the label under
+   *  the picture says where this one stands. The close is the exit's,
+   *  click and all, and comes first. Answers whether it turned. */
+  _turnPile(by) {
+    const pile = this.usingWagon ? null : this.hooks.loot?.pile;
+    if (!pile) return false;
+    const n = pile.bodies.length;
+    const at = pile.bodies.findIndex((b) => b.key === pile.current);
+    const next = pile.bodies[(at + by + n) % n];
+    this._close();
+    pile.open(next.key);
+    return true;
   }
   _remote() {
     return remoteTarget(this.hooks, {
@@ -1327,6 +1350,7 @@ export class NativeInventoryWindow {
     // G5: the drop-icon panel (:437-439). LEFT cycles the icon UP,
     // RIGHT cycles it DOWN and MIDDLE takes the next archive.
     if (inRect(R.remoteTargetIcon, vx, vy)) {
+      if (!middle && this._turnPile(right ? -1 : 1)) return true;   // LOOT-STACK: a pile's body turns instead
       this._cycleDropIcon(middle ? 0 : (right ? -1 : 1));
       return true;
     }

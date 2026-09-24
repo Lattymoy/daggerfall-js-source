@@ -3058,3 +3058,19 @@ room change is one), not instantly; the world channel — where everyone is
 - `src/net/moderation.js` — the commands, the lookup, the words.
 - `src/ui/playerBadge.js`, `enhancedAccount.js` — the blue shield.
 - `test/mod1.test.js` — 15 pins. `tools/mutants/mod1.json` — 20, all dead.
+
+## MAIL1 — letters, kept for a player who is away (2026-09-23)
+
+Addison Knox, on Discord: "An in-game mail system where players can send messages to offline players". The full
+record is `06-Systems/Community-Arc.md` (MAIL1). This is the service's part of it.
+
+- `server-account/src/letters.js` provides `sendLetter`, `inboxOf`, `readLetter` and `deleteLetter`. Letters go
+  between registered players only, and the function refuses a guest itself (`mail-needs-account`) as well as behind the
+  route's wall. It also refuses a muted sender (`muted`, 403), an unknown handle (`no-reader`, 404), oneself
+  (`to-self`), and an hour's letters to anyone or to one reader (`mail-rate`, 429, spent before the lookup). A full
+  box (`inbox-full`, 409) is bounded inside the INSERT, so the check and the write are one statement.
+- `/v1/mail/inbox` (GET), `/v1/mail/send`, `/v1/mail/read` and `/v1/mail/delete` (POST, the letter's id in the body,
+  never the path) all sit behind a session; none is open. The service is `acct6`, and migration 0007 adds `letters`:
+  `to_id` cascades, while `from_id` and `from_name` are what was sent.
+- `src/net/letterLaw.js` is the letter's law for both ends. The worker bundles it, so it is in the deploy's paths.
+- `src/net/accountClient.js`'s one table has a sentence for every new word, since ACC1e's walk reads letterLaw.js too.

@@ -1234,6 +1234,8 @@ export class Renderer {
     this._flashColorScratch = new Float32Array(CLASSIC_MAX_LIGHTS * 3);
     this._flashCarriedScratch = new Uint8Array(CLASSIC_MAX_LIGHTS);   // MAC-T1: the carried mask under the flash
     this._pointCarried = null;   // MAC-T1: per-light, 1 for the light in the player's hand (withPlayerLights' mask), else null
+    this._everyLightNow = false;    // DISC15: this frame's host asked for the lo tier (everyLightCasts)
+    this._everyLightPrev = false;   // DISC15: ...and the frame whose records the passes replay had asked too
     this._pointColor = new Float32Array([1, 1, 1]);
     // LT1: per-light colour x intensity (vec3 per light). null = every
     // light wears the shared _pointColor - the exterior lantern path,
@@ -1766,6 +1768,7 @@ export class Renderer {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'),
         pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
         casterOf: gl.getUniformLocation(p, 'uCasterOf'),   // EL8
+        pointShadowLo: gl.getUniformLocation(p, 'uPointShadowLo'),   // DISC15: the lo tier's array
       };
       a.ao = { adapt: gl.getUniformLocation(p, 'uAdapt') };   // EL4: the eye (EL6: the AO left the world shaders - the resolve applies it off the frame's depth)
       a.cluster = { grid: gl.getUniformLocation(p, 'uClusterGrid'), list: gl.getUniformLocation(p, 'uClusterList'), rect: gl.getUniformLocation(p, 'uClusterRect'), z: gl.getUniformLocation(p, 'uClusterZ'), fwd: gl.getUniformLocation(p, 'uCamFwd'), on: gl.getUniformLocation(p, 'uClusterOn') };   // LC1
@@ -1813,6 +1816,7 @@ export class Renderer {
         this._wsLane.shadow = {
           sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'),
           pointShadow: gl.getUniformLocation(p, 'uPointShadow'), pointParams: gl.getUniformLocation(p, 'uPointShadowParams'), shadowIndex: gl.getUniformLocation(p, 'uShadowIndex'),
+          pointShadowLo: gl.getUniformLocation(p, 'uPointShadowLo'),   // DISC15: declared by the block - on its own unit, or it would sit on the water's unit 0
         };
       }
     } else {
@@ -1848,6 +1852,8 @@ export class Renderer {
   setContact(on) { this._contactWanted = !!on; }
   /** VOL1: the lanterns' glow marched through their shadows by the air pass (`?volumetrics=off` restores the lane's analytic glow per fragment). */
   setVolumetrics(on) { this._volumetricsWanted = !!on; if (this._airPass) this._airPass.volOn = this._volumetricsWanted; }
+  /** VC7b: the haze march's door - `?haze=off` (syncLightingLane reads it). */
+  setHaze(on) { this._hazeWanted = !!on; if (this._airPass) this._airPass.hazeOn = this._hazeWanted; }
   /** EL1: the in-scatter gain folded with the fog's density (zero with the fog off, so clear air glows nowhere). */
   _scatterGain() { const lane = this._lane; return lane ? lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]) : 0; }
   /** VOL1: does the air pass draw this frame's glow - a world frame the pass was prepared for and has not yet resolved
@@ -1858,6 +1864,11 @@ export class Renderer {
   setClusters(on) { this._clustersWanted = !!on; }
   /** SC1: the static shadow cache's door - `?shadowcache=off` replays every caster at the cadence, as before (syncLightingLane reads it). */
   setShadowCache(on) { this._shadowCacheWanted = !!on; if (this._shadowPass) this._shadowPass.cacheOn = this._shadowCacheWanted; }
+  /** DISC15: THIS FRAME'S ROOM IS DRAWN WHOLE - every light in it keeps a shadow map (shadowPass.js's lo tier), so no
+   *  lamp past the eight nearest lights through the ceiling, and none pops as the eight change. A host whose frame
+   *  records every caster there is (a building's interior: nothing view-culled) calls it each frame before beginFrame;
+   *  the world frame consumes it, so a host that does not ask never has it. */
+  everyLightCasts() { this._everyLightNow = true; }
   /** AUDIT SC1: the host's floating origin moved by `offset` - every remembered placement follows it (ShadowPass.shiftOrigin). */
   shadowOriginShift(offset) { this._shadowPass?.shiftOrigin(offset); }
   /** SHADOW-REACH: would a caster whose world box is `box` (+ the translation) cast into this frame's shadow maps - a
@@ -1946,6 +1957,7 @@ export class Renderer {
       // VOL1: the glow's shader is built from the lane's own curve and integral and the shadow block, handed over - the air pass is a leaf and imports neither
       this._air = this._airPass ??= new AirPass(this.gl, { build: (vs, fs) => this._buildProgram(vs, fs), vs: { mesh: VS, bb: BB_VS }, glsl: { shadow: SHADOW_GLSL, tonemap: this._lane.tonemapGlsl, scatter: this._lane.scatterGlsl }, maxLights: this.maxPointLights });
       this._air.volOn = this._volumetricsWanted !== false;
+      this._air.hazeOn = this._hazeWanted !== false;   // VC7b
     }
     else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }
   }
@@ -2070,9 +2082,17 @@ export class Renderer {
     this._camPos[1] = -(v[4] * v[12] + v[5] * v[13] + v[6] * v[14]);
     this._camPos[2] = -(v[8] * v[12] + v[9] * v[13] + v[10] * v[14]);
     const bindVao = (vao) => this._bindVao(vao);
+    // DISC15: the lo tier runs on a frame whose host asked for it (everyLightCasts). The records it replays are the
+    // LAST frame's, so on the first frame through a door they are the street's - no casters of this room: the eight
+    // maps drawn from them were the street's walls around the tavern's lamps for a frame, and a lo map of them would
+    // stand until the room's static set moved. So that frame drops them: with no records nothing casts (the lamps
+    // unshadowed, once), and the room's own, recorded below, are replayed from the next frame on.
+    const everyLight = this._everyLightNow;
+    if (this._everyLightNow && !this._everyLightPrev) sp.discard();
+    this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;
     sp.render({
       eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1
-      textures: this.textures, isSpectral: isSpectralArchive, bindVao,
+      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight,
     });
     if (this._air) {
       const count = this._pointLights.length / 4;
@@ -2083,6 +2103,7 @@ export class Renderer {
         shadows: sp, textures: this.textures, emissionTextures: this.emissionTextures, blackTex: this._blackTex,
         windowEmission: this._windowEmission, isSpectral: isSpectralArchive, bindVao, clearColor: this._clearColor,
         scatter: this._scatterGain(), exposure: this._exposure,   // VOL1: the glow's gain (the fog's) and the scene's exposure, for the march
+        haze: this._lane ? this._lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]) : 0,   // VC7b: the fog's extinction, for the sun's march through the haze
       });
     }
     this._perf?.mark('world');   // VC6d: the passes' work is submitted; everything until the sky or the resolve is the world's own draws

@@ -965,7 +965,7 @@ all four caught, then reverted).
   update's worth; the cadence, the submergence geometry and the
   SetHealth(0) stay in dungeonContext.breathTick, which BOTH
   dungeon-mode hosts drive through dungeonCtx.drawFoes
-  (worldModes.js:818). exterior.js and world.js have no submersion
+  (worldModes.js:819). exterior.js and world.js have no submersion
   path for it to ride yet - when exterior water lands, it consumes
   this same step. New in the step:
   (1) THE ARGONIAN COIN REFUND (:331-333): on each drain tick,
@@ -1692,10 +1692,10 @@ that `worldModes`'s own mousedown/mouseup handlers never call
 `mouseCode(e.button)`, so `held(keys, 'AutoRun')` was dead in that host
 at the shipped `Mouse2` default, and handed it to the input lane.
 `worldModes` has no `keys` Set of its own: it destructures one from
-`host` (`worldModes.js:409`), and its only two callers are `world.js`
+`host` (`worldModes.js:410`), and its only two callers are `world.js`
 (`:6147`) and `exterior.js` (`:2769`), both of which pass their own Set
-and both of whose WINDOW-level handlers (`world.js:7995-7996`,
-`exterior.js:3232-3233`) call `mouseCode(e.button)` and add/delete
+and both of whose WINDOW-level handlers (`world.js:8037-8038`,
+`exterior.js:3256-3257`) call `mouseCode(e.button)` and add/delete
 unconditionally - outside every mode and overlay gate. `MOUSE_CODES`
 maps button 2 to `Mouse2` (`input.js:491`), which is the shipped
 binding (`InputManager.cs:995`). The latch is live in that host; there
@@ -1713,7 +1713,7 @@ not gate on `HasAction`; it gates on `playerMotor.IsStandingStill`
 that `GroundedMovement` writes straight into `moveDirection`, so DFU
 plays the stride. The port walked the autorunner forward in silence in
 every host. All four now pass `standingStill: player.standing`, the
-motor's own mirror of that getter (`world.js:14248` already did at its
+motor's own mirror of that getter (`world.js:14626` already did at its
 other footstep site) - which is also still the paralysis answer,
 because the hosts zero both axes for a frozen player.
 
@@ -2115,3 +2115,15 @@ standing mount band below `STEP_OFFSET` is still PH1's one-way floor
 setting the body on a surface it is under, by design and since before
 COL1. The F8 pin's band deliberately starts **above** the lower sphere's
 own reach (feet + 2R = 0.70) so it holds the middles' law and not PH1's.
+
+## DISC16-A - the capsule rests on a slope (2026-09-24, Mac)
+
+"I notice my character is sunken into the ground on hills". The terrain
+floor (`collider.js`) took the ground beneath the capsule's centre as its
+feet. DFU's CharacterController, a capsule, rests on a slope by its
+rounded bottom, with its feet r (1 / cos - 1) over that ground: 5 cm at
+30 degrees, 15 at 45, 35 at 60. The floor is the capsule's rest now
+(`restFloor`), the grade taken from the heightfield across the capsule's
+own width. It is read by both the floor snap and the clamp, so MAC3's
+downhill adhesion holds, and flat ground is unchanged.
+`01-Overview/Field-Bugs-2026-09-23.md` DISC16-A.

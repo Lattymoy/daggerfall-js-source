@@ -1,0 +1,146 @@
+[
+  {
+    "name": "DISC15-the-lo-slot-never-written-to-the-table",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (this.casterOf[i] === -1) this.casterOf[i] = SHADOW_POINT_CASTERS + j;\n",
+    "new": "",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-lo-maps-redrawn-every-frame",
+    "file": "src/render/shadowPass.js",
+    "old": "const fresh = !this._loBuilt[j] || !(sl[o] === pos[0]",
+    "new": "const fresh = true || !(sl[o] === pos[0]",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-eight-left-without-a-lo-map",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (!ShadowPass._castsAt(L, f.carried, i)) continue;\n      for (let j = 0; j < cap; j++) {",
+    "new": "      if (!ShadowPass._castsAt(L, f.carried, i) || this.casterOf[i] >= 0) continue;\n      for (let j = 0; j < cap; j++) {",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-lo-slots-matched-by-index",
+    "file": "src/render/shadowPass.js",
+    "old": "if (!taken[j] && sl[j * 4] === L[i * 4] && sl[j * 4 + 1] === L[i * 4 + 1] && sl[j * 4 + 2] === L[i * 4 + 2]) { slotOf[i] = j; taken[j] = 1; break; }",
+    "new": "if (!taken[j] && j === i) { slotOf[i] = j; taken[j] = 1; break; }",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-newcomer-deferred-under-the-budget",
+    "file": "src/render/shadowPass.js",
+    "old": "let sig = null, draw = fresh;",
+    "new": "let sig = null, draw = fresh && rebuilds-- > 0;",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-no-rebuild-budget",
+    "file": "src/render/shadowPass.js",
+    "old": "if (!fresh && rebuilds > 0) {",
+    "new": "if (!fresh) {",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-flag-sticky",
+    "file": "src/render/renderer.js",
+    "old": "this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;",
+    "new": "this._everyLightPrev = this._everyLightNow;",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-streets-records-replayed-for-the-tavern",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._everyLightNow && !this._everyLightPrev) sp.discard();\n",
+    "new": "",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-carried-torch-takes-a-lo-map",
+    "file": "src/render/shadowPass.js",
+    "old": "return !(carried && carried[i]) && w > 0 && w <= SHADOW_CASTER_MAX_RANGE;",
+    "new": "return w > 0 && w <= SHADOW_CASTER_MAX_RANGE;",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-flash-takes-a-lo-map",
+    "file": "src/render/shadowPass.js",
+    "old": "return !(carried && carried[i]) && w > 0 && w <= SHADOW_CASTER_MAX_RANGE;",
+    "new": "return !(carried && carried[i]) && w > 0;",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-array-made-with-the-lane",
+    "file": "src/render/shadowPass.js",
+    "old": "    this.loTex = this._depthArray(1, 6, gl.LINEAR);\n",
+    "new": "    this.loTex = this._depthArray(SHADOW_LO_SIZE, 6 * SHADOW_LO_STEP, gl.LINEAR);\n",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-stand-in-missing",
+    "file": "src/render/shadowPass.js",
+    "old": "    this.loTex = this._depthArray(1, 6, gl.LINEAR);\n",
+    "new": "    this.loTex = null;\n",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-array-never-grown",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (want <= this._loCap) return;\n",
+    "new": "    if (this._loCap > 0) return;\n",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-lit-loop-reads-the-512-tier-alone",
+    "file": "src/render/enhancedLighting.js",
+    "old": "    float sh = k >= 0 ? casterShadowAt(k, uPointLights[i], wp, n)",
+    "new": "    float sh = k >= 0 ? pointShadowAt(k, wp, n)",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-the-interior-arm-never-asks",
+    "file": "src/scenes/worldModes.js",
+    "old": "    renderer.everyLightCasts();   // DISC15",
+    "new": "    // renderer.everyLightCasts();   // DISC15",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "DISC15-upload-never-binds-the-lo-array",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.loTex);   // DISC15",
+    "new": "    // DISC15",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  }
+]

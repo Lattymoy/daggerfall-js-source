@@ -828,7 +828,7 @@
   {
     "name": "WORLD-HOVER-the-plaque-list-has-no-height-cap",
     "file": "src/ui/enhancedStyle.js",
-    "old": ".wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);\n  overflow: hidden; }",
+    "old": ".wplaque-list { display: block; max-height: calc(100vh - var(--wp-top, 55%) - 24px);\n  overflow: hidden; overflow-x: visible; overflow-y: clip; }",
     "new": ".wplaque-list { display: block; }",
     "tests": [
       "test/worldhover.test.js"

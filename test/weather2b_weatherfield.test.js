@@ -15,7 +15,7 @@ import {
 } from '../src/systems/weatherField.js';
 import {
   resetWeatherSim, setWeatherFieldLaw, weatherFieldOn, sampleWeatherField, weatherCrossingStamp, weatherJumpStamp, currentFieldCells, currentFieldCell,
-  importClimateWeathers, tickWeather, applyClimateWeather, weatherRespawn, currentWeather, setSnowGroundLaw, WEATHER_ENUM,
+  importClimateWeathers, tickWeather, applyClimateWeather, weatherRespawn, currentWeather, setSnowGroundLaw, WEATHER_ENUM, setWeatherMapLaw,
 } from '../src/systems/weatherSim.js';
 import { createWindModel, frontFactor, FRONT_LEAD_MIN, CROSS_LEAD_MIN } from '../src/systems/wind.js';
 import { CLIMATES, MAX_MAP_PIXEL_Y } from '../src/formats/mapsFile.js';
@@ -119,7 +119,7 @@ test('WEATHER2b fieldAt: inside a cell the cell\'s word, in the clear the zone\'
 });
 
 test('WEATHER2b the sim: nothing off the lane; on it the player\'s word is the field\'s, a live change is a crossing, a drain\'s is not, an arrival\'s is a jump; the respawn and the travel arrival sample the destination; the cells are kept for the clouds', () => {
-  resetWeatherSim(); setSnowGroundLaw(false);
+  resetWeatherSim(); setWeatherMapLaw(false); setSnowGroundLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   importClimateWeathers(DAY);
   const now = SUMMER + 12 * 1440;   // a summer day (no ground law in play either way - the seam is off above)
   const day = Math.floor(now / 1440);
@@ -153,9 +153,9 @@ test('WEATHER2b the sim: nothing off the lane; on it the player\'s word is the f
   assert.equal(currentWeather(), 'overcast'); assert.equal(weatherJumpStamp(), j2 + 1);
   assert.equal(weatherRespawn(now, CLIMATES.Woodlands, () => { throw new Error('rolled'); }, p.clear, WOODS), false, 'the same base: no change');
   // no words yet: nothing sampled
-  resetWeatherSim(); setWeatherFieldLaw(true);
+  resetWeatherSim(); setWeatherMapLaw(false); setWeatherFieldLaw(true);
   assert.equal(sampleWeatherField(now, CLIMATES.Woodlands, p.inside, WOODS, 'live'), false, 'the drain rolls the words first');
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);
   assert.equal(weatherCrossingStamp(), 0); assert.deepEqual(currentFieldCells(), []);
 });
 
@@ -208,15 +208,15 @@ test('WEATHER2b the controller and the hosts: the sky eases on the front\'s own 
     assert.match(s, /sampleWeatherField\(Math\.floor\(playerTicker\.classicMinutes\), [^,]+, [^;]+, climateAt, drained \? 'drain' : 'live'\);/, `${name}: the field after the drain`);
     assert.match(s, /let seenCrossing = weatherCrossingStamp\(\);/, `${name}: the boot's stamp is the baseline`);
     assert.match(s, /const crossing = weatherCrossingStamp\(\) !== seenCrossing;\s*\n\s*seenCrossing = weatherCrossingStamp\(\);\s*\n\s*if \(crossing && !jump\) sky\.weatherArrive\(\);/, `${name}: a crossing tells the sky, a jump wins`);
-    assert.match(s, /cells: fieldCellsHere\(\) \}\);/, `${name}: the clouds' cells are the field's`);
+    assert.match(s, /cells: fieldCellsHere\(\), cloudBase: /, `${name}: the clouds' cells are the field's (WEATHER3c: the base they stand on beside them)`);
     assert.match(s, /const climateAt = \(px, py\) => maps\.getClimateIndex\(px, py\);/, `${name}: the map's lookup`);
   }
   assert.match(w, /const fieldXZ = \(\) => \{ const wc = state\.worldCoords\(walkMode \? player\.pos : cam\.pos\); return fieldFromNative\(wc\.x, wc\.z\); \};/, 'world: the player\'s place in the field');
-  assert.match(w, /const h = state\.localFromWorld\(n\[0\], n\[1\]\); return cellOf\(c\.word, h\[0\], h\[1\], c\.r\);/, 'world: the cells back into the floating host space');
+  assert.match(w, /cellOfField\(c, \(x, z\) => \{ const n = nativeFromField\(x, z\); return state\.localFromWorld\(n\[0\], n\[1\]\); \}\)/, 'world: the cells back into the floating host space (WEATHER3g: through the one conversion)');
   assert.match(w, /weatherRespawn\(Math\.floor\(playerTicker\.classicMinutes\), maps\.getClimateIndex\(px\.x, px\.y\), Math\.random, fieldXZ\(\), climateAt\)/, 'world: the respawn samples the destination');
   assert.equal((w.match(/applyClimateWeather\([^;]*fieldXZ\(\), climateAt\);/g) || []).length, 2, 'world: both travel arrivals sample the destination');
   assert.match(e, /fieldOfPixelLocal\(_locPixel\.x, _locPixel\.y, eye\[0\], eye\[2\]\)/, 'exterior: the eye in the location\'s pixel');
-  assert.match(e, /const h = pixelLocalOfField\(_locPixel\.x, _locPixel\.y, c\.x, c\.z\); return cellOf\(c\.word, h\[0\], h\[1\], c\.r\);/);
+  assert.match(e, /cellOfField\(c, \(x, z\) => pixelLocalOfField\(_locPixel\.x, _locPixel\.y, x, z\)\)/);
 });
 
 test('WEATHER2b records: the arc page\'s B, the ledger row, the features arc, Home\'s index and the testing row', () => {

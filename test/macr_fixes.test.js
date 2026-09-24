@@ -5,7 +5,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { perspective } from '../src/world/mat4.js';
-import { FP_TOP_PAD, FP_FIELD_OF_VIEW, frustum } from '../src/combat/fpArm.js';
+import { FP_FIELD_OF_VIEW, frustum, fpFrameWindow } from '../src/combat/fpArm.js';
 import { offHandQuickslot, quickslotView, assignQuickslot, clearQuickslots, QUICKSLOT_TEXT } from '../src/systems/quickslots.js';
 import { TEMPLATES } from '../src/systems/useItem.js';
 import { EQUIP_SLOTS } from '../src/characters/paperdoll.js';
@@ -17,10 +17,15 @@ import { withDom } from './invdrag.mjs';
 //   1. "Morrowind weapons that go above the screen show their blade
 //      clipped off" - the arm's frame was exactly the screen and the
 //      Weapon Widget's bob shifted the COMPOSITE down, so the frame's
-//      top edge cut a raised blade. MAC-R1: the frame is padded above
-//      the screen while a transform is set (an off-centre frustum over
-//      the same lens), and the composite is extended up by the same
-//      share.
+//      top edge cut a raised blade. MAC-R1: the frame was padded above
+//      the screen while a transform was set (an off-centre frustum over
+//      the same lens), and the composite extended up by the same share.
+//      DISC13-C (2026-09-23) found the SIDES had the same cut (a torch in
+//      the left hand) and replaced the pad with a frame window (fpArm.js
+//      fpFrameWindow): the pass renders the lens's own pixel grid wherever
+//      the moved rect shows it on the screen, so no edge can cut, the top
+//      included. The pin below is that law's top edge; test/disc13.test.js
+//      drives all four through the real arm.
 //   2. "The enhanced quickbar sometimes shows double messages" - a held
 //      key auto-repeats its keydown, and the two quickslot actions that
 //      are not polled (swap, off hand) were routed on every repeat: two
@@ -47,31 +52,32 @@ const apply = (m, v) => {
 };
 const ndcY = (m, p) => { const c = apply(m, [p[0], p[1], p[2], 1]); return c[1] / c[3]; };
 
-test('MAC-R1: the padded frame is the same lens with its top edge raised - the screen keeps its bottom and its scale, the pad sees above it, and no pad is exactly perspective', () => {
-  const near = 0.2, far = 400, aspect = 1.6;
-  const hh = near * Math.tan(FP_FIELD_OF_VIEW / 2), hw = hh * aspect;
-  const p = FP_TOP_PAD;
-  assert.equal(p, 0.5, 'half a screen above: the widget clamps its shift under one screen height');
-  const sym = perspective(FP_FIELD_OF_VIEW, aspect, near, far);
+test('MAC-R1: a raised blade is not cut - a rect the bob moved DOWN gets frame rows above the lens\'s own top, laid from the screen\'s top, and a rect at rest is the screen\'s own frame through exactly perspective (DISC13-C\'s frame window, fpFrameWindow)', () => {
+  const near = 0.2, far = 400, W = 1600, H = 1000, pw = 400, ph = 250;   // 4 screen px a frame pixel
+  const hh = near * Math.tan(FP_FIELD_OF_VIEW / 2), hw = hh * (pw / ph), py = (2 * hh) / ph;
+  const sym = perspective(FP_FIELD_OF_VIEW, pw / ph, near, far);
   const same = frustum(-hw, hw, -hh, hh, near, far);
   for (let i = 0; i < 16; i++) assert.ok(Math.abs(sym[i] - same[i]) < 1e-9, `frustum's symmetric case is perspective (element ${i})`);
-  const padded = frustum(-hw, hw, -hh, hh * (1 + 2 * p), near, far);
+  const rest = fpFrameWindow({ x: 0, y: 0, w: W, h: H }, W, H, pw, ph);
+  assert.deepEqual([rest.k0, rest.r0, rest.nx, rest.ny], [0, 0, pw, ph], 'at rest: the screen\'s own frame');
+  assert.deepEqual(rest.dst, { x: 0, y: 0, w: W, h: H });
+  const dy = 60;   // the bob moved the rect down fifteen frame rows
+  const down = fpFrameWindow({ x: 0, y: dy, w: W, h: H }, W, H, pw, ph);
+  assert.equal(down.r0, -15, 'fifteen rows above the lens\'s own top are rendered');
+  assert.equal(down.ny, ph, 'and fifteen fewer at the bottom, which hangs off the screen');
+  assert.ok(down.dst.y <= 0 && down.dst.y + down.dst.h >= H, 'the composite covers the screen');
+  const lens = frustum(-hw, hw, hh - (down.r0 + down.ny) * py, hh - down.r0 * py, near, far);
   const k = 7;   // any depth
-  assert.ok(Math.abs(ndcY(padded, [0, -hh * k, -near * k]) - (-1)) < 1e-6, 'the screen\'s bottom edge is still NDC -1');
-  assert.ok(Math.abs(ndcY(padded, [0, hh * k, -near * k]) - (1 - p) / (1 + p)) < 1e-6, 'the screen\'s top edge lands at (1-p)/(1+p): the screen is the bottom 1/(1+p) of the frame');
-  assert.ok(Math.abs(ndcY(padded, [0, hh * (1 + 2 * p) * k, -near * k]) - 1) < 1e-6, 'and the frame\'s top is 2p half-heights above it');
-  // the same pixel scale: the screen's own two edges span 2/(1+p) of NDC over ph of phFull = ph(1+p) rows
-  const ph = 300, phFull = Math.round(ph * (1 + p));
-  const rowsOfScreen = ((ndcY(padded, [0, hh * k, -near * k]) - ndcY(padded, [0, -hh * k, -near * k])) / 2) * phFull;
-  assert.ok(Math.abs(rowsOfScreen - ph) < 1e-3, `the screen occupies ${ph} of ${phFull} rows`);
+  const v = ndcY(lens, [0, hh * k, -near * k]);
+  assert.ok(Math.abs(down.dst.y + (1 - v) / 2 * down.dst.h - dy) < 1e-3, 'the lens\'s old top edge is composited dy below the screen\'s top: the rows above it are drawn, not cut');
   const src = read('src/combat/fpArm.js');
   const draw = src.slice(src.indexOf('    draw(canvas)'), src.indexOf('    status()'));
-  assert.match(draw, /const padFrac = screenTransform \? FP_TOP_PAD : 0;/, 'padded only under a transform - the fullscreen overlay path is untouched');
-  assert.match(draw, /const s = Math\.min\(1, CHAR_SPRITE_RT_SIZE \/ wantW, CHAR_SPRITE_RT_SIZE \/ \(wantH \* \(1 \+ padFrac\)\)\);/, 'the RT cap counts the pad');
-  assert.match(draw, /const pad = Math\.round\(ph \* padFrac\);[^\n]*\n\s*const phFull = ph \+ pad;/);
-  assert.match(draw, /const proj = pad > 0 \? frustum\(-hw, hw, -hh, hh \* \(1 \+ 2 \* padFrac\), near, far\) : perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\);/);
-  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, pw, phFull,/, 'the pass renders the padded rows');
-  assert.match(draw, /const up = rect\.h \* padFrac;\s*\n\s*renderer\.drawScreenQuad\(tex, \{ x: rect\.x, y: rect\.y - up, w: rect\.w, h: rect\.h \+ up \}, \{ u0: 0, v0: phFull \/ CHAR_SPRITE_RT_SIZE, u1: pw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\);/, 'the composite is the screen\'s rect extended UP by the pad\'s share, sampling the whole padded sub-rect');
+  assert.match(draw, /const spare = screenTransform \? 1 : 0;\s*\n\s*const s = Math\.min\(1, \(CHAR_SPRITE_RT_SIZE - spare\) \/ wantW, \(CHAR_SPRITE_RT_SIZE - spare\) \/ wantH\);/, 'the target keeps a column and a row for a moved frame, and nothing else');
+  assert.match(draw, /const rect = screenTransform \? screenTransform\(\{ x: 0, y: 0, w: W, h: H \}\) : null;/, 'no transform, no rect');
+  assert.match(draw, /const win = rect \? fpFrameWindow\(rect, W, H, pw, ph\) : null;/);
+  assert.match(draw, /const proj = win \? frustum\(-hw \+ win\.k0 \* px, -hw \+ \(win\.k0 \+ fw\) \* px, hh - \(win\.r0 \+ fh\) \* py, hh - win\.r0 \* py, near, far\) : perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\);/, 'under a transform the window over those pixels; without one, the lens it always was');
+  assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, fw, fh,/, 'the pass renders the window\'s pixels');
+  assert.match(draw, /renderer\.drawScreenQuad\(tex, win\.dst, \{ u0: 0, v0: fh \/ CHAR_SPRITE_RT_SIZE, u1: fw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\);/, 'laid where the window says');
   assert.match(draw, /renderer\.drawScreenOverlayQuad\(tex, pw \/ CHAR_SPRITE_RT_SIZE, ph \/ CHAR_SPRITE_RT_SIZE\);/, 'no transform: the overlay is the screen, as it was');
 });
 

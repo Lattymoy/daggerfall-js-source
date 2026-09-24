@@ -502,5 +502,14 @@
     "tests": [
       "test/soc3_socialpanel.test.js"
     ]
+  },
+  {
+    "name": "C8-the-row-button-one-line",
+    "file": "src/ui/chatPanel.js",
+    "old": ".dfchat-rowbtn { display: flex; flex-wrap: wrap; align-items: baseline;",
+    "new": ".dfchat-rowbtn { display: flex; align-items: baseline;",
+    "tests": [
+      "test/soc3_socialpanel.test.js"
+    ]
   }
 ]

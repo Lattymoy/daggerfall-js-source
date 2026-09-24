@@ -208,7 +208,8 @@ import { combatVisualsOn, foeDraw, markConcealedHit } from '../systems/combatVis
 import { UnderwaterFog } from '../render/underwaterFog.js';   // ROAD-B (b3): UnderwaterFog.cs, called from PlayerEnterExit.Update's dungeon guard
 import { NavClient } from '../ai/navClient.js';   // ENHANCED AI 3b
 import { getPref } from '../systems/uiPrefs.js';   // ENHANCED AI 3b: the Enhanced tab's switch
-import { raiseEnemyDeath, playRareDrop } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime
+import { raiseEnemyDeath, playRareDrop, pileBody } from './corpseMarker.js';   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab
+import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { rollLootRarity, pileSource, dungeonRarityTier } from '../systems/lootRarity.js';   // LR1: the item ladder over every list this host mints (a foe's through hostCombat.spawnEnemyLoot, RF2)
 
 
@@ -1470,6 +1471,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // dungeon, not only after walking back outside it.
     partyMembers: () => opts.partyMembers?.() ?? [],
     shareQuest: (uid, questName, displayName) => opts.shareQuest?.(uid, questName, displayName),
+    // JOURNAL1: a note's Share - who a page can be held out to, and the letter - through the same chain
+    pageShare: () => opts.pageShare?.() ?? null,
   } : {});
 
   /** AUDIT 39 (#38): the chronicle's ONE builder. The key doors mount
@@ -1660,7 +1663,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:9386 / exterior.js:3642), set
+  // host's own townTalk sink (world.js:9428 / exterior.js:3666), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2192,7 +2195,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1179,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:1180,
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2717,7 +2720,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1080 against :1109; worldModes.js:7054 against :7078).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:1080 against :1109; worldModes.js:7066 against :7090).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -3288,8 +3291,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:14150,
-              // exterior.js:5190 and worldModes.js:7254 already ran;
+              // playerArrowHitFoe is the one copy world.js:14528,
+              // exterior.js:5228 and worldModes.js:7267 already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -4741,7 +4744,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // water sounds. Castle-block detection (doNotPlayInCastle) pends.
   const sceneAmbience = new AmbientEffects(DUNGEON_AMBIENT_WAITS);
   sceneAmbience.setPreset('dungeon');
-  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0, playerCrouching = false) {
+  function drawFoes(dt, canvas, proj, view, eye, playerFeet, moveHeld = false, playerHeight = CAPSULE_HEIGHT, playerSneaking = false, playerMove = null, playerBobY = 0, playerCrouching = false, playerRenderFeet = null) {
     _ecvT += dt;
     respawnSweep(_ecvT);   // WORLD8: the hour's respawn, once a second
     const ecvOn = combatVisualsOn();   // ECV1: once per frame
@@ -4974,7 +4977,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // the engine hangs the Light effect's magic candle 1.4 units in
     // FRONT of the player, and `-view[2..10]` is the same forward the
     // cast above fires down.
-    magic.update(dt, playerFeet, [-view[2], -view[6], -view[10]], playerHeight);   // M3: player spell missiles fly in the engine
+    magic.update(dt, playerFeet, [-view[2], -view[6], -view[10]], playerHeight, playerRenderFeet);   // M3: player spell missiles fly in the engine; DISC13-A the candle off the render feet
     { const mv = lycanthropeMoveSound(playerEntity, dt); if (mv != null) audio.playOneShot(mv, 1); }   // LM1: the beast's own noise while transformed (real time)
     // S19: WeaponManager's paralysis gate - weapons hide and the
     // machine holds while paralyzed (casting is NOT gated, verbatim:
@@ -5633,7 +5636,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // PlayerActivate.cs:85/:938 - a corpse has its OWN reach,
       // CorpseActivationDistance = 150 * GlobalScale = 3.75, not the
       // 128-unit default the loot piles use.
-      targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE });
+      targets.push({ key: `corpse:${i}`, aabb: { min: [p[0] - 0.5, p[1], p[2] - 0.5], max: [p[0] + 0.5, p[1] + 0.6, p[2] + 0.5] }, distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE, body: true });   // LOOT-STACK: a body, the producer's word (player/lootStack.js)
     });
     targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
     targets.push(...droppedTorches.targets());   // HT1: the dropped torches, at the mod's 3.2
@@ -7087,8 +7090,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  player takes what they want, rather than the whole pile
      *  teleporting into the pack on one keypress. Returns the number
      *  of items the target holds, so the caller's "did anything
-     *  happen" test still reads. */
-    takeLoot(key, mode = 'grab') {
+     *  happen" test still reads.
+     *
+     *  LOOT-STACK: `pileKeys` is the pile a loot window's tab carries
+     *  back here (player/lootStack.js lootPile) - a tab's open, which
+     *  quick loot does not take on. */
+    takeLoot(key, mode = 'grab', pileKeys = null) {
       const [kind, iStr] = key.split(':');
       const i = Number(iStr);
       if (kind === 'droppedTorch') return droppedTorches.activate(key, mode) ? 1 : 0;   // HT1: PickUpLightSource
@@ -7142,7 +7149,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (p) lootHooks = droppedLootHooks(p);   // G5: playerOwned - the icon cycles
       }
       if (!source) return 0;
-      if (activeOverlay) return source.length;
+      // LOOT-STACK: a window that has CLOSED is no window - a tab closes
+      // its body's window and opens the next through here in one click,
+      // before the frame's drain empties the slot (openBookHook's law).
+      if (activeOverlay && !activeOverlay.done) return source.length;
       // WORLD4: opening one of the room's containers CLAIMS it - the room hears this client's list before a single
       // item moves, so a second reader opening the same pile a moment later reads the room's and not their own roll.
       // AUDIT WORLD4 C6: after the mount, never before it - openInventory REFUSES a transformed lycanthrope
@@ -7167,12 +7177,18 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // between them), and an emptied pile's flat is settled as the
       // window's onEmptied would settle it. C6's order below stands:
       // the window's claim follows its mount.
-      if (quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText, { getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null })) {   // AUDIT QL-WEIGHT1: the window's own resolver (openInventory's, :1512)
+      if (!pileKeys && quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText, { getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null })) {   // AUDIT QL-WEIGHT1: the window's own resolver (openInventory's, :1512)
         const _q = lootHolder(key) ? lootKeyOf(key) : null;
         if (_q) publishLoot(_q);
         if (!source.length) onEmptied?.();
         return source.length;
       }
+      const pile = kind === 'corpse' ? lootPile(key, {
+        keys: pileKeys,
+        describe: (k) => { const b = foes[Number(k.split(':')[1])]; return b?.dead ? pileBody(b) : null; },
+        open: (k, keys) => { this.takeLoot(k, 'grab', keys); },
+      }) : null;
+      if (pile) lootHooks = { ...(lootHooks ?? {}), pile };
       const _k = lootHolder(key) ? lootKeyOf(key) : null;
       const _w = openInventory(source, onEmptied, { lootHooks, lootKey: _k });
       if (_w) activeOverlay = _w;   // DISC10-E L3: a refused pack is null - and its box already holds the slot

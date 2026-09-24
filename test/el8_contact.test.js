@@ -57,7 +57,7 @@ test('EL8: the constants, the door, the contact block and the table in the shade
   assert.equal(contactOn('?x=1'), true); assert.equal(contactOn('?contact=off'), false); assert.equal(contactOn('?air=off&contact=off'), false);
   assert.equal(SHADOW_CASTER_TABLE, EL_MAX_LIGHTS, 'one slot per light the lane can hold');
   assert.equal(SHADOW_FAR_CASCADE_EVERY, 2); assert.equal(SHADOW_FAR_CASTER_EVERY, 3); assert.equal(SHADOW_NEAR_CASTERS, 2);
-  assert.match(AIR_CONTACT_GLSL, /uniform sampler2D uPrevDepth;\nuniform mat4 uPrevVP;\nuniform vec4 uPrevProjInfo;/);
+  assert.match(AIR_CONTACT_GLSL, /uniform highp sampler2D uPrevDepth;.*\nuniform mat4 uPrevVP;\nuniform vec4 uPrevProjInfo;/);
   assert.match(AIR_CONTACT_GLSL, /if \(uContactParams\.w <= 0\.0\) return 1\.0;/, 'off is lit');
   assert.match(AIR_CONTACT_GLSL, /float len = min\(dist, uContactParams\.x\);/, 'the march stops at the light');
   assert.match(AIR_CONTACT_GLSL, /for \(int i = 1; i <= 4; i\+\+\) \{/);
@@ -68,11 +68,11 @@ test('EL8: the constants, the door, the contact block and the table in the shade
   assert.match(AIR_CONTACT_GLSL, /if \(behind > 0\.02 && behind < uContactParams\.y\) return uContactParams\.z;/, 'an occluder within the thickness: the floor, not black');
   for (const [name, fs] of [['mesh', EL_MESH_FS], ['terrain', EL_TERRAIN_FS], ['char', EL_CHAR_FS]]) {
     assert.ok(fs.includes(AIR_CONTACT_GLSL), `${name} carries the contact block`);
-    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? pointShadowAt\(k, wp, n\)\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: the table, then the map or the march - never for the hand's light, never past seven tenths of the range (F3, F5)`);
+    assert.match(fs, /int k = uCasterOf\[i\];[^\n]*\n(?:    \/\/[^\n]*\n)*    float sh = k >= 0 \? casterShadowAt\(k, uPointLights\[i\], wp, n\)[^\n]*\n      : \(k == -2 \|\| d > uPointLights\[i\]\.w \* 0\.7\) \? 1\.0[^\n]*\n      : contactShadow\(wp, n, Ln, d\);/, `${name}: the table, then the map (DISC15: of either tier) or the march - never for the hand's light, never past seven tenths of the range (F3, F5)`);
   }
   assert.ok(EL_BB_FS.includes('elPointFlat(vBBWorld, base)') && (EL_BB_FS.match(/elPointLit\(/g) || []).length === 1, 'a flat lights by elPointFlat, which marches nowhere (its own flat would occlude it); elPointLit is defined and never called there');
   assert.match(SHADOW_GLSL, /uniform int uCasterOf\[48\];/);
-  assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec3 wp, vec3 n\) \{\n  int k = uCasterOf\[i\];\n  return k >= 0 \? pointShadowAt\(k, wp, n\) : 1\.0;/);
+  assert.match(SHADOW_GLSL, /float shadowOfLight\(int i, vec4 L, vec3 wp, vec3 n\) \{\n  int k = uCasterOf\[i\];\n  return k >= 0 \? casterShadowAt\(k, L, wp, n\) : 1\.0;/);   // DISC15: either tier
   assert.ok(!/for \(int k = 0; k < \$\{SHADOW_POINT_CASTERS\}/.test(read('src/render/shadowPass.js')), 'no search over the casters per light');
   assert.ok(SHADOW_POINT_CASTERS === 8 && SHADOW_CASCADES.length === 3);   // HQ1: eight casters
 });

@@ -84,6 +84,17 @@ is the sprite's sheathe, and the arms sheathe with their own clips
 the sprite, which is what Mac asked for. The arms' own frame, stance,
 mirror and clip laws are untouched.
 
+**DISC14-C (2026-09-23): the arms keep the plain bob.** The bob's doubled
+-idle shape (centred on the rest) is for a doubled `w_` sprite texture.
+On the arms' full-screen composite it swung above the rest, and under
+DISC14-B's defaults the floor pinned it there for half of every stride.
+Main's shipped defaults jerked the arms mostly through the preset's Step,
+which B turned off (Field-Bugs DISC14-C has the numbers). The arms have
+their own bob integrator on the plain
+shape (`armsPosition`), with the same inertia the sprite takes. The
+sprite takes the doubled shape only over a doubled `w_` hit, the rule
+DW-CLIP gave the half-size shift.
+
 ## Method by method
 
 | FPSWeaponClone (IL) | Home in `weaponWidget.js` | Notes |
@@ -169,6 +180,18 @@ the mod wrote a Description it is the pane's; where it wrote none the
 port did. The Features home's row (`mod-weapon-widget`) is the mod's own
 Enabled switch; "takes effect at once", the widget reads its switches
 every frame.
+
+**Every default is the mod's (DISC16-B, 2026-09-24).** DISC14-B had
+shipped two departures at Mac's word: DoubleScaleTextures on and
+Inertia.Scale 0, with Diverse Weapons' preset off. DISC16-B reverted all
+of it at Mac's word (*"the changes we made to the values for the weapon
+widget reverted. Its no longer smooth like how it was before diverse
+weapons"*, then *"I just want it how it was before diverse weapons"*),
+and Diverse Weapons' preset is off by default (the mod itself stays on,
+MO1). WW1's
+shipped-defaults pin holds every key to the mod's once more, and the
+Thunderlock's forced inertia runs at the player's own scale, as it did
+before DISC14-B.
 
 ## Hosts
 

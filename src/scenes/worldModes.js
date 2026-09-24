@@ -132,6 +132,7 @@ import { composeNamer, composeContents } from '../systems/worldHover.js';   // I
 import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER: the race's WINNER, so the plaque names what the press would open
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, and the hide door for the branches that return above it
 import { quickLootTake } from '../systems/quickLoot.js';   // QUICK-LOOT B4: the take, through the window's own door
+import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { staticDoorName, npcHoverName, questResourceName, worldTooltipsOn, hideInteractTooltip,
   houseContainerName, actionName, actionDoorName, lootPileName,
   BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands   // WORLD-HOVER: the mod's ladder for the families THIS host stands
@@ -431,7 +432,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:3713 hands
+   * record these hosts mint spells it `name` (exterior.js:3742 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -1421,10 +1422,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:1814 states), so the same visual
+   *  the C11 law dungeonContext.js:1817 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:1699, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:1702, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -5630,7 +5631,7 @@ export function createWorldModes(host) {
     // (PlayerActivate.cs:325-339 - no return, skipped in Info mode):
     // the door/ladder/loot ladder below still runs. Over BOTH pools,
     // as the exterior arm runs over its own two; pickQuestFoe skips
-    // any foe without a questBehaviour (activate.js:169), so the
+    // any foe without a questBehaviour (activate.js:170), so the
     // watch costs nothing.
     if (getInteractionMode() !== 'info' && interiorCtx && !host.activateLockOnly?.()) {   // TS1: the stick's tap is no click
       const qf = pickQuestFoe(eye, dir, interiorFoePool(), interiorCtx.collider);
@@ -5767,13 +5768,20 @@ export function createWorldModes(host) {
       // already refuses a window that could not be built. One host, one
       // way in.
       if (key.startsWith('foeCorpse:') || key.startsWith('guardCorpse:')) {
-        const pool = key.startsWith('foeCorpse:') ? interiorFoes : interiorGuards;
+        const bodyPool = (k) => (k.startsWith('foeCorpse:') ? interiorFoes : interiorGuards);
         // QUICK-LOOT B4: through the window's own door - `loot` is the
         // container's hooks, the object this arm would hand the window.
-        pool?.takeLoot(key, (l) => say(l), (loot) => {
-          if (quickLootTake(key, loot, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
-          mountInterior(interiorInventory({ loot }));
-        });
+        // LOOT-STACK: and the window carries the pile as tabs, each of
+        // which comes back through this same door with the pile in hand
+        // (world.js openBodyLoot's law: quick loot takes on a press only).
+        const openBodyLoot = (lootKey, pileKeys = null) => {
+          bodyPool(lootKey)?.takeLoot(lootKey, (l) => say(l), (loot) => {
+            if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1: the window's own resolver
+            const pile = lootPile(lootKey, { keys: pileKeys, describe: (k) => bodyPool(k)?.pileBody(k) ?? null, open: openBodyLoot });
+            mountInterior(interiorInventory({ loot: pile ? { ...loot, pile } : loot }));
+          });
+        };
+        openBodyLoot(key);
         return true;
       }
       if (key.startsWith('hearth:')) { interiorCamps.activate(key, getInteractionMode()); return true; }   // HEARTH1: name it, or cook on it
@@ -6021,6 +6029,7 @@ export function createWorldModes(host) {
           shareQuest: (uid, questName, displayName) => host.shareQuest?.(uid, questName, displayName),
           // PEER-PLAQUE1: the plaque's peer pick, delegated the same way - the dungeon's own eye, the outer host's peers
           peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye
+          pageShare: () => host.pageShare?.() ?? null,   // JOURNAL1: a note's Share, the outer host's word, delegated the same way
           allyTarget: (eye, dir, reach) => host.allyTarget?.(eye, dir, reach) ?? null,   // AUDIT ALLY-CAST A3: the dungeon's own cast engine asks the outer host's pick
           castAtAlly: (id, frame) => !!host.castAtAlly?.(id, frame),
           fallenTarget: (eye, dir, reach) => host.fallenTarget?.(eye, dir, reach) ?? null,   // RESURRECT1: and its fallen bodies, and the door the call leaves through
@@ -6151,7 +6160,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6268), so the OUTER host's one rides in.
+          // (dungeonContext.js:6271), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:810 -> the
@@ -6828,6 +6837,9 @@ export function createWorldModes(host) {
           inside: true, inDungeon: mode === 'dungeon',
           centreY: player.pos[1] + player.height / 2, waterSurfaceY: mode === 'dungeon' ? (_surf ?? null) : null,
         });
+        // WEATHER3b: the weather outside goes on while the player is inside - the world weather map read over the
+        // place they are in (the host names it: AUDIT WEATHER3 R3), before the rain source below reads the word
+        host.weatherIndoors?.();
         // BA1: BetterFootstepsComponentPlayer.Update, CameraShaker.Update, ReverbMod.Update and the rain source's Update, one call.
         betterAmbience.frame(dt, {
           entity: playerEntity, inside: true, inBuilding: mode === 'interior', inDungeon: mode === 'dungeon',
@@ -7081,7 +7093,7 @@ export function createWorldModes(host) {
         // 16-slot shader cap picks from what survives (dungeonLights.js
         // carries the composition and why that order).
         withPlayerLights(nearestLights(dungeonCtx.lights, cam.pos, renderer.maxPointLights, dungeonCtx.flicker.ranges, null, DUNGEON_LIGHT_BLOCK_RANGE),   // EL1: the installed set's cap
-          magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...dungeonCtx.campLights(), ...dungeonCtx.torchLights()),   // X11 the Light effect's candle; T1 the torch; HT1 the dropped lights; SURV3 the campfires; FIELD-GUN13 the muzzle flash
+          magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...dungeonCtx.campLights(), ...dungeonCtx.torchLights()),   // X11 the Light effect's candle; T1 the torch; HT1 the dropped lights; SURV3 the campfires; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
         lanternColor(!!renderer.lightingLane, new Float32Array(DUNGEON_LIGHT_COLOR)));   // EL1: the lane's flame at the dungeon's intensity
       renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(largeHudViewportRect(canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
@@ -7114,7 +7126,7 @@ export function createWorldModes(host) {
       // (AUDIT 64 F37's law). A refusal spoken as a window opened stood
       // over that window until it closed.
       if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt); host.drawPeerNames?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas); return true; }   // U2b/U3: overlays gate the dungeon (AUDIT 18 F5: the overlay's own clock still runs)   // AUDIT-WH H4: and the plaque comes down on this line too - this return is ABOVE drawFoes, where the hover lives, so it hung frozen over every dungeon window showing a container's PRE-TAKE contents
-      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, motionBagOf(player), player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching);   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // PX26 F4: the jump-state inputs the interior lane never sent - without them `grounded` read undefined, the rig thought the player was permanently airborne, and BOTH the movement selection and the jump play died in every interior   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
+      dungeonCtx.drawFoes(dt, canvas, proj, view, cam.pos, player.pos, anyMove(moveHeld(keys)), player.height, !!player.isSneaking, motionBagOf(player), player.bobOffset ? player.bobOffset[1] : 0, !!player.crouching, player.feetAt());   // DISC13-A: the render feet, the candle's   // ROAD-H H1b: PlayerMotor.IsCrouching rides in beside the live height - the archer's 0.05 dip (DaggerfallMissile.cs:583-585) is the latched STATE, not a 0.9 capsule   // PX26 F4: the jump-state inputs the interior lane never sent - without them `grounded` read undefined, the rig thought the player was permanently airborne, and BOTH the movement selection and the jump play died in every interior   // moveHeld: the collision-trigger input gate (verbatim)   // C8 foes + S3b clock + S4b missiles - internally gated, must run foes or not (trap spells fire in empty dungeons)
       // WATER-D1: the water plane is drawn INSIDE drawFoes now, before the
       // weapon overlay - a draw here landed after the lane's resolve and
       // showed through every wall (dungeonContext.js's note at the draw).
@@ -7166,8 +7178,9 @@ export function createWorldModes(host) {
     const _itLit = withPlayerLights(
       nearestLights(interiorCtx.lights, cam.pos, renderer.maxPointLights, interiorCtx.lights.map((l) => l.range),   // EL1: the installed set's cap
         (l) => [l.color[0] * l.intensity, l.color[1] * l.intensity, l.color[2] * l.intensity]),
-      magic?.candleLight(), playerTorchLight(playerEntity, player.pos, cam.yaw), thunderlockMuzzleLight(playerEntity, player.pos, cam.yaw), ...interiorTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash
+      magic?.candleLight(), playerTorchLight(playerEntity, player.feetAt(), cam.yaw), thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...interiorTorches.lights());   // X11 candle; T1 torch; HT1 the dropped lights; FIELD-GUN13 the muzzle flash; DISC13-A the hand lights ride the render feet (feetAt), as the camera does
     renderer.setPointLights(_itLit.data, null, _itLit.colors);
+    renderer.everyLightCasts();   // DISC15: the building is drawn whole below (no view cull) - every lamp keeps a shadow map, none lights through the ceiling as the nearest eight change
     // AUDIT 39 (#33): the gate the dungeon arm above already carries.
     // A paused game advances no movers - DFU's door swing is an iTween
     // that never opts out of timeScale - so a swing begun before the
@@ -7229,7 +7242,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:9180's own wave-46 note); the interior
+          // a blow (world.js:9222's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -7331,7 +7344,7 @@ export function createWorldModes(host) {
       // M2: the armed click's cast + missile flight, on the interior's
       // own collider (the engine's mode-aware raycast reads it).
       magic.firePending([...cam.pos], eyeDir());
-      magic.update(dt, player.pos, eyeDir(), player.height);   // X11: the candle hangs off the look direction
+      magic.update(dt, player.pos, eyeDir(), player.height, player.feetAt());   // X11: the candle hangs off the look direction; DISC13-A off the render feet
       if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);
     }
     // LM1: the transformed move-sound loop, in this host's INTERIOR
@@ -8126,7 +8139,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:3775`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:3804`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -9723,9 +9736,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3361-3383), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3385-3407), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:6367). So an F9 pressed in a shop
+     *  unconditionally (world.js:6406). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -9764,7 +9777,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6460)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:6499)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -9774,8 +9787,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:6621`
-     *  and `dungeonContext.js:6277` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:6660`
+     *  and `dungeonContext.js:6280` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

@@ -1,0 +1,51 @@
+[
+  {
+    "name": "CS-open-measures-hidden-box",
+    "file": "src/ui/chatPanel.js",
+    "old": "    paint(true);   // CHAT-SCROLL: an open lands on the newest line",
+    "new": "    paint();   // CHAT-SCROLL: an open lands on the newest line",
+    "tests": ["test/chatscroll.test.js"]
+  },
+  {
+    "name": "CS-follow-ignores-open",
+    "file": "src/ui/chatPanel.js",
+    "old": "    const follow = newest || listTab !== log.active || !listNodes.length || atNewest();",
+    "new": "    const follow = listTab !== log.active || !listNodes.length || atNewest();",
+    "tests": ["test/chatscroll.test.js"]
+  },
+  {
+    "name": "CS-scroll-before-badges",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (follow) toNewest(); else paintJump();",
+    "new": "    paintJump();",
+    "tests": ["test/chatscroll.test.js"]
+  },
+  {
+    "name": "CS-late-badge-drops-bottom",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (keep) list.scrollTop = list.scrollHeight ?? 0;",
+    "new": "",
+    "tests": ["test/chatscroll.test.js"]
+  },
+  {
+    "name": "CS-unseen-not-counted",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (!follow) unseen += arrived;",
+    "new": "",
+    "tests": ["test/chatscroll.test.js"]
+  },
+  {
+    "name": "CS-bar-not-cleared-at-bottom",
+    "file": "src/ui/chatPanel.js",
+    "old": "  list.addEventListener('scroll', () => { if (unseen && log.open && atNewest()) { unseen = 0; paintJump(); } });",
+    "new": "  list.addEventListener('scroll', () => {});",
+    "tests": ["test/chatscroll.test.js"]
+  },
+  {
+    "name": "CS-reader-yanked",
+    "file": "src/ui/chatPanel.js",
+    "old": "    const follow = newest || listTab !== log.active || !listNodes.length || atNewest();",
+    "new": "    const follow = true;",
+    "tests": ["test/chatscroll.test.js", "test/chat1.test.js"]
+  }
+]

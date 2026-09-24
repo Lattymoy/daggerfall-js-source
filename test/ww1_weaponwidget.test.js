@@ -600,8 +600,9 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   assert.match(pw, /this\.onAttackResult\?\.\(\{ foe, damage \}\);/, 'OnAttackDamageCalculated\'s one consumer');
   const arm = rd('src/combat/fpArm.js');
   assert.match(arm, /setScreenTransform\(fn\) \{ screenTransform = typeof fn === 'function' \? fn : null; \}/);
-  assert.match(arm, /const rect = screenTransform\(\{ x: 0, y: 0, w: W, h: H \}\);/, 'the composite\'s whole rect through the transform');
-  assert.match(arm, /renderer\.drawScreenQuad\(tex, \{ x: rect\.x, y: rect\.y - up, w: rect\.w, h: rect\.h \+ up \}, \{ u0: 0, v0: phFull \/ CHAR_SPRITE_RT_SIZE, u1: pw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\)/, 'drawn as a screen quad with the overlay\'s own uv (MAC-R1: the rect extended UP by the pad\'s share, the padded sub-rect sampled whole)');
+  assert.match(arm, /const rect = screenTransform \? screenTransform\(\{ x: 0, y: 0, w: W, h: H \}\) : null;/, 'the composite\'s whole rect through the transform');
+  assert.match(arm, /const win = rect \? fpFrameWindow\(rect, W, H, pw, ph\) : null;/, 'DISC13-C: the frame window the moved rect shows on the screen');
+  assert.match(arm, /renderer\.drawScreenQuad\(tex, win\.dst, \{ u0: 0, v0: fh \/ CHAR_SPRITE_RT_SIZE, u1: fw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\)/, 'drawn as a screen quad with the overlay\'s own uv (DISC13-C: laid where the frame window says, at the rect\'s own sub-pixel place)');
   // WW2: the motor's words for the bob ride ONE bag (motionBagOf) at every site - a per-file grep let a second, partial
   // site in worldModes.js (the world-hosted dungeon lane) ship without `standing`, and the walking bob played at rest
   for (const [host, sites] of [['src/scenes/world.js', 1], ['src/scenes/exterior.js', 1], ['src/scenes/worldModes.js', 2], ['src/scenes/dungeon.js', 1]]) {

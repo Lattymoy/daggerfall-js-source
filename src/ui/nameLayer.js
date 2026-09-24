@@ -19,11 +19,19 @@
 // this one is CSS px (so it takes the viewport term and the player's HUD scale by value, AUDIT NAME1 F3) and the
 // bitmap pass is the drawing buffer's, where the host's own hudScale already is that term. One law, two rulers.
 //
-// THE BUBBLES, in one paragraph. A line a peer says on the WORLD channel stands over their name for BUBBLE_MS and
-// fades out; the newest line replaces the one before it; at most one a peer and at most BUBBLE_MAX at once. A
-// bubble follows the NAME's rules exactly - it is drawn only for a peer the name pass drew, so out of range, behind
-// a wall or off the strip is no bubble either. The hub's own notices (`system`) and my own lines get none, and the
-// other channel tabs get none (there is one tab today; the refusal is written so the second one inherits it).
+// THE BUBBLES, in one paragraph. A line a peer says stands over their name for BUBBLE_MS and fades out; the newest
+// line replaces the one before it; at most one a peer and at most BUBBLE_MAX at once. A bubble follows the NAME's
+// rules exactly - it is drawn only for a peer the name pass drew, so out of range, behind a wall or off the strip is
+// no bubble either. The game's own lines (`system`) and my own lines get none.
+//
+// CHAT-CHAN (2026-09-23): EVERY CHANNEL'S LINE, BUT NOT AN ASIDE. BUBBLE1 was the World tab's because the World tab was
+// the chat; it said "a later channel tab ... says nothing over a head until somebody decides it should". Mac's own
+// words decide it: "chat bubbles above the player when they chat" - a line on the World, the Region, the Party or the
+// Local tab is chatting, and a player I can see who said something to me has it over their head whichever tab it came
+// on (a bubble is drawn on the HEARER's screen alone, so a party's line stands only where the party heard it). The one
+// line that stands over no head is an aside marked out of character - `(( ))`, net/chat.js isOocText (Addison Knox:
+// "keeps immersion intact by separating in-character dialogue from coordination chatter"): what is said over a head
+// is what the character said.
 //
 // NO BUBBLE OF MY OWN, and that is a decision rather than an omission. I have no body in my own view to hang one
 // over, and a bubble at the bottom of my own screen would say my line a SECOND time: ChatLog.peek already draws the
@@ -37,13 +45,11 @@
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
-import { titleBadge, glyphBadges, GLYPH_STROKE, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { titleBadge, glyphBadges, glyphSvgNode, cssRgba } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
+import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
 
 export const NAME_STYLE_ID = 'dagger-names-style';
 
-/** The channel a bubble may come from: the World tab (net/chat.js CHAT_TABS). A later tab is a later row there and
- *  says nothing over a head until somebody decides it should. */
-export const BUBBLE_TAB = 'world';
 /** How long a bubble stands, ms. Mac: "a few seconds". */
 export const BUBBLE_MS = 6000;
 /** The share of that window the bubble holds full opacity before it fades - ChatLog.peek's own curve (net/chat.js),
@@ -82,7 +88,19 @@ export function bubbleAlpha(age, life = BUBBLE_MS) {
 export function bubbleText(text) {
   const s = String(text ?? '');
   if (s.length <= BUBBLE_CHARS) return s;
-  return s.slice(0, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;
+  return graphemeCut(s, BUBBLE_CHARS).trimEnd() + BUBBLE_ELLIPSIS;
+}
+
+/** EMOTE1: THE CUT FALLS BETWEEN CHARACTERS AS A READER COUNTS THEM. A bare `slice` counts UTF-16 units, so the cut
+ *  could halve a surrogate pair (a stray replacement box after a face) or a joined emoji (a family cut to a man and
+ *  a joiner). The longest run of whole graphemes within `max` units - the characters systems/graphemes.js counts,
+ *  which the notebook's line break reads too (JOURNAL1), so the two cuts agree on what a character is. */
+export function graphemeCut(s, max) {
+  const text = String(s ?? '');
+  if (text.length <= max) return text;
+  let out = '';
+  for (const g of graphemesOf(text)) { if (out.length + g.length > max) break; out += g; }
+  return out;
 }
 
 /** AUDIT NAME1 F10: and is there anything LEFT? The wire's own law bounds a line and strips what it strips, but a
@@ -94,10 +112,11 @@ export function bubbleSaid(text) {
   return said.trim() ? said : '';
 }
 
-/** Does this line earn a bubble? The World tab, from somebody else, with something to say. */
-export function bubbleLineOk(tabId, line) {
-  if (tabId !== BUBBLE_TAB || !line || typeof line !== 'object') return false;
-  if (line.system || line.mine) return false;
+/** Does this line earn a bubble? From somebody else, in character, with something to say - on any tab (CHAT-CHAN), and
+ *  never a roll (DICE1) or an action (EMOTE1): what stands over a head is what the character SAID. */
+export function bubbleLineOk(line) {
+  if (!line || typeof line !== 'object') return false;
+  if (line.system || line.mine || line.kind === 'ooc' || line.kind === 'roll' || line.kind === 'me') return false;   // DICE1: a roll is the table's, not the character's words; EMOTE1: an action is done, not said
   return typeof line.id === 'string' && !!line.id && typeof line.text === 'string' && !!line.text;
 }
 
@@ -250,23 +269,8 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     tag.worn = key;
     tag.glyphs.textContent = '';
     for (const g of badges) {
-      const svg = doc.createElementNS?.('http://www.w3.org/2000/svg', 'svg');
+      const svg = glyphSvgNode(doc, g, 'dfname-glyph', 1.6);   // INSPECT1: the one drawing (ui/playerBadge.js), at this face's stroke
       if (!svg) return;   // a document that cannot make one draws none, rather than throwing under a name
-      svg.setAttribute('class', 'dfname-glyph');
-      svg.setAttribute('viewBox', '0 0 16 16');
-      svg.setAttribute('aria-hidden', 'true');
-      if (g.rgba) svg.style.color = cssRgba(g.rgba) ?? '';
-      const path = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', g.path);
-      // `currentColor` on both, so the colour above is the one decision.
-      if (GLYPH_STROKE[g.key]) {
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', 'currentColor');
-        path.setAttribute('stroke-width', '1.6');
-        path.setAttribute('stroke-linecap', 'round');
-        path.setAttribute('stroke-linejoin', 'round');
-      } else path.setAttribute('fill', 'currentColor');
-      svg.append(path);
       tag.glyphs.append(svg);
     }
   };
@@ -289,17 +293,21 @@ export function createNameLayer({ doc = document, now = () => Date.now() } = {})
     // rejoin that builds a new one, a host that swaps it) arrives with line 1 under a watermark of 40 and every
     // line below it is mute for the rest of the session. Keyed to the log's identity, a new log starts a new count.
     if (log !== lastLog) { lastLog = log; seq = 0; }
-    const tab = log?.tab?.(BUBBLE_TAB);
-    if (!tab) return;
-    for (const line of tab.messages ?? []) {
-      if (!(line.seq > seq)) continue;
+    // CHAT-CHAN: EVERY TAB, IN THE ORDER THE LINES WERE HEARD - the log's one count runs across its tabs, so the newer
+    // lines of each are its tail, read back to the watermark (a line kept on every tab is one line: a Set)
+    const fresh = new Set();
+    for (const tab of log?.tabs ?? []) {
+      const msgs = tab.messages ?? [];
+      for (let i = msgs.length - 1; i >= 0 && msgs[i].seq > seq; i--) fresh.add(msgs[i]);
+    }
+    for (const line of [...fresh].sort((a, b) => a.seq - b.seq)) {
       seq = line.seq;
       // AUDIT NAME1 F6: THE LINE'S OWN STAMP, not this pump's clock. `t` is net/chat.js' local-clock stamp - the
       // one ChatLog.peek fades by, so a line over a head and the same line in the peek corner go out together -
       // and `at` is the relay's, kept only as the fallback for a line that never went through push(). A frame
       // where the pass did not run (a window over the HUD, a mode transition, the death path) used to stamp every
       // line it had missed with the moment it finally read them: minutes-old words, brand new over a head.
-      if (bubbleLineOk(BUBBLE_TAB, line)) say(line.id, line.text, Number.isFinite(line.t) ? line.t : line.at);
+      if (bubbleLineOk(line)) say(line.id, line.text, Number.isFinite(line.t) ? line.t : line.at);
     }
   };
 

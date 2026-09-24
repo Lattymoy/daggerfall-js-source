@@ -626,10 +626,11 @@ test('AUDIT 39r: the foreign-pass count is the real call-site count', () => {
   // the seam onto the host, making the overworld map the FOURTH pass;
   // MAP1 (2026-09-18) retired that renderer with the relief map.
   // MAP1 (2026-09-18): the overworld pass is RETIRED with the relief map
-  // (ui/heldMap.js draws through no GL), so the count is nine across six.
+  // (ui/heldMap.js draws through no GL), so the count is nine across six. BOLT (2026-09-24): the lightning's
+  // channels are a pass of their own on both exterior hosts - eleven across seven.
   const hosts = ['src/scenes/world.js', 'src/scenes/exterior.js']
     .reduce((n, f) => n + read(f).split('renderer.markForeignPass();').length - 1, 0);
-  assert.equal(hosts, 9, 'nine host call sites across the six passes (GR1: the lab\'s grass; WIND3: the wisps, WEATHER2d: the sand, one seam per exterior host each; the overworld map\'s seam went with it in MAP1)');
+  assert.equal(hosts, 11, 'eleven host call sites across the seven passes (GR1: the lab\'s grass; WIND3: the wisps, WEATHER2d: the sand, BOLT: the lightning\'s channels, one seam per exterior host each; the overworld map\'s seam went with it in MAP1)');
   const ev = read('bible/07-Rendering/Enhanced-Visuals-Arc.md').replace(/\s+/g, ' ');
   assert.ok(!ev.includes('three passes change programs behind the renderer\'s back'),
     'the EV arc is counting three passes again');

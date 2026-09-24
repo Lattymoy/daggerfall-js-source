@@ -77,7 +77,7 @@ test('RIDE wire: the pose carries the mount (1 the horse, 2 the cart) and the sp
 async function world() {
   const w = fakeRooms();
   // each word a second apart, as the client sends them (PARK_HZ_MAX's burst is pinned below on its own)
-  const park = (name, ws, data) => { const r = w.room(name); ws.att = { ...ws.att, parkBucket: null }; r.room._idx = null; return r.room.webSocketMessage(ws, JSON.stringify({ t: 'park', data })); };
+  const park = (name, ws, data) => { const r = w.room(name); r.room._meterOf(ws).parkBucket = null; return r.room.webSocketMessage(ws, JSON.stringify({ t: 'park', data })); };
   const join = async (name, id, acct) => { const r = w.room(name); const ws = r.connect(); await r.hello(ws, id, null, acct ? { tokenSub: acct } : {}); return ws; };
   const reg = async (k) => w.made.get(parkRegistryRoom(k))?.store.get('reg') ?? null;
   return { w, park, join, reg };
@@ -192,7 +192,7 @@ test('HCC-PARK relay: the cell drops its own superseded record ITSELF - nothing 
   const r = fakeRoom(X);   // no ROOMS: the registry is unreachable
   const ws = r.connect(); await r.hello(ws, 'ann1');
   const k = await K('acct-ann1', CA);
-  const say = (data) => { ws.att = { ...ws.att, parkBucket: null }; r.room._idx = null; return r.room.webSocketMessage(ws, JSON.stringify({ t: 'park', data })); };
+  const say = (data) => { r.room._meterOf(ws).parkBucket = null; return r.room.webSocketMessage(ws, JSON.stringify({ t: 'park', data })); };
   await say({ c: CA, a: [AX, AZ], r: { w: W() } });
   assert.ok(r.store.has(parkKey(k)));
   await say({ c: CA });
@@ -211,10 +211,10 @@ test('HCC-PARK relay: the park bucket - PARK_HZ_MAX words a second a socket, the
   for (let i = 0; i < 3; i++) await r.room.webSocketMessage(ws, JSON.stringify({ t: 'park', data: { c: CA, a: [AX, AZ], r: { w: W(AX + i) } } }));
   assert.equal(r.store.get(parkKey(k)).r.w[1], AX + 1, 'the third word in the same instant was not taken');
   const fans = framesOf(bob, 'park').length;
-  ws.att = { ...ws.att, parkBucket: null }; r.room._idx = null;   // a second later
+  r.room._meterOf(ws).parkBucket = null;   // a second later (AUDIT ATTACH: the meters are the Room instance's)
   await r.room.webSocketMessage(ws, JSON.stringify({ t: 'park', data: { c: CA, a: [AX, AZ], r: { w: W(AX + 1) } } }));
   assert.equal(framesOf(bob, 'park').length, fans, 'a socket repeating itself buys no fan');
-  ws.att = { ...ws.att, parkBucket: null }; r.room._idx = null;
+  r.room._meterOf(ws).parkBucket = null;
   await r.room.webSocketMessage(ws, JSON.stringify({ t: 'park', data: { c: CA, a: [AX, AZ], r: { w: W(AX + 2) } } }));
   assert.equal(framesOf(bob, 'park').length, fans + 1, 'a changed word is news (the gate above was open)');
 });

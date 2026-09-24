@@ -99,7 +99,10 @@ function frame() {
     const labMinutes = ((405 * 360 + day) * MINUTES_PER_DAY) + minuteOfDay;
     sky.setState(dyn.tick({ minuteOfDay, classicMinutes: labMinutes, weather: $('weather').value, seconds, dt: still ? 0 : 1 / 60, weatherScale: weatherSunlightScale($('weather').value, false) }));
   } else {
-    sky.setState(skyState({ minuteOfDay, weather: $('weather').value, phases, seconds, drift: labDrift }));
+    // VC7a: the lab's game minute - the day slider's day and the hour's minute, plus `?t=` minutes more for the clouds'
+    // own life (a time series at one sun)
+    const labClock = ((405 * 360 + day) * MINUTES_PER_DAY) + minuteOfDay + (Number(params.get('t')) || 0);
+    sky.setState(skyState({ minuteOfDay, weather: $('weather').value, classicMinutes: labClock, phases, seconds, drift: labDrift }));
   }
   sky.fogMix = Number($('fog').value);
   sky.fogColor = sky.clearColor;
@@ -115,7 +118,8 @@ function frame() {
     const cst = dynamicOn
       ? cloudsStateUnderMod(sky.state, dynamicMoonState(dyn, minuteOfDay, row.cover), { minuteOfDay, weather: $('weather').value, phases, seconds, drift: labDrift })
       : sky.state;
-    clouds.setState(cst, { cover: cst.cloudCover, soft: cst.cloudSoft }, $('weather').value, dtMin, labDrift, 0);   // CLK1: game minutes, the lab's own integral
+    clouds.testCellSpec ??= params.get('cloudcell');   // VC7c: the game's `?cloudcell=<weather>,<ahead>,<radius>` door, so the lab can hang a storm - and its curtain - over the land
+    clouds.setState(cst, { cover: cst.cloudCover, soft: cst.cloudSoft }, $('weather').value, dtMin, labDrift, 0, [0, 0, 0]);   // CLK1: game minutes, the lab's own integral; the eye at the origin, where the lab has always put it
     clouds.update([0, 0, w, h]);
     if (params.has('shadowmap')) clouds.drawShadowView();   // VC4: the ground's map as a picture
     else clouds.draw(yaw, pitch, 65 * Math.PI / 180, w / h);

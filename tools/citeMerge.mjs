@@ -26,7 +26,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { hunksFromDiff, lineMap, citeSpellings, ANY_CITE, CONTINUATION, SELF_DOCS } from './citeShift.mjs';   // RF3: one law for the continuations, and the tools' own fixtures skipped
+import { hunksFromDiff, lineMap, citeSpellings, regionStops, continuationsIn, SELF_DOCS } from './citeShift.mjs';   // RF3: one law for the continuations (CITE-SLASH: the chain a bare slash must touch; CITE-CS: where a region stops), and the tools' own fixtures skipped
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -126,13 +126,13 @@ export function mapLine(l, t, { map, oldLines, newLines, res = citeSpellings(t),
     edits.push([m.index, m.index + m[0].length, m[0].replace(/(\d+)(-(\d+))?(`?)$/, (s, x, d, y, tick) => `${v.ma}${y != null ? '-' + v.mb : ''}${tick}`)]);
   }
   // a continuation belongs to the cite just before it: the region ends at
-  // the next cite of ANY file, not only this target's
+  // the next cite of ANY file, not only this target's (CITE-CS: or at a C#
+  // member, or at a table cell's edge)
   spans.sort((x, y) => x[0] - y[0]);
-  const stops = [...l.matchAll(ANY_CITE)].map((m) => m.index);
+  const stops = regionStops(l);
   for (const [, from] of spans) {
     const to = stops.find((x) => x >= from) ?? l.length;
-    for (const m of l.slice(from, to).matchAll(CONTINUATION)) {
-      const abs = from + m.index;
+    for (const { m, at: abs } of continuationsIn(l, from, to)) {
       const a = +m[2], b = m[3] ? +m[3] : null, v = verdict(a, b);
       if (v.status === 'same') continue;
       if (v.status !== 'move') { held.push({ status: v.status, text: m[0], to: v.ma ?? null, continuation: true }); continue; }

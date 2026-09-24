@@ -1,0 +1,554 @@
+[
+  {
+    "name": "JRN-space-runs-cut-as-words",
+    "file": "src/systems/notebook.js",
+    "old": "(k % 2 || run.length <= MAX_LINE_LENGTH ? run : pieces(run))",
+    "new": "(run.length <= MAX_LINE_LENGTH ? run : pieces(run))",
+    "tests": ["test/journal1.test.js"],
+    "note": "A hundred spaces are a word to cut - a space is the wrap's own break, and a note's spacing changes under it."
+  },
+  {
+    "name": "JRN-a-tab-taken-for-a-break",
+    "file": "src/systems/notebook.js",
+    "old": ".split(/( +)/).map((run, k)",
+    "new": ".split(/(\\s+)/).map((run, k)",
+    "tests": ["test/journal1.test.js"],
+    "note": "A tab splits the run, so forty letters, a tab and forty more go to the wrap whole - and it throws."
+  },
+  {
+    "name": "JRN-the-cut-a-unit-short",
+    "file": "src/systems/notebook.js",
+    "old": "      if (out[out.length - 1].length + u.length > MAX_LINE_LENGTH) out.push('');",
+    "new": "      if (out[out.length - 1].length + u.length >= MAX_LINE_LENGTH) out.push('');",
+    "tests": ["test/journal1.test.js"],
+    "note": "Every piece a character short of the line."
+  },
+  {
+    "name": "JRN-the-cut-on-code-points",
+    "file": "src/systems/notebook.js",
+    "old": "  for (const g of graphemesOf(run)) {",
+    "new": "  for (const g of Array.from(run)) {",
+    "tests": ["test/journal1.test.js"],
+    "note": "A family is parted at its joiner across two lines - the cut counts code points, not characters."
+  },
+  {
+    "name": "JRN-a-character-wider-than-a-line-whole",
+    "file": "src/systems/notebook.js",
+    "old": "    for (const u of g.length > MAX_LINE_LENGTH ? Array.from(g) : [g]) {",
+    "new": "    for (const u of [g]) {",
+    "tests": ["test/journal1.test.js"],
+    "note": "A letter under a hundred marks goes whole into one piece past the line - the wrap throws on it."
+  },
+  {
+    "name": "JRN-composer-hands-the-raw-text",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "deps.notebook().addNote(breakableNote(text));",
+    "new": "deps.notebook().addNote(text);",
+    "tests": ["test/journal1.test.js", "test/enhancedChronicle.test.js"],
+    "note": "The composer's crash, back: two hundred characters with no space throw out of the submit handler and the note is lost."
+  },
+  {
+    "name": "JRN-the-segmenter-ignored",
+    "file": "src/systems/graphemes.js",
+    "old": "  if (!Seg) return Array.from(s);",
+    "new": "  return Array.from(s);",
+    "tests": ["test/journal1.test.js"],
+    "note": "Code points always: a family is five characters to every cut."
+  },
+  {
+    "name": "JRN-the-fallback-on-units",
+    "file": "src/systems/graphemes.js",
+    "old": "  if (!Seg) return Array.from(s);",
+    "new": "  if (!Seg) return s.split('');",
+    "tests": ["test/journal1.test.js"],
+    "note": "Without a segmenter the cut counts UTF-16 units and halves a face."
+  },
+  {
+    "name": "JRN-the-bubble-its-own-law",
+    "file": "src/ui/nameLayer.js",
+    "old": "  for (const g of graphemesOf(text)) { if (out.length + g.length > max) break; out += g; }",
+    "new": "  for (const g of Array.from(text)) { if (out.length + g.length > max) break; out += g; }",
+    "tests": ["test/journal1.test.js", "test/emote1.test.js"],
+    "note": "The bubble's cut counts code points while the notebook's counts characters - two laws, and a family cut to a man and a joiner."
+  },
+  {
+    "name": "JRN-head-bound-off-by-one",
+    "file": "src/net/wire.js",
+    "old": "  if (head.length > PAGE_HEAD_MAX) return { error: 'head-long' };",
+    "new": "  if (head.length >= PAGE_HEAD_MAX) return { error: 'head-long' };",
+    "tests": ["test/journal1.test.js"],
+    "note": "A head at its bound is refused."
+  },
+  {
+    "name": "JRN-line-bound-off-by-one",
+    "file": "src/net/wire.js",
+    "old": "  if (cleaned.some((l) => l.length > PAGE_LINE_MAX)) return { error: 'line-long' };",
+    "new": "  if (cleaned.some((l) => l.length >= PAGE_LINE_MAX)) return { error: 'line-long' };",
+    "tests": ["test/journal1.test.js"],
+    "note": "A line at its bound is refused."
+  },
+  {
+    "name": "JRN-lines-bound-off-by-one",
+    "file": "src/net/wire.js",
+    "old": "  if (lines.length > PAGE_LINES_MAX) return { error: 'page-long' };",
+    "new": "  if (lines.length >= PAGE_LINES_MAX) return { error: 'page-long' };",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page of the most lines is refused."
+  },
+  {
+    "name": "JRN-a-page-cut-to-fit",
+    "file": "src/net/wire.js",
+    "old": "  if (lines.length > PAGE_LINES_MAX) return { error: 'page-long' };",
+    "new": "  if (lines.length > PAGE_LINES_MAX) lines.length = PAGE_LINES_MAX;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page past its bound is cut and shown - its reader reads words its writer did not show them."
+  },
+  {
+    "name": "JRN-blank-runs-kept",
+    "file": "src/net/wire.js",
+    "old": "  const lines = foldBlankLines(cleaned);",
+    "new": "  const lines = cleaned;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page of forty blank lines between two words, and blank lines at its ends."
+  },
+  {
+    "name": "JRN-head-uncleaned",
+    "file": "src/net/wire.js",
+    "old": "  const head = wordsLine(rawHead);",
+    "new": "  const head = rawHead;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A head carries a bidi override - the date is the writer's word and the reader's screen."
+  },
+  {
+    "name": "JRN-a-page-of-no-words",
+    "file": "src/net/wire.js",
+    "old": "  if (!lines.length) return { error: 'no-words' };\n",
+    "new": "",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page with nothing written on it is held out."
+  },
+  {
+    "name": "JRN-a-line-not-a-string",
+    "file": "src/net/wire.js",
+    "old": " || rawLines.some((l) => typeof l !== 'string')) return { error: 'no-page' };",
+    "new": ") return { error: 'no-page' };",
+    "tests": ["test/journal1.test.js"],
+    "note": "A number where a line should be is written as one."
+  },
+  {
+    "name": "JRN-the-frame-to-anyone",
+    "file": "src/net/wire.js",
+    "old": "export function validPageData(d) {\n  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;\n  const to = typeof d.to === 'string' && ID_RE.test(d.to) ? d.to : null;",
+    "new": "export function validPageData(d) {\n  if (!d || typeof d !== 'object' || Array.isArray(d)) return null;\n  const to = typeof d.to === 'string' ? d.to : null;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page addressed to something that is no peer id."
+  },
+  {
+    "name": "JRN-parser-no-door",
+    "file": "src/net/wire.js",
+    "old": "    if (text.length > PAGE_FRAME_MAX) return { error: 'frame too large' };\n",
+    "new": "",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page frame is taken to the relay's whole cap, past its own door."
+  },
+  {
+    "name": "JRN-parser-before-hello",
+    "file": "src/net/wire.js",
+    "old": "    if (!hasHello) return { error: 'page before hello' };\n",
+    "new": "",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page from a socket nobody has met."
+  },
+  {
+    "name": "JRN-relay-min-a-deploy-early",
+    "file": "src/net/wire.js",
+    "old": "export const PAGE_RELAY_MIN = 102;",
+    "new": "export const PAGE_RELAY_MIN = 101;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page is sent to world101 (main's DISC12 relay), which closes the socket on a frame it does not know."
+  },
+  {
+    "name": "JRN-the-door-under-the-widest",
+    "file": "src/net/wire.js",
+    "old": "export const PAGE_FRAME_MAX = 12 * 1024;",
+    "new": "export const PAGE_FRAME_MAX = 8 * 1024;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page the law takes is a frame the relay refuses."
+  },
+  {
+    "name": "JRN-relay-mute-skipped",
+    "file": "server/src/index.js",
+    "old": "      a = this._meterPage(ws, a, now); if (!a) return;\n      if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }\n",
+    "new": "      a = this._meterPage(ws, a, now); if (!a) return;\n",
+    "tests": ["test/journal1.test.js"],
+    "note": "A muted player's page goes through - a mute that stopped a line and let a page through would be no mute."
+  },
+  {
+    "name": "JRN-relay-page-fanned",
+    "file": "server/src/index.js",
+    "old": "      this._send(tws, JSON.stringify({ t: 'page', id: a.id, data: m.data }));",
+    "new": "      for (const [o] of [...this._all()]) if (o !== ws) this._send(o, JSON.stringify({ t: 'page', id: a.id, data: m.data }));",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page held out to one player is shown to the whole room."
+  },
+  {
+    "name": "JRN-relay-page-unstamped",
+    "file": "server/src/index.js",
+    "old": "      this._send(tws, JSON.stringify({ t: 'page', id: a.id, data: m.data }));",
+    "new": "      this._send(tws, JSON.stringify({ t: 'page', data: m.data }));",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page with no writer's id - the reader cannot say whose it is."
+  },
+  {
+    "name": "JRN-relay-a-channel-carries-it",
+    "file": "server/src/index.js",
+    "old": "{ t: 'muted', until: a.mu })); return; }\n      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;\n",
+    "new": "{ t: 'muted', until: a.mu })); return; }\n",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page held out in a chat channel - nowhere to stand beside anyone."
+  },
+  {
+    "name": "JRN-relay-self-not-junk",
+    "file": "server/src/index.js",
+    "old": "      if (to === a.id) { this._junk(ws); return; }\n      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;\n      if (!target) return;\n      const [tws] = target;\n      // the funnel onto the destination, per sender - the cast's and the card's ONE",
+    "new": "      if (to === a.id) return;\n      const target = [...this._all()].find(([other, b]) => other !== ws && b.id === to) ?? null;\n      if (!target) return;\n      const [tws] = target;\n      // the funnel onto the destination, per sender - the cast's and the card's ONE",
+    "tests": ["test/journal1.test.js"],
+    "note": "A stream of pages at my own id is never struck out."
+  },
+  {
+    "name": "JRN-relay-funnel-skipped",
+    "file": "server/src/index.js",
+    "old": "      if (!this._senderFunnel(tws, a.id, now)) return;\n      this._send(tws, JSON.stringify({ t: 'page'",
+    "new": "      this._send(tws, JSON.stringify({ t: 'page'",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page is not bounded with the spells and cards its writer sends the same reader."
+  },
+  {
+    "name": "JRN-relay-strikes-shared",
+    "file": "server/src/index.js",
+    "old": "'pageBucket', 'pageDrops', 'too many page frames'",
+    "new": "'pageBucket', 'cardDrops', 'too many page frames'",
+    "tests": ["test/journal1.test.js", "test/auditattach.test.js"],
+    "note": "The page's strikes are the card's - a pass of either forgives the other's flood."
+  },
+  {
+    "name": "JRN-relay-meter-skipped",
+    "file": "server/src/index.js",
+    "old": "      a = this._meterPage(ws, a, now); if (!a) return;\n",
+    "new": "",
+    "tests": ["test/journal1.test.js", "test/auditattach.test.js"],
+    "note": "A page flood is bounded by nothing but its readers' funnels, and never struck out."
+  },
+  {
+    "name": "JRN-session-version-door-dropped",
+    "file": "src/net/online.js",
+    "old": "    if (!d || d.to === this.id || !this.pageOk) return false;",
+    "new": "    if (!d || d.to === this.id) return false;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page sent to a relay that closes the socket on it."
+  },
+  {
+    "name": "JRN-session-the-law-skipped",
+    "file": "src/net/online.js",
+    "old": "  sendPage(data) {\n    const d = validPageData(data);",
+    "new": "  sendPage(data) {\n    const d = data && data.page ? data : null;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page leaves uncleaned, its bounds unasked - the relay refuses it or the reader meets it raw."
+  },
+  {
+    "name": "JRN-session-gate-dropped",
+    "file": "src/net/online.js",
+    "old": "    const gate = pageGate(this._pageBucket, this._now());\n    if (!gate.pass) return false;",
+    "new": "    const gate = pageGate(this._pageBucket, this._now());",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page a frame - the relay strikes the socket out."
+  },
+  {
+    "name": "JRN-session-someone-elses-delivered",
+    "file": "src/net/online.js",
+    "old": "          if (d && d.to === this.id) this._deliver('page'",
+    "new": "          if (d) this._deliver('page'",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page for someone else is held out to me."
+  },
+  {
+    "name": "JRN-session-no-inbound-gate",
+    "file": "src/net/online.js",
+    "old": "        const g = pageInGate(this._inPageBuckets.get(m.id) ?? null, now);\n        this._inPageBuckets.set(m.id, g.bucket);\n        if (!g.pass) {",
+    "new": "        const g = pageInGate(this._inPageBuckets.get(m.id) ?? null, now);\n        this._inPageBuckets.set(m.id, g.bucket);\n        if (false) {",
+    "tests": ["test/journal1.test.js"],
+    "note": "Every page a writer floods is delivered."
+  },
+  {
+    "name": "JRN-session-every-relay-carries-it",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this.pageOk = relaySupportsPage(relayV);",
+    "new": "      if (primary) this.pageOk = true;",
+    "tests": ["test/journal1.test.js"],
+    "note": "Any relay is taken to route a page - world100 closes the socket on the first."
+  },
+  {
+    "name": "JRN-head-read-as-a-line",
+    "file": "src/net/journalPage.js",
+    "old": "  const headed = tokens[0]?.formatting === 'highlight';",
+    "new": "  const headed = false;",
+    "tests": ["test/journal1.test.js"],
+    "note": "The date the notebook stamped is read as the page's first line."
+  },
+  {
+    "name": "JRN-breaks-dropped",
+    "file": "src/net/journalPage.js",
+    "old": "const DRAWN_TOKENS = new Set([...LINE_TOKENS, 'newline']);",
+    "new": "const DRAWN_TOKENS = new Set(LINE_TOKENS);",
+    "tests": ["test/journal1.test.js"],
+    "note": "The blank line the notebook filed between two paragraphs is gone from the page."
+  },
+  {
+    "name": "JRN-kept-raw",
+    "file": "src/net/journalPage.js",
+    "old": "text: l ? breakableNote(l) : ''",
+    "new": "text: l",
+    "tests": ["test/journal1.test.js"],
+    "note": "A kept page's line goes to the wrap raw - eighty letters with no space throw."
+  },
+  {
+    "name": "JRN-kept-whose-lost",
+    "file": "src/net/journalPage.js",
+    "old": "  return noteTokensOf([page.head ? `From the journal of ${who} - ${page.head}` : `From the journal of ${who}:`, '', ...page.lines]);",
+    "new": "  return noteTokensOf([...page.lines]);",
+    "tests": ["test/journal1.test.js"],
+    "note": "A kept page does not say whose it was or when they wrote it."
+  },
+  {
+    "name": "JRN-letter-head-dropped",
+    "file": "src/net/journalPage.js",
+    "old": "body: (page.head ? [page.head, '', ...page.lines] : page.lines).join('\\n')",
+    "new": "body: page.lines.join('\\n')",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page sent as a letter loses the date its writer wrote it."
+  },
+  {
+    "name": "JRN-every-page-said",
+    "file": "src/net/journalPage.js",
+    "old": "    const say = !was || t - was.saidAt >= PAGE_NOTICE_MS;",
+    "new": "    const say = true;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A writer who holds out a page a second fills the reader's chat with notices."
+  },
+  {
+    "name": "JRN-the-hold-never-ends",
+    "file": "src/net/journalPage.js",
+    "old": "    if (this.now() - o.at > PAGE_HOLD_MS) { this.held.delete(id); return null; }\n",
+    "new": "",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page held out waits for ever."
+  },
+  {
+    "name": "JRN-kept-survives-a-new-page",
+    "file": "src/net/journalPage.js",
+    "old": "saidAt: say ? t : was.saidAt, kept: false });",
+    "new": "saidAt: say ? t : was.saidAt, kept: was?.kept ?? false });",
+    "tests": ["test/journal1.test.js"],
+    "note": "A new page from a writer reads as already kept, so it cannot be."
+  },
+  {
+    "name": "JRN-writers-unbounded",
+    "file": "src/net/journalPage.js",
+    "old": "    while (this.held.size > PAGE_OFFERS_MAX) this.held.delete(this.held.keys().next().value);",
+    "new": "    while (this.held.size > 2 * PAGE_OFFERS_MAX) this.held.delete(this.held.keys().next().value);",
+    "tests": ["test/journal1.test.js"],
+    "note": "A crowd holds out twice the pages a reader keeps."
+  },
+  {
+    "name": "JRN-leavers-keep-theirs",
+    "file": "src/net/journalPage.js",
+    "old": "    for (const id of this.held.keys()) if (!ids.has(id)) this.held.delete(id);",
+    "new": "    for (const id of this.held.keys()) if (!ids.has(id)) continue;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page whose writer left still waits under their name."
+  },
+  {
+    "name": "JRN-window-keep-twice",
+    "file": "src/ui/pageWindow.js",
+    "old": "        if (!view || view.kept || !shownPeer) return;",
+    "new": "        if (!view || !shownPeer) return;",
+    "tests": ["test/journal1.test.js"],
+    "note": "Keep files a second copy."
+  },
+  {
+    "name": "JRN-window-refused-drawn-as-kept",
+    "file": "src/ui/pageWindow.js",
+    "old": "        if (onKeep?.(shownPeer, view) !== true) return;",
+    "new": "        onKeep?.(shownPeer, view);",
+    "tests": ["test/journal1.test.js"],
+    "note": "A keep the journal refused is drawn as kept."
+  },
+  {
+    "name": "JRN-window-escape-under-a-surface",
+    "file": "src/ui/pageWindow.js",
+    "old": "    if (above()) return;   // a surface over this one owns the key - untouched, unstopped",
+    "new": "",
+    "tests": ["test/journal1.test.js"],
+    "note": "Escape closes the page under a surface that owns the key."
+  },
+  {
+    "name": "JRN-window-keep-with-no-journal",
+    "file": "src/ui/pageWindow.js",
+    "old": "    if (view.canKeep) {",
+    "new": "    if (true) {",
+    "tests": ["test/journal1.test.js"],
+    "note": "Keep offered where there is no journal to keep it in."
+  },
+  {
+    "name": "JRN-row-always-drawn",
+    "file": "src/ui/socialMenu.js",
+    "old": "  if (canReadPage) rows.unshift({ key: 'page'",
+    "new": "  if (canReadPage !== undefined) rows.unshift({ key: 'page'",
+    "tests": ["test/journal1.test.js"],
+    "note": "'Read their page' on a player who holds out no page."
+  },
+  {
+    "name": "JRN-row-the-wrong-act",
+    "file": "src/ui/socialMenu.js",
+    "old": "act: { k: 'page.read', peer: peerId } });",
+    "new": "act: { k: 'profile.inspect', peer: peerId } });",
+    "tests": ["test/journal1.test.js"],
+    "note": "The row opens their profile."
+  },
+  {
+    "name": "JRN-share-on-every-section",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "    const share = section === 'notes' && deps.notebook?.() ? (deps.pageShare?.() ?? null) : null;",
+    "new": "    const share = deps.notebook?.() ? (deps.pageShare?.() ?? null) : null;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A message - what I was told - offered as a page of my journal."
+  },
+  {
+    "name": "JRN-strip-on-every-note",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "        if (share && sharing === e.index) entry.append(shareStrip(share, e.index));",
+    "new": "        if (share) entry.append(shareStrip(share, e.index));",
+    "tests": ["test/journal1.test.js"],
+    "note": "Every note's share strip stands open."
+  },
+  {
+    "name": "JRN-share-the-cards-place",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "entry.append(shareStrip(share, e.index));",
+    "new": "entry.append(shareStrip(share, i));",
+    "tests": ["test/journal1.test.js"],
+    "note": "The page shown is the note at the card's place in the list - another note, once an empty entry is dropped."
+  },
+  {
+    "name": "JRN-remove-the-cards-place",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "deps.notebook().removeNote(e.index);",
+    "new": "deps.notebook().removeNote(i);",
+    "tests": ["test/journal1.test.js", "test/enhancedChronicle.test.js"],
+    "note": "Remove takes the note at the card's place in the list - another note, once an empty entry is dropped."
+  },
+  {
+    "name": "JRN-letter-left-standing",
+    "file": "src/ui/enhancedChronicle.js",
+    "old": "      if (w === true) { onExit(); return; }",
+    "new": "      if (w === true) { return; }",
+    "tests": ["test/journal1.test.js"],
+    "note": "The chronicle stands over the HUD, so the letters can never open on the page."
+  },
+  {
+    "name": "JRN-letters-draft-dropped",
+    "file": "src/ui/socialPanel.js",
+    "old": "      if (draft) { letters.draft =",
+    "new": "      if (false) { letters.draft =",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page sent as a letter opens the letters on the box, the page gone."
+  },
+  {
+    "name": "JRN-letter-keep-twice",
+    "file": "src/ui/socialPanel.js",
+    "old": "{ enabled: !kept, run: () => {",
+    "new": "{ enabled: true, run: () => {",
+    "tests": ["test/journal1.test.js"],
+    "note": "Keep stands after the letter is kept."
+  },
+  {
+    "name": "JRN-letter-refused-drawn-as-kept",
+    "file": "src/ui/socialPanel.js",
+    "old": "        if (keepLetter(l) === true) { letters.kept.add(l.id); letters.word = ''; } else letters.word = LETTER_KEEP_FAILED_TEXT;",
+    "new": "        keepLetter(l); letters.kept.add(l.id);",
+    "tests": ["test/journal1.test.js"],
+    "note": "A keep the journal refused is drawn as kept."
+  },
+  {
+    "name": "JRN-host-page-opened-on-arrival",
+    "file": "src/scenes/world.js",
+    "old": "      tradeSay(pageOfferText(peerName(id), pageReadHow()));",
+    "new": "      readPage(id);",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page opens over the reader's game whenever somebody near them presses a button."
+  },
+  {
+    "name": "JRN-host-held-without-a-menu",
+    "file": "src/scenes/world.js",
+    "old": "      if (!socialMenu || !pageWin || !d?.page) return;",
+    "new": "      if (!d?.page) return;",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page is held and said where there is no F-menu to read it by."
+  },
+  {
+    "name": "JRN-host-the-trades-reach",
+    "file": "src/scenes/world.js",
+    "old": "      .filter((p) => p.d <= SOCIAL_REACH && online.reachesPeer(p.id))",
+    "new": "      .filter((p) => p.d <= TRADE_RANGE_M && online.reachesPeer(p.id))",
+    "tests": ["test/journal1.test.js"],
+    "note": "The reach is the trade's, not a talk's - a player the F key finds cannot be shown the page."
+  },
+  {
+    "name": "JRN-host-the-press-unmeasured",
+    "file": "src/scenes/world.js",
+    "old": "    if (!pageReaders().some((p) => p.id === id)) return pageTooFarText(name);\n",
+    "new": "",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page is held out to someone who walked away after the list was drawn."
+  },
+  {
+    "name": "JRN-host-letter-under-the-chronicle",
+    "file": "src/scenes/world.js",
+    "old": "    _letterPending = { draft: letterOfPage(page), at: performance.now() };",
+    "new": "    socialPanel.openLetters({ draft: letterOfPage(page) });",
+    "tests": ["test/journal1.test.js"],
+    "note": "The letters are asked to open under the chronicle, which covers the HUD - they never stand."
+  },
+  {
+    "name": "JRN-host-never-swept",
+    "file": "src/scenes/world.js",
+    "old": "    pageFrame();   // JOURNAL1: a page whose writer left the room goes with them\n",
+    "new": "",
+    "tests": ["test/journal1.test.js"],
+    "note": "A page whose writer left still waits, and the F-menu offers it on nobody."
+  },
+  {
+    "name": "JRN-host-dungeon-share-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    pageShare: () => opts.pageShare?.() ?? null,\n",
+    "new": "",
+    "tests": ["test/journal1.test.js"],
+    "note": "No Share in the dungeon's chronicle."
+  },
+  {
+    "name": "JRN-chronicle-words-run-out",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8);\n  overflow-wrap: anywhere; }",
+    "new": "  line-height: 1.65; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }",
+    "tests": ["test/journal1.test.js"],
+    "note": "A note's run of one word runs out of its card and the Notes section scrolls sideways (the probe's finding)."
+  },
+  {
+    "name": "JRN-kept-marks-the-newer-page",
+    "file": "src/net/journalPage.js",
+    "old": "  markKept(id, page) { const o = this.held.get(id); if (o && o.page === page) o.kept = true; }",
+    "new": "  markKept(id, page) { const o = this.held.get(id); if (o) o.kept = true; }",
+    "tests": ["test/journal1.test.js"],
+    "note": "Keeping a page marks the newer one its writer held out while it was read - which then can never be kept."
+  }
+]

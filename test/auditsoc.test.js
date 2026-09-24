@@ -234,16 +234,18 @@ test('AUDIT SOC A11: "no account" is a refusal UNDER the room\'s budget - past S
   assert.equal(none, SOCIAL_ROOM_HZ_MAX); assert.equal(busy, 4);
 }));
 
-test('AUDIT SOC (the attachment): the widest attachment a hub socket carries - the longest name, a party pose with the longest place name, every bucket - fits the runtime\'s 2 KiB, which the fake enforces (mutants: a field added to the attachment without this being re-measured)', () => withHub(async ({ r, act, pose, join, tick }) => {
+test('AUDIT SOC (the attachment): the widest attachment a hub socket carries - the longest name, a party pose with the longest place name, its account and party - fits the runtime\'s 2 KiB, which the fake enforces; every bucket and strike count it spends is among its meters, off it (AUDIT ATTACH) (mutants: a field added to the attachment without this being re-measured)', () => withHub(async ({ r, act, pose, join, tick }) => {
   const a = await join('a', { name: 'N'.repeat(NAME_MAX) });
   const b = await join('b');
   await act(a, { k: 'party.invite', peer: 'peer-b' }); tick(); await act(b, { k: 'party.accept', party: a.att.party }); tick();
   await pose(a, { ...P, loc: 'L'.repeat(PARTY_LOC_MAX), px: 999, py: 499, h: 9999, hm: 9999, f: 9999, fm: 9999, m: 9999, mm: 9999 }); tick();
   for (let i = 0; i < 5; i++) { await act(a, { k: 'party.kick', acct: 'acct-zz' }); await r.ping(a); await pose(a); }   // the buckets and the strike counts written
   assert.equal(a.closed, null, 'never "hello too large" or a failed write');
+  assert.ok(a.meters.sbucket && a.meters.pbucket && a.meters.bucket, 'the buckets written - among its meters');
+  for (const k of ['sbucket', 'sdrops', 'pbucket', 'pdrops', 'bucket', 'drops']) assert.equal(a.att[k], undefined, `AUDIT ATTACH: ${k} is a meter, never the attachment's`);
   const bytes = JSON.stringify(a.att).length;
   assert.ok(bytes <= 2048, `the attachment is ${bytes} bytes`);
-  assert.ok(bytes > 400, 'and it is the wide one (the pose, the name, the buckets are on it)');
+  assert.ok(bytes > 400, 'and it is the wide one (the party pose, the name, the account are on it)');
 }));
 
 // ------------------------------------------------------------ THE CLIENT (B) ------------------------------------------------------------
@@ -352,7 +354,7 @@ test('AUDIT SOC B5/B18/B10: the party pose says fatigue in the sheet\'s digits (
   assert.match(w, /const NO_ACCOUNT_TEXT = 'Friends and parties are off: this browser keeps no storage, so there is no account to be anyone by';/);
   // AUDIT SOC C2/C14/C9: the host's word on which surface is TOPMOST (ui/chatPanel.js, ui/socialPanel.js, ui/socialMenu.js
   // take `above`), and the phone's F handed to the touch layer as the host's own door
-  assert.match(w, /above: \(\) => !!\(socialPanel\?\.isOpen\?\.\(\) \|\| socialMenu\?\.isOpen\?\.\(\)\),/, 'the chat yields to the panel and the menu');
-  assert.match(start, /above: \(\) => !!socialMenu\?\.isOpen\?\.\(\),/, 'the panel yields to the menu');
+  assert.match(w, /above: \(\) => !!\(socialPanel\?\.isOpen\?\.\(\) \|\| socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\) \|\| pageWin\?\.isOpen\?\.\(\)\),/, 'the chat yields to the panel, the menu and the profile (INSPECT1) - and a page read from the menu (JOURNAL1)');
+  assert.match(start, /above: \(\) => !!\(socialMenu\?\.isOpen\?\.\(\) \|\| profileWin\?\.isOpen\?\.\(\) \|\| pageWin\?\.isOpen\?\.\(\)\),/, 'the panel yields to the menu, and to the profile opened from it (INSPECT1) and the page read from it (JOURNAL1)');
   assert.match(w, /socialInteract: \(\) => socialInteract\(\),/, 'the touch layer\'s hook is the host\'s door (AUDIT SOC C9)');
 });

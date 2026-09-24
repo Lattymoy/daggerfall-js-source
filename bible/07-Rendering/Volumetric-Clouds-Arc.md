@@ -1,4 +1,4 @@
-# Volumetric Clouds - the arc (VC, opened 2026-09-07, CLOSED 2026-09-07; REOPENED and CLOSED again 2026-09-18 for VC6)
+# Volumetric Clouds - the arc (VC, opened 2026-09-07, CLOSED 2026-09-07; REOPENED and CLOSED again 2026-09-18 for VC6; REOPENED 2026-09-23 for VC7)
 
 **Mac (2026-09-07): "one thing I want to do pertaining to our enhanced
 environments is to remove the pixelated sky look and overhaul the
@@ -185,7 +185,451 @@ inside a backed-out stride is the one thing to look at first.
    `?clouds=off` is the kill switch.
 6. **Cells (WEATHER2c).** The one field takes cells - a place, a
    radius, a rim and a profile of their own, blended over the zone's
-   terms at every sample both marches take under a union slab - so a
+   terms at every sample both marches take under a union slab (each ray's own spans since SLAB-SPAN) - so a
    thunderhead stands over the hills under a sunny zone and its shadow
    falls where it stands. The Weather arc's C
    (`07-Rendering/Weather-Arc.md`); `?cloudcell=` the door.
+
+## VC7 - more immersive (the design, 2026-09-23)
+
+Mac, alongside WEATHER3i: "I really want to improve the volumetric cloud
+system to be more immersive." Asked which kinds, the answer was "All of
+the above": living clouds, light shafts, rain shafts under storms and a
+high cirrus layer. Each is a slice of its own, shipped with pins,
+mutants and before/after renders from the sky lab (`sky.html`, SwiftShader
+here, since there is no ARENA2 in the container).
+
+**What the lab showed before.** A fair morning reads well. A cloudy
+afternoon is a soft even blur, dusk an even cotton mottle, and a storm a
+flat dark lid with no structure. Nothing ever changes shape: the field is
+a fixed noise volume slid across the land by the wind integral, so a bank
+is the same bank from the moment it comes over the horizon until it
+leaves.
+
+### VC7a - living clouds
+
+- **They change as they pass.** Two clocks, both read from the game's
+  minutes (AUDIT-VC7: so every player online sees the same boil; the cover's
+  drift, like the whole field's, rides the session's own wind integral):
+  - the shape volume is read through its own height as time passes, so
+    the towers' structure rises through the cloud and the edges billow
+    rather than slide;
+  - the coverage field drifts at a fraction of the wind, not with it, so
+    a place's cover changes under the air moving through it: banks build
+    on the upwind side and dissolve on the downwind side as they travel.
+  Both clocks wrap to the field's own periods, as CLK1's drift does, so a
+  year of game time never outgrows a float.
+- **The day's convection.** Fair-weather cloud (the sunny and cloudy
+  rows) builds through the day: flat cumulus in the morning, towering by
+  mid-afternoon, sinking through the evening to the night's floor. It lives in the towers' HEIGHT; the
+  cover stays DFU's row. The first cut also redistributed the cover over
+  the day (its daily mean kept), and the lab showed why not: this slab's
+  scattered cumulus sits right at its coverage threshold, and a fair
+  row's cover raised by a tenth turned the afternoon into a smeared haze.
+- **A front thickens as it arrives.** A weather-map cell's cloud takes
+  its system's envelope: a newborn front is a thin deck that deepens and
+  darkens as it grows, and a dying one thins. The same numbers already
+  drive the rain under it (WEATHER3i), so the cloud and the fall agree.
+- One field still: the ground's shadow and the sun's disc read the same
+  density, so a billowing bank's shadow billows with it.
+
+**VC7a shipped (2026-09-23).** Pinned by `test/vc7a_living.test.js`
+(`tools/mutants/vc7a.json` 22/22 dead).
+- The sky state carries the game's minute (`skyState` `minutes`,
+  `minuteOfDay`), and `cloudClocks` reads the three clocks from it: the
+  shape read up its volume 120 m a game minute (an updraft's 2 m/s), the
+  detail 300 m, and the coverage turning through its slice once a day,
+  riding COVER_DRIFT_SHARE (0.6) of the air's drift. Every offset is
+  wrapped to its own volume's period. The lab's `?t=` steps the clock at
+  one sun, so the life can be watched apart from the day.
+- In the lab, a cloudy afternoon sampled 20 and 40 game minutes apart
+  reshapes rather than slides; a fair morning's arrangement reads as
+  before.
+- The day's convection is in the towers' HEIGHT only: `convection`'s
+  depth runs from 0.4 of the row's through the night and the morning to
+  the whole row CONVECTION_LAG_MINUTES (150) after the sun is highest
+  (14:30), and sinks through the evening to the floor again by 20:30
+  (AUDIT-VC7: it holds the floor until 8:30). The first cut also moved the cover (its daily
+  mean kept); the lab showed a fair row's cover raised by a tenth smeared
+  the afternoon into haze, and a cut with the boil off pinned the smear
+  on the cover, not the boil. So the cover is DFU's row at every hour.
+- A weather-map cell carries its system's envelope (`skyCells` `env`),
+  and `cellOfField` grows its cloud by it (`grownCell`): at birth half
+  the cover, 0.45 of the depth and 0.7 of the density, the whole profile
+  at full growth.
+- Seen and not changed here: a cloudy sky reads as a soft even blur and a
+  storm as a flat lid, as they did before VC7. That is the slab at high
+  cover and the sky map's texel (about five screen pixels at a 65-degree
+  view), not the life; it is recorded for Mac as its own question.
+
+### VC7b - light shafts
+
+- **Through the gaps.** EL3's screen-space shafts take the sky mask from
+  the depth alone, and VC6c turns them off when the deck covers the sun.
+  The mask will carry the cloud map's own transmittance, so broken cloud
+  in front of the sun throws beams through its gaps and a solid deck
+  throws none, without a switch.
+- **In the haze, away from the sun.** Shadow shafts slanting under a
+  broken deck are seen from any direction, not only toward the sun. The
+  world's fog gains an in-scattered sun term marched a few steps along
+  the view ray through the air under the clouds, each step reading the
+  same shadow map the ground reads (a point at height y sees the sun
+  through the slab where its sun ray meets the ground). Where the sun
+  reaches the air it glows; where the bank shades it, it does not. It
+  scales with the air's haze (humid weather, low sun) and is off indoors.
+
+**VC7b shipped (2026-09-23).** Pinned by `test/vc7b_shafts.test.js`
+(`tools/mutants/vc7b.json` 33/33 dead), and drawn on a real GPU by
+`tools/vc7bHazeProbe.mjs` (12/12), which is where the look is judged -
+the pins run on a fake GL that draws nothing.
+- **The beams through the gaps.** The deck the ground reads now carries
+  the sky map too (`VolumetricClouds.shadow` `sky`, once a sweep has
+  filled it), and EL3's mask reads its alpha - the slab's transmittance -
+  in each tap's world direction, by the composite's own parametrisation.
+  With the player in full sun, a sky map that is all gap leaves the beams
+  exactly as they were, all cloud takes them away, and one half cloud in
+  stripes leaves beams between the two (AUDIT-VC7: "half" was never
+  measured). The alpha is the slab's, the curtains' and the ice's. VC6c's gate is untouched: Mac's "when the sun is covered by
+  clouds, there shouldnt be sky rays" still decides first.
+- **The sun in the haze.** `airPass.js` walks each shaft pixel's view ray
+  AIR_HAZE_STEPS (12) jittered steps out to AIR_HAZE_REACH (3000 m); each
+  step's sun is the cloud shadow map read where its sun ray meets the
+  ground (the map's own ray), dimmed by the fog's own extinction (the
+  lane's `scatterDensity`, handed over as `haze`) and weighted by a
+  Henyey-Greenstein phase (g 0.6, a 0.3 isotropic share). VOL1's
+  depth-aware tile averages the jitter into the shafts' image the resolve
+  already adds. It runs only with a deck, the sun above the shadow map's
+  own floor (0.05) and a fog with an extinction - so never indoors, never
+  on the classic skin - and `?haze=off` shuts it.
+- **Measured on the probe**, under the clear day's own fog (linear to
+  2400): a solid deck leaves no haze; lanes of cloud shadow swing the air
+  48% against a lit deck's image, pixel for pixel (0.0% for the lit deck
+  against itself); toward a low sun the same air is fourteen times as
+  bright as away from it. AIR_HAZE_GAIN (1 of the colour at the probe's key
+  of 0.9; AUDIT-VC7 made it a share of the key, 1/0.9) was chosen against 0.5 (the
+  lanes all but invisible), 1.5 (over-bright toward the sun, where the
+  dome's glow and the beams already are) and 3 (the sky toward the sun
+  white). The term is additive, so the lit-against-shaded contrast can
+  never exceed what a fully lit day adds - a forward glow about the sun.
+  Near ground takes little of it by construction (a short ray through thin
+  haze scatters little), as the world fog leaves near ground clear.
+- **Found on the way: VC6c's probe never drew its scene.** It described
+  its mesh's sub-mesh as `{ archive, record, start, count }`; the renderer
+  reads `{ textureArchive, textureRecord, startIndex, primitiveCount }`
+  (tools/aoProbe.mjs has it right), so its ground and its pillar were
+  never drawn. Its "the ground moves with the rays" check was reading the
+  clear colour (177 / 174 / 174), moved only by the eye's adaptation. With
+  the fields named, the scene draws and the check measures what it says
+  (115.7 > 90.3 > 49.6); the other five checks held either way. VC6c's
+  probe now sets `?haze=off`'s door, so it measures the beams alone.
+
+### VC7e - cloud detail: the cloudy blur and the flat storm lid
+
+Mac, on the question VC7a raised (a cloudy sky an even blur, a storm a
+flat lid): "Whatever is the most visually detailed and immersive."
+
+**Measured first.** The sky lab, with the march's first-hit optical depth
+along the sun painted into the sky map: an overcast deck ran 0.56 to 0.80
+across the whole view, a storm 5.1 to 6.3, a cloudy sky 0.56 to 1.3. The
+3D noise averages out up a column, so a deck was the same thickness
+everywhere - no lighting could draw structure that was not in the field -
+and Beer's law alone, exp(-5) against exp(-6), made every point under a
+storm the same black. The first try (the octaves below, un-normalised)
+proved it: the whole sky brightened and no structure appeared.
+
+**VC7e shipped (2026-09-23).** Pinned by `test/vc7e_detail.test.js`
+(`tools/mutants/vc7e.json` 19/19 dead).
+- **The deck's cells.** `columnAt` - everything density() knows before the
+  shape read, now one function - takes the 32-cell Worley of the
+  variation sample (two kilometres a cell, a stratocumulus's own size, and
+  the same at every height, so it shapes whole COLUMNS) and thins the
+  lanes between cells: the base lifts CELL_BASE_LIFT (0.07) of the band
+  and the ceiling comes down CELL_THIN (0.55), scaled in with the cover
+  (DECK_COVER 0.4 to 0.95). A lane keeps 45% of a core's depth: the cut
+  that kept 20% went transparent in the lanes and opened holes to the
+  dome under the overcast and the storm.
+- **The octaves.** The sun's light through the deck is Wrenninge's
+  multiple-scattering octaves: octave 0 the single scattering it always
+  was, two more carrying half and a quarter of the light at 0.35 and
+  0.1225 of the depth, their phase flattened halfway to isotropic
+  (AUDIT-VC7: octave i by MS_C^i, the law the docstring named), the
+  sum divided by 1.75 so no depth outshines an unshadowed path. At a
+  storm's depth the single term is under 0.003; the octaves carry over
+  twenty times that, and a thin place stays visibly lighter than a thick
+  one. The light march stops where the last octave stops seeing.
+- **The ambient through the column above.** The sky's light on a cloud
+  comes down through the column over it (`columnAbove`, from the same
+  `columnAt`), never along the sun's path - the first cut used the sun's
+  depth, and at dusk that path runs sideways through kilometres of deck
+  and blackened the gold VC6b gave it. It is weighted by the same deck
+  amount, so a fair sky (none of it) and a cloudy one (under a fifth)
+  keep the looks they were tuned with (AUDIT-VC7: the octaves were not
+  weighted so, and brightened every fair cloud - they are now); its floor (0.15) sits under a
+  storm core's light, where 0.35 had erased the contrast.
+- **In the lab**: rain rolls dark and heavy with lighter gaps between; a
+  storm has darker cores in the lid; an overcast has bands; a fair sky
+  and a low sun's gold are what they were.
+
+### VC7c - rain shafts
+
+- A raining or storming cell hangs a curtain from its base to the ground:
+  density that falls off toward its rim, streaked vertically and moving
+  with the cell, in the same field both marches read. From afar it is a
+  grey veil under the storm, where the weather map puts it; it fades as
+  the player comes under it, where the falling rain itself takes over.
+- Only what falls hangs one (rain, thunder, snow; a sandstorm is already a
+  wall on the ground), with its intensity from the same law as the rain.
+
+**VC7c shipped (2026-09-23).** Pinned by `test/vc7c_curtains.test.js`
+(`tools/mutants/vc7c.json`). Two departures from the plan, both measured:
+the curtain is ANALYTIC in the sky march alone, not a density in the field
+both marches read (a ray against a cylinder costs arithmetic, a field
+sample two texture reads, and the cloud above already shadows the ground
+under it); and it is composited IN FRONT of the slab along the ray, since
+it hangs below it.
+- **The veil.** A cell whose word falls (`CURTAIN_FALL`: rain 1, thunder
+  1.3, snow 0.7 and pale) hangs a cylinder of CURTAIN_SHARE (0.55) of its
+  radius from the ground to its base. Its extinction is rain's own:
+  Koschmieder's 3.0 over moderate rain's five-kilometre visibility, 0.0006
+  a metre. The first cut took a fifth of that, and a storm's curtain was a
+  smear on the horizon; at the real value a thunder core's chord passed
+  under a twentieth (AUDIT-VC7: a tenth, once the chord is the integral of
+  the declared profile, not the core's weight at its closest approach for
+  its whole length), which is why a real shaft reads from thirty
+  kilometres off. It thins to its rim, fades as the eye comes under it (the falling
+  rain takes over there), and takes its own aerial perspective (40 km; the
+  slab's 14 km handed three quarters of a far storm's curtain to the
+  horizon). A system's rain is as grown as its cloud (`grownCell`).
+- **The detail.** Streaks around the axis in two octaves, the shafts and
+  three fibres to each, every octave faded to its mean where the sky map's
+  texels could not hold it (so a far curtain on the low tier keeps its
+  shafts and loses only its fibres, never shimmering). The rim's streaks
+  stop short of the ground, each by its own amount - 0.6 of the base on
+  the average at the rim, 0.9 at the most (virga); the core's reach it. The curtain rises CURTAIN_INTO (0.12) of
+  its cell's depth into the cloud and thins to nothing there: a cloud's
+  visible underside sits above its nominal base, and a curtain cut at the
+  base left a strip of sky between the rain and the cloud it fell from.
+- **Every row.** The march's two early rows (the horizon's own, and past
+  its reach) answer through the same `underCurtains`, so the rain meets
+  the ground instead of stopping a quarter-degree above it.
+
+**FOUND ON THE WAY: VC7e BROKE VC6d's STRIDE.** A fair sky with a rain
+cell showed specks of blue in the cloud's crown, a few before VC7e and
+dashes of them after. Forcing the stride off removed them; a bigger step
+budget did not. VC6d strode three steps on any zero, measured safe on
+2026-09-18 because every zero then held for a stride. Three did not:
+- VC7e's deck cells lift a lane's base and lower its ceiling every two
+  kilometres, so a ray above a lane strode over the core beside it.
+- A cell's rim blends its base, top and type into the zone's.
+- The height ramp's foot (a tower's to 0.08 of its band, a lid's to 0.12)
+  grows as the ray climbs, and every ray of the sky map climbs.
+`density()` now says whether its zero holds (`fSkip`). It is always a
+stride outside the band, except where a cell's rim is within one
+(`resolveAt` flags it, `fReach` the march's own stride). It is never a
+stride under a lane's lifted base, and never over a lowered ceiling where
+anything moves. Under the coverage cut it strides only by SKIP_ROOM
+(0.02), read on the shape BEFORE the height ramp wherever the ramp can
+grow (a lid's thin top reads far under the cut where the shape itself is
+not). And only a stride is backed out. Against the sky marched with no
+stride at all (the lab, 960x540, pixels off by more than 8 levels; the
+march's steps as a share of the no-stride count):
+
+| sky | VC6d's stride | always the raw margin | **VC7c** |
+|---|---|---|---|
+| a rain cell under a fair sky, low | 1301 px (170 over 24), 0.48 | 85 px, 0.66 | **23 px (none over 24), 0.50** |
+| a fair sky | 2 px, 0.66 | 0 px, 0.90 | **0 px, 0.66** |
+| cloudy (a deck: it never strides) | - | - | **0 px, 1.00** |
+
+The picture is the no-stride sky's, and the fair sky keeps VC6d's saving.
+
+### VC7d - a high cirrus layer
+
+- A thin layer of ice cloud at 8-10 km, far above the slab: a single
+  sample per ray where the ray meets its altitude, from the noise volumes
+  stretched along the wind into streaks, lit thin and bright in forward
+  scatter.
+- It uses VC6b's horizon dip at its own altitude, so it keeps the sun's
+  colour for minutes after the deck below has gone grey: the last colour
+  in a sunset sky.
+- Fair and cloudy skies carry it; an overcast lid or a storm hides it
+  behind their own cloud.
+
+**VC7d shipped (2026-09-23; Mac: "Let's do the not done yet before we
+merge").** Pinned by `test/vc7d_cirrus.test.js` (5 tests;
+`tools/mutants/vc7d.json` 34/34 dead).
+- **The shell.** One sample per sky-map texel, where the ray meets a sphere
+  CIRRUS_ALT_M (9 km) up. It uses the stable root (no cancellation at the
+  zenith), so the layer runs out to its own horizon 339 km off, where a
+  flat earth ran to infinity, and fades into the haze over 120 km. It sits
+  behind the slab along the ray, so a deck or a storm hides it by itself.
+- **The jet, not the wind.** The first design laid the streaks along the
+  surface wind. Its turning would have swung the whole field about the
+  world's origin: a kilometre of slide for every half-degree. The streaks
+  lie along the westerly jet instead, which is what upper air at these
+  latitudes does whatever the surface wind is up to. They ride east on
+  the game's clock at five times a fair day's surface drift (71 m a game
+  minute, derived), so every player sees one ice sky. Every tile the ice
+  reads divides the field's period (the floating origin's wrap, and now
+  the jet's), so neither moves a streak.
+- **Wisps, measured by eye four times.**
+  - As parallel stripes of Perlin-Worley cut by the cover it was a sheet
+    from horizon to horizon, its fibres aliasing to a dotted grain.
+  - With patches and a bend it became marbling: dark contour lines round
+    every streak. There were two causes. The cell borders of the
+    Perlin-Worley are thin low valleys, and stretched 8:1 they read as
+    cracks. And the veil, lit by the forward lobe alone, came out darker
+    than the blue away from the sun.
+  - As the fbm's ridge it drew every contour, so it was still marbling.
+  - What shipped: a slow round patch field (the field's period) decides
+    where the high air holds ice, and the cover sets how much. Inside a
+    patch, wisps stand where the smooth fbm of the stretched volume (16:1,
+    a mip soft) is in its upper tail. A gentle bend (2.5 km over ~49 km)
+    curves them like mare's tails, and faint striations run down each
+    one.
+  - The light: a share of the sun follows the ice's hard forward lobe
+    (g 0.7), the rest is isotropic, and the lit cloud colour is the sky's
+    light on it. So from any side it is brighter than the blue behind it,
+    which is pinned per channel.
+- **The ice's own sun.** `cirrusLight` is cloudLight at 9 km, which sees
+  3.04 degrees past the ground's horizon. It takes the palette's sun at
+  the elevation the ICE sees it: the player's elevation plus that dip. At
+  a sun 1.5 degrees down, the deck is out (dark mauve cumulus) and the
+  streaks are still gold against the blue: the last colour in the sky,
+  lit about 12 game minutes after the deck goes out.
+- **In the lab.** At noon, sparse long white streaks curve east-west with
+  blue between them. At dusk they are gold over a mauve deck. Under a
+  cloudy deck they show only where it is thin, and at night there is
+  nothing but stars.
+
+### AUDIT-VC7 - five lenses over VC7a/b/c/e and WIND5, every finding paid (2026-09-23)
+
+Mac asked "Is this ready?"; it was not - VC7d unbuilt, VC7 unaudited, never run in the game - and Mac: "Let's do the
+not done yet before we merge". Five lenses read VC7a, b, c, e and WIND5: what a change reaches, what it broke, the
+shaders' cost and portability, whether the pins derive, and whether the record says true things. Every finding below
+was verified, paid at its root, pinned, and killed as a mutant (`tools/mutants/auditvc7.json`).
+
+**The pins were the biggest finding.** Every old mutant died (230 of 230) because each record replaced the very line
+a pin quoted; of 41 new mutants written against the lines AROUND the quotes, 35 survived, 31 of them real - a curtain
+with Beer's law halved, a haze looking backwards, a wisp's curl dividing by zero for the sand. The fix is a tool, not
+more quotes: `test/glsl.mjs` evaluates GLSL ES 3.00 in JS (types, swizzles, uint wrap, out parameters, fp32 on
+request), and `test/cloudSky.mjs` hands it the march with cells packed by the source's own `packCells`. The laws now
+run on the shader's OWN functions:
+- the curtain's transmittance is exp(-tau) of a brute-force integral of its declared density (exact on a circle; on
+  lobed outlines and clips within the quadrature's measured 2.4%), the veil's colour its tint over what it absorbs,
+  its fade taken at the near entry, the chord toward the cell and still met at twenty kilometres;
+- the octaves are Wrenninge's definition written out independently, at every depth, phase and deck weight;
+- a stride's zero holds for every column a stride can reach (lanes and cores at one variation, 50 m apart over the
+  stride), and a rim is flagged wherever the profile moves within one;
+- the haze's phase integrates to one and peaks at the sun, its march covers the ray to the surface, its ray is the
+  pixel's own, the key scales it, the eye's height moves nothing, the map's edge holds;
+- the wisp's path is the shader's `swirl`, its ribbon square to the eye ray and the path, its pen and its ink read
+  through both main()s, and its clock wraps whole.
+
+**What the shaders got wrong, and what changed.**
+- **(B1) The octaves brightened every fair cloud** - VC7e's claim "a fair sky unchanged" was false (+29% at depth
+  0, a golden hour's chroma down 29%). The octaves are a DECK's: `lightOctaves(tau, phase, deck)` weighs them in by the
+  deck weight, and a fair sky takes exactly the single scattering it was tuned with. Each octave now takes its own
+  flattening (MS_C^i, the documented law - the code had one shared halfway flattening). The light march stops at
+  exp(-6) of whichever term sees furthest there.
+- **(B3) Fog and a sandstorm got lanes.** The deck weight ignored the type variation, which is 0 exactly for the two
+  weathers that are one thing everywhere. `deckWeight()` - one function for the lanes, the stride's evidence and the
+  octaves - eases in over DECK_VARY_FULL, the least vary any varying row takes (0.15, derived).
+- **(G1, R4) The stride's evidence was a blanket.** Any cover over 0.4 held every step to the fine walk (+36 to 65%
+  steps, no picture change), and every point inside a cell was "near a rim". `columnAt` now returns the SPAN a
+  column's height can take between a lane's middle and a core (monotone in the cells' weight between them): over the
+  profile's end a stride holds only if the span's foot is over it too. `resolveAt` flags a cell only where its weight
+  can change within a stride - its own rim or its clip's - asking the outline itself (`rimReach`: the bearings a
+  stride's disc spans, the outline's reach moving at most `shapeTurn` a radian, a rigorous bound from the shape's
+  harmonics). **Found by the new law, not by any lens:** under the band a stride could climb into it and skip the
+  band's lowest cloud; a stride there now holds only more than a stride below it. And density() starts every call
+  at "no stride": only a branch that proves its zero vouches.
+  **Measured, against the sky marched with no stride at all** (the lab, 960x540; the march's steps as a share of the
+  no-stride count):
+
+  | sky | pixels off by more than 8 levels (by more than 24) | steps |
+  |---|---|---|
+  | a rain cell under a fair sky, low | 50 (0) | 0.82 |
+  | a fair sky | 0 | 0.62 |
+  | cloudy | 0 | 0.96 |
+  | overcast | 0 | 0.98 |
+  | a storm cell under a cloudy sky | 0 | 0.90 |
+
+  The picture is the no-stride sky's. The lens's "+36 to 65% steps" was measured against a stride that skipped cloud;
+  a deck's lanes really do move within a stride, so what a deck can safely skip is small (2 to 4%), and the rain
+  view gives back some of VC7c's saving (0.50 then) to the band the stride may no longer climb into blind.
+- **(R1, B4, G4, G5) The curtains.** They ignored the cell's outline and its clip - 70.7% of a thunder curtain's area
+  hung outside its front's rain core. The veil is now an integral along the ray of its density across the ground (the
+  cell's own shape, inside its clip) times its weight up the column, by Simpson's rule over VEIL_PANELS (16) panels a
+  piece, cut at the base. The old chord took the core's weight at its closest approach for its whole length - 3/2 of
+  the declared profile's integral; the integral is the declared one now, so a thunder core's axis passes a tenth,
+  not a twentieth. The ray is cut where the slab begins: the veil before it is laid over everything, the veil past it
+  goes in at its depth among the slab's lit samples (it had been composited over a nearer low deck). The streaks'
+  lattice is an integer hash (GLSL ES 3.00 defines unsigned wrap; a sine's large arguments are each GPU's own), and
+  the bearing is taken only where the eye is off the axis (atan(0, 0) is undefined).
+- **(B6, B7, R2, G2, G3) The haze.** It took the sun's COLOUR, never the key's scale - 10x the ground's light at 06:30,
+  full under a storm's dimmed sun; it takes the key now, the gain retuned to the probe's own key (1/0.9). A low sun's
+  ray meeting the ground past the shadow map read full sun; it reads the map's edge. Its height was the world's y; it
+  is the height above the eye the maps are drawn from (no jump at a vertical recenter). The depth sampler was lowp by
+  default (fp16 depth on mobile) - highp now, for every pass that reads it - and the depth and sky-map reads in the
+  mask's loop take level 0 by name (no implicit derivatives under a branch).
+- **(R3) A front passing jumped the tops a kilometre**: the convection was chosen by the target word and applied to the
+  eased profile. How fair the zone is now eases on the profile's own span.
+- **(G6) The wisps' clock** was the page's seconds in a float32 - a day in, a life's phase stepped by half a frame's
+  advance. Every rate is now whole cycles over WISP_CLOCK_PERIOD (400 s) and the host hands the clock wrapped.
+
+**Decided, not changed: (B2) the lanes shadow the ground.** The deck's lanes are cloud structure, and the one field
+the sky and the ground's shadow read is this renderer's law (the sky you see is the cloud you stand under). Measured:
+under a rain deck the direct sun reaching the ground rose from 3.7% to 12% on the average, an overcast's by 37% - the
+light patches under a broken deck. Recorded here for Mac; a rain deck darker underfoot is a tuning of the rain row,
+not a second field.
+
+**The record, corrected.** Virga reaches up to 0.9 of the base at the rim (0.6 on the average), not "up to 0.6";
+VC7e's depths were 5.1 to 6.3 along the sun (not "2 to 6"), and an overcast's 0.56 to 0.80 (not "a tenth"); a calm
+draws 19 wisps (not "a couple of dozen", nor "~52"); a wisp is a 40-segment ribbon (not "a thin quad") and its alpha
+1.6 times the look's; the sky map's alpha is the slab's, the curtains' and the ice's transmittance; a sky map half cloud in
+stripes leaves the beams between all and none (not "half" - unmeasured); the boil is the game clock's and the same
+for every player, but the cover's drift rides the session's own wind integral (WIND2), so "every player sees one
+sky" is true of the boil and the ice, not of the cover.
+
+**In the game (2026-09-23).** The last of "the not done yet": the sky run in the real game, Daggerfall city, with
+the player's own ARENA2 (SwiftShader, so pictures and relative cost only). Noon sunny, a storm at 16:00, rain at
+11:00, golden hour at 17:20, dusk at 18:10 and an overcast at 13:00, each looking four ways. Three things came out of
+it; the first two were bugs of this branch and are paid, the third is older and recorded.
+- **The `?cloudcell=` door never stood in the game.** setState took the door's cell only in place of the host's list,
+  and the game hosts always hand one (the map's, empty in clear air), so every curtain scene showed clear sky. The
+  door's cell now joins the host's list (a behaviour test on the class; the old form a mutant in `auditvc7.json`).
+  With it, the storm and its curtain stand where the door puts them.
+- **SLAB-SPAN: a cell anywhere lowered every ray's slab.** Both marches walked the UNION of the zone's slab and every
+  cell's (WEATHER2c). One low cell - a rain cell 14 km east, under a cloudy zone - started EVERY ray at its base, and
+  at a grazing angle the sky march's 24 km ran out in the air under the zone's deck: a strip of bare dome round the
+  whole horizon, saturated blue in every direction, where the cell was nowhere. WEATHER3 puts cells in most skies, so
+  this was the common case, not a corner. The shadow march paid the same way, in coarser steps under a storm's
+  union. Now each ray finds its OWN slab (`raySpans`, in the field both marches share): the zone's slab along the ray,
+  and each cell's column where the ray is inside the disc its outline can reach, between the lowest base and the
+  highest top its weight can blend a column to; sorted, merged, disjoint. The sky march walks the spans' first 24 km
+  and jumps the air between them (no step spent); the shadow march lays the spans end to end under the midpoint rule.
+  The aerial perspective followed: it was keyed to the ray's one entry, and a ray through a cell's empty outer disc
+  entered near and faded the deck 80 km behind it as if it were near - a pale block the shape of the disc. Each
+  span is now faded by where it begins, so a storm near and the deck far behind it on one ray each take their own
+  distance's haze. **With no cells both marches are the old ones** (the sky within 1e-9 on 28 rays, the shadow
+  exactly: the old shader run beside the new in node); with cells, the rows that read T = 1 read opaque, and toward
+  a rain cell 9 km north the old sky had been 39% see-through at the horizon (the deck behind it never reached).
+  `slabOf` and the two slab uniforms are retired. Laws on the shader's own functions (weather2c): no cloud can stand
+  outside a span (the resolved profile over 120 rays through shaped, clipped cells of four kinds, and a lobe past its
+  circle); a cell a ray never passes changes nothing in the sky or the shadow; the grazing rows opaque toward a storm
+  and behind a thin low cell; an empty cell in front leaves the deck behind it its own colour; the horizon's share of
+  a cloud is fade(entry) (1 - T); the shadow is the midpoint rule over the spans. `slabspan.json` 15/15 dead.
+- **Recorded, not changed: the horizon's notched band.** Far cumulus at the horizon read as a dark scalloped band with
+  bright dome between the clouds (16:00 sunny, clearest looking north). It is on main too (the same scene run from a
+  main worktree), so it is not VC7's; the high tier (80 steps, a 2048x512 map) draws the same pattern finer, so it
+  is not the march's sampling; and the sky lab, which has the dome and the clouds but not the game's own passes,
+  draws that band light. So it sits in how the game's passes treat the cloud layer against the dome at the horizon -
+  its own slice, with the pictures.
+
+What the game showed right: the storm's anvil and its curtain from base to horizon; the rain and the deck around it;
+the overcast's lid with the haze's shafts under it; the golden hour's gold on the cloud toward the sun; dusk's purple
+lid with stars through its thin places; the cirrus at noon. **The cost, relative only** (SwiftShader has no GPU timer):
+a cloudy 15:00 in the city, twelve seconds each way, 1815 ms a frame with the clouds, the haze and the wisps against
+1203 ms with all three off (`?clouds=off&haze=off&wisps=off`) - the three together half again the frame on a software
+rasterizer; the main thread's script 19.0 ms against 16.7. A real GPU's per-pass numbers are `?perf=zones` on Mac's
+machine.

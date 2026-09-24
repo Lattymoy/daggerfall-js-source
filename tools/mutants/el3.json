@@ -155,7 +155,7 @@
   {
     "name": "render-shafts-always",
     "file": "src/render/airPass.js",
-    "old": "    const sun = f.sunScale > 0.01 && f.lightDir && f.lightDir[1] > 0 ? sunScreenUV(f.proj, f.view, f.lightDir) : null;",
+    "old": "    const sun = up ? sunScreenUV(f.proj, f.view, f.lightDir) : null;",
     "new": "    const sun = f.lightDir ? (sunScreenUV(f.proj, f.view, f.lightDir) ?? [0.5, 0.5]) : null;",
     "tests": [
       "test/el3_air.test.js"
@@ -308,7 +308,7 @@
   {
     "name": "renderer-air-before-shadows",
     "file": "src/render/renderer.js",
-    "old": "    sp.render({\n      eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao,\n    });\n    if (this._air) {",
+    "old": "    sp.render({\n      eye: this._camPos, lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight,\n    });\n    if (this._air) {",
     "new": "    if (this._air) {",
     "tests": [
       "test/el3_air.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "sync-no-air",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search)); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); }",
-    "new": "  if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(true); renderer.setContact?.(contactOn(search)); renderer.setClusters?.(clustersOn(search)); renderer.setShadowCache?.(shadowCacheOn(search)); renderer.setVolumetrics?.(volumetricsOn(search)); }",
+    "old": "renderer.setAir(airOn(search));",
+    "new": "renderer.setAir(true);",
     "tests": [
       "test/el1_enhancedlighting.test.js"
     ]

@@ -709,9 +709,10 @@ test('U58: one item is not "1 items"', () => {
   assert.ok(!/\$\{[a-z.]*count\} items/.test(src), 'a raw count is still being pluralised by hope');
   assert.match(src, /const plural = \(n, word\) =>/);
   // the DEFINITION plus BOTH headers - the pack's own count was
-  // written the same wrong way in U53 and is fixed with it.
-  assert.equal((src.match(/plural\(/g) || []).length, 3,
-    'one of the two headers still does it by hand');
+  // written the same wrong way in U53 and is fixed with it - and
+  // LOOT-STACK's pile tab, which says what a body holds on hover.
+  assert.equal((src.match(/plural\(/g) || []).length, 4,
+    'one of the two headers, or the pile tab, still does it by hand');
   // THE MODULE'S OWN, imported. A copy of the helper re-derived in
   // this file would compare it to itself, which is the vacuous shape
   // U56 found in the wagon suite.

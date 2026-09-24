@@ -153,7 +153,7 @@ test('AUDIT SC1: a dynamic the replay would not DRAW is no reason to replay - a 
 
 test('AUDIT SC1: the static cache is made on the first frame that wants it - not at the lane\'s install, and never behind `?shadowcache=off` (mutant: allocated with the lane)', () => {
   const { r, sp, calls, room, tile, frame } = stand();
-  assert.equal(count(calls, 'texStorage3D'), 2, 'the sun\'s and the casters\' arrays with the lane');
+  assert.equal(count(calls, 'texStorage3D'), 3, 'the sun\'s and the casters\' arrays with the lane, and DISC15\'s one-texel lo stand-in');
   assert.equal(sp.cacheTex, null);
   const draw = () => { r.drawMesh(room, I, null); r.drawTerrain(tile, I, {}, {}, 6.4); };
   frame(draw);

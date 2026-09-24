@@ -29,6 +29,19 @@ test('citeMerge: a continuation after ANOTHER file\'s cite is not this target\'s
   assert.equal(r.moved, 1);
 });
 
+test('citeMerge: CITE-SLASH - a bare slash continues only the chain it touches; a number of the prose\'s own after a cite keeps its value (mutant: the touch dropped)', () => {
+  const r = mapLine('// world.js:3 bands 2/3 of them; world.js:5/6 and (:7/8)', T, shifted);
+  assert.equal(r.out, '// world.js:4 bands 2/3 of them; world.js:6/7 and (:8/9)');
+  assert.equal(r.moved, 5);
+});
+
+test('citeMerge: CITE-CS - a C# member or a table cell\'s edge ends the region; the Ledger\'s DFU column keeps DFU\'s lines (mutant: either stop dropped)', () => {
+  const r = mapLine('| row (`world.js:3`, `:5`) | TalkManager.GetReactionToPlayer_0_1_2 (:6-7) | x (:8) |', T, shifted);
+  assert.equal(r.out, '| row (`world.js:4`, `:6`) | TalkManager.GetReactionToPlayer_0_1_2 (:6-7) | x (:8) |');
+  assert.equal(r.moved, 2);
+  assert.equal(mapLine('// world.js:3 and (:5); DaggerfallRestWindow.CanRest (:7)', T, shifted).out, '// world.js:4 and (:6); DaggerfallRestWindow.CanRest (:7)');
+});
+
 test('citeMerge: a cite whose content moved away is HELD, not renumbered; inside an edited hunk likewise (mutant: the check dropped)', () => {
   const drifted = { ...shifted, newLines: ['NEW', 'a', 'b', 'X', 'd', 'e', 'f', 'g', 'h', 'i', 'j'] };
   const r = mapLine('// world.js:3 and world.js:4', T, drifted);

@@ -24,7 +24,7 @@ import {
 } from '../src/systems/banking.js';
 import { MERCHANTS_FACTION_ID } from '../src/systems/guilds.js';
 import { FACTION_TYPES } from '../src/formats/factionFile.js';
-import { currentWeather, resetWeatherSim, tickWeather, setWeather } from '../src/systems/weatherSim.js';
+import { currentWeather, resetWeatherSim, tickWeather, setWeather, setWeatherMapLaw } from '../src/systems/weatherSim.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { createSceneCache, addPermanentScene, containsPermanentScene, interiorSceneName } from '../src/systems/sceneCache.js';
 import { REPUTATION_LOSS_PER_CRIME, CRIMES, legalRepOf, NORMALIZE_INTERVAL_MINUTES } from '../src/systems/court.js';
@@ -306,7 +306,7 @@ test('S41 loans: a region with no loan is never touched, and no accounts at all 
 // ── SetClimateWeathers (PlayerEntity.cs:447-448) ────────────────────
 
 test('S41 weather: the day change rolls the zones and raises the pending-apply flag; the frame drains it', () => {
-  resetWeatherSim();
+  resetWeatherSim(); setWeatherMapLaw(false);   // WEATHER3b: the day-roll machine's pin - on the map's lane the map is the sky and this machine stands down (weather3b pins that)
   try {
     setWeather('rain');
     // Drain the boot roll first so the pin is about the DAY block.
@@ -318,7 +318,7 @@ test('S41 weather: the day change rolls the zones and raises the pending-apply f
     assert.equal(currentWeather(), 'rain', 'the day block rolls but never applies');
     assert.equal(tickWeather(100 + MINUTES_PER_DAY, CLIMATES.Woodlands, () => 0.99), true);
     assert.equal(currentWeather(), 'sunny', 'the frame applied the DAY roll (low dice -> Woodlands winter sunny)');
-  } finally { resetWeatherSim(); }
+  } finally { resetWeatherSim(); setWeatherMapLaw(false); }
 });
 
 // ── THE WIRING: every host drives this, because the tick does ───────
@@ -454,8 +454,8 @@ test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midni
   // at :2429 that never re-enters Update.
   //
   // The port's hosts implement that RaiseTime as playerTicker.advance(60)
-  // fired from inside sinks.drainFatigue (shared.js:798 ->
-  // exterior.js:1053, world.js:1442), which re-enters tickPlayerMinutes
+  // fired from inside sinks.drainFatigue (shared.js:821 ->
+  // exterior.js:1064, world.js:1462), which re-enters tickPlayerMinutes
   // from inside its own fatigue band. With the marker assigned
   // unconditionally the nested tick left it an hour AHEAD, the outer
   // frame's own setWorldMinutes then reset the clock BELOW it, and the
@@ -486,7 +486,7 @@ test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midni
       try { collapses++; ticker.advance(60); e.fatigue = 1e9; }
       finally { onExhausted.busy = false; }
     };
-    const sinks = {                                 // shared.js:792-800
+    const sinks = {                                 // shared.js:815-823
       drainFatigue: (n) => {
         if (n <= 0) return;
         e.fatigue = Math.max(0, (e.fatigue ?? 0) - n);
@@ -499,7 +499,7 @@ test('S41 re-entrancy: the exhaustion collapse re-enters the tick, and one midni
           entity: e, classicMinutes: worldMinutes(), dt, sinks,
           rolls: () => 0.99, say: () => {},
         });
-        setWorldMinutes(r.classicMinutes);          // shared.js:833 - the write-back
+        setWorldMinutes(r.classicMinutes);          // shared.js:856 - the write-back
         return r;
       },
       advance(m) { return m > 0 ? this.tick(m / CLASSIC_MINUTES_PER_SECOND) : null; },

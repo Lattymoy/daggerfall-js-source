@@ -69,7 +69,7 @@ const defaultAction = (e) => (e.code === 'Enter' ? 'ActivateCursor' : null);
 test('MAC-T2: an H typed into the chat line switches no hand - the field stops the down in capture, the host\'s ungated keyup still runs, and the ring releases only what it captured; the same H on the canvas still switches', () => {
   setBindings(defaults());
   const doc = fakeDocument(), win = fakeWindow();
-  // the host's shape: bubble, on the window, feeding the held Set and the edge ring (world.js:7660 / :7720 / :7919)
+  // the host's shape: bubble, on the window, feeding the held Set and the edge ring (world.js:7702 / :7712 / :7927)
   const keys = new Set(); const edge = keyEdges();
   win.addEventListener('keydown', (e) => { keys.add(e.code); noteKeyDown(edge, e.code, e.repeat); });
   win.addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(edge, e.code); });
@@ -243,7 +243,7 @@ test('MAC-T1 (d): the caster pick skips a carried light in any camera; by source
     const s = rd(h);
     const n = (s.match(/withPlayerLights\(/g) ?? []).length;
     assert.ok(n >= 1, `${h} composes through withPlayerLights`);
-    assert.equal((s.match(/playerTorchLight\(playerEntity, player\.pos, cam\.yaw\)/g) ?? []).length, n, `${h}: every composition carries the torch`);
+    assert.equal((s.match(/playerTorchLight\(playerEntity, player\.feetAt\(\), cam\.yaw\)/g) ?? []).length, n, `${h}: every composition carries the torch`);   // DISC13-A: off the render feet now
     sites += n;
   }
   assert.equal(sites, 6, 'six call sites, no host edit');
