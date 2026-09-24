@@ -164,8 +164,8 @@ import { alignSurvival, shiftSurvival } from '../systems/survival/needs.js';   /
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
 import { elementalResistanceChance, ELEMENTS } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances
 import { createTownWatch, runTownWatchFrame } from '../systems/townWatch.js';   // DISC19-F: the watch defends the town
-import { rollCampEncounterOnChunkLoad, amGroupRollOwner } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
-import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
+import { rollCampEncounterOnChunkLoad, amGroupRollOwner, campAnchorSpot } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
+import { WORLD_SALT, spawnsDungeon, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { isMainStoryDungeon } from '../world/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { snapshotPlayer, restorePlayer, resolvePendingSpells, composeSessionState, restoreSessionState, dungeonPixelFor } from '../systems/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
@@ -696,37 +696,39 @@ export async function bootWorld(canvas, renderer, params, status) {
   // any location. The page flag is read off `params`, not `onlineOn` - that const is declared far below this build.
   // Wrapped: a failure here costs one pixel its dungeon, never the stream.
   const _spawnSalt = WORLD_SALT;   // one salt for every client: the same pixels, the same dungeons, the same rooms
-  // SPAWNED-DUNGEONS2b (Lost's package, 2026-09-19): NEARBY, WITH A
-  // DIRECTION, AND ONE LINE PER CROSSING.
+  // SPAWNED-DUNGEONS3 (2026-09-24, Mac): THE PLAYER'S OWN PIXEL, IN METRES.
   //
-  // A crossing can put several unannounced spawns inside the radius at
-  // once - the search covers a 5x5 block of pixels - and a line per hit
-  // stacked them up the log back to back. Every pixel found this
-  // crossing is still marked announced, so none of them nags again
-  // later; only the CLOSEST is ever actually said.
+  // SPAWNED-DUNGEONS2b searched a 5x5 block of pixels around the one
+  // entered and named the closest with a compass word - so the player
+  // was told of dungeons two pixels (a mile and more) away, and "nearby"
+  // meant anything inside that block. The line is now about the pixel
+  // the player has just walked into and nothing else: if IT holds a
+  // spawn, the player is told once how far and which way, in metres,
+  // from where they stand to the dungeon's centre. A spawn on a
+  // neighbouring pixel is announced when THAT pixel is entered.
   //
-  // The compass word is talk.js's own eight-band `directionHintString`,
-  // off the map-pixel delta. `px` is east-positive already; `py` is
-  // SOUTH-positive (mapsFile.js longitudeLatitudeToMapPixel writes
-  // `y = 499 - lat/128`), so north needs the sign flipped on the way in.
+  // THE DISTANCE is in the scene's own frame: the pixel's translation
+  // (state.pixelTranslation) plus the location's centre in the pixel
+  // (spawnedDungeons.js spawnedLocationCentreLocal - centred, as every
+  // location is), less the player's feet, on the frame of the crossing,
+  // after the recentre has moved both. Scene x runs east and scene z
+  // runs NORTH (pixelTranslation negates py), which is the (east, north)
+  // pair talk.js's eight-band `directionHintString` takes - no sign to
+  // flip here, unlike the map-pixel delta 2b fed it. The spawn stands
+  // centred in an 819.2 m pixel, so a walk-in is always 300+ metres
+  // from it; spawnedDungeons.js keeps that by the template's clearance.
   const _announcedSpawnPixels = new Set();
-  const SPAWN_NEARBY_RADIUS = 2;
   const _capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  function announceNearbySpawns(px, py) {
-    const found = [];
-    for (let dy = -SPAWN_NEARBY_RADIUS; dy <= SPAWN_NEARBY_RADIUS; dy++) {
-      for (let dx = -SPAWN_NEARBY_RADIUS; dx <= SPAWN_NEARBY_RADIUS; dx++) {
-        const key = `${px + dx},${py + dy}`;
-        if (_announcedSpawnPixels.has(key) || !locationIndex.get(key)?.spawned) continue;
-        found.push({ key, dx, dy, d2: dx * dx + dy * dy });
-      }
-    }
-    if (!found.length) return;
-    found.sort((a, b) => a.d2 - b.d2);   // closest first
-    for (const f of found) _announcedSpawnPixels.add(f.key);   // every hit this crossing is spent, even the ones left unsaid
-    const nearest = found[0];
-    if (nearest.dx === 0 && nearest.dy === 0) { townTalk.say('You see a Dungeon nearby!'); return; }
-    townTalk.say(`You see a Dungeon nearby, in the ${_capitalize(directionHintString(nearest.dx, -nearest.dy))}!`);
+  const _announceT = [0, 0, 0];
+  function announceNearbySpawns(px, py, feet) {
+    const key = `${px},${py}`;
+    const loc = locationIndex.get(key);
+    if (!loc?.spawned || _announcedSpawnPixels.has(key)) return;   // the player's own pixel, once
+    _announcedSpawnPixels.add(key);
+    const t = state.pixelTranslation(px, py, _announceT);
+    const [lx, lz] = spawnedLocationCentreLocal(loc);
+    const dx = t[0] + lx - feet[0], dz = t[2] + lz - feet[2];   // east, north
+    townTalk.say(dungeonSightLine(Math.hypot(dx, dz), _capitalize(directionHintString(dx, dz))));
   }
   let _spawnTemplates = null;
   // TTL1: what this client has met, and when. The roll above is a pure
@@ -4510,16 +4512,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // the player places several near a point, with no new geometry code.
   let _nextCampId = 1;
   const _standCampEncounter = (hit, feet) => {
-    const anchorEnv = placeFoeEnv({
-      collider,
-      playerFeet: [feet[0], feet[1] + 0.9, feet[2]],
-      playerYawRad: cam.yaw,
-      fovDegrees: fieldOfView() * 180 / Math.PI,
-      isOccupied: entityOccupancy((f) => f.ai?.feet, () => exteriorFoePool(), feet),
-    });
+    // CAMP-FAR: the anchor stands a hundred to a hundred and fifty metres
+    // out, just outside the view, on the TERRAIN's own floor
+    // (campEncounters.js campAnchorSpot says why the ring law cannot
+    // reach that far). The members below still stand around it by the
+    // ring law, at the group's spacing.
     let anchor = null;
     for (let i = 0; i < LOOSE_FOE_PLACE_ATTEMPTS && !anchor; i++) {
-      anchor = placeFoeFreely(anchorEnv, { minDistance: hit.minDistance, maxDistance: hit.maxDistance, lineOfSightCheck: true });
+      anchor = campAnchorSpot({ feet, yawRad: cam.yaw, fovDegrees: fieldOfView() * 180 / Math.PI, groundAt: collider.heightAt, minDistance: hit.minDistance, maxDistance: hit.maxDistance });
       if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;   // DISC19-F: a camp is a wilderness thing - never pitched in a town's rect from a player standing at its edge
     }
     if (!anchor) return;
@@ -13979,7 +13979,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         clearSceneCache(playerEntity.sceneCache, { start: false });
       }
       queue.push(...r.load);
-      announceNearbySpawns(r.current.x, r.current.y);   // SPAWNED-DUNGEONS2: said on ENTERING the pixel, not when it is rolled (that is three pixels ahead)
+      announceNearbySpawns(r.current.x, r.current.y, walkMode ? player.pos : cam.pos);   // SPAWNED-DUNGEONS2: said on ENTERING the pixel, not when it is rolled (that is three pixels ahead); SPAWNED-DUNGEONS3: from where the player stands, in metres
       // WOD5: PlayerGPS raises OnRegionIndexChanged on the frame the
       // region changes, and it changes only on a crossing - so the loader
       // hears it here as well as at a build: a visit shorter than a build

@@ -79,7 +79,7 @@ function rig() {
  *  corner), which is the branch that reads `locationRect.zMax`. */
 function standInTheRing(r) {
   r.state.tileRect = TOWN;
-  r.to.onMapPixelChanged({ x: 500, y: 250 });   // world.js:3341 - the rects for the pixel the player stands in
+  r.to.onMapPixelChanged({ x: 500, y: 250 });   // world.js:3343 - the rects for the pixel the player stands in
   const t = locationRectsOf(r.o.x, r.o.z, TOWN.tileRect, false, false);
   r.state.pos = { x: (t.locationRect.xMin + t.locationRect.xMax) / 2, z: (t.locationRect.zMax + t.locationBorderRect.zMax) / 2 };
   r.state.yaw = 90;

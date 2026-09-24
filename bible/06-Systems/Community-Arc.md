@@ -685,7 +685,7 @@ The sixth merge's conflicts showed a Ledger row whose DFU message ids read "8076
 The struck row above it still reads "8076/8077", and DFU's TalkManager.cs answers with records 8075, 8076 and 8077
 (:2029-2035). `tools/citeShift.mjs` and `tools/citeMerge.mjs` had been moving it for as far back as the history goes.
 - **CITE-SLASH.** RF3's grammar read a bare `/N` after a cite, anywhere up to the next cite, as that cite's line. So
-  "8076/8077", a sentence after `world.js:3751`, was world.js:8211 to both tools, and it moved whenever that line did.
+  "8076/8077", a sentence after `world.js:3753`, was world.js:8211 to both tools, and it moved whenever that line did.
   A bare `/N` now continues only the chain it touches: `world.js:6700/6701`, `:13/15`. The colon forms keep RF3's
   reach, because the colon says what they are.
 - **CITE-CS.** RF3 ends a cite's region at a `.cs:N` cite, but DFU's members are mostly written without their file:
@@ -743,7 +743,7 @@ Main moved thirty commits while the arc was in review. Merged, not rebased; 106 
 - **Six of main's mutant records, re-aimed by content.** Each is aimed at the site its name gives, and each dies
   against a green baseline.
   - Four SURV-TIERS records mutate line cites in source comments, and the merge had moved those cites
-    (`world.js:3084` is `:3095` now).
+    (`world.js:3086` is `:3097` now).
   - MUT-AIM found two that name two sites each:
     - DISC10-D-H1's stamp, which the hit's defaults and the kill's share;
     - DISC9's heard word, which DISC11's rain gain repeats below it.
