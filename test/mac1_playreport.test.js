@@ -374,15 +374,19 @@ test('AUDIT 65 XL-4: the third-person focal rides the SMOOTHED feet, and no host
   assert.deepEqual(m2.feetAt(), [m2.pos[0], m2.pos[1], m2.pos[2]], 'a placement answers the raw feet');
   assert.equal(m2._eyeFeetY, null, 'and primes the filter afresh, exactly as eyeAt does');
 
-  // 3. THE HOSTS (the four-hosts rule): every mwView call site takes
-  //    the render feet, and `player.pos` reaches neither.
+  // 3. THE HOSTS (the four-hosts rule): every mwView camera call takes
+  //    the render feet, and `player.pos` reaches neither. DISC18: the
+  //    BODY's draw takes the capsule's own interpolated feet
+  //    (bodyFeetAt) - on the camera's low-passed ones it stood under
+  //    the ground on every climb.
   for (const [host, sites] of [['src/scenes/world.js', 2], ['src/scenes/worldModes.js', 3],
     ['src/scenes/exterior.js', 2], ['src/scenes/dungeon.js', 2]]) {
     const s = src(host);
     let n = 0;
     for (const hit of s.matchAll(/mwView(?:Frame|DrawBody)\(/g)) {
       const call = s.slice(hit.index, hit.index + 320);
-      assert.match(call, /feet: player\.feetAt\(\)/, `${host}: a mwView call takes the render feet`);
+      const body = s.startsWith('mwViewDrawBody(', hit.index);
+      assert.match(call, body ? /feet: player\.bodyFeetAt\(\)/ : /feet: player\.feetAt\(\)/, `${host}: a mwView ${body ? 'body draw takes the body\'s feet' : 'camera call takes the render feet'}`);
       assert.ok(!/feet: player\.pos/.test(call), `${host}: the raw stepped feet must not reach the camera`);
       n++;
     }
