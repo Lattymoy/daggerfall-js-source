@@ -191,6 +191,24 @@
     ]
   },
   {
+    "name": "AUDITRETRO2-J7-alpha-art-keyed-on-a-null",
+    "file": "src/render/renderer.js",
+    "old": "    if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);",
+    "new": "    if (opts.alpha) (this._alphaArt ??= new WeakSet()).add(tex);",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-J8-a-menus-resolve-opens-a-span",
+    "file": "src/render/renderer.js",
+    "old": "    if (this._perfOpen) this._perf?.mark('air');",
+    "new": "    this._perf?.mark('air');",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
     "name": "AUDITRETRO2-G1-a-stale-side-counts",
     "file": "src/systems/dialogShortcuts.js",
     "old": "  const live = (flag) => typeof flag !== 'boolean' || flag;",
@@ -222,6 +240,60 @@
     "file": "src/scenes/exterior.js",
     "old": "    const act = retroToggleKey(e, keys) ? null : actionOf(e, keys);",
     "new": "    const act = actionOf(e, keys);",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G5-the-panel-on-the-screens-middle",
+    "file": "src/ui/hud.js",
+    "old": "  if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit, at);",
+    "new": "  if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit);",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G5-the-reticle-unmoved",
+    "file": "src/ui/hud.js",
+    "old": "reticleY: crosshairCentreY(canvas.height, hudReticle(canvas).largeHudHeight)",
+    "new": "reticleY: crosshairCentreY(canvas.height, 0)",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G5-the-docked-bar-only",
+    "file": "src/ui/hud.js",
+    "old": "floorY: lastLargeHudBar?.y ?? canvas.height",
+    "new": "floorY: canvas.height",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G5-the-reticle-row-ignored",
+    "file": "src/ui/classicLootPanel.js",
+    "old": "Math.round(centreY - h / 2)",
+    "new": "Math.round(NATIVE_H / 2 - h / 2)",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G5-the-floor-ignored",
+    "file": "src/ui/classicLootPanel.js",
+    "old": "Math.min(Math.floor(bottom) - h - 2,",
+    "new": "Math.min(NATIVE_H - h - 2,",
+    "tests": [
+      "test/auditretro2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITRETRO2-G5-the-floor-below-the-screen",
+    "file": "src/ui/classicLootPanel.js",
+    "old": "bottom: floorY == null ? NATIVE_H : Math.min(NATIVE_H, (floorY - m.oy) / m.s),",
+    "new": "bottom: floorY == null ? NATIVE_H : (floorY - m.oy) / m.s,",
     "tests": [
       "test/auditretro2.test.js"
     ]

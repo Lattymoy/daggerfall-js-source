@@ -104,8 +104,8 @@
     "tests": [
       "test/overhauls.test.js"
     ],
-    "old": "    if (opts.alpha) (this._alphaArt ??= new WeakSet()).add(tex);",
-    "new": "    if (opts.alpha === 'never') (this._alphaArt ??= new WeakSet()).add(tex);"
+    "old": "    if (opts.alpha && tex) (this._alphaArt ??= new WeakSet()).add(tex);",
+    "new": "    if (opts.alpha === 'never' && tex) (this._alphaArt ??= new WeakSet()).add(tex);"
   },
   {
     "name": "OVH-sdf-classic-spacing-kept",

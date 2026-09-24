@@ -49,6 +49,11 @@ pack's pixels. The doors:
   renderer's per-texture law (`uploadTexture(..., { alpha: true })`,
   `screenQuadBlends`'s `alphaArt`): the pack is soft-edged where the classic
   art was a 1-bit cutout, and the texture carries that to every draw of it.
+  AUDIT RETRO1 J7 (its second pass, fixed 2026-09-24): on a lost context a
+  browser on the old WebGL IDL hands back a null texture, and the flag's
+  `WeakSet.add(null)` threw - every pack upload a TypeError that took over
+  the context-lost notice, where a classic upload does nothing. The flag is
+  set on a texture only (`test/auditretro2.test.js`).
 - `nativePanel.loadImg`, `hud.js`'s loader and `chargenArt.loadOne` ask it
   first (the raw classic bitmap is still read: the size, the fallback, and
   TAMRIEL2's click mask and CHGN00I0's palette cycle, which the pack lacks).

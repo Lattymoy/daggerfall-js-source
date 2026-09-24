@@ -31,6 +31,19 @@ import { routeKey } from '../src/ui/input.js';
 import { retroToggleKey } from '../src/ui/hudShortcuts.js';
 import { _resetRetroPostprocessing, retroPostprocessingEnabled } from '../src/systems/retroMode.js';
 import { E, stateGl, presents, retroCfg, programBuilder } from './retroGl.mjs';
+import { drawHud } from '../src/ui/hud.js';
+import { nativeMetrics } from '../src/ui/nativePanel.js';
+import { crosshairCentreY } from '../src/ui/hudCrosshair.js';
+import { largeHudRect } from '../src/ui/hudLarge.js';
+import { lootPanelBounds, PARCHMENT, parchmentImage, _setLootPanelSeamsForTests } from '../src/ui/classicLootPanel.js';
+import { parseHexColor, DEFAULT_TOOLTIP_TEXT_BG } from '../src/ui/toolTip.js';
+import { worldHoverFrame, destroyWorldPlaque } from '../src/ui/worldPlaque.js';
+import { resetQuickLoot } from '../src/systems/quickLoot.js';
+import { setUiSkin } from '../src/systems/uiSkin.js';
+import { setUiPack } from '../src/systems/uiPack.js';
+import { getString, setValue, _resetForTests as resetSettings } from '../src/systems/settings.js';
+import { _resetForTests as resetPrefs } from '../src/systems/uiPrefs.js';
+import { readPng } from '../tools/pngIO.mjs';
 
 const src = (rel) => readFileSync(new URL(`../src/${rel}`, import.meta.url), 'utf8');
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -230,6 +243,60 @@ test('AUDIT RETRO1 G2/G3: the settings\' page test comes after the forced table 
   }
 });
 
+test('AUDIT RETRO1 G5: DISC22-C\'s loot panel stands beside the crosshair where it is - re-centred into a docked bar\'s strip - and clear of a large-HUD bar drawn before it, docked or not', async () => {
+  const canvas = { width: 1920, height: 1080 };
+  const m = nativeMetrics(canvas);   // 5x, 40 px of letterbox above and below
+  assert.deepEqual(lootPanelBounds(m, crosshairCentreY(1080, 0), 1080), { centreY: 100, bottom: 200 }, 'the plain HUD: the native screen\'s middle and foot, where it always stood');
+  const font = { fnt: { fixedHeight: 7, fixedWidth: 5, glyphWidth: () => 5, glyphs: [], chars: [] } };
+  const art = { health: { tex: 'h', w: 4, h: 32 }, fatigue: { tex: 'f', w: 4, h: 32 }, magicka: { tex: 'm', w: 4, h: 32 }, compass: { tex: 'c', w: 322, h: 17 }, compassBox: { tex: 'b', w: 69, h: 17 }, breathNormal: { tex: 'n', w: 1, h: 1 }, breathShort: { tex: 's', w: 1, h: 1 } };
+  const vitals = { health: 50, maxHealth: 50, magicka: 20, maxMagicka: 20, fatigue: 6400, stats: { strength: 50, endurance: 50 } };
+  let pile = [];
+  const hover = () => worldHoverFrame({
+    eye: [0, 0, 0], dir: [0, 0, 1], collider: { raycast: () => Infinity },
+    targets: () => [{ key: 'loot:7', aabb: { min: [-1, -1, 1], max: [1, 1, 2] }, distance: 1, reach: 3.2 }],
+    name: () => ({ title: 'Loot Pile' }), contents: () => pile,
+  });
+  const r = { quads: [], uploadTexture: (_a, rec) => ({ r: rec }), drawScreenQuad(tex, dst, uv, color) { this.quads.push({ tex, dst, color }); } };
+  const frame = (large) => { hover(); r.quads.length = 0; drawHud(r, canvas, art, vitals, 0, 0, { font, largeHud: { art: { main: { tex: 'tex:MAIN00I0' } }, alignment: 0, mode: 'info', ...large } }); };
+  const span = (qs) => [Math.min(...qs.map((q) => q.dst.y)), Math.max(...qs.map((q) => q.dst.y + q.dst.h))];
+  resetSettings(); resetPrefs(); resetQuickLoot();
+  setUiSkin('classic');
+  _setLootPanelSeamsForTests({ fetch: async () => new Uint8Array(readFileSync(new URL(`../public/art/${PARCHMENT.file}`, import.meta.url))), decode: async (b) => readPng(b) });
+  try {
+    setValue('GUI', 'LargeHUD', true);
+    // (a) DOCKED - the bar 46 * 1920/320 = 276 px, the crosshair re-centred to (1080 - 276) / 2 = 402. The panel stood
+    // on the screen's own 540
+    setValue('GUI', 'LargeHUDDocked', true);
+    pile = [{ name: 'Ruby' }, { name: 'Steel Longsword' }, { name: 'Leather Cuirass' }, { name: 'Gold' }];
+    frame({ docked: true }); frame({ docked: true });   // the first frame paints the bar
+    const bg = parseHexColor(getString('GUI', 'ToolTipBackgroundColor'), DEFAULT_TOOLTIP_TEXT_BG);
+    const box = r.quads.find((q) => q.tex === null && q.dst.w === 120 * m.s && String(q.color) === String(bg));
+    assert.ok(box, 'DFU\'s tooltip box, drawn');
+    const [top, foot] = span([box]);
+    assert.ok(Math.abs((top + foot) / 2 - 402) <= m.s, `centred on the crosshair's row, 402 - not the screen's 540 (${(top + foot) / 2})`);
+    // ...and the parchment, four rows: it reached 835, over the bar's top at 804
+    setUiPack('grimoire');
+    parchmentImage(r);
+    await new Promise((res) => setTimeout(res, 30));
+    frame({ docked: true });
+    const sheet = r.quads.filter((q) => q.tex?.r === PARCHMENT.file);
+    assert.equal(sheet.length, 3, 'Mac\'s parchment, in its three pieces');
+    const [pTop, pFoot] = span(sheet);
+    assert.ok(Math.abs((pTop + pFoot) / 2 - 402) <= m.s && pFoot <= 804, `the parchment beside the crosshair and above the bar (${pTop}..${pFoot})`);
+    // (b) UNDOCKED at LargeHUDUndockedScale 1 - the crosshair on the screen's middle, the bar an overlay whose top is
+    // 1080 - 46 * 5 = 850. The tallest list (six rows and "and 3 more") centred there reached 875; it stands above it
+    setValue('GUI', 'LargeHUDDocked', false);
+    pile = Array.from({ length: 9 }, (_, i) => ({ name: `Thing ${i}` }));
+    const bar = largeHudRect(canvas, { docked: false, undockedScale: 1, alignment: 0 });
+    frame({ docked: false, undockedScale: 1 }); frame({ docked: false, undockedScale: 1 });
+    const [, uFoot] = span(r.quads.filter((q) => q.tex?.r === PARCHMENT.file));
+    assert.equal(bar.y, 850);
+    assert.ok(uFoot <= bar.y, `clear of the undocked bar it is drawn after (${uFoot} against ${bar.y})`);
+  } finally {
+    setUiPack('none'); _setLootPanelSeamsForTests(); destroyWorldPlaque(); resetQuickLoot(); resetPrefs(); resetSettings();
+  }
+});
+
 // ── I: the pins the first pass lacked ──────────
 
 test('AUDIT RETRO1 I3: a cleared screen scissor stays cleared - the present never re-arms a box the 2D pass let go', () => {
@@ -350,7 +417,7 @@ test('AUDIT RETRO1 J1: `?perf` measures the retro present - and the LUT slice in
   }
 });
 
-test('AUDIT RETRO1 J7: a lost context\'s null texture is no WeakSet key - a replacement upload does what a classic one does, nothing', () => {
+test('AUDIT RETRO1 J7: a lost context\'s null texture is no WeakSet key - a replacement upload, and OVH2\'s alpha art, does what a classic one does, nothing', () => {
   const { gl: base, canvas } = stateGl();
   const lost = new Proxy(base, { get: (t, k) => (k === 'createTexture' ? () => null : t[k]) });
   canvas.getContext = () => lost;
@@ -358,4 +425,20 @@ test('AUDIT RETRO1 J7: a lost context\'s null texture is no WeakSet key - a repl
   const img = { width: 2, height: 2, colors: new Uint8Array(16) };
   assert.doesNotThrow(() => r.uploadTexture(7, 0, img, { replacement: true }));
   assert.doesNotThrow(() => r.uploadEmissionTexture(7, 0, img, { replacement: true }));
+  assert.doesNotThrow(() => r.uploadTexture(7, 1, img, { alpha: true }), 'OVH2\'s `_alphaArt` add, the same shape (a pack\'s soft-edged art, the loot parchment)');
+});
+
+test('AUDIT RETRO1 J8: a menu\'s frame resolved through the lane opens no `?perf` span - the world frame\'s meter had closed, and the `air` zone it opened stayed open through the rAF wait to the next world frame', () => {
+  const { canvas } = stateGl();
+  const r = new Renderer(canvas);
+  r.setLightingLane(EL_LANE); r.setAir(true);
+  const seen = [];
+  r._perf = { begin() { seen.push('begin'); }, mark(n) { seen.push(`mark:${n}`); }, end() { seen.push('end'); }, stop() { seen.push('stop'); }, frame() { seen.push('frame'); return null; } };
+  try {
+    r.beginFrame(I, I, L, WORLD_FRAME); r.drawScreenQuad(null, Q);
+    assert.ok(seen.includes('mark:air') && seen.at(-1) === 'frame', 'a world frame: its air span, closed with the frame');
+    seen.length = 0;
+    r.beginFrame(I, I, L); r.drawScreenQuad(null, Q);   // a menu or a video over the world - still the lane's frame, still resolved
+    assert.deepEqual(seen, [], 'nothing opened after the meter closed');
+  } finally { setFrameTarget(null); }
 });

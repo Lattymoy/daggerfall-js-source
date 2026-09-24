@@ -253,11 +253,14 @@ the wrong one) or recorded above.
   the bias's reach and the prefab (H3); "twelve re-aimed" was thirteen
   (I8); the "float32" credit (I9); 3.5% was 3.4% (I10); the arms'
   figures are relative to retro off at FieldOfView 60 (I11); "4:3" (I12).
-- **Outside retro, left for their own slices:** DISC22-C's loot panel
-  centred on the canvas where the crosshair is re-centred into a docked
-  strip (G5); OVH2's `_alphaArt` WeakSet add, the J7 shape (J7); `?perf`'s
-  `air` span opened by a non-world frame's resolve after the meter has
-  closed (J).
+- **Outside retro, first left for their own slices, then fixed the same
+  day (Mac: "Take care of those"):** DISC22-C's loot panel stood on the
+  screen's middle where a docked bar re-centres the crosshair, and a tall
+  parchment reached over the bar (G5 - `01-Overview/Field-Bugs-2026-09-24.md`);
+  OVH2's `_alphaArt` WeakSet add, the J7 shape (J7 -
+  `10-UI/Overhauls.md`); a non-world frame's resolve opened a `?perf`
+  `air` span after the meter had closed (J8, the lens's pre-existing
+  note - `07-Rendering/Performance-Rig.md`).
 
 ## Testing
 
@@ -284,14 +287,16 @@ pass (D3), every late-upload cap (D4) and the lane's retro slot (D5).
 the second pass; B6's fix spans two sites, so its revert was checked by
 hand against the pre-audit renderer). The fake GL is `test/retroGl.mjs`.
 
-`test/auditretro2.test.js` (14 pins), the second pass's: a pack's frame
+`test/auditretro2.test.js` (16 pins), the second pass's: a pack's frame
 flagged (F2), the lane's resolve under a scissor (F3), the LUT's jobs,
 failures, block cap and streamed slabs (F4-F7, J3-J6, I4 with shift 0's
 SHA-256), what the present hands the shader (I5), a stale modifier
-(G1), the page test and the outdoor action read (G2/G3), the scissor
-shadow's clear (I3), the half-pinned fixes (I6), `?perf`'s retro span
-(J1), a lost context (J7). `tools/mutants/auditretro2.json`: 43 mutants,
-all dead.
+(G1), the page test and the outdoor action read (G2/G3), the loot panel
+beside the crosshair and clear of the bar, through `drawHud` (G5), the
+scissor shadow's clear (I3), the half-pinned fixes (I6), `?perf`'s retro
+span (J1), a lost context under a replacement or an alpha upload (J7), no
+span after the meter closes (J8). `tools/mutants/auditretro2.json`: 51
+mutants, all dead.
 
 NOT SEEN ON A GPU. No probe was run for this slice or either pass of its
 audit (Mac: "Do not use probes"); the shader is pinned by source and the

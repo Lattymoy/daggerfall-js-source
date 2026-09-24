@@ -637,6 +637,19 @@ in the world, which is DFU's.
 The classic HOTBAR is not in this slice. See the open question in the
 report.
 
+**AUDIT RETRO1 G5 (found by its second pass; fixed 2026-09-24, Mac: "Take
+care of those").** "Beside the crosshair" held only on the plain HUD. The
+panel was centred on the native screen's middle, but over a DOCKED large
+HUD the crosshair is re-centred into the strip the bar leaves (ROAD-E E5).
+At 1920x1080 the crosshair stands at y 402 and the panel stood at 540,
+and a four-row parchment reached y 835, over the bar's top at 804 - the
+bar is drawn before it. The panel now asks `hudReticle` where the
+crosshair is, as the enhanced plaque does, and stands clear of the large
+HUD's bar, docked or not: an undocked bar at LargeHUDUndockedScale 1
+still overlapped the tallest list by 25 px (`lootPanelBounds`; the plain
+HUD's layout is unchanged). Pinned in `test/auditretro2.test.js` through
+`drawHud` itself, both faces.
+
 ## DISC22-G: the enhanced dungeon map, mended and made the better map
 
 Mac: *"enhanced dungeon automap is broken and doesn't work properly. This

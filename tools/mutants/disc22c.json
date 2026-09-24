@@ -38,7 +38,7 @@
   {
     "name": "D22C-hud-draws-nothing",
     "file": "src/ui/hud.js",
-    "old": "  if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit);",
+    "old": "  if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit, at);",
     "new": "",
     "tests": [
       "test/disc22c_classic_loot.test.js"
