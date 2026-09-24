@@ -959,13 +959,42 @@ but its facing (`lastMoveDirection`), its frame clock and the placed base (`plac
   tables step at along the facing, the facing's turn, and the stride phase off the frame clock. It is drawn as the
   quad TILTED in the view plane (the billboard shader takes its right and up per call; the base is set so the top
   stays on the hook) and SHORTENED as it swings along the line of sight.
-- **Only** in third person, on foot, alive and in your own form - the rider's sprite sits on a horse and the beast's
-  is another body. It lights you from its middle (`setPlayerWaistLightOverride`); the point is cleared the moment it
-  is not drawn - put out, the body toggled off, the graphic off, and each frame the Morrowind lane has the view
-  (`standDown`, called from mwView's Morrowind branch).
+- **It hangs** in third person, on foot, alive and in your own form - the rider's sprite sits on a horse and the
+  beast's is another body - and it is **drawn from behind only** (HT-WAIST-BACK, below). It lights you from its middle
+  (`setPlayerWaistLightOverride`) wherever it hangs, seen or not; the point is cleared the moment it stops hanging -
+  put out, the body toggled off, the graphic off, and each frame the Morrowind lane has the view (`standDown`, called
+  from mwView's Morrowind branch).
 - **Owner**: its batch is created when first drawn (at its full size - the renderer's cull sphere is the batch's own -
-  and minted again when `BillboardScale` moves it) and destroyed when it stops; its picture stays in the renderer's
-  cache under `htwaist-lantern`, as the body's own sprites do. With no lantern at the waist nothing of it runs - no
-  batch, no draw (`eotb_body.test.js` reads the last batch as the body's).
+  and minted again when `BillboardScale` moves it) and destroyed when it stops hanging - not when the sprite turns its
+  front to the eye; its picture stays in the renderer's cache under `htwaist-lantern`, as the body's own sprites do.
+  With no lantern at the waist nothing of it runs - no batch, no draw (`eotb_body.test.js` reads the last batch as the
+  body's).
 
-Pins: `test/htwaist_eotb.test.js`. Not verified in a browser (no ARENA2 here).
+**HT-WAIST-BACK (2026-09-24, Mac, looking at screenshots of the lantern at the hip from the front, the side, walking
+and behind: "Just have it show on the back of the sprite, not all angles. Make sure all the eye of the Beholder sprites
+get this change").**
+
+- **The rule** (`player/eotbLantern.js isRearView`): the lantern's picture is drawn only from the views that show the
+  sprite's BACK - orientation 4, and the back diagonals 3 and 5 - and from none of 0, 1, 2, 6, 7. It is asked of the
+  orientation UpdateBillboard last PAINTED (`shown.orientation`, the delayed repaint's), not of the one just measured,
+  so the lantern appears and goes with the picture under it.
+- **The numbering, verified.** `orientationFor` (IL_4779-IL_47a3) makes 0 the camera in front of the facing and 4 the
+  camera behind it (the EOTB-IL order: SignedAngle from the camera to the facing); the wheel draws records
+  +0 +1 +2 +3 +4 +3 +2 +1 for orientations 0-7, mirrored at 1-3 (checked against the IL, 0 of 168 deviate). Which
+  record is a back was read off the vendored art, upscaled side by side: archive 112364's idle (records 0-4), walk
+  (5-9) and armed walk (20-24), and 112372's idle (0-4) - +0 is the face, +1 the front three-quarter, +2 the profile,
+  +3 the back three-quarter (shoulder blades, the seat, the heels) and +4 the back. Every on-foot set shares the wheel,
+  so the rear views are those drawing +3 or +4: 3, 4 and 5. `mirrorFlips` (the Mirror string's flip at 0 and 4) turns
+  a front or a back over, never one into the other. A body that has never moved faces nowhere (the IL's Vector3.zero,
+  which SignedAngle reads as 0) and paints its front: no lantern until it has turned.
+- **Unseen, it still hangs**: the swing runs on (`stepLantern` asks whether it HANGS, not whether it is drawn), the
+  batch is kept, and the light stays at the hip - so turning round neither restarts the swing nor moves the light.
+- **Every EOTB sprite**: other players drawn online as the on-foot set they chose (DISC23-B's walkers,
+  `net/peerRiders.js`) hang it too, off their pose's `hl` (HT-WAIST-NET), by the same rule, art, hang and swing law,
+  swung off their own drawn motion; their riders and beasts hang none, as yours do not. It lights nothing on their
+  side (the waist light is the local player's). Handheld-Torches.md HT-WAIST has the peers' wiring.
+- **One home**: `player/eotbLantern.js` holds everything the two share (the rule, `loadLanternArt` and the art store,
+  the hang, the swing's drive, the batch); this body keeps whether it hangs and the light.
+
+Pins: `test/htwaist_eotb.test.js` (its bodies stand with their backs to the camera now; its sideways walk is a back
+diagonal, the side view its negative case), `test/htwaistback.test.js`. Not verified in a browser (no ARENA2 here).

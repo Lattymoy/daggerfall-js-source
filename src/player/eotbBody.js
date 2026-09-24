@@ -53,10 +53,11 @@ import {
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors } from './eotbSprite.js';
 import { decodePng } from '../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { getMeleeWeaponAnimTime } from '../characters/weaponStates.js';   // [IL] GetMeleeAnimTickTime reads FormulaHelper's own
-import { setPlayerTorchOffsetOverride, setPlayerWaistLightOverride, LANTERN_TEMPLATE } from '../systems/playerTorch.js';   // [IL] TorchOffset writes PlayerTorch's position; HT-WAIST: and the lantern at the waist lights from where it is drawn
-import { createLanternSwing, stepLanternSwing, lanternSwingDown } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law, the Morrowind body's too
-import { templateByIndex } from '../systems/itemTemplates.js';   // HT-WAIST: the lantern's own picture, off its template
-import { wrapAngle } from '../world/mat4.js';   // HT-WAIST: the turn's pull, off the one angle wrap
+import { setPlayerTorchOffsetOverride, setPlayerWaistLightOverride } from '../systems/playerTorch.js';   // [IL] TorchOffset writes PlayerTorch's position; HT-WAIST: and the lantern at the waist lights from where it hangs
+import {
+  isRearView, createLanternArt, loadLanternArt, createSpriteLantern, restSpriteLantern, stepSpriteLantern, spriteStride,
+  hangSpriteLantern, mintSpriteLantern, dropSpriteLantern,
+} from './eotbLantern.js';   // HT-WAIST-BACK: the lantern on every EOTB sprite, one home - this body's and the peers'
 
 /** PlayerHeightChanger's controllerStandingHeight, the capsule the
  *  billboard's parent sits at the centre of - the fallback when a
@@ -95,36 +96,17 @@ export const FOOTSTEP_VOLUME_SCALE = Object.freeze({ thirdPerson: 2, firstPerson
 // (systems/lanternSwing.js) off the sprite's walk: the speed the Move tables step at, the facing's turn, and the
 // walk cycle's phase off the frame clock. The swing is drawn as a tilt of the quad in the view plane (the
 // billboard shader takes its right and up per call) and a shortening as it swings toward or away from the eye.
-// Third person, on foot, alive and in your own form only: the rider's sprite sits on a horse and the beast's is
-// another body. It lights you from where it hangs (`setPlayerWaistLightOverride`), cleared the moment it stops.
-
-/** The hook, off the sprite: a fraction of the quad's height above its base, the hip's side out along the
- *  facing's right (scaled with the sprite), and a nudge toward the eye so it never shares the body's depth. */
-export const HIP_LANTERN_SPRITE = Object.freeze({ heightFraction: 0.5, side: 0.2, towardEye: 0.06, height: 0.3, minLength: 0.6 });
-/** The renderer's key for the picture: its own, so no world flat of the same record is ever replaced by it. */
-export const LANTERN_ART_KEY = 'htwaist-lantern';
-
-/** The default art door: the Lantern template's world texture from the player's own ARENA2, palette-mapped and
- *  its 0xFF mask cut out (ItemHelper's GetInventoryImage), in the world billboards' row order - the shape
- *  `renderer.uploadTexture` takes. Null when the data is not there; never throws. */
-export async function loadLanternArt() {
-  const t = templateByIndex(LANTERN_TEMPLATE);
-  const archive = t?.worldTextureArchive, record = t?.worldTextureRecord;
-  if (!Number.isInteger(archive) || !Number.isInteger(record)) return null;
-  try {
-    const [{ TextureFile, texName }, { DFPalette }, { changeMask }, { getBytes }] = await Promise.all([
-      import('../formats/textureFile.js'), import('../formats/dfPalette.js'), import('../formats/baseImageFile.js'), import('../scenes/dataSource.js'),
-    ]);
-    const pal = new DFPalette();
-    pal.load(await getBytes('ART_PAL.COL'), 'ART_PAL.COL');
-    const file = new TextureFile();
-    file.load(await getBytes(texName(archive)), texName(archive), pal);
-    return file.getColor32(changeMask(file.getDFBitmap(record, 0)), 0);
-  } catch (e) {
-    console.warn('[eotb] the lantern picture is unavailable; the lantern at the waist lights without being drawn', e);
-    return null;
-  }
-}
+// It hangs in third person, on foot, alive and in your own form only: the rider's sprite sits on a horse and the
+// beast's is another body. It lights you from where it hangs (`setPlayerWaistLightOverride`), cleared the moment
+// it stops hanging.
+//
+// HT-WAIST-BACK (2026-09-24, Mac: "Just have it show on the back of the sprite, not all angles. Make sure all the
+// eye of the Beholder sprites get this change"): the picture is DRAWN only while the sprite is seen from behind -
+// the painted orientation 3, 4 or 5 of EOTB's wheel, the three views that draw its back - and never from the front
+// or the side. It still hangs there, lit, whatever the view: the swing runs on and the light stays at the hip, so
+// turning round neither restarts the swing nor moves the light. Everything the peers' sprites share with this one
+// - the rear-view rule, the picture, the hang, the swing's drive, the batch - is player/eotbLantern.js's; this
+// body keeps what is its alone: whether it hangs, and the light.
 
 /** The mod's own settings, resolved - read at attach and on `reload`,
  *  as `LoadSettings` hands them to `Initialize`, and again whenever the
@@ -266,48 +248,33 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let firstUp = false;
 
   // ── HT-WAIST: the lantern at the waist (see the head above) ───────
-  const lanternSwing = createLanternSwing();
-  let lanternArt;               // undefined: not asked; a Promise in flight; { w, h } uploaded; null: none
-  let lanternBatch = null;
-  let lanternBatchH = 0;        // the height it was minted at
-  let lanternYaw = null;        // last frame's facing, for the turn's pull
+  const lantern = createSpriteLantern();   // HT-WAIST-BACK: its swing, its batch, its placement - player/eotbLantern.js
+  const lanternArt = createLanternArt(() => renderer, loadLantern);
   let waistWritten = false;
   // the frame's scratch - drawLantern and stepLantern run every Eye Of The Beholder frame and allocate nothing
-  const lanternScratch = { d: [0, 0, -1], right: [0, 0, 0], up: [0, 0, 0], hook: [0, 0, 0], cr: [0, 0, 0], mid: [0, 0, 0], waist: { left: 0, up: 0, forward: 0 } };
-  const LANTERN_REST = Object.freeze(createLanternSwing());
-  /** Is the lantern drawn this frame: lit at the waist, third person, on foot, alive, in your own form. */
-  const lanternShown = () => last.hipLantern && activeFlag && !FP && !died && !last.died && !last.riding && !last.transformed;
-  function ensureLanternArt() {
-    if (lanternArt !== undefined || !renderer) return lanternArt && !(lanternArt instanceof Promise) ? lanternArt : null;
-    const p = Promise.resolve().then(() => loadLantern()).then((img) => {
-      if (!img || !renderer) { lanternArt = null; return; }
-      renderer.uploadTexture(LANTERN_ART_KEY, 0, { width: img.width, height: img.height, colors: img.colors });
-      lanternArt = { w: img.width, h: img.height };
-    }, () => { lanternArt = null; });
-    lanternArt = p;
-    return null;
-  }
+  const lanternFacing = { fx: 0, fz: 1 };
+  const lanternWaist = { left: 0, up: 0, forward: 0 };
+  /** Does the lantern hang this frame: lit at the waist, third person, on foot, alive, in your own form. */
+  const lanternHangs = () => last.hipLantern && activeFlag && !FP && !died && !last.died && !last.riding && !last.transformed;
+  /** HT-WAIST-BACK: is it DRAWN this frame - it hangs, and the sprite is painted from behind (eotbLantern.js
+   *  isRearView: orientation 3, 4 or 5). */
+  const lanternShown = () => lanternHangs() && isRearView(shown?.orientation);
   /** The frame the sprite faces: its walk's facing (UpdateOrientation's `lastMoveDirection`), else the yaw. */
   function facingBasis() {
     const f = lastMoveDirection && (lastMoveDirection[0] || lastMoveDirection[2]) ? lastMoveDirection : cam.forward;
     const l = Math.hypot(f[0], f[2]) || 1;
-    const fx = f[0] / l, fz = f[2] / l;
-    return { fx, fz, rx: fz, rz: -fx };   // right = [cos y, 0, -sin y] for forward [sin y, 0, cos y]
+    lanternFacing.fx = f[0] / l; lanternFacing.fz = f[2] / l;
+    return lanternFacing;
   }
   /** One frame of the swing, off the sprite's own walk: the speed the Move tables step at along the facing, the
-   *  facing's turn, and the walk cycle's phase off the frame clock while a Move table plays. */
+   *  facing's turn, and the walk cycle's phase off the frame clock while a Move table plays. HT-WAIST-BACK: it swings
+   *  while it HANGS, seen or not - turning round shows a lantern already swinging, never one snapped plumb. */
   function stepLantern(dt) {
-    if (!lanternShown()) { lanternYaw = null; Object.assign(lanternSwing, LANTERN_REST); dropLantern(); return; }   // at rest, in place
-    const { fx, fz } = facingBasis();
-    const yaw = Math.atan2(fx, fz);
-    let yawRate = 0;
-    if (lanternYaw != null && dt > 0) yawRate = wrapAngle(yaw - lanternYaw) / dt;   // ONCRASH1: the one wrap
-    lanternYaw = yaw;
-    const n = frameCount(stateCurrent);
+    if (!lanternHangs()) { restSpriteLantern(lantern); dropLantern(); return; }   // at rest, in place
+    const f = facingBasis();
     const tick = frameTime(last.riding, cfg.walkAnimSpeedMod) * speedMod(last);
-    const walking = !last.stopped && n > 1 && last.moveSpeed > 0;
-    const stride = walking ? (frameCurrent + Math.min(1, tick > 0 ? frameTimer / tick : 0)) / n : null;
-    stepLanternSwing(lanternSwing, dt, { forward: last.moveSpeed || 0, side: 0, yawRate, stride });
+    const stride = spriteStride(!last.stopped, last.moveSpeed, frameCurrent, frameTimer, tick, frameCount(stateCurrent));
+    stepSpriteLantern(lantern, dt, f.fx, f.fz, last.moveSpeed || 0, stride);
   }
   function waistDefault() {
     if (waistWritten) { setPlayerWaistLightOverride(null); waistWritten = false; }
@@ -315,62 +282,32 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   /** The lantern's batch goes when the lantern does (EVERY ALLOCATION HAS AN OWNER); its picture stays in the
    *  renderer's cache under its own key, as every sprite of this body does. */
   function dropLantern() {
-    if (lanternBatch) { renderer?.destroyBillboardBatch?.(lanternBatch); lanternBatch = null; }
+    dropSpriteLantern(lantern, renderer);
     waistDefault();
   }
-  /** Draw the lantern hung from the sprite's hip, tilted by the swing. Answers whether it drew. */
+  /** Hang the lantern from the sprite's hip, tilted by the swing, light you from it, and draw it if the sprite is
+   *  seen from behind. Answers whether it drew. */
   function drawLantern() {
-    if (!lanternShown()) { dropLantern(); return false; }
-    const art = ensureLanternArt();
+    if (!lanternHangs()) { dropLantern(); return false; }
+    const art = lanternArt.ensure();
     if (!art || !batchSize) return false;
     const base = place();
     if (!base) return false;
-    const L = HIP_LANTERN_SPRITE;
-    const scale = cfg.scale > 0 ? cfg.scale : 1;
-    const h = L.height * scale, w = h * art.w / art.h;
-    // minted at its full size (the renderer's cull sphere is the batch's own), again only when the scale moves it
-    if (lanternBatch && lanternBatchH !== h) { renderer.destroyBillboardBatch?.(lanternBatch); lanternBatch = null; }
-    if (!lanternBatch) {
-      lanternBatch = renderer.createBillboardBatch(LANTERN_ART_KEY, 0, { w, h }, [[0, 0, 0]]);
-      lanternBatch.origin = [0, 0, 0];
-      lanternBatchH = h;
-    }
-    // the hook: up the quad, out to the facing's right, a nudge toward the eye
-    const { fx, fz, rx, rz } = facingBasis();
-    const ex = cam.pos[0] - cam.feet[0], ez = cam.pos[2] - cam.feet[2];
-    const el = Math.hypot(ex, ez) || 1;
-    const side = L.side * scale;
-    const S = lanternScratch;
-    const hook = S.hook;
-    hook[0] = base[0] + rx * side + ex / el * L.towardEye;
-    hook[1] = base[1] + batchSize.h * L.heightFraction;
-    hook[2] = base[2] + rz * side + ez / el * L.towardEye;
-    // the swing, from the facing frame into the view plane: the tilt, and the shortening toward or away
-    const d = lanternSwingDown(lanternSwing, S.d);
-    const wx = rx * d[0] + fx * d[1], wy = d[2], wz = rz * d[0] + fz * d[1];
-    const cr = S.cr;
-    cr[0] = Math.cos(cam.yaw); cr[1] = 0; cr[2] = -Math.sin(cam.yaw);
-    const dx = wx * cr[0] + wz * cr[2];
-    const len = Math.hypot(dx, wy);
-    const sin = len > 1e-6 ? dx / len : 0, cos = len > 1e-6 ? -wy / len : 1;
-    S.right[0] = cr[0] * cos; S.right[1] = sin; S.right[2] = cr[2] * cos;
-    S.up[0] = -cr[0] * sin; S.up[1] = cos; S.up[2] = -cr[2] * sin;
-    const drawnH = h * Math.max(L.minLength, Math.min(1, len));
-    lanternBatch.size.w = w; lanternBatch.size.h = drawnH;
-    lanternBatch.origin[0] = hook[0] - S.up[0] * drawnH;
-    lanternBatch.origin[1] = hook[1] - S.up[1] * drawnH;
-    lanternBatch.origin[2] = hook[2] - S.up[2] * drawnH;
-    lanternBatch.conceal = material();
-    renderer.drawBillboards([lanternBatch], S.right, S.up);
-    // the light, from the lantern's middle, in the offset words PlayerTorch's seam speaks (the yaw frame)
-    const mid = S.mid;
-    mid[0] = hook[0] - S.up[0] * drawnH * 0.5; mid[1] = hook[1] - S.up[1] * drawnH * 0.5; mid[2] = hook[2] - S.up[2] * drawnH * 0.5;
+    const f = facingBasis();
+    hangSpriteLantern(lantern, base, batchSize.h, f.fx, f.fz, cam.pos, cam.feet, cam.yaw, cfg.scale > 0 ? cfg.scale : 1, art);
+    // the light, from the lantern's middle, in the offset words PlayerTorch's seam speaks (the yaw frame) - where it
+    // hangs, whether or not this view draws it (HT-WAIST-BACK: the lantern is still there, lit, seen from the front)
+    const mid = lantern.mid;
     const yaw = cam.yaw, sy = Math.sin(yaw), cy = Math.cos(yaw);
     const px = mid[0] - cam.feet[0], pz = mid[2] - cam.feet[2];
-    const wo = S.waist;
+    const wo = lanternWaist;
     wo.left = -(px * cy - pz * sy); wo.up = mid[1] - cam.feet[1]; wo.forward = px * sy + pz * cy;
     setPlayerWaistLightOverride(wo);
     waistWritten = true;
+    // HT-WAIST-BACK: the picture from behind only - the painted view, so the lantern and the sprite under it agree
+    if (!isRearView(shown?.orientation)) return false;
+    mintSpriteLantern(lantern, renderer).conceal = material();
+    renderer.drawBillboards(lantern.list, lantern.right, lantern.up);
     return true;
   }
 
@@ -947,7 +884,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       mirrorCount, mirrorTimer, pingpongCount, died, animating, currentAngle, orientationTimer,
       lastMoveDirection: lastMoveDirection ? [...lastMoveDirection] : null, last: { ...last }, hasPlayedFootstep, footstepAlt, wasGrounded,
       material: material(), placed: place(),
-      lantern: { shown: lanternShown(), swing: { fore: lanternSwing.fore, side: lanternSwing.side }, batch: !!lanternBatch },   // HT-WAIST
+      lantern: { hangs: lanternHangs(), shown: lanternShown(), swing: { fore: lantern.swing.fore, side: lantern.swing.side }, batch: !!lantern.batch },   // HT-WAIST; HT-WAIST-BACK: hangs, and drawn
     }),
     settings: () => cfg,
     reload,

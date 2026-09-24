@@ -404,8 +404,8 @@
   {
     "name": "HT-WAIST-the-sprite-never-tilts",
     "file": "src/player/eotbBody.js",
-    "old": "    renderer.drawBillboards([lanternBatch], S.right, S.up);",
-    "new": "    renderer.drawBillboards([lanternBatch], cr, [0, 1, 0]);",
+    "old": "    renderer.drawBillboards(lantern.list, lantern.right, lantern.up);",
+    "new": "    renderer.drawBillboards(lantern.list, [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], [0, 1, 0]);",
     "tests": [
       "test/htwaist_eotb.test.js"
     ]
@@ -430,8 +430,8 @@
   },
   {
     "name": "HT-WAIST-the-sprite-lantern-never-regrown",
-    "file": "src/player/eotbBody.js",
-    "old": "    if (lanternBatch && lanternBatchH !== h) { renderer.destroyBillboardBatch?.(lanternBatch); lanternBatch = null; }\n",
+    "file": "src/player/eotbLantern.js",
+    "old": "  if (l.batch && l.batchH !== l.fullH) dropSpriteLantern(l, renderer);\n",
     "new": "",
     "tests": [
       "test/htwaist_eotb.test.js"
@@ -444,6 +444,183 @@
     "new": "",
     "tests": [
       "test/htwaist_handlaw.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-rule-lets-the-sides-in",
+    "file": "src/player/eotbLantern.js",
+    "old": "  return RECORD_OFFSETS[((orientation % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS] >= REAR_RECORD;",
+    "new": "  return RECORD_OFFSETS[((orientation % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS] >= REAR_RECORD - 1;",
+    "tests": [
+      "test/htwaistback.test.js",
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-rule-drops-the-diagonals",
+    "file": "src/player/eotbLantern.js",
+    "old": "export const REAR_RECORD = 3;",
+    "new": "export const REAR_RECORD = 4;",
+    "tests": [
+      "test/htwaistback.test.js",
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-rule-every-view",
+    "file": "src/player/eotbLantern.js",
+    "old": "  if (!Number.isInteger(orientation)) return false;\n",
+    "new": "  return true;\n",
+    "tests": [
+      "test/htwaistback.test.js",
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-body-never-asks-the-rule",
+    "file": "src/player/eotbBody.js",
+    "old": "    if (!isRearView(shown?.orientation)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/htwaistback.test.js",
+      "test/htwaist_eotb.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-body-drops-it-off-the-back",
+    "file": "src/player/eotbBody.js",
+    "old": "  function drawLantern() {\n    if (!lanternHangs()) { dropLantern(); return false; }",
+    "new": "  function drawLantern() {\n    if (!lanternShown()) { dropLantern(); return false; }",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-swing-stops-unseen",
+    "file": "src/player/eotbBody.js",
+    "old": "    if (!lanternHangs()) { restSpriteLantern(lantern); dropLantern(); return; }",
+    "new": "    if (!lanternShown()) { restSpriteLantern(lantern); dropLantern(); return; }",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-walker-never-hangs-it",
+    "file": "src/net/peerRiders.js",
+    "old": "      hangLantern(r, pose, feet, view, eye, right, step, ft);\n",
+    "new": "",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-walker-never-asks-the-rule",
+    "file": "src/net/peerRiders.js",
+    "old": "    if (!isRearView(view)) return;   // seen from the front or the side: it hangs, it swings, it is not drawn\n",
+    "new": "",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-walker-ignores-the-bit",
+    "file": "src/net/peerRiders.js",
+    "old": "    if (!pose.hl) {\n",
+    "new": "    if (false) {\n",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-walker-pace-unmeasured",
+    "file": "src/net/peerRiders.js",
+    "old": "    r.pace = stepPeerPace(r.pace, r.paceFeet, feet, dt);\n",
+    "new": "",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-walker-swing-not-stepped",
+    "file": "src/net/peerRiders.js",
+    "old": "    stepSpriteLantern(l, dt, fx, fz, r.pace, stride);\n",
+    "new": "",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-walker-lantern-leaks-with-the-walker",
+    "file": "src/net/peerRiders.js",
+    "old": "    if (r?.lantern) dropSpriteLantern(r.lantern, renderer);   // HT-WAIST-BACK: a walker's lantern goes with the walker\n",
+    "new": "",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-walker-lantern-left-minted-when-put-out",
+    "file": "src/net/peerRiders.js",
+    "old": "      if (r.lantern) { dropSpriteLantern(r.lantern, store.renderer); r.lantern = null; }",
+    "new": "      if (r.lantern) { r.lantern = null; }",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-recentre-leaves-it-behind",
+    "file": "src/net/peerRiders.js",
+    "old": "for (const o of [r.batch?.origin, r.lantern?.batch?.origin, r.paceFeet])",
+    "new": "for (const o of [r.batch?.origin, r.paceFeet])",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-draw-list-built-per-frame",
+    "file": "src/net/peerRiders.js",
+    "old": "    for (let i = 0; i < lit.length; i++) rr.drawBillboards(lit[i].list, lit[i].right, lit[i].up);",
+    "new": "    for (let i = 0; i < lit.length; i++) rr.drawBillboards([lit[i].batch], lit[i].right, lit[i].up);",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-walker-lantern-untilted",
+    "file": "src/net/peerRiders.js",
+    "old": "    for (let i = 0; i < lit.length; i++) rr.drawBillboards(lit[i].list, lit[i].right, lit[i].up);",
+    "new": "    for (let i = 0; i < lit.length; i++) rr.drawBillboards(lit[i].list, lit[i].right, [0, 1, 0]);",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-host-never-draws-them",
+    "file": "src/scenes/world.js",
+    "old": " peerWalkers?.drawLanterns(); };",
+    "new": " };",
+    "tests": [
+      "test/htwaistback.test.js",
+      "test/mwbody1.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-art-asked-every-frame",
+    "file": "src/player/eotbLantern.js",
+    "old": "      art = p;\n      return null;\n",
+    "new": "      return null;\n",
+    "tests": [
+      "test/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "HT-WAIST-BACK-the-pace-jump-read-as-a-sprint",
+    "file": "src/net/peerPace.js",
+    "old": "  if (d > JUMP_UNITS) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/htwaistback.test.js",
+      "test/mwbody1.test.js"
     ]
   }
 ]

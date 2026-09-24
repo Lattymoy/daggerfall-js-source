@@ -787,15 +787,42 @@ compare, the slow path binding once on the body, a failed bind remembered (`hipL
 body's one mesh, so it needs no owner of its own (`releaseThirdMesh` frees it with the rest). Morrowind-Rules.md
 HT-WAIST.
 
-**Eye Of The Beholder's sprite** (`player/eotbBody.js`). A second billboard, apart from the IL's machine: the Lantern
-template's own world texture (TEXTURE.200 record 10, read off the template, loaded from the player's ARENA2 - never
-vendored; the mod's hand-and-lantern frames are the author's art of a hand), hung by its top from the sprite's right
-hip in the sprite's facing frame, swung by the same law off the sprite's walk (the Move tables' speed, the facing's
-turn, the frame clock's stride phase), drawn as a tilt of the quad in the view plane and a foreshortening along the
-line of sight. Third person, on foot, alive, in your own form only. Its batch is created when it is first drawn and
-destroyed when it stops (EVERY ALLOCATION HAS AN OWNER); its picture sits in the renderer's cache under its own key
-(`htwaist-lantern`), as every sprite of this body does. mwView's Morrowind lane stands it down each frame, so its
-light point never outlives the lane. Eye-Of-The-Beholder.md HT-WAIST.
+**Eye Of The Beholder's sprite** (`player/eotbBody.js`; the lantern's law `player/eotbLantern.js` since HT-WAIST-BACK).
+A second billboard, apart from the IL's machine: the Lantern template's own world texture (TEXTURE.200 record 10, read
+off the template, loaded from the player's ARENA2 - never vendored; the mod's hand-and-lantern frames are the author's
+art of a hand), hung by its top from the sprite's right hip in the sprite's facing frame, swung by the same law off the
+sprite's walk (the Move tables' speed, the facing's turn, the frame clock's stride phase), drawn as a tilt of the quad
+in the view plane and a foreshortening along the line of sight. It HANGS in third person, on foot, alive, in your own
+form only, and it is DRAWN only while the sprite is seen from behind (HT-WAIST-BACK, below). Its batch is created when
+it is first drawn and destroyed when it stops hanging (EVERY ALLOCATION HAS AN OWNER); its picture sits in the
+renderer's cache under its own key (`htwaist-lantern`), as every sprite of this body does. mwView's Morrowind lane
+stands it down each frame, so its light point never outlives the lane. Eye-Of-The-Beholder.md HT-WAIST.
+
+**HT-WAIST-BACK (2026-09-24, Mac, looking at screenshots of the lantern at the sprite's hip from the front, the side,
+walking and behind: "Just have it show on the back of the sprite, not all angles. Make sure all the eye of the
+Beholder sprites get this change").** The lantern's picture is drawn only from the three views of Eye Of The
+Beholder's eight that show the sprite's BACK: orientation 4 (the camera straight behind, record +4) and the back
+diagonals 3 and 5 (record +3, mirrored at 3) - never from the front, the front diagonals or the sides (0, 1, 2, 6, 7).
+The rule is `isRearView` (`player/eotbLantern.js`), read against the view the sprite is PAINTED from, so the lantern
+and the picture under it always agree; the numbering is `orientationFor`'s (0 the camera in front) through the wheel,
+and which record is a back was checked against the vendored art (Eye-Of-The-Beholder.md HT-WAIST has how). Unseen, it
+still hangs: the swing runs on (turning round shows a lantern already swinging), the batch is kept, and your light
+stays at the hip rather than jumping to the yaw frame's default each time the sprite turns. And EVERY sprite: your own,
+in every on-foot set, and every other player drawn online as the set they chose (DISC23-B's walkers,
+`net/peerRiders.js createPeerWalkers`) whose pose says `hl` (HT-WAIST-NET, below) - the same picture through the same loader (the peers' art
+store, `createEotbArt`, holds its own `createLanternArt`; the renderer caches the texture once under the key), hung by
+the same law, swung off that walker's own motion (its pace off the drawn feet - MWBODY1's law, lifted to
+`net/peerPace.js` so the bodies and the walkers read one -, its yaw's turn, its walk clip's phase), drawn from their
+back alone. One home for all of it: `player/eotbLantern.js` (the rule, the art, the hang, the swing's drive, the batch);
+`eotbBody.js` keeps what is the local body's alone (whether it hangs, and the light), a walker keeps its `hl`. A peer's
+lantern is drawn by `drawLanterns`, called from world.js's `drawPeerBodies` - the hook world.js's exterior pass and
+worldModes' dungeon and interior passes all call right after your own body (the tilt is the lantern's own right and
+up, which the flats' shared pass cannot carry); `exterior.js` holds no online session and `dungeonContext.js` draws
+no body. Its batch goes when the lantern is put out, when the walker goes or stops being one, and when the layer is
+destroyed; the recentre carries it; its draw builds nothing. It lights nothing - no peer's light does. The rider and
+the beast still hang none, on your screen or theirs; the Morrowind body is not a sprite and is unchanged. Pins:
+`test/htwaistback.test.js` (8, every one failing on the base); `test/htwaist_eotb.test.js`'s bodies stand with their
+backs to the camera now, and its sideways walk is a back diagonal, with the side view its negative case.
 
 **Online: the others see it (HT-WAIST-NET, 2026-09-24).** Other players are drawn with the Morrowind body
 (MWBODY1), so a lantern at the waist its owner alone could see was half of what Mac asked for. The pose carries it:
@@ -818,8 +845,9 @@ travel, so a peer backing away swings as its legs walk, forward. It is the body'
 world108 (world106 on its branch; main's DISC23-B took world106 and DUEL1 world107 first), its LAW row recorded (the `net/wire.js` RELAY_VERSION chain is the record). No RELAY_MIN gate: a pose field
 has never had one (DISC12's `lh`/`wb`, PCORPSE1's `dd`) - an older relay's `validPose` drops `hl`, the others see no
 lantern, and nothing closes. Not carried: the lantern's LIGHT (a peer casts none - the light is the player torch's own),
-and the lantern on a peer drawn without a Morrowind body (the paperdoll, the class sprite, Eye Of The Beholder's rider
-and lycanthrope - your own sprite draws none on the beast or the rider either). Online-Arc.md HT-WAIST-NET. Pins:
+and the lantern on a peer drawn as the paperdoll, the class sprite, or Eye Of The Beholder's rider and lycanthrope
+(your own sprite draws none on the beast or the rider either); on a peer drawn as their chosen Eye Of The Beholder set
+it hangs since HT-WAIST-BACK, above. Online-Arc.md HT-WAIST-NET. Pins:
 `test/htwaistnet_peers.test.js` (6, every one failing on the base).
 
 **Decisions taken, for Mac's eye.** The RIGHT hip, not mirrored by Handedness (the left is the scabbard's). The beast
@@ -834,5 +862,7 @@ and the swing's constants are port-own tuning, set against the vendored skeleton
 
 Pins: `test/htwaist_setting.test.js`, `test/htwaist_handlaw.test.js`, `test/htwaist_swing.test.js`,
 `test/htwaist_mwbody.test.js`, `test/htwaist_eotb.test.js` (34 tests, every one failing on the base); HT1's pane pin
-names the key. `tools/mutants/htwaist.json`: 50 records, 50 dead (and `torchvis.json`'s two gate records re-aimed by
-content at the gate's new last line).
+names the key. `tools/mutants/htwaist.json`: 68 records, 68 dead - HT-WAIST-BACK's 19 among them, and two of
+HT-WAIST's (the sprite's tilt, its re-mint) re-aimed by content at the lantern's one home; the 50 this line said
+before was one over the 49 the file held (and `torchvis.json`'s two gate records re-aimed by content at the gate's new
+last line).
