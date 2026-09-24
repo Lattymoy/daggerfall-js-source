@@ -65,7 +65,7 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   const toml = rd('server-account/wrangler.toml');
   const v = (k) => new RegExp(`^${k} = "([^"]*)"$`, 'm').exec(toml)?.[1];
   assert.equal(v('DUNGEON_MASTER_HANDLES'), 'SquidKamer', 'Mac: "This goes strictly to the account SquidKamer"');
-  assert.equal(v('DISCIPLE_HANDLES'), 'Dutchess', 'Mac: "The account Dutchess will recieve the Disciple title/glyph"');
+  assert.equal(v('DISCIPLE_HANDLES'), 'Dutchess,Satranath', 'Mac: "The account Dutchess will recieve the Disciple title/glyph", then "Satranath please add this account as a disciple also"');
   assert.equal(v('APOSTLE_HANDLES'), '', 'nobody yet');
   assert.equal(v('HIEROPHANT_HANDLES'), '', 'nobody yet');
   assert.deepEqual(Object.keys(TIER_LISTS), NEW_TITLES);
@@ -77,6 +77,8 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   assert.deepEqual(glyphsOf(row('SquidKamer'), env, nowS), ['dm']);
   assert.deepEqual(titlesHeld(row('Dutchess'), env), ['disciple']);
   assert.deepEqual(glyphsOf(row('Dutchess'), env, nowS), ['disciple']);
+  assert.deepEqual(titlesHeld(row('Satranath'), env), ['disciple'], 'the second Disciple, off the same list');
+  assert.deepEqual(glyphsOf(row('satranath'), env, nowS), ['disciple']);
   assert.deepEqual(titlesHeld(row('Paul'), env), ['apostle']);
   assert.deepEqual(glyphsOf(row('pope'), env, nowS), ['hierophant']);
   assert.deepEqual(titlesHeld(row('Stranger'), env), []);

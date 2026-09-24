@@ -88,9 +88,9 @@ MODERATOR_HANDLES = "Asynian"
 # goes strictly to the account SquidKamer."
 DUNGEON_MASTER_HANDLES = "SquidKamer"
 # TITLE-N: the three Patreon tiers, lowest first - each list grants its
-# title and its glyph. Dutchess is the first Disciple (Mac); a tier that
+# title and its glyph. Dutchess and Satranath are the first Disciples (Mac); a tier that
 # lapses is a handle taken off, gone from that player's next token.
-DISCIPLE_HANDLES = "Dutchess"
+DISCIPLE_HANDLES = "Dutchess,Satranath"
 APOSTLE_HANDLES = ""
 HIEROPHANT_HANDLES = ""
 
