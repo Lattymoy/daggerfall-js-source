@@ -13460,19 +13460,30 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // U8e: a pile under the ray opens the inventory WITH the
               // pile as the remote target (Remove defaults - the OnPush law)
               const pile = droppedLoot.pileFor(dropKey);
-              const _hooks = droppedLootHooks(pile);
-              // QUICK-LOOT B4: the same door, on the player's own pile -
-              // the hooks this arm was already building for the window.
-              if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
-              const w = makeInventoryWindow({
-                // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
-                // This arm hand-rolled the window with the SAME eleven hooks
-                // makeInventoryWindow already passes, plus the two below -
-                // which is precisely what its `extra` parameter is for.
-                onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-                loot: _hooks,   // G5: DaggerfallLoot's own identity
-              });
-              if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+              // LOOT-GONE1 (2026-09-24, the contributor's report): pileFor answers null for a pile that went between the
+              // hover and the press (a peer took it, a rebuild emptied it), and droppedLootHooks(null) threw inside this
+              // frame - an uncaught throw in a rAF callback ends the loop as surely as a return. A pile that is gone
+              // opens nothing: worldModes' own twin's shape (its `if (pile)`).
+              // QL-FRAME1 (the soft-lock report): the quick-loot take below ended in `return`, and this arm runs INSIDE
+              // frame() - the return left before requestAnimationFrame(frame) at its foot, so a take or its refusal ("You
+              // cannot carry any more stuff.") stopped the game loop: no look, no walk, no foes. A handled press opens no
+              // window and the frame runs on (worldModes' own negated take). test/ql_frame.test.js holds every return.
+              if (pile) {
+                const _hooks = droppedLootHooks(pile);
+                // QUICK-LOOT B4: the same door, on the player's own pile -
+                // the hooks this arm was already building for the window.
+                if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) {   // AUDIT QL-WEIGHT1
+                  const w = makeInventoryWindow({
+                    // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
+                    // This arm hand-rolled the window with the SAME eleven hooks
+                    // makeInventoryWindow already passes, plus the two below -
+                    // which is precisely what its `extra` parameter is for.
+                    onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
+                    loot: _hooks,   // G5: DaggerfallLoot's own identity
+                  });
+                  if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+                }
+              }
             }
             else modes.tryEnter().then((opened) => {
               // GRAVE1: an activation that hit NOTHING - no door either -

@@ -25,6 +25,7 @@ import { snapshotAutomap, restoreAutomap } from './automap.js';   // A1: dictAut
 import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './sceneCache.js';   // P1
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { seedBundleSeq } from './effects.js';   // X10: the live-bundle counter's restore half
+import { repairLostCurses } from './curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
 import { SOCIAL_GROUPS } from '../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from './travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../ui/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
@@ -667,6 +668,10 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // no turn. `deathScheduled` IS fakeDeathVideoPlayed, which DFU saves, and
   // stays.
   for (const a of entity.activeEffects) if (a.infection && !a.dreamPlayed) a.dreamScheduled = false;
+  // CURSE-PERSIST1: a save written before the curse and the infection carried `permanent` holds them with a null round
+  // budget (NaN, as JSON writes it), which the next tick read as spent and pruned - the flag is given at the one door old
+  // data comes in by, so tickActiveEffects keeps its one law and never learns these kinds by name.
+  for (const a of entity.activeEffects) if ((a.kind === 'racialOverride' || a.infection) && !a.permanent) a.permanent = true;
   // V2a: the racial override MARKER is a live reference into the list
   // just restored - rebuilt here, never serialized on its own, so the
   // marker and the entry can never disagree (the gates - a second
@@ -808,6 +813,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
       + `${spellsByIndex ? '' : ' (SPELLS.STD not loaded yet)'} - HELD, not dropped:`, _pending);
   }
   seedCustomSpellIndex(entity.spells);
+  // CURSE-REPAIR1: after the spellbook AND the effect list (and the racial marker) are back - a tagged curse spell with no
+  // curse behind it is a curse the round clock pruned before CURSE-PERSIST1, given back at the save's own clock.
+  repairLostCurses(entity, { now: Math.floor(snap.classicMinutes ?? 0) });
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   restoreDiscovery(snap.discovery);

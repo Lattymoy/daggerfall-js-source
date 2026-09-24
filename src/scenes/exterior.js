@@ -4854,18 +4854,23 @@ export async function bootExterior(canvas, renderer, params, status) {
             // U8e: a pile under the ray opens the inventory WITH the
             // pile as the remote target (Remove defaults - the OnPush law)
             const pile = droppedLoot.pileFor(dropKey);
-            const _hooks = droppedLootHooks(pile);
-            // QUICK-LOOT B4: the same door, on the player's own pile.
-            if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return;   // AUDIT QL-WEIGHT1
-            const w = makeInventoryWindow({
-              // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
-              // This arm hand-rolled the window with the SAME eleven hooks
-              // makeInventoryWindow already passes, plus the two below -
-              // which is precisely what its `extra` parameter is for.
-              onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
-              loot: _hooks,   // G5: DaggerfallLoot's own identity
-            });
-            if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+            // LOOT-GONE1 + QL-FRAME1: world.js's twin, the same two laws - a pile gone since the hover opens nothing, and a
+            // handled quick-loot press opens no window and never leaves frame() before its requestAnimationFrame.
+            if (pile) {
+              const _hooks = droppedLootHooks(pile);
+              // QUICK-LOOT B4: the same door, on the player's own pile.
+              if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) {   // AUDIT QL-WEIGHT1
+                const w = makeInventoryWindow({
+                  // U53: THE HOST'S OWN FACTORY, not a twelfth copy of it.
+                  // This arm hand-rolled the window with the SAME eleven hooks
+                  // makeInventoryWindow already passes, plus the two below -
+                  // which is precisely what its `extra` parameter is for.
+                  onClose: () => droppedLoot.releaseEmptied(),   // AUDIT 17e F28: DFU frees the container on window close
+                  loot: _hooks,   // G5: DaggerfallLoot's own identity
+                });
+                if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+              }
+            }
           }
           else modes.tryEnter().then((opened) => {
             // GRAVE1: same law as world.js's twin - an activation that
@@ -5193,7 +5198,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // ROAD-G G2: THE ENEMY ARM EXISTS NOW - the note here said "this
     // host mounts no bow-armed pool", which stopped being true with the
     // encounter mount above, and an archer's shaft would have flown
-    // through the player for ever. world.js:13795-14034 is the shape.
+    // through the player for ever. world.js:13806-14045 is the shape.
     arrows.update(dt, {
       // enemy arrows hunt only a WALKING player - the fly camera has no
       // capsule to hit
@@ -5450,7 +5455,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // removed elsewhere.
         if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
           // ROAD-G G2: encounter foes resolve AFTER the watch and
-          // BEFORE civilians - world.js:14144's order, and the order
+          // BEFORE civilians - world.js:14155's order, and the order
           // matters because a watchman standing over a quest foe must
           // still be the one the swing finds.
           if (exteriorFoes.resolvePlayerHit(weaponRig.playerWeapon, eye, fwd, player.pos, makeInView(proj, view, multiply), guardHitSound)) {
