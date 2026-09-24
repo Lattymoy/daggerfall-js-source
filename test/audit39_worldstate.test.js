@@ -386,7 +386,7 @@ test('AUDIT 39 #159: the travel map refuses with enemies nearby, before the raci
   const i = WORLD.indexOf('const toggleTravelMap = (gotoPlace = null) => {');
   assert.ok(i > 0);
   const door = WORLD.slice(i, WORLD.indexOf('townTalk.showOverlay(_travelMap);', i));
-  const nearby = door.indexOf('if (areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes])) {');
+  const nearby = door.indexOf('if (duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes])) {');   // DUEL1: a duel opponent is an enemy nearby too
   const racial = door.indexOf('const ftb = racialFastTravelBlock(playerEntity');
   const build = door.indexOf('_travelMap = buildTravelMapWindow(');
   assert.ok(nearby > 0, 'the refusal is at the door');

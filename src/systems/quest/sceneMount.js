@@ -79,8 +79,10 @@ export function markerScenePosition(marker) {
 
 /** AddQuestResourceObjects (:903-937). */
 export function addQuestResourceObjects(machine, adapter, siteType, buildingKey = 0,
-  { enableNPCs = true, enableFoes = true, enableItems = true } = {}) {
+  { enableNPCs = true, enableFoes = true, enableItems = true, byName = !!machine?.mountByName } = {}) {
   void enableItems;   // C#'s own dead parameter, kept for the signature
+  // QREPAIR: `byName` - the repair's mount (quest/questRepair.js sets machine.mountByName for its pass) matches a
+  // standing behaviour by quest and symbol NAME, not identity: see isAlreadyInjected
   const siteLinks = machine.getSiteLinks(siteType, adapter.currentMapId?.(), buildingKey);
   if (!siteLinks || siteLinks.length === 0) return;
   for (const link of siteLinks) {
@@ -92,11 +94,11 @@ export function addQuestResourceObjects(machine, adapter, siteType, buildingKey 
     // expensive in C#, once per layout or "place thing")
     const resourceBehaviours = adapter.findBehaviours?.() ?? [];
     addMarkerResourceObjects(machine, adapter, siteType, enableNPCs, enableFoes, quest,
-      resourceBehaviours, place.siteDetails.selectedMarker);
+      resourceBehaviours, place.siteDetails.selectedMarker, byName);
     if (place.siteDetails.questSpawnMarkers) {
       for (const marker of place.siteDetails.questSpawnMarkers) {
         addMarkerResourceObjects(machine, adapter, siteType, enableNPCs, enableFoes, quest,
-          resourceBehaviours, marker);
+          resourceBehaviours, marker, byName);
       }
     }
   }
@@ -104,12 +106,12 @@ export function addQuestResourceObjects(machine, adapter, siteType, buildingKey 
 
 /** AddMarkerResourceObjects (:938-971). */
 export function addMarkerResourceObjects(machine, adapter, siteType, enableNPCs, enableFoes,
-  quest, resourceBehaviours, marker) {
+  quest, resourceBehaviours, marker, byName = false) {
   if (!marker?.targetResources) return;
   for (const target of marker.targetResources) {
     const resource = quest.getResource(target);
     if (!resource) continue;
-    if (isAlreadyInjected(resourceBehaviours, resource)) continue;
+    if (isAlreadyInjected(resourceBehaviours, resource, byName)) continue;
     if (resource.isPerson && enableNPCs) {
       addQuestNPC(machine, adapter, siteType, quest, marker, resource);
     } else if (resource.isFoe && enableFoes) {
@@ -143,10 +145,13 @@ export function addMarkerResourceObjects(machine, adapter, siteType, enableNPCs,
  *  object, so after a load the guard stops recognising its own
  *  resource and DFU stands a duplicate. The port restores the same
  *  way, so it inherits the same hole rather than quietly fixing it. */
-export function isAlreadyInjected(resourceBehaviours, resource) {
+export function isAlreadyInjected(resourceBehaviours, resource, byName = false) {
   if (!resourceBehaviours || resourceBehaviours.length === 0) return false;
   for (const behaviour of resourceBehaviours) {
     if (behaviour.targetSymbol === resource.symbol) return true;
+    // QREPAIR: the repair's mount closes the load hole above for its own pass - the same quest, the same symbol name,
+    // is the same resource standing. DFU's own mounts (the layout, the hot-place) keep the identity match, verbatim.
+    if (byName && behaviour.questUID === resource.parentQuest?.uid && behaviour.targetSymbol?.name === resource.symbol?.name) return true;
   }
   return false;
 }

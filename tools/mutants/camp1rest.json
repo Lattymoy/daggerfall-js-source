@@ -50,8 +50,8 @@
   {
     "name": "CAMP1REST-the-camp-band-slides-inside-the-rest-interrupts-reach",
     "file": "src/systems/campEncounters.js",
-    "old": "export const MIN_CAMP_SPAWN_DISTANCE = 14;   // a cluster wants more clearance than one foe",
-    "new": "export const MIN_CAMP_SPAWN_DISTANCE = 11;   // a cluster wants more clearance than one foe",
+    "old": "export const MIN_CAMP_SPAWN_DISTANCE = 100;   // a camp is come across, never landed on",
+    "new": "export const MIN_CAMP_SPAWN_DISTANCE = 11;   // a camp is come across, never landed on",
     "tests": [
       "test/camp1_groups.test.js"
     ]

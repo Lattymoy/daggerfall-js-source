@@ -20,7 +20,7 @@ import { maxFatigue, maxBreath, liveStat } from '../systems/statMods.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // PX30: the HUD is a skin too
 import { drawEnhancedHud } from './enhancedHud.js';   // PX30
 import { drawLevelNotices } from './levelNotice.js';   // LV2: the level-up notification, on the same one call
-import { drawCrosshairAndModeIcon } from './hudCrosshair.js';   // U38
+import { drawCrosshairAndModeIcon, crosshairCentreY } from './hudCrosshair.js';   // U38; AUDIT RETRO1 G5: the reticle's row, for the loot panel beside it
 import { playerDamageFlash } from './damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { playerBloodScreen, SCREEN_SPATTER_MIN } from './bloodScreen.js';   // BLOOD2e: blood on the lens rides the same call
 import { bloodScreenOn } from '../combat/bloodSwitch.js';   // BLOOD2e: its row
@@ -782,8 +782,11 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   drawSpellIconRows(renderer, canvas, vitals, dt, { font, cursorActive, largeHudRect: null, hover });
 }
 
-/** DISC22-C: the classic skins' quick-loot panel - the frame worldHoverFrame resolved THIS frame, the lit row banded. */
+/** DISC22-C: the classic skins' quick-loot panel - the frame worldHoverFrame resolved THIS frame, the lit row banded.
+ *  AUDIT RETRO1 G5: beside the reticle WHERE IT IS - hudReticle, the enhanced plaque's own door - and above the large
+ *  HUD's bar, docked or not, which is drawn before it (null on the plain HUD: the screen's foot). */
 function drawClassicLoot(renderer, canvas, font) {
   const loot = classicLootFrame(frameMark());
-  if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit);
+  const at = { reticleY: crosshairCentreY(canvas.height, hudReticle(canvas).largeHudHeight), floorY: lastLargeHudBar?.y ?? canvas.height };
+  if (loot) drawLootPanel(renderer, nativeMetrics(canvas), font, loot.frame, loot.lit, at);
 }

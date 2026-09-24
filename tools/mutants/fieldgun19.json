@@ -22,12 +22,12 @@
   {
     "name": "FIELD-GUN19-3-the-rig-stops-parking-the-world-strip",
     "file": "src/combat/weaponRig.js",
-    "old": "viewport: renderer.worldViewportRect ?? null };",
-    "new": "};",
+    "old": "viewport: renderer.worldViewportRect ?? null, aspect:",
+    "new": "aspect:",
     "tests": [
       "test/thunderlock.test.js"
     ],
-    "note": "Without the parked rect every shot is high again, with nothing else to show for it."
+    "note": "Without the parked rect every shot is high again, with nothing else to show for it. RETRO1 re-aimed BY CONTENT: the retro mode's lines now sit beside this one; same law, same killer."
   },
   {
     "name": "FIELD-GUN19-4-the-frames-strip-is-cleared-with-the-GL-state",

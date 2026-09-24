@@ -164,8 +164,8 @@
   {
     "name": "AAC-wire-selfcast-rides",
     "file": "src/net/wire.js",
-    "old": "  const rangeType = sp.rangeType === 1 || sp.rangeType === 2 ? sp.rangeType : null;",
-    "new": "  const rangeType = Number.isInteger(sp.rangeType) && sp.rangeType >= 0 && sp.rangeType <= 4 ? sp.rangeType : null;",
+    "old": "const CAST_RANGE_TYPES = Object.freeze([1, 2]);",
+    "new": "const CAST_RANGE_TYPES = Object.freeze([0, 1, 2, 3, 4]);",
     "tests": [
       "test/allycast.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AAC-effects-gift-merges-with-mine",
     "file": "src/systems/effects.js",
-    "old": "  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && !!a.bundleAlly === allyCast && pred(a)));",
-    "new": "  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && pred(a)));",
+    "old": "!a.heldItem && !!a.bundleAlly === allyCast && !!a.bundleDuel === duelCast && pred(a)));",
+    "new": "!a.heldItem && !!a.bundleDuel === duelCast && pred(a)));",
     "tests": [
       "test/allycast.test.js"
     ]

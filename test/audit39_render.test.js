@@ -109,11 +109,11 @@ test('audit39 F49: the upload arm reuses the ALBEDO, after the window arm, and s
   // emission" - the same colour32 that went up as the albedo.
   assert.match(s, /} else if \(isEmissive\(archive, record\) && archive !== FIRE_WALLS_ARCHIVE\) \{/,
     'the `else` is the C#\'s own `&& !isWindow`');
-  assert.match(s, /renderer\.uploadEmissionTexture\(archive, record, color32, \{ white: true \}\);/);
+  assert.match(s, /renderer\.uploadEmissionTexture\(archive, record, color32, \{ white: true, replacement \}\);/);   // AUDIT RETRO1 A4: a replacement's albedo reused, flagged as the albedo is
   // An animated flat is uploaded frame by frame and the billboard path
   // looks the mask up under that same composite key, so a torch's every
   // frame needs one.
-  assert.match(s, /renderer\.uploadEmissionTexture\(archive, key, color32, \{ white: true \}\);/);
+  assert.match(s, /renderer\.uploadEmissionTexture\(archive, key, color32, \{ white: true, replacement \}\);/);   // AUDIT RETRO1 F2
 });
 
 test('audit39 F49: an auto-emissive mask wears Color.white, a window mask wears the window style', () => {

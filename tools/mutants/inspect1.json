@@ -66,16 +66,16 @@
   {
     "name": "INS-relay-fans-to-the-room",
     "file": "server/src/index.js",
-    "old": "      this._send(tws, JSON.stringify({ t: 'card', id: a.id, data: m.data }));",
-    "new": "      for (const [other, b] of this._all()) if (other !== ws && b.id) this._send(other, JSON.stringify({ t: 'card', id: a.id, data: m.data }));",
+    "old": "this._send(tws, JSON.stringify({ t: 'card', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));",
+    "new": "for (const [other, b] of this._all()) if (other !== ws && b.id) this._send(other, JSON.stringify({ t: 'card', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));",
     "tests": ["test/inspect1.test.js"],
     "note": "An ask or an answer heard by everyone in the room."
   },
   {
     "name": "INS-relay-stamp-missing",
     "file": "server/src/index.js",
-    "old": "JSON.stringify({ t: 'card', id: a.id, data: m.data })",
-    "new": "JSON.stringify({ t: 'card', data: m.data })",
+    "old": "JSON.stringify({ t: 'card', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data })",
+    "new": "JSON.stringify({ t: 'card', ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data })",
     "tests": ["test/inspect1.test.js"],
     "note": "A card nobody can say whose it is."
   },

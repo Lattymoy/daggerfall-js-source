@@ -322,6 +322,7 @@ export class QuestMachine {
   constructor(deps = {}) {
     this.deps = deps;
     this.quests = new Map();          // uid -> Quest
+    this.mountByName = false;         // QREPAIR: set only for the repair's own pass (quest/questRepair.js) - its mounts match a standing resource by quest and name (sceneMount.js)
     // AUDIT DISC7 C2: every QuestResourceBehaviour made over this machine, WEAKLY (a host dropped without a destroy
     // must not be kept alive here) - a shared-quest resync relinks the ones standing on the quest it rebuilds
     this._behaviourRefs = new Set();
@@ -1448,7 +1449,7 @@ export class QuestMachine {
    *  faction ("This effectively shuts down several named NPCs during
    *  main quest") - and TalkManager.cs does not contain the word
    *  Listener at all. The port already ships that reader, at
-   *  src/scenes/worldModes.js:2701. A pending marker over shipped work
+   *  src/scenes/worldModes.js:2703. A pending marker over shipped work
    *  is worse than no marker: it sends the next reader looking for
    *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {

@@ -138,7 +138,8 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     // GR1: the world host has a third seam, the lab's grass; WIND3: both
     // hosts one more, the wisps (drawn after the rain, on their own program)
     // WEATHER2d: and the sand, one more in both; BOLT: and the lightning's channels, one more in both
-    const want = host === 'src/scenes/world.js' ? 6 : 5;
+    // DUEL1: and the duel ring's wall, one more in the world host (the one that is online)
+    const want = host === 'src/scenes/world.js' ? 7 : 5;
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
       `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }
@@ -1200,8 +1201,10 @@ test('AUDIT-AIR1: the shadow reset is ONE HOME - six copies of a rule is five ch
   assert.doesNotMatch(after, /this\._tex0Bound = null; this\._activeUnit = null;/,
     'no site outside the helper clears the pair by hand');
   // and every seam that can lose the units calls it
-  assert.equal((src.match(/this\._forgetTextureShadows\(\);/g) || []).length, 7,
-    'the constructor, endWorldPass, _installWorldSet, markForeignPass, beginFrame, uploadEmissionTexture and the air resolve');
+  // RETRO1: an eighth - the retro present binds units 0..2, a program and a VAO of its own (render/retroPass.js), and
+  // it runs as the classic lane's resolve as well as after the air's, so it forgets for itself
+  assert.equal((src.match(/this\._forgetTextureShadows\(\);/g) || []).length, 8,
+    'the constructor, endWorldPass, _installWorldSet, markForeignPass, beginFrame, uploadEmissionTexture, the air resolve and the retro present');
   // the air resolve's call sits AFTER the composite, because the
   // composite is what invalidates them
   const air = src.slice(src.indexOf('_compositeAir() {'));

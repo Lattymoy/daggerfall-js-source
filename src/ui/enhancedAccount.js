@@ -28,6 +28,7 @@
 
 import { STAGES, FIELDS, FIELD_SPEC } from './accountFlow.js';
 import { TITLE_TEXT, GLYPH_PATH, GLYPH_STROKE, glyphBadges, badgeClass } from './playerBadge.js';   // ACC3c: the SAME table the name over a head reads, so the picker shows what a player will actually wear - the COLOUR is the skin's (this card may not style itself, and a pin holds that)
+import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the account card's K/D row
 
 /** COPY LIVES IN ONE TABLE, so a stage cannot be drawn with a heading
  *  from one slice and a paragraph from another. Keyed by stage, and a
@@ -282,6 +283,10 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
       const joined = registeredText(flow.account.registeredAt);
       if (joined) row('Registered', joined);
       row('Time played', playedText(flow.account.playedS));
+      // DUEL1 (Mac: "Add a dueling K/D to the profile menu"): the account's record, the service's count of the duels
+      // it won and lost (net/duelRecord.js says whose word each result is). A service from before it says nothing.
+      const duels = duelRecordText(flow.account.duels);
+      if (duels) row('Duels', duels);
       root.append(rows);
       wardrobe();
       if (!flow.account.handle) {

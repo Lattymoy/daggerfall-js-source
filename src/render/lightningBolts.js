@@ -160,8 +160,11 @@ export class LightningBoltsRenderer {
   }
 
   /** Draw the burning channels. `seen` the metres over which the air thins a strike's light (the weather's
-   *  visibility; BOLT_SEEN_M in clear air). Nothing to draw, nothing touched. */
-  draw(bolts, proj, view, eye, seen = BOLT_SEEN_M) {
+   *  visibility; BOLT_SEEN_M in clear air). Nothing to draw, nothing touched. RETRO1: `viewH` the height in
+   *  pixels of the image the world pass draws into (Renderer.worldViewportPx) - a retro frame's is 200, and a
+   *  minimum width measured in the canvas's pixels is a fraction of one of its own; the drawing buffer's when
+   *  the host has none to give. */
+  draw(bolts, proj, view, eye, seen = BOLT_SEEN_M, viewH = 0) {
     this.drawn = 0;
     if (!bolts?.length) return;
     const verts = boltVertices(bolts, this.data);
@@ -171,7 +174,7 @@ export class LightningBoltsRenderer {
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
     gl.uniform3fv(U.uEye, eye);
-    gl.uniform1f(U.uPx, 2 / (proj[5] * Math.max(1, gl.drawingBufferHeight)));   // proj[5] = 1 / tan(fov / 2)
+    gl.uniform1f(U.uPx, 2 / (proj[5] * Math.max(1, viewH || gl.drawingBufferHeight)));   // proj[5] = 1 / tan(fov / 2)
     gl.uniform1f(U.uFar, farOf(proj));
     gl.uniform1f(U.uCore, BOLT_CORE_M); gl.uniform1f(U.uHalo, BOLT_HALO); gl.uniform1f(U.uMinPx, BOLT_MIN_PX);
     gl.uniform3fv(U.uColor, BOLT_COLOR); gl.uniform1f(U.uSeen, Math.max(1000, seen));

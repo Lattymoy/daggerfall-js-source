@@ -89,7 +89,7 @@ test('AUDIT-QUEST F1: an absent seam SAYS SO - the charter\'s "loudly", made tru
     const absent = reportUnwiredSeams({ data: {} }, QUEST_CTX_CONTRACT, 'a bare ctx');
     assert.ok(absent.length > 50, 'a bare ctx is missing nearly everything');
     assert.equal(said.length, 1, 'ONE line, not sixty - a report nobody reads is the silence it replaced');
-    assert.match(said[0], /wired 2\/\d+ seams/);
+    assert.match(said[0], new RegExp(`wired ${1 + QUEST_CTX_OPTIONAL_BY_DESIGN.length}/\\d+ seams`), 'data, and the members a host may decline on purpose (QREPAIR added hasQuestTopics to them)');
     assert.match(said[0], /these quest verbs will idle/);
     // ...and a fully wired ctx says nothing at all.
     said.length = 0;
