@@ -51,10 +51,11 @@ test('TITLE-N vocabulary: four titles and four glyphs join, each title with its 
 // ── THE GRANTS ──────────────────────────────────────────────────────
 
 test('TITLE-R founder: no account registered after the cutoff can obtain Founder, and every account that holds it keeps it - held and worn (Mac: "Remove the founder title from being obtained. Current users keep their founder title") (mutants: the cutoff moved forward; the cutoff an open end)', () => {
-  assert.equal(FOUNDER_UNTIL, Date.UTC(2026, 8, 23) / 1000, 'the cutoff is the end of the day ACC3 shipped, and it is in the past');
-  const today = Date.UTC(2026, 8, 24) / 1000;
-  assert.ok(FOUNDER_UNTIL < today, 'closed before this change: nobody has been able to obtain it since');
-  assert.deepEqual(titlesHeld({ handle: 'New', registered_at: today }, {}), [], 'registered now: no Founder');
+  // FOUNDER2 (2026-09-24): Mac granted it once more to every account then registered - the cutoff is the end of that
+  // day now (founder2.test.js), and the title is closed again past it
+  assert.equal(FOUNDER_UNTIL, Date.UTC(2026, 8, 25) / 1000, 'the cutoff is the end of the day FOUNDER2 was asked');
+  const later = Date.UTC(2026, 8, 26) / 1000;
+  assert.deepEqual(titlesHeld({ handle: 'New', registered_at: later }, {}), [], 'registered after it: no Founder');
   assert.deepEqual(titlesHeld({ handle: 'New', registered_at: FOUNDER_UNTIL + 1 }, {}), [], 'a second past the cutoff: no Founder');
   const old = { handle: 'Old', registered_at: FOUNDER_UNTIL - 86400, title: 'founder' };
   assert.deepEqual(titlesHeld(old, {}), ['founder'], 'registered before: kept');

@@ -2354,7 +2354,7 @@ ENUMERATED** applied to the one place a grant is usually a row:
 
 | | held when |
 |---|---|
-| **Founder** | `registered_at <= FOUNDER_UNTIL` (1790121600 — 2026-09-23T00:00:00Z) |
+| **Founder** | `registered_at <= FOUNDER_UNTIL` (1790294400 — 2026-09-25T00:00:00Z since FOUNDER2; it was 1790121600, 2026-09-23T00:00:00Z) |
 | **Developer** | the handle is in `env.DEVELOPER_HANDLES` |
 | **sprout** | `nowS - created_at < SPROUT_S` (two weeks) |
 | **dev** | the same list as the Developer title |
@@ -3105,4 +3105,10 @@ patreon titles. These also recieve their own unique glyphs. The account Dutchess
 - **Founder** is closed. It was already derived from `registered_at <= FOUNDER_UNTIL` (2026-09-23T00:00Z), so no
   account registered since then could obtain it, and every account that holds it keeps it, both held and worn. A pin
   now holds both halves.
+- **FOUNDER2 (2026-09-24, Mac: "I want to grant all current accounts the founder title if they dont have it
+  already").** The same derived grant, asked again at a later moment: `FOUNDER_UNTIL` moves to the end of the day it
+  was asked, 2026-09-25T00:00Z, so every account registered since TITLE-R closed it holds Founder too - no row is
+  written, as ACC3 designed - and past the new cutoff the title is closed again. Guests still hold none. The account
+  service is `acct8`, and it takes effect on that deploy. `test/founder2.test.js`, `tools/mutants/founder2.json`
+  (2 dead); TITLE-R's and ACC3's pins read the new date.
 - `test/titlen.test.js` has 8 pins. `tools/mutants/titlen.json` has 17 mutants, all dead. The relay is world104.

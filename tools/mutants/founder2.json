@@ -1,0 +1,20 @@
+[
+  {
+    "name": "FOUNDER2-the-old-cutoff",
+    "file": "server-account/src/titles.js",
+    "old": "export const FOUNDER_UNTIL = 1_790_294_400;",
+    "new": "export const FOUNDER_UNTIL = 1_790_121_600;",
+    "tests": [
+      "test/founder2.test.js"
+    ]
+  },
+  {
+    "name": "FOUNDER2-the-cutoff-an-open-end",
+    "file": "server-account/src/titles.js",
+    "old": "export const FOUNDER_UNTIL = 1_790_294_400;",
+    "new": "export const FOUNDER_UNTIL = Infinity;",
+    "tests": [
+      "test/founder2.test.js"
+    ]
+  }
+]
