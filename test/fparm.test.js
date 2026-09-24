@@ -2282,7 +2282,7 @@ test('MW-D32: raceRecords reads RADT by hand-laid offsets - heights at 120, flag
 test('MW-D34: the third-person model matrix carries the measured chirality flip and adjustScale', () => {
   // MEASURED through the real composite (mwArmProbe L5b): the 3P body
   // rides drawRigSpriteBox into the world's mirrorProjectionX lens, and
-  // the port's world convention is left-handed (motor.js:668 - the
+  // the port's world convention is left-handed (motor.js:683 - the
   // player's right is +X at yaw 0), so a right-handed NIF actor placed
   // with a pure rotation reads MIRRORED on screen. The -u on the local
   // side axis is the same basis adaptation the mirror gives every
@@ -3083,7 +3083,7 @@ test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stan
   const hm = readFileSync('src/scenes/hostMagic.js', 'utf8');
   // AUDIT ALLY-CAST A1: the instant arm arms instead when a party mate is in touch reach; with nobody there it is
   // the same synchronous castInput, which is the case F2 exists for.
-  assert.match(hm, /if \(sp\.rangeType === 0\) \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyInReach\([^\n]*\n\s*castInput\(null, null\); return;\n\s*\}/,
+  assert.match(hm, /if \(sp\.rangeType === 0\) \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyInReach\([^\n]*\n\s*if \(!free && hasResurrect\(sp\)\)[^\n]*\n\s*return castInput\(null, null\) !== false;\n\s*\}/,   // AUDIT CONTRIB H3: the instant cast is the ready's answer   // RESURRECT1: the dead's own arm beside the ally's
     'the CasterOnly instant cast is the case F2 exists for');
   // ROAD-E6 folded the four release arms' identical tail into one
   // `done` closure - RaiseOnCastReadySpell (:2129) still runs BEFORE

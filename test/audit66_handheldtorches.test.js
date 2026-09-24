@@ -48,6 +48,7 @@ import {
   createDroppedTorches, LIGHT_ABOVE_BILLBOARD, PROJECTILE, PROJECTILE_FIXED_DT, PUFF, ENEMY_FIRE_KIND, ENEMY_LIGHT_LOCAL,
 } from '../src/scenes/droppedTorches.js';
 import { MOD_SETTINGS } from '../src/systems/modSettings.js';
+import { DEFAULT_BINDINGS } from '../src/systems/inputActions.js';   // KB1: the three keys are the registry's actions
 import { raceActivation } from '../src/player/activationRace.js';   // HARD2: F7's law, where it lives now
 import { TEMPLATES } from '../src/systems/useItem.js';
 import { WEAPONS } from '../src/characters/weapons.js';
@@ -56,6 +57,8 @@ import { setWorldMinutes, worldMinutes } from '../src/systems/worldTick.js';
 import { GLOBAL_SCALE } from '../src/player/activate.js';
 import { playerTorchOffsetOverride, setPlayerTorchOffsetOverride } from '../src/systems/playerTorch.js';
 
+/** KB1: action -> its default code, so the fixture's key taps (KeyO/KeyG/KeyX) reach the registry's torch actions. */
+const DEFAULT_CODE = Object.fromEntries(DEFAULT_BINDINGS.map(([code, action]) => [action, code]));
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 /** AUDIT 68 S18-torch-batch-churn: where a batch's quads draw - its centres plus the per-frame origin the moving ones ride. */
@@ -122,7 +125,8 @@ function rig(over = {}, deps = {}) {
     castPlaying: false, spellArmed: false, thirdPerson: false, climbing: false, swimming: false, transformedLycanthrope: false,
     motion: { grounded: true, standing: true, speedRatio: 1, baseSpeed: 1, localVel: [0, 0, 0] }, look: [0, 0], swingHeld: false, cursorActive: false,
     camera: () => ({ pos: [0, 1.7, 0], feet: [0, 0, 0], yaw: 0, pitch: 0, forward: [0, 0, 1], right: [1, 0, 0], up: [0, 1, 0] }),
-    collider: () => deps.collider ?? null, keyDown: (c) => keys.has(c), sheathWeapons: () => { ctx.sheathed = true; },
+    collider: () => deps.collider ?? null, actionDown: (a) => keys.has(DEFAULT_CODE[a]),   // KB1: the registry's three actions, on their default keys (O, G, X)
+    sheathWeapons: () => { ctx.sheathed = true; },
   };
   const frame = (dt = 0.016) => { h.update(dt, ctx); h.lateUpdate(dt, ctx); };
   const twice = (dt = 0.016) => { frame(dt); frame(dt); };

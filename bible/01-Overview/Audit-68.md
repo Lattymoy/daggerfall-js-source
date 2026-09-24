@@ -41,7 +41,9 @@ copy through execFileSync's default 1 MiB buffer; `world.js` crossed
 1 MiB with the COMM merge, the read threw ENOBUFS, and a catch meant for
 new files swallowed it - no cite into the tree's largest file would ever
 move, and the run still said "0 to move". Fixed before the fix wave, since
-every cluster leaned on the tool (`test/audit68_citeshift.test.js`).
+every cluster leaned on the tool (`test/audit68_citeshift.test.js`). Main's CITE-BUF found and
+fixed the same bug the same day; the merge keeps main's `GIT_MAX_BUFFER`
+and both pins.
 
 ## What landed, by cluster
 
@@ -58,9 +60,11 @@ every cluster leaned on the tool (`test/audit68_citeshift.test.js`).
   swept; an owner registry's word expires; hit bytes and say/mute metered
   per sender; register, recover and the save-slot bound compare-and-set;
   the old password on a change rides the login throttle; bodies capped as
-  they arrive. Relay `world103`.
+  they arrive. Relay `world105` (`world103` on the branch; main's `world103`
+  and `world104` landed first).
 - **exterior** - the dropped-pile quick take returned out of `frame()` and
-  froze the game (exterior and world); a foe could die twice; pursuit
+  froze the game (exterior and world; main's QL-FRAME1 paid it too, and the
+  merge keeps main's shape with this branch's release on a take); a foe could die twice; pursuit
   memory moved with a recentre; a hit effect's failed warm leaked; the
   encounter cap raced.
 - **dungeonctx** - a dead foe takes no second death; missiles and a
@@ -122,7 +126,7 @@ and backend pin files, each run against the unfixed code first.
   reopened the very flood C3 was written against: N sockets, each its own
   256 KiB/s, into one destination. The budget is the DESTINATION's now,
   beside the destination's frame funnel - a flood aimed at one socket
-  spends that socket's bytes and no one else's. `world103` re-recorded in
+  spends that socket's bytes and no one else's. `world103` (now `world105`) re-recorded in
   place (never deployed).
 - **Medium - the encounter cap caught spawner squads.** S20's in-flight
   count applied to CreateFoeSpawner stands too, so a summoning punishment
@@ -147,6 +151,19 @@ and backend pin files, each run against the unfixed code first.
   cooldown always outlives the hold), and remain as a harmless second
   wall.
 
+## The merge with main
+
+Main moved 52 commits while the sweep ran (DISC16-DISC20, KB1, the
+contributor drop, TITLE-N). 311 conflict hunks: 279 differed only in cite
+numbers and were taken from main and mapped by `tools/citeMerge.mjs`; the
+rest were resolved by hand. Three were the same bug paid twice - the
+quick take (QL-FRAME1), the online dead load (DISC19-C) and citeShift's
+buffer (CITE-BUF) - and main's shape was kept. `citeMerge` keeps this
+branch's `ambiguousBare` across main's both-sides map, and main's
+friendly-spells pin, which had commented out its own `POSE_CAST_ELEMENTS`
+assert, asserts it again. Main's grass fog (DISC20-A) had pasted a tenth copy of
+`fogFactorAt`; it takes `render/fogGlsl.js`'s now, S17's one home.
+
 ## Not done
 
 - **Never audited:** S39-S41 and S43-S45 (`src/ui` from enhancedChunk to
@@ -170,7 +187,7 @@ and backend pin files, each run against the unfixed code first.
   continuation on the next line; every checkpoint needed the same hand
   mapping through the diff. That mapping belongs in the tool.
 - **Another repo's file is not this repo's file.** The cite tool matched
-  `main.js:303` in a paragraph about project-final's `main.js` as a cite
+  `main.js:311` in a paragraph about project-final's `main.js` as a cite
   into `src/main.js` and moved it. A cite qualified by another repository
   needs to be held, and the tool cannot yet tell.
 - **Cherry-picked new text keeps its worktree's numbers.** A comment a

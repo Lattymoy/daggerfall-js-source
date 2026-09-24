@@ -439,7 +439,7 @@ test('DISC10-E: the beast\'s blow SOUNDS as the empty hand\'s - PlayHitSound(cur
   const wm = src('src/scenes/worldModes.js');
   assert.match(wm, /const interiorHitSound = \(g\) => audio\.play3d\(hitSoundFor\(interiorWeapon\.playerWeapon\.strikingWeapon\), g\.ai\.feet, ENEMY_HIT_VOLUME,/, 'indoors: one hit sound, on the struck foe, with the hand');
   assert.doesNotMatch(wm, /\(wpn\) => audio\.playOneShot\(hitSoundFor\(wpn\)/, 'the foe pool\'s callback no longer reads the struck FOE as a weapon');
-  assert.equal((wm.match(/makeInView\(proj, view, multiply\), interiorHitSound\)\)/g) ?? []).length, 2, 'both interior pools');
+  assert.equal((wm.match(/makeInView\(proj, view, multiply\), interiorHitSound(?:, \{ swing \})?\)\)/g) ?? []).length, 2, 'both interior pools');   // AUDIT DISC19: the one swing's token rides beside it
 });
 
 test('DISC10-E: the knightly smith\'s gift, refused to a beast by the pack\'s own door, is a DISPATCH - not "That service is not available yet." on top of the refusal', () => {

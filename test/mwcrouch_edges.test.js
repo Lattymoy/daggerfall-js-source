@@ -44,7 +44,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, pressedCode,
+  keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released,
   held, setBindings,
 } from '../src/ui/input.js';
 import { createBindings, resetDefaults, setBinding, comboCode } from '../src/systems/inputActions.js';
@@ -136,15 +136,22 @@ test('MWCROUCH: a rebind moves the edge, exactly as it moves held()', () => {
   assert.equal(pressed(edge, keys, 'Crouch'), true);
 });
 
-test('MWCROUCH: pressedCode is the RAW code - the port’s one recorded E departure', () => {
-  setBindings(defaults());
+test('MWCROUCH (re-aimed by KB1): E is the Interact ACTION on the down ring - the raw `pressedCode` departure is retired, so a rebind moves it', () => {
+  // MWCROUCH pinned `pressedCode(edge, 'KeyE')`, the port's one recorded raw read. KB1 made E the Interact action
+  // and deleted the raw reader: the edge is `pressed` like every other press, and follows the binding.
+  const b = defaults();
+  setBindings(b);
   const edge = keyEdges();
   noteKeyDown(edge, 'KeyE', false);
   beginInputFrame(edge);
-  assert.equal(pressedCode(edge, 'KeyE'), true);
+  assert.equal(pressed(edge, new Set(['KeyE']), 'Interact'), true);
   beginInputFrame(edge);
-  assert.equal(pressedCode(edge, 'KeyE'), false);
-  assert.equal(pressedCode(null, 'KeyE'), false, 'a host without a ring answers false, never throws');
+  assert.equal(pressed(edge, new Set(['KeyE']), 'Interact'), false, 'one frame, then gone');
+  setBinding(b, 'KeyG', 'Interact');
+  setBindings(b);
+  noteKeyDown(edge, 'KeyE', false);
+  beginInputFrame(edge);
+  assert.equal(pressed(edge, new Set(['KeyE']), 'Interact'), false, 'moved off E, E no longer interacts');
 });
 
 // The motor half: the edge the hosts now hand it does uncrouch.
@@ -198,7 +205,7 @@ test('MWCROUCH: the old derivation is gone from every host', () => {
     assert.ok(/pressed\((keyEdge|latch\.edge), keys, 'Crouch'\)/.test(s), `${f}: no GetKeyDown crouch`);
     assert.ok(/pressed\((keyEdge|latch\.edge), keys, 'ReadyWeapon'\)/.test(s), `${f}: no GetKeyDown ReadyWeapon`);
     assert.ok(/released\((keyEdge|latch\.edge), keys, 'SwitchHand'\)/.test(s), `${f}: SwitchHand must read the UP ring (WeaponManager.cs:272)`);
-    assert.ok(/pressedCode\((keyEdge|latch\.edge), 'KeyE'\)/.test(s), `${f}: no GetKeyDown E`);
+    assert.ok(/pressed\((keyEdge|latch\.edge), keys, 'Interact'\)/.test(s), `${f}: no GetKeyDown Interact (KB1: the action, not a raw KeyE)`);
   }
 });
 

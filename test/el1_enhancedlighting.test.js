@@ -78,7 +78,7 @@ test('EL1: the row is the Features home\'s, on by default, forced on online', ()
   assert.ok(f, 'the row exists');
   assert.equal(f.group, 'sight');
   assert.deepEqual(f.kinds, ['enhanced']);
-  assert.deepEqual(f.control, { store: 'prefs', key: 'enhancedLighting', initial: true, online: true });
+  assert.deepEqual(f.control, { store: 'prefs', key: 'enhancedLighting', initial: true, online: 'player' });   // OL-LIGHT: the player's online too
   assert.equal(PREF_DEFAULTS.enhancedLighting, true, 'on by default like the other enhanced visuals');
   assert.equal(featureForControl('prefs', 'enhancedLighting'), f);
   assert.match(f.effect, /when the world next loads/);

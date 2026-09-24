@@ -227,7 +227,7 @@ export const MOD_SETTINGS = Object.freeze({
           + 'sprite. The sprites ship with the port; a newer version\u2019s .dfmod attached through the textures pick wins over them.',
       }),
       WeaponWidgetPreset: Object.freeze({
-        default: false,   // DISC14-B (2026-09-23, Mac, with the Weapon Widget tile: "these need to be the default values ingame for diverse weapons. The current defaults are wrong on the screen"): OFF again - the preset's true texture size, inertia, step, recoil and 142 bob are what drew wrong; the defaults Mac chose are Weapon Widget's own (with DoubleScaleTextures on and Inertia.Scale 0, below), and the preset stays a switch. It was on from DW-CLIP ("mod should be defaulted on")
+        default: false,   // DISC16-B (2026-09-24, Mac: "I just want it how it was before diverse weapons"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP ("mod should be defaulted on") had it on, DISC14-B off with two departures of its own
         description: 'Use the mod\u2019s own Weapon Widget preset while this is on - double-scale idles, true texture size, inertia, '
           + 'recoil and its bob - the settings its readme asks Weapon Widget users to select. Your own Weapon Widget '
           + 'settings are kept underneath and come back when this is off.',
@@ -366,7 +366,7 @@ export const MOD_SETTINGS = Object.freeze({
       'Modules.Bob': Object.freeze({ default: true, description: 'Bob: the sprite sways as you walk.' }),
       'Modules.Inertia': Object.freeze({ default: false, description: 'Inertia: the sprite lags the look and your movement. Requires double-scaled weapon textures.' }),
       'Modules.Step': Object.freeze({ default: false, description: 'Step: the sprite\u2019s position is rounded so it moves in steps.' }),
-      'Modules.DoubleScaleTextures': Object.freeze({ default: true, description: 'DoubleScaleTextures: the idle pose is drawn at double size from the mod\u2019s own textures (attach the mod\u2019s .dfmod through the textures pick).' }),   // DISC14-B: ON here, off in the mod - Mac's default for Diverse Weapons' idles (their `w_` double-scale paintings, drawn where the classic idle stands)
+      'Modules.DoubleScaleTextures': Object.freeze({ default: false, description: 'DoubleScaleTextures: the idle pose is drawn at double size from the mod\u2019s own textures (attach the mod\u2019s .dfmod through the textures pick).' }),   // DISC16-B: the mod's own again (DISC14-B had it on)
       'Modules.TrueTextureSize': Object.freeze({ default: false, description: 'TrueTextureSize: a custom texture is drawn at its own pixel size, divided by the scale factor below.' }),
       'Modules.Recoil': Object.freeze({ default: false, description: 'Recoil: the swing recoils on a hit, a parry or a miss, by the condition below.' }),
       'Swings.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 5.0, float: true, step: 0.25, description: 'Speed of the swing\u2019s frames.' }),
@@ -386,7 +386,7 @@ export const MOD_SETTINGS = Object.freeze({
       'Bob.BobWhileIdle': Object.freeze({ default: true, description: 'Whether the shield will slightly bob while stationary' }),
       'Step.Length': Object.freeze({ default: 1, min: 1, max: 10, description: 'The number (x8) whose multiples will be used for snapping' }),
       'Step.Condition': Object.freeze({ default: 0, options: Object.freeze(['Sheathe/Attack Only', 'All Transforms']), description: 'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil' }),
-      'Inertia.Scale': Object.freeze({ default: 0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),   // DISC14-B: 0 here, 1.0 in the mod - Mac's default (the module is off by default too)
+      'Inertia.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),   // DISC16-B: the mod's own again (DISC14-B had it at 0)
       'Inertia.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will move at towards the target offset' }),
       'Inertia.ForwardDepth': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Multiplier for the change in scale when moving forward or backward' }),
       'Inertia.ForwardSpeed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will scale towards the target depth' }),
@@ -433,7 +433,7 @@ export const MOD_SETTINGS = Object.freeze({
       // and by every other vendored mod, and it says what it does: on and off.
       // The player may still bind it wherever they like; this is about what
       // SHIPS. test/ht1_handheldtorches.test.js HT4 is the gate that caught it.
-      'Handling.ToggleLightInput': Object.freeze({ default: "O", text: true, description: 'Button used to quickly ignite or douse your light source' }),
+      'Handling.ToggleLightInput': Object.freeze({ default: "O", text: true, description: 'Button used to quickly ignite or douse your light source' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Handling.RememberLastLightSource': Object.freeze({ default: true, description: 'Igniting with the key re-lights the light you last doused, if you still carry one.' }),
       // HT4 (2026-09-15, Mac: "Pressing tab drops torches, tab is reserved
       // for the menu"): THE ONE DEPARTURE FROM THE MOD'S SHIPPED KEYS.
@@ -445,7 +445,7 @@ export const MOD_SETTINGS = Object.freeze({
       // have known; the port has to answer for it. G is unbound in DFU's
       // own defaults (inputActions.js DEFAULT_BINDINGS) and unused by the
       // mod's other two keys, and it stays the player's to rebind.
-      'Handling.ManualDropInput': Object.freeze({ default: "G", text: true, description: 'Button used to manually drop a light source' }),
+      'Handling.ManualDropInput': Object.freeze({ default: "G", text: true, description: 'Button used to manually drop a light source' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       // HT7 (2026-09-17, Mac: "Take care of both") - THE ONE DEFAULT THIS
       // PORT MOVES, and it is an owner decision rather than a misread.
       //
@@ -472,7 +472,7 @@ export const MOD_SETTINGS = Object.freeze({
       'Handling.StowWhenSwimming': Object.freeze({ default: true, description: 'Swimming stows the light: no free hand.' }),
       'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false, description: 'Two-handed weapons will only occupy your off-hand when attacking' }),   // 3ARMS: the mod ships true; the port ships false - see the departure in Handheld-Torches.md
       'Handling.RelaxedLanterns': Object.freeze({ default: false, description: 'If enabled, will not stow lanterns when both hands are occupied' }),
-      'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),
+      'Throwing.ThrowTorchInput': Object.freeze({ default: "X", text: true, description: 'Hold to wind up a throw, release to throw a torch.' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Throwing.ThrowStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the throw\u2019s speed (25 at full Strength).' }),
       'Throwing.GravityStrength': Object.freeze({ default: 1.0, min: 0.0, max: 10.0, float: true, step: 0.25, description: 'Multiplier on the thrown torch\u2019s fall.' }),
       'Throwing.ThrowAngleOffset': Object.freeze({ default: 15.0, min: 0.0, max: 45.0, float: true, step: 0.25, description: 'Degrees above the look the torch leaves at.' }),
@@ -603,7 +603,7 @@ export const MOD_SETTINGS = Object.freeze({
       // to the port's own pixel dial (ui/input.js). B is unbound in
       // DFU's defaults and unused by the port and by this mod's other
       // keys, and it stays the player's to rebind.
-      'Camera.SwitchShoulder': Object.freeze({ default: 'B', text: true, description: 'Mirrors the camera\u2019s X offset if it is non-zero (the mod ships Tab; the port had already spent it on the pixel dial).' }),
+      'Camera.SwitchShoulder': Object.freeze({ default: 'B', text: true, description: 'Mirrors the camera\u2019s X offset if it is non-zero (the mod ships Tab; the port had already spent it on the pixel dial).' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'CameraOverrideWeapon.Enable': Object.freeze({ default: false, description: 'Use this section\u2019s offsets while a weapon or spell is readied.' }),
       'CameraOverrideWeapon.FrontalPlaneOffset': Object.freeze({ default: Object.freeze([0.0, 0.5]), tuple: 'float', description: 'Moves the camera position on the X and Y axes' }),
       'CameraOverrideWeapon.LongitudinalDistance': Object.freeze({ default: 2.0, min: 1, max: 10, float: true, description: 'Moves the camera position nearer or further to the player' }),
@@ -628,7 +628,7 @@ export const MOD_SETTINGS = Object.freeze({
       // which it is not and never could be. The port's wheel is the
       // DOM's, so this is informational here.
       'CameraScrolling.ScrollableZOffsetAxis': Object.freeze({ default: 'Mouse ScrollWheel', text: true, axis: true, description: 'The axis the mod reads to move the camera offset. The port takes the browser\u2019s own wheel, so this names the input rather than choosing it.' }),
-      'AutoTogglePerspective.ToggleInput': Object.freeze({ default: 'KeypadPlus', text: true, description: 'Button that arms or disarms the automatic view changes below.' }),
+      'AutoTogglePerspective.ToggleInput': Object.freeze({ default: 'KeypadPlus', text: true, description: 'Button that arms or disarms the automatic view changes below.' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'AutoTogglePerspective.OnFoot': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot, with nothing readied.' }),
       'AutoTogglePerspective.OnFootMelee': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot with a weapon readied.' }),
       'AutoTogglePerspective.OnFootRanged': Object.freeze({ default: 0, options: Object.freeze(['Don\'tChange', 'FirstPerson', 'ThirdPerson']), description: 'Which view to take on foot with a bow readied.' }),
@@ -858,8 +858,8 @@ export const MOD_SETTINGS = Object.freeze({
       // SHIPS. `keyChoice` DECLARES the kind, the way `axis` does, so
       // the HT4 pin walks this choice list as it walks a TextKey and
       // never has to guess whether "U" is a key or a bob shape.
-      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true, options: Object.freeze(["None", "F", "G", "K", "O", "X", "Custom Key Bind"]), description: "Sets the key to initiate time accelerated travelling following paths if roads integration enabled" }),
-      'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({ default: "", text: true, description: "Custom key bind for following paths used if CustomBind set above" }),
+      'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true, options: Object.freeze(["None", "F", "G", "K", "O", "X", "Custom Key Bind"]), description: "Sets the key to initiate time accelerated travelling following paths if roads integration enabled" }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      'RoadsIntegration.FollowPathsCustomKeyBind': Object.freeze({ default: "", text: true, description: "Custom key bind for following paths used if CustomBind set above" }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'RoadsIntegration.EnableWaterways': Object.freeze({ default: false, description: "Enhances the travel map with rivers and streams with a toggle button" }),
       'RoadsIntegration.EnableStreamsToggle': Object.freeze({ default: false, description: "Adds a streams toggle button separate from rivers button" }),
       'RoadsIntegration.MarkLocationColor': Object.freeze({ default: '#ffeb05ff', color: true, description: "The colour used to highlight locations using middle mouse button on travel map" }),
@@ -930,8 +930,8 @@ export const MOD_SETTINGS = Object.freeze({
       'Following.AvoidCombat': Object.freeze({ default: true, description: 'Following Horse Avoids Combat. When enabled, a following horse or horse-and-wagon team will try to keep away from hostile enemies during combat.' }),
       'Following.FollowFastTravel': Object.freeze({ default: true, description: 'Following Transport Fast Travels With You. When disabled, transport currently commanded to Follow waits where it was when fast travel begins.' }),
       'WagonAccess.InteriorAccessDistance': Object.freeze({ default: 50, min: 10, max: 100, description: 'Interior Wagon Access Distance. Sets how close your wagon must be parked to a building or dungeon entrance to access it from inside.' }),
-      'Hotkeys.QuickMountDismount': Object.freeze({ default: 'Alpha5', text: true, description: 'Quick Mount / Dismount. Mounts your last-used horse or wagon using the same range and ownership rules as the Transport menu. Pressing it while riding dismounts immediately. Click it and press a key to rebind; \u2715 clears it (None).' }),
-      'Hotkeys.SummonTransport': Object.freeze({ default: 'Alpha6', text: true, description: 'Summon Horse & Wagon. Teleports owned transport to a nearby layout while outdoors. Click it and press a key to rebind; \u2715 clears it (None).' }),
+      'Hotkeys.QuickMountDismount': Object.freeze({ default: 'Alpha5', text: true, description: 'Quick Mount / Dismount. Mounts your last-used horse or wagon using the same range and ownership rules as the Transport menu. Pressing it while riding dismounts immediately. Click it and press a key to rebind; \u2715 clears it (None).' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+      'Hotkeys.SummonTransport': Object.freeze({ default: 'Alpha6', text: true, description: 'Summon Horse & Wagon. Teleports owned transport to a nearby layout while outdoors. Click it and press a key to rebind; \u2715 clears it (None).' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
     }),
   }),
 });
@@ -958,11 +958,27 @@ export const KEY_MIGRATIONS = Object.freeze([
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.QuickMountDismount', was: 'F7' }),
   Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),
 ]);
+/** DISC20-E (2026-09-24, Mac: "The weapon widget default toggle under diverse weapons should be set to off by
+ *  default"): A SWITCH WHOSE DEFAULT MOVED, RESET ONCE. Diverse Weapons' Weapon Widget Preset has shipped off since
+ *  DISC16-B, but a default only answers for a player who never touched the switch, and every player who turned it on
+ *  while DW-CLIP shipped it on (or tried it) holds a SAVED value and still sees it on. So a stored value WITHOUT this
+ *  entry's stamp is let go on load and the file written back, and the shipped off applies. setModSetting stamps the
+ *  key when a player sets it from now on, so a choice made after the reset is kept across reloads - unlike
+ *  KEY_MIGRATIONS, which can only match a value. A file that never mentioned the mod is not grown one. */
+export const SWITCH_RESETS = Object.freeze([
+  Object.freeze({ vendor: 'diverse-weapons', key: 'WeaponWidgetPreset', stamp: 'WeaponWidgetPreset@DISC20' }),
+]);
 function migrate(m) {
   let changed = false;
   for (const { vendor, key, was } of KEY_MIGRATIONS) {
     const held = m?.[vendor];
     if (!held || held[key] !== was) continue;
+    delete held[key];
+    changed = true;
+  }
+  for (const { vendor, key, stamp } of SWITCH_RESETS) {
+    const held = m?.[vendor];
+    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;
     delete held[key];
     changed = true;
   }
@@ -1095,6 +1111,13 @@ export function modSetting(vendor, key) {
 
 /** DS1: every key of one vendored mod, resolved - what a mod reads its
  *  ModSettings as, in one object. */
+/** KB1: the value a player SAVED for a key, raw, or undefined when they never touched it - the keybinding registry's
+ *  one-time carry of the mods' old TextKeys (systems/inputActions.js migrateKeyBinds) needs "chose" from "shipped". */
+export function storedModSetting(vendor, key) {
+  if (!declaredKey(vendor, key)) return undefined;
+  return load()[vendor]?.[key];
+}
+
 export function modSettingsOf(vendor) {
   const keys = MOD_SETTINGS[vendor]?.keys;
   if (!keys) throw new Error(`modSettingsOf: ${vendor} is not a vendored mod with switches`);
@@ -1116,6 +1139,7 @@ export function setModSetting(vendor, key, value) {
   const m = load();
   const v = coerce(def, value);
   (m[vendor] ??= {})[key] = v;
+  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true;   // DISC20-E: chosen after the reset - kept
   save();
   _generation++;
   return v;

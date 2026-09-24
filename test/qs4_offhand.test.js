@@ -104,7 +104,7 @@ test('QS4: the model asks the door and says nothing over it - the one line it ad
 test('QS4: one home for the guard - the mod\'s own key and the port\'s action press the SAME arm', () => {
   const src = read('src/systems/handheldTorches.js');
   // The key poll does not restate the guard; it presses the door.
-  assert.match(src, /if \(pressed\(w\.s\.toggleKey\)\) toggleLightPress\(\);/);
+  assert.match(src, /if \(pressed\('TorchToggleLight'\)\) toggleLightPress\(\);/);   // KB1: the registry's action, not the mod's TextKey
   assert.match(src, /function toggleLightPress\(\) \{[\s\S]*?if \(w\.s\.lanternRelaxed\) \{[\s\S]*?hasFreeHand\(\) \|\| contains\('UselessItems2', T\.Lantern\)[\s\S]*?\} else if \(hasFreeHand\(\)\)[\s\S]*?say\(MESSAGES\.noFreeHand\);\s*\n\s*return false;\s*\n\s*\}/);
   assert.equal((src.match(/MESSAGES\.noFreeHand\);/g) ?? []).length >= 1, true);
   // The rig's door is the only way the HUD reaches it, and the mod being

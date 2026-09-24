@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-WATCH1-B6-a-dropped-record-stays-sent",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      for (const r of before) if (!out.includes(r)) { const f = src.get(r); if (f) f._sentKey = null; }",
-    "new": "",
+    "old": "      for (const r of before) if (!out.includes(r)) { const f = src.get(r); if (f) { f._sentKey = null; f._heir = null; } }",
+    "new": "      for (const r of before) if (!out.includes(r)) { const f = src.get(r); if (f) { f._heir = null; } }",
     "tests": [
       "test/watch1.test.js"
     ]

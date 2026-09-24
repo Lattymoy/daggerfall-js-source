@@ -586,6 +586,21 @@ export class PlayerMotor {
     return [q[0] + dx * a, feetY, q[2] + dz * a];
   }
 
+  /** DISC18 (2026-09-24, Mac: "my characterless [character's legs] are in the ground"): THE BODY'S FEET - EV1's span lerp alone,
+   *  WITHOUT MAC1's low-pass. feetAt hands a camera the height the eye rides, low-passed over STEP_SMOOTH_TAU so a
+   *  rung or a facet does not pop the view, and the hosts handed that same height to the third-person BODY. A
+   *  low-pass trails a climb by the climb's vertical speed times its time constant: walking up a 30-degree hill the
+   *  body stood 13 cm under the ground (23 running, 33 running up 40 degrees, up to a whole rung on a stair), and it
+   *  floated as far over it going down. The body stands where the capsule stands; the camera keeps its smoothing,
+   *  and the filter is left alone here. The same snap guard as feetAt. */
+  bodyFeetAt(alpha = this._alpha) {
+    const p = this.pos, q = this._prevPos;
+    const dx = p[0] - q[0], dy = p[1] - q[1], dz = p[2] - q[2];
+    if (dx * dx + dy * dy + dz * dz > PlayerMotor.SNAP_SPAN * PlayerMotor.SNAP_SPAN) return [p[0], p[1], p[2]];
+    const a = Math.max(0, Math.min(1, alpha));
+    return [q[0] + dx * a, q[1] + dy * a, q[2] + dz * a];
+  }
+
   /** EV1: a floating-origin shift moves BOTH ends of the
    *  interpolation span - the world moved, the player did not - so
    *  the camera never lerps across the 819.2-unit recenter. The
@@ -860,7 +875,7 @@ export class PlayerMotor {
       //
       // The pass condition is `!Number.isFinite(dist)`, not a
       // comparison against the distance: collider.sphereCast
-      // (collider.js:585) returns Infinity ONLY on a clear sweep and a
+      // (collider.js:608) returns Infinity ONLY on a clear sweep and a
       // finite dist (0 on a start-overlap) for any hit, which is
       // exactly Unity's boolean. One accepted deviation: Unity's
       // SphereCast ignores colliders overlapping the START sphere, so a

@@ -171,17 +171,20 @@ export const WISP_BOX = 90;
  *
  *  WIND5 (2026-09-23, Mac: "lets reduce the amount of wind streaks"): 240. A flourish is a bigger, more deliberate
  *  mark than a streak - a stroke and a curl, drawn on and off - and a few of them read as wind where the streaks
- *  needed numbers; a calm keeps 19 (the floor). */
-export const WISP_MAX = 240;
+ *  needed numbers; a calm keeps 19 (the floor).
+ *
+ *  DISC17-A (2026-09-24, Mac: "I really want to give the wisps more opacity and reduce the amount of wind wisps"):
+ *  120, half - fewer marks, each one twice as dark (WISP_LOOK's alpha); a calm keeps 10. */
+export const WISP_MAX = 120;
 /** The share of WISP_MAX drawn in a dead calm - the floor that keeps
- *  the direction readable. 0.08 of WIND5's maximum is 19 wisps (of
- *  WIND4's 650, 52), where 0.12 of the old was 288 - a still day should be still. */
+ *  the direction readable. 0.08 of DISC17-A's maximum is 10 wisps (of
+ *  WIND5's 240, 19; of WIND4's 650, 52), where 0.12 of the old was 288 - a still day should be still. */
 export const WISP_FLOOR = 0.08;
 
 /** WEATHER2d: A LOOK - the program in a dress. The wisps' own, and the
  *  sandstorm's: tan, dense, short streaks in a lower box, no floor (no
  *  sand without a storm), the front's intensity its strength. */
-export const WISP_LOOK = Object.freeze({ color: Object.freeze([0.86, 0.89, 0.94]), alpha: Object.freeze([0.10, 0.12]), len: Object.freeze([2.6, 2.0]), count: WISP_MAX, floor: WISP_FLOOR, box: WISP_BOX, curl: 1 });   // WIND5: longer, to hold a curl
+export const WISP_LOOK = Object.freeze({ color: Object.freeze([0.86, 0.89, 0.94]), alpha: Object.freeze([0.20, 0.24]), len: Object.freeze([2.6, 2.0]), count: WISP_MAX, floor: WISP_FLOOR, box: WISP_BOX, curl: 1 });   // WIND5: longer, to hold a curl; DISC17-A: the alpha doubled (0.10, 0.12 before) - a gale's ink peaks at 0.70, a calm's at 0.32
 export const SAND_LOOK = Object.freeze({ color: Object.freeze([0.80, 0.64, 0.40]), alpha: Object.freeze([0.28, 0.30]), len: Object.freeze([0.8, 1.2]), count: 7000, floor: 0, box: 70, curl: 0 });   // WIND5: sand streaks, straight
 
 /** WIND5: the ribbon's vertices for a look - WISP_SEGMENTS segments for a flourish, one for a straight streak (the

@@ -8,7 +8,7 @@
 // inside the walk block and the mount later, in the HUD block - so the mount landed on top. The rig now draws after
 // the mount and before drawHud, under the walk block's own gate.
 //
-// ── DISC14-B: Diverse Weapons' defaults (Mac, with a screenshot of the Weapon Widget tile) ──
+// ── DISC14-B: Diverse Weapons' defaults (Mac, with a screenshot of the Weapon Widget tile) - REVERTED by DISC16-B ──
 // "these need to be the default values ingame for diverse weapons. The current defaults are wrong on the screen":
 // Swings, Ambidexterity, Offset, Bob and DoubleScaleTextures on; Inertia, Step, TrueTextureSize and Recoil off;
 // Swings.Speed 1, Bob.Length 100, Inertia.Scale 0. The defaults were the mod's preset laid OVER the player's Weapon
@@ -26,11 +26,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { modSetting, modSettingsOf, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
+import { modSettingsOf, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { readWidgetSettings, WEAPON_WIDGET_VENDOR } from '../src/combat/weaponWidget.js';
-import { diverseWeaponsPresetOn, moddedWeaponHUDAnimsEnabled } from '../src/combat/diverseWeapons.js';
-import { modModules, modDials } from '../src/systems/features.js';
-import { gunWidgetSettings, GUN_INERTIA_SCALE } from '../src/combat/gunViewmodel.js';
 import { createWeaponWidget } from '../src/combat/weaponWidget.js';
 import { WEAPON_TYPES, GENERAL_ANIMS } from '../src/combat/fpsWeapon.js';
 import { createWeaponMachine, machineStep } from '../src/characters/weaponStates.js';
@@ -51,59 +48,9 @@ test('DISC14-A: in both hosts that ride, the weapons draw over the mount - the m
   assert.match(rd('vendor/roleplay-realism/Scripts/EnhancedRiding.cs'), /Draw horse texture behind other HUD elements & weapons[^\n]*\n\s*GUI\.depth = 2;/, 'the law, in the vendored mod');
 });
 
-// ── DISC14-B ─────────────────────────────────────────────────────────
-
-const MAC = Object.freeze({
-  'Modules.Swings': true, 'Modules.Ambidexterity': true, 'Modules.Offset': true, 'Modules.Bob': true, 'Modules.Inertia': false,
-  'Modules.Step': false, 'Modules.DoubleScaleTextures': true, 'Modules.TrueTextureSize': false, 'Modules.Recoil': false,
-  'Swings.Speed': 1, 'Bob.Length': 100, 'Inertia.Scale': 0,
-});
-
-test('DISC14-B: a fresh game draws Diverse Weapons with Mac\'s values - the nine modules and the tile\'s three dials as the screenshot has them, the mod on and its preset off (mutants: the preset back on; either departure back to the mod\'s default)', () => {
-  _resetModSettings();
-  assert.equal(moddedWeaponHUDAnimsEnabled(), true, 'Diverse Weapons is on');
-  assert.equal(diverseWeaponsPresetOn(), false, 'and its preset is not laid over them');
-  const store = modSettingsOf(WEAPON_WIDGET_VENDOR);
-  for (const [k, v] of Object.entries(MAC)) assert.equal(store[k], v, `${k} defaults to ${v}`);
-  assert.deepEqual(modModules(WEAPON_WIDGET_VENDOR).concat(modDials(WEAPON_WIDGET_VENDOR)), Object.keys(MAC), 'the tile carries exactly these twelve');
-  // and what draws is what the tile shows - the widget's own reading of the store, nothing over it
-  const s = readWidgetSettings();
-  assert.deepEqual([s.swing, s.ambidexterity, s.offset, s.bob, s.inertia, s.stepTransforms, s.doubleScale, s.trueSize, s.recoil], [true, true, true, true, false, false, true, false, false]);
-  assert.deepEqual([s.swingSpeed, s.bobLength, s.inertiaScale], [1, 1, 0], 'Swings.Speed 1, Bob.Length 100 / 100, Inertia.Scale 0 x 500');
-});
-
-test('DISC14-B: the tile shows what draws - every chip and dial reads the value the widget uses, preset off; the preset, asked for, still lays the mod\'s values over them', () => {
-  _resetModSettings();
-  const field = { 'Modules.Swings': 'swing', 'Modules.Ambidexterity': 'ambidexterity', 'Modules.Offset': 'offset', 'Modules.Bob': 'bob', 'Modules.Inertia': 'inertia',
-    'Modules.Step': 'stepTransforms', 'Modules.DoubleScaleTextures': 'doubleScale', 'Modules.TrueTextureSize': 'trueSize', 'Modules.Recoil': 'recoil' };
-  for (const [k, f] of Object.entries(field)) {
-    setModSetting(WEAPON_WIDGET_VENDOR, k, !modSetting(WEAPON_WIDGET_VENDOR, k));   // a player's press on the chip
-    assert.equal(readWidgetSettings()[f], modSetting(WEAPON_WIDGET_VENDOR, k), `${k}: the press reaches the weapon`);
-  }
-  for (const [k, v, f, want] of [['Swings.Speed', 1.5, 'swingSpeed', 1.5], ['Bob.Length', 120, 'bobLength', 1.2], ['Inertia.Scale', 0.5, 'inertiaScale', 250]]) {
-    setModSetting(WEAPON_WIDGET_VENDOR, k, v);   // a turn of the dial
-    assert.equal(readWidgetSettings()[f], want, `${k}: the dial reaches the weapon`);
-  }
-  _resetModSettings();
-  setModSetting('diverse-weapons', 'WeaponWidgetPreset', true);
-  const p = readWidgetSettings();
-  assert.deepEqual([p.inertia, p.trueSize, p.recoil, p.bobLength], [true, true, true, 1.42], 'the mod\'s own preset, when a player asks for it');
-  _resetModSettings();
-});
-
-test('DISC14-B: the Thunderlock keeps its sway - its inertia runs at the mod\'s shipped scale while the player\'s module is off, and at the player\'s own once they turn it on (mutants: the gun on the store\'s 0)', () => {
-  _resetModSettings();
-  assert.equal(GUN_INERTIA_SCALE, 1);
-  const shipped = JSON.parse(rd('vendor/weapon-widget/modsettings.json')).Sections.find((x) => x.Name === 'Inertia').Keys.find((k) => k.Name === 'Scale').Value;
-  assert.equal(GUN_INERTIA_SCALE, shipped, 'the mod\'s own value, not a number made here');
-  const g = gunWidgetSettings();
-  assert.deepEqual([g.inertia, g.inertiaScale], [true, 500], 'the gun\'s one declared departure, at the mod\'s scale');
-  setModSetting(WEAPON_WIDGET_VENDOR, 'Modules.Inertia', true);
-  setModSetting(WEAPON_WIDGET_VENDOR, 'Inertia.Scale', 0.4);
-  assert.equal(gunWidgetSettings().inertiaScale, 200, 'a player who turns the module on sets its scale for the gun too');
-  _resetModSettings();
-  assert.equal(gunWidgetSettings({}).inertiaScale, 500, 'and the lab, which has no player, runs at the mod\'s scale');
-});
+// ── DISC14-B: REVERTED by DISC16-B (2026-09-24, Mac: "Weapon widget preset needs to be defaulted on with diverse
+// weapons and the changes we made to the values for the weapon widget reverted"). Its pins went with it; the defaults
+// are DW-CLIP's again, pinned where they were (DW1, WW1, AUDIT-DW) and in test/disc16.test.js.
 
 // ── DISC14-C ─────────────────────────────────────────────────────────
 
@@ -111,6 +58,10 @@ test('DISC14-B: the Thunderlock keeps its sway - its inertia runs at the mod\'s 
  *  `w_` idle with a doubled texture, as a Diverse Weapons idle is. Returns the sprite's drawn y and the arms' rect per frame. */
 function walkWidget(over = {}, { wHit = false, look = [0, 0] } = {}) {
   _resetModSettings();
+  // DISC16-B: the bench names its own settings - the preset off, so the chips below are what draws, and
+  // DoubleScaleTextures on unless the case turns it off (the defaults are DW-CLIP's again, the preset on)
+  setModSetting('diverse-weapons', 'WeaponWidgetPreset', false);
+  over = { 'Modules.DoubleScaleTextures': true, ...over };
   const widget = createWeaponWidget({ settings: () => readWidgetSettings(() => ({ ...modSettingsOf(WEAPON_WIDGET_VENDOR), ...over })), audio: { playOneShot() {} }, rolls: () => 0, handedness: () => false, bowDrawback: () => true });
   const machine = createWeaponMachine(false, false);
   const draws = [];

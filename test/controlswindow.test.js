@@ -25,7 +25,9 @@ const freshStore = () => { const b = createBindings(); resetDefaults(b); return 
 // became tests about a clash. Deriving it means a new default can
 // never change what a test is asking again.
 const freeCode = (store) => {
-  const letters = 'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`);
+  // KB1: every letter is somebody's since the standard (the mods' keys joined the table), so the candidates
+  // run on past the letters into keys no default holds
+  const letters = [...'PYZXQKJUOBNM'.split('').map((c) => `Key${c}`), 'Semicolon', 'Quote', 'BracketLeft', 'BracketRight'];
   const free = letters.find((c) => !actionForCode(store, c));
   assert.ok(free, 'every candidate letter is spoken for - this fixture needs a new one');
   return free;
@@ -155,8 +157,11 @@ test('I4: the apply CONTRACT - a clashing set is order-dependent, and the gate i
   setUnsavedBinding(u, 'MoveForwards', 'KeyI');   // KeyI is Status's default
   assert.equal(checkDuplicates(u).ok, false, 'the gate SEES it, and blocks the close');
   applyUnsavedKeybinds(store, u);
-  assert.equal(getBinding(store, 'MoveForwards'), null, 'the earlier action loses the code');
-  assert.equal(getBinding(store, 'Status'), 'KeyI', 'the later one keeps it');
+  // AUDIT KB1 F4: the apply reads "differs" off the store as it stood BEFORE the walk (a code MOVED by the replace
+  // prompt must mark its old holder removed whatever the order), so here the row that CHANGED takes the code and the
+  // row that did not is left holding nothing - still a lost key, which is the point: only the gate prevents it.
+  assert.equal(getBinding(store, 'MoveForwards'), 'KeyI', 'the changed row takes the code');
+  assert.equal(getBinding(store, 'Status'), null, 'and the untouched one is left unbound - the clash the gate exists to stop');
 });
 
 test('I4: Default resets the live registry and re-stages from it', () => {

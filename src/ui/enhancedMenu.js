@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:106-214, FD1: the
+// This is ONE screen, under BOTH skins (main.js:114-222, FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -145,7 +145,7 @@ import { CREDITS } from './credits.js';   // CR1: who made what the port carries
 // CLASSIC pause window. The pane is its own module because it owns a
 // document-level capture listener and a staged copy of both binding
 // dicts, neither of which belongs in a screen that repaints itself.
-import { paneControls, discardControlsStaging, captureArmed } from './enhancedControls.js';
+import { paneControls, discardControlsStaging, captureArmed, controlsPromptOpen, dismissControlsPrompt } from './enhancedControls.js';
 // FT0: the features home - one list over the three stores, filtered by kind
 import { FEATURES, KINDS, KIND_ORDER, GROUPS, GROUP_ORDER, filterFeatures, featureCounts, featureForControl, resolveControl, modModules, modDials } from '../systems/features.js';   // FT14: the groups and each mod's curated keys
 import '../world/landView.js';   // RF4: the land-view lane registers itself with the registry
@@ -953,7 +953,7 @@ function paneLoad(body) {
     actions: [
       // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
       // which is the shape AUDIT F3/F4 made confirm - but classic's
-      // own pause window loads on one press (pauseWindow.js:317-319)
+      // own pause window loads on one press (pauseWindow.js:334-336)
       // and so does F11, and inventing a prompt on exactly one of the
       // port's three load doors is a divergence, not a safety net.
       { label: 'Load', primary: true, disabled: !canLoad, onClick: () => { _pickedSaveKey = save.key; onAction('load'); } },
@@ -1046,7 +1046,7 @@ function transferCard(count) {
 
 // ── SAVE GAME (pause only) ───────────────────────────────────────
 // U51. Classic's SAVE button closes the window and then writes
-// (pauseWindow.js:290-292, `this._closeWith(); ... this.hooks.quickSave?.()`),
+// (pauseWindow.js:307-309, `this._closeWith(); ... this.hooks.quickSave?.()`),
 // and this does the same for a reason that is not only parity: the
 // port answers a write with a HUD LINE, and this screen is a fixed
 // opaque div over the whole canvas, so a save that left the door open
@@ -1119,7 +1119,7 @@ function paneSave(body) {
 
 // ── EXIT (pause only) ────────────────────────────────────────────
 // U51. Classic confirms on TEXT.RSC 1069 and then posts dfuiExitGame
-// (pauseWindow.js:198-201); in a browser Application.Quit means nothing,
+// (pauseWindow.js:215-218); in a browser Application.Quit means nothing,
 // so the port's door out has always been the front door - the same
 // unwind chargen's cancel and the death sequence use (Ledger A).
 //
@@ -3381,6 +3381,7 @@ function onKey(e) {
   const back = accountOpen ? () => { accountOpen = false; render(); }
     : confirming ? () => { confirming = null; render(); }
     : sheetOpen ? () => { sheetOpen = false; render(); }
+      : controlsPromptOpen() ? () => dismissControlsPrompt()   // AUDIT KB1: the Controls pane's own prompt answers No first - it never leaves the section with the staged binds
       : section !== 'home' ? () => go('home')   // PX1/PX2: a section backs out to the face
         : mode === 'pause' ? () => onAction('resume')   // Escape on the pause face resumes
           : null;

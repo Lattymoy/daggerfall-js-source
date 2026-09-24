@@ -8,8 +8,9 @@
 // tables miss (the /:N and `:N` continuations, a hand-resolved cite).
 //
 // So each line is mapped from the side it came from: a line that exists
-// verbatim in their file is theirs (their numbers - map from their head),
-// else in ours is ours, else it is new (reported, never touched). The
+// verbatim in their file only is theirs (their numbers - map from their
+// head), in ours only is ours, in BOTH is mapped from both and moved only
+// where the two agree, else it is new (reported, never touched). The
 // map, the content check and the cite spellings are citeShift's own; the
 // bare continuations citeShift only reports (`:N`, /:N, /N, `, :N` after a
 // cite, up to the next cite of any file) are moved here with the same
@@ -32,10 +33,46 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 // ---- the pure half (pinned in test/citemerge.test.js) ---------------------
 
-/** Which side a merged line came from: 'theirs' if their file carries it
- *  verbatim, else 'ours' if ours does, else null - a line the merge wrote. */
+/** Which side a merged line came from: 'both' if both files carry it
+ *  verbatim, else 'theirs' or 'ours' for the one that does, else null - a
+ *  line the merge wrote.
+ *
+ *  THE SHARED LINE (the contributor drop's merge, 2026-09-23). This was
+ *  'theirs' first, and a line BOTH sides carry is one whose number was
+ *  written against only one of two different targets: the drop's 85 files
+ *  came off several bases, so an untouched comment citing `hostMagic.js:78`
+ *  sat beside a hostMagic.js whose lines had moved on their side, and the
+ *  theirs-first map walked nine such cites through the wrong side's diff
+ *  (`spellcost.js:182` -> :181, `rest.js:46-58` -> :60-75). Nothing in
+ *  the line says which target its number was read off - so it is mapped
+ *  from BOTH, and a cite moves only where the two maps agree; where they
+ *  part it is held for a person (main's AMBIGUOUS). */
 export function provenance(line, theirs, ours) {
-  return theirs?.has(line) ? 'theirs' : ours?.has(line) ? 'ours' : null;
+  const t = !!theirs?.has(line), o = !!ours?.has(line);
+  return t && o ? 'both' : t ? 'theirs' : o ? 'ours' : null;
+}
+
+/** The sides a provenance maps from. */
+export const sidesOf = (prov) => (prov === 'both' ? ['theirs', 'ours'] : [prov]);
+
+/** Map one line from the side(s) its provenance names. `targetsFor(side)`
+ *  gives that side's [target, mapLine options] pairs for the files the line
+ *  cites. A shared line whose two maps disagree comes back `ambiguous` with
+ *  both proposals and moves nothing.
+ *  @returns {{ out: string, n: number, hs: object[], ambiguous?: {theirs: string, ours: string} }} */
+export function mapSides(l, prov, targetsFor) {
+  const from = (side) => {
+    let out = l, n = 0; const hs = [];
+    for (const [t, opts] of targetsFor(side)) {
+      const r = mapLine(out, t, opts);
+      for (const h of r.held) hs.push({ ...h, t });
+      n += r.moved; out = r.out;
+    }
+    return { out, n, hs };
+  };
+  const [r, other] = sidesOf(prov).map(from);
+  if (other && other.out !== r.out) return { out: l, n: 0, hs: [], ambiguous: { theirs: r.out, ours: other.out } };
+  return r;
 }
 
 
@@ -121,9 +158,9 @@ function main(argv) {
         if (!/:\d/.test(l)) continue;
         const prov = provenance(l, theirs, ours);
         if (!prov) continue;
-        for (const [t, cfg] of targetsOf[prov]) {
+        for (const side of sidesOf(prov)) for (const [t, cfg] of targetsOf[side]) {
           if (t === doc) continue;
-          for (const { a, status, escaped } of mapLine(l, t, { ...cfg, moveStruck, ambiguousBare: byBase[prov].get(basename(t)).length > 1 }).seen) {
+          for (const { a, status, escaped } of mapLine(l, t, { ...cfg, moveStruck, ambiguousBare: byBase[side].get(basename(t)).length > 1 }).seen) {
             if (escaped) continue;
             if (status === 'struck') add(struckNums, t, a);
             else if (status === 'move') add(movedNums, t, a);
@@ -147,14 +184,14 @@ function main(argv) {
       if (!prov) { if (/[\w-]\\?\.(?:js|mjs|md|sh):\d+|`:\d+/.test(l)) { news++; console.log(`  NEW      ${doc}:${i + 1}  (from neither side - read it)`); } return; }
       const names = new Set([...l.matchAll(/([\w.-]+?)(\\?)\.(js|mjs|md|sh):\d+/g)].map((m) => `${m[1]}.${m[3]}`));
       if (/Port-Ledger row|Ledger rows?|ledger rows?/.test(l)) names.add('Port-Ledger.md');
-      let out = l;
-      for (const name of names) for (const t of byBase[prov].get(name) ?? []) {
-        if (t === doc) continue;
-        const r = mapLine(out, t, { ...targetsOf[prov].get(t), moveStruck, holdEscaped: holdOf.get(t) ?? null, ambiguousBare: byBase[prov].get(name).length > 1 });
-        for (const h of r.held) { held++; console.log(`  ${h.status.toUpperCase().padEnd(8)} ${doc}:${i + 1}  ${h.text}${h.continuation ? ' (continuation)' : ''}${h.to ? ' -> ' + h.to : ''}  [${t}]`); }
-        if (r.out !== out) { moved += r.moved; console.log(`  ${apply ? 'moved  ' : 'MOVE   '} ${doc}:${i + 1}  ${out.trim().slice(0, 100)}\n        -> ${r.out.trim().slice(0, 100)}`); out = r.out; }
+      const r = mapSides(l, prov, (side) => [...names].flatMap((name) => (byBase[side].get(name) ?? []).filter((t) => t !== doc)
+        .map((t) => [t, { ...targetsOf[side].get(t), moveStruck, holdEscaped: holdOf.get(t) ?? null, ambiguousBare: byBase[side].get(name).length > 1 }])));
+      if (r.ambiguous) {
+        held++; console.log(`  AMBIGUOUS ${doc}:${i + 1}  a line both sides carry, mapped two ways - resolve it by content\n        theirs -> ${r.ambiguous.theirs.trim().slice(0, 100)}\n        ours   -> ${r.ambiguous.ours.trim().slice(0, 100)}`);
+        return;
       }
-      if (out !== l) { lines[i] = out; changed = true; }
+      for (const h of r.hs) { held++; console.log(`  ${h.status.toUpperCase().padEnd(8)} ${doc}:${i + 1}  ${h.text}${h.continuation ? ' (continuation)' : ''}${h.to ? ' -> ' + h.to : ''}  [${h.t}]`); }
+      if (r.out !== l) { moved += r.n; console.log(`  ${apply ? 'moved  ' : 'MOVE   '} ${doc}:${i + 1}  ${l.trim().slice(0, 100)}\n        -> ${r.out.trim().slice(0, 100)}`); lines[i] = r.out; changed = true; }
     });
     if (changed && apply) writeFileSync(join(ROOT, doc), lines.join('\n'));
   }

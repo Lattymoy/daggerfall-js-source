@@ -102,6 +102,11 @@ const ROWS = [
   // cost row agrees (spellcost.js, `'29,255': row(SKILLS.Illusion, {})`),
   // as does the identically shaped Teleport row below.
   [29, 255, 'Morph Self', '', [], false],
+  // RESURRECT1: the port's own (no classic key uses 45) - a fallen party member rises where they fell
+  // (systems/resurrect.js). In the REGISTRY so the spellbook and the cast engine name it, and NOT craftable, as
+  // MorphSelf is not: it is sold ready-made, online, at the spell shop (worldModes `resurrectionSpell`), and a
+  // Spell Maker copy crafted offline would be a spell with no one to raise.
+  [45, 255, 'Resurrect', '', [], false],
   [30, 255, 'Water Breathing', '', [D]],
   [31, 255, 'Water Walking', '', [D]],
   [33, 0, 'Pacify', 'Animal', [C]],
@@ -156,6 +161,7 @@ export const PORTED_KEYS = new Set([
   '27,255',                                                         // Jumping (X1)
   '28,255',                                                         // Climbing (X1)
   '29,255',                                                         // Morph Self (V2a - the arm calls the racial override)
+  '45,255',                                                         // Resurrect (RESURRECT1 - the arm is the cast engine's, at a fallen party member's body)
   '30,255',                                                         // Water Breathing
   '31,255',                                                         // Water Walking
   '6,0', '6,1', '6,2',                                              // Dispel {Magic,Undead,Daedra} (X9 the sweeps, X10 the bundle picker)
@@ -367,6 +373,17 @@ export function effectMacroSource(e) {
  *  null where the effect class declares none (EntityEffect's default
  *  is a null token array, and the box is then empty). */
 export const spellBookDescriptionId = (key) => SPELLBOOK_DESCRIPTION_IDS.get(key) ?? null;
+/** RESURRECT1: the PORT'S OWN effects have no TEXT.RSC record to name, so their box reads these rows instead - the
+ *  spellbook's effect popup is never empty on an effect the port itself added. */
+export const PORT_EFFECT_DESCRIPTIONS = new Map([
+  ['45,255', Object.freeze([
+    'Resurrect',
+    'Calls a fallen party member back from death.',
+    'Cast by touch at their body; they rise where',
+    'they fell, with 30% of their health.',
+  ])],
+]);
+export const portEffectDescription = (key) => PORT_EFFECT_DESCRIPTIONS.get(key) ?? null;
 
 /** ROAD-E E8 - SpellMakerDescription, the record the SETTINGS EDITOR
  *  puts on its parchment (DaggerfallEffectSettingsEditorWindow.cs

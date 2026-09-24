@@ -84,7 +84,7 @@ test('MAC-R1: a raised blade is not cut - a rect the bob moved DOWN gets frame r
 // ── MAC-R2 ───────────────────────────────────────────────────────
 test('MAC-R2: a held quickslot key\'s auto-repeat is nothing - routeKey swallows it, and the two self-routing hosts\' arms route the press edge alone', () => {
   const inp = read('src/ui/input.js');
-  assert.match(inp, /if \(POLLED_ACTIONS\.has\(act\)\) return false;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(e\.repeat && QUICKSLOT_ACTIONS\.has\(act\)\) return true;\s*\n\s*return routeAction\(act, ctx, setPlayerPos\);/, 'the repeat is swallowed before the table');
+  assert.match(inp, /if \(POLLED_ACTIONS\.has\(act\)\) return false;\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(e\.repeat && act\) return true;\s*\n\s*return routeAction\(act, ctx, setPlayerPos\);/, 'the repeat is swallowed before the table - AUDIT KB1: every routed action\'s, not the quickslots\' alone');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const h = read(host);
     assert.match(h, /QUICKSLOT_ACTIONS\.has\(act\) && !POLLED_ACTIONS\.has\(act\) && [^\n]*\) \{ if \(!e\.repeat && routeAction\(act, hudCtx\)\) \{ e\.preventDefault\(\); return; \} if \(e\.repeat\) \{ e\.preventDefault\(\); return; \} \}/, `${host}: the press routes, the repeat is eaten`);

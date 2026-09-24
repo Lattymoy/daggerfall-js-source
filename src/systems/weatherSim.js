@@ -231,10 +231,10 @@ function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
     _mapNear = systemsNear(at[0], at[1], minute, climateAt, FIELD_RANGE_M + MAP_REFIND_M);
     _mapNearAt = [at[0], at[1]]; _mapNearMinute = minute; _mapNearLookup = climateAt;
   }
-  // AUDIT-3i: the player's word through the SAME ground law as the travel map's and the hover's - rain over snow
-  // ground is snow BEFORE the strongest is chosen, so the strength the player feels is the one the map draws there
-  // (resolved raw first, a rain front's intensity was worn under a stronger snow front's word); `raw` keeps the
-  // painting system's own word for the sky's violence
+  // AUDIT-3i: the player's word through the SAME ground law as every other reader's - rain over snow ground is snow
+  // BEFORE the strongest is chosen, so the strength the player feels is the one that falls there (resolved raw first,
+  // a rain front's intensity was worn under a stronger snow front's word); `raw` keeps the painting system's own word
+  // for the sky's violence
   const ground = mapGround(climateAt);
   const worn = wornAmong(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes));
   _mapIntensity = worn.intensity;
@@ -255,9 +255,9 @@ function sampleWeatherMap(nowMinutes, climateIndex, at, climateAt, how) {
   return changed;
 }
 /** WEATHER3c / AUDIT WEATHER3 R1: THE GROUND LAW AT A PLACE, for every reader of the map's words - the sky's cells,
- *  the travel map's washes and forecast, the distant storms: `(word, x, z, minutes)` answers the word as it falls at
- *  field (x, z) at that minute (WEATHER2a: rain or a storm over a ground that wears snow is snow). One law, so the
- *  map never says "Rain" where the player standing there gets snow. */
+ *  the forecast, the distant storms (and the travel map's washes, until DISC17-C took the weather off the map):
+ *  `(word, x, z, minutes)` answers the word as it falls at field (x, z) at that minute (WEATHER2a: rain or a storm over
+ *  a ground that wears snow is snow). One law, so no reader says "Rain" where the player standing there gets snow. */
 export function mapGround(climateAt) {
   return (word, x, z, minutes) => {
     if (word !== 'rain' && word !== 'thunder') return word;

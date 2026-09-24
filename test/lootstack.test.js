@@ -15,8 +15,7 @@ import { raceActivation } from '../src/player/activationRace.js';
 import { corpseLootTargets, pileBody } from '../src/scenes/corpseMarker.js';
 import { worldHoverFrame, destroyWorldPlaque, bodyStackText } from '../src/ui/worldPlaque.js';
 import { setBindings } from '../src/ui/input.js';
-import { ACTIONS, DEFAULT_BINDINGS, createBindings, resetDefaults } from '../src/systems/inputActions.js';
-import { PORT_ROWS } from '../src/ui/enhancedControls.js';
+import { ACTIONS, DEFAULT_BINDINGS, ACTION_GROUPS, createBindings, resetDefaults } from '../src/systems/inputActions.js';
 import { mountEnhancedInventory, remoteModel } from '../src/ui/enhancedInventory.js';
 import { NativeInventoryWindow, pileLabel } from '../src/ui/nativeInventory.js';
 import { REMOTE_TARGET_ICON_RECT } from '../src/ui/targetIconPanel.js';
@@ -290,7 +289,7 @@ test('LOOT-STACK the hosts by source: all four corpse doors hand the window the 
 test('LOOT-STACK the key is gone: no NextBody action, no default on ], no controls row, and no host arms a turn - the pile lives in the window (mutant: a host still arming one)', () => {
   assert.ok(!ACTIONS.includes('NextBody'));
   assert.ok(!DEFAULT_BINDINGS.some(([c, a]) => c === 'BracketRight' || a === 'NextBody'));
-  assert.ok(!PORT_ROWS.some((r) => r.action === 'NextBody'));
+  assert.ok(!ACTION_GROUPS.some((grp) => grp.rows.some((r) => r.action === 'NextBody')));   // KB1: the controls page draws the registry's groups
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeon.js', 'src/ui/worldPlaque.js']) {
     assert.doesNotMatch(rd(f), /NextBody|armBodyTurn|turnBodyStack/, f);
   }

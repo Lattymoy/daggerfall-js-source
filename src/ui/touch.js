@@ -125,7 +125,7 @@ function synth(type, code) {
 // InputManager.GetKey's dual-dict fallthrough :1084). Move Jump off
 // Space in the controls window and the JUMP button fired whatever now
 // owned Space; move Run off ShiftLeft and the stick's 80% throw did
-// nothing. The reverse lookup is GetBinding (inputActions.js:615,
+// nothing. The reverse lookup is GetBinding (inputActions.js:783,
 // InputManager.cs:641-671) and it is exactly what the automap, rest
 // and exterior-automap windows already ask. Resolved at PRESS time, so
 // a rebind takes effect on the next touch with no re-attach.
@@ -296,10 +296,10 @@ export function attachTouch(canvas, hooks = {}) {
   }
 
   // TI1: the five. The dial button exists only where a host routes
-  // Tab to the rose - the same gate-by-hook rule the sword button had.
-  // Tab alone stays a literal: it is not an InputManager action
-  // (inputActions.js ACTIONS) and the hosts match `e.code === 'Tab'`.
-  if (hooks.dial) button('◆', edge('left', 16), edge('top', 16), 48, () => tap('Tab'));
+  // the dial to the rose - the same gate-by-hook rule the sword button had.
+  // KB1: the dial is the registry's QuickDial now, and the hosts read the
+  // action, so the button presses whatever key QuickDial holds.
+  if (hooks.dial) button('◆', edge('left', 16), edge('top', 16), 48, () => tapAction('QuickDial'));
   button('≡', edge('left', hooks.dial ? 72 : 16), edge('top', 16), 48, () => tapAction('Escape'));   // the menu: the pause window, save and load inside it
   // AUDIT 62 F8: each held button captures the code it resolved at the
   // press and lifts THAT one, so a rebind mid-hold cannot strand a key.

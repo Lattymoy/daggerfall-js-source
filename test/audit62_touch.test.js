@@ -86,7 +86,8 @@ function defaultStore() {
   const b = createBindings();
   for (const [c, a] of [['Escape', 'Escape'], ['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackwards'],
     ['KeyA', 'MoveLeft'], ['KeyD', 'MoveRight'], ['Space', 'Jump'], ['ShiftLeft', 'Run'],
-    ['KeyZ', 'ReadyWeapon'], ['Mouse0', 'ActivateCenterObject']]) setBinding(b, c, a);
+    ['KeyZ', 'ReadyWeapon'], ['Mouse0', 'ActivateCenterObject'],
+    ['Tab', 'QuickDial']]) setBinding(b, c, a);   // KB1: the dial is an action, and its default row is Tab
   return b;
 }
 const btn = (h, label) => h.el.children.find((c) => c.textContent === label);
@@ -222,10 +223,16 @@ test('AUDIT 62 F8: a touch button presses the ACTION\'s live code, not a frozen 
     keys.length = 0;
     btn(h, '≡').fire('touchstart', tev('touchstart', [], 40));
     assert.deepEqual(codesOfLog(keys, 'keydown'), ['F10'], 'the menu button follows the Escape ACTION');
-    // ...and the DIAL is not an action at all: Tab stays a literal
+    // ...and the DIAL, which KB1 made an action (QuickDial) - it was the
+    // one button spoken raw, as Tab, while Tab was in no binding table
     keys.length = 0;
     btn(h, '◆').fire('touchstart', tev('touchstart', [], 50));
-    assert.deepEqual(codesOfLog(keys, 'keydown'), ['Tab'], 'Tab is in no binding table (inputActions ACTIONS), so it is spoken raw');
+    assert.deepEqual(codesOfLog(keys, 'keydown'), ['Tab'], 'the dial button presses QuickDial\'s default');
+    setBinding(store, 'Backslash', 'QuickDial');
+    setBindings(store);
+    keys.length = 0;
+    btn(h, '◆').fire('touchstart', tev('touchstart', [], 60));
+    assert.deepEqual(codesOfLog(keys, 'keydown'), ['Backslash'], 'and follows QuickDial when it moves');
   });
 });
 

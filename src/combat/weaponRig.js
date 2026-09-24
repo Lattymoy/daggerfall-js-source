@@ -55,7 +55,7 @@ import { morrowindDataCount, morrowindDataFingerprint, registerMorrowindData } f
 import { mwRaceId } from '../formats/mwNpc.js';   // TR2: the one race-id spelling
 import { TEMPLATES } from '../systems/useItem.js';   // MW-D51: the Torch template - the lit light the Morrowind hand holds
 import { morrowindDataGeneration } from '../scenes/dataSource.js';
-import { objectAabb, rayAabb } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
+import { objectAabb, rayAabb, hasMeshCollider, RAY_DISTANCE } from '../player/activate.js';   // AUDIT 63 F37: one live box for both rays
 import { SOUND } from '../systems/soundClips.js';
 import { equipSoundFor } from '../characters/weapons.js';   // F023: GetEquipSound
 import { setMidScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: FPSWeapon.cs:365's mid-screen line
@@ -74,7 +74,6 @@ import { createHandheldTorches, isHeldLight } from '../systems/handheldTorches.j
 import { isTransformedLycanthrope, liveLycanthropy } from '../systems/lycanthropy.js';   // WW1: Weapon Widget's FPSWeaponClone, beside the machine; AUDIT-EOTB2: the sprite's form
 import { concealmentFlags } from '../systems/effects.js';   // EOTB-IL: PlayerBillboard.UpdateMaterial reads the player's own IsInvisible / IsAShade / IsBlending
 import { getBool, getInt } from '../systems/settings.js';   // EOTB-IL: PlayerBillboard.LateUpdate reads DaggerfallUnity.Settings.BowDrawback
-import { domCodeForKeyCode } from '../systems/keyCodes.js';   // AUDIT-EOTB2: the mod's two keys, polled off the hosts' raw set as the torch mod's are
 import { modSetting } from '../systems/modSettings.js';   // WW1: its Enabled
 import { takeFrameLook } from '../player/lookFilter.js';   // WW1: the frame's look for the widget's inertia
 import { cursorActive } from '../player/pointerLock.js';   // WW1: PlayerMouseLook.cursorActive
@@ -196,9 +195,9 @@ export async function autoBuildArms(entity, { wanted = () => getPref('mwArms'), 
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:2849), townTalk.say
- *                     (exterior.js:2136, world.js:4130) and
- *                     worldModes' own interior sink (worldModes.js:423,
+ *                     (dungeonContext.js:2866), townTalk.say
+ *                     (exterior.js:2135, world.js:4160) and
+ *                     worldModes' own interior sink (worldModes.js:425,
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -295,7 +294,7 @@ export function sheetHolderOf(rig) {
   };
 }
 
-export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, keyDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1: the hosts' raw key set and their dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
+export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, entity, camera = null, say = () => {}, spellArmed = () => false, abortSpell = () => {}, bindWorn = true, activateHeld = () => false, envHit = null, missEffect = null, collider = null, actionDown = null, torches = () => null, sheetWindowUp = () => false }) {   // HT1 (KB1): whether a registry action is held, and the hosts' dropped-torch pool   // MAP-WEAPON: whether the travel map window holds the screen   // AUDIT 28 W12: HasAction(ActivateCenterObject) - the drawn bow's un-draw; WW1: the widget's recoil doors
   const playerWeapon = new PlayerWeapon({});
   playerWeapon.animCtx = () => ({ entity, weaponType: weaponTypeForItem(playerWeapon.weapon), usingRightHand: playerWeapon.usingRightHand });   // AUDIT-RR F1: GetMeleeWeaponAnimTime(player, weaponType, weaponHands) - the swing clock's own ask, so RR's weaponSpeed and RRI's weaponBalance time the blow that lands, not only the widget's clone
   const poseProbe = () => ({ ...weaponPoseOf(playerWeapon), weaponType: weaponTypeForItem(playerWeapon.weapon) });   // RR1: WeaponManager.Sheathed (the pair through its one law, HARD2c) + ScreenWeapon.WeaponType
@@ -702,20 +701,19 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    * does, with nothing here to change.
    */
   /** [IL] The mod's two keys, `InputManager.GetKeyUp` - the RELEASE edge
-   *  (IL_14a5, IL_17f6) - off the same raw set the torch mod polls (HT1's
-   *  `keyDown`). The names are the mod's own KeyCode text, resolved
-   *  through the one converter the pane uses. */
-  const _eotbKeysLast = new Set();
+   *  (IL_14a5, IL_17f6). KB1: they are the registry's ShoulderSwitch and
+   *  AutoPerspective actions (systems/inputActions.js MOD_ACTIONS), read
+   *  through the host's `actionDown` - so a rebind in Controls moves them,
+   *  a combo resolves, and the mod switched off answers neither (the
+   *  readers' actionLive gate). The edge is taken here, off the held
+   *  state, as the mod takes GetKeyUp. */
+  const _eotbHeldLast = new Set();
   function pollEotbKeys() {
-    if (!keyDown) return;
-    const s = eotbCamera.settings();
-    const shoulder = domCodeForKeyCode(s.switchShoulderKey);
-    const arm = domCodeForKeyCode(s.autoToggleKey);
-    for (const [code, act] of [[shoulder, () => eotbCamera.switchShoulder()], [arm, () => eotbCamera.toggleAuto()]]) {
-      if (!code) continue;
-      const down = !!keyDown(code);
-      if (!down && _eotbKeysLast.has(code)) act();
-      if (down) _eotbKeysLast.add(code); else _eotbKeysLast.delete(code);
+    if (!actionDown) return;
+    for (const [action, act] of [['ShoulderSwitch', () => eotbCamera.switchShoulder()], ['AutoPerspective', () => eotbCamera.toggleAuto()]]) {
+      const down = !!actionDown(action);
+      if (!down && _eotbHeldLast.has(action)) act();
+      if (down) _eotbHeldLast.add(action); else _eotbHeldLast.delete(action);
     }
   }
   /** [IL] The camera's weapon hide (LateUpdate, IL_1c98-IL_1cb0) and the
@@ -1245,7 +1243,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:302), so a flag flipped to
+     *             LIVE (handheldTorches.js:301), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z
@@ -1315,10 +1313,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       bindBody();   // MAC-O3: and the sprite body, the same law
       bindGlobals();   // AUDIT 68 S09-rig-globals-last-built: and the pose probe, the shield hook, the popup
       syncWorn();   // AUDIT 17e F17: the rig owns the worn-weapon bind
-      // EOTB-IL: the mod's two keys are polled off the hosts' raw set on
-      // their RELEASE edge (GetKeyUp) - SwitchShoulder (the port binds
-      // B; the mod's Tab is spent) and AutoTogglePerspective's
-      // ToggleInput. The drawn string's release is the body's own
+      // EOTB-IL: the mod's two keys are polled on their RELEASE edge
+      // (GetKeyUp) - SwitchShoulder and AutoTogglePerspective's
+      // ToggleInput, the registry's ShoulderSwitch and AutoPerspective. The drawn string's release is the body's own
       // (PlayAnimationHoldCoroutine reads the swing held, IL_602e).
       pollEotbKeys();
       // FPSSpellCasting's AnimateSpellCast coroutine (:265-286). It is
@@ -1499,7 +1496,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
             climbing: !!cam?.climbing, swimming: !!mv.swimming, transformedLycanthrope: !!entity && isTransformedLycanthrope(entity),
             motion: frameMotion,   // AUDIT 68 S09-frame-motion-triplicated: FIELD-GUN12's one bag, not a restatement of it
             look, swingHeld: _held, cursorActive: cursorActive(), camera: camThunk, collider: () => collider?.() ?? null,
-            keyDown: (code) => !!keyDown?.(code), sheathWeapons: () => { if (!playerWeapon.sheathed) playerWeapon.toggleSheath(); },
+            actionDown: (action) => !!actionDown?.(action), sheathWeapons: () => { if (!playerWeapon.sheathed) playerWeapon.toggleSheath(); },
           };
           handheld.update(dt, tctx);
           handheld.lateUpdate(dt, tctx);
@@ -1840,6 +1837,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
  */
 export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) {
   let best = null, bestD = Infinity;
+  let first;   // DISC19-E: the one surface the swing's ray meets, cast lazily
   for (const o of actions.objects.values()) {
     // AUDIT 63 F37: WeaponEnvDamage reads a LIVE Physics.Raycast hit
     // (WeaponManager.cs:459-464), so a mover is struck where it is,
@@ -1848,6 +1846,18 @@ export function envAttack(actions, collider, eye, lookDir, rolls = Math.random) 
     if (!box) continue;
     const d = rayAabb(eye, lookDir, box);
     if (d === null || d > WEAPON_REACH || d >= bestD) continue;
+    // DISC19-E: the activate ray's law - a mesh collider whose box is
+    // entered while the first surface is ANOTHER action object's own bucket
+    // was never struck (the door stands inside the corridor piece's box).
+    // AUDIT DISC19: the cast runs as far as the press's, not the reach: a
+    // door whose BOX is inside the reach may have its mesh just past it
+    // (DFU's door is a BoxCollider, met at the box), and a cast cut at the
+    // reach met nothing - the relay in front kept the swing (Orsinium's
+    // door text, 12631 behind 12080: box 2.35 m, mesh 2.57 m).
+    if (hasMeshCollider(o) && collider.raycastHit) {
+      first ??= collider.raycastHit(eye, lookDir, RAY_DISTANCE);
+      if (first.key != null && first.key !== o.key && actions.objects.has(first.key)) continue;
+    }
     const wall = collider.raycast(eye, lookDir, d - 0.05);
     if (Number.isFinite(wall) && wall < d - 0.05) continue;   // occluded
     best = o; bestD = d;

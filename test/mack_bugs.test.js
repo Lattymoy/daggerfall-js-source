@@ -36,7 +36,7 @@ test('AUDIT-MACK F2: ONE feeder per held-key Set, and every reader is on a fed o
   // matters: it asserted that every file reading `held(keys, ...)`
   // must itself write the mouse codes into that Set. `worldModes.js`
   // does not OWN a Set - it takes `keys` off the host bag
-  // (`exterior.js:3795`) - and the lender's own mousedown writes the
+  // (`exterior.js:3803`) - and the lender's own mousedown writes the
   // codes UNGATED on a listener that is never removed. The codes were
   // always there.
   //
@@ -138,15 +138,20 @@ test('MAC-K1: BOTH controls skins can capture a mouse button, which is what "not
   hit(false, false);                       // the left click that ARMS
   assert.equal(win.capture, 'Jump', 'a left click on the row arms the capture');
   hit(false, false);                       // the NEXT press binds
-  assert.equal(currentDict(win.unsaved).get('Jump'), 'Mouse0', 'the left button binds');
   assert.equal(win.capture, null, 'and one press ends it');
+  // KB1: every mouse button is somebody's (activate, swing, auto-run), so the press ASKS before it moves (law 4)
+  assert.equal(win.top, 'replace', 'the left button is the activate\u2019s - the window asks');
+  win.input('KeyY');
+  assert.equal(currentDict(win.unsaved).get('Jump'), 'Mouse0', 'the left button binds');
 
   hit(false, false);
   hit(true, false);
+  win.input('KeyY');
   assert.equal(currentDict(win.unsaved).get('Jump'), 'Mouse1',
     'the RIGHT button is Unity\u2019s Mouse1 - the crossed middle name, read off the one table');
   hit(false, false);
   hit(false, true);
+  win.input('KeyY');
   assert.equal(currentDict(win.unsaved).get('Jump'), 'Mouse2', 'and the wheel press is Mouse2');
 
   // the remove gesture is still the remove gesture when NOTHING is armed

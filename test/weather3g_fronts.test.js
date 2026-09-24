@@ -8,7 +8,9 @@
 // its own colour under the pen, with a legend. Pinned here: the cell law
 // (rigid in its front, clipped to it, dying with it), the Cox law holding
 // at a front's rim as at its heart and in a newborn front as in an old
-// one, the weather's regional scale, the sky's clip, and the map's.
+// one, the weather's regional scale, and the sky's clip. The map's two
+// tests went with the travel map's weather (DISC17-C, 2026-09-24, Mac:
+// "Remove the enhanced map weather enhancements entirely").
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -18,14 +20,9 @@ import {
 } from '../src/systems/weatherMap.js';
 import { cellOfField, cellOf, packCells, FIELD_UNIFORMS, VC_PROFILE } from '../src/render/volumetricClouds.js';
 import { fieldFns, ZONE } from './cloudSky.mjs';
-import {
-  weatherMarks, paintWeatherGlyphs, paintWeatherLegend, WEATHER_NAMES, LEGEND_ROWS, LEGEND_STRENGTH_TEXT, LEGEND_INSET, CELL_GLYPH_MIN_PX,
-} from '../src/ui/weatherLayer.js';
-import { HeldMapWindow } from '../src/ui/heldMap.js';
 import { CLIMATES } from '../src/formats/mapsFile.js';
 import { SEASONS, seasonValue, dateFromClassicMinutes } from '../src/systems/gameDate.js';
 import { seededRng } from '../src/systems/wind.js';
-import { _resetForTests } from '../src/systems/uiPrefs.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const YEAR = 405 * 360 * 1440;
@@ -175,64 +172,4 @@ test('WEATHER3g: THE SKY\'S CLIP - a storm cell\'s cloud stands only over its fr
   assert.ok(mid > VC_PROFILE.thunder.base && mid < ZONE.uBase, 'eased over the clip\'s rim');
   assert.ok(FIELD_UNIFORMS.includes('uCellK'));
   assert.match(vc, /gl\.uniform4fv\(u\.uCellK, k\.k\);/);
-});
-
-// a canvas that records every call with the state it was made in
-function recordingCtx() {
-  const calls = [];
-  const state = { globalCompositeOperation: 'source-over' };
-  return new Proxy({}, {
-    get: (_, k) => {
-      if (k === 'calls') return calls;
-      if (k === 'measureText') return (t) => ({ width: t.length * 6 });
-      if (k === 'createRadialGradient') return (...args) => { const g = { args, addColorStop() {} }; calls.push({ fn: k, args }); return g; };
-      if (k in state) return state[k];
-      return (...args) => { calls.push({ fn: k, args, op: state.globalCompositeOperation, fillStyle: state.fillStyle }); };
-    },
-    set: (_, k, v) => { state[k] = v; return true; },
-  });
-}
-
-test('WEATHER3g: THE MAP - a cell signed only where it paints and when wide; glyphs kept to the map; the legend', () => {
-  // the marks carry the clip in map pixels, with the front's shape
-  const shape = Object.freeze([1, 0, 0, 0, 0, 0, 0]);
-  const [mark] = weatherMarks([{ id: 'c', type: 'thunder', x: TERRAIN * 10, z: TERRAIN * 400, env: 1, bands: [[TERRAIN * 3, 'thunder']], clip: [TERRAIN * 20, TERRAIN * 400, TERRAIN * 12, shape] }]);
-  assert.deepEqual(mark.clip.slice(0, 3).map((v) => Math.round(v * 1e6) / 1e6), [20, 100, 12]);
-  assert.equal(mark.clip[3], shape);
-  const view = { ox: 0, oy: 0, scale: 4 }, opts = { paperW: 800, paperH: 600 };
-  const paint = (marks, extra = {}) => { const ctx = recordingCtx(); paintWeatherGlyphs(ctx, view, marks, { ...opts, ...extra }); return ctx.calls; };
-  const wide = (CELL_GLYPH_MIN_PX + 1) / 4;
-  assert.ok(!paint([{ ...mark, bands: [[wide, 'thunder']], x: 50, y: 50, clip: [60, 50, 5, shape] }]).some((c) => c.fn === 'stroke'), 'its heart is outside its front: no glyph where it does not paint');
-  assert.ok(paint([{ ...mark, bands: [[wide, 'thunder']], x: 50, y: 50, clip: [50, 50, 20, shape] }]).some((c) => c.fn === 'stroke'), 'inside, it is signed');
-  assert.ok(!paint([{ ...mark, bands: [[(CELL_GLYPH_MIN_PX - 1) / 4, 'thunder']], x: 50, y: 50, clip: [50, 50, 20, shape] }]).some((c) => c.fn === 'stroke'), 'a narrow cell is not: a front is signed, not peppered');
-  // a system off the map's edge is not signed on the margin
-  const rain = { id: 'r', type: 'rain', x: 30, y: 58, env: 1, bands: [[8, 'rain']], clip: null };
-  assert.ok(paint([rain], { bounds: [100, 60] }).some((c) => c.fn === 'stroke'));
-  assert.ok(!paint([{ ...rain, y: 61 }], { bounds: [100, 60] }).some((c) => c.fn === 'stroke'), 'off the map, no glyph');
-  // the legend: every weather named, in the sheet's top-right corner
-  const lg = recordingCtx();
-  const [x, y, w, h] = paintWeatherLegend(lg, { paperW: 800 });
-  // every weather named, and since WEATHER3i a last row reading the hatch's strength
-  assert.deepEqual(lg.calls.filter((c) => c.fn === 'fillText').map((c) => c.args[0]), [...LEGEND_ROWS.map((wd) => WEATHER_NAMES[wd]), LEGEND_STRENGTH_TEXT]);
-  assert.ok(Math.abs(x + w - (800 - LEGEND_INSET)) < 1e-9 && y === LEGEND_INSET && h > LEGEND_ROWS.length * 10);
-  assert.deepEqual([...LEGEND_ROWS].sort(), [...Object.keys(WEATHER_NAMES)].sort(), 'no weather the map can draw is left out of the key');
-});
-
-test('WEATHER3g: THE SHEET - the weather goes UNDER the pen already on it, and the legend is drawn over', () => {
-  _resetForTests(); globalThis.location = { search: '?skin=enhanced' };
-  const node = () => { const n = { children: [], style: {}, dataset: {}, classList: { toggle() {}, add() {}, remove() {} }, append(...k) { n.children.push(...k); }, remove() {}, addEventListener() {}, removeEventListener() {}, setPointerCapture() {}, querySelectorAll: () => [] }; return n; };
-  const woods = () => CLIMATES.Woodlands;
-  globalThis.document = { createElement: () => node(), getElementById: () => null, head: node(), body: node(), addEventListener() {}, removeEventListener() {} };
-  try {
-    const win = new HeldMapWindow({ getPlayerPixel: () => ({ x: 5, y: 5 }), getClimateIndex: woods, woods: { heightMapBuffer: new Uint8Array(6000).fill(10) }, mapSize: { width: 100, height: 60 }, weather: { on: () => true, minutes: () => YEAR + 290 * 1440 + 10 * 60 } });
-    const wx = win._weatherLayer();
-    const ctx = recordingCtx();
-    win._paintWeather(ctx, { view: { ox: 0, oy: 0, scale: 8 }, paperW: 800, paperH: 480, dpr: 1 }, wx);
-    const fills = ctx.calls.filter((c) => c.fn === 'fill' && c.args[0] === 'nonzero');
-    assert.ok(fills.length > 0 && fills.every((c) => c.op === 'destination-over'), 'the regions are laid under the ink');
-    assert.equal(ctx.globalCompositeOperation, 'source-over', 'and the pen is given back');
-    const legend = ctx.calls.filter((c) => c.fn === 'fillText');
-    assert.equal(legend.length, LEGEND_ROWS.length + 1, 'the legend, and its strength row (WEATHER3i)');
-    assert.ok(legend.every((c) => c.op === 'source-over'), 'drawn over, not under');
-  } finally { delete globalThis.document; }
 });

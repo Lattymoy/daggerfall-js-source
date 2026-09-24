@@ -149,9 +149,8 @@ export function readCameraSettings(get) {
     scrollable: !!g('CameraScrolling.ScrollableZOffset'),
     increment: g('CameraScrolling.ScrollIncrement') ?? 0,
     boatTarget: g('CameraOverrideBoat.Target') ?? 0,
-    // the two keys the mod binds beside the wheel
-    switchShoulderKey: g('Camera.SwitchShoulder') ?? null,
-    autoToggleKey: g('AutoTogglePerspective.ToggleInput') ?? null,
+    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective
+    // actions (systems/inputActions.js MOD_ACTIONS), read by the rig - not settings of the camera's
     auto,
     /** [IL] `autoPOVSwitch` is DERIVED (IL_10e1-IL_112d): the nine rows
      *  summed, armed when any is not Don'tChange. The bundle ships every

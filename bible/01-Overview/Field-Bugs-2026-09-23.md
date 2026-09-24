@@ -782,6 +782,112 @@ lead handed to the newest seat when nobody is online): no pin held the
 all-away arm. `test/auditparty8.test.js` now holds it (every remaining seat
 away - the longest-standing leads), and S23 names that suite.
 
+# CONTRIB - the contributor's drop, integrated and read
+
+Mac: *"Integrate these please. My contributer made these for the codebase"* -
+two zips: the hotbar, player corpses, Resurrect, the death screen, UI sounds
+(85 whole files), and a sprite-fix patch.
+
+## The integration
+
+The drop's files came off several bases; scored against every commit, the
+nearest was 2b42cadb3, and the drop was committed there verbatim (branch
+`contrib-hotbar`) and merged. Its relay steps world100-102 never ran on a
+relay; ours had deployed world100 and world101 (DISC7, DISC12). The merged
+graph is **world102**: DISC12's pose plus the drop's death flag `dd`, the
+party pose's Resurrect call `rz` and fallen body `dd`, and the look's
+widened `class`. Resurrect is registered (effect 45) but not craftable, as
+MorphSelf is not, and carries its own spellbook description.
+
+**The cites.** `citeMerge` read a line both sides carry verbatim as
+THEIRS and moved its numbers through their diff - and the drop's
+untouched comments sat beside targets that had moved on their side
+(nine cites, `spellcost.js:182` -> :181 among them). A shared line's
+number was read off one side's target and the line cannot say which;
+the tool now maps it from both and moves it only where the two agree,
+else prints it AMBIGUOUS for a person (`test/citemerge.test.js`).
+
+## The read: three lenses, every finding verified in the code
+
+- **A1 - Resurrect could not be cast at a body with no foe beside it.**
+  The ready-made spell is ByTouch, and CastReadySpell's touch probe sees
+  foes and standing mates only - a fallen mate is neither - so the click
+  was eaten silently. The body the Resurrect gate already found is the
+  touch.
+- **A2 - one death, several bodies.** `sendDeath` speaks down the cell's
+  socket and every halo's; the first copy took the peer off the list, so
+  each later copy was a fresh death (a body and a cry per copy - a
+  Thief's and a Breton's, the look gone). The session delivers one death
+  per life; a living pose after it is a new life.
+- **A3 - a party-told body met after the death never stood.** The memo of
+  "seen" was written before the room check, so a body in a dungeon walked
+  into later, or one a building's walls took from the scene, never stood
+  again. `remotePlayers.partyBody` keeps each death's minute from its
+  first word and stands the body whenever the scene is its own, crying
+  once.
+- **A4 - risen, and still looking at the sky.** The dungeon's clear and
+  F11's online respawn skipped the view hand-back. Every close restores
+  it (and the enhanced veil goes with the screen); F11 goes through
+  Enter's reset.
+- **A5 - three seconds to raise a mate on the classic skin.** The online
+  hold was the enhanced face's alone; the classic reset respawned the
+  player and cleared the body at DFU's three seconds. Online, the hold is
+  the screen's on either skin, and the classic face says the count.
+- **A6 - the Resurrect snapshot outlived a respawn.** Taken through the
+  teleport's await with the player already healed, it made an old call
+  raise the next death at once. It is taken only while dead and dropped
+  on the first living frame.
+- **P1-P3 - the dying player's foes, doubled or lost.** Every survivor
+  judged "nearest" against its own lagging view, so two could take one foe
+  (two owners streaming it) or none. The dying owner - the one true view -
+  names each foe's heir on its last frame (`e`), and the survivor named
+  adopts it on that frame's arrival. The watch is never handed; the owner
+  lets go of exactly what it handed and keeps the rest.
+- **S1 - a Thief before the introduction.** A peer heard by pose before
+  its look arrived was drawn as a Thief, then nothing, then its class.
+  No look keeps the doll until the look lands.
+- **U1/U2 - the UI click.** Any one-shot in the 150 ms before a click
+  (a hit, the ambience) swallowed it, and a touch held on a hotbar slot
+  past 150 ms sounded twice. Only a sound chosen inside an input event
+  counts as the click's own, and the window opens at the press.
+
+Also: `OnlineSession` declares `onPeerDeath` (the type check), and the
+drop's trailing comments moved back onto the lines they describe.
+
+## The hotbar (the third lens)
+
+- **H1 - the digits were taken from everyone.** The bar read 1-0 at the
+  window's capture phase and swallowed them, so a digit the player bound
+  to an action in the controls pane, and Horse Cart and Cargo's mount and
+  summon (shipped on 5 and 6), never reached the host. And the diamond it
+  replaces was only hidden: a pad's d-pad and a rebound key still drank,
+  readied and lit from slots nobody could see, and with the HUD toggled
+  off the digits fell through to them. Now the diamond is put away while
+  the hotbar is in force (`hotbarInForce`: its five actions route nothing,
+  its hold machine taps nothing), the bar steps aside for any digit bound
+  to another action and for every enabled mod's hotkey
+  (`modHotkeyCodes`), and its keys follow the game's pause, not the HUD's
+  visibility. **Decision for Mac:** HCC's defaults (5, 6) and the hotbar's
+  slots 5 and 6 still share keys - HCC wins, as a binding should; moving
+  HCC's defaults is a KEY_MIGRATIONS row if the hotbar should have them.
+- **H2 - the light slot lit whatever the mod picked.** It went to the off
+  hand's toggle (the last light used, else a lantern, a torch, a candle):
+  a Candle slot lit the Lantern, a Lantern slot put out a lit candle, a
+  slot whose light was gone lit another. It is the pack's own Use on the
+  slot's kind now - that light lit, the lit one of the kind doused, none
+  left refused.
+- **H3 - a refused press flashed gold.** The doors answer the route
+  `true` whatever the performer decided. The four performers leave their
+  own answer for the bar, and `readySpell` answers as DFU's SetReadySpell
+  does (false on silence, no spell points, the hands mid-cast).
+- **H4 - the bar keyed the whole pack once per slot every frame.** One
+  pass now.
+- **H5 - the bar's icons skipped DW3's dye.** Asked with it, as the
+  diamond and the pack do.
+
+Pinned by execution in `test/auditcontrib.test.js`; mutants:
+`tools/mutants/auditcontrib.json` (21, all killed).
+
 # ARROW2 - the double arrows (DISC8-F), found
 
 DISC8-F counted shafts and found one. The second arrow was never a shaft:
@@ -1180,7 +1286,7 @@ lights the weapon, the shield and the torch with MAC-I's flat light
 (`fpTint`) but draws the horse untinted, so at night the horse is
 brighter than the hand on it.
 
-## DISC14-B: Diverse Weapons' defaults are Mac's
+## DISC14-B: Diverse Weapons' defaults are Mac's (REVERTED by DISC16-B, below)
 
 **What Mac asked for** (the tile's chips and dials in the screenshot):
 Swings, Ambidexterity, Offset, Bob and DoubleScaleTextures on; Inertia,
@@ -1279,7 +1385,9 @@ here.
 
 ---
 
-# MAP-LAG - the enhanced map after the weather
+# MAP-LAG - the enhanced map after the weather (REMOVED by DISC17-C, below)
+
+The weather this kept is gone from the map, and this machinery with it (DISC17-C). The record stands.
 
 Mac: *"One bug is the enhanced map now is very laggy after we
 introduced the weather changes."*
@@ -1345,5 +1453,375 @@ one go.
 **Not verified here:** in the game. There is no game data in the
 container.
 
-The pins are `test/maplag.test.js` (8). WEATHER3e's and WEATHER3i's hover
+The pins were `test/maplag.test.js` (8, DELETED by DISC17-C). WEATHER3e's and WEATHER3i's hover
 pins now read the forecast at rest.
+
+---
+
+# DISC16 - sunk on hills, and Diverse Weapons' preset back
+
+Mac, 2026-09-24: *"I notice my character is sunken into the ground on
+hills"* and *"Weapon widget preset needs to be defaulted on with diverse
+weapons and the changes we made to the values for the weapon widget
+reverted. Its no longer smooth like how it was before diverse
+weapons."*
+
+## DISC16-A: the body sunk into a slope
+
+**Cause.** DFU's body is Unity's CharacterController, a capsule of radius
+0.35. A capsule on a slope rests on its rounded bottom: the sphere's
+centre stands r / cos(grade) over the ground beneath it, so its lowest
+point, the feet, stands r (1 / cos - 1) over that ground. That is 5 cm
+at 30 degrees, 15 at 45 and 35 at 60. The collider's terrain floor
+(`collider.js` `move`) took the ground beneath the centre as the feet.
+So on a hill every body stood that much lower than DFU's, and the
+third-person body, placed at the feet (the Morrowind body in
+`fpArm.drawThird`, the Eye Of The Beholder sprite), had its uphill foot
+in the slope.
+
+Ruled out on the way:
+
+- The drawn ground and the floor agree: the same samples at the same
+  terrain scale, 1.25 (TERRAIN-SCALE1), and the triangles differ from the
+  bilinear floor by at most 0.08 (BLOOD1 AUDIT 3).
+- The swim sink (DoSinking) arms only on a water tile.
+
+**Fix.** The floor is the capsule's rest, `restFloor`: the ground beneath
+the centre plus r (sec - 1), the grade taken from the heightfield across
+the capsule's own width. The snap onto the floor and the clamp under it
+read the same height, so MAC3's downhill walk stays glued: no hop, no
+landing, no rise. Flat ground is unchanged. So is the edge of a built
+pixel, where there is no ground to one side to read a grade from.
+
+**Not verified here:** what Mac saw. There is no game data in the
+container, so which body and which view are not known. The rest is DFU's
+capsule, measured; a body with no foot IK still has an uphill foot, as in
+DFU. If the report was the third-person camera looking across a slope at
+a low angle, the ground between hides the feet, and that is the camera's
+to answer.
+
+## DISC16-B: the weapons as they were before Diverse Weapons
+
+The first cut reverted DISC14-B as asked: the preset on again (DW-CLIP)
+and Weapon Widget's own defaults. With the preset on, the Morrowind arms
+take its Step again, the footfall snap Mac had reported as jitter under
+DW-CLIP. Mac, to that: *"Im so confused man. I just want it how it was
+before diverse weapons."*
+
+So the weapons move as they did before DW1:
+
+- Diverse Weapons' preset defaults off, as at DW1.
+- Weapon Widget ships the mod's own defaults: DoubleScaleTextures off,
+  Inertia.Scale 1.0, Step and Inertia off, the 100 bob.
+- The Thunderlock's forced inertia runs at the player's own scale
+  (DISC14-B's `GUN_INERTIA_SCALE` is gone).
+- DISC14-C stays: it only acts on a doubled `w_` texture, which the
+  defaults never draw.
+
+The mod itself stays on. MO1 has every mod ship on, a rule pinned with no
+exemptions left, and the mod picks WHICH sprite is drawn, never how it
+moves. The first reading of "before diverse weapons" turned the mod off
+and broke MO1's pin, so it was not taken. The preset is the player's to
+choose.
+
+The pins are `test/disc16.test.js` (3), and MAC3's downhill pin reads
+the rest. DW1 and AUDIT-DW pin the preset's default off. DISC14's three B
+pins went with it. The mutants are `tools/mutants/disc16.json`, all
+seven dead; DISC14-B's five records are retired.
+
+# DISC17 - the wisps, the thunder, and the map's weather removed
+
+Mac, 2026-09-24, in one message: *"1. I really want to give the wisps
+more opacity and reduce the amount of wind wisps 2. Sometimes thunder
+ends abruptly 3. Remove the enhanced map weather enhancements
+entirely"*
+
+## DISC17-A: fewer wisps, each darker
+
+Half as many and twice as dark:
+
+- `WISP_MAX` goes from 240 to 120. A calm keeps the same floor share,
+  10 wisps where it was 19.
+- `WISP_LOOK`'s alpha goes from 0.10/0.12 to 0.20/0.24. The heart of a
+  flourish's ink peaks at 0.70 in a gale (0.35 before) and 0.32 in a calm.
+
+The sandstorm's look is not the wind's mark and is unchanged. Not seen
+on a screen here, since the container has no game data. The two numbers
+are the dials if it wants another step either way.
+
+## DISC17-B: thunder cut off mid-roll
+
+**Cause.** WEATHER3d plays a distant storm's thunder from a stand-in
+`THUNDER_SOURCE_M` (13 m) from the ear, toward the storm, at a 13 m
+reference distance. The stand-in is a WebAudio panner, and a panner stays
+where it was put. The ear moved on under a rolling clip:
+
+- Walking, every metre was a metre off the 13 m reference.
+- At every map pixel crossed, the floating origin's recentre
+  (`streamingWorld.js`, 819.2 m) moved the ear over 800 m from the
+  stand-in in one frame. The clip fell 35 dB (38 on a diagonal crossing)
+  mid-roll, which is the abrupt end.
+
+The storm overhead is DFU's ambience, placed at PlaySomewhereOnHorizon's
+3000 m minimum distance. Neither a walk nor a recentre changes its level,
+so it is left as DFU has it.
+
+**Fix.** `play3d(..., { far: true })` keeps the shot's offset from the
+listener: `setListener` moves it with the ear until its clip has run out,
+then lets it go. Both exterior hosts play the distant thunder `far`.
+Every other one-shot still stays where it was put.
+
+**Also found.** `tools/citeShift.mjs` read HEAD's `world.js` with
+`execFileSync`'s default 1 MiB buffer. The file passed that size, and the
+throw landed in the tool's new-file catch, so its largest target was
+skipped without a word. It takes `citeMerge.mjs`'s buffer now.
+
+## DISC17-C: the map's weather removed
+
+The travel map is the bay again:
+
+- `ui/weatherLayer.js` is deleted.
+- `ui/heldMap.js` is its pre-WEATHER3e self plus the unrelated MAP-FIELD8
+  and MAP-FIT1 changes: no regions, glyphs, legend, hover weather or
+  forecast, and none of MAP-LAG's raster, job or resting forecast.
+- `world.js` hands it no `weather`, and its climate lookup is the plain
+  `maps.getClimateIndex` again.
+- The sheet contract loses MAP-LAG's `paintUnder`, and the town and
+  automap sheets their empty ones.
+
+The sim keeps every law the map read (`forecastAt`, `mapGround`,
+`wornAmong`), and the three comments that named the map as a reader say
+it no longer is. Retired with it:
+
+- `test/weather3e_maplayer.test.js` and `test/maplag.test.js`, DELETED with
+  their mutant lists.
+- The map's tests in `weather3f` (R1's and R2's map halves, R2a),
+  `weather3g` (the map, the sheet), `weather3h` (the field, the regions,
+  the hand, the pen's sign) and `weather3i` (all but the law and the
+  player's strength), and their 57 mutant records.
+- EM1-25/26 go back to the click arm as it stands.
+
+The pins are `test/disc17.test.js` (5). Its mutants,
+`tools/mutants/disc17.json`, are all ten dead.
+
+# DISC18 - the body's legs in the ground, not the save
+
+Mac, 2026-09-24: *"I dont know if its my save or not, but my
+characterless are in the ground. I havent recieved any reports from
+other players"* ("characterless" read as "character's legs").
+
+**Not the save.** Every host drew the third-person body at
+`player.feetAt()`. That covers both bodies, the Morrowind body and Eye Of
+The Beholder's sprite, since both draw through `mwViewDrawBody`.
+`feetAt` is the height the CAMERA rides (AUDIT 65 XL-4): EV1's
+interpolation with MAC1's low-pass over `STEP_SMOOTH_TAU` (0.06 s), so a
+rung or a terrain facet does not pop the view. A low-pass trails a climb
+by the climb's vertical speed times its time constant. So on every hill
+the body was drawn under the ground it stood on, and over it going down.
+Measured through the real motor and collider:
+
+| Grade | Walking | Running |
+|---|---|---|
+| 10 degrees | 4 cm | 7 cm |
+| 20 degrees | 8 cm | 14 cm |
+| 30 degrees | 13 cm | 23 cm |
+| 40 degrees | 19 cm | 33 cm |
+
+On a stair it was up to a whole rung. Standing still it settles within a
+few frames, which is why it read as a place or a save rather than a
+motion.
+
+DISC16-A's capsule rest was real and stands: it lifted the resting body
+5 to 15 cm on a slope. This is the other half of what "sunk into hills"
+looked like, and it only shows while moving.
+
+**Fix.** `motor.js` `bodyFeetAt()` is EV1's span lerp alone: the
+capsule's own interpolated feet, with the same snap guard, and it leaves
+the camera's filter alone. All five body draws take it (`world.js`,
+`exterior.js`, `dungeon.js`, and `worldModes.js`'s dungeon and interior
+passes). The cameras keep `feetAt` and its smoothing, as do the torch
+light and every gameplay reader. On a stair the body now steps up a rung
+as the capsule does, and the camera glides after it.
+
+The pins are `test/disc18.test.js` (3):
+
+- the body on the ground to 0.1 mm on 10 to 40 degree hills, walking and
+  running, up and down, at 60 and 144 Hz;
+- the old placement's sink measured beside it;
+- the accessor and the filter;
+- the five draws and the cameras.
+
+AUDIT 65 XL-4's and MWBODY1's host pins are re-aimed. The mutants are
+`tools/mutants/disc18.json`, all seven dead.
+
+
+# DISC20 - five in one message
+
+(DISC19 on its branch. Main's own DISC19, the six Discord reports and the
+city watch in `Field-Bugs-2026-09-24.md`, landed first, so this batch takes
+the next number.)
+
+Mac, 2026-09-24: *"1. Grass isnt affected by fog 2. Sometimes when music
+tracks switch, its very abrupt instead of seamlessly fading in between
+tracks 3. Horse and carts can be seen parked in the sky 4. Lightning can
+be seen even when its not storming. 5. The weapon widget default toggle
+unfer diverse weapons should be set to off by default"*
+
+## DISC20-A: the grass stood out of the fog
+
+**Cause.** The lab's grass program had no fog term, GR1 carried it byte
+for byte, and the renderer's fog only reaches its own programs. So under
+every fog row the ground takes (a clear day's linear 2400, the rain's exp
+0.003, the heavy fog's exp 0.05, the sandstorm's exp 0.09, Dynamic Skies'
+exp2 and colour) the field was drawn out to its 300 m fade, dimmed but
+never fogged. In heavy fog the ground is the fog's colour past 60 m while
+the grass stood out of it to 165 m.
+
+**Fix.** `labGrass.js` `GRASSFOG_VS_EDITS`/`GRASSFOG_FS_EDITS`, applied
+after the pixel style's, so the fog is not snapped to a ramp step:
+
+- the vertex hands down its world point;
+- the fragment blends to the fog colour by the terrain's own
+  `fogFactorAt` (`FOG_FACTOR_GLSL`, TERRAIN_FS's text verbatim);
+- the renderer uploads the five fog uniforms from `light.fog`, and mode 0
+  (the lab's unfogged picture) when a host hands none;
+- `world.js` hands the fog the ground took this frame, from the view's eye.
+
+## DISC20-B: a switch cut the song off
+
+**Cause.** DFU cuts: `DaggerfallSongPlayer.Play` calls `Stop` first, and
+`Stop` is `audioSource.Stop()` or the sequencer's `NoteOffAll`. The old
+song goes mid-note and the next starts at full level. The port did the
+same at every switch: a weather ring crossed, dawn, a door, a new
+location, a quest's PlaySong. A song that ended on its own and was
+followed by the next one was the smooth case, hence "sometimes".
+
+**Fix, a recorded departure (Port-Ledger A).** Each player runs its song
+through a fader of its own under the volume (`songPlayer.js`
+`rampFader`). The master stays the volume: the slider and the video mute
+write it, and neither cancels a fade. `music.js`:
+
+- a switch fades the sounding song out over `MUSIC_FADE_OUT_S` (1.5 s),
+  stops it at silence, then starts the next at nothing and fades it in
+  over `MUSIC_FADE_IN_S` (1 s);
+- one synth voices one song, so the two play in turn, never on top of
+  each other;
+- the latest request during a fade is the one that plays, and the song
+  fading out, asked for again, turns round from where its fade stands;
+- `playing` stays up through the fade, so the director never reads it as
+  a song that ended;
+- a first song, and a song after one that ended, rise in at once;
+- `stop()` cancels a switch in flight.
+
+## DISC20-C: parked teams in the sky
+
+**Cause.** A peer's HCC word carries the height the OWNER's client stood
+the team at, and nothing re-read it on the viewer's ground. The one place
+the two part by much is a word older than the ground:
+
+- the relay keeps a parked team for 72 hours (HCC-PARK), and an
+  identical word refreshes it;
+- TERRAIN-SCALE1 lowered every ground from the prefab's 1.5 to the game
+  scene's 1.25 four hours after HCC-PARK shipped (PRs #341 and #345). It
+  re-stood the heights a save, a scene cache and an anchor carry, not
+  this one.
+
+So every team kept from before it, and every word from a tab still on the
+old build, stood a fifth of the ground's height up: 20 m over 100 m of
+ground, 60 m over 300. World of Daggerfall's levelled sites and Basic
+Roads' smoothing, on for one player and off for the other, part them the
+same way, by less.
+
+Two smaller faults in the same code:
+
+- The mod grounds its parked wagon and waiting horse once, since its
+  terrain never changes under a scene. The port's can: a pixel rebuilt
+  under them (the road network landing, a late World of Daggerfall pack)
+  left the owner's own team on the old ground until they walked out of
+  the pixel and back. By metres, on a levelled site.
+- A crossing that left the parked wagon's pixel left its collider box
+  behind in the old frame, 819 m off in the pixel entered: a wall no one
+  could see.
+
+**Fix.**
+
+- `horseCartPool.js` `groundPeer` stands a peer's PARKED wagon and
+  STANDING horse on the viewer's ground by the mod's own law: the wagon
+  by its two-wheel solve (`DeployedWagonVisual`, the owner's heading),
+  the horse by the stationary probe.
+  - Once per word, with the owner's box and mine left out of the ray.
+  - Kept as a delta off the word, so the floating origin and a re-anchor
+    carry it.
+  - Where the viewer's ground is not built yet it stands as said and is
+    tried again each second (`GROUND_RETRY_SECONDS`).
+  - A moving team is its owner's live word and stands as said.
+- `world.js` calls the pool's `groundMoved` after every pixel is
+  published, over its bounds. That re-stands the owner's own team
+  (`horseCart.js` `regroundStanding`) and the peers' within the pixel. The
+  hook is bound after the pool, because the boot's first pixel builds
+  before it.
+- `offsetAll` takes the parked wagon's box down with the old frame.
+
+Old kept records need no purge: they stand on the ground now and expire
+on their own.
+
+## DISC20-D: lightning under a clear sky
+
+**Cause.** Since WEATHER3g a thunderstorm is a cell of a rain front, and
+it paints (its word, its cloud) only inside its front's core as the core
+is now (`clip`). Cells are born out in the front's full-grown size, and
+many lie wholly or partly outside it. The distant storms read the clip
+only for the "under its heart" skip. So four cells in ten that paint
+nothing went on striking, and 61% of strikes landed where no storm
+stands. Since BOLT each drew a bolt, lit the land and thundered.
+Measured on the report's kind of afternoon (a swamp, the player's word
+sunny, 18 clipped cells in range): 248 strikes and 43 thunderclaps in
+twenty real minutes.
+
+**Fix.** `distantStorms.js`: a strike lands only inside its cell's clip,
+and not on ground that turns it to snow where it lands. The centre's test
+stays too: it is the cloud's, since a cell centred over snow is drawn a
+snow squall, whole (AUDIT WEATHER3 R1). A storm with no clip strikes as
+before, every client still sees the same strikes, and a far storm's
+lightning is still seen from afar, as BOLT asked.
+
+## DISC20-E: the Weapon Widget preset back to off
+
+Diverse Weapons' Weapon Widget Preset has shipped off since DISC16-B. A
+default only answers for a player who never touched the switch, though:
+anyone who turned it on while DW-CLIP shipped it on, or tried it, holds a
+saved value and still saw it on.
+
+**Fix.** `modSettings.js` `SWITCH_RESETS`: on load, a stored Weapon
+Widget Preset without the entry's stamp is let go and the file written
+back, so the shipped off applies. `setModSetting` stamps the key when a
+player sets it from now on, so a choice made after the reset is kept
+across reloads, which `KEY_MIGRATIONS` (value matches) could not do. A
+file that never mentioned the mod is not grown one.
+
+## Pins
+
+`test/disc20.test.js` (13):
+
+- A: the grass stage run through `test/glsl.mjs` in both styles (no fog
+  is the old picture to the bit, 100 m into heavy fog is the fog colour,
+  each mode exactly the terrain's blend) and the fog's text and wiring.
+- B: the service on fake players and a manual clock (out, then in; the
+  latest request; the turn-round; the stop), a music pack's track, and
+  the fader.
+- C: a kept team from before TERRAIN-SCALE1 on the viewer's ground; the
+  retry, the delta, a same-ground word where it was said, a moving team
+  unprobed; the owner's own team re-stood; the orphaned box; the host's
+  hook.
+- D: a cell wholly outside its core strikes nothing, half outside only
+  inside, never onto snow where it lands, and a cell centred over snow
+  not even at its edge; the sunny swamp afternoon is dark.
+- E: the stamped reset.
+
+GRASS-PX's composition pin now composes both edit lists, and
+`test/hccWorld.mjs`'s ground can move. The mutants,
+`tools/mutants/disc20.json`, are all 34 dead. Of the 88 older records the
+change reaches, 87 died as they stood; `WEATHER3f-squall-strikes` (the
+centre's gate) survived, because R1's winter is snow everywhere and the
+new strike-point gate stood in for it. It runs `test/disc20.test.js` too
+now, which holds a squall's edge over thunder ground dark.

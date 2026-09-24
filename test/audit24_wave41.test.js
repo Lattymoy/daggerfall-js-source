@@ -223,8 +223,8 @@ test('audit24 wave41: the host seam - the occlusion cast and the LINEAR rolloff'
   assert.doesNotThrow(() => playEnemyClip(null, { clip: 1, volume: 1 }, [0, 0, 0]), 'a host with no audio');
 
   // and play3d really can take the model now
-  assert.match(rd('src/systems/audio.js'), /distanceModel = 'inverse', pitch = 1 \} = \{\}\)/,
-    'inverse stays the default (AUDIT 58 added pitch beside it, at 1)');
+  assert.match(rd('src/systems/audio.js'), /distanceModel = 'inverse', pitch = 1, far = false \} = \{\}\)/,
+    'inverse stays the default (AUDIT 58 added pitch beside it, at 1; DISC17-B far, off)');
   assert.match(rd('src/systems/audio.js'), /pan\.distanceModel = distanceModel;/);
 
   // the whole FixedUpdate, end to end

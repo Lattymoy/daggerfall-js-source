@@ -227,10 +227,10 @@ test('NT1 / AUDIT-WH R6: the world plaque has ONE owner per host, and every one 
   // holds its own: a name here per `let` there, and a new `let` with no
   // line in the reset fails the second half.
   const reset = ql.slice(ql.indexOf('export function resetQuickLoot() {'));
-  for (const slot of ['_sel = null;', '_nudge = 0;', '_pending = null;', '_actionIds = null;', '_lastKey = null;']) {   // ACT-MENU: the lit list's verbs
+  for (const slot of ['_sel = null;', '_nudge = 0;', '_pending = null;', '_actionIds = null;', '_lastKey = null;', '_tookSound = null;']) {   // ACT-MENU: the lit list's verbs; SND1: the press's pending sound
     assert.ok(reset.slice(0, reset.indexOf('}')).includes(slot), `resetQuickLoot leaves ${slot.split(' ')[0]} behind`);
   }
-  assert.doesNotMatch(ql, /^let (?!_sel|_nudge|_pending|_actionIds|_lastKey)/m,
+  assert.doesNotMatch(ql, /^let (?!_sel|_nudge|_pending|_actionIds|_lastKey|_tookSound)/m,
     'a new module-level slot needs an owner and a line in resetQuickLoot');
   assert.doesNotMatch(ql, /from '\.\.\/ui\//,
     'the feature owns its own state, so it never has to reach into a draw to read it');

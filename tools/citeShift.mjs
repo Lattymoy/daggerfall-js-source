@@ -85,6 +85,8 @@ import { isMain } from './lib/isMain.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LEDGER = 'bible/01-Overview/Port-Ledger.md';
 /** RF3: the cite tools and their pin files carry SYNTHETIC cites - never docs. */
+/** CITE-BUF: the most bytes one git call may answer with - citeMerge's own figure (1 << 28, 256 MiB). */
+export const GIT_MAX_BUFFER = 1 << 28;
 export const SELF_DOCS = Object.freeze(['tools/citeShift.mjs', 'tools/citeMerge.mjs', 'test/citeshift.test.js', 'test/citemerge.test.js']);
 
 /** A cite of any file on a line - where the continuations after one cite
@@ -296,10 +298,11 @@ function main(argv) {
   const base = val('--base') ?? 'HEAD';
   const apply = opt('--apply'), moveStruck = opt('--struck');
   const only = argv.flatMap((a, i) => (a === '--target' ? [argv[i + 1]] : []));
-  // AUDIT 68 X5: git's default 1 MiB maxBuffer threw ENOBUFS on `git show` of a
-  // target past 1 MiB (world.js crossed it), and the new-file catch below swallowed
-  // it - every cite into the tree's largest file was silently never moved.
-  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 });
+  // CITE-BUF (2026-09-24): execFileSync's default maxBuffer is 1 MiB, and scenes/world.js passed it (1,057,642 bytes):
+  // `git show base:world.js` threw, the new-file `catch` below took it for a file with no past, and every cite of the
+  // port's largest host was skipped in silence - 0 moved, 0 held, a clean-looking run. citeMerge's own helper already
+  // carried the wide buffer; this one is the same helper now. DISC17 (main, the same day) found it too, from the world.js side.
+  const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER });
   const changed = git('diff', '--name-only', base, '--', 'src', 'bible', 'test', 'tools').split('\n').filter(Boolean);
   const targets = (only.length ? only : changed).filter((f) => /\.(js|mjs|md)$/.test(f));
   const docs = git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f));   // RF3: the tools' own fixtures are not docs
@@ -313,7 +316,7 @@ function main(argv) {
     const hunks = hunksFromDiff(git('diff', '-U0', base, '--', target));
     if (!hunks.length) continue;
     const map = lineMap(hunks);
-    let oldLines; try { oldLines = git('show', `${base}:${target}`).split('\n'); } catch { continue; }   // a new file cites nothing yet
+    let oldLines; try { oldLines = git('show', `${base}:${target}`).split('\n'); } catch (err) { if (err?.status !== 128) throw err; continue; }   // a new file cites nothing yet (git's own 128); anything else - ENOBUFS above all - is loud
     if (!existsSync(join(ROOT, target))) continue;   // MAC5 (the water revert): a target the change DELETED has no lines to land on; its cites are the record's to strike
     const newLines = readFileSync(join(ROOT, target), 'utf8').split('\n');
     // RF3, pass one: plan every doc, and learn which numbers the docs

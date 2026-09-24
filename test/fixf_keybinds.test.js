@@ -78,7 +78,10 @@ test('FIX-F: RecastSpell and AbortSpell reach the cast engine in all four hosts,
   const inp = read('src/ui/input.js');
   assert.match(inp, /case 'RecastSpell': return ctx\.recastSpell \? \(ctx\.recastSpell\(\), true\) : false;/);
   assert.match(inp, /case 'AbortSpell': return ctx\.abortSpell \? \(ctx\.abortSpell\(\), true\) : false;/);
-  assert.match(inp, /if \(e\.code === 'F8' && !actionOf\(e, keys\)\) \{ ctx\.toggleDebugHud\?\.\(\); return true; \}/, 'a bound F8 is the binding’s');
+  // KB1: the raw F8 arm is gone - with DFU's PrintScreen on F8 it answered for nobody. The readout is the
+  // DebugOverlay action (shipped unbound), and F8 is the screenshot (ui/screenshot.js).
+  assert.doesNotMatch(inp, /e\.code === 'F8'/, 'no raw F8 read');
+  assert.match(inp, /case 'DebugOverlay': return ctx\.toggleDebugHud \? \(ctx\.toggleDebugHud\(\), true\) : false;/, 'the readout is an action');
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(read(h), /if \(act === 'RecastSpell'\) \{ e\.preventDefault\(\); magic\.recastSpell\(\); return; \}\s*\n\s*if \(act === 'AbortSpell'\) \{ e\.preventDefault\(\); magic\.abortReadySpell\(\); return; \}/, `${h}: the two arms in the host’s own ladder`);
   }

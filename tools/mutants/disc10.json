@@ -677,8 +677,8 @@
   {
     "name": "DISC10-E-interior-foe-pool-reads-the-foe-as-a-weapon",
     "file": "src/scenes/worldModes.js",
-    "old": "        makeInView(proj, view, multiply), interiorHitSound)) {\n        tallySwingSkills(",
-    "new": "        makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), ENEMY_HIT_VOLUME))) {\n        tallySwingSkills(",
+    "old": "        makeInView(proj, view, multiply), interiorHitSound, { swing })) {\n        tallySwingSkills(",
+    "new": "        makeInView(proj, view, multiply), (wpn) => audio.playOneShot(hitSoundFor(wpn), ENEMY_HIT_VOLUME), { swing })) {\n        tallySwingSkills(",
     "tests": [
       "test/disc10_lycan.test.js"
     ]

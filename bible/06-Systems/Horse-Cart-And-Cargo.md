@@ -132,13 +132,15 @@ WithPlayer, None, FollowingPlayer):
 - `src/systems/modSettings.js` `horse-cart-and-cargo` - the eight keys
   plus `Enabled`; a disabled mod is one DFU never loaded (nothing stands,
   nothing rides the wire, the windows fall back, and the machine drops
-  what it was observing - `suspend`). ONE DEPARTURE, recorded (HCC-KEYS):
-  the hotkeys ship on `5` / `6` (`Alpha5` / `Alpha6`), because the mod's
-  `K` and `G` are Travel Options' follow key and Handheld Torches' drop
-  key in this tree and no letter is free; the mod's own fallbacks for an
-  unparseable entry stay `K` / `G`, as its IL has them. The first cut
-  shipped `F7` / `F10` and neither was free (AUDIT HCC K1, below); a file
-  that saved them loses exactly those, once.
+  what it was observing - `suspend`). ONE DEPARTURE, recorded (HCC-KEYS,
+  then KB1): the two hotkeys are not the mod's TextKeys but the registry's
+  `HorseMount` and `HorseSummon` actions (`systems/inputActions.js`
+  `MOD_ACTIONS`), shipped on `,` and `.` and bound in Controls under the
+  mod's name. The mod's `K` and `G` are Travel Options' follow key and
+  Handheld Torches' drop key in this tree; the first cut shipped `F7` /
+  `F10` and neither was free (AUDIT HCC K1, below); HCC-KEYS moved them to
+  `5` / `6`, which the hotbar's slots own since KB1. A player's own saved
+  TextKey is carried into the registry once (`migrateKeyBinds`).
 
 ## HCC-ONLINE - the enhancement
 
@@ -213,13 +215,14 @@ killed by a mutant in `tools/mutants/hcc.json`.
 **Notifications and UI.**
 - K1: `F10` is DFU's LargeHUDToggle and `Shift-F10` its HUDToggle (world
   shortcuts, answered with the key already in the ring), and `F7` is the
-  browser's caret browsing. The keys moved to `5` / `6`; the gate now walks
-  every vendored mod's shipped keys against DFU's bindings, its world
-  shortcuts, the browser's keys and each other.
+  browser's caret browsing. The keys moved to `5` / `6` (KB1: then to `,` /
+  `.`, as registry actions); the gate walks every default in the one
+  registry table - DFU's, the port's and the mods' - against each other,
+  DFU's world shortcuts and the browser's keys.
 - K2 / K3: the hotkeys were a derivation over the held-key set (a tap
   shorter than a frame lost; no gate under a DOM surface). They read the
   frame's edge ring behind the IL's own `IsPlayingGame` / `LoadInProgress`
-  gate.
+  gate (KB1: through `pressed`, as the registry's actions).
 - K4: a captured key could never be cleared to `None`; the capture has the
   controls pane's clear, and the notes say the port's control.
 - U4 / H1: the runtime was ticked only outdoors and after the draw - the
@@ -423,6 +426,63 @@ the handler runs in it, so the mod's refusals and lines are unchanged;
 F1-F4 decide as before where the plaque does not stand. A recorded
 departure: Port-Ledger A, THE HORSE'S VERBS ON THE PLAQUE.
 
+## DISC20-C - a parked team stands on the viewer's ground (2026-09-24)
+
+Mac: *"Horse and carts can be seen parked in the sky."*
+
+**The cause.** A peer's word (`hv`, and HCC-PARK's kept record) carries
+the height the OWNER's client stood the team at, and nothing re-read it
+on the viewer's ground. The relay keeps a parked team for 72 hours, and
+an identical word refreshes it. TERRAIN-SCALE1 lowered every ground from
+the prefab's 1.5 to the game scene's 1.25 four hours after HCC-PARK
+shipped. It re-stood the heights a save, a scene cache and an anchor
+carry, but not this one. So every team kept from before it, and every
+word from a tab still on the old build, stood a fifth of the ground's
+height up: 20 m over 100 m of ground. World of Daggerfall's levelled
+sites and Basic Roads' smoothing, on for one player and off for the
+other, part the two grounds the same way, by less.
+
+Two faults beside it:
+
+- The mod grounds its parked wagon and waiting horse ONCE
+  (`DeployedWagonVisual.Tick`'s `grounded` return, the stationary horse's
+  pose tolerance), because its terrain never changes under a scene. The
+  port's can: a pixel rebuilt under them (the road network landing, a
+  late World of Daggerfall pack) left the owner's own team on the old
+  ground until they left the pixel.
+- `offsetAll` forgot the parked wagon's box without taking it down. A
+  crossing that also left the wagon's pixel shows no wagon to stand it
+  again, so it stayed in the old frame, 819 m off in the pixel entered:
+  an invisible wall.
+
+**The fix.**
+
+- `horseCartPool.js` `groundPeer` stands a peer's PARKED wagon and
+  STANDING horse on the viewer's ground by the mod's own law, once per
+  word:
+  - the wagon by the two-wheel solve (`DeployedWagonVisual` over the
+    pool's parts, the owner's heading);
+  - the horse by the stationary probe;
+  - from 1000 m over to 3000 m down, the surface nearest the word's
+    height kept, with the owner's box and mine left out of the ray (a
+    re-stand must not land on the box it stood).
+- The stand is a delta off the word, so the floating origin and a
+  re-anchor carry it. Where the viewer's ground is not built yet the word
+  stands as said and is tried again each second (`GROUND_RETRY_SECONDS`).
+  A moving team (a trailing or following wagon, a walking horse) is its
+  owner's live word and stands as said.
+- `world.js` calls the pool's `groundMoved` after every pixel is
+  published, over its bounds with a wagon's length of margin. It
+  re-stands the owner's own team (`horseCart.js` `regroundStanding`) and
+  the peers' within it. The hook is bound after the pool, because the
+  boot's first pixel builds before it.
+- `offsetAll` takes the parked wagon's box down with the old frame.
+
+The kept records from before TERRAIN-SCALE1 need no purge: they stand on
+the ground now and expire on their own. Pinned by `test/disc20.test.js`
+(C); mutants `tools/mutants/disc20.json`.
+`01-Overview/Field-Bugs-2026-09-23.md`, DISC20-C.
+
 ## What is and is not ported
 
 The assembly's dump carries 444 method bodies; 46 are compiler-generated
@@ -430,7 +490,7 @@ and struck (constructors, the `<Start>d__161` coroutine's five, the
 `<>c` lambda bodies, the event accessors). That leaves
 **398 authored methods**, each a row of `test/hcc_scope.test.js` with the
 symbol and module that carries it or a sentence saying why the port has
-no twin. **341 are ported**; **57 have no twin**, in these families and
+no twin. **340 are ported**; **58 have no twin**, in these families and
 no other:
 
 - `DeployedWagonFollowerCollisionFilter` (11): `Physics.IgnoreCollision`
@@ -445,6 +505,11 @@ no other:
   toggle of its own yet (its action panel's wagon button is a consumed
   no-op awaiting its slice); when it lands it gates through
   `canAccessWagonStorage(Trade)` as the inventory's does.
+- `TrailingWagonRuntime::ParseConfiguredHotkey` (1, KB1): the mod's two
+  hotkeys are the registry's `HorseMount` and `HorseSummon` actions (Comma
+  and Period by default), bound in Controls beside every other key, so
+  there is no KeyCode text to parse; a player's old choice is carried
+  into the registry once (`migrateKeyBinds`).
 - Unity transform / hierarchy / lifetime plumbing (`OwnsTransform`,
   `get_Parent`, `ResetVisualLocalTransform`, the cargo tier roots, the
   mesh destroys, `OnDestroy`), DFU's event bus and `UIWindowFactory`

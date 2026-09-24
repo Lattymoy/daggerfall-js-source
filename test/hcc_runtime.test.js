@@ -3,18 +3,21 @@
 // windows' questions, the transitions and the save. Every scenario is a thing a player does with the mod on.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createHorseCartRuntime, DeployedWagonVisual, StationaryHorseVisual, solveTwoWheelPose, DEFAULT_QUICK_MOUNT_KEY, DEFAULT_SUMMON_KEY } from '../src/systems/horseCart.js';
+import { createHorseCartRuntime, DeployedWagonVisual, StationaryHorseVisual, solveTwoWheelPose, HCC_MOUNT_ACTION, HCC_SUMMON_ACTION } from '../src/systems/horseCart.js';
 import { WAGON_MODE, HORSE_MODE, INTERIOR_ACCESS, LAST_MOUNT, STORAGE_CONTEXT, TRANSPORT, HCC_TEXT, WAGON_FOLLOW_DISTANCE, HORSE_DISMOUNT_REAR_OFFSET, HITCHED_HORSE_LOCAL_Z, WAGON_SAVE_VERSION } from '../src/systems/horseCartLaw.js';
 import { quatForward } from '../src/world/quat.js';
 
 import { makeWorld, RATIO, WX0, WZ0, PARTS } from './hccWorld.mjs';   // the fake host, one home
 
-test('HCC runtime: the settings read at birth, an unparseable hotkey falls to the mod\'s own K / G, None is None', () => {
+test('HCC runtime: the settings read at birth; the hotkeys are the registry\'s two actions, not the mod\'s TextKeys (KB1)', () => {
+  // The runtime parsed Hotkeys.QuickMountDismount / SummonTransport at birth and warned on a name that was no KeyCode
+  // (ParseConfiguredHotkey, falling to K / G). KB1 moved both keys into the registry as HorseMount and HorseSummon,
+  // bound and cleared in Controls like every key: the runtime asks `actionPressed` and parses nothing.
   const { rt, w } = makeWorld({ settings: { quickMountKey: 'NotAKey', summonKey: 'None', horseFollowDistance: 99, interiorAccessDistance: 1 } });
   assert.equal(rt.physicalPersistenceEnabled, true); assert.equal(rt.showTrailingWagon, true);
-  assert.equal(rt.horseFollowDistance, 8, 'clamped'); assert.equal(DEFAULT_QUICK_MOUNT_KEY, 'K'); assert.equal(DEFAULT_SUMMON_KEY, 'G');
-  assert.ok(w.log.some((m) => /Quick Mount \/ Dismount hotkey 'NotAKey' is not a Unity KeyCode; using K/.test(m)));
-  assert.ok(!w.log.some((m) => /Summon/.test(m)), 'None is a valid answer, not a warning');
+  assert.equal(rt.horseFollowDistance, 8, 'clamped');
+  assert.equal(HCC_MOUNT_ACTION, 'HorseMount'); assert.equal(HCC_SUMMON_ACTION, 'HorseSummon');
+  assert.ok(!w.log.some((m) => /hotkey|KeyCode/.test(m)), 'no key is parsed, so none is warned about');
 });
 
 test('HCC runtime: ownership - a cart and a horse owned put the wagon and the horse with the player; losing the horse drops it', () => {
@@ -127,27 +130,27 @@ test('HCC runtime: the transport window\'s rows - the horse row is dark when the
 });
 
 test('HCC runtime: the hotkeys - quick mount rides the last mount and dismounts; summon brings the team to the player', () => {
-  const { rt, w, step, state, scene } = makeWorld({ settings: { quickMountKey: 'F7', summonKey: 'F10' } });
+  const { rt, w, step, state, scene } = makeWorld();   // KB1: the two keys are the registry's actions
   step();
-  w.keys.add('F7'); step();
+  w.keys.add('HorseMount'); step();
   assert.equal(w.mode, TRANSPORT.Horse, 'nothing mounted before: the horse');
-  w.keys.add('F7'); step();
+  w.keys.add('HorseMount'); step();
   assert.equal(w.mode, TRANSPORT.Foot);
   step(2);
   assert.equal(state().HorseMode, HORSE_MODE.LooseStationary);
   w.pos[2] += 200; step();
-  w.keys.add('F10'); step();
+  w.keys.add('HorseSummon'); step();
   assert.equal(w.said.at(-1), HCC_TEXT.summonedBoth);
   assert.equal(state().Mode, WAGON_MODE.Deployed); assert.equal(state().HorseMode, HORSE_MODE.HitchedToWagon);
   const p = scene(state().WorldX, state().WorldZ);
   assert.ok(Math.abs(p[2] - (w.pos[2] - WAGON_FOLLOW_DISTANCE)) < 0.05, 'the wagon 2.5 m behind the player');
-  w.inside = true; w.keys.add('F10'); step();
+  w.inside = true; w.keys.add('HorseSummon'); step();
   assert.equal(w.said.at(-1), HCC_TEXT.summonOutdoorsOnly);
-  w.keys.add('F7'); step();
+  w.keys.add('HorseMount'); step();
   assert.equal(w.said.at(-1), HCC_TEXT.mountOutdoorsOnly);
   w.inside = false;
-  const { rt: r2, w: w2, step: s2 } = makeWorld({ cart: false, horse: false, settings: { quickMountKey: 'F7' } });
-  s2(); w2.keys.add('F7'); s2();
+  const { rt: r2, w: w2, step: s2 } = makeWorld({ cart: false, horse: false });
+  s2(); w2.keys.add('HorseMount'); s2();
   assert.equal(w2.said.at(-1), HCC_TEXT.doNotOwnHorseOrWagon); assert.equal(r2.physicalPersistenceEnabled, true);
 });
 

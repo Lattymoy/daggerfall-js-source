@@ -16,6 +16,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { SKILLS } from '../src/systems/skills.js';   // RESURRECT1: the port's own cost row's skill
 import { join } from 'node:path';
 import {
   EFFECT_COST_TABLE, effectCost, calculateCastCost,
@@ -145,12 +146,14 @@ const expectedTable = () => {
 };
 
 test('audit18 magic: EFFECT_COST_TABLE is DFU\'s whole effect library, key for key', () => {
-  const want = expectedTable();
+  // DFU's library, plus the ONE row the port adds of its own: RESURRECT1's Resurrect (45,255, no classic key uses
+  // 45), zero-component and priced by the fudge at Restoration as MorphSelf is at Illusion
+  const want = { ...expectedTable(), '45,255': { skill: SKILLS.Restoration } };
   // plain-object copy so deepEqual compares values, not frozenness
   const got = {};
   for (const [k, v] of Object.entries(EFFECT_COST_TABLE)) got[k] = { ...v };
   assert.deepEqual(got, want);
-  assert.equal(Object.keys(EFFECT_COST_TABLE).length, 91);
+  assert.equal(Object.keys(EFFECT_COST_TABLE).length, 92);
   // The families that shipped after S10 and were priced by the fudge
   // at the wrong skill until this pass:
   for (const k of ['14,255', '18,255', '9,0', '7,0', '11,0', '11,8', '11,9', '10,0', '10,9', '4,1', '1,1', '4,2', '1,2']) {

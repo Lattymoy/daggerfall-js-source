@@ -1,0 +1,137 @@
+[
+  {
+    "name": "CP-lycan-not-lifelong",
+    "file": "src/systems/lycanthropy.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "    kind: 'racialOverride',\n    permanent: true,",
+    "new": "    kind: 'racialOverride',"
+  },
+  {
+    "name": "CP-vampire-not-lifelong",
+    "file": "src/systems/vampirism.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "    kind: 'racialOverride',\n    permanent: true,",
+    "new": "    kind: 'racialOverride',"
+  },
+  {
+    "name": "CP-infection-not-lifelong",
+    "file": "src/systems/infection.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "    kind: 'disease',\n    permanent: true,",
+    "new": "    kind: 'disease',"
+  },
+  {
+    "name": "CP-old-saves-not-migrated",
+    "file": "src/systems/save.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "  for (const a of entity.activeEffects) if ((a.kind === 'racialOverride' || a.infection) && !a.permanent) a.permanent = true;",
+    "new": ""
+  },
+  {
+    "name": "CP-migration-keyed-on-curses-only",
+    "file": "src/systems/save.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "if ((a.kind === 'racialOverride' || a.infection) && !a.permanent)",
+    "new": "if (a.kind === 'racialOverride' && !a.permanent)"
+  },
+  {
+    "name": "CR-repair-never-called",
+    "file": "src/systems/save.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "  repairLostCurses(entity, { now: Math.floor(snap.classicMinutes ?? 0) });\n",
+    "new": ""
+  },
+  {
+    "name": "CR-repair-replays-the-onset",
+    "file": "src/systems/lycanthropy.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "  if (!restore) endOldLifeEffects(entity);",
+    "new": "  endOldLifeEffects(entity);"
+  },
+  {
+    "name": "CR-anthotis-fallback-wrong",
+    "file": "src/systems/curseRepair.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "  return VAMPIRE_CLANS.Anthotis;\n}",
+    "new": "  return VAMPIRE_CLANS.Lyrezi;\n}"
+  },
+  {
+    "name": "CR-pending-ignored",
+    "file": "src/systems/curseRepair.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "  if (entity.racialOverride || entity.racialOverridePending || liveInfection(entity)) return null;",
+    "new": "  if (entity.racialOverride || liveInfection(entity)) return null;"
+  },
+  {
+    "name": "CR-clock-from-zero",
+    "file": "src/systems/save.js",
+    "tests": [
+      "test/curse_persist.test.js"
+    ],
+    "old": "repairLostCurses(entity, { now: Math.floor(snap.classicMinutes ?? 0) });",
+    "new": "repairLostCurses(entity, { now: 0 });"
+  },
+  {
+    "name": "QL-world-return-back",
+    "file": "src/scenes/world.js",
+    "tests": [
+      "test/ql_frame.test.js"
+    ],
+    "old": "if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) {   // AUDIT QL-WEIGHT1",
+    "new": "if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null })) return; {   // AUDIT QL-WEIGHT1"
+  },
+  {
+    "name": "QL-exterior-return-back",
+    "file": "src/scenes/exterior.js",
+    "tests": [
+      "test/ql_frame.test.js"
+    ],
+    "old": "if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) {   // AUDIT QL-WEIGHT1",
+    "new": "if (quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null })) return; {   // AUDIT QL-WEIGHT1"
+  },
+  {
+    "name": "LG-world-null-pile-hooked",
+    "file": "src/scenes/world.js",
+    "tests": [
+      "test/ql_frame.test.js"
+    ],
+    "old": "              if (pile) {\n                const _hooks = droppedLootHooks(pile);",
+    "new": "              {\n                const _hooks = droppedLootHooks(pile);"
+  },
+  {
+    "name": "LG-exterior-null-pile-hooked",
+    "file": "src/scenes/exterior.js",
+    "tests": [
+      "test/ql_frame.test.js"
+    ],
+    "old": "            if (pile) {\n              const _hooks = droppedLootHooks(pile);",
+    "new": "            {\n              const _hooks = droppedLootHooks(pile);"
+  },
+  {
+    "name": "QL-dungeon-frame-return",
+    "file": "src/scenes/dungeon.js",
+    "tests": [
+      "test/ql_frame.test.js"
+    ],
+    "old": "      requestAnimationFrame(frame);\n      return;   // U2b/U3",
+    "new": "      return;   // U2b/U3"
+  }
+]

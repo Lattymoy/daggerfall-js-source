@@ -246,8 +246,8 @@
   {
     "name": "EM1-25-a-click-on-a-tab-also-picks-the-place-under-it",
     "file": "src/ui/heldMap.js",
-    "old": "        if (tab) this._selectSheet(tab);\n        else {\n          this._sheet?.pickAt?.(px, py);",
-    "new": "        if (tab) this._selectSheet(tab);\n        {\n          this._sheet?.pickAt?.(px, py);",
+    "old": "        if (tab) this._selectSheet(tab);\n        else this._sheet?.pickAt?.(px, py);",
+    "new": "        if (tab) this._selectSheet(tab);\n        this._sheet?.pickAt?.(px, py);",
     "tests": [
       "test/heldmap.test.js"
     ],
@@ -256,8 +256,8 @@
   {
     "name": "EM1-26-the-strip-is-never-asked-before-the-sheet",
     "file": "src/ui/heldMap.js",
-    "old": "        const tab = stripHit(this._strip, px, py);\n        if (tab) this._selectSheet(tab);\n        else {\n          this._sheet?.pickAt?.(px, py);",
-    "new": "        {\n          this._sheet?.pickAt?.(px, py);",
+    "old": "        const tab = stripHit(this._strip, px, py);\n        if (tab) this._selectSheet(tab);\n        else this._sheet?.pickAt?.(px, py);",
+    "new": "        this._sheet?.pickAt?.(px, py);",
     "tests": [
       "test/heldmap.test.js"
     ],

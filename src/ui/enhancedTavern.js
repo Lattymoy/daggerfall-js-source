@@ -415,7 +415,7 @@ function render() {
     for (const b of win.querySelectorAll('button, input')) b.disabled = true;
     const scrim = boxScrim();
     (scrim.className.includes('sb-screen') ? shell : win).append(scrim);   // the panel's arm catches the press over the whole screen (AUDIT ENH-NOTICE3 B1)
-  } else noticeRelease(noticeOwner);   // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:868)
+  } else noticeRelease(noticeOwner);   // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:873)
   shell.append(win);
   host.append(shell);
   unregisterOutside();

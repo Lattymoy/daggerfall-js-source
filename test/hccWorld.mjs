@@ -1,6 +1,7 @@
 // HCC: THE RUNTIME'S FAKE HOST - a flat world at y = 0 around a player who walks and mounts, the eight settings at
 // their defaults, the hotkeys, the windows' questions. One home for test/hcc_runtime.test.js and the branch audit's
-// pins (test/audit_hcc_branch.test.js). `w.noGround` takes the ground away (a spot the probe cannot hit yet).
+// pins (test/audit_hcc_branch.test.js). `w.noGround` takes the ground away (a spot the probe cannot hit yet); `w.ground`
+// is its height.
 import { createHorseCartRuntime } from '../src/systems/horseCart.js';
 import { TRANSPORT } from '../src/systems/horseCartLaw.js';
 
@@ -13,10 +14,11 @@ export function makeWorld({ cart = true, horse = true, settings = {}, ground = 0
     mode: TRANSPORT.Foot, items: { cart, horse }, inside: false, dungeon: false, building: false, buildingKey: 7, dungeonId: 99,
     pos: [0, 0.9, 0], yaw: 0, said: [], mid: [], now: 0, keys: new Set(), prompt: null, openedInv: 0, activateMode: 'grab', travelOpt: null, changed: 0,
     threats: [], ready: true, ship: false, weight: 0, settings: { ...settings }, log: [],
+    ground,   // DISC20-C: the ground's height, which a pin may move (a pixel rebuilt under a parked team)
   };
   const phys = {
     now: () => w.now,
-    raycastAll: (o, d, max) => (!w.noGround && d[1] < 0 && o[1] >= ground && o[1] - ground <= max ? [{ point: [o[0], ground, o[2]], distance: o[1] - ground, normal: [0, 1, 0] }] : []),
+    raycastAll: (o, d, max) => (!w.noGround && d[1] < 0 && o[1] >= w.ground && o[1] - w.ground <= max ? [{ point: [o[0], w.ground, o[2]], distance: o[1] - w.ground, normal: [0, 1, 0] }] : []),
     sphereCastClear: () => true, threats: () => w.threats,
   };
   const fwd = () => [Math.sin(w.yaw), 0, Math.cos(w.yaw)];
@@ -30,7 +32,8 @@ export function makeWorld({ cart = true, horse = true, settings = {}, ground = 0
     entity: { wagonWeight: () => w.weight, wagonKgLimit: () => 750 },
     activateMode: () => w.activateMode, fadeInProgress: () => false,
     say: (l) => w.said.push(l), setMidScreenText: (t) => w.mid.push(t), tooFarText: () => 'You are too far away...',
-    settings: () => ({ ...w.settings }), keyDown: (n) => w.keys.has(n), now: () => w.now, travelOptionsActive: () => w.travelOpt,
+    settings: () => ({ ...w.settings }), actionPressed: (a) => w.keys.has(a),   // KB1: the registry's HorseMount/HorseSummon, pressed this frame
+    now: () => w.now, travelOptionsActive: () => w.travelOpt,
     worldCoordToMapPixel: () => ({ x: 0, y: 0 }),
     openInventoryWithWagon: () => { w.openedInv++; },
     openNamePrompt: (o) => { w.prompt = { ...o, open: true }; return { isOpen: () => !!w.prompt?.open }; },

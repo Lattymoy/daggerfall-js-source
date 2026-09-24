@@ -1,0 +1,97 @@
+[
+  {
+    "name": "DISC17-A-as-many-as-WIND5",
+    "file": "src/render/windWisps.js",
+    "old": "export const WISP_MAX = 120;",
+    "new": "export const WISP_MAX = 240;",
+    "tests": [
+      "test/disc17.test.js",
+      "test/wind4_windweather.test.js"
+    ]
+  },
+  {
+    "name": "DISC17-A-the-alpha-of-WIND3",
+    "file": "src/render/windWisps.js",
+    "old": "alpha: Object.freeze([0.20, 0.24])",
+    "new": "alpha: Object.freeze([0.10, 0.12])",
+    "tests": [
+      "test/disc17.test.js",
+      "test/wind3_windworld.test.js",
+      "test/weather2d_sandstorm.test.js"
+    ]
+  },
+  {
+    "name": "DISC17-B-far-ignored",
+    "file": "src/systems/audio.js",
+    "old": "    if (far) {   // DISC17-B",
+    "new": "    if (false) {   // DISC17-B",
+    "tests": [
+      "test/disc17.test.js"
+    ]
+  },
+  {
+    "name": "DISC17-B-the-far-shot-not-moved",
+    "file": "src/systems/audio.js",
+    "old": "        placeAudio(f.pan, [pos[0] + f.off[0], pos[1] + f.off[1], pos[2] + f.off[2]]);\n",
+    "new": "",
+    "tests": [
+      "test/disc17.test.js"
+    ]
+  },
+  {
+    "name": "DISC17-B-the-offset-not-the-ear-s",
+    "file": "src/systems/audio.js",
+    "old": "off: [pos[0] - L.x, pos[1] - L.y, pos[2] - L.z]",
+    "new": "off: [pos[0], pos[1], pos[2]]",
+    "tests": [
+      "test/disc17.test.js"
+    ]
+  },
+  {
+    "name": "DISC17-B-never-let-go",
+    "file": "src/systems/audio.js",
+    "old": "        if (f.until <= now) continue;\n",
+    "new": "",
+    "tests": [
+      "test/disc17.test.js"
+    ]
+  },
+  {
+    "name": "DISC17-B-the-world-plays-it-near",
+    "file": "src/scenes/world.js",
+    "old": "maxDistance: THUNDER_SOURCE_M * 8, far: true });",
+    "new": "maxDistance: THUNDER_SOURCE_M * 8 });",
+    "tests": [
+      "test/disc17.test.js",
+      "test/weather3d_distantstorms.test.js"
+    ]
+  },
+  {
+    "name": "DISC17-B-the-town-plays-it-near",
+    "file": "src/scenes/exterior.js",
+    "old": "maxDistance: THUNDER_SOURCE_M * 8, far: true });",
+    "new": "maxDistance: THUNDER_SOURCE_M * 8 });",
+    "tests": [
+      "test/disc17.test.js",
+      "test/weather3d_distantstorms.test.js"
+    ]
+  },
+  {
+    "name": "DISC17-C-the-host-hands-the-map-its-weather",
+    "file": "src/scenes/world.js",
+    "old": "      maps, mapDict, woods,\n      roads:",
+    "new": "      maps, mapDict, woods,\n      weather: { on: () => true, minutes: () => playerTicker.classicMinutes },\n      roads:",
+    "tests": [
+      "test/disc17.test.js"
+    ]
+  },
+  {
+    "name": "DISC17-C-paintUnder-back-in-the-contract",
+    "file": "src/ui/mapStrip.js",
+    "old": "  'homeView',      // (limits) => view|null - where this sheet rests; null = fit\n]);",
+    "new": "  'homeView',      // (limits) => view|null - where this sheet rests; null = fit\n  'paintUnder',\n]);",
+    "tests": [
+      "test/disc17.test.js"
+    ]
+  }
+]

@@ -146,7 +146,7 @@ test('CHAT-SIZE: a reader on the newest line stays on it as the list is dragged 
 });
 
 test('CHAT-SIZE by source: every size the chat\'s TEXT is drawn at is the scale\'s - the lines, their tags, times, titles and glyphs, the hint and the status, the roster\'s rows and its column, the field, the jump bar - and nothing a thumb presses is (the buttons, the tabs: AUDIT SOC C8\'s targets); the box is the dragged width inside the screen, the list the dragged height inside three quarters of it; the friends panel places itself off the chat\'s published footprint, the old fixed numbers kept for a page with no chat', () => {
-  const scaled = ['.dfchat-line', '.dfchat-tag', '.dfchat-time', '.dfchat-hint', '.dfchat-status', '.dfchat-jump', '.dfchat-input', '.dfchat-whohead', '.dfchat-who-row', '.dfchat-who-tag', '.dfchat-who-title', '.dfchat-line-title', '.dfchat-who-more'];
+  const scaled = ['.dfchat-line', '.dfchat-tag', '.dfchat-time', '.dfchat-hint', '.dfchat-status', '.dfchat-jump', '.dfchat-input', '.dfchat-whohead', '.dfchat-who-row', '.dfchat-who-tag', '.dfchat-line-title', '.dfchat-who-more'];   // TITLE-R: the roster wears no title, so it has no title rule
   const ruleOf = (sel) => { const m = new RegExp(`(?:^|\\n)${sel.replace(/[.]/g, '\\.')} \\{([^}]*)\\}`).exec(CHAT_CSS); return m ? m[1] : null; };
   for (const sel of scaled) assert.match(ruleOf(sel) ?? '', /font-size: calc\(\d+px \* var\(--dfchat-scale, 1\)\)/, `${sel} scales with the text`);
   assert.match(ruleOf('.dfchat-who'), /width: calc\(148px \* var\(--dfchat-scale, 1\)\)/, 'the roster column widens with its names');

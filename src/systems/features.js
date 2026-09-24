@@ -156,16 +156,14 @@ export const MOD_CURATED = Object.freeze({
   // RRI1: the three a player reaches for first - the new items, and what loot is.
   'roleplay-realism-items': Object.freeze(['newWeapons', 'newArmor', 'lootRebalance']),
   'roleplay-realism': Object.freeze(['advancedArchery', 'climbingRestriction', 'underworldExpulsion', 'shipPorts']),   // SHIP-PORTS: the boat's own switch, where a player can find it
-  // TORCH-BIND (2026-09-22, a player on Discord: "No option to rebind
-  // Handheld Torches actions"): the three TextKeys are the mod's own key
-  // store, read raw by the hosts, and the Mods pane that once captured
-  // them went with FT14 - this list was the only door left, and it did
-  // not name them. The relaxed switch rides along: 3ARMS ships it off.
-  'handheld-torches': Object.freeze(['Handling.ToggleLightInput', 'Handling.ManualDropInput', 'Throwing.ThrowTorchInput',
+  // KB1: a mod's KEYS are not dials. TORCH-BIND put the three TextKeys here because the hosts read them raw and
+  // this was the only door left; they are the registry's actions now (systems/inputActions.js MOD_ACTIONS) and
+  // are bound in Controls, under the mod's name, beside every other key - where a clash can be seen. The relaxed
+  // switch rides along: 3ARMS ships it off.
+  'handheld-torches': Object.freeze([
     'Handling.RelaxedTwoHandedWeapons', 'Handling.RememberLastLightSource', 'Handling.StowWhenSpellcasting', 'Bob.Length']),
-  // HCC: the two hotkeys (the mod's own key store, as Handheld Torches'),
-  // the persistence switch, and the two distances a player reaches for.
-  'horse-cart-and-cargo': Object.freeze(['Hotkeys.QuickMountDismount', 'Hotkeys.SummonTransport', 'Persistence.PhysicalPersistence',
+  // HCC: the persistence switch and the distances a player reaches for (KB1: its two hotkeys are Controls').
+  'horse-cart-and-cargo': Object.freeze(['Persistence.PhysicalPersistence',
     'Following.HorseFollowDistance', 'WagonAccess.InteriorAccessDistance', 'Following.AvoidCombat', 'Following.FollowFastTravel', 'Presentation.ShowTrailingWagon']),
   pcaao: Object.freeze(['equipmentDamageEnhanced', 'fadingEnchantedItems', 'armorHitFormulaRedone',
     'criticalStrikesIncreaseDamage', 'conditionBasedEffectiveness', 'softMaterialRequirements',
@@ -177,13 +175,12 @@ export const MOD_CURATED = Object.freeze({
   // one is curated hard. The five are what a player reaches for first:
   // whether a cautious trip is walked, whether a ship needs a port,
   // what a location does to a journey in progress, how fast it may run,
-  // and which key follows a road. Everything else - the fourteen dot
+  // and (KB1: in Controls now, as FollowPaths) which key follows a road. Everything else - the fourteen dot
   // colours, the junction map's placement, the fare scaling - stays in
   // the mod's own pane.
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause', 'TimeAcceleration.AccelerationLimit',
-    'RoadsIntegration.FollowPathsKey', 'RoadsIntegration.FollowPathsCustomKeyBind',   // TORCH-BIND: the custom key travelOptions.js reads
   ]),
   'ambient-text': Object.freeze(['textChance', 'interval', 'postTextInterval', 'textDisplayTime']),   // AT0: all four it ships - the mod is small enough that curation would only hide something
   // EOTB0: the mod ships FIFTY-FOUR keys across nine sections, so this
@@ -191,8 +188,8 @@ export const MOD_CURATED = Object.freeze({
   // first: how far back the camera sits, which shoulder it sits over,
   // how fast it follows, and how big you are drawn. Everything else
   // stays in the mod's own pane.
-  // TORCH-BIND: the two keys eotbCamera.js reads ride the tile too - the same class as the torch keys.
-  'eye-of-the-beholder': Object.freeze(['Camera.SwitchShoulder', 'AutoTogglePerspective.ToggleInput', 'Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
+  // KB1: its two keys (SwitchShoulder, ToggleInput) are Controls' ShoulderSwitch and AutoPerspective.
+  'eye-of-the-beholder': Object.freeze(['Camera.LongitudinalDistance', 'Camera.FrontalPlaneOffset',
     'Camera.Speed', 'Animation.BillboardScale']),
   // IF1: the clip quality and the two volumes are what a player reaches for.
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
@@ -349,7 +346,13 @@ export const FEATURES = Object.freeze([
       + 'shafts of sunlight. Off is Daggerfall Unity\u2019s flat shading.',
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'enhancedLighting', initial: true, online: true }),
+    // OL-LIGHT (2026-09-24, Mac: "Can we let people disable it online"): THE PLAYER'S, ONLINE TOO. It was forced on
+    // with the rest of the enhanced lane, so a player it did not suit - the interior flicker DISC15 closed, a GPU
+    // that cannot carry forty-eight shadowed lanterns - had no way out online. Lighting is what THIS screen draws:
+    // the room agrees on nothing through it (render/enhancedLighting.js lightingOn is its one reader, and no wire
+    // field, relay law or shared roll reads the lane), the same shape as the chat's visibility and the peers'
+    // sprites the lane already leaves to the player.
+    control: Object.freeze({ store: 'prefs', key: 'enhancedLighting', initial: true, online: 'player' }),
   }),
   // FT7 (2026-09-14): THE TWO QUALITY TIERS OF THE ENHANCED OUTDOORS
   // (PERF1) - the grass field's fraction and the clouds' march. Both
@@ -798,6 +801,23 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'quickslots', initial: true, online: 'player' }),
   }),
+  // HB1 (2026-09-23, Discord: "an enhanced hotbar alongside keeping the
+  // current quickbar ... togglable so ppl can choose the lightweight
+  // quickbar or hotbar - both at the same time are too much clutter"):
+  // WHICH bar the enhanced HUD wears. ONE OR THE OTHER, never both: the
+  // hotbar hides the diamond and takes keys 1-9 and 0 while it is up.
+  // Enhanced skin only, online included - it is the player's own view.
+  Object.freeze({
+    id: 'quickbar-style',
+    group: 'sight',
+    title: 'Quickbar or hotbar',
+    note: 'Quickbar is the bottom-left diamond. Hotbar is ten slots over the vitals on keys 1-9 and 0, filled by dragging '
+      + 'weapons, potions, torches and spells onto it from the pack and the spellbook.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'quickbarStyle', initial: 'quickbar', online: 'player',
+      tiers: Object.freeze([['quickbar', 'Quickbar'], ['hotbar', 'Hotbar']]) }),
+  }),
   // CAMP1 (2026-09-17, Mac: camps and roaming packs in the wilderness):
   // an original addition, not a DFU classic feature - the classic game
   // spawns wandering monsters one at a time. This is a second roll
@@ -813,6 +833,22 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'wildernessCamps', initial: true, online: 'player' }),
+  }),
+  // DISC19-F (2026-09-24, Discord through Mac: "enhance guard
+  // interaction"): THE WATCH DEFENDS THE TOWN (systems/townWatch.js) -
+  // the port's own. DFU's combat watch exists only for a crime; this
+  // brings it, as the player's ally, when a monster hunts the player
+  // inside a town. Off is DFU's watch alone.
+  Object.freeze({
+    id: 'town-watch',
+    group: 'combat',
+    title: 'The watch defends the town',
+    note: 'When a monster hunts you inside a town and you are not wanted, the city watch comes to fight it on your side, '
+      + 'and walks away once the town is quiet. Commit a crime and they turn on you like any watch. Off keeps the classic '
+      + 'watch, which only ever comes for a crime.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'townWatch', initial: true, online: 'player' }),
   }),
   // SURV2 (2026-09-18, Mac: "All on by default"): THE SURVIVAL ARC -
   // an overhaul of Ralzar's Climates & Calories (vendor/climates-
