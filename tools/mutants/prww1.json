@@ -38,7 +38,7 @@
   {
     "name": "PRWW1-no-claw",
     "file": "src/net/peerRiders.js",
-    "old": "      else if (r.an != null && an !== r.an) r.claw = { i: 0, t: 0 };\n",
+    "old": "      else if (r.an != null && an !== r.an && !riding && !r.claw) r.claw = { i: 0, t: 0 };\n",
     "new": "      else if (false) r.claw = { i: 0, t: 0 };\n",
     "tests": [
       "test/prww1_werewolf.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "PRWW1-claw-on-first-sight",
     "file": "src/net/peerRiders.js",
-    "old": "      else if (r.an != null && an !== r.an) r.claw = { i: 0, t: 0 };\n",
-    "new": "      else if (an !== r.an) r.claw = { i: 0, t: 0 };\n",
+    "old": "      else if (r.an != null && an !== r.an && !riding && !r.claw) r.claw = { i: 0, t: 0 };\n",
+    "new": "      else if (an !== r.an && !riding && !r.claw) r.claw = { i: 0, t: 0 };\n",
     "tests": [
       "test/prww1_werewolf.test.js"
     ]
@@ -112,6 +112,24 @@
     "file": "src/player/eotbBody.js",
     "old": "      if (renderer && last.lycanthropyType !== preloadedForm) preload(true);",
     "new": "      if (false) preload(true);",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-the-saddle-claws",
+    "file": "src/net/peerRiders.js",
+    "old": "      else if (r.an != null && an !== r.an && !riding && !r.claw) r.claw = { i: 0, t: 0 };",
+    "new": "      else if (r.an != null && an !== r.an && !r.claw) r.claw = { i: 0, t: 0 };",
+    "tests": [
+      "test/prww1_werewolf.test.js"
+    ]
+  },
+  {
+    "name": "PRWW1-a-new-swing-restarts-the-claw",
+    "file": "src/net/peerRiders.js",
+    "old": "      else if (r.an != null && an !== r.an && !riding && !r.claw) r.claw = { i: 0, t: 0 };",
+    "new": "      else if (r.an != null && an !== r.an && !riding) r.claw = { i: 0, t: 0 };",
     "tests": [
       "test/prww1_werewolf.test.js"
     ]

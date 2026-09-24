@@ -161,6 +161,26 @@ test('PR-WW1 claw: the swing count moving on a beast plays EOTB\'s lycan swing o
   assert.equal(rh.riders.get('man').table, 'IdleHorse');
 });
 
+test('PR-WW1 claw, the local body\'s own rule (eotbBody playLycanAttack): a beast in the saddle does not claw, and a swing while the claw plays does not restart it (mutants: the saddle claws; a new swing restarts the claw)', async () => {
+  const { riders } = riderLayer();
+  const mounted = { id: 'm', shown: shownOf({ wb: 1, rd: 1, an: 1 }) };
+  await drawn(riders, [mounted]);
+  mounted.shown = shownOf({ wb: 1, rd: 1, an: 2 });
+  riders.sync([mounted], toScene, { eye: [10, 1, 20], dt: 1 / 60 });
+  assert.notEqual(riders.riders.get('m').table, CLAW_TABLE, 'never in the saddle');
+  const { riders: rf } = riderLayer();
+  const wolf = { id: 'f', shown: shownOf({ wb: 1, wd: 1, an: 1 }) };
+  await drawn(rf, [wolf]);
+  wolf.shown = shownOf({ wb: 1, wd: 1, an: 2 });
+  rf.sync([wolf], toScene, { eye: [10, 1, 20], dt: 1 / 60 });
+  rf.sync([wolf], toScene, { eye: [10, 1, 20], dt: LYCAN_TICK + 1e-6 });
+  assert.equal(rf.riders.get('f').frame, 1, 'the claw is on its second frame');
+  wolf.shown = shownOf({ wb: 1, wd: 1, an: 3 });   // a swing while it plays
+  rf.sync([wolf], toScene, { eye: [10, 1, 20], dt: 1 / 60 });
+  assert.equal(rf.riders.get('f').table, CLAW_TABLE);
+  assert.equal(rf.riders.get('f').frame, 1, 'not restarted: the claw plays on');
+});
+
 test('PR-WW1 hand-off, in world.js\'s order: once the lycanthrope is up the enemy sprite gives way and the name rides at the beast\'s top; with no art (a build without it, or a failed fetch) DISC12\'s werewolf still stands - a beast is never nothing; the form back to human takes the beast away (mutants: the fallback lost; both drawn)', async () => {
   const LOOK = { race: 'Breton', gender: 'male', faceIndex: 0, items: [], class: 'Warrior' };
   const tex = (archive) => ({ archive, getFrameCount: () => 5, getSize: () => ({ w: 60, h: 100 }), getScale: () => ({ x: 0, y: 0 }) });

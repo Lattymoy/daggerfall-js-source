@@ -100,15 +100,16 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
       let r = riders.get(peer.id);
       if (!r) { r = { table: null, frame: 0, clock: 0, batch: null, batchKey: null, size: null, xml: null, mirror: false, an: null, claw: null }; riders.set(peer.id, r); }
       // PR-WW1: THE CLAW - the swing count moving on a beast plays EOTB's lycan swing once, forward, a LYCAN_TICK a
-      // frame; the count first seen is no swing (a peer met mid-fight does not claw at nothing), and a new swing
-      // restarts it, as the enemy sprite's strike did
+      // frame; the count first seen is no swing (a peer met mid-fight does not claw at nothing). It is the local
+      // body's own rule (eotbBody playLycanAttack, IL): never in the saddle, and a swing while the claw plays does not
+      // restart it
       const an = pose.an | 0;
       if (r.claw) {
         r.claw.t += Math.max(0, dt);
         while (r.claw && r.claw.t >= LYCAN_TICK) { r.claw.t -= LYCAN_TICK; r.claw.i++; if (r.claw.i >= frameCount(CLAW_TABLE)) r.claw = null; }
       }
       if (!beast) r.claw = null;
-      else if (r.an != null && an !== r.an) r.claw = { i: 0, t: 0 };
+      else if (r.an != null && an !== r.an && !riding && !r.claw) r.claw = { i: 0, t: 0 };
       r.an = an;
       const table = r.claw ? CLAW_TABLE : beast ? beastTable(pose) : rideTable(pose.mv | 0);
       if (table !== r.table) { r.table = table; r.frame = 0; r.clock = 0; }
