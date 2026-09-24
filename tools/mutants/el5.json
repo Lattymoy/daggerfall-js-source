@@ -146,8 +146,8 @@
   {
     "name": "glsl-face-sign",
     "file": "src/render/shadowPass.js",
-    "old": "  vec3 d = (wp + n * 0.05) - P.xyz;\n  vec3 a = abs(d);\n  int face; float m;\n  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }",
-    "new": "  vec3 d = (wp + n * 0.05) - P.xyz;\n  vec3 a = abs(d);\n  int face; float m;\n  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 1 : 0; m = a.x; }",
+    "old": "vec2 cubeFaceUv(vec3 d, out int face, out float m) {\n  vec3 a = abs(d);\n  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 0 : 1; m = a.x; }",
+    "new": "vec2 cubeFaceUv(vec3 d, out int face, out float m) {\n  vec3 a = abs(d);\n  if (a.x >= a.y && a.x >= a.z) { face = d.x > 0.0 ? 1 : 0; m = a.x; }",
     "tests": [
       "test/audit_reach.test.js",
       "test/el5_field.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "storage-six-layers",
     "file": "src/render/shadowPass.js",
-    "old": "gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE, 6 * SHADOW_POINT_CASTERS);",
-    "new": "gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.DEPTH_COMPONENT24, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE, 6);",
+    "old": "this.pointTex = this._depthArray(SHADOW_POINT_SIZE, 6 * SHADOW_POINT_CASTERS, gl.LINEAR);",
+    "new": "this.pointTex = this._depthArray(SHADOW_POINT_SIZE, 6, gl.LINEAR);",
     "tests": [
       "test/el2_shadows.test.js"
     ]

@@ -328,8 +328,8 @@
  {
   "name": "AUDIT-GRASSPX-the-renderer-ignores-the-stages-it-is-handed",
   "file": "src/render/labGrass.js",
-  "old": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + stages.fs));",
-  "new": "    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FS));",
+  "old": ", LAB_GRASS_HEAD + stages.fs);   // GRASS-PX: the lab's text under the declared edits",
+  "new": ", LAB_GRASS_HEAD + GAME_GRASS_FS);   // GRASS-PX: the lab's text under the declared edits",
   "tests": [
    "test/grasspx.test.js"
   ]

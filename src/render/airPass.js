@@ -84,7 +84,7 @@ import { multiply } from '../world/mat4.js';
 import { setFrameTarget } from './renderTarget.js';
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // VC6c: a covered sun throws no shafts - the same field the ground's shadow reads
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';   // EL6: the port's one Bayer - the dither at the byte, the AO's rotation
-import { spherePlanes, recordVisible, subMeshVisible, batchVisible } from './bounds.js';   // EL5: the emission replay culls by the records' spheres too (a leaf's import: bounds.js touches no GL)
+import { spherePlanes, recordVisible, subMeshVisible, batchVisible, ZERO_ORIGIN } from './bounds.js';   // EL5: the emission replay culls by the records' spheres too (a leaf's import: bounds.js touches no GL)
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
@@ -1461,7 +1461,7 @@ export class AirPass {
             this._emitDepth(bound, depthOn, T);
           }
           gl.uniform3fv(P.emitBb.uRight, r.right); gl.uniform3fv(P.emitBb.uUp, r.up);   // the camera basis the batch was drawn with
-          const o = b.origin || [0, 0, 0];
+          const o = b.origin || ZERO_ORIGIN;   // AUDIT 68 S16-v-replay-origin-alloc
           gl.uniform3f(P.emitBb.uOrigin, o[0], o[1], o[2]);
           gl.uniform2f(P.emitBb.uSize, b.size.w, b.size.h);
           gl.uniform1f(P.emitBb.uSway, b.sway || 0);

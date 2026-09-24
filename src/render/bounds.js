@@ -12,6 +12,12 @@
 
 import { frustumPlanes } from './frustum.js';   // EV3's plane extraction - one home
 
+/** A batch with no origin sits at the world's: createBillboardBatch mints
+ *  `origin: null` for every static flat. AUDIT 68 S16-v-replay-origin-alloc:
+ *  ONE shared, read-only zero for the draw and both replays, which minted
+ *  a fresh [0, 0, 0] per origin-less batch per replay. */
+export const ZERO_ORIGIN = Object.freeze([0, 0, 0]);
+
 /** The six planes of a view-projection for the sphere test: frustum.js's
  *  Gribb/Hartmann extraction (EV3's, unnormalised - the hosts' box test only
  *  wants the sign), normalised here so a plane distance is in world units

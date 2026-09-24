@@ -28,6 +28,7 @@
 import { frustumPlanes, aabbOutside } from './frustum.js';   // PERF2: the field draws only the cells in view
 import { smoothstep } from '../systems/mathf.js';   // GRASS2: the host's blade budget is a bound on the shader's fade, so the two must be the SAME curve
 import { buildTuftMips, buildTuftSheet, pixelGrass, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from './grassPixelArt.js';   // GRASS-PX: the tuft sheet and the pixel style's numbers
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 /**
  * GRASS2: THE DEPARTURES FROM THE LAB, AS DATA.
@@ -1085,18 +1086,7 @@ export class LabGrassRenderer {
    *  zero the arithmetic is the lab's". */
   constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null } = {}) {   // GRASS-PX4: `tuft` ({ w, h }) lays the sheet at another size - the probe photographs the old 16x32 beside the shipped 8x16 through it
     this.gl = gl;
-    const compile = (type, src) => {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src);
-      gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
-      return sh;
-    };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs));   // GRASS-PX: the lab's text under the declared edits
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, LAB_GRASS_HEAD + stages.fs));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    const prog = buildProgram(gl, LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs);   // GRASS-PX: the lab's text under the declared edits
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol',

@@ -27,6 +27,7 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 /** WIND5: a JS number as a GLSL float literal (`${1}` is an int to the compiler). */
 const glslF = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
@@ -55,6 +56,10 @@ export const WISP_CLOCK_PERIOD = 400;
 export const WISP_WOBBLE_CYCLES = Object.freeze([57, 45, 38]);
 export const WISP_RATE_STEPS = 100;
 export const wispClock = (seconds) => ((seconds % WISP_CLOCK_PERIOD) + WISP_CLOCK_PERIOD) % WISP_CLOCK_PERIOD;
+/** AUDIT 68 S17-wisp-wrap-gust: THE GUST'S DENOMINATOR. A wisp rides windOff x gust; a gust of k / WISP_GUST_DIV
+ *  (k 32..48, 0.8..1.2) makes the travel's wrap at box x WISP_GUST_DIV move every wisp a whole number of boxes, which
+ *  the eye-box mod removes. A continuous gust wrapped at one box jumped each wisp up to a fifth of the box. */
+export const WISP_GUST_DIV = 40;
 
 const HEAD = `#version 300 es
 precision highp float;
@@ -97,7 +102,7 @@ void main(){
   vec3 p = aSeed.xyz;
   // every wisp takes its own share of the wind, so the field is not one
   // rigid direction (the rain's per-drop gust, PROTO-9)
-  float gust = 0.80 + fract(seed*3.7)*0.4;
+  float gust = (${glslF(WISP_GUST_DIV * 4 / 5)} + floor(fract(seed*3.7) * ${glslF(WISP_GUST_DIV * 2 / 5 + 1)})) / ${glslF(WISP_GUST_DIV)};   // AUDIT 68 S17-wisp-wrap-gust: 0.8..1.2 in whole 1/WISP_GUST_DIV steps
   p += vec3(uWindOff.x, 0.0, uWindOff.y) * gust;
   // a slow wobble across and along, phased per wisp
   p.y += sin(uTime*${glslF(2 * Math.PI * WISP_WOBBLE_CYCLES[0] / WISP_CLOCK_PERIOD)} + seed*31.0) * 0.35;   // AUDIT-VC7 (G6): whole cycles over the clock's period
@@ -206,14 +211,6 @@ export function wispsOn(search = globalThis.location?.search ?? '') {
   return isEnhanced() && !!getPref('windWisps') && new URLSearchParams(search).get('wisps') !== 'off';
 }
 
-function compileShader(gl, type, src) {
-  const sh = gl.createShader(type);
-  gl.shaderSource(sh, src);
-  gl.compileShader(sh);
-  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
-  return sh;
-}
-
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {
     for (let r = 0; r < 4; r++) {
@@ -229,11 +226,7 @@ export class WindWispsRenderer {
   constructor(gl, look = WISP_LOOK) {
     this.gl = gl;
     this.look = look;   // WEATHER2d
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compileShader(gl, gl.VERTEX_SHADER, WISP_VS));
-    gl.attachShader(prog, compileShader(gl, gl.FRAGMENT_SHADER, WISP_FS));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    const prog = buildProgram(gl, WISP_VS, WISP_FS);
     this.program = prog;
     this.u = {};
     for (const n of ['uVP', 'uEye', 'uTime', 'uBox', 'uStrength', 'uWindV', 'uWindOff', 'uLen', 'uColor', 'uAlpha', 'uCurl']) this.u[n] = gl.getUniformLocation(prog, n);   // WIND5: uCurl
@@ -255,9 +248,11 @@ export class WindWispsRenderer {
     gl.bindVertexArray(null);
     this.vao = vao;
     /** the wind's travel so far, metres, integrated from windDrive's
-     *  step each frame and kept inside one box's span - the wrap makes
-     *  the two identical, and a bounded number never loses precision
-     *  over a long session */
+     *  step each frame and kept inside box x WISP_GUST_DIV - every
+     *  wisp's gust times that span is whole boxes, so the wrap moves no
+     *  wisp (AUDIT 68 S17-wisp-wrap-gust), and a bounded number never
+     *  loses precision over a long session (3600 m: a float32 step of
+     *  a quarter millimetre) */
     this.windOff = new Float32Array(2);
     this._vp = new Float32Array(16);
     /** the count the last draw put up, for the stats and the tests */
@@ -266,10 +261,10 @@ export class WindWispsRenderer {
 
   /** Advance the travel by the frame's step and wrap it. */
   advance(step) {
+    const period = this.look.box * WISP_GUST_DIV;   // AUDIT 68 S17-wisp-wrap-gust: a common period of every wisp's travel
     for (let i = 0; i < 2; i++) {
-      const box = this.look.box;
       let v = this.windOff[i] + (step?.[i] ?? 0);
-      v = ((v % box) + box) % box;
+      v = ((v % period) + period) % period;
       this.windOff[i] = v;
     }
   }

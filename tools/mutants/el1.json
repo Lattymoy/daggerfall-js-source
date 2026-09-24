@@ -346,8 +346,8 @@
   {
     "name": "farring-classic-fs",
     "file": "src/render/farRing.js",
-    "old": "    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, this.lane ? this.lane.farRingFs : FS));",
-    "new": "    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, FS));",
+    "old": "    const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');",
+    "new": "    const p = buildProgram(gl, VS, FS, 'far ring');",
     "tests": [
       "test/el1_enhancedlighting.test.js"
     ]

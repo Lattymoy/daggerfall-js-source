@@ -61,6 +61,7 @@ import { getPref } from '../systems/uiPrefs.js';
 import { BLOOD_ABSORB, BLOOD_F0, BLOOD_MENISCUS, WET_THICK_LO, WET_THICK_HI, INK_DEPTH, WET_DARKEN } from '../combat/bloodArt.js';   // BLOOD3: the film's own law, beside the tints it already owns
 import { isEnhanced } from '../systems/uiSkin.js';
 import { SHADOW_GLSL, shadowCacheOn } from './shadowPass.js';   // EL2: the receiver block - the sun map on the sun term, the cube map on its lantern; SC1: the cache's door
+import { FOG_GLSL as EL_FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: the fog law's one home, the classic lane's too (the lane's five interpolate it by this name)
 import { AIR_ADAPT_GLSL, AIR_CONTACT_GLSL, AIR_CONTACT_RANGE_FRACTION, airOn, contactOn, glslFloat } from './airPass.js';   // EL6: no AO block - the resolve's; EL8: the contact block
 import { BAYER_GLSL, BAYER_MEAN } from './orderedDither.js';
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // AUDIT 68 S16-el-cloudshadow-dup: the reader's one home, as the classic lane and the shafts take it - five hand copies were here
@@ -306,18 +307,6 @@ float elAttenuation(float d, float range) {
 }
 ${EL_TONEMAP_GLSL}
 ${EL_SCATTER_GLSL}
-`;
-
-const EL_FOG_GLSL = `
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }
-  return exp(-uFogDensity * d);
-}
 `;
 
 /** LC1: THE CLUSTER BLOCK - the grid and the list (render/lightClusters.js), read once per fragment. With the

@@ -8,10 +8,12 @@
 //   - Alpha 0 texels are palette-index cutouts; the shader discards them.
 
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // EE5 / VC4: the cloud shadow's reader - VC6c's one home, shared with the air pass's shafts
+import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home, for all seven world programs
 // ABOVE the first shader text on purpose: every template below is built
 // at module scope, and a block a shader interpolates has to be in hand by
-// then. The import hoists and the leaf has no imports of its own, so this
-// is already guaranteed - the line stands where it reads as the rule.
+// then. The imports hoist and the leaves have no imports of their own, so
+// this is already guaranteed - the lines stand where they read as the rule.
+import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 const VS = `#version 300 es
 layout(location=0) in vec3 aPos;
@@ -90,15 +92,7 @@ uniform float uAutomapWaterLevel;   // _WaterLevel: AddWater's per-block level (
 uniform vec4 uAutomapWaterColor;    // _WaterColor: UnderwaterFog.waterMapColor, which Automap.cs:2590 injects into the one automap material
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
-  return exp(-uFogDensity * d);
-}
+${FOG_GLSL}
 void main() {
   int amMode = int(uAutomapMode + 0.5);
   // A1: the ceiling cut (Automap.cs UpdateSlicingPositionY). c2/S6: the
@@ -315,15 +309,7 @@ uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
-  return exp(-uFogDensity * d);
-}
+${FOG_GLSL}
 void main() {
   vec3 n = normalize(vNormal);
   // MW-D11: the texture MULTIPLIES the vertex colour, which is how a
@@ -410,7 +396,7 @@ void main() {
 
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf, spherePlanes, batchVisible, batchSphere } from './bounds.js';
+import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN } from './bounds.js';
 import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
@@ -495,15 +481,7 @@ uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
-  return exp(-uFogDensity * d);
-}
+${FOG_GLSL}
 void main() {
   // ECV1: a chameleoned foe ripples - a slow horizontal wobble across
   // the sprite, phased per foe - so it reads as blending in, not as a
@@ -584,15 +562,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
-  return exp(-uFogDensity * d);
-}
+${FOG_GLSL}
 void main() {
   // World xz -> classic tile UVs: 6.4 units per 64px tile, REPEAT wrap,
   // scrolled diagonally.
@@ -663,15 +633,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
-  return exp(-uFogDensity * d);
-}
+${FOG_GLSL}
 // DFU's HLSL float2x2 initializers are row-major; GLSL mat2 is
 // column-major, so these are the TRANSPOSES of the shader source
 // (caught in R9 build: rotated tiles sampled the wrong direction).
@@ -743,7 +705,6 @@ void main() {
 }`;
 
 const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
-const ZERO_ORIGIN = [0, 0, 0];
 /** BLOOD1b: a billboard quad's four corners, ONE copy. `createBillboardBatch`
  *  bakes them and `moveBillboardBatch` rewrites them, and the two disagreeing
  *  about the winding would tear every moved quad. */
@@ -806,13 +767,7 @@ uniform vec3 uAmbientSky;
 uniform vec3 uAmbientGround;
 ${CLOUD_SHADOW_GLSL}
 out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }
-  return exp(-uFogDensity * d);
-}
+${FOG_GLSL}
 void main() {
   vec4 t = texture(uTex, vUV);
   // A DEGENERATE SLOT still rasterises nothing, but a live one whose
@@ -1177,6 +1132,10 @@ export class Renderer {
     this._ambientTri = null;
 
     this.textures = new Map(); // "archive_record" -> WebGLTexture
+    // AUDIT 68 X3-release-texture-variant-keys: every key uploadTexture
+    // minted under one "archive_record", so release frees what was made
+    // instead of guessing suffixes ('#smooth#travelto' was never tried).
+    this._texKeysByBase = new Map();   // "archive_record" -> Set<cache key>
     this.emissionTextures = new Map(); // "archive_record" -> window mask
     // AUDIT 39 F49: keys whose emission map is the AUTO-EMISSIVE albedo
     // (MaterialReader.cs:448-453 - EmissionColor = Color.white), not a
@@ -2263,26 +2222,7 @@ export class Renderer {
     this._2dVao = null;
   }
 
-  _buildProgram(vsSrc, fsSrc) {
-    const gl = this.gl;
-    const compile = (type, src) => {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src);
-      gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(sh));
-      }
-      return sh;
-    };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSrc));
-    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      throw new Error(gl.getProgramInfoLog(prog));
-    }
-    return prog;
-  }
+  _buildProgram(vsSrc, fsSrc) { return buildProgram(this.gl, vsSrc, fsSrc); }
 
   /** PERF-WARM: the programs this renderer builds ON DEMAND, each as its
    *  own step, so a caller can pay for them while the browser is idle
@@ -2862,15 +2802,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 out vec4 outColor;
-float fogFactorAt(vec3 worldPos) {
-  if (uFogMode == 0) return 1.0;
-  float d = length(worldPos - uCamPos);
-  if (uFogMode == 1) {
-    return clamp((uFogRange.y - d) / max(uFogRange.y - uFogRange.x, 1e-4), 0.0, 1.0);
-  }
-  if (uFogMode == 3) { float f = uFogDensity * d; return exp(-f * f); }   // DS1: FogMode.ExponentialSquared
-  return exp(-uFogDensity * d);
-}
+${FOG_GLSL}
 void main() {
   vec4 t = texture(uTex, vUV);
   if (t.a < 0.5) discard;
@@ -3516,6 +3448,10 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mips ? (gl.NEAREST_MIPMAP_NEAREST ?? filter) : filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     this.textures.set(key, tex);
+    const base = `${archive}_${record}`;
+    let keys = this._texKeysByBase.get(base);
+    if (!keys) this._texKeysByBase.set(base, keys = new Set());
+    keys.add(key);
     this._texGen++;   // EV2: cached sub-mesh lookups refresh
     return tex;
   }
@@ -3530,14 +3466,21 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // folds the mode into the key, so a caller that released only the
     // plain key would leave a smooth upload permanently unreachable -
     // fixing the cache bug by creating a leak.
+    // AUDIT 68 X3-release-texture-variant-keys: every variant is the set
+    // the upload recorded, not a suffix list (a custom `variant` or two
+    // flags at once was never freed). No prefix scan: records carry '#'.
     const base = record === undefined ? archive : `${archive}_${record}`;
+    const keys = this._texKeysByBase.get(base);
     let freed = false;
-    for (const key of [base, `${base}#smooth`, `${base}#opaque`, `${base}#ui`]) {   // REVIEW 2026-09-05: every variant
-      const tex = this.textures.get(key);
-      if (!tex) continue;
-      this.gl.deleteTexture(tex);
-      this.textures.delete(key);
-      freed = true;
+    if (keys) {
+      this._texKeysByBase.delete(base);
+      for (const key of keys) {
+        const tex = this.textures.get(key);
+        if (!tex) continue;
+        this.textures.delete(key);
+        this.gl.deleteTexture(tex);
+        freed = true;
+      }
     }
     // AUDIT 39 F51: the EV2 generation covers BOTH directions of the
     // map. A sub-mesh stamps its resolved texture and re-reads it while

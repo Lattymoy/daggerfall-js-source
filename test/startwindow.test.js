@@ -536,9 +536,11 @@ test('AUDIT 19 F10: the texture cache is keyed by SAMPLING MODE, and frees both'
   assert.match(up.slice(0, 900), /opts\.smooth \? '#smooth' : ''/,
     'the sampling mode must be part of the cache key');
 
+  // AUDIT 68 X3-release-texture-variant-keys: release frees the keys the
+  // upload recorded for the base, not a guessed suffix list.
   const rel = src.slice(src.indexOf('releaseTexture(archive, record)'));
-  assert.match(rel.slice(0, 700), /\$\{base\}#smooth/,
-    'and release must free BOTH variants, or fixing the cache leaks instead');
+  assert.match(rel.slice(0, 900), /this\._texKeysByBase\.get\(base\)/,
+    'and release must free EVERY variant, or fixing the cache leaks instead');
 
   // Behavioural half: a fake renderer-shaped cache proves the keys differ.
   const keyOf = (archive, record, opts = {}) => `${archive}_${record}${opts.smooth ? '#smooth' : ''}`;

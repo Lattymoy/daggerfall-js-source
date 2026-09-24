@@ -134,7 +134,7 @@ test('EL5: the face basis the shader selects by is pointFaceMatrices\' own - a p
   assert.match(SHADOW_GLSL, /const vec3 FACE_X\[6\] = vec3\[6\]\(vec3\(0\.0, 0\.0, -1\.0\), vec3\(0\.0, 0\.0, 1\.0\), vec3\(1\.0, 0\.0, 0\.0\), vec3\(1\.0, 0\.0, 0\.0\), vec3\(1\.0, 0\.0, 0\.0\), vec3\(-1\.0, 0\.0, 0\.0\)\);/);
   assert.match(SHADOW_GLSL, /const vec3 FACE_Y\[6\] = vec3\[6\]\(vec3\(0\.0, -1\.0, 0\.0\), vec3\(0\.0, -1\.0, 0\.0\), vec3\(0\.0, 0\.0, 1\.0\), vec3\(0\.0, 0\.0, -1\.0\), vec3\(0\.0, -1\.0, 0\.0\), vec3\(0\.0, -1\.0, 0\.0\)\);/);
   assert.match(SHADOW_GLSL, /if \(a\.x >= a\.y && a\.x >= a\.z\) \{ face = d\.x > 0\.0 \? 0 : 1; m = a\.x; \}\n  else if \(a\.y >= a\.z\) \{ face = d\.y > 0\.0 \? 2 : 3; m = a\.y; \}\n  else \{ face = d\.z > 0\.0 \? 4 : 5; m = a\.z; \}/, 'the same major-axis selection');
-  assert.match(SHADOW_GLSL, /vec2 uv = vec2\(dot\(FACE_X\[face\], d\), dot\(FACE_Y\[face\], d\)\) \/ max\(m, 1e-4\) \* 0\.5 \+ 0\.5;/);
+  assert.match(SHADOW_GLSL, /return vec2\(dot\(FACE_X\[face\], d\), dot\(FACE_Y\[face\], d\)\) \/ max\(m, 1e-4\) \* 0\.5 \+ 0\.5;/);   // AUDIT 68 S17-shadowpass-layer-dup: cubeFaceUv's
   assert.match(SHADOW_GLSL, /float t = 1\.5 \/ 512\.0;/, 'the five taps a texel and a half apart');
   assert.match(SHADOW_GLSL, /int k = uCasterOf\[i\];\n  return k >= 0 \? casterShadowAt\(k, L, wp, n\) : 1\.0;\n\}/, 'a light with no caster is lit (the flat\'s path; EL8: by the table; DISC15: a caster of either tier)');
   assert.equal(SHADOW_POINT_SIZE, 512); assert.equal(SHADOW_POINT_NEAR, 0.1);
@@ -229,7 +229,7 @@ test('EL5: the glare hides in world units at five taps, the resolve grades in di
   assert.match(a, /depthOn\(P\);   \/\/ EL5\/EL6/); assert.match(a, /if \(f\.carried && f\.carried\[i\]\) continue;   \/\/ MAC-T1/, 'the hand\'s light skipped by its flag (LIGHT-NEAR1: the camera-distance skip is gone)');
   assert.match(a, /vec3 e = airEncode\(max\(c, vec3\(0\.0\)\)\);\n  e = \(e - 0\.5\) \* uGrade\.w \+ 0\.5;\n  e \+= \(bayer4\(gl_FragCoord\.xy\) - \$\{BAYER_MEAN\}\) \/ 255\.0;/, 'the contrast after the encode, about mid-grey; EL6: dithered at the byte, zero-mean');
   assert.ok(!/c = \(c - 0\.18\) \* uGrade\.w \+ 0\.18;/.test(a), 'the linear pivot is gone');
-  assert.match(a, /import \{ spherePlanes, recordVisible, subMeshVisible, batchVisible \} from '\.\/bounds\.js';/, 'the leaf imports a leaf');
+  assert.match(a, /import \{ spherePlanes, recordVisible, subMeshVisible, batchVisible, ZERO_ORIGIN \} from '\.\/bounds\.js';/, 'the leaf imports a leaf');   // AUDIT 68 S16-v-replay-origin-alloc: and its zero origin
   const b = read('src/render/bounds.js');
   assert.match(b, /^import \{ frustumPlanes \} from '\.\/frustum\.js';/m, 'bounds.js imports EV3\'s plane extraction and nothing else (one home)');
   assert.equal((b.match(/^import /gm) || []).length, 1);

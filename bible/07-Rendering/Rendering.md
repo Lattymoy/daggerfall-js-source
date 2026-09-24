@@ -67,6 +67,17 @@ directory by `test/audit18_bible_docs.test.js`:
   program that lights by the sun, and the air pass's shafts, which
   cannot import from the renderer that imports them. No GL, no imports.
   See `07-Rendering/Volumetric-Clouds-Arc.md`.
+- `fogGlsl.js` - AUDIT 68 THE FOG BLOCK: `FOG_GLSL`, the one `fogFactorAt`
+  every world pass interpolates - renderer.js's seven programs, the water
+  surface and the lighting lane's five (DS1's exp2 had been added to nine
+  copies). Each shader declares its own fog uniforms; `setFog` feeds them.
+  No GL, no imports.
+- `glProgram.js` - AUDIT 68 ONE COMPILE AND LINK: `buildProgram(gl, vs, fs,
+  label)`, which the renderer's `_buildProgram` and every foreign pass's
+  program go through (the sky, the rain, the wisps, the clouds and their
+  noise, the far ring, the bolts, Dynamic Skies, the grass, the enhanced
+  sky); a fault throws the driver's log, a constructor fault the boot probe
+  sees. No imports.
 - `shadowPass.js` - EL2 THE SHADOW PASS: records what the world pass draws and
   replays it depth-only from the light at the top of the next frame - a
   two-cascade sun map outdoors, a cube map from the nearest lantern indoors -
