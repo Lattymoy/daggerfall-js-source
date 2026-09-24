@@ -181,17 +181,17 @@ port did. The Features home's row (`mod-weapon-widget`) is the mod's own
 Enabled switch; "takes effect at once", the widget reads its switches
 every frame.
 
-**Two defaults are not the mod's (DISC14-B, 2026-09-23).** Mac, with a
-screenshot of this tile: *"these need to be the default values ingame
-for diverse weapons. The current defaults are wrong on the screen."*
-`Modules.DoubleScaleTextures` ships ON here (off in the mod), and
-`Inertia.Scale` ships 0 (1.0 in the mod). Every other key is as shipped.
-Diverse Weapons is on by default, and these are the values Mac chose
-for its idles against what the old defaults drew. WW1's shipped-defaults pin names
-the two, and the clone's benches put the shipped values back, so the
-clone's own laws are still tested against the mod. The Thunderlock
-turns Inertia on as its own departure, and keeps the mod's scale for it
-while the player's module is off (`gunViewmodel.js` `GUN_INERTIA_SCALE`).
+**Every default is the mod's (DISC16-B, 2026-09-24).** DISC14-B had
+shipped two departures at Mac's word: DoubleScaleTextures on and
+Inertia.Scale 0, with Diverse Weapons' preset off. DISC16-B reverted all
+of it at Mac's word (*"the changes we made to the values for the weapon
+widget reverted. Its no longer smooth like how it was before diverse
+weapons"*, then *"I just want it how it was before diverse weapons"*),
+and Diverse Weapons' preset is off by default (the mod itself stays on,
+MO1). WW1's
+shipped-defaults pin holds every key to the mod's once more, and the
+Thunderlock's forced inertia runs at the player's own scale, as it did
+before DISC14-B.
 
 ## Hosts
 

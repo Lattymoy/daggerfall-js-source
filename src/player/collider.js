@@ -235,6 +235,30 @@ export class Collider {
   }
 
   /**
+   * DISC16-A (2026-09-24, Mac: "I notice my character is sunken into the
+   * ground on hills"): WHERE A CAPSULE'S FEET REST ON THE TERRAIN FLOOR.
+   * DFU's body is Unity's CharacterController, a capsule, and on a slope a
+   * capsule rests on its rounded bottom: the sphere's centre stands r / cos
+   * of the grade over the ground beneath it, so its lowest point, the feet,
+   * stands r (1 / cos - 1) over the ground there - 5 cm at 30 degrees, 15 at
+   * 45, 35 at 60. The floor here took the ground beneath the centre as the
+   * feet, so on a hill every body stood that much lower than DFU's, and the
+   * third-person body (placed at the feet) had its uphill foot in the slope.
+   * The grade is the heightfield's across the capsule's own width. Flat
+   * ground, and a floor with no ground either side of the capsule (a pixel's
+   * edge), are unchanged.
+   */
+  restFloor(x, z) {
+    const h = this.heightAt(x, z);
+    if (!Number.isFinite(h)) return h;
+    const r = CAPSULE_RADIUS;
+    const hx0 = this.heightAt(x - r, z), hx1 = this.heightAt(x + r, z), hz0 = this.heightAt(x, z - r), hz1 = this.heightAt(x, z + r);
+    if (!(Number.isFinite(hx0) && Number.isFinite(hx1) && Number.isFinite(hz0) && Number.isFinite(hz1))) return h;
+    const gx = (hx1 - hx0) / (2 * r), gz = (hz1 - hz0) / (2 * r);
+    return h + r * (Math.sqrt(1 + gx * gx + gz * gz) - 1);
+  }
+
+  /**
    * Register a mesh's triangles under a bucket. Positions/indices are the
    * meshReader model buffers; matrix bakes them into bucket space.
    */
@@ -1140,7 +1164,7 @@ export class Collider {
     // below the centre); this collider's answer to that spike is its
     // own snap (player/motor.js A6), so the floor takes the same
     // STEP_OFFSET reach, under the same jump gate.
-    const floor = this.heightAt(feet[0], feet[2]);
+    const floor = this.restFloor(feet[0], feet[2]);
     if (snap && dy <= 0 && !out.grounded && feet[1] > floor && feet[1] - floor <= STEP_OFFSET) {
       // ...but never against the step-up LADDER above: a capsule lifted
       // in front of a riser is off the floor on purpose, and the floor

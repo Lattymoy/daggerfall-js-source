@@ -227,7 +227,7 @@ export const MOD_SETTINGS = Object.freeze({
           + 'sprite. The sprites ship with the port; a newer version\u2019s .dfmod attached through the textures pick wins over them.',
       }),
       WeaponWidgetPreset: Object.freeze({
-        default: false,   // DISC14-B (2026-09-23, Mac, with the Weapon Widget tile: "these need to be the default values ingame for diverse weapons. The current defaults are wrong on the screen"): OFF again - the preset's true texture size, inertia, step, recoil and 142 bob are what drew wrong; the defaults Mac chose are Weapon Widget's own (with DoubleScaleTextures on and Inertia.Scale 0, below), and the preset stays a switch. It was on from DW-CLIP ("mod should be defaulted on")
+        default: false,   // DISC16-B (2026-09-24, Mac: "I just want it how it was before diverse weapons"): OFF, as at DW1 - the mod's sprites move with Weapon Widget's own defaults, as every weapon did before the mod; the preset (its step, inertia, true size and 142 bob) is the player's to choose. DW-CLIP ("mod should be defaulted on") had it on, DISC14-B off with two departures of its own
         description: 'Use the mod\u2019s own Weapon Widget preset while this is on - double-scale idles, true texture size, inertia, '
           + 'recoil and its bob - the settings its readme asks Weapon Widget users to select. Your own Weapon Widget '
           + 'settings are kept underneath and come back when this is off.',
@@ -366,7 +366,7 @@ export const MOD_SETTINGS = Object.freeze({
       'Modules.Bob': Object.freeze({ default: true, description: 'Bob: the sprite sways as you walk.' }),
       'Modules.Inertia': Object.freeze({ default: false, description: 'Inertia: the sprite lags the look and your movement. Requires double-scaled weapon textures.' }),
       'Modules.Step': Object.freeze({ default: false, description: 'Step: the sprite\u2019s position is rounded so it moves in steps.' }),
-      'Modules.DoubleScaleTextures': Object.freeze({ default: true, description: 'DoubleScaleTextures: the idle pose is drawn at double size from the mod\u2019s own textures (attach the mod\u2019s .dfmod through the textures pick).' }),   // DISC14-B: ON here, off in the mod - Mac's default for Diverse Weapons' idles (their `w_` double-scale paintings, drawn where the classic idle stands)
+      'Modules.DoubleScaleTextures': Object.freeze({ default: false, description: 'DoubleScaleTextures: the idle pose is drawn at double size from the mod\u2019s own textures (attach the mod\u2019s .dfmod through the textures pick).' }),   // DISC16-B: the mod's own again (DISC14-B had it on)
       'Modules.TrueTextureSize': Object.freeze({ default: false, description: 'TrueTextureSize: a custom texture is drawn at its own pixel size, divided by the scale factor below.' }),
       'Modules.Recoil': Object.freeze({ default: false, description: 'Recoil: the swing recoils on a hit, a parry or a miss, by the condition below.' }),
       'Swings.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 5.0, float: true, step: 0.25, description: 'Speed of the swing\u2019s frames.' }),
@@ -386,7 +386,7 @@ export const MOD_SETTINGS = Object.freeze({
       'Bob.BobWhileIdle': Object.freeze({ default: true, description: 'Whether the shield will slightly bob while stationary' }),
       'Step.Length': Object.freeze({ default: 1, min: 1, max: 10, description: 'The number (x8) whose multiples will be used for snapping' }),
       'Step.Condition': Object.freeze({ default: 0, options: Object.freeze(['Sheathe/Attack Only', 'All Transforms']), description: 'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil' }),
-      'Inertia.Scale': Object.freeze({ default: 0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),   // DISC14-B: 0 here, 1.0 in the mod - Mac's default (the module is off by default too)
+      'Inertia.Scale': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The maximum distance that the sprite will be offset' }),   // DISC16-B: the mod's own again (DISC14-B had it at 0)
       'Inertia.Speed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will move at towards the target offset' }),
       'Inertia.ForwardDepth': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'Multiplier for the change in scale when moving forward or backward' }),
       'Inertia.ForwardSpeed': Object.freeze({ default: 1.0, min: 0.0, max: 2.0, float: true, step: 0.1, description: 'The speed that the sprite will scale towards the target depth' }),
