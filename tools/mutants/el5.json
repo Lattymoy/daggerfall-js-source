@@ -65,8 +65,8 @@
   {
     "name": "batch-no-bounds-culled",
     "file": "src/render/bounds.js",
-    "old": "  const s = b.bounds;\n  if (!s) return true;",
-    "new": "  const s = b.bounds;\n  if (!s) return false;",
+    "old": "  return !c || sphereInPlanes(planes, c[0], c[1], c[2], c[3]);",
+    "new": "  return !!c && sphereInPlanes(planes, c[0], c[1], c[2], c[3]);",
     "tests": [
       "test/el5_field.test.js"
     ]

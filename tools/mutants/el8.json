@@ -128,7 +128,7 @@
   {
     "name": "upload-contact-current-depth",
     "file": "src/render/airPass.js",
-    "old": "    gl.bindTexture(gl.TEXTURE_2D, live ? this.frame.prevDepth : (this.frame ? this.frame.prevDepth : null));",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.prevDepth : null);",
     "new": "    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.depth : null);",
     "tests": [
       "test/el8_contact.test.js"

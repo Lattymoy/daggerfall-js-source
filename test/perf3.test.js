@@ -60,7 +60,9 @@ test('PERF3 pins: the terrain block goes up once per frame stamp; the cutout bil
   for (const u of ['tUModel', 'tUTileSize']) assert.ok(!tBlock.includes(`this.${u}`), `${u} was hoisted INTO the once-a-frame block`);
   assert.match(r, /this\._uploadCloudShadow\('terrain'\);\n\s+\/\/ PERF3/, 'the deck keeps its own stamp, outside the block');
   // the billboards
-  assert.match(r, /const keyOf = \(b\) => \{[\s\S]{0,1200}b\._bbKeyRecord !== b\.record \|\| b\._bbKeyFrame !== b\.frame \|\| b\._bbKeyArchive !== b\.archive/, 'the key is cached per record, frame and archive (FA1 animates b.frame; the mobiles animate b.record - MAC4)');
+  // AUDIT 68 S16-bbkey-stale-shadow-reach: the cache lives in billboardKey.js, the pass's and both replays' one home
+  assert.match(r, /const key = billboardKey\(b\);/, 'the pass keys through the one home');
+  assert.match(read('src/render/billboardKey.js'), /b\._bbKeyRecord !== b\.record \|\| b\._bbKeyFrame !== b\.frame \|\| b\._bbKeyArchive !== b\.archive/, 'the key is cached per record, frame and archive (FA1 animates b.frame; the mobiles animate b.record - MAC4)');
   // PERF-TEX3: the unit goes through the selector's funnel; the KEY skip
   // is untouched and is still what makes a repeated billboard free. This
   // path binds its own texture and clears the unit-0 shadow rather than

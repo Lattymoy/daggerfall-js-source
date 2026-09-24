@@ -410,7 +410,8 @@ void main() {
 
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf, spherePlanes, batchVisible } from './bounds.js';
+import { boundsOf, spherePlanes, batchVisible, batchSphere } from './bounds.js';
+import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
 
@@ -1207,6 +1208,7 @@ export class Renderer {
     // DRAW pays; upload-time binds are creation cost, not frame cost.
     this.stats = { draws: 0, programBinds: 0, vaoBinds: 0, texBinds: 0, bbCulled: 0 };   // PERF-CROWD2: the billboards this frame did NOT submit
     this._perf = perfOn() ? setMeter(gl, new PerfMeter(gl, perfZones(), perfCpu())) : null;   // EL8: `?perf` - a GPU-timed line every PERF_EVERY world frames; VC6d: `?perf=zones` per pass, and the meter is findable by its context (the sky's march marks its own span); PERF-CPU: `?perf=cpu` tiles the same zones on the MAIN THREAD's clock, which is the one a script-bound frame is losing
+    this._perfOpen = false;   // AUDIT 68 S16-perf-no-resolve-leak: a world frame's meter frame begun and not yet closed (_perfClose)
     this._frameStamp = 0;      // PERF3: bumped by beginFrame (and the state restores) - the terrain program's frame-constant block is uploaded once per stamp
     // PERF-CROWD2 (2026-09-19): THE BILLBOARD PASS CULLS, so that no host
     // has to remember to. PERF-ON2 found the peers submitted uncut and
@@ -1224,6 +1226,7 @@ export class Renderer {
     this._anisoExt = null;
     this._anisoMax = 1;
     this._bbPlanes = new Float32Array(24);
+    this._reachSphere = new Float64Array(4);   // AUDIT 68 S16-batch-sphere-dup: shadowReachBatch's scratch
     this._bbPv = new Float32Array(16);
     this._bbCullOff = cullDisabled();   // the ?cull=off door, read once
     this._tFrameStamp = -1;
@@ -1877,9 +1880,8 @@ export class Renderer {
   /** SHADOW-REACH: the same for a flat batch, on the sphere the replays cull it by (batchVisible's). */
   shadowReachBatch(b) {
     if (!this._casting) return false;
-    const s = b.bounds; if (!s) return true;
-    const o = b.origin;
-    return this._shadows.reachesSphere(s[0] + (o ? o[0] : 0), s[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, s[2] + (o ? o[2] : 0), s[3]);
+    const c = batchSphere(b, this._reachSphere);   // AUDIT 68 S16-batch-sphere-dup: the lift's one home
+    return !c || this._shadows.reachesSphere(c[0], c[1], c[2], c[3]);
   }
   /** SHADOW-REACH: record a caster for the maps WITHOUT drawing it - the seams drawMesh, drawTerrain and drawBillboards
    *  record through, with none of their draw. The billboards take the frame's wind as drawBillboards does. */
@@ -2059,9 +2061,10 @@ export class Renderer {
     // frame whose resolve was deferred to here (an enhanced-skin frame
     // draws no screen quad of its own), and its GPU clock was begun
     // twice before it was ended once.
+    if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: a world frame with no resolve owed (the classic lane, `?air=off`) that drew no screen quad
     if (this._air?.pending && !this._panelSaved) this._compositeAir();
     this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set
-    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
+    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
     if (this._shadows && world) this._renderPasses(proj, view, lightDir);
     // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
     this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(this.canvas.width, this.canvas.height) : null;
@@ -2121,6 +2124,7 @@ export class Renderer {
   resolveFrame() { this._compositeAir(); }
 
   _compositeAir() {
+    if (this._perfOpen && !this._air?.pending) this._perfClose();   // AUDIT 68 S16-perf-no-resolve-leak: no resolve owed - the frame's first screen draw closes its meter, as the resolve would
     if (!this._air?.pending) return;
     // PERF-2D: AFTER the early return, and that ordering is the whole
     // saving. drawScreenQuad calls this at the head of EVERY quad, so a
@@ -2143,15 +2147,22 @@ export class Renderer {
     // invalidates them. (VC6c/VC6d pin the two lines above this one as
     // adjacent, which is why the reason is written here and not there.)
     this._forgetTextureShadows();
-    if (this._perf) {   // EL8: the clock stops at the resolve; the line, when it is due
-      this._perf.end();
-      this._perf.stop();   // VC6d: the frame's last span
-      const line = this._perf.frame({ draws: this.stats.draws, shadows: this._shadows ? { ...this._shadows.stats, casters: this._shadows.casters } : null, air: { ...this._air.stats } });
-      if (line) console.info(line);
-    }
+    this._perfClose();   // EL8: the clock stops at the resolve; the line, when it is due
     this._frameFbo = null;
     this._lastProgram = null; this._lastVao = null;
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  /** AUDIT 68 S16-perf-no-resolve-leak: THE `?perf` FRAME'S CLOSE - the world frame's, not the air pass's. It lived
+   *  inside the resolve alone, so with no AirPass (the classic lane, `?air=off`) nothing closed a frame _beginLane
+   *  opened: no line ever printed, and `?perf=zones` piled up a GL query per mark that nothing polled or deleted. */
+  _perfClose() {
+    if (!this._perfOpen) return;
+    this._perfOpen = false;
+    this._perf.end();
+    this._perf.stop();   // VC6d: the frame's last span
+    const line = this._perf.frame({ draws: this.stats.draws, shadows: this._shadows ? { ...this._shadows.stats, casters: this._shadows.casters } : null, air: this._air ? { ...this._air.stats } : null });
+    if (line) console.info(line);
   }
 
   /** EL2: whether this draw is recorded for the shadow maps - a lane with
@@ -4940,26 +4951,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // order and only skips the repeats it happens to have.
     let lastKey = null;
     let lastSway = null;   // WIND3
-    const keyOf = (b) => {
-      // FA1: an animated flat's frames are uploaded under `record#frame`
-      // (the key uploadRecordFrame already mints for enemy sprites);
-      // a still flat is `record` alone, as before.
-      // MAC4 (2026-09-11, Mac: "enemy animations are completely broken"):
-      // the cache re-minted on a FRAME change only, and the mobiles -
-      // every foe, guard and townsperson (exteriorFoes, dungeonContext,
-      // cityGuards, the two hosts' people) - animate by writing the
-      // RECORD (`record#frame`, orientation and frame folded into one)
-      // and never touch `frame`: their key was minted once and they
-      // stood on their first texture for the rest of the session. The
-      // key follows every field it is made of.
-      if (b._bbKey == null || b._bbKeyRecord !== b.record || b._bbKeyFrame !== b.frame || b._bbKeyArchive !== b.archive) {
-        b._bbKeyRecord = b.record; b._bbKeyFrame = b.frame; b._bbKeyArchive = b.archive;
-        b._bbKey = b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`;
-      }
-      return b._bbKey;
-    };
     const drawOne = (b) => {
-      const key = keyOf(b);
+      const key = billboardKey(b);   // FA1/MAC4: the key follows every field it is made of (billboardKey.js)
       const tex = this.textures.get(key);
       if (!tex) return;
       if (key !== lastKey) {
@@ -4985,22 +4978,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform4f(this.bbUConceal, 0, 0, 0, 0);   // ECV1: plain unless a batch says otherwise
     const opaque = this._bbOpaque ??= [];
     opaque.length = 0;
-    // AUDIT PERF-CROWD2 F1: `keyOf` runs BEFORE the cull, and must. It is
-    // not this pass's bookkeeping alone - the shadow replay
-    // (shadowPass.js) and the air pass's emitters (airPass.js) both read
-    // `b._bbKey`, and both take it as it stands (`?? recompute` only
-    // fires when it is ABSENT, never when it is STALE). A culled batch
-    // that never re-keyed would carry last-seen-on-screen's key for as
-    // long as it stayed off camera - and a mobile animates by writing its
-    // RECORD (MAC4), so an off-screen foe would cast the silhouette of
-    // whatever frame it was on when it left the view, or none at all once
-    // that texture is gone. The shadow cascades reach 240 units; off
-    // screen is exactly where those casters live. Keying is a few
-    // comparisons and mints a string only when something changed.
+    // AUDIT 68 S16-bbkey-stale-shadow-reach: a batch is keyed for the
+    // sort below, which reads `b._bbKey`, and no longer for anyone else.
+    // AUDIT PERF-CROWD2 F1 keyed every batch BEFORE the cull because the
+    // shadow and air replays took `b._bbKey` as it stood; they re-key
+    // through billboardKey themselves now, which also covers the batch
+    // SHADOW-REACH records without drawing (recordShadowBillboards) - the
+    // one this pass never saw, and so never keyed.
     for (const b of batches) {
       if (isSpectralArchive(b.archive) || b.conceal) continue;
-      keyOf(b);
       if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2
+      billboardKey(b);
       opaque.push(b);
     }
     opaque.sort((a, b) => (a._bbKey < b._bbKey ? -1 : a._bbKey > b._bbKey ? 1 : 0));

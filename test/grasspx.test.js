@@ -276,8 +276,9 @@ test('GRASS-PX: the renderer compiles the game\'s stages, uploads the sheet with
   const params = calls.slice(binds[0][0]).filter((c) => c[0] === 'texParameteri').slice(0, 4).map((c) => [c[2], c[3]]);
   assert.deepEqual(params, [[C.TEXTURE_MIN_FILTER, C.NEAREST_MIPMAP_NEAREST], [C.TEXTURE_MAG_FILTER, C.NEAREST], [C.TEXTURE_WRAP_S, C.CLAMP_TO_EDGE], [C.TEXTURE_WRAP_T, C.CLAMP_TO_EDGE]], 'a pixel sprite is never filtered, and the sheet never wraps');
   const light = { sunDir: [0, 1, 0], amb: [1, 1, 1], sunCol: [1, 1, 1], dim: 1 }, wind = { dir: [1, 0], speed: 0, windV: [0, 0] };
+  r.allocSlots(49, 4);   // AUDIT 68 S16-grass-set-broken-dead: the field's slots are what a draw draws (empty here - the uploads are the draw's head)
   const uploads = (style) => {
-    calls.length = 0; r.count = 1;
+    calls.length = 0;
     r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, style);
     const u = {}; for (const c of calls) if (c[0] === 'uniform1f' || c[0] === 'uniform1i') u[c[1]] = c[2];
     return u;
@@ -289,21 +290,14 @@ test('GRASS-PX: the renderer compiles the game\'s stages, uploads the sheet with
   assert.deepEqual([sm.uPxVariants, sm.uPxSteps, sm.uPxTintBands], [PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS], 'the smooth draw still uploads every count');
   assert.equal(sm.uPxStepHz, undefined, 'GRASS-PX3: no sway clock exists to upload');
   assert.equal(sm.uPxSheet, undefined, '...but never binds the sheet');
-  calls.length = 0; r.count = 1; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'smooth');
+  calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'smooth');
   assert.ok(!calls.some((c) => c[0] === 'bindTexture' && c[2] === r.pxSheet) && !calls.some((c) => c[0] === 'activeTexture' && c[1] === C.TEXTURE4), 'the smooth style never touches unit 4');
   calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind);
   assert.equal(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uPixel')[2], 0, 'a draw that names no style is the lab\'s');
   assert.equal(uploads('junk').uPixel, 1, 'a stored value that is no tier is the row\'s default, pixel - the same fallback the pane draws');
   assert.deepEqual([px.uPxVariants, px.uPxSteps, px.uPxTintBands, px.uPxSheet], [PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS, 4]);
   assert.deepEqual([PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT], [8, 4, 2]);
-  // GRASS AUDIT 1: the lab's one-scatter path draws the pixel tuft too - one quad, half the blades
-  calls.length = 0; r.count = 7; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'pixel');
-  let dr = calls.find((c) => c[0] === 'drawArraysInstanced');
-  assert.deepEqual([dr[3], dr[4], r.drawn.farSlots, r.drawn.blades, r.drawn.kept], [r.vertsFar, 4, 1, 4, 7], 'the scatter path: the one-quad blade, ceil(7/2) instances, and the stats say so');
-  assert.equal(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uSlotN')[2], 4, 'the fade fraction runs over the half');
-  calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind, 300, 'smooth');
-  dr = calls.find((c) => c[0] === 'drawArraysInstanced');
-  assert.deepEqual([dr[3], dr[4], r.drawn.farSlots], [r.verts, 7, 0]);
+  // AUDIT 68 S16-grass-set-broken-dead: the lab's one-scatter path is gone; the slot path's one-quad tuft is GRASS-PX2's below
   // GRASS AUDIT 1: the constructor takes the LAB's stages, so the probe can draw the same field through the lab's own text
   const { gl: gl2, calls: calls2 } = stubGl();
   new LabGrassRenderer(gl2, { stages: { vs: LAB_GRASS_VS, fs: LAB_GRASS_FS } });

@@ -56,7 +56,8 @@
 //     the culling above is what makes 24 face replays cheap.
 
 import { lookAt, multiply, ortho, perspective } from '../world/mat4.js';
-import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible, sphereInPlanes } from './bounds.js';   // EL5: the cull
+import { spherePlanes, transformSphere, recordVisible, subMeshVisible, batchVisible, sphereInPlanes, batchSphere } from './bounds.js';   // EL5: the cull
+import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: re-keyed here, however the batch reached the records
 import { aabbOutside } from './frustum.js';   // SHADOW-REACH: a host's box against the cascades
 
 /** The sun map: two cascades of this size, as a depth texture array. */
@@ -766,6 +767,7 @@ export class ShadowPass {
     /** per-frame counts, for a probe */
     this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0, staticFaces: 0, dynFaces: 0, blits: 0, cachedSlots: 0, loSlots: 0, loFaces: 0 };   // SC1: the faces split, the blits, the slots served from the cache; DISC15: the lo tier's slots and faces
     this._planes = new Float32Array(24);   // EL5: the replay's frustum
+    this._bSphere = new Float64Array(4);   // AUDIT 68 S16-batch-sphere-dup: batchSphere's scratch for the SC1 scans
     this._slotOfScratch = new Int32Array(SHADOW_POINT_CASTERS);   // SC1: rank -> slot
     this._heldCasters = new Float64Array(4 * SHADOW_POINT_CASTERS);   // DISC6: last frame's casters, by position (Float64: an exact copy of whatever the host sent, so the match by position holds)
     this._heldCasterN = 0;
@@ -1241,8 +1243,8 @@ export class ShadowPass {
       if (r.kind === REC_BB) {
         for (const b of r.batches) {
           if (!b?.vao || b._dead || b._shDyn || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;
-          const o = b.origin;
-          if (b.bounds && !spheresTouch(b.bounds[0] + (o ? o[0] : 0), b.bounds[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, b.bounds[2] + (o ? o[2] : 0), b.bounds[3], pos[0], pos[1], pos[2], far)) continue;
+          const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup: the replays' own sphere
+          if (c && !spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) continue;
           h = foldSignature(h, shId(b)); h = foldSignature(h, Math.round(b._shOx * 64) + Math.round(b._shOz * 64) * 7919); n++;
         }
         continue;
@@ -1270,8 +1272,8 @@ export class ShadowPass {
           if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.conceal) continue;
           if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;
           if (b._shSway && near === DYN_SWAY) continue;
-          const o = b.origin;
-          if (!b.bounds || spheresTouch(b.bounds[0] + (o ? o[0] : 0), b.bounds[1] + (o ? o[1] : 0) + (b.size?.h ?? 0) * 0.5, b.bounds[2] + (o ? o[2] : 0), b.bounds[3], pos[0], pos[1], pos[2], far)) { if (!b._shSway) return DYN_MOVER; near = DYN_SWAY; }
+          const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup
+          if (!c || spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) { if (!b._shSway) return DYN_MOVER; near = DYN_SWAY; }
         }
         continue;
       }
@@ -1378,7 +1380,7 @@ export class ShadowPass {
           // culled) and its mutant survived, which is what said so. F5's
           // test over MESHES and terrain, at the top of this loop, is
           // untouched and still live.
-          const key = b._bbKey ?? (b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`);
+          const key = billboardKey(b);
           const tex = f.textures.get(key);
           if (!tex) continue;
           const o = b.origin || [0, 0, 0];

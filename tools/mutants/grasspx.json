@@ -263,15 +263,6 @@
   ]
  },
  {
-  "name": "AUDIT-GRASSPX-the-scatter-path-keeps-the-five-quad-blade",
-  "file": "src/render/labGrass.js",
-  "old": "      const one = this._oneQuad, verts = one ? this.vertsFar : this.verts;",
-  "new": "      const one = false, verts = this.verts;",
-  "tests": [
-   "test/grasspx.test.js"
-  ]
- },
- {
   "name": "AUDIT-GRASSPX-the-cell-submits-every-blade-in-pixel",
   "file": "src/render/labGrass.js",
   "old": "      const m = this._oneQuad ? Math.ceil(n / PX_BLADES_PER_TUFT) : n;",

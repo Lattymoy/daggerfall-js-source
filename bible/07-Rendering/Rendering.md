@@ -51,6 +51,14 @@ directory by `test/audit18_bible_docs.test.js`:
   (`transformSphere`), the frustum's normalised planes (`spherePlanes`,
   over frustum.js's extraction) and the sphere test the shadow and air
   replays cull by. A leaf: no GL. See `07-Rendering/Enhanced-Lighting-Arc.md`.
+  AUDIT 68: `batchSphere` is a billboard batch's lifted sphere, the one home
+  batchVisible, shadowReachBatch and the shadow cache's scans all take.
+- `billboardKey.js` - AUDIT 68: a billboard batch's texture key
+  (`archive_record`, `#frame` for an animated flat), re-minted whenever the
+  archive, record or frame moved. The billboard pass, the shadow replay and
+  the air pass's emission replay all key through it, so a batch recorded for
+  the maps without being drawn (SHADOW-REACH) casts its current frame. A
+  leaf: no GL, no imports.
 - `cloudShadow.js` - EE5 / VC4 THE CLOUD SHADOW BLOCK: the uniforms and
   the reader (`cloudShadowAt`) that answer how much sun reaches a point
   on the ground, off the map `volumetricClouds.js` writes. Its own leaf
