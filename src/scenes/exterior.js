@@ -2155,7 +2155,7 @@ export async function bootExterior(canvas, renderer, params, status) {
    *  them, and so does the broker fan-out below - one set of doors per
    *  entity, exactly as one EntityEffectManager per entity. */
   const foeSinks = (g, fromPlayer = true) => ({   // AUDIT WORLD6b-iii(a) B2: the engine's provenance, world.js's line
-    hurt: (n) => { if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer, kind: 'spell' }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer })); },   // ROAD-G G2: route by pool, world.js's line
+    hurt: (n, o) => { const fp = o?.fromPlayer ?? fromPlayer; if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer: fp, kind: 'spell' }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer: fp })); },   // AUDIT 68 review: a round's tick says whose it is, world.js's line   // ROAD-G G2: route by pool, world.js's line
     heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
     drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
@@ -3991,7 +3991,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       foes: enchantFoes(),
       spawn: (mt, pos, so) => (d
         ? d.spawnLooseFoe(mt, pos, { yawRad: so.yawRad, allied: so.allied })
-        : exteriorFoes.spawnFoe(mt, pos, { yaw: so.yawRad, allied: so.allied })),
+        : exteriorFoes.spawnFoe(mt, pos, { yaw: so.yawRad, allied: so.allied, loose: true })),
     }, mobileType, o);
   };
   /** AUDIT 58 (f2/hosts): THE ENCHANT CTX, MOUNTED HERE TOO - THE FOUR

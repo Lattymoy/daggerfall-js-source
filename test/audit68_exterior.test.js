@@ -204,3 +204,11 @@ test('AUDIT 68 S20-encounter-cap-race: a camp that starts every member in one lo
   assert.deepEqual(await Promise.all(inFlight), [null, null, null], 'the cancelled spawns stand nothing');
   assert.equal(restored.filter(Boolean).length, MAX_ACTIVE_ENCOUNTER_FOES, 'and hold no slot in the next world');
 });
+test('AUDIT 68 review R-scenes-loose-foe-squad-capped: a CreateFoeSpawner squad stood in one loop is not the encounter cap\'s - every member stands, and the rolls stay capped', async () => {
+  const pool = createExteriorFoes(rig());
+  for (let i = 0; i < MAX_ACTIVE_ENCOUNTER_FOES - 1; i++) assert.ok(await pool.spawnFoe(0, [i * 3, 0, 0], { feetGiven: true }));
+  const squad = await Promise.all([0, 1, 2, 3, 4].map((i) => pool.spawnFoe(0, [i * 3, 0, 10], { feetGiven: true, loose: true })));
+  assert.equal(squad.filter(Boolean).length, 5, 'mutants: `loose` back under the cap - the squad is cut at the one free slot');
+  assert.equal(await pool.spawnFoe(0, [0, 0, 40], { feetGiven: true }), null, 'an encounter roll is still refused over the cap');
+});
+

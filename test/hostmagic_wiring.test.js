@@ -114,7 +114,7 @@ test('M5: spell damage reaches guards through the ONE damage door', () => {
   assert.ok(src('cityGuards.js').includes('hurtGuard: (g, dmg, playerFeet, knockDir = null, opts = undefined) => damageGuard(g, dmg, playerFeet, knockDir, opts)'),   // AUDIT WORLD6b-iii(a) B2: and the options bag (the provenance)
     'cityGuards exports the door');
   for (const f of HOSTS) {
-    assert.ok(/hurt: \(n\) => \{ if \(n > 0\) (cityGuards\.hurtGuard\(g, n, player\.pos\)|\(g\._encounter \? exteriorFoes\.damageFoe\(g, n, player\.pos, null, \{ fromPlayer, kind: 'spell' \}\) : cityGuards\.hurtGuard\(g, n, player\.pos, null, \{ fromPlayer \}\)\))/.test(src(f)),   // AUDIT WORLD6b-iii(a) B2: the world host's carries the engine's provenance
+    assert.ok(/hurt: \(n(?:, o)?\) => \{ (?:const fp = o\?\.fromPlayer \?\? fromPlayer; )?if \(n > 0\) (cityGuards\.hurtGuard\(g, n, player\.pos\)|\(g\._encounter \? exteriorFoes\.damageFoe\(g, n, player\.pos, null, \{ fromPlayer(?:: fp)?, kind: 'spell' \}\) : cityGuards\.hurtGuard\(g, n, player\.pos, null, \{ fromPlayer(?:: fp)? \}\)\))/.test(src(f)),   // AUDIT WORLD6b-iii(a) B2: the world host's carries the engine's provenance
       `${f}: the engine sink routes through the pool's own damage door`);
   }
 });

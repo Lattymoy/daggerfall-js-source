@@ -39,6 +39,24 @@ export function createTransitionGate() {
       inFlight = null;
       held?.resolve();
     },
+    /** One build through the gate, the whole protocol: it waits its
+     *  turn, `live()` answers whether the world is still the one it was
+     *  asked in, and a build that PUBLISHES (answers true) is itself a
+     *  world move - every request queued behind it was asked in the world
+     *  it just left, so none of them may build over it (AUDIT 68 review,
+     *  R-scenes-gate-queued-publish-orphans: only abort() used to stale
+     *  them, and a queued door wrote the context slot over the live one). */
+    async run(build) {
+      const token = await this.begin();
+      if (token == null) return false;   // the world moved while it waited its turn
+      try {
+        const published = await build(() => this.valid(token));
+        if (published) gen++;
+        return published;
+      } finally {
+        this.end();
+      }
+    },
     /** Resolves once no build holds the gate. */
     async settled() {
       while (inFlight) await inFlight.promise;

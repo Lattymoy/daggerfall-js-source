@@ -8,6 +8,22 @@
 
 Newest first.
 
+**2026-09-24 - AUDIT 68: THE WHOLE-TREE SWEEP (PARTIAL).** Mac: *"a deep
+comprehensive audit across the entirety of the codebase, making bug
+fixes, refactoring where needed and overall doing some major
+housekeeping... No band aids."* 53 finder lanes (45 file slices, eight
+cross-cutting), an adversarial verifier each, then file-disjoint fix
+clusters in worktrees, integrated in green checkpoints, and a four-lane
+review of the whole diff before merge. The account's session limit cut
+the run at 03:52 and Mac wrapped it at what had landed: 22 clusters, about
+200 findings paid and pinned, the relay at `world103`, the desktop shell on
+Electron 42 (PR #338 folded in). Paid first: citeShift had silently
+skipped `world.js` since it crossed 1 MiB. The review's eleven findings
+were paid too, the worst a merge of two lanes' intents that reopened the
+relay's C3 flood. Not done: eight slices never audited (most of the
+enhanced skin and `src/world`), the verified findings of five clusters,
+three drafts on `audit68/*` side branches. Record: `Audit-68.md`.
+
 **2026-09-18 - AUDIT-MAP2: THE HELD MAP, THE LAST AUDIT BEFORE MERGE
 (MAP1-MAP3).** Mac: *"Before we merge, let's do one last audit on the
 new maps."* Three reviewer lenses (the rig's side of MAP3, the window's

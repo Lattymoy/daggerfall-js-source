@@ -20,7 +20,7 @@
 // enemyMelee.js htClose (the waypoint advance), at project-final
 // 8ba9100. The constants are his numbers with his comments; the two
 // functions are his bodies, re-homed on `this` instead of `e` because
-// the port's foe IS its motor. navWalkable is main.js:302 verbatim.
+// the port's foe IS its motor. navWalkable is main.js:303 verbatim.
 // Where the port's shape forced a change it is named below; there are
 // exactly two, and neither touches how a route is chosen or held.
 //
@@ -59,7 +59,8 @@
 // findPath's waypoints carry y = surfH(chf.colliders, ...) when the chf
 // has colliders, and y = 0 otherwise. AUDIT 59 F4 corrected the premise
 // this adaptation was written on: the live chf DOES carry colliders -
-// navClient's hydrateHere re-cuts the boxes and hands them to
+// navClient hydrates over the boxes the bake was cut into (the worker
+// ships them back; a cache hit asks it for them) and hands them to
 // hydrateBakedNav, and the 3b pin reads the hydrated floor through
 // them - so a waypoint's y is surfH's answer: the real floor where a
 // box top exists, and the PHANTOM floor (minY - 10) wherever none
@@ -124,7 +125,7 @@ export const PATH_BUDGET_PER_FRAME = 3; // cap findPath (poly A* + funnel) calls
  *  number; the port's, not his. */
 export const PROJECT_MARGIN = 0.05;
 
-/** project-final main.js:302, verbatim: a cell is walkable iff it holds
+/** project-final main.js:303, verbatim: a cell is walkable iff it holds
  *  a walkable, regioned span (or its bit is set in a hydrated map's
  *  walkmask). */
 export function navWalkable(chf, x, z) {

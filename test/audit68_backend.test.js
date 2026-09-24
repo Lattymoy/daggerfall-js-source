@@ -8,6 +8,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import {
   SOCIAL_ROOM, PARTY_OFFLINE_MS, ACCOUNT_IDLE_MS, DROP_STRIKES_MAX, PARK_TTL_MS, PIXEL_UNITS, parkRegistryRoom, parkKeyOf,
+  HIT_ROOM_BYTES_PER_S,
 } from '../src/net/wire.js';
 import { fakeRoom, fakeRooms } from './fakeRoom.mjs';
 import worker from '../server-account/src/index.js';
@@ -128,6 +129,15 @@ test('AUDIT 68 X8-hit-byte-budget-room-wide-starves-grants: one socket\'s junk b
   await r.raw(evil, junk);
   assert.equal(byst.sent.filter((m) => m.t === 'hit').length, 16, 'the flooder starved only itself');
   assert.equal(evil.closed, null, 'and nobody was struck for it');
+  // the pre-merge review: the budget is the DESTINATION's, so many senders together cannot push past it into one socket
+  // (C3's 720 KiB/s from three sockets) - a per-sender bucket gave each of them its own 256 KiB/s
+  const senders = [r.connect(), r.connect(), r.connect(), r.connect()];
+  for (const [i, s] of senders.entries()) await r.hello(s, `snd${i}-000${i + 5}`, at);
+  const before = taker.sent.filter((m) => m.t === 'hit').length;
+  const toTaker = JSON.stringify({ t: 'hit', data: { to: 'takr-0002', pad: 'z'.repeat(16000) } });
+  for (let i = 0; i < 12; i++) for (const s of senders) await r.raw(s, toTaker);   // 48 frames, 768 KiB: inside the frame funnel, each sender inside a per-sender 256 KiB
+  const landed = taker.sent.filter((m) => m.t === 'hit').length - before;
+  assert.ok(landed * toTaker.length <= HIT_ROOM_BYTES_PER_S, `mutants: a per-sender bucket - ${landed} frames (${landed * toTaker.length} bytes) reached one socket in a frozen second`);
 }));
 
 test('AUDIT 68 X8-v-say-mute-unstruck: a flood of `say` (a stranger\'s or a developer\'s) and of `mute` is struck out like every other arm\'s; one stranger\'s say is still ignored in silence and a developer\'s first line still heard', () => frozen(async () => {

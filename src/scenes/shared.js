@@ -1472,7 +1472,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
     for (const pool of pools) {
       for (const f of pool() ?? []) {
         if (!f || f.dead || !f.entity || f.puppet) continue;   // AUDIT WORLD6b B1: a PUPPET's entity is its owner's simulation - no round of mine ticks it (a poison put on it locally reached the divert as my blow)
-        const sinks = sinksFor(f);
+        const sinks = sinksFor(f, false);   // AUDIT 68 review (R-scenes-round-tick-provenance-three-hosts): a round is nobody's blow unless its tick says so - the dungeon's law (foeSinks(f, false)), all four hosts
         runMagicRoundsFor(f.entity, from, to, { sinks });
         killIfAnyLiveStatZero(f.entity, sinks, dt);
       }

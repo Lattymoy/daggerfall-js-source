@@ -111,6 +111,30 @@ test('AUDIT 68 X3-transition-build-race: the gate runs one build at a time and a
   gate.end();
 });
 
+test('AUDIT 68 review R-scenes-gate-queued-publish-orphans: a build that PUBLISHES stales every request queued behind it; one that fails does not', async () => {
+  const { createTransitionGate } = await import('../src/scenes/transitionGate.js');
+  const gate = createTransitionGate();
+  let release = null;
+  const first = gate.run(() => new Promise((r) => { release = r; }));
+  let secondBuilt = false;
+  const second = gate.run(async () => { secondBuilt = true; return true; });
+  await Promise.resolve(); await Promise.resolve();
+  release(true);
+  assert.equal(await first, true);
+  assert.equal(await second, false, 'mutants: no generation bump on publish - the queued door builds over the live context');
+  assert.equal(secondBuilt, false);
+  // a FAILED build moved nothing: the request behind it still runs
+  let releaseFail = null;
+  const failed = gate.run(() => new Promise((r) => { releaseFail = r; }));
+  let thirdBuilt = false;
+  const third = gate.run(async () => { thirdBuilt = true; return true; });
+  await Promise.resolve(); await Promise.resolve();
+  releaseFail(false);
+  assert.equal(await failed, false);
+  assert.equal(await third, true);
+  assert.equal(thirdBuilt, true, 'ASYNC NEVER DROPS: a request behind a failed build is not discarded');
+});
+
 test('AUDIT 68 X3-transition-build-race: the mode host serializes its door builds and a teleport or load abandons the pending one', async () => {
   // Driven through the host: the first restore's build hangs at its
   // model fetch while a second is asked for; the host moves the world

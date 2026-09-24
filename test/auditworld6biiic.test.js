@@ -163,7 +163,7 @@ test('AUDIT WORLD6b-iii(c) C5: the frame obeys CELL_FRAME_RECORDS_MAX - the live
   assert.ok(f.f.every((r) => validFoeRecord(r)), 'every record the wire\'s');
 });
 
-test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYTES_PER_S a second, the sender\'s since AUDIT 68) - over the budget a frame is dropped and nobody struck; inside it a grant lands; the relay is at or past this slice\'s deploy', async () => {
+test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYTES_PER_S a second, the destination\'s since AUDIT 68) - over the budget a frame is dropped and nobody struck; inside it a grant lands; the relay is at or past this slice\'s deploy', async () => {
   assert.equal(HIT_ROOM_BYTES_PER_S, 256 * 1024); assert.ok(relayVersionAtLeast(66));
   const at = (px, pz) => ({ x: px * PIXEL_UNITS + 10, y: 0, z: pz * PIXEL_UNITS + 10, yaw: 0, pitch: 0, mv: 0 });
   const r = fakeRoom('world:3,12');
@@ -173,11 +173,11 @@ test('AUDIT WORLD6b-iii(c) C3: the Room - the hit arm counts BYTES (HIT_ROOM_BYT
   assert.ok(grant.length > 10 * 1024 && grant.length < 16 * 1024);
   await r.raw(a, grant);
   assert.equal(c.sent.filter((m) => m.t === 'hit').length, 1, 'inside the budget: lands');
-  r.room._meterOf(a).hbytes = { bytes: 0, at: Date.now() + 1000 };   // spent, stamped a second ahead: no refill under load
+  r.room._meterOf(c).hbytes = { bytes: 0, at: Date.now() + 1000 };   // spent, stamped a second ahead: no refill under load
   await r.raw(a, grant);
-  assert.equal(c.sent.filter((m) => m.t === 'hit').length, 1, 'C3: over the sender\'s hit bytes - dropped');
+  assert.equal(c.sent.filter((m) => m.t === 'hit').length, 1, 'C3: over the destination\'s hit bytes - dropped');
   assert.equal(a.closed, null); assert.equal(a.meters.junk ?? 0, 0, 'and nobody struck');
-  r.room._meterOf(a).hbytes = { bytes: 20000, at: Date.now() + 1000 };
+  r.room._meterOf(c).hbytes = { bytes: 20000, at: Date.now() + 1000 };
   await r.raw(a, grant); await r.raw(a, grant);
   assert.equal(c.sent.filter((m) => m.t === 'hit').length, 2, 'a budget of one grant: one lands, the next is dropped');
 });
@@ -188,6 +188,6 @@ test('AUDIT WORLD6b-iii(c) by source: the dungeon\'s record clamps the overshoot
   assert.match(x, /if \(n > 0\) playRareDrop\(audio, f\.corpseMarker\?\.pos \?\? f\.ai\?\.feet \?\? null, grant\);/, 'B10');
   assert.match(x, /\.\.\.\(Number\.isFinite\(f\.entity\.health\) \? \{ h: Math\.max\(0, Math\.min\(FOE_HEALTH_MAX, f\.entity\.health\)\) \} : \{\}\)/, 'C9');
   assert.match(x, /const asker = peerCandidate\(from\);/, 'A1: the asker read off the hunt\'s roster');
-  assert.match(rd('server/src/index.js'), /const bytes = byteGate\(mine\.hbytes \?\? null, now, out\.length, HIT_ROOM_BYTES_PER_S\);/, 'C3 (the sender\'s bytes - AUDIT 68 X8-hit-byte-budget-room-wide-starves-grants)');
+  assert.match(rd('server/src/index.js'), /const bytes = byteGate\(tm\.hbytes \?\? null, now, out\.length, HIT_ROOM_BYTES_PER_S\);/, 'C3 (the destination\'s bytes - AUDIT 68 X8 and its review)');
   assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b-iii\(c\) \(2026-09-14\)/, 'the record');
 });

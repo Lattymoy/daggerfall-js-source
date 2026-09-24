@@ -4135,7 +4135,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  them, and so does the broker fan-out below - one set of doors per
    *  entity, exactly as one EntityEffectManager per entity. */
   const foeSinks = (g, fromPlayer = true) => ({   // AUDIT WORLD6b-iii(a) B2: the provenance the engine hands (AUDIT WORLD2 B7: a foe's spell is not the player's blow) - this host ignored it, so an enemy blast over a puppet went to its owner as MY hit
-    hurt: (n) => { if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer, kind: 'spell' }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer })); },   // X-slice: route by pool
+    hurt: (n, o) => { const fp = o?.fromPlayer ?? fromPlayer; if (n > 0) (g._encounter ? exteriorFoes.damageFoe(g, n, player.pos, null, { fromPlayer: fp, kind: 'spell' }) : cityGuards.hurtGuard(g, n, player.pos, null, { fromPlayer: fp })); },   // AUDIT 68 review: a round's tick says whose it is (effects.js runEffectRound), as the dungeon's sink reads it   // X-slice: route by pool
     heal: (n) => { if (n > 0) g.entity.health = Math.min(g.entity.maxHealth ?? Infinity, g.entity.health + n); },
     drainMagicka: (n) => { if (n > 0) g.entity.magicka = Math.max(0, (g.entity.magicka ?? 0) - n); },
     restoreMagicka: (n) => { if (n > 0) g.entity.magicka = Math.min(g.entity.maxMagicka ?? Infinity, (g.entity.magicka ?? 0) + n); },
@@ -4286,7 +4286,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:2442 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:5667
+  // that context through modes.dungeonCtx - so worldModes.js:5662
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -4371,7 +4371,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:407-412) never looks the record up in `foes`, and
+    // (exteriorFoes.js:410-415) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1348-1366) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -4543,7 +4543,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       foes: enchantFoes(),
       spawn: (mt, pos, o) => (d
         ? d.spawnLooseFoe(mt, pos, { yawRad: o.yawRad, allied: o.allied })
-        : exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied })),
+        : exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied, loose: true })),
     }, mobileType, opts);
   };
   /** EC1: THIS host's own pools, exterior only - and deliberately NOT
@@ -6376,7 +6376,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:6259), so exterior mode and a
+    // composer, dungeonContext.js:6262), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -8341,7 +8341,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:8790-8854 -
+  // worldModes answers it in BOTH modes (worldModes.js:8785-8849 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a

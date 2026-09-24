@@ -227,8 +227,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // CENTRE, and `hitDist` what AlignControllerToGround's ray found below
   // it (null: nothing within 3); the drop needs the capsule the sprite
   // sizes, so it lands once the sprite has.
-  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null } = {}) {
-    const capped = !questBehaviour && !replacing && !puppet && !placed;   // WORLD6b: a puppet is not this cap's
+  async function spawnFoe(mobileType, pos, { gender: forcedGender = null, yaw = null, questBehaviour = null, allied = false, feetGiven = false, replacing = false, puppet = null, seq = null, level = null, placed = false, groundAlign = null, site = null, loose = false } = {}) {
+    // WORLD6b: a puppet is not this cap's. AUDIT 68 review (R-scenes-loose-foe-squad-capped): nor is a `loose` stand -
+    // CreateFoeSpawner's (a summoning punishment, RR's expulsion squad, a Rose's Daedroth) stands however many it is
+    // told in one loop, and DFU caps none of them; the cap is the encounter rolls'
+    const capped = !questBehaviour && !replacing && !puppet && !placed && !loose;
     // AUDIT 68 S20-encounter-cap-race: a capped spawn still crossing its awaits holds its slot - a camp's members all
     // start in one synchronous loop, and each saw the count from before any of them landed
     if (capped && activeCount() + spawning.filter((s) => s.capped).length >= MAX_ACTIVE_ENCOUNTER_FOES) return null;

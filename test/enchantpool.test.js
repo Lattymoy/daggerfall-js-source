@@ -173,7 +173,7 @@ test('AUDIT 58: the WABBAJACK re-stands a foe in the pool that owns it', () => {
   // is two pools. `exteriorFoePool` is the watch AND the encounter
   // foes, and this arm handed both to the encounter pool's remover.
   // That was not a leak - removeFoe never looks the record up in `foes`
-  // (exteriorFoes.js:414-419) and both pools share the host's one
+  // (exteriorFoes.js:417-422) and both pools share the host's one
   // renderer - but the teardown of a watchman is the WATCH's to own,
   // and `removeFoe`'s `questBehaviour?.notifyDestroyed()` is an
   // encounter-pool term a guard has no business reaching, so the
@@ -256,7 +256,7 @@ test('EC1: the world host consumes the shared law rather than a second copy of i
   // two pools, with world.js's own _encounter split
   const wm = read('src/scenes/worldModes.js');
   assert.match(wm, /insideFoeSinksFor\(foe, fromPlayer\) \{/, 'the interior host has a foeSinksFor of its own');   // AUDIT 68 X4: + the engine's provenance
-  assert.match(wm, /if \(foe\._encounter\) interiorFoes\?\.damageFoe\(foe, n, player\.pos, null, \{ fromPlayer, kind: 'spell' \}\);\n\s+else interiorGuards\?\.hurtGuard\(foe, n, player\.pos, null, \{ fromPlayer \}\);/,
+  assert.match(wm, /if \(foe\._encounter\) interiorFoes\?\.damageFoe\(foe, n, player\.pos, null, \{ fromPlayer: fp, kind: 'spell' \}\);\n\s+else interiorGuards\?\.hurtGuard\(foe, n, player\.pos, null, \{ fromPlayer: fp \}\);/,
     'routed by pool, so the billboard dies in the pool that owns it');
   // every enchant-ctx site that reaches a foe's vitals goes through the
   // router - a bare foeSinks() there is the exterior assumption again.
@@ -372,7 +372,7 @@ test('AUDIT 58 (f2/hosts): the EXTERIOR host mounts the same body over its own p
   // while leaving every other assertion in this pin green.
   assert.match(sf, /const d = mode === 'dungeon' \? \(modes\?\.dungeonCtx \?\? null\) : null;\n\s*return standLooseFoe\(\{/);
   assert.match(sf, /collider: d \? d\.collider : collider,/, 'and it rays through the world it is standing in');
-  assert.match(sf, /\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: so\.yawRad, allied: so\.allied \}\)\n\s*: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: so\.yawRad, allied: so\.allied \}\)/);
+  assert.match(sf, /\? d\.spawnLooseFoe\(mt, pos, \{ yawRad: so\.yawRad, allied: so\.allied \}\)\n\s*: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: so\.yawRad, allied: so\.allied, loose: true \}\)/);
 });
 
 test('EC1: the DETECT feed keeps its own exterior pool - one change, two consumers', () => {
@@ -417,7 +417,7 @@ test('EC1/ROAD-G G1: the two SPAWN arms stand a foe in the world the player IS i
   assert.match(body, /if \(mode === 'interior'\) return modes\?\.insideStandLooseFoe\?\.\(mobileType, opts\) \?\? null;/,
     'a building stands its foe through the INTERIOR host - never this host\'s street pool, which is what enchantFoeHost routes for the sinks');
   assert.match(body, /d\n\s*\? d\.spawnLooseFoe\(/, 'a dungeon stands its foe through the DUNGEON\'s chain');
-  assert.match(body, /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied \}\)/,
+  assert.match(body, /: exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, allied: o\.allied, loose: true \}\)/,
     'and the street through its own encounter pool');
   // The gate that remains is not a mode gate but a POOL gate, and it
   // still refuses: a mode this host does not know is not a world with

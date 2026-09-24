@@ -563,6 +563,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     if (pn.standBatch) {
       const i = billboardBatches.indexOf(pn.standBatch);
       if (i >= 0) billboardBatches.splice(i, 1);
+      flatAnims.remove(pn.standBatch);   // AUDIT 68 review (R-scenes-unstand-flatanim-leak): its FlatAnim goes with it - armFlatAnim added one at the stand
       renderer.destroyBatch(pn.standBatch);
       pn.standBatch = null;
     }

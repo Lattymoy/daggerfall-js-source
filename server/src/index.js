@@ -1097,11 +1097,12 @@ export class Room {
       // AUDIT WORLD6b-iii(c) C3: the hit bytes - a grant carries a corpse's pile, so the arm counts bytes as the foes
       // and the acts do; over the budget the frame is dropped, nobody struck (three sockets pushed 720 KiB/s of grants
       // into one destination through an arm that counted frames alone). AUDIT 68 X8-hit-byte-budget-room-wide-starves-grants:
-      // the SENDER's, as AUDIT DROPS B3 made the trade's - one room-wide bucket let one socket's junk blows drop every
-      // honest grant in the room, whose items had already left their corpse
-      const mine = this._meterOf(ws);
-      const bytes = byteGate(mine.hbytes ?? null, now, out.length, HIT_ROOM_BYTES_PER_S);
-      mine.hbytes = bytes.bucket;
+      // the DESTINATION's, as the frame funnel above is - one room-wide bucket let one socket's junk blows drop every
+      // honest grant in the room, whose items had already left their corpse; and (the pre-merge review) a per-SENDER
+      // bucket reopened C3 itself, N senders each their own 256 KiB/s into one socket. Aimed at a destination, a flood
+      // spends that destination's bytes and no one else's
+      const bytes = byteGate(tm.hbytes ?? null, now, out.length, HIT_ROOM_BYTES_PER_S);
+      tm.hbytes = bytes.bucket;
       if (!bytes.pass) return;
       this._send(tws, out);
       return;

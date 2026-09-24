@@ -890,7 +890,7 @@ export function createWorldModes(host) {
       yawRad: cam.yaw,
       fovDegrees: fieldOfView() * 180 / Math.PI,   // fieldOfView() answers RADIANS
       foes: interiorFoePool(),
-      spawn: (mt, pos, o) => interiorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied }),
+      spawn: (mt, pos, o) => interiorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, allied: o.allied, loose: true }),
     }, mobileType, opts);
   }
 
@@ -1061,10 +1061,11 @@ export function createWorldModes(host) {
    *  as world.js's `foeSinks` takes it - a foe's spell on a watchman
    *  in a shop is not the player's attack. */
   const insideFoeSinks = (foe, fromPlayer = true) => ({
-    hurt: (n) => {
+    hurt: (n, o) => {
       if (n <= 0) return;
-      if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos, null, { fromPlayer, kind: 'spell' });
-      else interiorGuards?.hurtGuard(foe, n, player.pos, null, { fromPlayer });
+      const fp = o?.fromPlayer ?? fromPlayer;   // AUDIT 68 review: a round's tick says whose it is (effects.js runEffectRound)
+      if (foe._encounter) interiorFoes?.damageFoe(foe, n, player.pos, null, { fromPlayer: fp, kind: 'spell' });
+      else interiorGuards?.hurtGuard(foe, n, player.pos, null, { fromPlayer: fp });
     },
     heal: (n) => { if (n > 0) foe.entity.health = Math.min(foe.entity.maxHealth ?? Infinity, foe.entity.health + n); },
     drainMagicka: (n) => { if (n > 0) foe.entity.magicka = Math.max(0, (foe.entity.magicka ?? 0) - n); },
@@ -1081,7 +1082,7 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:389-390), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:897-901 and
+   *  READ the effect list every frame (exteriorFoes.js:900-904 and
    *  cityGuards.js:832-838 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
@@ -5371,13 +5372,7 @@ export function createWorldModes(host) {
    *  a request the world moved under, built or still waiting, publishes
    *  nothing. */
   async function gatedTransition(build) {
-    const token = await transitionGate.begin();
-    if (token == null) return false;   // the world moved while it waited its turn
-    try {
-      return await build(() => transitionGate.valid(token));
-    } finally {
-      transitionGate.end();
-    }
+    return transitionGate.run(build);   // a build that publishes stales the requests queued behind it
   }
   /** A built context the host never adopts - the doorless interior
    *  (NT1), the dungeon with no start marker (AUDIT 39 #29), a build the
@@ -6190,7 +6185,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:6279), so the OUTER host's one rides in.
+          // (dungeonContext.js:6282), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:744 -> the
@@ -9795,7 +9790,7 @@ export function createWorldModes(host) {
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
      *  HARD2c: this used to spell them out, and named `world.js:6643`
-     *  and `dungeonContext.js:6288` for its two sibling copies - lines
+     *  and `dungeonContext.js:6291` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {
